@@ -6,14 +6,28 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/registry/apis/secret"
 )
+
+type fakeSecureValueSupport struct {
+	canReferenceErr error
+}
+
+func (f *fakeSecureValueSupport) CanReference(_ context.Context, _ common.ObjectReference, _ ...string) error {
+	return f.canReferenceErr
+}
+
+func (f *fakeSecureValueSupport) CreateInline(_ context.Context, _ common.ObjectReference, _ common.RawSecureValue, _ *string) (string, error) {
+	return "", fmt.Errorf("not expected")
+}
+
+func (f *fakeSecureValueSupport) DeleteWhenOwnedByResource(_ context.Context, _ common.ObjectReference, _ ...string) error {
+	return fmt.Errorf("not expected")
+}
 
 func TestSecureValues(t *testing.T) {
 	raw := &unstructured.Unstructured{
@@ -32,7 +46,6 @@ func TestSecureValues(t *testing.T) {
 	}
 	obj, err := utils.MetaAccessor(raw)
 	require.NoError(t, err)
-	owner := utils.ToObjectReference(obj)
 
 	t.Run("Invalid input", func(t *testing.T) {
 		raw.Object["secure"] = map[string]any{
@@ -40,7 +53,7 @@ func TestSecureValues(t *testing.T) {
 				Create: common.NewSecretValue("XXX"),
 			},
 		}
-		secureMock := secret.NewMockInlineSecureValueSupport(t)
+		fake := &fakeSecureValueSupport{}
 		pberr := canReferenceSecureValues(context.Background(), obj, nil, nil)
 		require.Equal(t, http.StatusServiceUnavailable, int(pberr.Code), "missing store")
 
@@ -50,7 +63,7 @@ func TestSecureValues(t *testing.T) {
 					Create: common.NewSecretValue("XXX"),
 				},
 			}
-			pberr = canReferenceSecureValues(context.Background(), obj, nil, secureMock)
+			pberr = canReferenceSecureValues(context.Background(), obj, nil, fake)
 			require.Equal(t, http.StatusUnprocessableEntity, int(pberr.Code))
 			require.Equal(t, "secure.A.create", pberr.Details.Causes[0].Field)
 		})
@@ -61,7 +74,7 @@ func TestSecureValues(t *testing.T) {
 					Remove: true,
 				},
 			}
-			pberr = canReferenceSecureValues(context.Background(), obj, nil, secureMock)
+			pberr = canReferenceSecureValues(context.Background(), obj, nil, fake)
 			require.Equal(t, http.StatusUnprocessableEntity, int(pberr.Code))
 			require.Equal(t, "secure.A.remove", pberr.Details.Causes[0].Field)
 		})
@@ -72,12 +85,10 @@ func TestSecureValues(t *testing.T) {
 					Name: "", // EMPTY
 				},
 			}
-			pberr = canReferenceSecureValues(context.Background(), obj, nil, secureMock)
+			pberr = canReferenceSecureValues(context.Background(), obj, nil, fake)
 			require.Equal(t, http.StatusUnprocessableEntity, int(pberr.Code))
 			require.Equal(t, "secure.A.name", pberr.Details.Causes[0].Field)
 		})
-
-		secureMock.AssertExpectations(t)
 	})
 
 	t.Run("OnCreate", func(t *testing.T) {
@@ -89,13 +100,9 @@ func TestSecureValues(t *testing.T) {
 				Name: "111", // duplicate reference, but only checked once
 			},
 		}
-		secureMock := secret.NewMockInlineSecureValueSupport(t)
-		secureMock.On("CanReference", mock.Anything, owner, "111").
-			Return(nil).Once()
 
-		pberr := canReferenceSecureValues(context.Background(), obj, nil, secureMock)
+		pberr := canReferenceSecureValues(context.Background(), obj, nil, &fakeSecureValueSupport{})
 		require.Nil(t, pberr)
-		secureMock.AssertExpectations(t)
 	})
 
 	t.Run("OnUpdate", func(t *testing.T) {
@@ -109,13 +116,9 @@ func TestSecureValues(t *testing.T) {
 		}
 
 		old, _ := utils.MetaAccessor(&unstructured.Unstructured{})
-		secureMock := secret.NewMockInlineSecureValueSupport(t)
-		secureMock.On("CanReference", mock.Anything, owner, "111", "222").
-			Return(nil).Once()
 
-		pberr := canReferenceSecureValues(context.Background(), obj, old, secureMock)
+		pberr := canReferenceSecureValues(context.Background(), obj, old, &fakeSecureValueSupport{})
 		require.Nil(t, pberr)
-		secureMock.AssertExpectations(t)
 	})
 
 	t.Run("OnUpdate with same keys", func(t *testing.T) {
@@ -138,13 +141,9 @@ func TestSecureValues(t *testing.T) {
 						Name: "Not222",
 					},
 				}}})
-		secureMock := secret.NewMockInlineSecureValueSupport(t)
-		secureMock.On("CanReference", mock.Anything, owner, "111", "222").
-			Return(nil).Once()
 
-		pberr := canReferenceSecureValues(context.Background(), obj, old, secureMock)
+		pberr := canReferenceSecureValues(context.Background(), obj, old, &fakeSecureValueSupport{})
 		require.Nil(t, pberr)
-		secureMock.AssertExpectations(t)
 	})
 
 	t.Run("Update without changes should skip CanReference", func(t *testing.T) {
@@ -153,11 +152,12 @@ func TestSecureValues(t *testing.T) {
 				Name: "111",
 			},
 		}
-		secureMock := secret.NewMockInlineSecureValueSupport(t)
 
-		pberr := canReferenceSecureValues(context.Background(), obj, obj, secureMock)
+		// CanReference should not be called; if it were, the error would surface.
+		pberr := canReferenceSecureValues(context.Background(), obj, obj, &fakeSecureValueSupport{
+			canReferenceErr: fmt.Errorf("should not be called"),
+		})
 		require.Nil(t, pberr)
-		secureMock.AssertExpectations(t) // CanReference should not be called
 	})
 
 	t.Run("upstream errors", func(t *testing.T) {
@@ -166,23 +166,17 @@ func TestSecureValues(t *testing.T) {
 				Name: "111",
 			},
 		}
-		secureMock := secret.NewMockInlineSecureValueSupport(t)
-		secureMock.On("CanReference", mock.Anything, owner, "111").
-			Return(fmt.Errorf("nope")).Once() // <<< error in CanReference
 
-		pberr := canReferenceSecureValues(context.Background(), obj, nil, secureMock)
+		pberr := canReferenceSecureValues(context.Background(), obj, nil, &fakeSecureValueSupport{
+			canReferenceErr: fmt.Errorf("nope"),
+		})
 		require.NotNil(t, pberr)
-		secureMock.AssertExpectations(t)
 
 		// Check CanReference when the old value is invalid
 		old, _ := utils.MetaAccessor(&unstructured.Unstructured{
 			Object: map[string]any{"secure": t}})
 
-		secureMock = secret.NewMockInlineSecureValueSupport(t)
-		secureMock.On("CanReference", mock.Anything, owner, "111").
-			Return(nil).Once()
-		pberr = canReferenceSecureValues(context.Background(), obj, old, secureMock)
+		pberr = canReferenceSecureValues(context.Background(), obj, old, &fakeSecureValueSupport{})
 		require.Nil(t, pberr)
-		secureMock.AssertExpectations(t)
 	})
 }

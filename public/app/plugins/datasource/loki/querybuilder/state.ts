@@ -1,7 +1,7 @@
 import { QueryEditorMode } from '@grafana/plugin-ui';
 
 import { LokiQueryType } from '../dataquery.gen';
-import { LokiQuery } from '../types';
+import { type LokiQuery } from '../types';
 
 const queryEditorModeDefaultLocalStorageKey = 'LokiQueryEditorModeDefault';
 

@@ -3,26 +3,26 @@
  * in packages/grafana-data/src/types/logs.ts
  */
 import { flatten } from 'lodash';
-import { from, Observable } from 'rxjs';
+import { from, type Observable } from 'rxjs';
 
 import {
-  DataFrame,
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceApi,
-  DataSourceWithSupplementaryQueriesSupport,
+  type DataFrame,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceApi,
+  type DataSourceWithSupplementaryQueriesSupport,
   FieldType,
   LoadingState,
   LogLevel,
   LogsVolumeType,
   MutableDataFrame,
   SupplementaryQueryType,
-  SupplementaryQueryOptions,
+  type SupplementaryQueryOptions,
   toDataFrame,
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
-import { ExplorePanelData } from 'app/types/explore';
+import { type DataQuery } from '@grafana/schema';
+import { type ExplorePanelData } from 'app/types/explore';
 
 import { MockDataSourceApi } from '../../../../test/mocks/datasource_srv';
 import { MockDataQueryRequest, MockQuery } from '../../../../test/mocks/query';

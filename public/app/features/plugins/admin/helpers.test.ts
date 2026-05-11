@@ -1,5 +1,6 @@
 import { PluginErrorCode, PluginSignatureStatus, PluginSignatureType, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import {
   mapToCatalogPlugin,
@@ -13,9 +14,17 @@ import {
   isRemotePluginVisibleByConfig,
   isNonAngularVersion,
   isDisabledAngularPlugin,
+  formatGrafanaDependency,
 } from './helpers';
 import { getLocalPluginMock, getRemotePluginMock, getCatalogPluginMock } from './mocks/mockHelpers';
-import { RemotePlugin, LocalPlugin, RemotePluginStatus, Version, CatalogPlugin } from './types';
+import {
+  type RemotePlugin,
+  type LocalPlugin,
+  RemotePluginStatus,
+  type Version,
+  type CatalogPlugin,
+  PluginUpdateStrategy,
+} from './types';
 
 describe('Plugins/Helpers', () => {
   let remotePlugin: RemotePlugin;
@@ -220,7 +229,6 @@ describe('Plugins/Helpers', () => {
         isDeprecated: false,
         isPublished: true,
         latestVersion: '4.1.5',
-        isManaged: false,
         isPreinstalled: { found: false, withVersion: false },
         name: 'Zabbix',
         orgName: 'Alexander Zobnin',
@@ -234,6 +242,11 @@ describe('Plugins/Helpers', () => {
         isFullyInstalled: false,
         angularDetected: false,
         url: 'https://github.com/alexanderzobnin/grafana-zabbix',
+        managed: {
+          enabled: false,
+          strategy: undefined,
+        },
+        distributionType: undefined,
       });
     });
 
@@ -279,6 +292,89 @@ describe('Plugins/Helpers', () => {
       expect(mapRemoteToCatalog(corePlugin).isCore).toBe(true);
       expect(mapRemoteToCatalog(notCorePlugin).isCore).toBe(false);
     });
+
+    describe('.managed', () => {
+      test('should map V1 config to managed object when plugin is in pluginCatalogManagedPlugins', () => {
+        const oldPluginCatalogManagedPlugins = config.pluginCatalogManagedPlugins;
+        config.pluginCatalogManagedPlugins = [remotePlugin.slug];
+        const oldPluginAdminExternalManageEnabled = config.pluginAdminExternalManageEnabled;
+        config.pluginAdminExternalManageEnabled = true;
+
+        expect(mapRemoteToCatalog(remotePlugin)).toMatchObject({
+          managed: { enabled: true, strategy: PluginUpdateStrategy.Assigned },
+        });
+
+        config.pluginCatalogManagedPlugins = oldPluginCatalogManagedPlugins;
+        config.pluginAdminExternalManageEnabled = oldPluginAdminExternalManageEnabled;
+      });
+
+      test('should set managed.enabled to false if plugin is not in pluginCatalogManagedPlugins', () => {
+        expect(mapRemoteToCatalog(remotePlugin)).toMatchObject({
+          managed: { enabled: false, strategy: undefined },
+        });
+      });
+
+      test('should use grafana-com managed data when managedPluginsV2 is enabled', () => {
+        setTestFlags({ managedPluginsV2: true });
+
+        expect(
+          mapRemoteToCatalog({
+            ...remotePlugin,
+            managed: { enabled: true, strategy: PluginUpdateStrategy.MajorAligned },
+          })
+        ).toMatchObject({ managed: { enabled: true, strategy: PluginUpdateStrategy.MajorAligned } });
+
+        setTestFlags({});
+      });
+    });
+
+    describe('.managed', () => {
+      test('should return true if plugin is set as managed major-aligned from grafana-com and grafana is in cloud', () => {
+        const oldPluginAdminExternalManageEnabled = config.pluginAdminExternalManageEnabled;
+        config.pluginAdminExternalManageEnabled = true;
+        setTestFlags({ managedPluginsV2: true });
+
+        expect(
+          mapRemoteToCatalog({
+            ...remotePlugin,
+            managed: { enabled: true, strategy: PluginUpdateStrategy.MajorAligned },
+          })
+        ).toMatchObject({ managed: { enabled: true, strategy: PluginUpdateStrategy.MajorAligned } });
+
+        config.pluginAdminExternalManageEnabled = oldPluginAdminExternalManageEnabled;
+        setTestFlags({});
+      });
+
+      test('should return true if plugin is set as managed from grafana-com and grafana is in cloud', () => {
+        const oldPluginAdminExternalManageEnabled = config.pluginAdminExternalManageEnabled;
+        config.pluginAdminExternalManageEnabled = true;
+
+        setTestFlags({ managedPluginsV2: true });
+
+        expect(
+          mapRemoteToCatalog({
+            ...remotePlugin,
+            managed: { enabled: true, strategy: PluginUpdateStrategy.Assigned },
+          })
+        ).toMatchObject({ managed: { enabled: true, strategy: PluginUpdateStrategy.Assigned } });
+
+        config.pluginAdminExternalManageEnabled = oldPluginAdminExternalManageEnabled;
+        setTestFlags({});
+      });
+
+      test('should use grafana-com data directly when managedPluginsV2 is enabled', () => {
+        setTestFlags({ managedPluginsV2: true });
+
+        expect(
+          mapRemoteToCatalog({
+            ...remotePlugin,
+            managed: { enabled: true, strategy: PluginUpdateStrategy.Assigned },
+          })
+        ).toMatchObject({ managed: { enabled: true, strategy: PluginUpdateStrategy.Assigned } });
+
+        setTestFlags({});
+      });
+    });
   });
 
   describe('mapLocalToCatalog()', () => {
@@ -302,7 +398,6 @@ describe('Plugins/Helpers', () => {
         isInstalled: true,
         isPublished: false,
         isDeprecated: false,
-        isManaged: false,
         isPreinstalled: { found: false, withVersion: false },
         name: 'Zabbix',
         orgName: 'Alexander Zobnin',
@@ -316,6 +411,11 @@ describe('Plugins/Helpers', () => {
         installedVersion: '4.2.2',
         isFullyInstalled: true,
         angularDetected: false,
+        managed: {
+          enabled: false,
+          strategy: undefined,
+        },
+        distributionType: undefined,
       });
     });
 
@@ -357,7 +457,6 @@ describe('Plugins/Helpers', () => {
         isPublished: true,
         latestVersion: '4.1.5',
         isDeprecated: false,
-        isManaged: false,
         isPreinstalled: { found: false, withVersion: false },
         name: 'Zabbix',
         orgName: 'Alexander Zobnin',
@@ -372,6 +471,11 @@ describe('Plugins/Helpers', () => {
         isFullyInstalled: true,
         angularDetected: false,
         url: 'https://github.com/alexanderzobnin/grafana-zabbix',
+        managed: {
+          enabled: false,
+          strategy: undefined,
+        },
+        distributionType: undefined,
       });
     });
 
@@ -783,6 +887,49 @@ describe('Plugins/Helpers', () => {
       // No local or remote
       expect(mapToCatalogPlugin()).toMatchObject({ angularDetected: undefined });
     });
+
+    describe('.managed', () => {
+      test('should map V1 config to managed object when plugin is in pluginCatalogManagedPlugins', () => {
+        const oldPluginAdminExternalManageEnabled = config.pluginAdminExternalManageEnabled;
+        config.pluginAdminExternalManageEnabled = true;
+        const oldPluginCatalogManagedPlugins = config.pluginCatalogManagedPlugins;
+        config.pluginCatalogManagedPlugins = [localPlugin.id];
+
+        expect(mapToCatalogPlugin(localPlugin)).toMatchObject({
+          managed: { enabled: true, strategy: PluginUpdateStrategy.Assigned },
+        });
+
+        config.pluginCatalogManagedPlugins = oldPluginCatalogManagedPlugins;
+        config.pluginAdminExternalManageEnabled = oldPluginAdminExternalManageEnabled;
+      });
+
+      test('should set managed.enabled to false if plugin is not in pluginCatalogManagedPlugins', () => {
+        expect(mapToCatalogPlugin(localPlugin)).toMatchObject({
+          managed: { enabled: false, strategy: undefined },
+        });
+      });
+
+      test('should set managed.enabled to false when plugin is not managed', () => {
+        expect(mapToCatalogPlugin(localPlugin, { ...remotePlugin, managed: { enabled: true } })).toMatchObject({
+          managed: { enabled: false, strategy: undefined },
+        });
+      });
+    });
+
+    describe('.managed', () => {
+      test('should return true if plugin is set as managed from grafana-com and grafana is in cloud', () => {
+        const oldPluginAdminExternalManageEnabled = config.pluginAdminExternalManageEnabled;
+        config.pluginAdminExternalManageEnabled = true;
+        setTestFlags({ managedPluginsV2: true });
+
+        expect(mapToCatalogPlugin(localPlugin, { ...remotePlugin, managed: { enabled: true } })).toMatchObject({
+          managed: { enabled: true },
+        });
+
+        config.pluginAdminExternalManageEnabled = oldPluginAdminExternalManageEnabled;
+        setTestFlags({});
+      });
+    });
   });
 
   describe('sortPlugins()', () => {
@@ -930,6 +1077,58 @@ describe('Plugins/Helpers', () => {
     it('should return false for plugins that are not disabled', () => {
       const plugin = { isDisabled: false, error: undefined } as CatalogPlugin;
       expect(isDisabledAngularPlugin(plugin)).toBe(false);
+    });
+  });
+
+  describe('formatGrafanaDependency()', () => {
+    it('returns N/A for null', () => {
+      expect(formatGrafanaDependency(null)).toBe('N/A');
+    });
+
+    it('returns N/A for empty string', () => {
+      expect(formatGrafanaDependency('')).toBe('N/A');
+    });
+
+    it('formats simple gte range', () => {
+      expect(formatGrafanaDependency('>=8.0.0')).toBe('8.0.0 or later');
+    });
+
+    it('formats gte with non-zero minor', () => {
+      expect(formatGrafanaDependency('>=9.1.0')).toBe('9.1.0 or later');
+    });
+
+    it('formats gte with non-zero patch', () => {
+      expect(formatGrafanaDependency('>=8.5.20')).toBe('8.5.20 or later');
+    });
+
+    it('formats bounded range', () => {
+      expect(formatGrafanaDependency('>=8.5.20 <9.0.0')).toBe('8.5.20 – 9.0.0');
+    });
+
+    it('formats bounded range with shorthand upper bound', () => {
+      expect(formatGrafanaDependency('>=8.0.0 <9')).toBe('8.0.0 – 9.0.0');
+    });
+
+    it('formats complex OR range', () => {
+      expect(formatGrafanaDependency('>= 8.5.20 < 9 || >= 9.1.0')).toBe('8.5.20 – 9.0.0, 9.1.0 or later');
+    });
+
+    it('formats multiple bounded ranges', () => {
+      expect(formatGrafanaDependency('>=8.0.0 <9.0.0 || >=9.1.0 <10.0.0')).toBe('8.0.0 – 9.0.0, 9.1.0 – 10.0.0');
+    });
+
+    it('formats many adjacent bounded ranges', () => {
+      expect(
+        formatGrafanaDependency('>=11.6.11 <12.0.0 || >=12.0.10 <12.1.0 || >=12.1.7 <12.2.0 || >=12.2.5 <14.0.0')
+      ).toBe('11.6.11 – 12.0.0, 12.0.10 – 12.1.0, 12.1.7 – 12.2.0, 12.2.5 – 14.0.0');
+    });
+
+    it('formats upper-bound-only range', () => {
+      expect(formatGrafanaDependency('<9.0.0')).toBe('before 9.0.0');
+    });
+
+    it('falls back to raw string on parse error', () => {
+      expect(formatGrafanaDependency('not-a-range')).toBe('not-a-range');
     });
   });
 });

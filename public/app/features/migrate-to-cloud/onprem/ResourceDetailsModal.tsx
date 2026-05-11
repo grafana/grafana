@@ -1,9 +1,9 @@
-import { MigrateDataResponseItemDto } from '@grafana/api-clients/rtkq/legacy/migrate-to-cloud';
+import { type MigrateDataResponseItemDto } from '@grafana/api-clients/internal/rtkq/legacy/migrate-to-cloud';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Modal, Stack, Text } from '@grafana/ui';
 
 import { prettyTypeName } from './TypeCell';
-import { ResourceTableItem } from './types';
+import { type ResourceTableItem } from './types';
 
 interface ResourceDetailsModalProps {
   resource: ResourceTableItem | undefined;

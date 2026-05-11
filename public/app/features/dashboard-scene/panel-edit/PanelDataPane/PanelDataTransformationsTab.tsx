@@ -1,20 +1,20 @@
 import { css } from '@emotion/css';
-import { DragDropContext, DropResult, Droppable } from '@hello-pangea/dnd';
+import { DragDropContext, type DropResult, Droppable } from '@hello-pangea/dnd';
 import { throttle } from 'lodash';
 import { useCallback, useMemo, useState } from 'react';
 
-import { DataTransformerConfig, GrafanaTheme2, PanelData } from '@grafana/data';
+import { type DataTransformerConfig, type GrafanaTheme2, type PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import {
-  SceneComponentProps,
+  type SceneComponentProps,
   SceneDataTransformer,
   SceneObjectBase,
-  SceneObjectRef,
-  SceneObjectState,
-  SceneQueryRunner,
-  VizPanel,
+  type SceneObjectRef,
+  type SceneObjectState,
+  type SceneQueryRunner,
+  type VizPanel,
 } from '@grafana/scenes';
 import { Button, ButtonGroup, ConfirmModal, Tab, useStyles2 } from '@grafana/ui';
 import { TransformationOperationRows } from 'app/features/dashboard/components/TransformationsEditor/TransformationOperationRows';
@@ -27,7 +27,7 @@ import { EmptyTransformationsMessage } from './EmptyTransformationsMessage';
 import { PanelDataPane } from './PanelDataPane';
 import { PanelDataQueriesTab } from './PanelDataQueriesTab';
 import { TransformationsDrawer } from './TransformationsDrawer';
-import { PanelDataPaneTab, PanelDataTabHeaderProps, TabId } from './types';
+import { type PanelDataPaneTab, type PanelDataTabHeaderProps, TabId } from './types';
 import { scrollToQueryRow } from './utils';
 
 const SET_TIMEOUT = 750;

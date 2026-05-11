@@ -2,6 +2,7 @@ package sql
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"hash/fnv"
 	"net"
@@ -10,12 +11,12 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/fullstorydev/grpchan"
 	"github.com/gorilla/mux"
 	grpcauth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
-	"google.golang.org/grpc/health/grpc_health_v1"
 
 	"github.com/grafana/authlib/grpcutils"
 	"github.com/grafana/dskit/kv"
@@ -32,11 +33,15 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed/backfill"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
+	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/util/scheduler"
 )
 
 var (
 	_ resource.UnifiedStorageGrpcService = (*service)(nil)
+	_ grpcserver.HealthProbe             = (*service)(nil)
 )
 
 type service struct {
@@ -49,6 +54,8 @@ type service struct {
 
 	// -- Shared Components
 	backend       resource.StorageBackend
+	vectorBackend vector.VectorBackend
+	embedder      *embedder.Embedder
 	serverStopper resource.ResourceServerStopper
 	cfg           *setting.Cfg
 	features      featuremgmt.FeatureToggles
@@ -69,6 +76,20 @@ type service struct {
 	ringLifecycler   *ring.BasicLifecycler // Ring state for sharding
 	searchStandalone bool
 	authenticator    interceptors.AuthenticatorFunc
+
+	// uninitializedSearchServer holds the server created during module init, whose Init() is
+	// deferred to starting() so the ring is Running when search indexes are built.
+	uninitializedSearchServer resource.SearchServer
+
+	// -- Vector Storage Services
+	// backfiller is the embedding backfiller. Spawned as a plain goroutine
+	// from running() — intentionally NOT a subservice. dskit's Manager
+	// closes its healthy channel the moment any service transitions to
+	// Stopping/Terminated before all reach Running, so a one-shot service
+	// that drains its work and exits would race startup and fail
+	// AwaitHealthy. backfillerDone is closed when the goroutine exits.
+	backfiller     *backfill.VectorBackfiller
+	backfillerDone chan struct{}
 }
 
 // ProvideSearchGRPCService provides a gRPC service that only serves search requests.
@@ -93,10 +114,12 @@ func ProvideSearchGRPCService(cfg *setting.Cfg,
 	memberlistKVConfig kv.Config,
 	httpServerRouter *mux.Router,
 	backend resource.StorageBackend,
+	vectorBackend vector.VectorBackend,
+	embedderInstance *embedder.Embedder,
 	provider grpcserver.Provider,
 	opts ...ServiceOption,
 ) (resource.UnifiedStorageGrpcService, error) {
-	s := newService(cfg, features, log, reg, otel.Tracer("unified-storage"), docBuilders, nil, indexMetrics, searchRing, backend, nil)
+	s := newService(cfg, features, log, reg, otel.Tracer("unified-storage"), docBuilders, nil, indexMetrics, searchRing, backend, vectorBackend, embedderInstance, nil)
 	for _, opt := range opts {
 		opt(s)
 	}
@@ -131,11 +154,13 @@ func ProvideUnifiedStorageGrpcService(cfg *setting.Cfg,
 	memberlistKVConfig kv.Config,
 	httpServerRouter *mux.Router,
 	backend resource.StorageBackend,
+	vectorBackend vector.VectorBackend,
+	embedderInstance *embedder.Embedder,
 	searchClient resourcepb.ResourceIndexClient,
 	provider grpcserver.Provider,
 	opts ...ServiceOption,
 ) (resource.UnifiedStorageGrpcService, error) {
-	s := newService(cfg, features, log, reg, otel.Tracer("unified-storage"), docBuilders, storageMetrics, indexMetrics, searchRing, backend, searchClient)
+	s := newService(cfg, features, log, reg, otel.Tracer("unified-storage"), docBuilders, storageMetrics, indexMetrics, searchRing, backend, vectorBackend, embedderInstance, searchClient)
 	for _, opt := range opts {
 		opt(s)
 	}
@@ -167,7 +192,13 @@ func ProvideUnifiedStorageGrpcService(cfg *setting.Cfg,
 		s.subservices = append(s.subservices, s.queue, s.scheduler)
 	}
 
-	err := s.initializeSubservicesManager()
+	bf, err := backfill.ProvideVectorBackfiller(cfg, backend, vectorBackend, embedderInstance)
+	if err != nil {
+		return nil, fmt.Errorf("create vector backfiller: %w", err)
+	}
+	s.backfiller = bf // may be nil; running() checks before spawning
+
+	err = s.initializeSubservicesManager()
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize subservices manager: %w", err)
 	}
@@ -191,12 +222,16 @@ func newService(
 	indexMetrics *resource.BleveIndexMetrics,
 	searchRing *ring.Ring,
 	backend resource.StorageBackend,
+	vectorBackend vector.VectorBackend,
+	embedder *embedder.Embedder,
 	searchClient resourcepb.ResourceIndexClient,
 ) *service {
 	authn := grpcutils.NewAuthenticator(ReadGrpcServerConfig(cfg), tracer)
 
 	return &service{
 		backend:            backend,
+		vectorBackend:      vectorBackend,
+		embedder:           embedder,
 		cfg:                cfg,
 		features:           features,
 		authenticator:      authn,
@@ -327,7 +362,16 @@ func (s *service) starting(ctx context.Context) error {
 			return fmt.Errorf("error switching to JOINING in the ring: %s", err)
 		}
 		s.log.Info("resource server is JOINING in the ring")
+	}
 
+	// Initialize the server (builds search indexes) while in JOINING state.
+	// The ring is Running so OwnsIndex checks work, but this instance won't
+	// receive ring-routed queries until it switches to ACTIVE below.
+	if err := s.uninitializedSearchServer.Init(ctx); err != nil {
+		return fmt.Errorf("failed to initialize server: %w", err)
+	}
+
+	if s.cfg.EnableSharding {
 		if err := s.ringLifecycler.ChangeState(ctx, ring.ACTIVE); err != nil {
 			return fmt.Errorf("error switching to ACTIVE in the ring: %s", err)
 		}
@@ -351,6 +395,8 @@ func (s *service) registerServer(provider grpcserver.Provider) error {
 
 	serverOptions := ServerOptions{
 		Backend:        s.backend,
+		VectorBackend:  s.vectorBackend,
+		Embedder:       s.embedder,
 		Cfg:            s.cfg,
 		Tracer:         s.tracing,
 		Reg:            s.reg,
@@ -379,6 +425,18 @@ func (s *service) registerServer(provider grpcserver.Provider) error {
 }
 
 func (s *service) running(ctx context.Context) error {
+	if s.backfiller != nil {
+		s.backfillerDone = make(chan struct{})
+		go func() {
+			defer close(s.backfillerDone)
+			// ctx cancels when the service moves to Stopping; bf.Run
+			// honors it and runs `defer release()` to drop the advisory
+			// lock before returning.
+			if err := s.backfiller.Run(ctx); err != nil && !errors.Is(err, context.Canceled) {
+				s.log.Error("vector backfiller exited with error", "err", err)
+			}
+		}()
+	}
 	select {
 	case err := <-s.subservicesWatcher.Chan():
 		return fmt.Errorf("subservice failure: %w", err)
@@ -396,7 +454,25 @@ func (s *service) running(ctx context.Context) error {
 	}
 }
 
+// CheckHealth calls IsHealthy on the storage backend and returns whether it is healthy.
+// It implements grpcserver.HealthProbe.
+func (s *service) CheckHealth(ctx context.Context) (bool, error) {
+	diag, ok := s.backend.(resourcepb.DiagnosticsServer) //nolint:staticcheck
+	if !ok {
+		return true, nil
+	}
+	resp, err := diag.IsHealthy(ctx, &resourcepb.HealthCheckRequest{}) //nolint:staticcheck
+	if err != nil {
+		return false, fmt.Errorf("storage backend health check error: %w", err)
+	}
+	return resp.GetStatus() == resourcepb.HealthCheckResponse_SERVING, nil
+}
+
 func (s *service) stopping(_ error) error {
+	// Wait for the backfiller goroutine to exit. Ctx is canceled so it just needs to release its db lock
+	if s.backfillerDone != nil {
+		<-s.backfillerDone
+	}
 	if s.subservicesMngr != nil {
 		err := services.StopManagerAndAwaitStopped(context.Background(), s.subservicesMngr)
 		if err != nil {
@@ -454,19 +530,22 @@ func toLifecyclerConfig(cfg *setting.Cfg, logger log.Logger) (ring.BasicLifecycl
 
 func (s *service) createAndRegisterServer(provider grpcserver.Provider, opts ServerOptions) error {
 	if s.searchStandalone {
-		server, err := NewSearchServer(opts)
+		server, err := NewUninitializedSearchServer(opts)
 		if err != nil {
 			return err
 		}
 		s.serverStopper = server
+		s.uninitializedSearchServer = server
 		return s.registerSearchServer(provider, server)
 	}
-	server, err := NewResourceServer(opts)
+	server, err := NewUninitializedResourceServer(opts)
 	if err != nil {
 		return err
 	}
 	s.serverStopper = server
-	return s.registerUnifiedResourceServer(provider, server)
+	s.uninitializedSearchServer = server
+	s.registerUnifiedResourceServer(provider, server)
+	return nil
 }
 
 // searchServerWithAuth wraps a SearchServer with per-service authentication.
@@ -486,7 +565,8 @@ func (s *service) registerSearchServer(provider grpcserver.Provider, server reso
 	resourcepb.RegisterResourceIndexServer(srv, handler)
 	resourcepb.RegisterManagedObjectIndexServer(srv, handler)
 	resourcepb.RegisterDiagnosticsServer(srv, handler)
-	return s.registerHealthAndReflection(provider, server)
+	_, _ = grpcserver.ProvideReflectionService(s.cfg, provider)
+	return nil
 }
 
 // resourceServerWithAuth wraps a ResourceServer with per-service authentication.
@@ -497,33 +577,22 @@ type resourceServerWithAuth struct {
 
 var _ grpcauth.ServiceAuthFuncOverride = (*resourceServerWithAuth)(nil)
 
-func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, server resource.ResourceServer) error {
+func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, server resource.ResourceServer) {
 	var handler = server
 	if sa := interceptors.NewServiceAuth(s.authenticator); sa != nil {
 		handler = &resourceServerWithAuth{ResourceServer: server, ServiceWithAuth: sa}
 	}
-	// Register storage services
 	srv := provider.GetServer()
-	resourcepb.RegisterResourceStoreServer(srv, handler)
+	// Storage services. ResourceStore is wrapped with the request-duration interceptor
+	// so we get group/resource-labeled metrics for Read/Create/Update/Delete/List.
+	metricsInt := resource.UnaryRequestDurationInterceptor(s.storageMetrics)
+	srv.RegisterService(grpchan.InterceptServer(&resourcepb.ResourceStore_ServiceDesc, metricsInt, nil), handler)
 	resourcepb.RegisterBulkStoreServer(srv, handler)
 	resourcepb.RegisterBlobStoreServer(srv, handler)
 	resourcepb.RegisterDiagnosticsServer(srv, handler)
 	resourcepb.RegisterQuotasServer(srv, handler)
-	// Register search services
+	// Search services
 	resourcepb.RegisterResourceIndexServer(srv, handler)
 	resourcepb.RegisterManagedObjectIndexServer(srv, handler)
-	return s.registerHealthAndReflection(provider, server)
-}
-
-// registerHealthAndReflection registers the health check and reflection services on the gRPC server.
-func (s *service) registerHealthAndReflection(provider grpcserver.Provider, healthChecker resourcepb.DiagnosticsServer) error {
-	healthService, err := resource.ProvideHealthService(healthChecker)
-	if err != nil {
-		return err
-	}
-	srv := provider.GetServer()
-	grpc_health_v1.RegisterHealthServer(srv, healthService)
 	_, _ = grpcserver.ProvideReflectionService(s.cfg, provider)
-
-	return nil
 }

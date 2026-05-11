@@ -1,5 +1,5 @@
 import { matcherHint, printReceived } from 'jest-matcher-utils';
-import { Observable, Subscription } from 'rxjs';
+import { type Observable, Subscription } from 'rxjs';
 
 import { expectObservable, forceObservableCompletion } from './utils';
 

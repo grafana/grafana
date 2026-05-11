@@ -9,6 +9,7 @@ import { ColorScheme, PaneView, SelectedView, ViewMode } from './types';
 
 jest.mock('@grafana/assistant', () => ({
   useAssistant: jest.fn().mockReturnValue({
+    isLoading: false,
     isAvailable: false,
     openAssistant: undefined,
   }),

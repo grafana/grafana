@@ -2,14 +2,15 @@ import { memo, useEffect, useRef } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { Combobox, Field, Input, Stack } from '@grafana/ui';
+import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
-import { FreeTierLimitNote } from '../Shared/FreeTierLimitNote';
+import { QuotaLimitNote } from '../Shared/QuotaLimitNote';
 import { useGetRepositoryFolders } from '../hooks/useGetRepositoryFolders';
 import { useGetRepositoryRefs } from '../hooks/useGetRepositoryRefs';
 import { isGitProvider } from '../utils/repositoryTypes';
 
 import { getGitProviderFields, getLocalProviderFields } from './fields';
-import { WizardFormData } from './types';
+import { type WizardFormData } from './types';
 
 export const ConnectStep = memo(function ConnectStep() {
   const {
@@ -21,6 +22,7 @@ export const ConnectStep = memo(function ConnectStep() {
     setValue,
   } = useFormContext<WizardFormData>();
 
+  const { data: frontendSettings } = useGetFrontendSettingsQuery();
   // We don't need to dynamically react on repo type changes, so we use getValues for it
   const type = getValues('repository.type');
   const [repositoryName = '', branch = ''] = watch(['repositoryName', 'repository.branch']);
@@ -57,6 +59,20 @@ export const ConnectStep = memo(function ConnectStep() {
       hasAutoSelectedRef.current = true;
     }
   }, [defaultBranch, getValues, setValue]);
+
+  // Capture-phase mousedown so the typed path is committed to form state before
+  // Combobox's blur sequence wipes it (e.g. clicking the wizard submit button
+  // without first pressing Enter on the typed value).
+  useEffect(() => {
+    const commitTypedPath = () => {
+      const active = document.activeElement;
+      if (active instanceof HTMLInputElement && active.id === 'repository.path' && active.value) {
+        setValue('repository.path', active.value, { shouldDirty: true });
+      }
+    };
+    document.addEventListener('mousedown', commitTypedPath, { capture: true });
+    return () => document.removeEventListener('mousedown', commitTypedPath, { capture: true });
+  }, [setValue]);
 
   return (
     <Stack direction="column" gap={2}>
@@ -103,6 +119,7 @@ export const ConnectStep = memo(function ConnectStep() {
               rules={gitFields.pathConfig.validation}
               render={({ field: { ref, onChange, ...field } }) => (
                 <Combobox
+                  id="repository.path"
                   invalid={!!errors?.repository?.path?.message}
                   onChange={(option) => onChange(option?.value || '')}
                   placeholder={gitFields.pathConfig.placeholder}
@@ -135,7 +152,7 @@ export const ConnectStep = memo(function ConnectStep() {
         </Field>
       )}
 
-      <FreeTierLimitNote limitType="connection" />
+      <QuotaLimitNote maxRepositories={frontendSettings?.maxRepositories} />
     </Stack>
   );
 });

@@ -87,7 +87,7 @@ func (c *Grafana) AuthenticateProxy(ctx context.Context, r *authn.Request, usern
 	}
 
 	if v, ok := additional[proxyFieldGroups]; ok {
-		identity.Groups = util.SplitString(v)
+		identity.ExternalGroups = util.SplitString(v)
 	}
 
 	identity.ClientParams.LookUpParams.Email = &identity.Email
@@ -100,7 +100,7 @@ func (c *Grafana) AuthenticatePassword(ctx context.Context, r *authn.Request, us
 	ctx, span := c.tracer.Start(ctx, "authn.grafana.AuthenticatePassword")
 	defer span.End()
 
-	usr, err := c.userService.GetByLogin(ctx, &user.GetUserByLoginQuery{LoginOrEmail: username})
+	usr, err := c.userService.GetByLoginWithPassword(ctx, &user.GetUserByLoginQuery{LoginOrEmail: username})
 	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
 			return nil, errIdentityNotFound.Errorf("no user found: %w", err)

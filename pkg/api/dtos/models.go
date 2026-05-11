@@ -1,21 +1,19 @@
 package dtos
 
 import (
-	"crypto/md5"
+	"crypto/sha256"
 	"fmt"
 	"regexp"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 var regNonAlphaNumeric = regexp.MustCompile("[^a-zA-Z0-9]+")
-var mlog = log.New("models")
 
 type AnyId struct {
 	Id int64 `json:"id"`
@@ -124,15 +122,13 @@ func GetGravatarUrl(cfg *setting.Cfg, text string) string {
 }
 
 func GetGravatarHash(text string) ([]byte, bool) {
-	if text == "" {
+	s := strings.TrimSpace(text)
+	if s == "" {
 		return make([]byte, 0), false
 	}
 
-	hasher := md5.New()
-	if _, err := hasher.Write([]byte(strings.ToLower(text))); err != nil {
-		mlog.Warn("Failed to hash text", "err", err)
-	}
-	return hasher.Sum(nil), true
+	sum := sha256.Sum256([]byte(strings.ToLower(s)))
+	return sum[:], true
 }
 
 func GetGravatarUrlWithDefault(cfg *setting.Cfg, text string, defaultText string) string {

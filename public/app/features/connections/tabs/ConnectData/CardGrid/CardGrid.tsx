@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { featureEnabled } from '@grafana/runtime';
 import { Badge, Card, Grid, Stack, useStyles2 } from '@grafana/ui';
@@ -11,7 +11,7 @@ import { PluginInstalledBadge } from 'app/features/plugins/admin/components/Badg
 import { PluginUpdateAvailableBadge } from 'app/features/plugins/admin/components/Badges/PluginUpdateAvailableBadge';
 import { getBadgeColor } from 'app/features/plugins/admin/components/Badges/sharedStyles';
 import { isPluginUpdatable } from 'app/features/plugins/admin/helpers';
-import { CatalogPlugin } from 'app/features/plugins/admin/types';
+import { type CatalogPlugin } from 'app/features/plugins/admin/types';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   heading: css({

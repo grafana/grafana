@@ -65,7 +65,8 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 	if options.FieldSelector != nil {
 		for _, r := range options.FieldSelector.Requirements() {
 			switch r.Field {
-			case "spec.datasource.name":
+			case "spec.source.name",
+				"spec.datasource.name": // this is for backwards compatibility as the selector was previously on datasource.name (which is not an actual path in the schema)
 				switch r.Operator {
 				case selection.Equals, selection.DoubleEquals:
 					uids = []string{r.Value}
@@ -122,7 +123,7 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 			break
 		}
 
-		c, err := correlations.ToResource(orig, s.namespacer)
+		c, err := correlations.ToResource(orig)
 		if err != nil {
 			return nil, err
 		}
@@ -144,7 +145,7 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 		return nil, err
 	}
 
-	return correlations.ToResource(c, s.namespacer)
+	return correlations.ToResource(c)
 }
 
 func (s *legacyStorage) Create(ctx context.Context,
@@ -215,11 +216,6 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 		UID:   name,
 	})
 	return nil, (err == nil), err
-}
-
-// CollectionDeleter
-func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
-	return nil, fmt.Errorf("DeleteCollection for shorturl not implemented")
 }
 
 type continueToken struct {

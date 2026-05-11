@@ -1,4 +1,4 @@
-import SVG, { Props } from 'react-inlinesvg';
+import SVG, { type Props } from 'react-inlinesvg';
 
 import { textUtil } from '@grafana/data';
 
@@ -8,6 +8,7 @@ type SanitizedSVGProps = Props & { cleanStyle?: boolean };
 
 export const SanitizedSVG = (props: SanitizedSVGProps) => {
   const { cleanStyle, ...inlineSvgProps } = props;
+  // @ts-expect-error react-inlinesvg@4.3.0 return type includes bigint, which isn't in @types/react@18's ReactNode. Remove when we update @types/react.
   return <SVG {...inlineSvgProps} cacheRequests={true} preProcessor={cleanStyle ? getCleanSVGAndStyle : getCleanSVG} />;
 };
 

@@ -1,20 +1,20 @@
 import {
   CoreApp,
-  DataFrame,
-  DataLink,
+  type DataFrame,
+  type DataLink,
   DataLinkConfigOrigin,
   dateTime,
-  Field,
+  type Field,
   FieldType,
-  InterpolateFunction,
+  type InterpolateFunction,
   SupportedTransformationType,
-  TimeRange,
+  type TimeRange,
   toDataFrame,
 } from '@grafana/data';
 import { setTemplateSrv, reportInteraction } from '@grafana/runtime';
 
 import { initTemplateSrv } from '../../../../test/helpers/initTemplateSrv';
-import { ContextSrv, setContextSrv } from '../../../core/services/context_srv';
+import { type ContextSrv, setContextSrv } from '../../../core/services/context_srv';
 import { setLinkSrv } from '../../panel/panellinks/link_srv';
 
 import { getFieldLinksForExplore, getVariableUsageInfo } from './links';

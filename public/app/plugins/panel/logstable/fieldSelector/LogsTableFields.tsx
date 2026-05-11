@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
-import { Resizable, ResizeCallback } from 're-resizable';
+import { Resizable, type ResizeCallback } from 're-resizable';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { DataFrame, GrafanaTheme2, store } from '@grafana/data';
+import { type DataFrame, type GrafanaTheme2, store } from '@grafana/data';
 import { getDragStyles, useStyles2 } from '@grafana/ui';
-import { FieldNameMetaStore } from 'app/features/explore/Logs/LogsTableWrap';
+import { type FieldNameMetaStore } from 'app/features/explore/Logs/LogsTableWrap';
 import { SETTING_KEY_ROOT } from 'app/features/explore/Logs/utils/logs';
 import {
   FIELD_SELECTOR_MIN_WIDTH,
@@ -12,7 +12,7 @@ import {
 } from 'app/features/logs/components/fieldSelector/FieldSelector';
 import { LogsTableFieldSelector } from 'app/features/logs/components/fieldSelector/LogsTableFieldSelector';
 import { reportInteractionOnce } from 'app/features/logs/components/panel/analytics';
-import { LogsFrame } from 'app/features/logs/logsFrame';
+import { type LogsFrame } from 'app/features/logs/logsFrame';
 
 import { buildColumnsWithMeta } from './buildColumnsWithMeta';
 
@@ -29,6 +29,7 @@ interface Props {
   height: number;
   timeFieldName: string;
   bodyFieldName: string;
+  levelFieldName: string;
 }
 
 export function LogsTableFields({
@@ -40,6 +41,7 @@ export function LogsTableFields({
   onDisplayedFieldsChange,
   timeFieldName,
   bodyFieldName,
+  levelFieldName,
   logsFrame,
   onFieldSelectorWidthChange,
 }: Props) {
@@ -50,7 +52,10 @@ export function LogsTableFields({
     setContainerRefState(node);
   }, []);
 
-  const defaultDisplayedFields = useMemo(() => [timeFieldName, bodyFieldName], [timeFieldName, bodyFieldName]);
+  const defaultDisplayedFields = useMemo(
+    () => [timeFieldName, levelFieldName, bodyFieldName],
+    [timeFieldName, levelFieldName, bodyFieldName]
+  );
   const [columnsWithMeta, setColumnsWithMeta] = useState<FieldNameMetaStore | null>(null);
 
   const handleSetColumnsWithMeta = useCallback((columnsWithMeta: FieldNameMetaStore) => {

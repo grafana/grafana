@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
-import { AnchorHTMLAttributes, forwardRef } from 'react';
+import { type AnchorHTMLAttributes, forwardRef } from 'react';
 
-import { GrafanaTheme2, locationUtil, textUtil, ThemeTypographyVariantTypes } from '@grafana/data';
+import { type GrafanaTheme2, locationUtil, textUtil, type ThemeTypographyVariantTypes } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
-import { IconName, IconSize } from '../../types/icon';
+import { type IconName, type IconSize } from '../../types/icon';
 import { Icon } from '../Icon/Icon';
 import { customWeight } from '../Text/utils';
 

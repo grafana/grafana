@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { createRef } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { shouldHideSoloPanelLogo, SoloPanelPageLogo } from './SoloPanelPageLogo';
 

@@ -1,4 +1,4 @@
-import { Silence } from 'app/plugins/datasource/alertmanager/types';
+import { type Silence } from 'app/plugins/datasource/alertmanager/types';
 
 import { SilenceFiltersController } from './SilencesFilter';
 

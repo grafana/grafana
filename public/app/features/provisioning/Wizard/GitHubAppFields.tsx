@@ -1,10 +1,12 @@
+import { css } from '@emotion/css';
 import { useEffect } from 'react';
 import { Controller, FormProvider, useForm, useFormContext } from 'react-hook-form';
 
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
-import { Alert, Combobox, Field, RadioButtonGroup, Stack } from '@grafana/ui';
-import { ConnectionSpec } from 'app/api/clients/provisioning/v0alpha1';
+import { Alert, Combobox, Field, RadioButtonGroup, Stack, useStyles2 } from '@grafana/ui';
+import { type ConnectionSpec } from 'app/api/clients/provisioning/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
 
 import { ConnectionStatusBadge } from '../Connection/ConnectionStatusBadge';
@@ -12,18 +14,19 @@ import { GitHubConnectionFields } from '../components/Shared/GitHubConnectionFie
 import { useConnectionOptions } from '../hooks/useConnectionOptions';
 import { useConnectionStatus } from '../hooks/useConnectionStatus';
 import { useCreateOrUpdateConnection } from '../hooks/useCreateOrUpdateConnection';
-import { ConnectionFormData } from '../types';
+import { type ConnectionFormData } from '../types';
 import { getConnectionFormErrors } from '../utils/getFormErrors';
 
 import { useStepStatus } from './StepStatusContext';
 import { GithubAppStepInstruction } from './components/GithubAppStepInstruction';
-import { ConnectionCreationResult, WizardFormData } from './types';
+import { type ConnectionCreationResult, type WizardFormData } from './types';
 
 interface GitHubAppFieldsProps {
   onGitHubAppSubmit: (result: ConnectionCreationResult) => void;
 }
 
 export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
+  const styles = useStyles2(getStyles);
   const {
     control,
     watch,
@@ -131,6 +134,7 @@ export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
           // RadioButtonGroup doesn't support refs, so we need to remove it from fields
           render={({ field: { ref, onChange, ...field } }) => (
             <RadioButtonGroup
+              className={styles.appModeRadios}
               options={[
                 {
                   value: 'existing',
@@ -222,3 +226,10 @@ export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
     </Stack>
   );
 }
+
+const getStyles = (_theme: GrafanaTheme2) => ({
+  appModeRadios: css({
+    maxWidth: '100%',
+    overflowX: 'auto',
+  }),
+});

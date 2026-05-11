@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
-import { CSSProperties, ReactNode } from 'react';
+import { type CSSProperties, type ReactNode } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 
 import { VizTooltipRow } from './VizTooltipRow';
-import { VizTooltipItem } from './types';
+import { type VizTooltipItem } from './types';
 
 interface VizTooltipContentProps {
   items: VizTooltipItem[];

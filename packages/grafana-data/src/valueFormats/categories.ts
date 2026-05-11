@@ -31,7 +31,7 @@ import {
   scaledUnits,
   simpleCountUnit,
   toFixedUnit,
-  ValueFormatCategory,
+  type ValueFormatCategory,
   stringFormater,
   booleanValueFormatter,
 } from './valueFormats';
@@ -894,7 +894,7 @@ export const getCategories = (): ValueFormatCategory[] => [
           'Decibel-milliwatt (dBm)'
         ),
         id: 'dBm',
-        fn: SIPrefix('dBm'),
+        fn: toFixedUnit('dbm'),
       },
       {
         name: t('grafana-data.valueFormats.categories.energy.formats.name-milliohm', 'Milliohm (mΩ)'),
@@ -1110,6 +1110,11 @@ export const getCategories = (): ValueFormatCategory[] => [
         name: t('grafana-data.valueFormats.categories.length.formats.name-millimeter', 'millimeter (mm)'),
         id: 'lengthmm',
         fn: SIPrefix('m', -1),
+      },
+      {
+        name: t('grafana-data.valueFormats.categories.length.formats.name-centimeter', 'centimeter (cm)'),
+        id: 'lengthcm',
+        fn: toFixedUnit('cm'),
       },
       {
         name: t('grafana-data.valueFormats.categories.length.formats.name-inch', 'inch (in)'),

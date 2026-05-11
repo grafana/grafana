@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 
-import { PendingTransformation } from '../QueryEditorContext';
+import { type PendingTransformation } from '../QueryEditorContext';
 
 interface UsePendingTransformationOptions {
   addTransformation: (transformationId: string, afterTransformId?: string) => string | undefined;

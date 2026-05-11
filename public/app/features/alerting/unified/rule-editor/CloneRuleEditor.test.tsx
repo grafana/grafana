@@ -7,7 +7,7 @@ import { MIMIR_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server
 import { DashboardSearchItemType } from 'app/features/search/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { ExpressionEditorProps } from '../components/rule-editor/ExpressionEditor';
+import { type ExpressionEditorProps } from '../components/rule-editor/ExpressionEditor';
 import { setupMswServer } from '../mockApi';
 import { grantUserPermissions, mockDataSource, mockFolder, mockRulerAlertingRule } from '../mocks';
 import { grafanaRulerRule, mockPreviewApiResponse } from '../mocks/grafanaRulerApi';
@@ -15,7 +15,7 @@ import { mockRulerRulesApiResponse, mockRulerRulesGroupApiResponse } from '../mo
 import { setFolderResponse } from '../mocks/server/configure';
 import { AlertingQueryRunner } from '../state/AlertingQueryRunner';
 import { setupDataSources } from '../testSetup/datasources';
-import { RuleFormValues } from '../types/rule-form';
+import { type RuleFormValues } from '../types/rule-form';
 import { Annotation } from '../utils/constants';
 import { hashRulerRule } from '../utils/rule-id';
 

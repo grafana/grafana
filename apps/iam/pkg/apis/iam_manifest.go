@@ -20,6 +20,7 @@ import (
 
 var appManifestData = app.ManifestData{
 	AppName:          "iam",
+	AppDisplayName:   "iam",
 	Group:            "iam.grafana.app",
 	PreferredVersion: "v0alpha1",
 	Versions: []app.ManifestVersion{
@@ -37,13 +38,6 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "GlobalRoleBinding",
 					Plural:     "GlobalRoleBindings",
-					Scope:      "Namespaced",
-					Conversion: false,
-				},
-
-				{
-					Kind:       "CoreRole",
-					Plural:     "CoreRoles",
 					Scope:      "Namespaced",
 					Conversion: false,
 				},
@@ -121,11 +115,44 @@ var appManifestData = app.ManifestData{
 																					Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
 																				},
 																			},
+																			"metadata": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"object"},
+																					Properties: map[string]spec.Schema{
+																						"continue": {
+																							SchemaProps: spec.SchemaProps{
+																								Type: []string{"string"},
+																							},
+																						},
+																						"remainingItemCount": {
+																							SchemaProps: spec.SchemaProps{
+																								Type: []string{"integer"},
+																							},
+																						},
+																						"resourceVersion": {
+																							SchemaProps: spec.SchemaProps{
+																								Type: []string{"string"},
+																							},
+																						},
+																						"selfLink": {
+																							SchemaProps: spec.SchemaProps{
+																								Type: []string{"string"},
+																							},
+																						},
+																					},
+																				},
+																				VendorExtensible: spec.VendorExtensible{
+																					Extensions: spec.Extensions{
+																						"x-grafana-app-uses-kubernetes-list-metadata": true,
+																					},
+																				},
+																			},
 																		},
 																		Required: []string{
 																			"items",
 																			"apiVersion",
 																			"kind",
+																			"metadata",
 																		},
 																	}},
 															}},
@@ -145,6 +172,112 @@ var appManifestData = app.ManifestData{
 					Scope:      "Namespaced",
 					Conversion: false,
 					Routes: map[string]spec3.PathProps{
+						"/addmember": {
+							Post: &spec3.Operation{
+								OperationProps: spec3.OperationProps{
+
+									OperationId: "createTeamMember",
+
+									RequestBody: &spec3.RequestBody{
+										RequestBodyProps: spec3.RequestBodyProps{
+
+											Required: true,
+											Content: map[string]*spec3.MediaType{
+												"application/json": {
+													MediaTypeProps: spec3.MediaTypeProps{
+														Schema: &spec.Schema{
+															SchemaProps: spec.SchemaProps{
+																Type: []string{"object"},
+																Properties: map[string]spec.Schema{
+																	"external": {
+																		SchemaProps: spec.SchemaProps{
+																			Type:        []string{"boolean"},
+																			Description: "external marks the membership origin: true = added by team sync, false = added manually. Honored on a fresh add only; on re-add the existing member's origin is preserved and this field is ignored.",
+																		},
+																	},
+																	"name": {
+																		SchemaProps: spec.SchemaProps{
+																			Type: []string{"string"},
+																		},
+																	},
+																	"permission": {
+																		SchemaProps: spec.SchemaProps{
+																			Type: []string{"string"},
+																		},
+																	},
+																},
+																Required: []string{
+																	"name",
+																	"permission",
+																	"external",
+																},
+															}},
+													}},
+											},
+										}},
+									Responses: &spec3.Responses{
+										ResponsesProps: spec3.ResponsesProps{
+											Default: &spec3.Response{
+												ResponseProps: spec3.ResponseProps{
+													Description: "Default OK response",
+													Content: map[string]*spec3.MediaType{
+														"application/json": {
+															MediaTypeProps: spec3.MediaTypeProps{
+																Schema: &spec.Schema{
+																	SchemaProps: spec.SchemaProps{
+																		Type: []string{"object"},
+																		Properties: map[string]spec.Schema{
+																			"apiVersion": {
+																				SchemaProps: spec.SchemaProps{
+																					Type:        []string{"string"},
+																					Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+																				},
+																			},
+																			"external": {
+																				SchemaProps: spec.SchemaProps{
+																					Type:        []string{"boolean"},
+																					Description: "external reflects the stored origin of the membership after the operation. On a re-add this may differ from the value submitted in the request; clients that care about origin should diff request vs response.",
+																				},
+																			},
+																			"kind": {
+																				SchemaProps: spec.SchemaProps{
+																					Type:        []string{"string"},
+																					Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+																				},
+																			},
+																			"permission": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"string"},
+																				},
+																			},
+																			"team": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"string"},
+																				},
+																			},
+																			"user": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"string"},
+																				},
+																			},
+																		},
+																		Required: []string{
+																			"team",
+																			"user",
+																			"permission",
+																			"external",
+																			"apiVersion",
+																			"kind",
+																		},
+																	}},
+															}},
+													},
+												},
+											},
+										}},
+								},
+							},
+						},
 						"/groups": {
 							Get: &spec3.Operation{
 								OperationProps: spec3.OperationProps{
@@ -259,6 +392,86 @@ var appManifestData = app.ManifestData{
 								},
 							},
 						},
+						"/removemember": {
+							Post: &spec3.Operation{
+								OperationProps: spec3.OperationProps{
+
+									OperationId: "deleteTeamMember",
+
+									RequestBody: &spec3.RequestBody{
+										RequestBodyProps: spec3.RequestBodyProps{
+
+											Required: true,
+											Content: map[string]*spec3.MediaType{
+												"application/json": {
+													MediaTypeProps: spec3.MediaTypeProps{
+														Schema: &spec.Schema{
+															SchemaProps: spec.SchemaProps{
+																Type: []string{"object"},
+																Properties: map[string]spec.Schema{
+																	"name": {
+																		SchemaProps: spec.SchemaProps{
+																			Type: []string{"string"},
+																		},
+																	},
+																},
+																Required: []string{
+																	"name",
+																},
+															}},
+													}},
+											},
+										}},
+									Responses: &spec3.Responses{
+										ResponsesProps: spec3.ResponsesProps{
+											Default: &spec3.Response{
+												ResponseProps: spec3.ResponseProps{
+													Description: "Default OK response",
+													Content: map[string]*spec3.MediaType{
+														"application/json": {
+															MediaTypeProps: spec3.MediaTypeProps{
+																Schema: &spec.Schema{
+																	SchemaProps: spec.SchemaProps{
+																		Type: []string{"object"},
+																		Properties: map[string]spec.Schema{
+																			"apiVersion": {
+																				SchemaProps: spec.SchemaProps{
+																					Type:        []string{"string"},
+																					Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+																				},
+																			},
+																			"kind": {
+																				SchemaProps: spec.SchemaProps{
+																					Type:        []string{"string"},
+																					Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+																				},
+																			},
+																			"team": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"string"},
+																				},
+																			},
+																			"user": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"string"},
+																				},
+																			},
+																		},
+																		Required: []string{
+																			"team",
+																			"user",
+																			"apiVersion",
+																			"kind",
+																		},
+																	}},
+															}},
+													},
+												},
+											},
+										}},
+								},
+							},
+						},
 					},
 				},
 
@@ -286,6 +499,287 @@ var appManifestData = app.ManifestData{
 					Plural:     "ServiceAccounts",
 					Scope:      "Namespaced",
 					Conversion: false,
+					Routes: map[string]spec3.PathProps{
+						"/tokens": {
+							Get: &spec3.Operation{
+								OperationProps: spec3.OperationProps{
+
+									OperationId: "listServiceAccountTokens",
+
+									Parameters: []*spec3.Parameter{
+
+										{
+											ParameterProps: spec3.ParameterProps{
+												Name: "continue",
+												In:   "query",
+												Schema: &spec.Schema{
+													SchemaProps: spec.SchemaProps{
+														Type: []string{"string"},
+													},
+												},
+											},
+										},
+
+										{
+											ParameterProps: spec3.ParameterProps{
+												Name: "limit",
+												In:   "query",
+												Schema: &spec.Schema{
+													SchemaProps: spec.SchemaProps{
+														Type: []string{"integer"},
+													},
+												},
+											},
+										},
+									},
+
+									Responses: &spec3.Responses{
+										ResponsesProps: spec3.ResponsesProps{
+											Default: &spec3.Response{
+												ResponseProps: spec3.ResponseProps{
+													Description: "Default OK response",
+													Content: map[string]*spec3.MediaType{
+														"application/json": {
+															MediaTypeProps: spec3.MediaTypeProps{
+																Schema: &spec.Schema{
+																	SchemaProps: spec.SchemaProps{
+																		Type: []string{"object"},
+																		Properties: map[string]spec.Schema{
+																			"apiVersion": {
+																				SchemaProps: spec.SchemaProps{
+																					Type:        []string{"string"},
+																					Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+																				},
+																			},
+																			"continue": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"string"},
+																				},
+																			},
+																			"items": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"array"},
+																					Items: &spec.SchemaOrArray{
+																						Schema: &spec.Schema{
+																							SchemaProps: spec.SchemaProps{
+
+																								Ref: spec.MustCreateRef("#/components/schemas/listServiceAccountTokensToken"),
+																							}},
+																					},
+																				},
+																			},
+																			"kind": {
+																				SchemaProps: spec.SchemaProps{
+																					Type:        []string{"string"},
+																					Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+																				},
+																			},
+																		},
+																		Required: []string{
+																			"items",
+																			"continue",
+																			"apiVersion",
+																			"kind",
+																		},
+																	}},
+															}},
+													},
+												},
+											},
+										}},
+								},
+							},
+							Post: &spec3.Operation{
+								OperationProps: spec3.OperationProps{
+
+									OperationId: "createServiceAccountToken",
+
+									RequestBody: &spec3.RequestBody{
+										RequestBodyProps: spec3.RequestBodyProps{
+
+											Required: true,
+											Content: map[string]*spec3.MediaType{
+												"application/json": {
+													MediaTypeProps: spec3.MediaTypeProps{
+														Schema: &spec.Schema{
+															SchemaProps: spec.SchemaProps{
+																Type: []string{"object"},
+																Properties: map[string]spec.Schema{
+																	"expiresInSeconds": {
+																		SchemaProps: spec.SchemaProps{
+																			Type: []string{"integer"},
+																		},
+																	},
+																	"tokenName": {
+																		SchemaProps: spec.SchemaProps{
+																			Type: []string{"string"},
+																		},
+																	},
+																},
+																Required: []string{
+																	"tokenName",
+																	"expiresInSeconds",
+																},
+															}},
+													}},
+											},
+										}},
+									Responses: &spec3.Responses{
+										ResponsesProps: spec3.ResponsesProps{
+											Default: &spec3.Response{
+												ResponseProps: spec3.ResponseProps{
+													Description: "Default OK response",
+													Content: map[string]*spec3.MediaType{
+														"application/json": {
+															MediaTypeProps: spec3.MediaTypeProps{
+																Schema: &spec.Schema{
+																	SchemaProps: spec.SchemaProps{
+																		Type: []string{"object"},
+																		Properties: map[string]spec.Schema{
+																			"apiVersion": {
+																				SchemaProps: spec.SchemaProps{
+																					Type:        []string{"string"},
+																					Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+																				},
+																			},
+																			"expires": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"integer"},
+																				},
+																			},
+																			"kind": {
+																				SchemaProps: spec.SchemaProps{
+																					Type:        []string{"string"},
+																					Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+																				},
+																			},
+																			"serviceAccountTokenName": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"string"},
+																				},
+																			},
+																			"token": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"string"},
+																				},
+																			},
+																		},
+																		Required: []string{
+																			"token",
+																			"serviceAccountTokenName",
+																			"expires",
+																			"apiVersion",
+																			"kind",
+																		},
+																	}},
+															}},
+													},
+												},
+											},
+										}},
+								},
+							},
+						},
+						"/tokens/{tokenName}": {
+							Get: &spec3.Operation{
+								OperationProps: spec3.OperationProps{
+
+									OperationId: "getServiceAccountToken",
+
+									Responses: &spec3.Responses{
+										ResponsesProps: spec3.ResponsesProps{
+											Default: &spec3.Response{
+												ResponseProps: spec3.ResponseProps{
+													Description: "Default OK response",
+													Content: map[string]*spec3.MediaType{
+														"application/json": {
+															MediaTypeProps: spec3.MediaTypeProps{
+																Schema: &spec.Schema{
+																	SchemaProps: spec.SchemaProps{
+																		Type: []string{"object"},
+																		Properties: map[string]spec.Schema{
+																			"apiVersion": {
+																				SchemaProps: spec.SchemaProps{
+																					Type:        []string{"string"},
+																					Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+																				},
+																			},
+																			"body": {
+																				SchemaProps: spec.SchemaProps{
+
+																					Ref: spec.MustCreateRef("#/components/schemas/getServiceAccountTokenToken"),
+																				},
+																			},
+																			"kind": {
+																				SchemaProps: spec.SchemaProps{
+																					Type:        []string{"string"},
+																					Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+																				},
+																			},
+																		},
+																		Required: []string{
+																			"body",
+																			"apiVersion",
+																			"kind",
+																		},
+																	}},
+															}},
+													},
+												},
+											},
+										}},
+								},
+							},
+							Delete: &spec3.Operation{
+								OperationProps: spec3.OperationProps{
+
+									OperationId: "deleteServiceAccountToken",
+
+									Responses: &spec3.Responses{
+										ResponsesProps: spec3.ResponsesProps{
+											Default: &spec3.Response{
+												ResponseProps: spec3.ResponseProps{
+													Description: "Default OK response",
+													Content: map[string]*spec3.MediaType{
+														"application/json": {
+															MediaTypeProps: spec3.MediaTypeProps{
+																Schema: &spec.Schema{
+																	SchemaProps: spec.SchemaProps{
+																		Type: []string{"object"},
+																		Properties: map[string]spec.Schema{
+																			"apiVersion": {
+																				SchemaProps: spec.SchemaProps{
+																					Type:        []string{"string"},
+																					Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+																				},
+																			},
+																			"kind": {
+																				SchemaProps: spec.SchemaProps{
+																					Type:        []string{"string"},
+																					Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+																				},
+																			},
+																			"message": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"string"},
+																				},
+																			},
+																		},
+																		Required: []string{
+																			"message",
+																			"apiVersion",
+																			"kind",
+																		},
+																	}},
+															}},
+													},
+												},
+											},
+										}},
+								},
+							},
+						},
+					},
 				},
 
 				{
@@ -546,6 +1040,18 @@ var appManifestData = app.ManifestData{
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"object"},
 							Properties: map[string]spec.Schema{
+								"accessControl": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"object"},
+										AdditionalProperties: &spec.SchemaOrBool{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"boolean"},
+												},
+											},
+										},
+									},
+								},
 								"email": {
 									SchemaProps: spec.SchemaProps{
 										Type: []string{"string"},
@@ -554,6 +1060,11 @@ var appManifestData = app.ManifestData{
 								"externalUID": {
 									SchemaProps: spec.SchemaProps{
 										Type: []string{"string"},
+									},
+								},
+								"memberCount": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"integer"},
 									},
 								},
 								"name": {
@@ -673,7 +1184,6 @@ func RemoteManifest() app.Manifest {
 var kindVersionToGoType = map[string]resource.Kind{
 	"GlobalRole/v0alpha1":           v0alpha1.GlobalRoleKind(),
 	"GlobalRoleBinding/v0alpha1":    v0alpha1.GlobalRoleBindingKind(),
-	"CoreRole/v0alpha1":             v0alpha1.CoreRoleKind(),
 	"Role/v0alpha1":                 v0alpha1.RoleKind(),
 	"RoleBinding/v0alpha1":          v0alpha1.RoleBindingKind(),
 	"ResourcePermission/v0alpha1":   v0alpha1.ResourcePermissionKind(),
@@ -695,9 +1205,19 @@ func ManifestGoTypeAssociator(kind, version string) (goType resource.Kind, exist
 var customRouteToGoResponseType = map[string]any{
 	"v0alpha1|User|teams|GET": v0alpha1.GetUserTeamsResponse{},
 
+	"v0alpha1|Team|addmember|POST": v0alpha1.CreateTeamMemberResponse{},
+
 	"v0alpha1|Team|groups|GET": v0alpha1.GetTeamGroupsResponse{},
 
 	"v0alpha1|Team|members|GET": v0alpha1.GetTeamMembersResponse{},
+
+	"v0alpha1|Team|removemember|POST": v0alpha1.DeleteTeamMemberResponse{},
+
+	"v0alpha1|ServiceAccount|tokens|GET":  v0alpha1.ListServiceAccountTokensResponse{},
+	"v0alpha1|ServiceAccount|tokens|POST": v0alpha1.CreateServiceAccountTokenResponse{},
+
+	"v0alpha1|ServiceAccount|tokens/{tokenName}|GET":    v0alpha1.GetServiceAccountTokenResponse{},
+	"v0alpha1|ServiceAccount|tokens/{tokenName}|DELETE": v0alpha1.DeleteServiceAccountTokenResponse{},
 
 	"v0alpha1||<namespace>/searchTeams|GET": v0alpha1.GetSearchTeamsResponse{},
 	"v0alpha1||<namespace>/searchUsers|GET": v0alpha1.GetSearchUsersResponse{},
@@ -715,7 +1235,10 @@ func ManifestCustomRouteResponsesAssociator(kind, version, path, verb string) (g
 	return goType, exists
 }
 
-var customRouteToGoParamsType = map[string]runtime.Object{}
+var customRouteToGoParamsType = map[string]runtime.Object{
+
+	"v0alpha1|ServiceAccount|tokens|GET": &v0alpha1.ListServiceAccountTokensRequestParamsObject{},
+}
 
 func ManifestCustomRouteQueryAssociator(kind, version, path, verb string) (goType runtime.Object, exists bool) {
 	if len(path) > 0 && path[0] == '/' {
@@ -725,7 +1248,14 @@ func ManifestCustomRouteQueryAssociator(kind, version, path, verb string) (goTyp
 	return goType, exists
 }
 
-var customRouteToGoRequestBodyType = map[string]any{}
+var customRouteToGoRequestBodyType = map[string]any{
+
+	"v0alpha1|Team|addmember|POST": &v0alpha1.CreateTeamMemberRequestBody{},
+
+	"v0alpha1|Team|removemember|POST": &v0alpha1.DeleteTeamMemberRequestBody{},
+
+	"v0alpha1|ServiceAccount|tokens|POST": &v0alpha1.CreateServiceAccountTokenRequestBody{},
+}
 
 func ManifestCustomRouteRequestBodyAssociator(kind, version, path, verb string) (goType any, exists bool) {
 	if len(path) > 0 && path[0] == '/' {

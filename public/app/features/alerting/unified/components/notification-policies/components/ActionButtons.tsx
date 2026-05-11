@@ -1,13 +1,14 @@
-import { useState } from 'react';
+import { type JSX, useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { LinkButton, Stack, Tooltip } from '@grafana/ui';
 
-import { ROUTES_META_SYMBOL, Route } from '../../../../../../plugins/datasource/alertmanager/types';
+import { ROUTES_META_SYMBOL, type Route } from '../../../../../../plugins/datasource/alertmanager/types';
 import { AlertmanagerAction, useAlertmanagerAbilities } from '../../../hooks/useAbilities';
 import { ROOT_ROUTE_NAME } from '../../../utils/k8s/constants';
 import { createRelativeUrl } from '../../../utils/url';
 import ConditionalWrap from '../../ConditionalWrap';
+import { trackNotificationPolicyExported } from '../notificationPolicyAnalytics';
 import { useExportRoutingTree } from '../useExportRoutingTree';
 import { isRouteProvisioned, useDeleteRoutingTree } from '../useNotificationPolicyRoute';
 
@@ -64,7 +65,10 @@ export const ActionButtons = ({ route }: ActionButtonsProps) => {
         size="sm"
         data-testid="export-action"
         disabled={!exportPoliciesAllowed}
-        onClick={() => showExportDrawer(route.name ?? '')}
+        onClick={() => {
+          trackNotificationPolicyExported({ isDefaultPolicy: route.name === ROOT_ROUTE_NAME });
+          showExportDrawer(route.name ?? '');
+        }}
       >
         <Trans i18nKey="alerting.common.export">Export</Trans>
       </LinkButton>

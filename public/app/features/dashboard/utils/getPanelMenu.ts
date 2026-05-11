@@ -1,4 +1,4 @@
-import { PanelMenuItem, urlUtil, PluginExtensionLink } from '@grafana/data';
+import { type PanelMenuItem, urlUtil, type PluginExtensionLink } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { createErrorNotification } from 'app/core/copy/appNotification';
@@ -6,10 +6,10 @@ import { notifyApp } from 'app/core/reducers/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { getExploreUrl } from 'app/core/utils/explore';
-import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
+import { type RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { panelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
 import {
   addLibraryPanel,
   copyPanel,

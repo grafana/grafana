@@ -1,31 +1,31 @@
 import { defaults, each, sortBy } from 'lodash';
 
-import { DataSourceRef, VariableOption, VariableRefresh } from '@grafana/data';
+import { type DataSourceRef, type VariableOption, VariableRefresh } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { getPanelPluginMeta } from '@grafana/runtime/internal';
-import { Panel } from '@grafana/schema';
+import { type Panel } from '@grafana/schema';
 import {
-  Spec as DashboardV2Spec,
-  PanelKind,
-  LibraryPanelRef,
-  LibraryPanelKind,
-  DataQueryKind,
-  AdhocVariableKind,
-  GroupByVariableKind,
+  type Spec as DashboardV2Spec,
+  type PanelKind,
+  type LibraryPanelRef,
+  type LibraryPanelKind,
+  type DataQueryKind,
+  type AdhocVariableKind,
+  type GroupByVariableKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import config from 'app/core/config';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { buildPanelKind } from 'app/features/dashboard/api/ResponseTransformers';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { PanelModel, GridPos } from 'app/features/dashboard/state/PanelModel';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { type PanelModel, type GridPos } from 'app/features/dashboard/state/PanelModel';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 import { variableRegexExec } from 'app/features/variables/utils';
 import { dispatch } from 'app/store/store';
 
 import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
 import { LibraryElementKind } from '../../../library-panels/types';
-import { DashboardJson } from '../../../manage-dashboards/types';
+import { type DashboardJson } from '../../../manage-dashboards/types';
 import { isConstant } from '../../../variables/guard';
 
 // This label is used to store the export label for a datasource when exporting a V2 dashboard for external sharing.

@@ -1,17 +1,17 @@
-import { Dispatch, SetStateAction, useState } from 'react';
+import { type Dispatch, type SetStateAction, useState } from 'react';
 import { useDeepCompareEffect } from 'react-use';
 
 import {
-  DataSourcePluginOptionsEditorProps,
-  DataSourceSettings,
+  type DataSourcePluginOptionsEditorProps,
+  type DataSourceSettings,
   updateDatasourcePluginJsonDataOption,
   updateDatasourcePluginOption,
 } from '@grafana/data';
 import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
-import { ComboboxOption } from '@grafana/ui';
+import { type ComboboxOption } from '@grafana/ui';
 
 import { PostgresDatasource } from '../datasource';
-import { PostgresOptions, PostgresTLSModes, SecureJsonData } from '../types';
+import { type PostgresOptions, PostgresTLSModes, type SecureJsonData } from '../types';
 
 import { postgresVersions } from './ConfigurationEditor';
 

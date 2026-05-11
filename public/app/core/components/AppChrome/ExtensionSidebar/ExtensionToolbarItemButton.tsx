@@ -49,6 +49,7 @@ function ExtensionToolbarItemButtonComponent(
       aria-expanded={isOpen}
       onClick={onClick}
       tooltip={tooltip}
+      aria-pressed={isOpen}
     />
   );
 }

@@ -1,8 +1,8 @@
 import { cloneDeep } from 'lodash';
 
-import { TypedVariableModel, VariableType } from '@grafana/data';
+import { type TypedVariableModel, type VariableType } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { ThunkResult } from 'app/types/store';
+import { type ThunkResult } from 'app/types/store';
 
 import { variableAdapters } from '../adapters';
 import { initInspect } from '../inspect/reducer';
@@ -10,7 +10,7 @@ import { createUsagesNetwork, transformUsagesToNetwork } from '../inspect/utils'
 import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { getEditorVariables, getNewVariableIndex, getVariable, getVariablesByKey } from '../state/selectors';
 import { addVariable, removeVariable } from '../state/sharedReducer';
-import { AddVariable, KeyedVariableIdentifier, VariableIdentifier } from '../state/types';
+import { type AddVariable, type KeyedVariableIdentifier, type VariableIdentifier } from '../state/types';
 import { toStateKey } from '../toStateKey';
 import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 

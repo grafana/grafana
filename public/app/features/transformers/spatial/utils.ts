@@ -1,11 +1,11 @@
 import { getCenter } from 'ol/extent';
-import { Geometry, LineString, Point } from 'ol/geom';
+import { type Geometry, LineString, Point } from 'ol/geom';
 import { toLonLat } from 'ol/proj';
 import { getArea, getLength } from 'ol/sphere';
 
-import { Field, FieldType } from '@grafana/data';
+import { type Field, FieldType } from '@grafana/data';
 
-import { SpatialCalculation, SpatialCalculationOption } from './models.gen';
+import { SpatialCalculation, type SpatialCalculationOption } from './models.gen';
 
 /** Will return a field with a single row */
 export function toLineString(field: Field<Geometry | undefined>): LineString {

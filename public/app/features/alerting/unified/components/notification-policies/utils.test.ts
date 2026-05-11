@@ -1,4 +1,4 @@
-import { AlertState, AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
+import { AlertState, type AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
 
 import { getAlertGroupsKey } from './utils';
 

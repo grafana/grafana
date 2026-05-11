@@ -1,6 +1,6 @@
 import { of } from 'rxjs';
 
-import { FieldType, PanelData, toDataFrame } from '@grafana/data';
+import { FieldType, type PanelData, toDataFrame } from '@grafana/data';
 
 import { queryBuilder } from '../shared/testing/builders';
 import { toKeyedAction } from '../state/keyedVariablesReducer';

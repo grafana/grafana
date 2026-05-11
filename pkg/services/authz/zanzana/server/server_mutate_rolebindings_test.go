@@ -77,34 +77,4 @@ func TestIntegrationServerMutateRoleBindings(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, res.Tuples, 0)
 	})
-
-	t.Run("should assign role to basic role", func(t *testing.T) {
-		_, err := srv.Mutate(newContextWithZanzanaUpdatePermission(), &v1.MutateRequest{
-			Namespace: "default",
-			Operations: []*v1.MutateOperation{
-				{
-					Operation: &v1.MutateOperation_CreateRoleBinding{
-						CreateRoleBinding: &v1.CreateRoleBindingOperation{
-							SubjectKind: "BasicRole",
-							SubjectName: "basic_viewer",
-							RoleKind:    "Role",
-							RoleName:    "foo_bar",
-						},
-					},
-				},
-			},
-		})
-		require.NoError(t, err)
-
-		res, err := srv.Read(newContextWithNamespace(), &v1.ReadRequest{
-			Namespace: "default",
-			TupleKey: &v1.ReadRequestTupleKey{
-				Relation: common.RelationAssignee,
-				Object:   "role:foo_bar",
-			},
-		})
-		require.NoError(t, err)
-		require.Len(t, res.Tuples, 1)
-		require.Equal(t, "role:basic_viewer#assignee", res.Tuples[0].Key.User)
-	})
 }

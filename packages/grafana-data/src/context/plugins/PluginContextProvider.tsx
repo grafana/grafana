@@ -1,6 +1,6 @@
-import { PropsWithChildren, ReactElement } from 'react';
+import { type PropsWithChildren, type ReactElement } from 'react';
 
-import { PluginMeta } from '../../types/plugin';
+import { type PluginMeta } from '../../types/plugin';
 
 import { PluginContext } from './PluginContext';
 

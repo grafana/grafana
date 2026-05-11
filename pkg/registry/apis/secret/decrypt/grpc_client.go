@@ -130,10 +130,10 @@ func (g *GRPCDecryptClient) Decrypt(ctx context.Context, serviceName string, nam
 		return nil, err
 	}
 
-	unique := make(map[string]bool, len(names))
+	unique := make(map[string]struct{}, len(names))
 	for _, v := range names {
 		if v != "" {
-			unique[v] = true
+			unique[v] = struct{}{}
 		}
 	}
 	if len(unique) < 1 {
@@ -175,6 +175,11 @@ func (g *GRPCDecryptClient) Decrypt(ctx context.Context, serviceName string, nam
 	results := make(map[string]decrypt.DecryptResult, len(resp.GetDecryptedValues()))
 
 	for name, result := range resp.GetDecryptedValues() {
+		// Only accept results for names that were actually requested.
+		if _, ok := unique[name]; !ok {
+			continue
+		}
+
 		if result.GetErrorMessage() != "" {
 			results[name] = decrypt.NewDecryptResultErr(errors.New(result.GetErrorMessage()))
 		} else {

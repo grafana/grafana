@@ -8,7 +8,7 @@ import { setupMswServer } from '../mockApi';
 import { grantUserPermissions } from '../mocks';
 import { setPrometheusRules } from '../mocks/server/configure';
 import { alertingFactory } from '../mocks/server/db';
-import { RulesFilter } from '../search/rulesSearchParser';
+import { type RulesFilter } from '../search/rulesSearchParser';
 
 import { FilterView } from './FilterView';
 

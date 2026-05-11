@@ -3,9 +3,9 @@ import memoize from 'micro-memoize';
 import { useMemo } from 'react';
 
 import {
-  GrafanaTheme2,
+  type GrafanaTheme2,
   classicColors,
-  Field,
+  type Field,
   getColorByStringHash,
   FALLBACK_COLOR,
   fieldColorModeRegistry,
@@ -14,7 +14,7 @@ import {
 import { FieldColorModeId } from '@grafana/schema';
 
 import { getActiveCellSelector, isTableCellStylesKeyEqual } from '../styles';
-import { PillCellProps, TableCellStyles, TableCellValue } from '../types';
+import { type PillCellProps, type TableCellStyles, type TableCellValue } from '../types';
 
 export function PillCell({ rowIdx, field, theme, getTextColorForBackground }: PillCellProps) {
   const value = field.values[rowIdx];

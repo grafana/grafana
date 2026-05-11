@@ -1,10 +1,10 @@
-import { DataSourceInstanceSettings } from '@grafana/data';
-import { Dashboard } from '@grafana/schema';
-import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
+import { type DataSourceInstanceSettings } from '@grafana/data';
+import { type Dashboard } from '@grafana/schema';
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 
-import { ExternalDashboard } from '../dashboard/components/DashExportModal/DashboardExporter';
-import { LibraryElementDTO } from '../library-panels/types';
+import { type ExternalDashboard } from '../dashboard/components/DashExportModal/DashboardExporter';
+import { type LibraryElementDTO } from '../library-panels/types';
 
 // Dashboard JSON type for import
 export type DashboardJson = ExternalDashboard & Omit<Dashboard, 'panels'>;

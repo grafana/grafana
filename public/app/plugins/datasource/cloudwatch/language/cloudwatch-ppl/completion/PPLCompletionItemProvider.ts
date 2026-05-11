@@ -1,12 +1,17 @@
 import { getTemplateSrv, type TemplateSrv } from '@grafana/runtime';
-import { Monaco, monacoTypes } from '@grafana/ui';
+import { type Monaco, type monacoTypes } from '@grafana/ui';
 
-import { LogGroup } from '../../../dataquery.gen';
+import { type LogGroup } from '../../../dataquery.gen';
 import { type ResourcesAPI } from '../../../resources/ResourcesAPI';
 import { CompletionItemProvider } from '../../monarch/CompletionItemProvider';
-import { LinkedToken } from '../../monarch/LinkedToken';
+import { type LinkedToken } from '../../monarch/LinkedToken';
 import { TRIGGER_SUGGEST } from '../../monarch/commands';
-import { CompletionItem, CompletionItemPriority, StatementPosition, SuggestionKind } from '../../monarch/types';
+import {
+  type CompletionItem,
+  CompletionItemPriority,
+  type StatementPosition,
+  SuggestionKind,
+} from '../../monarch/types';
 import { fetchLogGroupFields } from '../../utils';
 import {
   BOOLEAN_LITERALS,

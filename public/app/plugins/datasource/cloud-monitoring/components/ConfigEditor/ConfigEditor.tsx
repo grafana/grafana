@@ -1,12 +1,12 @@
 import { memo } from 'react';
 
-import { DataSourcePluginOptionsEditorProps, updateDatasourcePluginJsonDataOption } from '@grafana/data';
+import { type DataSourcePluginOptionsEditorProps, updateDatasourcePluginJsonDataOption } from '@grafana/data';
 import { ConnectionConfig } from '@grafana/google-sdk';
 import { ConfigSection, DataSourceDescription } from '@grafana/plugin-ui';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Divider, Field, Input, SecureSocksProxySettings, Stack } from '@grafana/ui';
 
-import { CloudMonitoringOptions, CloudMonitoringSecureJsonData } from '../../types/types';
+import { type CloudMonitoringOptions, type CloudMonitoringSecureJsonData } from '../../types/types';
 
 export type Props = DataSourcePluginOptionsEditorProps<CloudMonitoringOptions, CloudMonitoringSecureJsonData>;
 

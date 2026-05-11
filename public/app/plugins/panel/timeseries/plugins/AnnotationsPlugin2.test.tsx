@@ -11,8 +11,8 @@ import {
   FieldConfigOptionsRegistry,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { PanelContext, UPlotConfigBuilder, usePanelContext } from '@grafana/ui';
-import { TimeRange2 } from '@grafana/ui/internal';
+import { type PanelContext, type UPlotConfigBuilder, usePanelContext } from '@grafana/ui';
+import { type TimeRange2 } from '@grafana/ui/internal';
 
 import { AnnotationsPlugin2 } from './AnnotationsPlugin2';
 import {
@@ -169,7 +169,7 @@ describe('AnnotationsPlugin2', () => {
         await event(firstMarker);
         expect(screen.queryByTestId('mock-annotation-text')).toBeVisible();
         expect(screen.queryByTestId('mock-annotation-text')).toHaveTextContent(
-          'A very large label value payload (>16MB) triggered a panic in the code. We disabled the gateway as a temporary mitigation. Declared by your mom'
+          'A very large label value payload (>16MB) triggered a panic in the code. We disabled the gateway as a temporary mitigation. Declared by Batman'
         );
       });
       it.each([userEvent.hover, userEvent.click])('title', async (event) => {
@@ -281,11 +281,6 @@ describe('AnnotationsPlugin2', () => {
             annotations: [frame],
             // newRange sets the wip annotation
             newRange: { from: minTime + 10, to: minTime + 10 },
-          });
-
-          // Wait for AnnotationsPlugin2 setTimeout(forceUpdate) to complete
-          await act(async () => {
-            await new Promise((resolve) => setTimeout(resolve, 0));
           });
 
           // WIP edit state should be visible

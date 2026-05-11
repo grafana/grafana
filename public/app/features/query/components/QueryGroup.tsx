@@ -1,21 +1,22 @@
 import { css } from '@emotion/css';
 import { PureComponent, useEffect, useState } from 'react';
 import * as React from 'react';
-import { Unsubscribable } from 'rxjs';
+import { type Unsubscribable } from 'rxjs';
 
 import {
   CoreApp,
-  DataSourceApi,
-  DataSourceInstanceSettings,
+  type DataSourceApi,
+  type DataSourceInstanceSettings,
+  type ScopedVars,
   getDataSourceRef,
   getDefaultTimeRange,
   LoadingState,
-  PanelData,
+  type PanelData,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv, locationService } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 import { Button, InlineFormLabel, Modal, ScrollContainer, Stack, stylesFactory } from '@grafana/ui';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import config from 'app/core/config';
@@ -25,10 +26,10 @@ import { DataSourceModal } from 'app/features/datasources/components/picker/Data
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { isSharedDashboardQuery } from 'app/plugins/datasource/dashboard/runSharedRequest';
-import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
-import { QueryGroupOptions } from 'app/types/query';
+import { type GrafanaQuery } from 'app/plugins/datasource/grafana/types';
+import { type QueryGroupOptions } from 'app/types/query';
 
-import { PanelQueryRunner } from '../state/PanelQueryRunner';
+import { type PanelQueryRunner } from '../state/PanelQueryRunner';
 import { updateQueries } from '../state/updateQueries';
 
 import { GroupActionComponents } from './QueryActionComponent';
@@ -260,7 +261,7 @@ export class QueryGroup extends PureComponent<Props, State> {
     const { data, queries } = this.state;
 
     return (
-      <div aria-label={selectors.components.QueryTab.content}>
+      <div data-testid={selectors.components.QueryTab.content}>
         <QueryEditorRows
           queries={queries}
           dsSettings={dsSettings}
@@ -392,6 +393,7 @@ interface QueryGroupTopSectionProps {
   dataSource: DataSourceApi;
   dsSettings: DataSourceInstanceSettings;
   options: QueryGroupOptions;
+  scopedVars?: ScopedVars;
   onOpenQueryInspector?: () => void;
   onOptionsChange?: (options: QueryGroupOptions) => void;
   onDataSourceChange?: (ds: DataSourceInstanceSettings, defaultQueries?: DataQuery[] | GrafanaQuery[]) => Promise<void>;
@@ -402,6 +404,7 @@ export function QueryGroupTopSection({
   options,
   data,
   dsSettings,
+  scopedVars,
   onDataSourceChange,
   onOptionsChange,
   onOpenQueryInspector,
@@ -419,6 +422,7 @@ export function QueryGroupTopSection({
           <div className={styles.dataSourceRowItem}>
             <DataSourcePickerWithPrompt
               options={options}
+              scopedVars={scopedVars}
               onChange={async (ds, defaultQueries) => {
                 return await onDataSourceChange?.(ds, defaultQueries);
               }}
@@ -454,7 +458,7 @@ export function QueryGroupTopSection({
                   <Button
                     variant="secondary"
                     onClick={onOpenQueryInspector}
-                    aria-label={selectors.components.QueryTab.queryInspectorButton}
+                    data-testid={selectors.components.QueryTab.queryInspectorButton}
                   >
                     <Trans i18nKey="query.query-group-top-section.query-inspector">Query inspector</Trans>
                   </Button>
@@ -480,10 +484,11 @@ export function QueryGroupTopSection({
 interface DataSourcePickerWithPromptProps {
   isDataSourceModalOpen?: boolean;
   options: QueryGroupOptions;
+  scopedVars?: ScopedVars;
   onChange: (ds: DataSourceInstanceSettings, defaultQueries?: DataQuery[] | GrafanaQuery[]) => Promise<void>;
 }
 
-function DataSourcePickerWithPrompt({ options, onChange, ...otherProps }: DataSourcePickerWithPromptProps) {
+function DataSourcePickerWithPrompt({ options, scopedVars, onChange, ...otherProps }: DataSourcePickerWithPromptProps) {
   const [isDataSourceModalOpen, setIsDataSourceModalOpen] = useState(Boolean(otherProps.isDataSourceModalOpen));
 
   useEffect(() => {
@@ -499,6 +504,7 @@ function DataSourcePickerWithPrompt({ options, onChange, ...otherProps }: DataSo
     dashboard: true,
     variables: true,
     current: options.dataSource,
+    scopedVars,
     onChange: async (ds: DataSourceInstanceSettings, defaultQueries?: DataQuery[] | GrafanaQuery[]) => {
       await onChange(ds, defaultQueries);
       setIsDataSourceModalOpen(false);

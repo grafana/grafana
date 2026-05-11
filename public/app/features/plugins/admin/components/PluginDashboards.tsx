@@ -1,12 +1,12 @@
 import { extend } from 'lodash';
 import { memo, useCallback, useEffect, useState } from 'react';
 
-import { AppEvents, PluginMeta, DataSourceApi } from '@grafana/data';
+import { AppEvents, type PluginMeta, type DataSourceApi } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
 import DashboardsTable from 'app/features/datasources/components/DashboardsTable';
-import { PluginDashboard } from 'app/types/plugins';
+import { type PluginDashboard } from 'app/types/plugins';
 
 interface Props {
   plugin: PluginMeta;

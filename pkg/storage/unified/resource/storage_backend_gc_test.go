@@ -129,6 +129,11 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 			Backend: storageBackend,
 		})
 		require.NoError(t, err)
+		t.Cleanup(func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			_ = server.Stop(ctx)
+		})
 
 		rv1, err := writeEvent(t, ctx, storageBackend, "resource1", resourcepb.WatchEvent_ADDED)
 		require.NoError(t, err)
@@ -184,6 +189,11 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 			Backend: storageBackend,
 		})
 		require.NoError(t, err)
+		t.Cleanup(func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			_ = server.Stop(ctx)
+		})
 
 		rv1, err := writeEvent(t, ctx, storageBackend, "resource1", resourcepb.WatchEvent_ADDED)
 		require.NoError(t, err)
@@ -250,6 +260,11 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 			Backend: storageBackend,
 		})
 		require.NoError(t, err)
+		t.Cleanup(func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			_ = server.Stop(ctx)
+		})
 
 		rv1, err := writeEvent(t, ctx, storageBackend, "resource1", resourcepb.WatchEvent_ADDED)
 		require.NoError(t, err)
@@ -306,7 +321,7 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 		require.Len(t, trashResp.Items, 1)
 	})
 
-	t.Run("will limit candidate batch size", func(t *testing.T) {
+	t.Run("will delete resources in multiple batches", func(t *testing.T) {
 		testutil.SkipIntegrationTestInShortMode(t)
 
 		ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
@@ -320,6 +335,11 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 			Backend: storageBackend,
 		})
 		require.NoError(t, err)
+		t.Cleanup(func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			_ = server.Stop(ctx)
+		})
 
 		rv1, err := writeEvent(t, ctx, storageBackend, "resource1", resourcepb.WatchEvent_ADDED)
 		require.NoError(t, err)
@@ -349,8 +369,7 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Nil(t, trashResp.Error)
-		// FIX THIS: server.List with TRASH source without setting Name should return both deleted resources, but currently only returns one - needs investigation
-		// require.Len(t, trashResp.Items, 2)
+		require.Len(t, trashResp.Items, 2)
 
 		cutoffTimestamp := b.garbageCollectionCutoffTimestamp("group", "resource", time.Now().Add(time.Hour).UnixMicro()) // everything eligible for deletion
 		b.garbageCollection.BatchSize = 1
@@ -369,8 +388,7 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Nil(t, trashResp.Error)
-		// FIX THIS: server.List with TRASH source without setting Name should return both deleted resources, but currently only returns one - needs investigation
-		// require.Len(t, trashResp.Items, 1)
+		require.Empty(t, trashResp.Items)
 	})
 
 	t.Run("will delete rows from before the resource gets deleted, but it will keep rows from after the resource gets recreated with same name", func(t *testing.T) {
@@ -387,6 +405,11 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 			Backend: storageBackend,
 		})
 		require.NoError(t, err)
+		t.Cleanup(func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			_ = server.Stop(ctx)
+		})
 
 		rv1, err := writeEvent(t, ctx, storageBackend, "resource1", resourcepb.WatchEvent_ADDED)
 		require.NoError(t, err)
@@ -458,7 +481,10 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 		err = b.garbageCollectGroupResource(ctx, "group", "resource", cutoffTimestamp)
 		require.NoError(t, err)
 
-		// Both resources should be fully GC'd; no history keys left
+		// other-dash was deleted and not recreated: all of its history is removed.
+		// my-dash still exists (recreated after delete); GC skips deleting its history when
+		// GetLatestResourceKey succeeds, so all five revision keys remain.
+		// BatchSize=3 exercises pagination across both resources without dropping my-dash history.
 		historyResp := storageBackend.kv.Keys(ctx, dataSection, ListOptions{
 			StartKey: "group/resource/namespace/",
 			EndKey:   "group/resource/namespace0",
@@ -466,10 +492,12 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 		count := 0
 		historyResp(func(k string, err error) bool {
 			require.NoError(t, err)
+			require.Contains(t, k, "/my-dash/")
+			require.NotContains(t, k, "/other-dash/")
 			count++
 			return true
 		})
-		require.Equal(t, 2, count)
+		require.Equal(t, 5, count)
 	})
 }
 
@@ -491,10 +519,15 @@ func TestIntegrationGarbageCollectionLoop(t *testing.T) {
 		})
 		b := storageBackend
 
-		_, err := NewResourceServer(ResourceServerOptions{
+		server, err := NewResourceServer(ResourceServerOptions{
 			Backend: storageBackend,
 		})
 		require.NoError(t, err)
+		t.Cleanup(func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			_ = server.Stop(ctx)
+		})
 
 		rv1, err := writeEvent(t, ctx, storageBackend, "resource1", resourcepb.WatchEvent_ADDED)
 		require.NoError(t, err)
@@ -544,10 +577,15 @@ func TestIntegrationGarbageCollectionLoop(t *testing.T) {
 		})
 		b := storageBackend
 
-		_, err := NewResourceServer(ResourceServerOptions{
+		server, err := NewResourceServer(ResourceServerOptions{
 			Backend: storageBackend,
 		})
 		require.NoError(t, err)
+		t.Cleanup(func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			_ = server.Stop(ctx)
+		})
 
 		rv1, err := writeEvent(t, ctx, storageBackend, "resource1", resourcepb.WatchEvent_ADDED)
 		require.NoError(t, err)
@@ -601,6 +639,11 @@ func TestIntegrationGarbageCollectionLoop(t *testing.T) {
 			Backend: storageBackend,
 		})
 		require.NoError(t, err)
+		t.Cleanup(func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			_ = server.Stop(ctx)
+		})
 
 		rv1, err := writeEvent(t, ctx, storageBackend, "dashboard1", resourcepb.WatchEvent_ADDED,
 			func(o *writeEventOptions) {
@@ -666,7 +709,6 @@ func TestIntegrationGarbageCollectionLoop(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Nil(t, trashResp.Error)
-		// FIX THIS: server.List with TRASH source without setting Name should return both deleted resources, but currently only returns one - needs investigation
-		// require.Len(t, trashResp.Items, 1)
+		require.Len(t, trashResp.Items, 1)
 	})
 }

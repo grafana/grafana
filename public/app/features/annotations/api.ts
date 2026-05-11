@@ -1,8 +1,8 @@
-import { AnnotationEvent, DataFrame, toDataFrame } from '@grafana/data';
+import { type AnnotationEvent, type DataFrame, toDataFrame } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
-import { StateHistoryItem } from 'app/types/unified-alerting';
+import { type StateHistoryItem } from 'app/types/unified-alerting';
 
-import { AnnotationTagsResponse } from './types';
+import { type AnnotationTagsResponse } from './types';
 
 export interface AnnotationServer {
   query(params: Record<string, unknown>, requestId: string): Promise<DataFrame>;

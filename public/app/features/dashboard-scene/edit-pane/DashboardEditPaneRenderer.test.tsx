@@ -1,4 +1,5 @@
 import { act, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
 import { getPanelPlugin } from '@grafana/data/test';
@@ -10,6 +11,7 @@ import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { DashboardInteractions } from '../utils/interactions';
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { DashboardEditPaneSplitter } from './DashboardEditPaneSplitter';
@@ -33,6 +35,27 @@ jest.mock('../utils/interactions', () => ({
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   useChromeHeaderHeight: jest.fn().mockReturnValue(80),
+}));
+
+jest.mock('@grafana/assistant', () => ({
+  useAssistant: jest.fn().mockReturnValue({
+    isAvailable: false,
+    isLoading: false,
+    openAssistant: jest.fn(),
+    closeAssistant: jest.fn(),
+    toggleAssistant: jest.fn(),
+  }),
+}));
+
+jest.mock('app/core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider', () => ({
+  useExtensionSidebarContext: jest.fn().mockReturnValue({
+    isOpen: false,
+    dockedComponentId: undefined,
+    setDockedComponentId: jest.fn(),
+    availableComponents: new Map(),
+    extensionSidebarWidth: 400,
+    setExtensionSidebarWidth: jest.fn(),
+  }),
 }));
 
 export function buildTestScene() {
@@ -71,25 +94,35 @@ describe('DashboardEditPaneRenderer', () => {
 
   it('Should sync sidebar docked state with edit pane state', async () => {
     const scene = buildTestScene();
-    render(<DashboardEditPaneSplitter dashboard={scene} />);
+
+    act(() => activateFullSceneTree(scene));
+
+    render(<DashboardEditPaneSplitter dashboard={scene} isEditing />);
 
     act(() => screen.getByLabelText('Outline').click());
 
     expect(await screen.findByTestId(selectors.components.Sidebar.dockToggle)).toBeInTheDocument();
 
+    // With defaultToDocked: true when editing, sidebar starts docked
+    expect(scene.state.editPane.state.isDocked).toBe(true);
+
+    // Clicking dock toggle should undock the sidebar
     act(() => screen.getByTestId(selectors.components.Sidebar.dockToggle).click());
 
-    expect(scene.state.editPane.state.isDocked).toBe(true);
+    expect(scene.state.editPane.state.isDocked).toBe(false);
   });
 
-  // describe('outline interactions tracking', () => {
-  //   it('should call DashboardInteractions.outlineClicked when clicking on dashboard outline', async () => {
-  //     const user = userEvent.setup();
-  //     const scene = buildTestScene();
-  //     render(<DashboardEditPaneRenderer editPane={scene.state.editPane} dashboard={scene} />);
-  //     const outlineButton = screen.getByTestId(selectors.components.PanelEditor.Outline.section);
-  //     await user.click(outlineButton);
-  //     expect(DashboardInteractions.dashboardOutlineClicked).toHaveBeenCalled();
-  //   });
-  // });
+  describe('outline interactions tracking', () => {
+    it('should call DashboardInteractions.outlineClicked when clicking on dashboard outline', async () => {
+      const user = userEvent.setup();
+      const scene = buildTestScene();
+
+      act(() => activateFullSceneTree(scene));
+
+      render(<DashboardEditPaneSplitter dashboard={scene} isEditing />);
+      const outlineButton = screen.getByTestId(selectors.pages.Dashboard.Sidebar.outlineButton);
+      await user.click(outlineButton);
+      expect(DashboardInteractions.dashboardOutlineClicked).toHaveBeenCalled();
+    });
+  });
 });

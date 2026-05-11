@@ -1,19 +1,25 @@
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectRef, VizPanel } from '@grafana/scenes';
-import { Dashboard } from '@grafana/schema';
+import {
+  type SceneComponentProps,
+  sceneGraph,
+  SceneObjectBase,
+  type SceneObjectRef,
+  type VizPanel,
+} from '@grafana/scenes';
+import { type Dashboard } from '@grafana/schema';
 import { Button, ClipboardButton, Field, Input, Modal, RadioButtonGroup, Stack } from '@grafana/ui';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
-import { getDashboardSnapshotSrv, SnapshotSharingOptions } from 'app/features/dashboard/services/SnapshotSrv';
+import { getDashboardSnapshotSrv, type SnapshotSharingOptions } from 'app/features/dashboard/services/SnapshotSrv';
 import { dispatch } from 'app/store/store';
 
-import { Spec as DashboardV2Spec } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2';
-import { DashboardScene } from '../scene/DashboardScene';
+import { type Spec as DashboardV2Spec } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2';
+import { type DashboardScene } from '../scene/DashboardScene';
 import { transformSceneToSaveModel, trimDashboardForSnapshot } from '../serialization/transformSceneToSaveModel';
 import {
   transformSceneToSaveModelSchemaV2,
@@ -21,7 +27,7 @@ import {
 } from '../serialization/transformSceneToSaveModelSchemaV2';
 import { DashboardInteractions } from '../utils/interactions';
 
-import { SceneShareTabState, ShareView } from './types';
+import { type SceneShareTabState, type ShareView } from './types';
 
 const selectors = e2eSelectors.pages.ShareDashboardModal.SnapshotScene;
 
@@ -118,8 +124,7 @@ export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> imp
 
     const apiVersion = dashboardRef.resolve().serializer.apiVersion;
 
-    const isV2Dashboard =
-      apiVersion === 'dashboard.grafana.app/v2beta1' || apiVersion === 'dashboard.grafana.app/v2alpha1';
+    const isV2Dashboard = apiVersion?.startsWith('dashboard.grafana.app/v2') ?? false;
 
     if (isV2Dashboard) {
       saveModel = transformSceneToSaveModelSchemaV2(dashboardRef.resolve(), true);

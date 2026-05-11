@@ -1,11 +1,11 @@
 import { render, screen } from '@testing-library/react';
 
-import { DataQueryError } from '@grafana/data';
-import { DataQuery } from '@grafana/schema';
+import { type DataQueryError } from '@grafana/data';
+import { type DataQuery } from '@grafana/schema';
 
 import { QueryErrorAlert } from './QueryErrorAlert';
 
-const mockUseAssistant = jest.fn().mockReturnValue({ isAvailable: true });
+const mockUseAssistant = jest.fn().mockReturnValue({ isLoading: false, isAvailable: true });
 
 jest.mock('@grafana/assistant', () => ({
   useAssistant: () => mockUseAssistant(),
@@ -19,11 +19,11 @@ jest.mock('@grafana/assistant', () => ({
 
 describe('QueryErrorAlert', () => {
   beforeEach(() => {
-    mockUseAssistant.mockReturnValue({ isAvailable: true });
+    mockUseAssistant.mockReturnValue({ isLoading: false, isAvailable: true });
   });
 
   it('should not render the assistant button when assistant is not available', () => {
-    mockUseAssistant.mockReturnValue({ isAvailable: false });
+    mockUseAssistant.mockReturnValue({ isLoading: false, isAvailable: false });
 
     const error: DataQueryError = { message: 'Some error' };
 

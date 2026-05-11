@@ -11,10 +11,10 @@
       },
       "connection-limits": {
         "auto-max-idle": "Otomatik maksimum boşta bağlantı sayısı",
-        "content-auto-max-idle": "",
+        "content-auto-max-idle": "Etkinleştirilirse <i>Maksimum boşta bağlantı</i> sayısını otomatik olarak <i>Maksimum açık bağlantı</i> ile aynı değere ayarlar. Maksimum açık bağlantı sayısı ayarlanmamışsa varsayılan değere ({{defaultMaxIdle}}) ayarlanacaktır.",
         "content-max-idle": "Boşta bağlantı havuzunda tutulacak maksimum bağlantı sayısıdır. <i>Maksimum açık bağlantı</i> değeri 0'dan büyük ve <i>Maksimum boşta bağlantı</i> değerinden küçükse <i>Maksimum boşta bağlantı</i> değeri, <i>Maksimum açık bağlantı</i>değerine düşürülür. 0 olarak ayarlanırsa boşta bağlantılar tutulmaz.",
         "content-max-lifetime": "Saniye cinsinden bir bağlantının yeniden kullanılabileceği maksimum süre. 0 olarak ayarlanırsa bağlantılar süresiz olarak yeniden kullanılır.",
-        "content-max-open": "",
+        "content-max-open": "Veri tabanına yapılabilecek maksimum açık bağlantı sayısı. <i>Maksimum boşta bağlantı</i> 0'dan büyükse ve <i>Maksimum açık bağlantı</i>, <i>Maksimum boşta bağlantı</i> değerinden küçükse <i>Maksimum boşta bağlantı</i> değeri <i>Maksimum açık bağlantı</i> sınırına uyacak şekilde azaltılır. 0 olarak ayarlanırsa açık bağlantı sayısında sınır olmaz.",
         "max-idle": "Maks. boşta",
         "max-lifetime": "Maksimum kullanım süresi",
         "max-open": "Maks. açık",
@@ -54,7 +54,7 @@
         }
       },
       "query-header": {
-        "content-invalid-query": "",
+        "content-invalid-query": "Sorgunuz geçersiz. Ayrıntılar için aşağıya bakın. <br/>Ancak bu sorguyu yine de çalıştırabilirsiniz.",
         "editor-modes": {
           "label-builder": "Oluşturucu",
           "label-code": "Kod"
@@ -63,7 +63,7 @@
         "label-filter": "Filtreleyin",
         "label-format": "Biçim",
         "label-group": "Grup",
-        "label-order": "Sipariş",
+        "label-order": "Sıralama",
         "label-preview": "Ön izleme",
         "label-table": "Tablo",
         "placeholder-select-format": "Biçimi seçin",

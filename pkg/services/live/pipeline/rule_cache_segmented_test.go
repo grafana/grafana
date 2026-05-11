@@ -55,7 +55,7 @@ func TestStorage_Get(t *testing.T) {
 
 func BenchmarkRuleGet(b *testing.B) {
 	s := NewCacheSegmentedTree(&testBuilder{})
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		_, ok, err := s.Get("default", "stream/telegraf/cpu")
 		if err != nil || !ok {
 			b.Fatal("unexpected return values")

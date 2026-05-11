@@ -1,6 +1,6 @@
 import { t } from '@grafana/i18n';
-import { SceneComponentProps, SceneObjectBase, SceneObjectRef, VizPanel } from '@grafana/scenes';
-import { LibraryPanel } from '@grafana/schema';
+import { type SceneComponentProps, SceneObjectBase, type SceneObjectRef, VizPanel } from '@grafana/scenes';
+import { type LibraryPanel } from '@grafana/schema';
 import { ShareLibraryPanel } from 'app/features/dashboard/components/ShareModal/ShareLibraryPanel';
 import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
@@ -15,7 +15,7 @@ import {
 } from '../serialization/transformSceneToSaveModel';
 import { getDashboardSceneFor } from '../utils/utils';
 
-import { SceneShareTabState } from './types';
+import { type SceneShareTabState } from './types';
 
 export interface ShareLibraryPanelTabState extends SceneShareTabState {
   panelRef?: SceneObjectRef<VizPanel>;

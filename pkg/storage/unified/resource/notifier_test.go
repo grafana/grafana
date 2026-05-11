@@ -500,8 +500,9 @@ func TestChannelNotifier(t *testing.T) {
 			event.ResourceVersion = snowflakeFromTime(time.Now())
 			notifier.Publish(event)
 
-			// Advance synctest's time past the settle delay so the event is emitted.
-			time.Sleep(opts.SettleDelay)
+			// Advance synctest's time past the settle delay plus
+			// the ticker period so the event is emitted.
+			time.Sleep(opts.SettleDelay + 1*time.Second)
 			synctest.Wait()
 			mustReceive(t, watcher, event)
 

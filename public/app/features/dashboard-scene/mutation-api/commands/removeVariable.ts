@@ -4,7 +4,7 @@
  * Remove a template variable from the dashboard by name.
  */
 
-import { z } from 'zod';
+import { type z } from 'zod';
 
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
@@ -20,6 +20,7 @@ export const removeVariableCommand: MutationCommand<RemoveVariablePayload> = {
 
   payloadSchema: payloads.removeVariable,
   permission: requiresEdit,
+  readOnly: false,
 
   handler: async (payload, context) => {
     const { scene } = context;
@@ -44,7 +45,8 @@ export const removeVariableCommand: MutationCommand<RemoveVariablePayload> = {
 
       return {
         success: true,
-        changes: [{ path: `/variables/${name}`, previousValue: previousState, newValue: undefined }],
+        data: { name },
+        changes: [{ path: `/variables/${name}`, previousValue: previousState, newValue: null }],
       };
     } catch (error) {
       return {

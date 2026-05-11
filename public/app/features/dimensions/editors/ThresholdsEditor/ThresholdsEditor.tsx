@@ -1,13 +1,13 @@
 import { css } from '@emotion/css';
 import { isNumber } from 'lodash';
-import { ChangeEvent, memo, useEffect, useRef, useState } from 'react';
+import { type ChangeEvent, memo, useEffect, useRef, useState } from 'react';
 
 import {
-  GrafanaTheme2,
-  SelectableValue,
+  type GrafanaTheme2,
+  type SelectableValue,
   sortThresholds,
-  Threshold,
-  ThresholdsConfig,
+  type Threshold,
+  type ThresholdsConfig,
   ThresholdsMode,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -26,6 +26,7 @@ export const ThresholdsEditor = memo(function ThresholdsEditor({ thresholds, onC
   });
   const latestThresholdInputRef = useRef<HTMLInputElement>(null);
   const isMounted = useRef(false);
+  const userAddedThreshold = useRef(false);
   const styles = useStyles2(getStyles);
 
   const stepsRef = useRef(steps);
@@ -46,8 +47,9 @@ export const ThresholdsEditor = memo(function ThresholdsEditor({ thresholds, onC
   }, [thresholds]);
 
   useEffect(() => {
-    if (isMounted.current) {
+    if (isMounted.current && userAddedThreshold.current) {
       latestThresholdInputRef.current?.focus();
+      userAddedThreshold.current = false;
     }
     isMounted.current = true;
   }, [steps.length]);
@@ -78,6 +80,7 @@ export const ThresholdsEditor = memo(function ThresholdsEditor({ thresholds, onC
     const newThresholds = [...steps, add];
     sortThresholds(newThresholds);
 
+    userAddedThreshold.current = true;
     setSteps(newThresholds);
     fireOnChange(newThresholds);
   }

@@ -1,4 +1,4 @@
-import { CorrelationSpec } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
+import { type CorrelationSpec } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
 
 import { fakeCorrelations, generateCorrMetadata } from './fixtures';
 import {

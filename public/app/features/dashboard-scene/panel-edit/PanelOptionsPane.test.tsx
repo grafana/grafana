@@ -2,7 +2,7 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
-import { PanelPlugin } from '@grafana/data';
+import { type PanelPlugin } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { VizPanel } from '@grafana/scenes';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
@@ -206,8 +206,96 @@ describe('PanelOptionsPane', () => {
       expect(mergedConfig.overrides[0].matcher).toEqual({ id: 'byName', options: 'A-series' });
       expect(mergedConfig.overrides[0].properties[0].id).toBe('displayName');
 
-      // Should use the new fieldConfig defaults
-      expect(mergedConfig.defaults.unit).toBe('percent');
+      // Should preserve the user's existing standard options
+      expect(mergedConfig.defaults.unit).toBe('bytes');
+    });
+
+    it('Should use plugin preferred color when suggestion has no color', () => {
+      const { optionsPane, panel } = setupTest('panel-1');
+
+      const mockOnFieldConfigChange = jest.fn();
+      panel.onFieldConfigChange = mockOnFieldConfigChange;
+
+      optionsPane.onChangePanel({
+        pluginId: 'table',
+        fieldConfig: {
+          defaults: { custom: { someProp: true } },
+          overrides: [],
+        },
+      });
+
+      expect(mockOnFieldConfigChange).toHaveBeenCalled();
+      const mergedConfig = mockOnFieldConfigChange.mock.calls[0][0];
+
+      expect(mergedConfig.defaults.color?.mode).toBe('thresholds');
+    });
+
+    it('Should adapt color to preferred scheme even for same-plugin suggestions', () => {
+      const { optionsPane, panel } = setupTest('panel-1');
+
+      expect(panel.state.fieldConfig.defaults.color?.mode).toBe('palette-classic');
+
+      const mockOnFieldConfigChange = jest.fn();
+      panel.onFieldConfigChange = mockOnFieldConfigChange;
+
+      optionsPane.onChangePanel({
+        pluginId: panel.state.pluginId,
+        fieldConfig: {
+          defaults: { custom: {} },
+          overrides: [],
+        },
+      });
+
+      expect(mockOnFieldConfigChange).toHaveBeenCalled();
+      const mergedConfig = mockOnFieldConfigChange.mock.calls[0][0];
+
+      expect(mergedConfig.defaults.color?.mode).toBe('thresholds');
+    });
+
+    it('Should use plugin preferred color over any current user color when suggestion has no color', () => {
+      const { optionsPane, panel } = setupTest('panel-1');
+
+      panel.setState({
+        fieldConfig: {
+          defaults: { ...panel.state.fieldConfig.defaults, color: { mode: 'fixed', fixedColor: 'blue' } },
+          overrides: [],
+        },
+      });
+
+      const mockOnFieldConfigChange = jest.fn();
+      panel.onFieldConfigChange = mockOnFieldConfigChange;
+
+      optionsPane.onChangePanel({
+        pluginId: 'table',
+        fieldConfig: {
+          defaults: { custom: {} },
+          overrides: [],
+        },
+      });
+
+      expect(mockOnFieldConfigChange).toHaveBeenCalled();
+      const mergedConfig = mockOnFieldConfigChange.mock.calls[0][0];
+      expect(mergedConfig.defaults.color?.mode).toBe('thresholds');
+    });
+
+    it('Should apply color from suggestion fieldConfig when explicitly provided', () => {
+      const { optionsPane, panel } = setupTest('panel-1');
+
+      const mockOnFieldConfigChange = jest.fn();
+      panel.onFieldConfigChange = mockOnFieldConfigChange;
+
+      optionsPane.onChangePanel({
+        pluginId: 'table',
+        fieldConfig: {
+          defaults: { color: { mode: 'thresholds' } },
+          overrides: [],
+        },
+      });
+
+      expect(mockOnFieldConfigChange).toHaveBeenCalled();
+      const mergedConfig = mockOnFieldConfigChange.mock.calls[0][0];
+
+      expect(mergedConfig.defaults.color?.mode).toBe('thresholds');
     });
 
     it('Should not call onFieldConfigChange when no fieldConfig provided', () => {
@@ -216,7 +304,6 @@ describe('PanelOptionsPane', () => {
       const mockOnFieldConfigChange = jest.fn();
       panel.onFieldConfigChange = mockOnFieldConfigChange;
 
-      // Call without fieldConfig
       optionsPane.onChangePanel({
         pluginId: 'table',
         options: { showHeader: false },

@@ -16,11 +16,11 @@ import (
 	prommodel "github.com/prometheus/common/model"
 	"go.yaml.in/yaml/v3"
 
-	"github.com/grafana/alerting/definition"
 	k8svalidation "k8s.io/apimachinery/pkg/util/validation"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -30,11 +30,12 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/validation"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/merge"
 	"github.com/grafana/grafana/pkg/services/ngalert/prom"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 const (
@@ -140,12 +141,13 @@ type ConvertPrometheusSrv struct {
 	alertRuleService *provisioning.AlertRuleService
 	featureToggles   featuremgmt.FeatureToggles
 	am               Alertmanager
+	importsAuthz     notifier.ExtraConfigAuthz
 }
 
 type Alertmanager interface {
-	DeleteExtraConfiguration(ctx context.Context, org int64, identifier string) error
-	SaveAndApplyExtraConfiguration(ctx context.Context, org int64, extraConfig apimodels.ExtraConfiguration, replace bool, dryRun bool) (definition.RenameResources, error)
-	GetAlertmanagerConfiguration(ctx context.Context, org int64, withAutogen bool, withMergedExtraConfig bool) (apimodels.GettableUserConfig, error)
+	DeleteExtraConfiguration(ctx context.Context, org int64, user identity.Requester, authz notifier.ExtraConfigAuthz, identifier string) error
+	SaveAndApplyExtraConfiguration(ctx context.Context, org int64, user identity.Requester, authz notifier.ExtraConfigAuthz, extraConfig apimodels.ExtraConfiguration, replace bool, dryRun bool) (merge.RenameResources, error)
+	GetAlertmanagerConfiguration(ctx context.Context, org int64, withAutogen bool) (apimodels.GettableUserConfig, error)
 }
 
 func NewConvertPrometheusSrv(
@@ -156,6 +158,7 @@ func NewConvertPrometheusSrv(
 	alertRuleService *provisioning.AlertRuleService,
 	featureToggles featuremgmt.FeatureToggles,
 	am Alertmanager,
+	importsAuthz notifier.ExtraConfigAuthz,
 ) *ConvertPrometheusSrv {
 	return &ConvertPrometheusSrv{
 		cfg:              cfg,
@@ -165,6 +168,7 @@ func NewConvertPrometheusSrv(
 		alertRuleService: alertRuleService,
 		featureToggles:   featureToggles,
 		am:               am,
+		importsAuthz:     importsAuthz,
 	}
 }
 
@@ -193,7 +197,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetRules(c *contextmodel.
 	}
 
 	filterOpts := &provisioning.FilterOptions{
-		HasPrometheusRuleDefinition: util.Pointer(true),
+		HasPrometheusRuleDefinition: new(true),
 		NamespaceUIDs:               folderUIDs,
 	}
 	groups, err := srv.alertRuleService.GetAlertGroupsWithFolderFullpath(c.Req.Context(), c.SignedInUser, filterOpts)
@@ -229,7 +233,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteNamespace(c *contex
 	provenance := getProvenance(c)
 	filterOpts := &provisioning.FilterOptions{
 		NamespaceUIDs:               []string{namespace.UID},
-		HasPrometheusRuleDefinition: util.Pointer(true),
+		HasPrometheusRuleDefinition: new(true),
 	}
 	err = srv.alertRuleService.DeleteRuleGroups(c.Req.Context(), c.SignedInUser, provenance, filterOpts)
 	if errors.Is(err, models.ErrAlertRuleGroupNotFound) {
@@ -261,7 +265,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteRuleGroup(c *contex
 	filterOpts := &provisioning.FilterOptions{
 		NamespaceUIDs:               []string{folder.UID},
 		RuleGroups:                  []string{group},
-		HasPrometheusRuleDefinition: util.Pointer(true),
+		HasPrometheusRuleDefinition: new(true),
 	}
 	err = srv.alertRuleService.DeleteRuleGroups(c.Req.Context(), c.SignedInUser, provenance, filterOpts)
 	if errors.Is(err, models.ErrAlertRuleGroupNotFound) {
@@ -291,7 +295,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetNamespace(c *contextmo
 	}
 
 	filterOpts := &provisioning.FilterOptions{
-		HasPrometheusRuleDefinition: util.Pointer(true),
+		HasPrometheusRuleDefinition: new(true),
 		NamespaceUIDs:               []string{namespace.UID},
 	}
 	groups, err := srv.alertRuleService.GetAlertGroupsWithFolderFullpath(c.Req.Context(), c.SignedInUser, filterOpts)
@@ -328,7 +332,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetRuleGroup(c *contextmo
 	}
 
 	filterOpts := &provisioning.FilterOptions{
-		HasPrometheusRuleDefinition: util.Pointer(true),
+		HasPrometheusRuleDefinition: new(true),
 		NamespaceUIDs:               []string{namespace.UID},
 		RuleGroups:                  []string{group},
 	}
@@ -510,11 +514,11 @@ func (srv *ConvertPrometheusSrv) getOrCreateNamespace(c *contextmodel.ReqContext
 			c.Permissions[orgID] = make(map[string][]string)
 		}
 
-		folderScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(ns.UID)
-		if c.Permissions[orgID][dashboards.ActionFoldersRead] == nil {
-			c.Permissions[orgID][dashboards.ActionFoldersRead] = []string{}
+		folderScope := folder.ScopeFoldersProvider.GetResourceScopeUID(ns.UID)
+		if c.Permissions[orgID][folder.ActionFoldersRead] == nil {
+			c.Permissions[orgID][folder.ActionFoldersRead] = []string{}
 		}
-		c.Permissions[orgID][dashboards.ActionFoldersRead] = append(c.Permissions[orgID][dashboards.ActionFoldersRead], folderScope)
+		c.Permissions[orgID][folder.ActionFoldersRead] = append(c.Permissions[orgID][folder.ActionFoldersRead], folderScope)
 	}
 
 	logger.Debug("Using folder for the converted rules", "folder_uid", ns.UID)
@@ -571,7 +575,7 @@ func (srv *ConvertPrometheusSrv) convertToGrafanaRuleGroup(
 			AlertRules: prom.RulesConfig{
 				IsPaused: pauseAlertRules,
 			},
-			KeepOriginalRuleDefinition: util.Pointer(keepOriginalRuleDefinition),
+			KeepOriginalRuleDefinition: new(keepOriginalRuleDefinition),
 			EvaluationOffset:           &srv.cfg.PrometheusConversion.RuleQueryOffset,
 			NotificationSettings:       notificationSettings,
 			ExtraLabels:                extraLabels,
@@ -635,13 +639,13 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostAlertmanagerConfig(c 
 		return errorToResponse(err)
 	}
 
-	renamed, err := srv.am.SaveAndApplyExtraConfiguration(c.Req.Context(), c.GetOrgID(), ec, replace, dryRun)
+	renamed, err := srv.am.SaveAndApplyExtraConfiguration(c.Req.Context(), c.GetOrgID(), c.SignedInUser, srv.importsAuthz, ec, replace, dryRun)
 	if err != nil {
 		logger.Error("Failed to save alertmanager configuration", "error", err, "identifier", identifier)
 		return errorToResponse(fmt.Errorf("failed to save alertmanager configuration: %w", err))
 	}
 
-	// Convert definition.RenameResources to API RenameResources type
+	// Convert merge.RenameResources to API RenameResources type
 	var apiRenamed *apimodels.RenameResources
 	if len(renamed.Receivers) > 0 || len(renamed.TimeIntervals) > 0 {
 		apiRenamed = &apimodels.RenameResources{
@@ -680,7 +684,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetAlertmanagerConfig(c *
 		return errorToResponse(err)
 	}
 
-	cfg, err := srv.am.GetAlertmanagerConfiguration(ctx, c.GetOrgID(), false, false)
+	cfg, err := srv.am.GetAlertmanagerConfiguration(ctx, c.GetOrgID(), false)
 	if err != nil {
 		logger.Error("failed to get alertmanager configuration", "err", err)
 		return errorToResponse(err)
@@ -729,7 +733,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteAlertmanagerConfig(
 		return errorToResponse(err)
 	}
 
-	err = srv.am.DeleteExtraConfiguration(c.Req.Context(), c.GetOrgID(), identifier)
+	err = srv.am.DeleteExtraConfiguration(c.Req.Context(), c.GetOrgID(), c.SignedInUser, srv.importsAuthz, identifier)
 	if err != nil {
 		logger.Error("Failed to delete alertmanager configuration", "error", err, "identifier", identifier)
 		return errorToResponse(fmt.Errorf("failed to delete alertmanager configuration: %w", err))
@@ -944,11 +948,15 @@ func formatMergeMatchers(matchers apimodels.Matchers) string {
 	return strings.Join(pairs, ",")
 }
 
-func parseConfigIdentifierHeader(c *contextmodel.ReqContext) (string, error) {
-	identifier := strings.TrimSpace(c.Req.Header.Get(configIdentifierHeader))
-	if identifier == "" {
-		return defaultConfigIdentifier, nil
+func readConfigIdentifierHeader(c *contextmodel.ReqContext) string {
+	if id := strings.TrimSpace(c.Req.Header.Get(configIdentifierHeader)); id != "" {
+		return id
 	}
+	return defaultConfigIdentifier
+}
+
+func parseConfigIdentifierHeader(c *contextmodel.ReqContext) (string, error) {
+	identifier := readConfigIdentifierHeader(c)
 	if errs := k8svalidation.IsDNS1123Subdomain(identifier); len(errs) > 0 {
 		return "", errInvalidHeaderValue(configIdentifierHeader, errors.New(strings.Join(errs, ",")))
 	}

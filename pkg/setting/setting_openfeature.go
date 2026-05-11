@@ -3,6 +3,7 @@ package setting
 import (
 	"fmt"
 	"net/url"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/features"
 )
@@ -25,6 +26,7 @@ type OpenFeatureSettings struct {
 	URL          *url.URL
 	TargetingKey string
 	ContextAttrs map[string]string
+	CacheTTL     time.Duration
 }
 
 func (cfg *Cfg) readOpenFeatureSettings() error {
@@ -87,5 +89,7 @@ func (cfg *Cfg) readOpenFeatureSettings() error {
 	}
 
 	cfg.OpenFeature.ContextAttrs = attrs
+
+	cfg.OpenFeature.CacheTTL = config.Key("cache_ttl").MustDuration(time.Minute)
 	return nil
 }

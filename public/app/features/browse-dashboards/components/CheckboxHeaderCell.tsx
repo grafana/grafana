@@ -1,7 +1,7 @@
 import { t } from '@grafana/i18n';
 import { Checkbox } from '@grafana/ui';
 
-import { DashboardTreeHeaderProps, SelectionState } from '../types';
+import { type DashboardTreeHeaderProps, SelectionState } from '../types';
 
 export default function CheckboxHeaderCell({
   isSelected,

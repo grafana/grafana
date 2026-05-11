@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"context"
 	"fmt"
+	"hash/fnv"
 	"math/rand"
 	"slices"
 	"strings"
@@ -17,20 +18,32 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/sync/singleflight"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/authlib/types"
 
-	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
+	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/util/debouncer"
 )
 
 const maxBatchSize = 1000
+
+const (
+	defaultVectorSearchLimit = 50
+	maxVectorSearchLimit     = 200
+	// authz BatchCheck enforces a per-request cap; chunk to stay under it.
+	batchCheckChunkSize = 50
+)
 
 type NamespacedResource struct {
 	Namespace string
@@ -66,8 +79,9 @@ type BulkIndexRequest struct {
 }
 
 type IndexBuildInfo struct {
-	BuildTime    time.Time       // Timestamp when the index was built. This value doesn't change on subsequent index updates.
-	BuildVersion *semver.Version // Grafana version used when originally building the index. This value doesn't change on subsequent index updates.
+	BuildTime        time.Time       // Timestamp when the index was built. This value doesn't change on subsequent index updates.
+	BuildVersion     *semver.Version // Grafana version used when originally building the index. This value doesn't change on subsequent index updates.
+	SelectableFields []string        // List of selectable fields used when index was built.
 }
 
 type ResourceIndex interface {
@@ -113,6 +127,9 @@ type SearchBackend interface {
 	// Updater function is used to update the index before performing the search.
 	// rebuild forces a full rebuild of the index, regardless of state.
 	// lastImportTime is used to determine if an existing file-based index needs to be rebuilt before opening.
+	// maxFreshSnapshotAge is the freshness window (by snapshot BuildTime) within
+	// which a same-version remote snapshot is preferred over rebuilding from
+	// scratch on the rebuild path. Zero disables that fast path.
 	BuildIndex(
 		ctx context.Context,
 		key NamespacedResource,
@@ -123,6 +140,7 @@ type SearchBackend interface {
 		updater UpdateFn,
 		rebuild bool,
 		lastImportTime time.Time,
+		maxFreshSnapshotAge time.Duration,
 	) (ResourceIndex, error)
 
 	// TotalDocs returns the total number of documents across all indexes.
@@ -134,14 +152,16 @@ type SearchBackend interface {
 
 // searchServer supports indexing+search regardless of implementation.
 type searchServer struct {
-	log          log.Logger
-	storage      StorageBackend
-	search       SearchBackend
-	indexMetrics *BleveIndexMetrics
-	access       types.AccessClient
-	builders     *builderCache
-	initWorkers  int
-	initMinSize  int
+	log           log.Logger
+	storage       StorageBackend
+	vectorBackend vector.VectorBackend
+	embedder      *embedder.Embedder
+	search        SearchBackend
+	indexMetrics  *BleveIndexMetrics
+	access        types.AccessClient
+	builders      *builderCache
+	initWorkers   int
+	initMinSize   int
 
 	ownsIndexFn func(key NamespacedResource) (bool, error)
 
@@ -152,6 +172,8 @@ type searchServer struct {
 	dashboardIndexMaxAge time.Duration
 	maxIndexAge          time.Duration
 	minBuildVersion      *semver.Version
+	buildVersion         *semver.Version
+	selectableFields     map[string][]string
 
 	bgTaskWg     sync.WaitGroup
 	bgTaskCancel func()
@@ -159,10 +181,29 @@ type searchServer struct {
 	rebuildQueue   *debouncer.Queue[rebuildRequest]
 	rebuildWorkers int
 
+	// inFlightRebuilds tracks rebuilds currently being executed by a worker.
+	// Presence of a key means a worker is rebuilding the index for that key,
+	// so other workers that pick up requests for the same key should defer
+	// their work to a follow-up rebuild rather than running concurrently.
+	// Concurrent rebuilds for the same key would corrupt each other's on-disk
+	// index directories via cleanOldIndexes.
+	inFlightRebuildsMu sync.Mutex
+	inFlightRebuilds   map[NamespacedResource]*rebuildState
+
 	injectFailuresPercent     int
 	indexModificationCacheTTL time.Duration
 
-	backendDiagnostics resourcepb.DiagnosticsServer
+	backendDiagnostics resourcepb.DiagnosticsServer //nolint:staticcheck
+}
+
+// getIndexMaxAge returns the configured rebuild interval for the given
+// resource: dashboards use IndexRebuildInterval (cfg.IndexRebuildInterval),
+// other resources use MaxFileIndexAge. Zero means "no age-based rebuild".
+func (s *searchServer) getIndexMaxAge(key NamespacedResource) time.Duration {
+	if key.Resource == dashboardv1.DASHBOARD_RESOURCE {
+		return s.dashboardIndexMaxAge
+	}
+	return s.maxIndexAge
 }
 
 // maybeInjectFailure returns an error for a configured percentage of calls.
@@ -181,7 +222,7 @@ var (
 )
 
 // newSearchServer creates a new search server implementation.
-func newSearchServer(opts SearchOptions, storage StorageBackend, access types.AccessClient, blob BlobSupport, indexMetrics *BleveIndexMetrics, ownsIndexFn func(key NamespacedResource) (bool, error)) (*searchServer, error) {
+func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend vector.VectorBackend, embedder *embedder.Embedder, access types.AccessClient, blob BlobSupport, indexMetrics *BleveIndexMetrics, ownsIndexFn func(key NamespacedResource) (bool, error)) (*searchServer, error) {
 	// No backend search support
 	if opts.Backend == nil {
 		return nil, nil
@@ -204,6 +245,8 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, access types.Ac
 	s := &searchServer{
 		access:         access,
 		storage:        storage,
+		vectorBackend:  vectorBackend,
+		embedder:       embedder,
 		search:         opts.Backend,
 		log:            log.New("resource-search"),
 		initWorkers:    opts.InitWorkerThreads,
@@ -215,11 +258,14 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, access types.Ac
 		dashboardIndexMaxAge:      opts.DashboardIndexMaxAge,
 		maxIndexAge:               opts.MaxIndexAge,
 		minBuildVersion:           opts.MinBuildVersion,
+		buildVersion:              opts.BuildVersion,
+		selectableFields:          opts.SelectableFieldsForKinds,
 		injectFailuresPercent:     opts.InjectFailuresPercent,
 		indexModificationCacheTTL: opts.IndexModificationCacheTTL,
 	}
 
 	s.rebuildQueue = debouncer.NewQueue(combineRebuildRequests)
+	s.inFlightRebuilds = map[NamespacedResource]*rebuildState{}
 
 	info, err := opts.Resources.GetDocumentBuilders()
 	if err != nil {
@@ -257,10 +303,22 @@ func combineRebuildRequests(a, b rebuildRequest) (c rebuildRequest, ok bool) {
 		ret.lastImportTime = b.lastImportTime
 	}
 
+	ret.selectableFields = mergeSelectableFields(a.selectableFields, b.selectableFields)
+
 	// Combine complete channels
 	ret.completeChannels = append(a.completeChannels, b.completeChannels...)
 
 	return ret, true
+}
+
+func mergeSelectableFields(a, b []string) []string {
+	if len(a) == 0 && len(b) == 0 {
+		return nil
+	}
+
+	merged := append(slices.Clone(a), b...)
+	slices.Sort(merged)
+	return slices.Compact(merged)
 }
 
 func (s *searchServer) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {
@@ -471,6 +529,170 @@ func (s *searchServer) Search(ctx context.Context, req *resourcepb.ResourceSearc
 	return idx.Search(ctx, s.access, req, federate, stats)
 }
 
+// VectorSearch implements ResourceIndexServer. Embeds the query string with
+// the configured embedding model, runs a nearest-neighbor search against
+// the vector backend, and returns results in ascending-distance order
+// (lower score = closer match — passes through pgvector's <=> output).
+//
+// Returns Unimplemented when no embedding provider or vector backend is configured
+func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorSearchRequest) (*resourcepb.VectorSearchResponse, error) {
+	ctx, span := tracer.Start(ctx, "resource.searchServer.VectorSearch")
+	defer span.End()
+
+	if s.embedder == nil || s.vectorBackend == nil {
+		return nil, status.Error(codes.Unimplemented, "vector search not configured")
+	}
+
+	if req.Key == nil || req.Key.Namespace == "" || req.Key.Group == "" || req.Key.Resource == "" {
+		return &resourcepb.VectorSearchResponse{
+			Error: NewBadRequestError("missing namespace, group or resource"),
+		}, nil
+	}
+	if strings.TrimSpace(req.Query) == "" {
+		return &resourcepb.VectorSearchResponse{
+			Error: NewBadRequestError("query must not be empty"),
+		}, nil
+	}
+
+	// TODO decide on appropriate max query length. Using 1k for now.
+	if len(req.Query) > 1000 {
+		return &resourcepb.VectorSearchResponse{
+			Error: NewBadRequestError("query exceeds maximum length of 1000 bytes"),
+		}, nil
+	}
+
+	limit := int(req.Limit)
+	switch {
+	case limit <= 0:
+		limit = defaultVectorSearchLimit
+	case limit > maxVectorSearchLimit:
+		limit = maxVectorSearchLimit
+	}
+
+	span.SetAttributes(
+		attribute.String("namespace", req.Key.Namespace),
+		attribute.String("group", req.Key.Group),
+		attribute.String("resource", req.Key.Resource),
+		attribute.Int("limit", limit),
+	)
+
+	// Embed the query as a retrieval *query* (different task hint than the
+	// retrieval *document* hint used at index time — providers tune
+	// projections per side of the retrieval pair).
+	out, err := s.embedder.EmbedText(ctx, embedder.EmbedTextInput{
+		Texts:     []string{req.Query},
+		Normalize: s.embedder.ShouldNormalize(),
+		Task:      embedder.TaskRetrievalQuery,
+	})
+	if err != nil {
+		s.log.Error("vector search: embed query", "err", err)
+		return nil, status.Error(codes.Internal, "embed query")
+	}
+	if len(out.Embeddings) != 1 || len(out.Embeddings[0].Dense) == 0 {
+		s.log.Error("vector search: embedder returned no vectors")
+		return nil, status.Error(codes.Internal, "embed query: empty result")
+	}
+
+	filters := translateVectorSearchFilters(req.Filters)
+
+	results, err := s.vectorBackend.Search(ctx,
+		req.Key.Namespace, s.embedder.Model, req.Key.Resource,
+		out.Embeddings[0].Dense, limit, filters...)
+	if err != nil {
+		s.log.Error("vector search: backend", "err", err)
+		return nil, status.Error(codes.Internal, "vector search backend")
+	}
+
+	// Using authz post-filtering for now
+	// Downside is that the results could be lower than expected
+	// For example: VectorSearch returns 10 results, user has access to 3 items, we would only return 3 items
+	user, ok := types.AuthInfoFrom(ctx)
+	if !ok || user == nil {
+		return nil, status.Error(codes.Unauthenticated, "no user in context")
+	}
+
+	// Dedupe per-(UID, Folder) so sub-resources of the same parent (e.g. dashboard panels) share a single batch-check entry.
+	type checkKey struct{ uid, folder string }
+	correlationIDs := make(map[checkKey]string, len(results))
+	checks := make([]types.BatchCheckItem, 0, len(results))
+	for _, r := range results {
+		key := checkKey{r.UID, r.Folder}
+		if _, ok := correlationIDs[key]; ok {
+			continue
+		}
+		id := fmt.Sprintf("%d", len(checks))
+		correlationIDs[key] = id
+		checks = append(checks, types.BatchCheckItem{
+			CorrelationID: id,
+			Verb:          utils.VerbGet,
+			Group:         req.Key.Group,
+			Resource:      req.Key.Resource,
+			Name:          r.UID,
+			Folder:        r.Folder,
+		})
+	}
+
+	checkResults := make(map[string]types.BatchCheckResult, len(checks))
+	for start := 0; start < len(checks); start += batchCheckChunkSize {
+		end := min(start+batchCheckChunkSize, len(checks))
+		batchResp, err := s.access.BatchCheck(ctx, user, types.BatchCheckRequest{
+			Namespace: req.Key.Namespace,
+			Checks:    checks[start:end],
+		})
+		if err != nil {
+			s.log.Error("vector search: authz batch check", "err", err)
+			return nil, status.Error(codes.Internal, "authz batch check")
+		}
+		for id, result := range batchResp.Results {
+			checkResults[id] = result
+		}
+	}
+
+	resp := &resourcepb.VectorSearchResponse{
+		Results: make([]*resourcepb.VectorSearchResult, 0, len(results)),
+	}
+	for _, r := range results {
+		id, ok := correlationIDs[checkKey{r.UID, r.Folder}]
+		if !ok {
+			continue
+		}
+		if !checkResults[id].Allowed {
+			continue
+		}
+		resp.Results = append(resp.Results, &resourcepb.VectorSearchResult{
+			Name:        r.UID,
+			Title:       r.Title,
+			Subresource: r.Subresource,
+			Content:     r.Content,
+			Score:       r.Score, // raw cosine distance — pass-through
+			Folder:      r.Folder,
+			Metadata:    r.Metadata,
+		})
+	}
+	return resp, nil
+}
+
+// translateVectorSearchFilters maps the proto Requirement shape into the
+// vector backend's SearchFilter shape. The backend recognizes "uid" and
+// "folder" as first-class columns; any other key is treated as a JSONB
+// metadata containment filter.
+func translateVectorSearchFilters(reqs []*resourcepb.Requirement) []vector.SearchFilter {
+	if len(reqs) == 0 {
+		return nil
+	}
+	out := make([]vector.SearchFilter, 0, len(reqs))
+	for _, r := range reqs {
+		if r == nil || r.Key == "" {
+			continue
+		}
+		out = append(out, vector.SearchFilter{
+			Field:  r.Key,
+			Values: r.Values,
+		})
+	}
+	return out
+}
+
 // GetStats implements ResourceServer.
 func (s *searchServer) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error) {
 	ctx, span := tracer.Start(ctx, "resource.searchServer.GetStats")
@@ -591,7 +813,7 @@ func (s *searchServer) RebuildIndexes(ctx context.Context, req *resourcepb.Rebui
 		}, nil
 	}
 
-	completeChs := s.findIndexesToRebuild(importTimes, filterKeys, time.Now())
+	completeChs := s.findIndexesToRebuild(importTimes, filterKeys, time.Now(), false)
 	rebuildCount := len(completeChs)
 	for _, ch := range completeChs {
 		select {
@@ -723,7 +945,7 @@ func (s *searchServer) IsHealthy(ctx context.Context, req *resourcepb.HealthChec
 	if s.backendDiagnostics == nil {
 		return resourcepb.UnimplementedDiagnosticsServer{}.IsHealthy(ctx, req)
 	}
-	return s.backendDiagnostics.IsHealthy(ctx, req)
+	return s.backendDiagnostics.IsHealthy(ctx, req) //nolint:staticcheck
 }
 
 func (s *searchServer) runPeriodicScanForIndexesToRebuild(ctx context.Context) {
@@ -742,12 +964,28 @@ func (s *searchServer) runPeriodicScanForIndexesToRebuild(ctx context.Context) {
 			if err != nil {
 				s.log.Error("failed to get import times", "error", err)
 			}
-			s.findIndexesToRebuild(importTimes, nil, time.Now())
+			s.findIndexesToRebuild(importTimes, nil, time.Now(), true)
 		}
 	}
 }
 
-func (s *searchServer) findIndexesToRebuild(lastImportTimes map[NamespacedResource]time.Time, filterKeys []NamespacedResource, now time.Time) []chan struct{} {
+// jitterForKey returns a deterministic jitter duration for the given key,
+// bounded to [0, maxAge/2). This spreads index rebuilds across scan intervals
+// to avoid thundering herd CPU spikes when many indexes become stale at once.
+func jitterForKey(key NamespacedResource, maxAge time.Duration) time.Duration {
+	if maxAge <= 0 {
+		return 0
+	}
+	h := fnv.New64a()
+	_, _ = h.Write([]byte(key.String()))
+	jitterRange := uint64(maxAge / 2)
+	if jitterRange == 0 {
+		return 0
+	}
+	return time.Duration(h.Sum64() % jitterRange)
+}
+
+func (s *searchServer) findIndexesToRebuild(lastImportTimes map[NamespacedResource]time.Time, filterKeys []NamespacedResource, now time.Time, applyJitter bool) []chan struct{} {
 	// Check all open indexes and see if any of them need to be rebuilt.
 	// This is done periodically to make sure that the indexes are up to date.
 
@@ -766,14 +1004,15 @@ func (s *searchServer) findIndexesToRebuild(lastImportTimes map[NamespacedResour
 			continue
 		}
 
-		maxAge := s.maxIndexAge
-		if key.Resource == dashboardv1.DASHBOARD_RESOURCE {
-			maxAge = s.dashboardIndexMaxAge
-		}
+		maxAge := s.getIndexMaxAge(key)
 
 		var minBuildTime time.Time
 		if maxAge > 0 {
 			minBuildTime = now.Add(-maxAge)
+		}
+
+		if applyJitter {
+			minBuildTime = minBuildTime.Add(-jitterForKey(key, maxAge))
 		}
 
 		lastImportTime := lastImportTimes[key] // Will be time.Time{} if not found.
@@ -784,10 +1023,13 @@ func (s *searchServer) findIndexesToRebuild(lastImportTimes map[NamespacedResour
 			continue
 		}
 
-		if shouldRebuildIndex(bi, s.minBuildVersion, minBuildTime, lastImportTime, nil) {
+		sfKey := fmt.Sprintf("%s/%s", strings.ToLower(key.Group), strings.ToLower(key.Resource))
+		sfields := s.selectableFields[sfKey]
+
+		if shouldRebuildIndex(bi, s.minBuildVersion, s.buildVersion, minBuildTime, lastImportTime, sfields, nil) {
 			completeCh := make(chan struct{})
 			completeChs = append(completeChs, completeCh)
-			rebuildReq := newRebuildRequest(key, minBuildTime, lastImportTime, s.minBuildVersion, completeCh)
+			rebuildReq := newRebuildRequest(key, minBuildTime, lastImportTime, s.minBuildVersion, sfields, completeCh)
 			s.rebuildQueue.Add(rebuildReq)
 
 			if s.indexMetrics != nil {
@@ -855,12 +1097,58 @@ func (s *searchServer) rebuildIndex(ctx context.Context, req rebuildRequest) {
 		l.Error("failed to get build info for index to rebuild", "error", err)
 	}
 
-	rebuild := shouldRebuildIndex(bi, req.minBuildVersion, req.minBuildTime, req.lastImportTime, l)
+	rebuild := shouldRebuildIndex(bi, req.minBuildVersion, s.buildVersion, req.minBuildTime, req.lastImportTime, req.selectableFields, l)
 	if !rebuild {
 		span.AddEvent("index not rebuilt")
 		l.Info("index doesn't need to be rebuilt")
 		return
 	}
+
+	// Coordinate with any other worker that is already rebuilding this key.
+	// Concurrent rebuilds for the same key would race in cleanOldIndexes and
+	// delete each other's on-disk directories.
+	s.inFlightRebuildsMu.Lock()
+	if state, inFlight := s.inFlightRebuilds[req.NamespacedResource]; inFlight {
+		// Another worker is already rebuilding. Stash this request as a follow-up
+		// so its conditions (e.g. a newer lastImportTime) are re-evaluated against
+		// the just-built index when the in-flight rebuild finishes.
+		if state.deferred == nil {
+			// new(req), not &req: we mutate req.completeChannels = nil below,
+			// and state.deferred must observe the values seen here, not those.
+			state.deferred = new(req)
+		} else {
+			merged, _ := combineRebuildRequests(*state.deferred, req)
+			state.deferred = &merged
+		}
+		// The follow-up rebuild will close these completion channels (or close
+		// them as a no-op via the recheck path); clear them here so the top-level
+		// defer in this function does not close them prematurely.
+		req.completeChannels = nil
+		s.inFlightRebuildsMu.Unlock()
+		span.AddEvent("rebuild already in flight, deferring as follow-up")
+		l.Info("rebuild already in flight for key, deferring as follow-up")
+		return
+	}
+	state := &rebuildState{}
+	s.inFlightRebuilds[req.NamespacedResource] = state
+	s.inFlightRebuildsMu.Unlock()
+
+	defer func() {
+		s.inFlightRebuildsMu.Lock()
+		deferred := state.deferred
+		delete(s.inFlightRebuilds, req.NamespacedResource)
+		s.inFlightRebuildsMu.Unlock()
+
+		if deferred != nil {
+			// Re-enqueue the follow-up. The worker that picks it up will re-check
+			// shouldRebuildIndex against the just-built BuildTime and either run
+			// another rebuild or close the deferred completion channels as a no-op.
+			s.rebuildQueue.Add(*deferred)
+			if s.indexMetrics != nil {
+				s.indexMetrics.RebuildQueueLength.Set(float64(s.rebuildQueue.Len()))
+			}
+		}
+	}()
 
 	if req.Resource == dashboardv1.DASHBOARD_RESOURCE {
 		// we need to clear the cache to make sure we get the latest usage insights data
@@ -889,7 +1177,7 @@ func (s *searchServer) rebuildIndex(ctx context.Context, req rebuildRequest) {
 		}
 	}
 
-	// Pass rebuild=true to force rebuild of any existing file-based index
+	// Pass rebuild=true to force rebuild of any existing file-based index.
 	_, err = s.build(ctx, req.NamespacedResource, size, "rebuild", true, time.Time{})
 	if err != nil {
 		span.RecordError(err)
@@ -897,7 +1185,7 @@ func (s *searchServer) rebuildIndex(ctx context.Context, req rebuildRequest) {
 	}
 }
 
-func shouldRebuildIndex(buildInfo IndexBuildInfo, minBuildVersion *semver.Version, minBuildTime time.Time, lastImportTime time.Time, rebuildLogger log.Logger) bool {
+func shouldRebuildIndex(buildInfo IndexBuildInfo, minBuildVersion, maxBuildVersion *semver.Version, minBuildTime time.Time, lastImportTime time.Time, selectableFields []string, rebuildLogger log.Logger) bool {
 	if !minBuildTime.IsZero() {
 		if buildInfo.BuildTime.IsZero() || buildInfo.BuildTime.Before(minBuildTime) {
 			if rebuildLogger != nil {
@@ -926,20 +1214,60 @@ func shouldRebuildIndex(buildInfo IndexBuildInfo, minBuildVersion *semver.Versio
 		}
 	}
 
+	// If index was built by a newer Grafana version than currently running, rebuild to ensure compatibility.
+	if maxBuildVersion != nil && buildInfo.BuildVersion != nil {
+		if buildInfo.BuildVersion.Compare(maxBuildVersion) > 0 {
+			if rebuildLogger != nil {
+				rebuildLogger.Info("index build version is after maxBuildVersion (running version), rebuilding the index", "indexBuildVersion", buildInfo.BuildVersion, "maxBuildVersion", maxBuildVersion)
+			}
+			return true
+		}
+	}
+
+	// It's OK if extra fields were indexed before, but if new selectable fields should now be indexed, we need to reindex.
+	if newSelectableFieldsAdded(buildInfo.SelectableFields, selectableFields) {
+		if rebuildLogger != nil {
+			rebuildLogger.Info("new selectable fields were added for the kind, rebuilding the index", "indexSelectableFields", buildInfo.BuildVersion, "selectableFields", minBuildVersion)
+		}
+		return true
+	}
+
 	return false
+}
+
+func newSelectableFieldsAdded(indexSelectableFields, selectableFields []string) bool {
+	// If index has no selectable fields yet, it's easy...
+	if len(indexSelectableFields) == 0 {
+		return len(selectableFields) > 0
+	}
+
+	for _, sf := range selectableFields {
+		if !slices.Contains(indexSelectableFields, sf) {
+			return true
+		}
+	}
+	return false
+}
+
+// rebuildState tracks an in-flight rebuild for a single key. The deferred
+// field accumulates requests that arrived while this rebuild was running, so
+// they can be re-enqueued as a follow-up once it finishes.
+type rebuildState struct {
+	deferred *rebuildRequest
 }
 
 type rebuildRequest struct {
 	NamespacedResource
 
-	minBuildTime    time.Time       // if not zero, rebuild index if it has been built before this timestamp
-	lastImportTime  time.Time       // if not zero, rebuild index if it has been built before this timestamp.
-	minBuildVersion *semver.Version // if not nil, rebuild index with build version older than this.
+	minBuildTime     time.Time       // if not zero, rebuild index if it has been built before this timestamp
+	lastImportTime   time.Time       // if not zero, rebuild index if it has been built before this timestamp.
+	minBuildVersion  *semver.Version // if not nil, rebuild index with build version older than this.
+	selectableFields []string        // rebuild index which is missing some of these selectable fields.
 
 	completeChannels []chan<- struct{} // signal rebuild index is complete
 }
 
-func newRebuildRequest(key NamespacedResource, minBuildTime, lastImportTime time.Time, minBuildVersion *semver.Version, completeCh chan<- struct{}) rebuildRequest {
+func newRebuildRequest(key NamespacedResource, minBuildTime, lastImportTime time.Time, minBuildVersion *semver.Version, selectableFields []string, completeCh chan<- struct{}) rebuildRequest {
 	var completeChannels []chan<- struct{} // setup a list as requests can be combined
 	if completeCh != nil {
 		completeChannels = []chan<- struct{}{completeCh}
@@ -949,6 +1277,7 @@ func newRebuildRequest(key NamespacedResource, minBuildTime, lastImportTime time
 		minBuildTime:       minBuildTime,
 		minBuildVersion:    minBuildVersion,
 		lastImportTime:     lastImportTime,
+		selectableFields:   selectableFields,
 		completeChannels:   completeChannels,
 	}
 }
@@ -1272,7 +1601,12 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 		s.builders.clearNamespacedCache(nsr)
 	}
 
-	index, err := s.search.BuildIndex(ctx, nsr, size, fields, indexBuildReason, builderFn, updaterFn, rebuild, lastImportTime)
+	// On the rebuild path, prefer downloading a fresh same-version remote
+	// snapshot over rebuilding from scratch when one exists with BuildTime
+	// within ~10% of the per-resource rebuild interval.
+	maxFreshSnapshotAge := s.getIndexMaxAge(nsr) / 10
+
+	index, err := s.search.BuildIndex(ctx, nsr, size, fields, indexBuildReason, builderFn, updaterFn, rebuild, lastImportTime, maxFreshSnapshotAge)
 
 	if err != nil {
 		return nil, err

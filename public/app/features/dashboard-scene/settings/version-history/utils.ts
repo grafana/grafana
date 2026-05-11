@@ -1,4 +1,4 @@
-import { compare, Operation } from 'fast-json-patch';
+import { compare, type Operation } from 'fast-json-patch';
 // @ts-ignore
 import jsonMap from 'json-source-map';
 import { flow, get, isArray, isEmpty, last, sortBy, tail, toNumber, isNaN } from 'lodash';

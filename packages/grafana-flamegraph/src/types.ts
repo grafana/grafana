@@ -1,4 +1,4 @@
-import { LevelItem } from './FlameGraph/dataTransform';
+import { type LevelItem } from './FlameGraph/dataTransform';
 
 export { type FlameGraphDataContainer } from './FlameGraph/dataTransform';
 

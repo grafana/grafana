@@ -20,6 +20,7 @@ import (
 
 	alertingCluster "github.com/grafana/alerting/cluster"
 	alertingImages "github.com/grafana/alerting/images"
+	alertingModels "github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -516,7 +517,7 @@ type TestMultiOrgAlertmanagerOptions struct {
 	featureToggles featuremgmt.FeatureToggles
 	peer           alertingNotify.ClusterPeer
 	waitReady      bool
-	secretService  *secretsManager.SecretsService
+	secretService  *secretsManager.SecretsService //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	alertmanagers  map[int64]Alertmanager
 	cfgStore       AlertingStore
 	skipLoad       bool
@@ -560,7 +561,9 @@ func WithWaitReady() TestMultiOrgAlertmanagerOption {
 	}
 }
 
-func WithSecretService(secretService *secretsManager.SecretsService) TestMultiOrgAlertmanagerOption {
+func WithSecretService(
+	secretService *secretsManager.SecretsService, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+) TestMultiOrgAlertmanagerOption {
 	return func(opts *TestMultiOrgAlertmanagerOptions) {
 		opts.secretService = secretService
 	}
@@ -639,10 +642,12 @@ func NewTestMultiOrgAlertmanager(t *testing.T, opts ...TestMultiOrgAlertmanagerO
 		m.GetMultiOrgAlertmanagerMetrics(),
 		nil,
 		fakes.NewFakeReceiverPermissionsService(),
+		fakes.NewFakeRoutePermissionsService(),
 		log.New("testlogger"),
 		secretsService,
 		options.featureToggles,
 		nil,
+		false,
 		moaOpts...,
 	)
 	require.NoError(t, err)
@@ -696,6 +701,37 @@ type FakeReceiverService struct {
 		GetReceiver []GetReceiverCall
 	}
 	GetReceiverFunc func(ctx context.Context, uid string, decrypt bool, user identity.Requester) (*models.Receiver, error)
+}
+
+type FakeEmailValidator struct {
+	ValidateIntegrationFunc       func(ctx context.Context, orgID int64, integration models.Integration, logger log.Logger) error
+	ValidateIntegrationConfigFunc func(ctx context.Context, orgID int64, integration alertingModels.IntegrationConfig, logger log.Logger) error
+}
+
+func NewFakeEmailValidator(t *testing.T, err error) *FakeEmailValidator {
+	t.Helper()
+	return &FakeEmailValidator{
+		ValidateIntegrationFunc: func(ctx context.Context, orgID int64, integration models.Integration, logger log.Logger) error {
+			return err
+		},
+		ValidateIntegrationConfigFunc: func(ctx context.Context, orgID int64, integration alertingModels.IntegrationConfig, logger log.Logger) error {
+			return err
+		},
+	}
+}
+
+func (f *FakeEmailValidator) ValidateIntegration(ctx context.Context, orgID int64, integration models.Integration, logger log.Logger) error {
+	if f.ValidateIntegrationFunc != nil {
+		return f.ValidateIntegrationFunc(ctx, orgID, integration, logger)
+	}
+	return nil
+}
+
+func (f *FakeEmailValidator) ValidateIntegrationConfig(ctx context.Context, orgID int64, integration alertingModels.IntegrationConfig, logger log.Logger) error {
+	if f.ValidateIntegrationConfigFunc != nil {
+		return f.ValidateIntegrationConfigFunc(ctx, orgID, integration, logger)
+	}
+	return nil
 }
 
 type GetReceiverCall struct {

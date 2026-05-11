@@ -12,9 +12,10 @@ import { versionsResourceList } from './mocks/versions';
 const mockListDashboardHistory = jest.fn();
 
 jest.mock('app/features/dashboard/api/dashboard_api', () => ({
-  getDashboardAPI: () => ({
-    listDashboardHistory: mockListDashboardHistory,
-  }),
+  getDashboardAPI: () =>
+    Promise.resolve({
+      listDashboardHistory: mockListDashboardHistory,
+    }),
 }));
 
 const queryByFullText = (text: string) =>
@@ -150,7 +151,7 @@ describe('VersionSettings', () => {
 
     setup();
 
-    expect(mockListDashboardHistory).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(mockListDashboardHistory).toHaveBeenCalledTimes(1));
 
     await waitFor(() => expect(screen.getByRole('table')).toBeInTheDocument());
 
@@ -211,7 +212,7 @@ describe('VersionSettings', () => {
 
     setup();
 
-    expect(mockListDashboardHistory).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(mockListDashboardHistory).toHaveBeenCalledTimes(1));
 
     await waitFor(() => expect(screen.getByRole('table')).toBeInTheDocument());
 

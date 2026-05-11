@@ -7,7 +7,7 @@ Seeds the Secrets API with test keepers and secure values for local development.
 ```bash
 # 1. Start Grafana with enterprise and feature flags
 make enterprise-dev
-GF_FEATURE_TOGGLES_ENABLE=secretsManagementAppPlatformUI,secretsManagementAppPlatform,secretsKeeperUI make run
+GF_FEATURE_TOGGLES_secretsManagementAppPlatformUI=true GF_FEATURE_TOGGLES_secretsManagementAppPlatform=true GF_FEATURE_TOGGLES_secretsKeeperUI=true make run
 
 # 2. Seed test data
 cd devenv/secrets && go run secrets.go

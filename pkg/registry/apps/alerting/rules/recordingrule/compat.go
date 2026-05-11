@@ -7,15 +7,15 @@ import (
 	"strconv"
 	"time"
 
+	prom_model "github.com/prometheus/common/model"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+
 	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/util"
-	prom_model "github.com/prometheus/common/model"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var (
@@ -38,6 +38,7 @@ func convertToK8sResource(
 	k8sRule := &model.RecordingRule{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            rule.UID,
+			UID:             types.UID(rule.GUID),
 			Namespace:       namespaceMapper(orgID),
 			ResourceVersion: fmt.Sprint(rule.Version),
 			Labels:          make(map[string]string),
@@ -49,13 +50,13 @@ func convertToK8sResource(
 				Interval: model.RecordingRulePromDuration(interval.String()),
 			},
 			Labels:              make(map[string]model.RecordingRuleTemplateString),
-			Metric:              rule.Record.Metric,
-			TargetDatasourceUID: rule.Record.TargetDatasourceUID,
+			Metric:              model.RecordingRuleMetricName(rule.Record.Metric),
+			TargetDatasourceUID: model.RecordingRuleDatasourceUID(rule.Record.TargetDatasourceUID),
 		},
 	}
 
 	if rule.IsPaused {
-		k8sRule.Spec.Paused = util.Pointer(true)
+		k8sRule.Spec.Paused = new(true)
 	}
 
 	if rule.RuleGroup != "" && !ngmodels.IsNoGroupRuleGroup(rule.RuleGroup) {
@@ -94,8 +95,6 @@ func convertToK8sResource(
 	// FIXME: we don't have a creation timestamp in the domain model, so we can't set it here.
 	// We should consider adding it to the domain model. Migration can set it to the Updated timestamp for existing
 	// k8sRule.SetCreationTimestamp(rule.)
-
-	k8sRule.UID = gapiutil.CalculateClusterWideUID(k8sRule)
 	return k8sRule, nil
 }
 
@@ -104,11 +103,11 @@ func convertToK8sExpression(query ngmodels.AlertQuery, rule *ngmodels.AlertRule)
 		Model: query.Model,
 	}
 	if query.QueryType != "" {
-		expression.QueryType = util.Pointer(query.QueryType)
+		expression.QueryType = new(query.QueryType)
 	}
 	// DatasourceUID is optional and defaults to expr datasource
 	if !expr.IsDataSource(query.DatasourceUID) {
-		expression.DatasourceUID = util.Pointer(model.RecordingRuleDatasourceUID(query.DatasourceUID))
+		expression.DatasourceUID = new(model.RecordingRuleDatasourceUID(query.DatasourceUID))
 	}
 	if time.Duration(query.RelativeTimeRange.From) > 0 || time.Duration(query.RelativeTimeRange.To) > 0 {
 		expression.RelativeTimeRange = &model.RecordingRuleRelativeTimeRange{
@@ -117,7 +116,7 @@ func convertToK8sExpression(query ngmodels.AlertQuery, rule *ngmodels.AlertRule)
 		}
 	}
 	if rule.Record != nil && rule.Record.From == query.RefID {
-		expression.Source = util.Pointer(true)
+		expression.Source = new(true)
 	}
 	return expression
 }
@@ -169,8 +168,8 @@ func convertToBaseDomainModel(orgID int64, k8sRule *model.RecordingRule) (*ngmod
 		Labels:   make(map[string]string),
 
 		Record: &ngmodels.Record{
-			Metric:              k8sRule.Spec.Metric,
-			TargetDatasourceUID: k8sRule.Spec.TargetDatasourceUID,
+			Metric:              string(k8sRule.Spec.Metric),
+			TargetDatasourceUID: string(k8sRule.Spec.TargetDatasourceUID),
 		},
 	}
 

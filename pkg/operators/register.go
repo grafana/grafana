@@ -1,7 +1,6 @@
 package operators
 
 import (
-	"github.com/grafana/grafana/pkg/operators/iam"
 	"github.com/grafana/grafana/pkg/operators/provisioning"
 	"github.com/grafana/grafana/pkg/server"
 )
@@ -24,11 +23,9 @@ func init() {
 		Description: "Watch provisioning jobs and manage job history cleanup",
 		RunFunc:     provisioning.RunJobController,
 	})
-
-	// IAM Operators
 	server.RegisterOperator(server.Operator{
-		Name:        "iam-folder-reconciler",
-		Description: "Reconcile folder resources into Zanzana",
-		RunFunc:     iam.RunIAMFolderReconciler,
+		Name:        "provisioning-jobqueue",
+		Description: "Pick and execute provisioning jobs using lease-based claiming",
+		RunFunc:     provisioning.RunJobQueueController,
 	})
 }

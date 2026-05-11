@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { useRef, useCallback } from 'react';
 
 import { createDataFrame, createTheme } from '@grafana/data';
+import { mockBoundingClientRect } from '@grafana/test-utils';
 
 import { FlameGraphDataContainer } from './FlameGraph/dataTransform';
 import { data } from './FlameGraph/testData/dataNestedSet';
@@ -11,6 +12,7 @@ import { MIN_WIDTH_FOR_SPLIT_VIEW, MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAP
 
 jest.mock('@grafana/assistant', () => ({
   useAssistant: jest.fn().mockReturnValue({
+    isLoading: false,
     isAvailable: false,
     openAssistant: undefined,
   }),
@@ -28,13 +30,7 @@ jest.mock('react-use', () => ({
 
 describe('FlameGraphContainer', () => {
   // Needed for AutoSizer to work in test
-  Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
-    value: jest.fn(() => ({
-      width: 500,
-      height: 500,
-      left: 0,
-    })),
-  });
+  mockBoundingClientRect({ width: 500, height: 500 });
 
   const FlameGraphContainerWithProps = () => {
     const flameGraphData = createDataFrame(data);
@@ -275,8 +271,8 @@ describe('FlameGraphContainer (new UI)', () => {
     expect(screen.getAllByText(/Top Table/).length).toBeGreaterThanOrEqual(2);
     expect(screen.getAllByText(/Flame Graph/).length).toBeGreaterThanOrEqual(2);
     // View mode options: Single/Split (as radio buttons)
-    expect(screen.getByRole('radio', { name: /Single view/ })).toBeDefined();
-    expect(screen.getByRole('radio', { name: /Split view/ })).toBeDefined();
+    expect(screen.getByRole('radio', { name: /Single/ })).toBeDefined();
+    expect(screen.getByRole('radio', { name: /Split/ })).toBeDefined();
   });
 
   it('should switch to single view mode', async () => {
@@ -287,7 +283,7 @@ describe('FlameGraphContainer (new UI)', () => {
     expect(screen.getByTestId('topTable')).toBeDefined();
 
     // Switch to Single mode using the ViewMode radio button
-    await userEvent.click(screen.getByRole('radio', { name: /Single view/ }));
+    await userEvent.click(screen.getByRole('radio', { name: /Single/ }));
 
     // In single mode, only one pane selector should be present
     expect(screen.getAllByText(/Top Table/).length).toBe(1);

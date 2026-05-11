@@ -75,12 +75,6 @@ storage_type = unified
 With this configuration, you can run everything in-process. Run the Grafana backend with:
 
 ```sh
-bra run
-```
-
-or
-
-```sh
 make run
 ```
 
@@ -228,8 +222,6 @@ signing_keys_url = http://localhost:3011/api/signing-keys/keys
 mode = "on-prem"
 
 [feature_toggles]
-kubernetesDashboards = true
-kubernetesFolders = true
 unifiedStorage = true
 unifiedStorageHistoryPruner = true
 unifiedStorageSearchPermissionFiltering = false
@@ -279,9 +271,6 @@ Quotas will make unified storage impose resource limits on a namespace. By defau
 
 Then add the following to your grafana ini:
 ```ini
-[feature_toggles]
-kubernetesUnifiedStorageQuotas = true
-
 [unified_storage]
 overrides_path = overrides.yaml
 overrides_reload_period = 5s
@@ -306,10 +295,6 @@ GET /apis/quotas.grafana.app/v0alpha1/namespaces/<NAMESPACE>/usage?group=<GROUP>
 ## Setting up search
 To enable it, add the following to your `custom.ini` under the `[feature_toggles]` and `[unified_storage]` sections:
 ```ini
-[feature_toggles]
-; Used by the Grafana instance
-unifiedStorageSearchUI = true
-
 [unified_storage]
 ; Used by unified storage server
 enable_search = true
@@ -465,9 +450,6 @@ search_server_address = 127.0.0.1:10000
 protocol = http
 http_port = 3011
 http_addr = "127.0.0.2"
-
-[feature_toggles]
-unifiedStorageSearchUI = true
 
 [unified_storage.dashboards.dashboard.grafana.app]
 dualWriterMode = 3
@@ -925,7 +907,6 @@ Unified Search requires several feature flags to be enabled depending on the des
 
 | Feature Flag | Purpose | Stage | Required For |
 |--------------|---------|-------|--------------|
-| `unifiedStorageSearchUI` | Frontend search interface | Experimental | Grafana UI search |
 | `unifiedStorageSearchDualReaderEnabled` | Shadow traffic to unified search | Experimental | Shadow traffic during migration |
 
 #### Unified Search Specific Configuration
@@ -939,9 +920,6 @@ Unified Search requires several feature flags to be enabled depending on the des
 [feature_toggles]
 ; Prerequisites for unified storage (required)
 grafanaAPIServerWithExperimentalAPIs = true
-
-; Enable search UI (required for frontend)
-unifiedStorageSearchUI = true
 
 ; Enable shadow traffic during migration (optional)
 unifiedStorageSearchDualReaderEnabled = true
@@ -1133,7 +1111,7 @@ Unified Search serves multiple types of consumers within the Grafana ecosystem:
 - **Source**: Grafana UI search interface
 - **Purpose**: Interactive dashboard and folder discovery
 - **Characteristics**: Real-time, user-facing, latency-sensitive
-- **Endpoint**: `/api/v1/search` (legacy search UI) or `/apis/dashboard.grafana.app/v0alpha1/namespaces/{namespace}/search` (when `unifiedStorageSearchUI` is enabled)
+- **Endpoint**: `/apis/dashboard.grafana.app/v0alpha1/namespaces/{namespace}/search`
 
 #### 2. Internal Service Searches
 
@@ -1174,7 +1152,7 @@ Unified Search supports multiple types of search operations:
 
 ##### Resource Search
 - **Purpose**: Find resources (dashboards, folders, etc.) by content
-- **Endpoint**: `/api/v1/search` (legacy) or `/apis/dashboard.grafana.app/v0alpha1/namespaces/{namespace}/search` (when `unifiedStorageSearchUI` is enabled)
+- **Endpoint**: `/apis/dashboard.grafana.app/v0alpha1/namespaces/{namespace}/search`
 - **Additional endpoint**: `/apis/dashboard.grafana.app/v0alpha1/namespaces/{namespace}/search/sortable` for retrieving sortable fields
 - **Features**: Full-text search, filtering, sorting
 
@@ -1352,15 +1330,6 @@ Built-in validators ensure data integrity after migration:
 
 - **CountValidator**: Verifies resource counts match between legacy and unified storage
 - **FolderTreeValidator**: Validates folder parent-child relationships are preserved
-
-### Configuration
-
-Enable migrations in `grafana.ini`:
-
-```ini
-[unified_storage]
-disable_data_migrations = false
-```
 
 ### Documentation
 

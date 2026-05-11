@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { AuthMethod } from '@grafana/plugin-ui';
-import { ComboboxOption } from '@grafana/ui';
+import { type ComboboxOption } from '@grafana/ui';
 
 export const RADIO_BUTTON_OPTIONS = [
   { label: 'Enabled', value: true },

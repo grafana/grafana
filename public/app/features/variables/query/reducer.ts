@@ -1,18 +1,18 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { isNumber, sortBy, toLower, uniqBy } from 'lodash';
 
 import {
-  MetricFindValue,
-  QueryVariableModel,
+  type MetricFindValue,
+  type QueryVariableModel,
   stringToJsRegex,
-  VariableOption,
+  type VariableOption,
   VariableRefresh,
   VariableSort,
 } from '@grafana/data';
 
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, NONE_VARIABLE_TEXT, NONE_VARIABLE_VALUE } from '../constants';
 import { getInstanceState } from '../state/getInstanceState';
-import { initialVariablesState, VariablePayload, VariablesState } from '../state/types';
+import { initialVariablesState, type VariablePayload, type VariablesState } from '../state/types';
 import { initialVariableModelState } from '../types';
 
 interface VariableOptionsUpdate {

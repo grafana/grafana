@@ -1,10 +1,10 @@
 import { existsSync, readFileSync } from 'fs';
 import path from 'path';
 
-import { Dashboard } from '@grafana/schema';
-import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
-import { DashboardDataDTO } from 'app/types/dashboard';
+import { type Dashboard } from '@grafana/schema';
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+import { type DashboardDataDTO } from 'app/types/dashboard';
 
 import { getSceneCreationOptions } from '../pages/DashboardScenePageStateManager';
 

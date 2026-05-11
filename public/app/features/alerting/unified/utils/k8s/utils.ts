@@ -1,7 +1,7 @@
-import { ObjectMeta, ReceiverIntegration } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+import { type ObjectMeta, type ReceiverIntegration } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { K8sAnnotations } from 'app/features/alerting/unified/utils/k8s/constants';
-import { GrafanaManagedReceiverConfig } from 'app/plugins/datasource/alertmanager/types';
+import { type GrafanaManagedReceiverConfig } from 'app/plugins/datasource/alertmanager/types';
 
 import { KnownProvenance } from '../../types/knownProvenance';
 

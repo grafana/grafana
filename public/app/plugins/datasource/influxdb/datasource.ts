@@ -3,39 +3,39 @@ import { lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
 import {
-  AdHocVariableFilter,
-  AnnotationEvent,
-  DataFrame,
-  DataQueryError,
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceGetTagKeysOptions,
-  DataSourceGetTagValuesOptions,
-  DataSourceInstanceSettings,
+  type AdHocVariableFilter,
+  type AnnotationEvent,
+  type DataFrame,
+  type DataQueryError,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceGetTagKeysOptions,
+  type DataSourceGetTagValuesOptions,
+  type DataSourceInstanceSettings,
   dateMath,
-  DateTime,
+  type DateTime,
   escapeRegex,
   FieldType,
-  MetricFindValue,
-  QueryResultMeta,
-  QueryVariableModel,
-  RawTimeRange,
-  ScopedVars,
+  type MetricFindValue,
+  type QueryResultMeta,
+  type QueryVariableModel,
+  type RawTimeRange,
+  type ScopedVars,
   TIME_SERIES_TIME_FIELD_NAME,
   TIME_SERIES_VALUE_FIELD_NAME,
-  TimeSeries,
+  type TimeSeries,
   toDataFrame,
 } from '@grafana/data';
 import {
-  BackendDataSourceResponse,
+  type BackendDataSourceResponse,
+  config,
   DataSourceWithBackend,
-  FetchResponse,
+  type FetchResponse,
   getBackendSrv,
   getTemplateSrv,
-  TemplateSrv,
+  type TemplateSrv,
 } from '@grafana/runtime';
-import { QueryFormat, SQLQuery } from '@grafana/sql';
-import config from 'app/core/config';
+import { QueryFormat, type SQLQuery } from '@grafana/sql';
 
 import { AnnotationEditor } from './components/editor/annotation/AnnotationEditor';
 import { FluxQueryEditor } from './components/editor/query/flux/FluxQueryEditor';
@@ -47,7 +47,7 @@ import { buildMetadataQuery } from './influxql_query_builder';
 import { prepareAnnotation } from './migrations';
 import { buildRawQuery, removeRegexWrapper } from './queryUtils';
 import ResponseParser from './response_parser';
-import { DEFAULT_POLICY, InfluxOptions, InfluxQuery, InfluxVariableQuery, InfluxVersion } from './types';
+import { DEFAULT_POLICY, type InfluxOptions, type InfluxQuery, type InfluxVariableQuery, InfluxVersion } from './types';
 import { InfluxVariableSupport } from './variables';
 
 export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery, InfluxOptions> {

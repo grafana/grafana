@@ -1,9 +1,9 @@
 import { useEffect, useRef } from 'react';
 
-import { SceneObject } from '@grafana/scenes';
+import { type SceneObject } from '@grafana/scenes';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { DashboardLayoutManager, isDashboardLayoutManager } from '../types/DashboardLayoutManager';
+import { type DashboardLayoutManager, isDashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { isLayoutParent } from '../types/LayoutParent';
 
 export function findParentLayout(sceneObject: SceneObject): DashboardLayoutManager | null {

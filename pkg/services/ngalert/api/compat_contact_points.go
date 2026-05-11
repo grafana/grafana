@@ -7,14 +7,15 @@ import (
 	"strings"
 	"unsafe"
 
-	alertingModels "github.com/grafana/alerting/models"
-	"github.com/grafana/alerting/notify"
-	"github.com/grafana/alerting/receivers"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/modern-go/reflect2"
 
+	alertingModels "github.com/grafana/alerting/models"
+	"github.com/grafana/alerting/notify"
+	"github.com/grafana/alerting/receivers"
+	"github.com/grafana/alerting/receivers/schema"
+
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 // ContactPointFromContactPointExport parses the database model of the contact point (group of integrations) where settings are represented in JSON,
@@ -231,13 +232,14 @@ func ContactPointToContactPointExport(cp definitions.ContactPoint) (notify.APIRe
 
 // marshallIntegration converts the API model integration to the storage model that contains settings in the JSON format.
 // The secret fields are not encrypted.
-func marshallIntegration(json jsoniter.API, integrationType string, integration interface{}, disableResolveMessage *bool) (*alertingModels.IntegrationConfig, error) {
+func marshallIntegration(json jsoniter.API, integrationType schema.IntegrationType, integration interface{}, disableResolveMessage *bool) (*alertingModels.IntegrationConfig, error) {
 	data, err := json.Marshal(integration)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshall integration '%s' to JSON: %w", integrationType, err)
 	}
 	e := &alertingModels.IntegrationConfig{
 		Type:     integrationType,
+		Version:  schema.V1,
 		Settings: data,
 	}
 	if disableResolveMessage != nil {
@@ -251,7 +253,7 @@ func parseIntegration(json jsoniter.API, result *definitions.ContactPoint, recei
 	var err error
 	var disable *bool
 	if disableResolveMessage { // populate only if true
-		disable = util.Pointer(disableResolveMessage)
+		disable = new(disableResolveMessage)
 	}
 	switch strings.ToLower(receiverType) {
 	case "prometheus-alertmanager":

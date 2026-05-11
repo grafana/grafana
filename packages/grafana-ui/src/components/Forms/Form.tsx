@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import { HTMLProps, useEffect } from 'react';
+import { type HTMLProps, useEffect } from 'react';
 import * as React from 'react';
-import { useForm, Mode, DefaultValues, SubmitHandler, FieldValues } from 'react-hook-form';
+import { useForm, type Mode, type DefaultValues, type SubmitHandler, type FieldValues } from 'react-hook-form';
 
-import { FormAPI } from '../../types/forms';
+import { type FormAPI } from '../../types/forms';
 
 interface FormProps<T extends FieldValues> extends Omit<HTMLProps<HTMLFormElement>, 'onSubmit' | 'children'> {
   validateOn?: Mode;

@@ -1,15 +1,15 @@
-import { FeatureLike } from 'ol/Feature';
-import OpenLayersMap from 'ol/Map';
-import { Units } from 'ol/control/ScaleLine';
-import BaseLayer from 'ol/layer/Base';
-import { Subject } from 'rxjs';
+import { type FeatureLike } from 'ol/Feature';
+import type OpenLayersMap from 'ol/Map';
+import { type Units } from 'ol/control/ScaleLine';
+import type BaseLayer from 'ol/layer/Base';
+import { type Subject } from 'rxjs';
 
-import { MapLayerHandler, MapLayerOptions } from '@grafana/data';
-import { ComparisonOperation } from '@grafana/schema';
-import { LayerElement } from 'app/core/components/Layers/types';
+import { type MapLayerHandler, type MapLayerOptions } from '@grafana/data';
+import { type ComparisonOperation } from '@grafana/schema';
+import { type LayerElement } from 'app/core/components/Layers/types';
 
-import { ControlsOptions as ControlsOptionsBase } from './panelcfg.gen';
-import { StyleConfig } from './style/types';
+import { type ControlsOptions as ControlsOptionsBase } from './panelcfg.gen';
+import { type StyleConfig } from './style/types';
 
 export interface ControlsOptions extends ControlsOptionsBase {
   scaleUnits?: Units;

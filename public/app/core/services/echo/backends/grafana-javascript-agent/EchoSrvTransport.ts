@@ -1,4 +1,4 @@
-import { BaseTransport, TransportItem } from '@grafana/faro-core';
+import { BaseTransport, type TransportItem } from '@grafana/faro-core';
 import { getEchoSrv, EchoEventType, config } from '@grafana/runtime';
 
 interface EchoSrcTransportOptions {

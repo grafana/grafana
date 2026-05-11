@@ -1,5 +1,5 @@
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
-import { CombinedRule } from 'app/types/unified-alerting';
+import { type CombinedRule } from 'app/types/unified-alerting';
 
 import { RuleDetailsMatchingInstances } from '../../rules/RuleDetailsMatchingInstances';
 

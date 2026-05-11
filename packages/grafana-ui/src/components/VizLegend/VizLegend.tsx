@@ -8,7 +8,7 @@ import { SeriesVisibilityChangeMode, usePanelContext } from '../PanelChrome';
 
 import { VizLegendList } from './VizLegendList';
 import { VizLegendTable } from './VizLegendTable';
-import { LegendProps, SeriesVisibilityChangeBehavior, VizLegendItem } from './types';
+import { type LegendProps, SeriesVisibilityChangeBehavior, type VizLegendItem } from './types';
 import { mapMouseEventToMode } from './utils';
 
 /**
@@ -32,6 +32,7 @@ export function VizLegend<T>({
   readonly,
   isSortable,
   limit,
+  filterAction,
 }: LegendProps<T>) {
   const { eventBus, onToggleSeriesVisibility, onToggleLegendSort } = usePanelContext();
 
@@ -101,10 +102,11 @@ export function VizLegend<T>({
           readonly={readonly}
           items={items}
           limit={limit}
+          filterAction={filterAction}
         />
       );
     },
-    [className, placement, onMouseOver, onMouseOut, onLegendLabelClick, itemRenderer, readonly, limit]
+    [className, placement, onMouseOver, onMouseOut, onLegendLabelClick, itemRenderer, readonly, limit, filterAction]
   );
 
   switch (displayMode) {
@@ -124,6 +126,7 @@ export function VizLegend<T>({
           readonly={readonly}
           isSortable={isSortable}
           limit={limit}
+          filterAction={filterAction}
         />
       );
     case LegendDisplayMode.List:

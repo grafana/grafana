@@ -1,6 +1,4 @@
-import { Repository } from 'app/api/clients/provisioning/v0alpha1';
-
-import { isFreeTierLicense } from './isFreeTierLicense';
+import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 type syncState = {
   instanceConnected: boolean;
@@ -9,7 +7,7 @@ type syncState = {
   maxReposReached: boolean;
 };
 
-export function checkSyncSettings(repos?: Repository[]): syncState {
+export function checkSyncSettings(repos?: Repository[], maxRepositories = 0): syncState {
   if (!repos?.length) {
     return {
       instanceConnected: false,
@@ -20,7 +18,7 @@ export function checkSyncSettings(repos?: Repository[]): syncState {
   }
 
   const repoCount = repos.length;
-  const maxReposReached = isFreeTierLicense() ? repoCount >= 1 : false;
+  const maxReposReached = maxRepositories > 0 && repoCount >= maxRepositories;
 
   return {
     instanceConnected: repos.some((item) => item.spec?.sync.target === 'instance'),

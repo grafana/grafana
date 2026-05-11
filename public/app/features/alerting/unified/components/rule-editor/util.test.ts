@@ -1,6 +1,6 @@
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
-import { ClassicCondition, ExpressionQuery } from 'app/features/expressions/types';
-import { AlertQuery } from 'app/types/unified-alerting-dto';
+import { type ClassicCondition, type ExpressionQuery } from 'app/features/expressions/types';
+import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { NEW_REDUCER_REF } from './query-and-alert-condition/reducer';
 import {

@@ -10,17 +10,21 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestRenderingService_GetRenderUserFromJWT(t *testing.T) {
 	const authToken = "render-secret"
 
-	rs := &RenderingService{
-		Cfg: &setting.Cfg{
-			RendererAuthToken: authToken,
-		},
-		log: log.NewNopLogger(),
+	j := &jwtRenderKeyProvider{
+		authToken: []byte(authToken),
+		log:       log.NewNopLogger(),
+	}
+
+	assertNotAuthenticated := func(t *testing.T, key string) {
+		t.Helper()
+		user, found := j.validate(t.Context(), key)
+		require.False(t, found)
+		require.Nil(t, user)
 	}
 
 	t.Run("returns render user from valid token", func(t *testing.T) {
@@ -35,7 +39,8 @@ func TestRenderingService_GetRenderUserFromJWT(t *testing.T) {
 			},
 		})
 
-		renderUser := rs.getRenderUserFromJWT(key)
+		renderUser, found := j.validate(t.Context(), key)
+		require.True(t, found)
 		require.NotNil(t, renderUser)
 		require.Equal(t, &RenderUser{OrgID: 1, UserID: 2, OrgRole: "Viewer"}, renderUser)
 	})
@@ -48,8 +53,7 @@ func TestRenderingService_GetRenderUserFromJWT(t *testing.T) {
 			},
 		})
 
-		renderUser := rs.getRenderUserFromJWT(key)
-		require.Nil(t, renderUser)
+		assertNotAuthenticated(t, key)
 	})
 
 	t.Run("returns nil for jwt signed with unexpected algorithm", func(t *testing.T) {
@@ -67,7 +71,7 @@ func TestRenderingService_GetRenderUserFromJWT(t *testing.T) {
 		key, err := token.SignedString([]byte(authToken))
 		require.NoError(t, err)
 
-		require.Nil(t, rs.getRenderUserFromJWT(key))
+		assertNotAuthenticated(t, key)
 	})
 
 	t.Run("returns nil for expired token", func(t *testing.T) {
@@ -82,7 +86,7 @@ func TestRenderingService_GetRenderUserFromJWT(t *testing.T) {
 			},
 		})
 
-		require.Nil(t, rs.getRenderUserFromJWT(key))
+		assertNotAuthenticated(t, key)
 	})
 
 	t.Run("returns nil for token signed with wrong key", func(t *testing.T) {
@@ -97,30 +101,30 @@ func TestRenderingService_GetRenderUserFromJWT(t *testing.T) {
 			},
 		})
 
-		require.Nil(t, rs.getRenderUserFromJWT(key))
+		assertNotAuthenticated(t, key)
 	})
 
 	t.Run("returns nil for invalid JWTs", func(t *testing.T) {
-		require.Nil(t, rs.getRenderUserFromJWT(""))
+		assertNotAuthenticated(t, "")
 
-		require.Nil(t, rs.getRenderUserFromJWT("not.a.jwt"))
+		assertNotAuthenticated(t, "not.a.jwt")
 
 		key, err := jwt.SigningMethodHS512.Sign("null", []byte(authToken))
 		require.NoError(t, err)
-		require.Nil(t, rs.getRenderUserFromJWT(key))
+		assertNotAuthenticated(t, key)
 
 		key, err = jwt.SigningMethodHS512.Sign("", []byte(authToken))
 		require.NoError(t, err)
-		require.Nil(t, rs.getRenderUserFromJWT(key))
+		assertNotAuthenticated(t, key)
 
 		// missing parts, raw
 		key, err = jwt.SigningMethodHS512.Sign(base64.RawURLEncoding.EncodeToString([]byte(`{"exp":4102444800}`)), []byte(authToken))
 		require.NoError(t, err)
-		require.Nil(t, rs.getRenderUserFromJWT(key))
+		assertNotAuthenticated(t, key)
 
 		key, err = jwt.SigningMethodHS512.Sign(base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"HS512","typ":"JWT"}`)), []byte(authToken))
 		require.NoError(t, err)
-		require.Nil(t, rs.getRenderUserFromJWT(key))
+		assertNotAuthenticated(t, key)
 	})
 
 	t.Run("returns nil for weak auth cases", func(t *testing.T) {
@@ -140,7 +144,7 @@ func TestRenderingService_GetRenderUserFromJWT(t *testing.T) {
 			key, err := token.SignedString(jwt.UnsafeAllowNoneSignatureType)
 			require.NoError(t, err)
 
-			require.Nil(t, rs.getRenderUserFromJWT(key))
+			assertNotAuthenticated(t, key)
 		})
 
 		t.Run("blank secret", func(t *testing.T) {
@@ -148,7 +152,7 @@ func TestRenderingService_GetRenderUserFromJWT(t *testing.T) {
 			key, err := token.SignedString([]byte(""))
 			require.NoError(t, err)
 
-			require.Nil(t, rs.getRenderUserFromJWT(key))
+			assertNotAuthenticated(t, key)
 		})
 
 		t.Run("null signature", func(t *testing.T) {
@@ -161,7 +165,7 @@ func TestRenderingService_GetRenderUserFromJWT(t *testing.T) {
 			require.Len(t, parts, 3)
 
 			nullSig := parts[0] + "." + parts[1] + "."
-			require.Nil(t, rs.getRenderUserFromJWT(nullSig))
+			assertNotAuthenticated(t, nullSig)
 		})
 	})
 }

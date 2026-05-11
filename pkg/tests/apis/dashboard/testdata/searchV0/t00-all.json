@@ -1,6 +1,15 @@
 {
-  "totalHits": 16,
+  "totalHits": 17,
   "hits": [
+    {
+      "resource": "dashboards",
+      "name": "timeseries-faceted-labels",
+      "title": "Faceted labels demo",
+      "tags": [
+        "gdev",
+        "panel-tests"
+      ]
+    },
     {
       "resource": "dashboards",
       "name": "timeseries",

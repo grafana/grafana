@@ -1,13 +1,13 @@
 import { memo, useCallback, useEffect, useState, type JSX } from 'react';
 import { useEffectOnce } from 'react-use';
 
-import { QueryEditorProps, SelectableValue } from '@grafana/data';
+import { type QueryEditorProps, type SelectableValue } from '@grafana/data';
 import { InlineSelect } from '@grafana/plugin-ui';
 
-import { CloudWatchLogsQuery, LogsMode, LogsQueryLanguage } from '../../../dataquery.gen';
-import { CloudWatchDatasource } from '../../../datasource';
+import { type CloudWatchLogsQuery, LogsMode, LogsQueryLanguage } from '../../../dataquery.gen';
+import { type CloudWatchDatasource } from '../../../datasource';
 import { DEFAULT_CWLI_QUERY_STRING, DEFAULT_PPL_QUERY_STRING, DEFAULT_SQL_QUERY_STRING } from '../../../defaultQueries';
-import { CloudWatchQuery, CloudWatchJsonData } from '../../../types';
+import { type CloudWatchQuery, type CloudWatchJsonData } from '../../../types';
 
 import { CloudWatchLink } from './CloudWatchLink';
 import { LogsAnomaliesQueryEditor } from './LogsAnomaliesQueryEditor';

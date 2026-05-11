@@ -1,6 +1,6 @@
-import { PanelMenuItem, PluginExtensionLink, PluginExtensionTypes } from '@grafana/data';
+import { type PanelMenuItem, type PluginExtensionLink, PluginExtensionTypes } from '@grafana/data';
 
-import { appendExtensionsToPanelMenu, AppendToPanelMenuOpts } from './appendExtensionsToPanelMenu';
+import { appendExtensionsToPanelMenu, type AppendToPanelMenuOpts } from './appendExtensionsToPanelMenu';
 
 const ROOT_CATEGORY = '${root}';
 

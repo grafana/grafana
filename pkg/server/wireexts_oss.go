@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
+	pluginauth "github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/registry"
 	apisregistry "github.com/grafana/grafana/pkg/registry/apis"
@@ -36,6 +37,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authimpl"
 	"github.com/grafana/grafana/pkg/services/auth/idimpl"
+	"github.com/grafana/grafana/pkg/services/authz"
+	zStore "github.com/grafana/grafana/pkg/services/authz/zanzana/store"
 	"github.com/grafana/grafana/pkg/services/caching"
 	"github.com/grafana/grafana/pkg/services/datasources/guardian"
 	"github.com/grafana/grafana/pkg/services/encryption"
@@ -53,8 +56,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/sandbox"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
-	publicdashboardsApi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
-	publicdashboardsService "github.com/grafana/grafana/pkg/services/publicdashboards/service"
 	"github.com/grafana/grafana/pkg/services/searchusers"
 	"github.com/grafana/grafana/pkg/services/searchusers/filters"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -68,6 +69,8 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	search2 "github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
+	embedderprovider "github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder/provider"
+	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 )
 
@@ -97,6 +100,7 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(accesscontrol.RoleRegistry), new(*acimpl.Service)),
 	wire.Bind(new(pluginaccesscontrol.RoleRegistry), new(*acimpl.Service)),
 	wire.Bind(new(accesscontrol.Service), new(*acimpl.Service)),
+	wire.Bind(new(pluginauth.RBACCleaner), new(*acimpl.Service)),
 	validations.ProvideValidator,
 	wire.Bind(new(validations.DataSourceRequestValidator), new(*validations.OSSDataSourceRequestValidator)),
 	validations.ProvideURLValidator,
@@ -130,10 +134,8 @@ var wireExtsBasicSet = wire.NewSet(
 	ossaccesscontrol.ProvideDatasourcePermissionsService,
 	wire.Bind(new(accesscontrol.DatasourcePermissionsService), new(*ossaccesscontrol.DatasourcePermissionsService)),
 	pluginsintegration.WireExtensionSet,
-	publicdashboardsApi.ProvideMiddleware,
-	wire.Bind(new(publicdashboards.Middleware), new(*publicdashboardsApi.Middleware)),
-	publicdashboardsService.ProvideServiceWrapper,
-	wire.Bind(new(publicdashboards.ServiceWrapper), new(*publicdashboardsService.PublicDashboardServiceWrapperImpl)),
+	publicdashboards.ProvideMiddleware,
+	publicdashboards.ProvideServiceWrapper,
 	caching.ProvideCachingService,
 	wire.Bind(new(caching.CachingService), new(*caching.OSSCachingService)),
 	secretsMigrator.ProvideSecretsMigrator,
@@ -150,6 +152,8 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Struct(new(unified.Options), "*"),
 	unified.ProvideUnifiedStorageClient,
 	sql.ProvideStorageBackend,
+	vector.ProvideVectorBackend,
+	embedderprovider.ProvideEmbedder,
 	builder.ProvideDefaultBuildHandlerChainFuncFromBuilders,
 	aggregatorrunner.ProvideNoopAggregatorConfigurator,
 	apisregistry.WireSetExts,
@@ -159,6 +163,8 @@ var wireExtsBasicSet = wire.NewSet(
 	provisioningExtras,
 	configProviderExtras,
 	advisor.ProvideAppInstaller,
+	zStore.ProvideDefaultStoreProvider,
+	authz.ProvideReconcileCRDs,
 )
 
 var wireExtsSet = wire.NewSet(
@@ -205,6 +211,10 @@ var wireExtsModuleServerSet = wire.NewSet(
 	// Overridden by enterprise
 	ProvideNoopModuleRegisterer,
 	sql.ProvideStorageBackend,
+	// Zanzana store provider
+	zStore.ProvideDefaultStoreProvider,
+	// Zanzana MT reconciler CRD list
+	authz.ProvideReconcileCRDs,
 )
 
 var wireExtsStandaloneAPIServerSet = wire.NewSet(

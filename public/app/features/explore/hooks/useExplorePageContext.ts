@@ -1,10 +1,10 @@
 import { useEffect } from 'react';
 
-import { createAssistantContextItem, ChatContextItem, useProvidePageContext } from '@grafana/assistant';
-import { DataSourceApi } from '@grafana/data';
+import { createAssistantContextItem, type ChatContextItem, useProvidePageContext } from '@grafana/assistant';
+import { type DataSourceApi } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
-import { ExploreItemState } from 'app/types/explore';
+import { type DataQuery } from '@grafana/schema';
+import { type ExploreItemState } from 'app/types/explore';
 
 export function useExplorePageContext(panes: Array<[string, ExploreItemState]>): void {
   const setContext = useProvidePageContext(/^\/explore/);

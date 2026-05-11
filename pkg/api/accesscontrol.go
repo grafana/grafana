@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 )
 
@@ -29,15 +30,31 @@ var (
 	ScopeProvisionersAlertRules    = ac.Scope("provisioners", "alerting")
 )
 
+const (
+	datasourcesExplorerRoleName = "fixed:datasources:explorer"
+	datasourcesReaderRoleName   = "fixed:datasources:reader"
+)
+
 // declareFixedRoles declares to the AccessControl service fixed roles and their
 // grants to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
 // that HTTPServer needs
 func (hs *HTTPServer) declareFixedRoles() error {
-	// Declare plugins roles
-	if err := pluginaccesscontrol.DeclareRBACRoles(hs.accesscontrolService, hs.Cfg, hs.Features); err != nil {
+	if err := pluginaccesscontrol.DeclareRBACRoles(hs.accesscontrolService, hs.Cfg); err != nil {
 		return err
 	}
 
+	//nolint:staticcheck // ViewersCanEdit is deprecated but still used for backward compatibility
+	return hs.accesscontrolService.DeclareFixedRoles(
+		FixedRoleRegistrations(hs.Cfg.ViewersCanEdit, hs.License.FeatureEnabled("dspermissions.enforcement"))...)
+}
+
+// FixedRoleRegistrations returns all HTTP API role registrations with grants
+// adjusted for the running instance.
+//
+// viewersCanEdit: when true the datasources explorer role also grants Viewer.
+// dsPermissionsEnforced: when false (OSS / enterprise without license) the
+// datasources reader role is granted to Viewer.
+func FixedRoleRegistrations(viewersCanEdit, dsPermissionsEnforced bool) []ac.RoleRegistration {
 	provisioningWriterRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
 			Name:        "fixed:provisioning:writer",
@@ -54,9 +71,13 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{ac.RoleGrafanaAdmin},
 	}
 
+	explorerGrants := []string{string(org.RoleEditor)}
+	if viewersCanEdit {
+		explorerGrants = append(explorerGrants, string(org.RoleViewer))
+	}
 	datasourcesExplorerRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
-			Name:        "fixed:datasources:explorer",
+			Name:        datasourcesExplorerRoleName,
 			DisplayName: "Explorer",
 			Description: "Enable the Explore and Drilldown features. Data source permissions still apply; you can only query data sources for which you have query permissions.",
 			Group:       "Data sources",
@@ -66,17 +87,16 @@ func (hs *HTTPServer) declareFixedRoles() error {
 				},
 			},
 		},
-		Grants: []string{string(org.RoleEditor)},
+		Grants: explorerGrants,
 	}
 
-	//nolint:staticcheck // ViewersCanEdit is deprecated but still used for backward compatibility
-	if hs.Cfg.ViewersCanEdit {
-		datasourcesExplorerRole.Grants = append(datasourcesExplorerRole.Grants, string(org.RoleViewer))
+	dsReaderGrants := []string{string(org.RoleAdmin)}
+	if !dsPermissionsEnforced {
+		dsReaderGrants = []string{string(org.RoleViewer)}
 	}
-
 	datasourcesReaderRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
-			Name:        "fixed:datasources:reader",
+			Name:        datasourcesReaderRoleName,
 			DisplayName: "Reader",
 			Description: "Read and query all data sources.",
 			Group:       "Data sources",
@@ -91,7 +111,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 				},
 			},
 		},
-		Grants: []string{string(org.RoleAdmin)},
+		Grants: dsReaderGrants,
 	}
 
 	builtInDatasourceReader := ac.RoleRegistration{
@@ -113,11 +133,6 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Hidden: true,
 		},
 		Grants: []string{string(org.RoleViewer)},
-	}
-
-	// when running oss or enterprise without a license all users should be able to query data sources
-	if !hs.License.FeatureEnabled("dspermissions.enforcement") {
-		datasourcesReaderRole.Grants = []string{string(org.RoleViewer)}
 	}
 
 	datasourcesCreatorRole := ac.RoleRegistration{
@@ -309,8 +324,8 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Description: "Create dashboards under the root folder.",
 			Group:       "Dashboards",
 			Permissions: []ac.Permission{
-				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID)},
-				{Action: dashboards.ActionDashboardsCreate, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID)},
+				{Action: folder.ActionFoldersRead, Scope: folder.ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID)},
+				{Action: dashboards.ActionDashboardsCreate, Scope: folder.ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID)},
 			},
 		},
 		Grants: []string{"Editor"},
@@ -338,7 +353,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Permissions: ac.ConcatPermissions(dashboardsReaderRole.Role.Permissions, []ac.Permission{
 				{Action: dashboards.ActionDashboardsWrite, Scope: dashboards.ScopeDashboardsAll},
 				{Action: dashboards.ActionDashboardsDelete, Scope: dashboards.ScopeDashboardsAll},
-				{Action: dashboards.ActionDashboardsCreate, Scope: dashboards.ScopeFoldersAll},
+				{Action: dashboards.ActionDashboardsCreate, Scope: folder.ScopeFoldersAll},
 				{Action: dashboards.ActionDashboardsPermissionsRead, Scope: dashboards.ScopeDashboardsAll},
 				{Action: dashboards.ActionDashboardsPermissionsWrite, Scope: dashboards.ScopeDashboardsAll},
 			}),
@@ -353,7 +368,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Description: "Create folders under root level",
 			Group:       "Folders",
 			Permissions: []ac.Permission{
-				{Action: dashboards.ActionFoldersCreate, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID)},
+				{Action: folder.ActionFoldersCreate, Scope: folder.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID)},
 			},
 		},
 		Grants: []string{"Editor"},
@@ -368,8 +383,8 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Description: "Read all folders and dashboards.",
 			Group:       "Folders",
 			Permissions: []ac.Permission{
-				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
-				{Action: dashboards.ActionDashboardsRead, Scope: dashboards.ScopeFoldersAll},
+				{Action: folder.ActionFoldersRead, Scope: folder.ScopeFoldersAll},
+				{Action: dashboards.ActionDashboardsRead, Scope: folder.ScopeFoldersAll},
 			},
 		},
 		Grants: []string{"Admin"},
@@ -384,7 +399,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Group:       "Folders",
 			Hidden:      true,
 			Permissions: []ac.Permission{
-				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID)},
+				{Action: folder.ActionFoldersRead, Scope: folder.ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID)},
 			},
 		},
 		Grants: []string{string(org.RoleViewer)},
@@ -399,14 +414,14 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Permissions: ac.ConcatPermissions(
 				foldersReaderRole.Role.Permissions,
 				[]ac.Permission{
-					{Action: dashboards.ActionFoldersCreate, Scope: dashboards.ScopeFoldersAll},
-					{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersAll},
-					{Action: dashboards.ActionFoldersDelete, Scope: dashboards.ScopeFoldersAll},
-					{Action: dashboards.ActionDashboardsWrite, Scope: dashboards.ScopeFoldersAll},
-					{Action: dashboards.ActionDashboardsDelete, Scope: dashboards.ScopeFoldersAll},
-					{Action: dashboards.ActionDashboardsCreate, Scope: dashboards.ScopeFoldersAll},
-					{Action: dashboards.ActionDashboardsPermissionsRead, Scope: dashboards.ScopeFoldersAll},
-					{Action: dashboards.ActionDashboardsPermissionsWrite, Scope: dashboards.ScopeFoldersAll},
+					{Action: folder.ActionFoldersCreate, Scope: folder.ScopeFoldersAll},
+					{Action: folder.ActionFoldersWrite, Scope: folder.ScopeFoldersAll},
+					{Action: folder.ActionFoldersDelete, Scope: folder.ScopeFoldersAll},
+					{Action: dashboards.ActionDashboardsWrite, Scope: folder.ScopeFoldersAll},
+					{Action: dashboards.ActionDashboardsDelete, Scope: folder.ScopeFoldersAll},
+					{Action: dashboards.ActionDashboardsCreate, Scope: folder.ScopeFoldersAll},
+					{Action: dashboards.ActionDashboardsPermissionsRead, Scope: folder.ScopeFoldersAll},
+					{Action: dashboards.ActionDashboardsPermissionsWrite, Scope: folder.ScopeFoldersAll},
 				}),
 		},
 		Grants: []string{"Admin"},
@@ -419,8 +434,8 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Description: "Create library panel under the root folder.",
 			Group:       "Library panels",
 			Permissions: []ac.Permission{
-				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID)},
-				{Action: libraryelements.ActionLibraryPanelsCreate, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID)},
+				{Action: folder.ActionFoldersRead, Scope: folder.ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID)},
+				{Action: libraryelements.ActionLibraryPanelsCreate, Scope: folder.ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID)},
 			},
 		},
 		Grants: []string{"Editor"},
@@ -433,7 +448,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Description: "Read all library panels.",
 			Group:       "Library panels",
 			Permissions: []ac.Permission{
-				{Action: libraryelements.ActionLibraryPanelsRead, Scope: dashboards.ScopeFoldersAll},
+				{Action: libraryelements.ActionLibraryPanelsRead, Scope: folder.ScopeFoldersAll},
 			},
 		},
 		Grants: []string{"Admin"},
@@ -446,7 +461,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Description: "Read all library panels under the root folder.",
 			Group:       "Library panels",
 			Permissions: []ac.Permission{
-				{Action: libraryelements.ActionLibraryPanelsRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID)},
+				{Action: libraryelements.ActionLibraryPanelsRead, Scope: folder.ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID)},
 			},
 		},
 		Grants: []string{"Viewer"},
@@ -459,9 +474,9 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Group:       "Library panels",
 			Description: "Create, read, write or delete all library panels and their permissions.",
 			Permissions: ac.ConcatPermissions(libraryPanelsReaderRole.Role.Permissions, []ac.Permission{
-				{Action: libraryelements.ActionLibraryPanelsWrite, Scope: dashboards.ScopeFoldersAll},
-				{Action: libraryelements.ActionLibraryPanelsDelete, Scope: dashboards.ScopeFoldersAll},
-				{Action: libraryelements.ActionLibraryPanelsCreate, Scope: dashboards.ScopeFoldersAll},
+				{Action: libraryelements.ActionLibraryPanelsWrite, Scope: folder.ScopeFoldersAll},
+				{Action: libraryelements.ActionLibraryPanelsDelete, Scope: folder.ScopeFoldersAll},
+				{Action: libraryelements.ActionLibraryPanelsCreate, Scope: folder.ScopeFoldersAll},
 			}),
 		},
 		Grants: []string{"Admin"},
@@ -474,9 +489,9 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Group:       "Library panels",
 			Description: "Create, read, write or delete all library panels and their permissions under the root folder.",
 			Permissions: ac.ConcatPermissions(libraryPanelsGeneralReaderRole.Role.Permissions, []ac.Permission{
-				{Action: libraryelements.ActionLibraryPanelsWrite, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID)},
-				{Action: libraryelements.ActionLibraryPanelsDelete, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID)},
-				{Action: libraryelements.ActionLibraryPanelsCreate, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID)},
+				{Action: libraryelements.ActionLibraryPanelsWrite, Scope: folder.ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID)},
+				{Action: libraryelements.ActionLibraryPanelsDelete, Scope: folder.ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID)},
+				{Action: libraryelements.ActionLibraryPanelsCreate, Scope: folder.ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID)},
 			}),
 		},
 		Grants: []string{"Editor"},
@@ -489,7 +504,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Description: "Create, write or disable a public dashboard.",
 			Group:       "Dashboards",
 			Permissions: []ac.Permission{
-				{Action: dashboards.ActionDashboardsPublicWrite, Scope: dashboards.ScopeDashboardsAll},
+				{Action: publicdashboards.ActionDashboardsPublicWrite, Scope: dashboards.ScopeDashboardsAll},
 			},
 		},
 		Grants: []string{"Admin"},
@@ -568,7 +583,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Group:       "Annotations",
 			Permissions: []ac.Permission{
 				{Action: ac.ActionAnnotationsRead, Scope: ac.ScopeAnnotationsTypeOrganization},
-				{Action: ac.ActionAnnotationsRead, Scope: dashboards.ScopeFoldersAll},
+				{Action: ac.ActionAnnotationsRead, Scope: folder.ScopeFoldersAll},
 			},
 		},
 		Grants: []string{string(org.RoleAdmin)},
@@ -582,16 +597,30 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Group:       "Annotations",
 			Permissions: []ac.Permission{
 				{Action: ac.ActionAnnotationsCreate, Scope: ac.ScopeAnnotationsTypeOrganization},
-				{Action: ac.ActionAnnotationsCreate, Scope: dashboards.ScopeFoldersAll},
+				{Action: ac.ActionAnnotationsCreate, Scope: folder.ScopeFoldersAll},
 				{Action: ac.ActionAnnotationsDelete, Scope: ac.ScopeAnnotationsTypeOrganization},
-				{Action: ac.ActionAnnotationsDelete, Scope: dashboards.ScopeFoldersAll},
+				{Action: ac.ActionAnnotationsDelete, Scope: folder.ScopeFoldersAll},
 				{Action: ac.ActionAnnotationsWrite, Scope: ac.ScopeAnnotationsTypeOrganization},
-				{Action: ac.ActionAnnotationsWrite, Scope: dashboards.ScopeFoldersAll},
+				{Action: ac.ActionAnnotationsWrite, Scope: folder.ScopeFoldersAll},
 			},
 		},
 		Grants: []string{string(org.RoleAdmin)},
 	}
-	roles := []ac.RoleRegistration{provisioningWriterRole, datasourcesReaderRole, builtInDatasourceReader, datasourcesWriterRole,
+
+	livePushRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Name:        "fixed:live:writer",
+			DisplayName: "Writer",
+			Description: "Push metrics and events to Grafana Live streams (via /api/live/push).",
+			Group:       "Live",
+			Permissions: []ac.Permission{
+				{Action: ac.ActionLivePush},
+			},
+		},
+		Grants: []string{string(org.RoleEditor), string(org.RoleAdmin)},
+	}
+
+	return []ac.RoleRegistration{provisioningWriterRole, datasourcesReaderRole, builtInDatasourceReader, datasourcesWriterRole,
 		datasourcesIdReaderRole, datasourcesCreatorRole, orgReaderRole, orgWriterRole,
 		orgMaintainerRole, teamsCreatorRole, teamsWriterRole, teamsReaderRole, datasourcesExplorerRole,
 		annotationsReaderRole, annotationsWriterRole,
@@ -599,9 +628,8 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		foldersCreatorRole, foldersReaderRole, generalFolderReaderRole, foldersWriterRole,
 		publicDashboardsWriterRole, featuremgmtReaderRole, featuremgmtWriterRole, libraryPanelsCreatorRole,
 		libraryPanelsReaderRole, libraryPanelsWriterRole, libraryPanelsGeneralReaderRole, libraryPanelsGeneralWriterRole,
-		snapshotsCreatorRole, snapshotsDeleterRole, snapshotsReaderRole, allAnnotationsReaderRole, allAnnotationsWriterRole}
-
-	return hs.accesscontrolService.DeclareFixedRoles(roles...)
+		snapshotsCreatorRole, snapshotsDeleterRole, snapshotsReaderRole, allAnnotationsReaderRole, allAnnotationsWriterRole,
+		livePushRole}
 }
 
 // Metadata helpers

@@ -60,5 +60,6 @@ type DataSourceGetter interface {
 // HealthChecker is a generic interface for checking data source health.
 // It receives minimal input (context and datasource) and returns the health check result.
 type HealthChecker interface {
+	Init(ctx context.Context) error
 	CheckHealth(ctx context.Context, ds *datasources.DataSource) (*backend.CheckHealthResult, error)
 }

@@ -1,15 +1,15 @@
 import { css, cx } from '@emotion/css';
-import RcPicker, { PickerProps } from '@rc-component/picker';
+import RcPicker, { type PickerProps } from '@rc-component/picker';
 import generateConfig from '@rc-component/picker/lib/generate/moment';
 import locale from '@rc-component/picker/lib/locale/en_US';
-import { Moment } from 'moment';
+import { type Moment } from 'moment';
 
-import { dateTime, DateTime, dateTimeAsMoment, GrafanaTheme2, isDateTimeInput } from '@grafana/data';
+import { dateTime, type DateTime, dateTimeAsMoment, type GrafanaTheme2, isDateTimeInput } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
 import { inputSizes } from '../Forms/commonStyles';
-import { FormInputSize } from '../Forms/types';
+import { type FormInputSize } from '../Forms/types';
 import { Icon } from '../Icon/Icon';
 import '@rc-component/picker/assets/index.css';
 

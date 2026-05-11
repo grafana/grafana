@@ -61,9 +61,15 @@ func (srv ConfigSrv) RouteGetNGalertConfig(c *contextmodel.ReqContext) response.
 		return ErrResp(http.StatusInternalServerError, err, msg)
 	}
 
-	resp := apimodels.GettableNGalertConfig{
-		AlertmanagersChoice: apimodels.AlertmanagersChoice(cfg.SendAlertsTo.String()),
+	var resp apimodels.GettableNGalertConfig
+	if cfg.SendAlertsTo != nil {
+		resp.AlertmanagersChoice = apimodels.AlertmanagersChoice(cfg.SendAlertsTo.String())
 	}
+
+	if cfg.ExternalAlertmanagerUID != nil {
+		resp.ExternalAlertmanagerUID = *cfg.ExternalAlertmanagerUID
+	}
+
 	return response.JSON(http.StatusOK, resp)
 }
 
@@ -72,36 +78,46 @@ func (srv ConfigSrv) RoutePostNGalertConfig(c *contextmodel.ReqContext, body api
 		return accessForbiddenResp()
 	}
 
-	sendAlertsTo, err := ngmodels.StringToAlertmanagersChoice(string(body.AlertmanagersChoice))
-	if err != nil {
-		return response.Error(http.StatusBadRequest, "Invalid alertmanager choice specified", err)
+	if body.AlertmanagersChoice == nil && body.ExternalAlertmanagerUID == nil {
+		return response.Error(http.StatusBadRequest, "No fields to update", nil)
 	}
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	disableExternal := srv.featureManager.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingDisableSendAlertsExternal)
-	if disableExternal && sendAlertsTo != ngmodels.InternalAlertmanager {
-		return response.Error(http.StatusBadRequest, "Sending alerts to external alertmanagers is disallowed on this instance", err)
+	adminConfig := ngmodels.AdminConfiguration{
+		OrgID: c.GetOrgID(),
 	}
 
-	externalAlertmanagers, err := srv.externalAlertmanagers(c.Req.Context(), c.GetOrgID())
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Couldn't fetch the external Alertmanagers from datasources", err)
+	if body.AlertmanagersChoice != nil {
+		sendAlertsTo, err := ngmodels.StringToAlertmanagersChoice(string(*body.AlertmanagersChoice))
+		if err != nil {
+			return response.Error(http.StatusBadRequest, "Invalid alertmanager choice specified", err)
+		}
+
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		disableExternal := srv.featureManager.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingDisableSendAlertsExternal)
+		if disableExternal && sendAlertsTo != ngmodels.InternalAlertmanager {
+			return response.Error(http.StatusBadRequest, "Sending alerts to external alertmanagers is disallowed on this instance", nil)
+		}
+
+		externalAlertmanagers, err := srv.externalAlertmanagers(c.Req.Context(), c.GetOrgID())
+		if err != nil {
+			return response.Error(http.StatusInternalServerError, "Couldn't fetch the external Alertmanagers from datasources", err)
+		}
+
+		if sendAlertsTo == ngmodels.ExternalAlertmanagers && len(externalAlertmanagers) < 1 {
+			return response.Error(http.StatusBadRequest, "At least one Alertmanager must be provided or configured as a datasource that handles alerts to choose this option", nil)
+		}
+
+		adminConfig.SendAlertsTo = &sendAlertsTo
 	}
 
-	if sendAlertsTo == ngmodels.ExternalAlertmanagers && len(externalAlertmanagers) < 1 {
-		return response.Error(http.StatusBadRequest, "At least one Alertmanager must be provided or configured as a datasource that handles alerts to choose this option", nil)
-	}
+	// TODO: setup remote alertmanager uid
 
-	cfg := &ngmodels.AdminConfiguration{
-		SendAlertsTo: sendAlertsTo,
-		OrgID:        c.GetOrgID(),
-	}
-
-	cmd := store.UpdateAdminConfigurationCmd{AdminConfiguration: cfg}
-	if err := srv.store.UpdateAdminConfiguration(cmd); err != nil {
+	if err := srv.store.UpdateAdminConfiguration(store.UpdateAdminConfigurationCmd{
+		AdminConfiguration: &adminConfig,
+	}); err != nil {
 		msg := "failed to save the admin configuration to the database"
 		srv.log.Error(msg, "error", err)
-		return ErrResp(http.StatusBadRequest, err, msg)
+		return ErrResp(http.StatusInternalServerError, err, msg)
 	}
 
 	return response.JSON(http.StatusCreated, util.DynMap{"message": "admin configuration updated"})
@@ -152,8 +168,8 @@ func (srv ConfigSrv) RouteGetAlertingStatus(c *contextmodel.ReqContext) response
 		srv.log.Error(msg, "error", err)
 		return ErrResp(http.StatusInternalServerError, err, msg)
 	}
-	if cfg != nil {
-		sendsAlertsTo = cfg.SendAlertsTo
+	if cfg != nil && cfg.SendAlertsTo != nil {
+		sendsAlertsTo = *cfg.SendAlertsTo
 	}
 
 	// handle errors

@@ -1,34 +1,34 @@
 import { defaultsDeep, set } from 'lodash';
-import { ComponentClass, ComponentType } from 'react';
+import { type ComponentClass, type ComponentType } from 'react';
 
 import { FieldConfigOptionsRegistry } from '../field/FieldConfigOptionsRegistry';
-import { StandardEditorContext } from '../field/standardFieldConfigEditorRegistry';
-import { PanelModel } from '../types/dashboard';
-import { FieldConfigProperty, FieldConfigSource } from '../types/fieldOverrides';
+import { type StandardEditorContext } from '../field/standardFieldConfigEditorRegistry';
+import { type PanelModel } from '../types/dashboard';
+import { type FieldConfigProperty, type FieldConfigSource } from '../types/fieldOverrides';
 import {
-  PanelPluginMeta,
-  PanelProps,
-  PanelEditorProps,
-  PanelMigrationHandler,
-  PanelTypeChangedHandler,
-  PanelPluginDataSupport,
+  type PanelPluginMeta,
+  type PanelProps,
+  type PanelEditorProps,
+  type PanelMigrationHandler,
+  type PanelTypeChangedHandler,
+  type PanelPluginDataSupport,
 } from '../types/panel';
 import { GrafanaPlugin } from '../types/plugin';
 import {
   getSuggestionHash,
-  PanelPluginVisualizationSuggestion,
-  VisualizationSuggestion,
-  VisualizationSuggestionsSupplierDeprecated,
-  VisualizationSuggestionsSupplier,
-  VisualizationPresetsContext,
-  VisualizationPresetsSupplier,
-  VisualizationSuggestionsBuilder,
+  type PanelPluginVisualizationSuggestion,
+  type VisualizationSuggestion,
+  type VisualizationSuggestionsSupplierDeprecated,
+  type VisualizationSuggestionsSupplier,
+  type VisualizationPresetsContext,
+  type VisualizationPresetsSupplier,
+  type VisualizationSuggestionsBuilder,
 } from '../types/suggestions';
-import { FieldConfigEditorBuilder, PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
+import { type FieldConfigEditorBuilder, PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
 import { deprecationWarning } from '../utils/deprecationWarning';
 
 import { createFieldConfigRegistry } from './registryFactories';
-import { PanelDataSummary } from './suggestions/getPanelDataSummary';
+import { type PanelDataSummary } from './suggestions/getPanelDataSummary';
 
 /** @beta */
 export type StandardOptionConfig = {
@@ -378,7 +378,6 @@ export class PanelPlugin<
    */
   setSuggestionsSupplier(supplier: VisualizationSuggestionsSupplierDeprecated): this;
   /**
-   * @alpha
    * sets function that can return visualization examples and suggestions.
    */
   setSuggestionsSupplier(supplier: VisualizationSuggestionsSupplier<TOptions, TFieldConfigOptions>): this;

@@ -5,12 +5,12 @@
  * query strings, preserving filters, groupBy selections, and time range.
  */
 
-import { AdHocVariableFilter, RawTimeRange, dateMath, makeTimeRange } from '@grafana/data';
+import { type AdHocVariableFilter, type RawTimeRange, dateMath, makeTimeRange } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { AdHocFiltersVariable, GroupByVariable, SceneObject, sceneGraph } from '@grafana/scenes';
+import { AdHocFiltersVariable, GroupByVariable, type SceneObject, sceneGraph } from '@grafana/scenes';
 
 import { toFilters, toUrl } from '../../../../variables/adhoc/urlParser';
-import { SavedSearch } from '../../components/saved-searches/savedSearchesSchema';
+import { type SavedSearch } from '../../components/saved-searches/savedSearchesSchema';
 import { TRIAGE_STATE_URL_PARAMS, URL_PARAMS, VARIABLES } from '../constants';
 
 /**

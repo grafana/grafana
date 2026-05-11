@@ -89,3 +89,20 @@ func TestFormatSQL(t *testing.T) {
 			got)
 	}
 }
+
+func TestFormatSQL_PreservesJSONBOperators(t *testing.T) {
+	t.Parallel()
+
+	cases := map[string]string{
+		`"m" @> $1`:  `"m" @> $1`,
+		`"m" <@ $1`:  `"m" <@ $1`,
+		`"m" #> $1`:  `"m" #> $1`,
+		`"m" #>> $1`: `"m" #>> $1`,
+		`"m" @@ $1`:  `"m" @@ $1`,
+	}
+	for input, expected := range cases {
+		if got := FormatSQL(input); got != expected {
+			t.Errorf("input %q: expected %q, got %q", input, expected, got)
+		}
+	}
+}

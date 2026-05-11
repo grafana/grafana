@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/registry/apis/datasource/converter"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
@@ -57,7 +58,7 @@ func ProvideDefaultPluginConfigs(
 		dsService:       dsService,
 		dsCache:         dsCache,
 		contextProvider: contextProvider,
-		converter:       NewConverter(request.GetNamespaceMapper(cfg), "", "", nil),
+		converter:       converter.NewConverter(request.GetNamespaceMapper(cfg), "", "", nil),
 	}
 }
 
@@ -65,7 +66,7 @@ type cachingDatasourceProvider struct {
 	dsService       datasources.DataSourceService
 	dsCache         datasources.CacheService
 	contextProvider *plugincontext.Provider
-	converter       *Converter
+	converter       *converter.Converter
 }
 
 func (q *cachingDatasourceProvider) GetDatasourceProvider(pluginJson plugins.JSONData) PluginDatasourceProvider {
@@ -74,7 +75,7 @@ func (q *cachingDatasourceProvider) GetDatasourceProvider(pluginJson plugins.JSO
 		dsService:       q.dsService,
 		dsCache:         q.dsCache,
 		contextProvider: q.contextProvider,
-		converter:       NewConverter(q.converter.Mapper(), pluginJson.ID, pluginJson.ID, pluginJson.AliasIDs),
+		converter:       converter.NewConverter(q.converter.Mapper(), pluginJson.ID, pluginJson.ID, pluginJson.AliasIDs),
 	}
 }
 
@@ -83,7 +84,7 @@ type scopedDatasourceProvider struct {
 	dsService       datasources.DataSourceService
 	dsCache         datasources.CacheService
 	contextProvider *plugincontext.Provider
-	converter       *Converter
+	converter       *converter.Converter
 }
 
 var (

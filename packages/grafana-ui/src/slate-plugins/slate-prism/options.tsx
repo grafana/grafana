@@ -1,7 +1,7 @@
 import { Record } from 'immutable';
 import * as React from 'react';
-import { Mark, Node, Decoration } from 'slate';
-import { Editor } from 'slate-react';
+import { type Mark, type Node, type Decoration } from 'slate';
+import { type Editor } from 'slate-react';
 
 import TOKEN_MARK from './TOKEN_MARK';
 

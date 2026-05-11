@@ -1,8 +1,0 @@
-{
-    "status" : "success",
-    "data" : {
-       "resultType" : "vector",
-       "result" : []
-    },
-    "warnings" : ["warning 1", "warning 2"]
- }

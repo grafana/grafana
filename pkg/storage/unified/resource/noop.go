@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	_ resourcepb.DiagnosticsServer = (*noopService)(nil)
+	_ resourcepb.DiagnosticsServer = (*noopService)(nil) //nolint:staticcheck
 )
 
 // noopService is a helper implementation to simplify tests

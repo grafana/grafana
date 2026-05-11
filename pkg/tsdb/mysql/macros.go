@@ -16,6 +16,88 @@ const sExpr = `\$` + rsIdentifier + `\(([^\)]*)\)`
 
 var restrictedRegExp = regexp.MustCompile(`(?im)([\s]*show[\s]+grants|[\s,]session_user\([^\)]*\)|[\s,]current_user(\([^\)]*\))?|[\s,]system_user\([^\)]*\)|[\s,]user\([^\)]*\))([\s,;]|$)`)
 
+// stripSQLComments removes SQL line comments (--, #) and block comments (/* */)
+// from the query string while preserving comment-like characters that appear
+// inside quoted strings (single-quoted, double-quoted, and backtick-quoted).
+// MySQL supports # as a line comment delimiter in addition to the standard
+// -- and /* */ forms.
+func stripSQLComments(sql string) string {
+	var result strings.Builder
+	result.Grow(len(sql))
+
+	i := 0
+	for i < len(sql) {
+		// Handle quoted strings: pass through verbatim.
+		if sql[i] == '\'' || sql[i] == '"' || sql[i] == '`' {
+			quote := sql[i]
+			result.WriteByte(quote)
+			i++
+			for i < len(sql) {
+				if sql[i] == '\\' && i+1 < len(sql) {
+					// Escaped character – copy both bytes.
+					result.WriteByte(sql[i])
+					result.WriteByte(sql[i+1])
+					i += 2
+					continue
+				}
+				if sql[i] == quote {
+					if i+1 < len(sql) && sql[i+1] == quote {
+						// Doubled quote escape (e.g. '' or "").
+						result.WriteByte(sql[i])
+						result.WriteByte(sql[i+1])
+						i += 2
+						continue
+					}
+					// Closing quote.
+					result.WriteByte(sql[i])
+					i++
+					break
+				}
+				result.WriteByte(sql[i])
+				i++
+			}
+			continue
+		}
+
+		// Block comment: /* ... */
+		if i+1 < len(sql) && sql[i] == '/' && sql[i+1] == '*' {
+			i += 2
+			for i+1 < len(sql) {
+				if sql[i] == '*' && sql[i+1] == '/' {
+					i += 2
+					break
+				}
+				i++
+			}
+			if i >= len(sql) {
+				break
+			}
+			continue
+		}
+
+		// Line comment: --
+		if i+1 < len(sql) && sql[i] == '-' && sql[i+1] == '-' {
+			for i < len(sql) && sql[i] != '\n' {
+				i++
+			}
+			continue
+		}
+
+		// Hash comment: #
+		if sql[i] == '#' {
+			for i < len(sql) && sql[i] != '\n' {
+				i++
+			}
+			continue
+		}
+
+		result.WriteByte(sql[i])
+		i++
+	}
+
+	return result.String()
+}
+
 type mySQLMacroEngine struct {
 	*sqleng.SQLMacroEngineBase
 	logger    log.Logger
@@ -36,6 +118,10 @@ func (m *mySQLMacroEngine) Interpolate(query *backend.DataQuery, timeRange backe
 		m.logger.Error("Show grants, session_user(), current_user(), system_user() or user() not allowed in query")
 		return "", fmt.Errorf("invalid query - %s", m.userError)
 	}
+
+	// Strip SQL comments before macro interpolation so that only macros present
+	// in executable SQL are evaluated.
+	sql = stripSQLComments(sql)
 
 	// TODO: Handle error
 	rExp, _ := regexp.Compile(sExpr)

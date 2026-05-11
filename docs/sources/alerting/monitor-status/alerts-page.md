@@ -23,7 +23,7 @@ labels:
 
 Grafana Alerting provides a consolidated snapshot of your firing and pending Grafana-managed alerts in a simplified view. For users with complex deployments, it can be difficult to monitor and prioritize critical incidents among a large volume of firing or pending alerts. With the Alert page, you have a view where you can quickly explore and sort your recent alert history and see what alerts require review or action.
 
-To see your firing and pending alerts in the alert page, go to **Alerts & IRM > Alerting > Alerts**.
+To see your firing and pending alerts in the alert page, go to **Alerts & IRM** > **Alerting** > **Alert activity**.
 
 {{< figure src="/media/docs/alerting/alerts-page.png" max-width="750px" alt="Filter your firing and pending alerts in the Alert view." >}}
 

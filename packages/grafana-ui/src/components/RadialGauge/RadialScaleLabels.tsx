@@ -1,11 +1,11 @@
 import { memo, useId } from 'react';
 
-import { FieldDisplay, GrafanaTheme2, Threshold, ThresholdsMode } from '@grafana/data';
+import { type FieldDisplay, type GrafanaTheme2, type Threshold, ThresholdsMode } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { measureText } from '../../utils/measureText';
 
-import { RadialGaugeDimensions } from './types';
+import { type RadialGaugeDimensions } from './types';
 import { getFieldConfigMinMax, drawRadialArcPath } from './utils';
 
 interface RadialScaleLabelsProps {
@@ -87,7 +87,7 @@ export const RadialScaleLabels = memo(
       if (isFullCircle) {
         // For full circle: nudge labels near the top at the end of the circle
         // counter-clockwise along the path to create extra space at 12 o'clock
-        const paddingFactor = 0.375; // 3/8 of the label width - a bit of trial-and-error showed this was a good value to use.
+        const paddingFactor = 0.65; // needs to be >= 0.5 so that center-to-center gap (2x factor x width) >= label width
         const padding = measure.width * paddingFactor;
         if (isFirst) {
           offset += padding;

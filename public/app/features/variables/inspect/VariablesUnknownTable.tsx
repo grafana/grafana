@@ -1,16 +1,16 @@
 import { css } from '@emotion/css';
-import { ReactElement, useEffect, useState } from 'react';
+import { type ReactElement, useEffect, useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { BaseVariableModel, GrafanaTheme2 } from '@grafana/data';
+import { type BaseVariableModel, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { CollapsableSection, Icon, Spinner, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { DashboardModel } from '../../dashboard/state/DashboardModel';
+import { type DashboardModel } from '../../dashboard/state/DashboardModel';
 
 import { VariablesUnknownButton } from './VariablesUnknownButton';
-import { UsagesToNetwork } from './types';
+import { type UsagesToNetwork } from './types';
 import { getUnknownsNetwork } from './utils';
 
 export const SLOW_VARIABLES_EXPANSION_THRESHOLD = 1000;

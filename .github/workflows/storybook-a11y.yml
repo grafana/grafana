@@ -27,14 +27,24 @@ jobs:
         with:
           self: .github/workflows/storybook-a11y.yml
 
-  test-storybook-a11y-light:
+  test-storybook-a11y:
     runs-on: ubuntu-x64-large
     permissions:
       contents: read
       id-token: write
     needs: detect-changes
     if: needs.detect-changes.outputs.changed == 'true'
-    name: "Run Storybook a11y tests (light theme)"
+    strategy:
+      fail-fast: false
+      matrix:
+        STORYBOOK_THEME:
+          - light
+          - dark
+          - deut_prot_light
+          - deut_prot_dark
+          - tritanopia_light
+          - tritanopia_dark
+    name: "Run Storybook a11y tests (${{ matrix.STORYBOOK_THEME }} theme)"
     steps:
     - uses: actions/checkout@v5
       with:
@@ -44,9 +54,9 @@ jobs:
     - name: Install yarn dependencies
       uses: ./.github/actions/yarn-install
     - name: Install Playwright browsers
-      run: npx playwright install --with-deps
+      run: yarn playwright install chromium --with-deps
     - name: Start Storybook
-      run: STORYBOOK_THEME=light yarn storybook &
+      run: STORYBOOK_THEME=${{ matrix.STORYBOOK_THEME }} yarn storybook &
     - name: Run tests
       # the chromium browser used by Playwright sets its locale to "en_US@posix" by default
       # this is not a valid language code, and causes some stories to fail to load!
@@ -56,31 +66,21 @@ jobs:
         LANG: en_US
       run: npx wait-on --timeout 120000 http://localhost:9001 && yarn test:storybook
 
-  test-storybook-a11y-dark:
-    runs-on: ubuntu-x64-large
-    permissions:
-      contents: read
-      id-token: write
-    needs: detect-changes
-    if: needs.detect-changes.outputs.changed == 'true'
-    name: "Run Storybook a11y tests (dark theme)"
+  storybook-a11y-result:
+    name: "Storybook a11y tests"
+    runs-on: ubuntu-x64-small
+    if: always()
+    needs:
+      - detect-changes
+      - test-storybook-a11y
     steps:
-    - uses: actions/checkout@v5
-      with:
-        persist-credentials: false
-    - name: Setup Node
-      uses: ./.github/actions/setup-node
-    - name: Install yarn dependencies
-      uses: ./.github/actions/yarn-install
-    - name: Install Playwright browsers
-      run: npx playwright install --with-deps
-    - name: Start Storybook
-      run: STORYBOOK_THEME=dark yarn storybook &
-    - name: Run tests
-      # the chromium browser used by Playwright sets its locale to "en_US@posix" by default
-      # this is not a valid language code, and causes some stories to fail to load!
-      # instead, we set the LANG environment variable to en_US to override this
-      # see https://github.com/microsoft/playwright/issues/34046
-      env:
-        LANG: en_US
-      run: npx wait-on --timeout 120000 http://localhost:9001 && yarn test:storybook
+      - name: No frontend changes detected
+        if: needs.detect-changes.outputs.changed != 'true'
+        run: echo "No frontend changes detected, skipping storybook a11y tests"
+      - name: Check test suites
+        if: needs.detect-changes.outputs.changed == 'true'
+        uses: grafana/grafana/.github/actions/check-jobs@main
+        with:
+          needs: ${{ toJson(needs) }}
+          failure-message: "One or more storybook a11y test suites have failed"
+          success-message: "All storybook a11y test suites completed successfully"

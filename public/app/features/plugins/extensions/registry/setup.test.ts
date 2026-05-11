@@ -1,5 +1,6 @@
-import { MonitoringLogger } from '@grafana/runtime';
-import { getAppPluginMetas, invalidateCache, setLogger } from '@grafana/runtime/internal';
+import { type MonitoringLogger } from '@grafana/runtime';
+import { getAppPluginMetas, invalidateCachedPromisesCache } from '@grafana/runtime/internal';
+import { mockLogger } from '@grafana/test-utils/unstable';
 
 import { getPluginExtensionRegistries } from './setup';
 
@@ -9,21 +10,14 @@ jest.mock('@grafana/runtime/internal', () => ({
 }));
 
 const getAppPluginMetasMock = jest.mocked(getAppPluginMetas);
-let logger: MonitoringLogger;
 
 describe('getPluginExtensionRegistries', () => {
+  let logger: MonitoringLogger;
   beforeEach(() => {
     jest.resetAllMocks();
-    invalidateCache();
+    invalidateCachedPromisesCache();
     getAppPluginMetasMock.mockResolvedValue([]);
-    logger = {
-      logDebug: jest.fn(),
-      logError: jest.fn(),
-      logInfo: jest.fn(),
-      logMeasurement: jest.fn(),
-      logWarning: jest.fn(),
-    };
-    setLogger(logger);
+    logger = mockLogger('grafana/runtime.utils.getCachedPromise');
   });
 
   test('should only call getAppPluginMetas once', async () => {
@@ -63,10 +57,13 @@ describe('getPluginExtensionRegistries', () => {
     expect(first).not.toBe(third);
     expect(second).toBe(third);
     expect(logger.logError).toHaveBeenCalledTimes(1);
-    expect(logger.logError).toHaveBeenCalledWith(new Error('Something failed while resolving a cached promise'), {
-      message: 'Some error',
-      stack: expect.any(String),
-      key: 'initPluginExtensionRegistries',
-    });
+    expect(logger.logError).toHaveBeenCalledWith(
+      new Error('getCachedPromise: Something failed while resolving a cached promise'),
+      {
+        message: 'Some error',
+        stack: expect.any(String),
+        key: expect.stringMatching(/^initPluginExtensionRegistries:-?\d+$/),
+      }
+    );
   });
 });

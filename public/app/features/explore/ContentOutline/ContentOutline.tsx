@@ -2,12 +2,12 @@ import { css, cx } from '@emotion/css';
 import { Fragment, useEffect, useRef, useState } from 'react';
 import { useToggle, useScroll } from 'react-use';
 
-import { GrafanaTheme2, store } from '@grafana/data';
+import { type GrafanaTheme2, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { useStyles2, PanelContainer, ScrollContainer } from '@grafana/ui';
 
-import { ContentOutlineItemContextProps, useContentOutlineContext } from './ContentOutlineContext';
+import { type ContentOutlineItemContextProps, useContentOutlineContext } from './ContentOutlineContext';
 import { ContentOutlineItemButton } from './ContentOutlineItemButton';
 
 function scrollableChildren(item: ContentOutlineItemContextProps) {
@@ -260,7 +260,7 @@ const getStyles = (theme: GrafanaTheme2, expanded: boolean) => {
     }),
     content: css({
       label: 'content',
-      marginLeft: theme.spacing(0.5),
+      padding: theme.spacing(0, 0.5),
       top: 0,
     }),
     buttonStyles: css({

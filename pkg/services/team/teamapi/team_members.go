@@ -193,7 +193,7 @@ func (tapi *TeamAPI) setTeamMemberships(c *contextmodel.ReqContext) response.Res
 
 	shouldRedirect := openfeature.NewDefaultClient().Boolean(
 		ctx,
-		featuremgmt.FlagKubernetesTeamsHandlerRedirect,
+		featuremgmt.FlagKubernetesTeamsRedirect,
 		defaultShouldRedirect,
 		openfeature.TransactionContext(ctx),
 	)

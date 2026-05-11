@@ -4,11 +4,11 @@ import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import * as React from 'react';
 import { useMeasure, usePrevious } from 'react-use';
 
-import { DataFrame, GrafanaTheme2, escapeStringForRegex } from '@grafana/data';
+import { type DataFrame, type GrafanaTheme2, escapeStringForRegex } from '@grafana/data';
 import { ThemeContext } from '@grafana/ui';
 
 import FlameGraph from './FlameGraph/FlameGraph';
-import { GetExtraContextMenuButtonsFunction } from './FlameGraph/FlameGraphContextMenu';
+import { type GetExtraContextMenuButtonsFunction } from './FlameGraph/FlameGraphContextMenu';
 import { CollapsedMap, FlameGraphDataContainer } from './FlameGraph/dataTransform';
 import FlameGraphHeader from './FlameGraphHeader';
 import FlameGraphPane from './FlameGraphPane';
@@ -19,7 +19,7 @@ import {
   FLAMEGRAPH_CONTAINER_HEIGHT,
 } from './constants';
 import { useColorScheme } from './hooks';
-import { ClickedItemData, PaneView, SelectedView, TextAlign, ViewMode } from './types';
+import { type ClickedItemData, PaneView, SelectedView, type TextAlign, ViewMode } from './types';
 import { getAssistantContextFromDataFrame } from './utils';
 
 const ufuzzy = new uFuzzy();

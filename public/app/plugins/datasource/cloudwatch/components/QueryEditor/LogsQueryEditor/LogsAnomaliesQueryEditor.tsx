@@ -1,7 +1,7 @@
 import { EditorField, EditorRow } from '@grafana/plugin-ui';
 import { Combobox, Input } from '@grafana/ui';
 
-import { CloudWatchLogsAnomaliesQuery } from '../../../dataquery.gen';
+import { type CloudWatchLogsAnomaliesQuery } from '../../../dataquery.gen';
 
 interface Props {
   query: CloudWatchLogsAnomaliesQuery;

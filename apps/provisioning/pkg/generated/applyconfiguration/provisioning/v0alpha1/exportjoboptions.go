@@ -17,6 +17,11 @@ type ExportJobOptionsApplyConfiguration struct {
 	// FIXME: we should validate this in admission hooks
 	// Prefix in target file system
 	Path *string `json:"path,omitempty"`
+	// Resources to export. When empty, every unmanaged resource in the namespace
+	// is exported (legacy behavior). When non-empty, only the listed resources
+	// are exported — the folder hierarchy is still emitted so parent paths resolve.
+	// Currently only unmanaged Dashboards are supported.
+	Resources []ResourceRefApplyConfiguration `json:"resources,omitempty"`
 }
 
 // ExportJobOptionsApplyConfiguration constructs a declarative configuration of the ExportJobOptions type for use with
@@ -54,5 +59,18 @@ func (b *ExportJobOptionsApplyConfiguration) WithBranch(value string) *ExportJob
 // If called multiple times, the Path field is set to the value of the last call.
 func (b *ExportJobOptionsApplyConfiguration) WithPath(value string) *ExportJobOptionsApplyConfiguration {
 	b.Path = &value
+	return b
+}
+
+// WithResources adds the given value to the Resources field in the declarative configuration
+// and returns the receiver, so that objects can be build by chaining "With" function invocations.
+// If called multiple times, values provided by each call will be appended to the Resources field.
+func (b *ExportJobOptionsApplyConfiguration) WithResources(values ...*ResourceRefApplyConfiguration) *ExportJobOptionsApplyConfiguration {
+	for i := range values {
+		if values[i] == nil {
+			panic("nil value passed to WithResources")
+		}
+		b.Resources = append(b.Resources, *values[i])
+	}
 	return b
 }

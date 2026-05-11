@@ -1,7 +1,7 @@
-import { TemplateSrv } from '@grafana/runtime';
+import { type TemplateSrv } from '@grafana/runtime';
 
-import { LogGroup } from '../dataquery.gen';
-import { ResourcesAPI } from '../resources/ResourcesAPI';
+import { type LogGroup } from '../dataquery.gen';
+import { type ResourcesAPI } from '../resources/ResourcesAPI';
 import { interpolateStringArrayUsingSingleOrMultiValuedVariable } from '../utils/templateVariableUtils';
 
 export const fetchLogGroupFields = async (

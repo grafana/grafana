@@ -1,5 +1,5 @@
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes';
-import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
+import { type DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
 
 import { PANEL_STYLES, overrideToFixedColor } from '../../home/Insights';
 

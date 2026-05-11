@@ -43,18 +43,25 @@ func ProvideSearchDistributorServer(tracer trace.Tracer, cfg *setting.Cfg, ring 
 		tracing:    tracer,
 	}
 
-	healthService, err := ProvideHealthService(s)
-	if err != nil {
-		return nil, err
-	}
-
 	srv := provider.GetServer()
 	resourcepb.RegisterResourceIndexServer(srv, s)
 	resourcepb.RegisterManagedObjectIndexServer(srv, s)
-	grpc_health_v1.RegisterHealthServer(srv, healthService)
 	_, _ = grpcserver.ProvideReflectionService(cfg, provider)
-
-	s.BasicService = services.NewIdleService(nil, nil).WithName(modules.SearchServerDistributor)
+	s.BasicService = services.NewBasicService(nil, func(ctx context.Context) error {
+		ringWatcher := services.NewFailureWatcher()
+		ringWatcher.WatchService(s.ring)
+		defer ringWatcher.Close()
+		if state := s.ring.State(); state != services.Running {
+			return fmt.Errorf("ring is not running: state=%s", state)
+		}
+		select {
+		case err := <-ringWatcher.Chan():
+			return fmt.Errorf("ring failure: %w", err)
+		case <-ctx.Done():
+			s.log.Info("Stopping search distributor server")
+			return nil
+		}
+	}, nil).WithName(modules.SearchServerDistributor)
 	return s, nil
 }
 
@@ -116,6 +123,29 @@ func (ds *distributorServer) GetStats(ctx context.Context, r *resourcepb.Resourc
 	}
 
 	return client.GetStats(ctx, r)
+}
+
+func (ds *distributorServer) VectorSearch(ctx context.Context, r *resourcepb.VectorSearchRequest) (*resourcepb.VectorSearchResponse, error) {
+	ctx, span := ds.tracing.Start(ctx, "distributor.VectorSearch")
+	defer span.End()
+
+	// No per-namespace locality — every search pod hits the same pgvector
+	// backend — so pick any healthy instance.
+	rs, err := ds.ring.GetAllHealthy(searchRingRead)
+	if err != nil || len(rs.Instances) == 0 {
+		return nil, fmt.Errorf("no healthy search instances available: %w", err)
+	}
+	inst := rs.Instances[rand.Intn(len(rs.Instances))]
+	client, err := ds.clientPool.GetClientForInstance(inst)
+	if err != nil {
+		return nil, err
+	}
+	var ns string
+	if r.Key != nil {
+		ns = r.Key.Namespace
+	}
+	ctx = userutils.InjectOrgID(metadata.NewOutgoingContext(ctx, metadata.MD{}), ns)
+	return client.(*RingClient).Client.VectorSearch(ctx, r)
 }
 
 func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.RebuildIndexesRequest) (*resourcepb.RebuildIndexesResponse, error) {

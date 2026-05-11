@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"slices"
+	"time"
 
 	"github.com/google/go-github/v82/github"
 	"github.com/google/uuid"
@@ -33,27 +34,30 @@ type GithubWebhookRepository interface {
 
 type githubWebhookRepository struct {
 	GithubRepository
-	config     *provisioning.Repository
-	owner      string
-	repo       string
-	secret     common.RawSecureValue
-	gh         Client
-	webhookURL string
+	config            *provisioning.Repository
+	owner             string
+	repo              string
+	secret            common.RawSecureValue
+	gh                Client
+	webhookURL        string
+	incrementalPolicy repository.IncrementalSyncPolicy
 }
 
 func NewGithubWebhookRepository(
 	basic GithubRepository,
 	webhookURL string,
 	secret common.RawSecureValue,
+	incrementalPolicy repository.IncrementalSyncPolicy,
 ) GithubWebhookRepository {
 	return &githubWebhookRepository{
-		GithubRepository: basic,
-		config:           basic.Config(),
-		owner:            basic.Owner(),
-		repo:             basic.Repo(),
-		gh:               basic.Client(),
-		webhookURL:       webhookURL,
-		secret:           secret,
+		GithubRepository:  basic,
+		config:            basic.Config(),
+		owner:             basic.Owner(),
+		repo:              basic.Repo(),
+		gh:                basic.Client(),
+		webhookURL:        webhookURL,
+		secret:            secret,
+		incrementalPolicy: incrementalPolicy,
 	}
 }
 
@@ -72,11 +76,11 @@ func (r *githubWebhookRepository) Webhook(ctx context.Context, req *http.Request
 		return nil, apierrors.NewUnauthorized("invalid signature")
 	}
 
-	return r.parseWebhook(github.WebHookType(req), payload)
+	return r.parseWebhook(ctx, github.WebHookType(req), payload)
 }
 
 // This method does not include context because it does delegate any more requests
-func (r *githubWebhookRepository) parseWebhook(messageType string, payload []byte) (*provisioning.WebhookResponse, error) {
+func (r *githubWebhookRepository) parseWebhook(ctx context.Context, messageType string, payload []byte) (*provisioning.WebhookResponse, error) {
 	event, err := github.ParseWebHook(messageType, payload)
 	if err != nil {
 		return nil, apierrors.NewBadRequest("invalid payload")
@@ -84,7 +88,7 @@ func (r *githubWebhookRepository) parseWebhook(messageType string, payload []byt
 
 	switch event := event.(type) {
 	case *github.PushEvent:
-		return r.parsePushEvent(event)
+		return r.parsePushEvent(ctx, event)
 	case *github.PullRequestEvent:
 		return r.parsePullRequestEvent(event)
 	case *github.PingEvent:
@@ -100,12 +104,16 @@ func (r *githubWebhookRepository) parseWebhook(messageType string, payload []byt
 	}
 }
 
-func (r *githubWebhookRepository) parsePushEvent(event *github.PushEvent) (*provisioning.WebhookResponse, error) {
+func (r *githubWebhookRepository) parsePushEvent(ctx context.Context, event *github.PushEvent) (*provisioning.WebhookResponse, error) {
+	_, logger := r.logger(ctx, "")
+
 	if event.GetRepo() == nil {
 		return nil, fmt.Errorf("missing repository in push event")
 	}
-	if event.GetRepo().GetFullName() != fmt.Sprintf("%s/%s", r.owner, r.repo) {
-		return nil, fmt.Errorf("repository mismatch")
+	expected := fmt.Sprintf("%s/%s", r.owner, r.repo)
+	if event.GetRepo().GetFullName() != expected {
+		logger.Warn("webhook push event repository mismatch", "expected", expected, "got", event.GetRepo().GetFullName())
+		return nil, repository.ErrRepositoryMismatch
 	}
 
 	// No need to sync if not enabled
@@ -119,16 +127,14 @@ func (r *githubWebhookRepository) parsePushEvent(event *github.PushEvent) (*prov
 		return &provisioning.WebhookResponse{Code: http.StatusOK}, nil
 	}
 
-	// whenever possible, we want to do incremental syncs to keep things performant.
-	// however, if we get an event where just a .keep file is being deleted, and no other files in the folder
-	// are being deleted, the folder could be gone from git, but not from grafana and we do not have a way
-	// to get the grafana uid to delete the folder. so, instead, we will queue a full sync to clean things up.
 	var deletedPaths []string
+	var totalChanges int
 	for _, change := range event.GetCommits() {
+		totalChanges += len(change.Added) + len(change.Modified) + len(change.Removed)
 		deletedPaths = append(deletedPaths, change.Removed...)
 	}
 
-	incremental := repository.CanUseIncrementalSync(deletedPaths)
+	incremental := r.incrementalPolicy.CanUseIncrementalSync(deletedPaths, totalChanges)
 
 	return &provisioning.WebhookResponse{
 		Code: http.StatusAccepted,
@@ -151,8 +157,10 @@ func (r *githubWebhookRepository) parsePullRequestEvent(event *github.PullReques
 		return nil, fmt.Errorf("missing GitHub config")
 	}
 
-	if event.GetRepo().GetFullName() != fmt.Sprintf("%s/%s", r.owner, r.repo) {
-		return nil, fmt.Errorf("repository mismatch")
+	expected := fmt.Sprintf("%s/%s", r.owner, r.repo)
+	if event.GetRepo().GetFullName() != expected {
+		slog.Warn("webhook pull request event repository mismatch", "expected", expected, "got", event.GetRepo().GetFullName())
+		return nil, repository.ErrRepositoryMismatch
 	}
 	pr := event.GetPullRequest()
 	if pr == nil {
@@ -323,6 +331,7 @@ func (r *githubWebhookRepository) OnCreate(ctx context.Context) ([]map[string]in
 				ID:               hook.ID,
 				URL:              hook.URL,
 				SubscribedEvents: hook.Events,
+				LastRotated:      time.Now().UnixMilli(),
 			},
 		},
 		{
@@ -369,6 +378,7 @@ func (r *githubWebhookRepository) OnUpdate(ctx context.Context) ([]map[string]in
 			ID:               hook.ID,
 			URL:              hook.URL,
 			SubscribedEvents: hook.Events,
+			LastRotated:      time.Now().UnixMilli(),
 		},
 	}, {
 		"op":   "replace",
@@ -385,6 +395,63 @@ func (r *githubWebhookRepository) OnDelete(ctx context.Context) error {
 	}
 
 	return r.deleteWebhook(ctx)
+}
+
+// RotateWebhookSecret generates a new HMAC secret for the repository's GitHub
+// webhook and updates it via the API. If the remote webhook no longer exists
+// (404), the Status.Webhook entry is cleared so the next reconcile re-creates
+// it via processHooks, and an error is returned so the failure is surfaced in
+// logs.
+func (r *githubWebhookRepository) RotateWebhookSecret(ctx context.Context) ([]map[string]any, error) {
+	if r.config.Status.Webhook == nil || r.config.Status.Webhook.ID == 0 {
+		return nil, nil
+	}
+
+	ctx, logger := r.logger(ctx, "")
+	logger.Info("rotating webhook secret", "trigger", "rotation")
+
+	hook, err := r.gh.GetWebhook(ctx, r.owner, r.repo, r.config.Status.Webhook.ID)
+	switch {
+	case errors.Is(err, repository.ErrFileNotFound):
+		return []map[string]any{{
+			"op":    "replace",
+			"path":  "/status/webhook",
+			"value": nil,
+		}}, fmt.Errorf("webhook %d not found on remote during rotation: %w", r.config.Status.Webhook.ID, err)
+	case err != nil:
+		return nil, fmt.Errorf("get webhook for rotation: %w", err)
+	}
+
+	secret, err := uuid.NewRandom()
+	if err != nil {
+		return nil, fmt.Errorf("generate rotation secret: %w", err)
+	}
+	hook.Secret = secret.String()
+
+	if err := r.gh.EditWebhook(ctx, r.owner, r.repo, hook); err != nil {
+		return nil, fmt.Errorf("edit webhook during rotation: %w", err)
+	}
+
+	logger.Info("webhook secret rotated successfully")
+	return []map[string]any{
+		{
+			"op":   "replace",
+			"path": "/status/webhook",
+			"value": &provisioning.WebhookStatus{
+				ID:               hook.ID,
+				URL:              hook.URL,
+				SubscribedEvents: hook.Events,
+				LastRotated:      time.Now().UnixMilli(),
+			},
+		},
+		{
+			"op":   "replace",
+			"path": "/secure/webhookSecret",
+			"value": map[string]string{
+				"create": hook.Secret,
+			},
+		},
+	}, nil
 }
 
 func (r *githubWebhookRepository) logger(ctx context.Context, ref string) (context.Context, logging.Logger) {

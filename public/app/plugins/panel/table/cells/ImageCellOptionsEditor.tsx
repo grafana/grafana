@@ -1,10 +1,10 @@
-import { FormEvent, useId } from 'react';
+import { type FormEvent, useId } from 'react';
 
 import { t } from '@grafana/i18n';
-import { TableImageCellOptions } from '@grafana/schema';
+import { type TableImageCellOptions } from '@grafana/schema';
 import { Field, Input } from '@grafana/ui';
 
-import { TableCellEditorProps } from '../TableCellOptionEditor';
+import { type TableCellEditorProps } from '../TableCellOptionEditor';
 
 export const ImageCellOptionsEditor = ({ cellOptions, onChange }: TableCellEditorProps<TableImageCellOptions>) => {
   const onAltChange = (e: FormEvent<HTMLInputElement>) => {

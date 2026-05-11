@@ -156,6 +156,7 @@ test.describe(
         const adHocVariable = getAdhocFiltersInput(dashboardPage, selectors).first();
 
         await defaultDashboardFilter.click();
+        await adHocVariable.click();
         await adHocVariable.fill('new value');
         await adHocVariable.press('Enter');
 
@@ -186,6 +187,7 @@ test.describe(
         const adHocVariable = getAdhocFiltersInput(dashboardPage, selectors).first();
 
         await defaultDashboardFilter.click();
+        await adHocVariable.click();
         await adHocVariable.fill('new value');
         await adHocVariable.press('Enter');
 

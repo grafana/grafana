@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 
 import { dateTime, LoadingState, EventBusSrv } from '@grafana/data';
 
-import { Props, TextPanel } from './TextPanel';
+import { type Props, TextPanel } from './TextPanel';
 import { TextMode } from './panelcfg.gen';
 
 const replaceVariablesMock = jest.fn();

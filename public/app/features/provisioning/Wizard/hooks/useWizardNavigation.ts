@@ -5,8 +5,8 @@ import { reportInteraction } from '@grafana/runtime';
 
 import { PROVISIONING_URL } from '../../constants';
 import { getWorkflows } from '../../utils/data';
-import { Step } from '../Stepper';
-import { RepoType, StepStatusInfo, WizardFormData, WizardStep } from '../types';
+import { type Step } from '../Stepper';
+import { type RepoType, type StepStatusInfo, type WizardFormData, type WizardStep } from '../types';
 
 export interface UseWizardNavigationParams {
   steps: Array<Step<WizardStep>>;

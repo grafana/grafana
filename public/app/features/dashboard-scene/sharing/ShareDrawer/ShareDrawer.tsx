@@ -1,9 +1,15 @@
 import { locationService } from '@grafana/runtime';
-import { SceneComponentProps, SceneObjectBase, SceneObjectRef, SceneObjectState, VizPanel } from '@grafana/scenes';
+import {
+  type SceneComponentProps,
+  SceneObjectBase,
+  type SceneObjectRef,
+  type SceneObjectState,
+  type VizPanel,
+} from '@grafana/scenes';
 import { Drawer } from '@grafana/ui';
 
 import { shareDashboardType } from '../../../dashboard/components/ShareModal/utils';
-import { DashboardScene } from '../../scene/DashboardScene';
+import { type DashboardScene } from '../../scene/DashboardScene';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { ExportAsCode } from '../ExportButton/ExportAsCode';
 import { ExportAsImage } from '../ExportButton/ExportAsImage';
@@ -13,7 +19,7 @@ import { ShareSnapshot } from '../ShareButton/share-snapshot/ShareSnapshot';
 import { ShareLibraryPanelTab } from '../ShareLibraryPanelTab';
 import { SharePanelEmbedTab } from '../SharePanelEmbedTab';
 import { SharePanelInternally } from '../panel-share/SharePanelInternally';
-import { ModalSceneObjectLike, SceneShareTabState, ShareView } from '../types';
+import { type ModalSceneObjectLike, type SceneShareTabState, type ShareView } from '../types';
 
 import { ShareDrawerContext } from './ShareDrawerContext';
 

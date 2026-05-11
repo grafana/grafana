@@ -1,6 +1,6 @@
 import { Fragment, useState } from 'react';
 
-import { AlertLabel, RouteMatchResult, RouteWithID } from '@grafana/alerting';
+import { AlertLabel, type RouteMatchResult, type RouteWithID } from '@grafana/alerting';
 import { Trans } from '@grafana/i18n';
 import { Button, Drawer, Text, TextLink } from '@grafana/ui';
 

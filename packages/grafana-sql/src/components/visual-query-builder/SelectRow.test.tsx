@@ -5,7 +5,7 @@ import userEvent from '@testing-library/user-event';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { QueryEditorExpressionType } from '../../expressions';
-import { SQLQuery } from '../../types';
+import { type SQLQuery } from '../../types';
 import { buildMockDB } from '../SqlComponents.testHelpers';
 
 import { SelectRow } from './SelectRow';

@@ -1,14 +1,14 @@
 import { css, cx } from '@emotion/css';
-import { memo, CSSProperties } from 'react';
+import { memo, type CSSProperties } from 'react';
 import * as React from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { areEqual, FixedSizeGrid as Grid } from 'react-window';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';
 
-import { ResourceItem } from './FolderPickerTab';
+import { type ResourceItem } from './FolderPickerTab';
 
 interface CellProps {
   columnIndex: number;

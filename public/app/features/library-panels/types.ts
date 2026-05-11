@@ -1,9 +1,9 @@
-import { AnyAction } from '@reduxjs/toolkit';
-import { Dispatch } from 'react';
+import { type AnyAction } from '@reduxjs/toolkit';
+import { type Dispatch } from 'react';
 
-import { LibraryPanel, LibraryElementDTOMetaUser } from '@grafana/schema';
+import { type LibraryPanel, type LibraryElementDTOMetaUser } from '@grafana/schema';
 
-import { PanelModel } from '../dashboard/state/PanelModel';
+import { type PanelModel } from '../dashboard/state/PanelModel';
 
 export enum LibraryElementKind {
   Panel = 1,

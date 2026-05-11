@@ -125,7 +125,32 @@ func (p *EnvVarsProvider) awsEnvVars(pluginID string) []string {
 		variables = append(variables, p.envVar(awsds.ListMetricsPageLimitKeyName, p.cfg.AWSListMetricsPageLimit))
 	}
 
+	// Forward AWS SDK credential chain env vars from the host so that plugins can use
+	// EKS IRSA, ECS task roles, and other environment-based credential providers.
+	for _, envVarName := range awsHostEnvVarNames {
+		if v, ok := os.LookupEnv(envVarName); ok {
+			variables = append(variables, p.envVar(envVarName, v))
+		}
+	}
+
 	return variables
+}
+
+// awsHostEnvVarNames are the host environment variables forwarded to AWS plugins.
+// These are needed for the AWS SDK default credential chain to resolve credentials
+// in container environments (EKS with IRSA, ECS Fargate).
+var awsHostEnvVarNames = []string{
+	// EKS IRSA
+	"AWS_ROLE_ARN",
+	"AWS_WEB_IDENTITY_TOKEN_FILE",
+	// ECS (Fargate / EC2)
+	"AWS_CONTAINER_CREDENTIALS_RELATIVE_URI",
+	"AWS_CONTAINER_CREDENTIALS_FULL_URI",
+	"AWS_CONTAINER_AUTHORIZATION_TOKEN",
+	"AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE",
+	// Region
+	"AWS_REGION",
+	"AWS_DEFAULT_REGION",
 }
 
 func (p *EnvVarsProvider) secureSocksProxyEnvVars() []string {

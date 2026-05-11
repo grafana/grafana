@@ -1,4 +1,4 @@
-import { dateMath, dateTimeParse, isDateTime, TimeRange, TimeZone } from '@grafana/data';
+import { dateMath, dateTimeParse, isDateTime, type TimeRange, type TimeZone } from '@grafana/data';
 
 import { commonFormat } from './commonFormat';
 

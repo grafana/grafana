@@ -3,7 +3,7 @@ import { render, screen } from 'test/test-utils';
 import { PluginSignatureStatus, PluginSignatureType, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { CatalogPlugin } from '../types';
+import { type CatalogPlugin } from '../types';
 
 import { PluginDetailsPage } from './PluginDetailsPage';
 
@@ -25,7 +25,6 @@ const plugin: CatalogPlugin = {
   isInstalled: true,
   isDisabled: false,
   isDeprecated: false,
-  isManaged: false,
   isPreinstalled: { found: false, withVersion: false },
   isPublished: true,
   name: 'Test Plugin',
@@ -63,6 +62,10 @@ const plugin: CatalogPlugin = {
   isFullyInstalled: true,
   accessControl: {},
   insights: { id: 1, name: 'test-plugin', version: '1.0.0', insights: [] },
+  managed: {
+    enabled: false,
+    strategy: undefined,
+  },
 };
 
 jest.mock('../state/hooks', () => ({

@@ -3,7 +3,7 @@ import { useToggle } from 'react-use';
 
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Button, Dropdown, Icon, LinkButton, Menu, Stack } from '@grafana/ui';
+import { Box, Button, Dropdown, Icon, LinkButton, Menu, Stack } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -21,7 +21,8 @@ import { AlertsActivityBanner } from './AlertsActivityBanner';
 import { FilterView } from './FilterView';
 import { GroupedView } from './GroupedView';
 import { RuleListPageTitle } from './RuleListPageTitle';
-import RulesFilter from './filter/RulesFilter';
+import RulesFilter from './filter/RulesFilter.v2';
+import { RulesFilterSidebar } from './filter/RulesFilterSidebar';
 import { useApplyDefaultSearch } from './filter/useApplyDefaultSearch';
 
 function RuleList() {
@@ -31,12 +32,19 @@ function RuleList() {
   return (
     <Stack direction="column">
       <AlertsActivityBanner />
-      <RulesFilter viewMode={viewMode} onViewModeChange={handleViewChange} />
-      {viewMode === 'list' ? (
-        <FilterView filterState={filterState} />
-      ) : (
-        <GroupedView groupFilter={filterState.groupName} namespaceFilter={filterState.namespace} />
-      )}
+      <Stack direction="column" gap={2}>
+        <RulesFilter viewMode={viewMode} onViewModeChange={handleViewChange} />
+        <Stack direction="row" grow={1} minHeight={0}>
+          <RulesFilterSidebar />
+          <Box flex={1} minWidth={0} paddingLeft={2}>
+            {viewMode === 'list' ? (
+              <FilterView filterState={filterState} />
+            ) : (
+              <GroupedView groupFilter={filterState.groupName} namespaceFilter={filterState.namespace} />
+            )}
+          </Box>
+        </Stack>
+      </Stack>
     </Stack>
   );
 }
@@ -91,7 +99,7 @@ export function RuleListActions() {
           )}
           {canAccessMigrationWizardUI && (
             <Menu.Item
-              label={t('alerting.rule-list-v2.import-to-gma-tool', 'Import to GMA')}
+              label={t('alerting.rule-list-v2.import-to-gma-tool', 'Import to Grafana Alerting')}
               icon="exchange-alt"
               url="/alerting/import-to-gma"
             />

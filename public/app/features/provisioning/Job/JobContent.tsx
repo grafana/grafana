@@ -2,13 +2,13 @@ import { useEffect, useRef } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { ControlledCollapse, Spinner, Stack, Text } from '@grafana/ui';
-import { Job } from 'app/api/clients/provisioning/v0alpha1';
+import { type Job } from 'app/api/clients/provisioning/v0alpha1';
 
 import { PullRequestButtons } from '../Repository/PullRequestButtons';
 import { RepositoryLink } from '../Repository/RepositoryLink';
 import ProgressBar from '../Shared/ProgressBar';
-import { StepStatusInfo } from '../Wizard/types';
-import { JobType } from '../types';
+import { type StepStatusInfo } from '../Wizard/types';
+import { type JobType } from '../types';
 
 import { JobSummary } from './JobSummary';
 import { getJobMessages } from './getJobMessage';

@@ -1,4 +1,4 @@
-import { SceneObject, VizPanel, sceneGraph, PATH_ID_SEPARATOR } from '@grafana/scenes';
+import { type SceneObject, VizPanel, sceneGraph, PATH_ID_SEPARATOR } from '@grafana/scenes';
 
 import { getVizPanelKeyForPanelId } from './utils';
 

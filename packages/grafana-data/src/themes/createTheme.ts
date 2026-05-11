@@ -10,7 +10,7 @@ import { createTransitions } from './createTransitions';
 import { createTypography, ThemeTypographyInputSchema } from './createTypography';
 import { createV1Theme } from './createV1Theme';
 import { createVisualizationColors, ThemeVisualizationColorsInputSchema } from './createVisualizationColors';
-import { GrafanaTheme2 } from './types';
+import { type GrafanaTheme2 } from './types';
 import { zIndex } from './zIndex';
 
 export const NewThemeOptionsSchema = z.object({

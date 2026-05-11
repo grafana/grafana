@@ -1,9 +1,9 @@
 import { render, within } from '@testing-library/react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { VariableValueOption } from '@grafana/scenes';
+import { type VariableValueOption } from '@grafana/scenes';
 
-import { VariableValuesPreview, VariableValuesPreviewProps } from './VariableValuesPreview';
+import { VariableValuesPreview, type VariableValuesPreviewProps } from './VariableValuesPreview';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),

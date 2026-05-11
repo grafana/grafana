@@ -1,6 +1,6 @@
-import { LinkModel } from '@grafana/data';
+import { type LinkModel } from '@grafana/data';
 
-import { FieldDef } from '../logParser';
+import { type FieldDef } from '../logParser';
 
 export function getTempoTraceFromLinks(fields: FieldDef[]) {
   for (const field of fields) {

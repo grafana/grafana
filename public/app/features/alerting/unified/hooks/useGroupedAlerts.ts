@@ -1,8 +1,8 @@
 import { uniqBy } from 'lodash';
 import { useMemo } from 'react';
 
-import { Labels } from '@grafana/data';
-import { AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
+import { type Labels } from '@grafana/data';
+import { type AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
 
 export const useGroupedAlerts = (groups: AlertmanagerGroup[], groupBy: string[]): AlertmanagerGroup[] => {
   return useMemo(() => {

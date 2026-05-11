@@ -1,9 +1,9 @@
-import { useMemo, ReactElement } from 'react';
+import { useMemo, type ReactElement } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import { getMessageFromError } from 'app/core/utils/errors';
 import { dispatch as storeDispatch } from 'app/store/store';
-import { AppNotificationSeverity, AppNotification } from 'app/types/appNotifications';
+import { AppNotificationSeverity, type AppNotification } from 'app/types/appNotifications';
 import { useDispatch } from 'app/types/store';
 
 import { notifyApp } from '../reducers/appNotification';

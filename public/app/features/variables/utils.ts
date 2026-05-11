@@ -1,27 +1,27 @@
 import { isArray, isEqual } from 'lodash';
 
 import {
-  LegacyMetricFindQueryOptions,
-  ScopedVars,
-  UrlQueryMap,
-  UrlQueryValue,
-  VariableType,
+  type LegacyMetricFindQueryOptions,
+  type ScopedVars,
+  type UrlQueryMap,
+  type UrlQueryValue,
+  type VariableType,
   VariableRefresh,
-  VariableWithOptions,
-  QueryVariableModel,
-  BaseVariableModel,
+  type VariableWithOptions,
+  type QueryVariableModel,
+  type BaseVariableModel,
 } from '@grafana/data';
 import { getTemplateSrv, locationService } from '@grafana/runtime';
 import { safeStringifyValue } from 'app/core/utils/explore';
-import { StoreState } from 'app/types/store';
+import { type StoreState } from 'app/types/store';
 
 import { getState } from '../../store/store';
-import { TimeSrv } from '../dashboard/services/TimeSrv';
+import { type TimeSrv } from '../dashboard/services/TimeSrv';
 
 import { variableAdapters } from './adapters';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, VARIABLE_PREFIX } from './constants';
 import { getVariablesState } from './state/selectors';
-import { KeyedVariableIdentifier, VariableIdentifier, VariablePayload } from './state/types';
+import { type KeyedVariableIdentifier, type VariableIdentifier, type VariablePayload } from './state/types';
 import { TransactionStatus } from './types';
 
 /*

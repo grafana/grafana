@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
-import { uniqueId } from 'lodash';
 import * as React from 'react';
+import { useId } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 
-import { MenuItemProps } from './MenuItem';
+import { type MenuItemProps } from './MenuItem';
 
 /** @internal */
 export interface MenuItemsGroup<T = unknown> {
@@ -27,7 +27,8 @@ export interface MenuGroupProps extends Partial<MenuItemsGroup> {
 /** @internal */
 export const MenuGroup = ({ label, ariaLabel, children }: MenuGroupProps) => {
   const styles = useStyles2(getStyles);
-  const labelID = `group-label-${uniqueId()}`;
+  const generatedId = useId();
+  const labelID = `group-label-${generatedId}`;
 
   return (
     <div role="group" aria-labelledby={!ariaLabel && label ? labelID : undefined} aria-label={ariaLabel}>

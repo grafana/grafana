@@ -1,8 +1,9 @@
 package kinds
 
 manifest: {
-	appName:       "alerting-notifications"
-	groupOverride: "notifications.alerting.grafana.app"
+	appName:          "alerting-notifications"
+	groupOverride:    "notifications.alerting.grafana.app"
+	preferredVersion: "v1beta1"
 	versions: {
 		"v0alpha1": {
 			codegen: {
@@ -20,6 +21,33 @@ manifest: {
 				namespaced: {
 					"/integrationtypeschemas": {
 						"GET": {
+							name: "getIntegrationtypeschemas"
+							response: {
+								items: [...#IntegrationTypeSchemaResource]
+							}
+							responseMetadata: typeMeta: false
+						}
+					}
+				}
+			}
+		}
+		"v1beta1": {
+			codegen: {
+				ts: {enabled: false}
+				go: {enabled: true}
+			}
+			kinds: [
+				inhibitionRulev1beta1,
+				receiverv1beta1,
+				routeTreev1beta1,
+				templatev1beta1,
+				timeIntervalv1beta1,
+			]
+			routes: {
+				namespaced: {
+					"/integrationtypeschemas": {
+						"GET": {
+							name: "getIntegrationtypeschemas"
 							response: {
 								items: [...#IntegrationTypeSchemaResource]
 							}

@@ -1,5 +1,5 @@
 import { OrgRole } from '@grafana/data';
-import { OrganizationState } from 'app/types/organization';
+import { type OrganizationState } from 'app/types/organization';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 

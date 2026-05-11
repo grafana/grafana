@@ -3,18 +3,18 @@ import { FormProvider, useForm } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
 import { Button, Drawer, Stack } from '@grafana/ui';
-import { Job, RepositoryView, useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning/v0alpha1';
+import { type Job, type RepositoryView, useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
-import { StepStatusInfo } from 'app/features/provisioning/Wizard/types';
+import { type StepStatusInfo } from 'app/features/provisioning/Wizard/types';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { useGetResourceRepositoryView } from '../../hooks/useGetResourceRepositoryView';
-import { StatusInfo } from '../../types';
-import { BaseProvisionedFormData } from '../../types/form';
+import { type StatusInfo } from '../../types';
+import { type BaseProvisionedFormData } from '../../types/form';
 import { useGetActiveJob } from '../../useGetActiveJob';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
-import { getCanPushToConfiguredBranch, getDefaultWorkflow } from '../defaults';
+import { getCanPushToConfiguredBranch, getDefaultRef, getDefaultWorkflow } from '../defaults';
 
 interface FixFolderMetadataDrawerProps {
   repositoryName: string;
@@ -80,7 +80,7 @@ export function FixFolderMetadataDrawer({ repositoryName, onDismiss }: FixFolder
   const defaultWorkflow = getDefaultWorkflow(repository);
 
   const defaultValues: BaseProvisionedFormData = {
-    ref: repository.branch ?? '',
+    ref: getDefaultRef(repository, 'fix-folder-ids'),
     path: '',
     comment: '',
     repo: repositoryName,

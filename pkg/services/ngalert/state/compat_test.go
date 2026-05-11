@@ -11,10 +11,11 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	alertingModels "github.com/grafana/alerting/models"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -181,6 +182,29 @@ func Test_StateToPostableAlert(t *testing.T) {
 				alertState.StateReason = "TEST_STATE_REASON"
 				result := StateToPostableAlert(alertState, appURL, featuremgmt.WithFeatures())
 				require.Equal(t, alertState.StateReason, result.Annotations[ngModels.StateReasonAnnotation])
+			})
+
+			t.Run("should propagate namespace UID label as annotation", func(t *testing.T) {
+				t.Run("when label is present and non-empty", func(t *testing.T) {
+					alertState := randomTransition(eval.Normal, tc.state)
+					alertState.Labels[alertingModels.NamespaceUIDLabel] = "test-namespace-uid"
+					result := StateToPostableAlert(alertState, appURL, featuremgmt.WithFeatures())
+					require.Equal(t, "test-namespace-uid", result.Annotations[alertingModels.NamespaceUIDLabel])
+				})
+
+				t.Run("when label is empty", func(t *testing.T) {
+					alertState := randomTransition(eval.Normal, tc.state)
+					alertState.Labels[alertingModels.NamespaceUIDLabel] = ""
+					result := StateToPostableAlert(alertState, appURL, featuremgmt.WithFeatures())
+					require.NotContains(t, result.Annotations, alertingModels.NamespaceUIDLabel)
+				})
+
+				t.Run("when label is missing", func(t *testing.T) {
+					alertState := randomTransition(eval.Normal, tc.state)
+					delete(alertState.Labels, alertingModels.NamespaceUIDLabel)
+					result := StateToPostableAlert(alertState, appURL, featuremgmt.WithFeatures())
+					require.NotContains(t, result.Annotations, alertingModels.NamespaceUIDLabel)
+				})
 			})
 
 			switch tc.state {
@@ -363,11 +387,11 @@ func randomTransition(from, to eval.State) StateTransition {
 			State:              to,
 			AlertRuleUID:       util.GenerateShortUID(),
 			StartsAt:           time.Now(),
-			FiredAt:            util.Pointer(randomTimeInPast()),
+			FiredAt:            new(randomTimeInPast()),
 			EndsAt:             randomTimeInFuture(),
 			LastEvaluationTime: randomTimeInPast(),
 			EvaluationDuration: randomDuration(),
-			LastSentAt:         util.Pointer(randomTimeInPast()),
+			LastSentAt:         new(randomTimeInPast()),
 			Annotations:        make(map[string]string),
 			Labels:             make(map[string]string),
 			Values:             make(map[string]float64),

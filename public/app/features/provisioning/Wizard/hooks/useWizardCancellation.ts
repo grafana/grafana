@@ -5,7 +5,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { useDeleteRepositoryMutation } from 'app/api/clients/provisioning/v0alpha1';
 
 import { PROVISIONING_URL } from '../../constants';
-import { RepoType, WizardStep } from '../types';
+import { type RepoType, type WizardStep } from '../types';
 
 export interface UseWizardCancellationParams {
   repoName: string;

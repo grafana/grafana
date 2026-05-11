@@ -112,20 +112,27 @@ func defaultRouteOnly[T models.Identified](eval ac.Evaluator) actionAccess[T] {
 	}
 }
 
+type permissionsService interface {
+	DeleteResourcePermissions(ctx context.Context, orgID int64, routeUID string) error
+	SetDefaultPermissions(ctx context.Context, orgID int64, user identity.Requester, routeUID string) error
+}
+
 type RouteAccess[T models.Identified] struct {
-	read        actionAccess[T]
-	create      actionAccess[T]
-	update      actionAccess[T]
-	delete      actionAccess[T]
-	permissions actionAccess[T]
+	read              actionAccess[T]
+	create            actionAccess[T]
+	update            actionAccess[T]
+	delete            actionAccess[T]
+	permissions       actionAccess[T]
+	permissionService permissionsService
 }
 
 // NewRouteAccess creates a new RouteAccess service. If includeProvisioningActions is true, the service will also
 // accept provisioning-specific permissions for the default route (alert.provisioning:read/write and
 // alert.notifications.provisioning:read/write). Like legacy permissions, provisioning permissions only grant access to
 // the default route, not to other managed routes.
-func NewRouteAccess[T models.Identified](a ac.AccessControl, includeProvisioningActions bool) *RouteAccess[T] {
+func NewRouteAccess[T models.Identified](a ac.AccessControl, permissionsService permissionsService, includeProvisioningActions bool) *RouteAccess[T] {
 	routeAccess := &RouteAccess[T]{
+		permissionService: permissionsService,
 		read: actionAccess[T]{
 			genericService: genericService{
 				ac: a,
@@ -256,6 +263,14 @@ func (s RouteAccess[T]) AuthorizeUpdateByUID(ctx context.Context, user identity.
 // AuthorizeReadByUID checks if user has access to read a route by name.
 func (s RouteAccess[T]) AuthorizeReadByUID(ctx context.Context, user identity.Requester, name string) error {
 	return s.read.Authorize(ctx, user, identified{uid: name})
+}
+
+func (s RouteAccess[T]) DeleteAllPermissions(ctx context.Context, orgID int64, route *legacy_storage.ManagedRoute) error {
+	return s.permissionService.DeleteResourcePermissions(ctx, orgID, route.GetUID())
+}
+
+func (s RouteAccess[T]) SetDefaultPermissions(ctx context.Context, user identity.Requester, route *legacy_storage.ManagedRoute) error {
+	return s.permissionService.SetDefaultPermissions(ctx, user.GetOrgID(), user, route.GetUID())
 }
 
 // Access returns the permission sets for a slice of routes.

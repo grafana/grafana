@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
+import { type GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Icon, Spinner, Stack, Tooltip, useStyles2 } from '@grafana/ui';
-import { CombinedRule } from 'app/types/unified-alerting';
+import { type CombinedRule } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { getFirstActiveAt, prometheusRuleType, rulerRuleType } from '../../utils/rules';
