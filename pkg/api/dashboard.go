@@ -528,8 +528,8 @@ func (hs *HTTPServer) saveDashboardViaK8s(c *contextmodel.ReqContext, cmd dashbo
 		}
 		// Check if provisioning allows edits.
 		// NOTE this would be handled by the storage layer, however the error is different so
-		// we are checking here to make the existing contracts on /api hold
-		if m, _ := oldMeta.GetManagerProperties(); !m.AllowsEdits {
+		// we are checking here to make the existing contracts on /api hold.
+		if m, ok := oldMeta.GetManagerProperties(); ok && !m.AllowsEdits {
 			return response.Error(http.StatusBadRequest, dashboards.ErrDashboardCannotSaveProvisionedDashboard.Error(), nil)
 		}
 
