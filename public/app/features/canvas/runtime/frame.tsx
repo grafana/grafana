@@ -18,7 +18,16 @@ import { initMoveable } from './sceneAbleManagement';
 const DEFAULT_OFFSET = 10;
 const HORIZONTAL_OFFSET = 50;
 
-const frameItemDummy: CanvasElementItem = {
+function removeFromByName(element: ElementState, scene: Scene) {
+  scene.byName.delete(element.options.name);
+  if (element instanceof FrameState) {
+    for (const child of element.elements) {
+      removeFromByName(child, scene);
+    }
+  }
+}
+
+export const frameItemDummy: CanvasElementItem = {
   id: 'frame',
   name: 'Frame',
   description: 'Frame',
@@ -123,7 +132,7 @@ export class FrameState extends ElementState {
       case LayerActionID.Delete:
         this.elements = this.elements.filter((e) => e !== element);
         updateConnectionsForSource(element, this.scene);
-        this.scene.byName.delete(element.options.name);
+        removeFromByName(element, this.scene);
         this.scene.save();
         this.reinitializeMoveable();
         break;
