@@ -323,7 +323,7 @@ func (s *Service) identityFromLDAPUser(user *login.ExternalUserInfo) *authn.Iden
 		IsGrafanaAdmin:  user.IsGrafanaAdmin,
 		AuthenticatedBy: user.AuthModule,
 		AuthID:          user.AuthId,
-		Groups:          user.Groups,
+		ExternalGroups:  user.Groups,
 		ClientParams: authn.ClientParams{
 			SyncUser:     true,
 			SyncTeams:    true,

@@ -15,6 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/watch"
 
 	"github.com/grafana/authlib/types"
@@ -37,10 +38,12 @@ type testSetup struct {
 	ctx       context.Context
 }
 
+var testResource = schema.GroupResource{Group: "test.grafana.app", Resource: "fakes"}
+
 func newTestSetup(t *testing.T) *testSetup {
 	mockStore := rest.NewMockStorage(t)
 	mockAuth := &FakeAuthorizer{}
-	wrapper := New(mockStore, mockAuth)
+	wrapper := New(mockStore, testResource, mockAuth)
 
 	ctx := identity.WithRequester(
 		context.Background(),
@@ -53,7 +56,7 @@ func newTestSetup(t *testing.T) *testSetup {
 func newTestSetupWithPreserveIdentity(t *testing.T) *testSetup {
 	mockStore := rest.NewMockStorage(t)
 	mockAuth := &FakeAuthorizer{}
-	wrapper := New(mockStore, mockAuth, WithPreserveIdentity())
+	wrapper := New(mockStore, testResource, mockAuth, WithPreserveIdentity())
 
 	ctx := identity.WithRequester(
 		context.Background(),
@@ -117,6 +120,54 @@ func TestWrapper_Create(t *testing.T) {
 		// Assert expectations
 		setup.mockAuth.AssertExpectations(t)
 		setup.mockStore.AssertNotCalled(t, "Create")
+	})
+}
+
+func TestWrapper_Observer(t *testing.T) {
+	t.Run("records authz and inner calls with explicit resource", func(t *testing.T) {
+		mockStore := rest.NewMockStorage(t)
+		mockAuth := &FakeAuthorizer{}
+		observer := &fakeObserver{}
+		resource := schema.GroupResource{Group: "iam.grafana.app", Resource: "resourcepermissions"}
+		wrapper := New(mockStore, resource, mockAuth, WithObserver(observer))
+		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{UserUID: "u001", Type: types.TypeUser})
+
+		obj := &fakeObject{}
+		createOpts := &metaV1.CreateOptions{}
+		expectedObj := &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "created"}}
+
+		mockAuth.On("BeforeCreate", mock.MatchedBy(matchesOriginalUser()), obj).Return(nil)
+		mockStore.On("Create", mock.MatchedBy(matchesServiceIdentity()), obj, mock.Anything, createOpts).Return(expectedObj, nil)
+
+		result, err := wrapper.Create(ctx, obj, nil, createOpts)
+
+		require.NoError(t, err)
+		assert.Equal(t, expectedObj, result)
+		assert.Equal(t, []observerCall{
+			{layer: LayerAuthz, resource: resource, op: "before_create", status: metaV1.StatusSuccess},
+			{layer: LayerInner, resource: resource, op: "create", status: metaV1.StatusSuccess},
+		}, observer.calls)
+	})
+
+	t.Run("records authz failure without inner call", func(t *testing.T) {
+		mockStore := rest.NewMockStorage(t)
+		mockAuth := &FakeAuthorizer{}
+		observer := &fakeObserver{}
+		resource := schema.GroupResource{Group: "iam.grafana.app", Resource: "resourcepermissions"}
+		wrapper := New(mockStore, resource, mockAuth, WithObserver(observer))
+		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{UserUID: "u001", Type: types.TypeUser})
+
+		obj := &fakeObject{}
+		mockAuth.On("BeforeCreate", mock.MatchedBy(matchesOriginalUser()), obj).Return(ErrUnauthorized)
+
+		result, err := wrapper.Create(ctx, obj, nil, &metaV1.CreateOptions{})
+
+		require.Error(t, err)
+		assert.Nil(t, result)
+		assert.Equal(t, []observerCall{
+			{layer: LayerAuthz, resource: resource, op: "before_create", status: string(metaV1.StatusReasonUnauthorized)},
+		}, observer.calls)
+		mockStore.AssertNotCalled(t, "Create")
 	})
 }
 
@@ -764,11 +815,7 @@ func TestWrapper_Watch(t *testing.T) {
 
 	t.Run("blocked consumer automatically shuts down the watch", func(t *testing.T) {
 		setup := newTestSetup(t)
-
-		defaultSendTimeout = 10 * time.Millisecond
-		defer func() {
-			defaultSendTimeout = 1 * time.Second
-		}()
+		setup.wrapper.watchSendTimeout = 10 * time.Millisecond
 
 		// Inner watcher has enough room to buffer the events without blocking.
 		inner := newPumpedWatcher(int(watch.DefaultChanSize) * 3)
@@ -803,7 +850,7 @@ func TestWrapper_Watch(t *testing.T) {
 		fakeWatcher := watch.NewFake()
 		watcherStore := &fakeWatcherStorage{K8sStorage: setup.mockStore, watcher: fakeWatcher}
 		// Re-create the wrapper with a short flush interval so the ticker case fires.
-		setup.wrapper = New(watcherStore, setup.mockAuth, WithWatchFlushInterval(10*time.Millisecond))
+		setup.wrapper = New(watcherStore, testResource, setup.mockAuth, WithWatchFlushInterval(10*time.Millisecond))
 
 		setup.mockAuth.On("WatchFilter", mock.Anything).Return(allowAllWatchFilter, nil)
 
@@ -938,9 +985,9 @@ func (f *fakeWatcherStorage) Watch(ctx context.Context, _ *internalversion.ListO
 // need to push events without racing on Stop (watch.FakeWatcher's Add/Stop are
 // not safe to call concurrently).
 type pumpedWatcher struct {
-	ch       chan watch.Event
-	stopOnce sync.Once
-	done     atomic.Bool
+	ch   chan watch.Event
+	mu   sync.Mutex
+	done atomic.Bool
 }
 
 func newPumpedWatcher(buffer int) *pumpedWatcher {
@@ -950,17 +997,45 @@ func newPumpedWatcher(buffer int) *pumpedWatcher {
 // Events will be written to the channel without blocking.
 // If the buffer is full, the event will be dropped.
 func (p *pumpedWatcher) push(e watch.Event) {
-	select {
-	case p.ch <- e:
-	default:
-		// Buffer full — drop. Tests using this just want to fill the pipeline.
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if !p.done.Load() {
+		select {
+		case p.ch <- e:
+		default:
+			// Buffer full — drop. Tests using this just want to fill the pipeline.
+		}
 	}
 }
 
 func (p *pumpedWatcher) Stop() {
-	p.stopOnce.Do(func() { close(p.ch); p.done.Store(true) })
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if !p.done.Load() {
+		p.done.Store(true)
+		close(p.ch)
+	}
 }
 
-func (p *pumpedWatcher) ResultChan() <-chan watch.Event { return p.ch }
+func (p *pumpedWatcher) ResultChan() <-chan watch.Event {
+	return p.ch
+}
 
-func (p *pumpedWatcher) IsStopped() bool { return p.done.Load() }
+func (p *pumpedWatcher) IsStopped() bool {
+	return p.done.Load()
+}
+
+type observerCall struct {
+	layer    string
+	resource schema.GroupResource
+	op       string
+	status   string
+}
+
+type fakeObserver struct {
+	calls []observerCall
+}
+
+func (f *fakeObserver) Observe(layer, op string, resource schema.GroupResource, _ time.Duration, status string) {
+	f.calls = append(f.calls, observerCall{layer: layer, resource: resource, op: op, status: status})
+}
