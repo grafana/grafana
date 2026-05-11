@@ -254,7 +254,7 @@ describe('SidebarCard', () => {
         { refId: 'A', datasource: { type: 'test', uid: 'test' } },
         { refId: 'B', datasource: { type: 'test', uid: 'test' } },
       ];
-      const item = { name: 'A', type: QueryEditorType.Query, isHidden: false };
+      const item: ActionItem = { id: 'A', type: QueryEditorType.Query, isHidden: false };
 
       const { user } = renderWithQueryEditorProvider(
         <SidebarCard id="A" isSelected={false} item={item} onSelect={onSelect}>
@@ -271,7 +271,7 @@ describe('SidebarCard', () => {
     it('passes multi: true to onSelect on plain click when in multi-select mode', async () => {
       const onSelect = jest.fn();
       const queries: DataQuery[] = [{ refId: 'A', datasource: { type: 'test', uid: 'test' } }];
-      const item = { name: 'A', type: QueryEditorType.Query, isHidden: false };
+      const item: ActionItem = { id: 'A', type: QueryEditorType.Query, isHidden: false };
 
       const { user } = renderWithQueryEditorProvider(
         <SidebarCard id="A" isSelected={false} item={item} onSelect={onSelect}>
@@ -288,7 +288,7 @@ describe('SidebarCard', () => {
     it('passes multi: true to onSelect on Enter when in multi-select mode', async () => {
       const onSelect = jest.fn();
       const queries: DataQuery[] = [{ refId: 'A', datasource: { type: 'test', uid: 'test' } }];
-      const item = { name: 'A', type: QueryEditorType.Query, isHidden: false };
+      const item: ActionItem = { id: 'A', type: QueryEditorType.Query, isHidden: false };
 
       const { user } = renderWithQueryEditorProvider(
         <SidebarCard id="A" isSelected={false} item={item} onSelect={onSelect}>
