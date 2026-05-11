@@ -15,6 +15,7 @@ labels:
 menuTitle: Troubleshooting
 title: Troubleshoot MySQL data source issues
 weight: 400
+review_date: 2026-05-11
 ---
 
 # Troubleshoot MySQL data source issues
@@ -170,6 +171,17 @@ These errors occur when there are issues with query syntax or configuration.
 1. Check that the column name passed to macros exists in your table.
 1. View the expanded query by clicking **Generated SQL** after running the query to debug macro expansion.
 1. Ensure backticks are used for reserved words or special characters in column names: `$__timeFilter(\`time-column\`)`.
+
+### Hash character in quoted strings causes query errors
+
+**Error message:** Query returns unexpected results or errors when string values contain `#`
+
+**Cause:** In versions before Grafana 13.0, the SQL comment stripping logic incorrectly treated `#` inside quoted strings (for example, `WHERE color = '#FF0000'`) as a comment delimiter, which stripped the rest of the line.
+
+**Solution:**
+
+1. Upgrade to Grafana 13.0 or later, which preserves `#` inside quoted strings.
+1. As a workaround on older versions, use the `CONCAT` function or a hexadecimal literal to avoid the `#` character in string literals.
 
 ### Timezone and time shift issues
 

@@ -16,6 +16,7 @@ labels:
 menuTitle: MySQL
 title: MySQL data source
 weight: 1000
+review_date: 2026-05-11
 ---
 
 # MySQL data source

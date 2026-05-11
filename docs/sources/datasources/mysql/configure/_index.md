@@ -15,6 +15,7 @@ labels:
 menuTitle: Configure
 title: Configure the MySQL data source
 weight: 10
+review_date: 2026-05-11
 ---
 
 # Configure the MySQL data source
@@ -110,6 +111,14 @@ The following are additional MySQL settings.
 **Private data source connect** - _Only for Grafana Cloud users._ Private data source connect, or PDC, allows you to establish a private, secured connection between a Grafana Cloud instance, or stack, and data sources secured within a private network. Click the drop-down to locate the URL for PDC. For more information regarding Grafana PDC refer to [Private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/).
 
 Click **Manage private data source connect** to be taken to your PDC connection page, where you’ll find your PDC configuration details.
+
+**Secure SOCKS proxy:**
+
+{{< admonition type="note" >}}
+This section is only visible when the Grafana server has the secure SOCKS proxy feature enabled.
+{{< /admonition >}}
+
+- **Enabled** - Toggle to route requests to the MySQL instance through a secure SOCKS proxy.
 
 Once you have added your MySQL connection settings, click **Save & test** to test and save the data source connection.
 
