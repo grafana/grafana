@@ -801,6 +801,16 @@ export interface DataTransformerConfig {
    * Valid options depend on the transformer id
    */
   options: unknown;
+  origin?: {
+    /**
+     * Transformation origin provenance
+     */
+    source: ('panel' | 'editor');
+    /**
+     * @todo I don't think we need the pluginId? The transformation is already stored in the viz panel, and we can't have transformations added from another panel?
+     */
+    pluginId?: string;
+  };
   /**
    * Where to pull DataFrames from as input to transformation
    */

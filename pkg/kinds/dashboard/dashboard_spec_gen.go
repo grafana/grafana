@@ -350,7 +350,8 @@ type DataTransformerConfig struct {
 	Topic *DataTransformerConfigTopic `json:"topic,omitempty"`
 	// Options to be passed to the transformer
 	// Valid options depend on the transformer id
-	Options any `json:"options"`
+	Options any                                   `json:"options"`
+	Origin  *DashboardDataTransformerConfigOrigin `json:"origin,omitempty"`
 }
 
 // NewDataTransformerConfig creates a new DataTransformerConfig object.
@@ -1151,6 +1152,18 @@ func NewDashboardSpecTemplating() *DashboardSpecTemplating {
 	return &DashboardSpecTemplating{}
 }
 
+type DashboardDataTransformerConfigOrigin struct {
+	// Transformation origin provenance
+	Source DashboardDataTransformerConfigOriginSource `json:"source"`
+	// @todo I don't think we need the pluginId? The transformation is already stored in the viz panel, and we can't have transformations added from another panel?
+	PluginId *string `json:"pluginId,omitempty"`
+}
+
+// NewDashboardDataTransformerConfigOrigin creates a new DashboardDataTransformerConfigOrigin object.
+func NewDashboardDataTransformerConfigOrigin() *DashboardDataTransformerConfigOrigin {
+	return &DashboardDataTransformerConfigOrigin{}
+}
+
 type DashboardFieldConfigSourceOverrides struct {
 	Matcher    MatcherConfig        `json:"matcher"`
 	Properties []DynamicConfigValue `json:"properties"`
@@ -1245,6 +1258,13 @@ const (
 	VariableModelStaticOptionsOrderBefore VariableModelStaticOptionsOrder = "before"
 	VariableModelStaticOptionsOrderAfter  VariableModelStaticOptionsOrder = "after"
 	VariableModelStaticOptionsOrderSorted VariableModelStaticOptionsOrder = "sorted"
+)
+
+type DashboardDataTransformerConfigOriginSource string
+
+const (
+	DashboardDataTransformerConfigOriginSourcePanel  DashboardDataTransformerConfigOriginSource = "panel"
+	DashboardDataTransformerConfigOriginSourceEditor DashboardDataTransformerConfigOriginSource = "editor"
 )
 
 type ValueMapOrRangeMapOrRegexMapOrSpecialValueMap struct {

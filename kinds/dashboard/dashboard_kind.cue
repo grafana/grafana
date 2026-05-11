@@ -547,9 +547,10 @@ lineage: schemas: [{
 			// Options to be passed to the transformer
 			// Valid options depend on the transformer id
 			options: _
-			// Metadata about where the transformation was created
 			origin?: {
-				source:    "panel" | "editor"
+				// Transformation origin provenance
+				source: "panel" | "editor"
+				// @todo I don't think we need the pluginId? The transformation is already stored in the viz panel, and we can't have transformations added from another panel?
 				pluginId?: string
 			}
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type")
