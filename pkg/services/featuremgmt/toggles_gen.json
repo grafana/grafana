@@ -2729,14 +2729,16 @@
     {
       "metadata": {
         "name": "grafana.orgDashboardTemplates",
-        "resourceVersion": "1777989950811",
-        "creationTimestamp": "2026-05-05T14:05:50Z"
+        "resourceVersion": "1778255533979",
+        "creationTimestamp": "2026-05-05T14:05:50Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-05-08 15:52:13.979194 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables org-defined dashboard templates for enterprise",
         "stage": "experimental",
         "codeowner": "@grafana/sharing-squad",
-        "frontend": true,
         "expression": "false"
       }
     },
