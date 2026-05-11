@@ -453,17 +453,7 @@ export function describeTimeRange(range: RawTimeRange, timeZone?: TimeZone, quic
   const options = { timeZone };
 
   if (isDateTime(range.from) && isDateTime(range.to)) {
-    const fromDate = range.from.toDate();
-    const toDate = range.to.toDate();
-
-    const hasSeconds = fromDate.getSeconds() !== 0 || toDate.getSeconds() !== 0;
-    const intlFormat = hasSeconds ? rangeFormatFull : rangeFormatShort;
-    const intlFormatOptions = {
-      ...intlFormat,
-      timeZone: timeZone ? toIANATimezone(timeZone) : undefined,
-    };
-
-    return formatDateRange(fromDate, toDate, intlFormatOptions);
+    return dateTimeFormat(range.from, options) + ' to ' + dateTimeFormat(range.to, options);
   }
 
   // TODO: We could update these to all use Intl APIs.
