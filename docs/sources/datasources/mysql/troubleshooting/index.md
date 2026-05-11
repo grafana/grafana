@@ -268,11 +268,11 @@ These errors occur when there are issues with query syntax or configuration.
 1. If the column name contains special characters or spaces, enclose it in backticks: `` `column-name` ``.
 1. Ensure the correct database is selected if you're referencing columns without the full table path.
 
-### CASE expression fails on non-standard string column types
+### `CASE` expression fails on non-standard string column types
 
 **Error message:** Query with `CASE WHEN` returns an error or unexpected results in Grafana, but works in other MySQL clients
 
-**Cause:** Grafana's MySQL driver doesn't handle all MySQL string subtypes (such as `ENUM`, `SET`, `TINYTEXT`, or `MEDIUMTEXT`) in `CASE` expressions. The driver may fail to infer the result type correctly.
+**Cause:** The Grafana MySQL driver doesn't handle all MySQL string subtypes (such as `ENUM`, `SET`, `TINYTEXT`, or `MEDIUMTEXT`) in `CASE` expressions. The driver may fail to infer the result type correctly.
 
 **Solution:**
 
