@@ -146,8 +146,8 @@ describe('TimeRangeForm', () => {
         'America/New_York'
       );
 
-      expect(await findByLabelText('From')).toHaveValue('2021-06-16 20:00:00');
-      expect(await findByLabelText('To')).toHaveValue('2021-06-19 19:59:00');
+      expect(await findByLabelText('From')).toHaveValue('16.06.2021 20:00:00');
+      expect(await findByLabelText('To')).toHaveValue('19.06.2021 19:59:00');
     });
   });
 
