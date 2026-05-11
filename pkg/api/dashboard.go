@@ -549,6 +549,10 @@ func (hs *HTTPServer) saveDashboardViaK8s(c *contextmodel.ReqContext, cmd dashbo
 	}
 	var dash *unstructured.Unstructured
 	if isCreate {
+		// Seed default RBAC permissions for the creator. The apistore strips
+		// this annotation before persisting and invokes its
+		// DefaultPermissionSetter hook after the resource is created.
+		meta.SetAnnotation(utils.AnnoKeyGrantPermissions, utils.AnnoGrantPermissionsDefault)
 		dash, err = client.Create(ctx, obj, metav1.CreateOptions{FieldValidation: validation})
 	} else {
 		dash, err = client.Update(ctx, obj, metav1.UpdateOptions{FieldValidation: validation})
@@ -560,23 +564,6 @@ func (hs *HTTPServer) saveDashboardViaK8s(c *contextmodel.ReqContext, cmd dashbo
 	dashMeta, err := utils.MetaAccessor(dash)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed get meta accessor", err)
-	}
-
-	// New dashboards need default RBAC permissions seeded. The K8s direct path
-	// bypasses DashboardService.SaveDashboard which previously did this; the
-	// apistore's AnnoKeyGrantPermissions hook is the alternative, but it
-	// leaves a managedFields trace in the persisted document.
-	if isCreate {
-		dto := &dashboards.SaveDashboardDTO{
-			OrgID: c.GetOrgID(),
-			User:  c.SignedInUser,
-			Dashboard: &dashboards.Dashboard{
-				ID:        dashMeta.GetDeprecatedInternalID(), //nolint:staticcheck
-				UID:       dashMeta.GetName(),
-				FolderUID: dashMeta.GetFolder(),
-			},
-		}
-		hs.DashboardService.SetDefaultPermissions(ctx, dto, dto.Dashboard, false)
 	}
 
 	title, _, _ = unstructured.NestedString(dash.Object, "spec", "title")
