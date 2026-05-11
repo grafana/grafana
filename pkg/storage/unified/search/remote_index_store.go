@@ -593,9 +593,10 @@ func ValidateIndexSnapshotManifest(meta *IndexMeta) error {
 }
 
 // ListIndexSnapshots returns the manifest for every complete snapshot under
-// nsResource. Snapshots whose manifest is missing or invalid are logged at
-// warn level on logger and skipped, matching the previous bucket-impl
-// behaviour.
+// nsResource. Snapshots whose manifest is missing or invalid are skipped;
+// invalid manifests are logged at warn level on logger, missing manifests
+// (in-progress uploads, or a concurrent cleanup pass deleting a snapshot
+// between the key listing and the manifest read) are silent.
 //
 // Note: snapshots may be deleted between listing and subsequent operations
 // (e.g. by a concurrent cleanup pass); callers acting on the returned
