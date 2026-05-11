@@ -50,8 +50,9 @@ func TestSearchHandler(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	accessClient := &fakeAccessClient{fn: func(_ authtypes.CheckRequest) bool { return true }}
-	handler := newSearchHandler(store, accessClient)
+	accessClient := &fakeAccessClient{fn: func(_ authtypes.BatchCheckItem) bool { return true }}
+	dashClient := newFakeFolderResolver(nil)
+	handler := newSearchHandler(store, accessClient, dashClient)
 
 	tests := []struct {
 		name          string
