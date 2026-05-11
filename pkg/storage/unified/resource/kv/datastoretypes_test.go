@@ -66,6 +66,27 @@ func TestParseDataKeyParts_ResourceVersionMetadata(t *testing.T) {
 		require.Equal(t, "f", dk.Folder)
 		require.Equal(t, []string{"1", "created", "f", "guid-xyz"}, rvParts)
 	})
+
+	t.Run("userstorage format with colon", func(t *testing.T) {
+		t.Parallel()
+		// User-storage names follow the "<service>:<userUID>" convention
+		// enforced by pkg/registry/apis/userstorage/strategy.go, so the Name
+		// segment of a KV key for these resources contains ':'. The KV regex
+		// must accept that, otherwise iterator-side validation rejects every
+		// freshly-written user-storage key with "received invalid key from
+		// server" and the resource server cannot init.
+		parts := strings.Split("userstorage.grafana.app/user-storage/default/grafana-splash-screen:myuser1234abcd/2052318477101322240~created~", "/")
+		dk, rvParts, err := ParseDataKeyParts(parts)
+		require.NoError(t, err)
+		require.Equal(t, "userstorage.grafana.app", dk.Group)
+		require.Equal(t, "user-storage", dk.Resource)
+		require.Equal(t, "default", dk.Namespace)
+		require.Equal(t, "grafana-splash-screen:myuser1234abcd", dk.Name)
+		require.Equal(t, int64(2052318477101322240), dk.ResourceVersion)
+		require.Equal(t, DataActionCreated, dk.Action)
+		require.Equal(t, "", dk.Folder)
+		require.Equal(t, []string{"2052318477101322240", "created", ""}, rvParts)
+	})
 }
 
 func TestParseKeyWithGUID(t *testing.T) {

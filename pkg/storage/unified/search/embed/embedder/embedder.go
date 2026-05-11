@@ -17,7 +17,7 @@ const (
 )
 
 // DistanceMetric is how the vector store compares embeddings. Recorded on
-// the Embedder so the orchestrator and search side stay in sync.
+// the Embedder so the resource embedder and search side stay in sync.
 type DistanceMetric string
 
 const (

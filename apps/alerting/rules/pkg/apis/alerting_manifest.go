@@ -63,6 +63,9 @@ var appManifestData = app.ManifestData{
 						"spec.paused",
 						"spec.panelRef.dashboardUID",
 						"spec.panelRef.panelID",
+						"spec.notificationSettings.type",
+						"spec.notificationSettings.receiver",
+						"spec.notificationSettings.routingTree",
 					},
 				},
 
@@ -89,6 +92,8 @@ var appManifestData = app.ManifestData{
 					SelectableFields: []string{
 						"spec.title",
 						"spec.paused",
+						"spec.metric",
+						"spec.targetDatasourceUID",
 					},
 				},
 			},

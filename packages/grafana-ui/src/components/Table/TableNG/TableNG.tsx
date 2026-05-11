@@ -64,6 +64,7 @@ import {
   useFilteredRows,
   useHeaderHeight,
   useManagedSort,
+  useNestedColWidths,
   useNestedRows,
   usePaginatedRows,
   useRowHeight,
@@ -174,6 +175,7 @@ export function TableNG(props: TableNGProps) {
   );
 
   const resizeHandler = useColumnResize(onColumnResize);
+  const nestedResizeHandler = useColumnResize(onColumnResize, 'nested');
 
   const hasNestedFrames = useMemo(() => getIsNestedTable(data.fields), [data]);
   const tableHasGeoCell = useMemo(() => hasGeoCell(data), [data]);
@@ -206,6 +208,14 @@ export function TableNG(props: TableNGProps) {
   );
   const nestedFields = useMemo(() => firstRowNestedData?.fields ?? [], [firstRowNestedData]);
   const nestedVisibleFields = useMemo(() => getVisibleFields(nestedFields), [nestedFields]);
+  const nestedHasFooter = useMemo(
+    () => nestedVisibleFields.some((field) => Boolean(field.config.custom?.footer?.reducers?.length)),
+    [nestedVisibleFields]
+  );
+  const nestedFooterHeight = useMemo(
+    () => (nestedHasFooter ? calculateFooterHeight(nestedVisibleFields) : 0),
+    [nestedHasFooter, nestedVisibleFields]
+  );
 
   const { rows: filteredRows, filter, setFilter, filterResult } = useFilteredRows(rows, data.fields, hasNestedFrames);
 
@@ -252,7 +262,12 @@ export function TableNG(props: TableNGProps) {
     },
     [getCellActions]
   );
-  const [expandedRows, setExpandedRows] = useState(() => new Set<number>());
+  const [expandedRows, setExpandedRows] = useState<Set<number>>(() => {
+    if (data.meta?.custom?.expandAllRows) {
+      return new Set(Array.from({ length: data.length }, (_, i) => i));
+    }
+    return new Set();
+  });
   const [selectedRows, setSelectedRows] = useState((): ReadonlySet<string> => new Set());
 
   // vt scrollbar accounting for column auto-sizing
@@ -298,7 +313,11 @@ export function TableNG(props: TableNGProps) {
     [nestedRows, expandedRows]
   );
 
-  const [nestedFieldWidths] = useColWidths(nestedVisibleFields, availableWidth);
+  const { nestedFieldWidths, nestedColWidths, handleNestedColumnWidthsChange } = useNestedColWidths({
+    nestedVisibleFields,
+    availableWidth,
+    structureRev,
+  });
 
   const hasNestedHeaders = useMemo(() => firstRowNestedData?.meta?.custom?.noHeader !== true, [firstRowNestedData]);
   const nestedHeaderHeight = useHeaderHeight({
@@ -331,6 +350,7 @@ export function TableNG(props: TableNGProps) {
     nestedColWidths: nestedFieldWidths,
     nestedFields: nestedVisibleFields,
     nestedRows,
+    nestedFooterHeight,
   });
 
   const {
@@ -367,33 +387,6 @@ export function TableNG(props: TableNGProps) {
     }
   }, [scrollToIndex, sortedRows]);
 
-  const [footers, isUniformFooter] = useMemo(() => {
-    const footers: Array<TableFooterOptions | undefined> = [];
-    let isUniformFooter = true;
-    let firstReducers: string[] | undefined;
-    for (const field of visibleFields) {
-      const footer = field.config?.custom?.footer;
-      footers.push(footer);
-
-      if (firstReducers === undefined && (footer?.reducers?.length ?? 0) > 0) {
-        firstReducers = footer?.reducers; // store the reducers for the first visible array with a footer.
-      } else if (firstReducers !== undefined) {
-        // once we have a list of reducers, compare each subsequent footer's reducers to the first.
-        const reducers: string[] | undefined = footer?.reducers;
-
-        // ignore fields with no footer reducers.
-        if (reducers?.length ?? 0 > 0) {
-          // isUniformFooter is false if there are different numbers of reducers or if the reducers are not identical.
-          if (reducers!.length !== firstReducers!.length || reducers!.some((r, idx) => firstReducers?.[idx] !== r)) {
-            isUniformFooter = false;
-            break;
-          }
-        }
-      }
-    }
-    return [footers, isUniformFooter];
-  }, [visibleFields]);
-
   // normalize the row height into a function which returns a number, so we avoid a bunch of conditionals during rendering.
   const rowHeightFn = useMemo((): ((row: TableRow) => number) => {
     if (typeof defaultNestedRowHeight === 'string') {
@@ -425,7 +418,6 @@ export function TableNG(props: TableNGProps) {
           sortable: true,
           // draggable: true,
         },
-        onColumnResize: resizeHandler,
         onSortColumnsChange: (newSortColumns: SortColumn[]) => {
           setSortColumns(newSortColumns);
           onSortByChange?.(
@@ -445,7 +437,6 @@ export function TableNG(props: TableNGProps) {
     [
       enableVirtualization,
       hasFooter,
-      resizeHandler,
       sortColumns,
       rowHeight,
       styles.headerRow,
@@ -462,6 +453,8 @@ export function TableNG(props: TableNGProps) {
       nestedColumnsMatrix: FromFieldsResult[],
       hasNestedHeaders: boolean,
       nestedHeaderHeightPx: number,
+      hasNestedFooter: boolean,
+      nestedFooterHeightPx: number,
       renderers: Renderers<TableRow, TableSummaryRow>
     ): TableColumn => ({
       key: EXPANDED_COLUMN_KEY,
@@ -525,10 +518,15 @@ export function TableNG(props: TableNGProps) {
               className={clsx(styles.grid, styles.gridNested)}
               headerRowClass={clsx(styles.headerRow, hasNestedHeaders ? '' : styles.displayNone)}
               headerRowHeight={hasNestedHeaders ? nestedHeaderHeightPx : 0}
+              bottomSummaryRows={hasNestedFooter ? [{}] : undefined}
+              summaryRowHeight={nestedFooterHeightPx}
+              onColumnResize={nestedResizeHandler}
               columns={nestedColumns}
               rows={expandedRecords}
               renderers={{ ...renderers, noRowsFallback: <EmptyTablePlaceholder noValue={noValue} /> }}
               onCellClick={onCellClick}
+              columnWidths={nestedColWidths}
+              onColumnWidthsChange={handleNestedColumnWidthsChange}
             />
           </div>
         );
@@ -553,6 +551,9 @@ export function TableNG(props: TableNGProps) {
       noValue,
       onCellClick,
       uniqueId,
+      nestedColWidths,
+      nestedResizeHandler,
+      handleNestedColumnWidthsChange,
     ]
   );
 
@@ -568,6 +569,38 @@ export function TableNG(props: TableNGProps) {
         columns: [],
         cellRootRenderers: {},
       };
+
+      // Derive footer config from the fields being processed so nested tables use
+      // their own footer configuration rather than the top-level table's.
+      const fieldFooters: Array<TableFooterOptions | undefined> = [];
+      let isFieldUniformFooter = true;
+      let firstFooterReducers: string[] | undefined;
+      for (const field of f) {
+        const footer = field.config?.custom?.footer;
+        const reducers: string[] | undefined = footer?.reducers;
+
+        fieldFooters.push(footer);
+
+        // if reducers are undefined or empty on the footer, don't retain them for comparison.
+        if (reducers === undefined || reducers.length === 0) {
+          continue;
+        }
+
+        // first time we encounter a viable footer config, store it and move on.
+        if (firstFooterReducers === undefined) {
+          firstFooterReducers = reducers;
+          continue;
+        }
+
+        // for all other viable footer configs, check to see if the reducers match the first one we encountered.
+        if (
+          reducers.length !== firstFooterReducers.length ||
+          reducers.some((r, idx) => firstFooterReducers?.[idx] !== r)
+        ) {
+          isFieldUniformFooter = false;
+          break;
+        }
+      }
 
       // Reuse pre-computed filter results — no re-scanning of rows needed.
       // Top-level tables use filterResult from useFilteredRows; nested tables use the
@@ -858,12 +891,12 @@ export function TableNG(props: TableNGProps) {
           renderSummaryCell: () => (
             <SummaryCell
               rows={visibleRows}
-              footers={footers}
+              footers={fieldFooters}
               field={field}
               colIdx={i}
               textAlign={getSummaryCellTextAlign(textAlign, cellType)}
-              rowLabel={isUniformFooter && i === 0}
-              hideLabel={isUniformFooter && i !== 0}
+              rowLabel={isFieldUniformFooter && i === 0}
+              hideLabel={isFieldUniformFooter && i !== 0}
             />
           ),
         });
@@ -877,12 +910,10 @@ export function TableNG(props: TableNGProps) {
       disableSanitizeHtml,
       filter,
       filterResult,
-      footers,
       frozenColumns,
       getCellActions,
       getCellColorInlineStyles,
       getTextColorForBackground,
-      isUniformFooter,
       maxRowHeight,
       nestedRows,
       numFrozenColsFullyInView,
@@ -934,11 +965,18 @@ export function TableNG(props: TableNGProps) {
 
     // If we have nested frames, we need to add a column for the row expansion
     result.columns.unshift(
-      buildNestedTableExpanderColumn(nestedColumnsMatrix, hasNestedHeaders, nestedHeaderHeight, {
-        renderRow,
-        renderCell: (key, props) =>
-          nestedColumnsMatrix[props.row.__parentIndex!].cellRootRenderers[props.column.key](key, props),
-      })
+      buildNestedTableExpanderColumn(
+        nestedColumnsMatrix,
+        hasNestedHeaders,
+        nestedHeaderHeight,
+        nestedHasFooter,
+        nestedFooterHeight,
+        {
+          renderRow,
+          renderCell: (key, props) =>
+            nestedColumnsMatrix[props.row.__parentIndex!].cellRootRenderers[props.column.key](key, props),
+        }
+      )
     );
 
     return result;
@@ -951,6 +989,8 @@ export function TableNG(props: TableNGProps) {
     fromFields,
     hasNestedHeaders,
     nestedColumnsMatrix,
+    nestedFooterHeight,
+    nestedHasFooter,
     nestedHeaderHeight,
     panelContext,
     rows,
@@ -986,6 +1026,7 @@ export function TableNG(props: TableNGProps) {
         onSelectedRowsChange={setSelectedRows}
         headerRowClass={clsx(styles.headerRow, noHeader ? styles.displayNone : '')}
         headerRowHeight={headerHeight}
+        onColumnResize={resizeHandler}
         onCellClick={onCellClick}
         onCellKeyDown={({ column, row }, event) => {
           // if top-left cell, use default browser tabbing

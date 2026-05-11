@@ -13,10 +13,11 @@ import (
 	"github.com/benbjohnson/clock"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/alerting/models"
 
@@ -47,7 +48,7 @@ func TestSetAlerting(t *testing.T) {
 			StateReason: "this is a reason",
 			StartsAt:    mock.Now(),
 			EndsAt:      mock.Now().Add(time.Minute),
-			FiredAt:     util.Pointer(mock.Now()),
+			FiredAt:     new(mock.Now()),
 		},
 	}, {
 		name: "previous state is removed",
@@ -62,7 +63,7 @@ func TestSetAlerting(t *testing.T) {
 			State:    eval.Alerting,
 			StartsAt: mock.Now(),
 			EndsAt:   mock.Now().Add(time.Minute),
-			FiredAt:  util.Pointer(mock.Now()),
+			FiredAt:  new(mock.Now()),
 		},
 	}}
 
@@ -370,7 +371,7 @@ func TestNeedsSending(t *testing.T) {
 			testState: &State{
 				State:              eval.Alerting,
 				LastEvaluationTime: evaluationTime,
-				LastSentAt:         util.Pointer(evaluationTime.Add(-2 * time.Minute)),
+				LastSentAt:         new(evaluationTime.Add(-2 * time.Minute)),
 			},
 		},
 		{
@@ -380,7 +381,7 @@ func TestNeedsSending(t *testing.T) {
 			testState: &State{
 				State:              eval.Alerting,
 				LastEvaluationTime: evaluationTime,
-				LastSentAt:         util.Pointer(evaluationTime),
+				LastSentAt:         new(evaluationTime),
 			},
 		},
 		{
@@ -390,7 +391,7 @@ func TestNeedsSending(t *testing.T) {
 			testState: &State{
 				State:              eval.Alerting,
 				LastEvaluationTime: evaluationTime,
-				LastSentAt:         util.Pointer(evaluationTime.Add(-1 * time.Minute)),
+				LastSentAt:         new(evaluationTime.Add(-1 * time.Minute)),
 			},
 		},
 		{
@@ -408,7 +409,7 @@ func TestNeedsSending(t *testing.T) {
 			testState: &State{
 				State:              eval.Alerting,
 				LastEvaluationTime: evaluationTime,
-				LastSentAt:         util.Pointer(evaluationTime),
+				LastSentAt:         new(evaluationTime),
 			},
 		},
 		{
@@ -417,9 +418,9 @@ func TestNeedsSending(t *testing.T) {
 			expected:    true,
 			testState: &State{
 				State:              eval.Normal,
-				ResolvedAt:         util.Pointer(evaluationTime),
+				ResolvedAt:         new(evaluationTime),
 				LastEvaluationTime: evaluationTime,
-				LastSentAt:         util.Pointer(evaluationTime.Add(-1 * time.Minute)),
+				LastSentAt:         new(evaluationTime.Add(-1 * time.Minute)),
 			},
 		},
 		{
@@ -429,9 +430,9 @@ func TestNeedsSending(t *testing.T) {
 			expected:          true,
 			testState: &State{
 				State:              eval.Normal,
-				ResolvedAt:         util.Pointer(evaluationTime.Add(-2 * time.Minute)),
+				ResolvedAt:         new(evaluationTime.Add(-2 * time.Minute)),
 				LastEvaluationTime: evaluationTime,
-				LastSentAt:         util.Pointer(evaluationTime.Add(-1 * time.Minute)),
+				LastSentAt:         new(evaluationTime.Add(-1 * time.Minute)),
 			},
 		},
 		{
@@ -441,9 +442,9 @@ func TestNeedsSending(t *testing.T) {
 			expected:          false,
 			testState: &State{
 				State:              eval.Normal,
-				ResolvedAt:         util.Pointer(evaluationTime.Add(-2 * time.Minute)),
+				ResolvedAt:         new(evaluationTime.Add(-2 * time.Minute)),
 				LastEvaluationTime: evaluationTime,
-				LastSentAt:         util.Pointer(evaluationTime.Add(-1 * time.Minute)),
+				LastSentAt:         new(evaluationTime.Add(-1 * time.Minute)),
 			},
 		},
 		{
@@ -453,9 +454,9 @@ func TestNeedsSending(t *testing.T) {
 			expected:          false,
 			testState: &State{
 				State:              eval.Normal,
-				ResolvedAt:         util.Pointer(evaluationTime.Add(-16 * time.Minute)),
+				ResolvedAt:         new(evaluationTime.Add(-16 * time.Minute)),
 				LastEvaluationTime: evaluationTime,
-				LastSentAt:         util.Pointer(evaluationTime.Add(-1 * time.Minute)),
+				LastSentAt:         new(evaluationTime.Add(-1 * time.Minute)),
 			},
 		},
 		{
@@ -464,9 +465,9 @@ func TestNeedsSending(t *testing.T) {
 			expected:    false,
 			testState: &State{
 				State:              eval.Normal,
-				ResolvedAt:         util.Pointer(time.Time{}),
+				ResolvedAt:         new(time.Time{}),
 				LastEvaluationTime: evaluationTime,
-				LastSentAt:         util.Pointer(evaluationTime.Add(-1 * time.Minute)),
+				LastSentAt:         new(evaluationTime.Add(-1 * time.Minute)),
 			},
 		},
 		{
@@ -476,7 +477,7 @@ func TestNeedsSending(t *testing.T) {
 			testState: &State{
 				State:              eval.NoData,
 				LastEvaluationTime: evaluationTime,
-				LastSentAt:         util.Pointer(evaluationTime.Add(-1 * time.Minute)),
+				LastSentAt:         new(evaluationTime.Add(-1 * time.Minute)),
 			},
 		},
 		{
@@ -486,7 +487,7 @@ func TestNeedsSending(t *testing.T) {
 			testState: &State{
 				State:              eval.NoData,
 				LastEvaluationTime: evaluationTime,
-				LastSentAt:         util.Pointer(evaluationTime.Add(-time.Duration(rand.Int63n(59)+1) * time.Second)),
+				LastSentAt:         new(evaluationTime.Add(-time.Duration(rand.Int63n(59)+1) * time.Second)),
 			},
 		},
 		{
@@ -496,7 +497,7 @@ func TestNeedsSending(t *testing.T) {
 			testState: &State{
 				State:              eval.Error,
 				LastEvaluationTime: evaluationTime,
-				LastSentAt:         util.Pointer(evaluationTime.Add(-1 * time.Minute)),
+				LastSentAt:         new(evaluationTime.Add(-1 * time.Minute)),
 			},
 		},
 		{
@@ -506,7 +507,7 @@ func TestNeedsSending(t *testing.T) {
 			testState: &State{
 				State:              eval.Error,
 				LastEvaluationTime: evaluationTime,
-				LastSentAt:         util.Pointer(evaluationTime.Add(-time.Duration(rand.Int63n(59)+1) * time.Second)),
+				LastSentAt:         new(evaluationTime.Add(-time.Duration(rand.Int63n(59)+1) * time.Second)),
 			},
 		},
 	}
@@ -729,7 +730,7 @@ func TestTakeImage(t *testing.T) {
 		defer ctrl.Finish()
 
 		ctx := context.Background()
-		r := ngmodels.AlertRule{DashboardUID: util.Pointer("foo")}
+		r := ngmodels.AlertRule{DashboardUID: new("foo")}
 		s := NewMockImageCapturer(ctrl)
 
 		s.EXPECT().NewImage(ctx, &r).Return(nil, ngmodels.ErrNoPanel)
@@ -743,7 +744,7 @@ func TestTakeImage(t *testing.T) {
 		defer ctrl.Finish()
 
 		ctx := context.Background()
-		r := ngmodels.AlertRule{DashboardUID: util.Pointer("foo"), PanelID: util.Pointer(int64(1))}
+		r := ngmodels.AlertRule{DashboardUID: new("foo"), PanelID: new(int64(1))}
 		s := NewMockImageCapturer(ctrl)
 
 		s.EXPECT().NewImage(ctx, &r).Return(nil, screenshot.ErrScreenshotsUnavailable)
@@ -757,7 +758,7 @@ func TestTakeImage(t *testing.T) {
 		defer ctrl.Finish()
 
 		ctx := context.Background()
-		r := ngmodels.AlertRule{DashboardUID: util.Pointer("foo"), PanelID: util.Pointer(int64(1))}
+		r := ngmodels.AlertRule{DashboardUID: new("foo"), PanelID: new(int64(1))}
 		s := NewMockImageCapturer(ctrl)
 
 		s.EXPECT().NewImage(ctx, &r).Return(nil, errors.New("unknown error"))
@@ -771,7 +772,7 @@ func TestTakeImage(t *testing.T) {
 		defer ctrl.Finish()
 
 		ctx := context.Background()
-		r := ngmodels.AlertRule{DashboardUID: util.Pointer("foo"), PanelID: util.Pointer(int64(1))}
+		r := ngmodels.AlertRule{DashboardUID: new("foo"), PanelID: new(int64(1))}
 		s := NewMockImageCapturer(ctrl)
 
 		s.EXPECT().NewImage(ctx, &r).Return(&ngmodels.Image{Path: "foo.png"}, nil)
@@ -823,7 +824,7 @@ func TestGetRuleExtraLabels(t *testing.T) {
 	cpr := ngmodels.ContactPointRouting{
 		Receiver:  "Test",
 		GroupBy:   []string{"alertname"},
-		GroupWait: util.Pointer(model.Duration(1 * time.Second)),
+		GroupWait: new(model.Duration(1 * time.Second)),
 	}
 
 	testCases := map[string]struct {
@@ -884,7 +885,7 @@ func TestGetRuleExtraLabels(t *testing.T) {
 		"with_both_routing": { // This is technically an invalid state, but we want to ensure that we fallback to something sane instead of failing.
 			rule: func() *ngmodels.AlertRule {
 				r := ngmodels.CopyRule(rule, ngmodels.RuleGen.WithContactPointRouting(ngmodels.CopyContactPointRouting(cpr)))
-				r.NotificationSettings.PolicyRouting = util.Pointer(ngmodels.PolicyRouting{Policy: "policy-a"})
+				r.NotificationSettings.PolicyRouting = new(ngmodels.PolicyRouting{Policy: "policy-a"})
 				return r
 			}(),
 			features: featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies),
