@@ -33,6 +33,7 @@ import { type DashboardLayoutGrid } from '../types/DashboardLayoutGrid';
 import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { type LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
+import { AddPanelToAutoGridAction } from './AddPanelToAutoGridAction';
 import { AutoGridItem } from './AutoGridItem';
 import { AutoGridLayout } from './AutoGridLayout';
 import { getEditOptions } from './AutoGridLayoutManagerEditor';
@@ -121,25 +122,7 @@ export class AutoGridLayoutManager
   }
 
   public addPanel(vizPanel: VizPanel) {
-    const panelId = dashboardSceneGraph.getNextPanelId(this);
-
-    vizPanel.setState({ key: getVizPanelKeyForPanelId(panelId) });
-    vizPanel.clearParent();
-
-    const newGridItem = new AutoGridItem({ body: vizPanel });
-
-    dashboardEditActions.addElement({
-      addedObject: vizPanel,
-      source: this,
-      perform: () => {
-        this.state.layout.setState({ children: [...this.state.layout.state.children, newGridItem] });
-      },
-      undo: () => {
-        this.state.layout.setState({
-          children: this.state.layout.state.children.filter((child) => child !== newGridItem),
-        });
-      },
-    });
+    dashboardEditActions.edit(new AddPanelToAutoGridAction(this, vizPanel));
   }
 
   public pastePanel() {
