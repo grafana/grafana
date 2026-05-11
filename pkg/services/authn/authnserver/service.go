@@ -57,7 +57,7 @@ func (s *Service) Authenticate(ctx context.Context, req *authnv1.AuthenticateReq
 
 	if req != nil && req.Namespace != "" {
 		ctx = request.WithNamespace(ctx, req.Namespace)
-		span.SetAttributes(attribute.String("namespace", req.Namespace))
+		span.SetAttributes(attribute.String("authn.namespace", req.Namespace))
 	}
 
 	grpclog.AddFields(ctx, grpclog.Fields{"authn.headers", headerNames(req.GetHttpHeaders())})
