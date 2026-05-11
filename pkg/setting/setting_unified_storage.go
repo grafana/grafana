@@ -175,6 +175,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	}
 	cfg.EnableSearch = section.Key("enable_search").MustBool(true)
 	cfg.EnableVectorBackend = section.Key("vector_backend").MustBool(false)
+	cfg.VectorBackfillerEnabled = section.Key("vector_backfiller_enabled").MustBool(false)
 	cfg.applyMigrationEnforcements()
 	cfg.EnableSearchClient = section.Key("enable_search_client").MustBool(false)
 	cfg.MaxPageSizeBytes = section.Key("max_page_size_bytes").MustInt(0)
@@ -276,8 +277,8 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.VectorDBUser = vectorSection.Key("db_user").String()
 	cfg.VectorDBPassword = vectorSection.Key("db_password").String()
 	cfg.VectorDBSSLMode = vectorSection.Key("db_sslmode").MustString("disable")
-	cfg.VectorPromotionThreshold = vectorSection.Key("promotion_threshold").MustInt(9999999) // effectively disabled by default
-	cfg.VectorPromoterInterval = vectorSection.Key("promoter_interval").MustDuration(1 * time.Hour)
+	cfg.VectorPromotionThreshold = vectorSection.Key("promotion_threshold").MustInt(10000)
+	cfg.VectorPromoterInterval = vectorSection.Key("promoter_interval").MustDuration(0) // zero means disabled
 
 	// Embedding provider for the VectorSearch RPC. Empty = disabled (RPC
 	// returns Unimplemented). When set, the matching provider's connection

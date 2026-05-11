@@ -54,7 +54,7 @@ export function getAppPluginSettings(pluginId: string, showErrorAlert?: boolean)
  * @returns The plugin's `PluginMeta`.
  */
 export async function getPluginSettings(pluginId: string, showErrorAlert = false): Promise<PluginMeta> {
-  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.UseMTPluginSettings, false)) {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPluginSettings, false)) {
     return getCachedLegacySettings(pluginId, showErrorAlert);
   }
 

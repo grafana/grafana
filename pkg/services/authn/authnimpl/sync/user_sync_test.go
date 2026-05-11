@@ -2261,3 +2261,24 @@ func TestUserSync_SyncUserHook_SCIMUserAllowsGCOMLogin(t *testing.T) {
 
 	require.NoError(t, err)
 }
+
+// Pins: id.Groups ← usr.TeamUIDs; id.ExternalGroups preserved.
+func TestSyncSignedInUserToIdentity_GroupsContract(t *testing.T) {
+	usr := &user.SignedInUser{
+		UserID:   42,
+		UserUID:  "uid-42",
+		Login:    "alice",
+		TeamUIDs: []string{"team-uid-1", "team-uid-2"},
+	}
+
+	id := &authn.Identity{
+		ExternalGroups: []string{"ldap-admins", "ldap-devs"},
+	}
+
+	syncSignedInUserToIdentity(usr, id)
+
+	assert.Equal(t, []string{"team-uid-1", "team-uid-2"}, id.Groups,
+		"Groups must be populated from usr.TeamUIDs")
+	assert.Equal(t, []string{"ldap-admins", "ldap-devs"}, id.ExternalGroups,
+		"ExternalGroups (set by the auth client) must not be clobbered by the user-sync hook")
+}

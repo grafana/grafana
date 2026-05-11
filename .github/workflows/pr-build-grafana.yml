@@ -178,3 +178,6 @@ jobs:
           api-token: ${{ env.METICULOUS_API_TOKEN }}
           image-tag: ${{ env.IMAGE_TAG }}
           container-port: 3000
+          container-env: |
+            GF_AUTH_ANONYMOUS_ENABLED=true
+            GF_AUTH_ANONYMOUS_ORG_ROLE=Admin

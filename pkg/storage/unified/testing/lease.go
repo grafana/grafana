@@ -34,6 +34,7 @@ func RunLeaseTest(t *testing.T, newKV NewKVFunc) {
 	t.Run("concurrency", func(t *testing.T) { runLeaseConcurrency(t, store) })
 	t.Run("expiration", func(t *testing.T) { runLeaseExpiration(t, store) })
 	t.Run("release semantics", func(t *testing.T) { runLeaseReleaseSemantics(t, store) })
+	t.Run("auto-renew", func(t *testing.T) { runLeaseAutoRenew(t, store) })
 	t.Run("notifying loss", func(t *testing.T) { runLeaseLoss(t, store) })
 	t.Run("kv errors", func(t *testing.T) { runLeaseKVErrors(t, &leaseFailingKV{KV: store}) })
 	t.Run("property-based testing", func(t *testing.T) { runLeasePBT(t, store) })
@@ -276,6 +277,48 @@ func runLeaseReleaseSemantics(t *testing.T, store kv.KV) {
 
 		err = m.Release(ctx, l)
 		require.ErrorIs(t, err, lease.ErrLeaseLost)
+	})
+}
+
+func runLeaseAutoRenew(t *testing.T, store kv.KV) {
+	const ttl = 500 * time.Millisecond
+	ctx := t.Context()
+
+	t.Run("keeps lease alive past TTL", func(t *testing.T) {
+		a := lease.NewManager(store, "holder-renew-a", lease.WithInternalMinTTL(ttl))
+		b := lease.NewManager(store, "holder-renew-b", lease.WithInternalMinTTL(ttl))
+
+		l, err := a.Acquire(ctx, "renew/alive", lease.WithTTL(ttl), lease.WithAutoRenew())
+		require.NoError(t, err)
+
+		// Sleep well past the original TTL — auto-renewal should keep it alive.
+		time.Sleep(ttl * 3)
+
+		_, err = b.Acquire(ctx, "renew/alive", lease.WithTTL(ttl))
+		require.ErrorIs(t, err, lease.ErrLeaseAlreadyHeld)
+
+		select {
+		case <-l.Lost():
+			t.Fatal("Lost() fired despite auto-renewal")
+		default:
+		}
+
+		require.NoError(t, a.Release(ctx, l))
+	})
+
+	t.Run("Lost fires on Release", func(t *testing.T) {
+		m := lease.NewManager(store, "holder-renew-release", lease.WithInternalMinTTL(ttl))
+
+		l, err := m.Acquire(ctx, "renew/release", lease.WithTTL(ttl), lease.WithAutoRenew())
+		require.NoError(t, err)
+
+		require.NoError(t, m.Release(ctx, l))
+
+		select {
+		case <-l.Lost():
+		case <-time.After(time.Second):
+			t.Fatal("Lost() did not close after Release")
+		}
 	})
 }
 
