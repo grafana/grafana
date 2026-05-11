@@ -744,7 +744,7 @@ Same `{ element, layoutItem }` shape as ADD_PANEL and UPDATE_PANEL. When moving 
 
 ## Variables
 
-Variable commands accept optional **`parentPath`** (layout path from `GET_LAYOUT`). Default **`"/"`** targets **dashboard-level** variables. Paths ending at a **row** or **tab** (for example `"/rows/0"` or `"/tabs/1/rows/0"`) target that section’s variable set. **`UPDATE_VARIABLE`** and **`REMOVE_VARIABLE`** require an explicit **`parentPath`** when the name does not exist on the dashboard but exists on a section (omit or `"/"` only affects dashboard scope).
+Variable commands accept optional **`parentPath`** (layout path from `GET_LAYOUT`). Default **`"/"`** targets **dashboard-level** variables. Paths ending at a **row** or **tab** (for example `"/rows/0"` or `"/tabs/1/rows/0"`) target that section’s variable set **only when `dashboardSectionVariables` is enabled**. When the toggle is off, `parentPath` is ignored and commands behave as dashboard-scope (`"/"`). **`UPDATE_VARIABLE`** and **`REMOVE_VARIABLE`** require an explicit **`parentPath`** when the name does not exist on the dashboard but exists on a section (with section variables enabled).
 
 ### `ADD_VARIABLE`
 
@@ -795,7 +795,7 @@ Variable commands accept optional **`parentPath`** (layout path from `GET_LAYOUT
 }
 ```
 
-For section scope, `changes[0].path` is prefixed (for example `"/rows/0/variables/region"`).
+For section scope, `changes[0].path` is prefixed (for example `"/rows/0/variables/region"`). With `dashboardSectionVariables` disabled, `changes[0].path` remains dashboard-scoped (for example `"/variables/env"`).
 
 ### `UPDATE_VARIABLE`
 

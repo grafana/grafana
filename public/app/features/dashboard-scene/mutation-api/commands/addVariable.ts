@@ -12,7 +12,7 @@ import { createSceneVariableFromVariableModel } from '../../serialization/transf
 
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
-import { buildVariableChangePath, resolveVariableScope } from './variableScope';
+import { buildVariableChangePath, getEffectiveVariableParentPath, resolveVariableScope } from './variableScope';
 import { getOwnerVariableArray, replaceOwnerVariableSet } from './variableUtils';
 
 const addVariablePayloadSchema = payloads.addVariable;
@@ -34,8 +34,9 @@ export const addVariableCommand: MutationCommand<AddVariablePayload> = {
     try {
       const { variable: variableKind, position, parentPath } = payload;
       const name = variableKind.spec.name;
+      const effectiveParentPath = getEffectiveVariableParentPath(parentPath);
 
-      const { owner, layoutPathPrefix } = resolveVariableScope(scene, parentPath);
+      const { owner, layoutPathPrefix } = resolveVariableScope(scene, effectiveParentPath);
 
       const existingVariables = owner.state.$variables;
       if (existingVariables) {

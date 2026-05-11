@@ -16,6 +16,7 @@ import {
 import { resolveLayoutPath } from './layoutPathResolver';
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresNewDashboardLayouts, type MutationCommand } from './types';
+import { isSectionVariablesFeatureEnabled } from './variableScope';
 
 const updateRowPayloadSchema = payloads.updateRow;
 
@@ -76,7 +77,7 @@ export const updateRowCommand: MutationCommand<UpdateRowPayload> = {
         row.setState({ conditionalRendering: group });
       }
 
-      if (spec.variables !== undefined) {
+      if (spec.variables !== undefined && isSectionVariablesFeatureEnabled()) {
         row.setState({ $variables: deserializeSectionVariables(spec.variables) });
       }
 

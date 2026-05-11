@@ -8,7 +8,13 @@ import { type z } from 'zod';
 
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
-import { buildVariableChangePath, findSectionPathsContainingVariable, resolveVariableScope } from './variableScope';
+import {
+  buildVariableChangePath,
+  findSectionPathsContainingVariable,
+  getEffectiveVariableParentPath,
+  isSectionVariablesFeatureEnabled,
+  resolveVariableScope,
+} from './variableScope';
 import { dashboardHasVariableNamed, getOwnerVariableArray, replaceOwnerVariableSet } from './variableUtils';
 
 const removeVariablePayloadSchema = payloads.removeVariable;
@@ -26,13 +32,15 @@ export const removeVariableCommand: MutationCommand<RemoveVariablePayload> = {
   handler: async (payload, context) => {
     const { scene } = context;
     const { name, parentPath } = payload;
+    const effectiveParentPath = getEffectiveVariableParentPath(parentPath);
+    const sectionVariablesEnabled = isSectionVariablesFeatureEnabled();
     enterEditModeIfNeeded(scene);
 
     try {
       let scope;
-      if (parentPath === undefined || parentPath === '/') {
+      if (effectiveParentPath === '/') {
         if (!dashboardHasVariableNamed(scene, name)) {
-          const sectionPaths = findSectionPathsContainingVariable(scene, name);
+          const sectionPaths = sectionVariablesEnabled ? findSectionPathsContainingVariable(scene, name) : [];
           if (sectionPaths.length === 0) {
             throw new Error(`Variable '${name}' not found`);
           }
@@ -42,7 +50,7 @@ export const removeVariableCommand: MutationCommand<RemoveVariablePayload> = {
         }
         scope = resolveVariableScope(scene, '/');
       } else {
-        scope = resolveVariableScope(scene, parentPath);
+        scope = resolveVariableScope(scene, effectiveParentPath);
       }
 
       const { owner, layoutPathPrefix } = scope;

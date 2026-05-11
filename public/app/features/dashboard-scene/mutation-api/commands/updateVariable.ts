@@ -12,7 +12,13 @@ import { createSceneVariableFromVariableModel } from '../../serialization/transf
 
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
-import { buildVariableChangePath, findSectionPathsContainingVariable, resolveVariableScope } from './variableScope';
+import {
+  buildVariableChangePath,
+  findSectionPathsContainingVariable,
+  getEffectiveVariableParentPath,
+  isSectionVariablesFeatureEnabled,
+  resolveVariableScope,
+} from './variableScope';
 import { dashboardHasVariableNamed, getOwnerVariableArray, replaceOwnerVariableSet } from './variableUtils';
 
 const updateVariablePayloadSchema = payloads.updateVariable;
@@ -33,11 +39,13 @@ export const updateVariableCommand: MutationCommand<UpdateVariablePayload> = {
 
     try {
       const { name, variable: variableKind, parentPath } = payload;
+      const effectiveParentPath = getEffectiveVariableParentPath(parentPath);
+      const sectionVariablesEnabled = isSectionVariablesFeatureEnabled();
 
       let scope;
-      if (parentPath === undefined || parentPath === '/') {
+      if (effectiveParentPath === '/') {
         if (!dashboardHasVariableNamed(scene, name)) {
-          const sectionPaths = findSectionPathsContainingVariable(scene, name);
+          const sectionPaths = sectionVariablesEnabled ? findSectionPathsContainingVariable(scene, name) : [];
           if (sectionPaths.length === 0) {
             throw new Error(`Variable '${name}' not found`);
           }
@@ -47,7 +55,7 @@ export const updateVariableCommand: MutationCommand<UpdateVariablePayload> = {
         }
         scope = resolveVariableScope(scene, '/');
       } else {
-        scope = resolveVariableScope(scene, parentPath);
+        scope = resolveVariableScope(scene, effectiveParentPath);
       }
 
       const { owner, layoutPathPrefix } = scope;

@@ -16,6 +16,7 @@ import {
 import { resolveLayoutPath } from './layoutPathResolver';
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresNewDashboardLayouts, type MutationCommand } from './types';
+import { isSectionVariablesFeatureEnabled } from './variableScope';
 
 const updateTabPayloadSchema = payloads.updateTab;
 
@@ -64,7 +65,7 @@ export const updateTabCommand: MutationCommand<UpdateTabPayload> = {
         tab.setState({ conditionalRendering: group });
       }
 
-      if (spec.variables !== undefined) {
+      if (spec.variables !== undefined && isSectionVariablesFeatureEnabled()) {
         tab.setState({ $variables: deserializeSectionVariables(spec.variables) });
       }
 

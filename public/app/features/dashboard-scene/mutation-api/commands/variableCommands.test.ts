@@ -1,4 +1,5 @@
 import { CustomVariable, SceneVariableSet } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import type { DashboardScene } from '../../scene/DashboardScene';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
@@ -43,6 +44,10 @@ describe('Variable mutation commands', () => {
     jest.spyOn(console, 'warn').mockImplementation(() => {});
     scene = buildMockScene({ editable: true });
     client = new DashboardMutationClient(scene);
+  });
+
+  afterEach(() => {
+    setTestFlags({});
   });
 
   it('ADD_VARIABLE adds a variable to the dashboard', async () => {
@@ -266,6 +271,10 @@ describe('Variable mutation commands', () => {
   });
 
   describe('parentPath (section variables)', () => {
+    beforeEach(() => {
+      setTestFlags({ dashboardSectionVariables: true });
+    });
+
     function buildSceneWithRow(): DashboardScene {
       const row = new RowItem({ title: 'R', layout: DefaultGridLayoutManager.fromVizPanels([]) });
       const body = new RowsLayoutManager({ rows: [row] });
@@ -385,6 +394,76 @@ describe('Variable mutation commands', () => {
       const rowVars = (rowList.data as { variables: Array<{ spec: { name: string } }> }).variables;
       expect(dashVars.map((v) => v.spec.name)).toEqual(['dashVar']);
       expect(rowVars.map((v) => v.spec.name)).toEqual(['rowVar']);
+    });
+
+    it('ADD_VARIABLE ignores parentPath when dashboardSectionVariables is disabled', async () => {
+      setTestFlags({ dashboardSectionVariables: false });
+      scene = buildSceneWithRow();
+      client = new DashboardMutationClient(scene);
+
+      const result = await client.execute({
+        type: 'ADD_VARIABLE',
+        payload: {
+          parentPath: '/rows/0',
+          variable: { kind: 'CustomVariable', spec: { name: 'fallbackDashVar', query: '1,2' } },
+        },
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.changes[0].path).toBe('/variables/fallbackDashVar');
+      expect((scene.state.$variables as SceneVariableSet).getByName('fallbackDashVar')).toBeDefined();
+      const body = scene.state.body as RowsLayoutManager;
+      expect(body.state.rows[0].state.$variables?.getByName('fallbackDashVar')).toBeUndefined();
+    });
+
+    it('UPDATE_VARIABLE ignores parentPath when dashboardSectionVariables is disabled', async () => {
+      setTestFlags({ dashboardSectionVariables: false });
+      scene = buildSceneWithRow();
+      client = new DashboardMutationClient(scene);
+
+      await client.execute({
+        type: 'ADD_VARIABLE',
+        payload: {
+          variable: { kind: 'CustomVariable', spec: { name: 'fallbackDashVar', query: '1,2' } },
+        },
+      });
+
+      const result = await client.execute({
+        type: 'UPDATE_VARIABLE',
+        payload: {
+          parentPath: '/rows/0',
+          name: 'fallbackDashVar',
+          variable: { kind: 'CustomVariable', spec: { name: 'fallbackDashVar', query: '1,2,3' } },
+        },
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.changes[0].path).toBe('/variables/fallbackDashVar');
+    });
+
+    it('REMOVE_VARIABLE ignores parentPath when dashboardSectionVariables is disabled', async () => {
+      setTestFlags({ dashboardSectionVariables: false });
+      scene = buildSceneWithRow();
+      client = new DashboardMutationClient(scene);
+
+      await client.execute({
+        type: 'ADD_VARIABLE',
+        payload: {
+          variable: { kind: 'CustomVariable', spec: { name: 'fallbackDashVar', query: '1,2' } },
+        },
+      });
+
+      const result = await client.execute({
+        type: 'REMOVE_VARIABLE',
+        payload: {
+          parentPath: '/rows/0',
+          name: 'fallbackDashVar',
+        },
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.changes[0].path).toBe('/variables/fallbackDashVar');
+      expect((scene.state.$variables as SceneVariableSet).getByName('fallbackDashVar')).toBeUndefined();
     });
   });
 });

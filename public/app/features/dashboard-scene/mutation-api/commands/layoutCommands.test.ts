@@ -2151,6 +2151,50 @@ describe('Layout mutation commands', () => {
       expect(result.success).toBe(true);
       expect(tab.state.$variables).toBeUndefined();
     });
+
+    it('UPDATE_ROW ignores spec.variables when dashboardSectionVariables is disabled', async () => {
+      setTestFlags({ dashboardSectionVariables: false });
+      const row = new RowItem({
+        title: 'R',
+        layout: DefaultGridLayoutManager.fromVizPanels([]),
+        $variables: new SceneVariableSet({
+          variables: [new CustomVariable({ name: 'secVar', query: 'x,y' })],
+        }),
+      });
+      const body = new RowsLayoutManager({ rows: [row] });
+      const scene = buildSceneWithLayoutParent(body);
+      const executor = new DashboardMutationClient(scene);
+
+      const result = await executor.execute({
+        type: 'UPDATE_ROW',
+        payload: { path: '/rows/0', spec: { variables: [] } },
+      });
+
+      expect(result.success).toBe(true);
+      expect(row.state.$variables?.getByName('secVar')).toBeDefined();
+    });
+
+    it('UPDATE_TAB ignores spec.variables when dashboardSectionVariables is disabled', async () => {
+      setTestFlags({ dashboardSectionVariables: false });
+      const tab = new TabItem({
+        title: 'T',
+        layout: DefaultGridLayoutManager.fromVizPanels([]),
+        $variables: new SceneVariableSet({
+          variables: [new CustomVariable({ name: 'secVar', query: 'x,y' })],
+        }),
+      });
+      const body = new TabsLayoutManager({ tabs: [tab] });
+      const scene = buildSceneWithLayoutParent(body);
+      const executor = new DashboardMutationClient(scene);
+
+      const result = await executor.execute({
+        type: 'UPDATE_TAB',
+        payload: { path: '/tabs/0', spec: { variables: [] } },
+      });
+
+      expect(result.success).toBe(true);
+      expect(tab.state.$variables?.getByName('secVar')).toBeDefined();
+    });
   });
 
   describe('repeat support', () => {
