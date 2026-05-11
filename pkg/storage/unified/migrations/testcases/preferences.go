@@ -24,6 +24,17 @@ func NewPreferencesTestCase() ResourceMigratorTestCase {
 	return &preferencesTestCase{}
 }
 
+// testUsers returns the users that the preferences testcase exercises.
+// Read fresh from the helper on each call so we never hold references to a
+// torn-down apiserver across migration steps.
+func (tc *preferencesTestCase) testUsers(helper *apis.K8sTestHelper) []apis.User {
+	return []apis.User{
+		helper.Org1.Admin,
+		helper.Org1.Editor,
+		helper.OrgB.Admin,
+	}
+}
+
 func (tc *preferencesTestCase) Name() string {
 	return "preferences"
 }
@@ -54,16 +65,10 @@ func (tc *preferencesTestCase) Setup(t *testing.T, helper *apis.K8sTestHelper) b
 	ctx := context.Background()
 	service := prefimpl.ProvideService(env.SQLStore, setting.NewCfg())
 
-	users := []apis.User{
-		helper.Org1.Admin,
-		helper.Org1.Editor,
-		helper.OrgB.Admin,
-	}
-
 	// Track unique orgs so we can save a namespace preference for each.
 	seenOrgs := map[int64]bool{}
 
-	for _, user := range users {
+	for _, user := range tc.testUsers(helper) {
 		orgID := user.Identity.GetOrgID()
 		userID, err := user.Identity.GetInternalID()
 		require.NoError(t, err)
@@ -83,8 +88,8 @@ func (tc *preferencesTestCase) Setup(t *testing.T, helper *apis.K8sTestHelper) b
 				Language: "org",
 			})
 			require.NoError(t, err)
+			seenOrgs[orgID] = true
 		}
-		seenOrgs[orgID] = true
 	}
 
 	return true // will exist in mode0
@@ -93,15 +98,22 @@ func (tc *preferencesTestCase) Setup(t *testing.T, helper *apis.K8sTestHelper) b
 func (tc *preferencesTestCase) Verify(t *testing.T, helper *apis.K8sTestHelper, shouldExist bool) {
 	t.Helper()
 
-	// The same users defined in setup!
-	users := []apis.User{
-		helper.Org1.Admin,
-		helper.Org1.Editor,
-		helper.OrgB.Admin,
+	// The preferences K8s API is wired directly to legacy SQL storage (no
+	// DualWriter — see preferences/register.go), so Get/List always returns
+	// the legacy row regardless of whether unified storage has been populated
+	// or migration has run. That means we cannot use the K8s API to assert
+	// "data is NOT in unified storage" — it will always appear to exist.
+	// Migration correctness is verified out-of-band by the CountValidator on
+	// the MigrationDefinition; here we only smoke-test that migrated data
+	// remains readable through the API.
+	if !shouldExist {
+		return
 	}
 
-	// Each user should be able to read their own preferences and namespace
-	for _, user := range users {
+	// Each user should be able to read their own preferences and namespace.
+	// The authorizer only allows a user to read their own "user-<uid>"
+	// preference, so we use each user's own client.
+	for _, user := range tc.testUsers(helper) {
 		orgID := user.Identity.GetOrgID()
 		namespace := authlib.OrgNamespaceFormatter(orgID)
 

@@ -29,10 +29,10 @@ func PreferencesMigrationDefinition(migrator PreferencesMigrator) migrations.Mig
 			preferencesGR: migrator.MigratePreferences,
 		},
 		Validators: []migrations.ValidatorFactory{
-			migrations.CountValidation(preferencesGR, migrations.CountValidationOptions{
-				Table: "preferences",
-				Where: "org_id = ?",
-			}),
+			// Strict count parity using a custom query that mirrors the read
+			// path: counts every row the migrator emits a resource for
+			// (namespace + valid user + valid team), excluding orphans.
+			preferencesCountValidation(preferencesGR),
 		},
 		RenameTables: []string{},
 	}
