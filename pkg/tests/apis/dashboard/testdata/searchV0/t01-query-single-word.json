@@ -10,7 +10,7 @@
         "panel-tests",
         "graph-ng"
       ],
-      "score": 0.15
+      "score": 0.12
     },
     {
       "resource": "dashboards",
@@ -21,8 +21,8 @@
         "panel-tests",
         "graph-ng"
       ],
-      "score": 0.144
+      "score": 0.114
     }
   ],
-  "maxScore": 0.15
+  "maxScore": 0.12
 }
