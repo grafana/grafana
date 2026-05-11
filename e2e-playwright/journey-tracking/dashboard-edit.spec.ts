@@ -97,29 +97,26 @@ test.describe('dashboard_edit journey tracking', { tag: ['@journey-tracking'] },
 
     await journeyRecorder.waitForJourneyStart('dashboard_edit');
 
-    // Make a real change so the dashboard becomes dirty. Without a structural
-    // change, exitEditMode bypasses the discard dialog because hasActualSaveChanges
-    // returns false (title-only changes via settings aren't counted).
-    // Add a visualization via the toolbar Add button which creates a real panel diff.
-    // Timeouts bumped from 3-5s to 10s — CI runners are slower than local and the
-    // dashboard-edit → panel-edit → back-to-dashboard transition has multiple scene
-    // renders that can take longer than the original tighter budget.
-    const addButton = page.getByRole('button', { name: /^Add$/ });
-    await expect(addButton).toBeVisible({ timeout: 10_000 });
-    await addButton.click();
+    // Make a real change so the dashboard becomes dirty. The discard dialog only
+    // shows when hasActualSaveChanges reports a non-zero diff against the save model.
+    // The dashboard title is in PERSISTED_PROPS (DashboardScene) so changing it via
+    // the settings drawer dirties the dashboard reliably regardless of layout flag.
+    await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.settingsButton).click();
 
-    const addVisualization = page.getByRole('menuitem', { name: /visualization/i });
-    await expect(addVisualization).toBeVisible({ timeout: 10_000 });
-    await addVisualization.click();
+    const titleInput = page.getByLabel('Title');
+    await expect(titleInput).toBeVisible({ timeout: 10_000 });
+    await titleInput.fill('Journey Edit Test Dashboard (discarded)');
+    // Blur so the controlled state commits before navigating away.
+    await titleInput.blur();
 
-    // This opens panel edit mode. Go back to the dashboard without saving the panel
-    // to keep the dashboard dirty with the new panel addition.
-    const backToDashboard = page.getByTestId(selectors.components.NavToolbar.editDashboard.backToDashboardButton);
+    // Return to the dashboard scene. Settings is a full page in legacy layout.
+    const backToDashboard = page.getByRole('button', { name: /back to dashboard/i });
     await expect(backToDashboard).toBeVisible({ timeout: 10_000 });
     await backToDashboard.click();
 
-    // Let the scene settle on the dashboard view before triggering exit. Without
-    // this the click on Exit can race the panel-edit-close transition.
+    // The change-tracker diff runs in a Web Worker (postMessage) so isDirty flips
+    // asynchronously. Wait for the dashboard scene to settle before clicking Exit
+    // - otherwise we race the worker and the no-confirm branch short-circuits.
     await page.waitForLoadState('networkidle');
 
     // Wait for the dashboard canvas with the Exit edit button

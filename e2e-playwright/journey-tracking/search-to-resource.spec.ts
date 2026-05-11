@@ -46,7 +46,14 @@ test.describe('search_to_resource journey tracking', { tag: ['@journey-tracking'
     expect(journey.attributes.resourceType).toBe('dashboard');
     expect(journey.durationMs).toBeGreaterThan(0);
     expect(journey.durationMs).toBeLessThan(30_000);
-    expect(journey.stepCount).toBe(0);
+    // The palette debounces command_palette_search_query at 500ms. Whether it fires
+    // before navigation depends on how fast the dashboard option click handler resolves
+    // vs. the timer; both orderings are valid. If a step was recorded it must be the
+    // debounced search_query event - no other step source exists on this path.
+    expect(journey.stepCount).toBeLessThanOrEqual(1);
+    if (journey.stepCount === 1) {
+      expect(journey.steps[0].name).toBe('search_query');
+    }
   });
 
   test('command palette opened and closed without selection records a discarded journey', async ({
@@ -91,10 +98,13 @@ test.describe('search_to_resource journey tracking', { tag: ['@journey-tracking'
     // Type a query that matches a non-dashboard action (e.g. the "Explore" page)
     await searchInput.fill('Explore');
 
-    // Select the Explore navigation action from the results
+    // Select the Explore navigation action from the results. kbar prefixes each
+    // option's accessible name with its section label, so the visible name is
+    // "Pages: Explore", not "Explore". The /^Pages: Explore/ anchor keeps us off
+    // accidentally matching dashboards or scopes that happen to contain "Explore".
     const exploreResult = page
       .getByRole('option')
-      .filter({ hasText: /^Explore/ })
+      .filter({ hasText: /^Pages: Explore/ })
       .first();
     await expect(exploreResult).toBeVisible({ timeout: 10_000 });
     await exploreResult.click();
