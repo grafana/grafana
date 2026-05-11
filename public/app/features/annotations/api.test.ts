@@ -138,34 +138,55 @@ describe('annotationServer with both gates ON', () => {
     expect(tags).toEqual([{ term: 'a', count: 3 }]);
   });
 
-  it('query hits the k8s /search sub-resource and returns a DataFrame', async () => {
-    getFn.mockResolvedValue({
-      kind: 'AnnotationList',
-      apiVersion: 'annotation.grafana.app/v0alpha1',
-      metadata: {},
-      items: [
-        {
+  it('query hits the k8s /search sub-resource and merges legacy alert annotations', async () => {
+    getFn.mockImplementation((url: string) => {
+      if (url === `${baseURL}/search`) {
+        return Promise.resolve({
+          kind: 'AnnotationList',
           apiVersion: 'annotation.grafana.app/v0alpha1',
-          kind: 'Annotation',
-          metadata: { name: 'a-7', resourceVersion: '1', creationTimestamp: '' },
-          spec: { text: 'hi', time: 100, dashboardUID: 'd' },
-        },
-      ],
+          metadata: {},
+          items: [
+            {
+              apiVersion: 'annotation.grafana.app/v0alpha1',
+              kind: 'Annotation',
+              metadata: { name: 'a-7', resourceVersion: '1', creationTimestamp: '' },
+              spec: { text: 'manual', time: 100, dashboardUID: 'd' },
+            },
+          ],
+        });
+      }
+      if (url === '/api/annotations') {
+        return Promise.resolve([{ id: 9, text: 'alerting', time: 200, dashboardUID: 'd', newState: 'alerting' }]);
+      }
+      return Promise.resolve(null);
     });
 
     const frame = await annotationServer().query(
-      { from: 1, to: 2, dashboardUID: 'd', limit: 100, matchAny: false },
+      { from: 1, to: 2, dashboardUID: 'd', limit: 100, matchAny: false, scopes: ['s-1'] },
       'req-1'
     );
 
     expect(getFn).toHaveBeenCalledWith(
       `${baseURL}/search`,
-      { from: 1, to: 2, dashboardUID: 'd', limit: 100, tagsMatchAny: false },
+      { from: 1, to: 2, dashboardUID: 'd', limit: 100, tagsMatchAny: false, scope: ['s-1'] },
       'req-1'
     );
-    expect(frame.length).toBe(1);
-    expect(frame.fields.find((f) => f.name === 'id')?.values[0]).toBe('7');
-    expect(frame.fields.find((f) => f.name === 'text')?.values[0]).toBe('hi');
+    expect(getFn).toHaveBeenCalledWith(
+      '/api/annotations',
+      { from: 1, to: 2, dashboardUID: 'd', limit: 100, matchAny: false, type: 'alert' },
+      'req-1-alert'
+    );
+    expect(frame.length).toBe(2);
+    const texts = frame.fields.find((f) => f.name === 'text')?.values;
+    expect(texts).toEqual(['manual', 'alerting']);
+  });
+
+  it('query skips the alert fetch when caller explicitly filters to type=annotation', async () => {
+    getFn.mockResolvedValue({ kind: 'AnnotationList', items: [] });
+    await annotationServer().query({ from: 1, to: 2, dashboardUID: 'd', type: 'annotation' }, 'req-1');
+
+    expect(getFn).toHaveBeenCalledTimes(1);
+    expect(getFn).toHaveBeenCalledWith(`${baseURL}/search`, expect.any(Object), 'req-1');
   });
 
   it('forAlert stays on the legacy /api/annotations endpoint', async () => {

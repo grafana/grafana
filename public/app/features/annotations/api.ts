@@ -64,9 +64,18 @@ export function isK8sAnnotationsClientEnabled(): boolean {
 class K8sAnnotationServer implements AnnotationServer {
   private legacy = new LegacyAnnotationServer();
 
+  // The k8s annotation API does not serve alert-state annotations — so we also fire
+  // the legacy one with type='alert' and merge results unless the type is specifically
+  // scoped to only annotations.
   async query(params: Record<string, unknown>, requestId: string): Promise<DataFrame> {
-    const events = await annotationK8sClient.search(params, requestId);
-    return toDataFrame(events);
+    const wantsAlertAnnotations = params.type !== 'annotation';
+
+    const [manualEvents, alertEvents] = await Promise.all([
+      annotationK8sClient.search(params, requestId),
+      wantsAlertAnnotations ? fetchLegacyAlertAnnotations(params, requestId) : Promise.resolve<AnnotationEvent[]>([]),
+    ]);
+
+    return toDataFrame([...manualEvents, ...alertEvents]);
   }
 
   forAlert(alertUID: string): Promise<StateHistoryItem[]> {
@@ -92,6 +101,12 @@ class K8sAnnotationServer implements AnnotationServer {
     const items = await annotationK8sClient.tags();
     return items.map(({ tag, count }) => ({ term: tag, count }));
   }
+}
+
+function fetchLegacyAlertAnnotations(params: Record<string, unknown>, requestId: string): Promise<AnnotationEvent[]> {
+  // legacy is not scopes aware, remove them
+  const { scopes, scopesMatchAny, ...rest } = params;
+  return getBackendSrv().get<AnnotationEvent[]>('/api/annotations', { ...rest, type: 'alert' }, `${requestId}-alert`);
 }
 
 export function annotationServer(): AnnotationServer {
