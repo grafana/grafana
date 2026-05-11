@@ -195,20 +195,19 @@ func TestSyncExternalAMs_FeatureFlagDisabled(t *testing.T) {
 	adminCfg := &mockAdminConfigStore{}
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, &dsfakes.FakeDataSourceService{}, false, "", []int64{1})
-	moa.externalAMSyncer.Sync(context.Background(), []int64{1})
+	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
 
-	adminCfg.AssertNotCalled(t, "GetAdminConfigurations")
+	// Flag off → FetchExtraConfig short-circuits before any admin-config lookup.
+	adminCfg.AssertNotCalled(t, "GetAdminConfiguration", mock.Anything)
 	assertNoExtraConfigSaved(t, cs, 1)
 }
 
 func TestSyncExternalAMs_NoUID_Skipped(t *testing.T) {
 	adminCfg := &mockAdminConfigStore{}
-	adminCfg.On("GetAdminConfigurations").Return([]*ngmodels.AdminConfiguration{
-		{OrgID: 1, ExternalAlertmanagerUID: nil},
-	}, nil)
+	adminCfg.On("GetAdminConfiguration", int64(1)).Return(&ngmodels.AdminConfiguration{OrgID: 1, ExternalAlertmanagerUID: nil}, nil)
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, &dsfakes.FakeDataSourceService{}, true, "", []int64{1})
-	moa.externalAMSyncer.Sync(context.Background(), []int64{1})
+	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
 
 	adminCfg.AssertExpectations(t)
 	assertNoExtraConfigSaved(t, cs, 1)
@@ -226,15 +225,13 @@ func TestSyncExternalAMs_DisabledOrgSkipped(t *testing.T) {
 	dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{ds1}}
 
 	adminCfg := &mockAdminConfigStore{}
-	adminCfg.On("GetAdminConfigurations").Return([]*ngmodels.AdminConfiguration{
-		{OrgID: 1, ExternalAlertmanagerUID: ptrTo("uid-1")},
-		{OrgID: 2, ExternalAlertmanagerUID: ptrTo("uid-2")},
-	}, nil)
+	adminCfg.On("GetAdminConfiguration", int64(1)).Return(&ngmodels.AdminConfiguration{OrgID: 1, ExternalAlertmanagerUID: ptrTo("uid-1")}, nil)
+	adminCfg.On("GetAdminConfiguration", int64(2)).Return(&ngmodels.AdminConfiguration{OrgID: 2, ExternalAlertmanagerUID: ptrTo("uid-2")}, nil).Maybe()
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1, 2})
 	moa.settings.UnifiedAlerting.DisabledOrgs = map[int64]struct{}{2: {}}
 
-	moa.externalAMSyncer.Sync(context.Background(), []int64{1, 2})
+	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1, 2})
 
 	// Org 1 succeeded.
 	saved, err := cs.GetLatestAlertmanagerConfiguration(context.Background(), 1)
@@ -258,12 +255,12 @@ func TestSyncExternalAMs_OperatorUIDOverridesDB(t *testing.T) {
 	dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{ds}}
 
 	adminCfg := &mockAdminConfigStore{}
-	adminCfg.On("GetAdminConfigurations").Return([]*ngmodels.AdminConfiguration{
-		{OrgID: 1, ExternalAlertmanagerUID: ptrTo("db-uid")},
-	}, nil)
+	// Operator UID short-circuits the admin-config lookup; Maybe in case the
+	// resolver gets called via a different path during the bootstrap.
+	adminCfg.On("GetAdminConfiguration", int64(1)).Return(&ngmodels.AdminConfiguration{OrgID: 1, ExternalAlertmanagerUID: ptrTo("db-uid")}, nil).Maybe()
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "operator-uid", []int64{1})
-	moa.externalAMSyncer.Sync(context.Background(), []int64{1})
+	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
 
 	adminCfg.AssertExpectations(t)
 	saved, err := cs.GetLatestAlertmanagerConfiguration(context.Background(), 1)
@@ -274,13 +271,14 @@ func TestSyncExternalAMs_OperatorUIDOverridesDB(t *testing.T) {
 	assert.Equal(t, "operator-uid", cfg.ExtraConfigs[0].Identifier)
 }
 
-func TestSyncExternalAMs_GetAdminConfigurationsError(t *testing.T) {
+func TestSyncExternalAMs_GetAdminConfigurationError(t *testing.T) {
 	adminCfg := &mockAdminConfigStore{}
-	adminCfg.On("GetAdminConfigurations").Return(nil, fmt.Errorf("db error"))
+	adminCfg.On("GetAdminConfiguration", int64(1)).Return(nil, fmt.Errorf("db error"))
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, &dsfakes.FakeDataSourceService{}, true, "", []int64{1})
-	moa.externalAMSyncer.Sync(context.Background(), []int64{1})
+	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
 
+	// Admin-config lookup error → FetchExtraConfig logs and returns (nil, 0); no save.
 	adminCfg.AssertExpectations(t)
 	assertNoExtraConfigSaved(t, cs, 1)
 }
@@ -305,13 +303,11 @@ func TestSyncExternalAMs_PerOrgErrorIsolation(t *testing.T) {
 	dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{ds1, ds2}}
 
 	adminCfg := &mockAdminConfigStore{}
-	adminCfg.On("GetAdminConfigurations").Return([]*ngmodels.AdminConfiguration{
-		{OrgID: 1, ExternalAlertmanagerUID: ptrTo("ds-1")},
-		{OrgID: 2, ExternalAlertmanagerUID: ptrTo("ds-2")},
-	}, nil)
+	adminCfg.On("GetAdminConfiguration", int64(1)).Return(&ngmodels.AdminConfiguration{OrgID: 1, ExternalAlertmanagerUID: ptrTo("ds-1")}, nil)
+	adminCfg.On("GetAdminConfiguration", int64(2)).Return(&ngmodels.AdminConfiguration{OrgID: 2, ExternalAlertmanagerUID: ptrTo("ds-2")}, nil)
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1, 2})
-	moa.externalAMSyncer.Sync(context.Background(), []int64{1, 2})
+	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1, 2})
 
 	adminCfg.AssertExpectations(t)
 
@@ -342,9 +338,7 @@ func TestSyncExternalAMs_HTTPTimeout(t *testing.T) {
 	dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{ds}}
 
 	adminCfg := &mockAdminConfigStore{}
-	adminCfg.On("GetAdminConfigurations").Return([]*ngmodels.AdminConfiguration{
-		{OrgID: 1, ExternalAlertmanagerUID: ptrTo("slow-uid")},
-	}, nil)
+	adminCfg.On("GetAdminConfiguration", int64(1)).Return(&ngmodels.AdminConfiguration{OrgID: 1, ExternalAlertmanagerUID: ptrTo("slow-uid")}, nil)
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1})
 
@@ -354,7 +348,7 @@ func TestSyncExternalAMs_HTTPTimeout(t *testing.T) {
 	defer cancel()
 
 	start := time.Now()
-	moa.externalAMSyncer.Sync(ctx, []int64{1})
+	moa.SyncAlertmanagersForOrgs(ctx, []int64{1})
 	elapsed := time.Since(start)
 
 	assert.Less(t, elapsed, 5*time.Second)
@@ -372,12 +366,10 @@ func TestSyncExternalAMs_SuccessPath(t *testing.T) {
 	dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{ds}}
 
 	adminCfg := &mockAdminConfigStore{}
-	adminCfg.On("GetAdminConfigurations").Return([]*ngmodels.AdminConfiguration{
-		{OrgID: 1, ExternalAlertmanagerUID: ptrTo("mimir-uid")},
-	}, nil)
+	adminCfg.On("GetAdminConfiguration", int64(1)).Return(&ngmodels.AdminConfiguration{OrgID: 1, ExternalAlertmanagerUID: ptrTo("mimir-uid")}, nil)
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1})
-	moa.externalAMSyncer.Sync(context.Background(), []int64{1})
+	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
 
 	adminCfg.AssertExpectations(t)
 	saved, err := cs.GetLatestAlertmanagerConfiguration(context.Background(), 1)
@@ -400,16 +392,14 @@ func TestSyncExternalAMs_DedupOnIdenticalResponse(t *testing.T) {
 	dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{ds}}
 
 	adminCfg := &mockAdminConfigStore{}
-	adminCfg.On("GetAdminConfigurations").Return([]*ngmodels.AdminConfiguration{
-		{OrgID: 1, ExternalAlertmanagerUID: ptrTo("mimir-uid")},
-	}, nil)
+	adminCfg.On("GetAdminConfiguration", int64(1)).Return(&ngmodels.AdminConfiguration{OrgID: 1, ExternalAlertmanagerUID: ptrTo("mimir-uid")}, nil)
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1})
 
 	// First tick: stores the config and writes a history row on top of the
 	// bootstrap default. Bootstrap counts as one history entry; the first sync
 	// adds a second.
-	moa.externalAMSyncer.Sync(context.Background(), []int64{1})
+	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
 	require.Len(t, cs.historicConfigs[1], 2)
 	require.NotZero(t, testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncHash.WithLabelValues("1")), "hash gauge should be set after a successful sync")
 
@@ -417,7 +407,7 @@ func TestSyncExternalAMs_DedupOnIdenticalResponse(t *testing.T) {
 	// incoming hash, so SaveAndApplyExtraConfiguration is not called and no
 	// new history row is written. Counts as success — we don't track skipped
 	// separately, matching the regular apply loop.
-	moa.externalAMSyncer.Sync(context.Background(), []int64{1})
+	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
 	require.Len(t, cs.historicConfigs[1], 2, "no-op sync should not write a new history row")
 
 	assert.Equal(t, float64(2), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncTotal.WithLabelValues("1")), "both ticks count as success")
@@ -448,18 +438,16 @@ func TestSyncExternalAMs_SavesWhenResponseChanges(t *testing.T) {
 	dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{ds}}
 
 	adminCfg := &mockAdminConfigStore{}
-	adminCfg.On("GetAdminConfigurations").Return([]*ngmodels.AdminConfiguration{
-		{OrgID: 1, ExternalAlertmanagerUID: ptrTo("mimir-uid")},
-	}, nil)
+	adminCfg.On("GetAdminConfiguration", int64(1)).Return(&ngmodels.AdminConfiguration{OrgID: 1, ExternalAlertmanagerUID: ptrTo("mimir-uid")}, nil)
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1})
 
-	moa.externalAMSyncer.Sync(context.Background(), []int64{1})
+	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
 	require.Len(t, cs.historicConfigs[1], 2, "first sync writes one history row on top of bootstrap")
 	firstHash := testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncHash.WithLabelValues("1"))
 	require.NotZero(t, firstHash)
 
-	moa.externalAMSyncer.Sync(context.Background(), []int64{1})
+	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
 	require.Len(t, cs.historicConfigs[1], 3, "different response bytes should trigger a new save")
 
 	assert.Equal(t, float64(2), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncTotal.WithLabelValues("1")))
@@ -477,9 +465,7 @@ func TestSyncExternalAMs_IdentifierMismatchClassifiedOnMetric(t *testing.T) {
 	dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{ds}}
 
 	adminCfg := &mockAdminConfigStore{}
-	adminCfg.On("GetAdminConfigurations").Return([]*ngmodels.AdminConfiguration{
-		{OrgID: 1, ExternalAlertmanagerUID: ptrTo("different-uid")},
-	}, nil)
+	adminCfg.On("GetAdminConfiguration", int64(1)).Return(&ngmodels.AdminConfiguration{OrgID: 1, ExternalAlertmanagerUID: ptrTo("different-uid")}, nil)
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1})
 
@@ -492,7 +478,7 @@ func TestSyncExternalAMs_IdentifierMismatchClassifiedOnMetric(t *testing.T) {
 	require.NoError(t, err)
 	rowsBefore := len(cs.historicConfigs[1])
 
-	moa.externalAMSyncer.Sync(context.Background(), []int64{1})
+	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
 
 	// No new history row — the save was rejected.
 	assert.Equal(t, rowsBefore, len(cs.historicConfigs[1]), "identifier collision must not write history")
@@ -518,14 +504,12 @@ func TestSyncExternalAMs_RejectedByValidator(t *testing.T) {
 	dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{ds}}
 
 	adminCfg := &mockAdminConfigStore{}
-	adminCfg.On("GetAdminConfigurations").Return([]*ngmodels.AdminConfiguration{
-		{OrgID: 1, ExternalAlertmanagerUID: ptrTo("mimir-uid")},
-	}, nil)
+	adminCfg.On("GetAdminConfiguration", int64(1)).Return(&ngmodels.AdminConfiguration{OrgID: 1, ExternalAlertmanagerUID: ptrTo("mimir-uid")}, nil)
 
 	rejecting := &rejectingValidator{err: fmt.Errorf("egress denied")}
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1}, rejecting)
 
-	moa.externalAMSyncer.Sync(context.Background(), []int64{1})
+	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
 
 	// Validator rejection short-circuits before the HTTP round-trip and before any save.
 	assertNoExtraConfigSaved(t, cs, 1)

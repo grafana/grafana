@@ -13,15 +13,12 @@ import (
 
 	"go.yaml.in/yaml/v3"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/merge"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
@@ -43,21 +40,17 @@ const (
 	syncReasonIdentifierMismatch = "identifier_mismatch"
 )
 
-// ConfigPersister is the subset of MultiOrgAlertmanager the syncer needs to
-// commit a fetched ExtraConfig. MultiOrgAlertmanager satisfies it via
-// SaveAndApplyExtraConfiguration.
-type ConfigPersister interface {
-	SaveAndApplyExtraConfiguration(ctx context.Context, org int64, user identity.Requester, authz ExtraConfigAuthz, extraConfig apimodels.ExtraConfiguration, replace bool, dryRun bool) (merge.RenameResources, error)
-}
-
-// ExternalAMSyncer fetches Mimir/Cortex alertmanager configuration for each org
-// that has it configured and applies it through the configured ConfigPersister.
+// ExternalAMSyncer fetches the alertmanager configuration from an org's external
+// Mimir/Cortex datasource. It does not own persistence — callers (MultiOrgAlertmanager
+// per-org sync loop) take the returned ExtraConfiguration and persist via
+// SaveAndApplyExtraConfiguration, then call MarkSaved to confirm the hash so future
+// ticks can dedup.
+//
 // Per-tick dedup hashes the raw response body and compares against the previous
-// successful sync's hash, held in memory. The map is per-process: each org pays
-// one save per restart before dedup engages, which is acceptable in exchange for
-// not maintaining sidecar persistence for the hash.
+// successful save's hash, held in memory. The map is per-process: each org pays one
+// save per restart before dedup engages, accepted as the cost of avoiding sidecar
+// persistence for the hash.
 type ExternalAMSyncer struct {
-	persister          ConfigPersister
 	adminConfigStore   store.AdminConfigurationStore
 	datasourceService  datasources.DataSourceService
 	httpClientProvider httpclient.Provider
@@ -73,7 +66,6 @@ type ExternalAMSyncer struct {
 // NewExternalAMSyncer constructs an ExternalAMSyncer. requestValidator may not be
 // nil; pass &validations.OSSDataSourceRequestValidator{} for the no-op default.
 func NewExternalAMSyncer(
-	persister ConfigPersister,
 	adminConfigStore store.AdminConfigurationStore,
 	datasourceService datasources.DataSourceService,
 	httpClientProvider httpclient.Provider,
@@ -83,7 +75,6 @@ func NewExternalAMSyncer(
 	logger log.Logger,
 ) *ExternalAMSyncer {
 	return &ExternalAMSyncer{
-		persister:          persister,
 		adminConfigStore:   adminConfigStore,
 		datasourceService:  datasourceService,
 		httpClientProvider: httpClientProvider,
@@ -95,99 +86,89 @@ func NewExternalAMSyncer(
 	}
 }
 
-// Sync fetches the alertmanager configuration from each org's external Mimir/Cortex
-// datasource and persists it via the ConfigPersister. It is a no-op when the feature
-// flag is disabled. Per-org errors are logged and do not abort other orgs.
-func (s *ExternalAMSyncer) Sync(ctx context.Context, orgIDs []int64) {
+// FetchExtraConfig fetches the external Alertmanager configuration for the given
+// org. Returns a non-nil ExtraConfiguration only when there's a new config to save:
+//   - sync feature flag is on
+//   - sync is configured for the org (operator-level ini OR per-org admin_config UID)
+//   - the fetch succeeded
+//   - the response body hash differs from the last successful save
+//
+// Returns (nil, 0) in all other cases — the caller should just continue with its
+// normal per-org apply path. The returned hash is paired with the ExtraConfig:
+// callers MUST pass it to MarkSaved after a successful persist, otherwise dedup
+// never engages and every fetch will return a non-nil ExtraConfig.
+//
+// Per-org failures (datasource lookup, HTTP fetch, parse) are logged and emit the
+// failure metric here; the caller does not need to handle the error specifically.
+func (s *ExternalAMSyncer) FetchExtraConfig(ctx context.Context, orgID int64) (*apimodels.ExtraConfiguration, uint64) {
 	client := openfeature.NewDefaultClient()
 	if !client.Boolean(ctx, featuremgmt.FlagAlertingSyncExternalAlertmanager, false, openfeature.TransactionContext(ctx)) {
-		return
+		return nil, 0
 	}
 
-	adminCfgs, err := s.adminConfigStore.GetAdminConfigurations()
+	uid, err := s.resolveExternalAMUIDForOrg(orgID)
 	if err != nil {
-		s.logger.Warn("Failed to fetch admin configurations for external AM sync", "error", err)
-		return
+		s.logger.Warn("Failed to resolve external AM UID", "org_id", orgID, "error", err)
+		return nil, 0
+	}
+	if uid == "" {
+		return nil, 0
 	}
 
-	adminCfgsByOrg := make(map[int64]*models.AdminConfiguration, len(adminCfgs))
-	for _, cfg := range adminCfgs {
-		adminCfgsByOrg[cfg.OrgID] = cfg
-	}
+	orgIDStr := fmt.Sprintf("%d", orgID)
+	start := time.Now()
 
-	for _, orgID := range orgIDs {
-		// Skip orgs the operator has disabled via unified_alerting.disabled_orgs.
-		// Mirrors the same filter SyncAlertmanagersForOrgs applies (multiorg_alertmanager.go)
-		// — running sync for a disabled org would write to alert_configuration_history
-		// and hit the upstream Mimir/Cortex endpoint for an org that has no Alertmanager
-		// running, neither of which the admin asked for.
-		if _, isDisabled := s.settings.UnifiedAlerting.DisabledOrgs[orgID]; isDisabled {
-			s.logger.Debug("Skipping external AM config sync for disabled org", "org_id", orgID)
-			continue
-		}
-
-		uid := s.resolveExternalAMUID(orgID, adminCfgsByOrg)
-		if uid == "" {
-			continue
-		}
-
-		orgIDStr := fmt.Sprintf("%d", orgID)
-		start := time.Now()
-
-		ec, newHash, reason, err := s.fetchExtraConfig(ctx, orgID, uid)
-		if err != nil {
-			s.logger.Warn("Failed to fetch external AM configuration", "org_id", orgID, "reason", reason, "error", err)
-			s.metrics.ExternalAMConfigSyncFailures.WithLabelValues(orgIDStr, reason).Inc()
-			s.metrics.ExternalAMConfigSyncDuration.WithLabelValues(orgIDStr).Observe(time.Since(start).Seconds())
-			continue
-		}
-
-		// Cross-tick dedup against the last successful sync's response hash held in
-		// memory. Mimir/Cortex returns the config from storage so the response is
-		// byte-stable across identical reads.
-		s.lastSyncHashMu.RLock()
-		prevHash, hasPrev := s.lastSyncHash[orgID]
-		s.lastSyncHashMu.RUnlock()
-		if hasPrev && prevHash == newHash {
-			s.logger.Debug("Skipping external AM config save: response unchanged since last sync", "org_id", orgID)
-			s.metrics.ExternalAMConfigSyncTotal.WithLabelValues(orgIDStr).Inc()
-			s.metrics.ExternalAMConfigSyncHash.WithLabelValues(orgIDStr).Set(float64(newHash & mask53))
-			s.metrics.ExternalAMConfigSyncDuration.WithLabelValues(orgIDStr).Observe(time.Since(start).Seconds())
-			continue
-		}
-
-		// SaveAndApplyExtraConfiguration is the same entry point used by the convert
-		// API. With replace=false, an existing ExtraConfig under a different identifier
-		// returns ErrAlertmanagerMultipleExtraConfigsUnsupported, which we classify
-		// separately so operators can see the collision in admin_config rather than
-		// as a generic "save" failure.
-		svcCtx, svcUser := identity.WithServiceIdentity(ctx, orgID)
-		if _, err = s.persister.SaveAndApplyExtraConfiguration(svcCtx, orgID, svcUser, syncBypassAuthz{}, ec, false /*replace*/, false /*dryRun*/); err != nil {
-			reason := classifySyncError(err)
-			s.logger.Warn("Failed to save external AM configuration", "org_id", orgID, "reason", reason, "error", err)
-			s.metrics.ExternalAMConfigSyncFailures.WithLabelValues(orgIDStr, reason).Inc()
-			s.metrics.ExternalAMConfigSyncDuration.WithLabelValues(orgIDStr).Observe(time.Since(start).Seconds())
-			continue
-		}
-
-		s.lastSyncHashMu.Lock()
-		s.lastSyncHash[orgID] = newHash
-		s.lastSyncHashMu.Unlock()
-
-		s.logger.Info("Synced external AM configuration", "org_id", orgID, "duration_ms", time.Since(start).Milliseconds())
-		s.metrics.ExternalAMConfigSyncTotal.WithLabelValues(orgIDStr).Inc()
-		s.metrics.ExternalAMConfigSyncHash.WithLabelValues(orgIDStr).Set(float64(newHash & mask53))
+	ec, newHash, reason, fetchErr := s.fetchExtraConfig(ctx, orgID, uid)
+	if fetchErr != nil {
+		s.logger.Warn("Failed to fetch external AM configuration", "org_id", orgID, "reason", reason, "error", fetchErr)
+		s.metrics.ExternalAMConfigSyncFailures.WithLabelValues(orgIDStr, reason).Inc()
 		s.metrics.ExternalAMConfigSyncDuration.WithLabelValues(orgIDStr).Observe(time.Since(start).Seconds())
+		return nil, 0
 	}
+
+	// Count every fetch that reaches upstream successfully. The hash gauge is
+	// set on MarkSaved (after the caller has actually persisted), so it
+	// always reflects the last persisted config, not the last fetched one.
+	s.metrics.ExternalAMConfigSyncTotal.WithLabelValues(orgIDStr).Inc()
+	s.metrics.ExternalAMConfigSyncDuration.WithLabelValues(orgIDStr).Observe(time.Since(start).Seconds())
+
+	// Cross-tick dedup. If the response body hashes the same as the last
+	// successful save, return (nil, _) so the caller doesn't re-save.
+	s.lastSyncHashMu.RLock()
+	prevHash, hasPrev := s.lastSyncHash[orgID]
+	s.lastSyncHashMu.RUnlock()
+	if hasPrev && prevHash == newHash {
+		s.logger.Debug("Skipping external AM config save: response unchanged since last sync", "org_id", orgID)
+		return nil, 0
+	}
+
+	return &ec, newHash
+}
+
+// MarkSaved records that an ExtraConfig with the given hash has been successfully
+// persisted for the given org. Callers MUST invoke this after the matching save
+// returned by FetchExtraConfig has been persisted, otherwise dedup never engages
+// and every tick will re-save the same config. Updates the hash gauge here (not
+// inside FetchExtraConfig) so the metric value always reflects the last persisted
+// config rather than the last fetched one.
+func (s *ExternalAMSyncer) MarkSaved(orgID int64, hash uint64) {
+	s.lastSyncHashMu.Lock()
+	s.lastSyncHash[orgID] = hash
+	s.lastSyncHashMu.Unlock()
+	s.metrics.ExternalAMConfigSyncHash.WithLabelValues(fmt.Sprintf("%d", orgID)).Set(float64(hash & mask53))
 }
 
 // fetchExtraConfig looks up the org's external AM datasource and fetches the current
-// alertmanager configuration from it. The 10s timeout used for both calls is owned
-// via defer here so an early return cannot leak the cancel — callers don't need to
-// care about timeout management when adding new failure paths. Returns the FNV-1a
-// hash of the raw response body so the caller can dedup across ticks. The returned
-// reason matches the label on ExternalAMConfigSyncFailures so the caller can emit
-// the metric without re-classifying.
+// alertmanager configuration from it. The 10s timeout caps a single fetch attempt;
+// Mimir/Cortex returns the config straight from storage so a healthy GET completes
+// well under a second, but a hung connection on a transient network blip should not
+// block MAM's per-org sync loop indefinitely. The timeout is owned via defer here
+// so an early return cannot leak the cancel — callers don't need to care about
+// timeout management when adding new failure paths.
+//
+// Returns the FNV-1a hash of the raw response body so the caller can dedup across
+// ticks. The returned reason matches the label on ExternalAMConfigSyncFailures so
+// the caller can emit the metric without re-classifying.
 func (s *ExternalAMSyncer) fetchExtraConfig(ctx context.Context, orgID int64, uid string) (apimodels.ExtraConfiguration, uint64, string, error) {
 	fetchCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
@@ -212,18 +193,26 @@ func (s *ExternalAMSyncer) fetchExtraConfig(ctx context.Context, orgID int64, ui
 	}, hash, "", nil
 }
 
-// resolveExternalAMUID returns the datasource UID to use for external AM sync for
-// the given org. The operator-level ExternalAlertmanagerUID setting takes precedence
-// over the per-org DB value. Returns "" when neither is set, signalling that sync
-// should be skipped for this org.
-func (s *ExternalAMSyncer) resolveExternalAMUID(orgID int64, adminCfgsByOrg map[int64]*models.AdminConfiguration) string {
+// resolveExternalAMUIDForOrg returns the datasource UID to use for external AM
+// sync for the given org. The operator-level ExternalAlertmanagerUID setting takes
+// precedence over the per-org DB value. Returns "" when neither is set (sync
+// should be skipped). Returns an error only on storage failure looking up the
+// per-org config.
+func (s *ExternalAMSyncer) resolveExternalAMUIDForOrg(orgID int64) (string, error) {
 	if uid := s.settings.UnifiedAlerting.ExternalAlertmanagerUID; uid != "" {
-		return uid
+		return uid, nil
 	}
-	if cfg, ok := adminCfgsByOrg[orgID]; ok && cfg.ExternalAlertmanagerUID != nil {
-		return *cfg.ExternalAlertmanagerUID
+	cfg, err := s.adminConfigStore.GetAdminConfiguration(orgID)
+	if err != nil {
+		if errors.Is(err, store.ErrNoAdminConfiguration) {
+			return "", nil
+		}
+		return "", err
 	}
-	return ""
+	if cfg.ExternalAlertmanagerUID == nil {
+		return "", nil
+	}
+	return *cfg.ExternalAlertmanagerUID, nil
 }
 
 // IsConfiguredForOrg reports whether external Alertmanager sync is configured for

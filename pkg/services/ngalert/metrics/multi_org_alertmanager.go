@@ -18,10 +18,10 @@ type MultiOrgAlertmanager struct {
 	ActiveConfigurations     prometheus.Gauge
 	DiscoveredConfigurations prometheus.Gauge
 
-	// ExternalAMConfigSyncTotal counts successful sync attempts by org. A tick where
-	// the fetched config matches what's already stored counts as success (no save
-	// is performed but the sync ran cleanly), matching the regular apply loop's
-	// behavior of treating no-op apply as a non-event.
+	// ExternalAMConfigSyncTotal counts external Alertmanager fetch attempts that
+	// successfully reached upstream and returned a parsed config, by org. This
+	// includes ticks where the body hashed the same as the previous save (no DB
+	// write happens). Failed fetches are tracked separately on ExternalAMConfigSyncFailures.
 	ExternalAMConfigSyncTotal *prometheus.CounterVec
 	// ExternalAMConfigSyncFailures counts failed sync attempts by org and reason.
 	ExternalAMConfigSyncFailures *prometheus.CounterVec

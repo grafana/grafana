@@ -183,10 +183,9 @@ func NewMultiOrgAlertmanager(
 		ns:                          ns,
 		peer:                        &NilPeer{},
 	}
-	// Sync responsibilities live on ExternalAMSyncer; MOA exposes only the persister
-	// surface. Built after the MOA literal so we can pass moa as the ConfigPersister.
+	// Fetch responsibilities live on ExternalAMSyncer; MOA drives it per-org inside
+	// SyncAlertmanagersForOrgs and owns the save+apply via SaveAndApplyExtraConfiguration.
 	moa.externalAMSyncer = NewExternalAMSyncer(
-		moa,
 		adminConfigStore,
 		datasourceService,
 		httpClientProvider,
@@ -367,10 +366,6 @@ func (moa *MultiOrgAlertmanager) LoadAndSyncAlertmanagersForOrgs(ctx context.Con
 		return err
 	}
 
-	// Sync remote AM configs to DB first so SyncAlertmanagersForOrgs sees fresh data.
-	moa.externalAMSyncer.Sync(ctx, orgIDs)
-
-	// Then, sync them by creating or deleting Alertmanagers as necessary.
 	moa.metrics.DiscoveredConfigurations.Set(float64(len(orgIDs)))
 	moa.SyncAlertmanagersForOrgs(ctx, orgIDs)
 
@@ -413,9 +408,66 @@ func (syncBypassAuthz) AuthorizeDelete(context.Context, identity.Requester, stri
 	return nil
 }
 
+// syncExternalAMConfigForOrgs runs the external Alertmanager fetch for each
+// non-disabled org whose Alertmanager instance has already been created, and
+// persists any changed configs via SaveAndApplyExtraConfiguration.
+//
+// The Alertmanager-exists check matches SaveAndApplyExtraConfiguration's
+// expectation that the org's Alertmanager is at least registered (it tolerates
+// not-ready, but errors when there's no instance at all). On the first sync
+// tick after Grafana startup the instances haven't been created yet — the
+// locked loop below creates them and the next tick picks up the sync.
+//
+// The disabled-orgs filter is duplicated from SyncAlertmanagersForOrgs because
+// the pre-pass runs before the locked loop's own filter.
+//
+// All per-org failures are logged + counted on the failures metric and do not
+// abort other orgs.
+func (moa *MultiOrgAlertmanager) syncExternalAMConfigForOrgs(ctx context.Context, orgIDs []int64) {
+	for _, orgID := range orgIDs {
+		if _, isDisabled := moa.settings.UnifiedAlerting.DisabledOrgs[orgID]; isDisabled {
+			continue
+		}
+		moa.alertmanagersMtx.RLock()
+		_, amExists := moa.alertmanagers[orgID]
+		moa.alertmanagersMtx.RUnlock()
+		if !amExists {
+			continue
+		}
+		ec, hash := moa.externalAMSyncer.FetchExtraConfig(ctx, orgID)
+		if ec == nil {
+			continue
+		}
+		// External sync is system-driven, so we use a service identity and a no-op
+		// authz: there is no end-user request to authorize against.
+		svcCtx, svcUser := identity.WithServiceIdentity(ctx, orgID)
+		if _, err := moa.SaveAndApplyExtraConfiguration(svcCtx, orgID, svcUser, syncBypassAuthz{}, *ec, false /*replace*/, false /*dryRun*/); err != nil {
+			reason := classifySyncError(err)
+			moa.logger.Warn("Failed to save external AM configuration", "org_id", orgID, "reason", reason, "error", err)
+			moa.metrics.ExternalAMConfigSyncFailures.WithLabelValues(fmt.Sprintf("%d", orgID), reason).Inc()
+			continue
+		}
+		moa.externalAMSyncer.MarkSaved(orgID, hash)
+	}
+}
+
 // SyncAlertmanagersForOrgs syncs configuration of the Alertmanager required by each organization.
 func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, orgIDs []int64) {
 	orgsFound := make(map[int64]struct{}, len(orgIDs))
+
+	// External Alertmanager sync runs as a pre-pass, before we acquire the
+	// alertmanagersMtx write lock for the per-org sync below. SaveAndApplyExtraConfiguration
+	// internally takes the alertmanagersMtx RLock (via AlertmanagerFor and saveAndApplyConfig),
+	// so calling it from inside the locked loop would deadlock; running it here keeps the
+	// fetch+save coupled to MAM's polling cadence without that conflict.
+	//
+	// On the first tick after startup the per-org Alertmanager instances haven't been
+	// created yet and the pre-pass skips those orgs. The locked loop below creates them
+	// and the next tick picks up the sync.
+	moa.syncExternalAMConfigForOrgs(ctx, orgIDs)
+
+	// Read dbConfigs AFTER the pre-pass so the snapshot includes any saves performed
+	// above. This avoids in-place mutation of a pre-loaded map mid-flow.
 	dbConfigs, err := moa.getLatestConfigs(ctx)
 	if err != nil {
 		moa.logger.Error("Failed to load Alertmanager configurations", "error", err)
