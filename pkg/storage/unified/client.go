@@ -226,10 +226,6 @@ func newClient(opts options.StorageOptions,
 			return nil, err
 		}
 
-		// Vector backfiller and write-path scanner are constructed inside
-		// the resource server (sql.NewResourceServer → withVectorIndexers).
-		// Their lifetime is bound to the server's ctx; Stop joins them.
-
 		return resource.NewLocalResourceClient(server), nil
 	}
 }
