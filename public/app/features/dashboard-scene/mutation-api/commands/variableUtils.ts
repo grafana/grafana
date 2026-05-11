@@ -27,32 +27,32 @@ export function replaceVariableSet(
 }
 
 /**
- * Replace variables on the dashboard or on a row/tab section owner.
+ * Replace variables on the dashboard or on a row/tab section scope owner.
  * Clears `$variables` on row/tab when the list is empty (matches section deserialization).
  */
-export function replaceOwnerVariableSet(
-  owner: VariableScopeOwner,
+export function replaceScopeVariableSet(
+  scopeOwner: VariableScopeOwner,
   variables: ReturnType<typeof sceneGraph.getVariables>['state']['variables']
 ): SceneVariableSet | undefined {
-  if (owner instanceof RowItem || owner instanceof TabItem) {
+  if (scopeOwner instanceof RowItem || scopeOwner instanceof TabItem) {
     if (variables.length === 0) {
-      owner.setState({ $variables: undefined });
+      scopeOwner.setState({ $variables: undefined });
       return undefined;
     }
 
     const newVarSet = new SceneVariableSet({ variables });
-    owner.setState({ $variables: newVarSet });
+    scopeOwner.setState({ $variables: newVarSet });
     newVarSet.activate();
     return newVarSet;
   }
 
-  return replaceVariableSet(owner, variables);
+  return replaceVariableSet(scopeOwner, variables);
 }
 
-export function getOwnerVariableArray(
-  owner: VariableScopeOwner
+export function getScopeVariableArray(
+  scopeOwner: VariableScopeOwner
 ): ReturnType<typeof sceneGraph.getVariables>['state']['variables'] {
-  const vs = owner.state.$variables;
+  const vs = scopeOwner.state.$variables;
   return vs ? [...vs.state.variables] : [];
 }
 

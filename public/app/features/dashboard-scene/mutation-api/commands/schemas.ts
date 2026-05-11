@@ -575,7 +575,8 @@ export const updateVariablePayloadSchema = z.object({
   parentPath: layoutPathSchema
     .optional()
     .describe(
-      'Variable scope: omit or "/" = dashboard-level only. Pass a row/tab path (e.g. "/rows/0") to update a section variable; required when the variable is not on the dashboard.'
+      'Variable scope: omit or "/" = dashboard-level. Pass a row/tab path (e.g. "/rows/0") to target section scope. ' +
+        'Runtime returns a friendly error if the variable exists only on a section and parentPath is omitted.'
     ),
 });
 
@@ -584,7 +585,8 @@ export const removeVariablePayloadSchema = z.object({
   parentPath: layoutPathSchema
     .optional()
     .describe(
-      'Variable scope: omit or "/" = dashboard-level only. Pass a row/tab path to remove a section variable; required when the variable is not on the dashboard.'
+      'Variable scope: omit or "/" = dashboard-level. Pass a row/tab path to target section scope. ' +
+        'Runtime returns a friendly error if the variable exists only on a section and parentPath is omitted.'
     ),
 });
 
