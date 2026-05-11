@@ -19,6 +19,14 @@ import (
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/rulesequence"
 )
 
+// funcMembershipResolver adapts a function to the RuleSequenceMembershipResolver
+// interface for use in tests.
+type funcMembershipResolver func(ctx context.Context, uids []string) (map[string]config.RuleSequenceMembership, error)
+
+func (f funcMembershipResolver) Resolve(ctx context.Context, uids []string) (map[string]config.RuleSequenceMembership, error) {
+	return f(ctx, uids)
+}
+
 func makeDefaultRuntimeConfig() config.RuntimeConfig {
 	return config.RuntimeConfig{
 		FolderValidator:        func(ctx context.Context, folderUID string) (bool, error) { return folderUID == "f1", nil },
@@ -390,7 +398,7 @@ func TestAlertRuleValidation_DeleteAndMoveGuardrails(t *testing.T) {
 	baseCfg.FolderValidator = func(ctx context.Context, folderUID string) (bool, error) {
 		return folderUID == "f1" || folderUID == "f2", nil
 	}
-	baseCfg.ResolveRuleSequenceMemberships = func(ctx context.Context, uids []string) (map[string]config.RuleSequenceMembership, error) {
+	baseCfg.MembershipResolver = funcMembershipResolver(func(ctx context.Context, uids []string) (map[string]config.RuleSequenceMembership, error) {
 		out := map[string]config.RuleSequenceMembership{}
 		for _, uid := range uids {
 			if uid == "uid-1" {
@@ -400,7 +408,7 @@ func TestAlertRuleValidation_DeleteAndMoveGuardrails(t *testing.T) {
 			}
 		}
 		return out, nil
-	}
+	})
 
 	v := alertrule.NewValidator(baseCfg)
 
@@ -435,7 +443,7 @@ func TestRecordingRuleValidation_DeleteAndMoveGuardrails(t *testing.T) {
 	baseCfg.FolderValidator = func(ctx context.Context, folderUID string) (bool, error) {
 		return folderUID == "f1" || folderUID == "f2", nil
 	}
-	baseCfg.ResolveRuleSequenceMemberships = func(ctx context.Context, uids []string) (map[string]config.RuleSequenceMembership, error) {
+	baseCfg.MembershipResolver = funcMembershipResolver(func(ctx context.Context, uids []string) (map[string]config.RuleSequenceMembership, error) {
 		out := map[string]config.RuleSequenceMembership{}
 		for _, uid := range uids {
 			if uid == "uid-1" {
@@ -445,7 +453,7 @@ func TestRecordingRuleValidation_DeleteAndMoveGuardrails(t *testing.T) {
 			}
 		}
 		return out, nil
-	}
+	})
 
 	v := recordingrule.NewValidator(baseCfg)
 
@@ -526,13 +534,13 @@ func ruleSequenceRuntimeConfig() config.RuntimeConfig {
 			return config.RuleRef{}, false, nil
 		}
 	}
-	cfg.ResolveRuleSequenceMemberships = func(ctx context.Context, uids []string) (map[string]config.RuleSequenceMembership, error) {
+	cfg.MembershipResolver = funcMembershipResolver(func(ctx context.Context, uids []string) (map[string]config.RuleSequenceMembership, error) {
 		out := make(map[string]config.RuleSequenceMembership, len(uids))
 		for _, uid := range uids {
 			out[uid] = config.RuleSequenceMembership{}
 		}
 		return out, nil
-	}
+	})
 	return cfg
 }
 
@@ -625,7 +633,7 @@ func TestRuleSequenceValidation_Errors(t *testing.T) {
 func TestRuleSequenceValidation_MembershipGuardrails(t *testing.T) {
 	cfg := ruleSequenceRuntimeConfig()
 	// Override membership resolver: rec-1 already belongs to seq-other
-	cfg.ResolveRuleSequenceMemberships = func(ctx context.Context, uids []string) (map[string]config.RuleSequenceMembership, error) {
+	cfg.MembershipResolver = funcMembershipResolver(func(ctx context.Context, uids []string) (map[string]config.RuleSequenceMembership, error) {
 		out := make(map[string]config.RuleSequenceMembership, len(uids))
 		for _, uid := range uids {
 			if uid == "rec-1" {
@@ -635,7 +643,7 @@ func TestRuleSequenceValidation_MembershipGuardrails(t *testing.T) {
 			}
 		}
 		return out, nil
-	}
+	})
 
 	t.Run("create blocked when rule belongs to another sequence", func(t *testing.T) {
 		r := baseRuleSequence()
@@ -649,7 +657,7 @@ func TestRuleSequenceValidation_MembershipGuardrails(t *testing.T) {
 
 	t.Run("update allowed when rule belongs to same sequence", func(t *testing.T) {
 		cfg2 := cfg
-		cfg2.ResolveRuleSequenceMemberships = func(ctx context.Context, uids []string) (map[string]config.RuleSequenceMembership, error) {
+		cfg2.MembershipResolver = funcMembershipResolver(func(ctx context.Context, uids []string) (map[string]config.RuleSequenceMembership, error) {
 			out := make(map[string]config.RuleSequenceMembership, len(uids))
 			for _, uid := range uids {
 				if uid == "rec-1" {
@@ -660,7 +668,7 @@ func TestRuleSequenceValidation_MembershipGuardrails(t *testing.T) {
 				}
 			}
 			return out, nil
-		}
+		})
 		r := baseRuleSequence()
 		err := rulesequence.NewValidator(cfg2).Validate(context.Background(), &appsdk.AdmissionRequest{
 			Action: resource.AdmissionActionUpdate,

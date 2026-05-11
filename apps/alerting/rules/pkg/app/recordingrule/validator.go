@@ -32,8 +32,8 @@ func validateDelete(ctx context.Context, req *app.AdmissionRequest, cfg config.R
 	if !ok {
 		return fmt.Errorf("old object is not of type *v0alpha1.RecordingRule")
 	}
-	if cfg.ResolveRuleSequenceMemberships != nil {
-		memberships, err := cfg.ResolveRuleSequenceMemberships(ctx, []string{r.Name})
+	if cfg.MembershipResolver != nil {
+		memberships, err := cfg.MembershipResolver.Resolve(ctx, []string{r.Name})
 		if err != nil {
 			return fmt.Errorf("failed to resolve sequence membership for rule %q: %w", r.Name, err)
 		}
@@ -62,13 +62,13 @@ func validateFolderAndSequenceMembership(ctx context.Context, r *model.Recording
 		}
 	}
 
-	if action == resource.AdmissionActionUpdate && oldRule != nil && cfg.ResolveRuleSequenceMemberships != nil {
+	if action == resource.AdmissionActionUpdate && oldRule != nil && cfg.MembershipResolver != nil {
 		oldFolderUID := ""
 		if oldRule.Annotations != nil {
 			oldFolderUID = oldRule.Annotations[model.FolderAnnotationKey]
 		}
 		if oldFolderUID != folderUID {
-			memberships, err := cfg.ResolveRuleSequenceMemberships(ctx, []string{r.Name})
+			memberships, err := cfg.MembershipResolver.Resolve(ctx, []string{r.Name})
 			if err != nil {
 				return fmt.Errorf("failed to resolve sequence membership for rule %q: %w", r.Name, err)
 			}

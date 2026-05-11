@@ -3,10 +3,7 @@ package rules
 import (
 	"context"
 	"errors"
-	"fmt"
-	"sync"
 
-	"k8s.io/apiserver/pkg/endpoints/request"
 	restclient "k8s.io/client-go/rest"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -21,6 +18,7 @@ import (
 	rulesManifest "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/manifestdata"
 	rulesApp "github.com/grafana/grafana/apps/alerting/rules/pkg/app"
 	rulesAppConfig "github.com/grafana/grafana/apps/alerting/rules/pkg/app/config"
+	rulesequence_app "github.com/grafana/grafana/apps/alerting/rules/pkg/app/rulesequence"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -52,7 +50,7 @@ type AppInstaller struct {
 func RegisterAppInstaller(
 	cfg *setting.Cfg,
 	ng *ngalert.AlertNG,
-	clientGenerator resource.ClientGenerator,
+	_ resource.ClientGenerator, // retained for Wire compatibility; membership resolution now uses a watch-backed index
 ) (*AppInstaller, error) {
 	if ng.IsDisabled() {
 		log.New("app-registry").Info("Skipping Kubernetes Alerting Rules apiserver (rules.alerting.grafana.app): Unified Alerting is disabled")
@@ -64,15 +62,15 @@ func RegisterAppInstaller(
 		ng:  ng,
 	}
 
-	namespacer := reqns.GetNamespaceMapper(cfg)
+	membershipIndex := rulesequence_app.NewMembershipIndex()
 
 	appSpecificConfig := rulesAppConfig.RuntimeConfig{
-		FolderValidator:                newFolderValidator(ng),
-		BaseEvaluationInterval:         ng.Cfg.UnifiedAlerting.BaseInterval,
-		ReservedLabelKeys:              ngmodels.LabelsUserCannotSpecify,
-		ResolveRuleRef:                 newRuleRefResolver(ng),
-		ResolveRuleSequenceMemberships: newRuleSequenceMembershipResolver(namespacer, clientGenerator),
-		NotificationSettingsValidator:  newNotificationSettingsValidator(ng),
+		FolderValidator:               newFolderValidator(ng),
+		BaseEvaluationInterval:        ng.Cfg.UnifiedAlerting.BaseInterval,
+		ReservedLabelKeys:             ngmodels.LabelsUserCannotSpecify,
+		ResolveRuleRef:                newRuleRefResolver(ng),
+		MembershipResolver:            membershipIndex,
+		NotificationSettingsValidator: newNotificationSettingsValidator(ng),
 	}
 
 	provider := simple.NewAppProvider(rulesManifest.LocalManifest(), appSpecificConfig, rulesApp.New)
@@ -99,126 +97,6 @@ func resolveOrgID(ctx context.Context) int64 {
 		}
 	}
 	return orgID
-}
-
-func resolveNamespace(ctx context.Context, namespacer func(int64) string) (string, error) {
-	namespace := request.NamespaceValue(ctx)
-	if namespace != "" {
-		return namespace, nil
-	}
-	orgID, err := reqns.OrgIDForList(ctx)
-	if err == nil && orgID > 0 {
-		return namespacer(orgID), nil
-	}
-	if user, _ := identity.GetRequester(ctx); user != nil && user.GetOrgID() > 0 {
-		return namespacer(user.GetOrgID()), nil
-	}
-	return "", errors.New("could not resolve namespace")
-}
-
-// newRuleSequenceMembershipResolver returns a callback used by RuleSequence
-// CREATE/UPDATE admission validation so all referenced rule UIDs are checked
-// with a single RuleSequence list/scan.
-//
-// TODO: This performs an O(N) full list of all RuleSequences and scans every
-// ref. It also has a TOCTOU race: another concurrent admission could assign
-// the same UID between our list and the final persist. At low sequence/rule
-// counts this is acceptable. Consider adding optimistic locking, a
-// label-based index, or an informer cache in PR 2 / future work to make
-// membership lookups O(1).
-func newRuleSequenceMembershipResolver(
-	namespacer func(int64) string,
-	clientGenerator resource.ClientGenerator,
-) func(ctx context.Context, uids []string) (map[string]rulesAppConfig.RuleSequenceMembership, error) {
-	// The clientGenerator blocks until the apiserver is ready, so calling it
-	// during registration would deadlock. Create the client lazily on first
-	// admission request. Uses mutex+nil-check so transient failures are
-	// retried on the next request.
-	var (
-		client   *alertingv0alpha1.RuleSequenceClient
-		clientMu sync.Mutex
-	)
-
-	return func(ctx context.Context, uids []string) (map[string]rulesAppConfig.RuleSequenceMembership, error) {
-		memberships := make(map[string]rulesAppConfig.RuleSequenceMembership, len(uids))
-		if len(uids) == 0 {
-			return memberships, nil
-		}
-
-		namespace, err := resolveNamespace(ctx, namespacer)
-		if err != nil {
-			return nil, err
-		}
-
-		targets := make(map[string]struct{}, len(uids))
-		for _, uid := range uids {
-			if uid == "" {
-				continue
-			}
-			targets[uid] = struct{}{}
-			memberships[uid] = rulesAppConfig.RuleSequenceMembership{}
-		}
-
-		if len(targets) == 0 {
-			return memberships, nil
-		}
-
-		c, err := lazyInitRuleSequenceClient(&clientMu, &client, clientGenerator)
-		if err != nil {
-			return nil, fmt.Errorf("initializing rule sequence client: %w", err)
-		}
-		sequences, err := c.ListAll(ctx, namespace, resource.ListOptions{})
-		if err != nil {
-			return nil, err
-		}
-
-		remaining := len(targets)
-		for _, seq := range sequences.Items {
-			remaining = matchRuleRefs(seq.Spec.RecordingRules, seq.Name, targets, memberships, remaining)
-			remaining = matchRuleRefs(seq.Spec.AlertingRules, seq.Name, targets, memberships, remaining)
-			if remaining == 0 {
-				break
-			}
-		}
-
-		return memberships, nil
-	}
-}
-
-func lazyInitRuleSequenceClient(
-	mu *sync.Mutex,
-	client **alertingv0alpha1.RuleSequenceClient,
-	clientGenerator resource.ClientGenerator,
-) (*alertingv0alpha1.RuleSequenceClient, error) {
-	mu.Lock()
-	defer mu.Unlock()
-	if *client != nil {
-		return *client, nil
-	}
-	c, err := alertingv0alpha1.NewRuleSequenceClientFromGenerator(clientGenerator)
-	if err != nil {
-		return nil, err
-	}
-	*client = c
-	return c, nil
-}
-
-func matchRuleRefs(
-	refs []alertingv0alpha1.RuleSequenceRuleRef,
-	sequenceName string,
-	targets map[string]struct{},
-	memberships map[string]rulesAppConfig.RuleSequenceMembership,
-	remaining int,
-) int {
-	for _, ref := range refs {
-		uid := string(ref.Uid)
-		if _, ok := targets[uid]; ok {
-			memberships[uid] = rulesAppConfig.RuleSequenceMembership{SequenceUID: sequenceName, Found: true}
-			delete(targets, uid)
-			remaining--
-		}
-	}
-	return remaining
 }
 
 // newFolderValidator returns a callback that validates folder existence using the folder service.

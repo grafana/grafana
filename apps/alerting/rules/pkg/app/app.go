@@ -28,6 +28,7 @@ func New(cfg app.Config) (app.App, error) {
 				Kind:      kind,
 				Validator: buildKindValidator(kind, runtimeCfg),
 				Mutator:   buildKindMutator(kind, runtimeCfg),
+				Watcher:   buildKindWatcher(kind, runtimeCfg),
 			}
 			managedKinds = append(managedKinds, managedKind)
 		}
@@ -79,6 +80,16 @@ func buildKindMutator(kind resource.Kind, cfg config.RuntimeConfig) *simple.Muta
 		return recordingrule.NewMutator(cfg)
 	case "RuleSequence":
 		return rulesequence.NewMutator(cfg)
+	}
+	return nil
+}
+
+func buildKindWatcher(kind resource.Kind, cfg config.RuntimeConfig) operator.ResourceWatcher {
+	switch kind.Kind() {
+	case "RuleSequence":
+		if idx, ok := cfg.MembershipResolver.(*rulesequence.MembershipIndex); ok {
+			return idx
+		}
 	}
 	return nil
 }

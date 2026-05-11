@@ -60,14 +60,14 @@ func NewValidator(cfg config.RuntimeConfig) *simple.Validator {
 			// object can reference many rule UIDs. Resolve membership in bulk
 			// for CREATE/UPDATE to avoid per-UID scans.
 			memberships := map[string]config.RuleSequenceMembership{}
-			if cfg.ResolveRuleSequenceMemberships != nil {
+			if cfg.MembershipResolver != nil {
 				allUIDs := make([]string, 0, len(allRefs))
 				for _, ref := range allRefs {
 					if uid := string(ref.Uid); uid != "" {
 						allUIDs = append(allUIDs, uid)
 					}
 				}
-				resolved, err := cfg.ResolveRuleSequenceMemberships(ctx, allUIDs)
+				resolved, err := cfg.MembershipResolver.Resolve(ctx, allUIDs)
 				if err != nil {
 					return fmt.Errorf("failed to resolve sequence memberships: %w", err)
 				}
