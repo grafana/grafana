@@ -11,13 +11,7 @@ export class LegacyVariableWrapper implements FormatVariable {
   }
 
   getValue(_fieldPath: string): VariableValue {
-    const { value } = this.state;
-
-    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
-      return value;
-    }
-
-    return value;
+    return this.state.value;
   }
 
   getValueText(): string {
