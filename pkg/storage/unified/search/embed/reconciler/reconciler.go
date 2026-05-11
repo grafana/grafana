@@ -125,10 +125,6 @@ func (s *Reconciler) UseBroadcaster(b resource.Broadcaster[*resource.WrittenEven
 	s.broadcaster = b
 }
 
-func (s *Reconciler) currentBroadcaster() resource.Broadcaster[*resource.WrittenEvent] {
-	return s.broadcaster
-}
-
 // enqueue keeps the highest RV per resource so older replayed events
 // can't overwrite a newer one already queued.
 func (s *Reconciler) enqueue(ev *pendingEvent) {

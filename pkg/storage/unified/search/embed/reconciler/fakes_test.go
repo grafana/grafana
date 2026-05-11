@@ -51,6 +51,7 @@ func (f *fakeStorage) ListIterator(context.Context, *resourcepb.ListRequest, fun
 func (f *fakeStorage) ListHistory(context.Context, *resourcepb.ListRequest, func(resource.ListIterator) error) (int64, error) {
 	panic("not implemented")
 }
+
 // WatchWriteEvents returns a channel the test can push events onto via
 // emit(). Closing happens when the parent ctx ends (handled by the test
 // harness). Tests that need watch errors set watchErr.

@@ -78,7 +78,6 @@ type service struct {
 	// uninitializedSearchServer holds the server created during module init, whose Init() is
 	// deferred to starting() so the ring is Running when search indexes are built.
 	uninitializedSearchServer resource.SearchServer
-
 }
 
 // ProvideSearchGRPCService provides a gRPC service that only serves search requests.
