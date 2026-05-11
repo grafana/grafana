@@ -1,4 +1,4 @@
-import { formatDateRange, t } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 
 import {
   type RawTimeRange,
@@ -10,7 +10,7 @@ import {
 } from '../types/time';
 
 import * as dateMath from './datemath';
-import { timeZoneAbbrevation, dateTimeFormat, dateTimeFormatTimeAgo, toIANATimezone } from './formatter';
+import { timeZoneAbbrevation, dateTimeFormat, dateTimeFormatTimeAgo } from './formatter';
 import { isDateTime, type DateTime, dateTime } from './moment_wrapper';
 import { dateTimeParse } from './parser';
 
