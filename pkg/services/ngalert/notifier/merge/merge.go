@@ -9,9 +9,11 @@
 package merge
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math"
+	"slices"
 	"strings"
 
 	"github.com/grafana/alerting/definition"
@@ -19,6 +21,8 @@ import (
 	"github.com/prometheus/alertmanager/dispatch"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 )
 
 var (
@@ -27,54 +31,11 @@ var (
 	ErrSubtreeMatchersConflict = errors.New("subtree matchers conflict with existing Grafana routes, merging will break existing notifications")
 )
 
-type MergeOpts struct {
-	// DedupSuffix is a string suffix that will be appended to any resources (receivers or time intervals)
-	// from the secondary configuration that have name conflicts with the primary configuration.
-	//
-	// The deduplication process works as follows:
-	// 1. If a resource from the secondary config has the same name as one in the primary config,
-	//    this suffix is appended to create a new name (e.g., "webhook" becomes "webhooksuffix")
-	// 2. If the new name still conflicts, a sequential number is added (e.g., "webhooksuffix_01")
-	// 3. All references to renamed resources are automatically updated throughout the configuration
-	//
-	// When left empty, only numeric suffixes will be used for deduplication (e.g., "webhook_01").
-	//
-	// Example usage:
-	//   MergeOpts{
-	//     DedupSuffix: "_secondary",  // Results in names like "webhook_secondary" or "webhook_secondary_01"
-	//   }
-	//
-	// This field helps maintain distinct resource identities while preserving relationships
-	// between components during the merge process.
-	DedupSuffix string
-	// SubtreeMatchers specifies a list of matchers that will be applied to the root route
-	// of the routing tree being merged. These matchers are essential for properly isolating
-	// and identifying alerts from the secondary configuration after merging.
-	//
-	// The matchers must follow these requirements:
-	// - Each matcher must use the equality operator (labels.MatchEqual type)
-	// - Each matcher name must be unique within the list
-	//
-	// Example usage:
-	//   SubtreeMatchers: config.Matchers{
-	//     {Name: "source", Value: "external", Type: labels.MatchEqual},
-	//     {Name: "environment", Value: "production", Type: labels.MatchEqual},
-	//   }
-	//
-	// These matchers will be:
-	// 1. Added to the root of the secondary routing tree during merge
-	// 2. Added to both source and target matchers of all inhibit rules from the secondary config
-	// 3. Used to ensure alerts are properly routed after configurations are merged
-	//
-	// Warning: If these matchers conflict with existing routes in the primary configuration,
-	// the merge operation will fail with ErrSubtreeMatchersConflict to prevent breaking
-	// existing notification flows.
-	SubtreeMatchers config.Matchers
-}
-
-func (o MergeOpts) Validate() error {
-	seenNames := make(map[string]struct{}, len(o.SubtreeMatchers))
-	for _, matcher := range o.SubtreeMatchers {
+// ValidateSubtreeMatchers checks that all matchers use the equality operator and have unique names.
+// These are the requirements for matchers used as subtree identifiers when merging configurations.
+func ValidateSubtreeMatchers(matchers config.Matchers) error {
+	seenNames := make(map[string]struct{}, len(matchers))
+	for _, matcher := range matchers {
 		if _, ok := seenNames[matcher.Name]; ok {
 			return ErrDuplicateMatchers
 		}
@@ -89,12 +50,12 @@ func (o MergeOpts) Validate() error {
 // MergeResult represents the result of merging two Alertmanager configurations.
 // It contains the unified configuration and maps of renamed receivers and time intervals.
 //
-// Identifier, ExtraRoute and ExtraInhibitRules are populated by GetMergedAlertmanagerConfig
+// Identifier, ExtraRoute and ExtraInhibitRules are populated by MergeExtraConfig
 // when the merge consumed an imported (Mimir-format) configuration; they expose the
 // imported route subtree and inhibit rules separately so callers can register them as
-// managed routes / managed inhibit rules. Plain calls to Merge leave these fields zero.
+// managed routes / managed inhibit rules.
 type MergeResult struct {
-	Config definition.PostableApiAlertingConfig
+	Config definitions.PostableUserConfig
 	RenameResources
 	Identifier        string
 	ExtraRoute        *definition.Route
@@ -131,109 +92,71 @@ func (m MergeResult) LogContext() []any {
 	return logCtx
 }
 
-// GetMergedAlertmanagerConfig merges the given imported alertmanager configuration into
-// the base Grafana configuration. The imported route is also returned separately on
-// MergeResult.ExtraRoute (after rename application) so callers can register it as a
-// managed route. The imported inhibit rules are returned on MergeResult.ExtraInhibitRules.
+// MergeExtraConfig merges extra configurations in cfg into the base Grafana configuration.
+// If no extra configurations are present, it returns the base configuration wrapped in a MergeResult.
 //
-// The given identifier is used as the dedup suffix for receiver / time-interval name
-// collisions and as the MergeResult.Identifier. The given matchers are used as the subtree
-// matchers for the merge.
-func GetMergedAlertmanagerConfig(
-	base definition.PostableApiAlertingConfig,
-	imported definition.PostableApiAlertingConfig,
-	identifier string,
-	matchers config.Matchers,
-) (MergeResult, error) {
-	opts := MergeOpts{
-		DedupSuffix:     identifier,
-		SubtreeMatchers: matchers,
-	}
-	if err := opts.Validate(); err != nil {
-		return MergeResult{}, fmt.Errorf("invalid merge options: %w", err)
-	}
-
-	m, err := Merge(base, imported, opts)
-	if err != nil {
-		return MergeResult{}, fmt.Errorf("failed to merge alertmanager config: %w", err)
-	}
-
-	route := imported.Route
-	RenameResourceUsagesInRoutes([]*definition.Route{route}, m.RenameResources)
-
-	return MergeResult{
-		Config:            m.Config,
-		RenameResources:   m.RenameResources,
-		Identifier:        identifier,
-		ExtraRoute:        route,
-		ExtraInhibitRules: imported.InhibitRules,
-	}, nil
-}
-
-// Merge combines two Alertmanager configurations into a single unified configuration.
-//
-// The function handles three main aspects of the merge process:
+// The merge combines two Alertmanager configurations into a single unified configuration,
+// handling three main aspects:
 //
 //  1. Resource Deduplication:
 //     When resources (receivers or time intervals) with identical names exist in both configurations,
-//     resources from configuration "b" are renamed according to these rules:
-//     - First, the MergeOpts.DedupSuffix is appended to the name
+//     resources from the extra configuration are renamed according to these rules:
+//     - First, the extra configuration's Identifier is appended to the name
 //     - If the name is still not unique, a numbered suffix is added (e.g., "_01", "_02")
 //     - All references to renamed resources are automatically updated throughout the configuration
 //
-// 2. Route Merging:
-//   - The entire routing tree from "b" is inserted as a sub-tree under the root route of "a"
-//   - The sub-tree is positioned as the first route in the list of routes
-//   - The MergeOpts.SubtreeMatchers are added to the root of the "b" routing tree
-//   - Default timing settings (GroupWait, GroupInterval, RepeatInterval) are explicitly set
-//     on the "b" route to prevent inheriting potentially unwanted defaults from the parent configuration
-//   - If any existing routes in "a" would match the SubtreeMatchers, the merge will fail with
-//     ErrSubtreeMatchersConflict to prevent breaking existing routing behavior
+//  2. Route Merging:
+//     - The entire routing tree from the extra configuration is inserted as a sub-tree under
+//     the root route of the base configuration
+//     - The sub-tree is positioned as the first route in the list of routes
+//     - The extra configuration's MergeMatchers are added to the root of the imported routing tree
+//     - Default timing settings (GroupWait, GroupInterval, RepeatInterval) are explicitly set
+//     on the imported route to prevent inheriting potentially unwanted defaults from the parent
+//     - If any existing routes in the base configuration would match the MergeMatchers, the merge
+//     will fail with ErrSubtreeMatchersConflict to prevent breaking existing notification flows
 //
-// 3. Inhibit Rule Merging:
-//   - All inhibit rules from "b" are copied to the result
-//   - MergeOpts.SubtreeMatchers are added to both source and target matchers of each
-//     copied inhibit rule to maintain proper context separation
-//
-// Returns a MergeResult containing the merged configuration and maps of renamed resources
-// that can be used to track the renaming that occurred during the merge process.
-//
-// Example usage:
-//
-//	result, err := Merge(primaryConfig, secondaryConfig, MergeOpts{
-//	  DedupSuffix: "_secondary",
-//	  SubtreeMatchers: config.Matchers{
-//	    {Name: "source", Value: "external", Type: labels.MatchEqual},
-//	  },
-//	})
-//
-// If the merge fails with ErrSubtreeMatchersConflict, it indicates that the SubtreeMatchers
-// would conflict with existing routes, potentially disrupting alert notifications. In this
-// case, you should choose different SubtreeMatchers that don't overlap with existing route
-// matchers.
-func Merge(a, b definition.PostableApiAlertingConfig, opts MergeOpts) (MergeResult, error) {
-	if err := opts.Validate(); err != nil {
-		return MergeResult{}, err
+//  3. Inhibit Rule Merging:
+//     - All inhibit rules from the extra configuration are copied to the result
+//     - MergeMatchers are added to both source and target matchers of each copied inhibit rule
+//     to maintain proper context separation
+func MergeExtraConfig(_ context.Context, cfg *definitions.PostableUserConfig) (MergeResult, error) {
+	if len(cfg.ExtraConfigs) == 0 {
+		return MergeResult{Config: *cfg}, nil
+	}
+	// support only one config for now
+	mimirCfg := cfg.ExtraConfigs[0]
+	if err := mimirCfg.Validate(); err != nil {
+		return MergeResult{}, fmt.Errorf("invalid extra configuration: %w", err)
+	}
+	mcfg, err := mimirCfg.GetAlertmanagerConfig()
+	if err != nil {
+		return MergeResult{}, fmt.Errorf("failed to get mimir alertmanager config: %w", err)
+	}
+	if err := ValidateSubtreeMatchers(mimirCfg.MergeMatchers); err != nil {
+		return MergeResult{}, fmt.Errorf("invalid merge options: %w", err)
 	}
 
-	if len(opts.SubtreeMatchers) > 0 {
-		match, err := checkIfMatchersUsed(opts.SubtreeMatchers, a.Route.Routes)
+	if len(mimirCfg.MergeMatchers) > 0 {
+		if cfg.AlertmanagerConfig.Route == nil {
+			return MergeResult{}, fmt.Errorf("failed to merge alertmanager config: cannot merge into undefined routing tree")
+		}
+		match, err := checkIfMatchersUsed(mimirCfg.MergeMatchers, cfg.AlertmanagerConfig.Route.Routes)
 		if err != nil {
-			return MergeResult{}, err
+			return MergeResult{}, fmt.Errorf("failed to merge alertmanager config: %w", err)
 		}
 		if match {
-			return MergeResult{}, fmt.Errorf("%w: sub tree matchers: %s", ErrSubtreeMatchersConflict, opts.SubtreeMatchers)
+			return MergeResult{}, fmt.Errorf("failed to merge alertmanager config: %w: sub tree matchers: %s", ErrSubtreeMatchersConflict, mimirCfg.MergeMatchers)
 		}
 	}
 
-	mergedReceivers, renamedReceivers := MergeReceivers(a.Receivers, b.Receivers, opts.DedupSuffix)
+	mergedReceivers, renamedReceivers := MergeReceivers(cfg.AlertmanagerConfig.Receivers, mcfg.Receivers, mimirCfg.Identifier)
 
-	mergedTimeInterval, renamedTimeIntervals := MergeTimeIntervals(
-		a.MuteTimeIntervals,
-		a.TimeIntervals,
-		b.MuteTimeIntervals,
-		b.TimeIntervals,
-		opts.DedupSuffix,
+	mergedTimeIntervals, renamedTimeIntervals := MergeTimeIntervals(
+		cfg.AlertmanagerConfig.MuteTimeIntervals,
+		cfg.AlertmanagerConfig.TimeIntervals,
+		mcfg.MuteTimeIntervals,
+		mcfg.TimeIntervals,
+		mimirCfg.Identifier,
 	)
 
 	renamed := RenameResources{
@@ -241,51 +164,57 @@ func Merge(a, b definition.PostableApiAlertingConfig, opts MergeOpts) (MergeResu
 		TimeIntervals: renamedTimeIntervals,
 	}
 
-	route := a.Route
-	inhibitRules := a.InhibitRules
-	if len(opts.SubtreeMatchers) > 0 {
-		RenameResourceUsagesInRoutes([]*definition.Route{b.Route}, renamed)
-		if route == nil {
-			return MergeResult{}, fmt.Errorf("cannot merge into undefined routing tree")
-		}
-		if b.Route == nil {
-			return MergeResult{}, fmt.Errorf("cannot merge undefined routing tree")
-		}
-		route = MergeRoutes(*route, *b.Route, opts.SubtreeMatchers)
-		inhibitRules = MergeInhibitRules(inhibitRules, b.InhibitRules, opts.SubtreeMatchers)
+	extraRoute := mcfg.Route
+	RenameResourceUsagesInRoutes([]*definition.Route{extraRoute}, renamed)
+
+	route := cfg.AlertmanagerConfig.Route
+	inhibitRules := cfg.AlertmanagerConfig.InhibitRules
+	if len(mimirCfg.MergeMatchers) > 0 {
+		route = MergeRoutes(*route, *mcfg.Route, mimirCfg.MergeMatchers)
+		inhibitRules = MergeInhibitRules(inhibitRules, mcfg.InhibitRules, mimirCfg.MergeMatchers)
 	}
 
-	return MergeResult{
-		Config: definition.PostableApiAlertingConfig{
+	mergedConfig := definitions.PostableUserConfig{
+		TemplateFiles: cfg.TemplateFiles,
+		AlertmanagerConfig: definition.PostableApiAlertingConfig{
 			Config: definition.Config{
 				Global:            nil, // Grafana does not have global.
 				Route:             route,
 				InhibitRules:      inhibitRules,
-				MuteTimeIntervals: a.MuteTimeIntervals,
-				TimeIntervals:     mergedTimeInterval,
+				MuteTimeIntervals: cfg.AlertmanagerConfig.MuteTimeIntervals,
+				TimeIntervals:     mergedTimeIntervals,
 				Templates:         nil, // we do not use this.
 			},
 			Receivers: mergedReceivers,
 		},
-		RenameResources: renamed,
+		ManagedRoutes:          cfg.ManagedRoutes,
+		ManagedInhibitionRules: cfg.ManagedInhibitionRules,
+	}
+
+	return MergeResult{
+		Config:            mergedConfig,
+		RenameResources:   renamed,
+		Identifier:        mimirCfg.Identifier,
+		ExtraRoute:        extraRoute,
+		ExtraInhibitRules: mcfg.InhibitRules,
 	}, nil
 }
 
 // DeduplicateResources merges existing and incoming resources (receivers and time intervals) and ensures unique names by applying suffixes. Returns renamed resources for tracking adjustments made.
-func DeduplicateResources(a, b definition.PostableApiAlertingConfig, opts MergeOpts) (RenameResources, error) {
-	_, renamedReceivers := MergeReceivers(a.Receivers, b.Receivers, opts.DedupSuffix)
+func DeduplicateResources(a, b definition.PostableApiAlertingConfig, suffix string) RenameResources {
+	_, renamedReceivers := MergeReceivers(a.Receivers, b.Receivers, suffix)
 
 	_, renamedTimeIntervals := MergeTimeIntervals(
 		a.MuteTimeIntervals,
 		a.TimeIntervals,
 		b.MuteTimeIntervals,
 		b.TimeIntervals,
-		opts.DedupSuffix,
+		suffix,
 	)
 	return RenameResources{
 		Receivers:     renamedReceivers,
 		TimeIntervals: renamedTimeIntervals,
-	}, nil
+	}
 }
 
 // MergeTimeIntervals merges existing and incoming time intervals and mute intervals, ensuring unique names by applying suffixes.
@@ -357,7 +286,7 @@ func MergeRoutes(a, b definition.Route, matcher config.Matchers) *definition.Rou
 		ri := model.Duration(defaultOpts.RepeatInterval)
 		b.RepeatInterval = &ri
 	}
-	b.Matchers = append(b.Matchers, matcher...)
+	b.Matchers = append(slices.Clone(b.Matchers), matcher...)
 	a.Routes = append([]*definition.Route{&b}, a.Routes...)
 	return &a
 }
@@ -426,8 +355,8 @@ func MergeInhibitRules(a, b []config.InhibitRule, matcher config.Matchers) []con
 	result := make([]config.InhibitRule, 0, len(a)+len(b))
 	result = append(result, a...)
 	for _, rule := range b {
-		rule.SourceMatchers = append(rule.SourceMatchers, matcher...)
-		rule.TargetMatchers = append(rule.TargetMatchers, matcher...)
+		rule.SourceMatchers = append(slices.Clone(rule.SourceMatchers), matcher...)
+		rule.TargetMatchers = append(slices.Clone(rule.TargetMatchers), matcher...)
 		result = append(result, rule)
 	}
 	return result

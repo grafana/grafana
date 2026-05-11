@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -177,6 +178,11 @@ func (q *scopedDatasourceProvider) GetDataSource(ctx context.Context, uid string
 			delete(ds.SecureJsonData, k)
 		}
 	}
+
+	// Add the decrypted secrets to the context if they were requested
+	pluginsettings.WithDecryptedValues(ctx, func(ctx context.Context) (map[string]string, error) {
+		return secrets, nil
+	})
 
 	return q.converter.AsDataSource(ds)
 }

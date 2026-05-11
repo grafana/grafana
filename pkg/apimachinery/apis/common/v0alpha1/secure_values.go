@@ -8,7 +8,6 @@ import (
 	"go.yaml.in/yaml/v3"
 	openapi "k8s.io/kube-openapi/pkg/common"
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
-	ptr "k8s.io/utils/ptr"
 )
 
 const redacted = "[REDACTED]"
@@ -66,14 +65,14 @@ func (InlineSecureValue) OpenAPIDefinition() openapi.OpenAPIDefinition {
 						SchemaProps: spec.SchemaProps{
 							Description: "Name in the secret service (reference)",
 							Type:        []string{"string"},
-							MinLength:   ptr.To[int64](1),
-							MaxLength:   ptr.To[int64](253),
+							MinLength:   new(int64(1)),
+							MaxLength:   new(int64(253)),
 							Format:      ""}},
 					"create": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Create a secure value -- this is only used for POST/PUT",
-							MinLength:   ptr.To[int64](1),
-							MaxLength:   ptr.To[int64](24576),
+							MinLength:   new(int64(1)),
+							MaxLength:   new(int64(24576)),
 							Type:        []string{"string"},
 							Format:      ""}},
 					"remove": {

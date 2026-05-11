@@ -1153,6 +1153,9 @@
         "rule-viewer-section-extension": "Échec du chargement de la section d’enrichissement de la visionneuse de règles"
       }
     },
+    "entities": {
+      "group": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "Échec de la mise à jour de votre configuration :",
       "title-something-went-wrong": "Une erreur s'est produite"
@@ -1161,6 +1164,9 @@
       "content-show-all-errors": "Afficher toutes les erreurs"
     },
     "errors": {
+      "api-machinery": {
+        "with-causes": ""
+      },
       "failedWith": "{{-config}} a échoué avec le statut {{status}} : {{-message}}"
     },
     "evaluate-every-validation-options": {
@@ -3174,9 +3180,7 @@
       "deleting": "Suppression",
       "text-federated": "Fédéré",
       "text-provisioned": "Mis en service",
-      "ungrouped": "Non groupé",
-      "ungrouped-suffix": "{{ruleName}} (non groupé)",
-      "unknown-rule": "Règle inconnue"
+      "ungrouped": "Non groupé"
     },
     "saved-searches": {
       "actions-aria-label": "Actions",
@@ -10850,6 +10854,11 @@
     "name-line-width": "Épaisseur de ligne",
     "name-stacking": "Empilement"
   },
+  "home": {
+    "home-page": {
+      "placeholder": ""
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "Chargement en cours",
@@ -16021,7 +16030,9 @@
       "description": {
         "group-by-field-value": "Regroupez les données selon la valeur d’un champ et créez des tableaux imbriqués avec les données regroupées."
       },
+      "description-expand-nested-rows": "",
       "description-show-field-names": "Si activés, les tableaux imbriqués afficheront les noms de champs comme en-tête de tableau",
+      "label-expand-nested-rows-by-default": "",
       "label-show-field-names-in-nested-tables": "Afficher les noms de champs dans les tableaux imbriqués",
       "name": {
         "group-to-nested-tables": "Regrouper en tableaux imbriqués"

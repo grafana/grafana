@@ -475,6 +475,10 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['Team'],
       }),
+      createTeamAddmember: build.mutation<CreateTeamAddmemberApiResponse, CreateTeamAddmemberApiArg>({
+        query: (queryArg) => ({ url: `/teams/${queryArg.name}/addmember`, method: 'POST' }),
+        invalidatesTags: ['Team'],
+      }),
       getTeamGroups: build.query<GetTeamGroupsApiResponse, GetTeamGroupsApiArg>({
         query: (queryArg) => ({
           url: `/teams/${queryArg.name}/groups`,
@@ -496,6 +500,10 @@ const injectedRtkApi = api
           },
         }),
         providesTags: ['Team'],
+      }),
+      createTeamRemovemember: build.mutation<CreateTeamRemovememberApiResponse, CreateTeamRemovememberApiArg>({
+        query: (queryArg) => ({ url: `/teams/${queryArg.name}/removemember`, method: 'POST' }),
+        invalidatesTags: ['Team'],
       }),
       listUser: build.query<ListUserApiResponse, ListUserApiArg>({
         query: (queryArg) => ({
@@ -1279,6 +1287,12 @@ export type UpdateTeamApiArg = {
   force?: boolean;
   patch: Patch;
 };
+export type CreateTeamAddmemberApiResponse =
+  /** status 200 OK */ GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1TeamMemberList;
+export type CreateTeamAddmemberApiArg = {
+  /** name of the TeamMemberList */
+  name: string;
+};
 export type GetTeamGroupsApiResponse = /** status 200 OK */ GetTeamGroupsResponse;
 export type GetTeamGroupsApiArg = {
   /** name of the GetTeamGroupsResponse */
@@ -1301,6 +1315,12 @@ export type GetTeamMembersApiArg = {
   page?: number;
   /** number of results to skip */
   offset?: number;
+};
+export type CreateTeamRemovememberApiResponse =
+  /** status 200 OK */ GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1TeamMemberList;
+export type CreateTeamRemovememberApiArg = {
+  /** name of the TeamMemberList */
+  name: string;
 };
 export type ListUserApiResponse = /** status 200 OK */ UserList;
 export type ListUserApiArg = {
@@ -1817,17 +1837,6 @@ export type TeamList = {
   kind?: string;
   metadata: ListMeta;
 };
-export type GetTeamGroupsExternalGroupMapping = {
-  externalGroup: string;
-  name: string;
-};
-export type GetTeamGroupsResponse = {
-  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
-  apiVersion?: string;
-  items: GetTeamGroupsExternalGroupMapping[];
-  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
-  kind?: string;
-};
 export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1IdentityRef = {
   /** Name is the unique identifier for identity, guaranteed to be a unique value for the type within a namespace. */
   name: string;
@@ -1858,6 +1867,17 @@ export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1TeamMemberList = {
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata?: ListMeta;
+};
+export type GetTeamGroupsExternalGroupMapping = {
+  externalGroup: string;
+  name: string;
+};
+export type GetTeamGroupsResponse = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  items: GetTeamGroupsExternalGroupMapping[];
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
 };
 export type UserSpec = {
   disabled: boolean;
@@ -1951,10 +1971,12 @@ export const {
   useReplaceTeamMutation,
   useDeleteTeamMutation,
   useUpdateTeamMutation,
+  useCreateTeamAddmemberMutation,
   useGetTeamGroupsQuery,
   useLazyGetTeamGroupsQuery,
   useGetTeamMembersQuery,
   useLazyGetTeamMembersQuery,
+  useCreateTeamRemovememberMutation,
   useListUserQuery,
   useLazyListUserQuery,
   useCreateUserMutation,

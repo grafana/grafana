@@ -1153,6 +1153,9 @@
         "rule-viewer-section-extension": "Kural Görüntüleyici Zenginleştirme Bölümü yüklenemedi"
       }
     },
+    "entities": {
+      "group": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "Yapılandırmanız güncellenemedi:",
       "title-something-went-wrong": "Bir hata oluştu"
@@ -1161,6 +1164,9 @@
       "content-show-all-errors": "Tüm hataları göster"
     },
     "errors": {
+      "api-machinery": {
+        "with-causes": ""
+      },
       "failedWith": "{{-config}}, {{status}} durumu ile başarısız oldu: {{-message}}"
     },
     "evaluate-every-validation-options": {
@@ -3174,9 +3180,7 @@
       "deleting": "Siliniyor",
       "text-federated": "Şirket dışı",
       "text-provisioned": "Sağlanan",
-      "ungrouped": "Gruplandırılmamış",
-      "ungrouped-suffix": "{{ruleName}} (Gruplandırılmamış)",
-      "unknown-rule": "Bilinmeyen Kural"
+      "ungrouped": "Gruplandırılmamış"
     },
     "saved-searches": {
       "actions-aria-label": "İşlemler",
@@ -10850,6 +10854,11 @@
     "name-line-width": "Çizgi genişliği",
     "name-stacking": "İstifleme"
   },
+  "home": {
+    "home-page": {
+      "placeholder": ""
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "Yükleniyor",
@@ -16021,7 +16030,9 @@
       "description": {
         "group-by-field-value": "Verileri bir alan değerine göre gruplandırın ve gruplanmış verilerle iç içe tablolar oluşturun."
       },
+      "description-expand-nested-rows": "",
       "description-show-field-names": "Etkinleştirilirse iç içe tablolar alan adlarını tablo başlığı olarak gösterir",
+      "label-expand-nested-rows-by-default": "",
       "label-show-field-names-in-nested-tables": "Alan adlarını iç içe tablolarda göster",
       "name": {
         "group-to-nested-tables": "İç içe tablolara grupla"

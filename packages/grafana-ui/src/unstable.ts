@@ -13,7 +13,10 @@ export * from './utils/skeleton';
 
 export { CodeMirrorEditor } from './components/CodeMirror/CodeEditorLazy';
 export type {
+  CodeMirrorCompletion,
+  CodeMirrorCompletionContext,
   CodeMirrorCompletionMode,
+  CodeMirrorCompletionResult,
   CodeMirrorCompletionSource,
   CodeMirrorEditorLanguage,
   CodeMirrorEditorProps,

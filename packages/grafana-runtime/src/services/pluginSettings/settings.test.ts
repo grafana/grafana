@@ -1,5 +1,6 @@
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
+import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { invalidateCachedPromisesCache } from '../../utils/getCachedPromise';
 import { type MonitoringLogger } from '../../utils/logging';
 import { type BackendSrv, setBackendSrv } from '../backendSrv';
@@ -10,7 +11,6 @@ import { clockPanelMetaOnPrem, myOrgTestAppMeta } from '../pluginMeta/test-fixtu
 import { isAppPluginEnabled } from './settings';
 import { legacyClockPanelOnPrem, legacyMyOrgTestAppSettings } from './test-fixtures/legacy.settings';
 import { myOrgTestAppSettings } from './test-fixtures/v0alpha1Response';
-
 jest.mock('../pluginMeta/plugins', () => ({
   ...jest.requireActual('../pluginMeta/plugins'),
   getPluginMetaFromCache: jest.fn(),
@@ -53,9 +53,9 @@ describe('settings', () => {
     setLogger('grafana/runtime.plugins.settings', logger);
   });
 
-  describe('when useMTPluginSettings flag is enabled', () => {
+  describe('when plugins.useMTPluginSettings flag is enabled', () => {
     beforeAll(() => {
-      setTestFlags({ useMTPluginSettings: true });
+      setTestFlags({ [FlagKeys.PluginsUseMTPluginSettings]: true });
     });
 
     afterAll(() => {
@@ -158,9 +158,9 @@ describe('settings', () => {
     });
   });
 
-  describe('when useMTPluginSettings flag is disabled', () => {
+  describe('when plugins.useMTPluginSettings flag is disabled', () => {
     beforeAll(() => {
-      setTestFlags({ useMTPluginSettings: false });
+      setTestFlags({ [FlagKeys.PluginsUseMTPluginSettings]: false });
     });
 
     afterAll(() => {

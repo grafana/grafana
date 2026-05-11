@@ -1148,6 +1148,9 @@
         "rule-viewer-section-extension": "Bagian Pengayaan Penampil Aturan gagal dimuat"
       }
     },
+    "entities": {
+      "group": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "Gagal memperbarui konfigurasi Anda:",
       "title-something-went-wrong": "Terjadi kesalahan"
@@ -1156,6 +1159,9 @@
       "content-show-all-errors": "Tampilkan semua kesalahan"
     },
     "errors": {
+      "api-machinery": {
+        "with-causes": ""
+      },
       "failedWith": "{{-config}} gagal dengan {{status}}: {{-message}}"
     },
     "evaluate-every-validation-options": {
@@ -3155,9 +3161,7 @@
       "deleting": "Menghapus",
       "text-federated": "Federasi",
       "text-provisioned": "Disediakan",
-      "ungrouped": "Tidak dikelompokkan",
-      "ungrouped-suffix": "{{ruleName}} (Tidak Dikelompokkan)",
-      "unknown-rule": "Aturan Tidak Diketahui"
+      "ungrouped": "Tidak dikelompokkan"
     },
     "saved-searches": {
       "actions-aria-label": "Tindakan",
@@ -10792,6 +10796,11 @@
     "name-line-width": "Lebar garis",
     "name-stacking": "Tumpukan"
   },
+  "home": {
+    "home-page": {
+      "placeholder": ""
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "Memuat",
@@ -15928,7 +15937,9 @@
       "description": {
         "group-by-field-value": "Kelompokkan data berdasarkan nilai bidang dan buat tabel bersarang dengan data yang dikelompokkan."
       },
+      "description-expand-nested-rows": "",
       "description-show-field-names": "Jika tabel nested diaktifkan, akan menampilkan nama bidang sebagai header tabel",
+      "label-expand-nested-rows-by-default": "",
       "label-show-field-names-in-nested-tables": "Tampilkan nama bidang dalam tabel nested",
       "name": {
         "group-to-nested-tables": "Kelompokkan ke tabel bersarang"
