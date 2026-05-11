@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
@@ -57,7 +56,7 @@ func convertToK8sResource(
 	}
 
 	if rule.IsPaused {
-		k8sRule.Spec.Paused = util.Pointer(true)
+		k8sRule.Spec.Paused = new(true)
 	}
 
 	if rule.RuleGroup != "" && !ngmodels.IsNoGroupRuleGroup(rule.RuleGroup) {
@@ -104,11 +103,11 @@ func convertToK8sExpression(query ngmodels.AlertQuery, rule *ngmodels.AlertRule)
 		Model: query.Model,
 	}
 	if query.QueryType != "" {
-		expression.QueryType = util.Pointer(query.QueryType)
+		expression.QueryType = new(query.QueryType)
 	}
 	// DatasourceUID is optional and defaults to expr datasource
 	if !expr.IsDataSource(query.DatasourceUID) {
-		expression.DatasourceUID = util.Pointer(model.RecordingRuleDatasourceUID(query.DatasourceUID))
+		expression.DatasourceUID = new(model.RecordingRuleDatasourceUID(query.DatasourceUID))
 	}
 	if time.Duration(query.RelativeTimeRange.From) > 0 || time.Duration(query.RelativeTimeRange.To) > 0 {
 		expression.RelativeTimeRange = &model.RecordingRuleRelativeTimeRange{
@@ -117,7 +116,7 @@ func convertToK8sExpression(query ngmodels.AlertQuery, rule *ngmodels.AlertRule)
 		}
 	}
 	if rule.Record != nil && rule.Record.From == query.RefID {
-		expression.Source = util.Pointer(true)
+		expression.Source = new(true)
 	}
 	return expression
 }

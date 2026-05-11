@@ -14,13 +14,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/alerting/notify/notifytest"
 	prometheus "github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/timeinterval"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/alerting/notify/notifytest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/bus"
@@ -407,7 +408,7 @@ func TestIntegrationProvisioningApi(t *testing.T) {
 			})
 
 			t.Run("PUT without MissingSeriesEvalsToResolve clears the field", func(t *testing.T) {
-				oldValue := util.Pointer[int64](5)
+				oldValue := new(int64(5))
 				sut := createProvisioningSrvSut(t)
 				rc := createTestRequestCtx()
 				rule := createTestAlertRule("rule", 1)
@@ -424,8 +425,8 @@ func TestIntegrationProvisioningApi(t *testing.T) {
 			})
 
 			t.Run("PUT with MissingSeriesEvalsToResolve updates the value", func(t *testing.T) {
-				oldValue := util.Pointer[int64](5)
-				newValue := util.Pointer[int64](10)
+				oldValue := new(int64(5))
+				newValue := new(int64(10))
 				sut := createProvisioningSrvSut(t)
 				rc := createTestRequestCtx()
 				rule := createTestAlertRule("rule", 1)
@@ -740,7 +741,7 @@ func TestIntegrationProvisioningApi(t *testing.T) {
 				require.Nil(t, updated.Rules[0].MissingSeriesEvalsToResolve)
 
 				// Put the same group with a new value
-				group.Rules[0].MissingSeriesEvalsToResolve = util.Pointer[int64](5)
+				group.Rules[0].MissingSeriesEvalsToResolve = new(int64(5))
 				response = sut.RoutePutAlertRuleGroup(&rc, group, "folder-uid", group.Title)
 				require.Equal(t, 200, response.Status())
 				updated = deserializeRuleGroup(t, response.Body())
@@ -2515,9 +2516,9 @@ func createTestAlertRule(title string, orgID int64) definitions.ProvisionedAlert
 		NotificationSettings: &definitions.AlertRuleNotificationSettings{
 			Receiver:            "Test-Receiver",
 			GroupBy:             []string{"alertname", "grafana_folder", "test"},
-			GroupWait:           util.Pointer(model.Duration(1 * time.Second)),
-			GroupInterval:       util.Pointer(model.Duration(5 * time.Second)),
-			RepeatInterval:      util.Pointer(model.Duration(5 * time.Minute)),
+			GroupWait:           new(model.Duration(1 * time.Second)),
+			GroupInterval:       new(model.Duration(5 * time.Second)),
+			RepeatInterval:      new(model.Duration(5 * time.Minute)),
 			MuteTimeIntervals:   []string{"test-mute"},
 			ActiveTimeIntervals: []string{"test-active"},
 		},

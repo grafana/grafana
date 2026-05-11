@@ -1118,7 +1118,7 @@ func (service *AlertRuleService) GetAlertGroupsWithFolderFullpath(ctx context.Co
 
 	namespaces := make(map[string][]*models.AlertRuleGroupKey)
 	for groupKey := range groups {
-		namespaces[groupKey.NamespaceUID] = append(namespaces[groupKey.NamespaceUID], util.Pointer(groupKey))
+		namespaces[groupKey.NamespaceUID] = append(namespaces[groupKey.NamespaceUID], new(groupKey))
 	}
 
 	if len(namespaces) == 0 {
