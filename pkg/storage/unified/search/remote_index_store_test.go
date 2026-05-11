@@ -1066,19 +1066,19 @@ type hookableStore struct {
 	lockBuildErr         error
 	lockCleanupErr       error
 	listKeysErr          error
-	writeSnapshotFileErr error // fires on any WriteSnapshotFile call
-	readSnapshotFileErr  error // fires on non-manifest ReadSnapshotFile (data-file phase of a download)
+	writeSnapshotFileErr error               // fires on any WriteSnapshotFile call
+	readSnapshotFileErr  error               // fires on non-manifest ReadSnapshotFile (data-file phase of a download)
 	readManifestErrs     map[ulid.ULID]error // fires on ReadSnapshotFile(manifest) for the keyed snapshot
 
 	onUpload func() error
 
 	// Counters.
-	lockAcquireCalls atomic.Int32
-	lockReleaseCalls atomic.Int32
-	listKeyCalls     atomic.Int32 // ListIndexKeys
-	readManifestCalls     atomic.Int32 // ReadSnapshotFile(manifest)
-	downloadCalls    atomic.Int32 // ReadSnapshotFile(non-manifest)
-	uploadCalls      atomic.Int32 // WriteSnapshotFile(manifest) succeeded — upload complete
+	lockAcquireCalls  atomic.Int32
+	lockReleaseCalls  atomic.Int32
+	listKeyCalls      atomic.Int32 // ListIndexKeys
+	readManifestCalls atomic.Int32 // ReadSnapshotFile(manifest)
+	downloadCalls     atomic.Int32 // ReadSnapshotFile(non-manifest)
+	uploadCalls       atomic.Int32 // WriteSnapshotFile(manifest) succeeded — upload complete
 
 	// Last-upload captures. Reset when a write for a new indexKey arrives.
 	lastUploadedMeta     IndexMeta

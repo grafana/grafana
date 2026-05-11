@@ -272,8 +272,6 @@ func (s *BucketRemoteIndexStore) ReadSnapshotFile(ctx context.Context, nsResourc
 	return nil
 }
 
-
-
 // ListIndexKeys lists the ULID-keyed snapshot subdirectories under the
 // namespaced-resource prefix using a delimited list, without reading any
 // manifest bodies. Non-ULID subdirectories (e.g. the sibling `locks/` prefix)
@@ -608,11 +606,16 @@ func ListIndexSnapshots(ctx context.Context, store RemoteIndexStore, nsResource 
 	for _, key := range keys {
 		meta, err := ReadIndexSnapshotManifest(ctx, store, nsResource, key)
 		if err != nil {
-			if errors.Is(err, ErrSnapshotNotFound) || errors.Is(err, ErrInvalidManifest) {
-				logger.Warn("skipping index snapshot with missing or invalid manifest", "key", key.String(), "err", err)
-				continue
+			// ErrSnapshotNotFound is the normal in-progress-upload case
+			// (data files written, manifest not yet) and a race with
+			// concurrent cleanup. Both are expected and silent. Other
+			// errors (invalid manifest, transient read failures) are
+			// logged but don't fail the whole listing — one bad snapshot
+			// must not block selection or cleanup of the rest.
+			if !errors.Is(err, ErrSnapshotNotFound) {
+				logger.Warn("skipping index snapshot due to manifest read error", "key", key.String(), "err", err)
 			}
-			return nil, fmt.Errorf("reading manifest for %s: %w", key, err)
+			continue
 		}
 		result[key] = meta
 	}
