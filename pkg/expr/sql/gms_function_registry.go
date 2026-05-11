@@ -13,7 +13,7 @@ import (
 var gmsBuiltinFunctions = func() map[string]struct{} {
 	m := make(map[string]struct{}, len(function.BuiltIns))
 	for _, fn := range function.BuiltIns {
-		m[fn.FunctionName()] = struct{}{}
+		m[strings.ToLower(fn.FunctionName())] = struct{}{}
 	}
 	return m
 }()
