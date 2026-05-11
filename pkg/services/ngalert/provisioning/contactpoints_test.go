@@ -746,9 +746,10 @@ func TestIntegrationAuthorization(t *testing.T) {
 	receiverC := "receiverC"
 	sut, authz := sutWithAuthz()
 	gen := models.IntegrationGen(models.IntegrationMuts.WithValidConfig(email.Type), models.IntegrationMuts.WithName(receiverA))
-	integration1 := GrafanaIntegrationConfigToEmbeddedContactPoint(new(gen()), models.ProvenanceAPI)
-	integration2 := GrafanaIntegrationConfigToEmbeddedContactPoint(new(gen()), models.ProvenanceAPI)
-	integration3 := GrafanaIntegrationConfigToEmbeddedContactPoint(new(gen()), models.ProvenanceAPI)
+	g1, g2, g3 := gen(), gen(), gen()
+	integration1 := GrafanaIntegrationConfigToEmbeddedContactPoint(&g1, models.ProvenanceAPI)
+	integration2 := GrafanaIntegrationConfigToEmbeddedContactPoint(&g2, models.ProvenanceAPI)
+	integration3 := GrafanaIntegrationConfigToEmbeddedContactPoint(&g3, models.ProvenanceAPI)
 	t.Run("CreateContactPoint", func(t *testing.T) {
 		t.Run("authorize create if receiver is new", func(t *testing.T) {
 			authz.AuthorizeCreateFunc = func(ctx context.Context, requester identity.Requester) error {

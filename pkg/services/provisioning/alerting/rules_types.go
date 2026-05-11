@@ -241,21 +241,21 @@ func (nsV1 *NotificationSettingsV1) mapToModel() (models.NotificationSettings, e
 		if err != nil {
 			return models.NotificationSettings{}, fmt.Errorf("failed to parse group wait: %w", err)
 		}
-		gw = new(dur)
+		gw = &dur
 	}
 	if nsV1.GroupInterval.Value() != "" {
 		dur, err := model.ParseDuration(nsV1.GroupInterval.Value())
 		if err != nil {
 			return models.NotificationSettings{}, fmt.Errorf("failed to parse group interval: %w", err)
 		}
-		gi = new(dur)
+		gi = &dur
 	}
 	if nsV1.RepeatInterval.Value() != "" {
 		dur, err := model.ParseDuration(nsV1.RepeatInterval.Value())
 		if err != nil {
 			return models.NotificationSettings{}, fmt.Errorf("failed to parse repeat interval: %w", err)
 		}
-		ri = new(dur)
+		ri = &dur
 	}
 
 	var groupBy []string
