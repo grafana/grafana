@@ -109,6 +109,10 @@ func (s *merger) Current(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// TODO: set properties from the URL???
+	// or should the frontend do it directly?
+	// https://github.com/grafana/grafana/blob/v13.0.1/pkg/api/index.go#L69
+
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(p)
 }
