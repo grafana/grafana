@@ -124,13 +124,18 @@ export const AlertInstanceNotificationAction = ({
     ? [...new Set(journeys.map((j) => j.journey.at(-1)?.route.receiver).filter((r): r is string => Boolean(r)))]
     : [];
   const singlePolicyReceiver = policyReceivers.length === 1 ? policyReceivers[0] : undefined;
+  const hasMultiplePolicies = isFresh && journeys.length > 1;
 
   return (
     <>
       <Stack direction="column" gap={0.5} alignItems="flex-start">
         {singlePolicyReceiver && <ContactPointLink name={singlePolicyReceiver} />}
         <Button fill="outline" variant="secondary" size="sm" onClick={() => setIsOpen(true)}>
-          <Trans i18nKey="alerting.alert-instance-extension-point.view-route">View route</Trans>
+          {hasMultiplePolicies ? (
+            <Trans i18nKey="alerting.alert-instance-extension-point.view-policies">View policies</Trans>
+          ) : (
+            <Trans i18nKey="alerting.alert-instance-extension-point.view-policy">View policy</Trans>
+          )}
         </Button>
       </Stack>
       {isOpen && isFresh && journeys.length > 0 && (
