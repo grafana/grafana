@@ -266,6 +266,9 @@ linters:
         text: G101 # extremely noisy and low confidence
       - linters:
           - gosec
+        text: G118 # extremely noisy and low confidence
+      - linters:
+          - gosec
         text: G108
       - linters:
           - gosec
