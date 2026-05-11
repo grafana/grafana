@@ -8,6 +8,7 @@ This file provides guidance to AI agents when working with code in the Grafana r
 
 - `docs/AGENTS.md` — Documentation style guide (for work under `docs/`)
 - `public/app/features/alerting/unified/AGENTS.md` — Alerting squad patterns
+- `public/app/core/journeys/AGENTS.md` — Critical User Journey instrumentation
 
 ## Project Overview
 

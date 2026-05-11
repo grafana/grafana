@@ -23,6 +23,10 @@ pre-commit:
       run: yarn prettier --write {staged_files}
       stage_fixed: true
 
+    typecheck-smoke:
+      glob: '{public/app/**/__smoke__/**,public/app/**/*.smoke.ts,scripts/cuj-smoke.ts,tsconfig.smoke.json}'
+      run: yarn typecheck:smoke
+
     backend-format:
       glob: '*pkg/**/*.go'
       run: gofmt -w -s {staged_files}

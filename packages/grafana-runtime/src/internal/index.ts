@@ -58,6 +58,7 @@ export {
   replaceCachedPromise,
   getCacheKeyFromPromise,
 } from '../utils/getCachedPromise';
+export { type JourneyStartOptions, setJourneyTracker, setJourneyRegistry } from '../services/JourneyTracker';
 export {
   getListedPanelPluginMetas,
   getPanelPluginMeta,

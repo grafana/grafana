@@ -1696,4 +1696,9 @@ export interface FeatureToggles {
   * @default false
   */
   ['alerting.rulesAPIV2']?: boolean;
+  /**
+  * Enables Critical User Journey (CUJ) tracking
+  * @default false
+  */
+  cujTracking?: boolean;
 }
