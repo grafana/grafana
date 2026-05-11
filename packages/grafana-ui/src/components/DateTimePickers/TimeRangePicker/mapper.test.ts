@@ -40,7 +40,7 @@ describe('when mapRangeToTimeOption is passed a TimeRange and timezone', () => {
     ).toStrictEqual({
       from: '2025-04-13 04:13:14',
       to: '2025-04-13 05:14:15',
-      display: '13/4/25, 4:13:14 am – 5:14:15 am', // "narrow no-break space"s, and "en dash" are the odd characters
+      display: '2025-04-13 04:13:14 to 2025-04-13 05:14:15',
     });
   });
 });
