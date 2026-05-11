@@ -117,7 +117,7 @@ The Grafana Google authentication must request the following scopes so the forwa
 scopes = openid email profile https://www.googleapis.com/auth/monitoring.read
 ```
 
-- `openid`, `email`, `profile`: Grafana's default sign-in scopes. Required for the user to log in.
+- `openid`, `email`, `profile`: the default Grafana sign-in scopes. Required for the user to log in.
 - `https://www.googleapis.com/auth/monitoring.read`: required for the forwarded token to call the Cloud Monitoring API.
 
 After you change the scopes, each user must sign out, revoke the existing grant at [https://myaccount.google.com/permissions](https://myaccount.google.com/permissions), and sign in again. Google reuses the previous consent until the grant is revoked, so existing sessions continue to hold tokens issued under the old scope set.
