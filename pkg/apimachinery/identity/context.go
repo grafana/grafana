@@ -57,7 +57,7 @@ func GetRequester(ctx context.Context) (Requester, error) {
 }
 
 func checkNilRequester(r Requester) bool {
-	return r == nil || (reflect.ValueOf(r).Kind() == reflect.Ptr && reflect.ValueOf(r).IsNil())
+	return r == nil || (reflect.ValueOf(r).Kind() == reflect.Pointer && reflect.ValueOf(r).IsNil())
 }
 
 const (

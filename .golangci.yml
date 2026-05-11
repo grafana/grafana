@@ -304,6 +304,10 @@ linters:
           - gosec
         path: (.+)_test\.go
         text: G601
+      - linters:
+          - gosec
+        path: (.+)_test\.go
+        text: G124
     paths:
       - devenv
       - scripts

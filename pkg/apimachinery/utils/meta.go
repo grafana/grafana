@@ -171,7 +171,7 @@ func MetaAccessor(raw interface{}) (GrafanaMetaAccessor, error) {
 
 	// reflection to find title and other non object properties
 	r := reflect.ValueOf(raw)
-	if r.Kind() == reflect.Ptr || r.Kind() == reflect.Interface {
+	if r.Kind() == reflect.Pointer || r.Kind() == reflect.Interface {
 		r = r.Elem()
 	}
 	return &grafanaMetaAccessor{raw, obj, r}, nil
