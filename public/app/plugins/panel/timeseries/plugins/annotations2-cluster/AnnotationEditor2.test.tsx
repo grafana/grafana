@@ -71,7 +71,7 @@ describe('onSubmit', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Save' }));
 
     expect(onAnnotationUpdate).toHaveBeenCalledWith({
-      id: 4683,
+      id: '4683',
       tags: ['tag1', 'tag2'],
       description: 'My description',
       from: 1759388895560,

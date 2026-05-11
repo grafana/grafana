@@ -32,8 +32,8 @@ function getTestContext(dataSourceSrvRejects = false) {
   createDashboardQueryRunner({} as DashboardQueryRunnerFactoryArgs);
   const executeAnnotationQueryMock = jest
     .spyOn(annotationsSrv, 'executeAnnotationQuery')
-    .mockReturnValue(toAsyncOfResult({ events: [{ id: 'NextGen' }] }));
-  const annotationQueryMock = jest.fn().mockResolvedValue([{ id: 'Legacy' }]);
+    .mockReturnValue(toAsyncOfResult({ events: [{ id: '2' }] }));
+  const annotationQueryMock = jest.fn().mockResolvedValue([{ id: '1' }]);
   const dataSourceSrvMock = {
     get: async (name: string) => {
       if (dataSourceSrvRejects) {
@@ -123,7 +123,7 @@ describe('AnnotationsWorker', () => {
           alertStates: [],
           annotations: [
             {
-              id: 'Legacy',
+              id: '1',
               source: {
                 enable: true,
                 hide: false,
@@ -137,7 +137,7 @@ describe('AnnotationsWorker', () => {
               isRegion: false,
             },
             {
-              id: 'NextGen',
+              id: '2',
               source: {
                 enable: true,
                 hide: false,
@@ -171,7 +171,7 @@ describe('AnnotationsWorker', () => {
           alertStates: [],
           annotations: [
             {
-              id: 'NextGen',
+              id: '2',
               source: {
                 enable: true,
                 hide: false,
@@ -195,9 +195,7 @@ describe('AnnotationsWorker', () => {
   describe('when run is called with correct props and a worker is cancelled', () => {
     it('then it should return the correct results', (done) => {
       const { options, executeAnnotationQueryMock, annotationQueryMock, cancellations } = getTestContext();
-      executeAnnotationQueryMock.mockReturnValueOnce(
-        toAsyncOfResult({ events: [{ id: 'NextGen' }] }).pipe(delay(10000))
-      );
+      executeAnnotationQueryMock.mockReturnValueOnce(toAsyncOfResult({ events: [{ id: '2' }] }).pipe(delay(10000)));
 
       expectOnResults({
         worker,
@@ -208,7 +206,7 @@ describe('AnnotationsWorker', () => {
             alertStates: [],
             annotations: [
               {
-                id: 'Legacy',
+                id: '1',
                 source: {
                   enable: true,
                   hide: false,
@@ -248,7 +246,7 @@ describe('AnnotationsWorker', () => {
           alertStates: [],
           annotations: [
             {
-              id: 'Legacy',
+              id: '1',
               source: {
                 enable: true,
                 hide: false,

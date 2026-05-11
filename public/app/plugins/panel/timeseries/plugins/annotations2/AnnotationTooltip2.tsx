@@ -117,7 +117,7 @@ export const AnnotationTooltip2 = ({
                   ref={canEdit ? null : focusRef}
                   name={'trash-alt'}
                   size={'sm'}
-                  onClick={() => onAnnotationDelete(annoId)}
+                  onClick={() => onAnnotationDelete(String(annoId))}
                   tooltip={t('timeseries.annotation-tooltip2.tooltip-delete', 'Delete')}
                 />
               )}

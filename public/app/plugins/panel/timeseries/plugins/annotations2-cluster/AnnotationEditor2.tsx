@@ -69,8 +69,7 @@ export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeZone, ...oth
 
   const onSubmit = ({ tags, description }: AnnotationEditFormDTO) => {
     operation({
-      // @ts-expect-error @todo https://github.com/grafana/grafana/issues/120097 - id is typed incorrectly as string but breaks annotation API
-      id: annoVals.id?.[annoIdx] ?? undefined,
+      id: annoVals.id?.[annoIdx] != null ? String(annoVals.id[annoIdx]) : undefined,
       tags,
       description,
       from: Math.round(annoVals.time[annoIdx]!),
