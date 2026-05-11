@@ -15,7 +15,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
-	"k8s.io/utils/ptr"
 
 	authlib "github.com/grafana/authlib/types"
 	collections "github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1"
@@ -188,7 +187,7 @@ func (s *DashboardStarsStorage) write(ctx context.Context, obj *collections.Star
 		return &collections.Stars{ObjectMeta: metav1.ObjectMeta{
 			Name:              obj.Name,
 			Namespace:         obj.Namespace,
-			DeletionTimestamp: ptr.To(metav1.Now()),
+			DeletionTimestamp: new(metav1.Now()),
 		}}, err
 	}
 

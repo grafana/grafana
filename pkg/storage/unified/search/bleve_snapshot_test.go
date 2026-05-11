@@ -254,6 +254,18 @@ func TestPickBestSnapshot(t *testing.T) {
 		assert.False(t, ok)
 	})
 
+	// Pins the "MaxIndexAge=0 means no age limit" semantic for the tiered
+	// selection path: tryDownloadRemoteSnapshot leaves notOlderThan as the
+	// zero time when MaxIndexAge is zero, and pickBestSnapshot must skip
+	// the age filter rather than rejecting everything.
+	t.Run("zero cutoff is no age limit", func(t *testing.T) {
+		old := makeULID(t, now.Add(-30*24*time.Hour))
+		all := map[ulid.ULID]*IndexMeta{old: snap("11.5.0", 100, 30*24*time.Hour)}
+		c, ok := newBackend(minV).pickBestSnapshot(all, time.Time{}, log.New("bleve-snapshot-test"))
+		require.True(t, ok)
+		assert.Equal(t, old, c.key)
+	})
+
 	t.Run("dropped for unparseable version", func(t *testing.T) {
 		all := map[ulid.ULID]*IndexMeta{makeULID(t, now): snap("not-a-version", 100, time.Minute)}
 		_, ok := newBackend(minV).pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
@@ -450,6 +462,26 @@ func TestTryDownloadRemoteSnapshot_AllFilteredOut(t *testing.T) {
 	assert.Zero(t, dt.store.downloadCalls.Load(), "DownloadIndex should not be called when all candidates are filtered out")
 }
 
+// TestTryDownloadRemoteSnapshot_NoAgeLimitWhenZero pins the
+// "MaxIndexAge=0 means no age limit" semantic for the tiered selection
+// path: an arbitrarily old same-version snapshot is still downloaded.
+func TestTryDownloadRemoteSnapshot_NoAgeLimitWhenZero(t *testing.T) {
+	store := &fakeRemoteIndexStore{}
+	store.put(makeULID(t, time.Now().Add(-30*24*time.Hour)), &IndexMeta{
+		BuildVersion:          "11.5.0",
+		LatestResourceVersion: 42,
+		UploadTimestamp:       time.Now().Add(-30 * 24 * time.Hour),
+	})
+	dt := newDownloadTest(t, store)
+	dt.be.opts.Snapshot.MaxIndexAge = 0
+
+	idx, rv, err := dt.run(t)
+	require.NoError(t, err)
+	require.NotNil(t, idx)
+	assert.Equal(t, int64(42), rv)
+	assert.Equal(t, 1.0, dt.counter(snapshotStatusSuccess))
+}
+
 // freshDownloadTest bundles the shared setup used by
 // tryDownloadFreshSameVersionSnapshot tests on the rebuild policy.
 type freshDownloadTest struct {
@@ -517,16 +549,19 @@ func TestTryDownloadFreshSnapshot_Hit(t *testing.T) {
 	assert.Equal(t, 1.0, dt.counter(snapshotStatusSuccess))
 }
 
-func TestTryDownloadFreshSnapshot_DisabledByZeroMaxAge(t *testing.T) {
+// TestTryDownloadFreshSnapshot_NoAgeLimitWhenZero verifies that maxAge=0
+// means "no age limit": an arbitrarily old same-version snapshot is
+// accepted as long as it is newer than lastImportTime.
+func TestTryDownloadFreshSnapshot_NoAgeLimitWhenZero(t *testing.T) {
 	store := &fakeRemoteIndexStore{}
-	store.put(makeULID(t, time.Now()), freshSnapshot(time.Minute))
+	store.put(makeULID(t, time.Now()), freshSnapshot(30*24*time.Hour))
 	dt := newFreshDownloadTest(t, store)
 
-	idx, _, err := dt.run(t, time.Time{}, 0)
+	idx, rv, err := dt.run(t, time.Time{}, 0)
 	require.NoError(t, err)
-	assert.Nil(t, idx)
-	assert.Equal(t, 1.0, dt.counter(snapshotStatusEmpty))
-	assert.Zero(t, dt.store.downloadCalls.Load())
+	require.NotNil(t, idx)
+	assert.Equal(t, int64(42), rv)
+	assert.Equal(t, 1.0, dt.counter(snapshotStatusSuccess))
 }
 
 func TestTryDownloadFreshSnapshot_VersionMismatchSkipped(t *testing.T) {
@@ -1580,19 +1615,16 @@ func TestBuildIndex_ColdStartTimeoutBuildsAlone(t *testing.T) {
 	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotColdStarts.WithLabelValues(coldStartOutcomeWaitTimedOut)))
 }
 
-// TestBuildIndex_ColdStartSkippedWhenMaxIndexAgeZero verifies that
-// BuildIndex skips cold-start coordination entirely when MaxIndexAge=0:
-// the probe would be a no-op (all freshness filters reject) so the
-// lock+wait would only serialise duplicate from-scratch builds without
-// any snapshot-reuse upside. With the gate, the builder runs in parallel
-// across replicas (today's behaviour without this PR's coordination).
-func TestBuildIndex_ColdStartSkippedWhenMaxIndexAgeZero(t *testing.T) {
+// TestBuildIndex_ColdStartRunsWhenMaxIndexAgeZero verifies that
+// MaxIndexAge=0 means "no age limit" rather than "reject everything":
+// cold-start coordination still runs, the leader path is taken, and the
+// freshly-built snapshot is uploaded immediately under the held lock.
+func TestBuildIndex_ColdStartRunsWhenMaxIndexAgeZero(t *testing.T) {
 	store := newColdStartFakeStore()
-	store.setLockHeld(true) // would force the wait loop if cold-start ran
 	be, metrics := newTestBleveBackend(t, SnapshotOptions{
 		Store:       store,
 		MinDocCount: 1,
-		// MaxIndexAge intentionally zero.
+		// MaxIndexAge intentionally zero — "no age limit".
 	})
 
 	builderCalled := atomic.Int32{}
@@ -1605,10 +1637,12 @@ func TestBuildIndex_ColdStartSkippedWhenMaxIndexAgeZero(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, idx)
 
-	assert.Equal(t, int32(1), builderCalled.Load(), "builder must run (cold-start coordination is skipped)")
-	assert.Zero(t, store.lockAcquireCalls.Load(), "cold-start must not attempt the lock when MaxIndexAge=0")
-	assert.Zero(t, testutil.ToFloat64(metrics.IndexSnapshotColdStarts.WithLabelValues(coldStartOutcomeAcquiredLock)))
-	assert.Zero(t, testutil.ToFloat64(metrics.IndexSnapshotColdStarts.WithLabelValues(coldStartOutcomeWaitTimedOut)))
+	assert.Equal(t, int32(1), builderCalled.Load(), "builder must run on the leader path")
+	assert.Equal(t, int32(1), store.lockAcquireCalls.Load(), "cold-start must attempt the lock even when MaxIndexAge=0")
+	assert.Equal(t, int32(1), store.uploadCalls.Load(), "leader must upload immediately")
+	assert.Equal(t, int32(1), store.lockReleasedCalls.Load(), "leader must release the build lock")
+	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotColdStarts.WithLabelValues(coldStartOutcomeAcquiredLock)))
+	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotUploads.WithLabelValues(snapshotUploadStatusSuccess)))
 }
 
 // TestBuildIndex_ColdStartContextCancelPropagates verifies that a context

@@ -111,7 +111,6 @@ export function RadioButtonGroup<T>({
             aria-describedby={ariaDescribedBy}
             onChange={handleOnChange(opt)}
             onClick={handleOnClick(opt)}
-            id={`option-${opt.value}-${internalId}`}
             name={groupName.current}
             description={opt.description}
             title={labelTitle}

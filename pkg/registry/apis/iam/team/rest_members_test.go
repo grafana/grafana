@@ -19,7 +19,7 @@ import (
 )
 
 func TestTeamMembersREST_Connect(t *testing.T) {
-	features := featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings)
+	features := featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamsApi)
 
 	t.Run("returns members from team spec", func(t *testing.T) {
 		g := &mockGetter{team: teamWithMembers("team1",

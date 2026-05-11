@@ -18,7 +18,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/client-go/dynamic"
-	"k8s.io/utils/ptr"
 
 	authlib "github.com/grafana/authlib/types"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
@@ -176,7 +175,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		err = meta.SetStatus(dashv1.DashboardStatus{
 			Conversion: &dashv1.DashboardConversionStatus{
 				Failed: true,
-				Error:  ptr.To("test"),
+				Error:  new("test"),
 			},
 		})
 		require.NoError(t, err)

@@ -1,6 +1,7 @@
 package vector
 
 import (
+	"database/sql"
 	"embed"
 	"encoding/json"
 	"fmt"
@@ -29,7 +30,12 @@ var (
 	sqlVectorCollectionDelete            = mustTemplate("vector_collection_delete.sql")
 	sqlVectorCollectionDeleteSubresource = mustTemplate("vector_collection_delete_subresources.sql")
 	sqlVectorCollectionGetContent        = mustTemplate("vector_collection_get_content.sql")
+	sqlVectorCollectionExists            = mustTemplate("vector_collection_exists.sql")
 	sqlVectorCollectionSearch            = mustTemplate("vector_collection_search.sql")
+	sqlVectorBackfillJobsList            = mustTemplate("vector_backfill_jobs_list.sql")
+	sqlVectorBackfillJobsUpdate          = mustTemplate("vector_backfill_jobs_update.sql")
+	sqlVectorBackfillJobsSetError        = mustTemplate("vector_backfill_jobs_set_error.sql")
+	sqlVectorBackfillJobsComplete        = mustTemplate("vector_backfill_jobs_complete.sql")
 )
 
 // All queries target `embeddings` and include `resource = $1 AND
@@ -88,6 +94,98 @@ func (r *sqlVectorCollectionDeleteSubresourcesRequest) Validate() error {
 
 func (r *sqlVectorCollectionDeleteSubresourcesRequest) SubresourcesSlice() reflect.Value {
 	return reflect.ValueOf(r.Subresources)
+}
+
+type sqlVectorCollectionExistsResponse struct {
+	Exists int
+}
+
+type sqlVectorCollectionExistsRequest struct {
+	sqltemplate.SQLTemplate
+	Resource  string
+	Namespace string
+	Model     string
+	UID       string
+	Response  *sqlVectorCollectionExistsResponse
+}
+
+func (r *sqlVectorCollectionExistsRequest) Validate() error {
+	if r.Resource == "" || r.Namespace == "" || r.Model == "" || r.UID == "" {
+		return fmt.Errorf("missing required fields")
+	}
+	return nil
+}
+
+func (r *sqlVectorCollectionExistsRequest) Results() (*sqlVectorCollectionExistsResponse, error) {
+	cp := *r.Response
+	return &cp, nil
+}
+
+type sqlVectorBackfillJobsListResponse struct {
+	ID          int64
+	Model       string
+	Resource    string
+	StoppingRV  int64
+	LastSeenKey sql.NullString
+	IsComplete  bool
+	LastError   sql.NullString
+}
+
+type sqlVectorBackfillJobsListRequest struct {
+	sqltemplate.SQLTemplate
+	Model    string
+	Response *sqlVectorBackfillJobsListResponse
+}
+
+func (r *sqlVectorBackfillJobsListRequest) Validate() error {
+	if r.Model == "" {
+		return fmt.Errorf("missing model")
+	}
+	return nil
+}
+
+func (r *sqlVectorBackfillJobsListRequest) Results() (*sqlVectorBackfillJobsListResponse, error) {
+	cp := *r.Response
+	return &cp, nil
+}
+
+type sqlVectorBackfillJobsUpdateRequest struct {
+	sqltemplate.SQLTemplate
+	ID          int64
+	LastSeenKey sql.NullString
+	LastError   sql.NullString
+}
+
+func (r *sqlVectorBackfillJobsUpdateRequest) Validate() error {
+	if r.ID == 0 {
+		return fmt.Errorf("missing id")
+	}
+	return nil
+}
+
+type sqlVectorBackfillJobsSetErrorRequest struct {
+	sqltemplate.SQLTemplate
+	ID        int64
+	LastError sql.NullString
+}
+
+func (r *sqlVectorBackfillJobsSetErrorRequest) Validate() error {
+	if r.ID == 0 {
+		return fmt.Errorf("missing id")
+	}
+	return nil
+}
+
+type sqlVectorBackfillJobsCompleteRequest struct {
+	sqltemplate.SQLTemplate
+	ID int64
+}
+
+func (r *sqlVectorBackfillJobsCompleteRequest) Validate() error {
+	if r.ID == 0 {
+		return fmt.Errorf("missing id")
+	}
+	return nil
 }
 
 type sqlVectorCollectionGetContentResponse struct {

@@ -186,8 +186,17 @@ func (m *mapKV) Batch(ctx context.Context, sec string, ops []kv.BatchOp) error {
 			copy(v, op.Value)
 			m.data[op.Key] = v
 
+		case kv.BatchOpUpdate:
+			if _, exists := m.data[op.Key]; !exists {
+				m.data = snapshot
+				return &kv.BatchError{Err: kv.ErrNotFound, Index: i, Op: op}
+			}
+			v := make([]byte, len(op.Value))
+			copy(v, op.Value)
+			m.data[op.Key] = v
+
 		default:
-			panic(fmt.Sprintf("mapKV: Batch mode %d not implemented (only BatchOpCreate is supported)", op.Mode))
+			panic(fmt.Sprintf("mapKV: Batch mode %d not implemented", op.Mode))
 		}
 	}
 	return nil

@@ -2,7 +2,10 @@ package common
 
 import (
 	"fmt"
+	"slices"
+	"strconv"
 
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
 
@@ -41,4 +44,52 @@ func ParseLabelSelectorFilter(selector labels.Selector, key string) (provisionin
 		}
 	}
 	return filter, nil
+}
+
+// ApplyFieldSelectorRequirement applies a single field selector requirement to the given filter.
+// Field selectors only support equality (= and ==) and inequality (!=); = and == add to Include,
+// != adds to Exclude. The same field cannot be used twice on the same side (e.g. two `=` for
+// `spec.title`) since that's not meaningful semantics for a field selector. The validate
+// callback, when non-nil, is run on the value before bucketing.
+func ApplyFieldSelectorRequirement(filter *provisioning.ListRuleStringFilter, req fields.Requirement, validate func(string) error) error {
+	if validate != nil {
+		if err := validate(req.Value); err != nil {
+			return err
+		}
+	}
+	switch req.Operator {
+	case selection.Equals, selection.DoubleEquals:
+		if len(filter.Include) > 0 {
+			return fmt.Errorf("field %q already has an include value, only one is supported", req.Field)
+		}
+		filter.Include = []string{req.Value}
+	case selection.NotEquals:
+		if len(filter.Exclude) > 0 {
+			return fmt.Errorf("field %q already has an exclude value, only one is supported", req.Field)
+		}
+		filter.Exclude = []string{req.Value}
+	default:
+		return fmt.Errorf("unsupported operator %q for field %q (only =, ==, != are supported)", req.Operator, req.Field)
+	}
+	return nil
+}
+
+// ValidateInt64String returns a validator that checks the value parses as a base-10 int64.
+func ValidateInt64String(field string) func(string) error {
+	return func(v string) error {
+		if _, err := strconv.ParseInt(v, 10, 64); err != nil {
+			return fmt.Errorf("invalid value for %s: %s", field, v)
+		}
+		return nil
+	}
+}
+
+// ValidateOneOf returns a validator that checks the value is in the provided allowlist.
+func ValidateOneOf(field string, allowed []string) func(string) error {
+	return func(v string) error {
+		if !slices.Contains(allowed, v) {
+			return fmt.Errorf("invalid value for %s: %s (expected one of %v)", field, v, allowed)
+		}
+		return nil
+	}
 }

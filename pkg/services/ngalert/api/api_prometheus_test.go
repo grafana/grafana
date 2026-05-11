@@ -549,7 +549,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				name:    "PolicyRouting",
 				inputNS: ngmodels.NotificationSettingsFromPolicy("test-policy"),
 				expectedNS: apimodels.AlertRuleNotificationSettings{
-					Policy: util.Pointer("test-policy"),
+					Policy: new("test-policy"),
 				},
 			},
 		} {

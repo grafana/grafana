@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestManagedRoute_GeneratedSubRoute_DefaultsAndMatcher(t *testing.T) {
@@ -173,16 +172,16 @@ func TestWithManagedRoutes(t *testing.T) {
 					{
 						Receiver:       "recv1",
 						ObjectMatchers: definitions.ObjectMatchers{{Name: NamedRouteMatcher, Type: labels.MatchEqual, Value: "r1"}},
-						GroupWait:      util.Pointer(model.Duration(dispatch.DefaultRouteOpts.GroupWait)),
-						GroupInterval:  util.Pointer(model.Duration(dispatch.DefaultRouteOpts.GroupInterval)),
-						RepeatInterval: util.Pointer(model.Duration(dispatch.DefaultRouteOpts.RepeatInterval)),
+						GroupWait:      new(model.Duration(dispatch.DefaultRouteOpts.GroupWait)),
+						GroupInterval:  new(model.Duration(dispatch.DefaultRouteOpts.GroupInterval)),
+						RepeatInterval: new(model.Duration(dispatch.DefaultRouteOpts.RepeatInterval)),
 					},
 					{
 						Receiver:       "recv2",
 						ObjectMatchers: definitions.ObjectMatchers{{Name: NamedRouteMatcher, Type: labels.MatchEqual, Value: "r2"}},
-						GroupWait:      util.Pointer(model.Duration(dispatch.DefaultRouteOpts.GroupWait)),
-						GroupInterval:  util.Pointer(model.Duration(dispatch.DefaultRouteOpts.GroupInterval)),
-						RepeatInterval: util.Pointer(model.Duration(dispatch.DefaultRouteOpts.RepeatInterval)),
+						GroupWait:      new(model.Duration(dispatch.DefaultRouteOpts.GroupWait)),
+						GroupInterval:  new(model.Duration(dispatch.DefaultRouteOpts.GroupInterval)),
+						RepeatInterval: new(model.Duration(dispatch.DefaultRouteOpts.RepeatInterval)),
 					},
 					{ObjectMatchers: definitions.ObjectMatchers{{Name: "severity", Type: labels.MatchEqual, Value: "warn"}}, Continue: true},
 					{ObjectMatchers: definitions.ObjectMatchers{{Name: "severity", Type: labels.MatchNotEqual, Value: "critical"}}, Continue: true},

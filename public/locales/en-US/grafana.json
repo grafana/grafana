@@ -1165,6 +1165,9 @@
       "content-show-all-errors": "Show all errors"
     },
     "errors": {
+      "api-machinery": {
+        "with-causes": "{{-baseMessage}}: {{-causes}}"
+      },
       "failedWith": "{{-config}} failed with {{status}}: {{-message}}"
     },
     "evaluate-every-validation-options": {
@@ -10858,6 +10861,11 @@
     "name-line-width": "Line width",
     "name-stacking": "Stacking"
   },
+  "home": {
+    "home-page": {
+      "placeholder": "Welcome to Grafana"
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "Loading",
@@ -16029,7 +16037,9 @@
       "description": {
         "group-by-field-value": "Group data by a field value and create nested tables with the grouped data."
       },
+      "description-expand-nested-rows": "If enabled, all nested rows will be expanded when the panel loads",
       "description-show-field-names": "If enabled nested tables will show field names as a table header",
+      "label-expand-nested-rows-by-default": "Expand nested rows by default",
       "label-show-field-names-in-nested-tables": "Show field names in nested tables",
       "name": {
         "group-to-nested-tables": "Group to nested tables"

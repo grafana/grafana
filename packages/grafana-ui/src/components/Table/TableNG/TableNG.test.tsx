@@ -95,7 +95,7 @@ const createEmptyDataFrame = (): DataFrame =>
     })
   );
 
-const createNestedDataFrame = (): DataFrame => {
+const createNestedDataFrame = (meta?: DataFrame['meta']): DataFrame => {
   const processedNestedFrame = withFieldOverrides(
     toDataFrame({
       name: 'NestedData',
@@ -116,6 +116,7 @@ const createNestedDataFrame = (): DataFrame => {
     toDataFrame({
       name: 'TestData',
       length: 2,
+      meta,
       fields: [
         { name: 'Column A', type: FieldType.string, values: ['A1', 'A2'], config: { custom: {} } },
         { name: 'Column B', type: FieldType.number, values: [1, 2], config: { custom: {} } },
@@ -529,6 +530,24 @@ describe('TableNG', () => {
         const expandedRow = container.querySelector('[aria-expanded="true"]');
         expect(expandedRow).toBeInTheDocument();
       }
+    });
+
+    it('auto-expands all rows when expandAllRows is set in frame meta', () => {
+      const { container } = render(
+        <TableNG
+          enableVirtualization={false}
+          data={createNestedDataFrame({ custom: { expandAllRows: true } })}
+          width={800}
+          height={600}
+        />
+      );
+
+      const expandedRows = container.querySelectorAll('[aria-expanded="true"]');
+      expect(expandedRows.length).toBeGreaterThan(0);
+
+      ['N1', 'N2'].forEach((text) => {
+        expect(screen.getAllByText(text)).toHaveLength(2);
+      });
     });
   });
 

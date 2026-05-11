@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/ptr"
 
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
@@ -238,7 +237,7 @@ func (s *Sut) CreateSv(ctx context.Context, opts ...func(*CreateSvConfig)) (*sec
 			},
 			Spec: secretv1beta1.SecureValueSpec{
 				Description: "desc1",
-				Value:       ptr.To(secretv1beta1.NewExposedSecureValue("v1")),
+				Value:       new(secretv1beta1.NewExposedSecureValue("v1")),
 				Decrypters:  []string{"decrypter1"},
 			},
 			Status: secretv1beta1.SecureValueStatus{},

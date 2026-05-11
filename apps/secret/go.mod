@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/secret
 
-go 1.26.2
+go 1.26.3
 
 require (
 	github.com/grafana/grafana-app-sdk v0.54.1
@@ -36,6 +36,8 @@ require (
 	github.com/go-openapi/swag/stringutils v0.26.0 // indirect
 	github.com/go-openapi/swag/typeutils v0.26.0 // indirect
 	github.com/go-openapi/swag/yamlutils v0.26.0 // indirect
+	github.com/go-openapi/testify/enable/yaml/v2 v2.5.0 // indirect
+	github.com/go-openapi/testify/v2 v2.5.0 // indirect
 	github.com/go-test/deep v1.1.1 // indirect
 	github.com/google/gnostic-models v0.7.1 // indirect
 	github.com/grafana/grafana-app-sdk/logging v0.54.1 // indirect
@@ -70,7 +72,7 @@ require (
 	golang.org/x/oauth2 v0.36.0 // indirect
 	golang.org/x/sys v0.43.0 // indirect
 	golang.org/x/term v0.42.0 // indirect
-	golang.org/x/text v0.36.0 // indirect
+	golang.org/x/text v0.37.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260406210006-6f92a3bedf2d // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
