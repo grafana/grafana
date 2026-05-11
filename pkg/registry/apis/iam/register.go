@@ -383,13 +383,13 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	})
 
 	if enableTeamsApi {
-		if err := b.UpdateTeamsAPIGroup(opts, storage, enableExternalGroupMappingsApi); err != nil {
+		if err := b.UpdateTeamsAPIGroup(opts, storage, enableExternalGroupMappingsApi, enableZanzanaSync); err != nil {
 			return err
 		}
 	}
 
 	if enableTeamsApi {
-		if err := b.UpdateTeamBindingsAPIGroup(opts, storage, enableZanzanaSync); err != nil {
+		if err := b.UpdateTeamBindingsAPIGroup(opts, storage); err != nil {
 			return err
 		}
 	}
@@ -455,14 +455,25 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	return nil
 }
 
-func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.APIGroupOptions, storage map[string]rest.Storage, enableExternalGroupMappingsApi bool) error {
+func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.APIGroupOptions, storage map[string]rest.Storage, enableExternalGroupMappingsApi bool, enableZanzanaSync bool) error {
 	teamResource := iamv0.TeamResourceInfo
 	teamUniStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, teamResource, opts.OptsGetter)
 	if err != nil {
 		return err
 	}
+
+	// Team membership is sourced from team.spec.members; sync those changes
+	// to Zanzana from the Team hooks (TeamBinding is deprecated).
+	if enableZanzanaSync {
+		b.logger.Info("Enabling hooks for Team to sync members to Zanzana")
+		teamUniStore.AfterCreate = b.AfterTeamCreate
+		teamUniStore.AfterDelete = b.AfterTeamDelete
+		teamUniStore.BeginUpdate = b.BeginTeamUpdate
+	}
+
 	storage[teamResource.StoragePath()] = teamUniStore
 	b.teamGetter = teamUniStore
+	teamStorage := rest.Storage(teamUniStore)
 
 	if b.legacyTeamStore != nil {
 		dw, err := opts.DualWriteBuilder(teamResource.GroupResource(), b.legacyTeamStore, teamUniStore)
@@ -471,12 +482,18 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.AP
 		}
 
 		storage[teamResource.StoragePath()] = dw
+		teamStorage = dw
 		if getter, ok := dw.(rest.Getter); ok {
 			b.teamGetter = getter
 		}
 	}
 
 	storage[teamResource.StoragePath("members")] = team.NewTeamMembersREST(b.teamGetter, b.tracing, b.features)
+
+	// addmember / removemember mutate a single Spec.Members entry through
+	// the dual-writer storage, so they work uniformly across all modes.
+	storage[teamResource.StoragePath("addmember")] = team.NewTeamAddMemberREST(teamStorage, b.tracing)
+	storage[teamResource.StoragePath("removemember")] = team.NewTeamRemoveMemberREST(teamStorage, b.tracing)
 
 	if enableExternalGroupMappingsApi && b.teamGroupsHandler != nil {
 		storage[teamResource.StoragePath("groups")] = b.teamGroupsHandler
@@ -485,7 +502,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.AP
 	return nil
 }
 
-func (b *IdentityAccessManagementAPIBuilder) UpdateTeamBindingsAPIGroup(opts builder.APIGroupOptions, storage map[string]rest.Storage, enableZanzanaSync bool) error {
+func (b *IdentityAccessManagementAPIBuilder) UpdateTeamBindingsAPIGroup(opts builder.APIGroupOptions, storage map[string]rest.Storage) error {
 	teamBindingResource := iamv0.TeamBindingResourceInfo
 
 	selectableFieldsOpts := grafanaregistry.SelectableFieldsOptions{
@@ -497,15 +514,9 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamBindingsAPIGroup(opts bui
 		return err
 	}
 
+	// Zanzana sync for team membership lives on the Team hooks now;
+	// team.spec.members is the source of truth.
 	var teamBindingStore storewrapper.K8sStorage = teamBindingUniStore
-
-	// Only teamBindingStore exposes the AfterCreate, AfterDelete, and BeginUpdate hooks
-	if enableZanzanaSync {
-		b.logger.Info("Enabling hooks for TeamBinding to sync to Zanzana")
-		teamBindingUniStore.AfterCreate = b.AfterTeamBindingCreate
-		teamBindingUniStore.AfterDelete = b.AfterTeamBindingDelete
-		teamBindingUniStore.BeginUpdate = b.BeginTeamBindingUpdate
-	}
 
 	if b.teamBindingLegacyStore != nil {
 		dw, err := opts.DualWriteBuilder(teamBindingResource.GroupResource(), b.teamBindingLegacyStore, teamBindingUniStore)
@@ -520,7 +531,11 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamBindingsAPIGroup(opts bui
 		}
 	}
 
-	authzWrapper := storewrapper.New(teamBindingStore, iamauthorizer.NewTeamBindingAuthorizer(b.accessClient))
+	authzWrapper := storewrapper.New(
+		teamBindingStore,
+		teamBindingResource.GroupResource(),
+		iamauthorizer.NewTeamBindingAuthorizer(b.accessClient),
+	)
 	storage[teamBindingResource.StoragePath()] = authzWrapper
 	if b.teamSearch != nil {
 		b.teamSearch.teamBindingStore = authzWrapper
@@ -562,7 +577,12 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.AP
 	}
 
 	b.userGetter = userStore
-	storage[userResource.StoragePath()] = storewrapper.New(userStore, user.NewStoreWrapper(b.cfgProvider, b.settingService), storewrapper.WithPreserveIdentity())
+	storage[userResource.StoragePath()] = storewrapper.New(
+		userStore,
+		iamv0.UserResourceInfo.GroupResource(),
+		user.NewStoreWrapper(b.cfgProvider, b.settingService),
+		storewrapper.WithPreserveIdentity(),
+	)
 
 	if b.dual != nil && b.unified != nil {
 		teamSearchClient := resource.NewSearchClient(
@@ -684,7 +704,11 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateResourcePermissionsAPIGroup(
 		}
 	}
 
-	authzWrapper := storewrapper.New(regStoreDW, iamauthorizer.NewResourcePermissionsAuthorizer(b.accessClient, b.resourceParentProvider))
+	authzWrapper := storewrapper.New(
+		regStoreDW,
+		iamv0.ResourcePermissionInfo.GroupResource(),
+		iamauthorizer.NewResourcePermissionsAuthorizer(b.accessClient, b.resourceParentProvider),
+	)
 
 	storage[iamv0.ResourcePermissionInfo.StoragePath()] = authzWrapper
 

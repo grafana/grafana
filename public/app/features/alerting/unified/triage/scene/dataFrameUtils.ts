@@ -1,4 +1,19 @@
+import { map } from 'rxjs/operators';
+
 import { type DataFrame, FieldType } from '@grafana/data';
+import { type CustomTransformOperator } from '@grafana/scenes';
+
+// Pending must sit below firing in the stack. Sort frame references only — no value copying.
+const ALERT_STATE_ORDER = ['pending', 'firing'];
+
+export function alertStateFrameOrder(a: DataFrame, b: DataFrame): number {
+  const aState = a.fields.find((f) => f.type !== 'time')?.labels?.alertstate ?? '';
+  const bState = b.fields.find((f) => f.type !== 'time')?.labels?.alertstate ?? '';
+  return ALERT_STATE_ORDER.indexOf(aState) - ALERT_STATE_ORDER.indexOf(bState);
+}
+
+export const sortByAlertState: CustomTransformOperator = () => (source) =>
+  source.pipe(map((frames) => frames.slice().sort(alertStateFrameOrder)));
 
 /**
  * Convert an instant-query DataFrame (one field per label, one row per instance)

@@ -5,7 +5,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/ptr"
 
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
@@ -27,7 +26,7 @@ func TestCrud(t *testing.T) {
 		// Create the same secure value twice
 		input := sv1.DeepCopy()
 		input.Spec.Description = "d2"
-		input.Spec.Value = ptr.To(secretv1beta1.NewExposedSecureValue("v2"))
+		input.Spec.Value = new(secretv1beta1.NewExposedSecureValue("v2"))
 
 		sv2, err := sut.CreateSv(t.Context(), testutils.CreateSvWithSv(input))
 		require.NoError(t, err)
@@ -59,7 +58,7 @@ func TestCrud(t *testing.T) {
 		// Update the secure value
 		input := sv1.DeepCopy()
 		input.Spec.Description = "d2"
-		input.Spec.Value = ptr.To(secretv1beta1.NewExposedSecureValue("v3"))
+		input.Spec.Value = new(secretv1beta1.NewExposedSecureValue("v3"))
 		sv2, err := sut.UpdateSv(t.Context(), input)
 		require.NoError(t, err)
 

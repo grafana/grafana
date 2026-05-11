@@ -46,9 +46,7 @@ import (
 )
 
 const (
-	MaxUpdateAttempts          = 30
-	LargeObjectSupportEnabled  = true
-	LargeObjectSupportDisabled = false
+	MaxUpdateAttempts = 30
 )
 
 var (
@@ -61,10 +59,6 @@ type DefaultPermissionSetter = func(ctx context.Context, key *resourcepb.Resourc
 // Optional settings that apply to a single resource
 type StorageOptions struct {
 	Scheme *runtime.Scheme
-
-	// ????: should we constrain this to only dashboards for now?
-	// Not yet clear if this is a good general solution, or just a stop-gap
-	LargeObjectSupport LargeObjectSupport
 
 	// Allow writing objects with metadata.annotations[grafana.app/folder]
 	EnableFolderSupport bool
@@ -697,14 +691,6 @@ func (s *Storage) GuaranteedUpdate(
 				return fmt.Errorf("precondition failed: %w", err)
 			}
 			continue
-		}
-
-		// restore the full original object before tryUpdate
-		if s.opts.LargeObjectSupport != nil && existing.GetBlob() != nil {
-			err = s.opts.LargeObjectSupport.Reconstruct(ctx, req.Key, s.store, existing)
-			if err != nil {
-				return err
-			}
 		}
 
 		updatedObj, _, err = tryUpdate(existingObj, res)

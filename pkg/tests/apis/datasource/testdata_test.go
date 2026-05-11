@@ -13,7 +13,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/utils/ptr"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -257,9 +256,9 @@ func TestIntegrationTestDatasource(t *testing.T) {
 			require.Equal(t, 1, frame.Fields[1].Len())
 			require.Equal(t, 1, frame.Fields[2].Len())
 
-			require.Equal(t, ptr.To(int64(1)), frame.Fields[0].At(0))
-			require.Equal(t, ptr.To("two"), frame.Fields[1].At(0))
-			require.Equal(t, ptr.To(false), frame.Fields[2].At(0))
+			require.Equal(t, new(int64(1)), frame.Fields[0].At(0))
+			require.Equal(t, new("two"), frame.Fields[1].At(0))
+			require.Equal(t, new(false), frame.Fields[2].At(0))
 		}
 
 		// The standard JSON request/response

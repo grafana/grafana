@@ -308,6 +308,7 @@ approval_rules:
           conclusions:
             - skipped
             - success
+            - failure
           workflows:
             - .github/workflows/govulncheck.yml
   - name: Workflow .github/workflows/i18n-verify.yml succeeded or skipped

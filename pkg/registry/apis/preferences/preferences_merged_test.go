@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"k8s.io/utils/ptr"
 
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 )
@@ -19,30 +18,30 @@ func TestStarsQueries(t *testing.T) {
 		{
 			name: "test1",
 			defaults: preferences.PreferencesSpec{
-				Theme:            ptr.To("settings.ini"),
-				Language:         ptr.To("settings.ini"),
-				HomeDashboardUID: ptr.To("settings.ini"),
-				Timezone:         ptr.To("settings.ini"),
+				Theme:            new("settings.ini"),
+				Language:         new("settings.ini"),
+				HomeDashboardUID: new("settings.ini"),
+				Timezone:         new("settings.ini"),
 			},
 			items: []preferences.Preferences{
 				{Spec: preferences.PreferencesSpec{
-					Theme:            ptr.To("namespace"),
-					Language:         ptr.To("namespace"),
-					HomeDashboardUID: ptr.To("namespace"),
+					Theme:            new("namespace"),
+					Language:         new("namespace"),
+					HomeDashboardUID: new("namespace"),
 				}},
 				{Spec: preferences.PreferencesSpec{
-					Theme:    ptr.To("team"),
-					Language: ptr.To("team"),
+					Theme:    new("team"),
+					Language: new("team"),
 				}},
 				{Spec: preferences.PreferencesSpec{
-					Theme: ptr.To("user"),
+					Theme: new("user"),
 				}},
 			},
 			expect: preferences.PreferencesSpec{
-				Theme:            ptr.To("user"),
-				Language:         ptr.To("team"),
-				HomeDashboardUID: ptr.To("namespace"),
-				Timezone:         ptr.To("settings.ini"),
+				Theme:            new("user"),
+				Language:         new("team"),
+				HomeDashboardUID: new("namespace"),
+				Timezone:         new("settings.ini"),
 			},
 		},
 	}
