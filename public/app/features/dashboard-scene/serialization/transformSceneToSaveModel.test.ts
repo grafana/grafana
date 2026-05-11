@@ -688,7 +688,7 @@ describe('transformSceneToSaveModel', () => {
           {
             id: 'organize',
             options: {
-              hideByName: {
+              excludeByName: {
                 host: true,
               },
             },
@@ -716,7 +716,7 @@ describe('transformSceneToSaveModel', () => {
         {
           id: 'organize',
           options: {
-            hideByName: {
+            excludeByName: {
               host: true,
             },
           },

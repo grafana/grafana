@@ -4,13 +4,17 @@ import React, { useEffect, useRef } from 'react';
 import { type Column, type SortDirection } from 'react-data-grid';
 
 import { type Field, type GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../../../themes/ThemeContext';
 import { getFieldTypeIcon } from '../../../../types/icon';
+import { Dropdown } from '../../../Dropdown/Dropdown';
 import { Icon } from '../../../Icon/Icon';
+import { IconButton } from '../../../IconButton/IconButton';
 import { Stack } from '../../../Layout/Stack/Stack';
+import { Menu } from '../../../Menu/Menu';
 import { Filter } from '../Filter/Filter';
-import { type FilterType, type TableRow, type TableSummaryRow } from '../types';
+import { type FilterType, type TableRow, type TableSummaryRow, type TableNGProps } from '../types';
 import { getDisplayName } from '../utils';
 
 interface HeaderCellProps {
@@ -26,6 +30,7 @@ interface HeaderCellProps {
   parentIndex?: number;
   crossFilterRows: Record<string, TableRow[]>;
   crossFilterTailRows: TableRow[];
+  onAddTransformation?: TableNGProps['onAddTransformation'];
 }
 
 export const HeaderCell: React.FC<HeaderCellProps> = ({
@@ -41,6 +46,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   parentIndex,
   crossFilterRows,
   crossFilterTailRows,
+  onAddTransformation,
 }) => {
   const ref = useRef<HTMLDivElement>(null);
   const headerCellWrap = field.config.custom?.wrapHeaderText ?? false;
@@ -119,6 +125,30 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
           crossFilterRows={crossFilterRows}
           crossFilterTailRows={crossFilterTailRows}
         />
+      )}
+
+      {onAddTransformation && (
+        <Dropdown
+          overlay={
+            <Menu>
+              <Menu.Item
+                label={t('grafana-ui.table.menu.hide-column-label', 'Hide column')}
+                icon="eye-slash"
+                onClick={() => {
+                  onAddTransformation({
+                    id: 'organize',
+                    options: { excludeByName: { [field.name]: true } },
+                  });
+                }}
+              />
+            </Menu>
+          }
+        >
+          <IconButton
+            name="ellipsis-v"
+            tooltip={t('grafana-ui.table.menu.columns-actions-tooltip', 'Column actions')}
+          />
+        </Dropdown>
       )}
     </Stack>
   );

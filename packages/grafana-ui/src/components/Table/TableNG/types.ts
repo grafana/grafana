@@ -14,7 +14,12 @@ import {
   type SelectableValue,
   type FieldState,
 } from '@grafana/data';
-import { type MatcherScope, type TableCellHeight, type TableFieldOptions } from '@grafana/schema';
+import {
+  type DataTransformerConfig,
+  type MatcherScope,
+  type TableCellHeight,
+  type TableFieldOptions,
+} from '@grafana/schema';
 
 import { type TableCellInspectorMode } from '../TableCellInspector';
 import { type TableCellOptions } from '../types';
@@ -145,6 +150,7 @@ export interface BaseTableProps {
   onColumnResize?: TableColumnResizeActionCallback;
   onSortByChange?: TableSortByActionCallback;
   onCellFilterAdded?: TableFilterActionCallback;
+  onAddTransformation?: (config: DataTransformerConfig) => void;
   footerValues?: FooterItem[];
   frozenColumns?: number;
   enablePagination?: boolean;

@@ -135,6 +135,7 @@ export function TableNG(props: TableNGProps) {
     maxRowHeight: _maxRowHeight,
     noHeader,
     noValue,
+    onAddTransformation,
     onCellFilterAdded,
     onColumnResize,
     onSortByChange,
@@ -883,6 +884,7 @@ export function TableNG(props: TableNGProps) {
               parentIndex={parentIndex}
               crossFilterRows={crossFilterRows}
               crossFilterTailRows={crossFilterTailRows}
+              onAddTransformation={onAddTransformation}
               selectFirstCell={() => {
                 gridRef.current?.selectCell({ rowIdx: 0, idx: 0 });
               }}
@@ -917,6 +919,7 @@ export function TableNG(props: TableNGProps) {
       maxRowHeight,
       nestedRows,
       numFrozenColsFullyInView,
+      onAddTransformation,
       onCellFilterAdded,
       rowHeight,
       rowHeightFn,

@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import {
+  EventBusSrv,
   type DataTransformerConfig,
   FieldType,
   type LoadingState,
@@ -13,11 +14,13 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import { SceneDataTransformer, SceneQueryRunner } from '@grafana/scenes';
+import { type PanelContext } from '@grafana/ui';
 import config from 'app/core/config';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 import { type DashboardDataDTO } from 'app/types/dashboard';
 
+import { setDashboardPanelContext } from '../../scene/setDashboardPanelContext';
 import { transformSaveModelToScene } from '../../serialization/transformSaveModelToScene';
 import { DashboardModelCompatibilityWrapper } from '../../utils/DashboardModelCompatibilityWrapper';
 import { findVizPanelByKey } from '../../utils/utils';
@@ -187,6 +190,34 @@ describe('PanelDataTransformationsTab', () => {
 
     // Should show SQL transformation card in empty state
     expect(screen.getByText('Add a Transformation')).toBeInTheDocument();
+  });
+
+  it('reads panel-appended transformations through the transformations tab model', () => {
+    config.featureToggles.panelAdHocTransformations = true;
+    try {
+      const { panel } = setupTabScene('panel-1');
+      const context: PanelContext = {
+        eventBus: new EventBusSrv(),
+        eventsScope: 'global',
+      };
+
+      setDashboardPanelContext(panel, context);
+      context.onAddAdHocTransformation?.({
+        id: 'organize',
+        options: { excludeByName: { values: true } },
+      });
+
+      const transformsTab = new PanelDataTransformationsTab({ panelRef: panel.getRef() });
+      expect(transformsTab.getDataTransformer().state.transformations).toEqual([
+        {
+          id: 'organize',
+          options: { excludeByName: { values: true } },
+          origin: { source: 'panel', pluginId: panel.state.pluginId },
+        },
+      ]);
+    } finally {
+      config.featureToggles.panelAdHocTransformations = false;
+    }
   });
 
   describe('transformation tracking', () => {

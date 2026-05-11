@@ -142,8 +142,11 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
   if (config.featureToggles.panelAdHocTransformations) {
     context.onAddAdHocTransformation = (newConfig: DataTransformerConfig) => {
       const dataProvider = vizPanel.state.$data;
-      // @todo verify the panel $data is always SceneDataTransformer?
-      console.log('dataProvider', { dataProvider, instance: dataProvider instanceof SceneDataTransformer });
+      if (process.env.NODE_ENV !== 'test') {
+        // @todo verify the panel $data is always SceneDataTransformer?
+        console.log('dataProvider', { dataProvider, instance: dataProvider instanceof SceneDataTransformer });
+      }
+
       if (!(dataProvider instanceof SceneDataTransformer)) {
         return;
       }

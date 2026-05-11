@@ -197,7 +197,7 @@ describe('setDashboardPanelContext', () => {
       const reprocessSpy = jest.spyOn(dataProvider, 'reprocessTransformations');
       const transformation: DataTransformerConfig = {
         id: 'organize',
-        options: { hideByName: { hello: true } },
+        options: { excludeByName: { hello: true } },
       };
 
       context.onAddAdHocTransformation?.(transformation);
@@ -205,7 +205,7 @@ describe('setDashboardPanelContext', () => {
       expect(dataProvider.state.transformations).toEqual([
         {
           id: 'organize',
-          options: { hideByName: { hello: true } },
+          options: { excludeByName: { hello: true } },
           origin: { source: 'panel', pluginId: 'timeseries' },
         },
       ]);

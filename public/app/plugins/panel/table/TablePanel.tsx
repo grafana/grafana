@@ -98,6 +98,9 @@ export function TablePanel(props: Props) {
         onColumnResize(displayName, resizedWidth, fieldScope, props)
       }
       onCellFilterAdded={panelContext.onAddAdHocFilter}
+      onAddTransformation={
+        config.featureToggles.panelAdHocTransformations ? panelContext.onAddAdHocTransformation : undefined
+      }
       frozenColumns={options.frozenColumns?.left}
       enablePagination={options.enablePagination}
       cellHeight={options.cellHeight}
