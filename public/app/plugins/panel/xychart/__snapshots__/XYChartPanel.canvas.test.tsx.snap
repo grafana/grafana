@@ -7411,7 +7411,7 @@ exports[`XYChartPanel2 Canvas: x, y (two numeric fields) auto mapping (single Y 
 ]
 `;
 
-exports[`XYChartPanel2 Color-by-value (threshold palette on color field) updates canvas fill/stroke when point color index changes (scatter drawBubbles) 1`] = `
+exports[`XYChartPanel2 Color by value renders fill/stroke 1`] = `
 [
   {
     "props": {},
