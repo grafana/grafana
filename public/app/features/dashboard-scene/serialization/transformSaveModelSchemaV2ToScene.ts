@@ -1,7 +1,6 @@
 import { uniqueId } from 'lodash';
 
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { VariableRefresh } from '@grafana/schema';
 import {
   AdHocFiltersVariable,
   type AdHocFilterWithLabels,
@@ -21,6 +20,7 @@ import {
   SwitchVariable,
   TextBoxVariable,
 } from '@grafana/scenes';
+import { VariableRefresh } from '@grafana/schema';
 import {
   type AdhocVariableKind,
   type ConstantVariableKind,
