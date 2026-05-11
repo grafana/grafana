@@ -1100,7 +1100,7 @@ func TestGeneratorFillsAllFields(t *testing.T) {
 		for j := 0; j < tpe.NumField(); j++ {
 			field := tpe.Field(j)
 			value := v.Field(j)
-			if !value.IsValid() || value.Kind() == reflect.Ptr && value.IsNil() || value.IsZero() {
+			if !value.IsValid() || value.Kind() == reflect.Pointer && value.IsNil() || value.IsZero() {
 				continue
 			}
 			delete(fields, field.Name)
@@ -1143,7 +1143,7 @@ func TestGeneratorFillsAllRecordingRuleFields(t *testing.T) {
 		for j := 0; j < tpe.NumField(); j++ {
 			field := tpe.Field(j)
 			value := v.Field(j)
-			if !value.IsValid() || value.Kind() == reflect.Ptr && value.IsNil() || value.IsZero() {
+			if !value.IsValid() || value.Kind() == reflect.Pointer && value.IsNil() || value.IsZero() {
 				continue
 			}
 			delete(fields, field.Name)

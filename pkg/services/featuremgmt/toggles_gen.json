@@ -4323,7 +4323,8 @@
       "metadata": {
         "name": "newTimeRangeZoomShortcuts",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-11-20T21:14:27Z"
+        "creationTimestamp": "2025-11-20T21:14:27Z",
+        "deletionTimestamp": "2026-05-08T20:37:51Z"
       },
       "spec": {
         "description": "Enables new keyboard shortcuts for time range zoom operations",

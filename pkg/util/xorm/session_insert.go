@@ -615,7 +615,7 @@ func (session *Session) genInsertColumns(bean any) ([]string, []any, error) {
 				if len(fieldValue.String()) == 0 {
 					continue
 				}
-			case reflect.Ptr:
+			case reflect.Pointer:
 				if fieldValue.Pointer() == 0 {
 					continue
 				}
