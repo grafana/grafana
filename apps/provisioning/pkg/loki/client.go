@@ -176,7 +176,7 @@ func (c *Client) RangeQuery(ctx context.Context, logQL string, start, end, limit
 }
 
 func (c *Client) setAuthAndTenantHeaders(req *http.Request) {
-	if c.cfg.BasicAuthUser != "" || c.cfg.BasicAuthPassword != "" {
+	if (c.cfg.BasicAuthUser != "" || c.cfg.BasicAuthPassword != "") && req.URL.Scheme == "https" {
 		req.SetBasicAuth(c.cfg.BasicAuthUser, c.cfg.BasicAuthPassword)
 	}
 	if c.cfg.TenantID != "" {
