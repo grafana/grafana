@@ -18,7 +18,7 @@ import { DEMO_CHAIN_ID, DEMO_CHAIN_SIZE } from '../../mocks/fixtures/chains';
 import { GRAFANA_RULES_SOURCE_NAME, GrafanaRulesSource } from '../../utils/datasource';
 import { makeFolderAlertsLink } from '../../utils/misc';
 import { groups as groupNav } from '../../utils/navigation';
-import { isUngroupedRuleGroup } from '../../utils/rules';
+import { getPromGroupReadOnlyStatus, isUngroupedRuleGroup } from '../../utils/rules';
 import { GrafanaRuleListItem } from '../GrafanaRuleListItem';
 import { GrafanaGroupActions } from '../PaginatedGrafanaLoader';
 import { AlertRuleListItemSkeleton } from '../components/AlertRuleListItemLoader';
@@ -291,7 +291,13 @@ function GroupedRuleGroup({ group, folderName, rules, isOpen, onChainLinkClick }
     <ListGroup
       name={groupDisplayName}
       metaRight={<GroupIntervalIndicator seconds={group.interval} />}
-      actions={<GrafanaGroupActions folderUid={group.folderUid} groupName={group.name} />}
+      actions={
+        <GrafanaGroupActions
+          folderUid={group.folderUid}
+          groupName={group.name}
+          readOnly={getPromGroupReadOnlyStatus(group).readOnly}
+        />
+      }
       href={detailsLink}
       isOpen={isOpen}
     >
