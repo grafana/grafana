@@ -63,25 +63,23 @@ func (s *preferencesStorage) ListPreferences(ctx context.Context, options *inter
 	}
 
 	// Append user+team preferences
-	addPreferencesToResult := func(name string) error {
-		// GetPreferenceAndAppendToResults
-		info, _ := utils.ParseOwnerFromName(name)
-		switch info.Owner {
+	addPreferencesToResult := func(owner utils.OwnerReference) error {
+		switch owner.Owner {
 		case utils.NamespaceResourceOwner:
 			// OK
 		case utils.UserResourceOwner:
-			if user.GetIdentifier() != info.Identifier {
+			if user.GetIdentifier() != owner.Identifier {
 				return nil
 			}
 		case utils.TeamResourceOwner:
-			if !slices.Contains(groups, info.Identifier) {
+			if !slices.Contains(groups, owner.Identifier) {
 				return nil
 			}
 		default:
 			return nil // skip
 		}
 
-		rsp, err := s.Get(ctx, name, &metav1.GetOptions{})
+		rsp, err := s.Get(ctx, owner.AsName(), &metav1.GetOptions{})
 		if k8serrors.IsNotFound(err) {
 			return nil // don't add it to the list
 		}
@@ -107,14 +105,18 @@ func (s *preferencesStorage) ListPreferences(ctx context.Context, options *inter
 		if r[0].Operator != selection.Equals {
 			return nil, fmt.Errorf("only the = operator is supported")
 		}
-		if err = addPreferencesToResult(r[0].Value); err != nil {
+		owner, ok := utils.ParseOwnerFromName(r[0].Value)
+		if !ok {
+			return result, nil
+		}
+		if err = addPreferencesToResult(owner); err != nil {
 			return nil, err
 		}
 		return result, nil
 	}
 
 	// Add the explicit user values
-	if err = addPreferencesToResult("user-" + user.GetIdentifier()); err != nil {
+	if err = addPreferencesToResult(utils.UserOwner(user.GetIdentifier())); err != nil {
 		return nil, err
 	}
 
@@ -124,13 +126,13 @@ func (s *preferencesStorage) ListPreferences(ctx context.Context, options *inter
 		if i >= 25 {
 			break // only process the fist 25 -- to keep it bounded
 		}
-		if err = addPreferencesToResult("team-" + group); err != nil {
+		if err = addPreferencesToResult(utils.TeamOwner(group)); err != nil {
 			return nil, err
 		}
 	}
 
 	// Add the org flavor
-	if err = addPreferencesToResult(string(utils.NamespaceResourceOwner)); err != nil {
+	if err = addPreferencesToResult(utils.NamespaceOwner()); err != nil {
 		return nil, err
 	}
 
