@@ -17,7 +17,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.43.0 // indirect; @grafana/grafana-backend-group
 	golang.org/x/net v0.53.0 // indirect; @grafana/data-sources-plugins
 	golang.org/x/sync v0.20.0 // @grafana/alerting-backend
-	golang.org/x/text v0.36.0 // indirect; @grafana/grafana-backend-group
+	golang.org/x/text v0.37.0 // indirect; @grafana/grafana-backend-group
 	google.golang.org/grpc v1.80.0 // indirect; @grafana/plugins-platform-backend
 	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af // indirect; @grafana/plugins-platform-backend
 )
