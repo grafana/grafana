@@ -14,12 +14,7 @@ import { getAppPluginEnabled } from './settings';
  * The value is true if the app plugin is installed and enabled, false otherwise.
  */
 export function useAppPluginEnabled(pluginId: string) {
-  const { loading, error, value } = useAsync(async () => {
-    if (!pluginId) {
-      return false;
-    }
-    return getAppPluginEnabled(pluginId);
-  }, [pluginId]);
+  const { loading, error, value } = useAsync(async () => getAppPluginEnabled(pluginId), [pluginId]);
   return { loading, error, value };
 }
 

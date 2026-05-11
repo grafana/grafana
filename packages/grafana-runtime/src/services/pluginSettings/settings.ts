@@ -5,6 +5,10 @@ import { logPluginSettingsError, logPluginSettingsWarning } from './logging';
 import { isAuthError } from './utils';
 
 export async function getAppPluginEnabled(pluginId: string): Promise<boolean> {
+  if (!pluginId) {
+    return false;
+  }
+
   const app = await getPluginSettings(pluginId);
   if (!app) {
     return false;
