@@ -75,7 +75,7 @@ func (b *bleveBackend) tryDownloadRemoteSnapshot(
 	return b.downloadSelectedSnapshot(ctx, key, resourceDir,
 		snapshotPolicyTiered, "search.remote_index_snapshot.download", logger,
 		func(ctx context.Context) (ulid.ULID, *IndexMeta, error) {
-			all, err := b.opts.Snapshot.Store.ListIndexes(ctx, key)
+			all, err := ListIndexSnapshots(ctx, b.opts.Snapshot.Store, key, logger)
 			if err != nil {
 				return ulid.ULID{}, nil, fmt.Errorf("listing remote snapshots: %w", err)
 			}
@@ -205,7 +205,7 @@ func (b *bleveBackend) downloadSelectedSnapshot(
 	}
 	logger = logger.New(logFields...)
 
-	// Pick a fresh destination directory name. DownloadIndex refuses to
+	// Pick a fresh destination directory name. DownloadIndexSnapshot refuses to
 	// overwrite an existing destDir; the bump-on-exists loop mirrors what
 	// BuildIndex does when creating new file-based indexes.
 	destDir, name, err := b.reserveSnapshotDir(resourceDir)
@@ -225,12 +225,12 @@ func (b *bleveBackend) downloadSelectedSnapshot(
 		}
 	}()
 
-	// TODO: retry DownloadIndex on transient errors before falling through to
+	// TODO: retry DownloadIndexSnapshot on transient errors before falling through to
 	// a from-scratch KV rebuild. The object store is its own fault domain;
 	// a single failed download shouldn't force a full rebuild for large
 	// indexes (e.g. a 1M-doc dashboard index would re-pay every read).
 	downloadStart := time.Now()
-	downloadedMeta, err := b.opts.Snapshot.Store.DownloadIndex(ctx, key, snapKey, destDir)
+	downloadedMeta, err := DownloadIndexSnapshot(ctx, b.opts.Snapshot.Store, key, snapKey, destDir)
 	if err != nil {
 		_ = os.RemoveAll(destDir)
 		outcome = snapshotStatusDownloadError
@@ -483,7 +483,7 @@ func findFreshSnapshot(
 			return ulid.ULID{}, nil, nil
 		}
 
-		meta, err := store.GetIndexMeta(ctx, ns, k)
+		meta, err := ReadIndexSnapshotManifest(ctx, store, ns, k)
 		if err != nil {
 			if errors.Is(err, ErrSnapshotNotFound) || errors.Is(err, ErrInvalidManifest) {
 				continue

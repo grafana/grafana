@@ -183,7 +183,9 @@ function FormContent({
                     clearErrors('targetFolderUID');
                   }}
                   repositoryName={repository.name}
-                  excludeUIDs={[...Object.keys(selectedItems?.folder).map((uid) => uid)]}
+                  // selectedItems.folder contains false entries from deselect ancestor propagation
+                  // in setItemSelectionState reducer - filter to only truly-selected UIDs
+                  excludeUIDs={Object.keys(selectedItems?.folder ?? {}).filter((uid) => selectedItems.folder[uid])}
                 />
               </Field>
               <ResourceEditFormSharedFields
