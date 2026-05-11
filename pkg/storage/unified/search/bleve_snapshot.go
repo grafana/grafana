@@ -225,10 +225,6 @@ func (b *bleveBackend) downloadSelectedSnapshot(
 		}
 	}()
 
-	// TODO: retry DownloadIndexSnapshot on transient errors before falling through to
-	// a from-scratch KV rebuild. The object store is its own fault domain;
-	// a single failed download shouldn't force a full rebuild for large
-	// indexes (e.g. a 1M-doc dashboard index would re-pay every read).
 	downloadStart := time.Now()
 	downloadedMeta, err := DownloadIndexSnapshot(ctx, b.opts.Snapshot.Store, key, snapKey, destDir)
 	if err != nil {
@@ -465,7 +461,9 @@ func findFreshSnapshot(
 	runningVersion string,
 	isFresh func(*IndexMeta) bool,
 ) (ulid.ULID, *IndexMeta, error) {
-	keys, err := store.ListIndexKeys(ctx, ns)
+	keys, err := retryRemoteIndexStoreValue(ctx, snapshotStoreOpListIndexKeys, nil, func() ([]ulid.ULID, error) {
+		return store.ListIndexKeys(ctx, ns)
+	})
 	if err != nil {
 		return ulid.ULID{}, nil, fmt.Errorf("listing index keys: %w", err)
 	}

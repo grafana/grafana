@@ -163,7 +163,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-10-04,pluginsSriChecks,GA,@grafana/plugins-platform-backend,false,false,false
 2024-10-22,timeRangeProvider,experimental,@grafana/grafana-frontend-platform,false,false,false
 2025-11-05,timeRangePan,GA,@grafana/dataviz-squad,false,false,true
-2025-11-20,newTimeRangeZoomShortcuts,GA,@grafana/dataviz-squad,false,false,true
 2024-10-24,azureMonitorDisableLogLimit,GA,@grafana/data-sources-plugins,false,false,false
 2024-12-20,playlistsReconciler,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2024-12-18,prometheusSpecialCharsInLabelValues,experimental,@grafana/data-sources-plugins,false,false,true

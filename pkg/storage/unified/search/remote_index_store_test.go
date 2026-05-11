@@ -36,6 +36,21 @@ import (
 // generally don't assert on log output, so a single shared logger is fine.
 var testLogger = log.New("remote-index-test")
 
+type transientTestError struct{}
+
+func (transientTestError) Error() string   { return "transient timeout" }
+func (transientTestError) Timeout() bool   { return true }
+func (transientTestError) Temporary() bool { return true }
+
+func useFastSnapshotStoreRetries(t *testing.T) {
+	t.Helper()
+	old := snapshotStoreRetryBackoffConfig
+	snapshotStoreRetryBackoffConfig.MinBackoff = 0
+	snapshotStoreRetryBackoffConfig.MaxBackoff = 0
+	snapshotStoreRetryBackoffConfig.MaxRetries = 2
+	t.Cleanup(func() { snapshotStoreRetryBackoffConfig = old })
+}
+
 // testBucket returns a bucket for testing. Uses CDK_TEST_BUCKET_URL if set,
 // otherwise falls back to a local fileblob.
 //
@@ -433,13 +448,19 @@ func TestRemoteIndexStore_UploadExcludesMetaJSON(t *testing.T) {
 type errorBucket struct {
 	resource.CDKBucket
 	uploadErr         error
-	manifestUploadErr error // fires on Upload only when key is the snapshot manifest object
+	uploadFn          func(key string) error // if set, called before uploadErr
+	manifestUploadErr error                  // fires on Upload only when key is the snapshot manifest object
 	downloadErr       error
 	downloadFn        func(key string) error // if set, called instead of downloadErr
 	deleteErr         error
 }
 
 func (e *errorBucket) Upload(ctx context.Context, key string, r io.Reader, opts *blob.WriterOptions) error {
+	if e.uploadFn != nil {
+		if err := e.uploadFn(key); err != nil {
+			return err
+		}
+	}
 	if e.uploadErr != nil {
 		return e.uploadErr
 	}
@@ -564,6 +585,92 @@ func TestRemoteIndexStore_BucketErrors(t *testing.T) {
 		err := store.DeleteIndex(ctx, ns, key)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "permission denied")
+	})
+}
+
+func TestRetryRemoteIndexStoreValue(t *testing.T) {
+	useFastSnapshotStoreRetries(t)
+	ctx := context.Background()
+
+	var attempts int
+	got, err := retryRemoteIndexStoreValue(ctx, snapshotStoreOpListIndexKeys, testLogger, func() (string, error) {
+		attempts++
+		if attempts == 1 {
+			return "", transientTestError{}
+		}
+		return "ok", nil
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "ok", got)
+	assert.Equal(t, 2, attempts)
+}
+
+func TestRetryRemoteIndexStoreValue_NonRetryable(t *testing.T) {
+	useFastSnapshotStoreRetries(t)
+	ctx := context.Background()
+
+	var attempts int
+	_, err := retryRemoteIndexStoreValue(ctx, snapshotStoreOpListIndexKeys, testLogger, func() (string, error) {
+		attempts++
+		return "", ErrSnapshotNotFound
+	})
+	require.ErrorIs(t, err, ErrSnapshotNotFound)
+	assert.Equal(t, 1, attempts)
+}
+
+func TestRemoteIndexStore_RetriesTransientUploadAndDownloadErrors(t *testing.T) {
+	useFastSnapshotStoreRetries(t)
+	ctx := context.Background()
+	ns := newTestNsResource()
+
+	t.Run("upload file", func(t *testing.T) {
+		real := memblob.OpenBucket(nil)
+		defer func() { _ = real.Close() }()
+		var uploadAttempts atomic.Int32
+		store := newTestRemoteIndexStore(t, &errorBucket{
+			CDKBucket: real,
+			uploadFn: func(key string) error {
+				if !strings.HasSuffix(key, "/"+snapshotManifestFile) && uploadAttempts.Add(1) == 1 {
+					return transientTestError{}
+				}
+				return nil
+			},
+		})
+
+		indexKey, err := UploadIndexSnapshot(ctx, store, ns, createTestBleveIndex(t),
+			IndexMeta{BuildVersion: "11.0.0", LatestResourceVersion: 10}, testLogger)
+		require.NoError(t, err)
+		assert.GreaterOrEqual(t, uploadAttempts.Load(), int32(2))
+
+		metas, err := ListIndexSnapshots(ctx, store, ns, testLogger)
+		require.NoError(t, err)
+		assert.Contains(t, metas, indexKey)
+	})
+
+	t.Run("download file", func(t *testing.T) {
+		real := memblob.OpenBucket(nil)
+		defer func() { _ = real.Close() }()
+		seedStore := newTestRemoteIndexStore(t, real)
+		indexKey, err := UploadIndexSnapshot(ctx, seedStore, ns, createTestBleveIndex(t),
+			IndexMeta{BuildVersion: "11.0.0", LatestResourceVersion: 10}, testLogger)
+		require.NoError(t, err)
+
+		var downloadAttempts atomic.Int32
+		store := newTestRemoteIndexStore(t, &errorBucket{
+			CDKBucket: real,
+			downloadFn: func(key string) error {
+				if !strings.HasSuffix(key, "/"+snapshotManifestFile) && downloadAttempts.Add(1) == 1 {
+					return transientTestError{}
+				}
+				return nil
+			},
+		})
+
+		destDir := filepath.Join(t.TempDir(), "downloaded")
+		_, err = DownloadIndexSnapshot(ctx, store, ns, indexKey, destDir)
+		require.NoError(t, err)
+		assert.GreaterOrEqual(t, downloadAttempts.Load(), int32(2))
+		assert.DirExists(t, destDir)
 	})
 }
 
