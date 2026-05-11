@@ -37,4 +37,10 @@ export class AlertRuleViewPage {
   annotationValue(key: string): Locator {
     return this.page.getByRole('group', { name: 'Annotations' }).getByLabel(key);
   }
+
+  // Folder or group link in the top-bar breadcrumb navigation.
+  // exact: false because long names can be visually truncated in the breadcrumb bar.
+  breadcrumbLink(name: string): Locator {
+    return this.page.getByRole('navigation', { name: 'Breadcrumbs' }).getByRole('link', { name, exact: false });
+  }
 }

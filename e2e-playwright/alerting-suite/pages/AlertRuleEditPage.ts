@@ -12,23 +12,13 @@ export class AlertRuleEditPage {
 
   // ---------- Navigation ----------
 
-  /**
-   * Open the new-rule form. Defaults to a Grafana-managed alert rule.
-   *
-   * `features` flips Grafana feature toggles via the `?__feature.<name>=true` URL
-   * mechanism (`overrideFeatureTogglesFromUrl` in grafana-runtime). This is more
-   * reliable than `test.use({ featureToggles })` for default-off flags, which the
-   * plugin-e2e override races against config initialisation.
-   */
-  async goto(opts?: { features?: string[] }): Promise<void> {
-    const search = opts?.features?.length
-      ? '?' + opts.features.map((f) => `__feature.${encodeURIComponent(f)}=true`).join('&')
-      : '';
-    await this.page.goto(`/alerting/new${search}`);
+  /** Open the new-rule form. Defaults to a Grafana-managed alert rule. */
+  async goto(): Promise<void> {
+    await this.page.goto('/alerting/new');
     await expect(this.nameInput).toBeVisible();
   }
 
-  /** Open the edit form for an existing rule by UID. */
+  /** Open the edit form for an existing Grafana-managed rule by UID. */
   async gotoEdit(uid: string): Promise<void> {
     await this.page.goto(`/alerting/${encodeURIComponent(uid)}/edit`);
     await expect(this.nameInput).toBeVisible();
@@ -140,13 +130,15 @@ export class AlertRuleEditPage {
     const dialog = this.page.getByRole('dialog');
     await dialog.getByRole('button', { name: /add more/i }).click();
 
-    // Both inputs are Combobox; placeholder distinguishes them.
-    const keyInput = dialog.getByPlaceholder(/choose key/i);
-    await keyInput.fill(key);
+    // The dialog may open with a pre-existing empty row, so "Add more" creates a second row.
+    // Use .last() to target the newly added row's inputs.
+    // Use pressSequentially so the Combobox receives keystroke events needed for createCustomValue.
+    const keyInput = dialog.getByPlaceholder(/choose key/i).last();
+    await keyInput.pressSequentially(key);
     await keyInput.press('Enter');
 
-    const valueInput = dialog.getByPlaceholder(/choose value/i);
-    await valueInput.fill(value);
+    const valueInput = dialog.getByPlaceholder(/choose value/i).last();
+    await valueInput.pressSequentially(value);
     await valueInput.press('Enter');
 
     await dialog.getByRole('button', { name: 'Save', exact: true }).click();
