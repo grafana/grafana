@@ -535,6 +535,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamBindingsAPIGroup(opts bui
 		teamBindingStore,
 		teamBindingResource.GroupResource(),
 		iamauthorizer.NewTeamBindingAuthorizer(b.accessClient),
+		storewrapper.WithObserver(storageObserver{}),
 	)
 	storage[teamBindingResource.StoragePath()] = authzWrapper
 	if b.teamSearch != nil {
@@ -582,6 +583,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.AP
 		iamv0.UserResourceInfo.GroupResource(),
 		user.NewStoreWrapper(b.cfgProvider, b.settingService),
 		storewrapper.WithPreserveIdentity(),
+		storewrapper.WithObserver(storageObserver{}),
 	)
 
 	if b.dual != nil && b.unified != nil {
@@ -708,6 +710,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateResourcePermissionsAPIGroup(
 		regStoreDW,
 		iamv0.ResourcePermissionInfo.GroupResource(),
 		iamauthorizer.NewResourcePermissionsAuthorizer(b.accessClient, b.resourceParentProvider),
+		storewrapper.WithObserver(storageObserver{}),
 	)
 
 	storage[iamv0.ResourcePermissionInfo.StoragePath()] = authzWrapper
