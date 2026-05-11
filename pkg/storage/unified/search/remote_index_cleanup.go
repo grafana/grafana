@@ -94,7 +94,9 @@ func (b *bleveBackend) runCleanup(ctx context.Context) {
 	defer span.End()
 
 	store := b.opts.Snapshot.Store
-	namespaces, err := store.ListNamespaces(ctx)
+	namespaces, err := retryRemoteIndexStoreValue(ctx, snapshotStoreOpListNamespaces, b.log, func() ([]string, error) {
+		return store.ListNamespaces(ctx)
+	})
 	if err != nil {
 		// We can't attribute this error to any single namespace, so it shows up
 		// as a single "error" cleanup. Logged at warn so operators see it.
@@ -227,7 +229,9 @@ func (b *bleveBackend) runNamespaceCleanup(ctx context.Context, namespace string
 		span.AddEvent("snapshot.lock.release.completed", oteltrace.WithAttributes(lockAttrs...))
 	}()
 
-	resources, err := store.ListNamespaceResources(nsCtx, namespace)
+	resources, err := retryRemoteIndexStoreValue(nsCtx, snapshotStoreOpListNamespaceResources, nsLogger, func() ([]resource.NamespacedResource, error) {
+		return store.ListNamespaceResources(nsCtx, namespace)
+	})
 	if err != nil {
 		return snapshotNamespaceCleanupStatusError, fmt.Errorf("listing namespace indexes: %w", err)
 	}
@@ -289,7 +293,9 @@ func (b *bleveBackend) runResourceCleanup(ctx context.Context, res resource.Name
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
-		if err := store.DeleteIndex(ctx, res, key); err != nil {
+		if err := retryRemoteIndexStore(ctx, snapshotStoreOpDeleteIndex, logger, func() error {
+			return store.DeleteIndex(ctx, res, key)
+		}); err != nil {
 			logger.Warn("deleting index snapshot", "resource", res, "snapshot", key.String(), "err", err)
 			b.recordSnapshotDeleted(snapshotDeleteOutcomeError)
 			deleteFailures++
