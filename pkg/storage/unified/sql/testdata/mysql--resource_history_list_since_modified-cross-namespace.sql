@@ -8,8 +8,7 @@ SELECT
     `value`
 FROM resource_history
 WHERE
-  `namespace` = 'ns'
-  AND `group` = 'group'
+  `group` = 'group'
   AND `resource` = 'res'
   AND `resource_version` > 10000 
   AND `resource_version` <= 20000 

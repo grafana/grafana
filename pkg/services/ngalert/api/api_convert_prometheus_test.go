@@ -1983,7 +1983,7 @@ func TestRouteConvertPrometheusPostAlertmanagerConfig(t *testing.T) {
 	const identifier = "test-config"
 	mockAM := &mockAlertmanager{}
 
-	ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
+	ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies, featuremgmt.FlagAlertingImportAlertmanagerAPI)
 	srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
 
 	t.Run("should parse headers and call SaveAndApplyExtraConfiguration", func(t *testing.T) {
@@ -2028,7 +2028,7 @@ func TestRouteConvertPrometheusPostAlertmanagerConfig(t *testing.T) {
 			return extraConfig.Identifier == defaultConfigIdentifier
 		}), false, false).Return(merge.RenameResources{}, nil)
 
-		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
+		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies, featuremgmt.FlagAlertingImportAlertmanagerAPI)
 		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
 
 		amCfg := apimodels.AlertmanagerUserConfig{
@@ -2057,7 +2057,7 @@ func TestRouteConvertPrometheusPostAlertmanagerConfig(t *testing.T) {
 			return extraConfig.Identifier == defaultConfigIdentifier
 		}), true, false).Return(merge.RenameResources{}, nil)
 
-		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
+		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies, featuremgmt.FlagAlertingImportAlertmanagerAPI)
 		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
 
 		amCfg := apimodels.AlertmanagerUserConfig{
@@ -2086,7 +2086,7 @@ func TestRouteConvertPrometheusPostAlertmanagerConfig(t *testing.T) {
 			return extraConfig.Identifier == defaultConfigIdentifier
 		}), false, true).Return(merge.RenameResources{}, nil)
 
-		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
+		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies, featuremgmt.FlagAlertingImportAlertmanagerAPI)
 		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
 
 		amCfg := apimodels.AlertmanagerUserConfig{
@@ -2125,7 +2125,7 @@ func TestRouteConvertPrometheusPostAlertmanagerConfig(t *testing.T) {
 			return extraConfig.Identifier == identifier
 		}), false, false).Return(expectedRenames, nil)
 
-		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
+		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies, featuremgmt.FlagAlertingImportAlertmanagerAPI)
 		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
 
 		amCfg := apimodels.AlertmanagerUserConfig{
@@ -2208,7 +2208,7 @@ receivers:
 				},
 			},
 		}, nil)
-		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
+		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies, featuremgmt.FlagAlertingImportAlertmanagerAPI)
 		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
 
 		rc := createRequestCtx()
@@ -2231,7 +2231,7 @@ receivers:
 				},
 			},
 		}, nil)
-		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
+		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies, featuremgmt.FlagAlertingImportAlertmanagerAPI)
 		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
 
 		rc := createRequestCtx()
@@ -2244,7 +2244,7 @@ receivers:
 
 	t.Run("should return config when it is found", func(t *testing.T) {
 		mockAM := &mockAlertmanager{}
-		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
+		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies, featuremgmt.FlagAlertingImportAlertmanagerAPI)
 		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
 
 		// Create a config with secrets to check that they will be hided in the response.
@@ -2317,7 +2317,7 @@ template_files:
 
 	t.Run("when config not found should return 404", func(t *testing.T) {
 		mockAM := &mockAlertmanager{}
-		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
+		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies, featuremgmt.FlagAlertingImportAlertmanagerAPI)
 		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
 
 		expectedConfig := apimodels.GettableUserConfig{
@@ -2347,7 +2347,7 @@ receivers:
 
 	t.Run("should return error when GetAlertmanagerConfiguration fails", func(t *testing.T) {
 		mockAM := &mockAlertmanager{}
-		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
+		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies, featuremgmt.FlagAlertingImportAlertmanagerAPI)
 		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
 
 		mockAM.On("GetAlertmanagerConfiguration", mock.Anything, orgID, false).Return(apimodels.GettableUserConfig{}, errors.New("config error")).Once()
@@ -2531,7 +2531,7 @@ func TestRouteConvertPrometheusDeleteAlertmanagerConfig(t *testing.T) {
 	const orgID = int64(1)
 
 	mockAM := &mockAlertmanager{}
-	ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
+	ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies, featuremgmt.FlagAlertingImportAlertmanagerAPI)
 	srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
 
 	t.Run("should parse identifier header and call DeleteExtraConfiguration", func(t *testing.T) {

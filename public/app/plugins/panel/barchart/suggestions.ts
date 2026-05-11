@@ -11,6 +11,16 @@ import { LegendDisplayMode, StackingMode, VisibilityMode } from '@grafana/schema
 
 import { type FieldConfig, type Options } from './panelcfg.gen';
 
+const MAX_PREVIEW_SERIES = 8;
+
+export const BARCHART_CARD_OPTIONS: VisualizationSuggestion<Options, FieldConfig>['cardOptions'] = {
+  maxSeries: MAX_PREVIEW_SERIES,
+  previewModifier: (s) => {
+    s.options!.barWidth = 0.8;
+    s.fieldConfig!.defaults!.custom!.hideFrom = { tooltip: false, legend: true, viz: false };
+  },
+};
+
 const withDefaults = (suggestion: VisualizationSuggestion<Options, FieldConfig>) =>
   defaultsDeep(suggestion, {
     options: {
@@ -29,12 +39,7 @@ const withDefaults = (suggestion: VisualizationSuggestion<Options, FieldConfig>)
       },
       overrides: [],
     },
-    cardOptions: {
-      previewModifier: (s) => {
-        s.options!.barWidth = 0.8;
-        s.fieldConfig!.defaults!.custom!.hideFrom = { tooltip: false, legend: true, viz: false }; // hide legend in preview
-      },
-    },
+    cardOptions: BARCHART_CARD_OPTIONS,
   } satisfies VisualizationSuggestion<Options, FieldConfig>);
 
 export const barchartSuggestionsSupplier: VisualizationSuggestionsSupplier<Options, FieldConfig> = (dataSummary) => {
