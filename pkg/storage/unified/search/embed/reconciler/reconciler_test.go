@@ -539,16 +539,20 @@ func TestReconciler_AcquireLockBlocking_RespectsContextCancel(t *testing.T) {
 // ---------- Startup pagination ----------
 
 // TestReconciler_StartupReconcile_FlushesAtBatchSize verifies that
-// startupReconcile breaks out of the listing iterator at startupBatchSize,
-// flushes via processQueue (advancing the cursor), and resumes listing
-// from the new cursor — instead of buffering every event in memory.
+// startupReconcile drains the listing iterator in startupBatchSize-sized
+// chunks (so memory stays bounded) but advances the cursor exactly once
+// at the end. Advancing per batch would lose events on real SQL where
+// the rows come back ORDER BY resource_version DESC: the first
+// (highest-RV) batch would bump the cursor past every later, lower-RV
+// batch, silently dropping them.
 func TestReconciler_StartupReconcile_FlushesAtBatchSize(t *testing.T) {
 	prev := startupBatchSize
 	startupBatchSize = 3
 	t.Cleanup(func() { startupBatchSize = prev })
 
 	st := &fakeStorage{}
-	for i := 0; i < 7; i++ {
+	// Emit in DESC order to mirror the real SQL backend.
+	for i := 6; i >= 0; i-- {
 		rv := int64(100 + i*10)
 		name := fmt.Sprintf("dash-%d", i)
 		st.changes = append(st.changes,
@@ -564,11 +568,38 @@ func TestReconciler_StartupReconcile_FlushesAtBatchSize(t *testing.T) {
 	require.Len(t, vec.upserts, 7, "every event must be processed across batched flushes")
 	assert.Equal(t, int64(160), vec.latestRV, "cursor advances to highest RV")
 	assert.Equal(t, 0, s.queueLen(), "queue is empty after startup")
+	assert.Equal(t, 1, vec.setLatestRVCalls, "cursor advances exactly once at end of startup")
+}
 
-	// 7 events at batch size 3 must trigger at least two mid-iteration
-	// flushes (after the 3rd and 6th enqueue) plus a trailing flush —
-	// otherwise the queue would buffer everything at once.
-	assert.GreaterOrEqual(t, vec.setLatestRVCalls, 3, "cursor advances multiple times during catch-up")
+// TestReconciler_StartupReconcile_DescOrderDoesNotDropEvents is the
+// regression test for the bug where startupReconcile flushed each
+// batch via processBatch (which advances the cursor) while the real
+// SQL backend yields ORDER BY resource_version DESC. The first batch
+// held the highest RVs, the cursor jumped past every subsequent
+// (lower-RV) batch's events, and they were silently filtered out by
+// the "ev.rv <= sinceRv" guard.
+func TestReconciler_StartupReconcile_DescOrderDoesNotDropEvents(t *testing.T) {
+	prev := startupBatchSize
+	startupBatchSize = 2
+	t.Cleanup(func() { startupBatchSize = prev })
+
+	st := &fakeStorage{}
+	// Strictly descending RV order, mirroring the real SQL backend.
+	for i := 5; i >= 0; i-- {
+		rv := int64(100 + i*10)
+		name := fmt.Sprintf("dash-%d", i)
+		st.changes = append(st.changes,
+			dashChange(resourcepb.WatchEvent_ADDED, "ns", name, rv, minimalDashboard(name, name)))
+	}
+
+	vec := newFakeVector()
+	vec.latestRV = 50
+	s, _ := newReconciler(t, st, vec)
+
+	s.startupReconcile(context.Background())
+
+	assert.Len(t, vec.upserts, 6, "every event embedded even though batches arrive in DESC order")
+	assert.Equal(t, int64(150), vec.latestRV)
 }
 
 // TestReconciler_StartupReconcile_DoesNotProcessWatchEvents verifies

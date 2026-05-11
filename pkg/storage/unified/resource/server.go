@@ -371,28 +371,28 @@ type ResourceServerOptions struct {
 	// VectorBackfiller, when non-nil, is launched in a background
 	// goroutine after Init. The server tracks it in its WaitGroup so
 	// Stop blocks until it returns. nil = backfill feature off.
-	VectorBackfiller VectorIndexer
+	VectorBackfiller Runnable
 
 	// VectorWriteReconciler, when non-nil, is launched alongside the
 	// backfiller; the server attaches its own broadcaster to it before
 	// starting Run so the reconciler's watch path lights up. nil =
 	// write-path reconciler feature off.
-	VectorWriteReconciler VectorWriteReconciler
+	VectorWriteReconciler BroadcasterConsumer
 }
 
-// VectorIndexer is anything the server can launch in a goroutine and
-// that exits cleanly on context cancel. Used for the vector backfiller
-// and the write-path reconciler — kept abstract so the resource package
-// doesn't need to import the concrete packages (which would cycle).
-type VectorIndexer interface {
+// Runnable is anything the server can launch in a goroutine and that
+// exits cleanly on context cancel. Stays abstract so the resource
+// package doesn't have to import the concrete indexer packages, which
+// would cycle.
+type Runnable interface {
 	Run(ctx context.Context) error
 }
 
-// VectorWriteReconciler is a VectorIndexer that wants the server's
-// write-events broadcaster attached before Run. The server sets this
-// up once initWatcher has populated its broadcaster.
-type VectorWriteReconciler interface {
-	VectorIndexer
+// BroadcasterConsumer is a Runnable that wants the server's write-events
+// broadcaster attached before Run. The server sets this up once
+// initWatcher has populated its broadcaster.
+type BroadcasterConsumer interface {
+	Runnable
 	UseBroadcaster(b Broadcaster[*WrittenEvent])
 }
 
@@ -631,8 +631,8 @@ type server struct {
 
 	// Async vector indexers (backfiller + write-path reconciler).
 	// Started in Init, joined in Stop via indexersWG.
-	vectorBackfiller      VectorIndexer
-	vectorWriteReconciler VectorWriteReconciler
+	vectorBackfiller      Runnable
+	vectorWriteReconciler BroadcasterConsumer
 	indexersWG            sync.WaitGroup
 }
 

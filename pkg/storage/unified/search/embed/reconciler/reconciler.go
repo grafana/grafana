@@ -299,9 +299,17 @@ func (s *Reconciler) startupReconcile(ctx context.Context) {
 // would then be filtered out as "already processed" — leaving those
 // dashboards without their initial embedding.
 //
+// The cursor is pinned to the value read at startupReconcile and
+// advanced once after all batches drain. Advancing per-batch would
+// drop events on the real SQL backend: rows come back ORDER BY
+// resource_version DESC, so the first batch holds the highest RVs,
+// and advancing after it would push every later (lower-RV) batch
+// below the freshly-bumped cursor — silently losing those resources.
+//
 // Watch events accumulate in the global queue while bootstrap runs and
 // are picked up by the first processQueue cycle in Run.
 func (s *Reconciler) reconcileSince(ctx context.Context, builder embed.Builder, sinceRv int64) {
+	logger := s.log.FromContext(ctx)
 	key := resource.NamespacedResource{
 		Group:    builder.Group(),
 		Resource: builder.Resource(),
@@ -309,13 +317,36 @@ func (s *Reconciler) reconcileSince(ctx context.Context, builder embed.Builder, 
 	}
 	_, seq := s.storage.ListModifiedSince(ctx, key, sinceRv, nil)
 
+	var (
+		failed         []*pendingEvent
+		maxRv          = sinceRv
+		lowestFailedRv = int64(math.MaxInt64)
+		successCount   int
+	)
+
+	flush := func(batch []*pendingEvent) bool {
+		batchMax, batchLowestFailed, batchFailed, batchSuccess, abort := s.processEvents(ctx, sinceRv, batch)
+		if abort {
+			return false
+		}
+		if batchMax > maxRv {
+			maxRv = batchMax
+		}
+		if batchLowestFailed < lowestFailedRv {
+			lowestFailedRv = batchLowestFailed
+		}
+		failed = append(failed, batchFailed...)
+		successCount += len(batchSuccess)
+		return true
+	}
+
 	batch := make([]*pendingEvent, 0, startupBatchSize)
 	for mr, err := range seq {
 		if ctx.Err() != nil {
 			return
 		}
 		if err != nil {
-			s.log.Warn("reconciler: startupReconcile iterator error",
+			logger.Warn("reconciler: startupReconcile iterator error",
 				"group", builder.Group(), "resource", builder.Resource(), "err", err)
 			return
 		}
@@ -339,13 +370,38 @@ func (s *Reconciler) reconcileSince(ctx context.Context, builder embed.Builder, 
 		}
 		batch = append(batch, ev)
 		if len(batch) >= startupBatchSize {
-			s.processBatch(ctx, batch)
+			if !flush(batch) {
+				return
+			}
 			batch = batch[:0]
 		}
 	}
 	if len(batch) > 0 {
-		s.processBatch(ctx, batch)
+		if !flush(batch) {
+			return
+		}
 	}
+
+	target := pickLatestRV(sinceRv, maxRv, lowestFailedRv)
+	if target > sinceRv {
+		if err := s.vectorBackend.SetLatestRV(ctx, target); err != nil {
+			logger.Error("reconciler: startupReconcile advance checkpoint",
+				"err", err, "sinceRV", sinceRv, "target", target)
+			// Re-enqueue everything we processed so the steady-state
+			// loop retries the cursor advance with fresh state.
+			for _, ev := range failed {
+				s.enqueue(ev)
+			}
+			return
+		}
+	}
+	for _, ev := range failed {
+		s.enqueue(ev)
+	}
+	logger.Info("reconciler: startupReconcile builder complete",
+		"group", builder.Group(), "resource", builder.Resource(),
+		"events", successCount, "failed", len(failed),
+		"from", sinceRv, "to", target)
 }
 
 // queueSupersedes returns true if the global queue has an event for the
@@ -367,8 +423,9 @@ func (s *Reconciler) processQueue(ctx context.Context) {
 }
 
 // processBatch runs the embed/upsert pipeline over a slice of pending
-// events. Used by both processQueue and reconcileSince so the cursor
-// advance logic stays in one place.
+// events and advances the cursor. Used by processQueue (steady state).
+// reconcileSince calls processEvents directly so the cursor advances
+// once after every startup batch, not per batch.
 func (s *Reconciler) processBatch(ctx context.Context, pending []*pendingEvent) {
 	if len(pending) == 0 {
 		return
@@ -382,17 +439,53 @@ func (s *Reconciler) processBatch(ctx context.Context, pending []*pendingEvent) 
 		return
 	}
 
-	var (
-		failed         []*pendingEvent
-		successes      []*pendingEvent
-		lowestFailedRv = int64(math.MaxInt64)
-		maxRv          = sinceRv
-	)
+	maxRv, lowestFailedRv, failed, successes, abort := s.processEvents(ctx, sinceRv, pending)
+	if abort {
+		s.requeue(pending)
+		return
+	}
 
-	for _, ev := range pending {
-		if ctx.Err() != nil {
+	selectedRV := pickLatestRV(sinceRv, maxRv, lowestFailedRv)
+	if selectedRV > sinceRv {
+		if err := s.vectorBackend.SetLatestRV(ctx, selectedRV); err != nil {
+			logger.Error("reconciler: advance checkpoint", "err", err, "sinceRV", sinceRv, "selectedRV", selectedRV)
 			s.requeue(pending)
 			return
+		}
+	}
+
+	for _, ev := range failed {
+		s.enqueue(ev)
+	}
+
+	switch {
+	case len(successes) == 0 && len(failed) == 0:
+	case len(failed) == 0:
+		logger.Info("reconciler: cycle processed",
+			"events", len(successes),
+			"from", sinceRv, "to", selectedRV)
+	default:
+		logger.Info("reconciler: cycle processed (partial)",
+			"events", len(successes),
+			"failed", len(failed),
+			"from", sinceRv, "to", selectedRV)
+	}
+}
+
+// processEvents runs the embed/upsert loop without advancing the
+// cursor — the caller decides when to commit progress. sinceRv is the
+// floor for the "already processed" filter; it stays pinned across
+// calls so callers (like reconcileSince) that flush multiple batches
+// don't accidentally filter out lower-RV events after an earlier batch
+// would have bumped the checkpoint. abort is true if ctx was cancelled
+// mid-loop; the caller should treat all events as un-processed.
+func (s *Reconciler) processEvents(ctx context.Context, sinceRv int64, pending []*pendingEvent) (maxRv, lowestFailedRv int64, failed, successes []*pendingEvent, abort bool) {
+	logger := s.log.FromContext(ctx)
+	maxRv = sinceRv
+	lowestFailedRv = math.MaxInt64
+	for _, ev := range pending {
+		if ctx.Err() != nil {
+			return maxRv, lowestFailedRv, nil, nil, true
 		}
 		// Replayed history past the cursor was already processed; skip
 		// it without spending an attempt.
@@ -421,32 +514,7 @@ func (s *Reconciler) processBatch(ctx context.Context, pending []*pendingEvent) 
 			maxRv = ev.rv
 		}
 	}
-
-	selectedRV := pickLatestRV(sinceRv, maxRv, lowestFailedRv)
-	if selectedRV > sinceRv {
-		if err := s.vectorBackend.SetLatestRV(ctx, selectedRV); err != nil {
-			logger.Error("reconciler: advance checkpoint", "err", err, "sinceRV", sinceRv, "selectedRV", selectedRV)
-			s.requeue(pending)
-			return
-		}
-	}
-
-	for _, ev := range failed {
-		s.enqueue(ev)
-	}
-
-	switch {
-	case len(successes) == 0 && len(failed) == 0:
-	case len(failed) == 0:
-		logger.Info("reconciler: cycle processed",
-			"events", len(successes),
-			"from", sinceRv, "to", selectedRV)
-	default:
-		logger.Info("reconciler: cycle processed (partial)",
-			"events", len(successes),
-			"failed", len(failed),
-			"from", sinceRv, "to", selectedRV)
-	}
+	return maxRv, lowestFailedRv, failed, successes, false
 }
 
 func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev *pendingEvent) error {
