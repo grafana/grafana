@@ -49,8 +49,8 @@ func setupIntegrationTest(t *testing.T) (VectorBackend, *xorm.Engine, context.Co
 	require.NoError(t, err)
 
 	database := dbimpl.NewDB(engine.DB().DB, engine.Dialect().DriverName())
-	// interval=0 keeps Run idle; promotion tests call Promote(ctx) directly.
-	backend := NewPgvectorBackend(database, 1000, 0)
+	// interval=0 keeps the promoter idle; promotion tests call Promote(ctx) directly.
+	backend := NewPgvectorBackend(ctx, database, 1000, 0, false, engine)
 
 	cleanIntegrationState(t, engine)
 
@@ -184,6 +184,32 @@ func TestIntegrationVectorDeleteSubresources(t *testing.T) {
 
 	err = backend.Delete(ctx, "integration-test", testModel, testResource, "dash")
 	require.NoError(t, err)
+}
+
+func TestIntegrationVectorExists(t *testing.T) {
+	backend, _, ctx := setupIntegrationTest(t)
+
+	exists, err := backend.Exists(ctx, "integration-test", testModel, testResource, "exists-dash")
+	require.NoError(t, err)
+	assert.False(t, exists, "no rows yet, Exists should be false")
+
+	require.NoError(t, backend.Upsert(ctx, []Vector{
+		{Namespace: "integration-test", Resource: testResource, UID: "exists-dash", Title: "T",
+			Subresource: "panel/1", ResourceVersion: 1, Content: "x",
+			Metadata: json.RawMessage(`{}`), Embedding: makeEmbedding(0.5, 0.5), Model: testModel},
+	}))
+
+	exists, err = backend.Exists(ctx, "integration-test", testModel, testResource, "exists-dash")
+	require.NoError(t, err)
+	assert.True(t, exists, "after upsert Exists should be true")
+
+	exists, err = backend.Exists(ctx, "integration-test", testModel, testResource, "nonexistent-dash")
+	require.NoError(t, err)
+	assert.False(t, exists)
+
+	exists, err = backend.Exists(ctx, "integration-test", "different-model", testResource, "exists-dash")
+	require.NoError(t, err)
+	assert.False(t, exists, "different model should be treated as not-exists")
 }
 
 func TestIntegrationVectorGetLatestRV(t *testing.T) {

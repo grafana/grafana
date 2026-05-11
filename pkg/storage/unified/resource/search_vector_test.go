@@ -89,8 +89,23 @@ func (f *fakeVectorBackend) DeleteSubresources(context.Context, string, string, 
 func (f *fakeVectorBackend) GetSubresourceContent(context.Context, string, string, string, string) (map[string]string, error) {
 	return nil, nil
 }
+func (f *fakeVectorBackend) Exists(context.Context, string, string, string, string) (bool, error) {
+	return false, nil
+}
 func (f *fakeVectorBackend) GetLatestRV(context.Context) (int64, error) { return 0, nil }
-func (f *fakeVectorBackend) Run(context.Context) error                  { return nil }
+func (f *fakeVectorBackend) ListIncompleteBackfillJobs(context.Context, string) ([]vector.BackfillJob, error) {
+	return nil, nil
+}
+func (f *fakeVectorBackend) UpdateBackfillJobCheckpoint(context.Context, int64, string, string) error {
+	return nil
+}
+func (f *fakeVectorBackend) MarkBackfillJobError(context.Context, int64, string) error {
+	return nil
+}
+func (f *fakeVectorBackend) CompleteBackfillJob(context.Context, int64) error { return nil }
+func (f *fakeVectorBackend) TryAcquireBackfillLock(context.Context) (func(), bool, error) {
+	return func() {}, true, nil
+}
 
 // newTestSearchServer builds a searchServer with just the fields the
 // VectorSearch handler needs, skipping all of newSearchServer's larger
@@ -359,10 +374,9 @@ func TestVectorSearch_AuthzFiltersUnauthorizedRows(t *testing.T) {
 }
 
 func TestVectorSearch_AuthzDenyAllReturnsEmpty(t *testing.T) {
-	// When BatchCheck denies every row, the handler returns an empty result set.
-	access := &fakeAccessClient{
-		allow: func(string, string) bool { return false },
-	}
+	// When BatchCheck denies every row, the handler should return an empty
+	// result set (not an error).
+	access := &fakeAccessClient{allow: func(string, string) bool { return false }}
 	backend := &fakeVectorBackend{
 		results: []vector.VectorSearchResult{{UID: "u1", Title: "T1", Score: 0.1}},
 	}
@@ -389,7 +403,7 @@ func TestVectorSearch_NoUserInContextReturnsUnauthenticated(t *testing.T) {
 	assert.Equal(t, codes.Unauthenticated, status.Code(err))
 }
 
-func TestVectorSearch_AuthzBatchCheckErrorReturnsInternal(t *testing.T) {
+func TestVectorSearch_AuthzCompileErrorReturnsInternal(t *testing.T) {
 	access := &erroringAccessClient{err: errors.New("authz service is down")}
 	backend := &fakeVectorBackend{
 		results: []vector.VectorSearchResult{{UID: "u1", Score: 0.1}},

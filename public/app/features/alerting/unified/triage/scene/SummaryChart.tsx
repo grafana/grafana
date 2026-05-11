@@ -9,6 +9,7 @@ import { LegendDisplayMode, StackingMode, TooltipDisplayMode } from '@grafana/ui
 
 import { overrideToFixedColor } from '../../home/Insights';
 
+import { sortByAlertState } from './dataFrameUtils';
 import { summaryChartQuery } from './queries';
 import { cleanAlertStateFilter, useQueryFilter } from './utils';
 
@@ -19,9 +20,9 @@ export const summaryChartVizConfig = VizConfigBuilders.timeseries()
   .setCustomFieldConfig('drawStyle', GraphDrawStyle.Bars)
   .setCustomFieldConfig('barWidthFactor', 1)
   .setCustomFieldConfig('barAlignment', BarAlignment.Center)
-  .setCustomFieldConfig('fillOpacity', 60)
+  .setCustomFieldConfig('fillOpacity', 80)
   .setCustomFieldConfig('lineWidth', 0)
-  .setCustomFieldConfig('stacking', { mode: StackingMode.None })
+  .setCustomFieldConfig('stacking', { mode: StackingMode.Normal })
   .setCustomFieldConfig('showPoints', VisibilityMode.Never)
   .setOption('legend', {
     showLegend: false,
@@ -94,14 +95,14 @@ export function SummaryChartReact() {
   // summaryChartQuery groups by alertstate, so remove any user-supplied alertstate matcher.
   const cleanFilter = cleanAlertStateFilter(filter);
 
-  const runner = useQueryRunner({
+  const queryRunner = useQueryRunner({
     queries: [summaryChartQuery(cleanFilter)],
   });
 
   // See collapseByAlertstateTransformation for why this is needed.
   const dataProvider = useDataTransformer({
-    data: runner,
-    transformations: [collapseByAlertstateTransformation],
+    data: queryRunner,
+    transformations: [collapseByAlertstateTransformation, sortByAlertState],
   });
 
   return <VizPanel title="" viz={summaryChartVizConfig} dataProvider={dataProvider} hoverHeader={true} />;

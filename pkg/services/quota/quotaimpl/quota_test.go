@@ -62,7 +62,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	resourcepb "github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -247,7 +246,7 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 			defer func() {
 				cfg.UnifiedAlerting = alertingCfg
 			}()
-			cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{Enabled: util.Pointer(false)}
+			cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{Enabled: new(false)}
 
 			cfgProvider, err := configprovider.ProvideService(cfg)
 			require.NoError(t, err)

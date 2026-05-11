@@ -8,9 +8,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -1043,4 +1046,432 @@ func TestRemoteIndexStore_BuildAndCleanupLockTTLsWiredIndependently(t *testing.T
 	info, err = backend.Read(ctx, cleanupLockKey(ns.Namespace))
 	require.NoError(t, err)
 	require.Equal(t, cleanupTTL, info.TTL)
+}
+
+// hookableStore wraps a real BucketRemoteIndexStore (backed by an in-memory
+// memblob bucket) and adds per-method error injection, call counters,
+// mid-call callbacks, and controllable lock loss.
+//
+// Tests seed snapshots by writing directly to the bucket via seedSnapshot or
+// seedDownloadableSnapshot, which lets them pin manifest fields independent
+// of UploadIndex's ULID-derived UploadTimestamp.
+type hookableStore struct {
+	inner  *BucketRemoteIndexStore
+	bucket *blob.Bucket
+
+	// Error injection. nil means pass through to the inner store.
+	mu             sync.Mutex
+	lockBuildErr   error
+	lockCleanupErr error
+	listIndexesErr error
+	listKeysErr    error
+	downloadErr    error
+	uploadErr      error
+	getMetaErrs    map[ulid.ULID]error
+
+	onUpload func() error
+
+	// Counters.
+	lockAcquireCalls atomic.Int32
+	lockReleaseCalls atomic.Int32
+	listCalls        atomic.Int32
+	listKeyCalls     atomic.Int32
+	getMetaCalls     atomic.Int32
+	downloadCalls    atomic.Int32
+	uploadCalls      atomic.Int32
+
+	// Last-call observations. Tests that previously inspected fake-internal
+	// state read these instead.
+	lastUploadedMeta     IndexMeta
+	lastUploadedFiles    []string
+	lastLockBuildVersion string
+
+	// Tracks the most recently acquired build lock so signalLockLost can
+	// fire it.
+	currentLock *hookableLock
+}
+
+// newHookableStore returns a fresh hookableStore wrapping a real
+// BucketRemoteIndexStore over an in-memory memblob bucket.
+func newHookableStore(t *testing.T) *hookableStore {
+	t.Helper()
+	bucket := memblob.OpenBucket(nil)
+	t.Cleanup(func() { _ = bucket.Close() })
+	return &hookableStore{
+		inner:  newTestRemoteIndexStore(t, bucket),
+		bucket: bucket,
+	}
+}
+
+func (s *hookableStore) LockBuildIndex(ctx context.Context, ns resource.NamespacedResource, buildVersion string) (IndexStoreLock, error) {
+	s.lockAcquireCalls.Add(1)
+	s.mu.Lock()
+	s.lastLockBuildVersion = buildVersion
+	injected := s.lockBuildErr
+	s.mu.Unlock()
+	if injected != nil {
+		return nil, injected
+	}
+	innerLock, err := s.inner.LockBuildIndex(ctx, ns, buildVersion)
+	if err != nil {
+		return nil, err
+	}
+	lock := newHookableLock(innerLock, s)
+	s.mu.Lock()
+	s.currentLock = lock
+	s.mu.Unlock()
+	return lock, nil
+}
+
+func (s *hookableStore) LockNamespaceForCleanup(ctx context.Context, namespace string) (IndexStoreLock, error) {
+	s.mu.Lock()
+	injected := s.lockCleanupErr
+	s.mu.Unlock()
+	if injected != nil {
+		return nil, injected
+	}
+	return s.inner.LockNamespaceForCleanup(ctx, namespace)
+}
+
+func (s *hookableStore) UploadIndex(ctx context.Context, ns resource.NamespacedResource, localDir string, meta IndexMeta) (ulid.ULID, error) {
+	s.uploadCalls.Add(1)
+	s.mu.Lock()
+	onUpload := s.onUpload
+	injected := s.uploadErr
+	s.lastUploadedMeta = meta
+	s.lastUploadedFiles = nil
+	s.mu.Unlock()
+
+	// Capture the relative paths the caller intends to upload by walking
+	// localDir before delegating. This mirrors what BucketRemoteIndexStore
+	// itself does, so tests can assert on the file set without inspecting
+	// the bucket afterwards.
+	var files []string
+	if walkErr := filepath.WalkDir(localDir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			return nil
+		}
+		rel, relErr := filepath.Rel(localDir, path)
+		if relErr != nil {
+			return relErr
+		}
+		files = append(files, filepath.ToSlash(rel))
+		return nil
+	}); walkErr != nil {
+		return ulid.ULID{}, walkErr
+	}
+	s.mu.Lock()
+	s.lastUploadedFiles = files
+	s.mu.Unlock()
+
+	if onUpload != nil {
+		if err := onUpload(); err != nil {
+			return ulid.ULID{}, err
+		}
+	}
+	if injected != nil {
+		return ulid.ULID{}, injected
+	}
+	return s.inner.UploadIndex(ctx, ns, localDir, meta)
+}
+
+func (s *hookableStore) DownloadIndex(ctx context.Context, ns resource.NamespacedResource, indexKey ulid.ULID, destDir string) (*IndexMeta, error) {
+	s.downloadCalls.Add(1)
+	s.mu.Lock()
+	injected := s.downloadErr
+	s.mu.Unlock()
+	if injected != nil {
+		return nil, injected
+	}
+	return s.inner.DownloadIndex(ctx, ns, indexKey, destDir)
+}
+
+func (s *hookableStore) ListNamespaces(ctx context.Context) ([]string, error) {
+	return s.inner.ListNamespaces(ctx)
+}
+
+func (s *hookableStore) ListNamespaceIndexes(ctx context.Context, namespace string) ([]resource.NamespacedResource, error) {
+	return s.inner.ListNamespaceIndexes(ctx, namespace)
+}
+
+func (s *hookableStore) ListIndexes(ctx context.Context, ns resource.NamespacedResource) (map[ulid.ULID]*IndexMeta, error) {
+	s.listCalls.Add(1)
+	s.mu.Lock()
+	injected := s.listIndexesErr
+	s.mu.Unlock()
+	if injected != nil {
+		return nil, injected
+	}
+	return s.inner.ListIndexes(ctx, ns)
+}
+
+func (s *hookableStore) ListIndexKeys(ctx context.Context, ns resource.NamespacedResource) ([]ulid.ULID, error) {
+	s.listKeyCalls.Add(1)
+	s.mu.Lock()
+	injected := s.listKeysErr
+	s.mu.Unlock()
+	if injected != nil {
+		return nil, injected
+	}
+	return s.inner.ListIndexKeys(ctx, ns)
+}
+
+func (s *hookableStore) GetIndexMeta(ctx context.Context, ns resource.NamespacedResource, indexKey ulid.ULID) (*IndexMeta, error) {
+	s.getMetaCalls.Add(1)
+	s.mu.Lock()
+	injected := s.getMetaErrs[indexKey]
+	s.mu.Unlock()
+	if injected != nil {
+		return nil, injected
+	}
+	return s.inner.GetIndexMeta(ctx, ns, indexKey)
+}
+
+func (s *hookableStore) DeleteIndex(ctx context.Context, ns resource.NamespacedResource, indexKey ulid.ULID) error {
+	return s.inner.DeleteIndex(ctx, ns, indexKey)
+}
+
+func (s *hookableStore) CleanupIncompleteUploads(ctx context.Context, ns resource.NamespacedResource, minAge time.Duration) (int, error) {
+	return s.inner.CleanupIncompleteUploads(ctx, ns, minAge)
+}
+
+// setLockBuildErr installs an error for the next LockBuildIndex calls. Use
+// errLockHeld to simulate "another instance is the leader", or any other
+// error to simulate a lock-backend failure. Pass nil to clear.
+func (s *hookableStore) setLockBuildErr(err error) {
+	s.mu.Lock()
+	s.lockBuildErr = err
+	s.mu.Unlock()
+}
+
+func (s *hookableStore) setListIndexesErr(err error) {
+	s.mu.Lock()
+	s.listIndexesErr = err
+	s.mu.Unlock()
+}
+
+func (s *hookableStore) setListKeysErr(err error) {
+	s.mu.Lock()
+	s.listKeysErr = err
+	s.mu.Unlock()
+}
+
+func (s *hookableStore) setUploadErr(err error) {
+	s.mu.Lock()
+	s.uploadErr = err
+	s.mu.Unlock()
+}
+
+func (s *hookableStore) setDownloadErr(err error) {
+	s.mu.Lock()
+	s.downloadErr = err
+	s.mu.Unlock()
+}
+
+// getLastUploadedMeta returns the IndexMeta passed to the most recent
+// UploadIndex call, guarded by the same mutex used for error injection.
+func (s *hookableStore) getLastUploadedMeta() IndexMeta {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.lastUploadedMeta
+}
+
+// getLastUploadedFiles returns the slash-separated relative paths captured
+// during the most recent UploadIndex call.
+func (s *hookableStore) getLastUploadedFiles() []string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return append([]string(nil), s.lastUploadedFiles...)
+}
+
+func (s *hookableStore) getLastLockBuildVersion() string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.lastLockBuildVersion
+}
+
+// setGetMetaErr installs an error to return on GetIndexMeta(indexKey).
+// Existing snapshot data in the bucket is left in place — only the manifest
+// read for this key fails.
+func (s *hookableStore) setGetMetaErr(indexKey ulid.ULID, err error) {
+	s.mu.Lock()
+	if s.getMetaErrs == nil {
+		s.getMetaErrs = map[ulid.ULID]error{}
+	}
+	s.getMetaErrs[indexKey] = err
+	s.mu.Unlock()
+}
+
+// setOnUpload installs a callback fired inside UploadIndex before delegating
+// to the inner store. The callback's returned error short-circuits the
+// upload. Used to trigger races (e.g. concurrent mutations during upload)
+// at a deterministic point.
+func (s *hookableStore) setOnUpload(fn func() error) {
+	s.mu.Lock()
+	s.onUpload = fn
+	s.mu.Unlock()
+}
+
+// signalLockLost closes the Lost() channel on the most recently acquired
+// build lock, simulating a heartbeat-detected lease loss without depending
+// on real heartbeat timing.
+func (s *hookableStore) signalLockLost() {
+	s.mu.Lock()
+	lock := s.currentLock
+	s.mu.Unlock()
+	if lock != nil {
+		lock.markLost()
+	}
+}
+
+// hookableLock wraps a real IndexStoreLock so tests can drive lock loss via
+// signalLockLost without depending on real heartbeat timing. The exposed
+// Lost() channel only closes when markLost is called; inner-lock loss is
+// not forwarded, because no test triggers it (real heartbeat loss requires
+// disturbing the bucket entry, which no test does).
+type hookableLock struct {
+	inner       IndexStoreLock
+	lost        chan struct{}
+	lostOnce    sync.Once
+	releaseOnce sync.Once
+	store       *hookableStore
+}
+
+func newHookableLock(inner IndexStoreLock, store *hookableStore) *hookableLock {
+	return &hookableLock{inner: inner, lost: make(chan struct{}), store: store}
+}
+
+func (l *hookableLock) Release() error {
+	var err error
+	l.releaseOnce.Do(func() {
+		l.store.lockReleaseCalls.Add(1)
+		err = l.inner.Release()
+	})
+	return err
+}
+
+func (l *hookableLock) Lost() <-chan struct{} { return l.lost }
+
+func (l *hookableLock) markLost() {
+	l.lostOnce.Do(func() { close(l.lost) })
+}
+
+// seedSnapshot writes a snapshot at indexKey under ns directly to bucket,
+// bypassing store.UploadIndex. The snapshot has a single placeholder file
+// plus a manifest with the caller-provided meta. Use this when a test only
+// needs the snapshot to be visible to ListIndexes / GetIndexMeta — the
+// snapshot is not downloadable as a real bleve index.
+//
+// Manifest fields (UploadTimestamp, BuildTime, etc.) are written as-is, so
+// callers can pin arbitrary values independent of indexKey's ULID time.
+func seedSnapshot(t *testing.T, ctx context.Context, bucket *blob.Bucket, ns resource.NamespacedResource, indexKey ulid.ULID, meta *IndexMeta) {
+	t.Helper()
+	pfx := indexPrefix(ns, indexKey.String())
+	require.NoError(t, bucket.WriteAll(ctx, pfx+"store/data.bin", []byte("x"), nil))
+	if meta.Files == nil {
+		meta.Files = map[string]int64{"store/data.bin": 1}
+	}
+	metaBytes, err := json.Marshal(meta)
+	require.NoError(t, err)
+	require.NoError(t, bucket.WriteAll(ctx, pfx+snapshotManifestFile, metaBytes, nil))
+}
+
+// downloadableSnapshot is a snapshot prepared in memory and ready to be
+// written to a bucket. Building uses testing.T (require.*); publishing
+// returns errors, so the publish step can run on a helper goroutine
+// without violating the testing.TB rule that FailNow must run on the test
+// goroutine.
+type downloadableSnapshot struct {
+	prefix   string
+	files    map[string][]byte
+	manifest []byte
+}
+
+// buildDownloadableSnapshot creates a real (minimal) bleve index for
+// indexKey under ns, walks it into memory, and marshals a manifest. The
+// returned snapshot can be published to any bucket via publish.
+//
+// The internal buildInfo.BuildTime is taken from meta.BuildTime when
+// non-zero, falling back to meta.UploadTimestamp. This mirrors production:
+// real snapshots derive manifest BuildTime from the index's internal
+// buildInfo (see bleve_snapshot_upload.go), so the two stay consistent
+// when readers (local reuse vs fresh-remote selection) compare them.
+func buildDownloadableSnapshot(t *testing.T, ns resource.NamespacedResource, indexKey ulid.ULID, meta *IndexMeta) *downloadableSnapshot {
+	t.Helper()
+	srcDir := filepath.Join(t.TempDir(), "idx")
+	idx, err := bleve.New(srcDir, bleve.NewIndexMapping())
+	require.NoError(t, err)
+	require.NoError(t, setRV(idx, meta.LatestResourceVersion))
+
+	buildTime := meta.BuildTime
+	if buildTime.IsZero() {
+		buildTime = meta.UploadTimestamp
+	}
+	bi, err := json.Marshal(buildInfo{
+		BuildTime:    buildTime.Unix(),
+		BuildVersion: meta.BuildVersion,
+	})
+	require.NoError(t, err)
+	require.NoError(t, idx.SetInternal([]byte(internalBuildInfoKey), bi))
+	require.NoError(t, idx.Close())
+
+	files := map[string][]byte{}
+	require.NoError(t, filepath.WalkDir(srcDir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			return nil
+		}
+		rel, err := filepath.Rel(srcDir, path)
+		if err != nil {
+			return err
+		}
+		data, err := os.ReadFile(path) //nolint:gosec // path is under a test-controlled temp dir
+		if err != nil {
+			return err
+		}
+		files[filepath.ToSlash(rel)] = data
+		return nil
+	}))
+
+	if meta.Files == nil {
+		meta.Files = make(map[string]int64, len(files))
+		for rel, data := range files {
+			meta.Files[rel] = int64(len(data))
+		}
+	}
+	manifest, err := json.Marshal(meta)
+	require.NoError(t, err)
+
+	return &downloadableSnapshot{
+		prefix:   indexPrefix(ns, indexKey.String()),
+		files:    files,
+		manifest: manifest,
+	}
+}
+
+// publish writes the snapshot's data files first, then the manifest (which
+// is the completion signal). Uses no testing.T, so it is safe to call from
+// a helper goroutine.
+func (s *downloadableSnapshot) publish(ctx context.Context, bucket *blob.Bucket) error {
+	for rel, data := range s.files {
+		if err := bucket.WriteAll(ctx, s.prefix+rel, data, nil); err != nil {
+			return fmt.Errorf("writing %s: %w", rel, err)
+		}
+	}
+	return bucket.WriteAll(ctx, s.prefix+snapshotManifestFile, s.manifest, nil)
+}
+
+// seedDownloadableSnapshot is buildDownloadableSnapshot + publish, for the
+// common case of seeding before the system under test runs. For tests that
+// need to publish from a helper goroutine, call buildDownloadableSnapshot
+// on the test goroutine and publish from the goroutine via the returned
+// snapshot.
+func seedDownloadableSnapshot(t *testing.T, ctx context.Context, bucket *blob.Bucket, ns resource.NamespacedResource, indexKey ulid.ULID, meta *IndexMeta) {
+	t.Helper()
+	require.NoError(t, buildDownloadableSnapshot(t, ns, indexKey, meta).publish(ctx, bucket))
 }

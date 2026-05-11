@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate/mocks"
-	"k8s.io/utils/ptr"
 )
 
 func TestKeeperQueries(t *testing.T) {
@@ -235,14 +234,14 @@ func TestSecureValueQueries(t *testing.T) {
 							UpdatedBy:                "user:cameron",
 							Version:                  1,
 							Description:              "description",
-							Keeper:                   toNullString(ptr.To("keeper_test")),
-							Decrypters:               toNullString(ptr.To("decrypters_test")),
-							Ref:                      toNullString(ptr.To("ref_test")),
+							Keeper:                   toNullString(new("keeper_test")),
+							Decrypters:               toNullString(new("decrypters_test")),
+							Ref:                      toNullString(new("ref_test")),
 							ExternalID:               "extId",
-							OwnerReferenceAPIGroup:   toNullString(ptr.To("prometheus.datasource.grafana.app")),
-							OwnerReferenceAPIVersion: toNullString(ptr.To("v0alpha1")),
-							OwnerReferenceKind:       toNullString(ptr.To("DataSource")),
-							OwnerReferenceName:       toNullString(ptr.To("prom-config")),
+							OwnerReferenceAPIGroup:   toNullString(new("prometheus.datasource.grafana.app")),
+							OwnerReferenceAPIVersion: toNullString(new("v0alpha1")),
+							OwnerReferenceKind:       toNullString(new("DataSource")),
+							OwnerReferenceName:       toNullString(new("prom-config")),
 						},
 					},
 				},

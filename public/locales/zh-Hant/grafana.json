@@ -1159,6 +1159,9 @@
       "content-show-all-errors": "顯示所有錯誤"
     },
     "errors": {
+      "api-machinery": {
+        "with-causes": ""
+      },
       "failedWith": "{{-config}} 失敗，顯示{{status}}：{{-message}}"
     },
     "evaluate-every-validation-options": {
@@ -10793,6 +10796,11 @@
     "name-line-width": "線寬",
     "name-stacking": "堆疊"
   },
+  "home": {
+    "home-page": {
+      "placeholder": ""
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "正在載入",
@@ -15929,7 +15937,9 @@
       "description": {
         "group-by-field-value": "依欄位值分組資料，並使用分組資料建立巢狀表格。"
       },
+      "description-expand-nested-rows": "",
       "description-show-field-names": "若啟用，巢狀表格將顯示欄位名稱作為表格標題",
+      "label-expand-nested-rows-by-default": "",
       "label-show-field-names-in-nested-tables": "在巢狀表格中顯示欄位名稱",
       "name": {
         "group-to-nested-tables": "分組到巢狀表格"

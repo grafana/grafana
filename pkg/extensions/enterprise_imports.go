@@ -780,7 +780,6 @@ import (
 	_ "k8s.io/kube-openapi/pkg/spec3"
 	_ "k8s.io/kube-openapi/pkg/validation/spec"
 	_ "k8s.io/utils/net"
-	_ "k8s.io/utils/ptr"
 	_ "sigs.k8s.io/structured-merge-diff/v6/typed"
 	_ "xorm.io/builder"
 )

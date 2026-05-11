@@ -44,6 +44,7 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/merge"
 	"github.com/grafana/grafana/pkg/services/ngalert/remote/client"
 	ngfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
@@ -497,10 +498,10 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 	require.NoError(t, err)
 	cfgWithExtraUnmerged, err := notifier.Load(cfgWithExtraUnmergedBytes)
 	require.NoError(t, err)
-	r, err := cfgWithExtraUnmerged.GetMergedAlertmanagerConfig()
+	r, err := merge.MergeExtraConfig(context.Background(), cfgWithExtraUnmerged)
 	require.NoError(t, err)
 	cfgWithExtraMerged := client.GrafanaAlertmanagerConfig{
-		AlertmanagerConfig: r.Config,
+		AlertmanagerConfig: r.Config.AlertmanagerConfig,
 		Templates:          cfgWithExtraUnmerged.GetMergedTemplateDefinitions(),
 	}
 
@@ -646,16 +647,16 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 				GrafanaAlertmanagerConfig: func() client.GrafanaAlertmanagerConfig {
 					cfgWithExtraUnmerged, err := notifier.Load(cfgWithExtraUnmergedBytes)
 					require.NoError(t, err)
-					r, err := cfgWithExtraUnmerged.GetMergedAlertmanagerConfig()
+					r, err := merge.MergeExtraConfig(context.Background(), cfgWithExtraUnmerged)
 					require.NoError(t, err)
 					managed := make(map[string]*definition.Route)
 					managed[r.Identifier] = r.ExtraRoute
-					r.Config.Route = legacy_storage.WithManagedRoutes(r.Config.Route, managed)
+					r.Config.AlertmanagerConfig.Route = legacy_storage.WithManagedRoutes(r.Config.AlertmanagerConfig.Route, managed)
 					importedRules, err := legacy_storage.BuildManagedInhibitionRules(r.Identifier, r.ExtraInhibitRules)
 					require.NoError(t, err)
-					r.Config.InhibitRules = legacy_storage.WithManagedInhibitionRules(r.Config.InhibitRules, importedRules)
+					r.Config.AlertmanagerConfig.InhibitRules = legacy_storage.WithManagedInhibitionRules(r.Config.AlertmanagerConfig.InhibitRules, importedRules)
 					cfgWithExtraMerged := client.GrafanaAlertmanagerConfig{
-						AlertmanagerConfig: r.Config,
+						AlertmanagerConfig: r.Config.AlertmanagerConfig,
 						Templates:          cfgWithExtraUnmerged.GetMergedTemplateDefinitions(),
 					}
 					return cfgWithExtraMerged
@@ -703,13 +704,13 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 				GrafanaAlertmanagerConfig: func() client.GrafanaAlertmanagerConfig {
 					cfgWithExtraUnmerged, err := notifier.Load(cfgWithExtraUnmergedBytes)
 					require.NoError(t, err)
-					r, err := cfgWithExtraUnmerged.GetMergedAlertmanagerConfig()
+					r, err := merge.MergeExtraConfig(context.Background(), cfgWithExtraUnmerged)
 					require.NoError(t, err)
-					r.Config.Route = legacy_storage.WithManagedRoutes(r.Config.Route, map[string]*definition.Route{
+					r.Config.AlertmanagerConfig.Route = legacy_storage.WithManagedRoutes(r.Config.AlertmanagerConfig.Route, map[string]*definition.Route{
 						"imported": {Receiver: "grafana-default-email"},
 					})
 					cfgWithExtraMerged := client.GrafanaAlertmanagerConfig{
-						AlertmanagerConfig: r.Config,
+						AlertmanagerConfig: r.Config.AlertmanagerConfig,
 						Templates:          cfgWithExtraUnmerged.GetMergedTemplateDefinitions(),
 					}
 					return cfgWithExtraMerged

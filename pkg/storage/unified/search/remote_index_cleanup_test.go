@@ -2,7 +2,6 @@ package search
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"sync"
 	"sync/atomic"
@@ -326,23 +325,6 @@ func TestRunCleanup_ReplicaVersionAgnostic(t *testing.T) {
 }
 
 // --- end-to-end runCleanup tests against a memblob bucket ---
-
-// seedSnapshot writes a minimal but valid snapshot at indexKey under ns,
-// matching the layout BucketRemoteIndexStore expects: a single placeholder file
-// plus a snapshot manifest declaring it. Bypasses store.UploadIndex so tests can pin
-// arbitrary UploadTimestamps without being tied to wall-clock or ULID.Time().
-// Takes *IndexMeta so callers can use mkMeta directly.
-func seedSnapshot(t *testing.T, ctx context.Context, bucket *blob.Bucket, ns resource.NamespacedResource, indexKey ulid.ULID, meta *IndexMeta) {
-	t.Helper()
-	pfx := indexPrefix(ns, indexKey.String())
-	require.NoError(t, bucket.WriteAll(ctx, pfx+"store/data.bin", []byte("x"), nil))
-	if meta.Files == nil {
-		meta.Files = map[string]int64{"store/data.bin": 1}
-	}
-	metaBytes, err := json.Marshal(meta)
-	require.NoError(t, err)
-	require.NoError(t, bucket.WriteAll(ctx, pfx+snapshotManifestFile, metaBytes, nil))
-}
 
 // listSeededIndexKeys returns the index keys still present at ns in the bucket.
 func listSeededIndexKeys(t *testing.T, ctx context.Context, store *BucketRemoteIndexStore, ns resource.NamespacedResource) []ulid.ULID {
