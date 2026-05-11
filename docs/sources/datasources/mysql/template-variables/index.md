@@ -131,7 +131,7 @@ This outputs the values as an unquoted comma-separated list.
 
 ### Use explicit quoting for string variables
 
-Don't rely on Grafana's implicit quoting behavior for string variables in SQL queries. Quoting behavior can vary depending on panel type and context:
+Don't rely on implicit quoting behavior for string variables in SQL queries. Quoting behavior can vary depending on panel type and context:
 
 - **Repeat panels** may not quote single-value variables at all, causing bare values to appear in the SQL and breaking the query.
 - If you manually wrap a variable in quotes (for example, `WHERE name = '$myvar'`) and Grafana also applies its own quoting, the value gets double-quoted (for example, `''30''` instead of `'30'`). This intentional quoting behavior was restored in Grafana 11.3.

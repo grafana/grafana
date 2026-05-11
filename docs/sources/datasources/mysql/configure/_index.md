@@ -122,7 +122,7 @@ This section is only visible when the Grafana server has the secure SOCKS proxy 
 
 - **Enabled** - Toggle to route requests to the MySQL instance through a secure SOCKS proxy.
 
-Once you have added your MySQL connection settings, click **Save & test** to test and save the data source connection.
+After you have added your MySQL connection settings, click **Save & test** to test and save the data source connection.
 
 ### Min time interval
 
