@@ -20,6 +20,12 @@ const queryItem: ActionItem = {
   isHidden: false,
 };
 
+const transformationItem: ActionItem = {
+  id: 'transform-1',
+  type: QueryEditorType.Transformation,
+  isHidden: false,
+};
+
 interface RenderActionsOptions {
   item?: ActionItem;
   onDelete?: jest.Mock;
@@ -252,6 +258,30 @@ describe('Actions', () => {
       expect(screen.getByRole('button', { name: 'Confirm' })).toHaveTextContent('Delete');
       // Cancel is icon-only — no visible text, accessible via aria-label only.
       expect(screen.getByRole('button', { name: 'Cancel' })).not.toHaveTextContent('Cancel');
+    });
+
+    it('keeps transformation delete warning accessible in full mode', async () => {
+      const { user } = renderActions({
+        confirmStyle: ConfirmationStyle.full,
+        contentHeader: true,
+        item: transformationItem,
+      });
+
+      await user.click(screen.getByRole('button', { name: 'Remove Transformation' }));
+
+      expect(screen.getByRole('button', { name: 'Confirm' })).toHaveAccessibleDescription(
+        'Removing one transformation may break others.'
+      );
+    });
+
+    it('keeps transformation delete warning accessible in compact mode', async () => {
+      const { user } = renderActions({ confirmStyle: ConfirmationStyle.compact, item: transformationItem });
+
+      await user.click(screen.getByRole('button', { name: 'Remove Transformation' }));
+
+      expect(screen.getByRole('button', { name: 'Confirm' })).toHaveAccessibleDescription(
+        'Removing one transformation may break others.'
+      );
     });
 
     it('reports the content_header source from the header context', async () => {

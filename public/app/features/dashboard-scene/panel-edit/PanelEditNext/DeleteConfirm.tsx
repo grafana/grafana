@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Button, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, useStyles2 } from '@grafana/ui';
 
 export enum ConfirmationStyle {
   compact = 'compact',
@@ -12,16 +12,18 @@ export enum ConfirmationStyle {
 
 interface DeleteConfirmProps {
   confirmStyle: ConfirmationStyle;
+  description?: string;
   onConfirm: () => void;
   onCancel: () => void;
 }
 
-export function DeleteConfirm({ confirmStyle, onConfirm, onCancel }: DeleteConfirmProps) {
+export function DeleteConfirm({ confirmStyle, description, onConfirm, onCancel }: DeleteConfirmProps) {
   const styles = useStyles2(getStyles);
 
   const groupAria = t('query-editor-next.action.delete-confirmation-group', 'Delete confirmation');
   const confirmDeleteAria = t('query-editor-next.action.confirm-delete-confirm', 'Confirm');
   const cancelDeleteAria = t('query-editor-next.action.cancel-delete', 'Cancel');
+  const confirmTooltip = description ? `${confirmDeleteAria}. ${description}` : confirmDeleteAria;
 
   const handleConfirmClick = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -52,35 +54,41 @@ export function DeleteConfirm({ confirmStyle, onConfirm, onCancel }: DeleteConfi
   return (
     <div className={styles.cluster} onKeyDownCapture={handleKeyDownCapture} role="group" aria-label={groupAria}>
       {confirmStyle === ConfirmationStyle.full ? (
-        <Button size="sm" variant="destructive" aria-label={confirmDeleteAria} onClick={handleConfirmClick}>
+        <Button
+          size="sm"
+          variant="destructive"
+          aria-label={confirmDeleteAria}
+          aria-description={description}
+          onClick={handleConfirmClick}
+          tooltip={confirmTooltip}
+        >
           {t('query-editor-next.action.confirm-delete', 'Delete')}
         </Button>
       ) : (
-        <Tooltip content={confirmDeleteAria}>
-          <Button
-            size="sm"
-            fill="text"
-            variant="destructive"
-            icon="check"
-            aria-label={confirmDeleteAria}
-            onClick={handleConfirmClick}
-          />
-        </Tooltip>
-      )}
-      <Tooltip content={cancelDeleteAria}>
         <Button
-          // Focus the safe action when the destructive prompt appears: lets keyboard users
-          // dismiss in one keystroke and ensures Escape (handled at capture phase above) sees
-          // the keydown. This is the WAI-ARIA pattern for confirmation dialogs.
-          autoFocus
           size="sm"
           fill="text"
-          variant="secondary"
-          icon="times"
-          aria-label={cancelDeleteAria}
-          onClick={handleCancelClick}
+          variant="destructive"
+          icon="check"
+          aria-label={confirmDeleteAria}
+          aria-description={description}
+          onClick={handleConfirmClick}
+          tooltip={confirmTooltip}
         />
-      </Tooltip>
+      )}
+      <Button
+        // Focus the safe action when the destructive prompt appears: lets keyboard users
+        // dismiss in one keystroke and ensures Escape (handled at capture phase above) sees
+        // the keydown. This is the WAI-ARIA pattern for confirmation dialogs.
+        autoFocus
+        size="sm"
+        fill="text"
+        variant="secondary"
+        icon="times"
+        aria-label={cancelDeleteAria}
+        onClick={handleCancelClick}
+        tooltip={cancelDeleteAria}
+      />
     </div>
   );
 }

@@ -49,6 +49,14 @@ const getToggleLabel = (item: ActionItem, labels: Record<string, string>) => {
   return isHidden ? labels.show : labels.hide;
 };
 
+const getDeleteConfirmationDescription = (item: ActionItem): string | undefined => {
+  if (item.type === QueryEditorType.Transformation) {
+    return t('query-editor-next.delete-modal.body-transformation', 'Removing one transformation may break others.');
+  }
+
+  return undefined;
+};
+
 export function Actions({
   contentHeader = false,
   confirmStyle = ConfirmationStyle.compact,
@@ -69,6 +77,7 @@ export function Actions({
   const itemKey = getActionItemKey(item);
   const confirmationKey = `${cardActionSource}:${itemKey}`;
   const showDeleteConfirmation = confirmingDeleteActionKey === confirmationKey;
+  const deleteConfirmationDescription = getDeleteConfirmationDescription(item);
 
   const labels = useMemo(
     () => ({
@@ -172,6 +181,7 @@ export function Actions({
             <DeleteConfirm
               key="delete-confirm"
               confirmStyle={confirmStyle}
+              description={deleteConfirmationDescription}
               onConfirm={handleConfirmDelete}
               onCancel={handleCancelDelete}
             />
