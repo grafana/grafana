@@ -1,4 +1,4 @@
-import { type Observable, debounce, debounceTime, defer, finalize, first, interval, map, of } from 'rxjs';
+import { type Observable, debounce, debounceTime, defer, filter, finalize, first, interval, map, of } from 'rxjs';
 
 import {
   DataSourceApi,
@@ -98,6 +98,26 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
 
       return sourceDataProvider!.getResultsStream!().pipe(
         debounceTime(50),
+        filter((result) => {
+          // Drop terminal (Done/Error) emissions whose upstream request range
+          // does not match this query's range. These are stale replays from
+          // the upstream SceneQueryRunner's ReplaySubject after a time-range
+          // change: without this guard, `emitFirstLoadedDataIfMixedDS` would
+          // match the stale Done with first(...) and complete the substream
+          // before the upstream re-runs for the new range.
+          const state = result.data.state;
+          if (state !== LoadingState.Done && state !== LoadingState.Error) {
+            return true;
+          }
+          const upstreamRange = result.data.request?.range;
+          if (!upstreamRange?.from || !upstreamRange?.to) {
+            return true;
+          }
+          return (
+            upstreamRange.from.valueOf() === options.range.from.valueOf() &&
+            upstreamRange.to.valueOf() === options.range.to.valueOf()
+          );
+        }),
         map((result) => {
           return {
             data: this.getDataFramesForQueryTopic(result.data, query, adHocFilters),
