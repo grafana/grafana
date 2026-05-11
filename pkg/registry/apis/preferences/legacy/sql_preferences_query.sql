@@ -25,8 +25,8 @@ WHERE p.org_id = {{ .Arg .OrgID }}
 {{ else if .Namespace }} 
   AND p.user_id = 0 AND p.team_id = 0
 {{ else if .All }}
-  AND (user_id = 0 OR user_uid is not null)
-  AND (team_id = 0 OR team_uid is not null)
+  AND (p.user_id = 0 OR u.uid IS NOT NULL)
+  AND (p.team_id = 0 OR t.uid IS NOT NULL)
 {{ else }}
   invalid query -- specify All to list all permissions in query
 {{ end }}
