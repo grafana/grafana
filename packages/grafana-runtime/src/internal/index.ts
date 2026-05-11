@@ -72,5 +72,17 @@ export { logPluginMetaError, logPluginMetaWarning } from '../services/pluginMeta
 export { refetchPluginSettings } from '../services/pluginSettings/refetchPluginSettings';
 export { invalidatePluginSettingsCache } from '../services/pluginSettings/invalidatePluginSettingsCache';
 
-export { initDataSources, upsertRuntimeDataSource } from '../services/dataSource/settings';
+export {
+  initDataSources,
+  getDataSourceInstanceSettingsList,
+  upsertRuntimeDataSource,
+} from '../services/dataSource/settings';
+export {
+  type DataSourceInstanceSettingsPage,
+  type GetDataSourceInstanceSettingsListOptions,
+} from '../services/dataSource/types';
 export { setDataSourceImporter } from '../services/dataSource/dataSource';
+export {
+  useDataSourceInstanceSettingsList,
+  type UseDataSourceInstanceSettingsListResult,
+} from '../services/dataSource/hooks';
