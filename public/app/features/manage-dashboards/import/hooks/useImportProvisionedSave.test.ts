@@ -189,4 +189,33 @@ describe('useImportProvisionedSave', () => {
 
     expect(result.current.error).toBeUndefined();
   });
+
+  it('is a no-op when repository is undefined', () => {
+    const { result } = renderHook(() => useImportProvisionedSave({ repository: undefined }));
+
+    act(() => {
+      result.current.save(defaultSaveParams());
+    });
+
+    expect(mockCreateFile).not.toHaveBeenCalled();
+  });
+
+  it('snapshots the active repository so navigation works after repo prop clears', () => {
+    const initialProps: { repo: RepositoryView | undefined } = { repo: mockRepository };
+    const { result, rerender } = renderHook(({ repo }) => useImportProvisionedSave({ repository: repo }), {
+      initialProps,
+    });
+
+    act(() => {
+      result.current.save(defaultSaveParams());
+    });
+
+    expect(mockCreateFile).toHaveBeenCalledTimes(1);
+
+    // Simulate the repository prop clearing (folder switch mid-save)
+    rerender({ repo: undefined });
+
+    // createFile was already called with the original repo name
+    expect(mockCreateFile.mock.calls[0][0].name).toBe('test-repo');
+  });
 });

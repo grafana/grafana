@@ -4,31 +4,17 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { AppEvents, locationUtil } from '@grafana/data';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { Stack } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
-import { ProvisioningAlert } from 'app/features/provisioning/Shared/ProvisioningAlert';
-import { RepoInvalidStateBanner } from 'app/features/provisioning/components/Shared/RepoInvalidStateBanner';
-import { ResourceEditFormSharedFields } from 'app/features/provisioning/components/Shared/ResourceEditFormSharedFields';
-import {
-  getCanPushToConfiguredBranch,
-  getDefaultRef,
-  getDefaultWorkflow,
-} from 'app/features/provisioning/components/defaults';
-import { generatePath, slugifyForFilename } from 'app/features/provisioning/components/utils/path';
-import { generateTimestamp } from 'app/features/provisioning/components/utils/timestamp';
-import {
-  useGetResourceRepositoryView,
-  RepoViewStatus,
-} from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 
 import { type DashboardInputs, DashboardSource, type ImportFormDataV2 } from '../../types';
-import { useImportProvisionedSave } from '../hooks/useImportProvisionedSave';
+import { useProvisionedImport, type ProvisionedImportDefaults } from '../hooks/useProvisionedImport';
 import { truncateFloatGridItems } from '../utils/floatingGridItems';
 import { applyV2Inputs } from '../utils/inputs';
 
 import { GcomDashboardInfo } from './GcomDashboardInfo';
 import { ImportDashboardFormV2 } from './ImportDashboardFormV2';
+import { ProvisionedImportFields } from './ProvisionedImportFields';
 
 const IMPORT_FINISHED_EVENT_NAME = 'dashboard_import_imported';
 
@@ -60,107 +46,81 @@ export function ImportOverviewV2({ dashboard, dashboardUid, inputs, meta, source
     mode: 'onChange',
   });
   const { register, control, watch, getValues, setValue, handleSubmit, trigger, formState } = methods;
-  const errors = formState.errors;
 
   // Trigger initial validation (replicates Form's validateOnMount)
   useEffect(() => {
     trigger();
   }, [trigger]);
 
-  // --- Folder-based provisioning detection ---
   const watchedFolderUid = watch('folderUid');
-  const currentFolderUid = typeof watchedFolderUid === 'string' ? watchedFolderUid : '';
 
-  const { repository, status, isReadOnlyRepo } = useGetResourceRepositoryView({
-    folderName: currentFolderUid || undefined,
+  const getDefaultTitle = useCallback(() => {
+    const dashVal = getValues('dashboard');
+    const formTitle = dashVal && typeof dashVal === 'object' && 'title' in dashVal ? String(dashVal.title) : '';
+    return formTitle || dashboard.title || '';
+  }, [getValues, dashboard.title]);
+
+  const applyDefaults = useCallback(
+    ({ workflow, ref, path, repo }: ProvisionedImportDefaults) => {
+      setValue('workflow', workflow, { shouldDirty: false });
+      setValue('ref', ref, { shouldDirty: false });
+      setValue('path', path, { shouldDirty: false });
+      setValue('repo', repo, { shouldDirty: false });
+    },
+    [setValue]
+  );
+
+  const {
+    isProvisioned,
+    shouldRenderProvisionedFields,
+    isOrphaned,
+    isReadOnlyRepo,
+    canPushToConfiguredBranch,
+    repository,
+    submitDisabled,
+    save: saveProvisionedImport,
+    error: provisionedError,
+  } = useProvisionedImport({
+    folderUid: typeof watchedFolderUid === 'string' ? watchedFolderUid : '',
+    getDefaultTitle,
+    applyDefaults,
   });
 
-  const isProvisioned = status === RepoViewStatus.Ready && !!repository;
-  const isOrphaned = status === RepoViewStatus.Orphaned;
-  const isRepoLoading = status === RepoViewStatus.Loading;
-
-  // --- Provisioned defaults ---
-  useEffect(() => {
-    if (!isProvisioned || !repository) {
-      return;
-    }
-    const workflow = getDefaultWorkflow(repository);
-    const ref = getDefaultRef(repository, 'import');
-    const dashboardValue = getValues('dashboard');
-    const title =
-      (dashboardValue && typeof dashboardValue === 'object' && 'title' in dashboardValue
-        ? String(dashboardValue.title)
-        : '') ||
-      dashboard.title ||
-      '';
-    const slug = slugifyForFilename(title);
-    const path = generatePath({
-      timestamp: generateTimestamp(),
-      slug,
-    });
-
-    setValue('workflow', workflow, { shouldDirty: false });
-    setValue('ref', ref, { shouldDirty: false });
-    setValue('path', path, { shouldDirty: false });
-    setValue('repo', repository.name, { shouldDirty: false });
-  }, [isProvisioned, repository, setValue, getValues, dashboard.title]);
-
-  // --- Provisioned save hook ---
-  const provisionedSave = useProvisionedSaveIfAvailable(repository);
-
-  // --- Standard (non-provisioned) submit ---
-  const onStandardSubmit = useCallback(
-    async (form: ImportFormDataV2) => {
-      reportInteraction(IMPORT_FINISHED_EVENT_NAME);
-
-      try {
-        const dashboardToSave: DashboardV2Spec = hasFloatGridItems
-          ? { ...dashboard, layout: normalizedLayout }
-          : dashboard;
-
-        const dashboardWithDataSources = {
-          ...applyV2Inputs(dashboardToSave, form),
-          title: form.dashboard.title,
-        };
-
-        const api = await getDashboardAPI('v2');
-        const result = await api.saveDashboard({
-          ...form,
-          dashboard: dashboardWithDataSources,
-        });
-
-        if (result.url) {
-          const dashboardUrl = locationUtil.stripBaseFromUrl(result.url);
-          locationService.push(dashboardUrl);
-        }
-      } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unknown error';
-        appEvents.emit(AppEvents.alertError, ['Dashboard import failed', message]);
-      }
+  const buildDashboardSpec = useCallback(
+    (form: ImportFormDataV2): DashboardV2Spec => {
+      const base: DashboardV2Spec = hasFloatGridItems ? { ...dashboard, layout: normalizedLayout } : dashboard;
+      return { ...applyV2Inputs(base, form), title: form.dashboard.title };
     },
     [dashboard, hasFloatGridItems, normalizedLayout]
   );
 
-  // --- Mode-aware submit handler ---
+  const onStandardSubmit = useCallback(
+    async (form: ImportFormDataV2) => {
+      reportInteraction(IMPORT_FINISHED_EVENT_NAME);
+      try {
+        const result = await (
+          await getDashboardAPI('v2')
+        ).saveDashboard({ ...form, dashboard: buildDashboardSpec(form) });
+        if (result.url) {
+          locationService.push(locationUtil.stripBaseFromUrl(result.url));
+        }
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : 'Unknown error';
+        appEvents.emit(AppEvents.alertError, ['Dashboard import failed', msg]);
+      }
+    },
+    [buildDashboardSpec]
+  );
+
   const onSubmit = useCallback(
     (form: ImportFormDataV2) => {
-      if (isProvisioned && provisionedSave && !isReadOnlyRepo) {
-        reportInteraction(IMPORT_FINISHED_EVENT_NAME, {
-          provisioned: true,
-          workflow: form.workflow,
-        });
-
-        const dashboardToSave: DashboardV2Spec = hasFloatGridItems
-          ? { ...dashboard, layout: normalizedLayout }
-          : dashboard;
-
-        const dashboardWithDataSources = {
-          ...applyV2Inputs(dashboardToSave, form),
-          title: form.dashboard.title,
-        };
-
-        provisionedSave.save({
-          spec: dashboardWithDataSources,
+      if (submitDisabled) {
+        return;
+      }
+      if (isProvisioned) {
+        reportInteraction(IMPORT_FINISHED_EVENT_NAME, { provisioned: true, workflow: form.workflow });
+        saveProvisionedImport({
+          spec: buildDashboardSpec(form),
           apiVersion: 'v2',
           uid: form.k8s?.name || dashboardUid || undefined,
           folderUid: String(form.folderUid ?? ''),
@@ -172,24 +132,12 @@ export function ImportOverviewV2({ dashboard, dashboardUid, inputs, meta, source
             workflow: form.workflow != null ? String(form.workflow) : undefined,
           },
         });
-      } else {
-        onStandardSubmit(form);
+        return;
       }
+      onStandardSubmit(form);
     },
-    [
-      isProvisioned,
-      provisionedSave,
-      isReadOnlyRepo,
-      dashboard,
-      dashboardUid,
-      hasFloatGridItems,
-      normalizedLayout,
-      onStandardSubmit,
-    ]
+    [submitDisabled, isProvisioned, saveProvisionedImport, buildDashboardSpec, dashboardUid, onStandardSubmit]
   );
-
-  const canPushToConfiguredBranch = isProvisioned ? getCanPushToConfiguredBranch(repository) : false;
-  const submitDisabled = isRepoLoading || isOrphaned || (isProvisioned && isReadOnlyRepo) || provisionedSave?.isLoading;
 
   return (
     <>
@@ -201,7 +149,7 @@ export function ImportOverviewV2({ dashboard, dashboardUid, inputs, meta, source
           <ImportDashboardFormV2
             register={register}
             inputs={inputs}
-            errors={errors}
+            errors={formState.errors}
             control={control}
             getValues={getValues}
             onCancel={onCancel}
@@ -210,66 +158,18 @@ export function ImportOverviewV2({ dashboard, dashboardUid, inputs, meta, source
             hasFloatGridItems={hasFloatGridItems}
             submitDisabled={submitDisabled}
           >
-            {isProvisioned && (
-              <ProvisionedFieldsV2
+            {shouldRenderProvisionedFields && (
+              <ProvisionedImportFields
                 isReadOnlyRepo={isReadOnlyRepo}
                 isOrphaned={isOrphaned}
                 canPushToConfiguredBranch={canPushToConfiguredBranch}
                 repository={repository}
-                error={provisionedSave?.error}
+                error={provisionedError}
               />
             )}
           </ImportDashboardFormV2>
         </form>
       </FormProvider>
     </>
-  );
-}
-
-// Conditionally calls useImportProvisionedSave only when a repository is available.
-function useProvisionedSaveIfAvailable(repository?: ReturnType<typeof useGetResourceRepositoryView>['repository']) {
-  const fallbackRepo = FALLBACK_REPO;
-  const result = useImportProvisionedSave({ repository: repository ?? fallbackRepo });
-  return repository ? result : undefined;
-}
-
-const FALLBACK_REPO = {
-  name: '',
-  branch: '',
-  type: 'local' as const,
-  target: 'folder' as const,
-  title: '',
-  workflows: [],
-};
-
-// Provisioning-specific UI rendered as children of ImportDashboardFormV2
-function ProvisionedFieldsV2({
-  isReadOnlyRepo,
-  isOrphaned,
-  canPushToConfiguredBranch,
-  repository,
-  error,
-}: {
-  isReadOnlyRepo: boolean;
-  isOrphaned: boolean;
-  canPushToConfiguredBranch: boolean;
-  repository?: ReturnType<typeof useGetResourceRepositoryView>['repository'];
-  error?: string;
-}) {
-  return (
-    <Stack direction="column" gap={2}>
-      {(isReadOnlyRepo || isOrphaned) && (
-        <RepoInvalidStateBanner noRepository={isOrphaned} isReadOnlyRepo={isReadOnlyRepo} />
-      )}
-      {!isReadOnlyRepo && !isOrphaned && (
-        <ResourceEditFormSharedFields
-          resourceType="dashboard"
-          isNew
-          canPushToConfiguredBranch={canPushToConfiguredBranch}
-          repository={repository}
-        />
-      )}
-      {error && <ProvisioningAlert error={error} />}
-    </Stack>
   );
 }

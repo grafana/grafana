@@ -42,7 +42,7 @@ export interface ImportProvisionedSaveParams {
  *
  * Used by both ImportOverviewV1 and ImportOverviewV2 in provisioned mode.
  */
-export function useImportProvisionedSave({ repository }: { repository: RepositoryView }) {
+export function useImportProvisionedSave({ repository }: { repository?: RepositoryView }) {
   const navigate = useNavigate();
   const [error, setError] = useState<string | undefined>();
 
@@ -52,6 +52,7 @@ export function useImportProvisionedSave({ repository }: { repository: Repositor
   const [folderUid, setFolderUid] = useState<string>();
   const [selectedBranch, setSelectedBranch] = useState<string>();
   const titleRef = useRef('');
+  const activeRepoRef = useRef<RepositoryView | undefined>();
 
   // Always create (never update) — import is always a new file.
   const [createFile, request] = useCreateOrUpdateRepositoryFile(undefined);
@@ -75,8 +76,12 @@ export function useImportProvisionedSave({ repository }: { repository: Repositor
         navigate(url);
       },
       onBranchSuccess: ({ ref, path }, info) => {
+        const repo = activeRepoRef.current;
+        if (!repo) {
+          return;
+        }
         const url = buildResourceBranchRedirectUrl({
-          baseUrl: `${PROVISIONING_PREVIEW_URL}/${repository.name}/preview/${path}`,
+          baseUrl: `${PROVISIONING_PREVIEW_URL}/${repo.name}/preview/${path}`,
           paramName: 'ref',
           paramValue: ref,
           repoType: info.repoType,
@@ -97,6 +102,10 @@ export function useImportProvisionedSave({ repository }: { repository: Repositor
 
   const save = useCallback(
     ({ spec, apiVersion, uid, folderUid: targetFolderUid, title, form }: ImportProvisionedSaveParams) => {
+      if (!repository) {
+        return;
+      }
+      activeRepoRef.current = repository;
       setError(undefined);
       setWorkflow(form.workflow);
       setFolderUid(targetFolderUid);

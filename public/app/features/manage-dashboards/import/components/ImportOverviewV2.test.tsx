@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -442,6 +442,134 @@ describe('ImportOverviewV2', () => {
 
       await waitFor(() => {
         expect(screen.getByTestId(selectors.components.ImportDashboardForm.submit)).toBeDisabled();
+      });
+    });
+  });
+
+  describe('blocked-submit guards', () => {
+    it('read-only provisioned submit does not call either save path via programmatic submit', async () => {
+      const mockSave = jest.fn();
+      mockUseGetResourceRepositoryView.mockReturnValue({
+        repository: mockRepository,
+        status: RepoViewStatus.Ready,
+        isLoading: false,
+        isInstanceManaged: false,
+        isReadOnlyRepo: true,
+      });
+      mockUseImportProvisionedSave.mockReturnValue({
+        save: mockSave,
+        isLoading: false,
+        error: undefined,
+      });
+      const layout = defaultGridLayoutKind();
+      renderCmp(layout);
+
+      await waitFor(() => {
+        expect(screen.getByTestId(selectors.components.ImportDashboardForm.submit)).toBeDisabled();
+      });
+
+      const form = screen.getByTestId(selectors.components.ImportDashboardForm.submit).closest('form')!;
+      fireEvent.submit(form);
+
+      await waitFor(() => {
+        expect(mockSave).not.toHaveBeenCalled();
+        expect(saveDashboard).not.toHaveBeenCalled();
+      });
+    });
+
+    it('orphaned folder programmatic submit does not call standard API', async () => {
+      mockUseGetResourceRepositoryView.mockReturnValue({
+        status: RepoViewStatus.Orphaned,
+        isLoading: false,
+        isInstanceManaged: false,
+        isReadOnlyRepo: false,
+        orphanedRepoName: 'dead-repo',
+      });
+      mockUseImportProvisionedSave.mockReturnValue({
+        save: jest.fn(),
+        isLoading: false,
+        error: undefined,
+      });
+      const layout = defaultGridLayoutKind();
+      renderCmp(layout);
+
+      const form = screen.getByTestId(selectors.components.ImportDashboardForm.submit).closest('form')!;
+      fireEvent.submit(form);
+
+      await waitFor(() => {
+        expect(saveDashboard).not.toHaveBeenCalled();
+      });
+    });
+
+    it('loading state programmatic submit does not call standard API', async () => {
+      mockUseGetResourceRepositoryView.mockReturnValue({
+        status: RepoViewStatus.Loading,
+        isLoading: true,
+        isInstanceManaged: false,
+        isReadOnlyRepo: false,
+      });
+      mockUseImportProvisionedSave.mockReturnValue({
+        save: jest.fn(),
+        isLoading: false,
+        error: undefined,
+      });
+      const layout = defaultGridLayoutKind();
+      renderCmp(layout);
+
+      const form = screen.getByTestId(selectors.components.ImportDashboardForm.submit).closest('form')!;
+      fireEvent.submit(form);
+
+      await waitFor(() => {
+        expect(saveDashboard).not.toHaveBeenCalled();
+      });
+    });
+
+    it('error state programmatic submit does not call standard API', async () => {
+      mockUseGetResourceRepositoryView.mockReturnValue({
+        status: RepoViewStatus.Error,
+        isLoading: false,
+        isInstanceManaged: false,
+        isReadOnlyRepo: false,
+        error: new Error('settings fetch failed'),
+      });
+      mockUseImportProvisionedSave.mockReturnValue({
+        save: jest.fn(),
+        isLoading: false,
+        error: undefined,
+      });
+      const layout = defaultGridLayoutKind();
+      renderCmp(layout);
+
+      const form = screen.getByTestId(selectors.components.ImportDashboardForm.submit).closest('form')!;
+      fireEvent.submit(form);
+
+      await waitFor(() => {
+        expect(saveDashboard).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe('orphaned folder banner', () => {
+    it('renders RepoInvalidStateBanner when folder is orphaned', async () => {
+      mockUseGetResourceRepositoryView.mockReturnValue({
+        status: RepoViewStatus.Orphaned,
+        isLoading: false,
+        isInstanceManaged: false,
+        isReadOnlyRepo: false,
+        orphanedRepoName: 'dead-repo',
+      });
+      mockUseImportProvisionedSave.mockReturnValue({
+        save: jest.fn(),
+        isLoading: false,
+        error: undefined,
+      });
+      const layout = defaultGridLayoutKind();
+      renderCmp(layout);
+
+      await waitFor(() => {
+        const banner = screen.getByTestId('repo-invalid-banner');
+        expect(banner).toBeInTheDocument();
+        expect(banner).toHaveAttribute('data-no-repo', 'true');
       });
     });
   });

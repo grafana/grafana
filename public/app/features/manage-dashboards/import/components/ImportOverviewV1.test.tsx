@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -145,11 +145,13 @@ function setupMocks({
   isReadOnlyRepo = false,
   isOrphaned = false,
   isLoading = false,
+  isError = false,
 }: {
   isProvisioned?: boolean;
   isReadOnlyRepo?: boolean;
   isOrphaned?: boolean;
   isLoading?: boolean;
+  isError?: boolean;
 } = {}) {
   const mockSave = jest.fn();
   mockUseImportProvisionedSave.mockReturnValue({
@@ -158,7 +160,15 @@ function setupMocks({
     error: undefined,
   });
 
-  if (isLoading) {
+  if (isError) {
+    mockUseGetResourceRepositoryView.mockReturnValue({
+      status: RepoViewStatus.Error,
+      isLoading: false,
+      isInstanceManaged: false,
+      isReadOnlyRepo: false,
+      error: new Error('settings fetch failed'),
+    });
+  } else if (isLoading) {
     mockUseGetResourceRepositoryView.mockReturnValue({
       status: RepoViewStatus.Loading,
       isLoading: true,
@@ -369,6 +379,91 @@ describe('ImportOverviewV1', () => {
 
       await waitFor(() => {
         expect(screen.getByTestId(selectors.components.ImportDashboardForm.submit)).toBeDisabled();
+      });
+    });
+  });
+  describe('blocked-submit guards', () => {
+    it('LP-blocked provisioned submit does not call either save path via programmatic submit', async () => {
+      const { mockSave } = setupMocks({ isProvisioned: true });
+      renderOverview(inputsWithLP);
+
+      await waitFor(() => {
+        expect(screen.getByTestId(selectors.components.ImportDashboardForm.submit)).toBeDisabled();
+      });
+
+      const form = screen.getByTestId(selectors.components.ImportDashboardForm.submit).closest('form')!;
+      fireEvent.submit(form);
+
+      // Wait a tick, then assert neither path was called
+      await waitFor(() => {
+        expect(mockSave).not.toHaveBeenCalled();
+        expect(saveDashboard).not.toHaveBeenCalled();
+      });
+    });
+
+    it('read-only provisioned submit does not call either save path via programmatic submit', async () => {
+      const { mockSave } = setupMocks({ isProvisioned: true, isReadOnlyRepo: true });
+      renderOverview();
+
+      await waitFor(() => {
+        expect(screen.getByTestId(selectors.components.ImportDashboardForm.submit)).toBeDisabled();
+      });
+
+      const form = screen.getByTestId(selectors.components.ImportDashboardForm.submit).closest('form')!;
+      fireEvent.submit(form);
+
+      await waitFor(() => {
+        expect(mockSave).not.toHaveBeenCalled();
+        expect(saveDashboard).not.toHaveBeenCalled();
+      });
+    });
+
+    it('orphaned folder programmatic submit does not call standard API', async () => {
+      setupMocks({ isOrphaned: true });
+      renderOverview();
+
+      const form = screen.getByTestId(selectors.components.ImportDashboardForm.submit).closest('form')!;
+      fireEvent.submit(form);
+
+      await waitFor(() => {
+        expect(saveDashboard).not.toHaveBeenCalled();
+      });
+    });
+
+    it('loading state programmatic submit does not call standard API', async () => {
+      setupMocks({ isLoading: true });
+      renderOverview();
+
+      const form = screen.getByTestId(selectors.components.ImportDashboardForm.submit).closest('form')!;
+      fireEvent.submit(form);
+
+      await waitFor(() => {
+        expect(saveDashboard).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  it('error state programmatic submit does not call standard API', async () => {
+    setupMocks({ isError: true });
+    renderOverview();
+
+    const form = screen.getByTestId(selectors.components.ImportDashboardForm.submit).closest('form')!;
+    fireEvent.submit(form);
+
+    await waitFor(() => {
+      expect(saveDashboard).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('orphaned folder banner', () => {
+    it('renders RepoInvalidStateBanner when folder is orphaned', async () => {
+      setupMocks({ isOrphaned: true });
+      renderOverview();
+
+      await waitFor(() => {
+        const banner = screen.getByTestId('repo-invalid-banner');
+        expect(banner).toBeInTheDocument();
+        expect(banner).toHaveAttribute('data-no-repo', 'true');
       });
     });
   });
