@@ -187,7 +187,10 @@ export class TestDataDataSource
       result.alias = this.templateSrv.replace(result.alias, scopedVars);
     }
     if (result.scenarioId) {
-      result.scenarioId = this.templateSrv.replace(result.scenarioId, scopedVars) as TestDataQueryType;
+      const replaced = this.templateSrv.replace(result.scenarioId, scopedVars);
+      if (isTestDataQueryType(replaced)) {
+        result.scenarioId = replaced;
+      }
     }
     if (result.stringInput) {
       result.stringInput = this.templateSrv.replace(result.stringInput, scopedVars);
@@ -486,7 +489,7 @@ export class TestDataDataSource
         })
         .catch((err: unknown) => {
           // Grafana fetch errors are not Error instances; extract status and message from the object.
-          const fetchErr = err as { status?: number; statusText?: string; data?: { message?: string } };
+          const fetchErr = isFetchError(err) ? err : {};
           const message = fetchErr.data?.message ?? fetchErr.statusText ?? 'Unknown error';
           return {
             data: [],
@@ -555,4 +558,13 @@ function runGrafanaLiveQuery(
     },
     key: `testStream.${liveQueryCounter++}`,
   });
+}
+
+function isTestDataQueryType(value: string): value is TestDataQueryType {
+  const validValues: string[] = Object.values(TestDataQueryType);
+  return validValues.includes(value);
+}
+
+function isFetchError(err: unknown): err is { status?: number; statusText?: string; data?: { message?: string } } {
+  return typeof err === 'object' && err !== null;
 }

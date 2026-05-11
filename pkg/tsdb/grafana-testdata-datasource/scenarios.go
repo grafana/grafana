@@ -1122,7 +1122,7 @@ func predictablePulse(query backend.DataQuery, model kinds.TestDataQuery) (*data
 		return nil, fmt.Errorf("failed to parse offValue value '%v' into float: %v", options.OffValue, err)
 	}
 
-	timeStep *= 1000 // Seconds to Milliseconds
+	timeStep *= 1000                             // Seconds to Milliseconds
 	onFor := func(mod int64) (*float64, error) { // How many items in the cycle should get the on value
 		var i int64
 		for i = 0; i < onCount; i++ {
