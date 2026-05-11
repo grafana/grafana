@@ -14172,6 +14172,9 @@
       "show-all-tooltip": "Show all selected",
       "toolbar-label": "Bulk actions"
     },
+    "delete-modal": {
+      "body-transformation": "Removing one transformation may break others."
+    },
     "details-sidebar": {
       "cache-timeout": "Cache timeout",
       "cache-timeout-tooltip": "If your time series store has a query cache this option can override the default cache timeout. Specify a numeric value in seconds.",
