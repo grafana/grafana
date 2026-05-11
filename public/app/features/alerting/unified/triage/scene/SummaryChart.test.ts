@@ -32,7 +32,7 @@ async function applyTransformation(frames: DataFrame[]): Promise<DataFrame[]> {
   return firstValueFrom(operator(of(frames)));
 }
 
-describe('collapseByAlertstateTranformation', () => {
+describe('collapseByAlertstateTransformation', () => {
   it('passes through frames unchanged when each alertstate appears only once', async () => {
     const firing = makeFrame('firing', '', [3, 5, 2]);
     const pending = makeFrame('pending', '', [1, 0, 2]);
