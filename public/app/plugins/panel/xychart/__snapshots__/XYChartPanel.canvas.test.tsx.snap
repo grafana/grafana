@@ -1969,3 +1969,118 @@ exports[`XYChartPanel2 DataFrame: x, y, z (three numeric fields) manual mapping 
   },
 ]
 `;
+
+exports[`XYChartPanel2 Square point shape (fillRect / strokeRect) renders points as squares when y field uses PointShape.Square 1`] = `
+[
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "height": 351,
+      "width": 533,
+      "x": 59,
+      "y": 8,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 351,
+            "width": 533,
+            "x": 59,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "value": "rgba(87, 148, 242, 0.5)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "value": "#5794f2",
+    },
+    "type": "strokeStyle",
+  },
+  {
+    "props": {
+      "value": 1,
+    },
+    "type": "lineWidth",
+  },
+  {
+    "props": {
+      "height": 32,
+      "width": 32,
+      "x": 87,
+      "y": 314,
+    },
+    "type": "fillRect",
+  },
+  {
+    "props": {
+      "height": 32,
+      "width": 32,
+      "x": 87,
+      "y": 314,
+    },
+    "type": "strokeRect",
+  },
+  {
+    "props": {
+      "height": 32,
+      "width": 32,
+      "x": 309,
+      "y": 168,
+    },
+    "type": "fillRect",
+  },
+  {
+    "props": {
+      "height": 32,
+      "width": 32,
+      "x": 309,
+      "y": 168,
+    },
+    "type": "strokeRect",
+  },
+  {
+    "props": {
+      "height": 32,
+      "width": 32,
+      "x": 532,
+      "y": 21,
+    },
+    "type": "fillRect",
+  },
+  {
+    "props": {
+      "height": 32,
+      "width": 32,
+      "x": 532,
+      "y": 21,
+    },
+    "type": "strokeRect",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+]
+`;

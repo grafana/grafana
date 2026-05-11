@@ -22,7 +22,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
 import { measureText as uPlotAxisMeasureText, type UPlotConfigBuilder } from '@grafana/ui';
 import { XYChartPanel2 } from 'app/plugins/panel/xychart/XYChartPanel';
-import { type Options, SeriesMapping, type XYSeriesConfig } from 'app/plugins/panel/xychart/panelcfg.gen';
+import { type Options, PointShape, SeriesMapping, type XYSeriesConfig } from 'app/plugins/panel/xychart/panelcfg.gen';
 
 import * as utils from './scatter';
 
@@ -243,6 +243,29 @@ const frameColorByThresholdZ: DataFrame = (() => {
   return frame;
 })();
 
+/** x + y only, with square points on y (scatter `isSquare` → fillRect / strokeRect). */
+const xySquareFrame: DataFrame = (() => {
+  const xField = defaultFrame.fields.find((f) => f.name === 'x')!;
+  const yField = defaultFrame.fields.find((f) => f.name === 'y')!;
+  const ySquare = {
+    ...yField,
+    config: {
+      ...yField.config,
+      custom: {
+        ...yField.config.custom!,
+        pointShape: PointShape.Square,
+      },
+    },
+  };
+  const fields = [xField, ySquare];
+  const frame: DataFrame = { ...defaultFrame, fields };
+  frame.fields = fields.map((field) => ({
+    ...field,
+    display: getDisplayProcessor({ field, theme }),
+  }));
+  return frame;
+})();
+
 /** Two numeric Y candidates (x + y only) — auto mapping yields a single series. */
 const xyOnlyFrame: DataFrame = {
   ...defaultFrame,
@@ -429,6 +452,13 @@ describe('XYChartPanel2', () => {
       ],
     ])('%s', async (_label, optionsPartial) => {
       setUp({ options: optionsPartial }, [xyOnlyFrame]);
+      await assertCanvasOutput();
+    });
+  });
+
+  describe('Square point shape (fillRect / strokeRect)', () => {
+    it('renders points as squares when y field uses PointShape.Square', async () => {
+      setUp(undefined, [xySquareFrame]);
       await assertCanvasOutput();
     });
   });
