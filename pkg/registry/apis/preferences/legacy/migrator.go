@@ -42,7 +42,7 @@ type PreferencesMigrator interface {
 	MigratePreferences(ctx context.Context, orgId int64, opts migrations.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error
 }
 
-// preferencesMigrator handles migrating playlists from legacy SQL storage.
+// preferencesMigrator handles migrating preferences from legacy SQL storage.
 type preferencesMigrator struct {
 	sql legacysql.LegacyDatabaseProvider
 }
