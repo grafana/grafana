@@ -18,7 +18,9 @@ import (
 
 // preferencesTestCase tests the "preferences" ResourceMigration
 type preferencesTestCase struct {
-	preferenceUIDs []string
+	// users that have an individual preference; verified using each user's own client
+	// because the authorizer only allows a user to read their own "user-<uid>" preference.
+	users []apis.User
 }
 
 // NewPreferencesTestCase creates a test case for the preferences migrator
@@ -59,6 +61,7 @@ func (tc *preferencesTestCase) Setup(t *testing.T, helper *apis.K8sTestHelper) b
 	users := []apis.User{
 		helper.Org1.Admin,
 		helper.Org1.Editor,
+		helper.OrgB.Admin,
 	}
 
 	for _, user := range users {
@@ -72,7 +75,7 @@ func (tc *preferencesTestCase) Setup(t *testing.T, helper *apis.K8sTestHelper) b
 		})
 		require.NoError(t, err)
 
-		tc.preferenceUIDs = append(tc.preferenceUIDs, "user-"+user.Identity.GetRawIdentifier())
+		tc.users = append(tc.users, user)
 	}
 
 	err := service.Save(ctx, &pref.SavePreferenceCommand{
@@ -80,7 +83,6 @@ func (tc *preferencesTestCase) Setup(t *testing.T, helper *apis.K8sTestHelper) b
 		Language: "lang2",
 	})
 	require.NoError(t, err)
-	tc.preferenceUIDs = append(tc.preferenceUIDs, "namespace") // the org settings
 
 	return true // will exist in mode0
 }
@@ -88,27 +90,23 @@ func (tc *preferencesTestCase) Setup(t *testing.T, helper *apis.K8sTestHelper) b
 func (tc *preferencesTestCase) Verify(t *testing.T, helper *apis.K8sTestHelper, shouldExist bool) {
 	t.Helper()
 
-	expectedCount := 0
-	if shouldExist {
-		expectedCount = len(tc.preferenceUIDs)
-	}
+	// Each user should be able to read their own preferences and namespace
+	for _, user := range tc.users {
+		orgID := user.Identity.GetOrgID()
+		namespace := authlib.OrgNamespaceFormatter(orgID)
 
-	orgID := helper.Org1.OrgID
-	namespace := authlib.OrgNamespaceFormatter(orgID)
+		client := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      user,
+			Namespace: namespace,
+			GVR: schema.GroupVersionResource{
+				Group:    preferencesV1.APIGroup,
+				Version:  preferencesV1.APIVersion,
+				Resource: "preferences",
+			},
+		})
+		verifyResource(t, client, "user-"+user.Identity.GetRawIdentifier(), shouldExist)
 
-	// Verify results
-	client := helper.GetResourceClient(apis.ResourceClientArgs{
-		User:      helper.Org1.Admin,
-		Namespace: namespace,
-		GVR: schema.GroupVersionResource{
-			Group:    preferencesV1.APIGroup,
-			Version:  preferencesV1.APIVersion,
-			Resource: "preferences",
-		},
-	})
-
-	verifyResourceCount(t, client, expectedCount)
-	for _, uid := range tc.preferenceUIDs {
-		verifyResource(t, client, uid, shouldExist)
+		// The user can see namespace properties
+		verifyResource(t, client, "namespace", shouldExist)
 	}
 }

@@ -41,10 +41,10 @@ func TestMain(m *testing.M) {
 
 func defaultMigrationTestCases() []testcases.ResourceMigratorTestCase {
 	cases := []testcases.ResourceMigratorTestCase{
-		// testcases.NewFoldersAndDashboardsTestCase(),
-		// testcases.NewPlaylistsTestCase(),
-		// testcases.NewShortURLsTestCase(),
-		// testcases.NewStarsTestCase(),
+		testcases.NewFoldersAndDashboardsTestCase(),
+		testcases.NewPlaylistsTestCase(),
+		testcases.NewShortURLsTestCase(),
+		testcases.NewStarsTestCase(),
 		testcases.NewPreferencesTestCase(),
 	}
 	// TODO: fix datasource migration tests on sqlite, see:
