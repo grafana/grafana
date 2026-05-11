@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource/kinds"
 )
 
@@ -210,6 +211,13 @@ Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means
 	s.registerScenario(&Scenario{
 		ID:   kinds.TestDataQueryTypeTrace,
 		Name: "Trace",
+	})
+
+	s.registerScenario(&Scenario{
+		ID:          kinds.TestDataQueryTypeStatusCode,
+		Name:        "Status Code",
+		StringInput: "200",
+		handler:     s.handleClientSideScenario,
 	})
 
 	s.registerScenario(&Scenario{
@@ -1114,7 +1122,7 @@ func predictablePulse(query backend.DataQuery, model kinds.TestDataQuery) (*data
 		return nil, fmt.Errorf("failed to parse offValue value '%v' into float: %v", options.OffValue, err)
 	}
 
-	timeStep *= 1000                             // Seconds to Milliseconds
+	timeStep *= 1000 // Seconds to Milliseconds
 	onFor := func(mod int64) (*float64, error) { // How many items in the cycle should get the on value
 		var i int64
 		for i = 0; i < onCount; i++ {

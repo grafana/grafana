@@ -6,6 +6,7 @@ import (
 	"io"
 	"math/rand"
 	"net/http"
+	"slices"
 	"sort"
 	"strconv"
 	"time"
@@ -13,6 +14,19 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource/kinds"
 )
+
+// allowedStatusCodes is the list of HTTP status codes the /status-code endpoint will return.
+var allowedStatusCodes = []int{
+	http.StatusOK,
+	http.StatusNoContent,
+	http.StatusBadRequest,
+	http.StatusUnauthorized,
+	http.StatusForbidden,
+	http.StatusNotFound,
+	http.StatusInternalServerError,
+	http.StatusBadGateway,
+	http.StatusServiceUnavailable,
+}
 
 func (s *Service) registerRoutes() *http.ServeMux {
 	mux := http.NewServeMux()
@@ -24,7 +38,48 @@ func (s *Service) registerRoutes() *http.ServeMux {
 	mux.HandleFunc("/boom", s.testPanicHandler)
 	mux.HandleFunc("/sims", s.sims.GetSimulationHandler)
 	mux.HandleFunc("/sim/", s.sims.GetSimulationHandler)
+	mux.HandleFunc("/status-code", s.testStatusCodeHandler)
 	return mux
+}
+
+func (s *Service) testStatusCodeHandler(rw http.ResponseWriter, req *http.Request) {
+	ctxLogger := s.logger.FromContext(req.Context())
+
+	codeStr := req.URL.Query().Get("code")
+	code, err := strconv.Atoi(codeStr)
+	if err != nil {
+		rw.WriteHeader(http.StatusBadRequest)
+		_, _ = rw.Write([]byte("invalid status code"))
+		return
+	}
+
+	if !slices.Contains(allowedStatusCodes, code) {
+		rw.WriteHeader(http.StatusBadRequest)
+		_, _ = rw.Write([]byte("status code not in allowed list"))
+		return
+	}
+
+	// 204 No Content must not include a response body.
+	if code == http.StatusNoContent {
+		rw.WriteHeader(code)
+		return
+	}
+
+	body, err := json.Marshal(map[string]any{
+		"code":    code,
+		"message": http.StatusText(code),
+	})
+	if err != nil {
+		ctxLogger.Error("Failed to marshal response body to JSON", "error", err)
+		rw.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	rw.Header().Set("Content-Type", "application/json")
+	rw.WriteHeader(code)
+	if _, err := rw.Write(body); err != nil {
+		ctxLogger.Error("Failed to write response", "error", err)
+	}
 }
 
 func (s *Service) testGetHandler(rw http.ResponseWriter, req *http.Request) {

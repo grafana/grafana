@@ -29,6 +29,18 @@ const endpoints = [
   { value: 'annotations', label: 'Annotations' },
 ];
 
+const statusCodeOptions = [
+  { value: '200', label: '200 OK' },
+  { value: '204', label: '204 No Content' },
+  { value: '400', label: '400 Bad Request' },
+  { value: '401', label: '401 Unauthorized' },
+  { value: '403', label: '403 Forbidden' },
+  { value: '404', label: '404 Not Found' },
+  { value: '500', label: '500 Internal Server Error' },
+  { value: '502', label: '502 Bad Gateway' },
+  { value: '503', label: '503 Service Unavailable' },
+];
+
 const selectors = editorSelectors.components.DataSource.TestData.QueryTab;
 
 export interface EditorProps {
@@ -128,6 +140,9 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
         break;
       case TestDataQueryType.ErrorWithSource:
         update.errorSource = 'plugin';
+        break;
+      case TestDataQueryType.StatusCode:
+        update.stringInput = '200';
     }
 
     onUpdate(update);
@@ -206,7 +221,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
             width={32}
           />
         </InlineField>
-        {currentScenario?.stringInput && (
+        {currentScenario?.stringInput && scenarioId !== TestDataQueryType.StatusCode && (
           <InlineField label="String Input">
             <Input
               width={32}
@@ -385,6 +400,16 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
             width={32}
             onChange={onInputChange}
             placeholder="10"
+          />
+        </InlineField>
+      )}
+      {scenarioId === TestDataQueryType.StatusCode && (
+        <InlineField labelWidth={14} label="Status Code">
+          <Select
+            options={statusCodeOptions}
+            onChange={({ value }) => onUpdate({ ...query, stringInput: value })}
+            width={32}
+            value={statusCodeOptions.find((opt) => opt.value === (query.stringInput ?? '200'))}
           />
         </InlineField>
       )}

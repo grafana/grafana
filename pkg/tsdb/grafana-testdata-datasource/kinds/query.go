@@ -76,6 +76,7 @@ const (
 	TestDataQueryTypeSteps                        TestDataQueryType = "steps"
 	TestDataQueryTypeSimulation                   TestDataQueryType = "simulation"
 	TestDataQueryTypeSlowQuery                    TestDataQueryType = "slow_query"
+	TestDataQueryTypeStatusCode                   TestDataQueryType = "status_code"
 	TestDataQueryTypeStreamingClient              TestDataQueryType = "streaming_client"
 	TestDataQueryTypeTableStatic                  TestDataQueryType = "table_static"
 	TestDataQueryTypeTrace                        TestDataQueryType = "trace"
