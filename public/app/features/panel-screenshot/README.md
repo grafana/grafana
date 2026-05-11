@@ -19,8 +19,8 @@ Given a `panelPathId` (the same id scenes emits as the `data-viz-panel-id` DOM a
 import { getPanelScreenshotService } from '@grafana/runtime';
 
 const blob = await getPanelScreenshotService().capture(panelPathId, {
-  format: 'png',           // 'png' | 'jpeg' | 'webp', default 'png'
-  sceneContext: this,      // optional; SceneObject. Falls back to window.__grafanaSceneContext.
+  format: 'png', // 'png' | 'jpeg' | 'webp', default 'png'
+  sceneContext: this, // optional; SceneObject. Falls back to window.__grafanaSceneContext.
 });
 ```
 
@@ -103,12 +103,12 @@ A throw from `onScreenshot` is reported as `errorKind: 'override_failed'` in ana
 
 ## Errors
 
-| Thrown when | `errorKind` |
-|---|---|
-| Selector finds no element | `panel_not_in_dom` |
-| `onScreenshot` throws | `override_failed` |
+| Thrown when                            | `errorKind`            |
+| -------------------------------------- | ---------------------- |
+| Selector finds no element              | `panel_not_in_dom`     |
+| `onScreenshot` throws                  | `override_failed`      |
 | `html-to-image` throws or returns null | `html_to_image_failed` |
-| Anything else | `unknown` |
+| Anything else                          | `unknown`              |
 
 `sceneContext` validation throws synchronously before any DOM work if the value is non-`SceneObject`-shaped — fail-fast, no silent fallback.
 
@@ -116,11 +116,11 @@ A throw from `onScreenshot` is reported as `errorKind: 'override_failed'` in ana
 
 `VizPanel.getPathId()` (from `@grafana/scenes`) returns `panel-<legacyId>` prefixed with the chain of `LocalValueVariable` values from the panel up to the root. For repeats, this disambiguates instances:
 
-| Scene shape | `panelPathId` |
-|---|---|
-| One panel, no repeats | `panel-3` |
-| Panel inside a row repeated by `$server = web-1` | `web-1$panel-3` |
-| Panel in a column-repeat inside a row-repeat | `prod$us-east$panel-3` |
+| Scene shape                                      | `panelPathId`          |
+| ------------------------------------------------ | ---------------------- |
+| One panel, no repeats                            | `panel-3`              |
+| Panel inside a row repeated by `$server = web-1` | `web-1$panel-3`        |
+| Panel in a column-repeat inside a row-repeat     | `prod$us-east$panel-3` |
 
 The same string is mirrored to the rendered DOM via `data-viz-panel-id`. Plugin authors get it pre-computed via `PluginExtensionPanelContext.panelPathId`.
 
