@@ -457,8 +457,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 
 func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.APIGroupOptions, storage map[string]rest.Storage, enableExternalGroupMappingsApi bool, enableZanzanaSync bool) error {
 	teamResource := iamv0.TeamResourceInfo
-	teamUniStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, teamResource, opts.OptsGetter,
-		grafanaregistry.WithNameGenerator(grafanaregistry.ShortUIDNameGenerator))
+	teamUniStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, teamResource, opts.OptsGetter)
 	if err != nil {
 		return err
 	}
