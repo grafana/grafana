@@ -2,7 +2,7 @@ import { map } from 'rxjs/operators';
 
 import type { MatcherConfig } from '@grafana/schema';
 
-import { guessFieldTypeForField } from '../../dataframe/processDataFrame';
+import { guessFieldTypeForField } from '../../dataframe/guessFieldType';
 import { getFieldDisplayName } from '../../field/fieldState';
 import { type DataFrame, type Field, FieldType } from '../../types/dataFrame';
 import { type DataTransformerInfo, TransformationApplicabilityLevels } from '../../types/transformations';

@@ -7,7 +7,8 @@ import { parseLabels } from '../utils/labels';
 import { renderLegendFormat } from '../utils/legend';
 
 import { type DataFrameJSON, decodeFieldValueEntities, type FieldSchema } from './DataFrameJSON';
-import { guessFieldTypeFromValue, toFilteredDataFrameDTO } from './processDataFrame';
+import { guessFieldTypeFromValue } from './guessFieldType';
+import { toFilteredDataFrameDTO } from './processDataFrame';
 
 /**
  * Indicate if the frame is appened or replace
