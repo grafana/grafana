@@ -145,6 +145,20 @@
     },
     {
       "metadata": {
+        "name": "alerting.notificationsAPIV1Beta1",
+        "resourceVersion": "1778531950507",
+        "creationTimestamp": "2026-05-11T20:39:10Z"
+      },
+      "spec": {
+        "description": "Switch the Grafana Alerting UI from notifications.alerting.grafana.app/v0alpha1 to v1beta1",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alerting.rulesAPIV2",
         "resourceVersion": "1776193652999",
         "creationTimestamp": "2026-04-14T19:07:32Z"
@@ -631,6 +645,36 @@
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad",
         "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingNotificationsApiV1Beta1",
+        "resourceVersion": "1778531729509",
+        "creationTimestamp": "2026-05-11T20:35:29Z",
+        "deletionTimestamp": "2026-05-11T20:39:10Z"
+      },
+      "spec": {
+        "description": "Switch the Grafana Alerting UI from notifications.alerting.grafana.app/v0alpha1 to v1beta1",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingNotificationsApiV1beta1",
+        "resourceVersion": "1778531705784",
+        "creationTimestamp": "2026-05-11T20:35:05Z",
+        "deletionTimestamp": "2026-05-11T20:35:29Z"
+      },
+      "spec": {
+        "description": "Switch the Grafana Alerting UI from notifications.alerting.grafana.app/v0alpha1 to v1beta1",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true,
         "expression": "false"
       }
     },

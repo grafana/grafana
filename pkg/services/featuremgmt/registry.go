@@ -3072,6 +3072,14 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:        "alerting.notificationsAPIV1Beta1",
+			Description: "Switch the Grafana Alerting UI from notifications.alerting.grafana.app/v0alpha1 to v1beta1",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAlertingSquad,
+			Expression:  "false",
+			Generate:    Generate{LegacyFrontend: true},
+		},
+		{
 			Name:        "assistant.frontend.tools.dashboardTemplates",
 			Description: "Enables the template dashboard assistant",
 			Stage:       FeatureStageExperimental,
