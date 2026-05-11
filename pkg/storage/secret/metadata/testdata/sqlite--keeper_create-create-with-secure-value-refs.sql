@@ -28,5 +28,13 @@ SELECT
 FROM
   (SELECT 1) AS "keeper_insert_check"
 WHERE
-  1 = 1
+  (
+    SELECT COUNT(*) FROM (
+      SELECT 1 FROM "secret_secure_value"
+      WHERE "namespace" = 'ns'
+        AND "name" IN ('a', 'b')
+        AND "active" = true
+        AND "keeper" = 'system'
+    ) AS "sv_check"
+  ) = 2
 ;
