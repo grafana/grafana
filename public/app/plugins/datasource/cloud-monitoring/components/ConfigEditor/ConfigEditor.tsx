@@ -1,7 +1,16 @@
 import { memo } from 'react';
 
-import { type DataSourcePluginOptionsEditorProps, updateDatasourcePluginJsonDataOption } from '@grafana/data';
-import { ConnectionConfig } from '@grafana/google-sdk';
+import {
+  type DataSourcePluginOptionsEditorProps,
+  type DataSourceSettings,
+  updateDatasourcePluginJsonDataOption,
+} from '@grafana/data';
+import {
+  AuthConfig,
+  type DataSourceOptions,
+  type DataSourceSecureJsonData,
+  GOOGLE_AUTH_TYPE_OPTIONS,
+} from '@grafana/google-sdk';
 import { ConfigSection, DataSourceDescription } from '@grafana/plugin-ui';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Divider, Field, Input, SecureSocksProxySettings, Stack } from '@grafana/ui';
@@ -10,17 +19,33 @@ import { type CloudMonitoringOptions, type CloudMonitoringSecureJsonData } from 
 
 export type Props = DataSourcePluginOptionsEditorProps<CloudMonitoringOptions, CloudMonitoringSecureJsonData>;
 
+const OAUTH_PASSTHROUGH = 'oauthPassthrough';
+
+const AUTH_OPTIONS = [
+  ...GOOGLE_AUTH_TYPE_OPTIONS,
+  { label: 'Forward OAuth Identity', value: OAUTH_PASSTHROUGH },
+];
+
 export const ConfigEditor = memo(({ options, onOptionsChange }: Props) => {
-  const handleOnOptionsChange = (options: Props['options']) => {
-    if (options.jsonData.privateKeyPath || options.secureJsonFields['privateKey']) {
+  const onAuthenticationTypeChange = (newOptions: DataSourceSettings<DataSourceOptions, DataSourceSecureJsonData>) => {
+    if (newOptions.jsonData.privateKeyPath || newOptions.secureJsonFields['privateKey']) {
       reportInteraction('grafana_cloud_monitoring_config_changed', {
         authenticationType: 'JWT',
-        privateKey: options.secureJsonFields['privateKey'],
-        privateKeyPath: !!options.jsonData.privateKeyPath,
+        privateKey: newOptions.secureJsonFields['privateKey'],
+        privateKeyPath: !!newOptions.jsonData.privateKeyPath,
       });
     }
-    onOptionsChange(options);
+    onOptionsChange({
+      ...newOptions,
+      jsonData: {
+        ...newOptions.jsonData,
+        oauthPassThru: newOptions.jsonData.authenticationType === OAUTH_PASSTHROUGH,
+      },
+    });
   };
+
+  const isOAuthPassthrough = options.jsonData.authenticationType === OAUTH_PASSTHROUGH;
+  const showImpersonation = !isOAuthPassthrough;
 
   return (
     <>
@@ -30,7 +55,29 @@ export const ConfigEditor = memo(({ options, onOptionsChange }: Props) => {
         hasRequiredFields
       />
       <Divider />
-      <ConnectionConfig options={options} onOptionsChange={handleOnOptionsChange}></ConnectionConfig>
+      <AuthConfig
+        options={options}
+        onOptionsChange={onAuthenticationTypeChange}
+        authOptions={AUTH_OPTIONS}
+        showServiceAccountImpersonationConfig={showImpersonation}
+      />
+      {isOAuthPassthrough && (
+        <Field noMargin label="Default project" description="Required when using OAuth Passthrough authentication.">
+          <Input
+            id="defaultProject"
+            width={60}
+            value={options.jsonData.defaultProject ?? ''}
+            onChange={(event) =>
+              updateDatasourcePluginJsonDataOption(
+                { options, onOptionsChange },
+                'defaultProject',
+                event.currentTarget.value
+              )
+            }
+            placeholder="my-gcp-project"
+          />
+        </Field>
+      )}
       {config.secureSocksDSProxyEnabled && (
         <>
           <Divider />
