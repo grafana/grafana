@@ -21,6 +21,8 @@ correlationsv0alpha1: {
 	}
 	selectableFields: [
 		"spec.source.name",
+		"spec.target.name",
+		"spec.target.group",
 	]
 }
 
