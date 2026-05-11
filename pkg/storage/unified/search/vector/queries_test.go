@@ -1,6 +1,7 @@
 package vector
 
 import (
+	"database/sql"
 	"encoding/json"
 	"testing"
 	"text/template"
@@ -75,6 +76,59 @@ func TestVectorQueries(t *testing.T) {
 						Model:       "text-embedding-005",
 						UID:         "abc-uid",
 						Response:    &sqlVectorCollectionGetContentResponse{},
+					},
+				},
+			},
+			sqlVectorCollectionExists: {
+				{
+					Name: "simple",
+					Data: &sqlVectorCollectionExistsRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Resource:    "dashboards",
+						Namespace:   "stacks-123",
+						Model:       "text-embedding-005",
+						UID:         "abc-uid",
+						Response:    &sqlVectorCollectionExistsResponse{},
+					},
+				},
+			},
+			sqlVectorBackfillJobsList: {
+				{
+					Name: "simple",
+					Data: &sqlVectorBackfillJobsListRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Model:       "text-embedding-005",
+						Response:    &sqlVectorBackfillJobsListResponse{},
+					},
+				},
+			},
+			sqlVectorBackfillJobsUpdate: {
+				{
+					Name: "simple",
+					Data: &sqlVectorBackfillJobsUpdateRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						ID:          7,
+						LastSeenKey: sql.NullString{String: "tok-42", Valid: true},
+						LastError:   sql.NullString{},
+					},
+				},
+			},
+			sqlVectorBackfillJobsSetError: {
+				{
+					Name: "simple",
+					Data: &sqlVectorBackfillJobsSetErrorRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						ID:          7,
+						LastError:   sql.NullString{String: "boom", Valid: true},
+					},
+				},
+			},
+			sqlVectorBackfillJobsComplete: {
+				{
+					Name: "simple",
+					Data: &sqlVectorBackfillJobsCompleteRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						ID:          7,
 					},
 				},
 			},

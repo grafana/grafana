@@ -22,6 +22,9 @@ var ErrInternal = errutil.Internal("folder.internal")
 var ErrCircularReference = errutil.BadRequest("folder.circular-reference", errutil.WithPublicMessage("Circular reference detected"))
 var ErrTargetRegistrySrvConflict = errutil.Internal("folder.target-registry-srv-conflict")
 var ErrFolderNotEmpty = errutil.BadRequest("folder.not-empty", errutil.WithPublicMessage("Folder cannot be deleted: folder is not empty"))
+var ErrFolderCannotBeMovedToK6 = errutil.BadRequest("folder.cannot-be-moved-to-k6", errutil.WithPublicMessage("Folders cannot be moved into the k6 project"))
+
+// ErrCyclicReference indicates corrupt storage state, not user input.
 var ErrCyclicReference = errutil.Internal("folder.cyclic-reference", errutil.WithPublicMessage("Cyclic folder references found"))
 
 // TODO: evaluate if we can remove legacy errors and only have k8s ones
@@ -43,7 +46,7 @@ var ErrAPIFolderCannotBeParentOfItself = errutil.BadRequest("folder.cannot-be-pa
 var ErrMoveAccessDenied = errutil.Forbidden("folders.forbiddenMove", errutil.WithPublicMessage("Access denied to the destination folder"))
 var ErrAccessEscalation = errutil.Forbidden("folders.accessEscalation", errutil.WithPublicMessage("Cannot move a folder to a folder where you have higher permissions"))
 var ErrCreationAccessDenied = errutil.Forbidden("folders.forbiddenCreation", errutil.WithPublicMessage("not enough permissions to create a folder in the selected location"))
-var ErrNameExists = errutil.BadGateway("folder.name-exists", errutil.WithPublicMessage("A folder with that name already exists"))
+var ErrNameExists = errutil.BadRequest("folder.name-exists", errutil.WithPublicMessage("A folder with that name already exists"))
 
 const (
 	GeneralFolderUID      = "general"

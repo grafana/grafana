@@ -6,14 +6,7 @@ import {
   type CorrelationSpec,
 } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
 import { type DataFrame, DataLinkConfigOrigin } from '@grafana/data';
-import {
-  config,
-  type CorrelationData,
-  type CorrelationsData,
-  createMonitoringLogger,
-  getBackendSrv,
-  getDataSourceSrv,
-} from '@grafana/runtime';
+import { config, type CorrelationData, type CorrelationsData, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { type DataQuery, type DataSourceRef } from '@grafana/schema';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { type ExploreItemState } from 'app/types/explore';
@@ -157,6 +150,13 @@ export const generateDefaultLabel = async (sourcePane: ExploreItemState, targetP
 
 export const generatePartialEditSpec = (data: EditFormDTO, correlation: Correlation): Partial<CorrelationSpec> => {
   let partialSpec: Partial<CorrelationSpec> = {};
+
+  // we will want to clear any target data if the correlation is being updated to external
+  // null sent in a PATCH will delete the property
+  if (data.type === 'external') {
+    partialSpec.target = null;
+  }
+
   if (data.label !== correlation.label) {
     partialSpec.label = data.label;
   }
@@ -185,7 +185,7 @@ export const generateAddSpec = async (data: FormDTO): Promise<CorrelationSpec> =
   const dsSrv = getDataSourceSrv();
   const sourceDs = await dsSrv.get(data.sourceUID);
   let targetDs;
-  if ('targetUID' in data) {
+  if ('targetUID' in data && data.targetUID !== undefined) {
     targetDs = await dsSrv.get(data.targetUID!);
   }
 
@@ -202,8 +202,6 @@ export const generateAddSpec = async (data: FormDTO): Promise<CorrelationSpec> =
     },
   };
 };
-
-export const correlationsLogger = createMonitoringLogger('features.correlations');
 
 // legacy just needs uid for lookup, remote storage needs name/group
 export const getCorrelationsFromStorage = async (

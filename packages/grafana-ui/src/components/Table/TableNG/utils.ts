@@ -1,7 +1,7 @@
 import { type Property } from 'csstype';
 import memoize from 'micro-memoize';
 import { type CSSProperties } from 'react';
-import { type SortColumn } from 'react-data-grid';
+import { type ColumnWidth, type ColumnWidths, type SortColumn } from 'react-data-grid';
 import tinycolor from 'tinycolor2';
 import { type Count, varPreLine } from 'uwrap';
 
@@ -786,12 +786,13 @@ export function applyFilter(
  */
 export function compileFrameToRecords(frame: DataFrame, nestedFramesFieldName?: string): FrameToRowsConverter {
   const fnBody = `
-    const rows = Array(frame.length);
     const values = frame.fields.map(f => f.values);
     const hasNestedFrames = '${nestedFramesFieldName ?? ''}'.length > 0;
+    const frameLength = frame.length ?? values[0]?.length ?? 0;
+    const rows = Array(frameLength);
 
     let rowCount = 0;
-    for (let i = 0; i < frame.length; i++) {
+    for (let i = 0; i < frameLength; i++) {
       rows[rowCount] = {
         __depth: 0,
         __index: i,
@@ -1019,6 +1020,12 @@ export function computeColWidths(fields: Field[], availWidth: number) {
           width ||
           Math.max(fields[i].config.custom?.minWidth ?? COLUMN.DEFAULT_WIDTH, (availWidth - definedWidth) / autoCount)
       )
+  );
+}
+
+export function buildNestedColumnWidthsMap(fields: Field[], widths: number[]): ColumnWidths {
+  return new Map<string, ColumnWidth>(
+    fields.map((field, idx) => [getDisplayName(field), { type: 'resized', width: widths[idx] }])
   );
 }
 

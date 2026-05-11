@@ -39,6 +39,7 @@ import {
   isGrafanaManagedRuleByType,
   isGrafanaRecordingRuleByType,
   isProvisionedRuleGroup,
+  isUngroupedRuleGroup,
 } from '../../utils/rules';
 import { parsePrometheusDuration, safeParsePrometheusDuration } from '../../utils/time';
 import { CollapseToggle } from '../CollapseToggle';
@@ -50,8 +51,10 @@ import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
 import { NeedHelpInfo } from './NeedHelpInfo';
 import { RuleEditorSection } from './RuleEditorSection';
 
-const namespaceToGroupOptions = (rulerNamespace: RulerRulesConfigDTO, enableProvisionedGroups: boolean) => {
-  const folderGroups = Object.values(rulerNamespace).flat();
+export const namespaceToGroupOptions = (rulerNamespace: RulerRulesConfigDTO, enableProvisionedGroups: boolean) => {
+  const folderGroups = Object.values(rulerNamespace)
+    .flat()
+    .filter((group) => !isUngroupedRuleGroup(group.name));
 
   return folderGroups
     .map<SelectableValue<string>>((group) => {

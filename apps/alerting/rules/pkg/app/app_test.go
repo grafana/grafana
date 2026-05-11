@@ -47,7 +47,7 @@ func TestAlertRuleValidation_Success(t *testing.T) {
 	r.Spec = v1.AlertRuleSpec{
 		Title:        "ok",
 		Trigger:      v1.AlertRuleIntervalTrigger{Interval: v1.AlertRulePromDuration("60s")},
-		Expressions:  v1.AlertRuleExpressionMap{"A": v1.AlertRuleExpression{Model: map[string]any{"expr": "1"}, Source: boolPtr(true)}},
+		Expressions:  v1.AlertRuleExpressionMap{"A": v1.AlertRuleExpression{Model: map[string]any{"expr": "1"}, Source: new(true)}},
 		NoDataState:  v1.DefaultNoDataState,
 		ExecErrState: v1.DefaultExecErrState,
 		NotificationSettings: &v1.AlertRuleNotificationSettings{
@@ -91,7 +91,7 @@ func TestAlertRuleValidation_SuccessWithDatasourceQuery(t *testing.T) {
 		Expressions: v1.AlertRuleExpressionMap{
 			"A": v1.AlertRuleExpression{
 				Model:         map[string]any{"expr": "up"},
-				Source:        boolPtr(true),
+				Source:        new(true),
 				DatasourceUID: &dsUID,
 				RelativeTimeRange: &v1.AlertRuleRelativeTimeRange{
 					From: v1.AlertRulePromDurationWMillis("600s"),
@@ -122,7 +122,7 @@ func TestAlertRuleValidation_SuccessWithExpressionDatasourceWithoutRelativeTimeR
 		Expressions: v1.AlertRuleExpressionMap{
 			"A": v1.AlertRuleExpression{
 				Model:         map[string]any{"expr": "1"},
-				Source:        boolPtr(true),
+				Source:        new(true),
 				DatasourceUID: &dsUID,
 			},
 		},
@@ -148,7 +148,7 @@ func TestAlertRuleValidation_SuccessWithoutDatasourceUIDWithoutRelativeTimeRange
 		Expressions: v1.AlertRuleExpressionMap{
 			"A": v1.AlertRuleExpression{
 				Model:  map[string]any{"expr": "1"},
-				Source: boolPtr(true),
+				Source: new(true),
 			},
 		},
 		NoDataState:  v1.DefaultNoDataState,
@@ -195,7 +195,7 @@ func TestAlertRuleValidation_Errors(t *testing.T) {
 		}
 	}), "want empty routing tree error")
 	assert.Error(t, mk(func(r *v1.AlertRule) { r.Labels[v1.GroupLabelKey] = "grp" }), "want group set on create error")
-	assert.Error(t, mk(func(r *v1.AlertRule) { r.Spec.For = strPtr("-10s") }), "want for>=0 error")
+	assert.Error(t, mk(func(r *v1.AlertRule) { r.Spec.For = new("-10s") }), "want for>=0 error")
 	assert.Error(t, mk(func(r *v1.AlertRule) {
 		if r.Spec.Labels == nil {
 			r.Spec.Labels = map[string]v1.AlertRuleTemplateString{}
@@ -211,15 +211,15 @@ func TestAlertRuleValidation_Errors(t *testing.T) {
 	// Expression validation: multiple source expressions
 	assert.Error(t, mk(func(r *v1.AlertRule) {
 		r.Spec.Expressions = v1.AlertRuleExpressionMap{
-			"A": v1.AlertRuleExpression{Model: map[string]any{"expr": "1"}, Source: boolPtr(true)},
-			"B": v1.AlertRuleExpression{Model: map[string]any{"expr": "2"}, Source: boolPtr(true)},
+			"A": v1.AlertRuleExpression{Model: map[string]any{"expr": "1"}, Source: new(true)},
+			"B": v1.AlertRuleExpression{Model: map[string]any{"expr": "2"}, Source: new(true)},
 		}
 	}), "want multiple source expressions error")
 	// Expression validation: non-expression query without relative time range
 	assert.Error(t, mk(func(r *v1.AlertRule) {
 		dsUID := v1.AlertRuleDatasourceUID("prometheus")
 		r.Spec.Expressions = v1.AlertRuleExpressionMap{
-			"A": v1.AlertRuleExpression{Model: map[string]any{"expr": "1"}, Source: boolPtr(true), DatasourceUID: &dsUID},
+			"A": v1.AlertRuleExpression{Model: map[string]any{"expr": "1"}, Source: new(true), DatasourceUID: &dsUID},
 		}
 	}), "want query expression requires relative time range error")
 }
@@ -234,7 +234,7 @@ func baseAlertRule() *v1.AlertRule {
 	r.Spec = v1.AlertRuleSpec{
 		Title:        "ok",
 		Trigger:      v1.AlertRuleIntervalTrigger{Interval: v1.AlertRulePromDuration("60s")},
-		Expressions:  v1.AlertRuleExpressionMap{"A": v1.AlertRuleExpression{Model: map[string]any{"expr": "1"}, Source: boolPtr(true)}},
+		Expressions:  v1.AlertRuleExpressionMap{"A": v1.AlertRuleExpression{Model: map[string]any{"expr": "1"}, Source: new(true)}},
 		NoDataState:  v1.DefaultNoDataState,
 		ExecErrState: v1.DefaultExecErrState,
 	}
@@ -251,7 +251,7 @@ func TestRecordingRuleValidation_Success(t *testing.T) {
 	r.Spec = v1.RecordingRuleSpec{
 		Title:               "ok",
 		Trigger:             v1.RecordingRuleIntervalTrigger{Interval: v1.RecordingRulePromDuration("60s")},
-		Expressions:         v1.RecordingRuleExpressionMap{"A": v1.RecordingRuleExpression{Model: map[string]any{"expr": "1"}, Source: boolPtr(true)}},
+		Expressions:         v1.RecordingRuleExpressionMap{"A": v1.RecordingRuleExpression{Model: map[string]any{"expr": "1"}, Source: new(true)}},
 		Metric:              "test_metric",
 		TargetDatasourceUID: "ds1",
 	}
@@ -275,7 +275,7 @@ func TestRecordingRuleValidation_SuccessWithDatasourceQuery(t *testing.T) {
 		Expressions: v1.RecordingRuleExpressionMap{
 			"A": v1.RecordingRuleExpression{
 				Model:         map[string]any{"expr": "up"},
-				Source:        boolPtr(true),
+				Source:        new(true),
 				DatasourceUID: &dsUID,
 				RelativeTimeRange: &v1.RecordingRuleRelativeTimeRange{
 					From: v1.RecordingRulePromDurationWMillis("600s"),
@@ -306,7 +306,7 @@ func TestRecordingRuleValidation_SuccessWithExpressionDatasourceWithoutRelativeT
 		Expressions: v1.RecordingRuleExpressionMap{
 			"A": v1.RecordingRuleExpression{
 				Model:         map[string]any{"expr": "1"},
-				Source:        boolPtr(true),
+				Source:        new(true),
 				DatasourceUID: &dsUID,
 			},
 		},
@@ -332,7 +332,7 @@ func TestRecordingRuleValidation_SuccessWithoutDatasourceUIDWithoutRelativeTimeR
 		Expressions: v1.RecordingRuleExpressionMap{
 			"A": v1.RecordingRuleExpression{
 				Model:  map[string]any{"expr": "1"},
-				Source: boolPtr(true),
+				Source: new(true),
 			},
 		},
 		Metric:              "test_metric",
@@ -371,15 +371,15 @@ func TestRecordingRuleValidation_Errors(t *testing.T) {
 	// Expression validation: multiple source expressions
 	assert.Error(t, mk(func(r *v1.RecordingRule) {
 		r.Spec.Expressions = v1.RecordingRuleExpressionMap{
-			"A": v1.RecordingRuleExpression{Model: map[string]any{"expr": "1"}, Source: boolPtr(true)},
-			"B": v1.RecordingRuleExpression{Model: map[string]any{"expr": "2"}, Source: boolPtr(true)},
+			"A": v1.RecordingRuleExpression{Model: map[string]any{"expr": "1"}, Source: new(true)},
+			"B": v1.RecordingRuleExpression{Model: map[string]any{"expr": "2"}, Source: new(true)},
 		}
 	}), "want multiple source expressions error")
 	// Expression validation: non-expression query without relative time range
 	assert.Error(t, mk(func(r *v1.RecordingRule) {
 		dsUID := v1.RecordingRuleDatasourceUID("prometheus")
 		r.Spec.Expressions = v1.RecordingRuleExpressionMap{
-			"A": v1.RecordingRuleExpression{Model: map[string]any{"expr": "1"}, Source: boolPtr(true), DatasourceUID: &dsUID},
+			"A": v1.RecordingRuleExpression{Model: map[string]any{"expr": "1"}, Source: new(true), DatasourceUID: &dsUID},
 		}
 	}), "want query expression requires relative time range error")
 }
@@ -394,12 +394,9 @@ func baseRecordingRule() *v1.RecordingRule {
 	r.Spec = v1.RecordingRuleSpec{
 		Title:               "ok",
 		Trigger:             v1.RecordingRuleIntervalTrigger{Interval: v1.RecordingRulePromDuration("60s")},
-		Expressions:         v1.RecordingRuleExpressionMap{"A": v1.RecordingRuleExpression{Model: map[string]any{"expr": "1"}, Source: boolPtr(true)}},
+		Expressions:         v1.RecordingRuleExpressionMap{"A": v1.RecordingRuleExpression{Model: map[string]any{"expr": "1"}, Source: new(true)}},
 		Metric:              "test_metric",
 		TargetDatasourceUID: "ds1",
 	}
 	return r
 }
-
-func boolPtr(b bool) *bool    { return &b }
-func strPtr(s string) *string { return &s }

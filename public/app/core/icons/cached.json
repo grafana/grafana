@@ -41,6 +41,7 @@
   "unicons/chart-line",
   "unicons/check",
   "unicons/check-circle",
+  "unicons/checkbox-multiple",
   "unicons/times-circle",
   "unicons/circle",
   "unicons/clipboard-alt",
@@ -200,5 +201,9 @@
   "unicons/bitbucket",
   "unicons/tachometer-fast",
   "unicons/tachometer-empty",
-  "unicons/vial"
+  "unicons/vial",
+  "unicons/anthropic-logo",
+  "unicons/cursor-logo",
+  "unicons/github-copilot-logo",
+  "unicons/robot"
 ]

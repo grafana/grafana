@@ -5,6 +5,7 @@ package setting
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -20,6 +21,7 @@ import (
 	"time"
 
 	"github.com/gobwas/glob"
+	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/common/model"
 	"gopkg.in/ini.v1"
 
@@ -162,6 +164,7 @@ type Cfg struct {
 	ProvisioningFolderAPIVersion              string        // "v1" (default for on-prem) or "v1beta1"
 	ProvisioningMaxIncrementalChanges         int           // default 100, 0 in config = unlimited
 	ProvisioningWebhookSecretRotationInterval time.Duration // default 30 days
+	ProvisioningPublicRootURL                 string        // public-facing root URL of this Grafana instance for provisioning consumers (webhooks, screenshots); falls back to AppURL when empty
 	DataPath                                  string
 	LogsPath                                  string
 	EnterpriseLicensePath                     string
@@ -344,6 +347,7 @@ type Cfg struct {
 	ResponseLimit                  int64
 	DataProxyRowLimit              int64
 	DataProxyUserAgent             string
+	DataProxyForwardUserAgent      bool
 
 	// DistributedCache
 	RemoteCacheOptions *RemoteCacheSettings
@@ -405,10 +409,11 @@ type Cfg struct {
 	SqlDatasourceMaxConnLifetimeDefault int
 
 	// Snapshots
-	SnapshotEnabled      bool
-	ExternalSnapshotUrl  string
-	ExternalSnapshotName string
-	ExternalEnabled      bool
+	SnapshotEnabled       bool
+	ExternalSnapshotUrl   string
+	ExternalSnapshotName  string
+	ExternalEnabled       bool
+	ExternalSnapshotToken string
 
 	// Only used in https://snapshots.raintank.io/
 	SnapshotPublicMode bool
@@ -444,6 +449,7 @@ type Cfg struct {
 	RudderstackIntegrationsURL          string
 	IntercomSecret                      string
 	FrontendAnalyticsConsoleReporting   bool
+	MeticulousAIRecordingToken          string
 
 	// LDAP
 	LDAPAuthEnabled       bool
@@ -532,6 +538,9 @@ type Cfg struct {
 
 	// Grafana.com SSO API token used for Unified SSO between instances and Grafana.com.
 	GrafanaComSSOAPIToken string
+
+	// GrafanaComProxyAPIToken is the dedicated auth token for Grafana.com proxy requests and plugin installs.
+	GrafanaComProxyAPIToken string
 
 	// Geomap base layer config
 	GeomapDefaultBaseLayerConfig map[string]any
@@ -683,22 +692,38 @@ type Cfg struct {
 	SearchInjectFailuresPercent                int
 	EnableSearch                               bool
 	EnableSearchClient                         bool
-	// Vector storage (separate pgvector database)
-	EnableVectorBackend               bool
-	VectorDBHost                      string
-	VectorDBPort                      string
-	VectorDBName                      string
-	VectorDBUser                      string
-	VectorDBPassword                  string
-	VectorDBSSLMode                   string
-	VectorPromotionThreshold          int           // row count per tenant to trigger leaf promotion
-	VectorPromoterInterval            time.Duration // promoter tick interval; 0 disables
-	OverridesFilePath                 string
-	OverridesReloadInterval           time.Duration
-	EnforcedQuotaResources            []string
-	QuotasErrorMessageSupportInfo     string
+
+	// Vector storage
+	EnableVectorBackend      bool
+	VectorDBHost             string
+	VectorDBPort             string
+	VectorDBName             string
+	VectorDBUser             string
+	VectorDBPassword         string
+	VectorDBSSLMode          string
+	VectorBackfillerEnabled  bool          // backfill resources without embeddings
+	VectorPromotionThreshold int           // row count per tenant to trigger promotion
+	VectorPromoterInterval   time.Duration // promoter tick interval; 0 disables
+
+	// Embedding provider used by the VectorSearch RPC. "" = disabled.
+	EmbeddingProvider string // "vertex" | "bedrock" | ""
+	VertexProjectID   string
+	VertexLocation    string // default "us-central1"
+	VertexModel       string // default "gemini-embedding-001"
+	VertexDimensions  int    // default 768
+	BedrockRegion     string // default "us-east-1"
+	BedrockModel      string // default "cohere.embed-v4:0"
+	BedrockDimensions int    // default 1024
+
+	// Overrides/Quotas
+	OverridesFilePath             string
+	OverridesReloadInterval       time.Duration
+	EnforcedQuotaResources        []string
+	QuotasErrorMessageSupportInfo string
+
 	EnableSQLKVBackend                bool
 	EnableSQLKVCompatibilityMode      bool
+	EnableKVLeases                    bool
 	EnableGarbageCollection           bool
 	GarbageCollectionDryRun           bool
 	GarbageCollectionInterval         time.Duration
@@ -747,6 +772,16 @@ type InstallPlugin struct {
 	ID      string `json:"id"`
 	Version string `json:"version"`
 	URL     string `json:"url,omitempty"`
+}
+
+// ResolveGrafanaComProxyAPIToken must be called after OpenFeature is initialized.
+// It sets GrafanaComProxyAPIToken to the dedicated token when the grafana.dedicatedGrafanaComProxyAPIToken
+// flag is enabled and proxy_token is configured; otherwise falls back to sso_api_token.
+func (cfg *Cfg) ResolveGrafanaComProxyAPIToken() {
+	if openfeature.NewDefaultClient().Boolean(context.Background(), "grafana.dedicatedGrafanaComProxyAPIToken", false, openfeature.EvaluationContext{}) && cfg.GrafanaComProxyAPIToken != "" {
+		return
+	}
+	cfg.GrafanaComProxyAPIToken = cfg.GrafanaComSSOAPIToken
 }
 
 // AddChangePasswordLink returns if login form is disabled or not since
@@ -811,6 +846,7 @@ func RedactedValue(key, value string) string {
 		"API_TOKEN$",
 		"WEBHOOK_TOKEN$",
 		"INSTALL_TOKEN$",
+		"PROXY_TOKEN$",
 	} {
 		if match, err := regexp.MatchString(pattern, uppercased); match && err == nil {
 			return RedactedPassword
@@ -1519,6 +1555,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.RudderstackIntegrationsURL = analytics.Key("rudderstack_integrations_url").String()
 	cfg.IntercomSecret = analytics.Key("intercom_secret").String()
 	cfg.FrontendAnalyticsConsoleReporting = analytics.Key("browser_console_reporter").MustBool(false)
+	cfg.MeticulousAIRecordingToken = analytics.Key("meticulous_ai_recording_token").String()
 
 	cfg.ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
 	cfg.ReportingDistributor = analytics.Key("reporting_distributor").MustString("grafana-labs")
@@ -1655,6 +1692,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	cfg.GrafanaComAPIURL = valueAsString(iniFile.Section("grafana_com"), "api_url", grafanaComUrl+"/api")
 	cfg.GrafanaComSSOAPIToken = valueAsString(iniFile.Section("grafana_com"), "sso_api_token", "")
+	cfg.GrafanaComProxyAPIToken = valueAsString(iniFile.Section("grafana_com"), "proxy_token", "")
 	imageUploadingSection := iniFile.Section("external_image_storage")
 	cfg.ImageUploadProvider = valueAsString(imageUploadingSection, "provider", "")
 
@@ -2176,6 +2214,7 @@ func readSnapshotsSettings(cfg *Cfg, iniFile *ini.File) error {
 	cfg.ExternalSnapshotName = valueAsString(snapshots, "external_snapshot_name", "")
 
 	cfg.ExternalEnabled = snapshots.Key("external_enabled").MustBool(true)
+	cfg.ExternalSnapshotToken = valueAsString(snapshots, "external_snapshot_token", "")
 	cfg.SnapshotPublicMode = snapshots.Key("public_mode").MustBool(false)
 
 	return nil
@@ -2430,6 +2469,7 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	cfg.ProvisioningFolderAPIVersion = iniFile.Section("provisioning").Key("folders_api_version").MustString("v1")
 	cfg.ProvisioningMaxIncrementalChanges = iniFile.Section("provisioning").Key("max_incremental_changes").MustInt(100)
 	cfg.ProvisioningWebhookSecretRotationInterval = iniFile.Section("provisioning").Key("webhook_secret_rotation_interval").MustDuration(30 * 24 * time.Hour)
+	cfg.ProvisioningPublicRootURL = strings.TrimRight(valueAsString(iniFile.Section("provisioning"), "public_root_url", ""), "/")
 
 	// Read job history configuration
 	cfg.ProvisioningLokiURL = valueAsString(iniFile.Section("provisioning"), "loki_url", "")

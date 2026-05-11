@@ -6,6 +6,8 @@
   "version": "13.1.0-pre",
   "repository": "github:grafana/grafana",
   "scripts": {
+    "analytics-report": "node ./scripts/cli/analytics/main.mts",
+    "analytics-report:test": "node --test ./scripts/cli/analytics/*.test.mts",
     "check-frontend-dev": "./scripts/check-frontend-dev.sh",
     "build": "NODE_ENV=production nx exec --verbose -- webpack --config scripts/webpack/webpack.prod.ts && yarn build:react19",
     "build:react19": "NODE_ENV=production nx exec --verbose -- webpack --config scripts/webpack/webpack.prod.ts --env react19=1",
@@ -17,7 +19,7 @@
     "codeowners-manifest:generate": "node ./scripts/codeowners-manifest/generate.js",
     "codeowners-manifest:metadata": "node ./scripts/codeowners-manifest/metadata.js",
     "codeowners-manifest:raw": "node ./scripts/codeowners-manifest/raw.js",
-    "uplot-compare": "yarn workspace @grafana/uplot-compare dev -- -p 5173",
+    "canvas-compare": "npx jest-canvas-mock-compare-viewer",
     "dev": "NODE_ENV=dev nx exec -- webpack --config scripts/webpack/webpack.dev.ts",
     "e2e:schema-v2": "KUBERNETES_DASHBOARDS=true yarn playwright test --project dashboards",
     "e2e:playwright": "NODE_OPTIONS='-C @grafana-app/source' yarn playwright test --grep-invert @cloud-plugins",
@@ -59,7 +61,7 @@
     "start:noTsCheck": "yarn start -- --env noTsCheck=1",
     "start:noLint": "yarn start -- --env noTsCheck=1 --env noLint=1",
     "stats": "webpack --mode production --config scripts/webpack/webpack.prod.ts --profile --json > compilation-stats.json",
-    "storybook": "yarn workspace @grafana/ui storybook --ci",
+    "storybook": "yarn workspace @grafana/ui storybook",
     "storybook:build": "yarn workspace @grafana/ui storybook:build",
     "themes-generate": "yarn workspace @grafana/data themes-schema && esbuild --target=es6 ./scripts/cli/generateSassVariableFiles.ts --bundle --conditions=@grafana-app/source --platform=node --tsconfig=./scripts/cli/tsconfig.json | node",
     "themes:usage": "eslint . --ignore-pattern '*.test.ts*' --ignore-pattern '*.spec.ts*' --cache --plugin '@grafana' --rule '{ @grafana/theme-token-usage: \"error\" }'",
@@ -92,9 +94,8 @@
     "@emotion/eslint-plugin": "11.12.0",
     "@grafana/eslint-config": "8.2.0",
     "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules",
-    "@grafana/plugin-e2e": "^3.4.12",
+    "@grafana/plugin-e2e": "3.7.1-canary.2604.25387292549.0",
     "@grafana/test-utils": "workspace:*",
-    "@grafana/uplot-compare": "workspace:^",
     "@manypkg/get-packages": "^3.0.0",
     "@npmcli/package-json": "^6.0.0",
     "@playwright/test": "1.56.1",
@@ -253,6 +254,7 @@
     "testing-library-selector": "0.3.1",
     "tracelib": "1.0.1",
     "ts-jest": "29.4.0",
+    "ts-morph": "^28.0.0",
     "ts-node": "10.9.2",
     "typescript": "6.0.2",
     "webpack": "^5.105.0",
@@ -295,8 +297,8 @@
     "@grafana/plugin-ui": "^0.13.1",
     "@grafana/prometheus": "13.1.2",
     "@grafana/runtime": "workspace:*",
-    "@grafana/scenes": "^8.0.0",
-    "@grafana/scenes-react": "^8.0.0",
+    "@grafana/scenes": "^8.2.4",
+    "@grafana/scenes-react": "^8.2.4",
     "@grafana/schema": "workspace:*",
     "@grafana/sql": "workspace:*",
     "@grafana/ui": "workspace:*",
@@ -444,7 +446,7 @@
     "whatwg-fetch": "3.6.20"
   },
   "resolutions": {
-    "underscore": "1.13.7",
+    "underscore": "1.13.8",
     "@types/slate": "0.47.11",
     "semver@npm:~7.3.5": "^7.3.5",
     "debug@npm:^0.7.2": "2.6.9",
@@ -457,7 +459,7 @@
     "@grafana/plugin-e2e/@grafana/e2e-selectors": "workspace:*",
     "@grafana/scenes/@grafana/e2e-selectors": "workspace:*",
     "@grafana/scenes-react/@grafana/e2e-selectors": "workspace:*",
-    "swagger-ui-react/dompurify": "3.3.1",
+    "swagger-ui-react/dompurify": "3.4.0",
     "refractor/prismjs": "^1.27.0",
     "@mapbox/jsonlint-lines-primitives": "github:mapbox/jsonlint#commit=e31b7289baedf3e1000d7ae7edd42268212c9954",
     "get-document": "github:webmodules/get-document#commit=a04ccb499d6e0433a368c3bb150b4899b698461f",
@@ -465,8 +467,8 @@
     "tmp@npm:^0.0.33": "~0.2.1",
     "js-yaml@npm:4.1.0": "^4.1.0",
     "js-yaml@npm:=4.1.0": "^4.1.0",
-    "nodemailer": "8.0.4",
-    "@storybook/core@npm:8.6.18": "patch:@storybook/core@npm%3A8.6.18#~/.yarn/patches/@storybook-core-npm-8.6.18-cff02a3017.patch",
+    "nodemailer": "8.0.7",
+    "storybook@npm:10.3.6": "patch:storybook@npm%3A10.3.6#~/.yarn/patches/storybook-npm-10.3.6-8a0644ac0b.patch",
     "protobufjs@npm:8.0.0": "8.0.1",
     "@types/slate/immutable": "^4.0.0",
     "@types/slate-react/immutable": "^4.0.0"
@@ -475,8 +477,7 @@
     "packages": [
       "packages/*",
       "public/app/plugins/*/*",
-      "e2e-playwright/test-plugins/*",
-      "scripts/uplot-compare"
+      "e2e-playwright/test-plugins/*"
     ]
   },
   "engines": {

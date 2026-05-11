@@ -1211,17 +1211,17 @@ func TestValidateAlertRule(t *testing.T) {
 			},
 			{
 				name:                        "should reject negative value",
-				missingSeriesEvalsToResolve: util.Pointer[int64](-1),
+				missingSeriesEvalsToResolve: new(int64(-1)),
 				expectedErrorContains:       "field `missing_series_evals_to_resolve` must be greater than 0",
 			},
 			{
 				name:                        "should reject 0",
-				missingSeriesEvalsToResolve: util.Pointer[int64](0),
+				missingSeriesEvalsToResolve: new(int64(0)),
 				expectedErrorContains:       "field `missing_series_evals_to_resolve` must be greater than 0",
 			},
 			{
 				name:                        "should accept positive value",
-				missingSeriesEvalsToResolve: util.Pointer[int64](2),
+				missingSeriesEvalsToResolve: new(int64(2)),
 			},
 		}
 

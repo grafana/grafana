@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/go-openapi/strfmt"
 	"github.com/grafana/alerting/definition/compat"
@@ -260,35 +259,6 @@ type (
 	TimeInterval              = config.TimeInterval
 	InhibitRule               = config.InhibitRule
 )
-
-type MergeResult struct {
-	definition.MergeResult
-	Identifier        string
-	ExtraRoute        *Route
-	ExtraInhibitRules []config.InhibitRule
-}
-
-func (m MergeResult) LogContext() []any {
-	if len(m.Receivers) == 0 && len(m.TimeIntervals) == 0 {
-		return nil
-	}
-	logCtx := make([]any, 0, 4)
-	if len(m.Receivers) > 0 {
-		rcvBuilder := strings.Builder{}
-		for from, to := range m.Receivers {
-			rcvBuilder.WriteString(fmt.Sprintf("'%s'->'%s',", from, to))
-		}
-		logCtx = append(logCtx, "renamedReceivers", fmt.Sprintf("[%s]", rcvBuilder.String()[0:rcvBuilder.Len()-1]))
-	}
-	if len(m.TimeIntervals) > 0 {
-		intervalBuilder := strings.Builder{}
-		for from, to := range m.TimeIntervals {
-			intervalBuilder.WriteString(fmt.Sprintf("'%s'->'%s',", from, to))
-		}
-		logCtx = append(logCtx, "renamedTimeIntervals", fmt.Sprintf("[%s]", intervalBuilder.String()[0:intervalBuilder.Len()-1]))
-	}
-	return logCtx
-}
 
 const (
 	errInvalidExtraConfigurationMsg = "Invalid Alertmanager configuration: {{.Public.Error}}"
@@ -751,48 +721,6 @@ type PostableUserConfig struct {
 	ManagedRoutes          ManagedRoutes             `yaml:"managed_routes,omitempty" json:"managed_routes,omitempty"`                     // TODO: Move to ConfigRevision?
 	ManagedInhibitionRules ManagedInhibitionRules    `yaml:"managed_inhibition_rules,omitempty" json:"managed_inhibition_rules,omitempty"` // TODO: Move to ConfigRevision?
 	amSimple               map[string]interface{}    `yaml:"-" json:"-"`
-}
-
-func (c *PostableUserConfig) GetMergedAlertmanagerConfig() (MergeResult, error) {
-	if len(c.ExtraConfigs) == 0 {
-		return MergeResult{
-			MergeResult: definition.MergeResult{
-				Config: c.AlertmanagerConfig,
-			},
-		}, nil
-	}
-	// support only one config for now
-	mimirCfg := c.ExtraConfigs[0]
-	if err := mimirCfg.Validate(); err != nil {
-		return MergeResult{}, fmt.Errorf("invalid extra configuration: %w", err)
-	}
-	opts := definition.MergeOpts{
-		DedupSuffix:     mimirCfg.Identifier,
-		SubtreeMatchers: mimirCfg.MergeMatchers,
-	}
-	if err := opts.Validate(); err != nil {
-		return MergeResult{}, fmt.Errorf("invalid merge options: %w", err)
-	}
-
-	mcfg, err := mimirCfg.GetAlertmanagerConfig()
-	if err != nil {
-		return MergeResult{}, fmt.Errorf("failed to get mimir alertmanager config: %w", err)
-	}
-
-	m, err := definition.Merge(c.AlertmanagerConfig, mcfg, opts)
-	if err != nil {
-		return MergeResult{}, fmt.Errorf("failed to merge alertmanager config: %w", err)
-	}
-
-	route := mcfg.Route
-	definition.RenameResourceUsagesInRoutes([]*definition.Route{route}, m.RenameResources)
-
-	return MergeResult{
-		MergeResult:       m,
-		Identifier:        mimirCfg.Identifier,
-		ExtraRoute:        route,
-		ExtraInhibitRules: mcfg.InhibitRules,
-	}, nil
 }
 
 // GetMergedTemplateDefinitions converts the given PostableUserConfig's TemplateFiles to a slice of Templates.

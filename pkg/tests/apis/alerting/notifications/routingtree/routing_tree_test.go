@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
@@ -17,6 +16,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/grafana/grafana-app-sdk/resource"
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/routingtree"
@@ -701,9 +702,9 @@ func TestIntegrationDataConsistency(t *testing.T) {
 	route := definitions.Route{
 		Receiver:       receiver,
 		GroupByStr:     []string{"test-123", "test-456"},
-		GroupWait:      util.Pointer(model.Duration(30 * time.Second)),
-		GroupInterval:  util.Pointer(model.Duration(1 * time.Minute)),
-		RepeatInterval: util.Pointer(model.Duration(24 * time.Hour)),
+		GroupWait:      new(model.Duration(30 * time.Second)),
+		GroupInterval:  new(model.Duration(1 * time.Minute)),
+		RepeatInterval: new(model.Duration(24 * time.Hour)),
 		Routes: []*definitions.Route{
 			{
 				ObjectMatchers: definitions.ObjectMatchers{
@@ -714,9 +715,9 @@ func TestIntegrationDataConsistency(t *testing.T) {
 				},
 				Receiver:            receiver,
 				GroupByStr:          []string{"test-789"},
-				GroupWait:           util.Pointer(model.Duration(2 * time.Minute)),
-				GroupInterval:       util.Pointer(model.Duration(5 * time.Minute)),
-				RepeatInterval:      util.Pointer(model.Duration(30 * time.Hour)),
+				GroupWait:           new(model.Duration(2 * time.Minute)),
+				GroupInterval:       new(model.Duration(5 * time.Minute)),
+				RepeatInterval:      new(model.Duration(30 * time.Hour)),
 				MuteTimeIntervals:   []string{timeInterval},
 				ActiveTimeIntervals: []string{timeInterval},
 				Continue:            true,
@@ -731,18 +732,18 @@ func TestIntegrationDataConsistency(t *testing.T) {
 		assert.Equal(t, v1beta1.RoutingTreeRouteDefaults{
 			Receiver:       receiver,
 			GroupBy:        []string{"test-123", "test-456"},
-			GroupWait:      util.Pointer("30s"),
-			GroupInterval:  util.Pointer("1m"),
-			RepeatInterval: util.Pointer("1d"),
+			GroupWait:      new("30s"),
+			GroupInterval:  new("1m"),
+			RepeatInterval: new("1d"),
 		}, tree.Spec.Defaults)
 		assert.Len(t, tree.Spec.Routes, 1)
 		assert.Equal(t, v1beta1.RoutingTreeRoute{
 			Continue:            true,
-			Receiver:            util.Pointer(receiver),
+			Receiver:            new(receiver),
 			GroupBy:             []string{"test-789"},
-			GroupWait:           util.Pointer("2m"),
-			GroupInterval:       util.Pointer("5m"),
-			RepeatInterval:      util.Pointer("1d6h"),
+			GroupWait:           new("2m"),
+			GroupInterval:       new("5m"),
+			RepeatInterval:      new("1d6h"),
 			MuteTimeIntervals:   []string{timeInterval},
 			ActiveTimeIntervals: []string{timeInterval},
 			Matchers: []v1beta1.RoutingTreeMatcher{

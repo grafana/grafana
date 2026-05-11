@@ -9,7 +9,6 @@ import (
 	"io"
 	"time"
 
-	"github.com/dustin/go-humanize"
 	"github.com/google/uuid"
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -26,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 type objectForStorage struct {
@@ -153,9 +151,7 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 		return v, err
 	}
 
-	if err = s.encode(newObject, &v.raw); err == nil {
-		err = s.handleLargeResources(ctx, obj, &v.raw)
-	}
+	err = s.encode(newObject, &v.raw)
 	return v, err
 }
 
@@ -269,9 +265,7 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		obj.SetAnnotation(utils.AnnoKeyUpdatedTimestamp, previous.GetAnnotation(utils.AnnoKeyUpdatedTimestamp))
 	}
 
-	if err = s.encode(updateObject, &v.raw); err == nil {
-		err = s.handleLargeResources(ctx, obj, &v.raw)
-	}
+	err = s.encode(updateObject, &v.raw)
 	return v, err
 }
 
@@ -310,39 +304,6 @@ func (s *Storage) getParentFolder(ctx context.Context, obj utils.GrafanaMetaAcce
 	}
 
 	return utils.MetaAccessor(raw)
-}
-
-// The bytes buffer will be reset with the proper value
-func (s *Storage) handleLargeResources(ctx context.Context, obj utils.GrafanaMetaAccessor, buf *bytes.Buffer) error {
-	support := s.opts.LargeObjectSupport
-	size := buf.Len()
-	if support != nil && size > support.Threshold() {
-		if support.MaxSize() > 0 && size > support.MaxSize() {
-			return fmt.Errorf("request object is too big (%s > %s)", humanize.Bytes(uint64(size)), humanize.Bytes(uint64(support.MaxSize())))
-		}
-
-		key := &resourcepb.ResourceKey{
-			Group:     s.gr.Group,
-			Resource:  s.gr.Resource,
-			Namespace: obj.GetNamespace(),
-			Name:      obj.GetName(),
-		}
-
-		err := support.Deconstruct(ctx, key, s.store, obj, buf.Bytes())
-		if err != nil {
-			return err
-		}
-
-		buf.Reset()
-		orig, ok := obj.GetRuntimeObject()
-		if !ok {
-			return fmt.Errorf("error using object as runtime object")
-		}
-
-		// Now encode the smaller version
-		return s.encode(orig, buf)
-	}
-	return nil
 }
 
 func (s *Storage) checkGVK(obj runtime.Object) error {
