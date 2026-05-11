@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/utils/ptr"
 
 	correlationsV0 "github.com/grafana/grafana/apps/correlations/pkg/apis/correlation/v0alpha1"
 )
@@ -26,9 +27,9 @@ func TestConversion(t *testing.T) {
 				Label:       "Test Label",
 				Type:        query,
 				SourceUID:   "source",
-				SourceType:  new("source-type"),
-				TargetUID:   new("target"),
-				TargetType:  new("target-type"),
+				SourceType:  ptr.To("source-type"),
+				TargetUID:   ptr.To("target"),
+				TargetType:  ptr.To("target-type"),
 				Description: "A test correlation",
 				Provisioned: true,
 				Config: CorrelationConfig{
@@ -50,7 +51,7 @@ func TestConversion(t *testing.T) {
 					},
 				},
 				Spec: correlationsV0.CorrelationSpec{
-					Description: new("A test correlation"),
+					Description: ptr.To("A test correlation"),
 					Label:       "Test Label",
 					Type:        correlationsV0.CorrelationCorrelationTypeQuery,
 					Source: correlationsV0.CorrelationDataSourceRef{
@@ -71,7 +72,7 @@ func TestConversion(t *testing.T) {
 				Label:       "Test Label",
 				Type:        query,
 				SourceUID:   "source",
-				TargetUID:   new("target"),
+				TargetUID:   ptr.To("target"),
 				Description: "A test correlation",
 				Provisioned: true,
 				Config: CorrelationConfig{
@@ -81,12 +82,12 @@ func TestConversion(t *testing.T) {
 			update: UpdateCorrelationCommand{
 				UID:         "uid",
 				OrgId:       2,
-				Label:       new("Test Label"),
-				Type:        new(query),
+				Label:       ptr.To("Test Label"),
+				Type:        ptr.To(query),
 				SourceUID:   "source",
-				Description: new("A test correlation"),
+				Description: ptr.To("A test correlation"),
 				Config: &CorrelationConfigUpdateDTO{
-					Field:  new("test-field"),
+					Field:  ptr.To("test-field"),
 					Target: &map[string]any{},
 				},
 			},

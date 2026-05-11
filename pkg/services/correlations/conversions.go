@@ -89,7 +89,7 @@ func ToCorrelation(obj *correlationsV0.Correlation) (*Correlation, error) {
 		Label:       obj.Spec.Label,
 		Description: ptr.Deref(obj.Spec.Description, ""),
 		SourceUID:   obj.Spec.Source.Name,
-		SourceType:  new(obj.Spec.Source.Group),
+		SourceType:  ptr.To(obj.Spec.Source.Group),
 		Type:        CorrelationType(obj.Spec.Type),
 		Config:      *cfg,
 	}
@@ -98,7 +98,7 @@ func ToCorrelation(obj *correlationsV0.Correlation) (*Correlation, error) {
 	}
 	if obj.Spec.Target != nil {
 		result.TargetUID = &obj.Spec.Target.Name
-		result.TargetType = new(obj.Spec.Target.Group)
+		result.TargetType = ptr.To(obj.Spec.Target.Group)
 	}
 	return result, nil
 }
