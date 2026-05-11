@@ -712,10 +712,6 @@ func createFolder(t *testing.T, grafanaListedAddr string, title string) *dtos.Fo
 	return f
 }
 
-func intPtr(n int) *int {
-	return &n
-}
-
 func TestIntegrationPreserveSchemaVersion(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableAnonymous: true,
@@ -723,7 +719,7 @@ func TestIntegrationPreserveSchemaVersion(t *testing.T) {
 
 	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
 
-	schemaVersions := []*int{intPtr(1), intPtr(36), intPtr(40), nil}
+	schemaVersions := []*int{new(1), new(36), new(40), nil}
 	for _, schemaVersion := range schemaVersions {
 		var title string
 		if schemaVersion == nil {

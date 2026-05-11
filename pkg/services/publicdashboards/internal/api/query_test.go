@@ -8,7 +8,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -125,7 +124,7 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 						Name: "anyDataFrame",
 						Fields: []*data.Field{
 							data.NewField("anyGroupName", nil, []*string{
-								aws.String("group_a"), aws.String("group_b"), aws.String("group_c"),
+								new("group_a"), new("group_b"), new("group_c"),
 							}),
 						},
 					},

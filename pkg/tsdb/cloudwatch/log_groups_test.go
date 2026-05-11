@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/services"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 )
 
 func TestLogGroupsRoute(t *testing.T) {
@@ -34,7 +33,7 @@ func TestLogGroupsRoute(t *testing.T) {
 				Arn:  "some arn",
 				Name: "some name",
 			},
-			AccountId: utils.Pointer("111"),
+			AccountId: new("111"),
 		}}, nil)
 
 		rr := httptest.NewRecorder()
@@ -56,13 +55,13 @@ func TestLogGroupsRoute(t *testing.T) {
 						Arn:  "arn 1",
 						Name: "name 1",
 					},
-					AccountId: utils.Pointer("111"),
+					AccountId: new("111"),
 				}, {
 					Value: resources.LogGroup{
 						Arn:  "arn 2",
 						Name: "name 2",
 					},
-					AccountId: utils.Pointer("222"),
+					AccountId: new("222"),
 				},
 			}, nil)
 
@@ -166,7 +165,7 @@ func TestLogGroupsRoute(t *testing.T) {
 
 		mockLogsService.AssertCalled(t, "GetLogGroups", resources.LogGroupsRequest{
 			Limit:              50,
-			LogGroupNamePrefix: utils.Pointer("some-prefix"),
+			LogGroupNamePrefix: new("some-prefix"),
 		})
 	})
 
@@ -182,7 +181,7 @@ func TestLogGroupsRoute(t *testing.T) {
 
 		mockLogsService.AssertCalled(t, "GetLogGroups", resources.LogGroupsRequest{
 			Limit:               50,
-			LogGroupNamePattern: utils.Pointer("some-pattern"),
+			LogGroupNamePattern: new("some-pattern"),
 		})
 	})
 
@@ -198,7 +197,7 @@ func TestLogGroupsRoute(t *testing.T) {
 
 		mockLogsService.AssertCalled(t, "GetLogGroups", resources.LogGroupsRequest{
 			Limit:           50,
-			ResourceRequest: resources.ResourceRequest{AccountId: utils.Pointer("some-account-id")},
+			ResourceRequest: resources.ResourceRequest{AccountId: new("some-account-id")},
 		})
 	})
 
