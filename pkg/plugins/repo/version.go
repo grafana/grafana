@@ -21,12 +21,10 @@ type VersionData struct {
 //   - Returns the latest grafana-compatible + arch-compatible version when no version
 //     is specified.
 //
-// Errors for a pinned version:
-//   - ErrVersionNotFound:      version not present in the catalog listing
-//   - ErrVersionNotCompatible: version present but incompatible with this Grafana version
-//   - ErrVersionUnsupported:   version is grafana-compatible but not built for this OS/arch
-//
-// Errors when the whole plugin can't be installed here:
+// Errors:
+//   - ErrVersionNotFound:      specified version not present in the catalog listing
+//   - ErrVersionNotCompatible: specified version is incompatible with this Grafana version
+//   - ErrVersionUnsupported:   specified version is grafana-compatible but not built for this OS/arch
 //   - ErrNoCompatibleVersions: no version in the listing is compatible with this Grafana version
 //   - ErrArcNotFound:          some versions are grafana-compatible but none for this OS/arch
 //
