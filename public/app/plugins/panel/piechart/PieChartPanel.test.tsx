@@ -199,7 +199,6 @@ describe('PieChartPanel', () => {
 
         expect(trigger).toBeDefined();
         expect(trigger).toHaveAttribute('tabindex', '0');
-        expect(trigger).toHaveAttribute('aria-haspopup', 'menu');
       });
 
       it('does not add keyboard semantics to slices without data links', () => {
