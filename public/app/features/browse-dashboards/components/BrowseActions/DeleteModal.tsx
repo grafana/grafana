@@ -9,6 +9,8 @@ import { useGetAffectedItems } from 'app/api/clients/folder/v1beta1/hooks';
 import { type DashboardTreeSelection } from '../../types';
 import { DeletedDashboardsInfo } from '../DeletedDashboardsInfo';
 
+import { getFolderIsEmpty } from './utils';
+
 export interface Props {
   isOpen: boolean;
   onConfirm: () => Promise<void>;
@@ -21,28 +23,7 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
   const [isDeleting, setIsDeleting] = useState(false);
 
   const selectedFolders = Object.keys(selectedItems.folder || {}).filter((uid) => selectedItems.folder[uid]);
-  const selectedDashboards = Object.keys(selectedItems.dashboard || {}).filter((uid) => selectedItems.dashboard[uid]);
-
-  let folderIsEmpty: boolean | undefined = undefined;
-
-  if (data) {
-    // We only want count of folders children but the useGetAffectedItems returns also the items user selected to
-    // delete so we substract those here.
-    const finalChildrenCounts = {
-      folders: data.folders - selectedFolders.length,
-      dashboards: data.dashboards - selectedDashboards.length,
-      library_elements: data.library_elements,
-      alertrules: data.alertrules,
-    };
-
-    // This should give os count of item that are children of any selected folder.
-    folderIsEmpty =
-      finalChildrenCounts.folders +
-        finalChildrenCounts.alertrules +
-        finalChildrenCounts.library_elements +
-        finalChildrenCounts.dashboards ===
-      0;
-  }
+  const folderIsEmpty = getFolderIsEmpty(data, selectedItems);
 
   const onDelete = async () => {
     reportInteraction('grafana_manage_dashboards_delete_clicked', {
@@ -74,7 +55,7 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
             // are no children that could be deleted by accident.
             (isLoading ? (
               <Skeleton width={200} />
-            ) : selectedFolders?.length && folderIsEmpty ? (
+            ) : folderIsEmpty ? (
               <Alert
                 title={t('browse-dashboards.action.delete-modal-folder-empty', 'Selected folder is empty', {
                   count: selectedFolders.length,
