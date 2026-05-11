@@ -49,7 +49,7 @@ jobs:
       - name: Wait for pgvector to be ready
         run: |
           set -euo pipefail
-          for i in $(seq 1 30); do
+          for _ in $(seq 1 30); do
             if docker exec "$(docker ps -qf name=pgvector)" pg_isready -U grafana -d grafana_vectors -q; then
               exit 0
             fi
