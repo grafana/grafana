@@ -10,6 +10,7 @@ import { alertRuleApi } from '../../api/alertRuleApi';
 import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName } from '../../utils/datasource';
 import { ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 import { alertInstanceKey, rulerRuleType } from '../../utils/rules';
+import { PopupCard } from '../HoverCard';
 import { NAMED_ROOT_LABEL_NAME } from '../notification-policies/useNotificationPolicyRoute';
 import { NotificationPolicySidebar } from '../rule-editor/notificaton-preview/NotificationPolicySidebar';
 import { useAlertmanagerNotificationRoutingPreview } from '../rule-editor/notificaton-preview/useAlertmanagerNotificationRoutingPreview';
@@ -130,6 +131,28 @@ export const AlertInstanceNotificationAction = ({
     <>
       <Stack direction="column" gap={0.5} alignItems="flex-start">
         {singlePolicyReceiver && <ContactPointLink name={singlePolicyReceiver} />}
+        {!singlePolicyReceiver && policyReceivers.length > 1 && (
+          <PopupCard
+            arrow
+            placement="top"
+            content={
+              <Stack direction="column" gap={0.5}>
+                {policyReceivers.map((name) => (
+                  <ContactPointLink key={name} name={name} />
+                ))}
+              </Stack>
+            }
+          >
+            <Button fill="text" variant="primary" size="sm">
+              <Trans
+                i18nKey="alerting.alert-instance-extension-point.n-contact-points"
+                count={policyReceivers.length}
+              >
+                {'{{count}}'} contact point
+              </Trans>
+            </Button>
+          </PopupCard>
+        )}
         <Button fill="outline" variant="secondary" size="sm" onClick={() => setIsOpen(true)}>
           {hasMultiplePolicies ? (
             <Trans i18nKey="alerting.alert-instance-extension-point.view-policies">View policies</Trans>

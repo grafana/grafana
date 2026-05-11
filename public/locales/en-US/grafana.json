@@ -440,7 +440,10 @@
       "label-value": "Value"
     },
     "alert-instance-extension-point": {
-      "view-route": "View route"
+      "n-contact-points_one": "{{count}} contact point",
+      "n-contact-points_other": "{{count}} contact points",
+      "view-policies": "View policies",
+      "view-policy": "View policy"
     },
     "alert-instance-modal-selector": {
       "add-alert-data-to-payload": "Add alert data to payload",

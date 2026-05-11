@@ -62,5 +62,8 @@ describe('AlertInstanceNotificationAction', () => {
     // singlePolicyReceiver is undefined when multiple receivers match — no contact point name shown
     expect(screen.queryByText('a-receiver')).not.toBeInTheDocument();
     expect(screen.queryByText('provisioned-contact-point')).not.toBeInTheDocument();
+    // Instead, a clickable "N contact points" affordance is shown above the View policies button.
+    // Tests render the singular source default; runtime uses the _other plural form.
+    expect(screen.getByRole('button', { name: /2 contact point/i })).toBeInTheDocument();
   });
 });
