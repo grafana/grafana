@@ -54,6 +54,7 @@ var snapshotStoreRetryBackoffConfig = backoff.Config{
 	MaxRetries: 2,
 }
 
+// remoteIndexStoreRetryLogger is used only when callers do not have a contextual logger to pass in.
 var remoteIndexStoreRetryLogger = log.New("remote-index-store-retry")
 
 // ErrNonRegularFile is returned when a non-regular file (symlink, pipe, socket, device) is found during index upload.
