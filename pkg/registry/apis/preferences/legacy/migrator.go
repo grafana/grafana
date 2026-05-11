@@ -6,8 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"strconv"
-	"time"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -66,17 +64,13 @@ func (m *preferencesMigrator) MigratePreferences(ctx context.Context, orgId int6
 		return err
 	}
 
-	rv := time.Now().UnixMicro()
-
 	for i, pref := range all.Items {
-		rv++
 		obj, err := utils.MetaAccessor(&pref)
 		if err != nil {
 			return err
 		}
 		pref.APIVersion = preferencesV1.GroupVersion.String()
 		pref.Kind = "Preferences"
-		obj.SetResourceVersion(strconv.FormatInt(rv, 10))
 
 		body, err := json.Marshal(&pref)
 		if err != nil {
