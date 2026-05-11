@@ -1,7 +1,9 @@
 import { AnnotationChangeEvent, type AnnotationEventUIModel, CoreApp, type DataFrame } from '@grafana/data';
+import { type OrganizeFieldsTransformerOptions } from '@grafana/data/internal';
 import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
+  CustomTransformerDefinition,
   dataLayers,
   SceneDataTransformer,
   sceneGraph,
@@ -18,6 +20,18 @@ import { getDatasourceFromQueryRunner } from '../utils/getDatasourceFromQueryRun
 import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
 
 import { type DashboardScene } from './DashboardScene';
+
+const appendAdHocTransform = (
+  adHocTransform: DataTransformerConfig,
+  vizPanel: VizPanel,
+  existingTransformations: DataTransformerConfig[]
+) => {
+  const stamped: DataTransformerConfig = {
+    ...adHocTransform,
+    origin: { source: 'panel', pluginId: vizPanel.state.pluginId, ...adHocTransform.origin },
+  };
+  return [...existingTransformations, stamped];
+};
 
 export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelContext) {
   const dashboard = getDashboardSceneFor(vizPanel);
@@ -139,23 +153,86 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
     updateAdHocFilterVariable(filterVar, newFilter);
   };
 
+  /**
+   * This is the hairy bit, do we want to edit existing transformations if the user already has one defined, or do we want to add new transformations at the end of the pipeline?
+   * Some transforms like nested table require being the last transformation, and won't(?) work if we add additional nested transforms
+   * Can we get by with editing whatever transform exists with the same id, or do we need the consumer to pass additional metadata so we know how to add it to the pipeline?
+   */
   if (config.featureToggles.panelAdHocTransformations) {
-    context.onAddAdHocTransformation = (newConfig: DataTransformerConfig) => {
+    context.onAddAdHocTransformation = (adHocTransform: DataTransformerConfig) => {
       const dataProvider = vizPanel.state.$data;
+
       if (process.env.NODE_ENV !== 'test') {
         // @todo verify the panel $data is always SceneDataTransformer?
         console.log('dataProvider', { dataProvider, instance: dataProvider instanceof SceneDataTransformer });
+        console.log('adHocTransform', adHocTransform);
       }
 
       if (!(dataProvider instanceof SceneDataTransformer)) {
         return;
       }
 
-      const stamped: DataTransformerConfig = {
-        ...newConfig,
-        origin: { source: 'panel', pluginId: vizPanel.state.pluginId, ...newConfig.origin },
-      };
-      const next = [...dataProvider.state.transformations, stamped];
+      // @todo need to update scene types: CustomTransformerDefinition is missing the new types
+
+      let existingTransformation: DataTransformerConfig | undefined = dataProvider.state.transformations.find(
+        // @todo do we want to only change ad-hoc transforms?
+        // (transform: DataTransformerConfig) => transform.id === adHocTransform.id && transform.origin?.source === 'panel'
+        // @todo or do we want to change any existing transform with the same id?
+        // @ts-expect-error
+        (transform: DataTransformerConfig) => transform.id === adHocTransform.id
+      );
+
+      //@ts-expect-error
+      const existingTransformations: DataTransformerConfig[] = dataProvider.state.transformations;
+
+      let next: DataTransformerConfig[] = [];
+
+      if (existingTransformation) {
+        if (process.env.NODE_ENV !== 'test') {
+          console.log('existingTransformation', existingTransformation);
+        }
+        // @todo we probably want to invert the control here, and call a method associated with the transformation id if the transformation supports merging
+        if (existingTransformation.id === 'organize') {
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+          const existingTransformationOptions = existingTransformation.options as OrganizeFieldsTransformerOptions;
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+          const adHocTransformOptions = adHocTransform.options as OrganizeFieldsTransformerOptions;
+
+          // Transformation with merged options
+          const mergedTransform: DataTransformerConfig<OrganizeFieldsTransformerOptions> = {
+            ...existingTransformation,
+            ...adHocTransform,
+            // @todo options type is any, so we might need to manually merge options based on the transformation id
+            options: {
+              excludeByName: {
+                ...existingTransformationOptions.excludeByName,
+                ...adHocTransformOptions.excludeByName,
+              },
+              includeByName: {},
+              indexByName: {},
+              orderBy: [],
+              orderByMode: adHocTransformOptions.orderByMode ?? existingTransformationOptions.orderByMode,
+              renameByName: {},
+            },
+          };
+
+          // @todo splice in instead of mutate
+          next = [
+            //@ts-expect-error
+            ...dataProvider.state.transformations.filter((t: DataTransformerConfig) => t.id === adHocTransform.id),
+            mergedTransform,
+          ];
+        } else {
+          // if not supported transform, add new transform to end of pipeline
+          next = appendAdHocTransform(adHocTransform, vizPanel, existingTransformations);
+        }
+
+        if (process.env.NODE_ENV !== 'test') {
+          console.log('new transforms', existingTransformations);
+        }
+      } else {
+        next = appendAdHocTransform(adHocTransform, vizPanel, existingTransformations);
+      }
 
       dataProvider.setState({ transformations: next });
       dataProvider.reprocessTransformations();

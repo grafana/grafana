@@ -546,6 +546,7 @@ lineage: schemas: [{
 			topic?: "series" | "annotations" | "alertStates" // replaced with common.DataTopic
 			// Options to be passed to the transformer
 			// Valid options depend on the transformer id
+			// @todo this makes merging arbitrary transformations impossible, can we update the types so we can write a generic merge method, or does each transformation that supports merge need to export its own merge method?
 			options: _
 			origin?: {
 				// Transformation origin provenance
