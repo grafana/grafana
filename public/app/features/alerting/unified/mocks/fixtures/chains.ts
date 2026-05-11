@@ -1,11 +1,8 @@
-import { type Chain, type ChainSummary } from '../../api/chainsApi';
-
-export const USAGE_CHAIN_ID = 'usage-chain';
-export const USAGE_CHAIN_FOLDER_TITLE = 'GrafanaCloud/Usage Alerts';
+import { type Chain } from '../../api/chainsApi';
 
 export const chainFixtures: Record<string, Chain> = {
-  [USAGE_CHAIN_ID]: {
-    id: USAGE_CHAIN_ID,
+  'usage-chain': {
+    id: 'usage-chain',
     mode: 'Sequential',
     interval: '1m',
     steps: [
@@ -35,11 +32,3 @@ export const chainFixtures: Record<string, Chain> = {
     ],
   },
 };
-
-export const chainSummaries: ChainSummary[] = Object.values(chainFixtures).map(({ id }) => ({ id }));
-
-// Demo config for the POC: tags the first N rules encountered in the list with
-// sequential positions of the chain, regardless of rule name. A real backend
-// would return memberships keyed by a stable rule UID.
-export const DEMO_CHAIN_ID = USAGE_CHAIN_ID;
-export const DEMO_CHAIN_SIZE = chainFixtures[USAGE_CHAIN_ID].steps.length;

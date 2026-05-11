@@ -67,8 +67,8 @@ export interface AlertRuleListItemProps {
   // group-header level instead. Distinct from `evaluationInterval` above which is a Prometheus
   // duration string consumed by `EvaluationMetadata`.
   evalIntervalSeconds?: number;
-  // V3 evaluation chain link; when present, the per-rule evaluation interval chip is omitted
-  // because chained rules share a chain-level interval surfaced in the drawer.
+  // Evaluation chain chip; surfaced when the rule is part of an evaluation chain
+  // (gated on the alerting.rulesAPIV2 feature toggle and backend-provided membership).
   chainLink?: ReactNode;
 }
 
@@ -123,7 +123,7 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
   }
 
   if (!isPaused) {
-    if (lastEvaluation && evaluationInterval && !chainLink) {
+    if (lastEvaluation && evaluationInterval) {
       metadata.push(
         <EvaluationMetadata lastEvaluation={lastEvaluation} evaluationInterval={evaluationInterval} state={state} />
       );

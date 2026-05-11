@@ -19,16 +19,18 @@ export function ChainDrawer({ chainId, currentPosition, onClose }: ChainDrawerPr
     <Stack direction="row" alignItems="center" gap={1}>
       <Icon name="link" />
       <Text element="h3" variant="h4">
-        <Trans i18nKey="alerting.rule-list-v3.drawer.title">Evaluation chain</Trans>
+        <Trans i18nKey="alerting.evaluation-chain.drawer.title">Evaluation chain</Trans>
       </Text>
     </Stack>
   );
 
   return (
     <Drawer size="sm" onClose={onClose} title={title}>
-      {isLoading && <LoadingPlaceholder text={t('alerting.rule-list-v3.drawer.loading', 'Loading chain details...')} />}
+      {isLoading && (
+        <LoadingPlaceholder text={t('alerting.evaluation-chain.drawer.loading', 'Loading chain details...')} />
+      )}
       {Boolean(error) && (
-        <Alert severity="error" title={t('alerting.rule-list-v3.drawer.error', 'Failed to load chain')} />
+        <Alert severity="error" title={t('alerting.evaluation-chain.drawer.error', 'Failed to load chain')} />
       )}
       {chain && <ChainDrawerContent chain={chain} currentPosition={currentPosition} />}
     </Drawer>
@@ -43,19 +45,19 @@ function ChainDrawerContent({ chain, currentPosition }: { chain: Chain; currentP
       <div className={styles.meta}>
         <div>
           <div className={styles.eyebrow}>
-            <Trans i18nKey="alerting.rule-list-v3.drawer.mode">Mode</Trans>
+            <Trans i18nKey="alerting.evaluation-chain.drawer.mode">Mode</Trans>
           </div>
           <Text variant="body">{chain.mode}</Text>
         </div>
         <div>
           <div className={styles.eyebrow}>
-            <Trans i18nKey="alerting.rule-list-v3.drawer.interval">Interval</Trans>
+            <Trans i18nKey="alerting.evaluation-chain.drawer.interval">Interval</Trans>
           </div>
           <Text variant="body">{chain.interval || '—'}</Text>
         </div>
         <div>
           <div className={styles.eyebrow}>
-            <Trans i18nKey="alerting.rule-list-v3.drawer.rules-count">Rules</Trans>
+            <Trans i18nKey="alerting.evaluation-chain.drawer.rules-count">Rules</Trans>
           </div>
           <Text variant="body">{chain.steps.length}</Text>
         </div>
@@ -63,7 +65,7 @@ function ChainDrawerContent({ chain, currentPosition }: { chain: Chain; currentP
 
       <div>
         <div className={styles.eyebrow}>
-          <Trans i18nKey="alerting.rule-list-v3.drawer.evaluation-order">Evaluation order</Trans>
+          <Trans i18nKey="alerting.evaluation-chain.drawer.evaluation-order">Evaluation order</Trans>
         </div>
         <ol className={styles.steps}>
           {chain.steps.map((step, index) => (
@@ -91,9 +93,9 @@ function ChainStep({ step, position, isCurrent }: ChainStepProps) {
   const isRecording = step.type === 'recording';
 
   const typeLabel = isRecording ? (
-    <Trans i18nKey="alerting.rule-list-v3.drawer.recording-rule">Recording rule</Trans>
+    <Trans i18nKey="alerting.evaluation-chain.drawer.recording-rule">Recording rule</Trans>
   ) : (
-    <Trans i18nKey="alerting.rule-list-v3.drawer.alert-rule">Alert rule</Trans>
+    <Trans i18nKey="alerting.evaluation-chain.drawer.alert-rule">Alert rule</Trans>
   );
 
   return (
@@ -109,7 +111,7 @@ function ChainStep({ step, position, isCurrent }: ChainStepProps) {
       {step.sub && <div className={styles.stepSub}>{step.sub}</div>}
       {isCurrent && (
         <span className={styles.youAreHere}>
-          <Trans i18nKey="alerting.rule-list-v3.drawer.you-are-here">You are here</Trans>
+          <Trans i18nKey="alerting.evaluation-chain.drawer.you-are-here">You are here</Trans>
         </span>
       )}
     </li>

@@ -1180,6 +1180,30 @@
       "label-metric": "Metric",
       "label-pending-period": "Pending period"
     },
+    "evaluation-chain": {
+      "drawer": {
+        "alert-rule": "Alert rule",
+        "error": "Failed to load chain",
+        "evaluation-order": "Evaluation order",
+        "interval": "Interval",
+        "loading": "Loading chain details...",
+        "mode": "Mode",
+        "recording-rule": "Recording rule",
+        "rules-count": "Rules",
+        "title": "Evaluation chain",
+        "you-are-here": "You are here"
+      },
+      "link": {
+        "label": "Open evaluation chain (position {{position}} of {{total}})",
+        "text": "Evaluation chain"
+      }
+    },
+    "evaluation-group": {
+      "label-delete": "Delete",
+      "label-export": "Export",
+      "label-reorder-rules": "Re-order rules",
+      "text-provisioned": "Provisioned"
+    },
     "evaluation-group-creation-modal": {
       "description-group-name": "A group evaluates all its rules over the same evaluation interval.",
       "description-often-rules-group-evaluated": "How often all rules in the group are evaluated.",
@@ -2971,26 +2995,6 @@
     "rule-list-v2": {
       "import-to-gma": "Import alert rules",
       "import-to-gma-tool": "Import to Grafana Alerting"
-    },
-    "rule-list-v3": {
-      "chain-link-label": "Open evaluation chain (position {{position}} of {{total}})",
-      "chain-link-text": "Evaluation chain",
-      "drawer": {
-        "alert-rule": "Alert rule",
-        "error": "Failed to load chain",
-        "evaluation-order": "Evaluation order",
-        "interval": "Interval",
-        "loading": "Loading chain details...",
-        "mode": "Mode",
-        "recording-rule": "Recording rule",
-        "rules-count": "Rules",
-        "title": "Evaluation chain",
-        "you-are-here": "You are here"
-      },
-      "filter": {
-        "all-chains": "All chains",
-        "chain-label": "Evaluation chain"
-      }
     },
     "rule-modify-export": {
       "text-loading-the-rule": "Loading the rule...",

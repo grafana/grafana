@@ -29,12 +29,12 @@ export function EvaluationChainLink({ chainId, position, total, onClick }: Evalu
         className={styles.link}
         onClick={handleClick}
         aria-label={t(
-          'alerting.rule-list-v3.chain-link-label',
+          'alerting.evaluation-chain.link.label',
           'Open evaluation chain (position {{position}} of {{total}})',
           { position, total }
         )}
       >
-        <Trans i18nKey="alerting.rule-list-v3.chain-link-text">Evaluation chain</Trans>
+        <Trans i18nKey="alerting.evaluation-chain.link.text">Evaluation chain</Trans>
       </button>
     </MetaText>
   );

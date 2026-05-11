@@ -1,5 +1,5 @@
 // TODO: The evaluation-chain backend endpoints do not exist yet. Once they ship,
-// replace the fixture-backed queryFns below with real `query: ...` URLs.
+// replace the fixture-backed queryFn below with a real `query: ...` URL.
 // Tracked under the `alerting.rulesAPIV2` feature toggle rollout.
 
 import { alertingApi } from './alertingApi';
@@ -28,10 +28,6 @@ export interface Chain {
   steps: ChainStep[];
 }
 
-export interface ChainSummary {
-  id: string;
-}
-
 export const chainsApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
     getChain: build.query<Chain, { chainId: string }>({
@@ -45,15 +41,7 @@ export const chainsApi = alertingApi.injectEndpoints({
         return { data: chain };
       },
     }),
-
-    listChains: build.query<ChainSummary[], void>({
-      keepUnusedDataFor: 300,
-      queryFn: async () => {
-        const { chainSummaries } = await import('../mocks/fixtures/chains');
-        return { data: chainSummaries };
-      },
-    }),
   }),
 });
 
-export const { useGetChainQuery, useListChainsQuery } = chainsApi;
+export const { useGetChainQuery } = chainsApi;

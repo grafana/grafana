@@ -22,6 +22,7 @@ import { AlertsActivityBanner } from './AlertsActivityBanner';
 import { FilterView } from './FilterView';
 import { GroupedView } from './GroupedView';
 import { RuleListPageTitle } from './RuleListPageTitle';
+import { ChainDrawerProvider } from './evaluation-chains/ChainDrawerContext';
 import RulesFilter from './filter/RulesFilter.v2';
 import { RulesFilterSidebar } from './filter/RulesFilterSidebar';
 import { useApplyDefaultSearch } from './filter/useApplyDefaultSearch';
@@ -31,22 +32,24 @@ function RuleList() {
   const { viewMode, handleViewChange } = useListViewMode();
 
   return (
-    <Stack direction="column">
-      <AlertsActivityBanner />
-      <Stack direction="column" gap={2}>
-        <RulesFilter viewMode={viewMode} onViewModeChange={handleViewChange} />
-        <Stack direction="row" grow={1} minHeight={0}>
-          <RulesFilterSidebar />
-          <Box flex={1} minWidth={0} paddingLeft={2}>
-            {viewMode === 'list' ? (
-              <FilterView filterState={filterState} />
-            ) : (
-              <GroupedView groupFilter={filterState.groupName} namespaceFilter={filterState.namespace} />
-            )}
-          </Box>
+    <ChainDrawerProvider>
+      <Stack direction="column">
+        <AlertsActivityBanner />
+        <Stack direction="column" gap={2}>
+          <RulesFilter viewMode={viewMode} onViewModeChange={handleViewChange} />
+          <Stack direction="row" grow={1} minHeight={0}>
+            <RulesFilterSidebar />
+            <Box flex={1} minWidth={0} paddingLeft={2}>
+              {viewMode === 'list' ? (
+                <FilterView filterState={filterState} />
+              ) : (
+                <GroupedView groupFilter={filterState.groupName} namespaceFilter={filterState.namespace} />
+              )}
+            </Box>
+          </Stack>
         </Stack>
       </Stack>
-    </Stack>
+    </ChainDrawerProvider>
   );
 }
 

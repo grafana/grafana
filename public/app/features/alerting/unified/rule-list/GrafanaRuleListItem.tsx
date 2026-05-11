@@ -1,5 +1,3 @@
-import { type ReactNode } from 'react';
-
 import { type GrafanaRuleGroupIdentifier } from 'app/types/unified-alerting';
 import { type GrafanaPromRuleDTO, PromRuleType } from 'app/types/unified-alerting-dto';
 
@@ -16,6 +14,9 @@ import {
   UnknownRuleListItem,
 } from './components/AlertRuleListItem';
 import { RuleActionsButtons } from './components/RuleActionsButtons.V2';
+import { useChainDrawer } from './evaluation-chains/ChainDrawerContext';
+import { EvaluationChainLink } from './evaluation-chains/EvaluationChainLink';
+import { useGrafanaRuleChainMembership } from './evaluation-chains/useGrafanaRuleChainMembership';
 
 interface GrafanaRuleListItemProps {
   rule: GrafanaPromRuleDTO;
@@ -24,7 +25,6 @@ interface GrafanaRuleListItemProps {
   operation?: 'creating' | 'deleting';
   showLocation?: boolean;
   evalIntervalSeconds?: number;
-  chainLink?: ReactNode;
 }
 
 export function GrafanaRuleListItem({
@@ -34,15 +34,25 @@ export function GrafanaRuleListItem({
   operation,
   showLocation = true,
   evalIntervalSeconds,
-  chainLink,
 }: GrafanaRuleListItemProps) {
   const { name, uid, labels, provenance } = rule;
+  const membership = useGrafanaRuleChainMembership(rule);
+  const { openChainDrawer } = useChainDrawer();
 
   const groupUrl = groups.detailsPageLink(
     GRAFANA_RULES_SOURCE_NAME,
     groupIdentifier.namespace.uid,
     groupIdentifier.groupName
   );
+
+  const chainLink = membership ? (
+    <EvaluationChainLink
+      chainId={membership.id}
+      position={membership.position}
+      total={membership.total}
+      onClick={openChainDrawer}
+    />
+  ) : undefined;
 
   const commonProps: RuleListItemCommonProps = {
     name,
