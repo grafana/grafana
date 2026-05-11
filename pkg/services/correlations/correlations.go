@@ -131,12 +131,13 @@ func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
 // app platform service functions
 
 type CorrelationsK8sService struct {
-	RouteRegister routing.RouteRegister
-	log           log.Logger
-	AccessControl accesscontrol.AccessControl
-	QuotaService  quota.Service
-	clientGen     resource.ClientGenerator
-	k8sClient     client.K8sHandler
+	RouteRegister     routing.RouteRegister
+	log               log.Logger
+	AccessControl     accesscontrol.AccessControl
+	QuotaService      quota.Service
+	clientGen         resource.ClientGenerator
+	k8sClient         client.K8sHandler
+	DataSourceService datasources.DataSourceService
 }
 
 func (s *CorrelationsK8sService) CreateCorrelation(ctx context.Context, cmd CreateCorrelationCommand) (Correlation, error) {
@@ -149,13 +150,34 @@ func (s *CorrelationsK8sService) CreateCorrelation(ctx context.Context, cmd Crea
 		return Correlation{}, ErrCorrelationsQuotaReached
 	}
 
+	sourceType := cmd.SourceType
+
+	if sourceType == "" {
+		cmd := &datasources.GetDataSourceQuery{OrgID: cmd.OrgId, UID: *&cmd.SourceUID}
+		sourceDs, err := s.DataSourceService.GetDataSource(ctx, cmd)
+		if err != nil {
+			return Correlation{}, err
+		}
+		sourceType = sourceDs.Type
+	}
+
+	targetType := cmd.TargetType
+	if cmd.TargetUID != nil && targetType == nil {
+		cmd := &datasources.GetDataSourceQuery{OrgID: cmd.OrgId, UID: *cmd.TargetUID}
+		targetDs, err := s.DataSourceService.GetDataSource(ctx, cmd)
+		if err != nil {
+			return Correlation{}, err
+		}
+		targetType = &targetDs.Type
+	}
+
 	correlation := Correlation{
 		UID:         util.GenerateShortUID(),
 		OrgID:       cmd.OrgId,
 		SourceUID:   cmd.SourceUID,
-		SourceType:  &cmd.SourceType,
+		SourceType:  &sourceType,
 		TargetUID:   cmd.TargetUID,
-		TargetType:  cmd.TargetType,
+		TargetType:  targetType,
 		Label:       cmd.Label,
 		Description: cmd.Description,
 		Config:      cmd.Config,

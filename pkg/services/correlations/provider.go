@@ -34,12 +34,13 @@ func ProvideService(ctx context.Context, sqlStore db.DB, routeRegister routing.R
 		)
 
 		s := &CorrelationsK8sService{
-			RouteRegister: routeRegister,
-			log:           logger,
-			AccessControl: ac,
-			QuotaService:  qs,
-			clientGen:     clientGen,
-			k8sClient:     k8sHandler,
+			RouteRegister:     routeRegister,
+			log:               logger,
+			AccessControl:     ac,
+			QuotaService:      qs,
+			clientGen:         clientGen,
+			k8sClient:         k8sHandler,
+			DataSourceService: ds,
 		}
 
 		s.registerAPIEndpoints()
