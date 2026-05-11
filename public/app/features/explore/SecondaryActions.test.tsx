@@ -175,7 +175,7 @@ describe('SecondaryActions', () => {
     );
 
     expect(screen.getByRole('button', { name: /Recent queries/i })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Query history/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Query history/i })).toBeInTheDocument();
   });
 
   it('should not render Recent queries button when recentQueriesUI is enabled and queryLibrary is also enabled', () => {
