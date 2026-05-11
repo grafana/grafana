@@ -16,14 +16,14 @@ import (
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	prom_model "github.com/prometheus/common/model"
+
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tests/apis/alerting/rules/common"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
 
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -62,10 +62,10 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 			Title: rule.Title,
 			Expressions: v0alpha1.AlertRuleExpressionMap{
 				"A": {
-					QueryType:     util.Pointer("query"),
-					DatasourceUID: util.Pointer(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+					QueryType:     new("query"),
+					DatasourceUID: new(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 					Model:         rule.Data[0].Model,
-					Source:        util.Pointer(true),
+					Source:        new(true),
 					RelativeTimeRange: &v0alpha1.AlertRuleRelativeTimeRange{
 						From: v0alpha1.AlertRulePromDurationWMillis("5m"),
 						To:   v0alpha1.AlertRulePromDurationWMillis("0s"),
@@ -160,10 +160,10 @@ func TestIntegrationAccessControl(t *testing.T) {
 			Title: rule.Title,
 			Expressions: v0alpha1.AlertRuleExpressionMap{
 				"A": {
-					QueryType:     util.Pointer(rule.Data[0].QueryType),
-					DatasourceUID: util.Pointer(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+					QueryType:     new(rule.Data[0].QueryType),
+					DatasourceUID: new(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 					Model:         rule.Data[0].Model,
-					Source:        util.Pointer(true),
+					Source:        new(true),
 					RelativeTimeRange: &v0alpha1.AlertRuleRelativeTimeRange{
 						From: v0alpha1.AlertRulePromDurationWMillis("5m"),
 						To:   v0alpha1.AlertRulePromDurationWMillis("0s"),
@@ -245,10 +245,10 @@ func TestIntegrationCRUD(t *testing.T) {
 				Title: rule.Title,
 				Expressions: v0alpha1.AlertRuleExpressionMap{
 					"A": {
-						QueryType:     util.Pointer(rule.Data[0].QueryType),
-						DatasourceUID: util.Pointer(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						QueryType:     new(rule.Data[0].QueryType),
+						DatasourceUID: new(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 						Model:         rule.Data[0].Model,
-						Source:        util.Pointer(true),
+						Source:        new(true),
 						RelativeTimeRange: &v0alpha1.AlertRuleRelativeTimeRange{
 							From: v0alpha1.AlertRulePromDurationWMillis("5m"),
 							To:   v0alpha1.AlertRulePromDurationWMillis("0s"),
@@ -299,10 +299,10 @@ func TestIntegrationCRUD(t *testing.T) {
 				Title: rule.Title,
 				Expressions: v0alpha1.AlertRuleExpressionMap{
 					"A": {
-						QueryType:     util.Pointer(rule.Data[0].QueryType),
-						DatasourceUID: util.Pointer(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						QueryType:     new(rule.Data[0].QueryType),
+						DatasourceUID: new(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 						Model:         rule.Data[0].Model,
-						Source:        util.Pointer(true),
+						Source:        new(true),
 						RelativeTimeRange: &v0alpha1.AlertRuleRelativeTimeRange{
 							From: v0alpha1.AlertRulePromDurationWMillis("5m"),
 							To:   v0alpha1.AlertRulePromDurationWMillis("0s"),
@@ -360,10 +360,10 @@ func TestIntegrationCRUD(t *testing.T) {
 				Title: rule.Title,
 				Expressions: v0alpha1.AlertRuleExpressionMap{
 					"A": {
-						QueryType:     util.Pointer(rule.Data[0].QueryType),
-						DatasourceUID: util.Pointer(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						QueryType:     new(rule.Data[0].QueryType),
+						DatasourceUID: new(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 						Model:         rule.Data[0].Model,
-						Source:        util.Pointer(true),
+						Source:        new(true),
 						RelativeTimeRange: &v0alpha1.AlertRuleRelativeTimeRange{
 							From: v0alpha1.AlertRulePromDurationWMillis("5m"),
 							To:   v0alpha1.AlertRulePromDurationWMillis("0s"),
@@ -412,8 +412,8 @@ func TestIntegrationCRUD(t *testing.T) {
 				Title: rule.Title,
 				Expressions: v0alpha1.AlertRuleExpressionMap{
 					"A": {
-						QueryType:     util.Pointer(rule.Data[0].QueryType),
-						DatasourceUID: util.Pointer(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						QueryType:     new(rule.Data[0].QueryType),
+						DatasourceUID: new(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 						Model:         rule.Data[0].Model,
 						RelativeTimeRange: &v0alpha1.AlertRuleRelativeTimeRange{
 							From: v0alpha1.AlertRulePromDurationWMillis("5m"),
@@ -449,10 +449,10 @@ func TestIntegrationCRUD(t *testing.T) {
 				Title: rule.Title,
 				Expressions: v0alpha1.AlertRuleExpressionMap{
 					"A": {
-						QueryType:     util.Pointer(rule.Data[0].QueryType),
-						DatasourceUID: util.Pointer(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						QueryType:     new(rule.Data[0].QueryType),
+						DatasourceUID: new(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 						Model:         rule.Data[0].Model,
-						Source:        util.Pointer(true),
+						Source:        new(true),
 						RelativeTimeRange: &v0alpha1.AlertRuleRelativeTimeRange{
 							From: v0alpha1.AlertRulePromDurationWMillis("5m"),
 							To:   v0alpha1.AlertRulePromDurationWMillis("0s"),
@@ -503,10 +503,10 @@ func TestIntegrationPatch(t *testing.T) {
 			Title: rule.Title,
 			Expressions: v0alpha1.AlertRuleExpressionMap{
 				"A": {
-					QueryType:     util.Pointer(rule.Data[0].QueryType),
-					DatasourceUID: util.Pointer(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+					QueryType:     new(rule.Data[0].QueryType),
+					DatasourceUID: new(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 					Model:         rule.Data[0].Model,
-					Source:        util.Pointer(true),
+					Source:        new(true),
 					RelativeTimeRange: &v0alpha1.AlertRuleRelativeTimeRange{
 						From: v0alpha1.AlertRulePromDurationWMillis("5m"),
 						To:   v0alpha1.AlertRulePromDurationWMillis("0s"),
@@ -605,10 +605,10 @@ func TestIntegrationFolderLabelSyncAndValidation(t *testing.T) {
 				Title: rule.Title,
 				Expressions: v0alpha1.AlertRuleExpressionMap{
 					"A": {
-						QueryType:     util.Pointer(rule.Data[0].QueryType),
-						DatasourceUID: util.Pointer(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						QueryType:     new(rule.Data[0].QueryType),
+						DatasourceUID: new(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 						Model:         rule.Data[0].Model,
-						Source:        util.Pointer(true),
+						Source:        new(true),
 						RelativeTimeRange: &v0alpha1.AlertRuleRelativeTimeRange{
 							From: v0alpha1.AlertRulePromDurationWMillis("5m"),
 							To:   v0alpha1.AlertRulePromDurationWMillis("0s"),
@@ -655,10 +655,10 @@ func TestIntegrationFolderLabelSyncAndValidation(t *testing.T) {
 				Title: rule.Title,
 				Expressions: v0alpha1.AlertRuleExpressionMap{
 					"A": {
-						QueryType:     util.Pointer(rule.Data[0].QueryType),
-						DatasourceUID: util.Pointer(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						QueryType:     new(rule.Data[0].QueryType),
+						DatasourceUID: new(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 						Model:         rule.Data[0].Model,
-						Source:        util.Pointer(true),
+						Source:        new(true),
 						RelativeTimeRange: &v0alpha1.AlertRuleRelativeTimeRange{
 							From: v0alpha1.AlertRulePromDurationWMillis("5m"),
 							To:   v0alpha1.AlertRulePromDurationWMillis("0s"),
@@ -695,10 +695,10 @@ func TestIntegrationFolderLabelSyncAndValidation(t *testing.T) {
 				Title: rule.Title,
 				Expressions: v0alpha1.AlertRuleExpressionMap{
 					"A": {
-						QueryType:     util.Pointer(rule.Data[0].QueryType),
-						DatasourceUID: util.Pointer(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						QueryType:     new(rule.Data[0].QueryType),
+						DatasourceUID: new(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 						Model:         rule.Data[0].Model,
-						Source:        util.Pointer(true),
+						Source:        new(true),
 						RelativeTimeRange: &v0alpha1.AlertRuleRelativeTimeRange{
 							From: v0alpha1.AlertRulePromDurationWMillis("5m"),
 							To:   v0alpha1.AlertRulePromDurationWMillis("0s"),
@@ -773,10 +773,10 @@ func TestIntegrationNotificationSettings(t *testing.T) {
 				Title: rule.Title,
 				Expressions: v0alpha1.AlertRuleExpressionMap{
 					"A": {
-						QueryType:     util.Pointer(rule.Data[0].QueryType),
-						DatasourceUID: util.Pointer(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						QueryType:     new(rule.Data[0].QueryType),
+						DatasourceUID: new(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 						Model:         rule.Data[0].Model,
-						Source:        util.Pointer(true),
+						Source:        new(true),
 						RelativeTimeRange: &v0alpha1.AlertRuleRelativeTimeRange{
 							From: v0alpha1.AlertRulePromDurationWMillis("5m"),
 							To:   v0alpha1.AlertRulePromDurationWMillis("0s"),
@@ -966,10 +966,10 @@ func TestIntegrationListWithLabelSelectors(t *testing.T) {
 				Title: rule.Title,
 				Expressions: v0alpha1.AlertRuleExpressionMap{
 					"A": {
-						QueryType:     util.Pointer("query"),
-						DatasourceUID: util.Pointer(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						QueryType:     new("query"),
+						DatasourceUID: new(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 						Model:         rule.Data[0].Model,
-						Source:        util.Pointer(true),
+						Source:        new(true),
 						RelativeTimeRange: &v0alpha1.AlertRuleRelativeTimeRange{
 							From: v0alpha1.AlertRulePromDurationWMillis("5m"),
 							To:   v0alpha1.AlertRulePromDurationWMillis("0s"),
@@ -1050,10 +1050,10 @@ func TestIntegrationListWithFieldSelectors(t *testing.T) {
 				Title: rule.Title,
 				Expressions: v0alpha1.AlertRuleExpressionMap{
 					"A": {
-						QueryType:     util.Pointer("query"),
-						DatasourceUID: util.Pointer(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						QueryType:     new("query"),
+						DatasourceUID: new(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 						Model:         rule.Data[0].Model,
-						Source:        util.Pointer(true),
+						Source:        new(true),
 						RelativeTimeRange: &v0alpha1.AlertRuleRelativeTimeRange{
 							From: v0alpha1.AlertRulePromDurationWMillis("5m"),
 							To:   v0alpha1.AlertRulePromDurationWMillis("0s"),
@@ -1108,9 +1108,9 @@ func TestIntegrationListWithFieldSelectors(t *testing.T) {
 
 	t.Run("filter by spec.paused", func(t *testing.T) {
 		paused1 := baseRule("fs-folder")
-		paused1.Spec.Paused = util.Pointer(true)
+		paused1.Spec.Paused = new(true)
 		paused2 := baseRule("fs-folder")
-		paused2.Spec.Paused = util.Pointer(true)
+		paused2.Spec.Paused = new(true)
 		active1 := baseRule("fs-folder")
 		active2 := baseRule("fs-folder")
 
@@ -1425,10 +1425,10 @@ func TestIntegrationListWithNamedRoutingTreeFieldSelectors(t *testing.T) {
 				Title: rule.Title,
 				Expressions: v0alpha1.AlertRuleExpressionMap{
 					"A": {
-						QueryType:     util.Pointer("query"),
-						DatasourceUID: util.Pointer(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						QueryType:     new("query"),
+						DatasourceUID: new(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 						Model:         rule.Data[0].Model,
-						Source:        util.Pointer(true),
+						Source:        new(true),
 						RelativeTimeRange: &v0alpha1.AlertRuleRelativeTimeRange{
 							From: v0alpha1.AlertRulePromDurationWMillis("5m"),
 							To:   v0alpha1.AlertRulePromDurationWMillis("0s"),

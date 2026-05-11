@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 func ConvertToK8sResources(orgID int64, routes legacy_storage.ManagedRoutes, namespacer request.NamespaceMapper, accesses map[string]ngmodels.RoutePermissionSet) (*model.RoutingTreeList, error) {
@@ -104,7 +103,7 @@ func convertRouteToK8sSubRoute(r *definitions.Route) model.RoutingTreeRoute {
 		Routes:              make([]model.RoutingTreeRoute, 0, len(r.Routes)),
 	}
 	if r.Receiver != "" {
-		result.Receiver = util.Pointer(r.Receiver)
+		result.Receiver = new(r.Receiver)
 	}
 
 	if r.Match != nil {

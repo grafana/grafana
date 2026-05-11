@@ -8,7 +8,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
-	"k8s.io/utils/ptr"
 	"pgregory.net/rapid"
 
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
@@ -63,7 +62,7 @@ func Test_SecureValueMetadataStorage_CreateAndRead(t *testing.T) {
 		testSecureValue := &secretv1beta1.SecureValue{
 			Spec: secretv1beta1.SecureValueSpec{
 				Description: "test description",
-				Value:       ptr.To(secretv1beta1.NewExposedSecureValue("test-value")),
+				Value:       new(secretv1beta1.NewExposedSecureValue("test-value")),
 			},
 			Status: secretv1beta1.SecureValueStatus{Keeper: keeperName},
 		}
@@ -117,7 +116,7 @@ func Test_SecureValueMetadataStorage_CreateAndRead(t *testing.T) {
 		testSecureValue := &secretv1beta1.SecureValue{
 			Spec: secretv1beta1.SecureValueSpec{
 				Description: "test description 2",
-				Value:       ptr.To(secretv1beta1.NewExposedSecureValue("test-value-2")),
+				Value:       new(secretv1beta1.NewExposedSecureValue("test-value-2")),
 			},
 			Status: secretv1beta1.SecureValueStatus{Keeper: keeperName},
 		}

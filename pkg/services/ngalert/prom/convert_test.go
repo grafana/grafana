@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestPrometheusRulesToGrafana(t *testing.T) {
@@ -38,13 +37,13 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 			promGroup: PrometheusRuleGroup{
 				Name:        "test-group-1",
 				Interval:    prommodel.Duration(10 * time.Second),
-				QueryOffset: util.Pointer(prommodel.Duration(1 * time.Minute)),
+				QueryOffset: new(prommodel.Duration(1 * time.Minute)),
 				Rules: []PrometheusRule{
 					{
 						Alert:         "alert-1",
 						Expr:          "cpu_usage > 80",
-						For:           util.Pointer(prommodel.Duration(5 * time.Minute)),
-						KeepFiringFor: util.Pointer(prommodel.Duration(60 * time.Second)),
+						For:           new(prommodel.Duration(5 * time.Minute)),
+						KeepFiringFor: new(prommodel.Duration(60 * time.Second)),
 						Labels: map[string]string{
 							"severity": "critical",
 						},
@@ -202,7 +201,7 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 			promGroup: PrometheusRuleGroup{
 				Name:        "test-group-1",
 				Interval:    prommodel.Duration(10 * time.Second),
-				QueryOffset: util.Pointer(prommodel.Duration(-1)),
+				QueryOffset: new(prommodel.Duration(-1)),
 				Rules: []PrometheusRule{
 					{
 						Alert: "alert-1",
@@ -259,7 +258,7 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 					{
 						Alert: "alert-1",
 						Expr:  "cpu_usage > 80",
-						For:   util.Pointer(prommodel.Duration(5 * time.Minute)),
+						For:   new(prommodel.Duration(5 * time.Minute)),
 						Labels: map[string]string{
 							"severity": "critical",
 						},
@@ -270,7 +269,7 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 				},
 			},
 			config: Config{
-				EvaluationOffset: util.Pointer(5 * time.Minute),
+				EvaluationOffset: new(5 * time.Minute),
 			},
 			expectError: false,
 		},
@@ -362,7 +361,7 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 				if promRule.Record != "" {
 					require.Nil(t, grafanaRule.MissingSeriesEvalsToResolve)
 				} else {
-					require.Equal(t, util.Pointer(int64(1)), grafanaRule.MissingSeriesEvalsToResolve)
+					require.Equal(t, new(int64(1)), grafanaRule.MissingSeriesEvalsToResolve)
 				}
 
 				require.Equal(t, models.OkErrState, grafanaRule.ExecErrState)
@@ -746,7 +745,7 @@ func TestPrometheusRulesToGrafana_UID(t *testing.T) {
 			{
 				Alert: "alert-1",
 				Expr:  "cpu_usage > 80",
-				For:   util.Pointer(prommodel.Duration(5 * time.Minute)),
+				For:   new(prommodel.Duration(5 * time.Minute)),
 				Labels: map[string]string{
 					"severity":   "critical",
 					ruleUIDLabel: "rule-uid-1",
@@ -862,12 +861,12 @@ func TestPrometheusRulesToGrafana_KeepOriginalRuleDefinition(t *testing.T) {
 	}{
 		{
 			name:                       "keep original rule definition is true",
-			keepOriginalRuleDefinition: util.Pointer(true),
+			keepOriginalRuleDefinition: new(true),
 			expectDefinition:           true,
 		},
 		{
 			name:                       "keep original rule definition is false",
-			keepOriginalRuleDefinition: util.Pointer(false),
+			keepOriginalRuleDefinition: new(false),
 			expectDefinition:           false,
 		},
 		{

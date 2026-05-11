@@ -1561,8 +1561,8 @@ func TestIntegrationRuleCreate(t *testing.T) {
 			Rules: []apimodels.PostableExtendedRuleNode{
 				{
 					ApiRuleNode: &apimodels.ApiRuleNode{
-						For:           util.Pointer(model.Duration(2 * time.Minute)),
-						KeepFiringFor: util.Pointer(model.Duration(1 * time.Minute)),
+						For:           new(model.Duration(2 * time.Minute)),
+						KeepFiringFor: new(model.Duration(1 * time.Minute)),
 						Labels: map[string]string{
 							"foo🙂":  "bar",
 							"_bar1": "baz🙂",
@@ -1595,8 +1595,8 @@ func TestIntegrationRuleCreate(t *testing.T) {
 			Rules: []apimodels.GettableExtendedRuleNode{
 				{
 					ApiRuleNode: &apimodels.ApiRuleNode{
-						For:           util.Pointer(model.Duration(2 * time.Minute)),
-						KeepFiringFor: util.Pointer(model.Duration(1 * time.Minute)),
+						For:           new(model.Duration(2 * time.Minute)),
+						KeepFiringFor: new(model.Duration(1 * time.Minute)),
 						Labels: map[string]string{
 							"foo🙂":  "bar",
 							"_bar1": "baz🙂",
@@ -1768,34 +1768,34 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 			{
 				name:           "should be able to set missing_series_evals_to_resolve to 5",
 				initialValue:   nil,
-				updatedValue:   util.Pointer[int64](5),
-				expectedValue:  util.Pointer[int64](5),
+				updatedValue:   new(int64(5)),
+				expectedValue:  new(int64(5)),
 				expectedStatus: http.StatusAccepted,
 			},
 			{
 				name:           "should be able to update missing_series_evals_to_resolve",
-				initialValue:   util.Pointer[int64](1),
-				updatedValue:   util.Pointer[int64](2),
-				expectedValue:  util.Pointer[int64](2),
+				initialValue:   new(int64(1)),
+				updatedValue:   new(int64(2)),
+				expectedValue:  new(int64(2)),
 				expectedStatus: http.StatusAccepted,
 			},
 			{
 				name:           "should preserve missing_series_evals_to_resolve when it's set nil",
-				initialValue:   util.Pointer[int64](5),
+				initialValue:   new(int64(5)),
 				updatedValue:   nil,
-				expectedValue:  util.Pointer[int64](5),
+				expectedValue:  new(int64(5)),
 				expectedStatus: http.StatusAccepted,
 			},
 			{
 				name:           "should reject missing_series_evals_to_resolve < 0",
-				initialValue:   util.Pointer[int64](1),
-				updatedValue:   util.Pointer[int64](-1),
+				initialValue:   new(int64(1)),
+				updatedValue:   new(int64(-1)),
 				expectedStatus: http.StatusBadRequest,
 			},
 			{
 				name:           "should be able to reset missing_series_evals_to_resolve by setting it to 0",
-				initialValue:   util.Pointer[int64](1),
-				updatedValue:   util.Pointer[int64](0),
+				initialValue:   new(int64(1)),
+				updatedValue:   new(int64(0)),
 				expectedValue:  nil,
 				expectedStatus: http.StatusAccepted,
 			},
@@ -3471,7 +3471,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						},
 						NoDataState:                 apimodels.NoDataState(ngmodels.Alerting),
 						ExecErrState:                apimodels.ExecutionErrorState(ngmodels.AlertingErrState),
-						MissingSeriesEvalsToResolve: util.Pointer[int64](2), // If UID is specified, this field is required
+						MissingSeriesEvalsToResolve: new(int64(2)), // If UID is specified, this field is required
 					},
 				},
 			},
