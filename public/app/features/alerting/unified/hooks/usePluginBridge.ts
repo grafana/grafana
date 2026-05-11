@@ -1,5 +1,5 @@
 import { OrgRole, type PluginMeta } from '@grafana/data';
-import { usePluginSettings } from '@grafana/runtime';
+import { usePluginSettings } from '@grafana/runtime/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { type PluginID } from '../components/PluginBridge';
