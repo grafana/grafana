@@ -972,9 +972,9 @@ func TestAuthorizeAdminJob(t *testing.T) {
 	t.Run("admin is authorized", func(t *testing.T) {
 		adminChecker := auth.NewMockAccessChecker(t)
 		adminChecker.EXPECT().Check(mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
-			return req.Verb == "create" &&
+			return req.Verb == utils.VerbUpdate &&
 				req.Group == provisioning.GROUP &&
-				req.Resource == provisioning.JobResourceInfo.GetName() &&
+				req.Resource == provisioning.RepositoryResourceInfo.GetName() &&
 				req.Namespace == cfg.Namespace
 		}), "").Return(nil)
 
@@ -989,9 +989,9 @@ func TestAuthorizeAdminJob(t *testing.T) {
 	t.Run("non-admin is forbidden", func(t *testing.T) {
 		adminChecker := auth.NewMockAccessChecker(t)
 		adminChecker.EXPECT().Check(mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
-			return req.Verb == "create" &&
+			return req.Verb == utils.VerbUpdate &&
 				req.Group == provisioning.GROUP &&
-				req.Resource == provisioning.JobResourceInfo.GetName()
+				req.Resource == provisioning.RepositoryResourceInfo.GetName()
 		}), "").Return(apierrors.NewForbidden(schema.GroupResource{}, "", fmt.Errorf("admin role is required")))
 
 		accessMock := auth.NewMockAccessChecker(t)
