@@ -18,6 +18,10 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 )
 
+// The maximum number of teams per user to use when listing preferences and for the merged endpoint. Teams beyond this limit
+// will have their preferences ignored to keep the processing time bounded.
+var PreferencesTeamLimit = 25
+
 // preferencesStorage wraps a regular storage backend, replacing the default list behavior
 // Rather than returning all preferences and filtering with the authz client (where there is not yet support for preferences)
 // This converts the query into explicitly picking the preferences the caller should have access
@@ -123,8 +127,8 @@ func (s *preferencesStorage) ListPreferences(ctx context.Context, options *inter
 	// predictable order
 	slices.Sort(groups)
 	for i, group := range groups {
-		if i >= 25 {
-			break // only process the fist 25 -- to keep it bounded
+		if i >= PreferencesTeamLimit {
+			break // only process the first PreferencesTeamLimit -- to keep it bounded
 		}
 		if err = addPreferencesToResult(utils.TeamOwner(group)); err != nil {
 			return nil, err
