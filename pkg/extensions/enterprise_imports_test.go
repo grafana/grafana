@@ -60,7 +60,6 @@ import (
 	_ "k8s.io/apiserver/pkg/util/compatibility"
 	_ "k8s.io/client-go/dynamic/fake"
 	_ "k8s.io/component-base/featuregate/testing"
-	_ "k8s.io/utils/ptr"
 	_ "pgregory.net/rapid"
 	_ "sigs.k8s.io/randfill"
 )

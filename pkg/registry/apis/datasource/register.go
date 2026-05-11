@@ -16,6 +16,7 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	openapi "k8s.io/kube-openapi/pkg/common"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
@@ -57,8 +58,9 @@ type DataSourceAPIBuilder struct {
 	client                 PluginClient // will only ever be called with the same plugin id!
 	datasources            PluginDatasourceProvider
 	contextProvider        PluginContextWrapper
-	decrypter              decrypt.DecryptService // when not reading legacy
-	accessControl          accesscontrol.AccessControl
+	decrypter              decrypt.DecryptService      // when not reading legacy
+	accessControl          accesscontrol.AccessControl // ST Only
+	accessClient           authlib.AccessClient        // MT+ST
 	schemas                map[string]*pluginschema.PluginSchema
 	queryTypes             *datasourceV0.QueryTypeDefinitionList
 	cfg                    DataSourceAPIBuilderConfig
@@ -76,6 +78,7 @@ func RegisterAPIService(
 	contextProvider PluginContextWrapper,
 	decrypter decrypt.DecryptService, // when not reading legacy
 	accessControl accesscontrol.AccessControl,
+	accessClient authlib.AccessClient,
 	reg prometheus.Registerer,
 	pluginSources sources.Registry,
 ) (*DataSourceAPIBuilder, error) {
@@ -143,6 +146,7 @@ func RegisterAPIService(
 		if plugin.Schemas != nil {
 			builder.schemas = plugin.Schemas
 		}
+		builder.accessClient = accessClient // Only registered in ST for now
 
 		apiRegistrar.RegisterAPI(builder)
 	}
