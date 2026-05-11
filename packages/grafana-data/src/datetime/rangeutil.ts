@@ -422,17 +422,6 @@ export function describeTextRange(expr: string): TimeOption {
   return opt;
 }
 
-// TODO: Should we keep these format presets somewhere common?
-const rangeFormatShort: Intl.DateTimeFormatOptions = {
-  dateStyle: 'short',
-  timeStyle: 'short',
-};
-
-const rangeFormatFull: Intl.DateTimeFormatOptions = {
-  dateStyle: 'short',
-  timeStyle: 'medium',
-};
-
 /**
  * Use this function to get a properly formatted string representation of a {@link @grafana/data:RawTimeRange | range}.
  *
