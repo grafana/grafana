@@ -21,10 +21,7 @@ export type Props = DataSourcePluginOptionsEditorProps<CloudMonitoringOptions, C
 
 const OAUTH_PASSTHROUGH = 'oauthPassthrough';
 
-const AUTH_OPTIONS = [
-  ...GOOGLE_AUTH_TYPE_OPTIONS,
-  { label: 'Forward OAuth Identity', value: OAUTH_PASSTHROUGH },
-];
+const AUTH_OPTIONS = [...GOOGLE_AUTH_TYPE_OPTIONS, { label: 'Forward OAuth Identity', value: OAUTH_PASSTHROUGH }];
 
 export const ConfigEditor = memo(({ options, onOptionsChange }: Props) => {
   const onAuthenticationTypeChange = (newOptions: DataSourceSettings<DataSourceOptions, DataSourceSecureJsonData>) => {
