@@ -64,25 +64,34 @@ func (tc *preferencesTestCase) Setup(t *testing.T, helper *apis.K8sTestHelper) b
 		helper.OrgB.Admin,
 	}
 
+	// Track unique orgs so we can save a namespace preference for each.
+	seenOrgs := map[int64]bool{}
+
 	for _, user := range users {
+		orgID := user.Identity.GetOrgID()
 		userID, err := user.Identity.GetInternalID()
 		require.NoError(t, err)
 
+		// Use the user's own OrgID — OrgB.Admin is in a different org from
+		// the Org1 users, so the verify step looks them up under their own org.
 		err = service.Save(ctx, &pref.SavePreferenceCommand{
 			UserID:   userID,
-			OrgID:    helper.Org1.OrgID,
+			OrgID:    orgID,
 			Language: "lang1",
 		})
 		require.NoError(t, err)
 
 		tc.users = append(tc.users, user)
-	}
 
-	err := service.Save(ctx, &pref.SavePreferenceCommand{
-		OrgID:    helper.Org1.OrgID,
-		Language: "lang2",
-	})
-	require.NoError(t, err)
+		if !seenOrgs[orgID] {
+			err := service.Save(ctx, &pref.SavePreferenceCommand{
+				OrgID:    orgID,
+				Language: "org",
+			})
+			require.NoError(t, err)
+		}
+		seenOrgs[orgID] = true
+	}
 
 	return true // will exist in mode0
 }

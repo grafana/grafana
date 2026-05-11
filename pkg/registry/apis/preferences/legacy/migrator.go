@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apiserver/pkg/endpoints/request"
 
 	preferencesV1 "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -60,7 +59,6 @@ func ProvidePreferencesMigrator(sql legacysql.LegacyDatabaseProvider) Preference
 func (m *preferencesMigrator) MigratePreferences(ctx context.Context, orgId int64, opts migrations.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
 	opts.Progress(-1, "migrating preferences...")
 
-	ctx = request.WithNamespace(ctx, opts.Namespace)
 	sql := NewLegacySQL(m.sql)
 
 	all, err := sql.ListPreferences(ctx, opts.Namespace, nil, false)
@@ -72,13 +70,15 @@ func (m *preferencesMigrator) MigratePreferences(ctx context.Context, orgId int6
 
 	for i, pref := range all.Items {
 		rv++
-		obj, err := utils.MetaAccessor(pref)
+		obj, err := utils.MetaAccessor(&pref)
 		if err != nil {
 			return err
 		}
+		pref.APIVersion = preferencesV1.GroupVersion.String()
+		pref.Kind = "Preferences"
 		obj.SetResourceVersion(strconv.FormatInt(rv, 10))
 
-		body, err := json.Marshal(pref)
+		body, err := json.Marshal(&pref)
 		if err != nil {
 			return err
 		}
