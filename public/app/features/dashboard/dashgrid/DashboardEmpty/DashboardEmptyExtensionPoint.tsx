@@ -2,7 +2,8 @@ import type { JSX } from 'react';
 
 import { PluginExtensionPoints } from '@grafana/data';
 import { config, renderLimitedComponents, usePluginComponents } from '@grafana/runtime';
-import PageLoader from 'app/core/components/PageLoader/PageLoader';
+import { PageLoader } from '@grafana/ui';
+import { Branding } from 'app/core/components/Branding/Branding';
 
 interface DashboardEmptyExtensionPointProps {
   renderDefaultUI: () => JSX.Element;
@@ -26,7 +27,11 @@ function InternalDashboardEmptyExtensionPoint(props: DashboardEmptyExtensionPoin
   });
 
   if (isLoading) {
-    return <PageLoader />;
+    return (
+      <PageLoader>
+        <Branding.LoginLogo />
+      </PageLoader>
+    );
   }
 
   return (

@@ -1,23 +1,31 @@
 import { css, keyframes } from '@emotion/css';
+import { type ReactNode } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { useStyles2 } from '@grafana/ui';
 
-import { Branding } from '../Branding/Branding';
+import { useStyles2 } from '../../themes/ThemeContext';
 
-export function BouncingLoader() {
+import grafanaIconSvg from './grafana_icon.svg';
+
+interface Props {
+  children?: ReactNode;
+}
+
+export function PageLoader({ children }: Props) {
   const styles = useStyles2(getStyles);
 
   return (
-    <div
-      className={styles.container}
-      aria-live="polite"
-      role="status"
-      aria-label={t('bouncing-loader.label', 'Loading')}
-    >
-      <div className={styles.bounce}>
-        <Branding.LoginLogo className={styles.logo} />
+    <div className={styles.loadingPage}>
+      <div
+        className={styles.container}
+        aria-live="polite"
+        role="status"
+        aria-label={t('bouncing-loader.label', 'Loading')}
+      >
+        <div className={styles.bounce}>
+          <div className={styles.logo}>{children ?? <img src={grafanaIconSvg} alt="Grafana" />}</div>
+        </div>
       </div>
     </div>
   );
@@ -80,6 +88,16 @@ const squash = keyframes({
 });
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  loadingPage: css({
+    backgroundColor: theme.colors.background.primary,
+    flex: 1,
+    flexDirection: 'column',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: '100%',
+  }),
+
   container: css({
     opacity: 0,
     [theme.transitions.handleMotion('no-preference')]: {
@@ -113,7 +131,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
       animationDuration: '0.9s',
       animationIterationCount: 'infinite',
     },
-    width: '60px',
-    height: '60px',
+
+    img: {
+      width: '60px',
+      height: '60px',
+    },
   }),
 });

@@ -2,8 +2,8 @@ import { type Action } from 'redux';
 
 import { type DataSourcePluginMeta, PluginType } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { LinkButton, FilterInput } from '@grafana/ui';
-import PageLoader from 'app/core/components/PageLoader/PageLoader';
+import { LinkButton, FilterInput, PageLoader } from '@grafana/ui';
+import { Branding } from 'app/core/components/Branding/Branding';
 import { PluginsErrorsInfo } from 'app/features/plugins/components/PluginsErrorsInfo';
 import { type DataSourcePluginCategory } from 'app/types/datasources';
 import { type StoreState, useDispatch, useSelector } from 'app/types/store';
@@ -56,7 +56,11 @@ export function NewDataSourceView({
   onSetSearchQuery,
 }: ViewProps) {
   if (isLoading) {
-    return <PageLoader />;
+    return (
+      <PageLoader>
+        <Branding.LoginLogo />
+      </PageLoader>
+    );
   }
 
   return (

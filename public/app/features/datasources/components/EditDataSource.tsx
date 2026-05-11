@@ -12,8 +12,9 @@ import {
   DataSourceUpdatedSuccessfully,
 } from '@grafana/data';
 import { getDataSourceSrv, usePluginComponents, type UsePluginComponentsResult } from '@grafana/runtime';
+import { PageLoader } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
-import PageLoader from 'app/core/components/PageLoader/PageLoader';
+import { Branding } from 'app/core/components/Branding/Branding';
 import { type DataSourceSettingsState } from 'app/types/datasources';
 import { useDispatch } from 'app/types/store';
 
@@ -209,7 +210,11 @@ export function EditDataSourceView({
   );
 
   if (loading || isLoading) {
-    return <PageLoader />;
+    return (
+      <PageLoader>
+        <Branding.LoginLogo />
+      </PageLoader>
+    );
   }
 
   if (loadError || !hasDataSource || !dsi) {
