@@ -212,7 +212,7 @@ describe('PanelScreenshotServiceImpl', () => {
     mountPanelElement(PANEL_PATH_ID);
 
     await expect(
-      // biome-ignore lint/suspicious/noExplicitAny: deliberately exercising bad input
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       service.capture(PANEL_PATH_ID, { sceneContext: badValue as any })
     ).rejects.toThrow(/sceneContext must be a SceneObject/);
 
