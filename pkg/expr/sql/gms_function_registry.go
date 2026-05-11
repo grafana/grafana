@@ -10,26 +10,24 @@ import (
 )
 
 // gmsBuiltinFunctions indexes function.BuiltIns by name for IsKnownEngineFunction.
-var gmsBuiltinFunctions = func() map[string]struct{} {
-	m := make(map[string]struct{}, len(function.BuiltIns))
-	for _, fn := range function.BuiltIns {
-		m[strings.ToLower(fn.FunctionName())] = struct{}{}
-	}
-	return m
-}()
+var gmsBuiltinFunctions map[string]struct{}
 
 // gmsExtraFunctions covers GMS functions that are registered separately by the
 // engine outside of function.BuiltIns. These names are finite and well-known, so
 // they are safe as metric label values.
-var gmsExtraFunctions = func() map[string]struct{} {
-	m := map[string]struct{}{
-		"version": {},
+var gmsExtraFunctions map[string]struct{}
+
+func init() {
+	gmsBuiltinFunctions = make(map[string]struct{}, len(function.BuiltIns))
+	for _, fn := range function.BuiltIns {
+		gmsBuiltinFunctions[strings.ToLower(fn.FunctionName())] = struct{}{}
 	}
+
+	gmsExtraFunctions = map[string]struct{}{"version": {}}
 	for _, fn := range function.GetLockingFuncs(gmssql.NewLockSubsystem()) {
-		m[strings.ToLower(fn.FunctionName())] = struct{}{}
+		gmsExtraFunctions[strings.ToLower(fn.FunctionName())] = struct{}{}
 	}
-	return m
-}()
+}
 
 // IsKnownEngineFunction reports whether name (case-insensitive) is a known
 // go-mysql-server function. True means the name comes from a finite vocabulary
