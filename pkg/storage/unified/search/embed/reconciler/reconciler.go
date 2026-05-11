@@ -94,7 +94,7 @@ type Reconciler struct {
 	broadcaster resource.Broadcaster[*resource.WrittenEvent]
 
 	pendingMu sync.Mutex
-	pending map[string]*pendingEvent
+	pending   map[string]*pendingEvent
 }
 
 // New constructs the embedding reconciler.
