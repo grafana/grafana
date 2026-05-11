@@ -61,6 +61,7 @@ export const SidebarCard = ({
   // of the selection (checkbox-style) instead of replacing it.
   const showSelectionControls =
     multiSelectMode || selectedQueryRefIds.length >= 2 || selectedTransformationIds.length >= 2;
+  const showHoverActions = hasActions && !multiSelectMode;
 
   const styles = useStyles2(getStyles, { isSelected, isPartOfSelection, item });
 
@@ -140,28 +141,28 @@ export const SidebarCard = ({
           )}
           {children}
         </div>
-        {/** Alerts don't have actions and cannot be hidden so we don't need to show the hidden icon or hover actions. */}
-        {/** hasActions is indicating if this is an alert card or a query/transformation card. */}
         {hasActions && (
           <div>
             <div className={styles.cardContentIcons}>
               {item.isHidden && <Icon name="eye-slash" size="sm" />}
               {!!item.error && <Icon name="exclamation-triangle" size="sm" color={theme.colors.error.text} />}
             </div>
-            <div className={cx(styles.hoverActions, { [styles.hoverActionsVisible]: hasFocusWithin })}>
-              <Actions
-                handleResetFocus={handleResetFocus}
-                item={item}
-                onDelete={onDelete}
-                onDuplicate={onDuplicate}
-                onToggleHide={onToggleHide}
-                order={{
-                  delete: 1,
-                  duplicate: 0,
-                  hide: 2,
-                }}
-              />
-            </div>
+            {showHoverActions && (
+              <div className={cx(styles.hoverActions, { [styles.hoverActionsVisible]: hasFocusWithin })}>
+                <Actions
+                  handleResetFocus={handleResetFocus}
+                  item={item}
+                  onDelete={onDelete}
+                  onDuplicate={onDuplicate}
+                  onToggleHide={onToggleHide}
+                  order={{
+                    delete: 1,
+                    duplicate: 0,
+                    hide: 2,
+                  }}
+                />
+              </div>
+            )}
           </div>
         )}
       </div>

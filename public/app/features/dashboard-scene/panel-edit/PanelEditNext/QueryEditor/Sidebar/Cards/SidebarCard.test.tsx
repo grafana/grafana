@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { type DataQuery } from '@grafana/schema';
 
 import { QueryEditorType } from '../../../constants';
+import { type QueryEditorUIState } from '../../QueryEditorContext';
 import { ds1SettingsMock, renderWithQueryEditorProvider } from '../../testUtils';
 import { type Transformation } from '../../types';
 
@@ -31,6 +32,7 @@ interface RenderSidebarCardProps {
     onToggleHide?: jest.Mock;
     onDuplicate?: jest.Mock;
   };
+  uiStateOverrides?: Partial<QueryEditorUIState>;
 }
 
 function renderSidebarCard({
@@ -46,6 +48,7 @@ function renderSidebarCard({
     onToggleHide: jest.fn(),
     onDuplicate: jest.fn(),
   },
+  uiStateOverrides = {},
 }: RenderSidebarCardProps = {}) {
   const queries: DataQuery[] = [{ refId: id, datasource: { type: 'test', uid: 'test' } }];
   const item = {
@@ -69,7 +72,7 @@ function renderSidebarCard({
     {
       queries,
       selectedQuery: queries[0],
-      uiStateOverrides: { setSelectedQuery, setPendingExpression },
+      uiStateOverrides: { setSelectedQuery, setPendingExpression, ...uiStateOverrides },
       actionsOverrides: { addQuery },
     }
   );
@@ -421,6 +424,17 @@ describe('SidebarCard', () => {
       expect(screen.getByRole('button', { name: /hide query/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /duplicate query/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /remove query/i })).toBeInTheDocument();
+    });
+
+    it('does not render hover actions in multi-select mode', () => {
+      renderSidebarCard({
+        id: 'A',
+        uiStateOverrides: { multiSelectMode: true },
+      });
+
+      expect(screen.queryByRole('button', { name: /hide query/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /duplicate query/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /remove query/i })).not.toBeInTheDocument();
     });
 
     it('does not render the hover actions when hasActions is false', () => {
