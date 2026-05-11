@@ -25,7 +25,7 @@ const DefaultInterval = time.Minute
 // maxEventAttempts caps retries so a permanently broken dashboard
 // can't wedge cursor advancement forever. ~5 minutes at the default
 // poll interval — long enough to ride out transient Vertex hiccups.
-const maxEventAttempts = 10
+const maxEventAttempts = 5
 
 // defaultLockRetryInterval is how long Run waits between attempts to
 // acquire the reconciler advisory lock when another replica holds it.
@@ -116,7 +116,7 @@ func New(opts Options) (*Reconciler, error) {
 		builders:          builders,
 		interval:          opts.Interval,
 		lockRetryInterval: opts.LockRetryInterval,
-		log:               log.New("reconciler"),
+		log:               log.New("embeddings_reconciler"),
 		queue:             make(map[string]*pendingEvent),
 	}, nil
 }
@@ -185,12 +185,19 @@ func (s *Reconciler) Run(ctx context.Context) error {
 	// startupReconcile snapshot and the subscription join can't slip through;
 	// the broadcaster's replay buffer covers the brief overlap.
 	if s.broadcaster != nil {
-		ch, err := s.broadcaster.Subscribe(ctx, "vector-write-reconciler", "reconciler")
+		ch, err := s.broadcaster.Subscribe(ctx, "embeddings-reconciler", "embeddings-reconciler")
 		if err != nil {
 			s.log.Error("reconciler: subscribe to write events", "err", err)
 		} else if ch != nil {
-			defer s.broadcaster.Unsubscribe(ch)
-			go s.consumeWatchEvents(ctx, ch)
+			watchFinished := make(chan struct{})
+			defer func() {
+				<-watchFinished
+				s.broadcaster.Unsubscribe(ch)
+			}()
+			go func() {
+				defer close(watchFinished)
+				s.consumeWatchEvents(ctx, ch)
+			}()
 			s.log.Info("reconciler: subscribed to write events broadcaster")
 		}
 	}

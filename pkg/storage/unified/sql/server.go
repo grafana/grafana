@@ -213,7 +213,7 @@ func withEmbedder(opts *ServerOptions, resourceOpts *resource.ResourceServerOpti
 // off, so nil is normal and propagates through to the resource server
 // which simply doesn't start the goroutine.
 func withVectorIndexers(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
-	if !opts.Cfg.VectorBackfillerEnabled ||
+	if !opts.Cfg.VectorIndexingEnabled ||
 		opts.Cfg.EmbeddingProvider == "" ||
 		opts.Backend == nil ||
 		opts.VectorBackend == nil ||
@@ -234,12 +234,12 @@ func withVectorIndexers(opts *ServerOptions, resourceOpts *resource.ResourceServ
 		return fmt.Errorf("create vector backfiller: %w", err)
 	}
 
-	resourceOpts.VectorWriteReconciler, err = reconciler.New(reconciler.Options{
+	resourceOpts.VectorReconciler, err = reconciler.New(reconciler.Options{
 		Storage:       opts.Backend,
 		VectorBackend: opts.VectorBackend,
 		BatchEmbedder: batchEmbedder,
 		Builders:      builders,
-		Interval:      opts.Cfg.EmbeddingInterval,
+		Interval:      opts.Cfg.VectorReconcilerInterval,
 	})
 	if err != nil {
 		return fmt.Errorf("create vector reconciler: %w", err)

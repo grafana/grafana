@@ -373,11 +373,11 @@ type ResourceServerOptions struct {
 	// Stop blocks until it returns. nil = backfill feature off.
 	VectorBackfiller Runnable
 
-	// VectorWriteReconciler, when non-nil, is launched alongside the
+	// VectorReconciler, when non-nil, is launched alongside the
 	// backfiller; the server attaches its own broadcaster to it before
 	// starting Run so the reconciler's watch path lights up. nil =
 	// reconciler feature off.
-	VectorWriteReconciler BroadcasterConsumer
+	VectorReconciler BroadcasterConsumer
 }
 
 // Runnable is anything the server can launch in a goroutine and that
@@ -528,7 +528,7 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		artificialSuccessfulWriteDelay: opts.Search.IndexMinUpdateInterval,
 		bookmarkFrequency:              opts.BookmarkFrequency,
 		vectorBackfiller:               opts.VectorBackfiller,
-		vectorWriteReconciler:          opts.VectorWriteReconciler,
+		vectorWriteReconciler:          opts.VectorReconciler,
 	}
 
 	if opts.Search.Resources != nil {

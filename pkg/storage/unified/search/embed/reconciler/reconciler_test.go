@@ -721,3 +721,302 @@ func TestChooseTarget(t *testing.T) {
 		})
 	}
 }
+
+// newRunnable builds a Reconciler with sub-millisecond tickers so the
+// Run tests don't sit waiting on real intervals. Caller is expected to
+// cancel the returned context to make Run exit.
+func newRunnable(t *testing.T, st *fakeStorage, vec *fakeVector) (*Reconciler, *fakeText) {
+	t.Helper()
+	text := &fakeText{dim: 4}
+	s, err := New(Options{
+		Storage:           st,
+		VectorBackend:     vec,
+		BatchEmbedder:     embedder.NewBatchEmbedder(*newFakeEmbedder(text)),
+		Builders:          []embed.Builder{dashboard.New()},
+		Interval:          5 * time.Millisecond,
+		LockRetryInterval: 1 * time.Millisecond,
+	})
+	require.NoError(t, err)
+	return s, text
+}
+
+// TestReconciler_Run_ExitsOnContextCancel covers the happy-path
+// shutdown: Run holds the lock for the pod's lifetime and only
+// returns when ctx is cancelled, propagating ctx.Err().
+func TestReconciler_Run_ExitsOnContextCancel(t *testing.T) {
+	vec := newFakeVector()
+	s, _ := newRunnable(t, &fakeStorage{}, vec)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan error, 1)
+	go func() { done <- s.Run(ctx) }()
+
+	// Let Run get past acquireLockBlocking and into the active state.
+	require.Eventually(t, func() bool {
+		vec.mu.Lock()
+		defer vec.mu.Unlock()
+		return vec.lockAttempts >= 1
+	}, time.Second, time.Millisecond, "lock should be acquired")
+
+	cancel()
+	select {
+	case err := <-done:
+		require.ErrorIs(t, err, context.Canceled)
+	case <-time.After(time.Second):
+		t.Fatal("Run did not exit after ctx cancel")
+	}
+
+	vec.mu.Lock()
+	defer vec.mu.Unlock()
+	assert.Equal(t, 1, vec.lockReleases, "lock released exactly once on shutdown")
+}
+
+// TestReconciler_Run_BlocksUntilLockAvailable pins the
+// one-replica-active invariant: Run retries the advisory lock at
+// lockRetryInterval and only proceeds once it succeeds. Flipping
+// lockUnavailable to false mid-flight unblocks it.
+func TestReconciler_Run_BlocksUntilLockAvailable(t *testing.T) {
+	vec := newFakeVector()
+	vec.lockUnavailable = true
+	s, _ := newRunnable(t, &fakeStorage{}, vec)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+	done := make(chan error, 1)
+	go func() { done <- s.Run(ctx) }()
+
+	// Wait for at least a couple of failed acquires before releasing.
+	require.Eventually(t, func() bool {
+		vec.mu.Lock()
+		defer vec.mu.Unlock()
+		return vec.lockAttempts >= 2
+	}, time.Second, time.Millisecond, "Run should retry the lock")
+
+	vec.mu.Lock()
+	attemptsBefore := vec.lockAttempts
+	vec.lockUnavailable = false
+	vec.mu.Unlock()
+
+	// Once the lock becomes available Run acquires it and enters
+	// active state. Cancel and assert clean shutdown.
+	require.Eventually(t, func() bool {
+		vec.mu.Lock()
+		defer vec.mu.Unlock()
+		return vec.lockAttempts > attemptsBefore
+	}, time.Second, time.Millisecond, "Run should re-attempt after we flip the lock")
+
+	cancel()
+	select {
+	case err := <-done:
+		require.ErrorIs(t, err, context.Canceled)
+	case <-time.After(time.Second):
+		t.Fatal("Run did not exit after ctx cancel")
+	}
+
+	vec.mu.Lock()
+	defer vec.mu.Unlock()
+	assert.Equal(t, 1, vec.lockReleases, "lock released after a successful acquire")
+}
+
+// TestReconciler_Run_ContextCancelDuringLockWait exits cleanly even
+// when the lock is never available — ctx cancellation must unstick
+// acquireLockBlocking and Run must NOT call the release function
+// (it never acquired).
+func TestReconciler_Run_ContextCancelDuringLockWait(t *testing.T) {
+	vec := newFakeVector()
+	vec.lockUnavailable = true
+	s, _ := newRunnable(t, &fakeStorage{}, vec)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan error, 1)
+	go func() { done <- s.Run(ctx) }()
+
+	require.Eventually(t, func() bool {
+		vec.mu.Lock()
+		defer vec.mu.Unlock()
+		return vec.lockAttempts >= 1
+	}, time.Second, time.Millisecond)
+
+	cancel()
+	select {
+	case err := <-done:
+		require.ErrorIs(t, err, context.Canceled)
+	case <-time.After(time.Second):
+		t.Fatal("Run did not exit after ctx cancel")
+	}
+
+	vec.mu.Lock()
+	defer vec.mu.Unlock()
+	assert.Equal(t, 0, vec.lockReleases, "no lock to release when ctx is cancelled mid-wait")
+}
+
+// TestReconciler_Run_RunsStartupAndCycles asserts the end-to-end
+// behavior: Run executes startupReconcile (embedding the pre-existing
+// changes) and then ticks the queue (embedding watch-style events
+// pushed onto the queue). Both must land in vec.upserts before ctx
+// is cancelled.
+func TestReconciler_Run_RunsStartupAndCycles(t *testing.T) {
+	st := &fakeStorage{}
+	st.changes = []*resource.ModifiedResource{
+		dashChange(resourcepb.WatchEvent_ADDED, "ns", "startup-1", 100, minimalDashboard("startup-1", "Startup 1")),
+	}
+	vec := newFakeVector()
+	vec.latestRV = 50 // > 0 so startupReconcile actually runs
+	s, _ := newRunnable(t, st, vec)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+	done := make(chan error, 1)
+	go func() { done <- s.Run(ctx) }()
+
+	// Startup event must reach the vector backend.
+	require.Eventually(t, func() bool {
+		vec.mu.Lock()
+		defer vec.mu.Unlock()
+		return len(vec.upserts) >= 1
+	}, time.Second, time.Millisecond, "startupReconcile should run before the first tick")
+
+	// Now enqueue a tick-driven event and wait for the next cycle.
+	s.enqueue(dashEvent(resourcepb.WatchEvent_MODIFIED, "ns", "live-1", 200, minimalDashboard("live-1", "Live 1")))
+	require.Eventually(t, func() bool {
+		vec.mu.Lock()
+		defer vec.mu.Unlock()
+		return len(vec.upserts) >= 2
+	}, time.Second, time.Millisecond, "ticker should drain the queue")
+
+	cancel()
+	select {
+	case err := <-done:
+		require.ErrorIs(t, err, context.Canceled)
+	case <-time.After(time.Second):
+		t.Fatal("Run did not exit after ctx cancel")
+	}
+}
+
+// TestReconciler_ProcessBatch_RequeuesOnGetLatestRVFailure pins the
+// processBatch failure path: if the checkpoint read fails we can't
+// safely advance the cursor, so the drained batch goes back on the
+// queue for the next cycle.
+func TestReconciler_ProcessBatch_RequeuesOnGetLatestRVFailure(t *testing.T) {
+	vec := newFakeVector()
+	vec.latestRV = 50
+	vec.getLatestRVErr = fmt.Errorf("transient checkpoint read failure")
+	s, _ := newReconciler(t, &fakeStorage{}, vec)
+
+	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "a", 100, minimalDashboard("a", "A")))
+	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "b", 110, minimalDashboard("b", "B")))
+
+	s.processQueue(context.Background())
+
+	assert.Empty(t, vec.upserts, "no upserts should happen when GetLatestRV errors")
+	assert.Equal(t, int64(50), vec.latestRV, "cursor stays put on GetLatestRV failure")
+	assert.Equal(t, 2, s.queueLen(), "both events re-enqueued for the next cycle")
+}
+
+// TestReconciler_ProcessBatch_RequeuesOnSetLatestRVFailure: in steady
+// state we already embedded the events; failing to advance the cursor
+// means we can't trust the checkpoint, so the whole batch goes back
+// on the queue (idempotent re-embed via UpsertReplaceSubresources).
+func TestReconciler_ProcessBatch_RequeuesOnSetLatestRVFailure(t *testing.T) {
+	vec := newFakeVector()
+	vec.latestRV = 50
+	vec.setLatestRVErr = fmt.Errorf("transient checkpoint write failure")
+	s, _ := newReconciler(t, &fakeStorage{}, vec)
+
+	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "a", 100, minimalDashboard("a", "A")))
+	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "b", 110, minimalDashboard("b", "B")))
+
+	s.processQueue(context.Background())
+
+	assert.Len(t, vec.upserts, 2, "embeds happen even when SetLatestRV errors")
+	assert.Equal(t, int64(50), vec.latestRV, "cursor stays put on SetLatestRV failure")
+	assert.Equal(t, 2, s.queueLen(), "both events re-enqueued so the next cycle retries the advance")
+}
+
+// TestReconciler_Run_BroadcasterDeliversWatchEvents pins the watch
+// path: Subscribe is called, events pushed onto the channel reach the
+// queue, and the next cycle drains them.
+func TestReconciler_Run_BroadcasterDeliversWatchEvents(t *testing.T) {
+	vec := newFakeVector()
+	s, _ := newRunnable(t, &fakeStorage{}, vec)
+	bcast := newFakeBroadcaster()
+	s.UseBroadcaster(bcast)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+	done := make(chan error, 1)
+	go func() { done <- s.Run(ctx) }()
+
+	// Subscribe should happen as part of Run startup.
+	require.Eventually(t, func() bool {
+		bcast.mu.Lock()
+		defer bcast.mu.Unlock()
+		return bcast.subscribeCalls == 1
+	}, time.Second, time.Millisecond)
+
+	bcast.emit(&resource.WrittenEvent{
+		Type: resourcepb.WatchEvent_MODIFIED,
+		Key: &resourcepb.ResourceKey{
+			Group:     dashGroup,
+			Resource:  dashRes,
+			Namespace: "ns",
+			Name:      "watched",
+		},
+		Value:           minimalDashboard("watched", "Watched"),
+		ResourceVersion: 500,
+	})
+
+	require.Eventually(t, func() bool {
+		vec.mu.Lock()
+		defer vec.mu.Unlock()
+		return len(vec.upserts) >= 1
+	}, time.Second, time.Millisecond, "watch event should reach the vector backend")
+
+	cancel()
+	select {
+	case err := <-done:
+		require.ErrorIs(t, err, context.Canceled)
+	case <-time.After(time.Second):
+		t.Fatal("Run did not exit after ctx cancel")
+	}
+
+	bcast.mu.Lock()
+	defer bcast.mu.Unlock()
+	assert.NotNil(t, bcast.unsubscribeCh, "Unsubscribe must run on Run exit")
+}
+
+// TestReconciler_Run_BroadcasterSubscribeErrorContinues asserts the
+// reconciler tolerates a broadcaster Subscribe failure: it logs and
+// proceeds in poll-only mode rather than aborting Run. This matters
+// for partial environments where the broadcaster isn't ready yet.
+func TestReconciler_Run_BroadcasterSubscribeErrorContinues(t *testing.T) {
+	vec := newFakeVector()
+	s, _ := newRunnable(t, &fakeStorage{}, vec)
+	bcast := newFakeBroadcaster()
+	bcast.subscribeErr = fmt.Errorf("broadcaster not ready")
+	s.UseBroadcaster(bcast)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan error, 1)
+	go func() { done <- s.Run(ctx) }()
+
+	// Subscribe is attempted and lock is acquired even though Subscribe failed.
+	require.Eventually(t, func() bool {
+		bcast.mu.Lock()
+		defer bcast.mu.Unlock()
+		return bcast.subscribeCalls == 1
+	}, time.Second, time.Millisecond)
+	require.Eventually(t, func() bool {
+		vec.mu.Lock()
+		defer vec.mu.Unlock()
+		return vec.lockReleases == 0 && vec.lockAttempts >= 1
+	}, time.Second, time.Millisecond, "lock acquired despite Subscribe error")
+
+	cancel()
+	select {
+	case err := <-done:
+		require.ErrorIs(t, err, context.Canceled)
+	case <-time.After(time.Second):
+		t.Fatal("Run did not exit after ctx cancel")
+	}
+}

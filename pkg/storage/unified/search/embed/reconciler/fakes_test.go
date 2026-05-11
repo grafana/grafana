@@ -171,6 +171,7 @@ type fakeVector struct {
 
 	setLatestRVCalls int
 	setLatestRVErr   error
+	getLatestRVErr   error
 }
 
 type deleteCall struct{ Namespace, Model, Resource, UID string }
@@ -286,6 +287,9 @@ func (f *fakeVector) Exists(context.Context, string, string, string, string) (bo
 func (f *fakeVector) GetLatestRV(context.Context) (int64, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
+	if f.getLatestRVErr != nil {
+		return 0, f.getLatestRVErr
+	}
 	return f.latestRV, nil
 }
 func (f *fakeVector) SetLatestRV(_ context.Context, rv int64) error {
@@ -368,3 +372,43 @@ func newFakeEmbedder(text *fakeText) *embedder.Embedder {
 }
 
 var errBoom = errors.New("boom")
+
+// fakeBroadcaster is the smallest viable resource.Broadcaster impl for
+// the reconciler tests. It returns a single subscriber channel, lets
+// the test push events via emit(), and records unsubscribe calls so
+// we can assert clean shutdown.
+type fakeBroadcaster struct {
+	mu              sync.Mutex
+	subscribeErr    error
+	ch              chan *resource.WrittenEvent
+	subscribeCalls  int
+	unsubscribeCh   <-chan *resource.WrittenEvent
+	unsubscribeOnce sync.Once
+}
+
+func newFakeBroadcaster() *fakeBroadcaster {
+	return &fakeBroadcaster{ch: make(chan *resource.WrittenEvent, 16)}
+}
+
+func (b *fakeBroadcaster) Subscribe(_ context.Context, _, _ string) (<-chan *resource.WrittenEvent, error) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	b.subscribeCalls++
+	if b.subscribeErr != nil {
+		return nil, b.subscribeErr
+	}
+	return b.ch, nil
+}
+
+func (b *fakeBroadcaster) Unsubscribe(ch <-chan *resource.WrittenEvent) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	b.unsubscribeCh = ch
+	// Closing once so consumeWatchEvents exits via the `!ok` branch
+	// (the real broadcaster has the same behavior on Unsubscribe).
+	b.unsubscribeOnce.Do(func() { close(b.ch) })
+}
+
+func (b *fakeBroadcaster) emit(ev *resource.WrittenEvent) {
+	b.ch <- ev
+}

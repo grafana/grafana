@@ -701,13 +701,13 @@ type Cfg struct {
 	VectorDBUser             string
 	VectorDBPassword         string
 	VectorDBSSLMode          string
-	VectorBackfillerEnabled  bool          // backfill resources without embeddings
+	VectorIndexingEnabled    bool          // run the embedding backfiller and reconciler
+	VectorReconcilerInterval time.Duration // reconciler tick interval; default 60s
 	VectorPromotionThreshold int           // row count per tenant to trigger promotion
 	VectorPromoterInterval   time.Duration // promoter tick interval; 0 disables
 
 	// Embedding provider used by the VectorSearch RPC. "" = disabled.
-	EmbeddingProvider string        // "vertex" | "bedrock" | ""
-	EmbeddingInterval time.Duration // default 60s
+	EmbeddingProvider string // "vertex" | "bedrock" | ""
 	VertexProjectID   string
 	VertexLocation    string // default "us-central1"
 	VertexModel       string // default "gemini-embedding-001"
