@@ -54,7 +54,7 @@ func ProvidePreferencesMigrator(sql legacysql.LegacyDatabaseProvider) Preference
 
 // MigratePreferences reads preferences from legacy SQL storage and streams them as
 // Kubernetes resources to the unified storage bulk process API.
-func (m *preferencesMigrator) MigratePreferences(ctx context.Context, orgId int64, opts migrations.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
+func (m *preferencesMigrator) MigratePreferences(ctx context.Context, _ int64, opts migrations.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
 	opts.Progress(-1, "migrating preferences...")
 
 	sql := NewLegacySQL(m.sql)
