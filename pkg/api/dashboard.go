@@ -522,13 +522,20 @@ func (hs *HTTPServer) saveDashboardViaK8s(c *contextmodel.ReqContext, cmd dashbo
 	}
 
 	if !isCreate {
-		if rsp := hs.refuseProvisionedUpdate(ctx, c.GetOrgID(), name); rsp != nil {
-			return rsp
+		oldMeta, err := utils.MetaAccessor(old)
+		if err != nil {
+			return response.Error(http.StatusInternalServerError, "Failed to read grafana metadata", err)
 		}
+		// Check if provisioning allows edits.
+		// NOTE this would be handled by the storage layer, however the error is different so
+		// we are checking here to make the existing contracts on /api hold
+		if mgr, _ := oldMeta.GetManagerProperties(); mgr.Kind == utils.ManagerKindClassicFP && !mgr.AllowsEdits { // nolint:staticcheck
+			return response.Error(http.StatusBadRequest, dashboards.ErrDashboardCannotSaveProvisionedDashboard.Error(), nil)
+		}
+
 		// Without overwrite, accept the update only when the caller supplied
 		// the current version (we return meta.GetGeneration() as "version").
 		if !cmd.Overwrite {
-			oldMeta, _ := utils.MetaAccessor(old)
 			if !hasSpecVersion || specVersion != oldMeta.GetGeneration() {
 				return response.Error(http.StatusConflict,
 					"Dashboard already exists. Use overwrite flag to update.", nil)
@@ -620,26 +627,6 @@ func (hs *HTTPServer) resolveLegacyInternalID(ctx context.Context, client dynami
 		return "", nil, response.Error(http.StatusInternalServerError, "Failed to read existing dashboard", gerr)
 	}
 	return name, nil, nil
-}
-
-// refuseProvisionedUpdate returns a 400 response if the named dashboard is
-// provisioned with allowUiUpdates=false; otherwise nil. The K8s direct path
-// bypasses DashboardService.SaveDashboard, which performed this check.
-func (hs *HTTPServer) refuseProvisionedUpdate(ctx context.Context, orgID int64, uid string) response.Response {
-	if hs.dashboardProvisioningService == nil || hs.ProvisioningService == nil {
-		return nil
-	}
-	data, err := hs.dashboardProvisioningService.GetProvisionedDashboardDataByDashboardUID(ctx, orgID, uid)
-	if errors.Is(err, dashboards.ErrProvisionedDashboardNotFound) || errors.Is(err, dashboards.ErrDashboardNotFound) {
-		return nil
-	}
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Error while checking if dashboard is provisioned", err)
-	}
-	if data == nil || hs.ProvisioningService.GetAllowUIUpdatesFromConfig(data.Name) {
-		return nil
-	}
-	return response.Error(http.StatusBadRequest, dashboards.ErrDashboardCannotSaveProvisionedDashboard.Error(), nil)
 }
 
 func nestedInternalID(obj map[string]interface{}) (int64, error) {
