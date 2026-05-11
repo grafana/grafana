@@ -36,8 +36,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/server/reconciler"
 	"github.com/grafana/grafana/pkg/setting"
-
-	authtypes "github.com/grafana/authlib/types"
 )
 
 const cacheCleanInterval = 2 * time.Minute
@@ -255,7 +253,7 @@ func (s *Server) Close() {
 }
 
 // getContextuals returns contextual tuples for the request subject.
-func (s *Server) getContextuals(ctx context.Context, subject string) (*openfgav1.ContextualTupleKeys, error) {
+func (s *Server) getContextuals(ctx context.Context, subject string, teams []string) (*openfgav1.ContextualTupleKeys, error) {
 	var keys []*openfgav1.TupleKey
 	if strings.HasPrefix(subject, common.TypeRenderService+":") {
 		keys = append(
@@ -292,15 +290,13 @@ func (s *Server) getContextuals(ctx context.Context, subject string) (*openfgav1
 
 	seen := make(map[string]struct{})
 	var teamNames []string
-	if c, ok := authtypes.AuthInfoFrom(ctx); ok {
-		for _, g := range c.GetGroups() {
-			if g == "" {
-				continue
-			}
-			if _, dup := seen[g]; !dup {
-				seen[g] = struct{}{}
-				teamNames = append(teamNames, g)
-			}
+	for _, g := range teams {
+		if g == "" {
+			continue
+		}
+		if _, dup := seen[g]; !dup {
+			seen[g] = struct{}{}
+			teamNames = append(teamNames, g)
 		}
 	}
 	sort.Strings(teamNames)

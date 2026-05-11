@@ -232,8 +232,10 @@ func TestIntegrationServerCheck(t *testing.T) {
 		assert.Equal(t, true, res.GetAllowed())
 	})
 
-	t.Run("user should check dashboard access through team groups from auth info", func(t *testing.T) {
-		res, err := server.Check(newContextWithGroups("ctx-check"), newReq("user:contextual", utils.VerbGet, dashboardGroup, dashboardResource, "", "", "ctx-check-dashboard"))
+	t.Run("user should check dashboard access through teams from request", func(t *testing.T) {
+		req := newReq("user:contextual", utils.VerbGet, dashboardGroup, dashboardResource, "", "", "ctx-check-dashboard")
+		req.Teams = []string{"ctx-check"}
+		res, err := server.Check(newContextWithNamespace(), req)
 		require.NoError(t, err)
 		assert.True(t, res.GetAllowed())
 
@@ -242,14 +244,16 @@ func TestIntegrationServerCheck(t *testing.T) {
 		assert.False(t, res.GetAllowed())
 	})
 
-	t.Run("user should check dashboard access with one thousand auth info team groups", func(t *testing.T) {
+	t.Run("user should check dashboard access with one thousand request teams", func(t *testing.T) {
 		groups := make([]string, 1000)
 		for i := range groups {
 			groups[i] = fmt.Sprintf("irrelevant-%04d", i)
 		}
 		groups[999] = "ctx-1000"
 
-		res, err := server.Check(newContextWithGroups(groups...), newReq("user:contextual-1000", utils.VerbGet, dashboardGroup, dashboardResource, "", "", "ctx-1000-dashboard"))
+		req := newReq("user:contextual-1000", utils.VerbGet, dashboardGroup, dashboardResource, "", "", "ctx-1000-dashboard")
+		req.Teams = groups
+		res, err := server.Check(newContextWithNamespace(), req)
 		require.NoError(t, err)
 		assert.True(t, res.GetAllowed())
 	})

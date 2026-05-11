@@ -695,7 +695,7 @@ func BenchmarkSubresourceRelationComparison(b *testing.B) {
 	store, err := srv.getStoreInfo(ctx, benchNamespace)
 	require.NoError(b, err)
 
-	contextuals, err := srv.getContextuals(ctx, deniedUser)
+	contextuals, err := srv.getContextuals(ctx, deniedUser, nil)
 	require.NoError(b, err)
 
 	subresourceGR := common.FormatGroupResource(benchDashboardGroup, benchDashboardResource, benchStatusSubresource)
