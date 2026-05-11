@@ -1,4 +1,4 @@
-import { first, Subject } from 'rxjs';
+import { first, ReplaySubject } from 'rxjs';
 
 import {
   arrayToDataFrame,
@@ -113,13 +113,14 @@ describe('DashboardDatasource', () => {
     expect(first).not.toHaveBeenCalled();
   });
 
-  it('Should skip stale Done from a different time range and emit the fresh Done when used within MixedDS', async () => {
-    // Regression test for support-escalations#22242: in a Mixed datasource panel with
-    // Dashboard datasource subqueries, a time-range change causes the upstream
-    // SceneQueryRunner ReplaySubject to replay a stale Done for the previous range.
-    // The Mixed-DS operator's `first(Done || Error)` used to match that stale Done
-    // and complete the substream before the upstream re-ran for the new range, so
-    // the chain panel rendered with stale/empty data and never re-rendered when the
+  it('Should skip the stale Done replayed by the upstream ReplaySubject on time-range change in MixedDS', async () => {
+    // Regression test for support-escalations#22242: in a Mixed datasource panel
+    // with Dashboard datasource subqueries, the upstream SceneQueryRunner exposes
+    // its results via a ReplaySubject(1) which synchronously replays the previous
+    // range's Done state to new subscribers on time-range change. The Mixed-DS
+    // operator's `first(Done || Error)` used to match that stale Done and
+    // complete the substream before the upstream re-ran for the new range, so
+    // the chain panel rendered with stale data and never re-rendered when the
     // real Done arrived seconds later.
     const oldRange = makeRange('2026-05-01T00:00:00Z', '2026-05-08T00:00:00Z');
     const newRange = makeRange('2026-05-04T00:00:00Z', '2026-05-08T00:00:00Z');
@@ -130,12 +131,12 @@ describe('DashboardDatasource', () => {
       newRange
     );
 
+    // Prime the ReplaySubject with the stale Done BEFORE subscribing, so it gets
+    // replayed synchronously on subscribe — exactly the production scenario.
+    upstreamStream.next(makeResult(LoadingState.Done, arrayToDataFrame([1]), oldRange));
+
     const emissions: DataQueryResponse[] = [];
     observable.subscribe({ next: (data) => emissions.push(data) });
-
-    // Replayed stale Done from the previous range — must be dropped by the filter
-    // before `emitFirstLoadedDataIfMixedDS`.
-    upstreamStream.next(makeResult(LoadingState.Done, arrayToDataFrame([1]), oldRange));
 
     await waitForDebounce();
     expect(emissions).toEqual([]);
@@ -150,7 +151,7 @@ describe('DashboardDatasource', () => {
     expect(emissions[0].data[0].fields[0].values).toEqual([2, 3]);
   });
 
-  it('Should still emit when upstream request range matches and the only emission is Done (editor-add path)', async () => {
+  it('Should still emit the only Done when ranges match (Mixed editor-add path)', async () => {
     // The filter must not skip the editor-add case: same range, single Done emission.
     const range = makeRange('2026-05-04T00:00:00Z', '2026-05-08T00:00:00Z');
 
@@ -160,15 +161,40 @@ describe('DashboardDatasource', () => {
       range
     );
 
+    upstreamStream.next(makeResult(LoadingState.Done, arrayToDataFrame([7, 8, 9]), range));
+
     const emissions: DataQueryResponse[] = [];
     observable.subscribe({ next: (data) => emissions.push(data) });
-
-    upstreamStream.next(makeResult(LoadingState.Done, arrayToDataFrame([7, 8, 9]), range));
 
     await waitForDebounce();
     expect(emissions).toHaveLength(1);
     expect(emissions[0].state).toBe(LoadingState.Done);
     expect(emissions[0].data[0].fields[0].values).toEqual([7, 8, 9]);
+  });
+
+  it('Should not drop Done when the chain panel has a different range than the upstream (non-Mixed PanelTimeRange override)', async () => {
+    // Regression guard: a chain panel with a PanelTimeRange override (timeFrom,
+    // timeShift, ...) legitimately observes ranges that differ from the upstream.
+    // The range-mismatch filter only runs on the Mixed-DS path; the non-Mixed
+    // path must keep forwarding terminal emissions regardless of range.
+    const chainRange = makeRange('2026-05-04T00:00:00Z', '2026-05-08T00:00:00Z');
+    const upstreamRange = makeRange('2026-04-27T00:00:00Z', '2026-05-04T00:00:00Z');
+
+    const { observable, upstreamStream } = setupWithControllableUpstream(
+      { refId: 'A', panelId: 1 },
+      /* non-Mixed requestId */ 'panel-1',
+      chainRange
+    );
+
+    upstreamStream.next(makeResult(LoadingState.Done, arrayToDataFrame([42]), upstreamRange));
+
+    const emissions: DataQueryResponse[] = [];
+    observable.subscribe({ next: (data) => emissions.push(data) });
+
+    await waitForDebounce();
+    expect(emissions).toHaveLength(1);
+    expect(emissions[0].state).toBe(LoadingState.Done);
+    expect(emissions[0].data[0].fields[0].values).toEqual([42]);
   });
 
   it('Should not mutate field state in dataframe', async () => {
@@ -987,7 +1013,10 @@ function waitForDebounce() {
 }
 
 function setupWithControllableUpstream(query: DashboardQuery, requestId: string, range: ReturnType<typeof makeRange>) {
-  const upstreamStream = new Subject<SceneDataProviderResult>();
+  // Match production: upstream SceneQueryRunner exposes a ReplaySubject(1) so
+  // subscribers attaching after the upstream has already emitted Done get the
+  // stale Done replayed synchronously on subscribe.
+  const upstreamStream = new ReplaySubject<SceneDataProviderResult>(1);
 
   const sourceData = new SceneDataNode({
     data: {

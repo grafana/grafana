@@ -16,6 +16,7 @@ import {
   type AdHocVariableFilter,
   type MetricFindValue,
   getValueMatcher,
+  type TimeRange,
   ValueMatcherID,
   type DataSourceGetDrilldownsApplicabilityOptions,
   type DrilldownsApplicability,
@@ -30,6 +31,13 @@ import {
 import { MIXED_REQUEST_PREFIX } from '../mixed/MixedDataSource';
 
 import { type DashboardQuery } from './types';
+
+function isSameRange(a: TimeRange | undefined, b: TimeRange | undefined): boolean {
+  if (!a?.from || !a?.to || !b?.from || !b?.to) {
+    return false;
+  }
+  return a.from.valueOf() === b.from.valueOf() && a.to.valueOf() === b.to.valueOf();
+}
 
 /**
  * This should not really be called
@@ -96,15 +104,22 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
 
       const activateCleanUp = activateSceneObjectAndParentTree(sourceDataProvider!);
 
+      // Only the Mixed-DS path uses `first(Done || Error)` to complete the
+      // substream, so only that path needs to defend against a stale Done
+      // replayed from the upstream SceneQueryRunner's ReplaySubject after a
+      // time-range change. The non-Mixed path stays open and naturally
+      // re-emits when the fresh Done arrives, so adding the filter there
+      // could only hurt: a chain panel with a `PanelTimeRange` override
+      // legitimately observes ranges that differ from the upstream and we
+      // would block its terminal emission indefinitely.
+      const isMixedDs = options.requestId.includes(MIXED_REQUEST_PREFIX);
+
       return sourceDataProvider!.getResultsStream!().pipe(
         debounceTime(50),
         filter((result) => {
-          // Drop terminal (Done/Error) emissions whose upstream request range
-          // does not match this query's range. These are stale replays from
-          // the upstream SceneQueryRunner's ReplaySubject after a time-range
-          // change: without this guard, `emitFirstLoadedDataIfMixedDS` would
-          // match the stale Done with first(...) and complete the substream
-          // before the upstream re-runs for the new range.
+          if (!isMixedDs) {
+            return true;
+          }
           const state = result.data.state;
           if (state !== LoadingState.Done && state !== LoadingState.Error) {
             return true;
@@ -113,10 +128,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
           if (!upstreamRange?.from || !upstreamRange?.to) {
             return true;
           }
-          return (
-            upstreamRange.from.valueOf() === options.range.from.valueOf() &&
-            upstreamRange.to.valueOf() === options.range.to.valueOf()
-          );
+          return isSameRange(upstreamRange, options.range);
         }),
         map((result) => {
           return {
