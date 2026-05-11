@@ -1120,27 +1120,19 @@ func (b *DashboardsAPIBuilder) verifyFolderAccessPermissions(ctx context.Context
 	if err != nil {
 		return err
 	}
-	folderClient := b.folderClientProvider.GetOrCreateHandler(ns.Value)
 
+	gvr := dashv1.DashboardResourceInfo.GroupVersionResource()
 	for _, folderId := range folderIds {
-		resp, err := folderClient.Get(ctx, folderId, ns.OrgID, metav1.GetOptions{}, "access")
+		resp, err := b.accessClient.Check(ctx, user, authlib.CheckRequest{
+			Verb:      utils.VerbCreate,
+			Group:     gvr.Group,
+			Resource:  gvr.Resource,
+			Namespace: ns.Value,
+		}, folderId)
 		if err != nil {
-			if apierrors.IsNotFound(err) {
-				return apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), folderId)
-			}
-			if apierrors.IsForbidden(err) {
-				return apierrors.NewForbidden(folders.FolderResourceInfo.GroupResource(), folderId, folder.ErrAccessDenied)
-			}
 			return err
 		}
-		var accessInfo folders.FolderAccessInfo
-		err = runtime.DefaultUnstructuredConverter.FromUnstructured(resp.Object, &accessInfo)
-		if err != nil {
-			logging.FromContext(ctx).Error("Failed to convert folder access response", "error", err)
-			return err
-		}
-
-		if !accessInfo.CanEdit {
+		if !resp.Allowed {
 			return apierrors.NewForbidden(folders.FolderResourceInfo.GroupResource(), folderId, folder.ErrAccessDenied)
 		}
 	}
