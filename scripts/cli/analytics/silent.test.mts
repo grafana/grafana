@@ -42,6 +42,58 @@ const findEvent = (events: ReturnType<typeof findAllEvents>, name: string) => {
   return event;
 };
 
+describe('analytics report — JSDoc comment validation', () => {
+  it('throws when an event has a plain // comment instead of JSDoc', () => {
+    const files = buildProject({
+      'feature.ts': `
+        import { defineFeatureEvents } from './runtime';
+        const factory = defineFeatureEvents('grafana', 'test');
+        // Not a JSDoc comment
+        export const loaded = factory('loaded');
+      `,
+    });
+
+    assert.throws(() => findAllEvents(files, './runtime'));
+  });
+
+  it('throws when an event in a grouped object has a plain // comment instead of JSDoc', () => {
+    const files = buildProject({
+      'feature.ts': `
+        import { defineFeatureEvents } from './runtime';
+        const factory = defineFeatureEvents('grafana', 'test');
+        export const Events = {
+          // Not a JSDoc comment
+          loaded: factory('loaded'),
+        };
+      `,
+    });
+
+    assert.throws(() => findAllEvents(files, './runtime'));
+  });
+
+  it('produces empty description when a property has a // comment instead of JSDoc', () => {
+    const files = buildProject({
+      'feature.ts': `
+        import { defineFeatureEvents, EventProperty } from './runtime';
+        const factory = defineFeatureEvents('grafana', 'test');
+        interface LoadedProps extends EventProperty {
+          // Not JSDoc
+          count: number;
+        }
+        /**
+         * Loaded event.
+         * @owner grafana-test
+         */
+        export const loaded = factory<LoadedProps>('loaded');
+      `,
+    });
+
+    const events = findAllEvents(files, './runtime');
+    const event = findEvent(events, 'loaded');
+    assert.equal(event.properties?.[0]?.description, undefined);
+  });
+});
+
 describe('analytics report — silent extraction', () => {
   it('marks per-event silent: true (loud factory + silent override)', () => {
     const files = buildProject({

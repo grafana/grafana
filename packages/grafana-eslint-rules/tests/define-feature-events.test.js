@@ -95,5 +95,50 @@ ruleTester.run('define-feature-events', defineFeatureEventsRule, {
       `,
       errors: [{ messageId: 'missingPropertyComment' }],
     },
+    // Plain // comment on a grouped-object event should not satisfy the JSDoc requirement
+    {
+      code: `
+        ${DEFINE_EVENTS_IMPORT}
+        const createEvent = defineFeatureEvents('grafana', 'dashboard_library');
+        export const MyInteractions = {
+          // This is a plain line comment, not JSDoc
+          loaded: createEvent('loaded'),
+        };
+      `,
+      errors: [{ messageId: 'missingEventComment' }],
+    },
+    // Plain // comment on an individual export event should not satisfy the JSDoc requirement
+    {
+      code: `
+        ${DEFINE_EVENTS_IMPORT}
+        const createEvent = defineFeatureEvents('grafana', 'dashboard_library');
+        // This is a plain line comment, not JSDoc
+        export const loaded = createEvent('loaded');
+      `,
+      errors: [{ messageId: 'missingEventComment' }],
+    },
+    // Non-JSDoc block comment (/* */ without leading *) should not satisfy the JSDoc requirement
+    {
+      code: `
+        ${DEFINE_EVENTS_IMPORT}
+        const createEvent = defineFeatureEvents('grafana', 'dashboard_library');
+        export const MyInteractions = {
+          /* Not a JSDoc comment */
+          loaded: createEvent('loaded'),
+        };
+      `,
+      errors: [{ messageId: 'missingEventComment' }],
+    },
+    // Plain // comment on an interface property should not satisfy the JSDoc requirement
+    {
+      code: `
+        ${EVENT_PROPERTY_IMPORT}
+        interface LoadedProps extends EventProperty {
+          // This is a plain line comment, not JSDoc
+          numberOfItems: number;
+        }
+      `,
+      errors: [{ messageId: 'missingPropertyComment' }],
+    },
   ],
 });
