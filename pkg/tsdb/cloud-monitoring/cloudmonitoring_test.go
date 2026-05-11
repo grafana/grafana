@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"reflect"
 	"strings"
@@ -45,6 +47,21 @@ func TestNewInstanceSettings(t *testing.T) {
 		assert.Equal(t, "test", dsInfoCasted.defaultProject)
 		assert.Equal(t, "test", dsInfoCasted.clientEmail)
 		assert.Equal(t, "test", dsInfoCasted.tokenUri)
+	})
+
+	t.Run("should parse oauthPassthrough authentication", func(t *testing.T) {
+		cli := httpclient.NewProvider()
+		f := newInstanceSettings(*cli)
+		dsInfo, err := f(context.Background(), backend.DataSourceInstanceSettings{
+			JSONData: json.RawMessage(`{"authenticationType": "oauthPassthrough", "oauthPassThru": true, "defaultProject": "p1"}`),
+		})
+		require.NoError(t, err)
+		dsInfoCasted := dsInfo.(*datasourceInfo)
+		assert.Equal(t, oauthPassthroughAuthentication, dsInfoCasted.authenticationType)
+		assert.True(t, dsInfoCasted.oauthPassThru)
+		assert.Equal(t, "p1", dsInfoCasted.defaultProject)
+		assert.NotNil(t, dsInfoCasted.services[cloudMonitor].client)
+		assert.NotNil(t, dsInfoCasted.services[resourceManager].client)
 	})
 }
 
@@ -1165,5 +1182,94 @@ func TestCheckHealth(t *testing.T) {
 			Status:  backend.HealthStatusError,
 			Message: "not found!",
 		}, res)
+	})
+
+	t.Run("oauthPassthrough without a default project returns an error", func(t *testing.T) {
+		im := datasource.NewInstanceManager(func(_ context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return &datasourceInfo{
+				authenticationType: oauthPassthroughAuthentication,
+				oauthPassThru:      true,
+				defaultProject:     "",
+			}, nil
+		})
+		service := &Service{im: im}
+		res, err := service.CheckHealth(context.Background(), &backend.CheckHealthRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			},
+		})
+		assert.Nil(t, err)
+		assert.Equal(t, backend.HealthStatusError, res.Status)
+		assert.Contains(t, res.Message, "Default project is required")
+	})
+
+	t.Run("oauthPassthrough forwards Authorization header to outgoing request", func(t *testing.T) {
+		var received string
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			received = r.Header.Get("Authorization")
+			w.WriteHeader(http.StatusOK)
+		}))
+		t.Cleanup(ts.Close)
+
+		client := &http.Client{Transport: oauthPassthroughMiddleware().CreateMiddleware(httpclient.Options{}, http.DefaultTransport)}
+
+		im := datasource.NewInstanceManager(func(_ context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return &datasourceInfo{
+				authenticationType: oauthPassthroughAuthentication,
+				oauthPassThru:      true,
+				defaultProject:     "p1",
+				services: map[string]datasourceService{
+					cloudMonitor: {url: ts.URL, client: client},
+				},
+			}, nil
+		})
+		service := &Service{im: im}
+		res, err := service.CheckHealth(context.Background(), &backend.CheckHealthRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			},
+			Headers: map[string]string{"Authorization": "Bearer test-token-123"},
+		})
+		require.NoError(t, err)
+		assert.Equal(t, backend.HealthStatusOk, res.Status)
+		assert.Equal(t, "Bearer test-token-123", received)
+	})
+}
+
+func TestOAuthPassthroughMiddleware(t *testing.T) {
+	t.Run("injects per-request Authorization from context", func(t *testing.T) {
+		var got string
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			got = r.Header.Get("Authorization")
+			w.WriteHeader(http.StatusOK)
+		}))
+		t.Cleanup(ts.Close)
+
+		client := &http.Client{Transport: oauthPassthroughMiddleware().CreateMiddleware(httpclient.Options{}, http.DefaultTransport)}
+
+		req, err := http.NewRequestWithContext(withAuthHeader(context.Background(), "Bearer abc"), http.MethodGet, ts.URL, nil)
+		require.NoError(t, err)
+		res, err := client.Do(req)
+		require.NoError(t, err)
+		_ = res.Body.Close()
+		assert.Equal(t, "Bearer abc", got)
+	})
+
+	t.Run("does not set Authorization when ctx has no token", func(t *testing.T) {
+		var got string
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			got = r.Header.Get("Authorization")
+			w.WriteHeader(http.StatusOK)
+		}))
+		t.Cleanup(ts.Close)
+
+		client := &http.Client{Transport: oauthPassthroughMiddleware().CreateMiddleware(httpclient.Options{}, http.DefaultTransport)}
+
+		req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, ts.URL, nil)
+		require.NoError(t, err)
+		res, err := client.Do(req)
+		require.NoError(t, err)
+		_ = res.Body.Close()
+		assert.Equal(t, "", got)
 	})
 }

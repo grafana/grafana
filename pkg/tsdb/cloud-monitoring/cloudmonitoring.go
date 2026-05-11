@@ -49,16 +49,31 @@ var (
 )
 
 const (
-	gceAuthentication         = "gce"
-	jwtAuthentication         = "jwt"
-	annotationQueryType       = dataquery.QueryTypeANNOTATION
-	timeSeriesListQueryType   = dataquery.QueryTypeTIMESERIESLIST
-	timeSeriesQueryQueryType  = dataquery.QueryTypeTIMESERIESQUERY
-	sloQueryType              = dataquery.QueryTypeSLO
-	promQLQueryType           = dataquery.QueryTypePROMQL
-	crossSeriesReducerDefault = "REDUCE_NONE"
-	perSeriesAlignerDefault   = "ALIGN_MEAN"
+	gceAuthentication              = "gce"
+	jwtAuthentication              = "jwt"
+	oauthPassthroughAuthentication = "oauthPassthrough"
+	annotationQueryType            = dataquery.QueryTypeANNOTATION
+	timeSeriesListQueryType        = dataquery.QueryTypeTIMESERIESLIST
+	timeSeriesQueryQueryType       = dataquery.QueryTypeTIMESERIESQUERY
+	sloQueryType                   = dataquery.QueryTypeSLO
+	promQLQueryType                = dataquery.QueryTypePROMQL
+	crossSeriesReducerDefault      = "REDUCE_NONE"
+	perSeriesAlignerDefault        = "ALIGN_MEAN"
 )
+
+type authHeaderCtxKey struct{}
+
+func withAuthHeader(ctx context.Context, h string) context.Context {
+	if h == "" {
+		return ctx
+	}
+	return context.WithValue(ctx, authHeaderCtxKey{}, h)
+}
+
+func authHeaderFromContext(ctx context.Context) string {
+	v, _ := ctx.Value(authHeaderCtxKey{}).(string)
+	return v
+}
 
 func ProvideService(httpClientProvider *httpclient.Provider) *Service {
 	s := &Service{
@@ -79,6 +94,8 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 }
 
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	ctx = withAuthHeader(ctx, req.Headers["Authorization"])
+
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	if err != nil {
 		return nil, err
@@ -92,8 +109,15 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 		}, nil
 	}
 
+	if dsInfo.oauthPassThru && defaultProject == "" {
+		return &backend.CheckHealthResult{
+			Status:  backend.HealthStatusError,
+			Message: "Default project is required when using OAuth passthrough authentication.",
+		}, nil
+	}
+
 	url := fmt.Sprintf("%s/v3/projects/%s/metricDescriptors", dsInfo.services[cloudMonitor].url, defaultProject)
-	request, err := http.NewRequest(http.MethodGet, url, nil)
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -144,6 +168,7 @@ type datasourceInfo struct {
 	privateKey                  string
 	usingImpersonation          bool
 	serviceAccountToImpersonate string
+	oauthPassThru               bool
 }
 
 type datasourceJSONData struct {
@@ -154,6 +179,7 @@ type datasourceJSONData struct {
 	UniverseDomain              string `json:"universeDomain"`
 	UsingImpersonation          bool   `json:"usingImpersonation"`
 	ServiceAccountToImpersonate string `json:"serviceAccountToImpersonate"`
+	OAuthPassThru               bool   `json:"oauthPassThru"`
 }
 
 type datasourceService struct {
@@ -184,6 +210,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			universeDomain:              jsonData.UniverseDomain,
 			usingImpersonation:          jsonData.UsingImpersonation,
 			serviceAccountToImpersonate: jsonData.ServiceAccountToImpersonate,
+			oauthPassThru:               jsonData.OAuthPassThru,
 			services:                    map[string]datasourceService{},
 		}
 
@@ -336,6 +363,8 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	if len(req.Queries) == 0 {
 		return nil, fmt.Errorf("query contains no queries")
 	}
+
+	ctx = withAuthHeader(ctx, req.Headers["Authorization"])
 
 	err := migrateRequest(req)
 	if err != nil {
