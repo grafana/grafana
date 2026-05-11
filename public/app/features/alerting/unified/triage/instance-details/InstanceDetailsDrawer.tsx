@@ -394,10 +394,7 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
   }
 
   if (activeView.type === 'contact-point-list' || isClosingContactPointDrawer) {
-    const contactPointEntry = viewStack.find(
-      (v): v is { type: 'contact-point-list'; receiverName: string } => v.type === 'contact-point-list'
-    );
-    const receiverTitle = contactPointEntry?.receiverName ?? '';
+    const receiverTitle = activeView.type === 'contact-point-list' ? activeView.receiverName : '';
 
     return (
       <>

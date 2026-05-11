@@ -7,7 +7,6 @@ import { ContactPointsList } from 'app/features/alerting/unified/components/cont
 import { useContactPointsWithStatus } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
 import { useContactPointsSearch } from 'app/features/alerting/unified/components/contact-points/useContactPointsSearch';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
-import { shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -18,7 +17,8 @@ export interface ContactPointDrawerProps {
 }
 
 export function ContactPointDrawer({ listSearchQuery }: ContactPointDrawerProps) {
-  const fetchPolicies = useMemo(() => !shouldUseK8sApi(GRAFANA_RULES_SOURCE_NAME), []);
+  // Grafana-managed AM uses the K8s receivers list; skip legacy alertmanager config (see useGrafanaContactPoints).
+  const fetchPolicies = false;
   const fetchStatuses = contextSrv.hasPermission(AccessControlAction.AlertingNotificationsRead);
 
   const { isLoading, error, contactPoints } = useContactPointsWithStatus({

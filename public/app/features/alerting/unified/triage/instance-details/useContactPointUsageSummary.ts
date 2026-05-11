@@ -1,22 +1,18 @@
 import { t } from '@grafana/i18n';
-import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { K8sAnnotations } from 'app/features/alerting/unified/utils/k8s/constants';
-import { getAnnotation, shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
+import { getAnnotation } from 'app/features/alerting/unified/utils/k8s/utils';
 
 import { type ContactPointWithMetadata } from '../../components/contact-points/utils';
 import { createRelativeUrl } from '../../utils/url';
 
 /**
- * Policy/rule usage strings and filter URLs for a contact point (alert instance drawer usage block).
+ * Policy/rule usage strings and filter URLs for a Grafana-managed contact point (alert instance drawer).
+ * Counts come from K8s receiver usage annotations, not the legacy alertmanager config `policies` list.
  */
 export function useContactPointUsageSummary(contactPoint: ContactPointWithMetadata) {
-  const { selectedAlertmanager } = useAlertmanager();
-  const usingK8sApi = shouldUseK8sApi(selectedAlertmanager!);
+  const { name } = contactPoint;
 
-  const { name, policies = [] } = contactPoint;
-
-  const k8sRoutesInUse = getAnnotation(contactPoint, K8sAnnotations.InUseRoutes);
-  const numberOfPolicies = usingK8sApi ? Number(k8sRoutesInUse) : policies.length;
+  const numberOfPolicies = Number(getAnnotation(contactPoint, K8sAnnotations.InUseRoutes)) || 0;
   const numberOfRules = Number(getAnnotation(contactPoint, K8sAnnotations.InUseRules)) || 0;
 
   const policiesSentence = t('alerting.contact-points.used-by', 'Used by {{count}} notification policies', {
