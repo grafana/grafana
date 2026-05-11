@@ -69,6 +69,7 @@ export const CardContainer = ({
     disableEvents,
     disableHover,
     hasDescriptionComponent,
+    false,
     isSelected,
     undefined,
     noMargin
@@ -86,6 +87,7 @@ export const getCardContainerStyles = (
   disabled = false,
   disableHover = false,
   hasDescriptionComponent: boolean,
+  hasTagsComponent = false,
   isSelected?: boolean,
   isCompact?: boolean,
   noMargin = false
@@ -96,6 +98,7 @@ export const getCardContainerStyles = (
     container: css({
       display: 'grid',
       position: 'relative',
+      ...(!hasTagsComponent && { '--card-content-column-end': '-1' }),
       gridTemplate: hasDescriptionComponent
         ? `
         "Figure Heading Tags"

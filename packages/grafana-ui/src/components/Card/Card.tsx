@@ -47,7 +47,6 @@ const CardContext = React.createContext<{
   onClick?: (e: React.MouseEvent<HTMLElement>) => void;
   disabled?: boolean;
   isSelected?: boolean;
-  hasTags?: boolean;
 } | null>(null);
 
 /**
@@ -87,6 +86,7 @@ export const Card: CardInterface = ({
     disabled,
     disableHover,
     hasDescriptionComponent,
+    hasTagsComponent,
     isSelected,
     isCompact,
     noMargin
@@ -102,7 +102,7 @@ export const Card: CardInterface = ({
       hasDescriptionComponent={hasDescriptionComponent}
       {...htmlProps}
     >
-      <CardContext.Provider value={{ href, onClick: onCardClick, disabled, isSelected, hasTags: hasTagsComponent }}>
+      <CardContext.Provider value={{ href, onClick: onCardClick, disabled, isSelected }}>
         {!hasHeadingComponent && <Heading />}
         {children}
       </CardContext.Provider>
@@ -120,8 +120,7 @@ interface ChildProps {
 /** Main heading for the card */
 const Heading = ({ children, className, 'aria-label': ariaLabel }: ChildProps & { 'aria-label'?: string }) => {
   const context = useContext(CardContext);
-  const hasTags = context?.hasTags ?? false;
-  const styles = useStyles2(getHeadingStyles, hasTags);
+  const styles = useStyles2(getHeadingStyles);
 
   const { href, onClick, isSelected } = context ?? {
     href: undefined,
@@ -150,10 +149,10 @@ const Heading = ({ children, className, 'aria-label': ariaLabel }: ChildProps & 
 };
 Heading.displayName = 'Heading';
 
-const getHeadingStyles = (theme: GrafanaTheme2, hasTags: boolean) => ({
+const getHeadingStyles = (theme: GrafanaTheme2) => ({
   heading: css({
     gridArea: 'Heading',
-    ...(!hasTags && { gridColumnEnd: -1 }),
+    gridColumnEnd: 'var(--card-content-column-end, auto)',
     justifySelf: 'start',
     display: 'flex',
     justifyContent: 'space-between',
@@ -210,19 +209,17 @@ const getTagStyles = (theme: GrafanaTheme2) => ({
 
 /** Card description text */
 const Description = ({ children, className }: ChildProps) => {
-  const context = useContext(CardContext);
-  const hasTags = context?.hasTags ?? false;
-  const styles = useStyles2(getDescriptionStyles, hasTags);
+  const styles = useStyles2(getDescriptionStyles);
   const Element = typeof children === 'string' ? 'p' : 'div';
   return <Element className={cx(styles.description, className)}>{children}</Element>;
 };
 Description.displayName = 'Description';
 
-const getDescriptionStyles = (theme: GrafanaTheme2, hasTags: boolean) => ({
+const getDescriptionStyles = (theme: GrafanaTheme2) => ({
   description: css({
     width: '100%',
     gridArea: 'Description',
-    ...(!hasTags && { gridColumnEnd: -1 }),
+    gridColumnEnd: 'var(--card-content-column-end, auto)',
     margin: theme.spacing(1, 0, 0),
     color: theme.colors.text.secondary,
     lineHeight: theme.typography.body.lineHeight,
@@ -266,9 +263,7 @@ const getFigureStyles = (theme: GrafanaTheme2) => ({
 });
 
 const Meta = memo(({ children, className, separator = '|' }: ChildProps & { separator?: string }) => {
-  const context = useContext(CardContext);
-  const hasTags = context?.hasTags ?? false;
-  const styles = useStyles2(getMetaStyles, hasTags);
+  const styles = useStyles2(getMetaStyles);
   let meta = children;
 
   const filtered = React.Children.toArray(children).filter(Boolean);
@@ -294,10 +289,10 @@ const Meta = memo(({ children, className, separator = '|' }: ChildProps & { sepa
 });
 Meta.displayName = 'Meta';
 
-const getMetaStyles = (theme: GrafanaTheme2, hasTags: boolean) => ({
+const getMetaStyles = (theme: GrafanaTheme2) => ({
   metadata: css({
     gridArea: 'Meta',
-    ...(!hasTags && { gridColumnEnd: -1 }),
+    gridColumnEnd: 'var(--card-content-column-end, auto)',
     display: 'flex',
     alignItems: 'center',
     width: '100%',
@@ -390,9 +385,9 @@ export const getCardStyles = (theme: GrafanaTheme2) => {
       width: '100%',
       flexWrap: 'wrap',
     }),
-    ...getHeadingStyles(theme, false),
-    ...getMetaStyles(theme, false),
-    ...getDescriptionStyles(theme, false),
+    ...getHeadingStyles(theme),
+    ...getMetaStyles(theme),
+    ...getDescriptionStyles(theme),
     ...getFigureStyles(theme),
     ...getActionStyles(theme),
     ...getTagStyles(theme),
