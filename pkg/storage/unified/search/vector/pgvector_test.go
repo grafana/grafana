@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"testing"
 
+	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/storage/unified/sql/test"
@@ -130,6 +131,29 @@ func TestPgvectorBackend_GetLatestRV(t *testing.T) {
 	rv, err := backend.GetLatestRV(ctx)
 	require.NoError(t, err)
 	require.Equal(t, int64(42), rv)
+	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
+}
+
+func TestPgvectorBackend_SetLatestRV_NonPositive_NoOp(t *testing.T) {
+	rdb := test.NewDBProviderNopSQL(t)
+	backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
+	ctx := testutil.NewDefaultTestContext(t)
+
+	require.NoError(t, backend.SetLatestRV(ctx, 0))
+	require.NoError(t, backend.SetLatestRV(ctx, -1))
+	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
+}
+
+func TestPgvectorBackend_SetLatestRV_Positive_Updates(t *testing.T) {
+	rdb := test.NewDBProviderNopSQL(t)
+	backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
+	ctx := testutil.NewDefaultTestContext(t)
+
+	rdb.SQLMock.ExpectExec("UPDATE vector_latest_rv").
+		WithArgs(int64(42)).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+
+	require.NoError(t, backend.SetLatestRV(ctx, 42))
 	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
 }
 

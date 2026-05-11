@@ -18,16 +18,13 @@ const backfillPageSize = 100
 type Options struct {
 	Storage       resource.StorageBackend
 	VectorBackend vector.VectorBackend
-	Embedder      *embedder.Embedder
 	BatchEmbedder *embedder.BatchEmbedder
 	Builders      []embed.Builder
-	Log           log.Logger
 }
 
 type VectorBackfiller struct {
 	storage       resource.StorageBackend
 	vectorBackend vector.VectorBackend
-	embedder      *embedder.Embedder
 	batchEmbedder *embedder.BatchEmbedder
 	builders      map[string]embed.Builder
 	// sortedBuilders is builders sorted by Resource() so iteration order
@@ -44,17 +41,11 @@ func NewVectorBackfiller(opts Options) (*VectorBackfiller, error) {
 	if opts.VectorBackend == nil {
 		return nil, fmt.Errorf("backfill: VectorBackend is required")
 	}
-	if opts.Embedder == nil {
-		return nil, fmt.Errorf("backfill: Embedder is required")
-	}
 	if opts.BatchEmbedder == nil {
 		return nil, fmt.Errorf("backfill: BatchEmbedder is required")
 	}
 	if len(opts.Builders) == 0 {
 		return nil, fmt.Errorf("backfill: at least one Builder is required")
-	}
-	if opts.Log == nil {
-		opts.Log = log.New("backfill")
 	}
 
 	builders := make(map[string]embed.Builder, len(opts.Builders))
@@ -78,11 +69,10 @@ func NewVectorBackfiller(opts Options) (*VectorBackfiller, error) {
 	return &VectorBackfiller{
 		storage:        opts.Storage,
 		vectorBackend:  opts.VectorBackend,
-		embedder:       opts.Embedder,
 		batchEmbedder:  opts.BatchEmbedder,
 		builders:       builders,
 		sortedBuilders: sorted,
-		log:            opts.Log,
+		log:            log.New("backfill"),
 	}, nil
 }
 
@@ -107,7 +97,7 @@ func (b *VectorBackfiller) Run(ctx context.Context) error {
 func (b *VectorBackfiller) runBackfill(ctx context.Context) {
 	log := b.log.FromContext(ctx)
 
-	jobs, err := b.vectorBackend.ListIncompleteBackfillJobs(ctx, b.embedder.Model)
+	jobs, err := b.vectorBackend.ListIncompleteBackfillJobs(ctx, b.batchEmbedder.Model())
 	if err != nil {
 		log.Error("backfill: list jobs", "err", err)
 		return

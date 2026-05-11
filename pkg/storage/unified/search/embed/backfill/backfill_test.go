@@ -48,7 +48,6 @@ func newBackfiller(t *testing.T, storage *fakeStorage, vec *fakeVector) *VectorB
 	b, err := NewVectorBackfiller(Options{
 		Storage:       storage,
 		VectorBackend: vec,
-		Embedder:      emb,
 		BatchEmbedder: embedder.NewBatchEmbedder(*emb),
 		Builders:      []embed.Builder{dashboard.New()},
 	})

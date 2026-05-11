@@ -706,7 +706,8 @@ type Cfg struct {
 	VectorPromoterInterval   time.Duration // promoter tick interval; 0 disables
 
 	// Embedding provider used by the VectorSearch RPC. "" = disabled.
-	EmbeddingProvider string // "vertex" | "bedrock" | ""
+	EmbeddingProvider string        // "vertex" | "bedrock" | ""
+	EmbeddingInterval time.Duration // default 60s
 	VertexProjectID   string
 	VertexLocation    string // default "us-central1"
 	VertexModel       string // default "gemini-embedding-001"

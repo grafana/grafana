@@ -219,16 +219,36 @@ func TestIntegrationVectorGetLatestRV(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, int64(0), rv)
 
-	err = backend.Upsert(ctx, []Vector{
-		{Namespace: "integration-test", Resource: testResource, UID: "rv-test", Title: "RV Test", Subresource: "x",
-			ResourceVersion: 42, Content: "test content", Metadata: json.RawMessage(`{}`),
-			Embedding: makeEmbedding(0.5, 0.5), Model: testModel},
-	})
-	require.NoError(t, err)
-
+	require.NoError(t, backend.SetLatestRV(ctx, 42))
 	rv, err = backend.GetLatestRV(ctx)
 	require.NoError(t, err)
 	assert.Equal(t, int64(42), rv)
+
+	// Monotonic: lower rv is ignored.
+	require.NoError(t, backend.SetLatestRV(ctx, 10))
+	rv, err = backend.GetLatestRV(ctx)
+	require.NoError(t, err)
+	assert.Equal(t, int64(42), rv)
+
+	// Higher rv advances.
+	require.NoError(t, backend.SetLatestRV(ctx, 100))
+	rv, err = backend.GetLatestRV(ctx)
+	require.NoError(t, err)
+	assert.Equal(t, int64(100), rv)
+}
+
+func TestIntegrationVectorScannerLock(t *testing.T) {
+	backend, _, ctx := setupIntegrationTest(t)
+
+	release, acquired, err := backend.TryAcquireReconcilerLock(ctx)
+	require.NoError(t, err)
+	require.True(t, acquired)
+	defer release()
+
+	// Second acquire on the same backend (different connection) must be denied.
+	_, acquired2, err := backend.TryAcquireReconcilerLock(ctx)
+	require.NoError(t, err)
+	require.False(t, acquired2)
 }
 
 func TestIntegrationPromoterPromotesLargeTenant(t *testing.T) {

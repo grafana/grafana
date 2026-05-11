@@ -285,6 +285,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	// fields must also be configured.
 	embedSection := cfg.Raw.Section("vector_embedder")
 	cfg.EmbeddingProvider = embedSection.Key("provider").String()
+	cfg.EmbeddingInterval = embedSection.Key("interval").MustDuration(time.Minute)
 	cfg.VertexProjectID = embedSection.Key("vertex_project_id").String()
 	cfg.VertexLocation = embedSection.Key("vertex_location").MustString("us-central1")
 	cfg.VertexModel = embedSection.Key("vertex_model").MustString("gemini-embedding-001")
