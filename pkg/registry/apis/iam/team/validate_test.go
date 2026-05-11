@@ -2,7 +2,7 @@ package team
 
 import (
 	"context"
-	"strings"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/authlib/types"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 )
 
 func TestValidateOnCreate(t *testing.T) {
@@ -112,7 +113,7 @@ func TestValidateOnCreate(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			ctx := identity.WithRequester(context.Background(), test.requester)
-			err := ValidateOnCreate(ctx, test.obj)
+			err := ValidateOnCreate(ctx, test.obj, legacy.NoopExternalGroupReconciler{})
 			assert.Equal(t, test.want, err)
 		})
 	}
@@ -322,32 +323,25 @@ func TestValidateOnUpdate(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			ctx := identity.WithRequester(context.Background(), test.requester)
-			err := ValidateOnUpdate(ctx, test.obj, test.old)
+			err := ValidateOnUpdate(ctx, test.obj, test.old, legacy.NoopExternalGroupReconciler{})
 			assert.Equal(t, test.want, err)
 		})
 	}
 }
 
-func TestNormalizeAndValidateExternalGroups(t *testing.T) {
-	t.Run("nil and empty are no-ops", func(t *testing.T) {
-		spec := &iamv0alpha1.TeamSpec{}
-		require.NoError(t, normalizeAndValidateExternalGroups(spec))
-		assert.Empty(t, spec.ExternalGroups)
+func TestValidateExternalGroups(t *testing.T) {
+	t.Run("nil and empty pass through to reconciler.Validate", func(t *testing.T) {
+		stub := &stubReconciler{}
+		require.NoError(t, validateExternalGroups(nil, stub))
+		assert.Nil(t, stub.gotInput)
 
-		spec = &iamv0alpha1.TeamSpec{ExternalGroups: []string{}}
-		require.NoError(t, normalizeAndValidateExternalGroups(spec))
-		assert.Empty(t, spec.ExternalGroups)
-	})
-
-	t.Run("lowercases and trims in place", func(t *testing.T) {
-		spec := &iamv0alpha1.TeamSpec{ExternalGroups: []string{"  LDAP-Admins ", "Some-Group"}}
-		require.NoError(t, normalizeAndValidateExternalGroups(spec))
-		assert.Equal(t, []string{"ldap-admins", "some-group"}, spec.ExternalGroups)
+		stub = &stubReconciler{}
+		require.NoError(t, validateExternalGroups([]string{}, stub))
+		assert.Empty(t, stub.gotInput)
 	})
 
 	t.Run("rejects empty entry", func(t *testing.T) {
-		spec := &iamv0alpha1.TeamSpec{ExternalGroups: []string{"foo", ""}}
-		err := normalizeAndValidateExternalGroups(spec)
+		err := validateExternalGroups([]string{"foo", ""}, legacy.NoopExternalGroupReconciler{})
 		require.Error(t, err)
 		statusErr, ok := err.(*apierrors.StatusError)
 		require.True(t, ok)
@@ -356,38 +350,39 @@ func TestNormalizeAndValidateExternalGroups(t *testing.T) {
 	})
 
 	t.Run("rejects whitespace-only entry", func(t *testing.T) {
-		spec := &iamv0alpha1.TeamSpec{ExternalGroups: []string{"   "}}
-		err := normalizeAndValidateExternalGroups(spec)
+		err := validateExternalGroups([]string{"   "}, legacy.NoopExternalGroupReconciler{})
 		require.Error(t, err)
 		statusErr, ok := err.(*apierrors.StatusError)
 		require.True(t, ok)
 		assert.Equal(t, int32(400), statusErr.ErrStatus.Code)
-	})
-
-	t.Run("rejects entry over max length", func(t *testing.T) {
-		spec := &iamv0alpha1.TeamSpec{ExternalGroups: []string{strings.Repeat("a", maxExternalGroupLength+1)}}
-		err := normalizeAndValidateExternalGroups(spec)
-		require.Error(t, err)
-		statusErr, ok := err.(*apierrors.StatusError)
-		require.True(t, ok)
-		assert.Equal(t, int32(400), statusErr.ErrStatus.Code)
-		assert.Contains(t, statusErr.ErrStatus.Message, "exceeds maximum length")
-	})
-
-	t.Run("accepts entry at exactly max length", func(t *testing.T) {
-		exact := strings.Repeat("a", maxExternalGroupLength)
-		spec := &iamv0alpha1.TeamSpec{ExternalGroups: []string{exact}}
-		require.NoError(t, normalizeAndValidateExternalGroups(spec))
-		assert.Equal(t, []string{exact}, spec.ExternalGroups)
 	})
 
 	t.Run("rejects duplicates after normalization", func(t *testing.T) {
-		spec := &iamv0alpha1.TeamSpec{ExternalGroups: []string{"LDAP-Admins", "ldap-admins"}}
-		err := normalizeAndValidateExternalGroups(spec)
+		err := validateExternalGroups([]string{"LDAP-Admins", "ldap-admins"}, legacy.NoopExternalGroupReconciler{})
 		require.Error(t, err)
 		statusErr, ok := err.(*apierrors.StatusError)
 		require.True(t, ok)
 		assert.Equal(t, int32(400), statusErr.ErrStatus.Code)
 		assert.Contains(t, statusErr.ErrStatus.Message, "duplicate")
 	})
+
+	t.Run("delegates implementation-specific checks to the reconciler", func(t *testing.T) {
+		boom := errors.New("over length")
+		stub := &stubReconciler{err: boom}
+		err := validateExternalGroups([]string{"LDAP-Admins"}, stub)
+		require.ErrorIs(t, err, boom)
+		assert.Equal(t, []string{"LDAP-Admins"}, stub.gotInput,
+			"reconciler.Validate must receive the caller's original (un-normalized) input")
+	})
+}
+
+type stubReconciler struct {
+	legacy.NoopExternalGroupReconciler
+	err      error
+	gotInput []string
+}
+
+func (s *stubReconciler) Validate(groups []string) error {
+	s.gotInput = groups
+	return s.err
 }

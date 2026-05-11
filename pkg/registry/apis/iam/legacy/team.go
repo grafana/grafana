@@ -286,9 +286,7 @@ type CreateTeamCommand struct {
 	// team insert rolls back the member inserts roll back with it.
 	MemberCreates []CreateTeamMemberCommand
 
-	// ExternalGroupReconciler, when non-nil, reconciles team_group rows
-	// against DesiredExternalGroups inside the same SQL transaction as the
-	// team row insert.
+	// Reconciled in the same tx as the team row insert.
 	ExternalGroupReconciler ExternalGroupReconciler
 	DesiredExternalGroups   []string
 }
@@ -373,7 +371,8 @@ func (s *legacySQLStore) CreateTeam(ctx context.Context, ns claims.NamespaceInfo
 		}
 
 		if cmd.ExternalGroupReconciler != nil {
-			if err := cmd.ExternalGroupReconciler.Reconcile(ctx, st, ns.OrgID, teamID, cmd.DesiredExternalGroups); err != nil {
+			desired := NormalizeExternalGroups(cmd.DesiredExternalGroups)
+			if err := cmd.ExternalGroupReconciler.Reconcile(ctx, st, ns.OrgID, teamID, desired); err != nil {
 				return fmt.Errorf("failed to reconcile team external groups: %w", err)
 			}
 		}
@@ -423,9 +422,7 @@ type UpdateTeamCommand struct {
 	MemberUpdates []UpdateTeamMemberCommand
 	MemberCreates []CreateTeamMemberCommand
 
-	// ExternalGroupReconciler, when non-nil, reconciles team_group rows
-	// against DesiredExternalGroups inside the same SQL transaction as the
-	// team row update.
+	// Reconciled in the same tx as the team row update.
 	ExternalGroupReconciler ExternalGroupReconciler
 	DesiredExternalGroups   []string
 }
@@ -557,7 +554,8 @@ func (s *legacySQLStore) UpdateTeam(ctx context.Context, ns claims.NamespaceInfo
 		}
 
 		if cmd.ExternalGroupReconciler != nil {
-			if err := cmd.ExternalGroupReconciler.Reconcile(ctx, st, ns.OrgID, teamInfo.ID, cmd.DesiredExternalGroups); err != nil {
+			desired := NormalizeExternalGroups(cmd.DesiredExternalGroups)
+			if err := cmd.ExternalGroupReconciler.Reconcile(ctx, st, ns.OrgID, teamInfo.ID, desired); err != nil {
 				return fmt.Errorf("failed to reconcile team external groups: %w", err)
 			}
 		}

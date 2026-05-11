@@ -9,13 +9,10 @@ import (
 	"github.com/grafana/authlib/types"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 )
 
-// maxExternalGroupLength matches the team_group.group_id column width
-// (NVarchar(190) — see pkg/extensions/teamgroupsync/database/database_mig.go).
-const maxExternalGroupLength = 190
-
-func ValidateOnCreate(ctx context.Context, obj *iamv0alpha1.Team) error {
+func ValidateOnCreate(ctx context.Context, obj *iamv0alpha1.Team, egr legacy.ExternalGroupReconciler) error {
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
 		return apierrors.NewUnauthorized("no identity found")
@@ -37,14 +34,14 @@ func ValidateOnCreate(ctx context.Context, obj *iamv0alpha1.Team) error {
 		return err
 	}
 
-	if err := normalizeAndValidateExternalGroups(&obj.Spec); err != nil {
+	if err := validateExternalGroups(obj.Spec.ExternalGroups, egr); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func ValidateOnUpdate(ctx context.Context, obj, old *iamv0alpha1.Team) error {
+func ValidateOnUpdate(ctx context.Context, obj, old *iamv0alpha1.Team, egr legacy.ExternalGroupReconciler) error {
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
 		return apierrors.NewUnauthorized("no identity found")
@@ -73,38 +70,31 @@ func ValidateOnUpdate(ctx context.Context, obj, old *iamv0alpha1.Team) error {
 		return err
 	}
 
-	if err := normalizeAndValidateExternalGroups(&obj.Spec); err != nil {
+	if err := validateExternalGroups(obj.Spec.ExternalGroups, egr); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-// normalizeAndValidateExternalGroups normalizes spec.externalGroups in place
-// (lowercase + trim) and rejects empty entries, entries longer than
-// team_group.group_id, and duplicates after normalization.
-func normalizeAndValidateExternalGroups(spec *iamv0alpha1.TeamSpec) error {
-	if len(spec.ExternalGroups) == 0 {
-		return nil
+// validateExternalGroups rejects empty entries and dup-after-normalize without
+// mutating groups; impl-specific constraints (length, charset) live on egr.
+func validateExternalGroups(groups []string, egr legacy.ExternalGroupReconciler) error {
+	if len(groups) == 0 {
+		return egr.Validate(groups)
 	}
-	seen := make(map[string]struct{}, len(spec.ExternalGroups))
-	out := make([]string, 0, len(spec.ExternalGroups))
-	for _, g := range spec.ExternalGroups {
-		g = strings.ToLower(strings.TrimSpace(g))
-		if g == "" {
+	seen := make(map[string]struct{}, len(groups))
+	for _, g := range groups {
+		key := strings.ToLower(strings.TrimSpace(g))
+		if key == "" {
 			return apierrors.NewBadRequest("externalGroups entries must be non-empty")
 		}
-		if len(g) > maxExternalGroupLength {
-			return apierrors.NewBadRequest("externalGroups entry exceeds maximum length")
+		if _, dup := seen[key]; dup {
+			return apierrors.NewBadRequest("duplicate externalGroups entry " + key)
 		}
-		if _, dup := seen[g]; dup {
-			return apierrors.NewBadRequest("duplicate externalGroups entry " + g)
-		}
-		seen[g] = struct{}{}
-		out = append(out, g)
+		seen[key] = struct{}{}
 	}
-	spec.ExternalGroups = out
-	return nil
+	return egr.Validate(groups)
 }
 
 func validateNoDuplicateMembers(members []iamv0alpha1.TeamTeamMember) error {

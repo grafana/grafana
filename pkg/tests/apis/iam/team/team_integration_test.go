@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -760,13 +759,9 @@ func doTeamSpecMembersTests(t *testing.T, helper *apis.K8sTestHelper) {
 	})
 }
 
-// doTeamSpecExternalGroupsOSSTests guards two properties of the OSS build:
-//   - spec.externalGroups is an accepted field on Create (validation rejects
-//     duplicates after lowercasing) — true regardless of dual-writer mode.
-//   - When the OSS Team store serves reads (Mode < Mode5), the noop reconciler
-//     hydrates spec.externalGroups as empty so OSS clients never see
-//     enterprise-only data leak through. In Mode5 reads come from unified
-//     storage and round-trip whatever validation normalized at write time.
+// doTeamSpecExternalGroupsOSSTests covers OSS-side spec.externalGroups
+// behavior: dup validation is universal; hydration differs by dual-writer mode
+// (noop returns empty on Mode<5, Mode5 round-trips from unified storage).
 func doTeamSpecExternalGroupsOSSTests(t *testing.T, helper *apis.K8sTestHelper, mode rest.DualWriterMode) {
 	teamClient := helper.GetResourceClient(apis.ResourceClientArgs{
 		User:      helper.Org1.Admin,
@@ -819,19 +814,10 @@ func doTeamSpecExternalGroupsOSSTests(t *testing.T, helper *apis.K8sTestHelper, 
 		groups, _, _ := unstructured.NestedSlice(fetched.Object, "spec", "externalGroups")
 
 		if mode == rest.Mode5 {
-			// Mode5 = unified-storage-only. The OSS Team store's Get is not
-			// in the read path, so the noop reconciler doesn't run. The kv
-			// store returns whatever the admission chain saw at Create time;
-			// validating admission's in-place spec mutation is not always
-			// persisted to the unified store, so we only assert the entry
-			// is present (any case).
-			require.Len(t, groups, 1)
-			s, ok := groups[0].(string)
-			require.True(t, ok)
-			require.Equal(t, "ldap-admins", strings.ToLower(s))
+			// Unified storage round-trips the original spec; admission no
+			// longer mutates, so case is preserved.
+			require.Equal(t, []interface{}{"LDAP-Admins"}, groups)
 		} else {
-			// Mode0/Mode1 read through the OSS LegacyStore + noop reconciler,
-			// which always hydrates an empty slice.
 			require.Empty(t, groups, "OSS noop reconciler must not populate externalGroups")
 		}
 	})
