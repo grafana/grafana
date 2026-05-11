@@ -5,8 +5,8 @@
 # $schema: https://golangci-lint.run/jsonschema/golangci.jsonschema.json
 version: '2'
 run:
-  timeout: 15m
-  concurrency: 10
+  timeout: 30m
+  concurrency: 0 # GOMAXPROCS
   allow-parallel-runners: true
 linters:
   default: none
