@@ -10856,7 +10856,12 @@
   },
   "home": {
     "home-page": {
-      "placeholder": "Welcome to Grafana"
+      "greeting": {
+        "afternoon": "Good afternoon.",
+        "evening": "Good evening.",
+        "morning": "Good morning."
+      },
+      "placeholder": "Welcome to Grafana."
     }
   },
   "inspector": {
