@@ -100,7 +100,7 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
             </ul>
           ) : null}
           {(onlyOneFolderSelected || !showItemNames) && <DescendantCount selectedItems={selectedItems} />}
-          {showItemNames && selectedFolders.length > 0 && (
+          {showItemNames && !onlyOneFolderSelected && selectedFolders.length > 0 && (
             <>
               <Space v={1} />
               <DescendantCount selectedItems={selectedItems} />
