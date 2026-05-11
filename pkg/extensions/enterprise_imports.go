@@ -36,6 +36,7 @@ import (
 	_ "github.com/dlmiddlecote/sqlstats"
 	_ "github.com/dolthub/go-mysql-server"
 	_ "github.com/dolthub/go-mysql-server/sql"
+	_ "github.com/dolthub/go-mysql-server/sql/analyzer"
 	_ "github.com/dolthub/go-mysql-server/sql/expression"
 	_ "github.com/dolthub/go-mysql-server/sql/expression/function/aggregation"
 	_ "github.com/dolthub/go-mysql-server/sql/plan"

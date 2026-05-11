@@ -17,11 +17,7 @@ import (
 )
 
 // preferencesTestCase tests the "preferences" ResourceMigration
-type preferencesTestCase struct {
-	// users that have an individual preference; verified using each user's own client
-	// because the authorizer only allows a user to read their own "user-<uid>" preference.
-	users []apis.User
-}
+type preferencesTestCase struct{}
 
 // NewPreferencesTestCase creates a test case for the preferences migrator
 func NewPreferencesTestCase() ResourceMigratorTestCase {
@@ -81,8 +77,6 @@ func (tc *preferencesTestCase) Setup(t *testing.T, helper *apis.K8sTestHelper) b
 		})
 		require.NoError(t, err)
 
-		tc.users = append(tc.users, user)
-
 		if !seenOrgs[orgID] {
 			err := service.Save(ctx, &pref.SavePreferenceCommand{
 				OrgID:    orgID,
@@ -99,8 +93,15 @@ func (tc *preferencesTestCase) Setup(t *testing.T, helper *apis.K8sTestHelper) b
 func (tc *preferencesTestCase) Verify(t *testing.T, helper *apis.K8sTestHelper, shouldExist bool) {
 	t.Helper()
 
+	// The same users defined in setup!
+	users := []apis.User{
+		helper.Org1.Admin,
+		helper.Org1.Editor,
+		helper.OrgB.Admin,
+	}
+
 	// Each user should be able to read their own preferences and namespace
-	for _, user := range tc.users {
+	for _, user := range users {
 		orgID := user.Identity.GetOrgID()
 		namespace := authlib.OrgNamespaceFormatter(orgID)
 
