@@ -177,15 +177,17 @@ func TestNormalizeGrafanaSQLRequest_passthroughPaths(t *testing.T) {
 		require.ErrorContains(t, sqlErrs["A"], "table name is required")
 	})
 
-	t.Run("nil schema provider returns sql error", func(t *testing.T) {
+	t.Run("nil schema provider uses default table label", func(t *testing.T) {
 		raw, err := json.Marshal(map[string]any{"refId": "A", "grafanaSql": true, "table": "carts"})
 		require.NoError(t, err)
 		req := queryDataRequestWithDSAbstraction([]backend.DataQuery{{RefID: "A", JSON: raw, TimeRange: tr}})
 		out, refIDs, sqlErrs := normalizeGrafanaSQLRequest(context.Background(), req, &datasourceInfo{})
-		require.Empty(t, refIDs)
-		require.Empty(t, out.Queries)
-		require.Len(t, sqlErrs, 1)
-		require.ErrorContains(t, sqlErrs["A"], "no schema provider")
+		require.Contains(t, refIDs, "A")
+		require.Empty(t, sqlErrs)
+		require.Len(t, out.Queries, 1)
+		var model QueryJSONModel
+		require.NoError(t, json.Unmarshal(out.Queries[0].JSON, &model))
+		require.Equal(t, `{service_name="carts"}`, model.Expr)
 	})
 
 	t.Run("buildLogQL failure omits query and returns sql error", func(t *testing.T) {

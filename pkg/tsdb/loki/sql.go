@@ -63,11 +63,15 @@ func normalizeGrafanaSQLRequest(ctx context.Context, req *backend.QueryDataReque
 		}
 
 		if tableLabel == "" {
-			if dsInfo == nil || dsInfo.schemaProvider == nil {
+			if dsInfo == nil {
 				sqlErrors[q.RefID] = fmt.Errorf("loki grafana sql: data source instance has no schema provider")
 				continue
 			}
-			tableLabel = dsInfo.schemaProvider.ResolveSchemaTableLabel(ctx)
+			if dsInfo.schemaProvider != nil {
+				tableLabel = dsInfo.schemaProvider.ResolveSchemaTableLabel(ctx)
+			} else {
+				tableLabel = defaultSchemaTableLabel
+			}
 		}
 
 		// Aggregation hints (if present) are ignored here: we fetch raw log rows and let dsabstraction
