@@ -24,6 +24,7 @@ const (
 	DashboardResource        = "dashboards.dashboard.grafana.app"
 	ShortURLResource         = "shorturls.shorturl.grafana.app"
 	StarsResource            = "stars.collections.grafana.app"
+	PreferencesResource      = "preferences.preferences.grafana.app"
 	DataSourceResources      = "datasources.datasource.grafana.app" // All datasources
 	QueryCacheConfigResource = "querycacheconfigs.querycaching.grafana.app"
 )
@@ -35,6 +36,7 @@ var MigratedUnifiedResources = map[string]bool{
 	DashboardResource:        true,  // Only Mode5!
 	ShortURLResource:         false, // Requires kubernetesShortURLs to be enabled by default
 	StarsResource:            false,
+	PreferencesResource:      false,
 	DataSourceResources:      false,
 	QueryCacheConfigResource: false,
 }
