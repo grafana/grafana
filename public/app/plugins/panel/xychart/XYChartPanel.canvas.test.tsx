@@ -8,17 +8,21 @@ import {
   type DataFrame,
   dateTime,
   EventBusSrv,
+  FieldMatcherID,
+  FieldColorModeId,
+  FrameMatcherID,
   getDisplayProcessor,
   LoadingState,
   type PanelProps,
   type TimeRange,
+  ThresholdsMode,
   toDataFrame,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
 import { measureText as uPlotAxisMeasureText, type UPlotConfigBuilder } from '@grafana/ui';
 import { XYChartPanel2 } from 'app/plugins/panel/xychart/XYChartPanel';
-import { type Options, SeriesMapping } from 'app/plugins/panel/xychart/panelcfg.gen';
+import { type Options, SeriesMapping, type XYSeriesConfig } from 'app/plugins/panel/xychart/panelcfg.gen';
 
 import * as utils from './scatter';
 
@@ -207,16 +211,87 @@ defaultFrame.fields = defaultFrame.fields.map((field) => ({
   display: getDisplayProcessor({ field, theme }),
 }));
 
-const setUp = (
-  propsOverrides?: Partial<PanelProps<Options>>,
-  seriesOverride?: DataFrame[],
-  timeRangeOverride?: TimeRange
-) => {
+/**
+ * z = [3, 5, 7] with absolute thresholds at 4 and 6 yields palette indices [0, 1, 2] so each point gets a
+ * different color and scatter `drawBubbles` runs the per-index fill/stroke update (scatter.ts ~139–144).
+ */
+const frameColorByThresholdZ: DataFrame = (() => {
+  const fields = defaultFrame.fields.map((f) =>
+    f.name !== 'z'
+      ? f
+      : {
+          ...f,
+          config: {
+            ...f.config,
+            color: { mode: FieldColorModeId.Thresholds },
+            thresholds: {
+              mode: ThresholdsMode.Absolute,
+              steps: [
+                { value: -Infinity, color: 'green' },
+                { value: 4, color: 'blue' },
+                { value: 6, color: 'red' },
+              ],
+            },
+          },
+        }
+  );
+  const frame: DataFrame = { ...defaultFrame, fields };
+  frame.fields = fields.map((field) => ({
+    ...field,
+    display: getDisplayProcessor({ field, theme }),
+  }));
+  return frame;
+})();
+
+/** Two numeric Y candidates (x + y only) — auto mapping yields a single series. */
+const xyOnlyFrame: DataFrame = {
+  ...defaultFrame,
+  fields: [defaultFrame.fields.find((f) => f.name === 'x')!, defaultFrame.fields.find((f) => f.name === 'y')!],
+};
+
+function buildOptions(partial: Partial<Options> = {}): Options {
+  return {
+    series: partial.series ?? [],
+    mapping: partial.mapping ?? SeriesMapping.Auto,
+    legend: {
+      showLegend: false,
+      displayMode: LegendDisplayMode.Hidden,
+      calcs: [],
+      placement: 'bottom',
+      ...partial.legend,
+    },
+    tooltip: {
+      sort: SortOrder.None,
+      mode: TooltipDisplayMode.None,
+      ...partial.tooltip,
+    },
+  };
+}
+
+type PanelOverrides = Partial<Omit<PanelProps<Options>, 'options'>> & { options?: Partial<Options> };
+
+function manualSeriesForFrame(opts: { yField: string; colorField?: string; sizeField?: string }): XYSeriesConfig {
+  const cfg: XYSeriesConfig = {
+    frame: { matcher: { id: FrameMatcherID.byIndex, options: 0 } },
+    x: { matcher: { id: FieldMatcherID.byName, options: 'x' } },
+    y: { matcher: { id: FieldMatcherID.byName, options: opts.yField } },
+  };
+  if (opts.colorField) {
+    cfg.color = { matcher: { id: FieldMatcherID.byName, options: opts.colorField } };
+  }
+  if (opts.sizeField) {
+    cfg.size = { matcher: { id: FieldMatcherID.byName, options: opts.sizeField } };
+  }
+  return cfg;
+}
+
+const setUp = (propsOverrides?: PanelOverrides, seriesOverride?: DataFrame[], timeRangeOverride?: TimeRange) => {
   const defaultTimeRange = timeRangeOverride ?? {
     from: dateTime(0),
     to: dateTime(100),
     raw: { from: 'now', to: 'now' },
   };
+  const { options: optionsPartial, ...restOverrides } = propsOverrides ?? {};
   return render(
     <XYChartPanel2
       onChangeTimeRange={onChangeTimeRange}
@@ -236,14 +311,8 @@ const setUp = (
         defaults: {},
         overrides: [],
       }}
-      options={{
-        series: [],
-        legend: { showLegend: false, displayMode: LegendDisplayMode.Hidden, calcs: [], placement: 'bottom' },
-        mapping: SeriesMapping.Auto,
-        tooltip: { sort: SortOrder.None, mode: TooltipDisplayMode.None },
-        ...propsOverrides?.options,
-      }}
-      {...propsOverrides}
+      options={buildOptions(optionsPartial)}
+      {...restOverrides}
       data={{
         state: LoadingState.Done,
         series: seriesOverride ?? [],
@@ -318,8 +387,64 @@ describe('XYChartPanel2', () => {
     expect(screen.getByText('Unable to render data: No data.'));
   });
 
-  it('renders default options', async () => {
-    setUp(undefined, [defaultFrame]);
-    await assertCanvasOutput();
+  describe('DataFrame: x, y, z (three numeric fields)', () => {
+    it.each<[string, Partial<Options>]>([
+      ['auto mapping (two Y series)', {}],
+      [
+        'manual mapping (x vs y only)',
+        {
+          mapping: SeriesMapping.Manual,
+          series: [manualSeriesForFrame({ yField: 'y' })],
+        },
+      ],
+      [
+        'manual mapping (x vs z only)',
+        {
+          mapping: SeriesMapping.Manual,
+          series: [manualSeriesForFrame({ yField: 'z' })],
+        },
+      ],
+      [
+        'manual mapping (size by z)',
+        {
+          mapping: SeriesMapping.Manual,
+          series: [manualSeriesForFrame({ yField: 'y', sizeField: 'z' })],
+        },
+      ],
+    ])('%s', async (_label, optionsPartial) => {
+      setUp({ options: optionsPartial }, [defaultFrame]);
+      await assertCanvasOutput();
+    });
+  });
+
+  describe('DataFrame: x, y (two numeric fields)', () => {
+    it.each<[string, Partial<Options>]>([
+      ['auto mapping (single Y series)', {}],
+      [
+        'manual mapping (x vs y)',
+        {
+          mapping: SeriesMapping.Manual,
+          series: [manualSeriesForFrame({ yField: 'y' })],
+        },
+      ],
+    ])('%s', async (_label, optionsPartial) => {
+      setUp({ options: optionsPartial }, [xyOnlyFrame]);
+      await assertCanvasOutput();
+    });
+  });
+
+  describe('Color-by-value (threshold palette on color field)', () => {
+    it('updates canvas fill/stroke when point color index changes (scatter drawBubbles)', async () => {
+      setUp(
+        {
+          options: {
+            mapping: SeriesMapping.Manual,
+            series: [manualSeriesForFrame({ yField: 'y', colorField: 'z' })],
+          },
+        },
+        [frameColorByThresholdZ]
+      );
+      await assertCanvasOutput();
+    });
   });
 });
