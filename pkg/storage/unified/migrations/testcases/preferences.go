@@ -76,7 +76,7 @@ func (tc *preferencesTestCase) Setup(t *testing.T, helper *apis.K8sTestHelper) b
 		err = service.Save(ctx, &pref.SavePreferenceCommand{
 			UserID:   userID,
 			OrgID:    orgID,
-			Language: "lang1",
+			Language: "user",
 		})
 		require.NoError(t, err)
 
