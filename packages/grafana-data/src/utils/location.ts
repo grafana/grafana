@@ -168,7 +168,11 @@ export const locationUtil = {
         }
       });
 
-      return stripBaseFromUrl(redirectUrl.href);
+      // For relative paths, use pathname+search rather than href. new URL(relativePath, origin)
+      // produces an absolute URL without the appSubUrl prefix, which stripBaseFromUrl cannot strip,
+      // causing the router to treat the full URL string as a literal path.
+      const isAbsoluteUri = redirectUri.startsWith('http');
+      return stripBaseFromUrl(isAbsoluteUri ? redirectUrl.href : redirectUrl.pathname + redirectUrl.search);
     } catch {
       return stripBaseFromUrl(redirectUri);
     }

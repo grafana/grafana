@@ -62,4 +62,5 @@ export enum PageLayoutType {
   Standard,
   Canvas,
   Custom,
+  Home,
 }

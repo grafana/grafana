@@ -81,6 +81,27 @@ describe('useSelectedCard', () => {
       expect(result.current.selectedAlert).toEqual(mockAlerts[0]);
     });
 
+    it('should not select query when alert is selected even if selectedQueryRefIds is non-empty', () => {
+      // After clearSelection() restores the first-query default, an alert
+      // selection arrives with selectedQueryRefIds = ['A']. Alert/picker must
+      // still take precedence so the alert view actually activates.
+      const { result } = renderHook(() =>
+        useSelectedCard(['A'], [], 'alert-1', mockQueries, mockTransformations, mockAlerts)
+      );
+
+      expect(result.current.selectedQuery).toBeNull();
+      expect(result.current.selectedTransformation).toBeNull();
+      expect(result.current.selectedAlert).toEqual(mockAlerts[0]);
+    });
+
+    it('should not select query while a picker is pending even if selectedQueryRefIds is non-empty', () => {
+      const { result } = renderHook(() =>
+        useSelectedCard(['A'], [], null, mockQueries, mockTransformations, mockAlerts, true)
+      );
+
+      expect(result.current.selectedQuery).toBeNull();
+    });
+
     it('should fall back to first query when primary refId does not exist', () => {
       const { result } = renderHook(() =>
         useSelectedCard(['INVALID'], [], null, mockQueries, mockTransformations, mockAlerts)

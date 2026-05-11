@@ -18,7 +18,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/client-go/dynamic"
-	"k8s.io/utils/ptr"
 
 	authlib "github.com/grafana/authlib/types"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
@@ -41,7 +40,6 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		opts: StorageOptions{
 			Scheme:              rtscheme,
 			EnableFolderSupport: true,
-			LargeObjectSupport:  nil,
 			MaximumNameLength:   100,
 		},
 	}
@@ -176,7 +174,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		err = meta.SetStatus(dashv1.DashboardStatus{
 			Conversion: &dashv1.DashboardConversionStatus{
 				Failed: true,
-				Error:  ptr.To("test"),
+				Error:  new("test"),
 			},
 		})
 		require.NoError(t, err)
@@ -652,51 +650,5 @@ func TestEnsureRepoManagedByParentFolder(t *testing.T) {
 		_, err = s.prepareObjectForUpdate(ctx, newDash, oldDash)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "no config")
-	})
-}
-
-func TestPrepareLargeObjectForStorage(t *testing.T) {
-	_ = dashv1.AddToScheme(rtscheme)
-	node, err := snowflake.NewNode(rand.Int64N(1024))
-	require.NoError(t, err)
-
-	ctx := authlib.WithAuthInfo(context.Background(), &identity.StaticRequester{UserID: 1, UserUID: "user-uid", Type: authlib.TypeUser})
-
-	dashboard := dashv1.Dashboard{}
-	dashboard.Name = "test-name"
-	t.Run("Should deconstruct object if size is over threshold", func(t *testing.T) {
-		los := LargeObjectSupportFake{
-			threshold: 0,
-		}
-
-		f := &Storage{
-			codec:     apitesting.TestCodec(rtcodecs, dashv1.DashboardResourceInfo.GroupVersion()),
-			snowflake: node,
-			opts: StorageOptions{
-				LargeObjectSupport: &los,
-			},
-		}
-
-		_, err := f.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
-		require.Nil(t, err)
-		require.True(t, los.deconstructed)
-	})
-
-	t.Run("Should not deconstruct object if size is under threshold", func(t *testing.T) {
-		los := LargeObjectSupportFake{
-			threshold: 1000,
-		}
-
-		f := &Storage{
-			codec:     apitesting.TestCodec(rtcodecs, dashv1.DashboardResourceInfo.GroupVersion()),
-			snowflake: node,
-			opts: StorageOptions{
-				LargeObjectSupport: &los,
-			},
-		}
-
-		_, err := f.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
-		require.Nil(t, err)
-		require.False(t, los.deconstructed)
 	})
 }

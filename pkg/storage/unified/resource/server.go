@@ -44,6 +44,21 @@ var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/resourc
 // Uses gRPC Unavailable so clients with retry interceptors will retry on another backend.
 var errStopping = status.Error(codes.Unavailable, "server is stopping")
 
+// logIfServerError logs errRes at Error level if it represents a 5xx (server) error.
+func (s *server) logIfServerError(ctx context.Context, op string, key *resourcepb.ResourceKey, errRes *resourcepb.ErrorResult) {
+	if errRes == nil || errRes.Code < 500 {
+		return
+	}
+	s.log.FromContext(ctx).Error(fmt.Sprintf("server error: %s", op),
+		"group", key.Group,
+		"resource", key.Resource,
+		"namespace", key.Namespace,
+		"name", key.Name,
+		"code", errRes.Code,
+		"error", errRes.Message,
+	)
+}
+
 // defaultBookmarkFrequency is how often periodic bookmark events are sent
 // to Watch clients that have AllowWatchBookmarks enabled.
 const defaultBookmarkFrequency = 10 * time.Second
@@ -927,6 +942,7 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 
 func (s *server) create(ctx context.Context, user claims.AuthInfo, req *resourcepb.CreateRequest) (*resourcepb.CreateResponse, error) {
 	rsp := &resourcepb.CreateResponse{}
+	defer func() { s.logIfServerError(ctx, "server.create", req.Key, rsp.Error) }()
 
 	event, e := s.newEvent(ctx, user, req.Key, 0, req.Value, nil)
 	if e != nil {
@@ -946,7 +962,6 @@ func (s *server) create(ctx context.Context, user claims.AuthInfo, req *resource
 		}
 		rsp.Error = AsErrorResult(err)
 	}
-	s.log.FromContext(ctx).Debug("server.WriteEvent", "type", event.Type, "rv", rsp.ResourceVersion, "previousRV", event.PreviousRV, "group", event.Key.Group, "namespace", event.Key.Namespace, "name", event.Key.Name, "resource", event.Key.Resource)
 	return rsp, nil
 }
 
@@ -1031,6 +1046,8 @@ func (s *server) Update(ctx context.Context, req *resourcepb.UpdateRequest) (*re
 
 func (s *server) update(ctx context.Context, user claims.AuthInfo, req *resourcepb.UpdateRequest) (*resourcepb.UpdateResponse, error) {
 	rsp := &resourcepb.UpdateResponse{}
+	defer func() { s.logIfServerError(ctx, "server.update", req.Key, rsp.Error) }()
+
 	latest := s.backend.ReadResource(ctx, &resourcepb.ReadRequest{
 		Key: req.Key,
 	})
@@ -1097,6 +1114,8 @@ func (s *server) Delete(ctx context.Context, req *resourcepb.DeleteRequest) (*re
 
 func (s *server) delete(ctx context.Context, user claims.AuthInfo, req *resourcepb.DeleteRequest) (*resourcepb.DeleteResponse, error) {
 	rsp := &resourcepb.DeleteResponse{}
+	defer func() { s.logIfServerError(ctx, "server.delete", req.Key, rsp.Error) }()
+
 	latest := s.backend.ReadResource(ctx, &resourcepb.ReadRequest{
 		Key: req.Key,
 	})
@@ -1197,7 +1216,13 @@ func (s *server) Read(ctx context.Context, req *resourcepb.ReadRequest) (*resour
 	return res, err
 }
 
-func (s *server) read(ctx context.Context, user claims.AuthInfo, req *resourcepb.ReadRequest) (*resourcepb.ReadResponse, error) {
+func (s *server) read(ctx context.Context, user claims.AuthInfo, req *resourcepb.ReadRequest) (readRsp *resourcepb.ReadResponse, readErr error) {
+	defer func() {
+		if readRsp != nil {
+			s.logIfServerError(ctx, "server.read", req.Key, readRsp.Error)
+		}
+	}()
+
 	rsp := s.backend.ReadResource(ctx, req)
 	if rsp.Error != nil && rsp.Error.Code == http.StatusNotFound {
 		return &resourcepb.ReadResponse{Error: rsp.Error}, nil
@@ -1365,7 +1390,7 @@ func (s *server) listAuthorized(ctx context.Context, req *resourcepb.ListRequest
 		return iter.Error()
 	})
 
-	return s.finalizeListResponse(rsp, rv, err, nextToken, req.Options.Key)
+	return s.finalizeListResponse(ctx, rsp, rv, err, nextToken, req.Options.Key)
 }
 
 // listFromTrash lists deleted resources. Trash uses a different authorization
@@ -1435,12 +1460,14 @@ func (s *server) listFromTrash(ctx context.Context, req *resourcepb.ListRequest)
 		return iter.Error()
 	})
 
-	return s.finalizeListResponse(rsp, rv, err, nextToken, req.Options.Key)
+	return s.finalizeListResponse(ctx, rsp, rv, err, nextToken, req.Options.Key)
 }
 
 // finalizeListResponse validates the resource version, sets pagination token,
 // and records metrics. Shared by listFromStore, listFromHistory, and listFromTrash.
-func (s *server) finalizeListResponse(rsp *resourcepb.ListResponse, rv int64, err error, nextToken string, key *resourcepb.ResourceKey) (*resourcepb.ListResponse, error) {
+func (s *server) finalizeListResponse(ctx context.Context, rsp *resourcepb.ListResponse, rv int64, err error, nextToken string, key *resourcepb.ResourceKey) (*resourcepb.ListResponse, error) {
+	defer func() { s.logIfServerError(ctx, "server.list", key, rsp.Error) }()
+
 	if err != nil {
 		rsp.Error = AsErrorResult(err)
 		return rsp, nil

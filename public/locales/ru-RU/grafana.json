@@ -1174,6 +1174,9 @@
       "content-show-all-errors": "Показать все ошибки"
     },
     "errors": {
+      "api-machinery": {
+        "with-causes": ""
+      },
       "failedWith": "Ошибка {{-config}} со статусом {{status}}: {{-message}}"
     },
     "evaluate-every-validation-options": {
@@ -10967,6 +10970,11 @@
     "name-line-width": "Ширина линии",
     "name-stacking": "Расположение в стеке"
   },
+  "home": {
+    "home-page": {
+      "placeholder": ""
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "Загрузка",
@@ -16208,7 +16216,9 @@
       "description": {
         "group-by-field-value": "Группируйте данные по значениям полей и создавайте вложенные таблицы со сгруппированными данными."
       },
+      "description-expand-nested-rows": "",
       "description-show-field-names": "Если параметр включен, вложенные таблицы будут отображать имена полей в качестве заголовка таблицы.",
+      "label-expand-nested-rows-by-default": "",
       "label-show-field-names-in-nested-tables": "Показывать названия полей во вложенных таблицах",
       "name": {
         "group-to-nested-tables": "Группировать во вложенные таблицы"

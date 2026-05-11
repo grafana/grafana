@@ -1164,6 +1164,9 @@
       "content-show-all-errors": "Mostrar todos os erros"
     },
     "errors": {
+      "api-machinery": {
+        "with-causes": ""
+      },
       "failedWith": "{{-config}} falhou com {{status}}: {{-message}}"
     },
     "evaluate-every-validation-options": {
@@ -10851,6 +10854,11 @@
     "name-line-width": "Largura da linha",
     "name-stacking": "Empilhamento"
   },
+  "home": {
+    "home-page": {
+      "placeholder": ""
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "A carregar",
@@ -16022,7 +16030,9 @@
       "description": {
         "group-by-field-value": "Agrupar dados por um valor de campo e criar tabelas aninhadas com os dados agrupados."
       },
+      "description-expand-nested-rows": "",
       "description-show-field-names": "Se esta opção estiver ativada, as tabelas aninhadas mostrarão os nomes dos campos como cabeçalho da tabela",
+      "label-expand-nested-rows-by-default": "",
       "label-show-field-names-in-nested-tables": "Mostrar nomes de campos em tabelas aninhadas",
       "name": {
         "group-to-nested-tables": "Agrupar em tabelas aninhadas"

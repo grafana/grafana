@@ -161,7 +161,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-09-23,useSessionStorageForRedirection,GA,@grafana/identity-access-team,false,false,false
 2024-09-26,rolePickerDrawer,experimental,@grafana/identity-access-team,false,false,false
 2024-10-04,pluginsSriChecks,GA,@grafana/plugins-platform-backend,false,false,false
-2024-10-17,unifiedStorageBigObjectsSupport,experimental,@grafana/search-and-storage,false,false,false
 2024-10-22,timeRangeProvider,experimental,@grafana/grafana-frontend-platform,false,false,false
 2025-11-05,timeRangePan,GA,@grafana/dataviz-squad,false,false,true
 2025-11-20,newTimeRangeZoomShortcuts,GA,@grafana/dataviz-squad,false,false,true
