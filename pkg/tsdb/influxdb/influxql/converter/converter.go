@@ -470,7 +470,7 @@ func handleTableFormatValueFields(rsp *backend.DataResponse, valueFields data.Fi
 			rsp.Frames[0].Fields = append(rsp.Frames[0].Fields, valueFields[i])
 		} else {
 			ll := valueFields[i].Len()
-			for vi := 0; vi < ll; vi++ {
+			for vi := range ll {
 				if valueFields[i].Type() == data.FieldTypeNullableJSON { //nolint:staticcheck
 					// add nil explicitly.
 					// we don't know if it is a float pointer nil or string pointer nil or etc

@@ -76,11 +76,11 @@ func TestQueueConcurrency(t *testing.T) {
 
 	// We will add some numbers to the queue.
 	writesWG := sync.WaitGroup{}
-	for i := 0; i < writeConcurrency; i++ {
+	for range writeConcurrency {
 		writesWG.Add(1)
 		go func() {
 			defer writesWG.Done()
-			for j := 0; j < numbers; j++ {
+			for range numbers {
 				v := rand.Int64N(100) // Generate small number, so that we have a chance for combining some numbers.
 				q.Add(v)
 				addCalls.Inc()
@@ -90,7 +90,7 @@ func TestQueueConcurrency(t *testing.T) {
 	}
 
 	readsWG := sync.WaitGroup{}
-	for i := 0; i < readConcurrency; i++ {
+	for range readConcurrency {
 		readsWG.Add(1)
 		go func() {
 			defer readsWG.Done()

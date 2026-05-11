@@ -781,7 +781,7 @@ func TestIntegrationRun_SQLiteLargeMigrationRebuildUsesMigrationTransaction(t *t
 		Resources:   []ResourceInfo{{GroupResource: gr}},
 		Migrators: map[schema.GroupResource]MigratorFunc{
 			gr: func(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
-				for i := 0; i < 16; i++ {
+				for i := range 16 {
 					err := stream.Send(&resourcepb.BulkRequest{
 						Key: &resourcepb.ResourceKey{
 							Namespace: opts.Namespace,

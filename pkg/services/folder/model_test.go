@@ -62,7 +62,7 @@ func TestFoldersSortByPostorder(t *testing.T) {
 		}
 		require.Equal(t, 3, aIndex, "parent 'a' should be last")
 		// All children should come before parent
-		for i := 0; i < 3; i++ {
+		for i := range 3 {
 			require.Contains(t, []string{"b", "c", "d"}, result[i].UID)
 		}
 	})

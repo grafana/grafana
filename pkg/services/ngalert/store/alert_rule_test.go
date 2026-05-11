@@ -514,7 +514,7 @@ func TestIntegration_CountAlertRules(t *testing.T) {
 
 	count := int64(5)
 	manyGen := gen.With(gen.WithNamespaceUID("many rules"), gen.WithOrgID(123))
-	for i := int64(0); i < count; i++ {
+	for range count {
 		_ = createRule(t, store, manyGen)
 	}
 
@@ -1760,7 +1760,7 @@ func TestIntegrationIncreaseVersionForAllRulesInNamespaces(t *testing.T) {
 	gen = gen.With(gen.WithIntervalMatching(store.Cfg.BaseInterval)).With(gen.WithOrgID(orgID))
 
 	alertRules := make([]*models.AlertRule, 0, 5)
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		alertRules = append(alertRules, createRule(t, store, gen))
 	}
 	alertRuleNamespaceUIDs := make([]string, 0, len(alertRules))
@@ -2015,7 +2015,7 @@ func TestIntegration_AlertRuleVersionsCleanup(t *testing.T) {
 		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg, b)
 		rule := createRule(t, store, generator)
 
-		for i := 0; i < 4; i++ {
+		for range 4 {
 			r, err := store.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{UID: rule.UID})
 			require.NoError(t, err)
 			rn := models.CopyRule(r)
@@ -3119,7 +3119,7 @@ func TestIntegration_ListAlertRulesPaginated(t *testing.T) {
 	t.Run("list rules with pagination", func(t *testing.T) {
 		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
 		alertingGen := ruleGen.With(ruleGen.WithNamespaceUID("paginate-test"))
-		for i := 0; i < 10; i++ {
+		for range 10 {
 			createRule(t, store, alertingGen)
 		}
 		t.Run("should return paginated results", func(t *testing.T) {
@@ -4085,7 +4085,7 @@ func createManyRules(tb testing.TB, store *DBstore, ruleGen *models.AlertRuleGen
 	for i := range namespaceUIDs {
 		namespaceUIDs[i] = fmt.Sprintf("ns-%d", i)
 	}
-	for i := 0; i < numRules; i++ {
+	for i := range numRules {
 		gen := ruleGen.With(
 			ruleGen.WithNamespaceUID(namespaceUIDs[i%numFolders]),
 			ruleGen.WithGroupName(fmt.Sprintf("group_%d", i%(numRules/rulesPerGroup))),

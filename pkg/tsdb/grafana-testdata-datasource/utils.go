@@ -33,7 +33,7 @@ func dropValues(frame *data.Frame, percent float64) (*data.Frame, error) {
 	percentage := percent / 100.0
 	seed := time.Now().UnixMilli()
 	r := rand.New(rand.NewSource(seed))
-	for i := 0; i < rows; i++ {
+	for i := range rows {
 		if r.Float64() < percentage { // .2 == 20
 			continue
 		}

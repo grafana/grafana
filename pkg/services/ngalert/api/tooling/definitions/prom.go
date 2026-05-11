@@ -280,7 +280,7 @@ func (by AlertsBy) TopK(alerts []Alert, k int) []Alert {
 	// Go version of this algorithm taken from Prometheus (promql/engine.go)
 
 	heap.Init(&h)
-	for i := 0; i < len(alerts); i++ {
+	for i := range alerts {
 		a := alerts[i]
 
 		// We build a heap of up to k elements, with the smallest element at heap[0].

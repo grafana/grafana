@@ -258,7 +258,7 @@ func (db *MySQLDialect) UpsertMultipleSQL(tableName string, keyCols, updateCols 
 	valuesStr := strings.Builder{}
 	separator = ", "
 	colPlaceHolders := colPlaceHoldersStr.String()
-	for i := 0; i < count; i++ {
+	for i := range count {
 		if i == count-1 {
 			separator = ""
 		}

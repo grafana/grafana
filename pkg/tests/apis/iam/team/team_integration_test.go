@@ -508,7 +508,7 @@ func doTeamSpecMembersTests(t *testing.T, helper *apis.K8sTestHelper) {
 		var wg sync.WaitGroup
 		errs := make([]error, parallel)
 		start := make(chan struct{})
-		for i := 0; i < parallel; i++ {
+		for i := range parallel {
 			wg.Add(1)
 			go func(i int) {
 				defer wg.Done()

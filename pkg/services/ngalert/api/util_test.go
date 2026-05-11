@@ -156,7 +156,7 @@ func Test_containsProvisionedAlerts(t *testing.T) {
 		rules := gen.GenerateManyRef(1, 6)
 		provenance := make(map[string]models2.Provenance)
 		numProvenanceNone := rand.Intn(len(rules))
-		for i := 0; i < numProvenanceNone; i++ {
+		for i := range numProvenanceNone {
 			provenance[rules[i].UID] = models2.ProvenanceNone
 		}
 		require.Falsef(t, containsProvisionedAlerts(provenance, rules), "the group of rules is not expected to be provisioned but it is. Provenances: %v", provenance)

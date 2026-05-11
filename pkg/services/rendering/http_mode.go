@@ -221,7 +221,7 @@ func (rs *RenderingService) writeResponseToFile(ctx context.Context, resp *http.
 func (rs *RenderingService) getRemotePluginVersionWithRetry(callback func(string, error)) {
 	go func() {
 		var err error
-		for try := uint(0); try < remoteVersionFetchRetries; try++ {
+		for try := range remoteVersionFetchRetries {
 			version, err := rs.getRemotePluginVersion()
 			if err == nil {
 				callback(version, err)

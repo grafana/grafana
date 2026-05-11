@@ -646,7 +646,7 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 		)
 		require.NoError(t, err)
 
-		for i := 0; i < 4; i++ {
+		for i := range 4 {
 			userCmd := user.CreateUserCommand{
 				Email: fmt.Sprint("user", i, "@example.org"),
 				Name:  fmt.Sprint("user", i),

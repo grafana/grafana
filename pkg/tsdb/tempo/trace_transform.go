@@ -70,7 +70,7 @@ func TraceToFrame(resourceSpans []*tracev11.ResourceSpans) (*data.Frame, error) 
 		},
 	}
 
-	for i := 0; i < len(resourceSpans); i++ {
+	for i := range resourceSpans {
 		rs := resourceSpans[i]
 		rows, err := resourceSpansToRows(rs)
 		if err != nil {
@@ -98,13 +98,13 @@ func resourceSpansToRows(rs *tracev11.ResourceSpans) ([][]any, error) {
 	// instrumentation library info.
 	rows := make([][]any, 0, len(ilss[0].Spans))
 
-	for i := 0; i < len(ilss); i++ {
+	for i := range ilss {
 		ils := ilss[i]
 
 		// These are finally the actual spans
 		spans := ils.Spans
 
-		for j := 0; j < len(spans); j++ {
+		for j := range spans {
 			span := spans[j]
 			row, err := spanToSpanRow(span, ils.Scope, resource)
 			if err != nil {
@@ -342,7 +342,7 @@ func spanEventsToLogs(events []*tracev11.Span_Event) []*TraceLog {
 	}
 
 	logs := make([]*TraceLog, 0, len(events))
-	for i := 0; i < len(events); i++ {
+	for i := range events {
 		event := events[i]
 		fields := make([]*KeyValue, 0, len(event.Attributes)+1)
 		for _, attr := range event.Attributes {
@@ -368,7 +368,7 @@ func spanLinksToReferences(links []*tracev11.Span_Link) []*TraceReference {
 	}
 
 	references := make([]*TraceReference, 0, len(links))
-	for i := 0; i < len(links); i++ {
+	for i := range links {
 		link := links[i]
 
 		traceID := link.TraceId

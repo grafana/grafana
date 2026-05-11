@@ -604,7 +604,7 @@ func TestIntegrationFullSync(t *testing.T) {
 
 		largeCount := 300
 		largeSet := make([]models.AlertInstance, largeCount)
-		for i := 0; i < largeCount; i++ {
+		for i := range largeCount {
 			largeSet[i] = *models.AlertInstanceGen(models.InstanceMuts.WithOrgID(orgID), models.InstanceMuts.WithRuleUID(fmt.Sprintf("large-%d", i)))
 		}
 
@@ -701,7 +701,7 @@ func TestIntegrationFullSyncWithJitter(t *testing.T) {
 
 	t.Run("Should handle zero delays (immediate execution)", func(t *testing.T) {
 		testInstances := make([]models.AlertInstance, 2)
-		for i := 0; i < 2; i++ {
+		for i := range 2 {
 			testInstances[i] = *models.AlertInstanceGen(models.InstanceMuts.WithOrgID(orgID), models.InstanceMuts.WithRuleUID(fmt.Sprintf("immediate-%d", i)))
 		}
 
@@ -728,7 +728,7 @@ func TestIntegrationFullSyncWithJitter(t *testing.T) {
 
 	t.Run("Should execute jitter delays correctly and save data", func(t *testing.T) {
 		testInstances := make([]models.AlertInstance, 4)
-		for i := 0; i < 4; i++ {
+		for i := range 4 {
 			testInstances[i] = *models.AlertInstanceGen(models.InstanceMuts.WithOrgID(orgID), models.InstanceMuts.WithRuleUID(fmt.Sprintf("jitter-test-%d", i)))
 		}
 
@@ -759,7 +759,7 @@ func TestIntegrationFullSyncWithJitter(t *testing.T) {
 		require.Len(t, res, 4)
 
 		// Verify specific instances were saved
-		for i := 0; i < 4; i++ {
+		for i := range 4 {
 			expectedUID := fmt.Sprintf("jitter-test-%d", i)
 			found := false
 			for _, instance := range res {

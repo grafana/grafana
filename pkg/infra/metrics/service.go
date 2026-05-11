@@ -105,7 +105,7 @@ func (g *addPrefixWrapper) Gather() ([]*dto.MetricFamily, error) {
 
 	names := make(map[string]struct{})
 
-	for i := 0; i < len(mf); i++ {
+	for i := range mf {
 		m := mf[i]
 		if m.Name != nil && !g.reg.MatchString(*m.Name) {
 			*m.Name = "grafana_" + *m.Name
@@ -146,7 +146,7 @@ func (r *multiRegistry) Gather() (mfs []*dto.MetricFamily, err error) {
 		mf, err := g.Gather()
 		errs.Append(err)
 
-		for i := 0; i < len(mf); i++ {
+		for i := range mf {
 			m := mf[i]
 			// skip metrics in the deny list
 			if _, denied := r.denyList[*m.Name]; denied {

@@ -86,7 +86,7 @@ func TestBuildStarredItemsNavLinks(t *testing.T) {
 	t.Run("Should limit to 50 starred dashboards", func(t *testing.T) {
 		starService := startest.NewStarServiceFake()
 		userStars := make(map[string]bool)
-		for i := 0; i < 60; i++ {
+		for i := range 60 {
 			userStars[fmt.Sprintf("dashboard%d", i)] = true
 		}
 		starService.ExpectedUserStars = &star.GetUserStarsResult{
@@ -94,7 +94,7 @@ func TestBuildStarredItemsNavLinks(t *testing.T) {
 		}
 
 		dashboardList := make(model.HitList, 60)
-		for i := 0; i < 60; i++ {
+		for i := range 60 {
 			dashboardList[i] = &model.Hit{
 				UID:   fmt.Sprintf("dashboard%d", i),
 				Title: fmt.Sprintf("Dashboard %d", i),

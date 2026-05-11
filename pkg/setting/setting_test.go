@@ -803,10 +803,10 @@ func TestDynamicSection(t *testing.T) {
 		require.NoError(t, err)
 
 		var wg sync.WaitGroup
-		for i := 0; i < goroutines; i++ {
+		for range goroutines {
 			wg.Add(1)
 			go require.NotPanics(t, func() {
-				for i := 0; i < attempts; i++ {
+				for range attempts {
 					ds.section.Key(key).SetValue("")
 					ds.Key(key)
 				}

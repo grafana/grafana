@@ -390,7 +390,7 @@ func TestIntegrationCachingJWKHTTPResponse(t *testing.T) {
 	})
 
 	jwkCachingScenario(t, "does not cache the response when TTL is zero", func(t *testing.T, sc cachingScenarioContext) {
-		for i := 0; i < 2; i++ {
+		for i := range 2 {
 			_, err := sc.authJWTSvc.Verify(sc.ctx, sign(t, &jwKeys[i], jwt.Claims{Subject: subject}, nil))
 			require.NoError(t, err, "verify call %d", i+1)
 		}

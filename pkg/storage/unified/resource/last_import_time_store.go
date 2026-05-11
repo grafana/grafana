@@ -144,7 +144,7 @@ func (s *lastImportStore) CleanupLastImportTimes(ctx context.Context, lastImport
 	}
 
 	deleted := 0
-	for i := 0; i < len(obsolete); i++ {
+	for i := range obsolete {
 		err := s.kv.Delete(ctx, lastImportTimesSection, obsolete[i].String())
 		if err != nil {
 			return 0, fmt.Errorf("failed to delete old last import time %s: %w", obsolete[i].String(), err)

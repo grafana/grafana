@@ -100,7 +100,7 @@ kXxSnDcVQGY0cWZ0FROyYbBp3nBVA5VT5HYYGfazhsisIHP+3zoG
 
 func init() {
 	data := []byte(rsaKeysPEM)
-	for i := 0; i < len(rsaKeys); i++ {
+	for i := range len(rsaKeys) {
 		var block *pem.Block
 		block, data = pem.Decode(data)
 		key, err := x509.ParsePKCS1PrivateKey(block.Bytes)

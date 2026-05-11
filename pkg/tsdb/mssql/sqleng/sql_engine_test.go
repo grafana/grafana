@@ -168,7 +168,7 @@ func TestSQLEngine(t *testing.T) {
 				nilInt,
 			}),
 		)
-		for i := 0; i < 3; i++ {
+		for i := range 3 {
 			err := convertSQLTimeColumnToEpochMS(originFrame, i)
 			require.NoError(t, err)
 		}

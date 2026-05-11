@@ -115,7 +115,7 @@ func TestIntegrationTempUserCommandsAndQueries(t *testing.T) {
 		db, cfg := db.InitTestDBWithCfg(t)
 		store = &xormStore{db: db, cfg: cfg}
 
-		for i := 0; i < verifications; i++ {
+		for range verifications {
 			tempUser, err = store.CreateTempUser(context.Background(), &cmd)
 			require.Nil(t, err)
 		}

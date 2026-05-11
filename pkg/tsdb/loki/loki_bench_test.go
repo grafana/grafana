@@ -43,7 +43,7 @@ func makeJsonTestValue(r *rand.Rand) string {
 // create one time-series
 func makeJsonTestSeries(start int64, step int64, timestampCount int, r *rand.Rand, seriesIndex int) string {
 	var values []string
-	for i := 0; i < timestampCount; i++ {
+	for i := range timestampCount {
 		value := fmt.Sprintf(`[%d,"%v"]`, start+(int64(i)*step), makeJsonTestValue(r))
 		values = append(values, value)
 	}
@@ -55,7 +55,7 @@ func createJsonTestData(start int64, step int64, timestampCount int, seriesCount
 	// every time we call this, so we create a random source.
 	r := rand.New(rand.NewSource(42))
 	var allSeries []string
-	for i := 0; i < seriesCount; i++ {
+	for i := range seriesCount {
 		allSeries = append(allSeries, makeJsonTestSeries(start, step, timestampCount, r, i))
 	}
 	return []byte(fmt.Sprintf(`{"data":{"resultType":"matrix","result":[%v]},"status":"success"}`, strings.Join(allSeries, ",")))

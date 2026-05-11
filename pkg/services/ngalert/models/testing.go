@@ -177,7 +177,7 @@ func (g *AlertRuleGenerator) getCount(bounds ...int) int {
 func (g *AlertRuleGenerator) GenerateMany(bounds ...int) []AlertRule {
 	count := g.getCount(bounds...)
 	result := make([]AlertRule, 0, count)
-	for i := 0; i < count; i++ {
+	for range count {
 		result = append(result, g.Generate())
 	}
 	return result
@@ -187,7 +187,7 @@ func (g *AlertRuleGenerator) GenerateManyRef(bounds ...int) []*AlertRule {
 	count := g.getCount(bounds...)
 
 	result := make([]*AlertRule, 0)
-	for i := 0; i < count; i++ {
+	for range count {
 		r := g.Generate()
 		result = append(result, &r)
 	}

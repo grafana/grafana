@@ -190,7 +190,7 @@ func groupResults(results *data.Frame, groupingFieldNames []string, fromSyncQuer
 	}
 
 	groupedDataFrames := make(map[string]*data.Frame)
-	for i := 0; i < rowLength; i++ {
+	for i := range rowLength {
 		groupKey := generateGroupKey(groupingFields, i)
 		// if group key doesn't exist create it
 		if _, exists := groupedDataFrames[groupKey]; !exists {

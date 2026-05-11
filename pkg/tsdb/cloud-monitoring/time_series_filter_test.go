@@ -198,7 +198,7 @@ func TestTimeSeriesFilter(t *testing.T) {
 		frames := res.Frames
 		require.NoError(t, err)
 		assert.Equal(t, 11, len(frames))
-		for i := 0; i < 11; i++ {
+		for i := range 11 {
 			if i == 0 {
 				assert.Equal(t, "0", frames[i].Fields[1].Name)
 			} else {
@@ -243,7 +243,7 @@ func TestTimeSeriesFilter(t *testing.T) {
 		frames := res.Frames
 		require.NoError(t, err)
 		assert.Equal(t, 42, len(frames))
-		for i := 0; i < 42; i++ {
+		for i := range 42 {
 			if i == 0 {
 				assert.Equal(t, "0", frames[i].Fields[1].Name)
 			}

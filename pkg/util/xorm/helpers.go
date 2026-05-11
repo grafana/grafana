@@ -175,7 +175,7 @@ func sliceEq(left, right []string) bool {
 	}
 	sort.Sort(sort.StringSlice(left))
 	sort.Sort(sort.StringSlice(right))
-	for i := 0; i < len(left); i++ {
+	for i := range left {
 		if left[i] != right[i] {
 			return false
 		}

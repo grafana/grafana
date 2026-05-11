@@ -191,7 +191,7 @@ func Test_SnapshotManagement(t *testing.T) {
 		const numResources = 50001
 		resources := make([]cloudmigration.CloudMigrationResource, numResources)
 
-		for i := 0; i < numResources; i++ {
+		for i := range numResources {
 			resources[i] = cloudmigration.CloudMigrationResource{
 				Name:   fmt.Sprintf("Resource %d", i),
 				Type:   cloudmigration.DashboardDataType,
@@ -440,7 +440,7 @@ func Test_SnapshotResources(t *testing.T) {
 		snapshotUid := uuid.New().String()
 
 		t.Run("create the resources", func(t *testing.T) {
-			for i := 0; i < numResources; i++ {
+			for i := range numResources {
 				resources[i] = cloudmigration.CloudMigrationResource{
 					Name:   fmt.Sprintf("Resource %d", i),
 					Type:   cloudmigration.DashboardDataType,
@@ -466,7 +466,7 @@ func Test_SnapshotResources(t *testing.T) {
 
 		t.Run("update the resources", func(t *testing.T) {
 			// Initially, update with a mix of ok and error statuses
-			for i := 0; i < numResources; i++ {
+			for i := range numResources {
 				if i%2 == 0 {
 					resources[i].Status = cloudmigration.ItemStatusOK
 				} else {
@@ -498,7 +498,7 @@ func Test_SnapshotResources(t *testing.T) {
 			}
 
 			// Now update with only error statuses
-			for i := 0; i < numResources; i++ {
+			for i := range numResources {
 				resources[i].Status = cloudmigration.ItemStatusError
 				resources[i].ErrorCode = "test-error-2"
 				resources[i].Error = "test-error-message-2"
@@ -522,7 +522,7 @@ func Test_SnapshotResources(t *testing.T) {
 			}
 
 			// Finally, all okay
-			for i := 0; i < numResources; i++ {
+			for i := range numResources {
 				resources[i].Status = cloudmigration.ItemStatusOK
 			}
 

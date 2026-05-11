@@ -97,7 +97,7 @@ func TestSchedulableAlertRulesRegistry_set(t *testing.T) {
 		newRules := make([]*models.AlertRule, 0, len(initialRules))
 		// generate random and then override rule key + version
 		randomNew := gen.GenerateManyRef(len(initialRules))
-		for i := 0; i < len(initialRules); i++ {
+		for i := range initialRules {
 			rule := randomNew[i]
 			oldRule := initialRules[i]
 			rule.UID = oldRule.UID

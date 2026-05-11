@@ -362,7 +362,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 			db := db.InitTestDB(t)
 			ss := SqlStore{db: db}
 			numberOfDatasource := 50
-			for i := 0; i < numberOfDatasource; i++ {
+			for i := range numberOfDatasource {
 				_, err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
 					OrgID:    10,
 					Name:     "laban" + strconv.Itoa(i),
@@ -386,7 +386,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 			db := db.InitTestDB(t)
 			ss := SqlStore{db: db}
 			numberOfDatasource := 50
-			for i := 0; i < numberOfDatasource; i++ {
+			for i := range numberOfDatasource {
 				_, err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
 					OrgID:    10,
 					Name:     "laban" + strconv.Itoa(i),

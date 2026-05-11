@@ -197,7 +197,7 @@ func withDatasourceQuery(uid string) func(r *apimodels.PostableExtendedRuleNode)
 
 func generateAlertRuleGroup(rulesCount int, gen func() apimodels.PostableExtendedRuleNode) apimodels.PostableRuleGroupConfig {
 	rules := make([]apimodels.PostableExtendedRuleNode, 0, rulesCount)
-	for i := 0; i < rulesCount; i++ {
+	for range rulesCount {
 		rules = append(rules, gen())
 	}
 	return apimodels.PostableRuleGroupConfig{

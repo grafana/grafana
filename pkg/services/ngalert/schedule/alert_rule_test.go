@@ -227,10 +227,10 @@ func TestAlertRule(t *testing.T) {
 		rule := gen.GenerateRef()
 		rule.UID = r.key.UID
 		rule.OrgID = r.key.OrgID
-		for i := 0; i < 10; i++ {
+		for range 10 {
 			wg.Add(1)
 			go func() {
-				for i := 0; i < 20; i++ {
+				for i := range 20 {
 					max := 3
 					if i <= 10 {
 						max = 2
@@ -830,7 +830,7 @@ func TestRuleRoutine(t *testing.T) {
 		// define some state
 		states := make([]*state.State, 0, len(allStates))
 		for _, s := range allStates {
-			for i := 0; i < 2; i++ {
+			for range 2 {
 				states = append(states, &state.State{
 					AlertRuleUID: rule.UID,
 					CacheID:      data.Labels(rule.Labels).Fingerprint(),

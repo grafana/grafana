@@ -321,7 +321,7 @@ func (session *Session) row2Slice(rows *core.Rows, fields []string, bean any) ([
 	}
 
 	scanResults := make([]any, len(fields))
-	for i := 0; i < len(fields); i++ {
+	for i := range fields {
 		var cell any
 		scanResults[i] = &cell
 	}

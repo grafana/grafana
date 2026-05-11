@@ -429,7 +429,7 @@ func (d *jobDriver) onProgress() ProgressFn {
 		logging.FromContext(ctx).Debug("job progress", "status", status)
 
 		const maxRetries = 3
-		for attempt := 0; attempt < maxRetries; attempt++ {
+		for attempt := range maxRetries {
 			d.mu.Lock()
 			if d.currentJob == nil {
 				d.mu.Unlock()

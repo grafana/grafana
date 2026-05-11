@@ -214,7 +214,7 @@ func TestMigratorLocking(t *testing.T) {
 
 	var errorNum int64
 	t.Run("when concurrent migrations for the same migrator occur, the second one should fail", func(t *testing.T) {
-		for i := 0; i < 2; i++ {
+		for i := range 2 {
 			i := i // capture i variable
 			t.Run(fmt.Sprintf("run migration %d", i), func(t *testing.T) {
 				t.Parallel()
@@ -269,7 +269,7 @@ func TestDatabaseLocking(t *testing.T) {
 
 	var errorNum int64
 	t.Run("when concurrent migrations occur for different migrators occur, the second one should fail", func(t *testing.T) {
-		for i := 0; i < 2; i++ {
+		for i := range 2 {
 			i := i // capture i variable
 			t.Run(fmt.Sprintf("run migration %d", i), func(t *testing.T) {
 				mg, err := reg.get(i)

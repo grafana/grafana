@@ -313,7 +313,7 @@ func (s *Service) handleRandomWalkScenario(ctx context.Context, req *backend.Que
 		}
 		seriesCount := model.SeriesCount
 
-		for i := 0; i < seriesCount; i++ {
+		for i := range seriesCount {
 			respD := resp.Responses[q.RefID]
 			respD.Frames = append(respD.Frames, RandomWalk(q, model, i))
 			resp.Responses[q.RefID] = respD
@@ -381,7 +381,7 @@ func (s *Service) handleCSVMetricValuesScenario(ctx context.Context, req *backen
 			step = (endTime - startTime) / int64(count-1)
 		}
 
-		for i := 0; i < count; i++ {
+		for i := range count {
 			t := time.Unix(startTime/int64(1e+3), (startTime%int64(1e+3))*int64(1e+6))
 			timeField.Set(i, t)
 			startTime += step
@@ -796,7 +796,7 @@ func makeIdField(stringTimeField *data.Field, lineField *data.Field, labelsField
 
 	checksums := make(map[string]int)
 
-	for i := 0; i < length; i++ {
+	for i := range length {
 		time := stringTimeField.At(i).(string)
 		line := lineField.At(i).(string)
 		labels := labelsField.At(i).(json.RawMessage)
@@ -1036,7 +1036,7 @@ func predictableCSVWave(query backend.DataQuery, model kinds.TestDataQuery) ([]*
 		valuesLen := int64(len(values))
 		getValue := func(mod int64) (*float64, error) {
 			var i int64
-			for i = 0; i < valuesLen; i++ {
+			for i = range valuesLen {
 				if mod == i*subQ.TimeStep {
 					return values[i], nil
 				}
@@ -1140,7 +1140,7 @@ func predictablePulse(query backend.DataQuery, model kinds.TestDataQuery) (*data
 func randomHeatmapData(query backend.DataQuery, fnBucketGen func(index int) float64) *data.Frame {
 	rand := rand.New(rand.NewSource(time.Now().UnixNano()))
 	frame := data.NewFrame("data", data.NewField("time", nil, []*time.Time{}))
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		frame.Fields = append(frame.Fields, data.NewField(strconv.FormatInt(int64(fnBucketGen(i)), 10), nil, []*float64{}))
 	}
 

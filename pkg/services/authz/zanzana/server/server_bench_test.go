@@ -112,7 +112,7 @@ func generateFolderHierarchy(childrenPerFolder, depth int) ([]*openfgav1.TupleKe
 
 		// Each parent gets exactly childrenPerFolder children
 		for _, parentUID := range parentFolders {
-			for j := 0; j < childrenPerFolder; j++ {
+			for range childrenPerFolder {
 				folderUID := fmt.Sprintf("folder-%d", folderIdx)
 
 				data.folders = append(data.folders, folderUID)
@@ -1093,7 +1093,7 @@ func BenchmarkBatchCheck(b *testing.B) {
 		items := make([]*authzv1.BatchCheckItem, 0, batchCheckSize)
 
 		// Mix of accessible and inaccessible resources
-		for i := 0; i < batchCheckSize; i++ {
+		for i := range batchCheckSize {
 			folder := data.folders[i%len(data.folders)]
 			items = append(items, &authzv1.BatchCheckItem{
 				Verb:          utils.VerbGet,

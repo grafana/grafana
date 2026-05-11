@@ -504,7 +504,7 @@ func TestMigrationRegistry_ConcurrentAccess(t *testing.T) {
 		numGoroutines := 100
 
 		// Pre-register some definitions to avoid panic from duplicates
-		for i := 0; i < numGoroutines; i++ {
+		for i := range numGoroutines {
 			def := testMigrationDefinition("def-" + string(rune('a'+i%26)) + string(rune('0'+i/26)))
 			gr := testGroupResource("group", "resource-"+string(rune('a'+i%26))+string(rune('0'+i/26)))
 			def.Migrators[gr] = noopMigrator
@@ -515,7 +515,7 @@ func TestMigrationRegistry_ConcurrentAccess(t *testing.T) {
 		wg.Add(numGoroutines * 3)
 
 		// Goroutines calling Get
-		for i := 0; i < numGoroutines; i++ {
+		for i := range numGoroutines {
 			go func(i int) {
 				defer wg.Done()
 				id := "def-" + string(rune('a'+i%26)) + string(rune('0'+i/26))
@@ -524,7 +524,7 @@ func TestMigrationRegistry_ConcurrentAccess(t *testing.T) {
 		}
 
 		// Goroutines calling All
-		for i := 0; i < numGoroutines; i++ {
+		for range numGoroutines {
 			go func() {
 				defer wg.Done()
 				_ = r.All()
@@ -532,7 +532,7 @@ func TestMigrationRegistry_ConcurrentAccess(t *testing.T) {
 		}
 
 		// Goroutines calling HasResource
-		for i := 0; i < numGoroutines; i++ {
+		for i := range numGoroutines {
 			go func(i int) {
 				defer wg.Done()
 				gr := testGroupResource("group", "resource-"+string(rune('a'+i%26))+string(rune('0'+i/26)))
@@ -547,14 +547,14 @@ func TestMigrationRegistry_ConcurrentAccess(t *testing.T) {
 		r := NewMigrationRegistry()
 
 		// Register some definitions
-		for i := 0; i < 10; i++ {
+		for i := range 10 {
 			r.Register(testMigrationDefinition("def-" + string(rune('a'+i))))
 		}
 
 		var wg sync.WaitGroup
 		results := make([][]MigrationDefinition, 50)
 
-		for i := 0; i < 50; i++ {
+		for i := range 50 {
 			wg.Add(1)
 			go func(idx int) {
 				defer wg.Done()
@@ -583,7 +583,7 @@ func TestMigrationRegistry_ConcurrentAccess(t *testing.T) {
 		r.Register(def)
 
 		var wg sync.WaitGroup
-		for i := 0; i < 100; i++ {
+		for range 100 {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()

@@ -1500,7 +1500,7 @@ func createAndSaveTestObject(t *testing.T, backend *kvStorageBackend, ctx contex
 	action := resourcepb.WatchEvent_ADDED
 	rv, testObj := addTestObject(t, backend, ctx, ns, name, uniqueStringGen())
 
-	for i := 0; i < updates; i += 1 {
+	for range updates {
 		rv = updateTestObject(t, backend, ctx, testObj, rv, ns, name, uniqueStringGen())
 		action = resourcepb.WatchEvent_MODIFIED
 	}
@@ -1942,7 +1942,7 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 
 		// Update the resource defaultPrunerHistoryLimit times. This will create one more event than the pruner limit.
 		previousRV := rv1
-		for i := 0; i < defaultPrunerHistoryLimit; i++ {
+		for i := range defaultPrunerHistoryLimit {
 			testObj.Object["spec"].(map[string]any)["value"] = fmt.Sprintf("update-%d", i)
 			writeEvent.Type = resourcepb.WatchEvent_MODIFIED
 			writeEvent.Value = objectToJSONBytes(t, testObj)
@@ -2020,7 +2020,7 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 
 		// Update the resource defaultPrunerHistoryLimit-1 times. This will create same number of events as the pruner limit.
 		previousRV := rv1
-		for i := 0; i < defaultPrunerHistoryLimit-1; i++ {
+		for i := range defaultPrunerHistoryLimit - 1 {
 			testObj.Object["spec"].(map[string]any)["value"] = fmt.Sprintf("update-%d", i)
 			writeEvent.Type = resourcepb.WatchEvent_MODIFIED
 			writeEvent.Value = objectToJSONBytes(t, testObj)
@@ -2088,7 +2088,7 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 		// = 1 + 20 + 20 = 41 total events (21 ADDED + 20 DELETED)
 		// Multiple deleted events for a resource shouldn't happen - this is just to ensure the pruner won't remove deleted events
 		previousRV := rv1
-		for i := 0; i < defaultPrunerHistoryLimit; i++ {
+		for i := range defaultPrunerHistoryLimit {
 			testObj.Object["spec"].(map[string]any)["value"] = fmt.Sprintf("delete-%d", i)
 			metaAccessor, err := utils.MetaAccessor(testObj)
 			require.NoError(t, err)
@@ -2175,7 +2175,7 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 
 		// Update the resource defaultPrunerHistoryLimit times to exceed the pruner limit
 		previousRV := rv1
-		for i := 0; i < defaultPrunerHistoryLimit; i++ {
+		for i := range defaultPrunerHistoryLimit {
 			testObj.Object["spec"].(map[string]any)["value"] = fmt.Sprintf("update-%d", i)
 			writeEvent.Type = resourcepb.WatchEvent_MODIFIED
 			writeEvent.Value = objectToJSONBytes(t, testObj)
@@ -2255,7 +2255,7 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 
 		// Update defaultPrunerHistoryLimit-1 times (total events = limit, nothing to prune)
 		previousRV := rv1
-		for i := 0; i < defaultPrunerHistoryLimit-1; i++ {
+		for i := range defaultPrunerHistoryLimit - 1 {
 			testObj.Object["spec"].(map[string]any)["value"] = fmt.Sprintf("update-%d", i)
 			writeEvent.Type = resourcepb.WatchEvent_MODIFIED
 			writeEvent.Value = objectToJSONBytes(t, testObj)
@@ -2323,7 +2323,7 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 		// Update the dashboard dashboardVersionsToKeep times to exceed the configured limit.
 		// Total events: 1 (create) + dashboardVersionsToKeep (updates) = limit + 1.
 		previousRV := rv1
-		for i := 0; i < dashboardVersionsToKeep; i++ {
+		for i := range dashboardVersionsToKeep {
 			testObj.Object["spec"].(map[string]any)["value"] = fmt.Sprintf("update-%d", i)
 			writeEvent.Type = resourcepb.WatchEvent_MODIFIED
 			writeEvent.Value = objectToJSONBytes(t, testObj)

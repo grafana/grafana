@@ -362,7 +362,7 @@ func Test_FromAlertsStateToStoppedAlert(t *testing.T) {
 func randomMapOfStrings() map[string]string {
 	max := 5
 	result := make(map[string]string, max)
-	for i := 0; i < max; i++ {
+	for range max {
 		result[util.GenerateShortUID()] = util.GenerateShortUID()
 	}
 	return result

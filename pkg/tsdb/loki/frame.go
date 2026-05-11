@@ -233,7 +233,7 @@ func makeIdField(stringTimeField *data.Field, lineField *data.Field, labelsField
 
 	checksums := make(map[string]int)
 
-	for i := 0; i < length; i++ {
+	for i := range length {
 		time := stringTimeField.At(i).(string)
 		line := lineField.At(i).(string)
 		labels := labelsField.At(i).(json.RawMessage)

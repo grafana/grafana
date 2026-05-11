@@ -350,7 +350,7 @@ func extractValueLong(t *testing.T, frames data.Frames, labels map[string]string
 	foundLabels := make(map[string]string)
 
 	l := frame.Fields[0].Len()
-	for i := 0; i < l; i++ {
+	for i := range l {
 		for _, field := range frame.Fields[1 : len(frame.Fields)-1] {
 			foundLabels[field.Name] = field.At(i).(string)
 		}

@@ -239,7 +239,7 @@ func TestIntegrationPromoterPromotesLargeTenant(t *testing.T) {
 	const nRows = threshold + 10
 
 	vectors := make([]Vector, 0, nRows)
-	for i := 0; i < nRows; i++ {
+	for i := range nRows {
 		vectors = append(vectors, Vector{
 			Namespace: ns, Resource: testResource, UID: "dash", Title: "Dash", Subresource: fmt.Sprintf("panel/%d", i),
 			ResourceVersion: int64(i + 1), Content: fmt.Sprintf("content %d", i),

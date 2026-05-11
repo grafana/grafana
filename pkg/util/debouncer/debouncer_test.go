@@ -75,7 +75,7 @@ func TestDebouncer(t *testing.T) {
 
 		start := clockMock.Now()
 
-		for counter := 0; counter < 25; counter++ {
+		for range 25 {
 			_ = group.Add("key1")
 			clockMock.Add(time.Millisecond * 40)
 			if processed["key1"] == 1 {

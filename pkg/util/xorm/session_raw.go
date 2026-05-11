@@ -94,7 +94,7 @@ func value2Bytes(rawValue *reflect.Value) ([]byte, error) {
 func row2map(rows *core.Rows, fields []string) (resultsMap map[string][]byte, err error) {
 	result := make(map[string][]byte)
 	scanResultContainers := make([]any, len(fields))
-	for i := 0; i < len(fields); i++ {
+	for i := range fields {
 		var scanResultContainer any
 		scanResultContainers[i] = &scanResultContainer
 	}

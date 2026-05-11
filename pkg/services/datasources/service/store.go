@@ -444,7 +444,7 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 }
 
 func generateNewDatasourceUid(sess *db.Session, orgId int64) (string, error) {
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		uid := generateNewUid()
 
 		exists, err := sess.Where("org_id=? AND uid=?", orgId, uid).Get(&datasources.DataSource{})

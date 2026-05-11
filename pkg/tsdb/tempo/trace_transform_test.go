@@ -353,9 +353,9 @@ func TestSpanLinksToReferencesTraceIDNotLeftTrimmed(t *testing.T) {
 func findSpan(trace tempopb.Trace, spanId string) *v1.Span {
 	for i := 0; i < len(trace.GetResourceSpans()); i++ {
 		scope := trace.GetResourceSpans()[i].GetScopeSpans()
-		for j := 0; j < len(scope); j++ {
+		for j := range scope {
 			spans := scope[j].GetSpans()
-			for k := 0; k < len(spans); k++ {
+			for k := range spans {
 				if hex.EncodeToString(spans[k].GetSpanId()[:]) == spanId {
 					return spans[k]
 				}

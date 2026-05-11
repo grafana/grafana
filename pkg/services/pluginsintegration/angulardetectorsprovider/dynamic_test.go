@@ -453,7 +453,7 @@ func TestRandomSkew(t *testing.T) {
 	const skew = ttl / 4
 	var different bool
 	var previous time.Duration
-	for i := 0; i < runs; i++ {
+	for i := range runs {
 		v := svc.randomSkew(skew)
 		require.True(t, v >= 0 && v <= skew, "returned skew must be within ttl and +ttl/4")
 		if i == 0 {

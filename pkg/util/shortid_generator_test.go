@@ -18,7 +18,7 @@ func TestAllowedCharMatchesUidPattern(t *testing.T) {
 }
 
 func TestRandomUIDs(t *testing.T) {
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		v := GenerateShortUID()
 		if !IsValidShortUID(v) {
 			t.Fatalf("charset for creating new shortids contains chars not present in uid pattern")

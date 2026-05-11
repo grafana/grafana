@@ -29,7 +29,7 @@ func ConcurrentBatch(workers, count, size int, eachFn func(start, end int) error
 	defer close(ret)
 
 	// Launch all workers
-	for x := 0; x < workers; x++ {
+	for range workers {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()

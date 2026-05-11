@@ -45,7 +45,7 @@ func TestIntegration_FolderTreeCache(t *testing.T) {
 		sc := setupTestScenario(t)
 
 		// Create multiple library panels
-		for i := 0; i < 5; i++ {
+		for i := range 5 {
 			// nolint:staticcheck
 			command := getCreatePanelCommand(sc.folder.ID, sc.folder.UID, "Panel "+string(rune('A'+i)))
 			sc.reqContext.Req.Body = mockRequestBody(command)
@@ -161,7 +161,7 @@ func TestIntegration_SkipFolderTreeForAdmin(t *testing.T) {
 
 	createPanels := func(t *testing.T, sc scenarioContext, count int) {
 		t.Helper()
-		for i := 0; i < count; i++ {
+		for i := range count {
 			// nolint:staticcheck
 			command := getCreatePanelCommand(sc.folder.ID, sc.folder.UID, "Panel "+string(rune('A'+i)))
 			sc.reqContext.Req.Body = mockRequestBody(command)

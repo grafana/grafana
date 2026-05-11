@@ -241,7 +241,7 @@ func TestGracefulShutdown(t *testing.T) {
 		<-service.startedChan
 
 		// Create multiple client connections
-		for i := 0; i < 5; i++ {
+		for range 5 {
 			conn, err := grpc.NewClient(
 				service.GetAddress(),
 				grpc.WithTransportCredentials(insecure.NewCredentials()),

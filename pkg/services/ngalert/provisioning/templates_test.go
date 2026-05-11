@@ -1492,7 +1492,7 @@ func TestTemplateService_LimitsValidation(t *testing.T) {
 
 	revision := func(existingCount int) *legacy_storage.ConfigRevision {
 		templates := make(map[string]string, existingCount)
-		for i := 0; i < existingCount; i++ {
+		for i := range existingCount {
 			templates[fmt.Sprintf("existing-%d", i)] = "content"
 		}
 		return &legacy_storage.ConfigRevision{
@@ -1661,7 +1661,7 @@ func TestTemplateService_LimitsValidation(t *testing.T) {
 		// Create a revision with many templates (over the count limit)
 		templates := make(map[string]string, 100)
 		templates[existingTemplateName] = "short"
-		for i := 0; i < 99; i++ {
+		for i := range 99 {
 			templates[fmt.Sprintf("template-%d", i)] = "content"
 		}
 		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {

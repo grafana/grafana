@@ -123,7 +123,7 @@ func (engine *Engine) SupportInsertMany() bool {
 
 func (engine *Engine) quoteColumns(columnStr string) string {
 	columns := strings.Split(columnStr, ",")
-	for i := 0; i < len(columns); i++ {
+	for i := range columns {
 		columns[i] = engine.Quote(strings.TrimSpace(columns[i]))
 	}
 	return strings.Join(columns, ",")

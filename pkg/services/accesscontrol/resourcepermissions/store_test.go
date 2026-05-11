@@ -549,11 +549,11 @@ func seedResourcePermissions(
 		require.NoError(t, err)
 	}
 
-	for i := 0; i < numUsers; i++ {
+	for i := range numUsers {
 		create(fmt.Sprintf("user:%s:%d", resourceID, i), false)
 	}
 
-	for i := 0; i < numServiceAccounts; i++ {
+	for i := range numServiceAccounts {
 		create(fmt.Sprintf("sa:%s:%d", resourceID, i), true)
 	}
 }

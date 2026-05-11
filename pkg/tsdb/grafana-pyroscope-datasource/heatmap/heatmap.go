@@ -68,7 +68,7 @@ func CreateHeatmapFrame(labels map[string]string, slots []*Slot, units string, s
 	for i, slot := range slots {
 		xMax := time.UnixMilli(slot.Timestamp)
 		nBuckets := len(slot.Counts)
-		for j := 0; j < nBuckets; j++ {
+		for j := range nBuckets {
 			if slot.Counts[j] == 0 {
 				continue
 			}

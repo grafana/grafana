@@ -171,7 +171,7 @@ func TestBroadcasterSlowConsumerDeadlock(t *testing.T) {
 	// Create 101 subscribers that never read — enough to exceed the
 	// internal unsubscribe channel buffer and exercise bulk disconnect.
 	const numSubs = internalChanSize + 1
-	for i := 0; i < numSubs; i++ {
+	for range numSubs {
 		_, err := b.Subscribe(ctx, "test", "test")
 		require.NoError(t, err)
 	}
@@ -181,7 +181,7 @@ func TestBroadcasterSlowConsumerDeadlock(t *testing.T) {
 	// event. Use a timeout to detect deadlock.
 	done := make(chan struct{})
 	go func() {
-		for i := 0; i < subBuf+ovfCap+1; i++ {
+		for i := range subBuf + ovfCap + 1 {
 			ch <- i
 		}
 		close(done)
@@ -213,13 +213,13 @@ func TestBroadcasterOverflowSpoolsInsteadOfDisconnecting(t *testing.T) {
 	// With overflow, the subscriber should NOT be disconnected.
 	const totalItems = subBuf + 20
 	go func() {
-		for i := 0; i < totalItems; i++ {
+		for i := range totalItems {
 			ch <- i
 		}
 	}()
 
 	// Read all items — they should arrive in order.
-	for i := 0; i < totalItems; i++ {
+	for i := range totalItems {
 		select {
 		case v, ok := <-sub:
 			require.True(t, ok, "subscriber channel closed prematurely at item %d", i)
@@ -250,7 +250,7 @@ func TestBroadcasterDisconnectsOnOverflowCapExceeded(t *testing.T) {
 	// The subscriber never reads, so it should be disconnected.
 	done := make(chan struct{})
 	go func() {
-		for i := 0; i < subBuf+ovfCap+10; i++ {
+		for i := range subBuf + ovfCap + 10 {
 			ch <- i
 		}
 		close(done)
@@ -297,7 +297,7 @@ func TestBroadcasterReadIntoDoesNotFillChannel(t *testing.T) {
 
 	// Fill the cache to capacity by sending items through the input channel
 	// (no subscribers yet, so items only go to cache).
-	for i := 0; i < defaultCacheSize; i++ {
+	for i := range defaultCacheSize {
 		ch <- i
 	}
 
@@ -316,12 +316,12 @@ func TestBroadcasterReadIntoDoesNotFillChannel(t *testing.T) {
 	// Send additional events. The channel has headroom (buffer > cache)
 	// so these arrive without overflowing.
 	const extra = 10
-	for i := 0; i < extra; i++ {
+	for i := range extra {
 		ch <- 1000 + i
 	}
 
 	// Read all remaining items — subscriber should still be alive.
-	for i := 0; i < extra; i++ {
+	for i := range extra {
 		select {
 		case _, ok := <-sub:
 			require.True(t, ok, "subscriber disconnected at item %d", i)
@@ -350,13 +350,13 @@ func TestBroadcasterOverflowMemoryReleasedWhenCaughtUp(t *testing.T) {
 	// Send more items than the channel buffer can hold, causing overflow.
 	const totalItems = subBuf + 15
 	go func() {
-		for i := 0; i < totalItems; i++ {
+		for i := range totalItems {
 			ch <- i
 		}
 	}()
 
 	// Read all items to catch up.
-	for i := 0; i < totalItems; i++ {
+	for i := range totalItems {
 		select {
 		case _, ok := <-sub:
 			require.True(t, ok)

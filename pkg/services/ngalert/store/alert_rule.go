@@ -1679,7 +1679,7 @@ func (st DBstore) Kind() string { return entity.StandardKindAlertRule }
 // This is set as a variable so that the tests can override it.
 // The ruleTitle is only used by the mocked functions.
 var GenerateNewAlertRuleUID = func(sess *db.Session, orgID int64, ruleTitle string) (string, error) {
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		uid := util.GenerateShortUID()
 
 		exists, err := sess.Where("org_id=? AND uid=?", orgID, uid).Get(&alertRule{})

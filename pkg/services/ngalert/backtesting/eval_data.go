@@ -49,7 +49,7 @@ func (d *dataEvaluator) Eval(_ context.Context, from time.Time, interval time.Du
 		resampled = append(resampled, r)
 	}
 
-	for i := 0; i < evaluations; i++ {
+	for i := range evaluations {
 		result := make([]eval.Result, 0, len(resampled))
 		var now time.Time
 		for _, series := range resampled {

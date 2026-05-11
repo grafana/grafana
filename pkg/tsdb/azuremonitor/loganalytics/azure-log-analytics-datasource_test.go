@@ -945,10 +945,10 @@ func TestEncodeQueryConcurrent(t *testing.T) {
 
 	var wg sync.WaitGroup
 	wg.Add(goroutines)
-	for g := 0; g < goroutines; g++ {
+	for g := range goroutines {
 		go func(g int) {
 			defer wg.Done()
-			for i := 0; i < iterations; i++ {
+			for i := range iterations {
 				query := fmt.Sprintf("Heartbeat | where Computer == 'c-%d-%d' | take 10", g, i)
 				encoded, err := encodeQuery(query)
 				require.NoError(t, err)

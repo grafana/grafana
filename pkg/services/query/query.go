@@ -166,7 +166,7 @@ func (s *ServiceImpl) executeConcurrentQueries(ctx context.Context, user identit
 	// Query each datasource concurrently
 	for _, queries := range queriesbyDs {
 		rawQueries := make([]*simplejson.Json, len(queries))
-		for i := 0; i < len(queries); i++ {
+		for i := range queries {
 			rawQueries[i] = queries[i].rawQuery
 		}
 		g.Go(func() error {

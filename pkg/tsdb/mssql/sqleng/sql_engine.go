@@ -658,7 +658,7 @@ func convertSQLTimeColumnToEpochMS(frame *data.Frame, timeIndex int) error {
 	newField.Labels = origin.Labels
 
 	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
+	for i := range valueLength {
 		v, err := origin.NullableFloatAt(i)
 		if err != nil {
 			return fmt.Errorf("unable to convert data to a time field")

@@ -492,7 +492,7 @@ receivers:
 
 			firstHash := am.(*alertmanager).appliedHash
 			firstApplied := base.AppliedConfig()
-			for i := 0; i < 20; i++ {
+			for range 20 {
 				changed, err = moa.ApplyConfig(ctx, 1, toDBConfig(t, tc.initialConfig()))
 				require.NoError(t, err)
 				diff := cmp.Diff(firstApplied, base.AppliedConfig(), cmpopts.IgnoreUnexported(definition.Route{}, labels.Matcher{}))

@@ -35,7 +35,7 @@ func BenchmarkEvaluate(b *testing.B) {
 
 func seedDataResponse(r *backend.QueryDataResponse, n int) {
 	resps := make(backend.Responses, n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		labels := data.Labels{
 			"foo": strconv.Itoa(i),
 			"bar": strconv.Itoa(i + 1),

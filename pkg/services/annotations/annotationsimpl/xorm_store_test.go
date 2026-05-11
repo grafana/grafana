@@ -202,7 +202,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		t.Run("Can batch-insert annotations", func(t *testing.T) {
 			count := 10
 			items := make([]annotations.Item, count)
-			for i := 0; i < count; i++ {
+			for i := range count {
 				items[i] = annotations.Item{
 					OrgID: 100,
 					Type:  "batch",
@@ -228,7 +228,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		t.Run("Can batch-insert annotations with tags", func(t *testing.T) {
 			count := 10
 			items := make([]annotations.Item, count)
-			for i := 0; i < count; i++ {
+			for i := range count {
 				items[i] = annotations.Item{
 					OrgID: 101,
 					Type:  "batch",
@@ -662,7 +662,7 @@ func benchmarkFindTags(b *testing.B, numAnnotations int) {
 	newAnnotations := make([]annotations.Item, 0, numAnnotations)
 	newTags := make([]tag.Tag, 0, numAnnotations)
 	newAnnotationTags := make([]annotationTag, 0, numAnnotations)
-	for i := 0; i < numAnnotations; i++ {
+	for i := range numAnnotations {
 		newAnnotations = append(newAnnotations, annotations.Item{
 			ID:          int64(i),
 			OrgID:       1,
@@ -686,7 +686,7 @@ func benchmarkFindTags(b *testing.B, numAnnotations int) {
 	err := sql.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		batchSize := 1000
 		numOfBatches := numAnnotations / batchSize
-		for i := 0; i < numOfBatches; i++ {
+		for i := range numOfBatches {
 			_, err := sess.Insert(newAnnotations[i*batchSize : (i+1)*batchSize-1])
 			require.NoError(b, err)
 

@@ -281,7 +281,7 @@ func TestAdjustFrame(t *testing.T) {
 		// NOTE: i compare it item-by-item otherwise the test-fail-error-message is very hard to read
 		require.Len(t, result, len(expected))
 
-		for i := 0; i < len(result); i++ {
+		for i := range result {
 			require.Equal(t, expected[i], result[i])
 		}
 	})

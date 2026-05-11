@@ -241,7 +241,7 @@ func TestMSSQL(t *testing.T) {
 
 			dt := fromStart
 
-			for i := 0; i < 2; i++ {
+			for i := range 2 {
 				aValue := *frames[0].Fields[1].At(i).(*float64)
 				aTime := *frames[0].Fields[0].At(i).(*time.Time)
 				require.Equal(t, float64(15), aValue)
@@ -288,7 +288,7 @@ func TestMSSQL(t *testing.T) {
 
 			dt := fromStart
 
-			for i := 0; i < 2; i++ {
+			for i := range 2 {
 				aValue := *frames[0].Fields[1].At(i).(*float64)
 				aTime := *frames[0].Fields[0].At(i).(*time.Time)
 				require.Equal(t, float64(15), aValue)
