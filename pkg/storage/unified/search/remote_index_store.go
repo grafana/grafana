@@ -370,10 +370,12 @@ func (s *BucketRemoteIndexStore) DeleteIndex(ctx context.Context, nsResource res
 // the manifest is written, the partial upload is cleaned up via
 // store.DeleteIndex; CleanupIncompleteIndexSnapshots is the fallback.
 //
-// Caller should hold a build lock (store.LockBuildIndex) to avoid
-// concurrent uploads for the same resource. logger is used to warn if the
-// partial-upload cleanup itself fails; the caller's logger context
-// (namespace, resource, etc.) is preserved on those logs.
+// Caller should hold a build lock (store.LockBuildIndex) so multiple
+// Grafana instances don't redundantly build and upload the same index.
+// Uploads themselves don't conflict — each one generates a unique ULID
+// — but the lock avoids wasted CPU and bucket writes. logger is used to
+// warn if the partial-upload cleanup itself fails; the caller's logger
+// context (namespace, resource, etc.) is preserved on those logs.
 func UploadIndexSnapshot(ctx context.Context, store RemoteIndexStore, nsResource resource.NamespacedResource, localDir string, meta IndexMeta, logger log.Logger) (_ ulid.ULID, retErr error) {
 	indexKey, err := ulid.New(ulid.Timestamp(time.Now()), rand.Reader)
 	if err != nil {
