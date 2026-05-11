@@ -272,10 +272,6 @@ func (s *BucketRemoteIndexStore) ReadSnapshotFile(ctx context.Context, nsResourc
 	return nil
 }
 
-// ListIndexKeys lists the ULID-keyed snapshot subdirectories under the
-// namespaced-resource prefix using a delimited list, without reading any
-// manifest bodies. Non-ULID subdirectories (e.g. the sibling `locks/` prefix)
-// are skipped silently.
 // listSubdirs runs a delimited bucket list at prefix and returns the parsed
 // values of the immediate subdirectories. parse transforms a subdirectory's
 // trimmed name into a T; entries for which parse returns ok=false are
@@ -302,6 +298,11 @@ func listSubdirs[T any](ctx context.Context, bucket resource.CDKBucket, prefix, 
 	return result, nil
 }
 
+// ListIndexKeys returns the ULIDs of all snapshot prefixes under nsResource.
+// Non-ULID sibling directories (e.g. /locks) are skipped silently. The list
+// may include incomplete uploads whose manifest has not yet been written;
+// callers that need to filter to complete snapshots follow up with
+// ReadIndexSnapshotManifest (or the ListIndexSnapshots helper).
 func (s *BucketRemoteIndexStore) ListIndexKeys(ctx context.Context, nsResource resource.NamespacedResource) ([]ulid.ULID, error) {
 	return listSubdirs(ctx, s.bucket, nsPrefix(nsResource), "listing index keys", func(name string) (ulid.ULID, bool) {
 		key, err := ulid.Parse(name)
