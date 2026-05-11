@@ -3,6 +3,8 @@ package loki
 import (
 	"context"
 	"encoding/json"
+	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -116,6 +118,20 @@ func TestBuildLogQLExpr(t *testing.T) {
 	}
 }
 
+// testDatasourceInfoServiceName returns datasource info whose SchemaProvider resolves the SQL table
+// label to service_name (matches defaultSchemaTableLabel for assertions).
+func testDatasourceInfoServiceName(t *testing.T) *datasourceInfo {
+	t.Helper()
+	p := newTestSchemaProvider(t, func(req *http.Request) (int, string, []byte) {
+		if strings.HasSuffix(req.URL.Path, "/loki/api/v1/labels") && req.URL.Query().Get("query") == "" {
+			return 200, "", []byte(`{"status":"success","data":["service_name"]}`)
+		}
+		t.Fatalf("unexpected request: %s %s", req.Method, req.URL.String())
+		return 0, "", nil
+	})
+	return &datasourceInfo{schemaProvider: p}
+}
+
 func queryDataRequestWithDSAbstraction(queries []backend.DataQuery) *backend.QueryDataRequest {
 	return &backend.QueryDataRequest{
 		PluginContext: backend.PluginContext{
@@ -128,7 +144,7 @@ func queryDataRequestWithDSAbstraction(queries []backend.DataQuery) *backend.Que
 }
 
 func TestNormalizeGrafanaSQLRequest_passthroughPaths(t *testing.T) {
-	ds := &datasourceInfo{schemaTableLabel: "service_name"}
+	ds := testDatasourceInfoServiceName(t)
 	tr := backend.TimeRange{From: time.Now().Add(-time.Hour), To: time.Now()}
 
 	t.Run("invalid json keeps query unchanged", func(t *testing.T) {
@@ -214,7 +230,7 @@ func TestNormalizeGrafanaSQLRequest_passthroughPaths(t *testing.T) {
 }
 
 func TestNormalizeGrafanaSQLRequest_hints(t *testing.T) {
-	ds := &datasourceInfo{schemaTableLabel: "service_name"}
+	ds := testDatasourceInfoServiceName(t)
 	from := time.Date(2024, 3, 1, 10, 0, 0, 0, time.UTC)
 	to := from.Add(time.Hour)
 	tr := backend.TimeRange{From: from, To: to}
@@ -320,7 +336,7 @@ func TestNormalizeGrafanaSQLRequest_Disabled(t *testing.T) {
 			JSON:  []byte(`{"grafanaSql":true,"table":"carts","refId":"A"}`),
 		}},
 	}
-	ds := &datasourceInfo{schemaTableLabel: "service_name"}
+	ds := &datasourceInfo{}
 	out, refIDs, sqlErrs := normalizeGrafanaSQLRequest(context.Background(), req, ds)
 	require.Same(t, req, out)
 	require.Nil(t, refIDs)
@@ -348,7 +364,7 @@ func TestNormalizeGrafanaSQLRequest_Converts(t *testing.T) {
 			TimeRange: backend.TimeRange{From: time.Now().Add(-time.Hour), To: time.Now()},
 		}},
 	}
-	ds := &datasourceInfo{schemaTableLabel: "service_name"}
+	ds := testDatasourceInfoServiceName(t)
 
 	out, refIDs, sqlErrs := normalizeGrafanaSQLRequest(context.Background(), req, ds)
 	require.Len(t, out.Queries, 1)

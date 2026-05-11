@@ -31,7 +31,6 @@ import (
 //
 // Row count uses schemas.Query.limit (SQL LIMIT pushdown), not a table hint.
 func normalizeGrafanaSQLRequest(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datasourceInfo) (*backend.QueryDataRequest, map[string]struct{}, map[string]error) {
-	_ = ctx
 	if req == nil || len(req.Queries) == 0 {
 		return req, nil, nil
 	}
@@ -41,11 +40,11 @@ func normalizeGrafanaSQLRequest(ctx context.Context, req *backend.QueryDataReque
 		return req, nil, nil
 	}
 
-	tableLabel := dsInfo.schemaTableLabel
-
 	out := make([]backend.DataQuery, 0, len(req.Queries))
 	schemadsRefIDs := make(map[string]struct{})
 	sqlErrors := make(map[string]error)
+
+	var tableLabel string
 
 	for _, q := range req.Queries {
 		var sq schemas.Query
@@ -62,6 +61,14 @@ func normalizeGrafanaSQLRequest(ctx context.Context, req *backend.QueryDataReque
 		if sq.Table == "" {
 			sqlErrors[q.RefID] = fmt.Errorf("loki grafana sql: table name is required")
 			continue
+		}
+
+		if tableLabel == "" {
+			if dsInfo.schemaProvider != nil {
+				tableLabel = dsInfo.schemaProvider.ResolveSchemaTableLabel(ctx)
+			} else {
+				tableLabel = defaultSchemaTableLabel
+			}
 		}
 
 		// Aggregation hints (if present) are ignored here: we fetch raw log rows and let dsabstraction

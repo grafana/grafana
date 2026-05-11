@@ -74,7 +74,7 @@ type datasourceInfo struct {
 	streamsMu sync.RWMutex
 
 	schemaDatasource *schemas.SchemaDatasource
-	schemaTableLabel string
+	schemaProvider   *SchemaProvider
 }
 
 type QueryJSONModel struct {
@@ -110,23 +110,27 @@ func newInstanceSettings(httpClientProvider *httpclient.Provider, logger log.Log
 			return nil, backend.DownstreamError(fmt.Errorf("error creating http client: %w", err))
 		}
 
-		schemaProvider := NewSchemaProvider(client, settings.URL, logger, tracer)
-		tblLabel := schemaProvider.ResolveSchemaTableLabel(ctx)
-		schemaDs := schemas.NewSchemaDatasource(
-			schemaProvider,
-			schemaProvider,
-			schemaProvider,
-			nil,
-			schemaProvider,
-			nil,
-		)
+		var schemaDs *schemas.SchemaDatasource
+		var schemaProv *SchemaProvider
+		grafCfg := config.GrafanaConfigFromContext(ctx)
+		if grafCfg != nil && grafCfg.FeatureToggles().IsEnabled(flagDsAbstractionApp) {
+			schemaProv = NewSchemaProvider(client, settings.URL, logger, tracer)
+			schemaDs = schemas.NewSchemaDatasource(
+				schemaProv,
+				schemaProv,
+				schemaProv,
+				nil,
+				schemaProv,
+				nil,
+			)
+		}
 
 		model := &datasourceInfo{
 			HTTPClient:       client,
 			URL:              settings.URL,
 			streams:          make(map[string]data.FrameJSONCache),
 			schemaDatasource: schemaDs,
-			schemaTableLabel: tblLabel,
+			schemaProvider:   schemaProv,
 		}
 		return model, nil
 	}

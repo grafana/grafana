@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -170,6 +171,38 @@ func TestSchemaProvider_ColumnValues_SkipsTimestampAndLine(t *testing.T) {
 	require.Equal(t, []string{"info", "error"}, resp.ColumnValues["level"])
 	_, hasTs := resp.ColumnValues["timestamp"]
 	require.False(t, hasTs)
+}
+
+func TestSchemaProvider_TableLabelCache_Expires(t *testing.T) {
+	var listLabelsCalls atomic.Int32
+	p := newTestSchemaProvider(t, func(req *http.Request) (int, string, []byte) {
+		if strings.HasSuffix(req.URL.Path, "/loki/api/v1/labels") && req.URL.Query().Get("query") == "" {
+			listLabelsCalls.Add(1)
+			return 200, "", []byte(`{"status":"success","data":["service_name"]}`)
+		}
+		if strings.Contains(req.URL.Path, "/loki/api/v1/label/service_name/values") {
+			return 200, "", []byte(`{"status":"success","data":["a"]}`)
+		}
+		t.Fatalf("unexpected request: %s", req.URL.String())
+		return 0, "", nil
+	})
+	const shortTTL = 100 * time.Millisecond
+	p.cacheTTL = shortTTL
+
+	ctx := context.Background()
+	_, err := p.Tables(ctx, &schemas.TablesRequest{})
+	require.NoError(t, err)
+	require.EqualValues(t, 1, listLabelsCalls.Load())
+
+	time.Sleep(shortTTL / 5)
+	_, err = p.Tables(ctx, &schemas.TablesRequest{})
+	require.NoError(t, err)
+	require.EqualValues(t, 1, listLabelsCalls.Load())
+
+	time.Sleep(shortTTL + 50*time.Millisecond)
+	_, err = p.Tables(ctx, &schemas.TablesRequest{})
+	require.NoError(t, err)
+	require.EqualValues(t, 2, listLabelsCalls.Load())
 }
 
 func TestSchemaProvider_Schema(t *testing.T) {

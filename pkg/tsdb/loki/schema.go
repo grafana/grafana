@@ -36,6 +36,10 @@ var schemaTableLabelCandidates = []string{
 
 const defaultSchemaTableLabel = "service_name"
 
+// schemaTableLabelCacheTTL is how long we reuse the label picked by discoverTableLabel before
+// re-querying Loki's /labels API.
+const schemaTableLabelCacheTTL = 5 * time.Minute
+
 var schemaBaseColumns = []schemas.Column{
 	{Name: "timestamp", Type: schemas.ColumnTypeDatetime},
 	{Name: "line", Type: schemas.ColumnTypeString},
@@ -76,7 +80,10 @@ type SchemaProvider struct {
 
 	tableLabelMu       sync.Mutex
 	cachedTableLabel   string
-	tableLabelResolved bool
+	tableLabelCachedAt time.Time
+
+	// cacheTTL overrides schemaTableLabelCacheTTL when non-zero (tests).
+	cacheTTL time.Duration
 }
 
 func NewSchemaProvider(httpClient *http.Client, url string, logger log.Logger, tracer trace.Tracer) *SchemaProvider {
@@ -89,10 +96,16 @@ func NewSchemaProvider(httpClient *http.Client, url string, logger log.Logger, t
 }
 
 // ResolveSchemaTableLabel resolves the label used to partition SQL tables (e.g. service_name) and
-// caches it. Call once at datasource instance creation so the same value is available for
-// Grafana SQL query normalization without a second discovery round-trip.
+// caches it for schemaTableLabelCacheTTL (see resolvedTableLabel).
 func (p *SchemaProvider) ResolveSchemaTableLabel(ctx context.Context) string {
 	return p.resolvedTableLabel(ctx)
+}
+
+func (p *SchemaProvider) cacheTTLOrDefault() time.Duration {
+	if p.cacheTTL > 0 {
+		return p.cacheTTL
+	}
+	return schemaTableLabelCacheTTL
 }
 
 // Schema implements schemas.SchemaHandler.
@@ -209,11 +222,13 @@ func (p *SchemaProvider) fetchLokiStringList(ctx context.Context, path, desc str
 func (p *SchemaProvider) resolvedTableLabel(ctx context.Context) string {
 	p.tableLabelMu.Lock()
 	defer p.tableLabelMu.Unlock()
-	if p.tableLabelResolved {
+	now := time.Now()
+	ttl := p.cacheTTLOrDefault()
+	if !p.tableLabelCachedAt.IsZero() && now.Sub(p.tableLabelCachedAt) < ttl {
 		return p.cachedTableLabel
 	}
 	p.cachedTableLabel = p.discoverTableLabel(ctx)
-	p.tableLabelResolved = true
+	p.tableLabelCachedAt = time.Now()
 	return p.cachedTableLabel
 }
 
