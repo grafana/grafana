@@ -2890,7 +2890,7 @@ func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 	// TODO(@leonorfmartins): write tests for uni store when we are able to support it
 }
 
-func TestIntegrationAlertRuleCRUD(t *testing.T) {
+func TestIntegrationAlertRuleCRUD_Validation(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	// Setup Grafana and its Database
@@ -3168,6 +3168,38 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 			})
 		}
 	}
+}
+
+func TestIntegrationAlertRuleCRUD(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	// Setup Grafana and its Database
+
+	testinfra.SQLiteIntegrationTest(t)
+
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		EnableQuota:           true,
+		DisableAnonymous:      true,
+		AppModeProduction:     true,
+	})
+
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
+
+	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleEditor),
+		Password:       "password",
+		Login:          "grafana",
+	})
+
+	apiClient := newAlertingApiClient(grafanaListedAddr, "grafana", "password")
+
+	// Create the namespace we'll save our alerts to.
+	apiClient.CreateFolder(t, "default", "default")
+
+	interval, err := model.ParseDuration("1m")
+	require.NoError(t, err)
 
 	var ruleUID string
 	var expectedGetNamespaceResponseBody string
