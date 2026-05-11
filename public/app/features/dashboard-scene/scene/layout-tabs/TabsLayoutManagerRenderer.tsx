@@ -227,13 +227,13 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     tabsScrollArea: css({
       position: 'relative',
-      flex: '1 1 auto',
+      flex: '0 1 auto',
       minWidth: 0,
       display: 'flex',
     }),
     tabsContainer: css({
       display: 'flex',
-      flex: '1 1 auto',
+      flex: '0 1 auto',
       minWidth: 0,
       justifyContent: 'flex-start',
       alignItems: 'flex-end',
