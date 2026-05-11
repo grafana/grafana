@@ -26,7 +26,7 @@ This document provides instructions for configuring the MySQL data source and ex
 
 Before configuring the MySQL data source, ensure you have the following:
 
-- **Grafana permissions:** You must have the `Organization administrator` role to configure data sources. Organization administrators can also [configure the data source via YAML](#provision-the-data-source) with the Grafana provisioning system.
+- **Grafana permissions:** You must have the Organization administrator role to configure data sources. Organization administrators can also [configure the data source via YAML](#provision-the-data-source) with the Grafana provisioning system.
 
 - **A running MySQL instance:** MySQL 5.7 or newer, MariaDB 10.2 or newer, or a compatible MySQL-based database such as Percona Server.
 
@@ -41,7 +41,7 @@ Grafana ships with a built-in MySQL data source plugin. No additional installati
 {{< /admonition >}}
 
 {{< admonition type="tip" >}}
-**Grafana Cloud users:** If your MySQL server is in a private network, you can configure [Private data source connect](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) to establish connectivity.
+**Grafana Cloud users:** Grafana Cloud doesn't provide static outbound IP addresses for data source connections, so IP allowlisting isn't a supported connectivity method. If your MySQL server is in a private network, configure [Private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) to establish a secure connection without exposing your database to the public internet.
 {{< /admonition >}}
 
 ### Database user permissions
@@ -83,7 +83,9 @@ Following is a list of MySQL configuration options:
 
 **Authentication:**
 
-- **Username**- Enter the username used to connect to your MySQL database.
+The MySQL data source supports username and password authentication, with optional TLS for encrypted connections. Kerberos, gMSA, and other external authentication mechanisms aren't supported. Create a dedicated MySQL user for Grafana instead.
+
+- **Username** - Enter the username used to connect to your MySQL database.
 - **Password** - Enter the password used to connect to the MySQL database.
 - **Use TLS Client Auth** - Toggle to enable TLS authentication using the client certificate specified in the secure JSON configuration. Refer to [Using TLS Connections](https://dev.mysql.com/doc/refman/8.4/en/mysql-cluster-tls-using.html) and [Configuring MySQL to Use Encrypted Connections](https://dev.mysql.com/doc/refman/8.4/en/using-encrypted-connections.html) for more information regarding TLS and configuring encrypted connections in MySQL. Provide the client certificate under **TLS/SSL Client Certificate**. Provide the key under **TLS/SSL Client Key**.
 - **With CA Cert** - Toggle to authenticate using a CA certificate. Required for verifying self-signed TLS Certs. Follow the instructions of your CA (Certificate Authority) to download the certificate file. Provide the root certificate under **TLS/SSL Root Certificate** if TLS/SSL mode requires it.

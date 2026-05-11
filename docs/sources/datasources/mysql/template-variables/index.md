@@ -129,4 +129,31 @@ ${servers:csv}
 
 This outputs the values as an unquoted comma-separated list.
 
+### Use explicit quoting for string variables
+
+Don't rely on Grafana's implicit quoting behavior for string variables in SQL queries. Quoting behavior can vary depending on panel type and context:
+
+- **Repeat panels** may not quote single-value variables at all, causing bare values to appear in the SQL and breaking the query.
+- If you manually wrap a variable in quotes (for example, `WHERE name = '$myvar'`) and Grafana also applies its own quoting, the value gets double-quoted (for example, `''30''` instead of `'30'`). This intentional quoting behavior was restored in Grafana 11.3.
+
+To avoid both problems, use the `sqlstring` format option. It handles escaping and quoting in a single step, so you don't add your own quotes around the variable:
+
+```sql
+SELECT *
+FROM my_table
+WHERE hostname = ${hostname:sqlstring}
+```
+
+This produces a safely quoted string (for example, `'server01'`) regardless of panel type or context. For multi-value variables, use `IN` with `${var:sqlstring}`:
+
+```sql
+SELECT *
+FROM my_table
+WHERE hostname IN (${hostname:sqlstring})
+```
+
+{{< admonition type="caution" >}}
+Don't wrap `${var:sqlstring}` in additional quotes. The `sqlstring` formatter already produces a quoted value. Writing `'${var:sqlstring}'` results in double quoting.
+{{< /admonition >}}
+
 Refer to [Advanced variable format options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/#advanced-variable-format-options) for additional information.
