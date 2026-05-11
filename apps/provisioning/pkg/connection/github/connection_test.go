@@ -1687,9 +1687,8 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 				mockClient := github.NewMockClient(t)
 				mockFactory.EXPECT().New(mock.Anything, common.RawSecureValue("jwt-token")).Return(mockClient)
 				mockClient.EXPECT().CreateInstallationAccessToken(mock.Anything, "456", "test-repo").
-					// #nosec G101 -- test fixture, not a real credential
 					Return(github.InstallationToken{
-						Token:     "ghs_repository_token_123",
+						Token:     "ghs_repository_token_123", // #nosec G101 -- test fixture, not a real credential
 						ExpiresAt: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
 					}, nil)
 			},

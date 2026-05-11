@@ -17,8 +17,8 @@ func TestLokiConfig(t *testing.T) {
 			expErr   string
 		}
 
-		// #nosec G101 -- test fixtures, not real credentials
 		cases := []testCase{
+			// #nosec G101 -- test fixture, not a real credential
 			{
 				name: "remote url only",
 				in: setting.UnifiedAlertingLokiSettings{
@@ -27,6 +27,7 @@ func TestLokiConfig(t *testing.T) {
 				expRead:  "http://url.com",
 				expWrite: "http://url.com",
 			},
+			// #nosec G101 -- test fixture, not a real credential
 			{
 				name: "separate urls",
 				in: setting.UnifiedAlertingLokiSettings{
@@ -36,6 +37,7 @@ func TestLokiConfig(t *testing.T) {
 				expRead:  "http://read.url.com",
 				expWrite: "http://write.url.com",
 			},
+			// #nosec G101 -- test fixture, not a real credential
 			{
 				name: "single fallback",
 				in: setting.UnifiedAlertingLokiSettings{
