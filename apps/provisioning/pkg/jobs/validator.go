@@ -124,7 +124,7 @@ func validateExportJobOptions(opts *provisioning.ExportJobOptions) field.ErrorLi
 
 // validateMigrateJobOptions validates migrate job options
 func validateMigrateJobOptions(opts *provisioning.MigrateJobOptions) field.ErrorList {
-	list := field.ErrorList{}
+	list := field.ErrorList{} //nolint:prealloc
 
 	// Empty Resources is valid: the worker falls back to migrating every
 	// unmanaged resource (legacy behavior).

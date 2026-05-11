@@ -17,6 +17,7 @@ func TestLokiConfig(t *testing.T) {
 			expErr   string
 		}
 
+		// #nosec G101 -- test fixtures, not real credentials
 		cases := []testCase{
 			{
 				name: "remote url only",

@@ -259,6 +259,9 @@ linters:
           - staticcheck
         text: use fake service and real access control evaluator instead
       - linters:
+          - staticcheck
+        text: 'QF1012'
+      - linters:
           - gosec
         text: G108
       - linters:
