@@ -790,11 +790,6 @@ export interface FeatureToggles {
   */
   pluginsSriChecks?: boolean;
   /**
-  * Enables to save big objects in blob storage
-  * @default false
-  */
-  unifiedStorageBigObjectsSupport?: boolean;
-  /**
   * Enables time pickers sync
   * @default false
   */
