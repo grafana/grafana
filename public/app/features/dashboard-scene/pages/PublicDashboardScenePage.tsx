@@ -6,9 +6,9 @@ import { type GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { type SceneComponentProps, UrlSyncContextProvider } from '@grafana/scenes';
-import { Alert, Box, Icon, PageLoader, Stack, useStyles2 } from '@grafana/ui';
-import { Branding } from 'app/core/components/Branding/Branding';
+import { Alert, Box, Icon, Stack, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { PageLoader } from 'app/core/components/PageLoader/PageLoader';
 import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { DashboardBrandingFooter } from 'app/features/dashboard/components/PublicDashboard/DashboardBrandingFooter';
 import { useGetPublicDashboardConfig } from 'app/features/dashboard/components/PublicDashboard/usePublicDashboardConfig';
@@ -59,11 +59,7 @@ export function PublicDashboardScenePage({ route }: Props) {
   if (!dashboard) {
     return (
       <Page layout={PageLayoutType.Custom} className={styles.loadingPage} data-testid={selectors.loadingPage}>
-        {isLoading && (
-          <PageLoader>
-            <Branding.LoginLogo />
-          </PageLoader>
-        )}
+        {isLoading && <PageLoader />}
       </Page>
     );
   }

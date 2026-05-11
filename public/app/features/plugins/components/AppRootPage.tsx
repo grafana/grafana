@@ -17,10 +17,10 @@ import {
 import { Trans, t } from '@grafana/i18n';
 import { config, locationSearchToObject } from '@grafana/runtime';
 import { getLogger } from '@grafana/runtime/unstable';
-import { Alert, ErrorWithStack, PageLoader } from '@grafana/ui';
+import { Alert, ErrorWithStack } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
-import { Branding } from 'app/core/components/Branding/Branding';
 import { Page } from 'app/core/components/Page/Page';
+import { PageLoader } from 'app/core/components/PageLoader/PageLoader';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { getNotFoundNav, getWarningNav, getExceptionNav } from 'app/core/navigation/errorModels';
@@ -90,11 +90,7 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
     const currentLayout = grafanaContext.chrome.state.getValue().layout;
     return (
       <Page navModel={navModel} pageNav={{ text: '' }} layout={currentLayout}>
-        {loading && (
-          <PageLoader>
-            <Branding.LoginLogo />
-          </PageLoader>
-        )}
+        {loading && <PageLoader />}
         {!loading && loadingError && <EntityNotFound entity="App" />}
       </Page>
     );

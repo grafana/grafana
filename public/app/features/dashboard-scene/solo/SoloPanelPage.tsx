@@ -6,8 +6,8 @@ import { useParams } from 'react-router-dom-v5-compat';
 import { type GrafanaTheme2, type UrlQueryValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { UrlSyncContextProvider } from '@grafana/scenes';
-import { Alert, Box, PageLoader, useStyles2 } from '@grafana/ui';
-import { Branding } from 'app/core/components/Branding/Branding';
+import { Alert, Box, useStyles2 } from '@grafana/ui';
+import { PageLoader } from 'app/core/components/PageLoader/PageLoader';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { type DashboardPageRouteParams } from 'app/features/dashboard/containers/types';
@@ -53,11 +53,7 @@ export function SoloPanelPage({ queryParams }: Props) {
   }
 
   if (!dashboard) {
-    return (
-      <PageLoader>
-        <Branding.LoginLogo />
-      </PageLoader>
-    );
+    return <PageLoader />;
   }
 
   return (

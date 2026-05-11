@@ -2,8 +2,8 @@ import { Suspense, useEffect, useLayoutEffect } from 'react';
 import { Navigate, useLocation, useParams } from 'react-router-dom-v5-compat';
 
 import { config, locationSearchToObject, navigationLogger, reportPageview } from '@grafana/runtime';
-import { ErrorBoundary, PageLoader } from '@grafana/ui';
-import { Branding } from 'app/core/components/Branding/Branding';
+import { ErrorBoundary } from '@grafana/ui';
+import { PageLoader } from 'app/core/components/PageLoader/PageLoader';
 import { updateMeticulousRecording } from 'app/core/services/meticulous';
 import { isFrontendService } from 'app/core/utils/isFrontendService';
 
@@ -55,13 +55,7 @@ export function GrafanaRoute(props: Props) {
         }
 
         return (
-          <Suspense
-            fallback={
-              <PageLoader>
-                <Branding.LoginLogo />
-              </PageLoader>
-            }
-          >
+          <Suspense fallback={<PageLoader />}>
             <props.route.component {...props} queryParams={locationSearchToObject(props.location.search)} />
           </Suspense>
         );

@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 
-import { PageLoader } from '@grafana/ui';
-import { Branding } from 'app/core/components/Branding/Branding';
+import { PageLoader } from 'app/core/components/PageLoader/PageLoader';
 import { importDashboard, removeDashboard } from 'app/features/dashboard/state/actions';
 import { loadPluginDashboards } from 'app/features/plugins/admin/state/actions';
 import { type PluginDashboard } from 'app/types/plugins';
@@ -79,11 +78,7 @@ export const DataSourceDashboardsView = ({
   onRemoveDashboard,
 }: ViewProps) => {
   if (isLoading) {
-    return (
-      <PageLoader>
-        <Branding.LoginLogo />
-      </PageLoader>
-    );
+    return <PageLoader />;
   }
 
   return <DashboardTable dashboards={dashboards} onImport={onImportDashboard} onRemove={onRemoveDashboard} />;

@@ -5,9 +5,9 @@ import { usePrevious } from 'react-use';
 import { PageLayoutType } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { UrlSyncContextProvider } from '@grafana/scenes';
-import { Box, PageLoader } from '@grafana/ui';
-import { Branding } from 'app/core/components/Branding/Branding';
+import { Box } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { PageLoader } from 'app/core/components/PageLoader/PageLoader';
 import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import {
   DashboardBrandingFooter,
@@ -118,11 +118,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
     ) : (
       <Page navId="dashboards/browse" layout={PageLayoutType.Canvas} data-testid={'dashboard-scene-page'}>
         <Box paddingY={4} display="flex" direction="column" alignItems="center">
-          {isLoading && (
-            <PageLoader>
-              <Branding.LoginLogo />
-            </PageLoader>
-          )}
+          {isLoading && <PageLoader />}
         </Box>
       </Page>
     );

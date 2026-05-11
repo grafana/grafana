@@ -1,8 +1,7 @@
 // Libraries
 import * as React from 'react';
 
-import { PageLoader } from '@grafana/ui';
-import { Branding } from 'app/core/components/Branding/Branding';
+import { PageLoader } from '../PageLoader/PageLoader';
 
 interface Props {
   isLoading?: boolean;
@@ -13,15 +12,5 @@ interface Props {
 export const PageContents = ({ isLoading, children, className }: Props) => {
   let content = className ? <div className={className}>{children}</div> : children;
 
-  return (
-    <>
-      {isLoading ? (
-        <PageLoader>
-          <Branding.LoginLogo />
-        </PageLoader>
-      ) : (
-        content
-      )}
-    </>
-  );
+  return <>{isLoading ? <PageLoader /> : content}</>;
 };
