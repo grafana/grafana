@@ -90,8 +90,8 @@ The following are configuration options for the Google Cloud Monitoring data sou
 
 Configure how Grafana authenticates with Google Cloud.
 
-| Setting                 | Description                                                                                                                                                                                                                                                                  |
-| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Setting                 | Description                                                                                                                                                                                                                                                                 |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Authentication type** | Select the authentication method. Choose **Google JWT File** to use a service account key file, **GCE Default Service Account** if Grafana is running on a GCE virtual machine, or **Forward OAuth Identity** to authenticate as the Google-signed-in Grafana user instead. |
 
 ### JWT Key Details
@@ -106,9 +106,9 @@ These settings appear when you select **Google JWT File** as the authentication 
 
 These settings appear when you select **Forward OAuth Identity** as the authentication type.
 
-| Setting             | Description                                                                                                                                                                                                                                                                                                                  |
-| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Default project** | Enter the GCP project ID to query. This field is required because the user's OAuth token doesn't carry a project context. The signed-in user must have the **Monitoring Viewer** role on this project.                                                                                                                       |
+| Setting             | Description                                                                                                                                                                                            |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Default project** | Enter the GCP project ID to query. This field is required because the user's OAuth token doesn't carry a project context. The signed-in user must have the **Monitoring Viewer** role on this project. |
 
 The Grafana Google authentication must request the following scopes so the forwarded token can read Cloud Monitoring data. Set the full list under `[auth.google]` in `grafana.ini` or `custom.ini`, or under **Scopes** in the SSO Settings UI:
 
