@@ -99,6 +99,47 @@ func TestPgvectorBackend_Upsert_UnknownResource_Rejected(t *testing.T) {
 	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
 }
 
+func TestPgvectorBackend_UpsertReplaceSubresources_EmptySlice(t *testing.T) {
+	rdb := test.NewDBProviderNopSQL(t)
+	backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
+	ctx := testutil.NewDefaultTestContext(t)
+
+	require.NoError(t, backend.UpsertReplaceSubresources(ctx, nil))
+	require.NoError(t, backend.UpsertReplaceSubresources(ctx, []Vector{}))
+	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
+}
+
+func TestPgvectorBackend_UpsertReplaceSubresources_InvalidVector_Rejected(t *testing.T) {
+	// Validate() runs before any DB work, so no Begin/Rollback expected.
+	rdb := test.NewDBProviderNopSQL(t)
+	backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
+	ctx := testutil.NewDefaultTestContext(t)
+
+	err := backend.UpsertReplaceSubresources(ctx, []Vector{
+		{Namespace: "ns", Model: "m", Resource: "dashboards", UID: "", Title: "t", Content: "x", Embedding: []float32{0.1}},
+	})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "uid must not be empty")
+	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
+}
+
+func TestPgvectorBackend_UpsertReplaceSubresources_UnknownResource_Rejected(t *testing.T) {
+	// Unknown resource fires inside the transaction; tx is rolled back.
+	rdb := test.NewDBProviderNopSQL(t)
+	backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
+	ctx := testutil.NewDefaultTestContext(t)
+
+	rdb.SQLMock.ExpectBegin()
+	rdb.SQLMock.ExpectRollback()
+
+	err := backend.UpsertReplaceSubresources(ctx, []Vector{
+		{Namespace: "ns", Model: "m", Resource: "folders", UID: "x", Title: "t", Embedding: []float32{0.1}},
+	})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "unsupported resource")
+	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
+}
+
 func TestPgvectorBackend_Delete_EmptyModel_Rejected(t *testing.T) {
 	rdb := test.NewDBProviderNopSQL(t)
 	backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
