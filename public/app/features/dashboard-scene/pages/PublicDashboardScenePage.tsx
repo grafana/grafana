@@ -8,7 +8,7 @@ import { config } from '@grafana/runtime';
 import { type SceneComponentProps, UrlSyncContextProvider } from '@grafana/scenes';
 import { Alert, Box, Icon, Stack, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { PageLoader } from 'app/core/components/PageLoader/PageLoader';
+import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { DashboardBrandingFooter } from 'app/features/dashboard/components/PublicDashboard/DashboardBrandingFooter';
 import { useGetPublicDashboardConfig } from 'app/features/dashboard/components/PublicDashboard/usePublicDashboardConfig';

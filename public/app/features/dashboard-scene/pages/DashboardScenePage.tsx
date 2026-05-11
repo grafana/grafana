@@ -7,7 +7,7 @@ import { locationService } from '@grafana/runtime';
 import { UrlSyncContextProvider } from '@grafana/scenes';
 import { Box } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { PageLoader } from 'app/core/components/PageLoader/PageLoader';
+import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import {
   DashboardBrandingFooter,

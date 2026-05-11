@@ -20,7 +20,7 @@ import { getLogger } from '@grafana/runtime/unstable';
 import { Alert, ErrorWithStack } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
-import { PageLoader } from 'app/core/components/PageLoader/PageLoader';
+import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { getNotFoundNav, getWarningNav, getExceptionNav } from 'app/core/navigation/errorModels';

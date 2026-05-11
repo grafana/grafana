@@ -1,7 +1,7 @@
 // Libraries
 import * as React from 'react';
 
-import { PageLoader } from '../PageLoader/PageLoader';
+import PageLoader from '../PageLoader/PageLoader';
 
 interface Props {
   isLoading?: boolean;

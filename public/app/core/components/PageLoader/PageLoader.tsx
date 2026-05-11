@@ -2,7 +2,7 @@ import { PageLoader as PageLoaderUI } from '@grafana/ui';
 
 import { Branding } from '../Branding/Branding';
 
-export function PageLoader() {
+export default function PageLoader() {
   return (
     <PageLoaderUI>
       <Branding.LoginLogo />
