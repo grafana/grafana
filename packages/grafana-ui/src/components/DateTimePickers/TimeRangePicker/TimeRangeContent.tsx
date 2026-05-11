@@ -23,6 +23,7 @@ import { Icon } from '../../Icon/Icon';
 import { Input } from '../../Input/Input';
 import { Tooltip } from '../../Tooltip/Tooltip';
 import { type WeekStart } from '../WeekStartPicker';
+import { commonFormat } from '../commonFormat';
 import { isValid } from '../utils';
 
 import TimePickerCalendar from './TimePickerCalendar';
@@ -100,7 +101,7 @@ export const TimeRangeContent = (props: Props) => {
   const onApply = useCallback(() => {
     handleSubmit((data) => {
       const raw: RawTimeRange = { from: data.from, to: data.to };
-      const timeRange = rangeUtil.convertRawToRange(raw, timeZone, fiscalYearStartMonth);
+      const timeRange = rangeUtil.convertRawToRange(raw, timeZone, fiscalYearStartMonth, commonFormat);
       onApplyFromProps(timeRange);
     })();
   }, [handleSubmit, timeZone, fiscalYearStartMonth, onApplyFromProps]);
@@ -273,7 +274,7 @@ export const TimeRangeContent = (props: Props) => {
 
 function isRangeInvalid(from: string, to: string, timezone?: string): boolean {
   const raw: RawTimeRange = { from, to };
-  const timeRange = rangeUtil.convertRawToRange(raw, timezone);
+  const timeRange = rangeUtil.convertRawToRange(raw, timezone, undefined, commonFormat);
   const valid = timeRange.from.isSame(timeRange.to) || timeRange.from.isBefore(timeRange.to);
 
   return !valid;
@@ -281,12 +282,12 @@ function isRangeInvalid(from: string, to: string, timezone?: string): boolean {
 
 function valueAsString(value: DateTime | string, timeZone?: TimeZone): string {
   if (isDateTime(value)) {
-    return dateTimeFormat(value, { timeZone });
+    return dateTimeFormat(value, { timeZone, format: commonFormat });
   }
 
   if (value.endsWith('Z')) {
     const dt = dateTimeParse(value);
-    return dateTimeFormat(dt, { timeZone });
+    return dateTimeFormat(dt, { timeZone, format: commonFormat });
   }
 
   return value;
