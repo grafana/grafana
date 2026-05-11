@@ -2,10 +2,8 @@ import { css } from '@emotion/css';
 import { Fragment, type JSX, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
-import { Dropdown, LinkButton, Menu, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
-import ConditionalWrap from 'app/features/alerting/unified/components/ConditionalWrap';
+import { t } from '@grafana/i18n';
+import { Dropdown, LinkButton, Menu, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { useExportContactPoint } from 'app/features/alerting/unified/components/contact-points/useExportContactPoint';
 import { ManagePermissionsDrawer } from 'app/features/alerting/unified/components/permissions/ManagePermissions';
 import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
@@ -24,6 +22,9 @@ import MoreButton from '../MoreButton';
 import { ProvisioningBadge } from '../Provisioning';
 import { Spacer } from '../Spacer';
 
+import { ContactPointDeleteMenuItem } from './components/ContactPointDeleteMenuItem';
+import { ContactPointHistoryLinkButton } from './components/ContactPointHistoryLinkButton';
+import { ContactPointManagePermissionsMenuItem } from './components/ContactPointManagePermissionsMenuItem';
 import { UnusedContactPointBadge } from './components/UnusedBadge';
 import { type ContactPointWithMetadata, showManageContactPointPermissions } from './utils';
 
@@ -95,11 +96,7 @@ export const ContactPointHeader = ({
   if (showManagePermissions) {
     menuActions.push(
       <Fragment key="manage-permissions">
-        <Menu.Item
-          icon="unlock"
-          label={t('alerting.contact-point-header.label-manage-permissions', 'Manage permissions')}
-          onClick={() => setShowPermissionsDrawer(true)}
-        />
+        <ContactPointManagePermissionsMenuItem onOpen={() => setShowPermissionsDrawer(true)} />
       </Fragment>
     );
   }
@@ -121,61 +118,18 @@ export const ContactPointHeader = ({
   }
 
   if (deleteSupported) {
-    const cannotDeleteNoPermissions = t(
-      'alerting.contact-points.delete-reasons.no-permissions',
-      'You do not have the required permission to delete this contact point'
-    );
-    const cannotDeleteProvisioned = t(
-      'alerting.contact-points.delete-reasons.provisioned',
-      'Contact point is provisioned and cannot be deleted via the UI'
-    );
-    const cannotDeletePolicies = t(
-      'alerting.contact-points.delete-reasons.policies',
-      'Contact point is referenced by one or more notification policies'
-    );
-    const cannotDeleteRules = t(
-      'alerting.contact-points.delete-reasons.rules',
-      'Contact point is referenced by one or more alert rules'
-    );
-
-    const reasonsDeleteIsDisabled = [
-      !hasAbilityToDelete ? cannotDeleteNoPermissions : '',
-      isProvisioned ? cannotDeleteProvisioned : '',
-      numberOfPoliciesPreventingDeletion > 0 ? cannotDeletePolicies : '',
-      numberOfRules ? cannotDeleteRules : '',
-    ].filter(Boolean);
-
-    const deleteTooltipContent = (
-      <>
-        <Trans i18nKey="alerting.contact-points.delete-reasons.heading">
-          Contact point cannot be deleted for the following reasons:
-        </Trans>
-        <br />
-        {reasonsDeleteIsDisabled.map((reason) => (
-          <li key={reason}>{reason}</li>
-        ))}
-      </>
-    );
-
     menuActions.push(
-      <ConditionalWrap
-        key="delete-contact-point"
-        shouldWrap={!canBeDeleted}
-        wrap={(children) => (
-          <Tooltip content={deleteTooltipContent} placement="top">
-            <span>{children}</span>
-          </Tooltip>
-        )}
-      >
-        <Menu.Item
-          label={t('alerting.contact-point-header.label-delete', 'Delete')}
-          ariaLabel={t('alerting.contact-point-header.ariaLabel-delete', 'Delete')}
-          icon="trash-alt"
-          destructive
-          disabled={!canBeDeleted}
-          onClick={() => onDelete(contactPoint)}
+      <Fragment key="delete-contact-point">
+        <ContactPointDeleteMenuItem
+          contactPoint={contactPoint}
+          onDelete={onDelete}
+          canBeDeleted={canBeDeleted}
+          hasAbilityToDelete={hasAbilityToDelete}
+          isProvisioned={isProvisioned}
+          numberOfPoliciesPreventingDeletion={numberOfPoliciesPreventingDeletion}
+          numberOfRules={numberOfRules}
         />
-      </ConditionalWrap>
+      </Fragment>
     );
   }
 
@@ -243,28 +197,8 @@ export const ContactPointHeader = ({
     </LinkButton>
   );
 
-  const historyButton = config.featureToggles.alertingNotificationHistoryGlobal && (
-    <LinkButton
-      variant="secondary"
-      size="sm"
-      icon="history"
-      type="button"
-      disabled={integrations.length === 0}
-      tooltip={t(
-        'alerting.contact-point-header.tooltip-history',
-        'View the history of notification attempts made to this contact point'
-      )}
-      tooltipPlacement="top"
-      data-testid="history-action"
-      href={createRelativeUrl('/alerting/history', {
-        tab: 'notifications',
-        'var-RECEIVER_FILTER': name,
-      })}
-      target="_blank"
-      rel="noopener noreferrer"
-    >
-      {t('alerting.contact-point-header.button-history', 'History')}
-    </LinkButton>
+  const historyButton = (
+    <ContactPointHistoryLinkButton contactPointName={name} integrationsCount={integrations.length} />
   );
 
   const moreMenu =

@@ -61,17 +61,12 @@ export const CloudReceiverForm = ({
   const onSubmit = async (values: ReceiverFormValues<CloudChannelValues>) => {
     const newReceiver = formValuesToCloudReceiver(values, defaultChannelValues);
 
-    try {
-      if (editMode && contactPoint) {
-        await updateContactPoint.execute({ contactPoint: newReceiver, originalName: contactPoint.name });
-      } else {
-        await createContactPoint.execute({ contactPoint: newReceiver });
-      }
-      locationService.push('/alerting/notifications');
-    } catch (error) {
-      // Propagate so ReceiverForm can show notifyApp.error with the backend message
-      throw error;
+    if (editMode && contactPoint) {
+      await updateContactPoint.execute({ contactPoint: newReceiver, originalName: contactPoint.name });
+    } else {
+      await createContactPoint.execute({ contactPoint: newReceiver });
     }
+    locationService.push('/alerting/notifications');
   };
 
   // this basically checks if we can manage the selected alert manager data source, either because it's a Grafana Managed one
