@@ -157,7 +157,7 @@ func (m *memoryStore) Create(ctx context.Context, anno *annotationV0.Annotation)
 	key := anno.Namespace + "/" + anno.Name
 
 	if _, exists := m.data[key]; exists {
-		return nil, fmt.Errorf("annotation already exists")
+		return nil, fmt.Errorf("%w: %s", ErrAlreadyExists, key)
 	}
 
 	created := anno.DeepCopy()

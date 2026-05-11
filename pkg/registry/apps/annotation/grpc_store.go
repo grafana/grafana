@@ -221,11 +221,11 @@ func mapGRPCError(err error) error {
 
 	switch st.Code() {
 	case codes.NotFound:
-		return ErrNotFound
+		return fmt.Errorf("%w: %s", ErrNotFound, st.Message())
 	case codes.AlreadyExists:
-		return ErrAlreadyExists
+		return fmt.Errorf("%w: %s", ErrAlreadyExists, st.Message())
 	case codes.InvalidArgument:
-		return ErrInvalidInput
+		return fmt.Errorf("%w: %s", ErrInvalidInput, st.Message())
 	default:
 		return fmt.Errorf("grpc error: %s", st.Message())
 	}
@@ -237,8 +237,13 @@ func mapToGRPCStatus(err error) error {
 		return nil
 	}
 
-	if errors.Is(err, ErrNotFound) {
+	switch {
+	case errors.Is(err, ErrNotFound):
 		return status.Error(codes.NotFound, err.Error())
+	case errors.Is(err, ErrAlreadyExists):
+		return status.Error(codes.AlreadyExists, err.Error())
+	case errors.Is(err, ErrInvalidInput):
+		return status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	return status.Error(codes.Internal, err.Error())

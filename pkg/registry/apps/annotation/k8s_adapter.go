@@ -28,6 +28,28 @@ import (
 
 var annotationGR = annotationV0.AnnotationKind().GroupVersionResource().GroupResource()
 
+// toAPIError maps store-layer sentinels to the right k8s apierror so HTTP
+// status + telemetry classification agree. Already-typed apierrors and unknown
+// errors pass through unchanged (the apiserver will wrap the latter as 500).
+func toAPIError(err error, name string) error {
+	if err == nil {
+		return nil
+	}
+	if _, ok := err.(apierrors.APIStatus); ok {
+		return err
+	}
+	switch {
+	case errors.Is(err, ErrNotFound):
+		return apierrors.NewNotFound(annotationGR, name)
+	case errors.Is(err, ErrAlreadyExists):
+		return apierrors.NewAlreadyExists(annotationGR, name)
+	case errors.Is(err, ErrInvalidInput):
+		return apierrors.NewBadRequest(err.Error())
+	default:
+		return err
+	}
+}
+
 var (
 	_ rest.Scoper               = (*k8sRESTAdapter)(nil)
 	_ rest.SingularNameProvider = (*k8sRESTAdapter)(nil)
@@ -114,7 +136,7 @@ func (s *k8sRESTAdapter) List(ctx context.Context, options *internalversion.List
 
 	result, err := s.store.List(ctx, namespace, opts)
 	if err != nil {
-		return nil, err
+		return nil, toAPIError(err, "")
 	}
 
 	// TODO: post-fetch filtering breaks pagination - cursor advances by opts.Limit regardless of authz results.
@@ -147,10 +169,7 @@ func (s *k8sRESTAdapter) Get(ctx context.Context, name string, options *metav1.G
 
 	annotation, err := s.store.Get(ctx, namespace, name)
 	if err != nil {
-		if errors.Is(err, ErrNotFound) {
-			return nil, apierrors.NewNotFound(annotationGR, name)
-		}
-		return nil, err
+		return nil, toAPIError(err, name)
 	}
 
 	allowed, err := canAccessAnnotation(ctx, s.accessClient, namespace, annotation, utils.VerbGet)
@@ -204,7 +223,11 @@ func (s *k8sRESTAdapter) Create(ctx context.Context,
 	}
 	annotation.SetCreatedBy(user.GetUID())
 
-	return s.store.Create(ctx, annotation)
+	created, err := s.store.Create(ctx, annotation)
+	if err != nil {
+		return nil, toAPIError(err, annotation.Name)
+	}
+	return created, nil
 }
 
 func (s *k8sRESTAdapter) Update(ctx context.Context,
@@ -227,10 +250,7 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 	// Fetch the existing annotation for patch merging and to verify authz on the pre-update resource.
 	existing, err := s.store.Get(ctx, namespace, name)
 	if err != nil {
-		if errors.Is(err, ErrNotFound) {
-			return nil, false, apierrors.NewNotFound(annotationGR, name)
-		}
-		return nil, false, err
+		return nil, false, toAPIError(err, name)
 	}
 
 	obj, err := objInfo.UpdatedObject(ctx, existing)
@@ -268,7 +288,10 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 	}
 
 	updated, err := s.store.Update(ctx, resource)
-	return updated, false, err
+	if err != nil {
+		return nil, false, toAPIError(err, name)
+	}
+	return updated, false, nil
 }
 
 func (s *k8sRESTAdapter) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (out runtime.Object, completed bool, err error) {
@@ -283,10 +306,7 @@ func (s *k8sRESTAdapter) Delete(ctx context.Context, name string, deleteValidati
 
 	annotation, err := s.store.Get(ctx, namespace, name)
 	if err != nil {
-		if errors.Is(err, ErrNotFound) {
-			return nil, false, apierrors.NewNotFound(annotationGR, name)
-		}
-		return nil, false, err
+		return nil, false, toAPIError(err, name)
 	}
 
 	allowedDelete, err := canAccessAnnotation(ctx, s.accessClient, namespace, annotation, utils.VerbDelete)
@@ -305,11 +325,10 @@ func (s *k8sRESTAdapter) Delete(ctx context.Context, name string, deleteValidati
 		return nil, false, apierrors.NewForbidden(annotationGR, name, fmt.Errorf("insufficient permissions"))
 	}
 
-	err = s.store.Delete(ctx, namespace, name)
-	if errors.Is(err, ErrNotFound) {
-		return nil, false, apierrors.NewNotFound(annotationGR, name)
+	if err := s.store.Delete(ctx, namespace, name); err != nil {
+		return nil, false, toAPIError(err, name)
 	}
-	return nil, false, err
+	return nil, false, nil
 }
 
 // parseFieldSelector translates K8s field selectors into Store ListOptions.
