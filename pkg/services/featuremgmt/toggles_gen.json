@@ -2683,13 +2683,17 @@
     {
       "metadata": {
         "name": "grafana.kubernetesAnnotationsClient",
-        "resourceVersion": "1778578390024",
-        "creationTimestamp": "2026-05-12T09:33:10Z"
+        "resourceVersion": "1778585512811",
+        "creationTimestamp": "2026-05-12T09:33:10Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-05-12 11:31:52.811850175 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables usage of the new annotations API client",
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
         "expression": "false"
       }
     },

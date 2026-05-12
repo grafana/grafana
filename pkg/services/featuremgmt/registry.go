@@ -385,7 +385,7 @@ var (
 			Owner:           grafanaDashboardsSquad,
 			RequiresRestart: false,
 			Expression:      "false",
-			Generate:        Generate{Go: true, React: true},
+			Generate:        Generate{React: true},
 		},
 		{
 			Name:            "kubernetesShortURLs",
