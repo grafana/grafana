@@ -215,9 +215,11 @@ const useGetAlertmanagerContactPoint = (
 };
 
 /**
- * Load one Grafana-managed receiver via `GET .../receivers/{name}`.
- * If `name` is a display title and the live resource id is `base64UrlEncode(title)`, the GET may 404; we then
- * list with `metadata.name = base64UrlEncode(name)` (same resolution as the notifications UI).
+ * Load one Grafana-managed receiver.
+ *
+ * `GET …/receivers/{name}` fails when the path `name` is not the receiver's `metadata.name` (often the URL has
+ * `spec.title` while the stored id differs). When that GET fails, list receivers filtered to
+ * `metadata.name === base64UrlEncode(name)`.
  */
 const useGetGrafanaContactPoint = (
   { name }: { name: string },
