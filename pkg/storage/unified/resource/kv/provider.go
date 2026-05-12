@@ -3,6 +3,7 @@ package kv
 import (
 	"context"
 	"errors"
+	"sync"
 )
 
 // ErrKVUnavailable is returned by EventualKVProvider.Get when the storage
@@ -12,11 +13,12 @@ var ErrKVUnavailable = errors.New("no KV store available in this configuration")
 
 // EventualKVProvider is a deferred KV store reference.
 //
-// Storage backend creation may happen during Wire DI (the Initialize path)
-// or later during dskit module init (the ModuleServer path). Consumers
-// wired via DI obtain the provider eagerly and call Get only when they
-// actually need the KV — Get blocks until Set lands or ctx is cancelled.
+// All methods are safe for concurrent use. Set and SetUnavailable follow
+// first-call-wins semantics: once resolved, subsequent calls are no-ops.
+// Callers may pass a nil *EventualKVProvider; all methods become no-ops in
+// that case (and Get blocks forever — caller's ctx must be cancellable).
 type EventualKVProvider struct {
+	once  sync.Once
 	ready chan struct{}
 	store KV
 }
@@ -27,18 +29,39 @@ func ProvideEventualKVStore() *EventualKVProvider {
 	}
 }
 
-// Set marks the provider as resolved and unblocks all Get callers. Pass
-// nil to signal that no KV is available in this configuration — Get will
-// then return ErrKVUnavailable. Must be called exactly once; a second
-// call panics ("close of closed channel").
+// Set marks the provider as resolved with the given KV store and unblocks
+// all Get callers. First call wins; subsequent Set or SetUnavailable calls
+// are silently ignored.
 func (p *EventualKVProvider) Set(store KV) {
-	p.store = store
-	close(p.ready)
+	if p == nil {
+		return
+	}
+	p.once.Do(func() {
+		p.store = store
+		close(p.ready)
+	})
 }
 
-// Get blocks until Set is called or ctx is cancelled. Returns
-// ErrKVUnavailable if Set was called with a nil store.
+// SetUnavailable marks the provider as resolved with no KV; Get will then
+// return ErrKVUnavailable. First call wins; subsequent Set or
+// SetUnavailable calls are silently ignored.
+func (p *EventualKVProvider) SetUnavailable() {
+	if p == nil {
+		return
+	}
+	p.once.Do(func() {
+		close(p.ready)
+	})
+}
+
+// Get blocks until Set or SetUnavailable is called, or until ctx is
+// cancelled. Returns ErrKVUnavailable if the provider was resolved with no
+// KV. On a nil receiver, blocks until ctx is cancelled.
 func (p *EventualKVProvider) Get(ctx context.Context) (KV, error) {
+	if p == nil {
+		<-ctx.Done()
+		return nil, ctx.Err()
+	}
 	select {
 	case <-p.ready:
 		if p.store == nil {

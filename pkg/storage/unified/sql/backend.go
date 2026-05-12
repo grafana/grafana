@@ -117,9 +117,7 @@ func NewStorageBackend(
 	case options.StorageTypeFile:
 		return NewFileBackend(cfg, kvProvider)
 	case options.StorageTypeUnifiedGrpc:
-		if kvProvider != nil {
-			kvProvider.Set(nil)
-		}
+		kvProvider.SetUnavailable()
 		return nil, nil
 	default: // fall back to SQL backend
 	}
@@ -133,9 +131,7 @@ func NewStorageBackend(
 		cfg.SectionWithEnvOverrides("resource_api"))
 
 	if !cfg.EnableSQLKVBackend {
-		if kvProvider != nil {
-			kvProvider.Set(nil)
-		}
+		kvProvider.SetUnavailable()
 		return NewBackend(BackendOptions{
 			DBProvider:           eDB,
 			Reg:                  reg,
@@ -225,9 +221,7 @@ func NewStorageBackend(
 		kvBackendOpts.Holder = resolveLeaseHolder(cfg)
 	}
 
-	if kvProvider != nil {
-		kvProvider.Set(sqlkv)
-	}
+	kvProvider.Set(sqlkv)
 	return resource.NewKVStorageBackend(kvBackendOpts)
 }
 
@@ -242,9 +236,7 @@ func NewFileBackend(cfg *setting.Cfg, kvProvider *kv.EventualKVProvider) (resour
 	}
 
 	kvStore := resource.NewBadgerKV(db)
-	if kvProvider != nil {
-		kvProvider.Set(kvStore)
-	}
+	kvProvider.Set(kvStore)
 	return resource.NewKVStorageBackend(resource.KVBackendOptions{
 		KvStore:                 kvStore,
 		Log:                     log.New("storage-backend"),

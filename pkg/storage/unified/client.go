@@ -130,11 +130,9 @@ func newClient(opts options.StorageOptions,
 		}
 
 		// No local backend is created for unified-grpc; the gRPC client below
-		// is what's used. Publish nil to the provider so any in-process
+		// is what's used. Mark the provider unavailable so any in-process
 		// consumer waiting on Get gets ErrKVUnavailable instead of blocking.
-		if kvProvider != nil {
-			kvProvider.Set(nil)
-		}
+		kvProvider.SetUnavailable()
 
 		var (
 			conn      grpc.ClientConnInterface
