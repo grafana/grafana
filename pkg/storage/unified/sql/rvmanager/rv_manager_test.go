@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/test"
+	"github.com/grafana/grafana/pkg/util/sqlite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -144,6 +145,66 @@ func TestExecWithRV_transactionContextRegression(t *testing.T) {
 		})
 		require.Error(t, err)
 		require.True(t, errors.Is(err, context.Canceled), "got %v", err)
+	})
+}
+
+// TestExecBatch_RetriesOnSQLiteBusy guards the retry path added to absorb
+// transient SQLITE_BUSY errors during provisioning sync, where the unified
+// storage layer would otherwise surface "database is locked" through the
+// resource_insert.sql write and fail the whole sync job.
+func TestExecBatch_RetriesOnSQLiteBusy(t *testing.T) {
+	ctx := testutil.NewDefaultTestContext(t)
+
+	t.Run("retries until success", func(t *testing.T) {
+		dbp := test.NewDBProviderMatchWords(t)
+		dialect := sqltemplate.DialectForDriver(dbp.DB.DriverName())
+		manager, err := NewResourceVersionManager(ResourceManagerOptions{
+			DB:      dbp.DB,
+			Dialect: dialect,
+		})
+		require.NoError(t, err)
+
+		// First attempt: insert returns BUSY, transaction rolled back.
+		dbp.SQLMock.ExpectBegin()
+		dbp.SQLMock.ExpectExec("insert resource").WillReturnError(sqlite.ErrTestBusy)
+		dbp.SQLMock.ExpectRollback()
+
+		// Second attempt: clean run, including RV bookkeeping that ExecWithRV does.
+		dbp.SQLMock.ExpectBegin()
+		dbp.SQLMock.ExpectExec("insert resource").WillReturnResult(sqlmock.NewResult(1, 1))
+		expectSuccessfulResourceVersionExec(t, dbp)
+		dbp.SQLMock.ExpectCommit()
+
+		key := &resourcepb.ResourceKey{Group: "retry-busy", Resource: "res"}
+		rv, err := manager.ExecWithRV(ctx, key, func(txnCtx context.Context, tx db.Tx) (string, error) {
+			_, err := tx.ExecContext(txnCtx, "insert resource")
+			return "guid-1", err
+		})
+		require.NoError(t, err)
+		require.Equal(t, int64(200), rv)
+	})
+
+	t.Run("non-busy errors do not retry", func(t *testing.T) {
+		dbp := test.NewDBProviderMatchWords(t)
+		dialect := sqltemplate.DialectForDriver(dbp.DB.DriverName())
+		manager, err := NewResourceVersionManager(ResourceManagerOptions{
+			DB:      dbp.DB,
+			Dialect: dialect,
+		})
+		require.NoError(t, err)
+
+		boom := errors.New("not a busy error")
+		dbp.SQLMock.ExpectBegin()
+		dbp.SQLMock.ExpectExec("insert resource").WillReturnError(boom)
+		dbp.SQLMock.ExpectRollback()
+
+		key := &resourcepb.ResourceKey{Group: "no-retry", Resource: "res"}
+		_, err = manager.ExecWithRV(ctx, key, func(txnCtx context.Context, tx db.Tx) (string, error) {
+			_, err := tx.ExecContext(txnCtx, "insert resource")
+			return "guid-1", err
+		})
+		require.Error(t, err)
+		require.ErrorIs(t, err, boom)
 	})
 }
 

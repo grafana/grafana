@@ -6,7 +6,7 @@ import {
   FieldType,
   getDefaultTimeRange,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, setDataSourceSrv, type DataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import {
   AdHocFiltersVariable,
@@ -69,6 +69,7 @@ import { djb2Hash } from '../utils/djb2Hash';
 import {
   getPersistedDSFor,
   getElementDatasource,
+  normalizeDataSourceRef,
   transformSceneToSaveModelSchemaV2,
   validateDashboardSchemaV2,
   getDataQueryKind,
@@ -1843,5 +1844,47 @@ describe('validateDashboardSchemaV2', () => {
     expect(validateDashboardSchemaV2({ ...validDashboard, layout: { kind: 'RowsLayout', spec: { rows: [] } } })).toBe(
       true
     );
+  });
+});
+
+describe('normalizeDataSourceRef', () => {
+  let originalSrv: DataSourceSrv | undefined;
+  const getInstanceSettings = jest.fn(() => ({ uid: 'prom-uid', type: 'prometheus', apiVersion: 'v1' }));
+
+  beforeAll(() => {
+    try {
+      originalSrv = jest.requireActual('@grafana/runtime').getDataSourceSrv();
+    } catch {
+      originalSrv = undefined;
+    }
+    setDataSourceSrv({ getInstanceSettings } as unknown as DataSourceSrv);
+  });
+
+  afterAll(() => {
+    setDataSourceSrv(originalSrv as DataSourceSrv);
+  });
+
+  it('passes through existing DataSourceRef and nullish inputs unchanged', () => {
+    const ref = { uid: 'abc', type: 'prometheus' };
+    expect(normalizeDataSourceRef(ref)).toBe(ref);
+
+    expect(normalizeDataSourceRef(undefined)).toBeUndefined();
+    expect(normalizeDataSourceRef(null)).toBeUndefined();
+  });
+
+  it('resolves a string datasource into a DataSourceRef', () => {
+    expect(normalizeDataSourceRef('prometheus')).toEqual({
+      uid: 'prom-uid',
+      type: 'prometheus',
+      apiVersion: 'v1',
+    });
+
+    // Falls back to a UID-only ref when the datasource is unknown.
+    getInstanceSettings.mockReturnValueOnce(undefined as never);
+    expect(normalizeDataSourceRef('nonexistent-ds')).toEqual({ uid: 'nonexistent-ds' });
+
+    // Template variables short-circuit and never call getInstanceSettings.
+    expect(normalizeDataSourceRef('$datasource')).toEqual({ uid: '$datasource' });
+    expect(normalizeDataSourceRef('${datasource}')).toEqual({ uid: '${datasource}' });
   });
 });

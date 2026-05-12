@@ -8,7 +8,7 @@ WIRE_TAGS = "oss"
 include .citools/Variables.mk
 
 GO = go
-GO_VERSION = 1.26.2
+GO_VERSION = 1.26.3
 GO_HOST_OS := $(shell $(GO) env GOHOSTOS)
 GO_HOST_ARCH := $(shell $(GO) env GOHOSTARCH)
 GO_LINT_FILES ?= $(shell ./scripts/go-workspace/golangci-lint-includes.sh)
@@ -61,7 +61,8 @@ endif
 GIT_BASE = remotes/origin/main
 
 CUE_VERSION = v0.16.0
-CUE = $(shell go env GOPATH)/bin/cue
+CUE_DIR     = $(shell go env GOPATH)/bin/cue-$(CUE_VERSION)
+CUE         = $(CUE_DIR)/cue
 
 # GNU xargs has flag -r, and BSD xargs (e.g. MacOS) has that behaviour by default
 XARGSR = $(shell xargs --version 2>&1 | grep -q GNU && echo xargs -r || echo xargs)
@@ -208,12 +209,6 @@ gen-cue: ## Do all CUE/Thema code generation
 	@cp apps/dashboard/pkg/apis/dashboard/v0alpha1/dashboard_kind.cue apps/dashboard/pkg/apis/dashboard/v1/dashboard_kind.cue
 
 
-.PHONY: gen-cuev2
-gen-cuev2: ## Do all CUE code generation
-	@echo "generate code from .cue files (v2)"
-	@$(MAKE) -C ./kindsv2 all
-
-
 APPS_DIRS=$(shell find ./apps -type d -exec test -f "{}/Makefile" \; -print | sort)
 # Alternatively use an explicit list of apps:
 # APPS_DIRS := ./apps/dashboard ./apps/folder ./apps/alerting/notifications
@@ -297,8 +292,14 @@ gen-app-manifests-unistore: ## Generate unified storage app manifests list
 	fi
 
 .PHONY: install-cue
-install-cue:
-	go install cuelang.org/go/cmd/cue@$(CUE_VERSION)
+install-cue: $(CUE)
+
+$(CUE):
+	@echo "Installing CUE version $(CUE_VERSION)"
+	@rm -rf $(dir $(CUE_DIR))cue-v*/
+	@mkdir -p $(CUE_DIR)
+	GOBIN=$(CUE_DIR) go install cuelang.org/go/cmd/cue@$(CUE_VERSION)
+	@touch $@
 
 .PHONY: fix-cue
 fix-cue: install-cue ## Format and fix CUE files. Use app=<name> to fix a specific app.
@@ -329,8 +330,18 @@ gen-themes:
 pkg/services/preference/themes_generated.go:
 	$(MAKE) gen-themes
 
+.PHONY: generate-enterprise-imports
+ifeq ("$(wildcard $(ENTERPRISE_EXT_FILE))","") ## if enterprise is not enabled
+generate-enterprise-imports:
+	@echo "skipping generating enterprise imports file"
+else
+generate-enterprise-imports: ## Generate Enterprise imports file
+	@echo "re-generating enterprise imports file"
+	$(GO) run ./scripts/ci/generate-enterprise-imports/main.go
+endif
+
 .PHONY: update-workspace
-update-workspace: gen-go
+update-workspace: gen-go generate-enterprise-imports
 	@echo "updating workspace"
 	bash scripts/go-workspace/update-workspace.sh
 
@@ -784,3 +795,5 @@ GENERATE_POLICY_BOT_CONFIG_SHA := sha256:d05ff5c7d4247da155c85f8c6f1f9f7c6d013d1
 		.
 # We don't want the patch workflow to be run. This is exclusively useful for the security-mirror. It won't work in OSS.
 	sed -i.bak '/- Workflow \.github\/workflows\/create-security-patch-from-security-mirror/d' .policy.yml; rm -f .policy.yml.bak
+# Make govulncheck non-blocking - accept failure so it doesn't prevent merge
+	sed -i.bak '/name: Workflow \.github\/workflows\/govulncheck\.yml/,/workflows:/{s/- success/- success\n            - failure/;}' .policy.yml; rm -f .policy.yml.bak

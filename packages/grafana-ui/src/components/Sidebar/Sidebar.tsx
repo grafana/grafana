@@ -1,6 +1,5 @@
 import { css, cx } from '@emotion/css';
 import { type ReactNode } from 'react';
-import { useMedia } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -93,8 +92,6 @@ export interface SiderbarToolbarProps {
 export function SiderbarToolbar({ children }: SiderbarToolbarProps) {
   const styles = useStyles2(getStyles);
   const sidebarContext = useSidebarContext();
-  const theme = useTheme2();
-  const isMobile = useMedia(`(max-width: ${theme.breakpoints.values.sm}px)`);
 
   if (!sidebarContext) {
     throw new Error('Sidebar.Toolbar must be used within a Sidebar component');
@@ -104,16 +101,6 @@ export function SiderbarToolbar({ children }: SiderbarToolbarProps) {
     <div className={cx(styles.toolbar, sidebarContext.compact && styles.toolbarIconsOnly)}>
       {children}
       <div className={styles.flexGrow} />
-      {!isMobile && (
-        <SidebarButton
-          icon={'web-section-alt'}
-          onClick={sidebarContext.onToggleDock}
-          title={
-            sidebarContext.isDocked ? t('grafana-ui.sidebar.undock', 'Undock') : t('grafana-ui.sidebar.dock', 'Dock')
-          }
-          data-testid={selectors.components.Sidebar.dockToggle}
-        />
-      )}
     </div>
   );
 }

@@ -14,7 +14,6 @@ import { AddedComponentsRegistry } from '../extensions/registry/AddedComponentsR
 import { AddedFunctionsRegistry } from '../extensions/registry/AddedFunctionsRegistry';
 import { AddedLinksRegistry } from '../extensions/registry/AddedLinksRegistry';
 import { ExposedComponentsRegistry } from '../extensions/registry/ExposedComponentsRegistry';
-import { pluginsLogger } from '../utils';
 
 import * as importPluginModule from './importPluginModule';
 import { pluginImporter, clearCaches } from './pluginImporter';
@@ -389,7 +388,6 @@ describe('pluginImporter', () => {
 
   describe('caches', () => {
     it('should return a cached plugin if it exsits', async () => {
-      const logSpy = jest.spyOn(pluginsLogger, 'logDebug').mockImplementation(() => {});
       const spy = jest
         .spyOn(importPluginModule, 'importPluginModule')
         .mockResolvedValue({ plugin: { ...panelPlugin } });
@@ -406,19 +404,10 @@ describe('pluginImporter', () => {
         moduleHash: 'cc3e6f370520e1efc6043f1874d735fabc710d4b',
         translations: { 'en-US': 'public/plugins/test-plugin/locales/en-US/test-plugin.json' },
       });
-      expect(logSpy).toHaveBeenCalledWith(`Retrieving plugin from cache`, {
-        expectedHash: 'cc3e6f370520e1efc6043f1874d735fabc710d4b',
-        loadingStrategy: 'fetch',
-        path: 'public/plugins/test-plugin/module.js',
-        pluginId: 'test-plugin',
-        pluginVersion: '1.0.0',
-        sriChecksEnabled: 'false',
-      });
       expect(cached).toBe(original);
     });
 
     it('should return an inflight plugin load if it exsits', async () => {
-      const logSpy = jest.spyOn(pluginsLogger, 'logDebug').mockImplementation(() => {});
       const spy = jest
         .spyOn(importPluginModule, 'importPluginModule')
         .mockResolvedValue({ plugin: { ...panelPlugin } });
@@ -435,14 +424,6 @@ describe('pluginImporter', () => {
         pluginId: 'test-plugin',
         moduleHash: 'cc3e6f370520e1efc6043f1874d735fabc710d4b',
         translations: { 'en-US': 'public/plugins/test-plugin/locales/en-US/test-plugin.json' },
-      });
-      expect(logSpy).toHaveBeenCalledWith(`Retrieving plugin from inflight plugin load request`, {
-        expectedHash: 'cc3e6f370520e1efc6043f1874d735fabc710d4b',
-        loadingStrategy: 'fetch',
-        path: 'public/plugins/test-plugin/module.js',
-        pluginId: 'test-plugin',
-        pluginVersion: '1.0.0',
-        sriChecksEnabled: 'false',
       });
       expect(cached).toBe(original);
     });

@@ -1,4 +1,4 @@
-FROM golang:latest as builder
+FROM golang:latest AS builder
 ADD main.go /
 WORKDIR /
 RUN go mod init proxy

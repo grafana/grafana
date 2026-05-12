@@ -4,7 +4,6 @@
       "label-advanced": "Lanjutan"
     },
     "advanced-resource-picker": {
-      "aria-label-add": "Tambahkan",
       "aria-label-remove": "Hapus",
       "button-add-resource": "Tambahkan sumber daya",
       "button-add-resource-uri": "Tambahkan URI sumber daya",

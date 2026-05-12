@@ -514,7 +514,8 @@
       "action-buttons": {
         "edit-yaml": "YAML bewerken",
         "save": "Opslaan"
-      }
+      },
+      "error-title": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "naam",
@@ -1152,6 +1153,9 @@
         "rule-viewer-section-extension": "De verrijkingssectie in de Rule Viewer kan niet worden geladen"
       }
     },
+    "entities": {
+      "group": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "Kan je configuratie niet bijwerken:",
       "title-something-went-wrong": "Er ging iets mis"
@@ -1160,6 +1164,9 @@
       "content-show-all-errors": "Alle fouten weergeven"
     },
     "errors": {
+      "api-machinery": {
+        "with-causes": ""
+      },
       "failedWith": "{{-config}} mislukt met status {{status}}: {{-message}}"
     },
     "evaluate-every-validation-options": {
@@ -1290,7 +1297,8 @@
       "delete": {
         "button": {
           "label": "Alle regels verwijderen"
-        }
+        },
+        "error": ""
       },
       "delete-modal-confirmation-text": "Verwijderen",
       "delete-modal-delete-button": "Verwijderen",
@@ -1573,8 +1581,14 @@
         "update-error": "Kan regelgroep niet bijwerken",
         "update-success": "Regelgroep is bijgewerkt"
       },
+      "group-federated": "",
+      "group-federated-description": "",
       "group-not-editable": "Geselecteerde groep kan niet worden bewerkt",
       "group-not-editable-description": "Deze groep behoort tot een gegevensbron die geen bewerking ondersteunt.",
+      "group-plugin-provided": "",
+      "group-plugin-provided-description": "",
+      "group-provisioned": "",
+      "group-provisioned-description": "",
       "page-title": "Regelgroep bewerken",
       "rule-group-error": "Er is een fout opgetreden bij het laden van de regelgroep"
     },
@@ -3166,9 +3180,7 @@
       "deleting": "Verwijderen",
       "text-federated": "Federatief",
       "text-provisioned": "Provisioned",
-      "ungrouped": "Niet gegroepeerd",
-      "ungrouped-suffix": "{{ruleName}} (Niet gegroepeerd)",
-      "unknown-rule": "Onbekende regel"
+      "ungrouped": "Niet gegroepeerd"
     },
     "saved-searches": {
       "actions-aria-label": "Acties",
@@ -4314,6 +4326,7 @@
         "repository-not-found-message": "De repository van de geselecteerde map kon niet worden gevonden. Controleer of de map juist is geconfigureerd.",
         "repository-not-found-title": "Repository niet gevonden"
       },
+      "error-already-in-target-folder": "",
       "error-moving-resources": "Fout bij verplaatsen van bronnen",
       "error-no-target-folder-path": "Pad naar doelmap is ongeldig of leeg, selecteer opnieuw.",
       "move-total": "In totaal heeft dit invloed op:",
@@ -4452,6 +4465,14 @@
       "request-extension": "Quotumuitbreiding aanvragen",
       "resource-detail-dashboards": "Je hebt {{usage}} van de {{limit}} dashboards aangemaakt ({{percentage}}%).",
       "resource-detail-folders": "Je hebt {{usage}} van de {{limit}} mappen aangemaakt ({{percentage}}%)."
+    },
+    "readme": {
+      "add-readme": "",
+      "edit-tooltip": "",
+      "empty-message": "",
+      "load-error-retry": "",
+      "load-error-title": "",
+      "parse-error": ""
     },
     "recently-viewed": {
       "clear": "Geschiedenis wissen",
@@ -5261,7 +5282,7 @@
   },
   "dashboard": {
     "actions": {
-      "open-settings": "Instellingen"
+      "open-settings": ""
     },
     "add": {
       "new-panel": {
@@ -5663,7 +5684,7 @@
         "title": "Variabelen"
       },
       "variable": {
-        "change-type": "Wijzigen",
+        "change-type": "",
         "change-type-aria-label": "Type variabele wijzigen",
         "custom-options": {
           "apply": "Toepassen",
@@ -5980,7 +6001,7 @@
       "cancel": "Annuleren",
       "common": {
         "copy": "Kopiëren",
-        "copy-or-duplicate": "Kopiëren/plakken of dupliceren",
+        "copy-tooltip": "",
         "delete": "Verwijderen",
         "duplicate": "Dupliceren",
         "layout": "Indeling",
@@ -6019,7 +6040,7 @@
     },
     "new-panel": {
       "aria-label": "Niet-geconfigureerd paneel. Gebruik Tab om de configuratieopties te bekijken.",
-      "configure-button": "Configureren",
+      "configure-button": "",
       "configure-button-menu": "Navigatiemenu",
       "configure-visualization": "Visualisatie configureren",
       "empty-state-message": "Voer een query uit om deze hier te visualiseren of ga naar alle visualisaties om andere paneeltypen toe te voegen",
@@ -6261,10 +6282,8 @@
       "title-provisioned": "Geprovisioneerd dashboard"
     },
     "save-dashboard-error-proxy": {
-      "body-name-exists": "Er bestaat al een dashboard met dezelfde naam in de geselecteerde map.<br/> <2>Wil je dit dashboard nog steeds opslaan?</2>",
       "body-version-mismatch": "Iemand anders heeft dit dashboard bijgewerkt<br/> <2>Wil je dit dashboard nog steeds opslaan?</2>",
       "confirmText-save-and-overwrite": "Opslaan en overschrijven",
-      "title-name-exists": "Conflict",
       "title-version-mismatch": "Conflict"
     },
     "save-dashboard-form": {
@@ -7305,6 +7324,7 @@
       "terraform": "Beheerd door: Terraform"
     },
     "move-provisioned-dashboard-form": {
+      "already-in-folder": "",
       "api-error": "Kan dashboard niet verplaatsen",
       "cancel-action": "Annuleren",
       "current-file-not-found": "Huidig dashboardbestand kon niet worden gevonden",
@@ -7317,10 +7337,6 @@
       "success-message": "Dashboard is verplaatst",
       "target-path-label": "Doelpad",
       "title-this-repository-is-read-only": "Deze repository is alleen-lezen"
-    },
-    "name-already-exists-error": {
-      "body-name-already-exists": "Er bestaat al een dashboard met dezelfde naam in de geselecteerde map. Wil je dit dashboard nog steeds opslaan?",
-      "title-name-already-exists": "Naam bestaat al"
     },
     "on-open-snapshot-original-dashboard": {
       "confirmText": {
@@ -8029,19 +8045,6 @@
       "aria-label-explore-data": "Gegevens verkennen",
       "aria-label-suggested-dashboards": "Voorgestelde dashboards"
     },
-    "alerting-enabled": {
-      "text-alerting-not-supported": "Waarschuwingen worden niet ondersteund",
-      "text-alerting-supported": "Waarschuwingen worden ondersteund"
-    },
-    "basic-serttings": {
-      "tooltip-name": "De naam wordt gebruikt wanneer je de gegevensbron in panelen selecteert. De standaardgegevensbron is vooraf geselecteerd in nieuwe panelen."
-    },
-    "basic-settings": {
-      "aria-label-datasource-settings-page-basic": "Basisinstellingen voor de instellingenpagina van de gegevensbron",
-      "basic-settings-name-placeholder-name": "Naam",
-      "label-default": "Standaard",
-      "label-name": "Naam"
-    },
     "build-a-dashboard-button": {
       "blank": "Leeg",
       "build-a-dashboard": "Maak een dashboard",
@@ -8136,6 +8139,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Aan favorieten toevoegen",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "Gegevens verkennen",
       "open-in-explore": "In Verkennen-weergave openen",
       "remove-favorite": "Uit favorieten verwijderen"
@@ -10845,6 +10854,11 @@
     "name-line-width": "Lijndikte",
     "name-stacking": "Opslaan"
   },
+  "home": {
+    "home-page": {
+      "placeholder": ""
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "Bezig met laden",
@@ -11239,7 +11253,7 @@
     "description-order": "Nieuwste of oudste logboeken eerst weergeven. Als 'Oudste eerst' is geselecteerd, scrolt de weergave automatisch naar de nieuwste logboeken onderaan.",
     "description-prettify-json": "JSON-logboekvermeldingen opmaken met inspringing en regelafbrekingen.",
     "description-show-controls": "Weergavebesturingselementen om naar de laatste of eerste logregel te gaan en filters op logniveau.",
-    "description-show-log-attributes": "Experimenteel. Wanneer OTel-logboeken worden weergegeven, voeg je een extra weergegeven veld toe met relevante sleutel-waardeparen van labels en metadata.",
+    "description-show-log-attributes": "",
     "description-unwrapped-columns": "Waarden uitlijnen met behulp van kolommen bij het gebruik van weergegeven velden.",
     "description-wrap-lines": "Logboeken als één regel weergeven of lange logboekvermeldingen terug laten lopen zodat ze in het paneel passen.",
     "field-selector": {
@@ -11565,7 +11579,7 @@
       "line-contains-not": "Toevoegen als regel geen filter bevat",
       "search-text": "Zoeken in resultaten"
     },
-    "show-log-attributes": "Logattributen weergeven voor OTel-logs",
+    "show-log-attributes": "",
     "timestamp-format": "Tijdstempelresolutie",
     "un-themed-log-details": {
       "aria-label-data-links": "Gegevenslinks",
@@ -13826,7 +13840,8 @@
       "make-sure": "Een token aanmaken met deze toestemmingen"
     },
     "validation": {
-      "hidden-characters": "Dit veld bevat verborgen tekens die mogelijk zijn ingevoerd door kopiëren en plakken. Typ de waarde opnieuw of verwijder de verborgen tekens en probeer het opnieuw."
+      "hidden-characters": "Dit veld bevat verborgen tekens die mogelijk zijn ingevoerd door kopiëren en plakken. Typ de waarde opnieuw of verwijder de verborgen tekens en probeer het opnieuw.",
+      "url-with-credentials": ""
     },
     "warning-title-default": "Waarschuwing",
     "watch-stream": {
@@ -14234,6 +14249,8 @@
       "alerts-loading": "Waarschuwingen",
       "card-click": "Kaart {{id}} selecteren",
       "data": "Data",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "Nieuw {{type}}",
       "queries-expressions": "Queries en expressies",
       "toggle-size": "Grootte van zijbalk in-/uitschakelen",
@@ -14950,10 +14967,13 @@
       "title": "Maak snel dashboards aan met suggesties en sjablonen"
     },
     "nav": {
+      "counter": "",
       "go-to": "Naar slide {{number}}",
-      "next": "Volgende",
-      "prev": "Vorige"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "Query uitleggen",
@@ -15433,7 +15453,6 @@
       "forwards-time-aria-label": "Tijdsbereik vooruitzetten",
       "to": "tot",
       "zoom-out-button": "Tijdsbereik uitzoomen",
-      "zoom-out-tooltip": "Tijdsbereik uitzoomen <br/> CTRL+Z",
       "zoom-out-tooltip-new": "Tijdsbereik uitzoomen <br/> t -"
     },
     "time-range": {
@@ -16011,7 +16030,9 @@
       "description": {
         "group-by-field-value": "Groepeer gegevens op een veldwaarde en maak geneste tabellen met de gegroepeerde gegevens."
       },
+      "description-expand-nested-rows": "",
       "description-show-field-names": "Indien ingeschakeld, geven geneste tabellen veldnamen weer als een tabelkoptekst",
+      "label-expand-nested-rows-by-default": "",
       "label-show-field-names-in-nested-tables": "Veldnamen weergeven in geneste tabellen",
       "name": {
         "group-to-nested-tables": "Groeperen naar geneste tabellen"

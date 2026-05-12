@@ -21,7 +21,20 @@ export type KnownMachineryErrorCodes = KnownErrorCodes | typeof ERROR_ROUTES_MAT
 export function getErrorMessageFromApiMachineryErrorResponse(error: ApiMachineryErrorResponse): string | undefined {
   const code = getErrorCode(error);
   if (!code) {
-    return error.data.message;
+    const baseMessage = error.data.message;
+    const causes = error.data.details?.causes?.flatMap((cause) => {
+      if (!cause.message) {
+        return [];
+      }
+      return [cause.field ? `${cause.field}: ${cause.message}` : cause.message];
+    });
+    if (causes && causes.length > 0) {
+      return t('alerting.errors.api-machinery.with-causes', '{{-baseMessage}}: {{-causes}}', {
+        baseMessage,
+        causes: causes.join(', '),
+      });
+    }
+    return baseMessage;
   }
 
   const errorMessageMap: Record<KnownMachineryErrorCodes, string | undefined> = {

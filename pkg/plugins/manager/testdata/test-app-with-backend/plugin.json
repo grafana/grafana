@@ -1,0 +1,24 @@
+{
+  "type": "app",
+  "name": "Test App With Backend",
+  "id": "test-app-with-backend",
+
+  "backend": true,
+  "executable": "gpx_test-app-with-backend",
+
+  "info": {
+    "description": "Test App with backend resource routes",
+    "author": {
+      "name": "Test Inc.",
+      "url": "http://test.com"
+    },
+    "keywords": ["test"],
+    "links": [],
+    "version": "1.0.0",
+    "updated": "2026-04-30"
+  },
+
+  "dependencies": {
+    "grafanaDependency": ">=10.0.0"
+  }
+}

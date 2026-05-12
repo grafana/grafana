@@ -139,8 +139,8 @@ type APIBuilder struct {
 	registry                      prometheus.Registerer
 	quotaGetter                   quotas.QuotaGetter
 	folderMetadataEnabled         bool
-	maxIncrementalChanges         int
 	maxFileSize                   int64
+	incrementalPolicy             repository.IncrementalSyncPolicy
 	folderAPIVersion              string
 	webhookSecretRotationInterval time.Duration
 }
@@ -189,7 +189,7 @@ func NewAPIBuilder(
 	quotaGetter quotas.QuotaGetter,
 	folderMetadataEnabled bool,
 	folderAPIVersion string,
-	maxIncrementalChanges int,
+	incrementalPolicy repository.IncrementalSyncPolicy,
 ) (*APIBuilder, error) {
 	var clients resources.ClientFactory
 	if newStandaloneClientFactoryFunc != nil {
@@ -241,7 +241,7 @@ func NewAPIBuilder(
 		quotaGetter:                         quotaGetter,
 		folderMetadataEnabled:               folderMetadataEnabled,
 		folderAPIVersion:                    folderAPIVersion,
-		maxIncrementalChanges:               maxIncrementalChanges,
+		incrementalPolicy:                   incrementalPolicy,
 		// Default cap for the files API. Callers (e.g. RegisterAPIService)
 		// may overwrite b.maxFileSize after construction; 0 disables the cap.
 		maxFileSize: 5 * 1024 * 1024,
@@ -319,8 +319,8 @@ func RegisterAPIService(
 	jobHistoryConfig := createJobHistoryConfigFromSettings(cfg)
 	folderMetadataEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata) //nolint:staticcheck
 	folderAPIVersion := cfg.ProvisioningFolderAPIVersion
-	maxIncrementalChanges := cfg.ProvisioningMaxIncrementalChanges
 	maxFileSize := cfg.ProvisioningMaxFileSize
+	incrementalPolicy := repository.NewIncrementalSyncPolicy(folderMetadataEnabled, cfg.ProvisioningMaxIncrementalChanges)
 
 	// Register v0alpha1 (preferred version)
 	builder, err := NewAPIBuilder(
@@ -352,7 +352,7 @@ func RegisterAPIService(
 		quotaGetter,
 		folderMetadataEnabled,
 		folderAPIVersion,
-		maxIncrementalChanges,
+		incrementalPolicy,
 	)
 	if err != nil {
 		return nil, err
@@ -391,7 +391,7 @@ func RegisterAPIService(
 		quotaGetter,
 		folderMetadataEnabled,
 		folderAPIVersion,
-		maxIncrementalChanges,
+		incrementalPolicy,
 	)
 	if err != nil {
 		return nil, err
@@ -800,7 +800,16 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	// TODO: Remove this connector when we deprecate the test endpoint
 	// We should use fieldErrors from status instead.
 	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = NewTestConnector(b, testTester)
-	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, b.accessWithAdmin, b.folderMetadataEnabled, b.folderAPIVersion, b.maxFileSize)
+	// The files subresource handles GET/POST/PUT/DELETE in a single connector
+	// and the appropriate role fallback differs per verb: reads should fall
+	// back to Viewer, writes to Editor. A static accessWithEditor would over-
+	// restrict reads when the inner authz denies; a static accessWithViewer
+	// would over-permit writes. Compose a verb-aware checker so each operation
+	// gets the right fallback. Per-resource authz still happens inside the
+	// connector via ProvisioningAuthorizer.AuthorizeResource, and repository-
+	// level operations remain Admin-gated by authorizeRepositorySubresource.
+	filesAccess := auth.NewVerbAwareAccessChecker(b.accessWithViewer, b.accessWithEditor)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, filesAccess, b.folderMetadataEnabled, b.folderAPIVersion, b.maxFileSize)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = NewRefsConnector(b)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = &listConnector{
 		getter: b,
@@ -1040,9 +1049,8 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.minSyncInterval,
 				30*time.Second,
 				b.quotaGetter,
-				b.folderMetadataEnabled,
+				b.incrementalPolicy,
 				b.folderAPIVersion,
-				b.maxIncrementalChanges,
 				webhookSecretRotationInterval,
 			)
 			if err != nil {

@@ -35,8 +35,8 @@ func TestConvertDataFramesToResults(t *testing.T) {
 				frames := []*data.Frame{
 					data.NewFrame("test",
 						data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
-						data.NewField("test-value1", nil, []*float64{fp(2)}),
-						data.NewField("test-value2", nil, []*float64{fp(2)})),
+						data.NewField("test-value1", nil, []*float64{new(2.0)}),
+						data.NewField("test-value2", nil, []*float64{new(2.0)})),
 				}
 
 				for _, dtype := range supported {
@@ -61,10 +61,10 @@ func TestConvertDataFramesToResults(t *testing.T) {
 				frames := []*data.Frame{
 					data.NewFrame("test-frame1",
 						data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
-						data.NewField("test-value1", nil, []*float64{fp(2)})),
+						data.NewField("test-value1", nil, []*float64{new(2.0)})),
 					data.NewFrame("test-frame2",
 						data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
-						data.NewField("test-value2", nil, []*float64{fp(2)})),
+						data.NewField("test-value2", nil, []*float64{new(2.0)})),
 				}
 
 				for _, dtype := range supported {
@@ -87,9 +87,9 @@ func TestConvertDataFramesToResults(t *testing.T) {
 			})
 		})
 		t.Run("should use fields DisplayNameFromDS when it is unique", func(t *testing.T) {
-			f1 := data.NewField("test-value1", nil, []*float64{fp(2)})
+			f1 := data.NewField("test-value1", nil, []*float64{new(2.0)})
 			f1.Config = &data.FieldConfig{DisplayNameFromDS: "test-value1"}
-			f2 := data.NewField("test-value2", nil, []*float64{fp(2)})
+			f2 := data.NewField("test-value2", nil, []*float64{new(2.0)})
 			f2.Config = &data.FieldConfig{DisplayNameFromDS: "test-value2"}
 			frames := []*data.Frame{
 				data.NewFrame("test-frame1",

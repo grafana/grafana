@@ -1,4 +1,4 @@
-import { Preview } from '@storybook/react';
+import { Preview } from '@storybook/react-webpack5';
 import { initialize, mswLoader } from 'msw-storybook-addon';
 
 import 'jquery';
@@ -63,6 +63,7 @@ const preview: Preview = {
     actions: { argTypesRegex: '^on[A-Z].*' },
     docs: {
       container: ThemedDocsContainer,
+      codePanel: true,
     },
     a11y: {
       test: 'error',

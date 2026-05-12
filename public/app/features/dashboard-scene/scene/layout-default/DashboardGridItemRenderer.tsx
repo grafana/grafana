@@ -26,6 +26,7 @@ function PanelWrapper({ panel, isLazy, containerRef, isSelected }: PanelWrapperP
       <LazyLoader
         key={panel.state.key!}
         ref={containerRef}
+        mode="query"
         className={cx(panelWrapper, isSelected && 'dashboard-selected-element')}
       >
         <panel.Component model={panel} />
