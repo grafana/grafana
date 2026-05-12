@@ -95,11 +95,11 @@ func TestBuildSnapshotOptionsFileBucketUsesProcessLocalLocks(t *testing.T) {
 	require.NoError(t, err)
 
 	ns := resource.NamespacedResource{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
-	lock1, err := snapshot.Store.LockBuildIndex(context.Background(), ns)
+	lock1, err := snapshot.Store.LockBuildIndex(context.Background(), ns, "11.0.0")
 	require.NoError(t, err)
 	defer func() { require.NoError(t, lock1.Release()) }()
 
-	lock2, err := snapshot.Store.LockBuildIndex(context.Background(), ns)
+	lock2, err := snapshot.Store.LockBuildIndex(context.Background(), ns, "11.0.0")
 	require.ErrorIs(t, err, errLockHeld)
 	assert.Nil(t, lock2)
 }

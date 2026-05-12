@@ -53,24 +53,24 @@ func (s *LocalInlineSecureValueService) CanReference(ctx context.Context, owner 
 
 	authInfo, ok := authlib.AuthInfoFrom(ctx)
 	if !ok {
-		return fmt.Errorf("missing auth info in context")
+		return contracts.ErrInlineSecureValueNoAuth
 	}
 
 	if owner.Namespace == "" || !authlib.NamespaceMatches(authInfo.GetNamespace(), owner.Namespace) {
-		return fmt.Errorf("owner namespace %s does not match auth info namespace %s", owner.Namespace, authInfo.GetNamespace())
+		return fmt.Errorf("owner namespace %s does not match auth info namespace %s: %w", owner.Namespace, authInfo.GetNamespace(), contracts.ErrInlineSecureValueInvalidOwner)
 	}
 
 	if owner.APIGroup == "" || owner.APIVersion == "" || owner.Kind == "" || owner.Name == "" {
-		return fmt.Errorf("owner reference must have a valid API group, API version, kind and name [CanReference]")
+		return contracts.ErrInlineSecureValueInvalidOwner
 	}
 
 	if len(names) == 0 {
-		return fmt.Errorf("no inline secure values provided")
+		return fmt.Errorf("no inline secure values provided: %w", contracts.ErrInlineSecureValueInvalidName)
 	}
 
 	for _, name := range names {
 		if name == "" {
-			return fmt.Errorf("empty secure value name")
+			return fmt.Errorf("empty secure value name: %w", contracts.ErrInlineSecureValueInvalidName)
 		}
 
 		owned, err := s.isSecureValueOwnedByResource(ctx, owner, name)
@@ -92,7 +92,7 @@ func (s *LocalInlineSecureValueService) isSecureValueOwnedByResource(ctx context
 	sv, err := s.secureValueService.Read(ctx, xkube.Namespace(owner.Namespace), name)
 	if err != nil {
 		if errors.Is(err, contracts.ErrSecureValueNotFound) {
-			return false, err
+			return false, contracts.ErrInlineSecureValueNotFound
 		}
 
 		return false, fmt.Errorf("error reading secure value %s: %w", name, err)
@@ -119,7 +119,7 @@ func (s *LocalInlineSecureValueService) isSecureValueOwnedByResource(ctx context
 			return true, nil // The secure value is owned by the same owner reference, pass!
 		}
 
-		return false, fmt.Errorf("secure value %s is not owned by %s/%s/%s/%s", name, owner.APIGroup, owner.APIVersion, owner.Kind, owner.Name)
+		return false, fmt.Errorf("secure value %s is not owned by %s/%s/%s/%s: %w", name, owner.APIGroup, owner.APIVersion, owner.Kind, owner.Name, contracts.ErrInlineSecureValueMismatchOwner)
 	}
 
 	// not owned
@@ -129,12 +129,12 @@ func (s *LocalInlineSecureValueService) isSecureValueOwnedByResource(ctx context
 func (s *LocalInlineSecureValueService) canIdentityReadSecureValue(ctx context.Context, namespace xkube.Namespace, name string) error {
 	authInfo, ok := authlib.AuthInfoFrom(ctx)
 	if !ok {
-		return fmt.Errorf("missing auth info in context")
+		return contracts.ErrInlineSecureValueNoAuth
 	}
 
 	// If the secure value is shared, we always need a user/svc account in the context.
 	if authInfo.GetIdentityType() != authlib.TypeUser && authInfo.GetIdentityType() != authlib.TypeServiceAccount {
-		return fmt.Errorf("identity type %s not allowed, expected either %s or %s", authInfo.GetIdentityType(), authlib.TypeUser, authlib.TypeServiceAccount)
+		return fmt.Errorf("identity type %s not allowed, expected either %s or %s: %w", authInfo.GetIdentityType(), authlib.TypeUser, authlib.TypeServiceAccount, contracts.ErrInlineSecureValueInvalidIdentity)
 	}
 
 	resp, err := s.accessChecker.Check(ctx, authInfo, authlib.CheckRequest{
@@ -149,7 +149,7 @@ func (s *LocalInlineSecureValueService) canIdentityReadSecureValue(ctx context.C
 	}
 
 	if !resp.Allowed {
-		return fmt.Errorf("identity is not allowed to reference secure value %s", name)
+		return fmt.Errorf("identity is not allowed to reference secure value %s: %w", name, contracts.ErrInlineSecureValueCannotReference)
 	}
 
 	return nil
@@ -159,16 +159,16 @@ func (s *LocalInlineSecureValueService) verifyOwnerAndAuth(ctx context.Context, 
 	// Any valid identity can create inline secure values
 	authInfo, ok := authlib.AuthInfoFrom(ctx)
 	if !ok {
-		return nil, fmt.Errorf("missing auth info in context")
+		return nil, contracts.ErrInlineSecureValueNoAuth
 	}
 
 	// Make sure the owner matches the identity when it is not global
 	if owner.Namespace == "" || !authlib.NamespaceMatches(authInfo.GetNamespace(), owner.Namespace) {
-		return nil, fmt.Errorf("owner namespace %s does not match auth info namespace %s", owner.Namespace, authInfo.GetNamespace())
+		return nil, fmt.Errorf("owner namespace %s does not match auth info namespace %s: %w", owner.Namespace, authInfo.GetNamespace(), contracts.ErrInlineSecureValueInvalidOwner)
 	}
 
 	if owner.Namespace == "" || owner.APIGroup == "" || owner.APIVersion == "" || owner.Kind == "" || owner.Name == "" {
-		return nil, fmt.Errorf("owner reference must have a valid API group, API version, kind, namespace and name [verifyOwnerAndAuth:%+v]", owner)
+		return nil, fmt.Errorf("[verifyOwnerAndAuth:%+v]: %w", owner, contracts.ErrInlineSecureValueInvalidOwner)
 	}
 
 	return authInfo, nil
@@ -190,7 +190,7 @@ func (s *LocalInlineSecureValueService) CreateInline(ctx context.Context, owner 
 	}
 
 	if value.IsZero() {
-		return "", fmt.Errorf("trying to create an inline secure value with empty value")
+		return "", fmt.Errorf("trying to create an inline secure value with empty value: %w", contracts.ErrInlineSecureValueInvalidName)
 	}
 
 	// TODO(2025-07-31): when we migrate to using the common type, we don't need this conversion.
@@ -265,6 +265,10 @@ func (s *LocalInlineSecureValueService) DeleteWhenOwnedByResource(ctx context.Co
 
 		if owned {
 			if _, err := s.secureValueService.Delete(ctx, xkube.Namespace(owner.Namespace), name); err != nil {
+				if errors.Is(err, contracts.ErrSecureValueNotFound) {
+					return contracts.ErrInlineSecureValueNotFound
+				}
+
 				return fmt.Errorf("error deleting secure value %s for owner %v: %w", name, owner, err)
 			}
 		}

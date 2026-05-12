@@ -14,11 +14,7 @@ func ProvideVectorBackend(cfg *setting.Cfg) (VectorBackend, error) {
 	return InitVectorBackend(context.Background(), cfg, true)
 }
 
-// InitVectorBackend opens the [database_vector] connection and returns a
-// pgvectorBackend. runMigrations=true applies schema migrations before
-// returning. Returns (nil, nil) when EnableVectorBackend is false.
-// Caller starts the promoter via backend.Run(ctx); gate on schema ownership.
-func InitVectorBackend(ctx context.Context, cfg *setting.Cfg, runMigrations bool) (VectorBackend, error) {
+func InitVectorBackend(ctx context.Context, cfg *setting.Cfg, ownsSchema bool) (VectorBackend, error) {
 	if !cfg.EnableVectorBackend {
 		return nil, nil
 	}
@@ -37,7 +33,7 @@ func InitVectorBackend(ctx context.Context, cfg *setting.Cfg, runMigrations bool
 		return nil, fmt.Errorf("open vector database: %w", err)
 	}
 
-	if runMigrations {
+	if ownsSchema {
 		logger.Info("Running vector database migrations")
 		if err := MigrateVectorStore(ctx, engine, cfg); err != nil {
 			return nil, fmt.Errorf("migrate vector database: %w", err)
@@ -47,5 +43,10 @@ func InitVectorBackend(ctx context.Context, cfg *setting.Cfg, runMigrations bool
 	}
 
 	database := dbimpl.NewDB(engine.DB().DB, engine.Dialect().DriverName())
-	return NewPgvectorBackend(database, cfg.VectorPromotionThreshold, cfg.VectorPromoterInterval), nil
+
+	// Pass the engine as the GC keep-alive — without this the local
+	// `engine` goes out of scope when this function returns, and xorm's
+	// finalizer eventually closes the underlying *sql.DB while the
+	// backfiller / promoter are still using it.
+	return NewPgvectorBackend(ctx, database, cfg.VectorPromotionThreshold, cfg.VectorPromoterInterval, ownsSchema, engine), nil
 }

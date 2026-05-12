@@ -1,6 +1,6 @@
-import { comboboxTestSetup } from 'test/helpers/comboboxTestSetup';
 import { render, screen, testWithFeatureToggles } from 'test/test-utils';
 
+import { mockComboboxRect } from '@grafana/test-utils';
 import { SearchLayout, type SearchState } from 'app/features/search/types';
 
 import { BrowseFilters } from './BrowseFilters';
@@ -36,7 +36,7 @@ jest.mock('app/core/services/context_srv', () => ({
   },
 }));
 
-comboboxTestSetup();
+mockComboboxRect();
 
 const createSearchState = (partial?: Partial<SearchState>): SearchState => ({
   query: '',

@@ -14,10 +14,9 @@ import { useSidebarContext } from './useSidebar';
 export interface Props {
   children?: ReactNode;
   title: string;
-  onGoBack?: () => void;
 }
 
-export function SidebarPaneHeader({ children, title, onGoBack }: Props) {
+export function SidebarPaneHeader({ children, title }: Props) {
   const styles = useStyles2(getStyles);
   const sidebarContext = useSidebarContext();
 
@@ -27,32 +26,47 @@ export function SidebarPaneHeader({ children, title, onGoBack }: Props) {
 
   return (
     <div className={styles.wrapper}>
-      {onGoBack && (
-        <IconButton
-          variant="secondary"
-          size="lg"
-          name="arrow-left"
-          onClick={onGoBack}
-          aria-label={t('grafana-ui.sidebar.go-back', 'Go back')}
-          tooltip={t('grafana-ui.sidebar.go-back', 'Go back')}
-          data-testid={selectors.components.Sidebar.goBack}
-        />
-      )}
-      {!onGoBack && sidebarContext.onClosePane && (
-        <IconButton
-          variant="secondary"
-          size="lg"
-          name="times"
-          onClick={sidebarContext.onClosePane}
-          aria-label={t('grafana-ui.sidebar.close', 'Close')}
-          tooltip={t('grafana-ui.sidebar.close', 'Close')}
-          data-testid={selectors.components.Sidebar.closePane}
-        />
-      )}
-      <Text weight="medium" variant="h6" truncate data-testid={selectors.components.Sidebar.headerTitle}>
-        {title}
-      </Text>
-      {children}
+      <div className={styles.header}>
+        {sidebarContext.onGoBack && (
+          <IconButton
+            variant="secondary"
+            size="lg"
+            name="arrow-left"
+            onClick={sidebarContext.onGoBack}
+            disabled={!sidebarContext.canGoBack}
+            aria-label={t('grafana-ui.sidebar.go-back', 'Go back')}
+            tooltip={t('grafana-ui.sidebar.go-back', 'Go back')}
+            data-testid={selectors.components.Sidebar.goBack}
+          />
+        )}
+        <Text weight="medium" variant="h6" truncate data-testid={selectors.components.Sidebar.headerTitle}>
+          {title}
+        </Text>
+        <div className={styles.flexGrow} />
+        {sidebarContext.onToggleDock && (
+          <IconButton
+            name={'web-section-alt'}
+            onClick={sidebarContext.onToggleDock}
+            className={sidebarContext.isDocked ? undefined : styles.dockedButtonUndocked}
+            tooltip={
+              sidebarContext.isDocked ? t('grafana-ui.sidebar.undock', 'Undock') : t('grafana-ui.sidebar.dock', 'Dock')
+            }
+            data-testid={selectors.components.Sidebar.dockToggle}
+          />
+        )}
+        {sidebarContext.onClosePane && (
+          <IconButton
+            variant="secondary"
+            size="lg"
+            name="times"
+            onClick={sidebarContext.onClosePane}
+            aria-label={t('grafana-ui.sidebar.close', 'Close')}
+            tooltip={t('grafana-ui.sidebar.close', 'Close')}
+            data-testid={selectors.components.Sidebar.closePane}
+          />
+        )}
+      </div>
+      {children && <div className={styles.actions}>{children}</div>}
     </div>
   );
 }
@@ -61,14 +75,29 @@ export const getStyles = (theme: GrafanaTheme2) => {
   return {
     wrapper: css({
       display: 'flex',
-      alignItems: 'center',
-      padding: theme.spacing(1.5),
-      height: theme.spacing(6),
-      gap: theme.spacing(1),
+      flexDirection: 'column',
       borderBottom: `1px solid ${theme.colors.border.weak}`,
+    }),
+    header: css({
+      display: 'flex',
+      alignItems: 'center',
+      padding: theme.spacing(1.5, 1, 1.5, 1.5),
+      gap: theme.spacing(1),
     }),
     flexGrow: css({
       flexGrow: 1,
+    }),
+    actions: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(1),
+      padding: theme.spacing(0, 1, 1.5, 1),
+      '&:empty': {
+        display: 'none',
+      },
+    }),
+    dockedButtonUndocked: css({
+      opacity: 0.6,
     }),
   };
 };

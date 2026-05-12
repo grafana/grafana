@@ -1064,5 +1064,32 @@
     "grants": [
       "Editor"
     ]
+  },
+  {
+    "name": "fixed:alerting.alertmanager-imports:writer",
+    "displayName": "Alerting alertmanager imports writer",
+    "description": "Read, write, and delete Prometheus/Mimir-compatible alertmanager configurations imported via the convert API.",
+    "group": "Alerting",
+    "permissions": [
+      {
+        "action": "notifications.alerting.grafana.app/alertmanagerimports:create",
+        "scope": "notifications.alerting.grafana.app/alertmanagerimports:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/alertmanagerimports:delete",
+        "scope": "notifications.alerting.grafana.app/alertmanagerimports:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/alertmanagerimports:get",
+        "scope": "notifications.alerting.grafana.app/alertmanagerimports:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/alertmanagerimports:update",
+        "scope": "notifications.alerting.grafana.app/alertmanagerimports:*"
+      }
+    ],
+    "grants": [
+      "Admin"
+    ]
   }
 ]

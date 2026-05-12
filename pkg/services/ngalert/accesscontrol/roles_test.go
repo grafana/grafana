@@ -252,6 +252,10 @@ func allAlertingActions() []string {
 		accesscontrol.ActionAlertingNotificationsProvisioningRead,
 		accesscontrol.ActionAlertingNotificationsProvisioningWrite,
 		accesscontrol.ActionAlertingProvisioningSetStatus,
+		accesscontrol.ActionAlertingAlertmanagerImportsCreate,
+		accesscontrol.ActionAlertingAlertmanagerImportsRead,
+		accesscontrol.ActionAlertingAlertmanagerImportsWrite,
+		accesscontrol.ActionAlertingAlertmanagerImportsDelete,
 	}
 	sort.Strings(actions)
 	return actions

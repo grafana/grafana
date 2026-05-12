@@ -481,9 +481,7 @@ func TestShouldUseIncrementalSync(t *testing.T) {
 	}
 	latestRef := "456"
 
-	// Large max so the size-threshold branch does not interfere with the
-	// pre-existing folder-metadata-guard assertions.
-	const largeMax = 1000
+	largePolicy := repository.NewIncrementalSyncPolicy(false, 1000)
 
 	t.Run("should use incremental sync", func(t *testing.T) {
 		versioned.On("CompareFiles", context.Background(), obj.Status.Sync.LastRef, latestRef).Return([]repository.VersionedFileChange{
@@ -492,7 +490,7 @@ func TestShouldUseIncrementalSync(t *testing.T) {
 				Path:   "test.json",
 			},
 		}, nil).Once()
-		got, err := shouldUseIncrementalSync(context.Background(), versioned, obj, latestRef, false, largeMax)
+		got, err := shouldUseIncrementalSync(context.Background(), versioned, obj, latestRef, largePolicy)
 		assert.NoError(t, err)
 		assert.True(t, got)
 	})
@@ -504,61 +502,62 @@ func TestShouldUseIncrementalSync(t *testing.T) {
 				Path:   "test/.keep",
 			},
 		}, nil).Once()
-		got, err := shouldUseIncrementalSync(context.Background(), versioned, obj, latestRef, false, largeMax)
+		got, err := shouldUseIncrementalSync(context.Background(), versioned, obj, latestRef, largePolicy)
 		assert.NoError(t, err)
 		assert.False(t, got)
 	})
 
 	t.Run("should use incremental sync when diff is one under the max size", func(t *testing.T) {
-		const max = 100
-		changes := make([]repository.VersionedFileChange, max-1)
+		policy := repository.NewIncrementalSyncPolicy(false, 100)
+		changes := make([]repository.VersionedFileChange, 99)
 		for i := range changes {
 			changes[i] = repository.VersionedFileChange{Action: repository.FileActionCreated, Path: "dashboards/d.json"}
 		}
 		versioned.On("CompareFiles", context.Background(), obj.Status.Sync.LastRef, latestRef).Return(changes, nil).Once()
-		got, err := shouldUseIncrementalSync(context.Background(), versioned, obj, latestRef, false, max)
+		got, err := shouldUseIncrementalSync(context.Background(), versioned, obj, latestRef, policy)
 		assert.NoError(t, err)
 		assert.True(t, got, "diff one under threshold must stay incremental")
 	})
 
 	t.Run("should use incremental sync when diff is at the max size", func(t *testing.T) {
-		const max = 100
-		changes := make([]repository.VersionedFileChange, max)
+		policy := repository.NewIncrementalSyncPolicy(false, 100)
+		changes := make([]repository.VersionedFileChange, 100)
 		for i := range changes {
 			changes[i] = repository.VersionedFileChange{Action: repository.FileActionCreated, Path: "dashboards/d.json"}
 		}
 		versioned.On("CompareFiles", context.Background(), obj.Status.Sync.LastRef, latestRef).Return(changes, nil).Once()
-		got, err := shouldUseIncrementalSync(context.Background(), versioned, obj, latestRef, false, max)
+		got, err := shouldUseIncrementalSync(context.Background(), versioned, obj, latestRef, policy)
 		assert.NoError(t, err)
 		assert.True(t, got, "diff at threshold must stay incremental (strict >)")
 	})
 
 	t.Run("should not use incremental sync when diff exceeds max size", func(t *testing.T) {
-		const max = 100
-		changes := make([]repository.VersionedFileChange, max+1)
+		policy := repository.NewIncrementalSyncPolicy(false, 100)
+		changes := make([]repository.VersionedFileChange, 101)
 		for i := range changes {
 			changes[i] = repository.VersionedFileChange{Action: repository.FileActionCreated, Path: "dashboards/d.json"}
 		}
 		versioned.On("CompareFiles", context.Background(), obj.Status.Sync.LastRef, latestRef).Return(changes, nil).Once()
-		got, err := shouldUseIncrementalSync(context.Background(), versioned, obj, latestRef, false, max)
+		got, err := shouldUseIncrementalSync(context.Background(), versioned, obj, latestRef, policy)
 		assert.NoError(t, err)
 		assert.False(t, got, "diff above threshold must force a full sync")
 	})
 
 	t.Run("should use incremental sync when max is zero (unlimited)", func(t *testing.T) {
+		policy := repository.NewIncrementalSyncPolicy(false, 0)
 		changes := make([]repository.VersionedFileChange, 1000)
 		for i := range changes {
 			changes[i] = repository.VersionedFileChange{Action: repository.FileActionCreated, Path: "dashboards/d.json"}
 		}
 		versioned.On("CompareFiles", context.Background(), obj.Status.Sync.LastRef, latestRef).Return(changes, nil).Once()
-		got, err := shouldUseIncrementalSync(context.Background(), versioned, obj, latestRef, false, 0)
+		got, err := shouldUseIncrementalSync(context.Background(), versioned, obj, latestRef, policy)
 		assert.NoError(t, err)
 		assert.True(t, got, "max_incremental_changes=0 disables the size check (unlimited)")
 	})
 
 	t.Run("propagates CompareFiles error without deciding", func(t *testing.T) {
 		versioned.On("CompareFiles", context.Background(), obj.Status.Sync.LastRef, latestRef).Return(nil, assert.AnError).Once()
-		got, err := shouldUseIncrementalSync(context.Background(), versioned, obj, latestRef, false, largeMax)
+		got, err := shouldUseIncrementalSync(context.Background(), versioned, obj, latestRef, largePolicy)
 		assert.Error(t, err)
 		assert.False(t, got, "on CompareFiles error the decision defaults to full sync (returned as false)")
 	})

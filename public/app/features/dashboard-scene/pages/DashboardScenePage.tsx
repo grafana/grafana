@@ -27,6 +27,7 @@ import { DashboardConversionWarningBanner } from '../components/DashboardConvers
 import { SuggestedDashboardsBanner } from '../components/SuggestedDashboardsBanner';
 import { DashboardPrompt } from '../saving/DashboardPrompt';
 import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
+import { useScenesFlickeringFix } from '../utils/utils';
 
 import { getDashboardScenePageStateManager } from './DashboardScenePageStateManager';
 import { shouldHideDashboardKioskFooter } from './utils';
@@ -46,6 +47,8 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
   // After scene migration is complete and we get rid of old dashboard we should refactor dashboardWatcher so this route reload is not need
   const routeReloadCounter = (location.state as any)?.routeReloadCounter;
   const prevParams = useRef<Params<string>>(params);
+
+  useScenesFlickeringFix();
 
   useEffect(() => {
     if (route.routeName === DashboardRoutes.Normal && type === 'snapshot') {
