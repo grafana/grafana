@@ -50,6 +50,8 @@ const MetricsQueryEditor = ({
       region: query.azureMonitor?.region,
     })) ?? [];
 
+  const batchAPIEnabled = datasource.azureMonitorDatasource.batchAPIEnabled;
+
   const supportMultipleResource = (namespace?: string) => {
     return multiResourceCompatibleTypes[namespace?.toLocaleLowerCase() ?? ''] ?? false;
   };
@@ -62,11 +64,16 @@ const MetricsQueryEditor = ({
 
     const rowResource = parseResourceDetails(row.uri, row.location);
     const selectedRowSample = parseResourceDetails(selectedRows[0].uri, selectedRows[0].location);
-    // Only resources:
-    // - in the same subscription
-    // - in the same region
-    // - with the same metric namespace
-    // - with a metric namespace that is compatible with multi-resource queries
+
+    if (batchAPIEnabled) {
+      // Resources must share the same metric namespace to be queried together via the batch API
+      return (
+        rowResource.metricNamespace?.toLocaleLowerCase() !== selectedRowSample.metricNamespace?.toLocaleLowerCase()
+      );
+    }
+
+    // Without the batch API, resources must also share the same subscription, region,
+    // and have a namespace that supports multi-resource queries.
     return (
       rowResource.subscription !== selectedRowSample.subscription ||
       rowResource.region !== selectedRowSample.region ||
@@ -78,6 +85,9 @@ const MetricsQueryEditor = ({
   const selectionNotice = (selectedRows: ResourceRowGroup) => {
     if (selectedRows.length === 0) {
       return '';
+    }
+    if (batchAPIEnabled) {
+      return 'You can select items of the same resource type across subscriptions and regions. Resources in different subscriptions or regions are queried in separate requests and may fail independently. To select resources of a different resource type, please first uncheck your current selection.';
     }
     const selectedRowSample = parseResourceDetails(selectedRows[0].uri, selectedRows[0].location);
     return supportMultipleResource(selectedRowSample.metricNamespace)

@@ -39,6 +39,11 @@ export interface FeatureToggles {
   */
   featureHighlights?: boolean;
   /**
+  * Configurable storage for dashboards, datasources, and resources
+  * @default false
+  */
+  storage?: boolean;
+  /**
   * Allow elements nesting
   * @default false
   */
@@ -975,6 +980,11 @@ export interface FeatureToggles {
   */
   newShareReportDrawer?: boolean;
   /**
+  * Enables SRI checks for Grafana JavaScript assets
+  * @default false
+  */
+  assetSriChecks?: boolean;
+  /**
   * Enables the alert rule restore feature
   * @default true
   */
@@ -1004,6 +1014,11 @@ export interface FeatureToggles {
   * @default false
   */
   azureMonitorLogsBuilderEditor?: boolean;
+  /**
+  * Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request
+  * @default false
+  */
+  azureMonitorBatchAPI?: boolean;
   /**
   * Specifies the locale so the correct format for numbers and dates can be shown
   * @deprecated
@@ -1647,6 +1662,11 @@ export interface FeatureToggles {
   */
   clearPreviousFieldValues?: boolean;
   /**
+  * Enables loading datasource plugins from the MetaAPI instead of bootData settings
+  * @default false
+  */
+  enableDatasourceMetaApiPluginLoading?: boolean;
+  /**
   * Enables new colorblind safe palette and line fill patterns for panels
   * @default false
   */
@@ -1671,9 +1691,4 @@ export interface FeatureToggles {
   * @default false
   */
   clickHouseConfigValidation?: boolean;
-  /**
-  * Enables the new Rules API v2 UI with evaluation chains and groupless rule creation
-  * @default false
-  */
-  ['alerting.rulesAPIV2']?: boolean;
 }
