@@ -30,7 +30,9 @@ import {
 } from '../../scene/types/EditableDashboardElement';
 import { VariableDisplaySelect } from '../../settings/variables/components/VariableDisplaySelect';
 import { getEditableVariableDefinition, validateVariableName } from '../../settings/variables/utils';
+import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { DashboardInteractions } from '../../utils/interactions';
+import { getTopPlacementLabel } from '../../utils/sectionPlacement';
 
 import { openChangeVariableTypePane } from './VariableTypeSelectionPane';
 import { useVariableSelectionOptionsCategory } from './useVariableSelectionOptionsCategory';
@@ -365,6 +367,8 @@ function VariableDescriptionTextArea({ variable, id }: VariableInputProps) {
 
 function VariableDisplayInput({ variable }: VariableInputProps) {
   const { hide: display = VariableHide.dontHide } = variable.useState();
+  const sectionOwner = dashboardSceneGraph.findSectionOwner(variable);
+  const topPlacementLabel = sectionOwner ? getTopPlacementLabel(sectionOwner) : undefined;
 
   const onChange = (option: VariableHide) => {
     dashboardEditActions.changeVariableHideValue({
@@ -379,6 +383,7 @@ function VariableDisplayInput({ variable }: VariableInputProps) {
       display={display}
       type={variable.state.type}
       hideControlsMenuOption={shouldHideControlsMenuOption(variable)}
+      topPlacementLabel={topPlacementLabel}
       onChange={onChange}
     />
   );

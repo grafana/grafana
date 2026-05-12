@@ -9,8 +9,32 @@ import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 
 import { SectionFiltersCategoryTitle, SectionFiltersList } from './SectionFiltersList';
 
+const mockDashboardVariablesList = jest.fn(
+  ({
+    renderVariables,
+    topPlacementLabel,
+  }: {
+    renderVariables?: Array<{ state: { name: string } }>;
+    topPlacementLabel?: string;
+  }) => (
+    <div>
+      {topPlacementLabel && <span>{topPlacementLabel}</span>}
+      {renderVariables?.map((variable, idx) => (
+        <span key={`${variable.state.name}-${idx}`}>{variable.state.name}</span>
+      ))}
+    </div>
+  )
+);
+
 jest.mock('./add-new/AddFilters', () => ({
   openAddFilterForm: jest.fn(),
+}));
+
+jest.mock('./dashboard/DashboardVariablesList', () => ({
+  DashboardVariablesList: (props: {
+    renderVariables?: Array<{ state: { name: string } }>;
+    topPlacementLabel?: string;
+  }) => mockDashboardVariablesList(props),
 }));
 
 describe('SectionFiltersList', () => {
@@ -37,6 +61,16 @@ describe('SectionFiltersList', () => {
     render(<SectionFiltersCategoryTitle sectionOwner={row} isExpanded={false} />);
 
     expect(screen.getByText('Filters (1)')).toBeInTheDocument();
+  });
+
+  it('uses top of row label for section filters placement', () => {
+    const row = buildRow({ includeFilter: true });
+
+    render(<SectionFiltersList sectionOwner={row} />);
+
+    expect(mockDashboardVariablesList).toHaveBeenCalledWith(
+      expect.objectContaining({ topPlacementLabel: 'Top of row' })
+    );
   });
 });
 

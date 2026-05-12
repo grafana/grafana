@@ -1589,11 +1589,6 @@
       "count": 4
     }
   },
-  "public/app/features/dashboard-scene/settings/variables/components/VariableDisplaySelect.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/settings/variables/components/VariableHideSelect.tsx": {
     "@grafana/require-no-margin": {
       "count": 1

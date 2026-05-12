@@ -3,10 +3,12 @@ import { type SceneObject, SceneVariableSet, sceneUtils } from '@grafana/scenes'
 import { Box, Button, Stack } from '@grafana/ui';
 
 import { DashboardInteractions } from '../utils/interactions';
+import { getTopPlacementLabel } from '../utils/sectionPlacement';
 import { getDashboardSceneFor } from '../utils/utils';
 import { filterSectionRepeatLocalVariables } from '../variables/utils';
 
 import { openAddFilterForm } from './add-new/AddFilters';
+import { DashboardVariablesList } from './dashboard/DashboardVariablesList';
 
 export interface SectionFiltersCategoryTitleProps {
   sectionOwner: SceneObject;
@@ -58,26 +60,20 @@ interface SectionFiltersListInnerProps {
 function SectionFiltersListInner({ sectionOwner, variableSet }: SectionFiltersListInnerProps) {
   const { variables: rawVariables } = variableSet.useState();
   const filters = filterSectionRepeatLocalVariables(rawVariables, variableSet).filter(sceneUtils.isAdHocVariable);
-  const dashboard = getDashboardSceneFor(sectionOwner);
+  const topPlacementLabel = getTopPlacementLabel(sectionOwner);
 
   return (
-    <Stack direction="column" gap={0}>
-      {filters.map((variable) => (
-        <Button
-          key={variable.state.key!}
-          variant="secondary"
-          size="sm"
-          fill="text"
-          onClick={() => dashboard.state.editPane.selectObject(variable, { force: true })}
-        >
-          {variable.state.name}
-        </Button>
-      ))}
-
+    <>
+      <DashboardVariablesList
+        sourceVariableSet={variableSet}
+        renderVariables={filters}
+        includeAdHoc
+        topPlacementLabel={topPlacementLabel}
+      />
       <Box display="flex" paddingTop={filters.length > 0 ? 1 : 0} paddingBottom={2}>
         <AddFilterButton sectionOwner={sectionOwner} />
       </Box>
-    </Stack>
+    </>
   );
 }
 

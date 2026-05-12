@@ -7,8 +7,38 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
 import { RowItem } from '../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
+import { TabItem } from '../scene/layout-tabs/TabItem';
+import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
 
 import { SectionVariablesCategoryTitle, SectionVariablesList } from './SectionVariablesList';
+
+const mockDashboardVariablesList = jest.fn(
+  ({
+    renderVariables,
+    topPlacementLabel,
+  }: {
+    renderVariables?: Array<{ state: { name: string; type?: string } }>;
+    topPlacementLabel?: string;
+  }) => (
+    <div>
+      {topPlacementLabel && <span>{topPlacementLabel}</span>}
+      {renderVariables
+        ?.filter((variable) =>
+          config.featureToggles.dashboardUnifiedDrilldownControls ? variable.state.type !== 'adhoc' : true
+        )
+        .map((variable, idx) => (
+          <span key={`${variable.state.name}-${idx}`}>{variable.state.name}</span>
+        ))}
+    </div>
+  )
+);
+
+jest.mock('./dashboard/DashboardVariablesList', () => ({
+  DashboardVariablesList: (props: {
+    renderVariables?: Array<{ state: { name: string; type?: string } }>;
+    topPlacementLabel?: string;
+  }) => mockDashboardVariablesList(props),
+}));
 
 describe('SectionVariablesList', () => {
   it('does not render local repeat variables in section variables list', () => {
@@ -46,6 +76,26 @@ describe('SectionVariablesList', () => {
       expect(screen.queryByText('filter0')).not.toBeInTheDocument();
     });
   });
+
+  it('uses top of row label for section variables placement', () => {
+    const row = buildRow();
+
+    render(<SectionVariablesList sectionOwner={row} />);
+
+    expect(mockDashboardVariablesList).toHaveBeenCalledWith(
+      expect.objectContaining({ topPlacementLabel: 'Top of row' })
+    );
+  });
+
+  it('uses top of tab label for tab section variables placement', () => {
+    const tab = buildTab();
+
+    render(<SectionVariablesList sectionOwner={tab} />);
+
+    expect(mockDashboardVariablesList).toHaveBeenCalledWith(
+      expect.objectContaining({ topPlacementLabel: 'Top of tab' })
+    );
+  });
 });
 
 function buildRow() {
@@ -70,4 +120,23 @@ function buildRow() {
   });
 
   return row;
+}
+
+function buildTab() {
+  const variableSet = new SceneVariableSet({
+    variables: [new CustomVariable({ name: 'custom0', query: 'sec1,sec2', value: ['sec1'], text: ['sec1'] })],
+  });
+
+  const tab = new TabItem({
+    $variables: variableSet,
+    layout: AutoGridLayoutManager.createEmpty(),
+  });
+
+  new DashboardScene({
+    body: new TabsLayoutManager({
+      tabs: [tab],
+    }),
+  });
+
+  return tab;
 }

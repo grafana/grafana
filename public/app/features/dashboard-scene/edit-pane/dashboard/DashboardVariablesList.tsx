@@ -28,15 +28,31 @@ const DROPPABLE_TO_HIDE: Record<string, VariableHide> = {
   [ID_HIDDEN_LIST]: VariableHide.hideVariable,
 };
 
-export function DashboardVariablesList({ variableSet }: { variableSet: SceneVariableSet }) {
-  const { variables } = variableSet.useState();
+interface DashboardVariablesListProps {
+  sourceVariableSet: SceneVariableSet;
+  renderVariables?: SceneVariable[];
+  includeAdHoc?: boolean;
+  topPlacementLabel?: string;
+}
+
+export function DashboardVariablesList({
+  sourceVariableSet,
+  renderVariables,
+  includeAdHoc = false,
+  topPlacementLabel,
+}: DashboardVariablesListProps) {
+  const { variables: allVariables } = sourceVariableSet.useState();
+  const listVariables = renderVariables ?? allVariables;
+  const resolvedTopPlacementLabel = topPlacementLabel
+    ? topPlacementLabel
+    : t('dashboard-scene.variables-list.top-placement.default', 'Above dashboard');
   const editable = useMemo(() => {
-    const { editable } = partitionVariablesByEditability(variables);
-    if (!config.featureToggles.dashboardUnifiedDrilldownControls) {
+    const { editable } = partitionVariablesByEditability(listVariables);
+    if (!config.featureToggles.dashboardUnifiedDrilldownControls || includeAdHoc) {
       return editable;
     }
     return editable.filter((v) => !sceneUtils.isAdHocVariable(v));
-  }, [variables]);
+  }, [includeAdHoc, listVariables]);
   const { visible, controlsMenu, hidden } = useMemo(() => partitionVariablesByDisplay(editable), [editable]);
 
   const onClickVariable = useCallback((variable: SceneVariable) => {
@@ -47,7 +63,7 @@ export function DashboardVariablesList({ variableSet }: { variableSet: SceneVari
   const onDragEnd = useMemo(
     () =>
       createDragEndHandler(
-        variableSet,
+        sourceVariableSet,
         { visible: ID_VISIBLE_LIST, controlsMenu: ID_CONTROLS_MENU_LIST, hidden: ID_HIDDEN_LIST },
         visible,
         controlsMenu,
@@ -58,7 +74,7 @@ export function DashboardVariablesList({ variableSet }: { variableSet: SceneVari
         ),
         DROPPABLE_TO_HIDE
       ),
-    [variableSet, visible, controlsMenu, hidden]
+    [sourceVariableSet, visible, controlsMenu, hidden]
   );
 
   return (
@@ -66,7 +82,8 @@ export function DashboardVariablesList({ variableSet }: { variableSet: SceneVari
       <DraggableList
         items={visible}
         droppableId={ID_VISIBLE_LIST}
-        title={t('dashboard-scene.variables-list.title-above-dashboard', 'Above dashboard ({{count}})', {
+        title={t('dashboard-scene.variables-list.title-top-placement', '{{placement}} ({{count}})', {
+          placement: resolvedTopPlacementLabel,
           count: visible.length,
         })}
         onClickItem={onClickVariable}
