@@ -138,14 +138,13 @@ Consider an alert rule with an **evaluation interval** set at every 30 seconds a
 | 01:00 (second evaluation) | Breached  | Pending              | 0s              |
 | 01:30 (third evaluation)  | Breached  | Pending              | 30s             |
 | 02:00 (fourth evaluation) | Breached  | Pending              | 60s             |
-| 02:30 (fifth evaluation)  | Breached  | Alerting 📩           | 90s             |
+| 02:30 (fifth evaluation)  | Breached  | Alerting 📩          | 90s             |
 
 With a **keep firing for** period of 0 seconds, the alert instance transitions immediately from **Alerting** to **Normal**, and marked as `Resolved`:
 
-| Time                       | Condition | Alert instance state         | Pending counter |
-| -------------------------- | --------- | ---------------------------- | --------------- |
+| Time                       | Condition | Alert instance state          | Pending counter |
+| -------------------------- | --------- | ----------------------------- | --------------- |
 | 03:00 (sixth evaluation)   | Not met   | Normal <sup>Resolved</sup> 📩 | 120s            |
-| 03:30 (seventh evaluation) | Not met   | Normal                       | 150s            |
-
+| 03:30 (seventh evaluation) | Not met   | Normal                        | 150s            |
 
 {{< figure src="/media/docs/alerting/alert-evaluation2.svg" alt="A diagram of alert state transitions of an alert example." max-width="750px" >}}

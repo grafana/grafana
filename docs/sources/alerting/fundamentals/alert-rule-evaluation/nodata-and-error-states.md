@@ -97,7 +97,6 @@ The **Error** state honors the [pending period](ref:pending-period): the alert i
 
 When an alert instance enters the **Error** state, Grafana, by default, triggers a new [`DatasourceError` alert](#no-data-and-error-alerts). You can control this behavior based on the desired outcome of your alert rule in [Modify the `No Data` or `Error` state](#modify-the-no-data-or-error-state).
 
-
 ## `No Data` state
 
 The **No Data** state occurs when the alert rule query runs successfully but returns no data points at all.
@@ -106,14 +105,13 @@ The **No Data** state honors the [pending period](ref:pending-period): the alert
 
 When an alert instance enters the **No Data** state, Grafana, by default, triggers a new [`DatasourceNoData` alert](#no-data-and-error-alerts). You can control this behavior based on the desired outcome of your alert rule in [Modify the `No Data` or `Error` state](#modify-the-no-data-or-error-state).
 
-
 ## Modify the `No Data` or `Error` state
 
-In [Configure no data and error handling](ref:no-data-and-error-handling), you can configure the behavior when the evaluation returns no data. 
+In [Configure no data and error handling](ref:no-data-and-error-handling), you can configure the behavior when the evaluation returns no data.
 
 {{< docs/shared lookup="alerts/modify-nodata-state.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-In [Configure no data and error handling](ref:no-data-and-error-handling), you can configure the behavior when the evaluation returns an error. 
+In [Configure no data and error handling](ref:no-data-and-error-handling), you can configure the behavior when the evaluation returns an error.
 
 {{< docs/shared lookup="alerts/modify-error-state.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
