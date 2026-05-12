@@ -6,20 +6,15 @@ import (
 	"errors"
 	"fmt"
 	"hash/fnv"
-	"maps"
 	"net/http"
 	"net/url"
-	"slices"
 	"strings"
 	"time"
 
 	openapiRuntime "github.com/go-openapi/runtime"
 	"github.com/go-openapi/strfmt"
-	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
 	alertingClusterPB "github.com/grafana/alerting/cluster/clusterpb"
 	alertingInstrument "github.com/grafana/alerting/http/instrument"
-	"github.com/grafana/alerting/http/v0mimir"
 	alertingModels "github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/utils/hash"
@@ -27,9 +22,7 @@ import (
 	amalertgroup "github.com/prometheus/alertmanager/api/v2/client/alertgroup"
 	amgeneral "github.com/prometheus/alertmanager/api/v2/client/general"
 	amsilence "github.com/prometheus/alertmanager/api/v2/client/silence"
-	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/client_golang/prometheus"
-	common_config "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
 	"go.yaml.in/yaml/v3"
 
@@ -43,7 +36,6 @@ import (
 	remoteClient "github.com/grafana/grafana/pkg/services/ngalert/remote/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	"github.com/grafana/grafana/pkg/services/secrets"
-	"github.com/grafana/grafana/pkg/util/cmputil"
 )
 
 const silenceOperationName = "/alertmanager/api/v2/silence/{uid}"
@@ -733,8 +725,7 @@ func (am *Alertmanager) shouldSendConfig(ctx context.Context, newCfg remoteClien
 		return true
 	}
 	if rc.Hash != newCfg.Hash {
-		diffPaths := am.logDiff(rc, &newCfg)
-		am.log.Debug("Hash of the remote Alertmanager configuration is different, sending the configuration", "remoteHash", rc.Hash, "hash", newCfg.Hash, "diff", diffPaths)
+		am.log.Debug("Hash of the remote Alertmanager configuration is different, sending the configuration", "remoteHash", rc.Hash, "hash", newCfg.Hash)
 		return true
 	}
 	return false
@@ -749,30 +740,4 @@ func calculateUserGrafanaConfigHash(config remoteClient.UserGrafanaConfig) (stri
 	hasher := fnv.New64a()
 	hash.DeepHashObject(hasher, &config)
 	return fmt.Sprintf("%x", hasher.Sum64()), nil
-}
-
-func (am *Alertmanager) logDiff(curCfg, newCfg *remoteClient.UserGrafanaConfig) []string {
-	defer func() {
-		if r := recover(); r != nil {
-			am.log.Warn("Panic while comparing configurations", "err", r)
-		}
-	}()
-	var reporter cmputil.DiffReporter
-	cOpt := []cmp.Option{
-		cmp.Reporter(&reporter),
-		cmpopts.EquateEmpty(),
-		cmpopts.SortMaps(func(a, b string) bool {
-			return a < b
-		}),
-		cmpopts.IgnoreFields(remoteClient.UserGrafanaConfig{}, "Hash", "CreatedAt", "Default"),
-		cmpopts.IgnoreUnexported(apimodels.PostableUserConfig{}, apimodels.Route{}, labels.Matcher{}, v0mimir.ProxyConfig{}, common_config.ProxyConfig{}, time.Location{}),
-	}
-	_ = cmp.Equal(curCfg, newCfg, cOpt...)
-	paths := reporter.Diffs.Paths()
-	// Deduplicate paths using map
-	uniquePaths := make(map[string]struct{}, len(paths))
-	for _, path := range paths {
-		uniquePaths[path] = struct{}{}
-	}
-	return slices.Collect(maps.Keys(uniquePaths))
 }
