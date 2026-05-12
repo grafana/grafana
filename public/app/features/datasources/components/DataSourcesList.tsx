@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import { DragDropContext, type DropResult, Draggable, Droppable } from '@hello-pangea/dnd';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { dispatch } from 'd3';
 import { type RefObject, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
@@ -12,7 +11,7 @@ import { EmptyState, LinkButton, TextLink, useStyles2, useTheme2 } from '@grafan
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
-import { type StoreState, useSelector } from 'app/types/store';
+import { type StoreState, useSelector, useDispatch } from 'app/types/store';
 
 import { ROUTES } from '../../connections/constants';
 import {
@@ -20,7 +19,7 @@ import {
   useDatasourceFailureByUID,
 } from '../../connections/hooks/useDatasourceAdvisorChecks';
 import { updateDataSource } from '../api';
-import { loadDataSource } from '../state/actions';
+import { loadDataSources } from '../state/actions';
 import { useLoadDataSources } from '../state/hooks';
 import { getDataSources, getDataSourcesCount } from '../state/selectors';
 import { trackDataSourcesListViewed } from '../tracking';
@@ -128,10 +127,10 @@ export function DataSourcesListView({
   const favoritesCheckbox =
     favoriteDataSources?.enabled && handleFavoritesCheckboxChange && showFavoritesOnly !== undefined
       ? {
-          onChange: handleFavoritesCheckboxChange,
-          value: showFavoritesOnly,
-          label: t('datasources.list.starred', 'Starred'),
-        }
+        onChange: handleFavoritesCheckboxChange,
+        value: showFavoritesOnly,
+        label: t('datasources.list.starred', 'Starred'),
+      }
       : undefined;
 
   // Filter data sources based on favorites when enabled
@@ -250,6 +249,7 @@ function DataSourcesListVirtualized({
   rowVirtualizer,
 }: DataSourcesListVirtualizedProps) {
   const styles = useStyles2(getStyles);
+  const dispatch = useDispatch();
 
   if (sortable) {
     const onDragEnd = (drop: DropResult) => {
@@ -313,10 +313,12 @@ function DataSourcesListVirtualized({
       }
 
       if (changes.length) {
+        console.log("CHANGES", changes)
+
         void (async () => {
           // Patch datasources whose ordinal changed.
           await Promise.all(changes.map(updateDataSource));
-          dispatch(loadDataSource()); // reload the list
+          dispatch(loadDataSources()); // reload the list
         })();
       }
     };

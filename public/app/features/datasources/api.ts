@@ -267,7 +267,7 @@ export const createDataSource = (dataSource: Partial<DataSourceSettings>) =>
 export const getDataSourcePlugins = () => getBackendSrv().get('/api/plugins', { enabled: 1, type: 'datasource' });
 
 export const updateDataSource = async (dataSource: DataSourceSettings) => {
-  if (getFeatureFlagClient().getBooleanValue(FlagKeys.DatasourcesConfigUiUseNewDatasourceCRUDAPIs, false)) {
+  if (false && getFeatureFlagClient().getBooleanValue(FlagKeys.DatasourcesConfigUiUseNewDatasourceCRUDAPIs, false)) {
     let k8sVersion = 'v0alpha1';
     let dsK8sSettings = convertLegacyDatasourceSettingsToK8sDatasourceSettings(
       dataSource,
@@ -311,6 +311,9 @@ export const updateDataSource = async (dataSource: DataSourceSettings) => {
       }
     );
   }
+
+  console.log('updateDataSource', dataSource.uid, dataSource.ordinal, dataSource);
+
   // we're setting showErrorAlert and showSuccessAlert to false to suppress the popover notifications. Request result will now be
   // handled by the data source config page
   return getBackendSrv().put(`/api/datasources/uid/${dataSource.uid}`, dataSource, {
