@@ -44,7 +44,7 @@ import {
 } from '@grafana/runtime';
 import {
   getPanelPluginMetas,
-  initDataSources,
+  initDataSourceInstanceSettings,
   initOpenFeature,
   setDataSourceImporter,
   setGetObservablePluginComponents,
@@ -258,7 +258,7 @@ export class GrafanaApp {
       // Init async data source services (populates cache from boot data so
       // new `getInstanceSettings` / `getInstanceSettingsList` callers don't
       // need to wait on a network round trip).
-      initDataSources(
+      initDataSourceInstanceSettings(
         { ...config.datasources, [expressionInstanceSettings.name]: expressionInstanceSettings },
         config.defaultDatasource
       );

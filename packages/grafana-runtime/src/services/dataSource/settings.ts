@@ -55,7 +55,10 @@ function populateMaps(settings: Record<string, DataSourceInstanceSettings>) {
  *
  * @internal
  */
-export function initDataSources(settings: Record<string, DataSourceInstanceSettings>, defaultDsName: string): void {
+export function initDataSourceInstanceSettings(
+  settings: Record<string, DataSourceInstanceSettings>,
+  defaultDsName: string
+): void {
   defaultName = defaultDsName;
   populateMaps(settings);
   fetchedAt = Date.now();
@@ -142,7 +145,7 @@ export async function getDataSourceInstanceSettingsList(
  *
  * @internal
  */
-export function upsertRuntimeDataSource(settings: DataSourceInstanceSettings): void {
+export function upsertRuntimeDataSourceInstanceSettings(settings: DataSourceInstanceSettings): void {
   if (runtimeByUid[settings.uid] || byUid[settings.uid]) {
     throw new Error(`A data source with uid ${settings.uid} has already been registered`);
   }
