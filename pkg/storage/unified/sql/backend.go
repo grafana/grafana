@@ -122,7 +122,8 @@ func NewStorageBackend(
 	case options.StorageTypeFile:
 		backend, store, err = newFileBackend(cfg)
 	case options.StorageTypeUnifiedGrpc:
-		return nil, nil
+		// No local backend; a remote gRPC client is used instead. backend
+		// and store stay nil and fall through to the single Set call below.
 	default:
 		backend, store, err = newSQLKVBackend(cfg, db, reg, storageMetrics, disableStorageServices)
 	}
@@ -130,7 +131,10 @@ func NewStorageBackend(
 		return nil, err
 	}
 
-	if kvProvider != nil && store != nil {
+	// Single Set site: every path above lands here exactly once, including
+	// the paths that produce no KV (store == nil). That signals
+	// ErrKVUnavailable to consumers rather than blocking them forever.
+	if kvProvider != nil {
 		kvProvider.Set(store)
 	}
 
@@ -249,11 +253,6 @@ func newSQLKVBackend(
 	}
 
 	return backend, sqlkv, nil
-}
-
-func NewFileBackend(cfg *setting.Cfg) (resource.StorageBackend, error) {
-	backend, _, err := newFileBackend(cfg)
-	return backend, err
 }
 
 func newFileBackend(cfg *setting.Cfg) (resource.StorageBackend, kv.KV, error) {
