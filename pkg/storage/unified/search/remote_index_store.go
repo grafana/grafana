@@ -93,6 +93,9 @@ type IndexMeta struct {
 
 // IndexStoreLock represents a distributed lock used to coordinate index store operations.
 type IndexStoreLock interface {
+	// Release stops renewing the lock and attempts to delete the lock object.
+	// After Lost is signaled, Release is best-effort cleanup; a nil return does
+	// not mean this caller retained ownership until release.
 	Release() error
 	Lost() <-chan struct{}
 }
