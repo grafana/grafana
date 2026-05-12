@@ -120,7 +120,8 @@
       "metadata": {
         "name": "alertRuleUseFiredAtForStartsAt",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-04-22T11:16:38Z"
+        "creationTimestamp": "2025-04-22T11:16:38Z",
+        "deletionTimestamp": "2026-05-12T10:50:19Z"
       },
       "spec": {
         "description": "Use FiredAt for StartsAt when sending alerts to Alertmaanger",
@@ -2729,14 +2730,16 @@
     {
       "metadata": {
         "name": "grafana.orgDashboardTemplates",
-        "resourceVersion": "1777989950811",
-        "creationTimestamp": "2026-05-05T14:05:50Z"
+        "resourceVersion": "1778509620347",
+        "creationTimestamp": "2026-05-05T14:05:50Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-05-11 14:27:00.347663 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables org-defined dashboard templates for enterprise",
         "stage": "experimental",
         "codeowner": "@grafana/sharing-squad",
-        "frontend": true,
         "expression": "false"
       }
     },

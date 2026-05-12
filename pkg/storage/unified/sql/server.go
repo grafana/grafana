@@ -9,6 +9,8 @@ import (
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed/dashboard"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 
@@ -18,7 +20,9 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed/backfill"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed/reconciler"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 )
 
@@ -65,6 +69,7 @@ func NewUninitializedResourceServer(opts ServerOptions) (resource.ResourceServer
 		withBackend,
 		withVectorBackend,
 		withEmbedder,
+		withVectorIndexers,
 		withQOSQueue,
 		withOverridesService,
 		withSearch,
@@ -200,6 +205,45 @@ func withVectorBackend(opts *ServerOptions, resourceOpts *resource.ResourceServe
 // the VectorSearch handler returns Unimplemented when it's absent.
 func withEmbedder(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
 	resourceOpts.Embedder = opts.Embedder
+	return nil
+}
+
+// withVectorIndexers builds the optional vector backfiller and
+// reconciler. Both providers return (nil, nil) when their feature is
+// off, so nil is normal and propagates through to the resource server
+// which simply doesn't start the goroutine.
+func withVectorIndexers(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	if !opts.Cfg.VectorIndexingEnabled ||
+		opts.Cfg.EmbeddingProvider == "" ||
+		opts.Backend == nil ||
+		opts.VectorBackend == nil ||
+		opts.Embedder == nil {
+		return nil
+	}
+	batchEmbedder := embedder.NewBatchEmbedder(*opts.Embedder)
+	builders := []embed.Builder{dashboard.New()}
+
+	var err error
+	resourceOpts.VectorBackfiller, err = backfill.NewVectorBackfiller(backfill.Options{
+		Storage:       opts.Backend,
+		VectorBackend: opts.VectorBackend,
+		BatchEmbedder: batchEmbedder,
+		Builders:      builders,
+	})
+	if err != nil {
+		return fmt.Errorf("create vector backfiller: %w", err)
+	}
+
+	resourceOpts.VectorReconciler, err = reconciler.New(reconciler.Options{
+		Storage:       opts.Backend,
+		VectorBackend: opts.VectorBackend,
+		BatchEmbedder: batchEmbedder,
+		Builders:      builders,
+		Interval:      opts.Cfg.VectorReconcilerInterval,
+	})
+	if err != nil {
+		return fmt.Errorf("create vector reconciler: %w", err)
+	}
 	return nil
 }
 

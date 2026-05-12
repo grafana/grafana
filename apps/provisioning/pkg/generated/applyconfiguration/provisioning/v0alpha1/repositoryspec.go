@@ -36,6 +36,9 @@ type RepositorySpecApplyConfiguration struct {
 	// The repository on GitHub.
 	// Mutually exclusive with local | github | git.
 	GitHub *GitHubRepositoryConfigApplyConfiguration `json:"github,omitempty"`
+	// The repository on a self-managed GitHub Enterprise Server (GHES).
+	// Mutually exclusive with local | github | git.
+	GitHubEnterprise *GitHubEnterpriseRepositoryConfigApplyConfiguration `json:"githubEnterprise,omitempty"`
 	// The repository on Git.
 	// Mutually exclusive with local | github | git.
 	Git *GitRepositoryConfigApplyConfiguration `json:"git,omitempty"`
@@ -127,6 +130,14 @@ func (b *RepositorySpecApplyConfiguration) WithLocal(value *LocalRepositoryConfi
 // If called multiple times, the GitHub field is set to the value of the last call.
 func (b *RepositorySpecApplyConfiguration) WithGitHub(value *GitHubRepositoryConfigApplyConfiguration) *RepositorySpecApplyConfiguration {
 	b.GitHub = value
+	return b
+}
+
+// WithGitHubEnterprise sets the GitHubEnterprise field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the GitHubEnterprise field is set to the value of the last call.
+func (b *RepositorySpecApplyConfiguration) WithGitHubEnterprise(value *GitHubEnterpriseRepositoryConfigApplyConfiguration) *RepositorySpecApplyConfiguration {
+	b.GitHubEnterprise = value
 	return b
 }
 
