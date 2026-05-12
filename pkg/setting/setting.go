@@ -701,7 +701,8 @@ type Cfg struct {
 	VectorDBUser             string
 	VectorDBPassword         string
 	VectorDBSSLMode          string
-	VectorBackfillerEnabled  bool          // backfill resources without embeddings
+	VectorIndexingEnabled    bool          // run the embedding backfiller and reconciler
+	VectorReconcilerInterval time.Duration // reconciler tick interval; default 60s
 	VectorPromotionThreshold int           // row count per tenant to trigger promotion
 	VectorPromoterInterval   time.Duration // promoter tick interval; 0 disables
 
