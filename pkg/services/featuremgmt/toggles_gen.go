@@ -989,4 +989,8 @@ const (
 	// FlagPluginsMarketplaceLicensing
 	// Enables marketplace plugin licensing
 	FlagPluginsMarketplaceLicensing = "plugins.marketplaceLicensing"
+
+	// FlagAlertingSyncExternalAlertmanager
+	// Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana
+	FlagAlertingSyncExternalAlertmanager = "alerting.syncExternalAlertmanager"
 )

@@ -202,7 +202,7 @@ test.describe(
       // Open the modal editor in the side pane
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.outlineButton).click();
       await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.Outline.node('Variables')).click();
-      await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.Outline.item('foo')).click();
+      await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.Outline.item('Foo')).click();
       await openModal(dashboardPage, selectors);
 
       // Check the items
