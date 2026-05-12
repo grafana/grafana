@@ -18,7 +18,7 @@ export default defineConfig<PluginOptions>({
     screenshot: 'only-on-failure',
   },
   webServer: {
-    command: 'yarn storybook',
+    command: 'pnpm run storybook',
     url: 'http://localhost:9001',
     stdout: 'ignore',
     stderr: 'pipe',

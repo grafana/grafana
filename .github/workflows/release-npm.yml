@@ -103,26 +103,24 @@ jobs:
       - name: Update npm
         run: npm install -g npm@^11.5.1
 
-      - name: Install yarn dependencies
-        uses: ./.github/actions/yarn-install
-        with:
-          hardened-mode: 'true'
+      - name: Install dependencies
+        uses: ./.github/actions/pnpm-install
 
       - name: Typecheck packages
-        run: yarn run packages:typecheck
+        run: pnpm run packages:typecheck
 
       - name: Version, build, and pack packages
         env:
           VERSION: ${{ inputs.version }}
         run: |
-          yarn run packages:build
-          yarn lerna version "$VERSION" \
+          pnpm run packages:build
+          pnpm exec lerna version "$VERSION" \
             --exact \
             --no-git-tag-version \
             --no-push \
             --force-publish \
             --yes
-          yarn run packages:pack
+          pnpm run packages:pack
 
       - name: Debug packed files
         run: tree -a ./npm-artifacts

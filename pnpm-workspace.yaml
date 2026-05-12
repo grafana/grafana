@@ -1,0 +1,12 @@
+packages:
+  - 'packages/*'
+  - 'public/app/plugins/*/*'
+  - 'e2e-playwright/test-plugins/*'
+
+onlyBuiltDependencies:
+  - '@parcel/watcher'
+  - '@swc/core'
+  - esbuild
+  - msw
+  - protobufjs
+  - unrs-resolver

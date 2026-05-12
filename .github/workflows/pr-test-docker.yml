@@ -15,10 +15,10 @@ on:
       - '**/package.json'
       - '**/nx.json'
       - '**/project.json'
-      - '**/yarn.lock'
+      - '**/pnpm-lock.yaml'
       - conf/**
-      - .yarnrc.yml
-      - .yarn/**
+      - .npmrc
+      - pnpm-workspace.yaml
       - tsconfig.json
       - '**.js'
       # We only want the top directory here.

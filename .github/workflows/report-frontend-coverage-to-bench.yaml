@@ -45,7 +45,7 @@ jobs:
         uses: ./.github/actions/setup-node
 
       - name: Install dependencies
-        uses: ./.github/actions/yarn-install
+        uses: ./.github/actions/pnpm-install
 
       - name: Get Grafana version
         id: version
@@ -55,7 +55,7 @@ jobs:
           echo "Grafana version: $GRAFANA_VERSION"
 
       - name: Run coverage for ${{ matrix.codeowner }}
-        run: yarn test:coverage:by-codeowner "${{ matrix.codeowner }}" --maxWorkers=1
+        run: pnpm run test:coverage:by-codeowner "${{ matrix.codeowner }}" --maxWorkers=1
         env:
           SHOULD_OPEN_COVERAGE_REPORT: 'false'
           CI: 'true'

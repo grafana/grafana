@@ -39,7 +39,7 @@
     "uuid": "11.1.0"
   },
   "devDependencies": {
-    "@grafana/plugin-configs": "13.1.0-pre",
+    "@grafana/plugin-configs": "workspace:*",
     "@testing-library/dom": "10.4.1",
     "@testing-library/jest-dom": "6.6.4",
     "@testing-library/react": "16.3.0",
@@ -64,11 +64,11 @@
   },
   "scripts": {
     "build": "webpack -c ./webpack.config.ts --env production",
-    "build:stats": "yarn build --env stats --profile --json=compilation-stats.json",
+    "build:stats": "pnpm run build --env stats --profile --json=compilation-stats.json",
     "build:commit": "webpack -c ./webpack.config.ts --env production --env commit=$(git rev-parse --short HEAD)",
     "dev": "webpack -w -c ./webpack.config.ts --env development",
     "test": "jest --watch --onlyChanged",
     "test:ci": "jest --maxWorkers 4"
   },
-  "packageManager": "yarn@4.11.0"
+  "packageManager": "pnpm@10.33.2"
 }

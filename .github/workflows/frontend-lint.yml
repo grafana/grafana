@@ -46,10 +46,10 @@ jobs:
         persist-credentials: false
     - name: Setup Node.js
       uses: ./.github/actions/setup-node
-    - name: Install yarn dependencies
-      uses: ./.github/actions/yarn-install
-    - run: yarn run prettier:check
-    - run: yarn run lint
+    - name: Install dependencies
+      uses: ./.github/actions/pnpm-install
+    - run: pnpm run prettier:check
+    - run: pnpm run lint
   lint-frontend-prettier-enterprise:
     needs: detect-changes
     permissions:
@@ -69,10 +69,10 @@ jobs:
       uses: ./.github/actions/setup-enterprise
       with:
         github-app-name: 'grafana-ci-bot'
-    - name: Install yarn dependencies
-      uses: ./.github/actions/yarn-install
-    - run: yarn run prettier:check
-    - run: yarn run lint
+    - name: Install dependencies
+      uses: ./.github/actions/pnpm-install
+    - run: pnpm run prettier:check
+    - run: pnpm run lint
   lint-frontend-typecheck:
     needs: detect-changes
     permissions:
@@ -91,9 +91,9 @@ jobs:
         persist-credentials: false
     - name: Setup Node.js
       uses: ./.github/actions/setup-node
-    - name: Install yarn dependencies
-      uses: ./.github/actions/yarn-install
-    - run: yarn run typecheck
+    - name: Install dependencies
+      uses: ./.github/actions/pnpm-install
+    - run: pnpm run typecheck
   lint-frontend-typecheck-enterprise:
     needs: detect-changes
     permissions:
@@ -115,9 +115,9 @@ jobs:
       uses: ./.github/actions/setup-enterprise
       with:
         github-app-name: 'grafana-ci-bot'
-    - name: Install yarn dependencies
-      uses: ./.github/actions/yarn-install
-    - run: yarn run typecheck
+    - name: Install dependencies
+      uses: ./.github/actions/pnpm-install
+    - run: pnpm run typecheck
   lint-frontend-typecheck-tsgo-enterprise:
     needs: detect-changes
     permissions:
@@ -140,9 +140,9 @@ jobs:
       uses: ./.github/actions/setup-enterprise
       with:
         github-app-name: 'grafana-ci-bot'
-    - name: Install yarn dependencies
-      uses: ./.github/actions/yarn-install
-    - run: yarn run typecheck:tsgo
+    - name: Install dependencies
+      uses: ./.github/actions/pnpm-install
+    - run: pnpm run typecheck:tsgo
   lint-frontend-api-clients:
     permissions:
       contents: read
@@ -158,15 +158,15 @@ jobs:
         persist-credentials: false
     - name: Setup Node
       uses: ./.github/actions/setup-node
-    - name: Install yarn dependencies
-      uses: ./.github/actions/yarn-install
+    - name: Install dependencies
+      uses: ./.github/actions/pnpm-install
     - name: Generate API clients
       run: |
         extract_error_message='ERROR! API client generation failed!'
-        yarn generate-apis || (echo "${extract_error_message}" && false)
+        pnpm run generate-apis || (echo "${extract_error_message}" && false)
     - name: Verify generated clients
       run: |
-        uncommited_error_message="ERROR! API client generation has not been committed. Please run 'yarn generate-apis', commit the changes and push again."
+        uncommited_error_message="ERROR! API client generation has not been committed. Please run 'pnpm run generate-apis', commit the changes and push again."
         file_diff="$(git diff ':!conf')"
         if [ -n "$file_diff" ]; then
             echo "$file_diff"
@@ -186,8 +186,8 @@ jobs:
         persist-credentials: false
     - name: Setup Node.js
       uses: ./.github/actions/setup-node
-    - name: Install yarn dependencies
-      uses: ./.github/actions/yarn-install
+    - name: Install dependencies
+      uses: ./.github/actions/pnpm-install
     - name: Free up disk space
       run: |
         sudo rm -rf /usr/local/lib/android || true
@@ -197,11 +197,11 @@ jobs:
     - name: Generate OpenAPI specs
       run: |
         extract_error_message='ERROR! OpenAPI generation failed!'
-        yarn generate:openapi || (echo "${extract_error_message}" && false)
+        pnpm run generate:openapi || (echo "${extract_error_message}" && false)
     - name: Verify generated specs
       run: |
         git add -N .
-        uncommited_error_message="ERROR! OpenAPI generation has not been committed. Please run 'yarn generate:openapi', commit the changes and push again."
+        uncommited_error_message="ERROR! OpenAPI generation has not been committed. Please run 'pnpm run generate:openapi', commit the changes and push again."
         file_diff="$(git diff --name-only ':!conf')"
         if [ -n "$file_diff" ]; then
             echo "$file_diff"
@@ -226,15 +226,15 @@ jobs:
       uses: ./.github/actions/setup-enterprise
       with:
         github-app-name: 'grafana-ci-bot'
-    - name: Install yarn dependencies
-      uses: ./.github/actions/yarn-install
+    - name: Install dependencies
+      uses: ./.github/actions/pnpm-install
     - name: Generate API clients
       run: |
         extract_error_message='ERROR! API client generation failed!'
-        yarn generate-apis || (echo "${extract_error_message}" && false)
+        pnpm run generate-apis || (echo "${extract_error_message}" && false)
     - name: Verify generated clients
       run: |
-        uncommited_error_message="ERROR! API client generation has not been committed. Please run 'yarn generate-apis', commit the changes and push again."
+        uncommited_error_message="ERROR! API client generation has not been committed. Please run 'pnpm run generate-apis', commit the changes and push again."
         file_diff="$(git diff ':!conf')"
         if [ -n "$file_diff" ]; then
             echo "$file_diff"
@@ -256,12 +256,12 @@ jobs:
         persist-credentials: false
     - name: Setup Node
       uses: ./.github/actions/setup-node
-    - name: Install yarn dependencies
-      uses: ./.github/actions/yarn-install
+    - name: Install dependencies
+      uses: ./.github/actions/pnpm-install
     - name: Build and pack packages
       run: |
-        yarn run packages:build
-        yarn run packages:pack
+        pnpm run packages:build
+        pnpm run packages:pack
     - name: Validate packages
       run: ./scripts/validate-npm-packages.sh
   lint-circular-dependencies:
@@ -282,15 +282,15 @@ jobs:
       uses: ./pr/.github/actions/setup-node
       with:
         cwd: './pr'
-    - name: Install yarn dependencies
-      uses: ./pr/.github/actions/yarn-install
+    - name: Install dependencies
+      uses: ./pr/.github/actions/pnpm-install
       with:
         cwd: './pr'
     - name: Check circular dependencies on PR
       # the first sed command is used to clean the output
       working-directory: ./pr
       run: |
-        yarn lint:circular &> /tmp/pr-circular.txt || true
+        pnpm run lint:circular &> /tmp/pr-circular.txt || true
         sed -n '/.*Found \([0-9]*\) circular.*/,$p' /tmp/pr-circular.txt > /tmp/pr-circular-clean.txt
         echo "Circular dependencies on PR:"
         pr_count=$(sed -n 's/.*Found \([0-9]*\) circular.*/\1/p' /tmp/pr-circular-clean.txt)
@@ -306,15 +306,15 @@ jobs:
       uses: ./pr/.github/actions/setup-node # run the action from the PR, pointing to the base checkout
       with:
         cwd: './main'
-    - name: Install yarn dependencies
-      uses: ./pr/.github/actions/yarn-install # run the action from the PR, pointing to the base checkout
+    - name: Install dependencies
+      uses: ./pr/.github/actions/pnpm-install # run the action from the PR, pointing to the base checkout
       with:
         cwd: './main'
     - name: Check circular dependencies on main
       working-directory: ./main
       # the first sed command is used to clean the output
       run: |
-        yarn lint:circular &> /tmp/main-circular.txt || true
+        pnpm run lint:circular &> /tmp/main-circular.txt || true
         sed -n '/.*Found \([0-9]*\) circular.*/,$p' /tmp/main-circular.txt > /tmp/main-circular-clean.txt
         echo "Circular dependencies on main:"
         main_count=$(sed -n 's/.*Found \([0-9]*\) circular.*/\1/p' /tmp/main-circular-clean.txt)
@@ -332,12 +332,12 @@ jobs:
           exit 1
         fi
 
-  yarn-install-validation:
+  pnpm-install-validation:
     needs:
       - detect-changes
     if: needs.detect-changes.outputs.changed-frontend-dependencies == 'true'
     runs-on: ubuntu-x64
-    name: Validate yarn install
+    name: Validate pnpm install
     permissions:
       contents: read
     steps:
@@ -347,8 +347,9 @@ jobs:
     - name: Setup Node.js
       uses: ./.github/actions/setup-node
 
-    # Deliberately not using the yarn-install action for exact control over the command for extra checks
-    - name: Install yarn dependencies
-      run: yarn install --immutable --check-cache
-      env:
-        YARN_ENABLE_HARDENED_MODE: 1
+    - name: Install pnpm
+      uses: pnpm/action-setup@v4
+
+    # Deliberately not using the pnpm-install action for exact control over the command for extra checks
+    - name: Install dependencies
+      run: pnpm install --frozen-lockfile

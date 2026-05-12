@@ -103,7 +103,7 @@
       "name": "Debug UI test",
       "type": "node",
       "request": "launch",
-      "runtimeExecutable": "yarn",
+      "runtimeExecutable": "pnpm",
       "runtimeArgs": ["run", "jest", "--runInBand", "${file}"],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
@@ -115,7 +115,7 @@
       "name": "Debug ESLint",
       "type": "node",
       "request": "launch",
-      "runtimeExecutable": "yarn",
+      "runtimeExecutable": "pnpm",
       "runtimeArgs": ["run", "eslint", "${file}"],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen"
@@ -124,7 +124,7 @@
       "name": "Debug ESLint with stats reporter",
       "type": "node",
       "request": "launch",
-      "runtimeExecutable": "yarn",
+      "runtimeExecutable": "pnpm",
       "runtimeArgs": ["run", "eslint", "${file}", "--format", "./scripts/cli/eslint-stats-reporter.mjs"],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen"

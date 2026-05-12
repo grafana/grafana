@@ -20,8 +20,8 @@ FROM --platform=${JS_PLATFORM} node:24-alpine AS js-builder-base
 # Javascript build stage
 FROM --platform=${JS_PLATFORM} ${JS_IMAGE} AS js-builder
 ARG JS_NODE_ENV=production
-ARG JS_YARN_INSTALL_FLAG=--immutable
-ARG JS_YARN_BUILD_FLAG=build
+ARG JS_PNPM_INSTALL_FLAG=--frozen-lockfile
+ARG JS_PNPM_BUILD_FLAG=build
 
 ENV NODE_OPTIONS=--max_old_space_size=8000
 
@@ -29,8 +29,8 @@ WORKDIR /tmp/grafana
 
 RUN apk add --no-cache make build-base python3
 
-COPY package.json project.json nx.json yarn.lock .yarnrc.yml ./
-COPY .yarn .yarn
+COPY package.json project.json nx.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
+COPY patches patches
 COPY packages packages
 COPY e2e-playwright e2e-playwright
 COPY public public
@@ -42,10 +42,12 @@ COPY conf/defaults.ini ./conf/defaults.ini
 #
 ENV NODE_ENV=${JS_NODE_ENV}
 #
-RUN if [ "$JS_YARN_INSTALL_FLAG" = "" ]; then \
-    yarn install; \
+RUN corepack enable && corepack prepare pnpm@10.33.2 --activate
+#
+RUN if [ "$JS_PNPM_INSTALL_FLAG" = "" ]; then \
+    pnpm install; \
   else \
-    yarn install --immutable; \
+    pnpm install --frozen-lockfile; \
   fi
 
 COPY tsconfig.json eslint.config.js .editorconfig .browserslistrc .prettierrc.js ./
@@ -53,7 +55,7 @@ COPY scripts scripts
 COPY emails emails
 
 # Set the build argument according to default or argument passed
-RUN yarn ${JS_YARN_BUILD_FLAG}
+RUN pnpm run ${JS_PNPM_BUILD_FLAG}
 
 # Golang build stage
 FROM ${GO_IMAGE} AS go-builder

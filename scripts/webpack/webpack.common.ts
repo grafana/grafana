@@ -45,6 +45,7 @@ export default (env: Env = {}): Configuration => ({
     publicPath: 'public/build/',
   },
   resolve: {
+    symlinks: false,
     conditionNames: ['@grafana-app/source', '...'],
     extensions: ['.ts', '.tsx', '.es6', '.js', '.json', '.svg'],
     alias: {

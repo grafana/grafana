@@ -12,16 +12,16 @@ for file in "$ARTIFACTS_DIR"/*.tgz; do
   echo "🔍 Checking NPM package: $file"
 
   # If you need to debug ATTW issues, pass "--format json" to get verbose output.
-  if ! NODE_OPTIONS="-C @grafana-app/source" yarn attw "$file" --ignore-rules "false-cjs" --profile "node16"; then
+  if ! NODE_OPTIONS="-C @grafana-app/source" pnpm exec attw "$file" --ignore-rules "false-cjs" --profile "node16"; then
     echo "attw check failed for $file"
     echo ""
-    failed_checks+=("$file - yarn attw")
+    failed_checks+=("$file - pnpm exec attw")
   fi
 
-  if ! yarn publint "$file"; then
+  if ! pnpm exec publint "$file"; then
     echo "publint check failed for $file"
     echo ""
-    failed_checks+=("$file - yarn publint")
+    failed_checks+=("$file - pnpm exec publint")
   fi
 done
 

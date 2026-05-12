@@ -161,7 +161,7 @@ pkg/services/featuremgmt/openfeature-manifest-react.gen.json
 
 /scripts/build/release_publisher/release_publisher
 *.patch
-!.yarn/patches/*.patch
+!patches/*.patch
 
 # Ignoring frontend packages specifics
 /packages/grafana-ui/.yarn/.cache

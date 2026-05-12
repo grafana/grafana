@@ -130,10 +130,12 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-node
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
       - name: Install JS dependencies
-        run: yarn install --immutable
+        run: pnpm install --frozen-lockfile
       - name: Build frontend
-        run: yarn build
+        run: pnpm run build
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: release-frontend

@@ -53,11 +53,11 @@
     "postpack": "mv package.json.bak package.json"
   },
   "dependencies": {
-    "@grafana/data": "13.1.0-pre",
-    "@grafana/e2e-selectors": "13.1.0-pre",
+    "@grafana/data": "workspace:*",
+    "@grafana/e2e-selectors": "workspace:*",
     "@grafana/faro-web-sdk": "^2.2.4",
-    "@grafana/schema": "13.1.0-pre",
-    "@grafana/ui": "13.1.0-pre",
+    "@grafana/schema": "workspace:*",
+    "@grafana/ui": "workspace:*",
     "@openfeature/core": "^1.10.0",
     "@openfeature/ofrep-web-provider": "^0.3.6",
     "@openfeature/react-sdk": "^1.3.0",

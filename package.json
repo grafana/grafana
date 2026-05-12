@@ -6,12 +6,13 @@
   "version": "13.1.0-pre",
   "repository": "github:grafana/grafana",
   "scripts": {
+    "postinstall": "find packages public/app/plugins e2e-playwright -mindepth 2 -maxdepth 2 -name node_modules -type d -exec rm -rf {} + 2>/dev/null || true",
     "analytics-report": "node ./scripts/cli/analytics/main.mts",
     "analytics-report:test": "node --test ./scripts/cli/analytics/*.test.mts",
     "check-frontend-dev": "./scripts/check-frontend-dev.sh",
-    "build": "NODE_ENV=production nx exec --verbose -- webpack --config scripts/webpack/webpack.prod.ts && yarn build:react19",
-    "build:react19": "NODE_ENV=production nx exec --verbose -- webpack --config scripts/webpack/webpack.prod.ts --env react19=1",
-    "build:nominify": "yarn run build -- --env noMinify=1",
+    "build": "NODE_ENV=production webpack --config scripts/webpack/webpack.prod.ts && pnpm run build:react19",
+    "build:react19": "NODE_ENV=production webpack --config scripts/webpack/webpack.prod.ts --env react19=1",
+    "build:nominify": "pnpm run build -- --env noMinify=1",
     "build:stats": "NODE_ENV=production webpack --progress --config scripts/webpack/webpack.stats.ts",
     "build:smolstats": "NODE_ENV=production webpack --progress --config scripts/webpack/webpack.stats.ts --env filtered=1 && http-server public/build -o bundle-stats-filtered.html",
     "codeowners-manifest": "node ./scripts/codeowners-manifest/index.js",
@@ -21,54 +22,54 @@
     "codeowners-manifest:raw": "node ./scripts/codeowners-manifest/raw.js",
     "canvas-compare": "npx jest-canvas-mock-compare-viewer",
     "dev": "NODE_ENV=dev nx exec -- webpack --config scripts/webpack/webpack.dev.ts",
-    "e2e:schema-v2": "KUBERNETES_DASHBOARDS=true yarn playwright test --project dashboards",
-    "e2e:playwright": "NODE_OPTIONS='-C @grafana-app/source' yarn playwright test --grep-invert @cloud-plugins",
-    "e2e:pw": "NODE_OPTIONS='-C @grafana-app/source' yarn playwright test",
-    "e2e:playwright:debug": "yarn e2e:pw --debug -x --trace on",
-    "e2e:playwright:10x": "yarn e2e:pw --repeat-each=10",
-    "e2e:playwright:cloud-plugins": "NODE_OPTIONS='-C @grafana-app/source' yarn playwright test --grep @cloud-plugins",
-    "e2e:playwright:storybook": "NODE_OPTIONS='-C @grafana-app/source' yarn playwright test -c playwright.storybook.config.ts",
-    "e2e:playwright:a11y": "AXE_A11Y_REPORT_PATH=./axe-ci-report.json NODE_OPTIONS='-C @grafana-app/source' yarn playwright test --grep \"@a11y\"",
-    "e2e:acceptance": "NODE_OPTIONS='-C @grafana-app/source' yarn playwright test --grep @acceptance",
+    "e2e:schema-v2": "KUBERNETES_DASHBOARDS=true playwright test --project dashboards",
+    "e2e:playwright": "NODE_OPTIONS='-C @grafana-app/source' playwright test --grep-invert @cloud-plugins",
+    "e2e:pw": "NODE_OPTIONS='-C @grafana-app/source' playwright test",
+    "e2e:playwright:debug": "pnpm run e2e:pw -- --debug -x --trace on",
+    "e2e:playwright:10x": "pnpm run e2e:pw -- --repeat-each=10",
+    "e2e:playwright:cloud-plugins": "NODE_OPTIONS='-C @grafana-app/source' playwright test --grep @cloud-plugins",
+    "e2e:playwright:storybook": "NODE_OPTIONS='-C @grafana-app/source' playwright test -c playwright.storybook.config.ts",
+    "e2e:playwright:a11y": "AXE_A11Y_REPORT_PATH=./axe-ci-report.json NODE_OPTIONS='-C @grafana-app/source' playwright test --grep \"@a11y\"",
+    "e2e:acceptance": "NODE_OPTIONS='-C @grafana-app/source' playwright test --grep @acceptance",
     "e2e:plugin:build": "nx run-many -t build --projects='@test-plugins/*'",
     "e2e:plugin:build:dev": "nx run-many -t dev --projects='@test-plugins/*' --maxParallel=100",
     "test": "jest --notify --watch",
     "test:coverage": "jest --coverage",
-    "test:coverage:by-codeowner": "yarn codeowners-manifest && node scripts/test-coverage-by-codeowner.js",
+    "test:coverage:by-codeowner": "pnpm run codeowners-manifest && node scripts/test-coverage-by-codeowner.js",
     "test:coverage:changes": "jest --coverage --changedSince=origin/main",
-    "test:storybook": "yarn workspace @grafana/ui storybook:test",
+    "test:storybook": "pnpm --filter @grafana/ui run storybook:test",
     "test:accessibility-report": "./scripts/generate-a11y-report.sh",
     "test:profile": "node --cpu-prof --cpu-prof-dir=.profiles --cpu-prof-name=grafana-jest-$(date -u +\"%Y-%m-%dT%H:%M:%S\").cpuprofile node_modules/.bin/jest --runInBand --no-coverage --no-cache",
     "test:ci": "mkdir -p reports/junit && JEST_JUNIT_OUTPUT_DIR=reports/junit jest --ci --reporters=default --reporters=jest-junit -w ${TEST_MAX_WORKERS:-100%} --shard=${TEST_SHARD:-1}/${TEST_SHARD_TOTAL:-1}",
-    "lint": "yarn run lint:ts && yarn run lint:sass",
+    "lint": "pnpm run lint:ts && pnpm run lint:sass",
     "lint:ts": "eslint ./ ./public/app/extensions/ --cache --no-error-on-unmatched-pattern",
-    "lint:sass": "yarn stylelint '{public/sass,packages}/**/*.scss' --cache",
-    "lint:fix": "yarn lint:ts --fix",
-    "lint:prune": "yarn lint:ts --prune-suppressions",
+    "lint:sass": "stylelint '{public/sass,packages}/**/*.scss' --cache",
+    "lint:fix": "pnpm run lint:ts -- --fix",
+    "lint:prune": "pnpm run lint:ts -- --prune-suppressions",
     "lint:circular": "madge --circular --extensions ts,tsx --no-count --no-spinner .",
     "packages:build": "nx run-many -t build --projects='tag:scope:package'",
     "packages:clean": "rimraf ./npm-artifacts && nx run-many -t clean --projects='tag:scope:package' --maxParallel=100",
     "packages:i18n-extract": "nx run-many -t i18n-extract --projects='tag:scope:package'",
     "packages:prepare": "lerna version --no-push --no-git-tag-version --force-publish --exact",
-    "packages:pack": "mkdir -p ./npm-artifacts && lerna exec --no-private -- yarn pack --out \"../../npm-artifacts/%s-%v.tgz\"",
+    "packages:pack": "mkdir -p ./npm-artifacts && lerna exec --no-private -- pnpm pack --pack-destination ../../npm-artifacts",
     "packages:typecheck": "nx run-many -t typecheck --projects='tag:scope:package'",
     "packages:test:ci": "nx run-many -t test:ci --projects='tag:scope:package'",
     "prettier:check": "prettier --check --ignore-path .prettierignore --list-different=false --log-level=warn \"**/*.{ts,tsx,scss,md,mdx,json,js,cjs}\"",
     "prettier:checkDocs": "prettier --check --list-different=false --log-level=warn \"docs/**/*.md\" \"*.md\" \"packages/**/*.{ts,tsx,scss,md,mdx,json,js,cjs}\"",
     "prettier:write": "prettier --ignore-path .prettierignore --list-different \"**/*.{js,ts,tsx,scss,md,mdx,json,cjs}\" --write",
     "start": "NODE_ENV=dev nx exec -- webpack --config scripts/webpack/webpack.dev.ts --watch",
-    "start:liveReload": "yarn start -- --env liveReload=1",
-    "start:noTsCheck": "yarn start -- --env noTsCheck=1",
-    "start:noLint": "yarn start -- --env noTsCheck=1 --env noLint=1",
+    "start:liveReload": "pnpm run start -- --env liveReload=1",
+    "start:noTsCheck": "pnpm run start -- --env noTsCheck=1",
+    "start:noLint": "pnpm run start -- --env noTsCheck=1 --env noLint=1",
     "stats": "webpack --mode production --config scripts/webpack/webpack.prod.ts --profile --json > compilation-stats.json",
-    "storybook": "yarn workspace @grafana/ui storybook",
-    "storybook:build": "yarn workspace @grafana/ui storybook:build",
-    "themes-generate": "yarn workspace @grafana/data themes-schema && esbuild --target=es6 ./scripts/cli/generateSassVariableFiles.ts --bundle --conditions=@grafana-app/source --platform=node --tsconfig=./scripts/cli/tsconfig.json | node",
+    "storybook": "pnpm --filter @grafana/ui run storybook",
+    "storybook:build": "pnpm --filter @grafana/ui run storybook:build",
+    "themes-generate": "pnpm --filter @grafana/data run themes-schema && esbuild --target=es6 ./scripts/cli/generateSassVariableFiles.ts --bundle --conditions=@grafana-app/source --platform=node --tsconfig=./scripts/cli/tsconfig.json | node",
     "themes:usage": "eslint . --ignore-pattern '*.test.ts*' --ignore-pattern '*.spec.ts*' --cache --plugin '@grafana' --rule '{ @grafana/theme-token-usage: \"error\" }'",
-    "typecheck": "tsc --noEmit && yarn run packages:typecheck",
+    "typecheck": "tsc --noEmit && pnpm run packages:typecheck",
     "typecheck:tsgo": "tsgo --noEmit",
     "plugins:build-bundled": "echo 'bundled plugins are no longer supported'",
-    "watch": "yarn start -d watch,start core:start --watchTheme",
+    "watch": "pnpm run start -- -d watch,start core:start --watchTheme",
     "i18n:stats": "node ./scripts/cli/reportI18nStats.mjs",
     "i18n-extract": "LANG=en_US.UTF-8 make i18n-extract",
     "plugin:build": "nx run-many -t build --projects='tag:scope:plugin'",
@@ -76,9 +77,9 @@
     "plugin:build:dev": "nx run-many -t dev --projects='tag:scope:plugin' --maxParallel=100",
     "plugin:test:ci": "nx run-many -t test:ci --projects='tag:scope:plugin' --maxParallel=2",
     "plugin:i18n-extract": "nx run-many -t i18n-extract --projects='tag:scope:plugin'",
-    "generate-apis": "yarn workspace @grafana/api-clients generate-apis",
-    "generate:api-client": "yarn workspace @grafana/api-clients generate:api-client",
-    "generate:openapi": "yarn workspace @grafana/openapi generate:openapi"
+    "generate-apis": "pnpm --filter @grafana/api-clients run generate-apis",
+    "generate:api-client": "pnpm --filter @grafana/api-clients run generate:api-client",
+    "generate:openapi": "pnpm --filter @grafana/openapi run generate:openapi"
   },
   "grafana": {
     "whatsNewUrl": "https://grafana.com/docs/grafana/next/whatsnew/whats-new-in-v%[1]s-%[2]s/",
@@ -86,6 +87,8 @@
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.2",
+    "@grafana-plugins/loki": "workspace:*",
+    "@grafana-plugins/tempo": "workspace:*",
     "@axe-core/playwright": "^4.11.1",
     "@babel/core": "7.28.0",
     "@babel/preset-env": "7.28.0",
@@ -400,7 +403,7 @@
     "react-dom-19": "npm:react-dom@^19.2.4",
     "react-draggable": "4.5.0",
     "react-dropzone": "^14.2.3",
-    "react-grid-layout": "patch:react-grid-layout@npm%3A1.4.4#~/.yarn/patches/react-grid-layout-npm-1.4.4-4024c5395b.patch",
+    "react-grid-layout": "1.4.4",
     "react-highlight-words": "0.21.0",
     "react-hook-form": "^7.49.2",
     "react-i18next": "^15.0.0",
@@ -445,51 +448,58 @@
     "vis-network": "10.0.2",
     "whatwg-fetch": "3.6.20"
   },
-  "resolutions": {
-    "underscore": "1.13.8",
-    "@types/slate": "0.47.11",
-    "semver@npm:~7.3.5": "^7.3.5",
-    "debug@npm:^0.7.2": "2.6.9",
-    "debug@npm:^0.7.4": "2.6.9",
-    "slate-dev-environment@^0.2.2": "patch:slate-dev-environment@npm:0.2.5#.yarn/patches/slate-dev-environment-npm-0.2.5-9aeb7da7b5.patch",
-    "react-split-pane@0.1.92": "patch:react-split-pane@npm:0.1.92#.yarn/patches/react-split-pane-npm-0.1.92-93dbf51dff.patch",
-    "history@4.10.1": "patch:history@npm%3A4.10.1#./.yarn/patches/history-npm-4.10.1-ee217563ae.patch",
-    "redux": "^5.0.0",
-    "react-grid-layout": "patch:react-grid-layout@npm%3A1.4.4#~/.yarn/patches/react-grid-layout-npm-1.4.4-4024c5395b.patch",
-    "@grafana/plugin-e2e/@grafana/e2e-selectors": "workspace:*",
-    "@grafana/scenes/@grafana/e2e-selectors": "workspace:*",
-    "@grafana/scenes-react/@grafana/e2e-selectors": "workspace:*",
-    "swagger-ui-react/dompurify": "3.4.0",
-    "refractor/prismjs": "^1.27.0",
-    "@mapbox/jsonlint-lines-primitives": "github:mapbox/jsonlint#commit=e31b7289baedf3e1000d7ae7edd42268212c9954",
-    "get-document": "github:webmodules/get-document#commit=a04ccb499d6e0433a368c3bb150b4899b698461f",
-    "gitconfiglocal": "2.1.0",
-    "tmp@npm:^0.0.33": "~0.2.1",
-    "js-yaml@npm:4.1.0": "^4.1.0",
-    "js-yaml@npm:=4.1.0": "^4.1.0",
-    "nodemailer": "8.0.7",
-    "storybook@npm:10.3.6": "patch:storybook@npm%3A10.3.6#~/.yarn/patches/storybook-npm-10.3.6-8a0644ac0b.patch",
-    "protobufjs@npm:8.0.0": "8.0.1",
-    "@types/slate/immutable": "^4.0.0",
-    "@types/slate-react/immutable": "^4.0.0"
-  },
-  "workspaces": {
-    "packages": [
-      "packages/*",
-      "public/app/plugins/*/*",
-      "e2e-playwright/test-plugins/*"
-    ]
-  },
   "engines": {
     "node": ">= 22 <25"
   },
-  "packageManager": "yarn@4.11.0",
-  "dependenciesMeta": {
-    "msw": {
-      "built": true
+  "packageManager": "pnpm@10.33.2+sha512.a90faf6feeab71ad6c6e57f94e0fe1a12f5dcc22cd754db40ae9593eb6a3e0b6b12e3540218bb37ae083404b1f2ce6db2a4121e979829b4aff94b99f49da1cf8",
+  "pnpm": {
+    "overrides": {
+      "underscore": "1.13.8",
+      "@types/slate": "0.47.11",
+      "semver@~7.3.5": "^7.3.5",
+      "debug@^0.7.2": "2.6.9",
+      "debug@^0.7.4": "2.6.9",
+      "redux": "^5.0.0",
+      "@grafana/plugin-e2e>@grafana/e2e-selectors": "workspace:*",
+      "@grafana/scenes>@grafana/e2e-selectors": "workspace:*",
+      "@grafana/scenes-react>@grafana/e2e-selectors": "workspace:*",
+      "swagger-ui-react>dompurify": "3.4.0",
+      "refractor>prismjs": "^1.27.0",
+      "@mapbox/jsonlint-lines-primitives": "github:mapbox/jsonlint#e31b7289baedf3e1000d7ae7edd42268212c9954",
+      "get-document": "github:webmodules/get-document#a04ccb499d6e0433a368c3bb150b4899b698461f",
+      "gitconfiglocal": "2.1.0",
+      "tmp@^0.0.33": "~0.2.1",
+      "js-yaml@4.1.0": "^4.1.0",
+      "js-yaml@=4.1.0": "^4.1.0",
+      "nodemailer": "8.0.7",
+      "protobufjs@8.0.0": "8.0.1",
+      "@types/slate>immutable": "^4.0.0",
+      "@types/slate-react>immutable": "^4.0.0"
     },
-    "prettier@3.6.2": {
-      "unplugged": true
+    "patchedDependencies": {
+      "history@4.10.1": "patches/history@4.10.1.patch",
+      "react-grid-layout@1.4.4": "patches/react-grid-layout@1.4.4.patch",
+      "react-split-pane@0.1.92": "patches/react-split-pane@0.1.92.patch",
+      "slate-dev-environment@0.2.5": "patches/slate-dev-environment@0.2.5.patch",
+      "storybook@10.3.6": "patches/storybook@10.3.6.patch"
+    },
+    "packageExtensions": {
+      "croact-css-styled@1.1.9": {
+        "dependencies": {
+          "croact": "1.0.4"
+        }
+      },
+      "doctrine@3.0.0": {
+        "dependencies": {
+          "assert": "2.0.0"
+        }
+      },
+      "rc-trigger@2.6.5": {
+        "peerDependencies": {
+          "react": "17.0.1",
+          "react-dom": "17.0.1"
+        }
+      }
     }
   },
   "msw": {

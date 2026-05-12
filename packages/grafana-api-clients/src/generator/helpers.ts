@@ -66,9 +66,9 @@ export const runGenerateApis =
       let command;
       if (isEnterprise) {
         command =
-          'yarn workspace @grafana/openapi process-specs && npx rtk-query-codegen-openapi ./local/generate-enterprise-apis.ts';
+          'pnpm --filter @grafana/openapi run process-specs && npx rtk-query-codegen-openapi ./local/generate-enterprise-apis.ts';
       } else {
-        command = 'yarn workspace @grafana/api-clients generate-apis';
+        command = 'pnpm --filter @grafana/api-clients run generate-apis';
       }
 
       console.log(`⏳ Running ${command} to generate endpoints...`);
@@ -96,7 +96,7 @@ export const formatFiles =
 
       console.log('🧹 Running ESLint on generated/modified files...');
       try {
-        execSync(`yarn eslint --fix ${filesList}`, { cwd: basePath });
+        execSync(`pnpm exec eslint --fix ${filesList}`, { cwd: basePath });
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
         console.warn(`⚠️ Warning: ESLint encountered issues: ${errorMessage}`);
@@ -105,7 +105,7 @@ export const formatFiles =
       console.log('🧹 Running Prettier on generated/modified files...');
       try {
         // '--ignore-path' is necessary so the gitignored files ('local/' folder) can still be formatted
-        execSync(`yarn prettier --write ${filesList} --ignore-path=./.prettierignore`, { cwd: basePath });
+        execSync(`pnpm exec prettier --write ${filesList} --ignore-path=./.prettierignore`, { cwd: basePath });
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
         console.warn(`⚠️ Warning: Prettier encountered issues: ${errorMessage}`);

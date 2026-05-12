@@ -1,0 +1,73 @@
+########################################################################################
+# "pnpm install" composite action                                                     #
+#--------------------------------------------------------------------------------------#
+# Requirement: ./.github/actions/setup-node should be run before                       #
+#                                                                                      #
+# Usage in workflows steps:                                                            #
+#                                                                                      #
+#      - name: Monorepo install                                                        #
+#        uses: ./.github/actions/pnpm-install                                          #
+#        with:                                                                         #
+#          cwd: ${{ github.workspace }}/apps/my-app # (default = '.')                  #
+#          cache-prefix: add cache key prefix       # (default = 'default')            #
+#          cache-node-modules: false                # (default = 'false')              #
+#                                                                                      #
+########################################################################################
+
+name: 'Monorepo install (pnpm)'
+description: 'Run pnpm install with cache enabled'
+inputs:
+  cwd:
+    description: "Changes node's process.cwd() if the project is not located on the root. Default to process.cwd()"
+    required: false
+    default: '.'
+  cache-prefix:
+    description: 'Add a specific cache-prefix'
+    required: false
+    default: 'default'
+  cache-node-modules:
+    description: 'Cache node_modules, might speed up install step (invalidated on lock/os/node-version/branch)'
+    required: false
+    default: 'false'
+  enable-corepack:
+    description: 'No-op: kept for backwards compatibility. pnpm/action-setup handles installation directly.'
+    required: false
+    default: 'false'
+  hardened-mode:
+    description: 'No-op: kept for backwards compatibility. pnpm does not have an equivalent to yarn hardened mode.'
+    required: false
+    default: 'auto'
+
+runs:
+  using: 'composite'
+
+  steps:
+    - name: Install pnpm
+      uses: pnpm/action-setup@v4
+      # Reads the pnpm version from the packageManager field in package.json
+
+    - name: Expose node/branch info
+      id: node-info
+      shell: bash
+      working-directory: ${{ inputs.cwd }}
+      run: |
+        echo "CURRENT_NODE_VERSION=node-$(node --version)" >> $GITHUB_OUTPUT
+        echo "CURRENT_BRANCH=$(echo ${GITHUB_REF#refs/heads/} | sed -r 's,/,-,g')" >> $GITHUB_OUTPUT
+
+    - name: Restore node_modules
+      if: inputs.cache-node-modules == 'true'
+      id: pnpm-nm-cache
+      uses: actions/cache@v5
+      with:
+        path: |
+          ${{ inputs.cwd }}/**/node_modules
+          !${{ inputs.cwd }}/**/node_modules/.cache
+        key: pnpm-nm-cache-${{ inputs.cache-prefix }}-${{ runner.os }}-${{ steps.node-info.outputs.CURRENT_NODE_VERSION }}-${{ steps.node-info.outputs.CURRENT_BRANCH }}-${{ hashFiles(format('{0}/pnpm-lock.yaml', inputs.cwd)) }}
+
+    - name: Install dependencies
+      shell: bash
+      working-directory: ${{ inputs.cwd }}
+      run: pnpm install --frozen-lockfile
+      env:
+        PUPPETEER_SKIP_DOWNLOAD: 'true'
+        CYPRESS_INSTALL_BINARY: '0'
