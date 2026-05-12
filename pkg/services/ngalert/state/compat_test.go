@@ -372,8 +372,6 @@ func randomTimeInPast() time.Time {
 	return time.Now().Add(-randomDuration())
 }
 
-func ptrTo[T any](v T) *T { return &v }
-
 func randomTransition(from, to eval.State) StateTransition {
 	return StateTransition{
 		PreviousState: from,
@@ -381,11 +379,11 @@ func randomTransition(from, to eval.State) StateTransition {
 			State:              to,
 			AlertRuleUID:       util.GenerateShortUID(),
 			StartsAt:           time.Now(),
-			FiredAt:            ptrTo(randomTimeInPast()),
+			FiredAt:            randomTimeInPast(),
 			EndsAt:             randomTimeInFuture(),
 			LastEvaluationTime: randomTimeInPast(),
 			EvaluationDuration: randomDuration(),
-			LastSentAt:         ptrTo(randomTimeInPast()),
+			LastSentAt:         randomTimeInPast(),
 			Annotations:        make(map[string]string),
 			Labels:             make(map[string]string),
 			Values:             make(map[string]float64),
