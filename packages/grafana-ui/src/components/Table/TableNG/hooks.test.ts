@@ -1383,18 +1383,18 @@ describe('TableNG hooks', () => {
     it('recomputes widths when reset key changes without new field objects', () => {
       const fields = makeFields(['a', 'b']);
       const { result, rerender } = renderHook(
-        ({ resetKey }: { resetKey: number }) => useColWidths(fields, 600, undefined, resetKey),
-        { initialProps: { resetKey: 0 } }
+        ({ resetKey }: { resetKey?: symbol }) => useColWidths(fields, 600, undefined, resetKey),
+        { initialProps: { resetKey: undefined as symbol | undefined } }
       );
 
       expect(result.current[0]).toEqual([300, 300]);
 
       fields[0].config.custom = { width: 100 };
-      rerender({ resetKey: 1 });
+      rerender({ resetKey: Symbol() });
       expect(result.current[0]).toEqual([100, 500]);
 
       fields[0].config.custom = {};
-      rerender({ resetKey: 2 });
+      rerender({ resetKey: Symbol() });
 
       expect(result.current[0]).toEqual([300, 300]);
     });

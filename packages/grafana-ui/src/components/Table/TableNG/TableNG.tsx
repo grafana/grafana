@@ -296,9 +296,13 @@ export function TableNG(props: TableNGProps) {
 
   // https://github.com/grafana/grafana/issues/118984: nested tables don't support frozen columns yet.
   const frozenColumns = useMemo(() => (hasNestedFrames ? 0 : _frozenColumns), [hasNestedFrames, _frozenColumns]);
-  const configuredWidthCount = visibleFields.filter((field) => field.config.custom?.width != null).length;
+  const configuredWidthCount = visibleFields.reduce(
+    (count, field) => count + (field.config.custom?.width != null ? 1 : 0),
+    0
+  );
   const prevConfiguredWidthCount = useRef(configuredWidthCount);
-  const resetColumnWidths = configuredWidthCount < prevConfiguredWidthCount.current ? new Map() : undefined;
+  const widthConfigResetKey = configuredWidthCount < prevConfiguredWidthCount.current ? Symbol() : undefined;
+  const resetColumnWidths = widthConfigResetKey != null ? new Map() : undefined;
 
   prevConfiguredWidthCount.current = configuredWidthCount;
 
@@ -306,7 +310,7 @@ export function TableNG(props: TableNGProps) {
     visibleFields,
     availableWidth,
     frozenColumns,
-    resetColumnWidths
+    widthConfigResetKey
   );
 
   const headerHeight = useHeaderHeight({
