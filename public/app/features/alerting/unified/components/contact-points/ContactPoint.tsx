@@ -28,7 +28,7 @@ import {
 
 interface ContactPointProps {
   contactPoint: ContactPointWithMetadata;
-  /** When true, this card is shown from the alert instance contact-point drawer: header opens full edit in a new tab (“Open configuration” / “View details”) instead of same-tab Edit/View. */
+  /** When true, this card is shown from the alert instance contact-point drawer: header opens full edit in a new tab (“Edit” / “View details”) instead of same-tab Edit/View. */
   contactPointFromInstanceDrawer?: boolean;
 }
 

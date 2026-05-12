@@ -31,7 +31,7 @@ import { type ContactPointWithMetadata, showManageContactPointPermissions } from
 interface ContactPointHeaderProps {
   contactPoint: ContactPointWithMetadata;
   onDelete: (contactPoint: ContactPointWithMetadata) => void;
-  /** True when rendered from the alert instance contact-point drawer: primary action opens full edit in a new tab (“Open configuration” / “View details”) instead of same-tab Edit/View. */
+  /** True when rendered from the alert instance contact-point drawer: primary action opens full edit in a new tab (“Edit” / “View details”) instead of same-tab Edit/View. */
   contactPointFromInstanceDrawer?: boolean;
 }
 
@@ -170,7 +170,7 @@ export const ContactPointHeader = ({
       }
     >
       {canEdit
-        ? t('alerting.contact-point-header.button-open-configuration', 'Open configuration')
+        ? t('alerting.contact-point-header.button-edit', 'Edit')
         : t('alerting.contact-point-header.button-view-details', 'View details')}
     </LinkButton>
   ) : (

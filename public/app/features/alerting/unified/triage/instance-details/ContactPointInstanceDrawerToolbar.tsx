@@ -127,7 +127,7 @@ export function ContactPointInstanceDrawerToolbar({ contactPoint, onDelete }: Co
       }
     >
       {canEdit
-        ? t('alerting.contact-point-header.button-open-configuration', 'Open configuration')
+        ? t('alerting.contact-point-header.button-edit', 'Edit')
         : t('alerting.contact-point-header.button-view-details', 'View details')}
     </LinkButton>
   );

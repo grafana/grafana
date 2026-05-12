@@ -29,7 +29,7 @@ describe('ContactPoint', () => {
     ]);
   });
 
-  it('contact point from instance drawer: Open configuration link uses receiver URL in a new tab when user can edit', async () => {
+  it('contact point from instance drawer: Edit link uses receiver URL in a new tab when user can edit', async () => {
     const contactPoint: ContactPointWithMetadata = {
       id: 'bmV3LWNvbnRhY3QtcG9pbnQ',
       name: 'new-contact-point',
@@ -50,7 +50,7 @@ describe('ContactPoint', () => {
     expect(link).toHaveAttribute('target', '_blank');
     expect(link).toHaveAttribute('rel', 'noopener noreferrer');
     expect(link).toHaveAttribute('href', '/alerting/notifications/receivers/bmV3LWNvbnRhY3QtcG9pbnQ/edit');
-    expect(link).toHaveTextContent('Open configuration');
+    expect(link).toHaveTextContent('Edit');
   });
 
   it('contact point from instance drawer: View details when contact point is not editable', async () => {
