@@ -34,9 +34,7 @@ type KVLeaseElector struct {
 // KVLeaseElectorOption configures a KVLeaseElector.
 type KVLeaseElectorOption func(*KVLeaseElector)
 
-// WithManagerOptions passes options to the underlying lease.Manager.
-// Intended for tests that need short TTLs via lease.WithInternalMinTTL.
-func WithManagerOptions(opts ...lease.ManagerOption) KVLeaseElectorOption {
+func withManagerOptions(opts ...lease.ManagerOption) KVLeaseElectorOption {
 	return func(e *KVLeaseElector) {
 		e.managerOpts = opts
 	}

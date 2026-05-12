@@ -37,7 +37,7 @@ func testConfig() Config {
 
 func testElectorOpts() []KVLeaseElectorOption {
 	return []KVLeaseElectorOption{
-		WithManagerOptions(lease.WithInternalMinTTL(50 * time.Millisecond)),
+		withManagerOptions(lease.WithInternalMinTTL(50 * time.Millisecond)),
 	}
 }
 
