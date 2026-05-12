@@ -52,7 +52,7 @@ export interface DataSourceSrv {
   /**
    * Registers a runtime data source. Make sure your data source uid is unique.
    *
-   * @deprecated Use `registerRuntimeDataSource` from `@grafana/runtime` instead.
+   * @deprecated Use `registerRuntimeDataSourceInstance` from `@grafana/runtime` instead.
    */
   registerRuntimeDataSource(entry: RuntimeDataSourceRegistration): void;
 }

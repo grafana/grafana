@@ -7,7 +7,7 @@ import { setTemplateSrv, type TemplateSrv } from '../templateSrv';
 import {
   _resetForTests as resetPlugin,
   getDataSourceInstance,
-  registerRuntimeDataSource,
+  registerRuntimeDataSourceInstance,
   setDataSourceImporter,
 } from './dataSource';
 import { _resetForTests as resetPluginCache } from './pluginCache';
@@ -170,11 +170,11 @@ describe('plugin', () => {
     });
   });
 
-  describe('registerRuntimeDataSource', () => {
+  describe('registerRuntimeDataSourceInstance', () => {
     it('makes the runtime instance available via getDataSourceInstance', async () => {
       initDataSourceInstanceSettings({}, '');
       const runtime = new TestRuntime('plugin-id', 'runtime-uid');
-      registerRuntimeDataSource({ dataSource: runtime });
+      registerRuntimeDataSourceInstance({ dataSource: runtime });
 
       const result = await getDataSourceInstance('runtime-uid');
       expect(result).toBe(runtime);
@@ -183,9 +183,9 @@ describe('plugin', () => {
     it('throws on duplicate uid', () => {
       initDataSourceInstanceSettings({}, '');
       const runtime = new TestRuntime('plugin-id', 'runtime-uid');
-      registerRuntimeDataSource({ dataSource: runtime });
+      registerRuntimeDataSourceInstance({ dataSource: runtime });
       const duplicate = new TestRuntime('plugin-id', 'runtime-uid');
-      expect(() => registerRuntimeDataSource({ dataSource: duplicate })).toThrow(/already been registered/);
+      expect(() => registerRuntimeDataSourceInstance({ dataSource: duplicate })).toThrow(/already been registered/);
     });
   });
 
@@ -220,7 +220,7 @@ describe('plugin', () => {
     it('preserves runtime plugin instances across reload', async () => {
       initDataSourceInstanceSettings({}, '');
       const runtime = new TestRuntime('plugin-id', 'runtime-uid');
-      registerRuntimeDataSource({ dataSource: runtime });
+      registerRuntimeDataSourceInstance({ dataSource: runtime });
 
       jest.spyOn(require('../../services/backendSrv'), 'getBackendSrv').mockReturnValue({
         get: jest.fn().mockResolvedValue({ datasources: {}, defaultDatasource: '' }),

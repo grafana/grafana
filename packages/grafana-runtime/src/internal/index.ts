@@ -72,11 +72,7 @@ export { logPluginMetaError, logPluginMetaWarning } from '../services/pluginMeta
 export { refetchPluginSettings } from '../services/pluginSettings/refetchPluginSettings';
 export { invalidatePluginSettingsCache } from '../services/pluginSettings/invalidatePluginSettingsCache';
 
-export {
-  initDataSourceInstanceSettings,
-  getDataSourceInstanceSettingsList,
-  upsertRuntimeDataSourceInstanceSettings,
-} from '../services/dataSource/settings';
+export { initDataSourceInstanceSettings, getDataSourceInstanceSettingsList } from '../services/dataSource/settings';
 export {
   type DataSourceInstanceSettingsPage,
   type GetDataSourceInstanceSettingsListOptions,

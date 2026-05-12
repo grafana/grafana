@@ -87,11 +87,11 @@ export async function getDataSourceInstance(
  * {@link getInstanceSettings} and {@link getDataSourceInstance}.
  *
  * Runtime data sources are intentionally excluded from {@link getInstanceSettingsList}
- * results, matching the behaviour of the legacy `DatasourceSrv.registerRuntimeDataSource`.
+ * results, matching the behaviour of the legacy `DatasourceSrv.registerRuntimeDataSourceInstance`.
  *
  * @public
  */
-export function registerRuntimeDataSource(entry: RuntimeDataSourceRegistration): void {
+export function registerRuntimeDataSourceInstance(entry: RuntimeDataSourceRegistration): void {
   const { dataSource } = entry;
 
   if (getCachedPlugin(dataSource.uid)) {
