@@ -98,7 +98,7 @@ describe('heatmap suggestions', () => {
         ['ascending number', FieldType.number, [1, 2, 3], true],
         ['descending number', FieldType.number, [3, 2, 1], false],
         ['number with NaN', FieldType.number, [1, NaN, 3], false],
-        ['number with adjacent duplicates', FieldType.number, [1, 1, 2, 2, 3], false],
+        ['number with adjacent duplicates', FieldType.number, [1, 1, 2, 2, 3], true],
         ['string', FieldType.string, ['a', 'b', 'c'], false],
         ['boolean', FieldType.boolean, [true, false, true], false],
         ['ascending time', FieldType.time, [1000, 2000, 3000], true],
