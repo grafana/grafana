@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import * as React from 'react';
 
 import { type PanelData } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { VizPanel } from '@grafana/scenes';
 import { OptionFilter, renderSearchHits } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getFieldOverrideCategories } from 'app/features/dashboard/components/PanelEditor/getFieldOverrideElements';
@@ -13,6 +14,9 @@ import {
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
 
+import { type TabId, getCategoryTab } from './categoryRouting';
+import { type InspectorMode } from './PanelInspectorModeToggle';
+import { TimeSeriesStyleCards } from './TimeSeriesStyleCards';
 import { getPanelFrameOptions, getPanelStylesOptions } from './getPanelFrameOptions';
 
 interface Props {
@@ -20,9 +24,11 @@ interface Props {
   searchQuery: string;
   listMode: OptionFilter;
   data?: PanelData;
+  activeTab: TabId;
+  inspectorMode: InspectorMode;
 }
 
-export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, data }) => {
+export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, data, activeTab, inspectorMode }) => {
   const { options, fieldConfig, _pluginInstanceState } = panel.useState();
 
   const panelFrameOptions = useMemo(() => getPanelFrameOptions(panel), [panel]);
@@ -88,32 +94,94 @@ export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, d
         searchQuery
       )
     );
+  } else if (listMode === OptionFilter.Overrides) {
+    for (const item of justOverrides) {
+      mainBoxElements.push(item.renderElement());
+    }
   } else {
-    switch (listMode) {
-      case OptionFilter.All:
+    // Tab-based rendering
+    switch (activeTab) {
+      case 'viz':
         if (libraryPanelOptions) {
-          // Library Panel options first
           mainBoxElements.push(libraryPanelOptions.renderElement());
         }
         mainBoxElements.push(panelFrameOptions.renderElement());
         if (panelStylesOptions) {
           mainBoxElements.push(panelStylesOptions.renderElement());
         }
+        break;
 
-        for (const item of visualizationOptions ?? []) {
-          mainBoxElements.push(item.renderElement());
+      case 'style': {
+        const { pluginId } = panel.state;
+        if (pluginId === 'timeseries') {
+          mainBoxElements.push(
+            <TimeSeriesStyleCards key="ts-style" panel={panel} inspectorMode={inspectorMode} />
+          );
+        } else {
+          const vizCats = (visualizationOptions ?? []).filter(
+            (cat) => getCategoryTab(cat.props.title) === 'style'
+          );
+          if (vizCats.length === 0) {
+            mainBoxElements.push(
+              <EmptyTabMessage
+                key="empty"
+                message={t('panel-edit.inspector-tab.empty-style', 'No options for this visualization in this tab.')}
+              />
+            );
+          } else {
+            for (const cat of vizCats) {
+              mainBoxElements.push(cat.renderElement());
+            }
+          }
         }
+        break;
+      }
 
+      case 'data': {
+        const vizCats = (visualizationOptions ?? []).filter(
+          (cat) => getCategoryTab(cat.props.title) === 'data'
+        );
+        if (vizCats.length === 0) {
+          mainBoxElements.push(
+            <EmptyTabMessage
+              key="empty"
+              message={t(
+                'panel-edit.inspector-tab.empty-style',
+                'No options for this visualization in this tab.'
+              )}
+            />
+          );
+        } else {
+          for (const cat of vizCats) {
+            mainBoxElements.push(cat.renderElement());
+          }
+        }
+        break;
+      }
+
+      case 'rules': {
+        const rulesCats = (visualizationOptions ?? []).filter(
+          (cat) => getCategoryTab(cat.props.title) === 'rules'
+        );
+        for (const cat of rulesCats) {
+          mainBoxElements.push(cat.renderElement());
+        }
         for (const item of justOverrides) {
           mainBoxElements.push(item.renderElement());
         }
-        break;
-      case OptionFilter.Overrides:
-        for (const item of justOverrides) {
-          mainBoxElements.push(item.renderElement());
+        if (rulesCats.length === 0 && justOverrides.length === 0) {
+          mainBoxElements.push(
+            <EmptyTabMessage
+              key="empty"
+              message={t(
+                'panel-edit.inspector-tab.empty-rules',
+                'No rules for this panel type. Overrides can still target any field.'
+              )}
+            />
+          );
         }
-      default:
         break;
+      }
     }
   }
 
@@ -121,3 +189,22 @@ export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, d
 });
 
 PanelOptions.displayName = 'PanelOptions';
+
+function EmptyTabMessage({ message }: { message: string }) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '32px 16px',
+        textAlign: 'center',
+        fontSize: '12px',
+        color: 'inherit',
+        opacity: 0.5,
+      }}
+    >
+      {message}
+    </div>
+  );
+}

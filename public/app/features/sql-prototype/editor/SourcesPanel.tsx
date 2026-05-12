@@ -91,8 +91,8 @@ export function SourcesPanel({ onTableClick, onColumnClick }: Props) {
                                 onClick={() => onColumnClick?.(table.name, col.name)}
                                 title={col.description}
                               >
-                                <span className={styles.columnTypeIcon}>
-                                  {col.type === 'timestamp' ? '⏱' : col.type === 'value' ? '#' : 'T'}
+                                <span className={`${styles.columnTypeIcon} ${col.type === 'timestamp' ? styles.colTypeTs : col.type === 'value' ? styles.colTypeNum : styles.colTypeLbl}`}>
+                                  {col.type === 'timestamp' ? 'T' : col.type === 'value' ? '#' : 'L'}
                                 </span>
                                 <span className={styles.columnName}>{col.name}</span>
                               </button>
@@ -198,11 +198,19 @@ function getStyles(theme: GrafanaTheme2) {
       },
     }),
     columnTypeIcon: css({
-      fontSize: '10px',
+      fontSize: '9px',
       width: '14px',
-      textAlign: 'center',
-      color: theme.colors.text.disabled,
+      height: '14px',
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: '2px',
+      fontWeight: 700,
+      flexShrink: 0,
     }),
+    colTypeTs: css({ color: theme.colors.info.text }),
+    colTypeNum: css({ color: theme.colors.warning.text }),
+    colTypeLbl: css({ color: theme.colors.success.text }),
     columnName: css({
       fontSize: theme.typography.bodySmall.fontSize,
       fontFamily: theme.typography.fontFamilyMonospace,

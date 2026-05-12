@@ -15,7 +15,10 @@ import {
   EmptyState,
   Icon,
   type IconName,
+  Input,
   Menu,
+  Modal,
+  Spinner,
   Stack,
   Text,
   useElementSelection,
@@ -28,6 +31,9 @@ import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryL
 import { AccessControlAction } from 'app/types/accessControl';
 import emptyPanelSvg from 'img/dashboards/empty-panel.svg';
 
+import { MockViz } from '../../sql-prototype/dashboard/MockViz';
+import { DEFAULT_SQL } from '../../sql-prototype/editor/SqlEditor';
+import { askAiStream } from '../../sql-prototype/mocks/mockAi';
 import { applyQueryToPanel, getVizSuggestionForQuery } from '../utils/getVizSuggestionForQuery';
 import { DashboardInteractions } from '../utils/interactions';
 import {
@@ -47,6 +53,41 @@ import { findVizPanelByKey, getVizPanelKeyForPanelId } from '../utils/utils';
 import { DashboardScene } from './DashboardScene';
 
 export const UNCONFIGURED_PANEL_PLUGIN_ID = '__unconfigured-panel';
+
+type VizType = 'timeseries' | 'barchart' | 'stat' | 'bargauge';
+
+interface AiResult {
+  prompt: string;
+  sql: string;
+  vizType: VizType;
+}
+
+const PROMQL_FOR_VIZ: Record<VizType, string> = {
+  timeseries: `histogram_quantile(0.95,
+  sum by (le, path) (
+    rate(http_server_requests_seconds_bucket[5m])
+  )
+)`,
+  barchart: `sum by (path, method) (
+  rate(http_server_requests_seconds_count{
+    status=~"5.."
+  }[5m])
+)
+/
+sum by (path, method) (
+  rate(http_server_requests_seconds_count[5m])
+)`,
+  bargauge: `topk(5,
+  sum by (path) (
+    rate(http_server_requests_seconds_count[5m])
+  )
+)`,
+  stat: `histogram_quantile(0.50,
+  sum by (le) (
+    rate(http_server_requests_seconds_bucket[5m])
+  )
+)`,
+};
 const UnconfiguredPanel = new PanelPlugin(UnconfiguredPanelComp);
 
 function hasSavedQueryReadPermissions(): boolean {
@@ -99,6 +140,11 @@ function NewUnconfiguredPanelComp(props: PanelProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const isActive = Boolean(isEditing && (isSelected || isHovered || isFocused));
+
+  const [aiInput, setAiInput] = useState('');
+  const [aiPhase, setAiPhase] = useState<'idle' | 'loading' | 'preview'>('idle');
+  const [aiResult, setAiResult] = useState<AiResult | null>(null);
+  const [aiTab, setAiTab] = useState<'sql' | 'promql'>('sql');
 
   const handleBlur = (e: React.FocusEvent) => {
     if (!e.currentTarget.contains(e.relatedTarget)) {
@@ -165,6 +211,46 @@ function NewUnconfiguredPanelComp(props: PanelProps) {
     dashboard.onShowAddLibraryPanelDrawer(panel.getRef());
   };
 
+  const handleAiSubmit = async () => {
+    if (!aiInput.trim()) {
+      return;
+    }
+    setAiPhase('loading');
+    let responseText = '';
+    const gen = askAiStream({ kind: 'generate-panel', payload: aiInput.trim() });
+    for await (const chunk of gen) {
+      responseText += chunk;
+    }
+    try {
+      const parsed: { sql: string; vizType: VizType } = JSON.parse(responseText);
+      setAiResult({ prompt: aiInput.trim(), sql: parsed.sql, vizType: parsed.vizType });
+    } catch {
+      setAiResult({ prompt: aiInput.trim(), sql: DEFAULT_SQL, vizType: 'timeseries' });
+    }
+    setAiPhase('preview');
+  };
+
+  const handleAiApply = () => {
+    if (!dashboard || !aiResult) {
+      return;
+    }
+    const panel = findVizPanelByKey(dashboard, panelKey);
+    if (!panel || !(dashboard instanceof DashboardScene)) {
+      return;
+    }
+    dashboard.changePanelPlugin(panel, aiResult.vizType, {}, { defaults: {}, overrides: [] });
+    dashboard.updatePanelTitle(panel, aiResult.prompt);
+    setAiPhase('idle');
+  };
+
+  const handleAiOpenWorkbench = () => {
+    if (!aiResult) {
+      return;
+    }
+    setAiPhase('idle');
+    locationService.push({ pathname: '/dashboard/sql-prototype', state: { initialSql: aiResult.sql } });
+  };
+
   const showEmptyState = config.featureToggles.newVizSuggestions && panelContext.app === CoreApp.PanelEditor;
 
   if (showEmptyState) {
@@ -216,6 +302,7 @@ function NewUnconfiguredPanelComp(props: PanelProps) {
   }
 
   return (
+    <>
     <div
       ref={measureRef}
       className={styles.root}
@@ -258,6 +345,35 @@ function NewUnconfiguredPanelComp(props: PanelProps) {
             aria-hidden={!isButtonsVisible}
             {...(!isButtonsVisible ? { inert: '' } : {})}
           >
+            {!isCompact && config.featureToggles.sqlAbstractionPrototype && (
+              <>
+                <Input
+                  prefix={<span className={styles.aiSparkle}>✨</span>}
+                  placeholder={t('dashboard.new-panel.ai-prompt-placeholder', 'What do you want to learn?')}
+                  value={aiInput}
+                  onChange={(e) => setAiInput(e.currentTarget.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      void handleAiSubmit();
+                    }
+                  }}
+                  disabled={aiPhase === 'loading'}
+                />
+                {aiPhase === 'loading' && (
+                  <div className={styles.aiLoadingRow}>
+                    <Spinner size="sm" />
+                    <Text variant="bodySmall" color="secondary">
+                      <Trans i18nKey="dashboard.new-panel.ai-generating">Generating…</Trans>
+                    </Text>
+                  </div>
+                )}
+                <div className={styles.aiDivider}>
+                  <Text variant="bodySmall" color="disabled">
+                    <Trans i18nKey="dashboard.new-panel.ai-or">or</Trans>
+                  </Text>
+                </div>
+              </>
+            )}
             {buttons.map((button, i) => (
               <div
                 key={button.key}
@@ -294,6 +410,76 @@ function NewUnconfiguredPanelComp(props: PanelProps) {
         </div>
       )}
     </div>
+
+    {config.featureToggles.sqlAbstractionPrototype && aiPhase === 'preview' && aiResult && (
+      <Modal
+        title={
+          <div className={styles.aiModalTitle}>
+            <span className={styles.aiSparkle}>✨</span>
+            <span>{t('dashboard.new-panel.ai-modal-title', 'AI-generated panel')}</span>
+          </div>
+        }
+        ariaLabel={t('dashboard.new-panel.ai-modal-aria-label', 'AI-generated panel')}
+        isOpen
+        onDismiss={() => setAiPhase('idle')}
+        contentClassName={styles.aiModalContent}
+      >
+        <div className={styles.aiPromptChip}>
+          <Text variant="bodySmall" color="secondary">
+            <Trans i18nKey="dashboard.new-panel.ai-your-question">Your question:</Trans>{' '}
+          </Text>
+          <Text variant="bodySmall" weight="medium">
+            &ldquo;{aiResult.prompt}&rdquo;
+          </Text>
+        </div>
+
+        <div className={styles.aiQueryContainer}>
+          <div className={styles.aiTabBar} role="tablist">
+            <button
+              role="tab"
+              aria-selected={aiTab === 'sql'}
+              className={cx(styles.aiTab, aiTab === 'sql' && styles.aiTabActive)}
+              onClick={() => setAiTab('sql')}
+            >
+              SQL
+            </button>
+            <button
+              role="tab"
+              aria-selected={aiTab === 'promql'}
+              className={cx(styles.aiTab, aiTab === 'promql' && styles.aiTabActive)}
+              onClick={() => setAiTab('promql')}
+            >
+              PromQL
+            </button>
+          </div>
+          <pre className={styles.aiCodeBlock}>
+            {aiTab === 'sql' ? aiResult.sql : PROMQL_FOR_VIZ[aiResult.vizType]}
+          </pre>
+        </div>
+
+        <div className={styles.aiChartSection}>
+          <Text variant="bodySmall" color="secondary" weight="bold">
+            <Trans i18nKey="dashboard.new-panel.ai-suggested-viz">Suggested visualization</Trans>
+          </Text>
+          <div className={styles.aiChartWrap}>
+            <MockViz title={aiResult.prompt} height={200} />
+          </div>
+        </div>
+
+        <div className={styles.aiActions}>
+          <Button variant="primary" icon="plus" onClick={handleAiApply}>
+            <Trans i18nKey="dashboard.new-panel.ai-add-to-dashboard">Add to dashboard</Trans>
+          </Button>
+          <Button variant="secondary" icon="pen" onClick={handleAiOpenWorkbench}>
+            <Trans i18nKey="dashboard.new-panel.ai-open-workbench">Open in SQL workbench</Trans>
+          </Button>
+          <Button variant="secondary" fill="text" onClick={() => setAiPhase('idle')}>
+            <Trans i18nKey="dashboard.new-panel.ai-cancel">Cancel</Trans>
+          </Button>
+        </div>
+      </Modal>
+    )}
+    </>
   );
 }
 
@@ -503,6 +689,90 @@ function getStyles(theme: GrafanaTheme2) {
     emptyStateIcon: css({
       color: theme.colors.text.secondary,
       marginBottom: theme.spacing(2),
+    }),
+    aiSparkle: css({ fontSize: '16px' }),
+    aiLoadingRow: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(1),
+    }),
+    aiDivider: css({
+      display: 'flex',
+      justifyContent: 'center',
+      padding: theme.spacing(0.5, 0),
+    }),
+    aiModalTitle: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(1),
+    }),
+    aiModalContent: css({
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(2),
+    }),
+    aiPromptChip: css({
+      display: 'flex',
+      gap: theme.spacing(0.5),
+      padding: theme.spacing(0.75, 1.25),
+      background: theme.colors.background.secondary,
+      borderRadius: theme.shape.radius.pill,
+      alignSelf: 'flex-start',
+      alignItems: 'center',
+    }),
+    aiQueryContainer: css({
+      border: `1px solid ${theme.colors.border.weak}`,
+      borderRadius: theme.shape.radius.default,
+      overflow: 'hidden',
+    }),
+    aiTabBar: css({
+      display: 'flex',
+      background: theme.colors.background.secondary,
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+    }),
+    aiTab: css({
+      background: 'none',
+      border: 'none',
+      borderBottom: '2px solid transparent',
+      padding: theme.spacing(0.75, 1.5),
+      cursor: 'pointer',
+      color: theme.colors.text.secondary,
+      fontSize: theme.typography.bodySmall.fontSize,
+      fontFamily: theme.typography.fontFamily,
+      '&:hover': { color: theme.colors.text.primary },
+    }),
+    aiTabActive: css({
+      color: theme.colors.text.primary,
+      borderBottomColor: theme.colors.primary.main,
+    }),
+    aiCodeBlock: css({
+      fontFamily: theme.typography.fontFamilyMonospace,
+      fontSize: theme.typography.bodySmall.fontSize,
+      background: theme.colors.background.canvas,
+      padding: theme.spacing(1.5),
+      margin: 0,
+      whiteSpace: 'pre-wrap',
+      color: theme.colors.text.primary,
+      height: 220,
+      overflowY: 'auto',
+    }),
+    aiChartSection: css({
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(0.75),
+    }),
+    aiChartWrap: css({
+      border: `1px solid ${theme.colors.border.weak}`,
+      borderRadius: theme.shape.radius.default,
+      overflow: 'hidden',
+      background: theme.colors.background.primary,
+    }),
+    aiActions: css({
+      display: 'flex',
+      gap: theme.spacing(1),
+      paddingTop: theme.spacing(1),
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+      flexWrap: 'wrap',
     }),
   };
 }

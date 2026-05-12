@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useEffect, useRef, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { Button, Input, Spinner, Text, useStyles2 } from '@grafana/ui';
+import { Button, Input, Modal, Spinner, Text, useStyles2 } from '@grafana/ui';
 
 import { askAiStream, getFollowUpResponse } from '../mocks/mockAi';
 
@@ -65,106 +65,80 @@ export function AiExplainerPopover({ selectedText, mode, onClose, onInsert }: Pr
   };
 
   return (
-    <div className={styles.backdrop} onClick={onClose}>
-      <div className={styles.panel} onClick={(e) => e.stopPropagation()}>
-        <div className={styles.header}>
+    <Modal
+      title={
+        <div className={styles.modalTitle}>
           <span className={styles.sparkle}>✨</span>
-          <Text variant="h6">{mode === 'explain' ? 'AI Explanation' : 'AI Generate'}</Text>
-          <button className={styles.closeBtn} onClick={onClose}>
-            ×
-          </button>
+          <span>{mode === 'explain' ? 'AI Explanation' : 'AI Generate'}</span>
         </div>
+      }
+      ariaLabel={mode === 'explain' ? 'AI Explanation' : 'AI Generate'}
+      isOpen
+      onDismiss={onClose}
+      contentClassName={styles.content}
+    >
+      <div className={styles.snippet}>
+        <Text variant="bodySmall" color="secondary">
+          {mode === 'explain' ? 'Selected snippet:' : 'Generating from:'}
+        </Text>
+        <code className={styles.snipCode}>{selectedText.slice(0, 120)}{selectedText.length > 120 ? '…' : ''}</code>
+      </div>
 
-        <div className={styles.snippet}>
+      <div className={styles.response}>
+        {isStreaming && streamedText.length === 0 && <Spinner />}
+        <Text variant="body">
+          {streamedText}
+          {isStreaming && <span className={styles.cursor}>▋</span>}
+        </Text>
+      </div>
+
+      {!isStreaming && mode === 'generate' && (
+        <div className={styles.actions}>
+          <Button variant="primary" size="sm" onClick={handleInsert} icon="arrow-to-right">
+            Insert at cursor
+          </Button>
+        </div>
+      )}
+
+      {!isStreaming && mode === 'explain' && (
+        <div className={styles.followUp}>
           <Text variant="bodySmall" color="secondary">
-            {mode === 'explain' ? 'Selected snippet:' : 'Generating from:'}
+            Ask a follow-up…
           </Text>
-          <code className={styles.snipCode}>{selectedText.slice(0, 120)}{selectedText.length > 120 ? '…' : ''}</code>
-        </div>
-
-        <div className={styles.response}>
-          {isStreaming && streamedText.length === 0 && <Spinner />}
-          <Text variant="body">
-            {streamedText}
-            {isStreaming && <span className={styles.cursor}>▋</span>}
-          </Text>
-        </div>
-
-        {!isStreaming && mode === 'generate' && (
-          <div className={styles.actions}>
-            <Button variant="primary" size="sm" onClick={handleInsert} icon="arrow-to-right">
-              Insert at cursor
+          <div className={styles.followUpRow}>
+            <Input
+              placeholder="e.g. why, how, alternative…"
+              value={followUpInput}
+              onChange={(e) => setFollowUpInput(e.currentTarget.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleFollowUp()}
+            />
+            <Button variant="secondary" size="sm" onClick={handleFollowUp}>
+              Ask
             </Button>
           </div>
-        )}
-
-        {!isStreaming && mode === 'explain' && (
-          <div className={styles.followUp}>
-            <Text variant="bodySmall" color="secondary">
-              Ask a follow-up…
-            </Text>
-            <div className={styles.followUpRow}>
-              <Input
-                placeholder="e.g. why, how, alternative…"
-                value={followUpInput}
-                onChange={(e) => setFollowUpInput(e.currentTarget.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleFollowUp()}
-              />
-              <Button variant="secondary" size="sm" onClick={handleFollowUp}>
-                Ask
-              </Button>
+          {followUpResponse && (
+            <div className={styles.followUpResponse}>
+              <Text variant="bodySmall">{followUpResponse}</Text>
             </div>
-            {followUpResponse && (
-              <div className={styles.followUpResponse}>
-                <Text variant="bodySmall">{followUpResponse}</Text>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
+          )}
+        </div>
+      )}
+    </Modal>
   );
 }
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    backdrop: css({
-      position: 'fixed',
-      inset: 0,
-      zIndex: theme.zIndex.modal,
-      background: 'rgba(0,0,0,0.5)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-    }),
-    panel: css({
-      background: theme.colors.background.primary,
-      border: `1px solid ${theme.colors.border.medium}`,
-      borderRadius: theme.shape.radius.default,
-      padding: theme.spacing(2),
-      maxWidth: 560,
-      width: '90%',
-      maxHeight: '80vh',
-      overflowY: 'auto',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: theme.spacing(1.5),
-      boxShadow: theme.shadows.z3,
-    }),
-    header: css({
+    modalTitle: css({
       display: 'flex',
       alignItems: 'center',
       gap: theme.spacing(1),
     }),
     sparkle: css({ fontSize: '18px' }),
-    closeBtn: css({
-      marginLeft: 'auto',
-      background: 'none',
-      border: 'none',
-      cursor: 'pointer',
-      fontSize: '20px',
-      color: theme.colors.text.secondary,
-      lineHeight: 1,
+    content: css({
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(1.5),
     }),
     snippet: css({
       display: 'flex',

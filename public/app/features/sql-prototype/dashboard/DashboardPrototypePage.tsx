@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
+import { useLocation } from 'react-router-dom-v5-compat';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Badge, Button, Icon, Text, useStyles2 } from '@grafana/ui';
+import { Badge, Button, Icon, IconButton, Input, TextArea, Text, useStyles2 } from '@grafana/ui';
 import { SqlEditorMode } from 'app/features/sql-prototype/editor/SqlEditorMode';
 
 import { AiPanel } from './AiPanel';
@@ -26,9 +27,11 @@ const MOCK_PANELS: MockPanel[] = [
 
 export function DashboardPrototypePage() {
   const styles = useStyles2(getStyles);
+  const location = useLocation();
+  const locationState = location.state as { initialSql?: string } | null;
   const [selectedPanelId, setSelectedPanelId] = useState<number | null>(null);
   const [isEditing, setIsEditing] = useState(true);
-  const [workbenchSql, setWorkbenchSql] = useState<string | null>(null);
+  const [workbenchSql, setWorkbenchSql] = useState<string | null>(locationState?.initialSql ?? null);
 
   if (!config.featureToggles.sqlAbstractionPrototype) {
     return (
@@ -104,9 +107,7 @@ export function DashboardPrototypePage() {
           <div className={styles.sidebar}>
             <div className={styles.sidebarHeader}>
               <Text variant="h6">Panel</Text>
-              <button className={styles.closeSidebar} onClick={() => setSelectedPanelId(null)}>
-                <Icon name="times" />
-              </button>
+              <IconButton name="times" tooltip="Close" onClick={() => setSelectedPanelId(null)} />
             </div>
 
             <AiPanelSidebar panelTitle={selectedPanel.title} />
@@ -121,14 +122,14 @@ export function DashboardPrototypePage() {
               <Text variant="bodySmall" color="secondary">
                 Title
               </Text>
-              <div className={styles.fakeInput}>{selectedPanel.title}</div>
+              <Input value={selectedPanel.title} readOnly />
             </div>
 
             <div className={styles.sidebarSection}>
               <Text variant="bodySmall" color="secondary">
                 Description
               </Text>
-              <div className={styles.fakeInputMulti} />
+              <TextArea value="" rows={3} readOnly placeholder="No description" />
             </div>
           </div>
         )}
@@ -234,31 +235,12 @@ function getStyles(theme: GrafanaTheme2) {
       padding: theme.spacing(1.5, 2),
       borderBottom: `1px solid ${theme.colors.border.weak}`,
     }),
-    closeSidebar: css({
-      background: 'none',
-      border: 'none',
-      cursor: 'pointer',
-      color: theme.colors.text.secondary,
-      '&:hover': { color: theme.colors.text.primary },
-    }),
     sidebarSection: css({
       padding: theme.spacing(1.5, 2),
       borderBottom: `1px solid ${theme.colors.border.weak}`,
       display: 'flex',
       flexDirection: 'column',
       gap: theme.spacing(0.75),
-    }),
-    fakeInput: css({
-      border: `1px solid ${theme.colors.border.medium}`,
-      borderRadius: theme.shape.radius.default,
-      padding: theme.spacing(0.75, 1),
-      fontSize: theme.typography.bodySmall.fontSize,
-      color: theme.colors.text.primary,
-    }),
-    fakeInputMulti: css({
-      border: `1px solid ${theme.colors.border.medium}`,
-      borderRadius: theme.shape.radius.default,
-      height: 60,
     }),
     disabled: css({
       display: 'flex',

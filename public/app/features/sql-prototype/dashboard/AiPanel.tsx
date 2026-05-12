@@ -135,6 +135,7 @@ export function AiPanel({ onEditInSqlEditor, onInserted }: Props) {
               <span>What do you want to learn?</span>
             </div>
           }
+          ariaLabel="Generate panel with AI"
           isOpen
           onDismiss={() => setPhase('idle')}
           contentClassName={styles.modalContent}
@@ -145,23 +146,25 @@ export function AiPanel({ onEditInSqlEditor, onInserted }: Props) {
           </div>
 
           {/* SQL / PromQL tabs */}
-          <TabsBar>
-            <Tab
-              label="SQL"
-              active={activeTab === 'sql'}
-              onChangeTab={() => setActiveTab('sql')}
-            />
-            <Tab
-              label="PromQL"
-              active={activeTab === 'promql'}
-              onChangeTab={() => setActiveTab('promql')}
-            />
-          </TabsBar>
-          <TabContent>
-            <pre className={styles.codeBlock}>
-              {activeTab === 'sql' ? result.sql : PROMQL_FOR_VIZ[result.vizType]}
-            </pre>
-          </TabContent>
+          <div className={styles.queryContainer}>
+            <TabsBar className={styles.queryTabs}>
+              <Tab
+                label="SQL"
+                active={activeTab === 'sql'}
+                onChangeTab={() => setActiveTab('sql')}
+              />
+              <Tab
+                label="PromQL"
+                active={activeTab === 'promql'}
+                onChangeTab={() => setActiveTab('promql')}
+              />
+            </TabsBar>
+            <TabContent>
+              <pre className={styles.codeBlock}>
+                {activeTab === 'sql' ? result.sql : PROMQL_FOR_VIZ[result.vizType]}
+              </pre>
+            </TabContent>
+          </div>
 
           {/* Chart preview */}
           <div className={styles.chartSection}>
@@ -251,6 +254,8 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexDirection: 'column',
       gap: theme.spacing(2),
+      maxHeight: '72vh',
+      overflowY: 'auto',
     }),
     promptChip: css({
       display: 'flex',
@@ -261,17 +266,26 @@ function getStyles(theme: GrafanaTheme2) {
       alignSelf: 'flex-start',
       alignItems: 'center',
     }),
+    queryContainer: css({
+      border: `1px solid ${theme.colors.border.weak}`,
+      borderRadius: theme.shape.radius.default,
+      overflow: 'hidden',
+    }),
+    queryTabs: css({
+      background: theme.colors.background.secondary,
+      paddingLeft: theme.spacing(0.5),
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+    }),
     codeBlock: css({
       fontFamily: theme.typography.fontFamilyMonospace,
       fontSize: theme.typography.bodySmall.fontSize,
       background: theme.colors.background.canvas,
-      border: `1px solid ${theme.colors.border.weak}`,
-      borderRadius: theme.shape.radius.default,
       padding: theme.spacing(1.5),
       margin: 0,
       whiteSpace: 'pre-wrap',
       color: theme.colors.text.primary,
-      maxHeight: 180,
+      minHeight: 240,
+      maxHeight: 300,
       overflowY: 'auto',
     }),
     chartSection: css({

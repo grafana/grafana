@@ -3,7 +3,7 @@ import type * as monacoNS from 'monaco-editor';
 import { useEffect, useRef, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { CodeEditor, type Monaco, type MonacoEditor, useStyles2 } from '@grafana/ui';
+import { Button, CodeEditor, type Monaco, type MonacoEditor, useStyles2 } from '@grafana/ui';
 
 import { mockSchema } from '../mocks/schema';
 
@@ -228,13 +228,15 @@ export function SqlEditor({ value, onChange, onRunQuery, readOnly = false, heigh
     <div className={styles.root}>
       {selectedText && !aiMode && (
         <div className={styles.aiBar}>
-          <span className={styles.selectionLabel}>✦ Selection: <em>{selectedText.slice(0, 50)}{selectedText.length > 50 ? '…' : ''}</em></span>
-          <button className={styles.aiBtn} onClick={() => setAiMode('explain')}>
-            ✨ Explain
-          </button>
-          <button className={styles.aiBtn} onClick={() => setAiMode('generate')}>
-            ✨ Generate
-          </button>
+          <span className={styles.selectionLabel}>
+            <em>{selectedText.slice(0, 50)}{selectedText.length > 50 ? '…' : ''}</em>
+          </span>
+          <Button size="sm" variant="primary" fill="text" icon="comment-alt" onClick={() => setAiMode('explain')}>
+            Explain
+          </Button>
+          <Button size="sm" variant="primary" fill="text" icon="pen" onClick={() => setAiMode('generate')}>
+            Generate
+          </Button>
         </div>
       )}
       <div className={styles.editorWrap}>
@@ -283,31 +285,20 @@ function getStyles(theme: GrafanaTheme2) {
     aiBar: css({
       display: 'flex',
       alignItems: 'center',
-      gap: theme.spacing(1),
-      padding: theme.spacing(0.5, 1),
-      background: `linear-gradient(90deg, rgba(120,80,200,0.1), transparent)`,
-      borderBottom: `1px solid rgba(120,80,200,0.3)`,
-      fontSize: theme.typography.bodySmall.fontSize,
+      gap: theme.spacing(0.5),
+      padding: theme.spacing(0.25, 0.5, 0.25, 1.5),
+      background: theme.colors.background.secondary,
+      borderBottom: `1px solid ${theme.colors.border.medium}`,
+      borderLeft: `3px solid ${theme.colors.primary.border}`,
       flexWrap: 'wrap',
     }),
     selectionLabel: css({
+      flex: 1,
       color: theme.colors.text.secondary,
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
-      maxWidth: 300,
-    }),
-    aiBtn: css({
-      background: `rgba(120,80,200,0.15)`,
-      border: `1px solid rgba(120,80,200,0.4)`,
-      borderRadius: theme.shape.radius.pill,
-      color: theme.colors.text.primary,
-      cursor: 'pointer',
-      padding: theme.spacing(0.25, 1),
       fontSize: theme.typography.bodySmall.fontSize,
-      '&:hover': {
-        background: `rgba(120,80,200,0.3)`,
-      },
     }),
     editorWrap: css({
       flex: 1,

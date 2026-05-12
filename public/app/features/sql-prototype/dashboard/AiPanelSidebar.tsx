@@ -104,8 +104,8 @@ function getStyles(theme: GrafanaTheme2) {
       flexDirection: 'column',
       gap: theme.spacing(1),
       padding: theme.spacing(1.5),
-      borderBottom: `1px solid ${theme.colors.border.medium}`,
-      background: `linear-gradient(135deg, rgba(120,80,200,0.06), transparent)`,
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+      background: theme.colors.background.secondary,
     }),
     header: css({
       display: 'flex',
