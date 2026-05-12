@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import {
@@ -263,6 +263,33 @@ describe('LogList', () => {
         OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME,
       ]);
       expect(setDisplayedFields).toHaveBeenCalledWith([LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME]);
+    });
+
+    test('Calls setDisplayedFields when showLogAttributes is toggled off externally', async () => {
+      setBooleanFlags({ newLogsPanel: true, otelLogsFormatting: true });
+      const setDisplayedFields = jest.fn();
+      const otelLogs = [createLogRow({ uid: '1', labels: { [OTEL_PROBE_FIELD]: '1' } })];
+
+      const { rerender } = render(
+        <LogList {...defaultProps} logs={otelLogs} setDisplayedFields={setDisplayedFields} showLogAttributes={true} />
+      );
+
+      await waitFor(() => {
+        expect(setDisplayedFields).toHaveBeenCalledWith([
+          LOG_LINE_BODY_FIELD_NAME,
+          OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME,
+        ]);
+      });
+
+      setDisplayedFields.mockClear();
+
+      rerender(
+        <LogList {...defaultProps} logs={otelLogs} setDisplayedFields={setDisplayedFields} showLogAttributes={false} />
+      );
+
+      await waitFor(() => {
+        expect(setDisplayedFields).toHaveBeenCalledWith([]);
+      });
     });
   });
 

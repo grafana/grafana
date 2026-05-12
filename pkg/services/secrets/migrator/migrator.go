@@ -1,3 +1,4 @@
+//nolint:staticcheck // SA1019: Legacy envelope encryption migrator; intentionally uses deprecated secrets manager types.
 package migrator
 
 import (

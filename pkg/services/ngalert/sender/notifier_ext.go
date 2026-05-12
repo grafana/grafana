@@ -152,6 +152,19 @@ func (n *Manager) ApplyConfig(conf *config.Config, headers map[string]http.Heade
 		if oldAmSet, ok := configToAlertmanagers[hash]; ok {
 			ams.ams = oldAmSet.ams
 			ams.droppedAms = oldAmSet.droppedAms
+			// Extension: If the dataSourceUID changed while the config hash stayed the same
+			// (e.g. datasource recreated at the same URL), delete the old UID's series now.
+			// sync() only deletes via the current dataSourceUID, so the old series would
+			// otherwise leak until process restart.
+			newUID := dataSourceUIDs[k]
+			if oldAmSet.dataSourceUID != newUID {
+				for _, am := range oldAmSet.ams {
+					us := am.url().String()
+					n.metrics.latency.DeleteLabelValues(us, oldAmSet.dataSourceUID)
+					n.metrics.sent.DeleteLabelValues(us, oldAmSet.dataSourceUID)
+					n.metrics.errors.DeleteLabelValues(us, oldAmSet.dataSourceUID)
+				}
+			}
 		}
 
 		// Extension: set the headers to the alertmanager set.

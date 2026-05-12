@@ -146,6 +146,10 @@ func (s *SecureValueService) Update(ctx context.Context, newSecureValue *secretv
 		return nil, false, fmt.Errorf("reading secure value secret: %+w", err)
 	}
 
+	// only service identities are allowed to mutate owner references after a secure value is created.
+	// for any other identity, preserve the existing ones to prevent unauthorized changes.
+	s.preserveOwnerReferencesForNonAccessPolicy(ctx, currentVersion, newSecureValue)
+
 	keeperCfg, err := s.keeperMetadataStorage.GetKeeperConfig(ctx, currentVersion.Namespace, currentVersion.Status.Keeper, contracts.ReadOpts{})
 	if err != nil {
 		return nil, false, fmt.Errorf("fetching keeper config: namespace=%+v keeper: %q %w", newSecureValue.Namespace, currentVersion.Status.Keeper, err)
@@ -442,4 +446,13 @@ func (s *SecureValueService) SetKeeperAsActive(ctx context.Context, namespace xk
 		return fmt.Errorf("calling keeper metadata storage to set keeper as active: %w", err)
 	}
 	return nil
+}
+
+func (s *SecureValueService) preserveOwnerReferencesForNonAccessPolicy(ctx context.Context, currentSecureValue, newSecureValue *secretv1beta1.SecureValue) {
+	authInfo, ok := claims.AuthInfoFrom(ctx)
+	if ok && authInfo.GetIdentityType() == claims.TypeAccessPolicy {
+		return
+	}
+
+	newSecureValue.OwnerReferences = currentSecureValue.OwnerReferences
 }

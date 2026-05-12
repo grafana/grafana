@@ -1,5 +1,4 @@
 import { type GrafanaPlugin, type NavModel, type NavModelItem, type PanelPluginMeta, PluginType } from '@grafana/data';
-import { createMonitoringLogger } from '@grafana/runtime';
 
 import { pluginImporter } from './importer/pluginImporter';
 import { getPluginSettings } from './pluginSettings';
@@ -82,5 +81,3 @@ export function buildPluginSectionNav(currentUrl: string, pluginNavSection?: Nav
 
   return { main: copiedPluginNavSection, node: activePage ?? copiedPluginNavSection };
 }
-
-export const pluginsLogger = createMonitoringLogger('features.plugins');

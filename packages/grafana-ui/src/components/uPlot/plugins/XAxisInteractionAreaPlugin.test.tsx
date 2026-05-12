@@ -1,6 +1,8 @@
 import { render } from '@testing-library/react';
 import type uPlot from 'uplot';
 
+import { mockBoundingClientRect } from '@grafana/test-utils';
+
 import { UPlotConfigBuilder, type UPlotConfigBuilder as UPlotConfigBuilderType } from '../config/UPlotConfigBuilder';
 
 import { calculatePanRange, setupXAxisPan, XAxisInteractionAreaPlugin } from './XAxisInteractionAreaPlugin';
@@ -26,9 +28,7 @@ const createMockUPlot = (xAxisElement: HTMLElement) => {
   root.appendChild(xAxisElement);
 
   const over = document.createElement('div');
-  Object.defineProperty(over, 'getBoundingClientRect', {
-    value: () => ({ left: 0, top: 0, width: 800, height: 400 }),
-  });
+  mockBoundingClientRect({ left: 0, top: 0, width: 800, height: 400 });
 
   return {
     root,

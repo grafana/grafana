@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { type ReactNode, useState } from 'react';
 import { useMeasure } from 'react-use';
 
@@ -200,51 +200,128 @@ function BulkTransformationActions({ barWidth }: BulkTransformationActionsProps)
   );
 }
 
-export function BulkActionsBar() {
+interface BulkActionsBarProps {
+  /** Optional class for layout/animation overrides applied by the consumer. */
+  className?: string;
+}
+
+interface BulkActionsVisibilityOptions {
+  selectedQueryCount: number;
+  selectedTransformationCount: number;
+  multiSelectMode: boolean;
+}
+
+interface BulkActionsVisibility {
+  hasQueryActions: boolean;
+  hasTransformationActions: boolean;
+  shouldRender: boolean;
+}
+
+// In explicit multi-select mode any selection is actionable. Outside of it
+// (keyboard-shortcut path: Cmd/Ctrl+click, Shift+click) the bar opens at 2+
+// to avoid noise on every plain single-card click. Exported so the parent
+// (SidebarFooter) can ternary-render the bar vs. counts off the same rule.
+export function hasActionableSelection(selectionCount: number, multiSelectMode: boolean): boolean {
+  return multiSelectMode ? selectionCount >= 1 : selectionCount >= 2;
+}
+
+function getBulkActionsVisibility({
+  selectedQueryCount,
+  selectedTransformationCount,
+  multiSelectMode,
+}: BulkActionsVisibilityOptions): BulkActionsVisibility {
+  const hasQueryActions = hasActionableSelection(selectedQueryCount, multiSelectMode);
+  const hasTransformationActions = hasActionableSelection(selectedTransformationCount, multiSelectMode);
+
+  return {
+    hasQueryActions,
+    hasTransformationActions,
+    shouldRender: hasQueryActions || hasTransformationActions,
+  };
+}
+
+export function BulkActionsBar({ className }: BulkActionsBarProps = {}) {
   const styles = useStyles2(getStyles);
   const [barRef, { width: barWidth }] = useMeasure<HTMLDivElement>();
-  const { selectedQueryRefIds, selectedTransformationIds, clearSelection } = useQueryEditorUIContext();
+  const { selectedQueryRefIds, selectedTransformationIds, clearSelection, multiSelectMode, setMultiSelectMode } =
+    useQueryEditorUIContext();
 
-  const hasMultipleQueriesSelected = selectedQueryRefIds.length >= 2;
-  const hasMultipleTransformationsSelected = selectedTransformationIds.length >= 2;
+  const { hasQueryActions, hasTransformationActions, shouldRender } = getBulkActionsVisibility({
+    selectedQueryCount: selectedQueryRefIds.length,
+    selectedTransformationCount: selectedTransformationIds.length,
+    multiSelectMode,
+  });
 
-  if (!hasMultipleQueriesSelected && !hasMultipleTransformationsSelected) {
+  if (!shouldRender) {
     return null;
   }
+
+  // When multi-select mode is active, closing the bar should also leave the
+  // mode so the sidebar returns to its default (single-selection) presentation.
+  const handleClear = () => {
+    clearSelection();
+    if (multiSelectMode) {
+      setMultiSelectMode(false);
+    }
+  };
 
   return (
     <div
       ref={barRef}
-      className={styles.bar}
+      className={cx(styles.bar, className)}
       role="toolbar"
       aria-label={t('query-editor-next.bulk-actions.toolbar-label', 'Bulk actions')}
     >
-      {hasMultipleQueriesSelected && <BulkQueryActions barWidth={barWidth} />}
-      {hasMultipleTransformationsSelected && <BulkTransformationActions barWidth={barWidth} />}
-      <Button
-        size="sm"
-        variant="secondary"
-        fill="text"
-        icon="times"
-        onClick={clearSelection}
-        tooltip={t('query-editor-next.bulk-actions.clear-selection', 'Clear selection')}
-        aria-label={t('query-editor-next.bulk-actions.clear-selection', 'Clear selection')}
-        className={styles.clearButton}
-      />
+      <div className={styles.actionsScroll}>
+        {hasQueryActions && <BulkQueryActions barWidth={barWidth} />}
+        {hasTransformationActions && <BulkTransformationActions barWidth={barWidth} />}
+      </div>
+      <div className={styles.clearButtonWrapper}>
+        <Button
+          size="sm"
+          variant="secondary"
+          fill="text"
+          icon="times"
+          onClick={handleClear}
+          tooltip={t('query-editor-next.bulk-actions.clear-selection', 'Clear selection')}
+          aria-label={t('query-editor-next.bulk-actions.clear-selection', 'Clear selection')}
+        />
+      </div>
     </div>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
   bar: css({
+    width: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+  }),
+  actionsScroll: css({
+    flex: 1,
+    minWidth: 0,
+    position: 'relative',
     display: 'flex',
     alignItems: 'center',
     gap: theme.spacing(0.5),
-    padding: theme.spacing(0.75, 1.5),
-    background: theme.colors.background.canvas,
-    borderBottom: `1px solid ${theme.colors.border.weak}`,
+    overflow: 'hidden',
+    whiteSpace: 'nowrap',
+
+    '&::after': {
+      content: '""',
+      position: 'absolute',
+      right: 0,
+      top: 0,
+      bottom: 0,
+      width: theme.spacing(4),
+      background: `linear-gradient(to right, transparent, ${theme.colors.background.primary})`,
+      pointerEvents: 'none',
+    },
   }),
-  clearButton: css({
-    marginLeft: 'auto',
+  clearButtonWrapper: css({
+    flexShrink: 0,
+    display: 'flex',
+    alignItems: 'center',
   }),
 });

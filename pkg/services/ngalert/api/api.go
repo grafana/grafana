@@ -109,6 +109,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		api.AlertRules,
 		api.FeatureManager,
 		api.MultiOrgAlertmanager,
+		accesscontrol.NewAlertmanagerImportsAccess(api.AccessControl),
 	)
 
 	// Register endpoints for proxying to Alertmanager-compatible backends.
@@ -172,9 +173,9 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		&ConfigSrv{
 			datasourceService:    api.DatasourceService,
 			store:                api.AdminConfigStore,
+			cfg:                  &api.Cfg.UnifiedAlerting,
 			log:                  logger,
 			alertmanagerProvider: api.AlertsRouter,
-			featureManager:       api.FeatureManager,
 		},
 	), m)
 

@@ -401,6 +401,30 @@
     ]
   },
   {
+    "action": "notifications.alerting.grafana.app/alertmanagerimports:create",
+    "roles": [
+      "fixed:alerting.alertmanager-imports:writer"
+    ]
+  },
+  {
+    "action": "notifications.alerting.grafana.app/alertmanagerimports:delete",
+    "roles": [
+      "fixed:alerting.alertmanager-imports:writer"
+    ]
+  },
+  {
+    "action": "notifications.alerting.grafana.app/alertmanagerimports:get",
+    "roles": [
+      "fixed:alerting.alertmanager-imports:writer"
+    ]
+  },
+  {
+    "action": "notifications.alerting.grafana.app/alertmanagerimports:update",
+    "roles": [
+      "fixed:alerting.alertmanager-imports:writer"
+    ]
+  },
+  {
     "action": "notifications.alerting.grafana.app/routingtrees:create",
     "roles": [
       "fixed:alerting.managed-routes:creator",

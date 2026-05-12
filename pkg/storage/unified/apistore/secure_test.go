@@ -91,6 +91,58 @@ func TestSecureLifecycle(t *testing.T) {
 		secureStore.AssertExpectations(t)
 	})
 
+	t.Run("do not save datasource secure values", func(t *testing.T) {
+		obj := resourceWithSecureValues(common.InlineSecureValues{
+			"a": common.InlineSecureValue{Name: "lds-sv-XXX"}, // value currently saved in legacy system
+		})
+
+		info := &objectForStorage{}
+		secureStore := secret.NewMockInlineSecureValueSupport(t)
+
+		err := prepareSecureValues(context.Background(), secureStore, obj, nil, info)
+		require.ErrorContains(t, err, "unable to save secure value reference with legacy datasource prefix")
+		secureStore.AssertExpectations(t)
+	})
+
+	t.Run("ensure one of", func(t *testing.T) {
+		t.Run("name and create", func(t *testing.T) {
+			obj := resourceWithSecureValues(common.InlineSecureValues{
+				"a": common.InlineSecureValue{Name: "xxx", Create: "yyy"},
+			})
+
+			info := &objectForStorage{}
+			secureStore := secret.NewMockInlineSecureValueSupport(t)
+
+			err := prepareSecureValues(context.Background(), secureStore, obj, nil, info)
+			require.ErrorContains(t, err, "only one of name, create, or remove is allowed")
+			secureStore.AssertExpectations(t)
+		})
+		t.Run("name and remove", func(t *testing.T) {
+			obj := resourceWithSecureValues(common.InlineSecureValues{
+				"a": common.InlineSecureValue{Name: "xxx", Remove: true},
+			})
+
+			info := &objectForStorage{}
+			secureStore := secret.NewMockInlineSecureValueSupport(t)
+
+			err := prepareSecureValues(context.Background(), secureStore, obj, nil, info)
+			require.ErrorContains(t, err, "only one of name, create, or remove is allowed")
+			secureStore.AssertExpectations(t)
+		})
+		t.Run("create and remove", func(t *testing.T) {
+			obj := resourceWithSecureValues(common.InlineSecureValues{
+				"a": common.InlineSecureValue{Create: "xxx", Remove: true},
+			})
+
+			info := &objectForStorage{}
+			secureStore := secret.NewMockInlineSecureValueSupport(t)
+
+			err := prepareSecureValues(context.Background(), secureStore, obj, nil, info)
+			require.ErrorContains(t, err, "only one of create, or remove is allowed")
+			secureStore.AssertExpectations(t)
+		})
+	})
+
 	t.Run("change name manually", func(t *testing.T) {
 		secureStore := secret.NewMockInlineSecureValueSupport(t)
 
