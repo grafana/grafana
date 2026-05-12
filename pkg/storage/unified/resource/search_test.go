@@ -295,9 +295,7 @@ func TestSearchGetOrCreateIndexWithCancellation(t *testing.T) {
 			{NamespacedResource: NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}, Count: 50, ResourceVersion: 11111111},
 		},
 	}
-	search := &slowSearchBackendWithCache{
-		mockSearchBackend: mockSearchBackend{},
-	}
+	search := newBlockingSearchBackend(nil)
 
 	supplier := &TestDocumentBuilderSupplier{
 		GroupsResources: map[string]string{
@@ -321,54 +319,27 @@ func TestSearchGetOrCreateIndexWithCancellation(t *testing.T) {
 	defer cancel()
 
 	_, err = support.getOrCreateIndex(ctx, nil, key, "test")
-	// Make sure we get context deadline error
+	// Make sure we get context deadline error.
 	require.ErrorIs(t, err, context.DeadlineExceeded)
 
-	// Wait until indexing is finished. We need to wait 2 seconds here,
-	// because BuildIndex simulates a 1 second build time, and we want
-	// to be sure it has started before we check the calls.
+	// BuildIndex started despite the cancellation: getOrCreateIndex's singleflight
+	// uses context.WithoutCancel so the underlying build runs to completion.
+	select {
+	case <-search.onStarted:
+	case <-time.After(2 * time.Second):
+		t.Fatal("BuildIndex never started")
+	}
+
+	// Release the in-flight build; the index should land in the cache.
+	close(search.proceed)
 	require.Eventually(t, func() bool {
-		return search.slowBuildCalls.Load() > 0
-	}, 2*time.Second, 100*time.Millisecond, "BuildIndex never started")
+		return support.search.GetIndex(key) != nil
+	}, 1*time.Second, 100*time.Millisecond, "index not cached after build finished")
 
-	require.NotEmpty(t, search.buildIndexCalls)
-
-	// Wait until new index is put into cache.
-	require.Eventually(t, func() bool {
-		idx := support.search.GetIndex(key)
-		return idx != nil
-	}, 1*time.Second, 100*time.Millisecond, "Indexing finishes despite context cancellation")
-
-	// Second call to getOrCreateIndex returns index immediately, even if context is canceled, as the index is now ready and cached.
+	// Second call to getOrCreateIndex returns the cached index immediately, even
+	// though ctx is already done.
 	_, err = support.getOrCreateIndex(ctx, nil, key, "test")
 	require.NoError(t, err)
-}
-
-type slowSearchBackendWithCache struct {
-	mockSearchBackend
-	slowBuildCalls atomic.Int64
-}
-
-func (m *slowSearchBackendWithCache) GetIndex(key NamespacedResource) ResourceIndex {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	return m.cache[key]
-}
-
-func (m *slowSearchBackendWithCache) BuildIndex(ctx context.Context, key NamespacedResource, size int64, fields SearchableDocumentFields, reason string, builder BuildFn, updater UpdateFn, rebuild bool, lastImportTime time.Time, maxFreshSnapshotAge time.Duration) (ResourceIndex, error) {
-	defer m.slowBuildCalls.Add(1)
-
-	time.Sleep(1 * time.Second)
-
-	// Simulate erroring out when context is cancelled.
-	if ctx.Err() != nil {
-		return nil, ctx.Err()
-	}
-	idx, err := m.mockSearchBackend.BuildIndex(ctx, key, size, fields, reason, builder, updater, rebuild, lastImportTime, maxFreshSnapshotAge)
-	if err != nil {
-		return nil, err
-	}
-	return idx, nil
 }
 
 func TestCombineBuildRequests(t *testing.T) {
@@ -1152,4 +1123,211 @@ func TestFindIndexesToRebuildWithJitter(t *testing.T) {
 	chsWithJitter := support2.findIndexesToRebuild(importTimes, nil, now, true)
 	require.Less(t, len(chsWithJitter), numIndexes, "jitter should cause some indexes to not be queued yet")
 	require.Greater(t, len(chsWithJitter), 0, "at least some indexes should still be queued")
+}
+
+// blockingSearchBackend wraps mockSearchBackend so a test can pause inside
+// BuildIndex. onStarted is closed when the first build enters; the test
+// closes proceed to release any blocked builds.
+type blockingSearchBackend struct {
+	mockSearchBackend
+
+	onStarted chan struct{}
+	proceed   chan struct{}
+
+	startedOnce sync.Once
+	buildCalls  atomic.Int32
+}
+
+func newBlockingSearchBackend(cache map[NamespacedResource]ResourceIndex) *blockingSearchBackend {
+	return &blockingSearchBackend{
+		mockSearchBackend: mockSearchBackend{cache: cache},
+		onStarted:         make(chan struct{}),
+		proceed:           make(chan struct{}),
+	}
+}
+
+func (b *blockingSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, fields SearchableDocumentFields, reason string, builder BuildFn, updater UpdateFn, rebuild bool, lastImportTime time.Time, maxFreshSnapshotAge time.Duration) (ResourceIndex, error) {
+	b.buildCalls.Add(1)
+	b.startedOnce.Do(func() { close(b.onStarted) })
+	<-b.proceed
+	return b.mockSearchBackend.BuildIndex(ctx, key, size, fields, reason, builder, updater, rebuild, lastImportTime, maxFreshSnapshotAge)
+}
+
+// TestRebuildIndexConcurrentRebuildsForSameKeyAreDeduplicated verifies the
+// in-flight tracker added by rebuildIndex: while a rebuild is running for a
+// key, additional rebuild requests for the same key do not call BuildIndex
+// and instead get stashed as a single follow-up that is re-enqueued when the
+// in-flight rebuild finishes.
+func TestRebuildIndexConcurrentRebuildsForSameKeyAreDeduplicated(t *testing.T) {
+	key := NamespacedResource{Namespace: "ns", Group: "group", Resource: "res"}
+
+	initialBuildTime := time.Now().Add(-2 * time.Hour)
+	search := newBlockingSearchBackend(map[NamespacedResource]ResourceIndex{
+		key: &MockResourceIndex{buildInfo: IndexBuildInfo{BuildTime: initialBuildTime}},
+	})
+
+	storage := &mockStorageBackend{
+		resourceStats: []ResourceStats{
+			{NamespacedResource: key, Count: 50, ResourceVersion: 11111111},
+		},
+	}
+	supplier := &TestDocumentBuilderSupplier{
+		GroupsResources: map[string]string{"group": "res"},
+	}
+
+	opts := SearchOptions{Backend: search, Resources: supplier}
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil)
+	require.NoError(t, err)
+
+	// Fire the first rebuild. It will claim the in-flight slot and block
+	// inside BuildIndex.
+	firstDone := make(chan struct{})
+	firstReq := rebuildRequest{
+		NamespacedResource: key,
+		minBuildTime:       time.Now().Add(-1 * time.Hour),
+		completeChannels:   []chan<- struct{}{firstDone},
+	}
+	firstReturned := make(chan struct{})
+	go func() {
+		defer close(firstReturned)
+		support.rebuildIndex(t.Context(), firstReq)
+	}()
+
+	// Wait for the first rebuild to be in flight.
+	select {
+	case <-search.onStarted:
+	case <-time.After(2 * time.Second):
+		t.Fatal("first rebuild did not enter BuildIndex")
+	}
+
+	support.inFlightRebuildsMu.Lock()
+	_, inFlight := support.inFlightRebuilds[key]
+	support.inFlightRebuildsMu.Unlock()
+	require.True(t, inFlight, "rebuild for key should be marked in flight")
+
+	// Fire 4 more rebuild requests for the same key with varying conditions.
+	// Each should return promptly (deferred) without calling BuildIndex; the
+	// strictest minBuildTime should win when the requests get merged.
+	latestMinBuildTime := time.Now() // strictest condition
+	laterTimes := []time.Time{
+		time.Now().Add(-50 * time.Minute),
+		latestMinBuildTime,
+		time.Now().Add(-40 * time.Minute),
+		time.Now().Add(-30 * time.Minute),
+	}
+	deferredChans := make([]chan struct{}, len(laterTimes))
+	for i, mbt := range laterTimes {
+		deferredChans[i] = make(chan struct{})
+		req := rebuildRequest{
+			NamespacedResource: key,
+			minBuildTime:       mbt,
+			completeChannels:   []chan<- struct{}{deferredChans[i]},
+		}
+		returned := make(chan struct{})
+		go func() {
+			defer close(returned)
+			support.rebuildIndex(t.Context(), req)
+		}()
+		select {
+		case <-returned:
+		case <-time.After(2 * time.Second):
+			t.Fatalf("rebuildIndex %d did not return; expected to be deferred", i)
+		}
+	}
+
+	// None of the deferred completion channels should be closed yet — they
+	// are owned by the follow-up rebuild that hasn't run.
+	for i, ch := range deferredChans {
+		select {
+		case <-ch:
+			t.Fatalf("deferred completion channel %d closed prematurely", i)
+		default:
+		}
+	}
+
+	// Queue is empty: deferred requests live on rebuildState.deferred until
+	// the in-flight rebuild's defer re-enqueues them.
+	require.Equal(t, 0, support.rebuildQueue.Len())
+
+	// Only one BuildIndex call should be in progress so far.
+	require.Equal(t, int32(1), search.buildCalls.Load())
+
+	// Release the first rebuild and wait for it to finish.
+	close(search.proceed)
+	select {
+	case <-firstReturned:
+	case <-time.After(2 * time.Second):
+		t.Fatal("first rebuildIndex did not return after unblocking")
+	}
+	select {
+	case <-firstDone:
+	case <-time.After(2 * time.Second):
+		t.Fatal("first rebuild's completion channel was not closed")
+	}
+
+	// In-flight tracker should be cleared.
+	support.inFlightRebuildsMu.Lock()
+	_, stillInFlight := support.inFlightRebuilds[key]
+	support.inFlightRebuildsMu.Unlock()
+	require.False(t, stillInFlight, "in-flight tracker should be cleared after rebuild finishes")
+
+	// The deferred follow-up should have been re-enqueued as a single item
+	// carrying all 4 deferred completion channels and the strictest
+	// minBuildTime among the deferred requests.
+	require.Equal(t, 1, support.rebuildQueue.Len())
+	items := support.rebuildQueue.Elements()
+	require.Len(t, items, 1)
+	req := items[0]
+	require.Equal(t, key, req.NamespacedResource)
+	require.Len(t, req.completeChannels, len(deferredChans))
+	require.True(t, req.minBuildTime.Equal(latestMinBuildTime),
+		"follow-up should carry the strictest minBuildTime; got %v want %v",
+		req.minBuildTime, latestMinBuildTime)
+
+	// Still only one BuildIndex call: the deferred follow-up has been
+	// enqueued but no worker is running in this test to pick it up.
+	require.Equal(t, int32(1), search.buildCalls.Load())
+}
+
+// TestRebuildIndexNoFollowUpWhenNotInFlight verifies the happy path: a single
+// rebuild request for a key runs to completion, clears the in-flight tracker,
+// and does not re-enqueue anything.
+func TestRebuildIndexNoFollowUpWhenNotInFlight(t *testing.T) {
+	key := NamespacedResource{Namespace: "ns", Group: "group", Resource: "res"}
+
+	search := &mockSearchBackend{
+		cache: map[NamespacedResource]ResourceIndex{
+			key: &MockResourceIndex{buildInfo: IndexBuildInfo{BuildTime: time.Now().Add(-2 * time.Hour)}},
+		},
+	}
+	storage := &mockStorageBackend{
+		resourceStats: []ResourceStats{
+			{NamespacedResource: key, Count: 50, ResourceVersion: 11111111},
+		},
+	}
+	supplier := &TestDocumentBuilderSupplier{
+		GroupsResources: map[string]string{"group": "res"},
+	}
+	opts := SearchOptions{Backend: search, Resources: supplier}
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil)
+	require.NoError(t, err)
+
+	done := make(chan struct{})
+	support.rebuildIndex(t.Context(), rebuildRequest{
+		NamespacedResource: key,
+		minBuildTime:       time.Now().Add(-1 * time.Hour),
+		completeChannels:   []chan<- struct{}{done},
+	})
+
+	select {
+	case <-done:
+	default:
+		t.Fatal("completion channel should be closed after rebuildIndex returns")
+	}
+
+	support.inFlightRebuildsMu.Lock()
+	_, inFlight := support.inFlightRebuilds[key]
+	support.inFlightRebuildsMu.Unlock()
+	require.False(t, inFlight, "in-flight tracker should be cleared")
+	require.Equal(t, 0, support.rebuildQueue.Len(), "no follow-up should be re-enqueued")
 }

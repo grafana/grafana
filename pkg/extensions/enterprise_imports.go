@@ -36,6 +36,7 @@ import (
 	_ "github.com/dlmiddlecote/sqlstats"
 	_ "github.com/dolthub/go-mysql-server"
 	_ "github.com/dolthub/go-mysql-server/sql"
+	_ "github.com/dolthub/go-mysql-server/sql/analyzer"
 	_ "github.com/dolthub/go-mysql-server/sql/expression"
 	_ "github.com/dolthub/go-mysql-server/sql/expression/function/aggregation"
 	_ "github.com/dolthub/go-mysql-server/sql/plan"
@@ -246,6 +247,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/registry/apis/iam/roleeffective"
 	_ "github.com/grafana/grafana/pkg/registry/apis/ofrep"
 	_ "github.com/grafana/grafana/pkg/registry/apis/preferences"
+	_ "github.com/grafana/grafana/pkg/registry/apis/preferences/legacy"
 	_ "github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	_ "github.com/grafana/grafana/pkg/registry/apis/provisioning/extras"
 	_ "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -780,7 +782,6 @@ import (
 	_ "k8s.io/kube-openapi/pkg/spec3"
 	_ "k8s.io/kube-openapi/pkg/validation/spec"
 	_ "k8s.io/utils/net"
-	_ "k8s.io/utils/ptr"
 	_ "sigs.k8s.io/structured-merge-diff/v6/typed"
 	_ "xorm.io/builder"
 )

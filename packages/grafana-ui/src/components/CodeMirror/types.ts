@@ -1,6 +1,9 @@
-import { type CompletionSource } from '@codemirror/autocomplete';
+import type { Completion, CompletionContext, CompletionResult, CompletionSource } from '@codemirror/autocomplete';
 import { type Extension } from '@codemirror/state';
 
+export type CodeMirrorCompletion = Completion;
+export type CodeMirrorCompletionContext = CompletionContext;
+export type CodeMirrorCompletionResult = CompletionResult;
 export type CodeMirrorCompletionSource = CompletionSource;
 
 export type CodeMirrorExtension = Extension;

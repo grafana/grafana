@@ -5,7 +5,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"k8s.io/utils/ptr"
 
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 )
@@ -14,16 +13,16 @@ func TestConvertAnnotationMappings_V2alpha1_to_V1(t *testing.T) {
 	t.Run("should convert simple field mappings to structured format with source and value", func(t *testing.T) {
 		mappings := map[string]dashv2alpha1.DashboardAnnotationEventFieldMapping{
 			"title": {
-				Source: ptr.To("field"),
-				Value:  ptr.To("service"),
+				Source: new("field"),
+				Value:  new("service"),
 			},
 			"text": {
-				Source: ptr.To("field"),
-				Value:  ptr.To("description"),
+				Source: new("field"),
+				Value:  new("description"),
 			},
 			"time": {
-				Source: ptr.To("field"),
-				Value:  ptr.To("timestamp"),
+				Source: new("field"),
+				Value:  new("timestamp"),
 			},
 		}
 
@@ -51,7 +50,7 @@ func TestConvertAnnotationMappings_V2alpha1_to_V1(t *testing.T) {
 		mappings := map[string]dashv2alpha1.DashboardAnnotationEventFieldMapping{
 			"title": {
 				Source: nil, // nil defaults to "field"
-				Value:  ptr.To("service"),
+				Value:  new("service"),
 			},
 		}
 
@@ -67,9 +66,9 @@ func TestConvertAnnotationMappings_V2alpha1_to_V1(t *testing.T) {
 	t.Run("should preserve complex mappings with regex as structured format", func(t *testing.T) {
 		mappings := map[string]dashv2alpha1.DashboardAnnotationEventFieldMapping{
 			"tags": {
-				Source: ptr.To("field"),
-				Value:  ptr.To("labels"),
-				Regex:  ptr.To("/(.*)/"),
+				Source: new("field"),
+				Value:  new("labels"),
+				Regex:  new("/(.*)/"),
 			},
 		}
 
@@ -86,8 +85,8 @@ func TestConvertAnnotationMappings_V2alpha1_to_V1(t *testing.T) {
 	t.Run("should preserve mappings with non-field source as structured format", func(t *testing.T) {
 		mappings := map[string]dashv2alpha1.DashboardAnnotationEventFieldMapping{
 			"text": {
-				Source: ptr.To("text"),
-				Value:  ptr.To("constant text"),
+				Source: new("text"),
+				Value:  new("constant text"),
 			},
 		}
 
@@ -103,11 +102,11 @@ func TestConvertAnnotationMappings_V2alpha1_to_V1(t *testing.T) {
 	t.Run("should preserve mappings with skip source as structured format", func(t *testing.T) {
 		mappings := map[string]dashv2alpha1.DashboardAnnotationEventFieldMapping{
 			"title": {
-				Source: ptr.To("skip"),
+				Source: new("skip"),
 			},
 			"text": {
-				Source: ptr.To("field"),
-				Value:  ptr.To("description"),
+				Source: new("field"),
+				Value:  new("description"),
 			},
 		}
 
@@ -128,16 +127,16 @@ func TestConvertAnnotationMappings_V2alpha1_to_V1(t *testing.T) {
 	t.Run("should skip mappings without value", func(t *testing.T) {
 		mappings := map[string]dashv2alpha1.DashboardAnnotationEventFieldMapping{
 			"title": {
-				Source: ptr.To("field"),
+				Source: new("field"),
 				Value:  nil,
 			},
 			"text": {
-				Source: ptr.To("field"),
-				Value:  ptr.To(""),
+				Source: new("field"),
+				Value:  new(""),
 			},
 			"time": {
-				Source: ptr.To("field"),
-				Value:  ptr.To("timestamp"),
+				Source: new("field"),
+				Value:  new("timestamp"),
 			},
 		}
 
@@ -163,17 +162,17 @@ func TestConvertAnnotationMappings_V2alpha1_to_V1(t *testing.T) {
 	t.Run("should handle all mappings in structured format", func(t *testing.T) {
 		mappings := map[string]dashv2alpha1.DashboardAnnotationEventFieldMapping{
 			"title": {
-				Source: ptr.To("field"),
-				Value:  ptr.To("service"),
+				Source: new("field"),
+				Value:  new("service"),
 			},
 			"tags": {
-				Source: ptr.To("field"),
-				Value:  ptr.To("labels"),
-				Regex:  ptr.To("/(.*)/"),
+				Source: new("field"),
+				Value:  new("labels"),
+				Regex:  new("/(.*)/"),
 			},
 			"text": {
-				Source: ptr.To("text"),
-				Value:  ptr.To("constant"),
+				Source: new("text"),
+				Value:  new("constant"),
 			},
 		}
 

@@ -1,11 +1,11 @@
 import { Fragment, type PropsWithChildren } from 'react';
 import { render, screen } from 'test/test-utils';
 
-import { isOnPrem } from '../utils/isOnPrem';
+import { isOnPrem } from 'app/core/utils/isOnPrem';
 
 import { QuotaLimitMessage } from './QuotaLimitMessage';
 
-jest.mock('../utils/isOnPrem', () => ({
+jest.mock('app/core/utils/isOnPrem', () => ({
   isOnPrem: jest.fn(() => false),
 }));
 
