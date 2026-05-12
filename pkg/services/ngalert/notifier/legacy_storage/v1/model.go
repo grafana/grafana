@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"cmp"
 	"errors"
 	"fmt"
 	"hash/fnv"
@@ -24,20 +25,32 @@ type AMConfigDB = definitions.PostableUserConfig // TODO: Define type explicitly
 
 // AMConfigV1 is an exact structural copy of PostableUserConfig without json tags.
 type AMConfigV1 struct {
-	TemplateFiles          map[string]string
+	Templates              map[ResourceUID]TemplateGroup
 	AlertmanagerConfig     PostableApiAlertingConfig
 	ExtraConfigs           []ExtraConfiguration
 	ManagedRoutes          ManagedRoutes
 	ManagedInhibitionRules ManagedInhibitionRules
 }
 
-// GetMergedTemplateDefinitions converts the given PostableUserConfig's TemplateFiles to a slice of Templates.
-func (c *AMConfigV1) GetMergedTemplateDefinitions() []definition.PostableApiTemplate {
-	out := definition.TemplatesMapToPostableAPITemplates(c.TemplateFiles, definition.GrafanaTemplateKind)
-	if len(c.ExtraConfigs) == 0 || len(c.ExtraConfigs[0].TemplateFiles) == 0 {
-		return out
+// SortedTemplates returns templates ordered by kind and title.
+func (c *AMConfigV1) SortedTemplates(includeImported bool) []TemplateGroup {
+	res := make([]TemplateGroup, 0, len(c.Templates))
+	for _, t := range c.Templates {
+		res = append(res, t)
 	}
-	return append(out, definition.TemplatesMapToPostableAPITemplates(c.ExtraConfigs[0].TemplateFiles, definition.MimirTemplateKind)...)
+
+	if includeImported && len(c.ExtraConfigs) > 0 {
+		for name, content := range c.ExtraConfigs[0].TemplateFiles {
+			res = append(res, NewTemplateGroup(name, content, TemplateKindMimir, models.ProvenanceConvertedPrometheus)) // Provenance shouldn't be used regardless.
+		}
+	}
+
+	return slices.SortedFunc(slices.Values(res), func(a TemplateGroup, b TemplateGroup) int {
+		return cmp.Or(
+			cmp.Compare(a.Kind, b.Kind),
+			cmp.Compare(a.Title, b.Title),
+		)
+	})
 }
 
 // GetGrafanaReceiverMap returns a map that associates UUIDs to grafana receivers

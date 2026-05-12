@@ -122,7 +122,7 @@ func MergeExtraConfig(_ context.Context, cfg *v1.AMConfigV1) (MergeResult, error
 	// TODO move adding managed routes and managed inhibit rules to cfg here
 
 	mergedConfig := v1.AMConfigV1{
-		TemplateFiles: cfg.TemplateFiles,
+		Templates: cfg.Templates,
 		AlertmanagerConfig: v1.PostableApiAlertingConfig{
 			Config: v1.Config{
 				Global:            nil, // Grafana does not have global.

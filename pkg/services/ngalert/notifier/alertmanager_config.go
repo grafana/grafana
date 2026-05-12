@@ -319,7 +319,6 @@ func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx contex
 	}
 
 	alertmanagerConfig := cfg.AlertmanagerConfig
-	templateFiles := cfg.TemplateFiles
 
 	if withAutogen {
 		// We validate the notification settings in a similar way to when we POST.
@@ -333,7 +332,7 @@ func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx contex
 	}
 
 	result := definitions.GettableUserConfig{
-		TemplateFiles: templateFiles,
+		TemplateFiles: v1.TemplatesToTemplateFiles(cfg.Templates),
 		AlertmanagerConfig: definitions.GettableApiAlertingConfig{
 			Config: PostableApiAlertingConfigToAPI(alertmanagerConfig).Config,
 		},
@@ -556,8 +555,7 @@ func (moa *MultiOrgAlertmanager) mergeProvenance(ctx context.Context, config def
 		}
 	}
 
-	tmpl := definitions.NotificationTemplate{}
-	tmplProvs, err := moa.ProvStore.GetProvenances(ctx, org, tmpl.ResourceType())
+	tmplProvs, err := moa.ProvStore.GetProvenances(ctx, org, (&v1.TemplateGroup{}).ResourceType())
 	if err != nil {
 		return definitions.GettableUserConfig{}, nil
 	}
