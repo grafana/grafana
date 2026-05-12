@@ -14,7 +14,8 @@ import { CardContainer, type CardContainerProps, getCardContainerStyles } from '
 /**
  * @public
  */
-export interface Props extends Omit<CardContainerProps, 'disableEvents' | 'disableHover'> {
+export interface Props
+  extends Omit<CardContainerProps, 'disableEvents' | 'disableHover' | 'hasDescriptionComponent' | 'hasTagsComponent'> {
   /** Indicates if the card and all its actions can be interacted with */
   disabled?: boolean;
   /** Link to redirect to on card click. If provided, the Card inner content will be rendered inside `a` */
@@ -100,6 +101,7 @@ export const Card: CardInterface = ({
       className={cx(styles.container, className)}
       noMargin={noMargin}
       hasDescriptionComponent={hasDescriptionComponent}
+      hasTagsComponent={hasTagsComponent}
       {...htmlProps}
     >
       <CardContext.Provider value={{ href, onClick: onCardClick, disabled, isSelected }}>
@@ -152,7 +154,6 @@ Heading.displayName = 'Heading';
 const getHeadingStyles = (theme: GrafanaTheme2) => ({
   heading: css({
     gridArea: 'Heading',
-    gridColumnEnd: 'var(--card-content-column-end, auto)',
     justifySelf: 'start',
     display: 'flex',
     justifyContent: 'space-between',
@@ -219,7 +220,6 @@ const getDescriptionStyles = (theme: GrafanaTheme2) => ({
   description: css({
     width: '100%',
     gridArea: 'Description',
-    gridColumnEnd: 'var(--card-content-column-end, auto)',
     margin: theme.spacing(1, 0, 0),
     color: theme.colors.text.secondary,
     lineHeight: theme.typography.body.lineHeight,
@@ -292,7 +292,6 @@ Meta.displayName = 'Meta';
 const getMetaStyles = (theme: GrafanaTheme2) => ({
   metadata: css({
     gridArea: 'Meta',
-    gridColumnEnd: 'var(--card-content-column-end, auto)',
     display: 'flex',
     alignItems: 'center',
     width: '100%',
