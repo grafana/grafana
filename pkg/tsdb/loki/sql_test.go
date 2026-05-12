@@ -570,3 +570,195 @@ func TestNormalizeGrafanaSQLRequest_Converts(t *testing.T) {
 	require.NotNil(t, model.QueryType)
 	require.Equal(t, "range", *model.QueryType)
 }
+
+func TestParseSQLHints(t *testing.T) {
+	t.Parallel()
+
+	t.Run("nil hints", func(t *testing.T) {
+		t.Parallel()
+		h, err := parseSQLHints(nil)
+		require.NoError(t, err)
+		require.Equal(t, sqlHints{}, h)
+	})
+
+	t.Run("STEP and RATE populate raw and parsed values", func(t *testing.T) {
+		t.Parallel()
+		h, err := parseSQLHints(map[string]string{"STEP": "30s", "RATE": "5m"})
+		require.NoError(t, err)
+		require.Equal(t, "30s", h.stepStr)
+		require.Equal(t, 30*time.Second, h.stepDur)
+		require.Equal(t, "5m", h.rateStr)
+		require.Equal(t, 5*time.Minute, h.rateDur)
+	})
+
+	t.Run("DIRECTION is lowercased", func(t *testing.T) {
+		t.Parallel()
+		h, err := parseSQLHints(map[string]string{"DIRECTION": "FORWARD"})
+		require.NoError(t, err)
+		require.Equal(t, "forward", h.direction)
+	})
+
+	t.Run("INSTANT presence sets flag regardless of value", func(t *testing.T) {
+		t.Parallel()
+		h, err := parseSQLHints(map[string]string{"INSTANT": ""})
+		require.NoError(t, err)
+		require.True(t, h.instant)
+	})
+
+	t.Run("lowercase hint keys are recognised", func(t *testing.T) {
+		t.Parallel()
+		h, err := parseSQLHints(map[string]string{"step": "1m", "instant": ""})
+		require.NoError(t, err)
+		require.Equal(t, "1m", h.stepStr)
+		require.True(t, h.instant)
+	})
+
+	t.Run("invalid STEP returns wrapped error", func(t *testing.T) {
+		t.Parallel()
+		_, err := parseSQLHints(map[string]string{"STEP": "not-a-duration"})
+		require.ErrorContains(t, err, "loki grafana sql:")
+		require.ErrorContains(t, err, "failed to parse STEP hint")
+		require.ErrorContains(t, err, "not-a-duration")
+	})
+
+	t.Run("invalid RATE returns wrapped error", func(t *testing.T) {
+		t.Parallel()
+		_, err := parseSQLHints(map[string]string{"RATE": "bogus"})
+		require.ErrorContains(t, err, "loki grafana sql:")
+		require.ErrorContains(t, err, "failed to parse RATE hint")
+	})
+}
+
+func TestBuildLogPlan(t *testing.T) {
+	t.Parallel()
+	const sel = `{service_name="carts"}`
+
+	t.Run("default plan is range with selector and no overrides", func(t *testing.T) {
+		t.Parallel()
+		plan := buildLogPlan(sel, grafanaSQLQuery{}, sqlHints{})
+		require.Equal(t, sel, plan.expr)
+		require.Equal(t, "range", plan.queryType)
+		require.Equal(t, sqlKindLog, plan.kind)
+		require.Equal(t, "", plan.modelStep)
+		require.Equal(t, time.Duration(0), plan.intervalStep)
+		require.Equal(t, int64(0), plan.maxLines)
+		require.Nil(t, plan.direction)
+	})
+
+	t.Run("STEP populates both intervalStep and modelStep", func(t *testing.T) {
+		t.Parallel()
+		plan := buildLogPlan(sel, grafanaSQLQuery{}, sqlHints{stepStr: "30s", stepDur: 30 * time.Second})
+		require.Equal(t, "30s", plan.modelStep)
+		require.Equal(t, 30*time.Second, plan.intervalStep)
+	})
+
+	t.Run("direction forward and backward are passed through", func(t *testing.T) {
+		t.Parallel()
+		for _, dir := range []string{"forward", "backward"} {
+			plan := buildLogPlan(sel, grafanaSQLQuery{}, sqlHints{direction: dir})
+			require.NotNil(t, plan.direction, "direction %q", dir)
+			require.Equal(t, dir, *plan.direction)
+		}
+	})
+
+	t.Run("unknown direction is nil", func(t *testing.T) {
+		t.Parallel()
+		plan := buildLogPlan(sel, grafanaSQLQuery{}, sqlHints{direction: "sideways"})
+		require.Nil(t, plan.direction)
+	})
+
+	t.Run("positive limit becomes maxLines", func(t *testing.T) {
+		t.Parallel()
+		lim := int64(500)
+		sq := grafanaSQLQuery{Query: schemas.Query{Limit: &lim}}
+		plan := buildLogPlan(sel, sq, sqlHints{})
+		require.Equal(t, int64(500), plan.maxLines)
+	})
+
+	t.Run("non-positive limit is ignored", func(t *testing.T) {
+		t.Parallel()
+		lim := int64(0)
+		sq := grafanaSQLQuery{Query: schemas.Query{Limit: &lim}}
+		plan := buildLogPlan(sel, sq, sqlHints{})
+		require.Equal(t, int64(0), plan.maxLines)
+	})
+}
+
+func TestBuildMetricPlan(t *testing.T) {
+	t.Parallel()
+	const sel = `{service_name="carts"}`
+	queryDur := time.Hour
+	countLine := &aggregationHint{Function: "COUNT", Column: "line", GroupBy: []string{"env"}}
+
+	t.Run("aggregation only defaults step to window", func(t *testing.T) {
+		t.Parallel()
+		plan, err := buildMetricPlan(sel, grafanaSQLQuery{Aggregation: countLine}, sqlHints{}, queryDur)
+		require.NoError(t, err)
+		require.Equal(t, `sum by (env) (count_over_time({service_name="carts"}[1m]))`, plan.expr)
+		require.Equal(t, "range", plan.queryType)
+		require.Equal(t, "1m", plan.modelStep)
+		require.Equal(t, time.Minute, plan.intervalStep)
+		require.Equal(t, sqlKindMetric, plan.kind)
+		require.Nil(t, plan.direction)
+	})
+
+	t.Run("aggregation with STEP uses step as window", func(t *testing.T) {
+		t.Parallel()
+		h := sqlHints{stepStr: "30s", stepDur: 30 * time.Second}
+		plan, err := buildMetricPlan(sel, grafanaSQLQuery{Aggregation: countLine}, h, queryDur)
+		require.NoError(t, err)
+		require.Equal(t, `sum by (env) (count_over_time({service_name="carts"}[30s]))`, plan.expr)
+		require.Equal(t, "30s", plan.modelStep)
+		require.Equal(t, 30*time.Second, plan.intervalStep)
+	})
+
+	t.Run("RATE without aggregation produces rate expr and defaults step to rate", func(t *testing.T) {
+		t.Parallel()
+		h := sqlHints{rateStr: "2m", rateDur: 2 * time.Minute}
+		plan, err := buildMetricPlan(sel, grafanaSQLQuery{}, h, queryDur)
+		require.NoError(t, err)
+		require.Equal(t, `rate({service_name="carts"}[2m])`, plan.expr)
+		require.Equal(t, "2m", plan.modelStep)
+		require.Equal(t, 2*time.Minute, plan.intervalStep)
+	})
+
+	t.Run("aggregation with RATE wraps rate expression", func(t *testing.T) {
+		t.Parallel()
+		h := sqlHints{rateStr: "5m", rateDur: 5 * time.Minute}
+		plan, err := buildMetricPlan(sel, grafanaSQLQuery{Aggregation: countLine}, h, queryDur)
+		require.NoError(t, err)
+		require.Equal(t, `sum by (env) (rate({service_name="carts"}[5m]))`, plan.expr)
+		require.Equal(t, "5m", plan.modelStep)
+		require.Equal(t, 5*time.Minute, plan.intervalStep)
+	})
+
+	// Key invariant the refactor preserves: instant queries clear modelStep (Loki's instant API
+	// has no step) but intervalStep keeps the underlying duration so q.Interval is still updated.
+	t.Run("instant with STEP clears modelStep but keeps intervalStep", func(t *testing.T) {
+		t.Parallel()
+		h := sqlHints{stepStr: "30s", stepDur: 30 * time.Second, instant: true}
+		plan, err := buildMetricPlan(sel, grafanaSQLQuery{Aggregation: countLine}, h, queryDur)
+		require.NoError(t, err)
+		require.Equal(t, "instant", plan.queryType)
+		require.Equal(t, "", plan.modelStep)
+		require.Equal(t, 30*time.Second, plan.intervalStep)
+	})
+
+	t.Run("instant without STEP yields zero intervalStep", func(t *testing.T) {
+		t.Parallel()
+		h := sqlHints{rateStr: "1m", rateDur: time.Minute, instant: true}
+		plan, err := buildMetricPlan(sel, grafanaSQLQuery{}, h, queryDur)
+		require.NoError(t, err)
+		require.Equal(t, "instant", plan.queryType)
+		require.Equal(t, "", plan.modelStep)
+		require.Equal(t, time.Duration(0), plan.intervalStep)
+	})
+
+	t.Run("unsupported aggregation function returns wrapped error", func(t *testing.T) {
+		t.Parallel()
+		sq := grafanaSQLQuery{Aggregation: &aggregationHint{Function: "STDDEV"}}
+		_, err := buildMetricPlan(sel, sq, sqlHints{}, queryDur)
+		require.ErrorContains(t, err, "loki grafana sql:")
+		require.ErrorContains(t, err, "unsupported aggregation function")
+	})
+}
