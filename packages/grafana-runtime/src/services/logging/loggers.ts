@@ -16,6 +16,7 @@ export const Loggers = {
   'features.correlations': {},
   'features.dashboards.genai': {},
   'features.query-history.local-storage': {},
+  'core.crash-detection': {},
 } satisfies Record<string, LoggerDefaults>;
 
 export type LoggerSource = keyof typeof Loggers;

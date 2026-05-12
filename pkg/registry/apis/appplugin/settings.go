@@ -151,13 +151,9 @@ func (s *settingsStorage) get(ctx context.Context) (*apppluginV0.Settings, error
 		return nil, fmt.Errorf("failed to get plugin settings: %w", err)
 	}
 	if ps != nil {
-		shim := legacyShimFromContext(ctx)
-		if shim != nil {
-			shim.getDecryptedSecureJSONData = func(ctx context.Context) (map[string]string, error) {
-				v := s.pluginSettings.DecryptedValues(ps)
-				return v, nil // odd this does not have an error
-			}
-		}
+		pluginsettings.WithDecryptedValues(ctx, func(ctx context.Context) (map[string]string, error) {
+			return s.pluginSettings.DecryptedValues(ps), nil
+		})
 
 		obj.SetCreationTimestamp(metav1.NewTime(ps.Updated))
 		obj.SetResourceVersion(getLegacySettingsResourceVersion(ps))
