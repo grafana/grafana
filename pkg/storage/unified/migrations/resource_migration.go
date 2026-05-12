@@ -86,7 +86,14 @@ func (r *MigrationRunner) Run(ctx context.Context, sess *xorm.Session, mg *migra
 		return fmt.Errorf("failed to check dualwrite state: %w", err)
 	}
 	if alreadyMigrated {
-		r.log.Debug("skipping migration: resources already on unified storage per dualwrite state",
+		r.log.Warn("skipping folders/dashboards unified-storage migration because a previous dualwrite marker "+
+			"says these resources were already migrated to unified storage. This protects data that may exist "+
+			"only in unified storage. If a Grafana 12 git-sync or unified-storage trial was disabled and later "+
+			"changes continued in legacy SQL, dashboards or folders changed after the trial may appear missing "+
+			"or revert to an older version after upgrade. To recover, restore from a pre-upgrade backup or "+
+			"follow the remediation steps in https://github.com/grafana/grafana/issues/123616. Only force "+
+			"re-migration after confirming legacy SQL is the source of truth; re-migration overwrites "+
+			"unified-storage data for folders/dashboards.",
 			"resources", r.definition.ConfigResources())
 		return nil
 	}

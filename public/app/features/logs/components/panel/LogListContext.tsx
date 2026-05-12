@@ -10,6 +10,7 @@ import {
   useMemo,
   useState,
 } from 'react';
+import { usePrevious } from 'react-use';
 
 import { createAssistantContextItem, type OpenAssistantProps, useAssistant } from '@grafana/assistant';
 import {
@@ -382,11 +383,15 @@ export const LogListContextProvider = ({
   }, [timestampResolution]);
 
   // Sync showLogAttributes
+  const prevShowLogAttributes = usePrevious(showLogAttributes);
   useEffect(() => {
-    if (showLogAttributes === false && setDisplayedFields) {
+    if (prevShowLogAttributes === undefined) {
+      return;
+    }
+    if (prevShowLogAttributes === true && showLogAttributes === false && setDisplayedFields) {
       setDisplayedFields([]);
     }
-  }, [setDisplayedFields, showLogAttributes]);
+  }, [prevShowLogAttributes, setDisplayedFields, showLogAttributes]);
 
   const controlsExpandedFromStore = store.getBool(
     `${logOptionsStorageKey}.controlsExpanded`,

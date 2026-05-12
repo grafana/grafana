@@ -45,7 +45,7 @@ import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../rule-editor/formDefaults';
 import { ruleGroupIdentifierV2toV1 } from '../utils/groupIdentifier';
 import { stringifyErrorLike } from '../utils/misc';
 import { alertListPageLink, createListFilterLink, groups } from '../utils/navigation';
-import { getRulerGroupReadOnlyStatus } from '../utils/rules';
+import { getRulerGroupReadOnlyStatus, isUngroupedRuleGroup } from '../utils/rules';
 
 import { DraggableRulesTable } from './components/DraggableRulesTable';
 import { evaluateEveryValidationOptions } from './validation';
@@ -59,8 +59,23 @@ type GroupEditPageRouteParams = {
 const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
 
 function GroupEditPage() {
-  const dispatch = useDispatch();
   const { dataSourceUid = '', namespaceId = '', groupName = '' } = useParams<GroupEditPageRouteParams>();
+
+  if (isUngroupedRuleGroup(groupName)) {
+    return <EntityNotFound entity={t('alerting.entities.group', 'Group')} />;
+  }
+
+  return <GroupEditPageContent dataSourceUid={dataSourceUid} namespaceId={namespaceId} groupName={groupName} />;
+}
+
+interface GroupEditPageContentProps {
+  dataSourceUid: string;
+  namespaceId: string;
+  groupName: string;
+}
+
+function GroupEditPageContent({ dataSourceUid, namespaceId, groupName }: GroupEditPageContentProps) {
+  const dispatch = useDispatch();
 
   const { folder, loading: isFolderLoading } = useFolder(dataSourceUid === 'grafana' ? namespaceId : '');
 

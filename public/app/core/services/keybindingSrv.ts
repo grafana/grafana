@@ -1,6 +1,6 @@
 import { toggleAssistant, isAssistantAvailable } from '@grafana/assistant';
 import { LegacyGraphHoverClearEvent, SetPanelAttentionEvent, locationUtil } from '@grafana/data';
-import { type LocationService, config } from '@grafana/runtime';
+import { type LocationService } from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
 import { getExploreUrl } from 'app/core/utils/explore';
 import { toggleMockApiAndReload, togglePseudoLocale } from 'app/dev-utils';
@@ -231,23 +231,17 @@ export class KeybindingSrv {
       appEvents.publish(new AbsoluteTimeEvent({ updateUrl }));
     });
 
-    if (config.featureToggles.newTimeRangeZoomShortcuts) {
-      this.bind('t +', () => {
-        appEvents.publish(new ZoomOutEvent({ scale: 0.5, updateUrl }));
-      });
+    this.bind('t +', () => {
+      appEvents.publish(new ZoomOutEvent({ scale: 0.5, updateUrl }));
+    });
 
-      this.bind('t =', () => {
-        appEvents.publish(new ZoomOutEvent({ scale: 0.5, updateUrl }));
-      });
+    this.bind('t =', () => {
+      appEvents.publish(new ZoomOutEvent({ scale: 0.5, updateUrl }));
+    });
 
-      this.bind('t -', () => {
-        appEvents.publish(new ZoomOutEvent({ scale: 2, updateUrl }));
-      });
-    } else {
-      this.bind('t z', () => {
-        appEvents.publish(new ZoomOutEvent({ scale: 2, updateUrl }));
-      });
-    }
+    this.bind('t -', () => {
+      appEvents.publish(new ZoomOutEvent({ scale: 2, updateUrl }));
+    });
 
     this.bind('ctrl+z', () => {
       appEvents.publish(new ZoomOutEvent({ scale: 2, updateUrl }));

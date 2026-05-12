@@ -1,9 +1,9 @@
 import { HttpResponse } from 'msw';
-import { comboboxTestSetup } from 'test/helpers/comboboxTestSetup';
 import { getSelectParent, selectOptionInTest } from 'test/helpers/selectOptionInTest';
 import { render, screen, userEvent, waitFor, within, testWithFeatureToggles } from 'test/test-utils';
 
 import { setBackendSrv } from '@grafana/runtime';
+import { mockComboboxRect } from '@grafana/test-utils';
 import { preferencesHandlers } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
@@ -47,7 +47,7 @@ beforeEach(() => {
 
 beforeAll(() => {
   jest.spyOn(window, 'location', 'get').mockReturnValue({ ...originalLocation, reload: mockReload });
-  comboboxTestSetup();
+  mockComboboxRect();
 });
 
 afterAll(() => {

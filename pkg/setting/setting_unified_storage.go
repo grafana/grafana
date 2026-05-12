@@ -175,6 +175,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	}
 	cfg.EnableSearch = section.Key("enable_search").MustBool(true)
 	cfg.EnableVectorBackend = section.Key("vector_backend").MustBool(false)
+	cfg.VectorBackfillerEnabled = section.Key("vector_backfiller_enabled").MustBool(false)
 	cfg.applyMigrationEnforcements()
 	cfg.EnableSearchClient = section.Key("enable_search_client").MustBool(false)
 	cfg.MaxPageSizeBytes = section.Key("max_page_size_bytes").MustInt(0)
@@ -246,6 +247,9 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.EnableSQLKVBackend = section.Key("enable_sqlkv_backend").MustBool(false)
 	// enable sqlkv backwards compatibility mode with sql/backend
 	cfg.EnableSQLKVCompatibilityMode = section.Key("enable_sqlkv_compatibility_mode").MustBool(true)
+	// enable per-resource leases in the KV backend; only effective when the
+	// SQL RV manager is not in use.
+	cfg.EnableKVLeases = section.Key("enable_kv_leases").MustBool(false)
 
 	cfg.MaxFileIndexAge = section.Key("max_file_index_age").MustDuration(0)
 	cfg.MinFileIndexBuildVersion = section.Key("min_file_index_build_version").MustString("")
@@ -273,8 +277,21 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.VectorDBUser = vectorSection.Key("db_user").String()
 	cfg.VectorDBPassword = vectorSection.Key("db_password").String()
 	cfg.VectorDBSSLMode = vectorSection.Key("db_sslmode").MustString("disable")
-	cfg.VectorPromotionThreshold = vectorSection.Key("promotion_threshold").MustInt(9999999) // effectively disabled by default
-	cfg.VectorPromoterInterval = vectorSection.Key("promoter_interval").MustDuration(1 * time.Hour)
+	cfg.VectorPromotionThreshold = vectorSection.Key("promotion_threshold").MustInt(10000)
+	cfg.VectorPromoterInterval = vectorSection.Key("promoter_interval").MustDuration(0) // zero means disabled
+
+	// Embedding provider for the VectorSearch RPC. Empty = disabled (RPC
+	// returns Unimplemented). When set, the matching provider's connection
+	// fields must also be configured.
+	embedSection := cfg.Raw.Section("vector_embedder")
+	cfg.EmbeddingProvider = embedSection.Key("provider").String()
+	cfg.VertexProjectID = embedSection.Key("vertex_project_id").String()
+	cfg.VertexLocation = embedSection.Key("vertex_location").MustString("us-central1")
+	cfg.VertexModel = embedSection.Key("vertex_model").MustString("gemini-embedding-001")
+	cfg.VertexDimensions = embedSection.Key("vertex_dimensions").MustInt(768)
+	cfg.BedrockRegion = embedSection.Key("bedrock_region").MustString("us-east-1")
+	cfg.BedrockModel = embedSection.Key("bedrock_model").MustString("cohere.embed-v4:0")
+	cfg.BedrockDimensions = embedSection.Key("bedrock_dimensions").MustInt(1024)
 }
 
 // applyMigrationEnforcements enforces unified storage migration configs when migrations should run,

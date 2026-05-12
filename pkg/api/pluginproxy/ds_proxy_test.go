@@ -763,6 +763,111 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 	})
 }
 
+func TestDataSourceProxy_userAgentHeader(t *testing.T) {
+	ds := &datasources.DataSource{Type: datasources.DS_GRAPHITE, URL: "http://graphite:8080"}
+	var routes []*plugins.Route
+
+	t.Run("When DataProxyForwardUserAgent config is disabled", func(t *testing.T) {
+		ctx := &contextmodel.ReqContext{}
+		proxy, err := setupDSProxyTest(t, ctx, ds, routes, "/render", func(p *DataSourceProxy) {
+			p.cfg = &setting.Cfg{
+				BuildVersion:              "5.3.0",
+				DataProxyUserAgent:        "Grafana/5.3.0",
+				DataProxyForwardUserAgent: false,
+			}
+		})
+		require.NoError(t, err)
+
+		req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
+		require.NoError(t, err)
+		req.Header.Set("User-Agent", "original-client/1.0")
+
+		proxy.director(req)
+
+		assert.Equal(t, "Grafana/5.3.0", req.Header.Get("User-Agent"))
+	})
+
+	t.Run("When DataProxyForwardUserAgent config is enabled", func(t *testing.T) {
+		ctx := &contextmodel.ReqContext{}
+		proxy, err := setupDSProxyTest(t, ctx, ds, routes, "/render", func(p *DataSourceProxy) {
+			p.cfg = &setting.Cfg{
+				BuildVersion:              "5.3.0",
+				DataProxyUserAgent:        "Grafana/5.3.0",
+				DataProxyForwardUserAgent: true,
+			}
+		})
+		require.NoError(t, err)
+
+		req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
+		require.NoError(t, err)
+		req.Header.Set("User-Agent", "original-client/1.0")
+
+		proxy.director(req)
+
+		assert.Equal(t, "Grafana/5.3.0 original-client/1.0", req.Header.Get("User-Agent"))
+	})
+
+	t.Run("When DataProxyForwardUserAgent config is enabled but the client User-Agent is empty", func(t *testing.T) {
+		ctx := &contextmodel.ReqContext{}
+		proxy, err := setupDSProxyTest(t, ctx, ds, routes, "/render", func(p *DataSourceProxy) {
+			p.cfg = &setting.Cfg{
+				BuildVersion:              "5.3.0",
+				DataProxyUserAgent:        "Grafana/5.3.0",
+				DataProxyForwardUserAgent: true,
+			}
+		})
+		require.NoError(t, err)
+
+		req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
+		require.NoError(t, err)
+		// no User-Agent header set
+
+		proxy.director(req)
+
+		assert.Equal(t, "Grafana/5.3.0", req.Header.Get("User-Agent"))
+	})
+
+	t.Run("When DataProxyForwardUserAgent config is enabled with a custom DataProxyUserAgent", func(t *testing.T) {
+		ctx := &contextmodel.ReqContext{}
+		proxy, err := setupDSProxyTest(t, ctx, ds, routes, "/render", func(p *DataSourceProxy) {
+			p.cfg = &setting.Cfg{
+				BuildVersion:              "5.3.0",
+				DataProxyUserAgent:        "MyCorp/1.0",
+				DataProxyForwardUserAgent: true,
+			}
+		})
+		require.NoError(t, err)
+
+		req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
+		require.NoError(t, err)
+		req.Header.Set("User-Agent", "original-client/1.0")
+
+		proxy.director(req)
+
+		assert.Equal(t, "MyCorp/1.0 original-client/1.0", req.Header.Get("User-Agent"))
+	})
+
+	t.Run("When DataProxyForwardUserAgent config is enabled and DataProxyUserAgent is empty", func(t *testing.T) {
+		ctx := &contextmodel.ReqContext{}
+		proxy, err := setupDSProxyTest(t, ctx, ds, routes, "/render", func(p *DataSourceProxy) {
+			p.cfg = &setting.Cfg{
+				BuildVersion:              "5.3.0",
+				DataProxyUserAgent:        "",
+				DataProxyForwardUserAgent: true,
+			}
+		})
+		require.NoError(t, err)
+
+		req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
+		require.NoError(t, err)
+		req.Header.Set("User-Agent", "original-client/1.0")
+
+		proxy.director(req)
+
+		assert.Equal(t, "original-client/1.0", req.Header.Get("User-Agent"))
+	})
+}
+
 // test DataSourceProxy request handling.
 func TestDataSourceProxy_requestHandling(t *testing.T) {
 	var writeErr error
@@ -1132,7 +1237,10 @@ func createAuthTest(t *testing.T, secretsStore secretskvs.SecretsKVStore, dsType
 	return test
 }
 
-func runDatasourceAuthTest(t *testing.T, secretsService secrets.Service, secretsStore secretskvs.SecretsKVStore, cfg *setting.Cfg, test *testCase) {
+func runDatasourceAuthTest(t *testing.T,
+	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+	secretsStore secretskvs.SecretsKVStore, cfg *setting.Cfg, test *testCase,
+) {
 	ctx := &contextmodel.ReqContext{}
 	tracer := tracing.InitializeTracerForTest()
 

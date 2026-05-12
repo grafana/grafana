@@ -16,6 +16,8 @@ export {
   guessFieldTypeFromValue,
   guessFieldTypeForField,
   guessFieldTypes,
+} from './dataframe/guessFieldType';
+export {
   isTableData,
   isDataFrame,
   isDataFrameWithValue,
@@ -667,6 +669,7 @@ export {
   VizOrientation,
 } from './types/panel';
 export {
+  type DataSourceConfigValidationAPI,
   type DataSourcePluginOptionsEditorProps,
   type DataSourceQueryType,
   type DataSourceOptionsType,
