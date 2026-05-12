@@ -1298,6 +1298,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-external-labelling.yml @Proximyst
 /.github/workflows/pr-patch-check-event.yml @grafana/grafana-backend-services-squad
 /.github/workflows/pr-patch-check.yml @grafana/grafana-backend-services-squad
+/.github/workflows/pr-test-integration-pgvector.yml @grafana/grafana-search-and-storage
 /.github/workflows/pr-test-integration.yml @grafana/grafana-backend-group
 /.github/workflows/reject-gh-secrets.yml @grafana/grafana-backend-services-squad
 /.github/workflows/sync-mirror-event.yml @grafana/grafana-backend-services-squad
