@@ -1,3 +1,8 @@
+<!-- 13.0.1+security-01 START -->
+
+# 13.0.1+security-01 (2026-05-12)
+
+<!-- 13.0.1+security-01 END -->
 <!-- 12.4.3+security-02 START -->
 
 # 12.4.3+security-02 (2026-05-12)
