@@ -158,8 +158,14 @@ func (k *KVLeaseElector) runAsLeader(
 	defer leaderCancel()
 
 	o.onStartedLeading(leaderCtx)
+	defer o.onStoppedLeading()
 
 	done := make(chan struct{})
+	defer func() {
+		leaderCancel()
+		<-done
+	}()
+
 	go func() {
 		defer close(done)
 		fn(leaderCtx)
@@ -167,18 +173,14 @@ func (k *KVLeaseElector) runAsLeader(
 
 	select {
 	case <-l.Lost():
-		k.logger.Warn("Lease lost")
+		k.logger.Debug("Lease lost")
 	case <-ctx.Done():
+		k.logger.Debug("Context cancelled, stopping leader work")
 	}
-
-	leaderCancel()
 
 	if o.releaseOnCancel && ctx.Err() != nil {
 		k.releaseLease(mgr, l)
 	}
-
-	<-done
-	o.onStoppedLeading()
 }
 
 func (k *KVLeaseElector) releaseLease(mgr *lease.Manager, l *lease.Lease) {
