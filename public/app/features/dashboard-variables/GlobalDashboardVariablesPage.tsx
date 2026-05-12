@@ -391,13 +391,15 @@ export default function GlobalDashboardVariablesPage() {
                   'Optional: scope this variable to a folder. Leave empty for org-wide.'
                 )}
               </Text>
-              <NestedFolderPicker
-                value={folderUid}
-                onChange={(uid) => setFolderUid(uid)}
-                clearable
-                showRootFolder
-                permission="edit"
-              />
+              <div style={{ width: 420, maxWidth: '100%' }}>
+                <NestedFolderPicker
+                  value={folderUid}
+                  onChange={(uid) => setFolderUid(uid)}
+                  clearable
+                  showRootFolder
+                  permission="edit"
+                />
+              </div>
             </div>
             <UrlSyncContextProvider scene={variableSet} updateUrlOnInit={false}>
               <VariableEditorForm
