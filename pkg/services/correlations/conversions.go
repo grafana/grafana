@@ -8,7 +8,6 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
 
 	authlib "github.com/grafana/authlib/types"
@@ -24,8 +23,8 @@ func ToResource(orig Correlation) (*correlationsV0.Correlation, error) {
 	}
 	obj := &correlationsV0.Correlation{
 		ObjectMeta: v1.ObjectMeta{
-			Name:      orig.UID,
-			UID:       types.UID(orig.UID), // required for PATCH to work in legacy storage
+			Name: orig.UID,
+			// TODO retest with legacy UID:       types.UID(orig.UID), // required for PATCH to work in legacy storage
 			Namespace: authlib.OrgNamespaceFormatter(orig.OrgID),
 		},
 		Spec: correlationsV0.CorrelationSpec{

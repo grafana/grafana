@@ -220,6 +220,13 @@ func (s *CorrelationsK8sService) UpdateCorrelation(ctx context.Context, cmd Upda
 		Type: *cmd.Type,
 	}
 
+	dsCmd := &datasources.GetDataSourceQuery{OrgID: cmd.OrgId, UID: *&cmd.SourceUID}
+	sourceDs, err := s.DataSourceService.GetDataSource(ctx, dsCmd)
+	if err != nil {
+		return Correlation{}, err
+	}
+	correlation.SourceType = &sourceDs.Type
+
 	unstructCorr, err := convertCorrelationToUnstructured(correlation)
 	if err != nil {
 		return Correlation{}, err
