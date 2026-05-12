@@ -3,7 +3,7 @@ import { GrafanaEdition } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
-import { isOnPrem } from 'app/features/provisioning/utils/isOnPrem';
+import { isOnPrem } from 'app/core/utils/isOnPrem';
 
 import useHomeGreeting from './useHomeGreeting';
 
