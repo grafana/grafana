@@ -1056,11 +1056,6 @@ export interface FeatureToggles {
   */
   alertingListViewV2PreviewToggle?: boolean;
   /**
-  * Use FiredAt for StartsAt when sending alerts to Alertmaanger
-  * @default false
-  */
-  alertRuleUseFiredAtForStartsAt?: boolean;
-  /**
   * Enables the alerting bulk actions in the UI
   * @default true
   */

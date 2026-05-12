@@ -598,10 +598,6 @@ const (
 	// Enables auto-updating of users installed plugins
 	FlagPluginsAutoUpdate = "pluginsAutoUpdate"
 
-	// FlagAlertRuleUseFiredAtForStartsAt
-	// Use FiredAt for StartsAt when sending alerts to Alertmaanger
-	FlagAlertRuleUseFiredAtForStartsAt = "alertRuleUseFiredAtForStartsAt"
-
 	// FlagKubernetesAuthzApis
 	// Deprecated: Use kubernetesAuthzCoreRolesApi, kubernetesAuthzRolesApi, and kubernetesAuthzRoleBindingsApi instead
 	FlagKubernetesAuthzApis = "kubernetesAuthzApis"
