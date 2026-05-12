@@ -462,7 +462,10 @@ func (hs *HTTPServer) saveDashboardViaK8s(c *contextmodel.ReqContext, cmd dashbo
 	if err != nil {
 		return response.Error(http.StatusBadRequest, err.Error(), err)
 	}
-	specVersion, hasSpecVersion := nestedSpecVersion(obj.Object)
+	specVersion, hasSpecVersion, err := nestedSpecVersion(obj.Object)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, err.Error(), err)
+	}
 	unstructured.RemoveNestedField(obj.Object, "spec", "uid")
 	unstructured.RemoveNestedField(obj.Object, "spec", "id")
 	unstructured.RemoveNestedField(obj.Object, "spec", "version")
@@ -635,26 +638,31 @@ func nestedInternalID(obj map[string]interface{}) (int64, error) {
 // nestedSpecVersion reads spec.version as int64. The legacy /api/dashboards/db
 // payload encodes version as a JSON number; simplejson parses it via UseNumber
 // so we usually see json.Number, but tolerate the common numeric types too.
-func nestedSpecVersion(obj map[string]interface{}) (int64, bool) {
+// A missing field returns (0, false, nil); a malformed field returns an error
+// so callers can surface a 400 instead of letting it fall through as a 409.
+func nestedSpecVersion(obj map[string]interface{}) (int64, bool, error) {
 	val, found, err := unstructured.NestedFieldNoCopy(obj, "spec", "version")
-	if !found || err != nil || val == nil {
-		return 0, false
+	if err != nil {
+		return 0, false, fmt.Errorf("spec.version is invalid: %w", err)
+	}
+	if !found || val == nil {
+		return 0, false, nil
 	}
 	switch v := val.(type) {
 	case int64:
-		return v, true
+		return v, true, nil
 	case int:
-		return int64(v), true
+		return int64(v), true, nil
 	case float64:
-		return int64(v), true
+		return int64(v), true, nil
 	case json.Number:
 		i, err := v.Int64()
 		if err != nil {
-			return 0, false
+			return 0, false, fmt.Errorf("spec.version is not an integer: %w", err)
 		}
-		return i, true
+		return i, true, nil
 	}
-	return 0, false
+	return 0, false, fmt.Errorf("spec.version has unsupported type %T", val)
 }
 
 // swagger:route GET /dashboards/home dashboards getHomeDashboard
