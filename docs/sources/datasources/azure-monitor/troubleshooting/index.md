@@ -104,6 +104,45 @@ These errors typically occur when setting up the data source or when authenticat
 4. Ensure the token path is accessible to the Grafana pod.
 5. Check the workload identity webhook is running in the cluster.
 
+### Managed Identity or Workload Identity returns "401 Unauthorized" despite correct Azure setup
+
+**Symptoms:**
+
+- Authentication fails with `401 Unauthorized` even though Managed Identity or Workload Identity is correctly configured in Azure
+- The managed identity has the correct RBAC roles
+- `managed_identity_enabled` or `workload_identity_enabled` is set to `true` in the Grafana `.ini` file
+
+**Cause:** The `forward_settings_to_plugins` setting under `[azure]` doesn't include the Azure Monitor plugin, so the plugin doesn't receive the Azure authentication settings from the Grafana server.
+
+**Solutions:**
+
+1. Check if you've customized the `forward_settings_to_plugins` setting under `[azure]` in your Grafana `.ini` file.
+1. If customized, ensure `grafana-azure-monitor-datasource` is listed. For example:
+   ```ini
+   [azure]
+   managed_identity_enabled = true
+   forward_settings_to_plugins = grafana-azure-monitor-datasource
+   ```
+1. By default, Grafana includes all Grafana Labs Azure plugins. If you haven't customized this setting, the default includes the Azure Monitor plugin.
+1. Restart Grafana after making changes.
+
+### Alerting fails with Current User authentication
+
+**Symptoms:**
+
+- Alert rules and recording rules fail with authentication errors
+- Dashboard queries work, but alerting evaluations do not
+- Error messages reference missing or invalid credentials during background evaluation
+
+**Cause:** Current User authentication relies on the logged-in user's credentials, which aren't available for background operations like alerting.
+
+**Solutions:**
+
+1. Configure **fallback service credentials** in the data source settings. Typically this means adding an App Registration (client secret) as the fallback.
+1. Ensure the `idForwarding` feature toggle is enabled in the Grafana server configuration.
+1. Verify the fallback credentials have the required Azure RBAC permissions on the resources used in your alert rules.
+1. Refer to [Limitations and fallback credentials](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/configure/#limitations-and-fallback-credentials) for configuration details.
+
 ### Client certificate authentication not working
 
 **Symptoms:**
@@ -180,16 +219,21 @@ These errors occur when executing queries against Azure Monitor services.
 
 **Symptoms:**
 
-- Query runs for a long time then fails
+- Query runs for a long time then fails with `DatasourceError` or `context deadline exceeded`
+- Alert evaluations fail with timeout errors
 - Error mentions timeout or query limits
+
+**Cause:** Grafana's default data source timeout is 30 seconds, but Azure Log Analytics queries can take up to 3 minutes on the Azure side, especially for complex KQL queries or large time ranges.
 
 **Solutions:**
 
+1. **Increase the data source timeout.** Open the Azure Monitor data source settings, scroll to the **Misc** section, and increase the **Timeout** to `300` (seconds). Refer to [Query timeout](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/configure/#query-timeout) for details.
 1. Narrow the time range to reduce data volume.
-2. Add filters to reduce the result set.
-3. Use `summarize` to aggregate data instead of returning raw rows.
-4. Consider using Basic Logs for large datasets (if enabled).
-5. Break complex queries into smaller parts.
+1. Add filters to reduce the result set.
+1. Use `summarize` to aggregate data instead of returning raw rows.
+1. Consider using Basic Logs for large datasets (if enabled).
+1. Break complex queries into smaller parts.
+1. For alerting, ensure the alert evaluation interval is long enough to accommodate the query duration plus the configured timeout.
 
 ### "Metrics not available" for a resource
 
@@ -294,24 +338,56 @@ These errors are specific to Basic Logs queries.
 
 ## Template variable errors
 
-For detailed troubleshooting of template variables, refer to the [template variables troubleshooting section](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/template-variables/).
+For general template variable configuration, refer to the [template variables documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/template-variables/).
+
+### "Properties found in series but missing valueProp and textProp"
+
+**Symptoms:**
+
+- Template variables using query types such as **Resource Groups**, **Resource Names**, or **Subscriptions** fail with this error
+- Variables that previously worked stop returning values after a Grafana upgrade
+- Dashboards that rely on cascading variables break
+
+**Cause:** This error occurs when the Azure Monitor plugin's variable query response format doesn't match what Grafana expects. This was a known bug that affected specific Grafana versions.
+
+**Solutions:**
+
+1. **Check your Grafana version.** This issue was a software bug fixed in later releases. Update to the latest Grafana patch release for your version.
+1. **Grafana Cloud users:** If you're on a release channel that doesn't yet include the fix, switch to the **stable** channel in your Cloud stack settings (**Stack Management** > **General** > **Release channel**) to receive the latest stable patch.
+1. **Self-hosted users:** Download the latest patch release from the [Grafana download page](https://grafana.com/grafana/download).
+1. After upgrading, reload the dashboard and re-run the variable queries.
 
 ### Variables return no values
 
 **Solutions:**
 
 1. Verify the data source connection is working (test it in the data source settings).
-2. Check that parent variables (for cascading variables) have valid selections.
-3. Verify the identity has permissions to list the requested resources.
-4. For Logs variables, ensure the KQL query returns a single column.
+1. Check that parent variables (for cascading variables) have valid selections.
+1. Verify the identity has permissions to list the requested resources.
+1. For Logs variables, ensure the KQL query returns a single column.
+
+### Variables stop working after a Grafana upgrade
+
+**Symptoms:**
+
+- Template variables that worked before an upgrade return errors or empty results
+- Dashboard variable dropdowns show no options or display error indicators
+
+**Solutions:**
+
+1. Check the [Grafana release notes](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/) for breaking changes related to template variables or the Azure Monitor data source.
+1. Verify the Azure Monitor plugin version is compatible with your Grafana version. Go to **Administration** > **Plugins and data** > **Plugins**, search for "Azure Monitor", and check the version.
+1. Clear the browser cache and reload the dashboard.
+1. Re-open the variable configuration and click **Run query** to verify it returns expected results.
+1. If the issue persists, check for known bugs in the [Grafana GitHub issues](https://github.com/grafana/grafana/issues?q=is%3Aissue+label%3A%22datasource%2Fazure-monitor%22+template+variable) and consider rolling back to the previous Grafana version.
 
 ### Variables are slow to load
 
 **Solutions:**
 
 1. Set variable refresh to **On dashboard load** instead of **On time range change**.
-2. Reduce the scope of variable queries (e.g., filter by resource group instead of entire subscription).
-3. For Logs variables, optimize the KQL query to return results faster.
+1. Reduce the scope of variable queries (e.g., filter by resource group instead of entire subscription).
+1. For Logs variables, optimize the KQL query to return results faster.
 
 ## Connection and network errors
 

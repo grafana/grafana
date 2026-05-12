@@ -85,6 +85,7 @@ The following errors occur when there are issues with authentication credentials
 1. Check that the authentication method selected matches your Prometheus configuration.
 1. If using a reverse proxy with authentication, verify the credentials are correct.
 1. For AWS SigV4 authentication, verify the IAM credentials and permissions. Alternatively, consider using the [Amazon Managed Service for Prometheus data source](https://grafana.com/grafana/plugins/grafana-amazonprometheus-datasource/) for simplified AWS authentication.
+1. **For Azure authentication on Grafana Cloud:** The `azure_auth_enabled` backend flag must be enabled on your Cloud stack. This flag isn't enabled by default. [Contact Grafana Support](https://grafana.com/help/) to have it enabled. Refer to [Azure authentication settings](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/configure/#azure-authentication-settings) for details.
 
 ### Forbidden (403)
 

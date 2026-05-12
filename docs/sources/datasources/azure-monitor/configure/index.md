@@ -67,15 +67,19 @@ You're taken to the **Settings** tab where you can configure the data source.
 
 ## Choose an authentication method
 
-The Azure Monitor data source supports four authentication methods. Choose based on where Grafana is hosted and your security requirements:
+The Azure Monitor data source supports five authentication methods. Choose based on where Grafana is hosted, your security requirements, and whether you need alerting:
 
-| Authentication method                     | Best for                                   | Requirements                                                    |
-| ----------------------------------------- | ------------------------------------------ | --------------------------------------------------------------- |
-| **App Registration (client secret)**      | Any Grafana deployment                     | Microsoft Entra ID app registration with client secret          |
-| **App Registration (client certificate)** | Any Grafana deployment                     | Microsoft Entra ID app registration with certificate credential |
-| **Managed Identity**                      | Grafana hosted in Azure (VMs, App Service) | Managed identity enabled on the Azure resource                  |
-| **Workload Identity**                     | Grafana in Kubernetes (AKS)                | Workload identity federation configured                         |
-| **Current User**                          | User-level access control                  | Microsoft Entra ID authentication configured for Grafana login  |
+| Authentication method                     | Best for                                   | Grafana Cloud | Supports alerting | Server config required |
+| ----------------------------------------- | ------------------------------------------ | ------------- | ----------------- | ---------------------- |
+| **App Registration (client secret)**      | Any Grafana deployment                     | ✓             | ✓                 | No                     |
+| **App Registration (client certificate)** | Any Grafana deployment                     | ✓             | ✓                 | No                     |
+| **Managed Identity**                      | Grafana hosted in Azure (VMs, App Service) | ✗             | ✓                 | Yes                    |
+| **Workload Identity**                     | Grafana in Kubernetes (AKS)                | ✗             | ✓                 | Yes                    |
+| **Current User**                          | User-level access control                  | ✓             | Partial            | Yes                    |
+
+{{< admonition type="note" >}}
+**Current User** authentication doesn't support background operations like alerting, reporting, and recording rules. To use alerting with Current User, you must configure **fallback service credentials**. Alerts then run under the fallback credential's permissions. Refer to [Limitations and fallback credentials](#limitations-and-fallback-credentials) for details.
+{{< /admonition >}}
 
 ## Configure authentication
 
@@ -267,6 +271,10 @@ managed_identity_enabled = true
 managed_identity_client_id = <USER_ASSIGNED_IDENTITY_CLIENT_ID>
 ```
 
+{{< admonition type="caution" >}}
+If you've customized the `forward_settings_to_plugins` setting under `[azure]`, verify that `grafana-azure-monitor-datasource` is included. This setting controls which plugins receive the Azure configuration from the Grafana server. By default, all Grafana Labs Azure plugins are included. Missing this setting causes `401 Unauthorized` errors even when Managed Identity is correctly configured on your Azure resource.
+{{< /admonition >}}
+
 Refer to [Grafana Azure configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#azure) for more details.
 
 #### Managed Identity UI configuration
@@ -322,6 +330,10 @@ workload_identity_tenant_id = <IDENTITY_TENANT_ID>    # Microsoft Entra ID tenan
 workload_identity_client_id = <IDENTITY_CLIENT_ID>    # Client ID if different from default
 workload_identity_token_file = <TOKEN_FILE_PATH>      # Path to the token file
 ```
+
+{{< admonition type="caution" >}}
+If you've customized the `forward_settings_to_plugins` setting under `[azure]`, verify that `grafana-azure-monitor-datasource` is included. Refer to [Managed Identity Grafana server configuration](#managed-identity-grafana-server-configuration) for details.
+{{< /admonition >}}
 
 Refer to [Grafana Azure configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#azure) and the [Azure workload identity documentation](https://azure.github.io/azure-workload-identity/docs/) for more details.
 
@@ -412,11 +424,19 @@ user_identity_fallback_credentials_enabled = false
 To use fallback service credentials, the [feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#feature_toggles) `idForwarding` must be set to `true`.
 {{< /admonition >}}
 
+{{< admonition type="caution" >}}
+If you've customized the `forward_settings_to_plugins` setting under `[azure]`, verify that `grafana-azure-monitor-datasource` is included. Refer to [Managed Identity Grafana server configuration](#managed-identity-grafana-server-configuration) for details.
+{{< /admonition >}}
+
 #### Limitations and fallback credentials
 
 Current User authentication doesn't support backend functionality like alerting, reporting, and recorded queries because user credentials aren't available for background operations.
 
-To support these features, configure **fallback service credentials**. When enabled, Grafana uses the fallback credentials for backend operations. Note that operations using fallback credentials are limited to the permissions of those credentials, not the user's permissions.
+To support these features, you must configure **fallback service credentials** — typically an App Registration with client secret. When enabled, Grafana uses the fallback credentials for backend operations. Operations using fallback credentials are limited to the permissions of those credentials, not the user's permissions.
+
+{{< admonition type="caution" >}}
+If you use Current User authentication without configuring fallback service credentials, alerting rules, recording rules, and reports will fail with authentication errors. Refer to the [alerting documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/alerting/) for more details.
+{{< /admonition >}}
 
 {{< admonition type="note" >}}
 Query and resource caching is disabled by default for data sources using Current User authentication.
@@ -463,6 +483,32 @@ These settings apply to all authentication methods.
 | ----------- | ------------------------------------------------------------------------------- |
 | **Name**    | The data source name used in panels and queries. Example: `azure-monitor-prod`. |
 | **Default** | Toggle to make this the default data source for new panels.                     |
+
+### Query timeout
+
+The default data source timeout is 30 seconds. Azure Log Analytics queries can take up to 3 minutes on the Azure side, especially for complex KQL queries, large time ranges, or queries across multiple workspaces. If queries fail with `DatasourceError`, `context deadline exceeded`, or timeout errors, increase the timeout.
+
+To change the timeout:
+
+1. Open your Azure Monitor data source settings.
+1. Scroll to the **Misc** section at the bottom of the configuration page.
+1. Set the **Timeout** value. A value of `300` (300 seconds / 5 minutes) accommodates the maximum Azure Log Analytics server-side query duration.
+1. Click **Save & test**.
+
+{{< admonition type="caution" >}}
+This timeout also affects alerting evaluations. If your alert rules use Log Analytics queries that exceed 30 seconds, you must increase this setting or alert evaluations will fail with timeout errors. For alerting, also ensure your alert evaluation interval is long enough to accommodate the query duration.
+{{< /admonition >}}
+
+To set the timeout in a provisioning file, add `timeout` to the `jsonData` section:
+
+```yaml
+datasources:
+  - name: Azure Monitor
+    type: grafana-azure-monitor-datasource
+    access: proxy
+    jsonData:
+      timeout: 300
+```
 
 ### Enable Basic Logs
 
