@@ -2,6 +2,8 @@ package leaderelection
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"os"
@@ -41,7 +43,7 @@ func withManagerOptions(opts ...lease.ManagerOption) KVLeaseElectorOption {
 }
 
 // NewKVLeaseElector creates a KVLeaseElector. If cfg.Identity is empty, it is
-// auto-generated from hostname:PID.
+// auto-generated from hostname:PID:nonce to avoid collisions across restarts.
 func NewKVLeaseElector(
 	kvProvider *kv.EventualKVProvider,
 	cfg Config,
@@ -58,7 +60,9 @@ func NewKVLeaseElector(
 		if err != nil {
 			hostname = "unknown"
 		}
-		identity = fmt.Sprintf("%s:%d", hostname, os.Getpid())
+		var nonce [4]byte
+		_, _ = rand.Read(nonce[:])
+		identity = fmt.Sprintf("%s:%d:%s", hostname, os.Getpid(), hex.EncodeToString(nonce[:]))
 	}
 
 	e := &KVLeaseElector{
