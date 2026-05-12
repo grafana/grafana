@@ -271,6 +271,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified"
 	migrations2 "github.com/grafana/grafana/pkg/storage/unified/migrations"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	provider2 "github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder/provider"
@@ -563,6 +564,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
+	eventualKVProvider := kv.ProvideEventualKVStore()
 	options := &unified.Options{
 		Cfg:           cfg,
 		Features:      featureToggles,
@@ -574,6 +576,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 		SecureValues:  inlineSecureValueSupport,
 		VectorBackend: vectorBackend,
 		Embedder:      embedder,
+		KVProvider:    eventualKVProvider,
 	}
 	storageMetrics := resource.ProvideStorageMetrics(registerer)
 	bleveIndexMetrics := resource.ProvideIndexMetrics(registerer)
@@ -1274,6 +1277,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
+	eventualKVProvider := kv.ProvideEventualKVStore()
 	options := &unified.Options{
 		Cfg:           cfg,
 		Features:      featureToggles,
@@ -1285,6 +1289,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		SecureValues:  inlineSecureValueSupport,
 		VectorBackend: vectorBackend,
 		Embedder:      embedder,
+		KVProvider:    eventualKVProvider,
 	}
 	storageMetrics := resource.ProvideStorageMetrics(registerer)
 	bleveIndexMetrics := resource.ProvideIndexMetrics(registerer)

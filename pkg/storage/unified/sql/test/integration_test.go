@@ -69,7 +69,7 @@ func newTestBackend(t *testing.T, isHA bool, simulatedNetworkLatency time.Durati
 	if maxOpenConn > 0 {
 		dbSection.Key("max_open_conn").SetValue(strconv.Itoa(maxOpenConn))
 	}
-	backend, err := sql.NewStorageBackend(cfg, dbstore, registerer, storageMetrics, false)
+	backend, err := sql.NewStorageBackend(cfg, dbstore, registerer, storageMetrics, false, nil)
 	require.NoError(t, err)
 	require.NotNil(t, backend)
 	backendService, ok := backend.(services.Service)
@@ -223,7 +223,7 @@ func TestClientServer(t *testing.T) {
 
 	registerer := prometheus.NewPedanticRegistry()
 	storageMetrics := resource.ProvideStorageMetrics(registerer)
-	backend, err := sql.NewStorageBackend(cfg, dbstore, registerer, storageMetrics, false)
+	backend, err := sql.NewStorageBackend(cfg, dbstore, registerer, storageMetrics, false, nil)
 	require.NoError(t, err)
 
 	grpcService, err := grpcserver.ProvideDSKitService(cfg, otel.Tracer("test-grpc-server"), prometheus.NewPedanticRegistry(), "test-grpc-server")
@@ -333,7 +333,7 @@ func TestIntegrationSearchClientServer(t *testing.T) {
 
 	registerer := prometheus.NewPedanticRegistry()
 	storageMetrics := resource.ProvideStorageMetrics(registerer)
-	backend, err := sql.NewStorageBackend(cfg, dbstore, registerer, storageMetrics, false)
+	backend, err := sql.NewStorageBackend(cfg, dbstore, registerer, storageMetrics, false, nil)
 	require.NoError(t, err)
 	backendService := backend.(services.Service)
 	require.NotNil(t, backendService)

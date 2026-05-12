@@ -67,6 +67,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	resourcekv "github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	search2 "github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	embedderprovider "github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder/provider"
@@ -165,6 +166,7 @@ var wireExtsBasicSet = wire.NewSet(
 	advisor.ProvideAppInstaller,
 	zStore.ProvideDefaultStoreProvider,
 	authz.ProvideReconcileCRDs,
+	resourcekv.ProvideEventualKVStore,
 )
 
 var wireExtsSet = wire.NewSet(
