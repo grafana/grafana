@@ -65,8 +65,7 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
         const valueFieldMatch = options.valueField || DEFAULT_VALUE_FIELD;
         const emptyValue = options.emptyValue || DEFAULT_EMPTY_VALUE;
 
-        // Accept only single queries
-        if (data.length !== 1) {
+        if (data.length < 1) {
           return data;
         }
 
@@ -140,6 +139,7 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
             fields,
             length: rowValues.length,
           },
+          ...data.slice(1),
         ];
       })
     ),

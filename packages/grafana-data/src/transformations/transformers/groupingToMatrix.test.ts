@@ -334,6 +334,62 @@ describe('Grouping to Matrix', () => {
     });
   });
 
+  it('processes first frame and passes through remaining frames', async () => {
+    const cfg: DataTransformerConfig<GroupingToMatrixTransformerOptions> = {
+      id: DataTransformerID.groupingToMatrix,
+      options: {
+        columnField: 'Column',
+        rowField: 'Row',
+        valueField: 'Temp',
+      },
+    };
+
+    const seriesA = toDataFrame({
+      name: 'A',
+      fields: [
+        { name: 'Column', type: FieldType.string, values: ['C1', 'C1', 'C2'] },
+        { name: 'Row', type: FieldType.string, values: ['R1', 'R2', 'R1'] },
+        { name: 'Temp', type: FieldType.number, values: [1, 4, 5] },
+      ],
+    });
+
+    const seriesB = toDataFrame({
+      name: 'B',
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [1000, 2000] },
+        { name: 'Value', type: FieldType.number, values: [10, 20] },
+      ],
+    });
+
+    await expect(transformDataFrame([cfg], [seriesA, seriesB])).toEmitValuesWith((received) => {
+      const processed = received[0];
+
+      expect(processed).toHaveLength(2);
+
+      expect(processed[0].fields).toEqual([
+        { name: 'Row\\Column', type: FieldType.string, values: ['R1', 'R2'], config: {} },
+        { name: 'C1', type: FieldType.number, values: [1, 4], config: {} },
+        { name: 'C2', type: FieldType.number, values: [5, ''], config: {} },
+      ]);
+
+      expect(processed[1].name).toBe('B');
+      expect(processed[1].fields[0].name).toBe('Time');
+      expect(processed[1].fields[1].name).toBe('Value');
+    });
+  });
+
+  it('returns empty array for empty input', async () => {
+    const cfg: DataTransformerConfig<GroupingToMatrixTransformerOptions> = {
+      id: DataTransformerID.groupingToMatrix,
+      options: {},
+    };
+
+    await expect(transformDataFrame([cfg], [])).toEmitValuesWith((received) => {
+      const processed = received[0];
+      expect(processed).toHaveLength(0);
+    });
+  });
+
   it('generates Matrix ignoring special value when value type is frame', async () => {
     const cfg: DataTransformerConfig<GroupingToMatrixTransformerOptions> = {
       id: DataTransformerID.groupingToMatrix,

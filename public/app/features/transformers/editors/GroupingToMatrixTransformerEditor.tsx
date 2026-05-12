@@ -6,9 +6,9 @@ import {
   type GroupingToMatrixTransformerOptions,
   type SpecialValue,
 } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
-import { InlineField, InlineFieldRow, Select } from '@grafana/ui';
+import { FieldValidationMessage, InlineField, InlineFieldRow, Select } from '@grafana/ui';
 
 import { getEmptyOptions, useAllFieldNamesFromDataFrames } from '../utils';
 
@@ -66,6 +66,14 @@ export const GroupingToMatrixTransformerEditor = ({
 
   return (
     <>
+      {input.length > 1 && (
+        <FieldValidationMessage>
+          <Trans i18nKey="transformers.grouping-to-matrix-transformer-editor.multiple-frames-warning">
+            Grouping to matrix only processes the first data frame. Consider applying a merge or join transformation
+            first.
+          </Trans>
+        </FieldValidationMessage>
+      )}
       <InlineFieldRow>
         <InlineField
           label={t('transformers.grouping-to-matrix-transformer-editor.label-column', 'Column')}
