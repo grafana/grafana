@@ -1,5 +1,5 @@
 import { API_VERSION, type RoutingTree } from '../../api/notifications';
-import { LabelMatcherFactory, RouteFactory } from '../../api/notifications/v0alpha1/mocks/fakes/Routes';
+import { LabelMatcherFactory, RouteFactory } from '../../api/notifications/mocks/fakes/Routes';
 import { type Label } from '../../matchers/types';
 
 import { matchInstancesToRouteTrees } from './useMatchPolicies';

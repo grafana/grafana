@@ -1,7 +1,7 @@
 import { countBy, isEmpty } from 'lodash';
 
 import { type Receiver } from '../api/notifications';
-import { type ContactPoint } from '../api/notifications/v1beta1/types';
+import { type ContactPoint } from '../api/notifications/types';
 
 // Annotation key that indicates whether a contact point can be used in routes and rules
 const CAN_USE_ANNOTATION = 'grafana.com/canUse';

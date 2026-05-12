@@ -3,8 +3,10 @@
  */
 
 // Contact Points
-// Types are sourced from v1beta1 (structurally identical to v0alpha1); see notifications/index.ts for the rationale.
-export * from './grafana/api/notifications/v1beta1/types';
+// Enhanced types (ContactPoint, EnhancedListReceiverApiResponse, …) are sourced from the centralized
+// notifications types module, which pins to v1beta1's underlying generated types. See
+// notifications/types.ts for the rationale.
+export * from './grafana/api/notifications/types';
 export { useListContactPoints } from './grafana/contactPoints/hooks/useContactPoints';
 export { ContactPointSelector } from './grafana/contactPoints/components/ContactPointSelector/ContactPointSelector';
 export { getContactPointDescription } from './grafana/contactPoints/utils';
