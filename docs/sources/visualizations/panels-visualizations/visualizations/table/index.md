@@ -608,9 +608,7 @@ The following image shows the "Info" field with the styling from the "Style" fie
 
 #### Apply overrides to nested table fields
 
-{{< admonition type="note" >}}
-This feature is in [public preview](https://grafana.com/docs/release-life-cycle/) and requires the `nestedFramesFieldOverrides` feature toggle.
-{{< /admonition >}}
+{{< docs/public-preview product="Nested table overrides" featureFlag="`nestedFramesFieldOverrides`" >}}
 
 By default, field overrides apply only to columns in the parent table.
 To target columns inside a nested table, set the **Target fields** option on the override to **Nested**:
