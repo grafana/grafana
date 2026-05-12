@@ -3705,7 +3705,8 @@
       "metadata": {
         "name": "kubernetesTeamBindings",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2026-02-18T17:05:38Z"
+        "creationTimestamp": "2026-02-18T17:05:38Z",
+        "deletionTimestamp": "2026-05-07T20:40:39Z"
       },
       "spec": {
         "description": "Enables search for team bindings in the app platform API",

@@ -234,41 +234,48 @@ function manualSeriesForFrame(opts: { yField: string; colorField?: string; sizeF
   return cfg;
 }
 
-const setUp = (propsOverrides?: PanelOverrides, seriesOverride?: DataFrame[], timeRangeOverride?: TimeRange) => {
+const getComponent = (propsOverrides?: PanelOverrides, seriesOverride?: DataFrame[], timeRangeOverride?: TimeRange) => {
   const defaultTimeRange = timeRangeOverride ?? {
     from: dateTime(0),
     to: dateTime(100),
     raw: { from: 'now', to: 'now' },
   };
   const { options: optionsPartial, ...restOverrides } = propsOverrides ?? {};
-  return render(
-    <XYChartPanel2
-      onChangeTimeRange={onChangeTimeRange}
-      onFieldConfigChange={onFieldConfigChange}
-      eventBus={new EventBusSrv()}
-      title={''}
-      timeZone={'utc'}
-      timeRange={propsOverrides?.timeRange ?? defaultTimeRange}
-      id={0}
-      transparent={false}
-      width={width}
-      height={height}
-      renderCounter={0}
-      replaceVariables={(v) => v}
-      onOptionsChange={onOptionsChange}
-      fieldConfig={{
-        defaults: {},
-        overrides: [],
-      }}
-      options={buildOptions(optionsPartial)}
-      {...restOverrides}
-      data={{
-        state: LoadingState.Done,
-        series: seriesOverride ?? [],
-        timeRange: propsOverrides?.timeRange ?? defaultTimeRange,
-      }}
-    />
-  );
+  const props: React.ComponentProps<typeof XYChartPanel2> = {
+    onChangeTimeRange: onChangeTimeRange,
+    onFieldConfigChange: onFieldConfigChange,
+    eventBus: new EventBusSrv(),
+    title: '',
+    timeZone: 'utc',
+    timeRange: defaultTimeRange,
+    id: 0,
+    transparent: false,
+    width: width,
+    height: height,
+    renderCounter: 0,
+    replaceVariables: (v) => v,
+    onOptionsChange: onOptionsChange,
+    fieldConfig: {
+      defaults: {},
+      overrides: [],
+    },
+    options: buildOptions(optionsPartial),
+    ...restOverrides,
+    data: {
+      state: LoadingState.Done,
+      series: seriesOverride ?? [],
+      timeRange: propsOverrides?.timeRange ?? defaultTimeRange,
+    },
+  };
+  return {
+    component: <XYChartPanel2 {...props} />,
+    props,
+  };
+};
+
+const setUp = (propsOverrides?: PanelOverrides, seriesOverride?: DataFrame[], timeRangeOverride?: TimeRange) => {
+  const { component, props } = getComponent(propsOverrides, seriesOverride, timeRangeOverride);
+  return { result: render(component), props };
 };
 
 function defaultAxisTextWidthForTests(text: string | null, fontSize: number): number {
@@ -405,6 +412,26 @@ describe('XYChartPanel2', () => {
         [frameColorByThresholdZ]
       );
       await assertCanvasOutput();
+    });
+  });
+
+  // https://github.com/grafana/grafana/issues/124703
+  describe('Regressions', () => {
+    it('should update on data change', async () => {
+      const { props, result } = setUp(undefined, [xySquareFrame]);
+      const { rerender } = result;
+      await assertUPlotReady();
+
+      // Update the frame
+      const updatedFrame: DataFrame = {
+        ...xySquareFrame,
+        fields: xySquareFrame.fields.map((field, i) => ({ ...field, values: [...field.values, 10 + i] })),
+      };
+      // re-render with same variable references, or the prepData method will re-run in the test execution despite the values not changing
+      rerender(<XYChartPanel2 {...props} data={{ ...props.data, series: [updatedFrame] }} />);
+
+      // If actual is empty, we're not re-rendering despite data change
+      await assertCanvasOutput(undefined);
     });
   });
 });
