@@ -150,9 +150,8 @@ func TestNormalizeGrafanaSQLRequest_passthroughPaths(t *testing.T) {
 	t.Run("invalid json keeps query unchanged", func(t *testing.T) {
 		orig := backend.DataQuery{RefID: "A", JSON: []byte(`{`), TimeRange: tr}
 		req := queryDataRequestWithDSAbstraction([]backend.DataQuery{orig})
-		out, logRefIDs, metricRefIDs, sqlErrs := normalizeGrafanaSQLRequest(context.Background(), req, ds)
-		require.Empty(t, logRefIDs)
-		require.Empty(t, metricRefIDs)
+		out, sqlKinds, sqlErrs := normalizeGrafanaSQLRequest(context.Background(), req, ds)
+		require.Empty(t, sqlKinds)
 		require.Empty(t, sqlErrs)
 		require.Equal(t, `{`, string(out.Queries[0].JSON))
 	})
@@ -161,9 +160,8 @@ func TestNormalizeGrafanaSQLRequest_passthroughPaths(t *testing.T) {
 		raw, err := json.Marshal(map[string]any{"refId": "A", "grafanaSql": false, "table": "carts", "expr": "{}"})
 		require.NoError(t, err)
 		req := queryDataRequestWithDSAbstraction([]backend.DataQuery{{RefID: "A", JSON: raw, TimeRange: tr}})
-		out, logRefIDs, metricRefIDs, sqlErrs := normalizeGrafanaSQLRequest(context.Background(), req, ds)
-		require.Empty(t, logRefIDs)
-		require.Empty(t, metricRefIDs)
+		out, sqlKinds, sqlErrs := normalizeGrafanaSQLRequest(context.Background(), req, ds)
+		require.Empty(t, sqlKinds)
 		require.Empty(t, sqlErrs)
 		require.JSONEq(t, string(raw), string(out.Queries[0].JSON))
 	})
@@ -172,9 +170,8 @@ func TestNormalizeGrafanaSQLRequest_passthroughPaths(t *testing.T) {
 		raw, err := json.Marshal(map[string]any{"refId": "A", "grafanaSql": true, "table": ""})
 		require.NoError(t, err)
 		req := queryDataRequestWithDSAbstraction([]backend.DataQuery{{RefID: "A", JSON: raw, TimeRange: tr}})
-		out, logRefIDs, metricRefIDs, sqlErrs := normalizeGrafanaSQLRequest(context.Background(), req, ds)
-		require.Empty(t, logRefIDs)
-		require.Empty(t, metricRefIDs)
+		out, sqlKinds, sqlErrs := normalizeGrafanaSQLRequest(context.Background(), req, ds)
+		require.Empty(t, sqlKinds)
 		require.Empty(t, out.Queries)
 		require.Len(t, sqlErrs, 1)
 		require.ErrorContains(t, sqlErrs["A"], "table name is required")
@@ -208,9 +205,8 @@ func TestNormalizeGrafanaSQLRequest_passthroughPaths(t *testing.T) {
 		})
 		require.NoError(t, err)
 		req := queryDataRequestWithDSAbstraction([]backend.DataQuery{{RefID: "A", JSON: raw, TimeRange: tr}})
-		out, logRefIDs, metricRefIDs, sqlErrs := normalizeGrafanaSQLRequest(context.Background(), req, ds)
-		require.Empty(t, logRefIDs)
-		require.Empty(t, metricRefIDs)
+		out, sqlKinds, sqlErrs := normalizeGrafanaSQLRequest(context.Background(), req, ds)
+		require.Empty(t, sqlKinds)
 		require.Empty(t, out.Queries)
 		require.Len(t, sqlErrs, 1)
 		require.ErrorContains(t, sqlErrs["A"], "failed to build LogQL")
@@ -237,13 +233,13 @@ func TestNormalizeGrafanaSQLRequest_passthroughPaths(t *testing.T) {
 			{RefID: "A", JSON: badRaw, TimeRange: tr},
 			{RefID: "B", JSON: goodRaw, TimeRange: tr},
 		})
-		out, logRefIDs, metricRefIDs, sqlErrs := normalizeGrafanaSQLRequest(context.Background(), req, ds)
+		out, sqlKinds, sqlErrs := normalizeGrafanaSQLRequest(context.Background(), req, ds)
 		require.Len(t, sqlErrs, 1)
 		require.ErrorContains(t, sqlErrs["A"], "failed to build LogQL")
 		require.Len(t, out.Queries, 1)
 		require.Equal(t, "B", out.Queries[0].RefID)
-		require.Contains(t, logRefIDs, "B")
-		require.Empty(t, metricRefIDs)
+		require.Equal(t, sqlKindLog, sqlKinds["B"])
+		require.NotContains(t, sqlKinds, "A")
 	})
 }
 
@@ -263,9 +259,8 @@ func TestNormalizeGrafanaSQLRequest_hints(t *testing.T) {
 		raw, err := json.Marshal(payload)
 		require.NoError(t, err)
 		q := backend.DataQuery{RefID: "A", JSON: raw, TimeRange: tr, Interval: time.Minute}
-		out, logRefIDs, metricRefIDs, sqlErrs := normalizeGrafanaSQLRequest(context.Background(), queryDataRequestWithDSAbstraction([]backend.DataQuery{q}), ds)
-		require.Contains(t, logRefIDs, "A")
-		require.Empty(t, metricRefIDs)
+		out, sqlKinds, sqlErrs := normalizeGrafanaSQLRequest(context.Background(), queryDataRequestWithDSAbstraction([]backend.DataQuery{q}), ds)
+		require.Equal(t, sqlKindLog, sqlKinds["A"])
 		require.Empty(t, sqlErrs)
 		var model QueryJSONModel
 		require.NoError(t, json.Unmarshal(out.Queries[0].JSON, &model))
@@ -281,9 +276,8 @@ func TestNormalizeGrafanaSQLRequest_hints(t *testing.T) {
 		raw, err := json.Marshal(payload)
 		require.NoError(t, err)
 		req := queryDataRequestWithDSAbstraction([]backend.DataQuery{{RefID: "A", JSON: raw, TimeRange: tr}})
-		out, logRefIDs, metricRefIDs, sqlErrs := normalizeGrafanaSQLRequest(context.Background(), req, ds)
-		require.Empty(t, logRefIDs)
-		require.Empty(t, metricRefIDs)
+		out, sqlKinds, sqlErrs := normalizeGrafanaSQLRequest(context.Background(), req, ds)
+		require.Empty(t, sqlKinds)
 		require.Empty(t, out.Queries)
 		require.Len(t, sqlErrs, 1)
 		require.ErrorContains(t, sqlErrs["A"], "failed to parse STEP hint")
@@ -296,9 +290,8 @@ func TestNormalizeGrafanaSQLRequest_hints(t *testing.T) {
 		raw, err := json.Marshal(payload)
 		require.NoError(t, err)
 		req := queryDataRequestWithDSAbstraction([]backend.DataQuery{{RefID: "A", JSON: raw, TimeRange: tr}})
-		out, logRefIDs, metricRefIDs, sqlErrs := normalizeGrafanaSQLRequest(context.Background(), req, ds)
-		require.Contains(t, logRefIDs, "A")
-		require.Empty(t, metricRefIDs)
+		out, sqlKinds, sqlErrs := normalizeGrafanaSQLRequest(context.Background(), req, ds)
+		require.Equal(t, sqlKindLog, sqlKinds["A"])
 		require.Empty(t, sqlErrs)
 		var model QueryJSONModel
 		require.NoError(t, json.Unmarshal(out.Queries[0].JSON, &model))
@@ -312,9 +305,8 @@ func TestNormalizeGrafanaSQLRequest_hints(t *testing.T) {
 		raw, err := json.Marshal(payload)
 		require.NoError(t, err)
 		req := queryDataRequestWithDSAbstraction([]backend.DataQuery{{RefID: "A", JSON: raw, TimeRange: tr}})
-		out, logRefIDs, metricRefIDs, sqlErrs := normalizeGrafanaSQLRequest(context.Background(), req, ds)
-		require.Contains(t, logRefIDs, "A")
-		require.Empty(t, metricRefIDs)
+		out, sqlKinds, sqlErrs := normalizeGrafanaSQLRequest(context.Background(), req, ds)
+		require.Equal(t, sqlKindLog, sqlKinds["A"])
 		require.Empty(t, sqlErrs)
 		var model QueryJSONModel
 		require.NoError(t, json.Unmarshal(out.Queries[0].JSON, &model))
@@ -328,9 +320,8 @@ func TestNormalizeGrafanaSQLRequest_hints(t *testing.T) {
 		raw, err := json.Marshal(payload)
 		require.NoError(t, err)
 		req := queryDataRequestWithDSAbstraction([]backend.DataQuery{{RefID: "A", JSON: raw, TimeRange: tr}})
-		out, logRefIDs, metricRefIDs, sqlErrs := normalizeGrafanaSQLRequest(context.Background(), req, ds)
-		require.Contains(t, logRefIDs, "A")
-		require.Empty(t, metricRefIDs)
+		out, sqlKinds, sqlErrs := normalizeGrafanaSQLRequest(context.Background(), req, ds)
+		require.Equal(t, sqlKindLog, sqlKinds["A"])
 		require.Empty(t, sqlErrs)
 		var model QueryJSONModel
 		require.NoError(t, json.Unmarshal(out.Queries[0].JSON, &model))
@@ -360,10 +351,9 @@ func TestNormalizeGrafanaSQLRequest_Disabled(t *testing.T) {
 		}},
 	}
 	ds := &datasourceInfo{}
-	out, logRefIDs, metricRefIDs, sqlErrs := normalizeGrafanaSQLRequest(context.Background(), req, ds)
+	out, sqlKinds, sqlErrs := normalizeGrafanaSQLRequest(context.Background(), req, ds)
 	require.Same(t, req, out)
-	require.Nil(t, logRefIDs)
-	require.Nil(t, metricRefIDs)
+	require.Nil(t, sqlKinds)
 	require.Empty(t, sqlErrs)
 }
 
@@ -451,10 +441,9 @@ func TestNormalizeGrafanaSQLRequest_metricAggregation(t *testing.T) {
 	require.NoError(t, err)
 	req := queryDataRequestWithDSAbstraction([]backend.DataQuery{{RefID: "A", JSON: raw, TimeRange: tr}})
 
-	out, logRefIDs, metricRefIDs, sqlErrs := normalizeGrafanaSQLRequest(context.Background(), req, ds)
+	out, sqlKinds, sqlErrs := normalizeGrafanaSQLRequest(context.Background(), req, ds)
 	require.Empty(t, sqlErrs)
-	require.Empty(t, logRefIDs)
-	require.Contains(t, metricRefIDs, "A")
+	require.Equal(t, sqlKindMetric, sqlKinds["A"])
 
 	var model QueryJSONModel
 	require.NoError(t, json.Unmarshal(out.Queries[0].JSON, &model))
@@ -478,10 +467,9 @@ func TestNormalizeGrafanaSQLRequest_rateAndInstant(t *testing.T) {
 		})
 		require.NoError(t, err)
 		req := queryDataRequestWithDSAbstraction([]backend.DataQuery{{RefID: "A", JSON: raw, TimeRange: tr}})
-		out, logRefIDs, metricRefIDs, sqlErrs := normalizeGrafanaSQLRequest(context.Background(), req, ds)
+		out, sqlKinds, sqlErrs := normalizeGrafanaSQLRequest(context.Background(), req, ds)
 		require.Empty(t, sqlErrs)
-		require.Empty(t, logRefIDs)
-		require.Contains(t, metricRefIDs, "A")
+		require.Equal(t, sqlKindMetric, sqlKinds["A"])
 		var model QueryJSONModel
 		require.NoError(t, json.Unmarshal(out.Queries[0].JSON, &model))
 		require.Equal(t, `rate({service_name="carts"}[2m])`, model.Expr)
@@ -498,9 +486,9 @@ func TestNormalizeGrafanaSQLRequest_rateAndInstant(t *testing.T) {
 		})
 		require.NoError(t, err)
 		req := queryDataRequestWithDSAbstraction([]backend.DataQuery{{RefID: "A", JSON: raw, TimeRange: tr}})
-		out, _, metricRefIDs, sqlErrs := normalizeGrafanaSQLRequest(context.Background(), req, ds)
+		out, sqlKinds, sqlErrs := normalizeGrafanaSQLRequest(context.Background(), req, ds)
 		require.Empty(t, sqlErrs)
-		require.Contains(t, metricRefIDs, "A")
+		require.Equal(t, sqlKindMetric, sqlKinds["A"])
 		var model QueryJSONModel
 		require.NoError(t, json.Unmarshal(out.Queries[0].JSON, &model))
 		require.Equal(t, `sum by (env) (rate({service_name="carts"}[5m]))`, model.Expr)
@@ -514,7 +502,7 @@ func TestNormalizeGrafanaSQLRequest_rateAndInstant(t *testing.T) {
 		})
 		require.NoError(t, err)
 		req := queryDataRequestWithDSAbstraction([]backend.DataQuery{{RefID: "A", JSON: raw, TimeRange: tr}})
-		out, _, _, sqlErrs := normalizeGrafanaSQLRequest(context.Background(), req, ds)
+		out, _, sqlErrs := normalizeGrafanaSQLRequest(context.Background(), req, ds)
 		require.Empty(t, sqlErrs)
 		var model QueryJSONModel
 		require.NoError(t, json.Unmarshal(out.Queries[0].JSON, &model))
@@ -529,7 +517,7 @@ func TestNormalizeGrafanaSQLRequest_rateAndInstant(t *testing.T) {
 		})
 		require.NoError(t, err)
 		req := queryDataRequestWithDSAbstraction([]backend.DataQuery{{RefID: "A", JSON: raw, TimeRange: tr}})
-		out, _, _, sqlErrs := normalizeGrafanaSQLRequest(context.Background(), req, ds)
+		out, _, sqlErrs := normalizeGrafanaSQLRequest(context.Background(), req, ds)
 		require.Empty(t, out.Queries)
 		require.Len(t, sqlErrs, 1)
 		require.ErrorContains(t, sqlErrs["A"], "INSTANT hint requires a metric query")
@@ -542,7 +530,7 @@ func TestNormalizeGrafanaSQLRequest_rateAndInstant(t *testing.T) {
 		})
 		require.NoError(t, err)
 		req := queryDataRequestWithDSAbstraction([]backend.DataQuery{{RefID: "A", JSON: raw, TimeRange: tr}})
-		out, _, _, sqlErrs := normalizeGrafanaSQLRequest(context.Background(), req, ds)
+		out, _, sqlErrs := normalizeGrafanaSQLRequest(context.Background(), req, ds)
 		require.Empty(t, out.Queries)
 		require.ErrorContains(t, sqlErrs["A"], "failed to parse RATE hint")
 	})
@@ -571,10 +559,9 @@ func TestNormalizeGrafanaSQLRequest_Converts(t *testing.T) {
 	}
 	ds := testDatasourceInfoServiceName(t)
 
-	out, logRefIDs, metricRefIDs, sqlErrs := normalizeGrafanaSQLRequest(context.Background(), req, ds)
+	out, sqlKinds, sqlErrs := normalizeGrafanaSQLRequest(context.Background(), req, ds)
 	require.Len(t, out.Queries, 1)
-	require.Contains(t, logRefIDs, "A")
-	require.Empty(t, metricRefIDs)
+	require.Equal(t, sqlKindLog, sqlKinds["A"])
 	require.Empty(t, sqlErrs)
 
 	var model QueryJSONModel

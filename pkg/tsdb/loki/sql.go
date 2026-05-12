@@ -31,6 +31,15 @@ type aggregationHint struct {
 	GroupBy  []string `json:"groupBy"`  // label names; timestamp/time excluded from LogQL grouping
 }
 
+// sqlKind classifies a successfully-rewritten Grafana SQL query so callers can route the response
+// through the right flattener (log vs metric tabular).
+type sqlKind string
+
+const (
+	sqlKindLog    sqlKind = "log"
+	sqlKindMetric sqlKind = "metric"
+)
+
 // normalizeGrafanaSQLRequest rewrites schemads tabular queries into native Loki queries.
 // Queries without GrafanaSql=true are unchanged.
 //
@@ -63,20 +72,19 @@ func dsAbstractionSQLRewriteEnabled(req *backend.QueryDataRequest) bool {
 	return gc.FeatureToggles().IsEnabled(flagDsAbstractionApp)
 }
 
-// logSQLRefIDs and metricSQLRefIDs partition successful Grafana SQL rewrites so callers can
-// choose flattenLogsToTabular vs flattenMetricsToTabular.
-func normalizeGrafanaSQLRequest(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datasourceInfo) (*backend.QueryDataRequest, map[string]struct{}, map[string]struct{}, map[string]error) {
+// sqlKinds maps each successfully-rewritten refID to its sqlKind so callers can choose
+// flattenLogsToTabular vs flattenMetricsToTabular.
+func normalizeGrafanaSQLRequest(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datasourceInfo) (*backend.QueryDataRequest, map[string]sqlKind, map[string]error) {
 	if req == nil || len(req.Queries) == 0 {
-		return req, nil, nil, nil
+		return req, nil, nil
 	}
 
 	if !dsAbstractionSQLRewriteEnabled(req) {
-		return req, nil, nil, nil
+		return req, nil, nil
 	}
 
 	out := make([]backend.DataQuery, 0, len(req.Queries))
-	logSQLRefIDs := make(map[string]struct{})
-	metricSQLRefIDs := make(map[string]struct{})
+	sqlKinds := make(map[string]sqlKind)
 	sqlErrors := make(map[string]error)
 
 	var tableLabel string
@@ -98,15 +106,7 @@ func normalizeGrafanaSQLRequest(ctx context.Context, req *backend.QueryDataReque
 		}
 
 		if tableLabel == "" {
-			if dsInfo == nil {
-				sqlErrors[q.RefID] = fmt.Errorf("loki grafana sql: data source instance has no schema provider")
-				continue
-			}
-			if dsInfo.schemaProvider != nil {
-				tableLabel = dsInfo.schemaProvider.ResolveSchemaTableLabel(ctx)
-			} else {
-				tableLabel = defaultSchemaTableLabel
-			}
+			tableLabel = resolveTableLabel(ctx, dsInfo)
 		}
 
 		hints := sq.TableHintValues
@@ -120,30 +120,18 @@ func normalizeGrafanaSQLRequest(ctx context.Context, req *backend.QueryDataReque
 			continue
 		}
 
-		stepStr := hintGet(hints, "STEP")
+		stepStr, stepDur, err := parseDurationHint(hints, "STEP")
+		if err != nil {
+			sqlErrors[q.RefID] = fmt.Errorf("loki grafana sql: %w", err)
+			continue
+		}
+		stepForModel := stepStr
 		dirStr := strings.ToLower(hintGet(hints, "DIRECTION"))
 
-		stepForModel := ""
-		var stepDur time.Duration
-		if stepStr != "" {
-			var perr error
-			stepDur, perr = gtime.ParseIntervalStringToTimeDuration(stepStr)
-			if perr != nil {
-				sqlErrors[q.RefID] = fmt.Errorf("loki grafana sql: failed to parse STEP hint %q: %w", stepStr, perr)
-				continue
-			}
-			stepForModel = stepStr
-		}
-
-		rateStr := hintGet(hints, "RATE")
-		var rateDur time.Duration
-		if rateStr != "" {
-			var rerr error
-			rateDur, rerr = gtime.ParseIntervalStringToTimeDuration(rateStr)
-			if rerr != nil {
-				sqlErrors[q.RefID] = fmt.Errorf("loki grafana sql: failed to parse RATE hint %q: %w", rateStr, rerr)
-				continue
-			}
+		rateStr, rateDur, err := parseDurationHint(hints, "RATE")
+		if err != nil {
+			sqlErrors[q.RefID] = fmt.Errorf("loki grafana sql: %w", err)
+			continue
 		}
 
 		isMetric := sq.Aggregation != nil || rateStr != ""
@@ -215,14 +203,39 @@ func normalizeGrafanaSQLRequest(ctx context.Context, req *backend.QueryDataReque
 		q.JSON = raw
 		out = append(out, q)
 		if isMetric {
-			metricSQLRefIDs[q.RefID] = struct{}{}
+			sqlKinds[q.RefID] = sqlKindMetric
 		} else {
-			logSQLRefIDs[q.RefID] = struct{}{}
+			sqlKinds[q.RefID] = sqlKindLog
 		}
 	}
 
 	req.Queries = out
-	return req, logSQLRefIDs, metricSQLRefIDs, sqlErrors
+	return req, sqlKinds, sqlErrors
+}
+
+// resolveTableLabel returns the label used to partition Grafana SQL tables for this datasource.
+// Falls back to defaultSchemaTableLabel when the datasource has no SchemaProvider configured
+// (e.g. when dsAbstractionApp was disabled at instance creation time).
+func resolveTableLabel(ctx context.Context, dsInfo *datasourceInfo) string {
+	if dsInfo != nil && dsInfo.schemaProvider != nil {
+		return dsInfo.schemaProvider.ResolveSchemaTableLabel(ctx)
+	}
+	return defaultSchemaTableLabel
+}
+
+// parseDurationHint returns the raw value and parsed Grafana duration for a TableHintValues entry.
+// Returns ("", 0, nil) when the hint is absent. Parse errors are wrapped with the hint key so they
+// surface as e.g. `failed to parse STEP hint "..."`.
+func parseDurationHint(hints map[string]string, key string) (string, time.Duration, error) {
+	raw := hintGet(hints, key)
+	if raw == "" {
+		return "", 0, nil
+	}
+	dur, err := gtime.ParseIntervalStringToTimeDuration(raw)
+	if err != nil {
+		return "", 0, fmt.Errorf("failed to parse %s hint %q: %w", key, raw, err)
+	}
+	return raw, dur, nil
 }
 
 func dataqueryFromExpr(refID, expr, queryType string, maxLines int64, step string) dataquery.LokiDataQuery {
