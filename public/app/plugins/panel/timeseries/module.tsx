@@ -25,9 +25,12 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TimeSeriesPanel)
     if (config.featureToggles.vizLegendFacetedFilter) {
       builder.addBooleanSwitch({
         path: 'legend.enableFacetedFilter',
-        name: t('timeseries.legend.name-faceted-filter', 'Faceted filter'),
+        name: t('timeseries.legend.name-faceted-filter', 'Series visibility'),
         category: legendCategory,
-        description: t('timeseries.legend.description-faceted-filter', 'Show series visibility filter based on labels'),
+        description: t(
+          'timeseries.legend.description-faceted-filter',
+          'Enable filter to display series based on labels or names'
+        ),
         defaultValue: true,
         showIf: (c) => c.legend.showLegend,
       });
