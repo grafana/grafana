@@ -3105,14 +3105,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "alerting.disableV0ReceiverConversion",
-			Description: "Disable automatic conversion of legacy (V0/Mimir) Alertmanager receivers to Grafana model",
-			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyGo: true},
-			Owner:       grafanaAlertingSquad,
-			Expression:  "false",
-		},
-		{
 			Name:        "grafana.unifiedHomepage",
 			Description: "Replaces the bundled home dashboard with the unified homepage React page",
 			Stage:       FeatureStageExperimental,

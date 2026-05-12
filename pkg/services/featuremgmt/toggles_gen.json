@@ -134,7 +134,8 @@
       "metadata": {
         "name": "alerting.disableV0ReceiverConversion",
         "resourceVersion": "1777923303116",
-        "creationTimestamp": "2026-05-04T19:35:03Z"
+        "creationTimestamp": "2026-05-04T19:35:03Z",
+        "deletionTimestamp": "2026-05-12T19:30:23Z"
       },
       "spec": {
         "description": "Disable automatic conversion of legacy (V0/Mimir) Alertmanager receivers to Grafana model",
