@@ -4342,7 +4342,6 @@
       "button-cancel": "취소",
       "button-delete": "삭제",
       "button-deleting": "삭제 중…",
-      "commit": "폴더 삭제",
       "delete-warning": "이 작업을 수행하면 이 폴더와 모든 하위 폴더가 삭제됩니다. 이는 전체적으로 다음에 영향을 미칩니다.",
       "missing-info": "필수 입력 항목 누락",
       "success-message": "폴더가 삭제되었습니다"
@@ -4448,7 +4447,6 @@
       "button-cancel": "취소",
       "button-rename": "이름 변경",
       "button-renaming": "이름 변경 중...",
-      "commit": "폴더 이름 변경",
       "error-saving": "폴더 이름 변경 실패",
       "label-folder-name": "폴더 이름",
       "missing-info": "필수 입력 항목 누락",

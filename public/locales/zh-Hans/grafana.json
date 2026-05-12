@@ -4342,7 +4342,6 @@
       "button-cancel": "取消",
       "button-delete": "删除",
       "button-deleting": "正在删除…",
-      "commit": "删除文件夹",
       "delete-warning": "这将删除此文件夹及其所有子文件夹。总体而言，这将影响：",
       "missing-info": "缺少必填字段",
       "success-message": "文件夹已成功删除"
@@ -4448,7 +4447,6 @@
       "button-cancel": "取消",
       "button-rename": "重命名",
       "button-renaming": "正在重命名…",
-      "commit": "重命名文件夹",
       "error-saving": "重命名文件夹失败",
       "label-folder-name": "文件夹名称",
       "missing-info": "缺少必填字段",

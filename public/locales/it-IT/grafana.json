@@ -4369,7 +4369,6 @@
       "button-cancel": "Annulla",
       "button-delete": "Elimina",
       "button-deleting": "Eliminazione in corso...",
-      "commit": "Elimina cartella",
       "delete-warning": "Questa operazione eliminerà questa cartella e tutti i suoi discendenti. In totale, questo influenzerà:",
       "missing-info": "Campi obbligatori mancanti",
       "success-message": "Cartella eliminata correttamente"
@@ -4475,7 +4474,6 @@
       "button-cancel": "Annulla",
       "button-rename": "Rinomina",
       "button-renaming": "Ridenominazione in corso...",
-      "commit": "Rinomina cartella",
       "error-saving": "Impossibile rinominare la cartella",
       "label-folder-name": "Nome cartella",
       "missing-info": "Campi obbligatori mancanti",

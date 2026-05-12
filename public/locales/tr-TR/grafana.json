@@ -4369,7 +4369,6 @@
       "button-cancel": "İptal et",
       "button-delete": "Sil",
       "button-deleting": "Siliniyor...",
-      "commit": "Klasörü sil",
       "delete-warning": "Bu işlem, bu klasörü ve tüm alt klasörlerini silecektir. Bu işlem toplamda şunları etkileyecektir:",
       "missing-info": "Eksik zorunlu alanlar",
       "success-message": "Klasör başarıyla silindi"
@@ -4475,7 +4474,6 @@
       "button-cancel": "İptal et",
       "button-rename": "Yeniden adlandır",
       "button-renaming": "Yeniden adlandırılıyor...",
-      "commit": "Klasörü yeniden adlandır",
       "error-saving": "Klasör yeniden adlandırılamadı",
       "label-folder-name": "Klasör adı",
       "missing-info": "Eksik zorunlu alanlar",

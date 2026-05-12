@@ -4342,7 +4342,6 @@
       "button-cancel": "Batalkan",
       "button-delete": "Hapus",
       "button-deleting": "Menghapus...",
-      "commit": "Hapus folder",
       "delete-warning": "Ini akan menghapus folder ini dan semua subfoldernya. Secara keseluruhan, ini akan memengaruhi:",
       "missing-info": "Bidang wajib tidak ada",
       "success-message": "Folder berhasil dihapus"
@@ -4448,7 +4447,6 @@
       "button-cancel": "Batalkan",
       "button-rename": "Ganti nama",
       "button-renaming": "Mengganti nama...",
-      "commit": "Ganti nama folder",
       "error-saving": "Gagal mengganti nama folder",
       "label-folder-name": "Nama folder",
       "missing-info": "Bidang wajib tidak ada",

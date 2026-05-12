@@ -25,19 +25,21 @@ describe('renderCommitMessage', () => {
     expect(
       renderCommitMessage(null, { action: 'move', resourceKind: 'dashboard', resourceID: 'abc', title: 'My DB' })
     ).toBe('Move dashboard: My DB');
+    expect(
+      renderCommitMessage(undefined, { action: 'rename', resourceKind: 'dashboard', resourceID: 'abc', title: 'My DB' })
+    ).toBe('Rename dashboard: My DB');
   });
 
   it('falls back to folder defaults for folder resources', () => {
     expect(
       renderCommitMessage(undefined, { action: 'create', resourceKind: 'folder', resourceID: '', title: 'ops' })
     ).toBe('Create folder: ops');
-    // i18n strings — jest mocks return the default value
     expect(
       renderCommitMessage(undefined, { action: 'rename', resourceKind: 'folder', resourceID: 'uid', title: 'ops' })
-    ).toBe('Rename folder');
+    ).toBe('Rename folder: ops');
     expect(
       renderCommitMessage(undefined, { action: 'delete', resourceKind: 'folder', resourceID: 'uid', title: 'ops' })
-    ).toBe('Delete folder');
+    ).toBe('Delete folder: ops');
   });
 
   it('interpolates {{action}}, {{resourceKind}}, {{resourceID}}, {{title}}', () => {

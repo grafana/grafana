@@ -4369,7 +4369,6 @@
       "button-cancel": "Annuleren",
       "button-delete": "Verwijderen",
       "button-deleting": "Bezig met verwijderen...",
-      "commit": "Map verwijderen",
       "delete-warning": "Hiermee worden deze map en alle onderliggende mappen verwijderd. In totaal heeft dit invloed op:",
       "missing-info": "Ontbrekende verplichte velden",
       "success-message": "Map is verwijderd"
@@ -4475,7 +4474,6 @@
       "button-cancel": "Annuleren",
       "button-rename": "Hernoemen",
       "button-renaming": "Naam wordt gewijzigd...",
-      "commit": "Map hernoemen",
       "error-saving": "Kan map niet hernoemen",
       "label-folder-name": "Mapnaam",
       "missing-info": "Ontbrekende verplichte velden",

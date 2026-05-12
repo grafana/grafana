@@ -4369,7 +4369,6 @@
       "button-cancel": "Abbrechen",
       "button-delete": "Löschen",
       "button-deleting": "Wird gelöscht …",
-      "commit": "Ordner löschen",
       "delete-warning": "Dadurch werden dieser und alle untergeordneten Ordner gelöscht. Insgesamt betrifft dies:",
       "missing-info": "Fehlende Pflichtfelder",
       "success-message": "Ordner erfolgreich gelöscht"
@@ -4475,7 +4474,6 @@
       "button-cancel": "Abbrechen",
       "button-rename": "Umbenennen",
       "button-renaming": "Wird umbenannt …",
-      "commit": "Ordner umbenennen",
       "error-saving": "Umbenennung des Ordners fehlgeschlagen",
       "label-folder-name": "Ordnername",
       "missing-info": "Fehlende Pflichtfelder",

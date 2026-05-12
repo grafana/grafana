@@ -4369,7 +4369,6 @@
       "button-cancel": "Cancel",
       "button-delete": "Delete",
       "button-deleting": "Deleting...",
-      "commit": "Delete folder",
       "delete-warning": "This will delete this folder and all its descendants. In total, this will affect:",
       "missing-info": "Missing required fields",
       "success-message": "Folder deleted successfully"
@@ -4483,7 +4482,6 @@
       "button-cancel": "Cancel",
       "button-rename": "Rename",
       "button-renaming": "Renaming...",
-      "commit": "Rename folder",
       "error-saving": "Failed to rename folder",
       "label-folder-name": "Folder name",
       "missing-info": "Missing required fields",
@@ -13224,7 +13222,9 @@
       "dashboard-rename-default": "Rename dashboard: {{title}}",
       "dashboard-update-default": "Save dashboard: {{title}}",
       "folder-create-default": "Create folder: {{title}}",
+      "folder-delete-default": "Delete folder: {{title}}",
       "folder-move-default": "Move folder: {{title}}",
+      "folder-rename-default": "Rename folder: {{title}}",
       "folder-update-default": "Save folder: {{title}}"
     },
     "config-form": {

@@ -4369,7 +4369,6 @@
       "button-cancel": "Cancelar",
       "button-delete": "Eliminar",
       "button-deleting": "Eliminando...",
-      "commit": "Eliminar carpeta",
       "delete-warning": "Esto eliminará esta carpeta y todas sus derivadas. En total, esto afectará a:",
       "missing-info": "Faltan campos obligatorios.",
       "success-message": "Carpeta eliminada correctamente"
@@ -4475,7 +4474,6 @@
       "button-cancel": "Cancelar",
       "button-rename": "Cambiar nombre",
       "button-renaming": "Cambiando el nombre...",
-      "commit": "Cambiar nombre de la carpeta",
       "error-saving": "Error al cambiar el nombre de la carpeta",
       "label-folder-name": "Nombre de la carpeta",
       "missing-info": "Faltan campos obligatorios.",

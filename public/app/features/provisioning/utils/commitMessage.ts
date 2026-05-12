@@ -35,8 +35,8 @@ function defaultMessage({ action, resourceKind, title }: CommitTemplateVars): st
     }),
     'folder:create': t('provisioning.commit-message.folder-create-default', 'Create folder: {{title}}', { title }),
     'folder:update': t('provisioning.commit-message.folder-update-default', 'Save folder: {{title}}', { title }),
-    'folder:delete': t('browse-dashboards.delete-provisioned-folder-form.commit', 'Delete folder'),
-    'folder:rename': t('browse-dashboards.rename-provisioned-folder-form.commit', 'Rename folder'),
+    'folder:delete': t('provisioning.commit-message.folder-delete-default', 'Delete folder: {{title}}', { title }),
+    'folder:rename': t('provisioning.commit-message.folder-rename-default', 'Rename folder: {{title}}', { title }),
     'folder:move': t('provisioning.commit-message.folder-move-default', 'Move folder: {{title}}', { title }),
   };
   return defaults[`${resourceKind}:${action}`];
