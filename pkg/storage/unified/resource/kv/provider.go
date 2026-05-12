@@ -10,10 +10,12 @@ import (
 // other configuration that does not produce a KV on this instance).
 var ErrKVUnavailable = errors.New("no KV store available in this configuration")
 
-// EventualKVProvider is a deferred KV store reference that blocks callers
-// until the storage backend resolves. This exists because the KV store is
-// created during module initialization (after Wire DI), while consumers
-// may be constructed during Wire DI.
+// EventualKVProvider is a deferred KV store reference.
+//
+// Storage backend creation may happen during Wire DI (the Initialize path)
+// or later during dskit module init (the ModuleServer path). Consumers
+// wired via DI obtain the provider eagerly and call Get only when they
+// actually need the KV — Get blocks until Set lands or ctx is cancelled.
 type EventualKVProvider struct {
 	ready chan struct{}
 	store KV
@@ -27,13 +29,9 @@ func ProvideEventualKVStore() *EventualKVProvider {
 
 // Set marks the provider as resolved and unblocks all Get callers. Pass
 // nil to signal that no KV is available in this configuration — Get will
-// then return ErrKVUnavailable. Must be called exactly once.
+// then return ErrKVUnavailable. Must be called exactly once; a second
+// call panics ("close of closed channel").
 func (p *EventualKVProvider) Set(store KV) {
-	select {
-	case <-p.ready:
-		panic("EventualKVProvider.Set called more than once")
-	default:
-	}
 	p.store = store
 	close(p.ready)
 }

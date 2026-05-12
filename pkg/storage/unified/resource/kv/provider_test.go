@@ -2,7 +2,6 @@ package kv
 
 import (
 	"context"
-	"errors"
 	"testing"
 	"time"
 
@@ -60,10 +59,7 @@ func TestEventualKVProvider_SetNilSignalsUnavailable(t *testing.T) {
 func TestEventualKVProvider_DoubleSetPanics(t *testing.T) {
 	p := ProvideEventualKVStore()
 	p.Set(&fakeKV{})
-	require.PanicsWithValue(t,
-		"EventualKVProvider.Set called more than once",
-		func() { p.Set(&fakeKV{}) },
-	)
+	require.Panics(t, func() { p.Set(&fakeKV{}) })
 }
 
 func TestEventualKVProvider_GetIsRepeatable(t *testing.T) {
@@ -77,9 +73,6 @@ func TestEventualKVProvider_GetIsRepeatable(t *testing.T) {
 		require.Same(t, store, kv)
 	}
 }
-
-// guard against a regression where errors.Is wouldn't match the sentinel.
-var _ = errors.Is(ErrKVUnavailable, ErrKVUnavailable)
 
 // fakeKV is an opaque KV used only to verify identity round-tripping through
 // EventualKVProvider. Methods aren't exercised; embedding the interface keeps

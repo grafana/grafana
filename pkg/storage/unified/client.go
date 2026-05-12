@@ -108,7 +108,7 @@ func newClient(opts options.StorageOptions,
 
 	switch opts.StorageType {
 	case options.StorageTypeFile:
-		backend, err := sql.NewStorageBackend(cfg, db, reg, storageMetrics, false, kvProvider)
+		backend, err := sql.NewFileBackend(cfg, kvProvider)
 		if err != nil {
 			return nil, err
 		}
@@ -130,10 +130,10 @@ func newClient(opts options.StorageOptions,
 		}
 
 		// No local backend is created for unified-grpc; the gRPC client below
-		// is what's used. Still route through NewStorageBackend so the single
-		// kvProvider.Set call site there records the absence of a local KV.
-		if _, err := sql.NewStorageBackend(cfg, db, reg, storageMetrics, false, kvProvider); err != nil {
-			return nil, err
+		// is what's used. Publish nil to the provider so any in-process
+		// consumer waiting on Get gets ErrKVUnavailable instead of blocking.
+		if kvProvider != nil {
+			kvProvider.Set(nil)
 		}
 
 		var (
