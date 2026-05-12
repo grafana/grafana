@@ -3,10 +3,64 @@ packages:
   - 'public/app/plugins/*/*'
   - 'e2e-playwright/test-plugins/*'
 
-onlyBuiltDependencies:
-  - '@parcel/watcher'
-  - '@swc/core'
-  - esbuild
-  - msw
-  - protobufjs
-  - unrs-resolver
+nodeLinker: hoisted
+blockExoticSubdeps: false
+resolvePeersFromWorkspaceRoot: true
+dedupePeerDependents: true
+
+allowBuilds:
+  '@parcel/watcher': true
+  '@scarf/scarf': false
+  '@swc/core': true
+  '@tree-sitter-grammars/tree-sitter-yaml': false
+  core-js: false
+  core-js-pure: false
+  esbuild: true
+  msw: true
+  nx: false
+  protobufjs: true
+  tree-sitter: false
+  tree-sitter-json: false
+  unrs-resolver: true
+
+overrides:
+  underscore: 1.13.8
+  '@types/slate': 0.47.11
+  semver@~7.3.5: ^7.3.5
+  debug@^0.7.2: 2.6.9
+  debug@^0.7.4: 2.6.9
+  redux: ^5.0.0
+  '@grafana/plugin-e2e>@grafana/e2e-selectors': workspace:*
+  '@grafana/scenes>@grafana/e2e-selectors': workspace:*
+  '@grafana/scenes-react>@grafana/e2e-selectors': workspace:*
+  swagger-ui-react>dompurify: 3.4.0
+  refractor>prismjs: ^1.27.0
+  '@mapbox/jsonlint-lines-primitives': 'github:mapbox/jsonlint#e31b7289baedf3e1000d7ae7edd42268212c9954'
+  get-document: 'github:webmodules/get-document#a04ccb499d6e0433a368c3bb150b4899b698461f'
+  gitconfiglocal: 2.1.0
+  tmp@^0.0.33: ~0.2.1
+  js-yaml@4.1.0: ^4.1.0
+  js-yaml@=4.1.0: ^4.1.0
+  nodemailer: 8.0.7
+  protobufjs@8.0.0: 8.0.1
+  '@types/slate>immutable': ^4.0.0
+  '@types/slate-react>immutable': ^4.0.0
+
+patchedDependencies:
+  history@4.10.1: patches/history@4.10.1.patch
+  react-grid-layout@1.4.4: patches/react-grid-layout@1.4.4.patch
+  react-split-pane@0.1.92: patches/react-split-pane@0.1.92.patch
+  slate-dev-environment@0.2.5: patches/slate-dev-environment@0.2.5.patch
+  storybook@10.3.6: patches/storybook@10.3.6.patch
+
+packageExtensions:
+  croact-css-styled@1.1.9:
+    dependencies:
+      croact: 1.0.4
+  doctrine@3.0.0:
+    dependencies:
+      assert: 2.0.0
+  rc-trigger@2.6.5:
+    peerDependencies:
+      react: 17.0.1
+      react-dom: 17.0.1

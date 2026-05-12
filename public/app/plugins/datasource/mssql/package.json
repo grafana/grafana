@@ -40,5 +40,5 @@
     "dev": "webpack -w -c ./webpack.config.ts --env development",
     "i18n-extract": "i18next-cli extract --sync-primary"
   },
-  "packageManager": "pnpm@10.33.2"
+  "packageManager": "pnpm@11.1.1"
 }

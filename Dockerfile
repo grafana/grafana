@@ -42,7 +42,7 @@ COPY conf/defaults.ini ./conf/defaults.ini
 #
 ENV NODE_ENV=${JS_NODE_ENV}
 #
-RUN corepack enable && corepack prepare pnpm@10.33.2 --activate
+RUN corepack enable && corepack prepare pnpm@11.1.1 --activate
 #
 RUN if [ "$JS_PNPM_INSTALL_FLAG" = "" ]; then \
     pnpm install; \

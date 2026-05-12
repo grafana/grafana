@@ -55,5 +55,5 @@
     "test": "jest --watch --onlyChanged",
     "test:ci": "jest --maxWorkers 4"
   },
-  "packageManager": "pnpm@10.33.2"
+  "packageManager": "pnpm@11.1.1"
 }
