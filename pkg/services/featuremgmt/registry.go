@@ -914,10 +914,10 @@ var (
 		{
 			Name:        "sqlExpressions",
 			Description: "Enables SQL Expressions, which can execute SQL queries against data source results.",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 			Owner:       grafanaDatasourcesCoreServicesSquad,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:        "sqlExpressionsColumnAutoComplete",
