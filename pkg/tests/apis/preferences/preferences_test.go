@@ -160,7 +160,7 @@ func TestIntegrationPreferences(t *testing.T) {
 		jj, err = json.MarshalIndent(obj.Object["spec"], "", "  ")
 		require.NoError(t, err)
 		require.JSONEq(t, `{
-			"weekStart":      "saturday",
+			"weekStart": "saturday"
 		}`, string(jj))
 
 		// The viewer should only have namespace (eg org level) permissions
@@ -188,8 +188,8 @@ func TestIntegrationPreferences(t *testing.T) {
 			"timezone":"Africa/Johannesburg",
 			"weekStart":"saturday",
 			"theme":"dark",
-			"language":"en-US", `+ // FROM global default!
-			string(jj))
+			"language":"en-US"
+		}`, string(jj))
 
 		merged := apis.DoRequest(helper, apis.RequestParams{
 			User:   clientAdmin.Args.User,
