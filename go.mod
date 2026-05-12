@@ -28,7 +28,7 @@ require (
 	github.com/Masterminds/sprig/v3 v3.3.0 // @grafana/grafana-backend-group
 	github.com/PaesslerAG/jsonpath v0.1.1 // @grafana/grafana-search-and-storage
 	github.com/VividCortex/mysqlerr v1.0.0 // @grafana/grafana-backend-group
-	github.com/alicebob/miniredis/v2 v2.37.0 // @grafana/alerting-backend
+	github.com/alicebob/miniredis/v2 v2.38.0 // @grafana/alerting-backend
 	github.com/andybalholm/brotli v1.2.0 // @grafana/data-sources-plugins
 	github.com/apache/arrow-go/v18 v18.5.2 // @grafana/plugins-platform-backend
 	github.com/armon/go-radix v1.0.0 // @grafana/grafana-app-platform-squad
@@ -68,7 +68,7 @@ require (
 	github.com/fsnotify/fsnotify v1.10.1 // @grafana/identity-access-team
 	github.com/fullstorydev/grpchan v1.1.2 // @grafana/grafana-backend-group
 	github.com/gchaincl/sqlhooks v1.3.0 // @grafana/grafana-search-and-storage
-	github.com/getkin/kin-openapi v0.137.0 // @grafana/grafana-app-platform-squad
+	github.com/getkin/kin-openapi v0.138.0 // @grafana/grafana-app-platform-squad
 	github.com/go-jose/go-jose/v4 v4.1.4 // @grafana/identity-access-team
 	github.com/go-kit/log v0.2.1 //  @grafana/grafana-backend-group
 	github.com/go-ldap/ldap/v3 v3.4.4 // @grafana/identity-access-team
@@ -77,7 +77,7 @@ require (
 	github.com/go-openapi/runtime v0.29.5 // @grafana/alerting-backend
 	github.com/go-openapi/strfmt v0.26.2 // @grafana/alerting-backend
 	github.com/go-sourcemap/sourcemap v2.1.4+incompatible // @grafana/grafana-backend-group
-	github.com/go-sql-driver/mysql v1.9.3 // @grafana/grafana-search-and-storage
+	github.com/go-sql-driver/mysql v1.10.0 // @grafana/grafana-search-and-storage
 	github.com/go-stack/stack v1.8.1 // @grafana/grafana-backend-group
 	github.com/gobwas/glob v0.2.3 // @grafana/grafana-backend-group
 	github.com/gogo/protobuf v1.3.2 // @grafana/alerting-backend
@@ -116,12 +116,12 @@ require (
 	github.com/grafana/otel-profiling-go v0.5.1 // @grafana/grafana-backend-group
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.9 // @grafana/data-sources-plugins
 	github.com/grafana/pyroscope/api v1.3.0 // @grafana/data-sources-plugins
-	github.com/grafana/schemads v0.1.0 // @grafana/data-sources
+	github.com/grafana/schemads v0.2.0 // @grafana/data-sources
 	github.com/grafana/tempo v1.5.1-0.20260427112133-525d1bab07e0 // @grafana/data-sources-plugins
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // @grafana/grafana-search-and-storage
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.1.0 // @grafana/plugins-platform-backend
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.3 // @grafana/grafana-backend-group
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.28.0 // @grafana/identity-access-team
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.29.0 // @grafana/identity-access-team
 	github.com/hashicorp/go-hclog v1.6.3 // @grafana/plugins-platform-backend
 	github.com/hashicorp/go-multierror v1.1.1 // @grafana/alerting-squad
 	github.com/hashicorp/go-plugin v1.7.0 // @grafana/plugins-platform-backend
@@ -215,8 +215,8 @@ require (
 	golang.org/x/time v0.15.0 // @grafana/grafana-backend-group
 	gonum.org/v1/gonum v0.17.0 // @grafana/data-sources-plugins
 	google.golang.org/api v0.276.0 // @grafana/grafana-backend-group
-	google.golang.org/genproto/googleapis/api v0.0.0-20260406210006-6f92a3bedf2d // @grafana/identity-access-team
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260406210006-6f92a3bedf2d // @grafana/identity-access-team
+	google.golang.org/genproto/googleapis/api v0.0.0-20260414002931-afd174a4e478 // @grafana/identity-access-team
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260414002931-afd174a4e478 // @grafana/identity-access-team
 	google.golang.org/grpc v1.80.0 // @grafana/plugins-platform-backend
 	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af // @grafana/plugins-platform-backend
 	gopkg.in/ini.v1 v1.67.2 // @grafana/alerting-backend

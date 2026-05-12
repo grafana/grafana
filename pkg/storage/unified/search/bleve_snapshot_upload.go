@@ -95,7 +95,7 @@ func (b *bleveBackend) uploadSnapshot(ctx context.Context, key resource.Namespac
 		span.AddEvent("snapshot.lock.release.started", oteltrace.WithAttributes(lockAttrs...))
 		if releaseErr := lock.Release(); releaseErr != nil {
 			span.AddEvent("snapshot.lock.release.failed", oteltrace.WithAttributes(lockAttrs...))
-			// A release failure after UploadIndex succeeds does not make the uploaded snapshot invalid.
+			// A release failure after UploadIndexSnapshot succeeds does not make the uploaded snapshot invalid.
 			logger.Warn("releasing index snapshot upload lock", "err", releaseErr)
 			return
 		}
@@ -159,7 +159,7 @@ func (b *bleveBackend) snapshotCopyAndUpload(ctx context.Context, key resource.N
 		meta.BuildTime = time.Unix(bi.BuildTime, 0).UTC()
 	}
 
-	uploadKey, err := b.opts.Snapshot.Store.UploadIndex(ctx, key, stagingDir, meta)
+	uploadKey, err := UploadIndexSnapshot(ctx, b.opts.Snapshot.Store, key, stagingDir, meta, b.log)
 	if err != nil {
 		return ulid.ULID{}, 0, fmt.Errorf("uploading snapshot: %w", err)
 	}
