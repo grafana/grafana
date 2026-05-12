@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/hack
 
-go 1.26.2
+go 1.26.3
 
 require k8s.io/code-generator v0.36.0
 

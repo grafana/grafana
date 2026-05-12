@@ -4,13 +4,13 @@ import (
 	"embed"
 	"time"
 
-	"github.com/grafana/alerting/definition"
 	prometheus "github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 
+	"github.com/grafana/alerting/definition"
+
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 //go:embed exports-*
@@ -74,9 +74,9 @@ var Legacy = func() *definitions.Route {
 	r := &definitions.Route{
 		Receiver:       "default-receiver",
 		GroupByStr:     []string{"g1", "g2"},
-		GroupWait:      util.Pointer(model.Duration(time.Duration(30) * time.Second)),
-		GroupInterval:  util.Pointer(model.Duration(time.Duration(5) * time.Minute)),
-		RepeatInterval: util.Pointer(model.Duration(time.Duration(1) * time.Hour)),
+		GroupWait:      new(model.Duration(time.Duration(30) * time.Second)),
+		GroupInterval:  new(model.Duration(time.Duration(5) * time.Minute)),
+		RepeatInterval: new(model.Duration(time.Duration(1) * time.Hour)),
 		Routes: []*definitions.Route{{
 			Receiver:   "nested-receiver",
 			GroupByStr: []string{"g3", "g4"},
@@ -91,9 +91,9 @@ var Legacy = func() *definitions.Route {
 			MuteTimeIntervals:   []string{"interval"},
 			ActiveTimeIntervals: []string{"active"},
 			Continue:            true,
-			GroupWait:           util.Pointer(model.Duration(time.Duration(5) * time.Minute)),
-			GroupInterval:       util.Pointer(model.Duration(time.Duration(5) * time.Minute)),
-			RepeatInterval:      util.Pointer(model.Duration(time.Duration(5) * time.Minute)),
+			GroupWait:           new(model.Duration(time.Duration(5) * time.Minute)),
+			GroupInterval:       new(model.Duration(time.Duration(5) * time.Minute)),
+			RepeatInterval:      new(model.Duration(time.Duration(5) * time.Minute)),
 		}},
 	}
 	_ = r.Validate()
@@ -112,16 +112,16 @@ var OverrideInherit = func() *definitions.Route {
 	r := &definitions.Route{
 		Receiver:       "provisioned-contact-point",
 		GroupByStr:     []string{"alertname"},
-		GroupWait:      util.Pointer(model.Duration(time.Duration(1) * time.Second)),
-		GroupInterval:  util.Pointer(model.Duration(time.Duration(1) * time.Minute)),
-		RepeatInterval: util.Pointer(model.Duration(time.Duration(1) * time.Hour)),
+		GroupWait:      new(model.Duration(time.Duration(1) * time.Second)),
+		GroupInterval:  new(model.Duration(time.Duration(1) * time.Minute)),
+		RepeatInterval: new(model.Duration(time.Duration(1) * time.Hour)),
 		Routes: []*definitions.Route{
 			{
 				Receiver:            "lotsa-emails",
 				GroupByStr:          []string{"alertname", "grafana_folder"},
-				GroupWait:           util.Pointer(model.Duration(time.Duration(10) * time.Second)),
-				GroupInterval:       util.Pointer(model.Duration(time.Duration(10) * time.Minute)),
-				RepeatInterval:      util.Pointer(model.Duration(time.Duration(10) * time.Hour)),
+				GroupWait:           new(model.Duration(time.Duration(10) * time.Second)),
+				GroupInterval:       new(model.Duration(time.Duration(10) * time.Minute)),
+				RepeatInterval:      new(model.Duration(time.Duration(10) * time.Hour)),
 				Continue:            true,
 				ActiveTimeIntervals: []string{"Some interval"},
 				MuteTimeIntervals:   []string{"A provisioned interval"},
@@ -136,9 +136,9 @@ var OverrideInherit = func() *definitions.Route {
 					{
 						Receiver:            "lotsa-emails-override",
 						GroupByStr:          []string{"alertname", "grafana_folder", "one_more_group"},
-						GroupWait:           util.Pointer(model.Duration(time.Duration(100) * time.Second)),
-						GroupInterval:       util.Pointer(model.Duration(time.Duration(100) * time.Minute)),
-						RepeatInterval:      util.Pointer(model.Duration(time.Duration(100) * time.Hour)),
+						GroupWait:           new(model.Duration(time.Duration(100) * time.Second)),
+						GroupInterval:       new(model.Duration(time.Duration(100) * time.Minute)),
+						RepeatInterval:      new(model.Duration(time.Duration(100) * time.Hour)),
 						Continue:            false,
 						ActiveTimeIntervals: []string{"Some interval override"},
 						MuteTimeIntervals:   []string{"A provisioned interval override"},
@@ -182,9 +182,9 @@ var MatcherVariety = func() *definitions.Route {
 	r := &definitions.Route{
 		Receiver:       "lotsa-emails",
 		GroupByStr:     []string{"alertname"},
-		GroupWait:      util.Pointer(model.Duration(time.Duration(2) * time.Second)),
-		GroupInterval:  util.Pointer(model.Duration(time.Duration(2) * time.Minute)),
-		RepeatInterval: util.Pointer(model.Duration(time.Duration(2) * time.Hour)),
+		GroupWait:      new(model.Duration(time.Duration(2) * time.Second)),
+		GroupInterval:  new(model.Duration(time.Duration(2) * time.Minute)),
+		RepeatInterval: new(model.Duration(time.Duration(2) * time.Hour)),
 		Routes: []*definitions.Route{
 			{
 				ObjectMatchers: definitions.ObjectMatchers{
@@ -243,9 +243,9 @@ var DeeplyNested = func() *definitions.Route {
 	r := &definitions.Route{
 		Receiver:       "slack-multi-channel",
 		GroupByStr:     []string{"alertname"},
-		GroupWait:      util.Pointer(model.Duration(time.Duration(3) * time.Second)),
-		GroupInterval:  util.Pointer(model.Duration(time.Duration(3) * time.Minute)),
-		RepeatInterval: util.Pointer(model.Duration(time.Duration(3) * time.Hour)),
+		GroupWait:      new(model.Duration(time.Duration(3) * time.Second)),
+		GroupInterval:  new(model.Duration(time.Duration(3) * time.Minute)),
+		RepeatInterval: new(model.Duration(time.Duration(3) * time.Hour)),
 		Routes: []*definitions.Route{
 			{
 				ObjectMatchers: definitions.ObjectMatchers{{Name: "level", Type: labels.MatchEqual, Value: "one"}},
