@@ -750,7 +750,6 @@ After choosing the field by which you want to group your data, you can add vario
 The following options are available in the new matcher-based editor and require the `groupToNestedTableV2` feature toggle, currently in [public preview](https://grafana.com/docs/release-life-cycle/).
 {{< /admonition >}}
 
-<!-- prettier-ignore-start -->
 | Option                            | Description                                                                                                |
 | --------------------------------- | ---------------------------------------------------------------------------------------------------------- |
 | Show field names in nested tables | Show or hide the column headers inside each nested table. On by default.                                   |
