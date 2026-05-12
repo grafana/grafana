@@ -2,6 +2,17 @@
 
 # 11.6.14+security-04 (2026-05-12)
 
+- **Security**: CVE-2026-28374
+- **Security**: CVE-2026-28376
+- **Security**: CVE-2026-28383
+- **Security**: CVE-2026-28380
+- **Security**: CVE-2026-33376
+- **Security**: CVE-2026-28379
+- **Security**: CVE-2026-33377
+- **Security**: CVE-2026-33378
+- **Security**: CVE-2026-33381
+- **Security**: CVE-2026-33380
+
 <!-- 11.6.14+security-04 END -->
 <!-- 11.6.14 START -->
 
