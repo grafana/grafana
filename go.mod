@@ -749,18 +749,6 @@ replace (
 	go.opentelemetry.io/otel/sdk/log => go.opentelemetry.io/otel/sdk/log v0.12.2
 )
 
-exclude (
-	// This package contains test data for github.com/RoaringBitmap/roaring, which is
-	// only used to run tests and not required for building the Grafana binary.
-	// Since the test data doesn't contain a license file we exclude it.
-	github.com/RoaringBitmap/real-roaring-datasets v0.0.0-20190726190000-eb7c87156f76
-
-	// v1.* versions were retracted, we need to stick with v0.*. This should work
-	// without the exclude, but this otherwise gets pulled in as a transitive
-	// dependency.
-	github.com/prometheus/prometheus v1.8.2-0.20221021121301-51a44e6657c3
-
-	// This was retracted, but seems to be known by the Go module proxy, and is
-	// otherwise pulled in as a transitive dependency.
-	k8s.io/client-go v12.0.0+incompatible
-)
+// This was retracted, but seems to be known by the Go module proxy, and is
+// otherwise pulled in as a transitive dependency.
+exclude k8s.io/client-go v12.0.0+incompatible
