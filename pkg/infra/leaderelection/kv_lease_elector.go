@@ -175,7 +175,7 @@ func (k *KVLeaseElector) runAsLeader(
 
 	select {
 	case <-l.Lost():
-		k.logger.Debug("Lease lost")
+		k.logger.Warn("Lease lost", "identity", k.identity, "lease", k.leaseName)
 	case <-ctx.Done():
 		k.logger.Debug("Context cancelled, stopping leader work")
 	}
