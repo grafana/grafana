@@ -96,7 +96,7 @@ export const getCardContainerStyles = (
 ) => {
   const isSelectable = isSelected !== undefined;
 
-  const headingRow = `"Figure Heading Heading" ${hasDescriptionComponent ? '' : '1fr'}`;
+  const headingRow = `"Figure Heading ${hasTagsComponent && !isSelectable ? 'Tags' : 'Heading'}" ${hasDescriptionComponent ? '' : '1fr'}`;
   const metaRow = `"Figure Meta ${hasTagsComponent ? 'Tags' : 'Meta'}"`;
   const descriptionRow = `"Figure Description ${hasTagsComponent ? 'Tags' : 'Description'}" 1fr`;
   const actionsRow = `"Figure Actions Secondary" / auto 1fr auto`;
