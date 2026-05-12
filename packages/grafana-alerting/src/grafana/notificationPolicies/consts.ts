@@ -1,4 +1,4 @@
-import { type RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+import { type RoutingTree } from '../api/notifications';
 
 export const USER_DEFINED_TREE_NAME = 'user-defined';
 
