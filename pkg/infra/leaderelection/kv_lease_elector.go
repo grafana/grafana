@@ -188,6 +188,6 @@ func (k *KVLeaseElector) releaseLease(mgr *lease.Manager, l *lease.Lease) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := mgr.Release(ctx, l); err != nil && !errors.Is(err, lease.ErrLeaseLost) {
-		k.logger.Debug("Failed to release lease on shutdown", "error", err)
+		k.logger.Warn("Failed to release lease on shutdown", "error", err)
 	}
 }
