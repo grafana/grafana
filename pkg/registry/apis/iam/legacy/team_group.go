@@ -3,6 +3,7 @@ package legacy
 import (
 	"context"
 	"errors"
+	"sort"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
@@ -47,8 +48,9 @@ func (NoopExternalGroupReconciler) ListByTeams(_ context.Context, _ int64, teamU
 }
 
 // NormalizeExternalGroups is the canonical form for team_group.group_id:
-// lowercase, trimmed, no empties, deduped. Applied by the legacy team store
-// before Reconcile; admission compares entries using the same rule.
+// lowercase, trimmed, no empties, deduped, alphabetically sorted. Applied by
+// the legacy team store before Reconcile; admission compares entries using
+// the same rule.
 func NormalizeExternalGroups(groups []string) []string {
 	if len(groups) == 0 {
 		return groups
@@ -66,5 +68,6 @@ func NormalizeExternalGroups(groups []string) []string {
 		seen[g] = struct{}{}
 		out = append(out, g)
 	}
+	sort.Strings(out)
 	return out
 }
