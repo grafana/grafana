@@ -1,9 +1,21 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { type DataFrame, EventBusSrv, getDefaultTimeRange, LoadingState, type PanelProps } from '@grafana/data';
 import { TooltipDisplayMode } from '@grafana/schema';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { CanvasPanel } from 'app/plugins/panel/canvas/CanvasPanel';
 import { HorizontalConstraint, type Options, VerticalConstraint } from 'app/plugins/panel/canvas/panelcfg.gen';
+
+const width = 600;
+const height = 400;
+const colors = {
+  unmapped: '#808080',
+  error: '#F2495C',
+  warning: '#FF9830',
+  success: '#73BF69',
+};
 
 // Good gravy this is huge @todo options builder?
 const defaultOptions: Options = {
@@ -47,7 +59,7 @@ const defaultOptions: Options = {
         config: {
           fill: {
             field: 'success',
-            fixed: 'green',
+            fixed: colors.success,
           },
           path: {
             field: 'success',
@@ -98,7 +110,7 @@ const defaultOptions: Options = {
         config: {
           fill: {
             field: 'warning',
-            fixed: 'orange',
+            fixed: colors.warning,
           },
           path: {
             field: 'warning',
@@ -149,7 +161,7 @@ const defaultOptions: Options = {
         config: {
           fill: {
             field: 'error',
-            fixed: 'red',
+            fixed: colors.error,
           },
           path: {
             field: 'error',
@@ -200,7 +212,7 @@ const defaultOptions: Options = {
         config: {
           fill: {
             field: 'unmapped',
-            fixed: '#808080',
+            fixed: colors.unmapped,
           },
           path: {
             field: 'unmapped',
@@ -356,9 +368,9 @@ describe('CanvasPanel', () => {
   let onFieldConfigChange = jest.fn();
   let onOptionsChange = jest.fn();
   let onChangeTimeRange = jest.fn();
-  const setUp = (propsOverrides?: Partial<PanelProps<Options>>, seriesOverrides?: DataFrame[]) => {
+  const canvasPanelElement = (propsOverrides?: Partial<PanelProps<Options>>) => {
     const timeRange = getDefaultTimeRange();
-    return render(
+    return (
       <CanvasPanel
         onChangeTimeRange={onChangeTimeRange}
         title={''}
@@ -380,16 +392,19 @@ describe('CanvasPanel', () => {
           overrides: [],
           defaults: {},
         }}
-        height={400}
-        width={600}
+        height={height}
+        width={width}
         transparent={false}
         options={defaultOptions}
         {...propsOverrides}
       />
     );
   };
+  const setUp = (propsOverrides?: Partial<PanelProps<Options>>, seriesOverrides?: DataFrame[]) => {
+    return render(canvasPanelElement(propsOverrides));
+  };
 
-  it('renders', () => {
+  it('renders (kitchen sink)', () => {
     setUp();
 
     // Everything is a button!
@@ -403,19 +418,23 @@ describe('CanvasPanel', () => {
     expect(buttons[0]).toHaveStyle('left: 20px');
 
     //Success SVG icon
-    expect(buttons[1]).toHaveTextContent('');
-    expect(buttons[1].querySelector('svg')).toBeVisible();
-    expect(buttons[1]).toHaveStyle('top: 60px');
-    expect(buttons[1]).toHaveStyle('left: 50px');
+    expect(getSuccessIconButton()).toHaveTextContent('');
+    expect(getSuccessIconButton().querySelector('svg')).toBeVisible();
+    expect(getSuccessIconButton().querySelector('svg')).toHaveStyle(`fill: ${colors.success};`); // success color
+    expect(getSuccessIconButton()).toHaveStyle('top: 60px');
+    expect(getSuccessIconButton()).toHaveStyle('left: 50px');
 
     // Success label
-    expect(buttons[2]).toHaveTextContent('Success');
-    expect(buttons[2]).toHaveStyle('top: 115px');
-    expect(buttons[2]).toHaveStyle('left: 30px');
+    expect(getSuccessIconText()).toHaveTextContent('Success');
+    expect(getSuccessIconText()).toHaveStyle('top: 115px');
+    expect(getSuccessIconText()).toHaveStyle('left: 30px');
 
     // Remaining buttons
+    expect(buttons[3].querySelector('svg')).toHaveStyle(`fill: ${colors.warning};`); // warning color
     expect(buttons[4]).toHaveTextContent('warning');
+    expect(buttons[5].querySelector('svg')).toHaveStyle(`fill: ${colors.error};`); // error color
     expect(buttons[6]).toHaveTextContent('error');
+    expect(buttons[7].querySelector('svg')).toHaveStyle(`fill: ${colors.unmapped}`); // unmapped color
     expect(buttons[8]).toHaveTextContent('No mapping (14)');
     expect(buttons[9]).toHaveTextContent('Fixed Relative Path:');
     expect(buttons[11]).toHaveTextContent('Fixed Absolute URL:');
@@ -425,4 +444,77 @@ describe('CanvasPanel', () => {
     const { unmount } = setUp();
     expect(() => unmount()).not.toThrow();
   });
+
+  it('re-renders when width and height change without losing canvas elements', () => {
+    const { rerender } = setUp();
+    const canvas = screen.getByTestId('canvas-scene');
+    expect(canvas).toBeInTheDocument();
+    expect(canvas).toHaveStyle(`width: ${width}px`);
+    expect(canvas).toHaveStyle(`height: ${height}px`);
+
+    rerender(canvasPanelElement({ width: 800, height: 500 }));
+    expect(canvas).toHaveStyle(`width: 800px`);
+    expect(canvas).toHaveStyle(`height: 500px`);
+
+    const buttons = screen.getAllByRole('button');
+    expect(buttons).toHaveLength(13);
+    expect(buttons[0]).toBeVisible();
+  });
+
+  const getSuccessIconButton = () => {
+    const candidates = screen.getAllByRole('button').filter((el) => el instanceof HTMLElement);
+    return candidates[1] as HTMLElement;
+  };
+
+  const getSuccessIconText = () => {
+    const candidates = screen.getAllByRole('button').filter((el) => el instanceof HTMLElement);
+    return candidates[2] as HTMLElement;
+  };
+
+  it('opens context menu on right click of success icon', async () => {
+    jest.spyOn(getDashboardSrv(), 'getCurrent').mockReturnValue({ editable: true } as DashboardModel);
+    const { rerender } = setUp();
+    // Scene wires Selector in a macrotask; rerender after it runs so contextmenu listeners attach to elements.
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 0));
+    });
+    rerender(canvasPanelElement({ renderCounter: 1 }));
+
+    const user = userEvent.setup();
+    await user.pointer({ keys: '[MouseRight]', target: getSuccessIconButton() });
+
+    await waitFor(() => {
+      expect(screen.queryByRole('menuitem', { name: 'Edit' })).toBeNull();
+      expect(screen.getByRole('menuitem', { name: 'Delete' })).toBeVisible();
+      expect(screen.getByRole('menuitem', { name: 'Duplicate' })).toBeVisible();
+      expect(screen.getByRole('menuitem', { name: 'Bring to front' })).toBeVisible();
+      expect(screen.getByRole('menuitem', { name: 'Send to back' })).toBeVisible();
+    });
+
+    jest.restoreAllMocks();
+  });
+
+  it('opens context menu on right click of success text', async () => {
+    jest.spyOn(getDashboardSrv(), 'getCurrent').mockReturnValue({ editable: true } as DashboardModel);
+    const { rerender } = setUp();
+    // Scene wires Selector in a macrotask; rerender after it runs so contextmenu listeners attach to elements.
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 0));
+    });
+    rerender(canvasPanelElement({ renderCounter: 1 }));
+
+    const user = userEvent.setup();
+    await user.pointer({ keys: '[MouseRight]', target: getSuccessIconText() });
+
+    await waitFor(() => {
+      expect(screen.getByRole('menuitem', { name: 'Edit' })).toBeVisible();
+      expect(screen.getByRole('menuitem', { name: 'Delete' })).toBeVisible();
+      expect(screen.getByRole('menuitem', { name: 'Duplicate' })).toBeVisible();
+      expect(screen.getByRole('menuitem', { name: 'Bring to front' })).toBeVisible();
+      expect(screen.getByRole('menuitem', { name: 'Send to back' })).toBeVisible();
+    });
+
+    jest.restoreAllMocks();
+  });
+  it.todo('double click on success shortcuts to text edit');
 });
