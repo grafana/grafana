@@ -1,5 +1,6 @@
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
+import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { invalidateCachedPromisesCache } from '../../utils/getCachedPromise';
 import { getLogger, setLogger } from '../logging/registry';
 
@@ -32,9 +33,9 @@ afterEach(() => {
   global.fetch = originalFetch;
 });
 
-describe('when useMTPlugins flag is enabled', () => {
+describe('when plugins.useMTPlugins flag is enabled', () => {
   beforeAll(() => {
-    setTestFlags({ useMTPlugins: true });
+    setTestFlags({ [FlagKeys.PluginsUseMTPlugins]: true });
   });
 
   afterAll(() => {
@@ -312,9 +313,9 @@ describe('when useMTPlugins flag is enabled', () => {
   });
 });
 
-describe('when useMTPlugins flag is disabled', () => {
+describe('when plugins.useMTPlugins flag is disabled', () => {
   beforeAll(() => {
-    setTestFlags({ useMTPlugins: false });
+    setTestFlags({ [FlagKeys.PluginsUseMTPlugins]: false });
   });
 
   afterAll(() => {
@@ -349,7 +350,7 @@ describe('when useMTPlugins flag is disabled', () => {
   });
 
   describe('installPluginMeta', () => {
-    it('should not call fetch when useMTPlugins is disabled', async () => {
+    it('should not call fetch when plugins.useMTPlugins is disabled', async () => {
       global.fetch = jest.fn().mockResolvedValue({
         ok: true,
         status: 200,
@@ -362,7 +363,7 @@ describe('when useMTPlugins flag is disabled', () => {
   });
 
   describe('uninstallPluginMeta', () => {
-    it('should not call fetch when useMTPlugins is disabled', async () => {
+    it('should not call fetch when plugins.useMTPlugins is disabled', async () => {
       global.fetch = jest.fn().mockResolvedValue({
         ok: true,
         status: 200,

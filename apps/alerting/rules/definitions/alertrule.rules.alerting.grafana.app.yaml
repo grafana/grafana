@@ -216,6 +216,9 @@ spec:
     - jsonPath: .spec.paused
     - jsonPath: .spec.panelRef.dashboardUID
     - jsonPath: .spec.panelRef.panelID
+    - jsonPath: .spec.notificationSettings.type
+    - jsonPath: .spec.notificationSettings.receiver
+    - jsonPath: .spec.notificationSettings.routingTree
     served: true
     storage: true
     subresources:

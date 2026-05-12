@@ -253,12 +253,12 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "provisioningReadmes",
+			Name:        "provisioning.readmes",
 			Description: "Render the README.md of a Git Sync provisioned folder inline below its dashboards list",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaAppPlatformSquad,
 			Expression:  "false",
-			Generate:    Generate{LegacyFrontend: true},
+			Generate:    Generate{React: true},
 		},
 		{
 			Name:            "grafanaAPIServerEnsureKubectlAccess",
@@ -1112,7 +1112,7 @@ var (
 			Description: "Enables org-defined dashboard templates for enterprise",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaSharingSquad,
-			Generate:    Generate{React: true},
+			Generate:    Generate{Go: true, React: true},
 			Expression:  "false",
 		},
 		{
@@ -1389,14 +1389,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "unifiedStorageBigObjectsSupport",
-			Description: "Enables to save big objects in blob storage",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaSearchAndStorageSquad,
-			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "timeRangeProvider",
 			Description: "Enables time pickers sync",
 			Stage:       FeatureStageExperimental,
@@ -1407,14 +1399,6 @@ var (
 		{
 			Name:        "timeRangePan",
 			Description: "Enables time range panning functionality",
-			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaDatavizSquad,
-			Expression:  "true",
-		},
-		{
-			Name:        "newTimeRangeZoomShortcuts",
-			Description: "Enables new keyboard shortcuts for time range zoom operations",
 			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{LegacyFrontend: true},
 			Owner:       grafanaDatavizSquad,
@@ -1878,14 +1862,6 @@ var (
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaAlertingSquad,
 			Expression:  "false",
-		},
-		{
-			Name:        "alertRuleUseFiredAtForStartsAt",
-			Description: "Use FiredAt for StartsAt when sending alerts to Alertmaanger",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaAlertingSquad,
-			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
 			Name:         "alertingBulkActionsInUI",
@@ -2492,11 +2468,11 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:         "useMTPlugins",
+			Name:         "plugins.useMTPlugins",
 			Description:  "Enables plugins decoupling from bootdata",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaPluginsPlatformSquad,
-			Generate:     Generate{LegacyFrontend: true, React: true},
+			Generate:     Generate{React: true},
 			Expression:   "false",
 			HideFromDocs: true,
 		},
@@ -2540,6 +2516,14 @@ var (
 			Owner:       grafanaObservabilityTracesAndProfilingSquad,
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 			Expression:  "false",
+		},
+		{
+			Name:        "pyroscopeUTF8LabelNames",
+			Description: "Enables support for UTF-8 label names in Pyroscope label selectors",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       grafanaObservabilityTracesAndProfilingSquad,
+			Expression:  "true",
+			Generate:    Generate{LegacyGo: true},
 		},
 		{
 			Name:            "alertingSyncDispatchTimer",
@@ -2904,11 +2888,11 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:         "useMTPluginSettings",
+			Name:         "plugins.useMTPluginSettings",
 			Description:  "Enables plugins setting from new apis",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaFrontendPlatformSquad,
-			Generate:     Generate{LegacyFrontend: true, React: true},
+			Generate:     Generate{React: true},
 			Expression:   "false",
 			HideFromDocs: true,
 		},
@@ -3161,6 +3145,16 @@ var (
 			RequiresRestart: true,
 			Expression:      "false",
 			Generate:        Generate{Go: true},
+		},
+		{
+			Name:            "alerting.syncExternalAlertmanager",
+			Description:     "Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana",
+			Stage:           FeatureStageExperimental,
+			Generate:        Generate{Go: true},
+			Owner:           grafanaAlertingSquad,
+			HideFromDocs:    true,
+			RequiresRestart: true,
+			Expression:      "false",
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//
