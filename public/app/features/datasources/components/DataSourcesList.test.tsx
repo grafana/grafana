@@ -54,7 +54,6 @@ const setup = (overrides: Partial<ViewProps> = {}) => {
     hasWriteRights: true,
     hasExploreRights: true,
     showFavoritesOnly: false,
-    sortable: false,
     handleFavoritesCheckboxChange: jest.fn(),
     ...overrides,
   };

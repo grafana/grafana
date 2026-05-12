@@ -2,6 +2,7 @@ import { debounce } from 'lodash';
 import { useCallback, useMemo } from 'react';
 
 import { type SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import PageActionBar, { type FilterCheckbox } from 'app/core/components/PageActionBar/PageActionBar';
 import { type StoreState, useSelector, useDispatch } from 'app/types/store';
 
@@ -49,16 +50,28 @@ export function DataSourcesListHeader({ filterCheckbox, sortable }: DataSourcesL
   const searchQuery = useSelector(({ dataSources }: StoreState) => getDataSourcesSearchQuery(dataSources));
 
   const setSort = useCallback(
-    (sort: SelectableValue) => dispatch(setIsSortAscending(sort.value === ascendingSortValue)),
+    (sort: SelectableValue) => {
+      // Ordinal order is implicit (it's how the list arrives from the backend),
+      // so picking the "Priority" option is a no-op against the ascending flag.
+      if (sort.value === ordinalSortValue) {
+        return;
+      }
+      dispatch(setIsSortAscending(sort.value === ascendingSortValue));
+    },
     [dispatch]
   );
   const isSortAscending = useSelector(({ dataSources }: StoreState) => getDataSourcesSort(dataSources));
 
+  const sortValue = sortable ? ordinalSortValue : isSortAscending ? ascendingSortValue : descendingSortValue;
   const sortPicker = {
     onChange: setSort,
-    value: sortable ? ordinalSortValue : isSortAscending ? ascendingSortValue : descendingSortValue,
-    // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-    getSortOptions: () => Promise.resolve(sortable ? [{ label: 'Priority', value: ascendingSortValue }] : sortOptions),
+    value: sortValue,
+    getSortOptions: () =>
+      Promise.resolve(
+        sortable
+          ? [{ label: t('data-sources.list.sort-by-priority', 'Priority'), value: ordinalSortValue }]
+          : sortOptions
+      ),
   };
 
   return (

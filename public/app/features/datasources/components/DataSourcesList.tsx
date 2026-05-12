@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { DragDropContext, type DropResult, Draggable, Droppable } from '@hello-pangea/dnd';
 import { useVirtualizer } from '@tanstack/react-virtual';
+import { dispatch } from 'd3';
 import { type RefObject, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
@@ -19,6 +20,7 @@ import {
   useDatasourceFailureByUID,
 } from '../../connections/hooks/useDatasourceAdvisorChecks';
 import { updateDataSource } from '../api';
+import { loadDataSource } from '../state/actions';
 import { useLoadDataSources } from '../state/hooks';
 import { getDataSources, getDataSourcesCount } from '../state/selectors';
 import { trackDataSourcesListViewed } from '../tracking';
@@ -31,6 +33,14 @@ const VIRTUAL_LIST_OVERSCAN = 5;
 const VIRTUAL_LIST_KEYBOARD_OVERSCAN = 100;
 const LOADING_SKELETON_COUNT = 20;
 const VIRTUAL_LIST_INITIAL_RECT = { width: 0, height: 500 };
+
+// Ordinal value reserved for the default data source ("isDefault" synonym).
+const DEFAULT_ORDINAL = 1;
+// Spacing used when seeding ordinals for items that don't yet have one.
+const ORDINAL_STEP = 1000;
+// Gap inserted between two neighbors when their ordinals are too close to
+// fit a new value between them.
+const ORDINAL_FALLBACK_DELTA = 100;
 
 export function DataSourcesList() {
   const { isLoading } = useLoadDataSources();
@@ -47,33 +57,25 @@ export function DataSourcesList() {
   const hasWriteRights = contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
   const hasExploreRights = contextSrv.hasAccessToExplore();
 
-  // While support for ordinal is rolled out on the backend, we only enable it if the API returned values with ordinals
+  // While support for ordinal is rolled out on the backend, we only enable
+  // ordinal sorting if the API returned values with ordinals.
   // TODO... we need an additional default sort state that does not sort
-  const { dataSources, hasOrdinal } = useMemo(() => {
-    for (const ds of dataSourcesX) {
-      if (ds.hasOwnProperty('ordinal')) {
-        const dataSources = dataSourcesX.sort((a, b) => {
-          if (a.ordinal) {
-            if (b.ordinal) {
-              if (a.ordinal > b.ordinal) {
-                return 1;
-              }
-              return -1;
-            }
-            return 1;
-          }
-          if (b.ordinal) {
-            return -1;
-          }
-          // when nothing has an ordinal, sort by name
-          // eslint-disable-next-line @grafana/no-locale-compare
-          return a.name.localeCompare(b.name);
-        });
-        return { dataSources, hasOrdinal: true };
-      }
+  const hasOrdinal = useMemo(() => dataSourcesX.some((ds) => typeof ds.ordinal === 'number'), [dataSourcesX]);
+  const dataSources = useMemo(() => {
+    if (!hasOrdinal) {
+      return dataSourcesX;
     }
-    return { dataSources: dataSourcesX, hasOrdinal: false };
-  }, [dataSourcesX]);
+    return [...dataSourcesX].sort((a, b) => {
+      const orderA = a.ordinal ?? Infinity;
+      const orderB = b.ordinal ?? Infinity;
+      if (orderA !== orderB) {
+        return orderA - orderB;
+      }
+      // when ordinals tie (or are both missing), sort by name
+      // eslint-disable-next-line @grafana/no-locale-compare
+      return a.name.localeCompare(b.name);
+    });
+  }, [dataSourcesX, hasOrdinal]);
 
   return (
     <DataSourcesListView
@@ -101,7 +103,8 @@ export type ViewProps = {
   showFavoritesOnly?: boolean;
   handleFavoritesCheckboxChange?: (value: boolean) => void;
   favoriteDataSources?: FavoriteDatasources;
-  sortable: boolean; // show drag handles and reorder
+  /** Show drag handles and allow drag-to-reorder. */
+  sortable?: boolean;
 };
 
 export function DataSourcesListView({
@@ -114,7 +117,7 @@ export function DataSourcesListView({
   showFavoritesOnly,
   handleFavoritesCheckboxChange,
   favoriteDataSources,
-  sortable,
+  sortable = false,
 }: ViewProps) {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
@@ -202,7 +205,9 @@ export function DataSourcesListView({
           hasWriteRights={hasWriteRights}
           hasExploreRights={hasExploreRights}
           datasourceFailureByUID={datasourceFailureByUID}
-          sortable={sortable && hasWriteRights}
+          // ordinals are global; reordering a filtered subset would produce
+          // inconsistent results, so disable sortable when favorites filter is on
+          sortable={sortable && hasWriteRights && !showFavoritesOnly}
           scrollRef={scrollRef}
           rowVirtualizer={rowVirtualizer}
         />
@@ -256,15 +261,15 @@ function DataSourcesListVirtualized({
 
       const result = dataSources.map((ds, idx) => ({
         uid: ds.uid,
-        ordinal: ds.ordinal ?? (idx + 1) * 1000,
+        ordinal: ds.ordinal ?? (idx + 1) * ORDINAL_STEP,
         ds,
       }));
       const [removed] = result.splice(startIndex, 1);
       result.splice(endIndex, 0, removed);
-      result[0].ordinal = 1; // "isDefault" synonym
+      result[0].ordinal = DEFAULT_ORDINAL; // "isDefault" synonym
 
-      let max = 1;
-      for (let v of result) {
+      let max = DEFAULT_ORDINAL;
+      for (const v of result) {
         if (v.ordinal > max) {
           max = v.ordinal;
         }
@@ -276,11 +281,12 @@ function DataSourcesListVirtualized({
         const now = Date.now();
         result[result.length - 1].ordinal = now;
         if (max > now) {
-          result[result.length - 1].ordinal = max + 1000;
+          result[result.length - 1].ordinal = max + ORDINAL_STEP;
         }
       }
 
-      // Make sure the updated ordinal is in the right value
+      // Walk the interior and bump any ordinal that is no longer strictly
+      // between its neighbors; this keeps the list monotonically increasing.
       if (result.length > 2) {
         for (let i = 1; i < result.length - 1; i++) {
           const prev = result[i - 1];
@@ -288,42 +294,37 @@ function DataSourcesListVirtualized({
           if (result[i].ordinal <= prev.ordinal) {
             let delta = Math.trunc((next.ordinal - prev.ordinal) / 2);
             if (delta < 1) {
-              delta = 100;
+              delta = ORDINAL_FALLBACK_DELTA;
             }
             result[i].ordinal = prev.ordinal + delta;
           }
         }
       }
 
-      let changes: DataSourceSettings[] = [];
+      const changes: DataSourceSettings[] = [];
       for (const v of result) {
         if (v.ordinal !== v.ds.ordinal) {
           changes.push({
             ...v.ds,
             ordinal: v.ordinal,
-            isDefault: v.ordinal === 1,
+            isDefault: v.ordinal === DEFAULT_ORDINAL,
           });
         }
       }
 
       if (changes.length) {
-        const updater = new Promise(async () => {
-          console.log('drop', drop);
-          // Patch datasources that need a new ordinal
-          // NOTE: this does not have to happen sequentially
-          for (const v of changes) {
-            await updateDataSource(v);
-          }
-          console.log('reload after updates');
-          window.location.reload();
-        });
-        updater.then(() => console.log('done'));
+        void (async () => {
+          // Patch datasources whose ordinal changed.
+          await Promise.all(changes.map(updateDataSource));
+          dispatch(loadDataSource()); // reload the list
+        })();
       }
     };
 
-    // NOT THE BEST... this should use the react-window based approach from:
-    // https://github.com/hello-pangea/dnd/blob/v18.0.1/stories/src/virtual/react-window/list.tsx#L66
-    // but my react foo is not up to the task
+    // NOT THE BEST... this should use the react-window based approach from
+    // the drag-and-drop virtual list example, but the dnd + virtualizer wiring
+    // is non-trivial. Skipping virtualization is fine for typical data-source
+    // counts; revisit if very large lists hit perf issues.
     return (
       <DragDropContext onDragEnd={onDragEnd}>
         <Droppable droppableId="ds-ordinal">
@@ -332,16 +333,14 @@ function DataSourcesListVirtualized({
               {dataSources.map((ds, index) => (
                 <Draggable key={ds.uid} draggableId={ds.uid} index={index}>
                   {(provided) => (
-                    <div ref={provided.innerRef} {...provided.draggableProps}>
-                      <div style={{ marginBottom: `5px` }}>
-                        <DataSourcesListCard
-                          dataSource={ds}
-                          hasWriteRights={hasWriteRights}
-                          hasExploreRights={hasExploreRights}
-                          failure={datasourceFailureByUID.get(ds.uid)}
-                          dragHandleProps={sortable ? provided.dragHandleProps : undefined}
-                        />
-                      </div>
+                    <div ref={provided.innerRef} className={styles.draggableRow} {...provided.draggableProps}>
+                      <DataSourcesListCard
+                        dataSource={ds}
+                        hasWriteRights={hasWriteRights}
+                        hasExploreRights={hasExploreRights}
+                        failure={datasourceFailureByUID.get(ds.uid)}
+                        dragHandleProps={provided.dragHandleProps}
+                      />
                     </div>
                   )}
                 </Draggable>
@@ -450,6 +449,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       top: 0,
       left: 0,
       width: '100%',
+    }),
+    draggableRow: css({
+      marginBottom: theme.spacing(1),
     }),
   };
 };

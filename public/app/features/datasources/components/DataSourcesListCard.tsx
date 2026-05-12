@@ -71,7 +71,7 @@ export function DataSourcesListCard({ dataSource, hasWriteRights, hasExploreRigh
         {dragHandleProps && (
           <div className={styles.draggable} {...dragHandleProps}>
             <Icon
-              aria-label={t('layers.layer-drag-drop-list.draggable-aria-label', 'Drag and drop to reorder')}
+              aria-label={t('datasources.data-sources-list-card.drag-handle-aria-label', 'Drag and drop to reorder')}
               name="draggabledots"
               size="lg"
             />
@@ -130,7 +130,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     draggable: css({
       marginLeft: theme.spacing(2),
-      display: 'inline',
+      display: 'inline-flex',
+      alignItems: 'center',
+      cursor: 'grab',
     }),
   };
 };

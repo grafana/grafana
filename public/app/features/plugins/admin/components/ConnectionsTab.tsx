@@ -35,7 +35,6 @@ export default function ConnectionsTab({ plugin }: Props) {
       plugin={plugin}
       hasWriteRights={hasWriteRights}
       hasExploreRights={hasExploreRights}
-      sortable={false}
     />
   );
 }
@@ -51,7 +50,6 @@ export function ConnectionsList({
   hasWriteRights,
   hasExploreRights,
   plugin,
-  sortable,
 }: ListProps) {
   const styles = useStyles2(getStyles);
 
