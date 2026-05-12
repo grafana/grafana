@@ -42,7 +42,8 @@ declare module "@openfeature/core" {
     | "datasources.apiserver.useNewAPIsForDatasourceResources"
     | "reporting.anyPageReporting"
     | "assistant.frontend.tools.dashboardTemplates"
-    | "grafana.unifiedHomepage";
+    | "grafana.unifiedHomepage"
+    | "grafana.enableScopesFirstMode";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;

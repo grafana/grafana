@@ -3139,6 +3139,15 @@ var (
 			RequiresRestart: true,
 			Expression:      "false",
 		},
+		{
+			Name:         "grafana.enableScopesFirstMode",
+			Description:  "Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button)",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaOperatorExperienceSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//
 		// Adding a new feature flag? Be sure to check out the updated docs at /contribute/feature-toggles.md#Steps-to-adding-a-feature-toggle

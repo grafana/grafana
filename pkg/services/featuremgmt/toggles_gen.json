@@ -2743,6 +2743,21 @@
     },
     {
       "metadata": {
+        "name": "grafana.enableScopesFirstMode",
+        "resourceVersion": "1778616044322",
+        "creationTimestamp": "2026-05-12T20:00:44Z"
+      },
+      "spec": {
+        "description": "Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button)",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.meticulousAIRecorder",
         "resourceVersion": "1777401759422",
         "creationTimestamp": "2026-04-28T17:20:14Z",
