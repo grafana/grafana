@@ -9,7 +9,7 @@ import { type ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
 import { labelMatcherToObjectMatcher } from '../../../utils/routeAdapter';
 import { Matchers } from '../../notification-policies/Matchers';
 import { DefaultPolicyIndicator } from '../../notification-policies/Policy';
-import { NAMED_ROOT_LABEL_NAME } from '../../notification-policies/useNotificationPolicyRoute';
+import { isNamedRootMatcher } from '../../notification-policies/useNotificationPolicyRoute';
 
 interface JourneyPolicyCardProps {
   route: RouteWithID;
@@ -21,9 +21,9 @@ interface JourneyPolicyCardProps {
 export function JourneyPolicyCard({ route, isRoot = false, isFinalRoute = false, policyName }: JourneyPolicyCardProps) {
   const styles = useStyles2(getStyles);
 
-  // Convert route matchers to ObjectMatcher format, filtering the internal routing label from the root card.
+  // Convert route matchers to ObjectMatcher format, hiding the internal routing label from the root route (__grafana_managed_route__).
   const matchers: ObjectMatcher[] = (route.matchers?.map(labelMatcherToObjectMatcher) ?? []).filter(
-    (m) => !isRoot || m[0] !== NAMED_ROOT_LABEL_NAME
+    (m) => !isRoot || !isNamedRootMatcher(m)
   );
 
   const hasMatchers = matchers.length > 0;
