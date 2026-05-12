@@ -156,8 +156,6 @@ func (s *LegacyStore) Update(ctx context.Context, name string, objInfo rest.Upda
 	if err != nil {
 		return oldObj, false, err
 	}
-	updateCmd.ExternalGroupReconciler = s.externalGroupReconciler
-	updateCmd.DesiredExternalGroups = teamObj.Spec.ExternalGroups
 
 	// Plumb caller's RV (ms-precision unix timestamp) so UpdateTeam can
 	// gate the SQL UPDATE on it.
@@ -333,8 +331,6 @@ func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createVali
 	if err != nil {
 		return nil, err
 	}
-	createCmd.ExternalGroupReconciler = s.externalGroupReconciler
-	createCmd.DesiredExternalGroups = teamObj.Spec.ExternalGroups
 
 	result, err := s.store.CreateTeam(ctx, ns, createCmd)
 	if err != nil {
@@ -479,11 +475,13 @@ func (s *LegacyStore) listTeamMembersForTeams(ctx context.Context, ns claims.Nam
 // SQL transaction. Unknown user UIDs surface as 400 Bad Request.
 func (s *LegacyStore) buildCreateCommand(ctx context.Context, ns claims.NamespaceInfo, teamObj *iamv0alpha1.Team) (legacy.CreateTeamCommand, error) {
 	cmd := legacy.CreateTeamCommand{
-		UID:           teamObj.Name,
-		Name:          teamObj.Spec.Title,
-		Email:         teamObj.Spec.Email,
-		IsProvisioned: teamObj.Spec.Provisioned,
-		ExternalUID:   teamObj.Spec.ExternalUID,
+		UID:                     teamObj.Name,
+		Name:                    teamObj.Spec.Title,
+		Email:                   teamObj.Spec.Email,
+		IsProvisioned:           teamObj.Spec.Provisioned,
+		ExternalUID:             teamObj.Spec.ExternalUID,
+		ExternalGroupReconciler: s.externalGroupReconciler,
+		DesiredExternalGroups:   teamObj.Spec.ExternalGroups,
 	}
 
 	diff, err := diffMembers(nil, teamObj.Spec.Members)
@@ -516,11 +514,13 @@ func (s *LegacyStore) buildCreateCommand(ctx context.Context, ns claims.Namespac
 // Request.
 func (s *LegacyStore) buildUpdateCommand(ctx context.Context, ns claims.NamespaceInfo, teamObj *iamv0alpha1.Team, diff memberDiff) (legacy.UpdateTeamCommand, error) {
 	cmd := legacy.UpdateTeamCommand{
-		UID:           teamObj.Name,
-		Name:          teamObj.Spec.Title,
-		Email:         teamObj.Spec.Email,
-		IsProvisioned: teamObj.Spec.Provisioned,
-		ExternalUID:   teamObj.Spec.ExternalUID,
+		UID:                     teamObj.Name,
+		Name:                    teamObj.Spec.Title,
+		Email:                   teamObj.Spec.Email,
+		IsProvisioned:           teamObj.Spec.Provisioned,
+		ExternalUID:             teamObj.Spec.ExternalUID,
+		ExternalGroupReconciler: s.externalGroupReconciler,
+		DesiredExternalGroups:   teamObj.Spec.ExternalGroups,
 	}
 
 	for _, del := range diff.toDelete {

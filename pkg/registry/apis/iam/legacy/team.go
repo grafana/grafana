@@ -472,10 +472,11 @@ func (s *legacySQLStore) UpdateTeam(ctx context.Context, ns claims.NamespaceInfo
 	// Resolve the team's internal ID before opening the write transaction. Doing
 	// the read inside WithTransaction would acquire a second DB connection while
 	// the tx holds the write lock, which deadlocks on SQLite.
-	teamInfo, err := s.GetTeamInternalID(ctx, ns, GetTeamInternalIDQuery{OrgID: ns.OrgID, UID: cmd.UID})
+	existing, err := s.GetTeamInternalID(ctx, ns, GetTeamInternalIDQuery{OrgID: ns.OrgID, UID: cmd.UID})
 	if err != nil {
 		return nil, fmt.Errorf("team not found: %w", err)
 	}
+	teamID := existing.ID
 
 	teamReq := newUpdateTeam(sql, &cmd)
 	var updatedTeam team.Team
@@ -489,16 +490,15 @@ func (s *legacySQLStore) UpdateTeam(ctx context.Context, ns claims.NamespaceInfo
 		if err != nil {
 			return fmt.Errorf("failed to update team: %w", err)
 		}
-		if cmd.HasPreviousUpdated() {
-			// 0 rows after a gated UPDATE means the caller's RV is stale
-			// (team existence is verified by the GetTeamInternalID pre-flight).
-			n, rowsErr := res.RowsAffected()
-			if rowsErr != nil {
-				return fmt.Errorf("rows affected: %w", rowsErr)
-			}
-			if n == 0 {
-				return team.ErrTeamUpdateConflict
-			}
+		// 0 rows = stale RV (when gated) or the team was deleted between the
+		// GetTeamInternalID pre-flight and this tx. Surface as conflict so
+		// the reconciler below doesn't INSERT orphan team_group rows.
+		n, rowsErr := res.RowsAffected()
+		if rowsErr != nil {
+			return fmt.Errorf("rows affected: %w", rowsErr)
+		}
+		if n == 0 {
+			return team.ErrTeamUpdateConflict
 		}
 
 		if len(cmd.MemberDeletes) > 0 {
@@ -555,7 +555,7 @@ func (s *legacySQLStore) UpdateTeam(ctx context.Context, ns claims.NamespaceInfo
 
 		if cmd.ExternalGroupReconciler != nil {
 			desired := NormalizeExternalGroups(cmd.DesiredExternalGroups)
-			if err := cmd.ExternalGroupReconciler.Reconcile(ctx, st, ns.OrgID, teamInfo.ID, desired); err != nil {
+			if err := cmd.ExternalGroupReconciler.Reconcile(ctx, st, ns.OrgID, teamID, desired); err != nil {
 				return fmt.Errorf("failed to reconcile team external groups: %w", err)
 			}
 		}
