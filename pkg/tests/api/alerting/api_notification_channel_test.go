@@ -16,6 +16,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/alertmanager/template"
+	"github.com/prometheus/common/model"
+	"github.com/stretchr/testify/require"
+
 	alertingModels "github.com/grafana/alerting/models"
 	"github.com/grafana/alerting/receivers"
 	alertingLine "github.com/grafana/alerting/receivers/line/v1"
@@ -24,15 +28,11 @@ import (
 	alertingTelegram "github.com/grafana/alerting/receivers/telegram/v1"
 	alertingThreema "github.com/grafana/alerting/receivers/threema/v1"
 	alertingTemplates "github.com/grafana/alerting/templates"
-	"github.com/prometheus/alertmanager/template"
-	"github.com/prometheus/common/model"
-	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/secrets"
-	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -1618,7 +1618,7 @@ var expEmailNotifications = []*notifications.SendEmailCommandSync{
 						DashboardURL: "",
 						PanelURL:     "",
 						RuleUID:      "UID_EmailAlert",
-						OrgID:        util.Pointer(int64(1)),
+						OrgID:        new(int64(1)),
 						Values:       map[string]float64{"A": 1},
 						ValueString:  "[ var='A' labels={} type='math' value=1 ]",
 					},

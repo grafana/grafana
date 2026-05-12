@@ -2,6 +2,7 @@ package test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"sync/atomic"
@@ -9,9 +10,11 @@ import (
 	"time"
 
 	badger "github.com/dgraph-io/badger/v4"
+	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -44,7 +47,9 @@ func setupBadgerKV(t *testing.T) resource.StorageBackend {
 	kvOpts := resource.KVBackendOptions{
 		KvStore: resource.NewBadgerKV(db),
 		// keep it low in tests as most of them don't exercise concurrent writes
-		WatchOptions: resource.WatchOptions{SettleDelay: time.Millisecond},
+		WatchOptions:   resource.WatchOptions{SettleDelay: time.Millisecond},
+		EnableKVLeases: true,
+		Holder:         fmt.Sprintf("badger-holder-%s", uuid.NewString()),
 	}
 	backend, err := resource.NewKVStorageBackend(kvOpts)
 	require.NoError(t, err)
@@ -148,8 +153,13 @@ func runConcurrentCreateNoAlreadyExists(t *testing.T, backend resource.StorageBa
 	// All creates should have received `AlreadyExists`
 	for _, e := range createErrors {
 		require.Error(t, e, "all creates should have failed")
-		require.ErrorIs(t, e, resource.ErrResourceAlreadyExists,
-			"should receive ErrResourceAlreadyExists after resource is created")
+
+		// TODO: once leases graduates from being optional (i.e., it should
+		// eventually be always enabled), then we can acquire the lease only
+		// after doing validations, and that should allow us to enforce that
+		// all clients get an "already exists" error here.
+		validError := errors.Is(e, resource.ErrResourceAlreadyExists) || apierrors.IsConflict(e)
+		require.True(t, validError, "should receive ErrResourceAlreadyExists after resource is created")
 	}
 }
 
@@ -296,6 +306,146 @@ func runConcurrentCreateRetry(t *testing.T, client resource.ResourceClient, ns s
 	require.Empty(t, unexpectedErrors, "unexpected errors from concurrent creates")
 	require.Equal(t, 1, successes, "exactly one create should succeed")
 	require.Equal(t, concurrency-1, alreadyExistsCount, "all other creates should get AlreadyExists")
+}
+
+func TestConcurrentWritesWithLeasesBadger(t *testing.T) {
+	runConcurrentWritesWithLeases(t, func() resource.StorageBackend {
+		return setupBadgerKV(t)
+	}, "badgerkv-leases")
+}
+
+func TestIntegrationConcurrentWritesWithLeasesSqlKV(t *testing.T) {
+	t.Run("sqlkv", func(t *testing.T) {
+		testutil.SkipIntegrationTestInShortMode(t)
+
+		runConcurrentWritesWithLeases(t, func() resource.StorageBackend {
+			backend, _ := NewTestSqlKvBackend(t, t.Context(), false)
+			return backend
+		}, "sqlkv-leases")
+	})
+}
+
+// runConcurrentWritesWithLeases verifies that with leases enabled and
+// no RV manager, concurrent writes to the same resource serialize cleanly:
+// exactly one succeeds and the rest get a recognizable conflict-style error.
+func runConcurrentWritesWithLeases(t *testing.T, newBackend func() resource.StorageBackend, ns string) {
+	t.Run("concurrent creates", func(t *testing.T) {
+		runConcurrentCreatesWithLeases(t, newBackend(), ns+"-create")
+	})
+	t.Run("concurrent updates", func(t *testing.T) {
+		runConcurrentUpdatesWithLeases(t, newBackend(), ns+"-update")
+	})
+	t.Run("concurrent deletes", func(t *testing.T) {
+		runConcurrentDeletesWithLeases(t, newBackend(), ns+"-delete")
+	})
+}
+
+func runConcurrentCreatesWithLeases(t *testing.T, backend resource.StorageBackend, ns string) {
+	ctx := t.Context()
+	const concurrency = 10
+	name := "lease-concurrent-create"
+
+	errs := make([]error, concurrency)
+	var wg sync.WaitGroup
+	for i := range concurrency {
+		wg.Go(func() {
+			_, errs[i] = WriteEvent(ctx, backend, name, resourcepb.WatchEvent_ADDED,
+				WithNamespace(ns),
+				WithValue(fmt.Sprintf("create-%d", i)))
+		})
+	}
+	wg.Wait()
+
+	var successes int
+	var unexpected []error
+	for _, err := range errs {
+		switch {
+		case err == nil:
+			successes++
+		case apierrors.IsAlreadyExists(err), apierrors.IsConflict(err):
+			// Expected: lost the lease race, or acquired the lease after
+			// the winner committed and saw the resource.
+		default:
+			unexpected = append(unexpected, err)
+		}
+	}
+
+	require.Empty(t, unexpected, "unexpected error types from concurrent creates")
+	require.Equal(t, 1, successes, "exactly one concurrent create must succeed")
+}
+
+func runConcurrentUpdatesWithLeases(t *testing.T, backend resource.StorageBackend, ns string) {
+	ctx := t.Context()
+	const concurrency = 10
+	name := "lease-concurrent-update"
+
+	rv, err := WriteEvent(ctx, backend, name, resourcepb.WatchEvent_ADDED,
+		WithNamespace(ns), WithValue("initial"))
+	require.NoError(t, err)
+
+	errs := make([]error, concurrency)
+	var wg sync.WaitGroup
+	for i := range concurrency {
+		wg.Go(func() {
+			_, errs[i] = WriteEvent(ctx, backend, name, resourcepb.WatchEvent_MODIFIED,
+				WithNamespaceAndRV(ns, rv),
+				WithValue(fmt.Sprintf("update-%d", i)))
+		})
+	}
+	wg.Wait()
+
+	var successes int
+	var unexpected []error
+	for _, err := range errs {
+		switch {
+		case err == nil:
+			successes++
+		case apierrors.IsConflict(err):
+			// Expected: lost the lease race, or PreviousRV no longer matches.
+		default:
+			unexpected = append(unexpected, err)
+		}
+	}
+
+	require.Empty(t, unexpected, "unexpected error types from concurrent updates")
+	require.Equal(t, 1, successes, "exactly one concurrent update must succeed")
+}
+
+func runConcurrentDeletesWithLeases(t *testing.T, backend resource.StorageBackend, ns string) {
+	ctx := t.Context()
+	const concurrency = 10
+	name := "lease-concurrent-delete"
+
+	rv, err := WriteEvent(ctx, backend, name, resourcepb.WatchEvent_ADDED,
+		WithNamespace(ns), WithValue("initial"))
+	require.NoError(t, err)
+
+	errs := make([]error, concurrency)
+	var wg sync.WaitGroup
+	for i := range concurrency {
+		wg.Go(func() {
+			_, errs[i] = WriteEvent(ctx, backend, name, resourcepb.WatchEvent_DELETED,
+				WithNamespaceAndRV(ns, rv),
+				WithValue(fmt.Sprintf("delete-%d", i)))
+		})
+	}
+	wg.Wait()
+
+	var successes int
+	var unexpected []error
+	for _, err := range errs {
+		switch {
+		case err == nil:
+			successes++
+		case apierrors.IsConflict(err), errors.Is(err, resource.ErrNotFound):
+			// Expected: lost the lease race, or the resource is already gone.
+		default:
+			unexpected = append(unexpected, err)
+		}
+	}
+
+	require.Empty(t, unexpected, "unexpected error types from concurrent deletes")
+	require.Equal(t, 1, successes, "exactly one concurrent delete must succeed")
 }
 
 func TestIntegrationBenchmarkSQLKVStorageBackend(t *testing.T) {

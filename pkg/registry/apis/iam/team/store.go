@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"time"
 
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -22,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/team"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -132,21 +134,11 @@ func (s *LegacyStore) Update(ctx context.Context, name string, objInfo rest.Upda
 		}
 	}
 
-	// TOCTOU note: the current-members read happens outside the write tx
-	// that runs inside legacy.UpdateTeam, so a concurrent writer may alter
-	// the team_member rows between diffMembers and the write. The apiserver
-	// resourceVersion check on the Team row does not cover team_member, so
-	// full-replace Updates can interleave. The two races that matter:
-	//   * Two writers adding the same user: the second INSERT hits the
-	//     UNIQUE(org_id, team_id, user_id) constraint; legacy.UpdateTeam
-	//     returns ErrTeamMemberAlreadyAdded and we surface 409 below so the
-	//     client re-reads and retries.
-	//   * A writer deleting a member that is already gone: the DELETE is a
-	//     no-op (affects 0 rows) — harmless.
-	// Moving this read into WithTransaction would close the remaining gap
-	// but requires the legacy store to expose a tx-scoped ListTeamBindings
-	// so we don't re-trigger the SQLite self-deadlock described on
-	// GetTeamInternalID.
+	// Concurrent writers are gated by the PreviousUpdated RV precondition
+	// in legacy.UpdateTeam: stale RV → ErrTeamUpdateConflict → 409, caller
+	// retries against fresh state. Same-user-add races still rely on the
+	// UNIQUE(org_id, team_id, user_id) constraint → ErrTeamMemberAlreadyAdded
+	// → 409. A delete of an already-gone member is a no-op DELETE.
 	currentMembers, err := s.listAllTeamMembers(ctx, ns, teamObj.Name)
 	if err != nil {
 		return oldObj, false, err
@@ -160,12 +152,29 @@ func (s *LegacyStore) Update(ctx context.Context, name string, objInfo rest.Upda
 	if err != nil {
 		return oldObj, false, err
 	}
+	// Plumb caller's RV (ms-precision unix timestamp) so UpdateTeam can
+	// gate the SQL UPDATE on it.
+	if rv := teamObj.GetResourceVersion(); rv != "" {
+		ms, parseErr := strconv.ParseInt(rv, 10, 64)
+		if parseErr != nil {
+			return oldObj, false, apierrors.NewBadRequest(fmt.Sprintf("invalid resourceVersion %q: %v", rv, parseErr))
+		}
+		updateCmd.PreviousUpdated = legacysql.NewDBTime(time.UnixMilli(ms).UTC())
+	}
 
 	result, err := s.store.UpdateTeam(ctx, ns, updateCmd)
 	if err != nil {
-		// Race with another writer adding the same member first — surface as
-		// 409 so retry.RetryOnConflict (or the client) can re-read and recompute.
+		// Same-user-add race → 409.
 		if errors.Is(err, team.ErrTeamMemberAlreadyAdded) {
+			return oldObj, false, apierrors.NewConflict(teamResource.GroupResource(), name, err)
+		}
+		// Stale RV → 409 so the caller re-reads against fresh state.
+		if errors.Is(err, team.ErrTeamUpdateConflict) {
+			return oldObj, false, apierrors.NewConflict(teamResource.GroupResource(), name, err)
+		}
+		// Transient SQL deadlock / serialization failure → 409 so callers
+		// retry instead of leaking a 500.
+		if isRetryableTxnError(err) {
 			return oldObj, false, apierrors.NewConflict(teamResource.GroupResource(), name, err)
 		}
 		return oldObj, false, err

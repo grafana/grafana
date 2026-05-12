@@ -154,7 +154,7 @@ func seriesToDataFrame(seriesResp *connect.Response[v1alpha1.QueryRangeResponse]
 		frame.Meta = &data.FrameMeta{PreferredVisualization: "graph"}
 		frames = append(frames, frame)
 
-		fields := data.Fields{}
+		fields := data.Fields{} //nolint:prealloc
 		timeField := data.NewField("time", nil, []time.Time{})
 		fields = append(fields, timeField)
 

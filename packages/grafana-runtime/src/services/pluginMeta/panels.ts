@@ -60,7 +60,7 @@ function setMetas(metas: PluginMetasResponse) {
 }
 
 async function initPanelPluginMetas(): Promise<void> {
-  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.UseMTPlugins, false)) {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)) {
     // eslint-disable-next-line @grafana/no-config-panels
     setPanelsAndAliases(config.panels);
     return;
@@ -166,7 +166,7 @@ export function setPanelPluginMetas(override: PanelPluginMetas): void {
 }
 
 export async function refetchPanelPluginMetas(): Promise<void> {
-  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.UseMTPlugins, false)) {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)) {
     const settings = await getBackendSrv().get('/api/frontend/settings');
     setPanelsAndAliases(settings.panels);
     return;

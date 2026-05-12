@@ -127,9 +127,8 @@ func WithInternalMinTTL(d time.Duration) ManagerOption {
 type AcquireOption func(*acquireOptions)
 
 type acquireOptions struct {
-	ttl           time.Duration
-	autoRenew     bool
-	renewInterval time.Duration
+	ttl       time.Duration
+	autoRenew bool
 }
 
 // WithTTL overrides the default lease TTL for this acquisition.
@@ -138,13 +137,11 @@ func WithTTL(d time.Duration) AcquireOption {
 }
 
 // WithAutoRenew enables automatic lease renewal. A background goroutine
-// extends the lease every renewInterval by creating the next generation.
+// extends the lease every ttl/3 by creating the next generation.
 // Lost() is notified only when a renewal fails with ErrLeaseLost.
-// If renewInterval is zero, or if it's >= TTL, it defaults to 1/3 the TTL.
-func WithAutoRenew(renewInterval time.Duration) AcquireOption {
+func WithAutoRenew() AcquireOption {
 	return func(o *acquireOptions) {
 		o.autoRenew = true
-		o.renewInterval = renewInterval
 	}
 }
 
@@ -224,11 +221,8 @@ func (m *Manager) Acquire(ctx context.Context, name string, opts ...AcquireOptio
 		}
 
 		if cfg.autoRenew {
-			renewInterval := cfg.renewInterval
-			if renewInterval == 0 || renewInterval >= cfg.ttl {
-				renewInterval = cfg.ttl / 3
-			}
-			go m.autoRenewLoop(l, cfg.ttl, renewInterval)
+			renewInterval := cfg.ttl / 3
+			go m.autoRenewLoop(l, expires, cfg.ttl, renewInterval)
 		} else {
 			go m.expiryLoop(l, time.Until(expires))
 		}
@@ -267,16 +261,16 @@ func (m *Manager) Release(ctx context.Context, lease *Lease) error {
 	return nil
 }
 
-func (m *Manager) extendGeneration(ctx context.Context, lease *Lease, ttl time.Duration) error {
+func (m *Manager) extendGeneration(ctx context.Context, lease *Lease, ttl time.Duration) (time.Time, error) {
 	key := leaseKey(lease.name, lease.generation)
 	meta, err := m.read(ctx, key)
 	if err != nil {
-		return fmt.Errorf("extending %s/%d: %w", lease.name, lease.generation, err)
+		return time.Time{}, fmt.Errorf("extending %s/%d: %w", lease.name, lease.generation, err)
 	}
 
 	now := time.Now()
 	if meta.Holder != m.holder || !meta.ValidAsOf(now) {
-		return fmt.Errorf("extending %s/%d: %w", lease.name, lease.generation, ErrLeaseLost)
+		return time.Time{}, fmt.Errorf("extending %s/%d: %w", lease.name, lease.generation, ErrLeaseLost)
 	}
 
 	newGeneration := lease.generation + 1
@@ -287,27 +281,28 @@ func (m *Manager) extendGeneration(ctx context.Context, lease *Lease, ttl time.D
 	}
 	value, err := json.Marshal(state)
 	if err != nil {
-		return err
+		return time.Time{}, err
+	}
+
+	tombstone, err := json.Marshal(leaseMetadata{Holder: m.holder, Deleted: true})
+	if err != nil {
+		return time.Time{}, err
 	}
 
 	newKey := leaseKey(lease.name, newGeneration)
-	err = m.store.Batch(ctx, kv.LeasesSection, []kv.BatchOp{{
-		Mode:  kv.BatchOpCreate,
-		Key:   newKey,
-		Value: value,
-	}})
+	err = m.store.Batch(ctx, kv.LeasesSection, []kv.BatchOp{
+		{Mode: kv.BatchOpCreate, Key: newKey, Value: value},
+		{Mode: kv.BatchOpUpdate, Key: key, Value: tombstone},
+	})
 	if errors.Is(err, kv.ErrKeyAlreadyExists) {
-		return fmt.Errorf("extending %s/%d: %w", lease.name, lease.generation, ErrLeaseLost)
+		return time.Time{}, fmt.Errorf("extending %s/%d: %w", lease.name, lease.generation, ErrLeaseLost)
 	}
 	if err != nil {
-		return fmt.Errorf("extending %s/%d: %w", lease.name, lease.generation, err)
+		return time.Time{}, fmt.Errorf("extending %s/%d: %w", lease.name, lease.generation, err)
 	}
 
-	meta.Deleted = true
-	_ = m.save(ctx, key, meta)
-
 	lease.generation = newGeneration
-	return nil
+	return expires, nil
 }
 
 func (m *Manager) expiryLoop(lease *Lease, remaining time.Duration) {
@@ -316,12 +311,13 @@ func (m *Manager) expiryLoop(lease *Lease, remaining time.Duration) {
 	defer timer.Stop()
 	select {
 	case <-lease.stop:
+		return
 	case <-timer.C:
 		lease.notifyLoss()
 	}
 }
 
-func (m *Manager) autoRenewLoop(lease *Lease, ttl, renewInterval time.Duration) {
+func (m *Manager) autoRenewLoop(lease *Lease, expiry time.Time, ttl, renewInterval time.Duration) {
 	defer close(lease.done)
 	ticker := time.NewTicker(renewInterval)
 	defer ticker.Stop()
@@ -331,16 +327,24 @@ func (m *Manager) autoRenewLoop(lease *Lease, ttl, renewInterval time.Duration) 
 		case <-lease.stop:
 			return
 		case <-ticker.C:
-			err := m.renewOnce(lease, ttl, renewInterval)
+			newExpiry, err := m.renewOnce(lease, ttl, renewInterval)
 			if errors.Is(err, ErrLeaseLost) {
 				lease.notifyLoss()
 				return
 			}
+			if err != nil {
+				if time.Now().After(expiry) {
+					lease.notifyLoss()
+					return
+				}
+				continue
+			}
+			expiry = newExpiry
 		}
 	}
 }
 
-func (m *Manager) renewOnce(lease *Lease, ttl, renewInterval time.Duration) error {
+func (m *Manager) renewOnce(lease *Lease, ttl, renewInterval time.Duration) (time.Time, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), renewInterval*3/4)
 	defer cancel()
 	return m.extendGeneration(ctx, lease, ttl)

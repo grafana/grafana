@@ -7,6 +7,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/validation"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -264,5 +266,39 @@ func TestVerifyRequestKeyCollection(t *testing.T) {
 
 			require.Equal(t, test.expectedCode, err.Code)
 		})
+	}
+}
+
+// TestKeyRegexCoversValidationCharSets pins the contract that the unified
+// storage KV regex (kv.IsValidKey) accepts every byte the upstream Grafana
+// resource-name validators (IsValidGrafanaName / IsValidNamespace /
+// IsValidGroup / IsValidResource) accept.
+//
+// Why: ensure KV regex supports Grafana API regex expressions
+//
+// The test lives in pkg/storage/unified/resource to avoid dependency between
+// validation and kv packages.
+func TestKeyRegexCoversValidationCharSets(t *testing.T) {
+	validators := map[string]func(string) []string{
+		"IsValidGrafanaName": validation.IsValidGrafanaName,
+		"IsValidNamespace":   validation.IsValidNamespace,
+		"IsValidGroup":       validation.IsValidGroup,
+		"IsValidResource":    validation.IsValidResource,
+	}
+
+	// so upstream regex don't reject the probe byte for the wrong reason.
+	// Only sweep ASCII (0..127) because upstream regex's characters are ASCII.
+	for b := 0; b < 128; b++ {
+		// Probe ASCII bytes between a alphanumeric string to pass name validation
+		sample := "ab" + string(rune(b)) + "cd"
+
+		for name, accepts := range validators {
+			if errs := accepts(sample); len(errs) > 0 {
+				continue
+			}
+			require.Truef(t, kv.IsValidKey(sample),
+				"%s accepts rune %q in sample %q, but kv.IsValidKey rejects it",
+				name, rune(b), sample)
+		}
 	}
 }

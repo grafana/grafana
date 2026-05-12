@@ -286,24 +286,27 @@ export function getCachedPromiseWithArgs<T, TArgs extends unknown[]>(
 /**
  * Removes a cached promise entry so the next call with the same key re-executes the function.
  *
- * The key is derived from the promise function's name and body via {@link getCacheKeyFromPromise},
- * unless an explicit `cacheKey` is provided — in which case it takes precedence and `promise` is
- * only used for type inference.
- *
+ * The key is derived from the promise function's name and body via {@link getCacheKeyFromPromise}.
  * Silently no-ops when no entry exists for the resolved key.
  *
  * @template T - The type of the resolved promise value
  * @param promise - The promise-returning function whose cache entry should be invalidated. Inline
- *   arrow functions are anonymous and require an explicit `cacheKey` — or assign the arrow to a
- *   `const` first so name inference applies.
- * @param options - Optional options object
- * @param options.cacheKey - Optional explicit cache key. When provided, takes precedence over the key
- *   derived from `promise`.
- * @throws {Error} when neither a named function nor a `cacheKey` is supplied
+ *   arrow functions are anonymous and will be rejected — use the `cacheKey` overload instead, or
+ *   assign the arrow to a `const` first so name inference applies.
+ * @throws {Error} when the function is anonymous
  */
-export function invalidateCachedPromise<T>(promise: PromiseFunction<T>, options?: CacheKeyOptions): void {
-  const { cacheKey } = options ?? {};
-  const key = cacheKey ?? getCacheKeyFromPromise(promise);
+export function invalidateCachedPromise<T>(promise: PromiseFunction<T>): void;
+/**
+ * Removes a cached promise entry so the next call with the same key re-executes the function.
+ *
+ * Silently no-ops when no entry exists for the given key.
+ *
+ * @param cacheKey - The explicit cache key for the entry to invalidate.
+ * @throws {Error} when `cacheKey` is empty
+ */
+export function invalidateCachedPromise(cacheKey: string): void;
+export function invalidateCachedPromise(promiseOrKey: PromiseFunction<unknown> | string): void {
+  const key = typeof promiseOrKey === 'string' ? promiseOrKey : getCacheKeyFromPromise(promiseOrKey);
 
   if (!key) {
     throw new Error(`invalidateCachedPromise function must be invoked with a named function or cacheKey`);

@@ -1153,6 +1153,9 @@
         "rule-viewer-section-extension": "De verrijkingssectie in de Rule Viewer kan niet worden geladen"
       }
     },
+    "entities": {
+      "group": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "Kan je configuratie niet bijwerken:",
       "title-something-went-wrong": "Er ging iets mis"
@@ -1161,6 +1164,9 @@
       "content-show-all-errors": "Alle fouten weergeven"
     },
     "errors": {
+      "api-machinery": {
+        "with-causes": ""
+      },
       "failedWith": "{{-config}} mislukt met status {{status}}: {{-message}}"
     },
     "evaluate-every-validation-options": {
@@ -3174,9 +3180,7 @@
       "deleting": "Verwijderen",
       "text-federated": "Federatief",
       "text-provisioned": "Provisioned",
-      "ungrouped": "Niet gegroepeerd",
-      "ungrouped-suffix": "{{ruleName}} (Niet gegroepeerd)",
-      "unknown-rule": "Onbekende regel"
+      "ungrouped": "Niet gegroepeerd"
     },
     "saved-searches": {
       "actions-aria-label": "Acties",
@@ -10850,6 +10854,11 @@
     "name-line-width": "Lijndikte",
     "name-stacking": "Opslaan"
   },
+  "home": {
+    "home-page": {
+      "placeholder": ""
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "Bezig met laden",
@@ -16021,7 +16030,9 @@
       "description": {
         "group-by-field-value": "Groepeer gegevens op een veldwaarde en maak geneste tabellen met de gegroepeerde gegevens."
       },
+      "description-expand-nested-rows": "",
       "description-show-field-names": "Indien ingeschakeld, geven geneste tabellen veldnamen weer als een tabelkoptekst",
+      "label-expand-nested-rows-by-default": "",
       "label-show-field-names-in-nested-tables": "Veldnamen weergeven in geneste tabellen",
       "name": {
         "group-to-nested-tables": "Groeperen naar geneste tabellen"

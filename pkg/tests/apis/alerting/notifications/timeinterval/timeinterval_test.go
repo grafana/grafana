@@ -10,13 +10,14 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+
+	"github.com/grafana/grafana-app-sdk/resource"
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1/fakes"
@@ -305,7 +306,7 @@ func TestIntegrationTimeIntervalAccessControl(t *testing.T) {
 				})
 			}
 
-			deleteOptions := v1.DeleteOptions{Preconditions: &v1.Preconditions{ResourceVersion: util.Pointer(expected.ResourceVersion)}}
+			deleteOptions := v1.DeleteOptions{Preconditions: &v1.Preconditions{ResourceVersion: new(expected.ResourceVersion)}}
 			oldClient := common.NewTimeIntervalClient(t, tc.user)
 			if tc.canDelete {
 				t.Run("should be able to delete time interval", func(t *testing.T) {
@@ -566,7 +567,7 @@ func TestIntegrationTimeIntervalOptimisticConcurrency(t *testing.T) {
 
 		err = oldClient.Delete(ctx, actual.GetStaticMetadata().Identifier().Name, v1.DeleteOptions{
 			Preconditions: &v1.Preconditions{
-				ResourceVersion: util.Pointer("something"),
+				ResourceVersion: new("something"),
 			},
 		})
 		require.Truef(t, errors.IsConflict(err), "should get Forbidden error but got %s", err)
@@ -577,7 +578,7 @@ func TestIntegrationTimeIntervalOptimisticConcurrency(t *testing.T) {
 
 		err = oldClient.Delete(ctx, actual.GetStaticMetadata().Identifier().Name, v1.DeleteOptions{
 			Preconditions: &v1.Preconditions{
-				ResourceVersion: util.Pointer(actual.ResourceVersion),
+				ResourceVersion: new(actual.ResourceVersion),
 			},
 		})
 		require.NoError(t, err)
@@ -588,7 +589,7 @@ func TestIntegrationTimeIntervalOptimisticConcurrency(t *testing.T) {
 
 		err = oldClient.Delete(ctx, actual.GetStaticMetadata().Identifier().Name, v1.DeleteOptions{
 			Preconditions: &v1.Preconditions{
-				ResourceVersion: util.Pointer(actual.ResourceVersion),
+				ResourceVersion: new(actual.ResourceVersion),
 			},
 		})
 		require.NoError(t, err)

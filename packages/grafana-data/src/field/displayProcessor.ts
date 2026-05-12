@@ -2,7 +2,7 @@
 import { toString, toNumber as _toNumber, isEmpty, isBoolean, isArray, join } from 'lodash';
 
 // Types
-import { getFieldTypeFromValue } from '../dataframe/processDataFrame';
+import { getFieldTypeFromValue } from '../dataframe/guessFieldType';
 import { toUtc } from '../datetime/moment_wrapper';
 import { dateTimeParse } from '../datetime/parser';
 import { type GrafanaTheme2 } from '../themes/types';
