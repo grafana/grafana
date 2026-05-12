@@ -14,6 +14,7 @@ declare module "@openfeature/core" {
     | "faroSessionReplay"
     | "provisioningFolderMetadata"
     | "provisioning.readmes"
+    | "kubernetesAnnotationsClient"
     | "stateTimeline.nameAboveBars"
     | "newSavedQueriesExperience"
     | "grafana.orgDashboardTemplates"

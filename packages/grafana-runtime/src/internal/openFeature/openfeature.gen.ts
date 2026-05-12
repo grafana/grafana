@@ -45,6 +45,8 @@ export const FlagKeys = {
   GrafanaUnifiedHomepage: "grafana.unifiedHomepage",
   /** Enables an inline version of Log Details that creates no new scrolls */
   InlineLogDetailsNoScrolls: "inlineLogDetailsNoScrolls",
+  /** Enables usage of the new annotations API client */
+  KubernetesAnnotationsClient: "kubernetesAnnotationsClient",
   /** Use stream shards to split queries into smaller subqueries */
   LokiShardSplitting: "lokiShardSplitting",
   /** Enables managed plugins v2 (expanded rollout, community plugin coverage) */
@@ -255,6 +257,17 @@ export const useFlagGrafanaUnifiedHomepage = (options?: ReactFlagEvaluationOptio
  */
 export const useFlagInlineLogDetailsNoScrolls = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("inlineLogDetailsNoScrolls", false, options).value;
+};
+
+/**
+ * Enables usage of the new annotations API client
+ *
+ * **Details:**
+ * - flag key: `kubernetesAnnotationsClient`
+ * - default value: `false`
+ */
+export const useFlagKubernetesAnnotationsClient = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("kubernetesAnnotationsClient", false, options).value;
 };
 
 /**
