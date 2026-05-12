@@ -96,18 +96,6 @@ func (tc *preferencesTestCase) Setup(t *testing.T, helper *apis.K8sTestHelper) b
 func (tc *preferencesTestCase) Verify(t *testing.T, helper *apis.K8sTestHelper, shouldExist bool) {
 	t.Helper()
 
-	// The preferences K8s API is wired directly to legacy SQL storage (no
-	// DualWriter — see preferences/register.go), so Get/List always returns
-	// the legacy row regardless of whether unified storage has been populated
-	// or migration has run. That means we cannot use the K8s API to assert
-	// "data is NOT in unified storage" — it will always appear to exist.
-	// Migration correctness is verified out-of-band by the CountValidator on
-	// the MigrationDefinition; here we only smoke-test that migrated data
-	// remains readable through the API.
-	if !shouldExist {
-		return
-	}
-
 	// Each user should be able to read their own preferences and namespace.
 	// The authorizer only allows a user to read their own "user-<uid>"
 	// preference, so we use each user's own client.
