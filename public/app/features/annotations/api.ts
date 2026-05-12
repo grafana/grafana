@@ -74,7 +74,7 @@ function fetchLegacyAlertAnnotations(params: Record<string, unknown>, requestId:
 // Single server that dispatches each operation to either the k8s API or the
 // legacy /api/annotations endpoint based on the runtime gate. `forAlert` is
 // always legacy because the k8s /search endpoint cannot filter by alertUID.
-class K8sAwareAnnotationServer implements AnnotationServer {
+class K8sAnnotationServer implements AnnotationServer {
   private legacy = new LegacyAnnotationServer();
 
   async query(params: Record<string, unknown>, requestId: string): Promise<DataFrame> {
@@ -129,7 +129,7 @@ class K8sAwareAnnotationServer implements AnnotationServer {
   }
 }
 
-const annotationServerInstance: AnnotationServer = new K8sAwareAnnotationServer();
+const annotationServerInstance: AnnotationServer = new K8sAnnotationServer();
 
 export function annotationServer(): AnnotationServer {
   return annotationServerInstance;
