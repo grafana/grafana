@@ -1112,7 +1112,7 @@ var (
 			Description: "Enables org-defined dashboard templates for enterprise",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaSharingSquad,
-			Generate:    Generate{React: true},
+			Generate:    Generate{Go: true, React: true},
 			Expression:  "false",
 		},
 		{
