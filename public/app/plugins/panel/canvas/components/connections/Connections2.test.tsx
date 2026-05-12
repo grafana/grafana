@@ -101,8 +101,8 @@ describe('Connections2', () => {
 
       connectionsObj.state = [
         {
-          source: sourceElement as ElementState,
-          target: targetElement as ElementState,
+          source: sourceElement,
+          target: targetElement,
           info: createConnection(),
           index: 0,
           sourceOriginal: { x: 50, y: 50 },
@@ -111,7 +111,7 @@ describe('Connections2', () => {
       ];
 
       calculateCoordinates2.mockClear();
-      connectionsObj.updateConnectionsAfterIndividualMove(sourceElement as ElementState);
+      connectionsObj.updateConnectionsAfterIndividualMove(sourceElement);
 
       expect(calculateCoordinates2).toHaveBeenCalledWith(sourceElement, targetElement, connectionsObj.state[0].info);
     });
@@ -130,8 +130,8 @@ describe('Connections2', () => {
 
       connectionsObj.state = [
         {
-          source: sourceElement as ElementState,
-          target: targetElement as ElementState,
+          source: sourceElement,
+          target: targetElement,
           info: createConnection(),
           index: 0,
           sourceOriginal: { x: 50, y: 50 },
@@ -139,7 +139,7 @@ describe('Connections2', () => {
         },
       ];
 
-      connectionsObj.updateConnectionsAfterIndividualMove(sourceElement as ElementState);
+      connectionsObj.updateConnectionsAfterIndividualMove(sourceElement);
 
       // Verify coordinates were updated by the shared utility
       expect(sourceElement.options?.connections?.[0].sourceOriginal).toEqual({ x: 100, y: 100 });
@@ -161,8 +161,8 @@ describe('Connections2', () => {
 
       connectionsObj.state = [
         {
-          source: sourceElement as ElementState,
-          target: targetElement as ElementState,
+          source: sourceElement,
+          target: targetElement,
           info: createConnection(),
           index: 0,
           sourceOriginal: { x: 50, y: 50 },
@@ -171,7 +171,7 @@ describe('Connections2', () => {
       ];
 
       const selectedTargets = [sourceElement.div!, targetElement.div!];
-      const movedElements = [sourceElement as ElementState, targetElement as ElementState];
+      const movedElements = [sourceElement, targetElement];
 
       calculateCoordinates2.mockClear();
       connectionsObj.updateConnectionsAfterGroupMove(movedElements, selectedTargets);
@@ -193,8 +193,8 @@ describe('Connections2', () => {
 
       connectionsObj.state = [
         {
-          source: sourceElement as ElementState,
-          target: targetElement as ElementState,
+          source: sourceElement,
+          target: targetElement,
           info: createConnection(),
           index: 0,
           sourceOriginal: { x: 50, y: 50 },
@@ -203,7 +203,7 @@ describe('Connections2', () => {
       ];
 
       const selectedTargets = [sourceElement.div!, targetElement.div!];
-      const movedElements = [sourceElement as ElementState, targetElement as ElementState];
+      const movedElements = [sourceElement, targetElement];
 
       connectionsObj.updateConnectionsAfterGroupMove(movedElements, selectedTargets);
 
