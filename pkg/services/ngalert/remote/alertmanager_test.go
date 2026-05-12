@@ -44,7 +44,6 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/merge"
 	"github.com/grafana/grafana/pkg/services/ngalert/remote/client"
 	ngfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
@@ -494,23 +493,11 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 		AlertmanagerConfig: test.AlertmanagerConfig,
 	}
 
-	cfgWithExtraUnmergedBytes, err := testData.ReadFile(path.Join("test-data", "config-with-extra.json"))
-	require.NoError(t, err)
-	cfgWithExtraUnmerged, err := notifier.Load(cfgWithExtraUnmergedBytes)
-	require.NoError(t, err)
-	r, err := merge.MergeExtraConfig(context.Background(), cfgWithExtraUnmerged)
-	require.NoError(t, err)
-	cfgWithExtraMerged := client.GrafanaAlertmanagerConfig{
-		AlertmanagerConfig: r.Config.AlertmanagerConfig,
-		Templates:          cfgWithExtraUnmerged.GetMergedTemplateDefinitions(),
-	}
-
 	tests := []struct {
 		name                  string
 		config                apimodels.PostableUserConfig
 		autogenConfig         map[int64]map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting
 		enabledMultipleRoutes bool
-		legacyMimirReceivers  bool
 		expCfg                *client.UserGrafanaConfig
 		expErrContains        []string
 	}{
@@ -631,39 +618,6 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 			}(),
 		},
 		{
-			name:                 "no error, with extra configurations",
-			config:               *cfgWithExtraUnmerged,
-			legacyMimirReceivers: true,
-			expCfg: &client.UserGrafanaConfig{
-				GrafanaAlertmanagerConfig: cfgWithExtraMerged,
-			},
-		},
-		{
-			name:                  "no error, with extra configurations and managed routes enabled",
-			config:                *cfgWithExtraUnmerged,
-			enabledMultipleRoutes: true,
-			legacyMimirReceivers:  true,
-			expCfg: &client.UserGrafanaConfig{
-				GrafanaAlertmanagerConfig: func() client.GrafanaAlertmanagerConfig {
-					cfgWithExtraUnmerged, err := notifier.Load(cfgWithExtraUnmergedBytes)
-					require.NoError(t, err)
-					r, err := merge.MergeExtraConfig(context.Background(), cfgWithExtraUnmerged)
-					require.NoError(t, err)
-					managed := make(map[string]*definition.Route)
-					managed[r.Identifier] = r.ExtraRoute
-					r.Config.AlertmanagerConfig.Route = legacy_storage.WithManagedRoutes(r.Config.AlertmanagerConfig.Route, managed)
-					importedRules, err := legacy_storage.BuildManagedInhibitionRules(r.Identifier, r.ExtraInhibitRules)
-					require.NoError(t, err)
-					r.Config.AlertmanagerConfig.InhibitRules = legacy_storage.WithManagedInhibitionRules(r.Config.AlertmanagerConfig.InhibitRules, importedRules)
-					cfgWithExtraMerged := client.GrafanaAlertmanagerConfig{
-						AlertmanagerConfig: r.Config.AlertmanagerConfig,
-						Templates:          cfgWithExtraUnmerged.GetMergedTemplateDefinitions(),
-					}
-					return cfgWithExtraMerged
-				}(),
-			},
-		},
-		{
 			name:                  "no error, with managed routes",
 			config:                *policy_exports.Config(),
 			enabledMultipleRoutes: true,
@@ -687,36 +641,6 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 				},
 			},
 		},
-		{
-			name: "do not add managed route from extra config if name conflict",
-			config: func() apimodels.PostableUserConfig {
-				c, err := notifier.Load(cfgWithExtraUnmergedBytes)
-				require.NoError(t, err)
-
-				c.ManagedRoutes = map[string]*definition.Route{
-					"imported": {Receiver: "grafana-default-email"},
-				}
-				return *c
-			}(),
-			enabledMultipleRoutes: true,
-			legacyMimirReceivers:  true,
-			expCfg: &client.UserGrafanaConfig{
-				GrafanaAlertmanagerConfig: func() client.GrafanaAlertmanagerConfig {
-					cfgWithExtraUnmerged, err := notifier.Load(cfgWithExtraUnmergedBytes)
-					require.NoError(t, err)
-					r, err := merge.MergeExtraConfig(context.Background(), cfgWithExtraUnmerged)
-					require.NoError(t, err)
-					r.Config.AlertmanagerConfig.Route = legacy_storage.WithManagedRoutes(r.Config.AlertmanagerConfig.Route, map[string]*definition.Route{
-						"imported": {Receiver: "grafana-default-email"},
-					})
-					cfgWithExtraMerged := client.GrafanaAlertmanagerConfig{
-						AlertmanagerConfig: r.Config.AlertmanagerConfig,
-						Templates:          cfgWithExtraUnmerged.GetMergedTemplateDefinitions(),
-					}
-					return cfgWithExtraMerged
-				}(),
-			},
-		},
 	}
 
 	for _, test := range tests {
@@ -726,9 +650,6 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 			flags := []any{}
 			if test.enabledMultipleRoutes {
 				flags = append(flags, featuremgmt.FlagAlertingMultiplePolicies)
-			}
-			if test.legacyMimirReceivers {
-				flags = append(flags, featuremgmt.FlagAlertingDisableV0ReceiverConversion)
 			}
 			features := featuremgmt.WithFeatures(flags...)
 			moa, _ := newRemoteMOA(t, cfg, test.autogenConfig, features, secretsService)
