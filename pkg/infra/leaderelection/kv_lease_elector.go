@@ -166,6 +166,9 @@ func (k *KVLeaseElector) runAsLeader(
 	defer func() {
 		leaderCancel()
 		<-done
+		if o.releaseOnCancel && ctx.Err() != nil {
+			k.releaseLease(mgr, l)
+		}
 	}()
 
 	go func() {
@@ -178,10 +181,6 @@ func (k *KVLeaseElector) runAsLeader(
 		k.logger.Warn("Lease lost", "identity", k.identity, "lease", k.leaseName)
 	case <-ctx.Done():
 		k.logger.Debug("Context cancelled, stopping leader work")
-	}
-
-	if o.releaseOnCancel && ctx.Err() != nil {
-		k.releaseLease(mgr, l)
 	}
 }
 
