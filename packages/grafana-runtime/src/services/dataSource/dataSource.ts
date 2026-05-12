@@ -4,7 +4,7 @@ import { UserStorage } from '../../utils/userStorage';
 import { type RuntimeDataSourceRegistration } from '../dataSourceSrv';
 
 import { getCachedPlugin, setCachedPlugin, setRuntimePlugin } from './pluginCache';
-import { getDataSourceInstanceSettings, upsertRuntimeDataSource } from './settings';
+import { getDataSourceInstanceSettings, upsertRuntimeDataSourceInstanceSettings } from './settings';
 import { type ImportDataSourceFn } from './types';
 
 let importDataSource: ImportDataSourceFn | undefined;
@@ -98,7 +98,7 @@ export function registerRuntimeDataSource(entry: RuntimeDataSourceRegistration):
     throw new Error(`A runtime data source with uid ${dataSource.uid} has already been registered`);
   }
 
-  upsertRuntimeDataSource(dataSource.instanceSettings);
+  upsertRuntimeDataSourceInstanceSettings(dataSource.instanceSettings);
   setRuntimePlugin(dataSource.uid, dataSource);
 }
 

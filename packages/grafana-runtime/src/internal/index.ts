@@ -73,9 +73,9 @@ export { refetchPluginSettings } from '../services/pluginSettings/refetchPluginS
 export { invalidatePluginSettingsCache } from '../services/pluginSettings/invalidatePluginSettingsCache';
 
 export {
-  initDataSources,
+  initDataSourceInstanceSettings,
   getDataSourceInstanceSettingsList,
-  upsertRuntimeDataSource,
+  upsertRuntimeDataSourceInstanceSettings,
 } from '../services/dataSource/settings';
 export {
   type DataSourceInstanceSettingsPage,
