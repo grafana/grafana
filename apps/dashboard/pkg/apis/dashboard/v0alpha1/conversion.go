@@ -51,3 +51,19 @@ func (d *Dashboard) SetAPIVersion(version string) {
 func (d *Dashboard) EnsureDefaultSpec() {
 	// v0alpha1 doesn't require default spec setup
 }
+
+// SetDecodedVersion implements apistore.DecodedVersionAware. It records the
+// API version the codec just decoded onto status.conversion.storedVersion,
+// preserving any existing failed/error/source fields. This is the
+// authoritative ground truth at the storage boundary: the decoded GVK is
+// the on-disk version, so it overwrites any stale value that may have been
+// encoded into the stored bytes.
+func (d *Dashboard) SetDecodedVersion(version string) {
+	if version == "" {
+		return
+	}
+	if d.Status.Conversion == nil {
+		d.Status.Conversion = &DashboardConversionStatus{}
+	}
+	d.Status.Conversion.StoredVersion = new(version)
+}
