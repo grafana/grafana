@@ -619,7 +619,24 @@ describe('CanvasPanel', () => {
     jest.restoreAllMocks();
   });
 
-  it.todo('Duplicate');
+  it('duplicates the selected element from the context menu', async () => {
+    const { rerender } = setUp();
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 0));
+    });
+    rerender(canvasPanelElement({ renderCounter: 1 }));
+    expect(screen.getAllByRole('button')).toHaveLength(13);
+
+    const user = userEvent.setup();
+
+    await user.pointer({ keys: '[MouseRight]', target: getSuccessIconButton() });
+    expect(screen.getByRole('menuitem', { name: 'Duplicate' })).toBeVisible();
+
+    // Canvas adds a moveable button on right click
+    expect(screen.getAllByRole('button')).toHaveLength(14);
+    await user.click(screen.getByRole('menuitem', { name: 'Duplicate' }));
+    expect(screen.getAllByRole('button')).toHaveLength(15);
+  });
   it.todo('Bring to front');
   it.todo('Send to back');
   it.todo('Open editor');
