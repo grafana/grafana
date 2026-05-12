@@ -223,7 +223,7 @@ jobs:
         run: git push
       - name: Create PR
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.generate_changelog_token.outputs.token }}
           DRY_RUN: ${{ inputs.dry_run }}
         run: |
           LATEST_FLAG=()
@@ -233,7 +233,6 @@ jobs:
           gh pr create \
             "${LATEST_FLAG[@]}" \
             -l "no-changelog" \
-            --draft \
             --dry-run="$DRY_RUN" \
             -B "${RELEASE_BRANCH}" \
             --title "Release: $VERSION" \
