@@ -511,7 +511,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/various-suite/bar-gauge.spec.ts @grafana/dataviz-squad
 /e2e-playwright/various-suite/bookmarks.spec.ts @grafana/grafana-frontend-navigation
 /e2e-playwright/various-suite/exemplars.spec.ts @grafana/data-sources-plugins
-/e2e-playwright/various-suite/explore.spec.ts @grafana/observability-traces-and-profiling
+/e2e-playwright/various-suite/explore.spec.ts @grafana/datapro
 /e2e-playwright/various-suite/filter-annotations.spec.ts @grafana/dashboards-squad
 /e2e-playwright/various-suite/frontend-sandbox-app.spec.ts @grafana/grafana-frontend-platform
 /e2e-playwright/various-suite/frontend-sandbox-datasource.spec.ts @grafana/grafana-frontend-platform
@@ -856,7 +856,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/components/SharedPreferences/ @grafana/grafana-frontend-platform
 /public/app/core/components/Signup/ @grafana/grafana-frontend-navigation
 /public/app/core/components/SplashScreenModal/ @grafana/grafana-frontend-platform
-/public/app/core/components/SplitPaneWrapper/ @grafana/observability-traces-and-profiling
+/public/app/core/components/SplitPaneWrapper/ @grafana/datapro
 /public/app/core/components/SVG/ @grafana/dataviz-squad
 /public/app/core/components/TagFilter/ @grafana/grafana-frontend-platform
 /public/app/core/components/Theme/ @grafana/grafana-frontend-platform
@@ -871,8 +871,8 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/constants.ts @grafana/grafana-frontend-platform
 /public/app/core/context/ @grafana/grafana-frontend-platform
 /public/app/core/copy/appNotification.ts @grafana/grafana-frontend-navigation
-/public/app/core/crash/ @grafana/observability-traces-and-profiling
-/public/app/core/history/ @grafana/observability-traces-and-profiling
+/public/app/core/crash/ @grafana/datapro
+/public/app/core/history/ @grafana/datapro
 /public/app/core/hooks/useBusEvent.ts @grafana/grafana-frontend-platform
 /public/app/core/hooks/useCleanup.ts @grafana/grafana-frontend-platform
 /public/app/core/hooks/useMediaQueryMinWidth.ts @grafana/grafana-frontend-platform
@@ -929,7 +929,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/deferred.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/docsLinks.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/errors* @grafana/grafana-frontend-platform
-/public/app/core/utils/explore* @grafana/observability-traces-and-profiling
+/public/app/core/utils/explore* @grafana/datapro
 /public/app/core/utils/factors.ts @grafana/dashboards-squad
 /public/app/core/utils/fetch* @grafana/grafana-frontend-platform
 /public/app/core/utils/flatten.ts @grafana/grafana-frontend-platform
