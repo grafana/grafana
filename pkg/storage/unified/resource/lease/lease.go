@@ -21,6 +21,9 @@ const (
 	// minimum TTL accepted. Returns an error if the caller passes a lower duration.
 	defaultMinTTL = 10 * time.Second
 
+	// max TTL accepted
+	maxTTL = 10 * time.Minute
+
 	// maximum tolerated clock skew across hosts when deciding whether an
 	// existing lease is still held by another process.
 	defaultMaxClockSkew = 500 * time.Millisecond
@@ -163,6 +166,10 @@ func (m *Manager) Acquire(ctx context.Context, name string, opts ...AcquireOptio
 
 	if cfg.ttl < m.minTTL {
 		return nil, fmt.Errorf("invalid TTL: %s < %s", cfg.ttl, m.minTTL)
+	}
+
+	if cfg.ttl > maxTTL {
+		return nil, fmt.Errorf("invalid TTL: %s > %s", cfg.ttl, maxTTL)
 	}
 
 	for attempt := 0; ; attempt++ {
