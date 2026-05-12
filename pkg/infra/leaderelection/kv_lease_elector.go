@@ -161,8 +161,8 @@ func (k *KVLeaseElector) runAsLeader(
 
 	done := make(chan struct{})
 	go func() {
+		defer close(done)
 		fn(leaderCtx)
-		close(done)
 	}()
 
 	select {
@@ -172,7 +172,6 @@ func (k *KVLeaseElector) runAsLeader(
 	}
 
 	leaderCancel()
-	o.onStoppedLeading()
 
 	if o.releaseOnCancel && ctx.Err() != nil {
 		releaseCtx, releaseCancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -183,4 +182,5 @@ func (k *KVLeaseElector) runAsLeader(
 	}
 
 	<-done
+	o.onStoppedLeading()
 }
