@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import * as React from 'react';
 
@@ -592,8 +592,6 @@ describe('CanvasPanel', () => {
 
       expect(screen.getByRole('menuitem', { name: 'Edit' })).toBeVisible();
       commonEditorMenuItemAssertions();
-
-      jest.restoreAllMocks();
     });
     it('Deletes', async () => {
       await rightClickMenuSetup();
@@ -606,21 +604,23 @@ describe('CanvasPanel', () => {
       await user.click(screen.getByRole('menuitem', { name: 'Delete' }));
       // Now there should be one less button
       expect(screen.getAllByRole('button')).toHaveLength(12);
-
-      jest.restoreAllMocks();
     });
     it('Duplicates', async () => {
       await rightClickMenuSetup();
       await user.pointer({ keys: '[MouseRight]', target: getSuccessIconButton() });
+
       expect(screen.getByRole('menuitem', { name: 'Duplicate' })).toBeVisible();
 
       // Canvas adds a moveable button on right click
       expect(screen.getAllByRole('button')).toHaveLength(14);
+
       await user.click(screen.getByRole('menuitem', { name: 'Duplicate' }));
+
       expect(screen.getAllByRole('button')).toHaveLength(15);
     });
     it('Brings to front', async () => {
       await rightClickMenuSetup();
+
       expect(getIndex(getSuccessIconText().textContent)).toBe(2);
 
       await user.pointer({ keys: '[MouseRight]', target: getSuccessIconText() });
@@ -635,13 +635,16 @@ describe('CanvasPanel', () => {
 
       await user.pointer({ keys: '[MouseRight]', target: getSuccessIconText() });
       await user.click(screen.getByRole('menuitem', { name: 'Send to back' }));
+
       expect(getIndex(getSuccessIconText().textContent)).toBe(0);
     });
 
     it('Opens editor', async () => {
       await rightClickMenuSetup();
+
       await user.pointer({ keys: '[MouseRight]', target: getSuccessIconText() });
       await user.click(screen.getByRole('menuitem', { name: 'Open Editor' }));
+
       expect(screen.getByText('Canvas Inline Editor')).toBeVisible();
     });
   });
