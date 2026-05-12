@@ -49,8 +49,8 @@ function renderVariablesList(
   const renderResult = render(
     <DashboardVariablesList
       sourceVariableSet={variableSet}
-      includeAdHoc={options?.includeAdHoc}
       topPlacementLabel={options?.topPlacementLabel}
+      includeAdHoc={options?.includeAdHoc}
     />
   );
 

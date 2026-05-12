@@ -18,23 +18,10 @@ export interface SectionVariablesCategoryTitleProps {
   isExpanded: boolean;
 }
 
-export function SectionVariablesCategoryTitle({ sectionOwner, isExpanded }: SectionVariablesCategoryTitleProps) {
-  const variableSet = sectionOwner.state.$variables;
-  const allVariables =
-    variableSet instanceof SceneVariableSet
-      ? filterSectionRepeatLocalVariables(variableSet.state.variables, variableSet)
-      : [];
-  const variableCount = config.featureToggles.dashboardUnifiedDrilldownControls
-    ? allVariables.filter((v) => !sceneUtils.isAdHocVariable(v)).length
-    : allVariables.length;
-
+export function SectionVariablesCategoryTitle(_: SectionVariablesCategoryTitleProps) {
   return (
     <Stack direction="row" alignItems="center" gap={1} flex={1}>
-      <span style={{ flexGrow: 1 }}>
-        {isExpanded || variableCount === 0
-          ? t('dashboard.edit-pane.section-variables.title', 'Variables')
-          : `${t('dashboard.edit-pane.section-variables.title', 'Variables')} (${variableCount})`}
-      </span>
+      <span style={{ flexGrow: 1 }}>{t('dashboard.edit-pane.section-variables.title', 'Variables')}</span>
     </Stack>
   );
 }

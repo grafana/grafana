@@ -50,12 +50,13 @@ describe('SectionVariablesList', () => {
     expect(screen.queryByText('$custom0')).not.toBeInTheDocument();
   });
 
-  it('counts only non-local variables in title', () => {
+  it('renders a plain top-level variables heading without a count', () => {
     const row = buildRow();
 
     render(<SectionVariablesCategoryTitle sectionOwner={row} isExpanded={false} />);
 
-    expect(screen.getByText('Variables (2)')).toBeInTheDocument();
+    expect(screen.getByText('Variables')).toBeInTheDocument();
+    expect(screen.queryByText('Variables (2)')).not.toBeInTheDocument();
   });
 
   describe('when dashboardUnifiedDrilldownControls is enabled', () => {

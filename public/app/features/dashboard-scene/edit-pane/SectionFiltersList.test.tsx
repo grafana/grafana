@@ -13,12 +13,15 @@ const mockDashboardVariablesList = jest.fn(
   ({
     renderVariables,
     topPlacementLabel,
+    includeAdHoc,
   }: {
     renderVariables?: Array<{ state: { name: string } }>;
     topPlacementLabel?: string;
+    includeAdHoc?: boolean;
   }) => (
     <div>
       {topPlacementLabel && <span>{topPlacementLabel}</span>}
+      {includeAdHoc && <span>includeAdHoc</span>}
       {renderVariables?.map((variable, idx) => (
         <span key={`${variable.state.name}-${idx}`}>{variable.state.name}</span>
       ))}
@@ -34,6 +37,7 @@ jest.mock('./dashboard/DashboardVariablesList', () => ({
   DashboardVariablesList: (props: {
     renderVariables?: Array<{ state: { name: string } }>;
     topPlacementLabel?: string;
+    includeAdHoc?: boolean;
   }) => mockDashboardVariablesList(props),
 }));
 
@@ -55,12 +59,13 @@ describe('SectionFiltersList', () => {
     expect(screen.getByText('Add filter')).toBeInTheDocument();
   });
 
-  it('counts only adhoc filter variables when collapsed', () => {
+  it('renders a plain top-level filters heading without a count', () => {
     const row = buildRow({ includeFilter: true, includeCustom: true });
 
     render(<SectionFiltersCategoryTitle sectionOwner={row} isExpanded={false} />);
 
-    expect(screen.getByText('Filters (1)')).toBeInTheDocument();
+    expect(screen.getByText('Filters')).toBeInTheDocument();
+    expect(screen.queryByText('Filters (1)')).not.toBeInTheDocument();
   });
 
   it('uses top of row label for section filters placement', () => {
@@ -69,7 +74,7 @@ describe('SectionFiltersList', () => {
     render(<SectionFiltersList sectionOwner={row} />);
 
     expect(mockDashboardVariablesList).toHaveBeenCalledWith(
-      expect.objectContaining({ topPlacementLabel: 'Top of row' })
+      expect.objectContaining({ topPlacementLabel: 'Top of row', includeAdHoc: true })
     );
   });
 });

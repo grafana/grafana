@@ -15,21 +15,10 @@ export interface SectionFiltersCategoryTitleProps {
   isExpanded: boolean;
 }
 
-export function SectionFiltersCategoryTitle({ sectionOwner, isExpanded }: SectionFiltersCategoryTitleProps) {
-  const variableSet = sectionOwner.state.$variables;
-  const filterCount =
-    variableSet instanceof SceneVariableSet
-      ? filterSectionRepeatLocalVariables(variableSet.state.variables, variableSet).filter(sceneUtils.isAdHocVariable)
-          .length
-      : 0;
-
+export function SectionFiltersCategoryTitle(_: SectionFiltersCategoryTitleProps) {
   return (
     <Stack direction="row" alignItems="center" gap={1} flex={1}>
-      <span style={{ flexGrow: 1 }}>
-        {isExpanded || filterCount === 0
-          ? t('dashboard.edit-pane.section-filters.title', 'Filters')
-          : `${t('dashboard.edit-pane.section-filters.title', 'Filters')} (${filterCount})`}
-      </span>
+      <span style={{ flexGrow: 1 }}>{t('dashboard.edit-pane.section-filters.title', 'Filters')}</span>
     </Stack>
   );
 }
@@ -68,6 +57,7 @@ function SectionFiltersListInner({ sectionOwner, variableSet }: SectionFiltersLi
         sourceVariableSet={variableSet}
         renderVariables={filters}
         topPlacementLabel={topPlacementLabel}
+        includeAdHoc
       />
       <Box display="flex" paddingTop={filters.length > 0 ? 1 : 0} paddingBottom={2}>
         <AddFilterButton sectionOwner={sectionOwner} />
