@@ -9,19 +9,31 @@ import { type BackendSrv, config, setBackendSrv } from '@grafana/runtime';
 import { GroupByVariable, sceneGraph, SceneQueryRunner } from '@grafana/scenes';
 import { type AdHocFilterItem, type PanelContext } from '@grafana/ui';
 
+import { getAPIGroupDiscoveryList } from '../../apiserver/discovery';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { findVizPanelByKey, getQueryRunnerFor } from '../utils/utils';
 
 import { getAdHocFilterVariableFor, setDashboardPanelContext } from './setDashboardPanelContext';
 
+jest.mock('../../apiserver/discovery');
+
+const mockGetAPIGroupDiscoveryList = jest.mocked(getAPIGroupDiscoveryList);
+
 const postFn = jest.fn();
 const putFn = jest.fn();
+const patchFn = jest.fn();
 const deleteFn = jest.fn();
 const getFn = jest.fn();
+
+const apiGroupAvailable = {
+  metadata: { resourceVersion: '' },
+  items: [{ metadata: { name: 'annotation.grafana.app' }, versions: [] }],
+};
 
 setBackendSrv({
   post: postFn,
   put: putFn,
+  patch: patchFn,
   delete: deleteFn,
   get: getFn,
 } as unknown as BackendSrv);
@@ -29,8 +41,10 @@ setBackendSrv({
 beforeEach(() => {
   postFn.mockReset();
   putFn.mockReset();
+  patchFn.mockReset();
   deleteFn.mockReset();
   getFn.mockReset();
+  mockGetAPIGroupDiscoveryList.mockReset();
 });
 
 describe('setDashboardPanelContext', () => {
@@ -96,10 +110,10 @@ describe('setDashboardPanelContext', () => {
   });
 
   describe('onAnnotationCreate', () => {
-    it('should create annotation', () => {
+    it('should create annotation', async () => {
       const { context } = buildTestScene({ dashboardCanEdit: true, canAdd: true });
 
-      context.onAnnotationCreate!({ from: 100, to: 200, description: 'save it', tags: [] });
+      await context.onAnnotationCreate!({ from: 100, to: 200, description: 'save it', tags: [] });
 
       expect(postFn).toHaveBeenCalledWith('/api/annotations', {
         dashboardUID: 'dash-1',
@@ -112,10 +126,10 @@ describe('setDashboardPanelContext', () => {
       });
     });
 
-    it('should POST to the k8s endpoint when both k8s annotations gates are on', async () => {
+    it('should POST to the k8s endpoint when the k8s annotation client is enabled and the API is discovered', async () => {
       config.featureToggles.kubernetesAnnotationsClient = true;
-      config.annotationAppPlatformEnabled = true;
       config.namespace = 'stack-1';
+      mockGetAPIGroupDiscoveryList.mockResolvedValue(apiGroupAvailable);
       postFn.mockResolvedValue({});
 
       try {
@@ -140,14 +154,13 @@ describe('setDashboardPanelContext', () => {
         );
       } finally {
         config.featureToggles.kubernetesAnnotationsClient = false;
-        config.annotationAppPlatformEnabled = false;
       }
     });
 
     it('should include active scopes in k8s create request', async () => {
       config.featureToggles.kubernetesAnnotationsClient = true;
-      config.annotationAppPlatformEnabled = true;
       config.namespace = 'stack-1';
+      mockGetAPIGroupDiscoveryList.mockResolvedValue(apiGroupAvailable);
       postFn.mockResolvedValue({});
 
       const mockScope: Scope = { metadata: { name: 'scope-a' }, spec: { title: 'Scope A' } };
@@ -162,16 +175,15 @@ describe('setDashboardPanelContext', () => {
       } finally {
         jest.restoreAllMocks();
         config.featureToggles.kubernetesAnnotationsClient = false;
-        config.annotationAppPlatformEnabled = false;
       }
     });
   });
 
   describe('onAnnotationUpdate', () => {
-    it('should update annotation', () => {
+    it('should update annotation', async () => {
       const { context } = buildTestScene({ dashboardCanEdit: true, canAdd: true });
 
-      context.onAnnotationUpdate!({ from: 100, to: 200, id: 'event-id-123', description: 'updated', tags: [] });
+      await context.onAnnotationUpdate!({ from: 100, to: 200, id: 'event-id-123', description: 'updated', tags: [] });
 
       expect(putFn).toHaveBeenCalledWith('/api/annotations/event-id-123', {
         id: 'event-id-123',
@@ -185,48 +197,37 @@ describe('setDashboardPanelContext', () => {
       });
     });
 
-    it('should PUT to the k8s endpoint when both k8s annotations gates are on', async () => {
+    it('should PATCH the k8s endpoint when the k8s annotation client is enabled and the API is discovered', async () => {
       config.featureToggles.kubernetesAnnotationsClient = true;
-      config.annotationAppPlatformEnabled = true;
       config.namespace = 'stack-1';
-      getFn.mockResolvedValue({
-        apiVersion: 'annotation.grafana.app/v0alpha1',
-        kind: 'Annotation',
-        metadata: { name: 'event-id-123', resourceVersion: 'rv-1', creationTimestamp: '' },
-        spec: { text: 'old', time: 1 },
-      });
-      putFn.mockResolvedValue({});
+      mockGetAPIGroupDiscoveryList.mockResolvedValue(apiGroupAvailable);
+      patchFn.mockResolvedValue({});
 
       try {
         const { context } = buildTestScene({ dashboardCanEdit: true, canAdd: true });
 
         await context.onAnnotationUpdate!({ from: 100, to: 200, id: 'event-id-123', description: 'updated', tags: [] });
 
-        expect(putFn).toHaveBeenCalledWith(
+        expect(getFn).not.toHaveBeenCalled();
+        expect(patchFn).toHaveBeenCalledWith(
           '/apis/annotation.grafana.app/v0alpha1/namespaces/stack-1/annotations/event-id-123',
           expect.objectContaining({
-            metadata: expect.objectContaining({ name: 'event-id-123', resourceVersion: 'rv-1' }),
             spec: expect.objectContaining({ text: 'updated', time: 100, timeEnd: 200 }),
           }),
-          expect.anything()
+          expect.objectContaining({
+            headers: expect.objectContaining({ 'Content-Type': 'application/merge-patch+json' }),
+          })
         );
       } finally {
         config.featureToggles.kubernetesAnnotationsClient = false;
-        config.annotationAppPlatformEnabled = false;
       }
     });
 
     it('should include active scopes in k8s update request', async () => {
       config.featureToggles.kubernetesAnnotationsClient = true;
-      config.annotationAppPlatformEnabled = true;
       config.namespace = 'stack-1';
-      getFn.mockResolvedValue({
-        apiVersion: 'annotation.grafana.app/v0alpha1',
-        kind: 'Annotation',
-        metadata: { name: 'event-id-123', resourceVersion: 'rv-2', creationTimestamp: '' },
-        spec: { text: 'old', time: 1 },
-      });
-      putFn.mockResolvedValue({});
+      mockGetAPIGroupDiscoveryList.mockResolvedValue(apiGroupAvailable);
+      patchFn.mockResolvedValue({});
 
       const mockScope: Scope = { metadata: { name: 'scope-b' }, spec: { title: 'Scope B' } };
       jest.spyOn(sceneGraph, 'getScopes').mockReturnValue([mockScope]);
@@ -241,29 +242,28 @@ describe('setDashboardPanelContext', () => {
           tags: [],
         });
 
-        const [, body] = putFn.mock.calls[0];
+        const [, body] = patchFn.mock.calls[0];
         expect(body.spec.scopes).toEqual(['scope-b']);
       } finally {
         jest.restoreAllMocks();
         config.featureToggles.kubernetesAnnotationsClient = false;
-        config.annotationAppPlatformEnabled = false;
       }
     });
   });
 
   describe('onAnnotationDelete', () => {
-    it('should update annotation', () => {
+    it('should update annotation', async () => {
       const { context } = buildTestScene({ dashboardCanEdit: true, canAdd: true });
 
-      context.onAnnotationDelete!('I-do-not-want-you');
+      await context.onAnnotationDelete!('I-do-not-want-you');
 
       expect(deleteFn).toHaveBeenCalledWith('/api/annotations/I-do-not-want-you');
     });
 
-    it('should DELETE the k8s resource when both k8s annotations gates are on', async () => {
+    it('should DELETE the k8s resource when the k8s annotation client is enabled and the API is discovered', async () => {
       config.featureToggles.kubernetesAnnotationsClient = true;
-      config.annotationAppPlatformEnabled = true;
       config.namespace = 'stack-1';
+      mockGetAPIGroupDiscoveryList.mockResolvedValue(apiGroupAvailable);
       deleteFn.mockResolvedValue({});
 
       try {
@@ -280,7 +280,6 @@ describe('setDashboardPanelContext', () => {
         );
       } finally {
         config.featureToggles.kubernetesAnnotationsClient = false;
-        config.annotationAppPlatformEnabled = false;
       }
     });
   });

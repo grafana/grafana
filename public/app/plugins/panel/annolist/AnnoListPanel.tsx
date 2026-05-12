@@ -152,7 +152,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
     const scopeNames = this.context?.state.value?.map((s) => s.metadata.name);
 
     let annotations: AnnotationEvent[];
-    if (isK8sAnnotationsClientEnabled()) {
+    if (await isK8sAnnotationsClientEnabled()) {
       // /search hardcodes Type: "annotation" on the backend, so the legacy `type: 'annotation'`
       // filter is implicit. User filter switches from legacy `userId` to k8s `createdBy`.
       const events = await annotationK8sClient.search(

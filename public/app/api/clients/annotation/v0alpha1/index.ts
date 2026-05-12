@@ -169,24 +169,38 @@ export const annotationK8sClient = {
     return resourceClient().create(buildCreatePayload(event, scopes));
   },
 
-  // Fetch-then-merge: k8s PUT requires the current resourceVersion for optimistic concurrency.
-  async update(event: AnnotationEvent, scopes?: string[]): Promise<Annotation> {
+  // PATCH (RFC 7396 JSON Merge Patch) avoids a fetch-then-PUT round-trip:
+  // we don't need to read the resourceVersion ourselves, and the server
+  // handles read-modify-write atomically. Optional fields are explicitly
+  // sent as null when absent so stale values (e.g. a removed timeEnd or
+  // cleared scope list) are cleared rather than preserved.
+  update(event: AnnotationEvent, scopes?: string[]): Promise<Annotation> {
     if (!event.id) {
-      throw new Error('Annotation id (metadata.name) is required for update');
+      return Promise.reject(new Error('Annotation id (metadata.name) is required for update'));
     }
 
-    const client = resourceClient();
-    const existing = await client.get(toK8sName(event.id));
+    const name = toK8sName(event.id);
     const nextSpec = annotationEventToSpec(event, scopes);
-
-    // Explicit assignment ensures undefined fields (timeEnd, scopes) from nextSpec
-    // overwrite any existing values — `...nextSpec` alone wouldn't remove them.
-    const merged: Annotation = {
-      ...existing,
-      spec: { ...existing.spec, ...nextSpec, timeEnd: nextSpec.timeEnd, scopes: nextSpec.scopes },
+    const patchSpec: Record<string, unknown> = {
+      text: nextSpec.text,
+      time: nextSpec.time,
+      timeEnd: nextSpec.timeEnd ?? null,
+      tags: nextSpec.tags ?? null,
+      scopes: nextSpec.scopes ?? null,
     };
+    if (nextSpec.dashboardUID !== undefined) {
+      patchSpec.dashboardUID = nextSpec.dashboardUID;
+    }
+    if (nextSpec.panelID !== undefined) {
+      patchSpec.panelID = nextSpec.panelID;
+    }
 
-    return client.update(merged);
+    const url = `/apis/${ANNOTATION_API_GROUP}/${ANNOTATION_API_VERSION}/namespaces/${getAPINamespace()}/${ANNOTATIONS_RESOURCE}/${name}`;
+    return getBackendSrv().patch<Annotation>(
+      url,
+      { spec: patchSpec },
+      { headers: { 'Content-Type': 'application/merge-patch+json' } }
+    );
   },
 
   remove(name: string | number): Promise<unknown> {

@@ -1,6 +1,8 @@
 import { type AnnotationEvent, type DataFrame, toDataFrame } from '@grafana/data';
 import { config, getBackendSrv } from '@grafana/runtime';
 import { annotationK8sClient } from 'app/api/clients/annotation/v0alpha1';
+import { ANNOTATION_API_GROUP } from 'app/api/clients/annotation/v0alpha1/types';
+import { getAPIGroupDiscoveryList } from 'app/features/apiserver/discovery';
 import { type StateHistoryItem } from 'app/types/unified-alerting';
 
 import { type AnnotationTagsResponse } from './types';
@@ -49,16 +51,22 @@ class LegacyAnnotationServer implements AnnotationServer {
 }
 
 /**
- * The k8s annotations client is gated by both the FE feature flag
- * (`kubernetesAnnotationsClient`) and the backend's `annotationAppPlatformEnabled`
- * config. Calling the new endpoints when the backend hasn't installed the app
- * would 404, so we require both signals before switching off legacy.
+ * The k8s annotations client is gated by the FE feature flag
+ * (`kubernetesAnnotationsClient`) and presence of the `annotation.grafana.app`
+ * group in the apiserver discovery list. Calling the new endpoints when the
+ * group isn't registered would 404, so we require both signals before
+ * switching off legacy.
  */
-export function isK8sAnnotationsClientEnabled(): boolean {
-  return Boolean(config.featureToggles.kubernetesAnnotationsClient) && Boolean(config.annotationAppPlatformEnabled);
+export function isK8sAnnotationsClientEnabled(): Promise<boolean> {
+  if (!config.featureToggles.kubernetesAnnotationsClient) {
+    return Promise.resolve(false);
+  }
+  return getAPIGroupDiscoveryList()
+    .then((apis) => apis.items.some((group) => group.metadata.name === ANNOTATION_API_GROUP))
+    .catch(() => false);
 }
 
-// When isK8sAnnotationsClientEnabled() is true, CRUD/tags/query (dashboard annotations)
+// When isK8sAnnotationsClientEnabled() resolves true, CRUD/tags/query (dashboard annotations)
 // go to annotation.grafana.app. forAlert stays on legacy because the new /search
 // endpoint cannot filter by alertUID/type=alert (ListOptions has no Type/AlertUID).
 class K8sAnnotationServer implements AnnotationServer {
@@ -109,6 +117,22 @@ function fetchLegacyAlertAnnotations(params: Record<string, unknown>, requestId:
   return getBackendSrv().get<AnnotationEvent[]>('/api/annotations', { ...rest, type: 'alert' }, `${requestId}-alert`);
 }
 
+function resolveServer(): Promise<AnnotationServer> {
+  return isK8sAnnotationsClientEnabled().then((enabled) =>
+    enabled ? new K8sAnnotationServer() : new LegacyAnnotationServer()
+  );
+}
+
+// Returns a façade that defers each call to the resolved (legacy or k8s)
+// implementation. Keeps call sites synchronous while the underlying gate
+// (apiserver discovery) is resolved asynchronously.
 export function annotationServer(): AnnotationServer {
-  return isK8sAnnotationsClientEnabled() ? new K8sAnnotationServer() : new LegacyAnnotationServer();
+  return {
+    query: (params, requestId) => resolveServer().then((server) => server.query(params, requestId)),
+    forAlert: (alertUID) => resolveServer().then((server) => server.forAlert(alertUID)),
+    save: (annotation, scopes) => resolveServer().then((server) => server.save(annotation, scopes)),
+    update: (annotation, scopes) => resolveServer().then((server) => server.update(annotation, scopes)),
+    delete: (annotation) => resolveServer().then((server) => server.delete(annotation)),
+    tags: () => resolveServer().then((server) => server.tags()),
+  };
 }

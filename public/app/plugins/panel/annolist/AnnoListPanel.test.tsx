@@ -13,6 +13,7 @@ import { config, locationService, ScopesContext, type ScopesContextValue } from 
 
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
 import { backendSrv } from '../../../core/services/backend_srv';
+import { getAPIGroupDiscoveryList } from '../../../features/apiserver/discovery';
 import { type DashboardSrv, setDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
 
 import { AnnoListPanel, type Props } from './AnnoListPanel';
@@ -22,6 +23,20 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
 }));
+
+jest.mock('../../../features/apiserver/discovery');
+
+const mockGetAPIGroupDiscoveryList = jest.mocked(getAPIGroupDiscoveryList);
+
+const apiGroupAvailable = {
+  metadata: { resourceVersion: '' },
+  items: [{ metadata: { name: 'annotation.grafana.app' }, versions: [] }],
+};
+const apiGroupMissing = { metadata: { resourceVersion: '' }, items: [] };
+
+beforeEach(() => {
+  mockGetAPIGroupDiscoveryList.mockReset();
+});
 
 const defaultOptions: Options = {
   limit: 10,
@@ -351,8 +366,8 @@ describe('AnnoListPanel', () => {
     const setupK8sContext = async (options: Options = defaultOptions, scopeNames?: string[]) => {
       jest.clearAllMocks();
       config.featureToggles.kubernetesAnnotationsClient = true;
-      config.annotationAppPlatformEnabled = true;
       config.namespace = 'stack-1';
+      mockGetAPIGroupDiscoveryList.mockResolvedValue(apiGroupAvailable);
 
       const getMock = jest.spyOn(backendSrv, 'get');
       getMock.mockImplementation(async (url) => {
@@ -416,7 +431,6 @@ describe('AnnoListPanel', () => {
 
     afterEach(() => {
       config.featureToggles.kubernetesAnnotationsClient = false;
-      config.annotationAppPlatformEnabled = false;
     });
 
     it('hits the k8s /search endpoint with translated params', async () => {
@@ -481,24 +495,23 @@ describe('AnnoListPanel', () => {
     });
   });
 
-  describe('with only one k8s gate ON falls back to legacy /api/annotations', () => {
+  describe('when the k8s client gate is not fully open it falls back to legacy /api/annotations', () => {
     afterEach(() => {
       config.featureToggles.kubernetesAnnotationsClient = false;
-      config.annotationAppPlatformEnabled = false;
     });
 
-    it('FE FF on, backend platform off → legacy GET', async () => {
+    it('FE FF on, API group missing in /apis → legacy GET', async () => {
       config.featureToggles.kubernetesAnnotationsClient = true;
-      config.annotationAppPlatformEnabled = false;
+      mockGetAPIGroupDiscoveryList.mockResolvedValue(apiGroupMissing);
       const { getMock } = await setupTestContext();
       expect(getMock).toHaveBeenCalledWith('/api/annotations', expect.any(Object), expect.any(String));
     });
 
-    it('FE FF off, backend platform on → legacy GET', async () => {
+    it('FE FF off → legacy GET, no discovery call', async () => {
       config.featureToggles.kubernetesAnnotationsClient = false;
-      config.annotationAppPlatformEnabled = true;
       const { getMock } = await setupTestContext();
       expect(getMock).toHaveBeenCalledWith('/api/annotations', expect.any(Object), expect.any(String));
+      expect(mockGetAPIGroupDiscoveryList).not.toHaveBeenCalled();
     });
   });
 });

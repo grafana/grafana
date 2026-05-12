@@ -1,16 +1,30 @@
 import { type BackendSrv, config, setBackendSrv } from '@grafana/runtime';
 
+import { getAPIGroupDiscoveryList } from '../apiserver/discovery';
+
 import { annotationServer } from './api';
+
+jest.mock('../apiserver/discovery');
+
+const mockGetAPIGroupDiscoveryList = jest.mocked(getAPIGroupDiscoveryList);
 
 const postFn = jest.fn();
 const putFn = jest.fn();
+const patchFn = jest.fn();
 const deleteFn = jest.fn();
 const getFn = jest.fn();
+
+const apiGroupAvailable = {
+  metadata: { resourceVersion: '' },
+  items: [{ metadata: { name: 'annotation.grafana.app' }, versions: [] }],
+};
+const apiGroupMissing = { metadata: { resourceVersion: '' }, items: [] };
 
 beforeAll(() => {
   setBackendSrv({
     post: postFn,
     put: putFn,
+    patch: patchFn,
     delete: deleteFn,
     get: getFn,
   } as unknown as BackendSrv);
@@ -19,14 +33,15 @@ beforeAll(() => {
 beforeEach(() => {
   postFn.mockReset();
   putFn.mockReset();
+  patchFn.mockReset();
   deleteFn.mockReset();
   getFn.mockReset();
+  mockGetAPIGroupDiscoveryList.mockReset();
 });
 
-describe('annotationServer with both gates OFF', () => {
+describe('annotationServer with FE flag OFF', () => {
   beforeAll(() => {
     config.featureToggles.kubernetesAnnotationsClient = false;
-    config.annotationAppPlatformEnabled = false;
     config.namespace = 'stack-1';
   });
 
@@ -51,41 +66,50 @@ describe('annotationServer with both gates OFF', () => {
     expect(getFn).toHaveBeenCalledWith('/api/annotations/tags?limit=1000');
     expect(tags).toEqual([{ term: 't', count: 2 }]);
   });
-});
 
-describe('annotationServer with only one gate ON falls back to legacy', () => {
-  afterEach(() => {
-    config.featureToggles.kubernetesAnnotationsClient = false;
-    config.annotationAppPlatformEnabled = false;
-  });
-
-  it('FE FF on, backend platform off → legacy', async () => {
-    config.featureToggles.kubernetesAnnotationsClient = true;
-    config.annotationAppPlatformEnabled = false;
+  it('does not call /apis discovery when FE flag is off', async () => {
     await annotationServer().save({ time: 1, text: 'x', dashboardUID: 'd', panelId: 1 });
-    expect(postFn).toHaveBeenCalledWith('/api/annotations', expect.objectContaining({ time: 1 }));
-  });
-
-  it('FE FF off, backend platform on → legacy', async () => {
-    config.featureToggles.kubernetesAnnotationsClient = false;
-    config.annotationAppPlatformEnabled = true;
-    await annotationServer().save({ time: 1, text: 'x', dashboardUID: 'd', panelId: 1 });
-    expect(postFn).toHaveBeenCalledWith('/api/annotations', expect.objectContaining({ time: 1 }));
+    expect(mockGetAPIGroupDiscoveryList).not.toHaveBeenCalled();
   });
 });
 
-describe('annotationServer with both gates ON', () => {
-  const baseURL = '/apis/annotation.grafana.app/v0alpha1/namespaces/stack-1';
-
+describe('annotationServer falls back to legacy when API group is not discovered', () => {
   beforeAll(() => {
     config.featureToggles.kubernetesAnnotationsClient = true;
-    config.annotationAppPlatformEnabled = true;
     config.namespace = 'stack-1';
   });
 
   afterAll(() => {
     config.featureToggles.kubernetesAnnotationsClient = false;
-    config.annotationAppPlatformEnabled = false;
+  });
+
+  it('FE FF on, API group missing in /apis → legacy', async () => {
+    mockGetAPIGroupDiscoveryList.mockResolvedValue(apiGroupMissing);
+    await annotationServer().save({ time: 1, text: 'x', dashboardUID: 'd', panelId: 1 });
+    expect(postFn).toHaveBeenCalledWith('/api/annotations', expect.objectContaining({ time: 1 }));
+  });
+
+  it('discovery rejection is treated as legacy', async () => {
+    mockGetAPIGroupDiscoveryList.mockRejectedValue(new Error('boom'));
+    await annotationServer().save({ time: 1, text: 'x', dashboardUID: 'd', panelId: 1 });
+    expect(postFn).toHaveBeenCalledWith('/api/annotations', expect.objectContaining({ time: 1 }));
+  });
+});
+
+describe('annotationServer with FE flag ON and API group discovered', () => {
+  const baseURL = '/apis/annotation.grafana.app/v0alpha1/namespaces/stack-1';
+
+  beforeAll(() => {
+    config.featureToggles.kubernetesAnnotationsClient = true;
+    config.namespace = 'stack-1';
+  });
+
+  afterAll(() => {
+    config.featureToggles.kubernetesAnnotationsClient = false;
+  });
+
+  beforeEach(() => {
+    mockGetAPIGroupDiscoveryList.mockResolvedValue(apiGroupAvailable);
   });
 
   it('save POSTs to the k8s endpoint and includes spec.scopes', async () => {
@@ -100,26 +124,30 @@ describe('annotationServer with both gates ON', () => {
     expect(body.spec.panelID).toBe(1);
   });
 
-  it('update fetches existing then PUTs back with scopes and resourceVersion preserved', async () => {
-    getFn.mockResolvedValue({
-      apiVersion: 'annotation.grafana.app/v0alpha1',
-      kind: 'Annotation',
-      metadata: { name: 'a-1', resourceVersion: 'rv-7', creationTimestamp: '' },
-      spec: { text: 'old', time: 1 },
-    });
-    putFn.mockResolvedValue({});
+  it('update PATCHes the k8s resource without a preceding GET', async () => {
+    patchFn.mockResolvedValue({});
 
     // Bare numeric id as returned by legacy /api/annotations
     await annotationServer().update({ id: '1', time: 2, text: 'new' }, ['scope-a']);
 
-    expect(getFn).toHaveBeenCalledWith(`${baseURL}/annotations/a-1`);
+    expect(getFn).not.toHaveBeenCalled();
 
-    const [putUrl, body] = putFn.mock.calls[0];
-    expect(putUrl).toBe(`${baseURL}/annotations/a-1`);
-    expect(body.metadata.name).toBe('a-1');
-    expect(body.metadata.resourceVersion).toBe('rv-7');
-    expect(body.spec.scopes).toEqual(['scope-a']);
+    const [patchUrl, body, opts] = patchFn.mock.calls[0];
+    expect(patchUrl).toBe(`${baseURL}/annotations/a-1`);
     expect(body.spec.text).toBe('new');
+    expect(body.spec.time).toBe(2);
+    expect(body.spec.scopes).toEqual(['scope-a']);
+    expect(opts.headers['Content-Type']).toBe('application/merge-patch+json');
+  });
+
+  it('update clears optional fields by sending explicit nulls', async () => {
+    patchFn.mockResolvedValue({});
+    await annotationServer().update({ id: '1', time: 2, text: 'new' });
+
+    const [, body] = patchFn.mock.calls[0];
+    expect(body.spec.timeEnd).toBeNull();
+    expect(body.spec.tags).toBeNull();
+    expect(body.spec.scopes).toBeNull();
   });
 
   it('delete DELETEs the k8s resource by metadata.name', async () => {
