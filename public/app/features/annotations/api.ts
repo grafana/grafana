@@ -129,8 +129,11 @@ class K8sAnnotationServer implements AnnotationServer {
   }
 }
 
-const annotationServerInstance: AnnotationServer = new K8sAnnotationServer();
+let instance: AnnotationServer | null = null;
 
 export function annotationServer(): AnnotationServer {
-  return annotationServerInstance;
+  if (!instance) {
+    instance = new K8sAnnotationServer();
+  }
+  return instance;
 }
