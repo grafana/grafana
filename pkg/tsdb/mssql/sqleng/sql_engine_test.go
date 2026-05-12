@@ -459,6 +459,7 @@ func genTempCacheFile(t *testing.T, lookups []kerberos.KerberosLookup) string {
 }
 
 func TestGenerateConnectionString(t *testing.T) {
+	// #nosec G101 -- test fixtures, not real credentials
 	kerberosLookup := []kerberos.KerberosLookup{
 		{
 			Address:                 "example.host",
@@ -483,6 +484,7 @@ func TestGenerateConnectionString(t *testing.T) {
 	}{
 		{
 			desc: "Use Kerberos Credential Cache",
+			// #nosec G101 -- test fixture, not a real credential
 			kerberosCfg: kerberos.KerberosAuth{
 				CredentialCache:    "/tmp/krb5cc_1000",
 				ConfigFilePath:     "/etc/krb5.conf",

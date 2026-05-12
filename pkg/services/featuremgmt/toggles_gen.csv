@@ -161,10 +161,8 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-09-23,useSessionStorageForRedirection,GA,@grafana/identity-access-team,false,false,false
 2024-09-26,rolePickerDrawer,experimental,@grafana/identity-access-team,false,false,false
 2024-10-04,pluginsSriChecks,GA,@grafana/plugins-platform-backend,false,false,false
-2024-10-17,unifiedStorageBigObjectsSupport,experimental,@grafana/search-and-storage,false,false,false
 2024-10-22,timeRangeProvider,experimental,@grafana/grafana-frontend-platform,false,false,false
 2025-11-05,timeRangePan,GA,@grafana/dataviz-squad,false,false,true
-2025-11-20,newTimeRangeZoomShortcuts,GA,@grafana/dataviz-squad,false,false,true
 2024-10-24,azureMonitorDisableLogLimit,GA,@grafana/data-sources-plugins,false,false,false
 2024-12-20,playlistsReconciler,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2024-12-18,prometheusSpecialCharsInLabelValues,experimental,@grafana/data-sources-plugins,false,false,true
@@ -370,3 +368,4 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-06,grafana.unifiedHomepage,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2026-05-06,preferences.rerouteLegacyAPIs,experimental,@grafana/grafana-frontend-platform,false,false,false
 2026-05-05,plugins.marketplaceLicensing,experimental,@grafana/plugins-platform-backend,false,true,false
+2026-05-11,alerting.syncExternalAlertmanager,experimental,@grafana/alerting-squad,false,true,false

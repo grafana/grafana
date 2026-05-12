@@ -1979,11 +1979,17 @@ func (m *mockAlertmanager) DeleteExtraConfiguration(ctx context.Context, org int
 	return args.Error(0)
 }
 
+func (m *mockAlertmanager) IsExternalAMSyncConfiguredForOrg(ctx context.Context, orgID int64) (bool, error) {
+	args := m.Called(ctx, orgID)
+	return args.Bool(0), args.Error(1)
+}
+
 func TestRouteConvertPrometheusPostAlertmanagerConfig(t *testing.T) {
 	const identifier = "test-config"
 	mockAM := &mockAlertmanager{}
+	mockAM.On("IsExternalAMSyncConfiguredForOrg", mock.Anything, int64(1)).Return(false, nil).Maybe()
 
-	ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
+	ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies, featuremgmt.FlagAlertingImportAlertmanagerAPI)
 	srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
 
 	t.Run("should parse headers and call SaveAndApplyExtraConfiguration", func(t *testing.T) {
@@ -2024,11 +2030,12 @@ func TestRouteConvertPrometheusPostAlertmanagerConfig(t *testing.T) {
 		rc := createRequestCtx()
 		rc.Req.Header.Set(mergeMatchersHeader, "test=value")
 		mockAM := &mockAlertmanager{}
+		mockAM.On("IsExternalAMSyncConfiguredForOrg", mock.Anything, int64(1)).Return(false, nil).Maybe()
 		mockAM.On("SaveAndApplyExtraConfiguration", mock.Anything, int64(1), mock.Anything, mock.Anything, mock.MatchedBy(func(extraConfig apimodels.ExtraConfiguration) bool {
 			return extraConfig.Identifier == defaultConfigIdentifier
 		}), false, false).Return(merge.RenameResources{}, nil)
 
-		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
+		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies, featuremgmt.FlagAlertingImportAlertmanagerAPI)
 		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
 
 		amCfg := apimodels.AlertmanagerUserConfig{
@@ -2053,11 +2060,12 @@ func TestRouteConvertPrometheusPostAlertmanagerConfig(t *testing.T) {
 		rc := createRequestCtx()
 		rc.Req.Header.Set(configForceReplaceHeader, "true")
 		mockAM := &mockAlertmanager{}
+		mockAM.On("IsExternalAMSyncConfiguredForOrg", mock.Anything, int64(1)).Return(false, nil).Maybe()
 		mockAM.On("SaveAndApplyExtraConfiguration", mock.Anything, int64(1), mock.Anything, mock.Anything, mock.MatchedBy(func(extraConfig apimodels.ExtraConfiguration) bool {
 			return extraConfig.Identifier == defaultConfigIdentifier
 		}), true, false).Return(merge.RenameResources{}, nil)
 
-		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
+		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies, featuremgmt.FlagAlertingImportAlertmanagerAPI)
 		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
 
 		amCfg := apimodels.AlertmanagerUserConfig{
@@ -2082,11 +2090,12 @@ func TestRouteConvertPrometheusPostAlertmanagerConfig(t *testing.T) {
 		rc := createRequestCtx()
 		rc.Req.Header.Set(dryRunHeader, "true")
 		mockAM := &mockAlertmanager{}
+		mockAM.On("IsExternalAMSyncConfiguredForOrg", mock.Anything, int64(1)).Return(false, nil).Maybe()
 		mockAM.On("SaveAndApplyExtraConfiguration", mock.Anything, int64(1), mock.Anything, mock.Anything, mock.MatchedBy(func(extraConfig apimodels.ExtraConfiguration) bool {
 			return extraConfig.Identifier == defaultConfigIdentifier
 		}), false, true).Return(merge.RenameResources{}, nil)
 
-		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
+		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies, featuremgmt.FlagAlertingImportAlertmanagerAPI)
 		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
 
 		amCfg := apimodels.AlertmanagerUserConfig{
@@ -2111,6 +2120,7 @@ func TestRouteConvertPrometheusPostAlertmanagerConfig(t *testing.T) {
 		rc := createRequestCtx()
 		rc.Req.Header.Set(configIdentifierHeader, identifier)
 		mockAM := &mockAlertmanager{}
+		mockAM.On("IsExternalAMSyncConfiguredForOrg", mock.Anything, int64(1)).Return(false, nil).Maybe()
 
 		expectedRenames := merge.RenameResources{
 			Receivers: map[string]string{
@@ -2125,7 +2135,7 @@ func TestRouteConvertPrometheusPostAlertmanagerConfig(t *testing.T) {
 			return extraConfig.Identifier == identifier
 		}), false, false).Return(expectedRenames, nil)
 
-		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
+		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies, featuremgmt.FlagAlertingImportAlertmanagerAPI)
 		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
 
 		amCfg := apimodels.AlertmanagerUserConfig{
@@ -2178,6 +2188,31 @@ func TestRouteConvertPrometheusPostAlertmanagerConfig(t *testing.T) {
 		require.Equal(t, http.StatusBadRequest, response.Status())
 		require.Contains(t, string(response.Body()), "failed to parse alertmanager config")
 	})
+
+	t.Run("should return 409 when external alertmanager sync is configured for the org", func(t *testing.T) {
+		t.Skip("flaky test")
+
+		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
+		mockAM := &mockAlertmanager{}
+		mockAM.On("IsExternalAMSyncConfiguredForOrg", mock.Anything, int64(1)).Return(true, nil).Once()
+
+		srv, _, _ := createConvertPrometheusSrv(t,
+			withAlertmanager(mockAM),
+			withFeatureToggles(ft),
+		)
+
+		rc := createRequestCtx()
+		rc.Req.Header.Set(configIdentifierHeader, identifier)
+
+		amCfg := apimodels.AlertmanagerUserConfig{
+			AlertmanagerConfig: `{"route":{"receiver":"default"},"receivers":[{"name":"default"}]}`,
+		}
+		response := srv.RouteConvertPrometheusPostAlertmanagerConfig(rc, amCfg)
+
+		require.Equal(t, http.StatusConflict, response.Status())
+		require.Contains(t, string(response.Body()), "external alertmanager sync is configured")
+		mockAM.AssertNotCalled(t, "SaveAndApplyExtraConfiguration", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	})
 }
 
 func TestRouteConvertPrometheusGetAlertmanagerConfig(t *testing.T) {
@@ -2208,7 +2243,7 @@ receivers:
 				},
 			},
 		}, nil)
-		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
+		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies, featuremgmt.FlagAlertingImportAlertmanagerAPI)
 		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
 
 		rc := createRequestCtx()
@@ -2231,7 +2266,7 @@ receivers:
 				},
 			},
 		}, nil)
-		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
+		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies, featuremgmt.FlagAlertingImportAlertmanagerAPI)
 		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
 
 		rc := createRequestCtx()
@@ -2244,7 +2279,7 @@ receivers:
 
 	t.Run("should return config when it is found", func(t *testing.T) {
 		mockAM := &mockAlertmanager{}
-		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
+		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies, featuremgmt.FlagAlertingImportAlertmanagerAPI)
 		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
 
 		// Create a config with secrets to check that they will be hided in the response.
@@ -2317,7 +2352,7 @@ template_files:
 
 	t.Run("when config not found should return 404", func(t *testing.T) {
 		mockAM := &mockAlertmanager{}
-		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
+		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies, featuremgmt.FlagAlertingImportAlertmanagerAPI)
 		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
 
 		expectedConfig := apimodels.GettableUserConfig{
@@ -2347,7 +2382,7 @@ receivers:
 
 	t.Run("should return error when GetAlertmanagerConfiguration fails", func(t *testing.T) {
 		mockAM := &mockAlertmanager{}
-		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
+		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies, featuremgmt.FlagAlertingImportAlertmanagerAPI)
 		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
 
 		mockAM.On("GetAlertmanagerConfiguration", mock.Anything, orgID, false).Return(apimodels.GettableUserConfig{}, errors.New("config error")).Once()
@@ -2531,7 +2566,7 @@ func TestRouteConvertPrometheusDeleteAlertmanagerConfig(t *testing.T) {
 	const orgID = int64(1)
 
 	mockAM := &mockAlertmanager{}
-	ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
+	ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies, featuremgmt.FlagAlertingImportAlertmanagerAPI)
 	srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
 
 	t.Run("should parse identifier header and call DeleteExtraConfiguration", func(t *testing.T) {

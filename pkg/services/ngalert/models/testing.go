@@ -137,7 +137,7 @@ func (g *AlertRuleGenerator) Generate() AlertRule {
 		Labels:                      labels,
 		NotificationSettings:        ns,
 		Metadata:                    GenerateMetadata(),
-		MissingSeriesEvalsToResolve: util.Pointer[int64](2),
+		MissingSeriesEvalsToResolve: new(int64(2)),
 	}
 
 	for _, mutator := range g.mutators {
