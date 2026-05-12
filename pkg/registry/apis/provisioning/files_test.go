@@ -2,15 +2,18 @@ package provisioning
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
 	provisioningapi "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -366,6 +369,139 @@ func TestParseRequestOptionsRefValidation(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 			}
+		})
+	}
+}
+
+func TestHandleGetRawFile_FolderScopedAuth(t *testing.T) {
+	t.Run("denies the read when the user lacks folder read permission", func(t *testing.T) {
+		mockReadWriter := repository.NewMockReaderWriter(t)
+		mockAccess := auth.NewMockAccessChecker(t)
+
+		repo := &provisioningapi.Repository{
+			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+			Spec: provisioningapi.RepositorySpec{
+				Sync: provisioningapi.SyncOptions{Target: provisioningapi.SyncTargetTypeFolder},
+			},
+		}
+		mockReadWriter.EXPECT().Config().Return(repo).Maybe()
+
+		// Folder check is denied — readWriter.Read on the file must never be called.
+		mockAccess.EXPECT().
+			Check(mock.Anything, mock.Anything, mock.Anything).
+			Return(apierrors.NewForbidden(provisioningapi.RepositoryResourceInfo.GroupResource(), "team-a", errors.New("denied")))
+
+		authorizer := resources.NewAuthorizer(repo, mockReadWriter, mockAccess, false)
+		connector := &filesConnector{access: mockAccess}
+
+		_, err := connector.handleGetRawFile(
+			context.Background(),
+			resources.DualWriteOptions{Path: "team-a/README.md"},
+			mockReadWriter,
+			authorizer,
+		)
+
+		require.Error(t, err)
+		require.True(t, apierrors.IsForbidden(err), "expected Forbidden, got %v", err)
+	})
+}
+
+func TestHandleGetRawFile_MaxFileSize(t *testing.T) {
+	const path = "README.md"
+	repo := &provisioningapi.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+		Spec: provisioningapi.RepositorySpec{
+			Sync: provisioningapi.SyncOptions{Target: provisioningapi.SyncTargetTypeFolder},
+		},
+	}
+
+	tests := []struct {
+		name        string
+		maxFileSize int64
+		dataSize    int
+		wantTooBig  bool
+	}{
+		{name: "under limit", maxFileSize: 1024, dataSize: 512},
+		{name: "exactly at limit", maxFileSize: 1024, dataSize: 1024},
+		{name: "over limit", maxFileSize: 1024, dataSize: 2048, wantTooBig: true},
+		{name: "zero disables limit", maxFileSize: 0, dataSize: 10 * 1024 * 1024},
+		{name: "negative disables limit", maxFileSize: -1, dataSize: 10 * 1024 * 1024},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			mockReadWriter := repository.NewMockReaderWriter(t)
+			mockAccess := auth.NewMockAccessChecker(t)
+			mockAccess.EXPECT().Check(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+
+			mockReadWriter.EXPECT().Config().Return(repo).Maybe()
+			authorizer := resources.NewAuthorizer(repo, mockReadWriter, mockAccess, false)
+
+			mockReadWriter.EXPECT().Read(mock.Anything, path, "").Return(&repository.FileInfo{
+				Path: path,
+				Data: make([]byte, tc.dataSize),
+				Ref:  "main",
+			}, nil)
+
+			connector := &filesConnector{access: mockAccess, maxFileSize: tc.maxFileSize}
+			// handleRequest wraps readWriter with the size limiter at the
+			// connector boundary. Mirror that here so the unit test exercises
+			// the same enforcement point as production.
+			limited := connector.withSizeLimit(mockReadWriter)
+
+			_, err := connector.handleGetRawFile(
+				context.Background(),
+				resources.DualWriteOptions{Path: path},
+				limited,
+				authorizer,
+			)
+
+			if tc.wantTooBig {
+				require.Error(t, err)
+				assert.True(t, apierrors.IsRequestEntityTooLargeError(err), "expected 413 RequestEntityTooLarge, got %v", err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestIsRawFileIntegration(t *testing.T) {
+	tests := []struct {
+		name     string
+		path     string
+		expected bool
+	}{
+		{
+			name:     "README.md is raw",
+			path:     "README.md",
+			expected: true,
+		},
+		{
+			name:     "nested README.md is raw",
+			path:     "folder/subfolder/README.md",
+			expected: true,
+		},
+		{
+			name:     "dashboard.json is not raw",
+			path:     "dashboard.json",
+			expected: false,
+		},
+		{
+			name:     "dashboard.yaml is not raw",
+			path:     "dashboard.yaml",
+			expected: false,
+		},
+		{
+			name:     "directory is not raw",
+			path:     "folder/",
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.expected, resources.IsRawFile(tt.path))
 		})
 	}
 }

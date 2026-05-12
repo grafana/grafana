@@ -142,6 +142,7 @@ type APIBuilder struct {
 	registry              prometheus.Registerer
 	quotaGetter           quotas.QuotaGetter
 	folderMetadataEnabled bool
+	maxFileSize           int64
 	folderAPIVersion      string
 }
 
@@ -240,6 +241,10 @@ func NewAPIBuilder(
 		quotaGetter:                         quotaGetter,
 		folderMetadataEnabled:               folderMetadataEnabled,
 		folderAPIVersion:                    folderAPIVersion,
+		// Default cap for the files API. Callers (e.g. RegisterAPIService)
+		// may overwrite b.maxFileSize after construction; any non-positive
+		// value (<=0) disables the cap.
+		maxFileSize: setting.ProvisioningMaxFileSizeDefault,
 	}
 
 	for _, builder := range extraBuilders {
@@ -315,6 +320,7 @@ func RegisterAPIService(
 	jobHistoryConfig := createJobHistoryConfigFromSettings(cfg)
 	folderMetadataEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata) //nolint:staticcheck
 	folderAPIVersion := cfg.ProvisioningFolderAPIVersion
+	maxFileSize := cfg.ProvisioningMaxFileSize
 	provisioningSec := cfg.SectionWithEnvOverrides("provisioning")
 
 	// allowed_git_urls contain an allowlist of Git URLs that are allowed to be used for Git repositories.
@@ -362,6 +368,7 @@ func RegisterAPIService(
 		return nil, err
 	}
 	builder.repoValidatorOpts = repoValidatorOpts
+	builder.maxFileSize = maxFileSize
 	apiregistration.RegisterAPI(builder)
 
 	// Register v1beta1
@@ -400,6 +407,7 @@ func RegisterAPIService(
 	}
 	v1beta1Builder.repoValidatorOpts = repoValidatorOpts
 
+	v1beta1Builder.maxFileSize = maxFileSize
 	apiregistration.RegisterAPI(v1beta1Builder)
 
 	// Return the preferred (v0alpha1) builder since it runs controllers/workers
@@ -804,7 +812,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	// level operations remain Admin-gated by authorizeRepositorySubresource.
 	filesAccess := auth.NewVerbAwareAccessChecker(b.accessWithViewer, b.accessWithEditor)
 
-	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = WithTimeout(NewFilesConnector(b, b.parsers, b.clients, filesAccess, b.folderMetadataEnabled, b.folderAPIVersion), 30*time.Second)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = WithTimeout(NewFilesConnector(b, b.parsers, b.clients, filesAccess, b.folderMetadataEnabled, b.folderAPIVersion, b.maxFileSize), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = WithTimeout(NewRefsConnector(b), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = WithTimeout(NewListConnector(b, b.resourceLister), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("history")] = WithTimeout(NewHistorySubresource(b), 30*time.Second)
