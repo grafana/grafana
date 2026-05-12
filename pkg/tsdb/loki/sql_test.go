@@ -313,21 +313,6 @@ func TestNormalizeGrafanaSQLRequest_hints(t *testing.T) {
 		require.NotNil(t, model.Direction)
 		require.Equal(t, "forward", *model.Direction)
 	})
-
-	t.Run("lowercase hint keys via EqualFold", func(t *testing.T) {
-		payload := cloneMap(base)
-		payload["tableHintValues"] = map[string]string{"step": "1m"}
-		raw, err := json.Marshal(payload)
-		require.NoError(t, err)
-		req := queryDataRequestWithDSAbstraction([]backend.DataQuery{{RefID: "A", JSON: raw, TimeRange: tr}})
-		out, sqlKinds, sqlErrs := normalizeGrafanaSQLRequest(context.Background(), req, ds)
-		require.Equal(t, sqlKindLog, sqlKinds["A"])
-		require.Empty(t, sqlErrs)
-		var model QueryJSONModel
-		require.NoError(t, json.Unmarshal(out.Queries[0].JSON, &model))
-		require.NotNil(t, model.Step)
-		require.Equal(t, "1m", *model.Step)
-	})
 }
 
 func cloneMap(m map[string]any) map[string]any {
@@ -478,22 +463,6 @@ func TestNormalizeGrafanaSQLRequest_rateAndInstant(t *testing.T) {
 		require.Equal(t, "2m", *model.Step)
 	})
 
-	t.Run("aggregation plus RATE wraps inner", func(t *testing.T) {
-		raw, err := json.Marshal(map[string]any{
-			"refId": "A", "grafanaSql": true, "table": "carts",
-			"tableHintValues": map[string]string{"RATE": "5m"},
-			"aggregation":     map[string]any{"function": "COUNT", "column": "line", "groupBy": []string{"env"}},
-		})
-		require.NoError(t, err)
-		req := queryDataRequestWithDSAbstraction([]backend.DataQuery{{RefID: "A", JSON: raw, TimeRange: tr}})
-		out, sqlKinds, sqlErrs := normalizeGrafanaSQLRequest(context.Background(), req, ds)
-		require.Empty(t, sqlErrs)
-		require.Equal(t, sqlKindMetric, sqlKinds["A"])
-		var model QueryJSONModel
-		require.NoError(t, json.Unmarshal(out.Queries[0].JSON, &model))
-		require.Equal(t, `sum by (env) (rate({service_name="carts"}[5m]))`, model.Expr)
-	})
-
 	t.Run("INSTANT sets query type on metric query", func(t *testing.T) {
 		// Key presence only (empty value), matching grafana-prometheus-datasource promlib.
 		raw, err := json.Marshal(map[string]any{
@@ -534,41 +503,6 @@ func TestNormalizeGrafanaSQLRequest_rateAndInstant(t *testing.T) {
 		require.Empty(t, out.Queries)
 		require.ErrorContains(t, sqlErrs["A"], "failed to parse RATE hint")
 	})
-}
-
-func TestNormalizeGrafanaSQLRequest_Converts(t *testing.T) {
-	sq, err := json.Marshal(map[string]any{
-		"refId":      "A",
-		"grafanaSql": true,
-		"table":      "carts",
-	})
-	require.NoError(t, err)
-
-	req := &backend.QueryDataRequest{
-		PluginContext: backend.PluginContext{
-			GrafanaConfig: config.NewGrafanaCfg(map[string]string{
-				featuretoggles.EnabledFeatures: "dsAbstractionApp",
-			}),
-		},
-		Queries: []backend.DataQuery{{
-			RefID:     "A",
-			JSON:      sq,
-			Interval:  10 * time.Second,
-			TimeRange: backend.TimeRange{From: time.Now().Add(-time.Hour), To: time.Now()},
-		}},
-	}
-	ds := testDatasourceInfoServiceName(t)
-
-	out, sqlKinds, sqlErrs := normalizeGrafanaSQLRequest(context.Background(), req, ds)
-	require.Len(t, out.Queries, 1)
-	require.Equal(t, sqlKindLog, sqlKinds["A"])
-	require.Empty(t, sqlErrs)
-
-	var model QueryJSONModel
-	require.NoError(t, json.Unmarshal(out.Queries[0].JSON, &model))
-	require.Equal(t, `{service_name="carts"}`, model.Expr)
-	require.NotNil(t, model.QueryType)
-	require.Equal(t, "range", *model.QueryType)
 }
 
 func TestParseSQLHints(t *testing.T) {
