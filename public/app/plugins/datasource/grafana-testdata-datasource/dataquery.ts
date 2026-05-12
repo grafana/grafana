@@ -36,7 +36,6 @@ export enum TestDataQueryType {
   USA = 'usa',
   VariablesQuery = 'variables-query',
   ErrorWithSource = 'error_with_source',
-  StatusCode = 'status_code',
 }
 
 export interface StreamingQuery {

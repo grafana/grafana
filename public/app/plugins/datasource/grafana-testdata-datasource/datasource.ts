@@ -136,9 +136,6 @@ export class TestDataDataSource
         case 'raw_frame':
           streams.push(this.rawFrameQuery(target, options));
           break;
-        case TestDataQueryType.StatusCode:
-          streams.push(this.statusCodeQuery(target));
-          break;
         case 'server_error_500':
           // this now has an option where it can return/throw an error from the frontend.
           // if it doesn't, send it to the backend where it might panic there :)
@@ -187,10 +184,7 @@ export class TestDataDataSource
       result.alias = this.templateSrv.replace(result.alias, scopedVars);
     }
     if (result.scenarioId) {
-      const replaced = this.templateSrv.replace(result.scenarioId, scopedVars);
-      if (isTestDataQueryType(replaced)) {
-        result.scenarioId = replaced;
-      }
+      result.scenarioId = this.templateSrv.replace(result.scenarioId, scopedVars) as TestDataQueryType;
     }
     if (result.stringInput) {
       result.stringInput = this.templateSrv.replace(result.stringInput, scopedVars);
@@ -468,38 +462,6 @@ export class TestDataDataSource
     return of({ data: [frame] }).pipe(delay(50));
   }
 
-  statusCodeQuery(target: TestDataDataQuery): Observable<DataQueryResponse> {
-    const code = target.stringInput ?? '200';
-    const makeFrame = (statusCode: number, message: string) =>
-      new MutableDataFrame({
-        refId: target.refId,
-        fields: [
-          { name: 'code', type: FieldType.number, values: [statusCode] },
-          { name: 'message', type: FieldType.string, values: [message] },
-        ],
-      });
-
-    return from(
-      this.getResource<{ code: number; message: string } | null>('status-code', { code })
-        .then((res) => {
-          // 204 No Content: Grafana's fetch resolves with null rather than throwing.
-          const statusCode = res?.code ?? Number(code);
-          const message = res?.message ?? 'No Content';
-          return { data: [makeFrame(statusCode, message)], state: LoadingState.Done };
-        })
-        .catch((err: unknown) => {
-          // Grafana fetch errors are not Error instances; extract status and message from the object.
-          const fetchErr = isFetchError(err) ? err : {};
-          const message = fetchErr.data?.message ?? fetchErr.statusText ?? 'Unknown error';
-          return {
-            data: [],
-            error: new Error(`${fetchErr.status ?? code}: ${message}`),
-            state: LoadingState.Error,
-          };
-        })
-    );
-  }
-
   serverErrorQuery(
     target: TestDataDataQuery,
     options: DataQueryRequest<TestDataDataQuery>
@@ -560,11 +522,3 @@ function runGrafanaLiveQuery(
   });
 }
 
-function isTestDataQueryType(value: string): value is TestDataQueryType {
-  const validValues: string[] = Object.values(TestDataQueryType);
-  return validValues.includes(value);
-}
-
-function isFetchError(err: unknown): err is { status?: number; statusText?: string; data?: { message?: string } } {
-  return typeof err === 'object' && err !== null;
-}

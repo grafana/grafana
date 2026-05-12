@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-
 	"github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource/kinds"
 )
 
@@ -211,13 +210,6 @@ Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means
 	s.registerScenario(&Scenario{
 		ID:   kinds.TestDataQueryTypeTrace,
 		Name: "Trace",
-	})
-
-	s.registerScenario(&Scenario{
-		ID:          kinds.TestDataQueryTypeStatusCode,
-		Name:        "Status Code",
-		StringInput: "200",
-		handler:     s.handleClientSideScenario,
 	})
 
 	s.registerScenario(&Scenario{
