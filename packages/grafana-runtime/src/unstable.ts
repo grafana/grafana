@@ -15,7 +15,7 @@ export { defineFeatureEvents } from './analyticsFramework/main';
 export type { EventProperty, Event } from './analyticsFramework/types';
 export { getPluginSettings } from './services/pluginSettings/getPluginSettings';
 export { updateAppPluginSettings } from './services/pluginSettings/updateAppPluginSettings';
-export { getDataSourceInstanceSettings, reloadDataSources } from './services/dataSource/settings';
+export { getDataSourceInstanceSettings, reloadDataSourceInstanceSettings } from './services/dataSource/settings';
 export { getDataSourceInstance, registerRuntimeDataSourceInstance } from './services/dataSource/dataSource';
 export {
   useDataSourceInstanceSettings,

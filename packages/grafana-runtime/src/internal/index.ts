@@ -76,7 +76,7 @@ export {
   type DataSourceInstanceSettingsPage,
   type GetDataSourceInstanceSettingsListOptions,
 } from '../services/dataSource/types';
-export { setDataSourceImporter } from '../services/dataSource/dataSource';
+export { setDataSourcePluginImporter } from '../services/dataSource/dataSource';
 export {
   useDataSourceInstanceSettingsList,
   type UseDataSourceInstanceSettingsListResult,

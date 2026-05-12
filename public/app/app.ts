@@ -46,7 +46,7 @@ import {
   getPanelPluginMetas,
   initDataSourceInstanceSettings,
   initOpenFeature,
-  setDataSourceImporter,
+  setDataSourcePluginImporter,
   setGetObservablePluginComponents,
   setGetObservablePluginLinks,
   setPanelDataErrorView,
@@ -262,7 +262,7 @@ export class GrafanaApp {
         { ...config.datasources, [expressionInstanceSettings.name]: expressionInstanceSettings },
         config.defaultDatasource
       );
-      setDataSourceImporter(pluginImporter.importDataSource.bind(pluginImporter));
+      setDataSourcePluginImporter(pluginImporter.importDataSource.bind(pluginImporter));
 
       // Init DataSourceSrv (legacy sync API; retained for backwards compatibility)
       const dataSourceSrv = new DatasourceSrv();
