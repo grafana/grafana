@@ -106,13 +106,15 @@ describe('Date time picker', () => {
       // open the time of day overlay
       await userEvent.click(screen.getByRole('combobox'));
 
-      let menu = screen.getByRole('listbox');
+      // let menu = screen.getByRole('listbox');
 
       // console.log(menu);
 
-      fireEvent.scroll(menu, { target: { scroll: 2000 } });
+      await userEvent.keyboard('{Delete}');
+      await userEvent.clear(screen.getByRole('combobox'));
+      await userEvent.type(screen.getByRole('combobox'), '23:00');
 
-      // screen.logTestingPlaygroundURL();
+      screen.logTestingPlaygroundURL();
 
       // change the hour
       await userEvent.click(screen.getByText('23:00'));
