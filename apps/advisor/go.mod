@@ -6,7 +6,7 @@ require (
 	github.com/Masterminds/semver/v3 v3.4.0
 	github.com/google/go-cmp v0.7.0
 	github.com/google/go-github/v82 v82.0.0
-	github.com/grafana/authlib/types v0.0.0-20260430103847-64b3d5d23ff6
+	github.com/grafana/authlib/types v0.0.0-20260511070317-cdec9a89f585
 	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
 	github.com/grafana/grafana-app-sdk v0.54.1
 	github.com/grafana/grafana-app-sdk/logging v0.54.1
@@ -176,7 +176,7 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/google/wire v0.7.0 // indirect
 	github.com/grafana/alerting v0.0.0-20260424175959-abd9b421dc12 // indirect
-	github.com/grafana/authlib v0.0.0-20260430103847-64b3d5d23ff6 // indirect
+	github.com/grafana/authlib v0.0.0-20260511070317-cdec9a89f585 // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
 	github.com/grafana/dskit v0.0.0-20260427162712-0457a92dacc3 // indirect
 	github.com/grafana/grafana-aws-sdk v1.4.4 // indirect
