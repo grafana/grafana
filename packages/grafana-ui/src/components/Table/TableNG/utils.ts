@@ -1213,3 +1213,8 @@ export const IS_SAFARI_26 = (() => {
   const minorVersion = +safariVersionMatch[2];
   return majorVersion === 26 && minorVersion <= 1;
 })();
+
+export const getStableRowKey = (rowIndex: number, frame?: DataFrame): string => {
+  const key = frame?.meta?.custom?.stableRowKey;
+  return key != null ? String(key) : String(rowIndex);
+};
