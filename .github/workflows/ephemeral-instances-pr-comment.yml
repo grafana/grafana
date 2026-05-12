@@ -16,63 +16,65 @@ jobs:
         (github.event.issue.pull_request && startsWith(github.event.comment.body, '/deploy-to-hg') && (github.event.comment.author_association == 'MEMBER' || github.event.comment.author_association == 'OWNER')) ||
         github.event.action == 'closed'
       )
-    runs-on:
-      labels: ubuntu-x64-xlarge
+    runs-on: ubuntu-latest
     continue-on-error: true
     permissions:
-      # For commenting.
-      pull-requests: write
-      # No contents permission is needed because we will impersonate an app to create the PR instead.
-      id-token: write # required for vault access
+      id-token: write # required for token broker
 
     steps:
-      - name: Get vault secrets
-        id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
-        with:
-          # Secrets placed in ci/repo/grafana/grafana/
-          repo_secrets: |
-            APP_ID=ephemeral-instances-bot:app-id
-            APP_PEM=ephemeral-instances-bot:app-private-key
-            GCOM_HOST=ephemeral-instances-bot:gcom-host
-            GCOM_TOKEN=ephemeral-instances-bot:gcom-token
-            REGISTRY=ephemeral-instances-bot:registry
-            GCP_SA_ACCOUNT_KEY_BASE64=ephemeral-instances-bot:sa-key
-          # Secrets placed in the ci/common/<path> path in Vault
-          common_secrets: |
-            DOCKERHUB_USERNAME=dockerhub:username
-            DOCKERHUB_PASSWORD=dockerhub:password
-
-      - name: Log in to Docker Hub to avoid unauthenticated image pull rate-limiting
-        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
-        with:
-          username: ${{ env.DOCKERHUB_USERNAME }}
-          password: ${{ env.DOCKERHUB_PASSWORD }}
-
-      - name: Generate a GitHub app installation token
+      - name: Get GitHub App token
         id: generate_token
-        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92 # v1.8.0
+        uses: grafana/shared-workflows/actions/create-github-app-token@ae92934a14a48b94494dbc06d74a81d47fe08a40 # create-github-app-token/v0.2.2
         with:
-          app_id: ${{ env.APP_ID }}
-          private_key: ${{ env.APP_PEM }}
+          github_app: ephemeral-instances-bot
 
-      - name: Checkout ephemeral instances repository
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
-        with:
-          repository: grafana/ephemeral-grafana-instances-github-action
-          token: ${{ steps.generate_token.outputs.token }}
-          ref: main
-          path: ephemeral
-          persist-credentials: false
+      - name: Dispatch (comment)
+        if: github.event_name == 'issue_comment'
+        env:
+          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
+          REPO_NAME: ${{ github.event.repository.name }}
+          REPO_ID: ${{ github.event.repository.id }}
+          REPO_OWNER: ${{ github.repository_owner }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+          PR_AUTHOR: ${{ github.event.issue.user.login }}
+          PR_HTML_URL: ${{ github.event.issue.html_url }}
+          TRIGGERING_ACTOR: ${{ github.triggering_actor }}
+        run: |
+          gh workflow run pr-comment-action.yml \
+            --repo grafana/ephemeral-grafana-instances-github-action \
+            --ref main \
+            -f mode=comment \
+            -f repo-name="$REPO_NAME" \
+            -f repo-id="$REPO_ID" \
+            -f repo-owner="$REPO_OWNER" \
+            -f pr-number="$PR_NUMBER" \
+            -f pr-author="$PR_AUTHOR" \
+            -f pr-html-url="$PR_HTML_URL" \
+            -f comment-body="$COMMENT_BODY" \
+            -f triggering-actor="$TRIGGERING_ACTOR"
 
-      - name: build and deploy ephemeral instance
-        uses: ./ephemeral
-        with:
-          github-token: ${{ steps.generate_token.outputs.token }}
-          gcom-host: ${{ env.GCOM_HOST }}
-          gcom-token: ${{ env.GCOM_TOKEN }}
-          registry: "${{ env.REGISTRY }}"
-          gcp-service-account-key: ${{ env.GCP_SA_ACCOUNT_KEY_BASE64 }}
-          ephemeral-org-id: ephemeral
-          oss-or-enterprise: oss
-          verbose: true
+      - name: Dispatch (pr-closed)
+        if: github.event_name == 'pull_request' && github.event.action == 'closed'
+        env:
+          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+          REPO_NAME: ${{ github.event.repository.name }}
+          REPO_ID: ${{ github.event.repository.id }}
+          REPO_OWNER: ${{ github.repository_owner }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          PR_HTML_URL: ${{ github.event.pull_request.html_url }}
+          TRIGGERING_ACTOR: ${{ github.triggering_actor }}
+        run: |
+          gh workflow run pr-comment-action.yml \
+            --repo grafana/ephemeral-grafana-instances-github-action \
+            --ref main \
+            -f mode=pr-closed \
+            -f repo-name="$REPO_NAME" \
+            -f repo-id="$REPO_ID" \
+            -f repo-owner="$REPO_OWNER" \
+            -f pr-number="$PR_NUMBER" \
+            -f pr-author="$PR_AUTHOR" \
+            -f pr-html-url="$PR_HTML_URL" \
+            -f comment-body="" \
+            -f triggering-actor="$TRIGGERING_ACTOR"
