@@ -39,7 +39,7 @@ require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/grafana/grafana/pkg/plugins v0.0.0-00010101000000-000000000000
 	github.com/quasilyte/go-ruleguard/dsl v0.3.23
-	github.com/urfave/cli/v3 v3.5.0
+	github.com/urfave/cli/v3 v3.8.0
 )
 
 require (

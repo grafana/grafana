@@ -17,6 +17,7 @@ export const Loggers = {
   'features.dashboards.genai': {},
   'features.query-history.local-storage': {},
   'core.crash-detection': {},
+  'extensions.auth-config.scim': { context: { module: 'SCIM' } },
 } satisfies Record<string, LoggerDefaults>;
 
 export type LoggerSource = keyof typeof Loggers;
