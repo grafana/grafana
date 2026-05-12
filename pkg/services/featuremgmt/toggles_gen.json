@@ -120,7 +120,8 @@
       "metadata": {
         "name": "alertRuleUseFiredAtForStartsAt",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-04-22T11:16:38Z"
+        "creationTimestamp": "2025-04-22T11:16:38Z",
+        "deletionTimestamp": "2026-05-12T10:50:19Z"
       },
       "spec": {
         "description": "Use FiredAt for StartsAt when sending alerts to Alertmaanger",

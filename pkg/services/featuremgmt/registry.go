@@ -1864,14 +1864,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "alertRuleUseFiredAtForStartsAt",
-			Description: "Use FiredAt for StartsAt when sending alerts to Alertmaanger",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaAlertingSquad,
-			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:         "alertingBulkActionsInUI",
 			Description:  "Enables the alerting bulk actions in the UI",
 			Generate:     Generate{LegacyFrontend: true},
