@@ -147,13 +147,16 @@ func (b *QueryAPIBuilder) QueryDatasources(w http.ResponseWriter, httpreq *http.
 	qdr, err := handleQuery(ctx, *raw, *b, httpreq, responder, connectLogger)
 
 	if err != nil {
-		if errors.Is(err, context.DeadlineExceeded) || errors.Is(ctx.Err(), context.DeadlineExceeded) {
+		ctxCanceled := errors.Is(err, context.Canceled) || errors.Is(ctx.Err(), context.Canceled)
+		ctxDeadline := errors.Is(err, context.DeadlineExceeded) || errors.Is(ctx.Err(), context.DeadlineExceeded)
+
+		if ctxDeadline {
 			connectLogger.Warn(
 				"query-service request deadline exceeded",
 				"ctx_err", ctx.Err(),
 				"cause", context.Cause(ctx),
 			)
-		} else if errors.Is(err, context.Canceled) || errors.Is(ctx.Err(), context.Canceled) {
+		} else if ctxCanceled {
 			connectLogger.Warn(
 				"query-service request cancelled",
 				"ctx_err", ctx.Err(),
@@ -189,7 +192,7 @@ func (b *QueryAPIBuilder) QueryDatasources(w http.ResponseWriter, httpreq *http.
 			} else if strings.Contains(err.Error(), "expression request error") {
 				connectLogger.Error("Error calling TransformData in an expression", "err", err)
 				errorDataResponse = backend.ErrDataResponseWithSource(backend.StatusBadRequest, backend.ErrorSourceDownstream, err.Error())
-			} else if errors.Is(err, context.Canceled) || errors.Is(ctx.Err(), context.Canceled) {
+			} else if ctxCanceled {
 				// Client-initiated cancellation — never the apiserver's fault.
 				// Tag downstream + status 499 so the response body stays a QueryDataResponse and
 				// errhttp.Write doesn't fall back to errutil.Internal (500).
