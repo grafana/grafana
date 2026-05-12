@@ -1,3 +1,4 @@
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useCallback, useMemo } from 'react';
 
@@ -147,8 +148,10 @@ export function BrowseView({
     [selectedItems, childrenByParentUID]
   );
 
+  const provisioningReadmesEnabled = useBooleanFlagValue('provisioning.readmes', false);
+
   const flatTreeWithReadme = useMemo(() => {
-    if (!config.featureToggles.provisioningReadmes || !isProvisionedFolder || !folderUID || flatTree.length === 0) {
+    if (!provisioningReadmesEnabled || !isProvisionedFolder || !folderUID || flatTree.length === 0) {
       return flatTree;
     }
 
@@ -160,7 +163,7 @@ export function BrowseView({
         isOpen: false,
       },
     ];
-  }, [flatTree, isProvisionedFolder, folderUID]);
+  }, [flatTree, isProvisionedFolder, folderUID, provisioningReadmesEnabled]);
 
   const isItemLoaded = useCallback(
     (itemIndex: number) => {

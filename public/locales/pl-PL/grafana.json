@@ -1163,6 +1163,9 @@
         "rule-viewer-section-extension": "Nie udało się wczytać sekcji wzbogacania przeglądarki reguł"
       }
     },
+    "entities": {
+      "group": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "Nie udało się zaktualizować konfiguracji:",
       "title-something-went-wrong": "Coś poszło nie tak"
@@ -1171,6 +1174,9 @@
       "content-show-all-errors": "Pokaż wszystkie błędy"
     },
     "errors": {
+      "api-machinery": {
+        "with-causes": ""
+      },
       "failedWith": "{{-config}} – niepowodzenie ze statusem {{status}}: {{-message}}"
     },
     "evaluate-every-validation-options": {
@@ -3212,9 +3218,7 @@
       "deleting": "Usuwam",
       "text-federated": "Federacja",
       "text-provisioned": "Po aprowizacji",
-      "ungrouped": "Niezgrupowane",
-      "ungrouped-suffix": "{{ruleName}} (niezgrupowane)",
-      "unknown-rule": "Nieznana reguła"
+      "ungrouped": "Niezgrupowane"
     },
     "saved-searches": {
       "actions-aria-label": "Działania",
@@ -10966,6 +10970,11 @@
     "name-line-width": "Szerokość linii",
     "name-stacking": "Układanie"
   },
+  "home": {
+    "home-page": {
+      "placeholder": ""
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "Ładowanie",
@@ -16207,7 +16216,9 @@
       "description": {
         "group-by-field-value": "Grupuj dane według wartości pola i twórz tabele zagnieżdżone z pogrupowanymi danymi."
       },
+      "description-expand-nested-rows": "",
       "description-show-field-names": "Jeśli ta opcja jest włączona, w tabelach zagnieżdżonych nazwy pól będą wyświetlać się jako nagłówki tabeli",
+      "label-expand-nested-rows-by-default": "",
       "label-show-field-names-in-nested-tables": "Pokaż nazwy pól w tabelach zagnieżdżonych",
       "name": {
         "group-to-nested-tables": "Grupuj w tabelach zagnieżdżonych"

@@ -17,7 +17,6 @@ import (
 	alertingmodels "github.com/grafana/alerting/models"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/merge"
 )
 
 // swagger:route POST /alertmanager/{DatasourceUID}/config/api/v1/alerts alertmanager RoutePostAlertingConfig
@@ -722,22 +721,6 @@ type PostableUserConfig struct {
 	ManagedRoutes          ManagedRoutes             `yaml:"managed_routes,omitempty" json:"managed_routes,omitempty"`                     // TODO: Move to ConfigRevision?
 	ManagedInhibitionRules ManagedInhibitionRules    `yaml:"managed_inhibition_rules,omitempty" json:"managed_inhibition_rules,omitempty"` // TODO: Move to ConfigRevision?
 	amSimple               map[string]interface{}    `yaml:"-" json:"-"`
-}
-
-func (c *PostableUserConfig) GetMergedAlertmanagerConfig() (merge.MergeResult, error) {
-	if len(c.ExtraConfigs) == 0 {
-		return merge.MergeResult{Config: c.AlertmanagerConfig}, nil
-	}
-	// support only one config for now
-	mimirCfg := c.ExtraConfigs[0]
-	if err := mimirCfg.Validate(); err != nil {
-		return merge.MergeResult{}, fmt.Errorf("invalid extra configuration: %w", err)
-	}
-	mcfg, err := mimirCfg.GetAlertmanagerConfig()
-	if err != nil {
-		return merge.MergeResult{}, fmt.Errorf("failed to get mimir alertmanager config: %w", err)
-	}
-	return merge.GetMergedAlertmanagerConfig(c.AlertmanagerConfig, mcfg, mimirCfg.Identifier, mimirCfg.MergeMatchers)
 }
 
 // GetMergedTemplateDefinitions converts the given PostableUserConfig's TemplateFiles to a slice of Templates.

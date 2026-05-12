@@ -692,22 +692,39 @@ type Cfg struct {
 	SearchInjectFailuresPercent                int
 	EnableSearch                               bool
 	EnableSearchClient                         bool
-	// Vector storage (separate pgvector database)
-	EnableVectorBackend               bool
-	VectorDBHost                      string
-	VectorDBPort                      string
-	VectorDBName                      string
-	VectorDBUser                      string
-	VectorDBPassword                  string
-	VectorDBSSLMode                   string
-	VectorPromotionThreshold          int           // row count per tenant to trigger leaf promotion
-	VectorPromoterInterval            time.Duration // promoter tick interval; 0 disables
-	OverridesFilePath                 string
-	OverridesReloadInterval           time.Duration
-	EnforcedQuotaResources            []string
-	QuotasErrorMessageSupportInfo     string
+
+	// Vector storage
+	EnableVectorBackend      bool
+	VectorDBHost             string
+	VectorDBPort             string
+	VectorDBName             string
+	VectorDBUser             string
+	VectorDBPassword         string
+	VectorDBSSLMode          string
+	VectorIndexingEnabled    bool          // run the embedding backfiller and reconciler
+	VectorReconcilerInterval time.Duration // reconciler tick interval; default 60s
+	VectorPromotionThreshold int           // row count per tenant to trigger promotion
+	VectorPromoterInterval   time.Duration // promoter tick interval; 0 disables
+
+	// Embedding provider used by the VectorSearch RPC. "" = disabled.
+	EmbeddingProvider string // "vertex" | "bedrock" | ""
+	VertexProjectID   string
+	VertexLocation    string // default "us-central1"
+	VertexModel       string // default "gemini-embedding-001"
+	VertexDimensions  int    // default 768
+	BedrockRegion     string // default "us-east-1"
+	BedrockModel      string // default "cohere.embed-v4:0"
+	BedrockDimensions int    // default 1024
+
+	// Overrides/Quotas
+	OverridesFilePath             string
+	OverridesReloadInterval       time.Duration
+	EnforcedQuotaResources        []string
+	QuotasErrorMessageSupportInfo string
+
 	EnableSQLKVBackend                bool
 	EnableSQLKVCompatibilityMode      bool
+	EnableKVLeases                    bool
 	EnableGarbageCollection           bool
 	GarbageCollectionDryRun           bool
 	GarbageCollectionInterval         time.Duration

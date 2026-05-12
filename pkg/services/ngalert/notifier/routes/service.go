@@ -274,7 +274,7 @@ func (nps *Service) UpdateManagedRoute(ctx context.Context, orgID int64, name st
 	}
 	updated.Provenance = p
 
-	_, err = revision.Config.GetMergedAlertmanagerConfig()
+	_, err = merge.MergeExtraConfig(ctx, revision.Config)
 	if err != nil {
 		if errors.Is(err, merge.ErrSubtreeMatchersConflict) {
 			// TODO temporarily get the conflicting matchers
@@ -368,7 +368,7 @@ func (nps *Service) DeleteManagedRoute(ctx context.Context, orgID int64, name st
 		revision.DeleteManagedRoute(name)
 	}
 
-	_, err = revision.Config.GetMergedAlertmanagerConfig()
+	_, err = merge.MergeExtraConfig(ctx, revision.Config)
 	if err != nil {
 		return fmt.Errorf("new routing tree is not compatible with extra configuration: %w", err)
 	}
@@ -515,5 +515,6 @@ func (nps *Service) includeImported() bool {
 		return false
 	}
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	return nps.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI)
+	return nps.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingMultiplePolicies) &&
+		nps.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI)
 }

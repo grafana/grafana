@@ -1148,6 +1148,9 @@
         "rule-viewer-section-extension": "규칙 뷰어 보강 기능 섹션을 불러오지 못했습니다"
       }
     },
+    "entities": {
+      "group": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "구성 업데이트 실패:",
       "title-something-went-wrong": "오류 발생"
@@ -1156,6 +1159,9 @@
       "content-show-all-errors": "모든 오류 표시"
     },
     "errors": {
+      "api-machinery": {
+        "with-causes": ""
+      },
       "failedWith": "{{status}}(으)로 인해 {{-config}} 실패: {{-message}}"
     },
     "evaluate-every-validation-options": {
@@ -3155,9 +3161,7 @@
       "deleting": "삭제 중",
       "text-federated": "연합됨",
       "text-provisioned": "프로비저닝됨",
-      "ungrouped": "그룹 미지정",
-      "ungrouped-suffix": "{{ruleName}} (그룹 미지정)",
-      "unknown-rule": "알 수 없는 규칙"
+      "ungrouped": "그룹 미지정"
     },
     "saved-searches": {
       "actions-aria-label": "작업",
@@ -10792,6 +10796,11 @@
     "name-line-width": "선 너비",
     "name-stacking": "스태킹"
   },
+  "home": {
+    "home-page": {
+      "placeholder": ""
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "로딩 중",
@@ -15928,7 +15937,9 @@
       "description": {
         "group-by-field-value": "필드 값을 기준으로 데이터를 그룹화하고 그룹화된 데이터로 중첩 테이블을 생성합니다."
       },
+      "description-expand-nested-rows": "",
       "description-show-field-names": "활성화하면 중첩 테이블의 필드 이름이 테이블 헤더에 표시됩니다",
+      "label-expand-nested-rows-by-default": "",
       "label-show-field-names-in-nested-tables": "중첩된 테이블에 필드 이름 표시",
       "name": {
         "group-to-nested-tables": "중첩 테이블로 그룹화"

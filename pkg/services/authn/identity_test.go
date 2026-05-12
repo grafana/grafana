@@ -138,3 +138,25 @@ func TestIdentity_GetExtra_ServiceIdentityKey(t *testing.T) {
 	require.Contains(t, extra, string(authnlib.ServiceIdentityKey))
 	assert.Equal(t, []string{"test-service"}, extra[string(authnlib.ServiceIdentityKey)])
 }
+
+// Pins: Groups = team UIDs, ExternalGroups = IdP groups, both survive conversions.
+func TestIdentity_GroupsAndExternalGroupsContract(t *testing.T) {
+	id := &Identity{
+		ID:             "1",
+		Type:           types.TypeUser,
+		Groups:         []string{"team-uid-1", "team-uid-2"},
+		ExternalGroups: []string{"ldap-admins", "ldap-devs"},
+	}
+
+	assert.Equal(t, []string{"team-uid-1", "team-uid-2"}, id.GetGroups())
+	assert.Equal(t, []string{"ldap-admins", "ldap-devs"}, id.GetExternalGroups())
+
+	u := id.SignedInUser()
+	assert.Equal(t, []string{"team-uid-1", "team-uid-2"}, u.TeamUIDs)
+	assert.Equal(t, []string{"team-uid-1", "team-uid-2"}, u.GetGroups())
+	assert.Equal(t, []string{"ldap-admins", "ldap-devs"}, u.ExternalGroups)
+	assert.Equal(t, []string{"ldap-admins", "ldap-devs"}, u.GetExternalGroups())
+
+	ext := id.ExternalUserInfo()
+	assert.Equal(t, []string{"ldap-admins", "ldap-devs"}, ext.Groups)
+}
