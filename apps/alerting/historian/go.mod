@@ -6,8 +6,8 @@ require (
 	github.com/go-kit/log v0.2.1
 	github.com/grafana/alerting v0.0.0-20260227100721-b07ef9eb845a
 	github.com/grafana/dskit v0.0.0-20260108123158-1a1acfb6ef2e
-	github.com/grafana/grafana-app-sdk v0.54.1
-	github.com/grafana/grafana-app-sdk/logging v0.54.1
+	github.com/grafana/grafana-app-sdk v0.55.0
+	github.com/grafana/grafana-app-sdk/logging v0.55.0
 	github.com/prometheus/client_golang v1.23.2
 	github.com/spf13/pflag v1.0.10
 	github.com/stretchr/testify v1.11.1
@@ -168,7 +168,7 @@ require (
 	gomodules.xyz/jsonpatch/v2 v2.5.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260414002931-afd174a4e478 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260414002931-afd174a4e478 // indirect
-	google.golang.org/grpc v1.80.0 // indirect
+	google.golang.org/grpc v1.81.0 // indirect
 	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
