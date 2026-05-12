@@ -420,4 +420,9 @@ describe('CanvasPanel', () => {
     expect(buttons[9]).toHaveTextContent('Fixed Relative Path:');
     expect(buttons[11]).toHaveTextContent('Fixed Absolute URL:');
   });
+
+  it('unmounts without throwing', () => {
+    const { unmount } = setUp();
+    expect(() => unmount()).not.toThrow();
+  });
 });
