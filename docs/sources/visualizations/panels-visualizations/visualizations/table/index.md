@@ -65,11 +65,6 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/time-series/#graph-styles-options
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/time-series/#graph-styles-options
-  group-to-nested-tables-transformation:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/#group-to-nested-tables
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/transform-data/#group-to-nested-tables
 ---
 
 # Table
