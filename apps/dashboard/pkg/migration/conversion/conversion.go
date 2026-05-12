@@ -56,6 +56,24 @@ func setConversionStatus(in DashboardConversion, out DashboardConversion, err er
 	out.SetConversionStatus(storedVersion, err != nil, errMsg, source)
 }
 
+// EnsureStoredVersion fills status.conversion.storedVersion on the given dashboard
+// from the supplied fallback version when it is missing or empty.
+//
+// Same-version reads (e.g., a v2beta1 GET against bytes stored as v2beta1) bypass
+// every external-to-external AddConversionFunc, so normalizeConversion never runs
+// and any stale storedVersion already encoded in the stored bytes leaks through.
+// Read-path DTO builders use this helper to ground storedVersion in the actual
+// decoded GVK they are about to return.
+func EnsureStoredVersion(d DashboardConversion, fallback string) {
+	if d == nil || fallback == "" {
+		return
+	}
+	if d.GetStoredVersion() != "" {
+		return
+	}
+	d.SetConversionStatus(fallback, false, nil, nil)
+}
+
 // setMetadata copies ObjectMeta and Kind from input to output, and sets output's APIVersion.
 func setMetadata(in, out DashboardConversion) {
 	out.SetObjectMeta(in.GetObjectMeta())
