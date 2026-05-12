@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { noop } from 'lodash';
 
 import { CollapseToggle } from './CollapseToggle';
@@ -17,10 +18,10 @@ describe('TestToggle', () => {
     expect(screen.getByRole('button', { expanded: false })).toBeInTheDocument();
   });
 
-  it('should call onToggle', () => {
+  it('should call onToggle', async () => {
     const onToggle = jest.fn();
     render(<CollapseToggle isCollapsed={true} text="Hello, world" onToggle={onToggle} />);
-    screen.getByRole('button').click();
+    await userEvent.click(screen.getByRole('button'));
 
     expect(onToggle).toHaveBeenCalledWith(false);
     // it should also not have any impact on the actual expanded state since the component does not track its own state

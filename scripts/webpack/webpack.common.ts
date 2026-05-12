@@ -45,7 +45,6 @@ export default (env: Env = {}): Configuration => ({
     publicPath: 'public/build/',
   },
   resolve: {
-    symlinks: false,
     conditionNames: ['@grafana-app/source', '...'],
     extensions: ['.ts', '.tsx', '.es6', '.js', '.json', '.svg'],
     alias: {
@@ -60,16 +59,7 @@ export default (env: Env = {}): Configuration => ({
         '@locker/near-membrane-dom/custom-devtools-formatter.js'
       ),
     },
-    modules: [
-      // default value
-      'node_modules',
-
-      // required for grafana enterprise resolution
-      path.resolve('node_modules'),
-
-      // required to for 'bare' imports (like 'app/core/utils' etc)
-      path.resolve('public'),
-    ],
+    modules: ['node_modules', path.resolve(grafanaRoot, 'node_modules'), path.resolve(grafanaRoot, 'public')],
     fallback: {
       buffer: false,
       fs: false,

@@ -84,9 +84,9 @@
     "typescript": "6.0.2"
   },
   "peerDependencies": {
-    "@grafana/data": ">=11.6 <= 12.x",
-    "@grafana/runtime": ">=11.6 <= 12.x",
-    "@grafana/ui": ">=11.6 <= 12.x",
+    "@grafana/data": ">=11.6",
+    "@grafana/runtime": ">=11.6",
+    "@grafana/ui": ">=11.6",
     "msw": "^2.0.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0"

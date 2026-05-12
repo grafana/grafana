@@ -21,7 +21,7 @@ module.exports = (path, options) => {
       //
       // How to test if this is needed anymore:
       // - comment it out
-      // - run `yarn test`
+      // - run `pnpm test`
       // - if all the tests pass, it means the workaround is no longer needed
       if (pkg.name === 'uuid' || pkg.name === 'react-colorful') {
         delete pkg['exports'];

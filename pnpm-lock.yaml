@@ -1368,17 +1368,17 @@ importers:
         specifier: workspace:*
         version: link:../grafana-api-clients
       '@grafana/data':
-        specifier: '>=11.6 <= 12.x'
-        version: 12.4.3(eslint@9.32.0(jiti@2.7.0))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@6.0.2)
+        specifier: '>=11.6'
+        version: 13.0.1(eslint@9.32.0(jiti@2.7.0))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@6.0.2)
       '@grafana/i18n':
         specifier: workspace:*
         version: link:../grafana-i18n
       '@grafana/runtime':
-        specifier: '>=11.6 <= 12.x'
-        version: 12.4.3(@openfeature/web-sdk@1.8.0(@openfeature/core@1.10.0))(@react-spectrum/provider@3.11.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@types/react@18.3.18)(eslint@9.32.0(jiti@2.7.0))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@6.0.2)
+        specifier: '>=11.6'
+        version: 13.0.1(@react-spectrum/provider@3.11.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@types/react@18.3.18)(eslint@9.32.0(jiti@2.7.0))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@6.0.2)
       '@grafana/ui':
-        specifier: '>=11.6 <= 12.x'
-        version: 12.4.3(@react-spectrum/provider@3.11.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@types/react@18.3.18)(eslint@9.32.0(jiti@2.7.0))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@6.0.2)
+        specifier: '>=11.6'
+        version: 13.0.1(@react-spectrum/provider@3.11.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@types/react@18.3.18)(eslint@9.32.0(jiti@2.7.0))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@6.0.2)
       '@reduxjs/toolkit':
         specifier: 2.10.1
         version: 2.10.1(react-redux@9.2.0(@types/react@18.3.18)(react@18.3.1)(redux@5.0.1))(react@18.3.1)
@@ -1456,8 +1456,8 @@ importers:
   packages/grafana-api-clients:
     dependencies:
       '@grafana/runtime':
-        specifier: '>=11.6 <= 12.x'
-        version: 12.4.3(@openfeature/web-sdk@1.8.0(@openfeature/core@1.10.0))(@react-spectrum/provider@3.11.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@types/react@18.3.18)(eslint@9.32.0(jiti@2.7.0))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@6.0.2)
+        specifier: '>=11.6'
+        version: 13.0.1(@react-spectrum/provider@3.11.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@types/react@18.3.18)(eslint@9.32.0(jiti@2.7.0))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@6.0.2)
       '@reduxjs/toolkit':
         specifier: ^2.10.0
         version: 2.10.1(react-redux@9.2.0(@types/react@18.3.18)(react@18.3.1)(redux@5.0.1))(react@18.3.1)
@@ -5554,12 +5554,6 @@ packages:
       react: '>=16.8.0'
       react-dom: '>=16.8.0'
 
-  '@floating-ui/react@0.27.16':
-    resolution: {integrity: sha512-9O8N4SeG2z++TSM8QA/KTeKFBVCNEz/AGS7gWPJf6KFRzmRWixFRnCnkPHRDwSVZW6QPDO6uT0P2SpWNKCc9/g==}
-    peerDependencies:
-      react: '>=17.0.0'
-      react-dom: '>=17.0.0'
-
   '@floating-ui/react@0.27.19':
     resolution: {integrity: sha512-31B8h5mm8YxotlE7/AU/PhNAl8eWxAmjL/v2QOxroDNkTFLk3Uu82u63N3b6TXa4EGJeeZLVcd/9AlNlVqzeog==}
     peerDependencies:
@@ -5611,20 +5605,11 @@ packages:
   '@grafana/azure-sdk@0.1.0':
     resolution: {integrity: sha512-+pXmnF1cdKSs5qzhM5yJk7QPktyhHrAWK6gN/U3MVYmpHCXVGEK3Cph6fD78hHwKbSjgw2I+vxPEyAIO3ybzDw==}
 
-  '@grafana/data@12.4.3':
-    resolution: {integrity: sha512-XEZcD95AFJhWKKcPuinVkQFTkYPmlrFJv0jjsl8O23i0Bvdz27s8gvUGIU8uq1ugx/r3kxNDYCnftJLal8IKYA==}
-    peerDependencies:
-      react: ^18.0.0
-      react-dom: ^18.0.0
-
   '@grafana/data@13.0.1':
     resolution: {integrity: sha512-0+7HyMtnHAOYlU6/KxQceUtu0t3wbKw2xt5Z4//OV+qHAm0f4uEA8IB0SGE/k7OrPKcAJdnFwBLkDg21k5hiHQ==}
     peerDependencies:
       react: ^18.0.0
       react-dom: ^18.0.0
-
-  '@grafana/e2e-selectors@12.4.3':
-    resolution: {integrity: sha512-YCNFnWT+l34mgR2v9eujGwDKRZ9Q6hfA++WcqblLHnZ4Vbmy5Na6C0NJobzsyzNAczr/NbUH9XW+0DhVeKYhBg==}
 
   '@grafana/e2e-selectors@13.0.1':
     resolution: {integrity: sha512-WVtVU1m5VeLEe6VdLVwbKxlaKVgLYc/KOwGCwrAKrrsMtnDQVFWioAID+9rgP48KJDRHurSW7/N4kGjZ/bKUeg==}
@@ -5642,17 +5627,11 @@ packages:
       eslint-plugin-react-hooks: '>=4.6.0'
       typescript: '>=5.2.0'
 
-  '@grafana/faro-core@1.19.0':
-    resolution: {integrity: sha512-Juo5G/aviSh3XqSGGr6D61noAC8sb+oCawBsv545ILEeOQdINyzRaoQdRpnXEY3DLS9LYtL0PYhvHZiP3rlscQ==}
-
   '@grafana/faro-core@2.6.3':
     resolution: {integrity: sha512-PBzH0cYtHgZOeDMCKddIFTL+u9KcT4zCZq2Lc4XnlE0iixDh61etfExror3TbPHeRyTt/aDwB0loneA1S/q1Cg==}
 
   '@grafana/faro-instrumentation-replay@2.6.3':
     resolution: {integrity: sha512-uueifJtJccdeap8fw8AKpaZ+y6n+BHOiWXKe6GPRp7yUH/ZFKfeGJoA8c/z3h130rryV84aXfe1lIujOiGU9Lw==}
-
-  '@grafana/faro-web-sdk@1.19.0':
-    resolution: {integrity: sha512-3u74mV2uBWqoF6WBx71p0vtkaS1Z0QbGoZ8tuX5yiYnIybqnhKdGkApFUi7q5se0tMPIeJdMVoRFdLU8f9hfAw==}
 
   '@grafana/faro-web-sdk@2.6.3':
     resolution: {integrity: sha512-cMEjcFOMT2incLamq2q0jgMXivSWp1mQknT24JYbL1eGnugIudNHYa35waFuW8+B+DJfWx9Hsv1N0o9gsO9QmA==}
@@ -5667,11 +5646,6 @@ packages:
       '@grafana/ui': '>=10.4.0'
       react: ^18.2.0
       react-dom: ^18.2.0
-
-  '@grafana/i18n@12.4.3':
-    resolution: {integrity: sha512-ECdz96IEk04rOZLMZSXTa6+6z+fgaIk9oHoyZC68Wzq1pkfQajdi7bnDCZ3Zsz5ikq1gEqIJpLgdL69Nd9lmdg==}
-    peerDependencies:
-      react: '>=18'
 
   '@grafana/i18n@13.0.1':
     resolution: {integrity: sha512-XYJO0efh0comm2JhjZCfKv8vQB1BQstfXZkI0CVXtURngpimYHB4TFmc3CikwXsH/wQcf5KQ5yHUnk/3WLhyEg==}
@@ -5749,12 +5723,6 @@ packages:
       '@grafana/assistant':
         optional: true
 
-  '@grafana/runtime@12.4.3':
-    resolution: {integrity: sha512-ENegem1AeWWAUDQs648GxoOp7XybZEh33gT1HWjKtEeJvs19MWXOISZA2Ju6PwQgEe/vWxWyn/xs4auP8HJj0w==}
-    peerDependencies:
-      react: ^18.0.0
-      react-dom: ^18.0.0
-
   '@grafana/runtime@13.0.1':
     resolution: {integrity: sha512-eyDnFnCuSlslJUFXvPGdribJ3UukV4eQAT/j1QQO1umqkVgq9XxLy9oM/SSoAzay7oOAUz+h2oBAiIS7FKN0gw==}
     peerDependencies:
@@ -5788,20 +5756,11 @@ packages:
       react-router-dom: ^6.28.0
       rxjs: ^7.8.1
 
-  '@grafana/schema@12.4.3':
-    resolution: {integrity: sha512-fFoYfBcCTDWliz37JsKf8GwqF5Ju64UJk9DsDBN0T5S7LJoKiIOEe5Gl3vJsmNgcYJhyKRedX/2RPYy+Cyo4LQ==}
-
   '@grafana/schema@13.0.1':
     resolution: {integrity: sha512-1fvrcKniQWBIGK2WGjNORqTR95Y/DiKskewSAzCJ6j8uyaE7vwfcj3/Ec6KwwIcgiQvw4okQ0KJt07t/lI7cTw==}
 
   '@grafana/tsconfig@2.1.0':
     resolution: {integrity: sha512-rJxzlVeKJNAiu1owcC8GcLpzwBg+B2TlkU3egDpb7z+3PZjQQwevrksqNvFxezBB9wMJSv49Qgve3KPT56e3yQ==}
-
-  '@grafana/ui@12.4.3':
-    resolution: {integrity: sha512-nWg+ezJ6KG+gAfBXXwsvBeWSpGLFcQc+orezEnw+Ip9RhwA+eZAmhoowfAz5W8MxGyMrcjAxn5RmhHp/ZBrmTg==}
-    peerDependencies:
-      react: ^18.0.0
-      react-dom: ^18.0.0
 
   '@grafana/ui@13.0.1':
     resolution: {integrity: sha512-WtyrReapvPtbN/j81Tciq6ezVJAdFf1cDN81S50dwrhwq/xlTPatdzw8QO46YGK6bj8Obw67GT/9MORPnVbBNA==}
@@ -6831,10 +6790,6 @@ packages:
     peerDependencies:
       '@openfeature/core': ^1.10.0
 
-  '@opentelemetry/api-logs@0.202.0':
-    resolution: {integrity: sha512-fTBjMqKCfotFWfLzaKyhjLvyEyq5vDKTTFfBmx21btv3gvy8Lq6N5Dh2OzqeuN4DjtpSvNT1uNVfg08eD2Rfxw==}
-    engines: {node: '>=8.0.0'}
-
   '@opentelemetry/api-logs@0.217.0':
     resolution: {integrity: sha512-Cdq0jW2lknrNfrAm92MyEAvpe2cRsKjdnQLHUL6xRA4IVUnsWx6P65E7NcUO0Y+L4w1Aee5iV8FvjSwd+lrs9A==}
     engines: {node: '>=8.0.0'}
@@ -6855,12 +6810,6 @@ packages:
     engines: {node: '>=8.5.0'}
     peerDependencies:
       '@opentelemetry/api': ^1.0.2
-
-  '@opentelemetry/core@2.0.1':
-    resolution: {integrity: sha512-MaZk9SJIDgo1peKevlbhP6+IwIiNPNmswNL4AF0WaQJLbHXjr9SrZMgS12+iqr9ToV4ZVosCcc0f8Rg67LXjxw==}
-    engines: {node: ^18.19.0 || >=20.6.0}
-    peerDependencies:
-      '@opentelemetry/api': '>=1.0.0 <1.10.0'
 
   '@opentelemetry/core@2.7.1':
     resolution: {integrity: sha512-QAqIj32AtK6+pEVNG7EOVxHdE06RP+FM5qpiEJ4RtDcFIqKUZHYhl7/7UY5efhwmwNAg7j8QbJVBLxMerc0+gw==}
@@ -6905,12 +6854,6 @@ packages:
     peerDependencies:
       '@opentelemetry/api': ^1.3.0
 
-  '@opentelemetry/otlp-transformer@0.202.0':
-    resolution: {integrity: sha512-5XO77QFzs9WkexvJQL9ksxL8oVFb/dfi9NWQSq7Sv0Efr9x3N+nb1iklP1TeVgxqJ7m1xWiC/Uv3wupiQGevMw==}
-    engines: {node: ^18.19.0 || >=20.6.0}
-    peerDependencies:
-      '@opentelemetry/api': ^1.3.0
-
   '@opentelemetry/otlp-transformer@0.217.0':
     resolution: {integrity: sha512-MKK8UHKFUOGAvbZRWh90MhwHG+Fxm6OROBdjKPCF+HQobjuJ/Kuf8Chs8CR45X1aqotxrMj7OxTdsXe8sXuGVA==}
     engines: {node: ^18.19.0 || >=20.6.0}
@@ -6923,23 +6866,11 @@ packages:
     peerDependencies:
       '@opentelemetry/api': ^1.0.2
 
-  '@opentelemetry/resources@2.0.1':
-    resolution: {integrity: sha512-dZOB3R6zvBwDKnHDTB4X1xtMArB/d324VsbiPkX/Yu0Q8T2xceRthoIVFhJdvgVM2QhGVUyX9tzwiNxGtoBJUw==}
-    engines: {node: ^18.19.0 || >=20.6.0}
-    peerDependencies:
-      '@opentelemetry/api': '>=1.3.0 <1.10.0'
-
   '@opentelemetry/resources@2.7.1':
     resolution: {integrity: sha512-DeT6KKolmC4e/dRQvMQ/RwlnzhaqeiFOXY5ngoOPJ07GgVVKxZOg9EcrNZb5aTzUn+iCrJldAgOfQm1O/QfPAQ==}
     engines: {node: ^18.19.0 || >=20.6.0}
     peerDependencies:
       '@opentelemetry/api': '>=1.3.0 <1.10.0'
-
-  '@opentelemetry/sdk-logs@0.202.0':
-    resolution: {integrity: sha512-pv8QiQLQzk4X909YKm0lnW4hpuQg4zHwJ4XBd5bZiXcd9urvrJNoNVKnxGHPiDVX/GiLFvr5DMYsDBQbZCypRQ==}
-    engines: {node: ^18.19.0 || >=20.6.0}
-    peerDependencies:
-      '@opentelemetry/api': '>=1.4.0 <1.10.0'
 
   '@opentelemetry/sdk-logs@0.217.0':
     resolution: {integrity: sha512-BB+PcHItcZDL63dPMW+mJvwN9rk37wuIDjRxbVlg6pPDvDR/7GL7UJHbGsllgoggOoTimsKgENaWPoGch/oE1A==}
@@ -6954,12 +6885,6 @@ packages:
     peerDependencies:
       '@opentelemetry/api': ^1.0.2
 
-  '@opentelemetry/sdk-metrics@2.0.1':
-    resolution: {integrity: sha512-wf8OaJoSnujMAHWR3g+/hGvNcsC16rf9s1So4JlMiFaFHiE4HpIA3oUh+uWZQ7CNuK8gVW/pQSkgoa5HkkOl0g==}
-    engines: {node: ^18.19.0 || >=20.6.0}
-    peerDependencies:
-      '@opentelemetry/api': '>=1.9.0 <1.10.0'
-
   '@opentelemetry/sdk-metrics@2.7.1':
     resolution: {integrity: sha512-MpDJdkiFDs3Pm1RHO3KByuZbuBdJEXEAkiC0+yJdsZGVCdf1RpHR6n+LHDcS7ffmfrt5kVCzJSCfm4z2C7v0uQ==}
     engines: {node: ^18.19.0 || >=20.6.0}
@@ -6971,12 +6896,6 @@ packages:
     engines: {node: '>=8.0.0'}
     peerDependencies:
       '@opentelemetry/api': ^1.0.2
-
-  '@opentelemetry/sdk-trace-base@2.0.1':
-    resolution: {integrity: sha512-xYLlvk/xdScGx1aEqvxLwf6sXQLXCjk3/1SQT9X9AoN5rXRhkdvIFShuNNmtTEPRBqcsMbS4p/gJLNI2wXaDuQ==}
-    engines: {node: ^18.19.0 || >=20.6.0}
-    peerDependencies:
-      '@opentelemetry/api': '>=1.3.0 <1.10.0'
 
   '@opentelemetry/sdk-trace-base@2.7.1':
     resolution: {integrity: sha512-NAYIlsF8MPUsKqJMiDQJTMPOmlbawC1Iz/omMLygZ1C9am8fTKYjTaI+OZM+WTY3t3Glo0wnOg/6/pac6RGPPw==}
@@ -11190,9 +11109,6 @@ packages:
   dompurify@2.5.9:
     resolution: {integrity: sha512-i6mvVmWN4xo9LrhCOZrDgSs9noW6nOahbrmzjRbPF36YPyj5Ue5lgok0MHDWkG7xzpWFO2OYttXdzM7rJxHvNA==}
 
-  dompurify@3.3.0:
-    resolution: {integrity: sha512-r+f6MYR1gGN1eJv0TVQbhA7if/U7P87cdPl3HN5rikqaBSBxLiCb/b9O+2eG0cxz0ghyU+mU1QkbsOwERMYlWQ==}
-
   dompurify@3.3.2:
     resolution: {integrity: sha512-6obghkliLdmKa56xdbLOpUZ43pAR6xFy1uOrxBaIDjT+yaRuuybLjGS9eVBoSR/UPU5fq3OXClEHLJNGvbxKpQ==}
     engines: {node: '>=20'}
@@ -12587,9 +12503,6 @@ packages:
 
   immutable@4.3.8:
     resolution: {integrity: sha512-d/Ld9aLbKpNwyl0KiM2CT1WYvkitQ1TSvmRtkcV8FKStiDoA7Slzgjmb/1G2yhKM1p0XeNOieaTbFZmU1d3Xuw==}
-
-  immutable@5.1.4:
-    resolution: {integrity: sha512-p6u1bG3YSnINT5RQmx/yRZBpenIl30kVxkTLDyHLIMk0gict704Q9n+thfDI7lTRm9vXdDYutVzXhzcThxTnXA==}
 
   immutable@5.1.5:
     resolution: {integrity: sha512-t7xcm2siw+hlUM68I+UEOK+z84RzmN59as9DZ7P1l0994DKUWV7UXBMQZVxaoMSRQ+PBZbHCOoBt7a2wxOMt+A==}
@@ -17787,9 +17700,6 @@ packages:
   web-tree-sitter@0.24.5:
     resolution: {integrity: sha512-+J/2VSHN8J47gQUAvF8KDadrfz6uFYVjxoxbKWDoXVsH2u7yLdarCnIURnrMA6uSRkgX3SdmqM5BOoQjPdSh5w==}
 
-  web-vitals@4.2.4:
-    resolution: {integrity: sha512-r4DIlprAGwJ7YM11VZp4R884m0Vmgr6EAKe3P+kO0PPj3Unqyvv59rczf6UiGcb9Z8QxZVcqKNwv/g0WNdWwsw==}
-
   web-vitals@5.2.0:
     resolution: {integrity: sha512-i2z98bEmaCqSDiHEDu+gHl/dmR4Q+TxFmG3/13KkMO+o8UxQzCqWaDRCiLgEa41nlO4VpXSI0ASa1xWmO9sBlA==}
 
@@ -19657,14 +19567,6 @@ snapshots:
       react-dom: 18.3.1(react@18.3.1)
       tabbable: 6.4.0
 
-  '@floating-ui/react@0.27.16(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
-    dependencies:
-      '@floating-ui/react-dom': 2.1.8(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@floating-ui/utils': 0.2.11
-      react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
-      tabbable: 6.4.0
-
   '@floating-ui/react@0.27.19(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@floating-ui/react-dom': 2.1.8(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -19760,45 +19662,6 @@ snapshots:
     transitivePeerDependencies:
       - react
 
-  '@grafana/data@12.4.3(eslint@9.32.0(jiti@2.7.0))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@6.0.2)':
-    dependencies:
-      '@braintree/sanitize-url': 7.0.1
-      '@grafana/i18n': 12.4.3(eslint@9.32.0(jiti@2.7.0))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@6.0.2)
-      '@grafana/schema': 12.4.3
-      '@leeoniya/ufuzzy': 1.0.19
-      '@types/d3-interpolate': 3.0.4
-      '@types/string-hash': 1.1.3
-      '@types/systemjs': 6.15.3
-      d3-interpolate: 3.0.1
-      d3-scale-chromatic: 3.1.0
-      date-fns: 4.1.0
-      dompurify: 3.3.0
-      eventemitter3: 5.0.1
-      fast_array_intersect: 1.1.0
-      history: 4.10.1(patch_hash=59f0d46e6f153d50eca0dd02e201978d26ff20d01917acd8ba8e7769d585b15d)
-      lodash: 4.18.1
-      marked: 16.3.0
-      marked-mangle: 1.1.12(marked@16.3.0)
-      moment: 2.30.1
-      moment-timezone: 0.5.47
-      ol: 10.7.0
-      papaparse: 5.5.3
-      react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
-      react-use: 17.6.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      rxjs: 7.8.2
-      string-hash: 1.1.3
-      tinycolor2: 1.6.0
-      tslib: 2.8.1
-      uplot: 1.6.32
-      xss: 1.0.15
-      zod: 4.4.3
-    transitivePeerDependencies:
-      - eslint
-      - react-native
-      - supports-color
-      - typescript
-
   '@grafana/data@13.0.1(eslint@9.32.0(jiti@2.7.0))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@6.0.2)':
     dependencies:
       '@braintree/sanitize-url': 7.0.1
@@ -19838,12 +19701,6 @@ snapshots:
       - supports-color
       - typescript
 
-  '@grafana/e2e-selectors@12.4.3':
-    dependencies:
-      semver: 7.7.3
-      tslib: 2.8.1
-      typescript: 5.9.2
-
   '@grafana/e2e-selectors@13.0.1':
     dependencies:
       semver: 7.7.3
@@ -19862,11 +19719,6 @@ snapshots:
       eslint-plugin-react-hooks: 5.2.0(eslint@9.32.0(jiti@2.7.0))
       typescript: 6.0.2
 
-  '@grafana/faro-core@1.19.0':
-    dependencies:
-      '@opentelemetry/api': 1.9.0
-      '@opentelemetry/otlp-transformer': 0.202.0(@opentelemetry/api@1.9.0)
-
   '@grafana/faro-core@2.6.3':
     dependencies:
       '@opentelemetry/api': 1.9.0
@@ -19876,12 +19728,6 @@ snapshots:
     dependencies:
       '@grafana/faro-core': 2.6.3
       rrweb: 2.0.0-alpha.20
-
-  '@grafana/faro-web-sdk@1.19.0':
-    dependencies:
-      '@grafana/faro-core': 1.19.0
-      ua-parser-js: 1.0.41
-      web-vitals: 4.2.4
 
   '@grafana/faro-web-sdk@2.6.3':
     dependencies:
@@ -19911,24 +19757,6 @@ snapshots:
       '@grafana/ui': link:packages/grafana-ui
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
-
-  '@grafana/i18n@12.4.3(eslint@9.32.0(jiti@2.7.0))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@6.0.2)':
-    dependencies:
-      '@formatjs/intl-durationformat': 0.7.6
-      '@typescript-eslint/utils': 8.59.2(eslint@9.32.0(jiti@2.7.0))(typescript@6.0.2)
-      fast-deep-equal: 3.1.3
-      i18next: 25.10.10(typescript@6.0.2)
-      i18next-browser-languagedetector: 8.2.1
-      i18next-pseudo: 2.2.1
-      micro-memoize: 4.2.0
-      react: 18.3.1
-      react-i18next: 15.7.4(i18next@25.10.10(typescript@6.0.2))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@6.0.2)
-    transitivePeerDependencies:
-      - eslint
-      - react-dom
-      - react-native
-      - supports-color
-      - typescript
 
   '@grafana/i18n@13.0.1(eslint@9.32.0(jiti@2.7.0))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@6.0.2)':
     dependencies:
@@ -20115,36 +19943,6 @@ snapshots:
       - react-native
       - supports-color
 
-  '@grafana/runtime@12.4.3(@openfeature/web-sdk@1.8.0(@openfeature/core@1.10.0))(@react-spectrum/provider@3.11.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@types/react@18.3.18)(eslint@9.32.0(jiti@2.7.0))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@6.0.2)':
-    dependencies:
-      '@grafana/data': 12.4.3(eslint@9.32.0(jiti@2.7.0))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@6.0.2)
-      '@grafana/e2e-selectors': 12.4.3
-      '@grafana/faro-web-sdk': 1.19.0
-      '@grafana/schema': 12.4.3
-      '@grafana/ui': 12.4.3(@react-spectrum/provider@3.11.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@types/react@18.3.18)(eslint@9.32.0(jiti@2.7.0))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@6.0.2)
-      '@openfeature/core': 1.10.0
-      '@openfeature/ofrep-web-provider': 0.3.6(@openfeature/core@1.10.0)(@openfeature/web-sdk@1.8.0(@openfeature/core@1.10.0))
-      '@openfeature/react-sdk': 1.3.0(@openfeature/web-sdk@1.8.0(@openfeature/core@1.10.0))(react@18.3.1)
-      '@types/systemjs': 6.15.3
-      history: 4.10.1(patch_hash=59f0d46e6f153d50eca0dd02e201978d26ff20d01917acd8ba8e7769d585b15d)
-      lodash: 4.18.1
-      react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
-      react-loading-skeleton: 3.5.0(react@18.3.1)
-      react-use: 17.6.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      rxjs: 7.8.2
-      tslib: 2.8.1
-    transitivePeerDependencies:
-      - '@openfeature/web-sdk'
-      - '@react-spectrum/provider'
-      - '@types/react'
-      - dayjs
-      - eslint
-      - luxon
-      - react-native
-      - supports-color
-      - typescript
-
   '@grafana/runtime@13.0.1(@react-spectrum/provider@3.11.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@types/react@18.3.18)(eslint@9.32.0(jiti@2.7.0))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@6.0.2)':
     dependencies:
       '@grafana/data': 13.0.1(eslint@9.32.0(jiti@2.7.0))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@6.0.2)
@@ -20256,98 +20054,11 @@ snapshots:
       - '@types/react'
       - supports-color
 
-  '@grafana/schema@12.4.3':
-    dependencies:
-      tslib: 2.8.1
-
   '@grafana/schema@13.0.1':
     dependencies:
       tslib: 2.8.1
 
   '@grafana/tsconfig@2.1.0': {}
-
-  '@grafana/ui@12.4.3(@react-spectrum/provider@3.11.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@types/react@18.3.18)(eslint@9.32.0(jiti@2.7.0))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@6.0.2)':
-    dependencies:
-      '@emotion/css': 11.13.5
-      '@emotion/react': 11.14.0(@types/react@18.3.18)(react@18.3.1)
-      '@emotion/serialize': 1.3.3
-      '@floating-ui/react': 0.27.16(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@grafana/data': 12.4.3(eslint@9.32.0(jiti@2.7.0))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@6.0.2)
-      '@grafana/e2e-selectors': 12.4.3
-      '@grafana/faro-web-sdk': 1.19.0
-      '@grafana/i18n': 12.4.3(eslint@9.32.0(jiti@2.7.0))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@6.0.2)
-      '@grafana/schema': 12.4.3
-      '@hello-pangea/dnd': 18.0.1(@types/react@18.3.18)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@monaco-editor/react': 4.7.0(monaco-editor@0.34.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@popperjs/core': 2.11.8
-      '@rc-component/cascader': 1.9.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@rc-component/drawer': 1.3.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@rc-component/picker': 1.7.1(date-fns@4.1.0)(moment@2.30.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@rc-component/slider': 1.0.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@rc-component/tooltip': 1.4.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@react-aria/dialog': 3.5.31(@react-spectrum/provider@3.11.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@react-aria/focus': 3.21.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@react-aria/overlays': 3.30.0(@react-spectrum/provider@3.11.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@react-aria/utils': 3.31.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@tanstack/react-virtual': 3.13.24(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@types/jquery': 3.5.33
-      '@types/lodash': 4.17.20
-      '@types/react-table': 7.7.20
-      calculate-size: 1.1.1
-      classnames: 2.5.1
-      clsx: 2.1.1
-      d3: 7.9.0
-      date-fns: 4.1.0
-      downshift: 9.3.2(react@18.3.1)
-      hoist-non-react-statics: 3.3.2
-      i18next: 25.10.10(typescript@6.0.2)
-      i18next-browser-languagedetector: 8.2.1
-      immutable: 5.1.4
-      is-hotkey: 0.2.0
-      jquery: 3.7.1
-      lodash: 4.18.1
-      micro-memoize: 4.2.0
-      moment: 2.30.1
-      monaco-editor: 0.34.1
-      ol: 10.7.0
-      prismjs: 1.30.0
-      react: 18.3.1
-      react-calendar: 6.0.1(@types/react@18.3.18)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      react-colorful: 5.6.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      react-custom-scrollbars-2: 4.5.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      react-data-grid: https://codeload.github.com/grafana/react-data-grid/tar.gz/a10c748f40edc538425b458af4e471a8262ec4ed(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      react-dom: 18.3.1(react@18.3.1)
-      react-dropzone: 14.3.8(react@18.3.1)
-      react-highlight-words: 0.21.0(react@18.3.1)
-      react-hook-form: 7.75.0(react@18.3.1)
-      react-i18next: 15.7.4(i18next@25.10.10(typescript@6.0.2))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@6.0.2)
-      react-inlinesvg: 4.2.0(react@18.3.1)
-      react-loading-skeleton: 3.5.0(react@18.3.1)
-      react-router-dom: 5.3.4(react@18.3.1)
-      react-router-dom-v5-compat: 6.30.3(react-dom@18.3.1(react@18.3.1))(react-router-dom@5.3.4(react@18.3.1))(react@18.3.1)
-      react-select: 5.10.2(@types/react@18.3.18)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      react-table: 7.8.0(react@18.3.1)
-      react-transition-group: 4.4.5(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      react-use: 17.6.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      react-window: 1.8.11(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      rxjs: 7.8.2
-      slate: 0.47.9(immutable@5.1.4)
-      slate-plain-serializer: 0.7.13(immutable@5.1.4)(slate@0.47.9(immutable@5.1.4))
-      slate-react: 0.22.10(immutable@5.1.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(slate@0.47.9(immutable@5.1.4))
-      tinycolor2: 1.6.0
-      tslib: 2.8.1
-      uplot: 1.6.32
-      uuid: 11.1.0
-      uwrap: 0.1.2
-    transitivePeerDependencies:
-      - '@react-spectrum/provider'
-      - '@types/react'
-      - dayjs
-      - eslint
-      - luxon
-      - react-native
-      - supports-color
-      - typescript
 
   '@grafana/ui@13.0.1(@react-spectrum/provider@3.11.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@types/react@18.3.18)(eslint@9.32.0(jiti@2.7.0))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@6.0.2)':
     dependencies:
@@ -22017,10 +21728,6 @@ snapshots:
     dependencies:
       '@openfeature/core': 1.10.0
 
-  '@opentelemetry/api-logs@0.202.0':
-    dependencies:
-      '@opentelemetry/api': 1.9.0
-
   '@opentelemetry/api-logs@0.217.0':
     dependencies:
       '@opentelemetry/api': 1.9.0
@@ -22036,11 +21743,6 @@ snapshots:
       '@opentelemetry/api': 1.9.0
       '@opentelemetry/semantic-conventions': 0.25.0
       semver: 7.7.3
-
-  '@opentelemetry/core@2.0.1(@opentelemetry/api@1.9.0)':
-    dependencies:
-      '@opentelemetry/api': 1.9.0
-      '@opentelemetry/semantic-conventions': 1.38.0
 
   '@opentelemetry/core@2.7.1(@opentelemetry/api@1.9.0)':
     dependencies:
@@ -22100,17 +21802,6 @@ snapshots:
       '@opentelemetry/core': 2.7.1(@opentelemetry/api@1.9.0)
       '@opentelemetry/otlp-transformer': 0.217.0(@opentelemetry/api@1.9.0)
 
-  '@opentelemetry/otlp-transformer@0.202.0(@opentelemetry/api@1.9.0)':
-    dependencies:
-      '@opentelemetry/api': 1.9.0
-      '@opentelemetry/api-logs': 0.202.0
-      '@opentelemetry/core': 2.0.1(@opentelemetry/api@1.9.0)
-      '@opentelemetry/resources': 2.0.1(@opentelemetry/api@1.9.0)
-      '@opentelemetry/sdk-logs': 0.202.0(@opentelemetry/api@1.9.0)
-      '@opentelemetry/sdk-metrics': 2.0.1(@opentelemetry/api@1.9.0)
-      '@opentelemetry/sdk-trace-base': 2.0.1(@opentelemetry/api@1.9.0)
-      protobufjs: 7.5.7
-
   '@opentelemetry/otlp-transformer@0.217.0(@opentelemetry/api@1.9.0)':
     dependencies:
       '@opentelemetry/api': 1.9.0
@@ -22128,24 +21819,11 @@ snapshots:
       '@opentelemetry/core': 0.25.0(@opentelemetry/api@1.9.0)
       '@opentelemetry/semantic-conventions': 0.25.0
 
-  '@opentelemetry/resources@2.0.1(@opentelemetry/api@1.9.0)':
-    dependencies:
-      '@opentelemetry/api': 1.9.0
-      '@opentelemetry/core': 2.0.1(@opentelemetry/api@1.9.0)
-      '@opentelemetry/semantic-conventions': 1.38.0
-
   '@opentelemetry/resources@2.7.1(@opentelemetry/api@1.9.0)':
     dependencies:
       '@opentelemetry/api': 1.9.0
       '@opentelemetry/core': 2.7.1(@opentelemetry/api@1.9.0)
       '@opentelemetry/semantic-conventions': 1.38.0
-
-  '@opentelemetry/sdk-logs@0.202.0(@opentelemetry/api@1.9.0)':
-    dependencies:
-      '@opentelemetry/api': 1.9.0
-      '@opentelemetry/api-logs': 0.202.0
-      '@opentelemetry/core': 2.0.1(@opentelemetry/api@1.9.0)
-      '@opentelemetry/resources': 2.0.1(@opentelemetry/api@1.9.0)
 
   '@opentelemetry/sdk-logs@0.217.0(@opentelemetry/api@1.9.0)':
     dependencies:
@@ -22163,12 +21841,6 @@ snapshots:
       '@opentelemetry/resources': 0.25.0(@opentelemetry/api@1.9.0)
       lodash.merge: 4.6.2
 
-  '@opentelemetry/sdk-metrics@2.0.1(@opentelemetry/api@1.9.0)':
-    dependencies:
-      '@opentelemetry/api': 1.9.0
-      '@opentelemetry/core': 2.0.1(@opentelemetry/api@1.9.0)
-      '@opentelemetry/resources': 2.0.1(@opentelemetry/api@1.9.0)
-
   '@opentelemetry/sdk-metrics@2.7.1(@opentelemetry/api@1.9.0)':
     dependencies:
       '@opentelemetry/api': 1.9.0
@@ -22182,13 +21854,6 @@ snapshots:
       '@opentelemetry/resources': 0.25.0(@opentelemetry/api@1.9.0)
       '@opentelemetry/semantic-conventions': 0.25.0
       lodash.merge: 4.6.2
-
-  '@opentelemetry/sdk-trace-base@2.0.1(@opentelemetry/api@1.9.0)':
-    dependencies:
-      '@opentelemetry/api': 1.9.0
-      '@opentelemetry/core': 2.0.1(@opentelemetry/api@1.9.0)
-      '@opentelemetry/resources': 2.0.1(@opentelemetry/api@1.9.0)
-      '@opentelemetry/semantic-conventions': 1.38.0
 
   '@opentelemetry/sdk-trace-base@2.7.1(@opentelemetry/api@1.9.0)':
     dependencies:
@@ -27234,10 +26899,6 @@ snapshots:
   dompurify@2.5.9:
     optional: true
 
-  dompurify@3.3.0:
-    optionalDependencies:
-      '@types/trusted-types': 2.0.7
-
   dompurify@3.3.2:
     optionalDependencies:
       '@types/trusted-types': 2.0.7
@@ -29074,8 +28735,6 @@ snapshots:
   immutable@3.8.3: {}
 
   immutable@4.3.8: {}
-
-  immutable@5.1.4: {}
 
   immutable@5.1.5: {}
 
@@ -33273,11 +32932,6 @@ snapshots:
       immutable: 3.8.3
       invariant: 2.2.4
 
-  react-immutable-proptypes@2.2.0(immutable@5.1.4):
-    dependencies:
-      immutable: 5.1.4
-      invariant: 2.2.4
-
   react-immutable-proptypes@2.2.0(immutable@5.1.5):
     dependencies:
       immutable: 5.1.5
@@ -34274,11 +33928,6 @@ snapshots:
 
   slash@5.1.0: {}
 
-  slate-base64-serializer@0.2.115(slate@0.47.9(immutable@5.1.4)):
-    dependencies:
-      isomorphic-base64: 1.0.2
-      slate: 0.47.9(immutable@5.1.4)
-
   slate-base64-serializer@0.2.115(slate@0.47.9(immutable@5.1.5)):
     dependencies:
       isomorphic-base64: 1.0.2
@@ -34293,62 +33942,21 @@ snapshots:
       is-hotkey: 0.1.4
       slate-dev-environment: 0.2.5(patch_hash=e91216507ae075e1f604a8d967490f1126b8345582a6cb9eead18e886d8abdd0)
 
-  slate-plain-serializer@0.7.13(immutable@5.1.4)(slate@0.47.9(immutable@5.1.4)):
-    dependencies:
-      immutable: 5.1.4
-      slate: 0.47.9(immutable@5.1.4)
-
   slate-plain-serializer@0.7.13(immutable@5.1.5)(slate@0.47.9(immutable@5.1.5)):
     dependencies:
       immutable: 5.1.5
       slate: 0.47.9(immutable@5.1.5)
-
-  slate-prop-types@0.5.44(immutable@5.1.4)(slate@0.47.9(immutable@5.1.4)):
-    dependencies:
-      immutable: 5.1.4
-      slate: 0.47.9(immutable@5.1.4)
 
   slate-prop-types@0.5.44(immutable@5.1.5)(slate@0.47.9(immutable@5.1.5)):
     dependencies:
       immutable: 5.1.5
       slate: 0.47.9(immutable@5.1.5)
 
-  slate-react-placeholder@0.2.9(react@18.3.1)(slate-react@0.22.10(immutable@5.1.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(slate@0.47.9(immutable@5.1.5)))(slate@0.47.9(immutable@5.1.4)):
-    dependencies:
-      react: 18.3.1
-      slate: 0.47.9(immutable@5.1.4)
-      slate-react: 0.22.10(immutable@5.1.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(slate@0.47.9(immutable@5.1.5))
-
   slate-react-placeholder@0.2.9(react@18.3.1)(slate-react@0.22.10(immutable@5.1.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(slate@0.47.9(immutable@5.1.5)))(slate@0.47.9(immutable@5.1.5)):
     dependencies:
       react: 18.3.1
       slate: 0.47.9(immutable@5.1.5)
       slate-react: 0.22.10(immutable@5.1.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(slate@0.47.9(immutable@5.1.5))
-
-  slate-react@0.22.10(immutable@5.1.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(slate@0.47.9(immutable@5.1.4)):
-    dependencies:
-      debug: 3.2.7
-      get-window: 1.1.2
-      immutable: 5.1.4
-      is-window: 1.0.2
-      lodash: 4.18.1
-      memoize-one: 4.1.0
-      prop-types: 15.8.1
-      react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
-      react-immutable-proptypes: 2.2.0(immutable@5.1.4)
-      selection-is-backward: 1.0.0
-      slate: 0.47.9(immutable@5.1.4)
-      slate-base64-serializer: 0.2.115(slate@0.47.9(immutable@5.1.4))
-      slate-dev-environment: 0.2.5(patch_hash=e91216507ae075e1f604a8d967490f1126b8345582a6cb9eead18e886d8abdd0)
-      slate-hotkeys: 0.2.11
-      slate-plain-serializer: 0.7.13(immutable@5.1.4)(slate@0.47.9(immutable@5.1.4))
-      slate-prop-types: 0.5.44(immutable@5.1.4)(slate@0.47.9(immutable@5.1.4))
-      slate-react-placeholder: 0.2.9(react@18.3.1)(slate-react@0.22.10(immutable@5.1.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(slate@0.47.9(immutable@5.1.5)))(slate@0.47.9(immutable@5.1.4))
-      tiny-invariant: 1.3.3
-      tiny-warning: 0.0.3
-    transitivePeerDependencies:
-      - supports-color
 
   slate-react@0.22.10(immutable@5.1.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(slate@0.47.9(immutable@5.1.5)):
     dependencies:
@@ -34372,20 +33980,6 @@ snapshots:
       slate-react-placeholder: 0.2.9(react@18.3.1)(slate-react@0.22.10(immutable@5.1.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(slate@0.47.9(immutable@5.1.5)))(slate@0.47.9(immutable@5.1.5))
       tiny-invariant: 1.3.3
       tiny-warning: 0.0.3
-    transitivePeerDependencies:
-      - supports-color
-
-  slate@0.47.9(immutable@5.1.4):
-    dependencies:
-      debug: 3.2.7
-      direction: 0.1.5
-      esrever: 0.2.0
-      immutable: 5.1.4
-      is-plain-object: 2.0.4
-      lodash: 4.18.1
-      tiny-invariant: 1.3.3
-      tiny-warning: 0.0.3
-      type-of: 2.0.1
     transitivePeerDependencies:
       - supports-color
 
@@ -35828,8 +35422,6 @@ snapshots:
 
   web-tree-sitter@0.24.5:
     optional: true
-
-  web-vitals@4.2.4: {}
 
   web-vitals@5.2.0: {}
 
