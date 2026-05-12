@@ -4217,13 +4217,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:^8.2.4":
-  version: 8.2.4
-  resolution: "@grafana/scenes-react@npm:8.2.4"
+"@grafana/scenes-react@npm:^8.2.5":
+  version: 8.2.5
+  resolution: "@grafana/scenes-react@npm:8.2.5"
   dependencies:
     "@emotion/css": "npm:11.10.5"
     "@emotion/react": "npm:11.10.5"
-    "@grafana/scenes": "npm:8.2.4"
+    "@grafana/scenes": "npm:8.2.5"
     lodash: "npm:^4.17.21"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
@@ -4237,11 +4237,42 @@ __metadata:
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
     rxjs: ^7.8.1
-  checksum: 10/50b77e06ed4f60fc91df1a341a434042d852c0947197505e70a00e3040b8bb877a8bd0d3fd870282bcb4cbb926cf1c0f2573a90008e3ed51f985b72f11cdcaff
+  checksum: 10/e49234076ccdef8c0e745e967c43efd462cd3d4f72481c9e25c5ccdf221c6d6b5872552003465516958696c8d937e3929f34139a82d593f156e4a991f5b9e93f
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:8.2.4, @grafana/scenes@npm:^8.2.4":
+"@grafana/scenes@npm:8.2.5, @grafana/scenes@npm:^8.2.5":
+  version: 8.2.5
+  resolution: "@grafana/scenes@npm:8.2.5"
+  dependencies:
+    "@emotion/css": "npm:11.10.5"
+    "@emotion/react": "npm:11.10.5"
+    "@floating-ui/react": "npm:^0.26.16"
+    "@leeoniya/ufuzzy": "npm:^1.0.16"
+    "@tanstack/react-virtual": "npm:^3.9.0"
+    history: "npm:^4.9.0"
+    lodash: "npm:^4.17.21"
+    react-grid-layout: "npm:^1.3.4"
+    react-select: "npm:^5.10.2"
+    react-use: "npm:^17.5.0"
+    react-virtualized-auto-sizer: "npm:^1.0.24"
+    uuid: "npm:^9.0.0"
+  peerDependencies:
+    "@grafana/data": ">=11.6"
+    "@grafana/e2e-selectors": ">=11.6"
+    "@grafana/i18n": "*"
+    "@grafana/runtime": ">=11.6"
+    "@grafana/schema": ">=11.6"
+    "@grafana/ui": ">=11.6"
+    react: ^18.0.0
+    react-dom: ^18.0.0
+    react-router-dom: ^6.28.0
+    rxjs: ^7.8.1
+  checksum: 10/dea382ac657a7c76d361c7faf23d3ddba5657dc5b12d134754940c31d84a5329be2cb65cbe98b336e677f5cd3ddd680ea7a0e41e57d7bd00339e8a96a4a27342
+  languageName: node
+  linkType: hard
+
+"@grafana/scenes@npm:^8.2.4":
   version: 8.2.4
   resolution: "@grafana/scenes@npm:8.2.4"
   dependencies:
@@ -20363,8 +20394,8 @@ __metadata:
     "@grafana/plugin-ui": "npm:^0.13.1"
     "@grafana/prometheus": "npm:13.1.2"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:^8.2.4"
-    "@grafana/scenes-react": "npm:^8.2.4"
+    "@grafana/scenes": "npm:^8.2.5"
+    "@grafana/scenes-react": "npm:^8.2.5"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"
