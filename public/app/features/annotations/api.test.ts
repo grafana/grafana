@@ -1,17 +1,16 @@
 import { type BackendSrv, config, setBackendSrv } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 
-import { getAPIGroupDiscoveryList } from '../apiserver/discovery';
-
 import { annotationServer } from './api';
+import { isAnnotationApiAvailable } from './isAnnotationApiAvailable';
 
-jest.mock('../apiserver/discovery');
+jest.mock('./isAnnotationApiAvailable');
 jest.mock('@grafana/runtime/internal', () => ({
   ...jest.requireActual('@grafana/runtime/internal'),
   getFeatureFlagClient: jest.fn(),
 }));
 
-const mockGetAPIGroupDiscoveryList = jest.mocked(getAPIGroupDiscoveryList);
+const mockIsAnnotationApiAvailable = jest.mocked(isAnnotationApiAvailable);
 const mockGetFeatureFlagClient = jest.mocked(getFeatureFlagClient);
 const getBooleanValueFn = jest.fn();
 
@@ -27,12 +26,6 @@ const postFn = jest.fn();
 const putFn = jest.fn();
 const deleteFn = jest.fn();
 const getFn = jest.fn();
-
-const apiGroupAvailable = {
-  metadata: { resourceVersion: '' },
-  items: [{ metadata: { name: 'annotation.grafana.app' }, versions: [] }],
-};
-const apiGroupMissing = { metadata: { resourceVersion: '' }, items: [] };
 
 beforeAll(() => {
   setBackendSrv({
@@ -51,7 +44,7 @@ beforeEach(() => {
   putFn.mockReset();
   deleteFn.mockReset();
   getFn.mockReset();
-  mockGetAPIGroupDiscoveryList.mockReset();
+  mockIsAnnotationApiAvailable.mockReset();
   getBooleanValueFn.mockReset();
 });
 
@@ -86,13 +79,13 @@ describe('annotationServer with FE flag OFF', () => {
     expect(tags).toEqual([{ term: 't', count: 2 }]);
   });
 
-  it('does not call /apis discovery when FE flag is off', async () => {
+  it('does not consult discovery when FE flag is off', async () => {
     await annotationServer().save({ time: 1, text: 'x', dashboardUID: 'd', panelId: 1 });
-    expect(mockGetAPIGroupDiscoveryList).not.toHaveBeenCalled();
+    expect(mockIsAnnotationApiAvailable).not.toHaveBeenCalled();
   });
 });
 
-describe('annotationServer falls back to legacy when API group is not discovered', () => {
+describe('annotationServer falls back to legacy when API group is not available', () => {
   beforeAll(() => {
     config.namespace = 'stack-1';
   });
@@ -101,20 +94,14 @@ describe('annotationServer falls back to legacy when API group is not discovered
     stubFFEnabled(true);
   });
 
-  it('FE FF on, API group missing in /apis → legacy', async () => {
-    mockGetAPIGroupDiscoveryList.mockResolvedValue(apiGroupMissing);
-    await annotationServer().save({ time: 1, text: 'x', dashboardUID: 'd', panelId: 1 });
-    expect(postFn).toHaveBeenCalledWith('/api/annotations', expect.objectContaining({ time: 1 }));
-  });
-
-  it('discovery rejection is treated as legacy', async () => {
-    mockGetAPIGroupDiscoveryList.mockRejectedValue(new Error('boom'));
+  it('FE FF on, availability returns false → legacy', async () => {
+    mockIsAnnotationApiAvailable.mockResolvedValue(false);
     await annotationServer().save({ time: 1, text: 'x', dashboardUID: 'd', panelId: 1 });
     expect(postFn).toHaveBeenCalledWith('/api/annotations', expect.objectContaining({ time: 1 }));
   });
 });
 
-describe('annotationServer with FE flag ON and API group discovered', () => {
+describe('annotationServer with FE flag ON and API group available', () => {
   const baseURL = '/apis/annotation.grafana.app/v0alpha1/namespaces/stack-1';
 
   beforeAll(() => {
@@ -123,7 +110,7 @@ describe('annotationServer with FE flag ON and API group discovered', () => {
 
   beforeEach(() => {
     stubFFEnabled(true);
-    mockGetAPIGroupDiscoveryList.mockResolvedValue(apiGroupAvailable);
+    mockIsAnnotationApiAvailable.mockResolvedValue(true);
   });
 
   it('save POSTs to the k8s endpoint and includes spec.scopes', async () => {

@@ -14,7 +14,7 @@ import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
 import { backendSrv } from '../../../core/services/backend_srv';
-import { getAPIGroupDiscoveryList } from '../../../features/apiserver/discovery';
+import { isAnnotationApiAvailable } from '../../../features/annotations/isAnnotationApiAvailable';
 import { type DashboardSrv, setDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
 
 import { AnnoListPanel, type Props } from './AnnoListPanel';
@@ -25,13 +25,13 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => backendSrv,
 }));
 
-jest.mock('../../../features/apiserver/discovery');
+jest.mock('../../../features/annotations/isAnnotationApiAvailable');
 jest.mock('@grafana/runtime/internal', () => ({
   ...jest.requireActual('@grafana/runtime/internal'),
   getFeatureFlagClient: jest.fn(),
 }));
 
-const mockGetAPIGroupDiscoveryList = jest.mocked(getAPIGroupDiscoveryList);
+const mockIsAnnotationApiAvailable = jest.mocked(isAnnotationApiAvailable);
 const mockGetFeatureFlagClient = jest.mocked(getFeatureFlagClient);
 const getBooleanValueFn = jest.fn();
 
@@ -45,14 +45,8 @@ mockGetFeatureFlagClient.mockReturnValue({ getBooleanValue: getBooleanValueFn } 
   typeof getFeatureFlagClient
 >);
 
-const apiGroupAvailable = {
-  metadata: { resourceVersion: '' },
-  items: [{ metadata: { name: 'annotation.grafana.app' }, versions: [] }],
-};
-const apiGroupMissing = { metadata: { resourceVersion: '' }, items: [] };
-
 beforeEach(() => {
-  mockGetAPIGroupDiscoveryList.mockReset();
+  mockIsAnnotationApiAvailable.mockReset();
   getBooleanValueFn.mockReset();
   stubFFEnabled(false);
 });
@@ -386,7 +380,7 @@ describe('AnnoListPanel', () => {
       jest.clearAllMocks();
       stubFFEnabled(true);
       config.namespace = 'stack-1';
-      mockGetAPIGroupDiscoveryList.mockResolvedValue(apiGroupAvailable);
+      mockIsAnnotationApiAvailable.mockResolvedValue(true);
 
       const getMock = jest.spyOn(backendSrv, 'get');
       getMock.mockImplementation(async (url) => {
@@ -511,18 +505,18 @@ describe('AnnoListPanel', () => {
   });
 
   describe('when the k8s client gate is not fully open it falls back to legacy /api/annotations', () => {
-    it('FE FF on, API group missing in /apis → legacy GET', async () => {
+    it('FE FF on, API not available → legacy GET', async () => {
       stubFFEnabled(true);
-      mockGetAPIGroupDiscoveryList.mockResolvedValue(apiGroupMissing);
+      mockIsAnnotationApiAvailable.mockResolvedValue(false);
       const { getMock } = await setupTestContext();
       expect(getMock).toHaveBeenCalledWith('/api/annotations', expect.any(Object), expect.any(String));
     });
 
-    it('FE FF off → legacy GET, no discovery call', async () => {
+    it('FE FF off → legacy GET, no availability lookup', async () => {
       stubFFEnabled(false);
       const { getMock } = await setupTestContext();
       expect(getMock).toHaveBeenCalledWith('/api/annotations', expect.any(Object), expect.any(String));
-      expect(mockGetAPIGroupDiscoveryList).not.toHaveBeenCalled();
+      expect(mockIsAnnotationApiAvailable).not.toHaveBeenCalled();
     });
   });
 });

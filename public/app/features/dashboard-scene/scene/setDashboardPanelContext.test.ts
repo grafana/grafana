@@ -10,19 +10,19 @@ import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { GroupByVariable, sceneGraph, SceneQueryRunner } from '@grafana/scenes';
 import { type AdHocFilterItem, type PanelContext } from '@grafana/ui';
 
-import { getAPIGroupDiscoveryList } from '../../apiserver/discovery';
+import { isAnnotationApiAvailable } from '../../annotations/isAnnotationApiAvailable';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { findVizPanelByKey, getQueryRunnerFor } from '../utils/utils';
 
 import { getAdHocFilterVariableFor, setDashboardPanelContext } from './setDashboardPanelContext';
 
-jest.mock('../../apiserver/discovery');
+jest.mock('../../annotations/isAnnotationApiAvailable');
 jest.mock('@grafana/runtime/internal', () => ({
   ...jest.requireActual('@grafana/runtime/internal'),
   getFeatureFlagClient: jest.fn(),
 }));
 
-const mockGetAPIGroupDiscoveryList = jest.mocked(getAPIGroupDiscoveryList);
+const mockIsAnnotationApiAvailable = jest.mocked(isAnnotationApiAvailable);
 const mockGetFeatureFlagClient = jest.mocked(getFeatureFlagClient);
 const getBooleanValueFn = jest.fn();
 
@@ -36,11 +36,6 @@ const postFn = jest.fn();
 const putFn = jest.fn();
 const deleteFn = jest.fn();
 const getFn = jest.fn();
-
-const apiGroupAvailable = {
-  metadata: { resourceVersion: '' },
-  items: [{ metadata: { name: 'annotation.grafana.app' }, versions: [] }],
-};
 
 setBackendSrv({
   post: postFn,
@@ -57,7 +52,7 @@ beforeEach(() => {
   putFn.mockReset();
   deleteFn.mockReset();
   getFn.mockReset();
-  mockGetAPIGroupDiscoveryList.mockReset();
+  mockIsAnnotationApiAvailable.mockReset();
   getBooleanValueFn.mockReset();
   stubFFEnabled(false);
 });
@@ -144,7 +139,7 @@ describe('setDashboardPanelContext', () => {
     it('should POST to the k8s endpoint when the k8s annotation client is enabled and the API is discovered', async () => {
       stubFFEnabled(true);
       config.namespace = 'stack-1';
-      mockGetAPIGroupDiscoveryList.mockResolvedValue(apiGroupAvailable);
+      mockIsAnnotationApiAvailable.mockResolvedValue(true);
       postFn.mockResolvedValue({});
 
       const { context } = buildTestScene({ dashboardCanEdit: true, canAdd: true });
@@ -171,7 +166,7 @@ describe('setDashboardPanelContext', () => {
     it('should include active scopes in k8s create request', async () => {
       stubFFEnabled(true);
       config.namespace = 'stack-1';
-      mockGetAPIGroupDiscoveryList.mockResolvedValue(apiGroupAvailable);
+      mockIsAnnotationApiAvailable.mockResolvedValue(true);
       postFn.mockResolvedValue({});
 
       const mockScope: Scope = { metadata: { name: 'scope-a' }, spec: { title: 'Scope A' } };
@@ -210,7 +205,7 @@ describe('setDashboardPanelContext', () => {
     it('should PUT to the k8s endpoint when the k8s annotation client is enabled and the API is discovered', async () => {
       stubFFEnabled(true);
       config.namespace = 'stack-1';
-      mockGetAPIGroupDiscoveryList.mockResolvedValue(apiGroupAvailable);
+      mockIsAnnotationApiAvailable.mockResolvedValue(true);
       getFn.mockResolvedValue({
         apiVersion: 'annotation.grafana.app/v0alpha1',
         kind: 'Annotation',
@@ -236,7 +231,7 @@ describe('setDashboardPanelContext', () => {
     it('should include active scopes in k8s update request', async () => {
       stubFFEnabled(true);
       config.namespace = 'stack-1';
-      mockGetAPIGroupDiscoveryList.mockResolvedValue(apiGroupAvailable);
+      mockIsAnnotationApiAvailable.mockResolvedValue(true);
       getFn.mockResolvedValue({
         apiVersion: 'annotation.grafana.app/v0alpha1',
         kind: 'Annotation',
@@ -278,7 +273,7 @@ describe('setDashboardPanelContext', () => {
     it('should DELETE the k8s resource when the k8s annotation client is enabled and the API is discovered', async () => {
       stubFFEnabled(true);
       config.namespace = 'stack-1';
-      mockGetAPIGroupDiscoveryList.mockResolvedValue(apiGroupAvailable);
+      mockIsAnnotationApiAvailable.mockResolvedValue(true);
       deleteFn.mockResolvedValue({});
 
       const { context } = buildTestScene({ dashboardCanEdit: true, canAdd: true });

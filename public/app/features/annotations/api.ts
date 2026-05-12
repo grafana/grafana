@@ -2,10 +2,9 @@ import { type AnnotationEvent, type DataFrame, toDataFrame } from '@grafana/data
 import { getBackendSrv } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { annotationK8sClient } from 'app/api/clients/annotation/v0alpha1';
-import { ANNOTATION_API_GROUP } from 'app/api/clients/annotation/v0alpha1/types';
-import { getAPIGroupDiscoveryList } from 'app/features/apiserver/discovery';
 import { type StateHistoryItem } from 'app/types/unified-alerting';
 
+import { isAnnotationApiAvailable } from './isAnnotationApiAvailable';
 import { type AnnotationTagsResponse } from './types';
 
 export interface AnnotationServer {
@@ -56,60 +55,14 @@ class LegacyAnnotationServer implements AnnotationServer {
  * (`grafana.kubernetesAnnotationsClient`) and presence of the `annotation.grafana.app`
  * group in the apiserver discovery list. Calling the new endpoints when the
  * group isn't registered would 404, so we require both signals before
- * switching off legacy.
+ * switching off legacy. The discovery lookup is cached for the page lifetime
+ * inside `isAnnotationApiAvailable`.
  */
 export function isK8sAnnotationsClientEnabled(): Promise<boolean> {
   if (!getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaKubernetesAnnotationsClient, false)) {
     return Promise.resolve(false);
   }
-  return getAPIGroupDiscoveryList()
-    .then((apis) => apis.items.some((group) => group.metadata.name === ANNOTATION_API_GROUP))
-    .catch(() => false);
-}
-
-// When isK8sAnnotationsClientEnabled() resolves true, CRUD/tags/query (dashboard annotations)
-// go to annotation.grafana.app. forAlert stays on legacy because the new /search
-// endpoint cannot filter by alertUID/type=alert (ListOptions has no Type/AlertUID).
-class K8sAnnotationServer implements AnnotationServer {
-  private legacy = new LegacyAnnotationServer();
-
-  // The k8s annotation API does not serve alert-state annotations — so we also fire
-  // the legacy one with type='alert' and merge results unless the type is specifically
-  // scoped to only annotations.
-  async query(params: Record<string, unknown>, requestId: string): Promise<DataFrame> {
-    const wantsAlertAnnotations = params.type !== 'annotation';
-
-    const [manualEvents, alertEvents] = await Promise.all([
-      annotationK8sClient.search(params, requestId),
-      wantsAlertAnnotations ? fetchLegacyAlertAnnotations(params, requestId) : Promise.resolve<AnnotationEvent[]>([]),
-    ]);
-
-    return toDataFrame([...manualEvents, ...alertEvents]);
-  }
-
-  forAlert(alertUID: string): Promise<StateHistoryItem[]> {
-    return this.legacy.forAlert(alertUID);
-  }
-
-  save(annotation: AnnotationEvent, scopes?: string[]) {
-    return annotationK8sClient.create(annotation, scopes);
-  }
-
-  update(annotation: AnnotationEvent, scopes?: string[]) {
-    return annotationK8sClient.update(annotation, scopes);
-  }
-
-  delete(annotation: AnnotationEvent) {
-    if (!annotation.id) {
-      return Promise.reject(new Error('Annotation id is required to delete'));
-    }
-    return annotationK8sClient.remove(annotation.id);
-  }
-
-  async tags() {
-    const items = await annotationK8sClient.tags();
-    return items.map(({ tag, count }) => ({ term: tag, count }));
-  }
+  return isAnnotationApiAvailable();
 }
 
 function fetchLegacyAlertAnnotations(params: Record<string, unknown>, requestId: string): Promise<AnnotationEvent[]> {
@@ -118,22 +71,66 @@ function fetchLegacyAlertAnnotations(params: Record<string, unknown>, requestId:
   return getBackendSrv().get<AnnotationEvent[]>('/api/annotations', { ...rest, type: 'alert' }, `${requestId}-alert`);
 }
 
-function resolveServer(): Promise<AnnotationServer> {
-  return isK8sAnnotationsClientEnabled().then((enabled) =>
-    enabled ? new K8sAnnotationServer() : new LegacyAnnotationServer()
-  );
+// Single server that dispatches each operation to either the k8s API or the
+// legacy /api/annotations endpoint based on the runtime gate. `forAlert` is
+// always legacy because the k8s /search endpoint cannot filter by alertUID.
+class K8sAwareAnnotationServer implements AnnotationServer {
+  private legacy = new LegacyAnnotationServer();
+
+  async query(params: Record<string, unknown>, requestId: string): Promise<DataFrame> {
+    if (!(await isK8sAnnotationsClientEnabled())) {
+      return this.legacy.query(params, requestId);
+    }
+    // The k8s annotation API does not serve alert-state annotations — so we also fire
+    // the legacy one with type='alert' and merge results unless the type is specifically
+    // scoped to only annotations.
+    const wantsAlertAnnotations = params.type !== 'annotation';
+    const [manualEvents, alertEvents] = await Promise.all([
+      annotationK8sClient.search(params, requestId),
+      wantsAlertAnnotations ? fetchLegacyAlertAnnotations(params, requestId) : Promise.resolve<AnnotationEvent[]>([]),
+    ]);
+    return toDataFrame([...manualEvents, ...alertEvents]);
+  }
+
+  forAlert(alertUID: string): Promise<StateHistoryItem[]> {
+    return this.legacy.forAlert(alertUID);
+  }
+
+  async save(annotation: AnnotationEvent, scopes?: string[]) {
+    if (!(await isK8sAnnotationsClientEnabled())) {
+      return this.legacy.save(annotation);
+    }
+    return annotationK8sClient.create(annotation, scopes);
+  }
+
+  async update(annotation: AnnotationEvent, scopes?: string[]) {
+    if (!(await isK8sAnnotationsClientEnabled())) {
+      return this.legacy.update(annotation);
+    }
+    return annotationK8sClient.update(annotation, scopes);
+  }
+
+  async delete(annotation: AnnotationEvent) {
+    if (!(await isK8sAnnotationsClientEnabled())) {
+      return this.legacy.delete(annotation);
+    }
+    if (!annotation.id) {
+      throw new Error('Annotation id is required to delete');
+    }
+    return annotationK8sClient.remove(annotation.id);
+  }
+
+  async tags() {
+    if (!(await isK8sAnnotationsClientEnabled())) {
+      return this.legacy.tags();
+    }
+    const items = await annotationK8sClient.tags();
+    return items.map(({ tag, count }) => ({ term: tag, count }));
+  }
 }
 
-// Returns a façade that defers each call to the resolved (legacy or k8s)
-// implementation. Keeps call sites synchronous while the underlying gate
-// (apiserver discovery) is resolved asynchronously.
+const annotationServerInstance: AnnotationServer = new K8sAwareAnnotationServer();
+
 export function annotationServer(): AnnotationServer {
-  return {
-    query: (params, requestId) => resolveServer().then((server) => server.query(params, requestId)),
-    forAlert: (alertUID) => resolveServer().then((server) => server.forAlert(alertUID)),
-    save: (annotation, scopes) => resolveServer().then((server) => server.save(annotation, scopes)),
-    update: (annotation, scopes) => resolveServer().then((server) => server.update(annotation, scopes)),
-    delete: (annotation) => resolveServer().then((server) => server.delete(annotation)),
-    tags: () => resolveServer().then((server) => server.tags()),
-  };
+  return annotationServerInstance;
 }
