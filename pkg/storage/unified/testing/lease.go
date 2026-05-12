@@ -748,7 +748,8 @@ func validateLeaseStore(t *testing.T, store kv.KV) {
 		releasedAt int64
 	}
 
-	ctx := context.Background()
+	ctx, stop := context.WithTimeout(context.Background(), 10*time.Second)
+	defer stop()
 	now := time.Now()
 	const window = 30 * time.Minute
 
