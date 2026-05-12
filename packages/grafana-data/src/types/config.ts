@@ -248,7 +248,6 @@ export interface GrafanaConfig {
   helpEnabled: boolean;
   profileEnabled: boolean;
   newsFeedEnabled: boolean;
-  annotationAppPlatformEnabled: boolean;
   ldapEnabled: boolean;
   sigV4AuthEnabled: boolean;
   azureAuthEnabled: boolean;

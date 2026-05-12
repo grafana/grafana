@@ -117,7 +117,6 @@ export class GrafanaBootConfig {
   helpEnabled = false;
   profileEnabled = false;
   newsFeedEnabled = true;
-  annotationAppPlatformEnabled = false;
   ldapEnabled = false;
   jwtHeaderName = '';
   jwtUrlLogin = false;

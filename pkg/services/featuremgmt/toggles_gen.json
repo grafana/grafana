@@ -2682,6 +2682,19 @@
     },
     {
       "metadata": {
+        "name": "grafana.kubernetesAnnotationsClient",
+        "resourceVersion": "1778578390024",
+        "creationTimestamp": "2026-05-12T09:33:10Z"
+      },
+      "spec": {
+        "description": "Enables usage of the new annotations API client",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.meticulousAIRecorder",
         "resourceVersion": "1777401759422",
         "creationTimestamp": "2026-04-28T17:20:14Z",
@@ -3186,6 +3199,7 @@
         "name": "kubernetesAnnotationsClient",
         "resourceVersion": "1778163715528",
         "creationTimestamp": "2026-05-07T00:00:00Z",
+        "deletionTimestamp": "2026-05-12T09:33:10Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-05-07 14:21:55.528883 +0000 UTC"
         }

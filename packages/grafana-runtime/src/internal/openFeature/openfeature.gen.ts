@@ -35,6 +35,8 @@ export const FlagKeys = {
   FaroSessionReplay: "faroSessionReplay",
   /** Enables the new Flame Graph UI containing the Call Tree view */
   FlameGraphWithCallTree: "flameGraphWithCallTree",
+  /** Enables usage of the new annotations API client */
+  GrafanaKubernetesAnnotationsClient: "grafana.kubernetesAnnotationsClient",
   /** Whether to use the new SharedPreferences functional component */
   GrafanaNewPreferencesPage: "grafana.newPreferencesPage",
   /** Enables org-defined dashboard templates for enterprise */
@@ -198,6 +200,17 @@ export const useFlagFaroSessionReplay = (options?: ReactFlagEvaluationOptions): 
  */
 export const useFlagFlameGraphWithCallTree = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("flameGraphWithCallTree", false, options).value;
+};
+
+/**
+ * Enables usage of the new annotations API client
+ *
+ * **Details:**
+ * - flag key: `grafana.kubernetesAnnotationsClient`
+ * - default value: `false`
+ */
+export const useFlagGrafanaKubernetesAnnotationsClient = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.kubernetesAnnotationsClient", false, options).value;
 };
 
 /**

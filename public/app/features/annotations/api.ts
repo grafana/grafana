@@ -1,5 +1,6 @@
 import { type AnnotationEvent, type DataFrame, toDataFrame } from '@grafana/data';
-import { config, getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { annotationK8sClient } from 'app/api/clients/annotation/v0alpha1';
 import { ANNOTATION_API_GROUP } from 'app/api/clients/annotation/v0alpha1/types';
 import { getAPIGroupDiscoveryList } from 'app/features/apiserver/discovery';
@@ -52,13 +53,13 @@ class LegacyAnnotationServer implements AnnotationServer {
 
 /**
  * The k8s annotations client is gated by the FE feature flag
- * (`kubernetesAnnotationsClient`) and presence of the `annotation.grafana.app`
+ * (`grafana.kubernetesAnnotationsClient`) and presence of the `annotation.grafana.app`
  * group in the apiserver discovery list. Calling the new endpoints when the
  * group isn't registered would 404, so we require both signals before
  * switching off legacy.
  */
 export function isK8sAnnotationsClientEnabled(): Promise<boolean> {
-  if (!config.featureToggles.kubernetesAnnotationsClient) {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaKubernetesAnnotationsClient, false)) {
     return Promise.resolve(false);
   }
   return getAPIGroupDiscoveryList()

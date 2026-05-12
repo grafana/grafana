@@ -5,7 +5,6 @@ import { annotationEventToSpec, annotationK8sClient, annotationToEvent, buildCre
 
 const postFn = jest.fn();
 const putFn = jest.fn();
-const patchFn = jest.fn();
 const deleteFn = jest.fn();
 const getFn = jest.fn();
 
@@ -13,7 +12,6 @@ beforeAll(() => {
   setBackendSrv({
     post: postFn,
     put: putFn,
-    patch: patchFn,
     delete: deleteFn,
     get: getFn,
   } as unknown as BackendSrv);
@@ -24,7 +22,6 @@ beforeAll(() => {
 beforeEach(() => {
   postFn.mockReset();
   putFn.mockReset();
-  patchFn.mockReset();
   deleteFn.mockReset();
   getFn.mockReset();
 });
@@ -98,8 +95,19 @@ describe('annotationK8sClient', () => {
     expect(body.spec.scopes).toEqual(['s1']);
   });
 
-  it('update PATCHes the spec with merge-patch+json and no preceding GET', async () => {
-    patchFn.mockResolvedValue({});
+  it('update fetches the existing annotation, merges spec, and PUTs it back with the resourceVersion preserved', async () => {
+    getFn.mockResolvedValue({
+      apiVersion: 'annotation.grafana.app/v0alpha1',
+      kind: 'Annotation',
+      metadata: {
+        name: 'a-2',
+        namespace: 'stack-1',
+        resourceVersion: '42',
+        creationTimestamp: '2024-01-01T00:00:00Z',
+      },
+      spec: { text: 'old', time: 1, dashboardUID: 'dash-1', panelID: 3 },
+    });
+    putFn.mockResolvedValue({});
 
     // Pass the bare numeric ID as the legacy /api/annotations endpoint returns it
     await annotationK8sClient.update(
@@ -107,12 +115,13 @@ describe('annotationK8sClient', () => {
       ['scope-a']
     );
 
-    expect(getFn).not.toHaveBeenCalled();
-    expect(putFn).not.toHaveBeenCalled();
+    expect(getFn).toHaveBeenCalledWith(`${baseURL}/annotations/a-2`);
 
-    const [patchUrl, patchBody, patchOpts] = patchFn.mock.calls[0];
-    expect(patchUrl).toBe(`${baseURL}/annotations/a-2`);
-    expect(patchBody.spec).toMatchObject({
+    const [putUrl, putBody] = putFn.mock.calls[0];
+    expect(putUrl).toBe(`${baseURL}/annotations/a-2`);
+    expect(putBody.metadata.name).toBe('a-2');
+    expect(putBody.metadata.resourceVersion).toBe('42');
+    expect(putBody.spec).toMatchObject({
       text: 'new',
       time: 2,
       timeEnd: 5,
@@ -120,32 +129,39 @@ describe('annotationK8sClient', () => {
       panelID: 3,
       scopes: ['scope-a'],
     });
-    expect(patchOpts.headers['Content-Type']).toBe('application/merge-patch+json');
   });
 
   it('update accepts an already-prefixed a-{id} name without double-prefixing', async () => {
-    patchFn.mockResolvedValue({});
+    getFn.mockResolvedValue({
+      apiVersion: 'annotation.grafana.app/v0alpha1',
+      kind: 'Annotation',
+      metadata: { name: 'a-2', resourceVersion: '1', creationTimestamp: '' },
+      spec: { text: 'x', time: 1 },
+    });
+    putFn.mockResolvedValue({});
+
     await annotationK8sClient.update({ id: 'a-2', time: 1, text: 'x' });
 
-    const [patchUrl] = patchFn.mock.calls[0];
-    expect(patchUrl).toBe(`${baseURL}/annotations/a-2`);
+    expect(getFn).toHaveBeenCalledWith(`${baseURL}/annotations/a-2`);
   });
 
-  it('update clears optional fields by sending explicit nulls', async () => {
-    patchFn.mockResolvedValue({});
+  it('update clears timeEnd when the new event is no longer a region', async () => {
+    getFn.mockResolvedValue({
+      apiVersion: 'annotation.grafana.app/v0alpha1',
+      kind: 'Annotation',
+      metadata: { name: 'a-3', resourceVersion: '1', creationTimestamp: '' },
+      spec: { text: 'x', time: 1, timeEnd: 9 },
+    });
+    putFn.mockResolvedValue({});
+
     await annotationK8sClient.update({ id: '3', time: 5, text: 'x', isRegion: false });
 
-    const [, patchBody] = patchFn.mock.calls[0];
-    // Explicit null is required for JSON Merge Patch to remove a field;
-    // an omitted field would be a no-op.
-    expect(patchBody.spec.timeEnd).toBeNull();
-    expect(patchBody.spec.tags).toBeNull();
-    expect(patchBody.spec.scopes).toBeNull();
+    const [, putBody] = putFn.mock.calls[0];
+    expect(putBody.spec.timeEnd).toBeUndefined();
   });
 
   it('update rejects when id is missing', async () => {
     await expect(annotationK8sClient.update({ time: 1, text: 'x' })).rejects.toThrow();
-    expect(patchFn).not.toHaveBeenCalled();
     expect(putFn).not.toHaveBeenCalled();
     expect(getFn).not.toHaveBeenCalled();
   });

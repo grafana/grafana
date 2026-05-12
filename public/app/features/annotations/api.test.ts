@@ -1,16 +1,30 @@
 import { type BackendSrv, config, setBackendSrv } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import { getAPIGroupDiscoveryList } from '../apiserver/discovery';
 
 import { annotationServer } from './api';
 
 jest.mock('../apiserver/discovery');
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  getFeatureFlagClient: jest.fn(),
+}));
 
 const mockGetAPIGroupDiscoveryList = jest.mocked(getAPIGroupDiscoveryList);
+const mockGetFeatureFlagClient = jest.mocked(getFeatureFlagClient);
+const getBooleanValueFn = jest.fn();
+
+// stubFFEnabled toggles only the KubernetesAnnotationsClient flag; any other
+// flag key falls through to the default the caller supplied.
+function stubFFEnabled(enabled: boolean) {
+  getBooleanValueFn.mockImplementation((key: string, defaultValue: boolean) =>
+    key === FlagKeys.GrafanaKubernetesAnnotationsClient ? enabled : defaultValue
+  );
+}
 
 const postFn = jest.fn();
 const putFn = jest.fn();
-const patchFn = jest.fn();
 const deleteFn = jest.fn();
 const getFn = jest.fn();
 
@@ -24,25 +38,30 @@ beforeAll(() => {
   setBackendSrv({
     post: postFn,
     put: putFn,
-    patch: patchFn,
     delete: deleteFn,
     get: getFn,
   } as unknown as BackendSrv);
+  mockGetFeatureFlagClient.mockReturnValue({ getBooleanValue: getBooleanValueFn } as unknown as ReturnType<
+    typeof getFeatureFlagClient
+  >);
 });
 
 beforeEach(() => {
   postFn.mockReset();
   putFn.mockReset();
-  patchFn.mockReset();
   deleteFn.mockReset();
   getFn.mockReset();
   mockGetAPIGroupDiscoveryList.mockReset();
+  getBooleanValueFn.mockReset();
 });
 
 describe('annotationServer with FE flag OFF', () => {
   beforeAll(() => {
-    config.featureToggles.kubernetesAnnotationsClient = false;
     config.namespace = 'stack-1';
+  });
+
+  beforeEach(() => {
+    stubFFEnabled(false);
   });
 
   it('save POSTs to legacy /api/annotations', async () => {
@@ -75,12 +94,11 @@ describe('annotationServer with FE flag OFF', () => {
 
 describe('annotationServer falls back to legacy when API group is not discovered', () => {
   beforeAll(() => {
-    config.featureToggles.kubernetesAnnotationsClient = true;
     config.namespace = 'stack-1';
   });
 
-  afterAll(() => {
-    config.featureToggles.kubernetesAnnotationsClient = false;
+  beforeEach(() => {
+    stubFFEnabled(true);
   });
 
   it('FE FF on, API group missing in /apis → legacy', async () => {
@@ -100,15 +118,11 @@ describe('annotationServer with FE flag ON and API group discovered', () => {
   const baseURL = '/apis/annotation.grafana.app/v0alpha1/namespaces/stack-1';
 
   beforeAll(() => {
-    config.featureToggles.kubernetesAnnotationsClient = true;
     config.namespace = 'stack-1';
   });
 
-  afterAll(() => {
-    config.featureToggles.kubernetesAnnotationsClient = false;
-  });
-
   beforeEach(() => {
+    stubFFEnabled(true);
     mockGetAPIGroupDiscoveryList.mockResolvedValue(apiGroupAvailable);
   });
 
@@ -124,30 +138,26 @@ describe('annotationServer with FE flag ON and API group discovered', () => {
     expect(body.spec.panelID).toBe(1);
   });
 
-  it('update PATCHes the k8s resource without a preceding GET', async () => {
-    patchFn.mockResolvedValue({});
+  it('update fetches existing then PUTs back with scopes and resourceVersion preserved', async () => {
+    getFn.mockResolvedValue({
+      apiVersion: 'annotation.grafana.app/v0alpha1',
+      kind: 'Annotation',
+      metadata: { name: 'a-1', resourceVersion: 'rv-7', creationTimestamp: '' },
+      spec: { text: 'old', time: 1 },
+    });
+    putFn.mockResolvedValue({});
 
     // Bare numeric id as returned by legacy /api/annotations
     await annotationServer().update({ id: '1', time: 2, text: 'new' }, ['scope-a']);
 
-    expect(getFn).not.toHaveBeenCalled();
+    expect(getFn).toHaveBeenCalledWith(`${baseURL}/annotations/a-1`);
 
-    const [patchUrl, body, opts] = patchFn.mock.calls[0];
-    expect(patchUrl).toBe(`${baseURL}/annotations/a-1`);
-    expect(body.spec.text).toBe('new');
-    expect(body.spec.time).toBe(2);
+    const [putUrl, body] = putFn.mock.calls[0];
+    expect(putUrl).toBe(`${baseURL}/annotations/a-1`);
+    expect(body.metadata.name).toBe('a-1');
+    expect(body.metadata.resourceVersion).toBe('rv-7');
     expect(body.spec.scopes).toEqual(['scope-a']);
-    expect(opts.headers['Content-Type']).toBe('application/merge-patch+json');
-  });
-
-  it('update clears optional fields by sending explicit nulls', async () => {
-    patchFn.mockResolvedValue({});
-    await annotationServer().update({ id: '1', time: 2, text: 'new' });
-
-    const [, body] = patchFn.mock.calls[0];
-    expect(body.spec.timeEnd).toBeNull();
-    expect(body.spec.tags).toBeNull();
-    expect(body.spec.scopes).toBeNull();
+    expect(body.spec.text).toBe('new');
   });
 
   it('delete DELETEs the k8s resource by metadata.name', async () => {

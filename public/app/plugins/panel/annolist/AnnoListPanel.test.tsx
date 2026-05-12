@@ -10,6 +10,7 @@ import {
   type Scope,
 } from '@grafana/data';
 import { config, locationService, ScopesContext, type ScopesContextValue } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
 import { backendSrv } from '../../../core/services/backend_srv';
@@ -25,8 +26,24 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 jest.mock('../../../features/apiserver/discovery');
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  getFeatureFlagClient: jest.fn(),
+}));
 
 const mockGetAPIGroupDiscoveryList = jest.mocked(getAPIGroupDiscoveryList);
+const mockGetFeatureFlagClient = jest.mocked(getFeatureFlagClient);
+const getBooleanValueFn = jest.fn();
+
+function stubFFEnabled(enabled: boolean) {
+  getBooleanValueFn.mockImplementation((key: string, defaultValue: boolean) =>
+    key === FlagKeys.GrafanaKubernetesAnnotationsClient ? enabled : defaultValue
+  );
+}
+
+mockGetFeatureFlagClient.mockReturnValue({ getBooleanValue: getBooleanValueFn } as unknown as ReturnType<
+  typeof getFeatureFlagClient
+>);
 
 const apiGroupAvailable = {
   metadata: { resourceVersion: '' },
@@ -36,6 +53,8 @@ const apiGroupMissing = { metadata: { resourceVersion: '' }, items: [] };
 
 beforeEach(() => {
   mockGetAPIGroupDiscoveryList.mockReset();
+  getBooleanValueFn.mockReset();
+  stubFFEnabled(false);
 });
 
 const defaultOptions: Options = {
@@ -365,7 +384,7 @@ describe('AnnoListPanel', () => {
 
     const setupK8sContext = async (options: Options = defaultOptions, scopeNames?: string[]) => {
       jest.clearAllMocks();
-      config.featureToggles.kubernetesAnnotationsClient = true;
+      stubFFEnabled(true);
       config.namespace = 'stack-1';
       mockGetAPIGroupDiscoveryList.mockResolvedValue(apiGroupAvailable);
 
@@ -428,10 +447,6 @@ describe('AnnoListPanel', () => {
       await waitFor(() => expect(getMock).toHaveBeenCalled());
       return { getMock };
     };
-
-    afterEach(() => {
-      config.featureToggles.kubernetesAnnotationsClient = false;
-    });
 
     it('hits the k8s /search endpoint with translated params', async () => {
       const { getMock } = await setupK8sContext();
@@ -496,19 +511,15 @@ describe('AnnoListPanel', () => {
   });
 
   describe('when the k8s client gate is not fully open it falls back to legacy /api/annotations', () => {
-    afterEach(() => {
-      config.featureToggles.kubernetesAnnotationsClient = false;
-    });
-
     it('FE FF on, API group missing in /apis → legacy GET', async () => {
-      config.featureToggles.kubernetesAnnotationsClient = true;
+      stubFFEnabled(true);
       mockGetAPIGroupDiscoveryList.mockResolvedValue(apiGroupMissing);
       const { getMock } = await setupTestContext();
       expect(getMock).toHaveBeenCalledWith('/api/annotations', expect.any(Object), expect.any(String));
     });
 
     it('FE FF off → legacy GET, no discovery call', async () => {
-      config.featureToggles.kubernetesAnnotationsClient = false;
+      stubFFEnabled(false);
       const { getMock } = await setupTestContext();
       expect(getMock).toHaveBeenCalledWith('/api/annotations', expect.any(Object), expect.any(String));
       expect(mockGetAPIGroupDiscoveryList).not.toHaveBeenCalled();
