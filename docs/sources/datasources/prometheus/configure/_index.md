@@ -219,17 +219,23 @@ datasources:
 
 The Prometheus data source works with Azure authentication. To configure Azure authentication refer to [Configure Azure Active Directory (AD) authentication](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/#configure-azure-active-directory-ad-authentication).
 
-In Grafana Enterprise, you need to update the .ini configuration file. Refer to [Configuration file location](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#configuration-file-location) to locate your .ini file.
+{{< admonition type="caution" >}}
+**Grafana Cloud users:** Azure AD authentication for the Prometheus data source requires a backend flag (`azure_auth_enabled`) that isn't enabled by default. You must [contact Grafana Support](https://grafana.com/help/) to have this flag enabled on your Cloud stack before Azure authentication works. Without this flag, queries return `401 Unauthorized` errors.
 
-Add the following setting in the **[auth]** section of the .ini configuration file:
+Consider using the [Azure Monitor Managed Service for Prometheus data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/configure/azure-authentication/) instead, which doesn't require this flag.
+{{< /admonition >}}
 
-```bash
+For self-hosted Grafana Enterprise, update the `.ini` configuration file. Refer to [Configuration file location](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#configuration-file-location) to locate your `.ini` file.
+
+Add the following setting in the **[auth]** section of the `.ini` configuration file:
+
+```ini
 [auth]
 azure_auth_enabled = true
 ```
 
 {{< admonition type="note" >}}
-If you are using Azure authentication, don't enable `Forward OAuth identity`. Both methods use the same HTTP authorization headers, and the OAuth token will override your Azure credentials.
+If you're using Azure authentication, don't enable `Forward OAuth identity`. Both methods use the same HTTP authorization headers, and the OAuth token overrides your Azure credentials.
 {{< /admonition >}}
 
 ## Recording rules (beta)

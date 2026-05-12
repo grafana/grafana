@@ -19,15 +19,61 @@ weight: 200
 
 # Connect to Azure Monitor Managed Service for Prometheus
 
-After creating a Azure Monitor Managed Service for Prometheus data source:
+This page explains how to authenticate the Azure Monitor Managed Service for Prometheus data source. Choose the right method based on where Grafana runs and your security requirements.
 
-1. In the data source configuration page, locate the **Authentication** section
-2. Select your authentication method:
-   - **Managed Identity**: For Azure-hosted Grafana instances. To learn more about Entra login for Grafana, refer to [Configure Entra ID/Entra ID OAuth authentication](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/azuread/#configure-azure-adentra-id-oauth-authentication)
-   - **App Registration**: For service principal authentication
-   - **Current User**: Uses the current user's Entra ID credentials
+## Supported authentication methods
 
-3. Configure based on your chosen method:
+The following table lists supported authentication methods and their trade-offs:
+
+| Method                   | Best for                           | Grafana Cloud | Supports alerting | Server config required |
+| ------------------------ | ---------------------------------- | ------------- | ----------------- | ---------------------- |
+| **App Registration**     | Any Grafana deployment             | ✓             | ✓                 | No                     |
+| **Managed Identity**     | Grafana hosted in Azure            | ✗             | ✓                 | Yes                    |
+| **Workload Identity**    | Grafana in Kubernetes (AKS)        | ✗             | ✓                 | Yes                    |
+| **Current User**         | User-level access control          | ✓             | Partial            | Yes                    |
+
+{{< admonition type="note" >}}
+**Certificate-based authentication is not supported** for the Azure Monitor Managed Service for Prometheus data source. If your organization requires certificate-based auth, use the [Azure Monitor data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/configure/), which supports App Registration with client certificates.
+{{< /admonition >}}
+
+**Current User** authentication doesn't support background operations like alerting and recording rules because user credentials aren't available for those processes. To use alerting with Current User, configure **fallback service credentials** (an App Registration). Alerts then run under the fallback credential's permissions, not the user's.
+
+### Grafana Cloud requirements
+
+{{< admonition type="caution" >}}
+**Grafana Cloud users** connecting to Azure resources in a private network should use [Private Data Source Connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) rather than the deprecated `azure_auth_enabled` flag. If you're not using PDC and need Azure AD authentication enabled, [contact Grafana Support](https://grafana.com/help/) to have the `azure_auth_enabled` backend flag enabled on your Cloud stack. Without this flag, queries return `401 Unauthorized` errors.
+{{< /admonition >}}
+
+Managed Identity and Workload Identity are not available in Grafana Cloud because they require Grafana to run on your Azure infrastructure. Use **App Registration** or **Current User** authentication instead.
+
+### Self-hosted server configuration
+
+For self-hosted Grafana, Managed Identity, Workload Identity, and Current User authentication methods require settings in the Grafana `.ini` configuration file. Additionally, the Azure Monitor Managed Service for Prometheus plugin must be included in `forward_settings_to_plugins` so that it receives the Azure settings from the server.
+
+Verify that `grafana-azureprometheus-datasource` is listed in `forward_settings_to_plugins` under the `[azure]` section of your `.ini` file:
+
+```ini
+[azure]
+managed_identity_enabled = true
+forward_settings_to_plugins = grafana-azure-monitor-datasource grafana-azureprometheus-datasource
+```
+
+{{< admonition type="note" >}}
+By default, Grafana includes all Grafana Labs Azure plugins in `forward_settings_to_plugins`. If you've customized this setting, ensure `grafana-azureprometheus-datasource` is included. Missing this setting is a common cause of `401 Unauthorized` errors.
+{{< /admonition >}}
+
+Refer to [Configure Grafana Azure settings](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#azure) for all available Azure configuration options.
+
+## Configure the data source
+
+After creating an Azure Monitor Managed Service for Prometheus data source:
+
+1. In the data source configuration page, locate the **Authentication** section.
+1. Select your authentication method:
+   - **Managed Identity**: For Azure-hosted Grafana instances. Refer to [Configure Entra ID OAuth authentication](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/azuread/#configure-azure-adentra-id-oauth-authentication) for details.
+   - **App Registration**: For service principal authentication.
+   - **Current User**: Uses the current user's Entra ID credentials.
+1. Configure based on your chosen method:
 
 | Setting                     | Description                     | Example                                |
 | --------------------------- | ------------------------------- | -------------------------------------- |
@@ -46,7 +92,7 @@ When using Managed Identity for authentication:
    https://your-workspace.eastus2.prometheus.monitor.azure.com
    ```
 
-5. Click **Save & test** to verify the connection
+5. Click **Save & test** to verify the connection.
 
 ## Example configuration
 
@@ -115,8 +161,8 @@ The following sections contain troubleshooting guidance.
 
 **After migrating, my data source returns "401 Unauthorized"**
 
-- If you are using self-hosted Grafana, check your .ini for `grafana-azureprometheus-datasource` is included in `forward_settings_to_plugins` under the `[azure]` heading.
-- If you are using Grafana Cloud, contact Grafana support.
+- **Self-hosted Grafana:** Verify that `grafana-azureprometheus-datasource` is included in `forward_settings_to_plugins` under the `[azure]` section of your `.ini` file. Refer to [Self-hosted server configuration](#self-hosted-server-configuration) for details.
+- **Grafana Cloud:** The `azure_auth_enabled` backend flag may not be enabled on your stack. Use [Private Data Source Connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) if connecting to private Azure resources, or [contact Grafana Support](https://grafana.com/help/) to have the flag enabled.
 
 ### Rollback self-hosted Grafana without a backup
 

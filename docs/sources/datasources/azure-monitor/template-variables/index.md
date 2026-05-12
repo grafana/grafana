@@ -185,7 +185,7 @@ When a multi-value variable is used as a parameter in another variable query (fo
 
 ## Troubleshoot template variables
 
-If you encounter issues with template variables, try the following solutions.
+If you encounter issues with template variables, try the following solutions. For additional troubleshooting, refer to the [Azure Monitor troubleshooting guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/troubleshooting/#template-variable-errors).
 
 ### Variable returns no values
 
@@ -197,6 +197,10 @@ If you encounter issues with template variables, try the following solutions.
 
 - Check the **Refresh** setting and adjust if needed.
 - Click the refresh icon next to the variable dropdown to manually refresh.
+
+### Variables break after a Grafana upgrade
+
+If template variables return errors such as `Properties found in series but missing valueProp and textProp` after upgrading Grafana, this typically indicates a version-specific bug. Update to the latest patch release for your Grafana version. For Grafana Cloud, verify you're on the **stable** release channel. Refer to [Template variable errors](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/troubleshooting/#template-variable-errors) for detailed solutions.
 
 ### Multi-value selection not working in queries
 

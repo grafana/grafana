@@ -214,9 +214,11 @@ If you see authentication errors when alerts evaluate:
 
 ### Query timeout errors
 
+- **Increase the data source timeout.** The default timeout is 30 seconds, but Azure Log Analytics queries can take up to 3 minutes. Open the Azure Monitor data source settings, scroll to **Misc**, and set **Timeout** to `300`. Refer to [Query timeout](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/configure/#query-timeout).
 - Simplify complex KQL queries.
 - Reduce the time range in Log Analytics queries.
 - Add more specific filters to narrow result sets.
+- Ensure the alert evaluation interval is long enough to accommodate the query duration.
 
 For additional troubleshooting help, refer to [Troubleshoot Azure Monitor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/troubleshooting/).
 
