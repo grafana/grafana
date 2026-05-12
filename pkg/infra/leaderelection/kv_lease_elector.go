@@ -96,6 +96,10 @@ func (k *KVLeaseElector) Run(ctx context.Context, fn func(ctx context.Context), 
 		opt(o)
 	}
 
+	if o.onNewLeader != nil {
+		k.logger.Warn("WithOnNewLeader is not supported by KVLeaseElector and will be ignored")
+	}
+
 	store, err := k.kvProvider.Get(ctx)
 	if err != nil {
 		return fmt.Errorf("waiting for KV store: %w", err)
