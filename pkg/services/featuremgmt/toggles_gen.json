@@ -120,7 +120,8 @@
       "metadata": {
         "name": "alertRuleUseFiredAtForStartsAt",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-04-22T11:16:38Z"
+        "creationTimestamp": "2025-04-22T11:16:38Z",
+        "deletionTimestamp": "2026-05-12T10:50:19Z"
       },
       "spec": {
         "description": "Use FiredAt for StartsAt when sending alerts to Alertmaanger",
@@ -152,6 +153,21 @@
         "description": "Enables the new Rules API v2 UI with evaluation chains and groupless rule creation",
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "alerting.syncExternalAlertmanager",
+        "resourceVersion": "1778502884021",
+        "creationTimestamp": "2026-05-11T12:34:44Z"
+      },
+      "spec": {
+        "description": "Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "requiresRestart": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -2714,14 +2730,16 @@
     {
       "metadata": {
         "name": "grafana.orgDashboardTemplates",
-        "resourceVersion": "1777989950811",
-        "creationTimestamp": "2026-05-05T14:05:50Z"
+        "resourceVersion": "1778509620347",
+        "creationTimestamp": "2026-05-05T14:05:50Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-05-11 14:27:00.347663 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables org-defined dashboard templates for enterprise",
         "stage": "experimental",
         "codeowner": "@grafana/sharing-squad",
-        "frontend": true,
         "expression": "false"
       }
     },
@@ -4323,7 +4341,8 @@
       "metadata": {
         "name": "newTimeRangeZoomShortcuts",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-11-20T21:14:27Z"
+        "creationTimestamp": "2025-11-20T21:14:27Z",
+        "deletionTimestamp": "2026-05-08T20:37:51Z"
       },
       "spec": {
         "description": "Enables new keyboard shortcuts for time range zoom operations",
@@ -6103,7 +6122,8 @@
       "metadata": {
         "name": "unifiedStorageBigObjectsSupport",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2024-10-17T10:18:29Z"
+        "creationTimestamp": "2024-10-17T10:18:29Z",
+        "deletionTimestamp": "2026-05-10T19:55:32Z"
       },
       "spec": {
         "description": "Enables to save big objects in blob storage",

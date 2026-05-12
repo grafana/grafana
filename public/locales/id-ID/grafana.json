@@ -1159,6 +1159,9 @@
       "content-show-all-errors": "Tampilkan semua kesalahan"
     },
     "errors": {
+      "api-machinery": {
+        "with-causes": ""
+      },
       "failedWith": "{{-config}} gagal dengan {{status}}: {{-message}}"
     },
     "evaluate-every-validation-options": {
@@ -10793,6 +10796,11 @@
     "name-line-width": "Lebar garis",
     "name-stacking": "Tumpukan"
   },
+  "home": {
+    "home-page": {
+      "placeholder": ""
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "Memuat",
@@ -15929,7 +15937,9 @@
       "description": {
         "group-by-field-value": "Kelompokkan data berdasarkan nilai bidang dan buat tabel bersarang dengan data yang dikelompokkan."
       },
+      "description-expand-nested-rows": "",
       "description-show-field-names": "Jika tabel nested diaktifkan, akan menampilkan nama bidang sebagai header tabel",
+      "label-expand-nested-rows-by-default": "",
       "label-show-field-names-in-nested-tables": "Tampilkan nama bidang dalam tabel nested",
       "name": {
         "group-to-nested-tables": "Kelompokkan ke tabel bersarang"

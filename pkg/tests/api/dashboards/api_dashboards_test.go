@@ -429,7 +429,7 @@ providers:
 	input, err := os.ReadFile(filepath.Join("./home.json"))
 	require.NoError(t, err)
 	provDashboardFile := filepath.Join(provDashboardsDir, "home.json")
-	err = os.WriteFile(provDashboardFile, input, 0644)
+	err = os.WriteFile(provDashboardFile, input, 0644) // #nosec G703 -- test writes to caller-provided temp dir
 	require.NoError(t, err)
 	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
 
@@ -712,10 +712,6 @@ func createFolder(t *testing.T, grafanaListedAddr string, title string) *dtos.Fo
 	return f
 }
 
-func intPtr(n int) *int {
-	return &n
-}
-
 func TestIntegrationPreserveSchemaVersion(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableAnonymous: true,
@@ -723,7 +719,7 @@ func TestIntegrationPreserveSchemaVersion(t *testing.T) {
 
 	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
 
-	schemaVersions := []*int{intPtr(1), intPtr(36), intPtr(40), nil}
+	schemaVersions := []*int{new(1), new(36), new(40), nil}
 	for _, schemaVersion := range schemaVersions {
 		var title string
 		if schemaVersion == nil {

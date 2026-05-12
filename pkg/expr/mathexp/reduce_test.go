@@ -15,7 +15,7 @@ import (
 var seriesWithNil = Vars{
 	"A": resultValuesNoErr(
 		makeSeries("temp", nil, tp{
-			time.Unix(5, 0), float64Pointer(2),
+			time.Unix(5, 0), new(2.0),
 		}, tp{
 			time.Unix(10, 0), nil,
 		}),
@@ -53,7 +53,7 @@ func TestSeriesReduce(t *testing.T) {
 			vars:        aSeries,
 			errIs:       require.NoError,
 			resultsIs:   require.Equal,
-			results:     resultValuesNoErr(makeNumber("", nil, float64Pointer(3))),
+			results:     resultValuesNoErr(makeNumber("", nil, new(3.0))),
 		},
 		{
 			name:        "sum series with a nil value",
@@ -71,7 +71,7 @@ func TestSeriesReduce(t *testing.T) {
 			vars:        seriesEmpty,
 			errIs:       require.NoError,
 			resultsIs:   require.Equal,
-			results:     resultValuesNoErr(makeNumber("", nil, float64Pointer(0))),
+			results:     resultValuesNoErr(makeNumber("", nil, new(0.0))),
 		},
 		{
 			name:        "mean series with a nil value",
@@ -116,15 +116,15 @@ func TestSeriesReduce(t *testing.T) {
 			vars: Vars{
 				"A": resultValuesNoErr(
 					makeSeries("temp", nil, tp{
-						time.Unix(5, 0), float64Pointer(20),
+						time.Unix(5, 0), new(20.0),
 					}, tp{
-						time.Unix(10, 0), float64Pointer(10),
+						time.Unix(10, 0), new(10.0),
 					}),
 				),
 			},
 			errIs:     require.NoError,
 			resultsIs: require.Equal,
-			results:   resultValuesNoErr(makeNumber("", nil, float64Pointer(15))),
+			results:   resultValuesNoErr(makeNumber("", nil, new(15.0))),
 		},
 		{
 			name:        "median series odd number of elements",
@@ -133,17 +133,17 @@ func TestSeriesReduce(t *testing.T) {
 			vars: Vars{
 				"A": resultValuesNoErr(
 					makeSeries("temp", nil, tp{
-						time.Unix(5, 0), float64Pointer(20),
+						time.Unix(5, 0), new(20.0),
 					}, tp{
-						time.Unix(10, 0), float64Pointer(10),
+						time.Unix(10, 0), new(10.0),
 					}, tp{
-						time.Unix(15, 0), float64Pointer(5),
+						time.Unix(15, 0), new(5.0),
 					}),
 				),
 			},
 			errIs:     require.NoError,
 			resultsIs: require.Equal,
-			results:   resultValuesNoErr(makeNumber("", nil, float64Pointer(10))),
+			results:   resultValuesNoErr(makeNumber("", nil, new(10.0))),
 		},
 		{
 			name:        "median series with repeated values",
@@ -152,17 +152,17 @@ func TestSeriesReduce(t *testing.T) {
 			vars: Vars{
 				"A": resultValuesNoErr(
 					makeSeries("temp", nil, tp{
-						time.Unix(5, 0), float64Pointer(5),
+						time.Unix(5, 0), new(5.0),
 					}, tp{
-						time.Unix(10, 0), float64Pointer(5),
+						time.Unix(10, 0), new(5.0),
 					}, tp{
-						time.Unix(15, 0), float64Pointer(5),
+						time.Unix(15, 0), new(5.0),
 					}),
 				),
 			},
 			errIs:     require.NoError,
 			resultsIs: require.Equal,
-			results:   resultValuesNoErr(makeNumber("", nil, float64Pointer(5))),
+			results:   resultValuesNoErr(makeNumber("", nil, new(5.0))),
 		},
 		{
 			name:        "median series with negative values",
@@ -171,19 +171,19 @@ func TestSeriesReduce(t *testing.T) {
 			vars: Vars{
 				"A": resultValuesNoErr(
 					makeSeries("temp", nil, tp{
-						time.Unix(5, 0), float64Pointer(-1),
+						time.Unix(5, 0), new(-1.0),
 					}, tp{
-						time.Unix(10, 0), float64Pointer(-3),
+						time.Unix(10, 0), new(-3.0),
 					}, tp{
-						time.Unix(10, 0), float64Pointer(-4),
+						time.Unix(10, 0), new(-4.0),
 					}, tp{
-						time.Unix(15, 0), float64Pointer(-2),
+						time.Unix(15, 0), new(-2.0),
 					}),
 				),
 			},
 			errIs:     require.NoError,
 			resultsIs: require.Equal,
-			results:   resultValuesNoErr(makeNumber("", nil, float64Pointer(-2.5))),
+			results:   resultValuesNoErr(makeNumber("", nil, new(-2.5))),
 		},
 		{
 			name:        "min series with a nil value",
@@ -228,7 +228,7 @@ func TestSeriesReduce(t *testing.T) {
 			vars:        aSeries,
 			errIs:       require.NoError,
 			resultsIs:   require.Equal,
-			results:     resultValuesNoErr(makeNumber("", nil, float64Pointer(1.5))),
+			results:     resultValuesNoErr(makeNumber("", nil, new(1.5))),
 		},
 		{
 			name:        "count empty series",
@@ -237,7 +237,7 @@ func TestSeriesReduce(t *testing.T) {
 			vars:        seriesEmpty,
 			errIs:       require.NoError,
 			resultsIs:   require.Equal,
-			results:     resultValuesNoErr(makeNumber("", nil, float64Pointer(0))),
+			results:     resultValuesNoErr(makeNumber("", nil, new(0.0))),
 		},
 		{
 			name:        "mean series with labels",
@@ -246,15 +246,15 @@ func TestSeriesReduce(t *testing.T) {
 			vars: Vars{
 				"A": resultValuesNoErr(
 					makeSeries("temp", data.Labels{"host": "a"}, tp{
-						time.Unix(5, 0), float64Pointer(2),
+						time.Unix(5, 0), new(2.0),
 					}, tp{
-						time.Unix(10, 0), float64Pointer(1),
+						time.Unix(10, 0), new(1.0),
 					}),
 				),
 			},
 			errIs:     require.NoError,
 			resultsIs: require.Equal,
-			results:   resultValuesNoErr(makeNumber("", data.Labels{"host": "a"}, float64Pointer(1.5))),
+			results:   resultValuesNoErr(makeNumber("", data.Labels{"host": "a"}, new(1.5))),
 		},
 		{
 			name:        "last empty series",
@@ -303,8 +303,8 @@ var seriesNonNumbers = Vars{
 	"A": resultValuesNoErr(
 		makeSeries("temp", nil,
 			tp{time.Unix(5, 0), NaN},
-			tp{time.Unix(10, 0), float64Pointer(math.Inf(-1))},
-			tp{time.Unix(15, 0), float64Pointer(math.Inf(1))},
+			tp{time.Unix(10, 0), new(math.Inf(-1))},
+			tp{time.Unix(15, 0), new(math.Inf(1))},
 			tp{time.Unix(15, 0), nil}),
 	),
 }
@@ -322,28 +322,28 @@ func TestSeriesReduceDropNN(t *testing.T) {
 			red:         "sum",
 			varToReduce: "A",
 			vars:        aSeries,
-			results:     resultValuesNoErr(makeNumber("", nil, float64Pointer(3))),
+			results:     resultValuesNoErr(makeNumber("", nil, new(3.0))),
 		},
 		{
 			name:        "dropNN: sum series with a nil value",
 			red:         "sum",
 			varToReduce: "A",
 			vars:        seriesWithNil,
-			results:     resultValuesNoErr(makeNumber("", nil, float64Pointer(2))),
+			results:     resultValuesNoErr(makeNumber("", nil, new(2.0))),
 		},
 		{
 			name:        "dropNN: sum empty series",
 			red:         "sum",
 			varToReduce: "A",
 			vars:        seriesEmpty,
-			results:     resultValuesNoErr(makeNumber("", nil, float64Pointer(0))),
+			results:     resultValuesNoErr(makeNumber("", nil, new(0.0))),
 		},
 		{
 			name:        "dropNN: mean series with a nil value and real value",
 			red:         "mean",
 			varToReduce: "A",
 			vars:        seriesWithNil,
-			results:     resultValuesNoErr(makeNumber("", nil, float64Pointer(2))),
+			results:     resultValuesNoErr(makeNumber("", nil, new(2.0))),
 		},
 		{
 			name:        "DropNN: mean empty series",
@@ -357,7 +357,7 @@ func TestSeriesReduceDropNN(t *testing.T) {
 			red:         "median",
 			varToReduce: "A",
 			vars:        seriesWithNil,
-			results:     resultValuesNoErr(makeNumber("", nil, float64Pointer(2))),
+			results:     resultValuesNoErr(makeNumber("", nil, new(2.0))),
 		},
 		{
 			name:        "DropNN: median empty series",
@@ -385,14 +385,14 @@ func TestSeriesReduceDropNN(t *testing.T) {
 			red:         "count",
 			varToReduce: "A",
 			vars:        seriesEmpty,
-			results:     resultValuesNoErr(makeNumber("", nil, float64Pointer(0))),
+			results:     resultValuesNoErr(makeNumber("", nil, new(0.0))),
 		},
 		{
 			name:        "DropNN: count series with nil and value should only count real numbers",
 			red:         "count",
 			varToReduce: "A",
 			vars:        seriesWithNil,
-			results:     resultValuesNoErr(makeNumber("", nil, float64Pointer(1))),
+			results:     resultValuesNoErr(makeNumber("", nil, new(1.0))),
 		},
 	}
 
@@ -430,42 +430,42 @@ func TestSeriesReduceReplaceNN(t *testing.T) {
 			red:         "sum",
 			varToReduce: "A",
 			vars:        aSeries,
-			results:     resultValuesNoErr(makeNumber("", nil, float64Pointer(3))),
+			results:     resultValuesNoErr(makeNumber("", nil, new(3.0))),
 		},
 		{
 			name:        "replaceNN: sum series with a nil value",
 			red:         "sum",
 			varToReduce: "A",
 			vars:        seriesWithNil,
-			results:     resultValuesNoErr(makeNumber("", nil, float64Pointer(replaceWith+2))),
+			results:     resultValuesNoErr(makeNumber("", nil, new(replaceWith+2))),
 		},
 		{
 			name:        "replaceNN: sum empty series",
 			red:         "sum",
 			varToReduce: "A",
 			vars:        seriesEmpty,
-			results:     resultValuesNoErr(makeNumber("", nil, float64Pointer(0))),
+			results:     resultValuesNoErr(makeNumber("", nil, new(0.0))),
 		},
 		{
 			name:        "replaceNN: mean series with a nil value and real value",
 			red:         "mean",
 			varToReduce: "A",
 			vars:        seriesWithNil,
-			results:     resultValuesNoErr(makeNumber("", nil, float64Pointer((2+replaceWith)/2e0))),
+			results:     resultValuesNoErr(makeNumber("", nil, new((2+replaceWith)/2e0))),
 		},
 		{
 			name:        "replaceNN: mean empty series",
 			red:         "mean",
 			varToReduce: "A",
 			vars:        seriesEmpty,
-			results:     resultValuesNoErr(makeNumber("", nil, float64Pointer(replaceWith))),
+			results:     resultValuesNoErr(makeNumber("", nil, new(replaceWith))),
 		},
 		{
 			name:        "replaceNN: mean series that becomes empty after filtering non-number",
 			red:         "mean",
 			varToReduce: "A",
 			vars:        seriesNonNumbers,
-			results:     resultValuesNoErr(makeNumber("", nil, float64Pointer(replaceWith))),
+			results:     resultValuesNoErr(makeNumber("", nil, new(replaceWith))),
 		},
 		{
 			name:        "replaceNN: median series with a nil value and real value",
@@ -474,16 +474,16 @@ func TestSeriesReduceReplaceNN(t *testing.T) {
 			vars: Vars{
 				"A": resultValuesNoErr(
 					makeSeries("temp", nil, tp{
-						time.Unix(5, 0), float64Pointer(2),
+						time.Unix(5, 0), new(2.0),
 					}, tp{
 						time.Unix(10, 0), nil,
 					}, tp{
-						time.Unix(15, 0), float64Pointer(5),
+						time.Unix(15, 0), new(5.0),
 					}),
 				),
 			},
 			results: resultValuesNoErr(
-				makeNumber("", nil, float64Pointer(
+				makeNumber("", nil, new(
 					sortedFloat64([]float64{2, 5, replaceWith})[1]),
 				),
 			),
@@ -493,28 +493,28 @@ func TestSeriesReduceReplaceNN(t *testing.T) {
 			red:         "median",
 			varToReduce: "A",
 			vars:        seriesEmpty,
-			results:     resultValuesNoErr(makeNumber("", nil, float64Pointer(replaceWith))),
+			results:     resultValuesNoErr(makeNumber("", nil, new(replaceWith))),
 		},
 		{
 			name:        "replaceNN: median series that becomes empty after filtering non-number",
 			red:         "median",
 			varToReduce: "A",
 			vars:        seriesNonNumbers,
-			results:     resultValuesNoErr(makeNumber("", nil, float64Pointer(replaceWith))),
+			results:     resultValuesNoErr(makeNumber("", nil, new(replaceWith))),
 		},
 		{
 			name:        "replaceNN: count empty series",
 			red:         "count",
 			varToReduce: "A",
 			vars:        seriesEmpty,
-			results:     resultValuesNoErr(makeNumber("", nil, float64Pointer(0))),
+			results:     resultValuesNoErr(makeNumber("", nil, new(0.0))),
 		},
 		{
 			name:        "replaceNN: count series with nil and value should only count real numbers",
 			red:         "count",
 			varToReduce: "A",
 			vars:        seriesWithNil,
-			results:     resultValuesNoErr(makeNumber("", nil, float64Pointer(2))),
+			results:     resultValuesNoErr(makeNumber("", nil, new(2.0))),
 		},
 	}
 

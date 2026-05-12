@@ -1164,6 +1164,9 @@
       "content-show-all-errors": "Alle Fehler anzeigen"
     },
     "errors": {
+      "api-machinery": {
+        "with-causes": ""
+      },
       "failedWith": "{{-config}} fehlgeschlagen mit {{status}}: {{-message}}"
     },
     "evaluate-every-validation-options": {
@@ -10851,6 +10854,11 @@
     "name-line-width": "Linienbreite",
     "name-stacking": "Stapeln"
   },
+  "home": {
+    "home-page": {
+      "placeholder": ""
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "Wird geladen",
@@ -16022,7 +16030,9 @@
       "description": {
         "group-by-field-value": "Gruppieren Sie Daten nach einem Feldwert und erstellen Sie verschachtelte Tabellen mit den gruppierten Daten."
       },
+      "description-expand-nested-rows": "",
       "description-show-field-names": "Wenn dies aktiviert ist, werden verschachtelte Tabellen Feldnamen als Tabellenüberschrift anzeigen",
+      "label-expand-nested-rows-by-default": "",
       "label-show-field-names-in-nested-tables": "Feldnamen in verschachtelten Tabellen anzeigen",
       "name": {
         "group-to-nested-tables": "Zu verschachtelten Tabellen gruppieren"

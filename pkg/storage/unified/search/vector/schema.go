@@ -97,4 +97,32 @@ func initVectorTables(mg *migrator.Migrator) {
 			ALTER TABLE vector_latest_rv ADD CONSTRAINT vector_latest_rv_single CHECK (id = 1);
 			INSERT INTO vector_latest_rv (id, latest_rv) VALUES (1, 0) ON CONFLICT DO NOTHING;
 		`))
+
+	// One row per backfill job. Operators add a row with is_complete=false
+	// to kick off a backfill (e.g. on a model rollout, or when adding a
+	// new resource type later). resource='' means "every registered
+	// Builder for this model"; a non-empty resource targets that one
+	// Builder, useful when adding a new resource type after an earlier
+	// (model, '') job has already embedded everything else.
+	backfillJobs := migrator.Table{
+		Name: "vector_backfill_jobs",
+		Columns: []*migrator.Column{
+			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true, Nullable: false},
+			{Name: "model", Type: migrator.DB_Varchar, Length: 256, Nullable: false},
+			{Name: "resource", Type: migrator.DB_Varchar, Length: 256, Nullable: false, Default: "''"},
+			{Name: "stopping_rv", Type: migrator.DB_BigInt, Nullable: false},
+			{Name: "last_seen_key", Type: migrator.DB_Text, Nullable: true},
+			{Name: "is_complete", Type: migrator.DB_Bool, Nullable: false, Default: "false"},
+			{Name: "started_at", Type: migrator.DB_TimeStampz, Nullable: false, Default: "CURRENT_TIMESTAMP"},
+			{Name: "updated_at", Type: migrator.DB_TimeStampz, Nullable: false, Default: "CURRENT_TIMESTAMP"},
+			{Name: "last_error", Type: migrator.DB_Text, Nullable: true},
+		},
+		Indices: []*migrator.Index{
+			{Cols: []string{"model", "resource"}, Type: migrator.UniqueIndex},
+		},
+	}
+	mg.AddMigration("create vector_backfill_jobs table",
+		migrator.NewAddTableMigration(backfillJobs))
+	mg.AddMigration("create vector_backfill_jobs (model, resource) index",
+		migrator.NewAddIndexMigration(backfillJobs, backfillJobs.Indices[0]))
 }

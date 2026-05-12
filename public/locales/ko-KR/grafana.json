@@ -1159,6 +1159,9 @@
       "content-show-all-errors": "모든 오류 표시"
     },
     "errors": {
+      "api-machinery": {
+        "with-causes": ""
+      },
       "failedWith": "{{status}}(으)로 인해 {{-config}} 실패: {{-message}}"
     },
     "evaluate-every-validation-options": {
@@ -10793,6 +10796,11 @@
     "name-line-width": "선 너비",
     "name-stacking": "스태킹"
   },
+  "home": {
+    "home-page": {
+      "placeholder": ""
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "로딩 중",
@@ -15929,7 +15937,9 @@
       "description": {
         "group-by-field-value": "필드 값을 기준으로 데이터를 그룹화하고 그룹화된 데이터로 중첩 테이블을 생성합니다."
       },
+      "description-expand-nested-rows": "",
       "description-show-field-names": "활성화하면 중첩 테이블의 필드 이름이 테이블 헤더에 표시됩니다",
+      "label-expand-nested-rows-by-default": "",
       "label-show-field-names-in-nested-tables": "중첩된 테이블에 필드 이름 표시",
       "name": {
         "group-to-nested-tables": "중첩 테이블로 그룹화"

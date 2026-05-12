@@ -225,6 +225,7 @@ func newClient(opts options.StorageOptions,
 		if err != nil {
 			return nil, err
 		}
+
 		return resource.NewLocalResourceClient(server), nil
 	}
 }

@@ -790,11 +790,6 @@ export interface FeatureToggles {
   */
   pluginsSriChecks?: boolean;
   /**
-  * Enables to save big objects in blob storage
-  * @default false
-  */
-  unifiedStorageBigObjectsSupport?: boolean;
-  /**
   * Enables time pickers sync
   * @default false
   */
@@ -804,11 +799,6 @@ export interface FeatureToggles {
   * @default true
   */
   timeRangePan?: boolean;
-  /**
-  * Enables new keyboard shortcuts for time range zoom operations
-  * @default true
-  */
-  newTimeRangeZoomShortcuts?: boolean;
   /**
   * Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
   * @default false
@@ -1075,11 +1065,6 @@ export interface FeatureToggles {
   * @default false
   */
   alertingListViewV2PreviewToggle?: boolean;
-  /**
-  * Use FiredAt for StartsAt when sending alerts to Alertmaanger
-  * @default false
-  */
-  alertRuleUseFiredAtForStartsAt?: boolean;
   /**
   * Enables the alerting bulk actions in the UI
   * @default true

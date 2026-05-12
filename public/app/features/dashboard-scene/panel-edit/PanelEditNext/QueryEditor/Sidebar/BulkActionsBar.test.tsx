@@ -48,7 +48,14 @@ function renderBar(overrides: Parameters<typeof renderWithQueryEditorProvider>[1
 }
 
 describe('BulkActionsBar', () => {
-  describe('visibility', () => {
+  describe('visibility (keyboard-shortcut path, multi-select mode off)', () => {
+    it('renders nothing when no selection at all', () => {
+      const { container } = renderBar({
+        uiStateOverrides: { selectedQueryRefIds: [], selectedTransformationIds: [] },
+      });
+      expect(container).toBeEmptyDOMElement();
+    });
+
     it('renders nothing when fewer than 2 queries are selected', () => {
       const { container } = renderBar({
         uiStateOverrides: { selectedQueryRefIds: ['A'] },
@@ -63,21 +70,45 @@ describe('BulkActionsBar', () => {
       expect(container).toBeEmptyDOMElement();
     });
 
-    it('renders nothing when no selection at all', () => {
+    it('renders the toolbar with action buttons when 2+ queries are selected', () => {
+      renderBar({ uiStateOverrides: { selectedQueryRefIds: ['A', 'B'] } });
+      expect(screen.getByRole('toolbar', { name: /bulk actions/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
+    });
+
+    it('renders the toolbar with action buttons when 2+ transformations are selected', () => {
+      renderBar({ uiStateOverrides: { selectedTransformationIds: ['tx-0', 'tx-1'] } });
+      expect(screen.getByRole('toolbar', { name: /bulk actions/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /disable all/i })).toBeInTheDocument();
+    });
+  });
+
+  describe('visibility (multi-select mode on)', () => {
+    it('does not render the toolbar when multi-select mode is on with no selection', () => {
+      // Multi-select mode without any actionable selection is a degenerate
+      // UI state — the toggle/clearSelection invariants prevent reaching it
+      // through normal flows, so the bar deliberately stays hidden.
       const { container } = renderBar({
-        uiStateOverrides: { selectedQueryRefIds: [], selectedTransformationIds: [] },
+        uiStateOverrides: { multiSelectMode: true, selectedQueryRefIds: [], selectedTransformationIds: [] },
       });
       expect(container).toBeEmptyDOMElement();
     });
 
-    it('renders the toolbar when 2+ queries are selected', () => {
-      renderBar({ uiStateOverrides: { selectedQueryRefIds: ['A', 'B'] } });
-      expect(screen.getByRole('toolbar', { name: /bulk actions/i })).toBeInTheDocument();
+    it('shows query action buttons as soon as 1 query is selected', () => {
+      renderBar({
+        uiStateOverrides: { multiSelectMode: true, selectedQueryRefIds: ['A'] },
+      });
+      expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /hide/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /data source/i })).toBeInTheDocument();
     });
 
-    it('renders the toolbar when 2+ transformations are selected', () => {
-      renderBar({ uiStateOverrides: { selectedTransformationIds: ['tx-0', 'tx-1'] } });
-      expect(screen.getByRole('toolbar', { name: /bulk actions/i })).toBeInTheDocument();
+    it('shows transformation action buttons as soon as 1 transformation is selected', () => {
+      renderBar({
+        uiStateOverrides: { multiSelectMode: true, selectedTransformationIds: ['tx-0'] },
+      });
+      expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /disable all/i })).toBeInTheDocument();
     });
   });
 
@@ -90,6 +121,38 @@ describe('BulkActionsBar', () => {
 
       await user.click(screen.getByRole('button', { name: /clear selection/i }));
       expect(clearSelection).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not toggle multi-select mode when the bar is shown without it', async () => {
+      const setMultiSelectMode = jest.fn();
+      const { user } = renderBar({
+        uiStateOverrides: {
+          selectedQueryRefIds: ['A', 'B'],
+          multiSelectMode: false,
+          setMultiSelectMode,
+        },
+      });
+
+      await user.click(screen.getByRole('button', { name: /clear selection/i }));
+      expect(setMultiSelectMode).not.toHaveBeenCalled();
+    });
+
+    it('also exits multi-select mode when the clear button is clicked while in multi-select mode', async () => {
+      const clearSelection = jest.fn();
+      const setMultiSelectMode = jest.fn();
+      const { user } = renderBar({
+        uiStateOverrides: {
+          selectedQueryRefIds: ['A', 'B'],
+          multiSelectMode: true,
+          clearSelection,
+          setMultiSelectMode,
+        },
+      });
+
+      await user.click(screen.getByRole('button', { name: /clear selection/i }));
+
+      expect(clearSelection).toHaveBeenCalledTimes(1);
+      expect(setMultiSelectMode).toHaveBeenCalledWith(false);
     });
   });
 

@@ -3,7 +3,6 @@ package legacy
 import (
 	"context"
 	"fmt"
-	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -12,14 +11,13 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/selection"
 	requestK8s "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	authlib "github.com/grafana/authlib/types"
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	utilsOrig "github.com/grafana/grafana/pkg/apimachinery/utils"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
@@ -27,14 +25,7 @@ import (
 )
 
 var (
-	_ rest.Scoper               = (*preferenceStorage)(nil)
-	_ rest.SingularNameProvider = (*preferenceStorage)(nil)
-	_ rest.Getter               = (*preferenceStorage)(nil)
-	_ rest.Lister               = (*preferenceStorage)(nil)
-	_ rest.Storage              = (*preferenceStorage)(nil)
-	_ rest.Creater              = (*preferenceStorage)(nil)
-	_ rest.Updater              = (*preferenceStorage)(nil)
-	_ rest.GracefulDeleter      = (*preferenceStorage)(nil)
+	_ grafanarest.Storage = (*preferenceStorage)(nil)
 )
 
 func NewPreferencesStorage(pref pref.Service, namespacer request.NamespaceMapper, sql *LegacySQL) *preferenceStorage {
@@ -76,69 +67,7 @@ func (s *preferenceStorage) ConvertToTable(ctx context.Context, object runtime.O
 }
 
 func (s *preferenceStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	user, err := identity.GetRequester(ctx)
-	if err != nil {
-		return nil, err
-	}
-	ns := requestK8s.NamespaceValue(ctx)
-	if user.GetIdentityType() != authlib.TypeUser {
-		return nil, fmt.Errorf("only users may list preferences")
-	}
-	if user.GetIdentifier() == "" {
-		return nil, fmt.Errorf("user identifier is required")
-	}
-	if options.Continue != "" {
-		return nil, fmt.Errorf("continue token not supported")
-	}
-	if options.LabelSelector != nil && !options.LabelSelector.Empty() {
-		return nil, fmt.Errorf("labelSelector not supported")
-	}
-
-	if options.FieldSelector != nil && !options.FieldSelector.Empty() {
-		r := options.FieldSelector.Requirements()
-		if len(r) != 1 {
-			return nil, fmt.Errorf("only one fieldSelector is supported")
-		}
-		if r[0].Field != "metadata.name" {
-			return nil, fmt.Errorf("only the metadata.name fieldSelector is supported")
-		}
-		if r[0].Operator != selection.Equals {
-			return nil, fmt.Errorf("only the = operator is supported")
-		}
-		return s.doListWithName(ctx, user, r[0].Value)
-	}
-
-	return s.sql.ListPreferences(ctx, ns, user, true)
-}
-
-func (s *preferenceStorage) doListWithName(ctx context.Context, user identity.Requester, name string) (*preferences.PreferencesList, error) {
-	info, _ := utils.ParseOwnerFromName(name)
-	switch info.Owner {
-	case utils.NamespaceResourceOwner:
-		// OK
-	case utils.UserResourceOwner:
-		if user.GetIdentifier() != info.Identifier {
-			return &preferences.PreferencesList{}, nil
-		}
-	case utils.TeamResourceOwner:
-		if !slices.Contains(user.GetGroups(), info.Identifier) {
-			return &preferences.PreferencesList{}, nil
-		}
-	default:
-		return &preferences.PreferencesList{}, nil
-	}
-
-	obj, err := s.Get(ctx, name, &metav1.GetOptions{})
-	if err != nil {
-		return &preferences.PreferencesList{}, nil
-	}
-	p, ok := obj.(*preferences.Preferences)
-	if !ok {
-		return &preferences.PreferencesList{}, nil
-	}
-	return &preferences.PreferencesList{
-		Items: []preferences.Preferences{*p},
-	}, nil
+	return nil, fmt.Errorf("list should not be called directly")
 }
 
 func (s *preferenceStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
