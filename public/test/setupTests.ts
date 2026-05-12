@@ -51,6 +51,28 @@ jest.mock('@grafana/api-clients/rtkq/folder/v1beta1', () => {
 // the factory uses import.meta.url so we can't use it in CommonJS modules.
 jest.mock('app/features/dashboard-scene/saving/createDetectChangesWorker.ts');
 
+// mock out the route groups matcher worker
+// The mock is needed because JSDOM does not support workers and
+// the factory uses import.meta.url so we can't use it in CommonJS modules.
+jest.mock('app/features/alerting/unified/createRouteGroupsMatcherWorker.ts');
+
+// mock comlink for the route groups matcher worker
+// comlink is used to wrap the worker and expose its methods
+jest.mock('comlink', () => {
+  const actual = jest.requireActual('app/features/alerting/unified/routeGroupsMatcher');
+  const releaseProxySymbol = Symbol('releaseProxy');
+  return {
+    wrap: jest.fn(() => {
+      return {
+        ...actual.routeGroupsMatcher,
+        [releaseProxySymbol]: jest.fn(),
+      };
+    }),
+    releaseProxy: releaseProxySymbol,
+    expose: jest.fn(),
+  };
+});
+
 // Mock useLoadAppPlugins to prevent async state updates in tests
 jest.mock('app/features/plugins/extensions/useLoadAppPlugins', () => ({
   useLoadAppPlugins: jest.fn().mockReturnValue({ isLoading: false }),

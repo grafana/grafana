@@ -25,3 +25,14 @@ class LayoutMockWorker {
 jest.mock('../../app/plugins/panel/nodeGraph/createLayoutWorker', () => ({
   createWorker: () => new LayoutMockWorker(),
 }));
+
+// Mock the route groups matcher worker to avoid issues with web workers in tests
+// Tests should use the routeGroupsMatcher directly instead of the worker
+jest.mock('../../app/features/alerting/unified/createRouteGroupsMatcherWorker', () => ({
+  createWorker: () => {
+    const mockWorker = {
+      terminate: jest.fn(),
+    };
+    return mockWorker;
+  },
+}));
