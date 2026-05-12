@@ -5,6 +5,7 @@ import (
 )
 
 func TestInjectURLCredentials(t *testing.T) {
+	// #nosec G101 -- test fixture, not a real credential
 	expected := "https://username:password@example.org/somepath?query=param"
 	input := "https://example.org/somepath?query=param"
 	output, err := injectURLCredentials(input, "username", "password")
