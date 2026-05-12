@@ -53,20 +53,19 @@ export const UnitPicker = memo<UnitPickerProps>(({ onChange, value, width, id })
   }
 
   return (
-    <div data-testid={selectors.components.UnitPicker.container}>
-      <Cascader
-        id={id}
-        width={width}
-        initialValue={current && current.label}
-        allowCustomValue
-        changeOnSelect={false}
-        formatCreateLabel={formatCreateLabel}
-        options={groupOptions}
-        placeholder={t('grafana-ui.unit-picker.placeholder', 'Choose')}
-        isClearable
-        onSelect={onChange}
-      />
-    </div>
+    <Cascader
+      id={id}
+      width={width}
+      initialValue={current && current.label}
+      allowCustomValue
+      changeOnSelect={false}
+      formatCreateLabel={formatCreateLabel}
+      options={groupOptions}
+      placeholder={t('grafana-ui.unit-picker.placeholder', 'Choose')}
+      isClearable
+      onSelect={onChange}
+      data-testid={selectors.components.UnitPicker.container}
+    />
   );
 });
 

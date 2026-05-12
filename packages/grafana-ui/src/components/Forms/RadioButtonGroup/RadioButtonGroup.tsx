@@ -23,6 +23,7 @@ export interface RadioButtonGroupProps<T> extends Omit<HTMLAttributes<HTMLDivEle
   autoFocus?: boolean;
   ['aria-label']?: string;
   invalid?: boolean;
+  'data-testid'?: string;
 }
 
 /**
@@ -45,6 +46,7 @@ export function RadioButtonGroup<T>({
   'aria-label': ariaLabel,
   'aria-describedby': ariaDescribedByProp,
   'aria-labelledby': ariaLabelledByProp,
+  'data-testid': dataTestId,
   invalid: invalidProp,
   ...rest
 }: RadioButtonGroupProps<T>) {
@@ -93,7 +95,7 @@ export function RadioButtonGroup<T>({
       role="radiogroup"
       aria-label={ariaLabel}
       aria-labelledby={ariaLabelledBy}
-      data-testid={selectors.components.RadioGroup.container}
+      data-testid={dataTestId ?? selectors.components.RadioGroup.container}
       className={cx(styles.radioGroup, fullWidth && styles.fullWidth, invalid && styles.invalid, className)}
     >
       {options.map((opt, i) => {
