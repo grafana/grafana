@@ -216,7 +216,11 @@ Click the expand icon on a row to toggle the visibility of its nested table:
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-nested-expanded-v13.x.png" max-width="750px" alt="Table with one row expanded showing a nested sub-table" >}}
 
-Sorting nested and top-level rows in a nested table uses the same interaction as sorting multiple columns in a flat table - refer to [Sort columns](#sort-columns) to learn more.
+To sort nested and top-level rows in nested tables, click a column title to change the sort order from default to descending to ascending.
+Each time you click, the sort order changes to the next option in the cycle.
+You can sort multiple columns by holding the `Cmd` or `Ctrl` key and clicking the column name.
+
+{{< figure src="/static/img/docs/tables/sort-descending.png" max-width="350px" alt="Sort descending" class="docs-image--no-shadow" >}}
 
 To control the display of fields inside a nested table&mdash;for example, to apply thresholds, units, or a different cell type&mdash;use [field overrides](#field-overrides) with the **Target fields** option set to **Nested**.
 For more information, refer to [Apply overrides to nested table fields](#apply-overrides-to-nested-table-fields).
