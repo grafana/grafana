@@ -28,6 +28,7 @@ i18next.use(initReactI18next).init({
   resources: {},
   returnEmptyString: false,
   lng: 'en-US', // this should be the locale of the phrases in our source JSX
+  showSupportNotice: false,
 });
 
 // Pre-resolve dashboard API version resolver with beta defaults so tests

@@ -2,8 +2,7 @@ import * as H from 'history';
 import React, { useContext } from 'react';
 import { BehaviorSubject, type Observable } from 'rxjs';
 
-import { deprecationWarning, type UrlQueryMap, urlUtil } from '@grafana/data';
-import { attachDebugger, createLogger } from '@grafana/ui';
+import { attachDebugger, createLogger, deprecationWarning, type UrlQueryMap, urlUtil } from '@grafana/data';
 
 import { config } from '../config';
 

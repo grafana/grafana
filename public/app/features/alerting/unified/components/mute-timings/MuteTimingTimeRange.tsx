@@ -70,7 +70,10 @@ export const MuteTimingTimeRange = ({ intervalIndex }: Props) => {
                     <Input
                       // @ts-ignore
                       {...register(startTimeKey, {
-                        validate: (input: string) => {
+                        validate: (input: string | undefined) => {
+                          if (!input) {
+                            return;
+                          }
                           const validFormat = isvalidTimeFormat(input);
                           if (!validFormat) {
                             return INVALID_FORMAT_MESSAGE;
@@ -102,7 +105,10 @@ export const MuteTimingTimeRange = ({ intervalIndex }: Props) => {
                   >
                     <Input
                       {...register(`time_intervals.${intervalIndex}.times.${index}.end_time`, {
-                        validate: (input: string) => {
+                        validate: (input: string | undefined) => {
+                          if (!input) {
+                            return;
+                          }
                           const validFormat = isvalidTimeFormat(input);
                           if (!validFormat) {
                             return INVALID_FORMAT_MESSAGE;

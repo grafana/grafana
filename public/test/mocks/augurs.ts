@@ -2,6 +2,7 @@ import type {
   LoadedOutlierDetector as AugursLoadedOutlierDetector,
   OutlierDetector as AugursOutlierDetector,
   OutlierDetectorOptions,
+  OutlierDetectorType,
   OutlierOutput,
 } from '@bsull/augurs/outlier';
 
@@ -15,12 +16,20 @@ const dummyOutliers: OutlierOutput = {
 
 export class OutlierDetector implements AugursOutlierDetector {
   free(): void {}
-  detect(): OutlierOutput {
+  [Symbol.dispose](): void {}
+  detect(y: number[][] | Float64Array[]): OutlierOutput {
     return dummyOutliers;
   }
   preprocess(y: number[][] | Float64Array[]): AugursLoadedOutlierDetector {
     return new LoadedOutlierDetector();
   }
+  static dbscan(options: OutlierDetectorOptions): OutlierDetector {
+    return new OutlierDetector();
+  }
+  static mad(options: OutlierDetectorOptions): OutlierDetector {
+    return new OutlierDetector();
+  }
+  constructor(_detectorType?: OutlierDetectorType, _options?: OutlierDetectorOptions) {}
 }
 
 export class LoadedOutlierDetector implements AugursLoadedOutlierDetector {
@@ -28,5 +37,6 @@ export class LoadedOutlierDetector implements AugursLoadedOutlierDetector {
     return dummyOutliers;
   }
   free(): void {}
+  [Symbol.dispose](): void {}
   updateDetector(options: OutlierDetectorOptions): void {}
 }

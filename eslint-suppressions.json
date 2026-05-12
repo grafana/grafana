@@ -790,18 +790,8 @@
       "count": 2
     }
   },
-  "packages/grafana-ui/src/utils/debug.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/utils/dom.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "packages/grafana-ui/src/utils/logger.ts": {
-    "@grafana/no-direct-local-storage-access": {
       "count": 1
     }
   },

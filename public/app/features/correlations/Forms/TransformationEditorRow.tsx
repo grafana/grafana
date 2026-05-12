@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
+import { SupportedTransformationType } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Field, Icon, IconButton, Input, Label, Select, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
@@ -137,7 +138,9 @@ const TransformationEditorRow = (props: Props) => {
           <Stack gap={0.5}>
             <Label htmlFor={`config.transformations.${defaultValue.id}.expression`}>
               <Trans i18nKey="correlations.transform-row.expression-label">Expression</Trans>
-              {getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`)).expressionDetails.required
+              {getSupportedTransTypeDetails(
+                watch(`config.transformations.${index}.type`) ?? SupportedTransformationType.Regex
+              ).expressionDetails.required
                 ? // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
                   ' *'
                 : ''}
@@ -163,14 +166,19 @@ const TransformationEditorRow = (props: Props) => {
       >
         <Input
           {...register(`config.transformations.${index}.expression`, {
-            required: getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`)).expressionDetails
-              .required
+            required: getSupportedTransTypeDetails(
+              watch(`config.transformations.${index}.type`) ?? SupportedTransformationType.Regex
+            ).expressionDetails.required
               ? t('correlations.transform-row.expression-required', 'Please define an expression')
               : undefined,
           })}
           defaultValue={defaultValue.expression}
           readOnly={readOnly}
-          disabled={!getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`)).expressionDetails.show}
+          disabled={
+            !getSupportedTransTypeDetails(
+              watch(`config.transformations.${index}.type`) ?? SupportedTransformationType.Regex
+            ).expressionDetails.show
+          }
           id={`config.transformations.${defaultValue.id}.expression`}
         />
       </Field>
@@ -201,7 +209,11 @@ const TransformationEditorRow = (props: Props) => {
           {...register(`config.transformations.${index}.mapValue`)}
           defaultValue={defaultValue.mapValue}
           readOnly={readOnly}
-          disabled={!getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`)).mapValueDetails.show}
+          disabled={
+            !getSupportedTransTypeDetails(
+              watch(`config.transformations.${index}.type`) ?? SupportedTransformationType.Regex
+            ).mapValueDetails.show
+          }
           id={`config.transformations.${defaultValue.id}.mapValue`}
         />
       </Field>

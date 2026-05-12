@@ -92,7 +92,7 @@ export function ChannelSubForm<R extends ChannelValues>({
     // Restore values when switching back from a changed integration to the default one
     const subscription = watch((formValues, { name, type }) => {
       // @ts-expect-error name is valid key for formValues
-      const value = name ? getValues(name, formValues) : '';
+      const value: unknown = name ? getValues(name, formValues) : '';
       if (initialValues && name === typeFieldPath && value === initialValues.type && type === 'change') {
         setValue(settingsFieldPath, initialValues.settings);
         setValue(secureFieldsPath, initialValues.secureFields);

@@ -58,7 +58,10 @@ export function RouteTimings({ alertManager }: RouteTimingsProps) {
       >
         <PromDurationInput
           {...register(`contactPoints.${alertManager}.repeatIntervalValue`, {
-            validate: (value: string) => {
+            validate: (value: string | undefined) => {
+              if (!value) {
+                return;
+              }
               const groupInterval = getValues(`contactPoints.${alertManager}.repeatIntervalValue`);
               return repeatIntervalValidator(value, groupInterval);
             },

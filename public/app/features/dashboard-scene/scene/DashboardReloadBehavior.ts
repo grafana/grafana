@@ -1,6 +1,6 @@
 import { debounce, isEqual } from 'lodash';
 
-import { type UrlQueryMap } from '@grafana/data';
+import { createLogger, type UrlQueryMap } from '@grafana/data';
 import {
   sceneGraph,
   SceneObjectBase,
@@ -9,7 +9,6 @@ import {
   type SceneVariable,
   VariableDependencyConfig,
 } from '@grafana/scenes';
-import { createLogger } from '@grafana/ui';
 
 import { getDashboardScenePageStateManager } from '../pages/DashboardScenePageStateManager';
 

@@ -276,6 +276,8 @@ export { store, Store } from './utils/store';
 export { LocalStorageValueProvider } from './utils/LocalStorageValueProvider';
 export { throwIfAngular } from './utils/throwIfAngular';
 export { fuzzySearch } from './utils/fuzzySearch';
+export { createLogger, type Logger } from './utils/logger';
+export { attachDebugger } from './utils/debug';
 
 // Transformations
 export { standardTransformers } from './transformations/transformers';
