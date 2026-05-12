@@ -13,11 +13,7 @@ var ErrKVUnavailable = errors.New("no KV store available in this configuration")
 // EventualKVProvider is a deferred KV store reference that blocks callers
 // until the storage backend resolves. This exists because the KV store is
 // created during module initialization (after Wire DI), while consumers
-// like the lease-based leader elector are constructed during Wire DI.
-//
-// Follows the same pattern as apiserver.eventualRestConfigProvider, but
-// also models the "no KV available" outcome explicitly via Set(nil) so
-// callers don't block forever in configurations that produce no KV.
+// may be constructed during Wire DI.
 type EventualKVProvider struct {
 	ready chan struct{}
 	store KV
