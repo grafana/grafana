@@ -46,14 +46,13 @@ type TeamSpec struct {
 	Provisioned    bool             `json:"provisioned"`
 	ExternalUID    string           `json:"externalUID"`
 	Members        []TeamTeamMember `json:"members"`
-	ExternalGroups []string         `json:"externalGroups"`
+	ExternalGroups []string         `json:"externalGroups,omitempty"`
 }
 
 // NewTeamSpec creates a new TeamSpec object.
 func NewTeamSpec() *TeamSpec {
 	return &TeamSpec{
-		Members:        []TeamTeamMember{},
-		ExternalGroups: []string{},
+		Members: []TeamTeamMember{},
 	}
 }
 

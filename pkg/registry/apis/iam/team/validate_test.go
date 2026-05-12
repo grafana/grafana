@@ -343,8 +343,8 @@ func TestValidateExternalGroups(t *testing.T) {
 	t.Run("rejects empty entry", func(t *testing.T) {
 		err := validateExternalGroups([]string{"foo", ""}, legacy.NoopExternalGroupReconciler{})
 		require.Error(t, err)
-		statusErr, ok := err.(*apierrors.StatusError)
-		require.True(t, ok)
+		var statusErr *apierrors.StatusError
+		require.ErrorAs(t, err, &statusErr)
 		assert.Equal(t, int32(400), statusErr.ErrStatus.Code)
 		assert.Contains(t, statusErr.ErrStatus.Message, "non-empty")
 	})
@@ -352,16 +352,16 @@ func TestValidateExternalGroups(t *testing.T) {
 	t.Run("rejects whitespace-only entry", func(t *testing.T) {
 		err := validateExternalGroups([]string{"   "}, legacy.NoopExternalGroupReconciler{})
 		require.Error(t, err)
-		statusErr, ok := err.(*apierrors.StatusError)
-		require.True(t, ok)
+		var statusErr *apierrors.StatusError
+		require.ErrorAs(t, err, &statusErr)
 		assert.Equal(t, int32(400), statusErr.ErrStatus.Code)
 	})
 
 	t.Run("rejects duplicates after normalization", func(t *testing.T) {
 		err := validateExternalGroups([]string{"LDAP-Admins", "ldap-admins"}, legacy.NoopExternalGroupReconciler{})
 		require.Error(t, err)
-		statusErr, ok := err.(*apierrors.StatusError)
-		require.True(t, ok)
+		var statusErr *apierrors.StatusError
+		require.ErrorAs(t, err, &statusErr)
 		assert.Equal(t, int32(400), statusErr.ErrStatus.Code)
 		assert.Contains(t, statusErr.ErrStatus.Message, "duplicate")
 	})

@@ -1009,8 +1009,8 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 }
 
 var (
-	_wireNoopExternalGroupReconcilerValue = legacy3.NoopExternalGroupReconciler{}
 	_wireValue                            = []decrypt.ExtraOwnerDecrypter(nil)
+	_wireNoopExternalGroupReconcilerValue = legacy3.NoopExternalGroupReconciler{}
 )
 
 func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interface {

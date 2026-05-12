@@ -394,9 +394,6 @@ func toTeamObject(t team.Team, ns claims.NamespaceInfo, members []legacy.TeamMem
 		}
 		specMembers = append(specMembers, mapped)
 	}
-	if externalGroups == nil {
-		externalGroups = []string{}
-	}
 	obj := iamv0alpha1.Team{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              t.UID,

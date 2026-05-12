@@ -3084,7 +3084,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamSpec(ref common.ReferenceCallback) common.
 						},
 					},
 				},
-				Required: []string{"title", "email", "provisioned", "externalUID", "members", "externalGroups"},
+				Required: []string{"title", "email", "provisioned", "externalUID", "members"},
 			},
 		},
 		Dependencies: []string{

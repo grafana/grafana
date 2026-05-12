@@ -6,5 +6,5 @@ TeamSpec: {
 	provisioned: bool
 	externalUID: string
 	members: [...TeamMember]
-	externalGroups: [...string]
+	externalGroups?: [...string]
 }
