@@ -137,15 +137,11 @@ func TestIntegrationProvisioning_MaxFileSize_Pull(t *testing.T) {
 	helper := sharedHelper(t)
 
 	const repo = "max-file-size-pull"
-	// SkipSync because the oversized fixture is present before the repo is
-	// created; the initial sync would otherwise fail and CreateLocalRepo
-	// would report that instead of letting us assert against a pull job.
 	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:                   repo,
 		LocalPath:              helper.ProvisioningPath,
 		SyncTarget:             "instance",
 		Workflows:              []string{"write"},
-		SkipSync:               true,
 		SkipResourceAssertions: true,
 	})
 
