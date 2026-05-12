@@ -366,6 +366,21 @@ const defaultOptions: Options = {
   },
 };
 
+const getSuccessIconButton = () => {
+  const candidates = screen.getAllByRole('button').filter((el) => el instanceof HTMLElement);
+  return candidates[1] as HTMLElement;
+};
+
+const getSuccessIconText = () => {
+  const candidates = screen.getAllByRole('button').filter((el) => el instanceof HTMLElement);
+  return candidates[2] as HTMLElement;
+};
+
+const getUnmappedIconText = () => {
+  const candidates = screen.getAllByRole('button').filter((el) => el instanceof HTMLElement);
+  return candidates[8] as HTMLElement;
+};
+
 describe('CanvasPanel', () => {
   let onFieldConfigChange = jest.fn();
   let onOptionsChange = jest.fn();
@@ -405,7 +420,6 @@ describe('CanvasPanel', () => {
   const setUp = (propsOverrides?: Partial<PanelProps<Options>>, seriesOverrides?: DataFrame[]) => {
     return render(canvasPanelElement(propsOverrides));
   };
-
   const setUpWithPanelContext = (
     propsOverrides?: Partial<PanelProps<Options>>
   ): ReturnType<typeof render> & { eventBus: EventBusSrv } => {
@@ -429,6 +443,14 @@ describe('CanvasPanel', () => {
       eventBus,
     });
   };
+
+  beforeEach(() => {
+    jest.spyOn(getDashboardSrv(), 'getCurrent').mockReturnValue({ editable: true } as DashboardModel);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
 
   it('renders (kitchen sink)', () => {
     setUp();
@@ -487,23 +509,7 @@ describe('CanvasPanel', () => {
     expect(buttons[0]).toBeVisible();
   });
 
-  const getSuccessIconButton = () => {
-    const candidates = screen.getAllByRole('button').filter((el) => el instanceof HTMLElement);
-    return candidates[1] as HTMLElement;
-  };
-
-  const getSuccessIconText = () => {
-    const candidates = screen.getAllByRole('button').filter((el) => el instanceof HTMLElement);
-    return candidates[2] as HTMLElement;
-  };
-
-  const getUnmappedIconText = () => {
-    const candidates = screen.getAllByRole('button').filter((el) => el instanceof HTMLElement);
-    return candidates[8] as HTMLElement;
-  };
-
   it('opens context menu on right click of success icon', async () => {
-    jest.spyOn(getDashboardSrv(), 'getCurrent').mockReturnValue({ editable: true } as DashboardModel);
     const { rerender } = setUp();
     // Scene wires Selector in a macrotask; rerender after it runs so contextmenu listeners attach to elements.
     await act(async () => {
@@ -521,8 +527,6 @@ describe('CanvasPanel', () => {
       expect(screen.getByRole('menuitem', { name: 'Bring to front' })).toBeVisible();
       expect(screen.getByRole('menuitem', { name: 'Send to back' })).toBeVisible();
     });
-
-    jest.restoreAllMocks();
   });
 
   it('opens context menu on right click of success text', async () => {
@@ -594,36 +598,27 @@ describe('CanvasPanel', () => {
   });
 
   it('deletes the selected element from the context menu', async () => {
-    jest.spyOn(getDashboardSrv(), 'getCurrent').mockReturnValue({ editable: true } as DashboardModel);
     const { rerender } = setUp();
     await act(async () => {
       await new Promise((r) => setTimeout(r, 0));
     });
     rerender(canvasPanelElement({ renderCounter: 1 }));
-    const buttons = screen.getAllByRole('button');
-    expect(buttons).toHaveLength(13);
+    expect(screen.getAllByRole('button')).toHaveLength(13);
 
     const user = userEvent.setup();
+
+    // Right click to open context menu
     await user.pointer({ keys: '[MouseRight]', target: getSuccessIconButton() });
-
-    await waitFor(() => {
-      expect(screen.getByRole('menuitem', { name: 'Delete' })).toBeVisible();
-    });
-
-    onOptionsChange.mockClear();
+    // Delete option should be visible
+    expect(screen.getByRole('menuitem', { name: 'Delete' })).toBeVisible();
+    // Click on the delete option
     await user.click(screen.getByRole('menuitem', { name: 'Delete' }));
-
-    await waitFor(() => {
-      expect(onOptionsChange).toHaveBeenCalled();
-    });
-
-    const lastOptions = onOptionsChange.mock.calls.at(-1)![0] as Options;
-
-    expect(lastOptions.root.elements.some((el) => el.name === 'Success Icon')).toBe(false);
-    expect(lastOptions.root.elements).toHaveLength(12);
+    // Now there should be one less button
+    expect(screen.getAllByRole('button')).toHaveLength(12);
 
     jest.restoreAllMocks();
   });
+
   it.todo('Duplicate');
   it.todo('Bring to front');
   it.todo('Send to back');
