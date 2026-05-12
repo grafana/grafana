@@ -94,12 +94,10 @@ func normalizeGrafanaSQLRequest(ctx context.Context, req *backend.QueryDataReque
 			out = append(out, q)
 			continue
 		}
-
 		if !sq.GrafanaSql {
 			out = append(out, q)
 			continue
 		}
-
 		if sq.Table == "" {
 			sqlErrors[q.RefID] = fmt.Errorf("loki grafana sql: table name is required")
 			continue
@@ -109,108 +107,169 @@ func normalizeGrafanaSQLRequest(ctx context.Context, req *backend.QueryDataReque
 			tableLabel = resolveTableLabel(ctx, dsInfo)
 		}
 
-		hints := sq.TableHintValues
-		if hints == nil {
-			hints = map[string]string{}
-		}
-
-		selector, err := buildLogQLExpr(tableLabel, sq.Table, sq.Filters)
+		rewritten, kind, err := rewriteSQLQuery(q, sq, tableLabel)
 		if err != nil {
-			sqlErrors[q.RefID] = fmt.Errorf("loki grafana sql: failed to build LogQL: %w", err)
+			sqlErrors[q.RefID] = err
 			continue
 		}
-
-		stepStr, stepDur, err := parseDurationHint(hints, "STEP")
-		if err != nil {
-			sqlErrors[q.RefID] = fmt.Errorf("loki grafana sql: %w", err)
-			continue
-		}
-		stepForModel := stepStr
-		dirStr := strings.ToLower(hintGet(hints, "DIRECTION"))
-
-		rateStr, rateDur, err := parseDurationHint(hints, "RATE")
-		if err != nil {
-			sqlErrors[q.RefID] = fmt.Errorf("loki grafana sql: %w", err)
-			continue
-		}
-
-		isMetric := sq.Aggregation != nil || rateStr != ""
-		instantOn := instantHintEnabled(hints)
-
-		if instantOn && !isMetric {
-			sqlErrors[q.RefID] = fmt.Errorf("loki grafana sql: INSTANT hint requires a metric query (aggregation or RATE)")
-			continue
-		}
-
-		var expr string
-		if !isMetric {
-			expr = selector
-		} else {
-			win := metricRangeWindow(stepDur, q.TimeRange.Duration())
-			var berr error
-			expr, berr = buildGrafanaSQLMetricExpr(selector, sq.Aggregation, win, rateDur)
-			if berr != nil {
-				sqlErrors[q.RefID] = fmt.Errorf("loki grafana sql: %w", berr)
-				continue
-			}
-			if !instantOn && stepForModel == "" && stepDur == 0 {
-				if rateStr != "" {
-					stepDur = rateDur
-					stepForModel = gtime.FormatInterval(rateDur)
-				} else {
-					stepDur = win
-					stepForModel = gtime.FormatInterval(win)
-				}
-			}
-		}
-
-		qt := "range"
-		if isMetric && instantOn {
-			qt = "instant"
-		}
-
-		if stepForModel != "" && stepDur > 0 {
-			q.Interval = stepDur
-			q.MaxDataPoints = int64(q.TimeRange.Duration() / stepDur)
-			if q.MaxDataPoints < 1 {
-				q.MaxDataPoints = 1
-			}
-		}
-
-		if isMetric && instantOn {
-			stepForModel = ""
-		}
-
-		maxLines := int64(0)
-		if !isMetric && sq.Limit != nil && *sq.Limit > 0 {
-			maxLines = *sq.Limit
-		}
-
-		model := QueryJSONModel{
-			LokiDataQuery: dataqueryFromExpr(q.RefID, expr, qt, maxLines, stepForModel),
-			Direction:     directionPtr(dirStr),
-		}
-		if isMetric {
-			model.Direction = nil
-		}
-
-		raw, err := json.Marshal(model)
-		if err != nil {
-			sqlErrors[q.RefID] = fmt.Errorf("loki grafana sql: marshal query model: %w", err)
-			continue
-		}
-
-		q.JSON = raw
-		out = append(out, q)
-		if isMetric {
-			sqlKinds[q.RefID] = sqlKindMetric
-		} else {
-			sqlKinds[q.RefID] = sqlKindLog
-		}
+		out = append(out, rewritten)
+		sqlKinds[q.RefID] = kind
 	}
 
 	req.Queries = out
 	return req, sqlKinds, sqlErrors
+}
+
+// sqlHints holds the table hints parsed once per query so buildLogPlan / buildMetricPlan can
+// share a uniform signature.
+type sqlHints struct {
+	stepStr   string        // raw STEP hint value, "" if absent
+	stepDur   time.Duration // parsed STEP duration, 0 if absent
+	rateStr   string        // raw RATE hint value, "" if absent
+	rateDur   time.Duration // parsed RATE duration, 0 if absent
+	direction string        // lowercased DIRECTION hint, "" if absent
+	instant   bool          // INSTANT hint key presence
+}
+
+// parseSQLHints validates and extracts the TableHintValues supported by Loki Grafana SQL. Errors
+// are prefixed with "loki grafana sql:" so callers can surface them directly.
+func parseSQLHints(hints map[string]string) (sqlHints, error) {
+	var h sqlHints
+	var err error
+	if h.stepStr, h.stepDur, err = parseDurationHint(hints, "STEP"); err != nil {
+		return h, fmt.Errorf("loki grafana sql: %w", err)
+	}
+	if h.rateStr, h.rateDur, err = parseDurationHint(hints, "RATE"); err != nil {
+		return h, fmt.Errorf("loki grafana sql: %w", err)
+	}
+	h.direction = strings.ToLower(hintGet(hints, "DIRECTION"))
+	h.instant = instantHintEnabled(hints)
+	return h, nil
+}
+
+// queryPlan captures the result of compiling a Grafana SQL query into a Loki query. Fields encode
+// the post-resolution invariants directly so the orchestrator just applies them (e.g. modelStep is
+// already cleared for instant metric queries while intervalStep retains the duration used to
+// override q.Interval).
+type queryPlan struct {
+	expr         string
+	queryType    string        // "range" or "instant"
+	intervalStep time.Duration // 0 means don't override q.Interval/MaxDataPoints
+	modelStep    string        // "" means don't set model.Step
+	maxLines     int64         // 0 means don't set model.MaxLines
+	direction    *string       // nil for metric queries
+	kind         sqlKind
+}
+
+// buildLogPlan compiles a log-stream Grafana SQL query (no aggregation, no RATE) into a queryPlan.
+// Log queries always use Loki's range API; STEP is honoured as-is when provided.
+func buildLogPlan(selector string, sq grafanaSQLQuery, hints sqlHints) queryPlan {
+	plan := queryPlan{
+		expr:      selector,
+		queryType: "range",
+		modelStep: hints.stepStr,
+		direction: directionPtr(hints.direction),
+		kind:      sqlKindLog,
+	}
+	if hints.stepStr != "" && hints.stepDur > 0 {
+		plan.intervalStep = hints.stepDur
+	}
+	if sq.Limit != nil && *sq.Limit > 0 {
+		plan.maxLines = *sq.Limit
+	}
+	return plan
+}
+
+// buildMetricPlan compiles a metric (aggregation and/or RATE) Grafana SQL query into a queryPlan.
+// queryDur is the request time range; it backs the default step when neither STEP nor RATE is set.
+// Instant plans intentionally leave modelStep empty (Loki's instant API has no step) while
+// intervalStep still carries the underlying duration so q.Interval is updated.
+func buildMetricPlan(selector string, sq grafanaSQLQuery, hints sqlHints, queryDur time.Duration) (queryPlan, error) {
+	win := metricRangeWindow(hints.stepDur, queryDur)
+	expr, err := buildGrafanaSQLMetricExpr(selector, sq.Aggregation, win, hints.rateDur)
+	if err != nil {
+		return queryPlan{}, fmt.Errorf("loki grafana sql: %w", err)
+	}
+
+	stepDur := hints.stepDur
+	stepStr := hints.stepStr
+	if !hints.instant && stepStr == "" && stepDur == 0 {
+		if hints.rateStr != "" {
+			stepDur = hints.rateDur
+			stepStr = gtime.FormatInterval(hints.rateDur)
+		} else {
+			stepDur = win
+			stepStr = gtime.FormatInterval(win)
+		}
+	}
+
+	plan := queryPlan{
+		expr: expr,
+		kind: sqlKindMetric,
+	}
+	if hints.instant {
+		plan.queryType = "instant"
+	} else {
+		plan.queryType = "range"
+		plan.modelStep = stepStr
+	}
+	if stepStr != "" && stepDur > 0 {
+		plan.intervalStep = stepDur
+	}
+	return plan, nil
+}
+
+// rewriteSQLQuery compiles one Grafana SQL query into a native Loki query and embeds the resulting
+// QueryJSONModel in the returned DataQuery's JSON. Callers must have already validated
+// sq.GrafanaSql == true and sq.Table != "". Returns sqlKindLog or sqlKindMetric so callers can
+// dispatch response-frame flattening. Returned errors are prefixed with "loki grafana sql:" and
+// intended to be surfaced to the user as-is.
+func rewriteSQLQuery(q backend.DataQuery, sq grafanaSQLQuery, tableLabel string) (backend.DataQuery, sqlKind, error) {
+	selector, err := buildLogQLExpr(tableLabel, sq.Table, sq.Filters)
+	if err != nil {
+		return q, "", fmt.Errorf("loki grafana sql: failed to build LogQL: %w", err)
+	}
+
+	hints, err := parseSQLHints(sq.TableHintValues)
+	if err != nil {
+		return q, "", err
+	}
+
+	isMetric := sq.Aggregation != nil || hints.rateStr != ""
+	if hints.instant && !isMetric {
+		return q, "", fmt.Errorf("loki grafana sql: INSTANT hint requires a metric query (aggregation or RATE)")
+	}
+
+	var plan queryPlan
+	if isMetric {
+		plan, err = buildMetricPlan(selector, sq, hints, q.TimeRange.Duration())
+		if err != nil {
+			return q, "", err
+		}
+	} else {
+		plan = buildLogPlan(selector, sq, hints)
+	}
+
+	if plan.intervalStep > 0 {
+		q.Interval = plan.intervalStep
+		q.MaxDataPoints = int64(q.TimeRange.Duration() / plan.intervalStep)
+		if q.MaxDataPoints < 1 {
+			q.MaxDataPoints = 1
+		}
+	}
+
+	model := QueryJSONModel{
+		LokiDataQuery: dataqueryFromExpr(q.RefID, plan.expr, plan.queryType, plan.maxLines, plan.modelStep),
+		Direction:     plan.direction,
+	}
+
+	raw, err := json.Marshal(model)
+	if err != nil {
+		return q, "", fmt.Errorf("loki grafana sql: marshal query model: %w", err)
+	}
+
+	q.JSON = raw
+	return q, plan.kind, nil
 }
 
 // resolveTableLabel returns the label used to partition Grafana SQL tables for this datasource.
