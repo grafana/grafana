@@ -1,4 +1,5 @@
 import { skipToken } from '@reduxjs/toolkit/query';
+import { chain } from 'lodash';
 import { type ReactElement, useMemo, useState } from 'react';
 
 import { Trans } from '@grafana/i18n';
@@ -11,14 +12,15 @@ import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName } from '../../utils/datas
 import { ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 import { alertInstanceKey, rulerRuleType } from '../../utils/rules';
 import { PopupCard } from '../HoverCard';
+import { MetaText } from '../MetaText';
 import { NAMED_ROOT_LABEL_NAME } from '../notification-policies/useNotificationPolicyRoute';
 import { NotificationPolicySidebar } from '../rule-editor/notificaton-preview/NotificationPolicySidebar';
 import { useAlertmanagerNotificationRoutingPreview } from '../rule-editor/notificaton-preview/useAlertmanagerNotificationRoutingPreview';
 import { ContactPointLink } from '../rule-viewer/ContactPointLink';
 
-// Returns a copy of `labels` with __grafana_managed_route__ set to `policyName` (or removed when
-// `policyName` is undefined). Used to override the alert instance's stale routing label so the
-// matcher reflects the rule's current tree assignment.
+// Returns a copy of `labels` with the routing label either added/updated or removed.
+// We use this to make sure the alert instance has the correct current policy before matching,
+// since the stored labels may be outdated if the rule's policy was changed since the last evaluation.
 function withRoutingPolicyLabel(labels: Labels, policyName: string | undefined): Labels {
   const result = { ...labels };
   if (policyName !== undefined) {
@@ -54,13 +56,13 @@ export const AlertInstanceNotificationAction = ({
 }: AlertInstanceNotificationActionProps): ReactElement | null => {
   const [isOpen, setIsOpen] = useState(false);
 
-  const propRule = rulerRuleType.grafana.alertingRule(rule?.rulerRule) ? rule.rulerRule : undefined;
+  const ruleDefinition = rulerRuleType.grafana.alertingRule(rule?.rulerRule) ? rule.rulerRule : undefined;
 
   // Refresh the rule's ruler data on mount so we always read the latest notification settings,
   // even when the parent's `rule` prop is served from a stale cache. RTK Query dedupes identical
   // args so all rows in the table share one network request.
-  const { data: freshGroup } = alertRuleApi.endpoints.getGrafanaRulerGroup.useQuery(
-    propRule && rule?.namespace.uid && rule?.group.name
+  const { data: ruleGroup } = alertRuleApi.endpoints.getGrafanaRulerGroup.useQuery(
+    ruleDefinition && rule?.namespace.uid && rule?.group.name
       ? { folderUid: rule.namespace.uid, groupName: rule.group.name }
       : skipToken,
     { refetchOnMountOrArgChange: true }
@@ -68,11 +70,11 @@ export const AlertInstanceNotificationAction = ({
 
   // Pick the freshest version of the rule available, falling back to the prop while loading.
   const grafanaRule = useMemo(() => {
-    if (!propRule) {
+    if (!ruleDefinition) {
       return undefined;
     }
-    return findGrafanaAlertingRuleByUid(freshGroup?.rules, propRule.grafana_alert.uid) ?? propRule;
-  }, [propRule, freshGroup]);
+    return findGrafanaAlertingRuleByUid(ruleGroup?.rules, ruleDefinition.grafana_alert.uid) ?? ruleDefinition;
+  }, [ruleDefinition, ruleGroup]);
 
   const receiver = grafanaRule?.grafana_alert.notification_settings?.receiver;
   // Mirror the form's selectedPolicy initialization: prefer notification_settings.policy, fall
@@ -99,15 +101,22 @@ export const AlertInstanceNotificationAction = ({
     routingPolicyName
   );
 
+  // this is when we have a single receiver all instances are forwarded to – used by simplified routing.
   if (receiver) {
-    return <ContactPointLink name={receiver} />;
+    return (
+      <MetaText icon="at">
+        <ContactPointLink name={receiver} />
+      </MetaText>
+    );
   }
 
+  // we might still be loading – show nothing
   if (!grafanaRule) {
     return null;
   }
 
   const matched = treeMatchingResults[0];
+
   // Collect all matched routes — a policy with "continue matching" enabled can produce multiple matches per instance.
   const journeys =
     matched?.matchedRoutes.map(({ matchDetails, routeTree }) => ({
@@ -122,16 +131,20 @@ export const AlertInstanceNotificationAction = ({
 
   // When all journeys resolve to the same single receiver, surface it next to the button.
   const policyReceivers = isFresh
-    ? [...new Set(journeys.map((j) => j.journey.at(-1)?.route.receiver).filter((r): r is string => Boolean(r)))]
+    ? chain(journeys)
+        .map((j) => j.journey.at(-1)?.route.receiver)
+        .compact()
+        .uniq()
+        .value()
     : [];
-  const singlePolicyReceiver = policyReceivers.length === 1 ? policyReceivers[0] : undefined;
-  const hasMultiplePolicies = isFresh && journeys.length > 1;
+
+  const singleResolvedReceiver = policyReceivers.at(0);
 
   return (
     <>
       <Stack direction="column" gap={0.5} alignItems="flex-start">
-        {singlePolicyReceiver && <ContactPointLink name={singlePolicyReceiver} />}
-        {!singlePolicyReceiver && policyReceivers.length > 1 && (
+        {singleResolvedReceiver && <ContactPointLink name={singleResolvedReceiver} />}
+        {!singleResolvedReceiver && policyReceivers.length > 1 && (
           <PopupCard
             arrow
             placement="top"
@@ -151,11 +164,9 @@ export const AlertInstanceNotificationAction = ({
           </PopupCard>
         )}
         <Button fill="outline" variant="secondary" size="sm" onClick={() => setIsOpen(true)}>
-          {hasMultiplePolicies ? (
-            <Trans i18nKey="alerting.alert-instance-extension-point.view-policies">View policies</Trans>
-          ) : (
-            <Trans i18nKey="alerting.alert-instance-extension-point.view-policy">View policy</Trans>
-          )}
+          <Trans i18nKey="alerting.alert-instance-extension-point.view-route" count={journeys.length}>
+            View route
+          </Trans>
         </Button>
       </Stack>
       {isOpen && isFresh && journeys.length > 0 && (

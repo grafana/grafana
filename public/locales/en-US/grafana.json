@@ -442,8 +442,8 @@
     "alert-instance-extension-point": {
       "n-contact-points_one": "{{count}} contact point",
       "n-contact-points_other": "{{count}} contact points",
-      "view-policies": "View policies",
-      "view-policy": "View policy"
+      "view-route_one": "View route",
+      "view-route_other": "View routes"
     },
     "alert-instance-modal-selector": {
       "add-alert-data-to-payload": "Add alert data to payload",
@@ -459,8 +459,8 @@
     },
     "alert-instances-table": {
       "created": "Created",
+      "destination": "Destination",
       "labels": "Labels",
-      "notification": "Notification",
       "state": "State"
     },
     "alert-label": {

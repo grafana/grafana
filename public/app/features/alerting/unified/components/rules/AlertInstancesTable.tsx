@@ -76,7 +76,7 @@ export const AlertInstancesTable = ({ rule, instances, pagination, footerRow, sh
       ? [
           {
             id: 'actions',
-            label: t('alerting.alert-instances-table.notification', 'Notification'),
+            label: t('alerting.alert-instances-table.destination', 'Destination'),
             renderCell: ({ data: { alert, rule } }: AlertTableItemProps) => (
               <AlertInstanceNotificationAction rule={rule} instance={alert} />
             ),
