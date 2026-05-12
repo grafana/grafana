@@ -21,7 +21,7 @@ import {
 import { VariableNameConstraints } from 'app/features/variables/editor/types';
 
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
-import { getTopPlacementLabel } from '../../utils/sectionPlacement';
+import { getTopPlacementLabel } from '../../utils/getTopPlacementLabel';
 
 import { VariableTypeSelect } from './components/VariableTypeSelect';
 import {

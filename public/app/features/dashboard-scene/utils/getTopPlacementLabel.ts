@@ -4,7 +4,7 @@ import { type SceneObject } from '@grafana/scenes';
 import { RowItem } from '../scene/layout-rows/RowItem';
 import { TabItem } from '../scene/layout-tabs/TabItem';
 
-export function getTopPlacementLabel(sectionOwner: SceneObject): string {
+export function getTopPlacementLabel(sectionOwner: SceneObject): string | undefined {
   if (sectionOwner instanceof RowItem) {
     return t('dashboard-scene.section-placement.top-row', 'Top of row');
   }
@@ -13,5 +13,5 @@ export function getTopPlacementLabel(sectionOwner: SceneObject): string {
     return t('dashboard-scene.section-placement.top-tab', 'Top of tab');
   }
 
-  return t('dashboard-scene.section-placement.top-section', 'Top of section');
+  return undefined;
 }

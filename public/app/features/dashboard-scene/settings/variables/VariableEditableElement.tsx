@@ -31,8 +31,8 @@ import {
 import { VariableDisplaySelect } from '../../settings/variables/components/VariableDisplaySelect';
 import { getEditableVariableDefinition, validateVariableName } from '../../settings/variables/utils';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
+import { getTopPlacementLabel } from '../../utils/getTopPlacementLabel';
 import { DashboardInteractions } from '../../utils/interactions';
-import { getTopPlacementLabel } from '../../utils/sectionPlacement';
 
 import { openChangeVariableTypePane } from './VariableTypeSelectionPane';
 import { useVariableSelectionOptionsCategory } from './useVariableSelectionOptionsCategory';

@@ -5,8 +5,8 @@ import { type SceneObject, SceneVariableSet, sceneUtils } from '@grafana/scenes'
 import { Box, Button, Stack } from '@grafana/ui';
 
 import { openAddSectionVariablePane } from '../settings/variables/VariableTypeSelectionPane';
+import { getTopPlacementLabel } from '../utils/getTopPlacementLabel';
 import { DashboardInteractions } from '../utils/interactions';
-import { getTopPlacementLabel } from '../utils/sectionPlacement';
 import { getDashboardSceneFor } from '../utils/utils';
 import { filterSectionRepeatLocalVariables } from '../variables/utils';
 

@@ -2,8 +2,8 @@ import { Trans, t } from '@grafana/i18n';
 import { type SceneObject, SceneVariableSet, sceneUtils } from '@grafana/scenes';
 import { Box, Button, Stack } from '@grafana/ui';
 
+import { getTopPlacementLabel } from '../utils/getTopPlacementLabel';
 import { DashboardInteractions } from '../utils/interactions';
-import { getTopPlacementLabel } from '../utils/sectionPlacement';
 import { getDashboardSceneFor } from '../utils/utils';
 import { filterSectionRepeatLocalVariables } from '../variables/utils';
 
