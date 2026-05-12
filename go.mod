@@ -408,7 +408,7 @@ require (
 	github.com/cenkalti/backoff/v4 v4.3.0 // @grafana/alerting-backend
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
 	github.com/centrifugal/protocol v0.17.0 // indirect
-	github.com/cespare/xxhash/v2 v2.3.0 // indirect
+	github.com/cespare/xxhash/v2 v2.3.0
 	github.com/charmbracelet/colorprofile v0.4.2 // indirect
 	github.com/charmbracelet/x/ansi v0.11.6 // indirect
 	github.com/charmbracelet/x/cellbuf v0.0.15 // indirect
