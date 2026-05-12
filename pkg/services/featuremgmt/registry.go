@@ -2560,15 +2560,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:         "kubernetesTeamBindings",
-			Description:  "Enables search for team bindings in the app platform API",
-			Stage:        FeatureStageExperimental,
-			Owner:        identityAccessTeam,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:         "kubernetesTeamsApi",
 			Description:  "Enables team APIs in the app platform",
 			Stage:        FeatureStageExperimental,

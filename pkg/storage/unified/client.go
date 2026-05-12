@@ -108,7 +108,7 @@ func newClient(opts options.StorageOptions,
 
 	switch opts.StorageType {
 	case options.StorageTypeFile:
-		backend, err := sql.NewFileBackend(cfg)
+		backend, err := sql.NewFileBackend(cfg, kvProvider)
 		if err != nil {
 			return nil, err
 		}
@@ -128,6 +128,11 @@ func newClient(opts options.StorageOptions,
 		if opts.Address == "" {
 			return nil, fmt.Errorf("expecting address for storage_type: %s", opts.StorageType)
 		}
+
+		// No local backend is created for unified-grpc; the gRPC client below
+		// is what's used. Mark the provider unavailable so any in-process
+		// consumer waiting on Get gets ErrKVUnavailable instead of blocking.
+		kvProvider.SetUnavailable()
 
 		var (
 			conn      grpc.ClientConnInterface

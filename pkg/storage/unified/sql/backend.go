@@ -113,47 +113,26 @@ func NewStorageBackend(
 ) (resource.StorageBackend, error) {
 	storageType := options.StorageType(cfg.SectionWithEnvOverrides("grafana-apiserver").Key("storage_type").
 		MustString(string(options.StorageTypeUnified)))
-
-	var backend resource.StorageBackend
-	var store kv.KV
-	var err error
-
 	switch storageType {
 	case options.StorageTypeFile:
-		backend, store, err = newFileBackend(cfg)
+		return NewFileBackend(cfg, kvProvider)
 	case options.StorageTypeUnifiedGrpc:
+		kvProvider.SetUnavailable()
 		return nil, nil
-	default:
-		backend, store, err = newSQLKVBackend(cfg, db, reg, storageMetrics, disableStorageServices)
+	default: // fall back to SQL backend
 	}
-	if err != nil {
-		return nil, err
-	}
-
-	if kvProvider != nil && store != nil {
-		kvProvider.Set(store)
-	}
-
-	return backend, nil
-}
-
-func newSQLKVBackend(
-	cfg *setting.Cfg,
-	db infraDB.DB,
-	reg prometheus.Registerer,
-	storageMetrics *resource.StorageMetrics,
-	disableStorageServices bool,
-) (resource.StorageBackend, kv.KV, error) {
+	// create default unified backend
 	eDB, err := dbimpl.ProvideResourceDB(db, cfg, tracer)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	isHA := isHighAvailabilityEnabled(cfg.SectionWithEnvOverrides("database"),
 		cfg.SectionWithEnvOverrides("resource_api"))
 
 	if !cfg.EnableSQLKVBackend {
-		backend, err := NewBackend(BackendOptions{
+		kvProvider.SetUnavailable()
+		return NewBackend(BackendOptions{
 			DBProvider:           eDB,
 			Reg:                  reg,
 			IsHA:                 isHA,
@@ -175,22 +154,21 @@ func newSQLKVBackend(
 			DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
 			BatchTransactionTimeout: cfg.ResourceVersionBatchTransactionTimeout,
 		})
-		return backend, nil, err
 	}
 
 	ctx := context.Background()
 	dbConn, err := eDB.Init(ctx)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error initializing DB: %w", err)
+		return nil, fmt.Errorf("error initializing DB: %w", err)
 	}
 	dialect := sqltemplate.DialectForDriver(dbConn.DriverName())
 	if dialect == nil {
-		return nil, nil, fmt.Errorf("unsupported database driver: %s", dbConn.DriverName())
+		return nil, fmt.Errorf("unsupported database driver: %s", dbConn.DriverName())
 	}
 
 	sqlkv, err := kv.NewSQLKV(dbConn.SqlDB(), dbConn.DriverName())
 	if err != nil {
-		return nil, nil, fmt.Errorf("error creating sqlkv: %s", err)
+		return nil, fmt.Errorf("error creating sqlkv: %s", err)
 	}
 
 	tenantDeleterCfg := resource.NewTenantDeleterConfig(cfg)
@@ -232,7 +210,7 @@ func newSQLKVBackend(
 			BatchTransactionTimeout: cfg.ResourceVersionBatchTransactionTimeout,
 		})
 		if err != nil {
-			return nil, nil, fmt.Errorf("failed to create resource version manager: %w", err)
+			return nil, fmt.Errorf("failed to create resource version manager: %w", err)
 		}
 
 		kvBackendOpts.RvManager = rvManager
@@ -243,40 +221,27 @@ func newSQLKVBackend(
 		kvBackendOpts.Holder = resolveLeaseHolder(cfg)
 	}
 
-	backend, err := resource.NewKVStorageBackend(kvBackendOpts)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return backend, sqlkv, nil
+	kvProvider.Set(sqlkv)
+	return resource.NewKVStorageBackend(kvBackendOpts)
 }
 
-func NewFileBackend(cfg *setting.Cfg) (resource.StorageBackend, error) {
-	backend, _, err := newFileBackend(cfg)
-	return backend, err
-}
-
-func newFileBackend(cfg *setting.Cfg) (resource.StorageBackend, kv.KV, error) {
+func NewFileBackend(cfg *setting.Cfg, kvProvider *kv.EventualKVProvider) (resource.StorageBackend, error) {
 	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
 	dataPath := apiserverCfg.Key("storage_path").
 		MustString(filepath.Join(cfg.DataPath, "grafana-apiserver"))
 	db, err := badger.Open(badger.DefaultOptions(filepath.Join(dataPath, "badger")).
 		WithLogger(nil))
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	kvStore := resource.NewBadgerKV(db)
-	backend, err := resource.NewKVStorageBackend(resource.KVBackendOptions{
+	kvProvider.Set(kvStore)
+	return resource.NewKVStorageBackend(resource.KVBackendOptions{
 		KvStore:                 kvStore,
 		Log:                     log.New("storage-backend"),
 		DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
 	})
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return backend, kvStore, nil
 }
 
 func resolveLeaseHolder(cfg *setting.Cfg) string {
