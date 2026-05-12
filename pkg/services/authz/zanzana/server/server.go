@@ -35,6 +35,17 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/server/reconciler"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
+)
+
+// LeaderElectionMode determines which leader election backend to use.
+type LeaderElectionMode int
+
+const (
+	// LeaderElectionModeKubernetes uses Kubernetes Lease objects.
+	LeaderElectionModeKubernetes LeaderElectionMode = iota
+	// LeaderElectionModeKV uses the KV store lease primitive.
+	LeaderElectionModeKV
 )
 
 const cacheCleanInterval = 2 * time.Minute
@@ -72,13 +83,13 @@ type Server struct {
 	nsLimiterSize     int64
 }
 
-func NewEmbeddedZanzanaServer(cfg *setting.Cfg, store storage.OpenFGADatastore, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer, restConfig apiserver.RestConfigProvider, reconcileCRDs []schema.GroupVersionResource) (*Server, error) {
+func NewEmbeddedZanzanaServer(cfg *setting.Cfg, store storage.OpenFGADatastore, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer, restConfig apiserver.RestConfigProvider, reconcileCRDs []schema.GroupVersionResource, kvProvider *kv.EventualKVProvider) (*Server, error) {
 	openfga, err := NewOpenFGAServer(cfg.ZanzanaServer, store)
 	if err != nil {
 		return nil, fmt.Errorf("failed to start zanzana: %w", err)
 	}
 
-	return newServer(cfg, openfga, store, logger, tracer, reg, restConfig, reconcileCRDs)
+	return newServer(cfg, openfga, store, logger, tracer, reg, restConfig, reconcileCRDs, kvProvider, LeaderElectionModeKV)
 }
 
 func NewZanzanaServer(cfg *setting.Cfg, store storage.OpenFGADatastore, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer, reconcileCRDs []schema.GroupVersionResource) (*Server, error) {
@@ -87,10 +98,10 @@ func NewZanzanaServer(cfg *setting.Cfg, store storage.OpenFGADatastore, logger l
 		return nil, fmt.Errorf("failed to start zanzana: %w", err)
 	}
 
-	return newServer(cfg, openfgaServer, store, logger, tracer, reg, nil, reconcileCRDs)
+	return newServer(cfg, openfgaServer, store, logger, tracer, reg, nil, reconcileCRDs, nil, LeaderElectionModeKubernetes)
 }
 
-func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADatastore, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer, restConfig apiserver.RestConfigProvider, reconcileCRDs []schema.GroupVersionResource) (*Server, error) {
+func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADatastore, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer, restConfig apiserver.RestConfigProvider, reconcileCRDs []schema.GroupVersionResource, kvProvider *kv.EventualKVProvider, mode LeaderElectionMode) (*Server, error) {
 	channel := &inprocgrpc.Channel{}
 	openfgav1.RegisterOpenFGAServiceServer(channel, openfga)
 	openFGAClient := openfgav1.NewOpenFGAServiceClient(channel)
@@ -184,17 +195,29 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 
 		var le leaderelection.Elector
 		if cfg.ZanzanaReconciler.LeaderElection.Enabled {
-			restCfg, err := clientrest.InClusterConfig()
-			if err != nil {
-				return nil, fmt.Errorf("failed to get in-cluster config for leader election: %w", err)
-			}
-			le, err = leaderelection.NewKubernetesElector(
-				restCfg,
-				cfg.ZanzanaReconciler.LeaderElection,
-				reconcilerLogger,
-			)
-			if err != nil {
-				return nil, fmt.Errorf("failed to create leader elector: %w", err)
+			switch mode {
+			case LeaderElectionModeKubernetes:
+				restCfg, err := clientrest.InClusterConfig()
+				if err != nil {
+					return nil, fmt.Errorf("failed to get in-cluster config for leader election: %w", err)
+				}
+				le, err = leaderelection.NewKubernetesElector(
+					restCfg,
+					cfg.ZanzanaReconciler.LeaderElection,
+					reconcilerLogger,
+				)
+				if err != nil {
+					return nil, fmt.Errorf("failed to create leader elector: %w", err)
+				}
+			case LeaderElectionModeKV:
+				if kvProvider == nil {
+					return nil, fmt.Errorf("KV lease leader election requires unified storage KV backend")
+				}
+				var leErr error
+				le, leErr = leaderelection.NewKVLeaseElector(kvProvider, cfg.ZanzanaReconciler.LeaderElection, reconcilerLogger)
+				if leErr != nil {
+					return nil, fmt.Errorf("failed to create KV lease elector: %w", leErr)
+				}
 			}
 		} else {
 			le = leaderelection.NewDefaultElector()
