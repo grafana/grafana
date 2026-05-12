@@ -47,10 +47,10 @@ To create a template variable for Azure Monitor:
 1. Click **Dashboard settings** (gear icon) in the top navigation.
 1. Select **Variables** in the left menu.
 1. Click **Add variable**.
-1. Enter a **Name** for your variable (e.g., `subscription`, `resourceGroup`, `resource`).
+1. Enter a **Name** for your variable (for example, `subscription`, `resourceGroup`, `resource`).
 1. In the **Type** dropdown, select **Query**.
 1. In the **Data source** dropdown, select your Azure Monitor data source.
-1. In the **Query Type** dropdown, select the appropriate query type (see [Available query types](#available-query-types)).
+1. In the **Query Type** dropdown, select the appropriate query type (refer to [Available query types](#available-query-types)).
 1. Configure any additional fields required by the selected query type.
 1. Click **Run query** to preview the variable values.
 1. Configure display options such as **Multi-value** or **Include All option** as needed.
@@ -69,7 +69,7 @@ The Azure Monitor data source provides the following query types for template va
 | **Resource Names**      | Returns resource names for a specified subscription, resource group, and namespace. Supports multi-value selection.                     |
 | **Metric Names**        | Returns available metric names for a specified resource.                                                                               |
 | **Workspaces**          | Returns Log Analytics workspaces for the specified subscription.                                                                       |
-| **Logs**                | Executes a KQL query and returns the results as variable values. See [Create a Logs variable](#create-a-logs-variable).                |
+| **Logs**                | Executes a KQL query and returns the results as variable values. Refer to [Create a Logs variable](#create-a-logs-variable).           |
 | **Custom Namespaces**   | Returns custom metric namespaces for a specified resource.                                                                             |
 | **Custom Metric Names** | Returns custom metric names for a specified resource.                                                                                  |
 
@@ -100,7 +100,7 @@ Cascading variables (also called dependent or chained variables) allow you to cr
 1. Set **Query Type** to **Resource Names**.
 1. In the **Subscription** field, select `$subscription`.
 1. In the **Resource Group** field, select `$resourceGroup`.
-1. Select the appropriate **Namespace** for your resources (e.g., `Microsoft.Compute/virtualMachines`).
+1. Select the appropriate **Namespace** for your resources (for example, `Microsoft.Compute/virtualMachines`).
 
 Now when you change the subscription, the resource group dropdown updates automatically, and when you change the resource group, the resource name dropdown updates.
 

@@ -225,7 +225,7 @@ The Prometheus data source works with Azure authentication. To configure Azure a
 Consider using the [Azure Monitor Managed Service for Prometheus data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/configure/azure-authentication/) instead, which doesn't require this flag.
 {{< /admonition >}}
 
-For self-hosted Grafana Enterprise, update the `.ini` configuration file. Refer to [Configuration file location](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#configuration-file-location) to locate your `.ini` file.
+For self-managed Grafana Enterprise, update the `.ini` configuration file. Refer to [Configuration file location](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#configuration-file-location) to locate your `.ini` file.
 
 Add the following setting in the **[auth]** section of the `.ini` configuration file:
 
@@ -240,7 +240,7 @@ If you're using Azure authentication, don't enable `Forward OAuth identity`. Bot
 
 ## Recording rules (beta)
 
-You can configure the Prometheus data source to disable recording rules in the data source configuration or provisioning file under `disableRecordingRules` in jsonData.
+You can configure the Prometheus data source to disable recording rules in the data source configuration or provisioning file under `disableRecordingRules` in `jsonData`.
 
 ## Troubleshooting configuration issues
 

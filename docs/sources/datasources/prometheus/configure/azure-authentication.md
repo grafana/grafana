@@ -25,7 +25,7 @@ This page explains how to authenticate the Azure Monitor Managed Service for Pro
 
 The following table lists supported authentication methods and their trade-offs:
 
-| Method                   | Best for                           | Grafana Cloud | Supports alerting | Server config required |
+| Method                   | Best for                           | Grafana Cloud | Supports alerting | Server configuration required |
 | ------------------------ | ---------------------------------- | ------------- | ----------------- | ---------------------- |
 | **App Registration**     | Any Grafana deployment             | ✓             | ✓                 | No                     |
 | **Managed Identity**     | Grafana hosted in Azure            | ✗             | ✓                 | Yes                    |
@@ -46,9 +46,9 @@ The following table lists supported authentication methods and their trade-offs:
 
 Managed Identity and Workload Identity are not available in Grafana Cloud because they require Grafana to run on your Azure infrastructure. Use **App Registration** or **Current User** authentication instead.
 
-### Self-hosted server configuration
+### Self-managed server configuration
 
-For self-hosted Grafana, Managed Identity, Workload Identity, and Current User authentication methods require settings in the Grafana `.ini` configuration file. Additionally, the Azure Monitor Managed Service for Prometheus plugin must be included in `forward_settings_to_plugins` so that it receives the Azure settings from the server.
+For self-managed Grafana, Managed Identity, Workload Identity, and Current User authentication methods require settings in the Grafana `.ini` configuration file. Additionally, the Azure Monitor Managed Service for Prometheus plugin must be included in `forward_settings_to_plugins` so that it receives the Azure settings from the server.
 
 Verify that `grafana-azureprometheus-datasource` is listed in `forward_settings_to_plugins` under the `[azure]` section of your `.ini` file:
 
@@ -120,7 +120,7 @@ Learn more about why this is happening: [Prometheus data source update: Redefini
 
 Before you begin, ensure you have the organization administrator role. If you are self-hosting Grafana, back up your existing dashboard configurations and queries.
 
-Grafana Cloud users will be automatically migrated to the relevant version of Prometheus, so no action needs to be taken.
+Grafana Cloud users are automatically migrated to the relevant version of Prometheus, so no action needs to be taken.
 
 For air-gapped environments, download and install [Azure Monitor Managed Service for Prometheus](https://grafana.com/grafana/plugins/grafana-azureprometheus-datasource/), then follow the standard migration process.
 
@@ -161,10 +161,10 @@ The following sections contain troubleshooting guidance.
 
 **After migrating, my data source returns "401 Unauthorized"**
 
-- **Self-hosted Grafana:** Verify that `grafana-azureprometheus-datasource` is included in `forward_settings_to_plugins` under the `[azure]` section of your `.ini` file. Refer to [Self-hosted server configuration](#self-hosted-server-configuration) for details.
+- **Self-managed Grafana:** Verify that `grafana-azureprometheus-datasource` is included in `forward_settings_to_plugins` under the `[azure]` section of your `.ini` file. Refer to [Self-managed server configuration](#self-managed-server-configuration) for details.
 - **Grafana Cloud:** The `azure_auth_enabled` backend flag may not be enabled on your stack. Use [Private Data Source Connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) if connecting to private Azure resources, or [contact Grafana Support](https://grafana.com/help/) to have the flag enabled.
 
-### Rollback self-hosted Grafana without a backup
+### Rollback self-managed Grafana without a backup
 
 If you don’t have a backup of your Grafana instance before the migration, remove the `prometheusTypeMigration` feature toggle, and run the following script. It reverts all the Azure Monitor Managed Service data source instances back to core Prometheus.
 

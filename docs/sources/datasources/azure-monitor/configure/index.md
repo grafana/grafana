@@ -69,7 +69,7 @@ You're taken to the **Settings** tab where you can configure the data source.
 
 The Azure Monitor data source supports five authentication methods. Choose based on where Grafana is hosted, your security requirements, and whether you need alerting:
 
-| Authentication method                     | Best for                                   | Grafana Cloud | Supports alerting | Server config required |
+| Authentication method                     | Best for                                   | Grafana Cloud | Supports alerting | Server configuration required |
 | ----------------------------------------- | ------------------------------------------ | ------------- | ----------------- | ---------------------- |
 | **App Registration (client secret)**      | Any Grafana deployment                     | ✓             | ✓                 | No                     |
 | **App Registration (client certificate)** | Any Grafana deployment                     | ✓             | ✓                 | No                     |
@@ -243,7 +243,7 @@ datasources:
 Use Azure Managed Identity for secure, credential-free authentication when Grafana is hosted in Azure.
 
 {{< admonition type="note" >}}
-Managed Identity is available in [Azure Managed Grafana](https://azure.microsoft.com/en-us/products/managed-grafana) or self-hosted Grafana deployed in Azure. It is not available in Grafana Cloud.
+Managed Identity is available in [Azure Managed Grafana](https://azure.microsoft.com/en-us/products/managed-grafana) or self-managed Grafana deployed in Azure. It is not available in Grafana Cloud.
 {{< /admonition >}}
 
 #### Managed Identity prerequisites
@@ -432,10 +432,10 @@ If you've customized the `forward_settings_to_plugins` setting under `[azure]`, 
 
 Current User authentication doesn't support backend functionality like alerting, reporting, and recorded queries because user credentials aren't available for background operations.
 
-To support these features, you must configure **fallback service credentials** — typically an App Registration with client secret. When enabled, Grafana uses the fallback credentials for backend operations. Operations using fallback credentials are limited to the permissions of those credentials, not the user's permissions.
+To support these features, you must configure **fallback service credentials**, typically an App Registration with client secret. When enabled, Grafana uses the fallback credentials for backend operations. Operations using fallback credentials are limited to the permissions of those credentials, not the user's permissions.
 
 {{< admonition type="caution" >}}
-If you use Current User authentication without configuring fallback service credentials, alerting rules, recording rules, and reports will fail with authentication errors. Refer to the [alerting documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/alerting/) for more details.
+If you use Current User authentication without configuring fallback service credentials, alerting rules, recording rules, and reports fail with authentication errors. Refer to the [alerting documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/alerting/) for more details.
 {{< /admonition >}}
 
 {{< admonition type="note" >}}
