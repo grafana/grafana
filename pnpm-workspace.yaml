@@ -42,7 +42,13 @@ overrides:
   js-yaml@4.1.0: ^4.1.0
   js-yaml@=4.1.0: ^4.1.0
   nodemailer: 8.0.7
-  protobufjs@8.0.0: 8.0.1
+  protobufjs@8.0.0: 8.0.2
+  protobufjs@8.0.1: 8.0.2
+  uuid@11.1.0: 11.1.1
+  dompurify: 3.4.2
+  axios: 1.16.0
+  jspdf: 4.2.1
+  http-proxy-agent: 7.0.2
   '@types/slate>immutable': ^4.0.0
   '@types/slate-react>immutable': ^4.0.0
 
