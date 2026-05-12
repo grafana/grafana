@@ -23,7 +23,6 @@ import (
 	legacyiamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	teamapi "github.com/grafana/grafana/pkg/registry/apis/iam/team"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
@@ -42,18 +41,18 @@ var (
 const userTeamsGetParallelism = 8
 
 type UserTeamREST struct {
-	client     resourcepb.ResourceIndexClient
-	teamGetter rest.Getter
-	tracer     trace.Tracer
-	features   featuremgmt.FeatureToggles
+	client              resourcepb.ResourceIndexClient
+	teamGetter          rest.Getter
+	tracer              trace.Tracer
+	teamBindingsEnabled bool
 }
 
-func NewUserTeamREST(client resourcepb.ResourceIndexClient, teamGetter rest.Getter, tracer trace.Tracer, features featuremgmt.FeatureToggles) *UserTeamREST {
+func NewUserTeamREST(client resourcepb.ResourceIndexClient, teamGetter rest.Getter, tracer trace.Tracer, teamBindingsEnabled bool) *UserTeamREST {
 	return &UserTeamREST{
-		client:     client,
-		teamGetter: teamGetter,
-		tracer:     tracer,
-		features:   features,
+		client:              client,
+		teamGetter:          teamGetter,
+		tracer:              tracer,
+		teamBindingsEnabled: teamBindingsEnabled,
 	}
 }
 
@@ -78,8 +77,7 @@ func (s *UserTeamREST) ProducesObject(verb string) interface{} {
 // Connect implements rest.Connecter.
 func (s *UserTeamREST) Connect(ctx context.Context, name string, _ runtime.Object, responder rest.Responder) (http.Handler, error) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		//nolint:staticcheck // not migrated to OpenFeature
-		if !s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesTeamBindings) {
+		if !s.teamBindingsEnabled {
 			responder.Error(apierrors.NewForbidden(iamv0alpha1.UserResourceInfo.GroupResource(),
 				name, errors.New("functionality not available")))
 			return

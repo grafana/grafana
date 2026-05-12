@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
@@ -27,7 +26,7 @@ import (
 func TestUserTeamREST_Connect(t *testing.T) {
 	t.Run("should create handler with default pagination and stable sort", func(t *testing.T) {
 		mockClient := &mockSearchClient{}
-		handler := NewUserTeamREST(mockClient, &mockGetter{}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
+		handler := NewUserTeamREST(mockClient, &mockGetter{}, tracing.NewNoopTracerService(), true)
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -60,7 +59,7 @@ func TestUserTeamREST_Connect(t *testing.T) {
 
 	t.Run("should parse limit query parameter", func(t *testing.T) {
 		mockClient := &mockSearchClient{}
-		handler := NewUserTeamREST(mockClient, &mockGetter{}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
+		handler := NewUserTeamREST(mockClient, &mockGetter{}, tracing.NewNoopTracerService(), true)
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -81,7 +80,7 @@ func TestUserTeamREST_Connect(t *testing.T) {
 
 	t.Run("should pass continue token through as SearchAfter", func(t *testing.T) {
 		mockClient := &mockSearchClient{}
-		handler := NewUserTeamREST(mockClient, &mockGetter{}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
+		handler := NewUserTeamREST(mockClient, &mockGetter{}, tracing.NewNoopTracerService(), true)
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -105,7 +104,7 @@ func TestUserTeamREST_Connect(t *testing.T) {
 
 	t.Run("should reject malformed continue token", func(t *testing.T) {
 		mockClient := &mockSearchClient{}
-		handler := NewUserTeamREST(mockClient, &mockGetter{}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
+		handler := NewUserTeamREST(mockClient, &mockGetter{}, tracing.NewNoopTracerService(), true)
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -141,7 +140,7 @@ func TestUserTeamREST_Connect(t *testing.T) {
 				},
 			},
 		}
-		handler := NewUserTeamREST(mockClient, &mockGetter{}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
+		handler := NewUserTeamREST(mockClient, &mockGetter{}, tracing.NewNoopTracerService(), true)
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -180,7 +179,7 @@ func TestUserTeamREST_Connect(t *testing.T) {
 				},
 			},
 		}
-		handler := NewUserTeamREST(mockClient, &mockGetter{}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
+		handler := NewUserTeamREST(mockClient, &mockGetter{}, tracing.NewNoopTracerService(), true)
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -203,7 +202,7 @@ func TestUserTeamREST_Connect(t *testing.T) {
 
 	t.Run("should parse explain query parameter", func(t *testing.T) {
 		mockClient := &mockSearchClient{}
-		handler := NewUserTeamREST(mockClient, &mockGetter{}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
+		handler := NewUserTeamREST(mockClient, &mockGetter{}, tracing.NewNoopTracerService(), true)
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -224,7 +223,7 @@ func TestUserTeamREST_Connect(t *testing.T) {
 
 	t.Run("should not enable explain when explain=false", func(t *testing.T) {
 		mockClient := &mockSearchClient{}
-		handler := NewUserTeamREST(mockClient, &mockGetter{}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
+		handler := NewUserTeamREST(mockClient, &mockGetter{}, tracing.NewNoopTracerService(), true)
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -245,7 +244,7 @@ func TestUserTeamREST_Connect(t *testing.T) {
 
 	t.Run("should return error when identity is missing", func(t *testing.T) {
 		mockClient := &mockSearchClient{}
-		handler := NewUserTeamREST(mockClient, &mockGetter{}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
+		handler := NewUserTeamREST(mockClient, &mockGetter{}, tracing.NewNoopTracerService(), true)
 
 		ctx := context.Background()
 		responder := &mockResponder{}
@@ -266,7 +265,7 @@ func TestUserTeamREST_Connect(t *testing.T) {
 
 	t.Run("should return error when search fails", func(t *testing.T) {
 		mockClient := &mockSearchClient{Err: errors.New("search failed")}
-		handler := NewUserTeamREST(mockClient, &mockGetter{}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
+		handler := NewUserTeamREST(mockClient, &mockGetter{}, tracing.NewNoopTracerService(), true)
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -302,7 +301,7 @@ func TestUserTeamREST_Connect(t *testing.T) {
 			"team-a": team("team-a", member("alice", "admin", false), member("bob", "member", false)),
 			"team-b": team("team-b", member("alice", "member", true)),
 		}}
-		handler := NewUserTeamREST(mockClient, getter, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
+		handler := NewUserTeamREST(mockClient, getter, tracing.NewNoopTracerService(), true)
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -358,7 +357,7 @@ func TestUserTeamREST_Connect(t *testing.T) {
 		}
 		// Failing getter ensures the inline-cells path doesn't call it.
 		getter := &mockGetter{err: errors.New("getter must not be called")}
-		handler := NewUserTeamREST(mockClient, getter, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
+		handler := NewUserTeamREST(mockClient, getter, tracing.NewNoopTracerService(), true)
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -402,7 +401,7 @@ func TestUserTeamREST_Connect(t *testing.T) {
 		getter := &mockGetter{teams: map[string]*iamv0alpha1.Team{
 			"team-a": team("team-a", member("alice", "admin", false)),
 		}}
-		handler := NewUserTeamREST(mockClient, getter, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
+		handler := NewUserTeamREST(mockClient, getter, tracing.NewNoopTracerService(), true)
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -426,7 +425,7 @@ func TestUserTeamREST_Connect(t *testing.T) {
 
 	t.Run("should include correct fields in search request", func(t *testing.T) {
 		mockClient := &mockSearchClient{}
-		handler := NewUserTeamREST(mockClient, &mockGetter{}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
+		handler := NewUserTeamREST(mockClient, &mockGetter{}, tracing.NewNoopTracerService(), true)
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -453,7 +452,7 @@ func TestUserTeamREST_Connect(t *testing.T) {
 
 	t.Run("should return 403 when feature flag is disabled", func(t *testing.T) {
 		mockClient := &mockSearchClient{}
-		handler := NewUserTeamREST(mockClient, &mockGetter{}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures())
+		handler := NewUserTeamREST(mockClient, &mockGetter{}, tracing.NewNoopTracerService(), false)
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
