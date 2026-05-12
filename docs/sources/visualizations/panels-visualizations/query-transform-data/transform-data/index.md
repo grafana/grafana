@@ -754,7 +754,6 @@ The following options are available in the new matcher-based editor and require 
 | --------------------------------- | ---------------------------------------------------------------------------------------------------------- |
 | Show field names in nested tables | Show or hide the column headers inside each nested table. On by default.                                   |
 | Expand nested rows by default     | Expand all nested rows automatically when the panel loads, instead of starting collapsed. Off by default.  |
-<!-- prettier-ignore-end -->
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-expand-nested-rows-v12.x.png" max-width="750px" alt="Nested table panel with all rows expanded by default" >}}
 
