@@ -551,16 +551,20 @@ describe('CanvasPanel', () => {
 
   it('double click on success shortcuts to text edit', async () => {
     jest.spyOn(getDashboardSrv(), 'getCurrent').mockReturnValue({ editable: true } as DashboardModel);
+    const elementFromPointTarget: { current: HTMLElement | null } = { current: null };
     Object.defineProperty(document, 'elementFromPoint', {
       configurable: true,
-      value: () => {
-        return unmappedIconText;
-      },
+      value: () => elementFromPointTarget.current ?? document.body,
     });
+    const { rerender, eventBus } = setUpWithPanelContext();
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 0));
+    });
+    rerender(canvasPanelElement({ renderCounter: 1 }, eventBus));
 
-    setUpWithPanelContext();
+    const unmappedIconText = getUnmappedIconText();
+    elementFromPointTarget.current = unmappedIconText;
 
-    let unmappedIconText = getUnmappedIconText();
     expect(unmappedIconText).toHaveTextContent('No mapping (14)');
     const user = userEvent.setup();
     await user.click(unmappedIconText);
@@ -569,23 +573,24 @@ describe('CanvasPanel', () => {
     const input = screen.getByRole('textbox');
     expect(input).toHaveFocus();
     expect(input).toHaveValue('No mapping (14)');
-    // Change the text
-    await userEvent.clear(input);
-    await userEvent.keyboard('can only edit fields with no mapping');
+    await user.clear(input);
+    await user.keyboard('can only edit fields with no mapping');
     expect(input).toHaveValue('can only edit fields with no mapping');
 
-    await userEvent.keyboard('{esc}');
-    expect(onOptionsChange).toHaveBeenCalledWith(
+    // TextEdit exits edit mode on Enter
+    await user.keyboard('{Enter}');
+
+    const lastOptions = onOptionsChange.mock.calls.at(-1)![0] as Options;
+    const unmappedTextEl = lastOptions.root.elements.find((el) => el.name === 'Unmapped Text');
+    expect(unmappedTextEl).toEqual(
       expect.objectContaining({
-        config: {
-          text: {
+        config: expect.objectContaining({
+          text: expect.objectContaining({
             fixed: 'can only edit fields with no mapping',
-          },
-        },
+          }),
+        }),
       })
     );
-
-    jest.restoreAllMocks();
   });
 
   it.todo('Delete');
