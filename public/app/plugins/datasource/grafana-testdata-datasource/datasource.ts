@@ -521,4 +521,3 @@ function runGrafanaLiveQuery(
     key: `testStream.${liveQueryCounter++}`,
   });
 }
-

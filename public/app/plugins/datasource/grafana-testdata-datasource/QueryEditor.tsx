@@ -128,7 +128,6 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
         break;
       case TestDataQueryType.ErrorWithSource:
         update.errorSource = 'plugin';
-        break;
     }
 
     onUpdate(update);
