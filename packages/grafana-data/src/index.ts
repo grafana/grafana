@@ -16,6 +16,8 @@ export {
   guessFieldTypeFromValue,
   guessFieldTypeForField,
   guessFieldTypes,
+} from './dataframe/guessFieldType';
+export {
   isTableData,
   isDataFrame,
   isDataFrameWithValue,

@@ -15,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/dskit/backoff"
 	"github.com/oklog/ulid/v2"
 	"gocloud.dev/blob"
 	"gocloud.dev/gcerrors"
@@ -34,6 +35,27 @@ const (
 	// manifest file (1 MiB).
 	maxSnapshotManifestSize = 1 << 20
 )
+
+const (
+	snapshotStoreOpUploadFile             = "upload_file"
+	snapshotStoreOpUploadManifest         = "upload_manifest"
+	snapshotStoreOpDownloadFile           = "download_file"
+	snapshotStoreOpReadManifest           = "read_manifest"
+	snapshotStoreOpListIndexKeys          = "list_index_keys"
+	snapshotStoreOpListNamespaces         = "list_namespaces"
+	snapshotStoreOpListNamespaceResources = "list_namespace_resources"
+	snapshotStoreOpDeleteIndex            = "delete_index"
+)
+
+var snapshotStoreRetryBackoffConfig = backoff.Config{
+	MinBackoff: 100 * time.Millisecond,
+	MaxBackoff: time.Second,
+	// dskit/backoff counts retries after the initial attempt, so this is at most three tries total.
+	MaxRetries: 2,
+}
+
+// remoteIndexStoreRetryLogger is used only when callers do not have a contextual logger to pass in.
+var remoteIndexStoreRetryLogger = log.New("remote-index-store-retry")
 
 // ErrNonRegularFile is returned when a non-regular file (symlink, pipe, socket, device) is found during index upload.
 var ErrNonRegularFile = errors.New("non-regular file found in index directory")
@@ -181,6 +203,61 @@ func NewBucketRemoteIndexStore(cfg BucketRemoteIndexStoreConfig) *BucketRemoteIn
 		cleanupLockOpts: cfg.CleanupLock,
 		log:             log.New("bucket-remote-index-store"),
 	}
+}
+
+func retryRemoteIndexStore(ctx context.Context, operation string, logger log.Logger, fn func() error) error {
+	_, err := retryRemoteIndexStoreValue(ctx, operation, logger, func() (struct{}, error) {
+		return struct{}{}, fn()
+	})
+	return err
+}
+
+func retryRemoteIndexStoreValue[T any](ctx context.Context, operation string, logger log.Logger, fn func() (T, error)) (T, error) {
+	if logger == nil {
+		logger = remoteIndexStoreRetryLogger
+	}
+
+	bo := backoff.New(ctx, snapshotStoreRetryBackoffConfig)
+	for {
+		result, err := fn()
+		if err == nil || !isRetryableSnapshotStoreError(ctx, err) {
+			return result, err
+		}
+		if !bo.Ongoing() {
+			return result, err
+		}
+
+		logger.Warn("remote index store operation failed; retrying", "operation", operation, "attempt", bo.NumRetries()+1, "err", err)
+		bo.Wait()
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			var zero T
+			return zero, ctxErr
+		}
+	}
+}
+
+func isRetryableSnapshotStoreError(ctx context.Context, err error) bool {
+	if err == nil || ctx.Err() != nil {
+		return false
+	}
+	if errors.Is(err, ErrSnapshotNotFound) || errors.Is(err, ErrInvalidManifest) || errors.Is(err, resource.ErrWriteLimitExceeded) {
+		return false
+	}
+
+	switch gcerrors.Code(err) {
+	case gcerrors.Internal, gcerrors.ResourceExhausted, gcerrors.DeadlineExceeded:
+		return true
+	}
+
+	var timeoutErr interface{ Timeout() bool }
+	if errors.As(err, &timeoutErr) && timeoutErr.Timeout() {
+		return true
+	}
+	var temporaryErr interface{ Temporary() bool }
+	if errors.As(err, &temporaryErr) && temporaryErr.Temporary() {
+		return true
+	}
+	return errors.Is(err, io.ErrUnexpectedEOF)
 }
 
 // indexPrefix returns the object storage prefix for a namespaced resource + index key.
@@ -429,7 +506,10 @@ func UploadIndexSnapshot(ctx context.Context, store RemoteIndexStore, nsResource
 	// already be cancelled by the time we get here.
 	defer func() {
 		if retErr != nil {
-			if delErr := store.DeleteIndex(context.WithoutCancel(ctx), nsResource, indexKey); delErr != nil {
+			cleanupCtx := context.WithoutCancel(ctx)
+			if delErr := retryRemoteIndexStore(cleanupCtx, snapshotStoreOpDeleteIndex, logger, func() error {
+				return store.DeleteIndex(cleanupCtx, nsResource, indexKey)
+			}); delErr != nil {
 				logger.Warn("failed to clean up partial upload", "key", indexKey.String(), "err", delErr)
 			}
 		}
@@ -438,7 +518,7 @@ func UploadIndexSnapshot(ctx context.Context, store RemoteIndexStore, nsResource
 	// Stream each file via WriteSnapshotFile.
 	for _, rel := range relPaths {
 		relSlash := filepath.ToSlash(rel)
-		if err := uploadSnapshotFileFromDisk(ctx, store, nsResource, indexKey, relSlash, filepath.Join(absLocalDir, rel)); err != nil {
+		if err := uploadSnapshotFileFromDisk(ctx, store, nsResource, indexKey, relSlash, filepath.Join(absLocalDir, rel), logger); err != nil {
 			return ulid.ULID{}, fmt.Errorf("uploading %s: %w", rel, err)
 		}
 	}
@@ -448,20 +528,24 @@ func UploadIndexSnapshot(ctx context.Context, store RemoteIndexStore, nsResource
 	if err != nil {
 		return ulid.ULID{}, fmt.Errorf("marshaling snapshot manifest: %w", err)
 	}
-	if err := store.WriteSnapshotFile(ctx, nsResource, indexKey, snapshotManifestFile, bytes.NewReader(metaBytes)); err != nil {
+	if err := retryRemoteIndexStore(ctx, snapshotStoreOpUploadManifest, logger, func() error {
+		return store.WriteSnapshotFile(ctx, nsResource, indexKey, snapshotManifestFile, bytes.NewReader(metaBytes))
+	}); err != nil {
 		return ulid.ULID{}, fmt.Errorf("uploading snapshot manifest: %w", err)
 	}
 
 	return indexKey, nil
 }
 
-func uploadSnapshotFileFromDisk(ctx context.Context, store RemoteIndexStore, ns resource.NamespacedResource, indexKey ulid.ULID, relSlash, localPath string) error {
-	f, err := os.Open(localPath) //nolint:gosec // path is under the server-controlled bleve index directory
-	if err != nil {
-		return err
-	}
-	defer func() { _ = f.Close() }()
-	return store.WriteSnapshotFile(ctx, ns, indexKey, relSlash, f)
+func uploadSnapshotFileFromDisk(ctx context.Context, store RemoteIndexStore, ns resource.NamespacedResource, indexKey ulid.ULID, relSlash, localPath string, logger log.Logger) error {
+	return retryRemoteIndexStore(ctx, snapshotStoreOpUploadFile, logger, func() error {
+		f, err := os.Open(localPath) //nolint:gosec // path is under the server-controlled bleve index directory
+		if err != nil {
+			return err
+		}
+		defer func() { _ = f.Close() }()
+		return store.WriteSnapshotFile(ctx, ns, indexKey, relSlash, f)
+	})
 }
 
 // DownloadIndexSnapshot downloads an existing snapshot to destDir, which must not
@@ -531,19 +615,21 @@ func DownloadIndexSnapshot(ctx context.Context, store RemoteIndexStore, nsResour
 // size or a bucket object that's grown out of band fails fast before we
 // transfer unbounded data.
 func downloadSnapshotFileToDisk(ctx context.Context, store RemoteIndexStore, ns resource.NamespacedResource, indexKey ulid.ULID, relPath, localPath string, expectedSize int64) error {
-	f, err := os.Create(localPath) //nolint:gosec // path is under a Grafana-controlled staging directory
-	if err != nil {
-		return err
-	}
-	lw := &resource.LimitedWriter{W: f, N: expectedSize + 1}
-	if err := store.ReadSnapshotFile(ctx, ns, indexKey, relPath, lw); err != nil {
-		_ = f.Close()
-		if errors.Is(err, resource.ErrWriteLimitExceeded) {
-			return fmt.Errorf("remote object exceeds expected size %d: %w", expectedSize, err)
+	return retryRemoteIndexStore(ctx, snapshotStoreOpDownloadFile, nil, func() error {
+		f, err := os.Create(localPath) //nolint:gosec // path is under a Grafana-controlled staging directory
+		if err != nil {
+			return err
 		}
-		return err
-	}
-	return f.Close()
+		lw := &resource.LimitedWriter{W: f, N: expectedSize + 1}
+		if err := store.ReadSnapshotFile(ctx, ns, indexKey, relPath, lw); err != nil {
+			_ = f.Close()
+			if errors.Is(err, resource.ErrWriteLimitExceeded) {
+				return fmt.Errorf("remote object exceeds expected size %d: %w", expectedSize, err)
+			}
+			return err
+		}
+		return f.Close()
+	})
 }
 
 // ReadIndexSnapshotManifest reads and validates the snapshot manifest for a single index.
@@ -551,19 +637,26 @@ func downloadSnapshotFileToDisk(ctx context.Context, store RemoteIndexStore, ns 
 // wrapping ErrInvalidManifest if the manifest is structurally invalid
 // (oversized, unparseable, empty file list, or non-canonical paths).
 func ReadIndexSnapshotManifest(ctx context.Context, store RemoteIndexStore, nsResource resource.NamespacedResource, indexKey ulid.ULID) (*IndexMeta, error) {
-	var buf bytes.Buffer
-	lw := &resource.LimitedWriter{W: &buf, N: maxSnapshotManifestSize}
-	if err := store.ReadSnapshotFile(ctx, nsResource, indexKey, snapshotManifestFile, lw); err != nil {
-		if errors.Is(err, ErrSnapshotNotFound) {
-			return nil, err
+	var manifest []byte
+	if err := retryRemoteIndexStore(ctx, snapshotStoreOpReadManifest, nil, func() error {
+		var buf bytes.Buffer
+		lw := &resource.LimitedWriter{W: &buf, N: maxSnapshotManifestSize}
+		if err := store.ReadSnapshotFile(ctx, nsResource, indexKey, snapshotManifestFile, lw); err != nil {
+			if errors.Is(err, ErrSnapshotNotFound) {
+				return err
+			}
+			if errors.Is(err, resource.ErrWriteLimitExceeded) {
+				return fmt.Errorf("%w: oversized snapshot manifest: %v", ErrInvalidManifest, err)
+			}
+			return fmt.Errorf("reading snapshot manifest: %w", err)
 		}
-		if errors.Is(err, resource.ErrWriteLimitExceeded) {
-			return nil, fmt.Errorf("%w: oversized snapshot manifest: %v", ErrInvalidManifest, err)
-		}
-		return nil, fmt.Errorf("reading snapshot manifest: %w", err)
+		manifest = append(manifest[:0], buf.Bytes()...)
+		return nil
+	}); err != nil {
+		return nil, err
 	}
 	var meta IndexMeta
-	if err := json.Unmarshal(buf.Bytes(), &meta); err != nil {
+	if err := json.Unmarshal(manifest, &meta); err != nil {
 		return nil, fmt.Errorf("%w: parsing snapshot manifest: %v", ErrInvalidManifest, err)
 	}
 	if err := ValidateIndexSnapshotManifest(&meta); err != nil {
@@ -602,7 +695,9 @@ func ValidateIndexSnapshotManifest(meta *IndexMeta) error {
 // (e.g. by a concurrent cleanup pass); callers acting on the returned
 // snapshots must handle ErrSnapshotNotFound from follow-up calls.
 func ListIndexSnapshots(ctx context.Context, store RemoteIndexStore, nsResource resource.NamespacedResource, logger log.Logger) (map[ulid.ULID]*IndexMeta, error) {
-	keys, err := store.ListIndexKeys(ctx, nsResource)
+	keys, err := retryRemoteIndexStoreValue(ctx, snapshotStoreOpListIndexKeys, logger, func() ([]ulid.ULID, error) {
+		return store.ListIndexKeys(ctx, nsResource)
+	})
 	if err != nil {
 		return nil, fmt.Errorf("listing index keys: %w", err)
 	}
@@ -639,7 +734,9 @@ func ListIndexSnapshots(ctx context.Context, store RemoteIndexStore, nsResource 
 // (store.LockNamespaceForCleanup) to avoid concurrent cleanup by different
 // instances.
 func CleanupIncompleteIndexSnapshots(ctx context.Context, store RemoteIndexStore, nsResource resource.NamespacedResource, olderThan time.Time, logger log.Logger) (int, error) {
-	keys, err := store.ListIndexKeys(ctx, nsResource)
+	keys, err := retryRemoteIndexStoreValue(ctx, snapshotStoreOpListIndexKeys, logger, func() ([]ulid.ULID, error) {
+		return store.ListIndexKeys(ctx, nsResource)
+	})
 	if err != nil {
 		return 0, fmt.Errorf("listing index keys: %w", err)
 	}
@@ -661,7 +758,9 @@ func CleanupIncompleteIndexSnapshots(ctx context.Context, store RemoteIndexStore
 			continue
 		}
 		logger.Info("cleaning up incomplete upload", "key", key.String())
-		if err := store.DeleteIndex(ctx, nsResource, key); err != nil {
+		if err := retryRemoteIndexStore(ctx, snapshotStoreOpDeleteIndex, logger, func() error {
+			return store.DeleteIndex(ctx, nsResource, key)
+		}); err != nil {
 			return cleaned, fmt.Errorf("deleting %s: %w", key, err)
 		}
 		cleaned++
