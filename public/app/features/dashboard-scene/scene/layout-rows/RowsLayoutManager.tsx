@@ -321,11 +321,32 @@ export class RowsLayoutManager
   }
 
   public moveRow(_rowKey: string, fromIndex: number, toIndex: number) {
-    const rows = [...this.state.rows];
-    const [removed] = rows.splice(fromIndex, 1);
-    rows.splice(toIndex, 0, removed);
-    this.setState({ rows });
-    this.publishEvent(new ObjectsReorderedOnCanvasEvent(this), true);
+    if (fromIndex === toIndex) {
+      return;
+    }
+
+    const rowsBefore = [...this.state.rows];
+    const movedRow = rowsBefore[fromIndex];
+    if (!movedRow) {
+      return;
+    }
+
+    const rowsAfter = [...rowsBefore];
+    const [removed] = rowsAfter.splice(fromIndex, 1);
+    rowsAfter.splice(toIndex, 0, removed);
+
+    dashboardEditActions.moveElement({
+      movedObject: movedRow,
+      source: this,
+      perform: () => {
+        this.setState({ rows: rowsAfter });
+        this.publishEvent(new ObjectsReorderedOnCanvasEvent(this), true);
+      },
+      undo: () => {
+        this.setState({ rows: rowsBefore });
+        this.publishEvent(new ObjectsReorderedOnCanvasEvent(this), true);
+      },
+    });
   }
 
   public forceSelectRow(rowKey: string) {

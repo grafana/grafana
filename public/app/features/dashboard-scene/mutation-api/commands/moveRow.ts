@@ -6,6 +6,7 @@
 
 import { type z } from 'zod';
 
+import { dashboardEditActions } from '../../edit-pane/shared';
 import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 
@@ -57,17 +58,41 @@ export const moveRowCommand: MutationCommand<MoveRowPayload> = {
         destParent = sourceParent;
       }
 
-      // Remove from source
-      const sourceRows = [...sourceParent.state.rows];
-      sourceRows.splice(sourceSegment.index, 1);
-      sourceParent.setState({ rows: sourceRows });
+      const sourceRowsBefore = [...sourceParent.state.rows];
+      const destRowsBefore = sourceParent === destParent ? sourceRowsBefore : [...destParent.state.rows];
 
-      // Insert into destination
-      const destRows = sourceParent === destParent ? sourceRows : [...destParent.state.rows];
+      const sourceRowsAfter = [...sourceRowsBefore];
+      sourceRowsAfter.splice(sourceSegment.index, 1);
+
+      const destRowsAfter = sourceParent === destParent ? sourceRowsAfter : [...destRowsBefore];
       const insertIndex =
-        toPosition !== undefined && toPosition >= 0 && toPosition <= destRows.length ? toPosition : destRows.length;
-      destRows.splice(insertIndex, 0, row);
-      destParent.setState({ rows: destRows });
+        toPosition !== undefined && toPosition >= 0 && toPosition <= destRowsAfter.length
+          ? toPosition
+          : destRowsAfter.length;
+      destRowsAfter.splice(insertIndex, 0, row);
+
+      const sameParent = sourceParent === destParent;
+
+      dashboardEditActions.moveElement({
+        movedObject: row,
+        source: sourceParent,
+        perform: () => {
+          if (sameParent) {
+            sourceParent.setState({ rows: destRowsAfter });
+          } else {
+            sourceParent.setState({ rows: sourceRowsAfter });
+            destParent.setState({ rows: destRowsAfter });
+          }
+        },
+        undo: () => {
+          if (sameParent) {
+            sourceParent.setState({ rows: sourceRowsBefore });
+          } else {
+            destParent.setState({ rows: destRowsBefore });
+            sourceParent.setState({ rows: sourceRowsBefore });
+          }
+        },
+      });
 
       const basePath = toParent ?? (path.substring(0, path.lastIndexOf('/rows/')) || '/');
       const newPath = basePath === '/' ? `/rows/${insertIndex}` : `${basePath}/rows/${insertIndex}`;

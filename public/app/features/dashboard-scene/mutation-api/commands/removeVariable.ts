@@ -6,6 +6,8 @@
 
 import { type z } from 'zod';
 
+import { dashboardEditActions } from '../../edit-pane/shared';
+
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
 import { replaceVariableSet } from './variableUtils';
@@ -40,8 +42,15 @@ export const removeVariableCommand: MutationCommand<RemoveVariablePayload> = {
 
       const previousState = variable.state;
 
-      const updatedVariables = variables.state.variables.filter((v) => v.state.name !== name);
-      replaceVariableSet(scene, updatedVariables);
+      const variablesBefore = [...variables.state.variables];
+      const variablesAfter = variablesBefore.filter((v) => v.state.name !== name);
+
+      dashboardEditActions.removeElement({
+        removedObject: variable,
+        source: variables,
+        perform: () => replaceVariableSet(scene, variablesAfter),
+        undo: () => replaceVariableSet(scene, variablesBefore),
+      });
 
       return {
         success: true,

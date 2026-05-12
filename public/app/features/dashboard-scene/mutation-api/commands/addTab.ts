@@ -9,6 +9,7 @@
 import { type z } from 'zod';
 
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
+import { dashboardEditActions } from '../../edit-pane/shared';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { TabItem } from '../../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
@@ -47,6 +48,7 @@ export const addTabCommand: MutationCommand<AddTabPayload> = {
 
       if (targetLayout instanceof TabsLayoutManager) {
         tabsManager = targetLayout;
+        const localTabsManager = tabsManager;
 
         const newTab = new TabItem({
           layout: DefaultGridLayoutManager.fromVizPanels([]),
@@ -57,16 +59,26 @@ export const addTabCommand: MutationCommand<AddTabPayload> = {
             : undefined,
         });
 
-        const currentTabs = [...tabsManager.state.tabs];
+        const tabsBefore = [...localTabsManager.state.tabs];
+        const slugBefore = localTabsManager.state.currentTabSlug;
+        const tabsAfter = [...tabsBefore];
         newTabIndex =
-          position !== undefined && position >= 0 && position <= currentTabs.length ? position : currentTabs.length;
-        currentTabs.splice(newTabIndex, 0, newTab);
-        tabsManager.setState({ tabs: currentTabs });
+          position !== undefined && position >= 0 && position <= tabsAfter.length ? position : tabsAfter.length;
+        tabsAfter.splice(newTabIndex, 0, newTab);
+
+        dashboardEditActions.addElement({
+          addedObject: newTab,
+          source: localTabsManager,
+          perform: () => localTabsManager.setState({ tabs: tabsAfter }),
+          undo: () => localTabsManager.setState({ tabs: tabsBefore, currentTabSlug: slugBefore }),
+        });
       } else {
         const layoutParent = targetLayout.parent;
         if (!layoutParent || !isLayoutParent(layoutParent)) {
           throw new Error('Cannot convert layout: parent is not a LayoutParent');
         }
+
+        const previousLayoutClone = targetLayout.clone({});
 
         // Nest the existing layout inside the requested tab as-is,
         // preserving its structure (rows, grid, etc.).
@@ -82,8 +94,14 @@ export const addTabCommand: MutationCommand<AddTabPayload> = {
 
         tabsManager = new TabsLayoutManager({ tabs: [newTab] });
         newTabIndex = 0;
+        const newTabsManager = tabsManager;
 
-        layoutParent.switchLayout(tabsManager);
+        dashboardEditActions.addElement({
+          addedObject: newTab,
+          source: scene,
+          perform: () => layoutParent.switchLayout(newTabsManager),
+          undo: () => layoutParent.switchLayout(previousLayoutClone),
+        });
         wasConverted = true;
       }
 

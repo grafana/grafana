@@ -6,7 +6,10 @@
 
 import { type z } from 'zod';
 
+import { t } from '@grafana/i18n';
+
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
+import { dashboardEditActions } from '../../edit-pane/shared';
 import { RowItem } from '../../scene/layout-rows/RowItem';
 
 import { resolveLayoutPath } from './layoutPathResolver';
@@ -46,6 +49,17 @@ export const updateRowCommand: MutationCommand<UpdateRowPayload> = {
         conditionalRendering: row.state.conditionalRendering?.serialize(),
       };
 
+      const stateBefore = {
+        title: row.state.title,
+        collapse: row.state.collapse,
+        hideHeader: row.state.hideHeader,
+        fillScreen: row.state.fillScreen,
+        repeatByVariable: row.state.repeatByVariable,
+        repeatedRows: row.state.repeatedRows,
+        $variables: row.state.$variables,
+        conditionalRendering: row.state.conditionalRendering,
+      };
+
       const updates: Record<string, unknown> = {};
       if (spec.title !== undefined) {
         updates.title = spec.title;
@@ -60,16 +74,38 @@ export const updateRowCommand: MutationCommand<UpdateRowPayload> = {
         updates.fillScreen = spec.fillScreen;
       }
 
-      row.setState(updates);
+      const newGroup =
+        spec.conditionalRendering !== undefined
+          ? ConditionalRenderingGroup.deserialize(spec.conditionalRendering)
+          : undefined;
 
-      if (spec.repeat !== undefined) {
-        row.onChangeRepeat(spec.repeat?.value || undefined);
-      }
-
-      if (spec.conditionalRendering !== undefined) {
-        const group = ConditionalRenderingGroup.deserialize(spec.conditionalRendering);
-        row.setState({ conditionalRendering: group });
-      }
+      dashboardEditActions.edit({
+        description: t('dashboard.mutation-api.update-row', 'Update row'),
+        source: row,
+        perform: () => {
+          if (Object.keys(updates).length > 0) {
+            row.setState(updates);
+          }
+          if (spec.repeat !== undefined) {
+            row.onChangeRepeat(spec.repeat?.value || undefined);
+          }
+          if (newGroup !== undefined) {
+            row.setState({ conditionalRendering: newGroup });
+          }
+        },
+        undo: () => {
+          row.setState({
+            title: stateBefore.title,
+            collapse: stateBefore.collapse,
+            hideHeader: stateBefore.hideHeader,
+            fillScreen: stateBefore.fillScreen,
+            repeatByVariable: stateBefore.repeatByVariable,
+            repeatedRows: stateBefore.repeatedRows,
+            $variables: stateBefore.$variables,
+            conditionalRendering: stateBefore.conditionalRendering,
+          });
+        },
+      });
 
       const currentSpec = {
         title: row.state.title,

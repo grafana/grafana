@@ -6,11 +6,12 @@
 
 import { type z } from 'zod';
 
+import { dashboardEditActions } from '../../edit-pane/shared';
 import { TabItem } from '../../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
 
 import { resolveLayoutPath, resolveParentPath } from './layoutPathResolver';
-import { movePanelsToLayout } from './movePanelsHelper';
+import { captureGridChildrenSnapshot, movePanelsToLayout, restoreGridChildrenSnapshot } from './movePanelsHelper';
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresNewDashboardLayouts, type MutationCommand } from './types';
 
@@ -47,18 +48,39 @@ export const removeTabCommand: MutationCommand<RemoveTabPayload> = {
         throw new Error(`Parent of "${path}" is not a TabsLayoutManager`);
       }
 
+      const tabsBefore = [...parent.state.tabs];
+      const slugBefore = parent.state.currentTabSlug;
+      const tabsAfter = [...tabsBefore];
+      tabsAfter.splice(segment.index, 1);
+
+      let targetSnapshot: ReturnType<typeof captureGridChildrenSnapshot> | undefined;
+      let panelsToMove: ReturnType<typeof resolved.item.state.layout.getVizPanels> = [];
       if (moveContentTo) {
-        const panels = resolved.item.state.layout.getVizPanels();
-        if (panels.length > 0) {
+        panelsToMove = resolved.item.state.layout.getVizPanels();
+        if (panelsToMove.length > 0) {
           const targetResolved = resolveLayoutPath(scene.state.body, moveContentTo);
-          movePanelsToLayout(panels, targetResolved.layoutManager);
+          targetSnapshot = captureGridChildrenSnapshot(targetResolved.layoutManager);
         }
       }
 
-      // Remove the tab
-      const currentTabs = [...parent.state.tabs];
-      currentTabs.splice(segment.index, 1);
-      parent.setState({ tabs: currentTabs });
+      const removedTab = resolved.item;
+      dashboardEditActions.removeElement({
+        removedObject: removedTab,
+        source: parent,
+        perform: () => {
+          if (panelsToMove.length > 0) {
+            const targetResolved = resolveLayoutPath(scene.state.body, moveContentTo!);
+            movePanelsToLayout(panelsToMove, targetResolved.layoutManager);
+          }
+          parent.setState({ tabs: tabsAfter });
+        },
+        undo: () => {
+          parent.setState({ tabs: tabsBefore, currentTabSlug: slugBefore });
+          if (targetSnapshot) {
+            restoreGridChildrenSnapshot(targetSnapshot);
+          }
+        },
+      });
 
       return {
         success: true,

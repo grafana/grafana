@@ -9,8 +9,10 @@
 
 import { type z } from 'zod';
 
+import { t } from '@grafana/i18n';
 import type { VizPanel } from '@grafana/scenes';
 
+import { dashboardEditActions } from '../../edit-pane/shared';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
@@ -50,7 +52,18 @@ function applyGridPosition(
   }
 
   if (Object.keys(updates).length > 0) {
-    gridItem.setState(updates);
+    const positionBefore = {
+      x: gridItem.state.x,
+      y: gridItem.state.y,
+      width: gridItem.state.width,
+      height: gridItem.state.height,
+    };
+    dashboardEditActions.edit({
+      description: t('dashboard.mutation-api.set-panel-position', 'Set panel position'),
+      source: gridItem,
+      perform: () => gridItem.setState(updates),
+      undo: () => gridItem.setState(positionBefore),
+    });
   }
 }
 

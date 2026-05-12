@@ -8,7 +8,10 @@
 
 import { type z } from 'zod';
 
+import { t } from '@grafana/i18n';
+
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
+import { dashboardEditActions } from '../../edit-pane/shared';
 import { AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
@@ -90,7 +93,18 @@ export const addPanelCommand: MutationCommand<AddPanelPayload> = {
             updates.height = spec.height;
           }
           if (Object.keys(updates).length > 0) {
-            gridItem.setState(updates);
+            const positionBefore = {
+              x: gridItem.state.x,
+              y: gridItem.state.y,
+              width: gridItem.state.width,
+              height: gridItem.state.height,
+            };
+            dashboardEditActions.edit({
+              description: t('dashboard.mutation-api.set-panel-position', 'Set panel position'),
+              source: gridItem,
+              perform: () => gridItem.setState(updates),
+              undo: () => gridItem.setState(positionBefore),
+            });
           }
         }
       }
@@ -100,7 +114,16 @@ export const addPanelCommand: MutationCommand<AddPanelPayload> = {
           const gridItem = vizPanel.parent;
           if (gridItem instanceof AutoGridItem) {
             const group = ConditionalRenderingGroup.deserialize(layoutItem.spec.conditionalRendering);
-            gridItem.setState({ conditionalRendering: group });
+            const conditionalRenderingBefore = gridItem.state.conditionalRendering;
+            dashboardEditActions.edit({
+              description: t(
+                'dashboard.mutation-api.set-panel-conditional-rendering',
+                'Set panel conditional rendering'
+              ),
+              source: gridItem,
+              perform: () => gridItem.setState({ conditionalRendering: group }),
+              undo: () => gridItem.setState({ conditionalRendering: conditionalRenderingBefore }),
+            });
           }
         } else {
           warnings.push('conditionalRendering ignored: show/hide rules are only supported with Auto grid layout.');

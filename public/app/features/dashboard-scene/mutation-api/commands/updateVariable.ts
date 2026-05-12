@@ -6,9 +6,11 @@
 
 import { type z } from 'zod';
 
+import { t } from '@grafana/i18n';
 import { sceneGraph } from '@grafana/scenes';
 import type { VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
+import { dashboardEditActions } from '../../edit-pane/shared';
 import { createSceneVariableFromVariableModel } from '../../serialization/transformSaveModelSchemaV2ToScene';
 
 import { payloads } from './schemas';
@@ -35,20 +37,29 @@ export const updateVariableCommand: MutationCommand<UpdateVariablePayload> = {
       const { name, variable: variableKind } = payload;
 
       const varSet = sceneGraph.getVariables(scene);
-      const currentVariables = [...varSet.state.variables];
+      const variablesBefore = [...varSet.state.variables];
 
-      const existingIndex = currentVariables.findIndex((v) => v.state.name === name);
+      const existingIndex = variablesBefore.findIndex((v) => v.state.name === name);
       if (existingIndex === -1) {
         throw new Error(`Variable '${name}' not found`);
       }
 
-      const previousState = currentVariables[existingIndex].state;
+      const oldVariable = variablesBefore[existingIndex];
+      const previousState = oldVariable.state;
 
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Zod output is structurally compatible with VariableKind
       const newSceneVariable = createSceneVariableFromVariableModel(variableKind as VariableKind);
-      currentVariables[existingIndex] = newSceneVariable;
+      const variablesAfter = [...variablesBefore];
+      variablesAfter[existingIndex] = newSceneVariable;
 
-      replaceVariableSet(scene, currentVariables);
+      dashboardEditActions.edit({
+        description: t('dashboard.mutation-api.update-variable', 'Update variable'),
+        source: varSet,
+        addedObject: newSceneVariable,
+        removedObject: oldVariable,
+        perform: () => replaceVariableSet(scene, variablesAfter),
+        undo: () => replaceVariableSet(scene, variablesBefore),
+      });
 
       return {
         success: true,

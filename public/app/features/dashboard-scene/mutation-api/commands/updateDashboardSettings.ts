@@ -1,6 +1,9 @@
 import { type z } from 'zod';
 
+import { t } from '@grafana/i18n';
 import { sceneGraph } from '@grafana/scenes';
+
+import { dashboardEditActions } from '../../edit-pane/shared';
 
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
@@ -67,9 +70,12 @@ export const updateDashboardSettingsCommand: MutationCommand<UpdateDashboardSett
         sceneUpdates.editable = payload.editable;
       }
 
-      if (Object.keys(sceneUpdates).length > 0) {
-        scene.setState(sceneUpdates);
-      }
+      const sceneBefore = {
+        title: scene.state.title,
+        description: scene.state.description,
+        tags: scene.state.tags,
+        editable: scene.state.editable,
+      };
 
       const timeRange = sceneGraph.getTimeRange(scene);
       const timeRangeUpdates: Record<string, unknown> = {};
@@ -81,18 +87,50 @@ export const updateDashboardSettingsCommand: MutationCommand<UpdateDashboardSett
         timeRangeUpdates.timeZone = payload.timezone;
       }
 
-      if (Object.keys(timeRangeUpdates).length > 0) {
-        timeRange.setState(timeRangeUpdates);
+      const timeRangeBefore = {
+        from: timeRange.state.from,
+        to: timeRange.state.to,
+        timeZone: timeRange.state.timeZone,
+      };
+
+      const refreshPicker = scene.state.controls?.state.refreshPicker;
+      const refreshBefore = refreshPicker?.state.refresh;
+
+      if (payload.refresh !== undefined && !refreshPicker) {
+        warnings.push('refresh interval could not be set: refresh picker not found in scene controls');
       }
 
-      if (payload.refresh !== undefined) {
-        const refreshPicker = scene.state.controls?.state.refreshPicker;
-        if (refreshPicker) {
-          refreshPicker.setState({ refresh: payload.refresh });
-        } else {
-          warnings.push('refresh interval could not be set: refresh picker not found in scene controls');
-        }
-      }
+      dashboardEditActions.edit({
+        description: t('dashboard.mutation-api.update-dashboard-settings', 'Update dashboard settings'),
+        source: scene,
+        perform: () => {
+          if (Object.keys(sceneUpdates).length > 0) {
+            scene.setState(sceneUpdates);
+          }
+          if (Object.keys(timeRangeUpdates).length > 0) {
+            timeRange.setState(timeRangeUpdates);
+          }
+          if (payload.refresh !== undefined && refreshPicker) {
+            refreshPicker.setState({ refresh: payload.refresh });
+          }
+        },
+        undo: () => {
+          scene.setState({
+            title: sceneBefore.title,
+            description: sceneBefore.description,
+            tags: sceneBefore.tags,
+            editable: sceneBefore.editable,
+          });
+          timeRange.setState({
+            from: timeRangeBefore.from,
+            to: timeRangeBefore.to,
+            timeZone: timeRangeBefore.timeZone,
+          });
+          if (refreshPicker && refreshBefore !== undefined) {
+            refreshPicker.setState({ refresh: refreshBefore });
+          }
+        },
+      });
 
       const newValue = readCurrentSettings(scene);
 

@@ -9,6 +9,7 @@ import { type z } from 'zod';
 import { sceneGraph } from '@grafana/scenes';
 import type { VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
+import { dashboardEditActions } from '../../edit-pane/shared';
 import { createSceneVariableFromVariableModel } from '../../serialization/transformSaveModelSchemaV2ToScene';
 
 import { payloads } from './schemas';
@@ -47,15 +48,21 @@ export const addVariableCommand: MutationCommand<AddVariablePayload> = {
       const sceneVariable = createSceneVariableFromVariableModel(variableKind as VariableKind);
 
       const varSet = sceneGraph.getVariables(scene);
-      const currentVariables = [...varSet.state.variables];
+      const variablesBefore = [...varSet.state.variables];
+      const variablesAfter = [...variablesBefore];
 
-      if (position !== undefined && position >= 0 && position < currentVariables.length) {
-        currentVariables.splice(position, 0, sceneVariable);
+      if (position !== undefined && position >= 0 && position < variablesAfter.length) {
+        variablesAfter.splice(position, 0, sceneVariable);
       } else {
-        currentVariables.push(sceneVariable);
+        variablesAfter.push(sceneVariable);
       }
 
-      replaceVariableSet(scene, currentVariables);
+      dashboardEditActions.addElement({
+        addedObject: sceneVariable,
+        source: varSet,
+        perform: () => replaceVariableSet(scene, variablesAfter),
+        undo: () => replaceVariableSet(scene, variablesBefore),
+      });
 
       return {
         success: true,
