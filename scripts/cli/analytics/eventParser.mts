@@ -13,6 +13,7 @@ import {
 
 import type { EventData, EventNamespace, EventPropertySchema, JSDocMetadata } from './types.mts';
 
+import { extractSilentFromOptions } from './findAllEvents.mts';
 import { getMetadataFromJSDocs, getJsDocsFromNode, resolveType } from './typeResolution.mts';
 import { resolveOwner } from './codeowners.mts';
 
@@ -63,10 +64,15 @@ const parseEventFromCall = (
     return null;
   }
 
-  const [arg, ...restArgs] = callExpr.getArguments();
+  const [arg, eventOptionsArg, ...restArgs] = callExpr.getArguments();
   if (!arg || !Node.isStringLiteral(arg) || restArgs.length > 0) {
-    throw new Error(`Expected ${fnName} to be called with only 1 string literal argument`);
+    throw new Error(`Expected ${fnName} to be called with a string literal name and an optional options object`);
   }
+
+  // Per-event silent (`factory(name, { silent: true })`) overrides the
+  // factory-level setting. Falls back to factoryOptions.silent if not present.
+  const eventSilent = eventOptionsArg ? extractSilentFromOptions(eventOptionsArg) : undefined;
+  const silent = eventSilent ?? eventNamespace.silent;
 
   const metadata = parseEventMetadata(callExpr);
   if (!metadata.description) {
@@ -102,6 +108,7 @@ const parseEventFromCall = (
     description: metadata.description,
     owner: metadata.owner,
     properties: mergedProperties,
+    silent,
   };
 };
 

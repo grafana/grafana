@@ -212,7 +212,7 @@ func (s *Service) getAvailableNonRootFolders(ctx context.Context, q *folder.GetC
 }
 
 func (s *Service) deduplicateAvailableFolders(ctx context.Context, folders []*folder.Folder, rootFolders []*folder.FolderReference) []*folder.FolderReference {
-	foldersRef := make([]*folder.FolderReference, len(folders))
+	foldersRef := make([]*folder.FolderReference, len(folders), len(folders)+len(rootFolders))
 	for i, f := range folders {
 		foldersRef[i] = f.ToFolderReference()
 	}

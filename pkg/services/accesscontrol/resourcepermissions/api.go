@@ -376,6 +376,9 @@ func (a *api) setUserPermission(c *contextmodel.ReqContext) response.Response {
 		err := a.setUserPermissionInTeamMembers(c, c.Namespace, resourceID, userID, cmd.Permission)
 		if err != nil {
 			span.RecordError(err)
+			if errors.Is(err, ErrExternalTeamMember) {
+				return response.Err(err)
+			}
 			if errors.Is(err, ErrRestConfigNotAvailable) {
 				a.logger.Debug("k8s API not available for team permissions via team members, continuing with legacy", "error", err, "resourceID", resourceID)
 			} else {

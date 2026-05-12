@@ -172,6 +172,112 @@ var appManifestData = app.ManifestData{
 					Scope:      "Namespaced",
 					Conversion: false,
 					Routes: map[string]spec3.PathProps{
+						"/addmember": {
+							Post: &spec3.Operation{
+								OperationProps: spec3.OperationProps{
+
+									OperationId: "createTeamMember",
+
+									RequestBody: &spec3.RequestBody{
+										RequestBodyProps: spec3.RequestBodyProps{
+
+											Required: true,
+											Content: map[string]*spec3.MediaType{
+												"application/json": {
+													MediaTypeProps: spec3.MediaTypeProps{
+														Schema: &spec.Schema{
+															SchemaProps: spec.SchemaProps{
+																Type: []string{"object"},
+																Properties: map[string]spec.Schema{
+																	"external": {
+																		SchemaProps: spec.SchemaProps{
+																			Type:        []string{"boolean"},
+																			Description: "external marks the membership origin: true = added by team sync, false = added manually. Honored on a fresh add only; on re-add the existing member's origin is preserved and this field is ignored.",
+																		},
+																	},
+																	"name": {
+																		SchemaProps: spec.SchemaProps{
+																			Type: []string{"string"},
+																		},
+																	},
+																	"permission": {
+																		SchemaProps: spec.SchemaProps{
+																			Type: []string{"string"},
+																		},
+																	},
+																},
+																Required: []string{
+																	"name",
+																	"permission",
+																	"external",
+																},
+															}},
+													}},
+											},
+										}},
+									Responses: &spec3.Responses{
+										ResponsesProps: spec3.ResponsesProps{
+											Default: &spec3.Response{
+												ResponseProps: spec3.ResponseProps{
+													Description: "Default OK response",
+													Content: map[string]*spec3.MediaType{
+														"application/json": {
+															MediaTypeProps: spec3.MediaTypeProps{
+																Schema: &spec.Schema{
+																	SchemaProps: spec.SchemaProps{
+																		Type: []string{"object"},
+																		Properties: map[string]spec.Schema{
+																			"apiVersion": {
+																				SchemaProps: spec.SchemaProps{
+																					Type:        []string{"string"},
+																					Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+																				},
+																			},
+																			"external": {
+																				SchemaProps: spec.SchemaProps{
+																					Type:        []string{"boolean"},
+																					Description: "external reflects the stored origin of the membership after the operation. On a re-add this may differ from the value submitted in the request; clients that care about origin should diff request vs response.",
+																				},
+																			},
+																			"kind": {
+																				SchemaProps: spec.SchemaProps{
+																					Type:        []string{"string"},
+																					Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+																				},
+																			},
+																			"permission": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"string"},
+																				},
+																			},
+																			"team": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"string"},
+																				},
+																			},
+																			"user": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"string"},
+																				},
+																			},
+																		},
+																		Required: []string{
+																			"team",
+																			"user",
+																			"permission",
+																			"external",
+																			"apiVersion",
+																			"kind",
+																		},
+																	}},
+															}},
+													},
+												},
+											},
+										}},
+								},
+							},
+						},
 						"/groups": {
 							Get: &spec3.Operation{
 								OperationProps: spec3.OperationProps{
@@ -274,6 +380,86 @@ var appManifestData = app.ManifestData{
 																		},
 																		Required: []string{
 																			"items",
+																			"apiVersion",
+																			"kind",
+																		},
+																	}},
+															}},
+													},
+												},
+											},
+										}},
+								},
+							},
+						},
+						"/removemember": {
+							Post: &spec3.Operation{
+								OperationProps: spec3.OperationProps{
+
+									OperationId: "deleteTeamMember",
+
+									RequestBody: &spec3.RequestBody{
+										RequestBodyProps: spec3.RequestBodyProps{
+
+											Required: true,
+											Content: map[string]*spec3.MediaType{
+												"application/json": {
+													MediaTypeProps: spec3.MediaTypeProps{
+														Schema: &spec.Schema{
+															SchemaProps: spec.SchemaProps{
+																Type: []string{"object"},
+																Properties: map[string]spec.Schema{
+																	"name": {
+																		SchemaProps: spec.SchemaProps{
+																			Type: []string{"string"},
+																		},
+																	},
+																},
+																Required: []string{
+																	"name",
+																},
+															}},
+													}},
+											},
+										}},
+									Responses: &spec3.Responses{
+										ResponsesProps: spec3.ResponsesProps{
+											Default: &spec3.Response{
+												ResponseProps: spec3.ResponseProps{
+													Description: "Default OK response",
+													Content: map[string]*spec3.MediaType{
+														"application/json": {
+															MediaTypeProps: spec3.MediaTypeProps{
+																Schema: &spec.Schema{
+																	SchemaProps: spec.SchemaProps{
+																		Type: []string{"object"},
+																		Properties: map[string]spec.Schema{
+																			"apiVersion": {
+																				SchemaProps: spec.SchemaProps{
+																					Type:        []string{"string"},
+																					Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+																				},
+																			},
+																			"kind": {
+																				SchemaProps: spec.SchemaProps{
+																					Type:        []string{"string"},
+																					Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+																				},
+																			},
+																			"team": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"string"},
+																				},
+																			},
+																			"user": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"string"},
+																				},
+																			},
+																		},
+																		Required: []string{
+																			"team",
+																			"user",
 																			"apiVersion",
 																			"kind",
 																		},
@@ -1019,9 +1205,13 @@ func ManifestGoTypeAssociator(kind, version string) (goType resource.Kind, exist
 var customRouteToGoResponseType = map[string]any{
 	"v0alpha1|User|teams|GET": v0alpha1.GetUserTeamsResponse{},
 
+	"v0alpha1|Team|addmember|POST": v0alpha1.CreateTeamMemberResponse{},
+
 	"v0alpha1|Team|groups|GET": v0alpha1.GetTeamGroupsResponse{},
 
 	"v0alpha1|Team|members|GET": v0alpha1.GetTeamMembersResponse{},
+
+	"v0alpha1|Team|removemember|POST": v0alpha1.DeleteTeamMemberResponse{},
 
 	"v0alpha1|ServiceAccount|tokens|GET":  v0alpha1.ListServiceAccountTokensResponse{},
 	"v0alpha1|ServiceAccount|tokens|POST": v0alpha1.CreateServiceAccountTokenResponse{},
@@ -1059,6 +1249,10 @@ func ManifestCustomRouteQueryAssociator(kind, version, path, verb string) (goTyp
 }
 
 var customRouteToGoRequestBodyType = map[string]any{
+
+	"v0alpha1|Team|addmember|POST": &v0alpha1.CreateTeamMemberRequestBody{},
+
+	"v0alpha1|Team|removemember|POST": &v0alpha1.DeleteTeamMemberRequestBody{},
 
 	"v0alpha1|ServiceAccount|tokens|POST": &v0alpha1.CreateServiceAccountTokenRequestBody{},
 }

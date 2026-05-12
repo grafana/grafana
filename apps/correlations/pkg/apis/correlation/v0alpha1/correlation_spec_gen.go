@@ -79,12 +79,13 @@ func (CorrelationTransformationSpec) OpenAPIModelName() string {
 
 // +k8s:openapi-gen=true
 type CorrelationSpec struct {
-	Type        CorrelationCorrelationType `json:"type"`
-	Source      CorrelationDataSourceRef   `json:"source"`
-	Target      *CorrelationDataSourceRef  `json:"target,omitempty"`
-	Description *string                    `json:"description,omitempty"`
-	Label       string                     `json:"label"`
-	Config      CorrelationConfigSpec      `json:"config"`
+	Type   CorrelationCorrelationType `json:"type"`
+	Source CorrelationDataSourceRef   `json:"source"`
+	// null is for PATCH/edit when we want to clear the value
+	Target      *CorrelationDataSourceRef `json:"target,omitempty"`
+	Description *string                   `json:"description,omitempty"`
+	Label       string                    `json:"label"`
+	Config      CorrelationConfigSpec     `json:"config"`
 }
 
 // NewCorrelationSpec creates a new CorrelationSpec object.

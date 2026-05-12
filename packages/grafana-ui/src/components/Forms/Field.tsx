@@ -94,7 +94,7 @@ export const Field = React.forwardRef<HTMLDivElement, FieldProps>(
           </legend>
         );
       } else {
-        labelElement = <legend>{label}</legend>;
+        labelElement = <legend className={labelStyles.label}>{label}</legend>;
       }
     } else if (typeof label === 'string') {
       labelElement = (

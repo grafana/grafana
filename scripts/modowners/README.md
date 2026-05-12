@@ -41,7 +41,7 @@ Example output:
 @grafana/observability-metrics 4
 @grafana/observability-traces-and-profiling 6
 @grafana/alerting-squad-backend 22
-@grafana/plugins-platform-backend 7
+@grafana/grafana-catalog 7
 @grafana/grafana-operator-experience-squad 3
 @grafana/dataviz-squad 1
 @grafana/grafana-backend-group 75

@@ -1332,7 +1332,7 @@ func TestWatchEventMetricsWithSinceRV(t *testing.T) {
 
 	// Wait until the broadcaster has received both events, so the cache is
 	// populated by the time we subscribe.
-	requireMetricEventually(t, metrics.Broadcaster.EventsReceivedTotal, 2)
+	requireMetricEventually(t, metrics.Broadcaster.EventsReceivedTotal.WithLabelValues(watchTestResource), 2)
 
 	// Start a watch with a tiny Since RV.
 	mock := newMockWatchServer(ctx)
@@ -1347,7 +1347,7 @@ func TestWatchEventMetricsWithSinceRV(t *testing.T) {
 	})
 
 	// Wait for the subscription to register before producing the third event.
-	requireMetricEventually(t, metrics.Broadcaster.Subscribers, 1)
+	requireMetricEventually(t, metrics.Broadcaster.Subscribers.WithLabelValues(watchTestResource), 1)
 
 	// Create a third resource after the watch has subscribed. This is the only
 	// event for which WatchEventLatency should record an observation.

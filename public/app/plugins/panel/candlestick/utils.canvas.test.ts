@@ -116,7 +116,7 @@ describe('drawMarkers', () => {
           async (_, setup) => {
             const { testEvents, uPlotEvents } = await getPlot(dataOverrides ?? defaultData, seriesOverrides);
             expect(() => getDraw(drawOverrides)(testEvents)).not.toThrow();
-            expect(scrubOutput(setup(testEvents))).toMatchUPlotSnapshot(uPlotEvents, { width, height });
+            expect(scrubOutput(setup(testEvents))).toMatchCanvasSnapshot(uPlotEvents, { width, height });
           }
         );
       }
@@ -142,7 +142,7 @@ describe('drawMarkers', () => {
       async (_, setup) => {
         const { testEvents, uPlotEvents } = await getPlot(defaultData, volumeSeries);
         expect(() => getDraw(volumeOpts)(testEvents)).not.toThrow();
-        expect(scrubOutput(setup(testEvents))).toMatchUPlotSnapshot(uPlotEvents, { width, height });
+        expect(scrubOutput(setup(testEvents))).toMatchCanvasSnapshot(uPlotEvents, { width, height });
       }
     );
   });

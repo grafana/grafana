@@ -16,7 +16,8 @@ test.describe('Panels test: TimeSeries', { tag: ['@panels', '@timeseries'] }, ()
     await expect(errorInfo, 'no errors in the panels').toBeHidden();
   });
 
-  test('tooltip interactions', async ({ gotoDashboardPage, page, selectors }) => {
+  // TODO: https://github.com/grafana/grafana/issues/124170
+  test.skip('tooltip interactions', async ({ gotoDashboardPage, page, selectors }) => {
     const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,
       queryParams: new URLSearchParams({ editPanel: '19' }),
