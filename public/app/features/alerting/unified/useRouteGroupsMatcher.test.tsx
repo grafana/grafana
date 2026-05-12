@@ -1,5 +1,8 @@
 import { renderHook } from '@testing-library/react';
 
+import type { AlertmanagerGroup, RouteWithID } from '../../../plugins/datasource/alertmanager/types';
+import type { Labels } from '../../../types/unified-alerting-dto';
+
 import { useRouteGroupsMatcher } from './useRouteGroupsMatcher';
 
 describe('useRouteGroupsMatcher', () => {
@@ -15,8 +18,8 @@ describe('useRouteGroupsMatcher', () => {
   it('should successfully call getRouteGroupsMap with valid data', async function () {
     const { result } = renderHook(() => useRouteGroupsMatcher());
 
-    const rootRoute = { id: '1', receiver: 'default' };
-    const groups = [];
+    const rootRoute: RouteWithID = { id: '1', receiver: 'default' };
+    const groups: AlertmanagerGroup[] = [];
 
     const routeGroupsMap = await result.current.getRouteGroupsMap(rootRoute, groups);
 
@@ -27,8 +30,8 @@ describe('useRouteGroupsMatcher', () => {
   it('should successfully call matchInstancesToRoutes with valid data', async function () {
     const { result } = renderHook(() => useRouteGroupsMatcher());
 
-    const rootRoute = { id: '1', receiver: 'default' };
-    const instances = [{ alertname: 'test' }];
+    const rootRoute: RouteWithID = { id: '1', receiver: 'default' };
+    const instances: Labels[] = [{ alertname: 'test' }];
 
     const matchResults = await result.current.matchInstancesToRoutes(rootRoute, instances);
 
