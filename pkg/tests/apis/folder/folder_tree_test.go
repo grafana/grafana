@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/search/model"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -39,13 +40,11 @@ func TestIntegrationFolderTreeZanzana(t *testing.T) {
 		DisableAuthZClientCache:             true,
 		DisableZanzanaServerCheckQueryCache: true,
 		APIServerStorageType:                "unified",
-		EnableFeatureToggles: []string{
-			"zanzana",
-			"zanzanaNoLegacyClient",
-			"kubernetesAuthzZanzanaSync",
-		},
-		ZanzanaReconciliationInterval: 100 * time.Millisecond,
-		DisableZanzanaCache:           true,
+		RBACSingleOrganization:              true,
+		ZanzanaReconcilerMode:               setting.ZanzanaReconcilerModeMT,
+		EnableFeatureToggles:                apis.ZanzanaMTReconcilerFeatureToggles,
+		ZanzanaReconciliationInterval:       100 * time.Millisecond,
+		DisableZanzanaCache:                 true,
 	})
 }
 

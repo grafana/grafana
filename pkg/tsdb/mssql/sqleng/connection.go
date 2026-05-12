@@ -10,12 +10,12 @@ import (
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
+	mssql "github.com/microsoft/go-mssqldb"
+	"github.com/microsoft/go-mssqldb/azuread"
+
 	"github.com/grafana/grafana/pkg/tsdb/mssql/azure"
 	"github.com/grafana/grafana/pkg/tsdb/mssql/kerberos"
 	"github.com/grafana/grafana/pkg/tsdb/mssql/utils"
-	"github.com/grafana/grafana/pkg/util"
-	mssql "github.com/microsoft/go-mssqldb"
-	"github.com/microsoft/go-mssqldb/azuread"
 )
 
 // odbcNeedsEscape returns true if the value contains semicolon or closing brace,
@@ -92,18 +92,18 @@ const (
 
 func generateConnectionString(dsInfo DataSourceInfo, azureCredentials azcredentials.AzureCredentials, kerberosAuth kerberos.KerberosAuth, logger log.Logger, azureSettings *azsettings.AzureSettings, userAssertion string) (string, error) {
 	const dfltPort = "0"
-	var addr util.NetworkAddress
+	var addr NetworkAddress
 	if dsInfo.URL != "" {
 		u, err := utils.ParseURL(dsInfo.URL, logger)
 		if err != nil {
 			return "", err
 		}
-		addr, err = util.SplitHostPortDefault(u.Host, "localhost", dfltPort)
+		addr, err = SplitHostPortDefault(u.Host, "localhost", dfltPort)
 		if err != nil {
 			return "", err
 		}
 	} else {
-		addr = util.NetworkAddress{
+		addr = NetworkAddress{
 			Host: "localhost",
 			Port: dfltPort,
 		}
@@ -144,7 +144,7 @@ func generateConnectionString(dsInfo DataSourceInfo, azureCredentials azcredenti
 			pass = escapeOdbcValue(pass)
 		}
 
-		connStr = kerberos.Krb5ParseAuthCredentials(addr.Host, addr.Port, dsInfo.Database, user, pass, kerberosAuth)
+		connStr = kerberos.Krb5ParseAuthCredentials(addr.Host, addr.Port, dsInfo.Database, user, pass, kerberosAuth, logger)
 		if useOdbc {
 			connStr = "odbc:" + strings.TrimPrefix(connStr, "odbc:")
 		}

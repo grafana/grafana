@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
-import * as React from 'react';
 
 import {
   type FieldConfigOptionsRegistry,
@@ -9,10 +8,10 @@ import {
   type VariableSuggestionsScope,
   type DynamicConfigValue,
   type ConfigOverrideRule,
-  type GrafanaTheme2,
   fieldMatchers,
   type FieldConfigSource,
   type DataFrame,
+  FieldType,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
@@ -24,6 +23,7 @@ import {
   buildScopeOptions,
   useStyles2,
   ValuePicker,
+  useFieldMatchersOptions,
 } from '@grafana/ui';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
@@ -37,7 +37,19 @@ if (config.featureToggles.nestedFramesFieldOverrides) {
   ALLOWED_SCOPES.push('nested');
 }
 
-// [FIXME] Is there something else we need to do in here?
+function getFramesForMatcherScope(data: DataFrame[], scope?: MatcherScope): DataFrame[] {
+  if (scope !== 'nested') {
+    return data;
+  }
+  for (const frame of data) {
+    for (const field of frame.fields) {
+      if (field.type === FieldType.nestedFrames && field.values.length > 0) {
+        return field.values[0];
+      }
+    }
+  }
+  return data;
+}
 
 export function getFieldOverrideCategories(
   fieldConfig: FieldConfigSource,
@@ -80,12 +92,6 @@ export function getFieldOverrideCategories(
     });
   };
 
-  const context = {
-    data,
-    getSuggestions: (scope?: VariableSuggestionsScope) => getDataLinksVariableSuggestions(data, scope),
-    isOverride: true,
-  };
-
   const uniqueMatcherScopes = getUniqueMatcherScopes(data);
 
   /**
@@ -93,6 +99,12 @@ export function getFieldOverrideCategories(
    */
   for (let idx = 0; idx < currentFieldConfig.overrides.length; idx++) {
     const override = currentFieldConfig.overrides[idx];
+    const overrideData = getFramesForMatcherScope(data, override.matcher.scope);
+    const context = {
+      data: overrideData,
+      getSuggestions: (scope?: VariableSuggestionsScope) => getDataLinksVariableSuggestions(overrideData, scope),
+      isOverride: true,
+    };
     const overrideName = t('dashboard.get-field-override-categories.override-name', 'Override {{overrideNum}}', {
       overrideNum: idx + 1,
     });
@@ -287,34 +299,35 @@ export function getFieldOverrideCategories(
     new OptionsPaneCategoryDescriptor({
       title: t('dashboard.get-field-override-categories.title.add-button', 'add button'),
       id: 'add button',
-      customRender: function renderAddButton() {
-        const options = fieldMatchersUI.selectOptions().options;
-        return (
-          <AddOverrideButtonContainer key="Add override">
-            <ValuePicker
-              icon="plus"
-              label={t('dashboard.get-field-override-categories.label-add-field-override', 'Add field override')}
-              variant="secondary"
-              menuPlacement="auto"
-              isFullWidth={true}
-              size="md"
-              options={options}
-              onChange={(value) => onOverrideAdd(value)}
-            />
-          </AddOverrideButtonContainer>
-        );
-      },
+      customRender: () => <AddButtonWrapper key="Add override" onOverrideAdd={onOverrideAdd} />,
     })
   );
 
   return categories;
 }
 
-function AddOverrideButtonContainer({ children }: { children: React.ReactNode }) {
-  const styles = useStyles2(getBorderTopStyles);
-  return <div className={styles}>{children}</div>;
-}
+function AddButtonWrapper({ onOverrideAdd }: { onOverrideAdd: (value: SelectableValue<string>) => void }) {
+  const options = useFieldMatchersOptions();
+  const styles = useStyles2((theme) =>
+    css({
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+      padding: `${theme.spacing(2)}`,
+      display: 'flex',
+    })
+  );
 
-function getBorderTopStyles(theme: GrafanaTheme2) {
-  return css({ borderTop: `1px solid ${theme.colors.border.weak}`, padding: `${theme.spacing(2)}`, display: 'flex' });
+  return (
+    <div className={styles}>
+      <ValuePicker
+        icon="plus"
+        label={t('dashboard.get-field-override-categories.label-add-field-override', 'Add field override')}
+        variant="secondary"
+        menuPlacement="auto"
+        isFullWidth={true}
+        size="md"
+        options={options}
+        onChange={(value) => onOverrideAdd(value)}
+      />
+    </div>
+  );
 }

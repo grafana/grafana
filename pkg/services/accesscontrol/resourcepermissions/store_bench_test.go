@@ -57,7 +57,7 @@ func benchmarkDSPermissions(b *testing.B, dsNum, usersNum int) {
 	// We don't want to measure DB initialization
 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		getDSPermissions(b, ac, dataSources)
 	}
 }

@@ -473,7 +473,7 @@ func (x *resourceTableColumn) Encode(v any) ([]byte, error) {
 		switch reflect.TypeOf(v).Kind() {
 		case reflect.Slice, reflect.Array:
 			s := reflect.ValueOf(v)
-			for i := 0; i < s.Len(); i++ {
+			for i := range s.Len() {
 				if i > 0 {
 					stream.WriteMore()
 				}

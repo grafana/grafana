@@ -40,8 +40,8 @@ jobs:
         STORYBOOK_THEME:
           - light
           - dark
-          - deuteranopia_protanopia_light
-          - deuteranopia_protanopia_dark
+          - deut_prot_light
+          - deut_prot_dark
           - tritanopia_light
           - tritanopia_dark
     name: "Run Storybook a11y tests (${{ matrix.STORYBOOK_THEME }} theme)"

@@ -35,7 +35,7 @@ func ProvideService(db db.DB, cfg *setting.Cfg, tracer tracing.Tracer, configPro
 		return nil, err
 	}
 
-	k8sService := teamk8s.NewTeamK8sService(log.New("team.k8s"), cfg, configProvider)
+	k8sService := teamk8s.NewTeamK8sService(log.New("team.k8s"), cfg, configProvider, tracer)
 
 	return &Service{
 		legacyService:     legacyService,
@@ -85,66 +85,62 @@ func (s *Service) GetTeamByID(ctx context.Context, query *team.GetTeamByIDQuery)
 }
 
 func (s *Service) GetTeamsByUser(ctx context.Context, query *team.GetTeamsByUserQuery) ([]*team.TeamDTO, error) {
-	// TODO enable Kubernetes team service for GetTeamsByUser once the implementation is complete.
-	// if s.isKubernetesTeamServiceEnabled(ctx) {
-	// 	return s.k8sService.GetTeamsByUser(ctx, query)
-	// }
+	if s.isUserTeamsK8sPathEnabled(ctx) {
+		return s.k8sService.GetTeamsByUser(ctx, query)
+	}
 
 	return s.legacyService.GetTeamsByUser(ctx, query)
 }
 
-func (s *Service) GetTeamIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserQuery) ([]int64, error) {
-	// TODO enable Kubernetes team service for GetTeamIDsByUser once the implementation is complete.
-	// if s.isKubernetesTeamServiceEnabled(ctx) {
-	// 	return s.k8sService.GetTeamIDsByUser(ctx, query)
-	// }
+func (s *Service) GetTeamIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserQuery) ([]int64, []string, error) {
+	if s.isUserTeamsK8sPathEnabled(ctx) {
+		// GetTeamIDsByUser is called during authentication (e.g. middleware that
+		// resolves team-based permissions) before a requester has been attached to
+		// the context. The k8s service requires a requester to build the dynamic
+		// client, so we must use the legacy SQL path for these pre-auth calls.
+		if _, err := identity.GetRequester(ctx); err == nil {
+			return s.k8sService.GetTeamIDsByUser(ctx, query)
+		}
+	}
 
 	return s.legacyService.GetTeamIDsByUser(ctx, query)
 }
 
 func (s *Service) IsTeamMember(ctx context.Context, orgId int64, teamId int64, userId int64) (bool, error) {
-	// TODO enable Kubernetes team service for IsTeamMember once the implementation is complete.
-	// if s.isKubernetesTeamServiceEnabled(ctx) {
-	// 	return s.k8sService.IsTeamMember(ctx, orgId, teamId, userId)
-	// }
+	if s.isKubernetesTeamServiceEnabled(ctx) {
+		return s.k8sService.IsTeamMember(ctx, orgId, teamId, userId)
+	}
 
 	return s.legacyService.IsTeamMember(ctx, orgId, teamId, userId)
 }
 
+// RemoveUsersMemberships is instance-wide cleanup; the k8s service is namespace-scoped so this always routes to legacy.
 func (s *Service) RemoveUsersMemberships(ctx context.Context, userID int64) error {
-	// TODO enable Kubernetes team service for RemoveUsersMemberships once the implementation is complete.
-	// if s.isKubernetesTeamServiceEnabled(ctx) {
-	// 	return s.k8sService.RemoveUsersMemberships(ctx, userID)
-	// }
-
 	return s.legacyService.RemoveUsersMemberships(ctx, userID)
 }
 
 func (s *Service) GetUserTeamMemberships(ctx context.Context, orgID, userID int64, external bool, bypassCache bool) ([]*team.TeamMemberDTO, error) {
-	// TODO enable Kubernetes team service for GetUserTeamMemberships once the implementation is complete.
-	// if s.isKubernetesTeamServiceEnabled(ctx) {
-	// 	return s.k8sService.GetUserTeamMemberships(ctx, orgID, userID, external, bypassCache)
-	// }
+	if s.isUserTeamsK8sPathEnabled(ctx) {
+		return s.k8sService.GetUserTeamMemberships(ctx, orgID, userID, external, bypassCache)
+	}
 
 	return s.legacyService.GetUserTeamMemberships(ctx, orgID, userID, external, bypassCache)
 }
 
 func (s *Service) GetTeamMembers(ctx context.Context, query *team.GetTeamMembersQuery) ([]*team.TeamMemberDTO, error) {
-	// TODO enable Kubernetes team service for GetTeamMembers once the implementation is complete.
-	// if s.isKubernetesTeamServiceEnabled(ctx) {
-	// 	return s.k8sService.GetTeamMembers(ctx, query)
-	// }
+	if s.isKubernetesTeamServiceEnabled(ctx) {
+		return s.k8sService.GetTeamMembers(ctx, query)
+	}
 
 	return s.legacyService.GetTeamMembers(ctx, query)
 }
 
 func (s *Service) RegisterDelete(query string) {
-	// TODO enable Kubernetes team service for RegisterDelete once the implementation is complete.
-	// if s.isKubernetesTeamServiceEnabled(context.Background()) {
-	// 	s.k8sService.RegisterDelete(query)
-	// 	return
-	// }
-
+	// Always register with legacy service since it manages SQL cleanup queries.
+	// The k8s service implementation is a no-op (k8s handles cascading deletes
+	// via its own mechanisms), so there is no need to gate on the feature flag.
+	// This is called at init time (Wire providers) where no request context
+	// exists, making feature flag evaluation with context.Background() unreliable.
 	s.legacyService.RegisterDelete(query)
 }
 
@@ -154,6 +150,18 @@ func (s *Service) isKubernetesTeamServiceEnabled(ctx context.Context) bool {
 	}
 
 	return s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesTeamsRedirect, false, openfeature.TransactionContext(ctx))
+}
+
+// isUserTeamsK8sPathEnabled gates the methods that read membership through
+// the /users/{uid}/teams subresource (GetTeamsByUser, GetTeamIDsByUser,
+// GetUserTeamMemberships). The subresource is gated on FlagKubernetesTeamBindings;
+// without it the apiserver returns 403 and these methods would fail. Both
+// flags must be on for the k8s path; otherwise we fall back to legacy.
+func (s *Service) isUserTeamsK8sPathEnabled(ctx context.Context) bool {
+	if !s.isKubernetesTeamServiceEnabled(ctx) {
+		return false
+	}
+	return s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesTeamBindings, false, openfeature.TransactionContext(ctx))
 }
 
 // shouldFallbackToLegacy determines whether to fallback to the legacy service for a given request.

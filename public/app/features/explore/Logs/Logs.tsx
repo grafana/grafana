@@ -913,6 +913,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
             <ExploreLogsTable
               eventBus={eventBus}
               data={panelData}
+              isLabelFilterActive={props.isFilterLabelActive}
               timeZone={timeZone}
               buildLinkToLogLine={onTablePermalinkClick}
               externalOptions={tableOptions}

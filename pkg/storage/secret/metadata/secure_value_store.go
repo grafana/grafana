@@ -529,12 +529,11 @@ func (s *secureValueMetadataStorage) SetExternalID(ctx context.Context, namespac
 	return nil
 }
 
-func (s *secureValueMetadataStorage) Delete(ctx context.Context, namespace xkube.Namespace, name string, version int64) (err error) {
+func (s *secureValueMetadataStorage) Delete(ctx context.Context, input []contracts.DeleteInput) (err error) {
 	start := s.clock.Now()
+	inputStr := fmt.Sprintf("%+v", input)
 	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.Delete", trace.WithAttributes(
-		attribute.String("name", name),
-		attribute.String("namespace", namespace.String()),
-		attribute.Int64("version", version),
+		attribute.String("input", inputStr),
 	))
 
 	defer span.End()
@@ -542,9 +541,7 @@ func (s *secureValueMetadataStorage) Delete(ctx context.Context, namespace xkube
 	defer func() {
 		success := err == nil
 		args := []any{
-			"namespace", namespace.String(),
-			"name", name,
-			"version", strconv.FormatInt(version, 10),
+			"input", inputStr,
 			"success", success,
 		}
 
@@ -558,11 +555,13 @@ func (s *secureValueMetadataStorage) Delete(ctx context.Context, namespace xkube
 		s.metrics.SecureValueDeleteDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
 	}()
 
+	if len(input) == 0 {
+		return nil
+	}
+
 	req := deleteSecureValue{
 		SQLTemplate: sqltemplate.New(s.dialect),
-		Namespace:   namespace.String(),
-		Name:        name,
-		Version:     version,
+		ToDelete:    input,
 	}
 
 	q, err := sqltemplate.Execute(sqlSecureValueDelete, req)
@@ -572,7 +571,7 @@ func (s *secureValueMetadataStorage) Delete(ctx context.Context, namespace xkube
 
 	res, err := s.db.ExecContext(ctx, q, req.GetArgs()...)
 	if err != nil {
-		return fmt.Errorf("deleting secure value: namespace=%+v name=%+v version=%+v %w", namespace, name, version, err)
+		return fmt.Errorf("deleting secure values: %s %w", inputStr, err)
 	}
 
 	modifiedCount, err := res.RowsAffected()
@@ -580,8 +579,8 @@ func (s *secureValueMetadataStorage) Delete(ctx context.Context, namespace xkube
 		return fmt.Errorf("getting rows affected: %w", err)
 	}
 	// Deleting is idempotent so modifiedCunt must be in {0, 1}
-	if modifiedCount > 1 {
-		return fmt.Errorf("secureValueMetadataStorage.Delete: delete more than one secret, this is a bug, check the where condition: modifiedCount=%d", modifiedCount)
+	if int(modifiedCount) > len(input) {
+		return fmt.Errorf("secureValueMetadataStorage.Delete: expected to delete at most %d rows but deleted %d, this is a bug, check the where condition", len(input), modifiedCount)
 	}
 
 	return nil
@@ -669,8 +668,8 @@ func (s *secureValueMetadataStorage) acquireLeases(ctx context.Context, leaseTok
 		SQLTemplate:  sqltemplate.New(s.dialect),
 		LeaseToken:   leaseToken,
 		MaxBatchSize: maxBatchSize,
-		MinAge:       int64((300 * time.Second).Seconds()),
-		LeaseTTL:     int64((30 * time.Second).Seconds()),
+		MinAge:       int64((10 * time.Minute).Seconds()),
+		LeaseTTL:     int64((5 * time.Minute).Seconds()),
 		Now:          s.clock.Now().UTC().Unix(),
 	}
 
@@ -739,4 +738,107 @@ func (s *secureValueMetadataStorage) listByLeaseToken(ctx context.Context, lease
 	}
 
 	return secureValues, nil
+}
+
+func (s *secureValueMetadataStorage) AddGCAttemptCount(ctx context.Context, secureValueIDs []string) (count map[string]int, err error) {
+	start := s.clock.Now()
+	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.AddGCAttemptCount", trace.WithAttributes(
+		attribute.StringSlice("secureValueIDs", secureValueIDs),
+	))
+
+	defer span.End()
+
+	defer func() {
+		success := err == nil
+
+		if !success {
+			span.SetStatus(codes.Error, "SecureValueMetadataStorage.AddGCAttemptCount failed")
+			span.RecordError(err)
+		}
+
+		logging.FromContext(ctx).Info("SecureValueMetadataStorage.AddGCAttemptCount", "secureValueIDs", secureValueIDs, "err", err)
+		s.metrics.SecureValueAddGCAttemptCount.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
+	}()
+
+	req := addGCAttemptCountSecureValues{
+		SQLTemplate:    sqltemplate.New(s.dialect),
+		SecureValueIDs: secureValueIDs,
+	}
+
+	q, err := sqltemplate.Execute(sqlSecureValueAddGCRetryCount, req)
+	if err != nil {
+		return nil, fmt.Errorf("execute template %q: %w", sqlSecureValueAddGCRetryCount.Name(), err)
+	}
+
+	if _, err := s.db.ExecContext(ctx, q, req.GetArgs()...); err != nil {
+		return nil, fmt.Errorf("adding to secure values gc retry count: %w", err)
+	}
+
+	// NOTE: this read may return stale data when concurrent method calls are made.
+	// this is fine since the method is used only by the gc worker at the moment
+	// and it'll work fine with stale data.
+	secureValues, err := s.fetchByIds(ctx, secureValueIDs)
+	if err != nil {
+		return nil, fmt.Errorf("fetching secure values by ids: %w", err)
+	}
+
+	count = make(map[string]int, len(secureValues))
+	for _, sv := range secureValues {
+		count[sv.GUID] = sv.GCAttempts
+	}
+
+	span.AddEvent("updated count", trace.WithAttributes(attribute.String("count", fmt.Sprintf("%+v", count))))
+
+	return count, nil
+}
+
+func (s *secureValueMetadataStorage) fetchByIds(ctx context.Context, secureValueIDs []string) (out []secureValueDB, err error) {
+	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.fetchByIds", trace.WithAttributes(
+		attribute.StringSlice("secureValueIDs", secureValueIDs),
+	))
+
+	defer span.End()
+
+	defer func() {
+		success := err == nil
+
+		if !success {
+			span.SetStatus(codes.Error, "SecureValueMetadataStorage.fetchByIds failed")
+			span.RecordError(err)
+		}
+	}()
+
+	req := listSecureValuesByIDs{
+		SQLTemplate:    sqltemplate.New(s.dialect),
+		SecureValueIDs: secureValueIDs,
+	}
+
+	q, err := sqltemplate.Execute(sqlSecureValueListByIDs, req)
+	if err != nil {
+		return nil, fmt.Errorf("execute template %q: %w", sqlSecureValueListByIDs.Name(), err)
+	}
+
+	rows, err := s.db.QueryContext(ctx, q, req.GetArgs()...)
+	if err != nil {
+		return nil, fmt.Errorf("listing secure values by ids: %w", err)
+	}
+	defer func() { _ = rows.Close() }()
+
+	for rows.Next() {
+		row := secureValueDB{}
+
+		err = rows.Scan(&row.GUID, &row.GCAttempts)
+
+		if err != nil {
+			return nil, fmt.Errorf("error reading secure value row: %w", err)
+		}
+
+		out = append(out, row)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error executing database query: %w", err)
+	}
+
+	return out, nil
 }

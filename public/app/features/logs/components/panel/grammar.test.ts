@@ -75,6 +75,23 @@ describe('generateLogGrammar', () => {
     expect.assertions(7);
   });
 
+  test.each([['1m30s'], ['2h30m45s'], ['1m30.5s'], ['1h30m'], ['1d2h']])(
+    'Identifies multi-unit durations: %s',
+    (duration: string) => {
+      const { tokens } = generateScenario(duration);
+      if (tokens[0] instanceof Token) {
+        expect(tokens[0].content).toBe(duration);
+        expect(tokens[0].type).toBe('log-token-duration');
+      }
+      expect.assertions(3);
+    }
+  );
+
+  test('Does not identify invalid duration-like strings', () => {
+    const { tokens } = generateScenario('5min');
+    expect(tokens.every((token) => !(token instanceof Token) || token.type !== 'log-token-duration')).toBe(true);
+  });
+
   test.each(['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS', 'TRACE', 'CONNECT'])(
     'Identifies HTTP methods',
     (method: string) => {

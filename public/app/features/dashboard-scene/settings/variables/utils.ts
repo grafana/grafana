@@ -131,8 +131,6 @@ export const getEditableVariables: () => Record<EditableVariableType, EditableVa
   },
 });
 
-export const ADHOC_VARIABLE_TYPE = 'adhoc';
-
 export function getEditableVariableDefinition(type: string): EditableVariableConfig {
   const editableVariables = getEditableVariables();
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -184,6 +182,7 @@ export function getVariableEditor(type: EditableVariableType) {
 export interface CommonVariableProperties {
   name: string;
   label?: string;
+  key?: string;
 }
 
 function getDefaultDatasourceRef(): DataSourceRef | undefined {
@@ -212,7 +211,6 @@ export function getVariableScene(type: EditableVariableType, initialState: Commo
     case 'adhoc':
       return new AdHocFiltersVariable({
         ...initialState,
-        layout: 'combobox',
       });
     case 'groupby':
       return new GroupByVariable(initialState);
@@ -229,7 +227,7 @@ export function getVariableDefault(variables: Array<SceneVariable<SceneVariableS
 }
 
 export function getVariableNamePrefix(type: EditableVariableType): string {
-  return type === ADHOC_VARIABLE_TYPE ? 'filter' : type;
+  return type === 'adhoc' ? 'filter' : type;
 }
 
 export function getNextAvailableId(

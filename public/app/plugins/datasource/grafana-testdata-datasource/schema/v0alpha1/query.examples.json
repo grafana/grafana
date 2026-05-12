@@ -1,0 +1,34 @@
+{
+  "examples": [
+    {
+      "name": "simple random walk",
+      "queryType": "default",
+      "saveModel": {
+        "scenarioId": "random_walk"
+      }
+    },
+    {
+      "name": "pulse wave example",
+      "queryType": "default",
+      "saveModel": {
+        "pulseWave": {
+          "offCount": 20,
+          "offValue": 1.23,
+          "onCount": 10,
+          "onValue": 4.56,
+          "timeStep": 1000
+        },
+        "scenarioId": "predictable_pulse"
+      }
+    },
+    {
+      "name": "multiple series",
+      "queryType": "default",
+      "saveModel": {
+        "scenarioId": "random_walk",
+        "seriesCount": 10,
+        "spread": 0.2
+      }
+    }
+  ]
+}

@@ -6,6 +6,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
@@ -13,9 +17,6 @@ import (
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // countingDataSourceProvider tracks how many times Index() is called
@@ -243,7 +244,7 @@ func TestConversionCaching_V0_to_V2alpha1(t *testing.T) {
 	numDashboards := 5
 	namespace := "default"
 
-	for i := 0; i < numDashboards; i++ {
+	for i := range numDashboards {
 		source := createTestV0Dashboard(namespace, "Dashboard "+string(rune('A'+i)))
 		target := &dashv2alpha1.Dashboard{}
 
@@ -283,7 +284,7 @@ func TestConversionCaching_V0_to_V2beta1(t *testing.T) {
 	numDashboards := 5
 	namespace := "default"
 
-	for i := 0; i < numDashboards; i++ {
+	for i := range numDashboards {
 		source := createTestV0Dashboard(namespace, "Dashboard "+string(rune('A'+i)))
 		target := &dashv2beta1.Dashboard{}
 
@@ -320,7 +321,7 @@ func TestConversionCaching_V1beta1_to_V2alpha1(t *testing.T) {
 	numDashboards := 5
 	namespace := "default"
 
-	for i := 0; i < numDashboards; i++ {
+	for i := range numDashboards {
 		source := createTestV1Dashboard(namespace, "Dashboard "+string(rune('A'+i)))
 		target := &dashv2alpha1.Dashboard{}
 
@@ -357,7 +358,7 @@ func TestConversionCaching_V1beta1_to_V2beta1(t *testing.T) {
 	numDashboards := 5
 	namespace := "default"
 
-	for i := 0; i < numDashboards; i++ {
+	for i := range numDashboards {
 		source := createTestV1Dashboard(namespace, "Dashboard "+string(rune('A'+i)))
 		target := &dashv2beta1.Dashboard{}
 
@@ -395,7 +396,7 @@ func TestConversionCaching_MultipleNamespaces(t *testing.T) {
 	numDashboardsPerNs := 3
 
 	for _, ns := range namespaces {
-		for i := 0; i < numDashboardsPerNs; i++ {
+		for i := range numDashboardsPerNs {
 			source := createTestV0Dashboard(ns, "Dashboard "+string(rune('A'+i)))
 			target := &dashv2alpha1.Dashboard{}
 
@@ -435,7 +436,7 @@ func TestConversionCaching_CacheDisabled(t *testing.T) {
 	numDashboards := 3
 	namespace := "default"
 
-	for i := 0; i < numDashboards; i++ {
+	for i := range numDashboards {
 		source := createTestV0Dashboard(namespace, "Dashboard "+string(rune('A'+i)))
 		target := &dashv2alpha1.Dashboard{}
 

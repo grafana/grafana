@@ -52,7 +52,13 @@ type IndexViewData struct {
 	// Feature flag for image-renderer to check support for binding calls
 	RenderBindingSupported bool
 
+	MeticulousAIEnabled        bool
+	MeticulousAIRecordingToken string
+
 	BootScript template.JS
+
+	// Feature flag for enabling SRI checks on Grafana assets
+	AssetSriChecksEnabled bool
 }
 
 // Templates setup.
@@ -122,6 +128,8 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 	ofClient := openfeature.NewDefaultClient()
 	renderBindingSupported, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagReportRenderBinding, false, openfeature.TransactionContext(ctx))
 	compiledBootScript, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagCompiledBootScript, false, openfeature.TransactionContext(ctx))
+	grafanaAssetSriChecks, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagGrafanaAssetSriChecks, false, openfeature.TransactionContext(ctx))
+	meticulousAIRecorderEnabled, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagGrafanaMeticulousAIRecorder, false, openfeature.TransactionContext(ctx))
 
 	data := IndexViewData{
 		AppTitle:                   "Grafana",
@@ -133,6 +141,9 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		PublicDashboardAccessToken: reqCtx.PublicDashboardAccessToken,
 		Settings:                   fsSettings,
 		RenderBindingSupported:     renderBindingSupported,
+		AssetSriChecksEnabled:      grafanaAssetSriChecks,
+		MeticulousAIEnabled:        meticulousAIRecorderEnabled,
+		MeticulousAIRecordingToken: p.config.MeticulousAIRecordingToken,
 	}
 
 	if compiledBootScript {
@@ -155,6 +166,7 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		if p.config.AppSubURL != "" {
 			cookiePath = data.AppSubUrl
 		}
+		// #nosec G124 -- HttpOnly/Secure/SameSite are explicitly set above
 		http.SetCookie(writer, &http.Cookie{
 			Name:     "login_error",
 			Value:    "",

@@ -174,20 +174,27 @@ func TranslateResourcePermissionToTuples(obj *unstructured.Unstructured) ([]*ope
 	return tuples, nil
 }
 
-// TranslateTeamBindingToTuples converts a TeamBinding CRD to team membership tuples.
-func TranslateTeamBindingToTuples(obj *unstructured.Unstructured) ([]*openfgav1.TupleKey, error) {
-	var tb iamv0.TeamBinding
-	if err := convertUnstructured(obj, &tb); err != nil {
+// TranslateTeamToMemberTuples converts a Team CRD to team membership tuples.
+// Each member in spec.members produces one tuple.
+func TranslateTeamToMemberTuples(obj *unstructured.Unstructured) ([]*openfgav1.TupleKey, error) {
+	var team iamv0.Team
+	if err := convertUnstructured(obj, &team); err != nil {
 		return nil, err
 	}
 
-	// Use the shared server logic to create the tuple
-	tuple, err := zanzana.GetTeamBindingTuple(tb.Spec.Subject.Name, tb.Spec.TeamRef.Name, string(tb.Spec.Permission))
-	if err != nil {
-		return nil, err
+	tuples := make([]*openfgav1.TupleKey, 0, len(team.Spec.Members))
+	for _, m := range team.Spec.Members {
+		if m.Name == "" {
+			continue
+		}
+		tuple, err := zanzana.GetTeamBindingTuple(m.Name, team.Name, string(m.Permission))
+		if err != nil {
+			return nil, err
+		}
+		tuples = append(tuples, tuple)
 	}
 
-	return []*openfgav1.TupleKey{tuple}, nil
+	return tuples, nil
 }
 
 // TranslateUserToTuples converts a User CRD to basic role assignment tuples.

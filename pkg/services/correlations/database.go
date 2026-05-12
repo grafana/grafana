@@ -3,8 +3,6 @@ package correlations
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/util/xorm/core"
-
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -390,40 +388,4 @@ func (s CorrelationsService) deleteCorrelationsByTargetUID(ctx context.Context, 
 		_, err := session.Where("source_uid = ? and org_id = ?", cmd.TargetUID, cmd.OrgId).Delete(&Correlation{})
 		return err
 	})
-}
-
-// internal use: It's require only for correct migration of existing records. Can be removed in Grafana 11.
-func (s CorrelationsService) createOrUpdateCorrelation(ctx context.Context, cmd CreateCorrelationCommand) error {
-	correlation := Correlation{
-		SourceUID:   cmd.SourceUID,
-		OrgID:       cmd.OrgId,
-		TargetUID:   cmd.TargetUID,
-		Label:       cmd.Label,
-		Description: cmd.Description,
-		Config:      cmd.Config,
-		Provisioned: false,
-		Type:        cmd.Type,
-	}
-
-	found := false
-	err := s.SQLStore.WithDbSession(ctx, func(session *db.Session) error {
-		has, err := session.Omit("source_type", "target_type").Get(&correlation)
-		found = has
-		return err
-	})
-
-	if err != nil {
-		return err
-	}
-
-	if found && cmd.Provisioned {
-		correlation.Provisioned = true
-		return s.SQLStore.WithDbSession(ctx, func(session *db.Session) error {
-			_, err := session.ID(core.NewPK(correlation.UID, correlation.SourceUID, correlation.OrgID)).Cols("provisioned").Update(&correlation)
-			return err
-		})
-	} else {
-		_, err := s.createCorrelation(ctx, cmd)
-		return err
-	}
 }

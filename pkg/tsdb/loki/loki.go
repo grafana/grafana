@@ -10,19 +10,19 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/dskit/concurrency"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/grafana/dskit/concurrency"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	scope "github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1"
-
 	"github.com/grafana/grafana/pkg/tsdb/loki/kinds/dataquery"
 )
 
@@ -309,5 +309,5 @@ func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext
 }
 
 func isFeatureEnabled(ctx context.Context, feature string) bool {
-	return backend.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled(feature)
+	return config.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled(feature)
 }

@@ -716,7 +716,7 @@ func benchmarkFindTags(b *testing.B, numAnnotations int) {
 	require.NoError(b, err)
 
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		result, err := store.GetTags(context.Background(), annotations.TagsQuery{
 			OrgID: 1,
 			Tag:   "outage",

@@ -1,9 +1,17 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { setBackendSrv } from '@grafana/runtime';
+import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
+import server, { setupMockServer } from '@grafana/test-utils/server';
+
 import { type Playlist } from '../../api/clients/playlist/v1';
+import { backendSrv } from '../../core/services/backend_srv';
 
 import { PlaylistForm } from './PlaylistForm';
+
+setBackendSrv(backendSrv);
+setupMockServer();
 
 jest.mock('app/core/components/TagFilter/TagFilter', () => ({
   TagFilter: () => {
@@ -44,6 +52,7 @@ const mockEmptyPlaylist: Playlist = {
 };
 
 function getTestContext(playlist: Playlist = mockPlaylist) {
+  server.use(getCustomSearchHandler([]));
   const onSubmitMock = jest.fn();
   const { rerender } = render(<PlaylistForm onSubmit={onSubmitMock} playlist={playlist} />);
 

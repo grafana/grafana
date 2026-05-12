@@ -8,6 +8,7 @@ import (
 	"maps"
 	"slices"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -952,7 +953,9 @@ func saveKVHelper(t *testing.T, kv resource.KV, ctx context.Context, section, ke
 
 func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
-	section := nsPrefix + "-batch"
+	nsPrefix += "-batch"
+	section := testSection
+	nk := func(k string) string { return namespacedKey(nsPrefix, k) }
 
 	t.Run("batch with empty section", func(t *testing.T) {
 		err := kv.Batch(ctx, "", nil)
@@ -967,14 +970,14 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 
 	t.Run("batch put creates new key", func(t *testing.T) {
 		ops := []resource.BatchOp{
-			{Mode: kvpkg.BatchOpPut, Key: "put-key", Value: []byte("put-value")},
+			{Mode: kvpkg.BatchOpPut, Key: nk("put-key"), Value: []byte("put-value")},
 		}
 
 		err := kv.Batch(ctx, section, ops)
 		require.NoError(t, err)
 
 		// Verify the key was created
-		reader, err := kv.Get(ctx, section, "put-key")
+		reader, err := kv.Get(ctx, section, nk("put-key"))
 		require.NoError(t, err)
 		value, err := io.ReadAll(reader)
 		require.NoError(t, err)
@@ -985,17 +988,17 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 
 	t.Run("batch put updates existing key", func(t *testing.T) {
 		// First create a key
-		saveKVHelper(t, kv, ctx, section, "put-update-key", strings.NewReader("original-value"))
+		saveKVHelper(t, kv, ctx, section, nk("put-update-key"), strings.NewReader("original-value"))
 
 		ops := []resource.BatchOp{
-			{Mode: kvpkg.BatchOpPut, Key: "put-update-key", Value: []byte("updated-value")},
+			{Mode: kvpkg.BatchOpPut, Key: nk("put-update-key"), Value: []byte("updated-value")},
 		}
 
 		err := kv.Batch(ctx, section, ops)
 		require.NoError(t, err)
 
 		// Verify the key was updated
-		reader, err := kv.Get(ctx, section, "put-update-key")
+		reader, err := kv.Get(ctx, section, nk("put-update-key"))
 		require.NoError(t, err)
 		value, err := io.ReadAll(reader)
 		require.NoError(t, err)
@@ -1006,14 +1009,14 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 
 	t.Run("batch create succeeds for new key", func(t *testing.T) {
 		ops := []resource.BatchOp{
-			{Mode: kvpkg.BatchOpCreate, Key: "create-new-key", Value: []byte("new-value")},
+			{Mode: kvpkg.BatchOpCreate, Key: nk("create-new-key"), Value: []byte("new-value")},
 		}
 
 		err := kv.Batch(ctx, section, ops)
 		require.NoError(t, err)
 
 		// Verify the key was created
-		reader, err := kv.Get(ctx, section, "create-new-key")
+		reader, err := kv.Get(ctx, section, nk("create-new-key"))
 		require.NoError(t, err)
 		value, err := io.ReadAll(reader)
 		require.NoError(t, err)
@@ -1024,17 +1027,17 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 
 	t.Run("batch create fails for existing key", func(t *testing.T) {
 		// First create a key
-		saveKVHelper(t, kv, ctx, section, "create-exists-key", strings.NewReader("existing-value"))
+		saveKVHelper(t, kv, ctx, section, nk("create-exists-key"), strings.NewReader("existing-value"))
 
 		ops := []resource.BatchOp{
-			{Mode: kvpkg.BatchOpCreate, Key: "create-exists-key", Value: []byte("new-value")},
+			{Mode: kvpkg.BatchOpCreate, Key: nk("create-exists-key"), Value: []byte("new-value")},
 		}
 
 		err := kv.Batch(ctx, section, ops)
 		assert.ErrorIs(t, err, kvpkg.ErrKeyAlreadyExists)
 
 		// Verify the original value is unchanged
-		reader, err := kv.Get(ctx, section, "create-exists-key")
+		reader, err := kv.Get(ctx, section, nk("create-exists-key"))
 		require.NoError(t, err)
 		value, err := io.ReadAll(reader)
 		require.NoError(t, err)
@@ -1045,17 +1048,17 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 
 	t.Run("batch update succeeds for existing key", func(t *testing.T) {
 		// First create a key
-		saveKVHelper(t, kv, ctx, section, "update-exists-key", strings.NewReader("original-value"))
+		saveKVHelper(t, kv, ctx, section, nk("update-exists-key"), strings.NewReader("original-value"))
 
 		ops := []resource.BatchOp{
-			{Mode: kvpkg.BatchOpUpdate, Key: "update-exists-key", Value: []byte("updated-value")},
+			{Mode: kvpkg.BatchOpUpdate, Key: nk("update-exists-key"), Value: []byte("updated-value")},
 		}
 
 		err := kv.Batch(ctx, section, ops)
 		require.NoError(t, err)
 
 		// Verify the key was updated
-		reader, err := kv.Get(ctx, section, "update-exists-key")
+		reader, err := kv.Get(ctx, section, nk("update-exists-key"))
 		require.NoError(t, err)
 		value, err := io.ReadAll(reader)
 		require.NoError(t, err)
@@ -1066,36 +1069,36 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 
 	t.Run("batch update fails for non-existent key", func(t *testing.T) {
 		ops := []resource.BatchOp{
-			{Mode: kvpkg.BatchOpUpdate, Key: "update-nonexistent-key", Value: []byte("new-value")},
+			{Mode: kvpkg.BatchOpUpdate, Key: nk("update-nonexistent-key"), Value: []byte("new-value")},
 		}
 
 		err := kv.Batch(ctx, section, ops)
 		assert.ErrorIs(t, err, resource.ErrNotFound)
 
 		// Verify the key was not created
-		_, err = kv.Get(ctx, section, "update-nonexistent-key")
+		_, err = kv.Get(ctx, section, nk("update-nonexistent-key"))
 		assert.ErrorIs(t, err, resource.ErrNotFound)
 	})
 
 	t.Run("batch delete removes existing key", func(t *testing.T) {
 		// First create a key
-		saveKVHelper(t, kv, ctx, section, "delete-exists-key", strings.NewReader("to-be-deleted"))
+		saveKVHelper(t, kv, ctx, section, nk("delete-exists-key"), strings.NewReader("to-be-deleted"))
 
 		ops := []resource.BatchOp{
-			{Mode: kvpkg.BatchOpDelete, Key: "delete-exists-key"},
+			{Mode: kvpkg.BatchOpDelete, Key: nk("delete-exists-key")},
 		}
 
 		err := kv.Batch(ctx, section, ops)
 		require.NoError(t, err)
 
 		// Verify the key was deleted
-		_, err = kv.Get(ctx, section, "delete-exists-key")
+		_, err = kv.Get(ctx, section, nk("delete-exists-key"))
 		assert.ErrorIs(t, err, resource.ErrNotFound)
 	})
 
 	t.Run("batch delete is idempotent for non-existent key", func(t *testing.T) {
 		ops := []resource.BatchOp{
-			{Mode: kvpkg.BatchOpDelete, Key: "delete-nonexistent-key"},
+			{Mode: kvpkg.BatchOpDelete, Key: nk("delete-nonexistent-key")},
 		}
 
 		err := kv.Batch(ctx, section, ops)
@@ -1104,9 +1107,9 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 
 	t.Run("batch multiple operations atomic success", func(t *testing.T) {
 		ops := []resource.BatchOp{
-			{Mode: kvpkg.BatchOpPut, Key: "multi-key1", Value: []byte("value1")},
-			{Mode: kvpkg.BatchOpPut, Key: "multi-key2", Value: []byte("value2")},
-			{Mode: kvpkg.BatchOpPut, Key: "multi-key3", Value: []byte("value3")},
+			{Mode: kvpkg.BatchOpPut, Key: nk("multi-key1"), Value: []byte("value1")},
+			{Mode: kvpkg.BatchOpPut, Key: nk("multi-key2"), Value: []byte("value2")},
+			{Mode: kvpkg.BatchOpPut, Key: nk("multi-key3"), Value: []byte("value3")},
 		}
 
 		err := kv.Batch(ctx, section, ops)
@@ -1114,7 +1117,7 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 
 		// Verify all keys were created
 		for i := 1; i <= 3; i++ {
-			key := fmt.Sprintf("multi-key%d", i)
+			key := nk(fmt.Sprintf("multi-key%d", i))
 			reader, err := kv.Get(ctx, section, key)
 			require.NoError(t, err)
 			value, err := io.ReadAll(reader)
@@ -1127,43 +1130,43 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 
 	t.Run("batch multiple operations atomic rollback on failure", func(t *testing.T) {
 		// First create a key that will cause the batch to fail
-		saveKVHelper(t, kv, ctx, section, "rollback-exists", strings.NewReader("existing"))
+		saveKVHelper(t, kv, ctx, section, nk("rollback-exists"), strings.NewReader("existing"))
 
 		ops := []resource.BatchOp{
-			{Mode: kvpkg.BatchOpPut, Key: "rollback-new1", Value: []byte("value1")},
-			{Mode: kvpkg.BatchOpCreate, Key: "rollback-exists", Value: []byte("should-fail")}, // This will fail
-			{Mode: kvpkg.BatchOpPut, Key: "rollback-new2", Value: []byte("value2")},
+			{Mode: kvpkg.BatchOpPut, Key: nk("rollback-new1"), Value: []byte("value1")},
+			{Mode: kvpkg.BatchOpCreate, Key: nk("rollback-exists"), Value: []byte("should-fail")}, // This will fail
+			{Mode: kvpkg.BatchOpPut, Key: nk("rollback-new2"), Value: []byte("value2")},
 		}
 
 		err := kv.Batch(ctx, section, ops)
 		assert.ErrorIs(t, err, kvpkg.ErrKeyAlreadyExists)
 
 		// Verify rollback: the first operation should NOT have persisted
-		_, err = kv.Get(ctx, section, "rollback-new1")
+		_, err = kv.Get(ctx, section, nk("rollback-new1"))
 		assert.ErrorIs(t, err, resource.ErrNotFound)
 
 		// Verify the third operation was not executed
-		_, err = kv.Get(ctx, section, "rollback-new2")
+		_, err = kv.Get(ctx, section, nk("rollback-new2"))
 		assert.ErrorIs(t, err, resource.ErrNotFound)
 	})
 
 	t.Run("batch mixed operations", func(t *testing.T) {
 		// Setup: create a key to update and one to delete
-		saveKVHelper(t, kv, ctx, section, "mixed-update", strings.NewReader("original"))
-		saveKVHelper(t, kv, ctx, section, "mixed-delete", strings.NewReader("to-delete"))
+		saveKVHelper(t, kv, ctx, section, nk("mixed-update"), strings.NewReader("original"))
+		saveKVHelper(t, kv, ctx, section, nk("mixed-delete"), strings.NewReader("to-delete"))
 
 		ops := []resource.BatchOp{
-			{Mode: kvpkg.BatchOpCreate, Key: "mixed-create", Value: []byte("created")},
-			{Mode: kvpkg.BatchOpUpdate, Key: "mixed-update", Value: []byte("updated")},
-			{Mode: kvpkg.BatchOpDelete, Key: "mixed-delete"},
-			{Mode: kvpkg.BatchOpPut, Key: "mixed-put", Value: []byte("put")},
+			{Mode: kvpkg.BatchOpCreate, Key: nk("mixed-create"), Value: []byte("created")},
+			{Mode: kvpkg.BatchOpUpdate, Key: nk("mixed-update"), Value: []byte("updated")},
+			{Mode: kvpkg.BatchOpDelete, Key: nk("mixed-delete")},
+			{Mode: kvpkg.BatchOpPut, Key: nk("mixed-put"), Value: []byte("put")},
 		}
 
 		err := kv.Batch(ctx, section, ops)
 		require.NoError(t, err)
 
 		// Verify create
-		reader, err := kv.Get(ctx, section, "mixed-create")
+		reader, err := kv.Get(ctx, section, nk("mixed-create"))
 		require.NoError(t, err)
 		value, err := io.ReadAll(reader)
 		require.NoError(t, err)
@@ -1172,7 +1175,7 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 		require.NoError(t, err)
 
 		// Verify update
-		reader, err = kv.Get(ctx, section, "mixed-update")
+		reader, err = kv.Get(ctx, section, nk("mixed-update"))
 		require.NoError(t, err)
 		value, err = io.ReadAll(reader)
 		require.NoError(t, err)
@@ -1181,11 +1184,11 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 		require.NoError(t, err)
 
 		// Verify delete
-		_, err = kv.Get(ctx, section, "mixed-delete")
+		_, err = kv.Get(ctx, section, nk("mixed-delete"))
 		assert.ErrorIs(t, err, resource.ErrNotFound)
 
 		// Verify put
-		reader, err = kv.Get(ctx, section, "mixed-put")
+		reader, err = kv.Get(ctx, section, nk("mixed-put"))
 		require.NoError(t, err)
 		value, err = io.ReadAll(reader)
 		require.NoError(t, err)
@@ -1197,7 +1200,7 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 	t.Run("batch too many operations", func(t *testing.T) {
 		ops := make([]kvpkg.BatchOp, kvpkg.MaxBatchOps+1)
 		for i := range ops {
-			ops[i] = kvpkg.BatchOp{Mode: kvpkg.BatchOpPut, Key: fmt.Sprintf("key-%d", i), Value: []byte("value")}
+			ops[i] = kvpkg.BatchOp{Mode: kvpkg.BatchOpPut, Key: nk(fmt.Sprintf("key-%d", i)), Value: []byte("value")}
 		}
 
 		err := kv.Batch(ctx, section, ops)
@@ -1205,28 +1208,97 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 		assert.Contains(t, err.Error(), "too many operations")
 	})
 
+	t.Run("concurrent create - only one succeeds", func(t *testing.T) {
+		key := nk("concurrent-create")
+		values := [][]byte{[]byte("from-goroutine-0"), []byte("from-goroutine-1")}
+
+		var wg sync.WaitGroup
+		errs := make([]error, 2)
+		start := make(chan struct{})
+		for i := range 2 {
+			wg.Go(func() {
+				<-start
+				errs[i] = kv.Batch(ctx, section, []resource.BatchOp{
+					{Mode: kvpkg.BatchOpCreate, Key: key, Value: values[i]},
+				})
+			})
+		}
+		close(start)
+		wg.Wait()
+
+		winner := -1
+		losers := 0
+		for i, err := range errs {
+			if err == nil {
+				require.Equal(t, -1, winner, "more than one batch succeeded")
+				winner = i
+			} else {
+				losers++
+			}
+		}
+		require.NotEqual(t, -1, winner, "no batch succeeded")
+		require.Equal(t, 1, losers, "exactly one batch should have failed")
+
+		reader, err := kv.Get(ctx, section, key)
+		require.NoError(t, err)
+		stored, err := io.ReadAll(reader)
+		require.NoError(t, err)
+		require.NoError(t, reader.Close())
+		assert.Equal(t, string(values[winner]), string(stored))
+	})
+
+	t.Run("concurrent put - both succeed", func(t *testing.T) {
+		key := nk("concurrent-put")
+		values := [][]byte{[]byte("from-goroutine-0"), []byte("from-goroutine-1")}
+
+		var wg sync.WaitGroup
+		errs := make([]error, 2)
+		start := make(chan struct{})
+		for i := range 2 {
+			wg.Go(func() {
+				<-start
+				errs[i] = kv.Batch(ctx, section, []resource.BatchOp{
+					{Mode: kvpkg.BatchOpPut, Key: key, Value: values[i]},
+				})
+			})
+		}
+		close(start)
+		wg.Wait()
+
+		for i, err := range errs {
+			require.NoError(t, err, "goroutine %d should have succeeded", i)
+		}
+
+		reader, err := kv.Get(ctx, section, key)
+		require.NoError(t, err)
+		stored, err := io.ReadAll(reader)
+		require.NoError(t, err)
+		require.NoError(t, reader.Close())
+		assert.Contains(t, []string{string(values[0]), string(values[1])}, string(stored))
+	})
+
 	t.Run("batch error context with later operation failure", func(t *testing.T) {
 		// Create some keys first
-		saveKVHelper(t, kv, ctx, section, "error-context-key2", strings.NewReader("existing"))
+		saveKVHelper(t, kv, ctx, section, nk("error-context-key2"), strings.NewReader("existing"))
 
 		ops := []resource.BatchOp{
-			{Mode: kvpkg.BatchOpPut, Key: "error-context-key0", Value: []byte("value0")},
-			{Mode: kvpkg.BatchOpPut, Key: "error-context-key1", Value: []byte("value1")},
-			{Mode: kvpkg.BatchOpUpdate, Key: "error-context-nonexistent", Value: []byte("should-fail")}, // This will fail at index 2
-			{Mode: kvpkg.BatchOpPut, Key: "error-context-key3", Value: []byte("value3")},
+			{Mode: kvpkg.BatchOpPut, Key: nk("error-context-key0"), Value: []byte("value0")},
+			{Mode: kvpkg.BatchOpPut, Key: nk("error-context-key1"), Value: []byte("value1")},
+			{Mode: kvpkg.BatchOpUpdate, Key: nk("error-context-nonexistent"), Value: []byte("should-fail")}, // This will fail at index 2
+			{Mode: kvpkg.BatchOpPut, Key: nk("error-context-key3"), Value: []byte("value3")},
 		}
 
 		err := kv.Batch(ctx, section, ops)
 		assert.ErrorIs(t, err, resource.ErrNotFound)
 
 		// Verify atomic rollback - no keys should have been created
-		_, err = kv.Get(ctx, section, "error-context-key0")
+		_, err = kv.Get(ctx, section, nk("error-context-key0"))
 		assert.ErrorIs(t, err, resource.ErrNotFound, "first operation should have been rolled back")
 
-		_, err = kv.Get(ctx, section, "error-context-key1")
+		_, err = kv.Get(ctx, section, nk("error-context-key1"))
 		assert.ErrorIs(t, err, resource.ErrNotFound, "second operation should have been rolled back")
 
-		_, err = kv.Get(ctx, section, "error-context-key3")
+		_, err = kv.Get(ctx, section, nk("error-context-key3"))
 		assert.ErrorIs(t, err, resource.ErrNotFound, "fourth operation should not have been executed")
 	})
 }

@@ -14,11 +14,6 @@ const defineFeatureEventsRule = createRule({
     // Names of variables assigned from defineFeatureEvents(...)
     const factoryVariables = new Set();
 
-    // Maps factory variable name → its VariableDeclarator node.
-    // Used to find the @owner anchor for individually exported events.
-    /** @type {Map<string, import('@typescript-eslint/utils').TSESTree.VariableDeclarator>} */
-    const factoryDeclarations = new Map();
-
     // Resolves whether a node is a call to a tracked factory variable.
     // Recurses into CallExpression callees to handle factory<P>('event')(props).
     /** @param {import('@typescript-eslint/utils').TSESTree.Node} node */
@@ -77,7 +72,6 @@ const defineFeatureEventsRule = createRule({
           const varName = node.id.type === AST_NODE_TYPES.Identifier && node.id.name;
           if (varName) {
             factoryVariables.add(varName);
-            factoryDeclarations.set(varName, node);
           }
 
           const [repoArg, featureArg] = node.init.arguments;
@@ -117,12 +111,6 @@ const defineFeatureEventsRule = createRule({
             return;
           }
 
-          const comments = context.sourceCode.getCommentsBefore(node);
-          const hasOwner = comments.some((c) => c.type === 'Block' && c.value.includes('@owner'));
-          if (!hasOwner) {
-            context.report({ node: decl.declarations[0].id, messageId: 'missingOwnerTag' });
-          }
-
           for (const prop of init.properties) {
             if (prop.type !== AST_NODE_TYPES.Property) {
               continue;
@@ -141,28 +129,6 @@ const defineFeatureEventsRule = createRule({
         if (callsFactoryVariable(init)) {
           if (context.sourceCode.getCommentsBefore(node).length === 0) {
             context.report({ node: decl.declarations[0].id, messageId: 'missingEventComment' });
-          }
-
-          // @owner may live on the export itself or on the factory declaration
-          const exportHasOwner = context.sourceCode
-            .getCommentsBefore(node)
-            .some((c) => c.type === 'Block' && c.value.includes('@owner'));
-
-          if (!exportHasOwner) {
-            const calleeName =
-              init.type === AST_NODE_TYPES.CallExpression &&
-              init.callee.type === AST_NODE_TYPES.Identifier &&
-              init.callee.name;
-            const factoryNode = calleeName && factoryDeclarations.get(calleeName);
-            const factoryHasOwner =
-              !!factoryNode &&
-              context.sourceCode
-                .getCommentsBefore(factoryNode.parent)
-                .some((c) => c.type === 'Block' && c.value.includes('@owner'));
-
-            if (!factoryHasOwner) {
-              context.report({ node: decl.declarations[0].id, messageId: 'missingOwnerTag' });
-            }
           }
         }
       },
@@ -201,7 +167,6 @@ const defineFeatureEventsRule = createRule({
     messages: {
       literalArgsRequired:
         'The `repo` and `feature` arguments to `defineFeatureEvents` must be string literals, not variables.',
-      missingOwnerTag: 'Exported events must have a JSDoc block comment with an `@owner` tag.',
       missingEventComment: 'Each event must have a JSDoc comment describing when it fires or its purpose.',
       interfaceMustExtend: 'Event property interfaces must extend `EventProperty` from `@grafana/runtime/internal`.',
       missingPropertyComment: 'Each interface property must have a JSDoc comment describing what it captures.',

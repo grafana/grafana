@@ -670,7 +670,8 @@ type AlertRuleKeyWithGroup struct {
 
 type AlertRuleKeyWithId struct {
 	AlertRuleKey
-	ID int64
+	ID   int64
+	GUID string
 }
 
 // AlertRuleGroupKey is the identifier of a group of alerts
@@ -965,7 +966,7 @@ func (alertRule *AlertRule) Copy() *AlertRule {
 	}
 
 	if alertRule.NotificationSettings != nil {
-		result.NotificationSettings = util.Pointer(CopyNotificationSettings(*alertRule.NotificationSettings))
+		result.NotificationSettings = new(CopyNotificationSettings(*alertRule.NotificationSettings))
 	}
 
 	return &result
@@ -1059,9 +1060,47 @@ type ListAlertRulesQuery struct {
 	// to return just those for a dashboard and panel.
 	DashboardUID string
 	PanelID      int64
+	// ExcludeDashboardUID, when non-empty, excludes rules whose dashboard UID matches.
+	ExcludeDashboardUID string
+	// ExcludePanelID, when non-zero, excludes rules whose panel ID matches.
+	ExcludePanelID int64
 
-	ReceiverName     string
-	TimeIntervalName string
+	// IsPaused filters rules by their paused state.
+	// nil means no filter; true means only paused rules; false means only non-paused rules.
+	IsPaused *bool
+	// TitleExact filters rules to those with an exact title match (case-sensitive).
+	// Empty string means no filter.
+	TitleExact string
+	// ExcludeTitle, when non-empty, excludes rules whose title matches exactly.
+	ExcludeTitle string
+
+	// NotificationSettingsType filters rules by the type of notification settings configured.
+	// Empty string means no filter.
+	NotificationSettingsType NotificationSettingsType
+	// ExcludeNotificationSettingsType, when set, excludes rules whose notification settings type
+	// matches the given enum value.
+	ExcludeNotificationSettingsType NotificationSettingsType
+	// RoutingPolicyExact filters rules to those whose named routing policy matches exactly.
+	// Empty string means no filter.
+	RoutingPolicyExact string
+	// ExcludeRoutingPolicy, when non-empty, excludes rules whose named routing policy matches.
+	ExcludeRoutingPolicy string
+	// RecordMetricExact filters recording rules by their target metric name (exact match).
+	// Empty string means no filter.
+	RecordMetricExact string
+	// ExcludeRecordMetric, when non-empty, excludes recording rules whose target metric name matches.
+	ExcludeRecordMetric string
+	// RecordTargetDatasourceUIDExact filters recording rules by their target data source UID (exact match).
+	// Empty string means no filter.
+	RecordTargetDatasourceUIDExact string
+	// ExcludeRecordTargetDatasourceUID, when non-empty, excludes recording rules whose target
+	// data source UID matches.
+	ExcludeRecordTargetDatasourceUID string
+
+	ReceiverName string
+	// ExcludeReceiverName, when non-empty, excludes rules whose contact-point receiver name matches.
+	ExcludeReceiverName string
+	TimeIntervalName    string
 
 	// DataSourceUIDs allows searching for alert rules using data sources
 	// that match any of the given UIDs exactly (case sensitive).

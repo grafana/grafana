@@ -133,7 +133,22 @@ async function fetchBootData(): Promise<FetchBootDataResult> {
 
   // Handle SSO auto-login redirection from /bootdata.
   // Only redirect if there's no login error to avoid redirect loops.
-  if (rawBootData.autoLoginRedirectURL && !rawBootData.settings.loginError && !queryParams.has('disableAutoLogin')) {
+  const hasLoginError = rawBootData.settings?.loginError || window.grafanaBootData.settings.loginError;
+  const annonAccessPages = [
+    /\/dashboard\/snapshot\/.*$/,
+    /\/invite$/,
+    /\/signup$/,
+    /\/user\/password\/send-reset-email$/,
+    /\/user\/password\/reset$/,
+    /\/public-dashboards\/.*$/,
+  ];
+  const isAllowedAnonPage = annonAccessPages.some((regex) => regex.test(window.location.pathname));
+  if (
+    rawBootData.autoLoginRedirectURL &&
+    !hasLoginError &&
+    !queryParams.has('disableAutoLogin') &&
+    !isAllowedAnonPage
+  ) {
     // Copied from context_srv.setRedirectToUrl
     const redirectPath = window.location.href.substring(window.location.origin.length);
     if (redirectPath !== '/login') {
@@ -225,6 +240,11 @@ async function initGrafana() {
   const isLightTheme = window.grafanaBootData.user.lightTheme;
 
   document.body.classList.add(isLightTheme ? 'theme-light' : 'theme-dark');
+
+  const lang = window.grafanaBootData.user.language;
+  if (lang) {
+    document.documentElement.lang = lang;
+  }
 
   cssLink.href = window.grafanaBootData.assets[isLightTheme ? 'light' : 'dark'];
   document.head.appendChild(cssLink);

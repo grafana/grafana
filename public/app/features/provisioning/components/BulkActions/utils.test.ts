@@ -1,6 +1,11 @@
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 
-import { getTargetFolderPathInRepo, getNestedFolderPath, getResourceTargetPath } from './utils';
+import {
+  getTargetFolderPathInRepo,
+  getNestedFolderPath,
+  getResourceTargetPath,
+  isResourceAlreadyInTarget,
+} from './utils';
 
 const MOCK_FOLDER = {
   metadata: { annotations: { [AnnoKeySourcePath]: 'path/to/folder' } },
@@ -92,5 +97,15 @@ describe('getResourceTargetPath', () => {
 
   it('should throw for invalid path', () => {
     expect(() => getResourceTargetPath('/', 'new/path')).toThrow('Invalid path');
+  });
+});
+
+describe('isResourceAlreadyInTarget', () => {
+  it('returns true when the computed target path matches the current resource path', () => {
+    expect(isResourceAlreadyInTarget('test/dashboard.json', 'test/')).toBe(true);
+  });
+
+  it('returns false when the resource would move to a different path', () => {
+    expect(isResourceAlreadyInTarget('test/dashboard.json', 'test2/')).toBe(false);
   });
 });
