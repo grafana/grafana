@@ -114,14 +114,12 @@ describe('DashboardDatasource', () => {
   });
 
   it('Should skip the stale Done replayed by the upstream ReplaySubject on time-range change in MixedDS', async () => {
-    // Regression test for support-escalations#22242: in a Mixed datasource panel
-    // with Dashboard datasource subqueries, the upstream SceneQueryRunner exposes
-    // its results via a ReplaySubject(1) which synchronously replays the previous
-    // range's Done state to new subscribers on time-range change. The Mixed-DS
-    // operator's `first(Done || Error)` used to match that stale Done and
-    // complete the substream before the upstream re-ran for the new range, so
-    // the chain panel rendered with stale data and never re-rendered when the
-    // real Done arrived seconds later.
+    // The upstream SceneQueryRunner exposes its results via a ReplaySubject(1)
+    // that synchronously replays the previous range's Done state on subscribe.
+    // The Mixed-DS operator's `first(Done || Error)` used to match that stale
+    // Done and complete the substream before the upstream re-ran for the new
+    // range, so the chain panel rendered with stale data and never re-rendered
+    // when the real Done arrived seconds later.
     const oldRange = makeRange('2026-05-01T00:00:00Z', '2026-05-08T00:00:00Z');
     const newRange = makeRange('2026-05-04T00:00:00Z', '2026-05-08T00:00:00Z');
 
