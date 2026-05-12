@@ -81,13 +81,14 @@ func (l *Lease) notifyLoss() {
 
 // leaseMetadata is the data saved in the KV store for each lease.
 type leaseMetadata struct {
-	Holder  string `json:"holder"`
-	Expires int64  `json:"expires"`
-	Deleted bool   `json:"deleted"`
+	Holder     string `json:"holder"`
+	Expires    int64  `json:"expires"`
+	Deleted    bool   `json:"deleted,omitempty"` // TODO: remove this field once every pod is running with `DeletedAt` support
+	ReleasedAt int64  `json:"released_at,omitempty"`
 }
 
 func (meta *leaseMetadata) ValidAsOf(ts time.Time) bool {
-	return !meta.Deleted && ts.Before(time.Unix(0, meta.Expires))
+	return !meta.Deleted && meta.ReleasedAt == 0 && ts.Before(time.Unix(0, meta.Expires))
 }
 
 // Manager acquires and releases leases backed by a KV store.
@@ -261,6 +262,7 @@ func (m *Manager) Release(ctx context.Context, lease *Lease) error {
 	}
 
 	meta.Deleted = true
+	meta.ReleasedAt = time.Now().UnixNano()
 	if err := m.save(ctx, key, meta); err != nil {
 		return fmt.Errorf("releasing %s/%d: %w", lease.name, lease.generation, err)
 	}
@@ -291,7 +293,9 @@ func (m *Manager) extendGeneration(ctx context.Context, lease *Lease, ttl time.D
 		return time.Time{}, err
 	}
 
-	tombstone, err := json.Marshal(leaseMetadata{Holder: m.holder, Deleted: true})
+	meta.Deleted = true
+	meta.ReleasedAt = time.Now().UnixNano()
+	tombstone, err := json.Marshal(meta)
 	if err != nil {
 		return time.Time{}, err
 	}
