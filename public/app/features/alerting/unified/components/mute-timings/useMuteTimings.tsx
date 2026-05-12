@@ -1,12 +1,7 @@
 import { useEffect } from 'react';
 
 import { base64UrlEncode } from '@grafana/alerting';
-import {
-  API_GROUP,
-  API_VERSION,
-  type ObjectMeta,
-  type TimeInterval,
-} from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+import { API_GROUP, API_VERSION, type ObjectMeta, type TimeInterval } from '@grafana/alerting/unstable';
 import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
 import { timeIntervalsApi } from 'app/features/alerting/unified/api/timeIntervalsApi';
 import { mergeTimeIntervals } from 'app/features/alerting/unified/components/mute-timings/util';

@@ -1,7 +1,9 @@
 import { useMemo } from 'react';
 
-import { useListRoutingTreeQuery } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+import { notificationsAPI } from '@grafana/alerting/unstable';
 import { t } from '@grafana/i18n';
+
+const { useListRoutingTreeQuery } = notificationsAPI;
 
 import { ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 
