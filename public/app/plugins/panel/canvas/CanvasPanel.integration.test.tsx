@@ -1,8 +1,10 @@
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import * as React from 'react';
 
 import { type DataFrame, EventBusSrv, getDefaultTimeRange, LoadingState, type PanelProps } from '@grafana/data';
 import { TooltipDisplayMode } from '@grafana/schema';
+import { PanelContextProvider } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { CanvasPanel } from 'app/plugins/panel/canvas/CanvasPanel';
@@ -368,7 +370,7 @@ describe('CanvasPanel', () => {
   let onFieldConfigChange = jest.fn();
   let onOptionsChange = jest.fn();
   let onChangeTimeRange = jest.fn();
-  const canvasPanelElement = (propsOverrides?: Partial<PanelProps<Options>>) => {
+  const canvasPanelElement = (propsOverrides?: Partial<PanelProps<Options>>, eventBus = new EventBusSrv()) => {
     const timeRange = getDefaultTimeRange();
     return (
       <CanvasPanel
@@ -384,7 +386,7 @@ describe('CanvasPanel', () => {
           timeRange,
         }}
         onFieldConfigChange={onFieldConfigChange}
-        eventBus={new EventBusSrv()}
+        eventBus={eventBus}
         onOptionsChange={onOptionsChange}
         replaceVariables={(s) => s}
         renderCounter={0}
@@ -402,6 +404,30 @@ describe('CanvasPanel', () => {
   };
   const setUp = (propsOverrides?: Partial<PanelProps<Options>>, seriesOverrides?: DataFrame[]) => {
     return render(canvasPanelElement(propsOverrides));
+  };
+
+  const setUpWithPanelContext = (
+    propsOverrides?: Partial<PanelProps<Options>>
+  ): ReturnType<typeof render> & { eventBus: EventBusSrv } => {
+    const eventBus = new EventBusSrv();
+    const PanelContextWrapper = ({ children }: { children: React.ReactNode }) => {
+      const [instanceState, setInstanceState] = React.useState<unknown>();
+      return (
+        <PanelContextProvider
+          value={{
+            eventsScope: 'canvas-panel-integration',
+            eventBus,
+            instanceState,
+            onInstanceStateChange: setInstanceState,
+          }}
+        >
+          {children}
+        </PanelContextProvider>
+      );
+    };
+    return Object.assign(render(canvasPanelElement(propsOverrides, eventBus), { wrapper: PanelContextWrapper }), {
+      eventBus,
+    });
   };
 
   it('renders (kitchen sink)', () => {
@@ -435,7 +461,7 @@ describe('CanvasPanel', () => {
     expect(buttons[5].querySelector('svg')).toHaveStyle(`fill: ${colors.error};`); // error color
     expect(buttons[6]).toHaveTextContent('error');
     expect(buttons[7].querySelector('svg')).toHaveStyle(`fill: ${colors.unmapped}`); // unmapped color
-    expect(buttons[8]).toHaveTextContent('No mapping (14)');
+    expect(getUnmappedIconText()).toHaveTextContent('No mapping (14)');
     expect(buttons[9]).toHaveTextContent('Fixed Relative Path:');
     expect(buttons[11]).toHaveTextContent('Fixed Absolute URL:');
   });
@@ -469,6 +495,11 @@ describe('CanvasPanel', () => {
   const getSuccessIconText = () => {
     const candidates = screen.getAllByRole('button').filter((el) => el instanceof HTMLElement);
     return candidates[2] as HTMLElement;
+  };
+
+  const getUnmappedIconText = () => {
+    const candidates = screen.getAllByRole('button').filter((el) => el instanceof HTMLElement);
+    return candidates[8] as HTMLElement;
   };
 
   it('opens context menu on right click of success icon', async () => {
@@ -512,9 +543,54 @@ describe('CanvasPanel', () => {
       expect(screen.getByRole('menuitem', { name: 'Duplicate' })).toBeVisible();
       expect(screen.getByRole('menuitem', { name: 'Bring to front' })).toBeVisible();
       expect(screen.getByRole('menuitem', { name: 'Send to back' })).toBeVisible();
+      expect(screen.getByRole('menuitem', { name: 'Open Editor' })).toBeVisible();
     });
 
     jest.restoreAllMocks();
   });
-  it.todo('double click on success shortcuts to text edit');
+
+  it('double click on success shortcuts to text edit', async () => {
+    jest.spyOn(getDashboardSrv(), 'getCurrent').mockReturnValue({ editable: true } as DashboardModel);
+    Object.defineProperty(document, 'elementFromPoint', {
+      configurable: true,
+      value: () => {
+        return unmappedIconText;
+      },
+    });
+
+    setUpWithPanelContext();
+
+    let unmappedIconText = getUnmappedIconText();
+    expect(unmappedIconText).toHaveTextContent('No mapping (14)');
+    const user = userEvent.setup();
+    await user.click(unmappedIconText);
+    await user.dblClick(unmappedIconText);
+
+    const input = screen.getByRole('textbox');
+    expect(input).toHaveFocus();
+    expect(input).toHaveValue('No mapping (14)');
+    // Change the text
+    await userEvent.clear(input);
+    await userEvent.keyboard('can only edit fields with no mapping');
+    expect(input).toHaveValue('can only edit fields with no mapping');
+
+    await userEvent.keyboard('{esc}');
+    expect(onOptionsChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        config: {
+          text: {
+            fixed: 'can only edit fields with no mapping',
+          },
+        },
+      })
+    );
+
+    jest.restoreAllMocks();
+  });
+
+  it.todo('Delete');
+  it.todo('Duplicate');
+  it.todo('Bring to front');
+  it.todo('Send to back');
+  it.todo('Open editor');
 });
