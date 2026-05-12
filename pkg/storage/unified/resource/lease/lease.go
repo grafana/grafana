@@ -86,7 +86,7 @@ func (l *Lease) notifyLoss() {
 type leaseMetadata struct {
 	Holder     string `json:"holder"`
 	Expires    int64  `json:"expires"`
-	Deleted    bool   `json:"deleted,omitempty"` // TODO: remove this field once every pod is running with `DeletedAt` support
+	Deleted    bool   `json:"deleted,omitempty"` // TODO: remove this field once every pod is running with `ReleasedAt` support
 	ReleasedAt int64  `json:"released_at,omitempty"`
 }
 
