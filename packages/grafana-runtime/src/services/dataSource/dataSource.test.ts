@@ -8,10 +8,14 @@ import {
   _resetForTests as resetPlugin,
   getDataSourceInstance,
   registerRuntimeDataSourceInstance,
-  setDataSourceImporter,
+  setDataSourcePluginImporter,
 } from './dataSource';
 import { _resetForTests as resetPluginCache } from './pluginCache';
-import { _resetForTests as resetInstanceSettings, initDataSourceInstanceSettings, reloadDataSources } from './settings';
+import {
+  _resetForTests as resetInstanceSettings,
+  initDataSourceInstanceSettings,
+  reloadDataSourceInstanceSettings,
+} from './settings';
 
 class TestRuntime extends RuntimeDataSource {
   query() {
@@ -64,7 +68,7 @@ describe('plugin', () => {
 
       const instance = Object.create(DataSourceApi.prototype) as DataSourceApi;
       const MockClass = jest.fn().mockReturnValue(instance);
-      setDataSourceImporter(jest.fn().mockResolvedValue({ DataSourceClass: MockClass, components: {} }));
+      setDataSourcePluginImporter(jest.fn().mockResolvedValue({ DataSourceClass: MockClass, components: {} }));
 
       const result = await getDataSourceInstance(settings.uid);
 
@@ -81,7 +85,7 @@ describe('plugin', () => {
         DataSourceClass: jest.fn().mockReturnValue(instance),
         components: {},
       });
-      setDataSourceImporter(mockImport);
+      setDataSourcePluginImporter(mockImport);
 
       const first = await getDataSourceInstance(settings.uid);
       const second = await getDataSourceInstance(settings.uid);
@@ -92,7 +96,7 @@ describe('plugin', () => {
 
     it('throws when the datasource is not found', async () => {
       initDataSourceInstanceSettings({}, '');
-      setDataSourceImporter(jest.fn());
+      setDataSourcePluginImporter(jest.fn());
 
       await expect(getDataSourceInstance('unknown-uid')).rejects.toThrow(/was not found/);
     });
@@ -114,7 +118,7 @@ describe('plugin', () => {
 
       const instance = Object.create(DataSourceApi.prototype) as DataSourceApi;
       const MockClass = jest.fn().mockReturnValue(instance);
-      setDataSourceImporter(jest.fn().mockResolvedValue({ DataSourceClass: MockClass, components: {} }));
+      setDataSourcePluginImporter(jest.fn().mockResolvedValue({ DataSourceClass: MockClass, components: {} }));
 
       const result = await getDataSourceInstance('${myds}');
       expect(result).toBe(instance);
@@ -128,7 +132,7 @@ describe('plugin', () => {
     it('throws when the plugin import fails', async () => {
       const settings = ds();
       initDataSourceInstanceSettings({ [settings.name]: settings }, settings.name);
-      setDataSourceImporter(jest.fn().mockRejectedValue(new Error('module not found')));
+      setDataSourcePluginImporter(jest.fn().mockRejectedValue(new Error('module not found')));
 
       await expect(getDataSourceInstance(settings.uid)).rejects.toThrow(/module not found/);
     });
@@ -142,7 +146,7 @@ describe('plugin', () => {
         DataSourceClass: jest.fn().mockReturnValue(instance),
         components: {},
       });
-      setDataSourceImporter(mockImport);
+      setDataSourcePluginImporter(mockImport);
 
       const byUid = await getDataSourceInstance(settings.uid);
       const byName = await getDataSourceInstance(settings.name);
@@ -161,7 +165,7 @@ describe('plugin', () => {
       } as unknown as TemplateSrv);
 
       const instance = Object.create(DataSourceApi.prototype) as DataSourceApi;
-      setDataSourceImporter(
+      setDataSourcePluginImporter(
         jest.fn().mockResolvedValue({ DataSourceClass: jest.fn().mockReturnValue(instance), components: {} })
       );
 
@@ -197,7 +201,7 @@ describe('plugin', () => {
       const instance = Object.create(DataSourceApi.prototype) as DataSourceApi;
       const MockClass = jest.fn().mockReturnValue(instance);
       const mockImport = jest.fn().mockResolvedValue({ DataSourceClass: MockClass, components: {} });
-      setDataSourceImporter(mockImport);
+      setDataSourcePluginImporter(mockImport);
 
       // Prime the cache.
       await getDataSourceInstance(settings.uid);
@@ -210,7 +214,7 @@ describe('plugin', () => {
           defaultDatasource: settings.name,
         }),
       });
-      await reloadDataSources();
+      await reloadDataSourceInstanceSettings();
 
       // The importer must be called again because the cache was cleared.
       await getDataSourceInstance(settings.uid);
@@ -225,7 +229,7 @@ describe('plugin', () => {
       jest.spyOn(require('../../services/backendSrv'), 'getBackendSrv').mockReturnValue({
         get: jest.fn().mockResolvedValue({ datasources: {}, defaultDatasource: '' }),
       });
-      await reloadDataSources();
+      await reloadDataSourceInstanceSettings();
 
       const result = await getDataSourceInstance('runtime-uid');
       expect(result).toBe(runtime);

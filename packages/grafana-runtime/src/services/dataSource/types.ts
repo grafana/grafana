@@ -41,4 +41,4 @@ export type GenericDataSourcePlugin = DataSourcePlugin<
 >;
 
 /** @internal */
-export type ImportDataSourceFn = (meta: DataSourcePluginMeta) => Promise<GenericDataSourcePlugin>;
+export type ImportDataSourcePluginFn = (meta: DataSourcePluginMeta) => Promise<GenericDataSourcePlugin>;

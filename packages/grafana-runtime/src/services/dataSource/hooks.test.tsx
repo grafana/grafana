@@ -6,7 +6,7 @@ import { invalidateCachedPromisesCache } from '../../utils/getCachedPromise';
 import { setBackendSrv } from '../backendSrv';
 import { setTemplateSrv, type TemplateSrv } from '../templateSrv';
 
-import { _resetForTests as resetPlugin, setDataSourceImporter } from './dataSource';
+import { _resetForTests as resetPlugin, setDataSourcePluginImporter } from './dataSource';
 import { useDataSourceInstance, useDataSourceInstanceSettingsList, useDataSourceInstanceSettings } from './hooks';
 import { _resetForTests as resetInstanceSettings, initDataSourceInstanceSettings } from './settings';
 
@@ -110,7 +110,7 @@ describe('useDataSourceInstanceSettingsList', () => {
 describe('useDataSourceInstance', () => {
   it('starts loading then resolves to a plugin instance', async () => {
     const instance = { name: 'mock-ds' };
-    setDataSourceImporter(
+    setDataSourcePluginImporter(
       jest.fn().mockResolvedValue({ DataSourceClass: jest.fn().mockReturnValue(instance), components: {} })
     );
 

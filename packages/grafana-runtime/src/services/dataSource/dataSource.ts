@@ -5,9 +5,9 @@ import { type RuntimeDataSourceRegistration } from '../dataSourceSrv';
 
 import { getCachedPlugin, setCachedPlugin, setRuntimePlugin } from './pluginCache';
 import { getDataSourceInstanceSettings, upsertRuntimeDataSourceInstanceSettings } from './settings';
-import { type ImportDataSourceFn } from './types';
+import { type ImportDataSourcePluginFn } from './types';
 
-let importDataSource: ImportDataSourceFn | undefined;
+let importDataSourcePlugin: ImportDataSourcePluginFn | undefined;
 
 /**
  * Register the data source plugin importer. Called once from application boot.
@@ -16,8 +16,8 @@ let importDataSource: ImportDataSourceFn | undefined;
  *
  * @internal
  */
-export function setDataSourceImporter(fn: ImportDataSourceFn): void {
-  importDataSource = fn;
+export function setDataSourcePluginImporter(fn: ImportDataSourcePluginFn): void {
+  importDataSourcePlugin = fn;
 }
 
 /**
@@ -46,11 +46,11 @@ export async function getDataSourceInstance(
     return cached;
   }
 
-  if (!importDataSource) {
-    throw new Error('Data source importer has not been set. Call setDataSourceImporter during application boot.');
+  if (!importDataSourcePlugin) {
+    throw new Error('Data source importer has not been set. Call setDataSourcePluginImporter during application boot.');
   }
 
-  const dsPlugin = await importDataSource(settings.meta);
+  const dsPlugin = await importDataSourcePlugin(settings.meta);
 
   // Another caller may have populated the cache while we were awaiting.
   const racedCache = getCachedPlugin(cacheUid);
@@ -118,5 +118,5 @@ function describeRef(ref: DataSourceRef | string | null | undefined): string {
  * @internal
  */
 export function _resetForTests(): void {
-  importDataSource = undefined;
+  importDataSourcePlugin = undefined;
 }

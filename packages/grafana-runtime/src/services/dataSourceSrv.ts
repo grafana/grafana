@@ -45,7 +45,7 @@ export interface DataSourceSrv {
   /**
    * Reloads the DataSourceSrv
    *
-   * @deprecated Use `reloadDataSources` from `@grafana/runtime` instead.
+   * @deprecated Use `reloadDataSourceInstanceSettings` from `@grafana/runtime` instead.
    */
   reload(): void;
 
