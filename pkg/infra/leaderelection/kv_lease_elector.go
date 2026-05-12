@@ -2,6 +2,8 @@ package leaderelection
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"os"
@@ -34,16 +36,14 @@ type KVLeaseElector struct {
 // KVLeaseElectorOption configures a KVLeaseElector.
 type KVLeaseElectorOption func(*KVLeaseElector)
 
-// WithManagerOptions passes options to the underlying lease.Manager.
-// Intended for tests that need short TTLs via lease.WithInternalMinTTL.
-func WithManagerOptions(opts ...lease.ManagerOption) KVLeaseElectorOption {
+func withManagerOptions(opts ...lease.ManagerOption) KVLeaseElectorOption {
 	return func(e *KVLeaseElector) {
 		e.managerOpts = opts
 	}
 }
 
 // NewKVLeaseElector creates a KVLeaseElector. If cfg.Identity is empty, it is
-// auto-generated from hostname:PID.
+// auto-generated from hostname:PID:nonce to avoid collisions across restarts.
 func NewKVLeaseElector(
 	kvProvider *kv.EventualKVProvider,
 	cfg Config,
@@ -60,7 +60,9 @@ func NewKVLeaseElector(
 		if err != nil {
 			hostname = "unknown"
 		}
-		identity = fmt.Sprintf("%s:%d", hostname, os.Getpid())
+		var nonce [4]byte
+		_, _ = rand.Read(nonce[:])
+		identity = fmt.Sprintf("%s:%d:%s", hostname, os.Getpid(), hex.EncodeToString(nonce[:]))
 	}
 
 	e := &KVLeaseElector{
@@ -94,6 +96,10 @@ func (k *KVLeaseElector) Run(ctx context.Context, fn func(ctx context.Context), 
 	}
 	for _, opt := range opts {
 		opt(o)
+	}
+
+	if o.onNewLeader != nil {
+		k.logger.Warn("WithOnNewLeader is not supported by KVLeaseElector and will be ignored")
 	}
 
 	store, err := k.kvProvider.Get(ctx)
@@ -154,29 +160,34 @@ func (k *KVLeaseElector) runAsLeader(
 	defer leaderCancel()
 
 	o.onStartedLeading(leaderCtx)
+	defer o.onStoppedLeading()
 
 	done := make(chan struct{})
+	defer func() {
+		leaderCancel()
+		<-done
+		if o.releaseOnCancel && ctx.Err() != nil {
+			k.releaseLease(mgr, l)
+		}
+	}()
+
 	go func() {
+		defer close(done)
 		fn(leaderCtx)
-		close(done)
 	}()
 
 	select {
 	case <-l.Lost():
-		k.logger.Warn("Lease lost")
+		k.logger.Warn("Lease lost", "identity", k.identity, "lease", k.leaseName)
 	case <-ctx.Done():
+		k.logger.Debug("Context cancelled, stopping leader work")
 	}
+}
 
-	leaderCancel()
-	o.onStoppedLeading()
-
-	if o.releaseOnCancel && ctx.Err() != nil {
-		releaseCtx, releaseCancel := context.WithTimeout(context.Background(), 5*time.Second)
-		if releaseErr := mgr.Release(releaseCtx, l); releaseErr != nil {
-			k.logger.Debug("Failed to release lease on shutdown", "error", releaseErr)
-		}
-		releaseCancel()
+func (k *KVLeaseElector) releaseLease(mgr *lease.Manager, l *lease.Lease) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := mgr.Release(ctx, l); err != nil && !errors.Is(err, lease.ErrLeaseLost) {
+		k.logger.Warn("Failed to release lease on shutdown", "error", err)
 	}
-
-	<-done
 }
