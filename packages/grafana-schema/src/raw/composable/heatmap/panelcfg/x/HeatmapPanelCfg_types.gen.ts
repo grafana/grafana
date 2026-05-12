@@ -10,7 +10,7 @@
 
 import * as ui from '@grafana/schema';
 
-export const pluginVersion = "11.6.15";
+export const pluginVersion = "11.6.16";
 
 /**
  * Controls the color mode of the heatmap
