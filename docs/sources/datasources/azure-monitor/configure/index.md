@@ -20,7 +20,7 @@ labels:
 menuTitle: Configure
 title: Configure the Azure Monitor data source
 weight: 200
-last_reviewed: 2025-12-04
+review_date: 2026-05-12
 ---
 
 # Configure the Azure Monitor data source
@@ -353,8 +353,8 @@ datasources:
 
 Forward the logged-in Grafana user's Azure credentials to the data source for user-level access control.
 
-{{< admonition type="warning" >}}
-Current User authentication is an [experimental feature](/docs/release-life-cycle/). Engineering and on-call support is not available. Documentation is limited. No SLA is provided. Contact Grafana Support to enable this feature in Grafana Cloud.
+{{< admonition type="note" >}}
+Current User authentication is a [generally available feature](/docs/release-life-cycle/). Contact Grafana Support to enable this feature in Grafana Cloud.
 {{< /admonition >}}
 
 #### Current User prerequisites
@@ -480,6 +480,21 @@ If you're using Grafana Cloud and need to connect to Azure resources in a privat
 1. Click **Manage private data source connect** to view your PDC connection details.
 
 For more information, refer to [Private data source connect](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) and [Configure PDC](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc).
+
+### Configure exemplars
+
+You can link Azure Monitor metrics to traces in a tracing data source by configuring exemplars. This lets you navigate from a metric data point directly to related traces for deeper investigation.
+
+To configure exemplars:
+
+1. Open your Azure Monitor data source settings.
+1. Scroll to the **Exemplar** configuration section.
+1. Click **Add**.
+1. Select a **Data source** from the drop-down. The data source must be a tracing backend such as Tempo, Zipkin, Jaeger, or X-Ray.
+1. (Optional) Configure a **URL** label to customize the link.
+1. Click **Save & test**.
+
+After configuration, exemplar links appear on supported Azure Monitor metrics visualizations, allowing you to jump to the corresponding trace in your tracing data source.
 
 ## Supported cloud names
 

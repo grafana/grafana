@@ -22,12 +22,26 @@ labels:
 menuTitle: Azure Monitor
 title: Azure Monitor data source
 weight: 300
-last_reviewed: 2025-12-04
+review_date: 2026-05-12
 ---
 
 # Azure Monitor data source
 
 The Azure Monitor data source plugin allows you to query and visualize data from Azure Monitor, the Azure service to maximize the availability and performance of applications and services in the Azure Cloud.
+
+## Supported features
+
+| Feature     | Supported |
+| ----------- | --------- |
+| Metrics     | Yes       |
+| Logs        | Yes       |
+| Traces      | Yes       |
+| Alerting    | Yes       |
+| Annotations | Yes       |
+
+{{< admonition type="note" >}}
+The Azure Monitor data source requires Grafana 12.3 or later.
+{{< /admonition >}}
 
 ## Supported Azure clouds
 
@@ -70,10 +84,40 @@ After you have configured the Azure Monitor data source, you can:
 
 ## Pre-built dashboards
 
-The Azure Monitor plugin includes the following pre-built dashboards:
+The Azure Monitor plugin includes pre-built dashboards organized by category:
 
-- **Azure Monitor Overview** - Displays key metrics across your Azure subscriptions and resources.
-- **Azure Storage Account** - Shows storage account metrics including availability, latency, and transactions.
+**Infrastructure monitoring:**
+
+- Azure / Infrastructure / Apps Monitoring
+- Azure / Infrastructure / Compute Monitoring
+- Azure / Infrastructure / Data Monitoring
+- Azure / Infrastructure / Network Monitoring
+- Azure / Infrastructure / Storage and Key Vaults Monitoring
+
+**Azure Insights:**
+
+- Azure / Insights / Applications
+- Azure / Insights / Applications / Performance / Operations
+- Azure / Insights / Applications / Performance / Dependencies
+- Azure / Insights / Applications / Failures / Operations
+- Azure / Insights / Applications / Failures / Dependencies
+- Azure / Insights / Applications / Failures / Exceptions
+- Azure / Insights / Applications Test Availability Geo Map
+- Azure / Insights / CosmosDB
+- Azure / Insights / Data Explorer Clusters
+- Azure / Insights / Key Vaults
+- Azure / Insights / Networks
+- Azure / Insights / SQL Database
+- Azure / Insights / Storage Accounts
+- Azure / Insights / Virtual Machines by Resource Group
+- Azure / Insights / Virtual Machines by Workspace
+
+**Other:**
+
+- Azure / Alert Consumption
+- Azure / Azure PostgreSQL / Flexible Server Monitoring
+- Azure Monitor / Container Insights / Syslog
+- Azure / Resources Overview
 
 To import a pre-built dashboard:
 
@@ -82,8 +126,16 @@ To import a pre-built dashboard:
 1. Click the **Dashboards** tab.
 1. Click **Import** next to the dashboard you want to use.
 
+## Plugin updates
+
+Always ensure that your plugin version is up-to-date so you have access to all current features and improvements. Navigate to **Plugins and data** > **Plugins** to check for updates. Grafana recommends upgrading to the latest Grafana version, and this applies to plugins as well.
+
+{{< admonition type="note" >}}
+Plugins are automatically updated in Grafana Cloud.
+{{< /admonition >}}
+
 ## Related resources
 
-- [Azure Monitor documentation](https://docs.microsoft.com/en-us/azure/azure-monitor/)
-- [Kusto Query Language (KQL) reference](https://docs.microsoft.com/en-us/azure/data-explorer/kusto/query/)
+- [Azure Monitor documentation](https://learn.microsoft.com/en-us/azure/azure-monitor/)
+- [Kusto Query Language (KQL) reference](https://learn.microsoft.com/en-us/azure/data-explorer/kusto/query/)
 - [Grafana community forum](https://community.grafana.com/)

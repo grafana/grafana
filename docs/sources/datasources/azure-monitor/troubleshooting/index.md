@@ -18,7 +18,7 @@ labels:
 menuTitle: Troubleshooting
 title: Troubleshoot Azure Monitor data source issues
 weight: 500
-last_reviewed: 2025-12-04
+review_date: 2026-05-12
 ---
 
 # Troubleshoot Azure Monitor data source issues
@@ -103,6 +103,23 @@ These errors typically occur when setting up the data source or when authenticat
 3. Verify the federated credential is configured in Azure.
 4. Ensure the token path is accessible to the Grafana pod.
 5. Check the workload identity webhook is running in the cluster.
+
+### Client certificate authentication not working
+
+**Symptoms:**
+
+- Authentication fails when using App Registration with client certificate
+- Error references invalid certificate or signature validation failure
+
+**Possible causes and solutions:**
+
+| Cause                                        | Solution                                                                                                                                                          |
+| -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Certificate has expired                      | Check the certificate expiration date in Azure Portal under **App registrations** > your app > **Certificates & secrets**. Upload a new certificate if expired.  |
+| Wrong certificate format                     | Verify you're using the correct format (PEM or PFX) and that the content matches what you selected. PEM requires separate certificate and private key fields.     |
+| PFX password is incorrect                    | For encrypted PFX certificates, verify the password is correct.                                                                                                   |
+| Private key doesn't match the certificate    | Ensure the private key corresponds to the certificate uploaded to Azure. Regenerate the certificate and key pair if needed.                                       |
+| Certificate not uploaded to Azure             | Verify the public certificate is uploaded to the app registration under **Certificates & secrets** > **Certificates** in the Azure Portal.                       |
 
 ## Query errors
 
@@ -237,6 +254,44 @@ These errors are specific to the Traces query type.
 3. Ensure the Operation ID is correct (copy directly from another trace or log).
 4. Verify the identity has access to the Application Insights resource.
 
+## Basic Logs errors
+
+These errors are specific to Basic Logs queries.
+
+### Basic Logs toggle is not available
+
+**Symptoms:**
+
+- The **Analytics / Basic** toggle doesn't appear in the Logs query editor
+- Unable to switch to Basic Logs mode
+
+**Solutions:**
+
+1. Verify **Enable Basic Logs** is toggled on in the data source configuration. Refer to [Enable Basic Logs](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/configure/#enable-basic-logs).
+1. Basic Logs isn't available when creating alert rules. If you're in the alerting UI, use Analytics mode instead.
+
+### Basic Logs query returns errors
+
+**Symptoms:**
+
+- Query fails with "BadArgumentError" or similar errors
+- Query returns unexpected results
+
+**Solutions:**
+
+1. Ensure you've selected only a single workspace resource. Basic Logs doesn't support multi-resource queries.
+1. Remove any time-range filters from the query itself. Basic Logs always uses the dashboard time range.
+1. Verify the table you're querying is configured with the Basic or Auxiliary log plan in Azure. Not all tables support Basic Logs.
+1. Check that your KQL query uses only [supported operators](https://learn.microsoft.com/en-us/azure/azure-monitor/logs/basic-logs-query?tabs=portal-1#limitations).
+
+### Unexpected costs from Basic Logs
+
+**Solutions:**
+
+1. Basic Logs queries are billed per query by Azure, separate from Grafana costs. Review the [Azure pricing documentation](https://learn.microsoft.com/en-us/azure/azure-monitor/logs/basic-logs-query?tabs=portal-1).
+1. Check your query frequency. Dashboard auto-refresh and variable changes can trigger repeated queries.
+1. Consider switching infrequently queried tables back to Analytics mode to avoid per-query charges.
+
 ## Template variable errors
 
 For detailed troubleshooting of template variables, refer to the [template variables troubleshooting section](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/template-variables/).
@@ -289,14 +344,29 @@ These errors indicate problems with network connectivity between Grafana and Azu
 2. Verify corporate proxy isn't intercepting HTTPS traffic.
 3. Check that required CA certificates are installed on the Grafana server.
 
+## Enable debug logging
+
+To capture detailed error information for troubleshooting Azure Monitor issues:
+
+1. Set the Grafana log level to `debug` in the configuration file:
+
+   ```ini
+   [log]
+   level = debug
+   ```
+
+1. Restart Grafana for the change to take effect.
+1. Reproduce the issue and review the logs at `/var/log/grafana/grafana.log` (or your configured log location).
+1. Look for entries containing `azuremonitor` or `azure` for Azure Monitor-specific request and response details.
+1. Reset the log level to `info` after troubleshooting to avoid excessive log volume.
+
 ## Get additional help
 
-If you've tried the solutions above and still encounter issues:
+If you've tried the solutions in this document and still encounter issues:
 
 1. Check the [Grafana community forums](https://community.grafana.com/) for similar issues.
 1. Review the [Azure Monitor data source GitHub issues](https://github.com/grafana/grafana/issues) for known bugs.
-1. Enable debug logging in Grafana to capture detailed error information.
-1. Contact Grafana Support if you're an Enterprise, Cloud Pro or Cloud Contracted user.
+1. Contact Grafana Support if you're an Enterprise, Cloud Pro, or Cloud Contracted user.
 1. When reporting issues, include:
    - Grafana version
    - Error messages (redact sensitive information)

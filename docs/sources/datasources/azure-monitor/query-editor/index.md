@@ -21,7 +21,7 @@ labels:
 menuTitle: Query editor
 title: Azure Monitor query editor
 weight: 300
-last_reviewed: 2025-12-04
+review_date: 2026-05-12
 ---
 
 # Azure Monitor query editor
@@ -160,7 +160,7 @@ When the feature is enabled, a **Builder / Code** toggle appears in the Logs que
 - **Builder**: Use the visual interface to select tables, columns, filters, and aggregations. The builder generates the KQL query for you.
 - **Code**: Write KQL queries directly. Use this mode for complex queries that require full KQL capabilities.
 
-New queries default to Builder mode. Existing queries that were created with raw KQL remain in Code mode.
+New queries default to Builder mode. Existing queries that were created with raw KQL remain in Code mode. When you switch to Builder mode, the time-range setting automatically changes to **Dashboard** because the builder manages time filtering for you.
 
 {{< admonition type="note" >}}
 You can switch from Builder to Code mode at any time to view or edit the generated KQL. However, switching from Code to Builder mode may not preserve complex queries that can't be represented in the builder interface.
@@ -186,16 +186,23 @@ You can also augment queries by using [template variables](https://grafana.com/d
 
 **To create a Basic Logs query:**
 
-1. Ensure that the data source has the `Enable Basic Logs` toggle enabled.
+1. Ensure that the data source has the **Enable Basic Logs** toggle enabled in the [data source configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/configure/#enable-basic-logs).
 1. In a Grafana panel, select the **Azure Monitor** data source.
 1. Select the **Logs** service.
-1. Select a resource to query. Multiple resources can be selected as long as they are of the same type.
-1. Switch the `Logs` toggle from `Analytics` to `Basic`. A modal will display to notify users of potential additional costs.
-   {{< admonition type="note" >}}
-   Basic Logs queries do not support time-ranges specified in the query. The time-range will be hardcoded to the dashboard time-range. There are also other query limitations. See the
-   [documentation for details.](https://learn.microsoft.com/en-us/azure/azure-monitor/logs/basic-logs-query?tabs=portal-1#limitations)
-   {{< /admonition >}}
+1. Select a single resource to query. Basic Logs queries only support a single workspace resource.
+1. Switch the **Logs** toggle from **Analytics** to **Basic**. A confirmation dialog displays to notify you of potential additional costs.
 1. Enter your KQL query.
+
+{{< admonition type="caution" >}}
+Basic Logs queries are billed on a per-query basis by Azure. Review the [Azure pricing documentation](https://learn.microsoft.com/en-us/azure/azure-monitor/logs/basic-logs-query?tabs=portal-1) before using this feature.
+{{< /admonition >}}
+
+Basic Logs queries have the following restrictions:
+
+- **Time range:** The dashboard time range is always used. You can't specify a time range within the query itself.
+- **Single resource:** Only a single Log Analytics workspace can be queried. Multi-resource selection isn't supported.
+- **Alerting:** Basic Logs queries aren't available when creating alert rules.
+- **KQL limitations:** Some KQL operators aren't supported. Refer to the [Azure documentation](https://learn.microsoft.com/en-us/azure/azure-monitor/logs/basic-logs-query?tabs=portal-1#limitations) for a full list of limitations.
 
 You can also augment queries by using [template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/template-variables/).
 

@@ -23,7 +23,7 @@ labels:
 menuTitle: Template variables
 title: Azure Monitor template variables
 weight: 400
-last_reviewed: 2025-12-04
+review_date: 2026-05-12
 ---
 
 # Azure Monitor template variables
@@ -64,9 +64,9 @@ The Azure Monitor data source provides the following query types for template va
 | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | **Subscriptions**       | Returns a list of Azure subscriptions accessible to the configured credentials.                                                        |
 | **Resource Groups**     | Returns resource groups for a specified subscription. Supports multi-value selection.                                                  |
-| **Namespaces**          | Returns metric namespaces for the specified subscription. If a resource group is specified, returns only namespaces within that group. |
-| **Regions**             | Returns Azure regions available for the specified subscription.                                                                        |
-| **Resource Names**      | Returns resource names for a specified subscription, resource group, and namespace. Supports multi-value selection.                    |
+| **Namespaces**          | Returns metric namespaces for the specified subscription. If a resource group is specified, returns only namespaces within that group.  |
+| **Regions**             | Returns Azure regions available for the specified subscription.                                                                         |
+| **Resource Names**      | Returns resource names for a specified subscription, resource group, and namespace. Supports multi-value selection.                     |
 | **Metric Names**        | Returns available metric names for a specified resource.                                                                               |
 | **Workspaces**          | Returns Log Analytics workspaces for the specified subscription.                                                                       |
 | **Logs**                | Executes a KQL query and returns the results as variable values. See [Create a Logs variable](#create-a-logs-variable).                |
