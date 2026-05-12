@@ -7688,7 +7688,7 @@ exports[`XYChartPanel2 Color by value renders fill/stroke 1`] = `
 ]
 `;
 
-exports[`XYChartPanel2 Line path stroke (scatter linePath + lineStyle) strokes connect line with dash/dot lineStyle after points (scatter ~185–199) 1`] = `
+exports[`XYChartPanel2 Line path stroke strokes connect line with dash/dot lineStyle after points 1`] = `
 [
   {
     "props": {},
@@ -7984,7 +7984,7 @@ exports[`XYChartPanel2 Line path stroke (scatter linePath + lineStyle) strokes c
 ]
 `;
 
-exports[`XYChartPanel2 Square point shape (fillRect / strokeRect) renders points as squares when y field uses PointShape.Square 1`] = `
+exports[`XYChartPanel2 Square point shape renders points as squares when y field uses PointShape.Square 1`] = `
 [
   {
     "props": {},

@@ -58,55 +58,8 @@ const defaultFrame = toDataFrame({
   name: 'A',
   fields: [
     {
-      config: {
-        custom: {
-          show: 'points',
-          pointSize: {
-            fixed: 32,
-          },
-          pointShape: 'circle',
-          pointStrokeWidth: 1,
-          fillOpacity: 50,
-          axisPlacement: 'auto',
-          axisLabel: '',
-          axisColorMode: 'text',
-          axisBorderShow: false,
-          scaleDistribution: {
-            type: 'linear',
-          },
-          axisCenteredZero: false,
-          hideFrom: {
-            legend: false,
-            tooltip: false,
-            viz: false,
-          },
-        },
-        fieldMinMax: false,
-        color: {
-          mode: 'fixed',
-          fixedColor: 'blue',
-        },
-        mappings: [],
-        thresholds: {
-          mode: 'absolute',
-          steps: [
-            {
-              value: null,
-              color: 'green',
-            },
-            {
-              value: 80,
-              color: 'red',
-            },
-          ],
-        },
-      },
       name: 'x',
       values: [1, 3, 5],
-      typeInfo: {
-        frame: 'int64',
-        nullable: true,
-      },
     },
     {
       config: {
@@ -118,38 +71,10 @@ const defaultFrame = toDataFrame({
           pointShape: 'circle',
           pointStrokeWidth: 1,
           fillOpacity: 50,
-          axisPlacement: 'auto',
-          axisLabel: '',
-          axisColorMode: 'text',
-          axisBorderShow: false,
-          scaleDistribution: {
-            type: 'linear',
-          },
-          axisCenteredZero: false,
-          hideFrom: {
-            legend: false,
-            tooltip: false,
-            viz: false,
-          },
         },
-        fieldMinMax: false,
         color: {
           mode: 'fixed',
           fixedColor: 'blue',
-        },
-        mappings: [],
-        thresholds: {
-          mode: 'absolute',
-          steps: [
-            {
-              value: null,
-              color: 'green',
-            },
-            {
-              value: 80,
-              color: 'red',
-            },
-          ],
         },
       },
       name: 'y',
@@ -169,46 +94,14 @@ const defaultFrame = toDataFrame({
           pointShape: 'circle',
           pointStrokeWidth: 1,
           fillOpacity: 50,
-          axisPlacement: 'auto',
-          axisLabel: '',
-          axisColorMode: 'text',
-          axisBorderShow: false,
-          scaleDistribution: {
-            type: 'linear',
-          },
-          axisCenteredZero: false,
-          hideFrom: {
-            legend: false,
-            tooltip: false,
-            viz: false,
-          },
         },
-        fieldMinMax: false,
         color: {
           mode: 'fixed',
           fixedColor: 'blue',
         },
-        mappings: [],
-        thresholds: {
-          mode: 'absolute',
-          steps: [
-            {
-              value: null,
-              color: 'green',
-            },
-            {
-              value: 80,
-              color: 'red',
-            },
-          ],
-        },
       },
       name: 'z',
       values: [3, 5, 7],
-      typeInfo: {
-        frame: 'int64',
-        nullable: true,
-      },
     },
   ],
 });
@@ -480,24 +373,21 @@ describe('XYChartPanel2', () => {
   });
 
   describe('Canvas: x, y (two numeric fields)', () => {
-    it.each<[string, Partial<Options>]>([['auto mapping (single Y series)', {}]])(
-      '%s',
-      async (_label, optionsPartial) => {
-        setUp({ options: optionsPartial }, [xyOnlyFrame]);
-        await assertCanvasOutput();
-      }
-    );
+    it('auto mapping (single Y series)', async () => {
+      setUp(undefined, [xyOnlyFrame]);
+      await assertCanvasOutput();
+    });
   });
 
-  describe('Square point shape (fillRect / strokeRect)', () => {
+  describe('Square point shape', () => {
     it('renders points as squares when y field uses PointShape.Square', async () => {
       setUp(undefined, [xySquareFrame]);
       await assertCanvasOutput();
     });
   });
 
-  describe('Line path stroke (scatter linePath + lineStyle)', () => {
-    it('strokes connect line with dash/dot lineStyle after points (scatter ~185–199)', async () => {
+  describe('Line path stroke', () => {
+    it('strokes connect line with dash/dot lineStyle after points', async () => {
       setUp(undefined, [xyLineDashFrame]);
       await assertCanvasOutput();
     });
