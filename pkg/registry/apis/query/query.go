@@ -189,9 +189,8 @@ func (b *QueryAPIBuilder) QueryDatasources(w http.ResponseWriter, httpreq *http.
 			} else if strings.Contains(err.Error(), "expression request error") {
 				connectLogger.Error("Error calling TransformData in an expression", "err", err)
 				errorDataResponse = backend.ErrDataResponseWithSource(backend.StatusBadRequest, backend.ErrorSourceDownstream, err.Error())
-			} else if errors.Is(err, context.Canceled) || errors.Is(ctx.Err(), context.Canceled) ||
-				errors.Is(err, context.DeadlineExceeded) || errors.Is(ctx.Err(), context.DeadlineExceeded) {
-				// Client-initiated cancellation or our own timeout — never the apiserver's fault.
+			} else if errors.Is(err, context.Canceled) || errors.Is(ctx.Err(), context.Canceled) {
+				// Client-initiated cancellation — never the apiserver's fault.
 				// Tag downstream + status 499 so the response body stays a QueryDataResponse and
 				// errhttp.Write doesn't fall back to errutil.Internal (500).
 				errorDataResponse = backend.ErrDataResponseWithSource(499, backend.ErrorSourceDownstream, err.Error())
