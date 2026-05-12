@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 )
 
@@ -51,6 +52,8 @@ var (
 	// already been released, or was superseded by another holder. When
 	// auto-renewal is enabled, this error also triggers the Lost() channel.
 	ErrLeaseLost = errors.New("lease lost")
+
+	log = logging.DefaultLogger.With("logger", "lease-manager")
 )
 
 type Lease struct {
@@ -334,20 +337,25 @@ func (m *Manager) autoRenewLoop(lease *Lease, expiry time.Time, ttl, renewInterv
 	defer ticker.Stop()
 
 	for {
+		log := log.With("lease", lease.name, "holder", lease.holder, "generation", lease.generation)
+
 		select {
 		case <-lease.stop:
 			return
 		case <-ticker.C:
 			newExpiry, err := m.renewOnce(lease, ttl, renewInterval)
 			if errors.Is(err, ErrLeaseLost) {
+				log.Warn("lease lost to another holder during renewal", "err", err)
 				lease.notifyLoss()
 				return
 			}
 			if err != nil {
 				if time.Now().After(expiry) {
+					log.Error("lease lost: renewal retries exhausted before expiry", "err", err)
 					lease.notifyLoss()
 					return
 				}
+				log.Warn("lease renewal failed, will retry", "time_until_expiry", time.Until(expiry), "err", err)
 				continue
 			}
 			expiry = newExpiry
