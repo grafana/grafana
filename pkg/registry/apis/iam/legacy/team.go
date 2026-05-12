@@ -397,6 +397,12 @@ type UpdateTeamCommand struct {
 	IsProvisioned bool
 	ExternalUID   string
 
+	// PreviousUpdated is the team row's `updated` value the caller observed
+	// when it built this Update. When set, the SQL UPDATE is gated on
+	// `updated = ?`; a stale match returns ErrTeamUpdateConflict. Zero
+	// means no gating (legacy callers).
+	PreviousUpdated legacysql.DBTime
+
 	// MemberDeletes / MemberUpdates / MemberCreates reconcile the team's
 	// members in the same SQL transaction as the team row update. Callers
 	// must pre-resolve both TeamID and UserID on MemberCreates entries;
@@ -404,6 +410,12 @@ type UpdateTeamCommand struct {
 	MemberDeletes []DeleteTeamMemberCommand
 	MemberUpdates []UpdateTeamMemberCommand
 	MemberCreates []CreateTeamMemberCommand
+}
+
+// HasPreviousUpdated drives the conditional `AND updated = ?` clause in
+// update_team.sql.
+func (c UpdateTeamCommand) HasPreviousUpdated() bool {
+	return !c.PreviousUpdated.IsZero()
 }
 
 type UpdateTeamResult struct {
@@ -457,8 +469,20 @@ func (s *legacySQLStore) UpdateTeam(ctx context.Context, ns claims.NamespaceInfo
 		if err != nil {
 			return fmt.Errorf("failed to execute team update template %q: %w", sqlUpdateTeamTemplate.Name(), err)
 		}
-		if _, err := st.Exec(ctx, teamQuery, teamReq.GetArgs()...); err != nil {
+		res, err := st.Exec(ctx, teamQuery, teamReq.GetArgs()...)
+		if err != nil {
 			return fmt.Errorf("failed to update team: %w", err)
+		}
+		if cmd.HasPreviousUpdated() {
+			// 0 rows after a gated UPDATE means the caller's RV is stale
+			// (team existence is verified by the GetTeamInternalID pre-flight).
+			n, rowsErr := res.RowsAffected()
+			if rowsErr != nil {
+				return fmt.Errorf("rows affected: %w", rowsErr)
+			}
+			if n == 0 {
+				return team.ErrTeamUpdateConflict
+			}
 		}
 
 		if len(cmd.MemberDeletes) > 0 {

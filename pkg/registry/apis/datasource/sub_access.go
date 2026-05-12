@@ -15,7 +15,6 @@ import (
 
 type subAccessREST struct {
 	builder *DataSourceAPIBuilder
-	getter  rest.Getter
 }
 
 var _ = rest.Connecter(&subAccessREST{})
@@ -25,7 +24,7 @@ func (r *subAccessREST) New() runtime.Object {
 }
 
 func (r *subAccessREST) Destroy() {
-	// no-op implemenation needed for rest.Storage interface.
+	// no-op implementation needed for rest.Storage interface.
 }
 
 func (r *subAccessREST) ConnectMethods() []string {

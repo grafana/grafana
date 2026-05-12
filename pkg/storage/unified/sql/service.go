@@ -180,8 +180,7 @@ func ProvideUnifiedStorageGrpcService(cfg *setting.Cfg,
 		s.subservices = append(s.subservices, s.queue, s.scheduler)
 	}
 
-	err := s.initializeSubservicesManager()
-	if err != nil {
+	if err := s.initializeSubservicesManager(); err != nil {
 		return nil, fmt.Errorf("failed to initialize subservices manager: %w", err)
 	}
 

@@ -1,9 +1,9 @@
-import { getByLabelText, render, screen, userEvent } from 'test/test-utils';
+import { act, getByLabelText, render, screen, userEvent } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { config, setBackendSrv } from '@grafana/runtime';
+import { setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
-import { getFolderFixtures } from '@grafana/test-utils/unstable';
+import { getFolderFixtures, setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import * as useFolderReadmeModule from 'app/features/provisioning/hooks/useFolderReadme';
@@ -187,19 +187,15 @@ describe('browse-dashboards BrowseView', () => {
       });
     }
 
-    let originalFlag: boolean | undefined;
-
-    beforeEach(() => {
-      originalFlag = config.featureToggles.provisioningReadmes;
-    });
-
     afterEach(() => {
-      config.featureToggles.provisioningReadmes = originalFlag;
+      act(() => {
+        setTestFlags({});
+      });
       jest.restoreAllMocks();
     });
 
     it('appends the README panel as the last row when the folder is provisioned and has children', async () => {
-      config.featureToggles.provisioningReadmes = true;
+      setTestFlags({ 'provisioning.readmes': true });
       mockReadme();
 
       render(
@@ -216,7 +212,7 @@ describe('browse-dashboards BrowseView', () => {
     });
 
     it('does not append the README row when the toggle is off', async () => {
-      config.featureToggles.provisioningReadmes = false;
+      setTestFlags({ 'provisioning.readmes': false });
       mockReadme();
 
       render(
@@ -234,7 +230,7 @@ describe('browse-dashboards BrowseView', () => {
     });
 
     it('does not append the README row when the folder is not provisioned', async () => {
-      config.featureToggles.provisioningReadmes = true;
+      setTestFlags({ 'provisioning.readmes': true });
       mockReadme();
 
       render(<BrowseView permissions={mockPermissions} folderUID={folderA.item.uid} width={WIDTH} height={HEIGHT} />);
@@ -244,7 +240,7 @@ describe('browse-dashboards BrowseView', () => {
     });
 
     it('does not append the README row when there is no folderUID (root)', async () => {
-      config.featureToggles.provisioningReadmes = true;
+      setTestFlags({ 'provisioning.readmes': true });
       mockReadme();
 
       render(
@@ -262,7 +258,7 @@ describe('browse-dashboards BrowseView', () => {
     });
 
     it('does not append the README row for empty folders', async () => {
-      config.featureToggles.provisioningReadmes = true;
+      setTestFlags({ 'provisioning.readmes': true });
       mockReadme();
 
       render(

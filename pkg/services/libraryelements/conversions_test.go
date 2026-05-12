@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/utils/ptr"
 
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
@@ -66,14 +65,14 @@ func TestConversionsCommands(t *testing.T) {
 				},
 			},
 			expectedCreate: &model.CreateLibraryElementCommand{
-				FolderUID: ptr.To("aaa"),
+				FolderUID: new("aaa"),
 				UID:       "uid",
 				Name:      "title",
 				Kind:      1,
 				Model:     json.RawMessage(`{"type":"timeseries","pluginVersion":"1.2.3","title":"title","panelTitle":"panel title","description":"descr","options":{"hello":"options"},"fieldConfig":{"hello":"fieldConfig"},"datasource":{"type":"ttt","uid":"uid","apiVersion":"v0alpha1"},"gridPos":{"w":1,"h":2,"x":3,"y":4},"transparent":true,"links":[{"link1":"hello"}]}`),
 			},
 			expectedPatch: &model.PatchLibraryElementCommand{
-				FolderUID: ptr.To("aaa"),
+				FolderUID: new("aaa"),
 				UID:       "uid",
 				Name:      "title",
 				Kind:      1,

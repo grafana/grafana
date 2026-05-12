@@ -35,7 +35,7 @@ function setMetas(metas: PluginMetasResponse) {
 }
 
 async function initAppPluginMetas(): Promise<void> {
-  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.UseMTPlugins, false)) {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)) {
     // eslint-disable-next-line @grafana/no-config-apps
     setApps(config.apps);
     return;

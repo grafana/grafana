@@ -2,6 +2,7 @@ package team
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"sync"
 	"testing"
@@ -550,5 +551,209 @@ func doTeamSpecMembersTests(t *testing.T, helper *apis.K8sTestHelper) {
 		require.Len(t, members, 1)
 		m := members[0].(map[string]interface{})
 		require.Equal(t, editorUID, m["name"])
+	})
+
+	// /teams/{name}/addMember and /teams/{name}/removeMember target a single
+	// team_member row per call, avoiding the stale-snapshot full-replace
+	// hazard the PUT path has. This test covers the happy path (insert /
+	// hydrate / delete) and the idempotency contract: addMember returns
+	// 201 on a fresh insert and 200 on a re-add, removeMember returns 200
+	// whether or not the row existed.
+	t.Run("addMember/removeMember subresources are atomic and idempotent", func(t *testing.T) {
+		ctx := context.Background()
+		obj := newTeamWithMembers("team-members-subres-", []map[string]interface{}{})
+		created, err := teamClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = teamClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{}) })
+		teamUID := created.GetName()
+		namespace := helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID())
+
+		addPath := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/teams/%s/addmember", namespace, teamUID)
+		removePath := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/teams/%s/removemember", namespace, teamUID)
+		addBody := func(uid, perm string, external bool) []byte {
+			b, err := json.Marshal(map[string]interface{}{"name": uid, "permission": perm, "external": external})
+			require.NoError(t, err)
+			return b
+		}
+		removeBody := func(uid string) []byte {
+			b, err := json.Marshal(map[string]interface{}{"name": uid})
+			require.NoError(t, err)
+			return b
+		}
+
+		// addMember inserts the row; Get on the parent Team hydrates it
+		// back through the same Spec.Members slice the PUT path uses.
+		// First call returns 201 Created (fresh insert).
+		rsp := apis.DoRequest(helper, apis.RequestParams{
+			User: helper.Org1.Admin, Method: "POST", Path: addPath, Body: addBody(editorUID, "member", true),
+		}, &map[string]interface{}{})
+		require.Equal(t, 201, rsp.Response.StatusCode, "first addMember should be 201 Created, got %d (%s)", rsp.Response.StatusCode, string(rsp.Body))
+
+		fetched, err := teamClient.Resource.Get(ctx, teamUID, metav1.GetOptions{})
+		require.NoError(t, err)
+		members, _, _ := unstructured.NestedSlice(fetched.Object, "spec", "members")
+		require.Len(t, members, 1)
+		require.Equal(t, editorUID, members[0].(map[string]interface{})["name"])
+
+		// Re-adding the same user is an idempotent no-op: the handler
+		// short-circuits before the Update and returns 200 OK (vs the
+		// fresh-insert 201) so a converged-but-resynced run doesn't
+		// surface as an error.
+		rsp = apis.DoRequest(helper, apis.RequestParams{
+			User: helper.Org1.Admin, Method: "POST", Path: addPath, Body: addBody(editorUID, "member", true),
+		}, &map[string]interface{}{})
+		require.Equal(t, 200, rsp.Response.StatusCode, "second addMember should be idempotent 200, got %d (%s)", rsp.Response.StatusCode, string(rsp.Body))
+
+		// removeMember deletes the row.
+		rsp = apis.DoRequest(helper, apis.RequestParams{
+			User: helper.Org1.Admin, Method: "POST", Path: removePath, Body: removeBody(editorUID),
+		}, &map[string]interface{}{})
+		require.Equal(t, 200, rsp.Response.StatusCode, "removeMember response: %s", string(rsp.Body))
+
+		fetched, err = teamClient.Resource.Get(ctx, teamUID, metav1.GetOptions{})
+		require.NoError(t, err)
+		members, _, _ = unstructured.NestedSlice(fetched.Object, "spec", "members")
+		require.Empty(t, members)
+
+		// removeMember on an absent membership is a no-op success
+		// (removed=false), not 404, so concurrent removeMember calls
+		// from peer instances don't surface as errors that increment
+		// the failure counter.
+		rsp = apis.DoRequest(helper, apis.RequestParams{
+			User: helper.Org1.Admin, Method: "POST", Path: removePath, Body: removeBody(editorUID),
+		}, &map[string]interface{}{})
+		require.Equal(t, 200, rsp.Response.StatusCode, "second removeMember should be 200 idempotent, got %d (%s)", rsp.Response.StatusCode, string(rsp.Body))
+	})
+
+	// Concurrent /addMember of *different* users on the same team is the
+	// scenario that silently lost members through the full PUT path. With
+	// the subresource each call inserts exactly one team_member row and
+	// the full-list semantics never come into play, so both members must
+	// always end up on the team. The handler returns 409 Conflict on
+	// RV-collision (no in-handler retry), so callers must retry.
+	t.Run("concurrent addMember of different users preserves every membership", func(t *testing.T) {
+		ctx := context.Background()
+		obj := newTeamWithMembers("team-members-subres-race-", []map[string]interface{}{})
+		created, err := teamClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = teamClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{}) })
+		teamUID := created.GetName()
+		namespace := helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID())
+		addPath := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/teams/%s/addmember", namespace, teamUID)
+
+		members := []string{editorUID, viewerUID}
+		var wg sync.WaitGroup
+		barrier := make(chan struct{})
+		results := make([]struct {
+			finalCode   int
+			sawConflict bool
+			attempts    int
+		}, len(members))
+		for i, uid := range members {
+			wg.Add(1)
+			go func(i int, uid string) {
+				defer wg.Done()
+				<-barrier
+				body, err := json.Marshal(map[string]interface{}{"name": uid, "permission": "member", "external": true})
+				require.NoError(t, err)
+				// Retry on 409 with a small bounded budget.
+				const maxAttempts = 8
+				var code int
+				for attempt := 1; attempt <= maxAttempts; attempt++ {
+					rsp := apis.DoRequest(helper, apis.RequestParams{
+						User: helper.Org1.Admin, Method: "POST", Path: addPath, Body: body,
+					}, &map[string]interface{}{})
+					code = rsp.Response.StatusCode
+					results[i].attempts = attempt
+					if code != 409 {
+						break
+					}
+					results[i].sawConflict = true
+					time.Sleep(time.Duration(attempt) * 25 * time.Millisecond)
+				}
+				results[i].finalCode = code
+			}(i, uid)
+		}
+		close(barrier)
+		wg.Wait()
+		for i, r := range results {
+			uid := ""
+			if i < len(members) {
+				uid = members[i]
+			}
+			require.Truef(t, r.finalCode == 200 || r.finalCode == 201,
+				"goroutine %d (uid=%s) addMember should converge to 200/201 after retries, got %d in %d attempts",
+				i, uid, r.finalCode, r.attempts)
+		}
+
+		fetched, err := teamClient.Resource.Get(ctx, teamUID, metav1.GetOptions{})
+		require.NoError(t, err)
+		final, _, _ := unstructured.NestedSlice(fetched.Object, "spec", "members")
+		names := make([]string, 0, len(final))
+		for _, raw := range final {
+			names = append(names, raw.(map[string]interface{})["name"].(string))
+		}
+		require.ElementsMatch(t, members, names, "no member should be silently lost")
+	})
+
+	// Cross-instance writers race here: instance A and instance B both Get
+	// the team at the same RV, each appends a different user to its own
+	// stale Spec.Members snapshot, and both submit Update. Without an RV
+	// precondition, B's full-replace Update silently drops the user A just
+	// added because that user isn't on B's submitted list.
+	//
+	// In a single-process integration test the in-flight Updates serialise
+	// inside the apiserver, so we simulate the cross-instance behaviour by
+	// keeping a stale snapshot in memory while another writer commits, then
+	// replaying the stale snapshot.
+	t.Run("stale-RV update with different members must not silently drop members", func(t *testing.T) {
+		ctx := context.Background()
+		obj := newTeamWithMembers("team-members-stalerv-", []map[string]interface{}{})
+		created, err := teamClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = teamClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{}) })
+
+		// Stale snapshot taken before interface{} member is added.
+		stale, err := teamClient.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+		require.NoError(t, err)
+
+		// Peer instance commits first: editor is now on the team.
+		fresh, err := teamClient.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+		require.NoError(t, err)
+		require.NoError(t, unstructured.SetNestedSlice(fresh.Object, []interface{}{
+			memberSpec(editorUID, "member", false),
+		}, "spec", "members"))
+		_, err = teamClient.Resource.Update(ctx, fresh, metav1.UpdateOptions{})
+		require.NoError(t, err)
+
+		// This instance's Update — built from the stale snapshot — appends
+		// viewer. With the RV precondition the apiserver returns 409, the
+		// caller refreshes, and both editor and viewer end up on the team.
+		require.NoError(t, unstructured.SetNestedSlice(stale.Object, []interface{}{
+			memberSpec(viewerUID, "member", false),
+		}, "spec", "members"))
+		_, err = teamClient.Resource.Update(ctx, stale, metav1.UpdateOptions{})
+		require.Error(t, err, "stale-RV update must be rejected, otherwise editor is silently removed")
+		require.True(t, errors.IsConflict(err), "stale-RV update must surface as 409 Conflict, got %v", err)
+
+		// Refresh and retry.
+		refreshed, err := teamClient.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+		require.NoError(t, err)
+		current, _, _ := unstructured.NestedSlice(refreshed.Object, "spec", "members")
+		current = append(current, memberSpec(viewerUID, "member", false))
+		require.NoError(t, unstructured.SetNestedSlice(refreshed.Object, current, "spec", "members"))
+		_, err = teamClient.Resource.Update(ctx, refreshed, metav1.UpdateOptions{})
+		require.NoError(t, err)
+
+		final, err := teamClient.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+		require.NoError(t, err)
+		finalMembers, _, _ := unstructured.NestedSlice(final.Object, "spec", "members")
+		names := make([]string, 0, len(finalMembers))
+		for _, raw := range finalMembers {
+			m := raw.(map[string]interface{})
+			names = append(names, m["name"].(string))
+		}
+		require.ElementsMatch(t, []string{editorUID, viewerUID}, names,
+			"both members must be present; the stale-RV writer must not have erased editor")
 	})
 }

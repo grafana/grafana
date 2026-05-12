@@ -504,6 +504,11 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		return section, err
 	}
 
+	pluginsSect, err := getOrCreateSection("plugins")
+	require.NoError(t, err)
+	_, err = pluginsSect.NewKey("disable_plugins", "grafana-assistant-app")
+	require.NoError(t, err)
+
 	if opts.EnableCSP {
 		securitySect, err := cfg.NewSection("security")
 		require.NoError(t, err)
@@ -567,15 +572,15 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		require.NoError(t, err)
 	}
 	if opts.PluginAdminEnabled {
-		anonSect, err := cfg.NewSection("plugins")
+		pluginsSect, err := getOrCreateSection("plugins")
 		require.NoError(t, err)
-		_, err = anonSect.NewKey("plugin_admin_enabled", "true")
+		_, err = pluginsSect.NewKey("plugin_admin_enabled", "true")
 		require.NoError(t, err)
 	}
 	if opts.PluginAdminExternalManageEnabled {
-		anonSect, err := cfg.NewSection("plugins")
+		pluginsSect, err := getOrCreateSection("plugins")
 		require.NoError(t, err)
-		_, err = anonSect.NewKey("plugin_admin_external_manage_enabled", "true")
+		_, err = pluginsSect.NewKey("plugin_admin_external_manage_enabled", "true")
 		require.NoError(t, err)
 	}
 	if opts.ViewersCanEdit {

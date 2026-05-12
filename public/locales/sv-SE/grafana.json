@@ -1164,6 +1164,9 @@
       "content-show-all-errors": "Visa alla fel"
     },
     "errors": {
+      "api-machinery": {
+        "with-causes": ""
+      },
       "failedWith": "{{-config}} misslyckades med {{status}}: {{-message}}"
     },
     "evaluate-every-validation-options": {
@@ -10851,6 +10854,11 @@
     "name-line-width": "Linjebredd",
     "name-stacking": "Stapling"
   },
+  "home": {
+    "home-page": {
+      "placeholder": ""
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "Laddar",
@@ -16022,7 +16030,9 @@
       "description": {
         "group-by-field-value": "Gruppera data efter ett fältvärde och skapa kapslade tabeller med de grupperade data."
       },
+      "description-expand-nested-rows": "",
       "description-show-field-names": "Om det är aktiverat kommer kapslade tabeller att visa fältnamn som en tabellrubrik",
+      "label-expand-nested-rows-by-default": "",
       "label-show-field-names-in-nested-tables": "Visa fältnamn i kapslade tabeller",
       "name": {
         "group-to-nested-tables": "Gruppera till kapslade tabeller"
