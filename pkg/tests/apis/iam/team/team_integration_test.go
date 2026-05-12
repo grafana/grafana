@@ -45,7 +45,7 @@ func TestIntegrationTeams(t *testing.T) {
 
 			doTeamCRUDTestsUsingTheNewAPIs(t, helper)
 			doTeamSpecMembersTests(t, helper)
-			doTeamSpecExternalGroupsOSSTests(t, helper, mode)
+			doTeamSpecExternalGroupsOSSTests(t, helper)
 
 			if mode < 3 {
 				doTeamCRUDTestsUsingTheLegacyAPIs(t, helper, mode)
@@ -759,10 +759,10 @@ func doTeamSpecMembersTests(t *testing.T, helper *apis.K8sTestHelper) {
 	})
 }
 
-// doTeamSpecExternalGroupsOSSTests covers OSS-side spec.externalGroups
-// behavior: dup validation is universal; hydration differs by dual-writer mode
-// (noop returns empty on Mode<5, Mode5 round-trips from unified storage).
-func doTeamSpecExternalGroupsOSSTests(t *testing.T, helper *apis.K8sTestHelper, mode rest.DualWriterMode) {
+// doTeamSpecExternalGroupsOSSTests covers spec.externalGroups behavior that
+// is universal regardless of which ExternalGroupReconciler is bound. Hydration
+// is reconciler-dependent and exercised in the enterprise suite.
+func doTeamSpecExternalGroupsOSSTests(t *testing.T, helper *apis.K8sTestHelper) {
 	teamClient := helper.GetResourceClient(apis.ResourceClientArgs{
 		User:      helper.Org1.Admin,
 		Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
@@ -789,36 +789,5 @@ func doTeamSpecExternalGroupsOSSTests(t *testing.T, helper *apis.K8sTestHelper, 
 		require.ErrorAs(t, err, &se)
 		require.Equal(t, int32(400), se.ErrStatus.Code)
 		require.Contains(t, se.ErrStatus.Message, "duplicate")
-	})
-
-	t.Run("spec.externalGroups: round-trip behavior is mode-dependent", func(t *testing.T) {
-		ctx := context.Background()
-		body := map[string]interface{}{
-			"apiVersion": "iam.grafana.app/v0alpha1",
-			"kind":       "Team",
-			"metadata":   map[string]interface{}{"generateName": "team-egroups-rt-"},
-			"spec": map[string]interface{}{
-				"title":          "Team egroups rt",
-				"email":          "egroups-rt@example.com",
-				"provisioned":    false,
-				"externalUID":    "",
-				"externalGroups": []interface{}{"LDAP-Admins"},
-			},
-		}
-		created, err := teamClient.Resource.Create(ctx, &unstructured.Unstructured{Object: body}, metav1.CreateOptions{})
-		require.NoError(t, err)
-		t.Cleanup(func() { _ = teamClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{}) })
-
-		fetched, err := teamClient.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
-		require.NoError(t, err)
-		groups, _, _ := unstructured.NestedSlice(fetched.Object, "spec", "externalGroups")
-
-		if mode == rest.Mode5 {
-			// Unified storage round-trips the original spec; admission no
-			// longer mutates, so case is preserved.
-			require.Equal(t, []interface{}{"LDAP-Admins"}, groups)
-		} else {
-			require.Empty(t, groups, "OSS noop reconciler must not populate externalGroups")
-		}
 	})
 }
