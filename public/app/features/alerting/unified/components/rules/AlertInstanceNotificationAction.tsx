@@ -138,7 +138,7 @@ export const AlertInstanceNotificationAction = ({
         .value()
     : [];
 
-  const singleResolvedReceiver = policyReceivers.at(0);
+  const singleResolvedReceiver = policyReceivers.length === 1 ? policyReceivers[0] : undefined;
 
   return (
     <>
