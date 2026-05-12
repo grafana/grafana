@@ -31,14 +31,12 @@ const DROPPABLE_TO_HIDE: Record<string, VariableHide> = {
 interface DashboardVariablesListProps {
   sourceVariableSet: SceneVariableSet;
   renderVariables?: SceneVariable[];
-  includeAdHoc?: boolean;
   topPlacementLabel?: string;
 }
 
 export function DashboardVariablesList({
   sourceVariableSet,
   renderVariables,
-  includeAdHoc = false,
   topPlacementLabel,
 }: DashboardVariablesListProps) {
   const { variables: allVariables } = sourceVariableSet.useState();
@@ -48,11 +46,11 @@ export function DashboardVariablesList({
     : t('dashboard-scene.variables-list.top-placement.default', 'Above dashboard');
   const editable = useMemo(() => {
     const { editable } = partitionVariablesByEditability(listVariables);
-    if (!config.featureToggles.dashboardUnifiedDrilldownControls || includeAdHoc) {
+    if (!config.featureToggles.dashboardUnifiedDrilldownControls) {
       return editable;
     }
     return editable.filter((v) => !sceneUtils.isAdHocVariable(v));
-  }, [includeAdHoc, listVariables]);
+  }, [listVariables]);
   const { visible, controlsMenu, hidden } = useMemo(() => partitionVariablesByDisplay(editable), [editable]);
 
   const onClickVariable = useCallback((variable: SceneVariable) => {

@@ -67,7 +67,6 @@ function SectionFiltersListInner({ sectionOwner, variableSet }: SectionFiltersLi
       <DashboardVariablesList
         sourceVariableSet={variableSet}
         renderVariables={filters}
-        includeAdHoc
         topPlacementLabel={topPlacementLabel}
       />
       <Box display="flex" paddingTop={filters.length > 0 ? 1 : 0} paddingBottom={2}>
