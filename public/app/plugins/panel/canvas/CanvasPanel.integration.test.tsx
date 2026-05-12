@@ -593,7 +593,37 @@ describe('CanvasPanel', () => {
     );
   });
 
-  it.todo('Delete');
+  it('deletes the selected element from the context menu', async () => {
+    jest.spyOn(getDashboardSrv(), 'getCurrent').mockReturnValue({ editable: true } as DashboardModel);
+    const { rerender } = setUp();
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 0));
+    });
+    rerender(canvasPanelElement({ renderCounter: 1 }));
+    const buttons = screen.getAllByRole('button');
+    expect(buttons).toHaveLength(13);
+
+    const user = userEvent.setup();
+    await user.pointer({ keys: '[MouseRight]', target: getSuccessIconButton() });
+
+    await waitFor(() => {
+      expect(screen.getByRole('menuitem', { name: 'Delete' })).toBeVisible();
+    });
+
+    onOptionsChange.mockClear();
+    await user.click(screen.getByRole('menuitem', { name: 'Delete' }));
+
+    await waitFor(() => {
+      expect(onOptionsChange).toHaveBeenCalled();
+    });
+
+    const lastOptions = onOptionsChange.mock.calls.at(-1)![0] as Options;
+
+    expect(lastOptions.root.elements.some((el) => el.name === 'Success Icon')).toBe(false);
+    expect(lastOptions.root.elements).toHaveLength(12);
+
+    jest.restoreAllMocks();
+  });
   it.todo('Duplicate');
   it.todo('Bring to front');
   it.todo('Send to back');
