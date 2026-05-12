@@ -133,6 +133,7 @@ jobs:
           path: .grafana-main
 
       - name: Setup Node.js
+        if: ${{ !contains(inputs.version, '+security') }}
         uses: ./.github/actions/setup-node
       # Use actions/setup-go directly instead of ./.github/actions/setup-go: the composite
       # references ./.github/actions/report-go-cache-sizes, which resolves from this job's
@@ -232,6 +233,7 @@ jobs:
           gh pr create \
             "${LATEST_FLAG[@]}" \
             -l "no-changelog" \
+            --draft \
             --dry-run="$DRY_RUN" \
             -B "${RELEASE_BRANCH}" \
             --title "Release: $VERSION" \
