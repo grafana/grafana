@@ -1112,7 +1112,7 @@ var (
 			Description: "Enables org-defined dashboard templates for enterprise",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaSharingSquad,
-			Generate:    Generate{React: true},
+			Generate:    Generate{Go: true, React: true},
 			Expression:  "false",
 		},
 		{
@@ -1862,14 +1862,6 @@ var (
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaAlertingSquad,
 			Expression:  "false",
-		},
-		{
-			Name:        "alertRuleUseFiredAtForStartsAt",
-			Description: "Use FiredAt for StartsAt when sending alerts to Alertmaanger",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaAlertingSquad,
-			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
 			Name:         "alertingBulkActionsInUI",
@@ -3153,6 +3145,16 @@ var (
 			RequiresRestart: true,
 			Expression:      "false",
 			Generate:        Generate{Go: true},
+		},
+		{
+			Name:            "alerting.syncExternalAlertmanager",
+			Description:     "Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana",
+			Stage:           FeatureStageExperimental,
+			Generate:        Generate{Go: true},
+			Owner:           grafanaAlertingSquad,
+			HideFromDocs:    true,
+			RequiresRestart: true,
+			Expression:      "false",
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//

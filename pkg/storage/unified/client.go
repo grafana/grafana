@@ -9,7 +9,6 @@ import (
 	"github.com/fullstorydev/grpchan"
 	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/storage/unified/search/embed/backfill"
 	otgrpc "github.com/opentracing-contrib/go-grpc"
 	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
@@ -169,20 +168,6 @@ func newClient(opts options.StorageOptions,
 			}
 		}
 
-		// only ever enabled for local dev
-		bf, err := backfill.ProvideVectorBackfiller(cfg, backend, vectorBackend, embedderInstance)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create embedding backfiller: %w", err)
-		}
-		if bf != nil {
-			// Single-binary lifetime: tie Run to the process via context.Background.
-			go func() {
-				if rerr := bf.Run(context.Background()); rerr != nil {
-					cfg.Logger.Error("embedding backfiller stopped", "err", rerr)
-				}
-			}()
-		}
-
 		serverOptions := sql.ServerOptions{
 			Backend:        backend,
 			VectorBackend:  vectorBackend,
@@ -240,6 +225,7 @@ func newClient(opts options.StorageOptions,
 		if err != nil {
 			return nil, err
 		}
+
 		return resource.NewLocalResourceClient(server), nil
 	}
 }
