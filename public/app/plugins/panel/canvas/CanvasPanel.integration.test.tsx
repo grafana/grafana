@@ -373,7 +373,7 @@ const getSuccessIconButton = () => {
 
 const getSuccessIconText = () => {
   const candidates = screen.getAllByRole('button').filter((el) => el instanceof HTMLElement);
-  return candidates[2] as HTMLElement;
+  return candidates.find((el) => el?.textContent === 'Success') ?? (candidates[2] as HTMLElement);
 };
 
 const getUnmappedIconText = () => {
@@ -452,7 +452,7 @@ describe('CanvasPanel', () => {
     jest.restoreAllMocks();
   });
 
-  it('renders (kitchen sink)', () => {
+  it('Renders (kitchen sink)', () => {
     setUp();
 
     // Everything is a button!
@@ -488,12 +488,12 @@ describe('CanvasPanel', () => {
     expect(buttons[11]).toHaveTextContent('Fixed Absolute URL:');
   });
 
-  it('unmounts without throwing', () => {
+  it('Unmounts without throwing', () => {
     const { unmount } = setUp();
     expect(() => unmount()).not.toThrow();
   });
 
-  it('re-renders when width and height change without losing canvas elements', () => {
+  it('Re-renders when width and height change without losing canvas elements', () => {
     const { rerender } = setUp();
     const canvas = screen.getByTestId('canvas-scene');
     expect(canvas).toBeInTheDocument();
@@ -509,51 +509,7 @@ describe('CanvasPanel', () => {
     expect(buttons[0]).toBeVisible();
   });
 
-  it('opens context menu on right click of success icon', async () => {
-    const { rerender } = setUp();
-    // Scene wires Selector in a macrotask; rerender after it runs so contextmenu listeners attach to elements.
-    await act(async () => {
-      await new Promise((r) => setTimeout(r, 0));
-    });
-    rerender(canvasPanelElement({ renderCounter: 1 }));
-
-    const user = userEvent.setup();
-    await user.pointer({ keys: '[MouseRight]', target: getSuccessIconButton() });
-
-    await waitFor(() => {
-      expect(screen.queryByRole('menuitem', { name: 'Edit' })).toBeNull();
-      expect(screen.getByRole('menuitem', { name: 'Delete' })).toBeVisible();
-      expect(screen.getByRole('menuitem', { name: 'Duplicate' })).toBeVisible();
-      expect(screen.getByRole('menuitem', { name: 'Bring to front' })).toBeVisible();
-      expect(screen.getByRole('menuitem', { name: 'Send to back' })).toBeVisible();
-    });
-  });
-
-  it('opens context menu on right click of success text', async () => {
-    jest.spyOn(getDashboardSrv(), 'getCurrent').mockReturnValue({ editable: true } as DashboardModel);
-    const { rerender } = setUp();
-    // Scene wires Selector in a macrotask; rerender after it runs so contextmenu listeners attach to elements.
-    await act(async () => {
-      await new Promise((r) => setTimeout(r, 0));
-    });
-    rerender(canvasPanelElement({ renderCounter: 1 }));
-
-    const user = userEvent.setup();
-    await user.pointer({ keys: '[MouseRight]', target: getSuccessIconText() });
-
-    await waitFor(() => {
-      expect(screen.getByRole('menuitem', { name: 'Edit' })).toBeVisible();
-      expect(screen.getByRole('menuitem', { name: 'Delete' })).toBeVisible();
-      expect(screen.getByRole('menuitem', { name: 'Duplicate' })).toBeVisible();
-      expect(screen.getByRole('menuitem', { name: 'Bring to front' })).toBeVisible();
-      expect(screen.getByRole('menuitem', { name: 'Send to back' })).toBeVisible();
-      expect(screen.getByRole('menuitem', { name: 'Open Editor' })).toBeVisible();
-    });
-
-    jest.restoreAllMocks();
-  });
-
-  it('double click on success shortcuts to text edit', async () => {
+  it('Double click edit', async () => {
     jest.spyOn(getDashboardSrv(), 'getCurrent').mockReturnValue({ editable: true } as DashboardModel);
     const elementFromPointTarget: { current: HTMLElement | null } = { current: null };
     Object.defineProperty(document, 'elementFromPoint', {
@@ -597,47 +553,105 @@ describe('CanvasPanel', () => {
     );
   });
 
-  it('deletes the selected element from the context menu', async () => {
-    const { rerender } = setUp();
-    await act(async () => {
-      await new Promise((r) => setTimeout(r, 0));
-    });
-    rerender(canvasPanelElement({ renderCounter: 1 }));
-    expect(screen.getAllByRole('button')).toHaveLength(13);
-
+  describe('right click menu', () => {
     const user = userEvent.setup();
 
-    // Right click to open context menu
-    await user.pointer({ keys: '[MouseRight]', target: getSuccessIconButton() });
-    // Delete option should be visible
-    expect(screen.getByRole('menuitem', { name: 'Delete' })).toBeVisible();
-    // Click on the delete option
-    await user.click(screen.getByRole('menuitem', { name: 'Delete' }));
-    // Now there should be one less button
-    expect(screen.getAllByRole('button')).toHaveLength(12);
+    const getIndex = (textContent: string) => {
+      return screen.getAllByRole('button').findIndex((el) => {
+        return el.textContent === textContent;
+      });
+    };
+    const rightClickMenuSetup = async () => {
+      const { rerender } = setUp();
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 0));
+      });
+      rerender(canvasPanelElement({ renderCounter: 1 }));
+      expect(screen.getAllByRole('button')).toHaveLength(13);
+    };
+    const commonEditorMenuItemAssertions = () => {
+      expect(screen.getByRole('menuitem', { name: 'Delete' })).toBeVisible();
+      expect(screen.getByRole('menuitem', { name: 'Duplicate' })).toBeVisible();
+      expect(screen.getByRole('menuitem', { name: 'Bring to front' })).toBeVisible();
+      expect(screen.getByRole('menuitem', { name: 'Send to back' })).toBeVisible();
+      expect(screen.getByRole('menuitem', { name: 'Open Editor' })).toBeVisible();
+    };
 
-    jest.restoreAllMocks();
-  });
+    it('Renders - icon', async () => {
+      await rightClickMenuSetup();
+      await user.pointer({ keys: '[MouseRight]', target: getSuccessIconButton() });
 
-  it('duplicates the selected element from the context menu', async () => {
-    const { rerender } = setUp();
-    await act(async () => {
-      await new Promise((r) => setTimeout(r, 0));
+      expect(screen.queryByRole('menuitem', { name: 'Edit' })).toBeNull();
+      commonEditorMenuItemAssertions();
     });
-    rerender(canvasPanelElement({ renderCounter: 1 }));
-    expect(screen.getAllByRole('button')).toHaveLength(13);
+    it('Renders - text', async () => {
+      await rightClickMenuSetup();
 
-    const user = userEvent.setup();
+      const user = userEvent.setup();
+      await user.pointer({ keys: '[MouseRight]', target: getSuccessIconText() });
 
-    await user.pointer({ keys: '[MouseRight]', target: getSuccessIconButton() });
-    expect(screen.getByRole('menuitem', { name: 'Duplicate' })).toBeVisible();
+      expect(screen.getByRole('menuitem', { name: 'Edit' })).toBeVisible();
+      commonEditorMenuItemAssertions();
 
-    // Canvas adds a moveable button on right click
-    expect(screen.getAllByRole('button')).toHaveLength(14);
-    await user.click(screen.getByRole('menuitem', { name: 'Duplicate' }));
-    expect(screen.getAllByRole('button')).toHaveLength(15);
+      jest.restoreAllMocks();
+    });
+    it('Deletes', async () => {
+      await rightClickMenuSetup();
+
+      // Right click to open context menu
+      await user.pointer({ keys: '[MouseRight]', target: getSuccessIconButton() });
+      // Delete option should be visible
+      expect(screen.getByRole('menuitem', { name: 'Delete' })).toBeVisible();
+      // Click on the delete option
+      await user.click(screen.getByRole('menuitem', { name: 'Delete' }));
+      // Now there should be one less button
+      expect(screen.getAllByRole('button')).toHaveLength(12);
+
+      jest.restoreAllMocks();
+    });
+    it('Duplicates', async () => {
+      await rightClickMenuSetup();
+      await user.pointer({ keys: '[MouseRight]', target: getSuccessIconButton() });
+      expect(screen.getByRole('menuitem', { name: 'Duplicate' })).toBeVisible();
+
+      // Canvas adds a moveable button on right click
+      expect(screen.getAllByRole('button')).toHaveLength(14);
+      await user.click(screen.getByRole('menuitem', { name: 'Duplicate' }));
+      expect(screen.getAllByRole('button')).toHaveLength(15);
+    });
+    it('Brings to front', async () => {
+      await rightClickMenuSetup();
+      expect(getIndex(getSuccessIconText().textContent)).toBe(2);
+
+      await user.pointer({ keys: '[MouseRight]', target: getSuccessIconText() });
+      await user.click(screen.getByRole('menuitem', { name: 'Bring to front' }));
+
+      expect(getIndex(getSuccessIconText().textContent)).toBe(12);
+    });
+    it('Sends to back', async () => {
+      await rightClickMenuSetup();
+
+      expect(getIndex(getSuccessIconText().textContent)).toBe(2);
+
+      await user.pointer({ keys: '[MouseRight]', target: getSuccessIconText() });
+      await user.click(screen.getByRole('menuitem', { name: 'Send to back' }));
+      expect(getIndex(getSuccessIconText().textContent)).toBe(0);
+    });
+
+    it('Opens editor', async () => {
+      await rightClickMenuSetup();
+      await user.pointer({ keys: '[MouseRight]', target: getSuccessIconText() });
+      await user.click(screen.getByRole('menuitem', { name: 'Open Editor' }));
+      expect(screen.getByText('Canvas Inline Editor')).toBeVisible();
+    });
   });
-  it.todo('Bring to front');
-  it.todo('Send to back');
-  it.todo('Open editor');
+
+  describe('Canvas Inline Editor', () => {
+    describe('Selected element', () => {
+      // @todo
+    });
+    describe('Element management', () => {
+      // @todo
+    });
+  });
 });
