@@ -1,12 +1,14 @@
 package kv
 
 import (
+	"bytes"
 	"context"
 	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
 
+	gokitlog "github.com/go-kit/log"
 	"github.com/stretchr/testify/require"
 )
 
@@ -59,6 +61,8 @@ func TestEventualKVProvider_SetUnavailable(t *testing.T) {
 }
 
 func TestEventualKVProvider_SecondSetIgnored(t *testing.T) {
+	captureProviderLog(t) // suppress duplicate-call warnings
+
 	p := ProvideEventualKVStore()
 	first := &fakeKV{}
 	p.Set(first)
@@ -97,6 +101,8 @@ func TestEventualKVProvider_NilReceiverIsNoOp(t *testing.T) {
 // guarantee under contention. Run with -race to validate that the publish
 // of p.store happens-before any Get reader.
 func TestEventualKVProvider_ConcurrentSet(t *testing.T) {
+	captureProviderLog(t) // suppress duplicate-call warnings
+
 	p := ProvideEventualKVStore()
 	stores := []*fakeKV{{}, {}, {}, {}, {}, {}, {}, {}}
 
@@ -153,6 +159,35 @@ func TestEventualKVProvider_BroadcastsToAllGetters(t *testing.T) {
 	wg.Wait()
 
 	require.Equal(t, int32(n), hits.Load())
+}
+
+func TestEventualKVProvider_DuplicateSetLogsWarning(t *testing.T) {
+	buf := captureProviderLog(t)
+
+	p := ProvideEventualKVStore()
+	p.Set(&fakeKV{})
+	p.Set(&fakeKV{})
+	p.SetUnavailable()
+
+	out := buf.String()
+	require.Contains(t, out, "EventualKVProvider already resolved")
+	require.Contains(t, out, "method=Set")
+	require.Contains(t, out, "method=SetUnavailable")
+	require.Contains(t, out, "provider_test.go:")
+}
+
+// captureProviderLog swaps in a buffer-backed logger for the package-level
+// providerLog for the duration of the test and returns the buffer. The
+// underlying writer is synchronized so tests that emit warnings from
+// multiple goroutines (e.g. ConcurrentSet) don't race on the buffer.
+// The original logger is restored on cleanup.
+func captureProviderLog(t *testing.T) *bytes.Buffer {
+	t.Helper()
+	var buf bytes.Buffer
+	orig := providerLog.GetLogger()
+	providerLog.Swap(gokitlog.NewLogfmtLogger(gokitlog.NewSyncWriter(&buf)))
+	t.Cleanup(func() { providerLog.Swap(orig) })
+	return &buf
 }
 
 // fakeKV is an opaque KV used only to verify identity round-tripping through
