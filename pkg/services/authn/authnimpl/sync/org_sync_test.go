@@ -86,11 +86,11 @@ func TestOrgSync_SyncOrgRolesHook(t *testing.T) {
 					Name:           "test",
 					Email:          "test",
 					OrgRoles:       map[int64]identity.RoleType{1: org.RoleAdmin, 2: org.RoleEditor},
-					IsGrafanaAdmin: ptrBool(false),
+					IsGrafanaAdmin: new(false),
 					ClientParams: authn.ClientParams{
 						SyncOrgRoles: true,
 						LookUpParams: login.UserLookupParams{
-							Email: ptrString("test"),
+							Email: new("test"),
 							Login: nil,
 						},
 					},
@@ -104,11 +104,11 @@ func TestOrgSync_SyncOrgRolesHook(t *testing.T) {
 				Email:          "test",
 				OrgRoles:       map[int64]identity.RoleType{1: org.RoleAdmin, 2: org.RoleEditor},
 				OrgID:          1, // set using org
-				IsGrafanaAdmin: ptrBool(false),
+				IsGrafanaAdmin: new(false),
 				ClientParams: authn.ClientParams{
 					SyncOrgRoles: true,
 					LookUpParams: login.UserLookupParams{
-						Email: ptrString("test"),
+						Email: new("test"),
 						Login: nil,
 					},
 				},

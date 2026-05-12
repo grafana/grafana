@@ -328,6 +328,8 @@ The **Default** option allows to select a [contact point](ref:contact-points) to
 
 With this option, all notifications for this alert rule are managed by the [notification policy tree](ref:notification-policies), which routes alerts based on their labels.
 
+Click **Change** to change the routing from the default policy to another policy.
+
 You can preview which notification policy would handle notifications from this alert rule.
 
 1. Click **Preview routing** after configuring the previous alert rule settings.
