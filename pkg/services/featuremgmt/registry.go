@@ -640,10 +640,10 @@ var (
 		{
 			Name:        "annotationsClustering",
 			Description: "Enables annotation clustering and switches to refactored annotation code",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{LegacyFrontend: true},
 			Owner:       grafanaDatavizSquad,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:        "dashboardNewLayouts",
@@ -1112,7 +1112,7 @@ var (
 			Description: "Enables org-defined dashboard templates for enterprise",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaSharingSquad,
-			Generate:    Generate{React: true},
+			Generate:    Generate{Go: true, React: true},
 			Expression:  "false",
 		},
 		{
@@ -1395,14 +1395,6 @@ var (
 			Owner:       grafanaFrontendPlatformSquad,
 			Expression:  "false",
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:        "timeRangePan",
-			Description: "Enables time range panning functionality",
-			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaDatavizSquad,
-			Expression:  "true",
 		},
 		{
 			Name:        "azureMonitorDisableLogLimit",
@@ -1864,14 +1856,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "alertRuleUseFiredAtForStartsAt",
-			Description: "Use FiredAt for StartsAt when sending alerts to Alertmaanger",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaAlertingSquad,
-			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:         "alertingBulkActionsInUI",
 			Description:  "Enables the alerting bulk actions in the UI",
 			Generate:     Generate{LegacyFrontend: true},
@@ -2283,14 +2267,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "externalVizSuggestions",
-			Description: "Enable all plugins to supply visualization suggestions (including 3rd party plugins)",
-			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaDatavizSquad,
-			Expression:  "true",
-		},
-		{
 			Name:        "nestedFramesFieldOverrides",
 			Description: "Enable field overrides for FieldType.nestedFrames fields (like in nested tables)",
 			Stage:       FeatureStagePublicPreview,
@@ -2566,15 +2542,6 @@ var (
 			Generate:    Generate{LegacyFrontend: true, React: true},
 			Owner:       grafanaDataProSquad,
 			Expression:  "false",
-		},
-		{
-			Name:         "kubernetesTeamBindings",
-			Description:  "Enables search for team bindings in the app platform API",
-			Stage:        FeatureStageExperimental,
-			Owner:        identityAccessTeam,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
 			Name:         "kubernetesTeamsApi",
@@ -3087,6 +3054,14 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
+			Name:        "alerting.notificationsAPIV1Beta1",
+			Description: "Switch the Grafana Alerting UI from notifications.alerting.grafana.app/v0alpha1 to v1beta1",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAlertingSquad,
+			Expression:  "false",
+			Generate:    Generate{LegacyFrontend: true},
 		},
 		{
 			Name:        "assistant.frontend.tools.dashboardTemplates",

@@ -10856,7 +10856,17 @@
   },
   "home": {
     "home-page": {
-      "placeholder": "Welcome to Grafana"
+      "edition": {
+        "cloud": "Grafana Cloud",
+        "enterprise": "Grafana Enterprise",
+        "open-source": "Grafana"
+      },
+      "greeting": {
+        "afternoon": "Good afternoon.",
+        "evening": "Good evening.",
+        "morning": "Good morning."
+      },
+      "placeholder": "Welcome to {{edition}}."
     }
   },
   "inspector": {

@@ -120,7 +120,8 @@
       "metadata": {
         "name": "alertRuleUseFiredAtForStartsAt",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-04-22T11:16:38Z"
+        "creationTimestamp": "2025-04-22T11:16:38Z",
+        "deletionTimestamp": "2026-05-12T10:50:19Z"
       },
       "spec": {
         "description": "Use FiredAt for StartsAt when sending alerts to Alertmaanger",
@@ -139,6 +140,20 @@
         "description": "Disable automatic conversion of legacy (V0/Mimir) Alertmanager receivers to Grafana model",
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "alerting.notificationsAPIV1Beta1",
+        "resourceVersion": "1778531950507",
+        "creationTimestamp": "2026-05-11T20:39:10Z"
+      },
+      "spec": {
+        "description": "Switch the Grafana Alerting UI from notifications.alerting.grafana.app/v0alpha1 to v1beta1",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true,
         "expression": "false"
       }
     },
@@ -635,6 +650,36 @@
     },
     {
       "metadata": {
+        "name": "alertingNotificationsApiV1Beta1",
+        "resourceVersion": "1778531729509",
+        "creationTimestamp": "2026-05-11T20:35:29Z",
+        "deletionTimestamp": "2026-05-11T20:39:10Z"
+      },
+      "spec": {
+        "description": "Switch the Grafana Alerting UI from notifications.alerting.grafana.app/v0alpha1 to v1beta1",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingNotificationsApiV1beta1",
+        "resourceVersion": "1778531705784",
+        "creationTimestamp": "2026-05-11T20:35:05Z",
+        "deletionTimestamp": "2026-05-11T20:35:29Z"
+      },
+      "spec": {
+        "description": "Switch the Grafana Alerting UI from notifications.alerting.grafana.app/v0alpha1 to v1beta1",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingNotificationsStepMode",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2024-11-22T11:07:45Z"
@@ -1027,18 +1072,18 @@
     {
       "metadata": {
         "name": "annotationsClustering",
-        "resourceVersion": "1775140656883",
+        "resourceVersion": "1778010740790",
         "creationTimestamp": "2026-03-12T21:45:54Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-04-02 14:37:36.883749 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-05-05 19:52:20.790026 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables annotation clustering and switches to refactored annotation code",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -2426,6 +2471,7 @@
         "name": "externalVizSuggestions",
         "resourceVersion": "1774877899502",
         "creationTimestamp": "2025-12-01T23:22:22Z",
+        "deletionTimestamp": "2026-05-08T20:27:40Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-03-30 13:38:19.502534 +0000 UTC"
         }
@@ -2746,14 +2792,16 @@
     {
       "metadata": {
         "name": "grafana.orgDashboardTemplates",
-        "resourceVersion": "1777989950811",
-        "creationTimestamp": "2026-05-05T14:05:50Z"
+        "resourceVersion": "1778509620347",
+        "creationTimestamp": "2026-05-05T14:05:50Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-05-11 14:27:00.347663 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables org-defined dashboard templates for enterprise",
         "stage": "experimental",
         "codeowner": "@grafana/sharing-squad",
-        "frontend": true,
         "expression": "false"
       }
     },
@@ -3720,7 +3768,8 @@
       "metadata": {
         "name": "kubernetesTeamBindings",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2026-02-18T17:05:38Z"
+        "creationTimestamp": "2026-02-18T17:05:38Z",
+        "deletionTimestamp": "2026-05-07T20:40:39Z"
       },
       "spec": {
         "description": "Enables search for team bindings in the app platform API",
@@ -6054,7 +6103,8 @@
       "metadata": {
         "name": "timeRangePan",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-11-05T01:39:46Z"
+        "creationTimestamp": "2025-11-05T01:39:46Z",
+        "deletionTimestamp": "2026-05-08T20:32:38Z"
       },
       "spec": {
         "description": "Enables time range panning functionality",

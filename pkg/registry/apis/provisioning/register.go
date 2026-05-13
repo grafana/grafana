@@ -139,6 +139,7 @@ type APIBuilder struct {
 	registry                      prometheus.Registerer
 	quotaGetter                   quotas.QuotaGetter
 	folderMetadataEnabled         bool
+	maxFileSize                   int64
 	incrementalPolicy             repository.IncrementalSyncPolicy
 	folderAPIVersion              string
 	webhookSecretRotationInterval time.Duration
@@ -241,6 +242,10 @@ func NewAPIBuilder(
 		folderMetadataEnabled:               folderMetadataEnabled,
 		folderAPIVersion:                    folderAPIVersion,
 		incrementalPolicy:                   incrementalPolicy,
+		// Default cap for the files API. Callers (e.g. RegisterAPIService)
+		// may overwrite b.maxFileSize after construction; any non-positive
+		// value (<=0) disables the cap.
+		maxFileSize: setting.ProvisioningMaxFileSizeDefault,
 	}
 
 	for _, builder := range extraBuilders {
@@ -315,6 +320,7 @@ func RegisterAPIService(
 	jobHistoryConfig := createJobHistoryConfigFromSettings(cfg)
 	folderMetadataEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata) //nolint:staticcheck
 	folderAPIVersion := cfg.ProvisioningFolderAPIVersion
+	maxFileSize := cfg.ProvisioningMaxFileSize
 	incrementalPolicy := repository.NewIncrementalSyncPolicy(folderMetadataEnabled, cfg.ProvisioningMaxIncrementalChanges)
 
 	// Register v0alpha1 (preferred version)
@@ -353,6 +359,7 @@ func RegisterAPIService(
 		return nil, err
 	}
 	builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
+	builder.maxFileSize = maxFileSize
 	apiregistration.RegisterAPI(builder)
 
 	// Register v1beta1
@@ -391,6 +398,7 @@ func RegisterAPIService(
 		return nil, err
 	}
 	v1beta1Builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
+	v1beta1Builder.maxFileSize = maxFileSize
 	apiregistration.RegisterAPI(v1beta1Builder)
 
 	// Return the preferred (v0alpha1) builder since it runs controllers/workers
@@ -802,7 +810,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	// connector via ProvisioningAuthorizer.AuthorizeResource, and repository-
 	// level operations remain Admin-gated by authorizeRepositorySubresource.
 	filesAccess := auth.NewVerbAwareAccessChecker(b.accessWithViewer, b.accessWithEditor)
-	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, filesAccess, b.folderMetadataEnabled, b.folderAPIVersion)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, filesAccess, b.folderMetadataEnabled, b.folderAPIVersion, b.maxFileSize)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = NewRefsConnector(b)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = &listConnector{
 		getter: b,

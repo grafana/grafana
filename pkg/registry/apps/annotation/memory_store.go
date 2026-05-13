@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 )
@@ -159,6 +160,9 @@ func (m *memoryStore) Create(ctx context.Context, anno *annotationV0.Annotation)
 	}
 
 	created := anno.DeepCopy()
+	if created.UID == "" {
+		created.UID = types.UID(created.Name)
+	}
 	if created.CreationTimestamp.IsZero() {
 		created.CreationTimestamp = metav1.Now()
 	}
