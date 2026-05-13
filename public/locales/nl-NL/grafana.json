@@ -1153,6 +1153,9 @@
         "rule-viewer-section-extension": "De verrijkingssectie in de Rule Viewer kan niet worden geladen"
       }
     },
+    "entities": {
+      "group": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "Kan je configuratie niet bijwerken:",
       "title-something-went-wrong": "Er ging iets mis"
@@ -1161,6 +1164,9 @@
       "content-show-all-errors": "Alle fouten weergeven"
     },
     "errors": {
+      "api-machinery": {
+        "with-causes": ""
+      },
       "failedWith": "{{-config}} mislukt met status {{status}}: {{-message}}"
     },
     "evaluate-every-validation-options": {
@@ -3174,9 +3180,7 @@
       "deleting": "Verwijderen",
       "text-federated": "Federatief",
       "text-provisioned": "Provisioned",
-      "ungrouped": "Niet gegroepeerd",
-      "ungrouped-suffix": "{{ruleName}} (Niet gegroepeerd)",
-      "unknown-rule": "Onbekende regel"
+      "ungrouped": "Niet gegroepeerd"
     },
     "saved-searches": {
       "actions-aria-label": "Acties",
@@ -10850,6 +10854,21 @@
     "name-line-width": "Lijndikte",
     "name-stacking": "Opslaan"
   },
+  "home": {
+    "home-page": {
+      "edition": {
+        "cloud": "",
+        "enterprise": "",
+        "open-source": ""
+      },
+      "greeting": {
+        "afternoon": "",
+        "evening": "",
+        "morning": ""
+      },
+      "placeholder": ""
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "Bezig met laden",
@@ -14828,9 +14847,6 @@
       "home-dashboard-placeholder": "Standaard dashboard",
       "language-preference-label": "Taal",
       "language-preference-placeholder": "Taal kiezen",
-      "locale-preference-description": "Kies je regio om de bijbehorende datum-, tijd- en cijferindeling te zien",
-      "locale-preference-label": "Regio-indeling",
-      "locale-preference-placeholder": "Kies regio",
       "theme-description": "Geniet je van de experimentele thema's? Vertel ons <2>hier</2> wat je wilt zien..",
       "theme-label": "Interfacethema",
       "week-start-label": "Begin van de week"
@@ -16021,7 +16037,9 @@
       "description": {
         "group-by-field-value": "Groepeer gegevens op een veldwaarde en maak geneste tabellen met de gegroepeerde gegevens."
       },
+      "description-expand-nested-rows": "",
       "description-show-field-names": "Indien ingeschakeld, geven geneste tabellen veldnamen weer als een tabelkoptekst",
+      "label-expand-nested-rows-by-default": "",
       "label-show-field-names-in-nested-tables": "Veldnamen weergeven in geneste tabellen",
       "name": {
         "group-to-nested-tables": "Groeperen naar geneste tabellen"

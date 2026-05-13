@@ -1163,6 +1163,9 @@
         "rule-viewer-section-extension": "Sekci pro rozšiřující modul prohlížeče pravidel se nepodařilo načíst"
       }
     },
+    "entities": {
+      "group": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "Konfiguraci se nepodařilo aktualizovat:",
       "title-something-went-wrong": "Došlo k chybě"
@@ -1171,6 +1174,9 @@
       "content-show-all-errors": "Zobrazit všechny chyby"
     },
     "errors": {
+      "api-machinery": {
+        "with-causes": ""
+      },
       "failedWith": "{{-config}} selhalo se stavem {{status}}: {{-message}}"
     },
     "evaluate-every-validation-options": {
@@ -3212,9 +3218,7 @@
       "deleting": "Odstraňování",
       "text-federated": "Federované",
       "text-provisioned": "Zajištěno",
-      "ungrouped": "Neseskupené",
-      "ungrouped-suffix": "{{ruleName}} (neseskupené)",
-      "unknown-rule": "Neznámé pravidlo"
+      "ungrouped": "Neseskupené"
     },
     "saved-searches": {
       "actions-aria-label": "Akce",
@@ -10966,6 +10970,21 @@
     "name-line-width": "Šířka řádku",
     "name-stacking": "Stackování"
   },
+  "home": {
+    "home-page": {
+      "edition": {
+        "cloud": "",
+        "enterprise": "",
+        "open-source": ""
+      },
+      "greeting": {
+        "afternoon": "",
+        "evening": "",
+        "morning": ""
+      },
+      "placeholder": ""
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "Načítání",
@@ -15012,9 +15031,6 @@
       "home-dashboard-placeholder": "Výchozí nástěnka",
       "language-preference-label": "Jazyk",
       "language-preference-placeholder": "Vyberte jazyk",
-      "locale-preference-description": "Pro zobrazení odpovídajícího formátu data, času a čísla vyberte svou oblast",
-      "locale-preference-label": "Formát oblasti",
-      "locale-preference-placeholder": "Vyberte region",
       "theme-description": "Baví vás experimentální motivy? Řekněte nám, co byste <2>tady uvítali.</2>",
       "theme-label": "Motiv rozhraní",
       "week-start-label": "Začátek týdne"
@@ -16207,7 +16223,9 @@
       "description": {
         "group-by-field-value": "Seskupit data podle hodnoty pole a vytvořit vnořené tabulky se seskupenými daty."
       },
+      "description-expand-nested-rows": "",
       "description-show-field-names": "Pokud je povoleno, vnořené tabulky zobrazí názvy polí jako záhlaví tabulky",
+      "label-expand-nested-rows-by-default": "",
       "label-show-field-names-in-nested-tables": "Zobrazit názvy polí ve vnořených tabulkách",
       "name": {
         "group-to-nested-tables": "Seskupit do vnořených tabulek"

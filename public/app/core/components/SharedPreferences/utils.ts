@@ -5,7 +5,6 @@ import { type ThemeRegistryItem } from '@grafana/data';
 import { LANGUAGES, PSEUDO_LOCALE, t } from '@grafana/i18n';
 import { type ComboboxOption } from '@grafana/ui';
 import { type UpdatePrefsCmd } from 'app/api/clients/legacy';
-import { LOCALES } from 'app/core/internationalization/locales';
 
 export interface Props {
   resourceUri: string;
@@ -71,24 +70,6 @@ export const getLanguageOptions = (): ComboboxOption[] => {
     ...languageOptions,
   ];
 
-  return options;
-};
-
-export const getRegionalFormatOptions = (): ComboboxOption[] => {
-  const localeOptions = LOCALES.map((v) => ({
-    value: v.code,
-    label: v.name,
-  })).sort((a, b) => {
-    return compareStrings(a.label, b.label);
-  });
-
-  const options = [
-    {
-      value: '',
-      label: t('common.locale.default', 'Default'),
-    },
-    ...localeOptions,
-  ];
   return options;
 };
 

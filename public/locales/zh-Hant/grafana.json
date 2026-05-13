@@ -1148,6 +1148,9 @@
         "rule-viewer-section-extension": "規則檢視器增強功能部分無法載入"
       }
     },
+    "entities": {
+      "group": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "無法更新您的設定：",
       "title-something-went-wrong": "發生了一些錯誤"
@@ -1156,6 +1159,9 @@
       "content-show-all-errors": "顯示所有錯誤"
     },
     "errors": {
+      "api-machinery": {
+        "with-causes": ""
+      },
       "failedWith": "{{-config}} 失敗，顯示{{status}}：{{-message}}"
     },
     "evaluate-every-validation-options": {
@@ -3155,9 +3161,7 @@
       "deleting": "正在刪除",
       "text-federated": "聯合",
       "text-provisioned": "已佈建",
-      "ungrouped": "未分組",
-      "ungrouped-suffix": "{{ruleName}}（未分組）",
-      "unknown-rule": "未知規則"
+      "ungrouped": "未分組"
     },
     "saved-searches": {
       "actions-aria-label": "動作",
@@ -10792,6 +10796,21 @@
     "name-line-width": "線寬",
     "name-stacking": "堆疊"
   },
+  "home": {
+    "home-page": {
+      "edition": {
+        "cloud": "",
+        "enterprise": "",
+        "open-source": ""
+      },
+      "greeting": {
+        "afternoon": "",
+        "evening": "",
+        "morning": ""
+      },
+      "placeholder": ""
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "正在載入",
@@ -14736,9 +14755,6 @@
       "home-dashboard-placeholder": "預設儀表板",
       "language-preference-label": "語言",
       "language-preference-placeholder": "選擇語言",
-      "locale-preference-description": "選擇您的地區以查看相應的日期、時間和數字格式",
-      "locale-preference-label": "地區格式",
-      "locale-preference-placeholder": "選擇地區",
       "theme-description": "喜歡實驗性主題嗎？請在<2>此處</2>告訴我們您想要看到什麼。</2>",
       "theme-label": "介面主題",
       "week-start-label": "一週哪一天開始"
@@ -15928,7 +15944,9 @@
       "description": {
         "group-by-field-value": "依欄位值分組資料，並使用分組資料建立巢狀表格。"
       },
+      "description-expand-nested-rows": "",
       "description-show-field-names": "若啟用，巢狀表格將顯示欄位名稱作為表格標題",
+      "label-expand-nested-rows-by-default": "",
       "label-show-field-names-in-nested-tables": "在巢狀表格中顯示欄位名稱",
       "name": {
         "group-to-nested-tables": "分組到巢狀表格"

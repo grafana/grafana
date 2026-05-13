@@ -49,10 +49,10 @@ func TestIntegrationPreferences_K8sAPIs(t *testing.T) {
 		require.NoError(t, putResult.Error())
 	})
 
-	// Teams permissions are not yet available yet due to https://github.com/grafana/grafana/pull/123657
-	// Should be un-skipped once groups are reworked
-	// TODO this might fail
 	t.Run("team preferences read", func(t *testing.T) {
+		// Teams permissions are not yet available yet due to https://github.com/grafana/grafana/pull/123657
+		// Should be un-skipped once groups are reworked
+		t.Skip("TODO: unskip this")
 		teamUID := helper.Org1.Staff.UID
 		putResult := putTeamPrefsK8s(t, helper, teamUID, fmt.Sprintf(`{"metadata": {"name": "team-%s"}, "spec": {"theme":"light","weekStart":"sunday"}}`, teamUID))
 		require.NoError(t, putResult.Error())

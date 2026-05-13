@@ -1153,6 +1153,9 @@
         "rule-viewer-section-extension": "Falha ao carregar a secção de enriquecimento do visualizador de regras"
       }
     },
+    "entities": {
+      "group": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "Falha ao atualizar a sua configuração:",
       "title-something-went-wrong": "Ocorreu um problema"
@@ -1161,6 +1164,9 @@
       "content-show-all-errors": "Mostrar todos os erros"
     },
     "errors": {
+      "api-machinery": {
+        "with-causes": ""
+      },
       "failedWith": "{{-config}} falhou com {{status}}: {{-message}}"
     },
     "evaluate-every-validation-options": {
@@ -3174,9 +3180,7 @@
       "deleting": "A eliminar",
       "text-federated": "Federado",
       "text-provisioned": "Aprovisionado",
-      "ungrouped": "Não agrupado",
-      "ungrouped-suffix": "{{ruleName}} (Não agrupado)",
-      "unknown-rule": "Regra desconhecida"
+      "ungrouped": "Não agrupado"
     },
     "saved-searches": {
       "actions-aria-label": "Ações",
@@ -10850,6 +10854,21 @@
     "name-line-width": "Largura da linha",
     "name-stacking": "Empilhamento"
   },
+  "home": {
+    "home-page": {
+      "edition": {
+        "cloud": "",
+        "enterprise": "",
+        "open-source": ""
+      },
+      "greeting": {
+        "afternoon": "",
+        "evening": "",
+        "morning": ""
+      },
+      "placeholder": ""
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "A carregar",
@@ -14828,9 +14847,6 @@
       "home-dashboard-placeholder": "Painel de controlo predefinido",
       "language-preference-label": "Idioma",
       "language-preference-placeholder": "Escolher idioma",
-      "locale-preference-description": "Escolha a sua região para ver a data, hora e formato de número correspondentes",
-      "locale-preference-label": "Formato da região",
-      "locale-preference-placeholder": "Escolha uma região",
       "theme-description": "Está a gostar dos temas experimentais? Diga-nos o que gostaria de ver <2>aqui.</2>",
       "theme-label": "Tema da interface",
       "week-start-label": "Início da semana"
@@ -16021,7 +16037,9 @@
       "description": {
         "group-by-field-value": "Agrupar dados por um valor de campo e criar tabelas aninhadas com os dados agrupados."
       },
+      "description-expand-nested-rows": "",
       "description-show-field-names": "Se esta opção estiver ativada, as tabelas aninhadas mostrarão os nomes dos campos como cabeçalho da tabela",
+      "label-expand-nested-rows-by-default": "",
       "label-show-field-names-in-nested-tables": "Mostrar nomes de campos em tabelas aninhadas",
       "name": {
         "group-to-nested-tables": "Agrupar em tabelas aninhadas"
