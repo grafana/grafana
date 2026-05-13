@@ -178,7 +178,7 @@ func (b *QueryAPIBuilder) QueryDatasources(w http.ResponseWriter, httpreq *http.
 				"ctx_err", ctx.Err(),
 				"cause", context.Cause(ctx),
 			)
-			errorDataResponse = backend.ErrDataResponseWithSource(http.StatusGatewayTimeout, backend.ErrorSourcePlugin, err.Error())
+			errorDataResponse = backend.ErrDataResponseWithSource(408, backend.ErrorSourceDownstream, err.Error())
 		case errors.Is(err, context.Canceled) || errors.Is(ctx.Err(), context.Canceled):
 			connectLogger.Warn(
 				"query-service request cancelled",
