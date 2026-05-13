@@ -1,6 +1,5 @@
 import { DataSourceApi, type DataSourceInstanceSettings, type DataSourcePluginMeta } from '@grafana/data';
 
-import { invalidateCachedPromisesCache } from '../../utils/getCachedPromise';
 import { RuntimeDataSource } from '../RuntimeDataSource';
 import { setTemplateSrv, type TemplateSrv } from '../templateSrv';
 
@@ -57,7 +56,6 @@ beforeEach(() => {
   resetInstanceSettings();
   resetPlugin();
   resetPluginCache();
-  invalidateCachedPromisesCache();
 });
 
 describe('plugin', () => {

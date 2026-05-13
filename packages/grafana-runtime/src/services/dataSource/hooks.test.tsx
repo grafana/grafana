@@ -2,7 +2,6 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 
 import { type DataSourceInstanceSettings } from '@grafana/data';
 
-import { invalidateCachedPromisesCache } from '../../utils/getCachedPromise';
 import { setBackendSrv } from '../backendSrv';
 import { setTemplateSrv, type TemplateSrv } from '../templateSrv';
 
@@ -61,7 +60,6 @@ beforeAll(() => {
 beforeEach(() => {
   resetInstanceSettings();
   resetPlugin();
-  invalidateCachedPromisesCache();
   initDataSourceInstanceSettings(fixtures, 'Bravo');
 });
 

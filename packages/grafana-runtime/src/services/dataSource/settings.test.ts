@@ -1,6 +1,5 @@
 import { type DataSourceInstanceSettings } from '@grafana/data';
 
-import { invalidateCachedPromisesCache } from '../../utils/getCachedPromise';
 import { setBackendSrv } from '../backendSrv';
 import { setTemplateSrv, type TemplateSrv } from '../templateSrv';
 
@@ -117,7 +116,6 @@ beforeAll(() => {
 
 beforeEach(() => {
   _resetForTests();
-  invalidateCachedPromisesCache();
   backendGet.mockReset();
 });
 
@@ -149,13 +147,10 @@ describe('instanceSettings', () => {
       expect(result?.rawRef).toEqual({ type: 'test-db', uid: 'uid-alpha' });
     });
 
-    it('fetches from the backend when cache is empty and miss', async () => {
-      // Don't call init — simulates the very first access before boot data has
-      // been pushed into the cache (e.g. from a non-Grafana mount point).
-      backendGet.mockResolvedValue({ datasources: fixtures, defaultDatasource: 'Bravo' });
+    it('returns undefined when cache has not been initialized', async () => {
       const result = await getDataSourceInstanceSettings('uid-alpha');
-      expect(backendGet).toHaveBeenCalledWith('/api/frontend/settings');
-      expect(result?.name).toBe('Alpha');
+      expect(result).toBeUndefined();
+      expect(backendGet).not.toHaveBeenCalled();
     });
 
     it('resolves expression references by uid, name, and legacy id', async () => {
@@ -207,17 +202,6 @@ describe('instanceSettings', () => {
       initDataSourceInstanceSettings(fixtures, 'Bravo');
       const result = await getDataSourceInstanceSettings('${missing}');
       expect(result).toBeUndefined();
-    });
-
-    it('deduplicates concurrent fetches', async () => {
-      backendGet.mockResolvedValue({ datasources: fixtures, defaultDatasource: 'Bravo' });
-      const [a, b] = await Promise.all([
-        getDataSourceInstanceSettings('uid-alpha'),
-        getDataSourceInstanceSettings('uid-bravo'),
-      ]);
-      expect(backendGet).toHaveBeenCalledTimes(1);
-      expect(a?.name).toBe('Alpha');
-      expect(b?.name).toBe('Bravo');
     });
   });
 
