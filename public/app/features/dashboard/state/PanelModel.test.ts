@@ -695,6 +695,18 @@ describe('PanelModel legacy API telemetry — migration invocation', () => {
 
     expect(reportMock).not.toHaveBeenCalledWith(expect.objectContaining({ apiName: 'PanelMigrationHandler.invoke' }));
   });
+
+  it('does not report PanelMigrationHandler.invoke when plugin version is already current', async () => {
+    const onPanelMigration = jest.fn().mockReturnValue({});
+    const plugin = getPanelPlugin({ id: 'legacy-panel' }).setMigrationHandler(onPanelMigration);
+    // pluginVersion equals plugin.meta.info.version so the migration guard skips both the handler and the report.
+    const panel = new PanelModel({ type: 'legacy-panel', pluginVersion: '1' });
+
+    await panel.pluginLoaded(plugin);
+
+    expect(onPanelMigration).not.toHaveBeenCalled();
+    expect(reportMock).not.toHaveBeenCalledWith(expect.objectContaining({ apiName: 'PanelMigrationHandler.invoke' }));
+  });
 });
 
 const variablesMock = [
