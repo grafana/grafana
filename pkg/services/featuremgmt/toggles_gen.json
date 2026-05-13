@@ -27,7 +27,7 @@
       "spec": {
         "description": "Enables the advisor report integration with datasource pages",
         "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "expression": "false"
       }
     },
@@ -134,7 +134,8 @@
       "metadata": {
         "name": "alerting.disableV0ReceiverConversion",
         "resourceVersion": "1777923303116",
-        "creationTimestamp": "2026-05-04T19:35:03Z"
+        "creationTimestamp": "2026-05-04T19:35:03Z",
+        "deletionTimestamp": "2026-05-12T19:30:23Z"
       },
       "spec": {
         "description": "Disable automatic conversion of legacy (V0/Mimir) Alertmanager receivers to Grafana model",
@@ -1127,7 +1128,7 @@
       "spec": {
         "description": "Register the proxy endpoints",
         "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "requiresRestart": true,
         "expression": "false"
       }
@@ -1141,7 +1142,7 @@
       "spec": {
         "description": "Registers an API server for each backend app plugin exposing a settings endpoint",
         "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "requiresRestart": true,
         "expression": "false"
       }
@@ -1378,7 +1379,7 @@
       "spec": {
         "description": "Prioritize loading plugins from the CDN before other sources",
         "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "expression": "false"
       }
     },
@@ -1392,7 +1393,7 @@
       "spec": {
         "description": "Enable loading plugins via declarative URLs",
         "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "expression": "false"
       }
     },
@@ -1875,7 +1876,7 @@
       "spec": {
         "description": "Shows defined connections for a data source in the plugins detail page",
         "stage": "privatePreview",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "frontend": true,
         "expression": "false"
       }
@@ -2154,7 +2155,7 @@
       "spec": {
         "description": "Use a dedicated auth token for Grafana.com proxy requests and plugin installs",
         "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "expression": "false"
       }
     },
@@ -2168,7 +2169,7 @@
       "spec": {
         "description": "Use a dedicated auth token for Grafana.com proxy requests and plugin installs",
         "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "expression": "false"
       }
     },
@@ -2182,7 +2183,7 @@
       "spec": {
         "description": "Use a dedicated auth token for Grafana.com proxy requests and plugin installs",
         "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "expression": "false"
       }
     },
@@ -2305,7 +2306,7 @@
       "spec": {
         "description": "Set this to true to enable all app chrome extensions registered by plugins.",
         "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "frontend": true,
         "hideFromDocs": true,
         "expression": "false"
@@ -2364,7 +2365,7 @@
       "spec": {
         "description": "Enables the extension admin page regardless of development mode",
         "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "requiresRestart": true,
         "expression": "false"
       }
@@ -2522,7 +2523,7 @@
       "spec": {
         "description": "Enable favorite datasources",
         "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "frontend": true,
         "expression": "false"
       }
@@ -2737,7 +2738,22 @@
       "spec": {
         "description": "Use a dedicated auth token for Grafana.com proxy requests and plugin installs",
         "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.enableScopesFirstMode",
+        "resourceVersion": "1778616044322",
+        "creationTimestamp": "2026-05-12T20:00:44Z"
+      },
+      "spec": {
+        "description": "Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button)",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "frontend": true,
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
@@ -2862,7 +2878,7 @@
       "spec": {
         "description": "Enables Advisor app",
         "stage": "GA",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "expression": "true"
       }
     },
@@ -4142,7 +4158,7 @@
       "spec": {
         "description": "Enables managed plugins v2 (expanded rollout, community plugin coverage)",
         "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -4157,7 +4173,7 @@
       "spec": {
         "description": "Enables marketplace plugin licensing: per-plugin license token storage in marketplace_license_token, bootstrap from env vars / on-disk seeds, and periodic renewal against grafana.com.",
         "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "requiresRestart": true,
         "expression": "false"
       }
@@ -4669,7 +4685,7 @@
       "spec": {
         "description": "Enables running plugins in containers",
         "stage": "privatePreview",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "requiresRestart": true,
         "expression": "false"
       }
@@ -4684,7 +4700,7 @@
       "spec": {
         "description": "Show insights for plugins in the plugin details page",
         "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "frontend": true,
         "expression": "false"
       }
@@ -4698,7 +4714,7 @@
       "spec": {
         "description": "Enable syncing plugin installations to the installs API",
         "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "expression": "false"
       }
     },
@@ -4711,7 +4727,7 @@
       "spec": {
         "description": "Preserve plugin proxy trailing slash.",
         "stage": "GA",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "expression": "false"
       }
     },
@@ -4724,7 +4740,7 @@
       "spec": {
         "description": "Load plugins on store service startup instead of wire provider, and call RegisterFixedRoles after all plugins are loaded",
         "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "expression": "false"
       }
     },
@@ -4740,7 +4756,7 @@
       "spec": {
         "description": "Enables marketplace plugin licensing",
         "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "requiresRestart": true,
         "expression": "false"
       }
@@ -4769,7 +4785,7 @@
       "spec": {
         "description": "Enables plugins decoupling from bootdata",
         "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "frontend": true,
         "hideFromDocs": true,
         "expression": "false"
@@ -4784,7 +4800,7 @@
       "spec": {
         "description": "Enables auto-updating of users installed plugins",
         "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "expression": "false"
       }
     },
@@ -4798,7 +4814,7 @@
       "spec": {
         "description": "Use a dedicated auth token for Grafana.com plugin API requests and plugin installs",
         "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "expression": "false"
       }
     },
@@ -4811,7 +4827,7 @@
       "spec": {
         "description": "Enables SRI checks for plugin assets",
         "stage": "GA",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "expression": "false"
       }
     },
@@ -5500,7 +5516,8 @@
       "metadata": {
         "name": "reportingCsvEncodingOptions",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2026-01-08T12:56:54Z"
+        "creationTimestamp": "2026-01-08T12:56:54Z",
+        "deletionTimestamp": "2026-05-13T10:49:39Z"
       },
       "spec": {
         "description": "Enables CSV encoding options in the reporting feature",
@@ -5581,7 +5598,7 @@
       "spec": {
         "description": "Enables sharing a list of APIs with a list of plugins",
         "stage": "GA",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "frontend": true,
         "hideFromDocs": true,
         "expression": "true"
@@ -5775,10 +5792,10 @@
     {
       "metadata": {
         "name": "splashScreen",
-        "resourceVersion": "1775046571105",
+        "resourceVersion": "1778658028142",
         "creationTimestamp": "2026-03-25T17:59:16Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-04-01 12:29:31.105103 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-05-13 07:40:28.142297 +0000 UTC"
         }
       },
       "spec": {
@@ -5786,7 +5803,7 @@
         "stage": "preview",
         "codeowner": "@grafana/grafana-frontend-platform",
         "frontend": true,
-        "expression": "true"
+        "expression": "false"
       }
     },
     {
@@ -6146,7 +6163,7 @@
       "spec": {
         "description": "Enable TTL plugin instance manager",
         "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "frontend": true,
         "expression": "false"
       }
@@ -6160,7 +6177,7 @@
       "spec": {
         "description": "Enables unified navbars",
         "stage": "GA",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "frontend": true,
         "expression": "false"
       }
@@ -6278,7 +6295,7 @@
       "spec": {
         "description": "Enables plugins decoupling from bootdata",
         "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "frontend": true,
         "hideFromDocs": true,
         "expression": "false"
