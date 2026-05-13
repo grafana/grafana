@@ -69,6 +69,10 @@ packageExtensions:
   doctrine@3.0.0:
     dependencies:
       assert: 2.0.0
+  '@grafana/api-clients':
+    peerDependencies:
+      react: '*'
+      react-dom: '*'
   rc-trigger@2.6.5:
     peerDependencies:
       react: 17.0.1
