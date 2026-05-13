@@ -133,7 +133,7 @@ func TestHomeDashboardGet_FallsBackToDefaultWhenFileMissing(t *testing.T) {
 	require.Equal(t, DASHBOARD_NAME, dash.Name)
 	require.NotEmpty(t, dash.ResourceVersion)
 	require.False(t, dash.CreationTimestamp.IsZero())
-	require.Equal(t, "home", dash.Spec.Object["title"])
+	require.Equal(t, "Home", dash.Spec.Object["title"])
 }
 
 func TestHomeDashboardGet_LoadsConfiguredFile(t *testing.T) {
