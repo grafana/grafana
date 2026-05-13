@@ -15,6 +15,11 @@ export {
   reportPageview,
   reportExperimentView,
 } from './analytics/utils';
+export {
+  reportLegacyDashboardApiUsage,
+  resolvePluginIdFromStack,
+  type LegacyDashboardApiUsage,
+} from './analytics/legacyDashboardApiUsage';
 export { featureEnabled } from './utils/licensing';
 export {
   logInfo,
