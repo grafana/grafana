@@ -28,9 +28,8 @@ type PreferenceLister interface {
 }
 
 type merger struct {
-	defaults         preferences.PreferencesSpec
-	homeDashboardUID string
-	lister           PreferenceLister
+	defaults preferences.PreferencesSpec
+	lister   PreferenceLister
 }
 
 func newMerger(cfg *setting.Cfg) *merger {
@@ -43,7 +42,7 @@ func newMerger(cfg *setting.Cfg) *merger {
 		},
 	}
 	if home.HasCustomHome(cfg) {
-		m.homeDashboardUID = home.DASHBOARD_NAME
+		m.defaults.HomeDashboardUID = new(home.DASHBOARD_NAME)
 	}
 	return m
 }
@@ -109,11 +108,7 @@ func (s *merger) Current(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	defaults := s.defaults
-	if s.homeDashboardUID != "" {
-		defaults.HomeDashboardUID = &s.homeDashboardUID
-	}
-	p, err := merge(defaults, list.Items)
+	p, err := merge(s.defaults, list.Items)
 	if err != nil {
 		errhttp.Write(ctx, err, w)
 		return
