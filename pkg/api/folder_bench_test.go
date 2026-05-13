@@ -470,7 +470,7 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 		SQLStore:         sc.db,
 		Features:         features,
 		QuotaService:     quotaSrv,
-		SearchService:    search.ProvideService(sc.cfg, sc.db, starSvc, dashboardSvc, folderServiceWithFlagOn, features, sort.ProvideService()),
+		SearchService:    search.ProvideService(sc.cfg, sc.db, starSvc, nil, dashboardSvc, folderServiceWithFlagOn, features, sort.ProvideService()),
 		folderService:    folderServiceWithFlagOn,
 		DashboardService: dashboardSvc,
 	}
