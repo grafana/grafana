@@ -13,7 +13,12 @@ test.describe(
   () => {
     const DATASOURCE_NAME = 'aprometheusAnnotationDS';
 
-    test('should navigate to variable query editor', async ({ page, selectors, createDataSourceConfigPage, components }) => {
+    test('should navigate to variable query editor', async ({
+      page,
+      selectors,
+      createDataSourceConfigPage,
+      components,
+    }) => {
       const annotationName = 'promAnnotation';
 
       await createDataSourceConfigPage({ type: 'prometheus', name: DATASOURCE_NAME });

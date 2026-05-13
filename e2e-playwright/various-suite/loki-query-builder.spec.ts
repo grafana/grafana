@@ -10,7 +10,13 @@ test.describe(
     tag: ['@various'],
   },
   () => {
-    test('should be able to use all modes', async ({ createDataSource, page, dashboardPage, selectors, components }) => {
+    test('should be able to use all modes', async ({
+      createDataSource,
+      page,
+      dashboardPage,
+      selectors,
+      components,
+    }) => {
       await createDataSource({ type: 'loki', name: dataSourceName });
       // Mock API responses
       await page.route(/labels\?/, async (route) => {
