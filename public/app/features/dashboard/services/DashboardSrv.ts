@@ -26,6 +26,7 @@ export interface SaveDashboardOptions {
 
 export class DashboardSrv {
   dashboard?: DashboardModel;
+  private hasReportedLegacyGetCurrentUsage = false;
 
   constructor() {
     appEvents.subscribe(RemovePanelEvent, (e) => this.onRemovePanel(e.payload));
@@ -40,10 +41,11 @@ export class DashboardSrv {
   }
 
   getCurrent(): DashboardModel | undefined {
-    if (this.dashboard) {
+    if (this.dashboard && !this.hasReportedLegacyGetCurrentUsage) {
       const pluginId = resolvePluginIdFromStack(new Error().stack);
       if (pluginId !== 'unknown') {
         reportLegacyDashboardApiUsage({ pluginId, apiName: 'DashboardSrv.getCurrent' });
+        this.hasReportedLegacyGetCurrentUsage = true;
       }
     }
     return this.dashboard;

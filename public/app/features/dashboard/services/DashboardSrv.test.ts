@@ -48,4 +48,14 @@ describe('DashboardSrv.getCurrent legacy telemetry', () => {
     srv.getCurrent(); // no setCurrent first
     expect(reportMock).not.toHaveBeenCalled();
   });
+
+  it('reports only once per DashboardSrv instance even on repeated calls', () => {
+    resolveMock.mockReturnValue('my-plugin');
+    const srv = new DashboardSrv();
+    srv.setCurrent({} as unknown as DashboardModel);
+    srv.getCurrent();
+    srv.getCurrent();
+    srv.getCurrent();
+    expect(reportMock).toHaveBeenCalledTimes(1);
+  });
 });
