@@ -78,6 +78,22 @@ const spyOnSelectionAfterInitial = (connections: Connections): jest.Mock => {
   return spy;
 };
 
+function setupConnectionsWithSelectorRoot(): {
+  connections: Connections;
+  rootContainer: HTMLElement;
+  target: HTMLDivElement;
+} {
+  const rootContainer = document.createElement('div');
+  jest.spyOn(rootContainer, 'addEventListener');
+
+  const connections = newConnections({
+    selecto: { rootContainer } as unknown as Scene['selecto'],
+  });
+
+  const target = document.createElement('div');
+  return { connections, rootContainer, target };
+}
+
 describe('Connections', () => {
   it('constructor', () => {
     let connections: Connections | undefined;
@@ -444,24 +460,8 @@ describe('Connections', () => {
   });
 
   describe('handleVertexDragStart', () => {
-    function setupConnectionsWithSelectoRoot(): {
-      connections: Connections;
-      rootContainer: HTMLElement;
-      target: HTMLDivElement;
-    } {
-      const rootContainer = document.createElement('div');
-      jest.spyOn(rootContainer, 'addEventListener');
-
-      const connections = newConnections({
-        selecto: { rootContainer } as unknown as Scene['selecto'],
-      });
-
-      const target = document.createElement('div');
-      return { connections, rootContainer, target };
-    }
-
     it('reads data-index onto selectedVertexIndex and registers mousemove/mouseup with the same listener', () => {
-      const { connections, rootContainer, target } = setupConnectionsWithSelectoRoot();
+      const { connections, rootContainer, target } = setupConnectionsWithSelectorRoot();
       target.setAttribute('data-index', '2');
 
       connections.handleVertexDragStart(target);
@@ -480,7 +480,7 @@ describe('Connections', () => {
     });
 
     it('uses 0 for selectedVertexIndex when data-index is absent (Number(null))', () => {
-      const { connections, rootContainer, target } = setupConnectionsWithSelectoRoot();
+      const { connections, rootContainer, target } = setupConnectionsWithSelectorRoot();
 
       connections.handleVertexDragStart(target);
 
@@ -500,7 +500,7 @@ describe('Connections', () => {
 
   describe('handleVertexAddDragStart', () => {
     it('reads data-index onto selectedVertexIndex and registers mousemove/mouseup with the same listener', () => {
-      const { connections, rootContainer, target } = setupConnectionsWithSelectoRoot();
+      const { connections, rootContainer, target } = setupConnectionsWithSelectorRoot();
       target.setAttribute('data-index', '4');
 
       connections.handleVertexAddDragStart(target);
@@ -516,8 +516,8 @@ describe('Connections', () => {
       expect(upListener).toBe(moveListener);
     });
 
-    it('uses 0 for selectedVertexIndex when data-index is absent (Number(null))', () => {
-      const { connections, rootContainer, target } = setupConnectionsWithSelectoRoot();
+    it('uses 0 for selectedVertexIndex when data-index is absent', () => {
+      const { connections, rootContainer, target } = setupConnectionsWithSelectorRoot();
 
       connections.handleVertexAddDragStart(target);
 
@@ -525,7 +525,7 @@ describe('Connections', () => {
       expect(rootContainer.addEventListener).toHaveBeenCalledTimes(2);
     });
 
-    it('does not throw when selecto or rootContainer is missing; still sets selectedVertexIndex', () => {
+    it('does not throw when selector or rootContainer is missing; still sets selectedVertexIndex', () => {
       const connections = newConnections();
       const target = document.createElement('div');
       target.setAttribute('data-index', '3');
@@ -535,13 +535,13 @@ describe('Connections', () => {
     });
 
     it('registers vertexAddListener, not the same references as handleVertexDragStart', () => {
-      const drag = setupConnectionsWithSelectoRoot();
+      const drag = setupConnectionsWithSelectorRoot();
       drag.connections.handleVertexDragStart(drag.target);
       const dragMove = jest
         .mocked(drag.rootContainer.addEventListener)
         .mock.calls.find((c) => c[0] === 'mousemove')?.[1];
 
-      const add = setupConnectionsWithSelectoRoot();
+      const add = setupConnectionsWithSelectorRoot();
       add.connections.handleVertexAddDragStart(add.target);
       const addMove = jest.mocked(add.rootContainer.addEventListener).mock.calls.find((c) => c[0] === 'mousemove')?.[1];
 
