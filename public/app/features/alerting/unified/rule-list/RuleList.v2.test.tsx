@@ -1,4 +1,4 @@
-import { HttpResponse } from 'msw';
+import { HttpResponse, http } from 'msw';
 import { render, testWithFeatureToggles, waitFor } from 'test/test-utils';
 import { byRole, byTestId } from 'testing-library-selector';
 
@@ -66,7 +66,7 @@ setPluginComponentsHook(() => ({ components: [], isLoading: false }));
 grantUserPermissions([AccessControlAction.AlertingRuleExternalRead]);
 testWithFeatureToggles({ enable: ['alertingListViewV2'] });
 
-setupMswServer();
+const server = setupMswServer();
 
 alertingFactory.dataSource.build({ name: 'Mimir', uid: 'mimir' });
 alertingFactory.dataSource.build({ name: 'Prometheus', uid: 'prometheus' });
@@ -438,6 +438,66 @@ describe('RuleListActions', () => {
       const menu = await ui.moreMenu.find();
 
       expect(ui.menuOptions.newDataSourceRecordingRule.query(menu)).toBeInTheDocument();
+    });
+  });
+
+  describe('Auto-sync Mimir Alertmanager — hides import menu items', () => {
+    testWithFeatureToggles({
+      enable: ['alerting.syncExternalAlertmanager', 'alertingMigrationUI', 'alertingMigrationWizardUI'],
+    });
+
+    function mockAdminConfig(uid?: string) {
+      server.use(
+        http.get('/api/v1/ngalert/admin_config', () =>
+          HttpResponse.json({ alertmanagersChoice: 'internal', ...(uid ? { external_alertmanager_uid: uid } : {}) })
+        )
+      );
+    }
+
+    it('hides "Import alert rules" when sync is configured for the org', async () => {
+      grantUserRole(OrgRole.Admin);
+      grantUserPermissions([
+        AccessControlAction.AlertingRuleRead,
+        AccessControlAction.AlertingRuleCreate,
+        AccessControlAction.AlertingProvisioningSetStatus,
+      ]);
+      mockAdminConfig('mimir-uid');
+
+      const { user } = render(<RuleListActions />);
+      await user.click(ui.moreButton.get());
+      const menu = await ui.moreMenu.find();
+
+      expect(ui.menuOptions.importAlertRules.query(menu)).not.toBeInTheDocument();
+    });
+
+    it('hides "Import to Grafana Alerting" when sync is configured for the org', async () => {
+      grantUserRole(OrgRole.Admin);
+      grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingNotificationsWrite]);
+      mockAdminConfig('mimir-uid');
+
+      const { user } = render(<RuleListActions />);
+      await user.click(ui.moreButton.get());
+      const menu = await ui.moreMenu.find();
+
+      expect(ui.menuOptions.importToGma.query(menu)).not.toBeInTheDocument();
+    });
+
+    it('leaves import items visible when sync is not configured', async () => {
+      grantUserRole(OrgRole.Admin);
+      grantUserPermissions([
+        AccessControlAction.AlertingRuleRead,
+        AccessControlAction.AlertingRuleCreate,
+        AccessControlAction.AlertingProvisioningSetStatus,
+        AccessControlAction.AlertingNotificationsWrite,
+      ]);
+      mockAdminConfig();
+
+      const { user } = render(<RuleListActions />);
+      await user.click(ui.moreButton.get());
+      const menu = await ui.moreMenu.find();
+
+      expect(ui.menuOptions.importAlertRules.get(menu)).toBeInTheDocument();
+      expect(ui.menuOptions.importToGma.get(menu)).toBeInTheDocument();
     });
   });
 
