@@ -10,35 +10,7 @@ import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDi
 
 import { buildLayout } from './BigValueLayout';
 import { PercentChange } from './PercentChange';
-
-export enum BigValueColorMode {
-  Background = 'background',
-  BackgroundSolid = 'background_solid',
-  None = 'none',
-  Value = 'value',
-}
-
-export enum BigValueGraphMode {
-  None = 'none',
-  Line = 'line',
-  Area = 'area',
-}
-
-export enum BigValueJustifyMode {
-  Auto = 'auto',
-  Center = 'center',
-}
-
-/**
- * Options for how the value & title are to be displayed
- */
-export enum BigValueTextMode {
-  Auto = 'auto',
-  Value = 'value',
-  ValueAndName = 'value_and_name',
-  Name = 'name',
-  None = 'none',
-}
+import { type BigValueColorMode, type BigValueGraphMode, BigValueJustifyMode, type BigValueTextMode } from './types';
 
 export interface Props extends Themeable2 {
   /** Height of the component */

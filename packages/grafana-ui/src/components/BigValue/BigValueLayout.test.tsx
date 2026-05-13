@@ -3,7 +3,7 @@ import { type CSSProperties } from 'react';
 import { createTheme, FieldType } from '@grafana/data';
 import { PercentChangeColorMode } from '@grafana/schema';
 
-import { type Props, BigValueColorMode, BigValueGraphMode, BigValueTextMode } from './BigValue';
+import { type Props } from './BigValue';
 import {
   buildLayout,
   getPercentChangeColor,
@@ -11,6 +11,7 @@ import {
   StackedWithNoChartLayout,
   WideWithChartLayout,
 } from './BigValueLayout';
+import { BigValueColorMode, BigValueGraphMode, BigValueTextMode } from './types';
 
 function getProps(propOverrides?: Partial<Props>): Props {
   const props: Props = {

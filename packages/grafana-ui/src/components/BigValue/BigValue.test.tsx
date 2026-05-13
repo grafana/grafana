@@ -2,7 +2,8 @@ import { render, screen } from '@testing-library/react';
 
 import { createTheme } from '@grafana/data';
 
-import { BigValue, BigValueColorMode, BigValueGraphMode, type Props } from './BigValue';
+import { BigValue, type Props } from './BigValue';
+import { BigValueColorMode, BigValueGraphMode } from './types';
 
 const valueObject = {
   text: '25',

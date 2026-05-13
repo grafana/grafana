@@ -4,15 +4,9 @@ import { type FieldSparkline, FieldType } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 
-import {
-  BigValue,
-  BigValueColorMode,
-  BigValueGraphMode,
-  BigValueJustifyMode,
-  BigValueTextMode,
-  type Props,
-} from './BigValue';
+import { BigValue, type Props } from './BigValue';
 import mdx from './BigValue.mdx';
+import { BigValueColorMode, BigValueGraphMode, BigValueJustifyMode, BigValueTextMode } from './types';
 
 const meta: Meta = {
   title: 'Plugins/BigValue',

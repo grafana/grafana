@@ -15,8 +15,9 @@ import { getTextColorForAlphaBackground } from '../../utils/colors';
 import { calculateFontSize } from '../../utils/measureText';
 import { Sparkline } from '../Sparkline/Sparkline';
 
-import { BigValueColorMode, type Props, BigValueJustifyMode, BigValueTextMode } from './BigValue';
+import { type Props } from './BigValue';
 import { percentChangeString } from './PercentChange';
+import { BigValueColorMode, BigValueJustifyMode, BigValueTextMode } from './types';
 
 const LINE_HEIGHT = 1.2;
 const MAX_TITLE_SIZE = 30;
