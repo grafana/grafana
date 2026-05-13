@@ -367,6 +367,8 @@ Not all exporters are available in every deployment:
 
 By default, dashboard content doesn't appear in audit logs because it can significantly increase log size. To include dashboard content, enable the `log_dashboard_content` option.
 
+Data source query request and response bodies are also excluded by default. Enabling `log_datasource_query_request_body` or `log_datasource_query_response_body` significantly increases log volume and may expose sensitive data such as query parameters, credentials, or personally identifiable information.
+
 ```ini
 [auditing]
 # Enable the auditing feature
