@@ -8,7 +8,13 @@ import { ConnectionPath, type CanvasConnection } from '../../panelcfg.gen';
 import type { ConnectionState } from '../../types';
 import * as canvasUtils from '../../utils';
 
-import { ANCHORS, ANCHOR_PADDING, CONNECTION_ANCHOR_ALT, HALF_SIZE } from './ConnectionAnchors';
+import {
+  ANCHORS,
+  ANCHOR_PADDING,
+  CONNECTION_ANCHOR_ALT,
+  CONNECTION_ANCHOR_HIGHLIGHT_OFFSET,
+  HALF_SIZE,
+} from './ConnectionAnchors';
 import { Connections } from './Connections';
 
 jest.mock('app/features/canvas/runtime/sceneElementManagement', () => ({
@@ -332,7 +338,111 @@ describe('Connections', () => {
     });
   });
 
-  it.todo('handleConnectionDragStart');
+  describe('handleConnectionDragStart', () => {
+    let getParentBoundingClientRectSpy: jest.SpiedFunction<typeof canvasUtils.getParentBoundingClientRect>;
+
+    beforeEach(() => {
+      getParentBoundingClientRectSpy = jest.spyOn(canvasUtils, 'getParentBoundingClientRect');
+    });
+
+    afterEach(() => {
+      getParentBoundingClientRectSpy.mockRestore();
+    });
+
+    function setupConnectionsForDragStart(opts?: { omitConnectionSvg?: boolean; omitConnectionLine?: boolean }): {
+      connections: Connections;
+      rootContainer: HTMLDivElement;
+      selectedTarget: HTMLDivElement;
+      connectionLine: SVGLineElement | undefined;
+    } {
+      const sceneDivParent = document.createElement('div');
+      const sceneDiv = document.createElement('div');
+      sceneDivParent.appendChild(sceneDiv);
+
+      const rootContainer = document.createElement('div');
+      jest.spyOn(rootContainer, 'addEventListener');
+
+      const svgNs = 'http://www.w3.org/2000/svg';
+      const connectionSVG =
+        opts?.omitConnectionSvg === true ? undefined : (document.createElementNS(svgNs, 'svg') as SVGElement);
+      const connectionLine =
+        opts?.omitConnectionLine === true
+          ? undefined
+          : (document.createElementNS(svgNs, 'line') as unknown as SVGLineElement);
+
+      const connections = newConnections({
+        scale: 2,
+        div: sceneDiv,
+        selecto: { rootContainer } as unknown as Scene['selecto'],
+      });
+      connections.connectionSVG = connectionSVG;
+      connections.connectionLine = connectionLine;
+
+      const selectedTarget = document.createElement('div');
+      jest
+        .spyOn(selectedTarget, 'getBoundingClientRect')
+        .mockReturnValue(rect({ top: 120, left: 150, width: 40, height: 40, bottom: 160, right: 190 }));
+
+      return { connections, rootContainer, selectedTarget, connectionLine };
+    }
+
+    it('sets crosshair cursor, primes the connection line from the anchor rect, resets leave highlight flag, and subscribes to mousemove', () => {
+      const parentBounds = rect({ top: 50, left: 100, width: 800, height: 600, bottom: 650, right: 900 });
+      getParentBoundingClientRectSpy.mockReturnValue(parentBounds);
+
+      const { connections, rootContainer, selectedTarget, connectionLine } = setupConnectionsForDragStart();
+      const setAttributeSpy = jest.spyOn(connectionLine!, 'setAttribute');
+      connections.didConnectionLeaveHighlight = true;
+
+      const clientX = 440;
+      const clientY = 390;
+      const scale = connections.scene.scale;
+      const offset = CONNECTION_ANCHOR_HIGHLIGHT_OFFSET * scale;
+      const anchor = selectedTarget.getBoundingClientRect();
+
+      connections.handleConnectionDragStart(selectedTarget, clientX, clientY);
+
+      expect(rootContainer.style.cursor).toBe('crosshair');
+      expect(connections.didConnectionLeaveHighlight).toBe(false);
+
+      expect(setAttributeSpy.mock.calls.map(([attr, val]) => [attr, val])).toEqual([
+        ['x1', `${(anchor.x - parentBounds.x + offset) / scale}`],
+        ['y1', `${(anchor.y - parentBounds.y + offset) / scale}`],
+        ['x2', `${clientX - parentBounds.x}`],
+        ['y2', `${clientY - parentBounds.y}`],
+      ]);
+
+      expect(rootContainer.addEventListener).toHaveBeenCalledWith('mousemove', expect.any(Function));
+    });
+
+    it('returns early without attaching mousemove when the parent bounding rect cannot be computed', () => {
+      const { connections, rootContainer, selectedTarget, connectionLine } = setupConnectionsForDragStart();
+      getParentBoundingClientRectSpy.mockReturnValue(undefined);
+
+      const setAttrSpy = jest.spyOn(connectionLine!, 'setAttribute');
+
+      connections.handleConnectionDragStart(selectedTarget, 0, 0);
+
+      expect(rootContainer.style.cursor).toBe('crosshair');
+      expect(setAttrSpy).not.toHaveBeenCalled();
+      expect(rootContainer.addEventListener).not.toHaveBeenCalled();
+    });
+
+    it('still attaches the mousemove listener when SVG / line prerequisites are missing', () => {
+      getParentBoundingClientRectSpy.mockReturnValue(rect({ top: 0, left: 0, width: 100, height: 100 }));
+
+      const { connections, rootContainer, selectedTarget } = setupConnectionsForDragStart({
+        omitConnectionSvg: true,
+        omitConnectionLine: true,
+      });
+
+      connections.handleConnectionDragStart(selectedTarget, 10, 20);
+
+      expect(rootContainer.style.cursor).toBe('crosshair');
+      expect(rootContainer.addEventListener).toHaveBeenCalledWith('mousemove', expect.any(Function));
+    });
+  });
+
   it.todo('handleVertexDragStart');
   it.todo('handleVertexAddDragStart');
   it.todo('onChange');
