@@ -1,4 +1,8 @@
-package leaderelection
+// Package kvlease provides a leader-election Elector backed by the KV
+// lease primitive. It lives outside the parent leaderelection package so
+// that consumers of leaderelection.Config (notably pkg/setting) don't
+// transitively pull the unified-storage lease/test dependency tree.
+package kvlease
 
 import (
 	"context"
@@ -7,21 +11,22 @@ import (
 	"os"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/leaderelection"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/lease"
 )
 
-// KVLeaseElector implements Elector using the KV store lease primitive.
-// It is used for leader election in embedded mode where Kubernetes Lease
-// objects are not available.
+// Elector implements leaderelection.Elector using the KV store lease
+// primitive. It is used for leader election in embedded mode where
+// Kubernetes Lease objects are not available.
 //
-// Unlike KubernetesElector, this implementation does not use
-// Config.RenewDeadline. Renewal is handled internally by the lease
+// Unlike leaderelection.KubernetesElector, this implementation does not
+// use Config.RenewDeadline. Renewal is handled internally by the lease
 // package's auto-renewal goroutine (at TTL/3), which reports loss only
 // when the lease is actually superseded by another holder.
 // Config.RetryPeriod controls how often a non-leader retries acquisition.
-type KVLeaseElector struct {
+type Elector struct {
 	kvProvider    *kv.EventualKVProvider
 	leaseName     string
 	identity      string
@@ -31,25 +36,25 @@ type KVLeaseElector struct {
 	managerOpts   []lease.ManagerOption
 }
 
-// KVLeaseElectorOption configures a KVLeaseElector.
-type KVLeaseElectorOption func(*KVLeaseElector)
+// Option configures an Elector.
+type Option func(*Elector)
 
 // WithManagerOptions passes options to the underlying lease.Manager.
 // Intended for tests that need short TTLs via lease.WithInternalMinTTL.
-func WithManagerOptions(opts ...lease.ManagerOption) KVLeaseElectorOption {
-	return func(e *KVLeaseElector) {
+func WithManagerOptions(opts ...lease.ManagerOption) Option {
+	return func(e *Elector) {
 		e.managerOpts = opts
 	}
 }
 
-// NewKVLeaseElector creates a KVLeaseElector. If cfg.Identity is empty, it is
-// auto-generated from hostname:PID.
-func NewKVLeaseElector(
+// New creates an Elector. If cfg.Identity is empty, it is auto-generated
+// from hostname:PID.
+func New(
 	kvProvider *kv.EventualKVProvider,
-	cfg Config,
+	cfg leaderelection.Config,
 	logger log.Logger,
-	opts ...KVLeaseElectorOption,
-) (*KVLeaseElector, error) {
+	opts ...Option,
+) (*Elector, error) {
 	if cfg.LeaseName == "" {
 		return nil, fmt.Errorf("leader_election_lease_name must be set")
 	}
@@ -63,7 +68,7 @@ func NewKVLeaseElector(
 		identity = fmt.Sprintf("%s:%d", hostname, os.Getpid())
 	}
 
-	e := &KVLeaseElector{
+	e := &Elector{
 		kvProvider:    kvProvider,
 		leaseName:     cfg.LeaseName,
 		identity:      identity,
@@ -77,24 +82,21 @@ func NewKVLeaseElector(
 	return e, nil
 }
 
-func (k *KVLeaseElector) Run(ctx context.Context, fn func(ctx context.Context), opts ...RunOption) error {
-	o := &runOptions{
-		releaseOnCancel: true,
-		onStartedLeading: func(ctx context.Context) {
+func (k *Elector) Run(ctx context.Context, fn func(ctx context.Context), opts ...leaderelection.RunOption) error {
+	o := leaderelection.ResolveRunOptions([]leaderelection.RunOption{
+		leaderelection.WithReleaseOnCancel(true),
+		leaderelection.WithOnStartedLeading(func(ctx context.Context) {
 			k.logger.Info("Acquired KV lease, starting leader work",
 				"identity", k.identity,
 				"lease", k.leaseName,
 			)
-		},
-		onStoppedLeading: func() {
+		}),
+		leaderelection.WithOnStoppedLeading(func() {
 			k.logger.Info("Lost KV lease, stopping leader work",
 				"identity", k.identity,
 			)
-		},
-	}
-	for _, opt := range opts {
-		opt(o)
-	}
+		}),
+	}, opts)
 
 	store, err := k.kvProvider.Get(ctx)
 	if err != nil {
@@ -121,7 +123,7 @@ func (k *KVLeaseElector) Run(ctx context.Context, fn func(ctx context.Context), 
 // tryAcquire attempts to acquire the lease. Returns the lease on success,
 // nil if the lease is held by someone else (after waiting retryPeriod
 // before the next attempt), or an error if the context is cancelled.
-func (k *KVLeaseElector) tryAcquire(ctx context.Context, mgr *lease.Manager) (*lease.Lease, error) {
+func (k *Elector) tryAcquire(ctx context.Context, mgr *lease.Manager) (*lease.Lease, error) {
 	l, err := mgr.Acquire(ctx, k.leaseName, lease.WithTTL(k.leaseDuration), lease.WithAutoRenew())
 	if err == nil {
 		return l, nil
@@ -143,17 +145,17 @@ func (k *KVLeaseElector) tryAcquire(ctx context.Context, mgr *lease.Manager) (*l
 
 // runAsLeader runs the leader work function. Returns when
 // leadership is lost or the context is cancelled.
-func (k *KVLeaseElector) runAsLeader(
+func (k *Elector) runAsLeader(
 	ctx context.Context,
 	l *lease.Lease,
 	mgr *lease.Manager,
 	fn func(ctx context.Context),
-	o *runOptions,
+	o *leaderelection.RunOptions,
 ) {
 	leaderCtx, leaderCancel := context.WithCancel(ctx)
 	defer leaderCancel()
 
-	o.onStartedLeading(leaderCtx)
+	o.OnStartedLeading(leaderCtx)
 
 	done := make(chan struct{})
 	go func() {
@@ -168,9 +170,9 @@ func (k *KVLeaseElector) runAsLeader(
 	}
 
 	leaderCancel()
-	o.onStoppedLeading()
+	o.OnStoppedLeading()
 
-	if o.releaseOnCancel && ctx.Err() != nil {
+	if o.ReleaseOnCancel && ctx.Err() != nil {
 		releaseCtx, releaseCancel := context.WithTimeout(context.Background(), 5*time.Second)
 		if releaseErr := mgr.Release(releaseCtx, l); releaseErr != nil {
 			k.logger.Debug("Failed to release lease on shutdown", "error", releaseErr)

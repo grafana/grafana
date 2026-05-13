@@ -1,4 +1,4 @@
-package leaderelection
+package kvlease
 
 import (
 	"bytes"
@@ -14,6 +14,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/leaderelection"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/lease"
@@ -26,8 +27,8 @@ func newTestKVProvider(t *testing.T) *kv.EventualKVProvider {
 	return p
 }
 
-func testConfig() Config {
-	return Config{
+func testElectionConfig() leaderelection.Config {
+	return leaderelection.Config{
 		LeaseName:     "test-lease",
 		Identity:      "test-holder",
 		LeaseDuration: 500 * time.Millisecond,
@@ -35,17 +36,17 @@ func testConfig() Config {
 	}
 }
 
-func testElectorOpts() []KVLeaseElectorOption {
-	return []KVLeaseElectorOption{
+func testElectorOpts() []Option {
+	return []Option{
 		WithManagerOptions(lease.WithInternalMinTTL(50 * time.Millisecond)),
 	}
 }
 
 func TestKVLeaseElector_AcquireLeadership(t *testing.T) {
 	kvp := newTestKVProvider(t)
-	cfg := testConfig()
+	cfg := testElectionConfig()
 
-	elector, err := NewKVLeaseElector(kvp, cfg, log.NewNopLogger(), testElectorOpts()...)
+	elector, err := New(kvp, cfg, log.NewNopLogger(), testElectorOpts()...)
 	require.NoError(t, err)
 
 	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
@@ -68,9 +69,9 @@ func TestKVLeaseElector_AcquireLeadership(t *testing.T) {
 
 func TestKVLeaseElector_GracefulRelease(t *testing.T) {
 	kvp := newTestKVProvider(t)
-	cfg := testConfig()
+	cfg := testElectionConfig()
 
-	elector, err := NewKVLeaseElector(kvp, cfg, log.NewNopLogger(), testElectorOpts()...)
+	elector, err := New(kvp, cfg, log.NewNopLogger(), testElectorOpts()...)
 	require.NoError(t, err)
 
 	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
@@ -96,11 +97,11 @@ func TestKVLeaseElector_GracefulRelease(t *testing.T) {
 
 func TestKVLeaseElector_LeadershipHandoff(t *testing.T) {
 	kvp := newTestKVProvider(t)
-	cfg := testConfig()
+	cfg := testElectionConfig()
 
 	var leader1Called, leader2Called atomic.Bool
 
-	elector1, err := NewKVLeaseElector(kvp, Config{
+	elector1, err := New(kvp, leaderelection.Config{
 		LeaseName:     cfg.LeaseName,
 		Identity:      "holder-1",
 		LeaseDuration: cfg.LeaseDuration,
@@ -108,7 +109,7 @@ func TestKVLeaseElector_LeadershipHandoff(t *testing.T) {
 	}, log.NewNopLogger(), testElectorOpts()...)
 	require.NoError(t, err)
 
-	elector2, err := NewKVLeaseElector(kvp, Config{
+	elector2, err := New(kvp, leaderelection.Config{
 		LeaseName:     cfg.LeaseName,
 		Identity:      "holder-2",
 		LeaseDuration: cfg.LeaseDuration,
@@ -155,7 +156,7 @@ func TestKVLeaseElector_LeadershipHandoff(t *testing.T) {
 func TestKVLeaseElector_IdentityAutoGeneration(t *testing.T) {
 	kvp := newTestKVProvider(t)
 
-	elector, err := NewKVLeaseElector(kvp, Config{
+	elector, err := New(kvp, leaderelection.Config{
 		LeaseName:     "test-auto-id",
 		Identity:      "",
 		LeaseDuration: time.Second,
@@ -169,7 +170,7 @@ func TestKVLeaseElector_IdentityAutoGeneration(t *testing.T) {
 func TestKVLeaseElector_MissingLeaseName(t *testing.T) {
 	kvp := newTestKVProvider(t)
 
-	_, err := NewKVLeaseElector(kvp, Config{
+	_, err := New(kvp, leaderelection.Config{
 		LeaseName: "",
 	}, log.NewNopLogger())
 	require.Error(t, err)
@@ -178,9 +179,9 @@ func TestKVLeaseElector_MissingLeaseName(t *testing.T) {
 
 func TestKVLeaseElector_KVProviderCancelled(t *testing.T) {
 	p := kv.ProvideEventualKVStore() // never set
-	cfg := testConfig()
+	cfg := testElectionConfig()
 
-	elector, err := NewKVLeaseElector(p, cfg, log.NewNopLogger())
+	elector, err := New(p, cfg, log.NewNopLogger())
 	require.NoError(t, err)
 
 	ctx, cancel := context.WithTimeout(t.Context(), 200*time.Millisecond)

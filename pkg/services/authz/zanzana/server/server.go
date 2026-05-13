@@ -25,6 +25,7 @@ import (
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/clientauth"
 	"github.com/grafana/grafana/pkg/infra/leaderelection"
+	"github.com/grafana/grafana/pkg/infra/leaderelection/kvlease"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -214,7 +215,7 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 					return nil, fmt.Errorf("KV lease leader election requires unified storage KV backend")
 				}
 				var leErr error
-				le, leErr = leaderelection.NewKVLeaseElector(kvProvider, cfg.ZanzanaReconciler.LeaderElection, reconcilerLogger)
+				le, leErr = kvlease.New(kvProvider, cfg.ZanzanaReconciler.LeaderElection, reconcilerLogger)
 				if leErr != nil {
 					return nil, fmt.Errorf("failed to create KV lease elector: %w", leErr)
 				}
