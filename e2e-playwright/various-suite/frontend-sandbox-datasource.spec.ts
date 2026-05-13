@@ -67,6 +67,7 @@ test.describe(
         createDataSource,
         dashboardPage,
         selectors,
+        components,
       }) => {
         const TIMESTAMP = Date.now();
         const DATASOURCE_TYPED_NAME = `SandboxDatasourceInstance-${TIMESTAMP}`;
@@ -78,17 +79,7 @@ test.describe(
         const DATASOURCE_CONNECTION_ID = response.uid;
         await page.goto('/explore');
 
-        const dataSourcePicker = dashboardPage.getByGrafanaSelector(selectors.components.DataSourcePicker.container);
-        await expect(dataSourcePicker).toBeVisible();
-        await dataSourcePicker.click();
-
-        // Type to search — the virtualized list only renders visible items
-        const pickerInput1 = page.getByTestId(selectors.components.DataSourcePicker.inputV2);
-        await pickerInput1.fill(DATASOURCE_TYPED_NAME);
-
-        const datasourceOption = page.locator(`text=${DATASOURCE_TYPED_NAME}`);
-        await expect(datasourceOption).toBeVisible();
-        await datasourceOption.click();
+        await components.dataSourcePicker.set(DATASOURCE_TYPED_NAME);
 
         // make sure the datasource was correctly selected and rendered
         const breadcrumb = dashboardPage.getByGrafanaSelector(
@@ -100,7 +91,13 @@ test.describe(
         await expect(sandboxDiv).toBeVisible();
       });
 
-      test('Should accept values when typed', async ({ page, createDataSource, dashboardPage, selectors }) => {
+      test('Should accept values when typed', async ({
+        page,
+        createDataSource,
+        dashboardPage,
+        selectors,
+        components,
+      }) => {
         const TIMESTAMP = Date.now();
         const DATASOURCE_TYPED_NAME = `SandboxDatasourceInstance-${TIMESTAMP}`;
         // Add the datasource
@@ -111,17 +108,7 @@ test.describe(
         const DATASOURCE_CONNECTION_ID = response.uid;
         await page.goto('/explore');
 
-        const dataSourcePicker = dashboardPage.getByGrafanaSelector(selectors.components.DataSourcePicker.container);
-        await expect(dataSourcePicker).toBeVisible();
-        await dataSourcePicker.click();
-
-        // Type to search — the virtualized list only renders visible items
-        const pickerInput2 = page.getByTestId(selectors.components.DataSourcePicker.inputV2);
-        await pickerInput2.fill(DATASOURCE_TYPED_NAME);
-
-        const datasourceOption = page.locator(`text=${DATASOURCE_TYPED_NAME}`);
-        await expect(datasourceOption).toBeVisible();
-        await datasourceOption.click();
+        await components.dataSourcePicker.set(DATASOURCE_TYPED_NAME);
 
         // make sure the datasource was correctly selected and rendered
         const breadcrumb = dashboardPage.getByGrafanaSelector(

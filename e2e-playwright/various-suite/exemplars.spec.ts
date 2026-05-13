@@ -34,11 +34,8 @@ test.describe(
       const dataSourcePicker = page.getByTestId(selectors.components.DataSourcePicker.container);
       await dataSourcePicker.click();
 
-      // Type to search — the virtualized list only renders visible items
-      const pickerInput = page.getByTestId(selectors.components.DataSourcePicker.inputV2);
-      await pickerInput.fill('gdev-tempo');
-
       const tempoOption = page.getByText('gdev-tempo');
+      await tempoOption.scrollIntoViewIfNeeded();
       await expect(tempoOption).toBeVisible();
       await tempoOption.click();
 
@@ -52,7 +49,7 @@ test.describe(
       await page.goto('/');
     });
 
-    test('should be able to navigate to configured data source', async ({ page, selectors }) => {
+    test('should be able to navigate to configured data source', async ({ page, selectors, components }) => {
       // Mock API responses
       await page.route(/api\/ds\/query/, async (route) => {
         const postData = route.request().postDataJSON();
@@ -79,17 +76,7 @@ test.describe(
       await page.goto('/explore');
 
       // Select data source
-      const dataSourcePicker = page.getByTestId(selectors.components.DataSourcePicker.container);
-      await expect(dataSourcePicker).toBeVisible();
-      await dataSourcePicker.click();
-
-      // Type to search — the virtualized list only renders visible items
-      const pickerSearch = page.getByTestId(selectors.components.DataSourcePicker.inputV2);
-      await pickerSearch.fill(dataSourceName);
-
-      const dataSourceOption = page.getByText(dataSourceName);
-      await expect(dataSourceOption).toBeVisible();
-      await dataSourceOption.click();
+      await components.dataSourcePicker.set(dataSourceName);
 
       // Switch to code editor
       const codeRadioButton = page.getByTestId(selectors.components.RadioButton.container).filter({ hasText: 'Code' });
