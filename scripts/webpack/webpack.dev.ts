@@ -20,14 +20,19 @@ function getDecoupledPlugins(): string[] {
   return packages.filter((pkg) => pkg.dir.includes('plugins/datasource')).map((pkg) => `${pkg.dir}/**`);
 }
 
-// When linking scenes for development, resolve the path to the src directory for sourcemaps
+// When linking scenes for development, resolve the path to the src directory for sourcemaps.
+// pnpm always symlinks packages into .pnpm/ — only treat it as a local dev link if the
+// symlink target is outside node_modules (i.e. a real local checkout).
 function scenesModule(): string {
   const scenesPath = path.resolve('./node_modules/@grafana/scenes');
   try {
     const status = fs.lstatSync(scenesPath);
     if (status.isSymbolicLink()) {
-      console.log(`scenes is linked to local scenes repo`);
-      return path.resolve(scenesPath + '/src');
+      const target = fs.realpathSync(scenesPath);
+      if (!target.includes('node_modules')) {
+        console.log(`scenes is linked to local scenes repo`);
+        return path.resolve(scenesPath + '/src');
+      }
     }
   } catch (error) {
     console.error(`Error checking scenes path: ${error instanceof Error ? error.message : String(error)}`);

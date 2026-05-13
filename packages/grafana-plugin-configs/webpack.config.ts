@@ -313,6 +313,10 @@ const config = async (env: Env): Promise<Configuration> => {
         : []),
     ],
 
+    resolveLoader: {
+      modules: ['node_modules', path.resolve(import.meta.dirname, 'node_modules')],
+    },
+
     resolve: {
       extensions: ['.ts', '.tsx', '.js', '.jsx'],
       conditionNames: ['@grafana-app/source', '...'],
