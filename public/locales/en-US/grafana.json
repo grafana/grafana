@@ -14098,7 +14098,11 @@
       "send": "Submit",
       "submit-error": "Could not submit thread. Please check Pulse API and try again.",
       "tab-preview": "Preview",
-      "tab-write": "Write"
+      "tab-write": "Write",
+      "user-lookup-empty": "No matching users.",
+      "user-lookup-error": "Could not load user suggestions.",
+      "user-lookup-forbidden": "You do not have permission to look up users in this org (requires org.users:read).",
+      "user-lookup-loading": "Searching users…"
     },
     "drawer": {
       "back": "Back to threads",

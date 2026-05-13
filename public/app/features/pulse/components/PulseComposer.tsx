@@ -74,18 +74,60 @@ export function PulseComposer({
 
   // User suggestions are fetched on debounce. AbortController cancels
   // an in-flight request when the query changes so the dropdown never
-  // shows stale results.
+  // shows stale results. Lookup state is tri-modal (idle/loading/ready/
+  // error) so the dropdown can surface "Searching…", "No matches", or
+  // a real error message instead of silently disappearing — a 403 from
+  // a missing org.users:read perm used to look identical to "no matches".
   const [userSuggestions, setUserSuggestions] = useState<UserSuggestion[]>([]);
+  const [userLookupState, setUserLookupState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const [userLookupError, setUserLookupError] = useState<string | null>(null);
   useEffect(() => {
     if (!picker || picker.kind !== 'user') {
       setUserSuggestions([]);
+      setUserLookupState('idle');
+      setUserLookupError(null);
+      return;
+    }
+    if (picker.query.trim().length === 0) {
+      // Empty query — match the underlying API behavior (returns nothing)
+      // and treat the picker as idle so the dropdown does not flash a
+      // "no matches" state while the user is still typing the first char.
+      setUserSuggestions([]);
+      setUserLookupState('idle');
+      setUserLookupError(null);
       return;
     }
     const controller = new AbortController();
+    setUserLookupState('loading');
+    setUserLookupError(null);
     const handle = window.setTimeout(() => {
       searchUsers(picker.query, { signal: controller.signal, excludeUserId: currentUserId })
-        .then(setUserSuggestions)
-        .catch(() => setUserSuggestions([]));
+        .then((users) => {
+          if (controller.signal.aborted) {
+            return;
+          }
+          setUserSuggestions(users);
+          setUserLookupState('ready');
+        })
+        .catch((err: unknown) => {
+          if (controller.signal.aborted) {
+            return;
+          }
+          setUserSuggestions([]);
+          setUserLookupState('error');
+          const status =
+            err && typeof err === 'object' && 'status' in err ? (err as { status?: number }).status : undefined;
+          if (status === 403 || status === 401) {
+            setUserLookupError(
+              t(
+                'pulse.composer.user-lookup-forbidden',
+                'You do not have permission to look up users in this org (requires org.users:read).'
+              )
+            );
+          } else {
+            setUserLookupError(t('pulse.composer.user-lookup-error', 'Could not load user suggestions.'));
+          }
+        });
     }, 150);
     return () => {
       window.clearTimeout(handle);
@@ -117,6 +159,25 @@ export function PulseComposer({
       mention: { kind: 'panel', targetId: String(p.id), displayName: p.title },
     }));
   }, [picker, userSuggestions, panelSuggestions]);
+
+  // Only the user picker has async/networked state — the panel picker
+  // is filtered locally from props and goes empty silently. So status
+  // messaging (loading / no matches / error) only applies to @user.
+  const userPickerStatusMessage: string | null = useMemo(() => {
+    if (!picker || picker.kind !== 'user' || picker.query.trim().length === 0) {
+      return null;
+    }
+    if (userLookupState === 'loading') {
+      return t('pulse.composer.user-lookup-loading', 'Searching users…');
+    }
+    if (userLookupState === 'error') {
+      return userLookupError;
+    }
+    if (userLookupState === 'ready' && userSuggestions.length === 0) {
+      return t('pulse.composer.user-lookup-empty', 'No matching users.');
+    }
+    return null;
+  }, [picker, userLookupState, userLookupError, userSuggestions.length]);
 
   function selectSuggestion(idx: number) {
     const sel = suggestions[idx];
@@ -294,23 +355,31 @@ export function PulseComposer({
               aria-label={t('pulse.composer.input-aria', 'Pulse message')}
               rows={4}
             />
-            {picker && suggestions.length > 0 && (
+            {picker && (suggestions.length > 0 || userPickerStatusMessage !== null) && (
               <ul className={styles.suggest} role="listbox">
-                {suggestions.map((s, i) => (
-                  <li
-                    key={`${s.mention.kind}-${s.mention.targetId}`}
-                    className={i === highlight ? styles.suggestActive : styles.suggestItem}
-                    role="option"
-                    aria-selected={i === highlight}
-                    onMouseDown={(ev) => {
-                      ev.preventDefault();
-                      selectSuggestion(i);
-                    }}
-                  >
-                    <strong>{s.label}</strong>
-                    {s.sublabel && <span className={styles.sublabel}>{s.sublabel}</span>}
-                  </li>
-                ))}
+                {suggestions.length > 0
+                  ? suggestions.map((s, i) => (
+                      <li
+                        key={`${s.mention.kind}-${s.mention.targetId}`}
+                        className={i === highlight ? styles.suggestActive : styles.suggestItem}
+                        role="option"
+                        aria-selected={i === highlight}
+                        onMouseDown={(ev) => {
+                          ev.preventDefault();
+                          selectSuggestion(i);
+                        }}
+                      >
+                        <strong>{s.label}</strong>
+                        {s.sublabel && <span className={styles.sublabel}>{s.sublabel}</span>}
+                      </li>
+                    ))
+                  : userPickerStatusMessage && (
+                      <li className={styles.suggestStatus} role="option" aria-selected={false} aria-disabled>
+                        <span className={userLookupState === 'error' ? styles.error : styles.sublabel}>
+                          {userPickerStatusMessage}
+                        </span>
+                      </li>
+                    )}
               </ul>
             )}
           </div>
@@ -448,6 +517,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gap: theme.spacing(1),
     alignItems: 'baseline',
     background: theme.colors.background.canvas,
+  }),
+  suggestStatus: css({
+    padding: theme.spacing(1),
+    cursor: 'default',
+    display: 'flex',
+    gap: theme.spacing(1),
+    alignItems: 'baseline',
   }),
   sublabel: css({
     color: theme.colors.text.secondary,
