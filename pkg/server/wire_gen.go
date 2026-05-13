@@ -699,9 +699,8 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 		return nil, err
 	}
 	dataSourceProxyService := datasourceproxy.ProvideService(cacheServiceImpl, ossDataSourceRequestValidator, pluginstoreService, cfg, httpclientProvider, oauthtokenService, service13, tracingService, secretsService, featureToggles)
-	starService := starimpl.ProvideService(sqlStore)
 	k8sClients := api2.ProvideK8sClients(cfg, eventualRestConfigProvider)
-	searchService := search2.ProvideService(cfg, sqlStore, starService, k8sClients, dashboardService, folderimplService, featureToggles, sortService)
+	searchService := search2.ProvideService(cfg, sqlStore, k8sClients, dashboardService, folderimplService, featureToggles, sortService)
 	plugincontextProvider := plugincontext.ProvideService(cfg, cacheService, pluginstoreService, cacheServiceImpl, service13, service12, requestConfigProvider)
 	dashboardAccessService := service7.ProvideDashboardAccessService(featureToggles, dashboardServiceImpl)
 	grafanaLive, err := live.ProvideService(cfg, routeRegisterImpl, plugincontextProvider, pluginstoreService, middlewareHandler, cacheServiceImpl, usageStats, featureToggles, dashboardAccessService, eventualRestConfigProvider)
@@ -753,6 +752,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
+	starService := starimpl.ProvideService(sqlStore)
 	csrfCSRF := csrf.ProvideCSRFFilter(cfg)
 	secretsMigrator := migrator6.ProvideSecretsMigrator(serviceService, secretsService, sqlStore, ossImpl, featureToggles)
 	dataSourceSecretMigrationService := migrations3.ProvideDataSourceMigrationService(service13, kvStore, featureToggles)
@@ -1414,9 +1414,8 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	authinfoimplService := authinfoimpl.ProvideService(loginStore, remoteCache, secretsService)
 	oauthtokenService := oauthtoken.ProvideService(socialService, authinfoimplService, cfg, registerer, serverLockService, tracingService, userAuthTokenService, featureToggles)
 	dataSourceProxyService := datasourceproxy.ProvideService(cacheServiceImpl, ossDataSourceRequestValidator, pluginstoreService, cfg, httpclientProvider, oauthtokenService, service13, tracingService, secretsService, featureToggles)
-	starService := starimpl.ProvideService(sqlStore)
 	k8sClients := api2.ProvideK8sClients(cfg, eventualRestConfigProvider)
-	searchService := search2.ProvideService(cfg, sqlStore, starService, k8sClients, dashboardService, folderimplService, featureToggles, sortService)
+	searchService := search2.ProvideService(cfg, sqlStore, k8sClients, dashboardService, folderimplService, featureToggles, sortService)
 	plugincontextProvider := plugincontext.ProvideService(cfg, cacheService, pluginstoreService, cacheServiceImpl, service13, service12, requestConfigProvider)
 	dashboardAccessService := service7.ProvideDashboardAccessService(featureToggles, dashboardServiceImpl)
 	grafanaLive, err := live.ProvideService(cfg, routeRegisterImpl, plugincontextProvider, pluginstoreService, middlewareHandler, cacheServiceImpl, usageStats, featureToggles, dashboardAccessService, eventualRestConfigProvider)
@@ -1469,6 +1468,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
+	starService := starimpl.ProvideService(sqlStore)
 	csrfCSRF := csrf.ProvideCSRFFilter(cfg)
 	secretsMigrator := migrator6.ProvideSecretsMigrator(serviceService, secretsService, sqlStore, ossImpl, featureToggles)
 	dataSourceSecretMigrationService := migrations3.ProvideDataSourceMigrationService(service13, kvStore, featureToggles)
