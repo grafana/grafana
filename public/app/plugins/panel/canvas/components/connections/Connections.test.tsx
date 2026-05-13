@@ -8,7 +8,7 @@ import { ConnectionPath, type CanvasConnection } from '../../panelcfg.gen';
 import type { ConnectionState } from '../../types';
 import * as canvasUtils from '../../utils';
 
-import { ANCHORS, ANCHOR_PADDING, HALF_SIZE } from './ConnectionAnchors';
+import { ANCHORS, ANCHOR_PADDING, CONNECTION_ANCHOR_ALT, HALF_SIZE } from './ConnectionAnchors';
 import { Connections } from './Connections';
 
 jest.mock('app/features/canvas/runtime/sceneElementManagement', () => ({
@@ -276,7 +276,62 @@ describe('Connections', () => {
     });
   });
 
-  it.todo('handleMouseLeave');
+  describe('handleMouseLeave', () => {
+    function setupConnectionsWithAnchors(connectionTargetFlag: boolean): Connections {
+      const connections = newConnections();
+      connections.connectionAnchorDiv = document.createElement('div');
+      connections.connectionAnchorDiv.style.display = 'block';
+      if (connectionTargetFlag) {
+        connections.connectionTarget = { options: {} } as ElementState;
+      }
+      return connections;
+    }
+
+    it('returns false and keeps anchors visible when leaving into a connection-anchor image', () => {
+      const connections = setupConnectionsWithAnchors(true);
+
+      const img = document.createElement('img');
+      img.setAttribute('alt', CONNECTION_ANCHOR_ALT);
+
+      const result = connections.handleMouseLeave({
+        relatedTarget: img,
+      } as unknown as React.MouseEvent<Element>);
+
+      expect(result).toBe(false);
+      expect(connections.connectionTarget).toBeDefined();
+      expect(connections.connectionAnchorDiv!.style.display).toBe('block');
+    });
+
+    it('returns true, clears connectionTarget, and hides the anchor overlay otherwise', () => {
+      const connections = setupConnectionsWithAnchors(true);
+
+      const unrelated = document.createElement('button');
+
+      const result = connections.handleMouseLeave({
+        relatedTarget: unrelated,
+      } as unknown as React.MouseEvent<Element>);
+
+      expect(result).toBe(true);
+      expect(connections.connectionTarget).toBeUndefined();
+      expect(connections.connectionAnchorDiv!.style.display).toBe('none');
+    });
+
+    it('treats an image with a different alt like a normal leave target', () => {
+      const connections = setupConnectionsWithAnchors(true);
+
+      const img = document.createElement('img');
+      img.setAttribute('alt', 'not a connection anchor');
+
+      const result = connections.handleMouseLeave({
+        relatedTarget: img,
+      } as unknown as React.MouseEvent<Element>);
+
+      expect(result).toBe(true);
+      expect(connections.connectionTarget).toBeUndefined();
+      expect(connections.connectionAnchorDiv!.style.display).toBe('none');
+    });
+  });
+
   it.todo('handleConnectionDragStart');
   it.todo('handleVertexDragStart');
   it.todo('handleVertexAddDragStart');
