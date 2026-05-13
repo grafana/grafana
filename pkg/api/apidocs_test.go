@@ -205,6 +205,85 @@ func TestApiDocsManifestShape(t *testing.T) {
 	assert.Len(t, ops, 4)
 }
 
+func TestExampleJSON(t *testing.T) {
+	const raw = `{
+		"openapi": "3.0.0",
+		"info": { "title": "T", "version": "1" },
+		"paths": {},
+		"components": {
+			"schemas": {
+				"User": {
+					"type": "object",
+					"properties": {
+						"id":      { "type": "integer" },
+						"email":   { "type": "string", "format": "email" },
+						"created": { "type": "string", "format": "date-time" },
+						"role":    { "type": "string", "enum": ["admin", "viewer"] },
+						"active":  { "type": "boolean", "default": true }
+					}
+				},
+				"UserList": {
+					"type": "array",
+					"items": { "$ref": "#/components/schemas/User" }
+				},
+				"Node": {
+					"type": "object",
+					"properties": {
+						"value": { "type": "string" },
+						"child": { "$ref": "#/components/schemas/Node" }
+					}
+				},
+				"WithExample": {
+					"type": "object",
+					"example": { "literal": "wins" }
+				}
+			}
+		}
+	}`
+
+	loader := openapi3.NewLoader()
+	doc, err := loader.LoadFromData([]byte(raw))
+	require.NoError(t, err)
+
+	userRef := doc.Components.Schemas["User"]
+	out := exampleJSON(userRef)
+	var got map[string]any
+	require.NoError(t, json.Unmarshal([]byte(out), &got))
+	assert.Equal(t, "user@example.com", got["email"])
+	assert.Equal(t, "2025-01-01T00:00:00Z", got["created"])
+	assert.Equal(t, "admin", got["role"], "first enum value should win")
+	assert.Equal(t, true, got["active"], "default should win")
+	assert.Equal(t, float64(0), got["id"])
+
+	listRef := doc.Components.Schemas["UserList"]
+	listOut := exampleJSON(listRef)
+	var gotList []map[string]any
+	require.NoError(t, json.Unmarshal([]byte(listOut), &gotList))
+	assert.Len(t, gotList, 1)
+	assert.Equal(t, "user@example.com", gotList[0]["email"], "items should expand the referenced schema")
+
+	// Recursive schema should terminate and not loop forever.
+	nodeRef := doc.Components.Schemas["Node"]
+	nodeOut := exampleJSON(nodeRef)
+	assert.NotEmpty(t, nodeOut, "recursive schema should still produce output")
+	assert.Less(t, len(nodeOut), 4096, "recursion should be depth-limited")
+
+	// Explicit example field on the schema wins.
+	withExample := doc.Components.Schemas["WithExample"]
+	got2 := exampleJSON(withExample)
+	assert.Contains(t, got2, `"literal": "wins"`)
+}
+
+func TestRenderOperationMarkdownIncludesExamples(t *testing.T) {
+	doc := buildFixtureSpec(t)
+	s := buildAPIDocsState(doc)
+
+	md := renderOperationMarkdown(s.ops["createDashboard"])
+	assert.Contains(t, md, "## Request Body")
+	assert.Contains(t, md, "Example:")
+	assert.Contains(t, md, "```json")
+}
+
 func TestSynthesizeOperationID(t *testing.T) {
 	cases := []struct {
 		method, path, want string
