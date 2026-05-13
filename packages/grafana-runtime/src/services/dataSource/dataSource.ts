@@ -1,4 +1,4 @@
-import { DataSourceApi, type DataSourceRef, type ScopedVars } from '@grafana/data';
+import { DataSourceApi, type DataSourceInstanceSettings, type DataSourceRef, type ScopedVars } from '@grafana/data';
 
 import { UserStorage } from '../../utils/userStorage';
 import { type RuntimeDataSourceRegistration } from '../dataSourceSrv';
@@ -8,6 +8,7 @@ import { getDataSourceInstanceSettings, upsertRuntimeDataSourceInstanceSettings 
 import { type ImportDataSourcePluginFn } from './types';
 
 let importDataSourcePlugin: ImportDataSourcePluginFn | undefined;
+const inflightLoads = new Map<string, Promise<DataSourceApi>>();
 
 /**
  * Register the data source plugin importer. Called once from application boot.
@@ -23,7 +24,8 @@ export function setDataSourcePluginImporter(fn: ImportDataSourcePluginFn): void 
 /**
  * Load and return a data source plugin instance. Resolves the data source by
  * name, uid, or {@link DataSourceRef}, caches the constructed instance, and
- * reuses it on subsequent calls.
+ * reuses it on subsequent calls. Concurrent callers for the same uid share
+ * a single in-flight load.
  *
  * @public
  */
@@ -46,13 +48,28 @@ export async function getDataSourceInstance(
     return cached;
   }
 
+  const inflight = inflightLoads.get(cacheUid);
+  if (inflight) {
+    return inflight;
+  }
+
+  const promise = loadDataSourceInstance(cacheUid, settings);
+  inflightLoads.set(cacheUid, promise);
+
+  try {
+    return await promise;
+  } finally {
+    inflightLoads.delete(cacheUid);
+  }
+}
+
+async function loadDataSourceInstance(cacheUid: string, settings: DataSourceInstanceSettings): Promise<DataSourceApi> {
   if (!importDataSourcePlugin) {
     throw new Error('Data source importer has not been set. Call setDataSourcePluginImporter during application boot.');
   }
 
   const dsPlugin = await importDataSourcePlugin(settings.meta);
 
-  // Another caller may have populated the cache while we were awaiting.
   const racedCache = getCachedPlugin(cacheUid);
   if (racedCache) {
     return racedCache;
@@ -62,11 +79,9 @@ export async function getDataSourceInstance(
   instance.components = dsPlugin.components;
 
   if (!instance.userStorage) {
-    // DataSourceApi does not instantiate userStorage; DataSourceWithBackend does.
     instance.userStorage = new UserStorage(settings.type);
   }
 
-  // Legacy plugins that don't extend DataSourceApi need manual patching.
   if (!(instance instanceof DataSourceApi)) {
     const anyInstance: { [key: string]: unknown } = instance;
     anyInstance.name = settings.name;
@@ -84,9 +99,9 @@ export async function getDataSourceInstance(
 /**
  * Register a runtime data source. Writes to both the instance-settings cache
  * and the plugin-instance cache so the data source is available to
- * {@link getInstanceSettings} and {@link getDataSourceInstance}.
+ * {@link getDataSourceInstanceSettings} and {@link getDataSourceInstance}.
  *
- * Runtime data sources are intentionally excluded from {@link getInstanceSettingsList}
+ * Runtime data sources are intentionally excluded from {@link getDataSourceInstanceSettingsList}
  * results, matching the behaviour of the legacy `DatasourceSrv.registerRuntimeDataSourceInstance`.
  *
  * @public
@@ -118,5 +133,9 @@ function describeRef(ref: DataSourceRef | string | null | undefined): string {
  * @internal
  */
 export function _resetForTests(): void {
+  if (process.env.NODE_ENV !== 'test') {
+    throw new Error('_resetForTests must only be called from tests');
+  }
   importDataSourcePlugin = undefined;
+  inflightLoads.clear();
 }
