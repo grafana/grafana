@@ -3888,11 +3888,16 @@
         "type": "object",
         "required": [
           "kind",
+          "group",
           "spec"
         ],
         "properties": {
+          "group": {
+            "description": "The group is the transformation ID",
+            "type": "string",
+            "default": ""
+          },
           "kind": {
-            "description": "The kind of a TransformationKind is the transformation ID",
             "type": "string",
             "default": ""
           },
