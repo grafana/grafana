@@ -1,3 +1,4 @@
+import CheckBox from 'ol-ext/util/input/Checkbox';
 import { useEffect, useState } from 'react';
 
 import { type GrafanaTheme2, type PanelData } from '@grafana/data';
@@ -21,6 +22,7 @@ import {
   Button,
   getGraphFieldOptions,
   RadioButtonGroup,
+  Checkbox,
 } from '@grafana/ui';
 import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
 
@@ -167,6 +169,13 @@ export function ViewPanelFanoutPaneRenderer({ model }: SceneComponentProps<ViewP
                   onClick={() => model.onSetMode(getModeForLabel(label))}
                 />
               ))}
+            </Box>
+          </OptionsPaneCategory>
+          <OptionsPaneCategory title="Toggle queries" id="toggle-queries" isOpenDefault={false}>
+            <Box direction="column" gap={1} display="flex" paddingLeft={1}>
+              <Checkbox id="toggle-queries-checkbox" checked={true} onChange={() => {}} label="Query A" />
+              <Checkbox id="toggle-queries-checkbox" checked={true} onChange={() => {}} label="Query B" />
+              <Checkbox id="toggle-queries-checkbox" checked={true} onChange={() => {}} label="Query C" />
             </Box>
           </OptionsPaneCategory>
         </Box>
