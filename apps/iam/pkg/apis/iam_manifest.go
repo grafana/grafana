@@ -877,27 +877,26 @@ var appManifestData = app.ManifestData{
 																				Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
 																			},
 																		},
-																		"items": {
-																			SchemaProps: spec.SchemaProps{
-																				Type: []string{"array"},
-																				Items: &spec.SchemaOrArray{
-																					Schema: &spec.Schema{
-																						SchemaProps: spec.SchemaProps{
-
-																							Ref: spec.MustCreateRef("#/components/schemas/createSearchExternalGroupMappingsExternalGroupMappingHit"),
-																						}},
-																				},
-																			},
-																		},
 																		"kind": {
 																			SchemaProps: spec.SchemaProps{
 																				Type:        []string{"string"},
 																				Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
 																			},
 																		},
+																		"teams": {
+																			SchemaProps: spec.SchemaProps{
+																				Type: []string{"array"},
+																				Items: &spec.SchemaOrArray{
+																					Schema: &spec.Schema{
+																						SchemaProps: spec.SchemaProps{
+																							Type: []string{"string"},
+																						}},
+																				},
+																			},
+																		},
 																	},
 																	Required: []string{
-																		"items",
+																		"teams",
 																		"apiVersion",
 																		"kind",
 																	},
@@ -1151,27 +1150,6 @@ var appManifestData = app.ManifestData{
 				},
 				Cluster: map[string]spec3.PathProps{},
 				Schemas: map[string]spec.Schema{
-					"createSearchExternalGroupMappingsExternalGroupMappingHit": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"object"},
-							Properties: map[string]spec.Schema{
-								"externalGroupId": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"string"},
-									},
-								},
-								"teamRef": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"string"},
-									},
-								},
-							},
-							Required: []string{
-								"teamRef",
-								"externalGroupId",
-							},
-						},
-					},
 					"getSearchTeamsTeamHit": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"object"},

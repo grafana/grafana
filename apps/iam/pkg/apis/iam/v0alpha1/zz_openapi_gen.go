@@ -9,7 +9,6 @@ import (
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
 		CreateSearchExternalGroupMappingsBody{}.OpenAPIModelName():                          schema_pkg_apis_iam_v0alpha1_CreateSearchExternalGroupMappingsBody(ref),
-		CreateSearchExternalGroupMappingsExternalGroupMappingHit{}.OpenAPIModelName():       schema_pkg_apis_iam_v0alpha1_CreateSearchExternalGroupMappingsExternalGroupMappingHit(ref),
 		CreateSearchExternalGroupMappingsResponse{}.OpenAPIModelName():                      schema_pkg_apis_iam_v0alpha1_CreateSearchExternalGroupMappingsResponse(ref),
 		CreateServiceAccountTokenBody{}.OpenAPIModelName():                                  schema_pkg_apis_iam_v0alpha1_CreateServiceAccountTokenBody(ref),
 		CreateServiceAccountTokenResponse{}.OpenAPIModelName():                              schema_pkg_apis_iam_v0alpha1_CreateServiceAccountTokenResponse(ref),
@@ -98,50 +97,22 @@ func schema_pkg_apis_iam_v0alpha1_CreateSearchExternalGroupMappingsBody(ref comm
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"items": {
+					"teams": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(CreateSearchExternalGroupMappingsExternalGroupMappingHit{}.OpenAPIModelName()),
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
 									},
 								},
 							},
 						},
 					},
 				},
-				Required: []string{"items"},
-			},
-		},
-		Dependencies: []string{
-			CreateSearchExternalGroupMappingsExternalGroupMappingHit{}.OpenAPIModelName()},
-	}
-}
-
-func schema_pkg_apis_iam_v0alpha1_CreateSearchExternalGroupMappingsExternalGroupMappingHit(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"teamRef": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"externalGroupId": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-				},
-				Required: []string{"teamRef", "externalGroupId"},
+				Required: []string{"teams"},
 			},
 		},
 	}
@@ -167,25 +138,24 @@ func schema_pkg_apis_iam_v0alpha1_CreateSearchExternalGroupMappingsResponse(ref 
 							Format:      "",
 						},
 					},
-					"items": {
+					"teams": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(CreateSearchExternalGroupMappingsExternalGroupMappingHit{}.OpenAPIModelName()),
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
 									},
 								},
 							},
 						},
 					},
 				},
-				Required: []string{"items"},
+				Required: []string{"teams"},
 			},
 		},
-		Dependencies: []string{
-			CreateSearchExternalGroupMappingsExternalGroupMappingHit{}.OpenAPIModelName()},
 	}
 }
 

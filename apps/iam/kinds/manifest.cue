@@ -94,11 +94,7 @@ v0alpha1: {
 						}
 					}
 					response: {
-						#ExternalGroupMappingHit: {
-							teamRef:         string
-							externalGroupId: string
-						}
-						items: [...#ExternalGroupMappingHit]
+						teams: [...string]
 					}
 					responseMetadata: objectMeta: false
 				}

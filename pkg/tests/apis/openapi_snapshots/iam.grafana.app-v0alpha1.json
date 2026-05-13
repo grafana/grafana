@@ -4298,53 +4298,38 @@
       "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.CreateSearchExternalGroupMappingsBody": {
         "type": "object",
         "required": [
-          "items"
+          "teams"
         ],
         "properties": {
-          "items": {
+          "teams": {
             "type": "array",
             "items": {
-              "default": {}
+              "type": "string",
+              "default": ""
             }
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.CreateSearchExternalGroupMappingsExternalGroupMappingHit": {
-        "type": "object",
-        "required": [
-          "teamRef",
-          "externalGroupId"
-        ],
-        "properties": {
-          "externalGroupId": {
-            "type": "string",
-            "default": ""
-          },
-          "teamRef": {
-            "type": "string",
-            "default": ""
           }
         }
       },
       "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.CreateSearchExternalGroupMappingsResponse": {
         "type": "object",
         "required": [
-          "items"
+          "teams"
         ],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
             "type": "string"
           },
-          "items": {
-            "type": "array",
-            "items": {
-              "default": {}
-            }
-          },
           "kind": {
             "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
             "type": "string"
+          },
+          "teams": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "default": ""
+            }
           }
         }
       },
