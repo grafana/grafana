@@ -305,14 +305,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "reportingCsvEncodingOptions",
-			Description: "Enables CSV encoding options in the reporting feature",
-			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-			Owner:       grafanaOperatorExperienceSquad,
-			Expression:  "false",
-		},
-		{
 			Name:        "reportingHeaderSettings",
 			Description: "Enables configuration of PDF report settings",
 			Stage:       FeatureStageExperimental,
