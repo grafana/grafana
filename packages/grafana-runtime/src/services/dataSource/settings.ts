@@ -7,6 +7,7 @@ import {
 } from '@grafana/data';
 
 import { ExpressionDatasourceRef, isExpressionReference } from '../../utils/DataSourceWithBackend';
+import { getCachedPromise } from '../../utils/getCachedPromise';
 import { getBackendSrv } from '../backendSrv';
 import { type GetDataSourceListFilters } from '../dataSourceSrv';
 import { getTemplateSrv } from '../templateSrv';
@@ -64,11 +65,20 @@ export function initDataSourceInstanceSettings(
  *
  * @public
  */
-export async function reloadDataSourceInstanceSettings(): Promise<void> {
-  clearPluginCache();
+const RELOAD_CACHE_KEY = 'grafana-runtime:ds-reload';
+
+async function fetchAndPopulate(): Promise<void> {
   const settings = await getBackendSrv().get('/api/frontend/settings');
   populateMaps(settings.datasources);
   defaultName = settings.defaultDatasource;
+}
+
+export async function reloadDataSourceInstanceSettings(): Promise<void> {
+  clearPluginCache();
+  await getCachedPromise(fetchAndPopulate, {
+    cacheKey: RELOAD_CACHE_KEY,
+    invalidate: true,
+  });
 }
 
 /**
