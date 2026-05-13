@@ -81,6 +81,12 @@ If you want to configure Git Sync for GitHub and authenticate with a Personal Ac
 - **Pull requests**: Read and write permission
 - **Webhooks**: Read and write permission
 
+{{< admonition type="note" >}}
+
+The Personal Access Token must belong to a user with the **Admin** role on the repository. GitHub only grants the **Webhooks: Read and write** permission to repository admins, so tokens created by non-admin users can't manage the webhooks Git Sync relies on for instantaneous updates and pull request previews.
+
+{{< /admonition >}}
+
 Refer to [Managing your personal access tokens](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) for instructions.
 
 Return to Grafana and fill in the following fields:

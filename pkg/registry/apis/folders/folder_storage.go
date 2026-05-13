@@ -11,7 +11,6 @@ import (
 	"k8s.io/apiserver/pkg/util/dryrun"
 
 	claims "github.com/grafana/authlib/types"
-
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -43,7 +42,6 @@ type folderStorage struct {
 
 	permissionsOnCreate  bool // cfg.RBAC.PermissionsOnCreation("folder")
 	folderPermissionsSvc accesscontrol.FolderPermissionsService
-	acService            accesscontrol.Service
 }
 
 func (s *folderStorage) New() runtime.Object {
@@ -152,11 +150,6 @@ func (s *folderStorage) Delete(ctx context.Context, name string, deleteValidatio
 	return obj, async, err
 }
 
-// GracefulDeleter
-func (s *folderStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
-	return nil, fmt.Errorf("DeleteCollection for folders not implemented")
-}
-
 func (s *folderStorage) setDefaultFolderPermissions(ctx context.Context, orgID int64, user identity.Requester, uid, parentUID string) error {
 	var permissions []accesscontrol.SetResourcePermissionCommand
 
@@ -188,10 +181,6 @@ func (s *folderStorage) setDefaultFolderPermissions(ctx context.Context, orgID i
 	_, err := s.folderPermissionsSvc.SetPermissions(ctx, orgID, uid, permissions...)
 	if err != nil {
 		return err
-	}
-
-	if user.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
-		s.acService.ClearUserPermissionCache(user)
 	}
 
 	return nil

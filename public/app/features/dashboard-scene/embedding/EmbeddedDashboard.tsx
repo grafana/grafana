@@ -11,10 +11,13 @@ import { DashboardRoutes } from 'app/types/dashboard';
 
 import { getDashboardScenePageStateManager } from '../pages/DashboardScenePageStateManager';
 import { type DashboardScene } from '../scene/DashboardScene';
+import { useScenesFlickeringFix } from '../utils/utils';
 
 export function EmbeddedDashboard(props: EmbeddedDashboardProps) {
   const stateManager = getDashboardScenePageStateManager();
   const { dashboard, loadError } = stateManager.useState();
+
+  useScenesFlickeringFix();
 
   useEffect(() => {
     stateManager.loadDashboard({ uid: props.uid!, route: DashboardRoutes.Embedded });
@@ -124,6 +127,7 @@ function getStyles(theme: GrafanaTheme2) {
       label: 'body',
       flexGrow: 1,
       display: 'flex',
+      flexDirection: 'column',
       gap: '8px',
       gridArea: 'panels',
       marginBottom: theme.spacing(2),

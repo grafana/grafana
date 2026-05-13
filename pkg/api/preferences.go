@@ -15,54 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-// POST /api/preferences/set-home-dash
-func (hs *HTTPServer) SetHomeDashboard(c *contextmodel.ReqContext) response.Response {
-	cmd := pref.SavePreferenceCommand{}
-	if err := web.Bind(c.Req, &cmd); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
-	}
-
-	userID, err := identity.UserIdentifier(c.GetID())
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to set home dashboard", err)
-	}
-
-	cmd.UserID = userID
-	cmd.OrgID = c.GetOrgID()
-
-	// convert dashboard UID to ID in order to store internally if it exists in the query, otherwise take the id from query
-	// nolint:staticcheck
-	dashboardID := cmd.HomeDashboardID
-	if cmd.HomeDashboardUID != nil {
-		query := dashboards.GetDashboardQuery{UID: *cmd.HomeDashboardUID}
-		if query.UID == "" {
-			dashboardID = 0 // clear the value
-		} else {
-			queryResult, err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
-			if err != nil {
-				return response.Error(http.StatusNotFound, "Dashboard not found", err)
-			}
-			dashboardID = queryResult.ID
-		}
-	} else if cmd.HomeDashboardID != 0 { // nolint:staticcheck
-		// make sure uid is always set if id is set
-		queryResult, err := hs.DashboardService.GetDashboard(c.Req.Context(), &dashboards.GetDashboardQuery{ID: cmd.HomeDashboardID, OrgID: cmd.OrgID}) // nolint:staticcheck
-		if err != nil {
-			return response.Error(http.StatusNotFound, "Dashboard not found", err)
-		}
-		cmd.HomeDashboardUID = &queryResult.UID
-	}
-
-	// nolint:staticcheck
-	cmd.HomeDashboardID = dashboardID
-
-	if err := hs.preferenceService.Save(c.Req.Context(), &cmd); err != nil {
-		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to set home dashboard", err)
-	}
-
-	return response.Success("Home dashboard set")
-}
-
 // swagger:route GET /user/preferences signed_in_user preferences getUserPreferences
 //
 // Get user preferences.

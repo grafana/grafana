@@ -288,6 +288,10 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     active: css({
       background: theme.colors.action.hover,
+      // needed to show active items in forced colors mode
+      '@media (forced-colors: active)': {
+        outline: '1px solid transparent',
+      },
     }),
     destructive: css({
       color: theme.colors.error.text,

@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/macros"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/utils"
-	"k8s.io/utils/strings/slices"
 )
 
 type TraceQueries struct {
@@ -32,7 +31,15 @@ func buildTracesQuery(operationId string, parentSpanID *string, traceTypes []str
 	filteredTypes := make([]string, 0)
 	// If the result format is set to trace then we filter out all events that are of the type traces as they don't make sense when visualised as a span
 	if resultFormat != nil && *resultFormat == dataquery.ResultFormatTrace {
-		filteredTypes = slices.Filter(filteredTypes, types, func(s string) bool { return s != "traces" })
+		// k8s slices.Filter has been deprecated in favor of stdlib slices.DeleteFunc,
+		// but slices.DeleteFunc mutates the underlying slice, which we don't want to do.
+		// Instead, just iterate over the original slice and apply our filter function to get the new one.
+		// (this is exactly what k8s's slices.Filter did/does)
+		for _, s := range types {
+			if s != "traces" {
+				filteredTypes = append(filteredTypes, s)
+			}
+		}
 	} else {
 		filteredTypes = types
 	}

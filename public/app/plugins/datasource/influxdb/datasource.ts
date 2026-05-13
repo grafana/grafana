@@ -28,6 +28,7 @@ import {
 } from '@grafana/data';
 import {
   type BackendDataSourceResponse,
+  config,
   DataSourceWithBackend,
   type FetchResponse,
   getBackendSrv,
@@ -35,7 +36,6 @@ import {
   type TemplateSrv,
 } from '@grafana/runtime';
 import { QueryFormat, type SQLQuery } from '@grafana/sql';
-import config from 'app/core/config';
 
 import { AnnotationEditor } from './components/editor/annotation/AnnotationEditor';
 import { FluxQueryEditor } from './components/editor/query/flux/FluxQueryEditor';

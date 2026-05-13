@@ -650,7 +650,7 @@ func TestRunPollCycle(t *testing.T) {
 			"pending-delete label should have been removed")
 	})
 
-	t.Run("stale record with tenant NotFound preserves record for deleter", func(t *testing.T) {
+	t.Run("stale record with tenant NotFound is promoted to orphaned", func(t *testing.T) {
 		tw := newTestTenantWatcher(t)
 		collector := &writeEventCollector{}
 		tw.writeEvent = collector.append
@@ -671,6 +671,7 @@ func TestRunPollCycle(t *testing.T) {
 		r, err := tw.pendingDeleteStore.Get(t.Context(), "tenant-deleted")
 		require.NoError(t, err, "KV record should be preserved for the deleter")
 		assert.True(t, r.LabelingComplete)
+		assert.True(t, r.Orphaned, "record should be promoted to orphaned so future cycles skip the tenant API GET")
 	})
 
 	t.Run("empty live set skips clear phase to avoid wiping records", func(t *testing.T) {
@@ -796,6 +797,37 @@ func TestRunPollCycle(t *testing.T) {
 		require.NoError(t, err, "raced record must be preserved")
 		assert.True(t, r.LabelingComplete)
 		assert.Empty(t, collector.all(), "no unlabel writes for raced tenant")
+	})
+
+	t.Run("orphaned records skip tenant API GET on subsequent cycles", func(t *testing.T) {
+		tw := newTestTenantWatcher(t)
+
+		// First cycle: tenant is 404 in tenant API, so record gets promoted to orphaned.
+		require.NoError(t, tw.pendingDeleteStore.Upsert(t.Context(), "tenant-deleted", PendingDeleteRecord{
+			DeleteAfter:      "2026-03-01T00:00:00Z",
+			LabelingComplete: true,
+		}))
+
+		fake := newFakeTenantClient(t, pendingDeleteTenant("tenant-active", "2026-03-01T00:00:00Z"))
+		var getCount int
+		fake.PrependReactor("get", "tenants", func(action k8stesting.Action) (bool, runtime.Object, error) {
+			if ga, ok := action.(k8stesting.GetAction); ok && ga.GetName() == "tenant-deleted" {
+				getCount++
+			}
+			return false, nil, nil
+		})
+		tw.client = fake
+
+		tw.runPollCycle(t.Context())
+		require.Equal(t, 1, getCount, "first cycle should GET the tenant once to discover 404")
+
+		r, err := tw.pendingDeleteStore.Get(t.Context(), "tenant-deleted")
+		require.NoError(t, err)
+		require.True(t, r.Orphaned)
+
+		// Second cycle: orphaned record must be skipped before the tenant API GET.
+		tw.runPollCycle(t.Context())
+		assert.Equal(t, 1, getCount, "orphaned record should not trigger a tenant API GET on subsequent cycles")
 	})
 }
 

@@ -27,7 +27,8 @@ var (
 	ScopeAllPluginsPluginsMeta = ScopeProviderPluginsPluginsMeta.GetResourceAllScope()
 )
 
-func registerAccessControlRoles(service accesscontrol.Service) error {
+// FixedRoleRegistrations returns the plugins app role registrations.
+func FixedRoleRegistrations() []accesscontrol.RoleRegistration {
 	// Plugins
 	pluginsReader := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
@@ -118,10 +119,14 @@ func registerAccessControlRoles(service accesscontrol.Service) error {
 		Grants: []string{string(org.RoleAdmin)},
 	}
 
-	return service.DeclareFixedRoles(
+	return []accesscontrol.RoleRegistration{
 		pluginsReader,
 		pluginsWriter,
 		pluginsMetaReader,
 		pluginsMetaWriter,
-	)
+	}
+}
+
+func registerAccessControlRoles(service accesscontrol.Service) error {
+	return service.DeclareFixedRoles(FixedRoleRegistrations()...)
 }

@@ -8,6 +8,7 @@
 
 import { type z } from 'zod';
 
+import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { TabItem } from '../../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
@@ -51,6 +52,9 @@ export const addTabCommand: MutationCommand<AddTabPayload> = {
           layout: DefaultGridLayoutManager.fromVizPanels([]),
           title: tab.spec.title,
           repeatByVariable: tab.spec.repeat?.value,
+          conditionalRendering: tab.spec.conditionalRendering
+            ? ConditionalRenderingGroup.deserialize(tab.spec.conditionalRendering)
+            : undefined,
         });
 
         const currentTabs = [...tabsManager.state.tabs];
@@ -71,6 +75,9 @@ export const addTabCommand: MutationCommand<AddTabPayload> = {
           layout: targetLayout,
           title: tab.spec.title,
           repeatByVariable: tab.spec.repeat?.value,
+          conditionalRendering: tab.spec.conditionalRendering
+            ? ConditionalRenderingGroup.deserialize(tab.spec.conditionalRendering)
+            : undefined,
         });
 
         tabsManager = new TabsLayoutManager({ tabs: [newTab] });

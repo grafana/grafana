@@ -6,21 +6,27 @@ import (
 	"fmt"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/attribute"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	openapi "k8s.io/kube-openapi/pkg/common"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
+	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	pluginspec "github.com/grafana/grafana/pkg/plugins/openapi"
@@ -37,11 +43,12 @@ var (
 )
 
 type DataSourceAPIBuilderConfig struct {
-	LoadQueryTypes         bool
-	LoadOpenAPISpec        bool
-	UseDualWriter          bool
-	EnableResourceEndpoint bool
-	EnableHealthEndpoint   bool
+	LoadQueryTypes              bool
+	LoadOpenAPISpec             bool
+	UseDualWriter               bool
+	EnableResourceEndpoint      bool
+	EnableHealthEndpoint        bool
+	EnableChunkedQueryStreaming bool
 }
 
 // DataSourceAPIBuilder is used just so wire has something unique to return
@@ -51,11 +58,16 @@ type DataSourceAPIBuilder struct {
 	client                 PluginClient // will only ever be called with the same plugin id!
 	datasources            PluginDatasourceProvider
 	contextProvider        PluginContextWrapper
-	accessControl          accesscontrol.AccessControl
+	decrypter              decrypt.DecryptService      // when not reading legacy
+	accessControl          accesscontrol.AccessControl // ST Only
+	accessClient           authlib.AccessClient        // MT+ST
 	schemas                map[string]*pluginschema.PluginSchema
 	queryTypes             *datasourceV0.QueryTypeDefinitionList
 	cfg                    DataSourceAPIBuilderConfig
 	dataSourceCRUDMetric   *prometheus.HistogramVec
+
+	// Legacy or Unified -- depending on config
+	store grafanarest.Storage
 }
 
 func RegisterAPIService(
@@ -64,7 +76,9 @@ func RegisterAPIService(
 	pluginClient plugins.Client, // access to everything
 	datasources ScopedPluginDatasourceProvider,
 	contextProvider PluginContextWrapper,
+	decrypter decrypt.DecryptService, // when not reading legacy
 	accessControl accesscontrol.AccessControl,
+	accessClient authlib.AccessClient,
 	reg prometheus.Registerer,
 	pluginSources sources.Registry,
 ) (*DataSourceAPIBuilder, error) {
@@ -75,11 +89,12 @@ func RegisterAPIService(
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	flags := DataSourceAPIBuilderConfig{
-		LoadQueryTypes:         features.IsEnabledGlobally(featuremgmt.FlagDatasourcesQueryTypes),
-		LoadOpenAPISpec:        features.IsEnabledGlobally(featuremgmt.FlagDatasourcesLoadOpenAPI),
-		UseDualWriter:          features.IsEnabledGlobally(featuremgmt.FlagDatasourceUseNewCRUDAPIs),
-		EnableResourceEndpoint: features.IsEnabledGlobally(featuremgmt.FlagDatasourcesApiServerEnableResourceEndpoint),
-		EnableHealthEndpoint:   features.IsEnabledGlobally(featuremgmt.FlagDatasourcesApiServerEnableHealthEndpoint),
+		LoadQueryTypes:              features.IsEnabledGlobally(featuremgmt.FlagDatasourcesQueryTypes),
+		LoadOpenAPISpec:             features.IsEnabledGlobally(featuremgmt.FlagDatasourcesLoadOpenAPI),
+		UseDualWriter:               features.IsEnabledGlobally(featuremgmt.FlagDatasourceUseNewCRUDAPIs),
+		EnableResourceEndpoint:      features.IsEnabledGlobally(featuremgmt.FlagDatasourcesApiServerEnableResourceEndpoint),
+		EnableHealthEndpoint:        features.IsEnabledGlobally(featuremgmt.FlagDatasourcesApiServerEnableHealthEndpoint),
+		EnableChunkedQueryStreaming: features.IsEnabledGlobally(featuremgmt.FlagDatasourcesChunkedQueryStreaming),
 	}
 
 	var err error
@@ -118,6 +133,7 @@ func RegisterAPIService(
 			datasources.GetDatasourceProvider(plugin.JSONData),
 			contextProvider,
 			accessControl,
+			decrypter,
 			flags,
 		)
 		if err != nil {
@@ -130,6 +146,7 @@ func RegisterAPIService(
 		if plugin.Schemas != nil {
 			builder.schemas = plugin.Schemas
 		}
+		builder.accessClient = accessClient // Only registered in ST for now
 
 		apiRegistrar.RegisterAPI(builder)
 	}
@@ -153,6 +170,7 @@ func NewDataSourceAPIBuilder(
 	datasources PluginDatasourceProvider,
 	contextProvider PluginContextWrapper,
 	accessControl accesscontrol.AccessControl,
+	decrypter decrypt.DecryptService, // when not reading legacy
 	cfg DataSourceAPIBuilderConfig,
 ) (*DataSourceAPIBuilder, error) {
 	registerSubresourceMetrics(prometheus.DefaultRegisterer)
@@ -164,6 +182,7 @@ func NewDataSourceAPIBuilder(
 		datasources:            datasources,
 		contextProvider:        contextProvider,
 		accessControl:          accessControl,
+		decrypter:              decrypter,
 		cfg:                    cfg,
 	}
 	return builder, nil
@@ -252,19 +271,21 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 			resourceInfo:                    &ds,
 			dsConfigHandlerRequestsDuration: b.dataSourceCRUDMetric,
 		}
+		// NOTE! there is currently NO PATH that is using unified storage to read!
 		unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, ds, opts.OptsGetter)
 		if err != nil {
 			return err
 		}
-		storage[ds.StoragePath()], err = opts.DualWriteBuilder(ds.GroupResource(), legacyStore, unified)
-		storage[ds.StoragePath("access")] = &subAccessREST{
-			builder: b,
-			getter:  legacyStore,
-		}
+		b.store, err = opts.DualWriteBuilder(ds.GroupResource(), legacyStore, unified)
 		if err != nil {
 			return err
 		}
+		storage[ds.StoragePath()] = b.store
+		storage[ds.StoragePath("access")] = &subAccessREST{
+			builder: b,
+		}
 	} else {
+		// Read only datasources
 		storage[ds.StoragePath()] = &connectionAccess{
 			datasources:    b.datasources,
 			resourceInfo:   ds,
@@ -333,11 +354,37 @@ func (b *DataSourceAPIBuilder) applyDefaultStorageConfig(opts builder.APIGroupOp
 }
 
 func (b *DataSourceAPIBuilder) getPluginContext(ctx context.Context, uid string) (backend.PluginContext, error) {
-	instance, err := b.datasources.GetInstanceSettings(ctx, uid)
+	ctx, span := tracing.Start(ctx, "datasource.getPluginContext",
+		attribute.String("namespace", request.NamespaceValue(ctx)),
+		attribute.String("plugin_id", b.pluginJSON.ID),
+		attribute.String("datasource_uid", uid),
+	)
+	defer span.End()
+
+	getInstanceCtx, getInstanceSpan := tracing.Start(ctx, "datasource.getPluginContext.getInstanceSettings")
+	var err error
+	var instance *backend.DataSourceInstanceSettings
+	if b.store != nil && b.decrypter != nil {
+		// Load from storage + decrypter (respecting dual write settings)
+		instance, err = b.getInstanceSettings(getInstanceCtx, uid)
+	} else {
+		// This is backed by the datasources abstraction, NOT storage
+		instance, err = b.datasources.GetInstanceSettings(getInstanceCtx, uid)
+	}
+	getInstanceSpan.End()
 	if err != nil {
+		err = tracing.Error(span, err)
 		return backend.PluginContext{}, err
 	}
-	return b.contextProvider.PluginContextForDataSource(ctx, instance)
+
+	buildContextCtx, buildContextSpan := tracing.Start(ctx, "datasource.getPluginContext.buildPluginContext")
+	pluginCtx, err := b.contextProvider.PluginContextForDataSource(buildContextCtx, instance)
+	buildContextSpan.End()
+	if err != nil {
+		err = tracing.Error(span, err)
+		return backend.PluginContext{}, err
+	}
+	return pluginCtx, nil
 }
 
 func (b *DataSourceAPIBuilder) GetOpenAPIDefinitions() openapi.GetOpenAPIDefinitions {

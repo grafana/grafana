@@ -9,13 +9,10 @@ import {
   VisualizationSuggestionScore,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { getListedPanelPluginMetas, getPanelPluginMeta } from '@grafana/runtime/internal';
 import { appEvents } from 'app/core/app_events';
 import { isBuiltinPluginPath } from 'app/features/plugins/built_in_plugins';
 import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
-
-import { panelsToCheckFirst } from './consts';
 
 interface PluginLoadResult {
   plugins: PanelPlugin[];
@@ -23,12 +20,8 @@ interface PluginLoadResult {
 }
 
 async function getPanelPluginIds(): Promise<string[]> {
-  if (config.featureToggles.externalVizSuggestions) {
-    const plugins = await getListedPanelPluginMetas();
-    return plugins.filter((panel) => panel.suggestions).map((m) => m.id);
-  }
-
-  return panelsToCheckFirst;
+  const plugins = await getListedPanelPluginMetas();
+  return plugins.filter((panel) => panel.suggestions).map((m) => m.id);
 }
 
 async function isBuiltInPlugin(id?: string): Promise<boolean> {

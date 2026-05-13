@@ -66,6 +66,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
                 isLazy && (!isConditionallyHidden || !renderHidden) ? (
                   <LazyLoader
                     key={item.state.key!}
+                    mode="query"
                     className={cx(
                       conditionalRenderingClass,
                       styles.wrapper,

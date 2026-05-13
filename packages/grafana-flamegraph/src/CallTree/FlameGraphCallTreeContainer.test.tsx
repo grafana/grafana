@@ -2,6 +2,7 @@ import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { createDataFrame } from '@grafana/data';
+import { mockBoundingClientRect } from '@grafana/test-utils';
 
 import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
 import { data } from '../FlameGraph/testData/dataNestedSet';
@@ -19,13 +20,7 @@ describe('FlameGraphCallTreeContainer', () => {
     // see https://github.com/testing-library/user-event/issues/833
     user = userEvent.setup({ delay: null });
 
-    Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
-      configurable: true,
-      value: jest.fn(() => ({
-        width: 1600,
-        height: 500,
-      })),
-    });
+    mockBoundingClientRect({ width: 1600, height: 500 });
   });
 
   afterEach(() => {

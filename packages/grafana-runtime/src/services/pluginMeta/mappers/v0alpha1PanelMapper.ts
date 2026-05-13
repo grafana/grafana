@@ -1,9 +1,18 @@
 import { type PanelPluginMeta, PluginType } from '@grafana/data';
 
+import { logPluginMetaWarning } from '../logging';
 import type { PanelPluginMetas, PanelPluginMetasMapper, PluginMetasResponse } from '../types';
 import type { Spec as v0alpha1Spec } from '../types/meta/types.spec.gen';
 
-import { angularMapper, infoMapper, loadingStrategyMapper, signatureMapper, stateMapper } from './shared';
+import {
+  angularMapper,
+  isCorePlugin,
+  loadingStrategyMapper,
+  stateMapper,
+  infoMapper,
+  signatureStatusMapper,
+  prependPublicPathToCorePlugins,
+} from './shared';
 
 const idToSortMap: Record<string, number> = {
   timeseries: 1,
@@ -31,14 +40,14 @@ function sortMapper(spec: v0alpha1Spec): number {
 
 function specMapper(spec: v0alpha1Spec): PanelPluginMeta {
   const { id, name, hideFromList = false, skipDataQuery = false, suggestions } = spec.pluginJson;
-  const state = stateMapper(spec);
+  const state = stateMapper(spec, logPluginMetaWarning);
   const info = infoMapper(spec);
   const loadingStrategy = loadingStrategyMapper(spec);
   const sort = sortMapper(spec);
   const type = PluginType.panel;
   const module = spec.module.path;
   const baseUrl = spec.baseURL;
-  const signature = signatureMapper(spec);
+  const signature = signatureStatusMapper(spec, logPluginMetaWarning);
   const angular = angularMapper(spec);
   const translations = spec.translations;
   const moduleHash = spec.module.hash;
@@ -65,6 +74,11 @@ function specMapper(spec: v0alpha1Spec): PanelPluginMeta {
   };
 }
 
+export function coreSpecMapper(spec: v0alpha1Spec): PanelPluginMeta {
+  const mapped = specMapper(spec);
+  return prependPublicPathToCorePlugins(mapped, spec);
+}
+
 export const v0alpha1PanelMapper: PanelPluginMetasMapper<PluginMetasResponse> = (response) => {
   const result: PanelPluginMetas = {};
 
@@ -73,7 +87,9 @@ export const v0alpha1PanelMapper: PanelPluginMetasMapper<PluginMetasResponse> = 
       return acc;
     }
 
-    const config = specMapper(curr.spec);
+    const mapper = isCorePlugin(curr.spec) ? coreSpecMapper : specMapper;
+
+    const config = mapper(curr.spec);
     acc[config.id] = config;
     return acc;
   }, result);

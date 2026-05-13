@@ -81,6 +81,84 @@ function formatDelta(prValue, mainValue) {
 }
 
 /**
+ * Identifies files where coverage decreased between main and PR branches
+ * @param {Object} mainCoverage - Main branch coverage data (with optional .files map)
+ * @param {Object} prCoverage - PR branch coverage data (with optional .files map)
+ * @returns {Array<{path: string, main: Object, pr: Object}>}
+ */
+function getFilesWithDecreasedCoverage(mainCoverage, prCoverage) {
+  const mainFiles = mainCoverage.files || {};
+  const prFiles = prCoverage.files || {};
+  const metrics = ['lines', 'statements', 'functions', 'branches'];
+  const decreased = [];
+
+  for (const [filePath, prFile] of Object.entries(prFiles)) {
+    const mainFile = mainFiles[filePath];
+    if (!mainFile) {
+      continue; // new file — not a regression
+    }
+
+    const anyDecreased = metrics.some((metric) => {
+      const prPct = Math.round(prFile[metric].pct * 100) / 100;
+      const mainPct = Math.round(mainFile[metric].pct * 100) / 100;
+      return prPct < mainPct;
+    });
+
+    if (anyDecreased) {
+      decreased.push({ path: filePath, main: mainFile, pr: prFile });
+    }
+  }
+
+  // eslint-disable-next-line @grafana/no-locale-compare
+  return decreased.sort((a, b) => a.path.localeCompare(b.path));
+}
+
+/**
+ * Generates the "files with decreased coverage" markdown section
+ * @param {Array} decreasedFiles - Output of getFilesWithDecreasedCoverage
+ * @param {string} artifactUrl - URL to the uploaded HTML coverage artifact
+ * @param {string} prSha - PR head commit SHA for GitHub file links
+ * @param {string} repo - GitHub repository in "owner/repo" format
+ * @returns {string} Markdown section
+ */
+function generateFailureDetailsSection(decreasedFiles, artifactUrl, prSha, repo) {
+  const lines = [];
+  if (decreasedFiles.length === 0) {
+    return lines.join('\n');
+  }
+
+  lines.push(`### Files with Decreased Coverage\n`);
+
+  if (artifactUrl) {
+    lines.push(`📊 [View full HTML coverage report](${artifactUrl})\n`);
+  }
+
+  const MAX_FILES = 20;
+  const metrics = ['lines', 'statements', 'functions', 'branches'];
+  const headers = ['File', 'Lines', 'Statements', 'Functions', 'Branches'];
+
+  lines.push(`| ${headers.join(' | ')} |`);
+  lines.push(`|------|-------|------------|-----------|----------|`);
+
+  const shown = decreasedFiles.slice(0, MAX_FILES);
+  for (const { path, main, pr } of shown) {
+    const metricCells = metrics.map((metric) => {
+      const prPct = Math.round(pr[metric].pct * 100) / 100;
+      const mainPct = Math.round(main[metric].pct * 100) / 100;
+      return prPct < mainPct ? `${formatPercentage(mainPct)} → ${formatPercentage(prPct)}` : '—';
+    });
+
+    lines.push(`| ${path} | ${metricCells.join(' | ')} |`);
+  }
+
+  if (decreasedFiles.length > MAX_FILES) {
+    lines.push(`\n_...and ${decreasedFiles.length - MAX_FILES} more files. See the full report for details._`);
+  }
+
+  return lines.join('\n');
+}
+
+/**
  * Generates markdown report comparing main and PR coverage
  * @param {Object} mainCoverage - Main branch coverage data
  * @param {Object} prCoverage - PR branch coverage data
@@ -126,11 +204,22 @@ function generateMarkdown(mainCoverage, prCoverage) {
 
   const overallStatus = overallPass ? '✅ Passed' : '❌ Failed';
 
+  let failureDetails = '';
+  if (!overallPass) {
+    const artifactUrl = process.env.COVERAGE_ARTIFACT_URL || '';
+    const prSha = process.env.PR_SHA || '';
+    const repo = process.env.GITHUB_REPOSITORY || '';
+    const decreasedFiles = getFilesWithDecreasedCoverage(mainCoverage, prCoverage);
+    failureDetails = generateFailureDetailsSection(decreasedFiles, artifactUrl, prSha, repo);
+  }
+
   return `## Test Coverage Checks ${overallStatus} for ${teamName}
 
 | Metric | Main | PR | Change | Status |
 |--------|------|----|----|--------|
 ${tableRows}
+
+${failureDetails}
 
 **Run locally:** 💻 \`yarn test:coverage:by-codeowner ${teamName}\`
 
@@ -181,4 +270,10 @@ if (require.main === module) {
   console.log('✅ Coverage check passed: All metrics maintained or improved');
 }
 
-module.exports = { compareCoverageByCodeowner, generateMarkdown, getOverallStatus };
+module.exports = {
+  compareCoverageByCodeowner,
+  generateMarkdown,
+  getOverallStatus,
+  getFilesWithDecreasedCoverage,
+  generateFailureDetailsSection,
+};

@@ -1755,7 +1755,7 @@ func TestGitHubRepository_Test_EmptyBranch(t *testing.T) {
 		gitTestError   error
 		expectGetRepo  bool
 		expectedBranch string
-		expectedError  bool
+		expectedResult *provisioning.TestResults
 	}{
 		{
 			name:          "empty branch triggers GetDefaultBranch and sets default branch",
@@ -1766,7 +1766,6 @@ func TestGitHubRepository_Test_EmptyBranch(t *testing.T) {
 			},
 			expectGetRepo:  true,
 			expectedBranch: "develop",
-			expectedError:  false,
 		},
 		{
 			name:          "non-empty branch does not trigger GetDefaultBranch",
@@ -1776,14 +1775,81 @@ func TestGitHubRepository_Test_EmptyBranch(t *testing.T) {
 			},
 			expectGetRepo:  false,
 			expectedBranch: "feature-branch",
-			expectedError:  false,
 		},
 		{
-			name:          "GetDefaultBranch failure returns error",
+			name:          "GetDefaultBranch returns ErrFileNotFound (404) → URL field error",
+			initialBranch: "",
+			getRepoError:  repo.ErrFileNotFound,
+			expectGetRepo: true,
+			expectedResult: &provisioning.TestResults{
+				Code:    http.StatusBadRequest,
+				Success: false,
+				Errors: []provisioning.ErrorDetails{{
+					Type:   metav1.CauseTypeFieldValueInvalid,
+					Field:  "spec.github.url",
+					Detail: `repository "https://github.com/grafana/grafana" not found, or the configured token does not have access to it`,
+				}},
+			},
+		},
+		{
+			name:          "GetDefaultBranch returns ErrUnauthorized (401) → token field error",
+			initialBranch: "",
+			getRepoError:  repo.ErrUnauthorized,
+			expectGetRepo: true,
+			expectedResult: &provisioning.TestResults{
+				Code:    http.StatusUnauthorized,
+				Success: false,
+				Errors: []provisioning.ErrorDetails{{
+					Type:   metav1.CauseTypeFieldValueInvalid,
+					Field:  "spec.github.token",
+					Detail: "authentication failed: the configured token is invalid or expired",
+				}},
+			},
+		},
+		{
+			name:          "GetDefaultBranch returns ErrPermissionDenied (403) → token field error",
+			initialBranch: "",
+			getRepoError:  repo.ErrPermissionDenied,
+			expectGetRepo: true,
+			expectedResult: &provisioning.TestResults{
+				Code:    http.StatusForbidden,
+				Success: false,
+				Errors: []provisioning.ErrorDetails{{
+					Type:   metav1.CauseTypeFieldValueInvalid,
+					Field:  "spec.github.token",
+					Detail: `the configured token lacks permission to access "https://github.com/grafana/grafana"`,
+				}},
+			},
+		},
+		{
+			name:          "GetDefaultBranch returns ErrServerUnavailable → 503 result",
+			initialBranch: "",
+			getRepoError:  repo.ErrServerUnavailable,
+			expectGetRepo: true,
+			expectedResult: &provisioning.TestResults{
+				Code:    http.StatusServiceUnavailable,
+				Success: false,
+				Errors: []provisioning.ErrorDetails{{
+					Type:   metav1.CauseTypeFieldValueInvalid,
+					Field:  "spec.github.url",
+					Detail: "GitHub is currently unavailable, please try again later",
+				}},
+			},
+		},
+		{
+			name:          "GetDefaultBranch returns unclassified error → generic 400 result",
 			initialBranch: "",
 			getRepoError:  errors.New("API rate limit exceeded"),
 			expectGetRepo: true,
-			expectedError: true, // Error is returned as error, not in TestResults
+			expectedResult: &provisioning.TestResults{
+				Code:    http.StatusBadRequest,
+				Success: false,
+				Errors: []provisioning.ErrorDetails{{
+					Type:   metav1.CauseTypeFieldValueInvalid,
+					Field:  "spec.github.url",
+					Detail: "failed to get repository metadata: API rate limit exceeded",
+				}},
+			},
 		},
 		{
 			name:          "empty branch with git test failure after branch detection",
@@ -1800,7 +1866,6 @@ func TestGitHubRepository_Test_EmptyBranch(t *testing.T) {
 			},
 			expectGetRepo:  true,
 			expectedBranch: "main",
-			expectedError:  false,
 		},
 	}
 
@@ -1864,20 +1929,20 @@ func TestGitHubRepository_Test_EmptyBranch(t *testing.T) {
 			result, err := githubRepo.Test(context.Background())
 
 			// Verify
-			if tt.expectedError {
-				require.Error(t, err)
-				if tt.getRepoError != nil {
-					assert.Contains(t, err.Error(), "failed to get repository metadata")
-				}
-			} else {
-				require.NoError(t, err)
-				if tt.expectedBranch != "" {
-					// Verify branch was updated in config
-					assert.Equal(t, tt.expectedBranch, config.Spec.GitHub.Branch)
+			require.NoError(t, err, "Test() must surface failures via TestResults, not Go errors")
 
-					if result != nil {
-						assert.Equal(t, tt.gitTestResults.Success, result.Success)
-					}
+			if tt.expectedResult != nil {
+				require.NotNil(t, result)
+				assert.Equal(t, tt.expectedResult, result)
+				return
+			}
+
+			if tt.expectedBranch != "" {
+				// Verify branch was updated in config
+				assert.Equal(t, tt.expectedBranch, config.Spec.GitHub.Branch)
+
+				if result != nil {
+					assert.Equal(t, tt.gitTestResults.Success, result.Success)
 				}
 			}
 		})

@@ -85,6 +85,7 @@ module.exports = {
     '<rootDir>/public/app/plugins/datasource/grafana-postgresql-datasource',
     '<rootDir>/public/app/plugins/datasource/grafana-pyroscope-datasource',
     '<rootDir>/public/app/plugins/datasource/grafana-testdata-datasource',
+    '<rootDir>/public/app/plugins/datasource/influxdb',
     '<rootDir>/public/app/plugins/datasource/graphite',
     '<rootDir>/public/app/plugins/datasource/jaeger',
     '<rootDir>/public/app/plugins/datasource/loki',
@@ -93,7 +94,6 @@ module.exports = {
     '<rootDir>/public/app/plugins/datasource/opentsdb',
     '<rootDir>/public/app/plugins/datasource/parca',
     '<rootDir>/public/app/plugins/datasource/tempo',
-    '<rootDir>/public/app/plugins/datasource/zipkin',
   ],
   projects: ['<rootDir>'],
 };
