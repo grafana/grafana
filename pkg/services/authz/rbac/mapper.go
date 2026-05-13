@@ -202,13 +202,15 @@ func newServiceAccountTranslation() translation {
 
 	actionSetMapping := make(map[string][]string)
 	for verb, rbacAction := range saTranslation.verbMapping {
-		var actionSets []string
-		if slices.Contains(ossaccesscontrol.ServiceAccountEditActions, rbacAction) {
+		var (
+			actionSets    []string
+			containsEdit  = slices.Contains(ossaccesscontrol.ServiceAccountEditActions, rbacAction)
+			containsAdmin = slices.Contains(ossaccesscontrol.ServiceAccountAdminActions, rbacAction)
+		)
+		if containsEdit {
 			actionSets = append(actionSets, "serviceaccounts:edit")
 			actionSets = append(actionSets, "serviceaccounts:admin")
-		}
-		if slices.Contains(ossaccesscontrol.ServiceAccountAdminActions, rbacAction) &&
-			!slices.Contains(ossaccesscontrol.ServiceAccountEditActions, rbacAction) {
+		} else if containsAdmin {
 			actionSets = append(actionSets, "serviceaccounts:admin")
 		}
 		actionSetMapping[verb] = actionSets
