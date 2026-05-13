@@ -126,7 +126,7 @@ var GrafanaFlags = []cli.Flag{
 	},
 	&cli.StringFlag{
 		Name:  "yarn-cache",
-		Usage: "If there is a yarn cache directory, then mount that when running 'yarn install' instead of creating a cache directory",
+		Usage: "If there is a pnpm store directory, then mount that when running 'pnpm install' instead of creating a store directory",
 	},
 }
 

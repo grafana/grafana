@@ -17,7 +17,7 @@ type Deps struct {
 // Create a container with frontend dependencies installed, ready to build plugins
 // or run e2e tests.
 // Theoretically we would setup Playwright in e2e.go, but to optimise layer caching
-// we want it to happen before yarn install.
+// we want it to happen before pnpm install.
 func WithFrontendContainer(ctx context.Context, d *dagger.Client, yarnHostSrc *dagger.Directory, yarnCache *dagger.CacheVolume) (*dagger.Container, error) {
 	deps, err := GetVersions(ctx, yarnHostSrc)
 	if err != nil {
@@ -66,13 +66,11 @@ func WithPlaywright(d *dagger.Client, base *dagger.Container, version string) *d
 func WithYarnInstall(d *dagger.Client, base *dagger.Container, yarnHostSrc *dagger.Directory, yarnCache *dagger.CacheVolume) *dagger.Container {
 	return base.
 		WithWorkdir("/src").
-		WithMountedCache("/.yarn", yarnCache).
-		WithEnvVariable("YARN_CACHE_FOLDER", "/.yarn").
-		WithEnvVariable("CYPRESS_INSTALL_BINARY", "0"). // Don't download Cypress binaries
-
-		// It's important to copy all files here because the whole src directory is then copied into the test runner container
+		WithMountedCache("/pnpm/store", yarnCache).
+		WithEnvVariable("PNPM_STORE_DIR", "/pnpm/store").
+		WithEnvVariable("CYPRESS_INSTALL_BINARY", "0").
 		WithDirectory("/src", yarnHostSrc).
 		WithExec([]string{"corepack", "enable"}).
 		WithExec([]string{"corepack", "install"}).
-		WithExec([]string{"yarn", "install", "--immutable"})
+		WithExec([]string{"pnpm", "install", "--frozen-lockfile"})
 }

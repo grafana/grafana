@@ -34,14 +34,14 @@
       "import": "./dist/esm/unstable.mjs",
       "require": "./dist/cjs/unstable.cjs"
     },
-    "./internal": {
-      "@grafana-app/source": "./src/internal.ts"
-    },
     "./testing": {
       "@grafana-app/source": "./src/testing.ts",
       "types": "./dist/types/testing.d.ts",
       "import": "./dist/esm/testing.mjs",
       "require": "./dist/cjs/testing.cjs"
+    },
+    "./internal": {
+      "@grafana-app/source": "./src/internal.ts"
     }
   },
   "publishConfig": {
@@ -84,9 +84,9 @@
     "typescript": "6.0.2"
   },
   "peerDependencies": {
-    "@grafana/data": ">=11.6",
-    "@grafana/runtime": ">=11.6",
-    "@grafana/ui": ">=11.6",
+    "@grafana/data": "workspace:^",
+    "@grafana/runtime": "workspace:^",
+    "@grafana/ui": "workspace:^",
     "msw": "^2.0.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0"

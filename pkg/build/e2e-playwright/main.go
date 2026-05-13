@@ -74,7 +74,7 @@ func NewApp() *cli.Command {
 			&cli.StringFlag{
 				Name:  "playwright-command",
 				Usage: "The playwright command to run.",
-				Value: "yarn e2e:playwright",
+				Value: "pnpm e2e:playwright",
 			},
 			&cli.StringFlag{
 				Name:      "cloud-plugin-creds",
@@ -122,13 +122,13 @@ func run(ctx context.Context, cmd *cli.Command) error {
 		},
 	})
 
-	// Minimal files needed to run yarn install
+	// Minimal files needed to run pnpm install
 	yarnHostSrc := d.Host().Directory(grafanaDir, dagger.HostDirectoryOpts{
 		Include: []string{
 			"package.json",
-			"yarn.lock",
-			".yarnrc.yml",
-			".yarn",
+			"pnpm-lock.yaml",
+			"pnpm-workspace.yaml",
+			".npmrc",
 			"packages/*/package.json",
 			"packages/grafana-data",
 			"packages/grafana-i18n",

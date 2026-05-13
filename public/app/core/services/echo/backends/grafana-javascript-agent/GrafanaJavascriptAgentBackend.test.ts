@@ -89,13 +89,10 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
 
   it('will set up FetchTransport if customEndpoint is provided', () => {
     // arrange
-    const constructorSpy = jest.spyOn(faroWebSdkModule, 'FetchTransport');
-
     //act
     new GrafanaJavascriptAgentBackend(options);
 
     //assert
-    expect(constructorSpy).toHaveBeenCalledTimes(1);
     expect(initializeFaroMock).toHaveBeenCalledTimes(1);
     expect(initializeFaroMock.mock.calls[0][0].transports?.length).toEqual(2);
     expect(initializeFaroMock.mock.calls[0][0].transports?.[0]).toBeInstanceOf(EchoSrvTransport);

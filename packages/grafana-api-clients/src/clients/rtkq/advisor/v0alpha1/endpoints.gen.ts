@@ -310,6 +310,7 @@ const injectedRtkApi = api
       }),
       createRegister: build.mutation<CreateRegisterApiResponse, CreateRegisterApiArg>({
         query: () => ({ url: `/register`, method: 'POST' }),
+        invalidatesTags: [],
       }),
     }),
     overrideExisting: false,

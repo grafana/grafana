@@ -557,6 +557,7 @@ approval_rules:
           - ^(?:(?:[^/]*(?:/|$))*)pnpm-lock\.yaml$
           - ^conf\/(?:(?:[^/]*(?:/|$))*)$
           - ^\.npmrc$
+          - ^pnpm-workspace\.yaml$
           - ^tsconfig\.json$
           - ^(?:[^/]*)\.js$
           - ^(?:[^/]*)\.ts$

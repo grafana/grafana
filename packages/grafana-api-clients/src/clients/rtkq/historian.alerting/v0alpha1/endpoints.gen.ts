@@ -12,6 +12,7 @@ const injectedRtkApi = api
       }),
       getAlertstatehistory: build.query<GetAlertstatehistoryApiResponse, GetAlertstatehistoryApiArg>({
         query: () => ({ url: `/alertstate/history` }),
+        providesTags: [],
       }),
       listDummy: build.query<ListDummyApiResponse, ListDummyApiArg>({
         query: (queryArg) => ({
@@ -168,6 +169,7 @@ const injectedRtkApi = api
           method: 'POST',
           body: queryArg.createNotificationqueryRequestBody,
         }),
+        invalidatesTags: [],
       }),
       createNotificationsqueryalerts: build.mutation<
         CreateNotificationsqueryalertsApiResponse,
@@ -178,6 +180,7 @@ const injectedRtkApi = api
           method: 'POST',
           body: queryArg.createNotificationsqueryalertsRequestBody,
         }),
+        invalidatesTags: [],
       }),
     }),
     overrideExisting: false,

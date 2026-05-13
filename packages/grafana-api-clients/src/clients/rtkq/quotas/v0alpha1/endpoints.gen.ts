@@ -14,6 +14,7 @@ const injectedRtkApi = api
             resource: queryArg.resource,
           },
         }),
+        providesTags: [],
       }),
     }),
     overrideExisting: false,

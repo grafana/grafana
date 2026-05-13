@@ -6,7 +6,7 @@
   "version": "13.1.0-pre",
   "repository": "github:grafana/grafana",
   "scripts": {
-    "postinstall": "find packages public/app/plugins e2e-playwright -mindepth 2 -maxdepth 2 -name node_modules -type d -exec rm -rf {} + 2>/dev/null || true",
+    "postinstall": "",
     "analytics-report": "node ./scripts/cli/analytics/main.mts",
     "analytics-report:test": "node --test ./scripts/cli/analytics/*.test.mts",
     "check-frontend-dev": "./scripts/check-frontend-dev.sh",

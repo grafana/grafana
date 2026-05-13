@@ -588,6 +588,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/src/utils/csv* @grafana/dataviz-squad
 /packages/grafana-data/src/utils/dataLinks* @grafana/dashboards-squad
 /packages/grafana-data/src/utils/datasource* @grafana/grafana-datasources-core-services
+/packages/grafana-data/src/utils/debug.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/src/utils/docs.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/src/utils/deprecationWarning* @grafana/grafana-frontend-platform
 /packages/grafana-data/src/utils/featureToggles.ts @grafana/grafana-frontend-platform
@@ -598,6 +599,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/src/utils/legend* @grafana/data-sources-plugins
 /packages/grafana-data/src/utils/location* @grafana/grafana-frontend-navigation
 /packages/grafana-data/src/utils/LocalStorageValueProvider.tsx @grafana/grafana-frontend-platform
+/packages/grafana-data/src/utils/logger.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/src/utils/makeClassES5Compatible.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/src/utils/matchPluginId* @grafana/plugins-platform-frontend
 /packages/grafana-data/src/utils/namedColorsPalette* @grafana/grafana-frontend-platform
@@ -796,6 +798,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /patches @grafana/frontend-ops
 /.npmrc @grafana/frontend-ops
 /pnpm-lock.yaml @grafana/frontend-ops
+/pnpm-workspace.yaml @grafana/frontend-ops
 /lerna.json @grafana/frontend-ops
 /.prettierrc.js @grafana/frontend-ops
 /.vim @zoltanbedi

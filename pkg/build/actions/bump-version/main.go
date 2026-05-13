@@ -68,11 +68,12 @@ func WithUpdatedVersion(d *dagger.Client, src *dagger.Directory, nodeVersion, ve
 	return d.Container().From(image).
 		WithDirectory("/src", src).
 		WithWorkdir("/src").
-		WithExec([]string{"yarn", "install"}).
+		WithExec([]string{"corepack", "enable"}).
+		WithExec([]string{"pnpm", "install", "--frozen-lockfile"}).
 		WithExec([]string{"npm", "version", version, "--no-git-tag-version"}).
-		WithExec([]string{"yarn", "run", "lerna", "version", version, "--no-push", "--no-git-tag-version", "--force-publish", "--exact", "--yes"}).
-		WithExec([]string{"yarn", "install"}).
-		WithExec([]string{"yarn", "prettier:write"}).
+		WithExec([]string{"pnpm", "exec", "lerna", "version", version, "--no-push", "--no-git-tag-version", "--force-publish", "--exact", "--yes"}).
+		WithExec([]string{"pnpm", "install", "--frozen-lockfile"}).
+		WithExec([]string{"pnpm", "prettier:write"}).
 		Directory("/src").
 		WithoutDirectory("node_modules")
 }

@@ -27,6 +27,8 @@ const esModules = [
   'vscode-languageserver-types',
   '@bsull/augurs',
   'react-data-grid',
+  '@grafana/faro-web-sdk',
+  '@grafana/faro-core',
   '@grafana/llm',
   'pkce-challenge',
   'quickselect',
@@ -45,9 +47,7 @@ module.exports = {
   transform: {
     '^.+\\.(ts|tsx|js|jsx)$': [require.resolve('ts-jest')],
   },
-  transformIgnorePatterns: [
-    `/node_modules/(?!${esModules})`, // exclude es modules to prevent TS complaining
-  ],
+  transformIgnorePatterns: [`node_modules/(?!(?:${esModules})|.pnpm/.+/node_modules/(?:${esModules}))`],
   moduleDirectories: ['public', 'node_modules'],
   roots: ['<rootDir>/public/app', '<rootDir>/public/test', '<rootDir>/packages', '<rootDir>/scripts/tests'],
   testRegex: '(\\.|/)(test)\\.(jsx?|tsx?)$',
@@ -60,6 +60,10 @@ module.exports = {
     __webpack_public_path__: '', // empty string
   },
   moduleNameMapper: {
+    '^react$': '<rootDir>/node_modules/react',
+    '^react/(.*)$': '<rootDir>/node_modules/react/$1',
+    '^react-dom$': '<rootDir>/node_modules/react-dom',
+    '^react-dom/(.*)$': '<rootDir>/node_modules/react-dom/$1',
     '\\.(svg|png|jpg)': '<rootDir>/public/test/mocks/images.ts',
     '\\.css': '<rootDir>/public/test/mocks/style.ts',
     'react-inlinesvg': '<rootDir>/public/test/mocks/react-inlinesvg.tsx',

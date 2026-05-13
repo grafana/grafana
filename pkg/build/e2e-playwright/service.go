@@ -20,7 +20,7 @@ func GrafanaService(ctx context.Context, d *dagger.Client, opts GrafanaServiceOp
 	testPlugins := opts.FrontendContainer.
 		WithDirectory("e2e-playwright/test-plugins", opts.HostSrc.Directory("./e2e-playwright/test-plugins")).
 		WithDirectory("packages/grafana-plugin-configs", opts.HostSrc.Directory("./packages/grafana-plugin-configs")).
-		WithExec([]string{"yarn", "e2e:plugin:build"})
+		WithExec([]string{"pnpm", "e2e:plugin:build"})
 
 	container := d.Container().From("alpine:3").
 		WithExec([]string{"apk", "add", "--no-cache", "bash", "tar", "netcat-openbsd", "util-linux"}).

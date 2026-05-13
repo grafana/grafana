@@ -133,6 +133,7 @@ const injectedRtkApi = api
       }),
       getIntegrationtypeschemas: build.query<GetIntegrationtypeschemasApiResponse, GetIntegrationtypeschemasApiArg>({
         query: () => ({ url: `/integrationtypeschemas` }),
+        providesTags: [],
       }),
       listReceiver: build.query<ListReceiverApiResponse, ListReceiverApiArg>({
         query: (queryArg) => ({
