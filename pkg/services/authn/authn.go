@@ -73,6 +73,11 @@ type FetchPermissionsParams struct {
 	// K8sRestrictedActions will restrict the permissions to only the Grafana actions
 	// that the Kubernetes-style permission strings translate to
 	K8sRestrictedActions []string
+	// RestrictedScopes further restricts permissions to specific resource scopes.
+	// Map of action -> allowed scope patterns. Only scopes matching the patterns
+	// are kept for that action. Actions not present in this map are unaffected.
+	// This is populated from the "restrictedDelegatedPermissionScopes" JWT claim.
+	RestrictedScopes map[string][]string
 	// AllowedActions will be added to the identity permissions
 	AllowedActions []string
 	// Note: Kept for backwards compatibility, use K8s style instead

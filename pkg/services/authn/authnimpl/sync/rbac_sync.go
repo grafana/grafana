@@ -91,6 +91,34 @@ func (s *RBACSync) SyncPermissionsHook(ctx context.Context, ident *authn.Identit
 		}
 		grouped = filtered
 	}
+
+	// Further restrict scopes for specific actions.
+	// restrictedScopes maps action -> allowed scope patterns. For each restricted
+	// action, only user scopes matching an allowed pattern are kept.
+	restrictedScopes := ident.ClientParams.FetchPermissionsParams.RestrictedScopes
+	if len(restrictedScopes) > 0 {
+		for action, allowedScopes := range restrictedScopes {
+			userScopes, ok := grouped[action]
+			if !ok {
+				continue
+			}
+			var kept []string
+			for _, userScope := range userScopes {
+				for _, allowed := range allowedScopes {
+					if userScope == allowed || strings.HasPrefix(userScope, allowed) {
+						kept = append(kept, userScope)
+						break
+					}
+				}
+			}
+			if len(kept) > 0 {
+				grouped[action] = kept
+			} else {
+				delete(grouped, action)
+			}
+		}
+	}
+
 	ident.Permissions[ident.OrgID] = grouped
 
 	return nil

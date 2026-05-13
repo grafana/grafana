@@ -156,6 +156,9 @@ func (s *ExtendedJWT) authenticateAsUserViaIDToken(
 			fetchPermissionsParams.RestrictedActions = append(fetchPermissionsParams.RestrictedActions, perm)
 		}
 	}
+	if rs := accessTokenClaims.Rest.RestrictedDelegatedPermissionScopes; len(rs) > 0 {
+		fetchPermissionsParams.RestrictedScopes = rs
+	}
 
 	identity := &authn.Identity{
 		ID:                id,
@@ -291,6 +294,9 @@ func (s *ExtendedJWT) authenticateAsUserViaOBO(
 		} else {
 			fetchPermissionsParams.RestrictedActions = append(fetchPermissionsParams.RestrictedActions, perm)
 		}
+	}
+	if rs := accessTokenClaims.Rest.RestrictedDelegatedPermissionScopes; len(rs) > 0 {
+		fetchPermissionsParams.RestrictedScopes = rs
 	}
 
 	identity := &authn.Identity{

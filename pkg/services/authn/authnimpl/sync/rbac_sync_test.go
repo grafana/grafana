@@ -245,6 +245,156 @@ func TestRBACSync_FetchPermissions(t *testing.T) {
 	}
 }
 
+func TestRBACSync_RestrictedScopes(t *testing.T) {
+	// Custom mock with specific scoped permissions (not just wildcards)
+	// so we can test that scope filtering keeps/removes the right entries.
+	acMock := &acmock.Mock{
+		GetUserPermissionsFunc: func(ctx context.Context, siu identity.Requester, o accesscontrol.Options) ([]accesscontrol.Permission, error) {
+			return []accesscontrol.Permission{
+				{Action: "datasources:read", Scope: "datasources:uid:prometheus"},
+				{Action: "datasources:read", Scope: "datasources:uid:loki"},
+				{Action: "datasources:read", Scope: "datasources:uid:billing-db"},
+				{Action: "datasources:query", Scope: "datasources:uid:prometheus"},
+				{Action: "datasources:query", Scope: "datasources:uid:loki"},
+				{Action: "datasources:query", Scope: "datasources:uid:billing-db"},
+				{Action: "dashboards:read", Scope: "dashboards:uid:*"},
+				{Action: accesscontrol.ActionUsersRead, Scope: accesscontrol.ScopeUsersAll},
+			}, nil
+		},
+	}
+	permRegistry := permreg.ProvidePermissionRegistry(t)
+	s := &RBACSync{
+		ac:           acMock,
+		log:          log.NewNopLogger(),
+		tracer:       tracing.InitializeTracerForTest(),
+		permRegistry: permRegistry,
+		mapper:       rbac.NewMapperRegistry(),
+	}
+
+	type testCase struct {
+		name                string
+		identity            *authn.Identity
+		expectedPermissions map[string][]string
+	}
+
+	testCases := []testCase{
+		{
+			name: "scope restriction filters to specific datasources",
+			identity: &authn.Identity{
+				ID: "2", Type: claims.TypeUser, OrgID: 1,
+				ClientParams: authn.ClientParams{
+					SyncPermissions: true,
+					FetchPermissionsParams: authn.FetchPermissionsParams{
+						RestrictedScopes: map[string][]string{
+							"datasources:query": {"datasources:uid:prometheus", "datasources:uid:loki"},
+						},
+					},
+				},
+			},
+			expectedPermissions: map[string][]string{
+				// datasources:read has no scope restriction, so all scopes kept
+				"datasources:read": {"datasources:uid:prometheus", "datasources:uid:loki", "datasources:uid:billing-db"},
+				// datasources:query restricted to prometheus and loki only
+				"datasources:query": {"datasources:uid:prometheus", "datasources:uid:loki"},
+				// unrelated actions unaffected
+				"dashboards:read":             {"dashboards:uid:*"},
+				accesscontrol.ActionUsersRead: {accesscontrol.ScopeUsersAll},
+			},
+		},
+		{
+			name: "scope restriction removes action when no scopes survive",
+			identity: &authn.Identity{
+				ID: "2", Type: claims.TypeUser, OrgID: 1,
+				ClientParams: authn.ClientParams{
+					SyncPermissions: true,
+					FetchPermissionsParams: authn.FetchPermissionsParams{
+						RestrictedScopes: map[string][]string{
+							"datasources:query": {"datasources:uid:nonexistent"},
+						},
+					},
+				},
+			},
+			expectedPermissions: map[string][]string{
+				"datasources:read":            {"datasources:uid:prometheus", "datasources:uid:loki", "datasources:uid:billing-db"},
+				"dashboards:read":             {"dashboards:uid:*"},
+				accesscontrol.ActionUsersRead: {accesscontrol.ScopeUsersAll},
+				// datasources:query removed entirely — no scopes matched
+			},
+		},
+		{
+			name: "scope restriction combined with action restriction",
+			identity: &authn.Identity{
+				ID: "2", Type: claims.TypeUser, OrgID: 1,
+				ClientParams: authn.ClientParams{
+					SyncPermissions: true,
+					FetchPermissionsParams: authn.FetchPermissionsParams{
+						// Action-level: only allow datasources:read and datasources:query
+						RestrictedActions: []string{"datasources:read", "datasources:query"},
+						// Scope-level: further restrict query to prometheus only
+						RestrictedScopes: map[string][]string{
+							"datasources:query": {"datasources:uid:prometheus"},
+						},
+					},
+				},
+			},
+			expectedPermissions: map[string][]string{
+				"datasources:read":  {"datasources:uid:prometheus", "datasources:uid:loki", "datasources:uid:billing-db"},
+				"datasources:query": {"datasources:uid:prometheus"},
+				// dashboards:read and users:read filtered out by action restriction
+			},
+		},
+		{
+			name: "no restricted scopes — no filtering applied",
+			identity: &authn.Identity{
+				ID: "2", Type: claims.TypeUser, OrgID: 1,
+				ClientParams: authn.ClientParams{
+					SyncPermissions: true,
+				},
+			},
+			expectedPermissions: map[string][]string{
+				"datasources:read":            {"datasources:uid:prometheus", "datasources:uid:loki", "datasources:uid:billing-db"},
+				"datasources:query":           {"datasources:uid:prometheus", "datasources:uid:loki", "datasources:uid:billing-db"},
+				"dashboards:read":             {"dashboards:uid:*"},
+				accesscontrol.ActionUsersRead: {accesscontrol.ScopeUsersAll},
+			},
+		},
+		{
+			name: "scope restriction on action not in user permissions is a no-op",
+			identity: &authn.Identity{
+				ID: "2", Type: claims.TypeUser, OrgID: 1,
+				ClientParams: authn.ClientParams{
+					SyncPermissions: true,
+					FetchPermissionsParams: authn.FetchPermissionsParams{
+						RestrictedScopes: map[string][]string{
+							"alert.rules:read": {"alert.rules:uid:foo"},
+						},
+					},
+				},
+			},
+			expectedPermissions: map[string][]string{
+				"datasources:read":            {"datasources:uid:prometheus", "datasources:uid:loki", "datasources:uid:billing-db"},
+				"datasources:query":           {"datasources:uid:prometheus", "datasources:uid:loki", "datasources:uid:billing-db"},
+				"dashboards:read":             {"dashboards:uid:*"},
+				accesscontrol.ActionUsersRead: {accesscontrol.ScopeUsersAll},
+			},
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			err := s.SyncPermissionsHook(context.Background(), tt.identity, &authn.Request{})
+			require.NoError(t, err)
+
+			require.Equal(t, len(tt.expectedPermissions), len(tt.identity.Permissions[tt.identity.OrgID]),
+				"expected %d actions but got %d: %v", len(tt.expectedPermissions), len(tt.identity.Permissions[tt.identity.OrgID]), tt.identity.Permissions[tt.identity.OrgID])
+			for action, scopes := range tt.expectedPermissions {
+				require.ElementsMatch(t, scopes, tt.identity.Permissions[tt.identity.OrgID][action],
+					"scopes mismatch for action %s", action)
+			}
+		})
+	}
+}
+
 func TestRBACSync_SyncCloudRoles(t *testing.T) {
 	type testCase struct {
 		desc           string
