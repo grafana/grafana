@@ -1,9 +1,12 @@
 package dashboard
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
 	"sync"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
@@ -14,7 +17,9 @@ import (
 const HOME_DASHBOARD_NAME = "default-home-dashboard"
 
 func newHomeDashboardSupport(defaultDashboardFile string) *homeDashboard {
-	fmt.Printf("TODO... read/watch %s\n", defaultDashboardFile)
+	if defaultDashboardFile == "" {
+		return nil
+	}
 	return &homeDashboard{
 		fpath:    defaultDashboardFile,
 		versions: make(map[string]homeDashboardGetter, 10),
@@ -58,10 +63,21 @@ func (h *homeDashboard) Get(version string) (runtime.Object, error) {
 
 // Called the first time we load the dashboard, OR after the file has changed
 func (h *homeDashboard) load() error {
-	h.source = &dashv0.Dashboard{Spec: v0alpha1.Unstructured{
-		Object: map[string]any{
-			"title": "home",
-		},
-	}}
+	raw, err := os.ReadFile(h.fpath)
+	if err != nil {
+		return fmt.Errorf("reading home dashboard %s: %w", h.fpath, err)
+	}
+
+	var data map[string]any
+	if err := json.Unmarshal(raw, &data); err != nil {
+		return fmt.Errorf("parsing home dashboard JSON: %w", err)
+	}
+
+	h.source = &dashv0.Dashboard{
+		ObjectMeta: metav1.ObjectMeta{Name: HOME_DASHBOARD_NAME},
+		Spec:       v0alpha1.Unstructured{Object: data},
+	}
+	// Invalidate cached conversions so they are re-derived from the new source.
+	clear(h.versions)
 	return nil
 }

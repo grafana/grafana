@@ -27,12 +27,13 @@ type PreferenceLister interface {
 }
 
 type merger struct {
-	defaults preferences.PreferencesSpec
-	lister   PreferenceLister
+	defaults         preferences.PreferencesSpec
+	homeDashboardUID string
+	lister           PreferenceLister
 }
 
 func newMerger(cfg *setting.Cfg) *merger {
-	return &merger{
+	m := &merger{
 		defaults: preferences.PreferencesSpec{
 			Theme:     &cfg.DefaultTheme,
 			Timezone:  &cfg.DateFormats.DefaultTimezone,
@@ -40,6 +41,10 @@ func newMerger(cfg *setting.Cfg) *merger {
 			Language:  &cfg.DefaultLanguage,
 		},
 	}
+	if cfg.DefaultHomeDashboardPath != "" {
+		m.homeDashboardUID = "default-home-dashboard"
+	}
+	return m
 }
 
 func (s *merger) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *builder.APIRoutes {
@@ -103,7 +108,11 @@ func (s *merger) Current(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	p, err := merge(s.defaults, list.Items)
+	defaults := s.defaults
+	if s.homeDashboardUID != "" {
+		defaults.HomeDashboardUID = &s.homeDashboardUID
+	}
+	p, err := merge(defaults, list.Items)
 	if err != nil {
 		errhttp.Write(ctx, err, w)
 		return
