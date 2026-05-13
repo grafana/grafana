@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/dashboard"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed/dashboardviews"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 
@@ -50,6 +51,11 @@ type ServerOptions struct {
 	QOSQueue         QOSEnqueueDequeuer
 	SecureValues     secrets.InlineSecureValueSupport
 	OwnsIndexFn      func(key resource.NamespacedResource) (bool, error)
+
+	// DashboardStats is optional. When set, vector indexing skips
+	// embedding dashboards with zero views in the last 30 days. Errors
+	// or missing stats fall back to embedding (best-effort).
+	DashboardStats dashboardviews.Provider
 
 	// DisableStorageServices is used for standalone search server
 	DisableStorageServices bool
@@ -225,21 +231,23 @@ func withVectorIndexers(opts *ServerOptions, resourceOpts *resource.ResourceServ
 
 	var err error
 	resourceOpts.VectorBackfiller, err = backfill.NewVectorBackfiller(backfill.Options{
-		Storage:       opts.Backend,
-		VectorBackend: opts.VectorBackend,
-		BatchEmbedder: batchEmbedder,
-		Builders:      builders,
+		Storage:        opts.Backend,
+		VectorBackend:  opts.VectorBackend,
+		BatchEmbedder:  batchEmbedder,
+		Builders:       builders,
+		DashboardStats: opts.DashboardStats,
 	})
 	if err != nil {
 		return fmt.Errorf("create vector backfiller: %w", err)
 	}
 
 	resourceOpts.VectorReconciler, err = reconciler.New(reconciler.Options{
-		Storage:       opts.Backend,
-		VectorBackend: opts.VectorBackend,
-		BatchEmbedder: batchEmbedder,
-		Builders:      builders,
-		Interval:      opts.Cfg.VectorReconcilerInterval,
+		Storage:        opts.Backend,
+		VectorBackend:  opts.VectorBackend,
+		BatchEmbedder:  batchEmbedder,
+		Builders:       builders,
+		Interval:       opts.Cfg.VectorReconcilerInterval,
+		DashboardStats: opts.DashboardStats,
 	})
 	if err != nil {
 		return fmt.Errorf("create vector reconciler: %w", err)
