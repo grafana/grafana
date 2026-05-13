@@ -301,14 +301,16 @@ func (DashboardPanelQuerySpec) OpenAPIModelName() string {
 
 // +k8s:openapi-gen=true
 type DashboardTransformationKind struct {
-	// The kind of a TransformationKind is the transformation ID
-	Kind string                         `json:"kind"`
-	Spec DashboardDataTransformerConfig `json:"spec"`
+	Kind string `json:"kind"`
+	// The group is the transformation ID
+	Group string                         `json:"group"`
+	Spec  DashboardDataTransformerConfig `json:"spec"`
 }
 
 // NewDashboardTransformationKind creates a new DashboardTransformationKind object.
 func NewDashboardTransformationKind() *DashboardTransformationKind {
 	return &DashboardTransformationKind{
+		Kind: "Transformation",
 		Spec: *NewDashboardDataTransformerConfig(),
 	}
 }

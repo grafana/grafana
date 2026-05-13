@@ -528,9 +528,10 @@ PanelQueryKind: {
 }
 
 TransformationKind: {
-	// The kind of a TransformationKind is the transformation ID
-	kind: string
-	spec: DataTransformerConfig
+	kind: "Transformation"
+	// The group is the transformation ID
+	group: string
+	spec:  DataTransformerConfig
 }
 
 QueryGroupSpec: {

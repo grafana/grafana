@@ -4884,7 +4884,14 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardTransformationKind(ref common.Re
 				Properties: map[string]spec.Schema{
 					"kind": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The kind of a TransformationKind is the transformation ID",
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"group": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The group is the transformation ID",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
@@ -4897,7 +4904,7 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardTransformationKind(ref common.Re
 						},
 					},
 				},
-				Required: []string{"kind", "spec"},
+				Required: []string{"kind", "group", "spec"},
 			},
 		},
 		Dependencies: []string{

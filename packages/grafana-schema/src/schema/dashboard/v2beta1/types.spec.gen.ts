@@ -184,13 +184,15 @@ export const defaultPanelQuerySpec = (): PanelQuerySpec => ({
 });
 
 export interface TransformationKind {
-	// The kind of a TransformationKind is the transformation ID
-	kind: string;
+	kind: "Transformation";
+	// The group is the transformation ID
+	group: string;
 	spec: DataTransformerConfig;
 }
 
 export const defaultTransformationKind = (): TransformationKind => ({
-	kind: "",
+	kind: "Transformation",
+	group: "",
 	spec: defaultDataTransformerConfig(),
 });
 
