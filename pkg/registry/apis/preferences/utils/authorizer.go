@@ -10,7 +10,6 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 type AuthorizeFromName struct {
@@ -83,9 +82,13 @@ func (a *AuthorizeFromName) Authorize(ctx context.Context, attr authorizer.Attri
 		return authorizer.DecisionDeny, "your are not the owner of the resource", nil
 
 	case TeamResourceOwner:
-		if !attr.IsReadOnly() {
+		// For read-only requests, being a member of the team is sufficient. For mutating requests, the user must have edit permissions on the team.
+		if attr.IsReadOnly() && slices.Contains(user.GetGroups(), info.Identifier) {
+			return authorizer.DecisionAllow, "", nil
+		}
+		if a.AccessClient != nil {
 			rsp, err := a.AccessClient.Check(ctx, user, authlib.CheckRequest{
-				Verb:      utils.VerbUpdate,
+				Verb:      attr.GetVerb(),
 				Group:     "iam.grafana.app",
 				Resource:  "teams",
 				Namespace: user.GetNamespace(),
@@ -97,13 +100,8 @@ func (a *AuthorizeFromName) Authorize(ctx context.Context, attr authorizer.Attri
 			if rsp.Allowed {
 				return authorizer.DecisionAllow, "", nil
 			}
-			return authorizer.DecisionDeny, "no edit permissions for the team", nil
 		}
-
-		if slices.Contains(user.GetGroups(), info.Identifier) {
-			return authorizer.DecisionAllow, "", nil
-		}
-		return authorizer.DecisionDeny, "you are not a member of the referenced team", err
+		return authorizer.DecisionDeny, "no edit permissions for the team", nil
 
 	case UnknownResourceOwner:
 		return authorizer.DecisionAllow, "", nil
