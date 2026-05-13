@@ -310,6 +310,17 @@ type ListThreadsQuery struct {
 	PanelID      *int64       `json:"-"` // nil = no panel filter (matches anchored OR mentioned across child pulses)
 	AuthorUserID *int64       `json:"-"` // nil = no participant filter (matches author OR replier across child pulses)
 	Query        string       `json:"-"` // empty = no text filter (matches title OR body_text of any non-deleted pulse)
+	// MineOnly + UserID mirror the ListAllThreadsQuery semantics so the
+	// folder Pulse page (and any other per-resource surface that wants
+	// a "Mine" scope toggle) can drop the caller's id into UserID and
+	// flip MineOnly on. Subscriptions are included so a user who only
+	// followed a thread without posting still sees it under "Mine".
+	MineOnly bool  `json:"-"`
+	UserID   int64 `json:"-"`
+	// Status narrows the listing to open or closed threads. The zero
+	// value (ThreadStatusAny) is "no filter" so callers that don't
+	// care simply omit it.
+	Status ThreadStatusFilter `json:"-"`
 	// Page is 1-indexed. The drawer renders a numbered pager with the
 	// current page highlighted, which means the UI needs the total
 	// page count up-front; we offset-paginate here (rather than the

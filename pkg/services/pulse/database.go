@@ -233,6 +233,30 @@ func (s *store) listThreads(ctx context.Context, q ListThreadsQuery) (PageResult
 					like, q.OrgID, false, like,
 				)
 			}
+			// "Mine" expands to (created_by=? OR authored any pulse OR
+			// subscribed). Each half is a sub-select on its own indexed
+			// (org_id, user_id) prefix, mirroring listAllThreads so the
+			// per-resource list inherits the same definition of "Mine"
+			// — a user who only subscribed (without posting) still sees
+			// the thread, which matches the global overview.
+			if q.MineOnly && q.UserID > 0 {
+				sb = sb.And(
+					"(created_by = ? OR uid IN (SELECT thread_uid FROM pulse WHERE org_id = ? AND author_user_id = ?) OR uid IN (SELECT thread_uid FROM pulse_subscription WHERE org_id = ? AND user_id = ?))",
+					q.UserID, q.OrgID, q.UserID, q.OrgID, q.UserID,
+				)
+			}
+			// Status filter: `closed` is a plain bool column, so the
+			// comparison is direct. The zero value (ThreadStatusAny)
+			// is intentionally a no-op so an absent query param never
+			// accidentally clamps the result set.
+			switch q.Status {
+			case ThreadStatusOpen:
+				sb = sb.And("closed = ?", false)
+			case ThreadStatusClosed:
+				sb = sb.And("closed = ?", true)
+			case ThreadStatusAny:
+				// no-op: no closed-state filter applied.
+			}
 			return sb
 		}
 

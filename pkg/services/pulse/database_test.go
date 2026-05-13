@@ -570,6 +570,139 @@ func TestIntegrationPulseStore_ListThreads_Filters(t *testing.T) {
 	require.ElementsMatch(t, []string{"t2bbbbbbbbbbbbbb"}, uidsOf(got.Items))
 }
 
+// TestIntegrationPulseStore_ListThreads_StatusAndMine locks in the
+// per-resource list's parity with the global overview for the "status"
+// (open/closed) and "mine" filters introduced after v1: the folder
+// Pulse page and any future per-resource surface needs both toggles
+// to behave identically to /threads/all when applied to one resource.
+func TestIntegrationPulseStore_ListThreads_StatusAndMine(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	ctx := context.Background()
+	sql := db.InitTestDB(t)
+	st := newStore(sql)
+	now := time.Now().UTC()
+	const folderUID = "folder-mine-status"
+
+	plain := func(text string) json.RawMessage {
+		raw, _ := sampleBody(t, text)
+		return raw
+	}
+	insert := func(uid string, createdBy int64, body json.RawMessage, lastPulseAt time.Time) {
+		t.Helper()
+		require.NoError(t, st.insertThreadAndPulse(ctx,
+			Thread{
+				UID: uid, OrgID: 1, ResourceKind: ResourceKindFolder, ResourceUID: folderUID,
+				Title:     "thread " + uid,
+				CreatedBy: createdBy, Created: now, Updated: now, LastPulseAt: lastPulseAt,
+				PulseCount: 1, Version: 1,
+			},
+			Pulse{
+				UID: util.GenerateShortUID(), ThreadUID: uid, OrgID: 1,
+				AuthorUserID: createdBy, AuthorKind: AuthorKindUser,
+				BodyText: "x", BodyJSON: body, Created: now, Updated: now,
+			},
+			nil,
+		))
+	}
+
+	// Fixture (all on the same folder, kind=folder to also lock in
+	// that the new filters work for non-dashboard resources):
+	//   M1: started by user 1, open. (oldest)
+	//   M2: started by user 2, OPEN, user 1 replies on it.
+	//   M3: started by user 3, open. user 1 subscribes but never posts.
+	//   M4: started by user 2, CLOSED.
+	insert("m1aaaaaaaaaaaaaa", 1, plain("open by u1"), now.Add(-40*time.Minute))
+
+	insert("m2aaaaaaaaaaaaaa", 2, plain("open by u2"), now.Add(-30*time.Minute))
+	_, err := st.insertPulse(ctx,
+		Pulse{
+			UID: util.GenerateShortUID(), ThreadUID: "m2aaaaaaaaaaaaaa", OrgID: 1,
+			AuthorUserID: 1, AuthorKind: AuthorKindUser,
+			BodyText: "u1 reply", BodyJSON: plain("u1 reply"), Created: now, Updated: now,
+		},
+		nil,
+	)
+	require.NoError(t, err)
+
+	insert("m3aaaaaaaaaaaaaa", 3, plain("open by u3, u1 follows"), now.Add(-20*time.Minute))
+	require.NoError(t, st.upsertSubscription(ctx, Subscription{
+		OrgID: 1, ThreadUID: "m3aaaaaaaaaaaaaa", UserID: 1, SubscribedAt: now,
+	}))
+
+	insert("m4aaaaaaaaaaaaaa", 2, plain("closed by u2"), now.Add(-10*time.Minute))
+	require.NoError(t, st.setThreadClosed(ctx, 1, "m4aaaaaaaaaaaaaa", true, 2))
+
+	baseQ := ListThreadsQuery{OrgID: 1, ResourceKind: ResourceKindFolder, ResourceUID: folderUID}
+
+	t.Run("status=open excludes closed threads", func(t *testing.T) {
+		q := baseQ
+		q.Status = ThreadStatusOpen
+		got, err := st.listThreads(ctx, q)
+		require.NoError(t, err)
+		require.ElementsMatch(t,
+			[]string{"m1aaaaaaaaaaaaaa", "m2aaaaaaaaaaaaaa", "m3aaaaaaaaaaaaaa"},
+			uidsOf(got.Items),
+		)
+	})
+
+	t.Run("status=closed returns only closed threads", func(t *testing.T) {
+		q := baseQ
+		q.Status = ThreadStatusClosed
+		got, err := st.listThreads(ctx, q)
+		require.NoError(t, err)
+		require.ElementsMatch(t, []string{"m4aaaaaaaaaaaaaa"}, uidsOf(got.Items))
+	})
+
+	t.Run("status=any (zero value) returns every thread", func(t *testing.T) {
+		got, err := st.listThreads(ctx, baseQ)
+		require.NoError(t, err)
+		require.ElementsMatch(t,
+			[]string{"m1aaaaaaaaaaaaaa", "m2aaaaaaaaaaaaaa", "m3aaaaaaaaaaaaaa", "m4aaaaaaaaaaaaaa"},
+			uidsOf(got.Items),
+		)
+	})
+
+	t.Run("mineOnly widens to creator + replier + subscriber for user 1", func(t *testing.T) {
+		q := baseQ
+		q.MineOnly = true
+		q.UserID = 1
+		got, err := st.listThreads(ctx, q)
+		require.NoError(t, err)
+		// M1 (created), M2 (replied), M3 (subscribed). M4 has none of
+		// the above for user 1, so it stays out.
+		require.ElementsMatch(t,
+			[]string{"m1aaaaaaaaaaaaaa", "m2aaaaaaaaaaaaaa", "m3aaaaaaaaaaaaaa"},
+			uidsOf(got.Items),
+		)
+	})
+
+	t.Run("mineOnly without a UserID is a no-op", func(t *testing.T) {
+		q := baseQ
+		q.MineOnly = true
+		// UserID intentionally left as 0 — the store treats it as
+		// "no scoping", which prevents an empty UserID from
+		// accidentally producing an empty result set.
+		got, err := st.listThreads(ctx, q)
+		require.NoError(t, err)
+		require.Len(t, got.Items, 4)
+	})
+
+	t.Run("mine + status compose", func(t *testing.T) {
+		q := baseQ
+		q.MineOnly = true
+		q.UserID = 2
+		q.Status = ThreadStatusClosed
+		got, err := st.listThreads(ctx, q)
+		require.NoError(t, err)
+		// User 2 created M2 (open) and M4 (closed). With status=closed,
+		// only M4 survives.
+		require.ElementsMatch(t, []string{"m4aaaaaaaaaaaaaa"}, uidsOf(got.Items))
+	})
+}
+
 func TestIntegrationPulseStore_ListThreads_QuerySearch(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test in short mode")

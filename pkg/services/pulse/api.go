@@ -170,6 +170,17 @@ func (s *PulseService) listThreadsHandler(c *contextmodel.ReqContext) response.R
 	// trims/lowercases for matching, so we pass the raw string
 	// through here.
 	q.Query = c.Query("q")
+	// mine + status mirror the global overview's parameters so the
+	// folder Pulse page and other per-resource surfaces can offer the
+	// same "Mine / All" + "Open / Closed / All" toggles without
+	// inventing a new wire shape. We derive UserID from the request
+	// context up-front so the store doesn't have to know about
+	// identity plumbing.
+	if c.QueryBool("mine") {
+		q.MineOnly = true
+		q.UserID = s.actorUserID(c)
+	}
+	q.Status = parseStatusFilter(c.Query("status"))
 	if err := s.assertCanReadResource(c, q.ResourceKind, q.ResourceUID); err != nil {
 		return err
 	}
