@@ -162,6 +162,78 @@ func TestCreateSnapshotDashboardValidation(t *testing.T) {
 	}
 }
 
+func TestCreateSnapshotPublicMode(t *testing.T) {
+	const orgID int64 = 1
+	namespace := authlib.OrgNamespaceFormatter(orgID)
+
+	testUser := &user.SignedInUser{
+		UserID: 1,
+		OrgID:  orgID,
+	}
+
+	tests := []struct {
+		name           string
+		body           map[string]any
+		expectedStatus int
+	}{
+		{
+			name: "succeeds with missing dashboard UID",
+			body: map[string]any{
+				"dashboard": map[string]any{
+					"title": "test",
+				},
+				"name": "test snapshot",
+			},
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name: "succeeds with non-existent dashboard UID",
+			body: map[string]any{
+				"dashboard": map[string]any{
+					"uid":   "does-not-exist",
+					"title": "test",
+				},
+				"name": "test snapshot",
+			},
+			expectedStatus: http.StatusOK,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			snapshotService := dashboardsnapshots.NewMockService(t)
+			dashboardService := dashboards.NewFakeDashboardService(t)
+
+			mockStorage := grafanarest.NewMockStorage(t)
+			mockStorage.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+				Return(&dashv0.Snapshot{}, nil)
+
+			routes := GetRoutes(
+				snapshotService,
+				dashv0.SnapshotSharingOptions{SnapshotsEnabled: true, PublicMode: true},
+				acmock.New().WithPermissions([]accesscontrol.Permission{{Action: dashboards.ActionSnapshotsCreate}}),
+				map[string]common.OpenAPIDefinition{},
+				func() rest.Storage { return mockStorage },
+				dashboardService,
+			)
+
+			bodyBytes, err := json.Marshal(tt.body)
+			require.NoError(t, err)
+
+			req := httptest.NewRequest(http.MethodPost, "/snapshots/create", bytes.NewReader(bodyBytes))
+			req.Header.Set("Content-Type", "application/json")
+			req = req.WithContext(identity.WithRequester(req.Context(), testUser))
+			req = mux.SetURLVars(req, map[string]string{"namespace": namespace})
+
+			recorder := httptest.NewRecorder()
+			routes.Namespace[0].Handler(recorder, req)
+
+			assert.Equal(t, tt.expectedStatus, recorder.Code)
+			dashboardService.AssertNotCalled(t, "GetDashboard", mock.Anything, mock.Anything)
+		})
+	}
+}
+
 func TestCreateExternalSnapshot(t *testing.T) {
 	const orgID int64 = 1
 	namespace := authlib.OrgNamespaceFormatter(orgID)
