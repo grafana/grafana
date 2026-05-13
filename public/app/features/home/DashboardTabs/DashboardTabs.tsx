@@ -7,6 +7,7 @@ import { t } from '@grafana/i18n';
 import { usePluginComponents } from '@grafana/runtime';
 import { Box, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 import { getRecentlyViewedDashboards } from 'app/features/browse-dashboards/api/recentlyViewed';
+import { useDashboardLocationInfo } from 'app/features/search/hooks/useDashboardLocationInfo';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 
 import { RecentDashboardsTab } from './RecentDashboardsTab';
@@ -43,6 +44,10 @@ export function DashboardTabs() {
     const response = await getGrafanaSearcher().starred({ limit: MAX_STARRED });
     return response.view.toArray();
   }, []);
+
+  const { foldersByUid } = useDashboardLocationInfo(
+    (recentDashboards?.length ?? 0) > 0 || (starredDashboards?.length ?? 0) > 0
+  );
 
   const { components: extensionComponents } = usePluginComponents<HomepageTabExtensionProps>({
     extensionPointId: PluginExtensionPoints.HomepageTabs,
@@ -99,6 +104,7 @@ export function DashboardTabs() {
             loading={recentLoading}
             error={recentError}
             retry={recentRetry}
+            foldersByUid={foldersByUid}
           />
         )}
         {activeTab === STARRED_TAB_ID && (
@@ -107,6 +113,7 @@ export function DashboardTabs() {
             loading={starredLoading}
             error={starredError}
             retry={starredRetry}
+            foldersByUid={foldersByUid}
           />
         )}
         {extensionTabs

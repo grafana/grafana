@@ -2,8 +2,7 @@ import { css } from '@emotion/css';
 
 import { t, Trans } from '@grafana/i18n';
 import { Alert, EmptyState, Spinner, TextLink, useStyles2 } from '@grafana/ui';
-import { useDashboardLocationInfo } from 'app/features/search/hooks/useDashboardLocationInfo';
-import { type DashboardQueryResult } from 'app/features/search/service/types';
+import { type DashboardQueryResult, type LocationInfo } from 'app/features/search/service/types';
 import { DashListItem } from 'app/plugins/panel/dashlist/DashListItem';
 
 interface Props {
@@ -11,11 +10,11 @@ interface Props {
   loading: boolean;
   error: Error | undefined;
   retry: () => void;
+  foldersByUid: Record<string, LocationInfo>;
 }
 
-export function RecentDashboardsTab({ dashboards, loading, error, retry }: Props) {
+export function RecentDashboardsTab({ dashboards, loading, error, retry, foldersByUid }: Props) {
   const styles = useStyles2(getStyles);
-  const { foldersByUid } = useDashboardLocationInfo(dashboards.length > 0);
 
   if (loading) {
     return <Spinner />;
