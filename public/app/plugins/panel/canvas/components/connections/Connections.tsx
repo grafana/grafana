@@ -56,7 +56,7 @@ export class Connections {
     this.updateState();
   }
 
-  select = (connection: ConnectionState | undefined) => {
+  public select = (connection: ConnectionState | undefined) => {
     if (connection === this.selection.value) {
       return;
     }
@@ -77,36 +77,36 @@ export class Connections {
     }
   };
 
-  setConnectionAnchorRef = (anchorElement: HTMLDivElement) => {
+  private setConnectionAnchorRef = (anchorElement: HTMLDivElement) => {
     this.connectionAnchorDiv = anchorElement;
   };
 
-  setAnchorsRef = (anchorsElement: HTMLDivElement) => {
+  private setAnchorsRef = (anchorsElement: HTMLDivElement) => {
     this.anchorsDiv = anchorsElement;
   };
 
-  setConnectionSVGRef = (connectionSVG: SVGSVGElement) => {
+  private setConnectionSVGRef = (connectionSVG: SVGSVGElement) => {
     this.connectionSVG = connectionSVG;
   };
 
-  setConnectionLineRef = (connectionLine: SVGLineElement) => {
+  private setConnectionLineRef = (connectionLine: SVGLineElement) => {
     this.connectionLine = connectionLine;
   };
 
-  setConnectionSVGVertexRef = (connectionSVG: SVGSVGElement) => {
+  private setConnectionSVGVertexRef = (connectionSVG: SVGSVGElement) => {
     this.connectionSVGVertex = connectionSVG;
   };
 
-  setConnectionVertexRef = (connectionVertex: SVGCircleElement) => {
+  private setConnectionVertexRef = (connectionVertex: SVGCircleElement) => {
     this.connectionVertex = connectionVertex;
   };
 
-  setConnectionVertexPathRef = (connectionVertexPath: SVGPathElement) => {
+  private setConnectionVertexPathRef = (connectionVertexPath: SVGPathElement) => {
     this.connectionVertexPath = connectionVertexPath;
   };
 
   // Recursively find the first parent that is a canvas element
-  findElementTarget = (element: Element): ElementState | undefined => {
+  private findElementTarget = (element: Element): ElementState | undefined => {
     let elementTarget = undefined;
 
     // Cap recursion at the scene level
@@ -123,7 +123,7 @@ export class Connections {
     return elementTarget;
   };
 
-  handleMouseEnter = (event: React.MouseEvent) => {
+  public handleMouseEnter = (event: React.MouseEvent) => {
     if (!(event.target instanceof Element) || !this.scene.isEditingEnabled) {
       return;
     }
@@ -182,7 +182,7 @@ export class Connections {
   };
 
   // Return boolean indicates if connection anchors were hidden or not
-  handleMouseLeave = (event: React.MouseEvent | React.FocusEvent): boolean => {
+  public handleMouseLeave = (event: React.MouseEvent | React.FocusEvent): boolean => {
     // If mouse is leaving INTO the anchor image, don't remove div
     if (
       event.relatedTarget instanceof HTMLImageElement &&
@@ -196,7 +196,7 @@ export class Connections {
     return true;
   };
 
-  connectionListener = (event: MouseEvent) => {
+  private connectionListener = (event: MouseEvent) => {
     event.preventDefault();
 
     if (!(this.connectionLine && this.scene.div && this.scene.div.parentElement)) {
@@ -314,7 +314,7 @@ export class Connections {
   };
 
   // Handles mousemove and mouseup events when dragging an existing vertex
-  vertexListener = (event: MouseEvent) => {
+  private vertexListener = (event: MouseEvent) => {
     this.scene.selecto!.rootContainer!.style.cursor = 'crosshair';
 
     event.preventDefault();
@@ -469,7 +469,7 @@ export class Connections {
   };
 
   // Handles mousemove and mouseup events when dragging a new vertex
-  vertexAddListener = (event: MouseEvent) => {
+  private vertexAddListener = (event: MouseEvent) => {
     this.scene.selecto!.rootContainer!.style.cursor = 'crosshair';
 
     event.preventDefault();
@@ -617,7 +617,7 @@ export class Connections {
     }
   };
 
-  handleConnectionDragStart = (selectedTarget: HTMLElement, clientX: number, clientY: number) => {
+  public handleConnectionDragStart = (selectedTarget: HTMLElement, clientX: number, clientY: number) => {
     this.scene.selecto!.rootContainer!.style.cursor = 'crosshair';
     if (this.connectionSVG && this.connectionLine && this.scene.div && this.scene.div.parentElement) {
       const connectionStartTargetBox = selectedTarget.getBoundingClientRect();
@@ -650,7 +650,7 @@ export class Connections {
   };
 
   // Add event listener at root container during existing vertex drag
-  handleVertexDragStart = (selectedTarget: HTMLElement) => {
+  public handleVertexDragStart = (selectedTarget: HTMLElement) => {
     // Get vertex index from selected target data
     this.selectedVertexIndex = Number(selectedTarget.getAttribute('data-index'));
 
@@ -659,7 +659,7 @@ export class Connections {
   };
 
   // Add event listener at root container during creation of new vertex
-  handleVertexAddDragStart = (selectedTarget: HTMLElement) => {
+  public handleVertexAddDragStart = (selectedTarget: HTMLElement) => {
     // Get vertex index from selected target data
     this.selectedVertexIndex = Number(selectedTarget.getAttribute('data-index'));
 
@@ -667,7 +667,7 @@ export class Connections {
     this.scene.selecto?.rootContainer?.addEventListener('mouseup', this.vertexAddListener);
   };
 
-  onChange = (current: ConnectionState, update: CanvasConnection) => {
+  public onChange = (current: ConnectionState, update: CanvasConnection) => {
     const connections = current.source.options.connections?.splice(0) ?? [];
     connections[current.index] = update;
     current.source.onChange({ ...current.source.options, connections });
@@ -675,11 +675,11 @@ export class Connections {
   };
 
   // used for moveable actions
-  connectionsNeedUpdate = (element: ElementState): boolean => {
+  public connectionsNeedUpdate = (element: ElementState): boolean => {
     return isConnectionSource(element) || isConnectionTarget(element, this.scene.byName);
   };
 
-  renderElement() {
+  public renderElement() {
     return (
       <>
         <ConnectionAnchors
