@@ -4,7 +4,7 @@ import { useCallback } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type DataQuery } from '@grafana/schema';
-import { Badge, Modal, Tab, TabsBar, Tooltip, useStyles2 } from '@grafana/ui';
+import { Badge, Divider, Modal, Tab, TabsBar, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { type RichHistoryQuery } from 'app/types/explore';
 
 import { RecentQueriesLayout } from './RecentQueriesLayout';
@@ -26,31 +26,40 @@ export function RecentQueriesModal({ isOpen, onClose, onSelectQuery }: Props) {
   );
 
   const modalTitle = (
-    <div className={styles.titleRow}>
-      <TabsBar className={styles.tabsBar}>
-        <Tab label={t('recent-queries.modal.tabs.recent', 'Recent queries')} active={true} onChangeTab={() => {}} />
-        <Tooltip
-          content={t('recent-queries.modal.tabs.saved-tooltip', 'Saved queries is available in Cloud and Enterprise')}
-          placement="bottom"
-        >
-          <Tab
-            label={t('recent-queries.modal.tabs.saved', 'Saved queries')}
-            active={false}
-            onChangeTab={() => {}}
-            disabled={true}
-            suffix={({ className }) => (
-              <span className={className}>
-                <Badge
-                  text={t('recent-queries.modal.tabs.saved-badge', 'Cloud')}
-                  color="blue"
-                  icon="info-circle"
-                  className={styles.cloudBadge}
-                />
-              </span>
-            )}
-          />
-        </Tooltip>
-      </TabsBar>
+    <div className={styles.titleColumn}>
+      <div className={styles.titleRow}>
+        <TabsBar className={styles.tabsBar}>
+          <Tab label={t('recent-queries.modal.tabs.recent', 'Recent queries')} active={true} onChangeTab={() => {}} />
+          <Tooltip
+            content={t('recent-queries.modal.tabs.saved-tooltip', 'Saved queries is available in Cloud and Enterprise')}
+            placement="bottom"
+          >
+            <Tab
+              label={t('recent-queries.modal.tabs.saved', 'Saved queries')}
+              active={false}
+              onChangeTab={() => {}}
+              disabled={true}
+              suffix={({ className }) => (
+                <span className={className}>
+                  <Badge
+                    text={t('recent-queries.modal.tabs.saved-badge', 'Cloud')}
+                    color="blue"
+                    icon="info-circle"
+                    className={styles.cloudBadge}
+                  />
+                </span>
+              )}
+            />
+          </Tooltip>
+        </TabsBar>
+      </div>
+      <Text color="secondary">
+        {t(
+          'recent-queries.description',
+          "Recent queries are queries that you've ran within Explore, within the past two weeks"
+        )}
+      </Text>
+      <Divider spacing={0} />
     </div>
   );
 
@@ -87,6 +96,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: '70vh',
     overflow: 'hidden',
     padding: 0,
+  }),
+  titleColumn: css({
+    display: 'flex',
+    flexDirection: 'column',
+    flex: 1,
+    gap: theme.spacing(2),
   }),
   titleRow: css({
     display: 'flex',

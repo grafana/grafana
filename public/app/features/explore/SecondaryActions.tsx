@@ -92,7 +92,7 @@ export function SecondaryActions({
                 variant="canvas"
                 aria-label={t('explore.secondary-actions.recent-queries-button-aria-label', 'Recent queries')}
                 onClick={() => setRecentQueriesOpen(true)}
-                icon="book-open"
+                icon="history"
               >
                 <Trans i18nKey="explore.secondary-actions.recent-queries-button">Recent queries</Trans>
               </ToolbarButton>

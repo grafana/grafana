@@ -35,6 +35,7 @@ const defaultFilters: RecentQueriesFilterState = {
   searchQuery: '',
   datasourceFilters: [],
   sortingOption: { value: SortOrder.Descending, label: 'Newest first' },
+  showStarredOnly: false,
   rememberFilters: false,
 };
 

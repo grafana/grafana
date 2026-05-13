@@ -28,6 +28,7 @@ const defaultFilters: RecentQueriesFilterState = {
   searchQuery: '',
   datasourceFilters: [],
   sortingOption: {},
+  showStarredOnly: false,
   rememberFilters: false,
 };
 
@@ -67,6 +68,16 @@ describe('RecentQueriesFilters', () => {
     // These should NOT be present (unlike SavedQueriesFilters)
     expect(within(filtersRegion).queryByText('Author')).not.toBeInTheDocument();
     expect(within(filtersRegion).queryByText('Tags')).not.toBeInTheDocument();
+  });
+
+  it('shows the starred filter when showStarredFilter is true', () => {
+    render(<RecentQueriesFilters {...defaultProps} showStarredFilter />);
+    expect(screen.getByRole('radiogroup', { name: 'Starred queries' })).toBeInTheDocument();
+  });
+
+  it('hides the starred filter by default', () => {
+    render(<RecentQueriesFilters {...defaultProps} />);
+    expect(screen.queryByRole('radiogroup', { name: 'Starred queries' })).not.toBeInTheDocument();
   });
 
   it('calls onClear when the Clear link is clicked', async () => {

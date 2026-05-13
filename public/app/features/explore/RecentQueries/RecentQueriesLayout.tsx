@@ -59,6 +59,7 @@ export function RecentQueriesLayout({ onSelectQuery, onClose, onSaveToLibrary, o
         value: SortOrder.Descending,
         label: t('recent-queries.sort.newest', 'Newest first'),
       },
+      showStarredOnly: false,
     });
   }, [setFilters]);
 
@@ -77,6 +78,7 @@ export function RecentQueriesLayout({ onSelectQuery, onClose, onSaveToLibrary, o
         setFilters={setFilters}
         availableDatasources={availableDatasources}
         onClear={handleClear}
+        showStarredFilter={!onSaveToLibrary}
         disabled={isInitialLoad}
         onAnalyticsEvent={onAnalyticsEvent}
       />

@@ -13,6 +13,7 @@ export type RecentQueriesFilterState = {
   searchQuery: string;
   datasourceFilters: string[];
   sortingOption: SelectableValue<SortOrder>;
+  showStarredOnly: boolean;
   rememberFilters: boolean;
 };
 
@@ -44,6 +45,7 @@ export function useRecentQueriesData(activeDatasources: string[] = []): UseRecen
       searchQuery: '',
       datasourceFilters: activeDatasources,
       sortingOption: defaultSortingOption(),
+      showStarredOnly: false,
       rememberFilters: false,
     };
     if (storedDefaults.rememberFilters === true) {
@@ -97,6 +99,8 @@ export function useRecentQueriesData(activeDatasources: string[] = []): UseRecen
   const retentionPeriod = settings?.retentionPeriod;
   const search = filters.searchQuery;
   const sortOrder = filters.sortingOption.value ?? SortOrder.Descending;
+  const showStarredOnly = filters.showStarredOnly;
+  const { datasourceFilters } = filters;
 
   const fetchPageRef = useRef(page);
 
@@ -112,13 +116,14 @@ export function useRecentQueriesData(activeDatasources: string[] = []): UseRecen
     return getRichHistory({
       search,
       sortOrder,
-      datasourceFilters: filters.datasourceFilters,
-      starred: false,
+      datasourceFilters,
+      starred: showStarredOnly,
       from: 0,
       to: retentionPeriod,
       page,
     });
-  }, [search, sortOrder, datasourceFiltersKey, retentionPeriod, page]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- datasourceFiltersKey is a stable string derived from datasourceFilters
+  }, [search, sortOrder, datasourceFiltersKey, showStarredOnly, retentionPeriod, page]);
 
   useEffect(() => {
     if (!fetchResult) {

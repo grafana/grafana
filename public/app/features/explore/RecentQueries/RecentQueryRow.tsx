@@ -92,27 +92,26 @@ export function RecentQueryRow({
 
   return (
     <div ref={cardRef} className={styles.card} data-testid="recent-query-row">
-      <div className={styles.metaRow}>
-        <img className={styles.dsIcon} src={logoSrc} alt={query.datasourceName} />
-        <Text variant="bodySmall" color="secondary" truncate>
-          {query.datasourceName}
-        </Text>
-        <Icon name="calendar-alt" size="sm" className={styles.calendarIcon} />
-        <Text variant="bodySmall" color="secondary">
-          {formattedDate}
-        </Text>
-      </div>
-
-      <div className={styles.contentRow}>
+      <div className={styles.textContent}>
+        <div className={styles.metaRow}>
+          <img className={styles.dsIcon} src={logoSrc} alt={query.datasourceName} />
+          <Text variant="bodySmall" color="secondary" truncate>
+            {query.datasourceName}
+          </Text>
+          <Icon name="calendar-alt" size="sm" className={styles.calendarIcon} />
+          <Text variant="bodySmall" color="secondary">
+            {formattedDate}
+          </Text>
+        </div>
         <div className={styles.queryText}>
           <Text truncate>{queryDisplayText}</Text>
         </div>
-        <div className={styles.actions}>
-          {actionButton}
-          <Button variant="primary" size="sm" onClick={handleSelect}>
-            {t('recent-queries.row.select-query', 'Select query')}
-          </Button>
-        </div>
+      </div>
+      <div className={styles.actions}>
+        {actionButton}
+        <Button variant="primary" size="sm" onClick={handleSelect}>
+          {t('recent-queries.row.select-query', 'Select query')}
+        </Button>
       </div>
     </div>
   );
@@ -121,22 +120,24 @@ export function RecentQueryRow({
 const getStyles = (theme: GrafanaTheme2) => ({
   card: css({
     display: 'flex',
-    flexDirection: 'column',
-    gap: theme.spacing(0.75),
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing(1),
     padding: theme.spacing(1.5),
     borderRadius: theme.shape.radius.default,
     backgroundColor: theme.colors.background.secondary,
+  }),
+  textContent: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(0.75),
+    flex: 1,
+    minWidth: 0,
   }),
   metaRow: css({
     display: 'flex',
     alignItems: 'center',
     gap: theme.spacing(0.5),
-    minWidth: 0,
-  }),
-  contentRow: css({
-    display: 'flex',
-    alignItems: 'center',
-    gap: theme.spacing(1),
     minWidth: 0,
   }),
   dsIcon: css({
@@ -151,7 +152,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: theme.colors.text.secondary,
   }),
   queryText: css({
-    flex: 1,
     minWidth: 0,
     overflow: 'hidden',
     whiteSpace: 'nowrap',

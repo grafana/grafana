@@ -14369,10 +14369,12 @@
     "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
   },
   "recent-queries": {
+    "description": "Recent queries are queries that you've ran within Explore, within the past two weeks",
     "error-state": {
       "title": "Something went wrong!"
     },
     "filters": {
+      "all-queries": "All queries",
       "clear": "Clear",
       "datasource-label": "Data source name",
       "datasource-placeholder": "Select data source name",
@@ -14383,7 +14385,9 @@
       "search-label": "Search",
       "search-placeholder": "Search by...",
       "sort-label": "Sort",
-      "sort-placeholder": "Sort Newest"
+      "sort-placeholder": "Sort Newest",
+      "starred": "Starred queries",
+      "starred-label": "Starred queries"
     },
     "list": {
       "empty": "No recent queries found",
