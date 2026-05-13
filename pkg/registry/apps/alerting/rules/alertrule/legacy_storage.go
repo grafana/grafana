@@ -91,6 +91,37 @@ func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Objec
 	return s.tableConverter.ConvertToTable(ctx, object, tableOptions)
 }
 
+// listSpecialMode handles the reserved label selectors (grafana.app/get-history and
+// grafana.app/get-trash). It returns handled=true when the selector matched and the result was
+// produced; callers should otherwise continue with the regular list pipeline.
+func (s *legacyStorage) listSpecialMode(ctx context.Context, orgID int64, user identity.Requester, opts *internalversion.ListOptions) (runtime.Object, bool, error) {
+	mode, ruleName, err := common.ParseListMode(opts.LabelSelector, opts.FieldSelector)
+	if err != nil {
+		return nil, true, k8serrors.NewBadRequest(err.Error())
+	}
+	switch mode {
+	case common.ListModeHistory:
+		versions, err := s.service.GetAlertRuleVersions(ctx, user, ruleName)
+		if err != nil {
+			if errors.Is(err, ngmodels.ErrAlertRuleNotFound) {
+				return nil, true, k8serrors.NewNotFound(ResourceInfo.GroupResource(), ruleName)
+			}
+			return nil, true, err
+		}
+		out, err := convertVersionsToK8sResources(orgID, onlyAlertingVersions(versions), s.namespacer)
+		return out, true, err
+	case common.ListModeTrash:
+		deleted, err := s.service.GetDeletedAlertRules(ctx, user)
+		if err != nil {
+			return nil, true, err
+		}
+		out, err := convertDeletedToK8sResources(orgID, onlyAlertingRules(deleted), s.namespacer)
+		return out, true, err
+	case common.ListModeNormal:
+	}
+	return nil, false, nil
+}
+
 func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOptions) (runtime.Object, error) {
 	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
@@ -102,28 +133,8 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 		return nil, err
 	}
 
-	mode, ruleName, err := common.ParseListMode(opts.LabelSelector, opts.FieldSelector)
-	if err != nil {
-		return nil, k8serrors.NewBadRequest(err.Error())
-	}
-	switch mode {
-	case common.ListModeHistory:
-		versions, err := s.service.GetAlertRuleVersions(ctx, user, ruleName)
-		if err != nil {
-			if errors.Is(err, ngmodels.ErrAlertRuleNotFound) {
-				return nil, k8serrors.NewNotFound(ResourceInfo.GroupResource(), ruleName)
-			}
-			return nil, err
-		}
-		return convertVersionsToK8sResources(info.OrgID, onlyAlertingVersions(versions), s.namespacer)
-	case common.ListModeTrash:
-		deleted, err := s.service.GetDeletedAlertRules(ctx, user)
-		if err != nil {
-			return nil, err
-		}
-		return convertDeletedToK8sResources(info.OrgID, onlyAlertingRules(deleted), s.namespacer)
-	case common.ListModeNormal:
-		// fall through to the normal list pipeline below.
+	if out, handled, err := s.listSpecialMode(ctx, info.OrgID, user, opts); handled || err != nil {
+		return out, err
 	}
 
 	groupFilter, err := common.ParseLabelSelectorFilter(opts.LabelSelector, model.GroupLabelKey)
