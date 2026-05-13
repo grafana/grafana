@@ -10,7 +10,6 @@ import {
 import {
   buildAlertRuleResource,
   buildRecordingRuleResource,
-  withMetadataName,
 } from '../components/rule-editor/alert-rule-form/formValuesToAppPlatform';
 import { type RuleFormValues } from '../types/rule-form';
 import { isGrafanaRecordingRuleByType } from '../utils/rules';
@@ -33,12 +32,12 @@ export function useSaveUngroupedGrafanaRule() {
         if (isRecordingRule) {
           await replaceRecordingRule({
             name: existingUid,
-            recordingRule: withMetadataName(buildRecordingRuleResource(values), existingUid),
+            recordingRule: buildRecordingRuleResource(values, existingUid),
           }).unwrap();
         } else {
           await replaceAlertRule({
             name: existingUid,
-            alertRule: withMetadataName(buildAlertRuleResource(values), existingUid),
+            alertRule: buildAlertRuleResource(values, existingUid),
           }).unwrap();
         }
         return existingUid;

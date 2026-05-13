@@ -56,7 +56,7 @@ function toApiExecErrState(decision: GrafanaAlertStateDecision): AlertRuleExecEr
   }
 }
 
-export function buildAlertRuleResource(values: RuleFormValues): AlertRule {
+export function buildAlertRuleResource(values: RuleFormValues, existingK8sName?: string): AlertRule {
   const folderUid = values.folder?.uid;
   if (!folderUid) {
     throw new Error('Folder UID is required to create a Grafana-managed alert rule');
@@ -90,6 +90,7 @@ export function buildAlertRuleResource(values: RuleFormValues): AlertRule {
     apiVersion: ALERT_RULE_API_VERSION,
     kind: 'AlertRule',
     metadata: {
+      name: existingK8sName,
       annotations: { [FOLDER_ANNOTATION]: folderUid },
       labels: { ...labels, [FOLDER_ANNOTATION]: folderUid },
     },
@@ -97,7 +98,7 @@ export function buildAlertRuleResource(values: RuleFormValues): AlertRule {
   };
 }
 
-export function buildRecordingRuleResource(values: RuleFormValues): RecordingRule {
+export function buildRecordingRuleResource(values: RuleFormValues, existingK8sName?: string): RecordingRule {
   const folderUid = values.folder?.uid;
   if (!folderUid) {
     throw new Error('Folder UID is required to create a Grafana-managed recording rule');
@@ -119,6 +120,7 @@ export function buildRecordingRuleResource(values: RuleFormValues): RecordingRul
     apiVersion: ALERT_RULE_API_VERSION,
     kind: 'RecordingRule',
     metadata: {
+      name: existingK8sName,
       annotations: { [FOLDER_ANNOTATION]: folderUid },
       labels: { ...labels, [FOLDER_ANNOTATION]: folderUid },
     },
@@ -201,8 +203,4 @@ function getNotificationSettings(values: RuleFormValues): AlertRuleSpec['notific
     groupInterval: settings.overrideTimings ? settings.groupIntervalValue : undefined,
     repeatInterval: settings.overrideTimings ? settings.repeatIntervalValue : undefined,
   };
-}
-
-export function withMetadataName<T extends { metadata: { name?: string } }>(resource: T, name: string): T {
-  return { ...resource, metadata: { ...resource.metadata, name } };
 }
