@@ -1,4 +1,3 @@
-import CheckBox from 'ol-ext/util/input/Checkbox';
 import { useEffect, useState } from 'react';
 
 import { type GrafanaTheme2, type PanelData } from '@grafana/data';
@@ -96,7 +95,7 @@ export function ViewPanelFanoutPaneRenderer({ model }: SceneComponentProps<ViewP
     setLabels(extractLabelsFromData(dataProvider.state.data));
 
     return () => dataSub.unsubscribe();
-  }, [viewPanel, dashboard, model]);
+  }, [viewPanel, dashboard, panel]);
 
   const modeValue = viewPanelFanout ?? '$__none__$';
   //@ts-expect-error
@@ -172,7 +171,7 @@ export function ViewPanelFanoutPaneRenderer({ model }: SceneComponentProps<ViewP
             </Box>
           </OptionsPaneCategory>
           <OptionsPaneCategory title="Toggle queries" id="toggle-queries" isOpenDefault={false}>
-            <Box direction="column" gap={1} display="flex" paddingLeft={1}>
+            <Box direction="column" gap={1} display="flex" paddingLeft={1} alignItems="flex-start">
               <Checkbox id="toggle-queries-checkbox" checked={true} onChange={() => {}} label="Query A" />
               <Checkbox id="toggle-queries-checkbox" checked={true} onChange={() => {}} label="Query B" />
               <Checkbox id="toggle-queries-checkbox" checked={true} onChange={() => {}} label="Query C" />
