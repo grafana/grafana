@@ -3,6 +3,7 @@ package home
 import (
 	"fmt"
 	"path/filepath"
+	"strconv"
 	"sync"
 
 	"github.com/fsnotify/fsnotify"
@@ -49,8 +50,16 @@ func newHomeDashboardSupportForFile(defaultDashboardFile string) *homeDashboard 
 		home.log.Error("failed to create fsnotify watcher", "err", err)
 		return home
 	}
-	if err := watcher.Add(defaultDashboardFile); err != nil {
-		home.log.Error("failed to watch home dashboard file", "path", defaultDashboardFile, "err", err)
+	// Watch the parent directory instead of the file itself: editors that save
+	// via rename (vim, VS Code atomic save) and ConfigMap symlink swaps would
+	// otherwise drop the watch after the first change. The watch loop filters
+	// events by base name so we only react to our file.
+	watchDir := filepath.Dir(defaultDashboardFile)
+	if watchDir == "" {
+		watchDir = "."
+	}
+	if err := watcher.Add(watchDir); err != nil {
+		home.log.Error("failed to watch home dashboard directory", "dir", watchDir, "err", err)
 		_ = watcher.Close()
 		return home
 	}
@@ -64,7 +73,18 @@ func (h *homeDashboard) RegisterSchema(scheme *runtime.Scheme) {
 	h.scheme = scheme
 }
 
-type homeDashboardGetter func() (runtime.Object, error)
+// Close stops the file watcher. Safe to call when no watcher was set up.
+func (h *homeDashboard) Close() error {
+	if h.watcher == nil {
+		return nil
+	}
+	return h.watcher.Close()
+}
+
+type cachedVersion struct {
+	obj runtime.Object
+	err error
+}
 
 type homeDashboard struct {
 	fpath   string
@@ -74,7 +94,7 @@ type homeDashboard struct {
 
 	// Everything below is protected by the mutex.
 	versionsMu sync.Mutex
-	versions   map[string]homeDashboardGetter
+	versions   map[string]cachedVersion
 	source     runtime.Object
 }
 
@@ -92,13 +112,12 @@ func (h *homeDashboard) Get(version string) (runtime.Object, error) {
 		}
 	}
 
-	getter, ok := h.versions[version]
-	if !ok {
-		out, err := conversion.Convert(h.scheme, h.source, version)
-		getter = func() (runtime.Object, error) { return out, err }
-		h.versions[version] = getter
+	if cached, ok := h.versions[version]; ok {
+		return cached.obj, cached.err
 	}
-	return getter()
+	obj, err := conversion.Convert(h.scheme, h.source, version)
+	h.versions[version] = cachedVersion{obj: obj, err: err}
+	return obj, err
 }
 
 // load reads the configured file (falling back to a built-in dashboard if the
@@ -123,16 +142,17 @@ func (h *homeDashboard) load() error {
 	}
 	meta.SetCreationTimestamp(now)
 	meta.SetName(DASHBOARD_NAME)
-	meta.SetResourceVersion(fmt.Sprintf("%d", now.UnixMilli()))
+	meta.SetResourceVersion(strconv.FormatInt(now.UnixMilli(), 10))
 
 	h.source = obj
-	h.versions = make(map[string]homeDashboardGetter)
+	h.versions = make(map[string]cachedVersion)
 	return nil
 }
 
 // watch invalidates the cached source whenever the watched file changes, so the
 // next Get re-reads from disk. It runs until the watcher's channels are closed.
 func (h *homeDashboard) watch() {
+	base := filepath.Base(h.fpath)
 	for {
 		select {
 		case err, ok := <-h.watcher.Errors:
@@ -144,6 +164,10 @@ func (h *homeDashboard) watch() {
 		case evt, ok := <-h.watcher.Events:
 			if !ok {
 				return
+			}
+			// We watch the parent directory; filter to events for our file.
+			if filepath.Base(evt.Name) != base {
+				continue
 			}
 			h.log.Debug("home dashboard file changed", "event", evt)
 

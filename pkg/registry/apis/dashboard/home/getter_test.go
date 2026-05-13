@@ -63,7 +63,7 @@ func TestNewHomeDashboardSupport_UsesConfiguredPath(t *testing.T) {
 	require.NotNil(t, home)
 	require.Equal(t, path, home.fpath)
 	require.NotNil(t, home.watcher, "watcher should be created for an existing file")
-	require.NoError(t, home.watcher.Close())
+	require.NoError(t, home.Close())
 }
 
 func TestNewHomeDashboardSupport_FallsBackToStaticRootPath(t *testing.T) {
@@ -86,12 +86,21 @@ func TestNewHomeDashboardSupportForFile(t *testing.T) {
 		require.Nil(t, home.watcher)
 	})
 
-	t.Run("missing file leaves watcher unset", func(t *testing.T) {
+	t.Run("missing file in existing dir is watched so future creates are picked up", func(t *testing.T) {
 		path := filepath.Join(t.TempDir(), "missing.json")
 		home := newHomeDashboardSupportForFile(path)
 		require.NotNil(t, home)
 		require.Equal(t, path, home.fpath)
-		require.Nil(t, home.watcher, "watcher.Add should fail for a missing file")
+		require.NotNil(t, home.watcher, "parent directory exists, so the watcher should be active")
+		require.NoError(t, home.Close())
+	})
+
+	t.Run("missing parent directory leaves watcher unset", func(t *testing.T) {
+		path := filepath.Join(t.TempDir(), "nope", "missing.json")
+		home := newHomeDashboardSupportForFile(path)
+		require.NotNil(t, home)
+		require.Equal(t, path, home.fpath)
+		require.Nil(t, home.watcher, "watcher.Add should fail when the parent dir is missing")
 	})
 
 	t.Run("existing file is watched", func(t *testing.T) {
@@ -100,7 +109,7 @@ func TestNewHomeDashboardSupportForFile(t *testing.T) {
 		require.NotNil(t, home)
 		require.Equal(t, path, home.fpath)
 		require.NotNil(t, home.watcher)
-		require.NoError(t, home.watcher.Close())
+		require.NoError(t, home.Close())
 	})
 }
 
@@ -114,6 +123,7 @@ func TestHomeDashboardGet_ErrorsWithoutScheme(t *testing.T) {
 func TestHomeDashboardGet_FallsBackToDefaultWhenFileMissing(t *testing.T) {
 	missing := filepath.Join(t.TempDir(), "missing.json")
 	home := newHomeDashboardSupportForFile(missing)
+	t.Cleanup(func() { _ = home.Close() })
 	home.scheme = newTestScheme(t)
 
 	obj, err := home.Get(dashv0.VERSION)
@@ -129,11 +139,7 @@ func TestHomeDashboardGet_FallsBackToDefaultWhenFileMissing(t *testing.T) {
 func TestHomeDashboardGet_LoadsConfiguredFile(t *testing.T) {
 	path := writeDashboardFile(t, `{"title":"from file"}`)
 	home := newHomeDashboardSupportForFile(path)
-	t.Cleanup(func() {
-		if home.watcher != nil {
-			_ = home.watcher.Close()
-		}
-	})
+	t.Cleanup(func() { _ = home.Close() })
 	home.scheme = newTestScheme(t)
 
 	obj, err := home.Get(dashv0.VERSION)
@@ -172,11 +178,7 @@ func TestHomeDashboardGet_CachesConvertedVersions(t *testing.T) {
 func TestHomeDashboardGet_ConvertsToAllRegisteredVersions(t *testing.T) {
 	path := writeDashboardFile(t, `{"title":"multi version"}`)
 	home := newHomeDashboardSupportForFile(path)
-	t.Cleanup(func() {
-		if home.watcher != nil {
-			_ = home.watcher.Close()
-		}
-	})
+	t.Cleanup(func() { _ = home.Close() })
 	home.scheme = newTestScheme(t)
 
 	cases := []struct {
@@ -257,11 +259,7 @@ func TestHomeDashboardLoad_PreservesPriorBehaviorOnMissingFile(t *testing.T) {
 func TestHomeDashboardLoad_RereadsSourceWhenInvalidated(t *testing.T) {
 	path := writeDashboardFile(t, `{"title":"first"}`)
 	home := newHomeDashboardSupportForFile(path)
-	t.Cleanup(func() {
-		if home.watcher != nil {
-			_ = home.watcher.Close()
-		}
-	})
+	t.Cleanup(func() { _ = home.Close() })
 	home.scheme = newTestScheme(t)
 
 	obj, err := home.Get(dashv0.VERSION)
@@ -283,11 +281,7 @@ func TestHomeDashboardWatch_FileChangeInvalidatesSource(t *testing.T) {
 	// fsnotify on macOS uses FSEvents; allow a generous deadline below.
 	path := writeDashboardFile(t, `{"title":"first"}`)
 	home := newHomeDashboardSupportForFile(path)
-	t.Cleanup(func() {
-		if home.watcher != nil {
-			_ = home.watcher.Close()
-		}
-	})
+	t.Cleanup(func() { _ = home.Close() })
 	home.scheme = newTestScheme(t)
 
 	// Populate the cache.

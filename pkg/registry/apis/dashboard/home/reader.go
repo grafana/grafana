@@ -2,10 +2,9 @@ package home
 
 import (
 	"bytes"
-	"embed"
+	_ "embed"
 	"encoding/json"
 	"fmt"
-	"io/fs"
 	"os"
 	"path/filepath"
 
@@ -17,21 +16,25 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var (
-	//go:embed home.json
-	defaultHomeDashboardFS embed.FS
-)
+//go:embed home.json
+var defaultHomeDashboardJSON []byte
 
+// HasCustomHome reports whether the deployment is configured to serve a custom
+// home dashboard. It mirrors the path resolution in homeDashboardPath so the
+// answer matches what the getter will actually serve.
 func HasCustomHome(cfg *setting.Cfg) bool {
 	if cfg.DefaultHomeDashboardPath != "" {
+		// An explicit override is always considered custom, even if the file
+		// happens to be missing — the getter will log and fall back, but the
+		// operator's intent is clear.
 		return true
 	}
 
-	// Check if the default is different
-	filePath := filepath.Join(cfg.StaticRootPath, "dashboards/home.json")
-	loaded, _ := os.ReadFile(filePath)
-	builtin, _ := fs.ReadFile(defaultHomeDashboardFS, "home.json")
-	return !bytes.Equal(builtin, loaded)
+	loaded, err := os.ReadFile(filepath.Join(cfg.StaticRootPath, "dashboards/home.json"))
+	if err != nil {
+		return false
+	}
+	return !bytes.Equal(defaultHomeDashboardJSON, loaded)
 }
 
 func readDashboard(filePath string) (runtime.Object, error) {
@@ -76,9 +79,5 @@ func readDashboardBytes(raw []byte) (runtime.Object, error) {
 // defaultHomeDashboard is the fallback returned when no file is configured or
 // the configured file cannot be read.
 func defaultHomeDashboard() (runtime.Object, error) {
-	raw, err := fs.ReadFile(defaultHomeDashboardFS, "home.json")
-	if err != nil {
-		return nil, err
-	}
-	return readDashboardBytes(raw)
+	return readDashboardBytes(defaultHomeDashboardJSON)
 }
