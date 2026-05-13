@@ -30,7 +30,7 @@ export function CorrelationsPageAppPlatform() {
 
   // we cant do a straight refetch, we have to pass in new pages if necessary
   const enhRefetch = (params: GetCorrelationsParams) => {
-    return { correlations: currentData, page: params.page, limit, totalCount: 0 };
+    return { correlations: currentData, page: params.page, limit, totalCount: 0, doesContinue: true };
   };
 
   const fmtedError = error ? handleRequestError(error) : undefined;
@@ -46,6 +46,7 @@ export function CorrelationsPageAppPlatform() {
         page: 0,
         limit: limit,
         totalCount: 0,
+        doesContinue: true,
       }}
       isLoading={isLoading}
       error={fmtedError?.error}

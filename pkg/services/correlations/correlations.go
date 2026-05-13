@@ -326,6 +326,7 @@ func (s *CorrelationsK8sService) GetCorrelations(ctx context.Context, cmd GetCor
 		TotalCount:   remainingItemCount + listLength,
 		Page:         cmd.Page,
 		Limit:        cmd.Limit,
+		DoesContinue: metadata.Continue != "",
 	}, nil
 }
 

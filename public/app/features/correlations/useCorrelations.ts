@@ -21,6 +21,7 @@ export interface CorrelationsResponse {
   page: number;
   limit: number;
   totalCount: number;
+  doesContinue: boolean;
 }
 
 export const toEnrichedCorrelationData = ({ sourceUID, ...correlation }: Correlation): CorrelationData | undefined => {

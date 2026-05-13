@@ -68,6 +68,11 @@ export default function CorrelationsPage(props: CorrelationsPageProps) {
   const navModel = useNavModel('correlations');
   const [isAdding, setIsAddingValue] = useState(false);
   const page = useRef(1);
+  // if this is legacy to app platform, we will not get a real total count but we will get the boolean if it continues
+  // if hasNextPage is undefined, we are coming from legacy, so use the doesContinue flag and pointer-pagination
+
+  //TODO what happens in pure legacy ? are both of these null? right now it shows page numbers in Legacy FE / AP BE scenario bc does continue is false, we need to differentiate
+  const hasNextPageOrContinue = hasNextPage ?? correlations?.doesContinue;
 
   const setIsAdding = (value: boolean) => {
     setIsAddingValue(value);
@@ -231,14 +236,14 @@ export default function CorrelationsPage(props: CorrelationsPageProps) {
               />
               <Pagination
                 currentPage={page.current}
-                numberOfPages={Math.ceil(correlations?.totalCount / correlations?.limit)}
+                numberOfPages={hasNextPageOrContinue ? 0 : Math.ceil(correlations?.totalCount / correlations?.limit)}
                 onNavigate={(toPage: number) => {
                   if (changePageFn) {
                     changePageFn(toPage);
                   }
                   fetchCorrelations({ page: (page.current = toPage) });
                 }}
-                hasNextPage={hasNextPage}
+                hasNextPage={hasNextPageOrContinue}
               />
             </>
           )}

@@ -344,6 +344,7 @@ func (s CorrelationsService) getCorrelations(ctx context.Context, cmd GetCorrela
 		Correlations: make([]Correlation, 0),
 		Page:         cmd.Page,
 		Limit:        cmd.Limit,
+		DoesContinue: true,
 	}
 
 	err := s.SQLStore.WithDbSession(ctx, func(session *db.Session) error {
