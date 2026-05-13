@@ -266,6 +266,9 @@ func (hs *HTTPServer) registerRoutes() {
 	// add swagger support
 	hs.registerSwaggerUI(r)
 
+	// agent-friendly markdown views of the OpenAPI spec
+	hs.registerAPIDocs(r)
+
 	r.Post("/api/user/auth-tokens/rotate", routing.Wrap(hs.RotateUserAuthToken))
 	r.Get("/user/auth-tokens/rotate", routing.Wrap(hs.RotateUserAuthTokenRedirect))
 
