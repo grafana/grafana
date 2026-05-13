@@ -2,7 +2,7 @@ import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../variables/constants';
 
 import { LegacyVariableWrapper } from './LegacyVariableWrapper';
 
-const makeVariable = (name = 'test', type = 'query') => ({ name, type } as any);
+const makeVariable = (name = 'test', type = 'query') => ({ name, type }) as any;
 
 describe('LegacyVariableWrapper', () => {
   describe('getValue', () => {
