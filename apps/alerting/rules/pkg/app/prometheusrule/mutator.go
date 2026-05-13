@@ -1,4 +1,4 @@
-package prometheusrulegroup
+package prometheusrule
 
 import (
 	"context"
@@ -13,23 +13,23 @@ import (
 func NewMutator(_ config.RuntimeConfig) *simple.Mutator {
 	return &simple.Mutator{
 		MutateFunc: func(ctx context.Context, req *app.AdmissionRequest) (*app.MutatingResponse, error) {
-			g, ok := req.Object.(*v1.PrometheusRuleGroup)
-			if !ok || g == nil {
+			pr, ok := req.Object.(*v1.PrometheusRule)
+			if !ok || pr == nil {
 				return nil, nil
 			}
 
 			folderUID := ""
-			if g.Annotations != nil {
-				folderUID = g.Annotations[v1.FolderAnnotationKey]
+			if pr.Annotations != nil {
+				folderUID = pr.Annotations[v1.FolderAnnotationKey]
 			}
 			if folderUID != "" {
-				if g.Labels == nil {
-					g.Labels = make(map[string]string)
+				if pr.Labels == nil {
+					pr.Labels = make(map[string]string)
 				}
-				g.Labels[v1.FolderLabelKey] = folderUID
+				pr.Labels[v1.FolderLabelKey] = folderUID
 			}
 
-			return &app.MutatingResponse{UpdatedObject: g}, nil
+			return &app.MutatingResponse{UpdatedObject: pr}, nil
 		},
 	}
 }

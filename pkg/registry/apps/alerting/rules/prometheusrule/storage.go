@@ -1,4 +1,4 @@
-package prometheusrulegroup
+package prometheusrule
 
 import (
 	"context"

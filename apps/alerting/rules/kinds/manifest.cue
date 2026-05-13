@@ -12,7 +12,7 @@ manifest: {
 			kinds: [
 				alertRulev0alpha1,
 				recordingRulev0alpha1,
-				prometheusRuleGroupv0alpha1,
+				prometheusRulev0alpha1,
 			]
 		}
 	}

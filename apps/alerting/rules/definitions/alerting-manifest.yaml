@@ -444,8 +444,8 @@ spec:
           - CREATE
           - UPDATE
       conversion: false
-      kind: PrometheusRuleGroup
-      plural: PrometheusRuleGroups
+      kind: PrometheusRule
+      plural: PrometheusRules
       schemas:
         OperatorState:
           additionalProperties: false
@@ -480,6 +480,14 @@ spec:
           pattern: ^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$
           type: string
         PrometheusRule:
+          properties:
+            spec:
+              $ref: '#/components/schemas/spec'
+            status:
+              $ref: '#/components/schemas/status'
+          required:
+          - spec
+        PrometheusRuleEntry:
           additionalProperties: false
           properties:
             alert:
@@ -504,14 +512,6 @@ spec:
           - expr
           type: object
         PrometheusRuleGroup:
-          properties:
-            spec:
-              $ref: '#/components/schemas/spec'
-            status:
-              $ref: '#/components/schemas/status'
-          required:
-          - spec
-        spec:
           additionalProperties: false
           properties:
             interval:
@@ -529,11 +529,21 @@ spec:
               $ref: '#/components/schemas/PromDuration'
             rules:
               items:
-                $ref: '#/components/schemas/PrometheusRule'
+                $ref: '#/components/schemas/PrometheusRuleEntry'
               type: array
           required:
           - name
           - rules
+          type: object
+        spec:
+          additionalProperties: false
+          properties:
+            groups:
+              items:
+                $ref: '#/components/schemas/PrometheusRuleGroup'
+              type: array
+          required:
+          - groups
           type: object
         status:
           additionalProperties: false
@@ -551,7 +561,5 @@ spec:
               type: object
           type: object
       scope: Namespaced
-      selectableFields:
-      - spec.name
     name: v0alpha1
     served: true

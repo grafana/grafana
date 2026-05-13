@@ -12,7 +12,7 @@ func GetKinds() map[schema.GroupVersion][]sdkResource.Kind {
 		v0alpha1.GroupVersion: {
 			v0alpha1.AlertRuleKind(),
 			v0alpha1.RecordingRuleKind(),
-			v0alpha1.PrometheusRuleGroupKind(),
+			v0alpha1.PrometheusRuleKind(),
 		},
 	}
 	return result

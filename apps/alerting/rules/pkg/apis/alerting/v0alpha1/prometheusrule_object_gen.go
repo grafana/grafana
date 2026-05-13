@@ -15,29 +15,29 @@ import (
 )
 
 // +k8s:openapi-gen=true
-type PrometheusRuleGroup struct {
+type PrometheusRule struct {
 	metav1.TypeMeta   `json:",inline" yaml:",inline"`
 	metav1.ObjectMeta `json:"metadata" yaml:"metadata"`
 
-	// Spec is the spec of the PrometheusRuleGroup
-	Spec PrometheusRuleGroupSpec `json:"spec" yaml:"spec"`
+	// Spec is the spec of the PrometheusRule
+	Spec PrometheusRuleSpec `json:"spec" yaml:"spec"`
 
-	Status PrometheusRuleGroupStatus `json:"status" yaml:"status"`
+	Status PrometheusRuleStatus `json:"status" yaml:"status"`
 }
 
-func NewPrometheusRuleGroup() *PrometheusRuleGroup {
-	return &PrometheusRuleGroup{
-		Spec:   *NewPrometheusRuleGroupSpec(),
-		Status: *NewPrometheusRuleGroupStatus(),
+func NewPrometheusRule() *PrometheusRule {
+	return &PrometheusRule{
+		Spec:   *NewPrometheusRuleSpec(),
+		Status: *NewPrometheusRuleStatus(),
 	}
 }
 
-func (o *PrometheusRuleGroup) GetSpec() any {
+func (o *PrometheusRule) GetSpec() any {
 	return o.Spec
 }
 
-func (o *PrometheusRuleGroup) SetSpec(spec any) error {
-	cast, ok := spec.(PrometheusRuleGroupSpec)
+func (o *PrometheusRule) SetSpec(spec any) error {
+	cast, ok := spec.(PrometheusRuleSpec)
 	if !ok {
 		return fmt.Errorf("cannot set spec type %#v, not of type Spec", spec)
 	}
@@ -45,13 +45,13 @@ func (o *PrometheusRuleGroup) SetSpec(spec any) error {
 	return nil
 }
 
-func (o *PrometheusRuleGroup) GetSubresources() map[string]any {
+func (o *PrometheusRule) GetSubresources() map[string]any {
 	return map[string]any{
 		"status": o.Status,
 	}
 }
 
-func (o *PrometheusRuleGroup) GetSubresource(name string) (any, bool) {
+func (o *PrometheusRule) GetSubresource(name string) (any, bool) {
 	switch name {
 	case "status":
 		return o.Status, true
@@ -60,12 +60,12 @@ func (o *PrometheusRuleGroup) GetSubresource(name string) (any, bool) {
 	}
 }
 
-func (o *PrometheusRuleGroup) SetSubresource(name string, value any) error {
+func (o *PrometheusRule) SetSubresource(name string, value any) error {
 	switch name {
 	case "status":
-		cast, ok := value.(PrometheusRuleGroupStatus)
+		cast, ok := value.(PrometheusRuleStatus)
 		if !ok {
-			return fmt.Errorf("cannot set status type %#v, not of type PrometheusRuleGroupStatus", value)
+			return fmt.Errorf("cannot set status type %#v, not of type PrometheusRuleStatus", value)
 		}
 		o.Status = cast
 		return nil
@@ -74,7 +74,7 @@ func (o *PrometheusRuleGroup) SetSubresource(name string, value any) error {
 	}
 }
 
-func (o *PrometheusRuleGroup) GetStaticMetadata() resource.StaticMetadata {
+func (o *PrometheusRule) GetStaticMetadata() resource.StaticMetadata {
 	gvk := o.GroupVersionKind()
 	return resource.StaticMetadata{
 		Name:      o.ObjectMeta.Name,
@@ -85,7 +85,7 @@ func (o *PrometheusRuleGroup) GetStaticMetadata() resource.StaticMetadata {
 	}
 }
 
-func (o *PrometheusRuleGroup) SetStaticMetadata(metadata resource.StaticMetadata) {
+func (o *PrometheusRule) SetStaticMetadata(metadata resource.StaticMetadata) {
 	o.Name = metadata.Name
 	o.Namespace = metadata.Namespace
 	o.SetGroupVersionKind(schema.GroupVersionKind{
@@ -95,7 +95,7 @@ func (o *PrometheusRuleGroup) SetStaticMetadata(metadata resource.StaticMetadata
 	})
 }
 
-func (o *PrometheusRuleGroup) GetCommonMetadata() resource.CommonMetadata {
+func (o *PrometheusRule) GetCommonMetadata() resource.CommonMetadata {
 	dt := o.DeletionTimestamp
 	var deletionTimestamp *time.Time
 	if dt != nil {
@@ -127,7 +127,7 @@ func (o *PrometheusRuleGroup) GetCommonMetadata() resource.CommonMetadata {
 	}
 }
 
-func (o *PrometheusRuleGroup) SetCommonMetadata(metadata resource.CommonMetadata) {
+func (o *PrometheusRule) SetCommonMetadata(metadata resource.CommonMetadata) {
 	o.UID = types.UID(metadata.UID)
 	o.ResourceVersion = metadata.ResourceVersion
 	o.Generation = metadata.Generation
@@ -172,7 +172,7 @@ func (o *PrometheusRuleGroup) SetCommonMetadata(metadata resource.CommonMetadata
 	}
 }
 
-func (o *PrometheusRuleGroup) GetCreatedBy() string {
+func (o *PrometheusRule) GetCreatedBy() string {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -180,7 +180,7 @@ func (o *PrometheusRuleGroup) GetCreatedBy() string {
 	return o.ObjectMeta.Annotations["grafana.com/createdBy"]
 }
 
-func (o *PrometheusRuleGroup) SetCreatedBy(createdBy string) {
+func (o *PrometheusRule) SetCreatedBy(createdBy string) {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -188,7 +188,7 @@ func (o *PrometheusRuleGroup) SetCreatedBy(createdBy string) {
 	o.ObjectMeta.Annotations["grafana.com/createdBy"] = createdBy
 }
 
-func (o *PrometheusRuleGroup) GetUpdateTimestamp() time.Time {
+func (o *PrometheusRule) GetUpdateTimestamp() time.Time {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -197,7 +197,7 @@ func (o *PrometheusRuleGroup) GetUpdateTimestamp() time.Time {
 	return parsed
 }
 
-func (o *PrometheusRuleGroup) SetUpdateTimestamp(updateTimestamp time.Time) {
+func (o *PrometheusRule) SetUpdateTimestamp(updateTimestamp time.Time) {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -205,7 +205,7 @@ func (o *PrometheusRuleGroup) SetUpdateTimestamp(updateTimestamp time.Time) {
 	o.ObjectMeta.Annotations["grafana.com/updateTimestamp"] = updateTimestamp.Format(time.RFC3339)
 }
 
-func (o *PrometheusRuleGroup) GetUpdatedBy() string {
+func (o *PrometheusRule) GetUpdatedBy() string {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -213,7 +213,7 @@ func (o *PrometheusRuleGroup) GetUpdatedBy() string {
 	return o.ObjectMeta.Annotations["grafana.com/updatedBy"]
 }
 
-func (o *PrometheusRuleGroup) SetUpdatedBy(updatedBy string) {
+func (o *PrometheusRule) SetUpdatedBy(updatedBy string) {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -221,21 +221,21 @@ func (o *PrometheusRuleGroup) SetUpdatedBy(updatedBy string) {
 	o.ObjectMeta.Annotations["grafana.com/updatedBy"] = updatedBy
 }
 
-func (o *PrometheusRuleGroup) Copy() resource.Object {
+func (o *PrometheusRule) Copy() resource.Object {
 	return resource.CopyObject(o)
 }
 
-func (o *PrometheusRuleGroup) DeepCopyObject() runtime.Object {
+func (o *PrometheusRule) DeepCopyObject() runtime.Object {
 	return o.Copy()
 }
 
-func (o *PrometheusRuleGroup) DeepCopy() *PrometheusRuleGroup {
-	cpy := &PrometheusRuleGroup{}
+func (o *PrometheusRule) DeepCopy() *PrometheusRule {
+	cpy := &PrometheusRule{}
 	o.DeepCopyInto(cpy)
 	return cpy
 }
 
-func (o *PrometheusRuleGroup) DeepCopyInto(dst *PrometheusRuleGroup) {
+func (o *PrometheusRule) DeepCopyInto(dst *PrometheusRule) {
 	dst.TypeMeta.APIVersion = o.TypeMeta.APIVersion
 	dst.TypeMeta.Kind = o.TypeMeta.Kind
 	o.ObjectMeta.DeepCopyInto(&dst.ObjectMeta)
@@ -243,39 +243,39 @@ func (o *PrometheusRuleGroup) DeepCopyInto(dst *PrometheusRuleGroup) {
 	o.Status.DeepCopyInto(&dst.Status)
 }
 
-func (PrometheusRuleGroup) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.PrometheusRuleGroup"
+func (PrometheusRule) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.PrometheusRule"
 }
 
 // Interface compliance compile-time check
-var _ resource.Object = &PrometheusRuleGroup{}
+var _ resource.Object = &PrometheusRule{}
 
 // +k8s:openapi-gen=true
-type PrometheusRuleGroupList struct {
+type PrometheusRuleList struct {
 	metav1.TypeMeta `json:",inline" yaml:",inline"`
 	metav1.ListMeta `json:"metadata" yaml:"metadata"`
-	Items           []PrometheusRuleGroup `json:"items" yaml:"items"`
+	Items           []PrometheusRule `json:"items" yaml:"items"`
 }
 
-func (o *PrometheusRuleGroupList) DeepCopyObject() runtime.Object {
+func (o *PrometheusRuleList) DeepCopyObject() runtime.Object {
 	return o.Copy()
 }
 
-func (o *PrometheusRuleGroupList) Copy() resource.ListObject {
-	cpy := &PrometheusRuleGroupList{
+func (o *PrometheusRuleList) Copy() resource.ListObject {
+	cpy := &PrometheusRuleList{
 		TypeMeta: o.TypeMeta,
-		Items:    make([]PrometheusRuleGroup, len(o.Items)),
+		Items:    make([]PrometheusRule, len(o.Items)),
 	}
 	o.ListMeta.DeepCopyInto(&cpy.ListMeta)
 	for i := 0; i < len(o.Items); i++ {
-		if item, ok := o.Items[i].Copy().(*PrometheusRuleGroup); ok {
+		if item, ok := o.Items[i].Copy().(*PrometheusRule); ok {
 			cpy.Items[i] = *item
 		}
 	}
 	return cpy
 }
 
-func (o *PrometheusRuleGroupList) GetItems() []resource.Object {
+func (o *PrometheusRuleList) GetItems() []resource.Object {
 	items := make([]resource.Object, len(o.Items))
 	for i := 0; i < len(o.Items); i++ {
 		items[i] = &o.Items[i]
@@ -283,52 +283,52 @@ func (o *PrometheusRuleGroupList) GetItems() []resource.Object {
 	return items
 }
 
-func (o *PrometheusRuleGroupList) SetItems(items []resource.Object) {
-	o.Items = make([]PrometheusRuleGroup, len(items))
+func (o *PrometheusRuleList) SetItems(items []resource.Object) {
+	o.Items = make([]PrometheusRule, len(items))
 	for i := 0; i < len(items); i++ {
-		o.Items[i] = *items[i].(*PrometheusRuleGroup)
+		o.Items[i] = *items[i].(*PrometheusRule)
 	}
 }
 
-func (o *PrometheusRuleGroupList) DeepCopy() *PrometheusRuleGroupList {
-	cpy := &PrometheusRuleGroupList{}
+func (o *PrometheusRuleList) DeepCopy() *PrometheusRuleList {
+	cpy := &PrometheusRuleList{}
 	o.DeepCopyInto(cpy)
 	return cpy
 }
 
-func (o *PrometheusRuleGroupList) DeepCopyInto(dst *PrometheusRuleGroupList) {
+func (o *PrometheusRuleList) DeepCopyInto(dst *PrometheusRuleList) {
 	resource.CopyObjectInto(dst, o)
 }
 
-func (PrometheusRuleGroupList) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.PrometheusRuleGroupList"
+func (PrometheusRuleList) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.PrometheusRuleList"
 }
 
 // Interface compliance compile-time check
-var _ resource.ListObject = &PrometheusRuleGroupList{}
+var _ resource.ListObject = &PrometheusRuleList{}
 
 // Copy methods for all subresource types
 
 // DeepCopy creates a full deep copy of Spec
-func (s *PrometheusRuleGroupSpec) DeepCopy() *PrometheusRuleGroupSpec {
-	cpy := &PrometheusRuleGroupSpec{}
+func (s *PrometheusRuleSpec) DeepCopy() *PrometheusRuleSpec {
+	cpy := &PrometheusRuleSpec{}
 	s.DeepCopyInto(cpy)
 	return cpy
 }
 
 // DeepCopyInto deep copies Spec into another Spec object
-func (s *PrometheusRuleGroupSpec) DeepCopyInto(dst *PrometheusRuleGroupSpec) {
+func (s *PrometheusRuleSpec) DeepCopyInto(dst *PrometheusRuleSpec) {
 	resource.CopyObjectInto(dst, s)
 }
 
-// DeepCopy creates a full deep copy of PrometheusRuleGroupStatus
-func (s *PrometheusRuleGroupStatus) DeepCopy() *PrometheusRuleGroupStatus {
-	cpy := &PrometheusRuleGroupStatus{}
+// DeepCopy creates a full deep copy of PrometheusRuleStatus
+func (s *PrometheusRuleStatus) DeepCopy() *PrometheusRuleStatus {
+	cpy := &PrometheusRuleStatus{}
 	s.DeepCopyInto(cpy)
 	return cpy
 }
 
-// DeepCopyInto deep copies PrometheusRuleGroupStatus into another PrometheusRuleGroupStatus object
-func (s *PrometheusRuleGroupStatus) DeepCopyInto(dst *PrometheusRuleGroupStatus) {
+// DeepCopyInto deep copies PrometheusRuleStatus into another PrometheusRuleStatus object
+func (s *PrometheusRuleStatus) DeepCopyInto(dst *PrometheusRuleStatus) {
 	resource.CopyObjectInto(dst, s)
 }

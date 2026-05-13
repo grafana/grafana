@@ -40,7 +40,7 @@ export interface ManagedFieldsEntry {
     subresource?: string;
 }
 
-export interface PrometheusRuleGroup {
+export interface PrometheusRule {
     kind: string;
     apiVersion: string;
     metadata: Metadata;

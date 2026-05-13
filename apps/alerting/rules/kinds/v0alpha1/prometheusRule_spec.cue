@@ -1,6 +1,12 @@
 package v0alpha1
 
-PrometheusRuleGroupSpec: {
+// PrometheusRuleSpec mirrors the structure of a Prometheus rules file:
+// a list of named groups, each holding alerting and/or recording rules.
+PrometheusRuleSpec: {
+	groups: [...#PrometheusRuleGroup]
+}
+
+#PrometheusRuleGroup: {
 	name:         string
 	interval?:    #PromDuration
 	queryOffset?: #PromDuration
@@ -8,10 +14,10 @@ PrometheusRuleGroupSpec: {
 	labels?: {
 		[string]: string
 	}
-	rules: [...#PrometheusRule]
+	rules: [...#PrometheusRuleEntry]
 }
 
-#PrometheusRule: {
+#PrometheusRuleEntry: {
 	alert?:         string
 	record?:        string
 	expr:           string

@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/alertrule"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/config"
-	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/prometheusrulegroup"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/prometheusrule"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/recordingrule"
 )
 
@@ -65,8 +65,8 @@ func buildKindValidator(kind resource.Kind, cfg config.RuntimeConfig) *simple.Va
 		return alertrule.NewValidator(cfg)
 	case "RecordingRule":
 		return recordingrule.NewValidator(cfg)
-	case "PrometheusRuleGroup":
-		return prometheusrulegroup.NewValidator(cfg)
+	case "PrometheusRule":
+		return prometheusrule.NewValidator(cfg)
 	}
 	return nil
 }
@@ -77,8 +77,8 @@ func buildKindMutator(kind resource.Kind, cfg config.RuntimeConfig) *simple.Muta
 		return alertrule.NewMutator(cfg)
 	case "RecordingRule":
 		return recordingrule.NewMutator(cfg)
-	case "PrometheusRuleGroup":
-		return prometheusrulegroup.NewMutator(cfg)
+	case "PrometheusRule":
+		return prometheusrule.NewMutator(cfg)
 	}
 	return nil
 }

@@ -1,4 +1,4 @@
-package prometheusrulegroup
+package prometheusrule
 
 import (
 	"strings"
@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-var kind = model.PrometheusRuleGroupKind()
+var kind = model.PrometheusRuleKind()
 
 var ResourceInfo = utils.NewResourceInfo(kind.Group(), kind.Version(),
 	kind.GroupVersionResource().Resource, strings.ToLower(kind.Kind()), kind.Kind(),
@@ -19,5 +19,11 @@ var ResourceInfo = utils.NewResourceInfo(kind.Group(), kind.Version(),
 )
 
 const (
+	// DatasourceUIDAnnotationKey is the annotation that selects the Prometheus
+	// datasource the rules will query. Optional; defaults to defaultDatasourceUID.
 	DatasourceUIDAnnotationKey = "rules.alerting.grafana.app/datasource-uid"
+
+	// SourceLabelKey is added to every alert rule produced from a PrometheusRule
+	// resource so reads can partition results back into the originating resource.
+	SourceLabelKey = "grafana.com/prometheusrule-source"
 )

@@ -5,7 +5,7 @@ import (
 	"slices"
 )
 
-func (o *PrometheusRuleGroup) GetProvenanceStatus() string {
+func (o *PrometheusRule) GetProvenanceStatus() string {
 	if o == nil || o.Annotations == nil {
 		return ProvenanceStatusNone
 	}
@@ -16,7 +16,7 @@ func (o *PrometheusRuleGroup) GetProvenanceStatus() string {
 	return s
 }
 
-func (o *PrometheusRuleGroup) SetProvenanceStatus(status string) error {
+func (o *PrometheusRule) SetProvenanceStatus(status string) error {
 	if o.Annotations == nil {
 		o.Annotations = make(map[string]string, 1)
 	}

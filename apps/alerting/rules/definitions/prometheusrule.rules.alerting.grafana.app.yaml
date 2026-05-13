@@ -1,12 +1,12 @@
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
-  name: prometheusrulegroups.rules.alerting.grafana.app
+  name: prometheusrules.rules.alerting.grafana.app
 spec:
   group: rules.alerting.grafana.app
   names:
-    kind: PrometheusRuleGroup
-    plural: prometheusrulegroups
+    kind: PrometheusRule
+    plural: prometheusrules
   scope: Namespaced
   versions:
   - name: v0alpha1
@@ -14,52 +14,62 @@ spec:
       openAPIV3Schema:
         properties:
           spec:
+            description: |-
+              PrometheusRuleSpec mirrors the structure of a Prometheus rules file:
+              a list of named groups, each holding alerting and/or recording rules.
             properties:
-              interval:
-                pattern: ^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$
-                type: string
-              labels:
-                additionalProperties:
-                  type: string
-                type: object
-              limit:
-                minimum: 0
-                type: integer
-              name:
-                type: string
-              queryOffset:
-                pattern: ^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$
-                type: string
-              rules:
+              groups:
                 items:
                   properties:
-                    alert:
-                      type: string
-                    annotations:
-                      additionalProperties:
-                        type: string
-                      type: object
-                    expr:
-                      type: string
-                    for:
-                      pattern: ^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$
-                      type: string
-                    keepFiringFor:
+                    interval:
                       pattern: ^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$
                       type: string
                     labels:
                       additionalProperties:
                         type: string
                       type: object
-                    record:
+                    limit:
+                      minimum: 0
+                      type: integer
+                    name:
                       type: string
+                    queryOffset:
+                      pattern: ^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$
+                      type: string
+                    rules:
+                      items:
+                        properties:
+                          alert:
+                            type: string
+                          annotations:
+                            additionalProperties:
+                              type: string
+                            type: object
+                          expr:
+                            type: string
+                          for:
+                            pattern: ^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$
+                            type: string
+                          keepFiringFor:
+                            pattern: ^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$
+                            type: string
+                          labels:
+                            additionalProperties:
+                              type: string
+                            type: object
+                          record:
+                            type: string
+                        required:
+                        - expr
+                        type: object
+                      type: array
                   required:
-                  - expr
+                  - name
+                  - rules
                   type: object
                 type: array
             required:
-            - name
-            - rules
+            - groups
             type: object
           status:
             properties:
@@ -103,8 +113,6 @@ spec:
         required:
         - spec
         type: object
-    selectableFields:
-    - jsonPath: .spec.name
     served: true
     storage: true
     subresources:

@@ -20,12 +20,13 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		AlertRuleSpec{}.OpenAPIModelName():                                schema_pkg_apis_alerting_v0alpha1_AlertRuleSpec(ref),
 		AlertRuleStatus{}.OpenAPIModelName():                              schema_pkg_apis_alerting_v0alpha1_AlertRuleStatus(ref),
 		AlertRulestatusOperatorState{}.OpenAPIModelName():                 schema_pkg_apis_alerting_v0alpha1_AlertRulestatusOperatorState(ref),
-		PrometheusRuleGroup{}.OpenAPIModelName():                          schema_pkg_apis_alerting_v0alpha1_PrometheusRuleGroup(ref),
-		PrometheusRuleGroupList{}.OpenAPIModelName():                      schema_pkg_apis_alerting_v0alpha1_PrometheusRuleGroupList(ref),
-		PrometheusRuleGroupPrometheusRule{}.OpenAPIModelName():            schema_pkg_apis_alerting_v0alpha1_PrometheusRuleGroupPrometheusRule(ref),
-		PrometheusRuleGroupSpec{}.OpenAPIModelName():                      schema_pkg_apis_alerting_v0alpha1_PrometheusRuleGroupSpec(ref),
-		PrometheusRuleGroupStatus{}.OpenAPIModelName():                    schema_pkg_apis_alerting_v0alpha1_PrometheusRuleGroupStatus(ref),
-		PrometheusRuleGroupstatusOperatorState{}.OpenAPIModelName():       schema_pkg_apis_alerting_v0alpha1_PrometheusRuleGroupstatusOperatorState(ref),
+		PrometheusRule{}.OpenAPIModelName():                               schema_pkg_apis_alerting_v0alpha1_PrometheusRule(ref),
+		PrometheusRuleList{}.OpenAPIModelName():                           schema_pkg_apis_alerting_v0alpha1_PrometheusRuleList(ref),
+		PrometheusRulePrometheusRuleEntry{}.OpenAPIModelName():            schema_pkg_apis_alerting_v0alpha1_PrometheusRulePrometheusRuleEntry(ref),
+		PrometheusRulePrometheusRuleGroup{}.OpenAPIModelName():            schema_pkg_apis_alerting_v0alpha1_PrometheusRulePrometheusRuleGroup(ref),
+		PrometheusRuleSpec{}.OpenAPIModelName():                           schema_pkg_apis_alerting_v0alpha1_PrometheusRuleSpec(ref),
+		PrometheusRuleStatus{}.OpenAPIModelName():                         schema_pkg_apis_alerting_v0alpha1_PrometheusRuleStatus(ref),
+		PrometheusRulestatusOperatorState{}.OpenAPIModelName():            schema_pkg_apis_alerting_v0alpha1_PrometheusRulestatusOperatorState(ref),
 		RecordingRule{}.OpenAPIModelName():                                schema_pkg_apis_alerting_v0alpha1_RecordingRule(ref),
 		RecordingRuleExpression{}.OpenAPIModelName():                      schema_pkg_apis_alerting_v0alpha1_RecordingRuleExpression(ref),
 		RecordingRuleIntervalTrigger{}.OpenAPIModelName():                 schema_pkg_apis_alerting_v0alpha1_RecordingRuleIntervalTrigger(ref),
@@ -607,7 +608,7 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRulestatusOperatorState(ref common.R
 	}
 }
 
-func schema_pkg_apis_alerting_v0alpha1_PrometheusRuleGroup(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_alerting_v0alpha1_PrometheusRule(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -635,15 +636,15 @@ func schema_pkg_apis_alerting_v0alpha1_PrometheusRuleGroup(ref common.ReferenceC
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Spec is the spec of the PrometheusRuleGroup",
+							Description: "Spec is the spec of the PrometheusRule",
 							Default:     map[string]interface{}{},
-							Ref:         ref(PrometheusRuleGroupSpec{}.OpenAPIModelName()),
+							Ref:         ref(PrometheusRuleSpec{}.OpenAPIModelName()),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref(PrometheusRuleGroupStatus{}.OpenAPIModelName()),
+							Ref:     ref(PrometheusRuleStatus{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -651,11 +652,11 @@ func schema_pkg_apis_alerting_v0alpha1_PrometheusRuleGroup(ref common.ReferenceC
 			},
 		},
 		Dependencies: []string{
-			PrometheusRuleGroupSpec{}.OpenAPIModelName(), PrometheusRuleGroupStatus{}.OpenAPIModelName(), metav1.ObjectMeta{}.OpenAPIModelName()},
+			PrometheusRuleSpec{}.OpenAPIModelName(), PrometheusRuleStatus{}.OpenAPIModelName(), metav1.ObjectMeta{}.OpenAPIModelName()},
 	}
 }
 
-func schema_pkg_apis_alerting_v0alpha1_PrometheusRuleGroupList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_alerting_v0alpha1_PrometheusRuleList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -688,7 +689,7 @@ func schema_pkg_apis_alerting_v0alpha1_PrometheusRuleGroupList(ref common.Refere
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(PrometheusRuleGroup{}.OpenAPIModelName()),
+										Ref:     ref(PrometheusRule{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -699,11 +700,11 @@ func schema_pkg_apis_alerting_v0alpha1_PrometheusRuleGroupList(ref common.Refere
 			},
 		},
 		Dependencies: []string{
-			PrometheusRuleGroup{}.OpenAPIModelName(), metav1.ListMeta{}.OpenAPIModelName()},
+			PrometheusRule{}.OpenAPIModelName(), metav1.ListMeta{}.OpenAPIModelName()},
 	}
 }
 
-func schema_pkg_apis_alerting_v0alpha1_PrometheusRuleGroupPrometheusRule(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_alerting_v0alpha1_PrometheusRulePrometheusRuleEntry(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -777,7 +778,7 @@ func schema_pkg_apis_alerting_v0alpha1_PrometheusRuleGroupPrometheusRule(ref com
 	}
 }
 
-func schema_pkg_apis_alerting_v0alpha1_PrometheusRuleGroupSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_alerting_v0alpha1_PrometheusRulePrometheusRuleGroup(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -830,7 +831,7 @@ func schema_pkg_apis_alerting_v0alpha1_PrometheusRuleGroupSpec(ref common.Refere
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(PrometheusRuleGroupPrometheusRule{}.OpenAPIModelName()),
+										Ref:     ref(PrometheusRulePrometheusRuleEntry{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -841,11 +842,39 @@ func schema_pkg_apis_alerting_v0alpha1_PrometheusRuleGroupSpec(ref common.Refere
 			},
 		},
 		Dependencies: []string{
-			PrometheusRuleGroupPrometheusRule{}.OpenAPIModelName()},
+			PrometheusRulePrometheusRuleEntry{}.OpenAPIModelName()},
 	}
 }
 
-func schema_pkg_apis_alerting_v0alpha1_PrometheusRuleGroupStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_alerting_v0alpha1_PrometheusRuleSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"groups": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(PrometheusRulePrometheusRuleGroup{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"groups"},
+			},
+		},
+		Dependencies: []string{
+			PrometheusRulePrometheusRuleGroup{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_alerting_v0alpha1_PrometheusRuleStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -860,7 +889,7 @@ func schema_pkg_apis_alerting_v0alpha1_PrometheusRuleGroupStatus(ref common.Refe
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(PrometheusRuleGroupstatusOperatorState{}.OpenAPIModelName()),
+										Ref:     ref(PrometheusRulestatusOperatorState{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -885,11 +914,11 @@ func schema_pkg_apis_alerting_v0alpha1_PrometheusRuleGroupStatus(ref common.Refe
 			},
 		},
 		Dependencies: []string{
-			PrometheusRuleGroupstatusOperatorState{}.OpenAPIModelName()},
+			PrometheusRulestatusOperatorState{}.OpenAPIModelName()},
 	}
 }
 
-func schema_pkg_apis_alerting_v0alpha1_PrometheusRuleGroupstatusOperatorState(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_alerting_v0alpha1_PrometheusRulestatusOperatorState(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
