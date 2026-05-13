@@ -2590,12 +2590,15 @@
     {
       "metadata": {
         "name": "flameGraphWithCallTree",
-        "resourceVersion": "1773162696077",
-        "creationTimestamp": "2026-03-10T17:11:36Z"
+        "resourceVersion": "1778683818187",
+        "creationTimestamp": "2026-03-10T17:11:36Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-05-13 14:50:18.187266 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the new Flame Graph UI containing the Call Tree view",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/observability-traces-and-profiling",
         "frontend": true,
         "expression": "false"
