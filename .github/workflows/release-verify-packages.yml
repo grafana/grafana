@@ -112,7 +112,7 @@ jobs:
 
       - name: Upload Playwright blob report
         if: success() || failure()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: release-verify-deb-playwright-blob
           path: blob-report
@@ -120,7 +120,7 @@ jobs:
 
       - name: Upload server logs
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: release-verify-deb-server-log
           path: /tmp/release-verify-deb.log
@@ -213,7 +213,7 @@ jobs:
 
       - name: Upload Playwright blob report
         if: success() || failure()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: release-verify-rpm-playwright-blob
           path: blob-report
@@ -221,7 +221,7 @@ jobs:
 
       - name: Upload server logs
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: release-verify-rpm-server-log
           path: /tmp/release-verify-rpm.log
@@ -299,7 +299,7 @@ jobs:
 
       - name: Upload Playwright blob report
         if: success() || failure()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: release-verify-docker-playwright-blob
           path: blob-report
@@ -311,7 +311,7 @@ jobs:
 
       - name: Upload server logs
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: release-verify-docker-server-log
           path: /tmp/release-verify-docker.log
@@ -386,7 +386,7 @@ jobs:
 
       - name: Upload Playwright blob report
         if: success() || failure()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: release-verify-docker-ubuntu-playwright-blob
           path: blob-report
@@ -398,7 +398,7 @@ jobs:
 
       - name: Upload server logs
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: release-verify-docker-ubuntu-server-log
           path: /tmp/release-verify-docker-ubuntu.log

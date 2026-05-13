@@ -51,7 +51,7 @@ jobs:
       run: make generate-golden-files
       working-directory: apps/dashboard
     - name: Upload golden files
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: golden-files
         retention-days: 1

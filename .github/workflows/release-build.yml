@@ -134,7 +134,7 @@ jobs:
         run: yarn install --immutable
       - name: Build frontend
         run: yarn build
-      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: release-frontend
           path: public
@@ -199,7 +199,7 @@ jobs:
           GOARCH: ${{ matrix.arch }}
           GOARM: ${{ matrix.arm }}
         run: make build-go BUILD_VERSION="${BUILD_VERSION}"
-      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: release-backend-${{ matrix.name }}
           path: bin/${{ matrix.os }}/${{ matrix.arch }}
@@ -300,12 +300,12 @@ jobs:
           cp "artifacts-list-packages-${{ matrix.name }}.txt" "upload/artifacts-list-packages-${{ matrix.name }}/"
           mkdir -p "upload/artifacts-packages-${{ matrix.name }}"
           cp -R dist/. "upload/artifacts-packages-${{ matrix.name }}/"
-      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: artifacts-list-packages-${{ matrix.name }}
           path: upload/artifacts-list-packages-${{ matrix.name }}
           retention-days: 1
-      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: artifacts-packages-${{ matrix.name }}
           path: upload/artifacts-packages-${{ matrix.name }}
@@ -401,12 +401,12 @@ jobs:
             cp "$f" "upload/artifacts-deb-rpm-${{ matrix.name }}/"
             cp "${f}.sha256" "upload/artifacts-deb-rpm-${{ matrix.name }}/"
           done
-      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: artifacts-list-deb-rpm-${{ matrix.name }}
           path: upload/artifacts-list-deb-rpm-${{ matrix.name }}
           retention-days: 1
-      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: artifacts-deb-rpm-${{ matrix.name }}
           path: upload/artifacts-deb-rpm-${{ matrix.name }}
@@ -522,12 +522,12 @@ jobs:
             cp "$f" "upload/artifacts-docker-${{ matrix.name }}/"
             cp "${f}.sha256" "upload/artifacts-docker-${{ matrix.name }}/"
           done
-      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: artifacts-list-docker-${{ matrix.name }}
           path: upload/artifacts-list-docker-${{ matrix.name }}
           retention-days: 1
-      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: artifacts-docker-${{ matrix.name }}
           path: upload/artifacts-docker-${{ matrix.name }}
@@ -621,12 +621,12 @@ jobs:
             cp "$f" "upload/artifacts-docker-ubuntu-${{ matrix.name }}/"
             cp "${f}.sha256" "upload/artifacts-docker-ubuntu-${{ matrix.name }}/"
           done
-      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: artifacts-list-docker-ubuntu-${{ matrix.name }}
           path: upload/artifacts-list-docker-ubuntu-${{ matrix.name }}
           retention-days: 1
-      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: artifacts-docker-ubuntu-${{ matrix.name }}
           path: upload/artifacts-docker-ubuntu-${{ matrix.name }}
@@ -703,12 +703,12 @@ jobs:
           cp "$BUILD_FILE" "upload/artifacts-list-${{ matrix.name }}/"
           mkdir -p "upload/artifacts-${{ matrix.name }}"
           cp -R "$BUILD_DIST_DIR/." "upload/artifacts-${{ matrix.name }}/"
-      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: artifacts-list-${{ matrix.name }}
           path: upload/artifacts-list-${{ matrix.name }}
           retention-days: 1
-      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: artifacts-${{ matrix.name }}
           path: upload/artifacts-${{ matrix.name }}

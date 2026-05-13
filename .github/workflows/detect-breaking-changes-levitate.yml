@@ -54,7 +54,7 @@ jobs:
         run: zip -r ./pr_built_packages.zip ./packages/**/*.tgz
 
       - name: Upload build output as artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: buildPr
           path: './pr/pr_built_packages.zip'
@@ -102,7 +102,7 @@ jobs:
         run: zip -r ./base_built_packages.zip ./packages/**/*.tgz
 
       - name: Upload build output as artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: buildBase
           path: './base/base_built_packages.zip'
@@ -174,7 +174,7 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
 
       - name: Upload check output as artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: levitate
           path: levitate/
