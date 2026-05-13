@@ -41,6 +41,71 @@ type apiDocsState struct {
 	spec    *openapi3.T
 	ops     map[string]*operationEntry
 	ordered []*operationEntry
+	// appURL is the externally reachable root of this Grafana instance
+	// (e.g. "https://grafana.example.com"). Used to emit absolute URLs in
+	// llms.txt / llms-full.txt so agents can resolve links without guessing
+	// the hostname. May be empty in tests; relative paths are used as fallback.
+	appURL string
+}
+
+// curatedOpGroup pairs an operation ID with the workflow group it belongs to
+// in the curated llms.txt index.
+type curatedOpGroup struct {
+	id    string
+	group string
+}
+
+// curatedOps is the ordered, curated set of operations shown in llms.txt.
+// Groups are task-centric rather than OpenAPI-tag-centric.
+// If an operation's Deprecated flag is set in the spec it is emitted under
+// the ## Optional section instead of the main index.
+var curatedOps = []curatedOpGroup{
+	// Health & Discovery
+	{"getHealth", "Health & Discovery"},
+	// Data Sources
+	{"getDataSources", "Data Sources"},
+	{"addDataSource", "Data Sources"},
+	{"getDataSourceByUID", "Data Sources"},
+	{"updateDataSourceByUID", "Data Sources"},
+	{"deleteDataSourceByUID", "Data Sources"},
+	{"checkDatasourceHealthWithUID", "Data Sources"},
+	// Query Execution
+	{"queryMetricsWithExpressions", "Query Execution"},
+	// Search
+	{"search", "Search"},
+	// Annotations
+	{"getAnnotations", "Annotations"},
+	{"postAnnotation", "Annotations"},
+	{"updateAnnotation", "Annotations"},
+	{"deleteAnnotationByID", "Annotations"},
+	// Organization
+	{"getCurrentOrg", "Organization"},
+	{"getOrgUsersForCurrentOrg", "Organization"},
+	{"addOrgUserToCurrentOrg", "Organization"},
+	// Users
+	{"getSignedInUser", "Users"},
+	{"searchUsersWithPaging", "Users"},
+	// Teams
+	{"searchTeams", "Teams"},
+	{"createTeam", "Teams"},
+	{"getTeamMembers", "Teams"},
+	{"addTeamMember", "Teams"},
+	// Service Accounts
+	{"searchOrgServiceAccountsWithPaging", "Service Accounts"},
+	{"createServiceAccount", "Service Accounts"},
+	// --- Deprecated: emitted under ## Optional ---
+	{"getDashboardByUID", "Dashboard CRUD (legacy — use /apis/dashboard.grafana.app/)"},
+	{"postDashboard", "Dashboard CRUD (legacy — use /apis/dashboard.grafana.app/)"},
+	{"deleteDashboardByUID", "Dashboard CRUD (legacy — use /apis/dashboard.grafana.app/)"},
+	{"getFolders", "Folder CRUD (legacy — use /apis/folder.grafana.app/)"},
+	{"createFolder", "Folder CRUD (legacy — use /apis/folder.grafana.app/)"},
+	{"getFolderByUID", "Folder CRUD (legacy — use /apis/folder.grafana.app/)"},
+	{"searchPlaylists", "Playlists (legacy — use /apis/playlist.grafana.app/)"},
+	{"createPlaylist", "Playlists (legacy — use /apis/playlist.grafana.app/)"},
+	{"RouteGetAlertRules", "Alerting Provisioning (legacy)"},
+	{"RoutePostAlertRule", "Alerting Provisioning (legacy)"},
+	{"RouteGetAlertRuleGroup", "Alerting Provisioning (legacy)"},
+	{"RoutePutAlertRuleGroup", "Alerting Provisioning (legacy)"},
 }
 
 // registerAPIDocs loads the spec once at startup and, if it's available, wires
@@ -56,6 +121,7 @@ func (hs *HTTPServer) registerAPIDocs(r routing.RouteRegister) {
 		return
 	}
 	state := buildAPIDocsState(doc)
+	state.appURL = strings.TrimRight(hs.Cfg.AppURL, "/")
 
 	r.Get("/llms.txt", routing.Wrap(state.llmsTxtHandler))
 	r.Get("/llms-full.txt", routing.Wrap(state.llmsFullTxtHandler))
@@ -78,59 +144,140 @@ func renderLLMsTxt(s *apiDocsState) string {
 		title = s.spec.Info.Title
 	}
 	fmt.Fprintf(&b, "# %s\n\n", title)
-	if s.spec.Info != nil && s.spec.Info.Description != "" {
-		fmt.Fprintf(&b, "> %s\n\n", oneLine(s.spec.Info.Description))
-	} else {
-		b.WriteString("> Grafana's HTTP API. Per-operation docs for AI/agent consumption.\n\n")
-	}
+
+	// Required by the llms.txt spec: a blockquote immediately after the H1
+	// that gives agents the base URL, authentication guidance, and a link to
+	// human-readable docs.
+	opBase := s.appURL // may be "" in tests — relative URLs are used as fallback
+	baseAPI := opBase + "/api/"
+	fmt.Fprintf(&b, "> The Grafana HTTP API is served at `%s`.\n", baseAPI)
+	b.WriteString("> Authenticate with `Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>` or basic auth (`-u admin:password`).\n")
+	b.WriteString("> Full reference: <https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/>\n\n")
 
 	b.WriteString("## Discovery\n\n")
-	b.WriteString("- [Operations manifest (JSON)](/api-docs/index.json)\n")
-	b.WriteString("- [Full markdown bundle](/llms-full.txt)\n")
-	b.WriteString("- [Swagger UI](/swagger)\n\n")
+	fmt.Fprintf(&b, "- [Operations manifest (JSON)](%s/api-docs/index.json) - JSON index of all operations\n", opBase)
+	fmt.Fprintf(&b, "- [Complete operations index](%s/llms-full.txt) - Index of all %d operations\n", opBase, len(s.ordered))
+	fmt.Fprintf(&b, "- [Swagger UI](%s/swagger) - Human-friendly Swagger UI for the API\n\n", opBase)
 
-	byTag := map[string][]*operationEntry{}
-	for _, e := range s.ordered {
-		if len(e.Tags) == 0 {
-			byTag["(untagged)"] = append(byTag["(untagged)"], e)
+	// Curated operations grouped by workflow task. Each entry is looked up in
+	// the live spec so missing/renamed IDs are silently skipped.
+	mainGroups := map[string][]string{} // group label -> list of markdown lines
+	mainGroupOrder := []string{}
+	optGroups := map[string][]string{}
+	optGroupOrder := []string{}
+
+	for _, c := range curatedOps {
+		e, ok := s.ops[c.id]
+		if !ok {
 			continue
 		}
-		for _, t := range e.Tags {
-			byTag[t] = append(byTag[t], e)
+		summary := e.Summary
+		if summary == "" {
+			summary = oneLine(e.Description)
+		}
+		url := opBase + "/api-docs/operations/" + e.OperationID
+		line := fmt.Sprintf("- [%s %s](%s): %s\n", e.Method, e.Path, url, summary)
+
+		if e.Operation.Deprecated {
+			if _, exists := optGroups[c.group]; !exists {
+				optGroupOrder = append(optGroupOrder, c.group)
+			}
+			optGroups[c.group] = append(optGroups[c.group], line)
+		} else {
+			if _, exists := mainGroups[c.group]; !exists {
+				mainGroupOrder = append(mainGroupOrder, c.group)
+			}
+			mainGroups[c.group] = append(mainGroups[c.group], line)
 		}
 	}
-	tags := make([]string, 0, len(byTag))
-	for t := range byTag {
-		tags = append(tags, t)
-	}
-	sort.Strings(tags)
 
-	for _, t := range tags {
-		fmt.Fprintf(&b, "## %s\n\n", t)
-		for _, e := range byTag[t] {
-			summary := e.Summary
-			if summary == "" {
-				summary = oneLine(e.Description)
-			}
-			fmt.Fprintf(&b, "- [%s %s](/api-docs/operations/%s): %s\n",
-				e.Method, e.Path, e.OperationID, summary)
+	for _, g := range mainGroupOrder {
+		fmt.Fprintf(&b, "## %s\n\n", g)
+		for _, line := range mainGroups[g] {
+			b.WriteString(line)
 		}
 		b.WriteString("\n")
 	}
+
+	// The ## Optional section has special semantics in the llms.txt spec:
+	// agents may skip it to save context window budget.
+	if len(optGroupOrder) > 0 {
+		b.WriteString("## Optional\n\n")
+		b.WriteString("> These endpoints are deprecated and will be removed in a future release.\n")
+		b.WriteString("> Prefer the new-generation `/apis/` surface where available.\n\n")
+		for _, g := range optGroupOrder {
+			fmt.Fprintf(&b, "### %s\n\n", g)
+			for _, line := range optGroups[g] {
+				b.WriteString(line)
+			}
+			b.WriteString("\n")
+		}
+	}
+
 	return b.String()
 }
 
+// renderLLMsFullTxt produces a deduplicated index of every operation in the
+// spec — auth context up front, then all operations grouped by tag with
+// per-operation links. Deprecated operations are annotated inline. Agents that
+// need the full parameter/response detail for a specific operation can follow
+// the link to /api-docs/operations/{operationId}.
 func renderLLMsFullTxt(s *apiDocsState) string {
 	var b strings.Builder
 	title := "Grafana HTTP API"
 	if s.spec.Info != nil && s.spec.Info.Title != "" {
 		title = s.spec.Info.Title
 	}
-	fmt.Fprintf(&b, "# %s — Full Operation Reference\n\n", title)
+	fmt.Fprintf(&b, "# %s — Complete Operations Index\n\n", title)
+
+	opBase := s.appURL
+	baseAPI := opBase + "/api/"
+	fmt.Fprintf(&b, "> The Grafana HTTP API is served at `%s`.\n", baseAPI)
+	b.WriteString("> Authenticate with `Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>` or basic auth (`-u admin:password`).\n")
+	b.WriteString("> Full reference: <https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api.md/>\n\n")
+
+	// Group under the first tag only to avoid duplicating entries that carry
+	// multiple tags (e.g. enterprise operations tagged under both a feature tag
+	// and "enterprise").
+	seen := map[string]bool{}
+	byTag := map[string][]*operationEntry{}
+	tagOrder := []string{}
+
 	for _, e := range s.ordered {
-		b.WriteString(renderOperationMarkdown(e))
-		b.WriteString("\n---\n\n")
+		if seen[e.OperationID] {
+			continue
+		}
+		seen[e.OperationID] = true
+
+		tags := e.Tags
+		if len(tags) == 0 {
+			tags = []string{"(untagged)"}
+		}
+		t := tags[0]
+		if _, exists := byTag[t]; !exists {
+			tagOrder = append(tagOrder, t)
+		}
+		byTag[t] = append(byTag[t], e)
 	}
+	sort.Strings(tagOrder)
+
+	for _, t := range tagOrder {
+		fmt.Fprintf(&b, "## %s\n\n", t)
+		for _, e := range byTag[t] {
+			summary := e.Summary
+			if summary == "" {
+				summary = oneLine(e.Description)
+			}
+			dep := ""
+			if e.Operation.Deprecated {
+				dep = " *(deprecated)*"
+			}
+			url := opBase + "/api-docs/operations/" + e.OperationID
+			fmt.Fprintf(&b, "- [%s %s](%s): %s%s\n", e.Method, e.Path, url, summary, dep)
+		}
+		b.WriteString("\n")
+	}
+
 	return b.String()
 }
 
@@ -176,7 +323,7 @@ func (s *apiDocsState) operationHandler(c *contextmodel.ReqContext) response.Res
 	if !ok {
 		return response.Error(http.StatusNotFound, "unknown operationId: "+opID, nil)
 	}
-	return markdownResponse(http.StatusOK, renderOperationMarkdown(entry))
+	return markdownResponse(http.StatusOK, renderOperationMarkdown(entry, s))
 }
 
 func markdownResponse(status int, body string) response.Response {
@@ -256,7 +403,114 @@ func synthesizeOperationID(method, path string) string {
 	return strings.Trim(string(out), "_")
 }
 
-func renderOperationMarkdown(e *operationEntry) string {
+// operationNotes contains agent-facing behavioral warnings for operations
+// whose semantics are non-obvious or dangerous. Keyed by operation ID.
+// Notes are emitted as a ## Caution block before ## Parameters.
+var operationNotes = map[string]string{
+	"setTeamRoles": "**Replace-all**: Overwrites the complete role list for the team. " +
+		"Any role omitted from the request body is removed. " +
+		"Read the current list with `listTeamRoles` first if you want additive changes.",
+	"setUserRoles": "**Replace-all**: Overwrites the complete role list for the user. " +
+		"Any role omitted from the request body is removed. " +
+		"Read the current list with `listUserRoles` first if you want additive changes.",
+	"setRoleAssignments": "**Replace-all**: Overwrites all role assignments for the specified role. " +
+		"Read `getRoleAssignments` first to avoid unintentional removals.",
+	"setResourcePermissions": "**Replace-all**: Replaces all permissions on the resource. " +
+		"Read `getResourcePermissions` first if you want additive changes.",
+	"setResourcePermissionsForTeam":        "**Replace-all**: Replaces all permissions for this resource/team combination.",
+	"setResourcePermissionsForUser":        "**Replace-all**: Replaces all permissions for this resource/user combination.",
+	"setResourcePermissionsForBuiltInRole": "**Replace-all**: Replaces all permissions for this resource/built-in role combination.",
+	"setTeamMemberships": "**Replace-all**: Replaces the entire team membership list. " +
+		"Any member omitted from the request is removed from the team.",
+	"massDeleteAnnotations": "**Irreversible**: Permanently deletes all annotations matching the filter. " +
+		"There is no undo — verify your filter with `getAnnotations` before calling this.",
+	"RoutePutAlertRuleGroup": "**Replace-all**: Replaces the entire alert rule group, including all its rules. " +
+		"Any rule omitted from the request is deleted. " +
+		"Read the current group with `RouteGetAlertRuleGroup` first.",
+	"RoutePutPolicyTree": "**Replace-all**: Replaces the entire notification policy tree. " +
+		"Any route omitted from the request is deleted. " +
+		"Read the current tree with `RouteGetPolicyTree` first.",
+	"updateDashboardPermissionsByUID": "**Replace-all**: Replaces all dashboard permission ACL entries. " +
+		"Any entry omitted from the request is removed.",
+	"updateFolderPermissions": "**Replace-all**: Replaces all folder permission ACL entries. " +
+		"Any entry omitted from the request is removed.",
+	"postDashboard": "**Upsert**: Creates a new dashboard or updates an existing one. " +
+		"Set `overwrite: true` in the body to replace an existing dashboard; " +
+		"omitting it returns a version-conflict error if the dashboard already exists.",
+	"adminDeleteUser": "**Irreversible**: Permanently deletes the user and revokes all their tokens and sessions.",
+}
+
+// relatedOps returns a capped list of operations that are structurally related
+// to e: same-path peers (different HTTP method), the parent collection path,
+// and direct children (one path segment deeper). Capped at 6 to keep pages
+// focused.
+func relatedOps(e *operationEntry, s *apiDocsState) []*operationEntry {
+	var related []*operationEntry
+	seen := map[string]bool{e.OperationID: true}
+
+	add := func(other *operationEntry) bool {
+		if seen[other.OperationID] {
+			return false
+		}
+		seen[other.OperationID] = true
+		related = append(related, other)
+		return len(related) < 6
+	}
+
+	// 1. Same path, different method (e.g. GET and DELETE on the same resource).
+	for _, other := range s.ordered {
+		if other.Path == e.Path {
+			if !add(other) {
+				return related
+			}
+		}
+	}
+
+	// 2. Parent path: strip the last segment (parameter or named) to find the
+	//    collection endpoint (e.g. /teams/{teamId} → /teams).
+	if parent := parentPath(e.Path); parent != "" {
+		for _, other := range s.ordered {
+			if other.Path == parent {
+				if !add(other) {
+					return related
+				}
+			}
+		}
+	}
+
+	// 3. Direct children: paths that extend this path by exactly one segment.
+	for _, other := range s.ordered {
+		if other.Path == e.Path {
+			continue
+		}
+		if !strings.HasPrefix(other.Path, e.Path+"/") {
+			continue
+		}
+		// Only immediate children (no further slash after the appended segment).
+		rest := other.Path[len(e.Path)+1:]
+		if !strings.Contains(rest, "/") {
+			if !add(other) {
+				return related
+			}
+		}
+	}
+
+	return related
+}
+
+// parentPath strips the last path segment, returning "" when the path has no
+// meaningful parent (i.e. it is already a top-level path).
+func parentPath(p string) string {
+	idx := strings.LastIndex(p, "/")
+	if idx <= 0 {
+		return ""
+	}
+	return p[:idx]
+}
+
+// renderOperationMarkdown produces the per-operation markdown page.
+// s is required for base URL, caution notes, and related-operation links.
+func renderOperationMarkdown(e *operationEntry, s *apiDocsState) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "# %s %s\n\n", e.Method, e.Path)
 	if e.Summary != "" {
@@ -273,6 +527,18 @@ func renderOperationMarkdown(e *operationEntry) string {
 		b.WriteString("- Deprecated: yes\n")
 	}
 	b.WriteString("\n")
+
+	// Base URL and auth context — agents fetching this page in isolation need
+	// this to construct a working curl command.
+	opBase := s.appURL
+	fmt.Fprintf(&b, "> Full URL: `%s %s/api%s`\n", e.Method, opBase, e.Path)
+	b.WriteString("> Authenticate with `Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>` or basic auth (`-u admin:password`).\n\n")
+
+	// Caution block for operations with replace-all or irreversible semantics.
+	if note, ok := operationNotes[e.OperationID]; ok {
+		b.WriteString("## Caution\n\n")
+		fmt.Fprintf(&b, "> %s\n\n", note)
+	}
 
 	if len(e.Operation.Parameters) > 0 {
 		b.WriteString("## Parameters\n\n")
@@ -334,6 +600,12 @@ func renderOperationMarkdown(e *operationEntry) string {
 				codes = append(codes, c)
 			}
 			sort.Strings(codes)
+
+			// Track schema refs whose example has already been rendered in
+			// this responses block so we don't repeat the same JSON object
+			// once per error code.
+			renderedExamples := map[string]bool{}
+
 			for _, code := range codes {
 				rref := resps[code]
 				if rref == nil || rref.Value == nil {
@@ -366,8 +638,20 @@ func renderOperationMarkdown(e *operationEntry) string {
 					if media == nil {
 						continue
 					}
+					// Suppress duplicate examples: same schema ref across
+					// multiple error responses would produce identical JSON.
+					schemaKey := refName(media.Schema.Ref)
+					if schemaKey == "" && media.Schema != nil && media.Schema.Value != nil {
+						schemaKey = schemaType(media.Schema.Value)
+					}
+					if schemaKey != "" && renderedExamples[schemaKey] {
+						continue
+					}
 					if ex := exampleJSON(media.Schema); ex != "" {
 						fmt.Fprintf(&b, "\n  Example (`%s`):\n\n  ```json\n%s\n  ```\n", mt, indentBlock(ex, "  "))
+						if schemaKey != "" {
+							renderedExamples[schemaKey] = true
+						}
 					}
 				}
 			}
@@ -383,6 +667,22 @@ func renderOperationMarkdown(e *operationEntry) string {
 			}
 		}
 		b.WriteString("\n")
+	}
+
+	// Related operations: same-path peers, parent collection, direct children.
+	if s != nil {
+		if rel := relatedOps(e, s); len(rel) > 0 {
+			b.WriteString("## Related Operations\n\n")
+			for _, r := range rel {
+				summary := r.Summary
+				if summary == "" {
+					summary = oneLine(r.Description)
+				}
+				url := s.appURL + "/api-docs/operations/" + r.OperationID
+				fmt.Fprintf(&b, "- [%s %s](%s): %s\n", r.Method, r.Path, url, summary)
+			}
+			b.WriteString("\n")
+		}
 	}
 
 	return b.String()

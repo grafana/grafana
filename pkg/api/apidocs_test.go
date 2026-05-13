@@ -13,6 +13,8 @@ import (
 // buildFixtureSpec returns a minimal but representative spec. It exercises
 // operationId, summary, tags, parameters (path + query), request body,
 // responses, an operation missing an operationId, and a deprecated flag.
+// It also includes operation IDs present in curatedOps so the llms.txt tests
+// can verify the curated and Optional sections.
 func buildFixtureSpec(t *testing.T) *openapi3.T {
 	t.Helper()
 
@@ -25,6 +27,7 @@ func buildFixtureSpec(t *testing.T) *openapi3.T {
 					"operationId": "getDashboardByUID",
 					"summary": "Get dashboard by UID",
 					"tags": ["dashboards"],
+					"deprecated": true,
 					"parameters": [
 						{
 							"name": "uid",
@@ -72,6 +75,22 @@ func buildFixtureSpec(t *testing.T) *openapi3.T {
 					},
 					"responses": { "200": { "description": "OK" } }
 				}
+			},
+			"/health": {
+				"get": {
+					"operationId": "getHealth",
+					"summary": "Check instance health",
+					"tags": ["health"],
+					"responses": { "200": { "description": "OK" } }
+				}
+			},
+			"/org": {
+				"get": {
+					"operationId": "getCurrentOrg",
+					"summary": "Get current organisation",
+					"tags": ["orgs"],
+					"responses": { "200": { "description": "OK" } }
+				}
 			}
 		}
 	}`
@@ -86,7 +105,7 @@ func TestBuildAPIDocsState(t *testing.T) {
 	doc := buildFixtureSpec(t)
 	s := buildAPIDocsState(doc)
 
-	assert.Len(t, s.ordered, 4, "expect 4 operations across 3 paths")
+	assert.Len(t, s.ordered, 6, "expect 6 operations across 5 paths")
 
 	for _, e := range s.ordered {
 		assert.NotEmpty(t, e.OperationID, "every operation should end up with an id")
@@ -97,6 +116,8 @@ func TestBuildAPIDocsState(t *testing.T) {
 	assert.Contains(t, s.ops, "getDashboardByUID")
 	assert.Contains(t, s.ops, "searchDashboards")
 	assert.Contains(t, s.ops, "createDashboard")
+	assert.Contains(t, s.ops, "getHealth")
+	assert.Contains(t, s.ops, "getCurrentOrg")
 
 	// The DELETE on /dashboards/uid/{uid} has no operationId; ensure one was synthesized.
 	found := false
@@ -113,18 +134,31 @@ func TestBuildAPIDocsState(t *testing.T) {
 func TestRenderOperationMarkdown(t *testing.T) {
 	doc := buildFixtureSpec(t)
 	s := buildAPIDocsState(doc)
+	s.appURL = "https://grafana.example.com"
 
-	md := renderOperationMarkdown(s.ops["getDashboardByUID"])
+	md := renderOperationMarkdown(s.ops["getDashboardByUID"], s)
 
 	assert.True(t, strings.HasPrefix(md, "# GET /dashboards/uid/{uid}"), "header line wrong: %q", md[:40])
 	assert.Contains(t, md, "Get dashboard by UID")
 	assert.Contains(t, md, "Operation ID: `getDashboardByUID`")
 	assert.Contains(t, md, "Tags: dashboards")
+
+	// Base URL blockquote must appear on every operation page.
+	assert.Contains(t, md, "> Full URL: `GET https://grafana.example.com/api/dashboards/uid/{uid}`")
+	assert.Contains(t, md, "> Authenticate with `Authorization: Bearer")
+
 	assert.Contains(t, md, "## Parameters")
 	assert.Contains(t, md, "`uid` (path, string, required): The dashboard UID")
 	assert.Contains(t, md, "## Responses")
 	assert.Contains(t, md, "`200`: OK")
 	assert.Contains(t, md, "`404`: Not found")
+
+	// Related operations: the DELETE on the same path should appear.
+	assert.Contains(t, md, "## Related Operations")
+	assert.Contains(t, md, "/api-docs/operations/")
+
+	// Deprecated GET should show the deprecated flag.
+	assert.Contains(t, md, "Deprecated: yes")
 
 	// Deprecated DELETE should call that out and not show a request body.
 	var deleteEntry *operationEntry
@@ -135,44 +169,150 @@ func TestRenderOperationMarkdown(t *testing.T) {
 		}
 	}
 	require.NotNil(t, deleteEntry)
-	mdDel := renderOperationMarkdown(deleteEntry)
+	mdDel := renderOperationMarkdown(deleteEntry, s)
 	assert.Contains(t, mdDel, "Deprecated: yes")
 	assert.NotContains(t, mdDel, "## Request Body")
 
 	// POST should show the request body block.
-	mdCreate := renderOperationMarkdown(s.ops["createDashboard"])
+	mdCreate := renderOperationMarkdown(s.ops["createDashboard"], s)
 	assert.Contains(t, mdCreate, "## Request Body")
 	assert.Contains(t, mdCreate, "Required.")
 	assert.Contains(t, mdCreate, "Content-Type: `application/json`")
 }
 
+func TestRenderOperationMarkdownCautionAndRelated(t *testing.T) {
+	// Build a minimal spec that exercises the caution note and related-ops logic.
+	const raw = `{
+		"openapi": "3.0.0",
+		"info": { "title": "T", "version": "1" },
+		"paths": {
+			"/teams": {
+				"get": {
+					"operationId": "searchTeams",
+					"summary": "Search teams",
+					"tags": ["teams"],
+					"responses": { "200": { "description": "OK" } }
+				},
+				"post": {
+					"operationId": "createTeam",
+					"summary": "Create team",
+					"tags": ["teams"],
+					"responses": { "200": { "description": "OK" } }
+				}
+			},
+			"/teams/{teamId}": {
+				"get": {
+					"operationId": "getTeamByID",
+					"summary": "Get team by ID",
+					"tags": ["teams"],
+					"responses": { "200": { "description": "OK" } }
+				}
+			},
+			"/teams/{teamId}/roles": {
+				"put": {
+					"operationId": "setTeamRoles",
+					"summary": "Set team roles",
+					"tags": ["teams"],
+					"responses": { "200": { "description": "OK" } }
+				}
+			}
+		}
+	}`
+
+	loader := openapi3.NewLoader()
+	doc, err := loader.LoadFromData([]byte(raw))
+	require.NoError(t, err)
+	s := buildAPIDocsState(doc)
+	s.appURL = "https://grafana.example.com"
+
+	// setTeamRoles should have a Caution block.
+	md := renderOperationMarkdown(s.ops["setTeamRoles"], s)
+	assert.Contains(t, md, "## Caution")
+	assert.Contains(t, md, "Replace-all")
+
+	// getTeamByID: parent is /teams (searchTeams + createTeam), child is /teams/{teamId}/roles.
+	mdGet := renderOperationMarkdown(s.ops["getTeamByID"], s)
+	assert.Contains(t, mdGet, "## Related Operations")
+	assert.Contains(t, mdGet, "/api-docs/operations/searchTeams")
+	assert.Contains(t, mdGet, "/api-docs/operations/createTeam")
+	assert.Contains(t, mdGet, "/api-docs/operations/setTeamRoles")
+
+	// searchTeams: no caution, but createTeam (same path) should be related.
+	mdSearch := renderOperationMarkdown(s.ops["searchTeams"], s)
+	assert.NotContains(t, mdSearch, "## Caution")
+	assert.Contains(t, mdSearch, "## Related Operations")
+	assert.Contains(t, mdSearch, "/api-docs/operations/createTeam")
+}
+
 func TestRenderLLMsTxt(t *testing.T) {
 	doc := buildFixtureSpec(t)
 	s := buildAPIDocsState(doc)
+	s.appURL = "https://grafana.example.com"
 	md := renderLLMsTxt(s)
 
+	// Header and required blockquote (llms.txt spec compliance).
 	assert.Contains(t, md, "# Grafana Test API")
-	assert.Contains(t, md, "## Discovery")
-	assert.Contains(t, md, "(/api-docs/index.json)")
-	assert.Contains(t, md, "(/llms-full.txt)")
+	assert.Contains(t, md, "> The Grafana HTTP API is served at `https://grafana.example.com/api/`.")
+	assert.Contains(t, md, "> Authenticate with `Authorization: Bearer")
+	assert.Contains(t, md, "grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/")
 
-	// Operations bucketed under their tag with markdown links.
-	assert.Contains(t, md, "## dashboards")
-	assert.Contains(t, md, "## search")
-	assert.Contains(t, md, "(/api-docs/operations/searchDashboards)")
-	assert.Contains(t, md, "(/api-docs/operations/getDashboardByUID)")
+	// Discovery section with absolute URLs.
+	assert.Contains(t, md, "## Discovery")
+	assert.Contains(t, md, "(https://grafana.example.com/api-docs/index.json)")
+	assert.Contains(t, md, "(https://grafana.example.com/llms-full.txt)")
+
+	// Curated ops appear under their workflow group with absolute links.
+	assert.Contains(t, md, "## Health & Discovery")
+	assert.Contains(t, md, "(https://grafana.example.com/api-docs/operations/getHealth)")
+	assert.Contains(t, md, "## Organization")
+	assert.Contains(t, md, "(https://grafana.example.com/api-docs/operations/getCurrentOrg)")
+
+	// Deprecated ops land in ## Optional, not in the main body.
+	assert.Contains(t, md, "## Optional")
+	assert.Contains(t, md, "### Dashboard CRUD (legacy")
+	assert.Contains(t, md, "(https://grafana.example.com/api-docs/operations/getDashboardByUID)")
+
+	// searchDashboards is not in the curated list — must NOT appear in llms.txt.
+	assert.NotContains(t, md, "/api-docs/operations/searchDashboards")
+}
+
+func TestRenderLLMsTxtFallbackRelativeURLs(t *testing.T) {
+	doc := buildFixtureSpec(t)
+	s := buildAPIDocsState(doc)
+	// appURL left empty: links should be relative (no hostname prefix).
+	md := renderLLMsTxt(s)
+
+	assert.Contains(t, md, "> The Grafana HTTP API is served at `/api/`.")
+	assert.Contains(t, md, "(/api-docs/index.json)")
+	assert.Contains(t, md, "(/api-docs/operations/getHealth)")
 }
 
 func TestRenderLLMsFullTxt(t *testing.T) {
 	doc := buildFixtureSpec(t)
 	s := buildAPIDocsState(doc)
+	s.appURL = "https://grafana.example.com"
 	md := renderLLMsFullTxt(s)
 
-	assert.Contains(t, md, "Grafana Test API")
-	assert.Contains(t, md, "# GET /dashboards/uid/{uid}")
-	assert.Contains(t, md, "# GET /search")
-	assert.Contains(t, md, "# POST /dashboards/db")
-	assert.True(t, strings.Count(md, "\n---\n") >= 4, "expect a separator after each of the 4 operations")
+	// Header and auth blockquote.
+	assert.Contains(t, md, "# Grafana Test API — Complete Operations Index")
+	assert.Contains(t, md, "> The Grafana HTTP API is served at `https://grafana.example.com/api/`.")
+	assert.Contains(t, md, "> Authenticate with `Authorization: Bearer")
+
+	// All operations appear as index entries (not as full ## GET /path docs).
+	assert.Contains(t, md, "/api-docs/operations/getDashboardByUID")
+	assert.Contains(t, md, "/api-docs/operations/searchDashboards")
+	assert.Contains(t, md, "/api-docs/operations/getHealth")
+
+	// Full operation markdown headers must NOT be present — this is an index.
+	assert.NotContains(t, md, "# GET /dashboards/uid/{uid}")
+	assert.NotContains(t, md, "# GET /search")
+	assert.NotContains(t, md, "\n---\n")
+
+	// Deprecated operations are annotated inline.
+	assert.Contains(t, md, "*(deprecated)*")
+
+	// Each operation should appear only once (deduplication).
+	assert.Equal(t, 1, strings.Count(md, "/api-docs/operations/getDashboardByUID"), "getDashboardByUID should appear exactly once")
 }
 
 func TestApiDocsManifestShape(t *testing.T) {
@@ -202,7 +342,7 @@ func TestApiDocsManifestShape(t *testing.T) {
 	assert.Equal(t, "Grafana Test API", round["title"])
 	ops, ok := round["operations"].([]any)
 	require.True(t, ok)
-	assert.Len(t, ops, 4)
+	assert.Len(t, ops, 6)
 }
 
 func TestExampleJSON(t *testing.T) {
@@ -278,7 +418,7 @@ func TestRenderOperationMarkdownIncludesExamples(t *testing.T) {
 	doc := buildFixtureSpec(t)
 	s := buildAPIDocsState(doc)
 
-	md := renderOperationMarkdown(s.ops["createDashboard"])
+	md := renderOperationMarkdown(s.ops["createDashboard"], s)
 	assert.Contains(t, md, "## Request Body")
 	assert.Contains(t, md, "Example:")
 	assert.Contains(t, md, "```json")
