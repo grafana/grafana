@@ -41,7 +41,6 @@ func TestIntegrationRemoteAlertmanagerConfigUpload(t *testing.T) {
 			"alertmanagerRemotePrimary",
 			"alertingMultiplePolicies",
 			"alertingImportAlertmanagerAPI",
-			"alerting.disableV0ReceiverConversion",
 		},
 		RemoteAlertmanagerURL: mimirEndpoint,
 	})
@@ -76,16 +75,13 @@ route:
   group_wait: 10s
   group_interval: 10s
   repeat_interval: 1h
-  receiver: extra-slack
+  receiver: extra-webhook
 
 receivers:
-- name: extra-slack
-  slack_configs:
-  - api_url: 'http://localhost/slack'
-    channel: '#alerts'
-    title: 'Alerts'
+- name: extra-webhook
+  webhook_configs:
+  - url: 'http://localhost'
 `
-
 	headers := map[string]string{
 		"Content-Type":                         "application/yaml",
 		"X-Grafana-Alerting-Config-Identifier": "external-system",
@@ -121,11 +117,9 @@ receivers:
 		case "empty":
 			foundDefault = true
 			require.Len(t, receiver.GrafanaManagedReceivers, 0)
-		case "extra-slack":
+		case "extra-webhook":
 			foundExtraSlack = true
-			require.Len(t, receiver.SlackConfigs, 1)
-			require.NotNil(t, receiver.SlackConfigs[0].APIURL)
-			require.Equal(t, "#alerts", receiver.SlackConfigs[0].Channel)
+			require.Len(t, receiver.GrafanaManagedReceivers, 1)
 		}
 	}
 	require.True(t, foundDefault, "Default receiver not found")
@@ -158,7 +152,6 @@ func TestIntegrationRemoteAlertmanagerHistoricalConfigActivation(t *testing.T) {
 			"alertmanagerRemotePrimary",
 			"alertingMultiplePolicies",
 			"alertingImportAlertmanagerAPI",
-			"alerting.disableV0ReceiverConversion",
 		},
 		RemoteAlertmanagerURL: mimirEndpoint,
 	})
@@ -181,13 +174,12 @@ route:
   group_wait: 10s
   group_interval: 10s
   repeat_interval: 1h
-  receiver: old-slack
+  receiver: old-webhook
 
 receivers:
-- name: old-slack
-  slack_configs:
-  - api_url: 'http://localhost/slack'
-    channel: '#alerts'
+- name: old-webhook
+  webhook_configs:
+  - url: 'http://localhost'
 `
 
 	headers := map[string]string{
@@ -232,9 +224,9 @@ receivers:
 
 	found := false
 	for _, receiver := range receivers {
-		if receiver.Name == "old-slack" {
+		if receiver.Name == "old-webhook" {
 			found = true
-			require.Len(t, receiver.SlackConfigs, 1)
+			require.Len(t, receiver.GrafanaManagedReceivers, 1)
 			break
 		}
 	}
