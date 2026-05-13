@@ -7,13 +7,16 @@ export interface UserSuggestion {
   avatarUrl?: string;
 }
 
-interface UserSearchResponse {
-  users: Array<{
-    id: number;
+interface OrgUsersSearchResponse {
+  orgUsers: Array<{
+    userId: number;
     login: string;
     name?: string;
     avatarUrl?: string;
   }>;
+  totalCount?: number;
+  page?: number;
+  perPage?: number;
 }
 
 interface SearchUsersOptions {
@@ -23,10 +26,12 @@ interface SearchUsersOptions {
 }
 
 /**
- * searchUsers hits the existing legacy users-search endpoint. We
- * intentionally use the legacy /api/users/search rather than building a
- * dedicated mention search so that orgs that have customized user
- * visibility get the same result here as elsewhere in Grafana.
+ * searchUsers hits /api/org/users/search — the org-scoped user search.
+ * The global /api/users/search route is gated behind the global
+ * `users:read` permission (Grafana Server Admin only), so Org Admins
+ * and below see a 403 there. The org-scoped endpoint is gated behind
+ * `org.users:read`, which any role with org membership can be granted,
+ * so it is the right surface for @-mention pickers inside an org.
  *
  * The optional AbortSignal lets callers cancel a stale debounced
  * request: getBackendSrv doesn't accept AbortSignal directly, so we
@@ -44,25 +49,25 @@ export async function searchUsers(query: string, options: SearchUsersOptions = {
     return [];
   }
   const { signal, excludeUserId } = options;
-  const url = new URL('/api/users/search', window.location.origin);
+  const url = new URL('/api/org/users/search', window.location.origin);
   url.searchParams.set('perpage', excludeUserId ? '11' : '10');
   url.searchParams.set('page', '1');
   url.searchParams.set('query', trimmed);
 
-  const data = await getBackendSrv().get<UserSearchResponse>(url.pathname + url.search, undefined, undefined, {
+  const data = await getBackendSrv().get<OrgUsersSearchResponse>(url.pathname + url.search, undefined, undefined, {
     showErrorAlert: false,
   });
   if (signal?.aborted) {
     return [];
   }
-  if (!data) {
+  if (!data || !Array.isArray(data.orgUsers)) {
     return [];
   }
-  const users = data.users
-    .filter((u) => excludeUserId === undefined || u.id !== excludeUserId)
+  const users = data.orgUsers
+    .filter((u) => excludeUserId === undefined || u.userId !== excludeUserId)
     .slice(0, 10)
     .map((u) => ({
-      id: u.id,
+      id: u.userId,
       login: u.login,
       name: u.name,
       avatarUrl: u.avatarUrl,
