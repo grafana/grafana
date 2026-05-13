@@ -26,7 +26,7 @@ jobs:
         id: generate_token
         uses: grafana/shared-workflows/actions/create-github-app-token@ae92934a14a48b94494dbc06d74a81d47fe08a40 # create-github-app-token/v0.2.2
         with:
-          github_app: ephemeral-instances-bot
+          github_app: grafana-delivery-bot
 
       - name: Dispatch (comment)
         if: github.event_name == 'issue_comment'

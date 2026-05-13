@@ -85,6 +85,9 @@ type IndexMeta struct {
 	// Zero-value means "unknown"; readers must not treat it as a freshness
 	// signal.
 	BuildTime time.Time `json:"build_time,omitempty"`
+	// IndexFormat identifies the Bleve segment format that wrote this snapshot
+	// (for example, "zap/16"). Empty on legacy snapshots means "unknown, assume compatible".
+	IndexFormat string `json:"index_format,omitempty"`
 	// LatestResourceVersion is the latest resource version included in the index.
 	LatestResourceVersion int64 `json:"latest_resource_version"`
 	// Files maps relative file paths to their sizes in bytes.

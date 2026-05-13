@@ -10856,6 +10856,16 @@
   },
   "home": {
     "home-page": {
+      "edition": {
+        "cloud": "",
+        "enterprise": "",
+        "open-source": ""
+      },
+      "greeting": {
+        "afternoon": "",
+        "evening": "",
+        "morning": ""
+      },
       "placeholder": ""
     }
   },
@@ -14837,9 +14847,6 @@
       "home-dashboard-placeholder": "Dashboard predefinito",
       "language-preference-label": "Lingua",
       "language-preference-placeholder": "Scegli lingua",
-      "locale-preference-description": "Scegli la tua regione per visualizzare la data, l'ora e il formato numerico corrispondenti",
-      "locale-preference-label": "Formato regione",
-      "locale-preference-placeholder": "Scegli regione",
       "theme-description": "Ti piacciono i temi sperimentali? Dicci cosa ti piacerebbe vedere <2>qui.</2>",
       "theme-label": "Tema dell'interfaccia",
       "week-start-label": "Inizio settimana"
