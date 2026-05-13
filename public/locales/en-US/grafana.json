@@ -4440,13 +4440,11 @@
       "empty": {
         "all": "No threads in this folder yet",
         "all-hint": "Use threads to discuss the dashboards in this folder. Mention dashboards with #name and teammates with @name.",
+        "error": "Couldn't load Pulse threads",
+        "error-hint": "Something went wrong while fetching threads. Please refresh and try again.",
         "filtered": "No matching threads",
         "filtered-hint": "Try clearing the search, user, status, or scope filters.",
         "start": "Start the first thread"
-      },
-      "error": {
-        "message": "Something went wrong while fetching threads. Please refresh and try again.",
-        "title": "Failed to load Pulse threads"
       },
       "filter-user-all": "All users",
       "filter-user-fallback": "User #{{id}}",

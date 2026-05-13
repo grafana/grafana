@@ -229,6 +229,35 @@ describe('FolderPulseContent', () => {
     expect(within(dialog).getByLabelText('Thread title')).toBeInTheDocument();
   });
 
+  it('falls back to the empty state on load failure (no scary red banner)', () => {
+    // RTK Query exposes a populated `error` field on failed requests.
+    // The page should treat the failure as a no-data state visually —
+    // same illustrated EmptyState the dashboard drawer uses — and
+    // surface the failure in the body copy rather than as a separate
+    // Alert above the list.
+    useListThreadsQueryMock.mockReturnValue({
+      data: undefined,
+      error: { status: 400, data: 'invalid resource kind' },
+      isLoading: false,
+      isFetching: false,
+    });
+
+    renderContent();
+
+    expect(screen.getByText("Couldn't load Pulse threads")).toBeInTheDocument();
+    expect(
+      screen.getByText('Something went wrong while fetching threads. Please refresh and try again.')
+    ).toBeInTheDocument();
+    // Error state must not offer the "Start the first thread" CTA —
+    // we don't know whether the folder is empty or whether the API
+    // refused us, so the safer affordance is the toolbar's "New thread"
+    // button (still rendered above).
+    expect(screen.queryByRole('button', { name: 'Start the first thread' })).not.toBeInTheDocument();
+    // No raw Alert role: the old behavior put an `alert` element above
+    // the empty state; the new behavior should not.
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
   it('renders the thread view when a ?pulse=thread-<uid> deep link is present', () => {
     // The deep link resolves through the standalone getThread query
     // because the thread is not in the (empty) listThreads result set.

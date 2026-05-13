@@ -440,34 +440,31 @@ export function FolderPulseContent({ folderUID }: FolderPulseContentProps) {
         </Button>
       </div>
 
-      {Boolean(error) && (
-        <Alert
-          severity="error"
-          title={t('browse-dashboards.folder-pulse.error.title', 'Failed to load Pulse threads')}
-        >
-          {t(
-            'browse-dashboards.folder-pulse.error.message',
-            'Something went wrong while fetching threads. Please refresh and try again.'
-          )}
-        </Alert>
-      )}
-
       {isLoading && !data && (
         <Box padding={4}>
           <LoadingPlaceholder text={t('browse-dashboards.folder-pulse.loading', 'Loading threads…')} />
         </Box>
       )}
 
-      {!isLoading && threads.length === 0 && !error && (
+      {!isLoading && threads.length === 0 && (
+        // The empty-state carries three distinct cases — filtered miss,
+        // unfiltered (nothing in the folder yet), and load failure —
+        // through one component so the page never trades the illustrated
+        // empty state for a bare red banner. Mirrors PulseDrawerContent,
+        // which similarly treats "no data" as one visual surface
+        // regardless of whether the cause was a successful empty
+        // response or a failed request.
         <EmptyState
           variant="not-found"
           message={
-            hasActiveFilters
-              ? t('browse-dashboards.folder-pulse.empty.filtered', 'No matching threads')
-              : t('browse-dashboards.folder-pulse.empty.all', 'No threads in this folder yet')
+            error
+              ? t('browse-dashboards.folder-pulse.empty.error', "Couldn't load Pulse threads")
+              : hasActiveFilters
+                ? t('browse-dashboards.folder-pulse.empty.filtered', 'No matching threads')
+                : t('browse-dashboards.folder-pulse.empty.all', 'No threads in this folder yet')
           }
           button={
-            !hasActiveFilters ? (
+            !hasActiveFilters && !error ? (
               <Button icon="plus" onClick={() => setComposing(true)}>
                 {t('browse-dashboards.folder-pulse.empty.start', 'Start the first thread')}
               </Button>
@@ -475,7 +472,11 @@ export function FolderPulseContent({ folderUID }: FolderPulseContentProps) {
           }
         >
           <Text color="secondary">
-            {hasActiveFilters ? (
+            {error ? (
+              <Trans i18nKey="browse-dashboards.folder-pulse.empty.error-hint">
+                Something went wrong while fetching threads. Please refresh and try again.
+              </Trans>
+            ) : hasActiveFilters ? (
               <Trans i18nKey="browse-dashboards.folder-pulse.empty.filtered-hint">
                 Try clearing the search, user, status, or scope filters.
               </Trans>
