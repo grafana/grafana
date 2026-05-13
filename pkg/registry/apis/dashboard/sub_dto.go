@@ -106,10 +106,18 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 			return
 		}
 
-		logger := logging.FromContext(ctx).With("logger", "dto-connector")
-		access := &dashboard.DashboardAccess{}
-		folder := obj.GetFolder()
-		ns := obj.GetNamespace()
+		if name == HOME_DASHBOARD_NAME {
+			dash, err := r.builder(rawobj, &dashboard.DashboardAccess{
+				Slug: "home",
+				Url:  dashboards.GetDashboardFolderURL(false, name, "home"),
+			})
+			if err != nil {
+				responder.Error(err)
+			} else {
+				responder.Object(http.StatusOK, dash)
+			}
+			return
+		}
 
 		authInfo, ok := authlib.AuthInfoFrom(ctx)
 		if !ok {
@@ -117,96 +125,96 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 			return
 		}
 
+		logger := logging.FromContext(ctx).With("logger", "dto-connector")
+		access := &dashboard.DashboardAccess{}
+		folder := obj.GetFolder()
 		gvr := dashv1.DashboardResourceInfo.GroupVersionResource()
 
-		checkAccess := name != HOME_DASHBOARD_NAME
-		if checkAccess {
-			checkRes, err := r.accessClient.BatchCheck(ctx, authInfo, authlib.BatchCheckRequest{
-				Namespace: ns,
-				Checks: []authlib.BatchCheckItem{
-					{
-						CorrelationID: "dash_read",
-						Verb:          utils.VerbGet,
-						Group:         gvr.Group,
-						Resource:      gvr.Resource,
-						Name:          name,
-						Folder:        folder,
-					},
-					{
-						CorrelationID: "dash_write",
-						Verb:          utils.VerbUpdate,
-						Group:         gvr.Group,
-						Resource:      gvr.Resource,
-						Name:          name,
-						Folder:        folder,
-					},
-					{
-						CorrelationID: "dash_delete",
-						Verb:          utils.VerbDelete,
-						Group:         gvr.Group,
-						Resource:      gvr.Resource,
-						Name:          name,
-						Folder:        folder,
-					},
-					{
-						CorrelationID: "dash_admin",
-						Verb:          utils.VerbSetPermissions,
-						Group:         gvr.Group,
-						Resource:      gvr.Resource,
-						Name:          name,
-						Folder:        folder,
-					},
-					{
-						CorrelationID: "annot_create",
-						Verb:          utils.VerbCreate,
-						Group:         gvr.Group,
-						Resource:      gvr.Resource,
-						Subresource:   "annotations",
-						Name:          name,
-						Folder:        folder,
-					},
-					{
-						CorrelationID: "annot_update",
-						Verb:          utils.VerbUpdate,
-						Group:         gvr.Group,
-						Resource:      gvr.Resource,
-						Subresource:   "annotations",
-						Name:          name,
-						Folder:        folder,
-					},
-					{
-						CorrelationID: "annot_delete",
-						Verb:          utils.VerbDelete,
-						Group:         gvr.Group,
-						Resource:      gvr.Resource,
-						Subresource:   "annotations",
-						Name:          name,
-						Folder:        folder,
-					},
+		checkRes, err := r.accessClient.BatchCheck(ctx, authInfo, authlib.BatchCheckRequest{
+			Namespace: obj.GetNamespace(),
+			Checks: []authlib.BatchCheckItem{
+				{
+					CorrelationID: "dash_read",
+					Verb:          utils.VerbGet,
+					Group:         gvr.Group,
+					Resource:      gvr.Resource,
+					Name:          name,
+					Folder:        folder,
 				},
-			})
-			if err != nil {
-				logger.Warn("Failed to batch check permissions", "err", err)
-				responder.Error(fmt.Errorf("failed to check permissions"))
-				return
-			}
-
-			if !checkRes.Results["dash_read"].Allowed {
-				responder.Error(fmt.Errorf("not allowed to view"))
-				return
-			}
-
-			access.CanStar = user.IsIdentityType(authlib.TypeUser)
-			access.CanSave = checkRes.Results["dash_write"].Allowed
-			access.CanEdit = checkRes.Results["dash_write"].Allowed
-			access.CanDelete = checkRes.Results["dash_delete"].Allowed
-			access.CanAdmin = checkRes.Results["dash_admin"].Allowed
-			access.AnnotationsPermissions = &dashboard.AnnotationPermission{Dashboard: dashboard.AnnotationActions{
-				CanAdd:    checkRes.Results["annot_create"].Allowed,
-				CanEdit:   checkRes.Results["annot_update"].Allowed,
-				CanDelete: checkRes.Results["annot_delete"].Allowed,
-			}}
+				{
+					CorrelationID: "dash_write",
+					Verb:          utils.VerbUpdate,
+					Group:         gvr.Group,
+					Resource:      gvr.Resource,
+					Name:          name,
+					Folder:        folder,
+				},
+				{
+					CorrelationID: "dash_delete",
+					Verb:          utils.VerbDelete,
+					Group:         gvr.Group,
+					Resource:      gvr.Resource,
+					Name:          name,
+					Folder:        folder,
+				},
+				{
+					CorrelationID: "dash_admin",
+					Verb:          utils.VerbSetPermissions,
+					Group:         gvr.Group,
+					Resource:      gvr.Resource,
+					Name:          name,
+					Folder:        folder,
+				},
+				{
+					CorrelationID: "annot_create",
+					Verb:          utils.VerbCreate,
+					Group:         gvr.Group,
+					Resource:      gvr.Resource,
+					Subresource:   "annotations",
+					Name:          name,
+					Folder:        folder,
+				},
+				{
+					CorrelationID: "annot_update",
+					Verb:          utils.VerbUpdate,
+					Group:         gvr.Group,
+					Resource:      gvr.Resource,
+					Subresource:   "annotations",
+					Name:          name,
+					Folder:        folder,
+				},
+				{
+					CorrelationID: "annot_delete",
+					Verb:          utils.VerbDelete,
+					Group:         gvr.Group,
+					Resource:      gvr.Resource,
+					Subresource:   "annotations",
+					Name:          name,
+					Folder:        folder,
+				},
+			},
+		})
+		if err != nil {
+			logger.Warn("Failed to batch check permissions", "err", err)
+			responder.Error(fmt.Errorf("failed to check permissions"))
+			return
 		}
+
+		if !checkRes.Results["dash_read"].Allowed {
+			responder.Error(fmt.Errorf("not allowed to view"))
+			return
+		}
+
+		access.CanStar = user.IsIdentityType(authlib.TypeUser)
+		access.CanSave = checkRes.Results["dash_write"].Allowed
+		access.CanEdit = checkRes.Results["dash_write"].Allowed
+		access.CanDelete = checkRes.Results["dash_delete"].Allowed
+		access.CanAdmin = checkRes.Results["dash_admin"].Allowed
+		access.AnnotationsPermissions = &dashboard.AnnotationPermission{Dashboard: dashboard.AnnotationActions{
+			CanAdd:    checkRes.Results["annot_create"].Allowed,
+			CanEdit:   checkRes.Results["annot_update"].Allowed,
+			CanDelete: checkRes.Results["annot_delete"].Allowed,
+		}}
 
 		title := obj.FindTitle("")
 		access.Slug = slugify.Slugify(title)
