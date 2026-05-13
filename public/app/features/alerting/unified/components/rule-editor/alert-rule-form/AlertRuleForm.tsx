@@ -45,7 +45,7 @@ import {
 import { alertingApi } from '../../../api/alertingApi';
 import { shouldUseRulesAPIV2 } from '../../../featureToggles';
 import { useAddRuleToRuleGroup, useUpdateRuleInRuleGroup } from '../../../hooks/ruleGroup/useUpsertRuleFromRuleGroup';
-import { useSaveUngroupedGrafanaRule } from '../../../hooks/useSaveUngroupedGrafanaRule';
+import { useUpsertUngroupedGrafanaRule } from '../../../hooks/useUpsertUngroupedGrafanaRule';
 import {
   defaultFormValuesForRuleType,
   formValuesFromExistingRule,
@@ -99,7 +99,7 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
 
   const [addRuleToRuleGroup] = useAddRuleToRuleGroup();
   const [updateRuleInRuleGroup] = useUpdateRuleInRuleGroup();
-  const saveUngroupedGrafanaRule = useSaveUngroupedGrafanaRule();
+  const upsertUngroupedGrafanaRule = useUpsertUngroupedGrafanaRule();
 
   const ruleType = translateRouteParamToRuleType(routeParams.type);
 
@@ -225,7 +225,7 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
         }
 
         const existingUid = existing ? getRuleUID(existing.rule) : undefined;
-        const savedUid = await saveUngroupedGrafanaRule({ values, existingUid });
+        const savedUid = await upsertUngroupedGrafanaRule({ values, existingUid });
 
         dispatch(alertingApi.util.invalidateTags(legacyRuleCacheTagsForUid(savedUid)));
         notifyApp.success(

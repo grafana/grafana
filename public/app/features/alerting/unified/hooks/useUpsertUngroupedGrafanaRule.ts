@@ -19,7 +19,7 @@ type SaveArgs = {
   existingUid: string | undefined;
 };
 
-export function useSaveUngroupedGrafanaRule() {
+export function useUpsertUngroupedGrafanaRule() {
   const [createAlertRule] = useCreateAlertRuleMutation();
   const [replaceAlertRule] = useReplaceAlertRuleMutation();
   const [createRecordingRule] = useCreateRecordingRuleMutation();
