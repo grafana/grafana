@@ -13,7 +13,7 @@ import {
   type TimeRange,
 } from '@grafana/data';
 
-import * as legacyApiUsage from '../analytics/legacyDashboardApiUsage';
+import { reportLegacyDashboardApiUsage } from '../analytics/legacyDashboardApiUsage';
 
 /**
  * Called when a dashboard is refreshed
@@ -51,23 +51,23 @@ export class CopyPanelEvent extends BusEventWithPayload<PanelModel> {
   static type = 'copy-panel';
 }
 
-const LEGACY_EVENT_API_NAMES: Record<string, string> = {
-  [RefreshEvent.type]: 'RefreshEvent.subscribe',
-  [TimeRangeUpdatedEvent.type]: 'TimeRangeUpdatedEvent.subscribe',
-  [CopyPanelEvent.type]: 'CopyPanelEvent.subscribe',
+const LEGACY_EVENT_TYPES: Record<string, string> = {
+  [RefreshEvent.type]: 'RefreshEvent',
+  [TimeRangeUpdatedEvent.type]: 'TimeRangeUpdatedEvent',
+  [CopyPanelEvent.type]: 'CopyPanelEvent',
 };
 
-function reportIfLegacy(staticType: string | undefined): void {
+function reportIfLegacy(staticType: string | undefined, method: 'subscribe' | 'getStream'): void {
   if (!staticType) {
     return;
   }
-  const apiName = LEGACY_EVENT_API_NAMES[staticType];
-  if (!apiName) {
+  const eventName = LEGACY_EVENT_TYPES[staticType];
+  if (!eventName) {
     return;
   }
-  legacyApiUsage.reportLegacyDashboardApiUsage({
+  reportLegacyDashboardApiUsage({
     pluginId: resolvePluginIdFromStack(new Error().stack),
-    apiName,
+    apiName: `${eventName}.${method}`,
     extra: { eventType: staticType },
   });
 }
@@ -77,13 +77,13 @@ function wrapBus(bus: EventBus): EventBus {
     get(target, prop, receiver) {
       if (prop === 'subscribe') {
         return function <T extends BusEvent>(typeFilter: BusEventType<T>, handler: BusEventHandler<T>): Unsubscribable {
-          reportIfLegacy(typeFilter?.type);
+          reportIfLegacy(typeFilter?.type, 'subscribe');
           return target.subscribe(typeFilter, handler);
         };
       }
       if (prop === 'getStream') {
         return function <T extends BusEvent>(eventType: BusEventType<T>): Observable<T> {
-          reportIfLegacy(eventType?.type);
+          reportIfLegacy(eventType?.type, 'getStream');
           return target.getStream(eventType);
         };
       }
