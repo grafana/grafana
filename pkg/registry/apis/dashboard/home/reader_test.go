@@ -162,7 +162,7 @@ func TestHasCustomHome(t *testing.T) {
 
 	t.Run("returns false when the static home.json matches the embedded default", func(t *testing.T) {
 		root := t.TempDir()
-		require.NoError(t, os.MkdirAll(filepath.Join(root, "dashboards"), 0o755))
+		require.NoError(t, os.MkdirAll(filepath.Join(root, "dashboards"), 0750))
 		require.NoError(t, os.WriteFile(
 			filepath.Join(root, "dashboards/home.json"),
 			defaultHomeDashboardJSON,
@@ -175,7 +175,7 @@ func TestHasCustomHome(t *testing.T) {
 
 	t.Run("returns true when the static home.json differs from the embedded default", func(t *testing.T) {
 		root := t.TempDir()
-		require.NoError(t, os.MkdirAll(filepath.Join(root, "dashboards"), 0o755))
+		require.NoError(t, os.MkdirAll(filepath.Join(root, "dashboards"), 0750))
 		require.NoError(t, os.WriteFile(
 			filepath.Join(root, "dashboards/home.json"),
 			[]byte(`{"title":"custom"}`),
@@ -190,7 +190,7 @@ func TestHasCustomHome(t *testing.T) {
 		// Even when the static file matches the embedded default, an explicit
 		// override flips the answer to true.
 		root := t.TempDir()
-		require.NoError(t, os.MkdirAll(filepath.Join(root, "dashboards"), 0o755))
+		require.NoError(t, os.MkdirAll(filepath.Join(root, "dashboards"), 0750))
 		require.NoError(t, os.WriteFile(
 			filepath.Join(root, "dashboards/home.json"),
 			defaultHomeDashboardJSON,
