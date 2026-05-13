@@ -34,12 +34,14 @@ function stubFFEnabled(enabled: boolean) {
 
 const postFn = jest.fn();
 const putFn = jest.fn();
+const patchFn = jest.fn();
 const deleteFn = jest.fn();
 const getFn = jest.fn();
 
 setBackendSrv({
   post: postFn,
   put: putFn,
+  patch: patchFn,
   delete: deleteFn,
   get: getFn,
 } as unknown as BackendSrv);
@@ -50,6 +52,7 @@ mockGetFeatureFlagClient.mockReturnValue({ getBooleanValue: getBooleanValueFn } 
 beforeEach(() => {
   postFn.mockReset();
   putFn.mockReset();
+  patchFn.mockReset();
   deleteFn.mockReset();
   getFn.mockReset();
   mockIsAnnotationApiAvailable.mockReset();
@@ -202,29 +205,24 @@ describe('setDashboardPanelContext', () => {
       });
     });
 
-    it('should PUT to the k8s endpoint when the k8s annotation client is enabled and the API is discovered', async () => {
+    it('should PATCH the k8s endpoint when the k8s annotation client is enabled and the API is discovered', async () => {
       stubFFEnabled(true);
       config.namespace = 'stack-1';
       mockIsAnnotationApiAvailable.mockResolvedValue(true);
-      getFn.mockResolvedValue({
-        apiVersion: 'annotation.grafana.app/v0alpha1',
-        kind: 'Annotation',
-        metadata: { name: 'event-id-123', resourceVersion: 'rv-1', creationTimestamp: '' },
-        spec: { text: 'old', time: 1 },
-      });
-      putFn.mockResolvedValue({});
+      patchFn.mockResolvedValue({});
 
       const { context } = buildTestScene({ dashboardCanEdit: true, canAdd: true });
 
       await context.onAnnotationUpdate!({ from: 100, to: 200, id: 'event-id-123', description: 'updated', tags: [] });
 
-      expect(putFn).toHaveBeenCalledWith(
+      expect(getFn).not.toHaveBeenCalled();
+      expect(putFn).not.toHaveBeenCalled();
+      expect(patchFn).toHaveBeenCalledWith(
         '/apis/annotation.grafana.app/v0alpha1/namespaces/stack-1/annotations/event-id-123',
         expect.objectContaining({
-          metadata: expect.objectContaining({ name: 'event-id-123', resourceVersion: 'rv-1' }),
           spec: expect.objectContaining({ text: 'updated', time: 100, timeEnd: 200 }),
         }),
-        expect.anything()
+        expect.objectContaining({ headers: { 'Content-Type': 'application/merge-patch+json' } })
       );
     });
 
@@ -232,13 +230,7 @@ describe('setDashboardPanelContext', () => {
       stubFFEnabled(true);
       config.namespace = 'stack-1';
       mockIsAnnotationApiAvailable.mockResolvedValue(true);
-      getFn.mockResolvedValue({
-        apiVersion: 'annotation.grafana.app/v0alpha1',
-        kind: 'Annotation',
-        metadata: { name: 'event-id-123', resourceVersion: 'rv-2', creationTimestamp: '' },
-        spec: { text: 'old', time: 1 },
-      });
-      putFn.mockResolvedValue({});
+      patchFn.mockResolvedValue({});
 
       const mockScope: Scope = { metadata: { name: 'scope-b' }, spec: { title: 'Scope B' } };
       jest.spyOn(sceneGraph, 'getScopes').mockReturnValue([mockScope]);
@@ -253,7 +245,7 @@ describe('setDashboardPanelContext', () => {
           tags: [],
         });
 
-        const [, body] = putFn.mock.calls[0];
+        const [, body] = patchFn.mock.calls[0];
         expect(body.spec.scopes).toEqual(['scope-b']);
       } finally {
         jest.restoreAllMocks();

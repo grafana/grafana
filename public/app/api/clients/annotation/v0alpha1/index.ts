@@ -169,27 +169,36 @@ export const annotationK8sClient = {
     return resourceClient().create(buildCreatePayload(event, scopes));
   },
 
-  // Fetch-then-PUT instead of PATCH because the annotation k8s adapter currently
-  // returns resources without `metadata.uid`, which makes the upstream apiserver
-  // PATCH handler short-circuit to NotFound (`jsonPatcher.createNewObject`).
-  // Switch back to PATCH once the backend assigns a stable UID.
-  async update(event: AnnotationEvent, scopes?: string[]): Promise<Annotation> {
+  // JSON Merge Patch (RFC 7396) lets the server perform the read-modify-write
+  // atomically — no need to fetch the existing resourceVersion first. Optional
+  // fields (timeEnd, tags, scopes) are sent as explicit `null` when absent so
+  // stale values are cleared; an omitted field would be a no-op under merge-patch.
+  update(event: AnnotationEvent, scopes?: string[]): Promise<Annotation> {
     if (!event.id) {
-      throw new Error('Annotation id (metadata.name) is required for update');
+      return Promise.reject(new Error('Annotation id (metadata.name) is required for update'));
     }
 
-    const client = resourceClient();
-    const existing = await client.get(toK8sName(event.id));
     const nextSpec = annotationEventToSpec(event, scopes);
-
-    // Explicit assignment ensures undefined fields (timeEnd, scopes) from nextSpec
-    // overwrite any existing values — `...nextSpec` alone wouldn't remove them.
-    const merged: Annotation = {
-      ...existing,
-      spec: { ...existing.spec, ...nextSpec, timeEnd: nextSpec.timeEnd, scopes: nextSpec.scopes },
+    const patchSpec: Record<string, unknown> = {
+      text: nextSpec.text,
+      time: nextSpec.time,
+      timeEnd: nextSpec.timeEnd ?? null,
+      tags: nextSpec.tags ?? null,
+      scopes: nextSpec.scopes ?? null,
     };
+    if (nextSpec.dashboardUID !== undefined) {
+      patchSpec.dashboardUID = nextSpec.dashboardUID;
+    }
+    if (nextSpec.panelID !== undefined) {
+      patchSpec.panelID = nextSpec.panelID;
+    }
 
-    return client.update(merged);
+    const url = `/apis/${ANNOTATION_API_GROUP}/${ANNOTATION_API_VERSION}/namespaces/${getAPINamespace()}/${ANNOTATIONS_RESOURCE}/${toK8sName(event.id)}`;
+    return getBackendSrv().patch<Annotation>(
+      url,
+      { spec: patchSpec },
+      { headers: { 'Content-Type': 'application/merge-patch+json' } }
+    );
   },
 
   remove(name: string | number): Promise<unknown> {

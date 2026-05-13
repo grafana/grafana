@@ -24,6 +24,7 @@ function stubFFEnabled(enabled: boolean) {
 
 const postFn = jest.fn();
 const putFn = jest.fn();
+const patchFn = jest.fn();
 const deleteFn = jest.fn();
 const getFn = jest.fn();
 
@@ -31,6 +32,7 @@ beforeAll(() => {
   setBackendSrv({
     post: postFn,
     put: putFn,
+    patch: patchFn,
     delete: deleteFn,
     get: getFn,
   } as unknown as BackendSrv);
@@ -42,6 +44,7 @@ beforeAll(() => {
 beforeEach(() => {
   postFn.mockReset();
   putFn.mockReset();
+  patchFn.mockReset();
   deleteFn.mockReset();
   getFn.mockReset();
   mockIsAnnotationApiAvailable.mockReset();
@@ -125,26 +128,21 @@ describe('annotationServer with FE flag ON and API group available', () => {
     expect(body.spec.panelID).toBe(1);
   });
 
-  it('update fetches existing then PUTs back with scopes and resourceVersion preserved', async () => {
-    getFn.mockResolvedValue({
-      apiVersion: 'annotation.grafana.app/v0alpha1',
-      kind: 'Annotation',
-      metadata: { name: 'a-1', resourceVersion: 'rv-7', creationTimestamp: '' },
-      spec: { text: 'old', time: 1 },
-    });
-    putFn.mockResolvedValue({});
+  it('update PATCHes the k8s resource with merge-patch+json and no preceding GET', async () => {
+    patchFn.mockResolvedValue({});
 
     // Bare numeric id as returned by legacy /api/annotations
     await annotationServer().update({ id: '1', time: 2, text: 'new' }, ['scope-a']);
 
-    expect(getFn).toHaveBeenCalledWith(`${baseURL}/annotations/a-1`);
+    expect(getFn).not.toHaveBeenCalled();
+    expect(putFn).not.toHaveBeenCalled();
 
-    const [putUrl, body] = putFn.mock.calls[0];
-    expect(putUrl).toBe(`${baseURL}/annotations/a-1`);
-    expect(body.metadata.name).toBe('a-1');
-    expect(body.metadata.resourceVersion).toBe('rv-7');
+    const [patchUrl, body, opts] = patchFn.mock.calls[0];
+    expect(patchUrl).toBe(`${baseURL}/annotations/a-1`);
     expect(body.spec.scopes).toEqual(['scope-a']);
     expect(body.spec.text).toBe('new');
+    expect(body.spec.time).toBe(2);
+    expect(opts.headers['Content-Type']).toBe('application/merge-patch+json');
   });
 
   it('delete DELETEs the k8s resource by metadata.name', async () => {
