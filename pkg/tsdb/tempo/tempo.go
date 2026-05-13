@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"github.com/grafana/grafana/pkg/tsdb/tempo/kinds/dataquery"
+	schemas "github.com/grafana/schemads"
 	"github.com/grafana/tempo/pkg/tempopb"
 )
 
@@ -52,11 +53,20 @@ func ProvideService(httpClientProvider *httpclient.Provider, tracer trace.Tracer
 		tracer: tracer,
 	}
 
-	// Set up resource routes using httpadapter
+	// Set up resource routes using httpadapter, then wrap with schemads for dsabstraction (Grafana SQL metadata).
 	mux := http.NewServeMux()
 	mux.HandleFunc("/tags", s.handleTags)
 	mux.HandleFunc("/tag-values", s.handleTagValues)
-	s.resourceHandler = httpadapter.New(mux)
+	muxHandler := httpadapter.New(mux)
+	schemaProvider := newTempoSchemaProvider(s, s.logger)
+	s.resourceHandler = schemas.NewSchemaDatasource(
+		schemaProvider,
+		schemaProvider,
+		schemaProvider,
+		nil,
+		schemaProvider,
+		muxHandler,
+	)
 
 	return s
 }
