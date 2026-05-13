@@ -415,10 +415,6 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     }
   }
 
-  public getOnGetBackCallback() {
-    return this.state.previousState ? () => this.goBackToPrevious() : undefined;
-  }
-
   private newObjectAddedToCanvas(obj: SceneObject) {
     this.selectObject(obj, { force: true });
     this.setState({ isNewElement: true });

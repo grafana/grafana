@@ -36,6 +36,22 @@ repository: {
 					// Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository.
 					path?: string
 				}
+				#GitHubEnterpriseRepositoryConfig: {
+					// The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`).
+					serverUrl?: string
+					// The repository URL on the GHES server (e.g. `https://ghes.example.com/example/test`).
+					url?: string
+					// The branch to use in the repository.
+					branch: string
+					// Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again.
+					token?: string
+					// Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted.
+					encryptedToken?: [...string]
+					// Whether we should show dashboard previews for pull requests.
+					generateDashboardPreviews?: bool
+					// Path is the subdirectory for the Grafana data inside the repository.
+					path?: string
+				}
 				#GitRepositoryConfig: {
 					// The repository URL (e.g. `https://github.com/example/test.git`).
 					url?: string
@@ -156,7 +172,7 @@ repository: {
 					// Sync settings -- how values are pulled from the repository into grafana
 					sync: #SyncOptions
 					// The repository type. When selected oneOf the values below should be non-nil
-					type: "local" | "github" | "git" | "bitbucket" | "gitlab"
+					type: "local" | "github" | "githubEnterprise" | "git" | "bitbucket" | "gitlab"
 					// Webhook settings for the repository.
 					webhook?: #WebhookConfig
 					// The repository on the local file system.
@@ -165,6 +181,9 @@ repository: {
 					// The repository on GitHub.
 					// Mutually exclusive with local | github | git.
 					github?: #GitHubRepositoryConfig
+					// The repository on a self-managed GitHub Enterprise Server (GHES).
+					// Mutually exclusive with the other repository configs.
+					githubEnterprise?: #GitHubEnterpriseRepositoryConfig
 					// The repository on Git.
 					// Mutually exclusive with local | github | git.
 					git?: #GitRepositoryConfig

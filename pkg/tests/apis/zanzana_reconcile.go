@@ -3,6 +3,7 @@ package apis
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"net/http"
 	"testing"
 	"time"
@@ -82,6 +83,8 @@ func AwaitZanzanaReconcileNext(t *testing.T, helper *K8sTestHelper) {
 func awaitZanzanaMTReconcileNext(t *testing.T, helper *K8sTestHelper) {
 	t.Helper()
 
+	ensureZanzanaStoreForOrg1(t, helper)
+
 	baseline := getZanzanaMTReconcileSuccessCount(t, helper)
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		count := getZanzanaMTReconcileSuccessCount(t, helper)
@@ -89,6 +92,30 @@ func awaitZanzanaMTReconcileNext(t *testing.T, helper *K8sTestHelper) {
 			"expected %s{status=%s} (%v) > baseline (%v)",
 			zanzanaMTReconcileDurationMetric, zanzanaMTReconcileSuccessLabel, count, baseline)
 	}, 30*time.Second, 250*time.Millisecond)
+}
+
+// ensureZanzanaStoreForOrg1 issues an authenticated request so the Zanzana
+// authorizer creates Org1's OpenFGA store. Without an existing store, the
+// reconciler tick finds nothing in ListAllStores and never observes
+// namespace_reconcile_duration_seconds, so awaitZanzanaMTReconcileNext can
+// time out at start-of-test.
+//
+// Only Org1 is needed: MT-mode tests set RBACSingleOrganization: true.
+// Cross-org Zanzana tests run on the legacy reconciler, which uses a
+// different metric.
+func ensureZanzanaStoreForOrg1(t *testing.T, helper *K8sTestHelper) {
+	t.Helper()
+	ns := helper.Org1.Admin.Identity.GetNamespace()
+	rsp := DoRequest(helper, RequestParams{
+		User:   helper.Org1.Admin,
+		Method: "GET",
+		Path:   fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/users", ns),
+		Accept: "application/json",
+	}, &struct{}{})
+	require.NotNil(t, rsp.Response, "no response from iam users LIST")
+	require.Lessf(t, rsp.Response.StatusCode, http.StatusInternalServerError,
+		"iam users LIST returned 5xx: status=%d body=%s",
+		rsp.Response.StatusCode, string(rsp.Body))
 }
 
 // fetchMetricFamilies scrapes the test server's /metrics endpoint and returns

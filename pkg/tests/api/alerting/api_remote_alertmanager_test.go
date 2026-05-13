@@ -39,7 +39,9 @@ func TestIntegrationRemoteAlertmanagerConfigUpload(t *testing.T) {
 		AppModeProduction:     true,
 		EnableFeatureToggles: []string{
 			"alertmanagerRemotePrimary",
+			"alertingMultiplePolicies",
 			"alertingImportAlertmanagerAPI",
+			"alerting.disableV0ReceiverConversion",
 		},
 		RemoteAlertmanagerURL: mimirEndpoint,
 	})
@@ -154,7 +156,9 @@ func TestIntegrationRemoteAlertmanagerHistoricalConfigActivation(t *testing.T) {
 		AppModeProduction:     true,
 		EnableFeatureToggles: []string{
 			"alertmanagerRemotePrimary",
+			"alertingMultiplePolicies",
 			"alertingImportAlertmanagerAPI",
+			"alerting.disableV0ReceiverConversion",
 		},
 		RemoteAlertmanagerURL: mimirEndpoint,
 	})

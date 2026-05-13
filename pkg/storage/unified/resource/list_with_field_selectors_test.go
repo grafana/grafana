@@ -407,6 +407,10 @@ func (*stubSearchClient) RebuildIndexes(_ context.Context, _ *resourcepb.Rebuild
 	return nil, nil
 }
 
+func (*stubSearchClient) VectorSearch(_ context.Context, _ *resourcepb.VectorSearchRequest, _ ...grpc.CallOption) (*resourcepb.VectorSearchResponse, error) {
+	return nil, nil
+}
+
 type fakeBackend struct {
 	forbidden map[string]struct{}
 }

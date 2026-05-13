@@ -11,10 +11,9 @@ import (
 
 func TestTransformExemplarToFrame_EmptyExemplars(t *testing.T) {
 	frame := transformExemplarToFrame("test", &tempopb.TimeSeries{
-		Labels:     nil,
-		Samples:    nil,
-		PromLabels: "",
-		Exemplars:  make([]tempopb.Exemplar, 0),
+		Labels:    nil,
+		Samples:   nil,
+		Exemplars: make([]tempopb.Exemplar, 0),
 	})
 	assert.NotNil(t, frame)
 	assert.Equal(t, "test", frame.RefID)
@@ -36,10 +35,9 @@ func TestTransformExemplarToFrame_SingleExemplar(t *testing.T) {
 		},
 	}
 	frame := transformExemplarToFrame("test", &tempopb.TimeSeries{
-		Labels:     nil,
-		Samples:    nil,
-		PromLabels: "",
-		Exemplars:  exemplars,
+		Labels:    nil,
+		Samples:   nil,
+		Exemplars: exemplars,
 	})
 	assert.NotNil(t, frame)
 	assert.Equal(t, "test", frame.RefID)
@@ -65,9 +63,8 @@ func TestTransformExemplarToFrame_SingleExemplarHistogram(t *testing.T) {
 		Labels: []v1.KeyValue{
 			{Key: "__bucket", Value: &v1.AnyValue{Value: &v1.AnyValue_DoubleValue{DoubleValue: 1.23}}},
 		},
-		Samples:    nil,
-		PromLabels: "",
-		Exemplars:  exemplars,
+		Samples:   nil,
+		Exemplars: exemplars,
 	})
 	assert.NotNil(t, frame)
 	assert.Equal(t, "test", frame.RefID)
@@ -96,10 +93,9 @@ func TestTransformExemplarToFrame_MultipleExemplars(t *testing.T) {
 		},
 	}
 	frame := transformExemplarToFrame("test", &tempopb.TimeSeries{
-		Labels:     nil,
-		Samples:    nil,
-		PromLabels: "",
-		Exemplars:  exemplars,
+		Labels:    nil,
+		Samples:   nil,
+		Exemplars: exemplars,
 	})
 	assert.NotNil(t, frame)
 	assert.Equal(t, "test", frame.RefID)
@@ -122,10 +118,9 @@ func TestTransformExemplarToFrame_ExemplarWithoutTraceId(t *testing.T) {
 		},
 	}
 	frame := transformExemplarToFrame("test", &tempopb.TimeSeries{
-		Labels:     nil,
-		Samples:    nil,
-		PromLabels: "",
-		Exemplars:  exemplars,
+		Labels:    nil,
+		Samples:   nil,
+		Exemplars: exemplars,
 	})
 	assert.NotNil(t, frame)
 	assert.Equal(t, "test", frame.RefID)

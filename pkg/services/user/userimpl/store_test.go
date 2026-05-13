@@ -418,7 +418,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		// Cannot make user non grafana admin if it is the last one
 		err = userStore.Update(context.Background(), &user.UpdateUserCommand{
 			UserID:         usr.ID,
-			IsGrafanaAdmin: boolPtr(false),
+			IsGrafanaAdmin: new(false),
 		})
 		require.ErrorIs(t, err, user.ErrLastGrafanaAdmin)
 
@@ -438,7 +438,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		// Now first admin user should be able to be downgraded
 		err = userStore.Update(context.Background(), &user.UpdateUserCommand{
 			UserID:         usr.ID,
-			IsGrafanaAdmin: boolPtr(false),
+			IsGrafanaAdmin: new(false),
 		})
 		require.NoError(t, err)
 
@@ -733,7 +733,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 
 		err = userStore.Update(context.Background(), &user.UpdateUserCommand{
 			UserID:     id,
-			IsDisabled: boolPtr(true),
+			IsDisabled: new(true),
 		})
 		require.NoError(t, err)
 
@@ -761,7 +761,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		// Update user to set IsProvisioned to true
 		err = userStore.Update(context.Background(), &user.UpdateUserCommand{
 			UserID:        id,
-			IsProvisioned: boolPtr(true),
+			IsProvisioned: new(true),
 		})
 		require.NoError(t, err)
 
@@ -773,7 +773,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		// Update user to set IsProvisioned to false
 		err = userStore.Update(context.Background(), &user.UpdateUserCommand{
 			UserID:        id,
-			IsProvisioned: boolPtr(false),
+			IsProvisioned: new(false),
 		})
 		require.NoError(t, err)
 
@@ -1146,8 +1146,4 @@ func createOrgAndUserSvc(t *testing.T, store db.DB, cfg *setting.Cfg) (org.Servi
 func passwordPtr(s string) *user.Password {
 	password := user.Password(s)
 	return &password
-}
-
-func boolPtr(b bool) *bool {
-	return &b
 }

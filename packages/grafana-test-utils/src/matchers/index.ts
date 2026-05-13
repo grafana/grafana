@@ -1,12 +1,15 @@
+import {
+  matchers as jestCanvasMatchers,
+  type CustomSnapshotMatchers as CanvasSnapshotMatchers,
+} from 'jest-canvas-mock-compare';
 import type { Observable } from 'rxjs';
 
 import { toEmitValues } from './toEmitValues';
 import { toEmitValuesWith } from './toEmitValuesWith';
-import { toMatchUPlotSnapshot } from './toMatchUPlotSnapshot';
-import { type CustomSnapshotMatchers, type ObservableMatchers } from './types';
+import { type ObservableMatchers } from './types';
 
-export const matchers: ObservableMatchers<void, Observable<unknown>> | CustomSnapshotMatchers = {
+export const matchers: ObservableMatchers<void, Observable<unknown>> | CanvasSnapshotMatchers = {
   toEmitValues,
   toEmitValuesWith,
-  toMatchUPlotSnapshot,
+  ...jestCanvasMatchers,
 };

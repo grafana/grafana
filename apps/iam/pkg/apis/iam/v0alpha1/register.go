@@ -372,6 +372,8 @@ func AddAuthNKnownTypes(scheme *runtime.Scheme) error {
 		&ExternalGroupMappingList{},
 		&GetTeamGroupsResponse{},
 		&GetTeamMembersResponse{},
+		&CreateTeamMemberResponse{},
+		&DeleteTeamMemberResponse{},
 		&GetUserTeamsResponse{},
 		&ListServiceAccountTokensResponse{},
 		&GetServiceAccountTokenResponse{},

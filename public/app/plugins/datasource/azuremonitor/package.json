@@ -29,6 +29,7 @@
   "devDependencies": {
     "@grafana/e2e-selectors": "13.1.0-pre",
     "@grafana/plugin-configs": "13.1.0-pre",
+    "@grafana/test-utils": "workspace:*",
     "@testing-library/dom": "10.4.1",
     "@testing-library/jest-dom": "6.6.4",
     "@testing-library/react": "16.3.0",

@@ -1,17 +1,17 @@
-import { type Extension } from '@uiw/react-codemirror';
 import { useEffect, useState } from 'react';
 
 import { faro } from '@grafana/faro-web-sdk';
 
-import { loadLanguageExtension, type CodeEditorLanguage } from './languageLoader';
+import { loadLanguageExtension } from './languageLoader';
+import { type CodeMirrorEditorLanguage, type CodeMirrorExtension } from './types';
 
 export interface LanguageExtensionState {
-  extension: Extension | null;
+  extension: CodeMirrorExtension | null;
   error: Error | null;
 }
 
-export function useLanguageExtension(language?: CodeEditorLanguage): LanguageExtensionState {
-  const [languageExtension, setLanguageExtension] = useState<Extension | null>(null);
+export function useLanguageExtension(language?: CodeMirrorEditorLanguage): LanguageExtensionState {
+  const [languageExtension, setLanguageExtension] = useState<CodeMirrorExtension | null>(null);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {

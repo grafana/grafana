@@ -282,5 +282,6 @@ func (svc *Service) multiplePoliciesEnabled() bool {
 }
 
 func (svc *Service) includeImported() bool {
-	return svc.isFeatureEnabled(featuremgmt.FlagAlertingImportAlertmanagerAPI)
+	return svc.isFeatureEnabled(featuremgmt.FlagAlertingMultiplePolicies) &&
+		svc.isFeatureEnabled(featuremgmt.FlagAlertingImportAlertmanagerAPI)
 }

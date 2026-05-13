@@ -44,7 +44,7 @@ func TestIntegrationProvisioning_IncrementalDiffThreshold_AboveThreshold_Schedul
 	seenJobs := snapshotPullJobNames(t, h, repoName)
 
 	// Push (threshold + 1) files in a single commit. CompareFiles will report
-	// `len(changes) > maxIncrementalChanges`, so CanUseIncrementalSyncInController
+	// `len(changes) > maxIncrementalChanges`, so CanUseIncrementalSync
 	// must return false.
 	const fileCount = testMaxIncrementalChanges + 1
 	addDashboardFiles(t, local, "above", fileCount)
