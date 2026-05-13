@@ -22,6 +22,7 @@ export const palette = {
   gray90: '#ececed',
   gray95: '#f4f5f5',
   gray100: '#fbfbfb',
+  gray101: '#fafafa',
 
   blueDarkMain: '#3d71d9',
   blueDarkText: '#6e9fff',

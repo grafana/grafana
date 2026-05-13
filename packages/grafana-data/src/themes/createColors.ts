@@ -36,6 +36,7 @@ const createThemeColorsBaseSchema = <TColor>(color: TColor) =>
         canvas: z.string().optional(),
         /** Primary content pane background (panels etc) */
         primary: z.string().optional(),
+        faint: z.string().optional(),
         /** Cards and elements that need to stand out on the primary background */
         secondary: z.string().optional(),
         /**
@@ -177,6 +178,7 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   background = {
     canvas: palette.gray05,
     primary: palette.gray10,
+    faint: palette.gray15,
     secondary: palette.gray15,
     elevated: palette.gray15,
   };
@@ -210,9 +212,9 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   blackBase = '36, 41, 46';
 
   primary = {
-    main: palette.blueLightMain,
-    border: palette.blueLightText,
-    text: palette.blueLightText,
+    main: palette.black,
+    border: palette.black,
+    text: palette.white,
   };
 
   text = {
@@ -230,8 +232,8 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   };
 
   secondary = {
-    main: palette.gray90,
-    shade: palette.gray85,
+    main: palette.white,
+    shade: palette.gray95,
     transparent: `rgba(${this.blackBase}, 0.08)`,
     contrastText: `rgba(${this.blackBase},  1)`,
     text: this.text.primary,
@@ -265,8 +267,9 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   };
 
   background = {
-    canvas: palette.gray100,
+    canvas: palette.white,
     primary: palette.white,
+    faint: palette.gray101,
     secondary: palette.gray95,
     elevated: palette.white,
   };
