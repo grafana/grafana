@@ -722,16 +722,6 @@ require (
 	software.sslmate.com/src/go-pkcs12 v0.7.0 // indirect
 )
 
-require dagger.io/dagger v0.20.8
-
-require (
-	github.com/99designs/gqlgen v0.17.89 // indirect
-	github.com/Khan/genqlient v0.8.1 // indirect
-	github.com/adrg/xdg v0.5.3 // indirect
-	github.com/sosodev/duration v1.4.0 // indirect
-	github.com/vektah/gqlparser/v2 v2.5.32 // indirect
-)
-
 replace (
 	// Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
 	github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20240917091248-ae3bbdad8a56
