@@ -36,6 +36,9 @@ export function clearPluginCache(): void {
  * @internal
  */
 export function _resetForTests(): void {
+  if (process.env.NODE_ENV !== 'test') {
+    throw new Error('_resetForTests must only be called from tests');
+  }
   cache.clear();
   runtimeCache.clear();
 }
