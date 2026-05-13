@@ -15,6 +15,7 @@ declare module "@openfeature/core" {
     | "provisioningFolderMetadata"
     | "provisioning.readmes"
     | "stateTimeline.nameAboveBars"
+    | "sqlExpressionsCodeMirror"
     | "newSavedQueriesExperience"
     | "grafana.orgDashboardTemplates"
     | "dashboardTemplatesAssistantButton"

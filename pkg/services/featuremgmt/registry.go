@@ -920,6 +920,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "sqlExpressionsCodeMirror",
+			Description: "Enables CodeMirror editor for SQL Expressions",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{LegacyFrontend: true, React: true},
+			Owner:       grafanaDataProSquad,
+			Expression:  "false",
+		},
+		{
 			Name:            "kubernetesAggregator",
 			Description:     "Enable grafana's embedded kube-aggregator",
 			Stage:           FeatureStageExperimental,
