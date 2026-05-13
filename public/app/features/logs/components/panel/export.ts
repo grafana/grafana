@@ -1,11 +1,6 @@
 import { groupBy } from 'lodash';
 
-import {
-  DataFrameType,
-  type DataSourceApi,
-  hasLogsLabelTypesSupport,
-  type Labels,
-} from '@grafana/data';
+import { DataFrameType, type DataSourceApi, hasLogsLabelTypesSupport, type Labels } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 
 import { getLabelTypeFromRow } from '../../utils';
@@ -78,10 +73,7 @@ function dataframeFieldsToRecord(log: LogListModel): Record<string, string> {
   return out;
 }
 
-export function buildLogLineFullJsonObject(
-  log: LogListModel,
-  ds: DataSourceApi
-): Record<string, unknown> {
+export function buildLogLineFullJsonObject(log: LogListModel, ds: DataSourceApi): Record<string, unknown> {
   const grouped = groupLabelsByCategory(log, ds);
   const labelsJson = formatGroupedLabelsForJson(grouped);
   const fieldsJson = dataframeFieldsToRecord(log);
@@ -109,7 +101,7 @@ export function buildLogLineFullJsonObject(
   return payload;
 }
 
-export async function buildLogLineFullJsonString(log: LogListModel): Promise<string> {
+export async function getLogAsJSON(log: LogListModel): Promise<string> {
   const ds = await getDataSourceSrv().get(log.datasourceUid);
   return JSON.stringify(buildLogLineFullJsonObject(log, ds), null, 2);
 }

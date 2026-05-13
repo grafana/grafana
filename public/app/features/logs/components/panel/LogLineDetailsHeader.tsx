@@ -12,7 +12,7 @@ import { LOG_LINE_BODY_FIELD_NAME } from '../fieldSelector/logFields';
 import { useLogDetailsContext } from './LogDetailsContext';
 import { type LogLineDetailsMode } from './LogLineDetails';
 import { useLogIsPinned, useLogListContext } from './LogListContext';
-import { buildLogLineFullJsonString } from './logLineFullJson';
+import { getLogAsJSON } from './export';
 import { type LogListModel } from './processing';
 
 interface Props {
@@ -82,7 +82,7 @@ export const LogLineDetailsHeader = ({
   }, [log.entry, reportInteractionWrapper]);
 
   const copyLogLineAsJson = useCallback(async () => {
-    copyText(await buildLogLineFullJsonString(log), containerRef);
+    copyText(await getLogAsJSON(log), containerRef);
     reportInteractionWrapper('logs_log_line_details_header_copy_json_clicked');
   }, [log, reportInteractionWrapper]);
 
@@ -185,20 +185,17 @@ export const LogLineDetailsHeader = ({
   }, [log, toggleDetails]);
 
   const copyMenu = useMemo(
-      () => (
-        <Menu>
-          <Menu.Item
-            label={t('logs.log-line-details.copy-log-line', 'Copy log line message')}
-            onClick={copyLogLine}
-          />
-          <Menu.Item
-            label={t('logs.log-line-details.copy-log-line-json', 'Copy log contents as JSON')}
-            onClick={copyLogLineAsJson}
-          />
-        </Menu>
-      ),
-      [copyLogLine, copyLogLineAsJson]
-    );
+    () => (
+      <Menu>
+        <Menu.Item label={t('logs.log-line-details.copy-log-line', 'Copy log line message')} onClick={copyLogLine} />
+        <Menu.Item
+          label={t('logs.log-line-details.copy-log-line-json', 'Copy log contents as JSON')}
+          onClick={copyLogLineAsJson}
+        />
+      </Menu>
+    ),
+    [copyLogLine, copyLogLineAsJson]
+  );
 
   return (
     <div className={styles.header} ref={containerRef}>
