@@ -10798,6 +10798,16 @@
   },
   "home": {
     "home-page": {
+      "edition": {
+        "cloud": "",
+        "enterprise": "",
+        "open-source": ""
+      },
+      "greeting": {
+        "afternoon": "",
+        "evening": "",
+        "morning": ""
+      },
       "placeholder": ""
     }
   },
@@ -14745,9 +14755,6 @@
       "home-dashboard-placeholder": "預設儀表板",
       "language-preference-label": "語言",
       "language-preference-placeholder": "選擇語言",
-      "locale-preference-description": "選擇您的地區以查看相應的日期、時間和數字格式",
-      "locale-preference-label": "地區格式",
-      "locale-preference-placeholder": "選擇地區",
       "theme-description": "喜歡實驗性主題嗎？請在<2>此處</2>告訴我們您想要看到什麼。</2>",
       "theme-label": "介面主題",
       "week-start-label": "一週哪一天開始"

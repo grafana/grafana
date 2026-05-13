@@ -4,7 +4,7 @@ import { type FieldMatcher } from '../../types/transformations';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
 
-import { JoinMode } from './joinByField';
+import { JoinMode } from './joinShared';
 
 export function pickBestJoinField(data: DataFrame[]): FieldMatcher {
   const { timeField } = getTimeField(data[0]);
