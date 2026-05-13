@@ -58,6 +58,17 @@ func New(ctx context.Context, configDirectory string, provisioner dashboards.Das
 		return nil, fmt.Errorf("%v: %w", "Failed to read dashboards config", err)
 	}
 
+	if cfg.DefaultHomeDashboardPath != "" {
+		c := &config{
+			Name:                  "default-home-dashboard",
+			Type:                  "file",
+			OrgID:                 1,
+			Options:               map[string]any{"path": cfg.DefaultHomeDashboardPath},
+			DisableDeletion:       true,
+			UpdateIntervalSeconds: 3600,
+		}
+		configs = append(configs, c)
+	}
 	fileReaders, err := getFileReaders(configs, logger, provisioner, dashboardStore, folderService, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "Failed to initialize file readers", err)

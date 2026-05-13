@@ -1,6 +1,8 @@
 package preferences
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"testing"
 	"time"
@@ -10,6 +12,8 @@ import (
 
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 )
 
 func TestMergePreferences(t *testing.T) {
@@ -166,5 +170,90 @@ func TestMergedResourceVersion(t *testing.T) {
 		got, err := merge(defaults, items)
 		require.NoError(t, err)
 		require.Equal(t, rv(t2), got.ResourceVersion)
+	})
+}
+
+type fakeDashboardSearcher struct {
+	results []dashboards.DashboardSearchProjection
+	err     error
+}
+
+func (f *fakeDashboardSearcher) FindDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
+	return f.results, f.err
+}
+
+func TestResolveHomeDashboardUID(t *testing.T) {
+	var orgID int64 = 1
+	uid := "test-uid-1"
+
+	t.Run("searcher returns a home dashboard UID.", func(t *testing.T) {
+		searcher := &fakeDashboardSearcher{
+			results: []dashboards.DashboardSearchProjection{{UID: uid, OrgID: orgID}},
+		}
+
+		m := &merger{
+			defaults:          preferences.PreferencesSpec{},
+			lister:            nil,
+			dashboardSearcher: searcher,
+			dashboardFilePath: "public/home/dashboard.json",
+			logger:            log.NewNopLogger(),
+		}
+		homeDashboardUID, err := m.resolveHomeDashboardUID(t.Context(), orgID)
+		require.NoError(t, err)
+		require.Equal(t, uid, homeDashboardUID)
+	})
+
+	t.Run("returns an empty string if dashboardFilePath is empty", func(t *testing.T) {
+		searcher := &fakeDashboardSearcher{
+			results: []dashboards.DashboardSearchProjection{{UID: uid, OrgID: orgID}},
+		}
+
+		m := &merger{
+			defaults:          preferences.PreferencesSpec{},
+			lister:            nil,
+			dashboardSearcher: searcher,
+			dashboardFilePath: "",
+			logger:            log.NewNopLogger(),
+		}
+
+		homeDashboardUID, err := m.resolveHomeDashboardUID(t.Context(), orgID)
+		require.NoError(t, err)
+		require.Equal(t, "", homeDashboardUID)
+	})
+
+	t.Run("returns an empty string if there are no dashboard results", func(t *testing.T) {
+		searcher := &fakeDashboardSearcher{
+			results: []dashboards.DashboardSearchProjection{},
+		}
+
+		m := &merger{
+			defaults:          preferences.PreferencesSpec{},
+			lister:            nil,
+			dashboardSearcher: searcher,
+			dashboardFilePath: "public/home/dashboard.json",
+			logger:            log.NewNopLogger(),
+		}
+
+		homeDashboardUID, err := m.resolveHomeDashboardUID(t.Context(), orgID)
+		require.NoError(t, err)
+		require.Equal(t, "", homeDashboardUID)
+	})
+
+	t.Run("returns an empty string if searcher returns an error.", func(t *testing.T) {
+		searcher := &fakeDashboardSearcher{
+			err: errors.New("some error"),
+		}
+
+		m := &merger{
+			defaults:          preferences.PreferencesSpec{},
+			lister:            nil,
+			dashboardSearcher: searcher,
+			dashboardFilePath: "public/home/dashboard.json",
+			logger:            log.NewNopLogger(),
+		}
+
+		homeDashboardUID, err := m.resolveHomeDashboardUID(t.Context(), orgID)
+		require.NoError(t, err)
+		require.Equal(t, "", homeDashboardUID)
 	})
 }

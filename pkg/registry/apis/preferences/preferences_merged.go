@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -16,8 +17,11 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
@@ -26,12 +30,31 @@ type PreferenceLister interface {
 	ListPreferences(ctx context.Context, options *internalversion.ListOptions) (*preferences.PreferencesList, error)
 }
 
-type merger struct {
-	defaults preferences.PreferencesSpec
-	lister   PreferenceLister
+type dashboardSearcher interface {
+	FindDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error)
 }
 
-func newMerger(cfg *setting.Cfg) *merger {
+type merger struct {
+	defaults          preferences.PreferencesSpec
+	lister            PreferenceLister
+	dashboardSearcher dashboardSearcher
+	dashboardFilePath string
+	logger            log.Logger
+}
+
+func newMerger(cfg *setting.Cfg, searcher dashboardSearcher) *merger {
+	logger := log.New("preferences.merger")
+	var path string
+	var err error
+	if cfg.DefaultHomeDashboardPath != "" {
+		path, err = filepath.Abs(cfg.DefaultHomeDashboardPath)
+
+		if err != nil {
+			logger.Error("could not resolve home dashboard path", "error", err)
+			path = ""
+		}
+	}
+
 	return &merger{
 		defaults: preferences.PreferencesSpec{
 			Theme:     &cfg.DefaultTheme,
@@ -39,6 +62,9 @@ func newMerger(cfg *setting.Cfg) *merger {
 			WeekStart: &cfg.DateFormats.DefaultWeekStart,
 			Language:  &cfg.DefaultLanguage,
 		},
+		dashboardFilePath: path,
+		dashboardSearcher: searcher,
+		logger:            logger,
 	}
 }
 
@@ -103,7 +129,20 @@ func (s *merger) Current(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	p, err := merge(s.defaults, list.Items)
+	defaults := s.defaults
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		errhttp.Write(ctx, err, w)
+		return
+	}
+	orgID := user.GetOrgID()
+	homeDashboardUID, _ := s.resolveHomeDashboardUID(ctx, orgID)
+
+	if homeDashboardUID != "" {
+		defaults.HomeDashboardUID = &homeDashboardUID
+	}
+
+	p, err := merge(defaults, list.Items)
 	if err != nil {
 		errhttp.Write(ctx, err, w)
 		return
@@ -111,6 +150,34 @@ func (s *merger) Current(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(p)
+}
+
+func (s *merger) resolveHomeDashboardUID(ctx context.Context, orgID int64) (string, error) {
+	if s.dashboardFilePath == "" || s.dashboardSearcher == nil {
+		return "", nil
+	}
+
+	query := &dashboards.FindPersistedDashboardsQuery{
+		OrgId:      orgID,
+		SourcePath: s.dashboardFilePath,
+		ManagedBy:  utils.ManagerKindClassicFP, // nolint:staticcheck
+		Limit:      1,
+	}
+
+	svcCtx := identity.WithServiceIdentityContext(ctx, orgID)
+
+	results, err := s.dashboardSearcher.FindDashboards(svcCtx, query)
+
+	if err != nil {
+		s.logger.Warn("failed to find dashboards", "error", err)
+		return "", nil
+	}
+
+	if len(results) > 0 {
+		return results[0].UID, nil
+	}
+
+	return "", nil
 }
 
 // items should be in descending order of importance — for each field, the

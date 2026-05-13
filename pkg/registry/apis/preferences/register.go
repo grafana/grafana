@@ -12,6 +12,7 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/resource"
+
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -20,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
@@ -43,11 +45,12 @@ func RegisterAPIService(
 	prefs pref.Service,
 	accessClient authlib.AccessClient,
 	apiregistration builder.APIRegistrar,
+	dbSrv dashboards.DashboardService,
 	_ resource.ClientGenerator,
 ) (*APIBuilder, error) {
 	sql := legacy.NewLegacySQL(legacysql.NewDatabaseProvider(db))
 	builder := &APIBuilder{
-		merger: newMerger(cfg),
+		merger: newMerger(cfg, dbSrv),
 		authorizer: &utils.AuthorizeFromName{
 			OKNames:      []string{"merged"},
 			AccessClient: accessClient, // can i edit a team
