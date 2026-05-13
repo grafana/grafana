@@ -511,6 +511,11 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   }
 
   changePlugin(newPlugin: PanelPlugin) {
+    reportLegacyDashboardApiUsage({
+      pluginId: newPlugin.meta.id,
+      apiName: 'PanelModel.changePlugin.invoke',
+      extra: { fromType: this.type },
+    });
     const pluginId = newPlugin.meta.id;
     const oldOptions = this.getOptionsToRemember();
     const prevFieldConfig = this.fieldConfig;

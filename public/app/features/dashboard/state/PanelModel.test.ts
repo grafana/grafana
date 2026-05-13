@@ -709,6 +709,27 @@ describe('PanelModel legacy API telemetry — migration invocation', () => {
   });
 });
 
+describe('PanelModel legacy API telemetry — changePlugin', () => {
+  beforeEach(() => {
+    reportMock.mockClear();
+    setLegacyApiReporter(jest.fn());
+  });
+
+  it('reports PanelModel.changePlugin.invoke when changePlugin runs', async () => {
+    const oldPlugin = getPanelPlugin({ id: 'old' });
+    const newPlugin = getPanelPlugin({ id: 'new' });
+    const panel = new PanelModel({ type: 'old' });
+    await panel.pluginLoaded(oldPlugin);
+    reportMock.mockClear();
+
+    panel.changePlugin(newPlugin);
+
+    expect(reportMock).toHaveBeenCalledWith(
+      expect.objectContaining({ pluginId: 'new', apiName: 'PanelModel.changePlugin.invoke' })
+    );
+  });
+});
+
 const variablesMock = [
   queryBuilder().withId('test1').withName('test1').withCurrent('val1').build(),
   queryBuilder().withId('test2').withName('test2').withCurrent('val2').build(),
