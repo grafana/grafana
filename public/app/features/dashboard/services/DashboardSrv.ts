@@ -1,5 +1,6 @@
+import { resolvePluginIdFromStack } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { type BackendSrvRequest } from '@grafana/runtime';
+import { type BackendSrvRequest, reportLegacyDashboardApiUsage } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
@@ -39,6 +40,12 @@ export class DashboardSrv {
   }
 
   getCurrent(): DashboardModel | undefined {
+    if (this.dashboard) {
+      const pluginId = resolvePluginIdFromStack(new Error().stack);
+      if (pluginId !== 'unknown') {
+        reportLegacyDashboardApiUsage({ pluginId, apiName: 'DashboardSrv.getCurrent' });
+      }
+    }
     return this.dashboard;
   }
 
