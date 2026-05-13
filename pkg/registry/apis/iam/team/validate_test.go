@@ -372,7 +372,7 @@ func TestValidateExternalGroups(t *testing.T) {
 		err := validateExternalGroups([]string{"LDAP-Admins"}, stub)
 		require.ErrorIs(t, err, boom)
 		assert.Equal(t, []string{"LDAP-Admins"}, stub.gotInput,
-			"reconciler.Validate must receive the caller's original (un-normalized) input")
+			"validateExternalGroups must pass groups through to reconciler.Validate without mutating")
 	})
 }
 

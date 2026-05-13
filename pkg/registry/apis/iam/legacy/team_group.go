@@ -19,6 +19,8 @@ type ExternalGroupReconciler interface {
 	Validate(groups []string) error
 
 	// Reconcile diffs current rows against desired and bulk INSERTs/DELETEs.
+	// `desired` is the post-admission spec; implementations should treat
+	// duplicates and whitespace defensively.
 	Reconcile(ctx context.Context, tx *session.SessionTx, orgID, teamID int64, desired []string) error
 
 	// ListByTeams hydrates Team.spec.externalGroups on Get/List. Each team's

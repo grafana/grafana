@@ -608,29 +608,28 @@ func (s *legacySQLStore) DeleteTeam(ctx context.Context, ns claims.NamespaceInfo
 		return err
 	}
 
-	req := newDeleteTeam(sql, &cmd)
-	if err := req.Validate(); err != nil {
+	teamDeleteReq := newDeleteTeam(sql, &cmd)
+	if err := teamDeleteReq.Validate(); err != nil {
 		return err
 	}
 
-	return sql.DB.GetSqlxSession().WithTransaction(ctx, func(st *session.SessionTx) error {
-		existing, err := s.GetTeamInternalID(ctx, ns, GetTeamInternalIDQuery{
-			OrgID: ns.OrgID,
-			UID:   cmd.UID,
-		})
-		if err != nil {
-			return err
-		}
+	// Resolve the team's internal ID before opening the write transaction. Doing
+	// the read inside WithTransaction would acquire a second DB connection while
+	// the tx holds the write lock, which deadlocks on SQLite.
+	existing, err := s.GetTeamInternalID(ctx, ns, GetTeamInternalIDQuery{
+		OrgID: ns.OrgID,
+		UID:   cmd.UID,
+	})
+	if err != nil {
+		return err
+	}
+	teamID := existing.ID
 
+	return sql.DB.GetSqlxSession().WithTransaction(ctx, func(st *session.SessionTx) error {
 		if cmd.ExternalGroupReconciler != nil {
-			if err := cmd.ExternalGroupReconciler.DeleteAll(ctx, st, ns.OrgID, existing.ID); err != nil {
+			if err := cmd.ExternalGroupReconciler.DeleteAll(ctx, st, ns.OrgID, teamID); err != nil {
 				return fmt.Errorf("failed to delete team external groups: %w", err)
 			}
-		}
-
-		teamDeleteReq := newDeleteTeam(sql, &cmd)
-		if err := teamDeleteReq.Validate(); err != nil {
-			return err
 		}
 
 		teamDeleteQuery, err := sqltemplate.Execute(sqlDeleteTeamTemplate, teamDeleteReq)
