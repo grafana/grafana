@@ -227,3 +227,22 @@ func RegisterConversions(s *runtime.Scheme, dsIndexProvider schemaversion.DataSo
 
 	return nil
 }
+
+// Convert a dashboard from one version to another
+func Convert(s *runtime.Scheme, src runtime.Object, version string) (runtime.Object, error) {
+	var out runtime.Object
+	switch version {
+	case dashv0.VERSION:
+		out = &dashv0.Dashboard{}
+	case dashv1.VERSION:
+		out = &dashv1.Dashboard{}
+	case dashv2alpha1.VERSION:
+		out = &dashv2alpha1.Dashboard{}
+	case dashv2beta1.VERSION:
+		out = &dashv2beta1.Dashboard{}
+	case dashv2.VERSION:
+		out = &dashv2.Dashboard{}
+	}
+	err := s.Convert(src, out, nil)
+	return out, err
+}

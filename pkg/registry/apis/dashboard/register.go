@@ -195,7 +195,7 @@ func RegisterAPIService(
 		namespacer:               namespacer,
 		dashboardActivityChannel: dashboardActivityChannel,
 		legacy:                   legacy.NewDashboardSQLAccess(dbp, namespacer, provisioning, accessControl),
-		homeDashboard:            &homeDashboard{}, // TODO initialize from cfg!!!
+		homeDashboard:            newHomeDashboardSupport("xxx"), // TODO initialize from cfg!!!
 	}
 
 	migration.RegisterMetrics(reg)
@@ -262,6 +262,7 @@ func (b *DashboardsAPIBuilder) GetGroupVersions() []schema.GroupVersion {
 }
 
 func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
+	b.homeDashboard.scheme = scheme
 	b.scheme = scheme
 	if err := dashv0.AddToScheme(scheme); err != nil {
 		return err
