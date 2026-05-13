@@ -57,13 +57,9 @@ export function PluginDetailsPage({
   const { isLoading: isFetchDetailsLoading } = useFetchDetailsStatus();
   const styles = useStyles2(getStyles);
 
-  // Only show the page-level loader while we don't yet have data to render:
-  //   - the plugin list is still loading (no shell in the store yet), OR
-  //   - the shell is here but `plugin.details` (readme, versions, changelog, screenshots) hasn't
-  //     arrived — tabs read from `plugin.details` and would flash their empty fallback otherwise.
-  // Re-fetches that happen after an action (e.g. fetchDetails after install) already have full
-  // details, so the loader skips and the page stays mounted — transient UI state in the actions
-  // slot (the "Refresh the page to see the changes" notice) survives.
+  // Gate on `!plugin?.details` so post-action refetches (e.g. fetchDetails after install) keep
+  // the page mounted — otherwise the "Refresh the page" notice in PluginActions is lost. Initial
+  // fetches still hit the loader because tabs read from plugin.details and would flash empty.
   if (isFetchLoading || (isFetchDetailsLoading && !plugin?.details)) {
     return (
       <Page
