@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard/home"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/live"
@@ -23,7 +24,7 @@ type dashboardStorageWrapper struct {
 	grafanarest.Storage
 
 	// Support home dashboards
-	homeDashboard *homeDashboard
+	homeDashboard home.HomeDashboardGetter
 	apiVersion    string
 
 	// Clear the dashboard cache on Delete
@@ -72,7 +73,7 @@ func (d dashboardStorageWrapper) Delete(ctx context.Context, name string, delete
 }
 
 func (d dashboardStorageWrapper) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	if name == HOME_DASHBOARD_NAME && d.homeDashboard != nil {
+	if name == home.DASHBOARD_NAME && d.homeDashboard != nil {
 		return d.homeDashboard.Get(d.apiVersion)
 	}
 

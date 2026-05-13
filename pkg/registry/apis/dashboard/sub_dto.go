@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/slugify"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard/home"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
@@ -106,7 +107,7 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 			return
 		}
 
-		if name == HOME_DASHBOARD_NAME {
+		if name == home.DASHBOARD_NAME {
 			dash, err := r.builder(rawobj, &dashboard.DashboardAccess{
 				Slug: "home",
 				Url:  dashboards.GetDashboardFolderURL(false, name, "home"),

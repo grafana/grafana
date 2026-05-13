@@ -17,6 +17,7 @@ import (
 
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard/home"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errhttp"
@@ -41,8 +42,8 @@ func newMerger(cfg *setting.Cfg) *merger {
 			Language:  &cfg.DefaultLanguage,
 		},
 	}
-	if cfg.DefaultHomeDashboardPath != "" {
-		m.homeDashboardUID = "default-home-dashboard"
+	if home.HasCustomHome(cfg) {
+		m.homeDashboardUID = home.DASHBOARD_NAME
 	}
 	return m
 }

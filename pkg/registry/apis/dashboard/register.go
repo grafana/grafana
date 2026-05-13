@@ -43,6 +43,7 @@ import (
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard/home"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/snapshot"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -121,8 +122,8 @@ type DashboardsAPIBuilder struct {
 	publicDashboardService   publicdashboards.Service
 	snapshotService          dashboardsnapshots.Service
 	snapshotOptions          dashv0.SnapshotSharingOptions
-	snapshotStorage          rest.Storage   // for dual-write support in routes
-	homeDashboard            *homeDashboard // On-prem home dashboard support
+	snapshotStorage          rest.Storage             // for dual-write support in routes
+	homeDashboard            home.HomeDashboardGetter // On-prem home dashboard support
 	namespacer               request.NamespaceMapper
 	dashboardActivityChannel live.DashboardActivityChannel
 	dashboardK8sClient       client.K8sHandler // for provisioning checks during delete validation
@@ -195,7 +196,7 @@ func RegisterAPIService(
 		namespacer:               namespacer,
 		dashboardActivityChannel: dashboardActivityChannel,
 		legacy:                   legacy.NewDashboardSQLAccess(dbp, namespacer, provisioning, accessControl),
-		homeDashboard:            newHomeDashboardSupport(cfg),
+		homeDashboard:            home.NewHomeDashboardSupport(cfg),
 	}
 
 	migration.RegisterMetrics(reg)
@@ -263,7 +264,7 @@ func (b *DashboardsAPIBuilder) GetGroupVersions() []schema.GroupVersion {
 
 func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	if b.homeDashboard != nil {
-		b.homeDashboard.scheme = scheme
+		b.homeDashboard.RegisterSchema(scheme)
 	}
 	b.scheme = scheme
 	if err := dashv0.AddToScheme(scheme); err != nil {
@@ -324,7 +325,7 @@ func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 
 	switch a.GetResource().Resource {
 	case dashv0.DASHBOARD_RESOURCE:
-		if a.GetName() == HOME_DASHBOARD_NAME && op != admission.Connect {
+		if a.GetName() == home.DASHBOARD_NAME && op != admission.Connect {
 			return fmt.Errorf("no operations are allowed on the home dashboard")
 		}
 

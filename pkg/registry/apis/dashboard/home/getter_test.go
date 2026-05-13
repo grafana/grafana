@@ -1,4 +1,4 @@
-package dashboard
+package home
 
 import (
 	"encoding/json"
@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/conversion"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/testutil"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -56,101 +55,11 @@ func writeDashboardFile(t *testing.T, contents string) string {
 	return path
 }
 
-func TestDefaultHomeDashboard(t *testing.T) {
-	obj := defaultHomeDashboard()
-	dash, ok := obj.(*dashv0.Dashboard)
-	require.True(t, ok, "default home dashboard should be a v0 Dashboard")
-	require.Equal(t, "home", dash.Spec.Object["title"])
-}
-
-func TestReadDashboard(t *testing.T) {
-	t.Run("empty path returns nil object and no error", func(t *testing.T) {
-		obj, err := readDashboard("")
-		require.NoError(t, err)
-		require.Nil(t, obj)
-	})
-
-	t.Run("missing file returns an error", func(t *testing.T) {
-		_, err := readDashboard(filepath.Join(t.TempDir(), "does-not-exist.json"))
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "read home dashboard")
-	})
-
-	t.Run("malformed JSON returns an error", func(t *testing.T) {
-		path := writeDashboardFile(t, "{not json")
-		_, err := readDashboard(path)
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "parse home dashboard")
-	})
-
-	t.Run("no apiVersion is treated as a v0 spec", func(t *testing.T) {
-		path := writeDashboardFile(t, `{"title":"my home","panels":[]}`)
-		obj, err := readDashboard(path)
-		require.NoError(t, err)
-		dash, ok := obj.(*dashv0.Dashboard)
-		require.True(t, ok, "expected v0 Dashboard for spec-only payload")
-		require.Equal(t, "my home", dash.Spec.Object["title"])
-		// The whole payload becomes the spec, including panels.
-		require.Contains(t, dash.Spec.Object, "panels")
-	})
-
-	t.Run("apiVersion v0alpha1 decodes into v0 Dashboard", func(t *testing.T) {
-		path := writeDashboardFile(t, `{
-			"apiVersion": "dashboard.grafana.app/v0alpha1",
-			"kind": "Dashboard",
-			"spec": {"title": "v0 home"}
-		}`)
-		obj, err := readDashboard(path)
-		require.NoError(t, err)
-		dash, ok := obj.(*dashv0.Dashboard)
-		require.True(t, ok)
-		require.Equal(t, "v0 home", dash.Spec.Object["title"])
-	})
-
-	t.Run("apiVersion v1 decodes into v1 Dashboard", func(t *testing.T) {
-		path := writeDashboardFile(t, `{
-			"apiVersion": "dashboard.grafana.app/v1",
-			"kind": "Dashboard",
-			"spec": {"title": "v1 home", "schemaVersion": 41}
-		}`)
-		obj, err := readDashboard(path)
-		require.NoError(t, err)
-		_, ok := obj.(*dashv1.Dashboard)
-		require.True(t, ok, "expected v1 Dashboard")
-	})
-
-	t.Run("unsupported apiVersion returns an error", func(t *testing.T) {
-		path := writeDashboardFile(t, `{"apiVersion":"dashboard.grafana.app/v9","spec":{}}`)
-		_, err := readDashboard(path)
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "unsupported home dashboard apiVersion")
-	})
-
-	t.Run("apiVersion present with invalid body returns a decode error", func(t *testing.T) {
-		// Spec is supposed to be an object; passing a number trips json.Unmarshal
-		// when decoding into the typed Dashboard.
-		path := writeDashboardFile(t, `{"apiVersion":"dashboard.grafana.app/v1","spec":123}`)
-		_, err := readDashboard(path)
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "decode home dashboard")
-	})
-
-	t.Run("header parses but spec body cannot unmarshal to map", func(t *testing.T) {
-		// No apiVersion → second unmarshal targets map[string]any; an array fails.
-		path := writeDashboardFile(t, `[1,2,3]`)
-		_, err := readDashboard(path)
-		require.Error(t, err)
-		// Either the header unmarshal or the spec unmarshal fails on the array;
-		// both error messages mention "home dashboard".
-		require.Contains(t, err.Error(), "home dashboard")
-	})
-}
-
 func TestNewHomeDashboardSupport_UsesConfiguredPath(t *testing.T) {
 	path := writeDashboardFile(t, `{"title":"configured"}`)
 	cfg := &setting.Cfg{DefaultHomeDashboardPath: path}
 
-	home := newHomeDashboardSupport(cfg)
+	home := NewHomeDashboardSupport(cfg)
 	require.NotNil(t, home)
 	require.Equal(t, path, home.fpath)
 	require.NotNil(t, home.watcher, "watcher should be created for an existing file")
@@ -162,7 +71,7 @@ func TestNewHomeDashboardSupport_FallsBackToStaticRootPath(t *testing.T) {
 	// need to exist for the constructor to return.
 	cfg := &setting.Cfg{StaticRootPath: t.TempDir()}
 
-	home := newHomeDashboardSupport(cfg)
+	home := NewHomeDashboardSupport(cfg)
 	require.NotNil(t, home)
 	require.Equal(t, filepath.Join(cfg.StaticRootPath, "dashboards/home.json"), home.fpath)
 	// File does not exist → watcher.Add fails and the watcher is left nil.
@@ -211,7 +120,7 @@ func TestHomeDashboardGet_FallsBackToDefaultWhenFileMissing(t *testing.T) {
 	require.NoError(t, err)
 	dash, ok := obj.(*dashv0.Dashboard)
 	require.True(t, ok)
-	require.Equal(t, HOME_DASHBOARD_NAME, dash.Name)
+	require.Equal(t, DASHBOARD_NAME, dash.Name)
 	require.NotEmpty(t, dash.ResourceVersion)
 	require.False(t, dash.CreationTimestamp.IsZero())
 	require.Equal(t, "home", dash.Spec.Object["title"])
@@ -231,13 +140,13 @@ func TestHomeDashboardGet_LoadsConfiguredFile(t *testing.T) {
 	require.NoError(t, err)
 	dash, ok := obj.(*dashv0.Dashboard)
 	require.True(t, ok)
-	require.Equal(t, HOME_DASHBOARD_NAME, dash.Name)
+	require.Equal(t, DASHBOARD_NAME, dash.Name)
 	require.Equal(t, "from file", dash.Spec.Object["title"])
 
 	// Meta should be reachable via the accessor too.
 	meta, err := utils.MetaAccessor(obj)
 	require.NoError(t, err)
-	require.Equal(t, HOME_DASHBOARD_NAME, meta.GetName())
+	require.Equal(t, DASHBOARD_NAME, meta.GetName())
 	require.NotEmpty(t, meta.GetResourceVersion())
 }
 
@@ -304,7 +213,7 @@ func TestHomeDashboardGet_ConvertsToAllRegisteredVersions(t *testing.T) {
 			tc.check(t, obj)
 			meta, err := utils.MetaAccessor(obj)
 			require.NoError(t, err)
-			require.Equal(t, HOME_DASHBOARD_NAME, meta.GetName())
+			require.Equal(t, DASHBOARD_NAME, meta.GetName())
 		})
 	}
 }
@@ -336,7 +245,7 @@ func TestHomeDashboardLoad_PreservesPriorBehaviorOnMissingFile(t *testing.T) {
 
 	meta, err := utils.MetaAccessor(home.source)
 	require.NoError(t, err)
-	require.Equal(t, HOME_DASHBOARD_NAME, meta.GetName())
+	require.Equal(t, DASHBOARD_NAME, meta.GetName())
 	require.NotEmpty(t, meta.GetResourceVersion())
 	ts := meta.GetCreationTimestamp()
 	require.False(t, ts.IsZero())
@@ -475,13 +384,4 @@ func TestReadDashboard_HeaderParsing(t *testing.T) {
 	}
 	require.NoError(t, json.Unmarshal([]byte(`{"apiVersion":"dashboard.grafana.app/v0alpha1"}`), &header))
 	require.Equal(t, "dashboard.grafana.app/v0alpha1", header.APIVersion)
-}
-
-// Smoke test: ensure the public type aliases / spec shapes used by the home
-// dashboard remain compatible with a runtime-built default. Guards against
-// silent breakage if Unstructured ever changes.
-func TestDefaultHomeDashboard_SpecIsUnstructured(t *testing.T) {
-	obj := defaultHomeDashboard()
-	dash := obj.(*dashv0.Dashboard)
-	require.IsType(t, common.Unstructured{}, dash.Spec)
 }

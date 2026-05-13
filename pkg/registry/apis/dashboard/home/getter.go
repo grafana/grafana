@@ -1,9 +1,7 @@
-package dashboard
+package home
 
 import (
-	"encoding/json"
 	"fmt"
-	"os"
 	"path/filepath"
 	"sync"
 
@@ -12,16 +10,22 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/conversion"
-	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-const HOME_DASHBOARD_NAME = "default-home-dashboard"
+const DASHBOARD_NAME = "default-home-dashboard"
 
-func newHomeDashboardSupport(cfg *setting.Cfg) *homeDashboard {
+type HomeDashboardGetter interface {
+	// Get the file based home dashboard at a specific version
+	Get(version string) (runtime.Object, error)
+
+	// Register the schema we will use for conversions
+	RegisterSchema(scheme *runtime.Scheme)
+}
+
+func NewHomeDashboardSupport(cfg *setting.Cfg) *homeDashboard {
 	filePath := cfg.DefaultHomeDashboardPath
 	if filePath == "" {
 		filePath = filepath.Join(cfg.StaticRootPath, "dashboards/home.json")
@@ -54,6 +58,10 @@ func newHomeDashboardSupportForFile(defaultDashboardFile string) *homeDashboard 
 	home.watcher = watcher
 	go home.watch()
 	return home
+}
+
+func (h *homeDashboard) RegisterSchema(scheme *runtime.Scheme) {
+	h.scheme = scheme
 }
 
 type homeDashboardGetter func() (runtime.Object, error)
@@ -102,7 +110,10 @@ func (h *homeDashboard) load() error {
 		h.log.Error("failed to read home dashboard, using default", "path", h.fpath, "err", err)
 	}
 	if obj == nil {
-		obj = defaultHomeDashboard()
+		obj, err = defaultHomeDashboard()
+		if err != nil {
+			return err
+		}
 	}
 
 	now := metav1.Now()
@@ -111,62 +122,12 @@ func (h *homeDashboard) load() error {
 		return fmt.Errorf("home dashboard meta accessor: %w", err)
 	}
 	meta.SetCreationTimestamp(now)
-	meta.SetName(HOME_DASHBOARD_NAME)
+	meta.SetName(DASHBOARD_NAME)
 	meta.SetResourceVersion(fmt.Sprintf("%d", now.UnixMilli()))
 
 	h.source = obj
 	h.versions = make(map[string]homeDashboardGetter)
 	return nil
-}
-
-// readDashboard loads the dashboard JSON at filePath. If the file declares an
-// `apiVersion`, the bytes are decoded into the matching versioned Dashboard
-// type; otherwise the whole payload is treated as a v0 dashboard spec.
-// Returns (nil, nil) when no file is configured.
-func readDashboard(filePath string) (runtime.Object, error) {
-	if filePath == "" {
-		return nil, nil
-	}
-	raw, err := os.ReadFile(filePath)
-	if err != nil {
-		return nil, fmt.Errorf("read home dashboard: %w", err)
-	}
-
-	// Peek at the apiVersion before deciding which type to decode into.
-	var header struct {
-		APIVersion string `json:"apiVersion"`
-	}
-	if err := json.Unmarshal(raw, &header); err != nil {
-		return nil, fmt.Errorf("parse home dashboard: %w", err)
-	}
-
-	if header.APIVersion != "" {
-		out, err := conversion.NewDashboardObject(header.APIVersion)
-		if err != nil {
-			return nil, fmt.Errorf("unsupported home dashboard apiVersion %q: %w", header.APIVersion, err)
-		}
-		if err := json.Unmarshal(raw, out); err != nil {
-			return nil, fmt.Errorf("decode home dashboard (%s): %w", header.APIVersion, err)
-		}
-		return out, nil
-	}
-
-	// No apiVersion → treat the whole file as the v0 spec.
-	var spec map[string]any
-	if err := json.Unmarshal(raw, &spec); err != nil {
-		return nil, fmt.Errorf("decode home dashboard spec: %w", err)
-	}
-	return &dashv0.Dashboard{Spec: v0alpha1.Unstructured{Object: spec}}, nil
-}
-
-// defaultHomeDashboard is the fallback returned when no file is configured or
-// the configured file cannot be read.
-func defaultHomeDashboard() runtime.Object {
-	return &dashv0.Dashboard{Spec: v0alpha1.Unstructured{
-		Object: map[string]any{
-			"title": "home",
-		},
-	}}
 }
 
 // watch invalidates the cached source whenever the watched file changes, so the
