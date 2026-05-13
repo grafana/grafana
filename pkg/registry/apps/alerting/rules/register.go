@@ -21,6 +21,7 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/alertrule"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/prometheusrulegroup"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/recordingrule"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	reqns "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -154,6 +155,8 @@ func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 				return recordingrule.Authorize(ctx, authz, a)
 			case alertrule.ResourceInfo.GroupResource().Resource:
 				return alertrule.Authorize(ctx, authz, a)
+			case prometheusrulegroup.ResourceInfo.GroupResource().Resource:
+				return prometheusrulegroup.Authorize(ctx, authz, a)
 			}
 			return authorizer.DecisionNoOpinion, "", nil
 		},
@@ -167,6 +170,8 @@ func (a *AppInstaller) GetLegacyStorage(gvr schema.GroupVersionResource) grafana
 		return recordingrule.NewStorage(*a.ng.Api.AlertRules, namespacer)
 	case alertrule.ResourceInfo.GroupVersionResource():
 		return alertrule.NewStorage(*a.ng.Api.AlertRules, namespacer)
+	case prometheusrulegroup.ResourceInfo.GroupVersionResource():
+		return prometheusrulegroup.NewStorage(*a.ng.Api.AlertRules, a.ng.Api.RuleStore, namespacer, a.ng.Cfg.UnifiedAlerting.BaseInterval)
 	default:
 		panic("unknown legacy storage requested: " + gvr.String())
 	}
