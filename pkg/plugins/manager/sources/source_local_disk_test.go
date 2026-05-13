@@ -145,7 +145,7 @@ func TestDirAsLocalSourcesSkipsUnreadableDirectory(t *testing.T) {
 
 	t.Cleanup(func() {
 		// Restore permissions so TempDir cleanup can remove the directory.
-		_ = os.Chmod(unreadableDir, 0750)
+		_ = os.Chmod(unreadableDir, 0750) //nolint:gosec // Directory needs execute permission to allow traversal during cleanup.
 	})
 	require.NoError(t, os.Chmod(unreadableDir, 0))
 
