@@ -195,7 +195,7 @@ func RegisterAPIService(
 		namespacer:               namespacer,
 		dashboardActivityChannel: dashboardActivityChannel,
 		legacy:                   legacy.NewDashboardSQLAccess(dbp, namespacer, provisioning, accessControl),
-		homeDashboard:            newHomeDashboardSupport(cfg.DefaultHomeDashboardPath),
+		homeDashboard:            newHomeDashboardSupport(cfg),
 	}
 
 	migration.RegisterMetrics(reg)
