@@ -2,12 +2,21 @@ package starimpl
 
 import (
 	"context"
-	"math/rand"
+	"sync/atomic"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/star"
 )
+
+// dashboardIDCounter provides a monotonic per-process offset used to generate
+// a synthetic unique dashboard_id value for new star rows. The dashboard_id
+// column is no longer used by the star service, but the legacy
+// UNIQUE (user_id, dashboard_id) index is still present (see star_mig.go).
+// Combining time.Now().UnixMicro() with an atomic counter guarantees uniqueness
+// for every Insert within a process, avoiding silent unique-constraint
+// violations when Add() is called in quick succession.
+var dashboardIDCounter atomic.Int64
 
 type sqlStore struct {
 	db db.DB
@@ -33,7 +42,12 @@ func (s *sqlStore) Insert(ctx context.Context, cmd *star.StarDashboardCommand) e
 	return s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		// nolint:staticcheck
 		if cmd.DashboardID == 0 {
-			cmd.DashboardID = time.Now().UnixMicro() + rand.Int63n(5000) // random unique value
+			// Use UnixMicro plus a monotonic counter so the generated value is
+			// guaranteed unique within this process, even for calls that happen
+			// in the same microsecond. This avoids hitting the legacy
+			// UNIQUE (user_id, dashboard_id) index, which would otherwise be
+			// silently swallowed by Add() and cause data loss.
+			cmd.DashboardID = time.Now().UnixMicro() + dashboardIDCounter.Add(1)
 		}
 
 		entity := star.Star{

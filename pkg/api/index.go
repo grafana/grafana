@@ -129,7 +129,9 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		settings.AppSubUrl = ""
 	}
 	ofClient := openfeature.NewDefaultClient()
-	renderBindingSupported, _ := ofClient.BooleanValue(c.Req.Context(), featuremgmt.FlagReportRenderBinding, false, openfeature.TransactionContext(c.Req.Context()))
+	ctx := c.Req.Context()
+	renderBindingSupported, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagReportRenderBinding, false, openfeature.TransactionContext(ctx))
+	grafanaAssetSriChecks, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagGrafanaAssetSriChecks, false, openfeature.TransactionContext(ctx))
 
 	navTree, err := hs.navTreeService.GetNavTree(c, prefs)
 	if err != nil {
@@ -200,6 +202,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		IsDevelopmentEnv:                    hs.Cfg.Env == setting.Dev,
 		Assets:                              assets,
 		RenderBindingSupported:              renderBindingSupported,
+		AssetSriChecksEnabled:               grafanaAssetSriChecks,
 	}
 
 	if hs.Cfg.CSPEnabled {

@@ -13,6 +13,7 @@
 import * as common from '@grafana/schema';
 
 export interface Options {
+  allowDownload?: boolean;
   buildLinkToLogLine?: unknown;
   displayedFields?: Array<string>;
   enableLogDetails?: boolean;

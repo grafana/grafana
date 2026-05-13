@@ -116,7 +116,7 @@ it('can convert proper numeric strings to numbers, but also treat edge-cases', (
   expect(numbers).toEqual({
     name: 'stringy nums',
     type: FieldType.number,
-    values: [10, null, 30, 14, 10, 23, 0, 0],
+    values: [10, null, 30, 14, 10, 23, null, null],
     config: {},
   });
 });

@@ -1,29 +1,11 @@
 /* eslint-disable id-blacklist, no-restricted-imports */
 import moment, { type Moment } from 'moment-timezone';
 
-import { formatDate } from '@grafana/i18n';
-
 import { type TimeZone } from '../types/time';
-import { getFeatureToggle } from '../utils/featureToggles';
 
 import { type DateTimeOptions, getTimeZone } from './common';
 import { systemDateFormats } from './formats';
 import { type DateTimeInput, toUtc, dateTimeAsMoment } from './moment_wrapper';
-
-/**
- * Converts a Grafana DateTimeInput to a plain Javascript Date object.
- */
-function toDate(dateInUtc: DateTimeInput): Date {
-  if (dateInUtc instanceof Date) {
-    return dateInUtc;
-  }
-
-  if (typeof dateInUtc === 'string' || typeof dateInUtc === 'number') {
-    return new Date(dateInUtc);
-  }
-
-  return dateTimeAsMoment(dateInUtc).toDate();
-}
 
 /**
  * Converts a Grafana timezone string to an IANA timezone string.
@@ -41,35 +23,6 @@ export function toIANATimezone(grafanaTimezone: string) {
   }
 
   return grafanaTimezone;
-}
-
-function getIntlOptions(
-  date: Date,
-  options?: DateTimeOptionsWithFormat
-): Intl.DateTimeFormatOptions & { timeZone?: string } {
-  const timeZone = getTimeZone(options);
-
-  const intlOptions: Intl.DateTimeFormatOptions = {
-    year: 'numeric', // ↔ dateStyle: 'short'
-    month: 'numeric',
-    day: 'numeric',
-    hour: 'numeric', // ↔ timeStyle: 'short'
-    minute: 'numeric',
-    timeZone: toIANATimezone(timeZone),
-  };
-
-  // If the time has seconds, ensure they're included in the format
-  const hasSeconds = date.getSeconds() !== 0;
-  if (hasSeconds) {
-    intlOptions.second = 'numeric';
-  }
-
-  if (options?.defaultWithMS) {
-    intlOptions.second = 'numeric';
-    intlOptions.fractionalSecondDigits = 3; // Include milliseconds
-  }
-
-  return intlOptions;
 }
 
 /**
@@ -94,24 +47,16 @@ type DateTimeFormatter<T extends DateTimeOptions = DateTimeOptions> = (dateInUtc
 // in favor of using @grafana/i18n directly.
 
 /**
- * Helper function to format date and time according to the specified options.
- * If no options are supplied, then the date is formatting according to the user's locale preference.
+ * Helper function to format date and time according to the specified options. If no options
+ * are supplied, then default values are used. For more details, see {@link DateTimeOptionsWithFormat}.
  *
  * @param dateInUtc - date in UTC format, e.g. string formatted with UTC offset, UNIX epoch in seconds etc.
  * @param options
  *
  * @public
  */
-export const dateTimeFormat: DateTimeFormatter<DateTimeOptionsWithFormat> = (dateInUtc, options?) => {
-  // If a custom format is provided (or the toggle isn't enabled), use the previous implementation
-  if (!getFeatureToggle('localeFormatPreference') || options?.format) {
-    return toTz(dateInUtc, getTimeZone(options)).format(getFormat(options));
-  }
-
-  const dateAsDate = toDate(dateInUtc);
-  const intlOptions = getIntlOptions(dateAsDate, options); // TODO - if invalid timezone, use browser timezone
-  return formatDate(dateAsDate, intlOptions);
-};
+export const dateTimeFormat: DateTimeFormatter<DateTimeOptionsWithFormat> = (dateInUtc, options?) =>
+  toTz(dateInUtc, getTimeZone(options)).format(getFormat(options));
 
 /**
  * Helper function to format date and time according to the standard ISO format e.g. 2013-02-04T22:44:30.652Z.
@@ -148,18 +93,8 @@ export const dateTimeFormatTimeAgo: DateTimeFormatter = (dateInUtc, options?) =>
  *
  * @public
  */
-export const dateTimeFormatWithAbbrevation: DateTimeFormatter = (dateInUtc, options?) => {
-  // If a custom format is provided (or the toggle isn't enabled), use the previous implementation
-  if (!getFeatureToggle('localeFormatPreference') || options?.format) {
-    return toTz(dateInUtc, getTimeZone(options)).format(`${systemDateFormats.fullDate} z`);
-  }
-
-  const dateAsDate = toDate(dateInUtc);
-  const intlOptions = getIntlOptions(dateAsDate, options);
-  intlOptions.timeZoneName = 'short';
-
-  return formatDate(dateAsDate, intlOptions);
-};
+export const dateTimeFormatWithAbbrevation: DateTimeFormatter = (dateInUtc, options?) =>
+  toTz(dateInUtc, getTimeZone(options)).format(`${systemDateFormats.fullDate} z`);
 
 /**
  * Helper function to return only the time zone abbreviation for a given date and time value. If no options

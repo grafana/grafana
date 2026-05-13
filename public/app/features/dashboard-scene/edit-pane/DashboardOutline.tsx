@@ -4,8 +4,8 @@ import React, { useMemo, useState } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { type SceneComponentProps, sceneGraph, SceneObjectBase, type SceneObject } from '@grafana/scenes';
-import { Box, Icon, ScrollContainer, Sidebar, Text, useElementSelection, useStyles2 } from '@grafana/ui';
+import { type SceneComponentProps, SceneObjectBase, type SceneObject } from '@grafana/scenes';
+import { Box, Icon, ScrollContainer, Sidebar, Text, Tooltip, useElementSelection, useStyles2 } from '@grafana/ui';
 
 import { DashboardLinksSet } from '../settings/links/DashboardLinksSet';
 import { LinkEdit } from '../settings/links/LinkAddEditableElement';
@@ -15,7 +15,7 @@ import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
 
-import { DashboardEditPane } from './DashboardEditPane';
+import { type DashboardEditPane } from './DashboardEditPane';
 import { getEditableElementFor } from './shared';
 import { useOutlineRename } from './useOutlineRename';
 
@@ -27,7 +27,6 @@ export class DashboardOutline extends SceneObjectBase {
 }
 
 export function DashboardOutlineRenderer({ model }: SceneComponentProps<DashboardOutline>) {
-  const editPane = sceneGraph.getAncestor(model, DashboardEditPane)!;
   const dashboard = getDashboardSceneFor(model);
   const { isEditing } = dashboard.useState();
 
@@ -36,7 +35,13 @@ export function DashboardOutlineRenderer({ model }: SceneComponentProps<Dashboar
       <Sidebar.PaneHeader title={t('dashboard.outline.pane-header', 'Content outline')} />
       <ScrollContainer showScrollIndicators={true}>
         <Box padding={1} gap={0} display="flex" direction="column" element="ul" role="tree" position="relative">
-          <DashboardOutlineNode sceneObject={dashboard} isEditing={isEditing} editPane={editPane} depth={0} index={0} />
+          <DashboardOutlineNode
+            sceneObject={dashboard}
+            isEditing={isEditing}
+            editPane={dashboard.state.editPane}
+            depth={0}
+            index={0}
+          />
         </Box>
       </ScrollContainer>
     </Box>
@@ -146,7 +151,15 @@ function DashboardOutlineNode({ sceneObject, editPane, isEditing, depth, index }
           ) : (
             <>
               <div className={styles.nodeName}>
-                <Text truncate>{instanceName}</Text>
+                {elementInfo.tooltip ? (
+                  <Tooltip content={elementInfo.tooltip} placement="auto">
+                    <span className={styles.nodeNameText}>
+                      <Text truncate>{instanceName}</Text>
+                    </span>
+                  </Tooltip>
+                ) : (
+                  <Text truncate>{instanceName}</Text>
+                )}
                 {elementInfo.isHidden && <Icon name="eye-slash" size="sm" className={styles.hiddenIcon} />}
               </div>
               {isCloned && (
@@ -267,6 +280,12 @@ function getStyles(theme: GrafanaTheme2) {
       flexGrow: 1,
       alignItems: 'center',
       overflow: 'hidden',
+    }),
+    nodeNameText: css({
+      display: 'inline-flex',
+      alignItems: 'center',
+      overflow: 'hidden',
+      minWidth: 0,
     }),
     hiddenIcon: css({
       color: theme.colors.text.secondary,

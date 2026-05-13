@@ -69,6 +69,7 @@ type Config struct {
 	WriteBatchSize      int                           // Number of tuples to write in a single batch (0 = no batching)
 	QueueSize           int                           // Size of the buffered work queue for namespaces (default 1000)
 	ZanzanaReadPageSize int                           // Page size when reading tuples from Zanzana (default 100, max 100)
+	ListPageSize        int                           // Page size when listing CRDs from the Kubernetes API (default 1000)
 	CRDs                []schema.GroupVersionResource // The set of namespaced resources the reconciler will translate
 }
 
@@ -86,11 +87,18 @@ func (c Config) zanzanaReadPageSize() int32 {
 	return int32(c.ZanzanaReadPageSize)
 }
 
+func (c Config) listPageSize() int64 {
+	if c.ListPageSize <= 0 {
+		return 1000
+	}
+	return int64(c.ListPageSize)
+}
+
 // defaultCRDs is the list of namespaced CRDs the reconciler will translate into Zanzana tuples.
 var DefaultCRDs = []schema.GroupVersionResource{
 	folderv1.FolderResourceInfo.GroupVersionResource(),
 	iamv0.ResourcePermissionInfo.GroupVersionResource(),
-	iamv0.TeamBindingResourceInfo.GroupVersionResource(),
+	iamv0.TeamResourceInfo.GroupVersionResource(),
 	iamv0.UserResourceInfo.GroupVersionResource(),
 	iamv0.ServiceAccountResourceInfo.GroupVersionResource(),
 }
@@ -136,7 +144,7 @@ func (r *Reconciler) Run(ctx context.Context) error {
 }
 
 // runLoop contains the main reconciliation loop, started when this instance
-// acquires leadership (or immediately for NoopElector).
+// acquires leadership (or immediately for DefaultElector).
 func (r *Reconciler) runLoop(ctx context.Context) {
 	r.metrics.isLeader.Set(1)
 	defer r.metrics.isLeader.Set(0)

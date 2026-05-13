@@ -5,7 +5,7 @@ import { isSharedWithMe, isVirtualTeamFolder } from 'app/features/browse-dashboa
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { type DashboardDataDTO } from 'app/types/dashboard';
 
-import { AnnoKeyFolder, type ManagerKind, type ResourceList } from '../../apiserver/types';
+import { AnnoKeyFolder, AnnoKeyUpdatedBy, type ManagerKind, type ResourceList } from '../../apiserver/types';
 import {
   type DashboardSearchHit,
   DashboardSearchItemType,
@@ -15,6 +15,33 @@ import {
 
 import { type DashboardQueryResult, type SearchQuery, type SearchResultMeta } from './types';
 import { type SearchHit } from './unified';
+
+/**
+ * Marker stored in `field.deletedBy` when IAM lookup succeeded but the deleter UID had no
+ * display entry — typically because the account (user, service account, API key, ...) was
+ * deleted. Chosen with NUL delimiters so it cannot collide with any real display name.
+ */
+export const DELETED_BY_REMOVED = '\u0000__grafana_deleted_account__\u0000';
+
+/**
+ * Marker stored in `field.deletedBy` when the IAM batch containing the UID failed entirely
+ * (network/timeout/server error). We cannot distinguish "account deleted" from "lookup failed"
+ * for UIDs in a failed batch, so we surface the ambiguity in the UI with an icon + tooltip.
+ */
+export const DELETED_BY_UNKNOWN = '\u0000__grafana_unknown_account__\u0000';
+
+export function formatDeletedByDisplayValue(
+  rawValue: unknown,
+  t: (key: string, defaultValue: string) => string
+): string {
+  if (rawValue === DELETED_BY_REMOVED) {
+    return t('search.results-table.deleted-by-removed', 'Deleted account');
+  }
+  if (typeof rawValue === 'string' && rawValue) {
+    return rawValue;
+  }
+  return '-';
+}
 
 /** prepare the query replacing folder:current */
 export async function replaceCurrentFolderQuery(query: SearchQuery): Promise<SearchQuery> {
@@ -138,11 +165,19 @@ export function queryResultToViewItem(
   return viewItem;
 }
 
-export function resourceToSearchResult(resource: ResourceList<DashboardDataDTO>): SearchHit[] {
+export function resourceToSearchResult(
+  resource: ResourceList<DashboardDataDTO>,
+  deletedByDisplayMap?: Map<string, string>
+): SearchHit[] {
   return resource.items.map((item) => {
     const field: Record<string, string | number> = {};
     if (item.metadata.deletionTimestamp) {
       field.deletionTimestamp = item.metadata.deletionTimestamp;
+    }
+
+    const deletedByUid = item.metadata.annotations?.[AnnoKeyUpdatedBy];
+    if (deletedByUid) {
+      field.deletedBy = deletedByDisplayMap?.get(deletedByUid) ?? DELETED_BY_UNKNOWN;
     }
 
     const hit = {
@@ -226,6 +261,30 @@ export function filterSearchResults(
         const timeA = Date.parse(timestampA);
         const timeB = Date.parse(timestampB);
         return mult * (timeA - timeB);
+      });
+    } else if (query.sort === 'deletedby-asc' || query.sort === 'deletedby-desc') {
+      const collator = new Intl.Collator();
+      const mult = query.sort === 'deletedby-desc' ? -1 : 1;
+      const isSortable = (v: string | number | undefined): v is string =>
+        typeof v === 'string' && v !== DELETED_BY_REMOVED && v !== DELETED_BY_UNKNOWN;
+      filtered.sort((a, b) => {
+        const byA = a.field.deletedBy;
+        const byB = b.field.deletedBy;
+
+        // Missing or sentinel deleter values sort to the end regardless of direction.
+        const sortableA = isSortable(byA);
+        const sortableB = isSortable(byB);
+        if (!sortableA && !sortableB) {
+          return 0;
+        }
+        if (!sortableA) {
+          return 1;
+        }
+        if (!sortableB) {
+          return -1;
+        }
+
+        return mult * collator.compare(byA, byB);
       });
     } else {
       // Alphabetical sorting

@@ -144,6 +144,18 @@ describe('DashboardEditPane', () => {
       expect(editPane.getSelectedObject()).toBe(tab1);
     });
 
+    it('Removing a panel that is not selected', () => {
+      const scene = buildTestScene();
+      const editPane = scene.state.editPane;
+
+      const panel1 = scene.onCreateNewPanel();
+      const panel2 = scene.onCreateNewPanel();
+
+      scene.removePanel(panel1);
+
+      expect(editPane.getSelectedObject()).toBe(panel2);
+    });
+
     it('Force selecting tab should always select it', () => {
       const { editPane, tab1 } = setupWithTwoTabs();
 

@@ -9,6 +9,7 @@ import (
 	"math"
 	"math/rand"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -17,6 +18,7 @@ import (
 	"github.com/dgraph-io/badger/v4"
 	"github.com/fullstorydev/grpchan/inprocgrpc"
 	"github.com/go-sql-driver/mysql"
+	"github.com/google/uuid"
 	"github.com/grafana/dskit/services"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
@@ -211,6 +213,11 @@ func NewStorageBackend(
 		kvBackendOpts.RvManager = rvManager
 	}
 
+	if cfg.EnableKVLeases {
+		kvBackendOpts.EnableKVLeases = true
+		kvBackendOpts.Holder = resolveLeaseHolder(cfg)
+	}
+
 	return resource.NewKVStorageBackend(kvBackendOpts)
 }
 
@@ -230,6 +237,20 @@ func NewFileBackend(cfg *setting.Cfg) (resource.StorageBackend, error) {
 		Log:                     log.New("storage-backend"),
 		DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
 	})
+}
+
+func resolveLeaseHolder(cfg *setting.Cfg) string {
+	id := "unknown"
+	if cfg.InstanceID != "" {
+		id = cfg.InstanceID
+	}
+
+	hostname, err := os.Hostname()
+	if err == nil {
+		id = hostname
+	}
+
+	return fmt.Sprintf("%s-%s", id, uuid.NewString())
 }
 
 type BackendOptions struct {
@@ -953,30 +974,38 @@ func (b *backend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest)
 
 	// TODO: validate key ?
 
-	if req.ResourceVersion > 0 {
-		return b.readHistory(ctx, req.Key, req.ResourceVersion)
-	}
-
-	readReq := &sqlResourceReadRequest{
-		SQLTemplate: sqltemplate.New(b.dialect),
-		Request:     req,
-		Response:    NewReadResponse(),
-	}
 	var res *resource.BackendReadResponse
-	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
-		var err error
-		res, err = dbutil.QueryRow(ctx, tx, sqlResourceRead, readReq)
-		return err
-	})
-
-	if errors.Is(err, sql.ErrNoRows) {
-		return &resource.BackendReadResponse{
-			Error: resource.NewNotFoundError(req.Key),
+	if req.ResourceVersion > 0 {
+		res = b.readHistory(ctx, req.Key, req.ResourceVersion)
+	} else {
+		readReq := &sqlResourceReadRequest{
+			SQLTemplate: sqltemplate.New(b.dialect),
+			Request:     req,
+			Response:    NewReadResponse(),
 		}
-	} else if err != nil {
-		return &resource.BackendReadResponse{Error: resource.AsErrorResult(err)}
+		err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
+			var err error
+			res, err = dbutil.QueryRow(ctx, tx, sqlResourceRead, readReq)
+			return err
+		})
+
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			res = &resource.BackendReadResponse{Error: resource.NewNotFoundError(req.Key)}
+		case err != nil:
+			res = &resource.BackendReadResponse{Error: resource.AsErrorResult(err)}
+		}
 	}
 
+	if resource.IsResourceNameMixedCase(req, res) {
+		b.log.Warn("resource name case mismatch in ReadResource",
+			"namespace", req.Key.Namespace,
+			"group", req.Key.Group,
+			"resource", req.Key.Resource,
+			"requested_name", req.Key.Name,
+			"stored_name", res.Key.Name,
+		)
+	}
 	return res
 }
 
@@ -1061,6 +1090,13 @@ func (b *backend) listLatest(ctx context.Context, req *resourcepb.ListRequest, c
 func (b *backend) ListModifiedSince(ctx context.Context, key resource.NamespacedResource, sinceRv int64, _ *time.Time) (int64, iter.Seq2[*resource.ModifiedResource, error]) {
 	sinceRv = toMicrosecondRV(sinceRv)
 
+	// Validate key before doing latest RV check
+	if key.Group == "" || key.Resource == "" {
+		return 0, func(yield func(*resource.ModifiedResource, error) bool) {
+			yield(nil, fmt.Errorf("group and resource are required"))
+		}
+	}
+
 	// We don't use an explicit transaction for fetching LatestRV and subsequent fetching of resources.
 	// To guarantee that we don't include events with RV > LatestRV, we include the check in SQL query.
 
@@ -1110,12 +1146,15 @@ func (b *backend) ListModifiedSince(ctx context.Context, key resource.Namespaced
 				continue
 			}
 
-			// Deduplicate by name (namespace, group, and resource are always the same in the result set)
-			if _, ok := seen[mr.Key.Name]; ok {
+			// Deduplicate by (namespace, name). The query may run
+			// cross-namespace (empty Namespace argument) for the
+			// write-path scanner, so two resources with the same name
+			// in different namespaces must each yield once.
+			dedupKey := mr.Key.Namespace + "/" + mr.Key.Name
+			if _, ok := seen[dedupKey]; ok {
 				continue
 			}
-
-			seen[mr.Key.Name] = struct{}{}
+			seen[dedupKey] = struct{}{}
 			if !yield(mr, nil) {
 				return
 			}

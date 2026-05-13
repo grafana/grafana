@@ -16,7 +16,7 @@ const (
 
 func ProvideService(
 	sqlStore db.DB,
-	secretsService secrets.Service,
+	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 ) (SecretsKVStore, error) {
 	store := NewSQLSecretsKVStore(sqlStore, secretsService, log.New("secrets.kvstore"))
 	return WithCache(store, 5*time.Second, 5*time.Minute), nil

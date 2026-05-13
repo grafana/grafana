@@ -23,9 +23,11 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards" // TODO: Check if we can remove this import
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -81,7 +83,45 @@ func TestIntegrationDashboardAPIValidation(t *testing.T) {
 	})
 }
 
+// TestIntegrationDashboardAPIZanzana runs the single-org Zanzana subtests against
+// the MT reconciler. The users API is single-org only, so the multi-org subtests
+// live in TestIntegrationDashboardAPIZanzanaCrossOrg below.
 func TestIntegrationDashboardAPIZanzana(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		AppModeProduction:                   true,
+		DisableAnonymous:                    true,
+		DisableAuthZClientCache:             true,
+		DisableZanzanaCache:                 true,
+		DisableZanzanaServerCheckQueryCache: true,
+		ZanzanaReconciliationInterval:       1 * time.Second,
+		ZanzanaReconcilerMode:               setting.ZanzanaReconcilerModeMT,
+		APIServerStorageType:                "unified",
+		RBACSingleOrganization:              true,
+		DBMaxConns:                          10,
+		EnableFeatureToggles:                apis.ZanzanaMTReconcilerFeatureToggles,
+	})
+
+	t.Cleanup(func() {
+		helper.Shutdown()
+	})
+
+	org1Ctx := createTestContext(t, helper, helper.Org1)
+
+	t.Run("Dashboard permission tests", func(t *testing.T) {
+		runDashboardPermissionTests(t, org1Ctx)
+	})
+
+	t.Run("Authorization tests for all identity types", func(t *testing.T) {
+		runAuthorizationTests(t, org1Ctx)
+	})
+}
+
+// TestIntegrationDashboardAPIZanzanaCrossOrg keeps the multi-org Zanzana subtests
+// on the legacy reconciler path. The k8s users API requires SingleOrganization=true,
+// so these cases cannot coexist with the IAM APIs enabled in TestIntegrationDashboardAPIZanzana.
+func TestIntegrationDashboardAPIZanzanaCrossOrg(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
@@ -94,9 +134,9 @@ func TestIntegrationDashboardAPIZanzana(t *testing.T) {
 		APIServerStorageType:                "unified",
 		DBMaxConns:                          10,
 		EnableFeatureToggles: []string{
-			"zanzana",
-			"zanzanaNoLegacyClient",
-			"kubernetesAuthzZanzanaSync",
+			featuremgmt.FlagZanzana,
+			featuremgmt.FlagZanzanaNoLegacyClient,
+			featuremgmt.FlagKubernetesAuthzZanzanaSync,
 		},
 	})
 
@@ -107,13 +147,6 @@ func TestIntegrationDashboardAPIZanzana(t *testing.T) {
 	org1Ctx := createTestContext(t, helper, helper.Org1)
 	org2Ctx := createTestContext(t, helper, helper.OrgB)
 
-	t.Run("Dashboard permission tests", func(t *testing.T) {
-		runDashboardPermissionTests(t, org1Ctx)
-	})
-
-	t.Run("Authorization tests for all identity types", func(t *testing.T) {
-		runAuthorizationTests(t, org1Ctx)
-	})
 	t.Run("Dashboard HTTP API test", func(t *testing.T) {
 		runDashboardHttpTest(t, org1Ctx, org2Ctx)
 	})

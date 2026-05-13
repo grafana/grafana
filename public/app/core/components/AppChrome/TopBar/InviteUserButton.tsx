@@ -1,9 +1,12 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 
+import { PluginExtensionPoints } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { renderLimitedComponents } from '@grafana/runtime';
 import { ToolbarButton } from '@grafana/ui';
 import { useGetCurrentOrgQuotaQuery } from 'app/api/clients/legacy';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
+import { usePluginComponents } from 'app/features/plugins/extensions/usePluginComponents';
 
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 
@@ -14,7 +17,22 @@ import {
   shouldRenderUpgradeUserButton,
 } from './InviteUserButtonUtils';
 
-export function InviteUserButton() {
+export function NavRightButton() {
+  const { components } = usePluginComponents({
+    extensionPointId: PluginExtensionPoints.NavRightButton,
+  });
+
+  return (
+    renderLimitedComponents({
+      props: {},
+      components,
+      limit: 1,
+      pluginId: 'grafana-setupguide-app',
+    }) ?? <InviteUserButton />
+  );
+}
+
+function InviteUserButton() {
   const isLargeScreen = useMediaQueryMinWidth('lg');
   const shouldRender = shouldRenderInviteUserButton();
   const shouldCheckQuota = shouldRenderUpgradeUserButton();

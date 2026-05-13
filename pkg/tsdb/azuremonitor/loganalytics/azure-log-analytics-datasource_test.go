@@ -1,7 +1,10 @@
 package loganalytics
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -9,6 +12,7 @@ import (
 	"net/http/httptest"
 	"regexp"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -22,10 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
-
-func makeQueryPointer(q AzureLogAnalyticsQuery) *AzureLogAnalyticsQuery {
-	return &q
-}
 
 func TestBuildLogAnalyticsQuery(t *testing.T) {
 	fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
@@ -115,7 +115,7 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeLogAnalytics),
 			},
-			azureLogAnalyticsQuery: makeQueryPointer(AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: new(AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTimeSeries,
 				URL:          "v1/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace/query",
@@ -152,7 +152,7 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 				RefID:     "A",
 				QueryType: string(dataquery.AzureQueryTypeLogAnalytics),
 			},
-			azureLogAnalyticsQuery: makeQueryPointer(AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: new(AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTimeSeries,
 				URL:          "v1/workspaces/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/query",
@@ -187,7 +187,7 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 				RefID:     "A",
 				QueryType: string(dataquery.AzureQueryTypeLogAnalytics),
 			},
-			azureLogAnalyticsQuery: makeQueryPointer(AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: new(AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTimeSeries,
 				URL:          "v1/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace/query",
@@ -223,7 +223,7 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 				RefID:     "A",
 				QueryType: string(dataquery.AzureQueryTypeLogAnalytics),
 			},
-			azureLogAnalyticsQuery: makeQueryPointer(AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: new(AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTimeSeries,
 				URL:          "v1/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace/query",
@@ -261,7 +261,7 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeLogAnalytics),
 			},
-			azureLogAnalyticsQuery: makeQueryPointer(AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: new(AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTimeSeries,
 				URL:          "v1/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace/query",
@@ -301,7 +301,7 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeLogAnalytics),
 			},
-			azureLogAnalyticsQuery: makeQueryPointer(AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: new(AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTimeSeries,
 				URL:          "v1/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace/query",
@@ -345,7 +345,7 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeLogAnalytics),
 			},
-			azureLogAnalyticsQuery: makeQueryPointer(AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: new(AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTimeSeries,
 				URL:          "v1/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/TestDataWorkspace/search",
@@ -481,7 +481,7 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeLogAnalytics),
 			},
-			azureLogAnalyticsQuery: makeQueryPointer(AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: new(AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTimeSeries,
 				URL:          "v1/apps/AppInsightsTestDataWorkspace/query",
@@ -520,7 +520,7 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeLogAnalytics),
 			},
-			azureLogAnalyticsQuery: makeQueryPointer(AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: new(AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTimeSeries,
 				URL:          "v1/apps/AppInsightsTestDataWorkspace/query",
@@ -898,5 +898,69 @@ func TestAddTraceDataLinksToFields_EmptyResources(t *testing.T) {
 			require.Error(t, err)
 			require.Contains(t, err.Error(), tt.expectedErrorString)
 		})
+	}
+}
+
+func decodeEncodedQuery(t *testing.T, encoded string) string {
+	t.Helper()
+	gzipped, err := base64.StdEncoding.DecodeString(encoded)
+	require.NoError(t, err)
+	r, err := gzip.NewReader(bytes.NewReader(gzipped))
+	require.NoError(t, err)
+	defer func() { require.NoError(t, r.Close()) }()
+	decoded, err := io.ReadAll(r)
+	require.NoError(t, err)
+	return string(decoded)
+}
+
+func TestEncodeQuery(t *testing.T) {
+	cases := []struct {
+		name  string
+		query string
+	}{
+		{name: "empty", query: ""},
+		{name: "simple", query: "Heartbeat | take 10"},
+		{name: "multiline", query: "Heartbeat\n| where TimeGenerated > ago(1d)\n| summarize count() by Computer"},
+		{name: "large", query: strings.Repeat("Heartbeat | where TimeGenerated > ago(1d) | summarize count() by Computer ", 50)},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			encoded, err := encodeQuery(tc.query)
+			require.NoError(t, err)
+			require.Equal(t, tc.query, decodeEncodedQuery(t, encoded))
+		})
+	}
+}
+
+func TestEncodeQueryConcurrent(t *testing.T) {
+	// Exercises the gzip.Writer sync.Pool under contention: each goroutine
+	// must produce output that decodes back to its own input.
+	const goroutines = 64
+	const iterations = 32
+
+	var wg sync.WaitGroup
+	wg.Add(goroutines)
+	for g := 0; g < goroutines; g++ {
+		go func(g int) {
+			defer wg.Done()
+			for i := 0; i < iterations; i++ {
+				query := fmt.Sprintf("Heartbeat | where Computer == 'c-%d-%d' | take 10", g, i)
+				encoded, err := encodeQuery(query)
+				require.NoError(t, err)
+				require.Equal(t, query, decodeEncodedQuery(t, encoded))
+			}
+		}(g)
+	}
+	wg.Wait()
+}
+
+func BenchmarkEncodeQuery(b *testing.B) {
+	query := strings.Repeat("Heartbeat | where TimeGenerated > ago(1d) | summarize count() by Computer ", 20)
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		if _, err := encodeQuery(query); err != nil {
+			b.Fatal(err)
+		}
 	}
 }
