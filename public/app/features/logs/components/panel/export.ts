@@ -1,4 +1,5 @@
 import { groupBy } from 'lodash';
+import { parse } from 'lossless-json';
 
 import { DataFrameType, type DataSourceApi, hasLogsLabelTypesSupport, type Labels } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
@@ -17,10 +18,10 @@ function labelsObjectToSortedEntries(labels: Labels): LabelEntry[] {
     .map((key) => ({ key, value: labels[key] }));
 }
 
-function groupLabelsByCategory(log: LogListModel, ds: DataSourceApi): Record<string, LabelEntry[]> {
+function groupLabelsByCategory(log: LogListModel, ds: DataSourceApi): Record<string, LabelEntry[]> | null {
   const labelsWithLinks = labelsObjectToSortedEntries(log.labels);
   if (!labelsWithLinks.length) {
-    return {};
+    return null;
   }
   return groupBy(labelsWithLinks, (label) => {
     if (hasLogsLabelTypesSupport(ds)) {
@@ -34,24 +35,24 @@ function groupLabelsByCategory(log: LogListModel, ds: DataSourceApi): Record<str
  * When every label falls into the unnamed bucket (no datasource or no typed categories),
  * export a single flat map. Otherwise export one nested object per category.
  */
-export function formatGroupedLabelsForJson(groupedLabels: Record<string, LabelEntry[]>): Record<string, unknown> {
+export function formatGroupedLabelsForJson(groupedLabels: Record<string, LabelEntry[]>) {
   const entries = Object.entries(groupedLabels).filter(([, items]) => items.length > 0);
-  const typedCategoryKeys = entries.map(([k]) => k).filter((k) => k !== '');
+  const typedCategoryKeys = entries.map(([key]) => key).filter((key) => key !== '');
   if (typedCategoryKeys.length === 0) {
-    const pairs: Array<[string, string]> = [];
+    const pairs: Array<[string, string | unknown]> = [];
     for (const [, items] of entries) {
       for (const { key, value } of items) {
-        pairs.push([key, value]);
+        pairs.push([key, prettifyIfJson(value)]);
       }
     }
     pairs.sort(([a], [b]) => labelKeyCollator.compare(a, b));
     return Object.fromEntries(pairs);
   }
-  const nested: Record<string, Record<string, string>> = {};
+  const nested: Record<string, Record<string, string | unknown>> = {};
   for (const [group, items] of entries) {
     const groupName = group === '' ? 'uncategorized' : group;
     const sorted = [...items].sort((a, b) => labelKeyCollator.compare(a.key, b.key));
-    nested[groupName] = Object.fromEntries(sorted.map(({ key, value }) => [key, value]));
+    nested[groupName] = Object.fromEntries(sorted.map(({ key, value }) => [key, prettifyIfJson(value)]));
   }
   return nested;
 }
@@ -63,21 +64,29 @@ function fieldDefsWithoutLinks(log: LogListModel) {
   return log.fields.filter((f) => f.links?.length === 0 && f.fieldIndex !== log.entryFieldIndex).sort();
 }
 
-function dataframeFieldsToRecord(log: LogListModel): Record<string, string> {
+function dataframeFieldsToRecord(log: LogListModel): Record<string, string | string[] | unknown> {
   const fields = fieldDefsWithoutLinks(log);
-  const out: Record<string, string> = {};
-  for (const f of fields) {
-    const name = f.keys.join(' | ');
-    out[name] = f.values.join(' | ');
+  const out: Record<string, string | string[] | unknown> = {};
+  for (const field of fields) {
+    const name = field.keys.join(' | ');
+    out[name] = field.values.length === 1 ? prettifyIfJson(field.values[0]) : field.values;
   }
   return out;
 }
 
-export function buildLogLineFullJsonObject(log: LogListModel, ds: DataSourceApi): Record<string, unknown> {
-  const grouped = groupLabelsByCategory(log, ds);
-  const labelsJson = formatGroupedLabelsForJson(grouped);
-  const fieldsJson = dataframeFieldsToRecord(log);
+function prettifyIfJson(raw: string): unknown {
+  const trimmed = raw.trim();
+  if (!trimmed || (trimmed[0] !== '{' && trimmed[0] !== '[')) {
+    return raw;
+  }
+  try {
+    return parse(raw) ?? raw;
+  } catch {
+    return raw;
+  }
+}
 
+export function buildLogLineFullJsonObject(log: LogListModel, ds: DataSourceApi): Record<string, unknown> {
   const payload: Record<string, unknown> = {
     timestamp: log.timestamp,
     timeEpochMs: log.timeEpochMs,
@@ -87,13 +96,16 @@ export function buildLogLineFullJsonObject(log: LogListModel, ds: DataSourceApi)
     timeFromNow: log.timeFromNow,
     logLevel: log.logLevel,
     displayLevel: log.displayLevel,
-    line: log.entry,
+    line: log.isJSON ? prettifyIfJson(log.entry) : log.entry,
   };
 
-  if (Object.keys(labelsJson).length > 0) {
+  const groupedLabels = groupLabelsByCategory(log, ds);
+  if (groupedLabels) {
+    const labelsJson = formatGroupedLabelsForJson(groupedLabels);
     payload.labels = labelsJson;
   }
 
+  const fieldsJson = dataframeFieldsToRecord(log);
   if (Object.keys(fieldsJson).length > 0) {
     payload.fields = fieldsJson;
   }
