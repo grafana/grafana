@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"path/filepath"
@@ -14,6 +15,10 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/web"
 )
+
+// maxExampleDepth caps recursion when synthesizing example payloads to keep
+// output manageable for very nested schemas (e.g. Dashboard).
+const maxExampleDepth = 4
 
 // apidocs serves agent-friendly markdown views of the classic /api/* OpenAPI
 // surface (sourced from public/openapi3.json). The /apis/* (App Platform)
@@ -311,6 +316,11 @@ func renderOperationMarkdown(e *operationEntry) string {
 				}
 			}
 			b.WriteString("\n")
+			if media != nil {
+				if ex := exampleJSON(media.Schema); ex != "" {
+					fmt.Fprintf(&b, "\n  Example:\n\n  ```json\n%s\n  ```\n", indentBlock(ex, "  "))
+				}
+			}
 		}
 		b.WriteString("\n")
 	}
@@ -335,14 +345,31 @@ func renderOperationMarkdown(e *operationEntry) string {
 					desc = oneLine(*r.Description)
 				}
 				fmt.Fprintf(&b, "- `%s`: %s", code, desc)
-				for mt, media := range r.Content {
+				mediaTypes := make([]string, 0, len(r.Content))
+				for mt := range r.Content {
+					mediaTypes = append(mediaTypes, mt)
+				}
+				sort.Strings(mediaTypes)
+				for _, mt := range mediaTypes {
+					media := r.Content[mt]
 					if media != nil && media.Schema != nil {
 						if ref := refName(media.Schema.Ref); ref != "" {
 							fmt.Fprintf(&b, " (`%s` → `%s`)", mt, ref)
+						} else if media.Schema.Value != nil {
+							fmt.Fprintf(&b, " (`%s` → `%s`)", mt, schemaType(media.Schema.Value))
 						}
 					}
 				}
 				b.WriteString("\n")
+				for _, mt := range mediaTypes {
+					media := r.Content[mt]
+					if media == nil {
+						continue
+					}
+					if ex := exampleJSON(media.Schema); ex != "" {
+						fmt.Fprintf(&b, "\n  Example (`%s`):\n\n  ```json\n%s\n  ```\n", mt, indentBlock(ex, "  "))
+					}
+				}
 			}
 			b.WriteString("\n")
 		}
@@ -404,4 +431,147 @@ func oneLine(s string) string {
 		s = strings.ReplaceAll(s, "  ", " ")
 	}
 	return s
+}
+
+// indentBlock prefixes every line of s with prefix. Used to align JSON
+// examples inside a Markdown list item so they render correctly.
+func indentBlock(s, prefix string) string {
+	if s == "" {
+		return s
+	}
+	lines := strings.Split(s, "\n")
+	for i, l := range lines {
+		lines[i] = prefix + l
+	}
+	return strings.Join(lines, "\n")
+}
+
+// exampleJSON synthesizes a representative JSON payload for the given schema
+// and returns it pretty-printed. Returns an empty string when no useful value
+// can be produced (e.g. nil schema or unresolved $ref).
+func exampleJSON(sref *openapi3.SchemaRef) string {
+	v := exampleValueForSchema(sref, map[string]bool{}, 0)
+	if v == nil {
+		return ""
+	}
+	buf, err := json.MarshalIndent(v, "", "  ")
+	if err != nil {
+		return ""
+	}
+	return string(buf)
+}
+
+// exampleValueForSchema walks a resolved schema and builds a Go value that
+// JSON-marshals to a plausible example payload. It honors any explicit
+// `example` field on the schema, picks Enum[0] or Default where available,
+// and falls back to format-aware placeholders. Depth-limited via
+// maxExampleDepth, cycle-safe via the visited ref-name set.
+func exampleValueForSchema(sref *openapi3.SchemaRef, visited map[string]bool, depth int) any {
+	if sref == nil || depth > maxExampleDepth || sref.Value == nil {
+		return nil
+	}
+	s := sref.Value
+
+	if s.Example != nil {
+		return s.Example
+	}
+
+	refKey := refName(sref.Ref)
+	if refKey != "" {
+		if visited[refKey] {
+			return map[string]any{"$ref": refKey}
+		}
+		visited[refKey] = true
+		defer delete(visited, refKey)
+	}
+
+	// allOf: merge object properties from all members plus our own.
+	if len(s.AllOf) > 0 {
+		merged := map[string]any{}
+		for _, m := range s.AllOf {
+			if v, ok := exampleValueForSchema(m, visited, depth+1).(map[string]any); ok {
+				for k, val := range v {
+					merged[k] = val
+				}
+			}
+		}
+		for name, prop := range s.Properties {
+			merged[name] = exampleValueForSchema(prop, visited, depth+1)
+		}
+		if len(merged) > 0 {
+			return merged
+		}
+	}
+
+	if len(s.OneOf) > 0 {
+		return exampleValueForSchema(s.OneOf[0], visited, depth+1)
+	}
+	if len(s.AnyOf) > 0 {
+		return exampleValueForSchema(s.AnyOf[0], visited, depth+1)
+	}
+
+	primary := ""
+	if s.Type != nil {
+		if ts := s.Type.Slice(); len(ts) > 0 {
+			primary = ts[0]
+		}
+	}
+	if primary == "" && len(s.Properties) > 0 {
+		primary = "object"
+	}
+
+	switch primary {
+	case "object":
+		out := map[string]any{}
+		for name, prop := range s.Properties {
+			out[name] = exampleValueForSchema(prop, visited, depth+1)
+		}
+		return out
+	case "array":
+		return []any{exampleValueForSchema(s.Items, visited, depth+1)}
+	case "string":
+		if s.Default != nil {
+			return s.Default
+		}
+		if len(s.Enum) > 0 {
+			return s.Enum[0]
+		}
+		return stringFormatExample(s.Format)
+	case "integer":
+		if s.Default != nil {
+			return s.Default
+		}
+		return 0
+	case "number":
+		if s.Default != nil {
+			return s.Default
+		}
+		return 0.0
+	case "boolean":
+		if s.Default != nil {
+			return s.Default
+		}
+		return false
+	case "null":
+		return nil
+	}
+	return nil
+}
+
+func stringFormatExample(format string) string {
+	switch format {
+	case "date-time":
+		return "2025-01-01T00:00:00Z"
+	case "date":
+		return "2025-01-01"
+	case "uuid":
+		return "00000000-0000-0000-0000-000000000000"
+	case "uri", "url":
+		return "https://example.com"
+	case "email":
+		return "user@example.com"
+	case "byte":
+		return "Zm9v"
+	}
+	return "string"
 }
