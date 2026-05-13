@@ -2886,7 +2886,7 @@ var (
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaFrontendPlatformSquad,
 			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
-			Expression:  "true",
+			Expression:  "false",
 		},
 		{
 			Name:         "streamingForwardTeamHeadersTempo",

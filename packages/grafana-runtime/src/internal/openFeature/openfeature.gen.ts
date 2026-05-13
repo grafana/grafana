@@ -416,10 +416,10 @@ export const useFlagReportingAnyPageReporting = (options?: ReactFlagEvaluationOp
  *
  * **Details:**
  * - flag key: `splashScreen`
- * - default value: `true`
+ * - default value: `false`
  */
 export const useFlagSplashScreen = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("splashScreen", true, options).value;
+  return useFlag("splashScreen", false, options).value;
 };
 
 /**
