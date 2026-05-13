@@ -80,6 +80,29 @@ v0alpha1: {
 					responseMetadata: objectMeta: false
 				}
 			}
+			"/searchExternalGroupMappings": {
+				"POST": {
+					name: "createSearchExternalGroupMappings"
+					request: {
+						query: {
+							limit?:  int64 | 30
+							page?:   int64 | 1
+							offset?: int64 | 0
+						}
+						body: {
+							externalGroups?: [...string]
+						}
+					}
+					response: {
+						#ExternalGroupMappingHit: {
+							teamRef:         string
+							externalGroupId: string
+						}
+						items: [...#ExternalGroupMappingHit]
+					}
+					responseMetadata: objectMeta: false
+				}
+			}
 		}
 	}
 }
