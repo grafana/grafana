@@ -148,6 +148,7 @@ export const LogLineMenu = ({ active, log, styles }: Props) => {
     [
       copyLinkToLogLine,
       copyLogLine,
+      copyLogLineAsJson,
       detailsDisplayed,
       enableLogDetails,
       isAssistantAvailable,
