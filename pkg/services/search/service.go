@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -13,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/search/model"
 	grafanasort "github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/star"
+	starapi "github.com/grafana/grafana/pkg/services/star/api"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"go.opentelemetry.io/otel"
@@ -20,11 +22,12 @@ import (
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/search")
 
-func ProvideService(cfg *setting.Cfg, sqlstore db.DB, starService star.Service, dashboardService dashboards.DashboardService, folderService folder.Service, features featuremgmt.FeatureToggles, sortService grafanasort.Service) *SearchService {
+func ProvideService(cfg *setting.Cfg, sqlstore db.DB, starService star.Service, starClient starapi.K8sClients, dashboardService dashboards.DashboardService, folderService folder.Service, features featuremgmt.FeatureToggles, sortService grafanasort.Service) *SearchService {
 	s := &SearchService{
 		Cfg:              cfg,
 		sqlstore:         sqlstore,
 		starService:      starService,
+		starClient:       starClient,
 		folderService:    folderService,
 		features:         features,
 		dashboardService: dashboardService,
@@ -62,6 +65,7 @@ type SearchService struct {
 	sortService      grafanasort.Service
 	sqlstore         db.DB
 	starService      star.Service
+	starClient       starapi.K8sClients
 	dashboardService dashboards.DashboardService
 	folderService    folder.Service
 	features         featuremgmt.FeatureToggles
@@ -71,10 +75,13 @@ func (s *SearchService) SearchHandler(ctx context.Context, query *Query) (model.
 	ctx, span := tracer.Start(ctx, "search.SearchHandler")
 	defer span.End()
 
-	starredQuery := star.GetUserStarsQuery{
-		UserID: query.SignedInUser.UserID,
-	}
-	staredDashIDs, err := s.starService.GetByUser(ctx, &starredQuery)
+	// Prefer the collections API for reading stars so this works in both
+	// dual-writer mode 0 (legacy SQL `star` table) and mode 5 (stars stored
+	// as a `stars.collections.grafana.app` resource in unified storage).
+	// The starService.GetByUser fallback only reads the SQL table and would
+	// return nothing in mode 5 — making the `?starred=true` filter on
+	// /api/search appear empty even when stars exist.
+	staredDashIDs, err := s.getUserStars(ctx, query.SignedInUser.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -138,6 +145,29 @@ func (s *SearchService) SearchHandler(ctx context.Context, query *Query) (model.
 		}
 	}
 	return result, nil
+}
+
+// getUserStars returns the current user's starred dashboard UIDs. When a
+// ReqContext is available on ctx (the normal path from /api/search) the
+// collections API is used via the K8sClients, which routes through the
+// dual writer and so works for both legacy-SQL mode 0 and unified-storage
+// mode 5. Otherwise — e.g. unit tests that pass context.Background() —
+// fall back to starService so existing call sites keep working.
+func (s *SearchService) getUserStars(ctx context.Context, userID int64) (*star.GetUserStarsResult, error) {
+	if s.starClient != nil {
+		if reqCtx := contexthandler.FromContext(ctx); reqCtx != nil {
+			uids, err := s.starClient.GetStars(reqCtx)
+			if err != nil {
+				return nil, err
+			}
+			out := &star.GetUserStarsResult{UserStars: make(map[string]bool, len(uids))}
+			for _, uid := range uids {
+				out.UserStars[uid] = true
+			}
+			return out, nil
+		}
+	}
+	return s.starService.GetByUser(ctx, &star.GetUserStarsQuery{UserID: userID})
 }
 
 func sortedHits(unsorted model.HitList) model.HitList {
