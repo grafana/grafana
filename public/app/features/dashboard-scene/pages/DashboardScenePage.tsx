@@ -4,6 +4,7 @@ import { usePrevious } from 'react-use';
 
 import { PageLayoutType } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
+import { useFlagGrafanaOrgDashboardTemplates } from '@grafana/runtime/internal';
 import { UrlSyncContextProvider } from '@grafana/scenes';
 import { Box } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -18,6 +19,7 @@ import {
   type DashboardPageRouteParams,
   type DashboardPageRouteSearchParams,
 } from 'app/features/dashboard/containers/types';
+import { TemplateDashboardModal } from 'app/features/dashboard/dashgrid/DashboardLibrary/TemplateDashboardModal';
 import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
 import { DashboardPreviewBanner } from 'app/features/provisioning/components/Dashboards/DashboardPreviewBanner';
 import { OrphanedDashboardBanner } from 'app/features/provisioning/components/Dashboards/OrphanedDashboardBanner';
@@ -25,6 +27,9 @@ import { DashboardRoutes } from 'app/types/dashboard';
 
 import { DashboardConversionWarningBanner } from '../components/DashboardConversionWarningBanner';
 import { SuggestedDashboardsBanner } from '../components/SuggestedDashboardsBanner';
+import { TemplateDashboardEditBanner } from '../components/TemplateDashboardEditBanner';
+import { TemplateDashboardSavedBanner } from '../components/TemplateDashboardSavedBanner';
+import { TemplateDashboardUseBanner } from '../components/TemplateDashboardUseBanner';
 import { DashboardPrompt } from '../saving/DashboardPrompt';
 import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
 import { useScenesFlickeringFix } from '../utils/utils';
@@ -38,6 +43,7 @@ export interface Props
 export function DashboardScenePage({ route, queryParams, location }: Props) {
   const params = useParams();
   const { type, slug, uid } = params;
+  const isOrgDashboardTemplatesFlagEnabled = useFlagGrafanaOrgDashboardTemplates();
   // Used by /dashboard/provisioning/:slug/preview/* to load dashboards based on their file path in a remote repository
   // Also used by /dashboard/assistant-preview/* to load the assistant preview dashboard
   const path = params['*'];
@@ -63,6 +69,8 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
         slug,
         route: route.routeName as DashboardRoutes,
         urlFolderUid: queryParams.folderUid,
+        orgDashboardTemplateUid: queryParams.orgDashboardTemplateUid,
+        editTemplate: queryParams.editTemplate === true,
       });
     }
 
@@ -86,6 +94,8 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
     type,
     queryParams.path,
     queryParams.gnetId,
+    queryParams.orgDashboardTemplateUid,
+    queryParams.editTemplate,
   ]);
 
   useEffect(() => {
@@ -142,8 +152,12 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
       <DashboardConversionWarningBanner dashboard={dashboard} />
       <OrphanedDashboardBanner dashboard={dashboard} />
       <SuggestedDashboardsBanner route={route.routeName} dashboard={dashboard} />
+      <TemplateDashboardSavedBanner templateName={dashboard.state.title} />
+      <TemplateDashboardUseBanner dashboard={dashboard} />
+      <TemplateDashboardEditBanner dashboard={dashboard} />
       <dashboard.Component model={dashboard} key={dashboard.state.key} />
       <DashboardPrompt dashboard={dashboard} />
+      {isOrgDashboardTemplatesFlagEnabled && <TemplateDashboardModal />}
       <DashboardBrandingFooter
         variant={DashboardBrandingFooterVariant.Kiosk}
         paddingX={2}

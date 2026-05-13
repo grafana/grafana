@@ -26,6 +26,7 @@ import { type DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { getDashboardSceneFor } from '../utils/utils';
 
+import { getOrgDashboardTemplateExtension } from './enterprise-components/OrgDashboardTemplateExtension';
 import { type DashboardEditView, type DashboardEditViewState, useDashboardEditPageNav } from './utils';
 import { VersionsHistoryButtons } from './version-history/VersionHistoryButtons';
 import { VersionHistoryComparison } from './version-history/VersionHistoryComparison';
@@ -97,9 +98,11 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
   }
 
   public fetchVersions = (append = false): void => {
-    const uid = this._dashboard.state.uid;
+    const { uid, meta } = this._dashboard.state;
+    const isOrgDashboardTemplate = Boolean(meta.isOrgDashboardTemplate);
+    const orgDashboardTemplateUid = meta.orgDashboardTemplateUid;
 
-    if (!uid) {
+    if (!uid && !(isOrgDashboardTemplate && orgDashboardTemplateUid)) {
       return;
     }
 
@@ -107,24 +110,43 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
 
     const options = append ? { limit: this._limit, continueToken: this._continueToken } : { limit: this._limit };
 
-    getDashboardAPI()
-      .then(async (api) => {
-        const result = await api.listDashboardHistory(uid, options);
-        const versions = this.transformToRevisionModels(result.items);
+    const loader: Promise<{ items: Array<Resource<unknown>>; continue?: string }> = isOrgDashboardTemplate
+      ? (async () => {
+          if (!orgDashboardTemplateUid) {
+            return { items: [], continue: undefined };
+          }
+          const result = await getOrgDashboardTemplateExtension().listHistory(orgDashboardTemplateUid, options);
+          return { items: result.items, continue: result.continueToken };
+        })()
+      : getDashboardAPI().then(async (api) => {
+          const result = await api.listDashboardHistory(uid!, options);
+          return { items: result.items, continue: result.metadata.continue };
+        });
+
+    loader
+      .then((result) => {
+        const versions = this.transformToRevisionModels(result.items, isOrgDashboardTemplate);
         this.setState({
           isLoading: false,
           versions: [...(append ? (this.state.versions ?? []) : []), ...this.decorateVersions(versions)],
         });
         // Update the continueToken for the next request, if available
-        this._continueToken = result.metadata.continue ?? '';
+        this._continueToken = result.continue ?? '';
       })
       .catch((err) => console.log(err))
       .finally(() => this.setState({ isAppending: false }));
   };
 
-  private transformToRevisionModels(items: Array<Resource<unknown>>): RevisionModel[] {
-    return items.map(
-      (item): RevisionModel => ({
+  private transformToRevisionModels(items: Array<Resource<unknown>>, isOrgDashboardTemplate = false): RevisionModel[] {
+    return items.map((item): RevisionModel => {
+      // For org templates the revision `data` should be the embedded dashboard spec so the
+      // Compare view diffs two embedded dashboards rather than two whole template specs —
+      // which matches what actually gets mutated on save/restore in this flow.
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      const spec = item.spec as { dashboard?: object } & object;
+      const data = isOrgDashboardTemplate ? (spec.dashboard ?? {}) : spec;
+
+      return {
         id: item.metadata.generation ?? 0,
         checked: false,
         uid: item.metadata.name,
@@ -135,10 +157,9 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
           new Date().toISOString(),
         createdBy: item.metadata.annotations?.[AnnoKeyUpdatedBy] ?? item.metadata.annotations?.[AnnoKeyCreatedBy] ?? '',
         message: item.metadata.annotations?.[AnnoKeyMessage] ?? '',
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        data: item.spec as object,
-      })
-    );
+        data,
+      };
+    });
   }
 
   public getDiff = () => {
