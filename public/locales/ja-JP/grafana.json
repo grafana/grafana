@@ -10798,6 +10798,16 @@
   },
   "home": {
     "home-page": {
+      "edition": {
+        "cloud": "",
+        "enterprise": "",
+        "open-source": ""
+      },
+      "greeting": {
+        "afternoon": "",
+        "evening": "",
+        "morning": ""
+      },
       "placeholder": ""
     }
   },
@@ -14745,9 +14755,6 @@
       "home-dashboard-placeholder": "デフォルトのダッシュボード",
       "language-preference-label": "言語",
       "language-preference-placeholder": "言語選択",
-      "locale-preference-description": "対応する日付、時刻、数値形式を表示するには地域を選択してください",
-      "locale-preference-label": "地域の形式",
-      "locale-preference-placeholder": "地域を選択",
       "theme-description": "実験的なテーマを楽しんでいますか？<2>こちらからご意見をお聞かせください。</2>",
       "theme-label": "インターフェースのテーマ",
       "week-start-label": "週のはじまり"

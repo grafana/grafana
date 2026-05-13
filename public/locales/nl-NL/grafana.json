@@ -10856,6 +10856,16 @@
   },
   "home": {
     "home-page": {
+      "edition": {
+        "cloud": "",
+        "enterprise": "",
+        "open-source": ""
+      },
+      "greeting": {
+        "afternoon": "",
+        "evening": "",
+        "morning": ""
+      },
       "placeholder": ""
     }
   },
@@ -14837,9 +14847,6 @@
       "home-dashboard-placeholder": "Standaard dashboard",
       "language-preference-label": "Taal",
       "language-preference-placeholder": "Taal kiezen",
-      "locale-preference-description": "Kies je regio om de bijbehorende datum-, tijd- en cijferindeling te zien",
-      "locale-preference-label": "Regio-indeling",
-      "locale-preference-placeholder": "Kies regio",
       "theme-description": "Geniet je van de experimentele thema's? Vertel ons <2>hier</2> wat je wilt zien..",
       "theme-label": "Interfacethema",
       "week-start-label": "Begin van de week"
