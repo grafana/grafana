@@ -52,7 +52,6 @@ import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
 import { NeedHelpInfo } from './NeedHelpInfo';
 import { RuleEditorSection } from './RuleEditorSection';
 
-export const MAX_GROUP_RESULTS = 1000;
 type EvaluationMode = 'rule-based' | 'group-based';
 
 const getEvaluationModeOptions = (): Array<SelectableValue<EvaluationMode>> => [

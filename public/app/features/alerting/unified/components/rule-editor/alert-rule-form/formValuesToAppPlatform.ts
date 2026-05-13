@@ -126,14 +126,14 @@ export function buildRecordingRuleResource(values: RuleFormValues): RecordingRul
   };
 }
 
-export function toAlertExpressionMap(values: RuleFormValues): Record<string, AlertRuleExpression> {
+function toAlertExpressionMap(values: RuleFormValues): Record<string, AlertRuleExpression> {
   return values.queries.reduce<Record<string, AlertRuleExpression>>((acc, query) => {
     acc[fixBothInstantAndRangeQuery(query).refId] = toExpression(query, values.condition);
     return acc;
   }, {});
 }
 
-export function toRecordingExpressionMap(values: RuleFormValues): Record<string, RecordingRuleExpression> {
+function toRecordingExpressionMap(values: RuleFormValues): Record<string, RecordingRuleExpression> {
   return values.queries.reduce<Record<string, RecordingRuleExpression>>((acc, query) => {
     acc[fixBothInstantAndRangeQuery(query).refId] = toExpression(query, values.condition);
     return acc;
