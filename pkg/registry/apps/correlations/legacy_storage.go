@@ -218,11 +218,6 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 	return nil, (err == nil), err
 }
 
-// CollectionDeleter
-func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
-	return nil, fmt.Errorf("DeleteCollection for correlation not implemented")
-}
-
 type continueToken struct {
 	Page  int64
 	Limit int64

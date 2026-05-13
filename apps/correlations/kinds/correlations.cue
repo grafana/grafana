@@ -13,7 +13,7 @@ correlationsv0alpha1: {
 		spec: {
 			type:         CorrelationType
 			source:       DataSourceRef
-			target?:      DataSourceRef
+			target?:      DataSourceRef | null // null is for PATCH/edit when we want to clear the value
 			description?: string
 			label:        string
 			config:       ConfigSpec

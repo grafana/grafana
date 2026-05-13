@@ -55,21 +55,23 @@ func TestReproIncident2144UsingGrafanaDB(t *testing.T) {
 	t.Run("core Grafana db without instrumentation preserves driver ability to use isolation levels",
 		func(t *testing.T) {
 			t.Run("base behaviour is preserved", func(t *testing.T) {
-				ctx := testutil.NewTestContext(t, time.Now().Add(testTimeout))
 				cfgMap := cfgMap{}
-				setupDBForGrafana(t, ctx, cfgMap)
+				// Fixture setup can take longer than testTimeout on slow CI
+				// runners, so don't share its deadline with the BeginTx call
+				// that's actually under test.
+				setupDBForGrafana(t, t.Context(), cfgMap)
 				grafanaDB := newTestInfraDB(t, cfgMap)
 				db := grafanaDB.GetEngine().DB().DB
+				ctx := testutil.NewTestContext(t, time.Now().Add(testTimeout))
 				_, err := db.BeginTx(ctx, txOpts)
 				require.NoError(t, err)
 			})
 
 			t.Run("Resource API does not fail and correctly uses Grafana DB as fallback",
 				func(t *testing.T) {
-					ctx := testutil.NewTestContext(t, time.Now().Add(testTimeout))
 					cfgMap := cfgMap{}
 					cfg := newCfgFromIniMap(t, cfgMap)
-					setupDBForGrafana(t, ctx, cfgMap)
+					setupDBForGrafana(t, t.Context(), cfgMap)
 					grafanaDB := newTestInfraDB(t, cfgMap)
 					resourceDB, err := ProvideResourceDB(grafanaDB, cfg, nil)
 					require.NotNil(t, resourceDB)
@@ -79,13 +81,12 @@ func TestReproIncident2144UsingGrafanaDB(t *testing.T) {
 
 	t.Run("core Grafana db instrumentation removes driver ability to use isolation levels",
 		func(t *testing.T) {
-			ctx := testutil.NewTestContext(t, time.Now().Add(testTimeout))
 			cfgMap := cfgMap{
 				"database": cfgSectionMap{
 					grafanaDBInstrumentQueriesKey: "true",
 				},
 			}
-			setupDBForGrafana(t, ctx, cfgMap)
+			setupDBForGrafana(t, t.Context(), cfgMap)
 			grafanaDB := newTestInfraDB(t, cfgMap)
 
 			t.Run("base failure caused by instrumentation", func(t *testing.T) {

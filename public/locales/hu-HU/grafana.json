@@ -1153,6 +1153,9 @@
         "rule-viewer-section-extension": "Nem sikerült betölteni a szabálymegjelenítő bővítési szakaszát"
       }
     },
+    "entities": {
+      "group": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "A konfiguráció frissítése sikertelen volt:",
       "title-something-went-wrong": "Valami hiba történt"
@@ -1161,6 +1164,9 @@
       "content-show-all-errors": "Összes hiba megjelenítése"
     },
     "errors": {
+      "api-machinery": {
+        "with-causes": ""
+      },
       "failedWith": "{{-config}} sikertelen {{status}} állapottal: {{-message}}"
     },
     "evaluate-every-validation-options": {
@@ -3174,9 +3180,7 @@
       "deleting": "Törlés",
       "text-federated": "Összevont",
       "text-provisioned": "Kiépítve",
-      "ungrouped": "Nem csoportosított",
-      "ungrouped-suffix": "{{ruleName}} (nem csoportosított)",
-      "unknown-rule": "Ismeretlen szabály"
+      "ungrouped": "Nem csoportosított"
     },
     "saved-searches": {
       "actions-aria-label": "Műveletek",
@@ -4461,6 +4465,14 @@
       "request-extension": "Kvótabővítés igénylése",
       "resource-detail-dashboards": "{{limit}}/{{usage}} irányítópultot hozott létre ({{percentage}}%).",
       "resource-detail-folders": "{{limit}}/{{usage}} mappát hozott létre ({{percentage}}%)."
+    },
+    "readme": {
+      "add-readme": "",
+      "edit-tooltip": "",
+      "empty-message": "",
+      "load-error-retry": "",
+      "load-error-title": "",
+      "parse-error": ""
     },
     "recently-viewed": {
       "clear": "Előzmények törlése",
@@ -8033,19 +8045,6 @@
       "aria-label-explore-data": "Adatok felfedezése",
       "aria-label-suggested-dashboards": "Javasolt irányítópultok"
     },
-    "alerting-enabled": {
-      "text-alerting-not-supported": "A riasztás nem támogatott",
-      "text-alerting-supported": "A riasztás támogatott"
-    },
-    "basic-serttings": {
-      "tooltip-name": "A név akkor használatos, amikor a paneleken kijelöli az adatforrást. Az alapértelmezett adatforrás előre ki van jelölve az új paneleken."
-    },
-    "basic-settings": {
-      "aria-label-datasource-settings-page-basic": "Adatforrás-beállítások oldalának alapbeállításai",
-      "basic-settings-name-placeholder-name": "Név",
-      "label-default": "Alapértelmezett",
-      "label-name": "Név"
-    },
     "build-a-dashboard-button": {
       "blank": "Üres",
       "build-a-dashboard": "Irányítópult létrehozása",
@@ -10855,6 +10854,21 @@
     "name-line-width": "Vonal szélessége",
     "name-stacking": "Egymásra helyezés"
   },
+  "home": {
+    "home-page": {
+      "edition": {
+        "cloud": "",
+        "enterprise": "",
+        "open-source": ""
+      },
+      "greeting": {
+        "afternoon": "",
+        "evening": "",
+        "morning": ""
+      },
+      "placeholder": ""
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "Betöltés",
@@ -11249,7 +11263,7 @@
     "description-order": "A legújabb vagy a legrégebbi naplóbejegyzések megjelenítése először. Ha a Legrégebbiek elöl lehetőség van kiválasztva, a nézet automatikusan a legalsó, legújabb naplókhoz lesz görgetve.",
     "description-prettify-json": "JSON-naplóbejegyzések formázása behúzással és sortörésekkel.",
     "description-show-controls": "Vezérlők megjelenítése az utolsó vagy az első naplósorra ugráshoz, és szűrés naplószint szerint.",
-    "description-show-log-attributes": "Kísérleti. Amikor az OTel-naplók megjelennek, hozzáadhat egy további megjelenített mezőt a címkék és a metaadatok releváns kulcs-érték párjaival.",
+    "description-show-log-attributes": "",
     "description-unwrapped-columns": "Az értékek igazítása oszlopok segítségével a megjelenített mezők használatakor.",
     "description-wrap-lines": "A naplóbejegyzések megjelenítése egyetlen sorban, vagy a hosszú naplóbejegyzések tördelése, hogy illeszkedjenek a panelhez.",
     "field-selector": {
@@ -11575,7 +11589,7 @@
       "line-contains-not": "A hozzáadás sorként nem tartalmaz szűrőt",
       "search-text": "Keresés az eredményekben"
     },
-    "show-log-attributes": "Naplóattribútumok megjelenítése az OTel-naplókhoz",
+    "show-log-attributes": "",
     "timestamp-format": "Időbélyeg felbontása",
     "un-themed-log-details": {
       "aria-label-data-links": "Adathivatkozások",
@@ -14833,9 +14847,6 @@
       "home-dashboard-placeholder": "Alapértelmezett irányítópult",
       "language-preference-label": "Nyelv",
       "language-preference-placeholder": "Válasszon nyelvet",
-      "locale-preference-description": "Válassza ki a régióját a megfelelő dátum-, idő- és számformátum megtekintéséhez",
-      "locale-preference-label": "Régióformátum",
-      "locale-preference-placeholder": "Válasszon régiót",
       "theme-description": "Tetszenek a kísérleti témák? Ossza meg velünk a véleményét <2>itt.</2>",
       "theme-label": "Felület témája",
       "week-start-label": "Hét kezdete"
@@ -16026,7 +16037,9 @@
       "description": {
         "group-by-field-value": "Csoportosítsa az adatokat egy mezőérték szerint, és hozzon létre beágyazott táblázatokat a csoportosított adatokkal."
       },
+      "description-expand-nested-rows": "",
       "description-show-field-names": "Ha engedélyezve van, a beágyazott táblázatok a mezőneveket táblázatfejlécként jelenítik meg",
+      "label-expand-nested-rows-by-default": "",
       "label-show-field-names-in-nested-tables": "Mezőnevek megjelenítése a beágyazott táblázatokban",
       "name": {
         "group-to-nested-tables": "Csoportosítás beágyazott táblázatokba"

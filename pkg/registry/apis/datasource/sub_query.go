@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"go.opentelemetry.io/otel/attribute"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -16,9 +17,9 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	dsV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/chunked"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/web"
-	"go.opentelemetry.io/otel/attribute"
 )
 
 type subQueryREST struct {
@@ -127,6 +128,24 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		queryCtx, querySpan := tracing.Start(callCtx, "datasource.query.pluginClient.QueryData",
 			attribute.Int("queries_count", len(queries)),
 		)
+
+		if chunked.IsRequestingChunkedResponse(req.Header.Get("accept")) {
+			if !r.builder.cfg.EnableChunkedQueryStreaming {
+				responder.Error(fmt.Errorf("chunked query streaming is not enabled"))
+				return
+			}
+
+			if err = r.builder.client.QueryChunkedData(ctx, &backend.QueryChunkedDataRequest{
+				Queries:       queries,
+				PluginContext: pluginCtx,
+				Headers:       map[string]string{},
+				Format:        backend.DataFrameFormat_JSON, // encode directly in the plugin
+			}, chunked.NewChunkedHTTPWriter(w)); err != nil {
+				responder.Error(fmt.Errorf("error running chunked query %w", err))
+			}
+			return
+		}
+
 		rsp, err := r.builder.client.QueryData(queryCtx, &backend.QueryDataRequest{
 			Queries:       queries,
 			PluginContext: pluginCtx,

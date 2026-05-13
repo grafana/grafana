@@ -1237,7 +1237,10 @@ func createAuthTest(t *testing.T, secretsStore secretskvs.SecretsKVStore, dsType
 	return test
 }
 
-func runDatasourceAuthTest(t *testing.T, secretsService secrets.Service, secretsStore secretskvs.SecretsKVStore, cfg *setting.Cfg, test *testCase) {
+func runDatasourceAuthTest(t *testing.T,
+	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+	secretsStore secretskvs.SecretsKVStore, cfg *setting.Cfg, test *testCase,
+) {
 	ctx := &contextmodel.ReqContext{}
 	tracer := tracing.InitializeTracerForTest()
 

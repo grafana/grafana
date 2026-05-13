@@ -221,14 +221,17 @@ export async function getProvisionedPlugins(): Promise<ProvisionedPlugin[]> {
 }
 
 export async function installPlugin(id: string, version?: string) {
-  // Install via K8s PluginMeta API (no-op when useMTPlugins is off).
+  // Install via K8s PluginMeta API (no-op when plugins.useMTPlugins is off).
   // We call both this and the legacy path because the K8s settings API doesn't cover all
   // plugin types yet — the legacy call keeps the UI in sync across browser refreshes.
   // TODO(@hugohaggmark): return early once all plugin types support the K8s Settings API.
   try {
     await installPluginMeta(id, version ?? '');
   } catch (error: unknown) {
-    logPluginMetaError(`PluginMeta: Failed to install plugin with id ${id} and version ${version}`, error);
+    logPluginMetaError(`installPluginMeta: Failed to install plugin`, error, {
+      pluginId: id,
+      pluginVersion: version ?? '',
+    });
   }
 
   // Legacy install path — kept until K8s settings API covers all plugin types.
@@ -243,14 +246,16 @@ export async function installPlugin(id: string, version?: string) {
 }
 
 export async function uninstallPlugin(id: string) {
-  // Uninstall via K8s PluginMeta API (no-op when useMTPlugins is off).
+  // Uninstall via K8s PluginMeta API (no-op when plugins.useMTPlugins is off).
   // We call both this and the legacy path because the K8s settings API doesn't cover all
   // plugin types yet — the legacy call keeps the UI in sync across browser refreshes.
   // TODO(@hugohaggmark): return early once all plugin types support the K8s Settings API.
   try {
     await uninstallPluginMeta(id);
   } catch (error: unknown) {
-    logPluginMetaError(`PluginMeta: Failed to uninstall plugin with id ${id}`, error);
+    logPluginMetaError(`uninstallPluginMeta: Failed to uninstall plugin`, error, {
+      pluginId: id,
+    });
   }
 
   // Legacy uninstall path — kept until K8s settings API covers all plugin types.

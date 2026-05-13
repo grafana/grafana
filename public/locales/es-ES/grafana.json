@@ -1153,6 +1153,9 @@
         "rule-viewer-section-extension": "No se ha podido cargar la sección de enriquecimiento del visor de reglas"
       }
     },
+    "entities": {
+      "group": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "Error al actualizar tu configuración:",
       "title-something-went-wrong": "Algo ha salido mal"
@@ -1161,6 +1164,9 @@
       "content-show-all-errors": "Mostrar todos los errores"
     },
     "errors": {
+      "api-machinery": {
+        "with-causes": ""
+      },
       "failedWith": "{{-config}} falló con {{status}}: {{-message}}"
     },
     "evaluate-every-validation-options": {
@@ -3174,9 +3180,7 @@
       "deleting": "Eliminando",
       "text-federated": "Federado",
       "text-provisioned": "Provisionado",
-      "ungrouped": "Sin agrupar",
-      "ungrouped-suffix": "{{ruleName}} (sin agrupar)",
-      "unknown-rule": "Regla desconocida"
+      "ungrouped": "Sin agrupar"
     },
     "saved-searches": {
       "actions-aria-label": "Acciones",
@@ -4461,6 +4465,14 @@
       "request-extension": "Solicitar ampliación de la cuota",
       "resource-detail-dashboards": "Has creado {{usage}} de {{limit}} dashboards ({{percentage}} %).",
       "resource-detail-folders": "Has creado {{usage}} de {{limit}} carpetas ({{percentage}} %)."
+    },
+    "readme": {
+      "add-readme": "",
+      "edit-tooltip": "",
+      "empty-message": "",
+      "load-error-retry": "",
+      "load-error-title": "",
+      "parse-error": ""
     },
     "recently-viewed": {
       "clear": "Borrar historial",
@@ -8033,19 +8045,6 @@
       "aria-label-explore-data": "Explorar datos",
       "aria-label-suggested-dashboards": "Dashboards sugeridos"
     },
-    "alerting-enabled": {
-      "text-alerting-not-supported": "Alertas no compatibles",
-      "text-alerting-supported": "Alertas compatibles"
-    },
-    "basic-serttings": {
-      "tooltip-name": "El nombre se utiliza cuando se selecciona la fuente de datos en los paneles. La fuente de datos predeterminada está preseleccionada en los paneles nuevos."
-    },
-    "basic-settings": {
-      "aria-label-datasource-settings-page-basic": "Ajustes básicos de la página de configuración de la fuente de datos",
-      "basic-settings-name-placeholder-name": "Nombre",
-      "label-default": "Por defecto",
-      "label-name": "Nombre"
-    },
     "build-a-dashboard-button": {
       "blank": "En blanco",
       "build-a-dashboard": "Crear un dashboard",
@@ -10855,6 +10854,21 @@
     "name-line-width": "Espesor de la línea",
     "name-stacking": "Apilamiento"
   },
+  "home": {
+    "home-page": {
+      "edition": {
+        "cloud": "",
+        "enterprise": "",
+        "open-source": ""
+      },
+      "greeting": {
+        "afternoon": "",
+        "evening": "",
+        "morning": ""
+      },
+      "placeholder": ""
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "Cargando",
@@ -11249,7 +11263,7 @@
     "description-order": "Muestra primero los logs más recientes o los más antiguos. Si se selecciona «Más antiguos primero», la vista se desplaza automáticamente hasta los logs más recientes, situados en la parte inferior.",
     "description-prettify-json": "Da formato a las entradas de log JSON con sangría y saltos de línea.",
     "description-show-controls": "Muestra controles para saltar a la última o primera línea de log y filtra por nivel de log.",
-    "description-show-log-attributes": "Experimental. Cuando se muestran los logs de OTel, añade un campo adicional con los pares clave-valor relevantes de las etiquetas y los metadatos.",
+    "description-show-log-attributes": "",
     "description-unwrapped-columns": "Alinea los valores mediante columnas al utilizar los campos mostrados.",
     "description-wrap-lines": "Muestra los logs en una sola línea o ajusta las entradas de logs largas para que se adapten al panel.",
     "field-selector": {
@@ -11575,7 +11589,7 @@
       "line-contains-not": "Añadir como filtro «la línea no contiene»",
       "search-text": "Buscar en resultados"
     },
-    "show-log-attributes": "Mostrar atributos del log para logs OTel",
+    "show-log-attributes": "",
     "timestamp-format": "Resolución de marca de tiempo",
     "un-themed-log-details": {
       "aria-label-data-links": "Enlaces de datos",
@@ -14833,9 +14847,6 @@
       "home-dashboard-placeholder": "Panel de control por defecto",
       "language-preference-label": "Idioma",
       "language-preference-placeholder": "Cambiar idioma",
-      "locale-preference-description": "Selecciona tu región para ver el formato correspondiente de fecha, hora y número",
-      "locale-preference-label": "Formato de región",
-      "locale-preference-placeholder": "Elige la región",
       "theme-description": "¿Te gustan los temas experimentales? Dinos lo que te gustaría ver <2>aquí.</2>",
       "theme-label": "Tema de interfaz de usuario",
       "week-start-label": "Inicio de la semana"
@@ -16026,7 +16037,9 @@
       "description": {
         "group-by-field-value": "Agrupa los datos por un valor de campo y crea tablas anidadas con los datos agrupados."
       },
+      "description-expand-nested-rows": "",
       "description-show-field-names": "Si está habilitado, las tablas anidadas mostrarán los nombres de los campos como encabezado de la tabla",
+      "label-expand-nested-rows-by-default": "",
       "label-show-field-names-in-nested-tables": "Mostrar nombres de campo en tablas anidadas",
       "name": {
         "group-to-nested-tables": "Agrupar en tablas anidadas"
