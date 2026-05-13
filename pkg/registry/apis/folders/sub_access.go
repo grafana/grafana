@@ -71,7 +71,7 @@ type folderAccessAction struct {
 // AccessControl. Cross-domain inheritance (dashboards:*, library.panels:*,
 // alert.rules:*) is intentionally out of scope for v1 — those resources
 // live in legacy SQL and their permissions are not yet uniformly checkable
-// through authlib in MT. Tracking issue: follow-up to A1.1.
+// through authlib in MT.
 var folderAccessActions = []folderAccessAction{
 	{Action: "folders:read", Verb: utils.VerbGet},
 	{Action: "folders:write", Verb: utils.VerbUpdate},
