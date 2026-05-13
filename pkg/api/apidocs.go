@@ -528,11 +528,7 @@ func renderOperationMarkdown(e *operationEntry, s *apiDocsState) string {
 	}
 	b.WriteString("\n")
 
-	// Base URL and auth context — agents fetching this page in isolation need
-	// this to construct a working curl command.
-	opBase := s.appURL
-	fmt.Fprintf(&b, "> Full URL: `%s %s/api%s`\n", e.Method, opBase, e.Path)
-	b.WriteString("> Authenticate with `Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>` or basic auth (`-u admin:password`).\n\n")
+	renderOperationContext(&b, e, s)
 
 	// Caution block for operations with replace-all or irreversible semantics.
 	if note, ok := operationNotes[e.OperationID]; ok {
@@ -540,152 +536,186 @@ func renderOperationMarkdown(e *operationEntry, s *apiDocsState) string {
 		fmt.Fprintf(&b, "> %s\n\n", note)
 	}
 
-	if len(e.Operation.Parameters) > 0 {
-		b.WriteString("## Parameters\n\n")
-		for _, pref := range e.Operation.Parameters {
-			if pref == nil || pref.Value == nil {
-				continue
-			}
-			p := pref.Value
-			req := ""
-			if p.Required {
-				req = ", required"
-			}
-			fmt.Fprintf(&b, "- `%s` (%s, %s%s): %s\n",
-				p.Name, p.In, paramTypeOf(p), req, oneLine(p.Description))
-		}
-		b.WriteString("\n")
-	}
-
-	if e.Operation.RequestBody != nil && e.Operation.RequestBody.Value != nil {
-		rb := e.Operation.RequestBody.Value
-		b.WriteString("## Request Body\n\n")
-		if rb.Required {
-			b.WriteString("Required.\n\n")
-		}
-		if rb.Description != "" {
-			fmt.Fprintf(&b, "%s\n\n", oneLine(rb.Description))
-		}
-		mediaTypes := make([]string, 0, len(rb.Content))
-		for mt := range rb.Content {
-			mediaTypes = append(mediaTypes, mt)
-		}
-		sort.Strings(mediaTypes)
-		for _, mt := range mediaTypes {
-			media := rb.Content[mt]
-			fmt.Fprintf(&b, "- Content-Type: `%s`", mt)
-			if media != nil && media.Schema != nil {
-				if ref := refName(media.Schema.Ref); ref != "" {
-					fmt.Fprintf(&b, " — schema: `%s`", ref)
-				} else if media.Schema.Value != nil {
-					fmt.Fprintf(&b, " — type: `%s`", schemaType(media.Schema.Value))
-				}
-			}
-			b.WriteString("\n")
-			if media != nil {
-				if ex := exampleJSON(media.Schema); ex != "" {
-					fmt.Fprintf(&b, "\n  Example:\n\n  ```json\n%s\n  ```\n", indentBlock(ex, "  "))
-				}
-			}
-		}
-		b.WriteString("\n")
-	}
-
-	if e.Operation.Responses != nil {
-		resps := e.Operation.Responses.Map()
-		if len(resps) > 0 {
-			b.WriteString("## Responses\n\n")
-			codes := make([]string, 0, len(resps))
-			for c := range resps {
-				codes = append(codes, c)
-			}
-			sort.Strings(codes)
-
-			// Track schema refs whose example has already been rendered in
-			// this responses block so we don't repeat the same JSON object
-			// once per error code.
-			renderedExamples := map[string]bool{}
-
-			for _, code := range codes {
-				rref := resps[code]
-				if rref == nil || rref.Value == nil {
-					continue
-				}
-				r := rref.Value
-				desc := ""
-				if r.Description != nil {
-					desc = oneLine(*r.Description)
-				}
-				fmt.Fprintf(&b, "- `%s`: %s", code, desc)
-				mediaTypes := make([]string, 0, len(r.Content))
-				for mt := range r.Content {
-					mediaTypes = append(mediaTypes, mt)
-				}
-				sort.Strings(mediaTypes)
-				for _, mt := range mediaTypes {
-					media := r.Content[mt]
-					if media != nil && media.Schema != nil {
-						if ref := refName(media.Schema.Ref); ref != "" {
-							fmt.Fprintf(&b, " (`%s` → `%s`)", mt, ref)
-						} else if media.Schema.Value != nil {
-							fmt.Fprintf(&b, " (`%s` → `%s`)", mt, schemaType(media.Schema.Value))
-						}
-					}
-				}
-				b.WriteString("\n")
-				for _, mt := range mediaTypes {
-					media := r.Content[mt]
-					if media == nil {
-						continue
-					}
-					// Suppress duplicate examples: same schema ref across
-					// multiple error responses would produce identical JSON.
-					schemaKey := refName(media.Schema.Ref)
-					if schemaKey == "" && media.Schema != nil && media.Schema.Value != nil {
-						schemaKey = schemaType(media.Schema.Value)
-					}
-					if schemaKey != "" && renderedExamples[schemaKey] {
-						continue
-					}
-					if ex := exampleJSON(media.Schema); ex != "" {
-						fmt.Fprintf(&b, "\n  Example (`%s`):\n\n  ```json\n%s\n  ```\n", mt, indentBlock(ex, "  "))
-						if schemaKey != "" {
-							renderedExamples[schemaKey] = true
-						}
-					}
-				}
-			}
-			b.WriteString("\n")
-		}
-	}
-
-	if e.Operation.Security != nil && len(*e.Operation.Security) > 0 {
-		b.WriteString("## Security\n\n")
-		for _, sec := range *e.Operation.Security {
-			for name := range sec {
-				fmt.Fprintf(&b, "- %s\n", name)
-			}
-		}
-		b.WriteString("\n")
-	}
-
-	// Related operations: same-path peers, parent collection, direct children.
-	if s != nil {
-		if rel := relatedOps(e, s); len(rel) > 0 {
-			b.WriteString("## Related Operations\n\n")
-			for _, r := range rel {
-				summary := r.Summary
-				if summary == "" {
-					summary = oneLine(r.Description)
-				}
-				url := s.appURL + "/api-docs/operations/" + r.OperationID
-				fmt.Fprintf(&b, "- [%s %s](%s): %s\n", r.Method, r.Path, url, summary)
-			}
-			b.WriteString("\n")
-		}
-	}
+	renderParametersSection(&b, e)
+	renderRequestBodySection(&b, e)
+	renderResponsesSection(&b, e)
+	renderSecuritySection(&b, e)
+	renderRelatedOpsSection(&b, e, s)
 
 	return b.String()
+}
+
+func renderOperationContext(b *strings.Builder, e *operationEntry, s *apiDocsState) {
+	opBase := ""
+	if s != nil {
+		opBase = s.appURL
+	}
+	fmt.Fprintf(b, "> Full URL: `%s %s/api%s`\n", e.Method, opBase, e.Path)
+	b.WriteString("> Authenticate with `Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>` or basic auth (`-u admin:password`).\n\n")
+}
+
+func renderParametersSection(b *strings.Builder, e *operationEntry) {
+	if len(e.Operation.Parameters) == 0 {
+		return
+	}
+	b.WriteString("## Parameters\n\n")
+	for _, pref := range e.Operation.Parameters {
+		if pref == nil || pref.Value == nil {
+			continue
+		}
+		p := pref.Value
+		req := ""
+		if p.Required {
+			req = ", required"
+		}
+		fmt.Fprintf(b, "- `%s` (%s, %s%s): %s\n",
+			p.Name, p.In, paramTypeOf(p), req, oneLine(p.Description))
+	}
+	b.WriteString("\n")
+}
+
+func renderRequestBodySection(b *strings.Builder, e *operationEntry) {
+	if e.Operation.RequestBody == nil || e.Operation.RequestBody.Value == nil {
+		return
+	}
+	rb := e.Operation.RequestBody.Value
+	b.WriteString("## Request Body\n\n")
+	if rb.Required {
+		b.WriteString("Required.\n\n")
+	}
+	if rb.Description != "" {
+		fmt.Fprintf(b, "%s\n\n", oneLine(rb.Description))
+	}
+	mediaTypes := sortedMediaTypes(rb.Content)
+	for _, mt := range mediaTypes {
+		media := rb.Content[mt]
+		fmt.Fprintf(b, "- Content-Type: `%s`", mt)
+		if media != nil && media.Schema != nil {
+			if ref := refName(media.Schema.Ref); ref != "" {
+				fmt.Fprintf(b, " — schema: `%s`", ref)
+			} else if media.Schema.Value != nil {
+				fmt.Fprintf(b, " — type: `%s`", schemaType(media.Schema.Value))
+			}
+		}
+		b.WriteString("\n")
+		if media != nil {
+			if ex := exampleJSON(media.Schema); ex != "" {
+				fmt.Fprintf(b, "\n  Example:\n\n  ```json\n%s\n  ```\n", indentBlock(ex, "  "))
+			}
+		}
+	}
+	b.WriteString("\n")
+}
+
+func renderResponsesSection(b *strings.Builder, e *operationEntry) {
+	if e.Operation.Responses == nil {
+		return
+	}
+	resps := e.Operation.Responses.Map()
+	if len(resps) == 0 {
+		return
+	}
+	b.WriteString("## Responses\n\n")
+	codes := make([]string, 0, len(resps))
+	for c := range resps {
+		codes = append(codes, c)
+	}
+	sort.Strings(codes)
+	renderedExamples := map[string]bool{}
+
+	for _, code := range codes {
+		rref := resps[code]
+		if rref == nil || rref.Value == nil {
+			continue
+		}
+		renderResponseCode(b, code, rref.Value, renderedExamples)
+	}
+	b.WriteString("\n")
+}
+
+func renderResponseCode(b *strings.Builder, code string, r *openapi3.Response, renderedExamples map[string]bool) {
+	desc := ""
+	if r.Description != nil {
+		desc = oneLine(*r.Description)
+	}
+	fmt.Fprintf(b, "- `%s`: %s", code, desc)
+	mediaTypes := sortedMediaTypes(r.Content)
+	for _, mt := range mediaTypes {
+		media := r.Content[mt]
+		if media == nil || media.Schema == nil {
+			continue
+		}
+		if ref := refName(media.Schema.Ref); ref != "" {
+			fmt.Fprintf(b, " (`%s` → `%s`)", mt, ref)
+		} else if media.Schema.Value != nil {
+			fmt.Fprintf(b, " (`%s` → `%s`)", mt, schemaType(media.Schema.Value))
+		}
+	}
+	b.WriteString("\n")
+	for _, mt := range mediaTypes {
+		renderResponseExample(b, mt, r.Content[mt], renderedExamples)
+	}
+}
+
+func renderResponseExample(b *strings.Builder, mediaType string, media *openapi3.MediaType, renderedExamples map[string]bool) {
+	if media == nil || media.Schema == nil {
+		return
+	}
+	schemaKey := refName(media.Schema.Ref)
+	if schemaKey == "" && media.Schema.Value != nil {
+		schemaKey = schemaType(media.Schema.Value)
+	}
+	if schemaKey != "" && renderedExamples[schemaKey] {
+		return
+	}
+	if ex := exampleJSON(media.Schema); ex != "" {
+		fmt.Fprintf(b, "\n  Example (`%s`):\n\n  ```json\n%s\n  ```\n", mediaType, indentBlock(ex, "  "))
+		if schemaKey != "" {
+			renderedExamples[schemaKey] = true
+		}
+	}
+}
+
+func renderSecuritySection(b *strings.Builder, e *operationEntry) {
+	if e.Operation.Security == nil || len(*e.Operation.Security) == 0 {
+		return
+	}
+	b.WriteString("## Security\n\n")
+	for _, sec := range *e.Operation.Security {
+		for name := range sec {
+			fmt.Fprintf(b, "- %s\n", name)
+		}
+	}
+	b.WriteString("\n")
+}
+
+func renderRelatedOpsSection(b *strings.Builder, e *operationEntry, s *apiDocsState) {
+	if s == nil {
+		return
+	}
+	rel := relatedOps(e, s)
+	if len(rel) == 0 {
+		return
+	}
+	b.WriteString("## Related Operations\n\n")
+	for _, r := range rel {
+		summary := r.Summary
+		if summary == "" {
+			summary = oneLine(r.Description)
+		}
+		url := s.appURL + "/api-docs/operations/" + r.OperationID
+		fmt.Fprintf(b, "- [%s %s](%s): %s\n", r.Method, r.Path, url, summary)
+	}
+	b.WriteString("\n")
+}
+
+func sortedMediaTypes(content openapi3.Content) []string {
+	mediaTypes := make([]string, 0, len(content))
+	for mt := range content {
+		mediaTypes = append(mediaTypes, mt)
+	}
+	sort.Strings(mediaTypes)
+	return mediaTypes
 }
 
 func paramTypeOf(p *openapi3.Parameter) string {
@@ -776,51 +806,64 @@ func exampleValueForSchema(sref *openapi3.SchemaRef, visited map[string]bool, de
 		return s.Example
 	}
 
-	refKey := refName(sref.Ref)
-	if refKey != "" {
-		if visited[refKey] {
-			return map[string]any{"$ref": refKey}
-		}
-		visited[refKey] = true
-		defer delete(visited, refKey)
+	refVal, done, cleanup := beginSchemaRefVisit(sref.Ref, visited)
+	if done {
+		return refVal
+	}
+	if cleanup != nil {
+		defer cleanup()
 	}
 
-	// allOf: merge object properties from all members plus our own.
+	if v := exampleValueForComposites(s, visited, depth); v != nil {
+		return v
+	}
+	return exampleValueForPrimaryType(s, visited, depth)
+}
+
+func beginSchemaRefVisit(ref string, visited map[string]bool) (any, bool, func()) {
+	refKey := refName(ref)
+	if refKey == "" {
+		return nil, false, nil
+	}
+	if visited[refKey] {
+		return map[string]any{"$ref": refKey}, true, nil
+	}
+	visited[refKey] = true
+	return nil, false, func() { delete(visited, refKey) }
+}
+
+func exampleValueForComposites(s *openapi3.Schema, visited map[string]bool, depth int) any {
 	if len(s.AllOf) > 0 {
-		merged := map[string]any{}
-		for _, m := range s.AllOf {
-			if v, ok := exampleValueForSchema(m, visited, depth+1).(map[string]any); ok {
-				for k, val := range v {
-					merged[k] = val
-				}
-			}
-		}
-		for name, prop := range s.Properties {
-			merged[name] = exampleValueForSchema(prop, visited, depth+1)
-		}
-		if len(merged) > 0 {
+		if merged := mergeAllOfExample(s, visited, depth); len(merged) > 0 {
 			return merged
 		}
 	}
-
 	if len(s.OneOf) > 0 {
 		return exampleValueForSchema(s.OneOf[0], visited, depth+1)
 	}
 	if len(s.AnyOf) > 0 {
 		return exampleValueForSchema(s.AnyOf[0], visited, depth+1)
 	}
+	return nil
+}
 
-	primary := ""
-	if s.Type != nil {
-		if ts := s.Type.Slice(); len(ts) > 0 {
-			primary = ts[0]
+func mergeAllOfExample(s *openapi3.Schema, visited map[string]bool, depth int) map[string]any {
+	merged := map[string]any{}
+	for _, m := range s.AllOf {
+		if v, ok := exampleValueForSchema(m, visited, depth+1).(map[string]any); ok {
+			for k, val := range v {
+				merged[k] = val
+			}
 		}
 	}
-	if primary == "" && len(s.Properties) > 0 {
-		primary = "object"
+	for name, prop := range s.Properties {
+		merged[name] = exampleValueForSchema(prop, visited, depth+1)
 	}
+	return merged
+}
 
-	switch primary {
+func exampleValueForPrimaryType(s *openapi3.Schema, visited map[string]bool, depth int) any {
+	switch schemaPrimaryType(s) {
 	case "object":
 		out := map[string]any{}
 		for name, prop := range s.Properties {
@@ -838,24 +881,35 @@ func exampleValueForSchema(sref *openapi3.SchemaRef, visited map[string]bool, de
 		}
 		return stringFormatExample(s.Format)
 	case "integer":
-		if s.Default != nil {
-			return s.Default
-		}
-		return 0
+		return firstNonNil(s.Default, 0)
 	case "number":
-		if s.Default != nil {
-			return s.Default
-		}
-		return 0.0
+		return firstNonNil(s.Default, 0.0)
 	case "boolean":
-		if s.Default != nil {
-			return s.Default
-		}
-		return false
+		return firstNonNil(s.Default, false)
 	case "null":
 		return nil
+	default:
+		return nil
 	}
-	return nil
+}
+
+func schemaPrimaryType(s *openapi3.Schema) string {
+	if s.Type != nil {
+		if ts := s.Type.Slice(); len(ts) > 0 {
+			return ts[0]
+		}
+	}
+	if len(s.Properties) > 0 {
+		return "object"
+	}
+	return ""
+}
+
+func firstNonNil(v any, fallback any) any {
+	if v != nil {
+		return v
+	}
+	return fallback
 }
 
 func stringFormatExample(format string) string {
