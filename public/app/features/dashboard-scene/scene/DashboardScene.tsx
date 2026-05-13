@@ -214,6 +214,8 @@ export interface DashboardSceneState extends SceneObjectState {
   defaultVariablesLoading?: boolean;
   /** True while default links from datasources are being loaded */
   defaultLinksLoading?: boolean;
+  /** Fanout for view panel */
+  viewPanelFanout?: string;
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> implements LayoutParent {

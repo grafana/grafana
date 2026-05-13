@@ -22,6 +22,7 @@ import { DashboardCodePane } from './DashboardCodePane';
 import { type DashboardEditPane } from './DashboardEditPane';
 import { ShareExportDashboardButton } from './DashboardExportButton';
 import { DashboardOutline } from './DashboardOutline';
+import { ViewPanelFanoutPane } from './ViewPanelFanoutPane';
 import { AddNewEditPane } from './add-new/AddNewEditPane';
 import { type DashboardSidebarPane } from './types';
 
@@ -37,13 +38,11 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
   const { openPane, selectionContext } = useSceneObjectState(editPane, {
     shouldActivateOrKeepAlive: true,
   });
-  const { isEditing, meta, uid } = dashboard.useState();
+  const { isEditing, meta, uid, viewPanel } = dashboard.useState();
   const styles = useStyles2(getStyles, isEditing);
   const hasUid = Boolean(uid);
   const isEmbedded = meta.isEmbedded;
   const selectedObject = editPane.getSelectedObject();
-  const theme = useTheme2();
-  const isMobile = useMedia(`(max-width: ${theme.breakpoints.values.sm}px)`);
   const sidebarContext = useSidebarContext();
   const onClickHideSidebar: React.MouseEventHandler<HTMLButtonElement> = useCallback(
     (e) => {
@@ -82,7 +81,6 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
               data-testid={selectors.pages.Dashboard.Sidebar.addButton}
               active={openPane instanceof AddNewEditPane}
             />
-
             <Sidebar.Button
               icon="cog"
               onClick={() => editPane.selectObject(dashboard)}
@@ -145,6 +143,18 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
               config.featureToggles.dashboardUnifiedDrilldownControls) && (
               <FiltersOverviewButton editPane={editPane} openPane={openPane} />
             )}
+          {viewPanel && (
+            <Sidebar.Button
+              icon="layer-group"
+              onClick={() => {
+                // editPane.openPane(new ViewPanelFanoutPane({}));
+              }}
+              title={t('dashboard.sidebar.view-panel-fanout.title', 'Fanout')}
+              tooltip={t('dashboard.sidebar.view-panel-fanout.tooltip', 'Split panels by series or label')}
+              data-testid={selectors.pages.Dashboard.Sidebar.outlineButton}
+              active={openPane?.getId() === 'fanout'}
+            />
+          )}
           {dashboard.isManaged() && Boolean(meta.canEdit) && <ManagedDashboardNavBarBadge dashboard={dashboard} />}
           {renderEnterpriseItems()}
           {Boolean(meta.isSnapshot) && (
@@ -156,7 +166,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
               onClick={() => onOpenSnapshotOriginalDashboard(dashboard.getSnapshotUrl())}
             />
           )}
-          {isMobile && !isEditing && (
+          {!isEditing && (
             <>
               <Sidebar.Divider />
               <Sidebar.Button
