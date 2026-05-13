@@ -10798,6 +10798,16 @@
   },
   "home": {
     "home-page": {
+      "edition": {
+        "cloud": "",
+        "enterprise": "",
+        "open-source": ""
+      },
+      "greeting": {
+        "afternoon": "",
+        "evening": "",
+        "morning": ""
+      },
       "placeholder": ""
     }
   },
@@ -14745,9 +14755,6 @@
       "home-dashboard-placeholder": "기본 대시보드",
       "language-preference-label": "언어",
       "language-preference-placeholder": "언어 선택",
-      "locale-preference-description": "해당 날짜, 시간 및 숫자 형식을 보려면 지역을 선택하세요",
-      "locale-preference-label": "지역 형식",
-      "locale-preference-placeholder": "지역 선택",
       "theme-description": "실험적 테마가 맘에 드시나요? <2>여기</2>에서 원하시는 테마를 알려 주세요.</2>",
       "theme-label": "인터페이스 테마",
       "week-start-label": "주 시작 요일"

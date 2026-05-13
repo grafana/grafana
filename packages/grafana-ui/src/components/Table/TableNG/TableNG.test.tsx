@@ -625,6 +625,126 @@ describe('TableNG', () => {
       // The nested footer value (sum of Nested B = 30) must be visible
       expect(screen.getByText('30')).toBeInTheDocument();
     });
+
+    it('preserves expanded state by stable key when row order changes on re-render', async () => {
+      window.HTMLElement.prototype.scrollIntoView = jest.fn();
+
+      const makeStableFrame = (order: Array<'key-A' | 'key-B'>): DataFrame => {
+        const nestedA = {
+          meta: { custom: { stableRowKey: 'key-A', noHeader: true } },
+          length: 1,
+          fields: [{ name: 'Info', type: FieldType.string, values: ['nested-A'], config: {} }],
+        };
+        const nestedB = {
+          meta: { custom: { stableRowKey: 'key-B', noHeader: true } },
+          length: 1,
+          fields: [{ name: 'Info', type: FieldType.string, values: ['nested-B'], config: {} }],
+        };
+        const nested = { 'key-A': nestedA, 'key-B': nestedB };
+        const labels = { 'key-A': 'Row A', 'key-B': 'Row B' };
+
+        return withFieldOverrides(
+          toDataFrame({
+            name: 'StableTest',
+            length: 2,
+            fields: [
+              {
+                name: 'Label',
+                type: FieldType.string,
+                values: order.map((k) => labels[k]),
+                config: {},
+              },
+              {
+                name: '__nestedFrames',
+                type: FieldType.nestedFrames,
+                values: order.map((k) => [nested[k]]),
+                config: {},
+              },
+            ],
+          })
+        );
+      };
+
+      const { rerender, container } = render(
+        <TableNG enableVirtualization={false} data={makeStableFrame(['key-A', 'key-B'])} width={800} height={600} />
+      );
+
+      // Expand the first row (key-A is at index 0)
+      const expandButton = container.querySelector('[aria-label="Expand row"]');
+      expect(expandButton).toBeInTheDocument();
+      await user.click(expandButton!);
+      expect(screen.getByText('nested-A')).toBeInTheDocument();
+      expect(screen.queryByText('nested-B')).not.toBeInTheDocument();
+
+      // Re-render with reversed row order: key-B is now at index 0, key-A at index 1
+      rerender(
+        <TableNG enableVirtualization={false} data={makeStableFrame(['key-B', 'key-A'])} width={800} height={600} />
+      );
+
+      // key-A is now at index 1 but should still be expanded via its stable key
+      expect(screen.getByText('nested-A')).toBeInTheDocument();
+      // key-B moved to index 0 but was never expanded, so its content should not appear
+      expect(screen.queryByText('nested-B')).not.toBeInTheDocument();
+    });
+
+    it('falls back to row index for expansion state when stableRowKey is unset', async () => {
+      // Nested subframes carry no meta.custom.stableRowKey, so getStableRowKey returns String(rowIdx).
+      // Expansion is therefore keyed by position: when rows are reordered, the expanded slot
+      // stays at the same index and ends up showing whichever row data now sits there.
+      const makeIndexedFrame = (order: Array<'A' | 'B'>): DataFrame => {
+        const nestedA = {
+          meta: { custom: { noHeader: true } },
+          length: 1,
+          fields: [{ name: 'Info', type: FieldType.string, values: ['nested-A'], config: {} }],
+        };
+        const nestedB = {
+          meta: { custom: { noHeader: true } },
+          length: 1,
+          fields: [{ name: 'Info', type: FieldType.string, values: ['nested-B'], config: {} }],
+        };
+        const nested = { A: nestedA, B: nestedB };
+        const labels = { A: 'Row A', B: 'Row B' };
+
+        return withFieldOverrides(
+          toDataFrame({
+            name: 'IndexedTest',
+            length: 2,
+            fields: [
+              {
+                name: 'Label',
+                type: FieldType.string,
+                values: order.map((k) => labels[k]),
+                config: {},
+              },
+              {
+                name: '__nestedFrames',
+                type: FieldType.nestedFrames,
+                values: order.map((k) => [nested[k]]),
+                config: {},
+              },
+            ],
+          })
+        );
+      };
+
+      const { rerender, container } = render(
+        <TableNG enableVirtualization={false} data={makeIndexedFrame(['A', 'B'])} width={800} height={600} />
+      );
+
+      // Expand the row at index 0 (A's subframe).
+      const expandButton = container.querySelector('[aria-label="Expand row"]');
+      expect(expandButton).toBeInTheDocument();
+      await user.click(expandButton!);
+      expect(screen.getByText('nested-A')).toBeInTheDocument();
+      expect(screen.queryByText('nested-B')).not.toBeInTheDocument();
+
+      // Reverse the row order. Without a stable key, expansion sticks to index 0,
+      // which now holds B's subframe.
+      rerender(<TableNG enableVirtualization={false} data={makeIndexedFrame(['B', 'A'])} width={800} height={600} />);
+
+      expect(screen.getByText('nested-B')).toBeInTheDocument();
+      expect(screen.queryByText('nested-A')).not.toBeInTheDocument();
+    });
   });
 
   describe('Header options', () => {
