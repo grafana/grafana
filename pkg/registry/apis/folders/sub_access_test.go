@@ -33,12 +33,12 @@ func TestSubAccessREST_getAccessInfo(t *testing.T) {
 		{
 			name: "admin: every verb allowed → all bools true and map fully populated",
 			allowed: map[string]bool{
-				utils.VerbGet:              true,
-				utils.VerbUpdate:           true,
-				utils.VerbDelete:           true,
-				utils.VerbCreate:           true,
-				utils.VerbGetPermissions:   true,
-				utils.VerbSetPermissions:   true,
+				utils.VerbGet:            true,
+				utils.VerbUpdate:         true,
+				utils.VerbDelete:         true,
+				utils.VerbCreate:         true,
+				utils.VerbGetPermissions: true,
+				utils.VerbSetPermissions: true,
 			},
 			expect: folders.FolderAccessInfo{
 				CanSave: true, CanEdit: true, CanAdmin: true, CanDelete: true,
