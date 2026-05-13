@@ -2,8 +2,9 @@ import { createTheme } from '../themes/createTheme';
 import { type DataFrame, type Field, FieldType } from '../types/dataFrame';
 import { FieldColorModeId } from '../types/fieldColor';
 
-import { fieldColorModeRegistry, type FieldValueColorCalculator, getFieldSeriesColor } from './fieldColor';
+import { fieldColorModeRegistry, type FieldValueColorCalculator } from './fieldColor';
 import { cacheFieldDisplayNames } from './fieldState';
+import { getFieldSeriesColor } from './scale';
 
 function getTestField(mode: string, fixedColor?: string, name = 'name'): Field {
   return {
@@ -141,35 +142,5 @@ describe('fieldColorModeRegistry', () => {
     const color = '#123456';
     const calcFn = getCalculator({ mode: FieldColorModeId.Shades, seriesIndex: 1, fixedColor: color });
     expect(calcFn(70, 0, undefined)).not.toEqual(color);
-  });
-});
-
-describe('getFieldSeriesColor', () => {
-  const field = getTestField('continuous-GrYlRd');
-  field.values = [0, -10, 5, 10, 2, 5];
-
-  it('When color.seriesBy is last use that to calc series color', () => {
-    field.config.color!.seriesBy = 'last';
-    const color = getFieldSeriesColor(field, createTheme());
-    const calcFn = getCalculator({ mode: 'continuous-GrYlRd' });
-
-    // the 4 can be anything, 0.75 comes from 5 being 75% in the range -10 to 10 (see data above)
-    expect(color.color).toEqual(calcFn(4, 0.75));
-  });
-
-  it('When color.seriesBy is max use that to calc series color', () => {
-    field.config.color!.seriesBy = 'max';
-    const color = getFieldSeriesColor(field, createTheme());
-    const calcFn = getCalculator({ mode: 'continuous-GrYlRd' });
-
-    expect(color.color).toEqual(calcFn(10, 1));
-  });
-
-  it('When color.seriesBy is min use that to calc series color', () => {
-    field.config.color!.seriesBy = 'min';
-    const color = getFieldSeriesColor(field, createTheme());
-    const calcFn = getCalculator({ mode: 'continuous-GrYlRd' });
-
-    expect(color.color).toEqual(calcFn(-10, 0));
   });
 });

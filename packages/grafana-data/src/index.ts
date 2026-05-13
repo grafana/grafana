@@ -140,7 +140,6 @@ export {
   getFieldColorMode,
   fieldColorModeRegistry,
   type FieldColorMode,
-  getFieldSeriesColor,
   /** @internal */
   getColorByStringHash,
 } from './field/fieldColor';
@@ -162,7 +161,7 @@ export {
   cacheFieldDisplayNames,
   getUniqueFieldName,
 } from './field/fieldState';
-export { getScaleCalculator, getFieldConfigWithMinMax, getMinMaxAndDelta } from './field/scale';
+export { getScaleCalculator, getFieldConfigWithMinMax, getMinMaxAndDelta, getFieldSeriesColor } from './field/scale';
 export {
   type ReduceDataOptions,
   VAR_SERIES_NAME,
@@ -345,11 +344,6 @@ export { ThemeContext } from './themes/context';
 
 // ValueFormats
 export {
-  type FormattedValue,
-  type ValueFormatter,
-  type ValueFormat,
-  type ValueFormatCategory,
-  type ValueFormatterIndex,
   formattedValueToString,
   toFixed,
   toFixedScaled,
@@ -360,10 +354,16 @@ export {
   locale,
   simpleCountUnit,
   stringFormater,
-  getValueFormat,
-  getValueFormatterIndex,
-  getValueFormats,
-} from './valueFormats/valueFormats';
+} from './valueFormats/baseFormatters';
+export { getValueFormat, getValueFormatterIndex, getValueFormats } from './valueFormats/valueFormats';
+
+export {
+  type FormattedValue,
+  type ValueFormatter,
+  type ValueFormat,
+  type ValueFormatCategory,
+  type ValueFormatterIndex,
+} from './types/valueFormats';
 
 // datetime
 export * as dateMath from './datetime/datemath';

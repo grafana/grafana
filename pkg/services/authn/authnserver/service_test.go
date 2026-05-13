@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	grpclog "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -197,4 +198,88 @@ func TestRegisterClient(t *testing.T) {
 	assert.Len(t, svc.clients, 2)
 	assert.Equal(t, "first", svc.clients[0].Name())
 	assert.Equal(t, "second", svc.clients[1].Name())
+}
+
+func TestAuthenticate_GRPCLogFields(t *testing.T) {
+	grpcCtx := func(ctx context.Context) context.Context {
+		return grpclog.InjectFields(ctx, grpclog.Fields{})
+	}
+
+	// gRPC log fields are stored as alternating (key, value, key, value, ...)
+	// in a flat []any slice. This helper converts it to a map to simplify assertions.
+	extractFieldMap := func(ctx context.Context) map[string]string {
+		m := make(map[string]string)
+		it := grpclog.ExtractFields(ctx).Iterator()
+		for it.Next() {
+			k, v := it.At()
+			m[k] = v.(string)
+		}
+		return m
+	}
+
+	t.Run("OK injects client, code, namespace, and headers", func(t *testing.T) {
+		svc := NewService(tracing.InitializeTracerForTest())
+		svc.RegisterClient(&mockClient{
+			name:       "ext_jwt",
+			testResult: true,
+			authResponse: &authnv1.AuthenticateResponse{
+				Code:  authnv1.AuthenticateCode_AUTHENTICATE_CODE_OK,
+				Token: "tok",
+			},
+		})
+
+		ctx := grpcCtx(t.Context())
+		req := &authnv1.AuthenticateRequest{
+			Namespace:   "stacks-123",
+			HttpHeaders: map[string]string{"Authorization": "Bearer xxx", "X-Grafana-Id": "id-token"},
+		}
+
+		_, err := svc.Authenticate(ctx, req)
+		require.NoError(t, err)
+
+		fields := extractFieldMap(ctx)
+		assert.Equal(t, "ext_jwt", fields["authn.client"])
+		assert.Equal(t, authnv1.AuthenticateCode_AUTHENTICATE_CODE_OK.String(), fields["authn.code"])
+		assert.Equal(t, "stacks-123", fields["authn.namespace"])
+		assert.Equal(t, "Authorization,X-Grafana-Id", fields["authn.headers"])
+	})
+
+	t.Run("no match injects none client and NOT_HANDLED code", func(t *testing.T) {
+		svc := NewService(tracing.InitializeTracerForTest())
+		svc.RegisterClient(&mockClient{name: "ext_jwt", testResult: false})
+
+		ctx := grpcCtx(t.Context())
+		req := &authnv1.AuthenticateRequest{Namespace: "stacks-123"}
+
+		_, err := svc.Authenticate(ctx, req)
+		require.NoError(t, err)
+
+		fields := extractFieldMap(ctx)
+		assert.Equal(t, "none", fields["authn.client"])
+		assert.Equal(t, authnv1.AuthenticateCode_AUTHENTICATE_CODE_NOT_HANDLED.String(), fields["authn.code"])
+		assert.Equal(t, "", fields["authn.headers"])
+	})
+
+	t.Run("error injects client and namespace", func(t *testing.T) {
+		svc := NewService(tracing.InitializeTracerForTest())
+		svc.RegisterClient(&mockClient{
+			name:       "ext_jwt",
+			testResult: true,
+			authError:  fmt.Errorf("boom"),
+		})
+
+		ctx := grpcCtx(t.Context())
+		req := &authnv1.AuthenticateRequest{
+			Namespace:   "stacks-456",
+			HttpHeaders: map[string]string{"Authorization": "Bearer xxx"},
+		}
+
+		_, err := svc.Authenticate(ctx, req)
+		require.Error(t, err)
+
+		fields := extractFieldMap(ctx)
+		assert.Equal(t, "ext_jwt", fields["authn.client"])
+		assert.Equal(t, "stacks-456", fields["authn.namespace"])
+		assert.Equal(t, "Authorization", fields["authn.headers"])
+	})
 }
