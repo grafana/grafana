@@ -47,13 +47,14 @@ export function TimeSeries(props: TimeSeriesProps) {
       }
 
       const enableFacetedFilter = config.featureToggles.vizLegendFacetedFilter && legend?.enableFacetedFilter;
+      const facetedFilterPinned = config.featureToggles.vizLegendFacetedFilter && legend?.facetedFilterPinned;
       return (
         <PlotLegend
           data={frames}
           config={uPlotConfig}
           {...legend}
           enableFacetedFilter={enableFacetedFilter}
-          pinnedToSidebar={legend?.facetedFilterPinned ?? false}
+          facetedFilterPinned={facetedFilterPinned}
           onPinnedToSidebarChange={onPinnedToSidebarChange}
         />
       );

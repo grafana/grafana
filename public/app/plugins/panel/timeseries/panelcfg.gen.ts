@@ -18,7 +18,7 @@ export interface TimeSeriesLegendOptions extends common.VizLegendOptions {
 }
 
 export const defaultTimeSeriesLegendOptions: Partial<TimeSeriesLegendOptions> = {
-  enableFacetedFilter: true,
+  enableFacetedFilter: false,
   facetedFilterPinned: false,
 };
 

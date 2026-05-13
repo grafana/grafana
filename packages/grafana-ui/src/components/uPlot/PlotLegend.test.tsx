@@ -86,8 +86,8 @@ describe('PlotLegend faceted filter', () => {
     expect(onPinnedToSidebarChange).toHaveBeenCalledWith(true);
   });
 
-  it('renders the docked layout when pinnedToSidebar is true and supports clear-all', async () => {
-    const { toggle } = renderWithContext({ pinnedToSidebar: true });
+  it('renders the docked layout when facetedFilterPinned is true and supports clear-all', async () => {
+    const { toggle } = renderWithContext({ facetedFilterPinned: true });
 
     expect(screen.queryByTestId('faceted-labels-filter-toggle')).not.toBeInTheDocument();
     expect(screen.getByLabelText('Unpin')).toBeInTheDocument();
@@ -100,7 +100,7 @@ describe('PlotLegend faceted filter', () => {
   });
 
   it('fires onPinnedToSidebarChange(false) when "Unpin" is clicked in the docked layout', async () => {
-    const { onPinnedToSidebarChange } = renderWithContext({ pinnedToSidebar: true });
+    const { onPinnedToSidebarChange } = renderWithContext({ facetedFilterPinned: true });
 
     await userEvent.click(screen.getByLabelText('Unpin'));
 
