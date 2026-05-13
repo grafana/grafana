@@ -12,6 +12,7 @@ import { type CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
 import { AlertingAction, useAlertingAbility } from '../../hooks/useAbilities';
+import { useIsAutoSyncActive } from '../../hooks/useIsAutoSyncActive';
 import { usePagination } from '../../hooks/usePagination';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { getPaginationStyles } from '../../styles/pagination';
@@ -50,9 +51,12 @@ export const CloudRules = ({ namespaces, expandAll }: Props) => {
     DEFAULT_PER_PAGE_PAGINATION
   );
 
+  const isAutoSyncActive = useIsAutoSyncActive();
+
   const canMigrateToGMA =
     hasDataSourcesConfigured &&
     config.featureToggles.alertingMigrationUI &&
+    !isAutoSyncActive &&
     contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate) &&
     contextSrv.hasPermission(AccessControlAction.AlertingProvisioningSetStatus);
 

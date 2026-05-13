@@ -1,4 +1,3 @@
-import { skipToken } from '@reduxjs/toolkit/query';
 import { useMemo } from 'react';
 import { useToggle } from 'react-use';
 
@@ -8,13 +7,13 @@ import { Box, Button, Dropdown, Icon, LinkButton, Menu, Stack } from '@grafana/u
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { alertmanagerApi } from '../api/alertmanagerApi';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { GrafanaRulesExporter } from '../components/export/GrafanaRulesExporter';
 import { useListViewMode } from '../components/rules/Filter/RulesViewModeSelector';
 import { AIAlertRuleButtonComponent } from '../enterprise-components/AI/AIGenAlertRuleButton/addAIAlertRuleButton';
 import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
 import { useRulesFilter } from '../hooks/useFilteredRules';
+import { useIsAutoSyncActive } from '../hooks/useIsAutoSyncActive';
 import { useAlertRulesNav } from '../navigation/useAlertRulesNav';
 import { getRulesDataSources } from '../utils/datasource';
 import { isAdmin } from '../utils/misc';
@@ -74,14 +73,7 @@ export function RuleListActions() {
 
   const canAccessMigrationWizardUI = config.featureToggles.alertingMigrationWizardUI && isAdmin();
 
-  // When Mimir Alertmanager auto-sync is configured for this org, the convert API rejects
-  // manual import requests server-side (via IsExternalAMSyncConfiguredForOrg). Hide the
-  // entry points entirely rather than surfacing a disabled state.
-  const autoSyncFlagOn = config.featureToggles['alerting.syncExternalAlertmanager'] === true;
-  const { data: ngalertAdminConfig } = alertmanagerApi.endpoints.getGrafanaAlertingConfiguration.useQuery(
-    isAdmin() && autoSyncFlagOn ? undefined : skipToken
-  );
-  const isAutoSyncActive = Boolean(ngalertAdminConfig?.external_alertmanager_uid);
+  const isAutoSyncActive = useIsAutoSyncActive();
 
   const [showExportDrawer, toggleShowExportDrawer] = useToggle(false);
 
