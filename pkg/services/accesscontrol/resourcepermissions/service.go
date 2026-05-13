@@ -75,6 +75,14 @@ func New(cfg *setting.Cfg,
 	ac accesscontrol.AccessControl, service accesscontrol.Service, sqlStore db.DB,
 	teamService team.Service, userService user.Service, actionSetService ActionSetService,
 ) (*Service, error) {
+	if cfg.RBAC.InsecureSkipLegacyAuthOnRedirectedResources {
+		if !features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthZResourcePermissionsRedirect) ||
+			!features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) {
+			return nil, fmt.Errorf("[rbac] insecure_skip_legacy_auth_on_redirected_resources is true but requires feature toggles %q and %q to be enabled",
+				featuremgmt.FlagKubernetesAuthZResourcePermissionsRedirect, featuremgmt.FlagKubernetesAuthzResourcePermissionApis)
+		}
+	}
+
 	if options.K8sActionFormat && options.APIGroup == "" {
 		return nil, fmt.Errorf("APIGroup is required when K8sActionFormat is enabled")
 	}

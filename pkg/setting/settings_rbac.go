@@ -21,6 +21,11 @@ type RBACSettings struct {
 
 	// set of resources that should we should seed wildcard scopes for
 	resourcesWithWildcardSeed map[string]struct{}
+
+	// InsecureSkipLegacyAuthOnRedirectedResources strips legacy access-control HTTP middleware from
+	// /api/access-control routes for dashboards, folders, and teams when K8s resource-permission redirects
+	// are enabled — see conf/defaults.ini.
+	InsecureSkipLegacyAuthOnRedirectedResources bool
 }
 
 func (cfg *Cfg) readRBACSettings() {
@@ -31,6 +36,7 @@ func (cfg *Cfg) readRBACSettings() {
 	s.PermissionValidationEnabled = rbac.Key("permission_validation_enabled").MustBool(false)
 	s.ResetBasicRoles = rbac.Key("reset_basic_roles").MustBool(false)
 	s.SingleOrganization = rbac.Key("single_organization").MustBool(false)
+	s.InsecureSkipLegacyAuthOnRedirectedResources = rbac.Key("insecure_skip_legacy_auth_on_redirected_resources").MustBool(false)
 	s.PluginsCleanup = util.SplitString(rbac.Key("plugins_cleanup").MustString(""))
 
 	// List of resources to generate managed permissions for upon resource creation (dashboard, folder, service-account, datasource)
