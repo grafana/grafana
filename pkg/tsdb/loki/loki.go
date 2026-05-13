@@ -285,7 +285,7 @@ func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datas
 			if _, ok := schemadsRefIDs[refID]; !ok || dr.Error != nil {
 				continue
 			}
-			dr.Frames = flattenLogsToTabular(dr.Frames, responseOpts.logsDataplane)
+			dr.Frames = flattenLogsToTabular(dr.Frames, responseOpts.logsDataplane, plog)
 			result.Responses[refID] = dr
 		}
 	}
