@@ -342,6 +342,13 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: SafeDynamicImport(() => import('app/features/admin/UpgradePage')),
     },
     {
+      path: '/admin/labs',
+      roles: () => ['ServerAdmin'],
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "LabsPage" */ 'app/features/admin/labs/LabsPage')
+      ),
+    },
+    {
       path: '/admin/users',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "UserListPage" */ 'app/features/admin/UserListPage')

@@ -259,6 +259,23 @@ func generateFile(t *testing.T, fpath string, gen string) {
 	}
 }
 
+func featureToggleStageTS(stage FeatureFlagStage) string {
+	switch stage {
+	case FeatureStageExperimental:
+		return "experimental"
+	case FeatureStagePrivatePreview:
+		return "privatePreview"
+	case FeatureStagePublicPreview:
+		return "publicPreview"
+	case FeatureStageGeneralAvailability:
+		return "GA"
+	case FeatureStageDeprecated:
+		return "deprecated"
+	default:
+		return "unknown"
+	}
+}
+
 func generateTypeScript() string {
 	buf := `// NOTE: This file was auto generated.  DO NOT EDIT DIRECTLY!
 // To change feature flags, edit:
@@ -294,7 +311,66 @@ export interface FeatureToggles {
 		buf += "  " + getTypeScriptKey(flag.Name) + "?: boolean;\n"
 	}
 
-	buf += "}\n"
+	buf += `}
+
+/**
+ * Release stage for a registered feature toggle (see Grafana release life cycle).
+ *
+ * @public
+ */
+export type FeatureToggleStage =
+  | 'experimental'
+  | 'privatePreview'
+  | 'publicPreview'
+  | 'GA'
+  | 'deprecated'
+  | 'unknown';
+
+/**
+ * Static registry metadata for feature toggles (for UI such as the Administration Labs page).
+ *
+ * @public
+ */
+export interface FeatureToggleRegistryEntry {
+  readonly name: string;
+  readonly description: string;
+  readonly stage: FeatureToggleStage;
+  readonly owner: string;
+  readonly expression: string;
+  readonly frontendOnly: boolean;
+  readonly requiresRestart: boolean;
+  readonly requiresDevMode: boolean;
+  readonly hideFromDocs: boolean;
+}
+
+/**
+ * All standard feature toggles with metadata, sorted by name.
+ *
+ * @public
+ */
+export const FEATURE_TOGGLE_REGISTRY: readonly FeatureToggleRegistryEntry[] = [
+`
+
+	sorted := append([]FeatureFlag(nil), standardFeatureFlags...)
+	sort.Slice(sorted, func(i, j int) bool {
+		return sorted[i].Name < sorted[j].Name
+	})
+
+	for _, flag := range sorted {
+		buf += "  {\n"
+		buf += "    name: " + strconv.Quote(flag.Name) + ",\n"
+		buf += "    description: " + strconv.Quote(flag.Description) + ",\n"
+		buf += "    stage: " + strconv.Quote(featureToggleStageTS(flag.Stage)) + ",\n"
+		buf += "    owner: " + strconv.Quote(string(flag.Owner)) + ",\n"
+		buf += "    expression: " + strconv.Quote(flag.Expression) + ",\n"
+		buf += "    frontendOnly: " + strconv.FormatBool(flag.FrontendOnly) + ",\n"
+		buf += "    requiresRestart: " + strconv.FormatBool(flag.RequiresRestart) + ",\n"
+		buf += "    requiresDevMode: " + strconv.FormatBool(flag.RequiresDevMode) + ",\n"
+		buf += "    hideFromDocs: " + strconv.FormatBool(flag.HideFromDocs) + ",\n"
+		buf += "  },\n"
+	}
+
+	buf += "];\n"
 	return buf
 }
 

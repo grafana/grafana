@@ -110,6 +110,31 @@
       "learn-more-link": "Learn more",
       "text": "Manage users, teams, and permissions automatically with <strong>SAML</strong>, <strong>SCIM</strong>, <strong>LDAP</strong>, and <strong>RBAC</strong> — available in Grafana Cloud and Enterprise."
     },
+    "labs": {
+      "access-denied-body": "Only Grafana server administrators can open Labs.",
+      "access-denied-title": "Access denied",
+      "badge-dev-mode": "Requires dev mode",
+      "badge-frontend": "Frontend only",
+      "badge-hidden": "Hidden from docs",
+      "badge-restart": "Requires restart",
+      "browser-only-body": "Changes apply only in this browser profile. Reload the page to apply overrides after editing.",
+      "browser-only-title": "Browser-only overrides",
+      "intro": "These toggles correspond to Grafana's feature registry. Overrides use the same <code>grafana.featureToggles</code> browser entry as Grafana's frontend bootstrap; they are merged with server defaults on reload.",
+      "meta-default": "Default",
+      "meta-owner": "Owner",
+      "meta-stage": "Stage",
+      "registry-count": "Showing {{filtered}} of {{total}} registry flags for this Grafana build.",
+      "reload": "Reload",
+      "reset": "Reset all local overrides",
+      "search-label": "Search flags",
+      "search-placeholder": "Name, description, owner, stage…",
+      "stage-heading-deprecated": "Deprecated",
+      "stage-heading-experimental": "Experimental",
+      "stage-heading-ga": "General availability",
+      "stage-heading-private-preview": "Private preview",
+      "stage-heading-public-preview": "Public preview",
+      "stage-heading-unknown": "Unknown stage"
+    },
     "feature-listing": {
       "title-auditing": "Auditing",
       "title-custom-branding": "Custom branding",
@@ -10782,6 +10807,10 @@
     },
     "kubernetes": {
       "title": "Kubernetes"
+    },
+    "labs": {
+      "subtitle": "Try out experimental features in your browser only",
+      "title": "Labs"
     },
     "library-panels": {
       "subtitle": "Reusable panels that can be added to multiple dashboards",

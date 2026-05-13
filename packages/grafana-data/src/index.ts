@@ -571,7 +571,12 @@ export {
   toLiveChannelId,
 } from './types/live';
 export type { SliderMarks } from './types/slider';
-export type { FeatureToggles } from './types/featureToggles.gen';
+export {
+  type FeatureToggles,
+  type FeatureToggleRegistryEntry,
+  type FeatureToggleStage,
+  FEATURE_TOGGLE_REGISTRY,
+} from './types/featureToggles.gen';
 export {
   PluginExtensionTypes,
   PluginExtensionPoints,

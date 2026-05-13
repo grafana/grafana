@@ -62,6 +62,15 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 			Url:      s.cfg.AppSubURL + "/admin/provisioning",
 		})
 	}
+	if c.SignedInUser != nil && c.SignedInUser.GetIsGrafanaAdmin() {
+		generalNodeLinks = append(generalNodeLinks, &navtree.NavLink{
+			Text:     "Labs",
+			Id:       "cfg/labs",
+			SubTitle: "Try out experimental features in your browser only",
+			Icon:     "flask",
+			Url:      s.cfg.AppSubURL + "/admin/labs",
+		})
+	}
 
 	generalNode := &navtree.NavLink{
 		Text:     "General",
