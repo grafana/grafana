@@ -10972,6 +10972,16 @@
   },
   "home": {
     "home-page": {
+      "edition": {
+        "cloud": "",
+        "enterprise": "",
+        "open-source": ""
+      },
+      "greeting": {
+        "afternoon": "",
+        "evening": "",
+        "morning": ""
+      },
       "placeholder": ""
     }
   },
@@ -15021,9 +15031,6 @@
       "home-dashboard-placeholder": "Výchozí nástěnka",
       "language-preference-label": "Jazyk",
       "language-preference-placeholder": "Vyberte jazyk",
-      "locale-preference-description": "Pro zobrazení odpovídajícího formátu data, času a čísla vyberte svou oblast",
-      "locale-preference-label": "Formát oblasti",
-      "locale-preference-placeholder": "Vyberte region",
       "theme-description": "Baví vás experimentální motivy? Řekněte nám, co byste <2>tady uvítali.</2>",
       "theme-label": "Motiv rozhraní",
       "week-start-label": "Začátek týdne"

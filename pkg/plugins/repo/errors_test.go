@@ -37,11 +37,17 @@ func TestErrorTemplates(t *testing.T) {
 	require.Equal(t, "plugin.unsupportedVersion", base.Public().MessageID)
 	require.Equal(t, "grafana-test-app v1.0.0 is not supported on your system darwin-amd64", base.Public().Message)
 
-	err = ErrVersionNotFound("grafana-test-app", "1.0.0", "darwin-amd64")
+	err = ErrVersionNotFound("grafana-test-app", "1.0.0")
 	require.True(t, errors.As(err, base))
 	require.Equal(t, http.StatusNotFound, base.Public().StatusCode)
 	require.Equal(t, "plugin.versionNotFound", base.Public().MessageID)
-	require.Equal(t, "grafana-test-app v1.0.0 either does not exist or is not supported on your system darwin-amd64", base.Public().Message)
+	require.Equal(t, "grafana-test-app v1.0.0 was not returned by the Grafana.com catalog. The version may not exist, or the configured Grafana.com proxy token ([grafana_com].proxy_token or GF_GRAFANA_COM_PROXY_TOKEN) may lack the required scopes.", base.Public().Message)
+
+	err = ErrVersionNotCompatible("grafana-test-app", "1.0.0", "10.0.0")
+	require.True(t, errors.As(err, base))
+	require.Equal(t, http.StatusNotFound, base.Public().StatusCode)
+	require.Equal(t, "plugin.versionNotCompatible", base.Public().MessageID)
+	require.Equal(t, "grafana-test-app v1.0.0 is not compatible with your Grafana version: 10.0.0", base.Public().Message)
 
 	err = ErrArcNotFound("grafana-test-app", "darwin-amd64")
 	require.True(t, errors.As(err, base))

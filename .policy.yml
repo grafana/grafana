@@ -37,6 +37,7 @@ policy:
             - Workflow .github/workflows/pr-mt-service-compatibility.yml succeeded or skipped
             - Workflow .github/workflows/pr-patch-check-event.yml succeeded or skipped
             - Workflow .github/workflows/pr-test-docker.yml succeeded or skipped
+            - Workflow .github/workflows/pr-test-integration-pgvector.yml succeeded or skipped
             - Workflow .github/workflows/pr-test-integration.yml succeeded or skipped
             - Workflow .github/workflows/reject-gh-secrets.yml succeeded or skipped
             - Workflow .github/workflows/run-schema-v2-e2e.yml succeeded or skipped
@@ -579,6 +580,32 @@ approval_rules:
             - success
           workflows:
             - .github/workflows/pr-test-docker.yml
+  - name: Workflow .github/workflows/pr-test-integration-pgvector.yml succeeded or skipped
+    if:
+      changed_files:
+        paths:
+          - ^Makefile$
+          - ^(?:(?:[^/]*(?:/|$))*)go\.mod$
+          - ^(?:(?:[^/]*(?:/|$))*)go\.sum$
+          - ^(?:(?:[^/]*(?:/|$))*)go\.work$
+          - ^(?:(?:[^/]*(?:/|$))*)go\.work\.sum$
+          - ^pkg\/storage\/unified\/search\/vector\/(?:(?:[^/]*(?:/|$))*)$
+          - ^pkg\/storage\/unified\/search\/embed\/(?:(?:[^/]*(?:/|$))*)$
+          - ^devenv\/docker\/blocks\/pgvector\/(?:(?:[^/]*(?:/|$))*)$
+          - ^devenv\/\.env$
+          - ^\.github\/actions\/setup-go\/(?:(?:[^/]*(?:/|$))*)$
+          - ^\.github\/workflows\/pr-test-integration-pgvector\.yml$
+      file_not_deleted:
+        paths:
+          - ^\.github\/workflows\/pr-test-integration-pgvector\.yml$
+    requires:
+      conditions:
+        has_workflow_result:
+          conclusions:
+            - skipped
+            - success
+          workflows:
+            - .github/workflows/pr-test-integration-pgvector.yml
   - name: Workflow .github/workflows/pr-test-integration.yml succeeded or skipped
     if:
       changed_files:

@@ -656,7 +656,7 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 		var uat userAuthToken
 		err = uat.fromUserToken(&ut)
 		require.Nil(t, err)
-		uatBytes, err := json.Marshal(uat)
+		uatBytes, err := json.Marshal(uat) // #nosec G117 -- test fixture marshaling internal struct
 		require.Nil(t, err)
 		uatJSON, err := simplejson.NewJson(uatBytes)
 		require.Nil(t, err)
@@ -681,7 +681,7 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 			UnhashedToken:     "e",
 			ExternalSessionId: 7,
 		}
-		uatBytes, err := json.Marshal(uat)
+		uatBytes, err := json.Marshal(uat) // #nosec G117 -- test fixture marshaling internal struct
 		require.Nil(t, err)
 		uatJSON, err := simplejson.NewJson(uatBytes)
 		require.Nil(t, err)

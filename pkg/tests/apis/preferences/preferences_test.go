@@ -36,7 +36,6 @@ func TestIntegrationPreferences(t *testing.T) {
 	})
 
 	t.Run("legacy preferences api", func(t *testing.T) {
-		t.Skip("TODO: skipping these for now; see #123657")
 		ctx := context.Background()
 		clientAdmin := helper.GetResourceClient(apis.ResourceClientArgs{
 			User: helper.Org1.Admin,
@@ -139,9 +138,9 @@ func TestIntegrationPreferences(t *testing.T) {
 			names = append(names, item.GetName())
 		}
 		require.Equal(t, []string{
-			"namespace",
-			fmt.Sprintf("team-%s", helper.Org1.Staff.UID),
 			userName,
+			fmt.Sprintf("team-%s", helper.Org1.Staff.UID),
+			"namespace",
 		}, names)
 
 		obj, err := clientAdmin.Resource.Get(ctx, userName, metav1.GetOptions{})

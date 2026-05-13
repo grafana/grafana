@@ -10972,6 +10972,16 @@
   },
   "home": {
     "home-page": {
+      "edition": {
+        "cloud": "",
+        "enterprise": "",
+        "open-source": ""
+      },
+      "greeting": {
+        "afternoon": "",
+        "evening": "",
+        "morning": ""
+      },
       "placeholder": ""
     }
   },
@@ -15021,9 +15031,6 @@
       "home-dashboard-placeholder": "Domyślny pulpit",
       "language-preference-label": "Język",
       "language-preference-placeholder": "Wybierz język",
-      "locale-preference-description": "Wybierz swój region, aby zobaczyć odpowiedni format daty, godziny i liczb",
-      "locale-preference-label": "Format regionu",
-      "locale-preference-placeholder": "Wybierz region",
       "theme-description": "Podobają Ci się motywy eksperymentalne? Powiedz nam, co chcesz <2>tutaj</2> zobaczyć.",
       "theme-label": "Motyw interfejsu",
       "week-start-label": "Początek tygodnia"

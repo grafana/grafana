@@ -845,7 +845,7 @@ func TestIntegrationExtraConfigsConflicts(t *testing.T) {
 
 	ctx := context.Background()
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles: []string{"alertingImportAlertmanagerAPI"},
+		EnableFeatureToggles: []string{"alertingMultiplePolicies", "alertingImportAlertmanagerAPI"},
 	})
 
 	cliCfg := helper.Org1.Admin.NewRestConfig()

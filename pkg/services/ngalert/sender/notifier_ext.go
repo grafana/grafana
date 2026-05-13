@@ -350,6 +350,13 @@ func (n *Manager) sendOne(ctx context.Context, c *http.Client, url string, b []b
 
 	// Any HTTP status 2xx is OK.
 	if resp.StatusCode/100 != 2 {
+		// Extension: include the response body for 400 Bad Request to aid debugging invalid payloads.
+		if resp.StatusCode == http.StatusBadRequest {
+			body, readErr := io.ReadAll(io.LimitReader(resp.Body, 1024))
+			if readErr == nil {
+				return fmt.Errorf("bad response status %s: %s", resp.Status, body)
+			}
+		}
 		return fmt.Errorf("bad response status %s", resp.Status)
 	}
 
