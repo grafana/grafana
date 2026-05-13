@@ -59,7 +59,7 @@ jobs:
           permissions: "{\"actions\": \"write\", \"workflows\": \"write\"}"
           repositories: "[\"security-patch-actions\"]"
       - name: "Dispatch job"
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           github-token: ${{ steps.generate_token.outputs.token }}
           script: |
@@ -83,7 +83,7 @@ jobs:
       - name: "Wait for success"
         # Only run metadata reads (status/conclusion) — never fetch logs or artifacts,
         # since the security-patch-actions workflow output must not be exposed.
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           github-token: ${{ steps.generate_token.outputs.token }}
           script: |
