@@ -1,32 +1,20 @@
 import { css } from '@emotion/css';
-import { useAsyncRetry } from 'react-use';
 
 import { t, Trans } from '@grafana/i18n';
 import { Alert, EmptyState, Spinner, TextLink, useStyles2 } from '@grafana/ui';
 import { useDashboardLocationInfo } from 'app/features/search/hooks/useDashboardLocationInfo';
+import { type DashboardQueryResult } from 'app/features/search/service/types';
 import { DashListItem } from 'app/plugins/panel/dashlist/DashListItem';
 
-import { getRecentlyViewedDashboards } from '../../browse-dashboards/api/recentlyViewed';
-
-const MAX_RECENT = 20;
-
-interface RecentDashboardsTabProps {
-  onCountChange: (count: number) => void;
+interface Props {
+  dashboards: DashboardQueryResult[];
+  loading: boolean;
+  error: Error | undefined;
+  retry: () => void;
 }
 
-export function RecentDashboardsTab({ onCountChange }: RecentDashboardsTabProps) {
+export function RecentDashboardsTab({ dashboards, loading, error, retry }: Props) {
   const styles = useStyles2(getStyles);
-  const {
-    value: dashboards = [],
-    loading,
-    error,
-    retry,
-  } = useAsyncRetry(async () => {
-    const results = await getRecentlyViewedDashboards(MAX_RECENT);
-    onCountChange(results.length);
-    return results;
-  }, []);
-
   const { foldersByUid } = useDashboardLocationInfo(dashboards.length > 0);
 
   if (loading) {

@@ -1,10 +1,13 @@
 import { css } from '@emotion/css';
 import { useCallback, useState } from 'react';
+import { useAsyncRetry } from 'react-use';
 
 import { type GrafanaTheme2, PluginExtensionPoints } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { usePluginComponents } from '@grafana/runtime';
 import { Box, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
+import { getRecentlyViewedDashboards } from 'app/features/browse-dashboards/api/recentlyViewed';
+import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 
 import { RecentDashboardsTab } from './RecentDashboardsTab';
 import { StarredDashboardsTab } from './StarredDashboardsTab';
@@ -12,6 +15,8 @@ import { type HomepageTab } from './types';
 
 const RECENT_TAB_ID = 'recent';
 const STARRED_TAB_ID = 'starred';
+const MAX_RECENT = 20;
+const MAX_STARRED = 30;
 
 interface HomepageTabExtensionProps {
   registerTab: (tab: HomepageTab) => void;
@@ -20,9 +25,24 @@ interface HomepageTabExtensionProps {
 export function DashboardTabs() {
   const styles = useStyles2(getStyles);
   const [activeTab, setActiveTab] = useState(RECENT_TAB_ID);
-  const [recentCount, setRecentCount] = useState<number | undefined>(undefined);
-  const [starredCount, setStarredCount] = useState<number | undefined>(undefined);
   const [extensionTabs, setExtensionTabs] = useState<HomepageTab[]>([]);
+
+  const {
+    value: recentDashboards,
+    loading: recentLoading,
+    error: recentError,
+    retry: recentRetry,
+  } = useAsyncRetry(() => getRecentlyViewedDashboards(MAX_RECENT), []);
+
+  const {
+    value: starredDashboards,
+    loading: starredLoading,
+    error: starredError,
+    retry: starredRetry,
+  } = useAsyncRetry(async () => {
+    const response = await getGrafanaSearcher().starred({ limit: MAX_STARRED });
+    return response.view.toArray();
+  }, []);
 
   const { components: extensionComponents } = usePluginComponents<HomepageTabExtensionProps>({
     extensionPointId: PluginExtensionPoints.HomepageTabs,
@@ -41,13 +61,13 @@ export function DashboardTabs() {
     {
       id: RECENT_TAB_ID,
       label: t('home.dashboard-tabs.recent', 'Recent'),
-      counter: recentCount,
+      counter: recentDashboards?.length,
     },
     {
       id: STARRED_TAB_ID,
       label: t('home.dashboard-tabs.starred', 'Starred'),
       icon: 'star',
-      counter: starredCount,
+      counter: starredDashboards?.length,
     },
   ];
 
@@ -73,8 +93,22 @@ export function DashboardTabs() {
         ))}
       </TabsBar>
       <TabContent className={styles.tabContent}>
-        {activeTab === RECENT_TAB_ID && <RecentDashboardsTab onCountChange={setRecentCount} />}
-        {activeTab === STARRED_TAB_ID && <StarredDashboardsTab onCountChange={setStarredCount} />}
+        {activeTab === RECENT_TAB_ID && (
+          <RecentDashboardsTab
+            dashboards={recentDashboards ?? []}
+            loading={recentLoading}
+            error={recentError}
+            retry={recentRetry}
+          />
+        )}
+        {activeTab === STARRED_TAB_ID && (
+          <StarredDashboardsTab
+            dashboards={starredDashboards ?? []}
+            loading={starredLoading}
+            error={starredError}
+            retry={starredRetry}
+          />
+        )}
         {extensionTabs
           .filter((tab) => tab.content && activeTab === tab.id)
           .map((tab) => (

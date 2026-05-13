@@ -45,6 +45,7 @@ function seedStars(uids: string[]) {
 beforeEach(() => {
   setPluginComponentsHook(() => ({ components: [], isLoading: false }));
   window.localStorage.removeItem(impressionKey);
+  seedStars([]);
 });
 
 describe('DashboardTabs', () => {
@@ -100,13 +101,19 @@ describe('DashboardTabs', () => {
 
   it('shows counter badges with correct counts', async () => {
     seedRecent(['recent-1', 'recent-2']);
-    server.use(getCustomSearchHandler(recentHits));
+    seedStars(['starred-1', 'starred-2', 'starred-3']);
+    server.use(getCustomSearchHandler([...recentHits, ...starredHits]));
 
     render(<DashboardTabs />);
 
     await waitFor(() => {
       const recentTab = screen.getByRole('tab', { name: /recent/i });
       expect(recentTab).toHaveTextContent('2');
+    });
+
+    await waitFor(() => {
+      const starredTab = screen.getByRole('tab', { name: /starred/i });
+      expect(starredTab).toHaveTextContent('3');
     });
   });
 

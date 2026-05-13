@@ -1,32 +1,20 @@
 import { css } from '@emotion/css';
-import { useAsyncRetry } from 'react-use';
 
 import { t, Trans } from '@grafana/i18n';
 import { Alert, EmptyState, Spinner, TextLink, useStyles2 } from '@grafana/ui';
 import { useDashboardLocationInfo } from 'app/features/search/hooks/useDashboardLocationInfo';
-import { getGrafanaSearcher } from 'app/features/search/service/searcher';
+import { type DashboardQueryResult } from 'app/features/search/service/types';
 import { DashListItem } from 'app/plugins/panel/dashlist/DashListItem';
 
-const MAX_STARRED = 30;
-
-interface StarredDashboardsTabProps {
-  onCountChange: (count: number) => void;
+interface Props {
+  dashboards: DashboardQueryResult[];
+  loading: boolean;
+  error: Error | undefined;
+  retry: () => void;
 }
 
-export function StarredDashboardsTab({ onCountChange }: StarredDashboardsTabProps) {
+export function StarredDashboardsTab({ dashboards, loading, error, retry }: Props) {
   const styles = useStyles2(getStyles);
-  const {
-    value: dashboards = [],
-    loading,
-    error,
-    retry,
-  } = useAsyncRetry(async () => {
-    const response = await getGrafanaSearcher().starred({ limit: MAX_STARRED });
-    const results = response.view.toArray();
-    onCountChange(results.length);
-    return results;
-  }, []);
-
   const { foldersByUid } = useDashboardLocationInfo(dashboards.length > 0);
 
   if (loading) {
