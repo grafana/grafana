@@ -60,8 +60,8 @@ func (r *subAccessREST) Connect(ctx context.Context, name string, opts runtime.O
 // folderAccessAction is one row in the access check matrix: the legacy
 // action string the frontend keys off, and the (verb) that maps to it on
 // the folder.grafana.app/folders resource. The authz system walks the
-// parent chain via Zanzana when answering, so a single BatchCheck per
-// folder is enough to capture inherited permissions.
+// parent chain via Zanzana when answering, so a single Check per action
+// is enough to capture inherited permissions.
 type folderAccessAction struct {
 	Action string // legacy key, e.g. "folders:write"
 	Verb   string // authlib verb on folder.grafana.app/folders
@@ -102,47 +102,41 @@ func (r *subAccessREST) getAccessInfo(ctx context.Context, name string) (*folder
 	}
 	parent := obj.GetFolder()
 
-	// One BatchCheck per folder captures every action in folderAccessActions.
+	// Issue one Check per action. We deliberately use Check (not BatchCheck)
+	// because Zanzana's BatchCheck is still being completed for some resource
+	// types — see the SA1019 nolints across pkg/storage/unified/resource/ and
+	// pkg/registry/apis/iam/ that note "BatchCheck is not yet fully implemented".
 	// authlib + Zanzana walk the parent chain internally given the immediate
 	// parent UID, so we don't need to enumerate ancestors ourselves.
-	checks := make([]authlib.BatchCheckItem, 0, len(folderAccessActions))
+	allowed := make(map[string]bool, len(folderAccessActions))
 	for _, a := range folderAccessActions {
-		checks = append(checks, authlib.BatchCheckItem{
-			CorrelationID: a.Action,
-			Verb:          a.Verb,
-			Group:         foldersV1.GROUP,
-			Resource:      foldersV1.RESOURCE,
-			Name:          name,
-			Folder:        parent,
-		})
-	}
-	batchResp, err := r.accessClient.BatchCheck(ctx, user, authlib.BatchCheckRequest{
-		Namespace: ns.Value,
-		Checks:    checks,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	allowed := func(action string) bool {
-		res, ok := batchResp.Results[action]
-		return ok && res.Allowed
+		resp, err := r.accessClient.Check(ctx, user, authlib.CheckRequest{
+			Verb:      a.Verb,
+			Group:     foldersV1.GROUP,
+			Resource:  foldersV1.RESOURCE,
+			Namespace: ns.Value,
+			Name:      name,
+		}, parent)
+		if err != nil {
+			return nil, err
+		}
+		allowed[a.Action] = resp.Allowed
 	}
 
 	rsp := &foldersV1.FolderAccessInfo{}
 
 	// Preserve the legacy 4-bool surface. CanAdmin implies the other three
 	// (parity with the previous implementation).
-	rsp.CanAdmin = allowed("folders.permissions:write")
-	rsp.CanDelete = rsp.CanAdmin || allowed("folders:delete")
-	rsp.CanEdit = rsp.CanAdmin || allowed("folders:write")
-	rsp.CanSave = rsp.CanAdmin || allowed("folders:create")
+	rsp.CanAdmin = allowed["folders.permissions:write"]
+	rsp.CanDelete = rsp.CanAdmin || allowed["folders:delete"]
+	rsp.CanEdit = rsp.CanAdmin || allowed["folders:write"]
+	rsp.CanSave = rsp.CanAdmin || allowed["folders:create"]
 
 	// Build the AccessControl map: only keys for actions the user has are
 	// included, matching the legacy dtos.Folder.AccessControl shape.
 	ac := make(map[string]bool, len(folderAccessActions))
 	for _, a := range folderAccessActions {
-		if allowed(a.Action) {
+		if allowed[a.Action] {
 			ac[a.Action] = true
 		}
 	}

@@ -21,24 +21,24 @@ import (
 func TestSubAccessREST_getAccessInfo(t *testing.T) {
 	type testCase struct {
 		name              string
-		allowed           map[string]bool // action -> allowed
-		batchCheckErr     error
+		allowed           map[string]bool // verb -> allowed
+		checkErr          error
 		parentFolder      string
 		expect            folders.FolderAccessInfo
 		expectErr         bool
-		expectFolderInReq string // verify Folder is propagated to BatchCheck items
+		expectFolderInReq string // verify parent folder is passed to Check
 	}
 
 	tcs := []testCase{
 		{
-			name: "admin: every action allowed → all bools true and map fully populated",
+			name: "admin: every verb allowed → all bools true and map fully populated",
 			allowed: map[string]bool{
-				"folders:read":              true,
-				"folders:write":             true,
-				"folders:delete":            true,
-				"folders:create":            true,
-				"folders.permissions:read":  true,
-				"folders.permissions:write": true,
+				utils.VerbGet:              true,
+				utils.VerbUpdate:           true,
+				utils.VerbDelete:           true,
+				utils.VerbCreate:           true,
+				utils.VerbGetPermissions:   true,
+				utils.VerbSetPermissions:   true,
 			},
 			expect: folders.FolderAccessInfo{
 				CanSave: true, CanEdit: true, CanAdmin: true, CanDelete: true,
@@ -55,8 +55,8 @@ func TestSubAccessREST_getAccessInfo(t *testing.T) {
 		{
 			name: "editor: write+read but no permissions/delete/create",
 			allowed: map[string]bool{
-				"folders:read":  true,
-				"folders:write": true,
+				utils.VerbGet:    true,
+				utils.VerbUpdate: true,
 			},
 			expect: folders.FolderAccessInfo{
 				CanSave: false, CanEdit: true, CanAdmin: false, CanDelete: false,
@@ -69,7 +69,7 @@ func TestSubAccessREST_getAccessInfo(t *testing.T) {
 		{
 			name: "viewer: only read",
 			allowed: map[string]bool{
-				"folders:read": true,
+				utils.VerbGet: true,
 			},
 			expect: folders.FolderAccessInfo{
 				CanSave: false, CanEdit: false, CanAdmin: false, CanDelete: false,
@@ -89,11 +89,11 @@ func TestSubAccessREST_getAccessInfo(t *testing.T) {
 		{
 			name: "permissions-write implies all other bools",
 			allowed: map[string]bool{
-				"folders.permissions:write": true,
+				utils.VerbSetPermissions: true,
 			},
 			expect: folders.FolderAccessInfo{
 				// CanAdmin=true forces CanDelete/CanEdit/CanSave true even though
-				// the underlying folders:delete/write/create are not granted.
+				// the underlying delete/update/create verbs are not granted.
 				CanSave: true, CanEdit: true, CanAdmin: true, CanDelete: true,
 				AccessControl: map[string]bool{
 					"folders.permissions:write": true,
@@ -101,9 +101,9 @@ func TestSubAccessREST_getAccessInfo(t *testing.T) {
 			},
 		},
 		{
-			name:              "parent folder is propagated to BatchCheck items for inheritance",
+			name:              "parent folder is propagated to Check for inheritance",
 			parentFolder:      "parent-uid",
-			allowed:           map[string]bool{"folders:read": true},
+			allowed:           map[string]bool{utils.VerbGet: true},
 			expectFolderInReq: "parent-uid",
 			expect: folders.FolderAccessInfo{
 				CanSave: false, CanEdit: false, CanAdmin: false, CanDelete: false,
@@ -111,9 +111,9 @@ func TestSubAccessREST_getAccessInfo(t *testing.T) {
 			},
 		},
 		{
-			name:          "BatchCheck error is propagated",
-			batchCheckErr: fmt.Errorf("authz unavailable"),
-			expectErr:     true,
+			name:      "Check error is propagated",
+			checkErr:  fmt.Errorf("authz unavailable"),
+			expectErr: true,
 		},
 	}
 
@@ -131,21 +131,15 @@ func TestSubAccessREST_getAccessInfo(t *testing.T) {
 			store.On("Get", mock.Anything, "this-folder", &metav1.GetOptions{}).Return(f, nil)
 
 			ac := &mockAccessClient{
-				batchCheckFunc: func(_ context.Context, _ authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
-					if tc.batchCheckErr != nil {
-						return authlib.BatchCheckResponse{}, tc.batchCheckErr
+				checkFunc: func(_ context.Context, _ authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+					if tc.checkErr != nil {
+						return authlib.CheckResponse{}, tc.checkErr
 					}
 					if tc.expectFolderInReq != "" {
-						for _, c := range req.Checks {
-							require.Equal(t, tc.expectFolderInReq, c.Folder,
-								"expected Folder=%q on BatchCheck item %q", tc.expectFolderInReq, c.CorrelationID)
-						}
+						require.Equal(t, tc.expectFolderInReq, folder,
+							"expected folder=%q on Check for verb %q", tc.expectFolderInReq, req.Verb)
 					}
-					results := make(map[string]authlib.BatchCheckResult, len(req.Checks))
-					for _, c := range req.Checks {
-						results[c.CorrelationID] = authlib.BatchCheckResult{Allowed: tc.allowed[c.CorrelationID]}
-					}
-					return authlib.BatchCheckResponse{Results: results}, nil
+					return authlib.CheckResponse{Allowed: tc.allowed[req.Verb]}, nil
 				},
 			}
 
@@ -170,13 +164,15 @@ func TestSubAccessREST_getAccessInfo(t *testing.T) {
 	}
 }
 
-// mockAccessClient is a minimal authlib.AccessClient that only implements
-// BatchCheck; Check and Compile are unused by subAccessREST.
+// mockAccessClient is a minimal authlib.AccessClient used by subAccessREST tests.
 type mockAccessClient struct {
-	batchCheckFunc func(ctx context.Context, info authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error)
+	checkFunc func(ctx context.Context, info authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error)
 }
 
-func (m *mockAccessClient) Check(_ context.Context, _ authlib.AuthInfo, _ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) {
+func (m *mockAccessClient) Check(ctx context.Context, info authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+	if m.checkFunc != nil {
+		return m.checkFunc(ctx, info, req, folder)
+	}
 	return authlib.CheckResponse{}, nil
 }
 
@@ -184,9 +180,6 @@ func (m *mockAccessClient) Compile(_ context.Context, _ authlib.AuthInfo, _ auth
 	return nil, nil, nil
 }
 
-func (m *mockAccessClient) BatchCheck(ctx context.Context, info authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
-	if m.batchCheckFunc != nil {
-		return m.batchCheckFunc(ctx, info, req)
-	}
+func (m *mockAccessClient) BatchCheck(_ context.Context, _ authlib.AuthInfo, _ authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
 	return authlib.BatchCheckResponse{}, nil
 }
