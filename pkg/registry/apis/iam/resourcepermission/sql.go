@@ -24,10 +24,9 @@ import (
 // For id-scoped resources (teams, users, service accounts), translates uid→id via the identity store.
 func resolveScope(ctx context.Context, ns types.NamespaceInfo, store IdentityStore, mapper Mapper, name string) (string, error) {
 	if isIDScoped(mapper) && store != nil {
-		// The resource name (grn.Name) is always a UID. Build a uid-scoped string so
-		// ResolveUIDScopeForWrite can look it up and return the id-based equivalent.
-		resource := strings.TrimSuffix(mapper.ScopePattern(), ":id:%")
-		return legacy.ResolveUIDScopeForWrite(ctx, store, ns, resource+":uid:"+name)
+		// The resource name (grn.Name) is always a UID. UIDScope returns the uid-form
+		// scope so ResolveUIDScopeForWrite can translate it to the id-based equivalent.
+		return legacy.ResolveUIDScopeForWrite(ctx, store, ns, mapper.UIDScope(name))
 	}
 	return mapper.Scope(name), nil
 }

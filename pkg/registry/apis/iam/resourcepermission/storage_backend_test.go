@@ -266,6 +266,9 @@ func TestWriteEvent_Add(t *testing.T) {
 	})
 }
 
+// saMapper builds a registry with the default folders/dashboards mappers (from NewMappersRegistry)
+// plus serviceaccounts. The folders/dashboards entries are load-bearing for the useSAMapper case
+// in sql_test.go — do not replace NewMappersRegistry() with a bare registry.
 func saMapper() *MappersRegistry {
 	m := NewMappersRegistry()
 	m.RegisterMapper(
