@@ -305,14 +305,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "reportingCsvEncodingOptions",
-			Description: "Enables CSV encoding options in the reporting feature",
-			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-			Owner:       grafanaOperatorExperienceSquad,
-			Expression:  "false",
-		},
-		{
 			Name:        "reportingHeaderSettings",
 			Description: "Enables configuration of PDF report settings",
 			Stage:       FeatureStageExperimental,
@@ -2267,14 +2259,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "externalVizSuggestions",
-			Description: "Enable all plugins to supply visualization suggestions (including 3rd party plugins)",
-			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaDatavizSquad,
-			Expression:  "true",
-		},
-		{
 			Name:        "nestedFramesFieldOverrides",
 			Description: "Enable field overrides for FieldType.nestedFrames fields (like in nested tables)",
 			Stage:       FeatureStagePublicPreview,
@@ -2894,7 +2878,7 @@ var (
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaFrontendPlatformSquad,
 			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
-			Expression:  "true",
+			Expression:  "false",
 		},
 		{
 			Name:         "streamingForwardTeamHeadersTempo",
@@ -3064,6 +3048,14 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:        "alerting.notificationsAPIV1Beta1",
+			Description: "Switch the Grafana Alerting UI from notifications.alerting.grafana.app/v0alpha1 to v1beta1",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAlertingSquad,
+			Expression:  "false",
+			Generate:    Generate{LegacyFrontend: true},
+		},
+		{
 			Name:        "assistant.frontend.tools.dashboardTemplates",
 			Description: "Enables the template dashboard assistant",
 			Stage:       FeatureStageExperimental,
@@ -3138,6 +3130,15 @@ var (
 			HideFromDocs:    true,
 			RequiresRestart: true,
 			Expression:      "false",
+		},
+		{
+			Name:         "grafana.enableScopesFirstMode",
+			Description:  "Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button)",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaOperatorExperienceSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//

@@ -36,6 +36,10 @@ var (
 	errPluginProxyRouteAccessDenied = errors.New("plugin proxy route access denied")
 )
 
+// maxForwardedUserAgentLen is the maximum byte length of the client User-Agent
+// appended to the data proxy User-Agent when forward_user_agent is enabled.
+const maxForwardedUserAgentLen = 255
+
 type DataSourceProxy struct {
 	ds                 *datasources.DataSource
 	ctx                *contextmodel.ReqContext
@@ -239,6 +243,9 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 	ua := proxy.cfg.DataProxyUserAgent
 	if proxy.cfg.DataProxyForwardUserAgent {
 		if originalUA := req.Header.Get("User-Agent"); originalUA != "" {
+			if len(originalUA) > maxForwardedUserAgentLen {
+				originalUA = originalUA[:maxForwardedUserAgentLen]
+			}
 			if ua != "" {
 				ua = ua + " " + originalUA
 			} else {
