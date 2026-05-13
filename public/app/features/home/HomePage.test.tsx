@@ -16,7 +16,7 @@ beforeEach(() => {
 describe('HomePage', () => {
   it('renders the page title and dashboard tabs', async () => {
     render(<HomePage />);
-    expect(screen.getByText('Welcome to Grafana')).toBeInTheDocument();
+    expect(screen.getByText('Welcome to Grafana.')).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /recent/i })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /starred/i })).toBeInTheDocument();
 
