@@ -19,7 +19,18 @@ interface Props {
   pending?: boolean;
   /** Drop this user id from the @-mention suggestions (the current user). */
   currentUserId?: number;
-  onSubmit: (body: PulseBody) => void | Promise<void>;
+  /** When true, render a required Title input above the textarea. Used
+   *  for the parent pulse in a new thread so the thread row has a real
+   *  summary instead of an auto-derived "first 80 chars of the body". */
+  showTitle?: boolean;
+  /** Seed the title input. Only meaningful when `showTitle` is true. */
+  initialTitle?: string;
+  /** Placeholder for the optional title input. */
+  titlePlaceholder?: string;
+  /** Submit accepts a body and (when `showTitle` is true) a non-empty
+   *  title. Call sites that don't enable showTitle can ignore the second
+   *  arg — TypeScript permits the narrower signature. */
+  onSubmit: (body: PulseBody, title?: string) => void | Promise<void>;
   onCancel?: () => void;
   autoFocus?: boolean;
 }
@@ -53,13 +64,18 @@ export function PulseComposer({
   initialMentions,
   pending,
   currentUserId,
+  showTitle = false,
+  initialTitle,
+  titlePlaceholder,
   onSubmit,
   onCancel,
   autoFocus,
 }: Props): ReactNode {
   const styles = useStyles2(getStyles);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const titleInputRef = useRef<HTMLInputElement>(null);
   const [tab, setTab] = useState<ActiveTab>('write');
+  const [title, setTitle] = useState(initialTitle ?? '');
   const [text, setText] = useState(initialMarkdown ?? '');
   const [mentions, setMentions] = useState<PulseMention[]>(initialMentions ?? []);
   const [picker, setPicker] = useState<ActivePicker | null>(null);
@@ -68,9 +84,16 @@ export function PulseComposer({
 
   useEffect(() => {
     if (autoFocus && tab === 'write') {
-      textareaRef.current?.focus();
+      // When the title field is visible focus that first so the caller
+      // lands on the highest-level summary; otherwise jump straight to
+      // the body textarea like a reply does.
+      if (showTitle && titleInputRef.current) {
+        titleInputRef.current.focus();
+      } else {
+        textareaRef.current?.focus();
+      }
     }
-  }, [autoFocus, tab]);
+  }, [autoFocus, tab, showTitle]);
 
   // User suggestions are fetched on debounce. AbortController cancels
   // an in-flight request when the query changes so the dropdown never
@@ -291,8 +314,17 @@ export function PulseComposer({
     }
   }
 
+  const trimmedTitle = title.trim();
+  const submitDisabled = pending || text.trim().length === 0 || (showTitle && trimmedTitle.length === 0);
+
   async function submit() {
     if (text.trim().length === 0) {
+      return;
+    }
+    if (showTitle && trimmedTitle.length === 0) {
+      // The submit button is already disabled in this state; this guard
+      // catches the keyboard shortcut path (Cmd/Ctrl+Enter) so a thread
+      // is never created with an empty user-supplied title.
       return;
     }
     // Garbage-collect mentions whose token is no longer in the source
@@ -301,8 +333,9 @@ export function PulseComposer({
     // here keeps notifications honest.
     const liveMentions = mentions.filter((m) => text.includes(mentionMarkdownToken(m)));
     try {
-      await onSubmit(bodyFromMarkdown(text, liveMentions));
+      await onSubmit(bodyFromMarkdown(text, liveMentions), showTitle ? trimmedTitle : undefined);
       setSubmitError(null);
+      setTitle('');
       setText('');
       setMentions([]);
       setPicker(null);
@@ -338,6 +371,21 @@ export function PulseComposer({
       <TabContent className={styles.tabContent}>
         {tab === 'write' ? (
           <div className={styles.editor}>
+            {showTitle && (
+              <input
+                ref={titleInputRef}
+                className={styles.title}
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder={
+                  titlePlaceholder ??
+                  t('pulse.composer.title-placeholder', 'Title — a short summary of this thread')
+                }
+                aria-label={t('pulse.composer.title-aria', 'Thread title')}
+                maxLength={160}
+              />
+            )}
             <textarea
               ref={textareaRef}
               className={styles.textarea}
@@ -406,7 +454,7 @@ export function PulseComposer({
               {t('pulse.composer.cancel', 'Cancel')}
             </Button>
           )}
-          <Button size="sm" onClick={submit} disabled={pending || text.trim().length === 0}>
+          <Button size="sm" onClick={submit} disabled={submitDisabled}>
             {t('pulse.composer.send', 'Submit')}
           </Button>
         </div>
@@ -428,6 +476,24 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   editor: css({
     position: 'relative',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(1),
+  }),
+  title: css({
+    width: '100%',
+    padding: theme.spacing(1),
+    background: theme.colors.background.primary,
+    border: `1px solid ${theme.colors.border.medium}`,
+    borderRadius: theme.shape.radius.default,
+    color: theme.colors.text.primary,
+    fontFamily: theme.typography.fontFamily,
+    fontSize: theme.typography.h5.fontSize,
+    fontWeight: theme.typography.fontWeightMedium,
+    '&:focus': {
+      outline: 'none',
+      borderColor: theme.colors.primary.border,
+    },
   }),
   textarea: css({
     width: '100%',

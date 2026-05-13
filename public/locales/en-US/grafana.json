@@ -14099,6 +14099,8 @@
       "submit-error": "Could not submit thread. Please check Pulse API and try again.",
       "tab-preview": "Preview",
       "tab-write": "Write",
+      "title-aria": "Thread title",
+      "title-placeholder": "Title — a short summary of this thread",
       "user-lookup-empty": "No matching users.",
       "user-lookup-error": "Could not load user suggestions.",
       "user-lookup-forbidden": "You do not have permission to look up users in this org (requires org.users:read).",
@@ -14136,6 +14138,7 @@
       "thread-meta_one": "{{count}} replies",
       "thread-meta_other": "{{count}} replies",
       "thread-missing": "Thread not found.",
+      "thread-title-placeholder": "Title — short summary of this thread (required)",
       "threads-on-dashboard": "Threads on this dashboard",
       "title": "Pulse"
     },
@@ -14144,10 +14147,11 @@
       "closed": "Closed",
       "column": {
         "author": "Author",
-        "dashboard": "Dashboard",
         "last-activity": "Last activity",
         "replies": "Replies",
-        "thread": "Thread"
+        "resource": "Resource",
+        "thread": "Thread",
+        "type": "Type"
       },
       "empty": {
         "all": "No threads yet",

@@ -31,7 +31,6 @@ import {
 } from '../api/pulseApi';
 import { useResourcePulseStream } from '../hooks/useResourcePulseStream';
 import { type PulseThread } from '../types';
-import { bodyToText } from '../utils/body';
 import { type PanelSuggestion } from '../utils/lookups';
 
 import { PulseComposer } from './PulseComposer';
@@ -349,8 +348,13 @@ export function PulseDrawerContent({
             autoFocus
             pending={createThreadState.isLoading}
             currentUserId={currentUserId}
+            showTitle
+            titlePlaceholder={t(
+              'pulse.drawer.thread-title-placeholder',
+              'Title — short summary of this thread (required)'
+            )}
             onCancel={() => setComposing(false)}
-            onSubmit={async (body) => {
+            onSubmit={async (body, title) => {
               const res = await createThread({
                 resourceKind: 'dashboard',
                 resourceUID,
@@ -359,7 +363,7 @@ export function PulseDrawerContent({
                 // user can mention `#panel:N` explicitly if they want
                 // to associate it. This keeps the affordance honest
                 // (filter ≠ scope) and avoids surprise anchoring.
-                title: buildThreadPreviewTitle(body.markdown ?? bodyToText(body)),
+                title,
                 body,
               }).unwrap();
               setComposing(false);
@@ -656,18 +660,3 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-function buildThreadPreviewTitle(text: string): string | undefined {
-  const normalized = text.replace(/\s+/g, ' ').trim();
-  if (!normalized) {
-    return undefined;
-  }
-
-  const sentenceMatch = normalized.match(/^(.+?[.!?])(?:\s|$)/);
-  const firstSentence = sentenceMatch ? sentenceMatch[1] : normalized;
-  const maxChars = 160;
-  if (firstSentence.length <= maxChars) {
-    return firstSentence;
-  }
-
-  return `${firstSentence.slice(0, maxChars - 1).trimEnd()}…`;
-}
