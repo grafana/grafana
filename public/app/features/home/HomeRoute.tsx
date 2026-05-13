@@ -15,7 +15,7 @@ const DashboardPageProxy = lazy(
 const HomePage = lazy(() => import(/* webpackChunkName: "HomePage" */ './HomePage'));
 
 function isBundledDefaultHome(dto: DashboardDTO): boolean {
-  return true; //dto.meta?.isDefaultHome === true;
+  return dto.meta?.isDefaultHome === true;
 }
 
 function HomeRouteInner(props: DashboardPageProxyProps) {
