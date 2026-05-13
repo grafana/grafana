@@ -371,8 +371,7 @@ func (s *legacySQLStore) CreateTeam(ctx context.Context, ns claims.NamespaceInfo
 		}
 
 		if cmd.ExternalGroupReconciler != nil {
-			desired := NormalizeExternalGroups(cmd.DesiredExternalGroups)
-			if err := cmd.ExternalGroupReconciler.Reconcile(ctx, st, ns.OrgID, teamID, desired); err != nil {
+			if err := cmd.ExternalGroupReconciler.Reconcile(ctx, st, ns.OrgID, teamID, cmd.DesiredExternalGroups); err != nil {
 				return fmt.Errorf("failed to reconcile team external groups: %w", err)
 			}
 		}
@@ -554,8 +553,7 @@ func (s *legacySQLStore) UpdateTeam(ctx context.Context, ns claims.NamespaceInfo
 		}
 
 		if cmd.ExternalGroupReconciler != nil {
-			desired := NormalizeExternalGroups(cmd.DesiredExternalGroups)
-			if err := cmd.ExternalGroupReconciler.Reconcile(ctx, st, ns.OrgID, teamID, desired); err != nil {
+			if err := cmd.ExternalGroupReconciler.Reconcile(ctx, st, ns.OrgID, teamID, cmd.DesiredExternalGroups); err != nil {
 				return fmt.Errorf("failed to reconcile team external groups: %w", err)
 			}
 		}
@@ -579,6 +577,9 @@ func (s *legacySQLStore) UpdateTeam(ctx context.Context, ns claims.NamespaceInfo
 
 type DeleteTeamCommand struct {
 	UID string
+
+	// Cleans up team_group rows in the same tx as the team row delete.
+	ExternalGroupReconciler ExternalGroupReconciler
 }
 
 var sqlDeleteTeamTemplate = mustTemplate("delete_team.sql")
@@ -613,12 +614,18 @@ func (s *legacySQLStore) DeleteTeam(ctx context.Context, ns claims.NamespaceInfo
 	}
 
 	return sql.DB.GetSqlxSession().WithTransaction(ctx, func(st *session.SessionTx) error {
-		_, err := s.GetTeamInternalID(ctx, ns, GetTeamInternalIDQuery{
+		existing, err := s.GetTeamInternalID(ctx, ns, GetTeamInternalIDQuery{
 			OrgID: ns.OrgID,
 			UID:   cmd.UID,
 		})
 		if err != nil {
 			return err
+		}
+
+		if cmd.ExternalGroupReconciler != nil {
+			if err := cmd.ExternalGroupReconciler.DeleteAll(ctx, st, ns.OrgID, existing.ID); err != nil {
+				return fmt.Errorf("failed to delete team external groups: %w", err)
+			}
 		}
 
 		teamDeleteReq := newDeleteTeam(sql, &cmd)

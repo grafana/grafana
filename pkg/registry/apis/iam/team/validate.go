@@ -80,9 +80,6 @@ func ValidateOnUpdate(ctx context.Context, obj, old *iamv0alpha1.Team, egr legac
 // validateExternalGroups rejects empty entries and dup-after-normalize without
 // mutating groups; impl-specific constraints (length, charset) live on egr.
 func validateExternalGroups(groups []string, egr legacy.ExternalGroupReconciler) error {
-	if len(groups) == 0 {
-		return egr.Validate(groups)
-	}
 	seen := make(map[string]struct{}, len(groups))
 	for _, g := range groups {
 		key := strings.ToLower(strings.TrimSpace(g))

@@ -3,36 +3,33 @@ package legacy
 import (
 	"context"
 	"errors"
-	"sort"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 )
 
-// ErrTeamGroupAlreadyAdded is returned on UNIQUE(org_id, team_id, group_id)
-// violations so the team store can map it to HTTP 409.
+// ErrTeamGroupAlreadyAdded maps unique-constraint violations to HTTP 409.
 var ErrTeamGroupAlreadyAdded = errors.New("group is already associated with this team")
 
-// ExternalGroupReconciler reconciles team_group rows during a team
-// Create/Update SQL transaction. Reconcile must run inside the caller's tx so
-// team_group writes commit or roll back with the team row.
+// ExternalGroupReconciler owns team_group writes done inside the team
+// Create/Update/Delete tx. All mutating methods must run on the caller's tx
+// and MUST NOT open their own.
 type ExternalGroupReconciler interface {
-	// Validate runs implementation-specific checks (e.g. enterprise enforces
-	// the team_group.group_id NVarchar(190) column width). Must return
-	// apimachinery errors so admission surfaces them as HTTP 400.
+	// Validate runs implementation-specific checks. Errors must use
+	// apimachinery so admission surfaces them as HTTP 400.
 	Validate(groups []string) error
 
-	// Reconcile diffs current rows against desired and applies bulk
-	// INSERT/DELETE through tx. MUST NOT open its own transaction.
+	// Reconcile diffs current rows against desired and bulk INSERTs/DELETEs.
 	Reconcile(ctx context.Context, tx *session.SessionTx, orgID, teamID int64, desired []string) error
 
-	// ListByTeams returns group IDs per team UID for hydrating
-	// Team.spec.externalGroups on Get/List.
+	// ListByTeams hydrates Team.spec.externalGroups on Get/List. Each team's
+	// slice must be in lexicographic order; the read path does not re-sort.
 	ListByTeams(ctx context.Context, orgID int64, teamUIDs []string) (map[string][]string, error)
+
+	// DeleteAll clears (orgID, teamID) so team_group cleanup commits with the team row delete.
+	DeleteAll(ctx context.Context, tx *session.SessionTx, orgID, teamID int64) error
 }
 
-// NoopExternalGroupReconciler is the OSS default: no validation, no write, no
-// hydration.
+// NoopExternalGroupReconciler is the default: every method is a no-op.
 type NoopExternalGroupReconciler struct{}
 
 func (NoopExternalGroupReconciler) Validate(_ []string) error {
@@ -47,27 +44,6 @@ func (NoopExternalGroupReconciler) ListByTeams(_ context.Context, _ int64, teamU
 	return make(map[string][]string, len(teamUIDs)), nil
 }
 
-// NormalizeExternalGroups is the canonical form for team_group.group_id:
-// lowercase, trimmed, no empties, deduped, alphabetically sorted. Applied by
-// the legacy team store before Reconcile; admission compares entries using
-// the same rule.
-func NormalizeExternalGroups(groups []string) []string {
-	if len(groups) == 0 {
-		return groups
-	}
-	seen := make(map[string]struct{}, len(groups))
-	out := make([]string, 0, len(groups))
-	for _, g := range groups {
-		g = strings.ToLower(strings.TrimSpace(g))
-		if g == "" {
-			continue
-		}
-		if _, dup := seen[g]; dup {
-			continue
-		}
-		seen[g] = struct{}{}
-		out = append(out, g)
-	}
-	sort.Strings(out)
-	return out
+func (NoopExternalGroupReconciler) DeleteAll(context.Context, *session.SessionTx, int64, int64) error {
+	return nil
 }

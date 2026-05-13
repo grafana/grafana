@@ -92,7 +92,8 @@ func (s *LegacyStore) Delete(ctx context.Context, name string, deleteValidation 
 	}
 
 	err = s.store.DeleteTeam(ctx, ns, legacy.DeleteTeamCommand{
-		UID: name,
+		UID:                     name,
+		ExternalGroupReconciler: s.externalGroupReconciler,
 	})
 
 	if err != nil {
