@@ -5664,6 +5664,13 @@
             "type": "string",
             "default": ""
           },
+          "externalGroups": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "default": ""
+            }
+          },
           "externalUID": {
             "type": "string",
             "default": ""

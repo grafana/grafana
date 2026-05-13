@@ -24,7 +24,6 @@ var (
 	sqlKeeperDelete      = mustTemplate("keeper_delete.sql")
 	sqlKeeperSetAsActive = mustTemplate("keeper_set_as_active.sql")
 
-	sqlKeeperListByName      = mustTemplate("keeper_listByName.sql")
 	sqlSecureValueListByName = mustTemplate("secure_value_listByName.sql")
 
 	sqlSecureValueRead                    = mustTemplate("secure_value_read.sql")
@@ -70,6 +69,9 @@ func (r setKeeperAsActive) Validate() error {
 type createKeeper struct {
 	sqltemplate.SQLTemplate
 	Row *keeperDB
+	// Deduplicated list of secure value names refrenced by the keeper. Only commits if all references is active and uses the system keeper.
+	UsedSecureValues []string
+	SystemKeeperName string
 }
 
 // Validate is only used if we use `dbutil` from `unifiedstorage`
@@ -105,6 +107,9 @@ func (r readActiveKeeper) Validate() error {
 type updateKeeper struct {
 	sqltemplate.SQLTemplate
 	Row *keeperDB
+	// Deduplicated list of secure value names refrenced by the keeper. Only commits if all references is active and uses the system keeper.
+	UsedSecureValues []string
+	SystemKeeperName string
 }
 
 // Validate is only used if we use `dbutil` from `unifiedstorage`
@@ -144,18 +149,6 @@ type listByNameSecureValue struct {
 
 // Validate is only used if we use `dbutil` from `unifiedstorage`
 func (r listByNameSecureValue) Validate() error {
-	return nil // TODO
-}
-
-// This is used at keeper store to validate create & update operations
-type listByNameKeeper struct {
-	sqltemplate.SQLTemplate
-	Namespace   string
-	KeeperNames []string
-}
-
-// Validate is only used if we use `dbutil` from `unifiedstorage`
-func (r listByNameKeeper) Validate() error {
 	return nil // TODO
 }
 

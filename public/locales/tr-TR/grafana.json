@@ -10856,6 +10856,16 @@
   },
   "home": {
     "home-page": {
+      "edition": {
+        "cloud": "",
+        "enterprise": "",
+        "open-source": ""
+      },
+      "greeting": {
+        "afternoon": "",
+        "evening": "",
+        "morning": ""
+      },
       "placeholder": ""
     }
   },
@@ -14837,9 +14847,6 @@
       "home-dashboard-placeholder": "Varsayılan pano",
       "language-preference-label": "Dil",
       "language-preference-placeholder": "Dil seçin",
-      "locale-preference-description": "Tarih, saat ve sayı biçimi ayarlarını görmek için bölgenizi seçin",
-      "locale-preference-label": "Bölge biçimi",
-      "locale-preference-placeholder": "Bölge seçin",
       "theme-description": "Deneysel temaları beğendiniz mi? Görmek istediklerinizi <2>buradan</2> bize bildirin.",
       "theme-label": "Arayüz teması",
       "week-start-label": "Hafta başlangıcı"
