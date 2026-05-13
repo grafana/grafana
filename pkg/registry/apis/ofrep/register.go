@@ -54,21 +54,35 @@ var groupVersion = schema.GroupVersion{
 type APIBuilder struct {
 	providerType    setting.OpenFeatureProviderType
 	url             *url.URL
-	insecure        bool
-	caFile          string
+	transport       *http.Transport
 	staticEvaluator featuremgmt.StaticFlagEvaluator
 	logger          log.Logger
 }
 
-func NewAPIBuilder(providerType setting.OpenFeatureProviderType, url *url.URL, insecure bool, caFile string, staticEvaluator featuremgmt.StaticFlagEvaluator) *APIBuilder {
-	return &APIBuilder{
+func NewAPIBuilder(providerType setting.OpenFeatureProviderType, url *url.URL, insecure bool, caFile string, staticEvaluator featuremgmt.StaticFlagEvaluator) (*APIBuilder, error) {
+	logger := log.New("grafana-apiserver.feature-flags")
+
+	b := &APIBuilder{
 		providerType:    providerType,
-		url:             url,
-		insecure:        insecure,
-		caFile:          caFile,
 		staticEvaluator: staticEvaluator,
-		logger:          log.New("grafana-apiserver.feature-flags"),
+		logger:          logger,
 	}
+
+	needsProxy := providerType == setting.FeaturesServiceProviderType || providerType == setting.OFREPProviderType
+	if needsProxy && url == nil {
+		return nil, fmt.Errorf("provider type %q requires a URL", providerType)
+	}
+
+	if url != nil {
+		var err error
+		b.transport, err = newTransport(insecure, caFile)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create ofrep transport: %w", err)
+		}
+		b.url = url
+	}
+
+	return b, nil
 }
 
 func RegisterAPIService(apiregistration builder.APIRegistrar, cfg *setting.Cfg) (*APIBuilder, error) {
@@ -81,7 +95,10 @@ func RegisterAPIService(apiregistration builder.APIRegistrar, cfg *setting.Cfg) 
 		}
 	}
 
-	b := NewAPIBuilder(cfg.OpenFeature.ProviderType, cfg.OpenFeature.URL, true, "", staticEvaluator)
+	b, err := NewAPIBuilder(cfg.OpenFeature.ProviderType, cfg.OpenFeature.URL, true, "", staticEvaluator)
+	if err != nil {
+		return nil, err
+	}
 	apiregistration.RegisterAPI(b)
 	return b, nil
 }

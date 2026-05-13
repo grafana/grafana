@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 
 	"github.com/gorilla/mux"
@@ -15,7 +16,55 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/setting"
 )
+
+func TestNewAPIBuilder_StartupValidation(t *testing.T) {
+	someURL, _ := url.Parse("http://localhost:8080")
+
+	tests := []struct {
+		name         string
+		providerType setting.OpenFeatureProviderType
+		url          *url.URL
+		expectErr    bool
+	}{
+		{
+			name:         "proxy provider without URL fails",
+			providerType: setting.OFREPProviderType,
+			url:          nil,
+			expectErr:    true,
+		},
+		{
+			name:         "features service provider without URL fails",
+			providerType: setting.FeaturesServiceProviderType,
+			url:          nil,
+			expectErr:    true,
+		},
+		{
+			name:         "static provider without URL succeeds",
+			providerType: setting.StaticProviderType,
+			url:          nil,
+			expectErr:    false,
+		},
+		{
+			name:         "proxy provider with URL succeeds",
+			providerType: setting.OFREPProviderType,
+			url:          someURL,
+			expectErr:    false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := NewAPIBuilder(tt.providerType, tt.url, false, "", nil)
+			if tt.expectErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
 
 func TestReadEvalContext(t *testing.T) {
 	b := &APIBuilder{logger: log.NewNopLogger()}

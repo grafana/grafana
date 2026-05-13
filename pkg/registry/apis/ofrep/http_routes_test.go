@@ -174,30 +174,6 @@ func TestRootAllFlagsHandler_NamespaceMismatch(t *testing.T) {
 	assert.Equal(t, http.StatusUnauthorized, w.Code)
 }
 
-func TestRootAllFlagsHandler_NoNamespaceInBody(t *testing.T) {
-	b := &APIBuilder{
-		providerType: setting.OFREPProviderType,
-		logger:       log.NewNopLogger(),
-		// url is nil so proxy will fail - but validation should pass first
-	}
-
-	body := `{"context":{}}`
-	req := httptest.NewRequest(http.MethodPost, "/ofrep/v1/evaluate/flags", bytes.NewBufferString(body))
-	req.Header.Set("Content-Type", "application/json")
-
-	requester := &identity.StaticRequester{
-		OrgID:     1,
-		Namespace: "stacks-1",
-	}
-	ctx := types.WithAuthInfo(req.Context(), requester)
-	req = req.WithContext(ctx)
-
-	w := httptest.NewRecorder()
-	b.rootAllFlagsHandler(w, req)
-	// Validation passes (no namespace to mismatch), but proxy fails with 500 (nil URL)
-	assert.Equal(t, http.StatusInternalServerError, w.Code)
-}
-
 func TestRootOneFlagHandler_NamespaceMismatch(t *testing.T) {
 	b := &APIBuilder{
 		providerType: setting.OFREPProviderType,

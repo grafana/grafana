@@ -6,13 +6,13 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httputil"
 	"os"
 	"path"
 	"strconv"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
@@ -26,13 +26,7 @@ func (b *APIBuilder) proxyAllFlagReq(ctx context.Context, isAuthedUser bool, w h
 
 	r = r.WithContext(ctx)
 
-	proxy, err := b.newProxy(ofrepPath)
-	if err != nil {
-		err = tracing.Error(span, err)
-		b.logger.Error("Failed to create proxy", "error", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	proxy := b.newProxy(ofrepPath)
 
 	proxy.ModifyResponse = func(resp *http.Response) error {
 		if resp.StatusCode == http.StatusOK && !isAuthedUser {
@@ -56,7 +50,6 @@ func (b *APIBuilder) proxyAllFlagReq(ctx context.Context, isAuthedUser bool, w h
 				return err
 			}
 
-			// Replace the body
 			resp.Body = io.NopCloser(bytes.NewReader(newBodyBytes))
 			resp.ContentLength = int64(len(newBodyBytes))
 			resp.Header.Set("Content-Length", strconv.Itoa(len(newBodyBytes)))
@@ -75,13 +68,7 @@ func (b *APIBuilder) proxyFlagReq(ctx context.Context, flagKey string, isAuthedU
 
 	r = r.WithContext(ctx)
 
-	proxy, err := b.newProxy(path.Join(ofrepPath, flagKey))
-	if err != nil {
-		err = tracing.Error(span, err)
-		b.logger.Error("Failed to create proxy", "key", flagKey, "error", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	proxy := b.newProxy(path.Join(ofrepPath, flagKey))
 
 	proxy.ModifyResponse = func(resp *http.Response) error {
 		if resp.StatusCode == http.StatusOK && !isAuthedUser && !isPublicFlag(flagKey) {
@@ -93,24 +80,7 @@ func (b *APIBuilder) proxyFlagReq(ctx context.Context, flagKey string, isAuthedU
 	proxy.ServeHTTP(w, r)
 }
 
-func (b *APIBuilder) newProxy(proxyPath string) (*httputil.ReverseProxy, error) {
-	if proxyPath == "" {
-		return nil, fmt.Errorf("proxy path is required")
-	}
-
-	if b.url == nil {
-		return nil, fmt.Errorf("OpenFeatureService provider URL is not set")
-	}
-
-	var caRoot *x509.CertPool
-	if b.caFile != "" {
-		var err error
-		caRoot, err = getCARoot(b.caFile)
-		if err != nil {
-			return nil, err
-		}
-	}
-
+func (b *APIBuilder) newProxy(proxyPath string) *httputil.ReverseProxy {
 	director := func(req *http.Request) {
 		req.URL.Scheme = b.url.Scheme
 		req.URL.Host = b.url.Host
@@ -118,13 +88,27 @@ func (b *APIBuilder) newProxy(proxyPath string) (*httputil.ReverseProxy, error) 
 	}
 
 	proxy := proxyutil.NewReverseProxy(b.logger, director)
-	proxy.Transport = &http.Transport{
+	proxy.Transport = b.transport
+	return proxy
+}
+
+func newTransport(insecure bool, caFile string) (*http.Transport, error) {
+	var caRoot *x509.CertPool
+	if caFile != "" {
+		var err error
+		caRoot, err = getCARoot(caFile)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return &http.Transport{
 		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: b.insecure,
+			InsecureSkipVerify: insecure, // nolint:gosec
 			RootCAs:            caRoot,
 		},
-	}
-	return proxy, nil
+		MaxIdleConnsPerHost: 10, // keep more idle connections than the default (2) to avoid new TCP handshakes on every request
+		IdleConnTimeout:     90 * time.Second,
+	}, nil
 }
 
 func getCARoot(caFile string) (*x509.CertPool, error) {
