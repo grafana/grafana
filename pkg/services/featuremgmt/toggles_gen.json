@@ -3484,6 +3484,20 @@
     },
     {
       "metadata": {
+        "name": "kubernetesAuthzServiceAccountResourcePermissions",
+        "resourceVersion": "1778678599530",
+        "creationTimestamp": "2026-05-13T13:23:19Z"
+      },
+      "spec": {
+        "description": "Enables service account resource permissions via the K8s IAM resource permission APIs",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesAuthzTeamLBACRuleApi",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2026-02-18T17:05:38Z"
