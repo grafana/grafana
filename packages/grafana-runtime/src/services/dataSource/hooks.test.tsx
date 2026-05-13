@@ -103,6 +103,40 @@ describe('useDataSourceInstanceSettingsList', () => {
     });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
   });
+
+  it('does not re-fetch when the same filter function reference is re-rendered', async () => {
+    const stableFilter = (x: DataSourceInstanceSettings) => Boolean(x.meta.metrics);
+    const { result, rerender } = renderHook(({ filter }) => useDataSourceInstanceSettingsList({ filter }), {
+      initialProps: { filter: stableFilter },
+    });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    const itemsAfterFirstRender = result.current.items;
+
+    rerender({ filter: stableFilter });
+    await act(async () => {});
+
+    // Same reference — no new fetch cycle, items reference is unchanged.
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.items).toBe(itemsAfterFirstRender);
+  });
+
+  it('re-fetches and updates items when the filter function reference changes', async () => {
+    const filterA = (x: DataSourceInstanceSettings) => x.name === 'Alpha';
+    const filterB = (x: DataSourceInstanceSettings) => x.name === 'Bravo';
+
+    const { result, rerender } = renderHook(({ filter }) => useDataSourceInstanceSettingsList({ filter }), {
+      initialProps: { filter: filterA },
+    });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.items.every((x) => x.name === 'Alpha')).toBe(true);
+
+    rerender({ filter: filterB });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.items.every((x) => x.name === 'Bravo')).toBe(true);
+  });
 });
 
 describe('useDataSourceInstance', () => {

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAsync, useAsyncFn } from 'react-use';
 
 import { type DataSourceApi, type DataSourceInstanceSettings, type DataSourceRef } from '@grafana/data';
@@ -39,17 +39,16 @@ export interface UseDataSourceInstanceResult {
   dataSource?: DataSourceApi;
 }
 
-let filterCallCounter = 0;
-
 function stableKey(value: unknown): string {
   return JSON.stringify(value ?? null);
 }
 
 function filtersKey(filters: GetDataSourceListFilters | undefined): string {
-  if (filters?.filter) {
-    return `fn:${++filterCallCounter}`;
+  if (!filters) {
+    return stableKey(null);
   }
-  return stableKey(filters);
+  const { filter: _, ...rest } = filters;
+  return stableKey(rest);
 }
 
 /**
@@ -74,15 +73,24 @@ export function useDataSourceInstanceSettings(
  * React hook wrapping {@link getDataSourceInstanceSettingsList}. Items are flattened
  * across pages; call `fetchMore` to load additional pages. Items reset when
  * `filters` changes (compared by value, so inline objects are safe).
- * When `filters.filter` (a callback) is set, the hook refetches on every
- * render since function identity cannot be reliably compared.
+ * When `filters.filter` (a callback) is set, the hook re-fetches when the
+ * function reference changes. Wrap inline filter callbacks in `useCallback`
+ * to avoid unnecessary re-fetches.
  *
  * @internal
  */
 export function useDataSourceInstanceSettingsList(
   filters?: GetDataSourceListFilters
 ): UseDataSourceInstanceSettingsListResult {
-  const fKey = filtersKey(filters);
+  const filterValuesKey = filtersKey(filters);
+
+  const filterFunc = filters?.filter;
+  const filterFuncKey = useMemo(() => {
+    if (filterFunc) {
+      return Date.now();
+    }
+    return null;
+  }, [filterFunc]);
 
   const [items, setItems] = useState<DataSourceInstanceSettings[]>([]);
   const [cursor, setCursor] = useState<string | undefined>(undefined);
@@ -91,7 +99,7 @@ export function useDataSourceInstanceSettingsList(
   const [fetchState, fetchPage] = useAsyncFn(
     (nextCursor?: string) => getDataSourceInstanceSettingsList({ filters, cursor: nextCursor }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [fKey],
+    [filterValuesKey, filterFuncKey],
     { loading: true }
   );
 
