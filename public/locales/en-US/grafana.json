@@ -11400,7 +11400,8 @@
     },
     "log-line-menu": {
       "copy-link": "Copy link to log line",
-      "copy-log": "Copy log line",
+      "copy-log-contents": "Copy log line contents as JSON",
+      "copy-log-message": "Copy log line message",
       "hide-details": "Show log details",
       "icon-label": "Log menu",
       "log-line": "Log line",
