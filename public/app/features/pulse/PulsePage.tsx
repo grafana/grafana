@@ -100,9 +100,19 @@ export default function PulsePage() {
         cell: ({ row: { original } }) => <ThreadCell thread={original} />,
       },
       {
-        id: 'dashboard',
-        header: t('pulse.overview.column.dashboard', 'Dashboard'),
-        cell: ({ row: { original } }) => <DashboardCell thread={original} />,
+        id: 'type',
+        header: t('pulse.overview.column.type', 'Type'),
+        cell: ({ row: { original } }) => (
+          <Text variant="bodySmall" color="secondary">
+            {formatResourceKind(original.resourceKind)}
+          </Text>
+        ),
+        disableGrow: true,
+      },
+      {
+        id: 'resource',
+        header: t('pulse.overview.column.resource', 'Resource'),
+        cell: ({ row: { original } }) => <ResourceCell thread={original} />,
       },
       {
         id: 'author',
@@ -253,13 +263,24 @@ function ThreadCell({ thread }: { thread: PulseThread }): React.ReactElement {
   // Prefer the rich preview body when the server populated it; fall
   // back to the thread title or a graceful placeholder.
   const previewText = thread.previewBody ? bodyToText(thread.previewBody) : (thread.title ?? '');
+  const threadTitle = thread.title?.trim() ?? '';
+  // Suppress the preview body when it is effectively the same string
+  // as the title — which is what legacy rows look like, because the
+  // server (and earlier client) auto-derived the title from the body's
+  // first sentence. Without this guard the overview shows the same
+  // text twice (the bold title above and a muted "preview" below).
+  // New threads created with an explicit user-supplied title carry a
+  // genuinely distinct body and always render the preview.
+  const previewMatchesTitle =
+    threadTitle.length > 0 && normalizeForCompare(previewText) === normalizeForCompare(threadTitle);
+  const showPreviewBody = Boolean(thread.previewBody) && !previewMatchesTitle;
   return (
     <Stack direction="column" gap={0.5}>
       <TextLink href={href} weight="medium" inline={false} color="primary">
         {thread.title ||
           (previewText.length > 0 ? truncate(previewText, 80) : t('pulse.overview.untitled', 'Untitled thread'))}
       </TextLink>
-      {thread.previewBody ? (
+      {showPreviewBody && thread.previewBody ? (
         <div className={styles.preview}>
           <PulseRenderer body={thread.previewBody} />
         </div>
@@ -274,7 +295,7 @@ function ThreadCell({ thread }: { thread: PulseThread }): React.ReactElement {
   );
 }
 
-function DashboardCell({ thread }: { thread: PulseThread }): React.ReactElement {
+function ResourceCell({ thread }: { thread: PulseThread }): React.ReactElement {
   const href = buildThreadHref(thread);
   const label = thread.resourceTitle?.trim() || thread.resourceUID;
   return (
@@ -282,6 +303,29 @@ function DashboardCell({ thread }: { thread: PulseThread }): React.ReactElement 
       {label}
     </TextLink>
   );
+}
+
+/**
+ * formatResourceKind turns a wire-level resource kind ("dashboard") into
+ * a human-readable column value ("Dashboard"). Capitalises the first
+ * character only — kinds are single lowercase tokens by contract — and
+ * leaves an empty string alone so a malformed row never renders "U" or
+ * other partial nonsense.
+ */
+function formatResourceKind(kind: string): string {
+  if (!kind) {
+    return '';
+  }
+  return kind.charAt(0).toUpperCase() + kind.slice(1);
+}
+
+/**
+ * normalizeForCompare collapses whitespace and trims so the preview/
+ * title equality check is not foiled by trailing newlines, double
+ * spaces, or markdown line wrapping that the body renderer flattens.
+ */
+function normalizeForCompare(value: string): string {
+  return value.replace(/\s+/g, ' ').trim();
 }
 
 function AuthorCell({ thread }: { thread: PulseThread }): React.ReactElement {
