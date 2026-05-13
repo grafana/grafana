@@ -383,4 +383,98 @@ describe('DeletedDashboardsCache', () => {
 
     consoleError.mockRestore();
   });
+
+  it('accumulates items across paginated responses', async () => {
+    const page1 = {
+      ...makeResourceList(['user:alice', 'user:bob']),
+      metadata: { resourceVersion: '1', continue: 'page2-token' },
+    };
+    const page2 = {
+      ...makeResourceList(['user:carol']),
+      metadata: { resourceVersion: '2' },
+    };
+
+    const mockListDeletedDashboards = jest.fn().mockResolvedValueOnce(page1).mockResolvedValueOnce(page2);
+    getDashboardAPI.mockResolvedValue({ listDeletedDashboards: mockListDeletedDashboards });
+
+    // IAM calls — one per unique UID batch
+    mockDispatch.mockReturnValue(
+      mockSubscription({
+        data: makeDisplayList([
+          { identity: { type: 'user', name: 'alice' }, displayName: 'Alice' },
+          { identity: { type: 'user', name: 'bob' }, displayName: 'Bob' },
+          { identity: { type: 'user', name: 'carol' }, displayName: 'Carol' },
+        ]),
+      })
+    );
+
+    const result = await deletedDashboardsCache.get();
+
+    expect(result).toHaveLength(3);
+    expect(mockListDeletedDashboards).toHaveBeenCalledTimes(2);
+    expect(mockListDeletedDashboards).toHaveBeenNthCalledWith(1, expect.objectContaining({ continue: undefined }));
+    expect(mockListDeletedDashboards).toHaveBeenNthCalledWith(2, expect.objectContaining({ continue: 'page2-token' }));
+  });
+
+  it('stops fetching when no continue token is present', async () => {
+    const page = makeResourceList(['user:alice']);
+    const mockListDeletedDashboards = jest.fn().mockResolvedValue(page);
+    getDashboardAPI.mockResolvedValue({ listDeletedDashboards: mockListDeletedDashboards });
+
+    mockDispatch.mockReturnValue(
+      mockSubscription({
+        data: makeDisplayList([{ identity: { type: 'user', name: 'alice' }, displayName: 'Alice' }]),
+      })
+    );
+
+    const result = await deletedDashboardsCache.get();
+
+    expect(result).toHaveLength(1);
+    expect(mockListDeletedDashboards).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns empty list when isResourceList returns false on first page', async () => {
+    const { isResourceList } = jest.requireMock('app/features/apiserver/guards') as {
+      isResourceList: jest.Mock;
+    };
+    isResourceList.mockReturnValueOnce(false);
+
+    const mockListDeletedDashboards = jest.fn().mockResolvedValue({ unexpected: true });
+    getDashboardAPI.mockResolvedValue({ listDeletedDashboards: mockListDeletedDashboards });
+
+    const resourceList = await deletedDashboardsCache.getAsResourceList();
+
+    expect(resourceList.items).toHaveLength(0);
+    expect(mockListDeletedDashboards).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns partial results when a subsequent page fails isResourceList check', async () => {
+    const { isResourceList } = jest.requireMock('app/features/apiserver/guards') as {
+      isResourceList: jest.Mock;
+    };
+    const page1 = {
+      ...makeResourceList(['user:alice']),
+      metadata: { resourceVersion: '1', continue: 'page2-token' },
+    };
+
+    isResourceList.mockReturnValueOnce(true).mockReturnValueOnce(false);
+
+    const mockListDeletedDashboards = jest
+      .fn()
+      .mockResolvedValueOnce(page1)
+      .mockResolvedValueOnce({ unexpected: true });
+    getDashboardAPI.mockResolvedValue({ listDeletedDashboards: mockListDeletedDashboards });
+
+    mockDispatch.mockReturnValue(
+      mockSubscription({
+        data: makeDisplayList([{ identity: { type: 'user', name: 'alice' }, displayName: 'Alice' }]),
+      })
+    );
+
+    const result = await deletedDashboardsCache.get();
+
+    expect(result).toHaveLength(1);
+    expect(result[0].field.deletedBy).toBe('Alice');
+    expect(mockListDeletedDashboards).toHaveBeenCalledTimes(2);
+  });
 });

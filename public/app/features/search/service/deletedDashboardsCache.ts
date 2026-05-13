@@ -1,6 +1,7 @@
 import { iamAPIv0alpha1, type DisplayList } from 'app/api/clients/iam/v0alpha1';
 import { isResourceList } from 'app/features/apiserver/guards';
-import { AnnoKeyUpdatedBy, type ResourceList } from 'app/features/apiserver/types';
+import { AnnoKeyUpdatedBy, type Resource, type ResourceList } from 'app/features/apiserver/types';
+import { DELETED_DASHBOARDS_LIMIT } from 'app/features/browse-dashboards/components/DeletedDashboardsLimitBanner';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { type DashboardDataDTO } from 'app/types/dashboard';
 import { dispatch } from 'app/types/store';
@@ -65,17 +66,38 @@ class DeletedDashboardsCache {
   private async fetchResourceList(): Promise<ResourceList<DashboardDataDTO>> {
     try {
       const api = await getDashboardAPI();
-      const deletedResponse = await api.listDeletedDashboards({ limit: 1000 });
+      const items: Array<Resource<DashboardDataDTO>> = [];
+      let continueToken: string | undefined;
+      let lastResponse: ResourceList<DashboardDataDTO> | undefined;
 
-      if (isResourceList<DashboardDataDTO>(deletedResponse)) {
-        return deletedResponse;
+      do {
+        const response = await api.listDeletedDashboards({
+          limit: DELETED_DASHBOARDS_LIMIT - items.length,
+          continue: continueToken,
+        });
+
+        if (!isResourceList<DashboardDataDTO>(response)) {
+          break;
+        }
+
+        items.push(...response.items);
+        continueToken = response.metadata.continue;
+        lastResponse = response;
+      } while (items.length < DELETED_DASHBOARDS_LIMIT && continueToken);
+
+      if (!lastResponse) {
+        return {
+          apiVersion: 'v1',
+          kind: 'List',
+          metadata: { resourceVersion: '0' },
+          items: [],
+        };
       }
 
       return {
-        apiVersion: 'v1',
-        kind: 'List',
-        metadata: { resourceVersion: '0' },
-        items: [],
+        ...lastResponse,
+        metadata: { ...lastResponse.metadata, continue: continueToken },
+        items,
       };
     } catch (error) {
       console.error('Failed to fetch deleted dashboards:', error);
