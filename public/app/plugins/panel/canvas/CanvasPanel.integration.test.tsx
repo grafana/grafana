@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import * as React from 'react';
 
 import { type DataFrame, EventBusSrv, getDefaultTimeRange, LoadingState, type PanelProps } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { TooltipDisplayMode } from '@grafana/schema';
 import { PanelContextProvider } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -381,7 +382,12 @@ const getUnmappedIconText = () => {
   return candidates[8] as HTMLElement;
 };
 
-describe('CanvasPanel', () => {
+describe.each([
+  { flag: 'canvasPanelPanZoom', value: true },
+  { flag: 'canvasPanelPanZoom', value: false },
+  { flag: 'canvasPanelNesting', value: true },
+  { flag: 'canvasPanelNesting', value: false },
+])('CanvasPanel: $flag -> $value', ({ flag, value }) => {
   let onFieldConfigChange = jest.fn();
   let onOptionsChange = jest.fn();
   let onChangeTimeRange = jest.fn();
@@ -443,6 +449,17 @@ describe('CanvasPanel', () => {
       eventBus,
     });
   };
+  //@ts-expect-error
+  const previousFlagValue = config.featureToggles[flag] as boolean;
+
+  beforeAll(() => {
+    //@ts-expect-error
+    config.featureToggles[flag] = value;
+  });
+  afterAll(() => {
+    //@ts-expect-error
+    config.featureToggles[flag] = previousFlagValue;
+  });
 
   beforeEach(() => {
     jest.spyOn(getDashboardSrv(), 'getCurrent').mockReturnValue({ editable: true } as DashboardModel);
@@ -460,22 +477,35 @@ describe('CanvasPanel', () => {
     expect(buttons).toHaveLength(13);
 
     // Header
-    expect(buttons[0]).toBeVisible();
-    expect(buttons[0]).toHaveTextContent('Field-based Icons (from value mappings):');
-    expect(buttons[0]).toHaveStyle('top: 10px');
-    expect(buttons[0]).toHaveStyle('left: 20px');
+    const titleElement = buttons[0];
+    expect(titleElement).toBeVisible();
+    expect(titleElement).toHaveTextContent('Field-based Icons (from value mappings):');
+    if (config.featureToggles.canvasPanelPanZoom) {
+      expect(titleElement).toHaveStyle('transform: translate(20px, 10px) rotate(0deg);');
+    } else {
+      expect(titleElement).toHaveStyle('top: 10px');
+      expect(titleElement).toHaveStyle('left: 20px');
+    }
 
     //Success SVG icon
     expect(getSuccessIconButton()).toHaveTextContent('');
     expect(getSuccessIconButton().querySelector('svg')).toBeVisible();
     expect(getSuccessIconButton().querySelector('svg')).toHaveStyle(`fill: ${colors.success};`); // success color
-    expect(getSuccessIconButton()).toHaveStyle('top: 60px');
-    expect(getSuccessIconButton()).toHaveStyle('left: 50px');
+    if (config.featureToggles.canvasPanelPanZoom) {
+      expect(getSuccessIconButton()).toHaveStyle('transform: translate(50px, 60px) rotate(0deg);');
+    } else {
+      expect(getSuccessIconButton()).toHaveStyle('top: 60px');
+      expect(getSuccessIconButton()).toHaveStyle('left: 50px');
+    }
 
     // Success label
     expect(getSuccessIconText()).toHaveTextContent('Success');
-    expect(getSuccessIconText()).toHaveStyle('top: 115px');
-    expect(getSuccessIconText()).toHaveStyle('left: 30px');
+    if (config.featureToggles.canvasPanelPanZoom) {
+      expect(getSuccessIconText()).toHaveStyle('transform: translate(30px, 115px) rotate(0deg);');
+    } else {
+      expect(getSuccessIconText()).toHaveStyle('top: 115px');
+      expect(getSuccessIconText()).toHaveStyle('left: 30px');
+    }
 
     // Remaining buttons
     expect(buttons[3].querySelector('svg')).toHaveStyle(`fill: ${colors.warning};`); // warning color
@@ -495,14 +525,21 @@ describe('CanvasPanel', () => {
 
   it('Re-renders when width and height change without losing canvas elements', () => {
     const { rerender } = setUp();
-    const canvas = screen.getByTestId('canvas-scene');
-    expect(canvas).toBeInTheDocument();
-    expect(canvas).toHaveStyle(`width: ${width}px`);
-    expect(canvas).toHaveStyle(`height: ${height}px`);
+    let canvas;
+    if (config.featureToggles.canvasPanelPanZoom) {
+      canvas = screen.getByTestId('canvas-scene-wrapper');
+    } else {
+      canvas = screen.getByTestId('canvas-scene');
+      expect(canvas).toHaveStyle(`width: ${width}px`);
+      expect(canvas).toHaveStyle(`height: ${height}px`);
+    }
 
     rerender(canvasPanelElement({ width: 800, height: 500 }));
-    expect(canvas).toHaveStyle(`width: 800px`);
-    expect(canvas).toHaveStyle(`height: 500px`);
+
+    if (!config.featureToggles.canvasPanelPanZoom) {
+      expect(canvas).toHaveStyle(`width: 800px`);
+      expect(canvas).toHaveStyle(`height: 500px`);
+    }
 
     const buttons = screen.getAllByRole('button');
     expect(buttons).toHaveLength(13);
