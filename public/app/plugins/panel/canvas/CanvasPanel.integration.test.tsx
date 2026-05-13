@@ -386,8 +386,6 @@ const getUnmappedIconText = () =>
 describe.each([
   { flag: 'canvasPanelPanZoom', value: true },
   { flag: 'canvasPanelPanZoom', value: false },
-  { flag: 'canvasPanelNesting', value: true },
-  { flag: 'canvasPanelNesting', value: false },
 ])('CanvasPanel: $flag -> $value', ({ flag, value }) => {
   let onFieldConfigChange = jest.fn();
   let onOptionsChange = jest.fn();
