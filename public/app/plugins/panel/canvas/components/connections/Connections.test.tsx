@@ -550,7 +550,95 @@ describe('Connections', () => {
     });
   });
 
-  it.todo('onChange');
+  describe('onChange', () => {
+    let getConnectionsSpy: jest.SpiedFunction<typeof canvasUtils.getConnections>;
+
+    beforeEach(() => {
+      getConnectionsSpy = jest.spyOn(canvasUtils, 'getConnections').mockReturnValue([]);
+    });
+
+    afterEach(() => {
+      getConnectionsSpy.mockRestore();
+    });
+
+    it('replaces the connection at current.index, calls source.onChange with the new list, and refreshes state', () => {
+      const first: CanvasConnection = {
+        path: ConnectionPath.Straight,
+        source: { x: 0, y: 0 },
+        target: { x: 1, y: 1 },
+      };
+      const second: CanvasConnection = {
+        path: ConnectionPath.Straight,
+        source: { x: 2, y: 2 },
+        target: { x: 3, y: 3 },
+      };
+      const connectionsArr: CanvasConnection[] = [first, second];
+
+      const sourceOnChange = jest.fn();
+      const mockSource = {
+        onChange: sourceOnChange,
+        options: {
+          name: 'el-a',
+          connections: connectionsArr,
+        },
+      } as unknown as ElementState;
+
+      const current = getMockConnectionState({
+        source: mockSource,
+        index: 1,
+        info: second,
+      });
+
+      const update: CanvasConnection = {
+        path: ConnectionPath.Straight,
+        source: { x: 8, y: 8 },
+        target: { x: 9, y: 9 },
+      };
+
+      const connections = newConnections();
+      connections.onChange(current, update);
+
+      expect(sourceOnChange).toHaveBeenCalledTimes(1);
+      expect(sourceOnChange).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'el-a',
+          connections: [first, update],
+        })
+      );
+      expect(getConnectionsSpy).toHaveBeenCalled();
+      expect(connections.state).toEqual([]);
+    });
+
+    it('starts from an empty list when options.connections is undefined', () => {
+      const sourceOnChange = jest.fn();
+      const mockSource = {
+        onChange: sourceOnChange,
+        options: { label: 'no-conns-yet' },
+      } as unknown as ElementState;
+
+      const update: CanvasConnection = {
+        path: ConnectionPath.Straight,
+        source: { x: 1, y: 0 },
+        target: { x: 0, y: 1 },
+      };
+
+      const current = getMockConnectionState({
+        source: mockSource,
+        index: 0,
+        info: update,
+      });
+
+      newConnections().onChange(current, update);
+
+      expect(sourceOnChange).toHaveBeenCalledWith(
+        expect.objectContaining({
+          label: 'no-conns-yet',
+          connections: [update],
+        })
+      );
+    });
+  });
+
   it.todo('connectionsNeedUpdate');
   it.todo('renderElement');
 });
