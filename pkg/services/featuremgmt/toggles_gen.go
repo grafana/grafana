@@ -634,6 +634,10 @@ const (
 	// Enables datasource resource permissions via the K8s IAM resource permission APIs
 	FlagKubernetesAuthzDatasourceResourcePermissions = "kubernetesAuthzDatasourceResourcePermissions"
 
+	// FlagKubernetesAuthzServiceAccountResourcePermissions
+	// Enables service account resource permissions via the K8s IAM resource permission APIs
+	FlagKubernetesAuthzServiceAccountResourcePermissions = "kubernetesAuthzServiceAccountResourcePermissions"
+
 	// FlagAlertEnrichment
 	// Enable configuration of alert enrichments in Grafana Cloud.
 	FlagAlertEnrichment = "alertEnrichment"
@@ -965,10 +969,6 @@ const (
 	// FlagDatasourcesUseNewStackInfoToSettingsCache
 	// Use the new cache for datasource.StackInfoToSettings, backend flag
 	FlagDatasourcesUseNewStackInfoToSettingsCache = "datasources.useNewStackInfoToSettingsCache"
-
-	// FlagAlertingDisableV0ReceiverConversion
-	// Disable automatic conversion of legacy (V0/Mimir) Alertmanager receivers to Grafana model
-	FlagAlertingDisableV0ReceiverConversion = "alerting.disableV0ReceiverConversion"
 
 	// FlagPreferencesRerouteLegacyAPIs
 	// Use K8s client implementation for legacy preferences API

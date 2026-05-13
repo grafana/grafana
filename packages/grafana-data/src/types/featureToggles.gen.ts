@@ -1106,6 +1106,11 @@ export interface FeatureToggles {
   */
   kubernetesAuthzDatasourceResourcePermissions?: boolean;
   /**
+  * Enables service account resource permissions via the K8s IAM resource permission APIs
+  * @default false
+  */
+  kubernetesAuthzServiceAccountResourcePermissions?: boolean;
+  /**
   * Enables recently viewed dashboards section in the browsing dashboard page
   * @default false
   */
