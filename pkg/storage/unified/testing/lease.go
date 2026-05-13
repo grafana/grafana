@@ -2,6 +2,7 @@ package test
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -9,6 +10,7 @@ import (
 	"os"
 	"reflect"
 	"strconv"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -28,6 +30,7 @@ func RunLeaseTest(t *testing.T, newKV NewKVFunc) {
 	t.Helper()
 
 	store := newKV(t.Context())
+	t.Cleanup(func() { validateLeaseStore(t, store) })
 
 	t.Run("happy path", func(t *testing.T) { runLeaseHappyPath(t, store) })
 	t.Run("contention", func(t *testing.T) { runLeaseContention(t, store) })
@@ -726,4 +729,80 @@ func (f *leaseFailingKV) Batch(ctx context.Context, section string, ops []kv.Bat
 
 func (f *leaseFailingKV) Reset() {
 	f.injectedError = nil
+}
+
+// validateLeaseStore checks store-wide invariants once all subtests have
+// finished: every entry has a non-empty holder and an Expires within 30
+// minutes of current time, and for every lease name a non-latest entry
+// may have ReleasedAt == 0 only if it has already expired.
+func validateLeaseStore(t *testing.T, store kv.KV) {
+	type meta struct {
+		Holder     string `json:"holder"`
+		Expires    int64  `json:"expires"`
+		ReleasedAt int64  `json:"released_at,omitempty"`
+	}
+
+	type entry struct {
+		generation int64
+		expires    int64
+		releasedAt int64
+	}
+
+	ctx, stop := context.WithTimeout(context.Background(), 10*time.Second)
+	defer stop()
+	now := time.Now()
+	const window = 30 * time.Minute
+
+	byName := make(map[string][]entry)
+
+	for key, err := range store.Keys(ctx, kv.LeasesSection, kv.ListOptions{Sort: kv.SortOrderAsc}) {
+		require.NoError(t, err)
+
+		idx := strings.LastIndex(key, "~")
+		require.GreaterOrEqual(t, idx, 0)
+		name := key[:idx]
+		generation, err := strconv.ParseInt(key[idx+1:], 10, 64)
+		require.NoError(t, err)
+
+		r, err := store.Get(ctx, kv.LeasesSection, key)
+		require.NoError(t, err)
+		data, err := io.ReadAll(r)
+		require.NoError(t, r.Close())
+		require.NoError(t, err)
+
+		var m meta
+		require.NoError(t, json.Unmarshal(data, &m))
+
+		// Every lease has a non-empty holder.
+		require.NotEmpty(t, m.Holder)
+
+		// Every lease's expiration is within a given `window`.
+		expires := time.Unix(0, m.Expires)
+		delta := expires.Sub(now)
+		if delta < 0 {
+			delta = -delta
+		}
+		require.LessOrEqual(t, delta, window)
+
+		byName[name] = append(byName[name], entry{
+			generation: generation,
+			expires:    m.Expires,
+			releasedAt: m.ReleasedAt,
+		})
+	}
+
+	for name, entries := range byName {
+		last := len(entries) - 1
+		latest := entries[last].generation
+		for _, e := range entries[:last] {
+			if e.releasedAt != 0 {
+				continue
+			}
+			// Non-latest, non-tombstoned: only valid if already expired.
+			expiresAt := time.Unix(0, e.expires)
+			require.LessOrEqual(t, expiresAt, now,
+				"lease %q generation %d is not the latest (%d), has ReleasedAt == 0, and is not yet expired (Expires=%s, now=%s)",
+				name, e.generation, latest, expiresAt, now)
+		}
+	}
 }
