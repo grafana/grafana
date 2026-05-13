@@ -57,28 +57,42 @@ func (r *subAccessREST) Connect(ctx context.Context, name string, opts runtime.O
 	}), nil
 }
 
-// folderAccessAction is one row in the access check matrix: the legacy
-// action string the frontend keys off, and the (verb) that maps to it on
-// the folder.grafana.app/folders resource. The authz system walks the
-// parent chain via Zanzana when answering, so a single Check per action
-// is enough to capture inherited permissions.
+// folderAccessAction is one row in the access check matrix.
 type folderAccessAction struct {
-	Action string // legacy key, e.g. "folders:write"
-	Verb   string // authlib verb on folder.grafana.app/folders
+	Action   string // legacy key, e.g. "folders:write" / "dashboards:create"
+	Verb     string // authlib verb
+	Group    string // optional: defaults to folder.grafana.app
+	Resource string // optional: defaults to folders
 }
 
-// folderAccessActions enumerates the folder-domain actions returned in
-// AccessControl. Cross-domain inheritance (dashboards:*, library.panels:*,
-// alert.rules:*) is intentionally out of scope for v1 — those resources
-// live in legacy SQL and their permissions are not yet uniformly checkable
-// through authlib in MT.
+// folderAccessActions lists the legacy RBAC actions surfaced in AccessControl.
+//
+// Scope today: domains with a real *.grafana.app API group that are routed to
+// Zanzana via the authzLimitedClient allowlist in
+// pkg/storage/unified/resource/access.go — `folders` and `dashboards`. For
+// these, Check returns an authoritative answer (verified empirically against a
+// running Zanzana).
+//
+// Out of scope (returns false even when the user has the permission via legacy
+// SQL): `library.panels:*`, `alert.rules:*`, `alert.silences:*`,
+// `annotations:*`, and `dashboards.permissions:*`. Adding them would mislead
+// clients. Revisit once those resources land on unified storage with their own
+// API groups.
 var folderAccessActions = []folderAccessAction{
+	// Folder domain — Name = this folder, folder hint = immediate parent.
 	{Action: "folders:read", Verb: utils.VerbGet},
 	{Action: "folders:write", Verb: utils.VerbUpdate},
 	{Action: "folders:delete", Verb: utils.VerbDelete},
 	{Action: "folders:create", Verb: utils.VerbCreate},
 	{Action: "folders.permissions:read", Verb: utils.VerbGetPermissions},
 	{Action: "folders.permissions:write", Verb: utils.VerbSetPermissions},
+
+	// Dashboard domain — Name = "", folder hint = this folder. Asks
+	// "can the user act on a dashboard within this folder".
+	{Action: "dashboards:read", Verb: utils.VerbGet, Group: "dashboard.grafana.app", Resource: "dashboards"},
+	{Action: "dashboards:write", Verb: utils.VerbUpdate, Group: "dashboard.grafana.app", Resource: "dashboards"},
+	{Action: "dashboards:create", Verb: utils.VerbCreate, Group: "dashboard.grafana.app", Resource: "dashboards"},
+	{Action: "dashboards:delete", Verb: utils.VerbDelete, Group: "dashboard.grafana.app", Resource: "dashboards"},
 }
 
 func (r *subAccessREST) getAccessInfo(ctx context.Context, name string) (*foldersV1.FolderAccessInfo, error) {
@@ -110,13 +124,32 @@ func (r *subAccessREST) getAccessInfo(ctx context.Context, name string) (*folder
 	// parent UID, so we don't need to enumerate ancestors ourselves.
 	allowed := make(map[string]bool, len(folderAccessActions))
 	for _, a := range folderAccessActions {
+		group := a.Group
+		if group == "" {
+			group = foldersV1.GROUP
+		}
+		resource := a.Resource
+		if resource == "" {
+			resource = foldersV1.RESOURCE
+		}
+
+		// Semantics:
+		//   folder-domain  → "can the user do <verb> on THIS folder"
+		//                    Name=this folder UID, folder hint=immediate parent.
+		//   cross-domain   → "can the user do <verb> on resources WITHIN this folder"
+		//                    Name="", folder hint=this folder UID.
+		reqName, reqFolder := name, parent
+		if group != foldersV1.GROUP || resource != foldersV1.RESOURCE {
+			reqName, reqFolder = "", name
+		}
+
 		resp, err := r.accessClient.Check(ctx, user, authlib.CheckRequest{
 			Verb:      a.Verb,
-			Group:     foldersV1.GROUP,
-			Resource:  foldersV1.RESOURCE,
+			Group:     group,
+			Resource:  resource,
 			Namespace: ns.Value,
-			Name:      name,
-		}, parent)
+			Name:      reqName,
+		}, reqFolder)
 		if err != nil {
 			return nil, err
 		}
