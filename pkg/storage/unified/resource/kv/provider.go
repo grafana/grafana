@@ -8,15 +8,13 @@ import (
 	"runtime"
 	"sync"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana-app-sdk/logging"
 )
 
 // ErrKVUnavailable is returned by EventualKVProvider.Get when the storage
 // backend resolved to no local KV (e.g. storage_type=unified-grpc, or any
 // other configuration that does not produce a KV on this instance).
 var ErrKVUnavailable = errors.New("no KV store available in this configuration")
-
-var providerLog = log.New("eventual-kv-provider")
 
 // EventualKVProvider is a deferred KV store reference.
 //
@@ -94,11 +92,17 @@ func (p *EventualKVProvider) Get(ctx context.Context) (KV, error) {
 // logDuplicate emits a warning when Set or SetUnavailable is called after
 // the provider has already been resolved. skip=2 walks past logDuplicate
 // and Set/SetUnavailable to surface the offending call site.
+//
+// The logger is resolved on every call so warnings pick up whatever
+// logging.DefaultLogger has been replaced with at runtime, rather than
+// capturing the NoOp default at package-init time.
 func logDuplicate(method string) {
 	caller := "unknown"
 	if _, file, line, ok := runtime.Caller(2); ok {
 		caller = fmt.Sprintf("%s:%d", filepath.Base(file), line)
 	}
-	providerLog.Warn("EventualKVProvider already resolved; ignoring duplicate call",
-		"method", method, "caller", caller)
+	logging.DefaultLogger.With("logger", "eventual-kv-provider").Warn(
+		"EventualKVProvider already resolved; ignoring duplicate call",
+		"method", method, "caller", caller,
+	)
 }

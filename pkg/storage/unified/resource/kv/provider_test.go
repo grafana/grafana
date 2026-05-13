@@ -3,12 +3,13 @@ package kv
 import (
 	"bytes"
 	"context"
+	"log/slog"
 	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
 
-	gokitlog "github.com/go-kit/log"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/stretchr/testify/require"
 )
 
@@ -176,17 +177,18 @@ func TestEventualKVProvider_DuplicateSetLogsWarning(t *testing.T) {
 	require.Contains(t, out, "provider_test.go:")
 }
 
-// captureProviderLog swaps in a buffer-backed logger for the package-level
-// providerLog for the duration of the test and returns the buffer. The
-// underlying writer is synchronized so tests that emit warnings from
-// multiple goroutines (e.g. ConcurrentSet) don't race on the buffer.
-// The original logger is restored on cleanup.
+// captureProviderLog swaps logging.DefaultLogger for a buffer-backed
+// SLogLogger for the duration of the test and returns the buffer. The
+// original logger is restored on cleanup.
+//
+// The slog handler internally serializes writes, so concurrent emitters
+// (e.g. ConcurrentSet) don't race on the buffer.
 func captureProviderLog(t *testing.T) *bytes.Buffer {
 	t.Helper()
 	var buf bytes.Buffer
-	orig := providerLog.GetLogger()
-	providerLog.Swap(gokitlog.NewLogfmtLogger(gokitlog.NewSyncWriter(&buf)))
-	t.Cleanup(func() { providerLog.Swap(orig) })
+	orig := logging.DefaultLogger
+	logging.DefaultLogger = logging.NewSLogLogger(slog.NewTextHandler(&buf, nil))
+	t.Cleanup(func() { logging.DefaultLogger = orig })
 	return &buf
 }
 
