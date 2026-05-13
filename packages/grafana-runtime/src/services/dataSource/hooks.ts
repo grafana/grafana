@@ -39,13 +39,25 @@ export interface UseDataSourceInstanceResult {
   dataSource?: DataSourceApi;
 }
 
+let filterCallCounter = 0;
+
 function stableKey(value: unknown): string {
   return JSON.stringify(value ?? null);
+}
+
+function filtersKey(filters: GetDataSourceListFilters | undefined): string {
+  if (filters?.filter) {
+    return `fn:${++filterCallCounter}`;
+  }
+  return stableKey(filters);
 }
 
 /**
  * React hook wrapping {@link getDataSourceInstanceSettings}. Re-fetches when `ref`
  * changes (compared by value, so inline objects are safe).
+ *
+ * Template variable strings (e.g. `$ds` or `${ds}`) are not supported — interpolate
+ * them before passing the resolved uid or name to this hook.
  *
  * @public
  */
@@ -62,13 +74,15 @@ export function useDataSourceInstanceSettings(
  * React hook wrapping {@link getDataSourceInstanceSettingsList}. Items are flattened
  * across pages; call `fetchMore` to load additional pages. Items reset when
  * `filters` changes (compared by value, so inline objects are safe).
+ * When `filters.filter` (a callback) is set, the hook refetches on every
+ * render since function identity cannot be reliably compared.
  *
- * @public
+ * @internal
  */
 export function useDataSourceInstanceSettingsList(
   filters?: GetDataSourceListFilters
 ): UseDataSourceInstanceSettingsListResult {
-  const filtersKey = stableKey(filters);
+  const fKey = filtersKey(filters);
 
   const [items, setItems] = useState<DataSourceInstanceSettings[]>([]);
   const [cursor, setCursor] = useState<string | undefined>(undefined);
@@ -77,7 +91,7 @@ export function useDataSourceInstanceSettingsList(
   const [fetchState, fetchPage] = useAsyncFn(
     (nextCursor?: string) => getDataSourceInstanceSettingsList({ filters, cursor: nextCursor }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [filtersKey],
+    [fKey],
     { loading: true }
   );
 
@@ -111,6 +125,9 @@ export function useDataSourceInstanceSettingsList(
 /**
  * React hook wrapping {@link getDataSourceInstance}. Re-fetches when `ref`
  * changes (compared by value, so inline objects are safe).
+ *
+ * Template variable strings (e.g. `$ds` or `${ds}`) are not supported — interpolate
+ * them before passing the resolved uid or name to this hook.
  *
  * @public
  */
