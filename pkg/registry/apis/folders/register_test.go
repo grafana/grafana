@@ -142,6 +142,7 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 			us := grafanarest.NewMockStorage(t)
 
 			b := &FolderAPIBuilder{
+				namespacer:           func(_ int64) string { return "123" },
 				storage:              us,
 				parents:              newParentsGetter(us, 2),
 				maxNestedFolderDepth: setting.NewCfg().MaxNestedFolderDepth,
@@ -283,8 +284,9 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 			).Once()
 
 			b := &FolderAPIBuilder{
-				storage:  us,
-				searcher: sm,
+				namespacer: func(_ int64) string { return "123" },
+				storage:    us,
+				searcher:   sm,
 			}
 
 			err := b.Validate(context.Background(), admission.NewAttributesRecord(
@@ -474,9 +476,10 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 			}
 
 			b := &FolderAPIBuilder{
-				storage:  us,
-				searcher: sm,
-				parents:  newParentsGetter(us, setting.NewCfg().MaxNestedFolderDepth),
+				namespacer: func(_ int64) string { return "123" },
+				storage:    us,
+				searcher:   sm,
+				parents:    newParentsGetter(us, setting.NewCfg().MaxNestedFolderDepth),
 			}
 
 			err := b.Validate(context.Background(), admission.NewAttributesRecord(
@@ -566,9 +569,10 @@ func TestFolderAPIBuilder_Mutate_Create(t *testing.T) {
 			us := grafanarest.NewMockStorage(t)
 			sm := resource.NewMockResourceClient(t)
 			b := &FolderAPIBuilder{
-				storage:  us,
-				searcher: sm,
-				parents:  newParentsGetter(us, setting.NewCfg().MaxNestedFolderDepth),
+				namespacer: func(_ int64) string { return "123" },
+				storage:    us,
+				searcher:   sm,
+				parents:    newParentsGetter(us, setting.NewCfg().MaxNestedFolderDepth),
 			}
 			admAttr := admission.NewAttributesRecord(
 				tt.input,
@@ -670,9 +674,10 @@ func TestFolderAPIBuilder_Mutate_Update(t *testing.T) {
 	us := grafanarest.NewMockStorage(t)
 	sm := resource.NewMockResourceClient(t)
 	b := &FolderAPIBuilder{
-		storage:  us,
-		searcher: sm,
-		parents:  newParentsGetter(us, setting.NewCfg().MaxNestedFolderDepth),
+		namespacer: func(_ int64) string { return "123" },
+		storage:    us,
+		searcher:   sm,
+		parents:    newParentsGetter(us, setting.NewCfg().MaxNestedFolderDepth),
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
