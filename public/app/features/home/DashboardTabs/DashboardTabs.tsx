@@ -126,8 +126,9 @@ export function DashboardTabs() {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   tabContent: css({
-    // Remove default TabContent padding — list items handle their own
     padding: 0,
+    maxHeight: 256,
+    overflowY: 'auto',
   }),
   linkTabsSpacer: css({
     flex: 1,
