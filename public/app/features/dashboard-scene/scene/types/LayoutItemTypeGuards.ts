@@ -9,9 +9,9 @@ export interface TabItemLike extends SceneObject {
 }
 
 export function isRowItem(object: SceneObject): object is RowItemLike {
-  return (object as Partial<RowItemLike>).dashboardLayoutItemType === 'row';
+  return 'dashboardLayoutItemType' in object && object.dashboardLayoutItemType === 'row';
 }
 
 export function isTabItem(object: SceneObject): object is TabItemLike {
-  return (object as Partial<TabItemLike>).dashboardLayoutItemType === 'tab';
+  return 'dashboardLayoutItemType' in object && object.dashboardLayoutItemType === 'tab';
 }
