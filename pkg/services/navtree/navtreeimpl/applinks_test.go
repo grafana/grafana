@@ -376,6 +376,108 @@ func TestAddAppLinks(t *testing.T) {
 	})
 }
 
+func TestAssistantStubNav(t *testing.T) {
+	httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
+	reqCtx := &contextmodel.ReqContext{SignedInUser: &user.SignedInUser{}, Context: &web.Context{Req: httpReq}}
+	installerPermissions := []ac.Permission{
+		{Action: pluginaccesscontrol.ActionAppAccess, Scope: "*"},
+		{Action: pluginaccesscontrol.ActionInstall},
+	}
+	nonInstallerPermissions := []ac.Permission{
+		{Action: pluginaccesscontrol.ActionAppAccess, Scope: "*"},
+	}
+
+	assistantPlugin := pluginstore.Plugin{
+		JSONData: plugins.JSONData{
+			ID:   "grafana-assistant-app",
+			Name: "Grafana Assistant",
+			Type: plugins.TypeApp,
+			Includes: []*plugins.Includes{
+				{Name: "Workspace", Path: "/a/grafana-assistant-app/workspace", Type: "page", AddToNav: true},
+			},
+		},
+	}
+
+	newService := func(togglesOn bool, permissions []ac.Permission, plugins ...pluginstore.Plugin) *ServiceImpl {
+		settings := pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{}}
+		for _, p := range plugins {
+			settings.Plugins[p.ID] = &pluginsettings.DTO{ID: 0, OrgID: 1, PluginID: p.ID, PluginVersion: "1.0.0", Enabled: true}
+		}
+
+		var features featuremgmt.FeatureToggles
+		if togglesOn {
+			features = featuremgmt.WithFeatures(featuremgmt.FlagAssistantStubNav)
+		} else {
+			features = featuremgmt.WithFeatures()
+		}
+
+		s := &ServiceImpl{
+			log:            log.New("navtree"),
+			cfg:            setting.NewCfg(),
+			accessControl:  accesscontrolmock.New().WithPermissions(permissions),
+			pluginSettings: &settings,
+			features:       features,
+			pluginStore:    &pluginstore.FakePluginStore{PluginList: plugins},
+		}
+		s.readNavigationSettings()
+		return s
+	}
+
+	t.Run("stub appears with the plugin's URL when toggle is on, plugin not installed, user can install", func(t *testing.T) {
+		service := newService(true, installerPermissions)
+		treeRoot := navtree.NavTreeRoot{}
+
+		require.NoError(t, service.addAppLinks(&treeRoot, reqCtx))
+
+		stub := treeRoot.FindById(navtree.NavIDAssistant)
+		require.NotNil(t, stub, "expected an assistant stub nav node")
+		require.Equal(t, "Assistant", stub.Text)
+		require.Equal(t, "/a/grafana-assistant-app", stub.Url, "stub must point at the plugin's canonical URL so the navtree never has to mutate when install state changes")
+		require.Equal(t, "ai-sparkle", stub.Icon)
+		require.Empty(t, stub.PluginID, "stub should not advertise a plugin id")
+	})
+
+	t.Run("stub is suppressed when the plugin is installed and enabled", func(t *testing.T) {
+		service := newService(true, installerPermissions, assistantPlugin)
+		treeRoot := navtree.NavTreeRoot{}
+
+		require.NoError(t, service.addAppLinks(&treeRoot, reqCtx))
+
+		require.Nil(t, treeRoot.FindById(navtree.NavIDAssistant), "stub should not be added when plugin is enabled")
+		require.NotNil(t, treeRoot.FindById("plugin-page-grafana-assistant-app"), "real plugin nav should be present")
+	})
+
+	t.Run("stub is suppressed when the plugin is enabled but the current user lacks app-access", func(t *testing.T) {
+		// Plugin is installed and enabled at the org level but the user has neither app-access nor install
+		// permission. The stub must NOT appear — surfacing a "go install" CTA to a user for whom the plugin
+		// already exists (just hidden from them) would be wrong.
+		service := newService(true, []ac.Permission{}, assistantPlugin)
+		treeRoot := navtree.NavTreeRoot{}
+
+		require.NoError(t, service.addAppLinks(&treeRoot, reqCtx))
+
+		require.Nil(t, treeRoot.FindById(navtree.NavIDAssistant), "stub should be suppressed when plugin is enabled regardless of access")
+	})
+
+	t.Run("stub is suppressed when the user lacks plugins:install permission", func(t *testing.T) {
+		service := newService(true, nonInstallerPermissions)
+		treeRoot := navtree.NavTreeRoot{}
+
+		require.NoError(t, service.addAppLinks(&treeRoot, reqCtx))
+
+		require.Nil(t, treeRoot.FindById(navtree.NavIDAssistant), "stub should not appear for users who can't install plugins")
+	})
+
+	t.Run("stub does not appear when toggle is off", func(t *testing.T) {
+		service := newService(false, installerPermissions)
+		treeRoot := navtree.NavTreeRoot{}
+
+		require.NoError(t, service.addAppLinks(&treeRoot, reqCtx))
+
+		require.Nil(t, treeRoot.FindById(navtree.NavIDAssistant))
+	})
+}
+
 func TestBuildDataConnectionsNavLink(t *testing.T) {
 	httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
 	reqCtx := &contextmodel.ReqContext{SignedInUser: &user.SignedInUser{}, Context: &web.Context{Req: httpReq}}

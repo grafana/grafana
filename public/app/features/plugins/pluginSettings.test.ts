@@ -115,11 +115,21 @@ describe('PluginSettings', () => {
     expect(getRequestSpy).toHaveBeenCalledTimes(2);
   });
 
-  it('should reject with Unknown Plugin message if error status is not 403 or 401', async () => {
+  it('should preserve a 404 FetchError shape so callers can discriminate "plugin not installed"', async () => {
     const error = { status: 404, message: 'Not found' };
     jest.spyOn(getBackendSrv(), 'get').mockRejectedValue(error);
 
-    await expect(getPluginSettings('test')).rejects.toEqual(new Error('Unknown Plugin'));
+    // The previous behaviour wrapped 404 in `new Error('Unknown Plugin')`, which discarded the status
+    // and prevented downstream code (e.g. AppRootPage's onboarding fallback) from telling a 404 apart
+    // from a real backend failure.
+    await expect(getPluginSettings('test')).rejects.toEqual(error);
+  });
+
+  it('should preserve a 5xx FetchError shape (no isHandled mark)', async () => {
+    const error = { status: 500, message: 'Internal Server Error' };
+    jest.spyOn(getBackendSrv(), 'get').mockRejectedValue(error);
+
+    await expect(getPluginSettings('test')).rejects.toEqual(error);
   });
 
   it('should reject thrown error if error status is 403', async () => {
@@ -134,5 +144,13 @@ describe('PluginSettings', () => {
     jest.spyOn(getBackendSrv(), 'get').mockRejectedValue(error);
 
     await expect(getPluginSettings('test')).rejects.toEqual({ ...error, isHandled: true });
+  });
+
+  it('should fall back to the opaque "Unknown Plugin" Error for status-less rejections', async () => {
+    // Network error / JSON parse failure / similar — no status field. Keep the legacy shape so
+    // pre-existing callers that don't read status keep working.
+    jest.spyOn(getBackendSrv(), 'get').mockRejectedValue(new TypeError('NetworkError'));
+
+    await expect(getPluginSettings('test')).rejects.toEqual(new Error('Unknown Plugin'));
   });
 });

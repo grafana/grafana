@@ -9,6 +9,7 @@ import { setEchoSrv } from '@grafana/runtime';
 import { GrafanaRouteWrapper } from 'app/core/navigation/GrafanaRoute';
 import { contextSrv } from 'app/core/services/context_srv';
 import { Echo } from 'app/core/services/echo/Echo';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { ExtensionRegistriesProvider } from '../extensions/ExtensionRegistriesContext';
 import { AddedComponentsRegistry } from '../extensions/registry/AddedComponentsRegistry';
@@ -19,6 +20,7 @@ import { pluginImporter } from '../importer/pluginImporter';
 import { getPluginSettings } from '../pluginSettings';
 
 import AppRootPage from './AppRootPage';
+import { pluginNavFallbacks } from './pluginNavFallbacks';
 
 jest.mock('../pluginSettings', () => ({
   getPluginSettings: jest.fn(),
@@ -137,6 +139,13 @@ describe('AppRootPage', () => {
   beforeEach(() => {
     jest.resetAllMocks();
     setEchoSrv(new Echo());
+    // Default: user can install plugins. Specific tests override this to exercise the unauthorized
+    // path where fallbacks should NOT render.
+    contextSrv.user.permissions = { [AccessControlAction.PluginsInstall]: true };
+  });
+
+  afterEach(() => {
+    contextSrv.user.permissions = {};
   });
 
   const pluginMeta = getMockPlugin({
@@ -145,12 +154,136 @@ describe('AppRootPage', () => {
     enabled: true,
   });
 
+  // Shape that matches isFetchError ({ status, data, ... }). We rely on this rather than a plain Error
+  // so the production code can differentiate "plugin not installed" (404) from real backend failures.
+  const fetchError = (status: number) => ({ status, data: { message: `status ${status}` } });
+
   it("should show a not found page if the plugin settings can't load", async () => {
     jest.spyOn(console, 'error').mockImplementation();
     getPluginSettingsMock.mockRejectedValue(new Error('Unknown Plugin'));
     // Renders once for the first time
     renderUnderRouter();
     expect(await screen.findByText('App not found')).toBeVisible();
+  });
+
+  it('renders a registered nav fallback component when settings returns 404', async () => {
+    jest.spyOn(console, 'error').mockImplementation();
+    getPluginSettingsMock.mockRejectedValue(fetchError(404));
+
+    // Inject a fallback for the pluginId the renderUnderRouter helper uses, then restore.
+    const FALLBACK_TEXT = 'fallback-onboarding-page';
+    const Fallback = () => <div>{FALLBACK_TEXT}</div>;
+    pluginNavFallbacks['my-awesome-plugin'] = Fallback;
+
+    try {
+      renderUnderRouter();
+      expect(await screen.findByText(FALLBACK_TEXT)).toBeVisible();
+      expect(screen.queryByText('App not found')).not.toBeInTheDocument();
+    } finally {
+      delete pluginNavFallbacks['my-awesome-plugin'];
+    }
+  });
+
+  it('does NOT render the fallback when settings returns 5xx (real backend failure)', async () => {
+    jest.spyOn(console, 'error').mockImplementation();
+    getPluginSettingsMock.mockRejectedValue(fetchError(500));
+
+    const FALLBACK_TEXT = 'fallback-onboarding-page';
+    const Fallback = () => <div>{FALLBACK_TEXT}</div>;
+    pluginNavFallbacks['my-awesome-plugin'] = Fallback;
+
+    try {
+      renderUnderRouter();
+      // 500 is a real failure, not "plugin not installed" — show the not-found UI rather than the
+      // onboarding stub, so the user knows something went wrong.
+      expect(await screen.findByText('App not found')).toBeVisible();
+      expect(screen.queryByText(FALLBACK_TEXT)).not.toBeInTheDocument();
+    } finally {
+      delete pluginNavFallbacks['my-awesome-plugin'];
+    }
+  });
+
+  it('does NOT render the fallback when settings returns 403', async () => {
+    jest.spyOn(console, 'error').mockImplementation();
+    getPluginSettingsMock.mockRejectedValue(fetchError(403));
+
+    const FALLBACK_TEXT = 'fallback-onboarding-page';
+    const Fallback = () => <div>{FALLBACK_TEXT}</div>;
+    pluginNavFallbacks['my-awesome-plugin'] = Fallback;
+
+    try {
+      renderUnderRouter();
+      expect(await screen.findByText('App not found')).toBeVisible();
+      expect(screen.queryByText(FALLBACK_TEXT)).not.toBeInTheDocument();
+    } finally {
+      delete pluginNavFallbacks['my-awesome-plugin'];
+    }
+  });
+
+  it('does NOT render the fallback when the user lacks plugins:install', async () => {
+    jest.spyOn(console, 'error').mockImplementation();
+    getPluginSettingsMock.mockRejectedValue(fetchError(404));
+    contextSrv.user.permissions = {};
+
+    const FALLBACK_TEXT = 'fallback-onboarding-page';
+    const Fallback = () => <div>{FALLBACK_TEXT}</div>;
+    pluginNavFallbacks['my-awesome-plugin'] = Fallback;
+
+    try {
+      renderUnderRouter();
+      // Without install permission, the fallback's "go install" CTA would be useless. Standardize
+      // on the existing not-found UI for unauthorized users — same as every other unavailable
+      // plugin URL in Grafana.
+      expect(await screen.findByText('App not found')).toBeVisible();
+      expect(screen.queryByText(FALLBACK_TEXT)).not.toBeInTheDocument();
+    } finally {
+      delete pluginNavFallbacks['my-awesome-plugin'];
+    }
+  });
+
+  it('does NOT render the fallback when the error is not a FetchError (e.g. import failure)', async () => {
+    jest.spyOn(console, 'error').mockImplementation();
+    // A plain Error stands in for an unexpected throw, e.g. pluginImporter.importApp blowing up.
+    // No HTTP status → can't be a 404 → we should not silently morph this into onboarding.
+    getPluginSettingsMock.mockRejectedValue(new Error('boom'));
+
+    const FALLBACK_TEXT = 'fallback-onboarding-page';
+    const Fallback = () => <div>{FALLBACK_TEXT}</div>;
+    pluginNavFallbacks['my-awesome-plugin'] = Fallback;
+
+    try {
+      renderUnderRouter();
+      expect(await screen.findByText('App not found')).toBeVisible();
+      expect(screen.queryByText(FALLBACK_TEXT)).not.toBeInTheDocument();
+    } finally {
+      delete pluginNavFallbacks['my-awesome-plugin'];
+    }
+  });
+
+  it('suppresses the backend auto-toast for plugins with a registered fallback', async () => {
+    jest.spyOn(console, 'error').mockImplementation();
+    getPluginSettingsMock.mockRejectedValue(fetchError(404));
+
+    const Fallback = () => <div>fallback</div>;
+    pluginNavFallbacks['my-awesome-plugin'] = Fallback;
+
+    try {
+      renderUnderRouter();
+      await screen.findByText('fallback');
+      expect(getPluginSettingsMock).toHaveBeenCalledWith('my-awesome-plugin', { showErrorAlert: false });
+    } finally {
+      delete pluginNavFallbacks['my-awesome-plugin'];
+    }
+  });
+
+  it('does NOT suppress the backend auto-toast for plugins without a registered fallback', async () => {
+    jest.spyOn(console, 'error').mockImplementation();
+    getPluginSettingsMock.mockRejectedValue(new Error('Unknown Plugin'));
+
+    renderUnderRouter();
+    await screen.findByText('App not found');
+    // No fallback for "my-awesome-plugin" → second arg should be undefined so the auto-toast still fires.
+    expect(getPluginSettingsMock).toHaveBeenCalledWith('my-awesome-plugin', undefined);
   });
 
   it('should not render the component if we are not under a plugin path', async () => {

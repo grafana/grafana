@@ -1,6 +1,6 @@
 // Libraries
 import { type AnyAction, createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import { useCallback, useEffect, useMemo, useReducer } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useReducer } from 'react';
 import * as React from 'react';
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 
@@ -15,7 +15,7 @@ import {
   PluginContextProvider,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, locationSearchToObject } from '@grafana/runtime';
+import { config, isFetchError, locationSearchToObject } from '@grafana/runtime';
 import { getLogger } from '@grafana/runtime/unstable';
 import { Alert, ErrorWithStack } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
@@ -26,6 +26,7 @@ import { useGrafana } from 'app/core/context/GrafanaContext';
 import { getNotFoundNav, getWarningNav, getExceptionNav } from 'app/core/navigation/errorModels';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getMessageFromError } from 'app/core/utils/errors';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import {
   ExtensionRegistriesProvider,
@@ -40,6 +41,7 @@ import { buildPluginSectionNav } from '../utils';
 
 import { PluginErrorBoundary } from './PluginErrorBoundary';
 import { buildPluginPageContext, PluginPageContext } from './PluginPageContext';
+import { pluginNavFallbacks } from './pluginNavFallbacks';
 import { RestrictedGrafanaApisProvider } from './restrictedGrafanaApis/RestrictedGrafanaApisProvider';
 
 interface Props {
@@ -53,6 +55,11 @@ interface Props {
 interface State {
   loading: boolean;
   loadingError: boolean;
+  // HTTP status from a settings fetch failure, if any. Only a 404 is interpreted as "plugin is not
+  // installed" and triggers a registered fallback; other failures (401/403/5xx/network/import) keep
+  // the existing not-found UI and re-emit a user-facing alert so backend errors don't silently
+  // morph into the onboarding stub.
+  errorStatus?: number;
   plugin?: AppPlugin | null;
   // Used to display a tab navigation (used before the new Top Nav)
   pluginNav: NavModel | null;
@@ -70,7 +77,7 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
   const location = useLocation();
   const [state, dispatch] = useReducer(stateSlice.reducer, initialState);
   const currentUrl = config.appSubUrl + location.pathname + location.search;
-  const { plugin, loading, loadingError, pluginNav } = state;
+  const { plugin, loading, loadingError, errorStatus, pluginNav } = state;
   const navModel = buildPluginSectionNav(currentUrl, pluginNavSection);
   const queryParams = useMemo(() => locationSearchToObject(location.search), [location.search]);
   const context = useMemo(() => buildPluginPageContext(navModel), [navModel]);
@@ -88,10 +95,25 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
   if (!plugin || pluginId !== plugin.meta.id) {
     // Use current layout while loading to reduce flickering
     const currentLayout = grafanaContext.chrome.state.getValue().layout;
+    // Only render a registered fallback when the settings fetch returned 404 — that is the genuine
+    // "plugin is not installed" signal. Other failures (auth, server, import) keep the not-found UI
+    // and the user gets a real toast (re-emitted in loadAppPlugin's catch).
+    //
+    // Also gate on plugins:install. Fallbacks are conceptually onboarding screens that direct the
+    // user to install; for users without that permission we fall through to the standard not-found
+    // UI so this matches how every other unavailable plugin URL behaves in Grafana.
+    const canInstallPlugins = contextSrv.hasPermission(AccessControlAction.PluginsInstall);
+    const FallbackComponent =
+      !loading && loadingError && errorStatus === 404 && canInstallPlugins ? pluginNavFallbacks[pluginId] : undefined;
     return (
       <Page navModel={navModel} pageNav={{ text: '' }} layout={currentLayout}>
         {loading && <PageLoader />}
-        {!loading && loadingError && <EntityNotFound entity="App" />}
+        {!loading && loadingError && FallbackComponent && (
+          <Suspense fallback={<PageLoader />}>
+            <FallbackComponent />
+          </Suspense>
+        )}
+        {!loading && loadingError && !FallbackComponent && <EntityNotFound entity="App" />}
       </Page>
     );
   }
@@ -228,8 +250,14 @@ const stateSlice = createSlice({
 });
 
 async function loadAppPlugin(pluginId: string, dispatch: React.Dispatch<AnyAction>) {
+  // For plugins with a registered nav fallback, the dummy fallback component IS the inline error UI
+  // for the "plugin is not installed" (404) case, so the backend's auto-toast there is just redundant
+  // noise. Suppressing it follows the same pattern Login uses. Failures other than 404 are NOT silent
+  // — we re-emit the alert from the catch block so backend errors still surface to the user.
+  const hasFallback = pluginNavFallbacks[pluginId] !== undefined;
+  const settingsRequestOptions = hasFallback ? { showErrorAlert: false } : undefined;
   try {
-    const app = await getPluginSettings(pluginId).then((info) => {
+    const app = await getPluginSettings(pluginId, settingsRequestOptions).then((info) => {
       const error = getAppPluginPageError(info);
       if (error) {
         appEvents.emit(AppEvents.alertError, [error]);
@@ -238,13 +266,29 @@ async function loadAppPlugin(pluginId: string, dispatch: React.Dispatch<AnyActio
       }
       return pluginImporter.importApp(info);
     });
-    dispatch(stateSlice.actions.setState({ plugin: app, loading: false, loadingError: false, pluginNav: null }));
+    dispatch(
+      stateSlice.actions.setState({
+        plugin: app,
+        loading: false,
+        loadingError: false,
+        errorStatus: undefined,
+        pluginNav: null,
+      })
+    );
   } catch (err) {
+    const errorStatus = isFetchError(err) ? err.status : undefined;
+    // We suppressed the auto-toast assuming a 404. Anything else (401/403/5xx, network, import error)
+    // must still produce a user-visible alert — otherwise a real backend failure silently morphs into
+    // the onboarding fallback and the user has no idea why nothing works.
+    if (hasFallback && errorStatus !== 404) {
+      appEvents.emit(AppEvents.alertError, [getMessageFromError(err)]);
+    }
     dispatch(
       stateSlice.actions.setState({
         plugin: null,
         loading: false,
         loadingError: true,
+        errorStatus,
         pluginNav: process.env.NODE_ENV === 'development' ? getExceptionNav(err) : getNotFoundNav(),
       })
     );

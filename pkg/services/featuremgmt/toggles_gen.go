@@ -535,6 +535,10 @@ const (
 	// Enables Advisor app
 	FlagGrafanaAdvisor = "grafanaAdvisor"
 
+	// FlagAssistantStubNav
+	// Show a Grafana Assistant entry in the main nav with an onboarding stub when the assistant app plugin is not installed.
+	FlagAssistantStubNav = "assistantStubNav"
+
 	// FlagElasticsearchImprovedParsing
 	// Enables less memory intensive Elasticsearch result parsing
 	FlagElasticsearchImprovedParsing = "elasticsearchImprovedParsing"
