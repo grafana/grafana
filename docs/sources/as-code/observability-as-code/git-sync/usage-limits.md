@@ -50,7 +50,7 @@ The following Git Sync per-tier limits apply:
 
 ### Modify your usage limits
 
-Before changing your usage limits, study your specific use case. Define the governance you'd like to set when you design the repository structure and how many repositories and how many resources you can support. For example, setting over 1,000 resources per repository may impact your system's performance.
+Before changing your usage limits, study your specific use case. Design the repository structure carefully, and determine how many repositories and how many resources you can support. For example, setting over 1,000 resources per repository may impact your system's performance.
 
 If you're a Cloud user, contact Support to modify the amount of repositories you can sync.
 
