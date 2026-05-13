@@ -1,8 +1,10 @@
+import { type VariableModel } from '@grafana/schema';
+
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../variables/constants';
 
 import { LegacyVariableWrapper } from './LegacyVariableWrapper';
 
-const makeVariable = (name = 'test', type = 'query') => ({ name, type }) as any;
+const makeVariable = (name = 'test', type = 'query') => ({ name, type }) as unknown as VariableModel;
 
 describe('LegacyVariableWrapper', () => {
   describe('getValue', () => {
@@ -53,7 +55,7 @@ describe('LegacyVariableWrapper', () => {
 
     it('falls back to String() for non-string non-array text without logging', () => {
       const spy = jest.spyOn(console, 'log');
-      const wrapper = new LegacyVariableWrapper(makeVariable(), 99, 99 as any);
+      const wrapper = new LegacyVariableWrapper(makeVariable(), 99, 99 as unknown as string);
       expect(wrapper.getValueText()).toBe('99');
       expect(spy).not.toHaveBeenCalled();
       spy.mockRestore();
