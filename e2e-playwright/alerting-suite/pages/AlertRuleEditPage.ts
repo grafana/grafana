@@ -186,42 +186,6 @@ export class AlertRuleEditPage {
     await this.saveButton.click();
   }
 
-  // ---------- Composite happy-path flows ----------
-
-  async createGrafanaRuleInGroup(opts: {
-    name: string;
-    folder: string;
-    group: string;
-    contactPoint: string;
-    dataSource?: string;
-  }): Promise<void> {
-    await this.setName(opts.name);
-    if (opts.dataSource) {
-      await this.selectQueryDataSource(opts.dataSource);
-    }
-    await this.selectFolder(opts.folder);
-    await this.useExistingGroup(opts.group);
-    await this.setManualRouting(opts.contactPoint);
-    await this.save();
-  }
-
-  async createUngroupedGrafanaRule(opts: {
-    name: string;
-    folder: string;
-    interval: string;
-    contactPoint: string;
-    dataSource?: string;
-  }): Promise<void> {
-    await this.setName(opts.name);
-    if (opts.dataSource) {
-      await this.selectQueryDataSource(opts.dataSource);
-    }
-    await this.selectFolder(opts.folder);
-    await this.setEvaluationInterval(opts.interval);
-    await this.setManualRouting(opts.contactPoint);
-    await this.save();
-  }
-
   // ---------- Locators (public when tests assert on them; otherwise protected) ----------
 
   protected get nameInput(): Locator {

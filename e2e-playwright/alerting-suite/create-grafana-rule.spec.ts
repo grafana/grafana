@@ -1,5 +1,6 @@
 import { type APIRequestContext } from '@playwright/test';
 
+import { type GrafanaConfig } from '@grafana/data';
 import { test, expect } from '@grafana/plugin-e2e';
 
 import { AlertRuleEditPage } from './pages/AlertRuleEditPage';
@@ -193,7 +194,7 @@ test.describe('Grafana-managed alert rule creation', () => {
       // Resolve the k8s namespace from the Grafana boot config, the same way the
       // frontend does (getAPINamespace → config.namespace).
       const settings = await request.get('/api/frontend/settings');
-      const namespace = (await settings.json()).namespace as string;
+      const { namespace } = (await settings.json()) as GrafanaConfig;
 
       const response = await request.post(
         `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/${namespace}/alertrules`,
@@ -211,11 +212,11 @@ test.describe('Grafana-managed alert rule creation', () => {
               expressions: {
                 A: {
                   model: {
-                    datasource: { type: 'grafana-testdata-datasource', uid: dataSource },
+                    datasource: { type: 'grafana-testdata-datasource', uid: dataSourceUid },
                     refId: 'A',
                     scenarioId: 'random_walk',
                   },
-                  datasourceUID: dataSource,
+                  datasourceUID: dataSourceUid,
                   queryType: '',
                   relativeTimeRange: { from: '10m', to: '0' },
                   source: false,
