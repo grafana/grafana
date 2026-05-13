@@ -34,10 +34,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	storagekv "github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	embedderprovider "github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder/provider"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
+	sqldb "github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"go.opentelemetry.io/otel"
 )
 
@@ -58,8 +60,10 @@ func NewModule(opts Options,
 	hooksService *hooks.HooksService,
 	storeProvider zStore.StoreProvider,
 	reconcileCRDs []schema.GroupVersionResource,
+	kvStore storagekv.KV,
+	eDB sqldb.DBProvider,
 ) (*ModuleServer, error) {
-	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, reg, promGatherer, license, moduleRegisterer, storageBackend, hooksService, storeProvider, reconcileCRDs)
+	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, reg, promGatherer, license, moduleRegisterer, storageBackend, hooksService, storeProvider, reconcileCRDs, kvStore, eDB)
 	if err != nil {
 		return nil, err
 	}
@@ -85,6 +89,8 @@ func newModuleServer(opts Options,
 	hooksService *hooks.HooksService,
 	storeProvider zStore.StoreProvider,
 	reconcileCRDs []schema.GroupVersionResource,
+	kvStore storagekv.KV,
+	eDB sqldb.DBProvider,
 ) (*ModuleServer, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 
@@ -114,6 +120,8 @@ func newModuleServer(opts Options,
 		license:          license,
 		moduleRegisterer: moduleRegisterer,
 		storageBackend:   storageBackend,
+		kvStore:          kvStore,
+		eDB:              eDB,
 		hooksService:     hooksService,
 		searchClient:     searchClient,
 		healthNotifier:   NewHealthNotifier(),
@@ -141,6 +149,8 @@ type ModuleServer struct {
 	isInitialized    bool
 	mtx              sync.Mutex
 	storageBackend   resource.StorageBackend
+	kvStore          storagekv.KV
+	eDB              sqldb.DBProvider
 	vectorBackend    vector.VectorBackend
 	embedder         *embedder.Embedder
 	searchClient     resourcepb.ResourceIndexClient
@@ -237,7 +247,7 @@ func (s *ModuleServer) Run() error {
 		if s.storageBackend == nil {
 			// If storage server not being used, disable GC, pruner, and RV manager
 			disableStorageServices := !m.IsModuleEnabled(modules.StorageServer)
-			s.storageBackend, err = sql.NewStorageBackend(s.cfg, nil, s.registerer, s.storageMetrics, disableStorageServices)
+			s.storageBackend, err = sql.NewStorageBackend(s.cfg, s.eDB, s.registerer, s.storageMetrics, disableStorageServices, s.kvStore)
 			if err != nil {
 				return nil, err
 			}

@@ -32,10 +32,12 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/federated"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
+	sqldb "github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/util/scheduler"
 )
 
@@ -50,6 +52,8 @@ type Options struct {
 	SecureValues  secrets.InlineSecureValueSupport
 	VectorBackend vector.VectorBackend
 	Embedder      *embedder.Embedder
+	KV            kv.KV
+	EDB           sqldb.DBProvider
 }
 
 type clientMetrics struct {
@@ -71,7 +75,7 @@ func ProvideUnifiedStorageClient(opts *Options,
 		BlobStoreURL:            apiserverCfg.Key("blob_url").MustString(""),
 		BlobThresholdBytes:      apiserverCfg.Key("blob_threshold_bytes").MustInt(options.BlobThresholdDefault),
 		GrpcClientKeepaliveTime: apiserverCfg.Key("grpc_client_keepalive_time").MustDuration(0),
-	}, opts.Cfg, opts.Features, opts.DB, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, opts.SecureValues, opts.VectorBackend, opts.Embedder)
+	}, opts.Cfg, opts.Features, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, opts.SecureValues, opts.VectorBackend, opts.Embedder, opts.KV, opts.EDB)
 	if err == nil {
 		// Used to get the folder stats
 		// Pass cfg directly so the federated client reads the current dual-writer mode
@@ -90,7 +94,6 @@ func ProvideUnifiedStorageClient(opts *Options,
 func newClient(opts options.StorageOptions,
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
-	db infraDB.DB,
 	tracer tracing.Tracer,
 	reg prometheus.Registerer,
 	authzc types.AccessClient,
@@ -100,12 +103,14 @@ func newClient(opts options.StorageOptions,
 	secure secrets.InlineSecureValueSupport,
 	vectorBackend vector.VectorBackend,
 	embedderInstance *embedder.Embedder,
+	kvStore kv.KV,
+	eDB sqldb.DBProvider,
 ) (resource.ResourceClient, error) {
 	ctx := context.Background()
 
 	switch opts.StorageType {
 	case options.StorageTypeFile:
-		backend, err := sql.NewFileBackend(cfg)
+		backend, err := sql.NewFileBackend(cfg, kvStore)
 		if err != nil {
 			return nil, err
 		}
@@ -157,7 +162,7 @@ func newClient(opts options.StorageOptions,
 			return nil, err
 		}
 
-		backend, err := sql.NewStorageBackend(cfg, db, reg, storageMetrics, false)
+		backend, err := sql.NewStorageBackend(cfg, eDB, reg, storageMetrics, false, kvStore)
 		if err != nil {
 			return nil, err
 		}

@@ -527,6 +527,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	_ "github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder/provider"
 	_ "github.com/grafana/grafana/pkg/storage/unified/search/vector"
+	_ "github.com/grafana/grafana/pkg/storage/unified/sql"
 	_ "github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	_ "github.com/grafana/grafana/pkg/tests/apis"
 	_ "github.com/grafana/grafana/pkg/tsdb/azuremonitor"

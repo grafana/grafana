@@ -563,6 +563,14 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
+	dbProvider, err := sql.ProvideResourceDB(cfg, sqlStore)
+	if err != nil {
+		return nil, err
+	}
+	kv, err := sql.ProvideKV(cfg, dbProvider)
+	if err != nil {
+		return nil, err
+	}
 	options := &unified.Options{
 		Cfg:           cfg,
 		Features:      featureToggles,
@@ -574,6 +582,8 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 		SecureValues:  inlineSecureValueSupport,
 		VectorBackend: vectorBackend,
 		Embedder:      embedder,
+		KV:            kv,
+		EDB:           dbProvider,
 	}
 	storageMetrics := resource.ProvideStorageMetrics(registerer)
 	bleveIndexMetrics := resource.ProvideIndexMetrics(registerer)
@@ -1274,6 +1284,14 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
+	dbProvider, err := sql.ProvideResourceDB(cfg, sqlStore)
+	if err != nil {
+		return nil, err
+	}
+	kv, err := sql.ProvideKV(cfg, dbProvider)
+	if err != nil {
+		return nil, err
+	}
 	options := &unified.Options{
 		Cfg:           cfg,
 		Features:      featureToggles,
@@ -1285,6 +1303,8 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		SecureValues:  inlineSecureValueSupport,
 		VectorBackend: vectorBackend,
 		Embedder:      embedder,
+		KV:            kv,
+		EDB:           dbProvider,
 	}
 	storageMetrics := resource.ProvideStorageMetrics(registerer)
 	bleveIndexMetrics := resource.ProvideIndexMetrics(registerer)
@@ -1891,12 +1911,25 @@ func InitializeModuleServer(cfg *setting.Cfg, opts Options, apiOpts api.ServerOp
 	}
 	storeProvider := store2.ProvideDefaultStoreProvider()
 	v := authz.ProvideReconcileCRDs()
-	moduleServer, err := NewModule(opts, apiOpts, featureToggles, cfg, storageMetrics, bleveIndexMetrics, registerer, gatherer, tracingService, ossLicensingService, moduleRegisterer, storageBackend, hooksService, storeProvider, v)
+	db := _wireDBValue
+	dbProvider, err := sql.ProvideResourceDB(cfg, db)
+	if err != nil {
+		return nil, err
+	}
+	kv, err := sql.ProvideKV(cfg, dbProvider)
+	if err != nil {
+		return nil, err
+	}
+	moduleServer, err := NewModule(opts, apiOpts, featureToggles, cfg, storageMetrics, bleveIndexMetrics, registerer, gatherer, tracingService, ossLicensingService, moduleRegisterer, storageBackend, hooksService, storeProvider, v, kv, dbProvider)
 	if err != nil {
 		return nil, err
 	}
 	return moduleServer, nil
 }
+
+var (
+	_wireDBValue = db.DB(nil)
+)
 
 // Initialize the standalone APIServer factory
 func InitializeAPIServerFactory() (standalone.APIServerFactory, error) {
