@@ -64,21 +64,17 @@ func TestIntegrationPreferences_LegacyBridge(t *testing.T) {
 				require.Equal(t, http.StatusOK, putResult)
 			})
 
-			if len(tc.flags) == 0 {
-				// Teams permissions are not yet available yet due to https://github.com/grafana/grafana/pull/123657
-				// Should be un-skipped once groups are reworked
-				t.Run("team preferences read", func(t *testing.T) {
-					teamID := helper.Org1.Staff.ID
-					putResult := putTeamPrefs(t, helper, teamID, `{"theme":"light","weekStart":"sunday"}`)
-					require.Equal(t, http.StatusOK, putResult)
+			t.Run("team preferences read", func(t *testing.T) {
+				teamID := helper.Org1.Staff.ID
+				putResult := putTeamPrefs(t, helper, teamID, `{"theme":"light","weekStart":"sunday"}`)
+				require.Equal(t, http.StatusOK, putResult)
 
-					got := getTeamPrefs(t, helper, teamID)
-					require.NotNil(t, got.Theme)
-					require.Equal(t, "light", *got.Theme)
-					require.NotNil(t, got.WeekStart)
-					require.Equal(t, "sunday", *got.WeekStart)
-				})
-			}
+				got := getTeamPrefs(t, helper, teamID)
+				require.NotNil(t, got.Theme)
+				require.Equal(t, "light", *got.Theme)
+				require.NotNil(t, got.WeekStart)
+				require.Equal(t, "sunday", *got.WeekStart)
+			})
 
 			t.Run("org preferences round-trip", func(t *testing.T) {
 				putResult := putOrgPrefs(t, helper, `{"theme":"dark","timezone":"UTC"}`)
