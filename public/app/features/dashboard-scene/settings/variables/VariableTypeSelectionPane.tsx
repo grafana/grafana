@@ -18,6 +18,8 @@ import { Box, Card, Sidebar, Stack, useStyles2 } from '@grafana/ui';
 import { dashboardEditActions } from '../../edit-pane/shared';
 import { type DashboardSidebarPane } from '../../edit-pane/types';
 import { type DashboardScene } from '../../scene/DashboardScene';
+import { RowItem } from '../../scene/layout-rows/RowItem';
+import { TabItem } from '../../scene/layout-tabs/TabItem';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getDashboardSceneFor } from '../../utils/utils';
 
@@ -70,7 +72,9 @@ export function VariableAddPaneRenderer({ model }: SceneComponentProps<VariableA
       if (sectionOwner === dashboard) {
         DashboardInteractions.variableTypeSelected({ type });
       } else {
-        DashboardInteractions.sectionVariableTypeSelected({ type });
+        const sectionOwnerType =
+          sectionOwner instanceof RowItem ? 'row' : sectionOwner instanceof TabItem ? 'tab' : undefined;
+        DashboardInteractions.sectionVariableTypeSelected({ type, sectionOwner: sectionOwnerType });
       }
     },
     [model]
