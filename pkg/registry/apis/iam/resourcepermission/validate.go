@@ -41,7 +41,10 @@ func ValidateCreateAndUpdateInput(ctx context.Context, v0ResourcePerm *v0alpha1.
 		return apierrors.NewBadRequest(fmt.Sprintf("unknown or disabled group/resource %s/%s", grn.Group, grn.Resource))
 	}
 
-	mapper, _ := mappers.Get(groupResource)
+	mapper, ok := mappers.Get(groupResource)
+	if !ok {
+		return apierrors.NewBadRequest(fmt.Sprintf("mapper not found for group/resource %s/%s", grn.Group, grn.Resource))
+	}
 
 	// Check for duplicate entities and validate kind/verb per permission
 	seen := make(map[string]bool)
