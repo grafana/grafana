@@ -12,14 +12,14 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/m3db/prometheus_remote_client_golang/promremote"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/prometheus/prompb"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -248,7 +248,7 @@ func TestExtractActualError(t *testing.T) {
 			name: "non-JSON error message",
 			inputErr: testClientWriteError{
 				statusCode: http.StatusInternalServerError,
-				msg:        util.Pointer("body=non-JSON error"),
+				msg:        new("body=non-JSON error"),
 			},
 			expected: "non-JSON error",
 		},
@@ -256,7 +256,7 @@ func TestExtractActualError(t *testing.T) {
 			name: "no body=",
 			inputErr: testClientWriteError{
 				statusCode: http.StatusInternalServerError,
-				msg:        util.Pointer(`test message {"message":"some message"}`),
+				msg:        new(`test message {"message":"some message"}`),
 			},
 			expected: `test message {"message":"some message"}`,
 		},
@@ -264,7 +264,7 @@ func TestExtractActualError(t *testing.T) {
 			name: "error message with body= and valid JSON with error field",
 			inputErr: testClientWriteError{
 				statusCode: http.StatusInternalServerError,
-				msg:        util.Pointer(`error body={"error":"nested error message"}`),
+				msg:        new(`error body={"error":"nested error message"}`),
 			},
 			expected: "nested error message",
 		},
@@ -272,7 +272,7 @@ func TestExtractActualError(t *testing.T) {
 			name: "error message with body= and invalid JSON",
 			inputErr: testClientWriteError{
 				statusCode: http.StatusBadRequest,
-				msg:        util.Pointer(`body={"error":"some error`), // Missing closing brace
+				msg:        new(`body={"error":"some error`), // Missing closing brace
 			},
 			expected: `{"error":"some error`,
 		},
@@ -280,7 +280,7 @@ func TestExtractActualError(t *testing.T) {
 			name: "error message with nothing after body=",
 			inputErr: testClientWriteError{
 				statusCode: http.StatusInternalServerError,
-				msg:        util.Pointer("random error without body="),
+				msg:        new("random error without body="),
 			},
 			expected: "random error without body=",
 		},
@@ -288,7 +288,7 @@ func TestExtractActualError(t *testing.T) {
 			name: "error message with string body",
 			inputErr: testClientWriteError{
 				statusCode: http.StatusInternalServerError,
-				msg:        util.Pointer("random error body=invalid-json-content"),
+				msg:        new("random error body=invalid-json-content"),
 			},
 			expected: "invalid-json-content",
 		},
@@ -296,7 +296,7 @@ func TestExtractActualError(t *testing.T) {
 			name: "error message with body and valid JSON without error field",
 			inputErr: testClientWriteError{
 				statusCode: http.StatusInternalServerError,
-				msg:        util.Pointer(`error body={"key":"value"}`),
+				msg:        new(`error body={"key":"value"}`),
 			},
 			expected: `{"key":"value"}`,
 		},

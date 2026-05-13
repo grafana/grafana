@@ -172,6 +172,7 @@ module.exports = [
       '@grafana/no-unreduced-motion': 'error',
       '@grafana/no-restricted-img-srcs': 'error',
       '@grafana/no-direct-date-fns': 'error',
+      '@grafana/no-direct-create-monitoring-logger': 'error',
       'react-prefer-function-component/react-prefer-function-component': ['error', { allowJsxUtilityClass: true }],
       'react/prop-types': 'off',
       // need to ignore emotion's `css` prop, see https://github.com/jsx-eslint/eslint-plugin-react/blob/master/docs/rules/no-unknown-property.md#rule-options
@@ -197,6 +198,16 @@ module.exports = [
       ],
       'no-restricted-imports': ['error', baseImportConfig],
       'no-restricted-globals': ['error'].concat(restrictedGlobals),
+      // React 19 related TransitionGroup rules to prevent usage of findDomNode. Remove once React 19 is the default
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector:
+            "JSXElement[openingElement.name.name=/^(CSSTransition|Transition)$/]:not(:has(JSXAttribute[name.name='nodeRef']))",
+          message:
+            'CSSTransition components must have a nodeRef attribute to avoid findDOMNode usage which breaks in React 19. See https://reactcommunity.org/react-transition-group/transition#Transition-prop-nodeRef for more details.',
+        },
+      ],
 
       // Use typescript's no-redeclare for compatibility with overrides
       'no-redeclare': 'off',
@@ -211,6 +222,12 @@ module.exports = [
       'no-constant-condition': 'error',
       '@grafana/define-feature-events': 'error',
       '@grafana/no-plain-links': 'error',
+      'react-hooks/exhaustive-deps': [
+        'error',
+        {
+          additionalHooks: 'use(Async)$',
+        },
+      ],
     },
   },
 
@@ -467,7 +484,6 @@ module.exports = [
       'public/app/plugins/datasource/opentsdb/**/*.{ts,tsx}',
       'public/app/plugins/datasource/parca/**/*.{ts,tsx}',
       'public/app/plugins/datasource/tempo/**/*.{ts,tsx}',
-      'public/app/plugins/datasource/zipkin/**/*.{ts,tsx}',
     ],
     plugins: {
       import: importPlugin,

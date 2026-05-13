@@ -1,8 +1,9 @@
 import uFuzzy from '@leeoniya/ufuzzy';
+import { Range } from 'semver';
 
 import { PluginSignatureStatus, dateTimeParse, type PluginError, PluginType, PluginErrorCode } from '@grafana/data';
 import { config, featureEnabled } from '@grafana/runtime';
-import { getFeatureFlagClient } from '@grafana/runtime/internal';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -113,7 +114,7 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
   } = plugin;
 
   const isDisabled = !!error;
-  const managedPluginsV2Enabled = getFeatureFlagClient().getBooleanValue('managedPluginsV2', false);
+  const managedPluginsV2Enabled = getFeatureFlagClient().getBooleanValue(FlagKeys.ManagedPluginsV2, false);
 
   return {
     description,
@@ -177,7 +178,7 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
   } = plugin;
 
   const isDisabled = !!error;
-  const managedPluginsV2Enabled = getFeatureFlagClient().getBooleanValue('managedPluginsV2', false);
+  const managedPluginsV2Enabled = getFeatureFlagClient().getBooleanValue(FlagKeys.ManagedPluginsV2, false);
   const isV1Managed = !managedPluginsV2Enabled && isManagedPlugin(id);
 
   return {
@@ -239,7 +240,7 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     logos = local.info.logos;
   }
 
-  const managedPluginsV2Enabled = getFeatureFlagClient().getBooleanValue('managedPluginsV2', false);
+  const managedPluginsV2Enabled = getFeatureFlagClient().getBooleanValue(FlagKeys.ManagedPluginsV2, false);
 
   return {
     description: local?.info.description || remote?.description || '',
@@ -505,6 +506,48 @@ export function isNonAngularVersion(version?: Version) {
 
 export function isDisabledAngularPlugin(plugin: CatalogPlugin) {
   return plugin.isDisabled && plugin.error === PluginErrorCode.angular;
+}
+
+/**
+ * Formats a semver range string (e.g. ">= 8.5.20 < 9 || >= 9.1.0")
+ * into a human-readable string (e.g. "8.5.20 – 9.0.0, 9.1.0 or later").
+ */
+export function formatGrafanaDependency(dependency: string | null): string {
+  if (!dependency) {
+    return 'N/A';
+  }
+
+  try {
+    const range = new Range(dependency);
+    const parts: string[] = [];
+
+    for (const comparators of range.set) {
+      const lowerBound = comparators.find((c) => c.operator === '>=');
+      const upperBound = comparators.find((c) => c.operator === '<');
+
+      if (lowerBound && upperBound) {
+        const from = formatVersion(lowerBound.semver.major, lowerBound.semver.minor, lowerBound.semver.patch);
+        const to = formatVersion(upperBound.semver.major, upperBound.semver.minor, upperBound.semver.patch);
+        parts.push(`${from} – ${to}`);
+      } else if (lowerBound) {
+        const from = formatVersion(lowerBound.semver.major, lowerBound.semver.minor, lowerBound.semver.patch);
+        parts.push(`${from} or later`);
+      } else if (upperBound) {
+        const to = formatVersion(upperBound.semver.major, upperBound.semver.minor, upperBound.semver.patch);
+        parts.push(`before ${to}`);
+      } else {
+        return dependency;
+      }
+    }
+
+    return parts.join(', ');
+  } catch {
+    return dependency;
+  }
+}
+
+function formatVersion(major: number, minor: number, patch: number): string {
+  return `${major}.${minor}.${patch}`;
 }
 
 export function mergeCloudState(

@@ -1,6 +1,6 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
-const DASHBOARD_UID = 'panel-tests-barchart';
+const DASHBOARD_UID = 'ea33320b-bd97-4fe1-a27c-24bc61a48b41';
 
 test.use({
   viewport: { width: 1280, height: 2000 },

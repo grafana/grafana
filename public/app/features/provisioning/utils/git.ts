@@ -123,10 +123,120 @@ type GetRepoFileUrlParams = {
 };
 
 /**
- * Build a URL to a specific source file in a repository.
+ * Build a URL to a specific file or directory in a repository.
  * Only works for git providers (GitHub, GitLab, Bitbucket).
+ *
+ * If `filePath` ends with `/`, the path is treated as a directory and the
+ * URL uses the provider's tree segment instead of blob.
  */
 export function getRepoFileUrl({
+  repoType,
+  url,
+  branch,
+  filePath,
+  pathPrefix,
+}: GetRepoFileUrlParams): string | undefined {
+  if (!url || !filePath) {
+    return undefined;
+  }
+
+  const effectiveBranch = branch || 'main';
+  const fullPath = pathPrefix ? `${pathPrefix.replace(/\/+$/, '')}/${filePath}` : filePath;
+  const isDir = fullPath.endsWith('/');
+
+  switch (repoType) {
+    case 'github':
+      return buildRepoUrl({
+        baseUrl: url,
+        branch: effectiveBranch,
+        providerSegments: [isDir ? 'tree' : 'blob'],
+        path: fullPath,
+      });
+    case 'gitlab':
+      return buildRepoUrl({
+        baseUrl: url,
+        branch: effectiveBranch,
+        providerSegments: ['-', isDir ? 'tree' : 'blob'],
+        path: fullPath,
+      });
+    case 'bitbucket':
+      return buildRepoUrl({
+        baseUrl: url,
+        branch: effectiveBranch,
+        providerSegments: ['src'],
+        path: fullPath,
+      });
+    default:
+      return undefined;
+  }
+}
+
+/**
+ * Build a host URL that returns the raw bytes of a file (no chrome). Used to
+ * load images embedded in a rendered README from the host repo.
+ *
+ * Per provider:
+ *   GitHub:    {url}/raw/{branch}/{path}      — redirects to raw.githubusercontent.com
+ *   GitLab:    {url}/-/raw/{branch}/{path}
+ *   Bitbucket: {url}/raw/{branch}/{path}
+ */
+export function getRepoRawFileUrl({
+  repoType,
+  url,
+  branch,
+  filePath,
+}: {
+  repoType: RepoType;
+  url: string | undefined;
+  branch?: string | undefined;
+  /** Repo-relative path to the file. */
+  filePath: string | undefined;
+}): string | undefined {
+  if (!url || !filePath) {
+    return undefined;
+  }
+
+  const effectiveBranch = branch || 'main';
+  const cleanPath = stripSlashes(filePath);
+
+  switch (repoType) {
+    case 'github':
+      return buildRepoUrl({
+        baseUrl: url,
+        branch: effectiveBranch,
+        providerSegments: ['raw'],
+        path: cleanPath,
+      });
+    case 'gitlab':
+      return buildRepoUrl({
+        baseUrl: url,
+        branch: effectiveBranch,
+        providerSegments: ['-', 'raw'],
+        path: cleanPath,
+      });
+    case 'bitbucket':
+      return buildRepoUrl({
+        baseUrl: url,
+        branch: effectiveBranch,
+        providerSegments: ['raw'],
+        path: cleanPath,
+      });
+    default:
+      return undefined;
+  }
+}
+
+type GetRepoNewFileUrlParams = GetRepoFileUrlParams & {
+  /** Optional content to prefill in the host's new-file editor. */
+  template?: string;
+};
+
+/**
+ * Build a URL that opens the file in the provider's web editor. GitHub and
+ * GitLab support a true `/edit/` URL; Bitbucket has none, so we fall back to
+ * the source view at the target branch and let the user click Edit there.
+ */
+export function getRepoEditFileUrl({
   repoType,
   url,
   branch,
@@ -145,14 +255,14 @@ export function getRepoFileUrl({
       return buildRepoUrl({
         baseUrl: url,
         branch: effectiveBranch,
-        providerSegments: ['blob'],
+        providerSegments: ['edit'],
         path: fullPath,
       });
     case 'gitlab':
       return buildRepoUrl({
         baseUrl: url,
         branch: effectiveBranch,
-        providerSegments: ['-', 'blob'],
+        providerSegments: ['-', 'edit'],
         path: fullPath,
       });
     case 'bitbucket':
@@ -162,6 +272,73 @@ export function getRepoFileUrl({
         providerSegments: ['src'],
         path: fullPath,
       });
+    default:
+      return undefined;
+  }
+}
+
+/**
+ * Build a URL that opens the provider's "new file" editor pre-filled with the
+ * supplied path. GitHub and GitLab support a true new-file URL with
+ * pre-filled content; Bitbucket has no documented new-file URL, so we link to
+ * the source view of the parent directory at the target branch and let the
+ * user create the file from there.
+ */
+export function getRepoNewFileUrl({
+  repoType,
+  url,
+  branch,
+  filePath,
+  pathPrefix,
+  template,
+}: GetRepoNewFileUrlParams): string | undefined {
+  if (!url || !filePath) {
+    return undefined;
+  }
+
+  const effectiveBranch = branch || 'main';
+  const fullPath = pathPrefix ? `${pathPrefix.replace(/\/+$/, '')}/${filePath}` : filePath;
+
+  switch (repoType) {
+    case 'github': {
+      const base = buildRepoUrl({
+        baseUrl: url,
+        branch: effectiveBranch,
+        providerSegments: ['new'],
+      });
+      if (!base) {
+        return undefined;
+      }
+      const params = new URLSearchParams({ filename: fullPath });
+      if (template) {
+        params.set('value', template);
+      }
+      return `${base}?${params.toString()}`;
+    }
+    case 'gitlab': {
+      const base = buildRepoUrl({
+        baseUrl: url,
+        branch: effectiveBranch,
+        providerSegments: ['-', 'new'],
+      });
+      if (!base) {
+        return undefined;
+      }
+      const params = new URLSearchParams({ file_name: fullPath });
+      if (template) {
+        params.set('content', template);
+      }
+      return `${base}?${params.toString()}`;
+    }
+    case 'bitbucket': {
+      const parentDir = fullPath.includes('/') ? fullPath.replace(/\/[^/]+$/, '') : '';
+      return buildRepoUrl({
+        baseUrl: url,
+        branch: effectiveBranch,
+        providerSegments: ['src'],
+        path: parentDir,
+      });
+    }
     default:
       return undefined;
   }

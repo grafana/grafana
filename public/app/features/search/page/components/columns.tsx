@@ -20,7 +20,7 @@ import { PluginIconName } from 'app/features/plugins/admin/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
 import { type QueryResponse, type SearchResultMeta } from '../../service/types';
-import { getIconForKind } from '../../service/utils';
+import { DELETED_BY_UNKNOWN, formatDeletedByDisplayValue, getIconForKind } from '../../service/utils';
 import { type SelectionChecker, type SelectionToggle } from '../selection';
 
 import { ExplainScorePopup } from './ExplainScorePopup';
@@ -29,6 +29,7 @@ import { type TableColumn } from './SearchResultsTable';
 const TYPE_COLUMN_WIDTH = 175;
 const DURATION_COLUMN_WIDTH = 200;
 const DATASOURCE_COLUMN_WIDTH = 200;
+const DELETED_BY_COLUMN_WIDTH = 200;
 
 export const generateColumns = (
   response: QueryResponse,
@@ -157,6 +158,46 @@ export const generateColumns = (
   } else {
     width = TYPE_COLUMN_WIDTH;
     columns.push(makeTypeColumn(response, access.kind, access.panel_type, width, styles, panelPluginMetas));
+    availableWidth -= width;
+  }
+
+  const deletedByField = access.deletedBy;
+  if (deletedByField && hasValue(deletedByField)) {
+    width = DELETED_BY_COLUMN_WIDTH;
+    columns.push({
+      id: `column-deleted-by`,
+      field: deletedByField,
+      Header: t('search.results-table.deleted-by-header', 'Deleted by'),
+      width,
+      Cell: (p) => {
+        const rawValue = deletedByField.values[p.row.index];
+        const { key, ...cellProps } = p.cellProps;
+        return (
+          <div key={key} {...cellProps} className={styles.cell}>
+            {!response.isItemLoaded(p.row.index) ? (
+              <Skeleton width={150} />
+            ) : rawValue === DELETED_BY_UNKNOWN ? (
+              <Tooltip
+                content={t(
+                  'search.results-table.deleted-by-unknown-tooltip',
+                  'Failed to look up the account that deleted this dashboard'
+                )}
+              >
+                <Text variant="body" truncate>
+                  <Trans i18nKey="search.results-table.deleted-by-unknown-short">
+                    <Icon name="exclamation-triangle" /> Unknown
+                  </Trans>
+                </Text>
+              </Tooltip>
+            ) : (
+              <Text variant="body" truncate>
+                {formatDeletedByDisplayValue(rawValue, t)}
+              </Text>
+            )}
+          </div>
+        );
+      },
+    });
     availableWidth -= width;
   }
 

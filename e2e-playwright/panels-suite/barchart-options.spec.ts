@@ -2,7 +2,7 @@ import { test, expect } from '@grafana/plugin-e2e';
 
 import { getUPlotCenterPosition } from './barchart-utils';
 
-const DASHBOARD_UID = 'panel-tests-barchart';
+const DASHBOARD_UID = 'WFlOM-jM1';
 
 test.use({
   viewport: { width: 1280, height: 2000 },
@@ -12,7 +12,7 @@ test.describe('Panels test: BarChart options', { tag: ['@panels', '@barchart'] }
   test('show values - toggle always/never/auto', async ({ gotoDashboardPage, selectors, page }) => {
     const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,
-      queryParams: new URLSearchParams({ editPanel: '7' }),
+      queryParams: new URLSearchParams({ editPanel: '23' }),
     });
 
     const barchartUplot = page.locator('.uplot').first();
@@ -38,7 +38,7 @@ test.describe('Panels test: BarChart options', { tag: ['@panels', '@barchart'] }
   test('stacking 100 percent - renders and shows tooltip', async ({ gotoDashboardPage, selectors, page }) => {
     const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,
-      queryParams: new URLSearchParams({ editPanel: '8' }),
+      queryParams: new URLSearchParams({ editPanel: '24' }),
     });
 
     const barchartUplot = page.locator('.uplot').first();
@@ -74,7 +74,7 @@ test.describe('Panels test: BarChart options', { tag: ['@panels', '@barchart'] }
   test('full highlight - tooltip appears across bar column', async ({ gotoDashboardPage, selectors, page }) => {
     const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,
-      queryParams: new URLSearchParams({ editPanel: '9' }),
+      queryParams: new URLSearchParams({ editPanel: '20' }),
     });
 
     const barchartUplot = page.locator('.uplot').first();
@@ -99,7 +99,7 @@ test.describe('Panels test: BarChart options', { tag: ['@panels', '@barchart'] }
   test('orientation - toggle vertical and horizontal', async ({ gotoDashboardPage, selectors, page }) => {
     const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,
-      queryParams: new URLSearchParams({ editPanel: '1' }),
+      queryParams: new URLSearchParams({ editPanel: '22' }),
     });
 
     const barchartUplot = page.locator('.uplot').first();

@@ -75,8 +75,8 @@ export const heatmapSuggestionsSupplier: VisualizationSuggestionsSupplier<Option
   return [
     {
       score: determineScore(dataSummary),
-      maxSeries: MAX_SUGGESTIONS_SERIES,
       cardOptions: {
+        maxSeries: MAX_SUGGESTIONS_SERIES,
         previewModifier: (s) => {
           s.options!.legend = { show: false };
         },

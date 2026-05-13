@@ -2,6 +2,7 @@ package git
 
 import (
 	"context"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -112,4 +113,16 @@ func ValidateGitConfigFields(repo *provisioning.Repository, url, branch, path st
 	}
 
 	return list
+}
+
+// ValidateHTTPScheme returns a field.Error if url is not prefixed with http:// or https://.
+// Returns nil if the url is empty (callers must enforce required separately) or valid.
+func ValidateHTTPScheme(path *field.Path, url string) *field.Error {
+	if url == "" {
+		return nil
+	}
+	if !strings.HasPrefix(url, "https://") && !strings.HasPrefix(url, "http://") {
+		return field.Invalid(path, url, "URL must start with https:// or http://")
+	}
+	return nil
 }

@@ -71,11 +71,19 @@ jest.mock('../services', () => ({
 }));
 jest.mock('./publicDashboardQueryHandler');
 
+const mockIsQueryServiceCompatible = jest.fn().mockReturnValue(false);
+jest.mock('./qscheck', () => ({
+  ...jest.requireActual('./qscheck'),
+  isQueryServiceCompatible: (a: unknown, b: unknown) => mockIsQueryServiceCompatible(a, b),
+}));
+
 const mockGetBooleanValue = jest.fn().mockReturnValue(false);
+const mockGetObjectValue = jest.fn().mockReturnValue({ types: ['prometheus'] });
 jest.mock('../internal/openFeature', () => ({
   ...jest.requireActual('../internal/openFeature'),
   getFeatureFlagClient: () => ({
     getBooleanValue: mockGetBooleanValue,
+    getObjectValue: mockGetObjectValue,
   }),
 }));
 
@@ -764,6 +772,68 @@ describe('DataSourceWithBackend', () => {
       mockGetBooleanValue.mockReturnValue(false);
       const url = createMockDatasource().ds.buildResourcesDatasourceUrl('api/v1/labels');
       expect(url).toBe('/api/datasources/uid/abc/resources/api/v1/labels');
+    });
+  });
+
+  describe('queryServiceDecision', () => {
+    let oldQsUI: boolean | undefined = undefined;
+    beforeEach(() => {
+      oldQsUI = config.featureToggles.queryServiceFromUI;
+      config.featureToggles.queryServiceFromUI = true;
+    });
+    afterEach(() => {
+      config.featureToggles.queryServiceFromUI = oldQsUI;
+      mockGetObjectValue.mockReset().mockReturnValue({ types: ['prometheus'] });
+      mockIsQueryServiceCompatible.mockReset().mockReturnValue(false);
+    });
+
+    const prometheus = {
+      name: 'prm',
+      id: 1,
+      uid: 'p',
+      type: 'prometheus',
+      jsonData: {},
+    } as DataSourceInstanceSettings;
+
+    const loki = {
+      name: 'lk',
+      id: 2,
+      uid: 'l',
+      type: 'loki',
+      jsonData: {},
+    } as DataSourceInstanceSettings;
+
+    it.each([
+      [
+        'handle per-query data source references',
+        [
+          { refId: 'A', datasource: prometheus },
+          { refId: 'B', datasource: loki },
+        ],
+        ['prometheus', 'loki'],
+      ],
+      ['handle no per-query data source references', [{ refId: 'A' }, { refId: 'B' }], ['dummy', 'dummy']],
+      [
+        'handle a mix of query and no-query data source references',
+        [{ refId: 'A' }, { refId: 'B', datasource: loki }],
+        ['dummy', 'loki'],
+      ],
+    ])('%s', (_, targets, expectedTypes) => {
+      const { ds } = createMockDatasource();
+
+      ds.query({
+        maxDataPoints: 10,
+        intervalMs: 5000,
+        targets,
+        range: getDefaultTimeRange(),
+      } as DataQueryRequest);
+
+      const { calls } = mockIsQueryServiceCompatible.mock;
+      expect(calls).toHaveLength(1);
+
+      const [datasources, compatibilityFlag] = calls[0];
+      expect([datasources, compatibilityFlag]).toHaveLength(2);
+      expect((datasources as Array<{ type: string }>).map((ds) => ds.type)).toStrictEqual(expectedTypes);
     });
   });
 });

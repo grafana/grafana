@@ -72,8 +72,14 @@ export const versionedComponents = {
     closePane: {
       '12.4.0': 'data-testid Sidebar close pane',
     },
+    goBack: {
+      '12.4.0': 'data-testid Sidebar go back',
+    },
     dockToggle: {
       '12.4.0': 'data-testid sidebar-dock-toggle',
+    },
+    headerTitle: {
+      '12.4.0': 'data-testid sidebar-pane-header-title',
     },
     showHideToggle: {
       '12.4.0': 'data-testid sidebar-show-hide-toggle',
@@ -1171,6 +1177,9 @@ export const versionedComponents = {
     },
   },
   Select: {
+    container: {
+      '13.1.0': 'data-testid Select container',
+    },
     menu: {
       '11.5.0': 'data-testid Select menu',
       [MIN_GRAFANA_VERSION]: 'Select options menu',
@@ -1187,6 +1196,26 @@ export const versionedComponents = {
     },
     singleValue: {
       [MIN_GRAFANA_VERSION]: () => 'div[class*="-singleValue"]',
+    },
+  },
+  MultiSelect: {
+    container: {
+      '13.1.0': 'data-testid MultiSelect container',
+    },
+  },
+  RadioGroup: {
+    container: {
+      '13.1.0': 'data-testid RadioGroup container',
+    },
+  },
+  Switch: {
+    container: {
+      '13.1.0': 'data-testid Switch container',
+    },
+  },
+  UnitPicker: {
+    container: {
+      '13.1.0': 'data-testid UnitPicker container',
     },
   },
   FieldConfigEditor: {

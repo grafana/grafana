@@ -58,14 +58,18 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
    */
   useEffect(() => {
     if (!selectedObject && selectionContext.selected.length > 0) {
-      editPane.clearSelection();
+      editPane.fixSelectionOfRemovedObject();
       return;
     }
   }, [selectedObject, selectionContext.selected, editPane]);
 
   return (
     <>
-      {openPane && <Sidebar.OpenPane>{openPane && <openPane.Component model={openPane} />}</Sidebar.OpenPane>}
+      {openPane && (
+        <Sidebar.OpenPane>
+          <openPane.Component key={openPane.state.key} model={openPane} />
+        </Sidebar.OpenPane>
+      )}
       <Sidebar.Toolbar>
         {isEditing && (
           <div className={styles.editGroup}>
@@ -85,7 +89,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
               title={t('dashboard.sidebar.dashboard-options.title', 'Options')}
               tooltip={t('dashboard.sidebar.dashboard-options.tooltip', 'Dashboard options')}
               data-testid={selectors.pages.Dashboard.Sidebar.optionsButton}
-              active={selectedObject === dashboard ? true : false}
+              active={selectedObject === dashboard && openPane?.getId() === 'element' ? true : false}
             />
             {config.featureToggles.feedbackButton && (
               <Sidebar.Button
