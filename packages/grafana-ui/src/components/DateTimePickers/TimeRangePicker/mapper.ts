@@ -17,6 +17,6 @@ export const mapRangeToTimeOption = (range: TimeRange, timeZone?: TimeZone): Tim
   return {
     from,
     to,
-    display: rangeUtil.describeTimeRange(range, timeZone),
+    display: `${from} to ${to}`,
   };
 };
