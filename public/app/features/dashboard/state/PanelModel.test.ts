@@ -4,6 +4,7 @@ import {
   FieldConfigProperty,
   type PanelData,
   type PanelProps,
+  setLegacyApiReporter,
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
   dateTime,
@@ -12,8 +13,13 @@ import {
   type PanelTypeChangedHandler,
 } from '@grafana/data';
 import { getPanelPlugin, mockStandardFieldConfigOptions } from '@grafana/data/test';
-import { setTemplateSrv } from '@grafana/runtime';
+import { reportLegacyDashboardApiUsage, setTemplateSrv } from '@grafana/runtime';
 import { queryBuilder } from 'app/features/variables/shared/testing/builders';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportLegacyDashboardApiUsage: jest.fn(),
+}));
 
 import { type PanelQueryRunner } from '../../query/state/PanelQueryRunner';
 import { TemplateSrv } from '../../templating/template_srv';
@@ -655,6 +661,39 @@ describe('PanelModel', () => {
         expect(model.getQueryRunner).toBeCalled();
       });
     });
+  });
+});
+
+const reportMock = reportLegacyDashboardApiUsage as jest.Mock;
+
+describe('PanelModel legacy API telemetry — migration invocation', () => {
+  beforeEach(() => {
+    reportMock.mockClear();
+    // Prevent setMigrationHandler's bridge call (from @grafana/data) from reaching
+    // the real reportLegacyDashboardApiUsage (which does console.warn via dedup logic).
+    setLegacyApiReporter(jest.fn());
+  });
+
+  it('reports PanelMigrationHandler.invoke when pluginLoaded runs onPanelMigration', async () => {
+    const onPanelMigration = jest.fn().mockReturnValue({});
+    const plugin = getPanelPlugin({ id: 'legacy-panel' }).setMigrationHandler(onPanelMigration);
+    const panel = new PanelModel({ type: 'legacy-panel', pluginVersion: '0.0.1' });
+
+    await panel.pluginLoaded(plugin);
+
+    expect(onPanelMigration).toHaveBeenCalled();
+    expect(reportMock).toHaveBeenCalledWith(
+      expect.objectContaining({ pluginId: 'legacy-panel', apiName: 'PanelMigrationHandler.invoke' })
+    );
+  });
+
+  it('does not report PanelMigrationHandler.invoke when the plugin has no migration handler', async () => {
+    const plugin = getPanelPlugin({ id: 'modern-panel' });
+    const panel = new PanelModel({ type: 'modern-panel' });
+
+    await panel.pluginLoaded(plugin);
+
+    expect(reportMock).not.toHaveBeenCalledWith(expect.objectContaining({ apiName: 'PanelMigrationHandler.invoke' }));
   });
 });
 
