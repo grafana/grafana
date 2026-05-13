@@ -24,9 +24,9 @@ func TestIntegrationPreferences_K8sAPIs(t *testing.T) {
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction: false,
 		DisableAnonymous:  true,
-		EnableFeatureToggles: append([]string{
+		EnableFeatureToggles: []string{
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
-		}),
+		},
 	})
 
 	t.Run("user preferences round-trip", func(t *testing.T) {
