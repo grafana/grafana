@@ -746,14 +746,10 @@ After choosing the field by which you want to group your data, you can add vario
 
 #### Display options
 
-{{< admonition type="note" >}}
-The following options are available in the new matcher-based editor and require the `groupToNestedTableV2` feature toggle, currently in [public preview](https://grafana.com/docs/release-life-cycle/).
-{{< /admonition >}}
-
-| Option                            | Description                                                                                                |
-| --------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| Show field names in nested tables | Show or hide the column headers inside each nested table. On by default.                                   |
-| Expand nested rows by default     | Expand all nested rows automatically when the panel loads, instead of starting with all columns collapsed. Off by default.  |
+| Option                            | Description                                                                                                                |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Show field names in nested tables | Show or hide the column headers inside each nested table. On by default.                                                   |
+| Expand nested rows by default     | Expand all nested rows automatically when the panel loads, instead of starting with all columns collapsed. Off by default. |
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-expand-nested-rows-v12.x.png" max-width="750px" alt="Nested table panel with all rows expanded by default" >}}
 
