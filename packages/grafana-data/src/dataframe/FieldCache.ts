@@ -1,6 +1,6 @@
 import { type DataFrame, type Field, FieldType } from '../types/dataFrame';
 
-import { guessFieldTypeForField } from './processDataFrame';
+import { guessFieldTypeForField } from './guessFieldType';
 
 export interface FieldWithIndex extends Field {
   index: number;

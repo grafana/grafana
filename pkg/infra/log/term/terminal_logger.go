@@ -184,7 +184,7 @@ func logfmt(buf *bytes.Buffer, ctx []interface{}, color int) {
 func formatShared(value interface{}) (result interface{}) {
 	defer func() {
 		if err := recover(); err != nil {
-			if v := reflect.ValueOf(value); v.Kind() == reflect.Ptr && v.IsNil() {
+			if v := reflect.ValueOf(value); v.Kind() == reflect.Pointer && v.IsNil() {
 				result = "nil"
 			} else {
 				panic(err)

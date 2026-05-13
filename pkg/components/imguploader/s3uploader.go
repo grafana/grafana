@@ -64,8 +64,8 @@ func (w *s3ClientWrapper) Upload(ctx context.Context, input *s3manager.UploadInp
 
 func (w *s3ClientWrapper) PresignGetObject(bucket, key string, expiration time.Duration) (string, error) {
 	req, _ := w.svc.GetObjectRequest(&s3.GetObjectInput{
-		Bucket: aws.String(bucket),
-		Key:    aws.String(key),
+		Bucket: new(bucket),
+		Key:    new(key),
 	})
 	return req.Presign(expiration)
 }
@@ -93,9 +93,9 @@ func (u *S3Uploader) Upload(ctx context.Context, imageDiskPath string) (string, 
 			remoteCredProvider(sess),
 		})
 	cfg := &aws.Config{
-		Region:           aws.String(u.opts.Region),
-		Endpoint:         aws.String(u.opts.Endpoint),
-		S3ForcePathStyle: aws.Bool(u.opts.PathStyleAccess),
+		Region:           new(u.opts.Region),
+		Endpoint:         new(u.opts.Endpoint),
+		S3ForcePathStyle: new(u.opts.PathStyleAccess),
 		Credentials:      creds,
 	}
 
@@ -125,13 +125,13 @@ func (u *S3Uploader) Upload(ctx context.Context, imageDiskPath string) (string, 
 	}
 
 	uploadInput := &s3manager.UploadInput{
-		Bucket:      aws.String(u.opts.Bucket),
-		Key:         aws.String(key),
+		Bucket:      new(u.opts.Bucket),
+		Key:         new(key),
 		Body:        file,
-		ContentType: aws.String("image/png"),
+		ContentType: new("image/png"),
 	}
 	if !u.opts.EnablePresignedURLs {
-		uploadInput.ACL = aws.String(u.opts.ACL)
+		uploadInput.ACL = new(u.opts.ACL)
 	}
 
 	result, err := s3Client.Upload(ctx, uploadInput)

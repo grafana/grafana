@@ -10798,6 +10798,16 @@
   },
   "home": {
     "home-page": {
+      "edition": {
+        "cloud": "",
+        "enterprise": "",
+        "open-source": ""
+      },
+      "greeting": {
+        "afternoon": "",
+        "evening": "",
+        "morning": ""
+      },
       "placeholder": ""
     }
   },
@@ -14745,9 +14755,6 @@
       "home-dashboard-placeholder": "默认仪表板",
       "language-preference-label": "语言",
       "language-preference-placeholder": "选择语言",
-      "locale-preference-description": "选择您的区域以查看相应的日期、时间和数字格式",
-      "locale-preference-label": "区域格式",
-      "locale-preference-placeholder": "选择区域",
       "theme-description": "喜欢实验性主题吗？请在<2>此处</2>告诉我们您想要看到的功能。",
       "theme-label": "UI 主题",
       "week-start-label": "每周开始日"
