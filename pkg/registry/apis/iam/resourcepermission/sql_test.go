@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 
@@ -21,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -721,11 +723,13 @@ func TestIntegration_ResourcePermSqlBackend_ListDirectPermissionsForSubject(t *t
 	setupTestRoles(t, sql.DB)
 
 	tests := []struct {
-		name      string
-		namespace string
-		subject   string
-		wantPerms []v0alpha1.PermissionSpec // action → scope
-		wantNil   bool
+		name        string
+		namespace   string
+		subject     string
+		wantPerms   []v0alpha1.PermissionSpec
+		wantNil     bool
+		setup       func(*testing.T, db.DB)
+		useSAMapper bool
 	}{
 		{
 			name:    "empty subject UID returns nil",
@@ -769,10 +773,44 @@ func TestIntegration_ResourcePermSqlBackend_ListDirectPermissionsForSubject(t *t
 			subject:   "user-1", // user-1's role is in org-1 only
 			wantPerms: []v0alpha1.PermissionSpec{},
 		},
+		{
+			name:      "returns serviceaccount permission with uid-based scope",
+			namespace: "default",
+			subject:   "user-1",
+			setup: func(t *testing.T, store db.DB) {
+				t.Helper()
+				sess := store.GetSqlxSession()
+				_, err := sess.Exec(context.Background(),
+					`INSERT INTO permission (role_id, action, scope, created, updated) VALUES (?, ?, ?, ?, ?)`,
+					1, "serviceaccounts:admin", "serviceaccounts:id:3", "2025-09-02", "2025-09-02",
+				)
+				require.NoError(t, err)
+			},
+			wantPerms: []v0alpha1.PermissionSpec{
+				{Action: "folders:view", Scope: "folders:uid:fold1"},
+				{Action: "dashboards:edit", Scope: "dashboards:uid:dash1"},
+				{Action: "serviceaccounts:admin", Scope: "serviceaccounts:uid:sa-1"},
+			},
+			useSAMapper: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := backend.ListDirectPermissionsForSubject(context.Background(), tt.namespace, tt.subject)
+			if tt.setup != nil {
+				tt.setup(t, sql.DB)
+			}
+			activeBackend := backend
+			if tt.useSAMapper {
+				activeBackend = &ResourcePermSqlBackend{
+					dbProvider:    backend.dbProvider,
+					identityStore: NewFakeIdentityStore(t),
+					logger:        backend.logger,
+					mappers:       saMapper(),
+					subscribers:   make([]chan *resource.WrittenEvent, 0),
+					mutex:         sync.Mutex{},
+				}
+			}
+			result, err := activeBackend.ListDirectPermissionsForSubject(context.Background(), tt.namespace, tt.subject)
 			require.NoError(t, err)
 			if tt.wantNil {
 				require.Nil(t, result)
