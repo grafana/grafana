@@ -57,6 +57,30 @@ func (r *subAccessREST) Connect(ctx context.Context, name string, opts runtime.O
 	}), nil
 }
 
+// folderAccessAction is one row in the access check matrix: the legacy
+// action string the frontend keys off, and the (verb) that maps to it on
+// the folder.grafana.app/folders resource. The authz system walks the
+// parent chain via Zanzana when answering, so a single BatchCheck per
+// folder is enough to capture inherited permissions.
+type folderAccessAction struct {
+	Action string // legacy key, e.g. "folders:write"
+	Verb   string // authlib verb on folder.grafana.app/folders
+}
+
+// folderAccessActions enumerates the folder-domain actions returned in
+// AccessControl. Cross-domain inheritance (dashboards:*, library.panels:*,
+// alert.rules:*) is intentionally out of scope for v1 — those resources
+// live in legacy SQL and their permissions are not yet uniformly checkable
+// through authlib in MT. Tracking issue: follow-up to A1.1.
+var folderAccessActions = []folderAccessAction{
+	{Action: "folders:read", Verb: utils.VerbGet},
+	{Action: "folders:write", Verb: utils.VerbUpdate},
+	{Action: "folders:delete", Verb: utils.VerbDelete},
+	{Action: "folders:create", Verb: utils.VerbCreate},
+	{Action: "folders.permissions:read", Verb: utils.VerbGetPermissions},
+	{Action: "folders.permissions:write", Verb: utils.VerbSetPermissions},
+}
+
 func (r *subAccessREST) getAccessInfo(ctx context.Context, name string) (*foldersV1.FolderAccessInfo, error) {
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
@@ -76,37 +100,55 @@ func (r *subAccessREST) getAccessInfo(ctx context.Context, name string) (*folder
 	if err != nil {
 		return nil, err
 	}
-	var tmp authlib.CheckResponse
-	check := func(verb string) bool {
-		if err != nil {
-			return false
-		}
-		tmp, err = r.accessClient.Check(ctx, user, authlib.CheckRequest{
-			Verb:      verb,
-			Group:     foldersV1.GROUP,
-			Resource:  foldersV1.RESOURCE,
-			Namespace: ns.Value,
-			Name:      name,
-		}, obj.GetFolder())
-		return tmp.Allowed
+	parent := obj.GetFolder()
+
+	// One BatchCheck per folder captures every action in folderAccessActions.
+	// authlib + Zanzana walk the parent chain internally given the immediate
+	// parent UID, so we don't need to enumerate ancestors ourselves.
+	checks := make([]authlib.BatchCheckItem, 0, len(folderAccessActions))
+	for _, a := range folderAccessActions {
+		checks = append(checks, authlib.BatchCheckItem{
+			CorrelationID: a.Action,
+			Verb:          a.Verb,
+			Group:         foldersV1.GROUP,
+			Resource:      foldersV1.RESOURCE,
+			Name:          name,
+			Folder:        parent,
+		})
+	}
+	batchResp, err := r.accessClient.BatchCheck(ctx, user, authlib.BatchCheckRequest{
+		Namespace: ns.Value,
+		Checks:    checks,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	allowed := func(action string) bool {
+		res, ok := batchResp.Results[action]
+		return ok && res.Allowed
 	}
 
 	rsp := &foldersV1.FolderAccessInfo{}
-	rsp.CanAdmin = check(utils.VerbSetPermissions)
-	if err != nil {
-		return nil, err
+
+	// Preserve the legacy 4-bool surface. CanAdmin implies the other three
+	// (parity with the previous implementation).
+	rsp.CanAdmin = allowed("folders.permissions:write")
+	rsp.CanDelete = rsp.CanAdmin || allowed("folders:delete")
+	rsp.CanEdit = rsp.CanAdmin || allowed("folders:write")
+	rsp.CanSave = rsp.CanAdmin || allowed("folders:create")
+
+	// Build the AccessControl map: only keys for actions the user has are
+	// included, matching the legacy dtos.Folder.AccessControl shape.
+	ac := make(map[string]bool, len(folderAccessActions))
+	for _, a := range folderAccessActions {
+		if allowed(a.Action) {
+			ac[a.Action] = true
+		}
 	}
-	rsp.CanDelete = rsp.CanAdmin || check(utils.VerbDelete)
-	if err != nil {
-		return nil, err
+	if len(ac) > 0 {
+		rsp.AccessControl = ac
 	}
-	rsp.CanEdit = rsp.CanAdmin || check(utils.VerbUpdate)
-	if err != nil {
-		return nil, err
-	}
-	rsp.CanSave = rsp.CanAdmin || check(utils.VerbCreate) // or the same as update?
-	if err != nil {
-		return nil, err
-	}
+
 	return rsp, nil
 }
