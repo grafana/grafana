@@ -825,8 +825,8 @@ func TestIntegration_ResourcePermSqlBackend_ListDirectPermissionsForSubject_SAMa
 		got[p.Action] = p.Scope
 	}
 	require.Equal(t, map[string]string{
-		"folders:view":         "folders:uid:fold1",
-		"dashboards:edit":      "dashboards:uid:dash1",
+		"folders:view":          "folders:uid:fold1",
+		"dashboards:edit":       "dashboards:uid:dash1",
 		"serviceaccounts:admin": "serviceaccounts:uid:sa-1",
 	}, got)
 }
