@@ -13,10 +13,10 @@ import {
   withMetadataName,
 } from '../components/rule-editor/alert-rule-form/formValuesToAppPlatform';
 import { type RuleFormValues } from '../types/rule-form';
+import { isGrafanaRecordingRuleByType } from '../utils/rules';
 
 type SaveArgs = {
   values: RuleFormValues;
-  isRecordingRule: boolean;
   existingUid: string | undefined;
 };
 
@@ -27,7 +27,8 @@ export function useSaveUngroupedGrafanaRule() {
   const [replaceRecordingRule] = useReplaceRecordingRuleMutation();
 
   return useCallback(
-    async ({ values, isRecordingRule, existingUid }: SaveArgs): Promise<string> => {
+    async ({ values, existingUid }: SaveArgs): Promise<string> => {
+      const isRecordingRule = isGrafanaRecordingRuleByType(values.type);
       if (existingUid) {
         if (isRecordingRule) {
           await replaceRecordingRule({

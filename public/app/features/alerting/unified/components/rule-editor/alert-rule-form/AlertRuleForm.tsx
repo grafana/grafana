@@ -217,7 +217,6 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
     }
 
     const targetIsUngrouped = values.isUngroupedRuleGroup;
-    const isRecordingRule = isRecordingRuleByType(type);
 
     try {
       if (grafanaTypeRule && targetIsUngrouped) {
@@ -226,7 +225,7 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
         }
 
         const existingUid = existing ? getRuleUID(existing.rule) : undefined;
-        const savedUid = await saveUngroupedGrafanaRule({ values, isRecordingRule, existingUid });
+        const savedUid = await saveUngroupedGrafanaRule({ values, existingUid });
 
         dispatch(alertingApi.util.invalidateTags(legacyRuleCacheTagsForUid(savedUid)));
         notifyApp.success(
