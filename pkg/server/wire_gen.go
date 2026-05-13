@@ -702,7 +702,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	searchService := search2.ProvideService(cfg, sqlStore, starService, dashboardService, folderimplService, featureToggles, sortService)
 	plugincontextProvider := plugincontext.ProvideService(cfg, cacheService, pluginstoreService, cacheServiceImpl, service13, service12, requestConfigProvider)
 	dashboardAccessService := service7.ProvideDashboardAccessService(featureToggles, dashboardServiceImpl)
-	grafanaLive, err := live.ProvideService(cfg, routeRegisterImpl, plugincontextProvider, pluginstoreService, middlewareHandler, cacheServiceImpl, usageStats, featureToggles, dashboardAccessService, eventualRestConfigProvider)
+	grafanaLive, err := live.ProvideService(cfg, routeRegisterImpl, plugincontextProvider, pluginstoreService, middlewareHandler, cacheServiceImpl, usageStats, featureToggles, dashboardAccessService, folderimplService, eventualRestConfigProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -1000,7 +1000,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	}
 	backgroundServiceRegistry := backgroundsvcs.ProvideBackgroundServiceRegistry(httpServer, alertNG, cleanUpService, grafanaLive, gateway, notificationService, pluginstoreService, renderingService, userAuthTokenService, tracingService, provisioningServiceImpl, usageStats, statscollectorService, grafanaService, pluginsService, internalMetricsService, secretsService, remoteCache, storageService, serviceAccountsService, grpcserverProvider, secretMigrationProviderImpl, loginattemptimplService, supportbundlesimplService, v7, keyRetriever, angulardetectorsproviderDynamic, apiserverService, anonDeviceService, ssosettingsimplService, pluginexternalService, plugininstallerService, zanzanaReconciler, appregistryService, dashboardUpdater, dashboardServiceImpl, worker, fixedRolesLoader, noopIAMRolesSyncer, syncer, embeddedZanzanaService, serviceImpl, serviceAccountsProxy, healthService, reflectionService, apiService, apiregistryService, idimplService, teamAPI, ssosettingsimplService, cloudmigrationService, registration)
 	channelPublisher := pulse.ProvideChannelPublisher(grafanaLive)
-	pulseService, err := pulse.ProvideService(sqlStore, routeRegisterImpl, accessControl, acimplService, featureToggles, userimplService, dashboardService, channelPublisher)
+	pulseService, err := pulse.ProvideService(sqlStore, routeRegisterImpl, accessControl, acimplService, featureToggles, userimplService, dashboardService, folderimplService, channelPublisher)
 	if err != nil {
 		return nil, err
 	}
@@ -1419,7 +1419,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	searchService := search2.ProvideService(cfg, sqlStore, starService, dashboardService, folderimplService, featureToggles, sortService)
 	plugincontextProvider := plugincontext.ProvideService(cfg, cacheService, pluginstoreService, cacheServiceImpl, service13, service12, requestConfigProvider)
 	dashboardAccessService := service7.ProvideDashboardAccessService(featureToggles, dashboardServiceImpl)
-	grafanaLive, err := live.ProvideService(cfg, routeRegisterImpl, plugincontextProvider, pluginstoreService, middlewareHandler, cacheServiceImpl, usageStats, featureToggles, dashboardAccessService, eventualRestConfigProvider)
+	grafanaLive, err := live.ProvideService(cfg, routeRegisterImpl, plugincontextProvider, pluginstoreService, middlewareHandler, cacheServiceImpl, usageStats, featureToggles, dashboardAccessService, folderimplService, eventualRestConfigProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -1718,7 +1718,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	backgroundServiceRegistry := backgroundsvcs.ProvideBackgroundServiceRegistry(httpServer, alertNG, cleanUpService, grafanaLive, gateway, notificationService, pluginstoreService, renderingService, userAuthTokenService, tracingService, provisioningServiceImpl, usageStats, statscollectorService, grafanaService, pluginsService, internalMetricsService, secretsService, remoteCache, storageService, serviceAccountsService, grpcserverProvider, secretMigrationProviderImpl, loginattemptimplService, supportbundlesimplService, v7, keyRetriever, angulardetectorsproviderDynamic, apiserverService, anonDeviceService, ssosettingsimplService, pluginexternalService, plugininstallerService, zanzanaReconciler, appregistryService, dashboardUpdater, dashboardServiceImpl, worker, fixedRolesLoader, noopIAMRolesSyncer, syncer, embeddedZanzanaService, serviceImpl, serviceAccountsProxy, healthService, reflectionService, apiService, apiregistryService, idimplService, teamAPI, ssosettingsimplService, cloudmigrationService, registration)
 	channelPublisher := pulse.ProvideChannelPublisher(grafanaLive)
-	pulseService, err := pulse.ProvideService(sqlStore, routeRegisterImpl, accessControl, acimplService, featureToggles, userimplService, dashboardService, channelPublisher)
+	pulseService, err := pulse.ProvideService(sqlStore, routeRegisterImpl, accessControl, acimplService, featureToggles, userimplService, dashboardService, folderimplService, channelPublisher)
 	if err != nil {
 		return nil, err
 	}

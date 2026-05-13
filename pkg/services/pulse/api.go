@@ -17,6 +17,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -290,11 +291,22 @@ func parseStatusFilter(raw string) ThreadStatusFilter {
 }
 
 // populateResourceTitles backfills Thread.ResourceTitle for the global
-// overview page. We batch-fetch dashboards by UID (one query per page,
-// not per thread). Threads whose dashboard cannot be resolved keep an
-// empty title and the frontend falls back to showing the UID.
+// overview page. Dashboards are batch-fetched (one query per page, not
+// per thread); folders are looked up individually because the folder
+// service exposes a single-Get API and the overview page typically only
+// has a handful of distinct folder UIDs anyway. Threads whose resource
+// cannot be resolved keep an empty title and the frontend falls back to
+// showing the UID.
 func (s *PulseService) populateResourceTitles(ctx context.Context, orgID int64, threads []Thread) {
-	if len(threads) == 0 || s.dashSvc == nil {
+	if len(threads) == 0 {
+		return
+	}
+	s.populateDashboardTitles(ctx, orgID, threads)
+	s.populateFolderTitles(ctx, threads)
+}
+
+func (s *PulseService) populateDashboardTitles(ctx context.Context, orgID int64, threads []Thread) {
+	if s.dashSvc == nil {
 		return
 	}
 	uidSet := make(map[string]struct{}, len(threads))
@@ -327,6 +339,53 @@ func (s *PulseService) populateResourceTitles(ctx context.Context, orgID int64, 
 	}
 	for i := range threads {
 		if threads[i].ResourceKind != ResourceKindDashboard {
+			continue
+		}
+		if title, ok := titles[threads[i].ResourceUID]; ok {
+			threads[i].ResourceTitle = title
+		}
+	}
+}
+
+// populateFolderTitles resolves Thread.ResourceTitle for folder-anchored
+// threads. The folder service uses identity from context for permission
+// scoping; the global overview already filters threads by what the
+// caller can read, so a folder.Get failure here means the title can't
+// be displayed (rare; we leave it blank rather than dropping the row).
+func (s *PulseService) populateFolderTitles(ctx context.Context, threads []Thread) {
+	if s.folderSvc == nil {
+		return
+	}
+	uidSet := make(map[string]struct{}, len(threads))
+	for _, t := range threads {
+		if t.ResourceKind == ResourceKindFolder && t.ResourceUID != "" {
+			uidSet[t.ResourceUID] = struct{}{}
+		}
+	}
+	if len(uidSet) == 0 {
+		return
+	}
+	requester, err := identity.GetRequester(ctx)
+	if err != nil {
+		s.log.Debug("no requester on context; skipping folder title resolution")
+		return
+	}
+	orgID := requester.GetOrgID()
+	titles := make(map[string]string, len(uidSet))
+	for uid := range uidSet {
+		u := uid
+		f, err := s.folderSvc.Get(ctx, &folder.GetFolderQuery{
+			UID:          &u,
+			OrgID:        orgID,
+			SignedInUser: requester,
+		})
+		if err != nil || f == nil {
+			continue
+		}
+		titles[uid] = f.Title
+	}
+	for i := range threads {
+		if threads[i].ResourceKind != ResourceKindFolder {
 			continue
 		}
 		if title, ok := titles[threads[i].ResourceUID]; ok {
@@ -888,6 +947,25 @@ func (s *PulseService) assertCanReadResource(c *contextmodel.ReqContext, kind Re
 		})
 		if err != nil || dash == nil {
 			return response.Error(http.StatusNotFound, "Dashboard not found", err)
+		}
+	case ResourceKindFolder:
+		if s.folderSvc == nil {
+			// Defensive: wire should always supply a folder service in
+			// real builds, but a partial test harness might omit it.
+			return response.Error(http.StatusServiceUnavailable, "Folder service unavailable", nil)
+		}
+		// folder.Service.Get enforces dashboards-style permission on the
+		// folder when SignedInUser is set, so a caller without access
+		// gets ErrAccessDenied here. We collapse not-found and
+		// access-denied to 404 to avoid leaking folder existence.
+		u := uid
+		f, err := s.folderSvc.Get(c.Req.Context(), &folder.GetFolderQuery{
+			UID:          &u,
+			OrgID:        c.GetOrgID(),
+			SignedInUser: c.SignedInUser,
+		})
+		if err != nil || f == nil {
+			return response.Error(http.StatusNotFound, "Folder not found", err)
 		}
 	}
 	return nil

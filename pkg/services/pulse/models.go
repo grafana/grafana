@@ -14,11 +14,12 @@ type ResourceKind string
 
 const (
 	ResourceKindDashboard ResourceKind = "dashboard"
+	ResourceKindFolder    ResourceKind = "folder"
 )
 
 func (k ResourceKind) Valid() bool {
 	switch k {
-	case ResourceKindDashboard:
+	case ResourceKindDashboard, ResourceKindFolder:
 		return true
 	}
 	return false
@@ -28,13 +29,15 @@ func (k ResourceKind) Valid() bool {
 type MentionKind string
 
 const (
-	MentionKindUser  MentionKind = "user"
-	MentionKindPanel MentionKind = "panel"
+	MentionKindUser      MentionKind = "user"
+	MentionKindPanel     MentionKind = "panel"
+	MentionKindDashboard MentionKind = "dashboard"
+	MentionKindFolder    MentionKind = "folder"
 )
 
 func (k MentionKind) Valid() bool {
 	switch k {
-	case MentionKindUser, MentionKindPanel:
+	case MentionKindUser, MentionKindPanel, MentionKindDashboard, MentionKindFolder:
 		return true
 	}
 	return false

@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -54,6 +55,7 @@ type PulseService struct {
 	features      featuremgmt.FeatureToggles
 	userSvc       user.Service
 	dashSvc       dashboards.DashboardService
+	folderSvc     folder.Service
 	log           log.Logger
 }
 
@@ -72,6 +74,7 @@ func ProvideService(
 	features featuremgmt.FeatureToggles,
 	userSvc user.Service,
 	dashSvc dashboards.DashboardService,
+	folderSvc folder.Service,
 	channelPub ChannelPublisher,
 ) (*PulseService, error) {
 	if err := RegisterAccessControlRoles(acService); err != nil {
@@ -88,6 +91,7 @@ func ProvideService(
 		features:      features,
 		userSvc:       userSvc,
 		dashSvc:       dashSvc,
+		folderSvc:     folderSvc,
 		log:           logger,
 	}
 
