@@ -1144,6 +1144,20 @@
     },
     {
       "metadata": {
+        "name": "azureMonitorBatchAPI",
+        "resourceVersion": "1778641260128",
+        "creationTimestamp": "2026-05-13T03:01:00Z"
+      },
+      "spec": {
+        "description": "Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "azureMonitorDisableLogLimit",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2024-10-24T13:32:09Z"
@@ -1913,6 +1927,20 @@
         "description": "Use the new cache for datasource.StackInfoToSettings, backend flag",
         "stage": "GA",
         "codeowner": "@grafana/grafana-datasources-core-services",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "datasources.wargamesTesting",
+        "resourceVersion": "1778641260128",
+        "creationTimestamp": "2026-05-13T03:01:00Z"
+      },
+      "spec": {
+        "description": "Simulates datasource query failures for war games training scenarios. Do not enable in production.",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
+        "hideFromDocs": true,
         "expression": "false"
       }
     },

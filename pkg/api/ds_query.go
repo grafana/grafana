@@ -67,6 +67,11 @@ func (hs *HTTPServer) getDSQueryEndpoint() web.Handler {
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) QueryMetricsV2(c *contextmodel.ReqContext) response.Response {
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagDatasourcesWargamesTesting) {
+		return response.Error(http.StatusInternalServerError, "datasource query failed: internal error", fmt.Errorf("wargames testing mode enabled"))
+	}
+
 	reqDTO := dtos.MetricRequest{}
 	if err := web.Bind(c.Req, &reqDTO); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)

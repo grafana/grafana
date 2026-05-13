@@ -578,10 +578,6 @@ const (
 	// Enables the logs builder mode for the Azure Monitor data source
 	FlagAzureMonitorLogsBuilderEditor = "azureMonitorLogsBuilderEditor"
 
-	// FlagAzureMonitorBatchAPI
-	// Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request
-	FlagAzureMonitorBatchAPI = "azureMonitorBatchAPI"
-
 	// FlagLocaleFormatPreference
 	// Specifies the locale so the correct format for numbers and dates can be shown
 	FlagLocaleFormatPreference = "localeFormatPreference"
@@ -973,4 +969,8 @@ const (
 	// FlagDatasourcesUseNewStackInfoToSettingsCache
 	// Use the new cache for datasource.StackInfoToSettings, backend flag
 	FlagDatasourcesUseNewStackInfoToSettingsCache = "datasources.useNewStackInfoToSettingsCache"
+
+	// FlagDatasourcesWargamesTesting
+	// Simulates datasource query failures for war games training scenarios. Do not enable in production.
+	FlagDatasourcesWargamesTesting = "datasources.wargamesTesting"
 )
