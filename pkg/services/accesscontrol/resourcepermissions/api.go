@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -617,12 +618,37 @@ func (a *api) setPermissions(c *contextmodel.ReqContext) response.Response {
 		}
 	}
 
+	resp := a.validateTeamResource(c, resourceID)
+	if resp != nil {
+		return resp
+	}
+
 	cmd := setPermissionsCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "Bad request data: "+err.Error(), err)
 	}
 
-	if a.shouldUseK8sAPIs() {
+	// Teams-specific dual-write: write user members to Team.Spec.Members via the K8s API,
+	// then always fall through to the legacy path so both systems stay in sync during
+	// migration. Mirrors the single-user path's behavior.
+	if a.service.options.Resource == "teams" && openfeature.NewDefaultClient().Boolean(c.Req.Context(), featuremgmt.FlagKubernetesTeamsRedirect, false, openfeature.TransactionContext(c.Req.Context())) {
+		err := a.setTeamPermissionsInTeamMembers(c, c.Namespace, resourceID, cmd.Permissions)
+		if err != nil {
+			span.RecordError(err)
+			if errors.Is(err, ErrExternalTeamMember) {
+				return response.Err(err)
+			}
+			if errors.Is(err, ErrRestConfigNotAvailable) {
+				a.logger.Debug("k8s API not available for team permissions via team members, continuing with legacy", "error", err, "resourceID", resourceID)
+			} else {
+				a.logger.Warn("Failed to set bulk permissions via team members k8s API, continuing with legacy", "error", err, "resourceID", resourceID)
+			}
+		} else {
+			metrics.MAccessResourcePermissionsBackend.WithLabelValues("k8s", "set_bulk", a.service.options.Resource, "success").Inc()
+		}
+	}
+
+	if a.service.options.Resource != "teams" && a.shouldUseK8sAPIs() {
 		err := a.setResourcePermissionsToK8s(c, c.Namespace, resourceID, cmd.Permissions)
 		if err == nil {
 			metrics.MAccessResourcePermissionsBackend.WithLabelValues("k8s", "set_bulk", a.service.options.Resource, "success").Inc()

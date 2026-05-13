@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -497,6 +498,249 @@ func TestIntegrationServiceIdentityFallbackToLegacy(t *testing.T) {
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "config provider not initialized")
 	})
+}
+
+type resourcePermissionDTO struct {
+	UserID     int64  `json:"userId"`
+	UserUID    string `json:"userUid"`
+	UserLogin  string `json:"userLogin"`
+	Permission string `json:"permission"`
+	IsManaged  bool   `json:"isManaged"`
+}
+
+// go test -timeout 120s -run ^TestIntegrationResourcePermissionsBulkRedirect$ github.com/grafana/grafana/pkg/tests/apis/iam/team -count=1
+func TestIntegrationResourcePermissionsBulkRedirect(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := setupTeamTestHelper(t)
+
+	adminID, err := helper.Org1.Admin.Identity.GetInternalID()
+	require.NoError(t, err)
+	editorID, err := helper.Org1.Editor.Identity.GetInternalID()
+	require.NoError(t, err)
+	viewerID, err := helper.Org1.Viewer.Identity.GetInternalID()
+	require.NoError(t, err)
+	viewerUID := helper.Org1.Viewer.Identity.GetRawIdentifier()
+
+	// Each subtest creates its own team for isolation, and we toggle the flag back
+	// to false on teardown so the next subtest starts from a known state.
+	newTeam := func(t *testing.T, name string) (int64, string) {
+		t.Helper()
+		setTeamK8sFeatureToggle(t, true)
+		teamID, teamUID := createTeamViaAPI(t, helper, name, name+"@example.com")
+		t.Cleanup(func() {
+			setTeamK8sFeatureToggle(t, false)
+			deleteTeamViaAPI(t, helper, teamID)
+		})
+		return teamID, teamUID
+	}
+
+	t.Run("bulk set persists to Team.Spec.Members", func(t *testing.T) {
+		teamID, teamUID := newTeam(t, "bulk-set-persist")
+
+		rec := setBulkResourcePermissions(t, helper, teamID, []ac.SetResourcePermissionCommand{
+			{UserID: adminID, Permission: "Admin"},
+			{UserID: editorID, Permission: "Member"},
+		})
+		require.Equal(t, http.StatusOK, rec.Response.StatusCode, "body=%s", string(rec.Body))
+
+		members := getTeamMembers(t, helper, teamUID)
+		require.Len(t, members, 2)
+		byName := teamMembersByName(members)
+		require.Contains(t, byName, helper.Org1.Admin.Identity.GetRawIdentifier())
+		require.Contains(t, byName, helper.Org1.Editor.Identity.GetRawIdentifier())
+		assert.Equal(t, "admin", string(byName[helper.Org1.Admin.Identity.GetRawIdentifier()].Permission))
+		assert.Equal(t, "member", string(byName[helper.Org1.Editor.Identity.GetRawIdentifier()].Permission))
+		assert.False(t, byName[helper.Org1.Admin.Identity.GetRawIdentifier()].External)
+
+		perms := getResourcePermissions(t, helper, teamID)
+		assert.Len(t, perms, 2)
+	})
+
+	t.Run("bulk write is upsert: omitted users stay", func(t *testing.T) {
+		teamID, teamUID := newTeam(t, "bulk-set-upsert")
+
+		rec := setBulkResourcePermissions(t, helper, teamID, []ac.SetResourcePermissionCommand{
+			{UserID: adminID, Permission: "Admin"},
+			{UserID: editorID, Permission: "Member"},
+		})
+		require.Equal(t, http.StatusOK, rec.Response.StatusCode)
+
+		// Second POST omits editor. Under upsert semantics editor stays.
+		rec = setBulkResourcePermissions(t, helper, teamID, []ac.SetResourcePermissionCommand{
+			{UserID: adminID, Permission: "Member"},
+		})
+		require.Equal(t, http.StatusOK, rec.Response.StatusCode)
+
+		members := getTeamMembers(t, helper, teamUID)
+		byName := teamMembersByName(members)
+		require.Contains(t, byName, helper.Org1.Admin.Identity.GetRawIdentifier(), "admin (in cmd) updated in place")
+		require.Contains(t, byName, helper.Org1.Editor.Identity.GetRawIdentifier(), "editor (omitted from cmd) must remain")
+		assert.Equal(t, "member", string(byName[helper.Org1.Admin.Identity.GetRawIdentifier()].Permission), "admin permission updated")
+		assert.Equal(t, "member", string(byName[helper.Org1.Editor.Identity.GetRawIdentifier()].Permission), "editor permission unchanged")
+	})
+
+	t.Run("external members preserved across bulk write", func(t *testing.T) {
+		teamID, teamUID := newTeam(t, "bulk-set-external-preserved")
+
+		injectExternalMember(t, helper, teamUID, viewerUID, "member")
+
+		rec := setBulkResourcePermissions(t, helper, teamID, []ac.SetResourcePermissionCommand{
+			{UserID: adminID, Permission: "Admin"},
+		})
+		require.Equal(t, http.StatusOK, rec.Response.StatusCode)
+
+		members := getTeamMembers(t, helper, teamUID)
+		require.Len(t, members, 2)
+		byName := teamMembersByName(members)
+		require.Contains(t, byName, viewerUID, "external viewer member should still be present")
+		require.Contains(t, byName, helper.Org1.Admin.Identity.GetRawIdentifier())
+		assert.True(t, byName[viewerUID].External)
+		assert.Equal(t, "member", string(byName[viewerUID].Permission))
+		assert.False(t, byName[helper.Org1.Admin.Identity.GetRawIdentifier()].External)
+	})
+
+	t.Run("targeting an external member returns 400", func(t *testing.T) {
+		teamID, teamUID := newTeam(t, "bulk-set-external-rejected")
+
+		injectExternalMember(t, helper, teamUID, viewerUID, "member")
+
+		rec := setBulkResourcePermissions(t, helper, teamID, []ac.SetResourcePermissionCommand{
+			{UserID: viewerID, Permission: "Admin"},
+		})
+		assert.Equal(t, http.StatusBadRequest, rec.Response.StatusCode)
+		assert.Contains(t, string(rec.Body), "externally-synced")
+
+		members := getTeamMembers(t, helper, teamUID)
+		byName := teamMembersByName(members)
+		require.Contains(t, byName, viewerUID, "external viewer should still be present after rejected bulk write")
+		assert.True(t, byName[viewerUID].External)
+		assert.Equal(t, "member", string(byName[viewerUID].Permission), "external member's permission must not be mutated")
+	})
+
+	t.Run("empty permissions is a no-op", func(t *testing.T) {
+		teamID, teamUID := newTeam(t, "bulk-set-empty")
+
+		rec := setBulkResourcePermissions(t, helper, teamID, []ac.SetResourcePermissionCommand{
+			{UserID: adminID, Permission: "Admin"},
+			{UserID: editorID, Permission: "Member"},
+		})
+		require.Equal(t, http.StatusOK, rec.Response.StatusCode)
+
+		injectExternalMember(t, helper, teamUID, viewerUID, "admin")
+
+		rec = setBulkResourcePermissions(t, helper, teamID, []ac.SetResourcePermissionCommand{})
+		require.Equal(t, http.StatusOK, rec.Response.StatusCode)
+
+		members := getTeamMembers(t, helper, teamUID)
+		byName := teamMembersByName(members)
+		require.Contains(t, byName, helper.Org1.Admin.Identity.GetRawIdentifier(), "admin must remain — empty POST does nothing")
+		require.Contains(t, byName, helper.Org1.Editor.Identity.GetRawIdentifier(), "editor must remain — empty POST does nothing")
+		require.Contains(t, byName, viewerUID, "external viewer must remain")
+	})
+
+	t.Run("bulk write is visible in legacy SQL via dual-write", func(t *testing.T) {
+		teamID, _ := newTeam(t, "bulk-set-dual-write")
+
+		rec := setBulkResourcePermissions(t, helper, teamID, []ac.SetResourcePermissionCommand{
+			{UserID: adminID, Permission: "Admin"},
+			{UserID: editorID, Permission: "Member"},
+		})
+		require.Equal(t, http.StatusOK, rec.Response.StatusCode)
+
+		// Flip the redirect off so the GET reads from legacy SQL. The dual-write
+		// path must have populated SQL too, otherwise this returns nothing.
+		setTeamK8sFeatureToggle(t, false)
+		perms := getResourcePermissions(t, helper, teamID)
+		assert.Len(t, perms, 2)
+	})
+}
+
+func setBulkResourcePermissions(t *testing.T, helper *apis.K8sTestHelper, teamID int64, items []ac.SetResourcePermissionCommand) apis.K8sResponse[struct{}] {
+	t.Helper()
+	body, err := json.Marshal(map[string]any{"permissions": items})
+	require.NoError(t, err)
+	return apis.DoRequest(helper, apis.RequestParams{
+		User:   helper.Org1.Admin,
+		Method: http.MethodPost,
+		Path:   fmt.Sprintf("/api/access-control/teams/%d", teamID),
+		Body:   body,
+	}, &struct{}{})
+}
+
+func getResourcePermissions(t *testing.T, helper *apis.K8sTestHelper, teamID int64) []resourcePermissionDTO {
+	t.Helper()
+	resp := apis.DoRequest(helper, apis.RequestParams{
+		User:   helper.Org1.Admin,
+		Method: http.MethodGet,
+		Path:   fmt.Sprintf("/api/access-control/teams/%d", teamID),
+	}, &[]resourcePermissionDTO{})
+	require.Equal(t, http.StatusOK, resp.Response.StatusCode, "body=%s", string(resp.Body))
+	return *resp.Result
+}
+
+func getTeamMembers(t *testing.T, helper *apis.K8sTestHelper, teamUID string) []iamv0alpha1.TeamTeamMember {
+	t.Helper()
+	teamClient := helper.GetResourceClient(apis.ResourceClientArgs{
+		User:      helper.Org1.Admin,
+		Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+		GVR:       gvrTeams,
+	})
+	obj, err := teamClient.Resource.Get(context.Background(), teamUID, metav1.GetOptions{})
+	require.NoError(t, err)
+
+	rawMembers, _, err := unstructured.NestedSlice(obj.Object, "spec", "members")
+	require.NoError(t, err)
+
+	members := make([]iamv0alpha1.TeamTeamMember, 0, len(rawMembers))
+	for _, raw := range rawMembers {
+		m, ok := raw.(map[string]any)
+		require.True(t, ok)
+		external, _ := m["external"].(bool)
+		perm, _ := m["permission"].(string)
+		members = append(members, iamv0alpha1.TeamTeamMember{
+			Kind:       fmt.Sprint(m["kind"]),
+			Name:       fmt.Sprint(m["name"]),
+			Permission: iamv0alpha1.TeamTeamPermission(perm),
+			External:   external,
+		})
+	}
+	return members
+}
+
+func teamMembersByName(members []iamv0alpha1.TeamTeamMember) map[string]iamv0alpha1.TeamTeamMember {
+	m := make(map[string]iamv0alpha1.TeamTeamMember, len(members))
+	for _, member := range members {
+		m[member.Name] = member
+	}
+	return m
+}
+
+// injectExternalMember appends an external (team-sync owned) user to Team.Spec.Members
+// directly through the K8s dynamic client, bypassing the access-control handler.
+func injectExternalMember(t *testing.T, helper *apis.K8sTestHelper, teamUID, userUID, permission string) {
+	t.Helper()
+	teamClient := helper.GetResourceClient(apis.ResourceClientArgs{
+		User:      helper.Org1.Admin,
+		Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+		GVR:       gvrTeams,
+	})
+	ctx := context.Background()
+	obj, err := teamClient.Resource.Get(ctx, teamUID, metav1.GetOptions{})
+	require.NoError(t, err)
+
+	existing, _, err := unstructured.NestedSlice(obj.Object, "spec", "members")
+	require.NoError(t, err)
+	existing = append(existing, map[string]any{
+		"kind":       "User",
+		"name":       userUID,
+		"permission": permission,
+		"external":   true,
+	})
+	require.NoError(t, unstructured.SetNestedSlice(obj.Object, existing, "spec", "members"))
+
+	_, err = teamClient.Resource.Update(ctx, obj, metav1.UpdateOptions{})
+	require.NoError(t, err)
 }
 
 func searchTeamsViaAPI(t *testing.T, helper *apis.K8sTestHelper, params url.Values) team.SearchTeamQueryResult {

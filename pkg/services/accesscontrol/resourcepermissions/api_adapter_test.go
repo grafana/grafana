@@ -1635,6 +1635,399 @@ func TestSetTeamMember(t *testing.T) {
 	}
 }
 
+// TestSetTeamMembers tests the bulk set path that rewrites Team.Spec.Members.
+func TestSetTeamMembers(t *testing.T) {
+	testUser1 := &user.User{ID: 1, UID: "user-uid-1"}
+	testUser2 := &user.User{ID: 2, UID: "user-uid-2"}
+	testTeam := &team.TeamDTO{ID: 10, UID: "team-uid-1"}
+
+	makeTeamObj := func(t *testing.T, members ...iamv0.TeamTeamMember) *unstructured.Unstructured {
+		t.Helper()
+		teamObj := iamv0.Team{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: iamv0.TeamResourceInfo.GroupVersion().String(),
+				Kind:       iamv0.TeamResourceInfo.TypeMeta().Kind,
+			},
+			ObjectMeta: metav1.ObjectMeta{Name: "team-uid-1", Namespace: "stacks-123-org-1", ResourceVersion: "42"},
+			Spec:       iamv0.TeamSpec{Members: members},
+		}
+		obj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&teamObj)
+		require.NoError(t, err)
+		return &unstructured.Unstructured{Object: obj}
+	}
+	decodeMembers := func(t *testing.T, obj *unstructured.Unstructured) []iamv0.TeamTeamMember {
+		t.Helper()
+		var decoded iamv0.Team
+		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, &decoded))
+		return decoded.Spec.Members
+	}
+
+	tests := []struct {
+		name            string
+		permissions     []accesscontrol.SetResourcePermissionCommand
+		userSvc         func() *usertest.MockService
+		fakeResource    func(t *testing.T) *fakeResourceInterface
+		expectedErrMsg  string
+		expectUpdate    bool
+		validateMembers func(t *testing.T, members []iamv0.TeamTeamMember)
+		validateCalls   func(t *testing.T, getCalls, updateCalls int)
+	}{
+		{
+			name: "upserts desired users without dropping omitted ones",
+			permissions: []accesscontrol.SetResourcePermissionCommand{
+				{UserID: 1, Permission: "Admin"},
+				{UserID: 2, Permission: "Member"},
+			},
+			userSvc: func() *usertest.MockService {
+				svc := &usertest.MockService{}
+				svc.On("GetByID", mock.Anything, &user.GetUserByIDQuery{ID: int64(1)}).Return(testUser1, nil)
+				svc.On("GetByID", mock.Anything, &user.GetUserByIDQuery{ID: int64(2)}).Return(testUser2, nil)
+				return svc
+			},
+			fakeResource: func(t *testing.T) *fakeResourceInterface {
+				return &fakeResourceInterface{
+					getFunc: func(_ context.Context, _ string, _ metav1.GetOptions, _ ...string) (*unstructured.Unstructured, error) {
+						return makeTeamObj(t, iamv0.TeamTeamMember{Kind: "User", Name: "old-user", Permission: iamv0.TeamTeamPermissionMember}), nil
+					},
+					updateFunc: func(_ context.Context, obj *unstructured.Unstructured, _ metav1.UpdateOptions, _ ...string) (*unstructured.Unstructured, error) {
+						return obj, nil
+					},
+				}
+			},
+			expectUpdate: true,
+			validateMembers: func(t *testing.T, members []iamv0.TeamTeamMember) {
+				require.Len(t, members, 3, "old-user not in cmd must remain")
+				assert.Equal(t, "old-user", members[0].Name)
+				assert.Equal(t, iamv0.TeamTeamPermissionMember, members[0].Permission)
+				assert.Equal(t, "user-uid-1", members[1].Name)
+				assert.Equal(t, iamv0.TeamTeamPermissionAdmin, members[1].Permission)
+				assert.Equal(t, "user-uid-2", members[2].Name)
+				assert.Equal(t, iamv0.TeamTeamPermissionMember, members[2].Permission)
+			},
+		},
+		{
+			name: "updates existing user's permission in place",
+			permissions: []accesscontrol.SetResourcePermissionCommand{
+				{UserID: 1, Permission: "Admin"},
+			},
+			userSvc: func() *usertest.MockService {
+				svc := &usertest.MockService{}
+				svc.On("GetByID", mock.Anything, &user.GetUserByIDQuery{ID: int64(1)}).Return(testUser1, nil)
+				return svc
+			},
+			fakeResource: func(t *testing.T) *fakeResourceInterface {
+				return &fakeResourceInterface{
+					getFunc: func(_ context.Context, _ string, _ metav1.GetOptions, _ ...string) (*unstructured.Unstructured, error) {
+						return makeTeamObj(t, iamv0.TeamTeamMember{Kind: "User", Name: "user-uid-1", Permission: iamv0.TeamTeamPermissionMember}), nil
+					},
+					updateFunc: func(_ context.Context, obj *unstructured.Unstructured, _ metav1.UpdateOptions, _ ...string) (*unstructured.Unstructured, error) {
+						return obj, nil
+					},
+				}
+			},
+			expectUpdate: true,
+			validateMembers: func(t *testing.T, members []iamv0.TeamTeamMember) {
+				require.Len(t, members, 1)
+				assert.Equal(t, "user-uid-1", members[0].Name)
+				assert.Equal(t, iamv0.TeamTeamPermissionAdmin, members[0].Permission)
+			},
+		},
+		{
+			name: "preserves external and unrelated existing members",
+			permissions: []accesscontrol.SetResourcePermissionCommand{
+				{UserID: 1, Permission: "Admin"},
+			},
+			userSvc: func() *usertest.MockService {
+				svc := &usertest.MockService{}
+				svc.On("GetByID", mock.Anything, &user.GetUserByIDQuery{ID: int64(1)}).Return(testUser1, nil)
+				return svc
+			},
+			fakeResource: func(t *testing.T) *fakeResourceInterface {
+				return &fakeResourceInterface{
+					getFunc: func(_ context.Context, _ string, _ metav1.GetOptions, _ ...string) (*unstructured.Unstructured, error) {
+						return makeTeamObj(t,
+							iamv0.TeamTeamMember{Kind: "User", Name: "ext-user", Permission: iamv0.TeamTeamPermissionMember, External: true},
+							iamv0.TeamTeamMember{Kind: "User", Name: "old-user", Permission: iamv0.TeamTeamPermissionMember},
+						), nil
+					},
+					updateFunc: func(_ context.Context, obj *unstructured.Unstructured, _ metav1.UpdateOptions, _ ...string) (*unstructured.Unstructured, error) {
+						return obj, nil
+					},
+				}
+			},
+			expectUpdate: true,
+			validateMembers: func(t *testing.T, members []iamv0.TeamTeamMember) {
+				require.Len(t, members, 3)
+				assert.Equal(t, "ext-user", members[0].Name)
+				assert.True(t, members[0].External)
+				assert.Equal(t, "old-user", members[1].Name)
+				assert.False(t, members[1].External)
+				assert.Equal(t, "user-uid-1", members[2].Name)
+				assert.False(t, members[2].External)
+			},
+		},
+		{
+			name:        "empty permissions is a no-op",
+			permissions: nil,
+			userSvc:     func() *usertest.MockService { return &usertest.MockService{} },
+			fakeResource: func(t *testing.T) *fakeResourceInterface {
+				return &fakeResourceInterface{
+					getFunc: func(_ context.Context, _ string, _ metav1.GetOptions, _ ...string) (*unstructured.Unstructured, error) {
+						return makeTeamObj(t,
+							iamv0.TeamTeamMember{Kind: "User", Name: "ext-user", Permission: iamv0.TeamTeamPermissionMember, External: true},
+							iamv0.TeamTeamMember{Kind: "User", Name: "old-user", Permission: iamv0.TeamTeamPermissionMember},
+						), nil
+					},
+				}
+			},
+			validateCalls: func(t *testing.T, _, updateCalls int) {
+				assert.Equal(t, 0, updateCalls, "upsert with no entries should not write")
+			},
+		},
+		{
+			name: "rejects when targeting an external member",
+			permissions: []accesscontrol.SetResourcePermissionCommand{
+				{UserID: 1, Permission: "Admin"},
+			},
+			userSvc: func() *usertest.MockService {
+				svc := &usertest.MockService{}
+				svc.On("GetByID", mock.Anything, &user.GetUserByIDQuery{ID: int64(1)}).Return(testUser1, nil)
+				return svc
+			},
+			fakeResource: func(t *testing.T) *fakeResourceInterface {
+				return &fakeResourceInterface{
+					getFunc: func(_ context.Context, _ string, _ metav1.GetOptions, _ ...string) (*unstructured.Unstructured, error) {
+						return makeTeamObj(t, iamv0.TeamTeamMember{Kind: "User", Name: "user-uid-1", Permission: iamv0.TeamTeamPermissionMember, External: true}), nil
+					},
+				}
+			},
+			expectedErrMsg: "externally-synced",
+			validateCalls: func(t *testing.T, _, updateCalls int) {
+				assert.Equal(t, 0, updateCalls)
+			},
+		},
+		{
+			name: "skips entries with empty permission",
+			permissions: []accesscontrol.SetResourcePermissionCommand{
+				{UserID: 1, Permission: "Admin"},
+				{UserID: 2, Permission: ""},
+			},
+			userSvc: func() *usertest.MockService {
+				svc := &usertest.MockService{}
+				svc.On("GetByID", mock.Anything, &user.GetUserByIDQuery{ID: int64(1)}).Return(testUser1, nil)
+				return svc
+			},
+			fakeResource: func(t *testing.T) *fakeResourceInterface {
+				return &fakeResourceInterface{
+					getFunc: func(_ context.Context, _ string, _ metav1.GetOptions, _ ...string) (*unstructured.Unstructured, error) {
+						return makeTeamObj(t), nil
+					},
+					updateFunc: func(_ context.Context, obj *unstructured.Unstructured, _ metav1.UpdateOptions, _ ...string) (*unstructured.Unstructured, error) {
+						return obj, nil
+					},
+				}
+			},
+			expectUpdate: true,
+			validateMembers: func(t *testing.T, members []iamv0.TeamTeamMember) {
+				require.Len(t, members, 1)
+				assert.Equal(t, "user-uid-1", members[0].Name)
+			},
+		},
+		{
+			name: "ignores non-user entries (team/builtin) and leaves existing alone",
+			permissions: []accesscontrol.SetResourcePermissionCommand{
+				{TeamID: 99, Permission: "Admin"},
+				{BuiltinRole: "Editor", Permission: "Admin"},
+			},
+			userSvc: func() *usertest.MockService { return &usertest.MockService{} },
+			fakeResource: func(t *testing.T) *fakeResourceInterface {
+				return &fakeResourceInterface{
+					getFunc: func(_ context.Context, _ string, _ metav1.GetOptions, _ ...string) (*unstructured.Unstructured, error) {
+						return makeTeamObj(t, iamv0.TeamTeamMember{Kind: "User", Name: "old-user", Permission: iamv0.TeamTeamPermissionMember}), nil
+					},
+				}
+			},
+			validateCalls: func(t *testing.T, _, updateCalls int) {
+				assert.Equal(t, 0, updateCalls, "non-user entries produce no user desired set, so no Update")
+			},
+		},
+		{
+			name: "no Update when desired set matches existing",
+			permissions: []accesscontrol.SetResourcePermissionCommand{
+				{UserID: 1, Permission: "Admin"},
+			},
+			userSvc: func() *usertest.MockService {
+				svc := &usertest.MockService{}
+				svc.On("GetByID", mock.Anything, &user.GetUserByIDQuery{ID: int64(1)}).Return(testUser1, nil)
+				return svc
+			},
+			fakeResource: func(t *testing.T) *fakeResourceInterface {
+				return &fakeResourceInterface{
+					getFunc: func(_ context.Context, _ string, _ metav1.GetOptions, _ ...string) (*unstructured.Unstructured, error) {
+						return makeTeamObj(t, iamv0.TeamTeamMember{Kind: "User", Name: "user-uid-1", Permission: iamv0.TeamTeamPermissionAdmin}), nil
+					},
+				}
+			},
+			validateCalls: func(t *testing.T, _, updateCalls int) {
+				assert.Equal(t, 0, updateCalls)
+			},
+		},
+		{
+			name: "retries on conflict and succeeds",
+			permissions: []accesscontrol.SetResourcePermissionCommand{
+				{UserID: 1, Permission: "Admin"},
+			},
+			userSvc: func() *usertest.MockService {
+				svc := &usertest.MockService{}
+				svc.On("GetByID", mock.Anything, &user.GetUserByIDQuery{ID: int64(1)}).Return(testUser1, nil)
+				return svc
+			},
+			fakeResource: func(t *testing.T) *fakeResourceInterface {
+				updates := 0
+				return &fakeResourceInterface{
+					getFunc: func(_ context.Context, _ string, _ metav1.GetOptions, _ ...string) (*unstructured.Unstructured, error) {
+						return makeTeamObj(t), nil
+					},
+					updateFunc: func(_ context.Context, obj *unstructured.Unstructured, _ metav1.UpdateOptions, _ ...string) (*unstructured.Unstructured, error) {
+						updates++
+						if updates == 1 {
+							return nil, k8serrors.NewConflict(schema.GroupResource{}, "team-uid-1", fmt.Errorf("conflict"))
+						}
+						return obj, nil
+					},
+				}
+			},
+			expectUpdate: true,
+			validateCalls: func(t *testing.T, getCalls, updateCalls int) {
+				assert.Equal(t, 2, getCalls)
+				assert.Equal(t, 2, updateCalls)
+			},
+		},
+		{
+			name: "returns error for unsupported permission",
+			permissions: []accesscontrol.SetResourcePermissionCommand{
+				{UserID: 1, Permission: "Bogus"},
+			},
+			userSvc: func() *usertest.MockService {
+				svc := &usertest.MockService{}
+				svc.On("GetByID", mock.Anything, &user.GetUserByIDQuery{ID: int64(1)}).Return(testUser1, nil)
+				return svc
+			},
+			fakeResource: func(_ *testing.T) *fakeResourceInterface {
+				return &fakeResourceInterface{}
+			},
+			expectedErrMsg: "unsupported team permission",
+		},
+		{
+			name: "fails before any k8s call when user lookup errors",
+			permissions: []accesscontrol.SetResourcePermissionCommand{
+				{UserID: 1, Permission: "Admin"},
+				{UserID: 999, Permission: "Admin"},
+			},
+			userSvc: func() *usertest.MockService {
+				svc := &usertest.MockService{}
+				svc.On("GetByID", mock.Anything, &user.GetUserByIDQuery{ID: int64(1)}).Return(testUser1, nil)
+				svc.On("GetByID", mock.Anything, &user.GetUserByIDQuery{ID: int64(999)}).Return(nil, fmt.Errorf("user not found"))
+				return svc
+			},
+			fakeResource: func(_ *testing.T) *fakeResourceInterface {
+				return &fakeResourceInterface{}
+			},
+			expectedErrMsg: "failed to get user details",
+			validateCalls: func(t *testing.T, getCalls, updateCalls int) {
+				assert.Equal(t, 0, getCalls, "team Get should not be called when user lookup fails")
+				assert.Equal(t, 0, updateCalls)
+			},
+		},
+		{
+			name: "no Update when desired set matches existing with interleaved external members",
+			permissions: []accesscontrol.SetResourcePermissionCommand{
+				{UserID: 1, Permission: "Admin"},
+			},
+			userSvc: func() *usertest.MockService {
+				svc := &usertest.MockService{}
+				svc.On("GetByID", mock.Anything, &user.GetUserByIDQuery{ID: int64(1)}).Return(testUser1, nil)
+				return svc
+			},
+			fakeResource: func(t *testing.T) *fakeResourceInterface {
+				return &fakeResourceInterface{
+					getFunc: func(_ context.Context, _ string, _ metav1.GetOptions, _ ...string) (*unstructured.Unstructured, error) {
+						return makeTeamObj(t,
+							iamv0.TeamTeamMember{Kind: "User", Name: "user-uid-1", Permission: iamv0.TeamTeamPermissionAdmin},
+							iamv0.TeamTeamMember{Kind: "User", Name: "ext-user", Permission: iamv0.TeamTeamPermissionMember, External: true},
+						), nil
+					},
+				}
+			},
+			validateCalls: func(t *testing.T, _, updateCalls int) {
+				assert.Equal(t, 0, updateCalls, "position-preserving rebuild must produce a slice equal to the input when nothing changed")
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var (
+				lastUpdated *unstructured.Unstructured
+				getCalls    int
+				updateCalls int
+			)
+			fr := tt.fakeResource(t)
+			if fr.getFunc != nil {
+				origGet := fr.getFunc
+				fr.getFunc = func(ctx context.Context, name string, opts metav1.GetOptions, subresources ...string) (*unstructured.Unstructured, error) {
+					getCalls++
+					return origGet(ctx, name, opts, subresources...)
+				}
+			}
+			if fr.updateFunc != nil {
+				origUpdate := fr.updateFunc
+				fr.updateFunc = func(ctx context.Context, obj *unstructured.Unstructured, opts metav1.UpdateOptions, subresources ...string) (*unstructured.Unstructured, error) {
+					updateCalls++
+					lastUpdated = obj
+					return origUpdate(ctx, obj, opts, subresources...)
+				}
+			}
+			fakeClient := &fakeDynamicClient{resourceInterface: fr}
+
+			testApi := &api{
+				cfg:    &setting.Cfg{},
+				logger: log.New("test"),
+				service: &Service{
+					store:       &mockResourcePermissionStore{},
+					teamService: teamtest.NewFakeServiceWithTeamDTO(testTeam),
+					userService: tt.userSvc(),
+					options:     Options{Resource: "teams"},
+				},
+			}
+
+			err := testApi.setTeamMembers(makeReqCtx(), fakeClient, "stacks-123-org-1", "10", tt.permissions)
+
+			if tt.expectedErrMsg != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.expectedErrMsg)
+				if tt.validateCalls != nil {
+					tt.validateCalls(t, getCalls, updateCalls)
+				}
+				return
+			}
+			require.NoError(t, err)
+
+			if tt.expectUpdate {
+				require.NotNil(t, lastUpdated, "expected an Update call")
+				if tt.validateMembers != nil {
+					tt.validateMembers(t, decodeMembers(t, lastUpdated))
+				}
+			} else {
+				assert.Nil(t, lastUpdated, "expected no Update call")
+			}
+			if tt.validateCalls != nil {
+				tt.validateCalls(t, getCalls, updateCalls)
+			}
+		})
+	}
+}
+
 // TestTeamMemberWrappers_RestConfigNotAvailable tests that both wrappers return
 // ErrRestConfigNotAvailable when no rest config provider is set, so the caller (api.go)
 // can stop the operation and return the error.
@@ -1654,6 +2047,12 @@ func TestTeamMemberWrappers_RestConfigNotAvailable(t *testing.T) {
 			call: func(a *api) error {
 				_, err := a.getTeamPermissionsFromMembers(makeReqCtx(), "stacks-123-org-1", "10")
 				return err
+			},
+		},
+		{
+			name: "setTeamPermissionsInTeamMembers",
+			call: func(a *api) error {
+				return a.setTeamPermissionsInTeamMembers(makeReqCtx(), "stacks-123-org-1", "10", nil)
 			},
 		},
 	}

@@ -602,6 +602,70 @@ func TestIntegrationApi_setUserPermissionForTeams(t *testing.T) {
 	}
 }
 
+func TestIntegrationApi_setBulkPermissionsForTeams(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	type bulkTestCase struct {
+		desc           string
+		permissions    []accesscontrol.Permission
+		body           string
+		expectedStatus int
+		expectedCount  int
+		teamCmd        *team.CreateTeamCommand
+	}
+	tests := []bulkTestCase{
+		{
+			desc:           "should set Member and Admin permissions for two users",
+			expectedStatus: http.StatusOK,
+			expectedCount:  2,
+			permissions: []accesscontrol.Permission{
+				{Action: "teams.permissions:read", Scope: accesscontrol.ScopeTeamsAll},
+				{Action: "teams.permissions:write", Scope: accesscontrol.ScopeTeamsAll},
+				{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll},
+			},
+			teamCmd: &team.CreateTeamCommand{Name: "test", Email: "test@test.com", OrgID: 1},
+		},
+		{
+			desc:           "should return status 400 for a provisioned team",
+			expectedStatus: http.StatusBadRequest,
+			permissions: []accesscontrol.Permission{
+				{Action: "teams.permissions:read", Scope: accesscontrol.ScopeTeamsAll},
+				{Action: "teams.permissions:write", Scope: accesscontrol.ScopeTeamsAll},
+				{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll},
+			},
+			teamCmd: &team.CreateTeamCommand{Name: "test", Email: "test@test.com", OrgID: 1, IsProvisioned: true},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			service, usrSvc, teamSvc := setupTestEnvironment(t, testOptionsForTeams)
+			server := setupTestServer(t, &user.SignedInUser{
+				OrgID:       1,
+				Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByActionContext(context.Background(), tt.permissions)},
+			}, service)
+
+			u1, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{Login: "user1", OrgID: 1})
+			require.NoError(t, err)
+			u2, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{Login: "user2", OrgID: 1})
+			require.NoError(t, err)
+
+			expectedTeam, err := teamSvc.CreateTeam(context.Background(), tt.teamCmd)
+			require.NoError(t, err)
+			resourceID := strconv.Itoa(int(expectedTeam.ID))
+
+			body := fmt.Sprintf(`{"permissions":[{"userId":%d,"permission":"Member"},{"userId":%d,"permission":"Admin"}]}`, u1.ID, u2.ID)
+			recorder := setBulkPermissions(t, server, testOptionsForTeams.Resource, resourceID, body)
+			assert.Equal(t, tt.expectedStatus, recorder.Code)
+
+			if tt.expectedStatus == http.StatusOK {
+				permissions, _ := getPermission(t, server, testOptionsForTeams.Resource, resourceID)
+				require.Len(t, permissions, tt.expectedCount)
+			}
+		})
+	}
+}
+
 func setupTestServer(t *testing.T, user *user.SignedInUser, service *Service) *web.Mux {
 	server := web.New()
 	server.UseMiddleware(web.Renderer("views", "[[", "]]"))
@@ -675,6 +739,15 @@ func setPermission(t *testing.T, server *web.Mux, resource, resourceID, permissi
 	recorder := httptest.NewRecorder()
 	server.ServeHTTP(recorder, req)
 
+	return recorder
+}
+
+func setBulkPermissions(t *testing.T, server *web.Mux, resource, resourceID, body string) *httptest.ResponseRecorder {
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("/api/access-control/%s/%s", resource, resourceID), strings.NewReader(body))
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+	recorder := httptest.NewRecorder()
+	server.ServeHTTP(recorder, req)
 	return recorder
 }
 

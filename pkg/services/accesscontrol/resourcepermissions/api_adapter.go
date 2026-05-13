@@ -805,6 +805,141 @@ func teamMemberPermissionToString(p iamv0.TeamTeamPermission) (string, error) {
 	}
 }
 
+func (a *api) setTeamPermissionsInTeamMembers(c *contextmodel.ReqContext, namespace string, resourceID string, permissions []accesscontrol.SetResourcePermissionCommand) error {
+	dynamicClient, err := a.getDynamicClient(c)
+	if err != nil {
+		return err
+	}
+	return a.setTeamMembers(c, dynamicClient, namespace, resourceID, permissions)
+}
+
+func (a *api) setTeamMembers(c *contextmodel.ReqContext, dynamicClient dynamic.Interface, namespace string, resourceID string, permissions []accesscontrol.SetResourcePermissionCommand) error {
+	ctx := c.Req.Context()
+
+	teamID, err := strconv.ParseInt(resourceID, 10, 64)
+	if err != nil {
+		return fmt.Errorf("invalid team resource ID: %w", err)
+	}
+
+	teamDetails, err := a.service.teamService.GetTeamByID(ctx, &team.GetTeamByIDQuery{
+		OrgID: c.GetOrgID(),
+		ID:    teamID,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to get team details: %w", err)
+	}
+
+	// Resolve users + permissions up-front: dedup by UserID (first wins) and
+	// fail before any k8s write so partial bulk writes aren't possible.
+	// Empty permission is skipped, not used for removal: in dual-writer mode
+	// the apiserver Update removes the team_member row before the legacy
+	// RemoveTeamMemberHook runs, and that hook errors on 0 rows affected.
+	// Known divergence from legacy, shared with the single-user redirect.
+	type desiredMember struct {
+		uid        string
+		permission iamv0.TeamTeamPermission
+	}
+	desired := make([]desiredMember, 0, len(permissions))
+	desiredByUID := make(map[string]iamv0.TeamTeamPermission, len(permissions))
+	seenUserID := make(map[int64]struct{}, len(permissions))
+	for _, perm := range permissions {
+		if perm.UserID == 0 || perm.Permission == "" {
+			continue
+		}
+		if _, dup := seenUserID[perm.UserID]; dup {
+			continue
+		}
+		seenUserID[perm.UserID] = struct{}{}
+
+		userDetails, err := a.service.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: perm.UserID})
+		if err != nil {
+			return fmt.Errorf("failed to get user details: %w", err)
+		}
+		memberPerm, err := stringToTeamMemberPermission(perm.Permission)
+		if err != nil {
+			return err
+		}
+		desiredByUID[userDetails.UID] = memberPerm
+		desired = append(desired, desiredMember{uid: userDetails.UID, permission: memberPerm})
+	}
+
+	teamResource := dynamicClient.Resource(iamv0.TeamResourceInfo.GroupVersionResource()).Namespace(namespace)
+
+	// Read-modify-write: spec.members is a slice on the Team object so a
+	// concurrent writer can lose updates if we don't refetch on conflict.
+	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		teamObj, err := teamResource.Get(ctx, teamDetails.UID, metav1.GetOptions{})
+		if err != nil {
+			return fmt.Errorf("failed to get team: %w", err)
+		}
+
+		var t iamv0.Team
+		if err := runtime.DefaultUnstructuredConverter.FromUnstructured(teamObj.Object, &t); err != nil {
+			return fmt.Errorf("failed to decode team: %w", err)
+		}
+
+		// External members are owned by team-sync. Reject the whole bulk write if it
+		// targets one, matching the single-user path and keeping k8s/SQL in sync.
+		for _, m := range t.Spec.Members {
+			if m.Kind != subjectKindUser || !m.External {
+				continue
+			}
+			if _, hit := desiredByUID[m.Name]; hit {
+				return ErrExternalTeamMember.Errorf("user %q is externally-synced", m.Name)
+			}
+		}
+
+		// Upsert: update entries the caller specified, leave entries they didn't
+		// specify alone. Matches the legacy SQL contract (callers like Terraform
+		// rely on partial updates not wiping omitted users).
+		applied := make(map[string]bool, len(desired))
+		newMembers := make([]iamv0.TeamTeamMember, 0, len(t.Spec.Members)+len(desired))
+		for _, m := range t.Spec.Members {
+			if m.Kind != subjectKindUser || m.External {
+				newMembers = append(newMembers, m)
+				continue
+			}
+			if perm, ok := desiredByUID[m.Name]; ok {
+				newMembers = append(newMembers, iamv0.TeamTeamMember{
+					Kind:       subjectKindUser,
+					Name:       m.Name,
+					Permission: perm,
+					External:   false,
+				})
+				applied[m.Name] = true
+				continue
+			}
+			newMembers = append(newMembers, m)
+		}
+		for _, d := range desired {
+			if applied[d.uid] {
+				continue
+			}
+			newMembers = append(newMembers, iamv0.TeamTeamMember{
+				Kind:       subjectKindUser,
+				Name:       d.uid,
+				Permission: d.permission,
+				External:   false,
+			})
+		}
+
+		if slices.Equal(t.Spec.Members, newMembers) {
+			return nil
+		}
+		t.Spec.Members = newMembers
+
+		updatedObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&t)
+		if err != nil {
+			return fmt.Errorf("failed to encode team: %w", err)
+		}
+
+		if _, err := teamResource.Update(ctx, &unstructured.Unstructured{Object: updatedObj}, metav1.UpdateOptions{}); err != nil {
+			return fmt.Errorf("failed to update team members: %w", err)
+		}
+		return nil
+	})
+}
+
 func stringToTeamMemberPermission(s string) (iamv0.TeamTeamPermission, error) {
 	switch strings.ToLower(s) {
 	case "admin":
