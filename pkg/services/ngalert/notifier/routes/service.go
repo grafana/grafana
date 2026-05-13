@@ -2,7 +2,6 @@ package routes
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"go.opentelemetry.io/otel/attribute"
@@ -276,10 +275,6 @@ func (nps *Service) UpdateManagedRoute(ctx context.Context, orgID int64, name st
 
 	_, err = merge.MergeExtraConfig(ctx, revision.Config)
 	if err != nil {
-		if errors.Is(err, merge.ErrSubtreeMatchersConflict) {
-			// TODO temporarily get the conflicting matchers
-			return nil, models.MakeErrRouteConflictingMatchers(fmt.Sprintf("%s", revision.Config.ExtraConfigs[0].MergeMatchers))
-		}
 		nps.log.FromContext(ctx).Warn("Unable to validate the combined routing tree because of an error during merging. This could be a sign of broken external configuration. Skipping", "error", err)
 	}
 
