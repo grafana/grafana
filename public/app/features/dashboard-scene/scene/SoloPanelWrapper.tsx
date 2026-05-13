@@ -1,6 +1,15 @@
 import React, { type CSSProperties, useContext, useEffect, useState } from 'react';
 
-import { getFrameDisplayName, type PanelData, type DataFrame } from '@grafana/data';
+import {
+  getFrameDisplayName,
+  type PanelData,
+  type DataFrame,
+  getFieldSeriesColor,
+  type GrafanaTheme2,
+  getFieldColorModeForField,
+  FieldColorModeId,
+  fieldColorModeRegistry,
+} from '@grafana/data';
 import { data } from '@grafana/flamegraph';
 import { Trans } from '@grafana/i18n';
 import {
@@ -85,7 +94,7 @@ function FanoutBySeries({
     return <Spinner />;
   }
 
-  const groups = groupByDataByMode(panelDataIn, fanoutMode);
+  const groups = groupByDataByMode(panel, panelDataIn, fanoutMode, theme);
 
   const style: CSSProperties = {
     display: 'grid',
@@ -117,12 +126,35 @@ interface SplitGroup {
   frames: DataFrame[];
 }
 
-export function groupByDataByMode(data: PanelData, mode: string): SplitGroup[] {
+export function groupByDataByMode(panel: VizPanel, data: PanelData, mode: string, theme: GrafanaTheme2): SplitGroup[] {
+  const fieldConfig = panel.state.fieldConfig.defaults;
+
   if (mode === bySeriesMode) {
-    return data.series.map((frame) => ({
-      name: getFrameDisplayName(frame, 0),
-      frames: [frame],
-    }));
+    return data.series.map((frame, index) => {
+      const valueField = frame.fields.find((f) => f.type === 'number');
+      if (valueField) {
+        const mode =
+          fieldColorModeRegistry.getIfExists(valueField.config.color?.mode) ??
+          fieldColorModeRegistry.getIfExists(fieldConfig.color?.mode) ??
+          fieldColorModeRegistry.get(FieldColorModeId.PaletteClassic);
+
+        if (!mode.isByValue) {
+          valueField.state = { ...valueField.state, seriesIndex: index };
+          valueField.config = {
+            ...valueField.config,
+            color: {
+              mode: FieldColorModeId.Fixed,
+              fixedColor: mode.getCalculator(valueField, theme)(0, 0),
+            },
+          };
+        }
+      }
+
+      return {
+        name: getFrameDisplayName(frame, 0),
+        frames: [frame],
+      };
+    });
   }
 
   const label = getLabelFromMode(mode);

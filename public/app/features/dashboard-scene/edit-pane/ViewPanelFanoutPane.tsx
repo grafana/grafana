@@ -9,7 +9,19 @@ import {
   type SceneObjectState,
   type VizPanel,
 } from '@grafana/scenes';
-import { Box, ScrollContainer, Sidebar, Text, RadioButtonDot, Field, Switch, Button } from '@grafana/ui';
+import { StackingMode } from '@grafana/schema';
+import {
+  Box,
+  ScrollContainer,
+  Sidebar,
+  Text,
+  RadioButtonDot,
+  Field,
+  Switch,
+  Button,
+  getGraphFieldOptions,
+  RadioButtonGroup,
+} from '@grafana/ui';
 import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
 
 import { getDashboardSceneFor } from '../utils/utils';
@@ -31,10 +43,32 @@ export class ViewPanelFanoutPane extends SceneObjectBase<ViewPanelFanoutPaneStat
 
   public onToggleLegend(show: boolean) {
     const panel = this.state.panelRef.resolve();
-    panel.setState({
+    panel.onOptionsChange({
+      ...panel.state.options,
       //@ts-expect-error
-      options: { ...panel.state.options, legend: { ...panel.state.options?.legend, showLegend: show } },
+      legend: { ...panel.state.options?.legend, showLegend: show },
     });
+  }
+
+  public onToggleStacking(stacking: string) {
+    const panel = this.state.panelRef.resolve();
+    panel.onFieldConfigChange(
+      {
+        ...panel.state.fieldConfig,
+        defaults: {
+          ...panel.state.fieldConfig?.defaults,
+          custom: {
+            ...panel.state.fieldConfig?.defaults?.custom,
+            stacking: {
+              // @ts-expect-error
+              ...panel.state.fieldConfig?.defaults?.custom?.stacking,
+              mode: stacking,
+            },
+          },
+        },
+      },
+      true
+    );
   }
 }
 
@@ -43,6 +77,7 @@ export function ViewPanelFanoutPaneRenderer({ model }: SceneComponentProps<ViewP
   const { viewPanel, viewPanelFanout } = dashboard.useState();
   const [labels, setLabels] = useState<string[] | undefined>(undefined);
   const panel = model.state.panelRef.resolve();
+  const { fieldConfig, options } = panel.useState();
 
   useEffect(() => {
     if (!viewPanel) {
@@ -63,7 +98,10 @@ export function ViewPanelFanoutPaneRenderer({ model }: SceneComponentProps<ViewP
 
   const modeValue = viewPanelFanout ?? '$__none__$';
   //@ts-expect-error
-  const showLegend = panel.state.options?.legend?.showLegend ?? false;
+  const showLegend = options.legend?.showLegend ?? false;
+  //@ts-expect-error
+  const stacking = fieldConfig.defaults?.custom?.stacking?.mode ?? StackingMode.None;
+  const stackingOptions = getGraphFieldOptions().stacking;
 
   return (
     <Box display="flex" direction="column" flex={1} height="100%">
@@ -82,9 +120,18 @@ export function ViewPanelFanoutPaneRenderer({ model }: SceneComponentProps<ViewP
           </Box>
 
           <OptionsPaneCategory title="Quick toggles" id="quick-toggles" isOpenDefault={true}>
-            <Field label="Show legend" noMargin>
-              <Switch value={showLegend} onChange={(e) => model.onToggleLegend(e.currentTarget.checked)} />
-            </Field>
+            <Box direction="column" gap={2} display="flex" paddingLeft={1}>
+              <Field label="Show legend" noMargin>
+                <Switch value={showLegend} onChange={(e) => model.onToggleLegend(e.currentTarget.checked)} />
+              </Field>
+              <Field label="Stacking" noMargin>
+                <RadioButtonGroup
+                  value={stacking}
+                  options={stackingOptions}
+                  onChange={(value) => model.onToggleStacking(value)}
+                />
+              </Field>
+            </Box>
           </OptionsPaneCategory>
           <OptionsPaneCategory title="Fan-out by series or label" id="fanout" isOpenDefault={true}>
             <Box direction="column" gap={1} display="flex" paddingLeft={1}>
