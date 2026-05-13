@@ -121,7 +121,8 @@ type DashboardsAPIBuilder struct {
 	publicDashboardService   publicdashboards.Service
 	snapshotService          dashboardsnapshots.Service
 	snapshotOptions          dashv0.SnapshotSharingOptions
-	snapshotStorage          rest.Storage // for dual-write support in routes
+	snapshotStorage          rest.Storage   // for dual-write support in routes
+	homeDashboard            *homeDashboard // On-prem home dashboard support
 	namespacer               request.NamespaceMapper
 	dashboardActivityChannel live.DashboardActivityChannel
 	dashboardK8sClient       client.K8sHandler // for provisioning checks during delete validation
@@ -194,6 +195,7 @@ func RegisterAPIService(
 		namespacer:               namespacer,
 		dashboardActivityChannel: dashboardActivityChannel,
 		legacy:                   legacy.NewDashboardSQLAccess(dbp, namespacer, provisioning, accessControl),
+		homeDashboard:            &homeDashboard{}, // TODO initialize from cfg!!!
 	}
 
 	migration.RegisterMetrics(reg)
@@ -319,6 +321,10 @@ func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 
 	switch a.GetResource().Resource {
 	case dashv0.DASHBOARD_RESOURCE:
+		if a.GetName() == HOME_DASHBOARD_NAME && op != admission.Connect {
+			return fmt.Errorf("no operations are allowed on the home dashboard")
+		}
+
 		// Handle different operations
 		switch op {
 		case admission.Delete:
@@ -767,7 +773,9 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 ) error {
 	// Register the versioned storage
 	storage := map[string]rest.Storage{}
-	apiGroupInfo.VersionedResourcesStorageMap[dashboards.GroupVersion().Version] = storage
+
+	apiVersion := dashboards.GroupVersion().Version
+	apiGroupInfo.VersionedResourcesStorageMap[apiVersion] = storage
 
 	unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, dashboards, opts.OptsGetter)
 	if err != nil {
@@ -793,6 +801,8 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 
 	storage[dashboards.StoragePath()] = dashboardStorageWrapper{
 		Storage:                 unified,
+		homeDashboard:           b.homeDashboard,
+		apiVersion:              apiVersion,
 		dashboardPermissionsSvc: b.dashboardPermissionsSvc,
 		live:                    b.dashboardActivityChannel,
 	}

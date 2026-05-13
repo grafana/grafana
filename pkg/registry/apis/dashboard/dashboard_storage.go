@@ -22,8 +22,15 @@ import (
 type dashboardStorageWrapper struct {
 	grafanarest.Storage
 
+	// Support home dashboards
+	homeDashboard *homeDashboard
+	apiVersion    string
+
+	// Clear the dashboard cache on Delete
 	dashboardPermissionsSvc accesscontrol.DashboardPermissionsService
-	live                    live.DashboardActivityChannel
+
+	// Broadcast events
+	live live.DashboardActivityChannel
 }
 
 func (d dashboardStorageWrapper) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
@@ -62,4 +69,12 @@ func (d dashboardStorageWrapper) Delete(ctx context.Context, name string, delete
 		return obj, async, accessErr
 	}
 	return obj, async, nil
+}
+
+func (d dashboardStorageWrapper) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	if name == HOME_DASHBOARD_NAME && d.homeDashboard != nil {
+		return d.homeDashboard.Get(d.apiVersion)
+	}
+
+	return d.Storage.Get(ctx, name, options)
 }
