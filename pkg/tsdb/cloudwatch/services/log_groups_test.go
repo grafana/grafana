@@ -138,17 +138,17 @@ func TestGetLogGroups(t *testing.T) {
 		mockLogsAPI := &mocks.LogsAPI{}
 		req := resources.LogGroupsRequest{
 			Limit:              2,
-			LogGroupNamePrefix: utils.Pointer("test"),
-			NextToken:          utils.Pointer("some_token"),
+			LogGroupNamePrefix: new("test"),
+			NextToken:          new("some_token"),
 		}
 
 		mockLogsAPI.On("DescribeLogGroups", &cloudwatchlogs.DescribeLogGroupsInput{
 			Limit:              aws.Int32(req.Limit),
 			LogGroupNamePrefix: req.LogGroupNamePrefix,
-			NextToken:          utils.Pointer("some_token"),
+			NextToken:          new("some_token"),
 		}).Return(&cloudwatchlogs.DescribeLogGroupsOutput{
 			LogGroups: []cloudwatchlogstypes.LogGroup{
-				{Arn: utils.Pointer("arn:aws:logs:us-east-1:111:log-group:group_a"), LogGroupName: utils.Pointer("group_a")},
+				{Arn: new("arn:aws:logs:us-east-1:111:log-group:group_a"), LogGroupName: new("group_a")},
 			},
 			NextToken: aws.String("another_token"),
 		}, nil)
@@ -160,7 +160,7 @@ func TestGetLogGroups(t *testing.T) {
 		mockLogsAPI.AssertNumberOfCalls(t, "DescribeLogGroups", 1)
 		assert.Equal(t, []resources.ResourceResponse[resources.LogGroup]{
 			{
-				AccountId: utils.Pointer("111"),
+				AccountId: new("111"),
 				Value:     resources.LogGroup{Arn: "arn:aws:logs:us-east-1:111:log-group:group_a", Name: "group_a"},
 			},
 		}, results)
@@ -221,8 +221,8 @@ func TestGetLogGroupsCrossAccountQuerying(t *testing.T) {
 		service := NewLogGroupsService(mockLogsAPI, false)
 
 		_, _, err := service.GetLogGroups(context.Background(), resources.LogGroupsRequest{
-			ResourceRequest:    resources.ResourceRequest{AccountId: utils.Pointer("accountId")},
-			LogGroupNamePrefix: utils.Pointer("prefix"),
+			ResourceRequest:    resources.ResourceRequest{AccountId: new("accountId")},
+			LogGroupNamePrefix: new("prefix"),
 		})
 
 		assert.NoError(t, err)
@@ -238,9 +238,9 @@ func TestGetLogGroupsCrossAccountQuerying(t *testing.T) {
 		service := NewLogGroupsService(mockLogsAPI, true)
 
 		_, _, err := service.GetLogGroups(context.Background(), resources.LogGroupsRequest{
-			ResourceRequest:     resources.ResourceRequest{AccountId: utils.Pointer("accountId")},
-			LogGroupNamePrefix:  utils.Pointer("prefix"),
-			LogGroupNamePattern: utils.Pointer("pattern"),
+			ResourceRequest:     resources.ResourceRequest{AccountId: new("accountId")},
+			LogGroupNamePrefix:  new("prefix"),
+			LogGroupNamePattern: new("pattern"),
 		})
 
 		assert.NoError(t, err)
@@ -258,7 +258,7 @@ func TestGetLogGroupsCrossAccountQuerying(t *testing.T) {
 		service := NewLogGroupsService(mockLogsAPI, true)
 
 		_, _, err := service.GetLogGroups(context.Background(), resources.LogGroupsRequest{
-			ResourceRequest: resources.ResourceRequest{AccountId: utils.Pointer("accountId")},
+			ResourceRequest: resources.ResourceRequest{AccountId: new("accountId")},
 		})
 
 		assert.NoError(t, err)
@@ -275,8 +275,8 @@ func TestGetLogGroupsCrossAccountQuerying(t *testing.T) {
 		service := NewLogGroupsService(mockLogsAPI, true)
 
 		_, _, err := service.GetLogGroups(context.Background(), resources.LogGroupsRequest{
-			ResourceRequest:    resources.ResourceRequest{AccountId: utils.Pointer("accountId")},
-			LogGroupNamePrefix: utils.Pointer("prefix"),
+			ResourceRequest:    resources.ResourceRequest{AccountId: new("accountId")},
+			LogGroupNamePrefix: new("prefix"),
 		})
 		assert.NoError(t, err)
 		mockLogsAPI.AssertCalled(t, "DescribeLogGroups", &cloudwatchlogs.DescribeLogGroupsInput{
@@ -293,7 +293,7 @@ func TestGetLogGroupsCrossAccountQuerying(t *testing.T) {
 		service := NewLogGroupsService(mockLogsAPI, true)
 
 		_, _, err := service.GetLogGroups(context.Background(), resources.LogGroupsRequest{
-			LogGroupNamePrefix: utils.Pointer("prefix"),
+			LogGroupNamePrefix: new("prefix"),
 		})
 
 		assert.NoError(t, err)
@@ -429,4 +429,3 @@ func TestGetLogGroupFields(t *testing.T) {
 		assert.NoError(t, err)
 	})
 }
-

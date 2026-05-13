@@ -33,7 +33,7 @@ func TestLogGroupsRoute(t *testing.T) {
 				Arn:  "some arn",
 				Name: "some name",
 			},
-			AccountId: utils.Pointer("111"),
+			AccountId: new("111"),
 		}}, (*string)(nil), nil)
 
 		rr := httptest.NewRecorder()
@@ -55,13 +55,13 @@ func TestLogGroupsRoute(t *testing.T) {
 						Arn:  "arn 1",
 						Name: "name 1",
 					},
-					AccountId: utils.Pointer("111"),
+					AccountId: new("111"),
 				}, {
 					Value: resources.LogGroup{
 						Arn:  "arn 2",
 						Name: "name 2",
 					},
-					AccountId: utils.Pointer("222"),
+					AccountId: new("222"),
 				},
 			}, (*string)(nil), nil)
 
@@ -223,8 +223,8 @@ func TestLogGroupsRoute(t *testing.T) {
 				Arn:  "some arn",
 				Name: "some name",
 			},
-			AccountId: utils.Pointer("111"),
-		}}, utils.Pointer("next_page_token"), nil)
+			AccountId: new("111"),
+		}}, new("next_page_token"), nil)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/log-groups?region=us-east-1", nil)
@@ -253,4 +253,3 @@ func TestLogGroupsRoute(t *testing.T) {
 		assert.Empty(t, rr.Header().Get("Link"))
 	})
 }
-
