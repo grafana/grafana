@@ -5515,7 +5515,8 @@
       "metadata": {
         "name": "reportingCsvEncodingOptions",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2026-01-08T12:56:54Z"
+        "creationTimestamp": "2026-01-08T12:56:54Z",
+        "deletionTimestamp": "2026-05-13T10:49:39Z"
       },
       "spec": {
         "description": "Enables CSV encoding options in the reporting feature",
