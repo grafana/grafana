@@ -107,11 +107,13 @@ When an alert instance enters the **No Data** state, Grafana, by default, trigge
 
 ## Modify the `No Data` or `Error` state
 
-In [Configure no data and error handling](ref:no-data-and-error-handling), you can configure the behavior when the evaluation returns no data.
+{{< figure src="/media/docs/alerting/screenshot-configure-no-and-error-handling.png" alt="A screenshot of the configure no data and error handling section in the alert rule form." max-width="750px" >}}
+
+In [Configure no data and error handling](ref:no-data-and-error-handling), you can configure the behavior when the evaluation returns no data or all values are null:
 
 {{< docs/shared lookup="alerts/modify-nodata-state.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-In [Configure no data and error handling](ref:no-data-and-error-handling), you can configure the behavior when the evaluation returns an error.
+You can also configure the behavior when the evaluation returns an error or timeout:
 
 {{< docs/shared lookup="alerts/modify-error-state.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 

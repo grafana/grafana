@@ -302,11 +302,11 @@ To do this, you need to make sure that your alert rule is in the right evaluatio
 
    ### Configure no data and error handling
 
-   Configure the behaviour when the evaluation returns no data:
+   Configure the behavior when the evaluation returns no data:
 
    {{< docs/shared lookup="alerts/modify-nodata-state.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-   You can also configure the behaviour when the evaluation returns an error:
+   You can also configure the behavior when the evaluation returns an error:
 
    {{< docs/shared lookup="alerts/modify-error-state.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
