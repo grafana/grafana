@@ -468,9 +468,9 @@ func TestShouldSkipForZeroViews_EmptyName_DoesNotConsult(t *testing.T) {
 // identity. Only used to exercise the builder-identity guard.
 type fakeNonDashboardBuilder struct{}
 
-func (fakeNonDashboardBuilder) Group() string                                                  { return "folder.grafana.app" }
-func (fakeNonDashboardBuilder) Resource() string                                               { return "folders" }
-func (fakeNonDashboardBuilder) MaxItemsPerResource() int                                       { return 0 }
+func (fakeNonDashboardBuilder) Group() string            { return "folder.grafana.app" }
+func (fakeNonDashboardBuilder) Resource() string         { return "folders" }
+func (fakeNonDashboardBuilder) MaxItemsPerResource() int { return 0 }
 func (fakeNonDashboardBuilder) Extract(context.Context, *resourcepb.ResourceKey, []byte, string) ([]embed.Item, error) {
 	return nil, nil
 }

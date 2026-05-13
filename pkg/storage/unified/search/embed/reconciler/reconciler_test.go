@@ -1020,4 +1020,3 @@ func TestReconciler_Run_BroadcasterSubscribeErrorContinues(t *testing.T) {
 		t.Fatal("Run did not exit after ctx cancel")
 	}
 }
-
