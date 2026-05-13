@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/apis/alerting/rules/common"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -41,10 +40,10 @@ func makeAlertRuleSpec(t *testing.T, folder, title string) *v0alpha1.AlertRule {
 			Title: title,
 			Expressions: v0alpha1.AlertRuleExpressionMap{
 				"A": {
-					QueryType:     util.Pointer("query"),
-					DatasourceUID: util.Pointer(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+					QueryType:     new("query"),
+					DatasourceUID: new(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 					Model:         rule.Data[0].Model,
-					Source:        util.Pointer(true),
+					Source:        new(true),
 					RelativeTimeRange: &v0alpha1.AlertRuleRelativeTimeRange{
 						From: v0alpha1.AlertRulePromDurationWMillis("5m"),
 						To:   v0alpha1.AlertRulePromDurationWMillis("0s"),
@@ -289,12 +288,12 @@ func TestIntegrationListTrash(t *testing.T) {
 
 		// Clear server-managed metadata; a fresh UID/Name is assigned on Create.
 		restore := trashed.DeepCopy()
-		restore.ObjectMeta.Name = ""
-		restore.ObjectMeta.UID = ""
-		restore.ObjectMeta.ResourceVersion = ""
-		restore.ObjectMeta.Generation = 0
-		restore.ObjectMeta.DeletionTimestamp = nil
-		restore.ObjectMeta.ManagedFields = nil
+		restore.Name = ""
+		restore.UID = ""
+		restore.ResourceVersion = ""
+		restore.Generation = 0
+		restore.DeletionTimestamp = nil
+		restore.ManagedFields = nil
 
 		restored, err := client.Create(ctx, restore, v1.CreateOptions{})
 		require.NoError(t, err)
@@ -330,10 +329,10 @@ func TestIntegrationListTrash(t *testing.T) {
 				Metric: v0alpha1.RecordingRuleMetricName(recRule.Record.Metric),
 				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
-						QueryType:     util.Pointer("query"),
-						DatasourceUID: util.Pointer(v0alpha1.RecordingRuleDatasourceUID(recRule.Data[0].DatasourceUID)),
+						QueryType:     new("query"),
+						DatasourceUID: new(v0alpha1.RecordingRuleDatasourceUID(recRule.Data[0].DatasourceUID)),
 						Model:         recRule.Data[0].Model,
-						Source:        util.Pointer(true),
+						Source:        new(true),
 						RelativeTimeRange: &v0alpha1.RecordingRuleRelativeTimeRange{
 							From: v0alpha1.RecordingRulePromDurationWMillis("5m"),
 							To:   v0alpha1.RecordingRulePromDurationWMillis("0s"),
