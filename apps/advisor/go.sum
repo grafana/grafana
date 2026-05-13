@@ -490,8 +490,8 @@ github.com/googleapis/gax-go/v2 v2.4.0/go.mod h1:XOTVJ59hdnfJLIP/dh8n5CGryZR2LxK
 github.com/googleapis/google-cloud-go-testing v0.0.0-20200911160855-bcd43fbb19e8/go.mod h1:dvDLG8qkwmyD9a/MJJN3XJcT3xFxOKAvTZGvuZmac9g=
 github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 h1:JeSE6pjso5THxAzdVpqr6/geYxZytqFMBCOtn/ujyeo=
 github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674/go.mod h1:r4w70xmWCQKmi1ONH4KIaBptdivuRPyosB9RmPlGEwA=
-github.com/grafana/alerting v0.0.0-20260424175959-abd9b421dc12 h1:8b2oKd3p+lGwxJOYn5liHtlkBiRKnjLmuL4BpVMk0lc=
-github.com/grafana/alerting v0.0.0-20260424175959-abd9b421dc12/go.mod h1:06F4s5KJ6LpL7od+rcusjKnsst+vRhdFqev9GdVNz4c=
+github.com/grafana/alerting v0.0.0-20260512174254-5095d423178f h1:IOQyi0EE5SyO8IPoUdCa2pgUcL6AUnpyfmt7q1rNn8I=
+github.com/grafana/alerting v0.0.0-20260512174254-5095d423178f/go.mod h1:06F4s5KJ6LpL7od+rcusjKnsst+vRhdFqev9GdVNz4c=
 github.com/grafana/authlib v0.0.0-20260427145542-9c256e2dbcb2 h1:Dz6EAPvxBi3+vewR83NEO0hgzFtCB4NXfp6glqG7M30=
 github.com/grafana/authlib v0.0.0-20260427145542-9c256e2dbcb2/go.mod h1:AWryAuOp+dICuspMD555qPikxDraraypjMU8/C+yHx0=
 github.com/grafana/authlib/types v0.0.0-20260427145542-9c256e2dbcb2 h1:vYkwPeFo9hb/apMfN/GfF6xRbsF/ZnOTjSY6ZnQYFXM=

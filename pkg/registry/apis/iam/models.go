@@ -51,6 +51,7 @@ type IdentityAccessManagementAPIBuilder struct {
 	userLegacyStore                  *user.LegacyStore
 	saLegacyStore                    *serviceaccount.LegacyStore
 	legacyTeamStore                  *team.LegacyStore
+	externalGroupReconciler          legacy.ExternalGroupReconciler
 	teamBindingLegacyStore           *teambinding.LegacyBindingStore
 	ssoLegacyStore                   *sso.LegacyStore
 	roleApiInstaller                 RoleApiInstaller
