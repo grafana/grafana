@@ -1020,3 +1020,98 @@ func TestReconciler_Run_BroadcasterSubscribeErrorContinues(t *testing.T) {
 		t.Fatal("Run did not exit after ctx cancel")
 	}
 }
+
+// newReconcilerWithStats mirrors newReconciler but wires a stats provider.
+func newReconcilerWithStats(t *testing.T, st *fakeStorage, vec *fakeVector, stats DashboardStatsProvider) (*Reconciler, *fakeText) {
+	t.Helper()
+	text := &fakeText{dim: 4}
+	s, err := New(Options{
+		Storage:        st,
+		VectorBackend:  vec,
+		BatchEmbedder:  embedder.NewBatchEmbedder(*newFakeEmbedder(text)),
+		Builders:       []embed.Builder{dashboard.New()},
+		Interval:       time.Hour,
+		DashboardStats: stats,
+	})
+	require.NoError(t, err)
+	return s, text
+}
+
+func TestReconciler_ViewsFilter_SkipsZeroViewDashboards(t *testing.T) {
+	vec := newFakeVector()
+	stats := newFakeDashboardStats()
+	stats.set("ns", "cold", map[string]int64{"views_last_30_days": 0})
+	stats.set("ns", "hot", map[string]int64{"views_last_30_days": 7})
+	s, text := newReconcilerWithStats(t, &fakeStorage{}, vec, stats)
+
+	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "cold", 100, minimalDashboard("cold", "Cold")))
+	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "hot", 200, minimalDashboard("hot", "Hot")))
+
+	s.processPending(context.Background())
+
+	require.Len(t, vec.upserts, 1, "only the viewed dashboard should be embedded")
+	assert.Equal(t, "hot", vec.upserts[0][0].UID)
+	assert.Equal(t, 1, text.calls, "skipped dashboard does not hit the embedder")
+	assert.Empty(t, vec.deletes, "skip does not delete existing embeddings")
+	assert.Equal(t, int64(200), vec.latestRV, "cursor still advances past skipped events")
+}
+
+func TestReconciler_ViewsFilter_BestEffortOnError(t *testing.T) {
+	vec := newFakeVector()
+	stats := newFakeDashboardStats()
+	stats.err = errBoom
+	s, text := newReconcilerWithStats(t, &fakeStorage{}, vec, stats)
+
+	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash-1", 100, minimalDashboard("dash-1", "Dash")))
+
+	s.processPending(context.Background())
+
+	require.Len(t, vec.upserts, 1, "stats error must not block embedding")
+	assert.Equal(t, 1, text.calls)
+}
+
+func TestReconciler_ViewsFilter_BestEffortOnEmptyStats(t *testing.T) {
+	// Provider returns no stats for this dashboard (unknown to usageinsights):
+	// embed anyway.
+	vec := newFakeVector()
+	stats := newFakeDashboardStats()
+	s, text := newReconcilerWithStats(t, &fakeStorage{}, vec, stats)
+
+	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "unknown", 100, minimalDashboard("unknown", "Unknown")))
+
+	s.processPending(context.Background())
+
+	require.Len(t, vec.upserts, 1, "empty stats must not block embedding")
+	assert.Equal(t, 1, text.calls)
+	assert.Equal(t, 1, stats.calls, "provider was consulted exactly once")
+}
+
+func TestReconciler_ViewsFilter_DeleteBypassesFilter(t *testing.T) {
+	// Even when stats say the dashboard has zero views, a delete event
+	// must still propagate so stale embeddings get cleaned up.
+	vec := newFakeVector()
+	stats := newFakeDashboardStats()
+	stats.set("ns", "cold", map[string]int64{"views_last_30_days": 0})
+	s, _ := newReconcilerWithStats(t, &fakeStorage{}, vec, stats)
+
+	s.enqueue(dashEvent(resourcepb.WatchEvent_DELETED, "ns", "cold", 100, nil))
+
+	s.processPending(context.Background())
+
+	require.Len(t, vec.deletes, 1, "delete must not be filtered out")
+	assert.Equal(t, 0, stats.calls, "delete path never consults the stats provider")
+}
+
+func TestReconciler_ViewsFilter_NilProviderIsNoop(t *testing.T) {
+	// Sanity check: without a provider the reconciler behaves exactly as
+	// before (no lookups, all dashboards embedded).
+	vec := newFakeVector()
+	s, text := newReconcilerWithStats(t, &fakeStorage{}, vec, nil)
+
+	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash", 100, minimalDashboard("dash", "Dash")))
+
+	s.processPending(context.Background())
+
+	require.Len(t, vec.upserts, 1)
+	assert.Equal(t, 1, text.calls)
+}

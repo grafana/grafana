@@ -15,11 +15,36 @@ import (
 
 const backfillPageSize = 100
 
+// dashboardGroup / dashboardResource gate the views filter to dashboard
+// items. Other builders skip the lookup entirely.
+const (
+	dashboardGroup    = "dashboard.grafana.app"
+	dashboardResource = "dashboards"
+)
+
+// viewsLast30DaysKey is the map key returned by DashboardStatsProvider
+// that the filter inspects. Matches the wire shape exposed by the
+// usageinsights apiserver (pkg/extensions/usageinsights.statsToMap).
+const viewsLast30DaysKey = "views_last_30_days"
+
+// DashboardStatsProvider returns per-dashboard usage stats keyed by
+// stat name. The backfiller uses it to skip embedding dashboards with
+// zero views in the last 30 days. The interface is intentionally
+// narrow: any error or empty map is treated as "unknown" and the
+// dashboard is embedded as if the filter weren't configured.
+type DashboardStatsProvider interface {
+	GetDashboardStats(ctx context.Context, namespace, dashboardUid string) (map[string]int64, error)
+}
+
 type Options struct {
 	Storage       resource.StorageBackend
 	VectorBackend vector.VectorBackend
 	BatchEmbedder *embedder.BatchEmbedder
 	Builders      []embed.Builder
+	// DashboardStats is optional. When set, dashboards with zero views
+	// in the last 30 days are skipped. Errors/empty results fall back to
+	// embedding.
+	DashboardStats DashboardStatsProvider
 }
 
 type VectorBackfiller struct {
@@ -31,6 +56,7 @@ type VectorBackfiller struct {
 	// is stable across pod restarts. Precomputed because the set is
 	// immutable after construction.
 	sortedBuilders []embed.Builder
+	dashboardStats DashboardStatsProvider
 	log            log.Logger
 }
 
@@ -72,6 +98,7 @@ func NewVectorBackfiller(opts Options) (*VectorBackfiller, error) {
 		batchEmbedder:  opts.BatchEmbedder,
 		builders:       builders,
 		sortedBuilders: sorted,
+		dashboardStats: opts.DashboardStats,
 		log:            log.New("backfill"),
 	}, nil
 }
@@ -268,6 +295,10 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 		return nil
 	}
 
+	if b.skipForZeroViews(ctx, builder, namespace, name) {
+		return nil
+	}
+
 	key := &resourcepb.ResourceKey{
 		Group:     builder.Group(),
 		Resource:  builder.Resource(),
@@ -295,4 +326,35 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 		return fmt.Errorf("upsert %s/%s: %w", namespace, name, err)
 	}
 	return nil
+}
+
+// skipForZeroViews reports whether the views filter is configured and
+// the dashboard has a confirmed zero views_last_30_days reading. Any
+// error or empty stats response returns false so the dashboard is
+// embedded as if the filter weren't wired up (best-effort).
+func (b *VectorBackfiller) skipForZeroViews(ctx context.Context, builder embed.Builder, namespace, name string) bool {
+	if b.dashboardStats == nil {
+		return false
+	}
+	if builder.Group() != dashboardGroup || builder.Resource() != dashboardResource {
+		return false
+	}
+	if name == "" {
+		return false
+	}
+	stats, err := b.dashboardStats.GetDashboardStats(ctx, namespace, name)
+	if err != nil {
+		b.log.FromContext(ctx).Debug("backfill: dashboard stats lookup failed; embedding anyway",
+			"namespace", namespace, "name", name, "err", err)
+		return false
+	}
+	if len(stats) == 0 {
+		return false
+	}
+	if stats[viewsLast30DaysKey] >= 1 {
+		return false
+	}
+	b.log.FromContext(ctx).Debug("backfill: skipping dashboard with zero views in last 30 days",
+		"namespace", namespace, "name", name)
+	return true
 }

@@ -352,3 +352,36 @@ func newFakeEmbedder(text *fakeText) *embedder.Embedder {
 		Dimensions:   uint32(text.dim),
 	}
 }
+
+// fakeDashboardStats stubs the DashboardStatsProvider. Tests pre-load
+// per-dashboard stats keyed by "namespace|uid"; lookups for unknown
+// dashboards return the zero map (mimicking "no stats found"). Setting
+// err makes every call fail so tests can exercise the best-effort path.
+type fakeDashboardStats struct {
+	mu     sync.Mutex
+	stats  map[string]map[string]int64
+	err    error
+	calls  int
+	called []string // "namespace|uid" per call, in order
+}
+
+func newFakeDashboardStats() *fakeDashboardStats {
+	return &fakeDashboardStats{stats: map[string]map[string]int64{}}
+}
+
+func (f *fakeDashboardStats) GetDashboardStats(_ context.Context, namespace, uid string) (map[string]int64, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.calls++
+	f.called = append(f.called, namespace+"|"+uid)
+	if f.err != nil {
+		return nil, f.err
+	}
+	return f.stats[namespace+"|"+uid], nil
+}
+
+func (f *fakeDashboardStats) set(namespace, uid string, stats map[string]int64) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.stats[namespace+"|"+uid] = stats
+}

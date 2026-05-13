@@ -23,6 +23,27 @@ import (
 
 const DefaultInterval = time.Minute
 
+// dashboardGroup / dashboardResource gate the views filter to dashboard
+// events. Other builders (if any) skip the lookup entirely.
+const (
+	dashboardGroup    = "dashboard.grafana.app"
+	dashboardResource = "dashboards"
+)
+
+// viewsLast30DaysKey is the map key returned by DashboardStatsProvider
+// that the filter inspects. Matches the wire shape exposed by the
+// usageinsights apiserver (pkg/extensions/usageinsights.statsToMap).
+const viewsLast30DaysKey = "views_last_30_days"
+
+// DashboardStatsProvider returns per-dashboard usage stats keyed by
+// stat name. The reconciler uses it to skip embedding dashboards with
+// zero views in the last 30 days. The interface is intentionally
+// narrow: any error or empty map is treated as "unknown" and the
+// dashboard is embedded as if the filter weren't configured.
+type DashboardStatsProvider interface {
+	GetDashboardStats(ctx context.Context, namespace, dashboardUid string) (map[string]int64, error)
+}
+
 // maxEventAttempts caps retries so a permanently broken dashboard
 // can't wedge cursor advancement forever. ~5 minutes at the default
 // poll interval — long enough to ride out transient Vertex hiccups.
@@ -74,6 +95,10 @@ type Options struct {
 	Builders          []embed.Builder
 	Interval          time.Duration
 	LockRetryInterval time.Duration
+	// DashboardStats is optional. When set, dashboards with zero views
+	// in the last 30 days are skipped. Errors/empty results fall back to
+	// embedding.
+	DashboardStats DashboardStatsProvider
 }
 
 // Reconciler keeps the vector index in sync with ongoing writes. The
@@ -88,6 +113,7 @@ type Reconciler struct {
 	builders          map[string]embed.Builder
 	interval          time.Duration
 	lockRetryInterval time.Duration
+	dashboardStats    DashboardStatsProvider
 	log               log.Logger
 
 	// broadcaster is attached after construction by the resource server,
@@ -125,6 +151,7 @@ func New(opts Options) (*Reconciler, error) {
 		builders:          builders,
 		interval:          opts.Interval,
 		lockRetryInterval: opts.LockRetryInterval,
+		dashboardStats:    opts.DashboardStats,
 		log:               log.New("embeddings_reconciler"),
 		pending:           make(map[string]*pendingEvent),
 	}, nil
@@ -546,6 +573,37 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev
 	}
 }
 
+// skipForZeroViews reports whether the views filter is configured and
+// the dashboard has a confirmed zero views_last_30_days reading. Any
+// error or empty stats response returns false so the dashboard is
+// embedded as if the filter weren't wired up (best-effort).
+func (s *Reconciler) skipForZeroViews(ctx context.Context, builder embed.Builder, ev *pendingEvent) bool {
+	if s.dashboardStats == nil {
+		return false
+	}
+	if builder.Group() != dashboardGroup || builder.Resource() != dashboardResource {
+		return false
+	}
+	if ev.name == "" {
+		return false
+	}
+	stats, err := s.dashboardStats.GetDashboardStats(ctx, ev.namespace, ev.name)
+	if err != nil {
+		s.log.FromContext(ctx).Debug("reconciler: dashboard stats lookup failed; embedding anyway",
+			"namespace", ev.namespace, "name", ev.name, "err", err)
+		return false
+	}
+	if len(stats) == 0 {
+		return false
+	}
+	if stats[viewsLast30DaysKey] >= 1 {
+		return false
+	}
+	s.log.FromContext(ctx).Debug("reconciler: skipping dashboard with zero views in last 30 days",
+		"namespace", ev.namespace, "name", ev.name, "rv", ev.rv)
+	return true
+}
+
 // embedAndUpsert routes through UpsertReplaceSubresources so removing
 // stale subresources and writing the new ones commit atomically — a
 // failure mid-way leaves the dashboard in its previous self-consistent
@@ -556,6 +614,9 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev
 // panel, which is wasteful when only one panel changed.
 func (s *Reconciler) embedAndUpsert(ctx context.Context, builder embed.Builder, ev *pendingEvent) error {
 	if len(ev.value) == 0 {
+		return nil
+	}
+	if s.skipForZeroViews(ctx, builder, ev) {
 		return nil
 	}
 	key := &resourcepb.ResourceKey{

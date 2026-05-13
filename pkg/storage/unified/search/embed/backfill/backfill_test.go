@@ -3,6 +3,7 @@ package backfill
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -339,4 +340,110 @@ func uniqName(i int) string {
 		out = append(out, letters[(i/(26*26))%26])
 	}
 	return string(out)
+}
+
+// newBackfillerWithStats mirrors newBackfiller but wires a stats provider.
+func newBackfillerWithStats(t *testing.T, storage *fakeStorage, vec *fakeVector, stats DashboardStatsProvider) *VectorBackfiller {
+	t.Helper()
+	emb := newFakeEmbedder(&fakeText{dim: 4})
+	b, err := NewVectorBackfiller(Options{
+		Storage:        storage,
+		VectorBackend:  vec,
+		BatchEmbedder:  embedder.NewBatchEmbedder(*emb),
+		Builders:       []embed.Builder{dashboard.New()},
+		DashboardStats: stats,
+	})
+	require.NoError(t, err)
+	return b
+}
+
+func TestRunBackfillJob_ViewsFilter_SkipsZeroViewDashboards(t *testing.T) {
+	storage := newFakeStorage()
+	storage.listItems = []listItem{
+		makeListItem("ns", "cold", 50),
+		makeListItem("ns", "hot", 60),
+	}
+
+	vec := newFakeVector()
+	vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", StoppingRV: 100}}
+
+	stats := newFakeDashboardStats()
+	stats.set("ns", "cold", map[string]int64{"views_last_30_days": 0})
+	stats.set("ns", "hot", map[string]int64{"views_last_30_days": 12})
+
+	o := newBackfillerWithStats(t, storage, vec, stats)
+	o.runBackfill(context.Background())
+
+	require.Len(t, vec.upserts, 1, "only the viewed dashboard should be embedded")
+	assert.Equal(t, "hot", vec.upserts[0][0].UID)
+	require.Len(t, vec.completedJobIDs, 1, "job still completes when items are filtered")
+}
+
+func TestRunBackfillJob_ViewsFilter_BestEffortOnError(t *testing.T) {
+	storage := newFakeStorage()
+	storage.listItems = []listItem{makeListItem("ns", "dash", 50)}
+
+	vec := newFakeVector()
+	vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", StoppingRV: 100}}
+
+	stats := newFakeDashboardStats()
+	stats.err = fmt.Errorf("boom")
+
+	o := newBackfillerWithStats(t, storage, vec, stats)
+	o.runBackfill(context.Background())
+
+	require.Len(t, vec.upserts, 1, "stats error must not block embedding")
+}
+
+func TestRunBackfillJob_ViewsFilter_BestEffortOnEmptyStats(t *testing.T) {
+	// Provider returns nothing for this dashboard (unknown to usageinsights):
+	// embed anyway.
+	storage := newFakeStorage()
+	storage.listItems = []listItem{makeListItem("ns", "unknown", 50)}
+
+	vec := newFakeVector()
+	vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", StoppingRV: 100}}
+
+	stats := newFakeDashboardStats()
+
+	o := newBackfillerWithStats(t, storage, vec, stats)
+	o.runBackfill(context.Background())
+
+	require.Len(t, vec.upserts, 1, "empty stats must not block embedding")
+	assert.Equal(t, 1, stats.calls, "provider was consulted exactly once")
+}
+
+func TestRunBackfillJob_ViewsFilter_ExistsShortCircuitSkipsStats(t *testing.T) {
+	// Existing-embedding short-circuit runs before the stats lookup so we
+	// don't waste a usageinsights call on dashboards we've already indexed.
+	storage := newFakeStorage()
+	storage.listItems = []listItem{makeListItem("ns", "already-indexed", 50)}
+
+	vec := newFakeVector()
+	vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", StoppingRV: 100}}
+	vec.markExists("ns", "test-model", "dashboards", "already-indexed")
+
+	stats := newFakeDashboardStats()
+	stats.set("ns", "already-indexed", map[string]int64{"views_last_30_days": 0})
+
+	o := newBackfillerWithStats(t, storage, vec, stats)
+	o.runBackfill(context.Background())
+
+	assert.Empty(t, vec.upserts)
+	assert.Equal(t, 0, stats.calls, "Exists short-circuit must come before stats lookup")
+}
+
+func TestRunBackfillJob_ViewsFilter_NilProviderIsNoop(t *testing.T) {
+	// Sanity check: without a provider the backfiller behaves exactly as
+	// before (no lookups, all dashboards embedded).
+	storage := newFakeStorage()
+	storage.listItems = []listItem{makeListItem("ns", "dash", 50)}
+
+	vec := newFakeVector()
+	vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", StoppingRV: 100}}
+
+	o := newBackfillerWithStats(t, storage, vec, nil)
+	o.runBackfill(context.Background())
+
+	require.Len(t, vec.upserts, 1)
 }
