@@ -35,6 +35,14 @@ interface ListThreadsArgs {
    * values are treated as no filter by the backend.
    */
   q?: string;
+  /** When true, narrows to threads the caller created, replied on, or
+   *  subscribed to. Mirrors the global overview's `mine` flag so
+   *  per-resource surfaces (folder Pulse tab) can offer the same
+   *  "Mine / All" scope toggle. */
+  mine?: boolean;
+  /** Narrows to open or closed threads. Omit (or pass undefined) for
+   *  "any"; the backend treats the missing param as no filter. */
+  status?: ThreadStatusFilter;
   /** 1-indexed page; the drawer pager renders numbered buttons that
    *  jump straight to a page rather than walking forwards. */
   page?: number;
@@ -80,7 +88,7 @@ export const pulseApi = createApi({
   tagTypes: ['Thread', 'Pulse', 'ResourceVersion', 'ResourceThreads', 'AllThreads', 'PanelMentions', 'Participants'],
   endpoints: (builder) => ({
     listThreads: builder.query<PageResult<PulseThread>, ListThreadsArgs>({
-      query: ({ resourceKind, resourceUID, panelId, authorUserId, q, page, limit }) => {
+      query: ({ resourceKind, resourceUID, panelId, authorUserId, q, mine, status, page, limit }) => {
         const params: Record<string, string> = {
           resourceKind,
           resourceUID,
@@ -98,6 +106,17 @@ export const pulseApi = createApi({
         const trimmedQ = q?.trim();
         if (trimmedQ) {
           params.q = trimmedQ;
+        }
+        if (mine) {
+          // Omit when false so an unchecked toggle doesn't produce a
+          // distinct cache key from "no toggle at all". Same shape the
+          // /threads/all endpoint already uses.
+          params.mine = 'true';
+        }
+        if (status) {
+          // "any" is encoded by omission (matches the backend's
+          // ThreadStatusAny zero value) so the URL stays clean.
+          params.status = status;
         }
         if (page !== undefined && page > 1) {
           // Page 1 is the default; omitting the param keeps the URL

@@ -4441,7 +4441,7 @@
         "all": "No threads in this folder yet",
         "all-hint": "Use threads to discuss the dashboards in this folder. Mention dashboards with #name and teammates with @name.",
         "filtered": "No matching threads",
-        "filtered-hint": "Try clearing the search or the user filter.",
+        "filtered-hint": "Try clearing the search, user, status, or scope filters.",
         "start": "Start the first thread"
       },
       "error": {
@@ -4454,7 +4454,16 @@
       "loading-thread": "Loading thread…",
       "new-thread": "New thread",
       "refreshing": "Updating…",
+      "scope": {
+        "all": "All threads",
+        "mine": "My threads"
+      },
       "search-placeholder": "Search by thread content",
+      "status": {
+        "all": "All",
+        "closed": "Closed",
+        "open": "Open"
+      },
       "thread-missing": "Thread not found.",
       "untitled": "Untitled thread"
     },

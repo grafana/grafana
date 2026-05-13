@@ -21,6 +21,7 @@ import {
   InteractiveTable,
   LoadingPlaceholder,
   Pagination,
+  RadioButtonGroup,
   Stack,
   Text,
   TextLink,
@@ -31,6 +32,7 @@ import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/services/context_srv';
 import { buildNavModel, getPulseTabID } from 'app/features/folders/state/navModel';
 import {
+  type ThreadStatusFilter,
   useCreateThreadMutation,
   useGetResourceVersionQuery,
   useGetThreadQuery,
@@ -50,6 +52,34 @@ import { FolderDetailsActions } from './components/FolderDetailsActions/FolderDe
 const PAGE_SIZE = 25;
 
 const FILTER_ALL = '__all__';
+
+/**
+ * Scope encodes the "show only threads I'm in" toggle. Same shape as
+ * the global overview so users carry the same mental model between
+ * the two surfaces.
+ */
+type Scope = 'all' | 'mine';
+
+/**
+ * StatusOption mirrors the backend's ThreadStatusFilter plus an
+ * explicit "all" sentinel for the UI. The radio group sends "all" →
+ * undefined over the wire so the API treats it as the default no-op
+ * filter (matches the global overview's encoding).
+ */
+type StatusOption = 'all' | ThreadStatusFilter;
+
+/**
+ * parseStatusParam keeps the URL → state mapping in one place so a
+ * hand-edited `?status=…` value can never push the radio group into
+ * an invalid state. Anything outside {open, closed} collapses to the
+ * "all" default — same defensive shape the backend uses.
+ */
+function parseStatusParam(raw: string | null): StatusOption {
+  if (raw === 'open' || raw === 'closed') {
+    return raw;
+  }
+  return 'all';
+}
 
 /**
  * BrowseFolderPulsePage hosts the Pulse experience for a folder. It is
@@ -121,7 +151,14 @@ interface FolderPulseContentProps {
   folderUID: string;
 }
 
-function FolderPulseContent({ folderUID }: FolderPulseContentProps) {
+/**
+ * FolderPulseContent is the inner of the folder Pulse page once the
+ * folder has resolved. Exported (rather than kept module-private)
+ * so the test suite can render it with a mock folder UID without
+ * pulling in the Page chrome, the folder API facade, or the
+ * breadcrumb nav model.
+ */
+export function FolderPulseContent({ folderUID }: FolderPulseContentProps) {
   const styles = useStyles2(getStyles);
   const currentUserId = contextSrv.user.id;
   const isAdmin = contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
@@ -136,9 +173,32 @@ function FolderPulseContent({ folderUID }: FolderPulseContentProps) {
   // mount, mirroring the dashboard drawer's URL contract so links from
   // the global Pulse overview land the user inside the thread directly.
   // The active thread uid lives in the URL so back/forward, bookmark,
-  // and cross-tab share all behave as expected.
+  // and cross-tab share all behave as expected. Status + scope live in
+  // the URL too so a "send your colleague the closed threads I'm in"
+  // link is one copy/paste away.
   const [searchParams, setSearchParams] = useSearchParams();
   const pulseParam = searchParams.get('pulse');
+  const scope: Scope = searchParams.get('scope') === 'mine' ? 'mine' : 'all';
+  const status: StatusOption = parseStatusParam(searchParams.get('status'));
+  const updateFilterParam = useCallback(
+    (key: 'scope' | 'status', value: string | null) => {
+      const next = new URLSearchParams(searchParams);
+      if (value === null || value === 'all') {
+        // The "all" sentinel and the unset state encode identically in
+        // the URL so the default view doesn't grow noise.
+        next.delete(key);
+      } else {
+        next.set(key, value);
+      }
+      // Resetting to page 1 keeps the user from landing on an empty
+      // page after a filter narrows the result set below their current
+      // offset.
+      next.delete('page');
+      setSearchParams(next, { replace: false });
+      setPage(1);
+    },
+    [searchParams, setSearchParams]
+  );
   const activeThreadUID = useMemo(() => {
     if (typeof pulseParam !== 'string') {
       return null;
@@ -209,6 +269,10 @@ function FolderPulseContent({ folderUID }: FolderPulseContentProps) {
     resourceUID: folderUID,
     authorUserId: authorFilter,
     q: searchQuery || undefined,
+    mine: scope === 'mine',
+    // "all" is encoded as an absent param so the request URL stays
+    // clean on the default view; matches the global overview.
+    status: status === 'all' ? undefined : status,
     page,
     limit: PAGE_SIZE,
   });
@@ -226,7 +290,8 @@ function FolderPulseContent({ folderUID }: FolderPulseContentProps) {
     }
   }, [page, totalPages]);
 
-  const hasActiveFilters = authorFilter !== undefined || searchQuery !== '';
+  const hasActiveFilters =
+    authorFilter !== undefined || searchQuery !== '' || scope !== 'all' || status !== 'all';
 
   // Mention picker source: folder's direct child dashboards. Loaded
   // whenever the composer drawer is open or a thread view is active
@@ -353,6 +418,23 @@ function FolderPulseContent({ folderUID }: FolderPulseContentProps) {
             setPage(1);
           }}
         />
+        <RadioButtonGroup<StatusOption>
+          value={status}
+          options={[
+            { label: t('browse-dashboards.folder-pulse.status.all', 'All'), value: 'all' },
+            { label: t('browse-dashboards.folder-pulse.status.open', 'Open'), value: 'open' },
+            { label: t('browse-dashboards.folder-pulse.status.closed', 'Closed'), value: 'closed' },
+          ]}
+          onChange={(value) => updateFilterParam('status', value)}
+        />
+        <RadioButtonGroup<Scope>
+          value={scope}
+          options={[
+            { label: t('browse-dashboards.folder-pulse.scope.all', 'All threads'), value: 'all' },
+            { label: t('browse-dashboards.folder-pulse.scope.mine', 'My threads'), value: 'mine' },
+          ]}
+          onChange={(value) => updateFilterParam('scope', value)}
+        />
         <Button icon="plus" onClick={() => setComposing(true)}>
           {t('browse-dashboards.folder-pulse.new-thread', 'New thread')}
         </Button>
@@ -395,7 +477,7 @@ function FolderPulseContent({ folderUID }: FolderPulseContentProps) {
           <Text color="secondary">
             {hasActiveFilters ? (
               <Trans i18nKey="browse-dashboards.folder-pulse.empty.filtered-hint">
-                Try clearing the search or the user filter.
+                Try clearing the search, user, status, or scope filters.
               </Trans>
             ) : (
               <Trans i18nKey="browse-dashboards.folder-pulse.empty.all-hint">
