@@ -124,7 +124,7 @@ func TestHomeDashboardGet_FallsBackToDefaultWhenFileMissing(t *testing.T) {
 	missing := filepath.Join(t.TempDir(), "missing.json")
 	home := newHomeDashboardSupportForFile(missing)
 	t.Cleanup(func() { _ = home.Close() })
-	home.scheme = newTestScheme(t)
+	home.RegisterSchema(newTestScheme(t))
 
 	obj, err := home.Get(dashv0.VERSION)
 	require.NoError(t, err)
