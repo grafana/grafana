@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 
 import KeyValuesTable, { LinkValue, type KeyValuesTableProps } from './KeyValuesTable';
 
@@ -39,8 +39,10 @@ describe('LinkValue', () => {
     };
     const childrenText = 'childrenTextValue';
     render(<LinkValue link={link}>{childrenText}</LinkValue>);
-    expect(screen.getByRole('link', { name: 'titleValue' })).toBeInTheDocument();
-    expect(screen.getByText(/^childrenTextValue$/)).toBeInTheDocument();
+    const linkEl = screen.getByRole('link', { name: /childrenTextValue/ });
+    expect(linkEl).toBeInTheDocument();
+    expect(linkEl).toHaveAttribute('title', 'titleValue');
+    expect(linkEl).toHaveAttribute('href', 'hrefValue');
   });
 });
 
@@ -78,7 +80,11 @@ describe('KeyValuesTable tests', () => {
           : [],
     } as KeyValuesTableProps);
 
-    expect(screen.getByRole('row', { name: 'span.kind More info about client' })).toBeInTheDocument();
+    const row = screen.getByRole('row', { name: /span\.kind/ });
+    expect(row).toBeInTheDocument();
+    const link = within(row).getByRole('link');
+    expect(link).toHaveAttribute('title', 'More info about client');
+    expect(link).toHaveAttribute('href', 'http://example.com/?kind=client');
   });
 
   it('renders a <CopyIcon /> for each data element', () => {
