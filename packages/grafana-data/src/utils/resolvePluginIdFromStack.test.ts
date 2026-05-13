@@ -31,4 +31,14 @@ describe('resolvePluginIdFromStack', () => {
     ].join('\n');
     expect(resolvePluginIdFromStack(stack)).toBe('first');
   });
+
+  it('extracts pluginId from Firefox-style stack frame (no parens)', () => {
+    const stack = 'handler@http://localhost:3000/public/plugins/foo-panel/module.js:10:1';
+    expect(resolvePluginIdFromStack(stack)).toBe('foo-panel');
+  });
+
+  it('extracts pluginId from a URL with a query string', () => {
+    const stack = '    at handler (http://localhost:3000/public/plugins/bar-panel/module.js?v=12345:10:1)';
+    expect(resolvePluginIdFromStack(stack)).toBe('bar-panel');
+  });
 });
