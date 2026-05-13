@@ -187,6 +187,8 @@ jobs:
         persist-credentials: false
     - name: Setup Node.js
       uses: ./.github/actions/setup-node
+    - name: Setup Go
+      uses: ./.github/actions/setup-go
     - name: Install yarn dependencies
       uses: ./.github/actions/yarn-install
     - name: Free up disk space
