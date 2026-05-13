@@ -58,6 +58,7 @@ func New(ctx context.Context, configDirectory string, provisioner dashboards.Das
 		return nil, fmt.Errorf("%v: %w", "Failed to read dashboards config", err)
 	}
 
+	// Add a synthetic dashboard provisioner config for provisioning default home dashboard
 	if cfg.DefaultHomeDashboardPath != "" {
 		c := &config{
 			Name:                  "default-home-dashboard",
