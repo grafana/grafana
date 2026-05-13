@@ -192,6 +192,10 @@ Plugin ID: `grafana-kowalski-app`
 | `plugins:grafana-kowalski-app:frontend-observability-viewer`             | View access only                                                    |
 | `plugins:grafana-kowalski-app:frontend-observability-sourcemap-uploader` | View access with the ability to read settings and upload sourcemaps |
 
+{{< admonition type="note" >}}
+Deleting custom tabs requires the Grafana **Admin** organization role. Plugin roles, including `frontend-observability-admin`, do not grant this permission.
+{{< /admonition >}}
+
 ## Grafana Assistant plugin
 
 Plugin ID: `grafana-assistant-app`
