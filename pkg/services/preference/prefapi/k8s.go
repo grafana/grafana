@@ -42,27 +42,6 @@ func NewK8sHandler(client K8sClient, ds dashboards.DashboardService) *K8sHandler
 	}
 }
 
-// UserOwner returns the resource owner reference for the signed-in user.
-func UserOwner(c *contextmodel.ReqContext) prefutils.OwnerReference {
-	return prefutils.OwnerReference{
-		Owner:      prefutils.UserResourceOwner,
-		Identifier: c.GetIdentifier(),
-	}
-}
-
-// TeamOwner returns the resource owner reference for the given team UID.
-func TeamOwner(teamUID string) prefutils.OwnerReference {
-	return prefutils.OwnerReference{
-		Owner:      prefutils.TeamResourceOwner,
-		Identifier: teamUID,
-	}
-}
-
-// NamespaceOwner returns the resource owner reference for org-wide preferences.
-func NamespaceOwner() prefutils.OwnerReference {
-	return prefutils.OwnerReference{Owner: prefutils.NamespaceResourceOwner}
-}
-
 // GetPreferences fetches the preferences for the given owner and returns
 // them as the legacy PreferencesSpec response.
 func (h *K8sHandler) GetPreferences(c *contextmodel.ReqContext, owner prefutils.OwnerReference) response.Response {

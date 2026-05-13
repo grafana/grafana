@@ -8,6 +8,7 @@ import (
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	prefutils "github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
@@ -288,7 +289,7 @@ func (tapi *TeamAPI) getTeamPreferences(c *contextmodel.ReqContext) response.Res
 		if errResp != nil {
 			return errResp
 		}
-		return tapi.preferenceK8sHandler.GetPreferences(c, prefapi.TeamOwner(uid))
+		return tapi.preferenceK8sHandler.GetPreferences(c, prefutils.TeamOwner(uid))
 	}
 
 	return prefapi.GetPreferencesFor(c.Req.Context(), tapi.ds, tapi.preferenceService, tapi.features, c.GetOrgID(), 0, teamId)
@@ -320,7 +321,7 @@ func (tapi *TeamAPI) updateTeamPreferences(c *contextmodel.ReqContext) response.
 		if errResp != nil {
 			return errResp
 		}
-		return tapi.preferenceK8sHandler.UpdatePreferences(c, prefapi.TeamOwner(uid), &dtoCmd)
+		return tapi.preferenceK8sHandler.UpdatePreferences(c, prefutils.TeamOwner(uid), &dtoCmd)
 	}
 
 	return prefapi.UpdatePreferencesFor(c.Req.Context(), tapi.ds, tapi.preferenceService, tapi.features, c.GetOrgID(), 0, teamId, &dtoCmd)

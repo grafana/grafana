@@ -38,7 +38,7 @@ func TestK8sHandler_GetPreferences(t *testing.T) {
 		client.EXPECT().Get(mock.Anything, prefutils.OwnerReference{Owner: prefutils.UserResourceOwner, Identifier: "u1"}).Return(spec, nil)
 
 		h := NewK8sHandler(client, dashboards.NewFakeDashboardService(t))
-		resp := h.GetPreferences(newReqContext(1, "u1"), UserOwner(newReqContext(1, "u1")))
+		resp := h.GetPreferences(newReqContext(1, "u1"), prefutils.UserOwner("u1"))
 
 		require.Equal(t, http.StatusOK, resp.Status())
 		var got preferences.PreferencesSpec
@@ -51,7 +51,7 @@ func TestK8sHandler_GetPreferences(t *testing.T) {
 		client.EXPECT().Get(mock.Anything, mock.Anything).Return(nil, apierrors.NewForbidden(schema.GroupResource{}, "x", errors.New("nope")))
 
 		h := NewK8sHandler(client, dashboards.NewFakeDashboardService(t))
-		resp := h.GetPreferences(newReqContext(1, "u1"), NamespaceOwner())
+		resp := h.GetPreferences(newReqContext(1, "u1"), prefutils.NamespaceOwner())
 
 		assert.Equal(t, http.StatusForbidden, resp.Status())
 	})
@@ -61,7 +61,7 @@ func TestK8sHandler_GetPreferences(t *testing.T) {
 		client.EXPECT().Get(mock.Anything, mock.Anything).Return(nil, errors.New("boom"))
 
 		h := NewK8sHandler(client, dashboards.NewFakeDashboardService(t))
-		resp := h.GetPreferences(newReqContext(1, "u1"), NamespaceOwner())
+		resp := h.GetPreferences(newReqContext(1, "u1"), prefutils.NamespaceOwner())
 
 		assert.Equal(t, http.StatusInternalServerError, resp.Status())
 	})
@@ -77,7 +77,7 @@ func TestK8sHandler_UpdatePreferences(t *testing.T) {
 			}).Return(nil)
 
 		h := NewK8sHandler(client, dashboards.NewFakeDashboardService(t))
-		resp := h.UpdatePreferences(newReqContext(1, "u1"), UserOwner(newReqContext(1, "u1")), &dtos.UpdatePrefsCmd{
+		resp := h.UpdatePreferences(newReqContext(1, "u1"), prefutils.UserOwner("u1"), &dtos.UpdatePrefsCmd{
 			Theme:    "dark",
 			Timezone: "",
 		})
@@ -105,7 +105,7 @@ func TestK8sHandler_UpdatePreferences(t *testing.T) {
 			}).Return(nil)
 
 		h := NewK8sHandler(client, ds)
-		resp := h.UpdatePreferences(newReqContext(1, "u1"), UserOwner(newReqContext(1, "u1")), &dtos.UpdatePrefsCmd{
+		resp := h.UpdatePreferences(newReqContext(1, "u1"), prefutils.UserOwner("u1"), &dtos.UpdatePrefsCmd{
 			HomeDashboardID: 42,
 		})
 
@@ -120,7 +120,7 @@ func TestK8sHandler_UpdatePreferences(t *testing.T) {
 
 		ds := dashboards.NewFakeDashboardService(t) // no expectations — must not be called
 		h := NewK8sHandler(client, ds)
-		resp := h.UpdatePreferences(newReqContext(1, "u1"), UserOwner(newReqContext(1, "u1")), &dtos.UpdatePrefsCmd{
+		resp := h.UpdatePreferences(newReqContext(1, "u1"), prefutils.UserOwner("u1"), &dtos.UpdatePrefsCmd{
 			HomeDashboardUID: ptr.To("supplied"),
 			HomeDashboardID:  42,
 		})
@@ -133,7 +133,7 @@ func TestK8sHandler_UpdatePreferences(t *testing.T) {
 		ds.On("GetDashboard", mock.Anything, mock.Anything).Return(nil, dashboards.ErrDashboardNotFound)
 
 		h := NewK8sHandler(NewMockK8sClient(t), ds)
-		resp := h.UpdatePreferences(newReqContext(1, "u1"), UserOwner(newReqContext(1, "u1")), &dtos.UpdatePrefsCmd{
+		resp := h.UpdatePreferences(newReqContext(1, "u1"), prefutils.UserOwner("u1"), &dtos.UpdatePrefsCmd{
 			HomeDashboardID: 42,
 		})
 
@@ -151,7 +151,7 @@ func TestK8sHandler_PatchPreferences(t *testing.T) {
 			}).Return(nil)
 
 		h := NewK8sHandler(client, dashboards.NewFakeDashboardService(t))
-		resp := h.PatchPreferences(newReqContext(1, "u1"), UserOwner(newReqContext(1, "u1")), &dtos.PatchPrefsCmd{
+		resp := h.PatchPreferences(newReqContext(1, "u1"), prefutils.UserOwner("u1"), &dtos.PatchPrefsCmd{
 			Theme: ptr.To("light"),
 		})
 
@@ -168,7 +168,7 @@ func TestK8sHandler_PatchPreferences(t *testing.T) {
 		client.EXPECT().Patch(mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 		h := NewK8sHandler(client, dashboards.NewFakeDashboardService(t))
-		resp := h.PatchPreferences(newReqContext(1, "u1"), UserOwner(newReqContext(1, "u1")), &dtos.PatchPrefsCmd{
+		resp := h.PatchPreferences(newReqContext(1, "u1"), prefutils.UserOwner("u1"), &dtos.PatchPrefsCmd{
 			Theme: ptr.To("light"),
 		})
 
@@ -181,21 +181,8 @@ func TestK8sHandler_PatchPreferences(t *testing.T) {
 			Return(apierrors.NewNotFound(schema.GroupResource{Resource: "preferences"}, "user-u1"))
 
 		h := NewK8sHandler(client, dashboards.NewFakeDashboardService(t))
-		resp := h.PatchPreferences(newReqContext(1, "u1"), UserOwner(newReqContext(1, "u1")), &dtos.PatchPrefsCmd{})
+		resp := h.PatchPreferences(newReqContext(1, "u1"), prefutils.UserOwner("u1"), &dtos.PatchPrefsCmd{})
 
 		assert.Equal(t, http.StatusNotFound, resp.Status())
-	})
-}
-
-func TestK8sHandler_OwnerHelpers(t *testing.T) {
-	t.Run("UserOwner uses identifier from signed-in user", func(t *testing.T) {
-		c := newReqContext(1, "user-uid")
-		assert.Equal(t, prefutils.OwnerReference{Owner: prefutils.UserResourceOwner, Identifier: "user-uid"}, UserOwner(c))
-	})
-	t.Run("TeamOwner wraps the team UID", func(t *testing.T) {
-		assert.Equal(t, prefutils.OwnerReference{Owner: prefutils.TeamResourceOwner, Identifier: "tuid"}, TeamOwner("tuid"))
-	})
-	t.Run("NamespaceOwner has no identifier", func(t *testing.T) {
-		assert.Equal(t, prefutils.OwnerReference{Owner: prefutils.NamespaceResourceOwner}, NamespaceOwner())
 	})
 }

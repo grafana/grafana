@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	prefutils "github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -30,7 +31,7 @@ var ofClient = openfeature.NewDefaultClient()
 func (hs *HTTPServer) GetUserPreferences(c *contextmodel.ReqContext) response.Response {
 	ctx := c.Req.Context()
 	if ofClient.Boolean(ctx, featuremgmt.FlagPreferencesRerouteLegacyAPIs, false, openfeature.TransactionContext(ctx)) {
-		return hs.preferenceK8sHandler.GetPreferences(c, prefapi.UserOwner(c))
+		return hs.preferenceK8sHandler.GetPreferences(c, prefutils.UserOwner(c.GetIdentifier()))
 	}
 
 	userID, err := identity.UserIdentifier(c.GetID())
@@ -60,7 +61,7 @@ func (hs *HTTPServer) UpdateUserPreferences(c *contextmodel.ReqContext) response
 
 	ctx := c.Req.Context()
 	if ofClient.Boolean(ctx, featuremgmt.FlagPreferencesRerouteLegacyAPIs, false, openfeature.TransactionContext(ctx)) {
-		return hs.preferenceK8sHandler.UpdatePreferences(c, prefapi.UserOwner(c), &dtoCmd)
+		return hs.preferenceK8sHandler.UpdatePreferences(c, prefutils.UserOwner(c.GetIdentifier()), &dtoCmd)
 	}
 
 	userID, err := identity.UserIdentifier(c.GetID())
@@ -89,7 +90,7 @@ func (hs *HTTPServer) PatchUserPreferences(c *contextmodel.ReqContext) response.
 
 	ctx := c.Req.Context()
 	if ofClient.Boolean(ctx, featuremgmt.FlagPreferencesRerouteLegacyAPIs, false, openfeature.TransactionContext(ctx)) {
-		return hs.preferenceK8sHandler.PatchPreferences(c, prefapi.UserOwner(c), &dtoCmd)
+		return hs.preferenceK8sHandler.PatchPreferences(c, prefutils.UserOwner(c.GetIdentifier()), &dtoCmd)
 	}
 
 	userID, err := identity.UserIdentifier(c.GetID())
@@ -171,7 +172,7 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 func (hs *HTTPServer) GetOrgPreferences(c *contextmodel.ReqContext) response.Response {
 	ctx := c.Req.Context()
 	if ofClient.Boolean(ctx, featuremgmt.FlagPreferencesRerouteLegacyAPIs, false, openfeature.TransactionContext(ctx)) {
-		return hs.preferenceK8sHandler.GetPreferences(c, prefapi.NamespaceOwner())
+		return hs.preferenceK8sHandler.GetPreferences(c, prefutils.NamespaceOwner())
 	}
 	return prefapi.GetPreferencesFor(ctx, hs.DashboardService, hs.preferenceService, hs.Features, c.GetOrgID(), 0, 0)
 }
@@ -194,7 +195,7 @@ func (hs *HTTPServer) UpdateOrgPreferences(c *contextmodel.ReqContext) response.
 
 	ctx := c.Req.Context()
 	if ofClient.Boolean(ctx, featuremgmt.FlagPreferencesRerouteLegacyAPIs, false, openfeature.TransactionContext(ctx)) {
-		return hs.preferenceK8sHandler.UpdatePreferences(c, prefapi.NamespaceOwner(), &dtoCmd)
+		return hs.preferenceK8sHandler.UpdatePreferences(c, prefutils.NamespaceOwner(), &dtoCmd)
 	}
 
 	return prefapi.UpdatePreferencesFor(ctx, hs.DashboardService, hs.preferenceService, hs.Features, c.GetOrgID(), 0, 0, &dtoCmd)
@@ -218,7 +219,7 @@ func (hs *HTTPServer) PatchOrgPreferences(c *contextmodel.ReqContext) response.R
 
 	ctx := c.Req.Context()
 	if ofClient.Boolean(ctx, featuremgmt.FlagPreferencesRerouteLegacyAPIs, false, openfeature.TransactionContext(ctx)) {
-		return hs.preferenceK8sHandler.PatchPreferences(c, prefapi.NamespaceOwner(), &dtoCmd)
+		return hs.preferenceK8sHandler.PatchPreferences(c, prefutils.NamespaceOwner(), &dtoCmd)
 	}
 
 	return hs.patchPreferencesFor(ctx, c.GetOrgID(), 0, 0, &dtoCmd)
