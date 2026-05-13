@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -28,6 +29,11 @@ type operationEntry struct {
 	OperationID string
 	Method      string
 	Path        string
+	RawPath     string
+	Surface     string
+	Group       string
+	Version     string
+	BasePath    string
 	Summary     string
 	Description string
 	Tags        []string
@@ -46,6 +52,14 @@ type apiDocsState struct {
 	// llms.txt / llms-full.txt so agents can resolve links without guessing
 	// the hostname. May be empty in tests; relative paths are used as fallback.
 	appURL string
+}
+
+type specSource struct {
+	doc      *openapi3.T
+	surface  string
+	group    string
+	version  string
+	basePath string
 }
 
 // curatedOpGroup pairs an operation ID with the workflow group it belongs to
@@ -116,17 +130,84 @@ func (hs *HTTPServer) registerAPIDocs(r routing.RouteRegister) {
 	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromFile(specPath)
 	if err != nil {
-		hs.log.Warn("api-docs: openapi3 spec not available, skipping registration",
-			"path", specPath, "error", err)
+		if hs.log != nil {
+			hs.log.Warn("api-docs: openapi3 spec not available, skipping registration",
+				"path", specPath, "error", err)
+		}
 		return
 	}
-	state := buildAPIDocsState(doc)
+	sources := []specSource{{
+		doc:      doc,
+		surface:  "legacy",
+		basePath: "/api",
+	}}
+
+	// App-platform specs are generated under packages/grafana-openapi during
+	// normal development builds. If unavailable, we continue serving legacy docs.
+	apiSpecsDir := filepath.Clean(filepath.Join(hs.Cfg.StaticRootPath, "..", "packages", "grafana-openapi", "src", "apis"))
+	appSpecs, err := loadAppPlatformSpecSources(apiSpecsDir)
+	if err != nil {
+		if hs.log != nil {
+			hs.log.Warn("api-docs: unable to load app-platform specs", "path", apiSpecsDir, "error", err)
+		}
+	} else {
+		sources = append(sources, appSpecs...)
+	}
+
+	state := buildAPIDocsStateFromSources(sources)
 	state.appURL = strings.TrimRight(hs.Cfg.AppURL, "/")
 
 	r.Get("/llms.txt", routing.Wrap(state.llmsTxtHandler))
 	r.Get("/llms-full.txt", routing.Wrap(state.llmsFullTxtHandler))
 	r.Get("/api-docs/index.json", routing.Wrap(state.manifestHandler))
 	r.Get("/api-docs/operations/:operationId", routing.Wrap(state.operationHandler))
+}
+
+func loadAppPlatformSpecSources(specsDir string) ([]specSource, error) {
+	entries, err := os.ReadDir(specsDir)
+	if err != nil {
+		return nil, err
+	}
+
+	loader := openapi3.NewLoader()
+	var out []specSource
+	for _, e := range entries {
+		if e.IsDir() || !strings.HasSuffix(e.Name(), ".json") {
+			continue
+		}
+		gv := strings.TrimSuffix(e.Name(), ".json")
+		group, version, ok := splitGroupVersion(gv)
+		if !ok {
+			continue
+		}
+		doc, loadErr := loader.LoadFromFile(filepath.Join(specsDir, e.Name()))
+		if loadErr != nil {
+			continue
+		}
+		out = append(out, specSource{
+			doc:      doc,
+			surface:  "app-platform",
+			group:    group,
+			version:  version,
+			basePath: "/apis/" + group + "/" + version + "/namespaces/{namespace}",
+		})
+	}
+
+	sort.SliceStable(out, func(i, j int) bool {
+		if out[i].group == out[j].group {
+			return out[i].version < out[j].version
+		}
+		return out[i].group < out[j].group
+	})
+	return out, nil
+}
+
+func splitGroupVersion(in string) (group, version string, ok bool) {
+	idx := strings.LastIndex(in, "-")
+	if idx <= 0 || idx >= len(in)-1 {
+		return "", "", false
+	}
+	return in[:idx], in[idx+1:], true
 }
 
 func (s *apiDocsState) llmsTxtHandler(_ *contextmodel.ReqContext) response.Response {
@@ -150,7 +231,8 @@ func renderLLMsTxt(s *apiDocsState) string {
 	// human-readable docs.
 	opBase := s.appURL // may be "" in tests — relative URLs are used as fallback
 	baseAPI := opBase + "/api/"
-	fmt.Fprintf(&b, "> The Grafana HTTP API is served at `%s`.\n", baseAPI)
+	baseAPIs := opBase + "/apis/"
+	fmt.Fprintf(&b, "> The Grafana HTTP API is served at `%s` and `%s`.\n", baseAPI, baseAPIs)
 	b.WriteString("> Authenticate with `Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>` or basic auth (`-u admin:password`).\n")
 	b.WriteString("> Full reference: <https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/>\n\n")
 
@@ -214,6 +296,26 @@ func renderLLMsTxt(s *apiDocsState) string {
 		}
 	}
 
+	appGroups := map[string]bool{}
+	for _, e := range s.ordered {
+		if e.Surface == "app-platform" && e.Group != "" && e.Version != "" {
+			appGroups[e.Group+"/"+e.Version] = true
+		}
+	}
+	if len(appGroups) > 0 {
+		keys := make([]string, 0, len(appGroups))
+		for k := range appGroups {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		b.WriteString("## App Platform APIs (/apis)\n\n")
+		b.WriteString("> Use `/llms-full.txt` for the complete endpoint list. Available group/versions:\n")
+		for _, k := range keys {
+			fmt.Fprintf(&b, "- `%s`\n", k)
+		}
+		b.WriteString("\n")
+	}
+
 	return b.String()
 }
 
@@ -232,9 +334,10 @@ func renderLLMsFullTxt(s *apiDocsState) string {
 
 	opBase := s.appURL
 	baseAPI := opBase + "/api/"
-	fmt.Fprintf(&b, "> The Grafana HTTP API is served at `%s`.\n", baseAPI)
+	baseAPIs := opBase + "/apis/"
+	fmt.Fprintf(&b, "> The Grafana HTTP API is served at `%s` and `%s`.\n", baseAPI, baseAPIs)
 	b.WriteString("> Authenticate with `Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>` or basic auth (`-u admin:password`).\n")
-	b.WriteString("> Full reference: <https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api.md/>\n\n")
+	b.WriteString("> Full reference: <https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/>\n\n")
 
 	// Group under the first tag only to avoid duplicating entries that carry
 	// multiple tags (e.g. enterprise operations tagged under both a feature tag
@@ -253,7 +356,7 @@ func renderLLMsFullTxt(s *apiDocsState) string {
 		if len(tags) == 0 {
 			tags = []string{"(untagged)"}
 		}
-		t := tags[0]
+		t := e.Surface + ": " + tags[0]
 		if _, exists := byTag[t]; !exists {
 			tagOrder = append(tagOrder, t)
 		}
@@ -285,6 +388,7 @@ type apiDocsManifestEntry struct {
 	OperationID string   `json:"operationId"`
 	Method      string   `json:"method"`
 	Path        string   `json:"path"`
+	Surface     string   `json:"surface,omitempty"`
 	Summary     string   `json:"summary,omitempty"`
 	Tags        []string `json:"tags,omitempty"`
 	MarkdownURL string   `json:"markdownUrl"`
@@ -309,6 +413,7 @@ func (s *apiDocsState) manifestHandler(_ *contextmodel.ReqContext) response.Resp
 			OperationID: e.OperationID,
 			Method:      e.Method,
 			Path:        e.Path,
+			Surface:     e.Surface,
 			Summary:     e.Summary,
 			Tags:        e.Tags,
 			MarkdownURL: "/api-docs/operations/" + e.OperationID,
@@ -334,42 +439,64 @@ func markdownResponse(status int, body string) response.Response {
 }
 
 func buildAPIDocsState(doc *openapi3.T) *apiDocsState {
-	s := &apiDocsState{spec: doc, ops: map[string]*operationEntry{}}
-	if doc.Paths == nil {
+	return buildAPIDocsStateFromSources([]specSource{{
+		doc:      doc,
+		surface:  "legacy",
+		basePath: "/api",
+	}})
+}
+
+func buildAPIDocsStateFromSources(sources []specSource) *apiDocsState {
+	s := &apiDocsState{ops: map[string]*operationEntry{}}
+	if len(sources) == 0 {
 		return s
 	}
+	s.spec = sources[0].doc
 
-	paths := doc.Paths.Map()
-	pathKeys := make([]string, 0, len(paths))
-	for k := range paths {
-		pathKeys = append(pathKeys, k)
-	}
-	sort.Strings(pathKeys)
-
-	for _, p := range pathKeys {
-		item := paths[p]
-		if item == nil {
+	for _, src := range sources {
+		if src.doc == nil || src.doc.Paths == nil {
 			continue
 		}
-		for method, op := range item.Operations() {
-			if op == nil {
+		paths := src.doc.Paths.Map()
+		pathKeys := make([]string, 0, len(paths))
+		for k := range paths {
+			pathKeys = append(pathKeys, k)
+		}
+		sort.Strings(pathKeys)
+
+		for _, p := range pathKeys {
+			item := paths[p]
+			if item == nil {
 				continue
 			}
-			id := op.OperationID
-			if id == "" {
-				id = synthesizeOperationID(method, p)
+			for method, op := range item.Operations() {
+				if op == nil {
+					continue
+				}
+				id := op.OperationID
+				if id == "" {
+					id = synthesizeOperationID(method, p)
+				}
+				id = uniqueOperationID(id, src.group, src.version, s.ops)
+
+				fullPath := joinBaseAndPath(src.basePath, p)
+				entry := &operationEntry{
+					OperationID: id,
+					Method:      strings.ToUpper(method),
+					Path:        fullPath,
+					RawPath:     p,
+					Surface:     src.surface,
+					Group:       src.group,
+					Version:     src.version,
+					BasePath:    src.basePath,
+					Summary:     op.Summary,
+					Description: op.Description,
+					Tags:        op.Tags,
+					Operation:   op,
+				}
+				s.ops[id] = entry
+				s.ordered = append(s.ordered, entry)
 			}
-			entry := &operationEntry{
-				OperationID: id,
-				Method:      strings.ToUpper(method),
-				Path:        p,
-				Summary:     op.Summary,
-				Description: op.Description,
-				Tags:        op.Tags,
-				Operation:   op,
-			}
-			s.ops[id] = entry
-			s.ordered = append(s.ordered, entry)
 		}
 	}
 
@@ -381,6 +508,57 @@ func buildAPIDocsState(doc *openapi3.T) *apiDocsState {
 	})
 
 	return s
+}
+
+func uniqueOperationID(id, group, version string, existing map[string]*operationEntry) string {
+	if _, ok := existing[id]; !ok {
+		return id
+	}
+	prefix := sanitizeID(group + "_" + version)
+	if prefix != "" {
+		id = prefix + "_" + id
+		if _, ok := existing[id]; !ok {
+			return id
+		}
+	}
+	for i := 2; ; i++ {
+		candidate := fmt.Sprintf("%s_%d", id, i)
+		if _, ok := existing[candidate]; !ok {
+			return candidate
+		}
+	}
+}
+
+func sanitizeID(s string) string {
+	s = strings.ToLower(s)
+	out := make([]rune, 0, len(s))
+	prevUnderscore := false
+	for _, r := range s {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
+			out = append(out, r)
+			prevUnderscore = false
+			continue
+		}
+		if !prevUnderscore {
+			out = append(out, '_')
+			prevUnderscore = true
+		}
+	}
+	return strings.Trim(string(out), "_")
+}
+
+func joinBaseAndPath(base, p string) string {
+	base = strings.TrimRight(base, "/")
+	if p == "/" || p == "" {
+		if base == "" {
+			return "/"
+		}
+		return base
+	}
+	if strings.HasPrefix(p, "/") {
+		return base + p
+	}
+	return base + "/" + p
 }
 
 // synthesizeOperationID produces a stable identifier when the spec omits one.
@@ -459,7 +637,7 @@ func relatedOps(e *operationEntry, s *apiDocsState) []*operationEntry {
 
 	// 1. Same path, different method (e.g. GET and DELETE on the same resource).
 	for _, other := range s.ordered {
-		if other.Path == e.Path {
+		if other.RawPath == e.RawPath && other.Surface == e.Surface && other.Group == e.Group && other.Version == e.Version {
 			if !add(other) {
 				return related
 			}
@@ -468,9 +646,9 @@ func relatedOps(e *operationEntry, s *apiDocsState) []*operationEntry {
 
 	// 2. Parent path: strip the last segment (parameter or named) to find the
 	//    collection endpoint (e.g. /teams/{teamId} → /teams).
-	if parent := parentPath(e.Path); parent != "" {
+	if parent := parentPath(e.RawPath); parent != "" {
 		for _, other := range s.ordered {
-			if other.Path == parent {
+			if other.RawPath == parent && other.Surface == e.Surface && other.Group == e.Group && other.Version == e.Version {
 				if !add(other) {
 					return related
 				}
@@ -480,14 +658,17 @@ func relatedOps(e *operationEntry, s *apiDocsState) []*operationEntry {
 
 	// 3. Direct children: paths that extend this path by exactly one segment.
 	for _, other := range s.ordered {
-		if other.Path == e.Path {
+		if other.RawPath == e.RawPath {
 			continue
 		}
-		if !strings.HasPrefix(other.Path, e.Path+"/") {
+		if other.Surface != e.Surface || other.Group != e.Group || other.Version != e.Version {
+			continue
+		}
+		if !strings.HasPrefix(other.RawPath, e.RawPath+"/") {
 			continue
 		}
 		// Only immediate children (no further slash after the appended segment).
-		rest := other.Path[len(e.Path)+1:]
+		rest := other.RawPath[len(e.RawPath)+1:]
 		if !strings.Contains(rest, "/") {
 			if !add(other) {
 				return related
@@ -550,7 +731,7 @@ func renderOperationContext(b *strings.Builder, e *operationEntry, s *apiDocsSta
 	if s != nil {
 		opBase = s.appURL
 	}
-	fmt.Fprintf(b, "> Full URL: `%s %s/api%s`\n", e.Method, opBase, e.Path)
+	fmt.Fprintf(b, "> Full URL: `%s %s%s`\n", e.Method, opBase, e.Path)
 	b.WriteString("> Authenticate with `Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>` or basic auth (`-u admin:password`).\n\n")
 }
 

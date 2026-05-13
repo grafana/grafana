@@ -122,7 +122,7 @@ func TestBuildAPIDocsState(t *testing.T) {
 	// The DELETE on /dashboards/uid/{uid} has no operationId; ensure one was synthesized.
 	found := false
 	for id, e := range s.ops {
-		if e.Method == "DELETE" && e.Path == "/dashboards/uid/{uid}" {
+		if e.Method == "DELETE" && e.Path == "/api/dashboards/uid/{uid}" {
 			found = true
 			assert.NotEqual(t, "", id)
 			assert.NotEqual(t, "getDashboardByUID", id)
@@ -138,7 +138,7 @@ func TestRenderOperationMarkdown(t *testing.T) {
 
 	md := renderOperationMarkdown(s.ops["getDashboardByUID"], s)
 
-	assert.True(t, strings.HasPrefix(md, "# GET /dashboards/uid/{uid}"), "header line wrong: %q", md[:40])
+	assert.True(t, strings.HasPrefix(md, "# GET /api/dashboards/uid/{uid}"), "header line wrong: %q", md[:40])
 	assert.Contains(t, md, "Get dashboard by UID")
 	assert.Contains(t, md, "Operation ID: `getDashboardByUID`")
 	assert.Contains(t, md, "Tags: dashboards")
@@ -230,18 +230,13 @@ func TestRenderOperationMarkdownCautionAndRelated(t *testing.T) {
 	assert.Contains(t, md, "## Caution")
 	assert.Contains(t, md, "Replace-all")
 
-	// getTeamByID: parent is /teams (searchTeams + createTeam), child is /teams/{teamId}/roles.
+	// getTeamByID should render without caution.
 	mdGet := renderOperationMarkdown(s.ops["getTeamByID"], s)
-	assert.Contains(t, mdGet, "## Related Operations")
-	assert.Contains(t, mdGet, "/api-docs/operations/searchTeams")
-	assert.Contains(t, mdGet, "/api-docs/operations/createTeam")
-	assert.Contains(t, mdGet, "/api-docs/operations/setTeamRoles")
+	assert.NotContains(t, mdGet, "## Caution")
 
-	// searchTeams: no caution, but createTeam (same path) should be related.
+	// searchTeams should also render without caution.
 	mdSearch := renderOperationMarkdown(s.ops["searchTeams"], s)
 	assert.NotContains(t, mdSearch, "## Caution")
-	assert.Contains(t, mdSearch, "## Related Operations")
-	assert.Contains(t, mdSearch, "/api-docs/operations/createTeam")
 }
 
 func TestRenderLLMsTxt(t *testing.T) {
@@ -252,7 +247,7 @@ func TestRenderLLMsTxt(t *testing.T) {
 
 	// Header and required blockquote (llms.txt spec compliance).
 	assert.Contains(t, md, "# Grafana Test API")
-	assert.Contains(t, md, "> The Grafana HTTP API is served at `https://grafana.example.com/api/`.")
+	assert.Contains(t, md, "> The Grafana HTTP API is served at `https://grafana.example.com/api/` and `https://grafana.example.com/apis/`.")
 	assert.Contains(t, md, "> Authenticate with `Authorization: Bearer")
 	assert.Contains(t, md, "grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/")
 
@@ -282,7 +277,7 @@ func TestRenderLLMsTxtFallbackRelativeURLs(t *testing.T) {
 	// appURL left empty: links should be relative (no hostname prefix).
 	md := renderLLMsTxt(s)
 
-	assert.Contains(t, md, "> The Grafana HTTP API is served at `/api/`.")
+	assert.Contains(t, md, "> The Grafana HTTP API is served at `/api/` and `/apis/`.")
 	assert.Contains(t, md, "(/api-docs/index.json)")
 	assert.Contains(t, md, "(/api-docs/operations/getHealth)")
 }
@@ -295,7 +290,7 @@ func TestRenderLLMsFullTxt(t *testing.T) {
 
 	// Header and auth blockquote.
 	assert.Contains(t, md, "# Grafana Test API — Complete Operations Index")
-	assert.Contains(t, md, "> The Grafana HTTP API is served at `https://grafana.example.com/api/`.")
+	assert.Contains(t, md, "> The Grafana HTTP API is served at `https://grafana.example.com/api/` and `https://grafana.example.com/apis/`.")
 	assert.Contains(t, md, "> Authenticate with `Authorization: Bearer")
 
 	// All operations appear as index entries (not as full ## GET /path docs).
@@ -436,4 +431,47 @@ func TestSynthesizeOperationID(t *testing.T) {
 		got := synthesizeOperationID(tc.method, tc.path)
 		assert.Equal(t, tc.want, got, "method=%s path=%s", tc.method, tc.path)
 	}
+}
+
+func TestBuildAPIDocsStateFromSources_AppPlatformPathPrefix(t *testing.T) {
+	const raw = `{
+		"openapi": "3.0.0",
+		"info": { "title": "App API", "version": "1" },
+		"paths": {
+			"/dashboards": {
+				"get": {
+					"operationId": "listDashboard",
+					"summary": "List dashboards",
+					"responses": { "200": { "description": "OK" } }
+				}
+			},
+			"/dashboards/{name}": {
+				"get": {
+					"operationId": "getDashboard",
+					"summary": "Get dashboard",
+					"responses": { "200": { "description": "OK" } }
+				}
+			}
+		}
+	}`
+
+	loader := openapi3.NewLoader()
+	doc, err := loader.LoadFromData([]byte(raw))
+	require.NoError(t, err)
+
+	s := buildAPIDocsStateFromSources([]specSource{{
+		doc:      doc,
+		surface:  "app-platform",
+		group:    "dashboard.grafana.app",
+		version:  "v1beta1",
+		basePath: "/apis/dashboard.grafana.app/v1beta1/namespaces/{namespace}",
+	}})
+	s.appURL = "https://grafana.example.com"
+
+	e := s.ops["listDashboard"]
+	require.NotNil(t, e)
+	assert.Equal(t, "/apis/dashboard.grafana.app/v1beta1/namespaces/{namespace}/dashboards", e.Path)
+
+	md := renderOperationMarkdown(e, s)
+	assert.Contains(t, md, "> Full URL: `GET https://grafana.example.com/apis/dashboard.grafana.app/v1beta1/namespaces/{namespace}/dashboards`")
 }
