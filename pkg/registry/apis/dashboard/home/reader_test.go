@@ -98,5 +98,5 @@ func TestDefaultHomeDashboard(t *testing.T) {
 	require.NoError(t, err)
 	dash, ok := obj.(*dashv0.Dashboard)
 	require.True(t, ok, "default home dashboard should be a v0 Dashboard")
-	require.Equal(t, "home", dash.Spec.Object["title"])
+	require.Equal(t, "Home", dash.Spec.Object["title"])
 }

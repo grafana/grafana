@@ -41,6 +41,8 @@ func readDashboard(filePath string) (runtime.Object, error) {
 	if filePath == "" {
 		return nil, nil
 	}
+
+	// nolint:gosec // G304
 	raw, err := os.ReadFile(filePath)
 	if err != nil {
 		return nil, fmt.Errorf("read home dashboard: %w", err)
