@@ -32,6 +32,10 @@ export const CONNECTION_VERTEX_ADD_ID = 'vertexAdd';
 const CONNECTION_VERTEX_ORTHO_TOLERANCE = 0.05; // Cartesian ratio against vertical or horizontal tolerance
 const CONNECTION_VERTEX_SNAP_TOLERANCE = (5 / 180) * Math.PI; // Multi-segment snapping angle in radians to trigger vertex removal
 
+/**
+ * Connections manages the connections UI between canvas elements (i.e. anchored arrows)
+ * Exposes UI chunks with renderElement method
+ */
 export class Connections {
   scene: Scene;
   connectionAnchorDiv?: HTMLDivElement;
@@ -56,6 +60,10 @@ export class Connections {
     this.updateState();
   }
 
+  /**
+   * Connection setter - sets which connection is selected by the user
+   * @param connection
+   */
   public select = (connection: ConnectionState | undefined) => {
     if (connection === this.selection.value) {
       return;

@@ -76,32 +76,32 @@ export class Connections2 {
     }
   };
 
-  setConnectionAnchorRef = (anchorElement: HTMLDivElement) => {
+  private setConnectionAnchorRef = (anchorElement: HTMLDivElement) => {
     this.connectionAnchorDiv = anchorElement;
   };
 
-  setAnchorsRef = (anchorsElement: HTMLDivElement) => {
+  private setAnchorsRef = (anchorsElement: HTMLDivElement) => {
     this.anchorsDiv = anchorsElement;
   };
 
-  setConnectionsSVGRef = (connectionsSVG: SVGElement) => {
+  private setConnectionsSVGRef = (connectionsSVG: SVGElement) => {
     this.connectionsSVG = connectionsSVG;
   };
 
-  setConnectionLineRef = (connectionLine: SVGLineElement) => {
+  private setConnectionLineRef = (connectionLine: SVGLineElement) => {
     this.connectionLine = connectionLine;
   };
 
-  setConnectionVertexRef = (connectionVertex: SVGCircleElement) => {
+  private setConnectionVertexRef = (connectionVertex: SVGCircleElement) => {
     this.connectionVertex = connectionVertex;
   };
 
-  setConnectionVertexPathRef = (connectionVertexPath: SVGPathElement) => {
+  private setConnectionVertexPathRef = (connectionVertexPath: SVGPathElement) => {
     this.connectionVertexPath = connectionVertexPath;
   };
 
   // Recursively find the first parent that is a canvas element
-  findElementTarget = (element: Element): ElementState | undefined => {
+  private findElementTarget = (element: Element): ElementState | undefined => {
     let elementTarget = undefined;
 
     // Cap recursion at the scene level
@@ -118,7 +118,7 @@ export class Connections2 {
     return elementTarget;
   };
 
-  handleMouseEnter = (event: React.MouseEvent) => {
+  public handleMouseEnter = (event: React.MouseEvent) => {
     if (!(event.target instanceof Element) || !this.scene.isEditingEnabled) {
       return;
     }
@@ -171,7 +171,7 @@ export class Connections2 {
   };
 
   // Return boolean indicates if connection anchors were hidden or not
-  handleMouseLeave = (event: React.MouseEvent | React.FocusEvent): boolean => {
+  private handleMouseLeave = (event: React.MouseEvent | React.FocusEvent): boolean => {
     // If mouse is leaving INTO the anchor image, don't remove div
     if (
       event.relatedTarget instanceof HTMLImageElement &&
