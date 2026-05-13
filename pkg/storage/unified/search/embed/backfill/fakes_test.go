@@ -353,27 +353,30 @@ func newFakeEmbedder(text *fakeText) *embedder.Embedder {
 	}
 }
 
-// fakeDashboardStats stubs the DashboardStatsProvider. Tests pre-load
-// per-dashboard stats keyed by "namespace|uid"; lookups for unknown
-// dashboards return the zero map (mimicking "no stats found"). Setting
-// err makes every call fail so tests can exercise the best-effort path.
+// fakeDashboardStats implements builders.DashboardStats. Tests pre-load
+// stats via set(); unknown UIDs return the zero map. err short-circuits
+// every call so the best-effort path can be exercised.
 type fakeDashboardStats struct {
-	mu     sync.Mutex
-	stats  map[string]map[string]int64
-	err    error
-	calls  int
-	called []string // "namespace|uid" per call, in order
+	mu    sync.Mutex
+	stats map[string]map[string]int64
+	err   error
+	calls int
 }
 
 func newFakeDashboardStats() *fakeDashboardStats {
 	return &fakeDashboardStats{stats: map[string]map[string]int64{}}
 }
 
+func (f *fakeDashboardStats) GetStats(context.Context, string) (map[string]map[string]int64, error) {
+	// Backfill never calls GetStats; method exists only to satisfy
+	// builders.DashboardStats.
+	return nil, nil
+}
+
 func (f *fakeDashboardStats) GetDashboardStats(_ context.Context, namespace, uid string) (map[string]int64, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.calls++
-	f.called = append(f.called, namespace+"|"+uid)
 	if f.err != nil {
 		return nil, f.err
 	}

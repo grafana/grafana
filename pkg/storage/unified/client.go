@@ -184,11 +184,6 @@ func newClient(opts options.StorageOptions,
 			IndexMetrics:   indexMetrics,
 			Features:       features,
 			SecureValues:   secure,
-			// builders.DashboardStats is a superset of dashboardviews.Provider
-			// (it adds GetStats); the interface-to-interface assignment
-			// works because the concrete value satisfies both. Letting the
-			// vector indexers use the narrow interface keeps embed/ out of
-			// the builders dep tree.
 			DashboardStats: dashboardStats,
 		}
 

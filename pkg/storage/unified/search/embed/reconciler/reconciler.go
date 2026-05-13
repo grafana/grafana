@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
-	"github.com/grafana/grafana/pkg/storage/unified/search/embed/dashboardviews"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 )
@@ -75,10 +74,6 @@ type Options struct {
 	Builders          []embed.Builder
 	Interval          time.Duration
 	LockRetryInterval time.Duration
-	// DashboardStats is optional. When set, dashboards with zero views
-	// in the last 30 days are skipped. Errors/empty results fall back to
-	// embedding.
-	DashboardStats dashboardviews.Provider
 }
 
 // Reconciler keeps the vector index in sync with ongoing writes. The
@@ -93,7 +88,6 @@ type Reconciler struct {
 	builders          map[string]embed.Builder
 	interval          time.Duration
 	lockRetryInterval time.Duration
-	dashboardStats    dashboardviews.Provider
 	log               log.Logger
 
 	// broadcaster is attached after construction by the resource server,
@@ -131,7 +125,6 @@ func New(opts Options) (*Reconciler, error) {
 		builders:          builders,
 		interval:          opts.Interval,
 		lockRetryInterval: opts.LockRetryInterval,
-		dashboardStats:    opts.DashboardStats,
 		log:               log.New("embeddings_reconciler"),
 		pending:           make(map[string]*pendingEvent),
 	}, nil
@@ -553,24 +546,6 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev
 	}
 }
 
-// skipForZeroViews delegates to dashboardviews.ShouldSkip and adds
-// reconciler-specific logging. Best-effort semantics live in the shared
-// helper; this wrapper exists to keep the call site in embedAndUpsert
-// readable and to centralize logging.
-func (s *Reconciler) skipForZeroViews(ctx context.Context, builder embed.Builder, ev *pendingEvent) bool {
-	skip, err := dashboardviews.ShouldSkip(ctx, s.dashboardStats, builder, ev.namespace, ev.name)
-	if err != nil {
-		s.log.FromContext(ctx).Debug("reconciler: dashboard stats lookup failed; embedding anyway",
-			"namespace", ev.namespace, "name", ev.name, "err", err)
-		return false
-	}
-	if skip {
-		s.log.FromContext(ctx).Debug("reconciler: skipping dashboard with zero views in last 30 days",
-			"namespace", ev.namespace, "name", ev.name, "rv", ev.rv)
-	}
-	return skip
-}
-
 // embedAndUpsert routes through UpsertReplaceSubresources so removing
 // stale subresources and writing the new ones commit atomically — a
 // failure mid-way leaves the dashboard in its previous self-consistent
@@ -581,9 +556,6 @@ func (s *Reconciler) skipForZeroViews(ctx context.Context, builder embed.Builder
 // panel, which is wasteful when only one panel changed.
 func (s *Reconciler) embedAndUpsert(ctx context.Context, builder embed.Builder, ev *pendingEvent) error {
 	if len(ev.value) == 0 {
-		return nil
-	}
-	if s.skipForZeroViews(ctx, builder, ev) {
 		return nil
 	}
 	key := &resourcepb.ResourceKey{
