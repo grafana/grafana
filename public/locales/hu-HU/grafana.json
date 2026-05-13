@@ -10856,6 +10856,16 @@
   },
   "home": {
     "home-page": {
+      "edition": {
+        "cloud": "",
+        "enterprise": "",
+        "open-source": ""
+      },
+      "greeting": {
+        "afternoon": "",
+        "evening": "",
+        "morning": ""
+      },
       "placeholder": ""
     }
   },
@@ -14837,9 +14847,6 @@
       "home-dashboard-placeholder": "Alapértelmezett irányítópult",
       "language-preference-label": "Nyelv",
       "language-preference-placeholder": "Válasszon nyelvet",
-      "locale-preference-description": "Válassza ki a régióját a megfelelő dátum-, idő- és számformátum megtekintéséhez",
-      "locale-preference-label": "Régióformátum",
-      "locale-preference-placeholder": "Válasszon régiót",
       "theme-description": "Tetszenek a kísérleti témák? Ossza meg velünk a véleményét <2>itt.</2>",
       "theme-label": "Felület témája",
       "week-start-label": "Hét kezdete"

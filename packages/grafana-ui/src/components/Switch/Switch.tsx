@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import { forwardRef, type HTMLProps, useId } from 'react';
 
 import { type GrafanaTheme2, deprecationWarning } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
@@ -45,7 +46,7 @@ export const Switch = forwardRef<HTMLInputElement, Props>(
     const switchId = idProp ?? fieldContext.id ?? generatedId;
 
     return (
-      <div className={cx(styles.switch, invalid && styles.invalid)}>
+      <div className={cx(styles.switch, invalid && styles.invalid)} data-testid={selectors.components.Switch.container}>
         <input
           type="checkbox"
           role="switch"
