@@ -10855,6 +10855,10 @@
     "name-stacking": "Stacking"
   },
   "home": {
+    "dashboard-tabs": {
+      "recent": "Recent",
+      "starred": "Starred"
+    },
     "home-page": {
       "edition": {
         "cloud": "Grafana Cloud",
@@ -10867,6 +10871,18 @@
         "morning": "Good morning."
       },
       "placeholder": "Welcome to {{edition}}."
+    },
+    "recent-dashboards-tab": {
+      "browse": "Browse dashboards",
+      "empty": "No recently viewed dashboards",
+      "error-title": "Could not load recently viewed dashboards",
+      "retry": "Retry"
+    },
+    "starred-dashboards-tab": {
+      "browse": "Browse dashboards to star your favorites",
+      "empty": "No starred dashboards",
+      "error-title": "Could not load starred dashboards",
+      "retry": "Retry"
     }
   },
   "inspector": {

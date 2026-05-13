@@ -5,6 +5,7 @@ import { config } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
 import { isOnPrem } from 'app/core/utils/isOnPrem';
 
+import { DashboardTabs } from './DashboardTabs/DashboardTabs';
 import useHomeGreeting from './useHomeGreeting';
 
 const getEdition = () => {
@@ -33,7 +34,7 @@ export default function HomePage() {
       layout={PageLayoutType.Home}
     >
       <Page.Contents>
-        <></>
+        <DashboardTabs />
       </Page.Contents>
     </Page>
   );

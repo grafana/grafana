@@ -2,7 +2,7 @@ import { http, HttpResponse } from 'msw';
 import { type ComponentProps } from 'react';
 import { act, render, screen, waitFor } from 'test/test-utils';
 
-import { locationService, setBackendSrv } from '@grafana/runtime';
+import { locationService, setBackendSrv, setPluginComponentsHook } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -33,6 +33,7 @@ describe('HomeRoute', () => {
 
   beforeEach(() => {
     probeCallCount = 0;
+    setPluginComponentsHook(() => ({ components: [], isLoading: false }));
   });
 
   afterEach(async () => {
