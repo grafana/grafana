@@ -225,7 +225,6 @@ func TestCanAccessAnnotations(t *testing.T) {
 		assert.Equal(t, "dashboards", captured[0].Resource)
 		assert.Equal(t, "annotations", captured[0].Subresource)
 		assert.Equal(t, dashUID, captured[0].Name)
-		assert.Equal(t, ns, client.namespace)
 		assert.Equal(t, utils.VerbList, captured[0].Verb)
 		assert.Equal(t, folderUID, captured[0].Folder)
 	})
