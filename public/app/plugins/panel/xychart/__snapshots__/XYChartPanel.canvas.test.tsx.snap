@@ -7984,6 +7984,139 @@ exports[`XYChartPanel2 Line path stroke strokes connect line with dash/dot lineS
 ]
 `;
 
+exports[`XYChartPanel2 Regressions should update on data change 1`] = `
+[
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "height": 351,
+      "width": 540,
+      "x": 52,
+      "y": 8,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 351,
+            "width": 540,
+            "x": 52,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "value": "rgba(87, 148, 242, 0.5)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "value": "#5794f2",
+    },
+    "type": "strokeStyle",
+  },
+  {
+    "props": {
+      "value": 1,
+    },
+    "type": "lineWidth",
+  },
+  {
+    "props": {
+      "height": 32,
+      "width": 32,
+      "x": 81,
+      "y": 314,
+    },
+    "type": "fillRect",
+  },
+  {
+    "props": {
+      "height": 32,
+      "width": 32,
+      "x": 81,
+      "y": 314,
+    },
+    "type": "strokeRect",
+  },
+  {
+    "props": {
+      "height": 32,
+      "width": 32,
+      "x": 181,
+      "y": 249,
+    },
+    "type": "fillRect",
+  },
+  {
+    "props": {
+      "height": 32,
+      "width": 32,
+      "x": 181,
+      "y": 249,
+    },
+    "type": "strokeRect",
+  },
+  {
+    "props": {
+      "height": 32,
+      "width": 32,
+      "x": 281,
+      "y": 184,
+    },
+    "type": "fillRect",
+  },
+  {
+    "props": {
+      "height": 32,
+      "width": 32,
+      "x": 281,
+      "y": 184,
+    },
+    "type": "strokeRect",
+  },
+  {
+    "props": {
+      "height": 32,
+      "width": 32,
+      "x": 531,
+      "y": 21,
+    },
+    "type": "fillRect",
+  },
+  {
+    "props": {
+      "height": 32,
+      "width": 32,
+      "x": 531,
+      "y": 21,
+    },
+    "type": "strokeRect",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+]
+`;
+
 exports[`XYChartPanel2 Square point shape renders points as squares when y field uses PointShape.Square 1`] = `
 [
   {

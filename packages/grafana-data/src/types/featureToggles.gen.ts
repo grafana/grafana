@@ -179,11 +179,6 @@ export interface FeatureToggles {
   */
   aiGeneratedDashboardChanges?: boolean;
   /**
-  * Enables CSV encoding options in the reporting feature
-  * @default false
-  */
-  reportingCsvEncodingOptions?: boolean;
-  /**
   * Enables configuration of PDF report settings
   * @default false
   */
@@ -360,7 +355,7 @@ export interface FeatureToggles {
   annotationPermissionUpdate?: boolean;
   /**
   * Enables annotation clustering and switches to refactored annotation code
-  * @default false
+  * @default true
   */
   annotationsClustering?: boolean;
   /**
@@ -795,11 +790,6 @@ export interface FeatureToggles {
   */
   timeRangeProvider?: boolean;
   /**
-  * Enables time range panning functionality
-  * @default true
-  */
-  timeRangePan?: boolean;
-  /**
   * Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
   * @default false
   */
@@ -1116,6 +1106,11 @@ export interface FeatureToggles {
   */
   kubernetesAuthzDatasourceResourcePermissions?: boolean;
   /**
+  * Enables service account resource permissions via the K8s IAM resource permission APIs
+  * @default false
+  */
+  kubernetesAuthzServiceAccountResourcePermissions?: boolean;
+  /**
   * Enables recently viewed dashboards section in the browsing dashboard page
   * @default false
   */
@@ -1302,11 +1297,6 @@ export interface FeatureToggles {
   */
   vizPresets?: boolean;
   /**
-  * Enable all plugins to supply visualization suggestions (including 3rd party plugins)
-  * @default true
-  */
-  externalVizSuggestions?: boolean;
-  /**
   * Enable field overrides for FieldType.nestedFrames fields (like in nested tables)
   * @default false
   */
@@ -1456,11 +1446,6 @@ export interface FeatureToggles {
   * @default false
   */
   queryEditorNextMultiSelect?: boolean;
-  /**
-  * Enables search for team bindings in the app platform API
-  * @default false
-  */
-  kubernetesTeamBindings?: boolean;
   /**
   * Enables team APIs in the app platform
   * @default false
@@ -1628,7 +1613,7 @@ export interface FeatureToggles {
   frontendServiceSSOAutoLogin?: boolean;
   /**
   * Enables the splash screen modal for introducing new Grafana features on first session
-  * @default true
+  * @default false
   */
   splashScreen?: boolean;
   /**
@@ -1691,4 +1676,9 @@ export interface FeatureToggles {
   * @default false
   */
   ['alerting.rulesAPIV2']?: boolean;
+  /**
+  * Switch the Grafana Alerting UI from notifications.alerting.grafana.app/v0alpha1 to v1beta1
+  * @default false
+  */
+  ['alerting.notificationsAPIV1Beta1']?: boolean;
 }

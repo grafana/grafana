@@ -10798,6 +10798,16 @@
   },
   "home": {
     "home-page": {
+      "edition": {
+        "cloud": "",
+        "enterprise": "",
+        "open-source": ""
+      },
+      "greeting": {
+        "afternoon": "",
+        "evening": "",
+        "morning": ""
+      },
       "placeholder": ""
     }
   },
@@ -14745,9 +14755,6 @@
       "home-dashboard-placeholder": "Dasbor default",
       "language-preference-label": "Bahasa",
       "language-preference-placeholder": "Pilih bahasa",
-      "locale-preference-description": "Pilih wilayah Anda untuk melihat format tanggal, waktu, dan angka yang sesuai",
-      "locale-preference-label": "Format wilayah",
-      "locale-preference-placeholder": "Pilih wilayah",
       "theme-description": "Menyukai tema eksperimental? Beri tahu kami apa yang ingin Anda lihat <2>di sini.</2>",
       "theme-label": "Tema antarmuka",
       "week-start-label": "Minggu mulai"

@@ -3069,6 +3069,20 @@ func schema_pkg_apis_iam_v0alpha1_TeamSpec(ref common.ReferenceCallback) common.
 							},
 						},
 					},
+					"externalGroups": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
 				},
 				Required: []string{"title", "email", "provisioned", "externalUID", "members"},
 			},
