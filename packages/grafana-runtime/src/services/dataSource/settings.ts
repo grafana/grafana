@@ -242,7 +242,7 @@ function applyFilters(filters: GetDataSourceListFilters = {}): DataSourceInstanc
     }
   }
 
-  const sorted = base.sort((a, b) => {
+  const results = base.sort((a, b) => {
     if (a.name.toLowerCase() > b.name.toLowerCase()) {
       return 1;
     }
@@ -256,24 +256,24 @@ function applyFilters(filters: GetDataSourceListFilters = {}): DataSourceInstanc
     if (filters.mixed) {
       const mixed = byName['-- Mixed --'] ?? byUid['-- Mixed --'];
       if (mixed) {
-        sorted.push(mixed);
+        results.push(mixed);
       }
     }
     if (filters.dashboard) {
       const dashboard = byName['-- Dashboard --'] ?? byUid['-- Dashboard --'];
       if (dashboard) {
-        sorted.push(dashboard);
+        results.push(dashboard);
       }
     }
     if (!filters.tracing) {
       const grafana = byName['-- Grafana --'] ?? byUid['-- Grafana --'];
       if (grafana && filters.filter?.(grafana) !== false) {
-        sorted.push(grafana);
+        results.push(grafana);
       }
     }
   }
 
-  return sorted;
+  return results;
 }
 
 function getNameOrUid(ref: DataSourceRef | string | null | undefined): string | undefined {
