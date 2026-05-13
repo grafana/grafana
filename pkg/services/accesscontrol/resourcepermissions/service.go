@@ -239,7 +239,7 @@ func (s *Service) SetUserPermission(ctx context.Context, orgID int64, user acces
 		}
 	}
 
-	return s.store.SetUserResourcePermission(ctx, orgID, user, SetResourcePermissionCommand{
+	result, err := s.store.SetUserResourcePermission(ctx, orgID, user, SetResourcePermissionCommand{
 		Actions:           actions,
 		Permission:        permission,
 		Resource:          s.scopeResource(),
@@ -247,6 +247,14 @@ func (s *Service) SetUserPermission(ctx context.Context, orgID int64, user acces
 		ResourceAttribute: s.options.ResourceAttribute,
 		DatasourceType:    datasourceType,
 	}, s.options.OnSetUser)
+
+	if err != nil {
+		return nil, err
+	}
+
+	s.clearUserPermissionCache(orgID, user.ID)
+
+	return result, nil
 }
 
 func (s *Service) SetTeamPermission(ctx context.Context, orgID, teamID int64, resourceID, permission string) (*accesscontrol.ResourcePermission, error) {
@@ -371,20 +379,32 @@ func (s *Service) SetPermissions(
 		})
 	}
 
-	rsp, err := s.store.SetResourcePermissions(ctx, orgID, dbCommands, ResourceHooks{
+	result, err := s.store.SetResourcePermissions(ctx, orgID, dbCommands, ResourceHooks{
 		User:        s.options.OnSetUser,
 		Team:        s.options.OnSetTeam,
 		BuiltInRole: s.options.OnSetBuiltInRole,
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	clearedUsers := make(map[int64]bool)
+	for _, cmd := range commands {
+		if cmd.UserID != 0 && !clearedUsers[cmd.UserID] {
+			s.clearUserPermissionCache(orgID, cmd.UserID)
+			clearedUsers[cmd.UserID] = true
+		}
+	}
 
 	// Some resources (folders!) must clear the user cache when permission changes happen
-	if err == nil && s.clearUserCache {
+	if s.clearUserCache {
 		user, _ := identity.GetRequester(ctx)
 		if user != nil && user.IsIdentityType(authlib.TypeUser, authlib.TypeServiceAccount) {
 			s.service.ClearUserPermissionCache(user)
 		}
 	}
-	return rsp, err
+
+	return result, nil
 }
 
 func (s *Service) MapActions(permission accesscontrol.ResourcePermission) string {
@@ -401,6 +421,21 @@ func (s *Service) DeleteResourcePermissions(ctx context.Context, orgID int64, re
 		Resource:          s.scopeResource(),
 		ResourceAttribute: s.options.ResourceAttribute,
 		ResourceID:        resourceID,
+	})
+}
+
+// clearUserPermissionCache invalidates the RBAC permission cache for a user.
+// It clears both regular user and service account cache keys since we don't
+// know the identity type from just the user ID.
+func (s *Service) clearUserPermissionCache(orgID int64, userID int64) {
+	s.service.ClearUserPermissionCache(&user.SignedInUser{
+		OrgID:  orgID,
+		UserID: userID,
+	})
+	s.service.ClearUserPermissionCache(&user.SignedInUser{
+		OrgID:            orgID,
+		UserID:           userID,
+		IsServiceAccount: true,
 	})
 }
 
