@@ -985,4 +985,8 @@ const (
 	// FlagPluginsMarketplaceLicensing
 	// Enables marketplace plugin licensing
 	FlagPluginsMarketplaceLicensing = "plugins.marketplaceLicensing"
+
+	// FlagDatasourcesWargamesTesting
+	// Simulates datasource query failures for war games training scenarios. Do not enable in production.
+	FlagDatasourcesWargamesTesting = "datasources.wargamesTesting"
 )

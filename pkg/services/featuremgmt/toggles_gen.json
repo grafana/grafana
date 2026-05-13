@@ -1962,6 +1962,20 @@
     },
     {
       "metadata": {
+        "name": "datasources.wargamesTesting",
+        "resourceVersion": "1778641678939",
+        "creationTimestamp": "2026-05-13T03:07:58Z"
+      },
+      "spec": {
+        "description": "Simulates datasource query failures for war games training scenarios. Do not enable in production.",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasourcesApiServerEnableHealthEndpoint",
         "resourceVersion": "1772118749630",
         "creationTimestamp": "2026-02-26T15:12:29Z"
