@@ -754,9 +754,7 @@ func TestV1ToV2alpha1_TimezoneEmptyString(t *testing.T) {
 
 // TestV1ToV2alpha1_AnnotationPanelFilterInt64Ids verifies that v1 dashboards whose
 // annotation panel-filter references a panel id outside the uint32 range survive
-// conversion to v2alpha1. The customer dashboard in support-escalations#22237 uses
-// 23763571993 as a panel id; the previous uint32 field on the v2 schema caused the
-// conversion to 500 with "cannot unmarshal number 23763571993 ... of type uint32".
+// conversion to v2alpha1. 
 func TestV1ToV2alpha1_AnnotationPanelFilterInt64Ids(t *testing.T) {
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	leProvider := migrationtestutil.NewLibraryElementProvider()
