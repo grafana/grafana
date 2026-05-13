@@ -1,4 +1,5 @@
 import type * as React from 'react';
+import { render, screen } from 'test/test-utils';
 
 import type { ElementState } from 'app/features/canvas/runtime/element';
 import type { Scene } from 'app/features/canvas/runtime/scene';
@@ -12,6 +13,7 @@ import {
   ANCHORS,
   ANCHOR_PADDING,
   CONNECTION_ANCHOR_ALT,
+  CONNECTION_ANCHOR_DIV_ID,
   CONNECTION_ANCHOR_HIGHLIGHT_OFFSET,
   HALF_SIZE,
 } from './ConnectionAnchors';
@@ -726,5 +728,29 @@ describe('Connections', () => {
     });
   });
 
-  it.todo('renderElement');
+  describe('renderElement', () => {
+    it('renders anchor controls and the static connection SVG editor layers', () => {
+      const scene = getMockScene({
+        byName: new Map(),
+        scale: 1,
+        isEditingEnabled: true,
+        panel: {
+          context: {
+            instanceState: {
+              selectedConnection: undefined,
+            },
+          },
+        },
+      } as Partial<Scene>);
+
+      const connections = new Connections(scene);
+      (scene as { connections: Connections }).connections = connections;
+
+      render(<>{connections.renderElement()}</>, { renderWithRouter: false });
+
+      expect(document.getElementById(CONNECTION_ANCHOR_DIV_ID)).not.toBeNull();
+      expect(screen.getAllByRole('img', { name: CONNECTION_ANCHOR_ALT, hidden: true })).toHaveLength(ANCHORS.length);
+      expect(document.querySelectorAll('svg')).toHaveLength(2);
+    });
+  });
 });
