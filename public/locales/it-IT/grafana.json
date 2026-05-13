@@ -1164,6 +1164,9 @@
       "content-show-all-errors": "Mostra tutti gli errori"
     },
     "errors": {
+      "api-machinery": {
+        "with-causes": ""
+      },
       "failedWith": "{{-config}} non riuscita con {{status}}: {{-message}}"
     },
     "evaluate-every-validation-options": {
@@ -10851,6 +10854,21 @@
     "name-line-width": "Larghezza linea",
     "name-stacking": "Impilabile"
   },
+  "home": {
+    "home-page": {
+      "edition": {
+        "cloud": "",
+        "enterprise": "",
+        "open-source": ""
+      },
+      "greeting": {
+        "afternoon": "",
+        "evening": "",
+        "morning": ""
+      },
+      "placeholder": ""
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "Caricamento",
@@ -14829,9 +14847,6 @@
       "home-dashboard-placeholder": "Dashboard predefinito",
       "language-preference-label": "Lingua",
       "language-preference-placeholder": "Scegli lingua",
-      "locale-preference-description": "Scegli la tua regione per visualizzare la data, l'ora e il formato numerico corrispondenti",
-      "locale-preference-label": "Formato regione",
-      "locale-preference-placeholder": "Scegli regione",
       "theme-description": "Ti piacciono i temi sperimentali? Dicci cosa ti piacerebbe vedere <2>qui.</2>",
       "theme-label": "Tema dell'interfaccia",
       "week-start-label": "Inizio settimana"
@@ -16022,7 +16037,9 @@
       "description": {
         "group-by-field-value": "Raggruppa i dati in base a un valore di campo e crea tabelle nidificate con i dati raggruppati."
       },
+      "description-expand-nested-rows": "",
       "description-show-field-names": "Se abilitato, le tabelle nidificate mostreranno i nomi dei campi come intestazione della tabella",
+      "label-expand-nested-rows-by-default": "",
       "label-show-field-names-in-nested-tables": "Mostra i nomi dei campi nelle tabelle nidificate",
       "name": {
         "group-to-nested-tables": "Raggruppa in tabelle nidificate"

@@ -1164,6 +1164,9 @@
       "content-show-all-errors": "Exibir todos os erros"
     },
     "errors": {
+      "api-machinery": {
+        "with-causes": ""
+      },
       "failedWith": "{{-config}} apresentou falha com o status {{status}}: {{-message}}"
     },
     "evaluate-every-validation-options": {
@@ -10851,6 +10854,21 @@
     "name-line-width": "Largura da linha",
     "name-stacking": "Empilhamento"
   },
+  "home": {
+    "home-page": {
+      "edition": {
+        "cloud": "",
+        "enterprise": "",
+        "open-source": ""
+      },
+      "greeting": {
+        "afternoon": "",
+        "evening": "",
+        "morning": ""
+      },
+      "placeholder": ""
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "Carregando",
@@ -14829,9 +14847,6 @@
       "home-dashboard-placeholder": "Painel de controle padrão",
       "language-preference-label": "Idioma",
       "language-preference-placeholder": "Escolher idioma",
-      "locale-preference-description": "Escolha sua região para ver o formato correspondente de data, hora e número",
-      "locale-preference-label": "Formato da região",
-      "locale-preference-placeholder": "Escolha a região",
       "theme-description": "Está gostando dos temas experimentais? Queremos saber o que você gostaria de encontrar<2>aqui.</2>",
       "theme-label": "Tema da interface",
       "week-start-label": "Início da semana"
@@ -16022,7 +16037,9 @@
       "description": {
         "group-by-field-value": "Agrupar dados por um valor de campo e criar tabelas aninhadas com os dados agrupados."
       },
+      "description-expand-nested-rows": "",
       "description-show-field-names": "Se ativadas, as tabelas aninhadas exibirão os nomes dos campos como um cabeçalho da tabela",
+      "label-expand-nested-rows-by-default": "",
       "label-show-field-names-in-nested-tables": "Exibir nomes de campos em tabelas aninhadas",
       "name": {
         "group-to-nested-tables": "Agrupar em tabelas aninhadas"

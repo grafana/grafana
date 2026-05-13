@@ -36,6 +36,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `dashgpt`                                    | Enable AI powered features in dashboards                                                                                                                      | Yes                |
 | `cloudWatchBatchQueries`                     | Runs CloudWatch metrics queries as separate batches                                                                                                           |                    |
 | `annotationPermissionUpdate`                 | Change the way annotation permissions work by scoping them to folders and dashboards.                                                                         | Yes                |
+| `annotationsClustering`                      | Enables annotation clustering and switches to refactored annotation code                                                                                      | Yes                |
 | `dashboardNewLayouts`                        | Enables new dashboard layouts                                                                                                                                 | Yes                |
 | `dashboardDefaultLayoutSelector`             | Enables default layout selector in dashboard settings                                                                                                         | Yes                |
 | `alertingQueryOptimization`                  | Optimizes eligible queries in order to reduce load on datasources                                                                                             |                    |
@@ -51,8 +52,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `improvedExternalSessionHandling`            | Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.                            | Yes                |
 | `useSessionStorageForRedirection`            | Use session storage for handling the redirection after login                                                                                                  | Yes                |
 | `pluginsSriChecks`                           | Enables SRI checks for plugin assets                                                                                                                          |                    |
-| `timeRangePan`                               | Enables time range panning functionality                                                                                                                      | Yes                |
-| `newTimeRangeZoomShortcuts`                  | Enables new keyboard shortcuts for time range zoom operations                                                                                                 | Yes                |
 | `azureMonitorDisableLogLimit`                | Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.                                                              |                    |
 | `enableSCIM`                                 | Enables SCIM support for user and group management                                                                                                            | Yes                |
 | `alertingUIOptimizeReducer`                  | Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query                                                      | Yes                |
@@ -71,7 +70,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `newClickhouseConfigPageDesign`              | Enables new design for the Clickhouse data source configuration page                                                                                          | Yes                |
 | `azureResourcePickerUpdates`                 | Enables the updated Azure Monitor resource picker                                                                                                             | Yes                |
 | `newVizSuggestions`                          | Enable new visualization suggestions                                                                                                                          | Yes                |
-| `externalVizSuggestions`                     | Enable all plugins to supply visualization suggestions (including 3rd party plugins)                                                                          | Yes                |
 | `opentsdbBackendMigration`                   | Run queries through the data source backend                                                                                                                   |                    |
 | `multiPropsVariables`                        | Enables support for variables whose values can have multiple properties                                                                                       | Yes                |
 | `dashboardSectionVariables`                  | Enables support for section level variables (rows and tabs)                                                                                                   | Yes                |
@@ -87,7 +85,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `refactorVariablesTimeRange`      | Refactor time range variables flow to reduce number of API calls made when query variables are chained |
 | `faroDatasourceSelector`          | Enable the data source selector within the Frontend Apps section of the Frontend Observability         |
 | `externalServiceAccounts`         | Automatic service account and token setup for plugins                                                  |
-| `annotationsClustering`           | Enables annotation clustering and switches to refactored annotation code                               |
 | `dashboardFiltersOverview`        | Enables the dashboard filters overview pane                                                            |
 | `feedbackButton`                  | Enables the feedback button in the dashboard edit sidebar                                              |
 | `pdfTables`                       | Enables generating table data as PDF in reporting                                                      |

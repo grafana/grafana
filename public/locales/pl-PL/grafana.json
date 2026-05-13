@@ -1174,6 +1174,9 @@
       "content-show-all-errors": "Pokaż wszystkie błędy"
     },
     "errors": {
+      "api-machinery": {
+        "with-causes": ""
+      },
       "failedWith": "{{-config}} – niepowodzenie ze statusem {{status}}: {{-message}}"
     },
     "evaluate-every-validation-options": {
@@ -10967,6 +10970,21 @@
     "name-line-width": "Szerokość linii",
     "name-stacking": "Układanie"
   },
+  "home": {
+    "home-page": {
+      "edition": {
+        "cloud": "",
+        "enterprise": "",
+        "open-source": ""
+      },
+      "greeting": {
+        "afternoon": "",
+        "evening": "",
+        "morning": ""
+      },
+      "placeholder": ""
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "Ładowanie",
@@ -15013,9 +15031,6 @@
       "home-dashboard-placeholder": "Domyślny pulpit",
       "language-preference-label": "Język",
       "language-preference-placeholder": "Wybierz język",
-      "locale-preference-description": "Wybierz swój region, aby zobaczyć odpowiedni format daty, godziny i liczb",
-      "locale-preference-label": "Format regionu",
-      "locale-preference-placeholder": "Wybierz region",
       "theme-description": "Podobają Ci się motywy eksperymentalne? Powiedz nam, co chcesz <2>tutaj</2> zobaczyć.",
       "theme-label": "Motyw interfejsu",
       "week-start-label": "Początek tygodnia"
@@ -16208,7 +16223,9 @@
       "description": {
         "group-by-field-value": "Grupuj dane według wartości pola i twórz tabele zagnieżdżone z pogrupowanymi danymi."
       },
+      "description-expand-nested-rows": "",
       "description-show-field-names": "Jeśli ta opcja jest włączona, w tabelach zagnieżdżonych nazwy pól będą wyświetlać się jako nagłówki tabeli",
+      "label-expand-nested-rows-by-default": "",
       "label-show-field-names-in-nested-tables": "Pokaż nazwy pól w tabelach zagnieżdżonych",
       "name": {
         "group-to-nested-tables": "Grupuj w tabelach zagnieżdżonych"

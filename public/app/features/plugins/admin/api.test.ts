@@ -1,5 +1,5 @@
 import { getBackendSrv, type MonitoringLogger, setBackendSrv } from '@grafana/runtime';
-import { installPluginMeta, uninstallPluginMeta } from '@grafana/runtime/internal';
+import { installPluginMeta, uninstallPluginMeta, FlagKeys } from '@grafana/runtime/internal';
 import { mockLogger, setTestFlags } from '@grafana/test-utils/unstable';
 
 import { installPlugin, uninstallPlugin } from './api';
@@ -45,7 +45,7 @@ describe('api', () => {
 
   describe('when plugins.useMTPlugins flag is enabled', () => {
     beforeAll(() => {
-      setTestFlags({ 'plugins.useMTPlugins': true });
+      setTestFlags({ [FlagKeys.PluginsUseMTPlugins]: true });
     });
 
     afterAll(() => {
@@ -149,7 +149,7 @@ describe('api', () => {
 
   describe('when plugins.useMTPlugins flag is disabled', () => {
     beforeAll(() => {
-      setTestFlags({ 'plugins.useMTPlugins': false });
+      setTestFlags({ [FlagKeys.PluginsUseMTPlugins]: false });
     });
 
     afterAll(() => {

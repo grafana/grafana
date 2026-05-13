@@ -12,7 +12,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/expr"
-	"github.com/grafana/grafana/pkg/util"
 
 	prom_model "github.com/prometheus/common/model"
 
@@ -61,7 +60,7 @@ func convertToK8sResource(
 	}
 
 	if rule.IsPaused {
-		k8sRule.Spec.Paused = util.Pointer(true)
+		k8sRule.Spec.Paused = new(true)
 	}
 
 	if rule.RuleGroup != "" && !ngmodels.IsNoGroupRuleGroup(rule.RuleGroup) {
@@ -70,11 +69,11 @@ func convertToK8sResource(
 	}
 
 	if rule.For != 0 {
-		k8sRule.Spec.For = util.Pointer(rule.For.String())
+		k8sRule.Spec.For = new(rule.For.String())
 	}
 
 	if rule.KeepFiringFor != 0 {
-		k8sRule.Spec.KeepFiringFor = util.Pointer(rule.KeepFiringFor.String())
+		k8sRule.Spec.KeepFiringFor = new(rule.KeepFiringFor.String())
 	}
 
 	if rule.PanelID != nil && rule.DashboardUID != nil &&
@@ -104,13 +103,13 @@ func convertToK8sResource(
 			GroupBy:  setting.GroupBy,
 		}
 		if setting.GroupWait != nil {
-			simplifiedRouting.GroupWait = util.Pointer(model.AlertRulePromDuration(setting.GroupWait.String()))
+			simplifiedRouting.GroupWait = new(model.AlertRulePromDuration(setting.GroupWait.String()))
 		}
 		if setting.GroupInterval != nil {
-			simplifiedRouting.GroupInterval = util.Pointer(model.AlertRulePromDuration(setting.GroupInterval.String()))
+			simplifiedRouting.GroupInterval = new(model.AlertRulePromDuration(setting.GroupInterval.String()))
 		}
 		if setting.RepeatInterval != nil {
-			simplifiedRouting.RepeatInterval = util.Pointer(model.AlertRulePromDuration(setting.RepeatInterval.String()))
+			simplifiedRouting.RepeatInterval = new(model.AlertRulePromDuration(setting.RepeatInterval.String()))
 		}
 		if setting.MuteTimeIntervals != nil {
 			simplifiedRouting.MuteTimeIntervals = make([]model.AlertRuleTimeIntervalRef, 0, len(setting.MuteTimeIntervals))
@@ -171,11 +170,11 @@ func convertToK8sExpression(query ngmodels.AlertQuery, rule *ngmodels.AlertRule)
 		Model: query.Model,
 	}
 	if query.QueryType != "" {
-		expression.QueryType = util.Pointer(query.QueryType)
+		expression.QueryType = new(query.QueryType)
 	}
 	// DatasourceUID is optional and defaults to expr datasource
 	if !expr.IsDataSource(query.DatasourceUID) {
-		expression.DatasourceUID = util.Pointer(model.AlertRuleDatasourceUID(query.DatasourceUID))
+		expression.DatasourceUID = new(model.AlertRuleDatasourceUID(query.DatasourceUID))
 	}
 	if time.Duration(query.RelativeTimeRange.From) > 0 || time.Duration(query.RelativeTimeRange.To) > 0 {
 		expression.RelativeTimeRange = &model.AlertRuleRelativeTimeRange{
@@ -184,7 +183,7 @@ func convertToK8sExpression(query ngmodels.AlertQuery, rule *ngmodels.AlertRule)
 		}
 	}
 	if rule.Condition == query.RefID {
-		expression.Source = util.Pointer(true)
+		expression.Source = new(true)
 	}
 	return expression
 }
