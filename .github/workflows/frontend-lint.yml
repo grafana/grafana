@@ -306,15 +306,26 @@ jobs:
       uses: ./pr/.github/actions/setup-node # run the action from the PR, pointing to the base checkout
       with:
         cwd: './main'
-    - name: Install dependencies
-      uses: ./pr/.github/actions/pnpm-install # run the action from the PR, pointing to the base checkout
-      with:
-        cwd: './main'
+    - name: Install dependencies for main
+      shell: bash
+      working-directory: ./main
+      run: |
+        if [ -f pnpm-lock.yaml ]; then
+          corepack enable
+          pnpm install --frozen-lockfile
+        else
+          corepack enable
+          yarn install --immutable
+        fi
     - name: Check circular dependencies on main
       working-directory: ./main
       # the first sed command is used to clean the output
       run: |
-        pnpm run lint:circular &> /tmp/main-circular.txt || true
+        if [ -f pnpm-lock.yaml ]; then
+          pnpm run lint:circular &> /tmp/main-circular.txt || true
+        else
+          yarn run lint:circular &> /tmp/main-circular.txt || true
+        fi
         sed -n '/.*Found \([0-9]*\) circular.*/,$p' /tmp/main-circular.txt > /tmp/main-circular-clean.txt
         echo "Circular dependencies on main:"
         main_count=$(sed -n 's/.*Found \([0-9]*\) circular.*/\1/p' /tmp/main-circular-clean.txt)

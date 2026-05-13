@@ -1,0 +1,21 @@
+diff --git a/lib/util/processAsyncTree.js b/lib/util/processAsyncTree.js
+index 1234567890abcdef..abcdef1234567890 100644
+--- a/lib/util/processAsyncTree.js
++++ b/lib/util/processAsyncTree.js
+@@ -19,6 +19,7 @@
+  */
+ const processAsyncTree = (items, concurrency, processor, callback) => {
+ 	const queue = [...items];
++	const visited = new Set(queue);
+ 	if (queue.length === 0) return callback();
+ 	let processing = 0;
+ 	let finished = false;
+@@ -31,6 +32,8 @@ const processAsyncTree = (items, concurrency, processor, callback) => {
+ 	 * @param {T} item item
+ 	 */
+ 	const push = (item) => {
++		if (visited.has(item)) return;
++		visited.add(item);
+ 		queue.push(item);
+ 		if (!processScheduled && processing < concurrency) {
+ 			processScheduled = true;
