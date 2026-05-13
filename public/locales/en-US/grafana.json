@@ -14131,6 +14131,7 @@
       "hint-markdown": "Cmd/Ctrl+Enter to send · @user · #panel · **markdown**",
       "hint-markdown-dashboard": "Cmd/Ctrl+Enter to send · @user · #dashboard · **markdown**",
       "hint-markdown-folder": "Cmd/Ctrl+Enter to send · @user · #folder · **markdown**",
+      "hint-markdown-multi": "Cmd/Ctrl+Enter to send · @user · #resource · **markdown**",
       "input-aria": "Pulse message",
       "placeholder": "Pulse on this dashboard… (@ for users, # for panels, **markdown** supported)",
       "preview-empty": "Nothing to preview yet.",
@@ -14244,6 +14245,7 @@
       "reply-placeholder": "Reply… (@ for users, # for panels)",
       "reply-placeholder-dashboard": "Reply… (@ for users, # for dashboards)",
       "reply-placeholder-folder": "Reply… (@ for users, # for folders)",
+      "reply-placeholder-multi": "Reply… (@ for users, # for resources)",
       "tombstone": "This pulse was deleted.",
       "untitled": "Conversation"
     }

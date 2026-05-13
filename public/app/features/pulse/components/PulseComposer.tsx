@@ -17,16 +17,18 @@ import {
 } from '../utils/lookups';
 
 /**
- * ResourceMentionSource configures what the `#` picker offers when the
- * composer is mounted somewhere other than a dashboard. Dashboards keep
- * passing `panels` (panel ids are dashboard-local integers and don't
- * fit the UID-keyed shape); folder pages pass `{ kind: 'dashboard',
- * suggestions: [...] }` to offer their direct child dashboards.
+ * ResourceMentionSource configures one entry in the `#` picker. A
+ * surface (composer call site) can stack multiple sources so a single
+ * `#` trigger can offer e.g. `#dashboard` AND `#folder` results in one
+ * merged dropdown. Each row attributes its kind via the chip render in
+ * the suggestion list (kind icon + label).
  *
- * If both `panels` and `resourceMention` are provided, `resourceMention`
- * wins. The composer mounts each `#` token as a single mention kind per
- * composer instance — we don't ask the user to disambiguate between
- * "#panel" and "#dashboard" mid-type.
+ * Dashboards still pass `panels` (panel ids are dashboard-local
+ * integers, not UIDs) plus optional `resourceMentions` to mix in
+ * sibling dashboards. Folder pages pass `resourceMentions=[{ kind:
+ * 'dashboard', suggestions: [...] }]` to offer their direct child
+ * dashboards. The singular `resourceMention` prop is preserved as a
+ * back-compat alias and is treated as a one-element plural list.
  */
 export interface ResourceMentionSource {
   kind: 'dashboard' | 'folder';
@@ -35,8 +37,15 @@ export interface ResourceMentionSource {
 
 interface Props {
   panels?: PanelSuggestion[];
-  /** Opt-in resource-mention source. Overrides `panels` when present. */
+  /** Opt-in resource-mention source (singular). Convenience wrapper
+   *  around a one-element `resourceMentions` array — kept so existing
+   *  call sites don't have to refactor when they only offer one kind. */
   resourceMention?: ResourceMentionSource;
+  /** Stack multiple resource sources behind the same `#` trigger.
+   *  When both `resourceMention` and `resourceMentions` are passed
+   *  the singular value is appended onto the plural list so the
+   *  back-compat alias and the new prop can safely co-exist. */
+  resourceMentions?: ResourceMentionSource[];
   placeholder?: string;
   /** Existing markdown source + already-known mentions when editing a pulse. */
   initialMarkdown?: string;
@@ -86,6 +95,7 @@ type ActiveTab = 'write' | 'preview';
 export function PulseComposer({
   panels = [],
   resourceMention,
+  resourceMentions,
   placeholder,
   initialMarkdown,
   initialMentions,
@@ -185,29 +195,78 @@ export function PulseComposer({
     };
   }, [picker, currentUserId]);
 
-  // resourceKind disambiguates what the `#` trigger means in this
-  // composer instance: dashboards offer `#panel`, the folder page
-  // offers `#dashboard`. We pick the resourceMention source first so
-  // call sites can pass an empty list without falling back to panels.
-  const resourceKind: 'panel' | 'dashboard' | 'folder' = resourceMention ? resourceMention.kind : 'panel';
+  // activeResourceKinds is the deduplicated set of mention kinds the
+  // `#` trigger can produce on this composer instance. We derive it
+  // up-front so the hint text and the (future) suggestion grouping
+  // both see the same source of truth and so a call site that mixes
+  // `panels` + `resourceMentions` is reflected in the footer hint
+  // without a separate prop. Order is stable (panel → dashboard →
+  // folder) so two composer mounts with the same inputs render the
+  // same hint.
+  const activeResourceKinds = useMemo<Array<'panel' | 'dashboard' | 'folder'>>(() => {
+    const kinds = new Set<'panel' | 'dashboard' | 'folder'>();
+    if (panels.length > 0) {
+      kinds.add('panel');
+    }
+    if (resourceMention) {
+      kinds.add(resourceMention.kind);
+    }
+    for (const src of resourceMentions ?? []) {
+      kinds.add(src.kind);
+    }
+    // Empty composer surface (no sources at all): we still need a
+    // sensible fallback for the hint copy. Panel is the historical
+    // default because the dashboard drawer was the only composer
+    // surface before folders existed.
+    if (kinds.size === 0) {
+      kinds.add('panel');
+    }
+    const order: Array<'panel' | 'dashboard' | 'folder'> = ['panel', 'dashboard', 'folder'];
+    return order.filter((k) => kinds.has(k));
+  }, [panels.length, resourceMention, resourceMentions]);
 
   const resourceSuggestions: Array<{ label: string; sublabel?: string; mention: PulseMention }> = useMemo(() => {
     if (!picker || picker.kind !== 'resource') {
       return [];
     }
-    if (resourceMention) {
-      return filterResourceSuggestions(resourceMention.suggestions, picker.query).map((r) => ({
-        label: r.title,
-        sublabel: r.uid,
-        mention: { kind: resourceMention.kind, targetId: r.uid, displayName: r.title },
-      }));
+    const out: Array<{ label: string; sublabel?: string; mention: PulseMention }> = [];
+    // Panels render first because the dashboard drawer is the heaviest
+    // user of `#`; pushing siblings/folders below keeps the muscle
+    // memory of "first hit is usually a panel here" intact on the
+    // surface where it matters most. Each branch caps its slice via
+    // filterPanels / filterResourceSuggestions so a 500-dashboard
+    // folder can't drown out a 50-panel dashboard.
+    if (panels.length > 0) {
+      for (const p of filterPanels(panels, picker.query)) {
+        out.push({
+          label: p.title,
+          sublabel: `#${p.id}`,
+          mention: { kind: 'panel', targetId: String(p.id), displayName: p.title },
+        });
+      }
     }
-    return filterPanels(panels, picker.query).map((p) => ({
-      label: p.title,
-      sublabel: `#${p.id}`,
-      mention: { kind: 'panel', targetId: String(p.id), displayName: p.title },
-    }));
-  }, [picker, panels, resourceMention]);
+    // Build the flattened source list. The singular `resourceMention`
+    // is appended onto whatever `resourceMentions` already has so the
+    // back-compat alias and the new prop combine cleanly when both
+    // are passed (the dashboard drawer's main use case).
+    const sources: ResourceMentionSource[] = [];
+    if (resourceMentions) {
+      sources.push(...resourceMentions);
+    }
+    if (resourceMention) {
+      sources.push(resourceMention);
+    }
+    for (const src of sources) {
+      for (const r of filterResourceSuggestions(src.suggestions, picker.query)) {
+        out.push({
+          label: r.title,
+          sublabel: `#${src.kind} · ${r.uid}`,
+          mention: { kind: src.kind, targetId: r.uid, displayName: r.title },
+        });
+      }
+    }
+    return out;
+  }, [picker, panels, resourceMention, resourceMentions]);
 
   const suggestions: Array<{ label: string; sublabel?: string; mention: PulseMention }> = useMemo(() => {
     if (!picker) {
@@ -485,7 +544,7 @@ export function PulseComposer({
       </TabContent>
 
       <div className={styles.actions}>
-        <span className={styles.hint}>{composerHint(resourceKind)}</span>
+        <span className={styles.hint}>{composerHint(activeResourceKinds)}</span>
         <div className={styles.actionButtons}>
           {onCancel && (
             <Button size="sm" variant="destructive" onClick={onCancel} disabled={pending}>
@@ -503,21 +562,33 @@ export function PulseComposer({
 }
 
 /**
- * composerHint renders the footer hint text so the `#` example reflects
- * the active resource-mention kind. The dashboard drawer keeps showing
- * `#panel`; the folder page surfaces `#dashboard`. Other future
- * surfaces (e.g. an org-level composer) can extend the switch.
+ * composerHint renders the footer hint text so the `#` example
+ * reflects the kinds the composer currently surfaces. Single-source
+ * surfaces (dashboard-only, folder-only) keep their existing hint
+ * copy so the strings stay translated. Mixed surfaces (the dashboard
+ * drawer surfacing both `#panel` and `#dashboard`) get a generic
+ * "#resource" hint — listing every kind inline would balloon the
+ * footer and force per-permutation translation strings.
  */
-function composerHint(kind: 'panel' | 'dashboard' | 'folder'): string {
-  switch (kind) {
-    case 'dashboard':
-      return t('pulse.composer.hint-markdown-dashboard', 'Cmd/Ctrl+Enter to send · @user · #dashboard · **markdown**');
-    case 'folder':
-      return t('pulse.composer.hint-markdown-folder', 'Cmd/Ctrl+Enter to send · @user · #folder · **markdown**');
-    case 'panel':
-    default:
-      return t('pulse.composer.hint-markdown', 'Cmd/Ctrl+Enter to send · @user · #panel · **markdown**');
+function composerHint(kinds: Array<'panel' | 'dashboard' | 'folder'>): string {
+  if (kinds.length === 1) {
+    switch (kinds[0]) {
+      case 'dashboard':
+        return t(
+          'pulse.composer.hint-markdown-dashboard',
+          'Cmd/Ctrl+Enter to send · @user · #dashboard · **markdown**'
+        );
+      case 'folder':
+        return t('pulse.composer.hint-markdown-folder', 'Cmd/Ctrl+Enter to send · @user · #folder · **markdown**');
+      case 'panel':
+      default:
+        return t('pulse.composer.hint-markdown', 'Cmd/Ctrl+Enter to send · @user · #panel · **markdown**');
+    }
   }
+  return t(
+    'pulse.composer.hint-markdown-multi',
+    'Cmd/Ctrl+Enter to send · @user · #resource · **markdown**'
+  );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({

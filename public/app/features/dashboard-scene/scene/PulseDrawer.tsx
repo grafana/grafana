@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
@@ -12,7 +14,9 @@ import {
 } from '@grafana/scenes';
 import { Drawer } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
+import { type ResourceMentionSource } from 'app/features/pulse/components/PulseComposer';
 import { PulseDrawerContent } from 'app/features/pulse/components/PulseDrawerContent';
+import { useFolderDashboards } from 'app/features/pulse/hooks/useFolderDashboards';
 import { type PanelSuggestion } from 'app/features/pulse/utils/lookups';
 
 import { type DashboardScene } from './DashboardScene';
@@ -199,48 +203,81 @@ export class PulseDrawer extends SceneObjectBase<PulseDrawerState> {
     getRootDashboardScene(this).closeModal();
   };
 
-  static Component = ({ model }: SceneComponentProps<PulseDrawer>) => {
-    const dashboard = getRootDashboardScene(model);
-    const { panelFilter, authorFilter, searchFilter, initialThreadUID } = model.useState();
-    const resourceUID = dashboard.state.uid ?? '';
-    const panels = collectPanels(dashboard);
-    const currentUserId = contextSrv.user.id;
-    // Reopen-thread is admin-only; close+delete-thread also surface for
-    // org admins so a moderation flow exists even when the original
-    // author has rotated out.
-    const isAdmin = contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
+  static Component = PulseDrawerRenderer;
+}
 
-    return (
-      <Drawer
-        title={t('pulse.drawer.title', 'Pulse')}
-        subtitle={dashboard.state.title}
-        onClose={model.onClose}
-        size="md"
-      >
-        <PulseDrawerContent
-          resourceUID={resourceUID}
-          panelFilter={panelFilter}
-          authorFilter={authorFilter}
-          searchFilter={searchFilter}
-          panels={panels}
-          currentUserId={currentUserId}
-          isAdmin={isAdmin}
-          initialThreadUID={initialThreadUID}
-          onInitialThreadOpened={model.clearInitialThreadUID}
-          onPanelFilterChange={model.setPanelFilter}
-          onAuthorFilterChange={model.setAuthorFilter}
-          onSearchFilterChange={model.setSearchFilter}
-          onClearFilters={model.clearFilters}
-          onMentionPanel={(id) => {
-            // Click on a `#panel` chip inside a thread applies the
-            // panel filter. Same affordance as clicking the title-bar
-            // mention icon: stay in the drawer, narrow the list.
-            model.setState({ panelFilter: id });
-          }}
-        />
-      </Drawer>
-    );
-  };
+/**
+ * PulseDrawerRenderer is the React function component that backs
+ * `PulseDrawer.Component`. We lift it out of the class body so React
+ * Hooks (`useFolderDashboards`, `useMemo`) don't trip the
+ * rules-of-hooks lint check, which only recognizes top-level
+ * functions and named components as valid hook call sites.
+ */
+function PulseDrawerRenderer({ model }: SceneComponentProps<PulseDrawer>) {
+  const dashboard = getRootDashboardScene(model);
+  const { panelFilter, authorFilter, searchFilter, initialThreadUID } = model.useState();
+  const resourceUID = dashboard.state.uid ?? '';
+  const panels = collectPanels(dashboard);
+  const currentUserId = contextSrv.user.id;
+  // Reopen-thread is admin-only; close+delete-thread also surface for
+  // org admins so a moderation flow exists even when the original
+  // author has rotated out.
+  const isAdmin = contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
+
+  // Sibling-dashboards mention source: the parent folder's direct
+  // child dashboards (minus the current one — referencing the
+  // dashboard you're already on inside its own thread would be
+  // gratuitous noise). Dashboards parented to the root folder fall
+  // back to an empty list rather than the org-wide set; the picker
+  // there would be unbounded and dominated by unrelated noise.
+  const folderUID = dashboard.state.meta.folderUid;
+  // Loading is gated on the drawer being open AND the dashboard
+  // having a parent folder; the hook itself returns an empty list
+  // for undefined folderUID, but skipping the fetch entirely also
+  // skips an avoidable searcher round-trip per dashboard view.
+  const folderDashboards = useFolderDashboards(folderUID, Boolean(folderUID));
+  const resourceMentions = useMemo<ResourceMentionSource[]>(() => {
+    const siblings = folderDashboards.items.filter((d) => d.uid !== resourceUID);
+    if (siblings.length === 0) {
+      // Empty source list collapses the `#dashboard` mention path
+      // gracefully — the composer only renders kinds it can offer
+      // results for, so the footer hint and picker stay panel-only.
+      return [];
+    }
+    return [{ kind: 'dashboard', suggestions: siblings }];
+  }, [folderDashboards.items, resourceUID]);
+
+  return (
+    <Drawer
+      title={t('pulse.drawer.title', 'Pulse')}
+      subtitle={dashboard.state.title}
+      onClose={model.onClose}
+      size="md"
+    >
+      <PulseDrawerContent
+        resourceUID={resourceUID}
+        panelFilter={panelFilter}
+        authorFilter={authorFilter}
+        searchFilter={searchFilter}
+        panels={panels}
+        resourceMentions={resourceMentions}
+        currentUserId={currentUserId}
+        isAdmin={isAdmin}
+        initialThreadUID={initialThreadUID}
+        onInitialThreadOpened={model.clearInitialThreadUID}
+        onPanelFilterChange={model.setPanelFilter}
+        onAuthorFilterChange={model.setAuthorFilter}
+        onSearchFilterChange={model.setSearchFilter}
+        onClearFilters={model.clearFilters}
+        onMentionPanel={(id) => {
+          // Click on a `#panel` chip inside a thread applies the
+          // panel filter. Same affordance as clicking the title-bar
+          // mention icon: stay in the drawer, narrow the list.
+          model.setState({ panelFilter: id });
+        }}
+      />
+    </Drawer>
+  );
 }
 
 /**

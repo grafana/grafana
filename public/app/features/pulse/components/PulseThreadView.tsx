@@ -38,6 +38,10 @@ interface Props {
    *  When provided, replies on this thread offer `#dashboard` (or
    *  `#folder`) mentions instead of the dashboard-only `#panel`. */
   resourceMention?: ResourceMentionSource;
+  /** Plural variant: stack multiple kinds behind the same `#` trigger
+   *  in the reply / edit composer. Used by the dashboard drawer to
+   *  surface `#dashboard` (sibling dashboards) alongside `#panel`. */
+  resourceMentions?: ResourceMentionSource[];
   currentUserId?: number;
   isAdmin?: boolean;
   onMentionPanel?: (panelId: number) => void;
@@ -57,6 +61,7 @@ export function PulseThreadView({
   panels,
   panelTitlesById,
   resourceMention,
+  resourceMentions,
   currentUserId,
   isAdmin = false,
   onMentionPanel,
@@ -251,10 +256,11 @@ export function PulseThreadView({
         <PulseComposer
           panels={panels}
           resourceMention={resourceMention}
+          resourceMentions={resourceMentions}
           pending={addPulseState.isLoading}
           currentUserId={currentUserId}
           onSubmit={handleSubmit}
-          placeholder={replyPlaceholder(resourceMention)}
+          placeholder={replyPlaceholder(resourceMention, resourceMentions)}
         />
       )}
     </div>
@@ -406,11 +412,29 @@ function PulseComposerForEdit({ pulse, panels, currentUserId, onSubmit, onCancel
  * Future surfaces (e.g. an alert resource page) can extend the switch
  * the same way the composer footer hint does.
  */
-function replyPlaceholder(source: ResourceMentionSource | undefined): string {
-  if (source?.kind === 'dashboard') {
+function replyPlaceholder(
+  source: ResourceMentionSource | undefined,
+  plural: ResourceMentionSource[] | undefined
+): string {
+  // When more than one resource kind is in play (e.g. the dashboard
+  // drawer surfacing both `#panel` and `#dashboard`) the placeholder
+  // can't usefully list every kind without overflowing — collapse to
+  // the generic "resource" copy. Single-kind surfaces keep their
+  // specific hint so the affordance stays unambiguous.
+  const kinds = new Set<'dashboard' | 'folder'>();
+  if (source) {
+    kinds.add(source.kind);
+  }
+  for (const s of plural ?? []) {
+    kinds.add(s.kind);
+  }
+  if (kinds.size > 1) {
+    return t('pulse.thread.reply-placeholder-multi', 'Reply… (@ for users, # for resources)');
+  }
+  if (source?.kind === 'dashboard' || (plural?.length === 1 && plural[0].kind === 'dashboard')) {
     return t('pulse.thread.reply-placeholder-dashboard', 'Reply… (@ for users, # for dashboards)');
   }
-  if (source?.kind === 'folder') {
+  if (source?.kind === 'folder' || (plural?.length === 1 && plural[0].kind === 'folder')) {
     return t('pulse.thread.reply-placeholder-folder', 'Reply… (@ for users, # for folders)');
   }
   return t('pulse.thread.reply-placeholder', 'Reply… (@ for users, # for panels)');

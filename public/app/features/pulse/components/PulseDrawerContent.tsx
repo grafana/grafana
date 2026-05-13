@@ -33,7 +33,7 @@ import { useResourcePulseStream } from '../hooks/useResourcePulseStream';
 import { type PulseThread } from '../types';
 import { type PanelSuggestion } from '../utils/lookups';
 
-import { PulseComposer } from './PulseComposer';
+import { PulseComposer, type ResourceMentionSource } from './PulseComposer';
 import { PulseRenderer } from './PulseRenderer';
 import { PulseThreadView } from './PulseThreadView';
 
@@ -44,6 +44,12 @@ interface Props {
   /** Free-form search needle. Empty / whitespace-only is no filter. */
   searchFilter?: string;
   panels?: PanelSuggestion[];
+  /** Extra resource sources for the composer's `#` picker on this
+   *  surface. The dashboard drawer passes sibling dashboards here so
+   *  a thread can reference other dashboards in the same folder
+   *  without leaving the drawer. Folder-scoped or alert-scoped
+   *  surfaces hook in their own kinds the same way. */
+  resourceMentions?: ResourceMentionSource[];
   currentUserId?: number;
   isAdmin?: boolean;
   onMentionPanel?: (panelId: number) => void;
@@ -89,6 +95,7 @@ export function PulseDrawerContent({
   authorFilter,
   searchFilter,
   panels,
+  resourceMentions,
   currentUserId,
   isAdmin = false,
   onMentionPanel,
@@ -326,6 +333,7 @@ export function PulseDrawerContent({
           thread={activeThread}
           panels={panels}
           panelTitlesById={panelTitlesById}
+          resourceMentions={resourceMentions}
           currentUserId={currentUserId}
           isAdmin={isAdmin}
           onMentionPanel={onMentionPanel}
@@ -345,6 +353,7 @@ export function PulseDrawerContent({
           </Text>
           <PulseComposer
             panels={panels}
+            resourceMentions={resourceMentions}
             autoFocus
             pending={createThreadState.isLoading}
             currentUserId={currentUserId}
