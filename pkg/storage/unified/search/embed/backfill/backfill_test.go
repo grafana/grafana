@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/dashboard"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed/dashboardviews"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 )
@@ -343,7 +344,7 @@ func uniqName(i int) string {
 }
 
 // newBackfillerWithStats mirrors newBackfiller but wires a stats provider.
-func newBackfillerWithStats(t *testing.T, storage *fakeStorage, vec *fakeVector, stats DashboardStatsProvider) *VectorBackfiller {
+func newBackfillerWithStats(t *testing.T, storage *fakeStorage, vec *fakeVector, stats dashboardviews.Provider) *VectorBackfiller {
 	t.Helper()
 	emb := newFakeEmbedder(&fakeText{dim: 4})
 	b, err := NewVectorBackfiller(Options{

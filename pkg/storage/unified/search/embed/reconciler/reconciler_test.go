@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/dashboard"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed/dashboardviews"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 )
 
@@ -1022,7 +1023,7 @@ func TestReconciler_Run_BroadcasterSubscribeErrorContinues(t *testing.T) {
 }
 
 // newReconcilerWithStats mirrors newReconciler but wires a stats provider.
-func newReconcilerWithStats(t *testing.T, st *fakeStorage, vec *fakeVector, stats DashboardStatsProvider) (*Reconciler, *fakeText) {
+func newReconcilerWithStats(t *testing.T, st *fakeStorage, vec *fakeVector, stats dashboardviews.Provider) (*Reconciler, *fakeText) {
 	t.Helper()
 	text := &fakeText{dim: 4}
 	s, err := New(Options{
