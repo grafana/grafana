@@ -55,16 +55,7 @@ export function DashboardTabs() {
   const linkTabs = extensionTabs.filter((tab) => tab.href);
 
   return (
-    <Box
-      backgroundColor="primary"
-      borderColor="weak"
-      borderStyle="solid"
-      borderRadius="default"
-      padding={3}
-      direction="column"
-      display="flex"
-      gap={2}
-    >
+    <Box backgroundColor="primary" borderRadius="default" padding={3} direction="column" display="flex" gap={2}>
       <TabsBar>
         {contentTabs.map((tab) => (
           <Tab
