@@ -639,6 +639,92 @@ describe('Connections', () => {
     });
   });
 
-  it.todo('connectionsNeedUpdate');
+  describe('connectionsNeedUpdate', () => {
+    function connectionTo(name: string): CanvasConnection {
+      return {
+        path: ConnectionPath.Straight,
+        source: { x: 0, y: 0 },
+        target: { x: 1, y: 1 },
+        targetName: name,
+      };
+    }
+
+    it('returns true when the element is a connection source', () => {
+      const el = {
+        options: {
+          connections: [connectionTo('other')],
+        },
+      } as unknown as ElementState;
+
+      expect(newConnections().connectionsNeedUpdate(el)).toBe(true);
+    });
+
+    it('returns true when the element is only a connection target', () => {
+      const targetEl = {
+        options: {},
+      } as unknown as ElementState;
+
+      const sourceEl = {
+        options: {
+          connections: [connectionTo('target-id')],
+        },
+      } as unknown as ElementState;
+
+      const byName = new Map<string, ElementState>([
+        ['target-id', targetEl],
+        ['source-id', sourceEl],
+      ]);
+
+      expect(
+        newConnections({
+          byName,
+        }).connectionsNeedUpdate(targetEl)
+      ).toBe(true);
+    });
+
+    it('returns false when the element has no outgoing connections and is not targeted', () => {
+      const orphan = {
+        options: {},
+      } as unknown as ElementState;
+
+      const sourceEl = {
+        options: {
+          connections: [connectionTo('someone-else')],
+        },
+      } as unknown as ElementState;
+
+      const someoneElse = {
+        options: {},
+      } as unknown as ElementState;
+
+      const byName = new Map<string, ElementState>([
+        ['orphan', orphan],
+        ['source-id', sourceEl],
+        ['someone-else', someoneElse],
+      ]);
+
+      expect(
+        newConnections({
+          byName,
+        }).connectionsNeedUpdate(orphan)
+      ).toBe(false);
+    });
+
+    it('returns false when connections is an empty array', () => {
+      const el = {
+        options: {
+          connections: [],
+        },
+      } as unknown as ElementState;
+
+      const byName = new Map<string, ElementState>([['el', el]]);
+      expect(
+        newConnections({
+          byName,
+        }).connectionsNeedUpdate(el)
+      ).toBe(false);
+    });
+  });
+
   it.todo('renderElement');
 });
