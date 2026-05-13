@@ -4302,6 +4302,9 @@
       "title-folder-not-found": "Folder not found",
       "title-ruler-namespace-error": "Cannot load rules"
     },
+    "browse-folder-pulse-page": {
+      "title-folder-not-found": "Folder not found"
+    },
     "browse-view": {
       "this-folder-is-empty": "This folder is empty"
     },
@@ -4422,10 +4425,44 @@
       "team-folders-error-title": "Error loading team folders",
       "unknown-error": "Unknown error"
     },
+    "folder-pulse": {
+      "author-unknown": "Unknown",
+      "back": "Back to threads",
+      "closed": "Closed",
+      "column": {
+        "author": "Author",
+        "last-activity": "Last activity",
+        "replies": "Replies",
+        "thread": "Thread"
+      },
+      "compose-title": "Start a thread in this folder",
+      "compose-title-placeholder": "Title — short summary of this thread (required)",
+      "empty": {
+        "all": "No threads in this folder yet",
+        "all-hint": "Use threads to discuss the dashboards in this folder. Mention dashboards with #name and teammates with @name.",
+        "filtered": "No matching threads",
+        "filtered-hint": "Try clearing the search or the user filter.",
+        "start": "Start the first thread"
+      },
+      "error": {
+        "message": "Something went wrong while fetching threads. Please refresh and try again.",
+        "title": "Failed to load Pulse threads"
+      },
+      "filter-user-all": "All users",
+      "filter-user-fallback": "User #{{id}}",
+      "loading": "Loading threads…",
+      "loading-thread": "Loading thread…",
+      "new-thread": "New thread",
+      "refreshing": "Updating…",
+      "search-placeholder": "Search by thread content",
+      "thread-missing": "Thread not found.",
+      "untitled": "Untitled thread"
+    },
     "manage-folder-nav": {
       "alert-rules": "Alert rules",
       "dashboards": "Dashboards",
-      "panels": "Panels"
+      "panels": "Panels",
+      "pulse": "Pulse"
     },
     "my-team-folders": "My team folders",
     "name-cell": {
@@ -14092,6 +14129,8 @@
     "composer": {
       "cancel": "Cancel",
       "hint-markdown": "Cmd/Ctrl+Enter to send · @user · #panel · **markdown**",
+      "hint-markdown-dashboard": "Cmd/Ctrl+Enter to send · @user · #dashboard · **markdown**",
+      "hint-markdown-folder": "Cmd/Ctrl+Enter to send · @user · #folder · **markdown**",
       "input-aria": "Pulse message",
       "placeholder": "Pulse on this dashboard… (@ for users, # for panels, **markdown** supported)",
       "preview-empty": "Nothing to preview yet.",
@@ -14203,6 +14242,8 @@
       "loading": "Loading…",
       "reopen-thread": "Reopen thread",
       "reply-placeholder": "Reply… (@ for users, # for panels)",
+      "reply-placeholder-dashboard": "Reply… (@ for users, # for dashboards)",
+      "reply-placeholder-folder": "Reply… (@ for users, # for folders)",
       "tombstone": "This pulse was deleted.",
       "untitled": "Conversation"
     }
