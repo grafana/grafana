@@ -7,10 +7,36 @@ import { Button, TabsBar, Tab, TabContent, useStyles2 } from '@grafana/ui';
 
 import { type PulseBody, type PulseMention } from '../types';
 import { bodyFromMarkdown, mentionMarkdownToken } from '../utils/body';
-import { filterPanels, type PanelSuggestion, searchUsers, type UserSuggestion } from '../utils/lookups';
+import {
+  filterPanels,
+  filterResourceSuggestions,
+  type PanelSuggestion,
+  type ResourceSuggestion,
+  searchUsers,
+  type UserSuggestion,
+} from '../utils/lookups';
+
+/**
+ * ResourceMentionSource configures what the `#` picker offers when the
+ * composer is mounted somewhere other than a dashboard. Dashboards keep
+ * passing `panels` (panel ids are dashboard-local integers and don't
+ * fit the UID-keyed shape); folder pages pass `{ kind: 'dashboard',
+ * suggestions: [...] }` to offer their direct child dashboards.
+ *
+ * If both `panels` and `resourceMention` are provided, `resourceMention`
+ * wins. The composer mounts each `#` token as a single mention kind per
+ * composer instance — we don't ask the user to disambiguate between
+ * "#panel" and "#dashboard" mid-type.
+ */
+export interface ResourceMentionSource {
+  kind: 'dashboard' | 'folder';
+  suggestions: ResourceSuggestion[];
+}
 
 interface Props {
   panels?: PanelSuggestion[];
+  /** Opt-in resource-mention source. Overrides `panels` when present. */
+  resourceMention?: ResourceMentionSource;
   placeholder?: string;
   /** Existing markdown source + already-known mentions when editing a pulse. */
   initialMarkdown?: string;
@@ -35,7 +61,7 @@ interface Props {
   autoFocus?: boolean;
 }
 
-type PickerKind = 'user' | 'panel';
+type PickerKind = 'user' | 'resource';
 
 interface ActivePicker {
   kind: PickerKind;
@@ -59,6 +85,7 @@ type ActiveTab = 'write' | 'preview';
  */
 export function PulseComposer({
   panels = [],
+  resourceMention,
   placeholder,
   initialMarkdown,
   initialMentions,
@@ -158,12 +185,29 @@ export function PulseComposer({
     };
   }, [picker, currentUserId]);
 
-  const panelSuggestions = useMemo(() => {
-    if (!picker || picker.kind !== 'panel') {
+  // resourceKind disambiguates what the `#` trigger means in this
+  // composer instance: dashboards offer `#panel`, the folder page
+  // offers `#dashboard`. We pick the resourceMention source first so
+  // call sites can pass an empty list without falling back to panels.
+  const resourceKind: 'panel' | 'dashboard' | 'folder' = resourceMention ? resourceMention.kind : 'panel';
+
+  const resourceSuggestions: Array<{ label: string; sublabel?: string; mention: PulseMention }> = useMemo(() => {
+    if (!picker || picker.kind !== 'resource') {
       return [];
     }
-    return filterPanels(panels, picker.query);
-  }, [picker, panels]);
+    if (resourceMention) {
+      return filterResourceSuggestions(resourceMention.suggestions, picker.query).map((r) => ({
+        label: r.title,
+        sublabel: r.uid,
+        mention: { kind: resourceMention.kind, targetId: r.uid, displayName: r.title },
+      }));
+    }
+    return filterPanels(panels, picker.query).map((p) => ({
+      label: p.title,
+      sublabel: `#${p.id}`,
+      mention: { kind: 'panel', targetId: String(p.id), displayName: p.title },
+    }));
+  }, [picker, panels, resourceMention]);
 
   const suggestions: Array<{ label: string; sublabel?: string; mention: PulseMention }> = useMemo(() => {
     if (!picker) {
@@ -176,12 +220,8 @@ export function PulseComposer({
         mention: { kind: 'user', targetId: String(u.id), displayName: u.name || u.login },
       }));
     }
-    return panelSuggestions.map((p) => ({
-      label: p.title,
-      sublabel: `#${p.id}`,
-      mention: { kind: 'panel', targetId: String(p.id), displayName: p.title },
-    }));
-  }, [picker, userSuggestions, panelSuggestions]);
+    return resourceSuggestions;
+  }, [picker, userSuggestions, resourceSuggestions]);
 
   // Only the user picker has async/networked state — the panel picker
   // is filtered locally from props and goes empty silently. So status
@@ -270,7 +310,7 @@ export function PulseComposer({
             return;
           }
           setPicker({
-            kind: ch === '@' ? 'user' : 'panel',
+            kind: ch === '@' ? 'user' : 'resource',
             triggerStart: i,
             query,
           });
@@ -445,9 +485,7 @@ export function PulseComposer({
       </TabContent>
 
       <div className={styles.actions}>
-        <span className={styles.hint}>
-          {t('pulse.composer.hint-markdown', 'Cmd/Ctrl+Enter to send · @user · #panel · **markdown**')}
-        </span>
+        <span className={styles.hint}>{composerHint(resourceKind)}</span>
         <div className={styles.actionButtons}>
           {onCancel && (
             <Button size="sm" variant="destructive" onClick={onCancel} disabled={pending}>
@@ -462,6 +500,24 @@ export function PulseComposer({
       {submitError && <span className={styles.error}>{submitError}</span>}
     </div>
   );
+}
+
+/**
+ * composerHint renders the footer hint text so the `#` example reflects
+ * the active resource-mention kind. The dashboard drawer keeps showing
+ * `#panel`; the folder page surfaces `#dashboard`. Other future
+ * surfaces (e.g. an org-level composer) can extend the switch.
+ */
+function composerHint(kind: 'panel' | 'dashboard' | 'folder'): string {
+  switch (kind) {
+    case 'dashboard':
+      return t('pulse.composer.hint-markdown-dashboard', 'Cmd/Ctrl+Enter to send · @user · #dashboard · **markdown**');
+    case 'folder':
+      return t('pulse.composer.hint-markdown-folder', 'Cmd/Ctrl+Enter to send · @user · #folder · **markdown**');
+    case 'panel':
+    default:
+      return t('pulse.composer.hint-markdown', 'Cmd/Ctrl+Enter to send · @user · #panel · **markdown**');
+  }
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({

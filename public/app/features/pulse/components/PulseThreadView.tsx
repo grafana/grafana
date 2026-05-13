@@ -21,7 +21,7 @@ import { type Pulse, type PulseBody, type PulseMention, type PulseThread } from 
 import { bodyToMarkdown } from '../utils/body';
 import { type PanelSuggestion } from '../utils/lookups';
 
-import { PulseComposer } from './PulseComposer';
+import { PulseComposer, type ResourceMentionSource } from './PulseComposer';
 import { PulseRenderer } from './PulseRenderer';
 
 interface Props {
@@ -33,6 +33,11 @@ interface Props {
    * back to their stored displayName.
    */
   panelTitlesById?: ReadonlyMap<number, string>;
+  /** Source for the `#` picker in the reply / edit composer when the
+   *  thread lives outside a dashboard (today: the folder Pulse tab).
+   *  When provided, replies on this thread offer `#dashboard` (or
+   *  `#folder`) mentions instead of the dashboard-only `#panel`. */
+  resourceMention?: ResourceMentionSource;
   currentUserId?: number;
   isAdmin?: boolean;
   onMentionPanel?: (panelId: number) => void;
@@ -51,6 +56,7 @@ export function PulseThreadView({
   thread,
   panels,
   panelTitlesById,
+  resourceMention,
   currentUserId,
   isAdmin = false,
   onMentionPanel,
@@ -244,10 +250,11 @@ export function PulseThreadView({
       ) : (
         <PulseComposer
           panels={panels}
+          resourceMention={resourceMention}
           pending={addPulseState.isLoading}
           currentUserId={currentUserId}
           onSubmit={handleSubmit}
-          placeholder={t('pulse.thread.reply-placeholder', 'Reply… (@ for users, # for panels)')}
+          placeholder={replyPlaceholder(resourceMention)}
         />
       )}
     </div>
@@ -389,6 +396,24 @@ function PulseComposerForEdit({ pulse, panels, currentUserId, onSubmit, onCancel
       onSubmit={onSubmit}
     />
   );
+}
+
+/**
+ * replyPlaceholder picks the right placeholder hint for the reply
+ * composer based on which mention kinds the surrounding surface
+ * exposes. The dashboard drawer keeps the original "@ for users, #
+ * for panels" hint; folders surface "@ for users, # for dashboards".
+ * Future surfaces (e.g. an alert resource page) can extend the switch
+ * the same way the composer footer hint does.
+ */
+function replyPlaceholder(source: ResourceMentionSource | undefined): string {
+  if (source?.kind === 'dashboard') {
+    return t('pulse.thread.reply-placeholder-dashboard', 'Reply… (@ for users, # for dashboards)');
+  }
+  if (source?.kind === 'folder') {
+    return t('pulse.thread.reply-placeholder-folder', 'Reply… (@ for users, # for folders)');
+  }
+  return t('pulse.thread.reply-placeholder', 'Reply… (@ for users, # for panels)');
 }
 
 /**

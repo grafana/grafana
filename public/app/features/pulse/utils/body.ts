@@ -64,7 +64,9 @@ export function bodyToText(body: PulseBody): string {
       return;
     }
     if (n.type === 'mention' && n.mention) {
-      const prefix = n.mention.kind === 'panel' ? '#' : '@';
+      // Anything that references a resource (panel / dashboard /
+      // folder) reads as `#name`; only user mentions use `@`.
+      const prefix = n.mention.kind === 'user' ? '@' : '#';
       out.push(prefix + (n.mention.displayName ?? n.mention.targetId));
       return;
     }
@@ -112,7 +114,7 @@ export function isSafeUrl(raw: string): string | undefined {
  * it matches the user's earlier ask for an inline-code mention style.
  */
 export function mentionMarkdownToken(m: PulseMention): string {
-  const prefix = m.kind === 'panel' ? '#' : '@';
+  const prefix = m.kind === 'user' ? '@' : '#';
   const label = m.displayName ?? m.targetId;
   return '`' + prefix + label + '`';
 }

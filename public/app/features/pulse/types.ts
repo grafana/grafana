@@ -2,9 +2,22 @@
 // backend doesn't (yet) ship CUE/OpenAPI generated TS for this domain.
 // Keep this file in sync with pkg/services/pulse/models.go and body.go.
 
-export type ResourceKind = 'dashboard';
+export type ResourceKind = 'dashboard' | 'folder';
 
-export type MentionKind = 'user' | 'panel';
+/**
+ * MentionKind enumerates the entity types a `@` or `#` chip may
+ * reference. Each kind has its own `targetId` namespace:
+ *
+ *   - `user`      → numeric user id, stringified
+ *   - `panel`     → numeric panel id (dashboard-local), stringified
+ *   - `dashboard` → dashboard UID (string)
+ *   - `folder`    → folder UID (string)
+ *
+ * Mirrors `pkg/services/pulse/models.go::MentionKind`. Future kinds
+ * (alert rule, SLO, synthetic, etc.) extend this union without
+ * reshaping the existing chip rendering.
+ */
+export type MentionKind = 'user' | 'panel' | 'dashboard' | 'folder';
 
 export type AuthorKind = 'user' | 'service_account';
 

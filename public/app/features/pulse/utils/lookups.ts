@@ -81,9 +81,10 @@ export interface PanelSuggestion {
 }
 
 /**
- * panelSuggestionsFromState walks the dashboard scene state and produces
- * the searchable panel list. Pulled out as a pure function for testability;
- * the composer wires it to scene state via a callback prop.
+ * filterPanels narrows the panel list by a query string, matched
+ * case-insensitively against the panel title or its numeric id. Pulled
+ * out as a pure function for testability; the composer wires it to
+ * scene state via a callback prop.
  */
 export function filterPanels(panels: PanelSuggestion[], query: string): PanelSuggestion[] {
   const trimmed = query.trim().toLowerCase();
@@ -91,4 +92,31 @@ export function filterPanels(panels: PanelSuggestion[], query: string): PanelSug
     return panels.slice(0, 10);
   }
   return panels.filter((p) => p.title.toLowerCase().includes(trimmed) || String(p.id).includes(trimmed)).slice(0, 10);
+}
+
+/**
+ * ResourceSuggestion is the generic shape used by the composer's `#`
+ * picker when it offers cross-resource mentions (dashboard, folder).
+ * The id is the resource's UID — string-typed because dashboard and
+ * folder UIDs are not numeric like panel ids are.
+ */
+export interface ResourceSuggestion {
+  uid: string;
+  title: string;
+}
+
+/**
+ * filterResourceSuggestions narrows a resource list (dashboards in a
+ * folder, etc.) by a query string. Same case-insensitive prefix-or-
+ * substring match against title or UID that filterPanels uses for
+ * panels, so the picker behaves identically across mention kinds.
+ */
+export function filterResourceSuggestions(items: ResourceSuggestion[], query: string): ResourceSuggestion[] {
+  const trimmed = query.trim().toLowerCase();
+  if (trimmed.length === 0) {
+    return items.slice(0, 10);
+  }
+  return items
+    .filter((r) => r.title.toLowerCase().includes(trimmed) || r.uid.toLowerCase().includes(trimmed))
+    .slice(0, 10);
 }
