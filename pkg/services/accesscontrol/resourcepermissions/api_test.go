@@ -608,7 +608,6 @@ func TestIntegrationApi_setBulkPermissionsForTeams(t *testing.T) {
 	type bulkTestCase struct {
 		desc           string
 		permissions    []accesscontrol.Permission
-		body           string
 		expectedStatus int
 		expectedCount  int
 		teamCmd        *team.CreateTeamCommand

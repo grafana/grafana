@@ -1637,8 +1637,8 @@ func TestSetTeamMember(t *testing.T) {
 
 // TestSetTeamMembers tests the bulk set path that rewrites Team.Spec.Members.
 func TestSetTeamMembers(t *testing.T) {
-	testUser1 := &user.User{ID: 1, UID: "user-uid-1"}
-	testUser2 := &user.User{ID: 2, UID: "user-uid-2"}
+	signedInUser1 := &user.SignedInUser{UserID: 1, UserUID: "user-uid-1", OrgID: 1}
+	signedInUser2 := &user.SignedInUser{UserID: 2, UserUID: "user-uid-2", OrgID: 1}
 	testTeam := &team.TeamDTO{ID: 10, UID: "team-uid-1"}
 
 	makeTeamObj := func(t *testing.T, members ...iamv0.TeamTeamMember) *unstructured.Unstructured {
@@ -1680,8 +1680,8 @@ func TestSetTeamMembers(t *testing.T) {
 			},
 			userSvc: func() *usertest.MockService {
 				svc := &usertest.MockService{}
-				svc.On("GetByID", mock.Anything, &user.GetUserByIDQuery{ID: int64(1)}).Return(testUser1, nil)
-				svc.On("GetByID", mock.Anything, &user.GetUserByIDQuery{ID: int64(2)}).Return(testUser2, nil)
+				svc.On("GetSignedInUser", mock.Anything, &user.GetSignedInUserQuery{OrgID: 1, UserID: 1}).Return(signedInUser1, nil)
+				svc.On("GetSignedInUser", mock.Anything, &user.GetSignedInUserQuery{OrgID: 1, UserID: 2}).Return(signedInUser2, nil)
 				return svc
 			},
 			fakeResource: func(t *testing.T) *fakeResourceInterface {
@@ -1712,7 +1712,7 @@ func TestSetTeamMembers(t *testing.T) {
 			},
 			userSvc: func() *usertest.MockService {
 				svc := &usertest.MockService{}
-				svc.On("GetByID", mock.Anything, &user.GetUserByIDQuery{ID: int64(1)}).Return(testUser1, nil)
+				svc.On("GetSignedInUser", mock.Anything, &user.GetSignedInUserQuery{OrgID: 1, UserID: 1}).Return(signedInUser1, nil)
 				return svc
 			},
 			fakeResource: func(t *testing.T) *fakeResourceInterface {
@@ -1739,7 +1739,7 @@ func TestSetTeamMembers(t *testing.T) {
 			},
 			userSvc: func() *usertest.MockService {
 				svc := &usertest.MockService{}
-				svc.On("GetByID", mock.Anything, &user.GetUserByIDQuery{ID: int64(1)}).Return(testUser1, nil)
+				svc.On("GetSignedInUser", mock.Anything, &user.GetSignedInUserQuery{OrgID: 1, UserID: 1}).Return(signedInUser1, nil)
 				return svc
 			},
 			fakeResource: func(t *testing.T) *fakeResourceInterface {
@@ -1791,7 +1791,7 @@ func TestSetTeamMembers(t *testing.T) {
 			},
 			userSvc: func() *usertest.MockService {
 				svc := &usertest.MockService{}
-				svc.On("GetByID", mock.Anything, &user.GetUserByIDQuery{ID: int64(1)}).Return(testUser1, nil)
+				svc.On("GetSignedInUser", mock.Anything, &user.GetSignedInUserQuery{OrgID: 1, UserID: 1}).Return(signedInUser1, nil)
 				return svc
 			},
 			fakeResource: func(t *testing.T) *fakeResourceInterface {
@@ -1814,7 +1814,7 @@ func TestSetTeamMembers(t *testing.T) {
 			},
 			userSvc: func() *usertest.MockService {
 				svc := &usertest.MockService{}
-				svc.On("GetByID", mock.Anything, &user.GetUserByIDQuery{ID: int64(1)}).Return(testUser1, nil)
+				svc.On("GetSignedInUser", mock.Anything, &user.GetSignedInUserQuery{OrgID: 1, UserID: 1}).Return(signedInUser1, nil)
 				return svc
 			},
 			fakeResource: func(t *testing.T) *fakeResourceInterface {
@@ -1858,7 +1858,7 @@ func TestSetTeamMembers(t *testing.T) {
 			},
 			userSvc: func() *usertest.MockService {
 				svc := &usertest.MockService{}
-				svc.On("GetByID", mock.Anything, &user.GetUserByIDQuery{ID: int64(1)}).Return(testUser1, nil)
+				svc.On("GetSignedInUser", mock.Anything, &user.GetSignedInUserQuery{OrgID: 1, UserID: 1}).Return(signedInUser1, nil)
 				return svc
 			},
 			fakeResource: func(t *testing.T) *fakeResourceInterface {
@@ -1879,7 +1879,7 @@ func TestSetTeamMembers(t *testing.T) {
 			},
 			userSvc: func() *usertest.MockService {
 				svc := &usertest.MockService{}
-				svc.On("GetByID", mock.Anything, &user.GetUserByIDQuery{ID: int64(1)}).Return(testUser1, nil)
+				svc.On("GetSignedInUser", mock.Anything, &user.GetSignedInUserQuery{OrgID: 1, UserID: 1}).Return(signedInUser1, nil)
 				return svc
 			},
 			fakeResource: func(t *testing.T) *fakeResourceInterface {
@@ -1910,7 +1910,7 @@ func TestSetTeamMembers(t *testing.T) {
 			},
 			userSvc: func() *usertest.MockService {
 				svc := &usertest.MockService{}
-				svc.On("GetByID", mock.Anything, &user.GetUserByIDQuery{ID: int64(1)}).Return(testUser1, nil)
+				svc.On("GetSignedInUser", mock.Anything, &user.GetSignedInUserQuery{OrgID: 1, UserID: 1}).Return(signedInUser1, nil)
 				return svc
 			},
 			fakeResource: func(_ *testing.T) *fakeResourceInterface {
@@ -1926,8 +1926,8 @@ func TestSetTeamMembers(t *testing.T) {
 			},
 			userSvc: func() *usertest.MockService {
 				svc := &usertest.MockService{}
-				svc.On("GetByID", mock.Anything, &user.GetUserByIDQuery{ID: int64(1)}).Return(testUser1, nil)
-				svc.On("GetByID", mock.Anything, &user.GetUserByIDQuery{ID: int64(999)}).Return(nil, fmt.Errorf("user not found"))
+				svc.On("GetSignedInUser", mock.Anything, &user.GetSignedInUserQuery{OrgID: 1, UserID: 1}).Return(signedInUser1, nil)
+				svc.On("GetSignedInUser", mock.Anything, &user.GetSignedInUserQuery{OrgID: 1, UserID: 999}).Return(nil, fmt.Errorf("user not found"))
 				return svc
 			},
 			fakeResource: func(_ *testing.T) *fakeResourceInterface {
@@ -1940,13 +1940,33 @@ func TestSetTeamMembers(t *testing.T) {
 			},
 		},
 		{
+			name: "rejects cross-org user (GetSignedInUser returns ErrUserNotFound)",
+			permissions: []accesscontrol.SetResourcePermissionCommand{
+				{UserID: 42, Permission: "Admin"},
+			},
+			userSvc: func() *usertest.MockService {
+				svc := &usertest.MockService{}
+				// User exists globally but not in org 1; GetSignedInUser returns ErrUserNotFound.
+				svc.On("GetSignedInUser", mock.Anything, &user.GetSignedInUserQuery{OrgID: 1, UserID: 42}).Return(nil, user.ErrUserNotFound)
+				return svc
+			},
+			fakeResource: func(_ *testing.T) *fakeResourceInterface {
+				return &fakeResourceInterface{}
+			},
+			expectedErrMsg: "failed to get user details",
+			validateCalls: func(t *testing.T, getCalls, updateCalls int) {
+				assert.Equal(t, 0, getCalls, "team Get must not run when target user is not in the org")
+				assert.Equal(t, 0, updateCalls, "Spec.Members must not be written for cross-org user IDs")
+			},
+		},
+		{
 			name: "no Update when desired set matches existing with interleaved external members",
 			permissions: []accesscontrol.SetResourcePermissionCommand{
 				{UserID: 1, Permission: "Admin"},
 			},
 			userSvc: func() *usertest.MockService {
 				svc := &usertest.MockService{}
-				svc.On("GetByID", mock.Anything, &user.GetUserByIDQuery{ID: int64(1)}).Return(testUser1, nil)
+				svc.On("GetSignedInUser", mock.Anything, &user.GetSignedInUserQuery{OrgID: 1, UserID: 1}).Return(signedInUser1, nil)
 				return svc
 			},
 			fakeResource: func(t *testing.T) *fakeResourceInterface {

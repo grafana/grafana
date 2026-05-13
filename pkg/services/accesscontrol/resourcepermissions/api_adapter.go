@@ -851,7 +851,12 @@ func (a *api) setTeamMembers(c *contextmodel.ReqContext, dynamicClient dynamic.I
 		}
 		seenUserID[perm.UserID] = struct{}{}
 
-		userDetails, err := a.service.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: perm.UserID})
+		// Org-scoped lookup so a caller cannot inject a user from another org
+		// into Spec.Members.
+		signedInUser, err := a.service.userService.GetSignedInUser(ctx, &user.GetSignedInUserQuery{
+			OrgID:  c.GetOrgID(),
+			UserID: perm.UserID,
+		})
 		if err != nil {
 			return fmt.Errorf("failed to get user details: %w", err)
 		}
@@ -859,8 +864,8 @@ func (a *api) setTeamMembers(c *contextmodel.ReqContext, dynamicClient dynamic.I
 		if err != nil {
 			return err
 		}
-		desiredByUID[userDetails.UID] = memberPerm
-		desired = append(desired, desiredMember{uid: userDetails.UID, permission: memberPerm})
+		desiredByUID[signedInUser.UserUID] = memberPerm
+		desired = append(desired, desiredMember{uid: signedInUser.UserUID, permission: memberPerm})
 	}
 
 	teamResource := dynamicClient.Resource(iamv0.TeamResourceInfo.GroupVersionResource()).Namespace(namespace)
