@@ -15,7 +15,7 @@ import { type GetDataSourceListFilters } from '../dataSourceSrv';
  * The shape is in place so callers don't need to migrate twice when real
  * pagination lands on the backend.
  *
- * @public
+ * @internal
  */
 export interface DataSourceInstanceSettingsPage {
   items: DataSourceInstanceSettings[];
@@ -25,7 +25,7 @@ export interface DataSourceInstanceSettingsPage {
 }
 
 /**
- * @public
+ * @internal
  */
 export interface GetDataSourceInstanceSettingsListOptions {
   filters?: GetDataSourceListFilters;

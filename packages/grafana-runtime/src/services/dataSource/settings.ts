@@ -7,7 +7,6 @@ import {
 } from '@grafana/data';
 
 import { ExpressionDatasourceRef, isExpressionReference } from '../../utils/DataSourceWithBackend';
-import { getCachedPromise } from '../../utils/getCachedPromise';
 import { getBackendSrv } from '../backendSrv';
 import { type GetDataSourceListFilters } from '../dataSourceSrv';
 import { getTemplateSrv } from '../templateSrv';
@@ -17,15 +16,11 @@ import { type DataSourceInstanceSettingsPage, type GetDataSourceInstanceSettings
 
 export type { DataSourceInstanceSettingsPage, GetDataSourceInstanceSettingsListOptions };
 
-const CACHE_TTL_MS = 5 * 60 * 1000;
-const FETCH_CACHE_KEY = 'grafana-runtime:ds-instance-settings';
-
 let byName: Record<string, DataSourceInstanceSettings> = {};
 let byUid: Record<string, DataSourceInstanceSettings> = {};
 let byId: Record<string, DataSourceInstanceSettings> = {};
 let runtimeByUid: Record<string, DataSourceInstanceSettings> = {};
 let defaultName = '';
-let fetchedAt = 0;
 
 function populateMaps(settings: Record<string, DataSourceInstanceSettings>) {
   byName = {};
@@ -61,28 +56,6 @@ export function initDataSourceInstanceSettings(
 ): void {
   defaultName = defaultDsName;
   populateMaps(settings);
-  fetchedAt = Date.now();
-}
-
-async function fetchAndPopulate(): Promise<void> {
-  const settings = await getBackendSrv().get('/api/frontend/settings');
-  populateMaps(settings.datasources);
-  defaultName = settings.defaultDatasource;
-  fetchedAt = Date.now();
-}
-
-async function ensureFetched(): Promise<void> {
-  if (fetchedAt > 0 && Date.now() - fetchedAt < CACHE_TTL_MS) {
-    return;
-  }
-
-  // `getCachedPromise` deduplicates concurrent callers. Once resolved the
-  // promise stays cached — we pass `invalidate: true` on re-fetch so a new
-  // request is issued when the TTL has expired.
-  await getCachedPromise(fetchAndPopulate, {
-    cacheKey: FETCH_CACHE_KEY,
-    invalidate: fetchedAt > 0,
-  });
 }
 
 /**
@@ -92,21 +65,16 @@ async function ensureFetched(): Promise<void> {
  * @public
  */
 export async function reloadDataSourceInstanceSettings(): Promise<void> {
-  fetchedAt = 0;
-  // Clear non-runtime plugin instances so they are reconstructed from fresh
-  // settings after reload — matching the behaviour of the legacy DatasourceSrv
-  // which reset `this.datasources` inside `init()`.
   clearPluginCache();
-  await getCachedPromise(fetchAndPopulate, {
-    cacheKey: FETCH_CACHE_KEY,
-    invalidate: true,
-  });
+  const settings = await getBackendSrv().get('/api/frontend/settings');
+  populateMaps(settings.datasources);
+  defaultName = settings.defaultDatasource;
 }
 
 /**
- * Asynchronously look up the instance settings for a data source. Reads from
- * the in-memory cache and falls back to fetching `/api/frontend/settings` on
- * cache miss or when the TTL has expired.
+ * Look up the instance settings for a data source from the in-memory cache
+ * populated at boot. Call {@link reloadDataSourceInstanceSettings} to refresh
+ * the cache from the backend.
  *
  * `scopedVars` are used when `ref` contains a template variable (e.g. `$ds`).
  *
@@ -116,25 +84,19 @@ export async function getDataSourceInstanceSettings(
   ref?: DataSourceRef | string | null,
   scopedVars?: ScopedVars
 ): Promise<DataSourceInstanceSettings | undefined> {
-  const found = lookupFromMaps(ref, scopedVars);
-  if (found) {
-    return found;
-  }
-  await ensureFetched();
   return lookupFromMaps(ref, scopedVars);
 }
 
 /**
- * Asynchronously search and filter data source instance settings.
+ * Search and filter data source instance settings from the in-memory cache.
  * Returns a paginated response; the initial implementation always returns
  * every matching item in a single page.
  *
- * @public
+ * @internal
  */
 export async function getDataSourceInstanceSettingsList(
   options?: GetDataSourceInstanceSettingsListOptions
 ): Promise<DataSourceInstanceSettingsPage> {
-  await ensureFetched();
   const items = applyFilters(options?.filters);
   return { items, hasMore: false, nextCursor: undefined };
 }
@@ -336,5 +298,4 @@ export function _resetForTests(): void {
   byId = {};
   runtimeByUid = {};
   defaultName = '';
-  fetchedAt = 0;
 }
