@@ -21,6 +21,13 @@ export class AlertRuleViewPage {
     return this.page.getByText(/^Every /);
   }
 
+  // Pending-period value rendered by `DetailText` (label "Pending period",
+  // value `<Text aria-labelledby="pending-period">`). getByLabel matches via the
+  // aria-labelledby association.
+  get pendingPeriodValue(): Locator {
+    return this.page.getByLabel('Pending period');
+  }
+
   // Contact-point link in the sidebar "Notification configuration" group.
   // The link also appears in the metadata strip, so scope to avoid strict-mode violations.
   contactPointLink(name: string): Locator {

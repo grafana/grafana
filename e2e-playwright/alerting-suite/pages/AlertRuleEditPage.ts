@@ -75,7 +75,23 @@ export class AlertRuleEditPage {
    */
   async setEvaluationInterval(interval: string): Promise<void> {
     await this.ensureEvaluationMode('rule-based');
-    await this.page.locator('#evaluate-every-no-group').fill(interval);
+    await this.ungroupedIntervalInput.fill(interval);
+  }
+
+  /**
+   * Public wrapper around `ensureEvaluationMode`. Useful for tests that exercise the
+   * `Set interval` ↔ `Use groups` toggle independently of any other helpers.
+   */
+  async switchEvaluationMode(mode: 'rule-based' | 'group-based'): Promise<void> {
+    await this.ensureEvaluationMode(mode);
+  }
+
+  /**
+   * Fill the pending-period input. The label "Pending period" double-matches via
+   * `getByLabel` because of description-bleed in `<Field>`, so we target the input id.
+   */
+  async setPendingPeriod(value: string): Promise<void> {
+    await this.pendingPeriodInput.fill(value);
   }
 
   /**
@@ -128,21 +144,28 @@ export class AlertRuleEditPage {
     await this.page.getByTestId('add-labels-button').click();
 
     const dialog = this.page.getByRole('dialog');
+    // The dialog opens with a pre-existing empty row (index 0); "Add more" creates a second
+    // row at index 1, which is the one we'll fill.
     await dialog.getByRole('button', { name: /add more/i }).click();
 
-    // The dialog may open with a pre-existing empty row, so "Add more" creates a second row.
-    // Use .last() to target the newly added row's inputs.
-    // Use pressSequentially so the Combobox receives keystroke events needed for createCustomValue.
-    const keyInput = dialog.getByPlaceholder(/choose key/i).last();
-    await keyInput.pressSequentially(key);
-    await keyInput.press('Enter');
-
-    const valueInput = dialog.getByPlaceholder(/choose value/i).last();
-    await valueInput.pressSequentially(value);
-    await valueInput.press('Enter');
+    // Each combobox is an `AlertLabelDropdown` (grafana-ui Combobox) with `createCustomValue=true`.
+    // Press-and-Enter races with async option loading and silently drops the keystrokes —
+    // clicking the explicit custom-value option in the dropdown is the deterministic path.
+    await this.fillLabelCombobox(dialog.getByTestId('labelsInSubform-key-1'), key);
+    await this.fillLabelCombobox(dialog.getByTestId('labelsInSubform-value-1'), value);
 
     await dialog.getByRole('button', { name: 'Save', exact: true }).click();
     await expect(dialog).toBeHidden();
+  }
+
+  private async fillLabelCombobox(field: Locator, text: string): Promise<void> {
+    await field.getByRole('combobox').click();
+    await this.page.keyboard.type(text);
+    // The custom-value option's accessible name combines the typed text with the
+    // "Use custom value" description (e.g. `"team Use custom value"`), so we anchor
+    // a regex to the start of the option name with a word boundary.
+    const escaped = text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    await this.page.getByRole('option', { name: new RegExp(`^${escaped}\\b`) }).click();
   }
 
   /**
@@ -199,7 +222,7 @@ export class AlertRuleEditPage {
     await this.save();
   }
 
-  // ---------- Locators (protected; expose only if a test needs custom assertions) ----------
+  // ---------- Locators (public when tests assert on them; otherwise protected) ----------
 
   protected get nameInput(): Locator {
     return this.page.getByRole('textbox', { name: 'name', exact: true });
@@ -213,15 +236,34 @@ export class AlertRuleEditPage {
    * Group `<Select>` rendered as a combobox with `inputId="group"`. We target it via the
    * form `<label htmlFor="group">` because the Field label text varies based on folder state.
    */
-  protected get groupSelect(): Locator {
+  get groupSelect(): Locator {
     return this.page.locator('#group');
+  }
+
+  /** Ungrouped/rule-based evaluation interval input. Only rendered when v2 + rule-based mode. */
+  get ungroupedIntervalInput(): Locator {
+    return this.page.locator('#evaluate-every-no-group');
+  }
+
+  /** Pending-period input inside the `ForInput` subsection. Alerting rules only. */
+  get pendingPeriodInput(): Locator {
+    return this.page.locator('#eval-for-input');
+  }
+
+  /**
+   * Form-side helper text "All rules in the selected group are evaluated every X".
+   * Only rendered when a real group is selected. Distinct from the viewer's metadata-strip
+   * "Every X" text exposed by `AlertRuleViewPage.evaluationIntervalText`.
+   */
+  groupIntervalHelperText(every: string): Locator {
+    return this.page.getByText(new RegExp(`evaluated every ${every}\\.`, 'i'));
   }
 
   protected get saveButton(): Locator {
     return this.page.getByTestId('save-rule');
   }
 
-  protected evaluationModeRadio(mode: 'rule-based' | 'group-based'): Locator {
+  evaluationModeRadio(mode: 'rule-based' | 'group-based'): Locator {
     const name = mode === 'rule-based' ? /set interval/i : /use groups/i;
     return this.page.getByRole('radio', { name });
   }
