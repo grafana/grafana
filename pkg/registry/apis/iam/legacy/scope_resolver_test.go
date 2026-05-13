@@ -3,6 +3,7 @@ package legacy
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	claims "github.com/grafana/authlib/types"
@@ -137,6 +138,7 @@ func TestIsNotFoundError(t *testing.T) {
 		{name: "team not found", err: team.ErrTeamNotFound, want: true},
 		{name: "service account not found", err: serviceaccounts.ErrServiceAccountNotFound, want: true},
 		{name: "wrapped user not found", err: errors.New("ctx: " + user.ErrUserNotFound.Error()), want: false}, // not wrapped via fmt.Errorf %w
+		{name: "wrapped user not found via %w", err: fmt.Errorf("ctx: %w", user.ErrUserNotFound), want: true},
 		{name: "nil", err: nil, want: false},
 		{name: "unrelated error", err: errors.New("boom"), want: false},
 	}
@@ -207,20 +209,9 @@ func TestResolveUIDScopesForWrite(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, got, 3)
 
-		// folders entry passes through unchanged
-		assert.Equal(t, "folders:uid:abc", got[0].Scope)
-
-		// users uid translated to id and Kind/Attribute/Identifier reflect the new scope
-		assert.Equal(t, "users:id:1", got[1].Scope)
-		assert.Equal(t, "users", got[1].Kind)
-		assert.Equal(t, "id", got[1].Attribute)
-		assert.Equal(t, "1", got[1].Identifier)
-
-		// service account uid translated to id
-		assert.Equal(t, "serviceaccounts:id:100", got[2].Scope)
-		assert.Equal(t, "serviceaccounts", got[2].Kind)
-		assert.Equal(t, "id", got[2].Attribute)
-		assert.Equal(t, "100", got[2].Identifier)
+		assert.Equal(t, accesscontrol.Permission{Action: "folders:read", Scope: "folders:uid:abc"}, got[0])
+		assert.Equal(t, accesscontrol.Permission{Action: "users:write", Scope: "users:id:1", Kind: "users", Attribute: "id", Identifier: "1"}, got[1])
+		assert.Equal(t, accesscontrol.Permission{Action: "serviceaccounts:write", Scope: "serviceaccounts:id:100", Kind: "serviceaccounts", Attribute: "id", Identifier: "100"}, got[2])
 	})
 
 	t.Run("input slice is not mutated", func(t *testing.T) {
@@ -258,9 +249,9 @@ func TestResolveUIDScopesForRead(t *testing.T) {
 		got, err := ResolveUIDScopesForRead(context.Background(), store, ns, input, logger)
 		require.NoError(t, err)
 		require.Len(t, got, 3)
-		assert.Equal(t, "users:id:1", got[0].Scope)
-		assert.Equal(t, "serviceaccounts:id:100", got[1].Scope)
-		assert.Equal(t, "folders:uid:abc", got[2].Scope)
+		assert.Equal(t, accesscontrol.Permission{Action: "users:read", Scope: "users:id:1", Kind: "users", Attribute: "id", Identifier: "1"}, got[0])
+		assert.Equal(t, accesscontrol.Permission{Action: "serviceaccounts:read", Scope: "serviceaccounts:id:100", Kind: "serviceaccounts", Attribute: "id", Identifier: "100"}, got[1])
+		assert.Equal(t, accesscontrol.Permission{Action: "folders:read", Scope: "folders:uid:abc"}, got[2])
 	})
 
 	t.Run("non-not-found errors propagate", func(t *testing.T) {
