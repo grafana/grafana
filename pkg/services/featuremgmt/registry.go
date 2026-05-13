@@ -3117,7 +3117,7 @@ var (
 			Name:            "alerting.syncExternalAlertmanager",
 			Description:     "Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana",
 			Stage:           FeatureStageExperimental,
-			Generate:        Generate{Go: true},
+			Generate:        Generate{Go: true, React: true, LegacyFrontend: true},
 			Owner:           grafanaAlertingSquad,
 			HideFromDocs:    true,
 			RequiresRestart: true,

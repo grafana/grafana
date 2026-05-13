@@ -13,6 +13,8 @@ import {
 
 // Flag key constants for programmatic access
 export const FlagKeys = {
+  /** Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana */
+  AlertingSyncExternalAlertmanager: "alerting.syncExternalAlertmanager",
   /** Enables new analytics framework */
   AnalyticsFramework: "analyticsFramework",
   /** Enables the template dashboard assistant */
@@ -82,6 +84,17 @@ export const FlagKeys = {
   /** Enables the 'Customize with Assistant' button on suggested dashboard cards */
   SuggestedDashboardsAssistantButton: "suggestedDashboardsAssistantButton",
 } as const;
+
+/**
+ * Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana
+ *
+ * **Details:**
+ * - flag key: `alerting.syncExternalAlertmanager`
+ * - default value: `false`
+ */
+export const useFlagAlertingSyncExternalAlertmanager = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alerting.syncExternalAlertmanager", false, options).value;
+};
 
 /**
  * Enables new analytics framework
