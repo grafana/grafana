@@ -1,5 +1,5 @@
 import { groupBy } from 'lodash';
-import { parse } from 'lossless-json';
+import { parse, stringify } from 'lossless-json';
 
 import { DataFrameType, type DataSourceApi, hasLogsLabelTypesSupport, type Labels } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
@@ -115,5 +115,5 @@ export function buildLogLineFullJsonObject(log: LogListModel, ds: DataSourceApi)
 
 export async function getLogAsJSON(log: LogListModel): Promise<string> {
   const ds = await getDataSourceSrv().get(log.datasourceUid);
-  return JSON.stringify(buildLogLineFullJsonObject(log, ds), null, 2);
+  return stringify(buildLogLineFullJsonObject(log, ds), null, 2) ?? log.entry;
 }
