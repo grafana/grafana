@@ -492,7 +492,7 @@ $(DOCKER_UBUNTU_FILE): $(TARGZ_FILE)
 	--output type=docker,dest=$@ \
 	.
 
-MSI_FILE := dist/$(TARGZ_PACKAGE_NAME)_$(BUILD_VERSION)_$(BUILD_NUMBER)_windows_amd64.msi
+MSI_FILE := dist/$(TARGZ_PACKAGE_NAME)_$(BUILD_VERSION)_$(BUILD_NUMBER)_$(OS)_$(ARCH_LABEL).msi
 
 .PHONY: build-msi
 build-msi: $(MSI_FILE) ## Build a Windows MSI installer from a tar.gz (requires Docker + Wine)

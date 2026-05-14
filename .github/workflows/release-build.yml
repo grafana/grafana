@@ -693,13 +693,17 @@ jobs:
       - name: Build MSI
         if: ${{ matrix.msi == true }}
         env:
-          TARGZ_PACKAGE_NAME: grafana
-          BUILD_VERSION: ${{ needs.setup.outputs.version }}
+          GOOS: windows
+          GOARCH: amd64
           BUILD_NUMBER: ${{ github.run_id }}
-          ENTERPRISE: 'false'
-          OS: windows
-          ARCH: amd64
-        run: make build-msi BUILD_VERSION="$BUILD_VERSION" BUILD_NUMBER="$BUILD_NUMBER"
+          BUILD_VERSION: ${{ needs.setup.outputs.version }}
+        run: |
+          for TARGZ in dist/*.tar.gz; do break; done
+          make build-msi \
+            -o "$TARGZ" \
+            BUILD_VERSION="$BUILD_VERSION" \
+            BUILD_NUMBER="$BUILD_NUMBER" \
+            TARGZ_PACKAGE_NAME=grafana
       - name: Generate checksums and stage artifacts
         run: |
           set -euo pipefail

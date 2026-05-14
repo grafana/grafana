@@ -87,6 +87,7 @@ cp "${PACKAGING_DIR}/grafana-service.wxs"  "${WORK_DIR}/grafana-service.wxs"
 echo "building MSI: dist/${FILENAME}"
 
 docker run --rm \
+  --platform linux/amd64 \
   --entrypoint="" \
   -v "${TARGZ_FILE}:/tmp/grafana.tar.gz:ro" \
   -v "${PACKAGING_DIR}/resources:/src/resources:ro" \
@@ -154,11 +155,13 @@ docker run --rm \
     done
 
     # Step 3: link into MSI
+    # -b sets the base path so light can resolve SourceDir\* paths harvested from /src/grafana
     WINEPATH="$(winepath /src/wix3)" wine light \
       -cultures:en-US \
       -ext WixUIExtension.dll \
       -ext WixFirewallExtension \
       -ext WixUtilExtension \
+      -b "$(winepath -w /src/grafana)" \
       -v -sval -spdb \
       grafana-service.wixobj grafana-firewall.wixobj grafana.wixobj grafana-product.wixobj \
       -out "$(winepath -w /src/grafana.msi)"
