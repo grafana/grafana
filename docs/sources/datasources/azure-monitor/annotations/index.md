@@ -38,7 +38,7 @@ To add an Azure Monitor annotation to a dashboard:
 1. Click **Dashboard settings** (gear icon) in the top navigation.
 1. Select **Annotations** in the left menu.
 1. Click **Add annotation query**.
-1. Enter a **Name** for the annotation (e.g., "Azure Activity", "Deployments").
+1. Enter a **Name** for the annotation (for example, "Azure Activity", "Deployments").
 1. Select your **Azure Monitor** data source.
 1. Choose the **Logs** service.
 1. Select a **Resource** (Log Analytics workspace or Application Insights resource).
@@ -183,7 +183,7 @@ Follow these recommendations when creating annotations:
 
 4. **Add relevant tags**: Include columns like `ResourceGroup`, `Severity`, or `Status` that become clickable tags for filtering.
 
-5. **Use descriptive names**: Name your annotations clearly (e.g., "Production Deployments", "Critical Alerts") so dashboard users understand what they represent.
+5. **Use descriptive names**: Name your annotations clearly (for example, "Production Deployments", "Critical Alerts") so dashboard users understand what they represent.
 
 ## Troubleshoot annotations
 

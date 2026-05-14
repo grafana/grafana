@@ -420,10 +420,6 @@ user_identity_enabled = true
 user_identity_fallback_credentials_enabled = false
 ```
 
-{{< admonition type="note" >}}
-To use fallback service credentials, the [feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#feature_toggles) `idForwarding` must be set to `true`.
-{{< /admonition >}}
-
 {{< admonition type="caution" >}}
 If you've customized the `forward_settings_to_plugins` setting under `[azure]`, verify that `grafana-azure-monitor-datasource` is included. Refer to [Managed Identity Grafana server configuration](#managed-identity-grafana-server-configuration) for details.
 {{< /admonition >}}
@@ -496,7 +492,7 @@ To change the timeout:
 1. Click **Save & test**.
 
 {{< admonition type="caution" >}}
-This timeout also affects alerting evaluations. If your alert rules use Log Analytics queries that exceed 30 seconds, you must increase this setting or alert evaluations will fail with timeout errors. For alerting, also ensure your alert evaluation interval is long enough to accommodate the query duration.
+This timeout also affects alerting evaluations. If your alert rules use Log Analytics queries that exceed 30 seconds, you must increase this setting or alert evaluations fail with timeout errors. For alerting, also ensure your alert evaluation interval is long enough to accommodate the query duration.
 {{< /admonition >}}
 
 To set the timeout in a provisioning file, add `timeout` to the `jsonData` section:
@@ -579,7 +575,7 @@ For more information about provisioning, refer to [Provisioning Grafana](https:/
 | App Registration (client secret) | `clientsecret`        | `tenantId`, `clientId`, `clientSecret`                           |
 | App Registration (certificate)   | `clientcertificate`   | `tenantId`, `clientId`, `certificateFormat`, `clientCertificate` |
 | Managed Identity                 | `msi`                 | None (uses VM identity)                                          |
-| Workload Identity                | `workloadidentity`    | None (uses pod identity)                                         |
+| Workload Identity                | `workloadidentity`    | None (uses Pod identity)                                         |
 | Current User                     | `currentuser`         | `oauthPassThru: true`, `disableGrafanaCache: true`               |
 
 All methods support the optional `subscriptionId` field to set a default subscription.
@@ -740,7 +736,7 @@ resource "grafana_data_source" "azure_monitor" {
 
 **With Basic Logs enabled:**
 
-Add `enableBasicLogs = true` to any of the above configurations:
+Add `basicLogsEnabled = true` to any of the above configurations:
 
 ```hcl
 resource "grafana_data_source" "azure_monitor" {
@@ -753,7 +749,7 @@ resource "grafana_data_source" "azure_monitor" {
     tenantId        = "<TENANT_ID>"
     clientId        = "<CLIENT_ID>"
     subscriptionId  = "<SUBSCRIPTION_ID>"
-    enableBasicLogs = true
+    basicLogsEnabled = true
   })
 
   secure_json_data_encoded = jsonencode({
@@ -762,4 +758,4 @@ resource "grafana_data_source" "azure_monitor" {
 }
 ```
 
-For more information about the Grafana Terraform provider, refer to the [provider documentation](https://registry.terraform.io/providers/grafana/grafana/latest/docs) and the [grafana_data_source resource](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/data_source).
+For more information about the Grafana Terraform provider, refer to the [provider documentation](https://registry.terraform.io/providers/grafana/grafana/latest/docs) and the [`grafana_data_source` resource](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/data_source).
