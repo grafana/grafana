@@ -1,5 +1,3 @@
-import { SortColumn } from 'react-data-grid';
-
 import {
   createDataFrame,
   createTheme,
@@ -13,6 +11,7 @@ import {
   LinkModel,
   ValueLinkConfig,
 } from '@grafana/data';
+import { SortColumn } from '@grafana/react-data-grid';
 import { BarGaugeDisplayMode, TableCellBackgroundDisplayMode, TableCellHeight } from '@grafana/schema';
 
 import { TableCellDisplayMode } from '../types';
