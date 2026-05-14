@@ -13,6 +13,13 @@ import (
 	schemas "github.com/grafana/schemads"
 )
 
+// Fixed context strings for scalarToString errors: identify the conversion step without echoing
+// user query text, tag names, or other payload content (PII-safe for logs and API errors).
+const (
+	scalarConvCtxLikePattern       = "converting LIKE pattern"
+	scalarConvCtxMultiValueOperand = "converting multi-value match operand"
+)
+
 // normalizeGrafanaSQLRequest translates dsabstraction Grafana SQL payloads into Tempo queries.
 //
 // Normalized span-table queries use queryType "traceql" (not "traceqlSearch"): runTraceQlQuery routes
@@ -39,13 +46,19 @@ func (s *Service) normalizeGrafanaSQLRequest(ctx context.Context, req *backend.Q
 			out = append(out, q)
 			continue
 		}
-		if !sq.GrafanaSql || strings.TrimSpace(sq.Table) == "" {
+		if !sq.GrafanaSql {
 			out = append(out, q)
 			continue
 		}
 
-		if strings.TrimSpace(sq.Table) != tempoSchemadsTableSpans {
-			sqlErrors[q.RefID] = fmt.Errorf("tempo grafana sql: unsupported table %q (only %q is supported)", sq.Table, tempoSchemadsTableSpans)
+		table := strings.TrimSpace(sq.Table)
+		if table == "" {
+			sqlErrors[q.RefID] = fmt.Errorf("tempo grafana sql: table is required when grafanaSql is true")
+			continue
+		}
+
+		if table != tempoSchemadsTableSpans {
+			sqlErrors[q.RefID] = fmt.Errorf("tempo grafana sql: unsupported table %q (only %q is supported)", table, tempoSchemadsTableSpans)
 			continue
 		}
 
@@ -194,7 +207,7 @@ func filterConditionToTraceQL(selector string, fc schemas.FilterCondition) ([]st
 	}
 
 	if op == schemas.OperatorLike {
-		s, err := scalarToString(fc.Value)
+		s, err := scalarToString(fc.Value, scalarConvCtxLikePattern)
 		if err != nil {
 			return nil, err
 		}
@@ -218,7 +231,11 @@ func multiValueNonLikeToTraceQL(selector string, op schemas.Operator, values []a
 		return nil, fmt.Errorf("tempo grafana sql: empty values")
 	}
 	if op == schemas.OperatorEquals {
-		return []string{selector + "=" + joinPipeQuotedValues(values)}, nil
+		pipe, err := joinPipeQuotedValues(values)
+		if err != nil {
+			return nil, err
+		}
+		return []string{selector + "=" + pipe}, nil
 	}
 	if op == schemas.OperatorNotEquals {
 		out := make([]string, 0, len(values))
@@ -230,13 +247,16 @@ func multiValueNonLikeToTraceQL(selector string, op schemas.Operator, values []a
 	return nil, fmt.Errorf("tempo grafana sql: multiple values not supported for operator %s", op)
 }
 
-func joinPipeQuotedValues(values []any) string {
+func joinPipeQuotedValues(values []any) (string, error) {
 	ss := make([]string, 0, len(values))
 	for _, v := range values {
-		s, _ := scalarToString(v)
+		s, err := scalarToString(v, scalarConvCtxMultiValueOperand)
+		if err != nil {
+			return "", err
+		}
 		ss = append(ss, s)
 	}
-	return `"` + strings.Join(ss, "|") + `"`
+	return `"` + strings.Join(ss, "|") + `"`, nil
 }
 
 func formatTraceQLOperand(v any, inferString bool) string {
@@ -278,7 +298,10 @@ func looksNumeric(s string) bool {
 	return false
 }
 
-func scalarToString(v any) (string, error) {
+func scalarToString(v any, convCtx string) (string, error) {
+	if v == nil {
+		return "", fmt.Errorf("tempo grafana sql: %s: value is null (expected string, number, or boolean)", convCtx)
+	}
 	switch t := v.(type) {
 	case string:
 		return t, nil
@@ -289,12 +312,13 @@ func scalarToString(v any) (string, error) {
 	case bool:
 		return strconv.FormatBool(t), nil
 	default:
-		return strings.TrimSpace(fmt.Sprint(t)), nil
+		return "", fmt.Errorf("tempo grafana sql: %s: unsupported value type %T (expected string, number, or boolean)", convCtx, v)
 	}
 }
 
 func likePatternToRegex(like string) string {
 	// Minimal SQL LIKE → regexp: % -> .*, _ -> ., escape regex metacharacters in literals.
+	// Anchor with ^...$ so the match follows SQL LIKE full-string semantics (not substring).
 	var b strings.Builder
 	runes := []rune(like)
 	for i := 0; i < len(runes); i++ {
@@ -312,5 +336,5 @@ func likePatternToRegex(like string) string {
 			b.WriteString(regexp.QuoteMeta(string(runes[i])))
 		}
 	}
-	return b.String()
+	return "^" + b.String() + "$"
 }

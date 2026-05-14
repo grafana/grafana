@@ -113,6 +113,39 @@ func TestNormalizeGrafanaSQLRequest_UnsupportedTable(t *testing.T) {
 	require.Empty(t, out.Queries)
 }
 
+func TestNormalizeGrafanaSQLRequest_GrafanaSqlMissingTable(t *testing.T) {
+	s := &Service{}
+	sq := schemas.Query{GrafanaSql: true, Table: "   "}
+	raw, err := json.Marshal(sq)
+	require.NoError(t, err)
+	req := &backend.QueryDataRequest{
+		PluginContext: backend.PluginContext{
+			GrafanaConfig: config.NewGrafanaCfg(map[string]string{
+				featuretoggles.EnabledFeatures: "dsAbstractionApp",
+			}),
+		},
+		Queries: []backend.DataQuery{{RefID: "A", JSON: raw}},
+	}
+	out, errs := s.normalizeGrafanaSQLRequest(context.Background(), req)
+	require.Contains(t, errs["A"].Error(), "table is required")
+	require.Empty(t, out.Queries)
+}
+
+func TestNormalizeGrafanaSQLRequest_GrafanaSqlOmittedTable(t *testing.T) {
+	s := &Service{}
+	req := &backend.QueryDataRequest{
+		PluginContext: backend.PluginContext{
+			GrafanaConfig: config.NewGrafanaCfg(map[string]string{
+				featuretoggles.EnabledFeatures: "dsAbstractionApp",
+			}),
+		},
+		Queries: []backend.DataQuery{{RefID: "B", JSON: []byte(`{"grafanaSql":true}`)}},
+	}
+	out, errs := s.normalizeGrafanaSQLRequest(context.Background(), req)
+	require.Contains(t, errs["B"].Error(), "table is required")
+	require.Empty(t, out.Queries)
+}
+
 func TestTraceQLFromSchemadsFilters_Empty(t *testing.T) {
 	q, err := traceQLFromSchemadsFilters(nil)
 	require.NoError(t, err)
@@ -149,4 +182,54 @@ func TestTraceQLFromSchemadsFilters_SpanScopeAndIntrinsic(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Equal(t, `{span.db="postgres" && status=200}`, q)
+}
+
+func TestTraceQLFromSchemadsFilters_LikeAnchorsFullString(t *testing.T) {
+	q, err := traceQLFromSchemadsFilters([]schemas.ColumnFilter{{
+		Name: "name",
+		Conditions: []schemas.FilterCondition{{
+			Operator: schemas.OperatorLike,
+			Value:    "foo",
+		}},
+	}})
+	require.NoError(t, err)
+	require.Equal(t, `{name=~"^foo$"}`, q)
+}
+
+func TestTraceQLFromSchemadsFilters_LikeWildcard(t *testing.T) {
+	q, err := traceQLFromSchemadsFilters([]schemas.ColumnFilter{{
+		Name: "name",
+		Conditions: []schemas.FilterCondition{{
+			Operator: schemas.OperatorLike,
+			Value:    "%foo%",
+		}},
+	}})
+	require.NoError(t, err)
+	require.Equal(t, `{name=~"^.*foo.*$"}`, q)
+}
+
+func TestTraceQLFromSchemadsFilters_JoinPipeUnsupportedValueType(t *testing.T) {
+	_, err := traceQLFromSchemadsFilters([]schemas.ColumnFilter{{
+		Name: "name",
+		Conditions: []schemas.FilterCondition{{
+			Operator: schemas.OperatorEquals,
+			Values:   []any{"a", map[string]any{"x": 1}},
+		}},
+	}})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "converting multi-value match operand")
+	require.Contains(t, err.Error(), "unsupported value type")
+}
+
+func TestTraceQLFromSchemadsFilters_MultiValueNullOperand(t *testing.T) {
+	_, err := traceQLFromSchemadsFilters([]schemas.ColumnFilter{{
+		Name: "name",
+		Conditions: []schemas.FilterCondition{{
+			Operator: schemas.OperatorEquals,
+			Values:   []any{"a", nil},
+		}},
+	}})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "converting multi-value match operand")
+	require.Contains(t, err.Error(), "value is null")
 }
