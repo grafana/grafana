@@ -751,9 +751,6 @@ func (c *PostableUserConfig) UnmarshalJSON(b []byte) error {
 
 func (c *PostableUserConfig) validate() error {
 	// Taken from https://github.com/prometheus/alertmanager/blob/master/config/config.go#L170-L191
-	// Check if we have a root route. We cannot check for it in the
-	// UnmarshalYAML method because it won't be called if the input is empty
-	// (e.g. the config file is empty or only contains whitespace).
 	if c.AlertmanagerConfig.Route == nil {
 		return fmt.Errorf("no route provided in config")
 	}
@@ -777,54 +774,12 @@ func (c *PostableUserConfig) GetGrafanaReceiverMap() map[string]*PostableGrafana
 	return UIDs
 }
 
-func (c *PostableUserConfig) UnmarshalYAML(value *yaml.Node) error {
-	// cortex/loki actually pass the AM config as a string.
-	type cortexPostableUserConfig struct {
-		TemplateFiles      map[string]string `yaml:"template_files" json:"template_files"`
-		AlertmanagerConfig string            `yaml:"alertmanager_config" json:"alertmanager_config"`
-	}
-
-	var tmp cortexPostableUserConfig
-
-	if err := value.Decode(&tmp); err != nil {
-		return err
-	}
-
-	if err := yaml.Unmarshal([]byte(tmp.AlertmanagerConfig), &c.AlertmanagerConfig); err != nil {
-		return err
-	}
-
-	c.TemplateFiles = tmp.TemplateFiles
-	return nil
-}
-
 // swagger:model
 type GettableUserConfig struct {
 	TemplateFiles           map[string]string         `yaml:"template_files" json:"template_files"`
 	TemplateFileProvenances map[string]Provenance     `yaml:"template_file_provenances,omitempty" json:"template_file_provenances,omitempty"`
 	AlertmanagerConfig      GettableApiAlertingConfig `yaml:"alertmanager_config" json:"alertmanager_config"`
 	ExtraConfigs            []ExtraConfiguration      `yaml:"extra_config,omitempty" json:"extra_config,omitempty"`
-}
-
-func (c *GettableUserConfig) UnmarshalYAML(value *yaml.Node) error {
-	// cortex/loki actually pass the AM config as a string.
-	type cortexGettableUserConfig struct {
-		TemplateFiles      map[string]string `yaml:"template_files" json:"template_files"`
-		AlertmanagerConfig string            `yaml:"alertmanager_config" json:"alertmanager_config"`
-	}
-
-	var tmp cortexGettableUserConfig
-
-	if err := value.Decode(&tmp); err != nil {
-		return err
-	}
-
-	if err := yaml.Unmarshal([]byte(tmp.AlertmanagerConfig), &c.AlertmanagerConfig); err != nil {
-		return err
-	}
-
-	c.TemplateFiles = tmp.TemplateFiles
-	return nil
 }
 
 // GetGrafanaReceiverMap returns a map that associates UUIDs to grafana receivers
