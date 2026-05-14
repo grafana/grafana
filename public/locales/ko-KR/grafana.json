@@ -512,7 +512,8 @@
         "edit-yaml": "YAML 편집",
         "save": "저장"
       },
-      "error-title": ""
+      "error-title": "",
+      "no-group-success": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "이름",
@@ -1166,6 +1167,7 @@
     },
     "evaluate-every-validation-options": {
       "message": {
+        "none-not-allowed": "",
         "required": "필수 사항입니다."
       }
     },
@@ -2859,6 +2861,11 @@
         },
         "group-name": "평가 그룹 이름",
         "group-text": "선택한 그룹의 모든 규칙은 {{evaluateEvery}}마다 평가됩니다.",
+        "interval-label": "",
+        "mode": {
+          "legacy": "",
+          "new": ""
+        },
         "new-group": "새 평가 그룹",
         "pause": {
           "alerting": "이 경고 규칙에 대한 평가를 일시 중지하려면 켜세요.",
@@ -10798,6 +10805,16 @@
   },
   "home": {
     "home-page": {
+      "edition": {
+        "cloud": "",
+        "enterprise": "",
+        "open-source": ""
+      },
+      "greeting": {
+        "afternoon": "",
+        "evening": "",
+        "morning": ""
+      },
       "placeholder": ""
     }
   },
@@ -14745,9 +14762,6 @@
       "home-dashboard-placeholder": "기본 대시보드",
       "language-preference-label": "언어",
       "language-preference-placeholder": "언어 선택",
-      "locale-preference-description": "해당 날짜, 시간 및 숫자 형식을 보려면 지역을 선택하세요",
-      "locale-preference-label": "지역 형식",
-      "locale-preference-placeholder": "지역 선택",
       "theme-description": "실험적 테마가 맘에 드시나요? <2>여기</2>에서 원하시는 테마를 알려 주세요.</2>",
       "theme-label": "인터페이스 테마",
       "week-start-label": "주 시작 요일"
@@ -15046,6 +15060,8 @@
     },
     "support-bundles-unconnected": {
       "created-on": "생성일",
+      "deprecation-warning-message": "",
+      "deprecation-warning-title": "",
       "download": "다운로드",
       "expires": "만료",
       "requested-by": "요청자",

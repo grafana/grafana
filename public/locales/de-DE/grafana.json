@@ -515,7 +515,8 @@
         "edit-yaml": "YAML bearbeiten",
         "save": "Speichern"
       },
-      "error-title": ""
+      "error-title": "",
+      "no-group-success": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "Name",
@@ -1171,6 +1172,7 @@
     },
     "evaluate-every-validation-options": {
       "message": {
+        "none-not-allowed": "",
         "required": "Erforderlich."
       }
     },
@@ -2875,6 +2877,11 @@
         },
         "group-name": "Name der Evaluierungsgruppe",
         "group-text": "Alle Regeln in der ausgewählten Gruppe werden alle {{evaluateEvery}} evaluiert.",
+        "interval-label": "",
+        "mode": {
+          "legacy": "",
+          "new": ""
+        },
         "new-group": "Neue Evaluierungsgruppe",
         "pause": {
           "alerting": "Aktivieren, um die Evaluierung für diese Warnregel zu pausieren.",
@@ -10856,6 +10863,16 @@
   },
   "home": {
     "home-page": {
+      "edition": {
+        "cloud": "",
+        "enterprise": "",
+        "open-source": ""
+      },
+      "greeting": {
+        "afternoon": "",
+        "evening": "",
+        "morning": ""
+      },
       "placeholder": ""
     }
   },
@@ -14837,9 +14854,6 @@
       "home-dashboard-placeholder": "Standard-Dashboard",
       "language-preference-label": "Sprache",
       "language-preference-placeholder": "Sprache wählen",
-      "locale-preference-description": "Wählen Sie Ihre Region aus, um das entsprechende Datums-, Zeit- und Zahlenformat anzuzeigen",
-      "locale-preference-label": "Regionsformat",
-      "locale-preference-placeholder": "Wählen Sie eine Region",
       "theme-description": "Gefallen dir die experimentellen Designs? Teile uns hier mit, was du gerne sehen möchtest.</2>",
       "theme-label": "UI-Design",
       "week-start-label": "Wochenbeginn"
@@ -15139,6 +15153,8 @@
     },
     "support-bundles-unconnected": {
       "created-on": "Erstellt am",
+      "deprecation-warning-message": "",
+      "deprecation-warning-title": "",
       "download": "Download",
       "expires": "Läuft ab",
       "requested-by": "Angefragt von",

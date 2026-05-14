@@ -252,9 +252,9 @@ export class GrafanaApp {
 
       if (contextSrv.user.orgRole !== '') {
         preloadPlugins(await getAppPluginsToPreload());
+        getPluginExtensionRegistries();
       }
 
-      getPluginExtensionRegistries();
       await getPanelPluginMetas();
 
       setHelpNavItemHook(useHelpNode);

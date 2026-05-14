@@ -14,6 +14,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/lib/pq"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 const (
@@ -402,6 +403,7 @@ func rowToAnnotation(namespace, name string, timeMs int64, timeEnd *int64,
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
+			UID:       types.UID(name),
 		},
 		Spec: annotationV0.AnnotationSpec{
 			Time:         timeMs,
