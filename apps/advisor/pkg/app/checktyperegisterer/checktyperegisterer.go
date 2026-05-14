@@ -213,7 +213,7 @@ func (r *Runner) update(ctx context.Context, log logging.Logger, obj resource.Ob
 
 func isAPIServerShuttingDown(err error, logger logging.Logger) bool {
 	if strings.Contains(err.Error(), "apiserver is shutting down") {
-		logger.Debug("Error creating check type, not retrying", "error", err)
+		logger.Debug("Error operating on check type, not retrying", "error", err)
 		return true
 	}
 	return false
