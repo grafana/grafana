@@ -150,6 +150,18 @@ func TestSetTeamMembershipsViaK8s(t *testing.T) {
 		s.mockResClient.AssertNotCalled(t, "Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 	})
 
+	t.Run("empty cmd on empty team triggers no Update", func(t *testing.T) {
+		// Pins the slices.Equal(nil, []T{}) edge case: the rebuild produces an
+		// empty slice and the input is nil; both must compare equal so the
+		// no-op short-circuit fires.
+		s := setupTest(t)
+		s.mockTeamGet(makeTeam(s.teamUID))
+
+		resp := s.tapi.setTeamMembershipsViaK8s(s.reqContext, s.teamID, team.SetTeamMembershipsCommand{})
+		require.Equal(t, http.StatusOK, resp.Status())
+		s.mockResClient.AssertNotCalled(t, "Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	})
+
 	t.Run("idempotent rebuild equals input even with interleaved external members", func(t *testing.T) {
 		s := setupTest(t)
 		s.mockUserByEmail(adminEmail, adminUID)
@@ -272,6 +284,156 @@ func TestSetTeamMembershipsViaK8s(t *testing.T) {
 		assert.Equal(t, http.StatusInternalServerError, resp.Status())
 		s.mockResClient.AssertNumberOfCalls(t, "Get", 1)
 		s.mockResClient.AssertNumberOfCalls(t, "Update", 1)
+	})
+
+	t.Run("non-NotFound user lookup error returns 500 before any K8s call", func(t *testing.T) {
+		s := setupTest(t)
+		s.mockUserSvc.On("GetByEmail", mock.Anything, &user.GetUserByEmailQuery{Email: adminEmail}).
+			Return(nil, fmt.Errorf("user store unavailable"))
+
+		resp := s.tapi.setTeamMembershipsViaK8s(s.reqContext, s.teamID, team.SetTeamMembershipsCommand{
+			Admins: []string{adminEmail},
+		})
+		assert.Equal(t, http.StatusInternalServerError, resp.Status())
+		s.mockResClient.AssertNotCalled(t, "Get", mock.Anything, mock.Anything)
+		s.mockResClient.AssertNotCalled(t, "Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	})
+
+	t.Run("teamService.GetTeamByID error returns 404", func(t *testing.T) {
+		s := setupTest(t)
+		s.mockTeamSvc.ExpectedError = team.ErrTeamNotFound
+		// Ensure no K8s call is attempted.
+		resp := s.tapi.setTeamMembershipsViaK8s(s.reqContext, s.teamID, team.SetTeamMembershipsCommand{
+			Admins: []string{adminEmail},
+		})
+		assert.Equal(t, http.StatusNotFound, resp.Status())
+		s.mockResClient.AssertNotCalled(t, "Get", mock.Anything, mock.Anything)
+	})
+
+	t.Run("teamClientFactory error returns 503", func(t *testing.T) {
+		s := setupTest(t)
+		// Factory check runs before resolveDesiredMembers, so userService is not
+		// touched on this path.
+		failingFactory := NewMockTeamClientFactory(t)
+		failingFactory.On("GetClient", mock.Anything).Return(nil, fmt.Errorf("rest config not available"))
+		s.tapi.teamClientFactory = failingFactory
+
+		resp := s.tapi.setTeamMembershipsViaK8s(s.reqContext, s.teamID, team.SetTeamMembershipsCommand{
+			Admins: []string{adminEmail},
+		})
+		assert.Equal(t, http.StatusServiceUnavailable, resp.Status())
+		s.mockResClient.AssertNotCalled(t, "Get", mock.Anything, mock.Anything)
+	})
+
+	t.Run("teamClient.Get NotFound returns 404", func(t *testing.T) {
+		s := setupTest(t)
+		s.mockUserByEmail(adminEmail, adminUID)
+		s.mockResClient.On("Get", mock.Anything, resource.Identifier{Namespace: s.namespace, Name: s.teamUID}).
+			Return(nil, k8serrors.NewNotFound(schema.GroupResource{Group: "iam.grafana.app", Resource: "teams"}, s.teamUID))
+
+		resp := s.tapi.setTeamMembershipsViaK8s(s.reqContext, s.teamID, team.SetTeamMembershipsCommand{
+			Admins: []string{adminEmail},
+		})
+		assert.Equal(t, http.StatusNotFound, resp.Status())
+		s.mockResClient.AssertNotCalled(t, "Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	})
+
+	t.Run("teamClient.Get non-conflict error does not retry", func(t *testing.T) {
+		s := setupTest(t)
+		s.mockUserByEmail(adminEmail, adminUID)
+		s.mockResClient.On("Get", mock.Anything, resource.Identifier{Namespace: s.namespace, Name: s.teamUID}).
+			Return(nil, fmt.Errorf("apiserver unavailable")).Once()
+
+		resp := s.tapi.setTeamMembershipsViaK8s(s.reqContext, s.teamID, team.SetTeamMembershipsCommand{
+			Admins: []string{adminEmail},
+		})
+		assert.Equal(t, http.StatusInternalServerError, resp.Status())
+		s.mockResClient.AssertNumberOfCalls(t, "Get", 1)
+		s.mockResClient.AssertNotCalled(t, "Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	})
+
+	t.Run("retry exhaustion returns 500", func(t *testing.T) {
+		s := setupTest(t)
+		s.mockUserByEmail(adminEmail, adminUID)
+		s.mockResClient.On("Get", mock.Anything, resource.Identifier{Namespace: s.namespace, Name: s.teamUID}).
+			Return(func(_ context.Context, _ resource.Identifier) resource.Object {
+				return makeTeam(s.teamUID)
+			}, nil)
+		s.mockResClient.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(nil, k8serrors.NewConflict(schema.GroupResource{Group: "iam.grafana.app", Resource: "teams"}, s.teamUID, fmt.Errorf("rv mismatch")))
+
+		resp := s.tapi.setTeamMembershipsViaK8s(s.reqContext, s.teamID, team.SetTeamMembershipsCommand{
+			Admins: []string{adminEmail},
+		})
+		assert.Equal(t, http.StatusInternalServerError, resp.Status())
+		// retry.DefaultRetry attempts up to 5 times. Assert we tried more than once.
+		updateCalls := len(s.mockResClient.Calls) // includes Get + Update; close enough as a smoke check.
+		assert.Greater(t, updateCalls, 2, "retry should have attempted Update more than once")
+	})
+
+	t.Run("rejects when previously-desired UID becomes External between retries", func(t *testing.T) {
+		s := setupTest(t)
+		s.mockUserByEmail(externalEmail, externalUID)
+
+		getCalls := 0
+		s.mockResClient.On("Get", mock.Anything, resource.Identifier{Namespace: s.namespace, Name: s.teamUID}).
+			Return(func(_ context.Context, _ resource.Identifier) resource.Object {
+				getCalls++
+				if getCalls == 1 {
+					// First read: target user is a normal member, request would succeed.
+					return makeTeam(s.teamUID,
+						iamv0alpha1.TeamTeamMember{Kind: "User", Name: externalUID, Permission: iamv0alpha1.TeamTeamPermissionMember},
+					)
+				}
+				// Retry read: team-sync flipped the same user to External.
+				return makeTeam(s.teamUID,
+					iamv0alpha1.TeamTeamMember{Kind: "User", Name: externalUID, Permission: iamv0alpha1.TeamTeamPermissionMember, External: true},
+				)
+			}, nil)
+		// First Update returns Conflict to force the retry; if the external re-check
+		// fails to fire we'd see a second Update happen.
+		s.mockResClient.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(nil, k8serrors.NewConflict(schema.GroupResource{Group: "iam.grafana.app", Resource: "teams"}, s.teamUID, fmt.Errorf("rv mismatch"))).Once()
+
+		resp := s.tapi.setTeamMembershipsViaK8s(s.reqContext, s.teamID, team.SetTeamMembershipsCommand{
+			Admins: []string{externalEmail},
+		})
+		assert.Equal(t, http.StatusBadRequest, resp.Status())
+		assert.Contains(t, string(resp.Body()), externalEmail, "error must name the email the caller submitted, not the UID")
+		s.mockResClient.AssertNumberOfCalls(t, "Update", 1)
+	})
+
+	t.Run("deterministic ordering when appending new members", func(t *testing.T) {
+		// Run rebuildSpecMembers many times with the same input — output order must be stable.
+		desired := map[string]iamv0alpha1.TeamTeamPermission{
+			"uid-c": iamv0alpha1.TeamTeamPermissionMember,
+			"uid-a": iamv0alpha1.TeamTeamPermissionAdmin,
+			"uid-b": iamv0alpha1.TeamTeamPermissionMember,
+		}
+		first := rebuildSpecMembers(nil, desired)
+		for range 50 {
+			got := rebuildSpecMembers(nil, desired)
+			require.Equal(t, first, got, "rebuildSpecMembers must be deterministic for the same input")
+		}
+		// Sanity: sorted by UID.
+		names := []string{first[0].Name, first[1].Name, first[2].Name}
+		assert.Equal(t, []string{"uid-a", "uid-b", "uid-c"}, names)
+	})
+
+	t.Run("external rejection error names the caller's email, not the UID", func(t *testing.T) {
+		s := setupTest(t)
+		s.mockUserByEmail(externalEmail, externalUID)
+		s.mockTeamGet(makeTeam(s.teamUID,
+			iamv0alpha1.TeamTeamMember{Kind: "User", Name: externalUID, Permission: iamv0alpha1.TeamTeamPermissionMember, External: true},
+		))
+
+		resp := s.tapi.setTeamMembershipsViaK8s(s.reqContext, s.teamID, team.SetTeamMembershipsCommand{
+			Admins: []string{externalEmail},
+		})
+		assert.Equal(t, http.StatusBadRequest, resp.Status())
+		body := string(resp.Body())
+		assert.Contains(t, body, externalEmail, "error body must include the submitted email")
+		assert.NotContains(t, body, externalUID, "error body must not leak the internal UID")
 	})
 }
 

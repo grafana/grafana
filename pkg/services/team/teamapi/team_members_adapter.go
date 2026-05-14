@@ -6,16 +6,19 @@ import (
 	"fmt"
 	"net/http"
 	"slices"
+	"sort"
 
 	"github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/util/retry"
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/team"
@@ -25,6 +28,21 @@ import (
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/team/teamapi")
 
 const subjectKindUser = "User"
+
+const externalTeamMemberMessage = `Cannot modify externally-synced team member {{ .Public.email }}`
+
+// ErrExternalTeamMember is returned when a caller tries to set or remove a
+// team member whose entry in Team.Spec.Members is flagged External (team-sync
+// owned). The public message names the user by email so the caller sees a
+// value they submitted.
+var ErrExternalTeamMember = errutil.BadRequest("teamMembers.externalTeamMember").
+	MustTemplate(externalTeamMemberMessage, errutil.WithPublic(externalTeamMemberMessage))
+
+func errExternalTeamMemberData(email string) errutil.TemplateData {
+	return errutil.TemplateData{
+		Public: map[string]any{"email": email},
+	}
+}
 
 //go:generate mockery --name teamClientFactory --structname MockTeamClientFactory --inpackage --filename team_client_factory_mock.go
 type teamClientFactory interface {
@@ -85,7 +103,7 @@ func (tapi *TeamAPI) setTeamMembershipsViaK8s(
 
 	// Resolve emails → UIDs up-front. Fail before any K8s write if any email
 	// can't be resolved. Admin wins on collision (same as the pre-K8s flow).
-	desired, missing, err := tapi.resolveDesiredMembers(ctx, cmd)
+	desired, uidToEmail, missing, err := tapi.resolveDesiredMembers(ctx, cmd)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to resolve users", err)
 	}
@@ -97,15 +115,13 @@ func (tapi *TeamAPI) setTeamMembershipsViaK8s(
 	// the background, so a 409 from a concurrent writer is expected; refresh
 	// and retry. Re-check external rejection on each attempt because a freshly
 	// added external member could target one of the desired users.
-	var resp response.Response
 	retryErr := retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		teamObj, err := teamClient.Get(ctx, resource.Identifier{
 			Namespace: c.Namespace,
 			Name:      teamDTO.UID,
 		})
 		if err != nil {
-			resp = response.Error(http.StatusInternalServerError, "Failed to get team", err)
-			return nil
+			return err
 		}
 
 		for _, m := range teamObj.Spec.Members {
@@ -113,40 +129,42 @@ func (tapi *TeamAPI) setTeamMembershipsViaK8s(
 				continue
 			}
 			if _, hit := desired[m.Name]; hit {
-				resp = response.Error(http.StatusBadRequest,
-					fmt.Sprintf("Cannot modify externally-synced team member %q", m.Name), nil)
-				return nil
+				return ErrExternalTeamMember.Build(errExternalTeamMemberData(uidToEmail[m.Name]))
 			}
 		}
 
 		newMembers := rebuildSpecMembers(teamObj.Spec.Members, desired)
 		if slices.Equal(teamObj.Spec.Members, newMembers) {
-			resp = response.Success("Team memberships have been updated")
 			return nil
 		}
 		teamObj.Spec.Members = newMembers
 
-		if _, err := teamClient.Update(ctx, teamObj, resource.UpdateOptions{}); err != nil {
-			return err
-		}
-		resp = response.Success("Team memberships have been updated")
-		return nil
+		_, err = teamClient.Update(ctx, teamObj, resource.UpdateOptions{})
+		return err
 	})
 	if retryErr != nil {
+		if errors.Is(retryErr, ErrExternalTeamMember) {
+			return response.Err(retryErr)
+		}
+		if k8serrors.IsNotFound(retryErr) {
+			return response.Error(http.StatusNotFound, "Team not found", retryErr)
+		}
 		return response.Error(http.StatusInternalServerError, "Failed to update team members", retryErr)
 	}
-	return resp
+	return response.Success("Team memberships have been updated")
 }
 
 // resolveDesiredMembers maps the caller's email lists to UIDs and the
 // permission each UID should end up with. Admin wins over Member on collision.
-// Returns the list of emails that couldn't be resolved so the caller can fail
-// the whole request before any write.
+// Returns a parallel UID→email map so error responses can name the user by
+// the email the caller submitted, and the list of emails that couldn't be
+// resolved so the caller can fail the whole request before any write.
 func (tapi *TeamAPI) resolveDesiredMembers(
 	ctx context.Context,
 	cmd team.SetTeamMembershipsCommand,
-) (map[string]iamv0alpha1.TeamTeamPermission, []string, error) {
+) (map[string]iamv0alpha1.TeamTeamPermission, map[string]string, []string, error) {
 	desired := make(map[string]iamv0alpha1.TeamTeamPermission, len(cmd.Admins)+len(cmd.Members))
+	uidToEmail := make(map[string]string, len(cmd.Admins)+len(cmd.Members))
 	var missing []string
 
 	apply := func(email string, perm iamv0alpha1.TeamTeamPermission) error {
@@ -158,6 +176,7 @@ func (tapi *TeamAPI) resolveDesiredMembers(
 			}
 			return err
 		}
+		uidToEmail[usr.UID] = email
 		if existing, ok := desired[usr.UID]; ok && existing == iamv0alpha1.TeamTeamPermissionAdmin {
 			return nil
 		}
@@ -167,15 +186,15 @@ func (tapi *TeamAPI) resolveDesiredMembers(
 
 	for _, email := range cmd.Admins {
 		if err := apply(email, iamv0alpha1.TeamTeamPermissionAdmin); err != nil {
-			return nil, nil, err
+			return nil, nil, nil, err
 		}
 	}
 	for _, email := range cmd.Members {
 		if err := apply(email, iamv0alpha1.TeamTeamPermissionMember); err != nil {
-			return nil, nil, err
+			return nil, nil, nil, err
 		}
 	}
-	return desired, missing, nil
+	return desired, uidToEmail, missing, nil
 }
 
 // rebuildSpecMembers applies the desired set to spec.members, preserving
@@ -204,14 +223,21 @@ func rebuildSpecMembers(
 			applied[m.Name] = true
 		}
 	}
-	for uid, perm := range desired {
+	// Sort the new (not-already-present) UIDs before appending so the resulting
+	// slice is deterministic.
+	newUIDs := make([]string, 0, len(desired))
+	for uid := range desired {
 		if applied[uid] {
 			continue
 		}
+		newUIDs = append(newUIDs, uid)
+	}
+	sort.Strings(newUIDs)
+	for _, uid := range newUIDs {
 		newMembers = append(newMembers, iamv0alpha1.TeamTeamMember{
 			Kind:       subjectKindUser,
 			Name:       uid,
-			Permission: perm,
+			Permission: desired[uid],
 			External:   false,
 		})
 	}
