@@ -35,13 +35,13 @@ const (
 	// Sort alert rule groups by folder full path in the Prometheus rules API
 	FlagAlertingRuleGroupSortByFolderFullpath = "alertingRuleGroupSortByFolderFullpath"
 
-	// FlagLiveAPIServer
+	// FlagLiveRunAPIServer
 	// Registers a live apiserver
-	FlagLiveAPIServer = "liveAPIServer"
+	FlagLiveRunAPIServer = "live.runAPIServer"
 
 	// FlagLiveDropHAPrefixInCloud
 	// do not include the HA prefix
-	FlagLiveDropHAPrefixInCloud = "liveDropHAPrefixInCloud"
+	FlagLiveDropHAPrefixInCloud = "live.dropHAPrefixInCloud"
 
 	// FlagInfluxqlStreamingParser
 	// Enable streaming JSON parser for InfluxDB datasource InfluxQL query language

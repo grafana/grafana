@@ -3926,9 +3926,41 @@
     },
     {
       "metadata": {
+        "name": "live.dropHAPrefixInCloud",
+        "resourceVersion": "1778740214922",
+        "creationTimestamp": "2026-05-14T06:30:14Z"
+      },
+      "spec": {
+        "description": "do not include the HA prefix",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true,
+        "hideFromDocs": true,
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "live.runAPIServer",
+        "resourceVersion": "1778740214922",
+        "creationTimestamp": "2026-05-14T06:30:14Z"
+      },
+      "spec": {
+        "description": "Registers a live apiserver",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresDevMode": true,
+        "requiresRestart": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "liveAPIServer",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2026-02-18T17:05:38Z"
+        "creationTimestamp": "2026-02-18T17:05:38Z",
+        "deletionTimestamp": "2026-05-14T06:30:14Z"
       },
       "spec": {
         "description": "Registers a live apiserver",
@@ -3944,7 +3976,8 @@
       "metadata": {
         "name": "liveDropHAPrefixInCloud",
         "resourceVersion": "1778739143895",
-        "creationTimestamp": "2026-05-14T06:12:23Z"
+        "creationTimestamp": "2026-05-14T06:12:23Z",
+        "deletionTimestamp": "2026-05-14T06:30:14Z"
       },
       "spec": {
         "description": "do not include the HA prefix",
