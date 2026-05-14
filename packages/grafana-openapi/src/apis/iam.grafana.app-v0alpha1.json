@@ -681,28 +681,6 @@
               "format": "int64"
             },
             "example": 0
-          },
-          {
-            "name": "sort",
-            "in": "query",
-            "description": "sortable field",
-            "schema": {
-              "type": "string"
-            },
-            "examples": {
-              "": {
-                "summary": "default sorting",
-                "value": "externalGroup"
-              },
-              "-externalGroup": {
-                "summary": "externalGroup descending",
-                "value": "-externalGroup"
-              },
-              "externalGroup": {
-                "summary": "externalGroup ascending",
-                "value": "externalGroup"
-              }
-            }
           }
         ],
         "requestBody": {

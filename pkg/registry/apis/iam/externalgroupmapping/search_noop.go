@@ -22,7 +22,7 @@ func ProvideNoopSearchREST() *NoopSearchREST {
 }
 
 func (n *NoopSearchREST) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *builder.APIRoutes {
-	searchResults := defs["github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ExternalGroupMappingList"].Schema
+	searchResults := defs["github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.CreateSearchExternalGroupMappingsBody"].Schema
 	return &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
 			{
@@ -101,36 +101,6 @@ func (n *NoopSearchREST) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) 
 										Example:     0,
 										Required:    false,
 										Schema:      spec.Int64Property(),
-									},
-								},
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "sort",
-										In:          "query",
-										Description: "sortable field",
-										Example:     "",
-										Examples: map[string]*spec3.Example{
-											"": {
-												ExampleProps: spec3.ExampleProps{
-													Summary: "default sorting",
-													Value:   "externalGroup",
-												},
-											},
-											"externalGroup": {
-												ExampleProps: spec3.ExampleProps{
-													Summary: "externalGroup ascending",
-													Value:   "externalGroup",
-												},
-											},
-											"-externalGroup": {
-												ExampleProps: spec3.ExampleProps{
-													Summary: "externalGroup descending",
-													Value:   "-externalGroup",
-												},
-											},
-										},
-										Required: false,
-										Schema:   spec.StringProperty(),
 									},
 								},
 							},
