@@ -204,7 +204,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-02-18,alertingMigrationWizardUI,experimental,@grafana/alerting-squad,false,false,true
 2025-04-02,azureMonitorLogsBuilderEditor,preview,@grafana/data-sources-plugins,false,false,false
 2025-03-31,localeFormatPreference,deprecated,@grafana/grafana-frontend-platform,false,false,false
-2025-03-21,unifiedStorageGrpcConnectionPool,experimental,@grafana/search-and-storage,false,false,false
 2025-04-03,alertingRulePermanentlyDelete,GA,@grafana/alerting-squad,false,false,true
 2025-03-27,alertingRuleRecoverDeleted,GA,@grafana/alerting-squad,false,false,false
 2025-04-02,multiTenantTempCredentials,experimental,@grafana/data-sources-plugins,false,false,false
