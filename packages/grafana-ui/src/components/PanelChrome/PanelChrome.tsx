@@ -534,6 +534,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
+      borderRadius: theme.shape.radius.default,
+      border: `1px solid ${theme.colors.border.faint}`,
       //overflow: 'hidden',
 
       '.always-show': {

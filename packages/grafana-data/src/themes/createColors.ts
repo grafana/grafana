@@ -32,6 +32,8 @@ const createThemeColorsBaseSchema = <TColor>(color: TColor) =>
       }),
 
       background: z.object({
+        // For topnav which is darker than canvas
+        ground: z.string().optional(),
         /** Dashboard and body background */
         canvas: z.string().optional(),
         /** Primary content pane background (panels etc) */
@@ -47,6 +49,7 @@ const createThemeColorsBaseSchema = <TColor>(color: TColor) =>
       }),
 
       border: z.object({
+        faint: z.string().optional(),
         weak: z.string().optional(),
         medium: z.string().optional(),
         strong: z.string().optional(),
@@ -125,13 +128,14 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   whiteBase = '204, 204, 220';
 
   border = {
-    weak: `rgba(${this.whiteBase}, 0.12)`,
-    medium: `rgba(${this.whiteBase}, 0.2)`,
+    faint: `#1b1b1f`,
+    weak: `#1a2027`,
+    medium: `rgba(${this.whiteBase}, 0.12)`,
     strong: `rgba(${this.whiteBase}, 0.30)`,
   };
 
   text = {
-    primary: `rgb(${this.whiteBase})`,
+    primary: `#b4bac3`,
     secondary: `rgba(${this.whiteBase}, 0.65)`,
     disabled: `rgba(${this.whiteBase}, 0.61)`,
     link: palette.blueDarkText,
@@ -139,18 +143,18 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   };
 
   primary = {
-    main: palette.blueDarkMain,
+    main: '#d9dee5',
     text: palette.blueDarkText,
     border: palette.blueDarkText,
   };
 
   secondary = {
-    main: palette.gray20,
+    main: '#1c2229',
     shade: palette.gray25,
     transparent: `rgba(${this.whiteBase}, 0.08)`,
     text: this.text.primary,
     contrastText: `rgb(${this.whiteBase})`,
-    border: `rgba(${this.whiteBase}, 0.08)`,
+    border: `#21272e`,
   };
 
   tertiary = {
@@ -176,16 +180,17 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   };
 
   background = {
-    canvas: palette.gray05,
-    primary: palette.gray10,
-    faint: palette.gray15,
+    ground: '#040608',
+    canvas: '#0b0d11',
+    primary: '#10161c',
+    faint: '#0c1215',
     secondary: palette.gray15,
     elevated: palette.gray15,
   };
 
   action = {
     hover: `rgba(${this.whiteBase}, 0.16)`,
-    selected: `rgba(${this.whiteBase}, 0.12)`,
+    selected: '#2c2e30',
     selectedBorder: palette.orangeDarkMain,
     focus: `rgba(${this.whiteBase}, 0.16)`,
     hoverOpacity: 0.08,
@@ -267,6 +272,7 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   };
 
   background = {
+    ground: palette.white,
     canvas: palette.white,
     primary: palette.white,
     faint: palette.gray101,
