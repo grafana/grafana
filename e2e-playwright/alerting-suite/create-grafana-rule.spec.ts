@@ -6,75 +6,25 @@ import { test, expect } from '@grafana/plugin-e2e';
 import { AlertRuleEditPage } from './pages/AlertRuleEditPage';
 import { AlertRuleViewPage } from './pages/AlertRuleViewPage';
 
-// Seed a Grafana-managed evaluation group via the ruler API. Each group must contain
-// at least one rule — we include a minimal placeholder. Cleanup is handled by the
-// parent folder delete in afterAll (`forceDeleteRules=true`).
-// Reference rule shape: public/app/features/alerting/unified/mocks/grafanaRulerApi.ts:33-73.
-async function seedRuleGroup(
-  request: APIRequestContext,
-  folderUid: string,
-  groupName: string,
-  interval: string,
-  dataSourceUid: string,
-  ruleTitle: string
-): Promise<void> {
-  const response = await request.post(`/api/ruler/grafana/api/v1/rules/${folderUid}`, {
-    data: {
-      name: groupName,
-      interval,
-      rules: [
-        {
-          for: '0s',
-          annotations: {},
-          labels: {},
-          grafana_alert: {
-            title: ruleTitle,
-            condition: 'A',
-            no_data_state: 'NoData',
-            exec_err_state: 'Error',
-            data: [
-              {
-                refId: 'A',
-                datasourceUid: dataSourceUid,
-                queryType: '',
-                relativeTimeRange: { from: 600, to: 0 },
-                model: {
-                  refId: 'A',
-                  scenarioId: 'random_walk',
-                  datasource: { type: 'grafana-testdata-datasource', uid: dataSourceUid },
-                },
-              },
-            ],
-          },
-        },
-      ],
-    },
-  });
-  if (!response.ok()) {
-    throw new Error(`Failed to seed rule group: ${response.status()} ${await response.text()}`);
-  }
-}
-
-// Run serially: tests share one folder seeded in beforeAll. Parallel workers lead to
-// colliding folder titles (Date.now() can match) and cleanup races on the same UID.
-test.describe.configure({ mode: 'serial' });
-
 test.use({
   featureToggles: {
     'alerting.rulesAPIV2': true,
   },
 });
 
-const SUFFIX = Date.now();
-const folderTitle = `E2E Alert Folder ${SUFFIX}`;
 // "empty" is the default contact point Grafana provisions on a fresh dev install.
 const contactPoint = 'empty';
 const dataSource = 'gdev-testdata';
 
+// Each test gets its own folder with a per-invocation unique title so parallel workers
+// never collide and orphans from crashed runs don't accumulate. Assigned in beforeEach.
+let folderTitle: string;
 let folderUid: string;
 let dataSourceUid: string;
 
-test.beforeAll(async ({ request }) => {
+test.beforeEach(async ({ request }) => {
+  folderTitle = `Infrastructure alerts ${crypto.randomUUID().slice(0, 8)}`;
+
   const response = await request.post('/api/folders', { data: { title: folderTitle } });
   expect(response.ok()).toBeTruthy();
   folderUid = (await response.json()).uid;
@@ -87,22 +37,24 @@ test.beforeAll(async ({ request }) => {
   dataSourceUid = (await dsResponse.json()).uid;
 });
 
-test.afterAll(async ({ request }) => {
+test.afterEach(async ({ request }) => {
   if (folderUid) {
     await request.delete(`/api/folders/${folderUid}?forceDeleteRules=true`);
+    folderUid = '';
   }
 });
 
 test.describe('Grafana-managed alert rule creation', () => {
   test('saves a rule with a rule-based evaluation interval', async ({ page }) => {
-    const ruleName = `E2E rule-based ${SUFFIX}`;
+    const ruleName = 'High CPU usage';
     const editor = new AlertRuleEditPage(page);
     await editor.goto();
 
     await editor.setName(ruleName);
     await editor.selectQueryDataSource(dataSource);
     await editor.selectFolder(folderTitle);
-    await editor.setEvaluationInterval('1m');
+    await editor.setEvaluationInterval('7m');
+    await editor.setPendingPeriod('14m');
     await editor.addLabel('team', 'e2e');
     await editor.setAnnotations({ summary: `${ruleName} summary` });
     await editor.setManualRouting(contactPoint);
@@ -113,15 +65,16 @@ test.describe('Grafana-managed alert rule creation', () => {
     await viewer.waitForLoad();
     await expect(viewer.nameHeading).toHaveText(ruleName);
     await expect(viewer.breadcrumbLink(folderTitle)).toBeVisible();
-    await expect(viewer.evaluationIntervalText).toBeVisible();
+    await expect(viewer.evaluationIntervalText).toHaveText('Every 7m');
+    await expect(viewer.pendingPeriodValue).toHaveText('14m');
     await expect(viewer.contactPointLink(contactPoint)).toBeVisible();
     await expect(viewer.label('team', 'e2e')).toBeVisible();
     await expect(viewer.annotationValue('summary')).toContainText(`${ruleName} summary`);
   });
 
   test('saves a rule by creating a new evaluation group via the modal', async ({ page }) => {
-    const ruleName = `E2E new-group ${SUFFIX}`;
-    const groupName = `e2e-group-${SUFFIX}`;
+    const ruleName = 'Disk space low';
+    const groupName = 'disk-alerts';
     const editor = new AlertRuleEditPage(page);
     await editor.goto();
 
@@ -148,17 +101,17 @@ test.describe('Grafana-managed alert rule creation', () => {
 
   // The "existing group" scenario depends on a group already living in the folder.
   // We seed it through the ruler API so the test itself only exercises the
-  // "pick existing" path. Cleanup is handled by the folder delete in afterAll
+  // "pick existing" path. Cleanup is handled by the folder delete in afterEach
   // (`forceDeleteRules=true`).
   test.describe('with a pre-seeded evaluation group', () => {
-    const existingGroup = `e2e-existing-${SUFFIX}`;
+    const existingGroup = 'infra-monitoring';
 
-    test.beforeAll(async ({ request }) => {
-      await seedRuleGroup(request, folderUid, existingGroup, '1m', dataSourceUid, `E2E seed ${SUFFIX}`);
+    test.beforeEach(async ({ request }) => {
+      await seedRuleGroup(request, folderUid, existingGroup, '1m', dataSourceUid, 'Node disk read latency');
     });
 
     test('saves a rule into an existing evaluation group', async ({ page }) => {
-      const ruleName = `E2E existing-group ${SUFFIX}`;
+      const ruleName = 'Memory pressure';
       const editor = new AlertRuleEditPage(page);
       await editor.goto();
 
@@ -187,10 +140,10 @@ test.describe('Grafana-managed alert rule creation', () => {
   // Verifies the rule viewer renders persisted data correctly for a rule seeded via the
   // k8s-style alertrule API (independent of the UI create form).
   test.describe('with a pre-seeded rule-based interval rule', () => {
-    const seededRuleName = `E2E seeded-rule-based ${SUFFIX}`;
+    const seededRuleName = 'Node load average';
     let seededRuleUid: string;
 
-    test.beforeAll(async ({ request }) => {
+    test.beforeEach(async ({ request }) => {
       // Resolve the k8s namespace from the Grafana boot config, the same way the
       // frontend does (getAPINamespace → config.namespace).
       const settings = await request.get('/api/frontend/settings');
@@ -269,14 +222,14 @@ test.describe('Grafana-managed alert rule creation', () => {
   // and restores it on the way back via `lastSelectedGroup` (GrafanaEvaluationBehavior.tsx:211-222,
   // L246-261). This test checks the round-trip is observable both in the form and after save.
   test.describe('with a pre-seeded evaluation group for mode toggle', () => {
-    const seededGroup = `e2e-mode-toggle-${SUFFIX}`;
+    const seededGroup = 'platform-alerts';
 
-    test.beforeAll(async ({ request }) => {
-      await seedRuleGroup(request, folderUid, seededGroup, '1m', dataSourceUid, `E2E mode-toggle seed ${SUFFIX}`);
+    test.beforeEach(async ({ request }) => {
+      await seedRuleGroup(request, folderUid, seededGroup, '1m', dataSourceUid, 'Pod restart rate');
     });
 
     test('switching evaluation mode round-trip restores the previously selected group', async ({ page }) => {
-      const ruleName = `E2E mode-toggle ${SUFFIX}`;
+      const ruleName = 'Service availability';
       const editor = new AlertRuleEditPage(page);
       await editor.goto();
 
@@ -312,19 +265,19 @@ test.describe('Grafana-managed alert rule creation', () => {
   // The form-side helper text "All rules in the selected group are evaluated every X" is the
   // user-visible signal. We verify it updates when switching between groups with different intervals.
   test.describe('with two pre-seeded evaluation groups', () => {
-    const group1m = `e2e-group-1m-${SUFFIX}`;
-    const group5m = `e2e-group-5m-${SUFFIX}`;
+    const group1m = 'frontend-alerts';
+    const group5m = 'backend-alerts';
 
-    test.beforeAll(async ({ request }) => {
-      await seedRuleGroup(request, folderUid, group1m, '1m', dataSourceUid, `E2E seed 1m ${SUFFIX}`);
-      await seedRuleGroup(request, folderUid, group5m, '5m', dataSourceUid, `E2E seed 5m ${SUFFIX}`);
+    test.beforeEach(async ({ request }) => {
+      await seedRuleGroup(request, folderUid, group1m, '1m', dataSourceUid, 'HTTP error rate');
+      await seedRuleGroup(request, folderUid, group5m, '5m', dataSourceUid, 'Database query time');
     });
 
     test('switching the selected group updates the displayed evaluation interval text', async ({ page }) => {
       const editor = new AlertRuleEditPage(page);
       await editor.goto();
 
-      await editor.setName(`E2E group-switch ${SUFFIX}`);
+      await editor.setName('Request timeout');
       await editor.selectQueryDataSource(dataSource);
       await editor.selectFolder(folderTitle);
 
@@ -340,8 +293,8 @@ test.describe('Grafana-managed alert rule creation', () => {
   // Creating a new group through the modal auto-bumps the pending period up to the new
   // interval when the previous value was shorter (GrafanaEvaluationBehavior.tsx:224-237).
   test('creating a new evaluation group bumps pending period to the new interval when shorter', async ({ page }) => {
-    const ruleName = `E2E pending-bump ${SUFFIX}`;
-    const newGroup = `e2e-bump-${SUFFIX}`;
+    const ruleName = 'Latency spike';
+    const newGroup = 'latency-alerts';
     const editor = new AlertRuleEditPage(page);
     await editor.goto();
 
@@ -368,7 +321,7 @@ test.describe('Grafana-managed alert rule creation', () => {
     const editor = new AlertRuleEditPage(page);
     await editor.goto();
 
-    await editor.setName(`E2E pending-validation ${SUFFIX}`);
+    await editor.setName('Error rate');
     await editor.selectQueryDataSource(dataSource);
     await editor.selectFolder(folderTitle);
 
@@ -383,3 +336,52 @@ test.describe('Grafana-managed alert rule creation', () => {
     await expect(page).toHaveURL(/\/alerting\/new/);
   });
 });
+
+// Seed a Grafana-managed evaluation group via the ruler API. Each group must contain
+// at least one rule — we include a minimal placeholder. Cleanup is handled by the
+// parent folder delete in afterEach (`forceDeleteRules=true`).
+// Reference rule shape: public/app/features/alerting/unified/mocks/grafanaRulerApi.ts:33-73.
+async function seedRuleGroup(
+  request: APIRequestContext,
+  folderUid: string,
+  groupName: string,
+  interval: string,
+  dataSourceUid: string,
+  ruleTitle: string
+): Promise<void> {
+  const response = await request.post(`/api/ruler/grafana/api/v1/rules/${folderUid}`, {
+    data: {
+      name: groupName,
+      interval,
+      rules: [
+        {
+          for: '0s',
+          annotations: {},
+          labels: {},
+          grafana_alert: {
+            title: ruleTitle,
+            condition: 'A',
+            no_data_state: 'NoData',
+            exec_err_state: 'Error',
+            data: [
+              {
+                refId: 'A',
+                datasourceUid: dataSourceUid,
+                queryType: '',
+                relativeTimeRange: { from: 600, to: 0 },
+                model: {
+                  refId: 'A',
+                  scenarioId: 'random_walk',
+                  datasource: { type: 'grafana-testdata-datasource', uid: dataSourceUid },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    },
+  });
+  if (!response.ok()) {
+    throw new Error(`Failed to seed rule group: ${response.status()} ${await response.text()}`);
+  }
+}
