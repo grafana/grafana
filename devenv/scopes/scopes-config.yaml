@@ -9,7 +9,7 @@ scopes:
   # Cluster 1 needs a scope definition; the tree references it but the API
   # returns 404 without one. defaultPath drives tree expansion to the leaf node.
   cluster1:
-    title: Cluster 1
+    title: Cluster 1 (defaultPath)
     defaultPath:
       - gdev-scopes
       - gdev-scopes-clusters
