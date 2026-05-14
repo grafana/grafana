@@ -1,6 +1,7 @@
 package prefapi
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -72,7 +73,7 @@ func TestK8sHandler_UpdatePreferences(t *testing.T) {
 		client := NewMockK8sClient(t)
 		var captured *preferences.PreferencesSpec
 		client.EXPECT().Update(mock.Anything, mock.Anything, mock.Anything).
-			Run(func(_ *contextmodel.ReqContext, _ prefutils.OwnerReference, spec *preferences.PreferencesSpec) {
+			Run(func(_ context.Context, _ prefutils.OwnerReference, spec *preferences.PreferencesSpec) {
 				captured = spec
 			}).Return(nil)
 
@@ -100,7 +101,7 @@ func TestK8sHandler_UpdatePreferences(t *testing.T) {
 		client := NewMockK8sClient(t)
 		var captured *preferences.PreferencesSpec
 		client.EXPECT().Update(mock.Anything, mock.Anything, mock.Anything).
-			Run(func(_ *contextmodel.ReqContext, _ prefutils.OwnerReference, spec *preferences.PreferencesSpec) {
+			Run(func(_ context.Context, _ prefutils.OwnerReference, spec *preferences.PreferencesSpec) {
 				captured = spec
 			}).Return(nil)
 
@@ -146,7 +147,7 @@ func TestK8sHandler_PatchPreferences(t *testing.T) {
 		client := NewMockK8sClient(t)
 		var captured *preferences.PreferencesSpec
 		client.EXPECT().Patch(mock.Anything, mock.Anything, mock.Anything).
-			Run(func(_ *contextmodel.ReqContext, _ prefutils.OwnerReference, spec *preferences.PreferencesSpec) {
+			Run(func(_ context.Context, _ prefutils.OwnerReference, spec *preferences.PreferencesSpec) {
 				captured = spec
 			}).Return(nil)
 

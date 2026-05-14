@@ -3,9 +3,10 @@
 package prefapi
 
 import (
+	"context"
+
 	v1alpha1 "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 	utils "github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
-	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -23,7 +24,7 @@ func (_m *MockK8sClient) EXPECT() *MockK8sClient_Expecter {
 }
 
 // Get provides a mock function with given fields: c, owner
-func (_m *MockK8sClient) Get(c *contextmodel.ReqContext, owner utils.OwnerReference) (*v1alpha1.PreferencesSpec, error) {
+func (_m *MockK8sClient) Get(c context.Context, owner utils.OwnerReference) (*v1alpha1.PreferencesSpec, error) {
 	ret := _m.Called(c, owner)
 
 	if len(ret) == 0 {
@@ -32,10 +33,10 @@ func (_m *MockK8sClient) Get(c *contextmodel.ReqContext, owner utils.OwnerRefere
 
 	var r0 *v1alpha1.PreferencesSpec
 	var r1 error
-	if rf, ok := ret.Get(0).(func(*contextmodel.ReqContext, utils.OwnerReference) (*v1alpha1.PreferencesSpec, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, utils.OwnerReference) (*v1alpha1.PreferencesSpec, error)); ok {
 		return rf(c, owner)
 	}
-	if rf, ok := ret.Get(0).(func(*contextmodel.ReqContext, utils.OwnerReference) *v1alpha1.PreferencesSpec); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, utils.OwnerReference) *v1alpha1.PreferencesSpec); ok {
 		r0 = rf(c, owner)
 	} else {
 		if ret.Get(0) != nil {
@@ -43,7 +44,7 @@ func (_m *MockK8sClient) Get(c *contextmodel.ReqContext, owner utils.OwnerRefere
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(*contextmodel.ReqContext, utils.OwnerReference) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, utils.OwnerReference) error); ok {
 		r1 = rf(c, owner)
 	} else {
 		r1 = ret.Error(1)
@@ -58,15 +59,15 @@ type MockK8sClient_Get_Call struct {
 }
 
 // Get is a helper method to define mock.On call
-//   - c *contextmodel.ReqContext
+//   - c context.Context
 //   - owner utils.OwnerReference
 func (_e *MockK8sClient_Expecter) Get(c interface{}, owner interface{}) *MockK8sClient_Get_Call {
 	return &MockK8sClient_Get_Call{Call: _e.mock.On("Get", c, owner)}
 }
 
-func (_c *MockK8sClient_Get_Call) Run(run func(c *contextmodel.ReqContext, owner utils.OwnerReference)) *MockK8sClient_Get_Call {
+func (_c *MockK8sClient_Get_Call) Run(run func(c context.Context, owner utils.OwnerReference)) *MockK8sClient_Get_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(*contextmodel.ReqContext), args[1].(utils.OwnerReference))
+		run(args[0].(context.Context), args[1].(utils.OwnerReference))
 	})
 	return _c
 }
@@ -76,13 +77,13 @@ func (_c *MockK8sClient_Get_Call) Return(_a0 *v1alpha1.PreferencesSpec, _a1 erro
 	return _c
 }
 
-func (_c *MockK8sClient_Get_Call) RunAndReturn(run func(*contextmodel.ReqContext, utils.OwnerReference) (*v1alpha1.PreferencesSpec, error)) *MockK8sClient_Get_Call {
+func (_c *MockK8sClient_Get_Call) RunAndReturn(run func(context.Context, utils.OwnerReference) (*v1alpha1.PreferencesSpec, error)) *MockK8sClient_Get_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Patch provides a mock function with given fields: c, owner, spec
-func (_m *MockK8sClient) Patch(c *contextmodel.ReqContext, owner utils.OwnerReference, spec *v1alpha1.PreferencesSpec) error {
+func (_m *MockK8sClient) Patch(c context.Context, owner utils.OwnerReference, spec *v1alpha1.PreferencesSpec) error {
 	ret := _m.Called(c, owner, spec)
 
 	if len(ret) == 0 {
@@ -90,7 +91,7 @@ func (_m *MockK8sClient) Patch(c *contextmodel.ReqContext, owner utils.OwnerRefe
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*contextmodel.ReqContext, utils.OwnerReference, *v1alpha1.PreferencesSpec) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, utils.OwnerReference, *v1alpha1.PreferencesSpec) error); ok {
 		r0 = rf(c, owner, spec)
 	} else {
 		r0 = ret.Error(0)
@@ -105,16 +106,16 @@ type MockK8sClient_Patch_Call struct {
 }
 
 // Patch is a helper method to define mock.On call
-//   - c *contextmodel.ReqContext
+//   - c context.Context
 //   - owner utils.OwnerReference
 //   - spec *v1alpha1.PreferencesSpec
 func (_e *MockK8sClient_Expecter) Patch(c interface{}, owner interface{}, spec interface{}) *MockK8sClient_Patch_Call {
 	return &MockK8sClient_Patch_Call{Call: _e.mock.On("Patch", c, owner, spec)}
 }
 
-func (_c *MockK8sClient_Patch_Call) Run(run func(c *contextmodel.ReqContext, owner utils.OwnerReference, spec *v1alpha1.PreferencesSpec)) *MockK8sClient_Patch_Call {
+func (_c *MockK8sClient_Patch_Call) Run(run func(c context.Context, owner utils.OwnerReference, spec *v1alpha1.PreferencesSpec)) *MockK8sClient_Patch_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(*contextmodel.ReqContext), args[1].(utils.OwnerReference), args[2].(*v1alpha1.PreferencesSpec))
+		run(args[0].(context.Context), args[1].(utils.OwnerReference), args[2].(*v1alpha1.PreferencesSpec))
 	})
 	return _c
 }
@@ -124,13 +125,13 @@ func (_c *MockK8sClient_Patch_Call) Return(_a0 error) *MockK8sClient_Patch_Call 
 	return _c
 }
 
-func (_c *MockK8sClient_Patch_Call) RunAndReturn(run func(*contextmodel.ReqContext, utils.OwnerReference, *v1alpha1.PreferencesSpec) error) *MockK8sClient_Patch_Call {
+func (_c *MockK8sClient_Patch_Call) RunAndReturn(run func(context.Context, utils.OwnerReference, *v1alpha1.PreferencesSpec) error) *MockK8sClient_Patch_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Update provides a mock function with given fields: c, owner, spec
-func (_m *MockK8sClient) Update(c *contextmodel.ReqContext, owner utils.OwnerReference, spec *v1alpha1.PreferencesSpec) error {
+func (_m *MockK8sClient) Update(c context.Context, owner utils.OwnerReference, spec *v1alpha1.PreferencesSpec) error {
 	ret := _m.Called(c, owner, spec)
 
 	if len(ret) == 0 {
@@ -138,7 +139,7 @@ func (_m *MockK8sClient) Update(c *contextmodel.ReqContext, owner utils.OwnerRef
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*contextmodel.ReqContext, utils.OwnerReference, *v1alpha1.PreferencesSpec) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, utils.OwnerReference, *v1alpha1.PreferencesSpec) error); ok {
 		r0 = rf(c, owner, spec)
 	} else {
 		r0 = ret.Error(0)
@@ -153,16 +154,16 @@ type MockK8sClient_Update_Call struct {
 }
 
 // Update is a helper method to define mock.On call
-//   - c *contextmodel.ReqContext
+//   - c context.Context
 //   - owner utils.OwnerReference
 //   - spec *v1alpha1.PreferencesSpec
 func (_e *MockK8sClient_Expecter) Update(c interface{}, owner interface{}, spec interface{}) *MockK8sClient_Update_Call {
 	return &MockK8sClient_Update_Call{Call: _e.mock.On("Update", c, owner, spec)}
 }
 
-func (_c *MockK8sClient_Update_Call) Run(run func(c *contextmodel.ReqContext, owner utils.OwnerReference, spec *v1alpha1.PreferencesSpec)) *MockK8sClient_Update_Call {
+func (_c *MockK8sClient_Update_Call) Run(run func(c context.Context, owner utils.OwnerReference, spec *v1alpha1.PreferencesSpec)) *MockK8sClient_Update_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(*contextmodel.ReqContext), args[1].(utils.OwnerReference), args[2].(*v1alpha1.PreferencesSpec))
+		run(args[0].(context.Context), args[1].(utils.OwnerReference), args[2].(*v1alpha1.PreferencesSpec))
 	})
 	return _c
 }
@@ -172,7 +173,7 @@ func (_c *MockK8sClient_Update_Call) Return(_a0 error) *MockK8sClient_Update_Cal
 	return _c
 }
 
-func (_c *MockK8sClient_Update_Call) RunAndReturn(run func(*contextmodel.ReqContext, utils.OwnerReference, *v1alpha1.PreferencesSpec) error) *MockK8sClient_Update_Call {
+func (_c *MockK8sClient_Update_Call) RunAndReturn(run func(context.Context, utils.OwnerReference, *v1alpha1.PreferencesSpec) error) *MockK8sClient_Update_Call {
 	_c.Call.Return(run)
 	return _c
 }

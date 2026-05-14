@@ -45,7 +45,7 @@ func NewK8sHandler(client K8sClient, ds dashboards.DashboardService) *K8sHandler
 // GetPreferences fetches the preferences for the given owner and returns
 // them as the legacy PreferencesSpec response.
 func (h *K8sHandler) GetPreferences(c *contextmodel.ReqContext, owner prefutils.OwnerReference) response.Response {
-	spec, err := h.client.Get(c, owner)
+	spec, err := h.client.Get(c.Req.Context(), owner)
 	if err != nil {
 		return responseFromError(err)
 	}
@@ -61,7 +61,7 @@ func (h *K8sHandler) UpdatePreferences(c *contextmodel.ReqContext, owner prefuti
 		return errResp
 	}
 
-	if err := h.client.Update(c, owner, updateCmdToSpec(dto, homeDashboardUID)); err != nil {
+	if err := h.client.Update(c.Req.Context(), owner, updateCmdToSpec(dto, homeDashboardUID)); err != nil {
 		return responseFromError(err)
 	}
 	return response.Success("Preferences updated")
@@ -80,7 +80,7 @@ func (h *K8sHandler) PatchPreferences(c *contextmodel.ReqContext, owner prefutil
 		return errResp
 	}
 
-	if err := h.client.Patch(c, owner, patchCmdToSpec(dto, homeDashboardUID)); err != nil {
+	if err := h.client.Patch(c.Req.Context(), owner, patchCmdToSpec(dto, homeDashboardUID)); err != nil {
 		return responseFromError(err)
 	}
 	return response.Success("Preferences updated")

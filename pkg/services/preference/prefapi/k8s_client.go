@@ -1,7 +1,9 @@
 package prefapi
 
 import (
+	"context"
 	"encoding/json"
+	stderrors "errors"
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -16,7 +18,7 @@ import (
 	prefutils "github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -26,9 +28,9 @@ import (
 // the legacy /api preferences bridge. It is intentionally narrow so it can
 // be mocked in tests of the legacy handlers.
 type K8sClient interface {
-	Get(c *contextmodel.ReqContext, owner prefutils.OwnerReference) (*preferences.PreferencesSpec, error)
-	Update(c *contextmodel.ReqContext, owner prefutils.OwnerReference, spec *preferences.PreferencesSpec) error
-	Patch(c *contextmodel.ReqContext, owner prefutils.OwnerReference, spec *preferences.PreferencesSpec) error
+	Get(ctx context.Context, owner prefutils.OwnerReference) (*preferences.PreferencesSpec, error)
+	Update(ctx context.Context, owner prefutils.OwnerReference, spec *preferences.PreferencesSpec) error
+	Patch(ctx context.Context, owner prefutils.OwnerReference, spec *preferences.PreferencesSpec) error
 }
 
 type k8sClient struct {
@@ -49,12 +51,12 @@ func NewK8sClient(cfg *setting.Cfg, configProvider grafanaapiserver.DirectRestCo
 	}
 }
 
-func (k *k8sClient) Get(c *contextmodel.ReqContext, owner prefutils.OwnerReference) (*preferences.PreferencesSpec, error) {
-	client, err := k.getClient(c)
+func (k *k8sClient) Get(ctx context.Context, owner prefutils.OwnerReference) (*preferences.PreferencesSpec, error) {
+	client, err := k.getClient(ctx)
 	if err != nil {
 		return nil, err
 	}
-	out, err := client.Get(c.Req.Context(), owner.AsName(), v1.GetOptions{})
+	out, err := client.Get(ctx, owner.AsName(), v1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return &preferences.PreferencesSpec{}, nil
@@ -68,8 +70,8 @@ func (k *k8sClient) Get(c *contextmodel.ReqContext, owner prefutils.OwnerReferen
 // (pkg/registry/apis/preferences/legacy.preferenceStorage.Update) handles
 // the missing-resource case by creating an empty placeholder, so we don't
 // need a preflight Get.
-func (k *k8sClient) Update(c *contextmodel.ReqContext, owner prefutils.OwnerReference, spec *preferences.PreferencesSpec) error {
-	client, err := k.getClient(c)
+func (k *k8sClient) Update(ctx context.Context, owner prefutils.OwnerReference, spec *preferences.PreferencesSpec) error {
+	client, err := k.getClient(ctx)
 	if err != nil {
 		return err
 	}
@@ -77,14 +79,14 @@ func (k *k8sClient) Update(c *contextmodel.ReqContext, owner prefutils.OwnerRefe
 	if err != nil {
 		return err
 	}
-	_, err = client.Update(c.Req.Context(), obj, v1.UpdateOptions{})
+	_, err = client.Update(ctx, obj, v1.UpdateOptions{})
 	return err
 }
 
 // Patch applies a JSON merge-patch to the preferences for the given owner.
 // The underlying storage upserts on missing resources by returning a UID-bearing
 // placeholder from its Update method, so this also works as upsert.
-func (k *k8sClient) Patch(c *contextmodel.ReqContext, owner prefutils.OwnerReference, spec *preferences.PreferencesSpec) error {
+func (k *k8sClient) Patch(ctx context.Context, owner prefutils.OwnerReference, spec *preferences.PreferencesSpec) error {
 	body, err := json.Marshal(struct {
 		Spec *preferences.PreferencesSpec `json:"spec"`
 	}{Spec: spec})
@@ -92,21 +94,25 @@ func (k *k8sClient) Patch(c *contextmodel.ReqContext, owner prefutils.OwnerRefer
 		return err
 	}
 
-	client, err := k.getClient(c)
+	client, err := k.getClient(ctx)
 	if err != nil {
 		return err
 	}
 
-	_, err = client.Patch(c.Req.Context(), owner.AsName(), types.MergePatchType, body, v1.PatchOptions{})
+	_, err = client.Patch(ctx, owner.AsName(), types.MergePatchType, body, v1.PatchOptions{})
 	return err
 }
 
-func (k *k8sClient) getClient(c *contextmodel.ReqContext) (dynamic.ResourceInterface, error) {
-	dyn, err := dynamic.NewForConfig(k.clientConfigProvider.GetDirectRestConfig(c))
+func (k *k8sClient) getClient(ctx context.Context) (dynamic.ResourceInterface, error) {
+	reqCtx := contexthandler.FromContext(ctx)
+	if reqCtx == nil {
+		return nil, stderrors.New("no request context")
+	}
+	dyn, err := dynamic.NewForConfig(k.clientConfigProvider.GetDirectRestConfig(reqCtx))
 	if err != nil {
 		return nil, err
 	}
-	return dyn.Resource(k.gvr).Namespace(k.namespacer(c.OrgID)), nil
+	return dyn.Resource(k.gvr).Namespace(k.namespacer(reqCtx.OrgID)), nil
 }
 
 func newPreferencesObject(name string, spec *preferences.PreferencesSpec) (*unstructured.Unstructured, error) {
