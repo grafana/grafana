@@ -2,9 +2,9 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type RefObject } from 'react';
-import { type DataGridHandle } from 'react-data-grid';
 
 import { createTheme, type DataFrame, type Field, FieldType, toDataFrame } from '@grafana/data';
+import { type DataGridHandle } from '@grafana/react-data-grid';
 import { TableCellDisplayMode } from '@grafana/schema';
 
 import { type TableCellRenderer } from '../types';

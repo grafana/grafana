@@ -1614,7 +1614,8 @@
       "metadata": {
         "name": "dashboardDisableSchemaValidationV1",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-04-11T16:52:46Z"
+        "creationTimestamp": "2025-04-11T16:52:46Z",
+        "deletionTimestamp": "2026-05-14T05:13:22Z"
       },
       "spec": {
         "description": "Disable schema validation for dashboards/v1",
@@ -1627,7 +1628,8 @@
       "metadata": {
         "name": "dashboardDisableSchemaValidationV2",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-04-11T16:52:46Z"
+        "creationTimestamp": "2025-04-11T16:52:46Z",
+        "deletionTimestamp": "2026-05-14T05:13:22Z"
       },
       "spec": {
         "description": "Disable schema validation for dashboards/v2",
@@ -1681,16 +1683,17 @@
     {
       "metadata": {
         "name": "dashboardNewLayouts",
-        "resourceVersion": "1775209187023",
+        "resourceVersion": "1778737473500",
         "creationTimestamp": "2024-10-23T08:55:45Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-04-03 09:39:47.02364 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-05-14 05:44:33.500189 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables new dashboard layouts",
         "stage": "GA",
         "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
         "expression": "true"
       }
     },
@@ -1713,7 +1716,8 @@
       "metadata": {
         "name": "dashboardSchemaValidationLogging",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-04-11T16:52:46Z"
+        "creationTimestamp": "2025-04-11T16:52:46Z",
+        "deletionTimestamp": "2026-05-14T05:13:22Z"
       },
       "spec": {
         "description": "Log schema validation errors so they can be analyzed later",
@@ -2590,12 +2594,15 @@
     {
       "metadata": {
         "name": "flameGraphWithCallTree",
-        "resourceVersion": "1773162696077",
-        "creationTimestamp": "2026-03-10T17:11:36Z"
+        "resourceVersion": "1778683818187",
+        "creationTimestamp": "2026-03-10T17:11:36Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-05-13 14:50:18.187266 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the new Flame Graph UI containing the Call Tree view",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/observability-traces-and-profiling",
         "frontend": true,
         "expression": "false"
@@ -3926,9 +3933,40 @@
     },
     {
       "metadata": {
-        "name": "liveAPIServer",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2026-02-18T17:05:38Z"
+        "name": "live.dropHAPrefixInCloud",
+        "resourceVersion": "1778740214922",
+        "creationTimestamp": "2026-05-14T06:30:14Z",
+        "deletionTimestamp": "2026-05-14T10:08:37Z"
+      },
+      "spec": {
+        "description": "do not include the HA prefix",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true,
+        "hideFromDocs": true,
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "live.keepHAPrefixInCloud",
+        "resourceVersion": "1778753317402",
+        "creationTimestamp": "2026-05-14T10:08:37Z"
+      },
+      "spec": {
+        "description": "keep the prefix (just in case)",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "live.runAPIServer",
+        "resourceVersion": "1778740214922",
+        "creationTimestamp": "2026-05-14T06:30:14Z"
       },
       "spec": {
         "description": "Registers a live apiserver",
@@ -3938,6 +3976,40 @@
         "requiresRestart": true,
         "hideFromDocs": true,
         "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "liveAPIServer",
+        "resourceVersion": "1771434338561",
+        "creationTimestamp": "2026-02-18T17:05:38Z",
+        "deletionTimestamp": "2026-05-14T06:30:14Z"
+      },
+      "spec": {
+        "description": "Registers a live apiserver",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresDevMode": true,
+        "requiresRestart": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "liveDropHAPrefixInCloud",
+        "resourceVersion": "1778739143895",
+        "creationTimestamp": "2026-05-14T06:12:23Z",
+        "deletionTimestamp": "2026-05-14T06:30:14Z"
+      },
+      "spec": {
+        "description": "do not include the HA prefix",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresDevMode": true,
+        "requiresRestart": true,
+        "hideFromDocs": true,
+        "expression": "true"
       }
     },
     {
@@ -4375,7 +4447,8 @@
       "metadata": {
         "name": "newPanelPadding",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-11-12T15:40:46Z"
+        "creationTimestamp": "2025-11-12T15:40:46Z",
+        "deletionTimestamp": "2026-05-14T05:09:15Z"
       },
       "spec": {
         "description": "Increases panel padding globally",
@@ -5823,13 +5896,30 @@
     {
       "metadata": {
         "name": "sqlExpressions",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2024-02-27T21:16:00Z"
+        "resourceVersion": "1778600445085",
+        "creationTimestamp": "2024-02-27T21:16:00Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-05-12 15:40:45.085855 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables SQL Expressions, which can execute SQL queries against data source results.",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/grafana-datasources-core-services",
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "sqlExpressionsCodeMirror",
+        "resourceVersion": "1778697735164",
+        "creationTimestamp": "2026-05-13T18:42:15Z"
+      },
+      "spec": {
+        "description": "Enables CodeMirror editor for SQL Expressions",
+        "stage": "experimental",
+        "codeowner": "@grafana/datapro",
+        "frontend": true,
         "expression": "false"
       }
     },

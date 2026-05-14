@@ -35,9 +35,13 @@ const (
 	// Sort alert rule groups by folder full path in the Prometheus rules API
 	FlagAlertingRuleGroupSortByFolderFullpath = "alertingRuleGroupSortByFolderFullpath"
 
-	// FlagLiveAPIServer
+	// FlagLiveRunAPIServer
 	// Registers a live apiserver
-	FlagLiveAPIServer = "liveAPIServer"
+	FlagLiveRunAPIServer = "live.runAPIServer"
+
+	// FlagLiveKeepHAPrefixInCloud
+	// keep the prefix (just in case)
+	FlagLiveKeepHAPrefixInCloud = "live.keepHAPrefixInCloud"
 
 	// FlagInfluxqlStreamingParser
 	// Enable streaming JSON parser for InfluxDB datasource InfluxQL query language
@@ -147,18 +151,6 @@ const (
 	// Adds support for Kubernetes querycaching
 	FlagKubernetesQueryCaching = "kubernetesQueryCaching"
 
-	// FlagDashboardDisableSchemaValidationV1
-	// Disable schema validation for dashboards/v1
-	FlagDashboardDisableSchemaValidationV1 = "dashboardDisableSchemaValidationV1"
-
-	// FlagDashboardDisableSchemaValidationV2
-	// Disable schema validation for dashboards/v2
-	FlagDashboardDisableSchemaValidationV2 = "dashboardDisableSchemaValidationV2"
-
-	// FlagDashboardSchemaValidationLogging
-	// Log schema validation errors so they can be analyzed later
-	FlagDashboardSchemaValidationLogging = "dashboardSchemaValidationLogging"
-
 	// FlagDatasourcesQueryTypes
 	// Load Query types from spec.{version}.query.{yaml|json}
 	FlagDatasourcesQueryTypes = "datasources.queryTypes"
@@ -230,10 +222,6 @@ const (
 	// FlagAnnotationPermissionUpdate
 	// Change the way annotation permissions work by scoping them to folders and dashboards.
 	FlagAnnotationPermissionUpdate = "annotationPermissionUpdate"
-
-	// FlagDashboardNewLayouts
-	// Enables new dashboard layouts
-	FlagDashboardNewLayouts = "dashboardNewLayouts"
 
 	// FlagPdfTables
 	// Enables generating table data as PDF in reporting

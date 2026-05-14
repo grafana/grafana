@@ -512,7 +512,8 @@
         "edit-yaml": "YAMLを編集",
         "save": "保存"
       },
-      "error-title": ""
+      "error-title": "",
+      "no-group-success": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "名前",
@@ -1166,6 +1167,7 @@
     },
     "evaluate-every-validation-options": {
       "message": {
+        "none-not-allowed": "",
         "required": "必須項目です。"
       }
     },
@@ -2859,6 +2861,11 @@
         },
         "group-name": "評価グループ名",
         "group-text": "選択したグループ内のすべてのルールは、{{evaluateEvery}}毎に評価されます。",
+        "interval-label": "",
+        "mode": {
+          "legacy": "",
+          "new": ""
+        },
         "new-group": "新しい評価グループ",
         "pause": {
           "alerting": "このアラートルールの評価を一時停止するには、オンにします。",
@@ -15053,6 +15060,8 @@
     },
     "support-bundles-unconnected": {
       "created-on": "作成日",
+      "deprecation-warning-message": "",
+      "deprecation-warning-title": "",
       "download": "ダウンロード",
       "expires": "有効期限",
       "requested-by": "依頼者",

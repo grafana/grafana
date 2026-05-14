@@ -74,11 +74,6 @@ export interface FeatureToggles {
   */
   influxdbBackendMigration?: boolean;
   /**
-  * Registers a live apiserver
-  * @default false
-  */
-  liveAPIServer?: boolean;
-  /**
   * populate star status from apiserver
   * @default false
   */
@@ -248,21 +243,6 @@ export interface FeatureToggles {
   * @default false
   */
   kubernetesQueryCaching?: boolean;
-  /**
-  * Disable schema validation for dashboards/v1
-  * @default false
-  */
-  dashboardDisableSchemaValidationV1?: boolean;
-  /**
-  * Disable schema validation for dashboards/v2
-  * @default false
-  */
-  dashboardDisableSchemaValidationV2?: boolean;
-  /**
-  * Log schema validation errors so they can be analyzed later
-  * @default false
-  */
-  dashboardSchemaValidationLogging?: boolean;
   /**
   * Register legacy datasource apis that use the numeric id
   * @default false
@@ -510,7 +490,7 @@ export interface FeatureToggles {
   logQLScope?: boolean;
   /**
   * Enables SQL Expressions, which can execute SQL queries against data source results.
-  * @default false
+  * @default true
   */
   sqlExpressions?: boolean;
   /**
@@ -518,6 +498,11 @@ export interface FeatureToggles {
   * @default false
   */
   sqlExpressionsColumnAutoComplete?: boolean;
+  /**
+  * Enables CodeMirror editor for SQL Expressions
+  * @default false
+  */
+  sqlExpressionsCodeMirror?: boolean;
   /**
   * Enable grafana's embedded kube-aggregator
   * @default false
@@ -1332,11 +1317,6 @@ export interface FeatureToggles {
   */
   pluginStoreServiceLoading?: boolean;
   /**
-  * Increases panel padding globally
-  * @default true
-  */
-  newPanelPadding?: boolean;
-  /**
   * When storing dashboard and folder resource permissions, only store action sets and not the full list of underlying permission
   * @default true
   */
@@ -1681,4 +1661,9 @@ export interface FeatureToggles {
   * @default false
   */
   ['alerting.notificationsAPIV1Beta1']?: boolean;
+  /**
+  * Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana
+  * @default false
+  */
+  ['alerting.syncExternalAlertmanager']?: boolean;
 }

@@ -1,8 +1,8 @@
 import memoize from 'micro-memoize';
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { type DataGridHandle, type DataGridProps } from 'react-data-grid';
 
 import { type Field } from '@grafana/data';
+import { type DataGridHandle, type DataGridProps } from '@grafana/react-data-grid';
 
 import { useTheme2 } from '../../../themes/ThemeContext';
 import { getTextColorForBackground as _getTextColorForBackground } from '../../../utils/colors';

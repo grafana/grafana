@@ -10,14 +10,6 @@ import {
   useCallback,
   useMemo,
 } from 'react';
-import {
-  Cell,
-  type CellRendererProps,
-  type DataGridHandle,
-  type RenderCellProps,
-  type RenderRowProps,
-  Row,
-} from 'react-data-grid';
 
 import {
   DataHoverClearEvent,
@@ -30,6 +22,14 @@ import {
   getDisplayProcessor,
   type TimeRange,
 } from '@grafana/data';
+import {
+  Cell,
+  type CellRendererProps,
+  type DataGridHandle,
+  type RenderCellProps,
+  type RenderRowProps,
+  Row,
+} from '@grafana/react-data-grid';
 import {
   FieldColorModeId,
   TableCellDisplayMode,

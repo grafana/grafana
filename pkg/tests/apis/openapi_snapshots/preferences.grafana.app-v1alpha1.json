@@ -837,10 +837,6 @@
               }
             ]
           },
-          "regionalFormat": {
-            "description": "Selected locale (beta)",
-            "type": "string"
-          },
           "theme": {
             "description": "user interface theme",
             "type": "string"
