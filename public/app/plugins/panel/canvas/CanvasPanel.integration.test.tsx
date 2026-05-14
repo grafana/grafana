@@ -1,8 +1,21 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import * as React from 'react';
 
-import { EventBusSrv, type FeatureToggles, getDefaultTimeRange, LoadingState, type PanelProps } from '@grafana/data';
+import {
+  createTheme,
+  type DataFrame,
+  EventBusSrv,
+  type FeatureToggles,
+  type Field,
+  FieldType,
+  getDefaultTimeRange,
+  getDisplayProcessor,
+  LoadingState,
+  MappingType,
+  type PanelProps,
+  toDataFrame,
+} from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { TooltipDisplayMode } from '@grafana/schema';
 import { PanelContextProvider } from '@grafana/ui';
@@ -12,6 +25,8 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { CanvasPanel } from 'app/plugins/panel/canvas/CanvasPanel';
 import { HorizontalConstraint, type Options, VerticalConstraint } from 'app/plugins/panel/canvas/panelcfg.gen';
+
+const theme = createTheme();
 
 jest.mock('react-router-dom-v5-compat', () => ({
   ...jest.requireActual('react-router-dom-v5-compat'),
@@ -32,6 +47,191 @@ const colors = {
   warning: '#FF9830',
   success: '#73BF69',
 };
+
+const successField: Partial<Field> = {
+  name: 'success',
+  config: {
+    mappings: [
+      {
+        type: MappingType.ValueToText,
+        options: {
+          '1': {
+            color: 'green',
+            icon: 'img/icons/unicons/check-circle.svg',
+            index: 0,
+            text: 'Success',
+          },
+        },
+      },
+      {
+        type: MappingType.ValueToText,
+        options: {
+          '1': {
+            text: 'Success',
+            color: 'green',
+            icon: 'img/icons/unicons/check-circle.svg',
+            index: 0,
+          },
+          '2': {
+            text: 'Warning',
+            color: 'orange',
+            icon: 'img/icons/unicons/exclamation-triangle.svg',
+            index: 1,
+          },
+          '3': {
+            text: 'Error',
+            color: 'red',
+            icon: 'img/icons/unicons/times-circle.svg',
+            index: 2,
+          },
+        },
+      },
+    ],
+  },
+  values: [1],
+  type: FieldType.number,
+};
+successField.display = getDisplayProcessor({ field: successField, theme });
+
+const warningField: Partial<Field> = {
+  name: 'warning',
+  config: {
+    mappings: [
+      {
+        options: {
+          1: {
+            color: 'green',
+            icon: 'img/icons/unicons/check-circle.svg',
+            index: 0,
+            text: 'Success',
+          },
+        },
+        type: MappingType.ValueToText,
+      },
+      {
+        type: MappingType.ValueToText,
+        options: {
+          1: {
+            text: 'Success',
+            color: 'green',
+            icon: 'img/icons/unicons/check-circle.svg',
+            index: 0,
+          },
+          2: {
+            text: 'Warning',
+            color: 'orange',
+            icon: 'img/icons/unicons/exclamation-triangle.svg',
+            index: 1,
+          },
+          3: {
+            text: 'Error',
+            color: 'red',
+            icon: 'img/icons/unicons/times-circle.svg',
+            index: 2,
+          },
+        },
+      },
+    ],
+  },
+  values: [1],
+  type: FieldType.number,
+};
+warningField.display = getDisplayProcessor({ field: warningField, theme });
+
+const errorField: Partial<Field> = {
+  name: 'warning',
+  config: {
+    mappings: [
+      {
+        options: {
+          1: {
+            color: 'red',
+            icon: 'img/icons/unicons/times-circle.svg',
+            index: 2,
+            text: 'Error',
+          },
+        },
+        type: MappingType.ValueToText,
+      },
+    ],
+  },
+  values: [1],
+  type: FieldType.number,
+};
+errorField.display = getDisplayProcessor({ field: errorField, theme });
+
+const unmappedField: Partial<Field> = {
+  name: 'unmapped',
+  config: {
+    mappings: [
+      {
+        options: {
+          '1': {
+            color: 'green',
+            icon: 'img/icons/unicons/check-circle.svg',
+            index: 0,
+            text: 'Success',
+          },
+          '2': {
+            color: 'orange',
+            icon: 'img/icons/unicons/exclamation-triangle.svg',
+            index: 1,
+            text: 'Warning',
+          },
+          '3': {
+            color: 'red',
+            icon: 'img/icons/unicons/times-circle.svg',
+            index: 2,
+            text: 'Error',
+          },
+        },
+        type: MappingType.ValueToText,
+      },
+      {
+        type: MappingType.ValueToText,
+        options: {
+          '1': {
+            text: 'Success',
+            color: 'green',
+            icon: 'img/icons/unicons/check-circle.svg',
+            index: 0,
+          },
+          '2': {
+            text: 'Warning',
+            color: 'orange',
+            icon: 'img/icons/unicons/exclamation-triangle.svg',
+            index: 1,
+          },
+          '3': {
+            text: 'Error',
+            color: 'red',
+            icon: 'img/icons/unicons/times-circle.svg',
+            index: 2,
+          },
+        },
+      },
+    ],
+  },
+  values: [1],
+  type: FieldType.number,
+};
+unmappedField.display = getDisplayProcessor({ field: unmappedField, theme });
+
+const successIconFrame = toDataFrame({
+  fields: [successField],
+});
+
+const warningIconFrame = toDataFrame({
+  fields: [warningField],
+});
+
+const errorIconFrame = toDataFrame({
+  fields: [errorField],
+});
+
+const unmappedFrame = toDataFrame({
+  fields: [unmappedField],
+});
 
 // Good gravy this is huge @todo options builder?
 const defaultOptions: Options = {
@@ -438,7 +638,7 @@ describe('Canvas', () => {
         timeRange={timeRange}
         id={0}
         data={{
-          series: [],
+          series: [successIconFrame, warningIconFrame, errorIconFrame, unmappedFrame],
           state: LoadingState.Done,
           timeRange,
         }}
@@ -460,7 +660,11 @@ describe('Canvas', () => {
     );
   }
 
-  const canvasPanelElement = (propsOverrides?: Partial<PanelProps<Options>>, eventBus = new EventBusSrv()) => {
+  const canvasPanelElement = (
+    propsOverrides?: Partial<PanelProps<Options>>,
+    eventBus = new EventBusSrv(),
+    seriesOverrides?: DataFrame[]
+  ) => {
     const timeRange = getDefaultTimeRange();
 
     return (
@@ -471,8 +675,7 @@ describe('Canvas', () => {
         timeRange={timeRange}
         id={0}
         data={{
-          // Dataframe doesn't do anything in canvas
-          series: [],
+          series: seriesOverrides ?? [successIconFrame, warningIconFrame, errorIconFrame, unmappedFrame],
           state: LoadingState.Done,
           timeRange,
         }}
@@ -493,8 +696,8 @@ describe('Canvas', () => {
       />
     );
   };
-  const setUp = (propsOverrides?: Partial<PanelProps<Options>>) => {
-    return render(canvasPanelElement(propsOverrides));
+  const setUp = (propsOverrides?: Partial<PanelProps<Options>>, seriesOverrides?: DataFrame[]) => {
+    return render(canvasPanelElement(propsOverrides, undefined, seriesOverrides));
   };
   const setUpWithPanelContext = (
     propsOverrides?: Partial<PanelProps<Options>>
@@ -555,7 +758,7 @@ describe('Canvas', () => {
     });
   };
   const rightClickMenuSetup = async (propsOverrides?: Partial<PanelProps<Options>>) => {
-    const { rerender } = setUp(propsOverrides);
+    const { rerender } = setUpWithPanelContext(propsOverrides);
     await act(async () => {
       await new Promise((r) => setTimeout(r, 0));
     });
@@ -584,7 +787,7 @@ describe('Canvas', () => {
     beforeAll(() => (config.featureToggles.canvasPanelPanZoom = true));
     afterAll(() => (config.featureToggles.canvasPanelPanZoom = previousFlagValue));
     it('Renders - kitchen sink', () => {
-      setUp();
+      setUp(undefined, []);
 
       // Everything is a button!
       const buttons = screen.getAllByRole('button');
@@ -683,7 +886,7 @@ describe('Canvas', () => {
     beforeAll(() => (config.featureToggles.canvasPanelPanZoom = false));
     afterAll(() => (config.featureToggles.canvasPanelPanZoom = previousFlagValue));
     it('Renders - kitchen sink', () => {
-      setUp();
+      setUp(undefined, []);
 
       // Everything is a button!
       const buttons = screen.getAllByRole('button');
@@ -880,11 +1083,80 @@ describe('Canvas', () => {
           expect(screen.getByText('Canvas Inline Editor')).toBeVisible();
 
           // Click close button
-          await userEvent.click(screen.getByTestId('icon-times'));
+          await userEvent.click(screen.getAllByTestId('icon-times')[0]);
           expect(screen.queryByText('Canvas Inline Editor')).not.toBeInTheDocument();
         });
 
-        describe('Selected element', () => {});
+        describe('Selected element', () => {
+          describe('element options', () => {
+            const selectElementOptionsSetup = async () => {
+              await rightClickMenuSetup();
+              const target = getSuccessIconText();
+
+              await user.pointer({ keys: '[MouseRight]', target });
+              // move the button to back so we can select it once the text is gone
+              await user.click(screen.getByRole('menuitem', { name: 'Send to back' }));
+              expect(target).toEqual(screen.getAllByRole('button')[0]);
+
+              await user.pointer({ keys: '[MouseRight]', target });
+              await user.click(screen.getByRole('menuitem', { name: 'Open Editor' }));
+              await user.click(screen.getByRole('tab', { name: /selected element/i }));
+
+              expect(screen.getByText('Selected element (Success Text)')).toBeVisible();
+
+              const elementTypeSelect = screen
+                .getAllByRole('combobox')
+                .filter((el) => el.id === 'canvas-inline-nested-panel-options-type')[0];
+              expect(elementTypeSelect).toBeVisible();
+              // Click element type select
+              await userEvent.click(elementTypeSelect);
+
+              return target;
+            };
+            it('ellipse', async () => {
+              const target = await selectElementOptionsSetup();
+              // Click ellipse option
+              await userEvent.click(screen.getAllByText('Ellipse')[0]);
+              // text should have been replaced with ellipse svg element
+              expect(target.querySelector('svg ellipse')).toBeVisible();
+            });
+
+            it('wind turbine', async () => {
+              const target = await selectElementOptionsSetup();
+              // Click wind turbine option
+              await userEvent.click(screen.getAllByText('Wind Turbine')[0]);
+              // text should have been replaced with wind turbine svg
+              expect(target.querySelector('svg [id="blade"]')).toBeVisible();
+            });
+
+            it('Metric value', async () => {
+              const target = await selectElementOptionsSetup();
+
+              const { ElementState } = jest.requireActual('app/features/canvas/runtime/element');
+              jest
+                .spyOn(ElementState.prototype, 'getTopLeftValues')
+                .mockReturnValue({ left: 0, top: 0, width: 260, height: 50 });
+
+              await userEvent.click(screen.getAllByText('Metric Value')[0]);
+
+              const metricTarget = screen.getByRole('button', { name: /Double click to set field/i });
+              expect(metricTarget).toBeVisible();
+
+              Object.defineProperty(document, 'elementFromPoint', {
+                configurable: true,
+                value: () => target,
+              });
+
+              await user.dblClick(metricTarget);
+
+              expect(screen.getByPlaceholderText('Select field')).toBeVisible();
+              await user.click(screen.getByPlaceholderText('Select field'));
+            });
+          });
+
+          it.todo('canvas options');
+          it.todo('tooltip options');
+        });
         describe('Element management', () => {
           // @todo
         });
