@@ -24,6 +24,34 @@ var (
 				return string(cast.Spec.Source.Name), nil
 			},
 		},
+			{
+				FieldSelector: "spec.target.name",
+				FieldValueFunc: func(o resource.Object) (string, error) {
+					cast, ok := o.(*Correlation)
+					if !ok {
+						return "", errors.New("provided object must be of type *Correlation")
+					}
+					if cast.Spec.Target == nil {
+						return "", nil
+					}
+
+					return string(cast.Spec.Target.Name), nil
+				},
+			},
+			{
+				FieldSelector: "spec.target.group",
+				FieldValueFunc: func(o resource.Object) (string, error) {
+					cast, ok := o.(*Correlation)
+					if !ok {
+						return "", errors.New("provided object must be of type *Correlation")
+					}
+					if cast.Spec.Target == nil {
+						return "", nil
+					}
+
+					return string(cast.Spec.Target.Group), nil
+				},
+			},
 		}))
 	kindCorrelation = resource.Kind{
 		Schema: schemaCorrelation,
