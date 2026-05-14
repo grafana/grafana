@@ -34,7 +34,7 @@ interface Props {
   showDatasourceProvidedBadge?: boolean;
   showCommunityBadge?: boolean;
   dimThumbnail?: boolean; // Apply 50% opacity to thumbnail when badge is shown
-  kind: 'template_dashboard' | 'suggested_dashboard' | 'org_template';
+  kind: 'template_dashboard' | 'suggested_dashboard' | 'custom_dashboard_template';
   /** Show the compact compatibility badge (replaces showCompatibilityButton) */
   showCompatibilityBadge?: boolean;
   /** State for the compatibility badge (idle, loading, success, error) */

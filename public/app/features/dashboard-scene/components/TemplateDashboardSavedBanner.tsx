@@ -25,12 +25,12 @@ export function TemplateDashboardSavedBanner({ templateName }: { templateName: s
 
   return (
     <Alert
-      title={t('dashboard-scene.template-saved-banner.title', 'Template created')}
+      title={t('dashboard-scene.dashboard-template-saved-banner.title', 'Template created')}
       severity="success"
       className={styles.banner}
       onRemove={onDismiss}
     >
-      <Trans i18nKey="dashboard-scene.template-saved-banner.body" values={{ templateName }}>
+      <Trans i18nKey="dashboard-scene.dashboard-template-saved-banner.body" values={{ templateName }}>
         {'The {{ templateName }} template was created. You can access it in the '}
         <TextLink
           href=""

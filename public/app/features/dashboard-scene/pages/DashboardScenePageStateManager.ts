@@ -40,7 +40,7 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { initializeReportRenderReadinessObserver } from 'app/features/dashboard/services/ReportRenderReadinessObserver';
 import { initializeScenePerformanceLogger } from 'app/features/dashboard/services/ScenePerformanceLogger';
 import { emitDashboardViewEvent } from 'app/features/dashboard/state/analyticsProcessor';
-import { toTemplateDashboardEnvelope } from 'app/features/dashboard-scene/utils/orgDashboardTemplateEnvelope';
+import { toTemplateDashboardEnvelope } from 'app/features/dashboard-scene/utils/dashboardTemplateEnvelope';
 import { trackDashboardSceneLoaded } from 'app/features/dashboard-scene/utils/tracking';
 import { interpolateV1Dashboard } from 'app/features/manage-dashboards/import/utils/inputs';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
@@ -63,7 +63,7 @@ import {
   type SceneCreationOptions,
   transformSaveModelToScene,
 } from '../serialization/transformSaveModelToScene';
-import { getOrgDashboardTemplateExtension } from '../settings/enterprise-components/OrgDashboardTemplateExtension';
+import { getDashboardTemplateExtension } from '../settings/enterprise-components/DashboardTemplateExtension';
 import { restoreDashboardStateFromLocalStorage } from '../utils/dashboardSessionState';
 
 import { processQueryParamsForDashboardLoad, updateNavModel } from './utils';
@@ -108,7 +108,7 @@ export interface LoadDashboardOptions {
   slug?: string;
   type?: string;
   urlFolderUid?: string;
-  orgDashboardTemplateUid?: string;
+  dashboardTemplateUid?: string;
   editTemplate?: boolean;
   defaultVariables?: VariableKind[];
   defaultLinks?: DashboardLink[];
@@ -1021,16 +1021,16 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
       ) {
         const editMode = !!options.editTemplate;
 
-        if (options.orgDashboardTemplateUid && editMode) {
+        if (options.dashboardTemplateUid && editMode) {
           // Land template-only flags onto scene.meta so downstream UI can detect "this is an
-          // org template" and the save drawer can build PUTs keyed on orgDashboardTemplateUid. Outer
+          // org template" and the save drawer can build PUTs keyed on dashboardTemplateUid. Outer
           // template spec fields (title/description/tags/...) are not cached here — consumers
-          // fetch them via useGetOrgDashboardTemplateQuery keyed on orgDashboardTemplateUid.
+          // fetch them via useGetDashboardTemplateQuery keyed on dashboardTemplateUid.
           scene.setState({
             meta: {
               ...scene.state.meta,
-              isOrgDashboardTemplate: true,
-              orgDashboardTemplateUid: options.orgDashboardTemplateUid,
+              isDashboardTemplate: true,
+              dashboardTemplateUid: options.dashboardTemplateUid,
               k8s: {
                 ...scene.state.meta.k8s,
                 resourceVersion: rsp.metadata.resourceVersion,
@@ -1065,7 +1065,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     uid,
     route,
     urlFolderUid,
-    orgDashboardTemplateUid,
+    dashboardTemplateUid,
     editTemplate,
   }: LoadDashboardOptions): Promise<DashboardWithAccessInfo<DashboardV2Spec> | null> {
     const cacheKey = route === DashboardRoutes.Home ? HOME_DASHBOARD_CACHE_KEY : uid;
@@ -1112,8 +1112,8 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
           return await this.dashboardLoader.loadDashboard('public', '', uid);
         }
         case DashboardRoutes.Template: {
-          if (orgDashboardTemplateUid) {
-            rsp = await this.loadOrgDashboardTemplate(orgDashboardTemplateUid, { editMode: !!editTemplate });
+          if (dashboardTemplateUid) {
+            rsp = await this.loadDashboardTemplate(dashboardTemplateUid, { editMode: !!editTemplate });
             break;
           }
           // Non-org templates are V1 only — throw to fallback
@@ -1162,11 +1162,11 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     return rsp;
   }
 
-  private async loadOrgDashboardTemplate(
-    orgDashboardTemplateUid: string,
+  private async loadDashboardTemplate(
+    dashboardTemplateUid: string,
     { editMode }: { editMode: boolean }
   ): Promise<DashboardWithAccessInfo<DashboardV2Spec>> {
-    const response = await getOrgDashboardTemplateExtension().loadTemplate(orgDashboardTemplateUid);
+    const response = await getDashboardTemplateExtension().loadTemplate(dashboardTemplateUid);
 
     const resourceVersion = response.metadata?.resourceVersion ?? '0';
 
@@ -1174,7 +1174,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
       // Edit-template flow: mark the scene as editing an org template so downstream UI can hide
       // irrelevant actions and the save drawer can PUT back to the template resource.
       // TODO: replace hasEditPermissionInFolders placeholder with a dedicated
-      // OrgDashboardTemplatesWrite permission when RBAC for this resource is introduced.
+      // DashboardTemplatesWrite permission when RBAC for this resource is introduced.
       const canEditTemplate = contextSrv.hasEditPermissionInFolders;
       return toTemplateDashboardEnvelope({
         dashboardSpec: response.spec.dashboard,
@@ -1186,7 +1186,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
 
     // Use-template flow: unchanged legacy behavior. The embedded dashboard spec is hydrated
     // into a fresh scene so the user can "Save as" a brand-new dashboard. Do NOT mark the
-    // scene as an org template; no snapshot, no orgDashboardTemplateUid — this is not an edit of the
+    // scene as an org template; no snapshot, no dashboardTemplateUid — this is not an edit of the
     // template, it's a cloning flow.
     return toTemplateDashboardEnvelope({
       dashboardSpec: response.spec.dashboard,
@@ -1414,7 +1414,7 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
 
     // Template dashboards: org templates use V2, gnet templates use V1
     if (options.route === DashboardRoutes.Template) {
-      if (options.orgDashboardTemplateUid) {
+      if (options.dashboardTemplateUid) {
         this.setActiveManager('v2');
       } else {
         this.setActiveManager('v1');

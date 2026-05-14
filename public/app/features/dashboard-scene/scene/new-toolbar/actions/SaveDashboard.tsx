@@ -9,7 +9,7 @@ import { type ToolbarActionProps } from '../types';
 
 export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
   const { meta, isDirty, uid, editview, editPanel } = dashboard.state;
-  const isOrgDashboardTemplatesFlagEnabled = useFlagGrafanaOrgDashboardTemplates();
+  const isDashboardTemplatesFlagEnabled = useFlagGrafanaOrgDashboardTemplates();
 
   const isNew = !Boolean(uid || dashboard.isManaged());
   const isManaged = dashboard.isManaged();
@@ -17,13 +17,13 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
   const buttonSize = Boolean(editview) || editPanel ? 'sm' : 'md';
 
   // Org-template edit flow
-  if (meta.isOrgDashboardTemplate) {
+  if (meta.isDashboardTemplate) {
     if (!meta.canSave) {
       return null;
     }
     return (
       <Button
-        onClick={() => dashboard.openSaveDrawer({ updateOrgDashboardTemplate: true })}
+        onClick={() => dashboard.openSaveDrawer({ updateDashboardTemplate: true })}
         tooltip={t('dashboard.toolbar.new.save-template.tooltip', 'Save template changes')}
         size={buttonSize}
         variant={isDirty ? 'primary' : 'secondary'}
@@ -88,12 +88,12 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
               icon="copy"
               onClick={() => dashboard.openSaveDrawer({ saveAsCopy: true })}
             />
-            {isOrgDashboardTemplatesFlagEnabled && getSaveAsTemplateForm() !== null && (
+            {isDashboardTemplatesFlagEnabled && getSaveAsTemplateForm() !== null && (
               <Menu.Item
                 label={t('dashboard.toolbar.save-as-template.label', 'Save as template')}
                 icon="grid"
                 onClick={() => {
-                  dashboard.openSaveDrawer({ saveAsOrgDashboardTemplate: true });
+                  dashboard.openSaveDrawer({ saveAsDashboardTemplate: true });
                 }}
               />
             )}

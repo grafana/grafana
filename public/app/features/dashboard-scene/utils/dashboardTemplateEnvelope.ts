@@ -10,7 +10,7 @@ export interface TemplateDashboardEnvelopeOpts {
 }
 
 // toTemplateDashboardEnvelope wraps a v2 dashboard payload (extracted from
-// `OrgDashboardTemplate.spec.dashboard`) into the shape expected by
+// `DashboardTemplate.spec.dashboard`) into the shape expected by
 // `transformSaveModelSchemaV2ToScene`. Templates don't have folders, stars,
 // sharing, or deletion semantics, so those access flags are hardcoded off.
 export function toTemplateDashboardEnvelope(

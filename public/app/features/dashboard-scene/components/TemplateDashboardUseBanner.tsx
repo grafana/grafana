@@ -28,7 +28,7 @@ export function TemplateDashboardUseBanner({ dashboard }: { dashboard: Dashboard
   return (
     <Alert
       title={t(
-        'dashboard-scene.template-use-banner.title',
+        'dashboard-scene.dashboard-template-use-banner.title',
         'You are using {{ templateName }} template in a new dashboard',
         { templateName: dashboard.state.title }
       )}
@@ -36,7 +36,7 @@ export function TemplateDashboardUseBanner({ dashboard }: { dashboard: Dashboard
       className={styles.banner}
       onRemove={onDismiss}
     >
-      {t('dashboard-scene.template-use-banner.body', 'Save this dashboard and edit it for your use case')}
+      {t('dashboard-scene.dashboard-template-use-banner.body', 'Save this dashboard and edit it for your use case')}
     </Alert>
   );
 }

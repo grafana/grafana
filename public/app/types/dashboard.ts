@@ -73,12 +73,12 @@ export interface DashboardMeta {
   isNew?: boolean;
   version?: number;
 
-  // Org-defined template flow. Set when a dashboard scene was hydrated from an OrgDashboardTemplate
+  // Org-defined template flow. Set when a dashboard scene was hydrated from an DashboardTemplate
   // via DashboardRoutes.Template with editTemplate=true. Consumers that need the outer template
-  // spec fields (title/description/tags/...) fetch them via the `getOrgDashboardTemplate` RTKQ
-  // endpoint keyed on `orgDashboardTemplateUid` rather than caching them on meta.
-  isOrgDashboardTemplate?: boolean;
-  orgDashboardTemplateUid?: string;
+  // spec fields (title/description/tags/...) fetch them via the `getDashboardTemplate` RTKQ
+  // endpoint keyed on `dashboardTemplateUid` rather than caching them on meta.
+  isDashboardTemplate?: boolean;
+  dashboardTemplateUid?: string;
 
   // When loaded from kubernetes, we stick the raw metadata here
   // yes weird, but this means all the editor structures can exist unchanged

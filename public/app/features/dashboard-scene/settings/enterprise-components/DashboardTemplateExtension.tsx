@@ -4,10 +4,10 @@ import { type DecoratedRevisionModel } from 'app/features/dashboard/types/revisi
 
 import { type DashboardScene } from '../../scene/DashboardScene';
 
-// Structural subset of the enterprise OrgDashboardTemplateSpec. Defined locally so OSS
+// Structural subset of the enterprise DashboardTemplateSpec. Defined locally so OSS
 // call sites can type the load response without importing from public/app/extensions/.
-// The enterprise OrgDashboardTemplate is structurally compatible with this shape.
-export interface OrgDashboardTemplateResourceSpec {
+// The enterprise DashboardTemplate is structurally compatible with this shape.
+export interface DashboardTemplateResourceSpec {
   title: string;
   description?: string;
   tags: string[];
@@ -16,20 +16,20 @@ export interface OrgDashboardTemplateResourceSpec {
   dashboard: DashboardV2Spec;
 }
 
-export interface OrgDashboardTemplateHistoryListResult {
+export interface DashboardTemplateHistoryListResult {
   // Raw k8s list items. Consumers transform these through the same
   // VersionsEditView.transformToRevisionModels pipeline used for dashboards.
   items: Array<Resource<unknown>>;
   continueToken?: string;
 }
 
-export interface OrgDashboardTemplateExtensionHooks {
-  loadTemplate(uid: string): Promise<Resource<OrgDashboardTemplateResourceSpec>>;
+export interface DashboardTemplateExtensionHooks {
+  loadTemplate(uid: string): Promise<Resource<DashboardTemplateResourceSpec>>;
 
   listHistory(
     uid: string,
     options: { limit: number; continueToken?: string }
-  ): Promise<OrgDashboardTemplateHistoryListResult>;
+  ): Promise<DashboardTemplateHistoryListResult>;
 
   // Builds a PUT body that keeps the current outer template spec fields and replaces
   // only spec.dashboard with the selected historical version's embedded dashboard,
@@ -42,7 +42,7 @@ export interface OrgDashboardTemplateExtensionHooks {
 // OSS build somehow reaches these code paths (e.g. via the feature toggle being on
 // without the enterprise bundle linked), loadTemplate throws and history/restore
 // degrade to empty/false rather than crash.
-let internal: OrgDashboardTemplateExtensionHooks = {
+let internal: DashboardTemplateExtensionHooks = {
   loadTemplate: async () => {
     throw new Error('Org template loading is only available in Grafana Enterprise');
   },
@@ -50,10 +50,10 @@ let internal: OrgDashboardTemplateExtensionHooks = {
   restore: async () => false,
 };
 
-export function registerOrgDashboardTemplateExtension(hooks: OrgDashboardTemplateExtensionHooks) {
+export function registerDashboardTemplateExtension(hooks: DashboardTemplateExtensionHooks) {
   internal = hooks;
 }
 
-export function getOrgDashboardTemplateExtension(): OrgDashboardTemplateExtensionHooks {
+export function getDashboardTemplateExtension(): DashboardTemplateExtensionHooks {
   return internal;
 }

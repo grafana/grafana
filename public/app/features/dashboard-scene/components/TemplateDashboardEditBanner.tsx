@@ -16,8 +16,8 @@ export function TemplateDashboardEditBanner({ dashboard }: { dashboard: Dashboar
 
   const shouldRender =
     location.pathname === DASHBOARD_LIBRARY_ROUTES.Template &&
-    Boolean(meta.isOrgDashboardTemplate) &&
-    Boolean(meta.orgDashboardTemplateUid);
+    Boolean(meta.isDashboardTemplate) &&
+    Boolean(meta.dashboardTemplateUid);
 
   const [dismissed, setDismissed] = useState<boolean>(!shouldRender);
 
@@ -26,23 +26,23 @@ export function TemplateDashboardEditBanner({ dashboard }: { dashboard: Dashboar
   }
 
   // Falls back to the embedded dashboard's title; the outer template title isn't accessible
-  // from OSS without a registry seam into the enterprise RTKQ client (see getOrgDashboardTemplateExtension
+  // from OSS without a registry seam into the enterprise RTKQ client (see getDashboardTemplateExtension
   // for the pattern). In practice the two titles match at template creation; if they diverge
   // later, we show the dashboard title here and promote to an enterprise-sourced label
   // (option 1) as a follow-up if UX requires.
   const templateName = dashboard.state.title;
   const useTemplateUrl =
-    `${DASHBOARD_LIBRARY_ROUTES.Template}?orgDashboardTemplateUid=${encodeURIComponent(meta.orgDashboardTemplateUid!)}` +
+    `${DASHBOARD_LIBRARY_ROUTES.Template}?dashboardTemplateUid=${encodeURIComponent(meta.dashboardTemplateUid!)}` +
     `&useTemplateBanner=true`;
 
   return (
     <Alert
-      title={t('dashboard-scene.template-edit-banner.title', 'You are editing {{ templateName }}', { templateName })}
+      title={t('dashboard-scene.dashboard-template-edit-banner.title', 'You are editing {{ templateName }}', { templateName })}
       severity="info"
       className={styles.banner}
       onRemove={() => setDismissed(true)}
     >
-      <Trans i18nKey="dashboard-scene.template-edit-banner.body">
+      <Trans i18nKey="dashboard-scene.dashboard-template-edit-banner.body">
         Edits made will update this template.{' '}
         <TextLink href={useTemplateUrl} inline>
           If you wish to use this template as a dashboard, click here

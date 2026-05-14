@@ -34,7 +34,7 @@ export function TemplateFilters({
   return (
     <Stack direction="column" gap={1}>
       <FilterInput
-        placeholder={t('dashboard-library.template-filters.search-placeholder', 'Search')}
+        placeholder={t('dashboard-library.custom-dashboard-template-filters.search-placeholder', 'Search')}
         value={searchQuery}
         escapeRegex={false}
         onChange={onSearchChange}
@@ -46,7 +46,7 @@ export function TemplateFilters({
             options={creatorOptions}
             value={selectedCreators}
             onChange={onCreatorsChange}
-            placeholder={t('dashboard-library.template-filters.creator-placeholder', 'Filter by created by')}
+            placeholder={t('dashboard-library.custom-dashboard-template-filters.creator-placeholder', 'Filter by created by')}
             isClearable
             width={30}
           />
@@ -55,7 +55,7 @@ export function TemplateFilters({
           value={sortValue}
           onChange={onSortChange}
           getSortOptions={getSortOptions}
-          placeholder={t('dashboard-library.template-filters.sort-placeholder', 'Sort')}
+          placeholder={t('dashboard-library.custom-dashboard-template-filters.sort-placeholder', 'Sort')}
           isClearable
         />
       </Stack>

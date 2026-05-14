@@ -26,7 +26,7 @@ import { type DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { getDashboardSceneFor } from '../utils/utils';
 
-import { getOrgDashboardTemplateExtension } from './enterprise-components/OrgDashboardTemplateExtension';
+import { getDashboardTemplateExtension } from './enterprise-components/DashboardTemplateExtension';
 import { type DashboardEditView, type DashboardEditViewState, useDashboardEditPageNav } from './utils';
 import { VersionsHistoryButtons } from './version-history/VersionHistoryButtons';
 import { VersionHistoryComparison } from './version-history/VersionHistoryComparison';
@@ -99,10 +99,10 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
 
   public fetchVersions = (append = false): void => {
     const { uid, meta } = this._dashboard.state;
-    const isOrgDashboardTemplate = Boolean(meta.isOrgDashboardTemplate);
-    const orgDashboardTemplateUid = meta.orgDashboardTemplateUid;
+    const isDashboardTemplate = Boolean(meta.isDashboardTemplate);
+    const dashboardTemplateUid = meta.dashboardTemplateUid;
 
-    if (!uid && !(isOrgDashboardTemplate && orgDashboardTemplateUid)) {
+    if (!uid && !(isDashboardTemplate && dashboardTemplateUid)) {
       return;
     }
 
@@ -110,12 +110,12 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
 
     const options = append ? { limit: this._limit, continueToken: this._continueToken } : { limit: this._limit };
 
-    const loader: Promise<{ items: Array<Resource<unknown>>; continue?: string }> = isOrgDashboardTemplate
+    const loader: Promise<{ items: Array<Resource<unknown>>; continue?: string }> = isDashboardTemplate
       ? (async () => {
-          if (!orgDashboardTemplateUid) {
+          if (!dashboardTemplateUid) {
             return { items: [], continue: undefined };
           }
-          const result = await getOrgDashboardTemplateExtension().listHistory(orgDashboardTemplateUid, options);
+          const result = await getDashboardTemplateExtension().listHistory(dashboardTemplateUid, options);
           return { items: result.items, continue: result.continueToken };
         })()
       : getDashboardAPI().then(async (api) => {
@@ -125,7 +125,7 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
 
     loader
       .then((result) => {
-        const versions = this.transformToRevisionModels(result.items, isOrgDashboardTemplate);
+        const versions = this.transformToRevisionModels(result.items, isDashboardTemplate);
         this.setState({
           isLoading: false,
           versions: [...(append ? (this.state.versions ?? []) : []), ...this.decorateVersions(versions)],
@@ -137,14 +137,14 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
       .finally(() => this.setState({ isAppending: false }));
   };
 
-  private transformToRevisionModels(items: Array<Resource<unknown>>, isOrgDashboardTemplate = false): RevisionModel[] {
+  private transformToRevisionModels(items: Array<Resource<unknown>>, isDashboardTemplate = false): RevisionModel[] {
     return items.map((item): RevisionModel => {
       // For org templates the revision `data` should be the embedded dashboard spec so the
       // Compare view diffs two embedded dashboards rather than two whole template specs —
       // which matches what actually gets mutated on save/restore in this flow.
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       const spec = item.spec as { dashboard?: object } & object;
-      const data = isOrgDashboardTemplate ? (spec.dashboard ?? {}) : spec;
+      const data = isDashboardTemplate ? (spec.dashboard ?? {}) : spec;
 
       return {
         id: item.metadata.generation ?? 0,

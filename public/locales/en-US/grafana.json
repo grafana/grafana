@@ -6728,6 +6728,11 @@
       "tooltip-red": "{{score}}% ({{found}}/{{total}}) of metrics match. This dashboard will require heavy query customization."
     },
     "create-from-scratch": "Create a dashboard from scratch instead",
+    "custom-dashboard-template-filters": {
+      "creator-placeholder": "Filter by created by",
+      "search-placeholder": "Search",
+      "sort-placeholder": "Sort"
+    },
     "dashboard-card": {
       "details": {
         "datasource": "Datasource",
@@ -6758,11 +6763,6 @@
       "tab-custom": "Custom templates",
       "tab-grafana": "Grafana-provisioned",
       "title": "Start a dashboard from a template"
-    },
-    "template-filters": {
-      "creator-placeholder": "Filter by created by",
-      "search-placeholder": "Search",
-      "sort-placeholder": "Sort"
     }
   },
   "dashboard-links": {
@@ -7061,6 +7061,18 @@
     },
     "dashboard-side-pane-new": {
       "dashboard-controls": "Dashboard controls"
+    },
+    "dashboard-template-edit-banner": {
+      "body": "Edits made will update this template. <2>If you wish to use this template as a dashboard, click here</2>",
+      "title": "You are editing {{ templateName }}"
+    },
+    "dashboard-template-saved-banner": {
+      "body": "The {{ templateName }} template was created. You can access it in the <1>template gallery</1>.",
+      "title": "Template created"
+    },
+    "dashboard-template-use-banner": {
+      "body": "Save this dashboard and edit it for your use case",
+      "title": "You are using {{ templateName }} template in a new dashboard"
     },
     "data-source-variable-form": {
       "data-source-options": "Data source options",
@@ -7661,18 +7673,6 @@
       "switch-options": "Switch options",
       "value-pair-type": "Value pair type",
       "value-pair-type-description": "Choose the type of values for the switch states"
-    },
-    "template-edit-banner": {
-      "body": "Edits made will update this template. <2>If you wish to use this template as a dashboard, click here</2>",
-      "title": "You are editing {{ templateName }}"
-    },
-    "template-saved-banner": {
-      "body": "The {{ templateName }} template was created. You can access it in the <1>template gallery</1>.",
-      "title": "Template created"
-    },
-    "template-use-banner": {
-      "body": "Save this dashboard and edit it for your use case",
-      "title": "You are using {{ templateName }} template in a new dashboard"
     },
     "text-box-variable": {
       "name-default-value": "Default value"
