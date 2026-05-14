@@ -1,4 +1,5 @@
 import { store } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { SceneGridLayout, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { DASHBOARD_FROM_LS_KEY, type DashboardDTO } from 'app/types/dashboard';
 
@@ -32,7 +33,14 @@ function buildTestScene(): DashboardScene {
 }
 
 describe('addPanelsOnLoadBehavior', () => {
+  const originalFT = config.featureToggles.dashboardNewLayouts;
+
+  beforeEach(() => {
+    config.featureToggles.dashboardNewLayouts = true;
+  });
+
   afterEach(() => {
+    config.featureToggles.dashboardNewLayouts = originalFT;
     store.delete(DASHBOARD_FROM_LS_KEY);
   });
 

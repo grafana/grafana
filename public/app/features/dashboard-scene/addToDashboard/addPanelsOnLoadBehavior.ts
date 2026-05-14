@@ -1,4 +1,5 @@
 import { store } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { SceneTimeRange } from '@grafana/scenes';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DASHBOARD_FROM_LS_KEY, type DashboardDTO } from 'app/types/dashboard';
@@ -34,6 +35,11 @@ export function addPanelsOnLoadBehavior(scene: DashboardScene) {
       }
     }
   };
+
+  if (!config.featureToggles.dashboardNewLayouts) {
+    addPanels();
+    return;
+  }
 
   if (scene.state.editPane.isActive) {
     addPanels();
