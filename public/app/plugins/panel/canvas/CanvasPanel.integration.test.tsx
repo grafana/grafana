@@ -374,6 +374,13 @@ const defaultOptions: Options = {
     type: 'frame',
   },
 };
+const getOptions = (optionsOverrides?: Partial<Options>): Options => {
+  const result = {
+    ...defaultOptions,
+    ...optionsOverrides,
+  };
+  return result;
+};
 
 const getSuccessIconButton = () => {
   const candidates = screen.getAllByRole('button').filter((el) => el instanceof HTMLElement);
@@ -396,6 +403,7 @@ describe('Canvas', () => {
   let onChangeTimeRange = jest.fn();
   const canvasPanelElement = (propsOverrides?: Partial<PanelProps<Options>>, eventBus = new EventBusSrv()) => {
     const timeRange = getDefaultTimeRange();
+
     return (
       <CanvasPanel
         onChangeTimeRange={onChangeTimeRange}
@@ -453,6 +461,28 @@ describe('Canvas', () => {
     });
   };
 
+  const getIndex = (textContent: string) => {
+    return screen.getAllByRole('button').findIndex((el) => {
+      return el.textContent === textContent;
+    });
+  };
+  const rightClickMenuSetup = async (propsOverrides?: Partial<PanelProps<Options>>) => {
+    const { rerender } = setUp(propsOverrides);
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 0));
+    });
+    rerender(canvasPanelElement({ renderCounter: 1 }));
+    expect(screen.getAllByRole('button')).toHaveLength(13);
+  };
+  const commonEditorMenuItemAssertions = () => {
+    expect(screen.getByRole('menuitem', { name: 'Delete' })).toBeVisible();
+    expect(screen.getByRole('menuitem', { name: 'Duplicate' })).toBeVisible();
+    expect(screen.getByRole('menuitem', { name: 'Bring to front' })).toBeVisible();
+    expect(screen.getByRole('menuitem', { name: 'Send to back' })).toBeVisible();
+    expect(screen.getByRole('menuitem', { name: 'Open Editor' })).toBeVisible();
+  };
+  const user = userEvent.setup();
+
   beforeEach(() => {
     jest.spyOn(getDashboardSrv(), 'getCurrent').mockReturnValue({ editable: true } as DashboardModel);
   });
@@ -461,173 +491,186 @@ describe('Canvas', () => {
     jest.restoreAllMocks();
   });
 
-  it('Renders - kitchen sink (canvasPanelPanZoom enabled)', () => {
-    config.featureToggles.canvasPanelPanZoom = true;
-    setUp();
+  describe('canvasPanelPanZoom enabled', () => {
+    beforeAll(() => (config.featureToggles.canvasPanelPanZoom = true));
+    afterAll(() => (config.featureToggles.canvasPanelPanZoom = false));
+    it('Renders - kitchen sink', () => {
+      setUp();
 
-    // Everything is a button!
-    const buttons = screen.getAllByRole('button');
-    expect(buttons).toHaveLength(13);
+      // Everything is a button!
+      const buttons = screen.getAllByRole('button');
+      expect(buttons).toHaveLength(13);
 
-    // Header
-    const titleElement = buttons[0];
-    expect(titleElement).toBeVisible();
-    expect(titleElement).toHaveTextContent('Field-based Icons (from value mappings):');
-    expect(titleElement).toHaveStyle('transform: translate(20px, 10px) rotate(0deg);');
+      // Header
+      const titleElement = buttons[0];
+      expect(titleElement).toBeVisible();
+      expect(titleElement).toHaveTextContent('Field-based Icons (from value mappings):');
+      expect(titleElement).toHaveStyle('transform: translate(20px, 10px) rotate(0deg);');
 
-    //Success SVG icon
-    expect(getSuccessIconButton()).toHaveTextContent('');
-    expect(getSuccessIconButton().querySelector('svg')).toBeVisible();
-    expect(getSuccessIconButton().querySelector('svg')).toHaveStyle(`fill: ${colors.success};`); // success color
-    expect(getSuccessIconButton()).toHaveStyle('transform: translate(50px, 60px) rotate(0deg);');
+      //Success SVG icon
+      expect(getSuccessIconButton()).toHaveTextContent('');
+      expect(getSuccessIconButton().querySelector('svg')).toBeVisible();
+      expect(getSuccessIconButton().querySelector('svg')).toHaveStyle(`fill: ${colors.success};`); // success color
+      expect(getSuccessIconButton()).toHaveStyle('transform: translate(50px, 60px) rotate(0deg);');
 
-    // Success label
-    expect(getSuccessIconText()).toHaveTextContent('Success');
-    expect(getSuccessIconText()).toHaveStyle('transform: translate(30px, 115px) rotate(0deg);');
+      // Success label
+      expect(getSuccessIconText()).toHaveTextContent('Success');
+      expect(getSuccessIconText()).toHaveStyle('transform: translate(30px, 115px) rotate(0deg);');
 
-    // Remaining buttons
-    expect(buttons[3].querySelector('svg')).toHaveStyle(`fill: ${colors.warning};`); // warning color
-    expect(buttons[4]).toHaveTextContent('warning');
-    expect(buttons[5].querySelector('svg')).toHaveStyle(`fill: ${colors.error};`); // error color
-    expect(buttons[6]).toHaveTextContent('error');
-    expect(buttons[7].querySelector('svg')).toHaveStyle(`fill: ${colors.unmapped}`); // unmapped color
-    expect(getUnmappedIconText()).toHaveTextContent('No mapping (14)');
-    expect(buttons[9]).toHaveTextContent('Fixed Relative Path:');
-    expect(buttons[11]).toHaveTextContent('Fixed Absolute URL:');
+      // Remaining buttons
+      expect(buttons[3].querySelector('svg')).toHaveStyle(`fill: ${colors.warning};`); // warning color
+      expect(buttons[4]).toHaveTextContent('warning');
+      expect(buttons[5].querySelector('svg')).toHaveStyle(`fill: ${colors.error};`); // error color
+      expect(buttons[6]).toHaveTextContent('error');
+      expect(buttons[7].querySelector('svg')).toHaveStyle(`fill: ${colors.unmapped}`); // unmapped color
+      expect(getUnmappedIconText()).toHaveTextContent('No mapping (14)');
+      expect(buttons[9]).toHaveTextContent('Fixed Relative Path:');
+      expect(buttons[11]).toHaveTextContent('Fixed Absolute URL:');
 
-    config.featureToggles.canvasPanelPanZoom = false;
-  });
-  it('Renders - kitchen sink (canvasPanelPanZoom disabled)', () => {
-    config.featureToggles.canvasPanelPanZoom = false;
-    setUp();
+      config.featureToggles.canvasPanelPanZoom = false;
+    });
+    it('Re-renders when width and height change without losing canvas elements', () => {
+      config.featureToggles.canvasPanelPanZoom = true;
+      let updateConnectionsSizeSpy: jest.SpyInstance | undefined;
 
-    // Everything is a button!
-    const buttons = screen.getAllByRole('button');
-    expect(buttons).toHaveLength(13);
+      const stubInfiniteViewer = {
+        getZoom: jest.fn(() => 1),
+        getScrollLeft: jest.fn(() => 0),
+        getScrollTop: jest.fn(() => 0),
+      };
+      const originalUpdateConnectionsSize = Scene.prototype.updateConnectionsSize;
 
-    // Header
-    const titleElement = buttons[0];
-    expect(titleElement).toBeVisible();
-    expect(titleElement).toHaveTextContent('Field-based Icons (from value mappings):');
-    expect(titleElement).toHaveStyle('top: 10px');
-    expect(titleElement).toHaveStyle('left: 20px');
-
-    //Success SVG icon
-    expect(getSuccessIconButton()).toHaveTextContent('');
-    expect(getSuccessIconButton().querySelector('svg')).toBeVisible();
-    expect(getSuccessIconButton().querySelector('svg')).toHaveStyle(`fill: ${colors.success};`); // success color
-    expect(getSuccessIconButton()).toHaveStyle('top: 60px');
-    expect(getSuccessIconButton()).toHaveStyle('left: 50px');
-
-    // Success label
-    expect(getSuccessIconText()).toHaveTextContent('Success');
-    expect(getSuccessIconText()).toHaveStyle('top: 115px');
-    expect(getSuccessIconText()).toHaveStyle('left: 30px');
-
-    // Remaining buttons
-    expect(buttons[3].querySelector('svg')).toHaveStyle(`fill: ${colors.warning};`); // warning color
-    expect(buttons[4]).toHaveTextContent('warning');
-    expect(buttons[5].querySelector('svg')).toHaveStyle(`fill: ${colors.error};`); // error color
-    expect(buttons[6]).toHaveTextContent('error');
-    expect(buttons[7].querySelector('svg')).toHaveStyle(`fill: ${colors.unmapped}`); // unmapped color
-    expect(getUnmappedIconText()).toHaveTextContent('No mapping (14)');
-    expect(buttons[9]).toHaveTextContent('Fixed Relative Path:');
-    expect(buttons[11]).toHaveTextContent('Fixed Absolute URL:');
-  });
-  it('Re-renders when width and height change without losing canvas elements (canvasPanelPanZoom enabled)', () => {
-    config.featureToggles.canvasPanelPanZoom = true;
-    let updateConnectionsSizeSpy: jest.SpyInstance | undefined;
-
-    const stubInfiniteViewer = {
-      getZoom: jest.fn(() => 1),
-      getScrollLeft: jest.fn(() => 0),
-      getScrollTop: jest.fn(() => 0),
-    };
-    const originalUpdateConnectionsSize = Scene.prototype.updateConnectionsSize;
-
-    // mock update connection size or infiniteViewer.getZoom will throw
-    updateConnectionsSizeSpy = jest.spyOn(Scene.prototype, 'updateConnectionsSize').mockImplementation(function (
-      this: Scene
-    ) {
-      const previous = this.infiniteViewer;
-      if (!previous) {
-        this.infiniteViewer = stubInfiniteViewer as unknown as Scene['infiniteViewer'];
+      // mock update connection size or infiniteViewer.getZoom will throw
+      updateConnectionsSizeSpy = jest.spyOn(Scene.prototype, 'updateConnectionsSize').mockImplementation(function (
+        this: Scene
+      ) {
+        const previous = this.infiniteViewer;
+        if (!previous) {
+          this.infiniteViewer = stubInfiniteViewer as unknown as Scene['infiniteViewer'];
+          return originalUpdateConnectionsSize.call(this);
+        }
         return originalUpdateConnectionsSize.call(this);
-      }
-      return originalUpdateConnectionsSize.call(this);
+      });
+
+      const { rerender } = setUp();
+      expect(screen.getAllByRole('button')).toHaveLength(13);
+      rerender(canvasPanelElement({ width: 800, height: 500 }));
+
+      const buttons = screen.getAllByRole('button');
+      expect(buttons).toHaveLength(13);
+      expect(buttons[0]).toBeVisible();
+      updateConnectionsSizeSpy?.mockRestore();
+      config.featureToggles.canvasPanelPanZoom = false;
     });
+    it.skip('zoom to content', async () => {
+      await rightClickMenuSetup({ options: getOptions({ zoomToContent: true }) });
 
-    const { rerender } = setUp();
-    expect(screen.getAllByRole('button')).toHaveLength(13);
-    rerender(canvasPanelElement({ width: 800, height: 500 }));
+      await user.pointer({ keys: '[MouseRight]', target: getSuccessIconText() });
+      await user.click(screen.getByRole('menuitem', { name: 'Open Editor' }));
 
-    const buttons = screen.getAllByRole('button');
-    expect(buttons).toHaveLength(13);
-    expect(buttons[0]).toBeVisible();
-    updateConnectionsSizeSpy?.mockRestore();
-    config.featureToggles.canvasPanelPanZoom = false;
+      expect(screen.getByText('Canvas Inline Editor')).toBeVisible();
+      screen.logTestingPlaygroundURL();
+    });
   });
-  it('Re-renders when width and height change without losing canvas elements (canvasPanelPanZoom disabled)', () => {
-    let updateConnectionsSizeSpy: jest.SpyInstance | undefined;
-    config.featureToggles.canvasPanelPanZoom = false;
 
-    const { rerender } = setUp();
-    const canvas = screen.getByTestId('canvas-scene');
-    expect(canvas).toHaveStyle(`width: ${width}px`);
-    expect(canvas).toHaveStyle(`height: ${height}px`);
+  describe('canvasPanelPanZoom disabled', () => {
+    it('Renders - kitchen sink', () => {
+      setUp();
 
-    rerender(canvasPanelElement({ width: 800, height: 500 }));
+      // Everything is a button!
+      const buttons = screen.getAllByRole('button');
+      expect(buttons).toHaveLength(13);
 
-    expect(canvas).toHaveStyle(`width: 800px`);
-    expect(canvas).toHaveStyle(`height: 500px`);
+      // Header
+      const titleElement = buttons[0];
+      expect(titleElement).toBeVisible();
+      expect(titleElement).toHaveTextContent('Field-based Icons (from value mappings):');
+      expect(titleElement).toHaveStyle('top: 10px');
+      expect(titleElement).toHaveStyle('left: 20px');
 
-    const buttons = screen.getAllByRole('button');
-    expect(buttons).toHaveLength(13);
-    expect(buttons[0]).toBeVisible();
-    updateConnectionsSizeSpy?.mockRestore();
-  });
-  it('Double click edit', async () => {
-    jest.spyOn(getDashboardSrv(), 'getCurrent').mockReturnValue({ editable: true } as DashboardModel);
-    const elementFromPointTarget: { current: HTMLElement | null } = { current: null };
-    Object.defineProperty(document, 'elementFromPoint', {
-      configurable: true,
-      value: () => elementFromPointTarget.current ?? document.body,
+      //Success SVG icon
+      expect(getSuccessIconButton()).toHaveTextContent('');
+      expect(getSuccessIconButton().querySelector('svg')).toBeVisible();
+      expect(getSuccessIconButton().querySelector('svg')).toHaveStyle(`fill: ${colors.success};`); // success color
+      expect(getSuccessIconButton()).toHaveStyle('top: 60px');
+      expect(getSuccessIconButton()).toHaveStyle('left: 50px');
+
+      // Success label
+      expect(getSuccessIconText()).toHaveTextContent('Success');
+      expect(getSuccessIconText()).toHaveStyle('top: 115px');
+      expect(getSuccessIconText()).toHaveStyle('left: 30px');
+
+      // Remaining buttons
+      expect(buttons[3].querySelector('svg')).toHaveStyle(`fill: ${colors.warning};`); // warning color
+      expect(buttons[4]).toHaveTextContent('warning');
+      expect(buttons[5].querySelector('svg')).toHaveStyle(`fill: ${colors.error};`); // error color
+      expect(buttons[6]).toHaveTextContent('error');
+      expect(buttons[7].querySelector('svg')).toHaveStyle(`fill: ${colors.unmapped}`); // unmapped color
+      expect(getUnmappedIconText()).toHaveTextContent('No mapping (14)');
+      expect(buttons[9]).toHaveTextContent('Fixed Relative Path:');
+      expect(buttons[11]).toHaveTextContent('Fixed Absolute URL:');
     });
-    const { rerender, eventBus } = setUpWithPanelContext();
-    await act(async () => {
-      await new Promise((r) => setTimeout(r, 0));
+    it('Re-renders when width and height change without losing canvas elements', () => {
+      let updateConnectionsSizeSpy: jest.SpyInstance | undefined;
+
+      const { rerender } = setUp();
+      const canvas = screen.getByTestId('canvas-scene');
+      expect(canvas).toHaveStyle(`width: ${width}px`);
+      expect(canvas).toHaveStyle(`height: ${height}px`);
+
+      rerender(canvasPanelElement({ width: 800, height: 500 }));
+
+      expect(canvas).toHaveStyle(`width: 800px`);
+      expect(canvas).toHaveStyle(`height: 500px`);
+
+      const buttons = screen.getAllByRole('button');
+      expect(buttons).toHaveLength(13);
+      expect(buttons[0]).toBeVisible();
+      updateConnectionsSizeSpy?.mockRestore();
     });
-    rerender(canvasPanelElement({ renderCounter: 1 }, eventBus));
+    it('Double click edit', async () => {
+      jest.spyOn(getDashboardSrv(), 'getCurrent').mockReturnValue({ editable: true } as DashboardModel);
+      const elementFromPointTarget: { current: HTMLElement | null } = { current: null };
+      Object.defineProperty(document, 'elementFromPoint', {
+        configurable: true,
+        value: () => elementFromPointTarget.current ?? document.body,
+      });
+      const { rerender, eventBus } = setUpWithPanelContext();
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 0));
+      });
+      rerender(canvasPanelElement({ renderCounter: 1 }, eventBus));
 
-    const unmappedIconText = getUnmappedIconText();
-    elementFromPointTarget.current = unmappedIconText;
+      const unmappedIconText = getUnmappedIconText();
+      elementFromPointTarget.current = unmappedIconText;
 
-    expect(unmappedIconText).toHaveTextContent('No mapping (14)');
-    const user = userEvent.setup();
-    await user.click(unmappedIconText);
-    await user.dblClick(unmappedIconText);
+      expect(unmappedIconText).toHaveTextContent('No mapping (14)');
+      const user = userEvent.setup();
+      await user.click(unmappedIconText);
+      await user.dblClick(unmappedIconText);
 
-    const input = screen.getByRole('textbox');
-    expect(input).toHaveFocus();
-    expect(input).toHaveValue('No mapping (14)');
-    await user.clear(input);
-    await user.keyboard('can only edit fields with no mapping');
-    expect(input).toHaveValue('can only edit fields with no mapping');
+      const input = screen.getByRole('textbox');
+      expect(input).toHaveFocus();
+      expect(input).toHaveValue('No mapping (14)');
+      await user.clear(input);
+      await user.keyboard('can only edit fields with no mapping');
+      expect(input).toHaveValue('can only edit fields with no mapping');
 
-    // TextEdit exits edit mode on Enter
-    await user.keyboard('{Enter}');
+      // TextEdit exits edit mode on Enter
+      await user.keyboard('{Enter}');
 
-    const lastOptions = onOptionsChange.mock.calls.at(-1)![0] as Options;
-    const unmappedTextEl = lastOptions.root.elements.find((el) => el.name === 'Unmapped Text');
-    expect(unmappedTextEl).toEqual(
-      expect.objectContaining({
-        config: expect.objectContaining({
-          text: expect.objectContaining({
-            fixed: 'can only edit fields with no mapping',
+      const lastOptions = onOptionsChange.mock.calls.at(-1)![0] as Options;
+      const unmappedTextEl = lastOptions.root.elements.find((el) => el.name === 'Unmapped Text');
+      expect(unmappedTextEl).toEqual(
+        expect.objectContaining({
+          config: expect.objectContaining({
+            text: expect.objectContaining({
+              fixed: 'can only edit fields with no mapping',
+            }),
           }),
-        }),
-      })
-    );
+        })
+      );
+    });
   });
 
   describe.each([
@@ -649,29 +692,6 @@ describe('Canvas', () => {
     });
 
     describe('right click menu', () => {
-      const user = userEvent.setup();
-
-      const getIndex = (textContent: string) => {
-        return screen.getAllByRole('button').findIndex((el) => {
-          return el.textContent === textContent;
-        });
-      };
-      const rightClickMenuSetup = async () => {
-        const { rerender } = setUp();
-        await act(async () => {
-          await new Promise((r) => setTimeout(r, 0));
-        });
-        rerender(canvasPanelElement({ renderCounter: 1 }));
-        expect(screen.getAllByRole('button')).toHaveLength(13);
-      };
-      const commonEditorMenuItemAssertions = () => {
-        expect(screen.getByRole('menuitem', { name: 'Delete' })).toBeVisible();
-        expect(screen.getByRole('menuitem', { name: 'Duplicate' })).toBeVisible();
-        expect(screen.getByRole('menuitem', { name: 'Bring to front' })).toBeVisible();
-        expect(screen.getByRole('menuitem', { name: 'Send to back' })).toBeVisible();
-        expect(screen.getByRole('menuitem', { name: 'Open Editor' })).toBeVisible();
-      };
-
       it('Renders - icon', async () => {
         await rightClickMenuSetup();
         await user.pointer({ keys: '[MouseRight]', target: getSuccessIconButton() });
@@ -733,7 +753,6 @@ describe('Canvas', () => {
 
         expect(getIndex(getSuccessIconText().textContent)).toBe(0);
       });
-
       it('Opens editor', async () => {
         await rightClickMenuSetup();
 
@@ -742,14 +761,25 @@ describe('Canvas', () => {
 
         expect(screen.getByText('Canvas Inline Editor')).toBeVisible();
       });
-    });
 
-    describe('Canvas Inline Editor', () => {
-      describe('Selected element', () => {
-        // @todo
-      });
-      describe('Element management', () => {
-        // @todo
+      describe('Canvas Inline Editor', () => {
+        it('closes', async () => {
+          await rightClickMenuSetup();
+
+          await user.pointer({ keys: '[MouseRight]', target: getSuccessIconText() });
+          await user.click(screen.getByRole('menuitem', { name: 'Open Editor' }));
+
+          expect(screen.getByText('Canvas Inline Editor')).toBeVisible();
+
+          // Click close button
+          await userEvent.click(screen.getByTestId('icon-times'));
+          expect(screen.queryByText('Canvas Inline Editor')).not.toBeInTheDocument();
+        });
+
+        describe('Selected element', () => {});
+        describe('Element management', () => {
+          // @todo
+        });
       });
     });
   });
