@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"reflect"
 	"strings"
@@ -1199,5 +1201,85 @@ func TestCheckHealth(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Equal(t, backend.HealthStatusError, res.Status)
 		assert.Contains(t, res.Message, "Default project is required")
+	})
+
+	t.Run("oauthPassthrough surfaces friendlier message on 401 Unauthorized", func(t *testing.T) {
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusUnauthorized)
+		}))
+		t.Cleanup(ts.Close)
+
+		im := datasource.NewInstanceManager(func(_ context.Context, _ backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return &datasourceInfo{
+				authenticationType: oauthPassthroughAuthentication,
+				oauthPassThru:      true,
+				defaultProject:     "p1",
+				services: map[string]datasourceService{
+					cloudMonitor: {url: ts.URL, client: http.DefaultClient},
+				},
+			}, nil
+		})
+		service := &Service{im: im}
+		res, err := service.CheckHealth(context.Background(), &backend.CheckHealthRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			},
+		})
+		require.NoError(t, err)
+		assert.Equal(t, backend.HealthStatusError, res.Status)
+		assert.Contains(t, res.Message, "authenticated via Google OAuth")
+	})
+
+	t.Run("oauthPassthrough surfaces friendlier message on 403 Forbidden", func(t *testing.T) {
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusForbidden)
+		}))
+		t.Cleanup(ts.Close)
+
+		im := datasource.NewInstanceManager(func(_ context.Context, _ backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return &datasourceInfo{
+				authenticationType: oauthPassthroughAuthentication,
+				oauthPassThru:      true,
+				defaultProject:     "p1",
+				services: map[string]datasourceService{
+					cloudMonitor: {url: ts.URL, client: http.DefaultClient},
+				},
+			}, nil
+		})
+		service := &Service{im: im}
+		res, err := service.CheckHealth(context.Background(), &backend.CheckHealthRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			},
+		})
+		require.NoError(t, err)
+		assert.Equal(t, backend.HealthStatusError, res.Status)
+		assert.Contains(t, res.Message, "Monitoring Viewer role")
+	})
+
+	t.Run("non-oauthPassthrough preserves the original response status on errors", func(t *testing.T) {
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusForbidden)
+		}))
+		t.Cleanup(ts.Close)
+
+		im := datasource.NewInstanceManager(func(_ context.Context, _ backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return &datasourceInfo{
+				authenticationType: jwtAuthentication,
+				defaultProject:     "p1",
+				services: map[string]datasourceService{
+					cloudMonitor: {url: ts.URL, client: http.DefaultClient},
+				},
+			}, nil
+		})
+		service := &Service{im: im}
+		res, err := service.CheckHealth(context.Background(), &backend.CheckHealthRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			},
+		})
+		require.NoError(t, err)
+		assert.Equal(t, backend.HealthStatusError, res.Status)
+		assert.NotContains(t, res.Message, "Monitoring Viewer role")
 	})
 }

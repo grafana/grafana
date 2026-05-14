@@ -61,6 +61,13 @@ const (
 	perSeriesAlignerDefault        = "ALIGN_MEAN"
 )
 
+// CheckHealth messages for OAuth passthrough failure modes admins hit most often.
+const (
+	oauthPassthroughMissingDefaultProjectMessage = "Default project is required when using OAuth passthrough authentication."
+	oauthPassthroughUnauthorizedMessage          = "401 Unauthorized: Usage of this data source requires you to be authenticated via Google OAuth. If you are signed in via Google, your session token may have expired — sign out and back in to refresh it."
+	oauthPassthroughForbiddenMessage             = "403 Forbidden: Permission denied. Make sure the https://www.googleapis.com/auth/monitoring.read scope is configured in Grafana's Google OAuth settings, and that the signed-in user has the Monitoring Viewer role on the default project."
+)
+
 func ProvideService(httpClientProvider *httpclient.Provider) *Service {
 	s := &Service{
 		httpClientProvider: *httpClientProvider,
@@ -96,7 +103,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	if dsInfo.oauthPassThru && defaultProject == "" {
 		return &backend.CheckHealthResult{
 			Status:  backend.HealthStatusError,
-			Message: "Default project is required when using OAuth passthrough authentication.",
+			Message: oauthPassthroughMissingDefaultProjectMessage,
 		}, nil
 	}
 
@@ -121,6 +128,14 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	if res.StatusCode != 200 {
 		status = backend.HealthStatusError
 		message = res.Status
+		if dsInfo.oauthPassThru {
+			switch res.StatusCode {
+			case http.StatusUnauthorized:
+				message = oauthPassthroughUnauthorizedMessage
+			case http.StatusForbidden:
+				message = oauthPassthroughForbiddenMessage
+			}
+		}
 	}
 	return &backend.CheckHealthResult{
 		Status:  status,
