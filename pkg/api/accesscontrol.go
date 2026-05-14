@@ -360,7 +360,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 					// Need to leave the permissions as they are, so that the seeder doesn't replace permissions when they have been removed from the basic role by the user
 					// Otherwise we could split this into ac.ScopeAnnotationsTypeOrganization and ac.ScopeAnnotationsTypeDashboard scopes and eventually remove the dashboard scope.
 					// https://github.com/grafana/identity-access-team/issues/524
-					{Action: ac.ActionAnnotationsRead, Scope: ac.ScopeAnnotationsAll},
+					{Action: ac.ActionAnnotationsRead, Scope: ac.ScopeAnnotationsTypeOrganization},
 				},
 			},
 			Grants: []string{string(org.RoleViewer)},
@@ -377,9 +377,9 @@ func (hs *HTTPServer) declareFixedRoles() error {
 					// Need to leave the permissions as they are, so that the seeder doesn't replace permissions when they have been removed from the basic role by the user
 					// Otherwise we could split this into ac.ScopeAnnotationsTypeOrganization and ac.ScopeAnnotationsTypeDashboard scopes and eventually remove the dashboard scope.
 					// https://github.com/grafana/identity-access-team/issues/524
-					{Action: ac.ActionAnnotationsCreate, Scope: ac.ScopeAnnotationsAll},
-					{Action: ac.ActionAnnotationsDelete, Scope: ac.ScopeAnnotationsAll},
-					{Action: ac.ActionAnnotationsWrite, Scope: ac.ScopeAnnotationsAll},
+					{Action: ac.ActionAnnotationsCreate, Scope: ac.ScopeAnnotationsTypeOrganization},
+					{Action: ac.ActionAnnotationsDelete, Scope: ac.ScopeAnnotationsTypeOrganization},
+					{Action: ac.ActionAnnotationsWrite, Scope: ac.ScopeAnnotationsTypeOrganization},
 				},
 			},
 			Grants: []string{string(org.RoleEditor)},

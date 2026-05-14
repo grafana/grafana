@@ -262,7 +262,7 @@ func (e *DataSourceHandler) processFrame(frame *data.Frame, qm *dataQueryModel, 
 				}
 			}
 		}
-		if qm.FillMissing != nil {
+		if qm.FillMissing != nil && qm.Interval > 0 {
 			// we align the start-time
 			startUnixTime := qm.TimeRange.From.Unix() / int64(qm.Interval.Seconds()) * int64(qm.Interval.Seconds())
 			alignedTimeRange := backend.TimeRange{
