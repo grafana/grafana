@@ -83,10 +83,12 @@ func TestNormalizeGrafanaSQLRequest_ConvertsSpansQuery(t *testing.T) {
 	out, errs := s.normalizeGrafanaSQLRequest(context.Background(), req)
 	require.Nil(t, errs)
 	require.Len(t, out.Queries, 1)
-	require.Equal(t, string(dataquery.TempoQueryTypeTraceqlSearch), out.Queries[0].QueryType)
+	require.Equal(t, string(dataquery.TempoQueryTypeTraceql), out.Queries[0].QueryType)
 
 	var model dataquery.TempoQuery
 	require.NoError(t, json.Unmarshal(out.Queries[0].JSON, &model))
+	require.NotNil(t, model.QueryType)
+	require.Equal(t, string(dataquery.TempoQueryTypeTraceql), *model.QueryType)
 	require.NotNil(t, model.Query)
 	require.Equal(t, `{resource.service.name="api"}`, *model.Query)
 	require.NotNil(t, model.TableType)

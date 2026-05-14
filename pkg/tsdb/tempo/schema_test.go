@@ -6,6 +6,7 @@ import (
 
 	apidata "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/tsdb/tempo/kinds/dataquery"
+	schemas "github.com/grafana/schemads"
 	"github.com/stretchr/testify/require"
 )
 
@@ -15,14 +16,40 @@ const (
 )
 
 func TestGlobalColumnValuesErrors(t *testing.T) {
-	fixed := map[string]struct{}{tempoSpanColTraceIDHidden: {}}
-	errs := globalColumnValuesErrors([]string{tempoSpanColTraceIDHidden, "resource.service.name"}, fixed, "upstream failed")
+	errs := globalColumnValuesErrors([]string{tempoSpanColTraceIDHidden, "resource.service.name"}, "upstream failed")
 	require.Len(t, errs, 1)
 	require.Equal(t, "upstream failed", errs["resource.service.name"])
 
-	errsOnlyFixed := globalColumnValuesErrors([]string{tempoSpanColSpanID}, spansFixedColumnNames(), "no ds")
+	errsOnlyFixed := globalColumnValuesErrors([]string{tempoSpanColSpanID}, "no ds")
 	require.Len(t, errsOnlyFixed, 1)
 	require.Equal(t, "no ds", errsOnlyFixed[""])
+}
+
+func TestSpansFixedColumnsSupportsValues(t *testing.T) {
+	for _, c := range spansFixedColumns() {
+		require.NotNil(t, c.SupportsValues, "column %q", c.Name)
+		switch c.Name {
+		case tempoSpanColName, tempoSpanColDuration:
+			require.True(t, *c.SupportsValues, "column %q", c.Name)
+		default:
+			require.False(t, *c.SupportsValues, "column %q", c.Name)
+		}
+	}
+}
+
+func TestMergeSpansColumnsUnique_DropsDynamicWhenNameMatchesFixed(t *testing.T) {
+	fixed := []schemas.Column{{Name: "name"}, {Name: "duration"}}
+	dynamic := []schemas.Column{
+		{Name: "name", Description: "dup from tags"},
+		{Name: "resource.svc", Description: "ok"},
+		{Name: "duration"},
+	}
+	got := mergeSpansColumnsUnique(fixed, dynamic)
+	names := make([]string, len(got))
+	for i, c := range got {
+		names[i] = c.Name
+	}
+	require.Equal(t, []string{"name", "duration", "resource.svc"}, names)
 }
 
 func TestFlattenTempoSearchTagScopesToColumnNames(t *testing.T) {

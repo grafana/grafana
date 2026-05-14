@@ -86,6 +86,8 @@ func spansFixedColumnNames() map[string]struct{} {
 }
 
 func spansFixedColumns() []schemas.Column {
+	falsePtr := schemaBoolPtr(false)
+	truePtr := schemaBoolPtr(true)
 	traceqlStringOps := traceqlStringColumnOperators()
 	timeOps := []schemas.Operator{
 		schemas.OperatorGreaterThan,
@@ -102,14 +104,47 @@ func spansFixedColumns() []schemas.Column {
 		schemas.OperatorLessThanOrEqual,
 	}
 	return []schemas.Column{
-		{Name: tempoSpanColTraceIDHidden, Type: schemas.ColumnTypeString, Operators: traceqlStringOps, Description: "Trace ID (used for drill-down links)."},
-		{Name: tempoSpanColTraceService, Type: schemas.ColumnTypeString, Operators: traceqlStringOps, Description: "Root trace service name."},
-		{Name: tempoSpanColTraceName, Type: schemas.ColumnTypeString, Operators: traceqlStringOps, Description: "Root trace name."},
-		{Name: tempoSpanColSpanID, Type: schemas.ColumnTypeString, Operators: traceqlStringOps, Description: "Span ID."},
-		{Name: tempoSpanColTime, Type: schemas.ColumnTypeDatetime, Operators: timeOps, Description: "Span start time."},
-		{Name: tempoSpanColName, Type: schemas.ColumnTypeString, Operators: traceqlStringOps, Description: "Span name."},
-		{Name: tempoSpanColDuration, Type: schemas.ColumnTypeFloat64, Operators: durOps, Description: "Span duration in nanoseconds."},
+		{Name: tempoSpanColTraceIDHidden, Type: schemas.ColumnTypeString, Operators: traceqlStringOps, Description: "Trace ID (used for drill-down links).", SupportsValues: falsePtr},
+		{Name: tempoSpanColTraceService, Type: schemas.ColumnTypeString, Operators: traceqlStringOps, Description: "Root trace service name.", SupportsValues: falsePtr},
+		{Name: tempoSpanColTraceName, Type: schemas.ColumnTypeString, Operators: traceqlStringOps, Description: "Root trace name.", SupportsValues: falsePtr},
+		{Name: tempoSpanColSpanID, Type: schemas.ColumnTypeString, Operators: traceqlStringOps, Description: "Span ID.", SupportsValues: falsePtr},
+		{Name: tempoSpanColTime, Type: schemas.ColumnTypeDatetime, Operators: timeOps, Description: "Span start time.", SupportsValues: falsePtr},
+		{Name: tempoSpanColName, Type: schemas.ColumnTypeString, Operators: traceqlStringOps, Description: "Span name.", SupportsValues: truePtr},
+		{Name: tempoSpanColDuration, Type: schemas.ColumnTypeFloat64, Operators: durOps, Description: "Span duration in nanoseconds.", SupportsValues: truePtr},
 	}
+}
+
+func schemaBoolPtr(b bool) *bool {
+	return &b
+}
+
+// mergeSpansColumnsUnique returns fixed span columns followed by dynamic tag columns,
+// omitting any dynamic column whose Name collides with a fixed column (e.g. intrinsic
+// "name" / "duration" from Tempo search tags API vs the same keys in spansFixedColumns).
+func mergeSpansColumnsUnique(fixed, dynamic []schemas.Column) []schemas.Column {
+	seen := make(map[string]struct{}, len(fixed)+len(dynamic))
+	out := make([]schemas.Column, 0, len(fixed)+len(dynamic))
+	for _, c := range fixed {
+		if c.Name == "" {
+			continue
+		}
+		if _, ok := seen[c.Name]; ok {
+			continue
+		}
+		seen[c.Name] = struct{}{}
+		out = append(out, c)
+	}
+	for _, c := range dynamic {
+		if c.Name == "" {
+			continue
+		}
+		if _, ok := seen[c.Name]; ok {
+			continue
+		}
+		seen[c.Name] = struct{}{}
+		out = append(out, c)
+	}
+	return out
 }
 
 func tempoSpansCapabilities() *schemas.DatasourceCapabilities {
@@ -127,7 +162,7 @@ func (p *tempoSchemaProvider) Schema(ctx context.Context, _ *schemas.SchemaReque
 		p.logger.Warn("tempo schemads: failed to load tags for schema", "error", tagErr)
 		tagCols = nil
 	}
-	cols := append(append([]schemas.Column{}, spansFixedColumns()...), tagCols...)
+	cols := mergeSpansColumnsUnique(spansFixedColumns(), tagCols)
 	table := schemas.Table{
 		Name:    tempoSchemadsTableSpans,
 		Columns: cols,
@@ -177,9 +212,7 @@ func (p *tempoSchemaProvider) Columns(ctx context.Context, req *schemas.ColumnsR
 		if t != tempoSchemadsTableSpans {
 			continue
 		}
-		merged := make([]schemas.Column, 0, len(fixed)+len(tagCols))
-		merged = append(merged, fixed...)
-		merged = append(merged, tagCols...)
+		merged := mergeSpansColumnsUnique(fixed, tagCols)
 		out[tempoSchemadsTableSpans] = merged
 	}
 	resp := &schemas.ColumnsResponse{Columns: out}
@@ -199,13 +232,11 @@ func (p *tempoSchemaProvider) ColumnValues(ctx context.Context, req *schemas.Col
 		return &schemas.ColumnValuesResponse{ColumnValues: out}, nil
 	}
 
-	fixed := spansFixedColumnNames()
-
 	dsInfo, err := p.dsInfo(ctx)
 	if err != nil {
 		return &schemas.ColumnValuesResponse{
 			ColumnValues: out,
-			Errors:       globalColumnValuesErrors(req.Columns, fixed, err.Error()),
+			Errors:       globalColumnValuesErrors(req.Columns, err.Error()),
 		}, nil
 	}
 
@@ -213,14 +244,15 @@ func (p *tempoSchemaProvider) ColumnValues(ctx context.Context, req *schemas.Col
 	if err != nil {
 		return &schemas.ColumnValuesResponse{
 			ColumnValues: out,
-			Errors:       globalColumnValuesErrors(req.Columns, fixed, err.Error()),
+			Errors:       globalColumnValuesErrors(req.Columns, err.Error()),
 		}, nil
 	}
 
 	tagCols := tagColumnNamesSetFromScopes(scopes)
+	noTagValues := spansFixedColumnNamesNoTagValues()
 	errs := make(map[string]string)
 	for _, col := range req.Columns {
-		if _, isFixed := fixed[col]; isFixed {
+		if _, skip := noTagValues[col]; skip {
 			continue
 		}
 		if _, ok := tagCols[col]; !ok {
@@ -240,14 +272,29 @@ func (p *tempoSchemaProvider) ColumnValues(ctx context.Context, req *schemas.Col
 	return &schemas.ColumnValuesResponse{ColumnValues: out, Errors: errs}, nil
 }
 
-// globalColumnValuesErrors attaches msg to each requested column that is not a
-// fixed span column (those never use tag-values). If there are no such columns,
-// msg is returned under the empty key for schemads consumers that expect a
-// single global error.
-func globalColumnValuesErrors(columns []string, fixed map[string]struct{}, msg string) map[string]string {
+// spansFixedColumnNamesNoTagValues is the set of fixed span columns that never use the
+// Tempo tag-values API. It is derived from spansFixedColumns (SupportsValues == false)
+// so metadata and ColumnValues stay aligned.
+func spansFixedColumnNamesNoTagValues() map[string]struct{} {
+	m := make(map[string]struct{})
+	for _, c := range spansFixedColumns() {
+		if c.SupportsValues != nil && *c.SupportsValues {
+			continue
+		}
+		m[c.Name] = struct{}{}
+	}
+	return m
+}
+
+// globalColumnValuesErrors attaches msg to each requested column that can use tag-values,
+// except fixed columns that never have that API (see spansFixedColumnNamesNoTagValues).
+// If there are no such columns, msg is returned under the empty key for schemads consumers
+// that expect a single global error.
+func globalColumnValuesErrors(columns []string, msg string) map[string]string {
+	noTag := spansFixedColumnNamesNoTagValues()
 	errs := make(map[string]string)
 	for _, col := range columns {
-		if _, isFixed := fixed[col]; isFixed {
+		if _, skip := noTag[col]; skip {
 			continue
 		}
 		errs[col] = msg
@@ -263,14 +310,20 @@ func (p *tempoSchemaProvider) dynamicTagColumns(ctx context.Context, dsInfo *Dat
 	if err != nil {
 		return nil, err
 	}
+	fixedNames := spansFixedColumnNames()
 	names := flattenTempoSearchTagScopesToColumnNames(scopes)
+	truePtr := schemaBoolPtr(true)
 	cols := make([]schemas.Column, 0, len(names))
 	for _, n := range names {
+		if _, isFixed := fixedNames[n]; isFixed {
+			continue
+		}
 		cols = append(cols, schemas.Column{
-			Name:        n,
-			Type:        schemas.ColumnTypeString,
-			Operators:   traceqlStringColumnOperators(),
-			Description: "Attribute tag from Tempo.",
+			Name:           n,
+			Type:           schemas.ColumnTypeString,
+			Operators:      traceqlStringColumnOperators(),
+			Description:    "Attribute tag from Tempo.",
+			SupportsValues: truePtr,
 		})
 	}
 	return cols, nil

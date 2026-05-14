@@ -13,7 +13,11 @@ import (
 	schemas "github.com/grafana/schemads"
 )
 
-// normalizeGrafanaSQLRequest translates dsabstraction Grafana SQL payloads into Tempo traceqlSearch queries.
+// normalizeGrafanaSQLRequest translates dsabstraction Grafana SQL payloads into Tempo queries.
+//
+// Normalized span-table queries use queryType "traceql" (not "traceqlSearch"): runTraceQlQuery routes
+// metrics vs search via isMetricsQuery(query), not via queryType. tableType "spans" is still required
+// so Search() selects span frames instead of defaulting to traces.
 // sqlErrors maps refId to validation or conversion errors for queries that were not converted.
 func (s *Service) normalizeGrafanaSQLRequest(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataRequest, map[string]error) {
 	_ = ctx
@@ -53,7 +57,7 @@ func (s *Service) normalizeGrafanaSQLRequest(ctx context.Context, req *backend.Q
 
 		model := dataquery.NewTempoQuery()
 		model.RefId = q.RefID
-		qt := string(dataquery.TempoQueryTypeTraceqlSearch)
+		qt := string(dataquery.TempoQueryTypeTraceql)
 		model.QueryType = &qt
 		model.Query = &traceQL
 		tt := dataquery.SearchTableTypeSpans
@@ -70,7 +74,7 @@ func (s *Service) normalizeGrafanaSQLRequest(ctx context.Context, req *backend.Q
 
 		out = append(out, backend.DataQuery{
 			RefID:         q.RefID,
-			QueryType:     string(dataquery.TempoQueryTypeTraceqlSearch),
+			QueryType:     string(dataquery.TempoQueryTypeTraceql),
 			TimeRange:     q.TimeRange,
 			Interval:      q.Interval,
 			MaxDataPoints: q.MaxDataPoints,
