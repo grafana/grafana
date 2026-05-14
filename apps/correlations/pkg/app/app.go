@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 	"fmt"
-	"strconv"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -61,14 +60,8 @@ const (
 	// TODO can datasources have periods in their names/uids? will using this work or should we use something else?
 
 	// SourceRefLabelKey is the label key for the composite source reference (group.name aka datasource type.datasource UID)
-	// this is used for filtering when we don't care about if the correlation was provisioned (ie, showing all correlations for the selected datasource(s) in explore)
+	// We use this because explore can call for more than one datasource at a time and field selectors can't handle multiple values
 	SourceRefLabelKey = "correlations.grafana.app/sourceDS-ref"
-	// SourceRefProvLabelKey is the label key for the composite source reference and a boolean for if the correlation was provisioned (group.name.(true|false))
-	// this is used when we need to filter correlations by their provisioned status (ie: deleting all previously provisioned correlations by datasource)
-	SourceRefProvLabelKey = "correlations.grafana.app/sourceDSProv-ref"
-
-	// TargetRefLabelKey is the label key for the composite target reference (group.name)
-	TargetRefLabelKey = "correlations.grafana.app/targetDS-ref"
 )
 
 func DataSourceMutator() *simple.Mutator {
@@ -83,26 +76,10 @@ func DataSourceMutator() *simple.Mutator {
 				c.Labels = make(map[string]string)
 			}
 
-			managedBy := c.Annotations["grafana.app/managedBy"]
-			isManaged := managedBy != ""
-
 			// Derive source label: "group.name" format
 			c.Labels[SourceRefLabelKey] = fmt.Sprintf("%s.%s",
 				c.Spec.Source.Group,
 				c.Spec.Source.Name)
-
-			c.Labels[SourceRefProvLabelKey] = fmt.Sprintf("%s.%s.%s",
-				c.Spec.Source.Group,
-				c.Spec.Source.Name, strconv.FormatBool(isManaged))
-
-			// Derive target label if target is present
-			if c.Spec.Target != nil {
-				c.Labels[TargetRefLabelKey] = fmt.Sprintf("%s.%s",
-					c.Spec.Target.Group,
-					c.Spec.Target.Name)
-			} else {
-				delete(c.Labels, TargetRefLabelKey)
-			}
 
 			return &app.MutatingResponse{UpdatedObject: c}, nil
 		},
