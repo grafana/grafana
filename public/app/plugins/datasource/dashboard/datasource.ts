@@ -1,4 +1,4 @@
-import { Observable, debounce, defer, finalize, first, interval, map, of } from 'rxjs';
+import { Observable, debounce, defer, filter, finalize, first, interval, map, of } from 'rxjs';
 
 import {
   DataSourceApi,
@@ -11,6 +11,7 @@ import {
   PanelData,
   DataFrame,
   LoadingState,
+  TimeRange,
 } from '@grafana/data';
 import { SceneDataProvider, SceneDataTransformer, SceneObject } from '@grafana/scenes';
 import {
@@ -22,6 +23,13 @@ import {
 import { MIXED_REQUEST_PREFIX } from '../mixed/MixedDataSource';
 
 import { DashboardQuery } from './types';
+
+function isSameRange(a: TimeRange | undefined, b: TimeRange | undefined): boolean {
+  if (!a?.from || !a?.to || !b?.from || !b?.to) {
+    return false;
+  }
+  return a.from.valueOf() === b.from.valueOf() && a.to.valueOf() === b.to.valueOf();
+}
 
 /**
  * This should not really be called
@@ -77,7 +85,31 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
 
       const cleanUp = activateSceneObjectAndParentTree(sourceDataProvider!);
 
+      // Only the Mixed-DS path uses `first(Done || Error)` to complete the
+      // substream, so only that path needs to defend against a stale Done
+      // replayed from the upstream SceneQueryRunner's ReplaySubject after a
+      // time-range change. The non-Mixed path stays open and naturally
+      // re-emits when the fresh Done arrives, so adding the filter there
+      // could only hurt: a chain panel with a `PanelTimeRange` override
+      // legitimately observes ranges that differ from the upstream and we
+      // would block its terminal emission indefinitely.
+      const isMixedDs = options.requestId.includes(MIXED_REQUEST_PREFIX);
+
       return sourceDataProvider!.getResultsStream!().pipe(
+        filter((result) => {
+          if (!isMixedDs) {
+            return true;
+          }
+          const state = result.data.state;
+          if (state !== LoadingState.Done && state !== LoadingState.Error) {
+            return true;
+          }
+          const upstreamRange = result.data.request?.range;
+          if (!upstreamRange?.from || !upstreamRange?.to) {
+            return true;
+          }
+          return isSameRange(upstreamRange, options.range);
+        }),
         map((result) => {
           return {
             data: this.getDataFramesForQueryTopic(result.data, query),
