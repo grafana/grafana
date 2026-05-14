@@ -142,7 +142,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 			LightTheme:                 theme.Type == "light",
 			Timezone:                   prefs.Timezone,
 			WeekStart:                  weekStart,
-			Locale:                     locale, // << will be removed in favor of RegionalFormat
+			Locale:                     locale,
 			Language:                   language,
 			HelpFlags1:                 c.HelpFlags1,
 			HasEditPermissionInFolders: hasEditPerm,
