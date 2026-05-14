@@ -137,7 +137,7 @@ Before using this method, ensure the following:
 
 ### Configure the Google OAuth scope
 
-Add the Cloud Monitoring read scope to the Grafana Google authentication configuration. In your `grafana.ini` or `custom.ini`:
+Add the Cloud Monitoring read scope to your Google authentication configuration in `grafana.ini` or `custom.ini`:
 
 ```ini
 [auth.google]
