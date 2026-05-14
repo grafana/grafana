@@ -2,7 +2,14 @@ import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import * as React from 'react';
 
-import { type DataFrame, EventBusSrv, getDefaultTimeRange, LoadingState, type PanelProps } from '@grafana/data';
+import {
+  type DataFrame,
+  EventBusSrv,
+  type FeatureToggles,
+  getDefaultTimeRange,
+  LoadingState,
+  type PanelProps,
+} from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { TooltipDisplayMode } from '@grafana/schema';
 import { PanelContextProvider } from '@grafana/ui';
@@ -383,10 +390,7 @@ const getUnmappedIconText = () =>
     name: 'No mapping (14)',
   }) as HTMLElement;
 
-describe.each([
-  { flag: 'canvasPanelPanZoom', value: true },
-  { flag: 'canvasPanelPanZoom', value: false },
-])('CanvasPanel: $flag -> $value', ({ flag, value }) => {
+describe('Canvas', () => {
   let onFieldConfigChange = jest.fn();
   let onOptionsChange = jest.fn();
   let onChangeTimeRange = jest.fn();
@@ -448,17 +452,6 @@ describe.each([
       eventBus,
     });
   };
-  //@ts-expect-error
-  const previousFlagValue = config.featureToggles[flag] as boolean;
-
-  beforeAll(() => {
-    //@ts-expect-error
-    config.featureToggles[flag] = value;
-  });
-  afterAll(() => {
-    //@ts-expect-error
-    config.featureToggles[flag] = previousFlagValue;
-  });
 
   beforeEach(() => {
     jest.spyOn(getDashboardSrv(), 'getCurrent').mockReturnValue({ editable: true } as DashboardModel);
@@ -468,7 +461,8 @@ describe.each([
     jest.restoreAllMocks();
   });
 
-  it('Renders (kitchen sink)', () => {
+  it('Renders - kitchen sink (canvasPanelPanZoom enabled)', () => {
+    config.featureToggles.canvasPanelPanZoom = true;
     setUp();
 
     // Everything is a button!
@@ -479,32 +473,56 @@ describe.each([
     const titleElement = buttons[0];
     expect(titleElement).toBeVisible();
     expect(titleElement).toHaveTextContent('Field-based Icons (from value mappings):');
-    if (config.featureToggles.canvasPanelPanZoom) {
-      expect(titleElement).toHaveStyle('transform: translate(20px, 10px) rotate(0deg);');
-    } else {
-      expect(titleElement).toHaveStyle('top: 10px');
-      expect(titleElement).toHaveStyle('left: 20px');
-    }
+    expect(titleElement).toHaveStyle('transform: translate(20px, 10px) rotate(0deg);');
 
     //Success SVG icon
     expect(getSuccessIconButton()).toHaveTextContent('');
     expect(getSuccessIconButton().querySelector('svg')).toBeVisible();
     expect(getSuccessIconButton().querySelector('svg')).toHaveStyle(`fill: ${colors.success};`); // success color
-    if (config.featureToggles.canvasPanelPanZoom) {
-      expect(getSuccessIconButton()).toHaveStyle('transform: translate(50px, 60px) rotate(0deg);');
-    } else {
-      expect(getSuccessIconButton()).toHaveStyle('top: 60px');
-      expect(getSuccessIconButton()).toHaveStyle('left: 50px');
-    }
+    expect(getSuccessIconButton()).toHaveStyle('transform: translate(50px, 60px) rotate(0deg);');
 
     // Success label
     expect(getSuccessIconText()).toHaveTextContent('Success');
-    if (config.featureToggles.canvasPanelPanZoom) {
-      expect(getSuccessIconText()).toHaveStyle('transform: translate(30px, 115px) rotate(0deg);');
-    } else {
-      expect(getSuccessIconText()).toHaveStyle('top: 115px');
-      expect(getSuccessIconText()).toHaveStyle('left: 30px');
-    }
+    expect(getSuccessIconText()).toHaveStyle('transform: translate(30px, 115px) rotate(0deg);');
+
+    // Remaining buttons
+    expect(buttons[3].querySelector('svg')).toHaveStyle(`fill: ${colors.warning};`); // warning color
+    expect(buttons[4]).toHaveTextContent('warning');
+    expect(buttons[5].querySelector('svg')).toHaveStyle(`fill: ${colors.error};`); // error color
+    expect(buttons[6]).toHaveTextContent('error');
+    expect(buttons[7].querySelector('svg')).toHaveStyle(`fill: ${colors.unmapped}`); // unmapped color
+    expect(getUnmappedIconText()).toHaveTextContent('No mapping (14)');
+    expect(buttons[9]).toHaveTextContent('Fixed Relative Path:');
+    expect(buttons[11]).toHaveTextContent('Fixed Absolute URL:');
+
+    config.featureToggles.canvasPanelPanZoom = false;
+  });
+  it('Renders - kitchen sink (canvasPanelPanZoom disabled)', () => {
+    config.featureToggles.canvasPanelPanZoom = false;
+    setUp();
+
+    // Everything is a button!
+    const buttons = screen.getAllByRole('button');
+    expect(buttons).toHaveLength(13);
+
+    // Header
+    const titleElement = buttons[0];
+    expect(titleElement).toBeVisible();
+    expect(titleElement).toHaveTextContent('Field-based Icons (from value mappings):');
+    expect(titleElement).toHaveStyle('top: 10px');
+    expect(titleElement).toHaveStyle('left: 20px');
+
+    //Success SVG icon
+    expect(getSuccessIconButton()).toHaveTextContent('');
+    expect(getSuccessIconButton().querySelector('svg')).toBeVisible();
+    expect(getSuccessIconButton().querySelector('svg')).toHaveStyle(`fill: ${colors.success};`); // success color
+    expect(getSuccessIconButton()).toHaveStyle('top: 60px');
+    expect(getSuccessIconButton()).toHaveStyle('left: 50px');
+
+    // Success label
+    expect(getSuccessIconText()).toHaveTextContent('Success');
+    expect(getSuccessIconText()).toHaveStyle('top: 115px');
+    expect(getSuccessIconText()).toHaveStyle('left: 30px');
 
     // Remaining buttons
     expect(buttons[3].querySelector('svg')).toHaveStyle(`fill: ${colors.warning};`); // warning color
@@ -516,65 +534,59 @@ describe.each([
     expect(buttons[9]).toHaveTextContent('Fixed Relative Path:');
     expect(buttons[11]).toHaveTextContent('Fixed Absolute URL:');
   });
-
-  it('Unmounts without throwing', () => {
-    const { unmount } = setUp();
-    expect(() => unmount()).not.toThrow();
-  });
-
-  it('Re-renders when width and height change without losing canvas elements', () => {
+  it('Re-renders when width and height change without losing canvas elements (canvasPanelPanZoom enabled)', () => {
+    config.featureToggles.canvasPanelPanZoom = true;
     let updateConnectionsSizeSpy: jest.SpyInstance | undefined;
 
-    // Before InfiniteViewer mounts, `updateConnectionsSize` can run from `shouldComponentUpdate`;
-    // stub viewer scroll/zoom APIs so `getZoom()` etc. never run on undefined.
-    if (config.featureToggles.canvasPanelPanZoom) {
-      const stubInfiniteViewer = {
-        getZoom: jest.fn(() => 1),
-        getScrollLeft: jest.fn(() => 0),
-        getScrollTop: jest.fn(() => 0),
-      };
-      const originalUpdateConnectionsSize = Scene.prototype.updateConnectionsSize;
-      updateConnectionsSizeSpy = jest.spyOn(Scene.prototype, 'updateConnectionsSize').mockImplementation(function (
-        this: Scene
-      ) {
-        const previous = this.infiniteViewer;
-        if (!previous) {
-          this.infiniteViewer = stubInfiniteViewer as unknown as Scene['infiniteViewer'];
-          return originalUpdateConnectionsSize.call(this);
-        }
+    const stubInfiniteViewer = {
+      getZoom: jest.fn(() => 1),
+      getScrollLeft: jest.fn(() => 0),
+      getScrollTop: jest.fn(() => 0),
+    };
+    const originalUpdateConnectionsSize = Scene.prototype.updateConnectionsSize;
+
+    // mock update connection size or infiniteViewer.getZoom will throw
+    updateConnectionsSizeSpy = jest.spyOn(Scene.prototype, 'updateConnectionsSize').mockImplementation(function (
+      this: Scene
+    ) {
+      const previous = this.infiniteViewer;
+      if (!previous) {
+        this.infiniteViewer = stubInfiniteViewer as unknown as Scene['infiniteViewer'];
         return originalUpdateConnectionsSize.call(this);
-      });
-    }
+      }
+      return originalUpdateConnectionsSize.call(this);
+    });
 
     const { rerender } = setUp();
-    let canvas;
-    if (config.featureToggles.canvasPanelPanZoom) {
-      canvas = screen.getByTestId('canvas-scene-wrapper');
-    } else {
-      canvas = screen.getByTestId('canvas-scene');
-      expect(canvas).toHaveStyle(`width: ${width}px`);
-      expect(canvas).toHaveStyle(`height: ${height}px`);
-    }
+    expect(screen.getAllByRole('button')).toHaveLength(13);
+    rerender(canvasPanelElement({ width: 800, height: 500 }));
+
+    const buttons = screen.getAllByRole('button');
+    expect(buttons).toHaveLength(13);
+    expect(buttons[0]).toBeVisible();
+    updateConnectionsSizeSpy?.mockRestore();
+    config.featureToggles.canvasPanelPanZoom = false;
+  });
+  it('Re-renders when width and height change without losing canvas elements (canvasPanelPanZoom disabled)', () => {
+    let updateConnectionsSizeSpy: jest.SpyInstance | undefined;
+    config.featureToggles.canvasPanelPanZoom = false;
+
+    const { rerender } = setUp();
+    const canvas = screen.getByTestId('canvas-scene');
+    expect(canvas).toHaveStyle(`width: ${width}px`);
+    expect(canvas).toHaveStyle(`height: ${height}px`);
 
     rerender(canvasPanelElement({ width: 800, height: 500 }));
 
-    if (!config.featureToggles.canvasPanelPanZoom) {
-      expect(canvas).toHaveStyle(`width: 800px`);
-      expect(canvas).toHaveStyle(`height: 500px`);
-    }
+    expect(canvas).toHaveStyle(`width: 800px`);
+    expect(canvas).toHaveStyle(`height: 500px`);
 
     const buttons = screen.getAllByRole('button');
     expect(buttons).toHaveLength(13);
     expect(buttons[0]).toBeVisible();
     updateConnectionsSizeSpy?.mockRestore();
   });
-
   it('Double click edit', async () => {
-    // canvasPanelPanZoom removes double click edit functionality
-    if (config.featureToggles.canvasPanelPanZoom) {
-      expect(1).toEqual(1);
-      return;
-    }
     jest.spyOn(getDashboardSrv(), 'getCurrent').mockReturnValue({ editable: true } as DashboardModel);
     const elementFromPointTarget: { current: HTMLElement | null } = { current: null };
     Object.defineProperty(document, 'elementFromPoint', {
@@ -618,108 +630,127 @@ describe.each([
     );
   });
 
-  describe('right click menu', () => {
-    const user = userEvent.setup();
+  describe.each([
+    { flag: 'canvasPanelPanZoom', value: true },
+    { flag: 'canvasPanelPanZoom', value: false },
+  ])('$flag -> $value', ({ flag, value }) => {
+    const previousFlagValue = config.featureToggles[flag as keyof FeatureToggles] as boolean;
 
-    const getIndex = (textContent: string) => {
-      return screen.getAllByRole('button').findIndex((el) => {
-        return el.textContent === textContent;
-      });
-    };
-    const rightClickMenuSetup = async () => {
-      const { rerender } = setUp();
-      await act(async () => {
-        await new Promise((r) => setTimeout(r, 0));
-      });
-      rerender(canvasPanelElement({ renderCounter: 1 }));
-      expect(screen.getAllByRole('button')).toHaveLength(13);
-    };
-    const commonEditorMenuItemAssertions = () => {
-      expect(screen.getByRole('menuitem', { name: 'Delete' })).toBeVisible();
-      expect(screen.getByRole('menuitem', { name: 'Duplicate' })).toBeVisible();
-      expect(screen.getByRole('menuitem', { name: 'Bring to front' })).toBeVisible();
-      expect(screen.getByRole('menuitem', { name: 'Send to back' })).toBeVisible();
-      expect(screen.getByRole('menuitem', { name: 'Open Editor' })).toBeVisible();
-    };
-
-    it('Renders - icon', async () => {
-      await rightClickMenuSetup();
-      await user.pointer({ keys: '[MouseRight]', target: getSuccessIconButton() });
-
-      expect(screen.queryByRole('menuitem', { name: 'Edit' })).toBeNull();
-      commonEditorMenuItemAssertions();
+    beforeAll(() => {
+      config.featureToggles[flag as keyof FeatureToggles] = value;
     });
-    it('Renders - text', async () => {
-      await rightClickMenuSetup();
+    afterAll(() => {
+      config.featureToggles[flag as keyof FeatureToggles] = previousFlagValue;
+    });
 
+    it('Unmounts without throwing', () => {
+      const { unmount } = setUp();
+      expect(() => unmount()).not.toThrow();
+    });
+
+    describe('right click menu', () => {
       const user = userEvent.setup();
-      await user.pointer({ keys: '[MouseRight]', target: getSuccessIconText() });
 
-      expect(screen.getByRole('menuitem', { name: 'Edit' })).toBeVisible();
-      commonEditorMenuItemAssertions();
+      const getIndex = (textContent: string) => {
+        return screen.getAllByRole('button').findIndex((el) => {
+          return el.textContent === textContent;
+        });
+      };
+      const rightClickMenuSetup = async () => {
+        const { rerender } = setUp();
+        await act(async () => {
+          await new Promise((r) => setTimeout(r, 0));
+        });
+        rerender(canvasPanelElement({ renderCounter: 1 }));
+        expect(screen.getAllByRole('button')).toHaveLength(13);
+      };
+      const commonEditorMenuItemAssertions = () => {
+        expect(screen.getByRole('menuitem', { name: 'Delete' })).toBeVisible();
+        expect(screen.getByRole('menuitem', { name: 'Duplicate' })).toBeVisible();
+        expect(screen.getByRole('menuitem', { name: 'Bring to front' })).toBeVisible();
+        expect(screen.getByRole('menuitem', { name: 'Send to back' })).toBeVisible();
+        expect(screen.getByRole('menuitem', { name: 'Open Editor' })).toBeVisible();
+      };
+
+      it('Renders - icon', async () => {
+        await rightClickMenuSetup();
+        await user.pointer({ keys: '[MouseRight]', target: getSuccessIconButton() });
+
+        expect(screen.queryByRole('menuitem', { name: 'Edit' })).toBeNull();
+        commonEditorMenuItemAssertions();
+      });
+      it('Renders - text', async () => {
+        await rightClickMenuSetup();
+
+        const user = userEvent.setup();
+        await user.pointer({ keys: '[MouseRight]', target: getSuccessIconText() });
+
+        expect(screen.getByRole('menuitem', { name: 'Edit' })).toBeVisible();
+        commonEditorMenuItemAssertions();
+      });
+      it('Deletes', async () => {
+        await rightClickMenuSetup();
+
+        // Right click to open context menu
+        await user.pointer({ keys: '[MouseRight]', target: getSuccessIconButton() });
+        // Delete option should be visible
+        expect(screen.getByRole('menuitem', { name: 'Delete' })).toBeVisible();
+        // Click on the delete option
+        await user.click(screen.getByRole('menuitem', { name: 'Delete' }));
+        // Now there should be one less button
+        expect(screen.getAllByRole('button')).toHaveLength(12);
+      });
+      it('Duplicates', async () => {
+        await rightClickMenuSetup();
+        await user.pointer({ keys: '[MouseRight]', target: getSuccessIconButton() });
+
+        expect(screen.getByRole('menuitem', { name: 'Duplicate' })).toBeVisible();
+
+        // Canvas adds a moveable button on right click
+        expect(screen.getAllByRole('button')).toHaveLength(14);
+
+        await user.click(screen.getByRole('menuitem', { name: 'Duplicate' }));
+
+        expect(screen.getAllByRole('button')).toHaveLength(15);
+      });
+      it('Brings to front', async () => {
+        await rightClickMenuSetup();
+
+        expect(getIndex(getSuccessIconText().textContent)).toBe(2);
+
+        await user.pointer({ keys: '[MouseRight]', target: getSuccessIconText() });
+        await user.click(screen.getByRole('menuitem', { name: 'Bring to front' }));
+
+        expect(getIndex(getSuccessIconText().textContent)).toBe(12);
+      });
+      it('Sends to back', async () => {
+        await rightClickMenuSetup();
+
+        expect(getIndex(getSuccessIconText().textContent)).toBe(2);
+
+        await user.pointer({ keys: '[MouseRight]', target: getSuccessIconText() });
+        await user.click(screen.getByRole('menuitem', { name: 'Send to back' }));
+
+        expect(getIndex(getSuccessIconText().textContent)).toBe(0);
+      });
+
+      it('Opens editor', async () => {
+        await rightClickMenuSetup();
+
+        await user.pointer({ keys: '[MouseRight]', target: getSuccessIconText() });
+        await user.click(screen.getByRole('menuitem', { name: 'Open Editor' }));
+
+        expect(screen.getByText('Canvas Inline Editor')).toBeVisible();
+      });
     });
-    it('Deletes', async () => {
-      await rightClickMenuSetup();
 
-      // Right click to open context menu
-      await user.pointer({ keys: '[MouseRight]', target: getSuccessIconButton() });
-      // Delete option should be visible
-      expect(screen.getByRole('menuitem', { name: 'Delete' })).toBeVisible();
-      // Click on the delete option
-      await user.click(screen.getByRole('menuitem', { name: 'Delete' }));
-      // Now there should be one less button
-      expect(screen.getAllByRole('button')).toHaveLength(12);
-    });
-    it('Duplicates', async () => {
-      await rightClickMenuSetup();
-      await user.pointer({ keys: '[MouseRight]', target: getSuccessIconButton() });
-
-      expect(screen.getByRole('menuitem', { name: 'Duplicate' })).toBeVisible();
-
-      // Canvas adds a moveable button on right click
-      expect(screen.getAllByRole('button')).toHaveLength(14);
-
-      await user.click(screen.getByRole('menuitem', { name: 'Duplicate' }));
-
-      expect(screen.getAllByRole('button')).toHaveLength(15);
-    });
-    it('Brings to front', async () => {
-      await rightClickMenuSetup();
-
-      expect(getIndex(getSuccessIconText().textContent)).toBe(2);
-
-      await user.pointer({ keys: '[MouseRight]', target: getSuccessIconText() });
-      await user.click(screen.getByRole('menuitem', { name: 'Bring to front' }));
-
-      expect(getIndex(getSuccessIconText().textContent)).toBe(12);
-    });
-    it('Sends to back', async () => {
-      await rightClickMenuSetup();
-
-      expect(getIndex(getSuccessIconText().textContent)).toBe(2);
-
-      await user.pointer({ keys: '[MouseRight]', target: getSuccessIconText() });
-      await user.click(screen.getByRole('menuitem', { name: 'Send to back' }));
-
-      expect(getIndex(getSuccessIconText().textContent)).toBe(0);
-    });
-
-    it('Opens editor', async () => {
-      await rightClickMenuSetup();
-
-      await user.pointer({ keys: '[MouseRight]', target: getSuccessIconText() });
-      await user.click(screen.getByRole('menuitem', { name: 'Open Editor' }));
-
-      expect(screen.getByText('Canvas Inline Editor')).toBeVisible();
-    });
-  });
-
-  describe('Canvas Inline Editor', () => {
-    describe('Selected element', () => {
-      // @todo
-    });
-    describe('Element management', () => {
-      // @todo
+    describe('Canvas Inline Editor', () => {
+      describe('Selected element', () => {
+        // @todo
+      });
+      describe('Element management', () => {
+        // @todo
+      });
     });
   });
 });
