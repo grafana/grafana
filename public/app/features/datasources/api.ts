@@ -7,6 +7,8 @@ import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
 
+import { DeprecatedInternalId } from '../apiserver/types';
+
 export const getDataSources = async (): Promise<DataSourceSettings[]> => {
   return await getBackendSrv().get('/api/datasources');
 };
@@ -48,7 +50,7 @@ export interface DatasourceAccessK8s {
 export interface DataSourceSettingsK8s {
   kind: string;
   apiVersion: string;
-  metadata: K8sMetadata;
+  metadata: Partial<K8sMetadata>;
   spec: DatasourceInstanceK8sSpec;
   secure?: Record<string, Record<string, string>>;
 }
@@ -68,7 +70,7 @@ export const getDataSourceK8sGroup = (uid: string): string => {
 export const convertLegacyDatasourceSettingsPartialToK8sDatasourceSettings = (
   dsSettings: Partial<DataSourceSettings>,
   version: string
-): Partial<DataSourceSettingsK8s & {}> => {
+): Partial<DataSourceSettingsK8s> => {
   let k8sSpec: DatasourceInstanceK8sSpec = {
     access: dsSettings.access ? dsSettings.access : '',
     jsonData: dsSettings.jsonData ? dsSettings.jsonData : {},
@@ -135,10 +137,10 @@ export const convertK8sDatasourceSettingsToLegacyDatasourceSettings = (
 ): DataSourceSettings => {
   // TODO: remove this once we figure out what code is using the deprecated
   // id field.
-  let id = parseInt(dsK8sSettings.metadata.labels['grafana.app/deprecatedInternalID'] || '', 10);
+  let id = parseInt(dsK8sSettings.metadata.labels?.[DeprecatedInternalId] || '', 10);
   let dsSettings: DataSourceSettings = {
     id: id,
-    uid: dsK8sSettings.metadata.name,
+    uid: dsK8sSettings.metadata.name!,
     orgId: 1,
     name: dsK8sSettings.spec.title,
     typeLogoUrl: '',
@@ -248,9 +250,10 @@ export const createDataSourceWithK8sAPI = async (dataSource: Partial<DataSourceS
       }
     }
   }
+
   // K8s apis require an explicit name, or request to generate the name for POST
-  if (!(dsK8sSettings.metadata!.name || dsK8sSettings.metadata!.generateName)) {
-    dsK8sSettings.metadata!.generateName = 'g'; // prefix for server generated unique name
+  if (!(dsK8sSettings.metadata?.name || dsK8sSettings.metadata?.generateName)) {
+    dsK8sSettings.metadata = { ...dsK8sSettings.metadata, generateName: 'g' }; // prefix for server generated unique name
   }
   return getBackendSrv().post(
     `/apis/${dsK8sSettings.apiVersion}/namespaces/${config.namespace}/datasources`,

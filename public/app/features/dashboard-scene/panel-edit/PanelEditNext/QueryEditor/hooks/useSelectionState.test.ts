@@ -75,6 +75,18 @@ describe('useSelectionState', () => {
       expect(result.current.selectedQueryRefIds).toEqual(['C']);
     });
 
+    it('keeps the last selection when Cmd+clicking the only selected query', () => {
+      // Mount-time default already selects queries[0] = 'A'. Cmd+clicking it
+      // should be a no-op so we never reach a "selection mode but nothing
+      // selected" state — same invariant clearSelection enforces.
+      const { result } = setup();
+      expect(result.current.selectedQueryRefIds).toEqual(['A']);
+
+      act(() => result.current.toggleQuerySelection({ refId: 'A' }, { multi: true }));
+
+      expect(result.current.selectedQueryRefIds).toEqual(['A']);
+    });
+
     it('does NOT call onClearSideEffects', () => {
       const onClearSideEffects = jest.fn();
       const { result } = setup({ ...defaultProps, onClearSideEffects });
@@ -125,7 +137,8 @@ describe('useSelectionState', () => {
     it('uses queries[0] as implicit anchor after clearSelection', () => {
       const { result } = setup();
       act(() => result.current.clearSelection());
-      expect(result.current.selectedQueryRefIds).toEqual([]);
+      // clearSelection mirrors the mount-time initializer and falls back to the first query.
+      expect(result.current.selectedQueryRefIds).toEqual(['A']);
 
       act(() => result.current.toggleQuerySelection({ refId: 'C' }, { range: true }));
       expect(result.current.selectedQueryRefIds).toEqual(['A', 'B', 'C']);
@@ -200,6 +213,16 @@ describe('useSelectionState', () => {
       act(() => result.current.toggleTransformationSelection(mockTransformations[0], { multi: true }));
       expect(result.current.selectedTransformationIds).toEqual(['tx-2']);
     });
+
+    it('keeps the last selection when Cmd+clicking the only selected transformation', () => {
+      const { result } = setup();
+      act(() => result.current.toggleTransformationSelection(mockTransformations[0]));
+      expect(result.current.selectedTransformationIds).toEqual(['tx-0']);
+
+      act(() => result.current.toggleTransformationSelection(mockTransformations[0], { multi: true }));
+
+      expect(result.current.selectedTransformationIds).toEqual(['tx-0']);
+    });
   });
 
   describe('transformation selection — Shift range-select', () => {
@@ -219,10 +242,18 @@ describe('useSelectionState', () => {
   });
 
   describe('clearSelection', () => {
-    it('resets all selections to empty', () => {
+    it('restores the default selection (first query) and clears transformations', () => {
       const { result } = setup();
       act(() => result.current.toggleQuerySelection({ refId: 'A' }));
       act(() => result.current.toggleQuerySelection({ refId: 'B' }, { multi: true }));
+      act(() => result.current.clearSelection());
+      // Mirrors the mount-time initializer: first query is the implicit default.
+      expect(result.current.selectedQueryRefIds).toEqual(['A']);
+      expect(result.current.selectedTransformationIds).toEqual([]);
+    });
+
+    it('clears to empty when there are no queries to default to', () => {
+      const { result } = setup({ ...defaultProps, queries: [] });
       act(() => result.current.clearSelection());
       expect(result.current.selectedQueryRefIds).toEqual([]);
       expect(result.current.selectedTransformationIds).toEqual([]);

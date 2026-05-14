@@ -47,9 +47,6 @@ type PreferencesSpec struct {
 	Theme *string `json:"theme,omitempty"`
 	// Selected language
 	Language *string `json:"language,omitempty"`
-	// Selected locale (beta)
-	// TODO: Will be removed
-	RegionalFormat *string `json:"regionalFormat,omitempty"`
 	// Explore query history preferences
 	QueryHistory *PreferencesQueryHistoryPreference `json:"queryHistory,omitempty"`
 	// Navigation preferences

@@ -25,6 +25,7 @@ export interface Props {
     event: React.MouseEvent<HTMLButtonElement> | React.FocusEvent<HTMLButtonElement>
   ) => void;
   readonly?: boolean;
+  hasMixedAxes?: boolean;
 }
 
 /**
@@ -37,6 +38,7 @@ export const LegendTableItem = ({
   onLabelMouseOut,
   className,
   readonly,
+  hasMixedAxes,
 }: Props) => {
   const styles = useStyles2(getStyles);
 
@@ -89,7 +91,7 @@ export const LegendTableItem = ({
             className={cx(styles.label, item.disabled && styles.labelDisabled)}
           >
             {item.label}{' '}
-            {item.yAxis === 2 && (
+            {item.yAxis === 2 && hasMixedAxes && (
               <span className={styles.yAxisLabel}>
                 <Trans i18nKey="grafana-ui.viz-legend.right-axis-indicator">(right y-axis)</Trans>
               </span>

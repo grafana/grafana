@@ -20,12 +20,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/models"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/testhelpers"
 	"github.com/grafana/grafana/pkg/services/query"
-	"github.com/grafana/grafana/pkg/util"
 
-	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 const (
@@ -400,7 +400,7 @@ func TestIntegrationFindAnnotations(t *testing.T) {
 				Tags:     nil,
 				Type:     "dashboard",
 			},
-			Type: util.Pointer("dashboard"),
+			Type: new("dashboard"),
 		}
 		grafanaTagAnnotation := models.DashAnnotation{
 			Datasource: CreateDatasource("grafana", "grafana"),
@@ -534,7 +534,7 @@ func TestIntegrationFindAnnotations(t *testing.T) {
 				Tags:     nil,
 				Type:     "dashboard",
 			},
-			Type: util.Pointer("dashboard"),
+			Type: new("dashboard"),
 		}
 		queryAnnotation := models.DashAnnotation{
 			Datasource: CreateDatasource("prometheus", "abc123"),
@@ -612,7 +612,7 @@ func TestIntegrationFindAnnotations(t *testing.T) {
 				Tags:     nil,
 				Type:     "dashboard",
 			},
-			Type: util.Pointer("dashboard"),
+			Type: new("dashboard"),
 		}
 		annos := []models.DashAnnotation{grafanaAnnotation}
 		dashboard := AddAnnotationsToDashboard(t, dash, annos)
@@ -668,7 +668,7 @@ func TestIntegrationFindAnnotations(t *testing.T) {
 			Enable:     true,
 			Name:       name,
 			IconColor:  color,
-			Type:       util.Pointer("dashboard"),
+			Type:       new("dashboard"),
 			Target:     nil,
 		}
 

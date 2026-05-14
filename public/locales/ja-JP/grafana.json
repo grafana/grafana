@@ -512,7 +512,8 @@
         "edit-yaml": "YAMLを編集",
         "save": "保存"
       },
-      "error-title": ""
+      "error-title": "",
+      "no-group-success": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "名前",
@@ -1148,6 +1149,9 @@
         "rule-viewer-section-extension": "ルールビューアのエンリッチメントセクションの読み込みに失敗しました"
       }
     },
+    "entities": {
+      "group": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "設定の更新に失敗しました：",
       "title-something-went-wrong": "エラーが発生しました"
@@ -1156,10 +1160,14 @@
       "content-show-all-errors": "すべてのエラーを表示"
     },
     "errors": {
+      "api-machinery": {
+        "with-causes": ""
+      },
       "failedWith": "{{status}}により{{-config}}が失敗しました：{{-message}}"
     },
     "evaluate-every-validation-options": {
       "message": {
+        "none-not-allowed": "",
         "required": "必須項目です。"
       }
     },
@@ -2853,6 +2861,11 @@
         },
         "group-name": "評価グループ名",
         "group-text": "選択したグループ内のすべてのルールは、{{evaluateEvery}}毎に評価されます。",
+        "interval-label": "",
+        "mode": {
+          "legacy": "",
+          "new": ""
+        },
         "new-group": "新しい評価グループ",
         "pause": {
           "alerting": "このアラートルールの評価を一時停止するには、オンにします。",
@@ -3155,9 +3168,7 @@
       "deleting": "削除しています",
       "text-federated": "フェデレーション",
       "text-provisioned": "プロビジョニング済み",
-      "ungrouped": "グループ化なし",
-      "ungrouped-suffix": "{{ruleName}}（グループ化なし）",
-      "unknown-rule": "不明なルール"
+      "ungrouped": "グループ化なし"
     },
     "saved-searches": {
       "actions-aria-label": "アクション",
@@ -10792,6 +10803,21 @@
     "name-line-width": "線の太さ",
     "name-stacking": "積み上げ"
   },
+  "home": {
+    "home-page": {
+      "edition": {
+        "cloud": "",
+        "enterprise": "",
+        "open-source": ""
+      },
+      "greeting": {
+        "afternoon": "",
+        "evening": "",
+        "morning": ""
+      },
+      "placeholder": ""
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "読込中",
@@ -14736,9 +14762,6 @@
       "home-dashboard-placeholder": "デフォルトのダッシュボード",
       "language-preference-label": "言語",
       "language-preference-placeholder": "言語選択",
-      "locale-preference-description": "対応する日付、時刻、数値形式を表示するには地域を選択してください",
-      "locale-preference-label": "地域の形式",
-      "locale-preference-placeholder": "地域を選択",
       "theme-description": "実験的なテーマを楽しんでいますか？<2>こちらからご意見をお聞かせください。</2>",
       "theme-label": "インターフェースのテーマ",
       "week-start-label": "週のはじまり"
@@ -15037,6 +15060,8 @@
     },
     "support-bundles-unconnected": {
       "created-on": "作成日",
+      "deprecation-warning-message": "",
+      "deprecation-warning-title": "",
       "download": "ダウンロード",
       "expires": "有効期限",
       "requested-by": "依頼者",
@@ -15928,7 +15953,9 @@
       "description": {
         "group-by-field-value": "フィールド値でデータをグループ化し、グループ化されたデータでネストされたテーブルを作成します。"
       },
+      "description-expand-nested-rows": "",
       "description-show-field-names": "有効にすると、入れ子になったテーブルではフィールド名がテーブルヘッダーとして表示されます",
+      "label-expand-nested-rows-by-default": "",
       "label-show-field-names-in-nested-tables": "ネストされたテーブルにフィールド名を表示",
       "name": {
         "group-to-nested-tables": "ネストされたテーブルとしてグループ化"

@@ -15,72 +15,74 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		Author{}.OpenAPIModelName():                      schema_pkg_apis_provisioning_v0alpha1_Author(ref),
-		BitbucketConnectionConfig{}.OpenAPIModelName():   schema_pkg_apis_provisioning_v0alpha1_BitbucketConnectionConfig(ref),
-		BitbucketRepositoryConfig{}.OpenAPIModelName():   schema_pkg_apis_provisioning_v0alpha1_BitbucketRepositoryConfig(ref),
-		CommitOptions{}.OpenAPIModelName():               schema_pkg_apis_provisioning_v0alpha1_CommitOptions(ref),
-		Connection{}.OpenAPIModelName():                  schema_pkg_apis_provisioning_v0alpha1_Connection(ref),
-		ConnectionInfo{}.OpenAPIModelName():              schema_pkg_apis_provisioning_v0alpha1_ConnectionInfo(ref),
-		ConnectionList{}.OpenAPIModelName():              schema_pkg_apis_provisioning_v0alpha1_ConnectionList(ref),
-		ConnectionSecure{}.OpenAPIModelName():            schema_pkg_apis_provisioning_v0alpha1_ConnectionSecure(ref),
-		ConnectionSpec{}.OpenAPIModelName():              schema_pkg_apis_provisioning_v0alpha1_ConnectionSpec(ref),
-		ConnectionStatus{}.OpenAPIModelName():            schema_pkg_apis_provisioning_v0alpha1_ConnectionStatus(ref),
-		DeleteJobOptions{}.OpenAPIModelName():            schema_pkg_apis_provisioning_v0alpha1_DeleteJobOptions(ref),
-		ErrorDetails{}.OpenAPIModelName():                schema_pkg_apis_provisioning_v0alpha1_ErrorDetails(ref),
-		ExportJobOptions{}.OpenAPIModelName():            schema_pkg_apis_provisioning_v0alpha1_ExportJobOptions(ref),
-		ExternalRepository{}.OpenAPIModelName():          schema_pkg_apis_provisioning_v0alpha1_ExternalRepository(ref),
-		ExternalRepositoryList{}.OpenAPIModelName():      schema_pkg_apis_provisioning_v0alpha1_ExternalRepositoryList(ref),
-		FileItem{}.OpenAPIModelName():                    schema_pkg_apis_provisioning_v0alpha1_FileItem(ref),
-		FileList{}.OpenAPIModelName():                    schema_pkg_apis_provisioning_v0alpha1_FileList(ref),
-		FixFolderMetadataJobOptions{}.OpenAPIModelName(): schema_pkg_apis_provisioning_v0alpha1_FixFolderMetadataJobOptions(ref),
-		GitHubConnectionConfig{}.OpenAPIModelName():      schema_pkg_apis_provisioning_v0alpha1_GitHubConnectionConfig(ref),
-		GitHubRepositoryConfig{}.OpenAPIModelName():      schema_pkg_apis_provisioning_v0alpha1_GitHubRepositoryConfig(ref),
-		GitLabRepositoryConfig{}.OpenAPIModelName():      schema_pkg_apis_provisioning_v0alpha1_GitLabRepositoryConfig(ref),
-		GitRepositoryConfig{}.OpenAPIModelName():         schema_pkg_apis_provisioning_v0alpha1_GitRepositoryConfig(ref),
-		GitlabConnectionConfig{}.OpenAPIModelName():      schema_pkg_apis_provisioning_v0alpha1_GitlabConnectionConfig(ref),
-		HealthStatus{}.OpenAPIModelName():                schema_pkg_apis_provisioning_v0alpha1_HealthStatus(ref),
-		HistoricJob{}.OpenAPIModelName():                 schema_pkg_apis_provisioning_v0alpha1_HistoricJob(ref),
-		HistoricJobList{}.OpenAPIModelName():             schema_pkg_apis_provisioning_v0alpha1_HistoricJobList(ref),
-		HistoryItem{}.OpenAPIModelName():                 schema_pkg_apis_provisioning_v0alpha1_HistoryItem(ref),
-		HistoryList{}.OpenAPIModelName():                 schema_pkg_apis_provisioning_v0alpha1_HistoryList(ref),
-		Job{}.OpenAPIModelName():                         schema_pkg_apis_provisioning_v0alpha1_Job(ref),
-		JobList{}.OpenAPIModelName():                     schema_pkg_apis_provisioning_v0alpha1_JobList(ref),
-		JobResourceSummary{}.OpenAPIModelName():          schema_pkg_apis_provisioning_v0alpha1_JobResourceSummary(ref),
-		JobSpec{}.OpenAPIModelName():                     schema_pkg_apis_provisioning_v0alpha1_JobSpec(ref),
-		JobStatus{}.OpenAPIModelName():                   schema_pkg_apis_provisioning_v0alpha1_JobStatus(ref),
-		LocalRepositoryConfig{}.OpenAPIModelName():       schema_pkg_apis_provisioning_v0alpha1_LocalRepositoryConfig(ref),
-		ManagerStats{}.OpenAPIModelName():                schema_pkg_apis_provisioning_v0alpha1_ManagerStats(ref),
-		MigrateJobOptions{}.OpenAPIModelName():           schema_pkg_apis_provisioning_v0alpha1_MigrateJobOptions(ref),
-		MoveJobOptions{}.OpenAPIModelName():              schema_pkg_apis_provisioning_v0alpha1_MoveJobOptions(ref),
-		PullRequestJobOptions{}.OpenAPIModelName():       schema_pkg_apis_provisioning_v0alpha1_PullRequestJobOptions(ref),
-		QuotaStatus{}.OpenAPIModelName():                 schema_pkg_apis_provisioning_v0alpha1_QuotaStatus(ref),
-		RefItem{}.OpenAPIModelName():                     schema_pkg_apis_provisioning_v0alpha1_RefItem(ref),
-		RefList{}.OpenAPIModelName():                     schema_pkg_apis_provisioning_v0alpha1_RefList(ref),
-		Repository{}.OpenAPIModelName():                  schema_pkg_apis_provisioning_v0alpha1_Repository(ref),
-		RepositoryList{}.OpenAPIModelName():              schema_pkg_apis_provisioning_v0alpha1_RepositoryList(ref),
-		RepositorySpec{}.OpenAPIModelName():              schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref),
-		RepositoryStatus{}.OpenAPIModelName():            schema_pkg_apis_provisioning_v0alpha1_RepositoryStatus(ref),
-		RepositoryURLs{}.OpenAPIModelName():              schema_pkg_apis_provisioning_v0alpha1_RepositoryURLs(ref),
-		RepositoryView{}.OpenAPIModelName():              schema_pkg_apis_provisioning_v0alpha1_RepositoryView(ref),
-		RepositoryViewList{}.OpenAPIModelName():          schema_pkg_apis_provisioning_v0alpha1_RepositoryViewList(ref),
-		ResourceCount{}.OpenAPIModelName():               schema_pkg_apis_provisioning_v0alpha1_ResourceCount(ref),
-		ResourceList{}.OpenAPIModelName():                schema_pkg_apis_provisioning_v0alpha1_ResourceList(ref),
-		ResourceListItem{}.OpenAPIModelName():            schema_pkg_apis_provisioning_v0alpha1_ResourceListItem(ref),
-		ResourceObjects{}.OpenAPIModelName():             schema_pkg_apis_provisioning_v0alpha1_ResourceObjects(ref),
-		ResourceRef{}.OpenAPIModelName():                 schema_pkg_apis_provisioning_v0alpha1_ResourceRef(ref),
-		ResourceRepositoryInfo{}.OpenAPIModelName():      schema_pkg_apis_provisioning_v0alpha1_ResourceRepositoryInfo(ref),
-		ResourceStats{}.OpenAPIModelName():               schema_pkg_apis_provisioning_v0alpha1_ResourceStats(ref),
-		ResourceType{}.OpenAPIModelName():                schema_pkg_apis_provisioning_v0alpha1_ResourceType(ref),
-		ResourceWrapper{}.OpenAPIModelName():             schema_pkg_apis_provisioning_v0alpha1_ResourceWrapper(ref),
-		SecureValues{}.OpenAPIModelName():                schema_pkg_apis_provisioning_v0alpha1_SecureValues(ref),
-		SyncJobOptions{}.OpenAPIModelName():              schema_pkg_apis_provisioning_v0alpha1_SyncJobOptions(ref),
-		SyncOptions{}.OpenAPIModelName():                 schema_pkg_apis_provisioning_v0alpha1_SyncOptions(ref),
-		SyncStatus{}.OpenAPIModelName():                  schema_pkg_apis_provisioning_v0alpha1_SyncStatus(ref),
-		TestResults{}.OpenAPIModelName():                 schema_pkg_apis_provisioning_v0alpha1_TestResults(ref),
-		TokenStatus{}.OpenAPIModelName():                 schema_pkg_apis_provisioning_v0alpha1_TokenStatus(ref),
-		WebhookConfig{}.OpenAPIModelName():               schema_pkg_apis_provisioning_v0alpha1_WebhookConfig(ref),
-		WebhookResponse{}.OpenAPIModelName():             schema_pkg_apis_provisioning_v0alpha1_WebhookResponse(ref),
-		WebhookStatus{}.OpenAPIModelName():               schema_pkg_apis_provisioning_v0alpha1_WebhookStatus(ref),
+		Author{}.OpenAPIModelName():                           schema_pkg_apis_provisioning_v0alpha1_Author(ref),
+		BitbucketConnectionConfig{}.OpenAPIModelName():        schema_pkg_apis_provisioning_v0alpha1_BitbucketConnectionConfig(ref),
+		BitbucketRepositoryConfig{}.OpenAPIModelName():        schema_pkg_apis_provisioning_v0alpha1_BitbucketRepositoryConfig(ref),
+		CommitOptions{}.OpenAPIModelName():                    schema_pkg_apis_provisioning_v0alpha1_CommitOptions(ref),
+		Connection{}.OpenAPIModelName():                       schema_pkg_apis_provisioning_v0alpha1_Connection(ref),
+		ConnectionInfo{}.OpenAPIModelName():                   schema_pkg_apis_provisioning_v0alpha1_ConnectionInfo(ref),
+		ConnectionList{}.OpenAPIModelName():                   schema_pkg_apis_provisioning_v0alpha1_ConnectionList(ref),
+		ConnectionSecure{}.OpenAPIModelName():                 schema_pkg_apis_provisioning_v0alpha1_ConnectionSecure(ref),
+		ConnectionSpec{}.OpenAPIModelName():                   schema_pkg_apis_provisioning_v0alpha1_ConnectionSpec(ref),
+		ConnectionStatus{}.OpenAPIModelName():                 schema_pkg_apis_provisioning_v0alpha1_ConnectionStatus(ref),
+		DeleteJobOptions{}.OpenAPIModelName():                 schema_pkg_apis_provisioning_v0alpha1_DeleteJobOptions(ref),
+		ErrorDetails{}.OpenAPIModelName():                     schema_pkg_apis_provisioning_v0alpha1_ErrorDetails(ref),
+		ExportJobOptions{}.OpenAPIModelName():                 schema_pkg_apis_provisioning_v0alpha1_ExportJobOptions(ref),
+		ExternalRepository{}.OpenAPIModelName():               schema_pkg_apis_provisioning_v0alpha1_ExternalRepository(ref),
+		ExternalRepositoryList{}.OpenAPIModelName():           schema_pkg_apis_provisioning_v0alpha1_ExternalRepositoryList(ref),
+		FileItem{}.OpenAPIModelName():                         schema_pkg_apis_provisioning_v0alpha1_FileItem(ref),
+		FileList{}.OpenAPIModelName():                         schema_pkg_apis_provisioning_v0alpha1_FileList(ref),
+		FixFolderMetadataJobOptions{}.OpenAPIModelName():      schema_pkg_apis_provisioning_v0alpha1_FixFolderMetadataJobOptions(ref),
+		GitHubConnectionConfig{}.OpenAPIModelName():           schema_pkg_apis_provisioning_v0alpha1_GitHubConnectionConfig(ref),
+		GitHubEnterpriseConnectionConfig{}.OpenAPIModelName(): schema_pkg_apis_provisioning_v0alpha1_GitHubEnterpriseConnectionConfig(ref),
+		GitHubEnterpriseRepositoryConfig{}.OpenAPIModelName(): schema_pkg_apis_provisioning_v0alpha1_GitHubEnterpriseRepositoryConfig(ref),
+		GitHubRepositoryConfig{}.OpenAPIModelName():           schema_pkg_apis_provisioning_v0alpha1_GitHubRepositoryConfig(ref),
+		GitLabRepositoryConfig{}.OpenAPIModelName():           schema_pkg_apis_provisioning_v0alpha1_GitLabRepositoryConfig(ref),
+		GitRepositoryConfig{}.OpenAPIModelName():              schema_pkg_apis_provisioning_v0alpha1_GitRepositoryConfig(ref),
+		GitlabConnectionConfig{}.OpenAPIModelName():           schema_pkg_apis_provisioning_v0alpha1_GitlabConnectionConfig(ref),
+		HealthStatus{}.OpenAPIModelName():                     schema_pkg_apis_provisioning_v0alpha1_HealthStatus(ref),
+		HistoricJob{}.OpenAPIModelName():                      schema_pkg_apis_provisioning_v0alpha1_HistoricJob(ref),
+		HistoricJobList{}.OpenAPIModelName():                  schema_pkg_apis_provisioning_v0alpha1_HistoricJobList(ref),
+		HistoryItem{}.OpenAPIModelName():                      schema_pkg_apis_provisioning_v0alpha1_HistoryItem(ref),
+		HistoryList{}.OpenAPIModelName():                      schema_pkg_apis_provisioning_v0alpha1_HistoryList(ref),
+		Job{}.OpenAPIModelName():                              schema_pkg_apis_provisioning_v0alpha1_Job(ref),
+		JobList{}.OpenAPIModelName():                          schema_pkg_apis_provisioning_v0alpha1_JobList(ref),
+		JobResourceSummary{}.OpenAPIModelName():               schema_pkg_apis_provisioning_v0alpha1_JobResourceSummary(ref),
+		JobSpec{}.OpenAPIModelName():                          schema_pkg_apis_provisioning_v0alpha1_JobSpec(ref),
+		JobStatus{}.OpenAPIModelName():                        schema_pkg_apis_provisioning_v0alpha1_JobStatus(ref),
+		LocalRepositoryConfig{}.OpenAPIModelName():            schema_pkg_apis_provisioning_v0alpha1_LocalRepositoryConfig(ref),
+		ManagerStats{}.OpenAPIModelName():                     schema_pkg_apis_provisioning_v0alpha1_ManagerStats(ref),
+		MigrateJobOptions{}.OpenAPIModelName():                schema_pkg_apis_provisioning_v0alpha1_MigrateJobOptions(ref),
+		MoveJobOptions{}.OpenAPIModelName():                   schema_pkg_apis_provisioning_v0alpha1_MoveJobOptions(ref),
+		PullRequestJobOptions{}.OpenAPIModelName():            schema_pkg_apis_provisioning_v0alpha1_PullRequestJobOptions(ref),
+		QuotaStatus{}.OpenAPIModelName():                      schema_pkg_apis_provisioning_v0alpha1_QuotaStatus(ref),
+		RefItem{}.OpenAPIModelName():                          schema_pkg_apis_provisioning_v0alpha1_RefItem(ref),
+		RefList{}.OpenAPIModelName():                          schema_pkg_apis_provisioning_v0alpha1_RefList(ref),
+		Repository{}.OpenAPIModelName():                       schema_pkg_apis_provisioning_v0alpha1_Repository(ref),
+		RepositoryList{}.OpenAPIModelName():                   schema_pkg_apis_provisioning_v0alpha1_RepositoryList(ref),
+		RepositorySpec{}.OpenAPIModelName():                   schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref),
+		RepositoryStatus{}.OpenAPIModelName():                 schema_pkg_apis_provisioning_v0alpha1_RepositoryStatus(ref),
+		RepositoryURLs{}.OpenAPIModelName():                   schema_pkg_apis_provisioning_v0alpha1_RepositoryURLs(ref),
+		RepositoryView{}.OpenAPIModelName():                   schema_pkg_apis_provisioning_v0alpha1_RepositoryView(ref),
+		RepositoryViewList{}.OpenAPIModelName():               schema_pkg_apis_provisioning_v0alpha1_RepositoryViewList(ref),
+		ResourceCount{}.OpenAPIModelName():                    schema_pkg_apis_provisioning_v0alpha1_ResourceCount(ref),
+		ResourceList{}.OpenAPIModelName():                     schema_pkg_apis_provisioning_v0alpha1_ResourceList(ref),
+		ResourceListItem{}.OpenAPIModelName():                 schema_pkg_apis_provisioning_v0alpha1_ResourceListItem(ref),
+		ResourceObjects{}.OpenAPIModelName():                  schema_pkg_apis_provisioning_v0alpha1_ResourceObjects(ref),
+		ResourceRef{}.OpenAPIModelName():                      schema_pkg_apis_provisioning_v0alpha1_ResourceRef(ref),
+		ResourceRepositoryInfo{}.OpenAPIModelName():           schema_pkg_apis_provisioning_v0alpha1_ResourceRepositoryInfo(ref),
+		ResourceStats{}.OpenAPIModelName():                    schema_pkg_apis_provisioning_v0alpha1_ResourceStats(ref),
+		ResourceType{}.OpenAPIModelName():                     schema_pkg_apis_provisioning_v0alpha1_ResourceType(ref),
+		ResourceWrapper{}.OpenAPIModelName():                  schema_pkg_apis_provisioning_v0alpha1_ResourceWrapper(ref),
+		SecureValues{}.OpenAPIModelName():                     schema_pkg_apis_provisioning_v0alpha1_SecureValues(ref),
+		SyncJobOptions{}.OpenAPIModelName():                   schema_pkg_apis_provisioning_v0alpha1_SyncJobOptions(ref),
+		SyncOptions{}.OpenAPIModelName():                      schema_pkg_apis_provisioning_v0alpha1_SyncOptions(ref),
+		SyncStatus{}.OpenAPIModelName():                       schema_pkg_apis_provisioning_v0alpha1_SyncStatus(ref),
+		TestResults{}.OpenAPIModelName():                      schema_pkg_apis_provisioning_v0alpha1_TestResults(ref),
+		TokenStatus{}.OpenAPIModelName():                      schema_pkg_apis_provisioning_v0alpha1_TokenStatus(ref),
+		WebhookConfig{}.OpenAPIModelName():                    schema_pkg_apis_provisioning_v0alpha1_WebhookConfig(ref),
+		WebhookResponse{}.OpenAPIModelName():                  schema_pkg_apis_provisioning_v0alpha1_WebhookResponse(ref),
+		WebhookStatus{}.OpenAPIModelName():                    schema_pkg_apis_provisioning_v0alpha1_WebhookStatus(ref),
 	}
 }
 
@@ -383,11 +385,11 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionSpec(ref common.ReferenceCa
 					},
 					"type": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The connection provider type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"github\"`\n - `\"gitlab\"`",
+							Description: "The connection provider type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"gitlab\"`",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
-							Enum:        []interface{}{"bitbucket", "github", "gitlab"},
+							Enum:        []interface{}{"bitbucket", "github", "githubEnterprise", "gitlab"},
 						},
 					},
 					"url": {
@@ -401,6 +403,12 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionSpec(ref common.ReferenceCa
 						SchemaProps: spec.SchemaProps{
 							Description: "GitHub connection configuration Only applicable when provider is \"github\"",
 							Ref:         ref(GitHubConnectionConfig{}.OpenAPIModelName()),
+						},
+					},
+					"githubEnterprise": {
+						SchemaProps: spec.SchemaProps{
+							Description: "GitHub Enterprise Server connection configuration Only applicable when provider is \"githubEnterprise\"",
+							Ref:         ref(GitHubEnterpriseConnectionConfig{}.OpenAPIModelName()),
 						},
 					},
 					"bitbucket": {
@@ -420,7 +428,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionSpec(ref common.ReferenceCa
 			},
 		},
 		Dependencies: []string{
-			BitbucketConnectionConfig{}.OpenAPIModelName(), GitHubConnectionConfig{}.OpenAPIModelName(), GitlabConnectionConfig{}.OpenAPIModelName()},
+			BitbucketConnectionConfig{}.OpenAPIModelName(), GitHubConnectionConfig{}.OpenAPIModelName(), GitHubEnterpriseConnectionConfig{}.OpenAPIModelName(), GitlabConnectionConfig{}.OpenAPIModelName()},
 	}
 }
 
@@ -883,6 +891,94 @@ func schema_pkg_apis_provisioning_v0alpha1_GitHubConnectionConfig(ref common.Ref
 					},
 				},
 				Required: []string{"appID", "installationID"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_GitHubEnterpriseConnectionConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "GitHubEnterpriseConnectionConfig describes a GitHub App installation against a self-managed GitHub Enterprise Server (GHES) instance.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"appID": {
+						SchemaProps: spec.SchemaProps{
+							Description: "GitHub App ID",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"installationID": {
+						SchemaProps: spec.SchemaProps{
+							Description: "GitHub App installation ID",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"serverUrl": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`).",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"appID", "installationID", "serverUrl"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_GitHubEnterpriseRepositoryConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "GitHubEnterpriseRepositoryConfig describes a repository hosted on a self-managed GitHub Enterprise Server (GHES) instance.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"serverUrl": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`).",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"url": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The repository URL on the GHES server (e.g. `https://ghes.example.com/example/test`).",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"branch": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The branch to use in the repository.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"generateDashboardPreviews": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Whether we should show dashboard previews for pull requests.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"path": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Path is the subdirectory for the Grafana data inside the repository.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"branch"},
 			},
 		},
 	}
@@ -2126,11 +2222,11 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref common.ReferenceCa
 					},
 					"type": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The repository type.  When selected oneOf the values below should be non-nil\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"git\"`\n - `\"github\"`\n - `\"gitlab\"`\n - `\"local\"`",
+							Description: "The repository type.  When selected oneOf the values below should be non-nil\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"git\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"gitlab\"`\n - `\"local\"`",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
-							Enum:        []interface{}{"bitbucket", "git", "github", "gitlab", "local"},
+							Enum:        []interface{}{"bitbucket", "git", "github", "githubEnterprise", "gitlab", "local"},
 						},
 					},
 					"webhook": {
@@ -2149,6 +2245,12 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref common.ReferenceCa
 						SchemaProps: spec.SchemaProps{
 							Description: "The repository on GitHub. Mutually exclusive with local | github | git.",
 							Ref:         ref(GitHubRepositoryConfig{}.OpenAPIModelName()),
+						},
+					},
+					"githubEnterprise": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The repository on a self-managed GitHub Enterprise Server (GHES). Mutually exclusive with local | github | git.",
+							Ref:         ref(GitHubEnterpriseRepositoryConfig{}.OpenAPIModelName()),
 						},
 					},
 					"git": {
@@ -2180,7 +2282,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref common.ReferenceCa
 			},
 		},
 		Dependencies: []string{
-			BitbucketRepositoryConfig{}.OpenAPIModelName(), CommitOptions{}.OpenAPIModelName(), ConnectionInfo{}.OpenAPIModelName(), GitHubRepositoryConfig{}.OpenAPIModelName(), GitLabRepositoryConfig{}.OpenAPIModelName(), GitRepositoryConfig{}.OpenAPIModelName(), LocalRepositoryConfig{}.OpenAPIModelName(), SyncOptions{}.OpenAPIModelName(), WebhookConfig{}.OpenAPIModelName()},
+			BitbucketRepositoryConfig{}.OpenAPIModelName(), CommitOptions{}.OpenAPIModelName(), ConnectionInfo{}.OpenAPIModelName(), GitHubEnterpriseRepositoryConfig{}.OpenAPIModelName(), GitHubRepositoryConfig{}.OpenAPIModelName(), GitLabRepositoryConfig{}.OpenAPIModelName(), GitRepositoryConfig{}.OpenAPIModelName(), LocalRepositoryConfig{}.OpenAPIModelName(), SyncOptions{}.OpenAPIModelName(), WebhookConfig{}.OpenAPIModelName()},
 	}
 }
 
@@ -2375,11 +2477,11 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryView(ref common.ReferenceCa
 					},
 					"type": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The repository type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"git\"`\n - `\"github\"`\n - `\"gitlab\"`\n - `\"local\"`",
+							Description: "The repository type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"git\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"gitlab\"`\n - `\"local\"`",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
-							Enum:        []interface{}{"bitbucket", "git", "github", "gitlab", "local"},
+							Enum:        []interface{}{"bitbucket", "git", "github", "githubEnterprise", "gitlab", "local"},
 						},
 					},
 					"target": {
@@ -2506,7 +2608,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryViewList(ref common.Referen
 										Default: "",
 										Type:    []string{"string"},
 										Format:  "",
-										Enum:    []interface{}{"bitbucket", "git", "github", "gitlab", "local"},
+										Enum:    []interface{}{"bitbucket", "git", "github", "githubEnterprise", "gitlab", "local"},
 									},
 								},
 							},
@@ -2789,11 +2891,11 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceRepositoryInfo(ref common.Ref
 				Properties: map[string]spec.Schema{
 					"type": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The repository type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"git\"`\n - `\"github\"`\n - `\"gitlab\"`\n - `\"local\"`",
+							Description: "The repository type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"git\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"gitlab\"`\n - `\"local\"`",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
-							Enum:        []interface{}{"bitbucket", "git", "github", "gitlab", "local"},
+							Enum:        []interface{}{"bitbucket", "git", "github", "githubEnterprise", "gitlab", "local"},
 						},
 					},
 					"title": {
