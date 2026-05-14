@@ -254,7 +254,6 @@ export const getCorrelationsFromStorage = async (
       page: 0,
       limit: 1000,
       totalCount: enrichedCorr.length,
-      doesContinue: false,
     };
   } else {
     const datasourceUIDs = getDatasourceUIDs(instanceUid, queries);

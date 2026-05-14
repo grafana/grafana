@@ -247,7 +247,7 @@ describe('correlations utils', () => {
     const listCorrelationK8sMock = jest.spyOn(correlationsAPIv0alpha1.endpoints.listCorrelation, 'initiate');
     const getCorrelationsLegacyMock = jest
       .spyOn(utils, 'getCorrelationsBySourceUIDs')
-      .mockResolvedValue({ correlations: [], page: 0, limit: 100, totalCount: 0, doesContinue: false });
+      .mockResolvedValue({ correlations: [], page: 0, limit: 100, totalCount: 0 });
 
     afterEach(() => {
       config.featureToggles = originalFeatureToggles;
