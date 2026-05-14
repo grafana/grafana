@@ -1,4 +1,4 @@
-import { DataFrameType, FieldType, LogLevel, LogsSortOrder, type DataSourceApi, toDataFrame } from '@grafana/data';
+import { FieldType, LogLevel, LogsSortOrder, type DataSourceApi, toDataFrame } from '@grafana/data';
 
 import { createLogLine } from '../mocks/logRow';
 
@@ -251,9 +251,8 @@ describe('buildLogLineFullJsonObject', () => {
       processOpts
     );
 
-    void log.body;
-    expect(log.isJSON).toBe(true);
     const line = buildLogLineFullJsonObject(log, untypedDs()).line as Record<string, unknown>;
+    expect(log.isJSON).toBe(true);
     expect(line.message).toBe('ping');
   });
 });

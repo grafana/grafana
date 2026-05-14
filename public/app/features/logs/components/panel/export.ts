@@ -1,7 +1,7 @@
 import { groupBy } from 'lodash';
 import { parse, stringify } from 'lossless-json';
 
-import { type DataSourceApi, hasLogsLabelTypesSupport, type Labels } from '@grafana/data';
+import { DataFrameType, type DataSourceApi, hasLogsLabelTypesSupport, type Labels } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 
 import { getLabelTypeFromRow } from '../../utils';
@@ -79,6 +79,8 @@ function prettifyIfJson(raw: string): unknown {
 }
 
 export function buildLogLineFullJsonObject(log: LogListModel, ds: DataSourceApi): Record<string, unknown> {
+  void log.body;
+
   const payload: Record<string, unknown> = {
     timestamp: log.timestamp,
     timeEpochMs: log.timeEpochMs,
