@@ -15,18 +15,6 @@ import {
   useRef,
   useState,
 } from 'react';
-import {
-  Cell,
-  type CellRendererProps,
-  DataGrid,
-  type DataGridHandle,
-  type DataGridProps,
-  type RenderCellProps,
-  type Renderers,
-  type RenderRowProps,
-  Row,
-  type SortColumn,
-} from 'react-data-grid';
 
 import {
   type DataFrame,
@@ -38,6 +26,18 @@ import {
   getDisplayProcessor,
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
+import {
+  Cell,
+  type CellRendererProps,
+  DataGrid,
+  type DataGridHandle,
+  type DataGridProps,
+  type RenderCellProps,
+  type Renderers,
+  type RenderRowProps,
+  Row,
+  type SortColumn,
+} from '@grafana/react-data-grid';
 import { FieldColorModeId, TableCellTooltipPlacement, type TableFooterOptions } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
