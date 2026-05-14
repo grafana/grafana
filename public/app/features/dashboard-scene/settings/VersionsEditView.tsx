@@ -14,6 +14,7 @@ import {
   AnnoKeyUpdatedBy,
   AnnoKeyUpdatedTimestamp,
   type Resource,
+  type ResourceList,
 } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import {
@@ -110,18 +111,10 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
 
     const options = append ? { limit: this._limit, continueToken: this._continueToken } : { limit: this._limit };
 
-    const loader: Promise<{ items: Array<Resource<unknown>>; continue?: string }> = isDashboardTemplate
-      ? (async () => {
-          if (!dashboardTemplateUid) {
-            return { items: [], continue: undefined };
-          }
-          const result = await getDashboardTemplateExtension().listHistory(dashboardTemplateUid, options);
-          return { items: result.items, continue: result.continueToken };
-        })()
-      : getDashboardAPI().then(async (api) => {
-          const result = await api.listDashboardHistory(uid!, options);
-          return { items: result.items, continue: result.metadata.continue };
-        });
+    const loader: Promise<ResourceList<unknown>> =
+      isDashboardTemplate && dashboardTemplateUid
+        ? getDashboardTemplateExtension().listHistory(dashboardTemplateUid, options)
+        : getDashboardAPI().then((api) => api.listDashboardHistory(uid!, options));
 
     loader
       .then((result) => {
@@ -131,7 +124,7 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
           versions: [...(append ? (this.state.versions ?? []) : []), ...this.decorateVersions(versions)],
         });
         // Update the continueToken for the next request, if available
-        this._continueToken = result.continue ?? '';
+        this._continueToken = result.metadata.continue ?? '';
       })
       .catch((err) => console.log(err))
       .finally(() => this.setState({ isAppending: false }));

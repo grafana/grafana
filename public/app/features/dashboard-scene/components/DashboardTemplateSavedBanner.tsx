@@ -1,13 +1,29 @@
 import { css } from '@emotion/css';
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Alert, TextLink, useStyles2 } from '@grafana/ui';
+import { getDashboardTemplateExtension } from 'app/features/dashboard-scene/settings/enterprise-components/DashboardTemplateExtension';
 
-export function DashboardTemplateSavedBanner({ templateName }: { templateName: string }) {
+export function DashboardTemplateSavedBanner() {
   const styles = useStyles2(getStyles);
   const [searchParams, setSearchParams] = useSearchParams();
+  const [templateName, setTemplateName] = useState<string | undefined>(undefined);
+
+  const dashboardTemplateUid = searchParams.get('templateSaved') ?? undefined;
+
+  useEffect(() => {
+    if (!dashboardTemplateUid) {
+      return;
+    }
+    getDashboardTemplateExtension()
+      .loadTemplate(dashboardTemplateUid)
+      .then((resource) => {
+        setTemplateName(resource.spec.title);
+      });
+  }, [dashboardTemplateUid]);
 
   const onDismiss = () => {
     searchParams.delete('templateSaved');
@@ -19,7 +35,7 @@ export function DashboardTemplateSavedBanner({ templateName }: { templateName: s
     setSearchParams(searchParams);
   };
 
-  if (!searchParams.get('templateSaved')) {
+  if (!dashboardTemplateUid || !templateName) {
     return null;
   }
 

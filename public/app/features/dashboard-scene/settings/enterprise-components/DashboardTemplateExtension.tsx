@@ -1,35 +1,22 @@
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { type Resource } from 'app/features/apiserver/types';
+import { type Resource, type ResourceList } from 'app/features/apiserver/types';
 import { type DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
 
 import { type DashboardScene } from '../../scene/DashboardScene';
 
-// Structural subset of the enterprise DashboardTemplateSpec. Defined locally so OSS
-// call sites can type the load response without importing from public/app/extensions/.
-// The enterprise DashboardTemplate is structurally compatible with this shape.
+// Structural subset of the enterprise DashboardTemplateSpec.
 export interface DashboardTemplateResourceSpec {
   title: string;
-  description?: string;
+  description: string;
   tags: string[];
-  thumbnail_url?: string;
-  source_dashboard_uid?: string;
+  dashboardVersion: string;
   dashboard: DashboardV2Spec;
-}
-
-export interface DashboardTemplateHistoryListResult {
-  // Raw k8s list items. Consumers transform these through the same
-  // VersionsEditView.transformToRevisionModels pipeline used for dashboards.
-  items: Array<Resource<unknown>>;
-  continueToken?: string;
 }
 
 export interface DashboardTemplateExtensionHooks {
   loadTemplate(uid: string): Promise<Resource<DashboardTemplateResourceSpec>>;
 
-  listHistory(
-    uid: string,
-    options: { limit: number; continueToken?: string }
-  ): Promise<DashboardTemplateHistoryListResult>;
+  listHistory(uid: string, options: { limit: number; continueToken?: string }): Promise<ResourceList<unknown>>;
 
   // Builds a PUT body that keeps the current outer template spec fields and replaces
   // only spec.dashboard with the selected historical version's embedded dashboard,
@@ -46,7 +33,7 @@ let internal: DashboardTemplateExtensionHooks = {
   loadTemplate: async () => {
     throw new Error('Org template loading is only available in Grafana Enterprise');
   },
-  listHistory: async () => ({ items: [], continueToken: undefined }),
+  listHistory: async () => ({ kind: '', apiVersion: '', metadata: { resourceVersion: '0' }, items: [] }),
   restore: async () => false,
 };
 
