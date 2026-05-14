@@ -1614,7 +1614,8 @@
       "metadata": {
         "name": "dashboardDisableSchemaValidationV1",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-04-11T16:52:46Z"
+        "creationTimestamp": "2025-04-11T16:52:46Z",
+        "deletionTimestamp": "2026-05-14T05:13:22Z"
       },
       "spec": {
         "description": "Disable schema validation for dashboards/v1",
@@ -1627,7 +1628,8 @@
       "metadata": {
         "name": "dashboardDisableSchemaValidationV2",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-04-11T16:52:46Z"
+        "creationTimestamp": "2025-04-11T16:52:46Z",
+        "deletionTimestamp": "2026-05-14T05:13:22Z"
       },
       "spec": {
         "description": "Disable schema validation for dashboards/v2",
@@ -1681,16 +1683,17 @@
     {
       "metadata": {
         "name": "dashboardNewLayouts",
-        "resourceVersion": "1775209187023",
+        "resourceVersion": "1778737473500",
         "creationTimestamp": "2024-10-23T08:55:45Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-04-03 09:39:47.02364 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-05-14 05:44:33.500189 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables new dashboard layouts",
         "stage": "GA",
         "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
         "expression": "true"
       }
     },
@@ -1713,7 +1716,8 @@
       "metadata": {
         "name": "dashboardSchemaValidationLogging",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-04-11T16:52:46Z"
+        "creationTimestamp": "2025-04-11T16:52:46Z",
+        "deletionTimestamp": "2026-05-14T05:13:22Z"
       },
       "spec": {
         "description": "Log schema validation errors so they can be analyzed later",

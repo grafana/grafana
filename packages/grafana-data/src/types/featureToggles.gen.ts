@@ -244,21 +244,6 @@ export interface FeatureToggles {
   */
   kubernetesQueryCaching?: boolean;
   /**
-  * Disable schema validation for dashboards/v1
-  * @default false
-  */
-  dashboardDisableSchemaValidationV1?: boolean;
-  /**
-  * Disable schema validation for dashboards/v2
-  * @default false
-  */
-  dashboardDisableSchemaValidationV2?: boolean;
-  /**
-  * Log schema validation errors so they can be analyzed later
-  * @default false
-  */
-  dashboardSchemaValidationLogging?: boolean;
-  /**
   * Register legacy datasource apis that use the numeric id
   * @default false
   */

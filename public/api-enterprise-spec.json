@@ -6189,9 +6189,6 @@
         "queryHistory": {
           "$ref": "#/definitions/QueryHistoryPreference"
         },
-        "regionalFormat": {
-          "type": "string"
-        },
         "theme": {
           "type": "string",
           "enum": [
@@ -6473,10 +6470,6 @@
         },
         "queryHistory": {
           "$ref": "#/definitions/PreferencesQueryHistoryPreference"
-        },
-        "regionalFormat": {
-          "description": "Selected locale (beta)\nTODO: Will be removed",
-          "type": "string"
         },
         "theme": {
           "description": "user interface theme",
@@ -8603,9 +8596,6 @@
         },
         "queryHistory": {
           "$ref": "#/definitions/QueryHistoryPreference"
-        },
-        "regionalFormat": {
-          "type": "string"
         },
         "theme": {
           "type": "string",

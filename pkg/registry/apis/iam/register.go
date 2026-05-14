@@ -506,6 +506,10 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.AP
 
 	storage[teamResource.StoragePath("members")] = team.NewTeamMembersREST(b.teamGetter, b.tracing, b.features)
 
+	if b.teamSearch != nil {
+		b.teamSearch.teamGetter = b.teamGetter
+	}
+
 	// addmember / removemember mutate a single Spec.Members entry through
 	// the dual-writer storage, so they work uniformly across all modes.
 	storage[teamResource.StoragePath("addmember")] = team.NewTeamAddMemberREST(teamStorage, b.tracing)
@@ -554,9 +558,6 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamBindingsAPIGroup(opts bui
 		storewrapper.WithObserver(storageObserver{}),
 	)
 	storage[teamBindingResource.StoragePath()] = authzWrapper
-	if b.teamSearch != nil {
-		b.teamSearch.teamBindingStore = authzWrapper
-	}
 	return nil
 }
 

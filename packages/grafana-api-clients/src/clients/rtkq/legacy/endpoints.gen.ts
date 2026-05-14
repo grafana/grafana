@@ -4492,9 +4492,6 @@ export type PreferencesSpec = {
   language?: string;
   navbar?: PreferencesNavbarPreference;
   queryHistory?: PreferencesQueryHistoryPreference;
-  /** Selected locale (beta)
-    TODO: Will be removed */
-  regionalFormat?: string;
   /** user interface theme */
   theme?: string;
   /** The timezone selection */
@@ -4515,7 +4512,6 @@ export type PatchPrefsCmd = {
   language?: string;
   navbar?: NavbarPreference;
   queryHistory?: QueryHistoryPreference;
-  regionalFormat?: string;
   theme?: 'light' | 'dark';
   /** Any IANA timezone string (e.g. America/New_York), 'utc', 'browser', or empty string */
   timezone?: string;
@@ -4528,7 +4524,6 @@ export type UpdatePrefsCmd = {
   language?: string;
   navbar?: NavbarPreference;
   queryHistory?: QueryHistoryPreference;
-  regionalFormat?: string;
   theme?: 'light' | 'dark' | 'system';
   /** Any IANA timezone string (e.g. America/New_York), 'utc', 'browser', or empty string */
   timezone?: string;

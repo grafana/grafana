@@ -976,6 +976,8 @@ github.com/grafana/dskit v0.0.0-20260209132809-8d1c6d34bb5a/go.mod h1:M2NzmN1SL1
 github.com/grafana/e2e v0.1.1/go.mod h1:RpNLgae5VT+BUHvPE+/zSypmOXKwEu4t+tnEMS1ATaE=
 github.com/grafana/go-gelf/v2 v2.0.1 h1:BOChP0h/jLeD+7F9mL7tq10xVkDG15he3T1zHuQaWak=
 github.com/grafana/go-gelf/v2 v2.0.1/go.mod h1:lexHie0xzYGwCgiRGcvZ723bSNyNI8ZRD4s0CLobh90=
+github.com/grafana/go-mysql-server v0.20.2-grafana-2 h1:Odgye5nVNmxma8PUN6QrLz9ygdjJLrpSOE5vPpezJzI=
+github.com/grafana/go-mysql-server v0.20.2-grafana-2/go.mod h1:phaWF0mUq6w4kkHi+ahJ+nUwZ20gkf2vAm8pGMZOJRw=
 github.com/grafana/gomemcache v0.0.0-20250318131618-74242eea118d h1:oXRJlb9UjVsl6LhqBdbyAQ9YFhExwsj4bjh5vwMNRZY=
 github.com/grafana/gomemcache v0.0.0-20250318131618-74242eea118d/go.mod h1:j/s0jkda4UXTemDs7Pgw/vMT06alWc42CHisvYac0qw=
 github.com/grafana/grafana-app-sdk v0.53.1/go.mod h1:wR7nY/6FbkSjLgSyzE4buEy4JF0poSG6HCZ4MRQrFb4=

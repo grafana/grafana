@@ -491,6 +491,19 @@ func runTestKVKeysWithSort(t *testing.T, kv resource.KV, nsPrefix string) {
 		assert.Equal(t, namespacedKeys(nsPrefix, []string{"a2", "a1"}), keys)
 	})
 
+	t.Run("keys descending with range keeps end key exclusive", func(t *testing.T) {
+		var keys []string //nolint:prealloc
+		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{
+			StartKey: namespacedKey(nsPrefix, "a2"),
+			EndKey:   namespacedKey(nsPrefix, "b2"),
+			Sort:     resource.SortOrderDesc,
+		}) {
+			require.NoError(t, err)
+			keys = append(keys, k)
+		}
+		assert.Equal(t, namespacedKeys(nsPrefix, []string{"b1", "a2"}), keys)
+	})
+
 	t.Run("keys descending with limit", func(t *testing.T) {
 		var keys []string //nolint:prealloc
 		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{
