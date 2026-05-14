@@ -48,7 +48,7 @@ Among other, the `gcx` CLI provides the following benefits:
 
 `gcx` is compatible with any agentic coding tool. 
 
-`gcx` works across a wide range of Grafana product offerings. Feature availability depends on your deployment. For more information, refer to the [Compatibilty matrix](https://github.com/grafana/gcx#compatibility).
+`gcx` works across a wide range of Grafana product offerings. Feature availability depends on your deployment. For more information, refer to the [Compatibility matrix](https://github.com/grafana/gcx#compatibility).
 
 ## Migrate from `grafanactl`
 
