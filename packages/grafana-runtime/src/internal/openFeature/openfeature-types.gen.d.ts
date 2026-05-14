@@ -15,6 +15,7 @@ declare module "@openfeature/core" {
     | "provisioningFolderMetadata"
     | "provisioning.readmes"
     | "stateTimeline.nameAboveBars"
+    | "sqlExpressionsCodeMirror"
     | "newSavedQueriesExperience"
     | "grafana.orgDashboardTemplates"
     | "dashboardTemplatesAssistantButton"
@@ -43,6 +44,7 @@ declare module "@openfeature/core" {
     | "reporting.anyPageReporting"
     | "assistant.frontend.tools.dashboardTemplates"
     | "grafana.unifiedHomepage"
+    | "alerting.syncExternalAlertmanager"
     | "grafana.enableScopesFirstMode";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;

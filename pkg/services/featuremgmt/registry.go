@@ -107,7 +107,7 @@ var (
 			Expression:  "true", // enabled by default
 		},
 		{
-			Name:            "liveAPIServer",
+			Name:            "live.runAPIServer",
 			Description:     "Registers a live apiserver",
 			Stage:           FeatureStageExperimental,
 			RequiresDevMode: true,
@@ -115,7 +115,17 @@ var (
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true,
 			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
+			Generate:        Generate{Go: true},
+		},
+		{
+			Name:            "live.keepHAPrefixInCloud",
+			Description:     "keep the prefix (just in case)",
+			Stage:           FeatureStageExperimental,
+			HideFromDocs:    true,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true,
+			Expression:      "false",
+			Generate:        Generate{Go: true},
 		},
 		{
 			Name:         "starsFromAPIServer",
@@ -916,6 +926,14 @@ var (
 			Description: "Enables column autocomplete for SQL Expressions",
 			Stage:       FeatureStageExperimental,
 			Generate:    Generate{LegacyFrontend: true},
+			Owner:       grafanaDataProSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "sqlExpressionsCodeMirror",
+			Description: "Enables CodeMirror editor for SQL Expressions",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{LegacyFrontend: true, React: true},
 			Owner:       grafanaDataProSquad,
 			Expression:  "false",
 		},
@@ -2324,14 +2342,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "newPanelPadding",
-			Description: "Increases panel padding globally",
-			Stage:       FeatureStagePublicPreview,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaDashboardsSquad,
-			Expression:  "true",
-		},
-		{
 			Name:         "onlyStoreActionSets",
 			Description:  "When storing dashboard and folder resource permissions, only store action sets and not the full list of underlying permission",
 			Stage:        FeatureStageGeneralAvailability,
@@ -2816,7 +2826,7 @@ var (
 		{
 			Name:        "flameGraphWithCallTree",
 			Description: "Enables the new Flame Graph UI containing the Call Tree view",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaObservabilityTracesAndProfilingSquad,
 			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 			Expression:  "false",
@@ -3126,7 +3136,7 @@ var (
 			Name:            "alerting.syncExternalAlertmanager",
 			Description:     "Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana",
 			Stage:           FeatureStageExperimental,
-			Generate:        Generate{Go: true},
+			Generate:        Generate{Go: true, React: true, LegacyFrontend: true},
 			Owner:           grafanaAlertingSquad,
 			HideFromDocs:    true,
 			RequiresRestart: true,

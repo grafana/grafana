@@ -15555,8 +15555,8 @@
     },
     "legend": {
       "category": "Legend",
-      "description-faceted-filter": "Show series visibility filter based on labels",
-      "name-faceted-filter": "Faceted filter"
+      "description-faceted-filter": "Enable filter to display series based on labels or names",
+      "name-faceted-filter": "Series visibility"
     },
     "line-style-editor": {
       "line-fill-options": {
