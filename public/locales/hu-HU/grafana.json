@@ -515,7 +515,8 @@
         "edit-yaml": "YAML szerkesztése",
         "save": "Mentés"
       },
-      "error-title": ""
+      "error-title": "",
+      "no-group-success": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "név",
@@ -1171,6 +1172,7 @@
     },
     "evaluate-every-validation-options": {
       "message": {
+        "none-not-allowed": "",
         "required": "Szükséges."
       }
     },
@@ -2875,6 +2877,11 @@
         },
         "group-name": "Értékelési csoport neve",
         "group-text": "A kijelölt csoport összes szabálya kiértékelésének gyakorisága: {{evaluateEvery}}.",
+        "interval-label": "",
+        "mode": {
+          "legacy": "",
+          "new": ""
+        },
         "new-group": "Új értékelési csoport",
         "pause": {
           "alerting": "Kapcsolja be az ehhez a riasztási szabályhoz tartozó értékelés szüneteltetéséhez.",
@@ -15146,6 +15153,8 @@
     },
     "support-bundles-unconnected": {
       "created-on": "Létrehozva:",
+      "deprecation-warning-message": "",
+      "deprecation-warning-title": "",
       "download": "Letöltés",
       "expires": "Lejár",
       "requested-by": "Kérelmező:",

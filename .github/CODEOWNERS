@@ -974,7 +974,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/features/explore/ @grafana/datapro
 /public/app/features/expressions/ @grafana/datapro
 /public/app/features/folders/ @grafana/grafana-frontend-navigation
-/public/app/features/home/ @grafana/grafana-frontend-navigation @grafana/growth-and-onboarding
+/public/app/features/home/ @grafana/grafana-frontend-navigation @grafana/growth-engineering
 /public/app/features/inspector/ @grafana/dashboards-squad
 /public/app/features/logs/ @grafana/observability-logs
 /public/app/features/live/ @grafana/dashboards-squad
