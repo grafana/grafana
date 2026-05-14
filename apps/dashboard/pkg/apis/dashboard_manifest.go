@@ -192,9 +192,6 @@ var appManifestData = app.ManifestData{
 						},
 					},
 					Schema: &versionSchemaVariablev2beta1,
-					SelectableFields: []string{
-						"spec.spec.name",
-					},
 				},
 			},
 			Routes: app.ManifestVersionRoutes{
