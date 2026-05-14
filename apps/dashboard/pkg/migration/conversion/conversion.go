@@ -9,6 +9,7 @@ import (
 
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	dashv1beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	dashv2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
@@ -243,6 +244,8 @@ func NewDashboardObject(version string) (runtime.Object, error) {
 	switch version {
 	case dashv0.VERSION:
 		return &dashv0.Dashboard{}, nil
+	case dashv1beta1.VERSION:
+		return &dashv1beta1.Dashboard{}, nil
 	case dashv1.VERSION:
 		return &dashv1.Dashboard{}, nil
 	case dashv2alpha1.VERSION:
