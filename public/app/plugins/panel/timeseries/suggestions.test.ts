@@ -5,7 +5,7 @@ import {
   getPanelDataSummary,
   VisualizationSuggestionScore,
 } from '@grafana/data';
-import { GraphDrawStyle, LegendDisplayMode, StackingMode } from '@grafana/schema';
+import { GraphDrawStyle, StackingMode } from '@grafana/schema';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import {
   createDashboardModelFixture,
@@ -332,11 +332,10 @@ describe('timeseries panel suggestions', () => {
       expect(suggestion.options!.disableKeyboardEvents).toBe(true);
     });
 
-    it('sets legend to hidden mode', () => {
+    it('hides legend in preview mode', () => {
       const result = timeseriesSuggestionsSupplier(summary)!;
       const suggestion = { ...result[0], options: {} as Partial<Options> };
       result[0].cardOptions!.previewModifier!(suggestion);
-      expect(suggestion.options!.legend?.displayMode).toBe(LegendDisplayMode.Hidden);
       expect(suggestion.options!.legend?.showLegend).toBe(false);
     });
 

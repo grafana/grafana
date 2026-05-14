@@ -454,7 +454,6 @@ export type LegendPlacement = ('bottom' | 'right');
  * Note: "hidden" needs to remain as an option for plugins compatibility
  */
 export enum LegendDisplayMode {
-  Hidden = 'hidden',
   List = 'list',
   Table = 'table',
 }
@@ -671,7 +670,6 @@ export interface GraphFieldConfig extends LineConfig, FillConfig, PointsConfig, 
  * TODO docs
  */
 export interface VizLegendOptions {
-  asTable?: boolean;
   calcs: Array<string>;
   displayMode: LegendDisplayMode;
   isVisible?: boolean;
