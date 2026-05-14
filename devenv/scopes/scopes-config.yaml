@@ -19,9 +19,8 @@ scopes:
         operator: equals
         value: cluster1
 
-  # app1 with defaultPath — tree expansion via production path.
   app1:
-    title: Application 1
+    title: Application 1 (defaultPath)
     defaultPath:
       - gdev-scopes
       - gdev-scopes-production
@@ -31,9 +30,8 @@ scopes:
         operator: equals
         value: app1
 
-  # app2 with defaultPath — tree expansion via production path.
   app2:
-    title: Application 2
+    title: Application 2 (defaultPath)
     defaultPath:
       - gdev-scopes
       - gdev-scopes-production
@@ -89,7 +87,7 @@ scopes:
   # The defaultPath determines which path is shown when this scope is selected
   # (e.g., from a URL or programmatically), even if another path also links to it.
   shared-service:
-    title: Shared Service
+    title: Shared Service (defaultPath)
     # Path from the root node down to the direct scopeNode.
     # Node names are hierarchical (parent-child), so use the full names.
     # This points to: gdev-scopes > production > shared-service-prod

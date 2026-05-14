@@ -1023,6 +1023,24 @@ describe('ScopesService', () => {
       );
     });
 
+    it('should overwrite stale scope_node in URL when enabling scopes with unchanged scopes', () => {
+      // When navigating to a dashboard with the same scopes already applied, the
+      // location subscription exits early (enabled=false at navigation time), so
+      // applyScopes never fires. setEnabled is the only write path that clears a
+      // stale scope_node left in the URL.
+      selectorService.state.appliedScopes = [{ scopeId: 'scope1', scopeNodeId: 'correct-node' }];
+      selectorService.state.scopes = {
+        scope1: { metadata: { name: 'scope1' }, spec: { title: 'Scope 1', filters: [] } },
+      };
+
+      service.setEnabled(true);
+
+      expect(locationService.partial).toHaveBeenCalledWith(
+        expect.objectContaining({ scope_node: 'correct-node' }),
+        true
+      );
+    });
+
     it('should clear scopes URL params when enabling with no applied scopes', () => {
       // Covers the firstScope-falsy short-circuit in the defer guard:
       // when appliedScopes is empty, the guard does not fire and the URL
