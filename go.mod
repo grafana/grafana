@@ -160,7 +160,7 @@ require (
 	github.com/prometheus/client_golang v1.23.2 // @grafana/alerting-backend
 	github.com/prometheus/client_model v0.6.2 // @grafana/grafana-backend-group
 	github.com/prometheus/common v0.67.5 // @grafana/alerting-backend
-	github.com/prometheus/prometheus v0.305.1-0.20250806170547-208187eaa19b // @grafana/alerting-backend
+	github.com/prometheus/prometheus v0.305.3 // @grafana/alerting-backend
 	github.com/prometheus/sigv4 v0.2.1 // @grafana/alerting-backend
 	github.com/puzpuzpuz/xsync/v4 v4.4.0 // @grafana/grafana-backend-group
 	github.com/redis/go-redis/v9 v9.14.0 // @grafana/alerting-backend
@@ -716,6 +716,11 @@ require (
 	sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730 // indirect
 	sigs.k8s.io/yaml v1.6.0 // indirect
 	software.sslmate.com/src/go-pkcs12 v0.7.0 // indirect
+)
+
+require (
+	github.com/linode/linodego v1.52.2 // indirect
+	github.com/ovh/go-ovh v1.9.0 // indirect
 )
 
 replace (
