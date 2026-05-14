@@ -5,33 +5,37 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"slices"
 
 	"github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/grafana/grafana-app-sdk/resource"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+	"k8s.io/client-go/util/retry"
+
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/team/teamapi")
 
-//go:generate mockery --name teamBindingClientFactory --structname MockTeamBindingClientFactory --inpackage --filename team_binding_client_factory_mock.go
-type teamBindingClientFactory interface {
-	GetClient(c *contextmodel.ReqContext) (*iamv0alpha1.TeamBindingClient, error)
+const subjectKindUser = "User"
+
+//go:generate mockery --name teamClientFactory --structname MockTeamClientFactory --inpackage --filename team_client_factory_mock.go
+type teamClientFactory interface {
+	GetClient(c *contextmodel.ReqContext) (*iamv0alpha1.TeamClient, error)
 }
 
 type directRestConfigClientFactory struct {
 	clientConfigProvider apiserver.DirectRestConfigProvider
 }
 
-func (f *directRestConfigClientFactory) GetClient(c *contextmodel.ReqContext) (*iamv0alpha1.TeamBindingClient, error) {
+func (f *directRestConfigClientFactory) GetClient(c *contextmodel.ReqContext) (*iamv0alpha1.TeamClient, error) {
 	restConfig := f.clientConfigProvider.GetDirectRestConfig(c)
 	if restConfig == nil {
 		return nil, errors.New("rest config not available")
@@ -40,15 +44,18 @@ func (f *directRestConfigClientFactory) GetClient(c *contextmodel.ReqContext) (*
 	restConfig.APIPath = "apis"
 	clientRegistry := k8s.NewClientRegistry(*restConfig, k8s.DefaultClientConfig())
 
-	client, err := iamv0alpha1.NewTeamBindingClientFromGenerator(clientRegistry)
+	client, err := iamv0alpha1.NewTeamClientFromGenerator(clientRegistry)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create resource client for TeamBinding: %w", err)
+		return nil, fmt.Errorf("failed to create resource client for Team: %w", err)
 	}
 
 	return client, nil
 }
 
-// setTeamMembershipsViaK8s updates team memberships using the TeamBinding K8s API
+// setTeamMembershipsViaK8s updates team memberships by writing to Team.Spec.Members.
+// The caller's admin/member email lists are the complete desired set for
+// non-external users: anyone not in the request is removed; entries
+// flagged External (team-sync owned) are preserved.
 func (tapi *TeamAPI) setTeamMembershipsViaK8s(
 	c *contextmodel.ReqContext,
 	teamID int64,
@@ -71,266 +78,142 @@ func (tapi *TeamAPI) setTeamMembershipsViaK8s(
 		return response.Error(http.StatusNotFound, "Team not found", err)
 	}
 
-	var (
-		namespace = c.Namespace
-		teamUID   = teamDTO.UID
-	)
-
-	teamBindingClient, err := tapi.teamBindingClientFactory.GetClient(c)
+	teamClient, err := tapi.teamClientFactory.GetClient(c)
 	if err != nil {
-		return response.Error(http.StatusServiceUnavailable, "Team binding service not available", err)
+		return response.Error(http.StatusServiceUnavailable, "Team service not available", err)
 	}
 
-	adminEmails := make(map[string]struct{}, len(cmd.Admins))
-	for _, admin := range cmd.Admins {
-		adminEmails[admin] = struct{}{}
+	// Resolve emails → UIDs up-front. Fail before any K8s write if any email
+	// can't be resolved. Admin wins on collision (same as the pre-K8s flow).
+	desired, missing, err := tapi.resolveDesiredMembers(ctx, cmd)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to resolve users", err)
 	}
-	memberEmails := make(map[string]struct{}, len(cmd.Members))
-	for _, member := range cmd.Members {
-		memberEmails[member] = struct{}{}
-	}
-
-	if err := tapi.validateUsersExist(ctx, adminEmails, memberEmails); err != nil {
-		return response.Error(http.StatusNotFound, "User validation failed", err)
+	if len(missing) > 0 {
+		return response.Error(http.StatusNotFound, fmt.Sprintf("users not found: %v", missing), nil)
 	}
 
-	existingBindings, err := teamBindingClient.List(
-		ctx,
-		namespace,
-		resource.ListOptions{
-			FieldSelectors: []string{fmt.Sprintf("spec.teamRef.name=%s", teamUID)},
+	// Read-modify-write on Team.Spec.Members. Team-sync reconciles members in
+	// the background, so a 409 from a concurrent writer is expected; refresh
+	// and retry. Re-check external rejection on each attempt because a freshly
+	// added external member could target one of the desired users.
+	var resp response.Response
+	retryErr := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		teamObj, err := teamClient.Get(ctx, resource.Identifier{
+			Namespace: c.Namespace,
+			Name:      teamDTO.UID,
 		})
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to list existing team bindings", err)
-	}
-
-	bindingUpdates, bindingsToDelete := tapi.processExistingBindings(
-		ctx,
-		existingBindings,
-		adminEmails,
-		memberEmails,
-	)
-
-	if err := tapi.updateTeamBindings(ctx, teamBindingClient, bindingUpdates); err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to update team bindings", err)
-	}
-
-	if err := tapi.createTeamBindingsForUsers(
-		ctx,
-		teamBindingClient,
-		namespace,
-		teamUID,
-		adminEmails,
-		iamv0alpha1.TeamBindingTeamPermissionAdmin,
-	); err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to create team bindings for admins", err)
-	}
-
-	if err := tapi.createTeamBindingsForUsers(
-		ctx,
-		teamBindingClient,
-		namespace,
-		teamUID,
-		memberEmails,
-		iamv0alpha1.TeamBindingTeamPermissionMember,
-	); err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to create team bindings for members", err)
-	}
-
-	if err := tapi.deleteTeamBindings(ctx, teamBindingClient, bindingsToDelete); err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to delete team bindings", err)
-	}
-
-	return response.Success("Team memberships have been updated")
-}
-
-// checkAndCreateBindingUpdate checks if a binding needs to be updated to a target permission.
-// Returns: (wasFound, updatedBinding, needsUpdate)
-// - wasFound: whether the email was in the map
-// - updatedBinding: the update to apply (only valid if needsUpdate is true)
-func checkAndCreateBindingUpdate(
-	binding iamv0alpha1.TeamBinding,
-	userEmail string,
-	emailsMap map[string]struct{},
-	targetPermission iamv0alpha1.TeamBindingTeamPermission,
-) (bool, *iamv0alpha1.TeamBinding) {
-	if _, exists := emailsMap[userEmail]; !exists {
-		return false, nil
-	}
-
-	delete(emailsMap, userEmail)
-
-	if binding.Spec.Permission == targetPermission {
-		return true, nil
-	}
-
-	updated := binding.DeepCopy()
-	updated.Spec.Permission = targetPermission
-
-	return true, updated
-}
-
-// processExistingBindings iterates through existing TeamBindings and determines which ones
-// need to be updated or deleted based on the desired admin and member emails.
-// It modifies adminEmails and memberEmails maps by removing processed entries.
-func (tapi *TeamAPI) processExistingBindings(
-	ctx context.Context,
-	existingBindings *iamv0alpha1.TeamBindingList,
-	adminEmails map[string]struct{},
-	memberEmails map[string]struct{},
-) ([]*iamv0alpha1.TeamBinding, []iamv0alpha1.TeamBinding) {
-	var (
-		bindingUpdates   = make([]*iamv0alpha1.TeamBinding, 0)
-		bindingsToDelete = make([]iamv0alpha1.TeamBinding, 0)
-	)
-
-	for _, binding := range existingBindings.Items {
-		usr, err := tapi.userService.GetByUID(ctx, &user.GetUserByUIDQuery{UID: binding.Spec.Subject.Name})
 		if err != nil {
-			tapi.logger.Warn("Failed to get user", "userUID", binding.Spec.Subject.Name, "error", err)
-			continue
+			resp = response.Error(http.StatusInternalServerError, "Failed to get team", err)
+			return nil
 		}
 
-		wasAdmin, adminUpdate := checkAndCreateBindingUpdate(
-			binding,
-			usr.Email,
-			adminEmails,
-			iamv0alpha1.TeamBindingTeamPermissionAdmin,
-		)
-		if wasAdmin {
-			if adminUpdate != nil {
-				bindingUpdates = append(bindingUpdates, adminUpdate)
+		for _, m := range teamObj.Spec.Members {
+			if m.Kind != subjectKindUser || !m.External {
+				continue
 			}
-			continue
-		}
-
-		wasMember, memberUpdate := checkAndCreateBindingUpdate(
-			binding,
-			usr.Email,
-			memberEmails,
-			iamv0alpha1.TeamBindingTeamPermissionMember,
-		)
-		if wasMember {
-			if memberUpdate != nil {
-				bindingUpdates = append(bindingUpdates, memberUpdate)
+			if _, hit := desired[m.Name]; hit {
+				resp = response.Error(http.StatusBadRequest,
+					fmt.Sprintf("Cannot modify externally-synced team member %q", m.Name), nil)
+				return nil
 			}
-			continue
 		}
 
-		// User is not in the new list, mark for deletion
-		bindingsToDelete = append(bindingsToDelete, binding)
+		newMembers := rebuildSpecMembers(teamObj.Spec.Members, desired)
+		if slices.Equal(teamObj.Spec.Members, newMembers) {
+			resp = response.Success("Team memberships have been updated")
+			return nil
+		}
+		teamObj.Spec.Members = newMembers
+
+		if _, err := teamClient.Update(ctx, teamObj, resource.UpdateOptions{}); err != nil {
+			return err
+		}
+		resp = response.Success("Team memberships have been updated")
+		return nil
+	})
+	if retryErr != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to update team members", retryErr)
 	}
-
-	return bindingUpdates, bindingsToDelete
+	return resp
 }
 
-// updateTeamBindings updates team bindings
-func (tapi *TeamAPI) updateTeamBindings(
+// resolveDesiredMembers maps the caller's email lists to UIDs and the
+// permission each UID should end up with. Admin wins over Member on collision.
+// Returns the list of emails that couldn't be resolved so the caller can fail
+// the whole request before any write.
+func (tapi *TeamAPI) resolveDesiredMembers(
 	ctx context.Context,
-	teamBindingClient *iamv0alpha1.TeamBindingClient,
-	bindingUpdates []*iamv0alpha1.TeamBinding,
-) error {
-	for _, binding := range bindingUpdates {
-		if _, err := teamBindingClient.Update(ctx, binding, resource.UpdateOptions{}); err != nil {
-			return fmt.Errorf("update team binding for user %s: %w", binding.Spec.Subject.Name, err)
-		}
-	}
+	cmd team.SetTeamMembershipsCommand,
+) (map[string]iamv0alpha1.TeamTeamPermission, []string, error) {
+	desired := make(map[string]iamv0alpha1.TeamTeamPermission, len(cmd.Admins)+len(cmd.Members))
+	var missing []string
 
-	return nil
-}
-
-// createTeamBindingsForUsers creates team bindings for the given users
-func (tapi *TeamAPI) createTeamBindingsForUsers(
-	ctx context.Context,
-	teamBindingClient *iamv0alpha1.TeamBindingClient,
-	namespace string,
-	teamUID string,
-	userEmails map[string]struct{},
-	permission iamv0alpha1.TeamBindingTeamPermission,
-) error {
-	for email := range userEmails {
-		user, err := tapi.userService.GetByEmail(ctx, &user.GetUserByEmailQuery{Email: email})
+	apply := func(email string, perm iamv0alpha1.TeamTeamPermission) error {
+		usr, err := tapi.userService.GetByEmail(ctx, &user.GetUserByEmailQuery{Email: email})
 		if err != nil {
-			return fmt.Errorf("user with email %s not found: %w", email, err)
+			if errors.Is(err, user.ErrUserNotFound) {
+				missing = append(missing, email)
+				return nil
+			}
+			return err
 		}
+		if existing, ok := desired[usr.UID]; ok && existing == iamv0alpha1.TeamTeamPermissionAdmin {
+			return nil
+		}
+		desired[usr.UID] = perm
+		return nil
+	}
 
-		binding := &iamv0alpha1.TeamBinding{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: iamv0alpha1.GroupVersion.Identifier(),
-				Kind:       iamv0alpha1.TeamBindingKind().Kind(),
-			},
-			ObjectMeta: makeMetadata(namespace, user.UID, teamUID),
-			Spec: iamv0alpha1.TeamBindingSpec{
-				Subject: iamv0alpha1.TeamBindingspecSubject{
-					Kind: "User",
-					Name: user.UID,
-				},
-				TeamRef: iamv0alpha1.TeamBindingTeamRef{
-					Name: teamUID,
-				},
-				Permission: permission,
+	for _, email := range cmd.Admins {
+		if err := apply(email, iamv0alpha1.TeamTeamPermissionAdmin); err != nil {
+			return nil, nil, err
+		}
+	}
+	for _, email := range cmd.Members {
+		if err := apply(email, iamv0alpha1.TeamTeamPermissionMember); err != nil {
+			return nil, nil, err
+		}
+	}
+	return desired, missing, nil
+}
+
+// rebuildSpecMembers applies the desired set to spec.members, preserving
+// external/non-user entries and existing order. Order preservation lets
+// idempotent requests produce a slice equal to the input, so the caller
+// can skip the K8s Update via slices.Equal.
+func rebuildSpecMembers(
+	existing []iamv0alpha1.TeamTeamMember,
+	desired map[string]iamv0alpha1.TeamTeamPermission,
+) []iamv0alpha1.TeamTeamMember {
+	applied := make(map[string]bool, len(desired))
+	newMembers := make([]iamv0alpha1.TeamTeamMember, 0, len(existing)+len(desired))
+
+	for _, m := range existing {
+		if m.Kind != subjectKindUser || m.External {
+			newMembers = append(newMembers, m)
+			continue
+		}
+		if perm, ok := desired[m.Name]; ok {
+			newMembers = append(newMembers, iamv0alpha1.TeamTeamMember{
+				Kind:       subjectKindUser,
+				Name:       m.Name,
+				Permission: perm,
 				External:   false,
-			},
-		}
-
-		if _, err := teamBindingClient.Create(ctx, binding, resource.CreateOptions{}); err != nil {
-			return fmt.Errorf("create team binding for user %s: %w", email, err)
+			})
+			applied[m.Name] = true
 		}
 	}
-
-	return nil
-}
-
-// deleteTeamBindings deletes the specified team bindings
-func (tapi *TeamAPI) deleteTeamBindings(
-	ctx context.Context,
-	teamBindingClient *iamv0alpha1.TeamBindingClient,
-	bindingsToDelete []iamv0alpha1.TeamBinding,
-) error {
-	for _, binding := range bindingsToDelete {
-		if err := teamBindingClient.Delete(ctx, resource.Identifier{
-			Namespace: binding.Namespace,
-			Name:      binding.Name,
-		}, resource.DeleteOptions{}); err != nil {
-			return fmt.Errorf("delete team binding %s: %w", binding.Name, err)
+	for uid, perm := range desired {
+		if applied[uid] {
+			continue
 		}
+		newMembers = append(newMembers, iamv0alpha1.TeamTeamMember{
+			Kind:       subjectKindUser,
+			Name:       uid,
+			Permission: perm,
+			External:   false,
+		})
 	}
-
-	return nil
-}
-
-// validateUsersExist checks that all users in the provided email maps exist before making any changes.
-// This provides fail-fast behavior to avoid partial updates.
-func (tapi *TeamAPI) validateUsersExist(
-	ctx context.Context,
-	adminEmails map[string]struct{},
-	memberEmails map[string]struct{},
-) error {
-	allEmails := make([]string, 0, len(adminEmails)+len(memberEmails))
-	for email := range adminEmails {
-		allEmails = append(allEmails, email)
-	}
-	for email := range memberEmails {
-		allEmails = append(allEmails, email)
-	}
-
-	var missingUsers []string
-	for _, email := range allEmails {
-		if _, err := tapi.userService.GetByEmail(ctx, &user.GetUserByEmailQuery{Email: email}); err != nil {
-			missingUsers = append(missingUsers, email)
-		}
-	}
-
-	if len(missingUsers) > 0 {
-		return fmt.Errorf("users not found: %v", missingUsers)
-	}
-
-	return nil
-}
-
-func makeMetadata(namespace, userUID, teamUID string) metav1.ObjectMeta {
-	return metav1.ObjectMeta{
-		Name:      fmt.Sprintf("u.%s.%s", userUID, teamUID),
-		Namespace: namespace,
-	}
+	return newMembers
 }
