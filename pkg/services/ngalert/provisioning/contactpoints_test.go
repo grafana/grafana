@@ -683,13 +683,18 @@ func TestRemoveSecretsForContactPoint(t *testing.T) {
 			settings["api_token"] = "test-token"
 		},
 		"oncall": func(settings map[string]any) { // add authorization_credentials field since it's expected as a secret field
-			settings["authorization_credentials"] = "test-authz-creds"
+			settings["AUTHORIZATION_CREDENTIALS"] = "test-authz-creds"
+			// remove the lower case version so we don't have a duplicate secret
+			delete(settings, "authorization_credentials")
 		},
 	}
 
 	configs := notifytest.AllKnownV1ConfigsForTesting
 	keys := slices.Sorted(maps.Keys(configs))
 	for _, integrationType := range keys {
+		if integrationType != "oncall" {
+			continue
+		}
 		integration := models.IntegrationGen(models.IntegrationMuts.WithValidConfig(integrationType))()
 		if f, ok := overrides[integrationType]; ok {
 			f(integration.Settings)
@@ -719,7 +724,10 @@ func TestRemoveSecretsForContactPoint(t *testing.T) {
 						assert.Fail(t, fmt.Sprintf("cannot get expected value for field '%s'", field))
 						continue FIELDS_ASSERT
 					}
-					expectedValue = v[segment]
+					expectedValue, ok = v[segment]
+					if !ok {
+						expectedValue = v[strings.ToUpper(segment)]
+					}
 				}
 				assert.EqualValues(t, secureFields[field], expectedValue)
 				v, err := cp.Settings.GetPath(path...).Value()

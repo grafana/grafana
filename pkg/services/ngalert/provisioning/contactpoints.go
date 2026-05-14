@@ -737,7 +737,7 @@ func extractCaseInsensitive(jsonObj *simplejson.Json, key string) (string, error
 
 	node := jsonObj
 	for idx, segment := range path {
-		_, value, err := getNodeCaseInsensitive(node, segment)
+		k, value, err := getNodeCaseInsensitive(node, segment)
 		if err != nil {
 			return "", err
 		}
@@ -746,7 +746,7 @@ func extractCaseInsensitive(jsonObj *simplejson.Json, key string) (string, error
 		}
 		if idx == len(path)-1 {
 			resultValue := value.MustString()
-			node.Del(segment)
+			node.Del(k)
 			return resultValue, nil
 		}
 		node = value
