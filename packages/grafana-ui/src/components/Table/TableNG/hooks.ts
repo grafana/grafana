@@ -1,8 +1,8 @@
 import { useState, useMemo, useEffect, useCallback, useRef, useLayoutEffect } from 'react';
-import { Column, DataGridProps, SortColumn } from '@grafana/react-data-grid';
 import { varPreLine } from 'uwrap';
 
 import { Field, fieldReducers, FieldType, formattedValueToString, LinkModel, reduceField } from '@grafana/data';
+import { Column, DataGridProps, SortColumn } from '@grafana/react-data-grid';
 
 import { useTheme2 } from '../../../themes/ThemeContext';
 import { TableCellDisplayMode, TableColumnResizeActionCallback } from '../types';
