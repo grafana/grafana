@@ -69,17 +69,17 @@ class DashboardAPIVersionResolver {
 
   private async discover(): Promise<ResolvedDashboardVersions> {
     const group = await getAPIGroupVersions(DASHBOARD_API_GROUP);
-    const availableVersions = new Set(group?.versions.map((v) => v.version));
-    const preferred = group?.preferredVersion?.version;
+    const versions = group?.versions ?? new Set<string>();
+    const preferred = group?.preferred;
 
     const v1: DashboardV1Version =
-      preferred === 'v1' || preferred === 'v1beta1' ? preferred : availableVersions.has('v1') ? 'v1' : BETA_V1;
+      preferred === 'v1' || preferred === 'v1beta1' ? preferred : versions.has('v1') ? 'v1' : BETA_V1;
 
     const v2: DashboardV2Version =
-      preferred === 'v2' || preferred === 'v2beta1' ? preferred : availableVersions.has('v2') ? 'v2' : BETA_V2;
+      preferred === 'v2' || preferred === 'v2beta1' ? preferred : versions.has('v2') ? 'v2' : BETA_V2;
 
     debugLog(
-      `Version negotiation: v1=${v1}, v2=${v2}, preferred=${preferred ?? 'none'} (available: ${Array.from(availableVersions).join(', ')})`
+      `Version negotiation: v1=${v1}, v2=${v2}, preferred=${preferred ?? 'none'} (available: ${Array.from(versions).join(', ')})`
     );
 
     return { v1, v2 };

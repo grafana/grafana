@@ -71,17 +71,26 @@ export async function getAPIGroupDiscoveryList(): Promise<APIGroupDiscoveryList>
   );
 }
 
+export interface APIGroupVersions {
+  versions: Set<string>;
+  preferred?: string;
+}
+
 /**
- * Fetch a single API group descriptor (its versions and preferred version) by
- * name. Returns `undefined` when the apiserver responds 404, i.e. the group is
- * not registered. Other errors propagate so callers can distinguish a missing
- * group from a transient failure.
+ * Fetch the set of available versions (and the apiserver's preferred version)
+ * for a single API group. Returns `undefined` when the apiserver responds 404,
+ * i.e. the group is not registered. Other errors propagate so callers can
+ * distinguish a missing group from a transient failure.
  */
-export async function getAPIGroupVersions(group: string): Promise<K8sAPIGroup | undefined> {
+export async function getAPIGroupVersions(group: string): Promise<APIGroupVersions | undefined> {
   try {
-    return await getBackendSrv().get<K8sAPIGroup>(`/apis/${group}/`, undefined, undefined, {
+    const result = await getBackendSrv().get<K8sAPIGroup>(`/apis/${group}/`, undefined, undefined, {
       showErrorAlert: false,
     });
+    return {
+      versions: new Set(result.versions.map((v) => v.version)),
+      preferred: result.preferredVersion?.version,
+    };
   } catch (err) {
     if (isFetchError(err) && err.status === 404) {
       return undefined;
