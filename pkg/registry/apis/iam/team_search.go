@@ -14,6 +14,7 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/endpoints/request"
@@ -485,6 +486,9 @@ func (s *TeamSearchHandler) enrichWithMemberCounts(ctx context.Context, namespac
 			outgoingCtx := request.WithNamespace(ctx, namespace)
 			obj, err := s.teamGetter.Get(outgoingCtx, hits[i].Name, &metav1.GetOptions{})
 			if err != nil {
+				if apierrors.IsNotFound(err) {
+					return nil
+				}
 				return fmt.Errorf("failed to get team %s: %w", hits[i].Name, err)
 			}
 			team, ok := obj.(*iamv0alpha1.Team)
