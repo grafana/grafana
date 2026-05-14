@@ -8144,14 +8144,16 @@
     "data-sources-list-card": {
       "explore": "Explore"
     },
+    "default-button": {
+      "active": "This data source is currently set as the default.",
+      "error": "Failed to update default data source",
+      "label": "Default",
+      "make": "Make default",
+      "remove": "Remove default",
+      "tooltip": "The default data source is preselected in new panels."
+    },
     "edit-data-source-actions": {
       "add-favorite": "Add to favorites",
-      "default-active": "This data source is currently set as the default.",
-      "default-error": "Failed to update default data source",
-      "default-label": "Default",
-      "default-make-button": "Make default",
-      "default-remove-button": "Remove default",
-      "default-tooltip": "The default data source is preselected in new panels.",
       "explore-data": "Explore data",
       "open-in-explore": "Open in Explore View",
       "remove-favorite": "Remove from favorites"
