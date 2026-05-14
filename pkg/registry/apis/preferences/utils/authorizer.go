@@ -86,20 +86,18 @@ func (a *AuthorizeFromName) Authorize(ctx context.Context, attr authorizer.Attri
 		if attr.IsReadOnly() && slices.Contains(user.GetGroups(), info.Identifier) {
 			return authorizer.DecisionAllow, "", nil
 		}
-		if a.AccessClient != nil {
-			rsp, err := a.AccessClient.Check(ctx, user, authlib.CheckRequest{
-				Verb:      attr.GetVerb(),
-				Group:     "iam.grafana.app",
-				Resource:  "teams",
-				Namespace: user.GetNamespace(),
-				Name:      info.Identifier,
-			}, "")
-			if err != nil {
-				return authorizer.DecisionDeny, "error fetching team permissions", err
-			}
-			if rsp.Allowed {
-				return authorizer.DecisionAllow, "", nil
-			}
+		rsp, err := a.AccessClient.Check(ctx, user, authlib.CheckRequest{
+			Verb:      attr.GetVerb(),
+			Group:     "iam.grafana.app",
+			Resource:  "teams",
+			Namespace: user.GetNamespace(),
+			Name:      info.Identifier,
+		}, "")
+		if err != nil {
+			return authorizer.DecisionDeny, "error fetching team permissions", err
+		}
+		if rsp.Allowed {
+			return authorizer.DecisionAllow, "", nil
 		}
 		return authorizer.DecisionDeny, "no edit permissions for the team", nil
 
