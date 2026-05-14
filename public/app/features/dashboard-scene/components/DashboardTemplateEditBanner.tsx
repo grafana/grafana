@@ -66,3 +66,7 @@ export function DashboardTemplateEditBanner({ dashboard }: { dashboard: Dashboar
 
 const getStyles = (theme: GrafanaTheme2) => ({
   banner: css({
+    flex: 0,
+    margin: theme.spacing(2, 2, 0, 2),
+  }),
+});

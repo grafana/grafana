@@ -74,9 +74,7 @@ export interface DashboardMeta {
   version?: number;
 
   // Org-defined template flow. Set when a dashboard scene was hydrated from an DashboardTemplate
-  // via DashboardRoutes.Template with editTemplate=true. Consumers that need the outer template
-  // spec fields (title/description/tags/...) fetch them via the `getDashboardTemplate` RTKQ
-  // endpoint keyed on `dashboardTemplateUid` rather than caching them on meta.
+  // via DashboardRoutes.Template with editTemplate=true.
   isDashboardTemplate?: boolean;
   dashboardTemplateUid?: string;
 
@@ -135,7 +133,6 @@ export enum DashboardRoutes {
   Embedded = 'embedded-dashboard',
   Report = 'report-dashboard',
   AssistantPreview = 'assistant-preview',
-  TemplateEdit = 'template-edit-dashboard',
 }
 
 export enum DashboardInitPhase {

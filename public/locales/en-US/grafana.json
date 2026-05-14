@@ -6760,6 +6760,7 @@
     "suggested-error-title": "Error loading suggested dashboard",
     "template-dashboard-modal": {
       "description": "Get started with Grafana templates. Connect your data to power them with real metrics.",
+      "description-custom": "Get started with templates. Connect your data to power them with real metrics.",
       "tab-custom": "Custom templates",
       "tab-grafana": "Grafana-provisioned",
       "title": "Start a dashboard from a template"
@@ -7063,7 +7064,7 @@
       "dashboard-controls": "Dashboard controls"
     },
     "dashboard-template-edit-banner": {
-      "body": "Edits made will update this template. <2>If you wish to use this template as a dashboard, click here</2>",
+      "body": "Edits made will update this template. <2>If you wish to use this template to create a dashboard, click here</2>",
       "title": "You are editing {{ templateName }}"
     },
     "dashboard-template-saved-banner": {
@@ -7548,8 +7549,7 @@
         "title": "Save dashboard",
         "title-copy": "Save dashboard copy",
         "title-provisioned": "Provisioned dashboard",
-        "title-template": "Save as template",
-        "title-update-template": "Save template"
+        "title-template": "Save as template"
       }
     },
     "save-dashboard-form": {

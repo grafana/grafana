@@ -26,10 +26,10 @@ import { OrphanedDashboardBanner } from 'app/features/provisioning/components/Da
 import { DashboardRoutes } from 'app/types/dashboard';
 
 import { DashboardConversionWarningBanner } from '../components/DashboardConversionWarningBanner';
-import { SuggestedDashboardsBanner } from '../components/SuggestedDashboardsBanner';
 import { DashboardTemplateEditBanner } from '../components/DashboardTemplateEditBanner';
 import { DashboardTemplateSavedBanner } from '../components/DashboardTemplateSavedBanner';
 import { DashboardTemplateUseBanner } from '../components/DashboardTemplateUseBanner';
+import { SuggestedDashboardsBanner } from '../components/SuggestedDashboardsBanner';
 import { DashboardPrompt } from '../saving/DashboardPrompt';
 import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
 import { useScenesFlickeringFix } from '../utils/utils';
@@ -152,7 +152,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
       <DashboardConversionWarningBanner dashboard={dashboard} />
       <OrphanedDashboardBanner dashboard={dashboard} />
       <SuggestedDashboardsBanner route={route.routeName} dashboard={dashboard} />
-      <DashboardTemplateSavedBanner templateName={dashboard.state.title} />
+      <DashboardTemplateSavedBanner />
       <DashboardTemplateUseBanner dashboard={dashboard} />
       <DashboardTemplateEditBanner dashboard={dashboard} />
       <dashboard.Component model={dashboard} key={dashboard.state.key} />

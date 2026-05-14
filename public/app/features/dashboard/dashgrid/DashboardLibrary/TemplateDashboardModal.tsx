@@ -185,9 +185,15 @@ export const TemplateDashboardModal = () => {
     >
       <div className={styles.stickyHeader}>
         <Text element="p">
-          <Trans i18nKey="dashboard-library.template-dashboard-modal.description">
-            Get started with Grafana templates. Connect your data to power them with real metrics.
-          </Trans>
+          {activeTab === 'custom' ? (
+            <Trans i18nKey="dashboard-library.template-dashboard-modal.description-custom">
+              Get started with templates. Connect your data to power them with real metrics.
+            </Trans>
+          ) : (
+            <Trans i18nKey="dashboard-library.template-dashboard-modal.description">
+              Get started with Grafana templates. Connect your data to power them with real metrics.
+            </Trans>
+          )}
         </Text>
         {showDashboardTemplates && (
           <Box marginTop={2}>

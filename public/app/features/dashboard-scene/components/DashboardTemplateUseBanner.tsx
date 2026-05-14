@@ -6,9 +6,9 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Alert, useStyles2 } from '@grafana/ui';
 import { DASHBOARD_LIBRARY_ROUTES } from 'app/features/dashboard/dashgrid/types';
+import { getDashboardTemplateExtension } from 'app/features/dashboard-scene/settings/enterprise-components/DashboardTemplateExtension';
 
 import { type DashboardScene } from '../scene/DashboardScene';
-import { getDashboardTemplateExtension } from 'app/features/dashboard-scene/settings/enterprise-components/DashboardTemplateExtension';
 
 export function DashboardTemplateUseBanner({ dashboard }: { dashboard: DashboardScene }) {
   const styles = useStyles2(getStyles);
@@ -19,7 +19,7 @@ export function DashboardTemplateUseBanner({ dashboard }: { dashboard: Dashboard
   const [dismissed, setDismissed] = useState<boolean>(!shouldRender);
   const [outerTitle, setOuterTitle] = useState<string | undefined>(undefined);
 
-  const dashboardTemplateUid = dashboard.state.meta.dashboardTemplateUid;
+  const dashboardTemplateUid = searchParams.get('dashboardTemplateUid') ?? undefined;
 
   useEffect(() => {
     if (!shouldRender || !dashboardTemplateUid) {
