@@ -9,7 +9,7 @@ import { DASHBOARD_LIBRARY_ROUTES } from 'app/features/dashboard/dashgrid/types'
 
 import { type DashboardScene } from '../scene/DashboardScene';
 
-export function TemplateDashboardEditBanner({ dashboard }: { dashboard: DashboardScene }) {
+export function DashboardTemplateEditBanner({ dashboard }: { dashboard: DashboardScene }) {
   const styles = useStyles2(getStyles);
   const location = useLocation();
   const { meta } = dashboard.useState();
@@ -37,7 +37,9 @@ export function TemplateDashboardEditBanner({ dashboard }: { dashboard: Dashboar
 
   return (
     <Alert
-      title={t('dashboard-scene.dashboard-template-edit-banner.title', 'You are editing {{ templateName }}', { templateName })}
+      title={t('dashboard-scene.dashboard-template-edit-banner.title', 'You are editing {{ templateName }}', {
+        templateName,
+      })}
       severity="info"
       className={styles.banner}
       onRemove={() => setDismissed(true)}

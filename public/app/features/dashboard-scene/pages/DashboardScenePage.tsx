@@ -27,9 +27,9 @@ import { DashboardRoutes } from 'app/types/dashboard';
 
 import { DashboardConversionWarningBanner } from '../components/DashboardConversionWarningBanner';
 import { SuggestedDashboardsBanner } from '../components/SuggestedDashboardsBanner';
-import { TemplateDashboardEditBanner } from '../components/TemplateDashboardEditBanner';
-import { TemplateDashboardSavedBanner } from '../components/TemplateDashboardSavedBanner';
-import { TemplateDashboardUseBanner } from '../components/TemplateDashboardUseBanner';
+import { DashboardTemplateEditBanner } from '../components/DashboardTemplateEditBanner';
+import { DashboardTemplateSavedBanner } from '../components/DashboardTemplateSavedBanner';
+import { DashboardTemplateUseBanner } from '../components/DashboardTemplateUseBanner';
 import { DashboardPrompt } from '../saving/DashboardPrompt';
 import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
 import { useScenesFlickeringFix } from '../utils/utils';
@@ -152,9 +152,9 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
       <DashboardConversionWarningBanner dashboard={dashboard} />
       <OrphanedDashboardBanner dashboard={dashboard} />
       <SuggestedDashboardsBanner route={route.routeName} dashboard={dashboard} />
-      <TemplateDashboardSavedBanner templateName={dashboard.state.title} />
-      <TemplateDashboardUseBanner dashboard={dashboard} />
-      <TemplateDashboardEditBanner dashboard={dashboard} />
+      <DashboardTemplateSavedBanner templateName={dashboard.state.title} />
+      <DashboardTemplateUseBanner dashboard={dashboard} />
+      <DashboardTemplateEditBanner dashboard={dashboard} />
       <dashboard.Component model={dashboard} key={dashboard.state.key} />
       <DashboardPrompt dashboard={dashboard} />
       {isDashboardTemplatesFlagEnabled && <TemplateDashboardModal />}

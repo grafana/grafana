@@ -9,7 +9,7 @@ import { DASHBOARD_LIBRARY_ROUTES } from 'app/features/dashboard/dashgrid/types'
 
 import { type DashboardScene } from '../scene/DashboardScene';
 
-export function TemplateDashboardUseBanner({ dashboard }: { dashboard: DashboardScene }) {
+export function DashboardTemplateUseBanner({ dashboard }: { dashboard: DashboardScene }) {
   const styles = useStyles2(getStyles);
   const location = useLocation();
   const [searchParams] = useSearchParams();
