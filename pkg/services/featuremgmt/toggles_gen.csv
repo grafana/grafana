@@ -48,9 +48,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-08-29,kubernetesCorrelations,experimental,@grafana/datapro,false,true,false
 2025-10-16,kubernetesLogsDrilldown,experimental,@grafana/observability-logs,false,true,false
 2025-10-20,kubernetesQueryCaching,experimental,@grafana/grafana-operator-experience-squad,false,true,false
-2025-04-11,dashboardDisableSchemaValidationV1,experimental,@grafana/grafana-app-platform-squad,false,false,false
-2025-04-11,dashboardDisableSchemaValidationV2,experimental,@grafana/grafana-app-platform-squad,false,false,false
-2025-04-11,dashboardSchemaValidationLogging,experimental,@grafana/grafana-app-platform-squad,false,false,false
 2026-04-13,datasources.queryTypes,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2026-04-13,datasources.loadOpenAPI,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2026-04-13,datasources.chunkedQueryStreaming,experimental,@grafana/grafana-datasources-core-services,false,false,false

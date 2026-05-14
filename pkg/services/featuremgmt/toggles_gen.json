@@ -1613,7 +1613,8 @@
       "metadata": {
         "name": "dashboardDisableSchemaValidationV1",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-04-11T16:52:46Z"
+        "creationTimestamp": "2025-04-11T16:52:46Z",
+        "deletionTimestamp": "2026-05-14T05:13:22Z"
       },
       "spec": {
         "description": "Disable schema validation for dashboards/v1",
@@ -1626,7 +1627,8 @@
       "metadata": {
         "name": "dashboardDisableSchemaValidationV2",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-04-11T16:52:46Z"
+        "creationTimestamp": "2025-04-11T16:52:46Z",
+        "deletionTimestamp": "2026-05-14T05:13:22Z"
       },
       "spec": {
         "description": "Disable schema validation for dashboards/v2",
@@ -1712,7 +1714,8 @@
       "metadata": {
         "name": "dashboardSchemaValidationLogging",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-04-11T16:52:46Z"
+        "creationTimestamp": "2025-04-11T16:52:46Z",
+        "deletionTimestamp": "2026-05-14T05:13:22Z"
       },
       "spec": {
         "description": "Log schema validation errors so they can be analyzed later",
