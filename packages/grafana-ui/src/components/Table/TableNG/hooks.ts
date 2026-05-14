@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback, useRef, useLayoutEffect, RefObject, CSSProperties, useEffect } from 'react';
-import { Column, DataGridHandle, DataGridProps, SortColumn } from 'react-data-grid';
 
 import { compareArrayValues, Field, FieldType, formattedValueToString, reduceField, ReducerID } from '@grafana/data';
+import { Column, DataGridHandle, DataGridProps, SortColumn } from '@grafana/react-data-grid';
 
 import { TableColumnResizeActionCallback } from '../types';
 

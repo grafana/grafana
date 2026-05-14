@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import React, { useEffect, useRef } from 'react';
-import { Column, SortDirection } from 'react-data-grid';
 
 import { Field, GrafanaTheme2 } from '@grafana/data';
+import { Column, SortDirection } from '@grafana/react-data-grid';
 
 import { useStyles2 } from '../../../../themes/ThemeContext';
 import { getFieldTypeIcon } from '../../../../types/icon';
