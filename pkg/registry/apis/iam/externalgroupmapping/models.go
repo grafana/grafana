@@ -11,6 +11,7 @@ type TeamGroupsHandler interface {
 	rest.Scoper
 	rest.StorageMetadata
 	rest.Connecter
+	SetTeamGetter(rest.Getter)
 }
 
 type SearchHandler interface {

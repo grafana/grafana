@@ -512,6 +512,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.AP
 	storage[teamResource.StoragePath("removemember")] = team.NewTeamRemoveMemberREST(teamStorage, b.tracing)
 
 	if enableExternalGroupMappingsApi && b.teamGroupsHandler != nil {
+		b.teamGroupsHandler.SetTeamGetter(b.teamGetter)
 		storage[teamResource.StoragePath("groups")] = b.teamGroupsHandler
 	}
 
