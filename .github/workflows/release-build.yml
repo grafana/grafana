@@ -668,12 +668,12 @@ jobs:
       matrix:
         include:
           - name: windows-amd64
-            artifacts: zip:grafana:windows/amd64:nocgo,msi:grafana:windows/amd64:nocgo
+            arch: amd64
+            msi: true
           - name: windows-arm64
-            artifacts: zip:grafana:windows/arm64:nocgo
+            arch: arm64
     steps:
       - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
-      - uses: grafana/shared-workflows/actions/login-to-gar@main
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
@@ -681,28 +681,51 @@ jobs:
         with:
           name: artifacts-packages-${{ matrix.name }}
           path: dist
-      - uses: ./.github/actions/build-package
-        id: build
-        with:
-          artifacts: ${{ matrix.artifacts }}
-          checksum: true
-          grafana-path: .
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          version: ${{ needs.setup.outputs.version }}
-          output: artifacts-${{ matrix.name }}.txt
-          verify: false
-          build-id: ${{ github.run_id }}
-          cache-builders: true
-      - name: Stage package artifacts for upload
-        env:
-          BUILD_FILE: ${{ steps.build.outputs.file }}
-          BUILD_DIST_DIR: ${{ steps.build.outputs.dist-dir }}
+      - name: Build zip
         run: |
           set -euo pipefail
+          cd dist
+          for TARGZ in *.tar.gz; do break; done
+          tar xzf "$TARGZ"
+          # shellcheck disable=SC2046
+          zip "${TARGZ%.tar.gz}.zip" $(tar tf "$TARGZ")
+          cd -
+      - name: Build MSI
+        if: ${{ matrix.msi == true }}
+        env:
+          GOOS: windows
+          GOARCH: amd64
+          BUILD_NUMBER: ${{ github.run_id }}
+          BUILD_VERSION: ${{ needs.setup.outputs.version }}
+        run: |
+          for TARGZ in dist/*.tar.gz; do break; done
+          make build-msi \
+            -o "$TARGZ" \
+            BUILD_VERSION="$BUILD_VERSION" \
+            BUILD_NUMBER="$BUILD_NUMBER" \
+            TARGZ_PACKAGE_NAME=grafana
+      - name: Generate checksums and stage artifacts
+        run: |
+          set -euo pipefail
+          for f in dist/*.zip dist/*.msi; do
+            [ -e "$f" ] || continue
+            sha256sum "$f" | awk '{print $1}' > "${f}.sha256"
+          done
+          listfile="artifacts-${{ matrix.name }}.txt"
+          : > "$listfile"
+          for f in dist/*.zip dist/*.msi; do
+            [ -e "$f" ] || continue
+            echo "dist/$(basename "$f")" | tee -a "$listfile"
+            echo "dist/$(basename "$f").sha256" | tee -a "$listfile"
+          done
           mkdir -p "upload/artifacts-list-${{ matrix.name }}"
-          cp "$BUILD_FILE" "upload/artifacts-list-${{ matrix.name }}/"
+          cp "$listfile" "upload/artifacts-list-${{ matrix.name }}/"
           mkdir -p "upload/artifacts-${{ matrix.name }}"
-          cp -R "$BUILD_DIST_DIR/." "upload/artifacts-${{ matrix.name }}/"
+          for f in dist/*.zip dist/*.msi; do
+            [ -e "$f" ] || continue
+            cp "$f" "upload/artifacts-${{ matrix.name }}/"
+            cp "${f}.sha256" "upload/artifacts-${{ matrix.name }}/"
+          done
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: artifacts-list-${{ matrix.name }}
