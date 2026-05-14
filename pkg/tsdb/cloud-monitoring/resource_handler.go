@@ -366,10 +366,6 @@ func (s *Service) setRequestVariables(req *http.Request, subDataSource string) (
 	req.URL.Host = serviceURL.Host
 	req.URL.Scheme = serviceURL.Scheme
 
-	if auth := req.Header.Get("Authorization"); auth != "" {
-		*req = *req.WithContext(withAuthHeader(req.Context(), auth))
-	}
-
 	return dsInfo.services[subDataSource].client, 0, nil
 }
 

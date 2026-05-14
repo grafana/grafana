@@ -4,8 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
-	"net/http/httptest"
 	"net/url"
 	"reflect"
 	"strings"
@@ -1203,73 +1201,4 @@ func TestCheckHealth(t *testing.T) {
 		assert.Contains(t, res.Message, "Default project is required")
 	})
 
-	t.Run("oauthPassthrough forwards Authorization header to outgoing request", func(t *testing.T) {
-		var received string
-		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			received = r.Header.Get("Authorization")
-			w.WriteHeader(http.StatusOK)
-		}))
-		t.Cleanup(ts.Close)
-
-		client := &http.Client{Transport: oauthPassthroughMiddleware().CreateMiddleware(httpclient.Options{}, http.DefaultTransport)}
-
-		im := datasource.NewInstanceManager(func(_ context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return &datasourceInfo{
-				authenticationType: oauthPassthroughAuthentication,
-				oauthPassThru:      true,
-				defaultProject:     "p1",
-				services: map[string]datasourceService{
-					cloudMonitor: {url: ts.URL, client: client},
-				},
-			}, nil
-		})
-		service := &Service{im: im}
-		res, err := service.CheckHealth(context.Background(), &backend.CheckHealthRequest{
-			PluginContext: backend.PluginContext{
-				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
-			},
-			Headers: map[string]string{"Authorization": "Bearer test-token-123"},
-		})
-		require.NoError(t, err)
-		assert.Equal(t, backend.HealthStatusOk, res.Status)
-		assert.Equal(t, "Bearer test-token-123", received)
-	})
-}
-
-func TestOAuthPassthroughMiddleware(t *testing.T) {
-	t.Run("injects per-request Authorization from context", func(t *testing.T) {
-		var got string
-		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			got = r.Header.Get("Authorization")
-			w.WriteHeader(http.StatusOK)
-		}))
-		t.Cleanup(ts.Close)
-
-		client := &http.Client{Transport: oauthPassthroughMiddleware().CreateMiddleware(httpclient.Options{}, http.DefaultTransport)}
-
-		req, err := http.NewRequestWithContext(withAuthHeader(context.Background(), "Bearer abc"), http.MethodGet, ts.URL, nil)
-		require.NoError(t, err)
-		res, err := client.Do(req)
-		require.NoError(t, err)
-		_ = res.Body.Close()
-		assert.Equal(t, "Bearer abc", got)
-	})
-
-	t.Run("does not set Authorization when ctx has no token", func(t *testing.T) {
-		var got string
-		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			got = r.Header.Get("Authorization")
-			w.WriteHeader(http.StatusOK)
-		}))
-		t.Cleanup(ts.Close)
-
-		client := &http.Client{Transport: oauthPassthroughMiddleware().CreateMiddleware(httpclient.Options{}, http.DefaultTransport)}
-
-		req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, ts.URL, nil)
-		require.NoError(t, err)
-		res, err := client.Do(req)
-		require.NoError(t, err)
-		_ = res.Body.Close()
-		assert.Equal(t, "", got)
-	})
 }

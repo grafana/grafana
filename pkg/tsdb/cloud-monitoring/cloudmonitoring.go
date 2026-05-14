@@ -61,20 +61,6 @@ const (
 	perSeriesAlignerDefault        = "ALIGN_MEAN"
 )
 
-type authHeaderCtxKey struct{}
-
-func withAuthHeader(ctx context.Context, h string) context.Context {
-	if h == "" {
-		return ctx
-	}
-	return context.WithValue(ctx, authHeaderCtxKey{}, h)
-}
-
-func authHeaderFromContext(ctx context.Context) string {
-	v, _ := ctx.Value(authHeaderCtxKey{}).(string)
-	return v
-}
-
 func ProvideService(httpClientProvider *httpclient.Provider) *Service {
 	s := &Service{
 		httpClientProvider: *httpClientProvider,
@@ -94,8 +80,6 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 }
 
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	ctx = withAuthHeader(ctx, req.Headers["Authorization"])
-
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	if err != nil {
 		return nil, err
@@ -222,6 +206,10 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 		opts, err := settings.HTTPClientOptions(ctx)
 		if err != nil {
 			return nil, err
+		}
+
+		if jsonData.AuthenticationType == oauthPassthroughAuthentication {
+			opts.ForwardHTTPHeaders = true
 		}
 
 		for name := range routes {
@@ -363,8 +351,6 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	if len(req.Queries) == 0 {
 		return nil, fmt.Errorf("query contains no queries")
 	}
-
-	ctx = withAuthHeader(ctx, req.Headers["Authorization"])
 
 	err := migrateRequest(req)
 	if err != nil {

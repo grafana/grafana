@@ -8,11 +8,10 @@ import (
 )
 
 const (
-	cloudMonitor                           = "cloudmonitoring"
-	resourceManager                        = "cloudresourcemanager"
-	cloudMonitorScope                      = "https://www.googleapis.com/auth/monitoring.read"
-	resourceManagerScope                   = "https://www.googleapis.com/auth/cloudplatformprojects.readonly"
-	forwardOAuthIdentityRequestHTTPHeaders = "forward-oauth-identity-request-http-headers"
+	cloudMonitor         = "cloudmonitoring"
+	resourceManager      = "cloudresourcemanager"
+	cloudMonitorScope    = "https://www.googleapis.com/auth/monitoring.read"
+	resourceManagerScope = "https://www.googleapis.com/auth/cloudplatformprojects.readonly"
 )
 
 type routeInfo struct {
@@ -36,7 +35,7 @@ var routes = map[string]routeInfo{
 
 func getMiddleware(model *datasourceInfo, routePath string) (httpclient.Middleware, error) {
 	if model.authenticationType == oauthPassthroughAuthentication {
-		return oauthPassthroughMiddleware(), nil
+		return nil, nil
 	}
 
 	providerConfig := tokenprovider.Config{
@@ -73,17 +72,6 @@ func getMiddleware(model *datasourceInfo, routePath string) (httpclient.Middlewa
 	return tokenprovider.AuthMiddleware(provider), nil
 }
 
-func oauthPassthroughMiddleware() httpclient.Middleware {
-	return httpclient.NamedMiddlewareFunc(forwardOAuthIdentityRequestHTTPHeaders, func(_ httpclient.Options, next http.RoundTripper) http.RoundTripper {
-		return httpclient.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
-			if h := authHeaderFromContext(req.Context()); h != "" {
-				req.Header.Set("Authorization", h)
-			}
-			return next.RoundTrip(req)
-		})
-	})
-}
-
 func buildURL(route string, universeDomain string) string {
 	if universeDomain == "" {
 		universeDomain = "googleapis.com"
@@ -97,6 +85,8 @@ func newHTTPClient(model *datasourceInfo, opts httpclient.Options, clientProvide
 		return nil, err
 	}
 
-	opts.Middlewares = append(opts.Middlewares, m)
+	if m != nil {
+		opts.Middlewares = append(opts.Middlewares, m)
+	}
 	return clientProvider.New(opts)
 }
