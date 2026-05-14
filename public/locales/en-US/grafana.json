@@ -7625,6 +7625,9 @@
         "title": "Unsaved changes"
       }
     },
+    "solo-panel": {
+      "text-loading-dynamic-panel": "Loading dynamic panel..."
+    },
     "suggested-dashboard-banner": {
       "body": "Not what you're looking for? View <2>other suggested dashboards</2> or <6>create one from scratch</6>.",
       "title": "You are viewing {{title}}"
