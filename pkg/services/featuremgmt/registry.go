@@ -906,10 +906,10 @@ var (
 		{
 			Name:        "sqlExpressions",
 			Description: "Enables SQL Expressions, which can execute SQL queries against data source results.",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 			Owner:       grafanaDatasourcesCoreServicesSquad,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:        "sqlExpressionsColumnAutoComplete",
@@ -2322,14 +2322,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 			Owner:       grafanaCatalogSquad,
 			Expression:  "false",
-		},
-		{
-			Name:        "newPanelPadding",
-			Description: "Increases panel padding globally",
-			Stage:       FeatureStagePublicPreview,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaDashboardsSquad,
-			Expression:  "true",
 		},
 		{
 			Name:         "onlyStoreActionSets",
