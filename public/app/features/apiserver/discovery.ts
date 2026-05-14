@@ -1,8 +1,8 @@
 import { lastValueFrom, map } from 'rxjs';
 
-import { type FetchResponse, getBackendSrv } from '@grafana/runtime';
+import { type FetchResponse, getBackendSrv, isFetchError } from '@grafana/runtime';
 
-import { type GroupVersionKind, type ListMeta } from './types';
+import { type GroupVersionKind, type K8sAPIGroup, type ListMeta } from './types';
 
 export type GroupDiscoveryResource = {
   resource: string;
@@ -69,6 +69,25 @@ export async function getAPIGroupDiscoveryList(): Promise<APIGroupDiscoveryList>
         })
       )
   );
+}
+
+/**
+ * Fetch a single API group descriptor (its versions and preferred version) by
+ * name. Returns `undefined` when the apiserver responds 404, i.e. the group is
+ * not registered. Other errors propagate so callers can distinguish a missing
+ * group from a transient failure.
+ */
+export async function getAPIGroupVersions(group: string): Promise<K8sAPIGroup | undefined> {
+  try {
+    return await getBackendSrv().get<K8sAPIGroup>(`/apis/${group}/`, undefined, undefined, {
+      showErrorAlert: false,
+    });
+  } catch (err) {
+    if (isFetchError(err) && err.status === 404) {
+      return undefined;
+    }
+    throw err;
+  }
 }
 
 export function discoveryResources(apis: APIGroupDiscoveryList): GroupDiscoveryResource[] {

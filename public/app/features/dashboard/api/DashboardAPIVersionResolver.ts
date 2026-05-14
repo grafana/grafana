@@ -1,6 +1,5 @@
-import { getBackendSrv } from '@grafana/runtime';
 import { createDebugLog } from 'app/core/utils/debugLog';
-import { type K8sAPIGroup } from 'app/features/apiserver/types';
+import { getAPIGroupVersions } from 'app/features/apiserver/discovery';
 
 const debugLog = createDebugLog('dashboardAPI', 'Dashboard API');
 
@@ -69,11 +68,9 @@ class DashboardAPIVersionResolver {
   }
 
   private async discover(): Promise<ResolvedDashboardVersions> {
-    const group = await getBackendSrv().get<K8sAPIGroup>(`/apis/${DASHBOARD_API_GROUP}/`, undefined, undefined, {
-      showErrorAlert: false,
-    });
-    const availableVersions = new Set(group.versions.map((v) => v.version));
-    const preferred = group.preferredVersion?.version;
+    const group = await getAPIGroupVersions(DASHBOARD_API_GROUP);
+    const availableVersions = new Set(group?.versions.map((v) => v.version));
+    const preferred = group?.preferredVersion?.version;
 
     const v1: DashboardV1Version =
       preferred === 'v1' || preferred === 'v1beta1' ? preferred : availableVersions.has('v1') ? 'v1' : BETA_V1;

@@ -1,5 +1,5 @@
 import { ANNOTATION_API_GROUP } from 'app/api/clients/annotation/v0alpha1/types';
-import { getAPIGroupDiscoveryList } from 'app/features/apiserver/discovery';
+import { getAPIGroupVersions } from 'app/features/apiserver/discovery';
 
 // Resolved once per page load. The set of registered API groups is effectively
 // static for the apiserver process lifetime, so we don't re-fetch on every
@@ -12,9 +12,7 @@ export function isAnnotationApiAvailable(): Promise<boolean> {
     return cached;
   }
 
-  const pending = getAPIGroupDiscoveryList().then((apis) =>
-    apis.items.some((group) => group.metadata.name === ANNOTATION_API_GROUP)
-  );
+  const pending = getAPIGroupVersions(ANNOTATION_API_GROUP).then((group) => group !== undefined);
 
   const result = pending.catch(() => false);
   cached = result;
