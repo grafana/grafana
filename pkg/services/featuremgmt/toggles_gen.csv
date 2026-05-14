@@ -271,7 +271,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-10-17,preventPanelChromeOverflow,preview,@grafana/grafana-frontend-platform,false,false,true
 2025-10-31,jaegerEnableGrpcEndpoint,experimental,@grafana/data-sources-plugins,false,false,false
 2025-10-17,pluginStoreServiceLoading,experimental,@grafana/grafana-catalog,false,false,false
-2025-11-12,newPanelPadding,preview,@grafana/dashboards-squad,false,false,true
 2025-10-20,onlyStoreActionSets,GA,@grafana/identity-access-team,false,false,false
 2026-04-15,onlyStoreServiceAccountActionSets,experimental,@grafana/identity-access-team,false,false,false
 2026-02-18,excludeRedundantManagedPermissions,experimental,@grafana/identity-access-team,false,false,false

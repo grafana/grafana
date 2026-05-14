@@ -4375,7 +4375,8 @@
       "metadata": {
         "name": "newPanelPadding",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-11-12T15:40:46Z"
+        "creationTimestamp": "2025-11-12T15:40:46Z",
+        "deletionTimestamp": "2026-05-14T05:09:15Z"
       },
       "spec": {
         "description": "Increases panel padding globally",
