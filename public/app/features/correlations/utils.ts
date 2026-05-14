@@ -246,6 +246,7 @@ export const getCorrelationsFromStorage = async (
         labelSelector: labelSelectString,
       })
     );
+    // this is just for retrieving in explore, so pagination features are not needed
     const enrichedCorr = (data?.items ?? [])
       .map((item) => toEnrichedCorrelationDataK8s(item))
       .filter((i) => i !== undefined);
@@ -254,7 +255,6 @@ export const getCorrelationsFromStorage = async (
       page: 0,
       limit: 1000,
       totalCount: enrichedCorr.length,
-      doesContinue: false,
     };
   } else {
     const datasourceUIDs = getDatasourceUIDs(instanceUid, queries);
