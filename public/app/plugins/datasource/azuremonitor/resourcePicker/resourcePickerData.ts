@@ -1,6 +1,6 @@
 import { uniq } from 'lodash';
 
-import { AzureCloud, getDefaultAzureCloud, resolveLegacyCloudName } from '@grafana/azure-sdk';
+import { AzureCloud, getDefaultAzureCloud } from '@grafana/azure-sdk';
 import { DataSourceWithBackend, reportInteraction } from '@grafana/runtime';
 
 import { logsResourceTypes } from '../azureMetadata/logsResourceTypes';
@@ -15,6 +15,7 @@ import {
   parseResourceURI,
   resourceToString,
 } from '../components/ResourcePicker/utils';
+import { getCredentials } from '../credentials';
 import { type AzureMonitorResource } from '../dataquery.gen';
 import { type AzureMonitorQuery } from '../types/query';
 import {
@@ -47,10 +48,8 @@ export default class ResourcePickerData extends DataSourceWithBackend<
     super(instanceSettings);
     this.azureMonitorDatasource = azureMonitorDatasource;
     this.azureResourceGraphDatasource = azureResourceGraphDatasource;
-    this.cloudName =
-      resolveLegacyCloudName(instanceSettings.jsonData.cloudName) ||
-      instanceSettings.jsonData.cloudName ||
-      getDefaultAzureCloud();
+    const creds = getCredentials(instanceSettings);
+    this.cloudName = ('azureCloud' in creds && creds.azureCloud) ? creds.azureCloud : getDefaultAzureCloud();
   }
 
   async fetchInitialRows(
@@ -355,8 +354,8 @@ export default class ResourcePickerData extends DataSourceWithBackend<
             supportedMetricNamespaces.add(`"${namespace.value.toLocaleLowerCase()}"`);
           }
         }
-      } catch {
-        // Region may not be available in this cloud environment; fall back to predefined namespaces
+      } catch (e) {
+        console.debug(`Failed to fetch metric namespaces for region ${region}, falling back to predefined list:`, e);
       }
     };
 
