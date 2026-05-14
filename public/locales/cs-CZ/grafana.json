@@ -521,7 +521,8 @@
         "edit-yaml": "Upravit YAML",
         "save": "Uložit"
       },
-      "error-title": ""
+      "error-title": "",
+      "no-group-success": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "název",
@@ -1181,6 +1182,7 @@
     },
     "evaluate-every-validation-options": {
       "message": {
+        "none-not-allowed": "",
         "required": "Povinné."
       }
     },
@@ -2907,6 +2909,11 @@
         },
         "group-name": "Název hodnotící skupiny",
         "group-text": "Všechna pravidla ve vybrané skupině jsou vyhodnocena každých {{evaluateEvery}}.",
+        "interval-label": "",
+        "mode": {
+          "legacy": "",
+          "new": ""
+        },
         "new-group": "Nová hodnotící skupina",
         "pause": {
           "alerting": "Zapnutím pozastavíte hodnocení tohoto pravidla výstrahy.",
@@ -15332,6 +15339,8 @@
     },
     "support-bundles-unconnected": {
       "created-on": "Vytvořeno",
+      "deprecation-warning-message": "",
+      "deprecation-warning-title": "",
       "download": "Stáhnout",
       "expires": "Vyprší",
       "requested-by": "Žadatel:",

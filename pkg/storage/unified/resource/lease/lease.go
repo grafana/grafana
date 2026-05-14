@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 )
 
@@ -20,6 +21,9 @@ const (
 
 	// minimum TTL accepted. Returns an error if the caller passes a lower duration.
 	defaultMinTTL = 10 * time.Second
+
+	// max TTL accepted
+	maxTTL = 10 * time.Minute
 
 	// maximum tolerated clock skew across hosts when deciding whether an
 	// existing lease is still held by another process.
@@ -48,6 +52,8 @@ var (
 	// already been released, or was superseded by another holder. When
 	// auto-renewal is enabled, this error also triggers the Lost() channel.
 	ErrLeaseLost = errors.New("lease lost")
+
+	log = logging.DefaultLogger.With("logger", "lease-manager")
 )
 
 type Lease struct {
@@ -78,13 +84,14 @@ func (l *Lease) notifyLoss() {
 
 // leaseMetadata is the data saved in the KV store for each lease.
 type leaseMetadata struct {
-	Holder  string `json:"holder"`
-	Expires int64  `json:"expires"`
-	Deleted bool   `json:"deleted"`
+	Holder     string `json:"holder"`
+	Expires    int64  `json:"expires"`
+	Deleted    bool   `json:"deleted,omitempty"` // TODO: remove this field once every pod is running with `ReleasedAt` support
+	ReleasedAt int64  `json:"released_at,omitempty"`
 }
 
 func (meta *leaseMetadata) ValidAsOf(ts time.Time) bool {
-	return !meta.Deleted && ts.Before(time.Unix(0, meta.Expires))
+	return !meta.Deleted && meta.ReleasedAt == 0 && ts.Before(time.Unix(0, meta.Expires))
 }
 
 // Manager acquires and releases leases backed by a KV store.
@@ -163,6 +170,10 @@ func (m *Manager) Acquire(ctx context.Context, name string, opts ...AcquireOptio
 
 	if cfg.ttl < m.minTTL {
 		return nil, fmt.Errorf("invalid TTL: %s < %s", cfg.ttl, m.minTTL)
+	}
+
+	if cfg.ttl > maxTTL {
+		return nil, fmt.Errorf("invalid TTL: %s > %s", cfg.ttl, maxTTL)
 	}
 
 	for attempt := 0; ; attempt++ {
@@ -254,6 +265,7 @@ func (m *Manager) Release(ctx context.Context, lease *Lease) error {
 	}
 
 	meta.Deleted = true
+	meta.ReleasedAt = time.Now().UnixNano()
 	if err := m.save(ctx, key, meta); err != nil {
 		return fmt.Errorf("releasing %s/%d: %w", lease.name, lease.generation, err)
 	}
@@ -284,7 +296,9 @@ func (m *Manager) extendGeneration(ctx context.Context, lease *Lease, ttl time.D
 		return time.Time{}, err
 	}
 
-	tombstone, err := json.Marshal(leaseMetadata{Holder: m.holder, Deleted: true})
+	meta.Deleted = true
+	meta.ReleasedAt = time.Now().UnixNano()
+	tombstone, err := json.Marshal(meta)
 	if err != nil {
 		return time.Time{}, err
 	}
@@ -323,20 +337,25 @@ func (m *Manager) autoRenewLoop(lease *Lease, expiry time.Time, ttl, renewInterv
 	defer ticker.Stop()
 
 	for {
+		log := log.With("lease", lease.name, "holder", lease.holder, "generation", lease.generation)
+
 		select {
 		case <-lease.stop:
 			return
 		case <-ticker.C:
 			newExpiry, err := m.renewOnce(lease, ttl, renewInterval)
 			if errors.Is(err, ErrLeaseLost) {
+				log.Warn("lease lost to another holder during renewal", "err", err)
 				lease.notifyLoss()
 				return
 			}
 			if err != nil {
 				if time.Now().After(expiry) {
+					log.Error("lease lost: renewal retries exhausted before expiry", "err", err)
 					lease.notifyLoss()
 					return
 				}
+				log.Warn("lease renewal failed, will retry", "time_until_expiry", time.Until(expiry), "err", err)
 				continue
 			}
 			expiry = newExpiry

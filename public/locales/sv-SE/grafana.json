@@ -515,7 +515,8 @@
         "edit-yaml": "Redigera YAML",
         "save": "Spara"
       },
-      "error-title": ""
+      "error-title": "",
+      "no-group-success": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "namn",
@@ -1171,6 +1172,7 @@
     },
     "evaluate-every-validation-options": {
       "message": {
+        "none-not-allowed": "",
         "required": "Krävs."
       }
     },
@@ -2875,6 +2877,11 @@
         },
         "group-name": "Namn för utvärderingsgrupp",
         "group-text": "Alla regler i den valda gruppen utvärderas varje {{evaluateEvery}}.",
+        "interval-label": "",
+        "mode": {
+          "legacy": "",
+          "new": ""
+        },
         "new-group": "Ny utvärderingsgrupp",
         "pause": {
           "alerting": "Aktivera om du vill pausa utvärderingen för den här varningsregeln.",
@@ -15146,6 +15153,8 @@
     },
     "support-bundles-unconnected": {
       "created-on": "Skapad den",
+      "deprecation-warning-message": "",
+      "deprecation-warning-title": "",
       "download": "Ladda ner",
       "expires": "Löper ut",
       "requested-by": "Begärd av",
