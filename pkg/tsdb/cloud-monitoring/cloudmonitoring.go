@@ -68,7 +68,7 @@ const (
 	oauthPassthroughMissingDefaultProjectMessage = "Default project is required when using OAuth passthrough authentication."
 	oauthPassthroughUnauthorizedMessage          = "401 Unauthorized: Usage of this data source requires you to be authenticated via Google OAuth. If you are signed in via Google, your session token may have expired — sign out and back in to refresh it."
 	oauthPassthroughForbiddenMessage             = "403 Forbidden: Permission denied. Make sure the https://www.googleapis.com/auth/monitoring.read scope is configured in Grafana's Google OAuth settings, and that the signed-in user has the Monitoring Viewer role on the default project."
-	oauthPassthroughAlertingNotSupportedMessage  = "Forward OAuth Identity authentication is not supported in alerting queries. Use Google JWT File or GCE Default Service Account authentication for data sources used by alerting rules."
+	oauthPassthroughAlertingNotSupportedMessage  = "Forward OAuth Identity authentication is not supported in alerting queries; use Google JWT File or GCE Default Service Account authentication for data sources used by alerting rules"
 )
 
 func ProvideService(httpClientProvider *httpclient.Provider) *Service {
