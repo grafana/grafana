@@ -1115,26 +1115,24 @@ func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 		})
 }
 
-func (b *DashboardsAPIBuilder) verifyFolderAccessPermissions(ctx context.Context, user identity.Requester, folderIds ...string) error {
+func (b *DashboardsAPIBuilder) verifyFolderAccessPermissions(ctx context.Context, user identity.Requester, folderID string) error {
 	ns, err := request.NamespaceInfoFrom(ctx, false)
 	if err != nil {
 		return err
 	}
 
 	gvr := dashv1.DashboardResourceInfo.GroupVersionResource()
-	for _, folderId := range folderIds {
-		resp, err := b.accessClient.Check(ctx, user, authlib.CheckRequest{
-			Verb:      utils.VerbCreate,
-			Group:     gvr.Group,
-			Resource:  gvr.Resource,
-			Namespace: ns.Value,
-		}, folderId)
-		if err != nil {
-			return err
-		}
-		if !resp.Allowed {
-			return apierrors.NewForbidden(folders.FolderResourceInfo.GroupResource(), folderId, folder.ErrAccessDenied)
-		}
+	resp, err := b.accessClient.Check(ctx, user, authlib.CheckRequest{
+		Verb:      utils.VerbCreate,
+		Group:     gvr.Group,
+		Resource:  gvr.Resource,
+		Namespace: ns.Value,
+	}, folderID)
+	if err != nil {
+		return err
+	}
+	if !resp.Allowed {
+		return apierrors.NewForbidden(folders.FolderResourceInfo.GroupResource(), folderID, folder.ErrAccessDenied)
 	}
 
 	return nil
