@@ -343,11 +343,12 @@ func (s CorrelationsService) getCorrelationsBySourceUID(ctx context.Context, cmd
 }
 
 func (s CorrelationsService) getCorrelations(ctx context.Context, cmd GetCorrelationsQuery) (GetCorrelationsResponseBody, error) {
+	// doesContinue is only relevant for app platform responses, which use pointer pagination
 	result := GetCorrelationsResponseBody{
 		Correlations: make([]Correlation, 0),
 		Page:         cmd.Page,
 		Limit:        cmd.Limit,
-		DoesContinue: true,
+		DoesContinue: nil,
 	}
 
 	err := s.SQLStore.WithDbSession(ctx, func(session *db.Session) error {

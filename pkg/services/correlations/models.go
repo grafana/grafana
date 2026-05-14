@@ -138,7 +138,7 @@ type GetCorrelationsResponseBody struct {
 	TotalCount   int64         `json:"totalCount"`
 	Page         int64         `json:"page"`
 	Limit        int64         `json:"limit"`
-	DoesContinue bool          `json:"doesContinue"`
+	DoesContinue *bool         `json:"doesContinue"`
 }
 
 // CreateCorrelationResponse is the response struct for CreateCorrelationCommand

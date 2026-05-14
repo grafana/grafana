@@ -48,7 +48,6 @@ type CorrelationsPageProps = {
     | Status
   >;
   error?: Error | FetchError;
-  hasNextPage?: boolean;
 };
 
 const collator = new Intl.Collator();
@@ -64,15 +63,17 @@ const loaderWrapper = css({
 });
 
 export default function CorrelationsPage(props: CorrelationsPageProps) {
-  const { fetchCorrelations, correlations, isLoading, error, removeFn, changePageFn, hasNextPage } = props;
+  const { fetchCorrelations, correlations, isLoading, error, removeFn, changePageFn } = props;
   const navModel = useNavModel('correlations');
   const [isAdding, setIsAddingValue] = useState(false);
   const page = useRef(1);
-  // if this is legacy to app platform, we will not get a real total count but we will get the boolean if it continues
-  // if hasNextPage is undefined, we are coming from legacy, so use the doesContinue flag and pointer-pagination
 
-  //TODO what happens in pure legacy ? are both of these null? right now it shows page numbers in Legacy FE / AP BE scenario bc does continue is false, we need to differentiate
-  const hasNextPageOrContinue = hasNextPage ?? correlations?.doesContinue;
+  /*
+    We need to support pagination for cursor based (app platform), and offset based (legacy) apis
+    cursor based pagination just does page forward/back with no list
+    offset based has a list of pages along with forward/back
+   The legacy api returns correlations.doesContinue as undefined, so we know to show pages
+  */
 
   const setIsAdding = (value: boolean) => {
     setIsAddingValue(value);
@@ -236,14 +237,20 @@ export default function CorrelationsPage(props: CorrelationsPageProps) {
               />
               <Pagination
                 currentPage={page.current}
-                numberOfPages={hasNextPageOrContinue ? 0 : Math.ceil(correlations?.totalCount / correlations?.limit)}
+                numberOfPages={
+                  correlations.doesContinue === undefined || correlations.doesContinue === null
+                    ? Math.ceil(correlations?.totalCount / correlations?.limit)
+                    : 0
+                }
                 onNavigate={(toPage: number) => {
                   if (changePageFn) {
                     changePageFn(toPage);
                   }
                   fetchCorrelations({ page: (page.current = toPage) });
                 }}
-                hasNextPage={hasNextPageOrContinue}
+                hasNextPage={
+                  correlations.doesContinue ?? page.current < Math.ceil(correlations?.totalCount / correlations?.limit)
+                }
               />
             </>
           )}

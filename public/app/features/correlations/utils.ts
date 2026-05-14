@@ -204,6 +204,7 @@ export const generateAddSpec = async (data: FormDTO): Promise<CorrelationSpec> =
 };
 
 // legacy just needs uid for lookup, remote storage needs name/group
+// this is just for retrieving in explore, so pagination features are not needed
 export const getCorrelationsFromStorage = async (
   dispatch: ThunkDispatch,
   queries: DataQuery[],
@@ -248,7 +249,13 @@ export const getCorrelationsFromStorage = async (
     const enrichedCorr = (data?.items ?? [])
       .map((item) => toEnrichedCorrelationDataK8s(item))
       .filter((i) => i !== undefined);
-    correlations = { correlations: enrichedCorr, page: 0, limit: 1000, totalCount: enrichedCorr.length };
+    correlations = {
+      correlations: enrichedCorr,
+      page: 0,
+      limit: 1000,
+      totalCount: enrichedCorr.length,
+      doesContinue: false,
+    };
   } else {
     const datasourceUIDs = getDatasourceUIDs(instanceUid, queries);
     correlations = await getCorrelationsBySourceUIDs(datasourceUIDs);

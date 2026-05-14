@@ -321,12 +321,14 @@ func (s *CorrelationsK8sService) GetCorrelations(ctx context.Context, cmd GetCor
 		remainingItemCount = 0
 	}
 
+	doesContinue := metadata.Continue != ""
+
 	return GetCorrelationsResponseBody{
 		Correlations: correlations,
 		TotalCount:   remainingItemCount + listLength,
 		Page:         cmd.Page,
 		Limit:        cmd.Limit,
-		DoesContinue: metadata.Continue != "",
+		DoesContinue: &doesContinue,
 	}, nil
 }
 
