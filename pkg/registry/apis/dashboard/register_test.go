@@ -15,7 +15,6 @@ import (
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -219,44 +218,4 @@ func (m *mockK8sHandler) GetStats(_ context.Context, _ int64) (*resourcepb.Resou
 }
 func (m *mockK8sHandler) GetUsersFromMeta(_ context.Context, _ []string) (map[string]*user.User, error) {
 	return nil, nil
-}
-
-type mockFeatureToggles struct {
-	// We need to make a copy in `GetEnabled` anyway,
-	// so no need to store the original map as map[string]bool.
-	enabledFeatures map[string]struct{}
-}
-
-func newMockFeatureToggles(t *testing.T, enabledFeatures ...string) featuremgmt.FeatureToggles {
-	t.Helper()
-
-	res := &mockFeatureToggles{
-		enabledFeatures: make(map[string]struct{}, len(enabledFeatures)),
-	}
-
-	for _, f := range enabledFeatures {
-		res.enabledFeatures[f] = struct{}{}
-	}
-
-	return res
-}
-
-func (m *mockFeatureToggles) IsEnabledGlobally(feature string) bool {
-	_, ok := m.enabledFeatures[feature]
-	return ok
-}
-
-func (m *mockFeatureToggles) IsEnabled(ctx context.Context, feature string) bool {
-	_, ok := m.enabledFeatures[feature]
-	return ok
-}
-
-func (m *mockFeatureToggles) GetEnabled(ctx context.Context) map[string]bool {
-	res := make(map[string]bool, len(m.enabledFeatures))
-
-	for f := range m.enabledFeatures {
-		res[f] = true
-	}
-
-	return res
 }
