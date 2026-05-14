@@ -134,7 +134,8 @@ LegendPlacement: "bottom" | "right" @cuetsy(kind="type")
 
 // TODO docs
 // Note: "hidden" needs to remain as an option for plugins compatibility
-LegendDisplayMode: "list" | "table" @cuetsy(kind="enum")
+// @deprecated 'hidden' is deprecated, use showLegend: false
+LegendDisplayMode: "list" | "table" | "hidden" @cuetsy(kind="enum")
 
 // TODO docs
 SingleStatBaseOptions: {
@@ -261,6 +262,8 @@ VizLegendOptions: {
 	displayMode?: LegendDisplayMode
 	placement:   LegendPlacement
 	showLegend:  bool
+	// @deprecated Use LegendDisplayMode.Table
+	asTable?:    bool
 	isVisible?:  bool
 	sortBy?:     string
 	sortDesc?:   bool
