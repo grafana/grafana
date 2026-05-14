@@ -5907,6 +5907,20 @@
     },
     {
       "metadata": {
+        "name": "sqlExpressionsCodeMirror",
+        "resourceVersion": "1778697735164",
+        "creationTimestamp": "2026-05-13T18:42:15Z"
+      },
+      "spec": {
+        "description": "Enables CodeMirror editor for SQL Expressions",
+        "stage": "experimental",
+        "codeowner": "@grafana/datapro",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "sqlExpressionsColumnAutoComplete",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-07-23T21:49:58Z"

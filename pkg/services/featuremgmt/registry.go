@@ -930,6 +930,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "sqlExpressionsCodeMirror",
+			Description: "Enables CodeMirror editor for SQL Expressions",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{LegacyFrontend: true, React: true},
+			Owner:       grafanaDataProSquad,
+			Expression:  "false",
+		},
+		{
 			Name:            "kubernetesAggregator",
 			Description:     "Enable grafana's embedded kube-aggregator",
 			Stage:           FeatureStageExperimental,
@@ -3128,7 +3136,7 @@ var (
 			Name:            "alerting.syncExternalAlertmanager",
 			Description:     "Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana",
 			Stage:           FeatureStageExperimental,
-			Generate:        Generate{Go: true},
+			Generate:        Generate{Go: true, React: true, LegacyFrontend: true},
 			Owner:           grafanaAlertingSquad,
 			HideFromDocs:    true,
 			RequiresRestart: true,
