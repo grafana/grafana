@@ -147,7 +147,7 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		AssetSriChecksEnabled:                 grafanaAssetSriChecks,
 		MeticulousAIEnabled:                   meticulousAIRecorderEnabled,
 		MeticulousAIRecordingToken:            p.config.MeticulousAIRecordingToken,
-		MeticulousAIProductionEnvironmentFlag: meticulousAIRecorderHighVolume != true,
+		MeticulousAIProductionEnvironmentFlag: !meticulousAIRecorderHighVolume,
 	}
 
 	if compiledBootScript {
