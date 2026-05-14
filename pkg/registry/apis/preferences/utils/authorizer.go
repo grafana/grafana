@@ -82,7 +82,8 @@ func (a *AuthorizeFromName) Authorize(ctx context.Context, attr authorizer.Attri
 		return authorizer.DecisionDeny, "your are not the owner of the resource", nil
 
 	case TeamResourceOwner:
-		// For read-only requests, being a member of the team is sufficient. For mutating requests, the user must have edit permissions on the team.
+		// Being able to view a team is not sufficient to view Permission resources - you must
+		// be a member of the team instead.
 		if attr.IsReadOnly() && slices.Contains(user.GetGroups(), info.Identifier) {
 			return authorizer.DecisionAllow, "", nil
 		}
