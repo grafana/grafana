@@ -512,7 +512,8 @@
         "edit-yaml": "編輯 YAML",
         "save": "儲存"
       },
-      "error-title": ""
+      "error-title": "",
+      "no-group-success": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "名稱",
@@ -1166,6 +1167,7 @@
     },
     "evaluate-every-validation-options": {
       "message": {
+        "none-not-allowed": "",
         "required": "必填。"
       }
     },
@@ -2859,6 +2861,11 @@
         },
         "group-name": "評估群組名稱",
         "group-text": "所選群組中的所有規則都會每 {{evaluateEvery}} 評估一次。",
+        "interval-label": "",
+        "mode": {
+          "legacy": "",
+          "new": ""
+        },
         "new-group": "新的評估群組",
         "pause": {
           "alerting": "開啟以暫停評估此警報規則。",
@@ -15053,6 +15060,8 @@
     },
     "support-bundles-unconnected": {
       "created-on": "建立時間",
+      "deprecation-warning-message": "",
+      "deprecation-warning-title": "",
       "download": "下載",
       "expires": "到期",
       "requested-by": "請求者",

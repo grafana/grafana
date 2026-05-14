@@ -515,7 +515,8 @@
         "edit-yaml": "Modifica YAML",
         "save": "Salva"
       },
-      "error-title": ""
+      "error-title": "",
+      "no-group-success": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "nome",
@@ -1171,6 +1172,7 @@
     },
     "evaluate-every-validation-options": {
       "message": {
+        "none-not-allowed": "",
         "required": "Obbligatorio."
       }
     },
@@ -2875,6 +2877,11 @@
         },
         "group-name": "Nome del gruppo di valutazione",
         "group-text": "Tutte le regole nel gruppo selezionato vengono valutate ogni {{evaluateEvery}}.",
+        "interval-label": "",
+        "mode": {
+          "legacy": "",
+          "new": ""
+        },
         "new-group": "Nuovo gruppo di valutazione",
         "pause": {
           "alerting": "Attiva per mettere in pausa la valutazione per questa regola di avviso.",
@@ -15146,6 +15153,8 @@
     },
     "support-bundles-unconnected": {
       "created-on": "Creato il",
+      "deprecation-warning-message": "",
+      "deprecation-warning-title": "",
       "download": "Scarica",
       "expires": "Scade ",
       "requested-by": "Richiesto da",
