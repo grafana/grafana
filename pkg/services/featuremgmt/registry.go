@@ -391,7 +391,7 @@ var (
 		},
 		{
 			Name:            "kubernetesShortURLs",
-			Description:     "Enables k8s short URL api and uses it under the hood when handling legacy /api",
+			Description:     "Enables k8s short URL API and uses it under the hood when handling legacy /api",
 			Stage:           FeatureStageGeneralAvailability,
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true, // changes the API routing
