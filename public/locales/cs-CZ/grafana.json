@@ -4423,6 +4423,7 @@
       "button-cancel": "Zrušit",
       "button-delete": "Odstranit",
       "button-deleting": "Probíhá odstraňování…",
+      "commit": "Odstranit složku",
       "delete-warning": "Tímto odstraníte tuto složku a všechny následné složky. Celkově to ovlivní:",
       "missing-info": "Chybějící povinná pole",
       "success-message": "Složka byla úspěšně odstraněna"
@@ -4528,6 +4529,7 @@
       "button-cancel": "Zrušit",
       "button-rename": "Přejmenovat",
       "button-renaming": "Přejmenovávání…",
+      "commit": "Přejmenovat složku",
       "error-saving": "Přejmenování složky se nezdařilo",
       "label-folder-name": "Název složky",
       "missing-info": "Chybějící povinná pole",

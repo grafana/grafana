@@ -4342,6 +4342,7 @@
       "button-cancel": "キャンセル",
       "button-delete": "削除",
       "button-deleting": "削除中…",
+      "commit": "フォルダを削除",
       "delete-warning": "このフォルダとその下位のすべてのフォルダやコンテンツが削除されます。影響のある項目は次のとおりです。",
       "missing-info": "必須フィールドが不足しています",
       "success-message": "フォルダが正常に削除されました"
@@ -4447,6 +4448,7 @@
       "button-cancel": "キャンセル",
       "button-rename": "名前を変更",
       "button-renaming": "名前を変更しています...",
+      "commit": "フォルダ名を変更",
       "error-saving": "フォルダ名の変更に失敗しました",
       "label-folder-name": "フォルダ名",
       "missing-info": "必須フィールドが不足しています",

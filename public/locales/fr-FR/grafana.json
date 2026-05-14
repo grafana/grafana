@@ -4369,6 +4369,7 @@
       "button-cancel": "Annuler",
       "button-delete": "Supprimer",
       "button-deleting": "Suppression en cours…",
+      "commit": "Supprimer le dossier",
       "delete-warning": "Cette opération supprimera ce dossier ainsi que tous ses éléments enfants. Au total, cela concernera :",
       "missing-info": "Champs obligatoires manquants",
       "success-message": "Dossier supprimé avec succès"
@@ -4474,6 +4475,7 @@
       "button-cancel": "Annuler",
       "button-rename": "Renommer",
       "button-renaming": "Changement de nom en cours…",
+      "commit": "Renommer le dossier",
       "error-saving": "Échec de l’attribution d’un nouveau nom au dossier",
       "label-folder-name": "Nom du dossier",
       "missing-info": "Champs obligatoires manquants",

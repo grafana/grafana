@@ -4342,6 +4342,7 @@
       "button-cancel": "取消",
       "button-delete": "刪除",
       "button-deleting": "正在刪除…",
+      "commit": "刪除資料夾",
       "delete-warning": "這將刪除此資料夾及其所有子資料夾。總體而言，這會影響：",
       "missing-info": "缺少必要欄位",
       "success-message": "已成功刪除資料夾"
@@ -4447,6 +4448,7 @@
       "button-cancel": "取消",
       "button-rename": "重新命名",
       "button-renaming": "正在重新命名…",
+      "commit": "重新命名資料夾",
       "error-saving": "無法重新命名資料夾",
       "label-folder-name": "資料夾名稱",
       "missing-info": "缺少必要欄位",

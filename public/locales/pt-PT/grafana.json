@@ -4369,6 +4369,7 @@
       "button-cancel": "Cancelar",
       "button-delete": "Eliminar",
       "button-deleting": "A eliminar...",
+      "commit": "Eliminar pasta",
       "delete-warning": "Isto eliminará esta pasta e todas as suas descendentes. No total, isto afetará:",
       "missing-info": "Campos obrigatórios em falta",
       "success-message": "Pasta eliminada com sucesso"
@@ -4474,6 +4475,7 @@
       "button-cancel": "Cancelar",
       "button-rename": "Renomear",
       "button-renaming": "A renomear...",
+      "commit": "Renomear a pasta",
       "error-saving": "Falha ao renomear a pasta",
       "label-folder-name": "Nome da pasta",
       "missing-info": "Campos obrigatórios em falta",

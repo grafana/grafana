@@ -4423,6 +4423,7 @@
       "button-cancel": "Anuluj",
       "button-delete": "Usuń",
       "button-deleting": "Usuwanie…",
+      "commit": "Usuń folder",
       "delete-warning": "Spowoduje to usunięcie folderu i elementów po nim dziedziczących. Łącznie wpłynie to na następujące elementy:",
       "missing-info": "Brak wymaganych pól",
       "success-message": "Folder został usunięty"
@@ -4528,6 +4529,7 @@
       "button-cancel": "Anuluj",
       "button-rename": "Zmień nazwę",
       "button-renaming": "Zmienianie nazwy…",
+      "commit": "Zmień nazwę folderu",
       "error-saving": "Nie udało się zmienić nazwy folderu",
       "label-folder-name": "Nazwa folderu",
       "missing-info": "Brak wymaganych pól",

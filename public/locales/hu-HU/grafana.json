@@ -4369,6 +4369,7 @@
       "button-cancel": "Mégse",
       "button-delete": "Törlés",
       "button-deleting": "Törlés…",
+      "commit": "Mappa törlése",
       "delete-warning": "Ez törli ezt a mappát és minden almappáját. Összességében ez a következőket érinti:",
       "missing-info": "Hiányzó kötelező mezők",
       "success-message": "A mappa törlése sikeres"
@@ -4474,6 +4475,7 @@
       "button-cancel": "Mégse",
       "button-rename": "Átnevezés",
       "button-renaming": "Átnevezés…",
+      "commit": "Mappa átnevezése",
       "error-saving": "A mappa átnevezése nem sikerült",
       "label-folder-name": "Mappa neve",
       "missing-info": "Hiányzó kötelező mezők",
