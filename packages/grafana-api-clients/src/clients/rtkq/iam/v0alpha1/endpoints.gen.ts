@@ -1815,6 +1815,7 @@ export type TeamTeamMember = {
 };
 export type TeamSpec = {
   email: string;
+  externalGroups?: string[];
   externalUID: string;
   members: TeamTeamMember[];
   provisioned: boolean;
