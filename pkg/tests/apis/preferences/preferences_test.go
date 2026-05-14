@@ -151,16 +151,18 @@ func TestIntegrationPreferences(t *testing.T) {
 			"weekStart":"saturday"
 		}`, string(jj))
 		obj.Object["spec"] = map[string]any{
-			"weekStart": "saturday",
+			"weekStart":        "saturday",
+			"homeDashboardUID": "test-uid",
 		}
 
-		// Set the regional format via k8s API
+		// Update via k8s API
 		obj, err = clientAdmin.Resource.Update(ctx, obj, metav1.UpdateOptions{})
 		require.NoError(t, err)
 		jj, err = json.MarshalIndent(obj.Object["spec"], "", "  ")
 		require.NoError(t, err)
 		require.JSONEq(t, `{
-			"weekStart": "saturday"
+			"weekStart": "saturday",
+			"homeDashboardUID": "test-uid"
 		}`, string(jj))
 
 		// The viewer should only have namespace (eg org level) permissions
@@ -198,6 +200,7 @@ func TestIntegrationPreferences(t *testing.T) {
 		}, &preferences.Preferences{})
 		require.Equal(t, http.StatusOK, merged.Response.StatusCode, "get merged preferences")
 		require.Equal(t, "saturday", *merged.Result.Spec.WeekStart)           // from user
+		require.Equal(t, "test-uid", *merged.Result.Spec.HomeDashboardUID)    // from user
 		require.Equal(t, "Africa/Johannesburg", *merged.Result.Spec.Timezone) // from team
 		require.Equal(t, "dark", *merged.Result.Spec.Theme)                   // from org
 		require.Equal(t, "en-US", *merged.Result.Spec.Language)               // settings.ini
