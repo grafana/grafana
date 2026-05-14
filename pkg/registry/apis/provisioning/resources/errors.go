@@ -474,6 +474,8 @@ func (e *DashboardUIDTooLongError) Error() string {
 	return fmt.Sprintf("dashboard UID %q at %q exceeds the 40-character limit enforced by the dashboard API: %v", e.UID, e.Path, e.Err)
 }
 
+// Unwrap exposes both the sentinel and the underlying API error so callers
+// can match either via errors.Is/errors.As.
 func (e *DashboardUIDTooLongError) Unwrap() []error {
 	if e.Err == nil {
 		return []error{ErrDashboardUIDTooLong}
@@ -481,6 +483,8 @@ func (e *DashboardUIDTooLongError) Unwrap() []error {
 	return []error{ErrDashboardUIDTooLong, e.Err}
 }
 
+// NewDashboardUIDTooLongError wraps the original dashboard-API error so
+// callers can detect the UID-length violation via errors.As.
 func NewDashboardUIDTooLongError(path, uid string, err error) *DashboardUIDTooLongError {
 	return &DashboardUIDTooLongError{Path: path, UID: uid, Err: err}
 }

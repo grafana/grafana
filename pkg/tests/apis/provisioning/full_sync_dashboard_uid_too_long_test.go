@@ -32,8 +32,8 @@ func TestIntegrationProvisioning_FullSync_DashboardUIDTooLong(t *testing.T) {
 		SkipResourceAssertions: true,
 	})
 
-	writeFile(t, helper, "valid-dashboard.yaml", dashboardYAML("valid-uid", "Valid Dashboard"))
-	writeFile(t, helper, "too-long-dashboard.yaml", dashboardYAML(tooLongUID, "Too Long Dashboard"))
+	writeToProvisioningPath(t, helper, "valid-dashboard.yaml", dashboardYAML("valid-uid", "Valid Dashboard"))
+	writeToProvisioningPath(t, helper, "too-long-dashboard.yaml", dashboardYAML(tooLongUID, "Too Long Dashboard"))
 
 	job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 		Action: provisioning.JobActionPull,
@@ -44,6 +44,7 @@ func TestIntegrationProvisioning_FullSync_DashboardUIDTooLong(t *testing.T) {
 	require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
 
 	t.Logf("Job state: %s", jobObj.Status.State)
+	t.Logf("Job message: %s", jobObj.Status.Message)
 	t.Logf("Job warnings: %v", jobObj.Status.Warnings)
 	t.Logf("Job errors: %v", jobObj.Status.Errors)
 
@@ -82,7 +83,7 @@ func TestIntegrationProvisioning_FullSync_DashboardUIDTooLong(t *testing.T) {
 	helper.RequireRepoDashboardCount(t, repo, 1)
 }
 
-func writeFile(t *testing.T, helper *common.ProvisioningTestHelper, relativePath string, data []byte) {
+func writeToProvisioningPath(t *testing.T, helper *common.ProvisioningTestHelper, relativePath string, data []byte) {
 	t.Helper()
 	fullPath := filepath.Join(helper.ProvisioningPath, relativePath)
 	require.NoError(t, os.MkdirAll(filepath.Dir(fullPath), 0o750))
