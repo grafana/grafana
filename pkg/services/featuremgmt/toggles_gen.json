@@ -2807,16 +2807,19 @@
     {
       "metadata": {
         "name": "grafana.scenesFlickeringFix",
-        "resourceVersion": "1778059584976",
-        "creationTimestamp": "2026-05-06T09:26:24Z"
+        "resourceVersion": "1778737357419",
+        "creationTimestamp": "2026-05-06T09:26:24Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-05-14 05:42:37.419249 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Prevents flickering in dashboards",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "hideFromDocs": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
