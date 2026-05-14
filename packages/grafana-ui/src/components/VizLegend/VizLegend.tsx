@@ -144,6 +144,8 @@ export function VizLegend<T>({
           {isValueMappingEnabled && makeVizLegendList(mappingItems)}
         </>
       );
+    default:
+      return null;
   }
 }
 
