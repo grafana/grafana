@@ -94,7 +94,7 @@ require (
 	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
 	github.com/grafana/dataplane/sdata v0.0.9 // @grafana/observability-metrics
 	github.com/grafana/dskit v0.0.0-20260108123158-1a1acfb6ef2e // @grafana/grafana-backend-group
-	github.com/grafana/e2e v0.1.1 // @grafana-app-platform-squad
+	github.com/grafana/e2e v0.1.2-0.20250825134630-3cea6f657739 // @grafana-app-platform-squad
 	github.com/grafana/gofpdf v0.0.0-20250307124105-3b9c5d35577f // @grafana/sharing-squad
 	github.com/grafana/gomemcache v0.0.0-20251127154401-74f93547077b // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana-api-golang-client v0.27.0 // @grafana/alerting-backend
@@ -113,7 +113,7 @@ require (
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.9 // @grafana/data-sources-plugins
 	github.com/grafana/pyroscope/api v1.2.1-0.20251202111406-6c67b876b686 // @grafana/data-sources-plugins
 	github.com/grafana/schemads v0.0.6 // @grafana/data-sources
-	github.com/grafana/tempo v1.5.1-0.20250529124718-87c2dc380cec // @grafana/data-sources-plugins
+	github.com/grafana/tempo v1.5.1-0.20251027222923-cbe5f845dc7b // @grafana/data-sources-plugins
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // @grafana/grafana-search-and-storage
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.1.0 // @grafana/plugins-platform-backend
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.3 // @grafana/grafana-backend-group
@@ -160,7 +160,7 @@ require (
 	github.com/prometheus/client_golang v1.23.2 // @grafana/alerting-backend
 	github.com/prometheus/client_model v0.6.2 // @grafana/grafana-backend-group
 	github.com/prometheus/common v0.67.5 // @grafana/alerting-backend
-	github.com/prometheus/prometheus v0.305.3 // @grafana/alerting-backend
+	github.com/prometheus/prometheus v0.306.0 // @grafana/alerting-backend
 	github.com/prometheus/sigv4 v0.2.1 // @grafana/alerting-backend
 	github.com/puzpuzpuz/xsync/v4 v4.4.0 // @grafana/grafana-backend-group
 	github.com/redis/go-redis/v9 v9.14.0 // @grafana/alerting-backend
@@ -322,7 +322,7 @@ require (
 	github.com/Azure/azure-pipeline-go v0.2.3 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.11.2 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/keyvault/internal v0.7.1 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.6.1 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.6.2 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20250102033503-faa5f7b0171c // indirect
 	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
 	github.com/Azure/go-autorest/autorest/date v0.3.0 // indirect
@@ -514,7 +514,6 @@ require (
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
-	github.com/jaegertracing/jaeger v1.67.0 // indirect
 	github.com/jaegertracing/jaeger-idl v0.6.0 // indirect
 	github.com/jcmturner/aescts/v2 v2.0.0 // indirect
 	github.com/jcmturner/dnsutils/v2 v2.0.0 // indirect
@@ -530,7 +529,6 @@ require (
 	github.com/joshlf/go-acl v0.0.0-20200411065538-eae00ae38531 // indirect
 	github.com/jpillora/backoff v1.0.0 // indirect
 	github.com/jszwedko/go-datemath v0.1.1-0.20230526204004-640a500621d6 // indirect
-	github.com/jtolds/gls v4.20.0+incompatible // indirect
 	github.com/klauspost/asmfmt v1.3.2 // indirect
 	github.com/klauspost/compress v1.18.5 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
@@ -538,6 +536,7 @@ require (
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
 	github.com/lestrrat-go/strftime v1.0.4 // indirect
+	github.com/linode/linodego v1.52.2 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/lufia/plan9stats v0.0.0-20240909124753-873cd0166683 // indirect
 	github.com/magefile/mage v1.16.1 // indirect
@@ -588,7 +587,6 @@ require (
 	github.com/natefinch/wrap v0.2.0 // indirect
 	github.com/ncruces/go-strftime v1.0.0 // indirect
 	github.com/nikunjy/rules v1.5.0 // indirect
-	github.com/nxadm/tail v1.4.8 // indirect
 	github.com/oapi-codegen/runtime v1.0.0 // indirect
 	github.com/oasdiff/yaml v0.0.0-20260313112342-a3ea61cb4d4c // indirect
 	github.com/oasdiff/yaml3 v0.0.0-20260224194419-61cd415a242b // indirect
@@ -598,12 +596,14 @@ require (
 	github.com/olekukonko/cat v0.0.0-20250911104152-50322a0618f6 // indirect
 	github.com/olekukonko/errors v1.2.0 // indirect
 	github.com/olekukonko/ll v0.1.6 // indirect
-	github.com/open-telemetry/opentelemetry-collector-contrib/internal/coreinternal v0.124.1 // indirect
-	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/core/xidutils v0.124.1 // indirect
-	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/jaeger v0.124.1 // indirect
+	github.com/onsi/ginkgo v1.16.5 // indirect
+	github.com/open-telemetry/opentelemetry-collector-contrib/internal/coreinternal v0.132.0 // indirect
+	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/core/xidutils v0.132.0 // indirect
+	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/jaeger v0.132.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/opentracing-contrib/go-stdlib v1.1.0 // indirect
+	github.com/ovh/go-ovh v1.9.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
 	github.com/perimeterx/marshmallow v1.1.5 // indirect
 	github.com/pierrec/lz4/v4 v4.1.25 // indirect
@@ -669,8 +669,6 @@ require (
 	go.etcd.io/etcd/client/v3 v3.6.7 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/collector/featuregate v1.44.0 // indirect
-	go.opentelemetry.io/collector/pdata/pprofile v0.129.0 // indirect
-	go.opentelemetry.io/collector/semconv v0.128.0 // indirect
 	go.opentelemetry.io/contrib/bridges/prometheus v0.64.0 // indirect
 	go.opentelemetry.io/contrib/detectors/gcp v1.39.0 // indirect
 	go.opentelemetry.io/contrib/exporters/autoexport v0.64.0 // indirect
@@ -718,11 +716,6 @@ require (
 	software.sslmate.com/src/go-pkcs12 v0.7.0 // indirect
 )
 
-require (
-	github.com/linode/linodego v1.52.2 // indirect
-	github.com/ovh/go-ovh v1.9.0 // indirect
-)
-
 replace (
 	// Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
 	github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20240917091248-ae3bbdad8a56
@@ -744,6 +737,9 @@ replace (
 
 	// Use our fork of the upstream Alertmanager.
 	github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20260225120258-18275ca76b0c
+
+	// Use v305.3 which has security fixes, while v0.306.0 does not, since the former is LTS.
+	github.com/prometheus/prometheus => github.com/prometheus/prometheus v0.305.3
 
 	// Pin OpenTelemetry log packages to v0.12.2 for compatibility with dagger v0.18.8
 	go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc => go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc v0.12.2
