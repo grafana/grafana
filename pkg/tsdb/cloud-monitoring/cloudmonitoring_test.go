@@ -1283,3 +1283,63 @@ func TestCheckHealth(t *testing.T) {
 		assert.NotContains(t, res.Message, "Monitoring Viewer role")
 	})
 }
+
+func TestQueryData_oauthPassthrough(t *testing.T) {
+	t.Run("rejects alerting queries when oauthPassThru is set", func(t *testing.T) {
+		im := datasource.NewInstanceManager(func(_ context.Context, _ backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return &datasourceInfo{
+				authenticationType: oauthPassthroughAuthentication,
+				oauthPassThru:      true,
+				defaultProject:     "p1",
+			}, nil
+		})
+		service := &Service{im: im, logger: backend.NewLoggerWith("logger", "test")}
+
+		_, err := service.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			},
+			Headers: map[string]string{"FromAlert": "true"},
+			Queries: []backend.DataQuery{
+				{RefID: "A", QueryType: string(dataquery.QueryTypeTIMESERIESLIST), JSON: json.RawMessage(`{}`)},
+			},
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "alerting queries")
+		// The error must be flagged as a downstream/client error so error sources are
+		// attributed correctly in Grafana's plugin metrics.
+		assert.True(t, backend.IsDownstreamError(err))
+	})
+
+	t.Run("does not reject alerting queries when oauthPassThru is unset", func(t *testing.T) {
+		// JWT auth should pass straight through the alerting guard. The request will
+		// still fail later (no services configured), but the error must NOT mention
+		// alerting — that would indicate the guard misfired.
+		im := datasource.NewInstanceManager(func(_ context.Context, _ backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return &datasourceInfo{
+				authenticationType: jwtAuthentication,
+				oauthPassThru:      false,
+				defaultProject:     "p1",
+			}, nil
+		})
+		service := &Service{im: im, logger: backend.NewLoggerWith("logger", "test")}
+
+		defer func() {
+			// The query pipeline will panic on the nil http.Client; recover and assert
+			// that the panic happens AFTER the guard (i.e. the guard didn't fire).
+			_ = recover()
+		}()
+		_, err := service.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			},
+			Headers: map[string]string{"FromAlert": "true"},
+			Queries: []backend.DataQuery{
+				{RefID: "A", QueryType: string(dataquery.QueryTypeTIMESERIESLIST), JSON: json.RawMessage(`{}`)},
+			},
+		})
+		if err != nil {
+			assert.NotContains(t, err.Error(), "alerting queries")
+		}
+	})
+}

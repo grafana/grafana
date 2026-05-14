@@ -3,6 +3,7 @@ package cloudmonitoring
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"math"
@@ -61,11 +62,13 @@ const (
 	perSeriesAlignerDefault        = "ALIGN_MEAN"
 )
 
-// CheckHealth messages for OAuth passthrough failure modes admins hit most often.
+const fromAlertHeaderName = "FromAlert"
+
 const (
 	oauthPassthroughMissingDefaultProjectMessage = "Default project is required when using OAuth passthrough authentication."
 	oauthPassthroughUnauthorizedMessage          = "401 Unauthorized: Usage of this data source requires you to be authenticated via Google OAuth. If you are signed in via Google, your session token may have expired — sign out and back in to refresh it."
 	oauthPassthroughForbiddenMessage             = "403 Forbidden: Permission denied. Make sure the https://www.googleapis.com/auth/monitoring.read scope is configured in Grafana's Google OAuth settings, and that the signed-in user has the Monitoring Viewer role on the default project."
+	oauthPassthroughAlertingNotSupportedMessage  = "Forward OAuth Identity authentication is not supported in alerting queries. Use Google JWT File or GCE Default Service Account authentication for data sources used by alerting rules."
 )
 
 func ProvideService(httpClientProvider *httpclient.Provider) *Service {
@@ -375,6 +378,13 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	if err != nil {
 		return nil, err
+	}
+
+	// OAuth passthrough requires a signed-in user to source the bearer token from.
+	// Alert rule evaluations run without a user context, so fail fast with a clear
+	// message rather than letting the request reach GCM with no Authorization header.
+	if dsInfo.oauthPassThru && req.Headers[fromAlertHeaderName] == "true" {
+		return nil, backend.DownstreamError(errors.New(oauthPassthroughAlertingNotSupportedMessage))
 	}
 
 	// There aren't any possible downstream errors here
