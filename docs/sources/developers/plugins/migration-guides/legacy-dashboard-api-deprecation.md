@@ -28,7 +28,6 @@ Grafana instruments plugin call sites in the legacy (non-scenes) dashboard archi
 | `apiName`                         | What triggers it                                                                                                                                                                                               |
 | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `PanelMigrationHandler.invoke`    | The legacy `PanelModel.pluginLoaded()` code path actually invoked a panel plugin's `onPanelMigration` handler. This only fires in non-scenes flows (alerting rule editor, library panels, panel editor Redux). |
-| `PanelModel.changePlugin.invoke`  | The legacy `PanelModel.changePlugin()` ran. This is reachable from the panel error-recovery flow when a broken panel isn't a scenes `VizPanel`.                                                                |
 | `DashboardSrv.getCurrent`         | A plugin called `getDashboardSrv().getCurrent()`. The returned object is a scenes compatibility wrapper, but the API itself is the legacy `DashboardSrv` singleton, not a scenes-native API.                   |
 | `RefreshEvent.subscribe`          | A plugin subscribed to the legacy `RefreshEvent`.                                                                                                                                                              |
 | `RefreshEvent.getStream`          | A plugin got a stream of the legacy `RefreshEvent`.                                                                                                                                                            |
@@ -58,10 +57,6 @@ Open your browser DevTools, load any dashboard that uses your plugin, and check 
 Scenes doesn't invoke the handler registered with `PanelPlugin.setMigrationHandler()` during normal dashboard load. If your plugin registered a migration handler to upgrade stored panel options, that logic no longer runs in scenes-powered dashboards.
 
 Migrate your option-upgrade logic to `PanelPlugin.setPanelChangeHandler()` (`onPanelTypeChanged`). Scenes still calls `onPanelTypeChanged` during Angular-era panel deserialisation, so this is the correct place for panel-type and option migration.
-
-### `PanelModel.changePlugin.invoke`
-
-This surface is only reachable via the panel error-recovery flow, not from plugin code directly. You don't need to change anything unless your plugin explicitly calls `PanelModel.changePlugin()` to swap panel types programmatically.
 
 ### `DashboardSrv.getCurrent`
 
