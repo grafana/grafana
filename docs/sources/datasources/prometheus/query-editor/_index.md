@@ -32,6 +32,8 @@ The Prometheus query editor has two modes:
 
 Grafana synchronizes both modes, allowing you to switch between them. Grafana also displays a warning message if it detects an issue with the query while switching modes.
 
+Builder mode covers many common PromQL query patterns, but it doesn't support every valid PromQL expression that you can write in Code mode. Some language features, operation orderings, or complex expressions may not round-trip cleanly between Builder mode and Code mode. Use Code mode when you need full PromQL control or when Grafana warns that a query can't be represented in Builder mode.
+
 You can configure Prometheus-specific options in the query editor by setting several options regardless of mode.
 
 {{< figure src="/static/img/docs/prometheus/options.png" max-width="500px" class="docs-image--no-shadow" caption="Options" >}}
