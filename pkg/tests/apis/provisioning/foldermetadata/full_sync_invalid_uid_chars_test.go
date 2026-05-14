@@ -41,13 +41,13 @@ func TestIntegrationProvisioning_FullSync_FolderInvalidUIDChars(t *testing.T) {
 
 	// Shallow folder with a valid UID — must be created normally despite
 	// the bad sibling branch.
-	writeToProvisioningPath(t, helper, "shallow/_folder.json", folderMetadataJSON("shallow-uid", "Shallow"))
-	writeToProvisioningPath(t, helper, "shallow/dashboard1.json", common.DashboardJSON("shallow-dash", "Shallow Dashboard", 1))
+	common.WriteToProvisioningPath(t, helper, "shallow/_folder.json", folderMetadataJSON("shallow-uid", "Shallow"))
+	common.WriteToProvisioningPath(t, helper, "shallow/dashboard1.json", common.DashboardJSON("shallow-dash", "Shallow Dashboard", 1))
 
 	// Folder with an illegal UID — the folder API must reject it; the
 	// sync must surface the rejection as a warning, not an error.
-	writeToProvisioningPath(t, helper, "bad-folder/_folder.json", folderMetadataJSON(illegalUID, "Bad folder"))
-	writeToProvisioningPath(t, helper, "bad-folder/dashboard2.json", common.DashboardJSON("bad-folder-dash", "Bad Folder Dashboard", 1))
+	common.WriteToProvisioningPath(t, helper, "bad-folder/_folder.json", folderMetadataJSON(illegalUID, "Bad folder"))
+	common.WriteToProvisioningPath(t, helper, "bad-folder/dashboard2.json", common.DashboardJSON("bad-folder-dash", "Bad Folder Dashboard", 1))
 
 	job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 		Action: provisioning.JobActionPull,

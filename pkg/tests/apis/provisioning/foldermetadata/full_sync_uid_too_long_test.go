@@ -48,13 +48,13 @@ func TestIntegrationProvisioning_FullSync_FolderUIDTooLong(t *testing.T) {
 
 	// Shallow folder with a valid UID — must be created normally to prove
 	// that one bad branch does not block the rest of the sync.
-	writeToProvisioningPath(t, helper, "shallow/_folder.json", folderMetadataJSON("shallow-uid", "Shallow"))
-	writeToProvisioningPath(t, helper, "shallow/dashboard1.json", common.DashboardJSON("shallow-dash", "Shallow Dashboard", 1))
+	common.WriteToProvisioningPath(t, helper, "shallow/_folder.json", folderMetadataJSON("shallow-uid", "Shallow"))
+	common.WriteToProvisioningPath(t, helper, "shallow/dashboard1.json", common.DashboardJSON("shallow-dash", "Shallow Dashboard", 1))
 
 	// Deep folder with a 41-char UID — the folder API must reject it; the
 	// sync must surface the rejection as a warning, not an error.
-	writeToProvisioningPath(t, helper, "bare-metal/_folder.json", folderMetadataJSON(tooLongUID, "Bare metal services engineering"))
-	writeToProvisioningPath(t, helper, "bare-metal/dashboard2.json", common.DashboardJSON("bare-metal-dash", "Bare Metal Dashboard", 1))
+	common.WriteToProvisioningPath(t, helper, "bare-metal/_folder.json", folderMetadataJSON(tooLongUID, "Bare metal services engineering"))
+	common.WriteToProvisioningPath(t, helper, "bare-metal/dashboard2.json", common.DashboardJSON("bare-metal-dash", "Bare Metal Dashboard", 1))
 
 	job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 		Action: provisioning.JobActionPull,

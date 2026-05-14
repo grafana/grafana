@@ -1,8 +1,6 @@
 package provisioning
 
 import (
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 
@@ -32,8 +30,8 @@ func TestIntegrationProvisioning_FullSync_DashboardUIDTooLong(t *testing.T) {
 		SkipResourceAssertions: true,
 	})
 
-	writeToProvisioningPath(t, helper, "valid-dashboard.yaml", dashboardYAML("valid-uid", "Valid Dashboard"))
-	writeToProvisioningPath(t, helper, "too-long-dashboard.yaml", dashboardYAML(tooLongUID, "Too Long Dashboard"))
+	common.WriteToProvisioningPath(t, helper, "valid-dashboard.yaml", common.DashboardYAML("valid-uid", "Valid Dashboard"))
+	common.WriteToProvisioningPath(t, helper, "too-long-dashboard.yaml", common.DashboardYAML(tooLongUID, "Too Long Dashboard"))
 
 	job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 		Action: provisioning.JobActionPull,
@@ -81,20 +79,4 @@ func TestIntegrationProvisioning_FullSync_DashboardUIDTooLong(t *testing.T) {
 	require.Equal(t, provisioning.JobStateWarning, rerunObj.Status.State)
 	require.Empty(t, rerunObj.Status.Errors)
 	helper.RequireRepoDashboardCount(t, repo, 1)
-}
-
-func writeToProvisioningPath(t *testing.T, helper *common.ProvisioningTestHelper, relativePath string, data []byte) {
-	t.Helper()
-	fullPath := filepath.Join(helper.ProvisioningPath, relativePath)
-	require.NoError(t, os.MkdirAll(filepath.Dir(fullPath), 0o750))
-	require.NoError(t, os.WriteFile(fullPath, data, 0o600))
-}
-
-func dashboardYAML(name, title string) []byte {
-	return []byte("apiVersion: dashboard.grafana.app/v0alpha1\n" +
-		"kind: Dashboard\n" +
-		"metadata:\n" +
-		"  name: " + name + "\n" +
-		"spec:\n" +
-		"  title: " + title + "\n")
 }

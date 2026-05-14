@@ -2561,6 +2561,26 @@ func DashboardJSON(uid, title string, version int) []byte {
 	return data
 }
 
+// DashboardYAML returns a minimal K8s-style dashboard manifest with the
+// given metadata.name and spec.title.
+func DashboardYAML(name, title string) []byte {
+	return []byte("apiVersion: dashboard.grafana.app/v0alpha1\n" +
+		"kind: Dashboard\n" +
+		"metadata:\n" +
+		"  name: " + name + "\n" +
+		"spec:\n" +
+		"  title: " + title + "\n")
+}
+
+// WriteToProvisioningPath writes data to a path inside the provisioning
+// helper's working directory, creating parent directories as needed.
+func WriteToProvisioningPath(t *testing.T, helper *ProvisioningTestHelper, relativePath string, data []byte) {
+	t.Helper()
+	fullPath := filepath.Join(helper.ProvisioningPath, relativePath)
+	require.NoError(t, os.MkdirAll(filepath.Dir(fullPath), 0o750))
+	require.NoError(t, os.WriteFile(fullPath, data, 0o600))
+}
+
 type exportRepoInfo struct {
 	user   *gittest.User
 	remote *gittest.RemoteRepository

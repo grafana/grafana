@@ -24,8 +24,8 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
-		writeToProvisioningPath(t, helper, "myfolder/dashboard.json", common.DashboardJSON("existing-parent-dash", "Parent Dashboard", 1))
-		writeToProvisioningPath(t, helper, "myfolder/child/child-dashboard.json", common.DashboardJSON("existing-child-dash", "Child Dashboard", 1))
+		common.WriteToProvisioningPath(t, helper, "myfolder/dashboard.json", common.DashboardJSON("existing-parent-dash", "Parent Dashboard", 1))
+		common.WriteToProvisioningPath(t, helper, "myfolder/child/child-dashboard.json", common.DashboardJSON("existing-child-dash", "Child Dashboard", 1))
 
 		helper.SyncAndWait(t, repo, nil)
 
@@ -37,8 +37,8 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 			"myfolder/child/child-dashboard.json": childUID,
 		})
 
-		writeToProvisioningPath(t, helper, "myfolder/child/child-dashboard.json", common.DashboardJSON("existing-child-dash", "Child Dashboard Updated", 2))
-		writeToProvisioningPath(t, helper, "myfolder/_folder.json", invalidFolderMetadataMissingNameJSON("Broken Folder"))
+		common.WriteToProvisioningPath(t, helper, "myfolder/child/child-dashboard.json", common.DashboardJSON("existing-child-dash", "Child Dashboard Updated", 2))
+		common.WriteToProvisioningPath(t, helper, "myfolder/_folder.json", invalidFolderMetadataMissingNameJSON("Broken Folder"))
 
 		job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
@@ -67,9 +67,9 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
-		writeToProvisioningPath(t, helper, "myfolder/_folder.json", invalidFolderMetadataMissingNameJSON("Broken Folder"))
-		writeToProvisioningPath(t, helper, "myfolder/dashboard.json", common.DashboardJSON("new-parent-dash", "Parent Dashboard", 1))
-		writeToProvisioningPath(t, helper, "myfolder/child/child-dashboard.json", common.DashboardJSON("new-child-dash", "Child Dashboard", 1))
+		common.WriteToProvisioningPath(t, helper, "myfolder/_folder.json", invalidFolderMetadataMissingNameJSON("Broken Folder"))
+		common.WriteToProvisioningPath(t, helper, "myfolder/dashboard.json", common.DashboardJSON("new-parent-dash", "Parent Dashboard", 1))
+		common.WriteToProvisioningPath(t, helper, "myfolder/child/child-dashboard.json", common.DashboardJSON("new-child-dash", "Child Dashboard", 1))
 
 		job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
@@ -100,15 +100,15 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
-		writeToProvisioningPath(t, helper, "dashboard.json", common.DashboardJSON("move-into-existing-invalid", "Move Into Existing Invalid", 1))
-		writeToProvisioningPath(t, helper, "broken/existing.json", common.DashboardJSON("existing-invalid-target", "Existing Invalid Target", 1))
+		common.WriteToProvisioningPath(t, helper, "dashboard.json", common.DashboardJSON("move-into-existing-invalid", "Move Into Existing Invalid", 1))
+		common.WriteToProvisioningPath(t, helper, "broken/existing.json", common.DashboardJSON("existing-invalid-target", "Existing Invalid Target", 1))
 
 		helper.SyncAndWait(t, repo, nil)
 
 		brokenUID := findFolderUIDBySourcePath(t, helper, repo, "broken")
 		require.NotEmpty(t, brokenUID)
 
-		writeToProvisioningPath(t, helper, "broken/_folder.json", invalidFolderMetadataMissingNameJSON("Broken Folder"))
+		common.WriteToProvisioningPath(t, helper, "broken/_folder.json", invalidFolderMetadataMissingNameJSON("Broken Folder"))
 
 		initialWarningJob := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
@@ -144,11 +144,11 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
-		writeToProvisioningPath(t, helper, "dashboard.json", common.DashboardJSON("move-into-new-invalid", "Move Into New Invalid", 1))
+		common.WriteToProvisioningPath(t, helper, "dashboard.json", common.DashboardJSON("move-into-new-invalid", "Move Into New Invalid", 1))
 
 		helper.SyncAndWait(t, repo, nil)
 
-		writeToProvisioningPath(t, helper, "broken/_folder.json", invalidFolderMetadataMissingNameJSON("Broken Folder"))
+		common.WriteToProvisioningPath(t, helper, "broken/_folder.json", invalidFolderMetadataMissingNameJSON("Broken Folder"))
 		moveInProvisioningPath(t, helper, "dashboard.json", "broken/dashboard.json")
 
 		job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
@@ -175,8 +175,8 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
-		writeToProvisioningPath(t, helper, "broken/_folder.json", invalidFolderMetadataMissingNameJSON("Broken Folder"))
-		writeToProvisioningPath(t, helper, "broken/dashboard.json", common.DashboardJSON("move-invalid-folder", "Move Invalid Folder", 1))
+		common.WriteToProvisioningPath(t, helper, "broken/_folder.json", invalidFolderMetadataMissingNameJSON("Broken Folder"))
+		common.WriteToProvisioningPath(t, helper, "broken/dashboard.json", common.DashboardJSON("move-invalid-folder", "Move Invalid Folder", 1))
 
 		initialJob := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,

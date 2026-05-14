@@ -18,8 +18,8 @@ func TestIntegrationProvisioning_FullSync_FolderMovePreservesPermissions(t *test
 	helper := sharedHelper(t)
 	const repo = "folder-move-perms"
 
-	writeToProvisioningPath(t, helper, "teamA/_folder.json", folderMetadataJSON("team-a-uid", "Team A"))
-	writeToProvisioningPath(t, helper, "teamB/_folder.json", folderMetadataJSON("team-b-uid", "Team B"))
+	common.WriteToProvisioningPath(t, helper, "teamA/_folder.json", folderMetadataJSON("team-a-uid", "Team A"))
+	common.WriteToProvisioningPath(t, helper, "teamB/_folder.json", folderMetadataJSON("team-b-uid", "Team B"))
 
 	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:                   repo,
@@ -111,8 +111,8 @@ func TestIntegrationProvisioning_FullSync_FolderMoveDoesNotPreservePermissionsFo
 	const repo = "folder-move-legacy-perms"
 
 	// Parent has stable metadata; the folder being moved does not.
-	writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("parent-uid", "Parent"))
-	writeToProvisioningPath(t, helper, "plain/.keep", []byte{})
+	common.WriteToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("parent-uid", "Parent"))
+	common.WriteToProvisioningPath(t, helper, "plain/.keep", []byte{})
 
 	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:                   repo,
@@ -182,10 +182,10 @@ func TestIntegrationProvisioning_FullSync_NestedFolderMovePreservesPermissions(t
 	const repo = "folder-move-nested-perms"
 
 	// Build root → child → grandchild; all have metadata so UIDs are stable.
-	writeToProvisioningPath(t, helper, "root/_folder.json", folderMetadataJSON("root-uid", "Root"))
-	writeToProvisioningPath(t, helper, "root/child/_folder.json", folderMetadataJSON("child-uid", "Child"))
-	writeToProvisioningPath(t, helper, "root/child/grandchild/_folder.json", folderMetadataJSON("grandchild-uid", "Grandchild"))
-	writeToProvisioningPath(t, helper, "destination/.keep", []byte{})
+	common.WriteToProvisioningPath(t, helper, "root/_folder.json", folderMetadataJSON("root-uid", "Root"))
+	common.WriteToProvisioningPath(t, helper, "root/child/_folder.json", folderMetadataJSON("child-uid", "Child"))
+	common.WriteToProvisioningPath(t, helper, "root/child/grandchild/_folder.json", folderMetadataJSON("grandchild-uid", "Grandchild"))
+	common.WriteToProvisioningPath(t, helper, "destination/.keep", []byte{})
 
 	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:                   repo,
@@ -239,9 +239,9 @@ func TestIntegrationProvisioning_FullSync_RootToLeafMovePreservesPermissions(t *
 	helper := sharedHelper(t)
 	const repo = "folder-move-root-to-leaf"
 
-	writeToProvisioningPath(t, helper, "top/_folder.json", folderMetadataJSON("top-uid", "Top"))
-	writeToProvisioningPath(t, helper, "container/_folder.json", folderMetadataJSON("container-uid", "Container"))
-	writeToProvisioningPath(t, helper, "container/inner/_folder.json", folderMetadataJSON("inner-uid", "Inner"))
+	common.WriteToProvisioningPath(t, helper, "top/_folder.json", folderMetadataJSON("top-uid", "Top"))
+	common.WriteToProvisioningPath(t, helper, "container/_folder.json", folderMetadataJSON("container-uid", "Container"))
+	common.WriteToProvisioningPath(t, helper, "container/inner/_folder.json", folderMetadataJSON("inner-uid", "Inner"))
 
 	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:                   repo,
@@ -293,9 +293,9 @@ func TestIntegrationProvisioning_FullSync_LeafToRootMovePreservesPermissions(t *
 	helper := sharedHelper(t)
 	const repo = "folder-move-leaf-to-root"
 
-	writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("parent-uid", "Parent"))
-	writeToProvisioningPath(t, helper, "parent/deep/_folder.json", folderMetadataJSON("deep-uid", "Deep"))
-	writeToProvisioningPath(t, helper, "parent/deep/leaf/_folder.json", folderMetadataJSON("leaf-uid", "Leaf"))
+	common.WriteToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("parent-uid", "Parent"))
+	common.WriteToProvisioningPath(t, helper, "parent/deep/_folder.json", folderMetadataJSON("deep-uid", "Deep"))
+	common.WriteToProvisioningPath(t, helper, "parent/deep/leaf/_folder.json", folderMetadataJSON("leaf-uid", "Leaf"))
 
 	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:                   repo,
@@ -349,8 +349,8 @@ func TestIntegrationProvisioning_FullSync_MetadataFolderMovedUnderLegacyPreserve
 	helper := sharedHelper(t)
 	const repo = "folder-move-meta-under-legacy"
 
-	writeToProvisioningPath(t, helper, "child-with-meta/_folder.json", folderMetadataJSON("child-meta-uid", "Child With Meta"))
-	writeToProvisioningPath(t, helper, "legacy-parent/.keep", []byte{})
+	common.WriteToProvisioningPath(t, helper, "child-with-meta/_folder.json", folderMetadataJSON("child-meta-uid", "Child With Meta"))
+	common.WriteToProvisioningPath(t, helper, "legacy-parent/.keep", []byte{})
 
 	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:                   repo,

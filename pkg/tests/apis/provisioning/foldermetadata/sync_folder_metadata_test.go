@@ -203,7 +203,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataTitle(t *testing.T) {
 		const repo = "full-sync-meta-title"
 
 		// Write _folder.json with a custom title different from the directory name.
-		writeToProvisioningPath(t, helper, "my-team/_folder.json", folderMetadataJSON("stable-uid-1", "My Team Display Name"))
+		common.WriteToProvisioningPath(t, helper, "my-team/_folder.json", folderMetadataJSON("stable-uid-1", "My Team Display Name"))
 
 		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:       repo,
@@ -225,7 +225,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataTitle(t *testing.T) {
 		const repo = "full-sync-meta-title-empty"
 
 		// Write _folder.json with an empty title — should fall back to directory name.
-		writeToProvisioningPath(t, helper, "reports/_folder.json", folderMetadataJSON("stable-uid-2", ""))
+		common.WriteToProvisioningPath(t, helper, "reports/_folder.json", folderMetadataJSON("stable-uid-2", ""))
 
 		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:       repo,
@@ -265,8 +265,8 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataTitle(t *testing.T) {
 		helper := sharedHelper(t)
 		const repo = "full-sync-meta-title-nested"
 
-		writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("parent-uid", "Parent Display"))
-		writeToProvisioningPath(t, helper, "parent/child/_folder.json", folderMetadataJSON("child-uid", "Child Display"))
+		common.WriteToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("parent-uid", "Parent Display"))
+		common.WriteToProvisioningPath(t, helper, "parent/child/_folder.json", folderMetadataJSON("child-uid", "Child Display"))
 
 		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:       repo,
@@ -288,7 +288,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataTitle(t *testing.T) {
 		helper := sharedHelper(t)
 		const repo = "full-sync-meta-title-rename"
 
-		writeToProvisioningPath(t, helper, "old-dir/_folder.json", folderMetadataJSON("stable-uid-rename", "My Team"))
+		common.WriteToProvisioningPath(t, helper, "old-dir/_folder.json", folderMetadataJSON("stable-uid-rename", "My Team"))
 
 		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:       repo,
@@ -379,7 +379,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataChecksum(t *testing.T) {
 		const repo = "full-sync-meta-checksum"
 
 		metadataContent := folderMetadataJSON("checksum-uid-1", "Checksum Folder")
-		writeToProvisioningPath(t, helper, "my-folder/_folder.json", metadataContent)
+		common.WriteToProvisioningPath(t, helper, "my-folder/_folder.json", metadataContent)
 
 		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:       repo,
@@ -443,8 +443,8 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataChecksum(t *testing.T) {
 
 		parentContent := folderMetadataJSON("parent-ck-uid", "Parent")
 		childContent := folderMetadataJSON("child-ck-uid", "Child")
-		writeToProvisioningPath(t, helper, "parent/_folder.json", parentContent)
-		writeToProvisioningPath(t, helper, "parent/child/_folder.json", childContent)
+		common.WriteToProvisioningPath(t, helper, "parent/_folder.json", parentContent)
+		common.WriteToProvisioningPath(t, helper, "parent/child/_folder.json", childContent)
 
 		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:       repo,
@@ -472,7 +472,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataReconciliation(t *testin
 
 		// First sync: folder with original title.
 		originalContent := folderMetadataJSON("title-update-uid", "Old Title")
-		writeToProvisioningPath(t, helper, "my-folder/_folder.json", originalContent)
+		common.WriteToProvisioningPath(t, helper, "my-folder/_folder.json", originalContent)
 
 		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:       repo,
@@ -490,7 +490,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataReconciliation(t *testin
 
 		// Modify only _folder.json — change the title, keep the same UID.
 		updatedContent := folderMetadataJSON("title-update-uid", "New Title")
-		writeToProvisioningPath(t, helper, "my-folder/_folder.json", updatedContent)
+		common.WriteToProvisioningPath(t, helper, "my-folder/_folder.json", updatedContent)
 
 		// Second sync: title should be reconciled, checksum updated.
 		helper.SyncAndWait(t, repo, nil)
@@ -503,7 +503,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataReconciliation(t *testin
 		const repo = "full-sync-meta-no-change"
 
 		metadataContent := folderMetadataJSON("no-change-uid", "Stable Title")
-		writeToProvisioningPath(t, helper, "my-folder/_folder.json", metadataContent)
+		common.WriteToProvisioningPath(t, helper, "my-folder/_folder.json", metadataContent)
 
 		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:       repo,
@@ -535,7 +535,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataUIDChange(t *testing.T) 
 
 		// First sync: folder with original UID.
 		originalContent := folderMetadataJSON("original-uid", "My Folder")
-		writeToProvisioningPath(t, helper, "my-folder/_folder.json", originalContent)
+		common.WriteToProvisioningPath(t, helper, "my-folder/_folder.json", originalContent)
 
 		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:       repo,
@@ -552,7 +552,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataUIDChange(t *testing.T) 
 
 		// Change UID in _folder.json, keep title the same.
 		updatedContent := folderMetadataJSON("new-uid", "My Folder")
-		writeToProvisioningPath(t, helper, "my-folder/_folder.json", updatedContent)
+		common.WriteToProvisioningPath(t, helper, "my-folder/_folder.json", updatedContent)
 
 		// Second sync: should replace folder (new UID) and re-parent the dashboard.
 		helper.SyncAndWait(t, repo, nil)
@@ -593,8 +593,8 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataUIDChange(t *testing.T) 
 		const repo = "uid-change-child-folder"
 
 		// First sync: parent with original UID, child folder + dashboard inside.
-		writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("parent-old-uid", "Parent"))
-		writeToProvisioningPath(t, helper, "parent/child/_folder.json", folderMetadataJSON("child-uid", "Child"))
+		common.WriteToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("parent-old-uid", "Parent"))
+		common.WriteToProvisioningPath(t, helper, "parent/child/_folder.json", folderMetadataJSON("child-uid", "Child"))
 
 		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:       repo,
@@ -614,7 +614,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataUIDChange(t *testing.T) 
 		})
 
 		// Change parent UID only.
-		writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("parent-new-uid", "Parent"))
+		common.WriteToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("parent-new-uid", "Parent"))
 
 		helper.SyncAndWait(t, repo, nil)
 
@@ -638,8 +638,8 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataUIDChange(t *testing.T) 
 		const repo = "uid-change-nested"
 
 		// First sync: parent + child each with original UIDs.
-		writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("p-old", "Parent"))
-		writeToProvisioningPath(t, helper, "parent/child/_folder.json", folderMetadataJSON("c-old", "Child"))
+		common.WriteToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("p-old", "Parent"))
+		common.WriteToProvisioningPath(t, helper, "parent/child/_folder.json", folderMetadataJSON("c-old", "Child"))
 
 		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:       repo,
@@ -656,8 +656,8 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataUIDChange(t *testing.T) 
 		common.RequireFolderState(t, helper.Folders, "c-old", "Child", "parent/child", "p-old")
 
 		// Change both UIDs.
-		writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("p-new", "Parent"))
-		writeToProvisioningPath(t, helper, "parent/child/_folder.json", folderMetadataJSON("c-new", "Child"))
+		common.WriteToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("p-new", "Parent"))
+		common.WriteToProvisioningPath(t, helper, "parent/child/_folder.json", folderMetadataJSON("c-new", "Child"))
 
 		helper.SyncAndWait(t, repo, nil)
 
@@ -681,7 +681,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataUIDChange(t *testing.T) 
 
 		// First sync: root-level folder with original UID.
 		// The folder's parent is the repository folder (Target: "folder").
-		writeToProvisioningPath(t, helper, "root-folder/_folder.json", folderMetadataJSON("root-old-uid", "Root Folder"))
+		common.WriteToProvisioningPath(t, helper, "root-folder/_folder.json", folderMetadataJSON("root-old-uid", "Root Folder"))
 
 		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:       repo,
@@ -700,7 +700,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataUIDChange(t *testing.T) 
 		})
 
 		// Change UID in _folder.json.
-		writeToProvisioningPath(t, helper, "root-folder/_folder.json", folderMetadataJSON("root-new-uid", "Root Folder"))
+		common.WriteToProvisioningPath(t, helper, "root-folder/_folder.json", folderMetadataJSON("root-new-uid", "Root Folder"))
 
 		helper.SyncAndWait(t, repo, nil)
 
@@ -726,7 +726,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataDeletedReverts(t *testin
 		const repo = "full-sync-meta-deleted-revert"
 
 		// First sync: folder with _folder.json (stable UID + custom title).
-		writeToProvisioningPath(t, helper, "my-folder/_folder.json", folderMetadataJSON("stable-uid", "Custom Title"))
+		common.WriteToProvisioningPath(t, helper, "my-folder/_folder.json", folderMetadataJSON("stable-uid", "Custom Title"))
 		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:       repo,
 			SyncTarget: "folder",
@@ -781,8 +781,8 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataDeletedReverts(t *testin
 		helper := sharedHelper(t)
 		const repo = "full-sync-meta-deleted-nested"
 
-		writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("parent-uid", "Parent"))
-		writeToProvisioningPath(t, helper, "parent/child/_folder.json", folderMetadataJSON("child-uid", "Child"))
+		common.WriteToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("parent-uid", "Parent"))
+		common.WriteToProvisioningPath(t, helper, "parent/child/_folder.json", folderMetadataJSON("child-uid", "Child"))
 		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:       repo,
 			SyncTarget: "folder",
@@ -842,8 +842,8 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataDeletedReverts(t *testin
 		helper := sharedHelper(t)
 		const repo = "full-sync-meta-deleted-child-uid-change"
 
-		writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("parent-uid", "Parent"))
-		writeToProvisioningPath(t, helper, "parent/child/_folder.json", folderMetadataJSON("child-old-uid", "Child"))
+		common.WriteToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("parent-uid", "Parent"))
+		common.WriteToProvisioningPath(t, helper, "parent/child/_folder.json", folderMetadataJSON("child-old-uid", "Child"))
 		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:       repo,
 			SyncTarget: "folder",
@@ -858,7 +858,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataDeletedReverts(t *testin
 		common.RequireFolderState(t, helper.Folders, "child-old-uid", "Child", "parent/child", "parent-uid")
 
 		require.NoError(t, os.Remove(filepath.Join(helper.ProvisioningPath, "parent/_folder.json")))
-		writeToProvisioningPath(t, helper, "parent/child/_folder.json", folderMetadataJSON("child-new-uid", "Child"))
+		common.WriteToProvisioningPath(t, helper, "parent/child/_folder.json", folderMetadataJSON("child-new-uid", "Child"))
 
 		job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
