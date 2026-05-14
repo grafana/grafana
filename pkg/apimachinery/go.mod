@@ -13,7 +13,7 @@ require (
 	k8s.io/utils v0.0.0-20250604170112-4c0f3b243397
 )
 
-require github.com/go-jose/go-jose/v4 v4.1.3
+require github.com/go-jose/go-jose/v4 v4.1.4
 
 require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
