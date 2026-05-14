@@ -65,6 +65,11 @@ const zoneInfo = "ZONEINFO"
 // Default renderer auth token from [rendering]renderer_token.
 const DefaultRendererAuthToken = "-"
 
+// ProvisioningMaxFileSizeDefault is the default value for the
+// [provisioning] max_file_size key (5 MiB). It bounds files read from or
+// written to a provisioning repository through the files API.
+const ProvisioningMaxFileSizeDefault int64 = 5 * 1024 * 1024
+
 var (
 	customInitPath = "conf/custom.ini"
 
@@ -163,6 +168,7 @@ type Cfg struct {
 	ProvisioningMaxRepositories               int64         // default 10, 0 in config = unlimited (converted to -1 internally)
 	ProvisioningFolderAPIVersion              string        // "v1" (default for on-prem) or "v1beta1"
 	ProvisioningMaxIncrementalChanges         int           // default 100, 0 in config = unlimited
+	ProvisioningMaxFileSize                   int64         // bytes; default 5 MiB (5242880); <=0 = unlimited
 	ProvisioningWebhookSecretRotationInterval time.Duration // default 30 days
 	ProvisioningPublicRootURL                 string        // public-facing root URL of this Grafana instance for provisioning consumers (webhooks, screenshots); falls back to AppURL when empty
 	DataPath                                  string
@@ -692,7 +698,8 @@ type Cfg struct {
 	SearchInjectFailuresPercent                int
 	EnableSearch                               bool
 	EnableSearchClient                         bool
-	// Vector storage (separate pgvector database)
+
+	// Vector storage
 	EnableVectorBackend      bool
 	VectorDBHost             string
 	VectorDBPort             string
@@ -700,23 +707,30 @@ type Cfg struct {
 	VectorDBUser             string
 	VectorDBPassword         string
 	VectorDBSSLMode          string
-	VectorPromotionThreshold int           // row count per tenant to trigger leaf promotion
+	VectorIndexingEnabled    bool          // run the embedding backfiller and reconciler
+	VectorReconcilerInterval time.Duration // reconciler tick interval; default 60s
+	VectorPromotionThreshold int           // row count per tenant to trigger promotion
 	VectorPromoterInterval   time.Duration // promoter tick interval; 0 disables
+
 	// Embedding provider used by the VectorSearch RPC. "" = disabled.
-	EmbeddingProvider                 string // "vertex" | "bedrock" | ""
-	VertexProjectID                   string
-	VertexLocation                    string // default "us-central1"
-	VertexModel                       string // default "gemini-embedding-001"
-	VertexDimensions                  int    // default 768
-	BedrockRegion                     string // default "us-east-1"
-	BedrockModel                      string // default "cohere.embed-v4:0"
-	BedrockDimensions                 int    // default 1024
-	OverridesFilePath                 string
-	OverridesReloadInterval           time.Duration
-	EnforcedQuotaResources            []string
-	QuotasErrorMessageSupportInfo     string
+	EmbeddingProvider string // "vertex" | "bedrock" | ""
+	VertexProjectID   string
+	VertexLocation    string // default "us-central1"
+	VertexModel       string // default "gemini-embedding-001"
+	VertexDimensions  int    // default 768
+	BedrockRegion     string // default "us-east-1"
+	BedrockModel      string // default "cohere.embed-v4:0"
+	BedrockDimensions int    // default 1024
+
+	// Overrides/Quotas
+	OverridesFilePath             string
+	OverridesReloadInterval       time.Duration
+	EnforcedQuotaResources        []string
+	QuotasErrorMessageSupportInfo string
+
 	EnableSQLKVBackend                bool
 	EnableSQLKVCompatibilityMode      bool
+	EnableKVLeases                    bool
 	EnableGarbageCollection           bool
 	GarbageCollectionDryRun           bool
 	GarbageCollectionInterval         time.Duration
@@ -2461,6 +2475,7 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	cfg.ProvisioningMaxRepositories = iniFile.Section("provisioning").Key("max_repositories").MustInt64(10)
 	cfg.ProvisioningFolderAPIVersion = iniFile.Section("provisioning").Key("folders_api_version").MustString("v1")
 	cfg.ProvisioningMaxIncrementalChanges = iniFile.Section("provisioning").Key("max_incremental_changes").MustInt(100)
+	cfg.ProvisioningMaxFileSize = iniFile.Section("provisioning").Key("max_file_size").MustInt64(ProvisioningMaxFileSizeDefault)
 	cfg.ProvisioningWebhookSecretRotationInterval = iniFile.Section("provisioning").Key("webhook_secret_rotation_interval").MustDuration(30 * 24 * time.Hour)
 	cfg.ProvisioningPublicRootURL = strings.TrimRight(valueAsString(iniFile.Section("provisioning"), "public_root_url", ""), "/")
 

@@ -149,6 +149,17 @@ func TestUnifiedStorageQueries(t *testing.T) {
 						LatestRv:    20000,
 					},
 				},
+				{
+					Name: "cross-namespace",
+					Data: &sqlResourceListModifiedSinceRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "",
+						Group:       "group",
+						Resource:    "res",
+						SinceRv:     10000,
+						LatestRv:    20000,
+					},
+				},
 			},
 			sqlResourceHistoryGarbageGetCandidates: {
 				{

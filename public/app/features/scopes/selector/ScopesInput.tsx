@@ -53,9 +53,8 @@ export function ScopesInput({
     // Extract parentNodeId from the second-to-last element of defaultPath
     parentNodeId = scope.spec.defaultPath[scope.spec.defaultPath.length - 2];
   } else {
-    // Fallback to parent from scope node or recent scopes
-    const parentNodeIdFromRecentScopes = firstScope?.parentNodeId;
-    parentNodeId = scopeNode?.spec.parentName ?? parentNodeIdFromRecentScopes;
+    // Fallback to parent from scope node
+    parentNodeId = scopeNode?.spec.parentName;
   }
 
   const { node: parentNode, isLoading: parentNodeLoading } = useScopeNode(parentNodeId);

@@ -9,6 +9,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 	storev1 "github.com/grafana/grafana/pkg/registry/apps/annotation/storepb/v1"
@@ -276,6 +277,7 @@ func fromProtoAnnotation(protoAnno *storev1.Annotation) *annotationV0.Annotation
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      protoAnno.Name,
 			Namespace: protoAnno.Namespace,
+			UID:       types.UID(protoAnno.Name),
 		},
 	}
 

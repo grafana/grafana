@@ -16,7 +16,6 @@ import (
 type ImportedConfigRevision struct {
 	identifier     string
 	rev            *ConfigRevision
-	opts           merge.MergeOpts
 	importedConfig *definition.PostableApiAlertingConfig
 }
 
@@ -30,20 +29,11 @@ func (rev *ConfigRevision) Imported() (ImportedConfigRevision, error) {
 	// support only one config for now
 	mimirCfg := rev.Config.ExtraConfigs[0]
 	result.identifier = mimirCfg.Identifier
-	opts := merge.MergeOpts{
-		DedupSuffix:     mimirCfg.Identifier,
-		SubtreeMatchers: mimirCfg.MergeMatchers,
-	}
-	if err := opts.Validate(); err != nil {
-		return result, fmt.Errorf("invalid merge options: %w", err)
-	}
-
 	mcfg, err := mimirCfg.GetAlertmanagerConfig()
 	if err != nil {
 		return result, fmt.Errorf("failed to get mimir alertmanager config: %w", err)
 	}
 	result.importedConfig = &mcfg
-	result.opts = opts
 	return result, nil
 }
 
@@ -52,7 +42,7 @@ func (e ImportedConfigRevision) GetReceivers(uids []string) ([]*models.Receiver,
 		return nil, nil
 	}
 	original := e.rev.Config.AlertmanagerConfig.GetReceivers()
-	merged, _ := merge.MergeReceivers(original, e.importedConfig.GetReceivers(), e.opts.DedupSuffix)
+	merged, _ := merge.MergeReceivers(original, e.importedConfig.GetReceivers(), e.identifier)
 
 	capacity := len(uids)
 	if capacity == 0 {
@@ -97,7 +87,7 @@ func (e ImportedConfigRevision) GetMuteTimeIntervals() ([]definitions.AmMuteTime
 		grafanaTime,
 		importedMute,
 		importedTime,
-		e.opts.DedupSuffix,
+		e.identifier,
 	)
 
 	// Apply renames to imported intervals
@@ -128,7 +118,7 @@ func (e ImportedConfigRevision) ReceiverUseByName() map[string]int {
 	}
 	m := make(map[string]int)
 	receiverUseCounts([]*definitions.Route{e.importedConfig.Route}, m)
-	_, renames := merge.MergeReceivers(e.rev.Config.AlertmanagerConfig.GetReceivers(), e.importedConfig.GetReceivers(), e.opts.DedupSuffix)
+	_, renames := merge.MergeReceivers(e.rev.Config.AlertmanagerConfig.GetReceivers(), e.importedConfig.GetReceivers(), e.identifier)
 	for original, renamed := range renames {
 		if cnt, ok := m[original]; ok {
 			delete(m, original)
@@ -143,10 +133,7 @@ func (e ImportedConfigRevision) GetManagedRoute() (*ManagedRoute, error) {
 		return nil, nil
 	}
 
-	renamed, err := merge.DeduplicateResources(e.rev.Config.AlertmanagerConfig, *e.importedConfig, e.opts)
-	if err != nil {
-		return nil, fmt.Errorf("failed to deduplicate imported config resources: %w", err)
-	}
+	renamed := merge.DeduplicateResources(e.rev.Config.AlertmanagerConfig, *e.importedConfig, e.identifier)
 
 	merge.RenameResourceUsagesInRoutes([]*definition.Route{e.importedConfig.Route}, renamed)
 

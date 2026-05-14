@@ -9,7 +9,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/utils/ptr"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -385,7 +384,7 @@ func TestMetaAccessor(t *testing.T) {
 			Secure: common.InlineSecureValues{
 				"x": common.InlineSecureValue{
 					Create:      "hello",
-					Description: ptr.To("olleh"),
+					Description: new("olleh"),
 				},
 			},
 			// Status is empty, but not nil!
@@ -526,7 +525,7 @@ func TestMetaAccessor(t *testing.T) {
 			Secure: map[string]any{
 				"x": map[string]any{
 					"create":      "hello",
-					"description": ptr.To("olleh"),
+					"description": new("olleh"),
 				},
 			},
 			// Status is empty, but not nil!
@@ -766,7 +765,7 @@ func TestMetaAccessor(t *testing.T) {
 		require.Nil(t, sv)
 
 		err = obj.SetSecureValues(common.InlineSecureValues{
-			"A": common.InlineSecureValue{Name: "NameForA", Description: ptr.To("DescForA")},
+			"A": common.InlineSecureValue{Name: "NameForA", Description: new("DescForA")},
 		})
 		require.NoError(t, err)
 		require.NotNil(t, raw.Object["secure"])

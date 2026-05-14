@@ -64,7 +64,12 @@ import {
   isSupportedExternalRulesSourceType,
 } from './datasource';
 import { arrayToRecord, recordToArray } from './misc';
-import { isGrafanaAlertingRuleByType, isGrafanaRecordingRuleByType, rulerRuleType } from './rules';
+import {
+  isGrafanaAlertingRuleByType,
+  isGrafanaRecordingRuleByType,
+  isUngroupedRuleGroup,
+  rulerRuleType,
+} from './rules';
 import { parseInterval } from './time';
 
 export type PromOrLokiQuery = PromQuery | LokiQuery;
@@ -354,6 +359,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         name: ga.title,
         type: RuleFormType.grafanaRecording,
         group: group.name,
+        isUngroupedRuleGroup: isUngroupedRuleGroup(group.name),
         evaluateEvery: group.interval || defaultFormValues.evaluateEvery,
         queries: ga.data,
         condition: ga.condition,
@@ -379,6 +385,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
           name: ga.title,
           type: RuleFormType.grafana,
           group: group.name,
+          isUngroupedRuleGroup: isUngroupedRuleGroup(group.name),
           evaluateEvery: group.interval || defaultFormValues.evaluateEvery,
           evaluateFor: normalizedRule.for || '0',
           keepFiringFor: normalizedRule.keep_firing_for || '0',

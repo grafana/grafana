@@ -187,7 +187,7 @@ func TestService_checkPermission(t *testing.T) {
 			},
 			folders: []store.Folder{
 				{UID: "parent"},
-				{UID: "child", ParentUID: strPtr("parent")},
+				{UID: "child", ParentUID: new("parent")},
 			},
 			check: checkRequest{
 				Action:       "dashboards:read",
@@ -461,7 +461,7 @@ func TestService_checkPermission_folderCacheMissRecovery(t *testing.T) {
 
 	// Populate store with folders
 	folderStore := &fakeStore{
-		folders:        []store.Folder{{UID: "root"}, {UID: "sub", ParentUID: strPtr("root")}},
+		folders:        []store.Folder{{UID: "root"}, {UID: "sub", ParentUID: new("root")}},
 		disableNsCheck: true,
 	}
 	s.folderStore = folderStore
@@ -499,7 +499,7 @@ func TestService_listPermission_skipCache(t *testing.T) {
 
 	// Populate store with folders
 	folderStore := &fakeStore{
-		folders:        []store.Folder{{UID: "root"}, {UID: "sub", ParentUID: strPtr("root")}},
+		folders:        []store.Folder{{UID: "root"}, {UID: "sub", ParentUID: new("root")}},
 		disableNsCheck: true,
 	}
 	s.folderStore = folderStore
@@ -887,11 +887,11 @@ func TestService_listPermission(t *testing.T) {
 			},
 			folders: []store.Folder{
 				{UID: "some_folder_parent"},
-				{UID: "some_folder_child", ParentUID: strPtr("some_folder_parent")},
-				{UID: "some_folder_subchild1", ParentUID: strPtr("some_folder_child")},
-				{UID: "some_folder_subchild2", ParentUID: strPtr("some_folder_child")},
-				{UID: "some_folder_subsubchild", ParentUID: strPtr("some_folder_subchild2")},
-				{UID: "some_folder_1", ParentUID: strPtr("some_other_folder")},
+				{UID: "some_folder_child", ParentUID: new("some_folder_parent")},
+				{UID: "some_folder_subchild1", ParentUID: new("some_folder_child")},
+				{UID: "some_folder_subchild2", ParentUID: new("some_folder_child")},
+				{UID: "some_folder_subsubchild", ParentUID: new("some_folder_subchild2")},
+				{UID: "some_folder_1", ParentUID: new("some_other_folder")},
 			},
 			list: listRequest{
 				Action:   "dashboards:read",
@@ -921,7 +921,7 @@ func TestService_listPermission(t *testing.T) {
 			},
 			folders: []store.Folder{
 				{UID: "some_folder_parent"},
-				{UID: "some_folder_child", ParentUID: strPtr("some_folder_parent")},
+				{UID: "some_folder_child", ParentUID: new("some_folder_parent")},
 			},
 			list: listRequest{
 				Action:   "dashboards:read",
@@ -952,9 +952,9 @@ func TestService_listPermission(t *testing.T) {
 			},
 			folders: []store.Folder{
 				{UID: "some_folder_parent"},
-				{UID: "some_folder_child", ParentUID: strPtr("some_folder_parent")},
-				{UID: "some_folder_subchild", ParentUID: strPtr("some_folder_child")},
-				{UID: "some_folder_child2", ParentUID: strPtr("some_folder_parent")},
+				{UID: "some_folder_child", ParentUID: new("some_folder_parent")},
+				{UID: "some_folder_subchild", ParentUID: new("some_folder_child")},
+				{UID: "some_folder_child2", ParentUID: new("some_folder_parent")},
 			},
 			list: listRequest{
 				Action:   "dashboards:read",
@@ -991,7 +991,7 @@ func TestService_listPermission(t *testing.T) {
 			},
 			folders: []store.Folder{
 				{UID: "some_folder_parent"},
-				{UID: "some_folder_child", ParentUID: strPtr("some_folder_parent")},
+				{UID: "some_folder_child", ParentUID: new("some_folder_parent")},
 			},
 			list: listRequest{
 				Action:   "folders:read",
@@ -2105,10 +2105,6 @@ func setupService() *Service {
 		identityStore:   &fakeIdentityStore{},
 		sf:              new(singleflight.Group),
 	}
-}
-
-func strPtr(s string) *string {
-	return &s
 }
 
 type fakeStore struct {
