@@ -7549,7 +7549,8 @@
         "title": "Save dashboard",
         "title-copy": "Save dashboard copy",
         "title-provisioned": "Provisioned dashboard",
-        "title-template": "Save as template"
+        "title-template": "Save as template",
+        "title-update-template": "Save template"
       }
     },
     "save-dashboard-form": {

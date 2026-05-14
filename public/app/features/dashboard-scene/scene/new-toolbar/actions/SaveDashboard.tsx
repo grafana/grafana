@@ -93,7 +93,7 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
                 label={t('dashboard.toolbar.save-as-template.label', 'Save as template')}
                 icon="grid"
                 onClick={() => {
-                  dashboard.openSaveDrawer({ saveDashboardTemplate: true });
+                  dashboard.openSaveDrawer({ saveAsDashboardTemplate: true });
                 }}
               />
             )}

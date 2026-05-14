@@ -589,10 +589,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   public openSaveDrawer({
     saveAsCopy,
     saveDashboardTemplate,
+    saveAsDashboardTemplate,
     onSaveSuccess,
   }: {
     saveAsCopy?: boolean;
     saveDashboardTemplate?: boolean;
+    saveAsDashboardTemplate?: boolean;
     onSaveSuccess?: () => void;
   }) {
     if (!this.state.isEditing) {
@@ -603,6 +605,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       overlay: new SaveDashboardDrawer({
         dashboardRef: this.getRef(),
         saveAsCopy,
+        saveAsDashboardTemplate,
         saveDashboardTemplate,
         onSaveSuccess,
         showVariablesWarning: this.hasVariableErrors(),
