@@ -10,7 +10,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	dashv2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
+	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 )
 
@@ -62,7 +62,7 @@ func (s *variableStorage) Create(ctx context.Context, obj runtime.Object, create
 		return created, nil
 	}
 
-	variable, ok := created.(*dashv2.Variable)
+	variable, ok := created.(*dashv2beta1.Variable)
 	if !ok {
 		return created, nil
 	}
@@ -103,5 +103,5 @@ func (s *variableStorage) Create(ctx context.Context, obj runtime.Object, create
 		)
 	}
 
-	return nil, apierrors.NewAlreadyExists(dashv2.VariableResourceInfo.GroupResource(), specName)
+	return nil, apierrors.NewAlreadyExists(dashv2beta1.VariableResourceInfo.GroupResource(), specName)
 }

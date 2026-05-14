@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	dashv2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
+	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 )
 
 var variableNameFormat = regexp.MustCompile(`^\w+$`)
@@ -16,7 +16,7 @@ var variableNameFormat = regexp.MustCompile(`^\w+$`)
 // the name-extraction and kind-counting use cases from drifting when a new
 // variable kind is added to the union: the new case only needs a single
 // entry in this function.
-func walkVariableKinds(spec dashv2.VariableSpec) (name string, count int) {
+func walkVariableKinds(spec dashv2beta1.VariableSpec) (name string, count int) {
 	if spec.QueryVariableKind != nil {
 		name = spec.QueryVariableKind.Spec.Name
 		count++
@@ -56,12 +56,12 @@ func walkVariableKinds(spec dashv2.VariableSpec) (name string, count int) {
 	return name, count
 }
 
-func getVariableName(spec dashv2.VariableSpec) string {
+func getVariableName(spec dashv2beta1.VariableSpec) string {
 	name, _ := walkVariableKinds(spec)
 	return name
 }
 
-func validateVariable(variable *dashv2.Variable) error {
+func validateVariable(variable *dashv2beta1.Variable) error {
 	if variable == nil {
 		return fmt.Errorf("variable payload is required")
 	}

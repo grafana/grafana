@@ -16,7 +16,7 @@ import (
 	"k8s.io/apiserver/pkg/admission"
 	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 
-	dashv2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
+	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
@@ -57,7 +57,7 @@ func TestValidateVariable(t *testing.T) {
 
 	t.Run("multiple variable kinds are rejected", func(t *testing.T) {
 		v := newCustomVariable("region", "region")
-		queryVariable := dashv2.NewDashboardQueryVariableKind()
+		queryVariable := dashv2beta1.NewDashboardQueryVariableKind()
 		queryVariable.Spec.Name = "region"
 		v.Spec.QueryVariableKind = queryVariable
 
@@ -73,10 +73,10 @@ func TestDashboardsAPIBuilderValidateVariable(t *testing.T) {
 	err := builder.Validate(ctx, admission.NewAttributesRecord(
 		v,
 		nil,
-		dashv2.VariableResourceInfo.GroupVersionKind(),
+		dashv2beta1.VariableResourceInfo.GroupVersionKind(),
 		"stacks-1",
 		v.GetName(),
-		dashv2.VariableResourceInfo.GroupVersionResource(),
+		dashv2beta1.VariableResourceInfo.GroupVersionResource(),
 		"",
 		admission.Create,
 		&metav1.CreateOptions{},
@@ -109,10 +109,10 @@ func TestDashboardsAPIBuilderValidateVariableCreateRequiresFolderAccess(t *testi
 	err := builder.Validate(ctx, admission.NewAttributesRecord(
 		v,
 		nil,
-		dashv2.VariableResourceInfo.GroupVersionKind(),
+		dashv2beta1.VariableResourceInfo.GroupVersionKind(),
 		"stacks-1",
 		v.GetName(),
-		dashv2.VariableResourceInfo.GroupVersionResource(),
+		dashv2beta1.VariableResourceInfo.GroupVersionResource(),
 		"",
 		admission.Create,
 		&metav1.CreateOptions{},
@@ -218,14 +218,14 @@ func TestVariableMutationPermissionsByRole(t *testing.T) {
 	}
 }
 
-func newCustomVariable(variableName, metadataName string) *dashv2.Variable {
-	customVariable := dashv2.NewDashboardCustomVariableKind()
+func newCustomVariable(variableName, metadataName string) *dashv2beta1.Variable {
+	customVariable := dashv2beta1.NewDashboardCustomVariableKind()
 	customVariable.Spec.Name = variableName
 
-	spec := dashv2.NewVariableSpec()
+	spec := dashv2beta1.NewVariableSpec()
 	spec.CustomVariableKind = customVariable
 
-	return &dashv2.Variable{
+	return &dashv2beta1.Variable{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: metadataName,
 		},
@@ -461,10 +461,10 @@ func TestResolveVariableNameConflictAfterCreate(t *testing.T) {
 	})
 }
 
-// newCreatedVariable builds a *dashv2.Variable resembling the object returned
+// newCreatedVariable builds a *dashv2beta1.Variable resembling the object returned
 // by registry.Store.Create: metadata is fully populated including namespace,
 // UID, resourceVersion, and (optionally) folder annotation + label.
-func newCreatedVariable(specName, metadataName, uid, resourceVersion, folderUID string, created time.Time) *dashv2.Variable {
+func newCreatedVariable(specName, metadataName, uid, resourceVersion, folderUID string, created time.Time) *dashv2beta1.Variable {
 	v := newCustomVariable(specName, metadataName)
 	v.SetNamespace("stacks-1")
 	v.SetUID(types.UID(uid))
@@ -519,16 +519,16 @@ func matchListOptions(specName, folderUID, resourceVersion string) func(metav1.L
 	}
 }
 
-func buildVariableAttributesForOp(op admission.Operation, newVariable, oldVariable *dashv2.Variable) admission.Attributes {
+func buildVariableAttributesForOp(op admission.Operation, newVariable, oldVariable *dashv2beta1.Variable) admission.Attributes {
 	switch op {
 	case admission.Create:
 		return admission.NewAttributesRecord(
 			newVariable,
 			nil,
-			dashv2.VariableResourceInfo.GroupVersionKind(),
+			dashv2beta1.VariableResourceInfo.GroupVersionKind(),
 			"stacks-1",
 			newVariable.GetName(),
-			dashv2.VariableResourceInfo.GroupVersionResource(),
+			dashv2beta1.VariableResourceInfo.GroupVersionResource(),
 			"",
 			admission.Create,
 			&metav1.CreateOptions{},
@@ -539,10 +539,10 @@ func buildVariableAttributesForOp(op admission.Operation, newVariable, oldVariab
 		return admission.NewAttributesRecord(
 			newVariable,
 			oldVariable,
-			dashv2.VariableResourceInfo.GroupVersionKind(),
+			dashv2beta1.VariableResourceInfo.GroupVersionKind(),
 			"stacks-1",
 			newVariable.GetName(),
-			dashv2.VariableResourceInfo.GroupVersionResource(),
+			dashv2beta1.VariableResourceInfo.GroupVersionResource(),
 			"",
 			admission.Update,
 			&metav1.UpdateOptions{},
@@ -553,10 +553,10 @@ func buildVariableAttributesForOp(op admission.Operation, newVariable, oldVariab
 		return admission.NewAttributesRecord(
 			nil,
 			oldVariable,
-			dashv2.VariableResourceInfo.GroupVersionKind(),
+			dashv2beta1.VariableResourceInfo.GroupVersionKind(),
 			"stacks-1",
 			oldVariable.GetName(),
-			dashv2.VariableResourceInfo.GroupVersionResource(),
+			dashv2beta1.VariableResourceInfo.GroupVersionResource(),
 			"",
 			admission.Delete,
 			&metav1.DeleteOptions{},

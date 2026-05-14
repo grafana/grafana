@@ -8,7 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/admission"
 
-	dashv2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
+	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
@@ -22,10 +22,10 @@ func TestDashboardsAPIBuilderMutateVariable(t *testing.T) {
 	err := builder.Mutate(context.Background(), admission.NewAttributesRecord(
 		v,
 		nil,
-		dashv2.VariableResourceInfo.GroupVersionKind(),
+		dashv2beta1.VariableResourceInfo.GroupVersionKind(),
 		"stacks-1",
 		v.GetName(),
-		dashv2.VariableResourceInfo.GroupVersionResource(),
+		dashv2beta1.VariableResourceInfo.GroupVersionResource(),
 		"",
 		admission.Create,
 		&metav1.CreateOptions{},
@@ -42,10 +42,10 @@ func TestDashboardsAPIBuilderMutateVariable(t *testing.T) {
 	err = builder.Mutate(context.Background(), admission.NewAttributesRecord(
 		v,
 		nil,
-		dashv2.VariableResourceInfo.GroupVersionKind(),
+		dashv2beta1.VariableResourceInfo.GroupVersionKind(),
 		"stacks-1",
 		v.GetName(),
-		dashv2.VariableResourceInfo.GroupVersionResource(),
+		dashv2beta1.VariableResourceInfo.GroupVersionResource(),
 		"",
 		admission.Update,
 		&metav1.UpdateOptions{},

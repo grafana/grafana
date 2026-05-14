@@ -166,7 +166,7 @@ func RegisterAPIService(
 	dbp := legacysql.NewDatabaseProvider(sql)
 	namespacer := request.GetNamespaceMapper(cfg)
 	folderClient := client.NewK8sHandler(request.GetNamespaceMapper(cfg), folders.FolderResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, userService, unified)
-	variableClient := client.NewK8sHandler(namespacer, dashv2.VariableResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, userService, unified)
+	variableClient := client.NewK8sHandler(namespacer, dashv2beta1.VariableResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, userService, unified)
 	dashboardClient := client.NewK8sHandler(namespacer, dashv1.DashboardResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, userService, unified)
 
 	snapshotOptions := dashv0.SnapshotSharingOptions{
@@ -286,7 +286,7 @@ func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	}
 
 	if err := scheme.AddFieldLabelConversionFunc(
-		dashv2.VariableResourceInfo.GroupVersionKind(),
+		dashv2beta1.VariableResourceInfo.GroupVersionKind(),
 		func(label, value string) (string, string, error) {
 			switch label {
 			case "metadata.name", "metadata.namespace", "spec.spec.name":
@@ -357,14 +357,14 @@ func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 	case dashv0.SNAPSHOT_RESOURCE:
 		return nil // OK for now
 	// Reachability invariant: this case only fires when the apiserver routes
-	// a request to the v2 Variable storage, which is registered in
+	// a request to the v2beta1 Variable storage, which is registered in
 	// UpdateAPIGroupInfo behind FlagGlobalDashboardVariables. No other
 	// dashboard.grafana.app version registers a standalone Variable resource,
 	// so without the flag the apiserver has no route and admission never
 	// dispatches here. If Variable is ever added to another version or moved
 	// to a subresource, update both the storage registration and this switch
 	// in lockstep.
-	case dashv2.VariableResourceInfo.GroupVersionResource().Resource:
+	case dashv2beta1.VariableResourceInfo.GroupVersionResource().Resource:
 		switch op {
 		case admission.Create:
 			return b.validateVariableCreate(ctx, a)
@@ -574,7 +574,7 @@ func (b *DashboardsAPIBuilder) validateVariableCreate(ctx context.Context, a adm
 		return err
 	}
 
-	variable, ok := a.GetObject().(*dashv2.Variable)
+	variable, ok := a.GetObject().(*dashv2beta1.Variable)
 	if !ok {
 		return fmt.Errorf("unsupported variable version: %T", a.GetObject())
 	}
@@ -622,12 +622,12 @@ func (b *DashboardsAPIBuilder) validateVariableUpdate(ctx context.Context, a adm
 		return err
 	}
 
-	newVariable, ok := a.GetObject().(*dashv2.Variable)
+	newVariable, ok := a.GetObject().(*dashv2beta1.Variable)
 	if !ok {
 		return fmt.Errorf("unsupported variable version: %T", a.GetObject())
 	}
 
-	oldVariable, ok := a.GetOldObject().(*dashv2.Variable)
+	oldVariable, ok := a.GetOldObject().(*dashv2beta1.Variable)
 	if !ok {
 		return fmt.Errorf("unsupported old variable version: %T", a.GetOldObject())
 	}
@@ -687,12 +687,12 @@ func (b *DashboardsAPIBuilder) validateVariableDelete(ctx context.Context) error
 func (b *DashboardsAPIBuilder) validateVariableMutationPermissions(ctx context.Context) error {
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
-		return apierrors.NewForbidden(dashv2.VariableResourceInfo.GroupResource(), "", fmt.Errorf("variable mutation requires editor or admin role"))
+		return apierrors.NewForbidden(dashv2beta1.VariableResourceInfo.GroupResource(), "", fmt.Errorf("variable mutation requires editor or admin role"))
 	}
 
 	role := requester.GetOrgRole()
 	if role != identity.RoleEditor && role != identity.RoleAdmin {
-		return apierrors.NewForbidden(dashv2.VariableResourceInfo.GroupResource(), "", fmt.Errorf("variable mutation requires editor or admin role"))
+		return apierrors.NewForbidden(dashv2beta1.VariableResourceInfo.GroupResource(), "", fmt.Errorf("variable mutation requires editor or admin role"))
 	}
 
 	return nil
@@ -932,13 +932,13 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if b.features.IsEnabledGlobally(featuremgmt.FlagGlobalDashboardVariables) {
-		opts.StorageOptsRegister(dashv2.VariableResourceInfo.GroupResource(), apistore.StorageOptions{
+		opts.StorageOptsRegister(dashv2beta1.VariableResourceInfo.GroupResource(), apistore.StorageOptions{
 			EnableFolderSupport: true,
 		})
 
 		gvStore, err := grafanaregistry.NewRegistryStoreWithSelectableFields(
 			opts.Scheme,
-			dashv2.VariableResourceInfo,
+			dashv2beta1.VariableResourceInfo,
 			opts.OptsGetter,
 			grafanaregistry.SelectableFieldsOptions{
 				GetAttrs: VariableGetAttrs,
@@ -948,8 +948,8 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 			return err
 		}
 
-		storage := apiGroupInfo.VersionedResourcesStorageMap[dashv2.VERSION]
-		storage[dashv2.VariableResourceInfo.StoragePath()] = newVariableStorage(gvStore, b.variableClientProvider)
+		storage := apiGroupInfo.VersionedResourcesStorageMap[dashv2beta1.VERSION]
+		storage[dashv2beta1.VariableResourceInfo.StoragePath()] = newVariableStorage(gvStore, b.variableClientProvider)
 	}
 
 	return nil

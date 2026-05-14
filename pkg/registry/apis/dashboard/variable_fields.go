@@ -8,14 +8,14 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/generic"
 
-	dashv2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
+	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 const variableFolderLabelKey = utils.AnnoKeyFolder
 
 // VariableToSelectableFields returns fields available for selectors.
-func VariableToSelectableFields(obj *dashv2.Variable) fields.Set {
+func VariableToSelectableFields(obj *dashv2beta1.Variable) fields.Set {
 	objectMetaFields := generic.ObjectMetaFieldsSet(&obj.ObjectMeta, true)
 	specificFields := fields.Set{
 		"spec.spec.name": getVariableName(obj.Spec),
@@ -25,7 +25,7 @@ func VariableToSelectableFields(obj *dashv2.Variable) fields.Set {
 
 // VariableGetAttrs returns labels and fields of a Variable object.
 func VariableGetAttrs(obj runtime.Object) (labels.Set, fields.Set, error) {
-	variable, ok := obj.(*dashv2.Variable)
+	variable, ok := obj.(*dashv2beta1.Variable)
 	if !ok {
 		return nil, nil, fmt.Errorf("given object is not a Variable")
 	}
