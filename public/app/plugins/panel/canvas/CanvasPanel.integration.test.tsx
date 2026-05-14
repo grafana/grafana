@@ -537,22 +537,6 @@ const getUnmappedIconText = () =>
     name: 'No mapping (14)',
   }) as HTMLElement;
 
-/**
- * {@link mockComboboxRect} replaces layout accessors globally; restore prior descriptors afterward so other tests keep working.
- */
-async function withComboboxLayoutMocks<T>(run: () => Promise<T>): Promise<T> {
-  // const elGbcr = Object.getOwnPropertyDescriptor(Element.prototype, 'getBoundingClientRect');
-  // const htmlOw = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetWidth');
-  // const htmlOh = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetHeight');
-
-  mockComboboxRect();
-
-  try {
-    return await run();
-  } finally {
-  }
-}
-
 describe('Canvas', () => {
   let onFieldConfigChange = jest.fn();
   let onOptionsChange = jest.fn();
