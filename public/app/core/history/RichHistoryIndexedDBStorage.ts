@@ -24,7 +24,7 @@ const QUERIES_STORE = 'queries';
 const SETTINGS_STORE = 'settings';
 const METADATA_STORE = 'metadata';
 
-const ITEM_COUNT_WARNING_THRESHOLD = 50_000;
+const DEFAULT_ITEM_COUNT_WARNING_THRESHOLD = 50_000;
 const MS_PER_DAY = 86_400_000;
 
 const DEFAULT_SETTINGS: RichHistorySettings = {
@@ -123,8 +123,10 @@ export default class RichHistoryIndexedDBStorage implements RichHistoryStorage, 
   private dbPromise: Promise<IDBPDatabase<QueryHistoryDBSchema>>;
   private migrationPromise: Promise<void> | undefined;
   private lastCleanupTime = 0;
+  private readonly itemCountWarningThreshold: number;
 
-  constructor() {
+  constructor(itemCountWarningThreshold = DEFAULT_ITEM_COUNT_WARNING_THRESHOLD) {
+    this.itemCountWarningThreshold = itemCountWarningThreshold;
     this.dbPromise = this.initDB();
   }
 
@@ -217,7 +219,7 @@ export default class RichHistoryIndexedDBStorage implements RichHistoryStorage, 
 
     // Check total count for warning (separate transaction, after write committed)
     const count = await db.count(QUERIES_STORE);
-    if (count >= ITEM_COUNT_WARNING_THRESHOLD) {
+    if (count >= this.itemCountWarningThreshold) {
       reportInteraction('grafana_query_history_item_count_warning', { itemCount: count });
     }
 

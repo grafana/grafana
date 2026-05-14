@@ -493,32 +493,27 @@ describe('RichHistoryIndexedDBStorage', () => {
 
   describe('item count warning', () => {
     it('should report interaction when item count reaches threshold', async () => {
-      const db = await storage.getDB();
+      const lowThresholdStorage = new RichHistoryIndexedDBStorage(2);
+      const db = await lowThresholdStorage.getDB();
+      await db.clear('queries');
 
-      // Insert items just below threshold
-      const tx = db.transaction('queries', 'readwrite');
-      for (let i = 0; i < 49_999; i++) {
-        tx.objectStore('queries').put({
-          id: `bulk-${i}`,
-          datasourceUid: 'dev-test',
-          datasourceName: 'name-of-dev-test',
-          createdAt: nowMs - i,
-          starred: 0,
-          comment: `entry-${i}`,
-          queries: [],
-        });
-      }
-      await tx.done;
+      await lowThresholdStorage.addToRichHistory(mockItem);
+      expect(reportInteraction).not.toHaveBeenCalled();
 
-      // Adding one more should trigger the warning (count becomes 50000)
-      await storage.addToRichHistory({
-        ...mockItem,
+      dateNowSpy.mockReturnValue(nowMs + 1);
+      await lowThresholdStorage.addToRichHistory({
+        ...mockItem2,
         queries: [{ refId: 'unique', query: 'unique-query' } as MockQuery],
       });
 
       expect(reportInteraction).toHaveBeenCalledWith('grafana_query_history_item_count_warning', {
-        itemCount: 50_000,
+        itemCount: 2,
       });
+    });
+
+    it('should not report interaction when below threshold', async () => {
+      await storage.addToRichHistory(mockItem);
+      expect(reportInteraction).not.toHaveBeenCalled();
     });
   });
 
