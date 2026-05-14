@@ -1023,7 +1023,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
 
         if (options.dashboardTemplateUid && editMode) {
           // Land template-only flags onto scene.meta so downstream UI can detect "this is an
-          // org template" and the save drawer can build PUTs keyed on dashboardTemplateUid. Outer
+          // dashboard template" and the save drawer can build PUTs keyed on dashboardTemplateUid. Outer
           // template spec fields (title/description/tags/...) are not cached here — consumers
           // fetch them via useGetDashboardTemplateQuery keyed on dashboardTemplateUid.
           scene.setState({
@@ -1173,14 +1173,11 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     if (editMode) {
       // Edit-template flow: mark the scene as editing an org template so downstream UI can hide
       // irrelevant actions and the save drawer can PUT back to the template resource.
-      // TODO: replace hasEditPermissionInFolders placeholder with a dedicated
-      // DashboardTemplatesWrite permission when RBAC for this resource is introduced.
-      const canEditTemplate = contextSrv.hasEditPermissionInFolders;
       return toTemplateDashboardEnvelope({
         dashboardSpec: response.spec.dashboard,
         resourceVersion,
-        canEdit: canEditTemplate,
-        canSave: canEditTemplate,
+        canEdit: true,
+        canSave: true,
       });
     }
 
@@ -1190,8 +1187,8 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     // template, it's a cloning flow.
     return toTemplateDashboardEnvelope({
       dashboardSpec: response.spec.dashboard,
-      canEdit: contextSrv.hasEditPermissionInFolders,
-      canSave: contextSrv.hasEditPermissionInFolders,
+      canEdit: true,
+      canSave: true,
     });
   }
 

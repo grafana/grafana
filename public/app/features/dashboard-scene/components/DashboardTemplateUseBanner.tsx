@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom-v5-compat';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -8,6 +8,7 @@ import { Alert, useStyles2 } from '@grafana/ui';
 import { DASHBOARD_LIBRARY_ROUTES } from 'app/features/dashboard/dashgrid/types';
 
 import { type DashboardScene } from '../scene/DashboardScene';
+import { getDashboardTemplateExtension } from 'app/features/dashboard-scene/settings/enterprise-components/DashboardTemplateExtension';
 
 export function DashboardTemplateUseBanner({ dashboard }: { dashboard: DashboardScene }) {
   const styles = useStyles2(getStyles);
@@ -16,6 +17,20 @@ export function DashboardTemplateUseBanner({ dashboard }: { dashboard: Dashboard
   const shouldRender =
     Boolean(searchParams.get('useTemplateBanner')) && location.pathname === DASHBOARD_LIBRARY_ROUTES.Template;
   const [dismissed, setDismissed] = useState<boolean>(!shouldRender);
+  const [outerTitle, setOuterTitle] = useState<string | undefined>(undefined);
+
+  const dashboardTemplateUid = dashboard.state.meta.dashboardTemplateUid;
+
+  useEffect(() => {
+    if (!shouldRender || !dashboardTemplateUid) {
+      return;
+    }
+    getDashboardTemplateExtension()
+      .loadTemplate(dashboardTemplateUid)
+      .then((resource) => {
+        setOuterTitle(resource.spec.title);
+      });
+  }, [shouldRender, dashboardTemplateUid]);
 
   const onDismiss = () => {
     setDismissed(true);
@@ -30,7 +45,7 @@ export function DashboardTemplateUseBanner({ dashboard }: { dashboard: Dashboard
       title={t(
         'dashboard-scene.dashboard-template-use-banner.title',
         'You are using {{ templateName }} template in a new dashboard',
-        { templateName: dashboard.state.title }
+        { templateName: outerTitle ?? dashboard.state.title }
       )}
       severity="success"
       className={styles.banner}
