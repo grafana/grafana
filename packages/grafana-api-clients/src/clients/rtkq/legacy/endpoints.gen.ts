@@ -1584,7 +1584,7 @@ const injectedRtkApi = api
         query: () => ({ url: `/user/email/update` }),
         providesTags: ['user'],
       }),
-getSignedInUserOrgList: build.query<GetSignedInUserOrgListApiResponse, GetSignedInUserOrgListApiArg>({
+      getSignedInUserOrgList: build.query<GetSignedInUserOrgListApiResponse, GetSignedInUserOrgListApiArg>({
         query: () => ({ url: `/user/orgs` }),
         providesTags: ['signed_in_user'],
       }),
