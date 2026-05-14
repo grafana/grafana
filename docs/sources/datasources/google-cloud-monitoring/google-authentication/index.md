@@ -156,7 +156,7 @@ After you change the scopes, existing user sessions still hold tokens issued und
 1. Click **Save & test** to verify the connection.
 
 {{< admonition type="note" >}}
-Service account impersonation isn't compatible with Forward OAuth Identity. The data source authenticates as the signed-in user, so there's no service account to impersonate from.
+Service account impersonation isn't compatible with Forward OAuth Identity. The data source authenticates as the signed-in user, so there's no service account to impersonate.
 {{< /admonition >}}
 
 ## Configure service account impersonation
