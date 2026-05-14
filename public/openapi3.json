@@ -1353,25 +1353,6 @@
         },
         "description": "GoneError is returned when the requested endpoint was removed."
       },
-      "helpFlagResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "properties": {
-                "helpFlags1": {
-                  "format": "int64",
-                  "type": "integer"
-                },
-                "message": {
-                  "type": "string"
-                }
-              },
-              "type": "object"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
       "importDashboardResponse": {
         "content": {
           "application/json": {

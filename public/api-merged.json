@@ -24934,21 +24934,6 @@
         "$ref": "#/definitions/ErrorResponseBody"
       }
     },
-    "helpFlagResponse": {
-      "description": "(empty)",
-      "schema": {
-        "type": "object",
-        "properties": {
-          "helpFlags1": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "message": {
-            "type": "string"
-          }
-        }
-      }
-    },
     "importDashboardResponse": {
       "description": "(empty)",
       "schema": {
