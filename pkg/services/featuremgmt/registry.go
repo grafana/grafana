@@ -118,13 +118,13 @@ var (
 			Generate:        Generate{Go: true},
 		},
 		{
-			Name:            "live.dropHAPrefixInCloud",
-			Description:     "do not include the HA prefix",
+			Name:            "live.keepHAPrefixInCloud",
+			Description:     "keep the prefix (just in case)",
 			Stage:           FeatureStageExperimental,
 			HideFromDocs:    true,
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true,
-			Expression:      "true", // gets applied as the software is deployed, but we can disable if necessary
+			Expression:      "false",
 			Generate:        Generate{Go: true},
 		},
 		{

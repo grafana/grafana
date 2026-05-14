@@ -3928,7 +3928,8 @@
       "metadata": {
         "name": "live.dropHAPrefixInCloud",
         "resourceVersion": "1778740214922",
-        "creationTimestamp": "2026-05-14T06:30:14Z"
+        "creationTimestamp": "2026-05-14T06:30:14Z",
+        "deletionTimestamp": "2026-05-14T10:08:37Z"
       },
       "spec": {
         "description": "do not include the HA prefix",
@@ -3937,6 +3938,21 @@
         "requiresRestart": true,
         "hideFromDocs": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "live.keepHAPrefixInCloud",
+        "resourceVersion": "1778753317402",
+        "creationTimestamp": "2026-05-14T10:08:37Z"
+      },
+      "spec": {
+        "description": "keep the prefix (just in case)",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true,
+        "hideFromDocs": true,
+        "expression": "false"
       }
     },
     {

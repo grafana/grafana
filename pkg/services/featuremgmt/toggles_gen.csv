@@ -11,7 +11,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2023-02-09,lokiQuerySplitting,GA,@grafana/observability-logs,false,false,true
 2022-02-09,influxdbBackendMigration,GA,@grafana/data-sources-plugins,false,false,true
 2026-05-14,live.runAPIServer,experimental,@grafana/grafana-app-platform-squad,true,true,false
-2026-05-14,live.dropHAPrefixInCloud,experimental,@grafana/grafana-app-platform-squad,false,true,false
+2026-05-14,live.keepHAPrefixInCloud,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2025-08-29,starsFromAPIServer,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2023-11-29,influxqlStreamingParser,experimental,@grafana/data-sources-plugins,false,false,false
 2024-02-01,influxdbRunQueriesInParallel,privatePreview,@grafana/data-sources-plugins,false,false,false

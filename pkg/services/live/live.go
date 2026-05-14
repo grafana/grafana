@@ -94,8 +94,8 @@ func ProvideService(cfg *setting.Cfg, routeRegister routing.RouteRegister, plugC
 		// This is OK because the channel prefix now starts with the full stack identifier
 		// Removing the prefix means we can implement an MT live apiserver, while watching events sent from ST
 		// nolint:staticcheck // not yet migrated to OpenFeature
-		dropPrefix := cfg.StackID != "" && toggles.IsEnabledGlobally(featuremgmt.FlagLiveDropHAPrefixInCloud)
-		if !dropPrefix {
+		keepPrefix := cfg.StackID == "" || toggles.IsEnabledGlobally(featuremgmt.FlagLiveKeepHAPrefixInCloud)
+		if keepPrefix {
 			g.keyPrefix = cfg.LiveHAPrefix + ".gf_live"
 		}
 	}
