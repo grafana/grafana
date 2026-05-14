@@ -11,7 +11,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/runtime"
 
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
@@ -124,6 +126,74 @@ func TestIntegrationProvisioning_MaxFileSize_Write(t *testing.T) {
 		"oversized POST should return HTTP 413; got %v", result.Error())
 	require.Contains(t, result.Error().Error(), "request body too large",
 		"error should advertise the size cap; got %v", result.Error())
+}
+
+// TestIntegrationProvisioning_MaxFileSize_Pull exercises the sync-side
+// enforcement: a pull job over a repository that contains a file larger than
+// [provisioning] max_file_size completes with state=error, recording a
+// per-file error for the oversized file. Under-cap files in the same
+// repository are still applied successfully.
+func TestIntegrationProvisioning_MaxFileSize_Pull(t *testing.T) {
+	helper := sharedHelper(t)
+
+	const repo = "max-file-size-pull"
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:                   repo,
+		LocalPath:              helper.ProvisioningPath,
+		SyncTarget:             "instance",
+		Workflows:              []string{"write"},
+		SkipResourceAssertions: true,
+	})
+
+	smallDashboard := common.DashboardJSON("small-dash", "Small Dashboard", 1)
+	require.Less(t, len(smallDashboard), int(testMaxFileSize),
+		"fixture must fit under the configured cap")
+
+	// Pad an otherwise valid dashboard JSON so the bytes-on-disk exceed the cap.
+	pad := strings.Repeat("p", int(testMaxFileSize)+1)
+	oversized, err := json.Marshal(map[string]any{
+		"uid":           "huge-dash",
+		"title":         pad,
+		"tags":          []string{},
+		"timezone":      "browser",
+		"schemaVersion": 39,
+		"version":       1,
+		"refresh":       "",
+		"panels":        []any{},
+	})
+	require.NoError(t, err)
+	require.Greater(t, len(oversized), int(testMaxFileSize),
+		"fixture must exceed the configured cap")
+
+	helper.WriteToProvisioningPath(t, "small.json", smallDashboard)
+	helper.WriteToProvisioningPath(t, "huge.json", oversized)
+
+	job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
+		Action: provisioning.JobActionPull,
+		Pull:   &provisioning.SyncJobOptions{},
+	})
+
+	jobObj := &provisioning.Job{}
+	require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
+
+	require.Equal(t, provisioning.JobStateError, jobObj.Status.State,
+		"pull should end in error state when a file exceeds max_file_size; job: %+v", jobObj.Status)
+	require.NotEmpty(t, jobObj.Status.Errors,
+		"pull should record a per-file error for the oversized file")
+
+	var foundOversized bool
+	for _, e := range jobObj.Status.Errors {
+		if strings.Contains(e, "huge.json") && strings.Contains(e, "max allowed") {
+			foundOversized = true
+			break
+		}
+	}
+	require.True(t, foundOversized,
+		"expected an error mentioning huge.json and the size cap; errors=%v", jobObj.Status.Errors)
+
+	// Under-cap files in the same repository are still applied — the cap is
+	// enforced per file, not per sync.
+	helper.RequireRepoDashboardCount(t, repo, 1)
 }
 
 // The "0 = unlimited" semantics are covered by the unit test

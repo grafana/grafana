@@ -296,6 +296,7 @@ func setupWorkers(
 		metrics,
 		tracer,
 		controllerCfg.maxSyncWorkers,
+		cfg.ProvisioningMaxFileSize,
 	)
 	workers = append(workers, syncWorker)
 
