@@ -2,22 +2,27 @@ import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import * as React from 'react';
 
-import {
-  type DataFrame,
-  EventBusSrv,
-  type FeatureToggles,
-  getDefaultTimeRange,
-  LoadingState,
-  type PanelProps,
-} from '@grafana/data';
+import { EventBusSrv, type FeatureToggles, getDefaultTimeRange, LoadingState, type PanelProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { TooltipDisplayMode } from '@grafana/schema';
 import { PanelContextProvider } from '@grafana/ui';
 import { Scene } from 'app/features/canvas/runtime/scene';
+import * as sceneAbleManagement from 'app/features/canvas/runtime/sceneAbleManagement';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { CanvasPanel } from 'app/plugins/panel/canvas/CanvasPanel';
 import { HorizontalConstraint, type Options, VerticalConstraint } from 'app/plugins/panel/canvas/panelcfg.gen';
+
+jest.mock('react-router-dom-v5-compat', () => ({
+  ...jest.requireActual('react-router-dom-v5-compat'),
+  useLocation: () => ({
+    pathname: '/',
+    search: '',
+    hash: '',
+    state: null,
+    key: 'default',
+  }),
+}));
 
 const width = 600;
 const height = 400;
@@ -375,11 +380,10 @@ const defaultOptions: Options = {
   },
 };
 const getOptions = (optionsOverrides?: Partial<Options>): Options => {
-  const result = {
+  return {
     ...defaultOptions,
     ...optionsOverrides,
   };
-  return result;
 };
 
 const getSuccessIconButton = () => {
@@ -392,6 +396,10 @@ const getSuccessIconText = () => {
   return candidates.find((el) => el?.textContent === 'Success') ?? (candidates[2] as HTMLElement);
 };
 
+const getCanvasPanZoomContainer = () => {
+  return screen.getByTestId('canvas-scene-pan-zoom');
+};
+
 const getUnmappedIconText = () =>
   screen.getByRole('button', {
     name: 'No mapping (14)',
@@ -401,6 +409,57 @@ describe('Canvas', () => {
   let onFieldConfigChange = jest.fn();
   let onOptionsChange = jest.fn();
   let onChangeTimeRange = jest.fn();
+
+  /** Keeps panel options in React state so controlled editors (e.g. Switch) update after onOptionsChange. */
+  function StatefulCanvasPanelHarness({
+    propsOverrides,
+    eventBus,
+  }: {
+    propsOverrides?: Partial<PanelProps<Options>>;
+    eventBus: EventBusSrv;
+  }) {
+    const [propsState, setPropsState] = React.useState<Partial<PanelProps<Options>>>(() => ({
+      ...propsOverrides,
+      options: propsOverrides?.options ?? defaultOptions,
+    }));
+
+    const handleOptionsChange = React.useCallback((options: Options) => {
+      onOptionsChange(options);
+      setPropsState((prev) => ({ ...prev, options }));
+    }, []);
+
+    const timeRange = getDefaultTimeRange();
+
+    return (
+      <CanvasPanel
+        onChangeTimeRange={onChangeTimeRange}
+        title={''}
+        timeZone={'utc'}
+        timeRange={timeRange}
+        id={0}
+        data={{
+          series: [],
+          state: LoadingState.Done,
+          timeRange,
+        }}
+        onFieldConfigChange={onFieldConfigChange}
+        eventBus={eventBus}
+        onOptionsChange={handleOptionsChange}
+        replaceVariables={(s) => s}
+        renderCounter={0}
+        fieldConfig={{
+          overrides: [],
+          defaults: {},
+        }}
+        height={height}
+        width={width}
+        transparent={false}
+        options={defaultOptions}
+        {...propsState}
+      />
+    );
+  }
+
   const canvasPanelElement = (propsOverrides?: Partial<PanelProps<Options>>, eventBus = new EventBusSrv()) => {
     const timeRange = getDefaultTimeRange();
 
@@ -434,7 +493,7 @@ describe('Canvas', () => {
       />
     );
   };
-  const setUp = (propsOverrides?: Partial<PanelProps<Options>>, seriesOverrides?: DataFrame[]) => {
+  const setUp = (propsOverrides?: Partial<PanelProps<Options>>) => {
     return render(canvasPanelElement(propsOverrides));
   };
   const setUpWithPanelContext = (
@@ -459,6 +518,35 @@ describe('Canvas', () => {
     return Object.assign(render(canvasPanelElement(propsOverrides, eventBus), { wrapper: PanelContextWrapper }), {
       eventBus,
     });
+  };
+
+  const setUpWithPanelContextStateful = (
+    propsOverrides?: Partial<PanelProps<Options>>
+  ): ReturnType<typeof render> & { eventBus: EventBusSrv } => {
+    const eventBus = new EventBusSrv();
+    const PanelContextWrapper = ({ children }: { children: React.ReactNode }) => {
+      const [instanceState, setInstanceState] = React.useState<unknown>();
+      return (
+        <PanelContextProvider
+          value={{
+            eventsScope: 'canvas-panel-integration',
+            eventBus,
+            instanceState,
+            onInstanceStateChange: setInstanceState,
+          }}
+        >
+          {children}
+        </PanelContextProvider>
+      );
+    };
+    return Object.assign(
+      render(
+        <PanelContextWrapper>
+          <StatefulCanvasPanelHarness propsOverrides={propsOverrides} eventBus={eventBus} />
+        </PanelContextWrapper>
+      ),
+      { eventBus }
+    );
   };
 
   const getIndex = (textContent: string) => {
@@ -492,8 +580,9 @@ describe('Canvas', () => {
   });
 
   describe('canvasPanelPanZoom enabled', () => {
+    const previousFlagValue = config.featureToggles.canvasPanelPanZoom;
     beforeAll(() => (config.featureToggles.canvasPanelPanZoom = true));
-    afterAll(() => (config.featureToggles.canvasPanelPanZoom = false));
+    afterAll(() => (config.featureToggles.canvasPanelPanZoom = previousFlagValue));
     it('Renders - kitchen sink', () => {
       setUp();
 
@@ -526,11 +615,8 @@ describe('Canvas', () => {
       expect(getUnmappedIconText()).toHaveTextContent('No mapping (14)');
       expect(buttons[9]).toHaveTextContent('Fixed Relative Path:');
       expect(buttons[11]).toHaveTextContent('Fixed Absolute URL:');
-
-      config.featureToggles.canvasPanelPanZoom = false;
     });
     it('Re-renders when width and height change without losing canvas elements', () => {
-      config.featureToggles.canvasPanelPanZoom = true;
       let updateConnectionsSizeSpy: jest.SpyInstance | undefined;
 
       const stubInfiniteViewer = {
@@ -560,20 +646,42 @@ describe('Canvas', () => {
       expect(buttons).toHaveLength(13);
       expect(buttons[0]).toBeVisible();
       updateConnectionsSizeSpy?.mockRestore();
-      config.featureToggles.canvasPanelPanZoom = false;
     });
-    it.skip('zoom to content', async () => {
-      await rightClickMenuSetup({ options: getOptions({ zoomToContent: true }) });
+
+    it('zoom to content', async () => {
+      const calculateZoomToFitScaleSpy = jest.spyOn(sceneAbleManagement, 'calculateZoomToFitScale').mockReturnValue({
+        scale: 2,
+        centerX: 100,
+        centerY: 100,
+      });
+
+      setUpWithPanelContextStateful({ options: getOptions({ zoomToContent: false }) });
 
       await user.pointer({ keys: '[MouseRight]', target: getSuccessIconText() });
       await user.click(screen.getByRole('menuitem', { name: 'Open Editor' }));
 
-      expect(screen.getByText('Canvas Inline Editor')).toBeVisible();
-      screen.logTestingPlaygroundURL();
+      expect(screen.getByText('Zoom to content')).toBeVisible();
+      expect(getCanvasPanZoomContainer()).toHaveStyle('transform-origin: 0 0;');
+      expect(getCanvasPanZoomContainer()).toHaveStyle('transform: translate3d(500px, 500px, 0px) scale(1, 1)');
+      const zoomToggle = screen.getByRole('switch', {
+        name: /zoom to content automatically zoom to fit content/i,
+      });
+      expect(zoomToggle).not.toBeChecked();
+
+      expect(calculateZoomToFitScaleSpy).not.toHaveBeenCalled();
+      await user.click(zoomToggle);
+      expect(zoomToggle).toBeChecked();
+      expect(calculateZoomToFitScaleSpy).toHaveBeenCalled();
+
+      expect(getCanvasPanZoomContainer()).toHaveStyle('transform-origin: 0 0;');
+      expect(getCanvasPanZoomContainer()).toHaveStyle('transform: translate3d(300px, 300px, 0px) scale(2, 2)');
     });
   });
 
   describe('canvasPanelPanZoom disabled', () => {
+    const previousFlagValue = config.featureToggles.canvasPanelPanZoom;
+    beforeAll(() => (config.featureToggles.canvasPanelPanZoom = false));
+    afterAll(() => (config.featureToggles.canvasPanelPanZoom = previousFlagValue));
     it('Renders - kitchen sink', () => {
       setUp();
 
