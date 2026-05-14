@@ -1,4 +1,4 @@
-import { act, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import * as React from 'react';
 
@@ -25,6 +25,7 @@ import * as sceneAbleManagement from 'app/features/canvas/runtime/sceneAbleManag
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { CanvasPanel } from 'app/plugins/panel/canvas/CanvasPanel';
+import { CONNECTION_ANCHOR_DIV_ID } from 'app/plugins/panel/canvas/components/connections/ConnectionAnchors';
 import { HorizontalConstraint, type Options, VerticalConstraint } from 'app/plugins/panel/canvas/panelcfg.gen';
 
 const theme = createTheme();
@@ -1116,6 +1117,7 @@ describe('Canvas', () => {
 
           it.todo('canvas options');
           it.todo('tooltip options');
+          it.todo('Set background');
         });
         describe('Element management', () => {
           // @todo
@@ -1123,4 +1125,70 @@ describe('Canvas', () => {
       });
     });
   });
+
+  describe('Connections', () => {
+    // Connections are super hard to test since they rely on stuff that isn't implemented in jest/RTL, if this test flakes it's probably better to delete and replace with e2e then to try and fix it
+    it('connection should render on click and drag', async () => {
+      // Couldn't figure out how to avoid all the console errors
+      jest.spyOn(console, 'error').mockImplementation();
+      const user = userEvent.setup();
+      setUpWithPanelContextStateful({ options: getOptions({ zoomToContent: false }) });
+
+      const firstAnchor = () => document.querySelectorAll('[alt="connection anchor"]')[0] as HTMLElement;
+
+      expect(firstAnchor()).not.toBeVisible();
+
+      await user.hover(getSuccessIconText());
+      expect(firstAnchor()).toBeVisible();
+
+      await user.hover(firstAnchor());
+
+      const connectionControl = document.getElementById(CONNECTION_ANCHOR_DIV_ID) as HTMLElement;
+      expect(connectionControl).toBeInTheDocument();
+      expect(connectionControl).toBeVisible();
+
+      expect(document.querySelectorAll('svg g line')).toHaveLength(0);
+
+      // JSDOM does not implement `line.x1.baseVal` on the draft editor line used while dragging.
+      const draftConnectionLine = screen.getByTestId('canvas-scene').querySelector('svg > line') as SVGLineElement;
+      for (const prop of ['x1', 'y1', 'x2', 'y2'] as const) {
+        Object.defineProperty(draftConnectionLine, prop, {
+          configurable: true,
+          enumerable: true,
+          get() {
+            const raw = draftConnectionLine.getAttribute(prop);
+            const value = raw == null || raw === '' ? 0 : Number.parseFloat(raw);
+            return { baseVal: { value: Number.isFinite(value) ? value : 0 } };
+          },
+        });
+      }
+
+      // Selecto's drag handler only recognizes the anchor highlight `#connectionControl`, not the `<img>` handles.
+      const rect = connectionControl!.getBoundingClientRect();
+      const startX = rect.left + rect.width / 2;
+      const startY = rect.top + rect.height / 2;
+
+      // Click and drag the mouse
+      await user.pointer([
+        { keys: '[MouseLeft>]', target: connectionControl, coords: { x: startX, y: startY } },
+        { coords: { x: startX, y: startY + 20 } },
+        { keys: '[/MouseLeft]', coords: { x: startX, y: startY + 20 } },
+      ]);
+      //
+      await act(async () => {
+        // connectionListener only handles `mousemove`; saving runs when a move occurs with no button
+        // pressed (`!event.buttons`). A plain `mouseup` does not hit that path.
+        fireEvent.mouseMove(screen.getByTestId('canvas-scene'), {
+          clientX: startX,
+          clientY: startY + 20,
+          pageX: startX,
+          pageY: startY + 20,
+          buttons: 0,
+        });
+      });
+
+      expect(document.querySelectorAll('svg line[id^="connectionLineId"]')).toHaveLength(2);
+    });
+  });
 });
+g;
