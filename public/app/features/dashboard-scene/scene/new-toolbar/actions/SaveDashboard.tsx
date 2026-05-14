@@ -1,10 +1,10 @@
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { Button, ButtonGroup, Dropdown, Menu } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { type ToolbarActionProps } from '../types';
-import { reportInteraction } from '@grafana/runtime';
 
 export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
   const { meta, isDirty, uid, editview, editPanel } = dashboard.state;
