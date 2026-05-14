@@ -3,7 +3,6 @@ import memoize from 'micro-memoize';
 import WKT from 'ol/format/WKT';
 import Geometry from 'ol/geom/Geometry';
 import { type CSSProperties } from 'react';
-import { type SortColumn } from 'react-data-grid';
 import tinycolor from 'tinycolor2';
 import { type Count, varPreLine } from 'uwrap';
 
@@ -21,6 +20,7 @@ import {
   type FieldSparkline,
   type DecimalCount,
 } from '@grafana/data';
+import { type SortColumn } from '@grafana/react-data-grid';
 import {
   BarGaugeDisplayMode,
   type FieldTextAlignment,
