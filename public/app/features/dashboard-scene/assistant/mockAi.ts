@@ -7,6 +7,15 @@ import {
   PANEL_QUESTION_RESPONSES,
 } from './cannedResponses';
 
+export const DEFAULT_SQL = `SELECT
+  le,
+  native(histogram_quantile(0.95, rate(http_server_requests_seconds_bucket[5m])))
+    AS p95_latency
+FROM http_server_requests_seconds_bucket
+WHERE timestamp >= UNIX_TIMESTAMP(NOW() - INTERVAL 1 HOUR)
+  AND timestamp <  UNIX_TIMESTAMP(NOW())
+GROUP BY le`;
+
 export type AiKind = 'explain' | 'generate' | 'panel-question' | 'generate-panel';
 
 export interface AiRequest {

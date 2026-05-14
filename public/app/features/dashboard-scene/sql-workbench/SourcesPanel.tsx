@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { FilterInput, Icon, Text, useStyles2 } from '@grafana/ui';
 
-import { type DatasourceDef, type TableDef, mockSchema } from '../mocks/schema';
+import { type DatasourceDef, type TableDef, mockSchema } from './schema';
 
 interface Props {
   onTableClick: (tableName: string) => void;
@@ -145,18 +145,14 @@ function getStyles(theme: GrafanaTheme2) {
       border: 'none',
       cursor: 'pointer',
       color: theme.colors.text.primary,
-      '&:hover': {
-        background: theme.colors.action.hover,
-      },
+      '&:hover': { background: theme.colors.action.hover },
     }),
     dsIcon: css({ color: theme.colors.primary.text }),
     dsName: css({
       fontSize: theme.typography.bodySmall.fontSize,
       fontWeight: theme.typography.fontWeightMedium,
     }),
-    tableList: css({
-      paddingLeft: theme.spacing(1),
-    }),
+    tableList: css({ paddingLeft: theme.spacing(1) }),
     tableRow: css({
       display: 'flex',
       alignItems: 'center',
@@ -167,9 +163,7 @@ function getStyles(theme: GrafanaTheme2) {
       border: 'none',
       cursor: 'pointer',
       color: theme.colors.text.primary,
-      '&:hover': {
-        background: theme.colors.action.hover,
-      },
+      '&:hover': { background: theme.colors.action.hover },
     }),
     tableIcon: css({ color: theme.colors.warning.text }),
     tableName: css({
@@ -179,9 +173,7 @@ function getStyles(theme: GrafanaTheme2) {
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
     }),
-    columnList: css({
-      paddingLeft: theme.spacing(3.5),
-    }),
+    columnList: css({ paddingLeft: theme.spacing(3.5) }),
     columnRow: css({
       display: 'flex',
       alignItems: 'center',
@@ -192,10 +184,7 @@ function getStyles(theme: GrafanaTheme2) {
       border: 'none',
       cursor: 'pointer',
       color: theme.colors.text.secondary,
-      '&:hover': {
-        color: theme.colors.text.primary,
-        background: theme.colors.action.hover,
-      },
+      '&:hover': { color: theme.colors.text.primary, background: theme.colors.action.hover },
     }),
     columnTypeIcon: css({
       fontSize: '9px',

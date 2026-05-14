@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { type DataFrame, type GrafanaTheme2 } from '@grafana/data';
 import { Button, Spinner, Text, useStyles2 } from '@grafana/ui';
 
-import { simulateQuery } from '../mocks/queryResults';
+import { simulateQuery } from './queryResults';
 
 interface Props {
   sql: string;
@@ -84,8 +84,6 @@ export function ResultsTable({ sql, autoRun = false }: Props) {
 
 function DataFrameTable({ frames }: { frames: DataFrame[] }) {
   const styles = useStyles2(getTableStyles);
-
-  // Show first 5 frames, max 8 rows each
   const visible = frames.slice(0, 5);
 
   return (
@@ -93,9 +91,7 @@ function DataFrameTable({ frames }: { frames: DataFrame[] }) {
       <thead>
         <tr>
           {visible[0].fields.map((f) => (
-            <th key={f.name} className={styles.th}>
-              {f.name}
-            </th>
+            <th key={f.name} className={styles.th}>{f.name}</th>
           ))}
           {visible.length > 1 && <th className={styles.th}>series</th>}
         </tr>
@@ -112,11 +108,7 @@ function DataFrameTable({ frames }: { frames: DataFrame[] }) {
                       ? new Date(raw).toLocaleTimeString()
                       : raw.toFixed(4)
                     : String(raw ?? '');
-                return (
-                  <td key={ci} className={styles.td}>
-                    {display}
-                  </td>
-                );
+                return <td key={ci} className={styles.td}>{display}</td>;
               })}
               {visible.length > 1 && <td className={styles.td}>{frame.name}</td>}
             </tr>
@@ -144,10 +136,7 @@ function getStyles(theme: GrafanaTheme2) {
       borderBottom: `1px solid ${theme.colors.border.weak}`,
       flexShrink: 0,
     }),
-    tableWrap: css({
-      flex: 1,
-      overflow: 'auto',
-    }),
+    tableWrap: css({ flex: 1, overflow: 'auto' }),
     empty: css({
       display: 'flex',
       alignItems: 'center',
@@ -177,12 +166,8 @@ function getTableStyles(theme: GrafanaTheme2) {
       fontWeight: theme.typography.fontWeightMedium,
     }),
     tr: css({
-      '&:nth-child(even)': {
-        background: theme.colors.background.secondary,
-      },
-      '&:hover': {
-        background: theme.colors.action.hover,
-      },
+      '&:nth-child(even)': { background: theme.colors.background.secondary },
+      '&:hover': { background: theme.colors.action.hover },
     }),
     td: css({
       padding: theme.spacing(0.25, 1.5),

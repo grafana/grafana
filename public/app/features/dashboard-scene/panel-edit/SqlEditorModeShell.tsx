@@ -3,7 +3,8 @@ import { css } from '@emotion/css';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { type SceneComponentProps } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
-import { SqlEditorMode } from 'app/features/sql-prototype/editor/SqlEditorMode';
+
+import { SqlEditorMode } from '../sql-workbench/SqlEditorMode';
 
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { getDashboardSceneFor } from '../utils/utils';
@@ -41,13 +42,7 @@ function getStyles(theme: GrafanaTheme2) {
       flexDirection: 'column',
       overflow: 'hidden',
     }),
-    controls: css({
-      flexShrink: 0,
-    }),
-    workbench: css({
-      flex: 1,
-      minHeight: 0,
-      overflow: 'hidden',
-    }),
+    controls: css({ flexShrink: 0 }),
+    workbench: css({ flex: 1, minHeight: 0, overflow: 'hidden' }),
   };
 }

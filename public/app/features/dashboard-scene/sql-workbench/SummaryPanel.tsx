@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { type DataFrame, type GrafanaTheme2 } from '@grafana/data';
 import { Spinner, Text, useStyles2 } from '@grafana/ui';
 
-import { getQuerySummary, simulateQuery } from '../mocks/queryResults';
+import { getQuerySummary, simulateQuery } from './queryResults';
 
 interface Props {
   sql: string;
@@ -38,16 +38,12 @@ export function SummaryPanel({ sql, selection }: Props) {
           SUMMARY
         </Text>
         {selection && (
-          <Text variant="bodySmall" color="secondary">
-            (selection)
-          </Text>
+          <Text variant="bodySmall" color="secondary">(selection)</Text>
         )}
       </div>
 
       {isLoading && (
-        <div className={styles.center}>
-          <Spinner />
-        </div>
+        <div className={styles.center}><Spinner /></div>
       )}
 
       {!isLoading && summary && (
@@ -61,9 +57,7 @@ export function SummaryPanel({ sql, selection }: Props) {
           </div>
 
           <div className={styles.chartSection}>
-            <Text variant="bodySmall" color="secondary">
-              Preview
-            </Text>
+            <Text variant="bodySmall" color="secondary">Preview</Text>
             <Sparklines frames={frames} />
           </div>
         </>
@@ -109,7 +103,6 @@ function Sparklines({ frames }: { frames: DataFrame[] }) {
   const min = Math.min(...allVals);
   const max = Math.max(...allVals);
   const range = max - min || 1;
-
   const W = 260;
   const H = 100;
 
@@ -130,14 +123,7 @@ function Sparklines({ frames }: { frames: DataFrame[] }) {
     <div className={styles.root}>
       <svg width={W} height={H} className={styles.svg}>
         {series.map((s) => (
-          <path
-            key={s!.name}
-            d={toPath(s!.values)}
-            fill="none"
-            stroke={s!.color}
-            strokeWidth={1.5}
-            opacity={0.85}
-          />
+          <path key={s!.name} d={toPath(s!.values)} fill="none" stroke={s!.color} strokeWidth={1.5} opacity={0.85} />
         ))}
       </svg>
       <div className={styles.legend}>
@@ -213,24 +199,13 @@ function getStatStyles(theme: GrafanaTheme2) {
 
 function getSparkStyles(theme: GrafanaTheme2) {
   return {
-    root: css({
-      display: 'flex',
-      flexDirection: 'column',
-      gap: theme.spacing(0.5),
-    }),
+    root: css({ display: 'flex', flexDirection: 'column', gap: theme.spacing(0.5) }),
     svg: css({
       display: 'block',
       background: theme.colors.background.secondary,
       borderRadius: theme.shape.radius.default,
     }),
-    legend: css({
-      display: 'flex',
-      flexWrap: 'wrap',
-      gap: theme.spacing(0.5, 1),
-    }),
-    legendItem: css({
-      fontSize: '11px',
-      fontFamily: theme.typography.fontFamilyMonospace,
-    }),
+    legend: css({ display: 'flex', flexWrap: 'wrap', gap: theme.spacing(0.5, 1) }),
+    legendItem: css({ fontSize: '11px', fontFamily: theme.typography.fontFamilyMonospace }),
   };
 }

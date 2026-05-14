@@ -31,9 +31,7 @@ import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryL
 import { AccessControlAction } from 'app/types/accessControl';
 import emptyPanelSvg from 'img/dashboards/empty-panel.svg';
 
-import { MockViz } from '../../sql-prototype/dashboard/MockViz';
-import { DEFAULT_SQL } from '../../sql-prototype/editor/SqlEditor';
-import { askAiStream } from '../../sql-prototype/mocks/mockAi';
+import { DEFAULT_SQL, askAiStream } from '../assistant/mockAi';
 import { applyQueryToPanel, getVizSuggestionForQuery } from '../utils/getVizSuggestionForQuery';
 import { DashboardInteractions } from '../utils/interactions';
 import {
@@ -241,14 +239,6 @@ function NewUnconfiguredPanelComp(props: PanelProps) {
     dashboard.changePanelPlugin(panel, aiResult.vizType, {}, { defaults: {}, overrides: [] });
     dashboard.updatePanelTitle(panel, aiResult.prompt);
     setAiPhase('idle');
-  };
-
-  const handleAiOpenWorkbench = () => {
-    if (!aiResult) {
-      return;
-    }
-    setAiPhase('idle');
-    locationService.push({ pathname: '/dashboard/sql-prototype', state: { initialSql: aiResult.sql } });
   };
 
   const showEmptyState = config.featureToggles.newVizSuggestions && panelContext.app === CoreApp.PanelEditor;
@@ -462,16 +452,13 @@ function NewUnconfiguredPanelComp(props: PanelProps) {
             <Trans i18nKey="dashboard.new-panel.ai-suggested-viz">Suggested visualization</Trans>
           </Text>
           <div className={styles.aiChartWrap}>
-            <MockViz title={aiResult.prompt} height={200} />
+            <AiPreviewSparkline />
           </div>
         </div>
 
         <div className={styles.aiActions}>
           <Button variant="primary" icon="plus" onClick={handleAiApply}>
             <Trans i18nKey="dashboard.new-panel.ai-add-to-dashboard">Add to dashboard</Trans>
-          </Button>
-          <Button variant="secondary" icon="pen" onClick={handleAiOpenWorkbench}>
-            <Trans i18nKey="dashboard.new-panel.ai-open-workbench">Open in SQL workbench</Trans>
           </Button>
           <Button variant="secondary" fill="text" onClick={() => setAiPhase('idle')}>
             <Trans i18nKey="dashboard.new-panel.ai-cancel">Cancel</Trans>
@@ -775,4 +762,28 @@ function getStyles(theme: GrafanaTheme2) {
       flexWrap: 'wrap',
     }),
   };
+}
+
+function AiPreviewSparkline() {
+  const style = css({ width: '100%', height: '100%', color: 'var(--color-primary-text, #6e9fff)' });
+  const W = 600;
+  const H = 160;
+  const pts = Array.from({ length: 60 }, (_, i) => ({
+    x: (i / 59) * W,
+    y: H * 0.5 + Math.sin(i * 0.35) * H * 0.28 + Math.sin(i * 1.1) * H * 0.1,
+  }));
+  const d = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+  const area = `${d} L${W},${H} L0,${H} Z`;
+  return (
+    <svg className={style} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <linearGradient id="aiSparkGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="currentColor" stopOpacity="0.2" />
+          <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path d={area} fill="url(#aiSparkGrad)" />
+      <path d={d} fill="none" stroke="currentColor" strokeWidth="2" />
+    </svg>
+  );
 }

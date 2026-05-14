@@ -68,7 +68,7 @@ export interface PanelEditorState extends SceneObjectState {
    * Enable the v2 query editor experience
    */
   useQueryExperienceNext?: boolean;
-  /** SQL abstraction prototype: 'sql' switches to SQL mode layout */
+  /** SQL workbench mode: 'sql' switches to the SQL workbench layout */
   sqlPrototypeMode?: 'classic' | 'sql';
 }
 
@@ -406,9 +406,6 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     });
   };
 
-  /**
-   * Toggle between v1 and v2 query editor.
-   */
   public onToggleSqlPrototypeMode = () => {
     const next = this.state.sqlPrototypeMode === 'sql' ? 'classic' : 'sql';
     this.setState({ sqlPrototypeMode: next });

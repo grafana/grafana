@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Button, Input, Modal, Spinner, Text, useStyles2 } from '@grafana/ui';
 
-import { askAiStream, getFollowUpResponse } from '../mocks/mockAi';
+import { askAiStream, getFollowUpResponse } from '../assistant/mockAi';
 
 interface Props {
   selectedText: string;

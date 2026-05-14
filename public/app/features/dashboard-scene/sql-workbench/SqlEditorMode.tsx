@@ -4,8 +4,8 @@ import { useState } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-import { DEFAULT_SQL, SqlEditor } from './SqlEditor';
 import { ResultsTable } from './ResultsTable';
+import { DEFAULT_SQL, SqlEditor } from './SqlEditor';
 import { SourcesPanel } from './SourcesPanel';
 import { SummaryPanel } from './SummaryPanel';
 
@@ -19,7 +19,6 @@ export function SqlEditorMode({ initialSql }: Props = {}) {
   const [runKey, setRunKey] = useState(0);
 
   const handleTableClick = (tableName: string) => {
-    // Insert table name — replace FROM clause if present, otherwise append
     const fromRegex = /\bFROM\s+\S+/i;
     if (fromRegex.test(sql)) {
       setSql(sql.replace(fromRegex, `FROM ${tableName}`));
@@ -30,12 +29,10 @@ export function SqlEditorMode({ initialSql }: Props = {}) {
 
   return (
     <div className={styles.root}>
-      {/* Left: sources & tables */}
       <div className={styles.sources}>
         <SourcesPanel onTableClick={handleTableClick} />
       </div>
 
-      {/* Center: editor (top) + results (bottom) */}
       <div className={styles.center}>
         <div className={styles.editorPane}>
           <SqlEditor
@@ -50,7 +47,6 @@ export function SqlEditorMode({ initialSql }: Props = {}) {
         </div>
       </div>
 
-      {/* Right: summary stats + viz */}
       <div className={styles.summary}>
         <SummaryPanel sql={sql} />
       </div>
@@ -67,29 +63,15 @@ function getStyles(theme: GrafanaTheme2) {
       height: '100%',
       overflow: 'hidden',
     }),
-    sources: css({
-      gridColumn: 1,
-      overflow: 'hidden',
-    }),
+    sources: css({ gridColumn: 1, overflow: 'hidden' }),
     center: css({
       gridColumn: 2,
       display: 'grid',
       gridTemplateRows: '1fr 280px',
       overflow: 'hidden',
     }),
-    editorPane: css({
-      overflow: 'hidden',
-      display: 'flex',
-      flexDirection: 'column',
-    }),
-    resultsPane: css({
-      overflow: 'hidden',
-      display: 'flex',
-      flexDirection: 'column',
-    }),
-    summary: css({
-      gridColumn: 3,
-      overflow: 'hidden',
-    }),
+    editorPane: css({ overflow: 'hidden', display: 'flex', flexDirection: 'column' }),
+    resultsPane: css({ overflow: 'hidden', display: 'flex', flexDirection: 'column' }),
+    summary: css({ gridColumn: 3, overflow: 'hidden' }),
   };
 }

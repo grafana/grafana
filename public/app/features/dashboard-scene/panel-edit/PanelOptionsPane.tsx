@@ -30,8 +30,6 @@ import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPlugi
 import { vizSuggestionsTracker } from 'app/features/panel/components/VizTypePicker/interactions';
 import { type VizTypeChangeDetails } from 'app/features/panel/components/VizTypePicker/types';
 
-import { AiPanelSidebar } from 'app/features/sql-prototype/dashboard/AiPanelSidebar';
-
 import { PanelInspectorModeToggle } from './PanelInspectorModeToggle';
 import { PanelInspectorTabs } from './PanelInspectorTabs';
 import { PanelOptions } from './PanelOptions';
@@ -202,9 +200,6 @@ function PanelOptionsPaneComponent({ model }: SceneComponentProps<PanelOptionsPa
     <>
       {!isVizPickerOpen && (
         <>
-          {config.featureToggles.sqlAbstractionPrototype && (
-            <AiPanelSidebar panelTitle={panelTitle || 'Panel'} />
-          )}
           <div className={styles.top}>
             <Stack gap={1}>
               <img alt={pluginMeta.name} src={pluginMeta.info.logos.small} className={styles.pluginIcon} />

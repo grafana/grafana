@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Button, CodeEditor, type Monaco, type MonacoEditor, useStyles2 } from '@grafana/ui';
 
-import { mockSchema } from '../mocks/schema';
+import { mockSchema } from './schema';
 
 import { AiExplainerPopover } from './AiExplainerPopover';
 
@@ -64,12 +64,10 @@ export function SqlEditor({ value, onChange, onRunQuery, readOnly = false, heigh
     const text = model.getValue();
     const decorations: monacoNS.editor.IModelDeltaDecoration[] = [];
 
-    // Find all native(...) spans
     const nativeRegex = /native\s*\(/gi;
     let match;
     while ((match = nativeRegex.exec(text)) !== null) {
       const start = match.index;
-      // Find matching closing paren
       let depth = 0;
       let end = start;
       for (let i = start + match[0].length - 1; i < text.length; i++) {
@@ -172,21 +170,14 @@ export function SqlEditor({ value, onChange, onRunQuery, readOnly = false, heigh
     editorRef.current = editor;
     monacoRef.current = monaco;
 
-    // Add native() block CSS
     injectNativeBlockStyles();
-
-    // Setup autocomplete
     setupAutocomplete(monaco);
-
-    // Apply initial decorations
     applyNativeDecorations(editor, monaco);
 
-    // Update decorations on content change
     editor.onDidChangeModelContent(() => {
       applyNativeDecorations(editor, monaco);
     });
 
-    // Selection listener
     editor.onDidChangeCursorSelection(() => {
       const sel = editor.getSelection();
       if (sel && !sel.isEmpty()) {
@@ -197,7 +188,6 @@ export function SqlEditor({ value, onChange, onRunQuery, readOnly = false, heigh
       }
     });
 
-    // Cmd/Ctrl+Enter to run
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
       onRunQuery?.();
     });
@@ -217,7 +207,6 @@ export function SqlEditor({ value, onChange, onRunQuery, readOnly = false, heigh
     editor.focus();
   };
 
-  // Cleanup decorations on unmount
   useEffect(() => {
     return () => {
       decorationsRef.current?.clear();
