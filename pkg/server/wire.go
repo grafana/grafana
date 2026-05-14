@@ -387,6 +387,7 @@ var wireBasicSet = wire.NewSet(
 	publicdashboards.ProvideMetricsService,
 	publicdashboards.ProvideApi,
 	starApi.ProvideApi,
+	starApi.ProvideK8sClients,
 	userimpl.ProvideService,
 	wire.Bind(new(user.Service), new(*userimpl.Service)),
 	orgimpl.ProvideService,
