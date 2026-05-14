@@ -1,8 +1,8 @@
 import { CSSProperties, ReactElement, useMemo, useState, useRef, useEffect, memo, RefObject } from 'react';
-import { DataGridHandle } from 'react-data-grid';
 
 import { ActionModel, DataFrame, Field, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { DataGridHandle } from '@grafana/react-data-grid';
 import { TableCellTooltipPlacement } from '@grafana/schema';
 
 import { Popover } from '../../../Tooltip/Popover';
