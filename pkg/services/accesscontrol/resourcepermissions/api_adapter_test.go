@@ -1807,7 +1807,7 @@ func TestSetTeamMembers(t *testing.T) {
 			},
 		},
 		{
-			name: "skips entries with empty permission",
+			name: "removes existing member when permission is empty",
 			permissions: []accesscontrol.SetResourcePermissionCommand{
 				{UserID: 1, Permission: "Admin"},
 				{UserID: 2, Permission: ""},
@@ -1815,12 +1815,15 @@ func TestSetTeamMembers(t *testing.T) {
 			userSvc: func() *usertest.MockService {
 				svc := &usertest.MockService{}
 				svc.On("GetSignedInUser", mock.Anything, &user.GetSignedInUserQuery{OrgID: 1, UserID: 1}).Return(signedInUser1, nil)
+				svc.On("GetSignedInUser", mock.Anything, &user.GetSignedInUserQuery{OrgID: 1, UserID: 2}).Return(signedInUser2, nil)
 				return svc
 			},
 			fakeResource: func(t *testing.T) *fakeResourceInterface {
 				return &fakeResourceInterface{
 					getFunc: func(_ context.Context, _ string, _ metav1.GetOptions, _ ...string) (*unstructured.Unstructured, error) {
-						return makeTeamObj(t), nil
+						return makeTeamObj(t,
+							iamv0.TeamTeamMember{Kind: "User", Name: "user-uid-2", Permission: iamv0.TeamTeamPermissionMember},
+						), nil
 					},
 					updateFunc: func(_ context.Context, obj *unstructured.Unstructured, _ metav1.UpdateOptions, _ ...string) (*unstructured.Unstructured, error) {
 						return obj, nil
@@ -1831,6 +1834,50 @@ func TestSetTeamMembers(t *testing.T) {
 			validateMembers: func(t *testing.T, members []iamv0.TeamTeamMember) {
 				require.Len(t, members, 1)
 				assert.Equal(t, "user-uid-1", members[0].Name)
+				assert.Equal(t, iamv0.TeamTeamPermissionAdmin, members[0].Permission)
+			},
+		},
+		{
+			name: "no Update when removing a non-member",
+			permissions: []accesscontrol.SetResourcePermissionCommand{
+				{UserID: 2, Permission: ""},
+			},
+			userSvc: func() *usertest.MockService {
+				svc := &usertest.MockService{}
+				svc.On("GetSignedInUser", mock.Anything, &user.GetSignedInUserQuery{OrgID: 1, UserID: 2}).Return(signedInUser2, nil)
+				return svc
+			},
+			fakeResource: func(t *testing.T) *fakeResourceInterface {
+				return &fakeResourceInterface{
+					getFunc: func(_ context.Context, _ string, _ metav1.GetOptions, _ ...string) (*unstructured.Unstructured, error) {
+						return makeTeamObj(t, iamv0.TeamTeamMember{Kind: "User", Name: "user-uid-1", Permission: iamv0.TeamTeamPermissionAdmin}), nil
+					},
+				}
+			},
+			validateCalls: func(t *testing.T, _, updateCalls int) {
+				assert.Equal(t, 0, updateCalls, "removing a non-member leaves Spec.Members unchanged, so no Update")
+			},
+		},
+		{
+			name: "rejects when removal targets an external member",
+			permissions: []accesscontrol.SetResourcePermissionCommand{
+				{UserID: 1, Permission: ""},
+			},
+			userSvc: func() *usertest.MockService {
+				svc := &usertest.MockService{}
+				svc.On("GetSignedInUser", mock.Anything, &user.GetSignedInUserQuery{OrgID: 1, UserID: 1}).Return(signedInUser1, nil)
+				return svc
+			},
+			fakeResource: func(t *testing.T) *fakeResourceInterface {
+				return &fakeResourceInterface{
+					getFunc: func(_ context.Context, _ string, _ metav1.GetOptions, _ ...string) (*unstructured.Unstructured, error) {
+						return makeTeamObj(t, iamv0.TeamTeamMember{Kind: "User", Name: "user-uid-1", Permission: iamv0.TeamTeamPermissionMember, External: true}), nil
+					},
+				}
+			},
+			expectedErrMsg: "externally-synced",
+			validateCalls: func(t *testing.T, _, updateCalls int) {
+				assert.Equal(t, 0, updateCalls)
 			},
 		},
 		{

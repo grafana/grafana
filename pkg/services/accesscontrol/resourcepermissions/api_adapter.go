@@ -830,20 +830,19 @@ func (a *api) setTeamMembers(c *contextmodel.ReqContext, dynamicClient dynamic.I
 	}
 
 	// Resolve users + permissions up-front: dedup by UserID (first wins) and
-	// fail before any k8s write so partial bulk writes aren't possible.
-	// Empty permission is skipped, not used for removal: in dual-writer mode
-	// the apiserver Update removes the team_member row before the legacy
-	// RemoveTeamMemberHook runs, and that hook errors on 0 rows affected.
-	// Known divergence from legacy, shared with the single-user redirect.
+	// fail before any k8s write so partial bulk writes aren't possible. An
+	// empty permission marks a removal, matching the single-user redirect and
+	// the legacy bulk path.
 	type desiredMember struct {
 		uid        string
 		permission iamv0.TeamTeamPermission
 	}
 	desired := make([]desiredMember, 0, len(permissions))
 	desiredByUID := make(map[string]iamv0.TeamTeamPermission, len(permissions))
+	removeByUID := make(map[string]struct{}, len(permissions))
 	seenUserID := make(map[int64]struct{}, len(permissions))
 	for _, perm := range permissions {
-		if perm.UserID == 0 || perm.Permission == "" {
+		if perm.UserID == 0 {
 			continue
 		}
 		if _, dup := seenUserID[perm.UserID]; dup {
@@ -859,6 +858,10 @@ func (a *api) setTeamMembers(c *contextmodel.ReqContext, dynamicClient dynamic.I
 		})
 		if err != nil {
 			return fmt.Errorf("failed to get user details: %w", err)
+		}
+		if perm.Permission == "" {
+			removeByUID[signedInUser.UserUID] = struct{}{}
+			continue
 		}
 		memberPerm, err := stringToTeamMemberPermission(perm.Permission)
 		if err != nil {
@@ -892,16 +895,21 @@ func (a *api) setTeamMembers(c *contextmodel.ReqContext, dynamicClient dynamic.I
 			if _, hit := desiredByUID[m.Name]; hit {
 				return ErrExternalTeamMember.Errorf("user %q is externally-synced", m.Name)
 			}
+			if _, hit := removeByUID[m.Name]; hit {
+				return ErrExternalTeamMember.Errorf("user %q is externally-synced", m.Name)
+			}
 		}
 
-		// Upsert: update entries the caller specified, leave entries they didn't
-		// specify alone. Matches the legacy SQL contract (callers like Terraform
-		// rely on partial updates not wiping omitted users).
+		// Upsert: update entries the caller specified, drop entries flagged for
+		// removal, leave the rest alone.
 		applied := make(map[string]bool, len(desired))
 		newMembers := make([]iamv0.TeamTeamMember, 0, len(t.Spec.Members)+len(desired))
 		for _, m := range t.Spec.Members {
 			if m.Kind != subjectKindUser || m.External {
 				newMembers = append(newMembers, m)
+				continue
+			}
+			if _, drop := removeByUID[m.Name]; drop {
 				continue
 			}
 			if perm, ok := desiredByUID[m.Name]; ok {

@@ -639,6 +639,43 @@ func TestIntegrationResourcePermissionsBulkRedirect(t *testing.T) {
 		require.Contains(t, byName, viewerUID, "external viewer must remain")
 	})
 
+	t.Run("empty permission removes existing member", func(t *testing.T) {
+		teamID, teamUID := newTeam(t, "bulk-set-remove")
+
+		rec := setBulkResourcePermissions(t, helper, teamID, []ac.SetResourcePermissionCommand{
+			{UserID: adminID, Permission: "Admin"},
+			{UserID: editorID, Permission: "Member"},
+		})
+		require.Equal(t, http.StatusOK, rec.Response.StatusCode)
+
+		rec = setBulkResourcePermissions(t, helper, teamID, []ac.SetResourcePermissionCommand{
+			{UserID: editorID, Permission: ""},
+		})
+		require.Equal(t, http.StatusOK, rec.Response.StatusCode, "body=%s", string(rec.Body))
+
+		members := getTeamMembers(t, helper, teamUID)
+		byName := teamMembersByName(members)
+		require.Contains(t, byName, helper.Org1.Admin.Identity.GetRawIdentifier(), "admin (omitted from cmd) must remain")
+		require.NotContains(t, byName, helper.Org1.Editor.Identity.GetRawIdentifier(), "editor (empty permission) must be removed")
+	})
+
+	t.Run("removal targeting an external member returns 400", func(t *testing.T) {
+		teamID, teamUID := newTeam(t, "bulk-set-remove-external")
+
+		injectExternalMember(t, helper, teamUID, viewerUID, "member")
+
+		rec := setBulkResourcePermissions(t, helper, teamID, []ac.SetResourcePermissionCommand{
+			{UserID: viewerID, Permission: ""},
+		})
+		assert.Equal(t, http.StatusBadRequest, rec.Response.StatusCode)
+		assert.Contains(t, string(rec.Body), "externally-synced")
+
+		members := getTeamMembers(t, helper, teamUID)
+		byName := teamMembersByName(members)
+		require.Contains(t, byName, viewerUID, "external viewer should still be present after rejected removal")
+		assert.True(t, byName[viewerUID].External)
+	})
+
 	t.Run("bulk write is visible in legacy SQL via dual-write", func(t *testing.T) {
 		teamID, _ := newTeam(t, "bulk-set-dual-write")
 

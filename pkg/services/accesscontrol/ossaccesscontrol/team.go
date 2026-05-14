@@ -2,6 +2,7 @@ package ossaccesscontrol
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 
@@ -89,11 +90,18 @@ func ProvideTeamPermissions(
 			case "Admin":
 				return teamimpl.AddOrUpdateTeamMemberHook(session, user.ID, orgID, teamId, user.IsExternal, team.PermissionTypeAdmin)
 			case "":
-				return teamimpl.RemoveTeamMemberHook(session, &team.RemoveTeamMemberCommand{
+				// The Kubernetes Teams redirect path deletes the team_member row via
+				// the dual-writer before this hook runs, so ErrTeamMemberNotFound here
+				// is expected and must not fail the request.
+				err := teamimpl.RemoveTeamMemberHook(session, &team.RemoveTeamMemberCommand{
 					OrgID:  orgID,
 					UserID: user.ID,
 					TeamID: teamId,
 				})
+				if err != nil && !errors.Is(err, team.ErrTeamMemberNotFound) {
+					return err
+				}
+				return nil
 			default:
 				return fmt.Errorf("invalid team permission type %s", permission)
 			}
