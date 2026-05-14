@@ -20,6 +20,7 @@ interface SaveDashboardDrawerState extends SceneObjectState {
   saveVariables?: boolean;
   saveRefresh?: boolean;
   saveAsCopy?: boolean;
+  saveAsDashboardTemplate?: boolean;
   saveDashboardTemplate?: boolean;
   showVariablesWarning?: boolean;
   onSaveSuccess?: () => void;
@@ -52,7 +53,15 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
 }
 
 function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboardDrawer>) {
-  const { showDiff, saveAsCopy, saveDashboardTemplate, saveTimeRange, saveVariables, saveRefresh } = model.useState();
+  const {
+    showDiff,
+    saveAsCopy,
+    saveAsDashboardTemplate,
+    saveDashboardTemplate,
+    saveTimeRange,
+    saveVariables,
+    saveRefresh,
+  } = model.useState();
 
   const changeInfo = model.state.dashboardRef.resolve().getDashboardChanges(saveTimeRange, saveVariables, saveRefresh);
 
@@ -83,8 +92,10 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
   );
 
   let title = t('dashboard-scene.save-dashboard-drawer.tabs.title', 'Save dashboard');
-  if (saveDashboardTemplate) {
+  if (saveAsDashboardTemplate) {
     title = t('dashboard-scene.save-dashboard-drawer.tabs.title-template', 'Save as template');
+  } else if (saveDashboardTemplate) {
+    title = t('dashboard-scene.save-dashboard-drawer.tabs.title-update-template', 'Save template');
   } else if (saveAsCopy) {
     title = t('dashboard-scene.save-dashboard-drawer.tabs.title-copy', 'Save dashboard copy');
   } else if (isProvisioned || isProvisionedNG) {
@@ -106,14 +117,14 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
       );
     }
 
-    if (saveDashboardTemplate && changeInfo.isNew) {
+    if (saveDashboardTemplate) {
       const SaveDashboardTemplateForm = getSaveDashboardTemplateForm();
       if (SaveDashboardTemplateForm) {
         return <SaveDashboardTemplateForm dashboard={dashboard} changeInfo={changeInfo} />;
       }
     }
 
-    if (saveDashboardTemplate) {
+    if (saveAsDashboardTemplate) {
       const SaveAsTemplateForm = getSaveAsTemplateForm();
       if (SaveAsTemplateForm) {
         return <SaveAsTemplateForm dashboard={dashboard} changeInfo={changeInfo} />;
@@ -147,7 +158,7 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
       title={title}
       subtitle={dashboard.state.title}
       onClose={model.onClose}
-      tabs={saveDashboardTemplate && !changeInfo.isNew ? undefined : tabs}
+      tabs={saveAsDashboardTemplate ? undefined : tabs}
     >
       {renderBody()}
     </Drawer>
