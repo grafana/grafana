@@ -234,16 +234,33 @@ func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation r
 		return nil, err
 	}
 
-	labelSelectors, _ := listOptions.LabelSelector.Requirements()
-	datasourceRef := labelSelectors[0].Values().List()[0]
-	datasourceData := strings.Split(datasourceRef, ".") // the selector is type.uid
-	if labelSelectors[0].Key() == "correlations.grafana.app/sourceDSProv-ref" {
-		return nil, s.service.DeleteCorrelationsBySourceUID(ctx, correlations.DeleteCorrelationsBySourceUIDCommand{SourceUID: datasourceData[1], SourceType: datasourceData[0], OrgId: orgID, OnlyProvisioned: true})
+	//fieldSelectors := listOptions.FieldSelector.Requirements()
+	isSourceDelete := true
+	datasourceToDelete := make(map[string]string)
+	if dsGroup, ok := listOptions.FieldSelector.RequiresExactMatch("spec.source.group"); ok {
+		datasourceToDelete["group"] = dsGroup
+		if dsName, ok := listOptions.FieldSelector.RequiresExactMatch("spec.source.name"); ok {
+			datasourceToDelete["name"] = dsName
+		}
 	}
-	if labelSelectors[0].Key() == "correlations.grafana.app/targetDS-ref" {
-		return nil, s.service.DeleteCorrelationsByTargetUID(ctx, correlations.DeleteCorrelationsByTargetUIDCommand{TargetUID: datasourceData[1], TargetType: datasourceData[0], OrgId: orgID})
+	if dsGroup, ok := listOptions.FieldSelector.RequiresExactMatch("spec.target.group"); ok {
+		isSourceDelete = false
+		datasourceToDelete["group"] = dsGroup
+		if dsName, ok := listOptions.FieldSelector.RequiresExactMatch("spec.target.name"); ok {
+			datasourceToDelete["name"] = dsName
+		}
 	}
-	return nil, fmt.Errorf("deleteCollection key not implemented for passthrough to legacy")
+
+	if datasourceToDelete["name"] == "" || datasourceToDelete["group"] == "" {
+		return nil, fmt.Errorf("deleteCollection to legacy passed invalid field selectors")
+	}
+
+	if isSourceDelete {
+		return nil, s.service.DeleteCorrelationsBySourceUID(ctx, correlations.DeleteCorrelationsBySourceUIDCommand{SourceUID: datasourceToDelete["name"], SourceType: datasourceToDelete["group"], OrgId: orgID, OnlyProvisioned: true})
+	} else {
+		return nil, s.service.DeleteCorrelationsByTargetUID(ctx, correlations.DeleteCorrelationsByTargetUIDCommand{TargetUID: datasourceToDelete["name"], TargetType: datasourceToDelete["group"], OrgId: orgID})
+	}
+
 }
 
 type continueToken struct {
