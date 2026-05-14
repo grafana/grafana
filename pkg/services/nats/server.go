@@ -8,6 +8,7 @@ import (
 	"github.com/nats-io/nats-server/v2/server"
 
 	"github.com/grafana/dskit/services"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -18,7 +19,7 @@ type natsServer struct {
 	server *server.Server
 }
 
-func ProvideNATSServer(cfg *setting.Cfg) (*natsServer, error) {
+func ProvideNATSServer(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*natsServer, error) {
 	s := &natsServer{
 		cfg: cfg,
 	}

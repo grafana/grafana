@@ -357,7 +357,7 @@ func (s *ModuleServer) Run() error {
 	})
 
 	m.RegisterModule(modules.NATSServer, func() (services.Service, error) {
-		return nats.ProvideNATSService(s.cfg, s.features)
+		return nats.ProvideNATSServer(s.cfg, s.features)
 	})
 
 	m.RegisterModule(modules.OperatorServer, s.initOperatorServer)
