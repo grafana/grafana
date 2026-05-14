@@ -96,27 +96,22 @@ func (moa *MultiOrgAlertmanager) PrepareConfig(
 		moa.logger.Info("Configurations merged successfully but some resources were renamed", logInfo...)
 	}
 	preparedConfig := mergeResult.Config.AlertmanagerConfig
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if moa.featureManager.IsEnabledGlobally(featuremgmt.FlagAlertingDisableV0ReceiverConversion) {
-		moa.logger.Info("Skipping converting Mimir receivers to Grafana receivers", "identifier", mergeResult.Identifier)
-	} else {
-		converted, failed := 0, 0
-		for idx, recv := range preparedConfig.Receivers {
-			if !recv.HasMimirIntegrations() {
-				continue
-			}
-			grafana, err := legacy_storage.PostableMimirReceiverToPostableGrafanaReceiver(recv)
-			if err != nil {
-				moa.logger.Warn("Failed to convert Mimir receiver to Grafana receiver. Using receiver as is", "identifier", mergeResult.Identifier, "receiver", recv.Name, "err", err)
-				failed++
-				continue
-			}
-			preparedConfig.Receivers[idx] = grafana
-			converted++
+	converted, failed := 0, 0
+	for idx, recv := range preparedConfig.Receivers {
+		if !recv.HasMimirIntegrations() {
+			continue
 		}
-		if converted > 0 || failed > 0 {
-			moa.logger.Info("Converted Mimir receivers to Grafana receivers", "identifier", mergeResult.Identifier, "converted", converted, "failed", failed)
+		grafana, err := legacy_storage.PostableMimirReceiverToPostableGrafanaReceiver(recv)
+		if err != nil {
+			moa.logger.Warn("Failed to convert Mimir receiver to Grafana receiver. Ignoring receiver ", "identifier", mergeResult.Identifier, "receiver", recv.Name, "err", err)
+			failed++
+			continue
 		}
+		preparedConfig.Receivers[idx] = grafana
+		converted++
+	}
+	if converted > 0 || failed > 0 {
+		moa.logger.Info("Converted Mimir receivers to Grafana receivers", "identifier", mergeResult.Identifier, "converted", converted, "failed", failed)
 	}
 
 	// Add managed routes and extra route as managed route to the configuration.
@@ -158,7 +153,7 @@ func (moa *MultiOrgAlertmanager) PrepareConfig(
 
 	prepared.AlertmanagerConfig = preparedConfig
 
-	return PostableAPIConfigToNotificationsConfiguration(prepared, moa.limits), nil
+	return PostableAPIConfigToNotificationsConfiguration(prepared, moa.limits)
 }
 
 func (moa *MultiOrgAlertmanager) SaveAndApplyDefaultConfig(ctx context.Context, orgId int64) error {

@@ -27,7 +27,7 @@
       "spec": {
         "description": "Enables the advisor report integration with datasource pages",
         "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "expression": "false"
       }
     },
@@ -134,7 +134,8 @@
       "metadata": {
         "name": "alerting.disableV0ReceiverConversion",
         "resourceVersion": "1777923303116",
-        "creationTimestamp": "2026-05-04T19:35:03Z"
+        "creationTimestamp": "2026-05-04T19:35:03Z",
+        "deletionTimestamp": "2026-05-12T19:30:23Z"
       },
       "spec": {
         "description": "Disable automatic conversion of legacy (V0/Mimir) Alertmanager receivers to Grafana model",
@@ -1127,7 +1128,7 @@
       "spec": {
         "description": "Register the proxy endpoints",
         "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "requiresRestart": true,
         "expression": "false"
       }
@@ -1141,7 +1142,7 @@
       "spec": {
         "description": "Registers an API server for each backend app plugin exposing a settings endpoint",
         "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "requiresRestart": true,
         "expression": "false"
       }
@@ -1378,7 +1379,7 @@
       "spec": {
         "description": "Prioritize loading plugins from the CDN before other sources",
         "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "expression": "false"
       }
     },
@@ -1392,7 +1393,7 @@
       "spec": {
         "description": "Enable loading plugins via declarative URLs",
         "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "expression": "false"
       }
     },
@@ -1613,7 +1614,8 @@
       "metadata": {
         "name": "dashboardDisableSchemaValidationV1",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-04-11T16:52:46Z"
+        "creationTimestamp": "2025-04-11T16:52:46Z",
+        "deletionTimestamp": "2026-05-14T05:13:22Z"
       },
       "spec": {
         "description": "Disable schema validation for dashboards/v1",
@@ -1626,7 +1628,8 @@
       "metadata": {
         "name": "dashboardDisableSchemaValidationV2",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-04-11T16:52:46Z"
+        "creationTimestamp": "2025-04-11T16:52:46Z",
+        "deletionTimestamp": "2026-05-14T05:13:22Z"
       },
       "spec": {
         "description": "Disable schema validation for dashboards/v2",
@@ -1680,16 +1683,17 @@
     {
       "metadata": {
         "name": "dashboardNewLayouts",
-        "resourceVersion": "1775209187023",
+        "resourceVersion": "1778737473500",
         "creationTimestamp": "2024-10-23T08:55:45Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-04-03 09:39:47.02364 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-05-14 05:44:33.500189 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables new dashboard layouts",
         "stage": "GA",
         "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
         "expression": "true"
       }
     },
@@ -1712,7 +1716,8 @@
       "metadata": {
         "name": "dashboardSchemaValidationLogging",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-04-11T16:52:46Z"
+        "creationTimestamp": "2025-04-11T16:52:46Z",
+        "deletionTimestamp": "2026-05-14T05:13:22Z"
       },
       "spec": {
         "description": "Log schema validation errors so they can be analyzed later",
@@ -1875,7 +1880,7 @@
       "spec": {
         "description": "Shows defined connections for a data source in the plugins detail page",
         "stage": "privatePreview",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "frontend": true,
         "expression": "false"
       }
@@ -2154,7 +2159,7 @@
       "spec": {
         "description": "Use a dedicated auth token for Grafana.com proxy requests and plugin installs",
         "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "expression": "false"
       }
     },
@@ -2168,7 +2173,7 @@
       "spec": {
         "description": "Use a dedicated auth token for Grafana.com proxy requests and plugin installs",
         "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "expression": "false"
       }
     },
@@ -2182,7 +2187,7 @@
       "spec": {
         "description": "Use a dedicated auth token for Grafana.com proxy requests and plugin installs",
         "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "expression": "false"
       }
     },
@@ -2305,7 +2310,7 @@
       "spec": {
         "description": "Set this to true to enable all app chrome extensions registered by plugins.",
         "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "frontend": true,
         "hideFromDocs": true,
         "expression": "false"
@@ -2364,7 +2369,7 @@
       "spec": {
         "description": "Enables the extension admin page regardless of development mode",
         "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "requiresRestart": true,
         "expression": "false"
       }
@@ -2522,7 +2527,7 @@
       "spec": {
         "description": "Enable favorite datasources",
         "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "frontend": true,
         "expression": "false"
       }
@@ -2589,12 +2594,15 @@
     {
       "metadata": {
         "name": "flameGraphWithCallTree",
-        "resourceVersion": "1773162696077",
-        "creationTimestamp": "2026-03-10T17:11:36Z"
+        "resourceVersion": "1778683818187",
+        "creationTimestamp": "2026-03-10T17:11:36Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-05-13 14:50:18.187266 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the new Flame Graph UI containing the Call Tree view",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/observability-traces-and-profiling",
         "frontend": true,
         "expression": "false"
@@ -2737,7 +2745,7 @@
       "spec": {
         "description": "Use a dedicated auth token for Grafana.com proxy requests and plugin installs",
         "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "expression": "false"
       }
     },
@@ -2877,7 +2885,7 @@
       "spec": {
         "description": "Enables Advisor app",
         "stage": "GA",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "expression": "true"
       }
     },
@@ -3484,6 +3492,20 @@
     },
     {
       "metadata": {
+        "name": "kubernetesAuthzServiceAccountResourcePermissions",
+        "resourceVersion": "1778678599530",
+        "creationTimestamp": "2026-05-13T13:23:19Z"
+      },
+      "spec": {
+        "description": "Enables service account resource permissions via the K8s IAM resource permission APIs",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesAuthzTeamLBACRuleApi",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2026-02-18T17:05:38Z"
@@ -3911,9 +3933,40 @@
     },
     {
       "metadata": {
-        "name": "liveAPIServer",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2026-02-18T17:05:38Z"
+        "name": "live.dropHAPrefixInCloud",
+        "resourceVersion": "1778740214922",
+        "creationTimestamp": "2026-05-14T06:30:14Z",
+        "deletionTimestamp": "2026-05-14T10:08:37Z"
+      },
+      "spec": {
+        "description": "do not include the HA prefix",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true,
+        "hideFromDocs": true,
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "live.keepHAPrefixInCloud",
+        "resourceVersion": "1778753317402",
+        "creationTimestamp": "2026-05-14T10:08:37Z"
+      },
+      "spec": {
+        "description": "keep the prefix (just in case)",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "live.runAPIServer",
+        "resourceVersion": "1778740214922",
+        "creationTimestamp": "2026-05-14T06:30:14Z"
       },
       "spec": {
         "description": "Registers a live apiserver",
@@ -3923,6 +3976,40 @@
         "requiresRestart": true,
         "hideFromDocs": true,
         "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "liveAPIServer",
+        "resourceVersion": "1771434338561",
+        "creationTimestamp": "2026-02-18T17:05:38Z",
+        "deletionTimestamp": "2026-05-14T06:30:14Z"
+      },
+      "spec": {
+        "description": "Registers a live apiserver",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresDevMode": true,
+        "requiresRestart": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "liveDropHAPrefixInCloud",
+        "resourceVersion": "1778739143895",
+        "creationTimestamp": "2026-05-14T06:12:23Z",
+        "deletionTimestamp": "2026-05-14T06:30:14Z"
+      },
+      "spec": {
+        "description": "do not include the HA prefix",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresDevMode": true,
+        "requiresRestart": true,
+        "hideFromDocs": true,
+        "expression": "true"
       }
     },
     {
@@ -4157,7 +4244,7 @@
       "spec": {
         "description": "Enables managed plugins v2 (expanded rollout, community plugin coverage)",
         "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -4172,7 +4259,7 @@
       "spec": {
         "description": "Enables marketplace plugin licensing: per-plugin license token storage in marketplace_license_token, bootstrap from env vars / on-disk seeds, and periodic renewal against grafana.com.",
         "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "requiresRestart": true,
         "expression": "false"
       }
@@ -4360,7 +4447,8 @@
       "metadata": {
         "name": "newPanelPadding",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-11-12T15:40:46Z"
+        "creationTimestamp": "2025-11-12T15:40:46Z",
+        "deletionTimestamp": "2026-05-14T05:09:15Z"
       },
       "spec": {
         "description": "Increases panel padding globally",
@@ -4684,7 +4772,7 @@
       "spec": {
         "description": "Enables running plugins in containers",
         "stage": "privatePreview",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "requiresRestart": true,
         "expression": "false"
       }
@@ -4699,7 +4787,7 @@
       "spec": {
         "description": "Show insights for plugins in the plugin details page",
         "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "frontend": true,
         "expression": "false"
       }
@@ -4713,7 +4801,7 @@
       "spec": {
         "description": "Enable syncing plugin installations to the installs API",
         "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "expression": "false"
       }
     },
@@ -4726,7 +4814,7 @@
       "spec": {
         "description": "Preserve plugin proxy trailing slash.",
         "stage": "GA",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "expression": "false"
       }
     },
@@ -4739,7 +4827,7 @@
       "spec": {
         "description": "Load plugins on store service startup instead of wire provider, and call RegisterFixedRoles after all plugins are loaded",
         "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "expression": "false"
       }
     },
@@ -4755,7 +4843,7 @@
       "spec": {
         "description": "Enables marketplace plugin licensing",
         "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "requiresRestart": true,
         "expression": "false"
       }
@@ -4784,7 +4872,7 @@
       "spec": {
         "description": "Enables plugins decoupling from bootdata",
         "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "frontend": true,
         "hideFromDocs": true,
         "expression": "false"
@@ -4799,7 +4887,7 @@
       "spec": {
         "description": "Enables auto-updating of users installed plugins",
         "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "expression": "false"
       }
     },
@@ -4813,7 +4901,7 @@
       "spec": {
         "description": "Use a dedicated auth token for Grafana.com plugin API requests and plugin installs",
         "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "expression": "false"
       }
     },
@@ -4826,7 +4914,7 @@
       "spec": {
         "description": "Enables SRI checks for plugin assets",
         "stage": "GA",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "expression": "false"
       }
     },
@@ -5597,7 +5685,7 @@
       "spec": {
         "description": "Enables sharing a list of APIs with a list of plugins",
         "stage": "GA",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "frontend": true,
         "hideFromDocs": true,
         "expression": "true"
@@ -5808,13 +5896,30 @@
     {
       "metadata": {
         "name": "sqlExpressions",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2024-02-27T21:16:00Z"
+        "resourceVersion": "1778600445085",
+        "creationTimestamp": "2024-02-27T21:16:00Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-05-12 15:40:45.085855 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables SQL Expressions, which can execute SQL queries against data source results.",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/grafana-datasources-core-services",
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "sqlExpressionsCodeMirror",
+        "resourceVersion": "1778697735164",
+        "creationTimestamp": "2026-05-13T18:42:15Z"
+      },
+      "spec": {
+        "description": "Enables CodeMirror editor for SQL Expressions",
+        "stage": "experimental",
+        "codeowner": "@grafana/datapro",
+        "frontend": true,
         "expression": "false"
       }
     },
@@ -6162,7 +6267,7 @@
       "spec": {
         "description": "Enable TTL plugin instance manager",
         "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "frontend": true,
         "expression": "false"
       }
@@ -6176,7 +6281,7 @@
       "spec": {
         "description": "Enables unified navbars",
         "stage": "GA",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "frontend": true,
         "expression": "false"
       }
@@ -6294,7 +6399,7 @@
       "spec": {
         "description": "Enables plugins decoupling from bootdata",
         "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
+        "codeowner": "@grafana/grafana-catalog",
         "frontend": true,
         "hideFromDocs": true,
         "expression": "false"

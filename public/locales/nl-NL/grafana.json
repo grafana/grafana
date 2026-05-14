@@ -515,7 +515,8 @@
         "edit-yaml": "YAML bewerken",
         "save": "Opslaan"
       },
-      "error-title": ""
+      "error-title": "",
+      "no-group-success": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "naam",
@@ -1171,6 +1172,7 @@
     },
     "evaluate-every-validation-options": {
       "message": {
+        "none-not-allowed": "",
         "required": "Vereist."
       }
     },
@@ -2875,6 +2877,11 @@
         },
         "group-name": "Naam evaluatiegroep",
         "group-text": "Alle regels in de geselecteerde groep worden elke {{evaluateEvery}} geëvalueerd.",
+        "interval-label": "",
+        "mode": {
+          "legacy": "",
+          "new": ""
+        },
         "new-group": "Nieuwe evaluatiegroep",
         "pause": {
           "alerting": "Schakel in om de evaluatie voor deze waarschuwingsregel te pauzeren.",
@@ -15146,6 +15153,8 @@
     },
     "support-bundles-unconnected": {
       "created-on": "Aangemaakt op ",
+      "deprecation-warning-message": "",
+      "deprecation-warning-title": "",
       "download": "Downloaden",
       "expires": "Verloopt op",
       "requested-by": "Aangevraagd door",

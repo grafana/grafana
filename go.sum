@@ -1590,8 +1590,8 @@ github.com/gorilla/sessions v1.2.1 h1:DHd3rPN5lE3Ts3D8rKkQ8x/0kqfeNmBAaiSi+o7Fsg
 github.com/gorilla/sessions v1.2.1/go.mod h1:dk2InVEVJ0sfLlnXv9EAgkf6ecYs/i80K/zI+bUmuGM=
 github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 h1:JeSE6pjso5THxAzdVpqr6/geYxZytqFMBCOtn/ujyeo=
 github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674/go.mod h1:r4w70xmWCQKmi1ONH4KIaBptdivuRPyosB9RmPlGEwA=
-github.com/grafana/alerting v0.0.0-20260424175959-abd9b421dc12 h1:8b2oKd3p+lGwxJOYn5liHtlkBiRKnjLmuL4BpVMk0lc=
-github.com/grafana/alerting v0.0.0-20260424175959-abd9b421dc12/go.mod h1:06F4s5KJ6LpL7od+rcusjKnsst+vRhdFqev9GdVNz4c=
+github.com/grafana/alerting v0.0.0-20260512174254-5095d423178f h1:IOQyi0EE5SyO8IPoUdCa2pgUcL6AUnpyfmt7q1rNn8I=
+github.com/grafana/alerting v0.0.0-20260512174254-5095d423178f/go.mod h1:06F4s5KJ6LpL7od+rcusjKnsst+vRhdFqev9GdVNz4c=
 github.com/grafana/authlib v0.0.0-20260427145542-9c256e2dbcb2 h1:Dz6EAPvxBi3+vewR83NEO0hgzFtCB4NXfp6glqG7M30=
 github.com/grafana/authlib v0.0.0-20260427145542-9c256e2dbcb2/go.mod h1:AWryAuOp+dICuspMD555qPikxDraraypjMU8/C+yHx0=
 github.com/grafana/authlib/types v0.0.0-20260427145542-9c256e2dbcb2 h1:vYkwPeFo9hb/apMfN/GfF6xRbsF/ZnOTjSY6ZnQYFXM=
@@ -1604,8 +1604,8 @@ github.com/grafana/dskit v0.0.0-20260427162712-0457a92dacc3 h1:/m/qmt7Ay+HK+GVbI
 github.com/grafana/dskit v0.0.0-20260427162712-0457a92dacc3/go.mod h1:6zFIzal2FCd0JC1pE0ZTb2ftC0Jr/zsQR4zRNRdDfZA=
 github.com/grafana/e2e v0.1.2-0.20260309174126-b5393d4e610f h1:gxaqz5StufMU078tWFuf8CUi4PZtITBxjM2TZV7NOFw=
 github.com/grafana/e2e v0.1.2-0.20260309174126-b5393d4e610f/go.mod h1:KFvJP5m5GQ837CN7rUbWIiPdw1JZgeRJTEyp2O5U0is=
-github.com/grafana/go-mysql-server v0.20.2-grafana-1 h1:N3IIlaF8Bbb+O1p1fS5kLwUwB8eNGqOqgoXGeXnzjf0=
-github.com/grafana/go-mysql-server v0.20.2-grafana-1/go.mod h1:phaWF0mUq6w4kkHi+ahJ+nUwZ20gkf2vAm8pGMZOJRw=
+github.com/grafana/go-mysql-server v0.20.2-grafana-2 h1:Odgye5nVNmxma8PUN6QrLz9ygdjJLrpSOE5vPpezJzI=
+github.com/grafana/go-mysql-server v0.20.2-grafana-2/go.mod h1:phaWF0mUq6w4kkHi+ahJ+nUwZ20gkf2vAm8pGMZOJRw=
 github.com/grafana/gofpdf v0.0.0-20250307124105-3b9c5d35577f h1:5xkjl5Y/j2QefJKOtTfyD1wXlVsQ2yEXmd0u82h5obs=
 github.com/grafana/gofpdf v0.0.0-20250307124105-3b9c5d35577f/go.mod h1:+O5QxOwwgP10jedZHapzXY+IPKTnzHBtIs5UUb9G+kI=
 github.com/grafana/gomemcache v0.0.0-20251127154401-74f93547077b h1:5qp8/5YPt/Z2RW5QHsxvwE05+LWQYIXydP2MwOkMfb8=
