@@ -14,15 +14,6 @@ This regenerates `spec.json`, `spec-stable.json`, `post.json`, and `api.json` fr
 
 ### Step 2 — Regenerate the merged public spec
 
-```bash
-GODEBUG=gotypesalias=0 swagger mixin -q \
-  public/api-spec.json \
-  public/api-enterprise-spec.json \
-  pkg/services/ngalert/api/tooling/api.json \
-  --ignore-conflicts \
-  -o public/api-merged.json
-```
-
-This merges the OSS, enterprise, and ngalert specs into `public/api-merged.json`, which is tracked in git.
+Run `make swagger-gen` from the repo root (see root `AGENTS.md` for details).
 
 Both `public/api-merged.json` and the files under `pkg/services/ngalert/api/tooling/` (`spec.json`, `spec-stable.json`, `post.json`, `api.json`) must be committed together with the struct change.
