@@ -906,10 +906,10 @@ var (
 		{
 			Name:        "sqlExpressions",
 			Description: "Enables SQL Expressions, which can execute SQL queries against data source results.",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 			Owner:       grafanaDatasourcesCoreServicesSquad,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:        "sqlExpressionsColumnAutoComplete",
@@ -1931,6 +1931,15 @@ var (
 		{
 			Name:         "kubernetesAuthzDatasourceResourcePermissions",
 			Description:  "Enables datasource resource permissions via the K8s IAM resource permission APIs",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
+			Name:         "kubernetesAuthzServiceAccountResourcePermissions",
+			Description:  "Enables service account resource permissions via the K8s IAM resource permission APIs",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,

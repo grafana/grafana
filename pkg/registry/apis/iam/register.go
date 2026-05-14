@@ -374,6 +374,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	enableServiceAccountTokensApi := client.Boolean(ctx, featuremgmt.FlagKubernetesServiceAccountTokensApi, false, openfeature.TransactionContext(ctx))
 	enableExternalGroupMappingsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesExternalGroupMappingsApi, false, openfeature.TransactionContext(ctx))
 	enableSsoSettingsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesSsoSettingsApi, false, openfeature.TransactionContext(ctx))
+	enableSaResourcePermissions := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzServiceAccountResourcePermissions, false, openfeature.TransactionContext(ctx))
 
 	// teams + users must have shorter names because they are often used as part of another name
 	opts.StorageOptsRegister(iamv0.TeamResourceInfo.GroupResource(), apistore.StorageOptions{
@@ -448,6 +449,19 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if b.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) {
+		if enableSaResourcePermissions {
+			// BasicRole is excluded: built-in roles already cover all service accounts globally,
+			// so granting a ResourcePermission to a BasicRole on a specific SA is not permitted.
+			b.mappers.RegisterMapper(
+				schema.GroupResource{Group: "iam.grafana.app", Resource: "serviceaccounts"},
+				resourcepermission.NewMapperWithAttribute("serviceaccounts", []string{"Edit", "Admin"}, resourcepermission.ScopeAttributeID,
+					[]iamv0.ResourcePermissionSpecPermissionKind{
+						iamv0.ResourcePermissionSpecPermissionKindUser,
+						iamv0.ResourcePermissionSpecPermissionKindServiceAccount,
+						iamv0.ResourcePermissionSpecPermissionKindTeam,
+					}), nil,
+			)
+		}
 		if err := b.UpdateResourcePermissionsAPIGroup(apiGroupInfo, opts, storage, enableZanzanaSync); err != nil {
 			return err
 		}

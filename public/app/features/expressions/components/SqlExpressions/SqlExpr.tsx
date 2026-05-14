@@ -13,7 +13,7 @@ import { Button, Stack, useStyles2 } from '@grafana/ui';
 
 import { type ExpressionQueryEditorProps } from '../../ExpressionQueryEditor';
 import { type SqlExpressionQuery } from '../../types';
-import { fetchSQLFields } from '../../utils/metaSqlExpr';
+import { fetchSQLFields, type FetchSQLFieldsOptions } from '../../utils/metaSqlExpr';
 import { QueryToolbox } from '../QueryToolbox';
 
 import { getSqlCompletionProvider } from './CompletionProvider/sqlCompletionProvider';
@@ -44,13 +44,21 @@ export interface SqlExprProps {
 
 export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, metadata, onRunQuery }: SqlExprProps) => {
   const vars = useMemo(() => refIds.map((v) => v.value!), [refIds]);
+  const interpolationScopedVars = metadata?.data?.request?.scopedVars;
+  const interpolationFilters = metadata?.data?.request?.filters;
+  const interpolationRange = metadata?.range;
   const completionProvider = useMemo(
     () =>
       getSqlCompletionProvider({
-        getFields: (identifier: TableIdentifier) => fetchFields(identifier, queries || []),
+        getFields: (identifier: TableIdentifier) =>
+          fetchFields(identifier, queries || [], {
+            range: interpolationRange,
+            scopedVars: interpolationScopedVars,
+            filters: interpolationFilters,
+          }),
         refIds,
       }),
-    [queries, refIds]
+    [interpolationFilters, interpolationRange, interpolationScopedVars, queries, refIds]
   );
 
   // Define the language definition for MySQL syntax highlighting and autocomplete
@@ -81,7 +89,9 @@ LIMIT
   } = useSQLSchemas({
     queries,
     enabled: true,
-    timeRange: metadata?.range,
+    timeRange: interpolationRange,
+    scopedVars: interpolationScopedVars,
+    filters: interpolationFilters,
   });
 
   const queryContext = useMemo(
@@ -279,7 +289,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-async function fetchFields(identifier: TableIdentifier, queries: DataQuery[]) {
-  const fields = await fetchSQLFields({ table: identifier.table }, queries);
+async function fetchFields(identifier: TableIdentifier, queries: DataQuery[], options: FetchSQLFieldsOptions) {
+  const fields = await fetchSQLFields({ table: identifier.table }, queries, options);
   return fields.map((t) => ({ name: t.name, completion: t.value, kind: CompletionItemKind.Field }));
 }
