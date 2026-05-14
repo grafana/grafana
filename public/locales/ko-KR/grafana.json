@@ -512,7 +512,8 @@
         "edit-yaml": "YAML 편집",
         "save": "저장"
       },
-      "error-title": ""
+      "error-title": "",
+      "no-group-success": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "이름",
@@ -1148,6 +1149,9 @@
         "rule-viewer-section-extension": "규칙 뷰어 보강 기능 섹션을 불러오지 못했습니다"
       }
     },
+    "entities": {
+      "group": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "구성 업데이트 실패:",
       "title-something-went-wrong": "오류 발생"
@@ -1156,10 +1160,14 @@
       "content-show-all-errors": "모든 오류 표시"
     },
     "errors": {
+      "api-machinery": {
+        "with-causes": ""
+      },
       "failedWith": "{{status}}(으)로 인해 {{-config}} 실패: {{-message}}"
     },
     "evaluate-every-validation-options": {
       "message": {
+        "none-not-allowed": "",
         "required": "필수 사항입니다."
       }
     },
@@ -2853,6 +2861,11 @@
         },
         "group-name": "평가 그룹 이름",
         "group-text": "선택한 그룹의 모든 규칙은 {{evaluateEvery}}마다 평가됩니다.",
+        "interval-label": "",
+        "mode": {
+          "legacy": "",
+          "new": ""
+        },
         "new-group": "새 평가 그룹",
         "pause": {
           "alerting": "이 경고 규칙에 대한 평가를 일시 중지하려면 켜세요.",
@@ -3155,9 +3168,7 @@
       "deleting": "삭제 중",
       "text-federated": "연합됨",
       "text-provisioned": "프로비저닝됨",
-      "ungrouped": "그룹 미지정",
-      "ungrouped-suffix": "{{ruleName}} (그룹 미지정)",
-      "unknown-rule": "알 수 없는 규칙"
+      "ungrouped": "그룹 미지정"
     },
     "saved-searches": {
       "actions-aria-label": "작업",
@@ -4434,6 +4445,14 @@
       "request-extension": "할당량 확장 요청",
       "resource-detail-dashboards": "{{limit}}개 중 {{usage}}개의 대시보드를 생성했습니다({{percentage}}%).",
       "resource-detail-folders": "{{limit}}개 중 {{usage}}개의 폴더를 생성했습니다({{percentage}}%)."
+    },
+    "readme": {
+      "add-readme": "",
+      "edit-tooltip": "",
+      "empty-message": "",
+      "load-error-retry": "",
+      "load-error-title": "",
+      "parse-error": ""
     },
     "recently-viewed": {
       "clear": "기록 지우기",
@@ -7987,19 +8006,6 @@
       "aria-label-explore-data": "데이터 탐색",
       "aria-label-suggested-dashboards": "추천 대시보드"
     },
-    "alerting-enabled": {
-      "text-alerting-not-supported": "경고 지원되지 않음",
-      "text-alerting-supported": "경고 지원됨"
-    },
-    "basic-serttings": {
-      "tooltip-name": "패널에서 데이터 소스를 선택할 때 해당 이름이 사용됩니다. 기본 데이터 소스는 새 패널에서 미리 선택됩니다."
-    },
-    "basic-settings": {
-      "aria-label-datasource-settings-page-basic": "데이터 소스 설정 페이지 기본 설정",
-      "basic-settings-name-placeholder-name": "이름",
-      "label-default": "기본값",
-      "label-name": "이름"
-    },
     "build-a-dashboard-button": {
       "blank": "비어 있음",
       "build-a-dashboard": "대시보드 구축",
@@ -10797,6 +10803,21 @@
     "name-line-width": "선 너비",
     "name-stacking": "스태킹"
   },
+  "home": {
+    "home-page": {
+      "edition": {
+        "cloud": "",
+        "enterprise": "",
+        "open-source": ""
+      },
+      "greeting": {
+        "afternoon": "",
+        "evening": "",
+        "morning": ""
+      },
+      "placeholder": ""
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "로딩 중",
@@ -11186,7 +11207,7 @@
     "description-order": "가장 최근 또는 가장 오래된 로그를 먼저 표시합니다. '가장 오래된 로그부터' 옵션을 선택하면, 화면이 자동으로 아래로 스크롤되어 가장 최근 로그를 표시합니다.",
     "description-prettify-json": "JSON 로그 항목을 들여쓰기와 줄 바꿈으로 형식화합니다.",
     "description-show-controls": "마지막 또는 첫 번째 로그 라인으로 이동하는 컨트롤과 로그 단계별 필터를 표시합니다.",
-    "description-show-log-attributes": "실험적. OTel 로그가 표시되면, 라벨 및 메타데이터의 관련 키-값 쌍을 추가로 표시 필드로 추가합니다.",
+    "description-show-log-attributes": "",
     "description-unwrapped-columns": "표시된 필드를 사용할 때 열을 사용하여 값을 정렬합니다.",
     "description-wrap-lines": "로그를 한 줄로 표시하거나 긴 로그 항목을 패널에 맞게 줄 바꿈합니다.",
     "field-selector": {
@@ -11509,7 +11530,7 @@
       "line-contains-not": "라인에 미포함 필터로 추가",
       "search-text": "결과 내에서 검색"
     },
-    "show-log-attributes": "OTel 로그에 대한 로그 속성 표시",
+    "show-log-attributes": "",
     "timestamp-format": "타임스탬프 해상도",
     "un-themed-log-details": {
       "aria-label-data-links": "데이터 링크",
@@ -14741,9 +14762,6 @@
       "home-dashboard-placeholder": "기본 대시보드",
       "language-preference-label": "언어",
       "language-preference-placeholder": "언어 선택",
-      "locale-preference-description": "해당 날짜, 시간 및 숫자 형식을 보려면 지역을 선택하세요",
-      "locale-preference-label": "지역 형식",
-      "locale-preference-placeholder": "지역 선택",
       "theme-description": "실험적 테마가 맘에 드시나요? <2>여기</2>에서 원하시는 테마를 알려 주세요.</2>",
       "theme-label": "인터페이스 테마",
       "week-start-label": "주 시작 요일"
@@ -15042,6 +15060,8 @@
     },
     "support-bundles-unconnected": {
       "created-on": "생성일",
+      "deprecation-warning-message": "",
+      "deprecation-warning-title": "",
       "download": "다운로드",
       "expires": "만료",
       "requested-by": "요청자",
@@ -15933,7 +15953,9 @@
       "description": {
         "group-by-field-value": "필드 값을 기준으로 데이터를 그룹화하고 그룹화된 데이터로 중첩 테이블을 생성합니다."
       },
+      "description-expand-nested-rows": "",
       "description-show-field-names": "활성화하면 중첩 테이블의 필드 이름이 테이블 헤더에 표시됩니다",
+      "label-expand-nested-rows-by-default": "",
       "label-show-field-names-in-nested-tables": "중첩된 테이블에 필드 이름 표시",
       "name": {
         "group-to-nested-tables": "중첩 테이블로 그룹화"

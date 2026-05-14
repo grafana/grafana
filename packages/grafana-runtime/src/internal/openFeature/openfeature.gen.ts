@@ -35,6 +35,8 @@ export const FlagKeys = {
   FaroSessionReplay: "faroSessionReplay",
   /** Enables the new Flame Graph UI containing the Call Tree view */
   FlameGraphWithCallTree: "flameGraphWithCallTree",
+  /** Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button) */
+  GrafanaEnableScopesFirstMode: "grafana.enableScopesFirstMode",
   /** Whether to use the new SharedPreferences functional component */
   GrafanaNewPreferencesPage: "grafana.newPreferencesPage",
   /** Enables org-defined dashboard templates for enterprise */
@@ -57,6 +59,12 @@ export const FlagKeys = {
   NewSavedQueriesExperience: "newSavedQueriesExperience",
   /** Applies OTel formatting templates to displayed logs */
   OtelLogsFormatting: "otelLogsFormatting",
+  /** Enables plugins setting from new apis */
+  PluginsUseMTPluginSettings: "plugins.useMTPluginSettings",
+  /** Enables plugins decoupling from bootdata */
+  PluginsUseMTPlugins: "plugins.useMTPlugins",
+  /** Render the README.md of a Git Sync provisioned folder inline below its dashboards list */
+  ProvisioningReadmes: "provisioning.readmes",
   /** Allow setting folder metadata for provisioned folders */
   ProvisioningFolderMetadata: "provisioningFolderMetadata",
   /** Enables next generation query editor experience */
@@ -73,10 +81,6 @@ export const FlagKeys = {
   StateTimelineNameAboveBars: "stateTimeline.nameAboveBars",
   /** Enables the 'Customize with Assistant' button on suggested dashboard cards */
   SuggestedDashboardsAssistantButton: "suggestedDashboardsAssistantButton",
-  /** Enables plugins setting from new apis */
-  UseMTPluginSettings: "useMTPluginSettings",
-  /** Enables plugins decoupling from bootdata */
-  UseMTPlugins: "useMTPlugins",
 } as const;
 
 /**
@@ -201,6 +205,17 @@ export const useFlagFlameGraphWithCallTree = (options?: ReactFlagEvaluationOptio
 };
 
 /**
+ * Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button)
+ *
+ * **Details:**
+ * - flag key: `grafana.enableScopesFirstMode`
+ * - default value: `false`
+ */
+export const useFlagGrafanaEnableScopesFirstMode = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.enableScopesFirstMode", false, options).value;
+};
+
+/**
  * Whether to use the new SharedPreferences functional component
  *
  * **Details:**
@@ -322,6 +337,39 @@ export const useFlagOtelLogsFormatting = (options?: ReactFlagEvaluationOptions):
 };
 
 /**
+ * Enables plugins setting from new apis
+ *
+ * **Details:**
+ * - flag key: `plugins.useMTPluginSettings`
+ * - default value: `false`
+ */
+export const useFlagPluginsUseMTPluginSettings = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("plugins.useMTPluginSettings", false, options).value;
+};
+
+/**
+ * Enables plugins decoupling from bootdata
+ *
+ * **Details:**
+ * - flag key: `plugins.useMTPlugins`
+ * - default value: `false`
+ */
+export const useFlagPluginsUseMTPlugins = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("plugins.useMTPlugins", false, options).value;
+};
+
+/**
+ * Render the README.md of a Git Sync provisioned folder inline below its dashboards list
+ *
+ * **Details:**
+ * - flag key: `provisioning.readmes`
+ * - default value: `false`
+ */
+export const useFlagProvisioningReadmes = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("provisioning.readmes", false, options).value;
+};
+
+/**
  * Allow setting folder metadata for provisioned folders
  *
  * **Details:**
@@ -381,10 +429,10 @@ export const useFlagReportingAnyPageReporting = (options?: ReactFlagEvaluationOp
  *
  * **Details:**
  * - flag key: `splashScreen`
- * - default value: `true`
+ * - default value: `false`
  */
 export const useFlagSplashScreen = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("splashScreen", true, options).value;
+  return useFlag("splashScreen", false, options).value;
 };
 
 /**
@@ -407,27 +455,5 @@ export const useFlagStateTimelineNameAboveBars = (options?: ReactFlagEvaluationO
  */
 export const useFlagSuggestedDashboardsAssistantButton = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("suggestedDashboardsAssistantButton", false, options).value;
-};
-
-/**
- * Enables plugins setting from new apis
- *
- * **Details:**
- * - flag key: `useMTPluginSettings`
- * - default value: `false`
- */
-export const useFlagUseMTPluginSettings = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("useMTPluginSettings", false, options).value;
-};
-
-/**
- * Enables plugins decoupling from bootdata
- *
- * **Details:**
- * - flag key: `useMTPlugins`
- * - default value: `false`
- */
-export const useFlagUseMTPlugins = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("useMTPlugins", false, options).value;
 };
 

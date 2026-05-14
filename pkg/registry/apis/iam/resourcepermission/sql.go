@@ -23,11 +23,12 @@ import (
 // resolveScope returns the legacy db scope for the given resource name.
 // For id-scoped resources (teams, users, service accounts), translates uid→id via the identity store.
 func resolveScope(ctx context.Context, ns types.NamespaceInfo, store IdentityStore, mapper Mapper, name string) (string, error) {
-	scope := mapper.Scope(name)
 	if isIDScoped(mapper) && store != nil {
-		return legacy.ResolveUIDScopeForWrite(ctx, store, ns, scope)
+		// The resource name (grn.Name) is always a UID. UIDScope returns the uid-form
+		// scope so ResolveUIDScopeForWrite can translate it to the id-based equivalent.
+		return legacy.ResolveUIDScopeForWrite(ctx, store, ns, mapper.UIDScope(name))
 	}
-	return scope, nil
+	return mapper.Scope(name), nil
 }
 
 // List

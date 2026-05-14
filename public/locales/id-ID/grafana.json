@@ -512,7 +512,8 @@
         "edit-yaml": "Edit YAML",
         "save": "Simpan"
       },
-      "error-title": ""
+      "error-title": "",
+      "no-group-success": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "nama",
@@ -1148,6 +1149,9 @@
         "rule-viewer-section-extension": "Bagian Pengayaan Penampil Aturan gagal dimuat"
       }
     },
+    "entities": {
+      "group": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "Gagal memperbarui konfigurasi Anda:",
       "title-something-went-wrong": "Terjadi kesalahan"
@@ -1156,10 +1160,14 @@
       "content-show-all-errors": "Tampilkan semua kesalahan"
     },
     "errors": {
+      "api-machinery": {
+        "with-causes": ""
+      },
       "failedWith": "{{-config}} gagal dengan {{status}}: {{-message}}"
     },
     "evaluate-every-validation-options": {
       "message": {
+        "none-not-allowed": "",
         "required": "Diperlukan."
       }
     },
@@ -2853,6 +2861,11 @@
         },
         "group-name": "Nama grup evaluasi",
         "group-text": "Semua aturan dalam grup yang dipilih dievaluasi setiap {{evaluateEvery}}.",
+        "interval-label": "",
+        "mode": {
+          "legacy": "",
+          "new": ""
+        },
         "new-group": "Grup evaluasi baru",
         "pause": {
           "alerting": "Aktifkan untuk menjeda evaluasi untuk aturan peringatan ini.",
@@ -3155,9 +3168,7 @@
       "deleting": "Menghapus",
       "text-federated": "Federasi",
       "text-provisioned": "Disediakan",
-      "ungrouped": "Tidak dikelompokkan",
-      "ungrouped-suffix": "{{ruleName}} (Tidak Dikelompokkan)",
-      "unknown-rule": "Aturan Tidak Diketahui"
+      "ungrouped": "Tidak dikelompokkan"
     },
     "saved-searches": {
       "actions-aria-label": "Tindakan",
@@ -4434,6 +4445,14 @@
       "request-extension": "Minta perpanjangan kuota",
       "resource-detail-dashboards": "Anda telah membuat {{usage}} dari {{limit}} dasbor ({{percentage}}%).",
       "resource-detail-folders": "Anda telah membuat {{usage}} dari {{limit}} folder ({{percentage}}%)."
+    },
+    "readme": {
+      "add-readme": "",
+      "edit-tooltip": "",
+      "empty-message": "",
+      "load-error-retry": "",
+      "load-error-title": "",
+      "parse-error": ""
     },
     "recently-viewed": {
       "clear": "Hapus riwayat",
@@ -7987,19 +8006,6 @@
       "aria-label-explore-data": "Jelajahi data",
       "aria-label-suggested-dashboards": "Dasbor yang disarankan"
     },
-    "alerting-enabled": {
-      "text-alerting-not-supported": "Pemberian peringatan tidak didukung",
-      "text-alerting-supported": "Pemberian peringatan didukung"
-    },
-    "basic-serttings": {
-      "tooltip-name": "Nama ini digunakan saat Anda memilih sumber data di panel. Sumber data default dipilih sebelumnya di panel baru."
-    },
-    "basic-settings": {
-      "aria-label-datasource-settings-page-basic": "Pengaturan dasar halaman pengaturan sumber data",
-      "basic-settings-name-placeholder-name": "Nama",
-      "label-default": "Default",
-      "label-name": "Nama"
-    },
     "build-a-dashboard-button": {
       "blank": "Kosong",
       "build-a-dashboard": "Buat dasbor",
@@ -10797,6 +10803,21 @@
     "name-line-width": "Lebar garis",
     "name-stacking": "Tumpukan"
   },
+  "home": {
+    "home-page": {
+      "edition": {
+        "cloud": "",
+        "enterprise": "",
+        "open-source": ""
+      },
+      "greeting": {
+        "afternoon": "",
+        "evening": "",
+        "morning": ""
+      },
+      "placeholder": ""
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "Memuat",
@@ -11186,7 +11207,7 @@
     "description-order": "Tampilkan log terbaru atau terlama terlebih dahulu. Jika opsi Terlama terlebih dahulu dipilih, tampilan akan otomatis menggulir ke log terbaru di bagian bawah.",
     "description-prettify-json": "Format entri log JSON dengan indentasi dan jeda baris.",
     "description-show-controls": "Tampilkan kontrol untuk melompat ke baris log terakhir atau pertama, dan filter berdasarkan level log.",
-    "description-show-log-attributes": "Eksperimental. Saat log OTel ditampilkan, tambahkan bidang tambahan yang ditampilkan dengan pasangan nilai kunci yang relevan dari label dan metadata.",
+    "description-show-log-attributes": "",
     "description-unwrapped-columns": "Ratakan nilai menggunakan kolom saat menggunakan bidang yang ditampilkan.",
     "description-wrap-lines": "Tampilkan log sebagai satu baris atau penggal entri log yang panjang agar sesuai dengan panel.",
     "field-selector": {
@@ -11509,7 +11530,7 @@
       "line-contains-not": "Tambahkan sebagai baris tidak berisi filter",
       "search-text": "Cari di hasil"
     },
-    "show-log-attributes": "Tampilkan atribut log untuk log OTel",
+    "show-log-attributes": "",
     "timestamp-format": "Resolusi stempel waktu",
     "un-themed-log-details": {
       "aria-label-data-links": "Tautan data",
@@ -14741,9 +14762,6 @@
       "home-dashboard-placeholder": "Dasbor default",
       "language-preference-label": "Bahasa",
       "language-preference-placeholder": "Pilih bahasa",
-      "locale-preference-description": "Pilih wilayah Anda untuk melihat format tanggal, waktu, dan angka yang sesuai",
-      "locale-preference-label": "Format wilayah",
-      "locale-preference-placeholder": "Pilih wilayah",
       "theme-description": "Menyukai tema eksperimental? Beri tahu kami apa yang ingin Anda lihat <2>di sini.</2>",
       "theme-label": "Tema antarmuka",
       "week-start-label": "Minggu mulai"
@@ -15042,6 +15060,8 @@
     },
     "support-bundles-unconnected": {
       "created-on": "Dibuat pada",
+      "deprecation-warning-message": "",
+      "deprecation-warning-title": "",
       "download": "Unduh",
       "expires": "Kedaluwarsa",
       "requested-by": "Diminta oleh",
@@ -15933,7 +15953,9 @@
       "description": {
         "group-by-field-value": "Kelompokkan data berdasarkan nilai bidang dan buat tabel bersarang dengan data yang dikelompokkan."
       },
+      "description-expand-nested-rows": "",
       "description-show-field-names": "Jika tabel nested diaktifkan, akan menampilkan nama bidang sebagai header tabel",
+      "label-expand-nested-rows-by-default": "",
       "label-show-field-names-in-nested-tables": "Tampilkan nama bidang dalam tabel nested",
       "name": {
         "group-to-nested-tables": "Kelompokkan ke tabel bersarang"

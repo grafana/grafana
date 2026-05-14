@@ -154,11 +154,6 @@ export interface FeatureToggles {
   */
   provisioningExport?: boolean;
   /**
-  * Render the README.md of a Git Sync provisioned folder inline below its dashboards list
-  * @default false
-  */
-  provisioningReadmes?: boolean;
-  /**
   * Start an additional https handler and write kubectl options
   * @default false
   */
@@ -183,11 +178,6 @@ export interface FeatureToggles {
   * @default false
   */
   aiGeneratedDashboardChanges?: boolean;
-  /**
-  * Enables CSV encoding options in the reporting feature
-  * @default false
-  */
-  reportingCsvEncodingOptions?: boolean;
   /**
   * Enables configuration of PDF report settings
   * @default false
@@ -228,6 +218,11 @@ export interface FeatureToggles {
   * @default false
   */
   kubernetesLibraryPanels?: boolean;
+  /**
+  * Enables usage of the new annotations API client
+  * @default false
+  */
+  kubernetesAnnotationsClient?: boolean;
   /**
   * Enables k8s short url api and uses it under the hood when handling legacy /api
   * @default false
@@ -360,7 +355,7 @@ export interface FeatureToggles {
   annotationPermissionUpdate?: boolean;
   /**
   * Enables annotation clustering and switches to refactored annotation code
-  * @default false
+  * @default true
   */
   annotationsClustering?: boolean;
   /**
@@ -388,11 +383,6 @@ export interface FeatureToggles {
   * @default false
   */
   unlimitedLayoutsNesting?: boolean;
-  /**
-  * Enables CSV export using scenes dashboard architecture
-  * @default true
-  */
-  sceneCsvExport?: boolean;
   /**
   * Enables showing recently used drilldowns or recommendations given by the datasource in the AdHocFilters and GroupBy variables
   * @default false
@@ -520,7 +510,7 @@ export interface FeatureToggles {
   logQLScope?: boolean;
   /**
   * Enables SQL Expressions, which can execute SQL queries against data source results.
-  * @default false
+  * @default true
   */
   sqlExpressions?: boolean;
   /**
@@ -795,25 +785,10 @@ export interface FeatureToggles {
   */
   pluginsSriChecks?: boolean;
   /**
-  * Enables to save big objects in blob storage
-  * @default false
-  */
-  unifiedStorageBigObjectsSupport?: boolean;
-  /**
   * Enables time pickers sync
   * @default false
   */
   timeRangeProvider?: boolean;
-  /**
-  * Enables time range panning functionality
-  * @default true
-  */
-  timeRangePan?: boolean;
-  /**
-  * Enables new keyboard shortcuts for time range zoom operations
-  * @default true
-  */
-  newTimeRangeZoomShortcuts?: boolean;
   /**
   * Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
   * @default false
@@ -1081,11 +1056,6 @@ export interface FeatureToggles {
   */
   alertingListViewV2PreviewToggle?: boolean;
   /**
-  * Use FiredAt for StartsAt when sending alerts to Alertmaanger
-  * @default false
-  */
-  alertRuleUseFiredAtForStartsAt?: boolean;
-  /**
   * Enables the alerting bulk actions in the UI
   * @default true
   */
@@ -1135,6 +1105,11 @@ export interface FeatureToggles {
   * @default false
   */
   kubernetesAuthzDatasourceResourcePermissions?: boolean;
+  /**
+  * Enables service account resource permissions via the K8s IAM resource permission APIs
+  * @default false
+  */
+  kubernetesAuthzServiceAccountResourcePermissions?: boolean;
   /**
   * Enables recently viewed dashboards section in the browsing dashboard page
   * @default false
@@ -1247,7 +1222,7 @@ export interface FeatureToggles {
   newLogContext?: boolean;
   /**
   * Enables new design for the Clickhouse data source configuration page
-  * @default false
+  * @default true
   */
   newClickhouseConfigPageDesign?: boolean;
   /**
@@ -1322,11 +1297,6 @@ export interface FeatureToggles {
   */
   vizPresets?: boolean;
   /**
-  * Enable all plugins to supply visualization suggestions (including 3rd party plugins)
-  * @default true
-  */
-  externalVizSuggestions?: boolean;
-  /**
   * Enable field overrides for FieldType.nestedFrames fields (like in nested tables)
   * @default false
   */
@@ -1361,11 +1331,6 @@ export interface FeatureToggles {
   * @default false
   */
   pluginStoreServiceLoading?: boolean;
-  /**
-  * Increases panel padding globally
-  * @default true
-  */
-  newPanelPadding?: boolean;
   /**
   * When storing dashboard and folder resource permissions, only store action sets and not the full list of underlying permission
   * @default true
@@ -1432,11 +1397,6 @@ export interface FeatureToggles {
   */
   kubernetesAlertingHistorian?: boolean;
   /**
-  * Enables plugins decoupling from bootdata
-  * @default false
-  */
-  useMTPlugins?: boolean;
-  /**
   * Enables support for variables whose values can have multiple properties
   * @default true
   */
@@ -1481,11 +1441,6 @@ export interface FeatureToggles {
   * @default false
   */
   queryEditorNextMultiSelect?: boolean;
-  /**
-  * Enables search for team bindings in the app platform API
-  * @default false
-  */
-  kubernetesTeamBindings?: boolean;
   /**
   * Enables team APIs in the app platform
   * @default false
@@ -1647,18 +1602,13 @@ export interface FeatureToggles {
   */
   logsTablePanelNG?: boolean;
   /**
-  * Enables plugins setting from new apis
-  * @default false
-  */
-  useMTPluginSettings?: boolean;
-  /**
   * Returns SSO auto-login information in /bootdata to automatically log in users with SSO when they access Grafana
   * @default false
   */
   frontendServiceSSOAutoLogin?: boolean;
   /**
   * Enables the splash screen modal for introducing new Grafana features on first session
-  * @default true
+  * @default false
   */
   splashScreen?: boolean;
   /**
@@ -1721,4 +1671,9 @@ export interface FeatureToggles {
   * @default false
   */
   ['alerting.rulesAPIV2']?: boolean;
+  /**
+  * Switch the Grafana Alerting UI from notifications.alerting.grafana.app/v0alpha1 to v1beta1
+  * @default false
+  */
+  ['alerting.notificationsAPIV1Beta1']?: boolean;
 }

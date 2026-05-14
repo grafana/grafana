@@ -52,7 +52,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
-	publicdashboardsapi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
+	publicdashboards "github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
@@ -198,18 +198,18 @@ func (hs *HTTPServer) registerRoutes() {
 		// anonymous view public dashboard
 		r.Get("/public-dashboards/:accessToken",
 			hs.PublicDashboardsApi.Middleware.HandleView,
-			publicdashboardsapi.SetPublicDashboardAccessToken,
-			publicdashboardsapi.SetPublicDashboardOrgIdOnContext(hs.PublicDashboardsApi.PublicDashboardService),
-			publicdashboardsapi.CountPublicDashboardRequest(),
+			publicdashboards.SetPublicDashboardAccessToken,
+			publicdashboards.SetPublicDashboardOrgIdOnContext(hs.PublicDashboardsApi.PublicDashboardService),
+			publicdashboards.CountPublicDashboardRequest(),
 			hs.Index,
 		)
 
 		r.Get("/bootdata/:accessToken",
 			reqNoAuth,
 			hs.PublicDashboardsApi.Middleware.HandleView,
-			publicdashboardsapi.SetPublicDashboardAccessToken,
-			publicdashboardsapi.SetPublicDashboardOrgIdOnContext(hs.PublicDashboardsApi.PublicDashboardService),
-			publicdashboardsapi.CountPublicDashboardRequest(),
+			publicdashboards.SetPublicDashboardAccessToken,
+			publicdashboards.SetPublicDashboardOrgIdOnContext(hs.PublicDashboardsApi.PublicDashboardService),
+			publicdashboards.CountPublicDashboardRequest(),
 			hs.GetBootdata,
 		)
 	}

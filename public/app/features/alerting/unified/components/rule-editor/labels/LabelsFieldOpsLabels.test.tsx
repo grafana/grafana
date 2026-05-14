@@ -2,6 +2,7 @@ import * as React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { render, screen, waitFor, within } from 'test/test-utils';
 
+import { mockBoundingClientRect } from '@grafana/test-utils';
 import { clearPluginSettingsCache } from 'app/features/plugins/pluginSettings';
 
 import { mockAlertRuleApi, setupMswServer } from '../../../mockApi';
@@ -10,20 +11,6 @@ import { getMockOpsLabels } from '../../../mocks/server/handlers/plugins/grafana
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 
 import { LabelsWithSuggestions } from './LabelsField';
-
-// Mock getBoundingClientRect for @tanstack/react-virtual to calculate visible items
-// The global ResizeObserver mock in jest-setup.ts handles subsequent measurements
-Element.prototype.getBoundingClientRect = jest.fn(() => ({
-  width: 200,
-  height: 400,
-  top: 0,
-  left: 0,
-  bottom: 400,
-  right: 200,
-  x: 0,
-  y: 0,
-  toJSON: () => ({}),
-}));
 
 // Existing labels in the form (simulating editing an existing alert rule with ops labels)
 const existingOpsLabels = getMockOpsLabels();
@@ -66,6 +53,11 @@ const grafanaRule = getGrafanaRule(undefined, {
 const server = setupMswServer();
 
 describe('LabelsField with ops labels', () => {
+  beforeAll(() => {
+    // Mock getBoundingClientRect for dropdown positioning (required for Combobox tests)
+    mockBoundingClientRect({ width: 200, height: 400 });
+  });
+
   beforeEach(() => {
     // Mock the ruler rules API
     mockAlertRuleApi(server).rulerRules(GRAFANA_RULES_SOURCE_NAME, {

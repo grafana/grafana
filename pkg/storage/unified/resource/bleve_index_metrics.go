@@ -27,6 +27,7 @@ type BleveIndexMetrics struct {
 	IndexSnapshotDownloadDuration         prometheus.Histogram
 	IndexSnapshotUploads                  *prometheus.CounterVec
 	IndexSnapshotUploadDuration           prometheus.Histogram
+	IndexSnapshotColdStarts               *prometheus.CounterVec
 	IndexSnapshotNamespaceCleanups        *prometheus.CounterVec
 	IndexSnapshotDeleted                  *prometheus.CounterVec
 	IndexSnapshotIncompleteUploadsCleaned prometheus.Counter
@@ -117,7 +118,7 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 		IndexSnapshotUploads: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "index_server_snapshot_uploads_total",
 			Help: "Number of remote index snapshot upload attempts, by outcome.",
-		}, []string{"status"}), // status: success, skip_no_changes, skip_lock_contention, skip_recent_remote, skip_not_owner, error
+		}, []string{"status"}), // status: success, skip_no_changes, skip_lock_contention, skip_lock_lost, skip_recent_remote, skip_not_owner, error
 		IndexSnapshotUploadDuration: promauto.With(reg).NewHistogram(prometheus.HistogramOpts{
 			Name:                            "index_server_snapshot_upload_duration_seconds",
 			Help:                            "Duration of successful remote index snapshot uploads, including snapshot creation.",
@@ -126,6 +127,10 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
 		}),
+		IndexSnapshotColdStarts: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "index_server_snapshot_cold_start_total",
+			Help: "Number of cold-start build coordination outcomes, by outcome.",
+		}, []string{"outcome"}), // outcome: acquired_lock, downloaded_after_wait, wait_timed_out, lock_error, context_canceled
 		IndexSnapshotNamespaceCleanups: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "index_server_snapshot_namespace_cleanups_total",
 			Help: "Number of namespace-level remote index snapshot cleanup attempts, by outcome.",
@@ -157,7 +162,7 @@ func (m *BleveIndexMetrics) InitSnapshotMetrics() {
 	if m == nil {
 		return
 	}
-	for _, policy := range []string{"tiered", "same_version"} {
+	for _, policy := range []string{"tiered", "same_version", "cold_start"} {
 		m.IndexSnapshotDownloads.WithLabelValues(policy, "success").Add(0)
 		m.IndexSnapshotDownloads.WithLabelValues(policy, "empty").Add(0)
 		m.IndexSnapshotDownloads.WithLabelValues(policy, "download_error").Add(0)
@@ -166,9 +171,15 @@ func (m *BleveIndexMetrics) InitSnapshotMetrics() {
 	m.IndexSnapshotUploads.WithLabelValues("success").Add(0)
 	m.IndexSnapshotUploads.WithLabelValues("skip_no_changes").Add(0)
 	m.IndexSnapshotUploads.WithLabelValues("skip_lock_contention").Add(0)
+	m.IndexSnapshotUploads.WithLabelValues("skip_lock_lost").Add(0)
 	m.IndexSnapshotUploads.WithLabelValues("skip_recent_remote").Add(0)
 	m.IndexSnapshotUploads.WithLabelValues("skip_not_owner").Add(0)
 	m.IndexSnapshotUploads.WithLabelValues("error").Add(0)
+	m.IndexSnapshotColdStarts.WithLabelValues("acquired_lock").Add(0)
+	m.IndexSnapshotColdStarts.WithLabelValues("downloaded_after_wait").Add(0)
+	m.IndexSnapshotColdStarts.WithLabelValues("wait_timed_out").Add(0)
+	m.IndexSnapshotColdStarts.WithLabelValues("lock_error").Add(0)
+	m.IndexSnapshotColdStarts.WithLabelValues("context_canceled").Add(0)
 	m.IndexSnapshotNamespaceCleanups.WithLabelValues("success").Add(0)
 	m.IndexSnapshotNamespaceCleanups.WithLabelValues("error").Add(0)
 	m.IndexSnapshotNamespaceCleanups.WithLabelValues("skip_lock_held").Add(0)

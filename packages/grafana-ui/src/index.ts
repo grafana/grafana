@@ -120,7 +120,7 @@ export {
   type TableJsonViewCellOptions,
 } from './components/Table/types';
 
-export { TableInputCSV } from './components/TableInputCSV/TableInputCSV';
+export { TableInputCSV } from './graveyard/TableInputCSV/TableInputCSV';
 export { TabsBar } from './components/Tabs/TabsBar';
 export { Tab, type TabProps } from './components/Tabs/Tab';
 export { VerticalTab } from './components/Tabs/VerticalTab';

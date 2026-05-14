@@ -854,7 +854,7 @@ func (s *Service) handleErrorWithSourceScenario(ctx context.Context, req *backen
 }
 
 func RandomWalk(query backend.DataQuery, model kinds.TestDataQuery, index int) *data.Frame {
-	rand := rand.New(rand.NewSource(time.Now().UnixNano() + int64(index)))
+	rand := rand.New(rand.NewSource(query.TimeRange.From.UnixNano() + query.TimeRange.To.UnixNano() + int64(index)))
 	timeWalkerMs := query.TimeRange.From.UnixNano() / int64(time.Millisecond)
 	to := query.TimeRange.To.UnixNano() / int64(time.Millisecond)
 	startValue := model.StartValue

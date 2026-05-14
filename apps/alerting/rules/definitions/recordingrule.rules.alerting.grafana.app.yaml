@@ -128,6 +128,8 @@ spec:
     selectableFields:
     - jsonPath: .spec.title
     - jsonPath: .spec.paused
+    - jsonPath: .spec.metric
+    - jsonPath: .spec.targetDatasourceUID
     served: true
     storage: true
     subresources:

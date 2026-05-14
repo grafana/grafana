@@ -30,6 +30,14 @@ export function useSelectedCard(
   const primaryTransformationId = selectedTransformationIds.at(-1) ?? null;
 
   const selectedQuery = useMemo(() => {
+    // Alert or picker takes precedence — short-circuit before resolving the
+    // primary query so the alert/picker view always wins, even when
+    // `selectedQueryRefIds` is non-empty (e.g. after `clearSelection` restores
+    // the first-query default).
+    if (selectedAlertId || hasPendingPicker) {
+      return null;
+    }
+
     // If we have a selected query refId, try to find that query
     if (primaryQueryRefId) {
       const query = queries.find(({ refId }) => refId === primaryQueryRefId);
@@ -38,8 +46,8 @@ export function useSelectedCard(
       }
     }
 
-    // If a transformation, alert, or picker is active, don't select any query
-    if (primaryTransformationId || selectedAlertId || hasPendingPicker) {
+    // If a transformation is active, don't fall back to the first query.
+    if (primaryTransformationId) {
       return null;
     }
 

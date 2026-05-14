@@ -30,7 +30,7 @@ import (
 type subProxyREST struct {
 	pluginID             string
 	routes               []*plugins.Route
-	settingsProvider     func(ctx context.Context) (*apppluginV0.Settings, pluginsettings.SecureJsonGetter, error)
+	settingsProvider     func(ctx context.Context) (*apppluginV0.Settings, pluginsettings.DecryptedSecureJSONLoader, error)
 	accessControl        ac.AccessControl
 	tracer               tracing.Tracer
 	features             featuremgmt.FeatureToggles
@@ -140,13 +140,14 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 }
 
 func proxyRequest(ctx context.Context, req *http.Request) (*http.Request, string, error) {
-	idx := strings.Index(req.URL.Path, "/proxy")
+	const slug = "/app/instance/proxy"
+	idx := strings.Index(req.URL.Path, slug)
 	if idx < 0 {
 		return nil, "", fmt.Errorf("expected proxy path") // 400?
 	}
 
 	clonedReq := req.Clone(ctx)
-	rawURL := strings.TrimLeft(req.URL.Path[idx+len("/proxy"):], "/")
+	rawURL := strings.TrimLeft(req.URL.Path[idx+len(slug):], "/")
 
 	clonedReq.URL = &url.URL{
 		Path:     rawURL,

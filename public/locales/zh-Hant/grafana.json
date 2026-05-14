@@ -512,7 +512,8 @@
         "edit-yaml": "編輯 YAML",
         "save": "儲存"
       },
-      "error-title": ""
+      "error-title": "",
+      "no-group-success": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "名稱",
@@ -1148,6 +1149,9 @@
         "rule-viewer-section-extension": "規則檢視器增強功能部分無法載入"
       }
     },
+    "entities": {
+      "group": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "無法更新您的設定：",
       "title-something-went-wrong": "發生了一些錯誤"
@@ -1156,10 +1160,14 @@
       "content-show-all-errors": "顯示所有錯誤"
     },
     "errors": {
+      "api-machinery": {
+        "with-causes": ""
+      },
       "failedWith": "{{-config}} 失敗，顯示{{status}}：{{-message}}"
     },
     "evaluate-every-validation-options": {
       "message": {
+        "none-not-allowed": "",
         "required": "必填。"
       }
     },
@@ -2853,6 +2861,11 @@
         },
         "group-name": "評估群組名稱",
         "group-text": "所選群組中的所有規則都會每 {{evaluateEvery}} 評估一次。",
+        "interval-label": "",
+        "mode": {
+          "legacy": "",
+          "new": ""
+        },
         "new-group": "新的評估群組",
         "pause": {
           "alerting": "開啟以暫停評估此警報規則。",
@@ -3155,9 +3168,7 @@
       "deleting": "正在刪除",
       "text-federated": "聯合",
       "text-provisioned": "已佈建",
-      "ungrouped": "未分組",
-      "ungrouped-suffix": "{{ruleName}}（未分組）",
-      "unknown-rule": "未知規則"
+      "ungrouped": "未分組"
     },
     "saved-searches": {
       "actions-aria-label": "動作",
@@ -4434,6 +4445,14 @@
       "request-extension": "請求配額擴充",
       "resource-detail-dashboards": "您已建立 {{usage}} 個儀表板，共 {{limit}} 個 ({{percentage}}%)。",
       "resource-detail-folders": "您已建立 {{usage}} 個資料夾，共 {{limit}} 個 ({{percentage}}%)。"
+    },
+    "readme": {
+      "add-readme": "",
+      "edit-tooltip": "",
+      "empty-message": "",
+      "load-error-retry": "",
+      "load-error-title": "",
+      "parse-error": ""
     },
     "recently-viewed": {
       "clear": "清除歷史記錄",
@@ -7987,19 +8006,6 @@
       "aria-label-explore-data": "探索資料",
       "aria-label-suggested-dashboards": "建議的儀表板"
     },
-    "alerting-enabled": {
-      "text-alerting-not-supported": "不支援的警報",
-      "text-alerting-supported": "支援的警報"
-    },
-    "basic-serttings": {
-      "tooltip-name": "在面板中選擇資料來源時，會使用此名稱。預設資料來源已在新面板中預先選取。"
-    },
-    "basic-settings": {
-      "aria-label-datasource-settings-page-basic": "資料來源設定頁面基本設定",
-      "basic-settings-name-placeholder-name": "名稱（名字）",
-      "label-default": "預設值",
-      "label-name": "名稱（名字）"
-    },
     "build-a-dashboard-button": {
       "blank": "空白",
       "build-a-dashboard": "建立儀表板",
@@ -10797,6 +10803,21 @@
     "name-line-width": "線寬",
     "name-stacking": "堆疊"
   },
+  "home": {
+    "home-page": {
+      "edition": {
+        "cloud": "",
+        "enterprise": "",
+        "open-source": ""
+      },
+      "greeting": {
+        "afternoon": "",
+        "evening": "",
+        "morning": ""
+      },
+      "placeholder": ""
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "正在載入",
@@ -11186,7 +11207,7 @@
     "description-order": "先顯示最新或最舊的記錄。選取「最舊記錄優先」時，檢視畫面會自動捲動至最下方的最新記錄。",
     "description-prettify-json": "使用縮排和換行來格式化 JSON 記錄項目。",
     "description-show-controls": "顯示控制項以跳至最後或第一個記錄行，並按記錄層級篩選。",
-    "description-show-log-attributes": "實驗性。顯示 OTel 記錄時，請新增一個附有標籤和中繼資料相關鍵值對的額外顯示欄位。",
+    "description-show-log-attributes": "",
     "description-unwrapped-columns": "使用顯示的欄位時，透過欄對齊值。",
     "description-wrap-lines": "將記錄顯示為單行，或將較長的記錄條目換行，以便適應面板大小。",
     "field-selector": {
@@ -11509,7 +11530,7 @@
       "line-contains-not": "新增為不包含篩選條件的行",
       "search-text": "在結果中搜尋"
     },
-    "show-log-attributes": "顯示 OTel 記錄的記錄屬性",
+    "show-log-attributes": "",
     "timestamp-format": "時間戳記解決方案",
     "un-themed-log-details": {
       "aria-label-data-links": "資料連結",
@@ -14741,9 +14762,6 @@
       "home-dashboard-placeholder": "預設儀表板",
       "language-preference-label": "語言",
       "language-preference-placeholder": "選擇語言",
-      "locale-preference-description": "選擇您的地區以查看相應的日期、時間和數字格式",
-      "locale-preference-label": "地區格式",
-      "locale-preference-placeholder": "選擇地區",
       "theme-description": "喜歡實驗性主題嗎？請在<2>此處</2>告訴我們您想要看到什麼。</2>",
       "theme-label": "介面主題",
       "week-start-label": "一週哪一天開始"
@@ -15042,6 +15060,8 @@
     },
     "support-bundles-unconnected": {
       "created-on": "建立時間",
+      "deprecation-warning-message": "",
+      "deprecation-warning-title": "",
       "download": "下載",
       "expires": "到期",
       "requested-by": "請求者",
@@ -15933,7 +15953,9 @@
       "description": {
         "group-by-field-value": "依欄位值分組資料，並使用分組資料建立巢狀表格。"
       },
+      "description-expand-nested-rows": "",
       "description-show-field-names": "若啟用，巢狀表格將顯示欄位名稱作為表格標題",
+      "label-expand-nested-rows-by-default": "",
       "label-show-field-names-in-nested-tables": "在巢狀表格中顯示欄位名稱",
       "name": {
         "group-to-nested-tables": "分組到巢狀表格"

@@ -521,7 +521,8 @@
         "edit-yaml": "Редактировать YAML",
         "save": "Сохранить"
       },
-      "error-title": ""
+      "error-title": "",
+      "no-group-success": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "имя",
@@ -1163,6 +1164,9 @@
         "rule-viewer-section-extension": "Не удалось загрузить раздел для просмотра правил пополнения информацией"
       }
     },
+    "entities": {
+      "group": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "Не удалось обновить конфигурацию:",
       "title-something-went-wrong": "Неизвестная ошибка"
@@ -1171,10 +1175,14 @@
       "content-show-all-errors": "Показать все ошибки"
     },
     "errors": {
+      "api-machinery": {
+        "with-causes": ""
+      },
       "failedWith": "Ошибка {{-config}} со статусом {{status}}: {{-message}}"
     },
     "evaluate-every-validation-options": {
       "message": {
+        "none-not-allowed": "",
         "required": "Обязательно."
       }
     },
@@ -2901,6 +2909,11 @@
         },
         "group-name": "Имя группы оценки",
         "group-text": "Все правила в выбранной группе оцениваются каждые {{evaluateEvery}}.",
+        "interval-label": "",
+        "mode": {
+          "legacy": "",
+          "new": ""
+        },
         "new-group": "Новая группа оценки",
         "pause": {
           "alerting": "Включите, чтобы приостановить оценку для этого правила оповещения.",
@@ -3212,9 +3225,7 @@
       "deleting": "Удаляется",
       "text-federated": "Федеративная",
       "text-provisioned": "Подготовлено",
-      "ungrouped": "Без группирования",
-      "ungrouped-suffix": "{{ruleName}} (без группирования)",
-      "unknown-rule": "Неизвестное правило"
+      "ungrouped": "Без группирования"
     },
     "saved-searches": {
       "actions-aria-label": "Действия",
@@ -4515,6 +4526,14 @@
       "request-extension": "Запросить увеличение квоты",
       "resource-detail-dashboards": "Вы создали {{usage}} из {{limit}} дашбордов ({{percentage}}%).",
       "resource-detail-folders": "Вы создали {{usage}} из {{limit}} папок ({{percentage}}%)."
+    },
+    "readme": {
+      "add-readme": "",
+      "edit-tooltip": "",
+      "empty-message": "",
+      "load-error-retry": "",
+      "load-error-title": "",
+      "parse-error": ""
     },
     "recently-viewed": {
       "clear": "Очистить историю",
@@ -8125,19 +8144,6 @@
       "aria-label-explore-data": "Просмотреть данные",
       "aria-label-suggested-dashboards": "Рекомендуемые дашборды"
     },
-    "alerting-enabled": {
-      "text-alerting-not-supported": "Оповещения не поддерживаются",
-      "text-alerting-supported": "Оповещения поддерживаются"
-    },
-    "basic-serttings": {
-      "tooltip-name": "Имя используется при выборе источника данных на панелях. Источник данных по умолчанию предварительно выбран на новых панелях."
-    },
-    "basic-settings": {
-      "aria-label-datasource-settings-page-basic": "Основные настройки страницы параметров источника данных",
-      "basic-settings-name-placeholder-name": "Имя",
-      "label-default": "По умолчанию",
-      "label-name": "Имя"
-    },
     "build-a-dashboard-button": {
       "blank": "Пусто",
       "build-a-dashboard": "Создать дашборд",
@@ -10971,6 +10977,21 @@
     "name-line-width": "Ширина линии",
     "name-stacking": "Расположение в стеке"
   },
+  "home": {
+    "home-page": {
+      "edition": {
+        "cloud": "",
+        "enterprise": "",
+        "open-source": ""
+      },
+      "greeting": {
+        "afternoon": "",
+        "evening": "",
+        "morning": ""
+      },
+      "placeholder": ""
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "Загрузка",
@@ -11375,7 +11396,7 @@
     "description-order": "Сначала отображаются самые новые или самые старые журналы. Если выбран параметр «Сначала самые старые», представление автоматически прокручивается вниз до самых новых журналов.",
     "description-prettify-json": "Позволяет форматировать записи журнала JSON с отступами и разрывами строк.",
     "description-show-controls": "Отображаются элементы управления для перехода к последней или первой строке журнала, а также фильтры по уровню журнала.",
-    "description-show-log-attributes": "Экспериментальная функция. При отображении журналов OTel вы можете добавить дополнительное поле с соответствующими парами «ключ — значение» из меток и метаданных.",
+    "description-show-log-attributes": "",
     "description-unwrapped-columns": "Выравнивайте значения по столбцам при использовании отображаемых полей.",
     "description-wrap-lines": "Отображает журналы в виде одной строки или переносит длинные записи так, чтобы они помещались на панели.",
     "field-selector": {
@@ -11707,7 +11728,7 @@
       "line-contains-not": "Добавить, поскольку строка не содержит фильтр",
       "search-text": "Поиск в результатах"
     },
-    "show-log-attributes": "Показывать атрибуты для журналов OTel",
+    "show-log-attributes": "",
     "timestamp-format": "Разрешение метки времени",
     "un-themed-log-details": {
       "aria-label-data-links": "Ссылки на данные",
@@ -15017,9 +15038,6 @@
       "home-dashboard-placeholder": "Дашборд по умолчанию",
       "language-preference-label": "Язык",
       "language-preference-placeholder": "Выбрать язык",
-      "locale-preference-description": "Выберите свой регион, чтобы установить соответствующий формат даты, времени и чисел.",
-      "locale-preference-label": "Региональный формат",
-      "locale-preference-placeholder": "Выбрать регион",
       "theme-description": "Нравится экспериментировать? Выразите свои пожелания по поводу темы <2>здесь.</2>",
       "theme-label": "Тема интерфейса",
       "week-start-label": "Начало недели"
@@ -15321,6 +15339,8 @@
     },
     "support-bundles-unconnected": {
       "created-on": "Дата создания",
+      "deprecation-warning-message": "",
+      "deprecation-warning-title": "",
       "download": "Загрузить",
       "expires": "Срок действия",
       "requested-by": "Запрос от",
@@ -16212,7 +16232,9 @@
       "description": {
         "group-by-field-value": "Группируйте данные по значениям полей и создавайте вложенные таблицы со сгруппированными данными."
       },
+      "description-expand-nested-rows": "",
       "description-show-field-names": "Если параметр включен, вложенные таблицы будут отображать имена полей в качестве заголовка таблицы.",
+      "label-expand-nested-rows-by-default": "",
       "label-show-field-names-in-nested-tables": "Показывать названия полей во вложенных таблицах",
       "name": {
         "group-to-nested-tables": "Группировать во вложенные таблицы"
