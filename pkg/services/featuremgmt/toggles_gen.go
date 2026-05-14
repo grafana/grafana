@@ -39,6 +39,10 @@ const (
 	// Registers a live apiserver
 	FlagLiveAPIServer = "liveAPIServer"
 
+	// FlagLiveDropHAPrefixInCloud
+	// do not include the HA prefix
+	FlagLiveDropHAPrefixInCloud = "liveDropHAPrefixInCloud"
+
 	// FlagInfluxqlStreamingParser
 	// Enable streaming JSON parser for InfluxDB datasource InfluxQL query language
 	FlagInfluxqlStreamingParser = "influxqlStreamingParser"

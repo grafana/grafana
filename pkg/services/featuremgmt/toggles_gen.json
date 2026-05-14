@@ -3942,6 +3942,22 @@
     },
     {
       "metadata": {
+        "name": "liveDropHAPrefixInCloud",
+        "resourceVersion": "1778739143895",
+        "creationTimestamp": "2026-05-14T06:12:23Z"
+      },
+      "spec": {
+        "description": "do not include the HA prefix",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresDevMode": true,
+        "requiresRestart": true,
+        "hideFromDocs": true,
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "localeFormatPreference",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-03-31T13:59:07Z"

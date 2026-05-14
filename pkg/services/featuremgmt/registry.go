@@ -115,7 +115,18 @@ var (
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true,
 			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
+			Generate:        Generate{LegacyGo: true},
+		},
+		{
+			Name:            "liveDropHAPrefixInCloud",
+			Description:     "do not include the HA prefix",
+			Stage:           FeatureStageExperimental,
+			RequiresDevMode: true,
+			HideFromDocs:    true,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true,
+			Expression:      "true", // gets applied as the software is deployed, but we can disable if necessary
+			Generate:        Generate{LegacyGo: true},
 		},
 		{
 			Name:         "starsFromAPIServer",
