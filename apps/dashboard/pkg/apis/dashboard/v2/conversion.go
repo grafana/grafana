@@ -50,3 +50,16 @@ func (d *Dashboard) SetAPIVersion(version string) {
 
 // EnsureDefaultSpec is a no-op for v2: its typed spec fields are safe at zero values.
 func (d *Dashboard) EnsureDefaultSpec() {}
+
+// SetDecodedVersion implements apistore.DecodedVersionAware. It records the
+// API version the codec just decoded onto status.conversion.storedVersion,
+// preserving any existing failed/error/source fields.
+func (d *Dashboard) SetDecodedVersion(version string) {
+	if version == "" {
+		return
+	}
+	if d.Status.Conversion == nil {
+		d.Status.Conversion = &DashboardConversionStatus{}
+	}
+	d.Status.Conversion.StoredVersion = new(version)
+}

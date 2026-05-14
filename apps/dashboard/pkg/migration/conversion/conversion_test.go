@@ -298,6 +298,174 @@ func TestConversionErrorPathPreservesMetadataAndStatus(t *testing.T) {
 	}
 }
 
+// TestEnsureStoredVersion verifies that EnsureStoredVersion only populates
+// storedVersion when the dashboard is missing one, and that it never clobbers
+// an existing value (so cross-version conversions that already populated
+// storedVersion via normalizeConversion are preserved).
+func TestEnsureStoredVersion(t *testing.T) {
+	existing := "v2beta1"
+	tests := []struct {
+		name             string
+		dashboard        DashboardConversion
+		fallback         string
+		expectedStored   string
+		expectedFailed   bool
+		expectedHasError bool
+	}{
+		{
+			name:           "v0alpha1 empty status gets fallback",
+			dashboard:      &dashv0.Dashboard{},
+			fallback:       dashv0.VERSION,
+			expectedStored: dashv0.VERSION,
+		},
+		{
+			name:           "v1 empty status gets fallback",
+			dashboard:      &dashv1.Dashboard{},
+			fallback:       dashv1.VERSION,
+			expectedStored: dashv1.VERSION,
+		},
+		{
+			name:           "v2alpha1 empty status gets fallback",
+			dashboard:      &dashv2alpha1.Dashboard{},
+			fallback:       dashv2alpha1.VERSION,
+			expectedStored: dashv2alpha1.VERSION,
+		},
+		{
+			name:           "v2beta1 empty status gets fallback",
+			dashboard:      &dashv2beta1.Dashboard{},
+			fallback:       dashv2beta1.VERSION,
+			expectedStored: dashv2beta1.VERSION,
+		},
+		{
+			name:           "v2 empty status gets fallback",
+			dashboard:      &dashv2.Dashboard{},
+			fallback:       dashv2.VERSION,
+			expectedStored: dashv2.VERSION,
+		},
+		{
+			name: "existing storedVersion is not overwritten",
+			dashboard: &dashv1.Dashboard{
+				Status: dashv1.DashboardStatus{
+					Conversion: &dashv1.DashboardConversionStatus{
+						StoredVersion: &existing,
+					},
+				},
+			},
+			fallback:       dashv1.VERSION,
+			expectedStored: existing,
+		},
+		{
+			name: "failed conversion status with storedVersion is preserved",
+			dashboard: func() DashboardConversion {
+				d := &dashv0.Dashboard{}
+				errMsg := "boom"
+				d.SetConversionStatus(existing, true, &errMsg, nil)
+				return d
+			}(),
+			fallback:         dashv0.VERSION,
+			expectedStored:   existing,
+			expectedFailed:   true,
+			expectedHasError: true,
+		},
+		{
+			name:           "empty fallback is a no-op when storedVersion is missing",
+			dashboard:      &dashv1.Dashboard{},
+			fallback:       "",
+			expectedStored: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			EnsureStoredVersion(tt.dashboard, tt.fallback)
+			require.Equal(t, tt.expectedStored, tt.dashboard.GetStoredVersion())
+
+			// Spot-check that we did not clobber Failed/Error when an existing
+			// status was already in place.
+			switch d := tt.dashboard.(type) {
+			case *dashv0.Dashboard:
+				if tt.expectedFailed || tt.expectedHasError {
+					require.NotNil(t, d.Status.Conversion)
+					require.Equal(t, tt.expectedFailed, d.Status.Conversion.Failed)
+					if tt.expectedHasError {
+						require.NotNil(t, d.Status.Conversion.Error)
+					}
+				}
+			}
+		})
+	}
+}
+
+// TestStoredVersionAcrossStoredAndRequestedVersionPairs simulates the three
+// scenarios called out by https://github.com/grafana/grafana/issues/124675:
+//   - Same-version read returns the stored bytes' version.
+//   - Cross-version read with conversion returns the stored bytes' version,
+//     not the requested version.
+//   - Legacy v0alpha1 same-version read returns v0alpha1.
+//
+// We model "decoded bytes" by constructing a typed dashboard of the stored
+// version and either applying the registered scheme conversion (cross-version)
+// or running EnsureStoredVersion against the same type (same-version).
+func TestStoredVersionAcrossStoredAndRequestedVersionPairs(t *testing.T) {
+	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
+	leProvider := migrationtestutil.NewTestLibraryElementProvider()
+	migration.Initialize(dsProvider, leProvider, migration.DefaultCacheTTL)
+
+	scheme := runtime.NewScheme()
+	require.NoError(t, RegisterConversions(scheme, dsProvider, leProvider))
+
+	t.Run("same-version read v2beta1/v2beta1 returns v2beta1", func(t *testing.T) {
+		stored := &dashv2beta1.Dashboard{
+			ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "d"},
+			Spec: dashv2beta1.DashboardSpec{
+				Title: "t",
+				Layout: dashv2beta1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{
+					GridLayoutKind: &dashv2beta1.DashboardGridLayoutKind{
+						Kind: "GridLayout",
+						Spec: dashv2beta1.DashboardGridLayoutSpec{},
+					},
+				},
+			},
+		}
+		// No AddConversionFunc fires for same-version reads, so the DTO builder
+		// is the only thing that can populate storedVersion.
+		EnsureStoredVersion(stored, dashv2beta1.VERSION)
+		require.Equal(t, dashv2beta1.VERSION, stored.GetStoredVersion())
+	})
+
+	t.Run("cross-version read v2beta1 stored, v1 requested returns v2beta1", func(t *testing.T) {
+		stored := &dashv2beta1.Dashboard{
+			ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "d"},
+			Spec: dashv2beta1.DashboardSpec{
+				Title: "t",
+				Layout: dashv2beta1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{
+					GridLayoutKind: &dashv2beta1.DashboardGridLayoutKind{
+						Kind: "GridLayout",
+						Spec: dashv2beta1.DashboardGridLayoutSpec{},
+					},
+				},
+			},
+		}
+		out := &dashv1.Dashboard{}
+		require.NoError(t, scheme.Convert(stored, out, nil))
+		// normalizeConversion already populated storedVersion to the source's
+		// version. The DTO builder helper must not clobber it.
+		require.Equal(t, dashv2beta1.VERSION, out.GetStoredVersion())
+		EnsureStoredVersion(out, dashv1.VERSION)
+		require.Equal(t, dashv2beta1.VERSION, out.GetStoredVersion(),
+			"DTO-level fallback must not overwrite the version set by normalizeConversion")
+	})
+
+	t.Run("legacy same-version read v0alpha1/v0alpha1 returns v0alpha1", func(t *testing.T) {
+		stored := &dashv0.Dashboard{
+			ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "d"},
+			Spec:       common.Unstructured{Object: map[string]any{"title": "t", "schemaVersion": 42}},
+		}
+		EnsureStoredVersion(stored, dashv0.VERSION)
+		require.Equal(t, dashv0.VERSION, stored.GetStoredVersion())
+	})
+}
+
 func TestConversionMatrixExist(t *testing.T) {
 	// Initialize the migrator with a test data source provider
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)

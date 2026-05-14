@@ -234,10 +234,40 @@ func (s *Storage) Versioner() storage.Versioner {
 	return s.versioner
 }
 
+// DecodedVersionAware is implemented by resource types that want to be
+// informed of the API version their bytes were decoded from. After every
+// decode, the storage layer calls SetDecodedVersion with the version the
+// codec just decoded.
+//
+// This lets resources record the authoritative on-disk version (e.g., onto
+// a status field) at the storage boundary, so plain Get/List/Watch reads
+// have a grounded value even though same-version reads bypass every
+// registered external-to-external conversion function.
+type DecodedVersionAware interface {
+	SetDecodedVersion(version string)
+}
+
 func (s *Storage) convertToObject(ctx context.Context, data []byte, obj runtime.Object) (runtime.Object, error) {
 	_, span := tracer.Start(ctx, "apistore.Storage.convertToObject")
 	defer span.End()
-	obj, _, err := s.codec.Decode(data, nil, obj)
+	obj, gvk, err := s.codec.Decode(data, nil, obj)
+	if err == nil && obj != nil {
+		// Prefer the GVK the codec reports for the bytes (this is the on-disk
+		// version) over the GVK on the returned typed object, which a versioning
+		// codec rewrites to the decode-target version when a conversion is
+		// applied.
+		version := ""
+		if gvk != nil && gvk.Version != "" {
+			version = gvk.Version
+		} else if kind := obj.GetObjectKind().GroupVersionKind(); kind.Version != "" {
+			version = kind.Version
+		}
+		if version != "" {
+			if setter, ok := obj.(DecodedVersionAware); ok {
+				setter.SetDecodedVersion(version)
+			}
+		}
+	}
 	return obj, err
 }
 

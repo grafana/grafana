@@ -651,6 +651,9 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 			dash, ok := obj.(*dashv0.Dashboard)
 			if ok {
 				dto.Dashboard = *dash
+				// Ground storedVersion in the decoded GVK so same-version reads do not
+				// leak whatever (possibly stale) value is encoded in the stored bytes.
+				conversion.EnsureStoredVersion(&dto.Dashboard, dashv0.DashboardResourceInfo.GroupVersion().Version)
 			}
 			if access != nil {
 				err = b.scheme.Convert(access, &dto.Access, nil)
@@ -670,6 +673,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 			dash, ok := obj.(*dashv1beta1.Dashboard)
 			if ok {
 				dto.Dashboard = *dash
+				conversion.EnsureStoredVersion(&dto.Dashboard, dashv1beta1.DashboardResourceInfo.GroupVersion().Version)
 			}
 			if access != nil {
 				err = b.scheme.Convert(access, &dto.Access, nil)
@@ -689,6 +693,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 			dash, ok := obj.(*dashv1.Dashboard)
 			if ok {
 				dto.Dashboard = *dash
+				conversion.EnsureStoredVersion(&dto.Dashboard, dashv1.DashboardResourceInfo.GroupVersion().Version)
 			}
 			if access != nil {
 				err = b.scheme.Convert(access, &dto.Access, nil)
@@ -708,6 +713,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 			dash, ok := obj.(*dashv2alpha1.Dashboard)
 			if ok {
 				dto.Dashboard = *dash
+				conversion.EnsureStoredVersion(&dto.Dashboard, dashv2alpha1.DashboardResourceInfo.GroupVersion().Version)
 			}
 			if access != nil {
 				err = b.scheme.Convert(access, &dto.Access, nil)
@@ -726,6 +732,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 			dash, ok := obj.(*dashv2beta1.Dashboard)
 			if ok {
 				dto.Dashboard = *dash
+				conversion.EnsureStoredVersion(&dto.Dashboard, dashv2beta1.DashboardResourceInfo.GroupVersion().Version)
 			}
 			if access != nil {
 				err = b.scheme.Convert(access, &dto.Access, nil)
@@ -745,6 +752,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 			dash, ok := obj.(*dashv2.Dashboard)
 			if ok {
 				dto.Dashboard = *dash
+				conversion.EnsureStoredVersion(&dto.Dashboard, dashv2.DashboardResourceInfo.GroupVersion().Version)
 			}
 			if access != nil {
 				err = b.scheme.Convert(access, &dto.Access, nil)

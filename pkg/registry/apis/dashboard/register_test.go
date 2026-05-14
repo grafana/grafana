@@ -9,15 +9,18 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/admission"
 
+	internal "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	dashv1beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	dashv2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
+	"github.com/grafana/grafana/apps/dashboard/pkg/migration/conversion"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -321,4 +324,149 @@ func (m *mockFeatureToggles) GetEnabled(ctx context.Context) map[string]bool {
 	}
 
 	return res
+}
+
+// TestDTOBuilderStoredVersion exercises the storedVersion-population branch
+// that lives inside each per-version DTO builder closure in
+// DashboardsAPIBuilder.UpdateAPIGroupInfo. The closures are constructed inline
+// against private state, so we re-create the same expressions here, one per
+// registered version, and assert that:
+//   - When the decoded object has no storedVersion, the closure grounds the
+//     DTO in the decoded GVK (this version's GroupVersion().Version).
+//   - When the decoded object already carries a storedVersion (e.g. a
+//     cross-version read where normalizeConversion already populated it), the
+//     closure does not clobber it.
+//
+// This is the unit-level guard for
+// https://github.com/grafana/grafana/issues/124675.
+func TestDTOBuilderStoredVersion(t *testing.T) {
+	v2beta1Stored := dashv2beta1.VERSION
+
+	type testCase struct {
+		name              string
+		buildDTO          func(t *testing.T, obj runtime.Object) string
+		decoded           runtime.Object
+		expectedStoredVer string
+	}
+
+	tests := []testCase{
+		{
+			name: "v0alpha1 same-version read populates storedVersion",
+			buildDTO: func(t *testing.T, obj runtime.Object) string {
+				dto := &dashv0.DashboardWithAccessInfo{}
+				dash, ok := obj.(*dashv0.Dashboard)
+				require.True(t, ok)
+				dto.Dashboard = *dash
+				conversion.EnsureStoredVersion(&dto.Dashboard, dashv0.DashboardResourceInfo.GroupVersion().Version)
+				return dto.GetStoredVersion()
+			},
+			decoded:           &dashv0.Dashboard{},
+			expectedStoredVer: dashv0.VERSION,
+		},
+		{
+			name: "v1beta1 same-version read populates storedVersion",
+			buildDTO: func(t *testing.T, obj runtime.Object) string {
+				dto := &dashv1beta1.DashboardWithAccessInfo{}
+				dash, ok := obj.(*dashv1beta1.Dashboard)
+				require.True(t, ok)
+				dto.Dashboard = *dash
+				conversion.EnsureStoredVersion(&dto.Dashboard, dashv1beta1.DashboardResourceInfo.GroupVersion().Version)
+				return dto.GetStoredVersion()
+			},
+			decoded:           &dashv1beta1.Dashboard{},
+			expectedStoredVer: dashv1beta1.VERSION,
+		},
+		{
+			name: "v1 same-version read populates storedVersion",
+			buildDTO: func(t *testing.T, obj runtime.Object) string {
+				dto := &dashv1.DashboardWithAccessInfo{}
+				dash, ok := obj.(*dashv1.Dashboard)
+				require.True(t, ok)
+				dto.Dashboard = *dash
+				conversion.EnsureStoredVersion(&dto.Dashboard, dashv1.DashboardResourceInfo.GroupVersion().Version)
+				return dto.GetStoredVersion()
+			},
+			decoded:           &dashv1.Dashboard{},
+			expectedStoredVer: dashv1.VERSION,
+		},
+		{
+			name: "v2alpha1 same-version read populates storedVersion",
+			buildDTO: func(t *testing.T, obj runtime.Object) string {
+				dto := &dashv2alpha1.DashboardWithAccessInfo{}
+				dash, ok := obj.(*dashv2alpha1.Dashboard)
+				require.True(t, ok)
+				dto.Dashboard = *dash
+				conversion.EnsureStoredVersion(&dto.Dashboard, dashv2alpha1.DashboardResourceInfo.GroupVersion().Version)
+				return dto.GetStoredVersion()
+			},
+			decoded:           &dashv2alpha1.Dashboard{},
+			expectedStoredVer: dashv2alpha1.VERSION,
+		},
+		{
+			name: "v2beta1 same-version read populates storedVersion",
+			buildDTO: func(t *testing.T, obj runtime.Object) string {
+				dto := &dashv2beta1.DashboardWithAccessInfo{}
+				dash, ok := obj.(*dashv2beta1.Dashboard)
+				require.True(t, ok)
+				dto.Dashboard = *dash
+				conversion.EnsureStoredVersion(&dto.Dashboard, dashv2beta1.DashboardResourceInfo.GroupVersion().Version)
+				return dto.GetStoredVersion()
+			},
+			decoded:           &dashv2beta1.Dashboard{},
+			expectedStoredVer: dashv2beta1.VERSION,
+		},
+		{
+			name: "v2 same-version read populates storedVersion",
+			buildDTO: func(t *testing.T, obj runtime.Object) string {
+				dto := &dashv2.DashboardWithAccessInfo{}
+				dash, ok := obj.(*dashv2.Dashboard)
+				require.True(t, ok)
+				dto.Dashboard = *dash
+				conversion.EnsureStoredVersion(&dto.Dashboard, dashv2.DashboardResourceInfo.GroupVersion().Version)
+				return dto.GetStoredVersion()
+			},
+			decoded:           &dashv2.Dashboard{},
+			expectedStoredVer: dashv2.VERSION,
+		},
+		{
+			name: "v1 cross-version read keeps storedVersion from normalizeConversion",
+			buildDTO: func(t *testing.T, obj runtime.Object) string {
+				dto := &dashv1.DashboardWithAccessInfo{}
+				dash, ok := obj.(*dashv1.Dashboard)
+				require.True(t, ok)
+				dto.Dashboard = *dash
+				conversion.EnsureStoredVersion(&dto.Dashboard, dashv1.DashboardResourceInfo.GroupVersion().Version)
+				return dto.GetStoredVersion()
+			},
+			decoded: &dashv1.Dashboard{
+				Status: dashv1.DashboardStatus{
+					Conversion: &dashv1.DashboardConversionStatus{
+						StoredVersion: &v2beta1Stored,
+					},
+				},
+			},
+			expectedStoredVer: dashv2beta1.VERSION,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := tc.buildDTO(t, tc.decoded)
+			require.Equal(t, tc.expectedStoredVer, got)
+		})
+	}
+
+	// Sanity-check: a nil access pointer (the DTO sub-resource path that does
+	// not request access info) must still produce a populated storedVersion.
+	t.Run("nil access does not change storedVersion semantics", func(t *testing.T) {
+		var access *internal.DashboardAccess
+		var obj runtime.Object = &dashv2.Dashboard{}
+		dto := &dashv2.DashboardWithAccessInfo{}
+		if dash, ok := obj.(*dashv2.Dashboard); ok {
+			dto.Dashboard = *dash
+			conversion.EnsureStoredVersion(&dto.Dashboard, dashv2.DashboardResourceInfo.GroupVersion().Version)
+		}
+		require.Nil(t, access)
+		require.Equal(t, dashv2.VERSION, dto.GetStoredVersion())
+	})
 }
