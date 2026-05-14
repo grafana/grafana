@@ -39,7 +39,7 @@ Among others, `gcx` provides the following benefits:
 
 - **Manage Grafana OSS/Enterprise and Grafana Cloud:** Use a single tool for dashboards, alerting, SLOs, on-call, synthetic checks, load testing, and more.
 - **GitOps**: Pull resources to files, version in Git, or push back with full round-trip fidelity.
-- **SRE**: Ensure system performance by monitoring and managing emergencies.
+- **SRE**: Ensure system performance by monitoring telemetry and root-causing incidents.
 - **Observability as code:** `gcx` can scaffold Go projects, import existing dashboards, lint with Rego rules, or live-reload development servers.
 - **Automation:** `gcx` uses JSON/YAML output, structured errors, and predictable exit codes.
 - **Multi-environment:** Use named contexts to switch between development, staging, and production environments.
