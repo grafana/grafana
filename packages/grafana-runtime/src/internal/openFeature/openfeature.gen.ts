@@ -35,6 +35,8 @@ export const FlagKeys = {
   FaroSessionReplay: "faroSessionReplay",
   /** Enables the new Flame Graph UI containing the Call Tree view */
   FlameGraphWithCallTree: "flameGraphWithCallTree",
+  /** Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button) */
+  GrafanaEnableScopesFirstMode: "grafana.enableScopesFirstMode",
   /** Enables usage of the new annotations API client */
   GrafanaKubernetesAnnotationsClient: "grafana.kubernetesAnnotationsClient",
   /** Whether to use the new SharedPreferences functional component */
@@ -202,6 +204,17 @@ export const useFlagFaroSessionReplay = (options?: ReactFlagEvaluationOptions): 
  */
 export const useFlagFlameGraphWithCallTree = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("flameGraphWithCallTree", false, options).value;
+};
+
+/**
+ * Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button)
+ *
+ * **Details:**
+ * - flag key: `grafana.enableScopesFirstMode`
+ * - default value: `false`
+ */
+export const useFlagGrafanaEnableScopesFirstMode = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.enableScopesFirstMode", false, options).value;
 };
 
 /**
@@ -429,10 +442,10 @@ export const useFlagReportingAnyPageReporting = (options?: ReactFlagEvaluationOp
  *
  * **Details:**
  * - flag key: `splashScreen`
- * - default value: `true`
+ * - default value: `false`
  */
 export const useFlagSplashScreen = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("splashScreen", true, options).value;
+  return useFlag("splashScreen", false, options).value;
 };
 
 /**

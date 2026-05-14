@@ -40,6 +40,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `dashboardNewLayouts`                        | Enables new dashboard layouts                                                                                                                                 | Yes                |
 | `dashboardDefaultLayoutSelector`             | Enables default layout selector in dashboard settings                                                                                                         | Yes                |
 | `alertingQueryOptimization`                  | Optimizes eligible queries in order to reduce load on datasources                                                                                             |                    |
+| `sqlExpressions`                             | Enables SQL Expressions, which can execute SQL queries against data source results.                                                                           | Yes                |
 | `cloudWatchNewLabelParsing`                  | Updates CloudWatch label parsing to be more accurate                                                                                                          | Yes                |
 | `playlistsRBAC`                              | Enables RBAC for playlists                                                                                                                                    |                    |
 | `newUnconfiguredPanel`                       | Enables the new unconfigured panel experience                                                                                                                 | Yes                |
@@ -92,7 +93,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `timeComparison`                  | Enables time comparison option in supported panels                                                     |
 | `secretsManagementAppPlatformUI`  | Enable the secrets management app platform UI                                                          |
 | `alertingSaveStateCompressed`     | Enables the compressed protobuf-based alert state storage. Default is enabled.                         |
-| `sqlExpressions`                  | Enables SQL Expressions, which can execute SQL queries against data source results.                    |
 | `queryLibrary`                    | Enables Saved queries (query library) feature                                                          |
 | `savedQueriesRBAC`                | Enables Saved queries (query library) RBAC permissions                                                 |
 | `newSavedQueriesExperience`       | Enables the new Saved queries (query library) modal experience                                         |

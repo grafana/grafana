@@ -179,11 +179,6 @@ export interface FeatureToggles {
   */
   aiGeneratedDashboardChanges?: boolean;
   /**
-  * Enables CSV encoding options in the reporting feature
-  * @default false
-  */
-  reportingCsvEncodingOptions?: boolean;
-  /**
   * Enables configuration of PDF report settings
   * @default false
   */
@@ -510,7 +505,7 @@ export interface FeatureToggles {
   logQLScope?: boolean;
   /**
   * Enables SQL Expressions, which can execute SQL queries against data source results.
-  * @default false
+  * @default true
   */
   sqlExpressions?: boolean;
   /**
@@ -1106,6 +1101,11 @@ export interface FeatureToggles {
   */
   kubernetesAuthzDatasourceResourcePermissions?: boolean;
   /**
+  * Enables service account resource permissions via the K8s IAM resource permission APIs
+  * @default false
+  */
+  kubernetesAuthzServiceAccountResourcePermissions?: boolean;
+  /**
   * Enables recently viewed dashboards section in the browsing dashboard page
   * @default false
   */
@@ -1608,7 +1608,7 @@ export interface FeatureToggles {
   frontendServiceSSOAutoLogin?: boolean;
   /**
   * Enables the splash screen modal for introducing new Grafana features on first session
-  * @default true
+  * @default false
   */
   splashScreen?: boolean;
   /**
