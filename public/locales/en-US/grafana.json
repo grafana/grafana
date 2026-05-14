@@ -11357,6 +11357,8 @@
       "clear-search": "Clear",
       "close-inline-details": "Close details for this log",
       "close-sidebar-details": "Close log details sidebar",
+      "copy-log-line": "Copy log line message",
+      "copy-log-line-json": "Copy log contents as JSON",
       "copy-shortlink": "Copy shortlink",
       "copy-to-clipboard": "Copy to clipboard",
       "displayed-fields-section": "Organize displayed fields",
@@ -11405,7 +11407,8 @@
     },
     "log-line-menu": {
       "copy-link": "Copy link to log line",
-      "copy-log": "Copy log line",
+      "copy-log-contents": "Copy log line contents as JSON",
+      "copy-log-message": "Copy log line message",
       "hide-details": "Show log details",
       "icon-label": "Log menu",
       "log-line": "Log line",
@@ -15555,8 +15558,8 @@
     },
     "legend": {
       "category": "Legend",
-      "description-faceted-filter": "Show series visibility filter based on labels",
-      "name-faceted-filter": "Faceted filter"
+      "description-faceted-filter": "Enable filter to display series based on labels or names",
+      "name-faceted-filter": "Series visibility"
     },
     "line-style-editor": {
       "line-fill-options": {

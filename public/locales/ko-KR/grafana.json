@@ -512,7 +512,8 @@
         "edit-yaml": "YAML 편집",
         "save": "저장"
       },
-      "error-title": ""
+      "error-title": "",
+      "no-group-success": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "이름",
@@ -1166,6 +1167,7 @@
     },
     "evaluate-every-validation-options": {
       "message": {
+        "none-not-allowed": "",
         "required": "필수 사항입니다."
       }
     },
@@ -2859,6 +2861,11 @@
         },
         "group-name": "평가 그룹 이름",
         "group-text": "선택한 그룹의 모든 규칙은 {{evaluateEvery}}마다 평가됩니다.",
+        "interval-label": "",
+        "mode": {
+          "legacy": "",
+          "new": ""
+        },
         "new-group": "새 평가 그룹",
         "pause": {
           "alerting": "이 경고 규칙에 대한 평가를 일시 중지하려면 켜세요.",
@@ -15053,6 +15060,8 @@
     },
     "support-bundles-unconnected": {
       "created-on": "생성일",
+      "deprecation-warning-message": "",
+      "deprecation-warning-title": "",
       "download": "다운로드",
       "expires": "만료",
       "requested-by": "요청자",

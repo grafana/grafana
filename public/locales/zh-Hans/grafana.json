@@ -512,7 +512,8 @@
         "edit-yaml": "编辑 YAML",
         "save": "保存"
       },
-      "error-title": ""
+      "error-title": "",
+      "no-group-success": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "姓名",
@@ -1166,6 +1167,7 @@
     },
     "evaluate-every-validation-options": {
       "message": {
+        "none-not-allowed": "",
         "required": "必填。"
       }
     },
@@ -2859,6 +2861,11 @@
         },
         "group-name": "评估组名称",
         "group-text": "系统每隔 {{evaluateEvery}} 会对所选组中的所有规则进行评估。",
+        "interval-label": "",
+        "mode": {
+          "legacy": "",
+          "new": ""
+        },
         "new-group": "新的评估组",
         "pause": {
           "alerting": "开启以暂停此提醒规则的评估。",
@@ -15053,6 +15060,8 @@
     },
     "support-bundles-unconnected": {
       "created-on": "创建时间",
+      "deprecation-warning-message": "",
+      "deprecation-warning-title": "",
       "download": "下载",
       "expires": "过期",
       "requested-by": "请求人",

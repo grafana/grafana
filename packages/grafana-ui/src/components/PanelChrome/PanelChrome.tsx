@@ -10,7 +10,6 @@ import { t } from '@grafana/i18n';
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
 import { DelayRender } from '../../utils/DelayRender';
-import { getFeatureToggle } from '../../utils/featureToggle';
 import { usePointerDistance } from '../../utils/usePointerDistance';
 import { useElementSelection } from '../ElementSelectionContext/ElementSelectionContext';
 import { Icon } from '../Icon/Icon';
@@ -473,10 +472,6 @@ const itemsRenderer = (items: ReactNode[] | ReactNode, renderer: (items: ReactNo
 
 const getHeaderHeight = (theme: GrafanaTheme2, hasHeader: boolean) => {
   if (hasHeader) {
-    if (getFeatureToggle('newPanelPadding')) {
-      return theme.spacing.gridSize * 5;
-    }
-
     return theme.spacing.gridSize * theme.components.panel.headerHeight;
   }
 
@@ -520,7 +515,6 @@ const getContentStyle = (
 
 const getStyles = (theme: GrafanaTheme2) => {
   const { background, borderColor } = theme.components.panel;
-  const newPanelPadding = getFeatureToggle('newPanelPadding');
 
   return {
     container: css({
@@ -599,8 +593,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'panel-header',
       display: 'flex',
       alignItems: 'center',
-      // remove logic after newPanelPadding feature toggle is removed
-      padding: newPanelPadding ? theme.spacing(0, 1, 0, 1) : theme.spacing(0, 0.5, 0, 1),
+      padding: theme.spacing(0, 1, 0, 1),
       gap: theme.spacing(1),
     }),
     subHeader: css({
@@ -608,7 +601,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       alignItems: 'center',
       maxHeight: theme.spacing.gridSize * theme.components.panel.headerHeight,
-      padding: newPanelPadding ? theme.spacing(0, 1, 0, 1.5) : theme.spacing(0, 0.5, 0, 1),
+      padding: theme.spacing(0, 1, 0, 1.5),
       overflow: 'hidden',
       gap: theme.spacing(1),
     }),

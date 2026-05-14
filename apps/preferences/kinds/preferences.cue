@@ -28,10 +28,6 @@ preferencesV1alpha1: {
 			// Selected language
 			language?: string
 
-			// Selected locale (beta)
-			// TODO: Will be removed
-			regionalFormat?: string
-
 			// Explore query history preferences
 			queryHistory?: #QueryHistoryPreference
 
