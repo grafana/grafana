@@ -105,6 +105,7 @@ func (p *simpleClientProvider) GetOrCreateHandler(namespace string) client.K8sHa
 // This is used just so wire has something unique to return
 type DashboardsAPIBuilder struct {
 	dashboardService         dashboards.DashboardService
+	features                 featuremgmt.FeatureToggles
 	accessControl            accesscontrol.AccessControl
 	accessClient             authlib.AccessClient
 	legacy                   legacy.DashboardAccessor
@@ -179,6 +180,7 @@ func RegisterAPIService(
 
 	builder := &DashboardsAPIBuilder{
 		dashboardService:         dashboardService,
+		features:                 features,
 		dashboardPermissions:     dashboardPermissions,
 		dashboardPermissionsSvc:  dashboardPermissionsSvc,
 		accessControl:            accessControl,
@@ -234,6 +236,7 @@ func NewAPIService(ac authlib.AccessClient, features featuremgmt.FeatureToggles,
 	return &DashboardsAPIBuilder{
 		minRefreshInterval:     "10s",
 		accessClient:           ac,
+		features:               features,
 		dashboardService:       &dashsvc.DashboardServiceImpl{}, // for validation helpers only
 		folderClientProvider:   folderClientProvider,
 		resourcePermissionsSvc: resourcePermissionsSvc,
