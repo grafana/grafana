@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import * as React from 'react';
 
@@ -18,6 +18,7 @@ import {
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { TooltipDisplayMode } from '@grafana/schema';
+import { mockComboboxRect } from '@grafana/test-utils';
 import { PanelContextProvider } from '@grafana/ui';
 import { Scene } from 'app/features/canvas/runtime/scene';
 import * as sceneAbleManagement from 'app/features/canvas/runtime/sceneAbleManagement';
@@ -45,7 +46,10 @@ const colors = {
   unmapped: '#808080',
   error: '#F2495C',
   warning: '#FF9830',
+  warningRGB: 'rgb(255, 152, 48)',
   success: '#73BF69',
+  successRGB: 'rgb(115, 191, 105)',
+  none: 'rgba(0, 0, 0, 0)',
 };
 
 const successField: Partial<Field> = {
@@ -100,36 +104,13 @@ const warningField: Partial<Field> = {
       {
         options: {
           1: {
-            color: 'green',
-            icon: 'img/icons/unicons/check-circle.svg',
-            index: 0,
-            text: 'Success',
-          },
-        },
-        type: MappingType.ValueToText,
-      },
-      {
-        type: MappingType.ValueToText,
-        options: {
-          1: {
-            text: 'Success',
-            color: 'green',
-            icon: 'img/icons/unicons/check-circle.svg',
-            index: 0,
-          },
-          2: {
-            text: 'Warning',
             color: 'orange',
-            icon: 'img/icons/unicons/exclamation-triangle.svg',
-            index: 1,
-          },
-          3: {
-            text: 'Error',
-            color: 'red',
-            icon: 'img/icons/unicons/times-circle.svg',
-            index: 2,
+            icon: 'img/icons/unicons/check-circle.svg',
+            index: 0,
+            text: 'Warning',
           },
         },
+        type: MappingType.ValueToText,
       },
     ],
   },
@@ -139,7 +120,7 @@ const warningField: Partial<Field> = {
 warningField.display = getDisplayProcessor({ field: warningField, theme });
 
 const errorField: Partial<Field> = {
-  name: 'warning',
+  name: 'error',
   config: {
     mappings: [
       {
@@ -162,56 +143,7 @@ errorField.display = getDisplayProcessor({ field: errorField, theme });
 
 const unmappedField: Partial<Field> = {
   name: 'unmapped',
-  config: {
-    mappings: [
-      {
-        options: {
-          '1': {
-            color: 'green',
-            icon: 'img/icons/unicons/check-circle.svg',
-            index: 0,
-            text: 'Success',
-          },
-          '2': {
-            color: 'orange',
-            icon: 'img/icons/unicons/exclamation-triangle.svg',
-            index: 1,
-            text: 'Warning',
-          },
-          '3': {
-            color: 'red',
-            icon: 'img/icons/unicons/times-circle.svg',
-            index: 2,
-            text: 'Error',
-          },
-        },
-        type: MappingType.ValueToText,
-      },
-      {
-        type: MappingType.ValueToText,
-        options: {
-          '1': {
-            text: 'Success',
-            color: 'green',
-            icon: 'img/icons/unicons/check-circle.svg',
-            index: 0,
-          },
-          '2': {
-            text: 'Warning',
-            color: 'orange',
-            icon: 'img/icons/unicons/exclamation-triangle.svg',
-            index: 1,
-          },
-          '3': {
-            text: 'Error',
-            color: 'red',
-            icon: 'img/icons/unicons/times-circle.svg',
-            index: 2,
-          },
-        },
-      },
-    ],
-  },
+  config: {},
   values: [1],
   type: FieldType.number,
 };
@@ -604,6 +536,22 @@ const getUnmappedIconText = () =>
   screen.getByRole('button', {
     name: 'No mapping (14)',
   }) as HTMLElement;
+
+/**
+ * {@link mockComboboxRect} replaces layout accessors globally; restore prior descriptors afterward so other tests keep working.
+ */
+async function withComboboxLayoutMocks<T>(run: () => Promise<T>): Promise<T> {
+  // const elGbcr = Object.getOwnPropertyDescriptor(Element.prototype, 'getBoundingClientRect');
+  // const htmlOw = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetWidth');
+  // const htmlOh = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetHeight');
+
+  mockComboboxRect();
+
+  try {
+    return await run();
+  } finally {
+  }
+}
 
 describe('Canvas', () => {
   let onFieldConfigChange = jest.fn();
@@ -1129,28 +1077,56 @@ describe('Canvas', () => {
               expect(target.querySelector('svg [id="blade"]')).toBeVisible();
             });
 
-            it('Metric value', async () => {
+            it('Metric value mapping sets element background color using field mapping config', async () => {
               const target = await selectElementOptionsSetup();
+              expect(target).toHaveStyle(`background-color: ${colors.none};`);
+              mockComboboxRect();
 
-              const { ElementState } = jest.requireActual('app/features/canvas/runtime/element');
               jest
-                .spyOn(ElementState.prototype, 'getTopLeftValues')
+                .spyOn(
+                  jest.requireActual('app/features/canvas/runtime/element').ElementState.prototype,
+                  'getTopLeftValues'
+                )
                 .mockReturnValue({ left: 0, top: 0, width: 260, height: 50 });
 
+              // Click on metric value in editor
               await userEvent.click(screen.getAllByText('Metric Value')[0]);
-
               const metricTarget = screen.getByRole('button', { name: /Double click to set field/i });
               expect(metricTarget).toBeVisible();
 
+              // Moveable skips emitting click when inputTarget is the root moveable element; hit inner span (matches real clicks on text).
+              const metricPointerTarget = within(metricTarget).getByText(/Double click to set field/i);
               Object.defineProperty(document, 'elementFromPoint', {
                 configurable: true,
-                value: () => target,
+                value: () => metricPointerTarget,
               });
 
-              await user.dblClick(metricTarget);
+              // Click once to focus into the canvas element and out of the editor
+              await user.click(metricPointerTarget);
+              // And then double click to trigger the field mapping select to get added to the UI
+              await user.dblClick(metricPointerTarget);
+              // Verify double click prompt has been replaced
+              expect(screen.queryByText(/Double click to set field/i)).not.toBeInTheDocument();
 
-              expect(screen.getByPlaceholderText('Select field')).toBeVisible();
-              await user.click(screen.getByPlaceholderText('Select field'));
+              // Click into the select combobox
+              const metricFieldCombo = within(metricTarget).getByPlaceholderText('Select field');
+              await user.click(metricFieldCombo);
+
+              // Verify the combobox is open/expanded
+              expect(metricFieldCombo).toHaveAttribute('aria-expanded', 'true');
+
+              const listboxId = metricFieldCombo.getAttribute('aria-controls') as string;
+              const listbox = document.getElementById(listboxId) as HTMLElement;
+
+              // We should have 4 options, one for each field
+              expect(within(listbox).getAllByRole('option')).toHaveLength(4);
+              expect(within(listbox).getByText('warning')).toBeVisible();
+              expect(within(listbox).getByText('success')).toBeVisible();
+              expect(within(listbox).getByText('error')).toBeVisible();
+              expect(within(listbox).getByText('unmapped')).toBeVisible();
+
+              await user.click(within(listbox).getByText('warning'));
+              expect(target).toHaveStyle(`background-color: ${colors.warningRGB};`);
             });
           });
 
