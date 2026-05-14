@@ -8,8 +8,13 @@ import { buildGridItemForPanel } from '../serialization/transformSaveModelToScen
 
 export function addPanelsOnLoadBehavior(scene: DashboardScene) {
   const dto = store.getObject<DashboardDTO>(DASHBOARD_FROM_LS_KEY);
+  if (!dto) {
+    return;
+  }
 
-  if (dto) {
+  store.delete(DASHBOARD_FROM_LS_KEY);
+
+  const addPanels = () => {
     const model = new DashboardModel(dto.dashboard);
 
     for (const panel of model.panels) {
@@ -28,7 +33,13 @@ export function addPanelsOnLoadBehavior(scene: DashboardScene) {
         });
       }
     }
-  }
+  };
 
-  store.delete(DASHBOARD_FROM_LS_KEY);
+  if (scene.state.editPane.isActive) {
+    addPanels();
+  } else {
+    scene.state.editPane.addActivationHandler(() => {
+      addPanels();
+    });
+  }
 }
