@@ -74,11 +74,6 @@ export interface FeatureToggles {
   */
   influxdbBackendMigration?: boolean;
   /**
-  * Registers a live apiserver
-  * @default false
-  */
-  liveAPIServer?: boolean;
-  /**
   * populate star status from apiserver
   * @default false
   */
@@ -179,11 +174,6 @@ export interface FeatureToggles {
   */
   aiGeneratedDashboardChanges?: boolean;
   /**
-  * Enables CSV encoding options in the reporting feature
-  * @default false
-  */
-  reportingCsvEncodingOptions?: boolean;
-  /**
   * Enables configuration of PDF report settings
   * @default false
   */
@@ -253,21 +243,6 @@ export interface FeatureToggles {
   * @default false
   */
   kubernetesQueryCaching?: boolean;
-  /**
-  * Disable schema validation for dashboards/v1
-  * @default false
-  */
-  dashboardDisableSchemaValidationV1?: boolean;
-  /**
-  * Disable schema validation for dashboards/v2
-  * @default false
-  */
-  dashboardDisableSchemaValidationV2?: boolean;
-  /**
-  * Log schema validation errors so they can be analyzed later
-  * @default false
-  */
-  dashboardSchemaValidationLogging?: boolean;
   /**
   * Register legacy datasource apis that use the numeric id
   * @default false
@@ -360,7 +335,7 @@ export interface FeatureToggles {
   annotationPermissionUpdate?: boolean;
   /**
   * Enables annotation clustering and switches to refactored annotation code
-  * @default false
+  * @default true
   */
   annotationsClustering?: boolean;
   /**
@@ -515,7 +490,7 @@ export interface FeatureToggles {
   logQLScope?: boolean;
   /**
   * Enables SQL Expressions, which can execute SQL queries against data source results.
-  * @default false
+  * @default true
   */
   sqlExpressions?: boolean;
   /**
@@ -523,6 +498,11 @@ export interface FeatureToggles {
   * @default false
   */
   sqlExpressionsColumnAutoComplete?: boolean;
+  /**
+  * Enables CodeMirror editor for SQL Expressions
+  * @default false
+  */
+  sqlExpressionsCodeMirror?: boolean;
   /**
   * Enable grafana's embedded kube-aggregator
   * @default false
@@ -794,11 +774,6 @@ export interface FeatureToggles {
   * @default false
   */
   timeRangeProvider?: boolean;
-  /**
-  * Enables time range panning functionality
-  * @default true
-  */
-  timeRangePan?: boolean;
   /**
   * Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
   * @default false
@@ -1116,6 +1091,11 @@ export interface FeatureToggles {
   */
   kubernetesAuthzDatasourceResourcePermissions?: boolean;
   /**
+  * Enables service account resource permissions via the K8s IAM resource permission APIs
+  * @default false
+  */
+  kubernetesAuthzServiceAccountResourcePermissions?: boolean;
+  /**
   * Enables recently viewed dashboards section in the browsing dashboard page
   * @default false
   */
@@ -1302,11 +1282,6 @@ export interface FeatureToggles {
   */
   vizPresets?: boolean;
   /**
-  * Enable all plugins to supply visualization suggestions (including 3rd party plugins)
-  * @default true
-  */
-  externalVizSuggestions?: boolean;
-  /**
   * Enable field overrides for FieldType.nestedFrames fields (like in nested tables)
   * @default false
   */
@@ -1341,11 +1316,6 @@ export interface FeatureToggles {
   * @default false
   */
   pluginStoreServiceLoading?: boolean;
-  /**
-  * Increases panel padding globally
-  * @default true
-  */
-  newPanelPadding?: boolean;
   /**
   * When storing dashboard and folder resource permissions, only store action sets and not the full list of underlying permission
   * @default true
@@ -1623,7 +1593,7 @@ export interface FeatureToggles {
   frontendServiceSSOAutoLogin?: boolean;
   /**
   * Enables the splash screen modal for introducing new Grafana features on first session
-  * @default true
+  * @default false
   */
   splashScreen?: boolean;
   /**
@@ -1686,4 +1656,14 @@ export interface FeatureToggles {
   * @default false
   */
   ['alerting.rulesAPIV2']?: boolean;
+  /**
+  * Switch the Grafana Alerting UI from notifications.alerting.grafana.app/v0alpha1 to v1beta1
+  * @default false
+  */
+  ['alerting.notificationsAPIV1Beta1']?: boolean;
+  /**
+  * Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana
+  * @default false
+  */
+  ['alerting.syncExternalAlertmanager']?: boolean;
 }

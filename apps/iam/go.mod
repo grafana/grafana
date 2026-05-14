@@ -46,8 +46,8 @@ replace (
 )
 
 require (
-	github.com/grafana/grafana v6.1.6+incompatible
-	github.com/grafana/grafana-app-sdk v0.54.1
+	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
+	github.com/grafana/grafana-app-sdk v0.55.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0
 	k8s.io/apimachinery v0.36.0
 	k8s.io/kube-openapi v0.0.0-20260317180543-43fb72c5454a
@@ -87,7 +87,7 @@ require (
 	github.com/grafana/authlib v0.0.0-20260427145542-9c256e2dbcb2 // indirect
 	github.com/grafana/authlib/types v0.0.0-20260427145542-9c256e2dbcb2 // indirect
 	github.com/grafana/dskit v0.0.0-20260427162712-0457a92dacc3 // indirect
-	github.com/grafana/grafana-app-sdk/logging v0.54.1 // indirect
+	github.com/grafana/grafana-app-sdk/logging v0.55.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.29.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect

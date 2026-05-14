@@ -11,7 +11,6 @@ import (
 	"github.com/modern-go/reflect2"
 
 	alertingModels "github.com/grafana/alerting/models"
-	"github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/receivers"
 	"github.com/grafana/alerting/receivers/schema"
 
@@ -38,11 +37,11 @@ func ContactPointFromContactPointExport(rawContactPoint definitions.ContactPoint
 	return contactPoint, errors.Join(errs...)
 }
 
-// ContactPointToContactPointExport converts definitions.ContactPoint to notify.APIReceiver.
+// ContactPointToContactPointExport converts definitions.ContactPoint to alertingModels.ReceiverConfig.
 // It uses special extension for json-iterator API that properly handles marshalling of some specific fields.
 //
 //nolint:gocyclo
-func ContactPointToContactPointExport(cp definitions.ContactPoint) (notify.APIReceiver, error) {
+func ContactPointToContactPointExport(cp definitions.ContactPoint) (alertingModels.ReceiverConfig, error) {
 	j := jsoniter.ConfigCompatibleWithStandardLibrary
 	// use json iterator with custom extension that has special codec for some field.
 	// This is needed to keep the API models clean and convert from database model
@@ -221,11 +220,11 @@ func ContactPointToContactPointExport(cp definitions.ContactPoint) (notify.APIRe
 	}
 
 	if len(errs) > 0 {
-		return notify.APIReceiver{}, errors.Join(errs...)
+		return alertingModels.ReceiverConfig{}, errors.Join(errs...)
 	}
-	contactPoint := notify.APIReceiver{
-		ConfigReceiver: notify.ConfigReceiver{Name: cp.Name},
-		ReceiverConfig: alertingModels.ReceiverConfig{Integrations: integration},
+	contactPoint := alertingModels.ReceiverConfig{
+		Name:         cp.Name,
+		Integrations: integration,
 	}
 	return contactPoint, nil
 }

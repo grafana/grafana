@@ -11,7 +11,6 @@ import (
 	"k8s.io/apiserver/pkg/util/dryrun"
 
 	claims "github.com/grafana/authlib/types"
-
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -20,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 )
 
@@ -43,9 +41,7 @@ type folderStorage struct {
 	tableConverter rest.TableConvertor
 
 	permissionsOnCreate  bool // cfg.RBAC.PermissionsOnCreation("folder")
-	features             featuremgmt.FeatureToggles
 	folderPermissionsSvc accesscontrol.FolderPermissionsService
-	acService            accesscontrol.Service
 }
 
 func (s *folderStorage) New() runtime.Object {
@@ -185,10 +181,6 @@ func (s *folderStorage) setDefaultFolderPermissions(ctx context.Context, orgID i
 	_, err := s.folderPermissionsSvc.SetPermissions(ctx, orgID, uid, permissions...)
 	if err != nil {
 		return err
-	}
-
-	if user.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
-		s.acService.ClearUserPermissionCache(user)
 	}
 
 	return nil
