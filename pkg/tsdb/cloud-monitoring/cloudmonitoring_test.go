@@ -1200,5 +1200,4 @@ func TestCheckHealth(t *testing.T) {
 		assert.Equal(t, backend.HealthStatusError, res.Status)
 		assert.Contains(t, res.Message, "Default project is required")
 	})
-
 }
