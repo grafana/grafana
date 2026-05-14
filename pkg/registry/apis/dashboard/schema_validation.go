@@ -3,7 +3,6 @@ package dashboard
 import (
 	"context"
 	_ "embed"
-	"fmt"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -25,14 +24,8 @@ func (b *DashboardsAPIBuilder) ValidateDashboardSpec(ctx context.Context, obj ru
 		switch obj.(type) {
 		case *v0.Dashboard:
 			errorOnSchemaMismatches = false // Never error for v0
-		case *v1.Dashboard:
-			errorOnSchemaMismatches = true
-		case *v2alpha1.Dashboard:
-		case *v2beta1.Dashboard:
-		case *v2.Dashboard:
-			errorOnSchemaMismatches = true
 		default:
-			return nil, fmt.Errorf("invalid dashboard type: %T", obj)
+			errorOnSchemaMismatches = true
 		}
 	}
 	if mode == metav1.FieldValidationWarn {
