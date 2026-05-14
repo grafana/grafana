@@ -95,6 +95,7 @@ v0alpha1: {
 					}
 					response: {
 						teams: [...string]
+						totalHits: int64
 					}
 					responseMetadata: objectMeta: false
 				}

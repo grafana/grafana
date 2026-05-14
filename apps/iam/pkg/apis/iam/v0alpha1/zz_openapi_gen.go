@@ -111,8 +111,15 @@ func schema_pkg_apis_iam_v0alpha1_CreateSearchExternalGroupMappingsBody(ref comm
 							},
 						},
 					},
+					"totalHits": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
+						},
+					},
 				},
-				Required: []string{"teams"},
+				Required: []string{"teams", "totalHits"},
 			},
 		},
 	}
@@ -152,8 +159,15 @@ func schema_pkg_apis_iam_v0alpha1_CreateSearchExternalGroupMappingsResponse(ref 
 							},
 						},
 					},
+					"totalHits": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
+						},
+					},
 				},
-				Required: []string{"teams"},
+				Required: []string{"teams", "totalHits"},
 			},
 		},
 	}

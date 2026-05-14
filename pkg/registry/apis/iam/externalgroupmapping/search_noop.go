@@ -30,7 +30,7 @@ func (n *NoopSearchREST) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) 
 				Spec: &spec3.PathProps{
 					Post: &spec3.Operation{
 						OperationProps: spec3.OperationProps{
-							Description: "Search ExternalGroupMapping resources by the provided external group IDs.",
+							Description: "Returns the team UIDs that map to any of the provided external group IDs.",
 							Tags:        []string{"Search"},
 							OperationId: "searchExternalGroupMappings",
 							RequestBody: &spec3.RequestBody{

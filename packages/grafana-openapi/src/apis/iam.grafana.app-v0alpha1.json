@@ -649,7 +649,7 @@
     "/searchExternalGroupMappings": {
       "post": {
         "tags": ["Search"],
-        "description": "Search ExternalGroupMapping resources by the provided external group IDs.",
+        "description": "Returns the team UIDs that map to any of the provided external group IDs.",
         "operationId": "searchExternalGroupMappings",
         "parameters": [
           {
@@ -3961,7 +3961,7 @@
     "schemas": {
       "CreateSearchExternalGroupMappingsBody": {
         "type": "object",
-        "required": ["teams"],
+        "required": ["teams", "totalHits"],
         "properties": {
           "teams": {
             "type": "array",
@@ -3969,12 +3969,17 @@
               "type": "string",
               "default": ""
             }
+          },
+          "totalHits": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
           }
         }
       },
       "CreateSearchExternalGroupMappingsResponse": {
         "type": "object",
-        "required": ["teams"],
+        "required": ["teams", "totalHits"],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -3990,6 +3995,11 @@
               "type": "string",
               "default": ""
             }
+          },
+          "totalHits": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
           }
         }
       },

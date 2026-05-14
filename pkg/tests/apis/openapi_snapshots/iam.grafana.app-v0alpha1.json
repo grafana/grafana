@@ -697,7 +697,7 @@
         "tags": [
           "Search"
         ],
-        "description": "Search ExternalGroupMapping resources by the provided external group IDs.",
+        "description": "Returns the team UIDs that map to any of the provided external group IDs.",
         "operationId": "searchExternalGroupMappings",
         "parameters": [
           {
@@ -4276,7 +4276,8 @@
       "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.CreateSearchExternalGroupMappingsBody": {
         "type": "object",
         "required": [
-          "teams"
+          "teams",
+          "totalHits"
         ],
         "properties": {
           "teams": {
@@ -4285,13 +4286,19 @@
               "type": "string",
               "default": ""
             }
+          },
+          "totalHits": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
           }
         }
       },
       "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.CreateSearchExternalGroupMappingsResponse": {
         "type": "object",
         "required": [
-          "teams"
+          "teams",
+          "totalHits"
         ],
         "properties": {
           "apiVersion": {
@@ -4308,6 +4315,11 @@
               "type": "string",
               "default": ""
             }
+          },
+          "totalHits": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
           }
         }
       },

@@ -4,7 +4,8 @@ package v0alpha1
 
 // +k8s:openapi-gen=true
 type CreateSearchExternalGroupMappingsBody struct {
-	Teams []string `json:"teams"`
+	Teams     []string `json:"teams"`
+	TotalHits int64    `json:"totalHits"`
 }
 
 // NewCreateSearchExternalGroupMappingsBody creates a new CreateSearchExternalGroupMappingsBody object.

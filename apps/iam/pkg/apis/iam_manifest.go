@@ -894,9 +894,15 @@ var appManifestData = app.ManifestData{
 																				},
 																			},
 																		},
+																		"totalHits": {
+																			SchemaProps: spec.SchemaProps{
+																				Type: []string{"integer"},
+																			},
+																		},
 																	},
 																	Required: []string{
 																		"teams",
+																		"totalHits",
 																		"apiVersion",
 																		"kind",
 																	},
