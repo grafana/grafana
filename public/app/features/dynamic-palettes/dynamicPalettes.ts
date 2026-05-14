@@ -60,7 +60,6 @@ function getPaletteMeta(indexItem: Record<string, unknown>): DynamicPaletteMeta 
 function getPaletteColors(storage: Storage, paletteId: string, theme: GrafanaTheme2): string[] {
   const rawColors = parseArray(storage.getItem(`${DYNAMIC_PALETTE_KEY_PREFIX}${paletteId}`));
 
-  console.log('rawColors', rawColors);
   return rawColors.filter(
     (v): v is string =>
       typeof v === 'string' &&
@@ -110,7 +109,6 @@ export async function fetchDynamicFieldColorModes(theme: GrafanaTheme2): Promise
     .filter((meta): meta is DynamicPaletteMeta => meta !== undefined)
     .map((meta) => {
       const colors = getPaletteColors(storage, meta.id, theme);
-      console.log('colors after filter', colors);
       if (colors.length === 0) {
         return undefined;
       }
