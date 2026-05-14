@@ -754,7 +754,7 @@ func TestV1ToV2alpha1_TimezoneEmptyString(t *testing.T) {
 
 // TestV1ToV2alpha1_AnnotationPanelFilterInt64Ids verifies that v1 dashboards whose
 // annotation panel-filter references a panel id outside the uint32 range survive
-// conversion to v2alpha1. 
+// conversion to v2alpha1.
 func TestV1ToV2alpha1_AnnotationPanelFilterInt64Ids(t *testing.T) {
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	leProvider := migrationtestutil.NewLibraryElementProvider()
