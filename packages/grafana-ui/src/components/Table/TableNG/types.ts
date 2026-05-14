@@ -1,6 +1,6 @@
 import { Property } from 'csstype';
 import { SyntheticEvent } from 'react';
-import { Column } from 'react-data-grid';
+import { Column } from '@grafana/react-data-grid';
 
 import {
   DataFrame,

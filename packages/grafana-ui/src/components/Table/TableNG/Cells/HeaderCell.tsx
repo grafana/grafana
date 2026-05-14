@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import React, { useEffect } from 'react';
-import { Column, SortDirection } from 'react-data-grid';
+import { Column, SortDirection } from '@grafana/react-data-grid';
 
 import { Field, GrafanaTheme2 } from '@grafana/data';
 

@@ -1,5 +1,5 @@
 import { Property } from 'csstype';
-import { SortColumn } from 'react-data-grid';
+import { SortColumn } from '@grafana/react-data-grid';
 import tinycolor from 'tinycolor2';
 
 import {
