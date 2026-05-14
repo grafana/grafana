@@ -358,7 +358,7 @@ These errors are specific to Basic Logs queries.
 
 These errors occur when using Azure Monitor data in Grafana alert rules or recording rules. For general alerting configuration, refer to the [Azure Monitor alerting documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/alerting/).
 
-### Alerting fails with Current User authentication
+### Alert failure with Current User authentication
 
 **Symptoms:**
 
