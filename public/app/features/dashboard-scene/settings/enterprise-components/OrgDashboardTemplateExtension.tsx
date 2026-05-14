@@ -24,10 +24,10 @@ export interface OrgDashboardTemplateHistoryListResult {
 }
 
 export interface OrgDashboardTemplateExtensionHooks {
-  loadTemplate(orgDashboardTemplateUid: string): Promise<Resource<OrgDashboardTemplateResourceSpec>>;
+  loadTemplate(uid: string): Promise<Resource<OrgDashboardTemplateResourceSpec>>;
 
   listHistory(
-    orgDashboardTemplateUid: string,
+    uid: string,
     options: { limit: number; continueToken?: string }
   ): Promise<OrgDashboardTemplateHistoryListResult>;
 

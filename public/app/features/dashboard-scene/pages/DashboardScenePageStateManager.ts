@@ -40,6 +40,7 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { initializeReportRenderReadinessObserver } from 'app/features/dashboard/services/ReportRenderReadinessObserver';
 import { initializeScenePerformanceLogger } from 'app/features/dashboard/services/ScenePerformanceLogger';
 import { emitDashboardViewEvent } from 'app/features/dashboard/state/analyticsProcessor';
+import { toTemplateDashboardEnvelope } from 'app/features/dashboard-scene/utils/orgDashboardTemplateEnvelope';
 import { trackDashboardSceneLoaded } from 'app/features/dashboard-scene/utils/tracking';
 import { interpolateV1Dashboard } from 'app/features/manage-dashboards/import/utils/inputs';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
@@ -1175,46 +1176,23 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
       // TODO: replace hasEditPermissionInFolders placeholder with a dedicated
       // OrgDashboardTemplatesWrite permission when RBAC for this resource is introduced.
       const canEditTemplate = contextSrv.hasEditPermissionInFolders;
-      return {
-        apiVersion: dashboardAPIVersionResolver.getV2(),
-        kind: 'DashboardWithAccessInfo',
-        metadata: {
-          creationTimestamp: '',
-          name: '',
-          resourceVersion,
-        },
-        spec: response.spec.dashboard,
-        access: {
-          canSave: canEditTemplate,
-          canEdit: canEditTemplate,
-          canStar: false,
-          canShare: false,
-          canDelete: false,
-        },
-      };
+      return toTemplateDashboardEnvelope({
+        dashboardSpec: response.spec.dashboard,
+        resourceVersion,
+        canEdit: canEditTemplate,
+        canSave: canEditTemplate,
+      });
     }
 
     // Use-template flow: unchanged legacy behavior. The embedded dashboard spec is hydrated
     // into a fresh scene so the user can "Save as" a brand-new dashboard. Do NOT mark the
     // scene as an org template; no snapshot, no orgDashboardTemplateUid — this is not an edit of the
     // template, it's a cloning flow.
-    return {
-      apiVersion: dashboardAPIVersionResolver.getV2(),
-      kind: 'DashboardWithAccessInfo',
-      metadata: {
-        creationTimestamp: '',
-        name: '',
-        resourceVersion: '0',
-      },
-      spec: response.spec.dashboard,
-      access: {
-        canSave: contextSrv.hasEditPermissionInFolders,
-        canEdit: contextSrv.hasEditPermissionInFolders,
-        canStar: false,
-        canShare: false,
-        canDelete: false,
-      },
-    };
+    return toTemplateDashboardEnvelope({
+      dashboardSpec: response.spec.dashboard,
+      canEdit: contextSrv.hasEditPermissionInFolders,
+      canSave: contextSrv.hasEditPermissionInFolders,
+    });
   }
 
   public async reloadDashboard(queryParams: UrlQueryMap): Promise<void> {
