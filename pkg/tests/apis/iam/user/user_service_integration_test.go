@@ -638,9 +638,16 @@ func TestIntegrationUserServiceSearchAuthorization(t *testing.T) {
 	}, &createUserResponse{})
 	require.Equal(t, 200, betaResp.Response.StatusCode, "body: %s", string(betaResp.Body))
 
-	// Editor role gives org.users:read with broad org scope. The custom
-	// permission grants users:read scoped to alpha only (the legacy stored
-	// scope format global.users:id:<n>).
+	// The scoped user needs two grants to exercise the redirect + filter chain
+	// end-to-end:
+	//   1) users:read — required by the /api/users/search route gate (see the
+	//      editor_route_gate sub-test above). Any scope is fine here; the
+	//      gate only checks the action.
+	//   2) org.users:read scoped to users:id:<alphaID> — the legacy SQL
+	//      filter at pkg/services/org/orgimpl/store.go:555 reads this scope
+	//      via accesscontrol.Filter(..., "org_user.user_id", "users:id:",
+	//      accesscontrol.ActionOrgUsersRead) and builds
+	//      `org_user.user_id IN (alphaID)`, so only alpha is returned.
 	scopedUser := helper.CreateUser(
 		"scoped-search-user",
 		apis.Org1,
@@ -649,6 +656,12 @@ func TestIntegrationUserServiceSearchAuthorization(t *testing.T) {
 			{
 				Actions:           []string{accesscontrol.ActionUsersRead},
 				Resource:          "global.users",
+				ResourceAttribute: "id",
+				ResourceID:        strconv.FormatInt(alphaID, 10),
+			},
+			{
+				Actions:           []string{accesscontrol.ActionOrgUsersRead},
+				Resource:          "users",
 				ResourceAttribute: "id",
 				ResourceID:        strconv.FormatInt(alphaID, 10),
 			},
