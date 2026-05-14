@@ -35,7 +35,7 @@ The Grafana CLI `gcx` is available in [public preview](https://grafana.com/docs/
 
 ## Benefits of `gcx`
 
-Among other, the `gcx` CLI provides the following benefits:
+Among others, `gcx` provides the following benefits:
 
 - **Manage Grafana OSS/Enterprise and Grafana Cloud:** Use a single tool for dashboards, alerting, SLOs, on-call, synthetic checks, load testing, and more.
 - **GitOps**: Pull resources to files, version in Git, or push back with full round-trip fidelity.
