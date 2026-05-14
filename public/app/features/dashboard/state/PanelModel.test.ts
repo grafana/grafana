@@ -4,7 +4,6 @@ import {
   FieldConfigProperty,
   type PanelData,
   type PanelProps,
-  setLegacyApiReporter,
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
   dateTime,
@@ -669,9 +668,6 @@ const reportMock = reportLegacyDashboardApiUsage as jest.Mock;
 describe('PanelModel legacy API telemetry — migration invocation', () => {
   beforeEach(() => {
     reportMock.mockClear();
-    // Prevent setMigrationHandler's bridge call (from @grafana/data) from reaching
-    // the real reportLegacyDashboardApiUsage (which does console.warn via dedup logic).
-    setLegacyApiReporter(jest.fn());
   });
 
   it('reports PanelMigrationHandler.invoke when pluginLoaded runs onPanelMigration', async () => {
@@ -712,7 +708,6 @@ describe('PanelModel legacy API telemetry — migration invocation', () => {
 describe('PanelModel legacy API telemetry — changePlugin', () => {
   beforeEach(() => {
     reportMock.mockClear();
-    setLegacyApiReporter(jest.fn());
   });
 
   it('reports PanelModel.changePlugin.invoke when changePlugin runs', async () => {

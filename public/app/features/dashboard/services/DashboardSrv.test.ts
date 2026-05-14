@@ -1,4 +1,4 @@
-import { resolvePluginIdFromStack, setLegacyApiReporter } from '@grafana/data';
+import { resolvePluginIdFromStack } from '@grafana/data';
 import { reportLegacyDashboardApiUsage } from '@grafana/runtime';
 
 import { type DashboardModel } from '../state/DashboardModel';
@@ -21,7 +21,6 @@ describe('DashboardSrv.getCurrent legacy telemetry', () => {
   beforeEach(() => {
     reportMock.mockClear();
     resolveMock.mockReset();
-    setLegacyApiReporter(jest.fn()); // silence the Task 5 bridge wiring
   });
 
   it('reports when the caller resolves to a plugin', () => {

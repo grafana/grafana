@@ -25,19 +25,17 @@ This guide explains what legacy dashboard API usage Grafana detects in plugins, 
 
 Grafana instruments plugin call sites in the legacy (non-scenes) dashboard architecture. Each surface has an `apiName` value that appears in deprecation warnings and telemetry.
 
-| `apiName`                         | What triggers it                                                                                                                                                                                                 |
-| --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PanelMigrationHandler.register`  | A panel plugin called `PanelPlugin.setMigrationHandler()` at registration time. Scenes never invokes this handler, so the registration itself is the legacy marker.                                              |
-| `PanelMigrationHandler.invoke`    | The legacy `PanelModel.pluginLoaded()` code path actually invoked a panel plugin's `onPanelMigration` handler. This only fires in non-scenes flows (alerting rule editor, library panels, panel editor Redux).   |
-| `PanelTypeChangedHandler.invoke`  | Scenes deserialised a dashboard JSON containing an old panel type and invoked the migration target plugin's `onPanelTypeChanged` handler. This is the one legacy plugin hook that scenes still calls at runtime. |
-| `PanelModel.changePlugin.invoke`  | The legacy `PanelModel.changePlugin()` ran. This is reachable from the panel error-recovery flow when a broken panel isn't a scenes `VizPanel`.                                                                  |
-| `DashboardSrv.getCurrent`         | A plugin called `getDashboardSrv().getCurrent()`. The returned object is a scenes compatibility wrapper, but the API itself is the legacy `DashboardSrv` singleton, not a scenes-native API.                     |
-| `RefreshEvent.subscribe`          | A plugin subscribed to the legacy `RefreshEvent`.                                                                                                                                                                |
-| `RefreshEvent.getStream`          | A plugin got a stream of the legacy `RefreshEvent`.                                                                                                                                                              |
-| `TimeRangeUpdatedEvent.subscribe` | A plugin subscribed to the legacy `TimeRangeUpdatedEvent`.                                                                                                                                                       |
-| `TimeRangeUpdatedEvent.getStream` | A plugin got a stream of the legacy `TimeRangeUpdatedEvent`.                                                                                                                                                     |
-| `CopyPanelEvent.subscribe`        | A plugin subscribed to the legacy `CopyPanelEvent`.                                                                                                                                                              |
-| `CopyPanelEvent.getStream`        | A plugin got a stream of the legacy `CopyPanelEvent`.                                                                                                                                                            |
+| `apiName`                         | What triggers it                                                                                                                                                                                               |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PanelMigrationHandler.invoke`    | The legacy `PanelModel.pluginLoaded()` code path actually invoked a panel plugin's `onPanelMigration` handler. This only fires in non-scenes flows (alerting rule editor, library panels, panel editor Redux). |
+| `PanelModel.changePlugin.invoke`  | The legacy `PanelModel.changePlugin()` ran. This is reachable from the panel error-recovery flow when a broken panel isn't a scenes `VizPanel`.                                                                |
+| `DashboardSrv.getCurrent`         | A plugin called `getDashboardSrv().getCurrent()`. The returned object is a scenes compatibility wrapper, but the API itself is the legacy `DashboardSrv` singleton, not a scenes-native API.                   |
+| `RefreshEvent.subscribe`          | A plugin subscribed to the legacy `RefreshEvent`.                                                                                                                                                              |
+| `RefreshEvent.getStream`          | A plugin got a stream of the legacy `RefreshEvent`.                                                                                                                                                            |
+| `TimeRangeUpdatedEvent.subscribe` | A plugin subscribed to the legacy `TimeRangeUpdatedEvent`.                                                                                                                                                     |
+| `TimeRangeUpdatedEvent.getStream` | A plugin got a stream of the legacy `TimeRangeUpdatedEvent`.                                                                                                                                                   |
+| `CopyPanelEvent.subscribe`        | A plugin subscribed to the legacy `CopyPanelEvent`.                                                                                                                                                            |
+| `CopyPanelEvent.getStream`        | A plugin got a stream of the legacy `CopyPanelEvent`.                                                                                                                                                          |
 
 ## Why these APIs are deprecated
 
@@ -55,15 +53,11 @@ Open your browser DevTools, load any dashboard that uses your plugin, and check 
 
 ## Migration paths
 
-### Panel migration handlers (`PanelMigrationHandler.*`)
+### `PanelMigrationHandler.invoke`
 
 Scenes doesn't invoke the handler registered with `PanelPlugin.setMigrationHandler()` during normal dashboard load. If your plugin registered a migration handler to upgrade stored panel options, that logic no longer runs in scenes-powered dashboards.
 
-Migrate your option-upgrade logic to `PanelPlugin.setPanelChangeHandler()` (`onPanelTypeChanged`). Scenes does still call `onPanelTypeChanged` during Angular-era panel deserialisation, so this is the correct place for panel-type and option migration in scenes.
-
-### `PanelTypeChangedHandler.invoke`
-
-This telemetry tracks usage of the `onPanelTypeChanged` hook, which scenes still calls. No migration action is required at this time.
+Migrate your option-upgrade logic to `PanelPlugin.setPanelChangeHandler()` (`onPanelTypeChanged`). Scenes still calls `onPanelTypeChanged` during Angular-era panel deserialisation, so this is the correct place for panel-type and option migration.
 
 ### `PanelModel.changePlugin.invoke`
 
