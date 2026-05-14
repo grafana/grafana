@@ -90,8 +90,8 @@ The following are configuration options for the Google Cloud Monitoring data sou
 
 Configure how Grafana authenticates with Google Cloud.
 
-| Setting                 | Description                                                                                                                                                                                                                                                                 |
-| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Setting                 | Description                                                                                                                                                                                                                                                         |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Authentication type** | Select the authentication method. Choose **Google JWT File** to use a service account key file, **GCE Default Service Account** if Grafana is running on a GCE virtual machine, or **Forward OAuth Identity** to authenticate as the Google-signed-in Grafana user. |
 
 ### JWT Key Details
