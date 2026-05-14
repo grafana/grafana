@@ -452,7 +452,6 @@ export type LegendPlacement = ('bottom' | 'right');
 /**
  * TODO docs
  * Note: "hidden" needs to remain as an option for plugins compatibility
- * @deprecated 'hidden' is deprecated, use showLegend: false
  */
 export enum LegendDisplayMode {
   Hidden = 'hidden',
