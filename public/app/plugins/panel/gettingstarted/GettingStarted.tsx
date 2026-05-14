@@ -2,11 +2,11 @@
 import { css, cx } from '@emotion/css';
 import { memo, useEffect, useState } from 'react';
 
-import { type PanelProps } from '@grafana/data';
+import { type GrafanaTheme2, type PanelProps } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import { useUserStorage } from '@grafana/runtime/internal';
-import { Button, Spinner, stylesFactory } from '@grafana/ui';
+import { Button, Spinner, useStyles2 } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { Step } from './components/Step';
@@ -19,6 +19,8 @@ interface State {
   steps: SetupStep[];
 }
 
+const STORAGE_KEY = 'gettingStartedPanelDismissed';
+
 export const GettingStarted = memo(function GettingStarted({ id }: PanelProps) {
   const storage = useUserStorage('grafana-help-flags');
   const [state, setState] = useState<State>({
@@ -26,12 +28,13 @@ export const GettingStarted = memo(function GettingStarted({ id }: PanelProps) {
     currentStep: 0,
     steps: getSteps(),
   });
+  const styles = useStyles2(getStyles);
 
   useEffect(() => {
     const { steps } = state;
 
     Promise.all([
-      storage.getItem('gettingStartedPanelDismissed'),
+      storage.getItem(STORAGE_KEY),
       ...steps.map(async (step: SetupStep) => {
         const checkedCards = await Promise.all(
           step.cards.map((card) => card.check().then((passed) => ({ ...card, done: passed })))
@@ -69,11 +72,10 @@ export const GettingStarted = memo(function GettingStarted({ id }: PanelProps) {
     const panel = dashboard?.getPanelById(id);
     reportInteraction('grafana_getting_started_remove_panel');
     dashboard?.removePanel(panel!);
-    await storage.setItem('gettingStartedPanelDismissed', 'true');
+    await storage.setItem(STORAGE_KEY, 'true');
   };
 
   const { checksDone, currentStep, steps } = state;
-  const styles = getStyles();
   const step = steps[currentStep];
 
   return (
@@ -119,8 +121,7 @@ export const GettingStarted = memo(function GettingStarted({ id }: PanelProps) {
   );
 });
 
-const getStyles = stylesFactory(() => {
-  const theme = config.theme2;
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css({
       display: 'flex',
@@ -200,4 +201,4 @@ const getStyles = stylesFactory(() => {
       marginRight: theme.spacing(1),
     }),
   };
-});
+};
