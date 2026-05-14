@@ -1,5 +1,4 @@
 import { FC, SyntheticEvent } from 'react';
-import { CellRendererProps, Column } from 'react-data-grid';
 
 import {
   DataFrame,
@@ -14,6 +13,7 @@ import {
   SelectableValue,
   FieldState,
 } from '@grafana/data';
+import { CellRendererProps, Column } from '@grafana/react-data-grid';
 import { TableCellHeight, TableFieldOptions } from '@grafana/schema';
 
 import { TableCellInspectorMode } from '../TableCellInspector';
