@@ -1,4 +1,10 @@
-import { type Field, fieldColorModeRegistry, type FieldColorMode, type GrafanaTheme2 } from '@grafana/data';
+import {
+  colorManipulator,
+  type Field,
+  type FieldColorMode,
+  fieldColorModeRegistry,
+  type GrafanaTheme2,
+} from '@grafana/data';
 
 export const DYNAMIC_PALETTES_INDEX_KEY = 'grafana.dynamicPalettes';
 export const DYNAMIC_PALETTE_KEY_PREFIX = 'grafana.dynamicPalette.';
@@ -51,9 +57,16 @@ function getPaletteMeta(indexItem: Record<string, unknown>): DynamicPaletteMeta 
   };
 }
 
-function getPaletteColors(storage: Storage, paletteId: string): string[] {
+function getPaletteColors(storage: Storage, paletteId: string, theme: GrafanaTheme2): string[] {
   const rawColors = parseArray(storage.getItem(`${DYNAMIC_PALETTE_KEY_PREFIX}${paletteId}`));
-  return rawColors.filter((v): v is string => typeof v === 'string');
+
+  console.log('rawColors', rawColors);
+  return rawColors.filter(
+    (v): v is string =>
+      typeof v === 'string' &&
+      colorManipulator.getContrastRatio(theme.visualization.getColorByName(v), theme.colors.background.primary) >=
+        theme.colors.contrastThreshold
+  );
 }
 
 function makeDynamicFieldColorMode(meta: DynamicPaletteMeta, colors: string[]): FieldColorMode {
@@ -77,7 +90,7 @@ function makeDynamicFieldColorMode(meta: DynamicPaletteMeta, colors: string[]): 
   };
 }
 
-export async function fetchDynamicFieldColorModes(): Promise<FieldColorMode[]> {
+export async function fetchDynamicFieldColorModes(theme: GrafanaTheme2): Promise<FieldColorMode[]> {
   await new Promise<void>((resolve) => {
     setTimeout(resolve, 2000);
   });
@@ -96,7 +109,8 @@ export async function fetchDynamicFieldColorModes(): Promise<FieldColorMode[]> {
     .map(getPaletteMeta)
     .filter((meta): meta is DynamicPaletteMeta => meta !== undefined)
     .map((meta) => {
-      const colors = getPaletteColors(storage, meta.id);
+      const colors = getPaletteColors(storage, meta.id, theme);
+      console.log('colors after filter', colors);
       if (colors.length === 0) {
         return undefined;
       }
@@ -118,9 +132,9 @@ export function isDynamicPalettesLoaded(): boolean {
   return dynamicPalettesLoaded;
 }
 
-export async function loadDynamicFieldColorModes(): Promise<FieldColorMode[]> {
+export async function loadDynamicFieldColorModes(theme: GrafanaTheme2): Promise<FieldColorMode[]> {
   if (!cachedLoadPromise) {
-    cachedLoadPromise = fetchDynamicFieldColorModes().then((modes) => {
+    cachedLoadPromise = fetchDynamicFieldColorModes(theme).then((modes) => {
       registerDynamicFieldColorModes(modes);
       dynamicPalettesLoaded = true;
       return modes;

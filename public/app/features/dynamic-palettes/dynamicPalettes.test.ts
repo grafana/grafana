@@ -1,4 +1,4 @@
-import { fieldColorModeRegistry } from '@grafana/data';
+import { createTheme, fieldColorModeRegistry } from '@grafana/data';
 
 import {
   DYNAMIC_PALETTES_INDEX_KEY,
@@ -29,8 +29,10 @@ describe('dynamicPalettes', () => {
     jest.useRealTimers();
   });
 
+  const theme = createTheme();
+
   it('returns no modes when index key is missing', async () => {
-    const modesPromise = fetchDynamicFieldColorModes();
+    const modesPromise = fetchDynamicFieldColorModes(theme);
 
     jest.advanceTimersByTime(wait);
 
@@ -43,7 +45,7 @@ describe('dynamicPalettes', () => {
       JSON.stringify([{ id: getTestPaletteId('missing'), name: 'Missing' }])
     );
 
-    const modesPromise = fetchDynamicFieldColorModes();
+    const modesPromise = fetchDynamicFieldColorModes(theme);
 
     jest.advanceTimersByTime(wait);
     await expect(modesPromise).resolves.toHaveLength(0);
@@ -58,7 +60,7 @@ describe('dynamicPalettes', () => {
     );
     localStorage.setItem(`${DYNAMIC_PALETTE_KEY_PREFIX}${paletteId}`, JSON.stringify(['#FF0000', '#00FF00']));
 
-    const firstLoad = loadDynamicFieldColorModes();
+    const firstLoad = loadDynamicFieldColorModes(theme);
     jest.advanceTimersByTime(wait);
     const firstModes = await firstLoad;
 
@@ -67,7 +69,7 @@ describe('dynamicPalettes', () => {
     expect(fieldColorModeRegistry.getIfExists(paletteId)).toBeDefined();
     expect(isDynamicPalettesLoaded()).toBe(true);
 
-    const secondLoad = await loadDynamicFieldColorModes();
+    const secondLoad = await loadDynamicFieldColorModes(theme);
     expect(secondLoad).toEqual(firstModes);
   });
 
@@ -75,7 +77,7 @@ describe('dynamicPalettes', () => {
     localStorage.setItem(DYNAMIC_PALETTES_INDEX_KEY, JSON.stringify([]));
 
     let resolved = false;
-    const modesPromise = fetchDynamicFieldColorModes().then(() => {
+    const modesPromise = fetchDynamicFieldColorModes(theme).then(() => {
       resolved = true;
     });
 
