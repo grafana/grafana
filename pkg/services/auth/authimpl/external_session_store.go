@@ -15,11 +15,14 @@ var _ auth.ExternalSessionStore = (*store)(nil)
 
 type store struct {
 	sqlStore       db.DB
-	secretsService secrets.Service
+	secretsService secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	tracer         tracing.Tracer
 }
 
-func provideExternalSessionStore(sqlStore db.DB, secretService secrets.Service, tracer tracing.Tracer) auth.ExternalSessionStore {
+func provideExternalSessionStore(sqlStore db.DB,
+	secretService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+	tracer tracing.Tracer,
+) auth.ExternalSessionStore {
 	return &store{
 		sqlStore:       sqlStore,
 		secretsService: secretService,

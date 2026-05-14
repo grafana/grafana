@@ -247,8 +247,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   private _scrollRef?: ScrollRefElement;
   private _prevScrollPos?: number;
 
-  protected _renderBeforeActivation = true;
-
   public serializer: DashboardSceneSerializerLike<
     Dashboard | DashboardV2Spec,
     DashboardMeta | DashboardWithAccessInfo<DashboardV2Spec>['metadata'],

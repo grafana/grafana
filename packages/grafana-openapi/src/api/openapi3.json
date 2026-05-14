@@ -8125,9 +8125,6 @@
           "queryHistory": {
             "$ref": "#/components/schemas/QueryHistoryPreference"
           },
-          "regionalFormat": {
-            "type": "string"
-          },
           "theme": {
             "enum": ["light", "dark"],
             "type": "string"
@@ -8765,7 +8762,7 @@
             "type": "string"
           },
           "language": {
-            "description": "Selected language (beta)",
+            "description": "Selected language",
             "type": "string"
           },
           "navbar": {
@@ -8774,16 +8771,12 @@
           "queryHistory": {
             "$ref": "#/components/schemas/PreferencesQueryHistoryPreference"
           },
-          "regionalFormat": {
-            "description": "Selected locale (beta)",
-            "type": "string"
-          },
           "theme": {
-            "description": "light, dark, empty is default",
+            "description": "user interface theme",
             "type": "string"
           },
           "timezone": {
-            "description": "The timezone selection\nTODO: this should use the timezone defined in common",
+            "description": "The timezone selection",
             "type": "string"
           },
           "weekStart": {
@@ -12266,9 +12259,6 @@
           },
           "queryHistory": {
             "$ref": "#/components/schemas/QueryHistoryPreference"
-          },
-          "regionalFormat": {
-            "type": "string"
           },
           "theme": {
             "enum": ["light", "dark", "system"],

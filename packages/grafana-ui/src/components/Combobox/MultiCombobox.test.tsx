@@ -2,6 +2,8 @@ import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent, { type UserEvent } from '@testing-library/user-event';
 import React from 'react';
 
+import { mockComboboxRect } from '@grafana/test-utils';
+
 import { Drawer } from '../Drawer/Drawer';
 import { Modal } from '../Modal/Modal';
 
@@ -11,18 +13,7 @@ import { DEBOUNCE_TIME_MS } from './useOptions';
 
 describe('MultiCombobox', () => {
   beforeAll(() => {
-    const mockGetBoundingClientRect = jest.fn(() => ({
-      width: 120,
-      height: 120,
-      top: 0,
-      left: 0,
-      bottom: 0,
-      right: 0,
-    }));
-
-    Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
-      value: mockGetBoundingClientRect,
-    });
+    mockComboboxRect();
   });
 
   let user: UserEvent;

@@ -13,6 +13,8 @@ import {
 
 // Flag key constants for programmatic access
 export const FlagKeys = {
+  /** Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana */
+  AlertingSyncExternalAlertmanager: "alerting.syncExternalAlertmanager",
   /** Enables new analytics framework */
   AnalyticsFramework: "analyticsFramework",
   /** Enables the template dashboard assistant */
@@ -37,8 +39,16 @@ export const FlagKeys = {
   FlameGraphWithCallTree: "flameGraphWithCallTree",
   /** Enables global and folder-scoped dashboard variables via dashboard.grafana.app */
   GlobalDashboardVariables: "globalDashboardVariables",
+  /** Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button) */
+  GrafanaEnableScopesFirstMode: "grafana.enableScopesFirstMode",
   /** Whether to use the new SharedPreferences functional component */
   GrafanaNewPreferencesPage: "grafana.newPreferencesPage",
+  /** Enables org-defined dashboard templates for enterprise */
+  GrafanaOrgDashboardTemplates: "grafana.orgDashboardTemplates",
+  /** Prevents flickering in dashboards */
+  GrafanaScenesFlickeringFix: "grafana.scenesFlickeringFix",
+  /** Replaces the bundled home dashboard with the unified homepage React page */
+  GrafanaUnifiedHomepage: "grafana.unifiedHomepage",
   /** Enables an inline version of Log Details that creates no new scrolls */
   InlineLogDetailsNoScrolls: "inlineLogDetailsNoScrolls",
   /** Use stream shards to split queries into smaller subqueries */
@@ -53,6 +63,12 @@ export const FlagKeys = {
   NewSavedQueriesExperience: "newSavedQueriesExperience",
   /** Applies OTel formatting templates to displayed logs */
   OtelLogsFormatting: "otelLogsFormatting",
+  /** Enables plugins setting from new apis */
+  PluginsUseMTPluginSettings: "plugins.useMTPluginSettings",
+  /** Enables plugins decoupling from bootdata */
+  PluginsUseMTPlugins: "plugins.useMTPlugins",
+  /** Render the README.md of a Git Sync provisioned folder inline below its dashboards list */
+  ProvisioningReadmes: "provisioning.readmes",
   /** Allow setting folder metadata for provisioned folders */
   ProvisioningFolderMetadata: "provisioningFolderMetadata",
   /** Enables next generation query editor experience */
@@ -65,15 +81,24 @@ export const FlagKeys = {
   ReportingAnyPageReporting: "reporting.anyPageReporting",
   /** Enables the splash screen modal for introducing new Grafana features on first session */
   SplashScreen: "splashScreen",
+  /** Enables CodeMirror editor for SQL Expressions */
+  SqlExpressionsCodeMirror: "sqlExpressionsCodeMirror",
   /** Enables option to position series names above bars in the state timeline panel */
   StateTimelineNameAboveBars: "stateTimeline.nameAboveBars",
   /** Enables the 'Customize with Assistant' button on suggested dashboard cards */
   SuggestedDashboardsAssistantButton: "suggestedDashboardsAssistantButton",
-  /** Enables plugins setting from new apis */
-  UseMTPluginSettings: "useMTPluginSettings",
-  /** Enables plugins decoupling from bootdata */
-  UseMTPlugins: "useMTPlugins",
 } as const;
+
+/**
+ * Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana
+ *
+ * **Details:**
+ * - flag key: `alerting.syncExternalAlertmanager`
+ * - default value: `false`
+ */
+export const useFlagAlertingSyncExternalAlertmanager = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alerting.syncExternalAlertmanager", false, options).value;
+};
 
 /**
  * Enables new analytics framework
@@ -205,6 +230,14 @@ export const useFlagFlameGraphWithCallTree = (options?: ReactFlagEvaluationOptio
  */
 export const useFlagGlobalDashboardVariables = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("globalDashboardVariables", false, options).value;
+ * Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button)
+ *
+ * **Details:**
+ * - flag key: `grafana.enableScopesFirstMode`
+ * - default value: `false`
+ */
+export const useFlagGrafanaEnableScopesFirstMode = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.enableScopesFirstMode", false, options).value;
 };
 
 /**
@@ -216,6 +249,39 @@ export const useFlagGlobalDashboardVariables = (options?: ReactFlagEvaluationOpt
  */
 export const useFlagGrafanaNewPreferencesPage = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.newPreferencesPage", false, options).value;
+};
+
+/**
+ * Enables org-defined dashboard templates for enterprise
+ *
+ * **Details:**
+ * - flag key: `grafana.orgDashboardTemplates`
+ * - default value: `false`
+ */
+export const useFlagGrafanaOrgDashboardTemplates = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.orgDashboardTemplates", false, options).value;
+};
+
+/**
+ * Prevents flickering in dashboards
+ *
+ * **Details:**
+ * - flag key: `grafana.scenesFlickeringFix`
+ * - default value: `false`
+ */
+export const useFlagGrafanaScenesFlickeringFix = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.scenesFlickeringFix", false, options).value;
+};
+
+/**
+ * Replaces the bundled home dashboard with the unified homepage React page
+ *
+ * **Details:**
+ * - flag key: `grafana.unifiedHomepage`
+ * - default value: `false`
+ */
+export const useFlagGrafanaUnifiedHomepage = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.unifiedHomepage", false, options).value;
 };
 
 /**
@@ -296,6 +362,39 @@ export const useFlagOtelLogsFormatting = (options?: ReactFlagEvaluationOptions):
 };
 
 /**
+ * Enables plugins setting from new apis
+ *
+ * **Details:**
+ * - flag key: `plugins.useMTPluginSettings`
+ * - default value: `false`
+ */
+export const useFlagPluginsUseMTPluginSettings = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("plugins.useMTPluginSettings", false, options).value;
+};
+
+/**
+ * Enables plugins decoupling from bootdata
+ *
+ * **Details:**
+ * - flag key: `plugins.useMTPlugins`
+ * - default value: `false`
+ */
+export const useFlagPluginsUseMTPlugins = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("plugins.useMTPlugins", false, options).value;
+};
+
+/**
+ * Render the README.md of a Git Sync provisioned folder inline below its dashboards list
+ *
+ * **Details:**
+ * - flag key: `provisioning.readmes`
+ * - default value: `false`
+ */
+export const useFlagProvisioningReadmes = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("provisioning.readmes", false, options).value;
+};
+
+/**
  * Allow setting folder metadata for provisioned folders
  *
  * **Details:**
@@ -355,10 +454,21 @@ export const useFlagReportingAnyPageReporting = (options?: ReactFlagEvaluationOp
  *
  * **Details:**
  * - flag key: `splashScreen`
- * - default value: `true`
+ * - default value: `false`
  */
 export const useFlagSplashScreen = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("splashScreen", true, options).value;
+  return useFlag("splashScreen", false, options).value;
+};
+
+/**
+ * Enables CodeMirror editor for SQL Expressions
+ *
+ * **Details:**
+ * - flag key: `sqlExpressionsCodeMirror`
+ * - default value: `false`
+ */
+export const useFlagSqlExpressionsCodeMirror = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("sqlExpressionsCodeMirror", false, options).value;
 };
 
 /**
@@ -381,27 +491,5 @@ export const useFlagStateTimelineNameAboveBars = (options?: ReactFlagEvaluationO
  */
 export const useFlagSuggestedDashboardsAssistantButton = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("suggestedDashboardsAssistantButton", false, options).value;
-};
-
-/**
- * Enables plugins setting from new apis
- *
- * **Details:**
- * - flag key: `useMTPluginSettings`
- * - default value: `false`
- */
-export const useFlagUseMTPluginSettings = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("useMTPluginSettings", false, options).value;
-};
-
-/**
- * Enables plugins decoupling from bootdata
- *
- * **Details:**
- * - flag key: `useMTPlugins`
- * - default value: `false`
- */
-export const useFlagUseMTPlugins = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("useMTPlugins", false, options).value;
 };
 

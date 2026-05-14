@@ -103,6 +103,7 @@ func (c *check) Steps() []checks.Step {
 		&uidValidationStep{},
 		&healthCheckStep{
 			HealthChecker: c.healthChecker,
+			PluginStore:   c.PluginStore,
 		},
 		&missingPluginStep{
 			PluginStore:    c.PluginStore,

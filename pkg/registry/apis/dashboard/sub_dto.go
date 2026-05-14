@@ -19,9 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
-	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -30,8 +28,6 @@ type dtoBuilder = func(dashboard runtime.Object, access *dashboard.DashboardAcce
 // The DTO returns everything the UI needs in a single request
 type DTOConnector struct {
 	getter                 rest.Getter
-	unified                resource.ResourceClient
-	largeObjects           apistore.LargeObjectSupport
 	accessClient           authlib.AccessClient
 	builder                dtoBuilder
 	publicDashboardService publicdashboards.Service
@@ -39,7 +35,6 @@ type DTOConnector struct {
 
 func NewDTOConnector(
 	getter rest.Getter,
-	largeObjects apistore.LargeObjectSupport,
 	resourceClient resource.ResourceClient,
 	accessClient authlib.AccessClient,
 	builder dtoBuilder,
@@ -48,8 +43,6 @@ func NewDTOConnector(
 	return &DTOConnector{
 		getter:                 getter,
 		accessClient:           accessClient,
-		unified:                resourceClient,
-		largeObjects:           largeObjects,
 		builder:                builder,
 		publicDashboardService: publicDashboardService,
 	}, nil
@@ -102,21 +95,6 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 	obj, err := utils.MetaAccessor(rawobj)
 	if err != nil {
 		return nil, err
-	}
-
-	// Check for blob info
-	blobInfo := obj.GetBlob()
-	if blobInfo != nil && r.largeObjects != nil {
-		gr := r.largeObjects.GroupResource()
-		err = r.largeObjects.Reconstruct(ctx, &resourcepb.ResourceKey{
-			Group:     gr.Group,
-			Resource:  gr.Resource,
-			Namespace: obj.GetNamespace(),
-			Name:      obj.GetName(),
-		}, r.unified, obj)
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {

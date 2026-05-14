@@ -378,15 +378,13 @@ export type PreferencesQueryHistoryPreference = {
 export type PreferencesSpec = {
   /** UID for the home dashboard */
   homeDashboardUID?: string;
-  /** Selected language (beta) */
+  /** Selected language */
   language?: string;
   /** Navigation preferences */
   navbar?: PreferencesNavbarPreference;
   /** Explore query history preferences */
   queryHistory?: PreferencesQueryHistoryPreference;
-  /** Selected locale (beta) */
-  regionalFormat?: string;
-  /** light, dark, empty is default */
+  /** user interface theme */
   theme?: string;
   /** The timezone selection */
   timezone?: string;

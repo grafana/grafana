@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	pubdash "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -248,6 +247,8 @@ const (
 	AccessControl    string = "accesscontrol"
 	Guardian         string = "guardian"
 	DashboardImport  string = "dashboardimport"
+	PubDashSuccess   string = "success"
+	PubDashFailure   string = "failure"
 )
 
 func init() {
@@ -458,7 +459,7 @@ func init() {
 		Name:      "public_dashboard_datasource_query_success",
 		Help:      "counter for queries to public dashboard datasources labelled by datasource type and success status success/failed",
 		Namespace: ExporterName,
-	}, []string{"datasource", "status"}, map[string][]string{"status": pubdash.QueryResultStatuses})
+	}, []string{"datasource", "status"}, map[string][]string{"status": {PubDashSuccess, PubDashFailure}})
 
 	MFolderIDsAPICount = metricutil.NewCounterVecStartingAtZero(prometheus.CounterOpts{
 		Name:      "folder_id_api_count",
