@@ -28,7 +28,6 @@ type dtoBuilder = func(dashboard runtime.Object, access *dashboard.DashboardAcce
 // The DTO returns everything the UI needs in a single request
 type DTOConnector struct {
 	getter                 rest.Getter
-	unified                resource.ResourceClient
 	accessClient           authlib.AccessClient
 	builder                dtoBuilder
 	publicDashboardService publicdashboards.Service
@@ -44,7 +43,6 @@ func NewDTOConnector(
 	return &DTOConnector{
 		getter:                 getter,
 		accessClient:           accessClient,
-		unified:                resourceClient,
 		builder:                builder,
 		publicDashboardService: publicDashboardService,
 	}, nil
