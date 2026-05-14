@@ -10,7 +10,6 @@ import { trackDsConfigClicked, trackExploreClicked } from '../tracking';
 import { constructDataSourceExploreUrl } from '../utils';
 
 import { BuildDashboardButton } from './BuildDashboardButton';
-import { DataSourceDefaultButton } from './DataSourceDefaultButton';
 import { INTERACTION_EVENT_NAME, INTERACTION_ITEM } from './picker/DataSourcePicker';
 
 interface Props {
@@ -106,7 +105,6 @@ export function EditDataSourceActions({ uid }: Props) {
   return (
     <>
       <FavoriteButton uid={uid} />
-      <DataSourceDefaultButton uid={uid} />
       {hasExploreRights && (
         <>
           {!hasActions ? (

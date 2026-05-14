@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
@@ -183,6 +183,45 @@ describe('<DataSourcesList>', () => {
       expect(screen.getByRole('link', { name: 'dataSource-0' })).toBeInTheDocument();
       expect(screen.getByRole('link', { name: 'dataSource-2' })).toBeInTheDocument();
       expect(screen.queryByRole('link', { name: 'dataSource-1' })).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Default functionality', () => {
+    it('should show "Default" badge on the correct data source', async () => {
+      const dataSources = getMockDataSources(3);
+      dataSources[1].isDefault = true; // Mark the second data source as default
+
+      setup({ dataSources });
+
+      // Ensure the "Default" badge is shown on the correct data source
+      const defaultBadge = await screen.findByText('Default');
+      expect(defaultBadge).toBeInTheDocument();
+      expect(defaultBadge.closest('li')).toHaveTextContent(dataSources[1].name);
+    });
+
+    it('should show "Make default" and "Remove default" buttons based on write rights and read-only status', async () => {
+      const dataSources = getMockDataSources(3);
+      dataSources[0].readOnly = false; // Writable data source
+      dataSources[1].readOnly = true; // Read-only data source
+      dataSources[2].readOnly = false; // Writable data source
+      dataSources[2].isDefault = true; // Mark the third data source as default
+
+      setup({ dataSources, hasWriteRights: true });
+
+      // Ensure "Make default" button is shown for writable, non-default data sources
+      const makeDefaultButton = await screen.findByRole('button', { name: 'Make default' });
+      expect(makeDefaultButton).toBeInTheDocument();
+      expect(makeDefaultButton.closest('li')).toHaveTextContent(dataSources[0].name);
+
+      // Ensure no "Make/Remove default" button is shown for read-only data sources
+      const secondDataSourceLi = (await screen.findByText(dataSources[1].name)).closest('li');
+      expect(within(secondDataSourceLi!).queryByRole('button', { name: 'Make default' })).not.toBeInTheDocument();
+      expect(within(secondDataSourceLi!).queryByRole('button', { name: 'Remove default' })).not.toBeInTheDocument();
+
+      // Ensure "Remove default" button is shown for writable, default data sources
+      const removeDefaultButton = await screen.findByRole('button', { name: 'Remove default' });
+      expect(removeDefaultButton).toBeInTheDocument();
+      expect(removeDefaultButton.closest('li')).toHaveTextContent(dataSources[2].name);
     });
   });
 });

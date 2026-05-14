@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import Skeleton from 'react-loading-skeleton';
 
 import { type DataSourceSettings, type GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Card, LinkButton, Stack, Tag, useStyles2 } from '@grafana/ui';
+import { Badge, Card, LinkButton, Stack, useStyles2 } from '@grafana/ui';
 
 import { ROUTES } from '../../connections/constants';
 import { type DatasourceFailureDetails } from '../../connections/hooks/useDatasourceAdvisorChecks';
@@ -12,6 +12,7 @@ import { trackExploreClicked } from '../tracking';
 import { constructDataSourceExploreUrl } from '../utils';
 
 import { BuildDashboardButton } from './BuildDashboardButton';
+import { DataSourceDefaultButton } from './DataSourceDefaultButton';
 import { DataSourceFailureBadge } from './DataSourceFailureBadge';
 
 export interface Props {
@@ -27,7 +28,14 @@ export function DataSourcesListCard({ dataSource, hasWriteRights, hasExploreRigh
 
   return (
     <Card noMargin href={hasWriteRights ? dsLink : undefined}>
-      <Card.Heading>{dataSource.name}</Card.Heading>
+      <Card.Heading>
+        <Stack direction="row" gap={1} alignItems="center">
+          {dataSource.name}
+          {dataSource.isDefault && (
+            <Badge text={t('datasources.data-sources-list-card.default', 'Default')} color="blue" />
+          )}
+        </Stack>
+      </Card.Heading>
       <Card.Figure>
         <img src={dataSource.typeLogoUrl} alt="" height="40px" width="40px" className={styles.logo} />
       </Card.Figure>
@@ -35,7 +43,9 @@ export function DataSourcesListCard({ dataSource, hasWriteRights, hasExploreRigh
         {[
           dataSource.typeName,
           dataSource.url,
-          dataSource.isDefault && <Tag key="default-tag" name={'default'} colorIndex={1} />,
+          hasWriteRights && !dataSource.readOnly && (
+            <DataSourceDefaultButton key="default-button" dataSource={dataSource} />
+          ),
           failure?.severity && (
             <DataSourceFailureBadge key="unhealthy-badge" severity={failure.severity} message={failure.message} />
           ),

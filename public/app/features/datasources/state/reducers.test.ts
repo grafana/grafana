@@ -21,6 +21,7 @@ import {
   setDataSourceName,
   setDataSourcesLayoutMode,
   setDataSourcesSearchQuery,
+  setDataSourcesDefault,
   setDataSourceTypeSearchQuery,
   setIsDefault,
 } from './reducers';
@@ -79,6 +80,28 @@ describe('dataSourcesReducer', () => {
         .givenReducer(dataSourcesReducer, initialState)
         .whenActionIsDispatched(setDataSourcesLayoutMode(layoutMode))
         .thenStateShouldEqual({ ...initialState, layoutMode: LayoutModes.Grid });
+    });
+  });
+
+  describe('when setDataSourcesDefault is dispatched', () => {
+    it('then it updates the list in place', () => {
+      const currentDefault = getMockDataSource({ uid: 'default-uid', isDefault: true, name: 'Default' });
+      const nextDefault = getMockDataSource({ uid: 'next-uid', isDefault: false, name: 'Next' });
+      const state: DataSourcesState = {
+        ...initialState,
+        dataSources: [currentDefault, nextDefault],
+      };
+
+      reducerTester<DataSourcesState>()
+        .givenReducer(dataSourcesReducer, state)
+        .whenActionIsDispatched(setDataSourcesDefault({ uid: nextDefault.uid, isDefault: true }))
+        .thenStateShouldEqual({
+          ...state,
+          dataSources: [
+            { ...currentDefault, isDefault: false },
+            { ...nextDefault, isDefault: true },
+          ],
+        });
     });
   });
 

@@ -8142,12 +8142,12 @@
       "aria-label-learn-more": "{{dataSourcePluginName}}, learn more."
     },
     "data-sources-list-card": {
+      "default": "Default",
       "explore": "Explore"
     },
     "default-button": {
       "active": "This data source is currently set as the default.",
       "error": "Failed to update default data source",
-      "label": "Default",
       "make": "Make default",
       "remove": "Remove default",
       "tooltip": "The default data source is preselected in new panels."

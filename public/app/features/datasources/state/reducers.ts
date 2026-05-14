@@ -34,6 +34,9 @@ export const dataSourcePluginsLoaded = createAction<DataSourceTypesLoadedPayload
 );
 export const setDataSourcesSearchQuery = createAction<string>('dataSources/setDataSourcesSearchQuery');
 export const setDataSourcesLayoutMode = createAction<LayoutMode>('dataSources/setDataSourcesLayoutMode');
+export const setDataSourcesDefault = createAction<{ uid: string; isDefault: boolean }>(
+  'dataSources/setDataSourcesDefault'
+);
 export const setDataSourceTypeSearchQuery = createAction<string>('dataSources/setDataSourceTypeSearchQuery');
 export const setDataSourceName = createAction<string>('dataSources/setDataSourceName');
 export const setIsDefault = createAction<boolean>('dataSources/setIsDefault');
@@ -68,6 +71,31 @@ export const dataSourcesReducer = (state: DataSourcesState = initialState, actio
 
   if (setDataSourcesLayoutMode.match(action)) {
     return { ...state, layoutMode: action.payload };
+  }
+
+  if (setDataSourcesDefault.match(action)) {
+    const { uid, isDefault } = action.payload;
+
+    return {
+      ...state,
+      dataSources: state.dataSources.map((dataSource) => {
+        if (dataSource.uid === uid) {
+          return { ...dataSource, isDefault };
+        }
+
+        if (isDefault && dataSource.isDefault) {
+          return { ...dataSource, isDefault: false };
+        }
+
+        return dataSource;
+      }),
+      dataSource:
+        state.dataSource.uid === uid
+          ? { ...state.dataSource, isDefault }
+          : isDefault && state.dataSource.isDefault
+            ? { ...state.dataSource, isDefault: false }
+            : state.dataSource,
+    };
   }
 
   if (dataSourcePluginsLoad.match(action)) {

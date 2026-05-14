@@ -1,14 +1,17 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { Provider } from 'react-redux';
 
-import { useDispatch } from 'app/types/store';
+import { configureStore } from 'app/store/configureStore';
 
+import * as api from '../api';
 import { getMockDataSource } from '../mocks/dataSourcesMocks';
+import { initialState } from '../state/reducers';
 
 import { DataSourceDefaultButton } from './DataSourceDefaultButton';
 
-jest.mock('app/types/store', () => ({
-  ...jest.requireActual('app/types/store'),
-  useDispatch: jest.fn(),
+jest.mock('../api', () => ({
+  getDataSourceByUid: jest.fn(),
+  updateDataSource: jest.fn(),
 }));
 
 const mockDataSource = getMockDataSource({
@@ -18,70 +21,58 @@ const mockDataSource = getMockDataSource({
   typeName: 'Prometheus',
 });
 
-const mockDataSourceRights = {
-  hasWriteRights: true,
-  readOnly: false,
+const mockApi = jest.mocked(api);
+
+const setup = (dataSource = mockDataSource) => {
+  const store = configureStore({
+    dataSources: {
+      ...initialState,
+      dataSources: [dataSource],
+      dataSourcesCount: 1,
+    },
+  });
+
+  return {
+    store,
+    ...render(
+      <Provider store={store}>
+        <DataSourceDefaultButton dataSource={dataSource} />
+      </Provider>
+    ),
+  };
 };
-
-jest.mock('../state/hooks', () => ({
-  useDataSource: jest.fn(() => mockDataSource),
-  useDataSourceRights: jest.fn(() => mockDataSourceRights),
-}));
-
-const mockUseDispatch = jest.mocked(useDispatch);
-const mockUseDataSource = jest.mocked(require('../state/hooks').useDataSource);
-const mockUseDataSourceRights = jest.mocked(require('../state/hooks').useDataSourceRights);
 
 describe('DataSourceDefaultButton', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockUseDispatch.mockReturnValue(jest.fn());
-    mockUseDataSource.mockReturnValue(mockDataSource);
-    mockUseDataSourceRights.mockReturnValue(mockDataSourceRights);
+    mockApi.getDataSourceByUid.mockResolvedValue(mockDataSource);
+    mockApi.updateDataSource.mockResolvedValue(mockDataSource);
   });
 
   it('should render make default button when data source is not default and editable', () => {
-    mockUseDataSource.mockReturnValue({ ...mockDataSource, isDefault: false });
-
-    render(<DataSourceDefaultButton uid="test-uid" />);
+    setup({ ...mockDataSource, isDefault: false });
 
     expect(screen.getByText('Make default')).toBeInTheDocument();
     expect(screen.queryByText('Remove default')).not.toBeInTheDocument();
   });
 
   it('should render remove default button when data source is default and editable', () => {
-    mockUseDataSource.mockReturnValue({ ...mockDataSource, isDefault: true });
-
-    render(<DataSourceDefaultButton uid="test-uid" />);
+    setup({ ...mockDataSource, isDefault: true });
 
     expect(screen.getByText('Remove default')).toBeInTheDocument();
     expect(screen.queryByText('Make default')).not.toBeInTheDocument();
   });
 
-  it('should not render make default button when data source is not default but not editable', () => {
-    mockUseDataSource.mockReturnValue({ ...mockDataSource, isDefault: false });
-    mockUseDataSourceRights.mockReturnValue({ hasWriteRights: false, readOnly: true });
+  it('updates the datasource list state after updating the default flag', async () => {
+    const updatedDataSource = { ...mockDataSource, isDefault: false };
+    const store = setup(updatedDataSource).store;
 
-    render(<DataSourceDefaultButton uid="test-uid" />);
+    fireEvent.click(screen.getByText('Make default'));
 
-    expect(screen.queryByLabelText('Make default')).not.toBeInTheDocument();
-  });
-
-  it('should not render remove default button when data source is default but not editable', () => {
-    mockUseDataSource.mockReturnValue({ ...mockDataSource, isDefault: true });
-    mockUseDataSourceRights.mockReturnValue({ hasWriteRights: false, readOnly: true });
-
-    render(<DataSourceDefaultButton uid="test-uid" />);
-
-    expect(screen.queryByLabelText('Remove default')).not.toBeInTheDocument();
-  });
-
-  it('should render default badge when data source is default but not editable', () => {
-    mockUseDataSource.mockReturnValue({ ...mockDataSource, isDefault: true });
-    mockUseDataSourceRights.mockReturnValue({ hasWriteRights: true, readOnly: true });
-
-    render(<DataSourceDefaultButton uid="test-uid" />);
-
-    expect(screen.getByText('Default')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(mockApi.getDataSourceByUid).toHaveBeenCalledWith(mockDataSource.uid);
+      expect(mockApi.updateDataSource).toHaveBeenCalledWith({ ...mockDataSource, isDefault: true });
+      expect(store.getState().dataSources.dataSources[0].isDefault).toBe(true);
+    });
   });
 });

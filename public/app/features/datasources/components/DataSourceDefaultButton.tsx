@@ -1,22 +1,20 @@
+import { css } from '@emotion/css';
 import { useState } from 'react';
 
+import { type DataSourceSettings, type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
-import { Badge, Tooltip, Button } from '@grafana/ui';
+import { Button, useStyles2 } from '@grafana/ui';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { useDispatch } from 'app/types/store';
 
 import * as api from '../api';
-import { useDataSource, useDataSourceRights } from '../state/hooks';
-import { setIsDefault } from '../state/reducers';
+import { setDataSourcesDefault } from '../state/reducers';
 
-export const DataSourceDefaultButton = ({ uid }: { uid: string }) => {
+export const DataSourceDefaultButton = ({ dataSource }: { dataSource: DataSourceSettings }) => {
+  const styles = useStyles2(getStyles);
   const [loading, setLoading] = useState(false);
-
-  const dataSource = useDataSource(uid);
-  const rights = useDataSourceRights(uid);
-  const editable = rights.hasWriteRights && !rights.readOnly;
 
   const dispatch = useDispatch();
 
@@ -27,10 +25,9 @@ export const DataSourceDefaultButton = ({ uid }: { uid: string }) => {
     setLoading(true);
 
     try {
-      // Make manual API calls to avoid pre-emptively saving other changes from the EditDataSource form
-      const ds = await api.getDataSourceByUid(uid);
+      const ds = await api.getDataSourceByUid(dataSource.uid);
       await api.updateDataSource({ ...ds, isDefault: value });
-      dispatch(setIsDefault(value));
+      dispatch(setDataSourcesDefault({ uid: dataSource.uid, isDefault: value }));
     } catch (error) {
       dispatch(
         notifyApp(
@@ -45,30 +42,10 @@ export const DataSourceDefaultButton = ({ uid }: { uid: string }) => {
     setLoading(false);
   };
 
-  if (!editable) {
-    return dataSource.isDefault ? (
-      <Badge
-        text={
-          <Tooltip
-            content={[
-              t('datasources.default-button.active', 'This data source is currently set as the default.'),
-              t('datasources.default-button.tooltip', 'The default data source is preselected in new panels.'),
-            ].join(' ')}
-          >
-            <span>
-              <Trans i18nKey="datasources.default-button.label">Default</Trans>
-            </span>
-          </Tooltip>
-        }
-        color="blue"
-      />
-    ) : null;
-  }
-
   return (
     <Button
-      variant="secondary"
       size="sm"
+      fill="text"
       tooltip={[
         dataSource.isDefault &&
           t('datasources.default-button.active', 'This data source is currently set as the default.'),
@@ -80,6 +57,7 @@ export const DataSourceDefaultButton = ({ uid }: { uid: string }) => {
       icon={loading ? 'spinner' : undefined}
       iconPlacement="right"
       disabled={loading}
+      className={styles.button}
     >
       {dataSource.isDefault ? (
         <Trans i18nKey="datasources.default-button.remove">Remove default</Trans>
@@ -88,4 +66,13 @@ export const DataSourceDefaultButton = ({ uid }: { uid: string }) => {
       )}
     </Button>
   );
+};
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    button: css({
+      pointerEvents: 'auto',
+      position: 'relative',
+    }),
+  };
 };
