@@ -259,15 +259,15 @@ GraphFieldConfig: {
 // TODO docs
 VizLegendOptions: {
 	displayMode?: LegendDisplayMode
-	placement:   LegendPlacement
-	showLegend:  bool
+	placement:    LegendPlacement
+	showLegend:   bool
 	// @deprecated Use LegendDisplayMode.Table
-	asTable?:    bool
-	isVisible?:  bool
-	sortBy?:     string
-	sortDesc?:   bool
-	width?:      number
-	limit?:      number
+	asTable?:   bool
+	isVisible?: bool
+	sortBy?:    string
+	sortDesc?:  bool
+	width?:     number
+	limit?:     number
 	calcs: [...string]
 } @cuetsy(kind="interface")
 
