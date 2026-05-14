@@ -219,12 +219,12 @@ export interface FeatureToggles {
   */
   kubernetesAnnotationsClient?: boolean;
   /**
-  * Enables k8s short url api and uses it under the hood when handling legacy /api
+  * Enables k8s short URL api and uses it under the hood when handling legacy /api
   * @default true
   */
   kubernetesShortURLs?: boolean;
   /**
-  * Routes short url requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs
+  * Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs
   * @default true
   */
   useKubernetesShortURLsAPI?: boolean;

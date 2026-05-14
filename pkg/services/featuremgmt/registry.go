@@ -282,7 +282,7 @@ var (
 		},
 		{
 			Name:        "awsAsyncQueryCaching",
-			Description: "Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled",
+			Description: "Enable caching for async queries for Redshift and Athena. Requires that the data source has caching and async query support enabled",
 			Stage:       FeatureStageGeneralAvailability,
 			Expression:  "true", // enabled by default
 			Owner:       grafanaDataSourcesPlugins,
@@ -391,7 +391,7 @@ var (
 		},
 		{
 			Name:            "kubernetesShortURLs",
-			Description:     "Enables k8s short url api and uses it under the hood when handling legacy /api",
+			Description:     "Enables k8s short URL api and uses it under the hood when handling legacy /api",
 			Stage:           FeatureStageGeneralAvailability,
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true, // changes the API routing
@@ -400,7 +400,7 @@ var (
 		},
 		{
 			Name:        "useKubernetesShortURLsAPI",
-			Description: "Routes short url requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs",
+			Description: "Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs",
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaSharingSquad,
 			Generate:    Generate{LegacyFrontend: true},

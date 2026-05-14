@@ -136,7 +136,7 @@ const (
 	FlagKubernetesAnnotationsClient = "kubernetesAnnotationsClient"
 
 	// FlagKubernetesShortURLs
-	// Enables k8s short url api and uses it under the hood when handling legacy /api
+	// Enables k8s short URL api and uses it under the hood when handling legacy /api
 	FlagKubernetesShortURLs = "kubernetesShortURLs"
 
 	// FlagKubernetesCorrelations
