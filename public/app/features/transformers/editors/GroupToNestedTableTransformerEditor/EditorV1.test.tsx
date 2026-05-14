@@ -1,10 +1,10 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { comboboxTestSetup } from 'test/helpers/comboboxTestSetup';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
 import { FieldType, ReducerID, toDataFrame } from '@grafana/data';
 import { GroupByOperationID, type GroupToNestedTableTransformerOptions } from '@grafana/data/internal';
+import { mockComboboxRect } from '@grafana/test-utils';
 
 import { GroupToNestedTableTransformerEditorV1 } from './EditorV1';
 
@@ -20,7 +20,7 @@ const input = [
 describe('GroupToNestedTableTransformerEditorV1', () => {
   beforeAll(() => {
     // Required for MultiCombobox (StatsPicker) virtual list to render items in JSDOM.
-    comboboxTestSetup();
+    mockComboboxRect();
   });
 
   it('lists all field names from the input frame as labelled rows', () => {

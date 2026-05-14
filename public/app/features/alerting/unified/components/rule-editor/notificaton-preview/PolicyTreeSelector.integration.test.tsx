@@ -7,6 +7,7 @@ import { screen, testWithFeatureToggles, waitFor, within } from 'test/test-utils
 import { byRole, byText } from 'testing-library-selector';
 
 import { setPluginLinksHook } from '@grafana/runtime';
+import { mockComboboxRect } from '@grafana/test-utils';
 import { contextSrv } from 'app/core/services/context_srv';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions, mockDataSource, mockFolder } from 'app/features/alerting/unified/mocks';
@@ -71,6 +72,8 @@ const selectFolderAndGroup = async (user: UserEvent) => {
   const folderOption = await within(folderPicker).findByLabelText(FOLDER_TITLE_HAPPY_PATH);
   await user.click(folderOption);
 
+  await user.click(await screen.findByRole('radio', { name: /use groups \(legacy\)/i }));
+
   const groupInput = await ui.inputs.group.find();
   const groupCombobox = await byRole('combobox').find(groupInput);
   await user.click(groupCombobox);
@@ -80,18 +83,7 @@ const selectFolderAndGroup = async (user: UserEvent) => {
 const server = setupMswServer();
 
 beforeEach(() => {
-  const mockGetBoundingClientRect = jest.fn(() => ({
-    width: 120,
-    height: 120,
-    top: 0,
-    left: 0,
-    bottom: 0,
-    right: 0,
-  }));
-
-  Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
-    value: mockGetBoundingClientRect,
-  });
+  mockComboboxRect();
 
   mockPreviewApiResponse(server, []);
 });
@@ -122,6 +114,8 @@ const grantAllPermissions = () => {
 };
 
 describe('PolicyTreeSelector - feature toggle OFF', () => {
+  testWithFeatureToggles({ enable: ['alerting.rulesAPIV2'] });
+
   beforeEach(() => {
     localStorage.setItem(MANUAL_ROUTING_KEY, 'false');
     contextSrv.isEditor = true;
@@ -149,7 +143,7 @@ describe('PolicyTreeSelector - feature toggle OFF', () => {
 });
 
 describe('PolicyTreeSelector - feature toggle ON', () => {
-  testWithFeatureToggles({ enable: ['alertingMultiplePolicies'] });
+  testWithFeatureToggles({ enable: ['alertingMultiplePolicies', 'alerting.rulesAPIV2'] });
 
   beforeEach(() => {
     localStorage.setItem(MANUAL_ROUTING_KEY, 'false');
@@ -465,7 +459,9 @@ describe('PolicyTreeSelector - feature toggle ON', () => {
 });
 
 describe('PolicyTreeSelector - alertingPolicyRoutingSettings ON', () => {
-  testWithFeatureToggles({ enable: ['alertingMultiplePolicies', 'alertingPolicyRoutingSettings'] });
+  testWithFeatureToggles({
+    enable: ['alertingMultiplePolicies', 'alertingPolicyRoutingSettings', 'alerting.rulesAPIV2'],
+  });
 
   beforeEach(() => {
     localStorage.setItem(MANUAL_ROUTING_KEY, 'false');

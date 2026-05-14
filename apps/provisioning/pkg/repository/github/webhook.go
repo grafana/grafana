@@ -34,30 +34,30 @@ type GithubWebhookRepository interface {
 
 type githubWebhookRepository struct {
 	GithubRepository
-	config                *provisioning.Repository
-	owner                 string
-	repo                  string
-	secret                common.RawSecureValue
-	gh                    Client
-	webhookURL            string
-	folderMetadataEnabled bool
+	config            *provisioning.Repository
+	owner             string
+	repo              string
+	secret            common.RawSecureValue
+	gh                Client
+	webhookURL        string
+	incrementalPolicy repository.IncrementalSyncPolicy
 }
 
 func NewGithubWebhookRepository(
 	basic GithubRepository,
 	webhookURL string,
 	secret common.RawSecureValue,
-	folderMetadataEnabled bool,
+	incrementalPolicy repository.IncrementalSyncPolicy,
 ) GithubWebhookRepository {
 	return &githubWebhookRepository{
-		GithubRepository:      basic,
-		config:                basic.Config(),
-		owner:                 basic.Owner(),
-		repo:                  basic.Repo(),
-		gh:                    basic.Client(),
-		webhookURL:            webhookURL,
-		secret:                secret,
-		folderMetadataEnabled: folderMetadataEnabled,
+		GithubRepository:  basic,
+		config:            basic.Config(),
+		owner:             basic.Owner(),
+		repo:              basic.Repo(),
+		gh:                basic.Client(),
+		webhookURL:        webhookURL,
+		secret:            secret,
+		incrementalPolicy: incrementalPolicy,
 	}
 }
 
@@ -76,11 +76,11 @@ func (r *githubWebhookRepository) Webhook(ctx context.Context, req *http.Request
 		return nil, apierrors.NewUnauthorized("invalid signature")
 	}
 
-	return r.parseWebhook(github.WebHookType(req), payload)
+	return r.parseWebhook(ctx, github.WebHookType(req), payload)
 }
 
 // This method does not include context because it does delegate any more requests
-func (r *githubWebhookRepository) parseWebhook(messageType string, payload []byte) (*provisioning.WebhookResponse, error) {
+func (r *githubWebhookRepository) parseWebhook(ctx context.Context, messageType string, payload []byte) (*provisioning.WebhookResponse, error) {
 	event, err := github.ParseWebHook(messageType, payload)
 	if err != nil {
 		return nil, apierrors.NewBadRequest("invalid payload")
@@ -88,7 +88,7 @@ func (r *githubWebhookRepository) parseWebhook(messageType string, payload []byt
 
 	switch event := event.(type) {
 	case *github.PushEvent:
-		return r.parsePushEvent(event)
+		return r.parsePushEvent(ctx, event)
 	case *github.PullRequestEvent:
 		return r.parsePullRequestEvent(event)
 	case *github.PingEvent:
@@ -104,12 +104,16 @@ func (r *githubWebhookRepository) parseWebhook(messageType string, payload []byt
 	}
 }
 
-func (r *githubWebhookRepository) parsePushEvent(event *github.PushEvent) (*provisioning.WebhookResponse, error) {
+func (r *githubWebhookRepository) parsePushEvent(ctx context.Context, event *github.PushEvent) (*provisioning.WebhookResponse, error) {
+	_, logger := r.logger(ctx, "")
+
 	if event.GetRepo() == nil {
 		return nil, fmt.Errorf("missing repository in push event")
 	}
-	if event.GetRepo().GetFullName() != fmt.Sprintf("%s/%s", r.owner, r.repo) {
-		return nil, fmt.Errorf("repository mismatch")
+	expected := fmt.Sprintf("%s/%s", r.owner, r.repo)
+	if event.GetRepo().GetFullName() != expected {
+		logger.Warn("webhook push event repository mismatch", "expected", expected, "got", event.GetRepo().GetFullName())
+		return nil, repository.ErrRepositoryMismatch
 	}
 
 	// No need to sync if not enabled
@@ -123,16 +127,14 @@ func (r *githubWebhookRepository) parsePushEvent(event *github.PushEvent) (*prov
 		return &provisioning.WebhookResponse{Code: http.StatusOK}, nil
 	}
 
-	// whenever possible, we want to do incremental syncs to keep things performant.
-	// however, if we get an event where just a .keep file is being deleted, and no other files in the folder
-	// are being deleted, the folder could be gone from git, but not from grafana and we do not have a way
-	// to get the grafana uid to delete the folder. so, instead, we will queue a full sync to clean things up.
 	var deletedPaths []string
+	var totalChanges int
 	for _, change := range event.GetCommits() {
+		totalChanges += len(change.Added) + len(change.Modified) + len(change.Removed)
 		deletedPaths = append(deletedPaths, change.Removed...)
 	}
 
-	incremental := repository.CanUseIncrementalSyncInWebhook(deletedPaths, r.folderMetadataEnabled)
+	incremental := r.incrementalPolicy.CanUseIncrementalSync(deletedPaths, totalChanges)
 
 	return &provisioning.WebhookResponse{
 		Code: http.StatusAccepted,
@@ -155,8 +157,10 @@ func (r *githubWebhookRepository) parsePullRequestEvent(event *github.PullReques
 		return nil, fmt.Errorf("missing GitHub config")
 	}
 
-	if event.GetRepo().GetFullName() != fmt.Sprintf("%s/%s", r.owner, r.repo) {
-		return nil, fmt.Errorf("repository mismatch")
+	expected := fmt.Sprintf("%s/%s", r.owner, r.repo)
+	if event.GetRepo().GetFullName() != expected {
+		slog.Warn("webhook pull request event repository mismatch", "expected", expected, "got", event.GetRepo().GetFullName())
+		return nil, repository.ErrRepositoryMismatch
 	}
 	pr := event.GetPullRequest()
 	if pr == nil {

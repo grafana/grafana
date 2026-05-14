@@ -145,7 +145,13 @@ export class RowsLayoutManager
     dashboardEditActions.addElement({
       addedObject: newRow,
       source: this,
-      perform: () => this.setState({ rows: [...this.state.rows, newRow] }),
+      perform: () => {
+        this.setState({ rows: [...this.state.rows, newRow] });
+        const dashboard = getDashboardSceneFor(this);
+        if (dashboard.state.isEditing) {
+          newRow.getLayout().editModeChanged?.(true);
+        }
+      },
       undo: () => this.setState({ rows: this.state.rows.filter((r) => r !== newRow) }),
     });
 

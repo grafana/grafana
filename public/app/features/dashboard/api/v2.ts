@@ -147,16 +147,18 @@ export class K8sDashboardV2API
       };
     }
 
+    obj.metadata.annotations = {
+      ...obj.metadata.annotations,
+      [AnnoKeyGrantPermissions]: 'default',
+    };
+
     if (obj.metadata.name) {
       // remove resource version when updating
       delete obj.metadata.resourceVersion;
       delete obj.metadata.labels?.[DeprecatedInternalId];
       return this.client.update(obj).then((v) => this.asSaveDashboardResponseDTO(v));
     }
-    obj.metadata.annotations = {
-      ...obj.metadata.annotations,
-      [AnnoKeyGrantPermissions]: 'default',
-    };
+
     // clear the deprecated id label so the backend generates a new unique id to prevent duplicate ids.
     delete obj.metadata.labels?.[DeprecatedInternalId];
     return await this.client.create(obj).then((v) => this.asSaveDashboardResponseDTO(v));

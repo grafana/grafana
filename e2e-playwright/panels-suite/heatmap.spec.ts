@@ -182,7 +182,6 @@ test.describe('Panels test: Heatmap', { tag: ['@panels', '@heatmap'] }, () => {
 
 test.use({
   featureToggles: {
-    timeRangePan: true,
     dashboardNewLayouts: false,
   },
 });

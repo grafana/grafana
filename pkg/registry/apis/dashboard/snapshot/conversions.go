@@ -108,6 +108,8 @@ func convertK8sResourceToCreateCommand(snap *dashV0.Snapshot, orgID int64, userI
 	// Map dashboard (convert map[string]interface{} to *common.Unstructured)
 	if snap.Spec.Dashboard != nil {
 		cmd.Dashboard = &common.Unstructured{Object: snap.Spec.Dashboard}
+	} else {
+		cmd.Dashboard = &common.Unstructured{}
 	}
 
 	// Map expires

@@ -49,7 +49,7 @@ type AlertsRouter struct {
 	adminConfigPollInterval time.Duration
 
 	datasourceService datasources.DataSourceService
-	secretService     secrets.Service
+	secretService     secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	featureManager    featuremgmt.FeatureToggles
 	broadcastAlerts   bool
 	senderMetrics     *metrics.Sender
@@ -57,8 +57,11 @@ type AlertsRouter struct {
 
 func NewAlertsRouter(multiOrgNotifier *notifier.MultiOrgAlertmanager, store store.AdminConfigurationStore,
 	clk clock.Clock, appURL *url.URL, disabledOrgs map[int64]struct{}, configPollInterval time.Duration,
-	datasourceService datasources.DataSourceService, secretService secrets.Service, featureManager featuremgmt.FeatureToggles,
-	broadcastAlerts bool, senderMetrics *metrics.Sender) *AlertsRouter {
+	datasourceService datasources.DataSourceService,
+	secretService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+	featureManager featuremgmt.FeatureToggles,
+	broadcastAlerts bool, senderMetrics *metrics.Sender,
+) *AlertsRouter {
 	d := &AlertsRouter{
 		logger:           log.New("ngalert.sender.router"),
 		clock:            clk,

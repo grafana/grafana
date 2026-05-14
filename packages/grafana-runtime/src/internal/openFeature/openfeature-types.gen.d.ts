@@ -13,8 +13,10 @@ declare module "@openfeature/core" {
     | "lokiShardSplitting"
     | "faroSessionReplay"
     | "provisioningFolderMetadata"
+    | "provisioning.readmes"
     | "stateTimeline.nameAboveBars"
     | "newSavedQueriesExperience"
+    | "grafana.orgDashboardTemplates"
     | "dashboardTemplatesAssistantButton"
     | "suggestedDashboardsAssistantButton"
     | "newLogsPanel"
@@ -23,20 +25,25 @@ declare module "@openfeature/core" {
     | "createdByMeSearchFilter"
     | "otelLogsFormatting"
     | "newLogContext"
-    | "useMTPlugins"
+    | "plugins.useMTPlugins"
     | "dashboardSectionVariables"
     | "queryEditorNext"
+    | "queryEditorNextMultiSelect"
     | "managedPluginsV2"
     | "analyticsFramework"
+    | "grafana.scenesFlickeringFix"
     | "datasourcesApiServerEnableHealthEndpointFrontend"
     | "flameGraphWithCallTree"
     | "inlineLogDetailsNoScrolls"
+    | "plugins.useMTPluginSettings"
     | "splashScreen"
     | "grafana.newPreferencesPage"
     | "datasources.config.ui.useNewDatasourceCRUDAPIs"
     | "datasources.apiserver.useNewAPIsForDatasourceResources"
     | "reporting.anyPageReporting"
-    | "assistant.frontend.tools.dashboardTemplates";
+    | "assistant.frontend.tools.dashboardTemplates"
+    | "grafana.unifiedHomepage"
+    | "grafana.enableScopesFirstMode";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;

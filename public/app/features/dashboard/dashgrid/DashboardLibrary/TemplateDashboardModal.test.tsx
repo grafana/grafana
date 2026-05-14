@@ -2,7 +2,6 @@ import { http, HttpResponse } from 'msw';
 import { of } from 'rxjs';
 import { render, screen, waitFor } from 'test/test-utils';
 
-import { selectors } from '@grafana/e2e-selectors';
 import { locationService, setBackendSrv } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { setTestFlags } from '@grafana/test-utils/unstable';
@@ -146,7 +145,7 @@ describe('TemplateDashboardModal', () => {
 
       await waitFor(() => {
         // Assert DashboardCard components are rendered by checking for their headings
-        const cardHeadings = screen.getAllByTestId(selectors.components.Card.heading);
+        const cardHeadings = screen.getAllByRole('heading', { level: 3 });
         expect(cardHeadings).toHaveLength(2);
         expect(cardHeadings[0]).toHaveTextContent('Test Template Dashboard');
         expect(cardHeadings[1]).toHaveTextContent('Test Template Dashboard 2');
@@ -177,7 +176,7 @@ describe('TemplateDashboardModal', () => {
         });
 
         await waitFor(() => {
-          const cardHeadings = screen.getAllByTestId(selectors.components.Card.heading);
+          const cardHeadings = screen.getAllByRole('heading', { level: 3 });
           expect(cardHeadings).toHaveLength(2);
           expect(cardHeadings[0]).toHaveTextContent('Test Template Dashboard');
           expect(cardHeadings[1]).toHaveTextContent('Test Template Dashboard 2');
@@ -194,7 +193,7 @@ describe('TemplateDashboardModal', () => {
         });
 
         await waitFor(() => {
-          const cardHeadings = screen.getAllByTestId(selectors.components.Card.heading);
+          const cardHeadings = screen.getAllByRole('heading', { level: 3 });
           expect(cardHeadings).toHaveLength(2);
           expect(cardHeadings[0]).toHaveTextContent('Test Template Dashboard');
           expect(cardHeadings[1]).toHaveTextContent('Test Template Dashboard 2');
@@ -211,7 +210,7 @@ describe('TemplateDashboardModal', () => {
         });
 
         await waitFor(() => {
-          const cardHeadings = screen.getAllByTestId(selectors.components.Card.heading);
+          const cardHeadings = screen.getAllByRole('heading', { level: 3 });
           expect(cardHeadings).toHaveLength(2);
           expect(cardHeadings[0]).toHaveTextContent('Test Template Dashboard');
           expect(cardHeadings[1]).toHaveTextContent('Test Template Dashboard 2');

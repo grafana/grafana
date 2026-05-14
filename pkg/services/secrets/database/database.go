@@ -129,7 +129,7 @@ func (ss *SecretsStoreImpl) DeleteDataKey(ctx context.Context, id string) error 
 
 func (ss *SecretsStoreImpl) ReEncryptDataKeys(
 	ctx context.Context,
-	providers map[secrets.ProviderID]secrets.Provider,
+	providers map[secrets.ProviderID]secrets.Provider, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	currProvider secrets.ProviderID,
 ) error {
 	keys := make([]*secrets.DataKey, 0)
