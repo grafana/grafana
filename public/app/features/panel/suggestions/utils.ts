@@ -68,7 +68,7 @@ export function hasData(data?: PanelData): boolean {
  * Hidden legend config for previewing suggestion cards.
  * This should only be used in previewModifier.
  */
-export const SUGGESTIONS_LEGEND_OPTIONS: Partial<VizLegendOptions> = {
+export const SUGGESTIONS_LEGEND_OPTIONS: VizLegendOptions = {
   calcs: [],
   placement: 'right',
   showLegend: false,
