@@ -173,7 +173,6 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 			Locale:                     locale, // << will be removed in favor of RegionalFormat
 			RegionalFormat:             regionalFormat,
 			Language:                   language,
-			HelpFlags1:                 c.HelpFlags1,
 			HasEditPermissionInFolders: hasEditPerm,
 			Analytics:                  hs.buildUserAnalyticsSettings(c),
 			AuthenticatedBy:            c.GetAuthenticatedBy(),

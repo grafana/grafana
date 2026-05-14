@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -45,7 +44,6 @@ type CurrentUser struct {
 	Locale                     string             `json:"locale"`
 	RegionalFormat             string             `json:"regionalFormat"`
 	Language                   string             `json:"language"`
-	HelpFlags1                 user.HelpFlags1    `json:"helpFlags1"`
 	HasEditPermissionInFolders bool               `json:"hasEditPermissionInFolders"`
 	AuthenticatedBy            string             `json:"authenticatedBy"`
 	Permissions                UserPermissionsMap `json:"permissions,omitempty"`
