@@ -1090,18 +1090,6 @@ func TestIntegrationMetricsUsage(t *testing.T) {
 	})
 }
 
-func assertEqualUser(t *testing.T, expected, got *user.User) {
-	// zero out time fields
-	expected.Updated = time.Time{}
-	expected.Created = time.Time{}
-	expected.LastSeenAt = time.Time{}
-	got.Updated = time.Time{}
-	got.Created = time.Time{}
-	got.LastSeenAt = time.Time{}
-
-	assert.Equal(t, expected, got)
-}
-
 func createOrgAndUserSvc(t *testing.T, store db.DB, cfg *setting.Cfg) (org.Service, user.Service) {
 	t.Helper()
 
