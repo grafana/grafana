@@ -1,4 +1,4 @@
-import 'react-data-grid/lib/styles.css';
+import '@grafana/react-data-grid/lib/styles.css';
 
 import { clsx } from 'clsx';
 import memoize from 'micro-memoize';
