@@ -337,4 +337,3 @@ func annotationValue(annotations map[string]string, key string) string {
 	}
 	return annotations[key]
 }
-
