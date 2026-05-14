@@ -6,7 +6,6 @@ import (
 
 	"go.yaml.in/yaml/v3"
 
-	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/stretchr/testify/require"
 
@@ -360,7 +359,6 @@ func createTestConfig(t *testing.T, grafanaRules, importedRules []definitions.In
 	cfg.ExtraConfigs = []definitions.ExtraConfiguration{
 		{
 			Identifier:         "test-mimir",
-			MergeMatchers:      config.Matchers{&labels.Matcher{Type: labels.MatchEqual, Name: "__imported", Value: "test"}},
 			AlertmanagerConfig: mimirConfig,
 		},
 	}
