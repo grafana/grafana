@@ -371,7 +371,6 @@ These errors occur when using Azure Monitor data in Grafana alert rules or recor
 **Solutions:**
 
 1. Configure **fallback service credentials** in the data source settings. Typically this means adding an App Registration (client secret) as the fallback.
-1. Ensure the `idForwarding` feature toggle is enabled in the Grafana server configuration.
 1. Verify the fallback credentials have the required Azure RBAC permissions on the resources used in your alert rules.
 1. Refer to [Limitations and fallback credentials](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/configure/#limitations-and-fallback-credentials) for configuration details.
 

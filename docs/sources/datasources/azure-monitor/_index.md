@@ -64,7 +64,7 @@ The Azure Monitor data source supports the following Azure services:
 
 ## Get started
 
-The following documents will help you get started with the Azure Monitor data source:
+The following documents help you get started with the Azure Monitor data source:
 
 - [Configure the Azure Monitor data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/configure/) - Set up authentication and connect to Azure
 - [Azure Monitor query editor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/query-editor/) - Create and edit queries for Metrics, Logs, Traces, and Resource Graph
