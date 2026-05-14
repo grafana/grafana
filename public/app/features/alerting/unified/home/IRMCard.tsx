@@ -4,6 +4,7 @@ import irmSvg from 'img/irm_logo.svg';
 import AdCard from './AdCard';
 
 const LINK = 'https://grafana.com/auth/sign-up/create-user?redirectPath=irm&src=oss-grafana&cnt=alerting-irm';
+const STORAGE_KEY = 'irmCardDismissed';
 
 export default function IRMCard() {
   return (
@@ -21,7 +22,7 @@ export default function IRMCard() {
         t('alerting.home.irm-card-item-3', 'Pinpoint root causes with AI-powered Grafana SIFT.'),
         t('alerting.home.irm-card-item-4', 'Analyze past incidents to improve response and resilience.'),
       ]}
-      storageKey="irmCardDismissed"
+      storageKey={STORAGE_KEY}
     />
   );
 }

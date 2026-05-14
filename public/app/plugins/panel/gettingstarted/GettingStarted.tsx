@@ -20,7 +20,7 @@ interface State {
 }
 
 export const GettingStarted = memo(function GettingStarted({ id }: PanelProps) {
-  const storage = useUserStorage('grafana-core');
+  const storage = useUserStorage('grafana-help-flags');
   const [state, setState] = useState<State>({
     checksDone: false,
     currentStep: 0,

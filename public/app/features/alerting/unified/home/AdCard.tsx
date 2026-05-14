@@ -19,8 +19,8 @@ type AdCardProps = {
 
 export default function AdCard({ title, description, href, logoUrl, items, storageKey }: AdCardProps) {
   const styles = useStyles2(getAddCardStyles);
-  const storage = useUserStorage('grafana-core');
-  const [isDismissed, setDismissed] = useState<boolean | null>(null);
+  const storage = useUserStorage('grafana-help-flags');
+  const [isDismissed, setDismissed] = useState<boolean>(true);
 
   useEffect(() => {
     storage.getItem(storageKey).then((value: string | null) => {
@@ -33,7 +33,7 @@ export default function AdCard({ title, description, href, logoUrl, items, stora
     setDismissed(true);
   };
 
-  if (isDismissed === null || isDismissed || !isOpenSourceBuildOrUnlicenced()) {
+  if (isDismissed || !isOpenSourceBuildOrUnlicenced()) {
     return null;
   }
 

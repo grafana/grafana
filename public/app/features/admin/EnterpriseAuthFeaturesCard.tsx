@@ -15,8 +15,8 @@ export interface Props {
 
 export function EnterpriseAuthFeaturesCard({ page }: Props) {
   const styles = useStyles2(getStyles);
-  const storage = useUserStorage('grafana-core');
-  const [isDismissed, setDismissed] = useState<boolean | null>(null);
+  const storage = useUserStorage('grafana-help-flags');
+  const [isDismissed, setDismissed] = useState<boolean>(true);
 
   useEffect(() => {
     storage.getItem('enterpriseAuthCardDismissed').then((value: string | null) => {
@@ -30,7 +30,7 @@ export function EnterpriseAuthFeaturesCard({ page }: Props) {
   };
 
   // This card is only visible in oss
-  if (isDismissed === null || isDismissed || !isOpenSourceBuildOrUnlicenced()) {
+  if (isDismissed || !isOpenSourceBuildOrUnlicenced()) {
     return null;
   }
 
