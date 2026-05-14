@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	dashv1beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	dashv2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
@@ -1512,6 +1513,11 @@ func TestNewDashboardObject(t *testing.T) {
 			expected: &dashv0.Dashboard{},
 		},
 		{
+			name:     "dashv1beta1 version",
+			input:    dashv1beta1.VERSION,
+			expected: &dashv1beta1.Dashboard{},
+		},
+		{
 			name:     "v1 bare version",
 			input:    dashv1.VERSION,
 			expected: &dashv1.Dashboard{},
@@ -1576,11 +1582,6 @@ func TestNewDashboardObject(t *testing.T) {
 		{
 			name:        "valid group with empty version",
 			input:       dashv0.GROUP + "/",
-			expectedErr: "invalid version",
-		},
-		{
-			name:        "v1beta1 not handled by NewDashboardObject",
-			input:       "v1beta1",
 			expectedErr: "invalid version",
 		},
 		{
