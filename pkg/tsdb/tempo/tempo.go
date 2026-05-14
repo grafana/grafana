@@ -107,6 +107,8 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	ctxLogger := s.logger.FromContext(ctx)
 	ctxLogger.Debug("Processing queries", "queryLength", len(req.Queries), "function", logEntrypoint())
 
+	req, sqlErrs := s.normalizeGrafanaSQLRequest(ctx, req)
+
 	// create response struct
 	response := backend.NewQueryDataResponse()
 
@@ -145,6 +147,18 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 			response.Responses[q.RefID] = *res
 		} else {
 			ctxLogger.Debug("Query resulted in empty response", "counter", i, "function", logEntrypoint())
+		}
+	}
+
+	if len(sqlErrs) > 0 {
+		if response.Responses == nil {
+			response.Responses = make(map[string]backend.DataResponse, len(sqlErrs))
+		}
+		for refID, e := range sqlErrs {
+			response.Responses[refID] = backend.DataResponse{
+				Error:       e,
+				ErrorSource: backend.ErrorSourceDownstream,
+			}
 		}
 	}
 

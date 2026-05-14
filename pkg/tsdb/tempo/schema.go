@@ -160,7 +160,10 @@ func (p *tempoSchemaProvider) Tables(ctx context.Context, _ *schemas.TablesReque
 func (p *tempoSchemaProvider) Columns(ctx context.Context, req *schemas.ColumnsRequest) (*schemas.ColumnsResponse, error) {
 	dsInfo, err := p.dsInfo(ctx)
 	if err != nil {
-		return &schemas.ColumnsResponse{Columns: map[string][]schemas.Column{}}, nil
+		return &schemas.ColumnsResponse{
+			Columns: map[string][]schemas.Column{},
+			Errors:  map[string]string{tempoSchemadsTableSpans: err.Error()},
+		}, nil
 	}
 
 	tagCols, tagErr := p.dynamicTagColumns(ctx, dsInfo)
