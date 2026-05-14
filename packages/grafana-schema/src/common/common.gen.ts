@@ -671,7 +671,7 @@ export interface GraphFieldConfig extends LineConfig, FillConfig, PointsConfig, 
  */
 export interface VizLegendOptions {
   calcs: Array<string>;
-  displayMode: LegendDisplayMode;
+  displayMode?: LegendDisplayMode;
   isVisible?: boolean;
   limit?: number;
   placement: LegendPlacement;

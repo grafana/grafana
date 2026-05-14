@@ -258,7 +258,7 @@ GraphFieldConfig: {
 
 // TODO docs
 VizLegendOptions: {
-	displayMode: LegendDisplayMode
+	displayMode?: LegendDisplayMode
 	placement:   LegendPlacement
 	showLegend:  bool
 	isVisible?:  bool
