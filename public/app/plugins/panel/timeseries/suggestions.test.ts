@@ -332,7 +332,7 @@ describe('timeseries panel suggestions', () => {
       expect(suggestion.options!.disableKeyboardEvents).toBe(true);
     });
 
-    it('hides legend in preview mode', () => {
+    it('sets legend to hidden mode', () => {
       const result = timeseriesSuggestionsSupplier(summary)!;
       const suggestion = { ...result[0], options: {} as Partial<Options> };
       result[0].cardOptions!.previewModifier!(suggestion);
