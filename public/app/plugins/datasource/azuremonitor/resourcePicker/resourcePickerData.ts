@@ -1,5 +1,6 @@
 import { uniq } from 'lodash';
 
+import { AzureCloud, getDefaultAzureCloud, resolveLegacyCloudName } from '@grafana/azure-sdk';
 import { DataSourceWithBackend, reportInteraction } from '@grafana/runtime';
 
 import { logsResourceTypes } from '../azureMetadata/logsResourceTypes';
@@ -36,6 +37,7 @@ export default class ResourcePickerData extends DataSourceWithBackend<
   azureMonitorDatasource;
   azureResourceGraphDatasource;
   supportedMetricNamespaces = '';
+  private cloudName: string;
 
   constructor(
     instanceSettings: AzureMonitorDataSourceInstanceSettings,
@@ -45,6 +47,10 @@ export default class ResourcePickerData extends DataSourceWithBackend<
     super(instanceSettings);
     this.azureMonitorDatasource = azureMonitorDatasource;
     this.azureResourceGraphDatasource = azureResourceGraphDatasource;
+    this.cloudName =
+      resolveLegacyCloudName(instanceSettings.jsonData.cloudName) ||
+      instanceSettings.jsonData.cloudName ||
+      getDefaultAzureCloud();
   }
 
   async fetchInitialRows(
@@ -312,6 +318,17 @@ export default class ResourcePickerData extends DataSourceWithBackend<
       : `| where type in (${this.supportedMetricNamespaces})`;
   };
 
+  private getRegionsForCloud(): string[] {
+    switch (this.cloudName) {
+      case AzureCloud.USGovernment:
+        return ['usgovvirginia', 'usgovarizona'];
+      case AzureCloud.China:
+        return ['chinanorth3', 'chinaeast3'];
+      default:
+        return ['westeurope', 'eastus', 'japaneast'];
+    }
+  }
+
   private async fetchAllNamespaces() {
     const subscriptions = await this.getSubscriptions();
     reportInteraction('grafana_ds_azuremonitor_subscriptions_loaded', { subscriptions: subscriptions.length });
@@ -322,21 +339,24 @@ export default class ResourcePickerData extends DataSourceWithBackend<
       supportedMetricNamespaces.add(`"${namespace}"`);
     });
 
-    // We make use of these three regions as they *should* contain every possible namespace
-    const regions = ['westeurope', 'eastus', 'japaneast'];
+    const regions = this.getRegionsForCloud();
     const getNamespacesForRegion = async (region: string) => {
-      const namespaces = await this.azureMonitorDatasource.getMetricNamespaces(
-        {
-          // We only need to run this request against the first available subscription
-          resourceUri: `/subscriptions/${subscriptions[0].id}`,
-        },
-        false,
-        region
-      );
-      if (namespaces) {
-        for (const namespace of namespaces) {
-          supportedMetricNamespaces.add(`"${namespace.value.toLocaleLowerCase()}"`);
+      try {
+        const namespaces = await this.azureMonitorDatasource.getMetricNamespaces(
+          {
+            // We only need to run this request against the first available subscription
+            resourceUri: `/subscriptions/${subscriptions[0].id}`,
+          },
+          false,
+          region
+        );
+        if (namespaces) {
+          for (const namespace of namespaces) {
+            supportedMetricNamespaces.add(`"${namespace.value.toLocaleLowerCase()}"`);
+          }
         }
+      } catch {
+        // Region may not be available in this cloud environment; fall back to predefined namespaces
       }
     };
 
