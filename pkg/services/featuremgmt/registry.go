@@ -392,19 +392,19 @@ var (
 		{
 			Name:            "kubernetesShortURLs",
 			Description:     "Enables k8s short url api and uses it under the hood when handling legacy /api",
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStageGeneralAvailability,
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true, // changes the API routing
-			Expression:      "false",
+			Expression:      "true",
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
 			Name:        "useKubernetesShortURLsAPI",
 			Description: "Routes short url requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaSharingSquad,
 			Generate:    Generate{LegacyFrontend: true},
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:            "kubernetesCorrelations",
