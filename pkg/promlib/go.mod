@@ -21,6 +21,7 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.19.1 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.12.0 // indirect
 	github.com/apache/arrow-go/v18 v18.4.1 // indirect
+	github.com/apache/thrift v0.23.1-0.20260429145742-d2acd3c49e58 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.41.7 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.31.2 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.18.16 // indirect
