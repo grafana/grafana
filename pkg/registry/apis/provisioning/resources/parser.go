@@ -219,32 +219,8 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 		}
 	}
 
-	// Calculate folder identifier from the file path
 	if info.Path != "" {
-		dirPath := safepath.Dir(info.Path)
-		// _folder.json represents the directory it lives in, so its parent is one level above.
-		if r.folderMetadataEnabled && IsFolderMetadataFile(info.Path) {
-			dirPath = safepath.Dir(dirPath)
-		}
-		if dirPath != "" {
-			folderID := ParseFolder(dirPath, r.repo.Name).ID
-			// When folder metadata is enabled and the parent folder has a _folder.json,
-			// use the stable UID from that file instead of the hash-derived one.
-			if r.folderMetadataEnabled && r.reader != nil {
-				if meta, _, err := ReadFolderMetadata(ctx, r.reader, dirPath, info.Ref); err == nil && meta.Name != "" {
-					folderID = meta.Name
-				} else if err != nil && errors.Is(err, repository.ErrRefNotFound) {
-					// Target branch doesn't exist yet (e.g. new PR branch). Fall back to
-					// the configured branch where _folder.json is already committed.
-					if meta, _, err := ReadFolderMetadata(ctx, r.reader, dirPath, ""); err == nil && meta.Name != "" {
-						folderID = meta.Name
-					}
-				}
-			}
-			parsed.Meta.SetFolder(folderID)
-		} else {
-			parsed.Meta.SetFolder(RootFolder(r.config))
-		}
+		parsed.Meta.SetFolder(r.resolveFolderID(ctx, info))
 	}
 	obj.SetUID("")             // clear identifiers
 	obj.SetResourceVersion("") // clear identifiers
@@ -261,6 +237,35 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 	}
 
 	return parsed, nil
+}
+
+// resolveFolderID computes the folder annotation value for a file path,
+// preferring a stable _folder.json UID over the hash-derived ID when available.
+func (r *parser) resolveFolderID(ctx context.Context, info *repository.FileInfo) string {
+	dirPath := safepath.Dir(info.Path)
+	// _folder.json represents the directory it lives in, so its parent is one level above.
+	if r.folderMetadataEnabled && IsFolderMetadataFile(info.Path) {
+		dirPath = safepath.Dir(dirPath)
+	}
+	if dirPath == "" {
+		return RootFolder(r.config)
+	}
+	folderID := ParseFolder(dirPath, r.repo.Name).ID
+	if !r.folderMetadataEnabled || r.reader == nil {
+		return folderID
+	}
+	meta, _, err := ReadFolderMetadata(ctx, r.reader, dirPath, info.Ref)
+	if err == nil && meta.Name != "" {
+		return meta.Name
+	}
+	// Target branch doesn't exist yet (e.g. new PR branch). Fall back to
+	// the configured branch where _folder.json is already committed.
+	if err != nil && errors.Is(err, repository.ErrRefNotFound) {
+		if meta, _, err := ReadFolderMetadata(ctx, r.reader, dirPath, ""); err == nil && meta.Name != "" {
+			return meta.Name
+		}
+	}
+	return folderID
 }
 
 // SameIdentity reports whether f and other refer to the same Kubernetes
