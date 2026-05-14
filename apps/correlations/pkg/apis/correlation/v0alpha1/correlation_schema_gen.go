@@ -25,6 +25,17 @@ var (
 			},
 		},
 			{
+				FieldSelector: "spec.source.group",
+				FieldValueFunc: func(o resource.Object) (string, error) {
+					cast, ok := o.(*Correlation)
+					if !ok {
+						return "", errors.New("provided object must be of type *Correlation")
+					}
+
+					return string(cast.Spec.Source.Group), nil
+				},
+			},
+			{
 				FieldSelector: "spec.target.name",
 				FieldValueFunc: func(o resource.Object) (string, error) {
 					cast, ok := o.(*Correlation)
