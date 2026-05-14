@@ -114,6 +114,41 @@ spec:
 		require.Equal(t, "v0alpha1", dash.GVR.Version)
 	})
 
+	t.Run("dashboard with uid > 40 chars is rejected at parse", func(t *testing.T) {
+		const tooLong = "a0123456789012345678901234567890123456789" // 41
+		_, err := parser.Parse(context.Background(), &repository.FileInfo{
+			Path: "team-a/too-long.yaml",
+			Data: []byte(`apiVersion: dashboard.grafana.app/v0alpha1
+kind: Dashboard
+metadata:
+  name: ` + tooLong + `
+spec:
+  title: Test dashboard
+`),
+		})
+		require.Error(t, err)
+		var uidErr *DashboardUIDTooLongError
+		require.ErrorAs(t, err, &uidErr)
+		require.Equal(t, "team-a/too-long.yaml", uidErr.Path)
+		require.Equal(t, tooLong, uidErr.UID)
+	})
+
+	t.Run("dashboard with uid == 40 chars is accepted", func(t *testing.T) {
+		const exactly40 = "a012345678901234567890123456789012345678" // 40
+		dash, err := parser.Parse(context.Background(), &repository.FileInfo{
+			Path: "team-a/exact.yaml",
+			Data: []byte(`apiVersion: dashboard.grafana.app/v0alpha1
+kind: Dashboard
+metadata:
+  name: ` + exactly40 + `
+spec:
+  title: Test dashboard
+`),
+		})
+		require.NoError(t, err)
+		require.Equal(t, exactly40, dash.Obj.GetName())
+	})
+
 	t.Run("validate proper folder metadata is set", func(t *testing.T) {
 		testCases := []struct {
 			name           string

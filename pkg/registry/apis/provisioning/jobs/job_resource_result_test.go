@@ -492,6 +492,24 @@ func TestJobResourceResult_WarningReason(t *testing.T) {
 		assert.Equal(t, provisioning.ReasonFolderUIDTooLong, result.WarningReason(),
 			"uid-too-long must keep its specific reason; the generic FolderValidationFailed must not shadow it")
 	})
+
+	t.Run("DashboardUIDTooLongError classifies as ReasonDashboardUIDTooLong", func(t *testing.T) {
+		uidErr := resources.NewDashboardUIDTooLongError("archive/misc/long.json", "cxvh-performance-dashboard-0217-finalized-v2", nil)
+		result := NewResourceResult().WithError(uidErr).Build()
+
+		assert.Equal(t, provisioning.ReasonDashboardUIDTooLong, result.WarningReason())
+		assert.Nil(t, result.Error(), "dashboard uid-too-long should be a warning, not an error")
+		assert.NotNil(t, result.Warning())
+	})
+
+	t.Run("DashboardUIDTooLongError wrapped through fmt.Errorf still classifies as ReasonDashboardUIDTooLong", func(t *testing.T) {
+		uidErr := resources.NewDashboardUIDTooLongError("archive/misc/long.json", "uid", nil)
+		wrapped := fmt.Errorf("parse file: %w", uidErr)
+		result := NewResourceResult().WithError(wrapped).Build()
+
+		assert.Equal(t, provisioning.ReasonDashboardUIDTooLong, result.WarningReason())
+		assert.NotNil(t, result.Warning())
+	})
 }
 
 func TestIsNonFailingWarning(t *testing.T) {

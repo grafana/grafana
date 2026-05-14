@@ -779,3 +779,80 @@ func TestIsFolderValidationAPIError(t *testing.T) {
 		require.False(t, IsFolderValidationAPIError(errors.New("something else")))
 	})
 }
+
+func TestDashboardUIDTooLongError(t *testing.T) {
+	t.Run("Error includes path, uid, and underlying message", func(t *testing.T) {
+		underlying := errors.New("uid too long, max 40 characters")
+		err := NewDashboardUIDTooLongError("archive/misc/long.json", "a0123456789012345678901234567890123456789", underlying)
+
+		require.Contains(t, err.Error(), "archive/misc/long.json")
+		require.Contains(t, err.Error(), "a0123456789012345678901234567890123456789")
+		require.Contains(t, err.Error(), "40-character")
+	})
+
+	t.Run("Error formats without underlying error", func(t *testing.T) {
+		err := NewDashboardUIDTooLongError("a/b.json", "uid", nil)
+
+		require.Contains(t, err.Error(), "a/b.json")
+		require.Contains(t, err.Error(), "uid")
+		require.Contains(t, err.Error(), "40-character")
+	})
+
+	t.Run("Unwrap exposes both sentinel and underlying error", func(t *testing.T) {
+		underlying := errors.New("uid too long, max 40 characters")
+		err := NewDashboardUIDTooLongError("a/b.json", "uid", underlying)
+
+		require.True(t, errors.Is(err, ErrDashboardUIDTooLong))
+		require.True(t, errors.Is(err, underlying))
+	})
+
+	t.Run("Unwrap returns sentinel only when no underlying error", func(t *testing.T) {
+		err := NewDashboardUIDTooLongError("a/b.json", "uid", nil)
+
+		require.True(t, errors.Is(err, ErrDashboardUIDTooLong))
+	})
+
+	t.Run("errors.As extracts DashboardUIDTooLongError through wrapping", func(t *testing.T) {
+		underlying := errors.New("uid too long, max 40 characters")
+		err := NewDashboardUIDTooLongError("a/b.json", "uid", underlying)
+		wrapped := fmt.Errorf("write dashboard: %w", err)
+
+		var uidErr *DashboardUIDTooLongError
+		require.True(t, errors.As(wrapped, &uidErr))
+		require.Equal(t, "a/b.json", uidErr.Path)
+		require.Equal(t, "uid", uidErr.UID)
+	})
+}
+
+func TestIsDashboardUIDTooLongAPIError(t *testing.T) {
+	t.Run("nil returns false", func(t *testing.T) {
+		require.False(t, IsDashboardUIDTooLongAPIError(nil))
+	})
+
+	t.Run("matches the legacy message substring", func(t *testing.T) {
+		err := errors.New("failed to update dashboard: uid too long, max 40 characters")
+		require.True(t, IsDashboardUIDTooLongAPIError(err))
+	})
+
+	t.Run("matches BadRequest with the legacy public message", func(t *testing.T) {
+		err := apierrors.NewBadRequest("uid too long, max 40 characters")
+		require.True(t, IsDashboardUIDTooLongAPIError(err))
+	})
+
+	t.Run("matches sentinel error via errors.Is", func(t *testing.T) {
+		require.True(t, IsDashboardUIDTooLongAPIError(ErrDashboardUIDTooLong))
+	})
+
+	t.Run("matches sentinel through wrapping", func(t *testing.T) {
+		wrapped := fmt.Errorf("write dashboard: %w", ErrDashboardUIDTooLong)
+		require.True(t, IsDashboardUIDTooLongAPIError(wrapped))
+	})
+
+	t.Run("does not match unrelated errors", func(t *testing.T) {
+		require.False(t, IsDashboardUIDTooLongAPIError(errors.New("something else")))
+	})
+
+	t.Run("does not match unrelated bad-request status errors", func(t *testing.T) {
+		require.False(t, IsDashboardUIDTooLongAPIError(apierrors.NewBadRequest("title cannot be empty")))
+	})
+}

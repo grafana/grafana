@@ -62,6 +62,7 @@ func classifyWarning(err error) (string, bool) {
 	var folderManagedByOtherErr *resources.FolderManagedByOtherError
 	var uidTooLongErr *resources.FolderUIDTooLongError
 	var folderValidationErr *resources.FolderValidationError
+	var dashboardUIDTooLongErr *resources.DashboardUIDTooLongError
 
 	// Order matters: the more specific folder reasons must be checked
 	// before the generic FolderValidationError fallback so the user-facing
@@ -89,6 +90,8 @@ func classifyWarning(err error) (string, bool) {
 		return provisioning.ReasonFolderUIDTooLong, true
 	case errors.As(err, &folderValidationErr):
 		return provisioning.ReasonFolderValidationFailed, true
+	case errors.As(err, &dashboardUIDTooLongErr):
+		return provisioning.ReasonDashboardUIDTooLong, true
 	default:
 		return "", false
 	}

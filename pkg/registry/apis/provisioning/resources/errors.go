@@ -447,3 +447,55 @@ func IsFolderValidationAPIError(err error) bool {
 
 	return false
 }
+
+// ErrDashboardUIDTooLong is the sentinel for a dashboard metadata.name
+// exceeding the 40-character limit enforced by the dashboard API. Surfaced
+// as a job warning rather than a retryable error.
+var ErrDashboardUIDTooLong = errors.New("dashboard uid too long")
+
+// dashboardUIDTooLongLegacyMsg is the human-readable form of
+// dashboards.ErrDashboardUidTooLong; matched as a fallback because the
+// dashboard apiserver does not currently emit a structured 400.
+const dashboardUIDTooLongLegacyMsg = "uid too long, max 40 characters"
+
+// DashboardUIDTooLongError wraps a dashboard "uid too long" rejection so the
+// job classifier can surface it as a warning. Err may be nil when the
+// rejection is detected client-side before any apiserver call.
+type DashboardUIDTooLongError struct {
+	Path string
+	UID  string
+	Err  error
+}
+
+func (e *DashboardUIDTooLongError) Error() string {
+	if e.Err == nil {
+		return fmt.Sprintf("dashboard UID %q at %q exceeds the 40-character limit enforced by the dashboard API", e.UID, e.Path)
+	}
+	return fmt.Sprintf("dashboard UID %q at %q exceeds the 40-character limit enforced by the dashboard API: %v", e.UID, e.Path, e.Err)
+}
+
+func (e *DashboardUIDTooLongError) Unwrap() []error {
+	if e.Err == nil {
+		return []error{ErrDashboardUIDTooLong}
+	}
+	return []error{ErrDashboardUIDTooLong, e.Err}
+}
+
+func NewDashboardUIDTooLongError(path, uid string, err error) *DashboardUIDTooLongError {
+	return &DashboardUIDTooLongError{Path: path, UID: uid, Err: err}
+}
+
+// IsDashboardUIDTooLongAPIError reports whether err is a dashboard UID-too-long
+// rejection, matched via the sentinel or the legacy message substring.
+func IsDashboardUIDTooLongAPIError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	if errors.Is(err, ErrDashboardUIDTooLong) {
+		return true
+	}
+
+	msg := strings.ToLower(err.Error())
+	return strings.Contains(msg, dashboardUIDTooLongLegacyMsg)
+}

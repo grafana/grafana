@@ -211,6 +211,14 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 		obj.SetName(obj.GetGenerateName() + util.GenerateShortUID())
 	}
 
+	// Reject too-long dashboard UIDs client-side; the apiserver rejection
+	// is slow and the retry loop would burn the dashboard latency SLO.
+	if parsed.GVK.Group == dashboard.GROUP && parsed.GVK.Kind == "Dashboard" {
+		if util.IsShortUIDTooLong(obj.GetName()) {
+			return nil, NewDashboardUIDTooLongError(info.Path, obj.GetName(), nil)
+		}
+	}
+
 	// Calculate folder identifier from the file path
 	if info.Path != "" {
 		dirPath := safepath.Dir(info.Path)

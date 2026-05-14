@@ -113,6 +113,11 @@ const (
 	// without user action, so provisioning surfaces it as a warning rather
 	// than retrying the failed write.
 	ReasonFolderValidationFailed = "FolderValidationFailed"
+	// ReasonDashboardUIDTooLong indicates a dashboard metadata.name exceeds
+	// the 40-character limit enforced by the dashboard API. The repository
+	// owner must shorten the offending UID; provisioning will not retry the
+	// failed write.
+	ReasonDashboardUIDTooLong = "DashboardUIDTooLong"
 )
 
 // Condition reasons for the Quota condition
