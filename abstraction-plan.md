@@ -61,6 +61,7 @@ flowchart LR
   subgraph gates [render gates]
     G1["PanelRenderer.tsx"]
     G2["DashboardGridItemRenderer.tsx"]
+    G3["SoloPanelContext.tsx<br/>(renderMatchingSoloPanels)"]
   end
 
   P3 --> A1
@@ -70,12 +71,16 @@ flowchart LR
 
   P4 --> G1
   P4 --> G2
+  P4 --> G3
   P5 --> G1
   P5 --> G2
+  P5 --> G3
   F2 -.future.-> G1
   F2 -.future.-> G2
+  F2 -.future.-> G3
   F3 -.future.-> G1
   F3 -.future.-> G2
+  F3 -.future.-> G3
 ```
 
 ## Files to add
@@ -199,6 +204,46 @@ Same shape: replace
 ```
 
 with `needsDynamicPalette(panel.state.fieldConfig)` plus a comment marking where future `needsDynamicX(panel.state.fieldConfig, panel.state.options)` calls drop in. Loading text key stays panel-flavored ("Loading dynamic panel...") since it covers any pending dynamic option.
+
+### `public/app/features/dashboard-scene/scene/SoloPanelContext.tsx`
+
+Solo-panel paths (viewPanel URL param, panel search, solo render endpoints) bypass `DashboardGridItemRenderer` entirely - `renderMatchingSoloPanels` mounts each `VizPanel` directly. Without its own gate, a saved panel that references a dynamic palette would render with stale colours on the solo path. This is the same shape as the other two gates, but on a different render entry point.
+
+Today, the inner loop in `renderMatchingSoloPanels` does:
+
+```ts
+if (isLazy) {
+  matches.push(<LazyLoader key={panel.state.key!}><panel.Component model={panel} /></LazyLoader>);
+} else {
+  matches.push(<panel.Component model={panel} key={panel.state.key} />);
+}
+```
+
+Extract a single `MatchedSoloPanel` wrapper that runs the same predicate/hook pair as the other two renderers before falling through to the original lazy/non-lazy branch:
+
+```ts
+function MatchedSoloPanel({ panel, isLazy }: { panel: VizPanel; isLazy?: boolean }) {
+  const shouldWaitForDynamicPalette = needsDynamicPalette(panel.state.fieldConfig);
+  // future: const shouldWaitForX = needsDynamicX(panel.state.fieldConfig, panel.state.options);
+  const shouldWait = shouldWaitForDynamicPalette; /* || shouldWaitForX */
+
+  if (shouldWait) {
+    return <MatchedSoloPanelWithDynamicOptionsGate panel={panel} isLazy={isLazy} />;
+  }
+  return <MatchedSoloPanelContent panel={panel} isLazy={isLazy} />;
+}
+
+function MatchedSoloPanelWithDynamicOptionsGate({ panel, isLazy }: { panel: VizPanel; isLazy?: boolean }) {
+  const palettesReady = useDynamicPalettesReady();
+  // future: const xReady = useDynamicXReady(); const ready = palettesReady && xReady;
+  if (!palettesReady) {
+    return <LoadingPlaceholder text={t('dashboard-scene.solo-panel.text-loading-dynamic-panel', 'Loading dynamic panel...')} />;
+  }
+  return <MatchedSoloPanelContent panel={panel} isLazy={isLazy} />;
+}
+```
+
+The two-component split mirrors `PanelRenderer.tsx` and `DashboardGridItemRenderer.tsx`: panels that don't need any dynamic option never call the hook, so cold-load cost stays at the "extra `useState` per gate" sanity-check noted in [Risks](#risks).
 
 ## Out of scope
 
