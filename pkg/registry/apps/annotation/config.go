@@ -31,12 +31,13 @@ type Config struct {
 	GRPCTLSSkipVerify bool
 
 	// Postgres store configuration
-	PostgresConnectionString string
-	PostgresMaxConnections   int
-	PostgresMaxIdleConns     int
-	PostgresConnMaxLifetime  time.Duration
-	PostgresTagCacheTTL      time.Duration
-	PostgresTagCacheSize     int
+	PostgresConnStrings        []string
+	PostgresMetadataConnString string
+	PostgresMaxConnections     int
+	PostgresMaxIdleConns       int
+	PostgresConnMaxLifetime    time.Duration
+	PostgresTagCacheTTL        time.Duration
+	PostgresTagCacheSize       int
 
 	// CleanupSettings configures annotation pruning for the SQL backend's LifecycleManager.
 	// Zero value (all limits unset) disables cleanup. Not used by memory or gRPC backends.
@@ -57,12 +58,13 @@ func (c *Config) AddFlags(flags *pflag.FlagSet) {
 	flags.BoolVar(&c.GRPCTLSSkipVerify, "annotation.grpc-tls-skip-verify", false, "Skip TLS verification for the annotation gRPC connection (insecure)")
 
 	// Postgres flags
-	flags.StringVar(&c.PostgresConnectionString, "annotation.postgres-connection-string", "", "PostgreSQL connection string for annotation store")
-	flags.IntVar(&c.PostgresMaxConnections, "annotation.postgres-max-connections", defaultMaxConnections, "Maximum number of connections in the Postgres pool")
-	flags.IntVar(&c.PostgresMaxIdleConns, "annotation.postgres-max-idle-conns", defaultMaxIdleConns, "Maximum number of idle connections in the Postgres pool")
+	flags.StringSliceVar(&c.PostgresConnStrings, "annotation.postgres-connection-strings", nil, "Comma-separated PostgreSQL connection strings, one per shard (ordered by shard index)")
+	flags.StringVar(&c.PostgresMetadataConnString, "annotation.postgres-metadata-connection-string", "", "PostgreSQL connection string for the metadata database")
+	flags.IntVar(&c.PostgresMaxConnections, "annotation.postgres-max-connections", defaultMaxConnections, "Maximum number of connections per shard in the Postgres pool")
+	flags.IntVar(&c.PostgresMaxIdleConns, "annotation.postgres-max-idle-conns", defaultMaxIdleConns, "Maximum number of idle connections per shard in the Postgres pool")
 	flags.DurationVar(&c.PostgresConnMaxLifetime, "annotation.postgres-conn-max-lifetime", defaultConnMaxLifetime, "Maximum lifetime of a connection in the Postgres pool")
-	flags.DurationVar(&c.PostgresTagCacheTTL, "annotation.postgres-tag-cache-ttl", defaultTagCacheTTL, "TTL for tag query cache")
-	flags.IntVar(&c.PostgresTagCacheSize, "annotation.postgres-tag-cache-size", defaultTagCacheSize, "Size of the tag query cache")
+	flags.DurationVar(&c.PostgresTagCacheTTL, "annotation.postgres-tag-cache-ttl", defaultTagCacheTTL, "TTL for tag query cache per shard")
+	flags.IntVar(&c.PostgresTagCacheSize, "annotation.postgres-tag-cache-size", defaultTagCacheSize, "Size of the tag query cache per shard")
 }
 
 func newConfigFromSettings(cfg *setting.Cfg) Config {
@@ -80,12 +82,13 @@ func newConfigFromSettings(cfg *setting.Cfg) Config {
 		GRPCTLSCAFile:     cfg.AnnotationAppPlatform.GRPCTLSCAFile,
 		GRPCTLSSkipVerify: cfg.AnnotationAppPlatform.GRPCTLSSkipVerify,
 
-		PostgresConnectionString: cfg.AnnotationAppPlatform.PostgresConnectionString,
-		PostgresMaxConnections:   cfg.AnnotationAppPlatform.PostgresMaxConnections,
-		PostgresMaxIdleConns:     cfg.AnnotationAppPlatform.PostgresMaxIdleConns,
-		PostgresConnMaxLifetime:  cfg.AnnotationAppPlatform.PostgresConnMaxLifetime,
-		PostgresTagCacheTTL:      cfg.AnnotationAppPlatform.PostgresTagCacheTTL,
-		PostgresTagCacheSize:     cfg.AnnotationAppPlatform.PostgresTagCacheSize,
+		PostgresConnStrings:        cfg.AnnotationAppPlatform.PostgresConnStrings,
+		PostgresMetadataConnString: cfg.AnnotationAppPlatform.PostgresMetadataConnString,
+		PostgresMaxConnections:     cfg.AnnotationAppPlatform.PostgresMaxConnections,
+		PostgresMaxIdleConns:       cfg.AnnotationAppPlatform.PostgresMaxIdleConns,
+		PostgresConnMaxLifetime:    cfg.AnnotationAppPlatform.PostgresConnMaxLifetime,
+		PostgresTagCacheTTL:        cfg.AnnotationAppPlatform.PostgresTagCacheTTL,
+		PostgresTagCacheSize:       cfg.AnnotationAppPlatform.PostgresTagCacheSize,
 
 		CleanupSettings: annotations.CleanupSettings{
 			Alerting:  cfg.AlertingAnnotationCleanupSetting,

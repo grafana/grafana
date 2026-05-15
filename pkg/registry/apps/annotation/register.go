@@ -181,21 +181,22 @@ func loadTLSConfig(cfg Config) (*tls.Config, error) {
 }
 
 func newPostgresStore(ctx context.Context, cfg Config) (Store, error) {
-	if cfg.PostgresConnectionString == "" {
-		return nil, fmt.Errorf("postgres connection string is required")
+	if len(cfg.PostgresConnStrings) == 0 {
+		return nil, fmt.Errorf("at least one postgres connection string is required")
 	}
 
-	pgCfg := PostgreSQLStoreConfig{
-		ConnectionString: cfg.PostgresConnectionString,
-		MaxConnections:   cfg.PostgresMaxConnections,
-		MaxIdleConns:     cfg.PostgresMaxIdleConns,
-		ConnMaxLifetime:  cfg.PostgresConnMaxLifetime,
-		RetentionTTL:     cfg.RetentionTTL,
-		TagCacheTTL:      cfg.PostgresTagCacheTTL,
-		TagCacheSize:     cfg.PostgresTagCacheSize,
+	shardCfg := ShardedStoreConfig{
+		ShardConnectionStrings:   cfg.PostgresConnStrings,
+		MetadataConnectionString: cfg.PostgresMetadataConnString,
+		MaxConnections:           cfg.PostgresMaxConnections,
+		MaxIdleConns:             cfg.PostgresMaxIdleConns,
+		ConnMaxLifetime:          cfg.PostgresConnMaxLifetime,
+		RetentionTTL:             cfg.RetentionTTL,
+		TagCacheTTL:              cfg.PostgresTagCacheTTL,
+		TagCacheSize:             cfg.PostgresTagCacheSize,
 	}
 
-	return NewPostgreSQLStore(ctx, pgCfg)
+	return NewShardedPostgresStore(ctx, shardCfg)
 }
 
 // GetLegacyStorage returns the K8s REST storage implementation for the annotation resource.
