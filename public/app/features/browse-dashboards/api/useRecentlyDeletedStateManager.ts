@@ -18,6 +18,17 @@ export class TrashStateManager extends SearchStateManager {
   protected sortStorageKey = SEARCH_SELECTED_SORT_DELETED;
   protected layoutStorageKey = SEARCH_SELECTED_LAYOUT_DELETED;
 
+  // Clear stale results so the skeleton shows while fresh data loads on navigation
+  initStateFromUrl(folderUid?: string, doInitialSearch = true) {
+    this.setState({ result: undefined });
+    super.initStateFromUrl(folderUid, doInitialSearch);
+  }
+
+  // Clear stale results to show skeleton during post-mutation refresh
+  refreshAfterMutation() {
+    this.setState({ result: undefined });
+    return super.doSearch();
+  }
   setStateAndDoSearch(state: Partial<SearchState>) {
     const sort = state.sort || this.state.sort || store.get(this.sortStorageKey) || undefined;
 

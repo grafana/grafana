@@ -145,7 +145,7 @@ export function RecentlyDeletedActions() {
     dispatch(setAllSelection({ isSelected: false, folderUID: undefined }));
 
     deletedDashboardsCache.clear();
-    await stateManager.doSearch();
+    await stateManager.refreshAfterMutation();
 
     const notificationData = getRestoreNotificationData(successful, failed, restoreTarget);
     if (notificationData) {
