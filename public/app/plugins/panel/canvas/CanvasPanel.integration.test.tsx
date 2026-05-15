@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import * as React from 'react';
 
@@ -1090,8 +1090,10 @@ describe('Canvas', () => {
               await user.click(metricPointerTarget);
               // And then double click to trigger the field mapping select to get added to the UI
               await user.dblClick(metricPointerTarget);
-              // Verify double click prompt has been replaced
-              expect(screen.queryByText(/Double click to set field/i)).not.toBeInTheDocument();
+              // Inline editor replaces the placeholder after editModeEnabled & React update
+              await waitFor(() => {
+                expect(screen.queryByText(/Double click to set field/i)).not.toBeInTheDocument();
+              });
 
               // Click into the select combobox
               const metricFieldCombo = within(metricTarget).getByPlaceholderText('Select field');
