@@ -17,6 +17,7 @@ FROM alpine:3.23.4 AS alpine-base
 FROM ubuntu:24.04 AS ubuntu-base
 FROM golang:1.26.3-alpine AS go-builder-base
 FROM --platform=${JS_PLATFORM} node:24-alpine AS js-builder-base
+FROM gcr.io/distroless/static-debian13 AS distroless-base
 # Javascript build stage
 FROM --platform=${JS_PLATFORM} ${JS_IMAGE} AS js-builder
 ARG JS_NODE_ENV=production
@@ -125,6 +126,58 @@ RUN mkdir -p data/plugins-bundled
 FROM ${GO_SRC} AS go-src
 FROM ${JS_SRC} AS js-src
 
+# Intermediate filesystem setup for the distroless target.
+# Uses an Alpine shell to create directories, users, and config files
+# since distroless has no shell. No network access required.
+FROM alpine-base AS distroless-prep
+
+ARG GF_UID="472"
+ARG GF_GID="0"
+
+ENV PATH="/usr/share/grafana/bin:$PATH" \
+  GF_PATHS_CONFIG="/etc/grafana/grafana.ini" \
+  GF_PATHS_DATA="/var/lib/grafana" \
+  GF_PATHS_HOME="/usr/share/grafana" \
+  GF_PATHS_LOGS="/var/log/grafana" \
+  GF_PATHS_PLUGINS="/var/lib/grafana/plugins" \
+  GF_PATHS_PROVISIONING="/etc/grafana/provisioning"
+
+WORKDIR $GF_PATHS_HOME
+
+COPY --from=go-src /tmp/grafana/conf ./conf
+COPY --from=go-src /tmp/grafana/bin/grafana* /tmp/grafana/bin/*/grafana* ./bin/
+
+RUN if [ ! "$(getent group "$GF_GID")" ]; then \
+  addgroup -S -g $GF_GID grafana; \
+  fi && \
+  GF_GID_NAME=$(getent group $GF_GID | cut -d':' -f1) && \
+  mkdir -p "$GF_PATHS_HOME/.aws" \
+  "$GF_PATHS_PROVISIONING/datasources" \
+  "$GF_PATHS_PROVISIONING/dashboards" \
+  "$GF_PATHS_PROVISIONING/notifiers" \
+  "$GF_PATHS_PROVISIONING/plugins" \
+  "$GF_PATHS_PROVISIONING/access-control" \
+  "$GF_PATHS_PROVISIONING/alerting" \
+  "$GF_PATHS_LOGS" \
+  "$GF_PATHS_PLUGINS" \
+  "$GF_PATHS_HOME/data/plugins-bundled" \
+  "$GF_PATHS_DATA" \
+  /etc/grafana && \
+  adduser -S -u $GF_UID -G "$GF_GID_NAME" grafana && \
+  cp conf/sample.ini "$GF_PATHS_CONFIG" && \
+  cp conf/ldap.toml /etc/grafana/ldap.toml && \
+  chown -R "grafana:$GF_GID_NAME" "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING" "$GF_PATHS_HOME/data/plugins-bundled" && \
+  chmod -R 777 "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING" "$GF_PATHS_HOME/data/plugins-bundled" && \
+  printf 'root:x:0:0:root:/root:/sbin/nologin\nnobody:x:65534:65534:nobody:/nonexistent:/sbin/nologin\ngrafana:x:%s:%s::/usr/share/grafana:/sbin/nologin\n' "$GF_UID" "$GF_GID" > /tmp/distroless-passwd && \
+  printf 'root:x:0:\nnobody:x:65534:\n' > /tmp/distroless-group && \
+  if [ "$GF_GID" != "0" ]; then printf 'grafana:x:%s:\n' "$GF_GID" >> /tmp/distroless-group; fi && \
+  grafana server --homepath="$GF_PATHS_HOME" -v | sed -e 's/Version //' > /.grafana-version && \
+  chmod 644 /.grafana-version
+
+ARG SLIM=false
+RUN --mount=type=bind,from=go-src,source=/tmp/grafana/data/plugins-bundled,target=/mnt/plugins-bundled \
+  [ "$SLIM" = "true" ] || cp -a /mnt/plugins-bundled/. "$GF_PATHS_HOME/data/plugins-bundled/"
+
 # Alpine final stage
 FROM alpine-base AS final-alpine
 
@@ -190,10 +243,13 @@ RUN if [ ! "$(getent group "$GF_GID")" ]; then \
 COPY --from=go-src /tmp/grafana/bin/grafana* /tmp/grafana/bin/*/grafana* ./bin/
 COPY --from=js-src /tmp/grafana/public ./public
 COPY --from=js-src /tmp/grafana/LICENSE ./
-COPY --from=go-src /tmp/grafana/data/plugins-bundled ./data/plugins-bundled
 
 RUN grafana server -v | sed -e 's/Version //' > /.grafana-version
 RUN chmod 644 /.grafana-version
+
+ARG SLIM=false
+RUN --mount=type=bind,from=go-src,source=/tmp/grafana/data/plugins-bundled,target=/mnt/plugins-bundled \
+  [ "$SLIM" = "true" ] || cp -a /mnt/plugins-bundled/. ./data/plugins-bundled/
 
 EXPOSE 3000
 
@@ -254,10 +310,13 @@ RUN if [ ! "$(getent group "$GF_GID")" ]; then \
 COPY --from=go-src /tmp/grafana/bin/grafana* /tmp/grafana/bin/*/grafana* ./bin/
 COPY --from=js-src /tmp/grafana/public ./public
 COPY --from=js-src /tmp/grafana/LICENSE ./
-COPY --from=go-src /tmp/grafana/data/plugins-bundled ./data/plugins-bundled
 
 RUN grafana server -v | sed -e 's/Version //' > /.grafana-version
 RUN chmod 644 /.grafana-version
+
+ARG SLIM=false
+RUN --mount=type=bind,from=go-src,source=/tmp/grafana/data/plugins-bundled,target=/mnt/plugins-bundled \
+  [ "$SLIM" = "true" ] || cp -a /mnt/plugins-bundled/. ./data/plugins-bundled/
 
 EXPOSE 3000
 
@@ -267,6 +326,55 @@ COPY ${RUN_SH} /run.sh
 
 USER "$GF_UID"
 ENTRYPOINT [ "/run.sh" ]
+
+# Distroless final stage — use --target=final-distroless to select this variant.
+# No shell, no package manager, no OS utilities: significantly reduces CVE surface.
+# Requires a static binary (CGO_ENABLED=0). The run.sh entrypoint is replaced by a
+# direct grafana server invocation, so these run.sh features are unavailable:
+#   - GF_*__FILE secret expansion (reading config values from mounted secret files)
+#   - AWS credential file generation from GF_AWS_* env vars
+#   - GF_INSTALL_PLUGINS (deprecated; use GF_PLUGINS_PREINSTALL instead)
+# GF_PATHS_* env vars work normally — they are not overridden by cfg: flags in this entrypoint.
+#
+# Filesystem layout (dirs, users, config) is prepared by distroless-prep and
+# binaries/assets are copied directly from go-src/js-src. No Alpine OS packages,
+# libraries, or network downloads are included.
+FROM distroless-base AS final-distroless
+
+LABEL maintainer="Grafana Labs <hello@grafana.com>"
+LABEL org.opencontainers.image.source="https://github.com/grafana/grafana"
+
+ARG GF_UID="472"
+ARG GF_GID="0"
+
+ENV PATH="/usr/share/grafana/bin:$PATH" \
+  GF_PATHS_CONFIG="/etc/grafana/grafana.ini" \
+  GF_PATHS_DATA="/var/lib/grafana" \
+  GF_PATHS_HOME="/usr/share/grafana" \
+  GF_PATHS_LOGS="/var/log/grafana" \
+  GF_PATHS_PLUGINS="/var/lib/grafana/plugins" \
+  GF_PATHS_PROVISIONING="/etc/grafana/provisioning"
+
+WORKDIR $GF_PATHS_HOME
+
+COPY --from=distroless-prep /tmp/distroless-passwd /etc/passwd
+COPY --from=distroless-prep /tmp/distroless-group /etc/group
+COPY --from=distroless-prep /etc/grafana /etc/grafana
+COPY --chown=${GF_UID}:${GF_GID} --from=distroless-prep /var/lib/grafana /var/lib/grafana
+COPY --chown=${GF_UID}:${GF_GID} --from=distroless-prep /var/log/grafana /var/log/grafana
+COPY --from=distroless-prep /usr/share/grafana/conf /usr/share/grafana/conf
+COPY --chown=${GF_UID}:${GF_GID} --from=distroless-prep /usr/share/grafana/.aws /usr/share/grafana/.aws
+COPY --chown=${GF_UID}:${GF_GID} --from=distroless-prep /usr/share/grafana/data /usr/share/grafana/data
+COPY --from=distroless-prep /.grafana-version /.grafana-version
+COPY --chown=${GF_UID}:${GF_GID} --from=go-src /tmp/grafana/bin/grafana* /tmp/grafana/bin/*/grafana* ./bin/
+COPY --from=js-src /tmp/grafana/public ./public
+COPY --from=js-src /tmp/grafana/LICENSE ./
+
+EXPOSE 3000
+
+USER $GF_UID
+
+ENTRYPOINT ["/usr/share/grafana/bin/grafana", "server", "--homepath=/usr/share/grafana", "--config=/etc/grafana/grafana.ini", "--packaging=docker", "cfg:default.log.mode=console"]
 
 # Default stage — alpine. Builds without --target produce an alpine image.
 # Use --target=final-ubuntu to build the ubuntu variant instead.

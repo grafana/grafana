@@ -70,6 +70,9 @@ post-generate-cleanup: ## Clean up the generated code
 	@rm -f ./pkg/apis/dashboard/v1beta1/zz_generated.openapi.go
 	@echo "Removed generated v1beta1 files (v1beta1 is a thin wrapper around v1)"
 
+	# Copy default home dashboard into the apiserver
+	@cp ../../public/dashboards/home.json ../../pkg/registry/apis/dashboard/home/home.json
+
 .PHONY: generate-golden-files
 generate-golden-files: ## Generate golden output files (migration first, then conversion)
 	go test -run '$(MIGRATION_TESTS)' $(MIGRATION_PKG) -count=1

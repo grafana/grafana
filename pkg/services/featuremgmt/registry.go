@@ -3076,6 +3076,15 @@ var (
 			Generate:     Generate{Go: true},
 		},
 		{
+			Name:         "grafana.meticulousAIRecorderHighVolume",
+			Description:  "When true, increases the volume of data transferred before abandoning sessions for Meticulous AI session recorder.",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
+			HideFromDocs: true,
+			Generate:     Generate{Go: true},
+		},
+		{
 			Name:        "datasources.useNewStackInfoToSettingsCache",
 			Description: "Use the new cache for datasource.StackInfoToSettings, backend flag",
 			Stage:       FeatureStageGeneralAvailability,
