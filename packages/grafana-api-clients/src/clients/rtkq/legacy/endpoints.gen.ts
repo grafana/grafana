@@ -5250,6 +5250,7 @@ export type TeamGroupDto = {
   orgId?: number;
   teamId?: number;
   teamUid?: string;
+  /** Deprecated: always empty; no per-entry id. */
   uid?: string;
 };
 export type TeamGroupMapping = {

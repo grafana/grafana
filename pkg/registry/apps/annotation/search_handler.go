@@ -13,7 +13,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func newSearchHandler(store Store, accessClient authtypes.AccessClient) func(ctx context.Context, writer app.CustomRouteResponseWriter, request *app.CustomRouteRequest) error {
+func newSearchHandler(store Store, accessClient authtypes.AccessClient, folderResolver DashboardFolderResolver) func(ctx context.Context, writer app.CustomRouteResponseWriter, request *app.CustomRouteRequest) error {
 	return func(ctx context.Context, writer app.CustomRouteResponseWriter, request *app.CustomRouteRequest) error {
 		namespace := request.ResourceIdentifier.Namespace
 
@@ -25,7 +25,7 @@ func newSearchHandler(store Store, accessClient authtypes.AccessClient) func(ctx
 			return err
 		}
 
-		allowed, err := canAccessAnnotations(ctx, accessClient, namespace, result.Items, utils.VerbList)
+		allowed, err := canAccessAnnotations(ctx, accessClient, folderResolver, namespace, result.Items, utils.VerbList)
 		if err != nil {
 			return err
 		}
