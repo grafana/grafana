@@ -207,7 +207,7 @@ jobs:
 
   build-targz:
     name: targz / ${{ matrix.name }}
-    runs-on: ubuntu-x64-large-io
+    runs-on: ubuntu-x64-large
     continue-on-error: ${{ matrix.allow-failure == true }}
     needs:
       - setup

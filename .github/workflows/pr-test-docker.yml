@@ -35,12 +35,12 @@ on:
       - .github/workflows/build-docker-variants.yml
 
 jobs:
-  # Path 1:
+  # ── Path 1 ────────────────────────────────────────────────────────────────
   # Full source build inside Docker. Validates that the complete compilation
   # pipeline (go-builder + js-builder + final stage) works end-to-end.
   build-full:
     name: build / full source (alpine)
-    runs-on: ubuntu-x64-large-io
+    runs-on: ubuntu-x64-large
     permissions:
       contents: read
     steps:
@@ -53,49 +53,86 @@ jobs:
       - name: Build alpine (full source)
         run: make build-docker-full DOCKER_BUILD_ARGS=--load
 
-  # Path 2:
-  # Prod-like build: compile from source → tarball → all 6 Docker variants.
-  # Mirrors exactly what release-build.yml does, but builds the tarball here
-  # since no pre-built artifact exists in a PR.
+  # ── Path 2 ────────────────────────────────────────────────────────────────
+  # Prod-like build: compile frontend + backend in parallel → assemble tarball
+  # → build all 6 Docker variants. Mirrors the release-build.yml structure so
+  # the same code paths are exercised on every PR.
 
-  build-source-targz:
-    name: build / source tarball
-    runs-on: ubuntu-x64-large-io
+  build-frontend:
+    name: build / frontend
+    runs-on: ubuntu-x64-large
     permissions:
       contents: read
     steps:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
-      - uses: docker/setup-docker-action@3fb92d6d9c634363128c8cce4bc3b2826526370a # v4
-      - name: Set up Docker Buildx
-        run: docker buildx create --use
-      - name: Compile Go binary
-        run: |
-          docker buildx build \
-            --target=go-builder \
-            --platform linux/amd64 \
-            --output "type=local,dest=_go" \
-            .
+      - uses: ./.github/actions/setup-node
+      - name: Install JS dependencies
+        run: yarn install --immutable
       - name: Build frontend
-        run: |
-          docker buildx build \
-            --target=js-builder \
-            --platform linux/amd64 \
-            --output "type=local,dest=_js" \
-            .
-      - name: Package tarball
-        run: |
-          set -euo pipefail
-          mkdir -p dist _staging/grafana-0.0.0-pr
-          cp -r _go/tmp/grafana/. _staging/grafana-0.0.0-pr/
-          cp -r _js/tmp/grafana/public _staging/grafana-0.0.0-pr/
-          cp _js/tmp/grafana/LICENSE _staging/grafana-0.0.0-pr/
-          tar czf dist/grafana_0.0.0-pr_0_linux_amd64.tar.gz -C _staging .
+        run: yarn build
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        with:
+          name: pr-frontend
+          path: public
+          retention-days: 1
+
+  build-backend:
+    name: build / backend (linux-amd64)
+    runs-on: ubuntu-x64-large
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-go
+      - name: Build Go binary
+        env:
+          CGO_ENABLED: '0'
+          GOOS: linux
+          GOARCH: amd64
+        run: make build-go
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        with:
+          name: pr-backend-linux-amd64
+          path: bin/linux/amd64
+          retention-days: 1
+
+  build-source-targz:
+    name: build / source tarball
+    runs-on: ubuntu-x64-large
+    needs:
+      - build-frontend
+      - build-backend
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: pr-frontend
+          path: public
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: pr-backend-linux-amd64
+          path: bin/linux/amd64
+      - name: Fix backend binary permissions
+        run: chmod +x bin/linux/amd64/grafana*
+      - name: Build tar.gz
+        env:
+          GOOS: linux
+          GOARCH: amd64
+          BUILD_NUMBER: ${{ github.run_id }}
+          BUILD_VERSION: 0.0.0-pr
+        run: make build-targz BUILD_VERSION="$BUILD_VERSION" BUILD_NUMBER="$BUILD_NUMBER"
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: pr-source-targz
-          path: dist/grafana_0.0.0-pr_0_linux_amd64.tar.gz
+          path: dist/*.tar.gz
           retention-days: 1
 
   build-docker-variants:
