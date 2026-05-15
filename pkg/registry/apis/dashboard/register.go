@@ -1315,6 +1315,39 @@ func (b *DashboardsAPIBuilder) verifyFolderAccessPermissions(ctx context.Context
 		return fmt.Errorf("folder client handler is not configured for namespace %q", ns.Value)
 	}
 
+	if b.accessClient == nil {
+		resp, err := folderClient.Get(ctx, folderID, ns.OrgID, metav1.GetOptions{}, "access")
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				return apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), folderID)
+			}
+			if apierrors.IsForbidden(err) {
+				return apierrors.NewForbidden(folders.FolderResourceInfo.GroupResource(), folderID, folder.ErrAccessDenied)
+			}
+			return err
+		}
+		if resp == nil {
+			return fmt.Errorf("folder access response is empty for folder %q", folderID)
+		}
+
+		var accessInfo folders.FolderAccessInfo
+		if err := runtime.DefaultUnstructuredConverter.FromUnstructured(resp.Object, &accessInfo); err == nil {
+			if !accessInfo.CanEdit {
+				return apierrors.NewForbidden(folders.FolderResourceInfo.GroupResource(), folderID, folder.ErrAccessDenied)
+			}
+			return nil
+		}
+
+		canEdit, found, nestedErr := unstructured.NestedBool(resp.Object, "spec", "canEdit")
+		if nestedErr != nil {
+			return nestedErr
+		}
+		if !found || !canEdit {
+			return apierrors.NewForbidden(folders.FolderResourceInfo.GroupResource(), folderID, folder.ErrAccessDenied)
+		}
+		return nil
+	}
+
 	gvr := dashv1.DashboardResourceInfo.GroupVersionResource()
 	resp, err := b.accessClient.Check(ctx, user, authlib.CheckRequest{
 		Verb:      utils.VerbCreate,
