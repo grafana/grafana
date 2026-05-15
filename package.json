@@ -206,7 +206,6 @@
     "jest-watch-typeahead": "^2.2.2",
     "jimp": "^1.6.0",
     "jsdom-testing-mocks": "^1.13.1",
-    "knip": "^6.13.1",
     "known-css-properties": "^0.37.0",
     "lerna": "9.0.6",
     "madge": "^8.0.0",
