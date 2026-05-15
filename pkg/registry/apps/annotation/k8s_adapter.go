@@ -67,6 +67,7 @@ type k8sRESTAdapter struct {
 	store          Store
 	tableConverter rest.TableConvertor
 	accessClient   authtypes.AccessClient
+	folderResolver DashboardFolderResolver
 	installer      *AppInstaller
 
 	tracer  trace.Tracer
@@ -140,7 +141,7 @@ func (s *k8sRESTAdapter) List(ctx context.Context, options *internalversion.List
 	}
 
 	// TODO: post-fetch filtering breaks pagination - cursor advances by opts.Limit regardless of authz results.
-	allowed, err := canAccessAnnotations(ctx, s.accessClient, namespace, result.Items, utils.VerbList)
+	allowed, err := canAccessAnnotations(ctx, s.accessClient, s.folderResolver, namespace, result.Items, utils.VerbList)
 	if err != nil {
 		return nil, err
 	}
@@ -172,7 +173,7 @@ func (s *k8sRESTAdapter) Get(ctx context.Context, name string, options *metav1.G
 		return nil, toAPIError(err, name)
 	}
 
-	allowed, err := canAccessAnnotation(ctx, s.accessClient, namespace, annotation, utils.VerbGet)
+	allowed, err := canAccessAnnotation(ctx, s.accessClient, s.folderResolver, namespace, annotation, utils.VerbGet)
 	if err != nil {
 		return nil, err
 	}
@@ -202,7 +203,7 @@ func (s *k8sRESTAdapter) Create(ctx context.Context,
 		return nil, apierrors.NewInternalError(fmt.Errorf("expected *Annotation, got %T", obj))
 	}
 
-	allowed, err := canAccessAnnotation(ctx, s.accessClient, namespace, annotation, utils.VerbCreate)
+	allowed, err := canAccessAnnotation(ctx, s.accessClient, s.folderResolver, namespace, annotation, utils.VerbCreate)
 	if err != nil {
 		return nil, err
 	}
@@ -272,14 +273,14 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 	}
 
 	// Check authz on both existing and new body: prevents privilege escalation via scope changes.
-	allowed, err := canAccessAnnotation(ctx, s.accessClient, namespace, existing, utils.VerbUpdate)
+	allowed, err := canAccessAnnotation(ctx, s.accessClient, s.folderResolver, namespace, existing, utils.VerbUpdate)
 	if err != nil {
 		return nil, false, err
 	}
 	if !allowed {
 		return nil, false, apierrors.NewForbidden(annotationGR, existing.Name, fmt.Errorf("insufficient permissions"))
 	}
-	allowed, err = canAccessAnnotation(ctx, s.accessClient, namespace, resource, utils.VerbUpdate)
+	allowed, err = canAccessAnnotation(ctx, s.accessClient, s.folderResolver, namespace, resource, utils.VerbUpdate)
 	if err != nil {
 		return nil, false, err
 	}
@@ -309,13 +310,13 @@ func (s *k8sRESTAdapter) Delete(ctx context.Context, name string, deleteValidati
 		return nil, false, toAPIError(err, name)
 	}
 
-	allowedDelete, err := canAccessAnnotation(ctx, s.accessClient, namespace, annotation, utils.VerbDelete)
+	allowedDelete, err := canAccessAnnotation(ctx, s.accessClient, s.folderResolver, namespace, annotation, utils.VerbDelete)
 	if err != nil {
 		return nil, false, err
 	}
 	if !allowedDelete {
 		// Return 404 if caller can't read (don't leak existence), 403 if readable but not deletable.
-		allowedRead, rerr := canAccessAnnotation(ctx, s.accessClient, namespace, annotation, utils.VerbGet)
+		allowedRead, rerr := canAccessAnnotation(ctx, s.accessClient, s.folderResolver, namespace, annotation, utils.VerbGet)
 		if rerr != nil {
 			return nil, false, rerr
 		}

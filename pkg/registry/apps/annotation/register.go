@@ -28,6 +28,7 @@ import (
 	apiserverrest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -47,16 +48,17 @@ type AppInstaller struct {
 	metrics       *Metrics
 }
 
-// RegisterAppInstaller is the wire entry point for the ST server.
+// RegisterAppInstaller is the ST wire entry. Folder resolver uses the loopback rest config.
 func RegisterAppInstaller(
 	cfg *setting.Cfg,
 	service annotations.Repository,
 	cleaner annotations.Cleaner,
 	accessClient authtypes.AccessClient,
+	restConfigProvider apiserver.RestConfigProvider,
 	tracer trace.Tracer,
 	reg prometheus.Registerer,
 ) (*AppInstaller, error) {
-	return NewAppInstaller(newConfigFromSettings(cfg), service, cleaner, accessClient, tracer, reg)
+	return NewAppInstaller(newConfigFromSettings(cfg), service, cleaner, accessClient, NewDashboardFolderResolver(restConfigProvider.GetRestConfig), tracer, reg)
 }
 
 // NewAppInstaller Layers (from bottom to top):
@@ -64,14 +66,20 @@ func RegisterAppInstaller(
 //  2. sqlAdapter - Bridges annotations.Repository → Store interface (apps/annotation/Store), converts ItemDTO ↔ v0alpha1.Annotation
 //  3. instrumentedStore - Tracing/metrics/logging decorator
 //  4. k8sRESTAdapter - Bridges Store → K8s REST interface, handles K8s API conventions
+//
+// folderResolver is required; dashboard-linked annotation authz needs it to walk folder inheritance.
 func NewAppInstaller(
 	cfg Config,
 	service annotations.Repository,
 	cleaner annotations.Cleaner,
 	accessClient authtypes.AccessClient,
+	folderResolver DashboardFolderResolver,
 	tracer trace.Tracer,
 	reg prometheus.Registerer,
 ) (*AppInstaller, error) {
+	if folderResolver == nil {
+		return nil, fmt.Errorf("annotation service requires folder resolver")
+	}
 	logger := log.New("annotation.app")
 	metrics := ProvideMetrics(reg)
 	installer := &AppInstaller{
@@ -100,12 +108,13 @@ func NewAppInstaller(
 	}
 
 	installer.k8sAdapter = &k8sRESTAdapter{
-		store:        instrumentedStore,
-		accessClient: accessClient,
-		installer:    installer,
-		tracer:       installer.tracer,
-		metrics:      installer.metrics,
-		logger:       logger,
+		store:          instrumentedStore,
+		accessClient:   accessClient,
+		folderResolver: folderResolver,
+		installer:      installer,
+		tracer:         installer.tracer,
+		metrics:        installer.metrics,
+		logger:         logger,
 	}
 	// Create the tags handler
 	tagProvider, ok := store.(TagProvider)
@@ -116,7 +125,7 @@ func NewAppInstaller(
 	tagHandler := newTagsHandler(tagProvider, installer.tracer, installer.metrics, logger)
 
 	// Create the search handler
-	searchHandler := newSearchHandler(instrumentedStore, accessClient, installer.tracer, installer.metrics, logger)
+	searchHandler := newSearchHandler(instrumentedStore, accessClient, folderResolver, installer.tracer, installer.metrics, logger)
 
 	provider := simple.NewAppProvider(apis.LocalManifest(), nil, annotationapp.New)
 
