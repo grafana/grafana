@@ -1750,23 +1750,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "localeFormatPreference",
-			Description: "Specifies the locale so the correct format for numbers and dates can be shown",
-			Stage:       FeatureStageDeprecated, // not continuing the work for now, will be removed
-			Owner:       grafanaFrontendPlatformSquad,
-			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:         "unifiedStorageGrpcConnectionPool",
-			Description:  "Enables the unified storage grpc connection pool",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaSearchAndStorageSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:         "alertingRulePermanentlyDelete",
 			Description:  "Enables UI functionality to permanently delete alert rules",
 			Generate:     Generate{LegacyFrontend: true},
@@ -2462,6 +2445,15 @@ var (
 			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "true", // enabled by default
+		},
+		{
+			Name:            "globalDashboardVariables",
+			Description:     "Enables global and folder-scoped dashboard variables via dashboard.grafana.app",
+			Stage:           FeatureStageExperimental,
+			Generate:        Generate{LegacyGo: true, LegacyFrontend: true, React: true},
+			Owner:           grafanaDashboardsSquad,
+			RequiresRestart: true,
+			Expression:      "false",
 		},
 		{
 			Name:        "smoothingTransformation",

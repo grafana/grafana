@@ -133,13 +133,13 @@ func newClient(opts options.StorageOptions,
 			metrics   = newClientMetrics(reg)
 		)
 
-		conn, err = newGrpcConn(opts.Address, metrics, features, opts.GrpcClientKeepaliveTime)
+		conn, err = grpcConn(opts.Address, metrics, opts.GrpcClientKeepaliveTime)
 		if err != nil {
 			return nil, err
 		}
 
 		if opts.SearchServerAddress != "" {
-			indexConn, err = newGrpcConn(opts.SearchServerAddress, metrics, features, opts.GrpcClientKeepaliveTime)
+			indexConn, err = grpcConn(opts.SearchServerAddress, metrics, opts.GrpcClientKeepaliveTime)
 
 			if err != nil {
 				return nil, err
@@ -230,11 +230,11 @@ func newClient(opts options.StorageOptions,
 	}
 }
 
-func NewStorageApiSearchClient(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (resourcepb.ResourceIndexClient, error) {
+func NewStorageApiSearchClient(cfg *setting.Cfg) (resourcepb.ResourceIndexClient, error) {
 	var searchClient resourcepb.ResourceIndexClient
 	var err error
 	if cfg.EnableSearchClient {
-		searchClient, err = NewSearchClient(cfg, features)
+		searchClient, err = NewSearchClient(cfg)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create search client: %w", err)
 		}
@@ -242,7 +242,7 @@ func NewStorageApiSearchClient(cfg *setting.Cfg, features featuremgmt.FeatureTog
 	return searchClient, nil
 }
 
-func NewSearchClient(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (resourcepb.ResourceIndexClient, error) {
+func NewSearchClient(cfg *setting.Cfg) (resourcepb.ResourceIndexClient, error) {
 	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
 	searchServerAddress := apiserverCfg.Key("search_server_address").MustString("")
 	grpcClientKeepaliveTime := apiserverCfg.Key("grpc_client_keepalive_time").MustDuration(0)
@@ -251,48 +251,14 @@ func NewSearchClient(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (res
 		return nil, fmt.Errorf("expecting search_server_address to be set for search client under grafana-apiserver section")
 	}
 
-	var (
-		conn    grpc.ClientConnInterface
-		err     error
-		metrics = newClientMetrics(prometheus.NewRegistry())
-	)
-
-	conn, err = newGrpcConn(searchServerAddress, metrics, features, grpcClientKeepaliveTime)
+	metrics := newClientMetrics(prometheus.NewRegistry())
+	conn, err := grpcConn(searchServerAddress, metrics, grpcClientKeepaliveTime)
 	if err != nil {
 		return nil, err
 	}
 
 	cc := grpchan.InterceptClientConn(conn, grpcUtils.UnaryClientInterceptor, grpcUtils.StreamClientInterceptor)
 	return resourcepb.NewResourceIndexClient(cc), nil
-}
-
-func newGrpcConn(address string, metrics *clientMetrics, features featuremgmt.FeatureToggles, clientKeepaliveTime time.Duration) (grpc.ClientConnInterface, error) {
-	// Create either a connection pool or a single connection.
-	// The connection pool __can__ be useful when connection to
-	// server side load balancers like kube-proxy.
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageGrpcConnectionPool) {
-		conn, err := newPooledConn(&poolOpts{
-			initialCapacity: 3,
-			maxCapacity:     6,
-			idleTimeout:     time.Minute,
-			factory: func() (*grpc.ClientConn, error) {
-				return grpcConn(address, metrics, clientKeepaliveTime)
-			},
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		return conn, nil
-	}
-
-	conn, err := grpcConn(address, metrics, clientKeepaliveTime)
-	if err != nil {
-		return nil, err
-	}
-
-	return conn, nil
 }
 
 // grpcConn creates a new gRPC connection to the provided address.

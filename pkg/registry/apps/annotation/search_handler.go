@@ -5,17 +5,36 @@ import (
 	"encoding/json"
 	"net/url"
 	"strconv"
+	"time"
 
 	authtypes "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/app"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
-func newSearchHandler(store Store, accessClient authtypes.AccessClient, folderResolver DashboardFolderResolver) func(ctx context.Context, writer app.CustomRouteResponseWriter, request *app.CustomRouteRequest) error {
-	return func(ctx context.Context, writer app.CustomRouteResponseWriter, request *app.CustomRouteRequest) error {
+func newSearchHandler(
+	store Store,
+	accessClient authtypes.AccessClient,
+	folderResolver DashboardFolderResolver,
+	tracer trace.Tracer,
+	metrics *Metrics,
+	logger log.Logger,
+) func(ctx context.Context, writer app.CustomRouteResponseWriter, request *app.CustomRouteRequest) error {
+	return func(ctx context.Context, writer app.CustomRouteResponseWriter, request *app.CustomRouteRequest) (err error) {
 		namespace := request.ResourceIdentifier.Namespace
+
+		ctx, span := tracer.Start(ctx, "annotation.k8s.search", trace.WithAttributes(
+			attribute.String("namespace", namespace),
+		))
+		defer span.End()
+		start := time.Now()
+		defer func() { observe(ctx, logger, metrics.RequestDuration, "search", start, err) }()
 
 		queryParams := request.URL.Query()
 		opts := listOptionsFromQueryParams(queryParams)
@@ -36,6 +55,10 @@ func newSearchHandler(store Store, accessClient authtypes.AccessClient, folderRe
 				filtered = append(filtered, anno)
 			}
 		}
+		span.SetAttributes(
+			attribute.Int("item_count", len(result.Items)),
+			attribute.Int("filtered_count", len(filtered)),
+		)
 
 		response := &annotationV0.AnnotationList{
 			Items:    filtered,

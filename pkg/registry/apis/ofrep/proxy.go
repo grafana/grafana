@@ -3,14 +3,11 @@ package ofrep
 import (
 	"bytes"
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/http/httputil"
-	"os"
 	"path"
 	"strconv"
 
@@ -102,15 +99,6 @@ func (b *APIBuilder) newProxy(proxyPath, namespace string) (*httputil.ReversePro
 		return nil, fmt.Errorf("OpenFeatureService provider URL is not set")
 	}
 
-	var caRoot *x509.CertPool
-	if b.caFile != "" {
-		var err error
-		caRoot, err = getCARoot(b.caFile)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	director := func(req *http.Request) {
 		req.URL.Scheme = b.url.Scheme
 		req.URL.Host = b.url.Host
@@ -119,12 +107,7 @@ func (b *APIBuilder) newProxy(proxyPath, namespace string) (*httputil.ReversePro
 	}
 
 	proxy := proxyutil.NewReverseProxy(b.logger, director)
-	proxy.Transport = &http.Transport{
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: b.insecure,
-			RootCAs:            caRoot,
-		},
-	}
+	proxy.Transport = b.transport
 	return proxy, nil
 }
 
@@ -133,16 +116,4 @@ func namespaceUserAgent(namespace string) string {
 		return "features-grafana-app"
 	}
 	return "features-grafana-app/" + namespace
-}
-
-func getCARoot(caFile string) (*x509.CertPool, error) {
-	// It should be safe to ignore since caFile is passed as --internal.root-ca-file flag of apiserver
-	// nolint:gosec
-	caCert, err := os.ReadFile(caFile)
-	if err != nil {
-		return nil, err
-	}
-	caCertPool := x509.NewCertPool()
-	caCertPool.AppendCertsFromPEM(caCert)
-	return caCertPool, nil
 }
