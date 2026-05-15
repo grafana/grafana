@@ -569,15 +569,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       alignItems: 'center',
       justifyContent: 'center',
     }),
-    svgLink: css({
-      textDecoration: 'none',
-      color: 'inherit',
-      cursor: 'pointer',
-      '&:focus, &:focus-visible': {
-        outline: `2px solid ${theme.colors.primary.main}`,
-        outlineOffset: '2px',
-      },
-    }),
     svgArg: {
       normal: css({
         [theme.transitions.handleMotion('no-preference')]: {
