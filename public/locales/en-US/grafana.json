@@ -10857,7 +10857,9 @@
   "home": {
     "dashboard-tabs": {
       "recent": "Recent",
-      "starred": "Starred"
+      "recent-active": "Recent dashboards",
+      "starred": "Starred",
+      "starred-active": "Starred dashboards"
     },
     "home-page": {
       "edition": {
@@ -12576,6 +12578,9 @@
       "required": "Please enter a title",
       "save-tooltip": "Save"
     }
+  },
+  "page-loader": {
+    "default": "Loading ..."
   },
   "panel": {
     "dashlist": {

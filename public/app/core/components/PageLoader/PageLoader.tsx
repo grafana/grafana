@@ -6,7 +6,7 @@ interface Props {
 }
 
 const PageLoader = ({ text }: Props) => {
-  const loadingText = text ?? t('page-loader.default', 'Loading...');
+  const loadingText = text ?? t('page-loader.default', 'Loading ...');
   return (
     <Box display="flex" alignItems="center" direction="column" justifyContent="center" paddingTop={10}>
       <LoadingPlaceholder text={loadingText} />

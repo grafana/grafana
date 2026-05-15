@@ -20,8 +20,10 @@ describe('HomePage', () => {
     expect(screen.getByRole('tab', { name: /recent/i })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /starred/i })).toBeInTheDocument();
 
+    // Default mocks have starred dashboards but no recent impressions,
+    // so auto-switch activates the Starred tab
     await waitFor(() => {
-      expect(screen.getByText('No recently viewed dashboards')).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
     });
   });
 });
