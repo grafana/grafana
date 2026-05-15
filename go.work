@@ -20,6 +20,7 @@ use (
 	./apps/iam
 	./apps/live
 	./apps/logsdrilldown
+	./apps/palettes
 	./apps/playlist
 	./apps/plugins
 	./apps/preferences
