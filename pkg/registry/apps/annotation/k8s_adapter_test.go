@@ -91,7 +91,7 @@ func TestToAPIError(t *testing.T) {
 // pins the contract between Store implementations and the K8s boundary.
 func TestK8sAdapter_StoreErrorMapping(t *testing.T) {
 	ns := "org-1"
-	allowAll := &fakeAccessClient{fn: func(_ authtypes.CheckRequest) bool { return true }}
+	allowAll := &fakeAccessClient{fn: func(_ authtypes.BatchCheckItem) bool { return true }}
 
 	cases := []struct {
 		name      string
@@ -140,7 +140,7 @@ func (u *updatedObjectInfo) UpdatedObject(_ context.Context, _ runtime.Object) (
 // error can come from either the pre-fetch Get or the Update call itself.
 func TestK8sAdapter_Update_StoreErrors(t *testing.T) {
 	ns := "org-1"
-	allowAll := &fakeAccessClient{fn: func(_ authtypes.CheckRequest) bool { return true }}
+	allowAll := &fakeAccessClient{fn: func(_ authtypes.BatchCheckItem) bool { return true }}
 	obj := &annotationV0.Annotation{ObjectMeta: metav1.ObjectMeta{Name: "obj", Namespace: ns}}
 
 	t.Run("pre-fetch returns NotFound", func(t *testing.T) {
@@ -156,7 +156,7 @@ func TestK8sAdapter_Update_StoreErrors(t *testing.T) {
 // regressions where backends drift back to plain fmt.Errorf.
 func TestMemoryStore_DuplicateCreate(t *testing.T) {
 	ns := "org-1"
-	allowAll := &fakeAccessClient{fn: func(_ authtypes.CheckRequest) bool { return true }}
+	allowAll := &fakeAccessClient{fn: func(_ authtypes.BatchCheckItem) bool { return true }}
 	adapter := newTestAdapter(NewMemoryStore(), allowAll)
 	ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
 
