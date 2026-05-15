@@ -289,10 +289,7 @@ func TestK8sRESTAdapter_TenantIsolation(t *testing.T) {
 
 func TestK8sRESTAdapter_UIDIsSet(t *testing.T) {
 	store := NewMemoryStore()
-	adapter := &k8sRESTAdapter{
-		store:        store,
-		accessClient: authtypes.FixedAccessClient(true),
-	}
+	adapter := newTestAdapter(store, authtypes.FixedAccessClient(true))
 
 	ctx := k8srequest.WithNamespace(identity.WithRequester(t.Context(), &identity.StaticRequester{
 		Type:    authtypes.TypeUser,
