@@ -40,27 +40,7 @@ const (
 	sqlKindMetric sqlKind = "metric"
 )
 
-// normalizeGrafanaSQLRequest rewrites schemads tabular queries into native Loki queries.
-// Queries without GrafanaSql=true are unchanged.
-//
-// sqlErrors maps refId to conversion errors for Grafana SQL queries that could not be rewritten;
-// those queries are omitted from the returned request (callers attach sqlErrors to the response).
-//
-// TableHintValues (keys are uppercase per schemads):
-//
-//	Log stream selectors always use Loki's range API (/query_range); the instant API does not support log queries.
-//	STEP('30s')      — range query step / resolution (must parse as a Grafana duration; invalid values fail the query)
-//	DIRECTION('forward'|'backward')
-//	RATE('5m')       — parseable Grafana duration; wraps metric expr with rate() or bytes_rate() (see buildGrafanaSQLMetricExpr)
-//	INSTANT          — metric queries only: use Loki's instant API (/query) instead of query_range (invalid with pure log selectors)
-//
-// Row count uses schemas.Query.limit (SQL LIMIT pushdown), not a table hint.
-//
-// When `aggregation` is present (dsabstraction pushdown), the query is compiled to LogQL metric expressions
-// (range API only); responses are flattened with flattenMetricsToTabular instead of log flattening.
-//
-// dsAbstractionSQLRewriteEnabled runs Grafana SQL normalization when dsAbstractionApp is enabled on
-// PluginContext.GrafanaConfig (from plugin request config, including stack toggles forwarded by the query API).
+// dsAbstractionSQLRewriteEnabled reports whether PluginContext.GrafanaConfig enables dsAbstractionApp.
 func dsAbstractionSQLRewriteEnabled(req *backend.QueryDataRequest) bool {
 	if req == nil {
 		return false
@@ -72,8 +52,34 @@ func dsAbstractionSQLRewriteEnabled(req *backend.QueryDataRequest) bool {
 	return gc.FeatureToggles().IsEnabled(flagDsAbstractionApp)
 }
 
-// sqlKinds maps each successfully-rewritten refID to its sqlKind so callers can choose
-// flattenLogsToTabular vs flattenMetricsToTabular.
+// normalizeGrafanaSQLRequest rewrites schemads Grafana SQL payloads into native Loki queries embedded
+// in each DataQuery's JSON. Queries without GrafanaSql=true are unchanged.
+//
+// sqlErrors maps refId to conversion errors for Grafana SQL queries that could not be rewritten;
+// those queries are omitted from the returned request (callers attach sqlErrors to the response).
+//
+// Eligibility: runs only when dsAbstractionSQLRewriteEnabled(req) is true. The first Grafana SQL
+// row resolves the stream table label via resolveTableLabel; that requires a non-nil datasource
+// instance with SchemaProvider.
+//
+// Log vs metric (rewriteSQLQuery): metric when json aggregation is non-nil OR TableHintValues
+// contains a non-empty RATE hint after parseSQLHints; otherwise log. Log queries always use Loki's
+// range API. Metric queries use range or instant query type per the INSTANT hint (instant is rejected for log queries).
+//
+// TableHintValues (parsed in parseSQLHints; keys compared case-insensitively via hintGet / instantHintEnabled):
+//
+//	STEP, RATE — Grafana duration strings; invalid values fail the rewrite.
+//	DIRECTION — forward/backward; applied on log queries only (QueryJSONModel.Direction).
+//	INSTANT — key presence selects instant API for metric queries only.
+//
+// Positive schemas.Query.limit is mapped to Loki MaxLines on log queries only (buildLogPlan).
+//
+// Details live in parseSQLHints, rewriteSQLQuery, buildLogPlan, and buildMetricPlan.
+//
+// Returns sqlKinds so queryData can apply flattenLogsToTabular vs flattenMetricsToTabular per refID.
+//
+// The datasource instance should have been created with dsAbstractionApp enabled so SchemaProvider
+// exists; otherwise resolveTableLabel fails.
 func normalizeGrafanaSQLRequest(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datasourceInfo) (*backend.QueryDataRequest, map[string]sqlKind, map[string]error) {
 	if req == nil || len(req.Queries) == 0 {
 		return req, nil, nil
@@ -104,7 +110,12 @@ func normalizeGrafanaSQLRequest(ctx context.Context, req *backend.QueryDataReque
 		}
 
 		if tableLabel == "" {
-			tableLabel = resolveTableLabel(ctx, dsInfo)
+			var err error
+			tableLabel, err = resolveTableLabel(ctx, dsInfo)
+			if err != nil {
+				sqlErrors[q.RefID] = err
+				continue
+			}
 		}
 
 		rewritten, kind, err := rewriteSQLQuery(q, sq, tableLabel)
@@ -273,13 +284,14 @@ func rewriteSQLQuery(q backend.DataQuery, sq grafanaSQLQuery, tableLabel string)
 }
 
 // resolveTableLabel returns the label used to partition Grafana SQL tables for this datasource.
-// Falls back to defaultSchemaTableLabel when the datasource has no SchemaProvider configured
-// (e.g. when dsAbstractionApp was disabled at instance creation time).
-func resolveTableLabel(ctx context.Context, dsInfo *datasourceInfo) string {
-	if dsInfo != nil && dsInfo.schemaProvider != nil {
-		return dsInfo.schemaProvider.ResolveSchemaTableLabel(ctx)
+func resolveTableLabel(ctx context.Context, dsInfo *datasourceInfo) (string, error) {
+	if dsInfo == nil {
+		return "", fmt.Errorf("loki grafana sql: data source instance is missing")
 	}
-	return defaultSchemaTableLabel
+	if dsInfo.schemaProvider == nil {
+		return "", fmt.Errorf("loki grafana sql: data source instance has no schema provider")
+	}
+	return dsInfo.schemaProvider.ResolveSchemaTableLabel(ctx), nil
 }
 
 // parseDurationHint returns the raw value and parsed Grafana duration for a TableHintValues entry.

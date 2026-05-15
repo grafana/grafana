@@ -287,7 +287,7 @@ func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datas
 		}
 		switch kind {
 		case sqlKindMetric:
-			dr.Frames = flattenMetricsToTabular(dr.Frames)
+			dr.Frames = flattenMetricsToTabular(dr.Frames, plog)
 		case sqlKindLog:
 			dr.Frames = flattenLogsToTabular(dr.Frames, responseOpts.logsDataplane, plog)
 		}

@@ -147,7 +147,7 @@ func TestFlattenMetricsToTabular(t *testing.T) {
 		Meta: &data.FrameMeta{ExecutedQueryString: "Expr: sum(count_over_time..."},
 	}
 
-	out := flattenMetricsToTabular(data.Frames{f})
+	out := flattenMetricsToTabular(data.Frames{f}, log.NewNullLogger())
 	require.Len(t, out, 1)
 	frame := out[0]
 	require.Len(t, frame.Fields, 3)

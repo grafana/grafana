@@ -13,7 +13,7 @@ import (
 
 // flattenMetricsToTabular merges Loki metric (matrix) frames into one tabular frame with columns
 // timestamp, value, and label columns for Grafana SQL / schemads (see promlib flattenTimeSeriesToTabular).
-func flattenMetricsToTabular(frames data.Frames) data.Frames {
+func flattenMetricsToTabular(frames data.Frames, logger log.Logger) data.Frames {
 	if len(frames) == 0 {
 		return frames
 	}
@@ -41,6 +41,7 @@ func flattenMetricsToTabular(frames data.Frames) data.Frames {
 			}
 		}
 		if timeField == nil {
+			logger.Warn("loki: skipping metric flatten, no time field in frame")
 			continue
 		}
 
@@ -56,10 +57,12 @@ func flattenMetricsToTabular(frames data.Frames) data.Frames {
 			for i := 0; i < f.Len(); i++ {
 				tv, ok := timeField.At(i).(time.Time)
 				if !ok {
+					logger.Warn("loki: skipping metric row, time value is not time.Time", "row", i)
 					continue
 				}
 				v, err := f.FloatAt(i)
 				if err != nil {
+					logger.Warn("loki: skipping metric row, FloatAt failed", "row", i, "error", err)
 					continue
 				}
 				val := v
