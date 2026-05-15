@@ -57,4 +57,5 @@ runs:
         GOOS: ${{ inputs.os }}
         GOARCH: ${{ inputs.arch }}
         GOARM: ${{ inputs.arm }}
-      run: make build-go BUILD_VERSION="${{ steps.version.outputs.value }}"
+        BUILD_VERSION: ${{ steps.version.outputs.value }}
+      run: make build-go BUILD_VERSION="$BUILD_VERSION"

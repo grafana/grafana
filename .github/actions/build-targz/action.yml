@@ -43,7 +43,10 @@ runs:
     - name: Fix backend binary permissions
       if: inputs.os != 'windows'
       shell: bash
-      run: chmod +x bin/${{ inputs.os }}/${{ inputs.arch }}/grafana*
+      env:
+        TARGET_OS: ${{ inputs.os }}
+        TARGET_ARCH: ${{ inputs.arch }}
+      run: chmod +x bin/${TARGET_OS}/${TARGET_ARCH}/grafana*
 
     - name: Build tar.gz
       shell: bash
