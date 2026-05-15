@@ -126,6 +126,11 @@ export class SilenceFiltersController implements AdHocFiltersController {
 
   async getKeys(_currentKey: string | null): Promise<Array<SelectableValue<string>>> {
     const keys = new Set<string>();
+    // "alertname" is always offered as a filter key because silences can be matched by
+    // rule title (metadata.rule_title) even when no alertname label matcher is present.
+    //
+    // This is used when a user creates a silence for a rule (using UID) but still wants to match it by name.
+    keys.add('alertname');
     for (const silence of this.silencesRef.current ?? []) {
       for (const matcher of silence.matchers ?? []) {
         keys.add(matcher.name);
@@ -137,6 +142,9 @@ export class SilenceFiltersController implements AdHocFiltersController {
   async getValuesFor(filter: AdHocFilterWithLabels): Promise<Array<SelectableValue<string>>> {
     const values = new Set<string>();
     for (const silence of this.silencesRef.current ?? []) {
+      if (filter.key === 'alertname' && silence.metadata?.rule_title) {
+        values.add(silence.metadata.rule_title);
+      }
       for (const matcher of silence.matchers ?? []) {
         if (matcher.name === filter.key) {
           values.add(matcher.value);
