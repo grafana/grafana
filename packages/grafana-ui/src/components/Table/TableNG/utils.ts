@@ -1,7 +1,6 @@
 import { Property } from 'csstype';
 import memoize from 'micro-memoize';
 import { CSSProperties } from 'react';
-import { SortColumn } from 'react-data-grid';
 import tinycolor from 'tinycolor2';
 import { Count, varPreLine } from 'uwrap';
 
@@ -17,6 +16,7 @@ import {
   DisplayProcessor,
   DecimalCount,
 } from '@grafana/data';
+import { SortColumn } from '@grafana/react-data-grid';
 import {
   BarGaugeDisplayMode,
   FieldTextAlignment,
