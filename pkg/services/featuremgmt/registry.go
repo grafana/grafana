@@ -1758,15 +1758,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:         "unifiedStorageGrpcConnectionPool",
-			Description:  "Enables the unified storage grpc connection pool",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaSearchAndStorageSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:         "alertingRulePermanentlyDelete",
 			Description:  "Enables UI functionality to permanently delete alert rules",
 			Generate:     Generate{LegacyFrontend: true},

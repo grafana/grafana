@@ -6318,7 +6318,8 @@
       "metadata": {
         "name": "unifiedStorageGrpcConnectionPool",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-03-21T13:24:54Z"
+        "creationTimestamp": "2025-03-21T13:24:54Z",
+        "deletionTimestamp": "2026-05-14T17:53:20Z"
       },
       "spec": {
         "description": "Enables the unified storage grpc connection pool",

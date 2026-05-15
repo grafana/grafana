@@ -566,10 +566,6 @@ const (
 	// Specifies the locale so the correct format for numbers and dates can be shown
 	FlagLocaleFormatPreference = "localeFormatPreference"
 
-	// FlagUnifiedStorageGrpcConnectionPool
-	// Enables the unified storage grpc connection pool
-	FlagUnifiedStorageGrpcConnectionPool = "unifiedStorageGrpcConnectionPool"
-
 	// FlagAlertingRuleRecoverDeleted
 	// Enables the UI functionality to recover and view deleted alert rules
 	FlagAlertingRuleRecoverDeleted = "alertingRuleRecoverDeleted"

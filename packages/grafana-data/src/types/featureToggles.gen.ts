@@ -991,11 +991,6 @@ export interface FeatureToggles {
   */
   localeFormatPreference?: boolean;
   /**
-  * Enables the unified storage grpc connection pool
-  * @default false
-  */
-  unifiedStorageGrpcConnectionPool?: boolean;
-  /**
   * Enables UI functionality to permanently delete alert rules
   * @default true
   */
