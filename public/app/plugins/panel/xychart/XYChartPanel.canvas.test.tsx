@@ -19,7 +19,7 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
+import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
 import { measureText as uPlotAxisMeasureText, type UPlotConfigBuilder } from '@grafana/ui';
 import { XYChartPanel2 } from 'app/plugins/panel/xychart/XYChartPanel';
 import {
@@ -204,7 +204,6 @@ function buildOptions(partial: Partial<Options> = {}): Options {
     mapping: partial.mapping ?? SeriesMapping.Auto,
     legend: {
       showLegend: false,
-      displayMode: LegendDisplayMode.Hidden,
       calcs: [],
       placement: 'bottom',
       ...partial.legend,

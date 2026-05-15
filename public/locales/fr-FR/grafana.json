@@ -11357,6 +11357,8 @@
       "clear-search": "Effacer",
       "close-inline-details": "Fermer les détails de ce journal",
       "close-sidebar-details": "Fermer la barre latérale des détails du journal",
+      "copy-log-line": "",
+      "copy-log-line-json": "",
       "copy-shortlink": "Copier le lien court",
       "copy-to-clipboard": "Copier dans le presse-papiers",
       "displayed-fields-section": "Organiser les champs affichés",
@@ -11405,7 +11407,8 @@
     },
     "log-line-menu": {
       "copy-link": "Copier le lien vers la ligne de journal",
-      "copy-log": "Copier la ligne de journal",
+      "copy-log-contents": "",
+      "copy-log-message": "",
       "hide-details": "Afficher les détails du journal",
       "icon-label": "Menu du journal",
       "log-line": "Ligne de journal",
@@ -15555,8 +15558,8 @@
     },
     "legend": {
       "category": "Légende",
-      "description-faceted-filter": "Afficher le filtre de visibilité des séries en fonction des étiquettes",
-      "name-faceted-filter": "Filtre à facettes"
+      "description-faceted-filter": "",
+      "name-faceted-filter": ""
     },
     "line-style-editor": {
       "line-fill-options": {
