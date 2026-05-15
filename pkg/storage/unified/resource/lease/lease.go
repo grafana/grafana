@@ -133,16 +133,15 @@ type Manager struct {
 // NewManager returns a Manager that uses store for persistence and identifies
 // itself as holder.
 func NewManager(store kv.KV, holder string, opts ...ManagerOption) *Manager {
-	log := logging.DefaultLogger.With("logger", "lease-manager")
 	m := &Manager{
 		store:        store,
 		holder:       holder,
 		minTTL:       defaultMinTTL,
 		maxClockSkew: defaultMaxClockSkew,
-		log:          log,
+		log:          logging.DefaultLogger.With("logger", "lease-manager"),
 		now:          time.Now,
 	}
-	m.garbageCollector = newGarbageCollector(store, log, m.now)
+	m.garbageCollector = newGarbageCollector(store, m.log, m.now)
 	for _, opt := range opts {
 		opt(m)
 	}

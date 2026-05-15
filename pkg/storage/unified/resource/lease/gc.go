@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"math/rand/v2"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -77,9 +78,9 @@ func (gc *garbageCollector) Stop() {
 // expired leases. Before any deletion happens, there's a best-effort attempt at
 // having a single instance of the garbage collector running, controlled by the
 // data written in `gcKey`: the entry is read and, if non-existent or expired, this
-// instance will upsert the key and run a GC cycle if successful. This is a simpler
-// version of what the leases manager provides: we don't want GC to create more
-// entries for itself to delete. Also, this process is sufficient to stop avoidable
+// instance will attempt to create the key and run a GC cycle if successful. This is
+// a simpler version of what the leases manager provides: we don't want GC to create
+// more entries for itself to delete. Also, this process is sufficient to stop avoidable
 // duplicated work in the vast majority of cases. It's still possible for two instances
 // of the garbage collector to start garbage collection at the same time if the timing
 // aligns just right. That is fine, as the GC cycle does not fail in that case.
@@ -218,7 +219,7 @@ func (gc *garbageCollector) runCycle(ctx context.Context) (int, error) {
 			if err != nil {
 				return 0, err
 			}
-			if key == gcKey {
+			if isInternal(key) {
 				continue
 			}
 			keys = append(keys, key)
@@ -280,4 +281,8 @@ func (gc *garbageCollector) logError(err error, message string, args ...any) {
 	}
 
 	gc.log.Warn(message, append(args, "err", err)...)
+}
+
+func isInternal(key string) bool {
+	return strings.HasPrefix(key, internalPrefix)
 }

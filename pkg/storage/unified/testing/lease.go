@@ -423,97 +423,100 @@ func runLeaseKVErrors(t *testing.T, failing *leaseFailingKV) {
 }
 
 func runLeaseGarbageCollection(t *testing.T, store kv.KV) {
-	const shortTTL = time.Millisecond
-	ctx := t.Context()
+	t.Run("deletes eligible leases", func(t *testing.T) {
+		const shortTTL = time.Millisecond
+		ctx := t.Context()
 
-	base := time.Now().Add(-10 * time.Minute)
-	now := base
-	nowFunc := func() time.Time { return now }
+		base := time.Now().Add(-10 * time.Minute)
+		now := base
+		nowFunc := func() time.Time { return now }
 
-	m := newLeaseManagerNoGC(store, "holder-gc", lease.WithInternalMinTTL(shortTTL), lease.WithInternalNowFunc(nowFunc))
+		m := newLeaseManagerNoGC(store, "holder-gc", lease.WithInternalMinTTL(shortTTL), lease.WithInternalNowFunc(nowFunc))
 
-	acquire := func(name string, opts ...lease.AcquireOption) *lease.Lease {
-		t.Helper()
-		l, err := m.Acquire(ctx, name, opts...)
+		acquire := func(name string, opts ...lease.AcquireOption) *lease.Lease {
+			t.Helper()
+			l, err := m.Acquire(ctx, name, opts...)
+			require.NoError(t, err)
+			require.NotNil(t, l)
+			return l
+		}
+
+		release := func(l *lease.Lease) {
+			t.Helper()
+			require.NoError(t, m.Release(ctx, l))
+		}
+
+		// Create leases far enough in the past that released and expired records
+		// should be eligible once GC runs at finalNow.
+		oldReleasedName := "gc/old-released"
+		oldReleased := acquire(oldReleasedName)
+		oldReleasedKey := requireSingleLeaseKey(t, store, oldReleasedName)
+		release(oldReleased)
+
+		oldExpiredName := "gc/old-expired"
+		_ = acquire(oldExpiredName, lease.WithTTL(shortTTL))
+		oldExpiredKey := requireSingleLeaseKey(t, store, oldExpiredName)
+
+		multiGenerationName := "gc/multi-generation"
+		firstGeneration := acquire(multiGenerationName)
+		firstGenerationKey := requireSingleLeaseKey(t, store, multiGenerationName)
+		release(firstGeneration)
+
+		finalNow := base.Add(2 * time.Minute)
+		now = finalNow.Add(-30 * time.Second)
+
+		// Create leases inside the GC grace period. GC should retain them even if
+		// they are already released or expired.
+		recentReleasedName := "gc/recent-released"
+		recentReleased := acquire(recentReleasedName)
+		recentReleasedKey := requireSingleLeaseKey(t, store, recentReleasedName)
+		release(recentReleased)
+
+		recentExpiredName := "gc/recent-expired"
+		_ = acquire(recentExpiredName, lease.WithTTL(shortTTL))
+		recentExpiredKey := requireSingleLeaseKey(t, store, recentExpiredName)
+
+		secondGeneration := acquire(multiGenerationName)
+		multiGenerationKeys := leaseKeys(t, store, multiGenerationName)
+		require.Len(t, multiGenerationKeys, 2)
+		require.Equal(t, firstGenerationKey, multiGenerationKeys[0])
+		secondGenerationKey := multiGenerationKeys[1]
+		release(secondGeneration)
+
+		now = finalNow
+
+		// Create an active lease at GC time to verify live records are preserved.
+		activeName := "gc/active"
+		active := acquire(activeName)
+		activeKey := requireSingleLeaseKey(t, store, activeName)
+
+		deleted, err := m.RunGarbageCollection(ctx)
 		require.NoError(t, err)
-		require.NotNil(t, l)
-		return l
-	}
+		require.Equal(t, 3, deleted)
 
-	release := func(l *lease.Lease) {
-		t.Helper()
-		require.NoError(t, m.Release(ctx, l))
-	}
+		// GC should remove only records that are older than the grace period.
+		requireKeyMissing(t, store, oldReleasedKey)
+		requireKeyMissing(t, store, oldExpiredKey)
+		requireKeyMissing(t, store, firstGenerationKey)
 
-	// Create leases far enough in the past that released and expired records
-	// should be eligible once GC runs at finalNow.
-	oldReleasedName := "gc/old-released"
-	oldReleased := acquire(oldReleasedName)
-	oldReleasedKey := requireSingleLeaseKey(t, store, oldReleasedName)
-	release(oldReleased)
+		requireKeyPresent(t, store, recentReleasedKey)
+		requireKeyPresent(t, store, recentExpiredKey)
+		requireKeyPresent(t, store, secondGenerationKey)
+		requireKeyPresent(t, store, activeKey)
 
-	oldExpiredName := "gc/old-expired"
-	_ = acquire(oldExpiredName, lease.WithTTL(shortTTL))
-	oldExpiredKey := requireSingleLeaseKey(t, store, oldExpiredName)
+		require.NoError(t, m.Release(ctx, active))
 
-	multiGenerationName := "gc/multi-generation"
-	firstGeneration := acquire(multiGenerationName)
-	firstGenerationKey := requireSingleLeaseKey(t, store, multiGenerationName)
-	release(firstGeneration)
-
-	finalNow := base.Add(2 * time.Minute)
-	now = finalNow.Add(-30 * time.Second)
-
-	// Create leases inside the GC grace period. GC should retain them even if
-	// they are already released or expired.
-	recentReleasedName := "gc/recent-released"
-	recentReleased := acquire(recentReleasedName)
-	recentReleasedKey := requireSingleLeaseKey(t, store, recentReleasedName)
-	release(recentReleased)
-
-	recentExpiredName := "gc/recent-expired"
-	_ = acquire(recentExpiredName, lease.WithTTL(shortTTL))
-	recentExpiredKey := requireSingleLeaseKey(t, store, recentExpiredName)
-
-	secondGeneration := acquire(multiGenerationName)
-	multiGenerationKeys := leaseKeys(t, store, multiGenerationName)
-	require.Len(t, multiGenerationKeys, 2)
-	require.Equal(t, firstGenerationKey, multiGenerationKeys[0])
-	secondGenerationKey := multiGenerationKeys[1]
-	release(secondGeneration)
-
-	now = finalNow
-
-	// Create an active lease at GC time to verify live records are preserved.
-	activeName := "gc/active"
-	active := acquire(activeName)
-	activeKey := requireSingleLeaseKey(t, store, activeName)
-
-	deleted, err := m.RunGarbageCollection(ctx)
-	require.NoError(t, err)
-	require.Equal(t, 3, deleted)
-
-	// GC should remove only records that are older than the grace period.
-	requireKeyMissing(t, store, oldReleasedKey)
-	requireKeyMissing(t, store, oldExpiredKey)
-	requireKeyMissing(t, store, firstGenerationKey)
-
-	requireKeyPresent(t, store, recentReleasedKey)
-	requireKeyPresent(t, store, recentExpiredKey)
-	requireKeyPresent(t, store, secondGenerationKey)
-	requireKeyPresent(t, store, activeKey)
-
-	require.NoError(t, m.Release(ctx, active))
-
-	// A lease whose only generation was collected can be acquired again.
-	reacquired := acquire(oldReleasedName)
-	require.NoError(t, m.Release(ctx, reacquired))
+		// A lease whose only generation was collected can be acquired again.
+		reacquired := acquire(oldReleasedName)
+		require.NoError(t, m.Release(ctx, reacquired))
+	})
 
 	t.Run("concurrent runs are safe", func(t *testing.T) {
 		const (
 			numLeases   = 100
 			concurrency = 5
 		)
+		ctx := t.Context()
 
 		now := time.Now().Add(-10 * time.Minute)
 		nowFunc := func() time.Time { return now }
@@ -559,6 +562,55 @@ func runLeaseGarbageCollection(t *testing.T, store kv.KV) {
 
 		for i := range numLeases {
 			require.Empty(t, leaseKeys(t, store, fmt.Sprintf("gc/concurrent/%03d", i)))
+		}
+	})
+
+	t.Run("expired internal key permits next run", func(t *testing.T) {
+		const numLeases = 2
+		ctx := t.Context()
+
+		present := time.Now()
+		now := present.Add(-20 * time.Minute)
+		nowFunc := func() time.Time { return now }
+		m := newLeaseManagerNoGC(store, "holder-gc-stale-internal-key", lease.WithInternalNowFunc(nowFunc))
+
+		// Create leases far enough in the past that the second GC run should
+		// delete them once the stale internal key is cleared.
+		leaseNames := make([]string, 0, numLeases)
+		for i := range numLeases {
+			name := fmt.Sprintf("gc/stale-internal-key/%d", i)
+			l, err := m.Acquire(ctx, name)
+			require.NoError(t, err)
+			require.NotNil(t, l)
+			leaseNames = append(leaseNames, name)
+		}
+
+		// Simulate a GC run that crashed before deleting its internal key.
+		gcExpiresAt := present.Add(-5 * time.Minute)
+		data, err := json.Marshal(struct {
+			Expires int64 `json:"expires"`
+		}{Expires: gcExpiresAt.UnixNano()})
+		require.NoError(t, err)
+		saveKVHelper(t, store, ctx, kv.LeasesSection, "lease-internal/gc", strings.NewReader(string(data)))
+
+		// Before the internal key expires, GC should treat another run as active.
+		now = gcExpiresAt.Add(-time.Minute)
+		deleted, err := m.RunGarbageCollection(ctx)
+		require.NoError(t, err)
+		require.Zero(t, deleted)
+		requireKeyPresent(t, store, "lease-internal/gc")
+		for _, name := range leaseNames {
+			require.NotEmpty(t, leaseKeys(t, store, name))
+		}
+
+		// Once the internal key expires, GC should delete it and run normally.
+		now = present
+		deleted, err = m.RunGarbageCollection(ctx)
+		require.NoError(t, err)
+		require.GreaterOrEqual(t, deleted, numLeases)
+		requireKeyMissing(t, store, "lease-internal/gc")
+		for _, name := range leaseNames {
+			require.Empty(t, leaseKeys(t, store, name))
 		}
 	})
 }
