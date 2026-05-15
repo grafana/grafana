@@ -63,7 +63,11 @@ func TestSetTeamMembershipsViaK8s(t *testing.T) {
 		require.Equal(t, http.StatusOK, resp.Status())
 	})
 
-	t.Run("preserves external members untouched", func(t *testing.T) {
+	t.Run("drops external members not in the request (matches legacy SQL)", func(t *testing.T) {
+		// Legacy SQL behavior: the bulk endpoint doesn't filter by External, so
+		// an external member omitted from the request is removed. Team-sync
+		// will re-add them on the next reconciliation, but the row is deleted
+		// in the meantime.
 		s := setupTest(t)
 		s.mockUserByEmail(adminEmail, adminUID)
 
@@ -72,11 +76,8 @@ func TestSetTeamMembershipsViaK8s(t *testing.T) {
 		))
 		s.mockTeamUpdate(func(t2 *iamv0alpha1.Team) {
 			byName := membersByName(t2.Spec.Members)
-			require.Contains(t, byName, externalUID, "external member must be preserved")
-			assert.True(t, byName[externalUID].External)
-			assert.Equal(t, iamv0alpha1.TeamTeamPermissionMember, byName[externalUID].Permission)
+			require.NotContains(t, byName, externalUID, "external member should be dropped when omitted")
 			require.Contains(t, byName, adminUID)
-			assert.False(t, byName[adminUID].External)
 		})
 
 		resp := s.tapi.setTeamMembershipsViaK8s(s.reqContext, s.teamID, team.SetTeamMembershipsCommand{
@@ -85,20 +86,27 @@ func TestSetTeamMembershipsViaK8s(t *testing.T) {
 		require.Equal(t, http.StatusOK, resp.Status())
 	})
 
-	t.Run("rejects 400 when targeting an external member", func(t *testing.T) {
+	t.Run("updates external member permission and preserves External flag", func(t *testing.T) {
+		// Legacy SQL behavior: column-scoped Update on permission leaves the
+		// External=true flag intact. The K8s path mirrors that — the member is
+		// re-emitted with the new permission and External: true unchanged.
 		s := setupTest(t)
 		s.mockUserByEmail(externalEmail, externalUID)
 
 		s.mockTeamGet(makeTeam(s.teamUID,
 			iamv0alpha1.TeamTeamMember{Kind: "User", Name: externalUID, Permission: iamv0alpha1.TeamTeamPermissionMember, External: true},
 		))
-		// No Update call expected — assertions on Update absence are below.
+		s.mockTeamUpdate(func(t2 *iamv0alpha1.Team) {
+			byName := membersByName(t2.Spec.Members)
+			require.Contains(t, byName, externalUID)
+			assert.Equal(t, iamv0alpha1.TeamTeamPermissionAdmin, byName[externalUID].Permission, "permission should be flipped to Admin")
+			assert.True(t, byName[externalUID].External, "External flag must be preserved")
+		})
 
 		resp := s.tapi.setTeamMembershipsViaK8s(s.reqContext, s.teamID, team.SetTeamMembershipsCommand{
 			Admins: []string{externalEmail},
 		})
-		assert.Equal(t, http.StatusBadRequest, resp.Status())
-		s.mockResClient.AssertNotCalled(t, "Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+		require.Equal(t, http.StatusOK, resp.Status())
 	})
 
 	t.Run("404 with missing email list before any K8s call", func(t *testing.T) {
@@ -162,9 +170,13 @@ func TestSetTeamMembershipsViaK8s(t *testing.T) {
 		s.mockResClient.AssertNotCalled(t, "Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 	})
 
-	t.Run("idempotent rebuild equals input even with interleaved external members", func(t *testing.T) {
+	t.Run("idempotent when external member is included in request with same permission", func(t *testing.T) {
+		// External member listed with the same permission they already have →
+		// rebuildSpecMembers re-emits the entry unchanged (External flag
+		// preserved) and slices.Equal short-circuits the Update.
 		s := setupTest(t)
 		s.mockUserByEmail(adminEmail, adminUID)
+		s.mockUserByEmail(externalEmail, externalUID)
 
 		s.mockTeamGet(makeTeam(s.teamUID,
 			iamv0alpha1.TeamTeamMember{Kind: "User", Name: adminUID, Permission: iamv0alpha1.TeamTeamPermissionAdmin},
@@ -172,7 +184,8 @@ func TestSetTeamMembershipsViaK8s(t *testing.T) {
 		))
 
 		resp := s.tapi.setTeamMembershipsViaK8s(s.reqContext, s.teamID, team.SetTeamMembershipsCommand{
-			Admins: []string{adminEmail},
+			Admins:  []string{adminEmail},
+			Members: []string{externalEmail},
 		})
 		require.Equal(t, http.StatusOK, resp.Status())
 		s.mockResClient.AssertNotCalled(t, "Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
@@ -194,18 +207,21 @@ func TestSetTeamMembershipsViaK8s(t *testing.T) {
 		require.Equal(t, http.StatusOK, resp.Status())
 	})
 
-	t.Run("empty admins+members removes all non-external members", func(t *testing.T) {
+	t.Run("empty admins+members removes all User members including external", func(t *testing.T) {
+		// Matches legacy: an empty request is "the complete desired set is
+		// nobody," and external members get swept along with the rest.
 		s := setupTest(t)
 
 		s.mockTeamGet(makeTeam(s.teamUID,
 			iamv0alpha1.TeamTeamMember{Kind: "User", Name: adminUID, Permission: iamv0alpha1.TeamTeamPermissionAdmin},
 			iamv0alpha1.TeamTeamMember{Kind: "User", Name: memberUID, Permission: iamv0alpha1.TeamTeamPermissionMember},
 			iamv0alpha1.TeamTeamMember{Kind: "User", Name: externalUID, Permission: iamv0alpha1.TeamTeamPermissionMember, External: true},
+			iamv0alpha1.TeamTeamMember{Kind: "ServiceAccount", Name: "sa-uid", Permission: iamv0alpha1.TeamTeamPermissionMember},
 		))
 		s.mockTeamUpdate(func(t2 *iamv0alpha1.Team) {
-			require.Len(t, t2.Spec.Members, 1, "only external should remain")
-			assert.Equal(t, externalUID, t2.Spec.Members[0].Name)
-			assert.True(t, t2.Spec.Members[0].External)
+			require.Len(t, t2.Spec.Members, 1, "only ServiceAccount should remain — non-User entries pass through")
+			assert.Equal(t, "ServiceAccount", t2.Spec.Members[0].Kind)
+			assert.Equal(t, "sa-uid", t2.Spec.Members[0].Name)
 		})
 
 		resp := s.tapi.setTeamMembershipsViaK8s(s.reqContext, s.teamID, team.SetTeamMembershipsCommand{})
@@ -371,38 +387,6 @@ func TestSetTeamMembershipsViaK8s(t *testing.T) {
 		assert.Greater(t, updateCalls, 2, "retry should have attempted Update more than once")
 	})
 
-	t.Run("rejects when previously-desired UID becomes External between retries", func(t *testing.T) {
-		s := setupTest(t)
-		s.mockUserByEmail(externalEmail, externalUID)
-
-		getCalls := 0
-		s.mockResClient.On("Get", mock.Anything, resource.Identifier{Namespace: s.namespace, Name: s.teamUID}).
-			Return(func(_ context.Context, _ resource.Identifier) resource.Object {
-				getCalls++
-				if getCalls == 1 {
-					// First read: target user is a normal member, request would succeed.
-					return makeTeam(s.teamUID,
-						iamv0alpha1.TeamTeamMember{Kind: "User", Name: externalUID, Permission: iamv0alpha1.TeamTeamPermissionMember},
-					)
-				}
-				// Retry read: team-sync flipped the same user to External.
-				return makeTeam(s.teamUID,
-					iamv0alpha1.TeamTeamMember{Kind: "User", Name: externalUID, Permission: iamv0alpha1.TeamTeamPermissionMember, External: true},
-				)
-			}, nil)
-		// First Update returns Conflict to force the retry; if the external re-check
-		// fails to fire we'd see a second Update happen.
-		s.mockResClient.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-			Return(nil, k8serrors.NewConflict(schema.GroupResource{Group: "iam.grafana.app", Resource: "teams"}, s.teamUID, fmt.Errorf("rv mismatch"))).Once()
-
-		resp := s.tapi.setTeamMembershipsViaK8s(s.reqContext, s.teamID, team.SetTeamMembershipsCommand{
-			Admins: []string{externalEmail},
-		})
-		assert.Equal(t, http.StatusBadRequest, resp.Status())
-		assert.Contains(t, string(resp.Body()), externalEmail, "error must name the email the caller submitted, not the UID")
-		s.mockResClient.AssertNumberOfCalls(t, "Update", 1)
-	})
-
 	t.Run("deterministic ordering when appending new members", func(t *testing.T) {
 		// Run rebuildSpecMembers many times with the same input — output order must be stable.
 		desired := map[string]iamv0alpha1.TeamTeamPermission{
@@ -420,21 +404,6 @@ func TestSetTeamMembershipsViaK8s(t *testing.T) {
 		assert.Equal(t, []string{"uid-a", "uid-b", "uid-c"}, names)
 	})
 
-	t.Run("external rejection error names the caller's email, not the UID", func(t *testing.T) {
-		s := setupTest(t)
-		s.mockUserByEmail(externalEmail, externalUID)
-		s.mockTeamGet(makeTeam(s.teamUID,
-			iamv0alpha1.TeamTeamMember{Kind: "User", Name: externalUID, Permission: iamv0alpha1.TeamTeamPermissionMember, External: true},
-		))
-
-		resp := s.tapi.setTeamMembershipsViaK8s(s.reqContext, s.teamID, team.SetTeamMembershipsCommand{
-			Admins: []string{externalEmail},
-		})
-		assert.Equal(t, http.StatusBadRequest, resp.Status())
-		body := string(resp.Body())
-		assert.Contains(t, body, externalEmail, "error body must include the submitted email")
-		assert.NotContains(t, body, externalUID, "error body must not leak the internal UID")
-	})
 }
 
 // --- test scaffolding ---

@@ -18,7 +18,6 @@ import (
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/team"
@@ -28,21 +27,6 @@ import (
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/team/teamapi")
 
 const subjectKindUser = "User"
-
-const externalTeamMemberMessage = `Cannot modify externally-synced team member {{ .Public.email }}`
-
-// ErrExternalTeamMember is returned when a caller tries to set or remove a
-// team member whose entry in Team.Spec.Members is flagged External (team-sync
-// owned). The public message names the user by email so the caller sees a
-// value they submitted.
-var ErrExternalTeamMember = errutil.BadRequest("teamMembers.externalTeamMember").
-	MustTemplate(externalTeamMemberMessage, errutil.WithPublic(externalTeamMemberMessage))
-
-func errExternalTeamMemberData(email string) errutil.TemplateData {
-	return errutil.TemplateData{
-		Public: map[string]any{"email": email},
-	}
-}
 
 //go:generate mockery --name teamClientFactory --structname MockTeamClientFactory --inpackage --filename team_client_factory_mock.go
 type teamClientFactory interface {
@@ -70,10 +54,14 @@ func (f *directRestConfigClientFactory) GetClient(c *contextmodel.ReqContext) (*
 	return client, nil
 }
 
-// setTeamMembershipsViaK8s updates team memberships by writing to Team.Spec.Members.
-// The caller's admin/member email lists are the complete desired set for
-// non-external users: anyone not in the request is removed; entries
-// flagged External (team-sync owned) are preserved.
+// setTeamMembershipsViaK8s updates team memberships by writing to
+// Team.Spec.Members, mirroring the legacy SQL "set complete list" contract:
+// the caller's admin/member email lists are the complete desired set for User
+// members. Any User member not in the request is removed (including external
+// team-sync-owned members — team-sync will re-add them on the next
+// reconciliation). External members in the request have their permission
+// updated and the External flag preserved. Non-User entries (e.g.
+// ServiceAccount) are always passed through unchanged.
 func (tapi *TeamAPI) setTeamMembershipsViaK8s(
 	c *contextmodel.ReqContext,
 	teamID int64,
@@ -103,7 +91,7 @@ func (tapi *TeamAPI) setTeamMembershipsViaK8s(
 
 	// Resolve emails → UIDs up-front. Fail before any K8s write if any email
 	// can't be resolved. Admin wins on collision (same as the pre-K8s flow).
-	desired, uidToEmail, missing, err := tapi.resolveDesiredMembers(ctx, cmd)
+	desired, missing, err := tapi.resolveDesiredMembers(ctx, cmd)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to resolve users", err)
 	}
@@ -113,8 +101,7 @@ func (tapi *TeamAPI) setTeamMembershipsViaK8s(
 
 	// Read-modify-write on Team.Spec.Members. Team-sync reconciles members in
 	// the background, so a 409 from a concurrent writer is expected; refresh
-	// and retry. Re-check external rejection on each attempt because a freshly
-	// added external member could target one of the desired users.
+	// and retry.
 	retryErr := retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		teamObj, err := teamClient.Get(ctx, resource.Identifier{
 			Namespace: c.Namespace,
@@ -122,15 +109,6 @@ func (tapi *TeamAPI) setTeamMembershipsViaK8s(
 		})
 		if err != nil {
 			return err
-		}
-
-		for _, m := range teamObj.Spec.Members {
-			if m.Kind != subjectKindUser || !m.External {
-				continue
-			}
-			if _, hit := desired[m.Name]; hit {
-				return ErrExternalTeamMember.Build(errExternalTeamMemberData(uidToEmail[m.Name]))
-			}
 		}
 
 		newMembers := rebuildSpecMembers(teamObj.Spec.Members, desired)
@@ -143,9 +121,6 @@ func (tapi *TeamAPI) setTeamMembershipsViaK8s(
 		return err
 	})
 	if retryErr != nil {
-		if errors.Is(retryErr, ErrExternalTeamMember) {
-			return response.Err(retryErr)
-		}
 		if k8serrors.IsNotFound(retryErr) {
 			return response.Error(http.StatusNotFound, "Team not found", retryErr)
 		}
@@ -156,15 +131,13 @@ func (tapi *TeamAPI) setTeamMembershipsViaK8s(
 
 // resolveDesiredMembers maps the caller's email lists to UIDs and the
 // permission each UID should end up with. Admin wins over Member on collision.
-// Returns a parallel UID→email map so error responses can name the user by
-// the email the caller submitted, and the list of emails that couldn't be
-// resolved so the caller can fail the whole request before any write.
+// Returns the list of emails that couldn't be resolved so the caller can fail
+// the whole request before any write.
 func (tapi *TeamAPI) resolveDesiredMembers(
 	ctx context.Context,
 	cmd team.SetTeamMembershipsCommand,
-) (map[string]iamv0alpha1.TeamTeamPermission, map[string]string, []string, error) {
+) (map[string]iamv0alpha1.TeamTeamPermission, []string, error) {
 	desired := make(map[string]iamv0alpha1.TeamTeamPermission, len(cmd.Admins)+len(cmd.Members))
-	uidToEmail := make(map[string]string, len(cmd.Admins)+len(cmd.Members))
 	var missing []string
 
 	apply := func(email string, perm iamv0alpha1.TeamTeamPermission) error {
@@ -176,7 +149,6 @@ func (tapi *TeamAPI) resolveDesiredMembers(
 			}
 			return err
 		}
-		uidToEmail[usr.UID] = email
 		if existing, ok := desired[usr.UID]; ok && existing == iamv0alpha1.TeamTeamPermissionAdmin {
 			return nil
 		}
@@ -186,21 +158,24 @@ func (tapi *TeamAPI) resolveDesiredMembers(
 
 	for _, email := range cmd.Admins {
 		if err := apply(email, iamv0alpha1.TeamTeamPermissionAdmin); err != nil {
-			return nil, nil, nil, err
+			return nil, nil, err
 		}
 	}
 	for _, email := range cmd.Members {
 		if err := apply(email, iamv0alpha1.TeamTeamPermissionMember); err != nil {
-			return nil, nil, nil, err
+			return nil, nil, err
 		}
 	}
-	return desired, uidToEmail, missing, nil
+	return desired, missing, nil
 }
 
-// rebuildSpecMembers applies the desired set to spec.members, preserving
-// external/non-user entries and existing order. Order preservation lets
-// idempotent requests produce a slice equal to the input, so the caller
-// can skip the K8s Update via slices.Equal.
+// rebuildSpecMembers applies the desired set to spec.members. User entries
+// (including External team-sync-owned ones) are dropped if not in desired,
+// and have their permission updated if they are — the External flag is
+// preserved so the K8s representation continues to match what team-sync owns.
+// Non-User entries are passed through untouched. Existing order is preserved
+// for User entries that survive, so an idempotent request produces a slice
+// equal to the input and the caller can skip the K8s Update via slices.Equal.
 func rebuildSpecMembers(
 	existing []iamv0alpha1.TeamTeamMember,
 	desired map[string]iamv0alpha1.TeamTeamPermission,
@@ -209,7 +184,7 @@ func rebuildSpecMembers(
 	newMembers := make([]iamv0alpha1.TeamTeamMember, 0, len(existing)+len(desired))
 
 	for _, m := range existing {
-		if m.Kind != subjectKindUser || m.External {
+		if m.Kind != subjectKindUser {
 			newMembers = append(newMembers, m)
 			continue
 		}
@@ -218,7 +193,7 @@ func rebuildSpecMembers(
 				Kind:       subjectKindUser,
 				Name:       m.Name,
 				Permission: perm,
-				External:   false,
+				External:   m.External,
 			})
 			applied[m.Name] = true
 		}
