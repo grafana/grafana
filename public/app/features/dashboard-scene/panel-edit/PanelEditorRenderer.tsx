@@ -11,8 +11,8 @@ import { MIN_SUGGESTIONS_PANE_WIDTH } from 'app/features/panel/suggestions/const
 import { useEditPaneCollapsed } from '../edit-pane/shared';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
-import { SoloPanelContextProvider, useDefineSoloPanelContext } from '../scene/SoloPanelContext';
 import { UnlinkModal } from '../scene/UnlinkModal';
+import { SoloPanelContextProvider, useDefineSoloPanelContext } from '../solo/SoloPanelContext';
 import { getDashboardSceneFor, getLibraryPanelBehavior } from '../utils/utils';
 
 import { type PanelEditor } from './PanelEditor';

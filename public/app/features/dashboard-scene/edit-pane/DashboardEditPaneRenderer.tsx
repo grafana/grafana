@@ -1,13 +1,12 @@
 import { css } from '@emotion/css';
 import { useCallback, useEffect } from 'react';
-import { useMedia } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { sceneGraph, type SceneVariable, useSceneObjectState } from '@grafana/scenes';
-import { Sidebar, useStyles2, useSidebarContext, useTheme2 } from '@grafana/ui';
+import { Sidebar, useStyles2, useSidebarContext } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { type DashboardScene } from '../scene/DashboardScene';
@@ -22,8 +21,8 @@ import { DashboardCodePane } from './DashboardCodePane';
 import { type DashboardEditPane } from './DashboardEditPane';
 import { ShareExportDashboardButton } from './DashboardExportButton';
 import { DashboardOutline } from './DashboardOutline';
-import { ViewPanelFanoutPane } from './ViewPanelFanoutPane';
 import { AddNewEditPane } from './add-new/AddNewEditPane';
+import { ToggleViewPanePaneEvent } from './events';
 import { type DashboardSidebarPane } from './types';
 
 export interface Props {
@@ -143,20 +142,17 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
               config.featureToggles.dashboardUnifiedDrilldownControls) && (
               <FiltersOverviewButton editPane={editPane} openPane={openPane} />
             )}
+          {dashboard.isManaged() && Boolean(meta.canEdit) && <ManagedDashboardNavBarBadge dashboard={dashboard} />}
+          {renderEnterpriseItems()}
           {viewPanel && (
             <Sidebar.Button
               icon="layer-group"
-              onClick={() => {
-                // editPane.openPane(new ViewPanelFanoutPane({}));
-              }}
-              title={t('dashboard.sidebar.view-panel-fanout.title', 'Fanout')}
-              tooltip={t('dashboard.sidebar.view-panel-fanout.tooltip', 'Split panels by series or label')}
-              data-testid={selectors.pages.Dashboard.Sidebar.outlineButton}
-              active={openPane?.getId() === 'fanout'}
+              onClick={() => editPane.publishEvent(new ToggleViewPanePaneEvent())}
+              title={t('dashboard.sidebar.view-panel.title', 'View panel controls')}
+              data-testid={selectors.pages.Dashboard.Sidebar.viewPanelControls}
+              active={openPane?.getId() === 'view-panel-pane'}
             />
           )}
-          {dashboard.isManaged() && Boolean(meta.canEdit) && <ManagedDashboardNavBarBadge dashboard={dashboard} />}
-          {renderEnterpriseItems()}
           {Boolean(meta.isSnapshot) && (
             <Sidebar.Button
               data-testid="button-snapshot"

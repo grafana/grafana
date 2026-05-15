@@ -2838,6 +2838,21 @@
     },
     {
       "metadata": {
+        "name": "grafana.viewPanelPane",
+        "resourceVersion": "1778761195995",
+        "creationTimestamp": "2026-05-14T12:19:55Z"
+      },
+      "spec": {
+        "description": "Enables the sidebar pane with new toggles and options in panel view mode",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafanaAPIServerEnsureKubectlAccess",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2023-12-06T20:21:21Z"
