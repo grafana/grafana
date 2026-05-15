@@ -55,12 +55,11 @@ func (p *EnvVarsProvider) PluginEnvVars(ctx context.Context, plugin *plugins.Plu
 		hostEnv = append(hostEnv, p.license.Environment()...)
 	}
 
-	// Marketplace license: only forwarded when Grafana is running with a
-	// valid (active and non-expired) commercial license. On OSS builds, or
-	// when the license is missing/expired/invalid, HasValidLicense returns
-	// false and the per-plugin marketplace license path is not exposed.
+	// Marketplace license: forwarded when a licensing service is wired up
+	// and the feature toggle is enabled. The per-plugin marketplace license
+	// path is exposed so the plugin backend can locate its JWT.
 	marketplaceLicensingEnabled := openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagPluginsMarketplaceLicensing, false, openfeature.TransactionContext(ctx))
-	if marketplaceLicensingEnabled && p.license != nil && p.license.HasValidLicense() {
+	if marketplaceLicensingEnabled && p.license != nil {
 		marketplaceLicenseFile, err := p.license.PluginLicensePath(plugin.ID)
 		if err != nil {
 			p.logger.Debug("Skipping marketplace license env var", "pluginID", plugin.ID, "error", err)

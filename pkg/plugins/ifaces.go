@@ -138,10 +138,6 @@ type Licensing interface {
 	AppURL() string
 	ContentDeliveryPrefix() string
 	PluginLicensePath(pluginID string) (string, error)
-	// HasValidLicense reports whether the host is running with an active,
-	// non-expired commercial license (Enterprise/Pro/Cloud). Always false on
-	// OSS builds.
-	HasValidLicense() bool
 }
 
 type SignatureCalculator interface {
