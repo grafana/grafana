@@ -4,7 +4,6 @@
       "label-advanced": "Geavanceerd"
     },
     "advanced-resource-picker": {
-      "aria-label-add": "Toevoegen",
       "aria-label-remove": "Verwijderen",
       "button-add-resource": "Bron toevoegen",
       "button-add-resource-uri": "URI van bron toevoegen",

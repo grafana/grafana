@@ -234,7 +234,7 @@ func stripBOMReflect(v reflect.Value) {
 	}
 
 	// Handle pointers by dereferencing
-	if v.Kind() == reflect.Ptr {
+	if v.Kind() == reflect.Pointer {
 		if v.IsNil() {
 			return
 		}

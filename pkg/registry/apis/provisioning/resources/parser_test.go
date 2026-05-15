@@ -154,6 +154,130 @@ spec:
 	})
 }
 
+func TestParser_FolderMetadataRefFallback(t *testing.T) {
+	clients := NewMockResourceClients(t)
+	clients.On("ForKind", mock.Anything, mock.Anything).
+		Return(nil, dashboardV0.DashboardResourceInfo.GroupVersionResource(), nil).Maybe()
+
+	folderMetadataJSON := `{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"stable-uid"},"spec":{"title":"Team A"}}`
+
+	dashboardYAML := `apiVersion: dashboard.grafana.app/v0alpha1
+kind: Dashboard
+metadata:
+  name: test-dashboard
+spec:
+  title: Test dashboard
+`
+
+	repoConfig := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Namespace: "xxx", Name: "repo"},
+		Spec: provisioning.RepositorySpec{
+			Type: provisioning.GitHubRepositoryType,
+			Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+		},
+	}
+
+	t.Run("reads folder metadata from target ref", func(t *testing.T) {
+		reader := repository.NewMockReader(t)
+		reader.On("Config").Return(repoConfig).Maybe()
+		reader.On("Read", mock.Anything, "team-a/_folder.json", "feature-branch").
+			Return(&repository.FileInfo{Data: []byte(folderMetadataJSON), Hash: "h1"}, nil)
+
+		p := &parser{
+			repo:                  provisioning.ResourceRepositoryInfo{Type: provisioning.GitHubRepositoryType, Namespace: "xxx", Name: "repo"},
+			clients:               clients,
+			config:                repoConfig,
+			reader:                reader,
+			folderMetadataEnabled: true,
+		}
+
+		parsed, err := p.Parse(context.Background(), &repository.FileInfo{
+			Path: "team-a/dashboard.json",
+			Ref:  "feature-branch",
+			Data: []byte(dashboardYAML),
+		})
+		require.NoError(t, err)
+		require.Equal(t, "stable-uid", parsed.Meta.GetFolder())
+	})
+
+	t.Run("falls back to configured branch when target ref not found", func(t *testing.T) {
+		reader := repository.NewMockReader(t)
+		reader.On("Config").Return(repoConfig).Maybe()
+		reader.On("Read", mock.Anything, "team-a/_folder.json", "new-pr-branch").
+			Return(nil, fmt.Errorf("ref not found: refs/heads/new-pr-branch: %w", repository.ErrRefNotFound))
+		reader.On("Read", mock.Anything, "team-a/_folder.json", "").
+			Return(&repository.FileInfo{Data: []byte(folderMetadataJSON), Hash: "h1"}, nil)
+
+		p := &parser{
+			repo:                  provisioning.ResourceRepositoryInfo{Type: provisioning.GitHubRepositoryType, Namespace: "xxx", Name: "repo"},
+			clients:               clients,
+			config:                repoConfig,
+			reader:                reader,
+			folderMetadataEnabled: true,
+		}
+
+		parsed, err := p.Parse(context.Background(), &repository.FileInfo{
+			Path: "team-a/dashboard.json",
+			Ref:  "new-pr-branch",
+			Data: []byte(dashboardYAML),
+		})
+		require.NoError(t, err)
+		require.Equal(t, "stable-uid", parsed.Meta.GetFolder(),
+			"should use stable UID from configured branch when PR branch doesn't exist")
+	})
+
+	t.Run("falls back to hash-based ID when both refs lack metadata", func(t *testing.T) {
+		reader := repository.NewMockReader(t)
+		reader.On("Config").Return(repoConfig).Maybe()
+		reader.On("Read", mock.Anything, "team-a/_folder.json", "new-pr-branch").
+			Return(nil, fmt.Errorf("ref not found: refs/heads/new-pr-branch: %w", repository.ErrRefNotFound))
+		reader.On("Read", mock.Anything, "team-a/_folder.json", "").
+			Return(nil, repository.ErrFileNotFound)
+
+		p := &parser{
+			repo:                  provisioning.ResourceRepositoryInfo{Type: provisioning.GitHubRepositoryType, Namespace: "xxx", Name: "repo"},
+			clients:               clients,
+			config:                repoConfig,
+			reader:                reader,
+			folderMetadataEnabled: true,
+		}
+
+		parsed, err := p.Parse(context.Background(), &repository.FileInfo{
+			Path: "team-a/dashboard.json",
+			Ref:  "new-pr-branch",
+			Data: []byte(dashboardYAML),
+		})
+		require.NoError(t, err)
+		require.Equal(t, ParseFolder("team-a/", "repo").ID, parsed.Meta.GetFolder(),
+			"should fall back to hash-based folder ID when no _folder.json on any branch")
+	})
+
+	t.Run("does not fall back for non-ref errors", func(t *testing.T) {
+		reader := repository.NewMockReader(t)
+		reader.On("Config").Return(repoConfig).Maybe()
+		reader.On("Read", mock.Anything, "team-a/_folder.json", "feature-branch").
+			Return(nil, repository.ErrFileNotFound)
+
+		p := &parser{
+			repo:                  provisioning.ResourceRepositoryInfo{Type: provisioning.GitHubRepositoryType, Namespace: "xxx", Name: "repo"},
+			clients:               clients,
+			config:                repoConfig,
+			reader:                reader,
+			folderMetadataEnabled: true,
+		}
+
+		parsed, err := p.Parse(context.Background(), &repository.FileInfo{
+			Path: "team-a/dashboard.json",
+			Ref:  "feature-branch",
+			Data: []byte(dashboardYAML),
+		})
+		require.NoError(t, err)
+		require.Equal(t, ParseFolder("team-a/", "repo").ID, parsed.Meta.GetFolder(),
+			"should not retry on configured branch for non-ref errors like ErrFileNotFound")
+		reader.AssertNotCalled(t, "Read", mock.Anything, "team-a/_folder.json", "")
+	})
+}
+
 func TestSameIdentity(t *testing.T) {
 	makeParsed := func(name, group, kind string) *ParsedResource {
 		return &ParsedResource{

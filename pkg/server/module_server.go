@@ -34,6 +34,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
+	embedderprovider "github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder/provider"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"go.opentelemetry.io/otel"
@@ -140,6 +142,7 @@ type ModuleServer struct {
 	mtx              sync.Mutex
 	storageBackend   resource.StorageBackend
 	vectorBackend    vector.VectorBackend
+	embedder         *embedder.Embedder
 	searchClient     resourcepb.ResourceIndexClient
 	storageMetrics   *resource.StorageMetrics
 	indexMetrics     *resource.BleveIndexMetrics
@@ -245,23 +248,7 @@ func (s *ModuleServer) Run() error {
 		return services.NewIdleService(nil, nil).WithName(modules.UnifiedBackend), nil
 	})
 
-	m.RegisterInvisibleModule(modules.UnifiedVectorBackend, func() (services.Service, error) {
-		// StorageServer owns the schema and runs the promoter; other targets
-		// get a read-only backend.
-		ownsSchema := m.IsModuleEnabled(modules.StorageServer)
-		if s.vectorBackend == nil {
-			var err error
-			s.vectorBackend, err = vector.InitVectorBackend(context.Background(), s.cfg, ownsSchema)
-			if err != nil {
-				return nil, err
-			}
-		}
-		if s.vectorBackend != nil && ownsSchema {
-			runFn := func(ctx context.Context) error { return s.vectorBackend.Run(ctx) }
-			return services.NewBasicService(nil, runFn, nil).WithName(modules.UnifiedVectorBackend), nil
-		}
-		return services.NewIdleService(nil, nil).WithName(modules.UnifiedVectorBackend), nil
-	})
+	m.RegisterInvisibleModule(modules.UnifiedVectorBackend, s.initUnifiedVectorBackend(m.IsModuleEnabled(modules.StorageServer)))
 
 	m.RegisterModule(modules.MemberlistKV, s.initMemberlistKV)
 	m.RegisterModule(modules.SearchServerRing, s.initSearchServerRing)
@@ -306,7 +293,7 @@ func (s *ModuleServer) Run() error {
 			}
 			indexMetrics = s.indexMetrics
 		}
-		svc, err := sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, s.log, s.registerer, docBuilders, s.storageMetrics, indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.vectorBackend, s.searchClient, s.grpcService, s.StorageServiceOptions...)
+		svc, err := sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, s.log, s.registerer, docBuilders, s.storageMetrics, indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.vectorBackend, s.embedder, s.searchClient, s.grpcService, s.StorageServiceOptions...)
 		if err != nil {
 			return nil, err
 		}
@@ -337,7 +324,7 @@ func (s *ModuleServer) Run() error {
 		if err != nil {
 			return nil, err
 		}
-		svc, err := sql.ProvideSearchGRPCService(s.cfg, s.features, s.log, s.registerer, docBuilders, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.vectorBackend, s.grpcService, s.StorageServiceOptions...)
+		svc, err := sql.ProvideSearchGRPCService(s.cfg, s.features, s.log, s.registerer, docBuilders, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.vectorBackend, s.embedder, s.grpcService, s.StorageServiceOptions...)
 		if err != nil {
 			return nil, err
 		}
@@ -374,6 +361,28 @@ func (s *ModuleServer) Run() error {
 	s.moduleRegisterer.RegisterModules(m)
 
 	return m.Run(s.context)
+}
+
+// initUnifiedVectorBackend constructs the shared vector backend + embedder
+// values that StorageServer and SearchServer modules consume.
+func (s *ModuleServer) initUnifiedVectorBackend(storageServerEnabled bool) func() (services.Service, error) {
+	return func() (services.Service, error) {
+		if s.vectorBackend == nil {
+			vb, err := vector.InitVectorBackend(s.context, s.cfg, storageServerEnabled)
+			if err != nil {
+				return nil, err
+			}
+			s.vectorBackend = vb
+		}
+		if s.embedder == nil {
+			e, err := embedderprovider.ProvideEmbedder(s.cfg)
+			if err != nil {
+				return nil, err
+			}
+			s.embedder = e
+		}
+		return services.NewIdleService(nil, nil).WithName(modules.UnifiedVectorBackend), nil
+	}
 }
 
 func (s *ModuleServer) initOperatorServer() (services.Service, error) {

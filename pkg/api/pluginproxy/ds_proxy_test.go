@@ -866,6 +866,49 @@ func TestDataSourceProxy_userAgentHeader(t *testing.T) {
 
 		assert.Equal(t, "original-client/1.0", req.Header.Get("User-Agent"))
 	})
+
+	t.Run("When DataProxyForwardUserAgent is enabled and the client User-Agent exceeds the length cap, it is truncated", func(t *testing.T) {
+		ctx := &contextmodel.ReqContext{}
+		proxy, err := setupDSProxyTest(t, ctx, ds, routes, "/render", func(p *DataSourceProxy) {
+			p.cfg = &setting.Cfg{
+				BuildVersion:              "5.3.0",
+				DataProxyUserAgent:        "Grafana/5.3.0",
+				DataProxyForwardUserAgent: true,
+			}
+		})
+		require.NoError(t, err)
+
+		oversized := strings.Repeat("a", maxForwardedUserAgentLen+100)
+		req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
+		require.NoError(t, err)
+		req.Header.Set("User-Agent", oversized)
+
+		proxy.director(req)
+
+		expected := "Grafana/5.3.0 " + strings.Repeat("a", maxForwardedUserAgentLen)
+		assert.Equal(t, expected, req.Header.Get("User-Agent"))
+	})
+
+	t.Run("When DataProxyForwardUserAgent is enabled and the client User-Agent is exactly the cap, it is forwarded unchanged", func(t *testing.T) {
+		ctx := &contextmodel.ReqContext{}
+		proxy, err := setupDSProxyTest(t, ctx, ds, routes, "/render", func(p *DataSourceProxy) {
+			p.cfg = &setting.Cfg{
+				BuildVersion:              "5.3.0",
+				DataProxyUserAgent:        "Grafana/5.3.0",
+				DataProxyForwardUserAgent: true,
+			}
+		})
+		require.NoError(t, err)
+
+		exact := strings.Repeat("b", maxForwardedUserAgentLen)
+		req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
+		require.NoError(t, err)
+		req.Header.Set("User-Agent", exact)
+
+		proxy.director(req)
+
+		assert.Equal(t, "Grafana/5.3.0 "+exact, req.Header.Get("User-Agent"))
+	})
 }
 
 // test DataSourceProxy request handling.
@@ -1237,7 +1280,10 @@ func createAuthTest(t *testing.T, secretsStore secretskvs.SecretsKVStore, dsType
 	return test
 }
 
-func runDatasourceAuthTest(t *testing.T, secretsService secrets.Service, secretsStore secretskvs.SecretsKVStore, cfg *setting.Cfg, test *testCase) {
+func runDatasourceAuthTest(t *testing.T,
+	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+	secretsStore secretskvs.SecretsKVStore, cfg *setting.Cfg, test *testCase,
+) {
 	ctx := &contextmodel.ReqContext{}
 	tracer := tracing.InitializeTracerForTest()
 
