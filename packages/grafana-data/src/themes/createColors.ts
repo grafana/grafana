@@ -3,8 +3,10 @@ import { z } from 'zod';
 
 import { alpha, darken, emphasize, getContrastRatio, lighten } from './colorManipulator';
 import { palette } from './palette';
+import { palette as newPalette } from './palette_new';
 import { type DeepRequired, type ThemeRichColor, ThemeRichColorInputSchema } from './types';
 
+const PALETTE_TOKEN_REGEX = /^palette\.(\w+)$/;
 const ThemeColorsModeSchema = z.enum(['light', 'dark']);
 /** @internal */
 export type ThemeColorsMode = z.infer<typeof ThemeColorsModeSchema>;
@@ -294,7 +296,36 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   tonalOffset = 0.2;
 }
 
+function isPaletteKey(key: string): key is keyof typeof newPalette {
+  return key in newPalette;
+}
+
+function resolveRef(value: string): string {
+  const match = value.match(PALETTE_TOKEN_REGEX);
+  if (!match) {
+    return value;
+  }
+  const key = match[1];
+  return isPaletteKey(key) ? newPalette[key] : value;
+}
+
+function resolvePaletteRefs(input: ThemeColorsInput): ThemeColorsInput {
+  const walk = (node: unknown): unknown => {
+    if (typeof node === 'string') {
+      return resolveRef(node);
+    }
+    if (node === null || typeof node !== 'object') {
+      return node;
+    }
+    return Object.fromEntries(Object.entries(node).map(([k, v]) => [k, walk(v)]));
+  };
+  // can't avoid this type assertion unfortunately
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  return walk(input) as ThemeColorsInput;
+}
+
 export function createColors(colors: ThemeColorsInput): ThemeColors {
+  colors = resolvePaletteRefs(colors);
   const dark = new DarkColors();
   const light = new LightColors();
   const base = (colors.mode ?? 'dark') === 'dark' ? dark : light;
