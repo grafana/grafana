@@ -10,15 +10,11 @@ import { useExportContactPoint } from 'app/features/alerting/unified/components/
 import { ManagePermissionsDrawer } from 'app/features/alerting/unified/components/permissions/ManagePermissions';
 import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { K8sAnnotations } from 'app/features/alerting/unified/utils/k8s/constants';
-import {
-  canDeleteEntity,
-  canEditEntity,
-  getAnnotation,
-  isProvisionedResource,
-  shouldUseK8sApi,
-} from 'app/features/alerting/unified/utils/k8s/utils';
+import { getAnnotation, isProvisionedResource, shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 
-import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
+import { isSupported, isGranted } from '../../hooks/abilities/abilityUtils';
+import { useContactPointAbility } from '../../hooks/abilities/alertmanager/useContactPointAbility';
+import { ContactPointAction } from '../../hooks/abilities/types';
 import { createRelativeUrl } from '../../utils/url';
 import MoreButton from '../MoreButton';
 import { ProvisioningBadge } from '../Provisioning';
@@ -42,9 +38,10 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
 
   const isProvisioned = isProvisionedResource(provenance);
 
-  const [exportSupported, exportAllowed] = useAlertmanagerAbility(AlertmanagerAction.ExportContactPoint);
-  const [editSupported, editAllowed] = useAlertmanagerAbility(AlertmanagerAction.UpdateContactPoint);
-  const [deleteSupported, deleteAllowed] = useAlertmanagerAbility(AlertmanagerAction.UpdateContactPoint);
+  // Entity-scoped ability checks — fold provisioning and k8s access annotations together
+  const exportAbility = useContactPointAbility({ action: ContactPointAction.Export, context: contactPoint });
+  const editAbility = useContactPointAbility({ action: ContactPointAction.Update, context: contactPoint });
+  const deleteAbility = useContactPointAbility({ action: ContactPointAction.Delete, context: contactPoint });
   const [ExportDrawer, openExportDrawer] = useExportContactPoint();
 
   const showManagePermissions = showManageContactPointPermissions(selectedAlertmanager!, contactPoint);
@@ -71,19 +68,11 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
    * Used to determine whether to show the "Unused" badge
    */
   const isReferencedByAnything = usingK8sApi ? Boolean(numberOfPolicies || numberOfRules) : policies.length > 0;
-  /** Does the current user have permissions to edit the contact point? */
-  const hasAbilityToEdit = usingK8sApi ? canEditEntity(contactPoint) : editAllowed;
-  /** Can the contact point actually be edited via the UI? */
-  const contactPointIsEditable = !isProvisioned;
-  /** Given the alertmanager, the user's permissions, and the state of the contact point - can it actually be edited? */
-  const canEdit = editSupported && hasAbilityToEdit && contactPointIsEditable;
+  /** Can the contact point actually be edited? Ability encapsulates provisioning + k8s annotation + RBAC. */
+  const canEdit = isGranted(editAbility);
 
-  /** Does the current user have permissions to delete the contact point? */
-  const hasAbilityToDelete = usingK8sApi ? canDeleteEntity(contactPoint) : deleteAllowed;
-  /** Can the contact point actually be deleted, regardless of permissions? i.e. ensuring it isn't provisioned and isn't referenced elsewhere */
-  const contactPointIsDeleteable = !isProvisioned && !numberOfPoliciesPreventingDeletion && !numberOfRules;
-  /** Given the alertmanager, the user's permissions, and the state of the contact point - can it actually be deleted? */
-  const canBeDeleted = deleteSupported && hasAbilityToDelete && contactPointIsDeleteable;
+  /** Can the contact point actually be deleted? Ability covers permissions; policies/rules checked separately. */
+  const canBeDeleted = isGranted(deleteAbility) && !numberOfPoliciesPreventingDeletion && !numberOfRules;
 
   const menuActions: JSX.Element[] = [];
   if (showManagePermissions) {
@@ -98,14 +87,14 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
     );
   }
 
-  if (exportSupported) {
+  if (isSupported(exportAbility)) {
     menuActions.push(
       <Fragment key="export-contact-point">
         <Menu.Item
           icon="download-alt"
           label={t('alerting.contact-point-header.export-label-export', 'Export')}
           ariaLabel={t('alerting.contact-point-header.export-ariaLabel-export', 'Export')}
-          disabled={!exportAllowed}
+          disabled={!exportAbility.granted}
           data-testid="export"
           onClick={() => openExportDrawer(name)}
         />
@@ -114,7 +103,7 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
     );
   }
 
-  if (deleteSupported) {
+  if (isSupported(deleteAbility)) {
     const cannotDeleteNoPermissions = t(
       'alerting.contact-points.delete-reasons.no-permissions',
       'You do not have the required permission to delete this contact point'
@@ -133,7 +122,7 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
     );
 
     const reasonsDeleteIsDisabled = [
-      !hasAbilityToDelete ? cannotDeleteNoPermissions : '',
+      !deleteAbility.granted ? cannotDeleteNoPermissions : '',
       isProvisioned ? cannotDeleteProvisioned : '',
       numberOfPoliciesPreventingDeletion > 0 ? cannotDeletePolicies : '',
       numberOfRules ? cannotDeleteRules : '',
