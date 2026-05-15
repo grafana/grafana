@@ -16,6 +16,8 @@ type AuthorizeFromName struct {
 	AccessClient authlib.AccessClient
 	OKNames      []string
 	Resource     map[string][]ResourceOwner // may include unknown
+	// OwnerRefFromName optionally parses metadata.name into an owner reference. When nil, ParseOwnerFromName is used.
+	OwnerRefFromName func(string) (OwnerReference, bool)
 }
 
 func (a *AuthorizeFromName) Authorize(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
@@ -59,7 +61,7 @@ func (a *AuthorizeFromName) Authorize(ctx context.Context, attr authorizer.Attri
 		return authorizer.DecisionAllow, "", nil
 	}
 
-	info, _ := ParseOwnerFromName(attr.GetName())
+	info, _ := a.ownerFromName(attr.GetName())
 	if !slices.Contains(owners, info.Owner) {
 		return authorizer.DecisionDeny, "unsupported owner type", nil
 	}
@@ -108,4 +110,11 @@ func (a *AuthorizeFromName) Authorize(ctx context.Context, attr authorizer.Attri
 
 	// the owner was not explicitly allowed
 	return authorizer.DecisionDeny, "", nil
+}
+
+func (a *AuthorizeFromName) ownerFromName(name string) (OwnerReference, bool) {
+	if a.OwnerRefFromName != nil {
+		return a.OwnerRefFromName(name)
+	}
+	return ParseOwnerFromName(name)
 }
