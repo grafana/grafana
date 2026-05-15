@@ -538,8 +538,9 @@ export async function applyScopes(page: Page, scopes?: TestScope[]) {
 
   // Wait for the apply button to disappear (selector closed)
   await page.waitForSelector('[data-testid="scopes-selector-apply"]', { state: 'hidden', timeout: 5000 });
-  // Wait for any resulting API calls to complete
-  await page.waitForLoadState('networkidle');
+  // networkidle is intentionally omitted here — long-lived connections (WebSockets, live
+  // channels) prevent it from ever resolving in CI. Test-level expect() retries handle waiting
+  // for any dashboard DTO reload that scope application triggers.
 }
 
 /**

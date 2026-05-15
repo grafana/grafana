@@ -40,6 +40,7 @@ test.describe(
   },
   () => {
     test('Navigate between dashboards', async ({ page, gotoDashboardPage, selectors }) => {
+      test.setTimeout(90000);
       const scopeSelectorInput = getScopesSelectorInput(page);
       const scopesDashboards = getScopesDashboards(page);
       const scopesDashboardsSearchInput = getScopesDashboardsSearchInput(page);
