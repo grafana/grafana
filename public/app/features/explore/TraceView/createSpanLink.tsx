@@ -215,6 +215,7 @@ function legacyCreateSpanLinkFactory(
       // query can be false in case the simple UI tag mapping is used but none of them are present in the span.
       // For custom query, this is always defined and we check if the interpolation matched all variables later on.
       if (query) {
+        query.datasource = { type: logsDataSourceSettings.type, uid: logsDataSourceSettings.uid };
         const dataLink: DataLink = {
           title: logsDataSourceSettings.name,
           url: '',
@@ -307,6 +308,7 @@ function legacyCreateSpanLinkFactory(
             query: {
               expr,
               refId: 'A',
+              datasource: { type: metricsDataSourceSettings.type, uid: metricsDataSourceSettings.uid },
             },
           },
         };
