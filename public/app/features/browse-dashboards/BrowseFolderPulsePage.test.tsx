@@ -1,81 +1,25 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom-v5-compat';
-
-import { contextSrv } from 'app/core/services/context_srv';
 
 import { FolderPulseContent } from './BrowseFolderPulsePage';
 
-// We mock the RTK Query hooks rather than wiring up a full store —
-// every interesting branch in FolderPulseContent is gated on the
-// shape of these query results, so mocks keep the test focused on
-// the UX (filters, deep-link, drawer) rather than the network
-// lifecycle. Same shape as PulseDrawerContent.test.tsx for parity.
-const useListThreadsQueryMock = jest.fn();
-const useListParticipantsQueryMock = jest.fn();
-const useGetResourceVersionQueryMock = jest.fn();
-const useGetThreadQueryMock = jest.fn();
-const useCreateThreadMutationMock = jest.fn();
-const useListPulsesQueryMock = jest.fn();
-const createThreadMock = jest.fn();
+// We mock the rollup query directly rather than wiring up a full
+// store — every interesting branch of FolderPulseContent is gated
+// on the shape of this single hook, so a focused mock keeps the
+// test on the UX (filters, columns, empty/error states) and away
+// from the network lifecycle.
+const useListFolderRollupThreadsQueryMock = jest.fn();
 
-jest.mock('app/features/pulse/api/pulseApi', () => {
-  // Defined inside the factory because jest.mock hoists above the
-  // top-of-file consts, so a shared `const noopMutation` declared up
-  // there would be in the TDZ at mock-evaluation time.
-  const noopMutation = () => [jest.fn(), { isLoading: false }];
-  return {
-    useListThreadsQuery: (...args: unknown[]) => useListThreadsQueryMock(...args),
-    useListParticipantsQuery: (...args: unknown[]) => useListParticipantsQueryMock(...args),
-    useGetResourceVersionQuery: (...args: unknown[]) => useGetResourceVersionQueryMock(...args),
-    useGetThreadQuery: (...args: unknown[]) => useGetThreadQueryMock(...args),
-    useCreateThreadMutation: () => useCreateThreadMutationMock(),
-    // Thread-view-side hooks. We only assert against the list/composer
-    // path in this suite, so all the per-thread mutations resolve to
-    // no-op tuples that match the RTK Query mutation hook shape.
-    useListPulsesQuery: (...args: unknown[]) => useListPulsesQueryMock(...args),
-    useAddPulseMutation: noopMutation,
-    useEditPulseMutation: noopMutation,
-    useDeletePulseMutation: noopMutation,
-    useDeleteThreadMutation: noopMutation,
-    useCloseThreadMutation: noopMutation,
-    useReopenThreadMutation: noopMutation,
-    useMarkReadMutation: noopMutation,
-  };
-});
-
-// Sibling lookups + the live channel are fire-and-forget for these
-// tests; stub to deterministic no-ops so render never crashes.
-jest.mock('app/features/pulse/hooks/useResourcePulseStream', () => ({
-  useResourcePulseStream: () => undefined,
+jest.mock('app/features/pulse/api/pulseApi', () => ({
+  useListFolderRollupThreadsQuery: (...args: unknown[]) => useListFolderRollupThreadsQueryMock(...args),
 }));
-jest.mock('app/features/pulse/hooks/useFolderDashboards', () => ({
-  useFolderDashboards: () => ({ items: [], loading: false, error: null }),
-}));
-
-// contextSrv reads happen at render — pin user.id and the role probe
-// so empty-state and admin gating behave deterministically. We patch
-// in place rather than replace the module wholesale: other modules
-// pulled in via FolderDetailsActions call methods we don't care
-// about (licensedAccessControlEnabled, hasPermission, etc.) and a
-// blanket `jest.mock` would have to enumerate every one.
-beforeAll(() => {
-  Object.assign(contextSrv, {
-    user: { ...(contextSrv.user ?? {}), id: 42 },
-    isGrafanaAdmin: false,
-  });
-  jest.spyOn(contextSrv, 'hasRole').mockReturnValue(false);
-});
 
 function renderContent(folderUID = 'folder-uid', initialEntry = '/dashboards/f/folder-uid/pulse') {
   return render(
     // Both v7 future flags are opted-in here only to silence the
     // upgrade warnings; jest-fail-on-console treats them as hard
     // failures and we don't depend on the v7 behavior either way.
-    <MemoryRouter
-      initialEntries={[initialEntry]}
-      future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
-    >
+    <MemoryRouter initialEntries={[initialEntry]} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <Routes>
         <Route path="/dashboards/f/:uid/pulse" element={<FolderPulseContent folderUID={folderUID} />} />
       </Routes>
@@ -84,26 +28,12 @@ function renderContent(folderUID = 'folder-uid', initialEntry = '/dashboards/f/f
 }
 
 beforeEach(() => {
-  useListThreadsQueryMock.mockReset();
-  useListParticipantsQueryMock.mockReset();
-  useGetResourceVersionQueryMock.mockReset();
-  useGetThreadQueryMock.mockReset();
-  useCreateThreadMutationMock.mockReset();
-  createThreadMock.mockReset();
-
-  // unwrap() returns a Promise; the page awaits it on submit.
-  createThreadMock.mockReturnValue({ unwrap: () => Promise.resolve({ thread: { uid: 'new-thread' } }) });
-
-  useCreateThreadMutationMock.mockReturnValue([createThreadMock, { isLoading: false }]);
-  useGetResourceVersionQueryMock.mockReturnValue({ data: undefined });
-  useGetThreadQueryMock.mockReturnValue({ data: undefined, isLoading: false });
-  useListParticipantsQueryMock.mockReturnValue({ data: { participants: [] } });
-  useListPulsesQueryMock.mockReturnValue({ data: { items: [] }, isLoading: false });
+  useListFolderRollupThreadsQueryMock.mockReset();
 });
 
-describe('FolderPulseContent', () => {
-  it('shows the unfiltered empty state with a Start CTA when there are no threads and no filters', () => {
-    useListThreadsQueryMock.mockReturnValue({
+describe('FolderPulseContent (rollup)', () => {
+  it('shows the unfiltered empty state when no dashboards in the hierarchy have threads', () => {
+    useListFolderRollupThreadsQueryMock.mockReturnValue({
       data: { items: [], totalCount: 0, hasMore: false },
       isLoading: false,
       isFetching: false,
@@ -111,55 +41,60 @@ describe('FolderPulseContent', () => {
 
     renderContent();
 
-    expect(screen.getByText('No threads in this folder yet')).toBeInTheDocument();
-    // The empty-state CTA must be present when no filters are active —
-    // it's how users discover the "New thread" affordance with an
-    // empty folder.
-    expect(screen.getByRole('button', { name: 'Start the first thread' })).toBeInTheDocument();
-    // The "filtered" copy must not appear in the unfiltered state, or
-    // the empty-state message is actively misleading.
+    expect(screen.getByText('No Pulse threads on dashboards in this folder yet')).toBeInTheDocument();
+    // The folder rollup is read-only — there must not be a "Start
+    // the first thread" CTA here, since folders don't own threads.
+    expect(screen.queryByRole('button', { name: 'Start the first thread' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'New thread' })).not.toBeInTheDocument();
     expect(screen.queryByText('No matching threads')).not.toBeInTheDocument();
   });
 
   it('shows the filtered empty state copy when a URL filter is active', () => {
-    useListThreadsQueryMock.mockReturnValue({
+    useListFolderRollupThreadsQueryMock.mockReturnValue({
       data: { items: [], totalCount: 0, hasMore: false },
       isLoading: false,
       isFetching: false,
     });
 
-    // status=closed counts as an active filter; the empty-state should
-    // tell the user the cause is the filter, not the absence of data.
     renderContent('folder-uid', '/dashboards/f/folder-uid/pulse?status=closed');
 
     expect(screen.getByText('No matching threads')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Start the first thread' })).not.toBeInTheDocument();
   });
 
-  it('renders one row per thread with the author name and reply count', () => {
-    useListThreadsQueryMock.mockReturnValue({
+  it('renders one row per dashboard-bound thread with type, resource, folder, author, and reply count', () => {
+    const now = new Date().toISOString();
+    useListFolderRollupThreadsQueryMock.mockReturnValue({
       data: {
         items: [
           {
             uid: 'tttttttttttttt0',
-            resourceKind: 'folder',
-            resourceUID: 'folder-uid',
+            resourceKind: 'dashboard',
+            resourceUID: 'dash-1',
+            resourceTitle: 'Latency overview',
+            folderUID: 'subfolder-1',
+            folderTitle: 'Subteam alpha',
             title: 'Discussion about SLOs',
             authorName: 'Alice',
             authorAvatarUrl: '',
             pulseCount: 4,
-            lastPulseAt: new Date().toISOString(),
+            lastPulseAt: now,
             closed: false,
           },
           {
             uid: 'tttttttttttttt1',
-            resourceKind: 'folder',
-            resourceUID: 'folder-uid',
+            resourceKind: 'dashboard',
+            resourceUID: 'dash-2',
+            resourceTitle: 'Capacity dashboard',
+            // Threads on root-level dashboards have no folderUID; the
+            // FolderCell must render an em-dash rather than a broken
+            // link in that case.
+            folderUID: '',
+            folderTitle: '',
             title: 'Capacity planning',
             authorName: 'Bob',
             authorAvatarUrl: '',
             pulseCount: 1,
-            lastPulseAt: new Date().toISOString(),
+            lastPulseAt: now,
             closed: false,
           },
         ],
@@ -172,8 +107,38 @@ describe('FolderPulseContent', () => {
 
     renderContent();
 
-    expect(screen.getByText('Discussion about SLOs')).toBeInTheDocument();
-    expect(screen.getByText('Capacity planning')).toBeInTheDocument();
+    // Thread title links navigate back to the dashboard with the
+    // pulse drawer pre-opened — assert the href shape so a future
+    // refactor can't silently break the deep-link contract.
+    const threadLink = screen.getByRole('link', { name: 'Discussion about SLOs' });
+    expect(threadLink).toHaveAttribute('href', '/d/dash-1?pulse=thread-tttttttttttttt0');
+
+    // Type column always renders "Dashboard" today; we keep the
+    // assertion explicit so a future "Alert" row is a deliberate
+    // change rather than a silent regression.
+    expect(screen.getAllByText('Dashboard').length).toBeGreaterThanOrEqual(2);
+
+    // Resource column links to the dashboard — there's one link per
+    // row plus the thread-title link, so we look up by the
+    // dashboard's title via the link role.
+    expect(screen.getByRole('link', { name: 'Latency overview' })).toHaveAttribute(
+      'href',
+      '/d/dash-1?pulse=thread-tttttttttttttt0'
+    );
+    expect(screen.getByRole('link', { name: 'Capacity dashboard' })).toHaveAttribute(
+      'href',
+      '/d/dash-2?pulse=thread-tttttttttttttt1'
+    );
+
+    // Folder column renders a link for rows with a folderUID and an
+    // em-dash for rows without — both branches must be exercised
+    // because root-level dashboards are common.
+    expect(screen.getByRole('link', { name: 'Subteam alpha' })).toHaveAttribute(
+      'href',
+      '/dashboards/f/subfolder-1'
+    );
+    expect(screen.getByText('—')).toBeInTheDocument();
+
     expect(screen.getByText('Alice')).toBeInTheDocument();
     expect(screen.getByText('Bob')).toBeInTheDocument();
     // Replies = pulseCount - 1 (the root pulse doesn't count as a reply).
@@ -181,8 +146,8 @@ describe('FolderPulseContent', () => {
     expect(screen.getByText('0')).toBeInTheDocument();
   });
 
-  it('passes mine + status URL params to the listThreads query', async () => {
-    useListThreadsQueryMock.mockReturnValue({
+  it('passes mine + status URL params through to the rollup query', async () => {
+    useListFolderRollupThreadsQueryMock.mockReturnValue({
       data: { items: [], totalCount: 0, hasMore: false },
       isLoading: false,
       isFetching: false,
@@ -190,54 +155,24 @@ describe('FolderPulseContent', () => {
 
     renderContent('folder-uid', '/dashboards/f/folder-uid/pulse?scope=mine&status=open');
 
-    // The hook is invoked once per render; the latest call carries the
-    // current query state. We assert on a recent call rather than first
-    // so a fast re-render doesn't cause a false negative.
     await waitFor(() => {
-      const args = useListThreadsQueryMock.mock.calls.at(-1)?.[0];
+      const args = useListFolderRollupThreadsQueryMock.mock.calls.at(-1)?.[0];
       expect(args).toMatchObject({
-        resourceKind: 'folder',
-        resourceUID: 'folder-uid',
+        folderUID: 'folder-uid',
         mine: true,
         status: 'open',
       });
     });
   });
 
-  it('opens the composer drawer when the New thread button is clicked', async () => {
-    useListThreadsQueryMock.mockReturnValue({
-      data: { items: [], totalCount: 0, hasMore: false },
-      isLoading: false,
-      isFetching: false,
-    });
-
-    renderContent();
-
-    // Two "New thread" affordances on the empty-state path: the
-    // toolbar button and the empty-state Start CTA. Either should
-    // open the composer drawer; the toolbar is the canonical one.
-    await userEvent.click(screen.getByRole('button', { name: 'New thread' }));
-
-    // Drawer renders a dialog with the title we passed in. Finding by
-    // accessible role (rather than text) guards against the title copy
-    // changing.
-    const dialog = await screen.findByRole('dialog');
-    expect(within(dialog).getByText('Start a thread in this folder')).toBeInTheDocument();
-    // The composer's title input is always present when showTitle is
-    // true — proves the composer mounted inside the drawer rather
-    // than just rendering an empty shell.
-    expect(within(dialog).getByLabelText('Thread title')).toBeInTheDocument();
-  });
-
   it('falls back to the empty state on load failure (no scary red banner)', () => {
     // RTK Query exposes a populated `error` field on failed requests.
-    // The page should treat the failure as a no-data state visually —
-    // same illustrated EmptyState the dashboard drawer uses — and
-    // surface the failure in the body copy rather than as a separate
-    // Alert above the list.
-    useListThreadsQueryMock.mockReturnValue({
+    // The rollup view treats failure as a no-data state visually —
+    // illustrated EmptyState — and surfaces the failure in the body
+    // copy rather than a separate Alert banner above the table.
+    useListFolderRollupThreadsQueryMock.mockReturnValue({
       data: undefined,
-      error: { status: 400, data: 'invalid resource kind' },
+      error: { status: 500, data: 'boom' },
       isLoading: false,
       isFetching: false,
     });
@@ -248,55 +183,7 @@ describe('FolderPulseContent', () => {
     expect(
       screen.getByText('Something went wrong while fetching threads. Please refresh and try again.')
     ).toBeInTheDocument();
-    // Error state must not offer the "Start the first thread" CTA —
-    // we don't know whether the folder is empty or whether the API
-    // refused us, so the safer affordance is the toolbar's "New thread"
-    // button (still rendered above).
-    expect(screen.queryByRole('button', { name: 'Start the first thread' })).not.toBeInTheDocument();
-    // No raw Alert role: the old behavior put an `alert` element above
-    // the empty state; the new behavior should not.
+    // No raw Alert role above the empty state.
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
-  });
-
-  it('renders the thread view when a ?pulse=thread-<uid> deep link is present', () => {
-    // The deep link resolves through the standalone getThread query
-    // because the thread is not in the (empty) listThreads result set.
-    useListThreadsQueryMock.mockReturnValue({
-      data: { items: [], totalCount: 0, hasMore: false },
-      isLoading: false,
-      isFetching: false,
-    });
-    useGetThreadQueryMock.mockReturnValue({
-      data: {
-        uid: 'deeplink-uid',
-        resourceKind: 'folder',
-        resourceUID: 'folder-uid',
-        title: 'Linked from overview',
-        authorName: 'Eve',
-        authorAvatarUrl: '',
-        pulseCount: 1,
-        lastPulseAt: new Date().toISOString(),
-        closed: false,
-        pulses: [
-          {
-            uid: 'pulse-1',
-            authorName: 'Eve',
-            authorAvatarUrl: '',
-            bodyText: 'root pulse',
-            created: new Date().toISOString(),
-            updated: new Date().toISOString(),
-            body: { root: { type: 'root', children: [{ type: 'paragraph', children: [{ type: 'text', text: 'root pulse' }] }] } },
-          },
-        ],
-      },
-      isLoading: false,
-    });
-
-    renderContent('folder-uid', '/dashboards/f/folder-uid/pulse?pulse=thread-deeplink-uid');
-
-    expect(screen.getByText('Linked from overview')).toBeInTheDocument();
-    // The empty-state of the list view must not co-exist with the
-    // thread view; the page switches surfaces entirely on deep link.
-    expect(screen.queryByText('No threads in this folder yet')).not.toBeInTheDocument();
   });
 });

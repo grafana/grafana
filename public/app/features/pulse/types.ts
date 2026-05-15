@@ -2,7 +2,15 @@
 // backend doesn't (yet) ship CUE/OpenAPI generated TS for this domain.
 // Keep this file in sync with pkg/services/pulse/models.go and body.go.
 
-export type ResourceKind = 'dashboard' | 'folder';
+/**
+ * ResourceKind enumerates the kinds of resources a Pulse thread can
+ * be attached to. v1 supports `dashboard` only. Folder is
+ * intentionally NOT a thread kind: the folder Pulse tab aggregates
+ * dashboard-scoped threads from dashboards under a folder rather
+ * than holding folder-scoped conversations. Future kinds (alert,
+ * SLO, etc.) widen this union without reshaping existing rows.
+ */
+export type ResourceKind = 'dashboard';
 
 /**
  * MentionKind enumerates the entity types a `@` or `#` chip may
@@ -11,13 +19,15 @@ export type ResourceKind = 'dashboard' | 'folder';
  *   - `user`      → numeric user id, stringified
  *   - `panel`     → numeric panel id (dashboard-local), stringified
  *   - `dashboard` → dashboard UID (string)
- *   - `folder`    → folder UID (string)
  *
- * Mirrors `pkg/services/pulse/models.go::MentionKind`. Future kinds
- * (alert rule, SLO, synthetic, etc.) extend this union without
- * reshaping the existing chip rendering.
+ * Mirrors `pkg/services/pulse/models.go::MentionKind`. Folder
+ * mentions were dropped together with folder-as-a-resource; legacy
+ * folder chips persisted in old bodies render through the chip's
+ * defensive fallback (a static text span) rather than as a real
+ * navigable link. Future kinds (alert rule, SLO, etc.) widen this
+ * union without reshaping existing rows.
  */
-export type MentionKind = 'user' | 'panel' | 'dashboard' | 'folder';
+export type MentionKind = 'user' | 'panel' | 'dashboard';
 
 export type AuthorKind = 'user' | 'service_account';
 
@@ -77,6 +87,13 @@ export interface PulseThread {
   authorAvatarUrl?: string;
   /** Resource title (e.g. dashboard title) — only set on the global overview. */
   resourceTitle?: string;
+  /** Parent folder UID for the dashboard this thread is attached to —
+   *  populated only by the folder Pulse rollup endpoint so the rollup
+   *  table can render a "Folder" column with a navigable link without
+   *  a per-row lookup. Other surfaces leave this empty. */
+  folderUID?: string;
+  /** Parent folder title; companion to `folderUID`. */
+  folderTitle?: string;
 }
 
 export interface Pulse {

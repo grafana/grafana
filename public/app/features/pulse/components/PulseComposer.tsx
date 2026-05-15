@@ -17,21 +17,21 @@ import {
 } from '../utils/lookups';
 
 /**
- * ResourceMentionSource configures one entry in the `#` picker. A
- * surface (composer call site) can stack multiple sources so a single
- * `#` trigger can offer e.g. `#dashboard` AND `#folder` results in one
- * merged dropdown. Each row attributes its kind via the chip render in
- * the suggestion list (kind icon + label).
+ * ResourceMentionSource configures one entry in the `#` picker. The
+ * shape stays an object (kind + suggestions) — instead of a flat
+ * dashboard list — because we plan to add other foldable resource
+ * kinds (alerts, etc.) and the kind tag is what lets the suggestion
+ * row attribute its origin in the merged dropdown.
  *
  * Dashboards still pass `panels` (panel ids are dashboard-local
  * integers, not UIDs) plus optional `resourceMentions` to mix in
  * sibling dashboards. Folder pages pass `resourceMentions=[{ kind:
- * 'dashboard', suggestions: [...] }]` to offer their direct child
- * dashboards. The singular `resourceMention` prop is preserved as a
- * back-compat alias and is treated as a one-element plural list.
+ * 'dashboard', suggestions: [...] }]` to offer the dashboards in the
+ * folder hierarchy. The singular `resourceMention` prop is preserved
+ * as a back-compat alias and is treated as a one-element plural list.
  */
 export interface ResourceMentionSource {
-  kind: 'dashboard' | 'folder';
+  kind: 'dashboard';
   suggestions: ResourceSuggestion[];
 }
 
@@ -136,8 +136,10 @@ export function PulseComposer({
   // an in-flight request when the query changes so the dropdown never
   // shows stale results. Lookup state is tri-modal (idle/loading/ready/
   // error) so the dropdown can surface "Searching…", "No matches", or
-  // a real error message instead of silently disappearing — a 403 from
-  // a missing org.users:read perm used to look identical to "no matches".
+  // a real error message instead of silently disappearing — the
+  // Pulse-scoped /api/pulse/users/search endpoint should be reachable
+  // for any signed-in Pulse user, but a misconfigured custom role
+  // could still produce a 403 and we want to surface that loudly.
   const [userSuggestions, setUserSuggestions] = useState<UserSuggestion[]>([]);
   const [userLookupState, setUserLookupState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [userLookupError, setUserLookupError] = useState<string | null>(null);
@@ -175,13 +177,12 @@ export function PulseComposer({
           }
           setUserSuggestions([]);
           setUserLookupState('error');
-          const status =
-            err && typeof err === 'object' && 'status' in err ? (err as { status?: number }).status : undefined;
+          const status = readErrorStatus(err);
           if (status === 403 || status === 401) {
             setUserLookupError(
               t(
                 'pulse.composer.user-lookup-forbidden',
-                'You do not have permission to look up users in this org (requires org.users:read).'
+                'You do not have permission to look up users for mentions (requires pulse:read).'
               )
             );
           } else {
@@ -200,11 +201,10 @@ export function PulseComposer({
   // up-front so the hint text and the (future) suggestion grouping
   // both see the same source of truth and so a call site that mixes
   // `panels` + `resourceMentions` is reflected in the footer hint
-  // without a separate prop. Order is stable (panel → dashboard →
-  // folder) so two composer mounts with the same inputs render the
-  // same hint.
-  const activeResourceKinds = useMemo<Array<'panel' | 'dashboard' | 'folder'>>(() => {
-    const kinds = new Set<'panel' | 'dashboard' | 'folder'>();
+  // without a separate prop. Order is stable (panel → dashboard) so
+  // two composer mounts with the same inputs render the same hint.
+  const activeResourceKinds = useMemo<Array<'panel' | 'dashboard'>>(() => {
+    const kinds = new Set<'panel' | 'dashboard'>();
     if (panels.length > 0) {
       kinds.add('panel');
     }
@@ -216,12 +216,12 @@ export function PulseComposer({
     }
     // Empty composer surface (no sources at all): we still need a
     // sensible fallback for the hint copy. Panel is the historical
-    // default because the dashboard drawer was the only composer
-    // surface before folders existed.
+    // default because the dashboard drawer was the original composer
+    // surface.
     if (kinds.size === 0) {
       kinds.add('panel');
     }
-    const order: Array<'panel' | 'dashboard' | 'folder'> = ['panel', 'dashboard', 'folder'];
+    const order: Array<'panel' | 'dashboard'> = ['panel', 'dashboard'];
     return order.filter((k) => kinds.has(k));
   }, [panels.length, resourceMention, resourceMentions]);
 
@@ -564,13 +564,28 @@ export function PulseComposer({
 /**
  * composerHint renders the footer hint text so the `#` example
  * reflects the kinds the composer currently surfaces. Single-source
- * surfaces (dashboard-only, folder-only) keep their existing hint
- * copy so the strings stay translated. Mixed surfaces (the dashboard
- * drawer surfacing both `#panel` and `#dashboard`) get a generic
- * "#resource" hint — listing every kind inline would balloon the
- * footer and force per-permutation translation strings.
+ * surfaces keep their existing hint copy so the strings stay
+ * translated. Mixed surfaces (the dashboard drawer surfacing both
+ * `#panel` and `#dashboard`) get a generic "#resource" hint —
+ * listing every kind inline would balloon the footer and force
+ * per-permutation translation strings.
  */
-function composerHint(kinds: Array<'panel' | 'dashboard' | 'folder'>): string {
+/**
+ * readErrorStatus narrows the `unknown` thrown out of getBackendSrv
+ * (and `searchUsers`) into a status code without a type assertion.
+ * BackendSrvRequest errors expose `status` as a number; any other
+ * shape yields undefined so the caller falls through to the generic
+ * "Could not load" message instead of crashing.
+ */
+function readErrorStatus(err: unknown): number | undefined {
+  if (!err || typeof err !== 'object' || !('status' in err)) {
+    return undefined;
+  }
+  const { status } = err;
+  return typeof status === 'number' ? status : undefined;
+}
+
+function composerHint(kinds: Array<'panel' | 'dashboard'>): string {
   if (kinds.length === 1) {
     switch (kinds[0]) {
       case 'dashboard':
@@ -578,8 +593,6 @@ function composerHint(kinds: Array<'panel' | 'dashboard' | 'folder'>): string {
           'pulse.composer.hint-markdown-dashboard',
           'Cmd/Ctrl+Enter to send · @user · #dashboard · **markdown**'
         );
-      case 'folder':
-        return t('pulse.composer.hint-markdown-folder', 'Cmd/Ctrl+Enter to send · @user · #folder · **markdown**');
       case 'panel':
       default:
         return t('pulse.composer.hint-markdown', 'Cmd/Ctrl+Enter to send · @user · #panel · **markdown**');

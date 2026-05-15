@@ -7,16 +7,13 @@ export interface UserSuggestion {
   avatarUrl?: string;
 }
 
-interface OrgUsersSearchResponse {
-  orgUsers: Array<{
+interface PulseUserSearchResponse {
+  users: Array<{
     userId: number;
     login: string;
     name?: string;
     avatarUrl?: string;
   }>;
-  totalCount?: number;
-  page?: number;
-  perPage?: number;
 }
 
 interface SearchUsersOptions {
@@ -26,12 +23,15 @@ interface SearchUsersOptions {
 }
 
 /**
- * searchUsers hits /api/org/users/search — the org-scoped user search.
- * The global /api/users/search route is gated behind the global
- * `users:read` permission (Grafana Server Admin only), so Org Admins
- * and below see a 403 there. The org-scoped endpoint is gated behind
- * `org.users:read`, which any role with org membership can be granted,
- * so it is the right surface for @-mention pickers inside an org.
+ * searchUsers hits /api/pulse/users/search — the Pulse-scoped org
+ * user search. We don't go through /api/org/users/search because
+ * that route requires `org.users:read`, which only Org Admin (and
+ * Grafana Server Admin) hold by default — every Viewer / Editor
+ * gets a silent 403 there and the @-mention picker shows zero
+ * matches. The Pulse-scoped endpoint is gated behind `pulse:read`
+ * so any caller who can read Pulse can look up other org members
+ * for a mention, while still scoping the search to the caller's
+ * own org.
  *
  * The optional AbortSignal lets callers cancel a stale debounced
  * request: getBackendSrv doesn't accept AbortSignal directly, so we
@@ -49,21 +49,21 @@ export async function searchUsers(query: string, options: SearchUsersOptions = {
     return [];
   }
   const { signal, excludeUserId } = options;
-  const url = new URL('/api/org/users/search', window.location.origin);
+  const url = new URL('/api/pulse/users/search', window.location.origin);
   url.searchParams.set('perpage', excludeUserId ? '11' : '10');
   url.searchParams.set('page', '1');
   url.searchParams.set('query', trimmed);
 
-  const data = await getBackendSrv().get<OrgUsersSearchResponse>(url.pathname + url.search, undefined, undefined, {
+  const data = await getBackendSrv().get<PulseUserSearchResponse>(url.pathname + url.search, undefined, undefined, {
     showErrorAlert: false,
   });
   if (signal?.aborted) {
     return [];
   }
-  if (!data || !Array.isArray(data.orgUsers)) {
+  if (!data || !Array.isArray(data.users)) {
     return [];
   }
-  const users = data.orgUsers
+  const users = data.users
     .filter((u) => excludeUserId === undefined || u.userId !== excludeUserId)
     .slice(0, 10)
     .map((u) => ({
@@ -96,9 +96,10 @@ export function filterPanels(panels: PanelSuggestion[], query: string): PanelSug
 
 /**
  * ResourceSuggestion is the generic shape used by the composer's `#`
- * picker when it offers cross-resource mentions (dashboard, folder).
- * The id is the resource's UID — string-typed because dashboard and
- * folder UIDs are not numeric like panel ids are.
+ * picker when it offers cross-resource mentions (dashboard today,
+ * future kinds will reuse the shape). The id is the resource's UID
+ * — string-typed because dashboard UIDs are not numeric like panel
+ * ids are.
  */
 export interface ResourceSuggestion {
   uid: string;

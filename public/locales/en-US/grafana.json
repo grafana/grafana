@@ -4427,42 +4427,36 @@
     },
     "folder-pulse": {
       "author-unknown": "Unknown",
-      "back": "Back to threads",
       "closed": "Closed",
       "column": {
         "author": "Author",
+        "folder": "Folder",
         "last-activity": "Last activity",
         "replies": "Replies",
-        "thread": "Thread"
+        "resource": "Resource",
+        "thread": "Thread",
+        "type": "Type"
       },
-      "compose-title": "Start a thread in this folder",
-      "compose-title-placeholder": "Title — short summary of this thread (required)",
       "empty": {
-        "all": "No threads in this folder yet",
-        "all-hint": "Use threads to discuss the dashboards in this folder. Mention dashboards with #name and teammates with @name.",
+        "all": "No Pulse threads on dashboards in this folder yet",
+        "all-hint": "This view rolls up Pulse threads attached to dashboards in this folder and its subfolders. Open any dashboard to start a thread there.",
         "error": "Couldn't load Pulse threads",
         "error-hint": "Something went wrong while fetching threads. Please refresh and try again.",
         "filtered": "No matching threads",
-        "filtered-hint": "Try clearing the search, user, status, or scope filters.",
-        "start": "Start the first thread"
+        "filtered-hint": "Try clearing the search, status, or scope filters."
       },
-      "filter-user-all": "All users",
-      "filter-user-fallback": "User #{{id}}",
       "loading": "Loading threads…",
-      "loading-thread": "Loading thread…",
-      "new-thread": "New thread",
       "refreshing": "Updating…",
       "scope": {
         "all": "All threads",
         "mine": "My threads"
       },
-      "search-placeholder": "Search by thread content",
+      "search-placeholder": "Search by thread content or dashboard title",
       "status": {
         "all": "All",
         "closed": "Closed",
         "open": "Open"
       },
-      "thread-missing": "Thread not found.",
       "untitled": "Untitled thread"
     },
     "manage-folder-nav": {
@@ -14137,7 +14131,6 @@
       "cancel": "Cancel",
       "hint-markdown": "Cmd/Ctrl+Enter to send · @user · #panel · **markdown**",
       "hint-markdown-dashboard": "Cmd/Ctrl+Enter to send · @user · #dashboard · **markdown**",
-      "hint-markdown-folder": "Cmd/Ctrl+Enter to send · @user · #folder · **markdown**",
       "hint-markdown-multi": "Cmd/Ctrl+Enter to send · @user · #resource · **markdown**",
       "input-aria": "Pulse message",
       "placeholder": "Pulse on this dashboard… (@ for users, # for panels, **markdown** supported)",
@@ -14150,7 +14143,7 @@
       "title-placeholder": "Title — a short summary of this thread",
       "user-lookup-empty": "No matching users.",
       "user-lookup-error": "Could not load user suggestions.",
-      "user-lookup-forbidden": "You do not have permission to look up users in this org (requires org.users:read).",
+      "user-lookup-forbidden": "You do not have permission to look up users for mentions (requires pulse:read).",
       "user-lookup-loading": "Searching users…"
     },
     "drawer": {
@@ -14251,7 +14244,6 @@
       "reopen-thread": "Reopen thread",
       "reply-placeholder": "Reply… (@ for users, # for panels)",
       "reply-placeholder-dashboard": "Reply… (@ for users, # for dashboards)",
-      "reply-placeholder-folder": "Reply… (@ for users, # for folders)",
       "reply-placeholder-multi": "Reply… (@ for users, # for resources)",
       "tombstone": "This pulse was deleted.",
       "untitled": "Conversation"

@@ -9,8 +9,8 @@ import { type PulseMention } from '../types';
 interface Props {
   mention: PulseMention;
   /** Click handler for panel mentions only — applies a panel filter in
-   *  the dashboard drawer. Resource mentions (dashboard/folder) are
-   *  rendered as anchor tags and ignore this prop. */
+   *  the dashboard drawer. Resource mentions (dashboard) are rendered
+   *  as anchor tags and ignore this prop. */
   onClick?: (mention: PulseMention) => void;
   /**
    * Live panel-id → title map for the dashboard the chip is rendered
@@ -23,11 +23,15 @@ interface Props {
 }
 
 /**
- * MentionChip renders a `@user`, `#panel`, `#dashboard`, or `#folder`
- * chip. Resource chips (dashboard, folder) are anchor tags that
- * navigate to the underlying entity; panel chips are buttons that
- * apply a panel filter in the current dashboard's Pulse drawer; user
- * chips are static spans.
+ * MentionChip renders a `@user`, `#panel`, or `#dashboard` chip.
+ * Dashboard chips are anchor tags that navigate to the underlying
+ * dashboard; panel chips are buttons that apply a panel filter in
+ * the current dashboard's Pulse drawer; user chips are static spans.
+ *
+ * Legacy folder chips persisted in old bodies (folder mentions were
+ * dropped together with folder-as-a-resource) fall through to the
+ * static text fallback at the bottom of the function so they still
+ * render readably without exposing a broken navigable link.
  *
  * Security: chips render via React data bindings (no inner HTML); the
  * displayName / target id are server-validated before persistence; the
@@ -54,16 +58,14 @@ export function MentionChip({ mention, onClick, panelTitlesById }: Props): React
     }
   }
 
-  if (mention.kind === 'dashboard' || mention.kind === 'folder') {
-    // Resource chips link to the underlying entity. Using a real
-    // anchor (rather than a router push) lets cmd/ctrl-click open a
-    // new tab, matches the affordance of the resource link in the
+  if (mention.kind === 'dashboard') {
+    // Dashboard chips link to the dashboard. Using a real anchor
+    // (rather than a router push) lets cmd/ctrl-click open a new
+    // tab, matches the affordance of the resource link in the
     // overview table, and keeps the chip keyboard-navigable. The
     // label is wrapped in a span so the chip can take a pill-shaped
-    // style without the linter flagging a bare anchor — and the span
-    // makes the chip text easier to truncate / style further if we
-    // ever want to (e.g. dimmed prefix, bolded title).
-    const href = resourceHref(mention.kind, mention.targetId);
+    // style without the linter flagging a bare anchor.
+    const href = `/d/${encodeURIComponent(mention.targetId)}`;
     return (
       <a className={styles.resource} href={href}>
         <span>#{label}</span>
@@ -82,20 +84,14 @@ export function MentionChip({ mention, onClick, panelTitlesById }: Props): React
     return <span className={styles.panel}>#{label}</span>;
   }
 
-  return <span className={styles.user}>@{label}</span>;
-}
+  if (mention.kind === 'user') {
+    return <span className={styles.user}>@{label}</span>;
+  }
 
-/**
- * resourceHref returns the canonical link for a resource mention.
- * Folder UIDs route to the browse-dashboards folder page; dashboard
- * UIDs route to the dashboard view. Both shapes match what
- * `buildThreadHref` already produces on the Pulse overview, so the
- * link target inside a chip is identical to the link in the row
- * above it.
- */
-function resourceHref(kind: 'dashboard' | 'folder', uid: string): string {
-  const encoded = encodeURIComponent(uid);
-  return kind === 'dashboard' ? `/d/${encoded}` : `/dashboards/f/${encoded}`;
+  // Defensive fallback: any other kind (e.g. legacy `folder` chips
+  // still in old bodies) renders as a plain text span so the
+  // surrounding sentence still reads, with no broken link target.
+  return <span className={styles.legacy}>#{label}</span>;
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -128,11 +124,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
       textDecoration: 'underline',
     },
   }),
-  // Resource chips (dashboard, folder) use the success palette so
-  // they read as a navigable link in flowing prose while staying
-  // visually distinct from panel chips (warning) and user chips
-  // (primary). The hover underline matches the panel chip so all
-  // clickable mentions share the same feedback cue.
+  // Resource chips (dashboard) use the success palette so they read
+  // as a navigable link in flowing prose while staying visually
+  // distinct from panel chips (warning) and user chips (primary).
+  // The hover underline matches the panel chip so all clickable
+  // mentions share the same feedback cue.
   resource: css({
     display: 'inline-block',
     padding: '0 6px',
@@ -150,5 +146,19 @@ const getStyles = (theme: GrafanaTheme2) => ({
       textDecoration: 'underline',
       color: theme.colors.success.text,
     },
+  }),
+  // Inert fallback for legacy / unknown mention kinds — looks like
+  // a chip so the surrounding text doesn't reflow, but doesn't
+  // pretend to be navigable.
+  legacy: css({
+    display: 'inline-block',
+    padding: '0 6px',
+    margin: '0 2px',
+    borderRadius: theme.shape.radius.pill,
+    background: theme.colors.background.secondary,
+    color: theme.colors.text.secondary,
+    fontSize: theme.typography.bodySmall.fontSize,
+    fontWeight: theme.typography.fontWeightMedium,
+    whiteSpace: 'nowrap',
   }),
 });

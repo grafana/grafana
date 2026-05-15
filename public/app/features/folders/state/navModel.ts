@@ -68,10 +68,11 @@ export function buildNavModel(folder: FolderDTO | FolderParent, parentsArg?: Fol
   }
 
   // Pulse is gated on the same feature toggle the dashboard-side drawer
-  // uses, so toggling Pulse off hides both surfaces in lockstep. We
-  // intentionally surface Pulse on provisioned folders too: a thread is
-  // metadata external to the folder's spec and doesn't violate the
-  // read-only contract that other tabs (panels, alerting) enforce.
+  // uses, so toggling Pulse off hides both surfaces in lockstep. The
+  // folder Pulse tab is a read-only roll-up of threads attached to
+  // dashboards in this folder hierarchy — it doesn't write anything
+  // to the folder itself, so it stays available on provisioned
+  // folders alongside the rest of the read-only tabs.
   if (config.featureToggles?.dashboardPulse) {
     model.children!.push({
       active: false,

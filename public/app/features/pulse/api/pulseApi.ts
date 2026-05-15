@@ -70,6 +70,24 @@ interface ListAllThreadsArgs {
   limit?: number;
 }
 
+/**
+ * ListFolderRollupThreadsArgs powers the folder Pulse tab. The
+ * folder isn't a Pulse resource — instead the backend resolves the
+ * folder hierarchy (root + descendants) into a dashboard set and
+ * returns the threads attached to those dashboards. Filter shape
+ * mirrors the per-resource list so the surface can offer the same
+ * Status / Mine / search / Users dropdown.
+ */
+interface ListFolderRollupThreadsArgs {
+  folderUID: string;
+  authorUserId?: number;
+  q?: string;
+  mine?: boolean;
+  status?: ThreadStatusFilter;
+  page?: number;
+  limit?: number;
+}
+
 interface ResourceVersionArgs {
   resourceKind: ResourceKind;
   resourceUID: string;
@@ -85,7 +103,16 @@ interface ResourceVersionArgs {
 export const pulseApi = createApi({
   reducerPath: 'pulseApi',
   baseQuery: createBaseQuery({ baseURL: '/api/pulse' }),
-  tagTypes: ['Thread', 'Pulse', 'ResourceVersion', 'ResourceThreads', 'AllThreads', 'PanelMentions', 'Participants'],
+  tagTypes: [
+    'Thread',
+    'Pulse',
+    'ResourceVersion',
+    'ResourceThreads',
+    'AllThreads',
+    'FolderRollupThreads',
+    'PanelMentions',
+    'Participants',
+  ],
   endpoints: (builder) => ({
     listThreads: builder.query<PageResult<PulseThread>, ListThreadsArgs>({
       query: ({ resourceKind, resourceUID, panelId, authorUserId, q, mine, status, page, limit }) => {
@@ -173,6 +200,56 @@ export const pulseApi = createApi({
       },
     }),
 
+    /**
+     * listFolderRollupThreads aggregates dashboard-scoped threads for
+     * every dashboard the caller can read under the given folder
+     * hierarchy. The folder itself is not a Pulse resource, so this
+     * lives on a dedicated route. Each row is decorated server-side
+     * with `resourceTitle` (dashboard title), `folderUID`, and
+     * `folderTitle` so the table renders Type / Resource / Folder
+     * columns without per-row lookups.
+     */
+    listFolderRollupThreads: builder.query<PageResult<PulseThread>, ListFolderRollupThreadsArgs>({
+      query: ({ folderUID, authorUserId, q, mine, status, page, limit }) => {
+        const params: Record<string, string> = {};
+        if (authorUserId !== undefined) {
+          params.authorUserId = String(authorUserId);
+        }
+        const trimmedQ = q?.trim();
+        if (trimmedQ) {
+          params.q = trimmedQ;
+        }
+        if (mine) {
+          params.mine = 'true';
+        }
+        if (status) {
+          params.status = status;
+        }
+        if (page !== undefined && page > 1) {
+          params.page = String(page);
+        }
+        if (limit !== undefined) {
+          params.limit = String(limit);
+        }
+        return { url: `/folders/${encodeURIComponent(folderUID)}/threads`, params };
+      },
+      providesTags: (result, _error, args) => {
+        // Two tags per response: one keyed on this folder's UID
+        // (so a manual refetch on that surface only busts its own
+        // bucket), and a shared LIST sentinel (so write-side
+        // mutations that don't know the folder context — like
+        // createThread, which only knows the dashboard — can still
+        // invalidate every folder rollup that might contain the
+        // affected dashboard).
+        const folderTag = { type: 'FolderRollupThreads' as const, id: args.folderUID };
+        const listTag = { type: 'FolderRollupThreads' as const, id: 'LIST' };
+        if (!result) {
+          return [folderTag, listTag];
+        }
+        return [folderTag, listTag, ...result.items.map((t) => ({ type: 'Thread' as const, id: t.uid }))];
+      },
+    }),
+
     getThread: builder.query<PulseThread, string>({
       query: (uid) => ({ url: `/threads/${encodeURIComponent(uid)}` }),
       providesTags: (_r, _e, uid) => [{ type: 'Thread', id: uid }],
@@ -210,6 +287,10 @@ export const pulseApi = createApi({
         // participants set, so bust the dropdown's cache.
         { type: 'Participants', id: `${args.resourceKind}:${args.resourceUID}` },
         { type: 'AllThreads', id: 'LIST' },
+        // The dashboard could live under any folder hierarchy, so we
+        // bust every folder rollup via the shared LIST sentinel
+        // rather than trying to figure out the parent folder here.
+        { type: 'FolderRollupThreads', id: 'LIST' },
       ],
     }),
 
@@ -226,6 +307,7 @@ export const pulseApi = createApi({
         { type: 'Participants', id: `${args.resourceKind}:${args.resourceUID}` },
         { type: 'Thread', id: args.threadUID },
         { type: 'AllThreads', id: 'LIST' },
+        { type: 'FolderRollupThreads', id: 'LIST' },
       ],
     }),
 
@@ -242,6 +324,7 @@ export const pulseApi = createApi({
         { type: 'PanelMentions', id: `${args.resourceKind}:${args.resourceUID}` },
         { type: 'Thread', id: args.threadUID },
         { type: 'AllThreads', id: 'LIST' },
+        { type: 'FolderRollupThreads', id: 'LIST' },
       ],
     }),
 
@@ -259,6 +342,7 @@ export const pulseApi = createApi({
           { type: 'PanelMentions', id: `${args.resourceKind}:${args.resourceUID}` },
           { type: 'Thread', id: args.threadUID },
           { type: 'AllThreads', id: 'LIST' },
+          { type: 'FolderRollupThreads', id: 'LIST' },
         ],
       }
     ),
@@ -280,6 +364,7 @@ export const pulseApi = createApi({
         { type: 'Pulse', id: args.threadUID },
         { type: 'Thread', id: args.threadUID },
         { type: 'AllThreads', id: 'LIST' },
+        { type: 'FolderRollupThreads', id: 'LIST' },
       ],
     }),
 
@@ -376,6 +461,7 @@ export const pulseApi = createApi({
 export const {
   useListThreadsQuery,
   useListAllThreadsQuery,
+  useListFolderRollupThreadsQuery,
   useGetThreadQuery,
   useListPulsesQuery,
   useCreateThreadMutation,

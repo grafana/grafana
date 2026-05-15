@@ -343,22 +343,21 @@ function AuthorCell({ thread }: { thread: PulseThread }): React.ReactElement {
 }
 
 /**
- * buildThreadHref returns the canonical link to a thread, routing by
- * resource kind so the click lands on the right host page:
+ * buildThreadHref returns the canonical link to a thread. Threads
+ * are always anchored to a dashboard (folders aggregate dashboard
+ * threads in a separate rollup view but never own threads
+ * themselves), so the link always lands on the dashboard with the
+ * Pulse drawer pre-opened to the right thread via the `pulse=
+ * thread-<uid>` query param.
  *
- *   dashboard → /d/<uid>?pulse=thread-<uid>           (PulseDrawer)
- *   folder    → /dashboards/f/<uid>/pulse?pulse=thread-<uid>
- *                                                     (BrowseFolderPulsePage)
- *
- * Future kinds (alert rule, SLO, synthetic, etc.) extend the switch
- * with their own canonical surface. Both surfaces read the same
- * `?pulse=thread-<uid>` query param so deep-linking is consistent
- * across resource types.
+ * Future resource kinds (alert rule, SLO, synthetic, etc.) will
+ * extend this with their own canonical surface; the deep-link
+ * contract — same `?pulse=thread-<uid>` param across surfaces —
+ * stays the same.
  */
 function buildThreadHref(thread: PulseThread): string {
   const encoded = encodeURIComponent(thread.resourceUID);
-  const path = thread.resourceKind === 'folder' ? `/dashboards/f/${encoded}/pulse` : `/d/${encoded}`;
-  const url = new URL(path, window.location.origin);
+  const url = new URL(`/d/${encoded}`, window.location.origin);
   url.searchParams.set('pulse', `thread-${thread.uid}`);
   // Return only the path + search so we hand a relative URL to the
   // router; we don't want to force a full page reload.

@@ -408,9 +408,10 @@ function PulseComposerForEdit({ pulse, panels, currentUserId, onSubmit, onCancel
  * replyPlaceholder picks the right placeholder hint for the reply
  * composer based on which mention kinds the surrounding surface
  * exposes. The dashboard drawer keeps the original "@ for users, #
- * for panels" hint; folders surface "@ for users, # for dashboards".
- * Future surfaces (e.g. an alert resource page) can extend the switch
- * the same way the composer footer hint does.
+ * for panels" hint; the folder rollup surface — which surfaces
+ * dashboards in the folder hierarchy — gets the dashboard variant.
+ * Future surfaces (e.g. an alert resource page) can extend the
+ * switch the same way the composer footer hint does.
  */
 function replyPlaceholder(
   source: ResourceMentionSource | undefined,
@@ -421,7 +422,7 @@ function replyPlaceholder(
   // can't usefully list every kind without overflowing — collapse to
   // the generic "resource" copy. Single-kind surfaces keep their
   // specific hint so the affordance stays unambiguous.
-  const kinds = new Set<'dashboard' | 'folder'>();
+  const kinds = new Set<'dashboard'>();
   if (source) {
     kinds.add(source.kind);
   }
@@ -433,9 +434,6 @@ function replyPlaceholder(
   }
   if (source?.kind === 'dashboard' || (plural?.length === 1 && plural[0].kind === 'dashboard')) {
     return t('pulse.thread.reply-placeholder-dashboard', 'Reply… (@ for users, # for dashboards)');
-  }
-  if (source?.kind === 'folder' || (plural?.length === 1 && plural[0].kind === 'folder')) {
-    return t('pulse.thread.reply-placeholder-folder', 'Reply… (@ for users, # for folders)');
   }
   return t('pulse.thread.reply-placeholder', 'Reply… (@ for users, # for panels)');
 }
