@@ -15,6 +15,7 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	palettesapi "github.com/grafana/grafana/apps/palettes/pkg/apis/palettes/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	paletteutils "github.com/grafana/grafana/pkg/registry/apis/palettes/utils"
 	prefutils "github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/setting"
@@ -37,6 +38,11 @@ func RegisterAPIService(
 	b := &APIBuilder{
 		authorizer: NewPaletteAuthorizer(&prefutils.AuthorizeFromName{
 			AccessClient: accessClient,
+			// Palette names use a trailing slug (user-<uid>-<slug>); map owner id for AuthorizeFromName.
+			OwnerRefFromName: func(name string) (prefutils.OwnerReference, bool) {
+				ref, _, ok := paletteutils.ParseOwnerWithSuffix(name)
+				return ref, ok
+			},
 			Resource: map[string][]prefutils.ResourceOwner{
 				Resource: {
 					prefutils.NamespaceResourceOwner,
@@ -97,9 +103,7 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 }
 
 func (b *APIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
-	return func(common.ReferenceCallback) map[string]common.OpenAPIDefinition {
-		return map[string]common.OpenAPIDefinition{}
-	}
+	return palettesapi.GetOpenAPIDefinitions
 }
 
 func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
