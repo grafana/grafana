@@ -40,7 +40,7 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { initializeReportRenderReadinessObserver } from 'app/features/dashboard/services/ReportRenderReadinessObserver';
 import { initializeScenePerformanceLogger } from 'app/features/dashboard/services/ScenePerformanceLogger';
 import { emitDashboardViewEvent } from 'app/features/dashboard/state/analyticsProcessor';
-import { toTemplateDashboardEnvelope } from 'app/features/dashboard-scene/utils/dashboardTemplateEnvelope';
+import { transformTemplateToSaveModelSchemaV2 } from 'app/features/dashboard-scene/utils/dashboardTemplateEnvelope';
 import { trackDashboardSceneLoaded } from 'app/features/dashboard-scene/utils/tracking';
 import { interpolateV1Dashboard } from 'app/features/manage-dashboards/import/utils/inputs';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
@@ -1022,10 +1022,6 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
         const editMode = !!options.editTemplate;
 
         if (options.dashboardTemplateUid && editMode) {
-          // Land template-only flags onto scene.meta so downstream UI can detect "this is an
-          // dashboard template" and the save drawer can build PUTs keyed on dashboardTemplateUid. Outer
-          // template spec fields (title/description/tags/...) are not cached here — consumers
-          // fetch them via useGetDashboardTemplateQuery keyed on dashboardTemplateUid.
           scene.setState({
             meta: {
               ...scene.state.meta,
@@ -1168,12 +1164,13 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
   ): Promise<DashboardWithAccessInfo<DashboardV2Spec>> {
     const response = await getDashboardTemplateExtension().loadTemplate(dashboardTemplateUid);
 
-    const resourceVersion = response.metadata?.resourceVersion ?? '0';
+    const resourceVersion = response.metadata?.resourceVersion;
 
     if (editMode) {
       // Edit-template flow: mark the scene as editing an org template so downstream UI can hide
-      // irrelevant actions and the save drawer can PUT back to the template resource.
-      return toTemplateDashboardEnvelope({
+      // irrelevant actions.
+      // canEdit and canSave will change in the future with specific RBAC permissions.
+      return transformTemplateToSaveModelSchemaV2({
         dashboardSpec: response.spec.dashboard,
         resourceVersion,
         canEdit: true,
@@ -1181,11 +1178,11 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
       });
     }
 
-    // Use-template flow: unchanged legacy behavior. The embedded dashboard spec is hydrated
+    // Use-template flow: The embedded dashboard spec is hydrated
     // into a fresh scene so the user can "Save as" a brand-new dashboard. Do NOT mark the
-    // scene as an org template; no snapshot, no dashboardTemplateUid — this is not an edit of the
+    // scene as an org template; no dashboardTemplateUid — this is not an edit of the
     // template, it's a cloning flow.
-    return toTemplateDashboardEnvelope({
+    return transformTemplateToSaveModelSchemaV2({
       dashboardSpec: response.spec.dashboard,
       canEdit: true,
       canSave: true,

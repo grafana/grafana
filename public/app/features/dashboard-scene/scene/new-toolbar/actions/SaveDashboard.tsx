@@ -88,7 +88,7 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
               icon="copy"
               onClick={() => dashboard.openSaveDrawer({ saveAsCopy: true })}
             />
-            {isDashboardTemplatesFlagEnabled && getSaveAsTemplateForm() !== null && (
+            {isDashboardTemplatesFlagEnabled && meta.canSave && getSaveAsTemplateForm() !== null && (
               <Menu.Item
                 label={t('dashboard.toolbar.save-as-template.label', 'Save as template')}
                 icon="grid"
