@@ -694,7 +694,13 @@ func (b *DashboardsAPIBuilder) validateFolderExists(ctx context.Context, folderU
 	if err != nil {
 		return nil, err
 	}
+	if b.folderClientProvider == nil {
+		return nil, fmt.Errorf("folder client provider is not configured")
+	}
 	folderClient := b.folderClientProvider.GetOrCreateHandler(ns.Value)
+	if folderClient == nil {
+		return nil, fmt.Errorf("folder client handler is not configured for namespace %q", ns.Value)
+	}
 	folder, err := folderClient.Get(ctx, folderUID, orgID, metav1.GetOptions{})
 	// Check if the error is a context deadline exceeded error
 	if err != nil {
@@ -1301,7 +1307,13 @@ func (b *DashboardsAPIBuilder) verifyFolderAccessPermissions(ctx context.Context
 	if err != nil {
 		return err
 	}
+	if b.folderClientProvider == nil {
+		return fmt.Errorf("folder client provider is not configured")
+	}
 	folderClient := b.folderClientProvider.GetOrCreateHandler(ns.Value)
+	if folderClient == nil {
+		return fmt.Errorf("folder client handler is not configured for namespace %q", ns.Value)
+	}
 
 	for _, folderId := range folderIds {
 		resp, err := folderClient.Get(ctx, folderId, ns.OrgID, metav1.GetOptions{}, "access")

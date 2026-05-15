@@ -125,6 +125,39 @@ func TestDashboardsAPIBuilderValidateVariableCreateRequiresFolderAccess(t *testi
 	require.True(t, folderHandler.accessSubresourceChecked)
 }
 
+func TestDashboardsAPIBuilderValidateVariableCreateMissingFolderHandlerReturnsError(t *testing.T) {
+	folderUID := "folder-a"
+	v := newCustomVariable("region", "region")
+	v.SetAnnotations(map[string]string{utils.AnnoKeyFolder: folderUID})
+
+	ctx := k8srequest.WithNamespace(context.Background(), "stacks-1")
+	ctx = identity.WithRequester(ctx, &identity.StaticRequester{
+		OrgRole: identity.RoleEditor,
+		OrgID:   1,
+	})
+
+	builder := &DashboardsAPIBuilder{
+		folderClientProvider: &staticHandlerProvider{},
+	}
+
+	err := builder.Validate(ctx, admission.NewAttributesRecord(
+		v,
+		nil,
+		dashv2beta1.VariableResourceInfo.GroupVersionKind(),
+		"stacks-1",
+		v.GetName(),
+		dashv2beta1.VariableResourceInfo.GroupVersionResource(),
+		"",
+		admission.Create,
+		&metav1.CreateOptions{},
+		false,
+		nil,
+	), nil)
+
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "folder client handler is not configured")
+}
+
 func TestDashboardsAPIBuilderValidateVariableUpdateScopeChangeRequiresFolderAccess(t *testing.T) {
 	oldVariable := newCustomVariable("region", "region")
 	newVariable := newCustomVariable("region", "region")
