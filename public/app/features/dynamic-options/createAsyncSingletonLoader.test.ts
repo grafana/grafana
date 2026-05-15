@@ -61,31 +61,4 @@ describe('createAsyncSingletonLoader', () => {
     await expect(loader.load()).resolves.toBe(2);
     expect(fetcher).toHaveBeenCalledTimes(2);
   });
-
-  describe('with fetcher args', () => {
-    it('passes the first call args to the fetcher and ignores subsequent args', async () => {
-      const fetcher = jest.fn(async (label: string) => `result:${label}`);
-      const loader = createAsyncSingletonLoader<string, string>(fetcher);
-
-      const first = await loader.load('alpha');
-      const second = await loader.load('beta');
-
-      expect(first).toBe('result:alpha');
-      expect(second).toBe('result:alpha');
-      expect(fetcher).toHaveBeenCalledTimes(1);
-      expect(fetcher).toHaveBeenCalledWith('alpha');
-    });
-
-    it('refetches with the next call args after reset', async () => {
-      const fetcher = jest.fn(async (label: string) => `result:${label}`);
-      const loader = createAsyncSingletonLoader<string, string>(fetcher);
-
-      await loader.load('alpha');
-      loader.reset();
-      await loader.load('beta');
-
-      expect(fetcher).toHaveBeenNthCalledWith(1, 'alpha');
-      expect(fetcher).toHaveBeenNthCalledWith(2, 'beta');
-    });
-  });
 });

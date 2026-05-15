@@ -29,10 +29,8 @@ describe('dynamicPalettes', () => {
     jest.useRealTimers();
   });
 
-  const theme = createTheme();
-
   it('returns no modes when index key is missing', async () => {
-    const modesPromise = fetchDynamicFieldColorModes(theme);
+    const modesPromise = fetchDynamicFieldColorModes();
 
     jest.advanceTimersByTime(wait);
 
@@ -45,7 +43,7 @@ describe('dynamicPalettes', () => {
       JSON.stringify([{ id: getTestPaletteId('missing'), name: 'Missing' }])
     );
 
-    const modesPromise = fetchDynamicFieldColorModes(theme);
+    const modesPromise = fetchDynamicFieldColorModes();
 
     jest.advanceTimersByTime(wait);
     await expect(modesPromise).resolves.toHaveLength(0);
@@ -60,7 +58,7 @@ describe('dynamicPalettes', () => {
     );
     localStorage.setItem(`${DYNAMIC_PALETTE_KEY_PREFIX}${paletteId}`, JSON.stringify(['#FF0000', '#00FF00']));
 
-    const firstLoad = loadDynamicFieldColorModes(theme);
+    const firstLoad = loadDynamicFieldColorModes();
     jest.advanceTimersByTime(wait);
     const firstModes = await firstLoad;
 
@@ -69,7 +67,7 @@ describe('dynamicPalettes', () => {
     expect(fieldColorModeRegistry.getIfExists(paletteId)).toBeDefined();
     expect(isDynamicPalettesLoaded()).toBe(true);
 
-    const secondLoad = await loadDynamicFieldColorModes(theme);
+    const secondLoad = await loadDynamicFieldColorModes();
     expect(secondLoad).toEqual(firstModes);
   });
 
@@ -77,7 +75,7 @@ describe('dynamicPalettes', () => {
     localStorage.setItem(DYNAMIC_PALETTES_INDEX_KEY, JSON.stringify([]));
 
     let resolved = false;
-    const modesPromise = fetchDynamicFieldColorModes(theme).then(() => {
+    const modesPromise = fetchDynamicFieldColorModes().then(() => {
       resolved = true;
     });
 
@@ -105,5 +103,24 @@ describe('dynamicPalettes', () => {
     registerDynamicFieldColorModes([mode]);
 
     expect(fieldColorModeRegistry.getIfExists(paletteId)).toBeDefined();
+  });
+
+  it('applies contrast filtering when colors are read for each theme', async () => {
+    const paletteId = getTestPaletteId('contrast-aware');
+    const lightTheme = createTheme({ colors: { mode: 'light' } });
+    const darkTheme = createTheme({ colors: { mode: 'dark' } });
+
+    localStorage.setItem(DYNAMIC_PALETTES_INDEX_KEY, JSON.stringify([{ id: paletteId, name: 'Contrast aware' }]));
+    localStorage.setItem(`${DYNAMIC_PALETTE_KEY_PREFIX}${paletteId}`, JSON.stringify(['#000000', '#ffffff']));
+
+    const loadPromise = loadDynamicFieldColorModes();
+    jest.advanceTimersByTime(wait);
+    await loadPromise;
+
+    const dynamicMode = fieldColorModeRegistry.getIfExists(paletteId);
+    expect(dynamicMode?.getColors?.(lightTheme)).toContain('#000000');
+    expect(dynamicMode?.getColors?.(lightTheme)).not.toContain('#ffffff');
+    expect(dynamicMode?.getColors?.(darkTheme)).toContain('#ffffff');
+    expect(dynamicMode?.getColors?.(darkTheme)).not.toContain('#000000');
   });
 });

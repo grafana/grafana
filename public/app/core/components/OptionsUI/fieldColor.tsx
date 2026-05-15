@@ -38,6 +38,7 @@ export const FieldColorEditor = ({ value, onChange, item, id }: Props) => {
   const filteredOptions = availableOptions.filter(
     (option) =>
       !option.excludeFromPicker &&
+      (!option.getColors || option.getColors(theme).length > 0) &&
       (option.id !== FieldColorModeId.PaletteColorblind || config.featureToggles.enableColorblindSafePanelOptions) &&
       (option.id !== FieldColorModeId.Gradient ||
         (item.settings?.gradientSupport && config.featureToggles.pieChartGradientColorScheme))

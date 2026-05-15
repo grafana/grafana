@@ -32,6 +32,13 @@ const testRegistryItems = [
     excludeFromPicker: true,
   },
   {
+    id: 'empty',
+    name: 'Empty',
+    description: 'This option has no colors in the active theme',
+    getCalculator: () => 'orange',
+    getColors: () => [],
+  },
+  {
     id: FieldColorModeId.PaletteColorblind,
     name: 'Colorblind safe',
     description: 'Colorblind-safe palette option',
@@ -68,6 +75,7 @@ describe('fieldColor', () => {
     expect(screen.getByText(/^Foo/i)).toBeInTheDocument();
     expect(screen.getByText(/^Bar/i)).toBeInTheDocument();
     expect(screen.queryByText(/^Baz/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Empty/i)).not.toBeInTheDocument();
   });
 
   describe('enableColorblindSafePanelOptions', () => {

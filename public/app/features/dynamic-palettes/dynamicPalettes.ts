@@ -55,14 +55,17 @@ function getPaletteMeta(indexItem: Record<string, unknown>): DynamicPaletteMeta 
   };
 }
 
-function getPaletteColors(storage: Storage, paletteId: string, theme: GrafanaTheme2): string[] {
+function getPaletteColors(storage: Storage, paletteId: string): string[] {
   const rawColors = parseArray(storage.getItem(`${DYNAMIC_PALETTE_KEY_PREFIX}${paletteId}`));
 
-  return rawColors.filter(
-    (v): v is string =>
-      typeof v === 'string' &&
-      colorManipulator.getContrastRatio(theme.visualization.getColorByName(v), theme.colors.background.primary) >=
-        theme.colors.contrastThreshold
+  return rawColors.filter((v): v is string => typeof v === 'string');
+}
+
+function getPaletteColorsForTheme(colors: string[], theme: GrafanaTheme2): string[] {
+  return colors.filter(
+    (value) =>
+      colorManipulator.getContrastRatio(theme.visualization.getColorByName(value), theme.colors.background.primary) >=
+      theme.colors.contrastThreshold
   );
 }
 
@@ -73,9 +76,9 @@ function makeDynamicFieldColorMode(meta: DynamicPaletteMeta, colors: string[]): 
     group: meta.group,
     isContinuous: false,
     isByValue: false,
-    getColors: () => colors,
+    getColors: (theme: GrafanaTheme2) => getPaletteColorsForTheme(colors, theme),
     getCalculator: (field: Field, theme: GrafanaTheme2) => {
-      const resolvedColors = colors.map(theme.visualization.getColorByName);
+      const resolvedColors = getPaletteColorsForTheme(colors, theme).map(theme.visualization.getColorByName);
       return (_value, _percent, _threshold) => {
         if (resolvedColors.length === 0) {
           return theme.visualization.getColorByName('gray');
@@ -87,7 +90,7 @@ function makeDynamicFieldColorMode(meta: DynamicPaletteMeta, colors: string[]): 
   };
 }
 
-export async function fetchDynamicFieldColorModes(theme: GrafanaTheme2): Promise<FieldColorMode[]> {
+export async function fetchDynamicFieldColorModes(): Promise<FieldColorMode[]> {
   await new Promise<void>((resolve) => {
     setTimeout(resolve, 2000);
   });
@@ -106,7 +109,7 @@ export async function fetchDynamicFieldColorModes(theme: GrafanaTheme2): Promise
     .map(getPaletteMeta)
     .filter((meta): meta is DynamicPaletteMeta => meta !== undefined)
     .map((meta) => {
-      const colors = getPaletteColors(storage, meta.id, theme);
+      const colors = getPaletteColors(storage, meta.id);
       if (colors.length === 0) {
         return undefined;
       }
@@ -124,10 +127,6 @@ export function registerDynamicFieldColorModes(modes: FieldColorMode[]): void {
   }
 }
 
-// The palette loader needs a GrafanaTheme2 because contrast filtering is
-// theme-dependent. Singleton semantics still apply: the theme passed on the
-// first load() call wins. A theme switch during a session would require a
-// reset (or, as today, a full page reload) to refetch.
 export const dynamicPalettesLoader = createAsyncSingletonLoader(
   fetchDynamicFieldColorModes,
   registerDynamicFieldColorModes
@@ -137,8 +136,8 @@ export function isDynamicPalettesLoaded(): boolean {
   return dynamicPalettesLoader.isLoaded();
 }
 
-export async function loadDynamicFieldColorModes(theme: GrafanaTheme2): Promise<FieldColorMode[]> {
-  return dynamicPalettesLoader.load(theme);
+export async function loadDynamicFieldColorModes(): Promise<FieldColorMode[]> {
+  return dynamicPalettesLoader.load();
 }
 
 export function resetDynamicFieldColorModesForTests(): void {

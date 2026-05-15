@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 
-import { useTheme2 } from '@grafana/ui';
 import { useAsyncReady } from 'app/features/dynamic-options/useAsyncReady';
 import { dynamicPalettesLoader } from 'app/features/dynamic-palettes/dynamicPalettes';
 
@@ -10,8 +9,7 @@ export interface UseDynamicFieldColorModesResult {
 }
 
 export function useDynamicFieldColorModes(): UseDynamicFieldColorModesResult {
-  const theme = useTheme2();
-  const ready = useAsyncReady(dynamicPalettesLoader, theme);
+  const ready = useAsyncReady(dynamicPalettesLoader);
   const [error, setError] = useState<Error | undefined>();
 
   useEffect(() => {
@@ -21,7 +19,7 @@ export function useDynamicFieldColorModes(): UseDynamicFieldColorModesResult {
 
     let cancelled = false;
 
-    dynamicPalettesLoader.load(theme).catch((e) => {
+    dynamicPalettesLoader.load().catch((e) => {
       if (!cancelled) {
         setError(e instanceof Error ? e : new Error(String(e)));
       }
@@ -30,12 +28,11 @@ export function useDynamicFieldColorModes(): UseDynamicFieldColorModesResult {
     return () => {
       cancelled = true;
     };
-  }, [ready, theme]);
+  }, [ready]);
 
   return { loading: !ready, error };
 }
 
 export function useDynamicPalettesReady(): boolean {
-  const theme = useTheme2();
-  return useAsyncReady(dynamicPalettesLoader, theme);
+  return useAsyncReady(dynamicPalettesLoader);
 }
