@@ -1750,14 +1750,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "localeFormatPreference",
-			Description: "Specifies the locale so the correct format for numbers and dates can be shown",
-			Stage:       FeatureStageDeprecated, // not continuing the work for now, will be removed
-			Owner:       grafanaFrontendPlatformSquad,
-			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:         "alertingRulePermanentlyDelete",
 			Description:  "Enables UI functionality to permanently delete alert rules",
 			Generate:     Generate{LegacyFrontend: true},
@@ -3132,6 +3124,15 @@ var (
 			Description:  "Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button)",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaOperatorExperienceSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
+			Name:         "grafana.logLevelInference",
+			Description:  "Enables log level inference from log line contents when level is not defined as a field or a label",
+			Stage:        FeatureStageDeprecated,
+			Owner:        grafanaObservabilityLogsSquad,
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{React: true},

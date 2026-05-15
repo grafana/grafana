@@ -29,6 +29,9 @@ func NewSQLAdapter(repo annotations.Repository, cleaner annotations.Cleaner, cle
 	}
 }
 
+// Close is a no-op as sqlAdapter does not own the underlying sqlstore
+func (a *sqlAdapter) Close() error { return nil }
+
 func (a *sqlAdapter) Get(ctx context.Context, namespace, name string) (*annotationV0.Annotation, error) {
 	id, err := parseAnnotationID(name)
 	if err != nil {

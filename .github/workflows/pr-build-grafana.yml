@@ -85,14 +85,10 @@ jobs:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
-      - uses: ./.github/actions/setup-go
-      - name: Build Go
-        env:
-          CGO_ENABLED: '0'
-          BUILD_VERSION: ${{ needs.setup.outputs.version }}
-          GOOS: linux
-          GOARCH: amd64
-        run: make build-go BUILD_VERSION="${BUILD_VERSION}"
+      - uses: ./.github/actions/build-go
+        with:
+          build-number: ${{ github.run_id }}
+          build-version: ${{ needs.setup.outputs.version }}
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: pr-backend
@@ -101,7 +97,7 @@ jobs:
 
   build-targz:
     name: build targz
-    runs-on: ubuntu-x64-large-io
+    runs-on: ubuntu-x64-large
     needs:
       - setup
       - build-frontend
@@ -112,23 +108,12 @@ jobs:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+      - uses: ./.github/actions/build-targz
         with:
-          name: pr-frontend
-          path: public
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
-        with:
-          name: pr-backend
-          path: bin/linux/amd64
-      - name: Fix backend binary permissions
-        run: chmod +x bin/linux/amd64/grafana*
-      - name: Build tar.gz
-        env:
-          GOOS: linux
-          GOARCH: amd64
-          BUILD_NUMBER: ${{ github.run_id }}
-          BUILD_VERSION: ${{ needs.setup.outputs.version }}
-        run: make build-targz BUILD_VERSION="$BUILD_VERSION" BUILD_NUMBER="$BUILD_NUMBER"
+          build-number: ${{ github.run_id }}
+          build-version: ${{ needs.setup.outputs.version }}
+          frontend-artifact: pr-frontend
+          backend-artifact: pr-backend
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: pr-targz

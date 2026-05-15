@@ -91,7 +91,7 @@ func canAccessAnnotations(ctx context.Context, accessClient authtypes.AccessClie
 			Checks:    checks[start:end],
 		})
 		if err != nil {
-			return nil, fmt.Errorf("batch authz check failed: %w", err)
+			return nil, apierrors.NewInternalError(fmt.Errorf("batch authz check failed: %w", err))
 		}
 		for id, result := range res.Results {
 			if idx, err := strconv.Atoi(id); err == nil {

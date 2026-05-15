@@ -12,6 +12,8 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -52,7 +54,7 @@ func TestSearchHandler(t *testing.T) {
 
 	accessClient := &fakeAccessClient{fn: func(_ authtypes.BatchCheckItem) bool { return true }}
 	dashClient := newFakeFolderResolver(nil)
-	handler := newSearchHandler(store, accessClient, dashClient)
+	handler := newSearchHandler(store, accessClient, dashClient, tracing.InitializeTracerForTest(), ProvideMetrics(nil), log.NewNopLogger())
 
 	tests := []struct {
 		name          string

@@ -46,7 +46,8 @@ declare module "@openfeature/core" {
     | "assistant.frontend.tools.dashboardTemplates"
     | "grafana.unifiedHomepage"
     | "alerting.syncExternalAlertmanager"
-    | "grafana.enableScopesFirstMode";
+    | "grafana.enableScopesFirstMode"
+    | "grafana.logLevelInference";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;
