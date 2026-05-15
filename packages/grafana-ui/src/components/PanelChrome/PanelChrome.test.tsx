@@ -170,7 +170,7 @@ it('renders loading indicator in the panel header if loadingState is loading reg
 });
 
 it('renders streaming indicator in the panel header if loadingState is streaming', () => {
-  setup({ loadingState: LoadingState.Streaming });
+  setup({ loadingState: LoadingState.Streaming, title: 'Test' });
 
   expect(screen.getByTestId('panel-streaming')).toBeInTheDocument();
 });

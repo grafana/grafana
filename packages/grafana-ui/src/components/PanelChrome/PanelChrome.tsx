@@ -183,7 +183,9 @@ export function PanelChrome({
   const showOnHoverClass = showMenuAlways ? 'always-show' : 'show-on-hover';
   const isPanelTransparent = displayMode === 'transparent';
 
-  const hasHeaderContent = Boolean(title || description || titleItems || menu || dragClass || actions);
+  const hasHeaderContent = Boolean(
+    title || description || titleItems || menu || dragClass || actions || statusMessage || subHeaderContent
+  );
   const hasHeader = hasHeaderContent && !hoverHeader;
   const headerHeight = hasHeader ? getHeaderHeight(theme, true) : 0;
   const { contentStyle, innerWidth, innerHeight } = getContentStyle(
