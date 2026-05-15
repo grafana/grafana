@@ -4,10 +4,24 @@
   "colors": {
     "mode": "dark",
     "background": {
-      "canvas": "palette.ink900",
-      "primary": "palette.ink800",
-      "secondary": "palette.ink700",
-      "elevated": "palette.ink700"
+      "canvas": "palette.ink950",
+      "primary": "palette.ink900",
+      "secondary": "palette.ink800",
+      "elevated": "palette.ink800"
+    },
+    "primary": {
+      "main": "palette.ink100"
+    },
+    "secondary": {
+      "main": "palette.ink700",
+      "border": "palette.ink600",
+      "text": "palette.ink300"
+    },
+    "text": {
+      "primary": "palette.ink200",
+      "secondary": "palette.ink300",
+      "disabled": "palette.ink500",
+      "link": "palette.orange400"
     }
   }
 }
