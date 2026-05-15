@@ -484,7 +484,7 @@ export async function applyScopes(page: Page, scopes?: TestScope[]) {
                 creationTimestamp: 'stamp',
               },
               spec: {
-                url: dashboardUrl + '/' + Math.random().toString(),
+                url: dashboardUrl,
                 scope: `scope-${scope.name}`,
               },
               status: {
@@ -504,7 +504,7 @@ export async function applyScopes(page: Page, scopes?: TestScope[]) {
               creationTimestamp: 'stamp',
             },
             spec: {
-              url: dashboardUrl + '/' + Math.random().toString(),
+              url: dashboardUrl,
               scope: `scope-${scope.name}`,
             },
             status: {
