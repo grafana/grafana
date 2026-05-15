@@ -8,36 +8,41 @@ import (
 // ResourceKind is the kind of resource a Pulse thread is attached to.
 //
 // v1 supports "dashboard". The schema is polymorphic from day one so that
-// future kinds (folder, alert rule, datasource, etc.) can be added without
-// migrating existing rows.
+// future kinds (alert rule, datasource, etc.) can be added without
+// migrating existing rows. Folder is intentionally NOT a thread kind:
+// the folder Pulse tab aggregates dashboard-scoped threads from
+// dashboards under that folder rather than holding folder-scoped
+// conversations of its own.
 type ResourceKind string
 
 const (
 	ResourceKindDashboard ResourceKind = "dashboard"
-	ResourceKindFolder    ResourceKind = "folder"
 )
 
 func (k ResourceKind) Valid() bool {
 	switch k {
-	case ResourceKindDashboard, ResourceKindFolder:
+	case ResourceKindDashboard:
 		return true
 	}
 	return false
 }
 
-// MentionKind is the kind of entity a mention token in a pulse body refers to.
+// MentionKind is the kind of entity a mention token in a pulse body
+// refers to. Folder mentions were dropped together with folder-as-a-
+// resource: the picker no longer surfaces them, and any legacy folder
+// chips persisted in old bodies render through the chip's defensive
+// fallback rather than as a real navigable link.
 type MentionKind string
 
 const (
 	MentionKindUser      MentionKind = "user"
 	MentionKindPanel     MentionKind = "panel"
 	MentionKindDashboard MentionKind = "dashboard"
-	MentionKindFolder    MentionKind = "folder"
 )
 
 func (k MentionKind) Valid() bool {
 	switch k {
-	case MentionKindUser, MentionKindPanel, MentionKindDashboard, MentionKindFolder:
+	case MentionKindUser, MentionKindPanel, MentionKindDashboard:
 		return true
 	}
 	return false
@@ -130,6 +135,14 @@ type Thread struct {
 	// attached to (e.g. the dashboard title), resolved at API time so
 	// the frontend can render a rich link without N+1 lookups.
 	ResourceTitle string `json:"resourceTitle,omitempty" xorm:"-"`
+	// FolderUID / FolderTitle are populated by the folder Pulse
+	// rollup endpoint only. They identify the parent folder of the
+	// thread's underlying dashboard so the rollup table can render a
+	// "Folder" column with a navigable link to the dashboard's home.
+	// Other surfaces leave these empty; the global overview already
+	// has ResourceTitle for its single resource link.
+	FolderUID   string `json:"folderUID,omitempty" xorm:"-"`
+	FolderTitle string `json:"folderTitle,omitempty" xorm:"-"`
 }
 
 // Pulse is a single message inside a thread. The first pulse in a thread is
@@ -392,6 +405,34 @@ type ListAllThreadsQuery struct {
 	Status   ThreadStatusFilter `json:"-"` // optional: open / closed / any (default)
 	Page     int                `json:"-"`
 	Limit    int                `json:"-"`
+}
+
+// ListFolderRolledUpThreadsQuery powers the folder Pulse tab. The
+// folder itself is NOT a Pulse resource — this query rolls up the
+// most-recently-active dashboard-scoped threads for every dashboard
+// that lives anywhere under the given folder (its direct children
+// plus every descendant subfolder), so a user can scan one tab and
+// see every conversation happening "inside" that folder regardless
+// of which specific dashboard hosts it.
+//
+// Permission is enforced at the dashboard search step (the same
+// SignedInUser that the dashboard list page uses) so a viewer who
+// can't see a dashboard never sees its threads here either.
+//
+// Filters mirror ListThreadsQuery semantics so the tab can offer the
+// same Status / Mine / search / Users dropdown as the per-resource
+// drawer. The store layer uses the resolved dashboard UID set from
+// the service layer rather than re-walking the folder tree itself.
+type ListFolderRolledUpThreadsQuery struct {
+	OrgID         int64
+	UserID        int64
+	DashboardUIDs []string `json:"-"`
+	AuthorUserID  *int64
+	Query         string
+	MineOnly      bool
+	Status        ThreadStatusFilter
+	Page          int
+	Limit         int
 }
 
 // ListPulsesQuery returns pulses inside a thread, oldest first by default

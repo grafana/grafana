@@ -37,7 +37,6 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/live/features"
 	"github.com/grafana/grafana/pkg/services/live/livecontext"
@@ -75,7 +74,6 @@ func ProvideService(cfg *setting.Cfg, routeRegister routing.RouteRegister, plugC
 	pluginStore pluginstore.Store, pluginClient plugins.Client, dataSourceCache datasources.CacheService,
 	usageStatsService usagestats.Service, toggles featuremgmt.FeatureToggles,
 	dashboardService dashboards.DashboardAccessService,
-	folderService folder.Service,
 	configProvider apiserver.RestConfigProvider) (*GrafanaLive, error) {
 	g := &GrafanaLive{
 		Cfg:                   cfg,
@@ -180,7 +178,6 @@ func ProvideService(cfg *setting.Cfg, routeRegister routing.RouteRegister, plugC
 	g.GrafanaScope.Features["watch"] = features.NewWatchRunner(g.Publish, configProvider)
 	g.GrafanaScope.Features["pulse"] = &features.PulseHandler{
 		AccessControl: dashboardService,
-		FolderService: folderService,
 	}
 
 	g.surveyCaller = survey.NewCaller(managedStreamRunner, node)

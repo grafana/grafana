@@ -17,7 +17,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -48,6 +48,16 @@ func (s *PulseService) registerAPIEndpoints() {
 	s.routeRegister.Group("/api/pulse", func(r routing.RouteRegister) {
 		r.Get("/threads", authorize(read), routing.Wrap(s.listThreadsHandler))
 		r.Get("/threads/all", authorize(read), routing.Wrap(s.listAllThreadsHandler))
+		// Folder rollup: aggregates dashboard-scoped threads from
+		// every dashboard under the given folder hierarchy. The
+		// folder itself is not a Pulse resource, so this lives on a
+		// distinct route that takes a folderUID directly.
+		r.Get("/folders/:folderUID/threads", authorize(read), routing.Wrap(s.listFolderRollupThreadsHandler))
+		// Pulse-scoped user search. /api/org/users/search requires
+		// org.users:read which only Org Admin holds by default; this
+		// endpoint lets any signed-in caller with pulse:read look up
+		// other users in their org for the @-mention picker.
+		r.Get("/users/search", authorize(read), routing.Wrap(s.searchOrgUsersHandler))
 		r.Post("/threads", authorize(write), routing.Wrap(s.createThreadHandler))
 		r.Get("/threads/:threadUID", authorize(read), routing.Wrap(s.getThreadHandler))
 		r.Delete("/threads/:threadUID", authorize(deleteOrAdmin), routing.Wrap(s.deleteThreadHandler))
@@ -303,17 +313,13 @@ func parseStatusFilter(raw string) ThreadStatusFilter {
 
 // populateResourceTitles backfills Thread.ResourceTitle for the global
 // overview page. Dashboards are batch-fetched (one query per page, not
-// per thread); folders are looked up individually because the folder
-// service exposes a single-Get API and the overview page typically only
-// has a handful of distinct folder UIDs anyway. Threads whose resource
-// cannot be resolved keep an empty title and the frontend falls back to
-// showing the UID.
+// per thread). Threads whose resource cannot be resolved keep an empty
+// title and the frontend falls back to showing the UID.
 func (s *PulseService) populateResourceTitles(ctx context.Context, orgID int64, threads []Thread) {
 	if len(threads) == 0 {
 		return
 	}
 	s.populateDashboardTitles(ctx, orgID, threads)
-	s.populateFolderTitles(ctx, threads)
 }
 
 func (s *PulseService) populateDashboardTitles(ctx context.Context, orgID int64, threads []Thread) {
@@ -358,51 +364,129 @@ func (s *PulseService) populateDashboardTitles(ctx context.Context, orgID int64,
 	}
 }
 
-// populateFolderTitles resolves Thread.ResourceTitle for folder-anchored
-// threads. The folder service uses identity from context for permission
-// scoping; the global overview already filters threads by what the
-// caller can read, so a folder.Get failure here means the title can't
-// be displayed (rare; we leave it blank rather than dropping the row).
-func (s *PulseService) populateFolderTitles(ctx context.Context, threads []Thread) {
-	if s.folderSvc == nil {
-		return
+// swagger:route GET /pulse/folders/{folderUID}/threads pulse alpha listFolderRollupThreads
+//
+// List the dashboard-scoped threads from every dashboard under a folder.
+//
+// The folder itself is NOT a Pulse resource: this endpoint walks the
+// folder hierarchy (root + descendants), resolves the dashboard UIDs
+// the caller can read in any of those folders, and returns the
+// threads attached to those dashboards as one page. Each thread is
+// decorated with its dashboard title and the dashboard's parent
+// folder so the UI can render a Resource link plus a Folder link
+// without a per-row lookup.
+//
+// Filters mirror the per-resource list: q (text search), authorUserId,
+// mine, status, page, limit. Pagination is offset-based.
+//
+// Responses:
+// 200: pulseListThreadsResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+func (s *PulseService) listFolderRollupThreadsHandler(c *contextmodel.ReqContext) response.Response {
+	folderUID := web.Params(c.Req)[":folderUID"]
+	if strings.TrimSpace(folderUID) == "" {
+		return response.Error(http.StatusBadRequest, "Missing folder UID", nil)
 	}
-	uidSet := make(map[string]struct{}, len(threads))
-	for _, t := range threads {
-		if t.ResourceKind == ResourceKindFolder && t.ResourceUID != "" {
-			uidSet[t.ResourceUID] = struct{}{}
+	q := ListFolderRolledUpThreadsQuery{
+		OrgID:  c.GetOrgID(),
+		UserID: s.actorUserID(c),
+		Query:  c.Query("q"),
+		Page:   int(c.QueryInt64("page")),
+		Limit:  int(c.QueryInt64("limit")),
+	}
+	if uid := c.Query("authorUserId"); uid != "" {
+		if v, err := strconv.ParseInt(uid, 10, 64); err == nil && v > 0 {
+			q.AuthorUserID = &v
 		}
 	}
-	if len(uidSet) == 0 {
-		return
+	if c.QueryBool("mine") {
+		q.MineOnly = true
 	}
-	requester, err := identity.GetRequester(ctx)
+	q.Status = parseStatusFilter(c.Query("status"))
+
+	res, err := s.ListFolderRolledUpThreads(c.Req.Context(), q, c.SignedInUser, folderUID)
 	if err != nil {
-		s.log.Debug("no requester on context; skipping folder title resolution")
-		return
+		return mapPulseError(err, "Failed to list folder threads")
 	}
-	orgID := requester.GetOrgID()
-	titles := make(map[string]string, len(uidSet))
-	for uid := range uidSet {
-		u := uid
-		f, err := s.folderSvc.Get(ctx, &folder.GetFolderQuery{
-			UID:          &u,
-			OrgID:        orgID,
-			SignedInUser: requester,
+	s.populateThreadPreviews(c.Req.Context(), c.GetOrgID(), res.Items)
+	return response.JSON(http.StatusOK, res)
+}
+
+// swagger:route GET /pulse/users/search pulse alpha pulseSearchOrgUsers
+//
+// Search users in the caller's org for the @-mention picker.
+//
+// /api/org/users/search requires `org.users:read` which only Org Admin
+// (and Grafana Server Admin) hold by default — every Viewer / Editor
+// gets a 403 there, so the @-mention picker silently shows zero hits
+// for them. This endpoint accepts the same query shape but is gated
+// only behind `pulse:read`, so any caller who can read Pulse can also
+// look up other org members for a mention. The response is the bare
+// minimum needed by the picker (id / login / name / avatar URL); no
+// emails, no auth metadata, no role information.
+//
+// Responses:
+// 200: pulseSearchUsersResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
+func (s *PulseService) searchOrgUsersHandler(c *contextmodel.ReqContext) response.Response {
+	if s.userSvc == nil {
+		return response.JSON(http.StatusOK, PulseUserSearchResponse{Users: []PulseUserSearchHit{}})
+	}
+	q := strings.TrimSpace(c.Query("query"))
+	perPage := int(c.QueryInt64("perpage"))
+	if perPage <= 0 || perPage > 100 {
+		// 100 matches the cap on /api/org/users/search; this endpoint
+		// shares the same picker contract, so the cap is set here
+		// rather than left to the underlying SearchOrgUsers default.
+		perPage = 10
+	}
+	page := int(c.QueryInt64("page"))
+	if page <= 0 {
+		page = 1
+	}
+
+	res, err := s.orgSvc.SearchOrgUsers(c.Req.Context(), &org.SearchOrgUsersQuery{
+		OrgID: c.GetOrgID(),
+		Query: q,
+		Page:  page,
+		Limit: perPage,
+		// SearchOrgUsers normally filters its results down to the set
+		// the caller can read via org.users:read — which Viewer /
+		// Editor do not have by default. The Pulse picker needs every
+		// org member visible so anyone can be @-mentioned, so we opt
+		// out of that filter here. The route is still gated behind
+		// pulse:read, the response intentionally exposes only the
+		// minimum fields the picker uses (id / login / name / avatar
+		// URL), and the org_id WHERE on the underlying query keeps
+		// the scope confined to the caller's own org.
+		DontEnforceAccessControl: true,
+		// ExcludeHiddenUsers honors the [users] hidden_users config
+		// so deliberately-suppressed users don't show up in mention
+		// pickers either.
+		ExcludeHiddenUsers: true,
+		User:               c.SignedInUser,
+	})
+	if err != nil {
+		s.log.Warn("pulse user search failed", "err", err)
+		return response.Error(http.StatusInternalServerError, "Failed to search users", err)
+	}
+	out := PulseUserSearchResponse{Users: make([]PulseUserSearchHit, 0, len(res.OrgUsers))}
+	for _, u := range res.OrgUsers {
+		out.Users = append(out.Users, PulseUserSearchHit{
+			UserID:    u.UserID,
+			Login:     u.Login,
+			Name:      u.Name,
+			AvatarURL: gravatarAvatarURL(u.Email),
 		})
-		if err != nil || f == nil {
-			continue
-		}
-		titles[uid] = f.Title
 	}
-	for i := range threads {
-		if threads[i].ResourceKind != ResourceKindFolder {
-			continue
-		}
-		if title, ok := titles[threads[i].ResourceUID]; ok {
-			threads[i].ResourceTitle = title
-		}
-	}
+	return response.JSON(http.StatusOK, out)
 }
 
 // swagger:route GET /pulse/threads/{threadUID} pulse alpha getThread
@@ -959,25 +1043,6 @@ func (s *PulseService) assertCanReadResource(c *contextmodel.ReqContext, kind Re
 		if err != nil || dash == nil {
 			return response.Error(http.StatusNotFound, "Dashboard not found", err)
 		}
-	case ResourceKindFolder:
-		if s.folderSvc == nil {
-			// Defensive: wire should always supply a folder service in
-			// real builds, but a partial test harness might omit it.
-			return response.Error(http.StatusServiceUnavailable, "Folder service unavailable", nil)
-		}
-		// folder.Service.Get enforces dashboards-style permission on the
-		// folder when SignedInUser is set, so a caller without access
-		// gets ErrAccessDenied here. We collapse not-found and
-		// access-denied to 404 to avoid leaking folder existence.
-		u := uid
-		f, err := s.folderSvc.Get(c.Req.Context(), &folder.GetFolderQuery{
-			UID:          &u,
-			OrgID:        c.GetOrgID(),
-			SignedInUser: c.SignedInUser,
-		})
-		if err != nil || f == nil {
-			return response.Error(http.StatusNotFound, "Folder not found", err)
-		}
 	}
 	return nil
 }
@@ -1104,4 +1169,30 @@ type PulsePanelMentionsResponse struct {
 type PulseParticipantsResponse struct {
 	// in: body
 	Body ParticipantsResponse `json:"body"`
+}
+
+// PulseUserSearchHit is one row in the Pulse-scoped user search
+// response. Intentionally minimal: id, login, optional name, and the
+// gravatar URL the @-mention picker renders. No emails, roles, or
+// auth metadata so the endpoint is safe to expose to every Pulse
+// reader without widening org.users:read.
+type PulseUserSearchHit struct {
+	UserID    int64  `json:"userId"`
+	Login     string `json:"login,omitempty"`
+	Name      string `json:"name,omitempty"`
+	AvatarURL string `json:"avatarUrl,omitempty"`
+}
+
+// PulseUserSearchResponse is the JSON envelope returned by the
+// pulse-scoped user search endpoint. The shape mirrors
+// /api/org/users/search closely enough that the @-mention picker can
+// share its parsing path, but the field set is intentionally smaller.
+type PulseUserSearchResponse struct {
+	Users []PulseUserSearchHit `json:"users"`
+}
+
+// swagger:response pulseSearchUsersResponse
+type PulseSearchUsersResponse struct {
+	// in: body
+	Body PulseUserSearchResponse `json:"body"`
 }

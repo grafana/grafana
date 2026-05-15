@@ -9,12 +9,14 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -35,6 +37,7 @@ type Service interface {
 	GetThread(ctx context.Context, orgID int64, uid string) (Thread, error)
 	ListThreads(ctx context.Context, q ListThreadsQuery) (PageResult[Thread], error)
 	ListAllThreads(ctx context.Context, q ListAllThreadsQuery) (PageResult[Thread], error)
+	ListFolderRolledUpThreads(ctx context.Context, q ListFolderRolledUpThreadsQuery, signedInUser identity.Requester, folderUID string) (PageResult[Thread], error)
 	ListPulses(ctx context.Context, q ListPulsesQuery) (PageResult[Pulse], error)
 	ListPanelMentions(ctx context.Context, q ListPanelMentionsQuery) ([]PanelMentionSummary, error)
 	ListParticipants(ctx context.Context, q ListParticipantsQuery) ([]ParticipantSummary, error)
@@ -54,6 +57,7 @@ type PulseService struct {
 	routeRegister routing.RouteRegister
 	features      featuremgmt.FeatureToggles
 	userSvc       user.Service
+	orgSvc        org.Service
 	dashSvc       dashboards.DashboardService
 	folderSvc     folder.Service
 	log           log.Logger
@@ -73,6 +77,7 @@ func ProvideService(
 	acService accesscontrol.Service,
 	features featuremgmt.FeatureToggles,
 	userSvc user.Service,
+	orgSvc org.Service,
 	dashSvc dashboards.DashboardService,
 	folderSvc folder.Service,
 	channelPub ChannelPublisher,
@@ -90,6 +95,7 @@ func ProvideService(
 		routeRegister: routeRegister,
 		features:      features,
 		userSvc:       userSvc,
+		orgSvc:        orgSvc,
 		dashSvc:       dashSvc,
 		folderSvc:     folderSvc,
 		log:           logger,
@@ -425,6 +431,183 @@ func (s *PulseService) ListThreads(ctx context.Context, q ListThreadsQuery) (Pag
 // itself is org-scoped only.
 func (s *PulseService) ListAllThreads(ctx context.Context, q ListAllThreadsQuery) (PageResult[Thread], error) {
 	return s.store.listAllThreads(ctx, q)
+}
+
+// ListFolderRolledUpThreads powers the folder Pulse tab. It walks the
+// folder hierarchy (root + all descendants), finds dashboards in
+// those folders that the caller can read, and returns the threads
+// attached to those dashboards as a single rolled-up page. Each
+// returned thread is decorated with its dashboard title and parent
+// folder so the UI can render a "Folder" + "Resource" column with
+// links without a per-row lookup.
+//
+// Permission flow:
+//
+//  1. folder.Service.GetChildren walks the tree using SignedInUser.
+//     Folders the caller can't read are excluded from the walk
+//     (folder.Service applies its own RBAC), so the dashboard set
+//     is naturally narrowed to dashboards the caller can at least
+//     reach via the folder browse view.
+//  2. dashboards.FindDashboards re-filters that dashboard set
+//     against the caller's dashboard read permissions, so a folder
+//     they can browse but a dashboard inside it they can't read is
+//     dropped here.
+//
+// The store query then filters threads to that exact UID set, so
+// the result reflects "every dashboard the caller can read under
+// this folder, regardless of how the dashboard was placed".
+func (s *PulseService) ListFolderRolledUpThreads(ctx context.Context, q ListFolderRolledUpThreadsQuery, signedInUser identity.Requester, folderUID string) (PageResult[Thread], error) {
+	if folderUID == "" {
+		return PageResult[Thread]{}, ErrThreadResourceMissing
+	}
+	if s.folderSvc == nil || s.dashSvc == nil {
+		return PageResult[Thread]{}, ErrPulseUnsupported
+	}
+
+	folderUIDs, err := s.collectDescendantFolderUIDs(ctx, q.OrgID, signedInUser, folderUID)
+	if err != nil {
+		return PageResult[Thread]{}, err
+	}
+	dashboards, err := s.findDashboardsInFolders(ctx, q.OrgID, signedInUser, folderUIDs)
+	if err != nil {
+		return PageResult[Thread]{}, err
+	}
+	if len(dashboards) == 0 {
+		return PageResult[Thread]{Items: []Thread{}, Page: max1(q.Page), TotalCount: 0, HasMore: false}, nil
+	}
+	dashUIDs := make([]string, 0, len(dashboards))
+	titlesByUID := make(map[string]dashRollupInfo, len(dashboards))
+	for _, d := range dashboards {
+		if d.UID == "" {
+			continue
+		}
+		dashUIDs = append(dashUIDs, d.UID)
+		titlesByUID[d.UID] = dashRollupInfo{
+			title:       d.Title,
+			folderUID:   d.FolderUID,
+			folderTitle: d.FolderTitle,
+		}
+	}
+
+	q.DashboardUIDs = dashUIDs
+	res, err := s.store.listFolderRolledUpThreads(ctx, q)
+	if err != nil {
+		return PageResult[Thread]{}, err
+	}
+	for i := range res.Items {
+		info, ok := titlesByUID[res.Items[i].ResourceUID]
+		if !ok {
+			continue
+		}
+		res.Items[i].ResourceTitle = info.title
+		res.Items[i].FolderUID = info.folderUID
+		res.Items[i].FolderTitle = info.folderTitle
+	}
+	return res, nil
+}
+
+// dashRollupInfo carries the per-dashboard projection that decorates
+// each rolled-up thread row. Lives next to the rollup method because
+// it is only used to denormalize titles into the rollup response.
+type dashRollupInfo struct {
+	title       string
+	folderUID   string
+	folderTitle string
+}
+
+// max1 clamps a page number to its 1-indexed minimum so the empty
+// rollup response doesn't echo "Page 0" back to a client that asked
+// for an out-of-range page.
+func max1(n int) int {
+	if n < 1 {
+		return 1
+	}
+	return n
+}
+
+// collectDescendantFolderUIDs returns the root folder UID plus the
+// UIDs of every subfolder reachable from it, using a breadth-first
+// walk. The root is always included so dashboards directly inside
+// it are caught. SignedInUser is passed to GetChildren so the walk
+// stops at folders the caller cannot read — a hidden subtree never
+// leaks dashboard UIDs into the rollup.
+//
+// Pagination: GetChildren uses 1-indexed pages; we walk pages of
+// 250 (well above typical fan-out) until a short page tells us the
+// level is exhausted. A pathological folder tree with thousands of
+// siblings will issue more requests but the rollup endpoint already
+// pages its own response, so the worst case is a large but bounded
+// initial cost on first open. We guard against accidental cycles
+// (the folder service in principle disallows them, but we are
+// defensive in case of a bug or stale row) via the `visited` set.
+func (s *PulseService) collectDescendantFolderUIDs(ctx context.Context, orgID int64, signedInUser identity.Requester, rootUID string) ([]string, error) {
+	out := []string{rootUID}
+	queue := []string{rootUID}
+	visited := map[string]bool{rootUID: true}
+	const pageLimit int64 = 250
+
+	for len(queue) > 0 {
+		next := queue[0]
+		queue = queue[1:]
+		var page int64 = 1
+		for {
+			children, err := s.folderSvc.GetChildren(ctx, &folder.GetChildrenQuery{
+				UID:          next,
+				OrgID:        orgID,
+				SignedInUser: signedInUser,
+				Limit:        pageLimit,
+				Page:         page,
+			})
+			if err != nil {
+				return nil, err
+			}
+			if len(children) == 0 {
+				break
+			}
+			for _, c := range children {
+				if c == nil || c.UID == "" || visited[c.UID] {
+					continue
+				}
+				visited[c.UID] = true
+				out = append(out, c.UID)
+				queue = append(queue, c.UID)
+			}
+			if int64(len(children)) < pageLimit {
+				break
+			}
+			page++
+		}
+	}
+	return out, nil
+}
+
+// findDashboardsInFolders runs a single dashboard search bounded to
+// the resolved folder UID set. SignedInUser is passed through so the
+// dashboard guardian filters the result by the caller's read
+// permission — a folder the caller can browse may still hold
+// dashboards they cannot read, and those are filtered here.
+//
+// The Limit guard prevents an unbounded result on a very large
+// folder tree (10k dashboards in a single folder is rare but not
+// impossible). The folder Pulse tab cannot meaningfully render
+// threads from beyond 5000 dashboards anyway; truncating here is
+// preferable to OOMing on the JSON marshal.
+func (s *PulseService) findDashboardsInFolders(ctx context.Context, orgID int64, signedInUser identity.Requester, folderUIDs []string) ([]dashboards.DashboardSearchProjection, error) {
+	if len(folderUIDs) == 0 {
+		return nil, nil
+	}
+	const dashLimit int64 = 5000
+	res, err := s.dashSvc.FindDashboards(ctx, &dashboards.FindPersistedDashboardsQuery{
+		OrgId:        orgID,
+		SignedInUser: signedInUser,
+		FolderUIDs:   folderUIDs,
+		Type:         "dash-db",
+		Limit:        dashLimit,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
 }
 
 func (s *PulseService) ListPulses(ctx context.Context, q ListPulsesQuery) (PageResult[Pulse], error) {

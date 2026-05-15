@@ -375,6 +375,95 @@ func (s *store) listAllThreads(ctx context.Context, q ListAllThreadsQuery) (Page
 	return res, nil
 }
 
+// listFolderRolledUpThreads returns the most-recently-active
+// dashboard-scoped threads whose dashboard UID is in the supplied
+// allowlist. Powers the folder Pulse tab: the service layer resolves
+// the folder hierarchy → dashboard UIDs → permission-filtered set,
+// and this query rolls those threads into a single sorted page.
+//
+// Filter semantics mirror listThreads / listAllThreads exactly so
+// the folder tab can offer the same Status / Mine / search / Users
+// dropdown as every other Pulse surface; the only structural change
+// is the WHERE switches from a single resource_uid match to an IN
+// over the resolved dashboard UID set.
+//
+// An empty DashboardUIDs slice short-circuits to an empty page
+// rather than executing a degenerate "WHERE resource_uid IN ()"
+// query — the dialects handle empty IN clauses inconsistently and
+// we never want to surface threads from outside the resolved set
+// even by accident.
+func (s *store) listFolderRolledUpThreads(ctx context.Context, q ListFolderRolledUpThreadsQuery) (PageResult[Thread], error) {
+	if q.Limit <= 0 || q.Limit > 100 {
+		q.Limit = 25
+	}
+	if q.Page <= 0 {
+		q.Page = 1
+	}
+	if len(q.DashboardUIDs) == 0 {
+		return PageResult[Thread]{Items: []Thread{}, Page: q.Page, TotalCount: 0, HasMore: false}, nil
+	}
+
+	threads := make([]Thread, 0, q.Limit)
+	var total int64
+	err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
+		applyFilters := func() *xorm.Session {
+			sb := sess.
+				Where("org_id = ? AND resource_kind = ?", q.OrgID, ResourceKindDashboard).
+				In("resource_uid", q.DashboardUIDs)
+			if q.AuthorUserID != nil {
+				sb = sb.And(
+					"(created_by = ? OR uid IN (SELECT thread_uid FROM pulse WHERE org_id = ? AND deleted = ? AND author_user_id = ?))",
+					*q.AuthorUserID, q.OrgID, false, *q.AuthorUserID,
+				)
+			}
+			if needle := strings.TrimSpace(q.Query); needle != "" {
+				like := "%" + strings.ToLower(needle) + "%"
+				sb = sb.And(
+					"(LOWER(title) LIKE ? OR uid IN (SELECT thread_uid FROM pulse WHERE org_id = ? AND deleted = ? AND LOWER(body_text) LIKE ?))",
+					like, q.OrgID, false, like,
+				)
+			}
+			if q.MineOnly && q.UserID > 0 {
+				sb = sb.And(
+					"(created_by = ? OR uid IN (SELECT thread_uid FROM pulse WHERE org_id = ? AND author_user_id = ?) OR uid IN (SELECT thread_uid FROM pulse_subscription WHERE org_id = ? AND user_id = ?))",
+					q.UserID, q.OrgID, q.UserID, q.OrgID, q.UserID,
+				)
+			}
+			switch q.Status {
+			case ThreadStatusOpen:
+				sb = sb.And("closed = ?", false)
+			case ThreadStatusClosed:
+				sb = sb.And("closed = ?", true)
+			case ThreadStatusAny:
+				// no-op: any status is allowed.
+			}
+			return sb
+		}
+
+		n, err := applyFilters().Count(&Thread{})
+		if err != nil {
+			return err
+		}
+		total = n
+
+		offset := (q.Page - 1) * q.Limit
+		return applyFilters().
+			OrderBy("last_pulse_at DESC, uid DESC").
+			Limit(q.Limit, offset).
+			Find(&threads)
+	})
+	if err != nil {
+		return PageResult[Thread]{}, err
+	}
+
+	return PageResult[Thread]{
+		Items:      threads,
+		Page:       q.Page,
+		TotalCount: total,
+		HasMore:    int64(q.Page*q.Limit) < total,
+	}, nil
+}
+
 // firstPulseBodiesByThread returns the body_json of the earliest
 // non-deleted pulse for each given thread. We hand back the AST (not the
 // pre-rendered body_text) so the frontend can render the same mention

@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/live/model"
 )
 
@@ -22,12 +21,13 @@ import (
 //
 // Channel paths are `<resourceKind>/<resourceUID>`, scoped by org via the
 // Live namespace mechanism. We authorize subscriptions against the
-// underlying resource — dashboards go through DashboardAccessService and
-// folders through the folder service's Get (which enforces the same
-// permission model used by the browse-dashboards UI).
+// underlying resource — dashboards go through DashboardAccessService.
+// Folders are intentionally NOT a Pulse resource: the folder Pulse tab
+// is an aggregate view powered by the per-dashboard channels of every
+// dashboard in the folder hierarchy, not a folder-scoped stream of its
+// own.
 type PulseHandler struct {
 	AccessControl dashboards.DashboardAccessService
-	FolderService folder.Service
 }
 
 // GetHandlerForPath called on init.
@@ -36,13 +36,9 @@ func (h *PulseHandler) GetHandlerForPath(_ string) (model.ChannelHandler, error)
 }
 
 // OnSubscribe authorizes the subscription against the parent resource.
-// Each supported kind delegates to its own permission surface so the
-// live channel inherits the same access semantics as the REST API:
-//
-//   - dashboard: DashboardAccessService (the same access service that
-//     guards /api/dashboards/uid/:uid reads).
-//   - folder:    folder.Service.Get, which returns ErrAccessDenied when
-//     the caller lacks folders:read on the folder.
+// The dashboard branch delegates to DashboardAccessService — the same
+// access service that guards /api/dashboards/uid/:uid reads — so the
+// live channel inherits the same access semantics as the REST API.
 //
 // Unknown kinds collapse to NotFound so we never accidentally accept a
 // subscription on a kind we haven't authorised.
@@ -57,23 +53,6 @@ func (h *PulseHandler) OnSubscribe(ctx context.Context, user identity.Requester,
 		ns := types.OrgNamespaceFormatter(user.GetOrgID())
 		ok, err := h.AccessControl.HasDashboardAccess(ctx, user, utils.VerbGet, ns, parts[1])
 		if !ok || err != nil {
-			return model.SubscribeReply{}, backend.SubscribeStreamStatusPermissionDenied, err
-		}
-		return model.SubscribeReply{Presence: false, JoinLeave: false}, backend.SubscribeStreamStatusOK, nil
-	case "folder":
-		if h.FolderService == nil {
-			logger.Error("Folder service not wired into PulseHandler")
-			return model.SubscribeReply{}, backend.SubscribeStreamStatusNotFound, nil
-		}
-		uid := parts[1]
-		f, err := h.FolderService.Get(ctx, &folder.GetFolderQuery{
-			UID:          &uid,
-			OrgID:        user.GetOrgID(),
-			SignedInUser: user,
-		})
-		if err != nil || f == nil {
-			// Collapse access-denied and not-found to PermissionDenied to
-			// avoid leaking folder existence to unauthorised subscribers.
 			return model.SubscribeReply{}, backend.SubscribeStreamStatusPermissionDenied, err
 		}
 		return model.SubscribeReply{Presence: false, JoinLeave: false}, backend.SubscribeStreamStatusOK, nil

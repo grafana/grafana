@@ -584,7 +584,7 @@ func TestIntegrationPulseStore_ListThreads_StatusAndMine(t *testing.T) {
 	sql := db.InitTestDB(t)
 	st := newStore(sql)
 	now := time.Now().UTC()
-	const folderUID = "folder-mine-status"
+	const resourceUID = "dash-mine-status"
 
 	plain := func(text string) json.RawMessage {
 		raw, _ := sampleBody(t, text)
@@ -594,7 +594,7 @@ func TestIntegrationPulseStore_ListThreads_StatusAndMine(t *testing.T) {
 		t.Helper()
 		require.NoError(t, st.insertThreadAndPulse(ctx,
 			Thread{
-				UID: uid, OrgID: 1, ResourceKind: ResourceKindFolder, ResourceUID: folderUID,
+				UID: uid, OrgID: 1, ResourceKind: ResourceKindDashboard, ResourceUID: resourceUID,
 				Title:     "thread " + uid,
 				CreatedBy: createdBy, Created: now, Updated: now, LastPulseAt: lastPulseAt,
 				PulseCount: 1, Version: 1,
@@ -608,8 +608,7 @@ func TestIntegrationPulseStore_ListThreads_StatusAndMine(t *testing.T) {
 		))
 	}
 
-	// Fixture (all on the same folder, kind=folder to also lock in
-	// that the new filters work for non-dashboard resources):
+	// Fixture (all on the same dashboard):
 	//   M1: started by user 1, open. (oldest)
 	//   M2: started by user 2, OPEN, user 1 replies on it.
 	//   M3: started by user 3, open. user 1 subscribes but never posts.
@@ -635,7 +634,7 @@ func TestIntegrationPulseStore_ListThreads_StatusAndMine(t *testing.T) {
 	insert("m4aaaaaaaaaaaaaa", 2, plain("closed by u2"), now.Add(-10*time.Minute))
 	require.NoError(t, st.setThreadClosed(ctx, 1, "m4aaaaaaaaaaaaaa", true, 2))
 
-	baseQ := ListThreadsQuery{OrgID: 1, ResourceKind: ResourceKindFolder, ResourceUID: folderUID}
+	baseQ := ListThreadsQuery{OrgID: 1, ResourceKind: ResourceKindDashboard, ResourceUID: resourceUID}
 
 	t.Run("status=open excludes closed threads", func(t *testing.T) {
 		q := baseQ
@@ -700,6 +699,86 @@ func TestIntegrationPulseStore_ListThreads_StatusAndMine(t *testing.T) {
 		// User 2 created M2 (open) and M4 (closed). With status=closed,
 		// only M4 survives.
 		require.ElementsMatch(t, []string{"m4aaaaaaaaaaaaaa"}, uidsOf(got.Items))
+	})
+}
+
+func TestIntegrationPulseStore_ListFolderRolledUpThreads(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	ctx := context.Background()
+	sql := db.InitTestDB(t)
+	st := newStore(sql)
+	now := time.Now().UTC()
+
+	plain := func(text string) json.RawMessage {
+		raw, _ := sampleBody(t, text)
+		return raw
+	}
+	insertOn := func(uid, dashUID string, createdBy int64, lastPulseAt time.Time) {
+		t.Helper()
+		require.NoError(t, st.insertThreadAndPulse(ctx,
+			Thread{
+				UID: uid, OrgID: 1, ResourceKind: ResourceKindDashboard, ResourceUID: dashUID,
+				Title:     "thread " + uid,
+				CreatedBy: createdBy, Created: now, Updated: now, LastPulseAt: lastPulseAt,
+				PulseCount: 1, Version: 1,
+			},
+			Pulse{
+				UID: util.GenerateShortUID(), ThreadUID: uid, OrgID: 1,
+				AuthorUserID: createdBy, AuthorKind: AuthorKindUser,
+				BodyText: "x", BodyJSON: plain("x"), Created: now, Updated: now,
+			},
+			nil,
+		))
+	}
+
+	// Fixture: three threads spread across two dashboards in the
+	// resolved set, plus one thread on a dashboard outside the set
+	// that must NOT bleed into the rollup.
+	insertOn("rollup-aaaaaaaaaa1", "dash-in-1", 1, now.Add(-30*time.Minute))
+	insertOn("rollup-aaaaaaaaaa2", "dash-in-1", 2, now.Add(-20*time.Minute))
+	insertOn("rollup-aaaaaaaaaa3", "dash-in-2", 1, now.Add(-10*time.Minute))
+	insertOn("rollup-aaaaaaaaaa4", "dash-out", 1, now.Add(-5*time.Minute))
+	require.NoError(t, st.setThreadClosed(ctx, 1, "rollup-aaaaaaaaaa2", true, 2))
+
+	t.Run("returns threads only from the dashboard allowlist", func(t *testing.T) {
+		res, err := st.listFolderRolledUpThreads(ctx, ListFolderRolledUpThreadsQuery{
+			OrgID:         1,
+			DashboardUIDs: []string{"dash-in-1", "dash-in-2"},
+		})
+		require.NoError(t, err)
+		// `dash-out` thread must be excluded even though it's in the
+		// same org — the folder rollup is strictly bounded by the
+		// resolved dashboard set.
+		require.ElementsMatch(t,
+			[]string{"rollup-aaaaaaaaaa1", "rollup-aaaaaaaaaa2", "rollup-aaaaaaaaaa3"},
+			uidsOf(res.Items),
+		)
+	})
+
+	t.Run("status filter composes with the allowlist", func(t *testing.T) {
+		res, err := st.listFolderRolledUpThreads(ctx, ListFolderRolledUpThreadsQuery{
+			OrgID:         1,
+			DashboardUIDs: []string{"dash-in-1", "dash-in-2"},
+			Status:        ThreadStatusOpen,
+		})
+		require.NoError(t, err)
+		require.ElementsMatch(t,
+			[]string{"rollup-aaaaaaaaaa1", "rollup-aaaaaaaaaa3"},
+			uidsOf(res.Items),
+		)
+	})
+
+	t.Run("empty allowlist short-circuits to an empty page", func(t *testing.T) {
+		res, err := st.listFolderRolledUpThreads(ctx, ListFolderRolledUpThreadsQuery{
+			OrgID:         1,
+			DashboardUIDs: nil,
+		})
+		require.NoError(t, err)
+		require.Empty(t, res.Items)
+		require.Equal(t, int64(0), res.TotalCount)
 	})
 }
 

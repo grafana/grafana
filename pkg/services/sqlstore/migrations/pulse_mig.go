@@ -126,4 +126,54 @@ func addPulseMigrations(mg *Migrator) {
 	mg.AddMigration("add closed_by column to pulse_thread", NewAddColumnMigration(pulseThreadV1, &Column{
 		Name: "closed_by", Type: DB_BigInt, Nullable: true,
 	}))
+
+	// v3: drop folder-as-a-resource. Folder-scoped threads were a
+	// short-lived dev-only experiment; the folder Pulse tab now
+	// aggregates dashboard-scoped threads instead. Sweep any
+	// orphaned folder rows that may exist in dev databases so the
+	// per-resource list endpoint never trips on an unknown kind.
+	// We delete child rows first to keep the relational view
+	// consistent under SQLite, MySQL and Postgres without depending
+	// on cascade behavior.
+	mg.AddMigration(
+		"pulse: delete orphan rows for folder-scoped threads",
+		NewRawSQLMigration(
+			"DELETE FROM pulse_mention WHERE thread_uid IN (SELECT uid FROM pulse_thread WHERE resource_kind = 'folder')",
+		),
+	)
+	mg.AddMigration(
+		"pulse: delete pulses for folder-scoped threads",
+		NewRawSQLMigration(
+			"DELETE FROM pulse WHERE thread_uid IN (SELECT uid FROM pulse_thread WHERE resource_kind = 'folder')",
+		),
+	)
+	mg.AddMigration(
+		"pulse: delete subscriptions for folder-scoped threads",
+		NewRawSQLMigration(
+			"DELETE FROM pulse_subscription WHERE thread_uid IN (SELECT uid FROM pulse_thread WHERE resource_kind = 'folder')",
+		),
+	)
+	mg.AddMigration(
+		"pulse: delete read state for folder-scoped threads",
+		NewRawSQLMigration(
+			"DELETE FROM pulse_read_state WHERE thread_uid IN (SELECT uid FROM pulse_thread WHERE resource_kind = 'folder')",
+		),
+	)
+	mg.AddMigration(
+		"pulse: delete folder-scoped threads",
+		NewRawSQLMigration(
+			"DELETE FROM pulse_thread WHERE resource_kind = 'folder'",
+		),
+	)
+	// Drop folder mentions stored in pulse rows that survived the
+	// thread sweep above (e.g. a #folder chip inside a dashboard
+	// thread). The rendered chip falls through to the defensive
+	// fallback in MentionChip when we miss any leftovers, so this is
+	// best-effort cleanup rather than a strict invariant.
+	mg.AddMigration(
+		"pulse: delete folder mentions from pulse_mention",
+		NewRawSQLMigration(
+			"DELETE FROM pulse_mention WHERE kind = 'folder'",
+		),
+	)
 }

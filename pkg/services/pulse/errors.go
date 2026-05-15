@@ -25,4 +25,5 @@ var (
 	ErrThreadClosed                = errors.New("thread is closed and does not accept new replies")
 	ErrThreadAlreadyClosed         = errors.New("thread is already closed")
 	ErrThreadNotClosed             = errors.New("thread is not closed")
+	ErrPulseUnsupported            = errors.New("pulse feature is not fully wired in this build")
 )

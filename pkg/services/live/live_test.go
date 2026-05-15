@@ -357,10 +357,6 @@ func setupLiveService(cfg *setting.Cfg, t *testing.T) (*GrafanaLive, error) {
 		&usagestats.UsageStatsMock{T: t},
 		featuremgmt.WithFeatures(),
 		&dashboards.FakeDashboardService{},
-		// folder.Service is wired into PulseHandler for `grafana/pulse/folder/<uid>`
-		// channel authorization. The non-pulse test paths exercised here
-		// don't touch the folder handler so a nil fake is sufficient.
-		nil,
 		nil)
 }
 
