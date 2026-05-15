@@ -17,7 +17,7 @@ FROM alpine:3.23.4 AS alpine-base
 FROM ubuntu:24.04 AS ubuntu-base
 FROM golang:1.26.3-alpine AS go-builder-base
 FROM --platform=${JS_PLATFORM} node:24-alpine AS js-builder-base
-FROM gcr.io/distroless/static-debian12 AS distroless-base
+FROM gcr.io/distroless/static-debian13 AS distroless-base
 # Javascript build stage
 FROM --platform=${JS_PLATFORM} ${JS_IMAGE} AS js-builder
 ARG JS_NODE_ENV=production
