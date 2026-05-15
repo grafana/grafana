@@ -137,7 +137,6 @@ test.describe(
             await clickFirstScopesDashboard(page);
             await page.waitForURL('**/d/**');
             await waitForExpectedRequests();
-            await page.waitForLoadState('networkidle');
 
             const requests = getRequests();
             expect(checkDashboardReloadBehavior(requests)).toBe(true);
