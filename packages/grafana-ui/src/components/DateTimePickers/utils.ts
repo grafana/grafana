@@ -1,7 +1,5 @@
 import { dateMath, dateTimeParse, isDateTime, type TimeRange, type TimeZone } from '@grafana/data';
 
-import { commonFormat } from './commonFormat';
-
 export function isValid(value: string, roundUp?: boolean, timeZone?: TimeZone): boolean {
   if (isDateTime(value)) {
     return value.isValid();
@@ -12,7 +10,7 @@ export function isValid(value: string, roundUp?: boolean, timeZone?: TimeZone): 
     return dateMath.isValid(value);
   }
 
-  const parsed = dateTimeParse(value, { roundUp, timeZone, format: commonFormat });
+  const parsed = dateTimeParse(value, { roundUp, timeZone });
   return parsed.isValid();
 }
 

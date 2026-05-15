@@ -4,16 +4,18 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"net/url"
 	"strconv"
 	"strings"
 	"time"
 
+	sdkk8s "github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/rest"
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -23,7 +25,9 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacysort"
 	iamuser "github.com/grafana/grafana/pkg/registry/apis/iam/user"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -32,35 +36,60 @@ import (
 type UserK8sService struct {
 	logger          log.Logger
 	namespaceMapper request.NamespaceMapper
-	clientGenerator resource.ClientGenerator
+	configProvider  apiserver.DirectRestConfigProvider
 	config          *setting.Cfg
 	tracer          tracing.Tracer
 }
 
 var _ user.Service = (*UserK8sService)(nil)
 
-func NewUserK8sService(logger log.Logger, cfg *setting.Cfg, clientGenerator resource.ClientGenerator, tracer tracing.Tracer) *UserK8sService {
+func NewUserK8sService(logger log.Logger, cfg *setting.Cfg, configProvider apiserver.DirectRestConfigProvider, tracer tracing.Tracer) *UserK8sService {
 	return &UserK8sService{
 		logger:          logger,
 		namespaceMapper: request.GetNamespaceMapper(cfg),
-		clientGenerator: clientGenerator,
+		configProvider:  configProvider,
 		config:          cfg,
 		tracer:          tracer,
 	}
 }
 
-func (s *UserK8sService) getUserClient() (*iamv0alpha1.UserClient, error) {
-	if s.clientGenerator == nil {
-		return nil, errors.New("client generator not initialized")
+// getRestConfig returns a per-request rest.Config whose Transport injects the
+// caller identity from ctx's *contextmodel.ReqContext. Returns an error if
+// either the provider or the request context is missing — callers in
+// userimpl.Service route those cases to the legacy path.
+func (s *UserK8sService) getRestConfig(ctx context.Context) (*rest.Config, error) {
+	if s.configProvider == nil {
+		return nil, errors.New("config provider not initialized")
 	}
-	return iamv0alpha1.NewUserClientFromGenerator(s.clientGenerator)
+	reqCtx := contexthandler.FromContext(ctx)
+	if reqCtx == nil {
+		return nil, errors.New("no request context")
+	}
+	cfg := s.configProvider.GetDirectRestConfig(reqCtx)
+	if cfg == nil {
+		return nil, errors.New("rest config not available")
+	}
+	return cfg, nil
 }
 
-func (s *UserK8sService) getCustomRouteClient(namespace string) (*iamv0alpha1.CustomRouteClient, error) {
-	if s.clientGenerator == nil {
-		return nil, errors.New("client generator not initialized")
+func (s *UserK8sService) getUserClient(ctx context.Context) (*iamv0alpha1.UserClient, error) {
+	cfg, err := s.getRestConfig(ctx)
+	if err != nil {
+		return nil, err
 	}
-	return iamv0alpha1.NewCustomRouteClientFromGenerator(s.clientGenerator, namespace)
+	cfg.APIPath = "apis"
+	registry := sdkk8s.NewClientRegistry(*cfg, sdkk8s.DefaultClientConfig())
+	return iamv0alpha1.NewUserClientFromGenerator(registry)
+}
+
+func (s *UserK8sService) getRESTClient(ctx context.Context) (*rest.RESTClient, error) {
+	cfg, err := s.getRestConfig(ctx)
+	if err != nil {
+		return nil, err
+	}
+	dynCfg := dynamic.ConfigFor(cfg)
+	dynCfg.GroupVersion = &iamv0alpha1.GroupVersion
+	return rest.RESTClientFor(dynCfg)
 }
 
 func (s *UserK8sService) Create(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
@@ -80,7 +109,7 @@ func (s *UserK8sService) Create(ctx context.Context, cmd *user.CreateUserCommand
 	namespace := s.namespaceMapper(orgID)
 	span.SetAttributes(attribute.Int64("orgID", orgID))
 
-	client, err := s.getUserClient()
+	client, err := s.getUserClient(ctx)
 	if err != nil {
 		ctxLogger.Error("failed to get k8s client", "namespace", namespace, "err", err)
 		return nil, err
@@ -150,7 +179,7 @@ func (s *UserK8sService) Delete(ctx context.Context, cmd *user.DeleteUserCommand
 	namespace := s.namespaceMapper(orgID)
 	span.SetAttributes(attribute.Int64("orgID", orgID))
 
-	client, err := s.getUserClient()
+	client, err := s.getUserClient(ctx)
 	if err != nil {
 		ctxLogger.Error("failed to get k8s client", "namespace", namespace, "err", err)
 		span.RecordError(err)
@@ -198,7 +227,7 @@ func (s *UserK8sService) GetByID(ctx context.Context, cmd *user.GetUserByIDQuery
 	namespace := s.namespaceMapper(orgID)
 	span.SetAttributes(attribute.Int64("orgID", orgID))
 
-	client, err := s.getUserClient()
+	client, err := s.getUserClient(ctx)
 	if err != nil {
 		ctxLogger.Error("failed to get k8s client", "namespace", namespace, "err", err)
 		span.RecordError(err)
@@ -247,7 +276,7 @@ func (s *UserK8sService) GetByLogin(ctx context.Context, cmd *user.GetUserByLogi
 	namespace := s.namespaceMapper(orgID)
 	span.SetAttributes(attribute.Int64("orgID", orgID))
 
-	client, err := s.getUserClient()
+	client, err := s.getUserClient(ctx)
 	if err != nil {
 		ctxLogger.Error("failed to get k8s client", "namespace", namespace, "err", err)
 		return nil, err
@@ -290,7 +319,7 @@ func (s *UserK8sService) GetByEmail(ctx context.Context, cmd *user.GetUserByEmai
 	namespace := s.namespaceMapper(orgID)
 	span.SetAttributes(attribute.Int64("orgID", orgID))
 
-	client, err := s.getUserClient()
+	client, err := s.getUserClient(ctx)
 	if err != nil {
 		ctxLogger.Error("failed to get k8s client", "namespace", namespace, "err", err)
 		return nil, err
@@ -324,7 +353,7 @@ func (s *UserK8sService) Update(ctx context.Context, cmd *user.UpdateUserCommand
 	namespace := s.namespaceMapper(orgID)
 	span.SetAttributes(attribute.Int64("orgID", orgID))
 
-	client, err := s.getUserClient()
+	client, err := s.getUserClient(ctx)
 	if err != nil {
 		ctxLogger.Error("failed to get k8s client", "namespace", namespace, "err", err)
 		span.RecordError(err)
@@ -383,7 +412,7 @@ func (s *UserK8sService) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateU
 	namespace := s.namespaceMapper(cmd.OrgID)
 	span.SetAttributes(attribute.Int64("orgID", cmd.OrgID))
 
-	client, err := s.getUserClient()
+	client, err := s.getUserClient(ctx)
 	if err != nil {
 		ctxLogger.Error("failed to get k8s client", "namespace", namespace, "err", err)
 		span.RecordError(err)
@@ -445,7 +474,7 @@ func (s *UserK8sService) GetSignedInUser(ctx context.Context, cmd *user.GetSigne
 	namespace := s.namespaceMapper(orgID)
 	span.SetAttributes(attribute.Int64("orgID", orgID))
 
-	client, err := s.getUserClient()
+	client, err := s.getUserClient(ctx)
 	if err != nil {
 		ctxLogger.Error("failed to get k8s client", "namespace", namespace, "err", err)
 		span.RecordError(err)
@@ -500,9 +529,9 @@ func (s *UserK8sService) Search(ctx context.Context, cmd *user.SearchUsersQuery)
 	namespace := s.namespaceMapper(orgID)
 	span.SetAttributes(attribute.Int64("orgID", orgID))
 
-	routeClient, err := s.getCustomRouteClient(namespace)
+	restClient, err := s.getRESTClient(ctx)
 	if err != nil {
-		ctxLogger.Error("failed to get custom route client", "namespace", namespace, "err", err)
+		ctxLogger.Error("failed to get k8s rest client", "namespace", namespace, "err", err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return nil, err
@@ -517,21 +546,18 @@ func (s *UserK8sService) Search(ctx context.Context, cmd *user.SearchUsersQuery)
 		page = 1
 	}
 
-	params := url.Values{}
+	req := restClient.Get().
+		AbsPath("apis", iamv0alpha1.APIGroup, iamv0alpha1.APIVersion, "namespaces", namespace, "searchUsers").
+		Param("limit", strconv.Itoa(limit)).
+		Param("page", strconv.Itoa(page))
 	if cmd.Query != "" {
-		params.Set("query", cmd.Query)
+		req = req.Param("query", cmd.Query)
 	}
-	params.Set("limit", strconv.Itoa(limit))
-	params.Set("page", strconv.Itoa(page))
 	for _, sortParam := range legacysort.ConvertToSortParams(cmd.SortOpts, iamuser.UserSortFieldMapping()) {
-		params.Add("sort", sortParam)
+		req = req.Param("sort", sortParam)
 	}
 
-	raw, err := routeClient.NamespacedRequest(ctx, namespace, resource.CustomRouteRequestOptions{
-		Path:  "/searchUsers",
-		Verb:  "GET",
-		Query: params,
-	})
+	raw, err := req.DoRaw(ctx)
 	if err != nil {
 		ctxLogger.Error("k8s user search request failed", "namespace", namespace, "err", err)
 		span.RecordError(err)
@@ -591,7 +617,7 @@ func (s *UserK8sService) GetProfile(ctx context.Context, cmd *user.GetUserProfil
 	namespace := s.namespaceMapper(orgID)
 	span.SetAttributes(attribute.Int64("orgID", orgID))
 
-	client, err := s.getUserClient()
+	client, err := s.getUserClient(ctx)
 	if err != nil {
 		ctxLogger.Error("failed to get k8s client", "namespace", namespace, "err", err)
 		span.RecordError(err)
