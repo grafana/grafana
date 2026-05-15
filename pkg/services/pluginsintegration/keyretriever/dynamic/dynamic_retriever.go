@@ -52,8 +52,8 @@ func ProvideService(cfg *setting.Cfg, kv plugins.KeyStore) *KeyRetriever {
 
 // IsDisabled disables dynamic retrieval of public keys from the API server.
 // Also disabled when CheckForPluginUpdates is false, since both require outbound
-// connectivity to grafana.com. Plugin signature verification falls back to the
-// built-in static key when dynamic retrieval is disabled.
+// connectivity to the configured GrafanaComAPIURL. Plugin signature verification
+// falls back to the built-in static key when dynamic retrieval is disabled.
 func (kr *KeyRetriever) IsDisabled() bool {
 	return kr.cfg.PluginSkipPublicKeyDownload || !kr.cfg.CheckForPluginUpdates
 }
