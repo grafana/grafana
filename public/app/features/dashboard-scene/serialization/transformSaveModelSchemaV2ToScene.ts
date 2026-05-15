@@ -80,6 +80,7 @@ import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
 import { ReportInteractionBehavior } from '../scene/ReportInteractionBehavior';
 import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
+import { type GlobalVariableDefault, markAsGlobalSceneVariable } from '../utils/globalDashboardVariables';
 import { getIntervalsFromQueryString } from '../utils/utils';
 
 import { transformV2ToV1AnnotationQuery } from './annotations';
@@ -241,7 +242,12 @@ export function transformSaveModelSchemaV2ToScene(
         weekStart: dashboard.timeSettings.weekStart,
         UNSAFE_nowDelay: dashboard.timeSettings.nowDelay,
       }),
-      $variables: getVariables(dashboard, meta.isSnapshot ?? false, options?.defaultVariables),
+      $variables: getVariables(
+        dashboard,
+        meta.isSnapshot ?? false,
+        options?.defaultVariables,
+        options?.globalDefaultVariables
+      ),
       $behaviors: [
         new behaviors.CursorSync({
           sync: transformCursorSyncV2ToV1(dashboard.cursorSync),
@@ -292,20 +298,25 @@ export function transformSaveModelSchemaV2ToScene(
 function getVariables(
   dashboard: DashboardV2Spec,
   isSnapshot: boolean,
-  defaultVariables?: VariableKind[]
+  defaultVariables?: VariableKind[],
+  globalDefaultVariables?: GlobalVariableDefault[]
 ): SceneVariableSet | undefined {
   let variables: SceneVariableSet | undefined;
 
   if (isSnapshot) {
     variables = createVariablesForSnapshot(dashboard);
   } else {
-    variables = createVariablesForDashboard(dashboard, defaultVariables);
+    variables = createVariablesForDashboard(dashboard, defaultVariables, globalDefaultVariables);
   }
 
   return variables;
 }
 
-function createVariablesForDashboard(dashboard: DashboardV2Spec, defaultVariables: VariableKind[] = []) {
+function createVariablesForDashboard(
+  dashboard: DashboardV2Spec,
+  defaultVariables: VariableKind[] = [],
+  globalDefaultVariables: GlobalVariableDefault[] = []
+) {
   const isDefined = (v: SceneVariable | null): v is SceneVariable => Boolean(v);
   const variables = migrateGroupByVariablesV2(dashboard.variables ?? []);
   const variableObjects = variables
@@ -332,13 +343,28 @@ function createVariablesForDashboard(dashboard: DashboardV2Spec, defaultVariable
     })
     .filter(isDefined);
 
+  const globalDefaultVariableObjects = globalDefaultVariables
+    .map(({ kind, scope }) => {
+      try {
+        const sv = createSceneVariableFromVariableModel(kind);
+        markAsGlobalSceneVariable(sv, scope);
+        return sv;
+      } catch (err) {
+        console.error(err);
+        return null;
+      }
+    })
+    .filter(isDefined);
+
   // Explicitly disable scopes for public dashboards
   if (config.featureToggles.scopeFilters && !config.publicDashboardAccessToken) {
     variableObjects.push(new ScopesVariable({ enable: true }));
   }
 
   return new SceneVariableSet({
-    variables: [...defaultVariableObjects, ...variableObjects],
+    // Datasource defaults first (grouped by plugin), then globals (grouped by scope),
+    // then the dashboard-persisted variables. Matches the original merge order.
+    variables: [...defaultVariableObjects, ...globalDefaultVariableObjects, ...variableObjects],
   });
 }
 

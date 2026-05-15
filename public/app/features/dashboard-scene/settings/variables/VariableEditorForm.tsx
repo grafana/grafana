@@ -34,8 +34,16 @@ interface VariableEditorFormProps {
   onTypeChange: (type: EditableVariableType) => void;
   onGoBack: () => void;
   onDelete: (variableName: string) => void;
+  /** Hide delete (e.g. global variables admin creates new resources outside the dashboard). */
+  hideDelete?: boolean;
 }
-export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete }: VariableEditorFormProps) {
+export function VariableEditorForm({
+  variable,
+  onTypeChange,
+  onGoBack,
+  onDelete,
+  hideDelete,
+}: VariableEditorFormProps) {
   const styles = useStyles2(getStyles);
   const [nameError, setNameError] = useState<string>();
   const [nameWarning, setNameWarning] = useState<string>();
@@ -137,29 +145,31 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete 
 
       <div className={styles.buttonContainer}>
         <Stack gap={2}>
-          <ModalsController>
-            {({ showModal, hideModal }) => (
-              <Button
-                variant="destructive"
-                fill="outline"
-                onClick={() => {
-                  showModal(ConfirmModal, {
-                    title: t('dashboard-scene.variable-editor-form.title.delete-variable', 'Delete variable'),
-                    body: `Are you sure you want to delete: ${name}?`,
-                    confirmText: t(
-                      'dashboard-scene.variable-editor-form.confirmText.delete-variable',
-                      'Delete variable'
-                    ),
-                    onConfirm: onDeleteVariable(hideModal),
-                    onDismiss: hideModal,
-                    isOpen: true,
-                  });
-                }}
-              >
-                <Trans i18nKey="dashboard-scene.variable-editor-form.delete">Delete</Trans>
-              </Button>
-            )}
-          </ModalsController>
+          {!hideDelete && (
+            <ModalsController>
+              {({ showModal, hideModal }) => (
+                <Button
+                  variant="destructive"
+                  fill="outline"
+                  onClick={() => {
+                    showModal(ConfirmModal, {
+                      title: t('dashboard-scene.variable-editor-form.title.delete-variable', 'Delete variable'),
+                      body: `Are you sure you want to delete: ${name}?`,
+                      confirmText: t(
+                        'dashboard-scene.variable-editor-form.confirmText.delete-variable',
+                        'Delete variable'
+                      ),
+                      onConfirm: onDeleteVariable(hideModal),
+                      onDismiss: hideModal,
+                      isOpen: true,
+                    });
+                  }}
+                >
+                  <Trans i18nKey="dashboard-scene.variable-editor-form.delete">Delete</Trans>
+                </Button>
+              )}
+            </ModalsController>
+          )}
           <Button
             variant="secondary"
             data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.General.applyButton}

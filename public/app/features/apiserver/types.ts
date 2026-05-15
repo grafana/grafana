@@ -10,6 +10,8 @@
 
 import { type Observable } from 'rxjs';
 
+import { type VARIABLE_FOLDER_LABEL_KEY } from 'app/features/dashboard-scene/utils/globalDashboardVariables';
+
 /** The object type and version */
 export interface TypeMeta<K = string> {
   apiVersion: string;
@@ -127,6 +129,7 @@ type GrafanaClientAnnotations = {
 // Labels
 type GrafanaLabels = {
   [DeprecatedInternalId]?: string;
+  [VARIABLE_FOLDER_LABEL_KEY]?: string;
 };
 
 export interface GroupVersionResource {

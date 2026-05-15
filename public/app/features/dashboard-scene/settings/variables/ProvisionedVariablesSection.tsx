@@ -30,7 +30,7 @@ export function ProvisionedVariablesSection({ variables }: { variables: SceneVar
               {getDefinition(variable)}
             </td>
             <td role="gridcell" className={styles.sourceCell}>
-              <SourceIcon origin={variableState.origin} />
+              <SourceIcon origin={variableState.origin} variable={variable} />
             </td>
           </tr>
         );
