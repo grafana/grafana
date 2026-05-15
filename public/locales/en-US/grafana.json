@@ -7747,16 +7747,10 @@
           "description": "Only visible in edit mode",
           "label": "Hidden"
         },
-        "top-placement": {
-          "label": "{{placement}}"
-        },
         "top-placement-hidden-label": {
           "description": "{{placement}}, but without showing the name of variable",
           "label": "{{placement}}, label hidden"
         }
-      },
-      "top-placement": {
-        "default": "Above dashboard"
       }
     },
     "variable-editable-element": {

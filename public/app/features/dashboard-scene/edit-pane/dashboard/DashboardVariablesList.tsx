@@ -10,7 +10,7 @@ import { Box, Button } from '@grafana/ui';
 
 import { type DashboardScene } from '../../scene/DashboardScene';
 import { openAddVariablePane } from '../../settings/variables/VariableTypeSelectionPane';
-import { isEditableVariableType } from '../../settings/variables/utils';
+import { getDefaultTopPlacementLabel, isEditableVariableType } from '../../settings/variables/utils';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getDashboardSceneFor } from '../../utils/utils';
 
@@ -43,9 +43,7 @@ export function DashboardVariablesList({
 }: DashboardVariablesListProps) {
   const { variables: allVariables } = sourceVariableSet.useState();
   const listVariables = renderVariables ?? allVariables;
-  const resolvedTopPlacementLabel = topPlacementLabel
-    ? topPlacementLabel
-    : t('dashboard-scene.variables-list.top-placement.default', 'Above dashboard');
+  const resolvedTopPlacementLabel = topPlacementLabel ? topPlacementLabel : getDefaultTopPlacementLabel();
   const editable = useMemo(() => {
     const { editable } = partitionVariablesByEditability(listVariables);
     if (!config.featureToggles.dashboardUnifiedDrilldownControls || includeAdHoc) {

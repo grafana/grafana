@@ -5,6 +5,8 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Combobox, Field } from '@grafana/ui';
 
+import { getDefaultTopPlacementLabel } from '../utils';
+
 interface Props {
   onChange: (option: VariableHide) => void;
   display: VariableHide;
@@ -23,16 +25,12 @@ export function VariableDisplaySelect({
   minWidth = 52,
 }: PropsWithChildren<Props>) {
   const displayId = useId();
-  const resolvedTopPlacementLabel = topPlacementLabel
-    ? topPlacementLabel
-    : t('dashboard-scene.variable-display-select.top-placement.default', 'Above dashboard');
+  const resolvedTopPlacementLabel = topPlacementLabel ? topPlacementLabel : getDefaultTopPlacementLabel();
   const OPTIONS = useMemo(
     () => [
       {
         value: VariableHide.dontHide,
-        label: t('dashboard-scene.variable-display-select.options.top-placement.label', '{{placement}}', {
-          placement: resolvedTopPlacementLabel,
-        }),
+        label: resolvedTopPlacementLabel,
       },
       {
         value: VariableHide.hideLabel,
