@@ -11357,6 +11357,8 @@
       "clear-search": "Törlés",
       "close-inline-details": "A napló részleteinek bezárása",
       "close-sidebar-details": "A napló részleteit tartalmazó oldalsáv bezárása",
+      "copy-log-line": "",
+      "copy-log-line-json": "",
       "copy-shortlink": "Rövid hivatkozás másolása",
       "copy-to-clipboard": "Másolás vágólapra",
       "displayed-fields-section": "Megjelenített mezők rendezése",
@@ -11405,7 +11407,8 @@
     },
     "log-line-menu": {
       "copy-link": "Hivatkozás másolása a naplósorba",
-      "copy-log": "Naplósor másolása",
+      "copy-log-contents": "",
+      "copy-log-message": "",
       "hide-details": "Napló részleteinek megjelenítése",
       "icon-label": "Naplómenü",
       "log-line": "Naplósor",
@@ -15555,8 +15558,8 @@
     },
     "legend": {
       "category": "Jelmagyarázat",
-      "description-faceted-filter": "Sorozatláthatósági szűrő megjelenítése a címkék alapján",
-      "name-faceted-filter": "Többdimenziós szűrő"
+      "description-faceted-filter": "",
+      "name-faceted-filter": ""
     },
     "line-style-editor": {
       "line-fill-options": {
