@@ -11291,6 +11291,8 @@
       "clear-search": "Hapus",
       "close-inline-details": "Tutup detail untuk log ini",
       "close-sidebar-details": "Tutup bilah sisi detail log",
+      "copy-log-line": "",
+      "copy-log-line-json": "",
       "copy-shortlink": "Salin tautan pendek",
       "copy-to-clipboard": "Salin ke papan klip",
       "displayed-fields-section": "Susun bidang yang ditampilkan",
@@ -11339,7 +11341,8 @@
     },
     "log-line-menu": {
       "copy-link": "Salin tautan ke baris log",
-      "copy-log": "Salin baris log",
+      "copy-log-contents": "",
+      "copy-log-message": "",
       "hide-details": "Tampilkan detail log",
       "icon-label": "Menu log",
       "log-line": "Baris log",
@@ -15462,8 +15465,8 @@
     },
     "legend": {
       "category": "Legenda",
-      "description-faceted-filter": "Tampilkan filter visibilitas seri berdasarkan label",
-      "name-faceted-filter": "Filter berfacet"
+      "description-faceted-filter": "",
+      "name-faceted-filter": ""
     },
     "line-style-editor": {
       "line-fill-options": {
