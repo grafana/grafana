@@ -4,22 +4,25 @@ overview: Extract the tiny shared piece (a generic `useAsyncReady` hook plus an 
 todos:
   - id: shared-loader-factory
     content: Add public/app/features/dynamic-options/createAsyncSingletonLoader.ts (cached promise + isLoaded + reset + onResolve) with unit tests
-    status: pending
+    status: completed
   - id: shared-ready-hook
     content: Add public/app/features/dynamic-options/useAsyncReady.ts and a render-gate test using a stub loader
-    status: pending
+    status: completed
   - id: refactor-palettes-loader
     content: Refactor public/app/features/dynamic-palettes/dynamicPalettes.ts to build its loader via createAsyncSingletonLoader and re-export the existing load/isLoaded/reset names
-    status: pending
+    status: completed
   - id: refactor-palettes-hooks
     content: Refactor useDynamicFieldColorModes / useDynamicPalettesReady in public/app/features/dynamic-palettes/useDynamicFieldColorModes.ts to wrap useAsyncReady
-    status: pending
+    status: completed
   - id: widen-needs-predicate
     content: Change needsDynamicPalette to accept FieldConfigSource (not a raw colorMode string) and update its test
-    status: pending
+    status: completed
   - id: update-render-gates
     content: Update PanelRenderer.tsx and DashboardGridItemRenderer.tsx to pass fieldConfig into needsDynamicPalette and structure the gate so a future needsDynamicX is a 2-line addition
-    status: pending
+    status: completed
+  - id: theme-filter-at-read-time
+    content: Keep singleton loader args-free and apply contrast/theme filtering at read time (`getColors(theme)`), with a theme-switch regression test in `fieldColor.test.tsx`
+    status: completed
 isProject: false
 ---
 
@@ -34,6 +37,12 @@ Keep the architecture from PR #124415 (lazy cached singleton load → idempotent
 - A future panel option (e.g. dynamic mappings, dynamic units, a hydrated custom value) is added by creating its own `dynamic-<thing>/` module that copies the palettes module's shape - one `needs*(fieldConfig, options?)` predicate, one `useReady()` hook, one cached loader - and adding two lines to each render gate.
 
 No central registry is introduced; each `dynamic-*` module is self-contained.
+
+## Decision Update
+
+The shared singleton abstraction intentionally stays args-free (`load()` only). Theme is no longer passed into the cached promise path because singleton caching makes later prop updates misleading (first call wins).
+
+Dynamic palette data is loaded once from storage and theme filtering is applied when colors are read (`getColors(theme)` / `getCalculator(..., theme)`). This keeps theme changes reactive without resetting or reloading the singleton loader.
 
 ## Architecture
 
