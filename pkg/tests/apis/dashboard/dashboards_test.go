@@ -260,7 +260,7 @@ func TestIntegrationLegacySupport(t *testing.T) {
 			input: map[string]any{
 				"panels": []any{}, // this used to be a panic
 			},
-			expect: "Dashboard spec is missing required title property",
+			expect: "Dashboard is missing required title property",
 		}}
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
