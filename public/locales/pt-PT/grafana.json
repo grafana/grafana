@@ -11357,6 +11357,8 @@
       "clear-search": "Limpar",
       "close-inline-details": "Fechar detalhes deste registo",
       "close-sidebar-details": "Fechar barra lateral de detalhes do registo",
+      "copy-log-line": "",
+      "copy-log-line-json": "",
       "copy-shortlink": "Copiar link curto",
       "copy-to-clipboard": "Copiar para a área de transferência",
       "displayed-fields-section": "Organizar campos exibidos",
@@ -11405,7 +11407,8 @@
     },
     "log-line-menu": {
       "copy-link": "Copiar link para a linha de registo",
-      "copy-log": "Copiar linha de registo",
+      "copy-log-contents": "",
+      "copy-log-message": "",
       "hide-details": "Mostrar detalhes do registo",
       "icon-label": "Menu de registo",
       "log-line": "Linha de registo",
@@ -15555,8 +15558,8 @@
     },
     "legend": {
       "category": "Legenda",
-      "description-faceted-filter": "Mostrar filtro de visibilidade de séries com base em etiquetas",
-      "name-faceted-filter": "Filtro com facetas"
+      "description-faceted-filter": "",
+      "name-faceted-filter": ""
     },
     "line-style-editor": {
       "line-fill-options": {
