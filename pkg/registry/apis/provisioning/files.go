@@ -23,11 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
-const (
-	// Files endpoint max size for dashboards etc (5MB)
-	filesMaxBodySize = 5 * 1024 * 1024
-)
-
 type filesConnector struct {
 	getter                RepoGetter
 	access                auth.AccessChecker
@@ -35,9 +30,12 @@ type filesConnector struct {
 	clients               resources.ClientFactory
 	folderMetadataEnabled bool
 	folderAPIVersion      string
+	// maxFileSize caps the size in bytes of files read from or written to the
+	// repository through this connector. <=0 disables the check.
+	maxFileSize int64
 }
 
-func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clients resources.ClientFactory, access auth.AccessChecker, folderMetadataEnabled bool, folderAPIVersion string) *filesConnector {
+func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clients resources.ClientFactory, access auth.AccessChecker, folderMetadataEnabled bool, folderAPIVersion string, maxFileSize int64) *filesConnector {
 	return &filesConnector{
 		getter:                getter,
 		parsers:               parsers,
@@ -45,6 +43,7 @@ func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clien
 		access:                access,
 		folderMetadataEnabled: folderMetadataEnabled,
 		folderAPIVersion:      folderAPIVersion,
+		maxFileSize:           maxFileSize,
 	}
 }
 
@@ -105,6 +104,10 @@ func (c *filesConnector) handleRequest(ctx context.Context, name string, r *http
 		responder.Error(apierrors.NewBadRequest("repository does not support read-writing"))
 		return
 	}
+	// Enforce max_file_size right at the repo boundary so oversized payloads
+	// are rejected before parsing/DryRun runs in DualReadWriter.Read or before
+	// the bytes are streamed back from handleGetRawFile.
+	readWriter = repository.NewSizeLimitedReaderWriter(readWriter, c.maxFileSize)
 
 	dualReadWriter, authorizer, err := c.createDualReadWriter(ctx, repo, readWriter)
 	if err != nil {
@@ -310,7 +313,7 @@ func (c *filesConnector) handlePost(ctx context.Context, r *http.Request, opts r
 		return dualReadWriter.CreateFolder(ctx, opts)
 	}
 
-	data, err := readBody(r, filesMaxBodySize)
+	data, err := readBody(r, c.maxFileSize)
 	if err != nil {
 		return nil, err
 	}
@@ -326,7 +329,7 @@ func (c *filesConnector) handlePost(ctx context.Context, r *http.Request, opts r
 func (c *filesConnector) handleMove(ctx context.Context, r *http.Request, opts resources.DualWriteOptions, isDir bool, dualReadWriter *resources.DualReadWriter) (*provisioning.ResourceWrapper, error) {
 	// For move operations, only read body for file moves (not directory moves)
 	if !isDir {
-		data, err := readBody(r, filesMaxBodySize)
+		data, err := readBody(r, c.maxFileSize)
 		if err != nil {
 			return nil, err
 		}
@@ -348,7 +351,7 @@ func (c *filesConnector) handlePut(ctx context.Context, r *http.Request, opts re
 		return nil, apierrors.NewMethodNotSupported(provisioning.RepositoryResourceInfo.GroupResource(), r.Method)
 	}
 
-	data, err := readBody(r, filesMaxBodySize)
+	data, err := readBody(r, c.maxFileSize)
 	if err != nil {
 		return nil, err
 	}
@@ -362,7 +365,7 @@ func (c *filesConnector) handlePut(ctx context.Context, r *http.Request, opts re
 }
 
 func (c *filesConnector) handleFolderMetadataUpdate(ctx context.Context, r *http.Request, opts resources.DualWriteOptions, dualReadWriter *resources.DualReadWriter) (*provisioning.ResourceWrapper, error) {
-	data, err := readBody(r, filesMaxBodySize)
+	data, err := readBody(r, c.maxFileSize)
 	if err != nil {
 		return nil, err
 	}

@@ -13,6 +13,8 @@ import {
 
 // Flag key constants for programmatic access
 export const FlagKeys = {
+  /** Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana */
+  AlertingSyncExternalAlertmanager: "alerting.syncExternalAlertmanager",
   /** Enables new analytics framework */
   AnalyticsFramework: "analyticsFramework",
   /** Enables the template dashboard assistant */
@@ -35,6 +37,8 @@ export const FlagKeys = {
   FaroSessionReplay: "faroSessionReplay",
   /** Enables the new Flame Graph UI containing the Call Tree view */
   FlameGraphWithCallTree: "flameGraphWithCallTree",
+  /** Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button) */
+  GrafanaEnableScopesFirstMode: "grafana.enableScopesFirstMode",
   /** Whether to use the new SharedPreferences functional component */
   GrafanaNewPreferencesPage: "grafana.newPreferencesPage",
   /** Enables org-defined dashboard templates for enterprise */
@@ -75,11 +79,24 @@ export const FlagKeys = {
   ReportingAnyPageReporting: "reporting.anyPageReporting",
   /** Enables the splash screen modal for introducing new Grafana features on first session */
   SplashScreen: "splashScreen",
+  /** Enables CodeMirror editor for SQL Expressions */
+  SqlExpressionsCodeMirror: "sqlExpressionsCodeMirror",
   /** Enables option to position series names above bars in the state timeline panel */
   StateTimelineNameAboveBars: "stateTimeline.nameAboveBars",
   /** Enables the 'Customize with Assistant' button on suggested dashboard cards */
   SuggestedDashboardsAssistantButton: "suggestedDashboardsAssistantButton",
 } as const;
+
+/**
+ * Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana
+ *
+ * **Details:**
+ * - flag key: `alerting.syncExternalAlertmanager`
+ * - default value: `false`
+ */
+export const useFlagAlertingSyncExternalAlertmanager = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alerting.syncExternalAlertmanager", false, options).value;
+};
 
 /**
  * Enables new analytics framework
@@ -200,6 +217,17 @@ export const useFlagFaroSessionReplay = (options?: ReactFlagEvaluationOptions): 
  */
 export const useFlagFlameGraphWithCallTree = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("flameGraphWithCallTree", false, options).value;
+};
+
+/**
+ * Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button)
+ *
+ * **Details:**
+ * - flag key: `grafana.enableScopesFirstMode`
+ * - default value: `false`
+ */
+export const useFlagGrafanaEnableScopesFirstMode = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.enableScopesFirstMode", false, options).value;
 };
 
 /**
@@ -416,10 +444,21 @@ export const useFlagReportingAnyPageReporting = (options?: ReactFlagEvaluationOp
  *
  * **Details:**
  * - flag key: `splashScreen`
- * - default value: `true`
+ * - default value: `false`
  */
 export const useFlagSplashScreen = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("splashScreen", true, options).value;
+  return useFlag("splashScreen", false, options).value;
+};
+
+/**
+ * Enables CodeMirror editor for SQL Expressions
+ *
+ * **Details:**
+ * - flag key: `sqlExpressionsCodeMirror`
+ * - default value: `false`
+ */
+export const useFlagSqlExpressionsCodeMirror = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("sqlExpressionsCodeMirror", false, options).value;
 };
 
 /**
