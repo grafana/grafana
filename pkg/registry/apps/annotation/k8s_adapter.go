@@ -121,7 +121,7 @@ func (s *k8sRESTAdapter) List(ctx context.Context, options *internalversion.List
 
 	opts := ListOptions{}
 	if err := parseFieldSelector(options.FieldSelector, &opts); err != nil {
-		return nil, err
+		return nil, apierrors.NewBadRequest(err.Error())
 	}
 
 	opts.Limit = 100
@@ -338,7 +338,7 @@ func parseFieldSelector(fs fields.Selector, opts *ListOptions) error {
 	}
 	for _, r := range fs.Requirements() {
 		if r.Operator != selection.Equals && r.Operator != selection.DoubleEquals {
-			return apierrors.NewBadRequest(fmt.Sprintf("unsupported operator %s for %s (only = supported)", r.Operator, r.Field))
+			return fmt.Errorf("unsupported operator %s for %s (only = supported)", r.Operator, r.Field)
 		}
 		switch r.Field {
 		case "spec.dashboardUID":
@@ -346,23 +346,23 @@ func parseFieldSelector(fs fields.Selector, opts *ListOptions) error {
 		case "spec.panelID":
 			v, err := strconv.ParseInt(r.Value, 10, 64)
 			if err != nil {
-				return apierrors.NewBadRequest(fmt.Sprintf("invalid panelID value %q: %v", r.Value, err))
+				return fmt.Errorf("invalid panelID value %q: %w", r.Value, err)
 			}
 			opts.PanelID = v
 		case "spec.time":
 			v, err := strconv.ParseInt(r.Value, 10, 64)
 			if err != nil {
-				return apierrors.NewBadRequest(fmt.Sprintf("invalid time value %q: %v", r.Value, err))
+				return fmt.Errorf("invalid time value %q: %w", r.Value, err)
 			}
 			opts.From = v
 		case "spec.timeEnd":
 			v, err := strconv.ParseInt(r.Value, 10, 64)
 			if err != nil {
-				return apierrors.NewBadRequest(fmt.Sprintf("invalid timeEnd value %q: %v", r.Value, err))
+				return fmt.Errorf("invalid timeEnd value %q: %w", r.Value, err)
 			}
 			opts.To = v
 		default:
-			return apierrors.NewBadRequest(fmt.Sprintf("unsupported field selector: %s", r.Field))
+			return fmt.Errorf("unsupported field selector: %s", r.Field)
 		}
 	}
 	return nil
