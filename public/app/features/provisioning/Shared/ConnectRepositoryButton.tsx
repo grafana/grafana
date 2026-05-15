@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 import { t, Trans } from '@grafana/i18n';
 import { Button, Dropdown, Icon, Menu, Stack } from '@grafana/ui';
 import { useGetFrontendSettingsQuery, type Repository } from 'app/api/clients/provisioning/v0alpha1';
+import { isOnPrem } from 'app/core/utils/isOnPrem';
 
 import { CONNECT_URL, DEFAULT_REPOSITORY_TYPES } from '../constants';
 import { checkSyncSettings } from '../utils/checkSyncSettings';
-import { isOnPrem } from '../utils/isOnPrem';
 import { getOrderedRepositoryConfigs } from '../utils/repositoryTypes';
 
 interface Props {

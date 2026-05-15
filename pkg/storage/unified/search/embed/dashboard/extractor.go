@@ -1,4 +1,4 @@
-// Package dashboard implements an embed.Extractor for Grafana dashboards.
+// Package dashboard implements an embed.Builder for Grafana dashboards.
 // Walks the dashboard JSON via JSONPath, supporting both classic (v1) and
 // v2 (k8s-shape) dashboards. Produces one embed.Item per panel.
 package dashboard
@@ -18,16 +18,31 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
 )
 
+// defaultMaxPanels caps embeddings per dashboard. Anything past ~200
+// panels is unlikely to be human-authored; the cap saves provider
+// tokens on those outliers without affecting normal dashboards.
+const defaultMaxPanels = 200
+
 // Extractor produces one embed.Item per panel.
 type Extractor struct {
-	logger *slog.Logger
+	logger    *slog.Logger
+	maxPanels int
 }
 
+// New builds an Extractor with the default panel cap (200).
 func New() *Extractor {
-	return &Extractor{logger: slog.Default()}
+	return &Extractor{logger: slog.Default(), maxPanels: defaultMaxPanels}
 }
 
+// Group returns the API group; satisfies the embed.Builder interface.
+func (e *Extractor) Group() string { return "dashboard.grafana.app" }
+
+// Resource returns the resource type; satisfies the embed.Builder interface.
 func (e *Extractor) Resource() string { return "dashboards" }
+
+// MaxItemsPerResource returns the per-dashboard panel cap; satisfies the
+// embed.Builder interface.
+func (e *Extractor) MaxItemsPerResource() int { return e.maxPanels }
 
 // Extract folder title doesn't exist on unified storage resources - so need to provide that
 func (e *Extractor) Extract(ctx context.Context, key *resourcepb.ResourceKey, value []byte, folderTitle string) ([]embed.Item, error) {

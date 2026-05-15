@@ -521,7 +521,8 @@
         "edit-yaml": "Edytuj YAML",
         "save": "Zapisz"
       },
-      "error-title": ""
+      "error-title": "",
+      "no-group-success": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "nazwa",
@@ -1163,6 +1164,9 @@
         "rule-viewer-section-extension": "Nie udało się wczytać sekcji wzbogacania przeglądarki reguł"
       }
     },
+    "entities": {
+      "group": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "Nie udało się zaktualizować konfiguracji:",
       "title-something-went-wrong": "Coś poszło nie tak"
@@ -1171,10 +1175,14 @@
       "content-show-all-errors": "Pokaż wszystkie błędy"
     },
     "errors": {
+      "api-machinery": {
+        "with-causes": ""
+      },
       "failedWith": "{{-config}} – niepowodzenie ze statusem {{status}}: {{-message}}"
     },
     "evaluate-every-validation-options": {
       "message": {
+        "none-not-allowed": "",
         "required": "Wymagane."
       }
     },
@@ -2901,6 +2909,11 @@
         },
         "group-name": "Nazwa grupy oceny",
         "group-text": "Wszystkie reguły w wybranej grupie są oceniane co {{evaluateEvery}}.",
+        "interval-label": "",
+        "mode": {
+          "legacy": "",
+          "new": ""
+        },
         "new-group": "Nowa grupa oceny",
         "pause": {
           "alerting": "Włącz, aby wstrzymać ocenę tej reguły alertu.",
@@ -3212,9 +3225,7 @@
       "deleting": "Usuwam",
       "text-federated": "Federacja",
       "text-provisioned": "Po aprowizacji",
-      "ungrouped": "Niezgrupowane",
-      "ungrouped-suffix": "{{ruleName}} (niezgrupowane)",
-      "unknown-rule": "Nieznana reguła"
+      "ungrouped": "Niezgrupowane"
     },
     "saved-searches": {
       "actions-aria-label": "Działania",
@@ -10966,6 +10977,21 @@
     "name-line-width": "Szerokość linii",
     "name-stacking": "Układanie"
   },
+  "home": {
+    "home-page": {
+      "edition": {
+        "cloud": "",
+        "enterprise": "",
+        "open-source": ""
+      },
+      "greeting": {
+        "afternoon": "",
+        "evening": "",
+        "morning": ""
+      },
+      "placeholder": ""
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "Ładowanie",
@@ -15012,9 +15038,6 @@
       "home-dashboard-placeholder": "Domyślny pulpit",
       "language-preference-label": "Język",
       "language-preference-placeholder": "Wybierz język",
-      "locale-preference-description": "Wybierz swój region, aby zobaczyć odpowiedni format daty, godziny i liczb",
-      "locale-preference-label": "Format regionu",
-      "locale-preference-placeholder": "Wybierz region",
       "theme-description": "Podobają Ci się motywy eksperymentalne? Powiedz nam, co chcesz <2>tutaj</2> zobaczyć.",
       "theme-label": "Motyw interfejsu",
       "week-start-label": "Początek tygodnia"
@@ -15316,6 +15339,8 @@
     },
     "support-bundles-unconnected": {
       "created-on": "Data utworzenia",
+      "deprecation-warning-message": "",
+      "deprecation-warning-title": "",
       "download": "Pobierz",
       "expires": "Wygasa",
       "requested-by": "Wnioskowane przez",
@@ -16207,7 +16232,9 @@
       "description": {
         "group-by-field-value": "Grupuj dane według wartości pola i twórz tabele zagnieżdżone z pogrupowanymi danymi."
       },
+      "description-expand-nested-rows": "",
       "description-show-field-names": "Jeśli ta opcja jest włączona, w tabelach zagnieżdżonych nazwy pól będą wyświetlać się jako nagłówki tabeli",
+      "label-expand-nested-rows-by-default": "",
       "label-show-field-names-in-nested-tables": "Pokaż nazwy pól w tabelach zagnieżdżonych",
       "name": {
         "group-to-nested-tables": "Grupuj w tabelach zagnieżdżonych"

@@ -271,7 +271,7 @@ func HandleLoginResponse(r *http.Request, w http.ResponseWriter, cfg *setting.Cf
 // HandleLoginRedirect is a utility function to perform common operations after a successful login and redirects
 func HandleLoginRedirect(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator, features featuremgmt.FeatureToggles) {
 	redirectURL := handleLogin(r, w, cfg, identity, validator, features, "redirectTo")
-	http.Redirect(w, r, redirectURL, http.StatusFound)
+	http.Redirect(w, r, redirectURL, http.StatusFound) // #nosec G710 -- redirectURL validated by RedirectValidator in handleLogin
 }
 
 // HandleLoginRedirectResponse is a utility function to perform common operations after a successful login and return a response.RedirectResponse

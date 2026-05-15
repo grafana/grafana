@@ -64,6 +64,8 @@ func TestAcquireTTLValidation(t *testing.T) {
 		{d: time.Millisecond, isValid: false},
 		{d: 100 * time.Millisecond, isValid: true},
 		{d: time.Minute, isValid: true},
+		{d: 10 * time.Minute, isValid: true},
+		{d: 11 * time.Minute, isValid: false}, // too long
 	}
 
 	for _, tc := range testCases {
@@ -186,8 +188,17 @@ func (m *mapKV) Batch(ctx context.Context, sec string, ops []kv.BatchOp) error {
 			copy(v, op.Value)
 			m.data[op.Key] = v
 
+		case kv.BatchOpUpdate:
+			if _, exists := m.data[op.Key]; !exists {
+				m.data = snapshot
+				return &kv.BatchError{Err: kv.ErrNotFound, Index: i, Op: op}
+			}
+			v := make([]byte, len(op.Value))
+			copy(v, op.Value)
+			m.data[op.Key] = v
+
 		default:
-			panic(fmt.Sprintf("mapKV: Batch mode %d not implemented (only BatchOpCreate is supported)", op.Mode))
+			panic(fmt.Sprintf("mapKV: Batch mode %d not implemented", op.Mode))
 		}
 	}
 	return nil

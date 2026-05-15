@@ -20,7 +20,7 @@ import (
 func TestSQLService(t *testing.T) {
 	inputFrame := data.NewFrame("",
 		data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
-		data.NewField("value", nil, []*float64{fp(2)}),
+		data.NewField("value", nil, []*float64{new(2.0)}),
 	)
 
 	resp := map[string]backend.DataResponse{
@@ -122,12 +122,12 @@ func TestSQLService(t *testing.T) {
 func TestSQLServiceErrors(t *testing.T) {
 	tsMulti := data.NewFrame("",
 		data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
-		data.NewField("value", data.Labels{"testLabelKey": "testLabelValue"}, []*float64{fp(2)}),
+		data.NewField("value", data.Labels{"testLabelKey": "testLabelValue"}, []*float64{new(2.0)}),
 	).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti})
 
 	tsMultiNoType := data.NewFrame("",
 		data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
-		data.NewField("value", data.Labels{"testLabelKey": "testLabelValue"}, []*float64{fp(2)}),
+		data.NewField("value", data.Labels{"testLabelKey": "testLabelValue"}, []*float64{new(2.0)}),
 	)
 
 	resp := map[string]backend.DataResponse{

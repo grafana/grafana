@@ -93,7 +93,7 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 
 	revision.Config.AlertmanagerConfig.Route = &tree
 
-	_, err = revision.Config.GetMergedAlertmanagerConfig()
+	_, err = merge.MergeExtraConfig(ctx, revision.Config)
 	if err != nil {
 		if errors.Is(err, merge.ErrSubtreeMatchersConflict) {
 			// TODO temporarily get the conflicting matchers

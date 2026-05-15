@@ -18,7 +18,12 @@ export function useAsyncReady<T, Args>(loader: AsyncSingletonLoader<T, Args>, ar
 
     // The loader's singleton semantics mean only the first call's args have
     // any effect; later renders pass args through but get the cached promise.
-    loader.load(args).finally(() => {
+    // The `as Args` cast is sound because: overload 1 makes `Args = void` so
+    // `undefined` is assignable, and overload 2 makes `args` required.
+
+    // @todo clean up
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    loader.load(args as Args).finally(() => {
       if (!cancelled) {
         setReady(true);
       }

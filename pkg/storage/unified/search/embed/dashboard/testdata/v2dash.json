@@ -47,7 +47,7 @@
         "kind": "Panel",
         "spec": {
           "id": 1,
-          "title": "instance info",
+          "title": "Active Grafana Cloud Stack Instances",
           "description": "",
           "links": [],
           "data": {
@@ -165,7 +165,7 @@
         "kind": "Panel",
         "spec": {
           "id": 2,
-          "title": "dashboard counts",
+          "title": "Dashboards per Grafana Cloud Stack",
           "description": "",
           "links": [],
           "data": {
@@ -337,7 +337,7 @@
       "hideTimepicker": false,
       "fiscalYearStartMonth": 0
     },
-    "title": "New dashboard",
+    "title": "Grafana Cloud Stack Overview",
     "variables": [],
     "preferences": {
       "layout": {
