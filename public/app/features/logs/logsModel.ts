@@ -448,12 +448,12 @@ export function logSeriesToLogsModel(
         raw: message,
         labels: labels || {},
         // prepend refId to uid to make it unique across all series in a case when series contain duplicates
-        uid: `${series.refId}_${idField ? idField.values[j] : j.toString()}`,
+        uid: `${series.refId}_${idField?.values[j] ? idField.values[j] : j.toString()}`,
         datasourceType,
         datasourceUid,
       };
 
-      if (idField !== null) {
+      if (idField?.values[j]) {
         row.rowId = idField.values[j];
       }
 
