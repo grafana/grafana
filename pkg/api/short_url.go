@@ -2,12 +2,13 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
 
-	"k8s.io/apimachinery/pkg/api/errors"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
@@ -189,7 +190,8 @@ func (sk8s *shortURLK8sHandler) getKubernetesRedirectFromShortURL(c *contextmode
 		// Details.Group="meta.k8s.io" and must not be cached as a permanent
 		// redirect, or a client would keep bypassing a working link after the
 		// backend issue is fixed.
-		if statusErr, ok := err.(*errors.StatusError); ok && errors.IsNotFound(err) &&
+		var statusErr *k8serrors.StatusError
+		if errors.As(err, &statusErr) && k8serrors.IsNotFound(err) &&
 			statusErr.ErrStatus.Details != nil &&
 			statusErr.ErrStatus.Details.Group == v1beta1.APIGroup {
 			c.Logger.Debug("Not redirecting short URL since not found", "uid", uid)
@@ -292,7 +294,7 @@ func (sk8s *shortURLK8sHandler) getClient(c *contextmodel.ReqContext) (dynamic.R
 
 func (sk8s *shortURLK8sHandler) writeError(c *contextmodel.ReqContext, err error) {
 	//nolint:errorlint
-	statusError, ok := err.(*errors.StatusError)
+	statusError, ok := err.(*k8serrors.StatusError)
 	if ok {
 		c.JsonApiErr(int(statusError.Status().Code), statusError.Status().Message, err)
 		return
