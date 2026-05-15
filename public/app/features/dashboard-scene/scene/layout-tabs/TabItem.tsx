@@ -135,22 +135,8 @@ export class TabItem
   }
 
   public getSlug(): string {
-    const getSlugString = (tab: TabItem) => getSlugForRowOrTab(tab);
-    const baseSlug = getSlugString(this);
-
-    // check that the tab doesn't end up with the same slug, e.g. My tab and My-tab, if they do add a suffix to make it unique,
-    // parent is only defined when TabItem is attached and part of the scene graph
-    if (this.parent) {
-      const parentLayout = this.getParentLayout();
-      const tabsWithSameSlug = parentLayout.getTabsIncludingRepeats().filter((tab) => getSlugString(tab) === baseSlug);
-      if (tabsWithSameSlug.length > 1) {
-        const slugIndex = tabsWithSameSlug.findIndex((tab) => tab === this);
-        if (slugIndex > 0) {
-          return `${baseSlug}__${slugIndex + 1}`;
-        }
-      }
-    }
-    return baseSlug;
+    const siblings = this.parent ? this.getParentLayout().getTabsIncludingRepeats() : [];
+    return getSlugForRowOrTab(this, siblings);
   }
 
   public isCurrentTab() {

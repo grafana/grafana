@@ -135,25 +135,12 @@ export class RowItem
   }
 
   public getSlug(): string {
-    const getSlugString = (row: RowItem) => getSlugForRowOrTab(row);
-    const baseSlug = getSlugString(this);
-
-    // parent is only defined when RowItem is attached and part of the scene graph
-    if (this.parent) {
-      const parentLayout = this.getParentLayout();
-      const rowsWithSameSlug = parentLayout
-        .getOutlineChildren()
-        .filter((item): item is RowItem => item instanceof RowItem)
-        .filter((row) => getSlugString(row) === baseSlug);
-      if (rowsWithSameSlug.length > 1) {
-        const slugIndex = rowsWithSameSlug.findIndex((row) => row === this);
-        if (slugIndex > 0) {
-          return `${baseSlug}__${slugIndex + 1}`;
-        }
-      }
-    }
-
-    return baseSlug;
+    const siblings = this.parent
+      ? this.getParentLayout()
+          .getOutlineChildren()
+          .filter((item): item is RowItem => item instanceof RowItem)
+      : [];
+    return getSlugForRowOrTab(this, siblings);
   }
 
   public switchLayout(layout: DashboardLayoutManager) {
