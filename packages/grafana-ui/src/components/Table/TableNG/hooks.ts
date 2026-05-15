@@ -735,7 +735,7 @@ export function useColWidths(
   visibleFields: Field[],
   availableWidth: number,
   frozenColumns?: number,
-  resetKey?: unknown
+  resetKey?: Symbol
 ): [number[], number] {
   const widths = useMemo(
     () => computeColWidths(visibleFields, availableWidth),
