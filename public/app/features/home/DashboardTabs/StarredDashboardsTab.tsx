@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 
 import { t, Trans } from '@grafana/i18n';
-import { Alert, Button, EmptyState, Icon, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { Alert, Button, EmptyState, Icon, useStyles2 } from '@grafana/ui';
+import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { type DashboardQueryResult, type LocationInfo } from 'app/features/search/service/types';
 import { DashListItem } from 'app/plugins/panel/dashlist/DashListItem';
 
@@ -17,7 +18,7 @@ export function StarredDashboardsTab({ dashboards, loading, error, retry, folder
   const styles = useStyles2(getStyles);
 
   if (loading) {
-    return <LoadingPlaceholder text={t('home.starred-dashboards-tab.loading', 'Loading starred dashboards...')} />;
+    return <PageLoader text={t('home.starred-dashboards-tab.loading', 'Loading starred dashboards...')} />;
   }
 
   if (error) {

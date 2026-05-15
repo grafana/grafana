@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 
 import { t, Trans } from '@grafana/i18n';
-import { Alert, Button, EmptyState, LinkButton, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { Alert, Button, EmptyState, LinkButton, useStyles2 } from '@grafana/ui';
+import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { contextSrv } from 'app/core/services/context_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 import { type DashboardQueryResult, type LocationInfo } from 'app/features/search/service/types';
@@ -20,9 +21,7 @@ export function RecentDashboardsTab({ dashboards, loading, error, retry, folders
   const styles = useStyles2(getStyles);
 
   if (loading) {
-    return (
-      <LoadingPlaceholder text={t('home.recent-dashboards-tab.loading', 'Loading recently viewed dashboards...')} />
-    );
+    return <PageLoader text={t('home.recent-dashboards-tab.loading', 'Loading recently viewed dashboards...')} />;
   }
 
   if (error) {
