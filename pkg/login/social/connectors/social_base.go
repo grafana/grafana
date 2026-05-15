@@ -126,6 +126,12 @@ func (s *SocialBase) Exchange(ctx context.Context, code string, opts ...oauth2.A
 	s.reloadMutex.RLock()
 	defer s.reloadMutex.RUnlock()
 
+	if s.info.TokenExchangeTimeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, s.info.TokenExchangeTimeout)
+		defer cancel()
+	}
+
 	return s.Config.Exchange(ctx, code, opts...)
 }
 
