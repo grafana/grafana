@@ -107,6 +107,8 @@ jobs:
       - build-backend
     permissions:
       contents: read
+    outputs:
+      version: ${{ needs.build-backend.outputs.version }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -136,5 +138,5 @@ jobs:
       os: linux
       arch: amd64
       arch-tag: amd64
-      version: '0.0.0-pr'
+      version: ${{ needs.build-source-targz.outputs.version }}
       build-number: ${{ github.run_id }}
