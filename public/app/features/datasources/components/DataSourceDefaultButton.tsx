@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
-import { Badge, Tooltip, Button } from '@grafana/ui';
+import { Badge, Tooltip, Button, ConfirmModal } from '@grafana/ui';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { useDispatch } from 'app/types/store';
@@ -13,6 +13,7 @@ import { setIsDefault } from '../state/reducers';
 
 export const DataSourceDefaultButton = ({ uid }: { uid: string }) => {
   const [loading, setLoading] = useState(false);
+  const [confirming, setConfirming] = useState(false);
 
   const dataSource = useDataSource(uid);
   const rights = useDataSourceRights(uid);
@@ -21,10 +22,11 @@ export const DataSourceDefaultButton = ({ uid }: { uid: string }) => {
   const dispatch = useDispatch();
 
   const onChangeDefault = async (value: boolean) => {
-    if (loading) {
+    if (loading || !confirming) {
       return;
     }
     setLoading(true);
+    setConfirming(false);
 
     try {
       // Make manual API calls to avoid pre-emptively saving other changes from the EditDataSource form
@@ -66,26 +68,54 @@ export const DataSourceDefaultButton = ({ uid }: { uid: string }) => {
   }
 
   return (
-    <Button
-      variant="secondary"
-      size="sm"
-      tooltip={[
-        dataSource.isDefault &&
-          t('datasources.default-button.active', 'This data source is currently set as the default.'),
-        t('datasources.default-button.tooltip', 'The default data source is preselected in new panels.'),
-      ]
-        .filter(Boolean)
-        .join(' ')}
-      onClick={() => onChangeDefault(!dataSource.isDefault)}
-      icon={loading ? 'spinner' : undefined}
-      iconPlacement="right"
-      disabled={loading}
-    >
-      {dataSource.isDefault ? (
-        <Trans i18nKey="datasources.default-button.remove">Remove default</Trans>
-      ) : (
-        <Trans i18nKey="datasources.default-button.make">Make default</Trans>
-      )}
-    </Button>
+    <>
+      <Button
+        variant="secondary"
+        size="sm"
+        tooltip={[
+          dataSource.isDefault &&
+            t('datasources.default-button.active', 'This data source is currently set as the default.'),
+          t('datasources.default-button.tooltip', 'The default data source is preselected in new panels.'),
+        ]
+          .filter(Boolean)
+          .join(' ')}
+        onClick={() => setConfirming(true)}
+        icon={loading ? 'spinner' : undefined}
+        iconPlacement="right"
+        disabled={loading}
+      >
+        {dataSource.isDefault ? (
+          <Trans i18nKey="datasources.default-button.remove">Remove default</Trans>
+        ) : (
+          <Trans i18nKey="datasources.default-button.make">Make default</Trans>
+        )}
+      </Button>
+
+      <ConfirmModal
+        isOpen={confirming}
+        title={
+          dataSource.isDefault
+            ? t('datasources.default-button.remove', 'Remove default')
+            : t('datasources.default-button.make', 'Make default')
+        }
+        body={[
+          dataSource.isDefault
+            ? t(
+                'datasources.default-button.remove-confirm',
+                'Are you sure you want to remove the default status from this data source for all users?'
+              )
+            : t(
+                'datasources.default-button.make-confirm',
+                'Are you sure you want to set this data source as the default for all users?'
+              ),
+          t('datasources.default-button.tooltip', 'The default data source is preselected in new panels.'),
+        ].join(' ')}
+        confirmText={t('datasources.default-button.confirm', 'Confirm')}
+        confirmVariant={dataSource.isDefault ? 'destructive' : 'primary'}
+        dismissText={t('datasources.default-button.cancel', 'Cancel')}
+        onConfirm={() => onChangeDefault(!dataSource.isDefault)}
+        onDismiss={() => setConfirming(false)}
+      />
+    </>
   );
 };
