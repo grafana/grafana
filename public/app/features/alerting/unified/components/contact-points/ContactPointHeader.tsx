@@ -12,7 +12,7 @@ import { useAlertmanager } from 'app/features/alerting/unified/state/Alertmanage
 import { K8sAnnotations } from 'app/features/alerting/unified/utils/k8s/constants';
 import { getAnnotation, isProvisionedResource, shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 
-import { isSupported, isGranted } from '../../hooks/abilities/abilityUtils';
+import { isGranted, isSupported } from '../../hooks/abilities/abilityUtils';
 import { useContactPointAbility } from '../../hooks/abilities/alertmanager/useContactPointAbility';
 import { ContactPointAction } from '../../hooks/abilities/types';
 import { createRelativeUrl } from '../../utils/url';

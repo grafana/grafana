@@ -18,7 +18,7 @@ import {
 import { shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 import { makeAMLink, stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 
-import { isSupported, isGranted } from '../../hooks/abilities/abilityUtils';
+import { isGranted, isSupported } from '../../hooks/abilities/abilityUtils';
 import { useContactPointAbility } from '../../hooks/abilities/alertmanager/useContactPointAbility';
 import { useNotificationTemplateAbility } from '../../hooks/abilities/alertmanager/useNotificationTemplateAbility';
 import { ContactPointAction, NotificationTemplateAction } from '../../hooks/abilities/types';
