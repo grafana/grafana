@@ -4,7 +4,10 @@
   "colors": {
     "mode": "dark",
     "background": {
-      "canvas": "palette.coral400"
+      "canvas": "palette.ink900",
+      "primary": "palette.ink800",
+      "secondary": "palette.ink700",
+      "elevated": "palette.ink700"
     }
   }
 }
