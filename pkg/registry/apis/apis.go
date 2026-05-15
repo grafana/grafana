@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/registry/apis/ofrep"
+	"github.com/grafana/grafana/pkg/registry/apis/palettes"
 	"github.com/grafana/grafana/pkg/registry/apis/preferences"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/registry/apis/query"
@@ -27,6 +28,7 @@ func ProvideRegistryServiceSink(
 	_ *query.QueryAPIBuilder,
 	_ *userstorage.UserStorageAPIBuilder,
 	_ *preferences.APIBuilder,
+	_ *palettes.APIBuilder,
 	_ *collections.APIBuilder,
 	_ *provisioning.APIBuilder,
 	_ *ofrep.APIBuilder,

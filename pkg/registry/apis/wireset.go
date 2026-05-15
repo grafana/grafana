@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/noopstorage"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
 	"github.com/grafana/grafana/pkg/registry/apis/ofrep"
+	"github.com/grafana/grafana/pkg/registry/apis/palettes"
 	"github.com/grafana/grafana/pkg/registry/apis/preferences"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/extras"
@@ -86,6 +87,7 @@ var WireSet = wire.NewSet(
 	service.RegisterAPIService,
 	query.RegisterAPIService,
 	preferences.RegisterAPIService,
+	palettes.RegisterAPIService,
 	collections.RegisterAPIService,
 	userstorage.RegisterAPIService,
 	ofrep.RegisterAPIService,
