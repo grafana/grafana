@@ -278,8 +278,20 @@ func (s *CorrelationsK8sService) GetCorrelations(ctx context.Context, cmd GetCor
 	//get all correlations up to the last page asked for
 	listOpts := v1.ListOptions{Limit: cmd.Limit * cmd.Page}
 
+	sourceDsList := map[string]string{}
+	for _, val := range cmd.SourceUIDs {
+		dsCmd := &datasources.GetDataSourceQuery{OrgID: cmd.OrgId, UID: val}
+		sourceDs, _ := s.DataSourceService.GetDataSource(ctx, dsCmd)
+		sourceDsList[val] = sourceDs.Type
+	}
+
+	dsLabels := make([]string, 0, len(sourceDsList))
+	for key, value := range sourceDsList {
+		dsLabels = append(dsLabels, value+"."+key)
+	}
+	dsListString := strings.Join(dsLabels, ",")
 	if len(cmd.SourceUIDs) != 0 {
-		listOpts.LabelSelector = fmt.Sprintf("correlations.grafana.app/sourceDS-ref in (%s)", strings.Join(cmd.SourceUIDs, ","))
+		listOpts.LabelSelector = fmt.Sprintf("correlations.grafana.app/sourceDS-ref in (%s)", dsListString)
 	}
 
 	appPlatformCorrs, err := s.k8sClient.List(ctx, cmd.OrgId, listOpts)
