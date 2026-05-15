@@ -64,6 +64,8 @@ func TestAcquireTTLValidation(t *testing.T) {
 		{d: time.Millisecond, isValid: false},
 		{d: 100 * time.Millisecond, isValid: true},
 		{d: time.Minute, isValid: true},
+		{d: 10 * time.Minute, isValid: true},
+		{d: 11 * time.Minute, isValid: false}, // too long
 	}
 
 	for _, tc := range testCases {

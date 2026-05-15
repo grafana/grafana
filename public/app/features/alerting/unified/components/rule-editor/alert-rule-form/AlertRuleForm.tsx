@@ -13,6 +13,7 @@ import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedR
 import {
   getRuleGroupLocationFromFormValues,
   getRuleGroupLocationFromRuleWithLocation,
+  getRuleUID,
   isCloudAlertingRuleByType,
   isCloudRecordingRuleByType,
   isGrafanaManagedRuleByType,
@@ -21,6 +22,7 @@ import {
   rulerRuleType,
 } from 'app/features/alerting/unified/utils/rules';
 import { isExpressionQuery } from 'app/features/expressions/guards';
+import { useDispatch } from 'app/types/store';
 import { type RuleGroupIdentifier, type RuleWithLocation } from 'app/types/unified-alerting';
 import { type PostableRuleGrafanaRuleDTO, type RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
@@ -40,7 +42,10 @@ import {
   type RulerGroupUpdatedResponse,
   isGrafanaGroupUpdatedResponse,
 } from '../../../api/alertRuleModel';
+import { alertingApi } from '../../../api/alertingApi';
+import { shouldUseRulesAPIV2 } from '../../../featureToggles';
 import { useAddRuleToRuleGroup, useUpdateRuleInRuleGroup } from '../../../hooks/ruleGroup/useUpsertRuleFromRuleGroup';
+import { useUpsertUngroupedGrafanaRule } from '../../../hooks/useUpsertUngroupedGrafanaRule';
 import {
   defaultFormValuesForRuleType,
   formValuesFromExistingRule,
@@ -73,6 +78,8 @@ import { RecordingRulesNameSpaceAndGroupStep } from '../RecordingRulesNameSpaceA
 import { RuleInspector } from '../RuleInspector';
 import { QueryAndExpressionsStep } from '../query-and-alert-condition/QueryAndExpressionsStep';
 
+import { legacyRuleCacheTagsForUid } from './formValuesToAppPlatform';
+
 type Props = {
   existing?: RuleWithLocation;
   prefill?: Partial<RuleFormValues>; // Existing implies we modify existing rule. Prefill only provides default form values
@@ -82,15 +89,17 @@ type Props = {
 export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => {
   const styles = useStyles2(getStyles);
   const notifyApp = useAppNotification();
+  const dispatch = useDispatch();
 
   const routeParams = useParams<{ type: string; id: string }>();
   const uidFromParams = routeParams.id;
 
-  const { redirectToDetailsPage } = useRedirectToDetailsPage(uidFromParams);
+  const { redirectToDetailsPage, redirectToGrafanaRuleByUid } = useRedirectToDetailsPage(uidFromParams);
   const [showEditYaml, setShowEditYaml] = useState(false);
 
   const [addRuleToRuleGroup] = useAddRuleToRuleGroup();
   const [updateRuleInRuleGroup] = useUpdateRuleInRuleGroup();
+  const upsertUngroupedGrafanaRule = useUpsertUngroupedGrafanaRule();
 
   const ruleType = translateRouteParamToRuleType(routeParams.type);
 
@@ -168,14 +177,82 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
 
     const errorTitle = t('alerting.alert-rule-form.error-title', 'Failed to save alert rule');
 
-    let saveResult: RulerGroupUpdatedResponse;
+    // TODO(alerting.rulesAPIV2): remove this branch once the flag is rolled out — the v2 path below covers the same flows.
+    const shouldUseLegacyGroupsApi = !shouldUseRulesAPIV2();
+    if (shouldUseLegacyGroupsApi) {
+      try {
+        let saveResult: RulerGroupUpdatedResponse;
+        if (!existing) {
+          // when creating a new rule, we save the manual routing setting and editorSettings.simplifiedQueryEditor to the local storage
+          storeInLocalStorageValues(values);
+          // save the rule to the rule group
+          saveResult = await addRuleToRuleGroup.execute(ruleGroupIdentifier, ruleDefinition, evaluateEvery);
+          // track the new Grafana-managed rule creation in the analytics
+          if (grafanaTypeRule) {
+            const dataQueries = values.queries.filter((query) => !isExpressionQuery(query.model));
+            const expressionQueries = values.queries.filter((query) => isExpressionQueryInAlert(query));
+            trackNewGrafanaAlertRuleFormSavedSuccess({
+              simplifiedQueryEditor: values.editorSettings?.simplifiedQueryEditor ?? false,
+              simplifiedNotificationEditor: values.editorSettings?.simplifiedNotificationEditor ?? false,
+              canBeTransformedToSimpleQuery: areQueriesTransformableToSimpleCondition(dataQueries, expressionQueries),
+            });
+          }
+        } else {
+          // when updating an existing rule
+          const ruleIdentifier = fromRulerRuleAndRuleGroupIdentifier(ruleGroupIdentifier, existing.rule);
+          saveResult = await updateRuleInRuleGroup.execute(
+            ruleGroupIdentifier,
+            ruleIdentifier,
+            ruleDefinition,
+            targetRuleGroupIdentifier,
+            evaluateEvery
+          );
+        }
+
+        redirectToDetailsPage(ruleDefinition, targetRuleGroupIdentifier, saveResult);
+      } catch (err) {
+        notifyApp.error(errorTitle, stringifyErrorLike(err));
+      }
+      return;
+    }
+
+    const targetIsUngrouped = values.isUngroupedRuleGroup;
+
     try {
+      if (grafanaTypeRule && targetIsUngrouped) {
+        if (!existing) {
+          storeInLocalStorageValues(values);
+        }
+
+        const existingUid = existing ? getRuleUID(existing.rule) : undefined;
+        const savedUid = await upsertUngroupedGrafanaRule({ values, existingUid });
+
+        dispatch(alertingApi.util.invalidateTags(legacyRuleCacheTagsForUid(savedUid)));
+        notifyApp.success(
+          existing
+            ? t('alerting.rules.update-rule.success', 'Rule updated successfully')
+            : t('alerting.alert-rule-form.no-group-success', 'Rule added successfully')
+        );
+
+        if (!existing && grafanaTypeRule) {
+          const dataQueries = values.queries.filter((query) => !isExpressionQuery(query.model));
+          const expressionQueries = values.queries.filter((query) => isExpressionQueryInAlert(query));
+          trackNewGrafanaAlertRuleFormSavedSuccess({
+            simplifiedQueryEditor: values.editorSettings?.simplifiedQueryEditor ?? false,
+            simplifiedNotificationEditor: values.editorSettings?.simplifiedNotificationEditor ?? false,
+            canBeTransformedToSimpleQuery: areQueriesTransformableToSimpleCondition(dataQueries, expressionQueries),
+          });
+        }
+
+        redirectToGrafanaRuleByUid(savedUid);
+        return;
+      }
+
+      let saveResult: RulerGroupUpdatedResponse;
       if (!existing) {
-        // when creating a new rule, we save the manual routing setting , and editorSettings.simplifiedQueryEditor to the local storage
         storeInLocalStorageValues(values);
-        // save the rule to the rule group
         saveResult = await addRuleToRuleGroup.execute(ruleGroupIdentifier, ruleDefinition, evaluateEvery);
-        // track the new Grafana-managed rule creation in the analytics
+
         if (grafanaTypeRule) {
           const dataQueries = values.queries.filter((query) => !isExpressionQuery(query.model));
           const expressionQueries = values.queries.filter((query) => isExpressionQueryInAlert(query));
@@ -186,7 +263,6 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
           });
         }
       } else {
-        // when updating an existing rule
         const ruleIdentifier = fromRulerRuleAndRuleGroupIdentifier(ruleGroupIdentifier, existing.rule);
         saveResult = await updateRuleInRuleGroup.execute(
           ruleGroupIdentifier,
@@ -318,16 +394,20 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
 function useRedirectToDetailsPage(existingUid?: string) {
   const notifyApp = useAppNotification();
 
+  const redirectToGrafanaRuleByUid = useCallback((uid: string) => {
+    locationService.replace(
+      rulesNav.detailsPageLink('grafana', { uid, ruleSourceName: 'grafana' }, undefined, {
+        skipSubPath: true,
+      })
+    );
+  }, []);
+
   const redirectGrafanaRule = useCallback(
     (saveResult: GrafanaGroupUpdatedResponse) => {
       // if the response contains no created or updated rules, we'll use the existing UID.
       const newOrUpdatedRuleUid = (saveResult.created?.at(0) || saveResult.updated?.at(0)) ?? existingUid;
       if (newOrUpdatedRuleUid) {
-        locationService.replace(
-          rulesNav.detailsPageLink('grafana', { uid: newOrUpdatedRuleUid, ruleSourceName: 'grafana' }, undefined, {
-            skipSubPath: true,
-          })
-        );
+        redirectToGrafanaRuleByUid(newOrUpdatedRuleUid);
       } else {
         notifyApp.error(
           'Cannot navigate to the new rule details page.',
@@ -336,7 +416,7 @@ function useRedirectToDetailsPage(existingUid?: string) {
         logWarning('Cannot navigate to the new rule details page. The rule was created but the UID is missing.');
       }
     },
-    [existingUid, notifyApp]
+    [existingUid, notifyApp, redirectToGrafanaRuleByUid]
   );
 
   const redirectCloudRulerRule = useCallback((rule: RulerRuleDTO, groupId: RuleGroupIdentifier) => {
@@ -371,7 +451,7 @@ function useRedirectToDetailsPage(existingUid?: string) {
     [redirectGrafanaRule, redirectCloudRulerRule]
   );
 
-  return { redirectToDetailsPage };
+  return { redirectToDetailsPage, redirectToGrafanaRuleByUid };
 }
 
 const isCortexLokiOrRecordingRule = (watch: UseFormWatch<RuleFormValues>) => {

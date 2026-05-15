@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"slices"
 	"strconv"
 	"strings"
@@ -29,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 var ErrRestConfigNotAvailable = errors.New("k8s rest config provider not available")
@@ -55,7 +57,7 @@ func (a *api) getResourcePermissionsFromK8s(c *contextmodel.ReqContext, namespac
 		return nil, err
 	}
 
-	resourcePermName := a.buildResourcePermissionName(resourceID)
+	resourcePermName := a.buildResourcePermissionName(c.Req, resourceID)
 	resourcePermResource := dynamicClient.Resource(iamv0.ResourcePermissionInfo.GroupVersionResource()).Namespace(namespace)
 	unstructuredObj, err := resourcePermResource.Get(ctx, resourcePermName, metav1.GetOptions{})
 
@@ -373,8 +375,18 @@ func (a *api) getProvisionedPermissions(ctx context.Context, namespace string, r
 	return dto, nil
 }
 
-func (a *api) buildResourcePermissionName(resourceID string) string {
-	return fmt.Sprintf("%s-%s-%s", a.getAPIGroup(), a.service.options.Resource, resourceID)
+// resourceNameFromRequest returns the UID stored by the resource translator when present
+// (":resourceUID"), falling back to the (possibly numeric) resourceID for resources
+// that don't perform UID→ID translation.
+func resourceNameFromRequest(r *http.Request, resourceID string) string {
+	if uid := web.Params(r)[":resourceUID"]; uid != "" {
+		return uid
+	}
+	return resourceID
+}
+
+func (a *api) buildResourcePermissionName(r *http.Request, resourceID string) string {
+	return fmt.Sprintf("%s-%s-%s", a.getAPIGroup(), a.service.options.Resource, resourceNameFromRequest(r, resourceID))
 }
 
 // Write operations
@@ -386,7 +398,7 @@ func (a *api) setResourcePermissionsToK8s(c *contextmodel.ReqContext, namespace 
 		return err
 	}
 
-	resourcePermName := a.buildResourcePermissionName(resourceID)
+	resourcePermName := a.buildResourcePermissionName(c.Req, resourceID)
 	resourcePermResource := dynamicClient.Resource(iamv0.ResourcePermissionInfo.GroupVersionResource()).Namespace(namespace)
 
 	_, existingResourceVersion, err := a.getExistingResourcePermission(ctx, resourcePermResource, resourcePermName)
@@ -438,7 +450,7 @@ func (a *api) setResourcePermissionsToK8s(c *contextmodel.ReqContext, namespace 
 			Resource: iamv0.ResourcePermissionspecResource{
 				ApiGroup: a.getAPIGroup(),
 				Resource: a.service.options.Resource,
-				Name:     resourceID,
+				Name:     resourceNameFromRequest(c.Req, resourceID),
 			},
 			Permissions: k8sPermissions,
 		},
@@ -478,7 +490,7 @@ func (a *api) setSinglePermissionToK8s(c *contextmodel.ReqContext, namespace str
 		return err
 	}
 
-	resourcePermName := a.buildResourcePermissionName(resourceID)
+	resourcePermName := a.buildResourcePermissionName(c.Req, resourceID)
 	resourcePermResource := dynamicClient.Resource(iamv0.ResourcePermissionInfo.GroupVersionResource()).Namespace(namespace)
 
 	existingResourcePerm, existingResourceVersion, err := a.getExistingResourcePermission(ctx, resourcePermResource, resourcePermName)
@@ -526,7 +538,7 @@ func (a *api) setSinglePermissionToK8s(c *contextmodel.ReqContext, namespace str
 			Resource: iamv0.ResourcePermissionspecResource{
 				ApiGroup: a.getAPIGroup(),
 				Resource: a.service.options.Resource,
-				Name:     resourceID,
+				Name:     resourceNameFromRequest(c.Req, resourceID),
 			},
 			Permissions: newPermissions,
 		},
