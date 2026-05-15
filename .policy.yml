@@ -569,6 +569,7 @@ approval_rules:
           - ^embed\.go$
           - ^packaging\/docker\/(?:(?:[^/]*(?:/|$))*)$
           - ^\.github\/workflows\/pr-test-docker\.yml$
+          - ^\.github\/workflows\/build-docker-variants\.yml$
       file_not_deleted:
         paths:
           - ^\.github\/workflows\/pr-test-docker\.yml$

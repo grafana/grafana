@@ -35,7 +35,7 @@ on:
       - .github/workflows/build-docker-variants.yml
 
 jobs:
-  # ── Path 1 ────────────────────────────────────────────────────────────────
+  # Path 1:
   # Full source build inside Docker. Validates that the complete compilation
   # pipeline (go-builder + js-builder + final stage) works end-to-end.
   build-full:
@@ -53,7 +53,7 @@ jobs:
       - name: Build alpine (full source)
         run: make build-docker-full DOCKER_BUILD_ARGS=--load
 
-  # ── Path 2 ────────────────────────────────────────────────────────────────
+  # Path 2:
   # Prod-like build: compile from source → tarball → all 6 Docker variants.
   # Mirrors exactly what release-build.yml does, but builds the tarball here
   # since no pre-built artifact exists in a PR.
