@@ -33,7 +33,7 @@ type PluginProxy struct {
 	matchedRoute     *plugins.Route
 	dataProxyLogging bool // from cfg
 	sendUserHeader   bool // from cfg
-	secureJsonData   pluginsettings.SecureJsonGetter
+	secureJsonData   pluginsettings.DecryptedSecureJSONLoader
 	tracer           tracing.Tracer
 	transport        *http.Transport
 	features         featuremgmt.FeatureToggles
@@ -44,7 +44,7 @@ func NewPluginProxy(ps *pluginsettings.DTO, routes []*plugins.Route,
 	r *http.Request, w http.ResponseWriter, signedInUser identity.Requester,
 	proxyPath string,
 	dataProxyLogging bool, sendUserHeader bool,
-	secureJsonData pluginsettings.SecureJsonGetter, tracer tracing.Tracer,
+	secureJsonData pluginsettings.DecryptedSecureJSONLoader, tracer tracing.Tracer,
 	transport *http.Transport, accessControl ac.AccessControl, features featuremgmt.FeatureToggles) (*PluginProxy, error) {
 	return &PluginProxy{
 		accessControl:    accessControl,

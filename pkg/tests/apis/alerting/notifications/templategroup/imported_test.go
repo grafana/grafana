@@ -31,6 +31,7 @@ func TestIntegrationImportedTemplates(t *testing.T) {
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{
+			featuremgmt.FlagAlertingMultiplePolicies,
 			featuremgmt.FlagAlertingImportAlertmanagerAPI,
 		},
 	})

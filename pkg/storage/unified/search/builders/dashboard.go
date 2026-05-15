@@ -354,7 +354,7 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 }
 
 func DashboardFields() []string {
-	baseFields := []string{
+	baseFields := []string{ //nolint:prealloc
 		DASHBOARD_SCHEMA_VERSION,
 		DASHBOARD_LINK_COUNT,
 		DASHBOARD_PANEL_TYPES,
