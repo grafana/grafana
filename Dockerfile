@@ -126,11 +126,9 @@ RUN mkdir -p data/plugins-bundled
 FROM ${GO_SRC} AS go-src
 FROM ${JS_SRC} AS js-src
 
-# Collects all Grafana binaries and frontend assets into one place.
-# Every final stage (alpine, ubuntu, distroless) copies from here with identical
-# instructions, guaranteeing the same layer hash across all variants.
-# plugins-bundled is set to 472:0 777 to match the setup RUN in each final stage
-# so its directory entry is absent from the COPY layer (no metadata diff → shared hash).
+# Binaries and frontend assets — shared by all 6 variants (full and slim) via COPY --link.
+# No plugins here; keeping this stage SLIM-agnostic ensures the layer hash is identical
+# across every build regardless of the SLIM flag.
 FROM alpine-base AS grafana-assets
 
 ENV GF_PATHS_HOME="/usr/share/grafana"
@@ -139,6 +137,14 @@ WORKDIR $GF_PATHS_HOME
 COPY --from=go-src /tmp/grafana/bin/grafana* /tmp/grafana/bin/*/grafana* ./bin/
 COPY --from=js-src /tmp/grafana/public ./public
 COPY --from=js-src /tmp/grafana/LICENSE ./
+
+# Bundled plugins — shared by the 3 full (non-slim) variants, and by the 3 slim variants
+# among themselves (as an empty directory). Kept separate from grafana-assets so the two
+# groups each get their own shared layer rather than a single mixed one.
+FROM alpine-base AS grafana-plugins
+
+ENV GF_PATHS_HOME="/usr/share/grafana"
+WORKDIR $GF_PATHS_HOME
 
 RUN mkdir -p data/plugins-bundled && \
   chown 472:0 data/plugins-bundled && \
@@ -259,6 +265,7 @@ RUN if [ ! "$(getent group "$GF_GID")" ]; then \
   chmod -R 777 "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING" "$GF_PATHS_HOME/data/plugins-bundled"
 
 COPY --link --from=grafana-assets /usr/share/grafana /usr/share/grafana
+COPY --link --from=grafana-plugins /usr/share/grafana/data/plugins-bundled /usr/share/grafana/data/plugins-bundled
 
 RUN grafana server -v | sed -e 's/Version //' > /.grafana-version
 RUN chmod 644 /.grafana-version
@@ -320,6 +327,7 @@ RUN if [ ! "$(getent group "$GF_GID")" ]; then \
   chmod -R 777 "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING" "$GF_PATHS_HOME/data/plugins-bundled"
 
 COPY --link --from=grafana-assets /usr/share/grafana /usr/share/grafana
+COPY --link --from=grafana-plugins /usr/share/grafana/data/plugins-bundled /usr/share/grafana/data/plugins-bundled
 
 RUN grafana server -v | sed -e 's/Version //' > /.grafana-version
 RUN chmod 644 /.grafana-version
@@ -372,6 +380,7 @@ COPY --from=distroless-prep /usr/share/grafana/conf /usr/share/grafana/conf
 COPY --chown=${GF_UID}:${GF_GID} --from=distroless-prep /usr/share/grafana/.aws /usr/share/grafana/.aws
 COPY --chown=${GF_UID}:${GF_GID} --from=distroless-prep /usr/share/grafana/data /usr/share/grafana/data
 COPY --link --from=grafana-assets /usr/share/grafana /usr/share/grafana
+COPY --link --from=grafana-plugins /usr/share/grafana/data/plugins-bundled /usr/share/grafana/data/plugins-bundled
 COPY --from=distroless-prep /.grafana-version /.grafana-version
 
 EXPOSE 3000
