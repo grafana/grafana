@@ -168,7 +168,8 @@ func (sk8s *shortURLK8sHandler) getKubernetesRedirectFromShortURL(c *contextmode
 
 	client, err := kubernetes.NewForConfig(sk8s.clientConfigProvider.GetDirectRestConfig(c))
 	if err != nil {
-		c.JsonApiErr(500, "client", err)
+		c.Logger.Error("Short URL redirection error: failed to create kubernetes client", "err", err)
+		c.Redirect(sk8s.cfg.AppURL, http.StatusTemporaryRedirect)
 		return
 	}
 
@@ -182,23 +183,32 @@ func (sk8s *shortURLK8sHandler) getKubernetesRedirectFromShortURL(c *contextmode
 		Do(c.Req.Context())
 
 	if err = result.Error(); err != nil {
-		c.JsonApiErr(500, "goto", err)
+		if errors.IsNotFound(err) {
+			c.Logger.Debug("Not redirecting short URL since not found", "uid", uid)
+			c.Redirect(sk8s.cfg.AppURL, http.StatusPermanentRedirect)
+			return
+		}
+		c.Logger.Error("Short URL redirection error: goto subresource call failed", "uid", uid, "err", err)
+		c.Redirect(sk8s.cfg.AppURL, http.StatusTemporaryRedirect)
 		return
 	}
 
 	body, err := result.Raw()
 	if err != nil {
-		c.JsonApiErr(500, "body", err)
+		c.Logger.Error("Short URL redirection error: failed to read response body", "uid", uid, "err", err)
+		c.Redirect(sk8s.cfg.AppURL, http.StatusTemporaryRedirect)
 		return
 	}
 
 	value := &v1beta1.GetGotoResponse{}
 	if err = json.Unmarshal(body, value); err != nil {
-		c.JsonApiErr(500, "unmarshal", err)
+		c.Logger.Error("Short URL redirection error: failed to unmarshal response", "uid", uid, "err", err)
+		c.Redirect(sk8s.cfg.AppURL, http.StatusTemporaryRedirect)
 		return
 	}
 	if value.Url == "" {
-		c.JsonApiErr(500, "invalid", fmt.Errorf("expected url"))
+		c.Logger.Error("Short URL redirection error: empty url in response", "uid", uid)
+		c.Redirect(sk8s.cfg.AppURL, http.StatusTemporaryRedirect)
 		return
 	}
 
@@ -207,7 +217,8 @@ func (sk8s *shortURLK8sHandler) getKubernetesRedirectFromShortURL(c *contextmode
 	// so we parse it and validate the path component.
 	parsedURL, parseErr := url.Parse(value.Url)
 	if parseErr != nil {
-		c.JsonApiErr(500, "invalid redirect URL", parseErr)
+		c.Logger.Error("Short URL redirection error: invalid redirect URL", "uid", uid, "url", value.Url, "err", parseErr)
+		c.Redirect(sk8s.cfg.AppURL, http.StatusTemporaryRedirect)
 		return
 	}
 	// Ensure the redirect URL is relative to this server by checking it has no scheme
@@ -215,7 +226,8 @@ func (sk8s *shortURLK8sHandler) getKubernetesRedirectFromShortURL(c *contextmode
 	// as appURL + "/" + path, we just need to verify it's not pointing externally.
 	appParsed, appParseErr := url.Parse(sk8s.cfg.AppURL)
 	if appParseErr != nil || appParsed.Host == "" {
-		c.JsonApiErr(500, "invalid app URL configuration", appParseErr)
+		c.Logger.Error("Short URL redirection error: invalid app URL configuration", "err", appParseErr)
+		c.Redirect(sk8s.cfg.AppURL, http.StatusTemporaryRedirect)
 		return
 	}
 	if parsedURL.Host != "" && !strings.EqualFold(parsedURL.Host, appParsed.Host) {
