@@ -403,7 +403,6 @@ func TestSetTeamMembershipsViaK8s(t *testing.T) {
 		names := []string{first[0].Name, first[1].Name, first[2].Name}
 		assert.Equal(t, []string{"uid-a", "uid-b", "uid-c"}, names)
 	})
-
 }
 
 // --- test scaffolding ---
