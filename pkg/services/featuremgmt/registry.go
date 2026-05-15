@@ -3131,7 +3131,7 @@ var (
 			Name:            "plugins.marketplaceLicensing",
 			Description:     "Enables marketplace plugin licensing",
 			Stage:           FeatureStageExperimental,
-			Owner:           grafanaPluginsPlatformSquad,
+			Owner:           grafanaCatalogSquad,
 			RequiresRestart: true,
 			Expression:      "false",
 			Generate:        Generate{Go: true},
