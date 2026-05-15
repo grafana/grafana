@@ -42,7 +42,7 @@ type apiDocsState struct {
 	ops     map[string]*operationEntry
 	ordered []*operationEntry
 	// appURL is the externally reachable root of this Grafana instance
-	// (e.g. "https://grafana.example.com"). Used to emit absolute URLs in
+	// (e.g. "https://example.grafana.com"). Used to emit absolute URLs in
 	// llms.txt / llms-full.txt so agents can resolve links without guessing
 	// the hostname. May be empty in tests; relative paths are used as fallback.
 	appURL string
