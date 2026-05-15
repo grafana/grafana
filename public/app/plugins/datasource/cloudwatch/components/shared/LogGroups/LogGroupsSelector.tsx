@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { type SelectableValue } from '@grafana/data';
+import { type SelectableValue, AppEvents } from '@grafana/data';
 import { EditorField } from '@grafana/plugin-ui';
+import { getAppEvents } from '@grafana/runtime';
 import {
   Button,
   Checkbox,
@@ -14,7 +15,6 @@ import {
   TextLink,
   useStyles2,
 } from '@grafana/ui';
-import { useAppNotification } from 'app/core/copy/appNotification';
 
 import { type LogGroup } from '../../../dataquery.gen';
 import { type DescribeLogGroupsRequest, type LogGroupsResponse } from '../../../resources/types';
@@ -49,7 +49,7 @@ export const LogGroupsSelector = ({
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [nextToken, setNextToken] = useState<string | undefined>();
   const styles = useStyles2(getStyles);
-  const notifyApp = useAppNotification();
+  const appEvents = getAppEvents();
   const selectedLogGroupsCounter = useMemo(
     () => selectedLogGroups.filter((lg) => !lg.name?.startsWith('$')).length,
     [selectedLogGroups]
@@ -132,9 +132,13 @@ export const LogGroupsSelector = ({
       ]);
       setNextToken(response.nextToken);
     } catch (err) {
-      notifyApp.error('Failed to load more log groups. Please try again.');
+      appEvents.publish({
+        type: AppEvents.alertError.name,
+        payload: ['Failed to load more log groups. Please try again.'],
+      });
+    } finally {
+      setIsLoadingMore(false);
     }
-    setIsLoadingMore(false);
   };
 
   const handleSelectCheckbox = (row: LogGroup, isChecked: boolean) => {

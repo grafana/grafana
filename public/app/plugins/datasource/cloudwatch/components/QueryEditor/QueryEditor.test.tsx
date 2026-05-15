@@ -18,15 +18,6 @@ import {
 } from '../../mocks/queries';
 import { type CloudWatchJsonData, type CloudWatchQuery } from '../../types';
 
-jest.mock('app/core/copy/appNotification', () => ({
-  useAppNotification: () => ({
-    error: jest.fn(),
-    warning: jest.fn(),
-    info: jest.fn(),
-    success: jest.fn(),
-  }),
-}));
-
 import { QueryEditor } from './QueryEditor';
 
 // the following three fields are added to legacy queries in the dashboard migrator
@@ -58,6 +49,9 @@ jest.mock('./MetricsQueryEditor/SQLCodeEditor', () => ({
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
+  getAppEvents: () => ({
+    publish: jest.fn(),
+  }),
   config: {
     ...jest.requireActual('@grafana/runtime').config,
     featureToggles: {

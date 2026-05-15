@@ -18,15 +18,6 @@ import {
   CREDENTIALS_AUTHENTICATION_WARNING_MESSAGE,
 } from './ConfigEditor';
 
-jest.mock('app/core/copy/appNotification', () => ({
-  useAppNotification: () => ({
-    error: jest.fn(),
-    warning: jest.fn(),
-    info: jest.fn(),
-    success: jest.fn(),
-  }),
-}));
-
 const datasource = new CloudWatchDatasource(CloudWatchSettings, setupMockedTemplateService());
 const loadDataSourceMock = jest.fn();
 
@@ -38,6 +29,7 @@ const putMock = jest.fn();
 const getMock = jest.fn();
 const mockAppEvents = {
   subscribe: () => ({ unsubscribe: jest.fn() }),
+  publish: jest.fn(),
 };
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),

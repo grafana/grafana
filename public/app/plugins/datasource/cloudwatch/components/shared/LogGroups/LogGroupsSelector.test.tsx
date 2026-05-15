@@ -4,17 +4,17 @@ import userEvent from '@testing-library/user-event';
 import lodash from 'lodash';
 import selectEvent from 'react-select-event';
 
+import { AppEvents } from '@grafana/data';
+
 import { type LogGroupsResponse } from '../../../resources/types';
 
 import { LogGroupsSelector } from './LogGroupsSelector';
 
-const mockNotifyError = jest.fn();
-jest.mock('app/core/copy/appNotification', () => ({
-  useAppNotification: () => ({
-    error: mockNotifyError,
-    warning: jest.fn(),
-    info: jest.fn(),
-    success: jest.fn(),
+const mockPublish = jest.fn();
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getAppEvents: () => ({
+    publish: mockPublish,
   }),
 }));
 
@@ -411,7 +411,10 @@ describe('LogGroupsSelector', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Load more' }));
 
     await waitFor(() =>
-      expect(mockNotifyError).toHaveBeenCalledWith('Failed to load more log groups. Please try again.')
+      expect(mockPublish).toHaveBeenCalledWith({
+        type: AppEvents.alertError.name,
+        payload: ['Failed to load more log groups. Please try again.'],
+      })
     );
   });
 });

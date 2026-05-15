@@ -12,12 +12,10 @@ import {
 
 import { LogGroupsField } from './LogGroupsField';
 
-jest.mock('app/core/copy/appNotification', () => ({
-  useAppNotification: () => ({
-    error: jest.fn(),
-    warning: jest.fn(),
-    info: jest.fn(),
-    success: jest.fn(),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getAppEvents: () => ({
+    publish: jest.fn(),
   }),
 }));
 
