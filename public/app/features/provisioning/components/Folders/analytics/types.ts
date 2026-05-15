@@ -1,4 +1,4 @@
-import { type EventProperty } from '@grafana/runtime/internal';
+import { type EventProperty } from '@grafana/runtime/unstable';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
 type RepoType = RepositoryView['type'];

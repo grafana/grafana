@@ -348,7 +348,7 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 				}
 			}
 		}
-		if qm.FillMissing != nil {
+		if qm.FillMissing != nil && qm.Interval > 0 {
 			frame = e.applyFill(frame, qm)
 		}
 	}

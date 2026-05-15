@@ -73,7 +73,7 @@ func TestLDAP_AuthenticateProxy(t *testing.T) {
 				Email:           "test@test.com",
 				AuthenticatedBy: login.LDAPAuthModule,
 				AuthID:          "123",
-				Groups:          []string{"1", "2"},
+				ExternalGroups:  []string{"1", "2"},
 				ClientParams: authn.ClientParams{
 					SyncUser:        true,
 					SyncTeams:       true,
@@ -82,8 +82,8 @@ func TestLDAP_AuthenticateProxy(t *testing.T) {
 					SyncOrgRoles:    true,
 					SyncPermissions: true,
 					LookUpParams: login.UserLookupParams{
-						Email: strPtr("test@test.com"),
-						Login: strPtr("test"),
+						Email: new("test@test.com"),
+						Login: new("test"),
 					},
 				},
 			},
@@ -156,7 +156,7 @@ func TestLDAP_AuthenticatePassword(t *testing.T) {
 				Email:           "test@test.com",
 				AuthenticatedBy: login.LDAPAuthModule,
 				AuthID:          "123",
-				Groups:          []string{"1", "2"},
+				ExternalGroups:  []string{"1", "2"},
 				ClientParams: authn.ClientParams{
 					SyncUser:        true,
 					SyncTeams:       true,
@@ -165,8 +165,8 @@ func TestLDAP_AuthenticatePassword(t *testing.T) {
 					SyncOrgRoles:    true,
 					SyncPermissions: true,
 					LookUpParams: login.UserLookupParams{
-						Email: strPtr("test@test.com"),
-						Login: strPtr("test"),
+						Email: new("test@test.com"),
+						Login: new("test"),
 					},
 				},
 			},
@@ -234,8 +234,4 @@ func setupLDAPTestCase(tt *ldapTestCase) *LDAP {
 	)
 
 	return c
-}
-
-func strPtr(s string) *string {
-	return &s
 }

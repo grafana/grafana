@@ -512,7 +512,8 @@
         "edit-yaml": "YAMLを編集",
         "save": "保存"
       },
-      "error-title": ""
+      "error-title": "",
+      "no-group-success": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "名前",
@@ -1148,6 +1149,9 @@
         "rule-viewer-section-extension": "ルールビューアのエンリッチメントセクションの読み込みに失敗しました"
       }
     },
+    "entities": {
+      "group": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "設定の更新に失敗しました：",
       "title-something-went-wrong": "エラーが発生しました"
@@ -1156,10 +1160,14 @@
       "content-show-all-errors": "すべてのエラーを表示"
     },
     "errors": {
+      "api-machinery": {
+        "with-causes": ""
+      },
       "failedWith": "{{status}}により{{-config}}が失敗しました：{{-message}}"
     },
     "evaluate-every-validation-options": {
       "message": {
+        "none-not-allowed": "",
         "required": "必須項目です。"
       }
     },
@@ -2853,6 +2861,11 @@
         },
         "group-name": "評価グループ名",
         "group-text": "選択したグループ内のすべてのルールは、{{evaluateEvery}}毎に評価されます。",
+        "interval-label": "",
+        "mode": {
+          "legacy": "",
+          "new": ""
+        },
         "new-group": "新しい評価グループ",
         "pause": {
           "alerting": "このアラートルールの評価を一時停止するには、オンにします。",
@@ -3155,9 +3168,7 @@
       "deleting": "削除しています",
       "text-federated": "フェデレーション",
       "text-provisioned": "プロビジョニング済み",
-      "ungrouped": "グループ化なし",
-      "ungrouped-suffix": "{{ruleName}}（グループ化なし）",
-      "unknown-rule": "不明なルール"
+      "ungrouped": "グループ化なし"
     },
     "saved-searches": {
       "actions-aria-label": "アクション",
@@ -4434,6 +4445,14 @@
       "request-extension": "クォータ拡張をリクエスト",
       "resource-detail-dashboards": "{{limit}}件中{{usage}}件のダッシュボード（{{percentage}}%）を作成しました。",
       "resource-detail-folders": "{{limit}}件中{{usage}}件のフォルダ（{{percentage}}%）を作成しました。"
+    },
+    "readme": {
+      "add-readme": "",
+      "edit-tooltip": "",
+      "empty-message": "",
+      "load-error-retry": "",
+      "load-error-title": "",
+      "parse-error": ""
     },
     "recently-viewed": {
       "clear": "履歴をクリア",
@@ -7987,19 +8006,6 @@
       "aria-label-explore-data": "データを調査",
       "aria-label-suggested-dashboards": "推奨ダッシュボード"
     },
-    "alerting-enabled": {
-      "text-alerting-not-supported": "アラート非対応",
-      "text-alerting-supported": "アラート対応"
-    },
-    "basic-serttings": {
-      "tooltip-name": "この名前はパネルでデータソースを選択する際に使用されます。デフォルトのデータソースは新しいパネルで事前選択されています。"
-    },
-    "basic-settings": {
-      "aria-label-datasource-settings-page-basic": "データソース設定ページの基本設定",
-      "basic-settings-name-placeholder-name": "名前",
-      "label-default": "初期設定",
-      "label-name": "名前"
-    },
     "build-a-dashboard-button": {
       "blank": "空白",
       "build-a-dashboard": "ダッシュボードを作成",
@@ -10797,6 +10803,21 @@
     "name-line-width": "線の太さ",
     "name-stacking": "積み上げ"
   },
+  "home": {
+    "home-page": {
+      "edition": {
+        "cloud": "",
+        "enterprise": "",
+        "open-source": ""
+      },
+      "greeting": {
+        "afternoon": "",
+        "evening": "",
+        "morning": ""
+      },
+      "placeholder": ""
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "読込中",
@@ -11186,7 +11207,7 @@
     "description-order": "最新のログまたは最も古いログを最初に表示します。「最も古いログを最初に表示」を選択すると、ビューは自動的に下部にある最新のログまでスクロールします。",
     "description-prettify-json": "JSONログエントリをインデントと改行で整形します。",
     "description-show-controls": "最後または最初のログ行にジャンプするコントロールを表示し、ログレベルでフィルタリングします。",
-    "description-show-log-attributes": "実験的機能。OTelログが表示されたら、ラベルとメタデータから関連するキーと値のペアを含む追加の表示フィールドが追加されます。",
+    "description-show-log-attributes": "",
     "description-unwrapped-columns": "表示フィールドを使用する場合、列を使用して値を整列します。",
     "description-wrap-lines": "ログを1行で表示するか、長いログエントリをパネルに収まるように折り返します。",
     "field-selector": {
@@ -11270,6 +11291,8 @@
       "clear-search": "クリア",
       "close-inline-details": "このログの詳細を閉じる",
       "close-sidebar-details": "ログの詳細サイドバーを閉じる",
+      "copy-log-line": "",
+      "copy-log-line-json": "",
       "copy-shortlink": "ショートリンクをコピー",
       "copy-to-clipboard": "クリップボードにコピー",
       "displayed-fields-section": "表示フィールドを整理",
@@ -11318,7 +11341,8 @@
     },
     "log-line-menu": {
       "copy-link": "ログ行へのリンクをコピー",
-      "copy-log": "ログ行をコピー",
+      "copy-log-contents": "",
+      "copy-log-message": "",
       "hide-details": "ログの詳細を表示",
       "icon-label": "ログメニュー",
       "log-line": "ログ行",
@@ -11509,7 +11533,7 @@
       "line-contains-not": "フィルタが含まれていない行として追加",
       "search-text": "結果内を検索"
     },
-    "show-log-attributes": "OTelログのログ属性を表示",
+    "show-log-attributes": "",
     "timestamp-format": "タイムスタンプの表示形式",
     "un-themed-log-details": {
       "aria-label-data-links": "データリンク",
@@ -14741,9 +14765,6 @@
       "home-dashboard-placeholder": "デフォルトのダッシュボード",
       "language-preference-label": "言語",
       "language-preference-placeholder": "言語選択",
-      "locale-preference-description": "対応する日付、時刻、数値形式を表示するには地域を選択してください",
-      "locale-preference-label": "地域の形式",
-      "locale-preference-placeholder": "地域を選択",
       "theme-description": "実験的なテーマを楽しんでいますか？<2>こちらからご意見をお聞かせください。</2>",
       "theme-label": "インターフェースのテーマ",
       "week-start-label": "週のはじまり"
@@ -15042,6 +15063,8 @@
     },
     "support-bundles-unconnected": {
       "created-on": "作成日",
+      "deprecation-warning-message": "",
+      "deprecation-warning-title": "",
       "download": "ダウンロード",
       "expires": "有効期限",
       "requested-by": "依頼者",
@@ -15442,8 +15465,8 @@
     },
     "legend": {
       "category": "凡例",
-      "description-faceted-filter": "ラベルに基づく系列の表示状態フィルターを表示",
-      "name-faceted-filter": "ファセットフィルター"
+      "description-faceted-filter": "",
+      "name-faceted-filter": ""
     },
     "line-style-editor": {
       "line-fill-options": {
@@ -15933,7 +15956,9 @@
       "description": {
         "group-by-field-value": "フィールド値でデータをグループ化し、グループ化されたデータでネストされたテーブルを作成します。"
       },
+      "description-expand-nested-rows": "",
       "description-show-field-names": "有効にすると、入れ子になったテーブルではフィールド名がテーブルヘッダーとして表示されます",
+      "label-expand-nested-rows-by-default": "",
       "label-show-field-names-in-nested-tables": "ネストされたテーブルにフィールド名を表示",
       "name": {
         "group-to-nested-tables": "ネストされたテーブルとしてグループ化"

@@ -521,7 +521,8 @@
         "edit-yaml": "Upravit YAML",
         "save": "Uložit"
       },
-      "error-title": ""
+      "error-title": "",
+      "no-group-success": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "název",
@@ -1163,6 +1164,9 @@
         "rule-viewer-section-extension": "Sekci pro rozšiřující modul prohlížeče pravidel se nepodařilo načíst"
       }
     },
+    "entities": {
+      "group": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "Konfiguraci se nepodařilo aktualizovat:",
       "title-something-went-wrong": "Došlo k chybě"
@@ -1171,10 +1175,14 @@
       "content-show-all-errors": "Zobrazit všechny chyby"
     },
     "errors": {
+      "api-machinery": {
+        "with-causes": ""
+      },
       "failedWith": "{{-config}} selhalo se stavem {{status}}: {{-message}}"
     },
     "evaluate-every-validation-options": {
       "message": {
+        "none-not-allowed": "",
         "required": "Povinné."
       }
     },
@@ -2901,6 +2909,11 @@
         },
         "group-name": "Název hodnotící skupiny",
         "group-text": "Všechna pravidla ve vybrané skupině jsou vyhodnocena každých {{evaluateEvery}}.",
+        "interval-label": "",
+        "mode": {
+          "legacy": "",
+          "new": ""
+        },
         "new-group": "Nová hodnotící skupina",
         "pause": {
           "alerting": "Zapnutím pozastavíte hodnocení tohoto pravidla výstrahy.",
@@ -3212,9 +3225,7 @@
       "deleting": "Odstraňování",
       "text-federated": "Federované",
       "text-provisioned": "Zajištěno",
-      "ungrouped": "Neseskupené",
-      "ungrouped-suffix": "{{ruleName}} (neseskupené)",
-      "unknown-rule": "Neznámé pravidlo"
+      "ungrouped": "Neseskupené"
     },
     "saved-searches": {
       "actions-aria-label": "Akce",
@@ -4515,6 +4526,14 @@
       "request-extension": "Požádat o navýšení limitu",
       "resource-detail-dashboards": "Vytvořili jste {{usage}} z {{limit}} nástěnek ({{percentage}} %).",
       "resource-detail-folders": "Vytvořili jste {{usage}} z {{limit}} složek ({{percentage}} %)."
+    },
+    "readme": {
+      "add-readme": "",
+      "edit-tooltip": "",
+      "empty-message": "",
+      "load-error-retry": "",
+      "load-error-title": "",
+      "parse-error": ""
     },
     "recently-viewed": {
       "clear": "Vymazat historii",
@@ -8125,19 +8144,6 @@
       "aria-label-explore-data": "Prozkoumat data",
       "aria-label-suggested-dashboards": "Navrhované nástěnky"
     },
-    "alerting-enabled": {
-      "text-alerting-not-supported": "Upozorňování není podporováno",
-      "text-alerting-supported": "Upozorňování je podporováno"
-    },
-    "basic-serttings": {
-      "tooltip-name": "Název se použije při výběru zdroje dat v panelech. Výchozí zdroj dat se předvolí v nových panelech."
-    },
-    "basic-settings": {
-      "aria-label-datasource-settings-page-basic": "Základní nastavení stránky nastavení zdroje dat",
-      "basic-settings-name-placeholder-name": "Název",
-      "label-default": "Výchozí",
-      "label-name": "Název"
-    },
     "build-a-dashboard-button": {
       "blank": "Prázdné",
       "build-a-dashboard": "Vytvořit nástěnku",
@@ -10971,6 +10977,21 @@
     "name-line-width": "Šířka řádku",
     "name-stacking": "Stackování"
   },
+  "home": {
+    "home-page": {
+      "edition": {
+        "cloud": "",
+        "enterprise": "",
+        "open-source": ""
+      },
+      "greeting": {
+        "afternoon": "",
+        "evening": "",
+        "morning": ""
+      },
+      "placeholder": ""
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "Načítání",
@@ -11375,7 +11396,7 @@
     "description-order": "Zobrazit nejdříve nejnovější nebo nejstarší protokoly. Pokud je vybrána možnost Nejstarší nejdříve, zobrazení se automaticky posune na nejnovější protokoly ve spodní části.",
     "description-prettify-json": "Formátovat záznamy protokolu JSON pomocí odsazení a zalomení řádků.",
     "description-show-controls": "Zobrazit ovládací prvky pro přechod na poslední nebo první řádek protokolu a filtry podle úrovně protokolu.",
-    "description-show-log-attributes": "Experimentální. Když se zobrazí protokoly OTel, přidejte další zobrazené pole s relevantními páry klíč-hodnota ze štítků a metadat.",
+    "description-show-log-attributes": "",
     "description-unwrapped-columns": "Při používání zobrazených polí zarovnat hodnoty pomocí sloupců.",
     "description-wrap-lines": "Zobrazujte protokoly jako jeden řádek nebo zalomte dlouhé záznamy protokolu tak, aby se vešly do panelu.",
     "field-selector": {
@@ -11468,6 +11489,8 @@
       "clear-search": "Vymazat",
       "close-inline-details": "Zavřít podrobnosti tohoto protokolu",
       "close-sidebar-details": "Zavřít postranní panel s podrobnostmi protokolu",
+      "copy-log-line": "",
+      "copy-log-line-json": "",
       "copy-shortlink": "Kopírovat krátký odkaz",
       "copy-to-clipboard": "Kopírovat do schránky",
       "displayed-fields-section": "Uspořádat zobrazená pole",
@@ -11516,7 +11539,8 @@
     },
     "log-line-menu": {
       "copy-link": "Kopírovat odkaz na řádek protokolu",
-      "copy-log": "Kopírovat řádek protokolu",
+      "copy-log-contents": "",
+      "copy-log-message": "",
       "hide-details": "Zobrazit podrobnosti protokolu",
       "icon-label": "Nabídka protokolu",
       "log-line": "Řádek protokolu",
@@ -11707,7 +11731,7 @@
       "line-contains-not": "Přidat jako řádek neobsahuje filtr",
       "search-text": "Hledat ve výsledcích"
     },
-    "show-log-attributes": "Zobrazit atributy protokolu pro protokoly OTel",
+    "show-log-attributes": "",
     "timestamp-format": "Rozlišení časového razítka",
     "un-themed-log-details": {
       "aria-label-data-links": "Propojení dat",
@@ -15017,9 +15041,6 @@
       "home-dashboard-placeholder": "Výchozí nástěnka",
       "language-preference-label": "Jazyk",
       "language-preference-placeholder": "Vyberte jazyk",
-      "locale-preference-description": "Pro zobrazení odpovídajícího formátu data, času a čísla vyberte svou oblast",
-      "locale-preference-label": "Formát oblasti",
-      "locale-preference-placeholder": "Vyberte region",
       "theme-description": "Baví vás experimentální motivy? Řekněte nám, co byste <2>tady uvítali.</2>",
       "theme-label": "Motiv rozhraní",
       "week-start-label": "Začátek týdne"
@@ -15321,6 +15342,8 @@
     },
     "support-bundles-unconnected": {
       "created-on": "Vytvořeno",
+      "deprecation-warning-message": "",
+      "deprecation-warning-title": "",
       "download": "Stáhnout",
       "expires": "Vyprší",
       "requested-by": "Žadatel:",
@@ -15721,8 +15744,8 @@
     },
     "legend": {
       "category": "Legenda",
-      "description-faceted-filter": "Zobrazit filtr viditelnosti řad na základě štítků",
-      "name-faceted-filter": "Fasetová filtrace"
+      "description-faceted-filter": "",
+      "name-faceted-filter": ""
     },
     "line-style-editor": {
       "line-fill-options": {
@@ -16212,7 +16235,9 @@
       "description": {
         "group-by-field-value": "Seskupit data podle hodnoty pole a vytvořit vnořené tabulky se seskupenými daty."
       },
+      "description-expand-nested-rows": "",
       "description-show-field-names": "Pokud je povoleno, vnořené tabulky zobrazí názvy polí jako záhlaví tabulky",
+      "label-expand-nested-rows-by-default": "",
       "label-show-field-names-in-nested-tables": "Zobrazit názvy polí ve vnořených tabulkách",
       "name": {
         "group-to-nested-tables": "Seskupit do vnořených tabulek"

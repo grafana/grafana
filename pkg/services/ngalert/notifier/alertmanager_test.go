@@ -8,12 +8,13 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/grafana/alerting/definition"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/client_golang/prometheus"
 	prommodel "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/alerting/definition"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -29,7 +30,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -422,17 +422,17 @@ receivers:
 			initialSettings: map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting{
 				{OrgID: 1, UID: "rule-b"}: {
 					Receiver:  "receiver-1",
-					GroupWait: util.Pointer(prommodel.Duration(1 * time.Minute)),
+					GroupWait: new(prommodel.Duration(1 * time.Minute)),
 				},
 				{OrgID: 1, UID: "rule-a"}: {
 					Receiver:      "receiver-1",
-					GroupInterval: util.Pointer(prommodel.Duration(2 * time.Minute)),
+					GroupInterval: new(prommodel.Duration(2 * time.Minute)),
 				},
 			},
 			mutate: func(_ *definitions.PostableUserConfig, settings map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting) {
 				settings[ngmodels.AlertRuleKey{OrgID: 1, UID: "rule-b"}] = ngmodels.ContactPointRouting{
 					Receiver:  "receiver-1",
-					GroupWait: util.Pointer(prommodel.Duration(3 * time.Minute)),
+					GroupWait: new(prommodel.Duration(3 * time.Minute)),
 				}
 			},
 		},

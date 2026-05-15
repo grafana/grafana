@@ -333,14 +333,14 @@ func TestExtractorV2Dash(t *testing.T) {
 
 	// Panel 1: instance info
 	assert.Equal(t, "ow8csz6", items[0].UID)
-	assert.Equal(t, "New dashboard — instance info", items[0].Title)
+	assert.Equal(t, "Grafana Cloud Stack Overview — Active Grafana Cloud Stack Instances", items[0].Title)
 	assert.Equal(t, "panel/1", items[0].Subresource)
 	assert.Equal(t, "", items[0].Folder)
-	assert.Equal(t, "New dashboard → instance info\ngrafanacloud_instance_info", items[0].Content)
+	assert.Equal(t, "Grafana Cloud Stack Overview → Active Grafana Cloud Stack Instances\ngrafanacloud_instance_info", items[0].Content)
 
 	var md0 map[string]any
 	require.NoError(t, json.Unmarshal(items[0].Metadata, &md0))
-	assert.Equal(t, "New dashboard", md0["dashboardTitle"])
+	assert.Equal(t, "Grafana Cloud Stack Overview", md0["dashboardTitle"])
 	assert.Equal(t, []any{float64(1)}, md0["panelIds"])
 	assert.Equal(t, "grafanacloud-usage", md0["datasourceUid"])
 	assert.Equal(t, "promql", md0["language"])
@@ -348,9 +348,9 @@ func TestExtractorV2Dash(t *testing.T) {
 	assert.Nil(t, md0["rowName"])
 
 	// Panel 2: dashboard counts
-	assert.Equal(t, "New dashboard — dashboard counts", items[1].Title)
+	assert.Equal(t, "Grafana Cloud Stack Overview — Dashboards per Grafana Cloud Stack", items[1].Title)
 	assert.Equal(t, "panel/2", items[1].Subresource)
-	assert.Equal(t, "New dashboard → dashboard counts\ngrafanacloud_grafana_instance_dashboard_count", items[1].Content)
+	assert.Equal(t, "Grafana Cloud Stack Overview → Dashboards per Grafana Cloud Stack\ngrafanacloud_grafana_instance_dashboard_count", items[1].Content)
 
 	var md1 map[string]any
 	require.NoError(t, json.Unmarshal(items[1].Metadata, &md1))
