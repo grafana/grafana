@@ -231,18 +231,44 @@ export function MaxDataPointsOption({
   onChange: (options: AlertQueryOptions) => void;
 }) {
   const value = options.maxDataPoints ?? '';
+  const currentValueRef = React.useRef(String(value));
+  const committedRef = React.useRef(false);
+  const onChangeRef = React.useRef(onChange);
+  const optionsRef = React.useRef(options);
+  onChangeRef.current = onChange;
+  optionsRef.current = options;
 
-  const onMaxDataPointsBlur = (event: ChangeEvent<HTMLInputElement>) => {
-    const maxDataPointsNumber = parseInt(event.target.value, 10);
-
+  const commitValue = React.useCallback((rawValue: string) => {
+    if (committedRef.current) {
+      return;
+    }
+    committedRef.current = true;
+    const maxDataPointsNumber = parseInt(rawValue, 10);
     const maxDataPoints = isNaN(maxDataPointsNumber) || maxDataPointsNumber === 0 ? undefined : maxDataPointsNumber;
-
-    if (maxDataPoints !== options.maxDataPoints) {
-      onChange({
-        ...options,
+    if (maxDataPoints !== optionsRef.current.maxDataPoints) {
+      onChangeRef.current({
+        ...optionsRef.current,
         maxDataPoints,
       });
     }
+  }, []);
+
+  // Commit the current input value on unmount (e.g. when the Toggletip closes)
+  React.useEffect(() => {
+    return () => {
+      commitValue(currentValueRef.current);
+    };
+  }, [commitValue]);
+
+  const onMaxDataPointsChange = (event: ChangeEvent<HTMLInputElement>) => {
+    currentValueRef.current = event.target.value;
+    committedRef.current = false;
+  };
+
+  const onMaxDataPointsBlur = (event: ChangeEvent<HTMLInputElement>) => {
+    currentValueRef.current = event.target.value;
+    committedRef.current = false;
+    commitValue(event.target.value);
   };
 
   return (
@@ -259,6 +285,7 @@ export function MaxDataPointsOption({
         width={10}
         placeholder={DEFAULT_MAX_DATA_POINTS.toString()}
         spellCheck={false}
+        onChange={onMaxDataPointsChange}
         onBlur={onMaxDataPointsBlur}
         defaultValue={value}
       />
@@ -274,15 +301,42 @@ export function MinIntervalOption({
   onChange: (options: AlertQueryOptions) => void;
 }) {
   const value = options.minInterval ?? '';
+  const currentValueRef = React.useRef(value);
+  const committedRef = React.useRef(false);
+  const onChangeRef = React.useRef(onChange);
+  const optionsRef = React.useRef(options);
+  onChangeRef.current = onChange;
+  optionsRef.current = options;
 
-  const onMinIntervalBlur = (event: ChangeEvent<HTMLInputElement>) => {
-    const minInterval = event.target.value;
-    if (minInterval !== value) {
-      onChange({
-        ...options,
-        minInterval,
+  const commitValue = React.useCallback((rawValue: string) => {
+    if (committedRef.current) {
+      return;
+    }
+    committedRef.current = true;
+    if (rawValue !== (optionsRef.current.minInterval ?? '')) {
+      onChangeRef.current({
+        ...optionsRef.current,
+        minInterval: rawValue || undefined,
       });
     }
+  }, []);
+
+  // Commit the current input value on unmount (e.g. when the Toggletip closes)
+  React.useEffect(() => {
+    return () => {
+      commitValue(currentValueRef.current);
+    };
+  }, [commitValue]);
+
+  const onMinIntervalChange = (event: ChangeEvent<HTMLInputElement>) => {
+    currentValueRef.current = event.target.value;
+    committedRef.current = false;
+  };
+
+  const onMinIntervalBlur = (event: ChangeEvent<HTMLInputElement>) => {
+    currentValueRef.current = event.target.value;
+    committedRef.current = false;
+    commitValue(event.target.value);
   };
 
   return (
@@ -301,6 +355,7 @@ export function MinIntervalOption({
         width={10}
         placeholder={DEFAULT_MIN_INTERVAL}
         spellCheck={false}
+        onChange={onMinIntervalChange}
         onBlur={onMinIntervalBlur}
         defaultValue={value}
       />
