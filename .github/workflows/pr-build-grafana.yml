@@ -34,54 +34,155 @@ jobs:
         with:
           self: .github/workflows/pr-build-grafana.yml
 
-  build-grafana:
-    needs: detect-changes
+  setup:
+    name: setup
+    needs: [detect-changes]
     if: needs.detect-changes.outputs.changed == 'true'
-    name: Build & Package Grafana
-    runs-on: ubuntu-x64-xlarge
+    runs-on: ubuntu-x64-small
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.output.outputs.version }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Set up version
+        run: jq -r .version package.json | sed -s "s/pre/${BUILD_ID}/g" > VERSION
+        env:
+          BUILD_ID: ${{ github.run_id }}
+      - id: output
+        run: echo "version=$(cat VERSION)" >> "$GITHUB_OUTPUT"
+
+  build-frontend:
+    name: build frontend
+    runs-on: ubuntu-x64-large
+    needs: [setup]
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-node
+      - name: Install JS dependencies
+        run: yarn install --immutable
+      - name: Build frontend
+        run: yarn build
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        with:
+          name: pr-frontend
+          path: public
+          retention-days: 1
+
+  build-backend:
+    name: build backend
+    runs-on: ubuntu-x64-large
+    needs: [setup]
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-go
+      - name: Build Go
+        env:
+          CGO_ENABLED: '0'
+          BUILD_VERSION: ${{ needs.setup.outputs.version }}
+          GOOS: linux
+          GOARCH: amd64
+        run: make build-go BUILD_VERSION="${BUILD_VERSION}"
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        with:
+          name: pr-backend
+          path: bin/linux/amd64
+          retention-days: 1
+
+  build-targz:
+    name: build targz
+    runs-on: ubuntu-x64-large-io
+    needs:
+      - setup
+      - build-frontend
+      - build-backend
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: pr-frontend
+          path: public
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: pr-backend
+          path: bin/linux/amd64
+      - name: Fix backend binary permissions
+        run: chmod +x bin/linux/amd64/grafana*
+      - name: Build tar.gz
+        env:
+          GOOS: linux
+          GOARCH: amd64
+          BUILD_NUMBER: ${{ github.run_id }}
+          BUILD_VERSION: ${{ needs.setup.outputs.version }}
+        run: make build-targz BUILD_VERSION="$BUILD_VERSION" BUILD_NUMBER="$BUILD_NUMBER"
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        with:
+          name: pr-targz
+          path: dist
+          retention-days: 1
+
+  build-docker:
+    name: build docker
+    runs-on: ubuntu-x64-large
+    needs:
+      - setup
+      - build-targz
     permissions:
       contents: read
       id-token: write
     steps:
-      - uses: grafana/shared-workflows/actions/dockerhub-login@main
-        if: github.event.pull_request.head.repo.fork == false
-      - uses: grafana/shared-workflows/actions/login-to-gar@main
-        if: github.event.pull_request.head.repo.fork == false
-      - uses: actions/checkout@v5
+      - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
-
-      - name: Build Grafana
-        uses: kminehart/dagger-for-github@590bdefcb7f0c1030fce068a2c041c36582262d6
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: pr-targz
+          path: dist
+      - name: Set up Docker Buildx
+        run: docker buildx create --use
+      - name: Build docker image
         env:
-          CACHE_BUILDERS: ${{ github.event.pull_request.head.repo.fork == false }}
-        with:
-          cache-binary: "true"
-          version: 0.18.8
-          verb: run
-          args: go run ./pkg/build/cmd artifacts -a docker:grafana:linux/amd64 --grafana-dir="${PWD}" --cache-builders=${CACHE_BUILDERS} > out.txt
-      - name: Cat built artifact
-        run: cat out.txt
-      - name: Move built artifacts
+          GOOS: linux
+          GOARCH: amd64
+          BUILD_NUMBER: ${{ github.run_id }}
+          BUILD_VERSION: ${{ needs.setup.outputs.version }}
         run: |
-          mkdir -p build-dir
-          mv "$(grep 'grafana_.*docker.tar.gz$' out.txt)" build-dir/grafana.docker.tar.gz
-
-      - name: Set artifact name
-        run: echo "artifact=grafana-server-${{github.run_number}}" >> "$GITHUB_OUTPUT"
-        id: artifact
-
-      - name: Upload grafana docker tarball
-        uses: actions/upload-artifact@v7
+          for TARGZ in dist/*.tar.gz; do break; done
+          TAG_VERSION="${BUILD_VERSION//+/-}"
+          make build-docker \
+            -o "$TARGZ" \
+            BUILD_VERSION="$BUILD_VERSION" \
+            BUILD_NUMBER="$BUILD_NUMBER" \
+            DOCKER_TAG="grafana/grafana-image-tags:${TAG_VERSION}-amd64"
+      - name: Stage docker artifact
+        run: |
+          mkdir -p upload
+          cp dist/*.docker.tar.gz upload/
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
+          name: pr-docker
+          path: upload
           retention-days: 1
-          name: grafana-docker-tar-gz
-          path: build-dir/grafana.docker.tar.gz
 
   push-docker-image:
     needs:
       - detect-changes
-      - build-grafana
+      - build-docker
     if: needs.detect-changes.outputs.changed == 'true'
     name: Push PR Docker image
     outputs:
@@ -91,19 +192,27 @@ jobs:
       id-token: write
     runs-on: ubuntu-x64
     steps:
-      - id: get-github-token
-        name: "create github app token"
-        uses: grafana/shared-workflows/actions/create-github-app-token@eb02241ed0a92aff205feab8ac3afcdf51c757c8 # create-github-app-token-v0.2.0
+      - id: vault-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main
         with:
-          github_app: "delivery-bot-app"
+          repo_secrets: |
+            GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
+      - name: Generate token
+        id: generate_token
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        with:
+          app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
+          private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
+          repositories: '["grafana"]'
+          permissions: '{"checks": "write"}'
       - uses: grafana/shared-workflows/actions/login-to-gar@main
         id: login-to-gar
         with:
           registry: 'us-docker.pkg.dev'
           environment: 'dev'
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: grafana-docker-tar-gz
+          name: pr-docker
           path: .
       - name: Load & Push Docker image
         id: push-image
@@ -111,7 +220,8 @@ jobs:
           BUILD_ID: ${{ github.run_id }}
         run: |
           set -euo pipefail
-          LOADED_IMAGE_NAME=$(docker load -i grafana.docker.tar.gz | sed 's/Loaded image: //g')
+          for f in *.docker.tar.gz; do break; done
+          LOADED_IMAGE_NAME=$(docker load -i "$f" | sed 's/Loaded image: //g')
           VERSION=$(echo "${LOADED_IMAGE_NAME}" | cut -d ':' -f 2 | cut -d '-' -f 1)
           DOCKER_IMAGE="us-docker.pkg.dev/grafanalabs-dev/docker-grafana-dev/grafana:${VERSION}-${BUILD_ID}"
           docker tag "${LOADED_IMAGE_NAME}" "${DOCKER_IMAGE}"
@@ -120,7 +230,7 @@ jobs:
           echo "IMAGE=${DOCKER_IMAGE}" | tee -a "$GITHUB_OUTPUT"
       - name: Add PR status check
         env:
-          GH_TOKEN: ${{ steps.get-github-token.outputs.token }}
+          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
           SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           gh api \
