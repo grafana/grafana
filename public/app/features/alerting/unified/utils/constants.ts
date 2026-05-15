@@ -1,5 +1,8 @@
 export const RULER_NOT_SUPPORTED_MSG = 'ruler not supported';
 
+/** The name used to identify the built-in Grafana rules/alertmanager source */
+export const GRAFANA_RULES_SOURCE_NAME = 'grafana';
+
 export const RULE_LIST_POLL_INTERVAL_MS = 30000;
 
 export const ALERTMANAGER_NAME_QUERY_KEY = 'alertmanager';

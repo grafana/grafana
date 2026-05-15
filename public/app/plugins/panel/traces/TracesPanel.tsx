@@ -5,6 +5,7 @@ import { useAsync } from 'react-use';
 import { type TraceSearchProps, type Field, type LinkModel, type PanelProps } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
+import { type DataSourceRef } from '@grafana/schema';
 import { TraceView } from 'app/features/explore/TraceView/TraceView';
 import { type SpanLinkFunc } from 'app/features/explore/TraceView/components/types/links';
 import { transformDataFrames } from 'app/features/explore/TraceView/utils/transform';
@@ -19,6 +20,8 @@ const styles = {
 };
 
 export interface TracesPanelOptions {
+  /** Fallback datasource identity for when data is provided via SceneDataNode and PanelData.request is unavailable. Required for extension points like grafana/traceview/header/actions. */
+  datasource?: DataSourceRef;
   createSpanLink?: SpanLinkFunc;
   focusedSpanId?: string;
   createFocusSpanLink?: (traceId: string, spanId: string) => LinkModel<Field>;
@@ -30,7 +33,13 @@ export const TracesPanel = ({ data, options, replaceVariables }: PanelProps<Trac
   const topOfViewRef = useRef<HTMLDivElement>(null);
   const traceProp = useMemo(() => transformDataFrames(data.series[0]), [data.series]);
   const dataSource = useAsync(async () => {
-    return await getDataSourceSrv().get(data.request?.targets[0].datasource?.uid);
+    const uid = data.request?.targets[0].datasource?.uid ?? options.datasource?.uid;
+
+    if (!uid) {
+      return undefined;
+    }
+
+    return await getDataSourceSrv().get(uid);
   });
 
   if (!data || !data.series.length || !traceProp) {

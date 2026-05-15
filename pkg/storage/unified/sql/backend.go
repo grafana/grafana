@@ -1090,6 +1090,13 @@ func (b *backend) listLatest(ctx context.Context, req *resourcepb.ListRequest, c
 func (b *backend) ListModifiedSince(ctx context.Context, key resource.NamespacedResource, sinceRv int64, _ *time.Time) (int64, iter.Seq2[*resource.ModifiedResource, error]) {
 	sinceRv = toMicrosecondRV(sinceRv)
 
+	// Validate key before doing latest RV check
+	if key.Group == "" || key.Resource == "" {
+		return 0, func(yield func(*resource.ModifiedResource, error) bool) {
+			yield(nil, fmt.Errorf("group and resource are required"))
+		}
+	}
+
 	// We don't use an explicit transaction for fetching LatestRV and subsequent fetching of resources.
 	// To guarantee that we don't include events with RV > LatestRV, we include the check in SQL query.
 
@@ -1139,12 +1146,15 @@ func (b *backend) ListModifiedSince(ctx context.Context, key resource.Namespaced
 				continue
 			}
 
-			// Deduplicate by name (namespace, group, and resource are always the same in the result set)
-			if _, ok := seen[mr.Key.Name]; ok {
+			// Deduplicate by (namespace, name). The query may run
+			// cross-namespace (empty Namespace argument) for the
+			// write-path scanner, so two resources with the same name
+			// in different namespaces must each yield once.
+			dedupKey := mr.Key.Namespace + "/" + mr.Key.Name
+			if _, ok := seen[dedupKey]; ok {
 				continue
 			}
-
-			seen[mr.Key.Name] = struct{}{}
+			seen[dedupKey] = struct{}{}
 			if !yield(mr, nil) {
 				return
 			}

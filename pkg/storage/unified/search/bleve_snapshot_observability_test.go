@@ -61,13 +61,13 @@ func assertSpanEvents(t *testing.T, recorder *tracetest.SpanRecorder, spanName s
 func TestSnapshotDownloadEmitsSpan(t *testing.T) {
 	recorder := setupSnapshotSpanRecorder(t)
 
-	store := &fakeRemoteIndexStore{}
-	store.put(makeULID(t, time.Now()), &IndexMeta{
+	store := newHookableStore(t)
+	dt := newDownloadTest(t, store)
+	seedDownloadableSnapshot(t, t.Context(), store.bucket, dt.ns, makeULID(t, time.Now()), &IndexMeta{
 		BuildVersion:          "11.5.0",
 		LatestResourceVersion: 42,
 		UploadTimestamp:       time.Now(),
 	})
-	dt := newDownloadTest(t, store)
 
 	_, _, err := dt.run(t)
 	require.NoError(t, err)
@@ -78,7 +78,7 @@ func TestSnapshotDownloadEmitsSpan(t *testing.T) {
 func TestSnapshotUploadEmitsSpanAndLockEvents(t *testing.T) {
 	recorder := setupSnapshotSpanRecorder(t)
 
-	store := &uploadTestStore{}
+	store := newHookableStore(t)
 	be, _ := newTestBleveBackend(t, SnapshotOptions{Store: store})
 	key := newTestNsResource()
 	idx := newUploadTestIndex(t, be, key, 42)

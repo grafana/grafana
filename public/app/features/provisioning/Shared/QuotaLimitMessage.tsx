@@ -1,8 +1,8 @@
 import { Trans } from '@grafana/i18n';
 import { TextLink } from '@grafana/ui';
+import { isOnPrem } from 'app/core/utils/isOnPrem';
 
 import { CONFIGURE_GRAFANA_DOCS_URL, UPGRADE_URL } from '../constants';
-import { isOnPrem } from '../utils/isOnPrem';
 
 interface QuotaLimitMessageProps {
   maxRepositories?: number;
