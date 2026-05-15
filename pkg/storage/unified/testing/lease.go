@@ -508,6 +508,59 @@ func runLeaseGarbageCollection(t *testing.T, store kv.KV) {
 	// A lease whose only generation was collected can be acquired again.
 	reacquired := acquire(oldReleasedName)
 	require.NoError(t, m.Release(ctx, reacquired))
+
+	t.Run("concurrent runs are safe", func(t *testing.T) {
+		const (
+			numLeases   = 100
+			concurrency = 5
+		)
+
+		now := time.Now().Add(-10 * time.Minute)
+		nowFunc := func() time.Time { return now }
+		m := newLeaseManagerNoGC(store, "holder-gc-concurrent", lease.WithInternalNowFunc(nowFunc))
+
+		for i := range numLeases {
+			l, err := m.Acquire(ctx, fmt.Sprintf("gc/concurrent/%03d", i))
+			require.NoError(t, err)
+			require.NotNil(t, l)
+		}
+
+		now = time.Now()
+
+		var (
+			wg      sync.WaitGroup
+			errs    = make(chan error, concurrency)
+			deleted = make(chan int, concurrency)
+		)
+
+		for range concurrency {
+			wg.Go(func() {
+				count, err := m.RunGarbageCollection(ctx)
+				if err != nil {
+					errs <- err
+				}
+				deleted <- count
+			})
+		}
+
+		wg.Wait()
+		close(errs)
+		close(deleted)
+
+		for err := range errs {
+			require.NoError(t, err)
+		}
+
+		totalDeleted := 0
+		for count := range deleted {
+			totalDeleted += count
+		}
+		require.GreaterOrEqual(t, totalDeleted, numLeases)
+
+		for i := range numLeases {
+			require.Empty(t, leaseKeys(t, store, fmt.Sprintf("gc/concurrent/%03d", i)))
+		}
+	})
 }
 
 func requireSingleLeaseKey(t *testing.T, store kv.KV, name string) string {
