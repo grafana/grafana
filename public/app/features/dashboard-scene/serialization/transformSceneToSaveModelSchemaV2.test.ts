@@ -52,6 +52,7 @@ import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsData
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, type DashboardSceneState } from '../scene/DashboardScene';
+import { LiveNowStreamingGuard } from '../scene/LiveNowStreamingGuard';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../scene/layout-auto-grid/AutoGridLayout';
@@ -293,7 +294,10 @@ describe('transformSceneToSaveModelSchemaV2', () => {
           sync: DashboardCursorSyncV1.Crosshair,
         }),
         new behaviors.LiveNowTimer({
-          enabled: true,
+          enabled: false,
+        }),
+        new LiveNowStreamingGuard({
+          userEnabled: true,
         }),
       ],
       $variables: new SceneVariableSet({

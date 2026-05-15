@@ -23,6 +23,7 @@ import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsData
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardScene, PERSISTED_PROPS } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
+import { LiveNowStreamingGuard } from '../scene/LiveNowStreamingGuard';
 import { VizPanelLinks } from '../scene/PanelLinks';
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
@@ -125,7 +126,7 @@ export class DashboardSceneChangeTracker {
         return true;
       }
     }
-    if (payload.changedObject instanceof behaviors.LiveNowTimer) {
+    if (payload.changedObject instanceof LiveNowStreamingGuard) {
       return true;
     }
     if (isSceneVariableInstance(payload.changedObject)) {

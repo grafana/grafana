@@ -32,6 +32,7 @@ import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { type DashboardScene } from '../scene/DashboardScene';
+import { LiveNowStreamingGuard } from '../scene/LiveNowStreamingGuard';
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
@@ -135,7 +136,7 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     state.$behaviors?.find((b): b is behaviors.CursorSync => b instanceof behaviors.CursorSync)?.state.sync ??
     defaultDashboard.graphTooltip;
   const liveNow =
-    state.$behaviors?.find((b): b is behaviors.LiveNowTimer => b instanceof behaviors.LiveNowTimer)?.isEnabled ||
+    state.$behaviors?.find((b): b is LiveNowStreamingGuard => b instanceof LiveNowStreamingGuard)?.isEnabled ||
     undefined;
 
   const dashboard: Dashboard = {

@@ -1,5 +1,5 @@
 import { isEmpty } from 'lodash';
-import { type FormEvent, memo, useState } from 'react';
+import { type FormEvent, type ReactNode, memo, useState } from 'react';
 
 import { rangeUtil, type TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -21,6 +21,7 @@ interface Props {
   timezone: TimeZone;
   weekStart?: WeekStart;
   liveNow?: boolean;
+  liveNowWarning?: ReactNode;
 }
 
 export const TimePickerSettings = memo(
@@ -37,6 +38,7 @@ export const TimePickerSettings = memo(
     timezone,
     weekStart,
     liveNow,
+    liveNowWarning,
   }: Props) => {
     const [isNowDelayValid, setIsNowDelayValid] = useState(true);
 
@@ -124,6 +126,7 @@ export const TimePickerSettings = memo(
         >
           <Switch id="smooth-streaming-toggle" value={!!liveNow} onChange={handleLiveNowChange} />
         </Field>
+        {liveNowWarning}
       </CollapsableSection>
     );
   }

@@ -43,6 +43,7 @@ import { registerDashboardMacro } from '../scene/DashboardMacro';
 import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
+import { LiveNowStreamingGuard } from '../scene/LiveNowStreamingGuard';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { PanelNotices } from '../scene/PanelNotices';
@@ -379,7 +380,8 @@ export function createDashboardSceneFromDashboardModel(
     interactionTracker,
     registerDashboardMacro,
     registerPanelInteractionsReporter,
-    new behaviors.LiveNowTimer({ enabled: oldModel.liveNow }),
+    new behaviors.LiveNowTimer({ enabled: false }),
+    new LiveNowStreamingGuard({ userEnabled: !!oldModel.liveNow }),
     addPanelsOnLoadBehavior,
     new DashboardReloadBehavior({
       reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange && oldModel.meta.reloadOnParamsChange,
