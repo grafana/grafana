@@ -73,7 +73,7 @@ export interface DashboardMeta {
   isNew?: boolean;
   version?: number;
 
-  // Org-defined template flow. Set when a dashboard scene was hydrated from an DashboardTemplate
+  // Dashboard template edit flow. Set when a dashboard scene was hydrated from an DashboardTemplate
   // via DashboardRoutes.Template with editTemplate=true.
   isDashboardTemplate?: boolean;
   dashboardTemplateUid?: string;

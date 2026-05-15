@@ -9,11 +9,14 @@ export interface TemplateDashboardEnvelopeOpts {
   canSave?: boolean;
 }
 
-// toTemplateDashboardEnvelope wraps a v2 dashboard payload (extracted from
-// `DashboardTemplate.spec.dashboard`) into the shape expected by
-// `transformSaveModelSchemaV2ToScene`. Templates don't have folders, stars,
-// sharing, or deletion semantics, so those access flags are hardcoded off.
-export function toTemplateDashboardEnvelope(
+/**
+ * Wraps a v2 dashboard payload (extracted from `DashboardTemplate.spec.dashboard`)
+ * into the shape expected by `transformSaveModelSchemaV2ToScene`.
+ *
+ * Templates don't have folders, stars, sharing, or deletion semantics, so those
+ * access flags are hardcoded off.
+ */
+export function transformTemplateToSaveModelSchemaV2(
   opts: TemplateDashboardEnvelopeOpts
 ): DashboardWithAccessInfo<DashboardV2Spec> {
   return {
@@ -26,8 +29,8 @@ export function toTemplateDashboardEnvelope(
     },
     spec: opts.dashboardSpec,
     access: {
-      canSave: opts.canSave ?? true,
-      canEdit: opts.canEdit ?? true,
+      canSave: opts.canSave ?? false,
+      canEdit: opts.canEdit ?? false,
       canStar: false,
       canShare: false,
       canDelete: false,
