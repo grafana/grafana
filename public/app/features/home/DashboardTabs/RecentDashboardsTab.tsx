@@ -49,11 +49,11 @@ export function RecentDashboardsTab({ dashboards, loading, error, retry, folders
         message={t('home.recent-dashboards-tab.empty', 'Dashboards you\u2019ve recently viewed will appear here.')}
         button={
           canCreate ? (
-            <LinkButton href="/dashboard/new">
+            <LinkButton icon="plus" href="/dashboard/new">
               <Trans i18nKey="home.recent-dashboards-tab.create">Create your first dashboard</Trans>
             </LinkButton>
           ) : (
-            <LinkButton href="/dashboards" variant="secondary">
+            <LinkButton icon="apps" href="/dashboards" variant="secondary">
               <Trans i18nKey="home.recent-dashboards-tab.browse">Browse dashboards</Trans>
             </LinkButton>
           )
@@ -73,7 +73,7 @@ export function RecentDashboardsTab({ dashboards, loading, error, retry, folders
   };
 
   return (
-    <>
+    <div className={styles.wrapper}>
       <ul className={styles.list}>
         {dashboards.map((dash) => (
           <li key={dash.uid}>
@@ -93,11 +93,16 @@ export function RecentDashboardsTab({ dashboards, loading, error, retry, folders
           <Trans i18nKey="home.recent-dashboards-tab.clear">Clear history</Trans>
         </Button>
       </div>
-    </>
+    </div>
   );
 }
 
 const getStyles = () => ({
+  wrapper: css({
+    display: 'flex',
+    flexDirection: 'column',
+    flex: 1,
+  }),
   list: css({
     listStyle: 'none',
     padding: 0,
@@ -107,5 +112,6 @@ const getStyles = () => ({
     display: 'flex',
     justifyContent: 'flex-end',
     paddingTop: 4,
+    marginTop: 'auto',
   }),
 });
