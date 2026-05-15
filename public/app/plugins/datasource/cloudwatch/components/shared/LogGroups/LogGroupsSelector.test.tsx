@@ -205,7 +205,7 @@ describe('LogGroupsSelector', () => {
     const defer = new Deferred();
     const fetchLogGroups = jest.fn(async () => {
       await Promise.all([defer.promise]);
-      return { results: [] } as LogGroupsResponse;
+      return { results: [] } satisfies LogGroupsResponse;
     });
     render(<LogGroupsSelector {...defaultProps} fetchLogGroups={fetchLogGroups} />);
     await userEvent.click(screen.getByText('Select log groups'));
@@ -227,7 +227,7 @@ describe('LogGroupsSelector', () => {
               name: `logGroup${i}`,
             },
           })),
-      } as LogGroupsResponse;
+      } satisfies LogGroupsResponse;
     });
     render(<LogGroupsSelector {...defaultProps} fetchLogGroups={fetchLogGroups} />);
     await userEvent.click(screen.getByText('Select log groups'));
@@ -342,7 +342,7 @@ describe('LogGroupsSelector', () => {
             },
           ],
           nextToken: 'page2_token',
-        } as LogGroupsResponse;
+        } satisfies LogGroupsResponse;
       }
       return {
         results: [
@@ -354,14 +354,14 @@ describe('LogGroupsSelector', () => {
             },
           },
         ],
-      } as LogGroupsResponse;
+      } satisfies LogGroupsResponse;
     });
 
     render(<LogGroupsSelector {...defaultProps} fetchLogGroups={fetchLogGroups} />);
     await userEvent.click(screen.getByText('Select log groups'));
 
     await waitFor(() => expect(screen.getByText('logGroup1')).toBeInTheDocument());
-    expect(screen.getByText('Load more')).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Load more' })).toBeInTheDocument();
     expect(screen.queryByText('logGroup2')).not.toBeInTheDocument();
 
     await userEvent.click(screen.getByText('Load more'));
@@ -399,7 +399,7 @@ describe('LogGroupsSelector', () => {
             },
           ],
           nextToken: 'page2_token',
-        } as LogGroupsResponse;
+        } satisfies LogGroupsResponse;
       }
       throw new Error('network error');
     });
