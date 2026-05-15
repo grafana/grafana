@@ -7,6 +7,7 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -27,6 +28,9 @@ func NewSQLAdapter(repo annotations.Repository, cleaner annotations.Cleaner, cle
 		cleanupSettings: cleanupSettings,
 	}
 }
+
+// Close is a no-op as sqlAdapter does not own the underlying sqlstore
+func (a *sqlAdapter) Close() error { return nil }
 
 func (a *sqlAdapter) Get(ctx context.Context, namespace, name string) (*annotationV0.Annotation, error) {
 	id, err := parseAnnotationID(name)
@@ -216,10 +220,12 @@ func (a *sqlAdapter) ListTags(ctx context.Context, namespace string, opts TagLis
 }
 
 func (a *sqlAdapter) toK8sResource(item *annotations.ItemDTO, namespace string) *annotationV0.Annotation {
+	name := fmt.Sprintf("a-%d", item.ID)
 	anno := &annotationV0.Annotation{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("a-%d", item.ID),
+			Name:      name,
 			Namespace: namespace,
+			UID:       types.UID(name),
 		},
 		Spec: annotationV0.AnnotationSpec{
 			Text: item.Text,

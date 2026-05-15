@@ -5,7 +5,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/blevesearch/bleve/v2"
 	"github.com/blevesearch/bleve/v2/document"
+	"github.com/blevesearch/bleve/v2/index/scorch"
+	"github.com/blevesearch/bleve/v2/index/scorch/mergeplan"
 	"github.com/blevesearch/bleve/v2/mapping"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -126,6 +129,73 @@ func TestTermVectorsAndFreqNorm(t *testing.T) {
 				"field %q needs freq/norm for BM25 scoring", name)
 		}
 	}
+}
+
+func TestStoredTitleSurvivesMergeAfterDelete(t *testing.T) {
+	mappings, err := search.GetBleveMappings(nil, nil)
+	require.NoError(t, err)
+
+	idx, err := bleve.NewUsing(t.TempDir(), mappings, bleve.Config.DefaultIndexType, bleve.Config.DefaultKVStore, nil)
+	require.NoError(t, err)
+	defer func() { require.NoError(t, idx.Close()) }()
+
+	const docCount = 3000
+	batch := idx.NewBatch()
+	for i := range docCount {
+		title := fmt.Sprintf("Dashboard title %04d", i)
+		doc := resource.IndexableDocument{
+			Name:        fmt.Sprintf("dash-%05d", i),
+			Title:       title,
+			Description: "description",
+			Folder:      "folder",
+		}
+		doc.UpdateCopyFields()
+
+		require.NoError(t, batch.Index(fmt.Sprintf("id-%05d", i), doc))
+		if batch.Size() >= 1000 {
+			require.NoError(t, idx.Batch(batch))
+			batch = idx.NewBatch()
+		}
+	}
+	if batch.Size() > 0 {
+		require.NoError(t, idx.Batch(batch))
+	}
+
+	require.NoError(t, idx.Delete("id-01000"))
+
+	advancedIndex, err := idx.Advanced()
+	require.NoError(t, err)
+
+	// Grafana creates indexes with Bleve's default index type, which is Scorch.
+	// Merges normally happen in the background; ForceMerge makes that path deterministic for this test.
+	advanced, ok := advancedIndex.(*scorch.Scorch)
+	require.True(t, ok)
+	require.NoError(t, advanced.ForceMerge(t.Context(), &mergeplan.SingleSegmentMergePlanOptions))
+
+	query := bleve.NewMatchQuery("dashboard")
+	query.SetField(resource.SEARCH_FIELD_TITLE)
+	req := bleve.NewSearchRequestOptions(query, docCount, 0, false)
+	req.Fields = []string{resource.SEARCH_FIELD_TITLE}
+
+	result, err := idx.Search(req)
+	require.NoError(t, err)
+	require.Equal(t, uint64(docCount-1), result.Total)
+
+	missingTitles := 0
+	missingTitleExamples := make([]string, 0, 10)
+	for _, hit := range result.Hits {
+		title, ok := hit.Fields[resource.SEARCH_FIELD_TITLE].(string)
+		if !ok || title == "" {
+			missingTitles++
+			if len(missingTitleExamples) < cap(missingTitleExamples) {
+				missingTitleExamples = append(missingTitleExamples, hit.ID)
+			}
+		}
+	}
+
+	// Dashboard search can still match indexed title terms when this regresses,
+	// but clients display the stored title returned in the search hit.
+	require.Zero(t, missingTitles, "stored title missing for %d docs; examples: %v", missingTitles, missingTitleExamples)
 }
 
 func TestDocValuesConfiguration(t *testing.T) {

@@ -24,6 +24,7 @@ const (
 	DashboardResource        = "dashboards.dashboard.grafana.app"
 	ShortURLResource         = "shorturls.shorturl.grafana.app"
 	StarsResource            = "stars.collections.grafana.app"
+	PreferencesResource      = "preferences.preferences.grafana.app"
 	DataSourceResources      = "datasources.datasource.grafana.app" // All datasources
 	QueryCacheConfigResource = "querycacheconfigs.querycaching.grafana.app"
 )
@@ -35,6 +36,7 @@ var MigratedUnifiedResources = map[string]bool{
 	DashboardResource:        true,  // Only Mode5!
 	ShortURLResource:         false, // Requires kubernetesShortURLs to be enabled by default
 	StarsResource:            false,
+	PreferencesResource:      false,
 	DataSourceResources:      false,
 	QueryCacheConfigResource: false,
 }
@@ -175,7 +177,8 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	}
 	cfg.EnableSearch = section.Key("enable_search").MustBool(true)
 	cfg.EnableVectorBackend = section.Key("vector_backend").MustBool(false)
-	cfg.VectorBackfillerEnabled = section.Key("vector_backfiller_enabled").MustBool(false)
+	cfg.VectorIndexingEnabled = section.Key("vector_indexing_enabled").MustBool(false)
+	cfg.VectorReconcilerInterval = section.Key("vector_reconciler_interval").MustDuration(time.Minute)
 	cfg.applyMigrationEnforcements()
 	cfg.EnableSearchClient = section.Key("enable_search_client").MustBool(false)
 	cfg.MaxPageSizeBytes = section.Key("max_page_size_bytes").MustInt(0)

@@ -1,5 +1,6 @@
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
+import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { invalidateCachedPromisesCache } from '../../utils/getCachedPromise';
 import { getLogger, setLogger } from '../logging/registry';
 
@@ -34,7 +35,7 @@ afterEach(() => {
 
 describe('when plugins.useMTPlugins flag is enabled', () => {
   beforeAll(() => {
-    setTestFlags({ 'plugins.useMTPlugins': true });
+    setTestFlags({ [FlagKeys.PluginsUseMTPlugins]: true });
   });
 
   afterAll(() => {
@@ -314,7 +315,7 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
 
 describe('when plugins.useMTPlugins flag is disabled', () => {
   beforeAll(() => {
-    setTestFlags({ 'plugins.useMTPlugins': false });
+    setTestFlags({ [FlagKeys.PluginsUseMTPlugins]: false });
   });
 
   afterAll(() => {
