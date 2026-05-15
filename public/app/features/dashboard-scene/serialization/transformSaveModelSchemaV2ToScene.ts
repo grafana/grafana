@@ -251,7 +251,7 @@ export function transformSaveModelSchemaV2ToScene(
         interactionTracker,
         registerDashboardMacro,
         registerPanelInteractionsReporter,
-        new behaviors.LiveNowTimer({ enabled: false }),
+        new behaviors.LiveNowTimer({ enabled: false, refreshRate: 500 }),
         new LiveNowStreamingGuard({ userEnabled: !!dashboard.liveNow }),
         addPanelsOnLoadBehavior,
         new DashboardReloadBehavior({

@@ -380,7 +380,7 @@ export function createDashboardSceneFromDashboardModel(
     interactionTracker,
     registerDashboardMacro,
     registerPanelInteractionsReporter,
-    new behaviors.LiveNowTimer({ enabled: false }),
+    new behaviors.LiveNowTimer({ enabled: false, refreshRate: 500 }),
     new LiveNowStreamingGuard({ userEnabled: !!oldModel.liveNow }),
     addPanelsOnLoadBehavior,
     new DashboardReloadBehavior({
