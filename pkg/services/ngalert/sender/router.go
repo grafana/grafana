@@ -296,10 +296,22 @@ func (d *AlertsRouter) datasourceToExternalAMcfg(ds *datasources.DataSource) (Ex
 
 	insecureSkipVerify := false
 
-	var tlsAuthEnabled bool
+	var tlsAuthEnabled, tlsAuthWithCACert bool
 	if ds.JsonData != nil {
 		insecureSkipVerify = ds.JsonData.Get("tlsSkipVerify").MustBool(false)
 		tlsAuthEnabled = ds.JsonData.Get("tlsAuth").MustBool(false)
+		tlsAuthWithCACert = ds.JsonData.Get("tlsAuthWithCACert").MustBool(false)
+	}
+
+	var tlsCACert string
+	if tlsAuthWithCACert {
+		if ds.SecureJsonData == nil {
+			return ExternalAMcfg{}, errors.New("tlsAuthWithCACert is enabled but CA certificate is not configured")
+		}
+		tlsCACert = d.secretService.GetDecryptedValue(context.Background(), ds.SecureJsonData, "tlsCACert", "")
+		if tlsCACert == "" {
+			return ExternalAMcfg{}, errors.New("tlsAuthWithCACert is enabled but CA certificate is empty")
+		}
 	}
 
 	var tlsClientCert, tlsClientKey string
@@ -321,6 +333,7 @@ func (d *AlertsRouter) datasourceToExternalAMcfg(ds *datasources.DataSource) (Ex
 		URL:                amURL,
 		Headers:            headers,
 		InsecureSkipVerify: insecureSkipVerify,
+		TLSCACert:          tlsCACert,
 		TLSClientCert:      tlsClientCert,
 		TLSClientKey:       tlsClientKey,
 	}, nil

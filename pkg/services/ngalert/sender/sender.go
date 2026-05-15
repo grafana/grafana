@@ -52,6 +52,8 @@ type ExternalAMcfg struct {
 	Timeout       time.Duration
 	// InsecureSkipVerify determines whether the server's TLS certificate should be verified.
 	InsecureSkipVerify bool
+	// TLSCACert is the PEM-encoded CA certificate used to verify the server's certificate.
+	TLSCACert string
 	// TLSClientCert specifies the TLS client certificate used for secure communication.
 	TLSClientCert string
 	// TLSClientKey specifies the private key associated with the TLS client certificate for secure communication.
@@ -111,6 +113,7 @@ func (cfg *ExternalAMcfg) SHA256() string {
 		cfg.headerString(),
 		cfg.URL,
 		skipVerify,
+		cfg.TLSCACert,
 		cfg.TLSClientCert,
 		cfg.TLSClientKey,
 	})
@@ -344,9 +347,10 @@ func externalAMcfgToAlertmanagerConfig(am ExternalAMcfg) (*config.AlertmanagerCo
 	}
 
 	// Set TLS configuration if any TLS options are provided
-	if am.InsecureSkipVerify || am.TLSClientCert != "" {
+	if am.InsecureSkipVerify || am.TLSCACert != "" || am.TLSClientCert != "" {
 		amConfig.HTTPClientConfig.TLSConfig = common_config.TLSConfig{
 			InsecureSkipVerify: am.InsecureSkipVerify,
+			CA:                 am.TLSCACert,
 			Cert:               am.TLSClientCert,
 			Key:                common_config.Secret(am.TLSClientKey),
 		}
