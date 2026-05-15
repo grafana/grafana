@@ -13,7 +13,12 @@ import {
   getScopesDashboardsSearchInput,
   getScopesSelectorInput,
 } from './cuj-selectors';
-import { checkDashboardReloadBehavior, getConfigDashboards, trackDashboardReloadRequests } from './utils';
+import {
+  checkDashboardReloadBehavior,
+  getConfigDashboards,
+  prepareAPIMocks,
+  trackDashboardReloadRequests,
+} from './utils';
 
 test.use({
   featureToggles: {
@@ -40,6 +45,8 @@ test.describe(
       const scopesDashboardsSearchInput = getScopesDashboardsSearchInput(page);
       const adhocFilterPills = getAdHocFilterPills(page);
       const groupByValues = getGroupByValues(page);
+
+      await prepareAPIMocks(page);
 
       // Set up routes before any navigation (only for mocked mode)
       if (!USE_LIVE_DATA) {
