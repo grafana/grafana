@@ -1,12 +1,11 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { useUserStorage } from '@grafana/runtime/internal';
 import { Button, Divider, Icon, IconButton, useStyles2 } from '@grafana/ui';
 import { CloudBadge } from 'app/core/components/Branding/CloudBadge';
-import { backendSrv } from 'app/core/services/backend_srv';
-import { contextSrv } from 'app/core/services/context_srv';
 import { isOpenSourceBuildOrUnlicenced } from 'app/features/admin/EnterpriseAuthFeaturesCard';
 
 type AdCardProps = {
@@ -15,20 +14,23 @@ type AdCardProps = {
   href: string;
   logoUrl: string;
   items: string[];
-  helpFlag: number;
+  storageKey: string;
 };
 
-export default function AdCard({ title, description, href, logoUrl, items, helpFlag }: AdCardProps) {
+export default function AdCard({ title, description, href, logoUrl, items, storageKey }: AdCardProps) {
   const styles = useStyles2(getAddCardStyles);
+  const storage = useUserStorage('grafana-help-flags');
+  const [isDismissed, setDismissed] = useState<boolean>(true);
 
-  const helpFlags = contextSrv.user.helpFlags1;
-  const [isDismissed, setDismissed] = useState<boolean>(Boolean(helpFlags & helpFlag));
-
-  const onDismiss = () => {
-    backendSrv.put(`/api/user/helpflags/${helpFlag}`, undefined, { showSuccessAlert: false }).then((res) => {
-      contextSrv.user.helpFlags1 = res.helpFlags1;
-      setDismissed(true);
+  useEffect(() => {
+    storage.getItem(storageKey).then((value: string | null) => {
+      setDismissed(value === 'true');
     });
+  }, [storage, storageKey]);
+
+  const onDismiss = async () => {
+    await storage.setItem(storageKey, 'true');
+    setDismissed(true);
   };
 
   if (isDismissed || !isOpenSourceBuildOrUnlicenced()) {
