@@ -1,7 +1,10 @@
-import 'react-data-grid/lib/styles.css';
+import '@grafana/react-data-grid/lib/styles.css';
 import { css, cx } from '@emotion/css';
 import { Property } from 'csstype';
 import { Key, ReactNode, useCallback, useLayoutEffect, useMemo, useState } from 'react';
+
+import { DataHoverClearEvent, DataHoverEvent, Field, FieldType, GrafanaTheme2, ReducerID } from '@grafana/data';
+import { t, Trans } from '@grafana/i18n';
 import {
   Cell,
   CellRendererProps,
@@ -11,10 +14,7 @@ import {
   RenderRowProps,
   Row,
   SortColumn,
-} from 'react-data-grid';
-
-import { DataHoverClearEvent, DataHoverEvent, Field, FieldType, GrafanaTheme2, ReducerID } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+} from '@grafana/react-data-grid';
 import { TableCellHeight } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';

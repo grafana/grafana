@@ -1,5 +1,4 @@
 import { Property } from 'csstype';
-import { SortColumn } from 'react-data-grid';
 import tinycolor from 'tinycolor2';
 
 import {
@@ -12,6 +11,7 @@ import {
   DisplayValueAlignmentFactors,
   DataFrame,
 } from '@grafana/data';
+import { SortColumn } from '@grafana/react-data-grid';
 import {
   BarGaugeDisplayMode,
   TableCellBackgroundDisplayMode,
