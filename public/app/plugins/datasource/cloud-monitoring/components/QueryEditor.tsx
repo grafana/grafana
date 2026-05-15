@@ -3,6 +3,7 @@ import { isEqual } from 'lodash';
 import { useEffect, useState } from 'react';
 
 import { CoreApp, type QueryEditorProps, getDefaultTimeRange, toOption } from '@grafana/data';
+import { GoogleAuthType } from '@grafana/google-sdk';
 import { EditorRows } from '@grafana/plugin-ui';
 import { Alert, ConfirmModal, TextLink } from '@grafana/ui';
 
@@ -91,7 +92,7 @@ export const QueryEditor = (props: Props) => {
   // so the data source can't forward a token. Show a clear message instead of
   // letting the user compose a query that will always fail at runtime.
   if (
-    datasource.authenticationType === 'oauthPassthrough' &&
+    datasource.authenticationType === GoogleAuthType.ForwardOAuthIdentity &&
     (app === CoreApp.UnifiedAlerting || app === CoreApp.CloudAlerting)
   ) {
     return <OAuthPassthroughAlertingAlert />;
