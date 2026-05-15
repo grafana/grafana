@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { t, Trans } from '@grafana/i18n';
-import { Alert, EmptyState, Spinner, TextLink, useStyles2 } from '@grafana/ui';
+import { Alert, Button, EmptyState, Icon, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { type DashboardQueryResult, type LocationInfo } from 'app/features/search/service/types';
 import { DashListItem } from 'app/plugins/panel/dashlist/DashListItem';
 
@@ -17,7 +17,7 @@ export function StarredDashboardsTab({ dashboards, loading, error, retry, folder
   const styles = useStyles2(getStyles);
 
   if (loading) {
-    return <Spinner />;
+    return <LoadingPlaceholder text={t('home.starred-dashboards-tab.loading', 'Loading starred dashboards...')} />;
   }
 
   if (error) {
@@ -25,20 +25,25 @@ export function StarredDashboardsTab({ dashboards, loading, error, retry, folder
       <Alert
         severity="warning"
         title={t('home.starred-dashboards-tab.error-title', 'Could not load starred dashboards')}
-      >
-        <button onClick={retry}>
-          <Trans i18nKey="home.starred-dashboards-tab.retry">Retry</Trans>
-        </button>
-      </Alert>
+        action={
+          <Button onClick={retry} variant="secondary" size="sm">
+            <Trans i18nKey="home.starred-dashboards-tab.retry">Retry</Trans>
+          </Button>
+        }
+      />
     );
   }
 
   if (dashboards.length === 0) {
     return (
-      <EmptyState variant="call-to-action" message={t('home.starred-dashboards-tab.empty', 'No starred dashboards')}>
-        <TextLink href="/dashboards">
-          <Trans i18nKey="home.starred-dashboards-tab.browse">Browse dashboards to star your favorites</Trans>
-        </TextLink>
+      <EmptyState
+        hideImage
+        variant="completed"
+        message={t('home.starred-dashboards-tab.empty', 'Your starred dashboards will appear here.')}
+      >
+        <Trans i18nKey="home.starred-dashboards-tab.empty-description">
+          You can star your favorite dashboards by clicking the <Icon name="star" /> from the dashboard page.
+        </Trans>
       </EmptyState>
     );
   }

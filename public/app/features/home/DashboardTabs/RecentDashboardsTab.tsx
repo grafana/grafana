@@ -1,9 +1,12 @@
 import { css } from '@emotion/css';
 
 import { t, Trans } from '@grafana/i18n';
-import { Alert, EmptyState, Spinner, TextLink, useStyles2 } from '@grafana/ui';
+import { Alert, Button, EmptyState, LinkButton, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { contextSrv } from 'app/core/services/context_srv';
+import impressionSrv from 'app/core/services/impression_srv';
 import { type DashboardQueryResult, type LocationInfo } from 'app/features/search/service/types';
 import { DashListItem } from 'app/plugins/panel/dashlist/DashListItem';
+import { AccessControlAction } from 'app/types/accessControl';
 
 interface Props {
   dashboards: DashboardQueryResult[];
@@ -17,7 +20,9 @@ export function RecentDashboardsTab({ dashboards, loading, error, retry, folders
   const styles = useStyles2(getStyles);
 
   if (loading) {
-    return <Spinner />;
+    return (
+      <LoadingPlaceholder text={t('home.recent-dashboards-tab.loading', 'Loading recently viewed dashboards...')} />
+    );
   }
 
   if (error) {
@@ -25,42 +30,70 @@ export function RecentDashboardsTab({ dashboards, loading, error, retry, folders
       <Alert
         severity="warning"
         title={t('home.recent-dashboards-tab.error-title', 'Could not load recently viewed dashboards')}
-      >
-        <button onClick={retry}>
-          <Trans i18nKey="home.recent-dashboards-tab.retry">Retry</Trans>
-        </button>
-      </Alert>
+        action={
+          <Button onClick={retry} variant="secondary" size="sm">
+            <Trans i18nKey="home.recent-dashboards-tab.retry">Retry</Trans>
+          </Button>
+        }
+      />
     );
   }
 
   if (dashboards.length === 0) {
+    const canCreate = contextSrv.hasPermission(AccessControlAction.DashboardsCreate);
+
     return (
       <EmptyState
+        hideImage
         variant="call-to-action"
-        message={t('home.recent-dashboards-tab.empty', 'No recently viewed dashboards')}
+        message={t('home.recent-dashboards-tab.empty', 'Dashboards you\u2019ve recently viewed will appear here.')}
+        button={
+          canCreate ? (
+            <LinkButton href="/dashboard/new">
+              <Trans i18nKey="home.recent-dashboards-tab.create">Create your first dashboard</Trans>
+            </LinkButton>
+          ) : (
+            <LinkButton href="/dashboards" variant="secondary">
+              <Trans i18nKey="home.recent-dashboards-tab.browse">Browse dashboards</Trans>
+            </LinkButton>
+          )
+        }
       >
-        <TextLink href="/dashboards">
-          <Trans i18nKey="home.recent-dashboards-tab.browse">Browse dashboards</Trans>
-        </TextLink>
+        <Trans i18nKey="home.recent-dashboards-tab.empty-description">
+          After you&apos;ve connected data, you can use dashboards to query and visualize your data with charts, stats
+          and tables or create lists, markdowns and other widgets.
+        </Trans>
       </EmptyState>
     );
   }
 
+  const handleClearHistory = () => {
+    impressionSrv.clearImpressions();
+    retry();
+  };
+
   return (
-    <ul className={styles.list}>
-      {dashboards.map((dash) => (
-        <li key={dash.uid}>
-          <DashListItem
-            dashboard={dash}
-            url={dash.url}
-            showFolderNames={true}
-            locationInfo={foldersByUid[dash.location]}
-            layoutMode="list"
-            source="homepage_recentTab"
-          />
-        </li>
-      ))}
-    </ul>
+    <>
+      <ul className={styles.list}>
+        {dashboards.map((dash) => (
+          <li key={dash.uid}>
+            <DashListItem
+              dashboard={dash}
+              url={dash.url}
+              showFolderNames={true}
+              locationInfo={foldersByUid[dash.location]}
+              layoutMode="list"
+              source="homepage_recentTab"
+            />
+          </li>
+        ))}
+      </ul>
+      <div className={styles.clearButton}>
+        <Button icon="times" size="xs" variant="secondary" fill="text" onClick={handleClearHistory}>
+          <Trans i18nKey="home.recent-dashboards-tab.clear">Clear history</Trans>
+        </Button>
+      </div>
+    </>
   );
 }
 
@@ -69,5 +102,10 @@ const getStyles = () => ({
     listStyle: 'none',
     padding: 0,
     margin: 0,
+  }),
+  clearButton: css({
+    display: 'flex',
+    justifyContent: 'flex-end',
+    paddingTop: 4,
   }),
 });

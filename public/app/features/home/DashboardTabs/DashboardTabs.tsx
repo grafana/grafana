@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAsyncRetry } from 'react-use';
 
 import { type GrafanaTheme2, PluginExtensionPoints } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { usePluginComponents } from '@grafana/runtime';
-import { Box, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
+import { Box, ScrollContainer, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 import { getRecentlyViewedDashboards } from 'app/features/browse-dashboards/api/recentlyViewed';
 import { useDashboardLocationInfo } from 'app/features/search/hooks/useDashboardLocationInfo';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
@@ -62,6 +62,24 @@ export function DashboardTabs() {
     });
   }, []);
 
+  // Auto-switch to the non-empty tab when initial data finishes loading
+  const didAutoSwitch = useRef(false);
+  useEffect(() => {
+    if (didAutoSwitch.current || recentLoading || starredLoading) {
+      return;
+    }
+    didAutoSwitch.current = true;
+
+    const recentEmpty = !recentDashboards?.length;
+    const starredEmpty = !starredDashboards?.length;
+
+    if (activeTab === RECENT_TAB_ID && recentEmpty && !starredEmpty) {
+      setActiveTab(STARRED_TAB_ID);
+    } else if (activeTab === STARRED_TAB_ID && starredEmpty && !recentEmpty) {
+      setActiveTab(RECENT_TAB_ID);
+    }
+  }, [recentLoading, starredLoading, recentDashboards, starredDashboards, activeTab]);
+
   const builtInTabs: HomepageTab[] = [
     {
       id: RECENT_TAB_ID,
@@ -71,7 +89,6 @@ export function DashboardTabs() {
     {
       id: STARRED_TAB_ID,
       label: t('home.dashboard-tabs.starred', 'Starred'),
-      icon: 'star',
       counter: starredDashboards?.length,
     },
   ];
@@ -98,29 +115,31 @@ export function DashboardTabs() {
         ))}
       </TabsBar>
       <TabContent className={styles.tabContent}>
-        {activeTab === RECENT_TAB_ID && (
-          <RecentDashboardsTab
-            dashboards={recentDashboards ?? []}
-            loading={recentLoading}
-            error={recentError}
-            retry={recentRetry}
-            foldersByUid={foldersByUid}
-          />
-        )}
-        {activeTab === STARRED_TAB_ID && (
-          <StarredDashboardsTab
-            dashboards={starredDashboards ?? []}
-            loading={starredLoading}
-            error={starredError}
-            retry={starredRetry}
-            foldersByUid={foldersByUid}
-          />
-        )}
-        {extensionTabs
-          .filter((tab) => tab.content && activeTab === tab.id)
-          .map((tab) => (
-            <div key={tab.id}>{tab.content}</div>
-          ))}
+        <ScrollContainer showScrollIndicators maxHeight="256px" minHeight="256px">
+          {activeTab === RECENT_TAB_ID && (
+            <RecentDashboardsTab
+              dashboards={recentDashboards ?? []}
+              loading={recentLoading}
+              error={recentError}
+              retry={recentRetry}
+              foldersByUid={foldersByUid}
+            />
+          )}
+          {activeTab === STARRED_TAB_ID && (
+            <StarredDashboardsTab
+              dashboards={starredDashboards ?? []}
+              loading={starredLoading}
+              error={starredError}
+              retry={starredRetry}
+              foldersByUid={foldersByUid}
+            />
+          )}
+          {extensionTabs
+            .filter((tab) => tab.content && activeTab === tab.id)
+            .map((tab) => (
+              <div key={tab.id}>{tab.content}</div>
+            ))}
+        </ScrollContainer>
       </TabContent>
 
       {/* Render extension components (they return null, just register tabs) */}
@@ -134,8 +153,6 @@ export function DashboardTabs() {
 const getStyles = (theme: GrafanaTheme2) => ({
   tabContent: css({
     padding: 0,
-    maxHeight: 256,
-    overflowY: 'auto',
   }),
   linkTabsSpacer: css({
     flex: 1,

@@ -84,7 +84,7 @@ describe('DashboardTabs', () => {
     render(<DashboardTabs />);
 
     await waitFor(() => {
-      expect(screen.getByText('No recently viewed dashboards')).toBeInTheDocument();
+      expect(screen.getByText('Dashboards you\u2019ve recently viewed will appear here.')).toBeInTheDocument();
     });
   });
 
@@ -95,7 +95,7 @@ describe('DashboardTabs', () => {
     await user.click(screen.getByRole('tab', { name: /starred/i }));
 
     await waitFor(() => {
-      expect(screen.getByText('No starred dashboards')).toBeInTheDocument();
+      expect(screen.getByText('Your starred dashboards will appear here.')).toBeInTheDocument();
     });
   });
 
