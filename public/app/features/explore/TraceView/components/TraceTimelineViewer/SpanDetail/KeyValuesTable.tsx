@@ -124,7 +124,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexShrink: 0,
     }),
     jsonTable: css({
-      display: 'inline-block',
+      display: 'block',
+      wordBreak: 'break-word',
     }),
   };
 };
