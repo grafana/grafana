@@ -394,8 +394,11 @@ DEB_PACKAGE_NAME   := $(if $(filter 6,$(ARM)),$(TARGZ_PACKAGE_NAME)-rpi,$(TARGZ_
 TARGZ_FILE         := dist/$(TARGZ_PACKAGE_NAME)_$(BUILD_VERSION)_$(BUILD_NUMBER)_$(OS)_$(ARCH_LABEL).tar.gz
 DEB_FILE           := dist/$(DEB_PACKAGE_NAME)_$(BUILD_VERSION)_$(BUILD_NUMBER)_$(OS)_$(ARCH_LABEL).deb
 RPM_FILE           := dist/$(TARGZ_PACKAGE_NAME)_$(BUILD_VERSION)_$(BUILD_NUMBER)_$(OS)_$(ARCH_LABEL).rpm
-DOCKER_FILE        := dist/$(TARGZ_PACKAGE_NAME)_$(BUILD_VERSION)_$(BUILD_NUMBER)_$(OS)_$(ARCH_LABEL).docker.tar.gz
-DOCKER_UBUNTU_FILE := dist/$(TARGZ_PACKAGE_NAME)_$(BUILD_VERSION)_$(BUILD_NUMBER)_$(OS)_$(ARCH_LABEL).ubuntu.docker.tar.gz
+SLIM                    ?= false
+SLIM_SUFFIX             := $(if $(filter true,$(SLIM)),-slim,)
+DOCKER_FILE             := dist/$(TARGZ_PACKAGE_NAME)_$(BUILD_VERSION)_$(BUILD_NUMBER)_$(OS)_$(ARCH_LABEL)$(SLIM_SUFFIX).docker.tar.gz
+DOCKER_UBUNTU_FILE      := dist/$(TARGZ_PACKAGE_NAME)_$(BUILD_VERSION)_$(BUILD_NUMBER)_$(OS)_$(ARCH_LABEL).ubuntu$(SLIM_SUFFIX).docker.tar.gz
+DOCKER_DISTROLESS_FILE  := dist/$(TARGZ_PACKAGE_NAME)_$(BUILD_VERSION)_$(BUILD_NUMBER)_$(OS)_$(ARCH_LABEL).distroless$(SLIM_SUFFIX).docker.tar.gz
 DOCKER_TAG         ?= $(TARGZ_PACKAGE_NAME):$(BUILD_VERSION)
 
 # Default catalog plugins under data/plugins-bundled. Stamp encodes OS/ARCH so cross-builds refresh.
@@ -472,6 +475,7 @@ $(DOCKER_FILE): $(TARGZ_FILE)
 	--build-arg GRAFANA_TGZ=$(TARGZ_FILE) \
 	--build-arg GO_SRC=tgz-builder \
 	--build-arg JS_SRC=tgz-builder \
+	--build-arg SLIM=$(SLIM) \
 	--target=final-alpine \
 	--tag $(DOCKER_TAG) \
 	--output type=docker,dest=$@ \
@@ -487,7 +491,24 @@ $(DOCKER_UBUNTU_FILE): $(TARGZ_FILE)
 	--build-arg GRAFANA_TGZ=$(TARGZ_FILE) \
 	--build-arg GO_SRC=tgz-builder \
 	--build-arg JS_SRC=tgz-builder \
+	--build-arg SLIM=$(SLIM) \
 	--target=final-ubuntu \
+	--tag $(DOCKER_TAG) \
+	--output type=docker,dest=$@ \
+	.
+
+.PHONY: build-docker-distroless
+build-docker-distroless: $(DOCKER_DISTROLESS_FILE) ## Build a Docker image (distroless) from a tar.gz
+
+$(DOCKER_DISTROLESS_FILE): $(TARGZ_FILE)
+	@echo "building docker image (distroless)"
+	docker buildx build \
+	--platform $(OS)/$(ARCH) \
+	--build-arg GRAFANA_TGZ=$(TARGZ_FILE) \
+	--build-arg GO_SRC=tgz-builder \
+	--build-arg JS_SRC=tgz-builder \
+	--build-arg SLIM=$(SLIM) \
+	--target=final-distroless \
 	--tag $(DOCKER_TAG) \
 	--output type=docker,dest=$@ \
 	.
@@ -670,6 +691,7 @@ build-docker-full: ## Build Docker image for development.
 	--build-arg WIRE_TAGS=$(WIRE_TAGS) \
 	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
 	--build-arg BUILD_BRANCH=$$(git rev-parse --abbrev-ref HEAD) \
+	--build-arg SLIM=$(SLIM) \
 	--target=final-alpine \
 	--tag grafana/grafana$(TAG_SUFFIX):dev \
 	$(DOCKER_BUILD_ARGS) \
@@ -689,8 +711,28 @@ build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
 	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
 	--build-arg BUILD_BRANCH=$$(git rev-parse --abbrev-ref HEAD) \
 	--build-arg GO_IMAGE=golang:$(GO_VERSION) \
+	--build-arg SLIM=$(SLIM) \
 	--target=final-ubuntu \
 	--tag grafana/grafana$(TAG_SUFFIX):dev-ubuntu \
+	$(DOCKER_BUILD_ARGS) \
+	.
+
+.PHONY: build-docker-full-distroless
+build-docker-full-distroless: ## Build Docker image based on distroless for development.
+	@echo "build docker container mode=($(DOCKER_JS_NODE_ENV_FLAG))"
+	docker buildx build \
+	--platform $(PLATFORM) \
+	--build-arg NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
+	--build-arg JS_NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
+	--build-arg JS_YARN_INSTALL_FLAG=$(DOCKER_JS_YARN_INSTALL_FLAG) \
+	--build-arg JS_YARN_BUILD_FLAG=$(DOCKER_JS_YARN_BUILD_FLAG) \
+	--build-arg GO_BUILD_TAGS=$(GO_BUILD_TAGS) \
+	--build-arg WIRE_TAGS=$(WIRE_TAGS) \
+	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
+	--build-arg BUILD_BRANCH=$$(git rev-parse --abbrev-ref HEAD) \
+	--build-arg SLIM=$(SLIM) \
+	--target=final-distroless \
+	--tag grafana/grafana$(TAG_SUFFIX):dev-distroless \
 	$(DOCKER_BUILD_ARGS) \
 	.
 

@@ -4533,47 +4533,30 @@
       },
       "GetTeamGroupsBody": {
         "type": "object",
-        "required": ["items"],
+        "required": ["externalGroups"],
         "properties": {
-          "items": {
+          "externalGroups": {
             "type": "array",
             "items": {
-              "default": {}
+              "type": "string",
+              "default": ""
             }
-          }
-        }
-      },
-      "GetTeamGroupsExternalGroupMapping": {
-        "type": "object",
-        "required": ["name", "externalGroup"],
-        "properties": {
-          "externalGroup": {
-            "type": "string",
-            "default": ""
-          },
-          "name": {
-            "type": "string",
-            "default": ""
           }
         }
       },
       "GetTeamGroupsResponse": {
         "type": "object",
-        "required": ["items"],
+        "required": ["externalGroups"],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
             "type": "string"
           },
-          "items": {
+          "externalGroups": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/GetTeamGroupsExternalGroupMapping"
-                }
-              ]
+              "type": "string",
+              "default": ""
             }
           },
           "kind": {

@@ -4934,53 +4934,33 @@
       "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetTeamGroupsBody": {
         "type": "object",
         "required": [
-          "items"
+          "externalGroups"
         ],
         "properties": {
-          "items": {
+          "externalGroups": {
             "type": "array",
             "items": {
-              "default": {}
+              "type": "string",
+              "default": ""
             }
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetTeamGroupsExternalGroupMapping": {
-        "type": "object",
-        "required": [
-          "name",
-          "externalGroup"
-        ],
-        "properties": {
-          "externalGroup": {
-            "type": "string",
-            "default": ""
-          },
-          "name": {
-            "type": "string",
-            "default": ""
           }
         }
       },
       "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetTeamGroupsResponse": {
         "type": "object",
         "required": [
-          "items"
+          "externalGroups"
         ],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
             "type": "string"
           },
-          "items": {
+          "externalGroups": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetTeamGroupsExternalGroupMapping"
-                }
-              ]
+              "type": "string",
+              "default": ""
             }
           },
           "kind": {

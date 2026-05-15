@@ -107,7 +107,7 @@ func TestNewSearchClient(t *testing.T) {
 	t.Run("new search client fails when address is empty", func(t *testing.T) {
 		cfg := setting.NewCfg()
 
-		_, err := NewSearchClient(cfg, featuremgmt.WithFeatures())
+		_, err := NewSearchClient(cfg)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "search_server_address")
 	})
@@ -116,7 +116,7 @@ func TestNewSearchClient(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.EnableSearchClient = false
 
-		client, err := NewStorageApiSearchClient(cfg, featuremgmt.WithFeatures())
+		client, err := NewStorageApiSearchClient(cfg)
 		require.NoError(t, err)
 		require.Nil(t, client)
 	})
@@ -126,7 +126,7 @@ func TestNewSearchClient(t *testing.T) {
 		cfg.EnableSearchClient = true
 		cfg.Raw.Section("grafana-apiserver").Key("search_server_address").SetValue("localhost:12345")
 
-		client, err := NewStorageApiSearchClient(cfg, featuremgmt.WithFeatures())
+		client, err := NewStorageApiSearchClient(cfg)
 		require.NoError(t, err)
 		require.NotNil(t, client)
 	})
