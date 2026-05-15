@@ -30,7 +30,7 @@ export async function isAppPluginEnabled(pluginId: string): Promise<boolean> {
     if (isAuthError(error)) {
       logPluginSettingsWarning(`isAppPluginEnabled: failed because auth denied`, { pluginId });
     } else {
-      logPluginSettingsError(`isAppPluginEnabled: failed because of unknonw reason`, error, { pluginId });
+      logPluginSettingsError(`isAppPluginEnabled: failed because of unknown reason`, error, { pluginId });
     }
   }
   return false;
