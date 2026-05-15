@@ -13,26 +13,16 @@ import { Step } from './components/Step';
 import { getSteps } from './steps';
 import { type SetupStep } from './types';
 
-interface State {
-  checksDone: boolean;
-  currentStep: number;
-  steps: SetupStep[];
-}
-
 const STORAGE_KEY = 'gettingStartedPanelDismissed';
 
 export const GettingStarted = memo(function GettingStarted({ id }: PanelProps) {
   const storage = useUserStorage('grafana-help-flags');
-  const [state, setState] = useState<State>({
-    checksDone: false,
-    currentStep: 0,
-    steps: getSteps(),
-  });
+  const [checksDone, setChecksDone] = useState(false);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [steps, setSteps] = useState<SetupStep[]>(getSteps());
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
-    const { steps } = state;
-
     Promise.all([
       storage.getItem(STORAGE_KEY),
       ...steps.map(async (step: SetupStep) => {
@@ -48,23 +38,21 @@ export const GettingStarted = memo(function GettingStarted({ id }: PanelProps) {
         dashboard?.removePanel(panel!);
         return;
       }
-      setState({
-        checksDone: true,
-        currentStep: !checkedSteps[0].done ? 0 : 1,
-        steps: checkedSteps,
-      });
+      setSteps(checkedSteps);
+      setCurrentStep(!checkedSteps[0].done ? 0 : 1);
+      setChecksDone(true);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const onForwardClick = () => {
     reportInteraction('grafana_getting_started_button_to_advanced_tutorials');
-    setState((prev) => ({ ...prev, currentStep: prev.currentStep + 1 }));
+    setCurrentStep((prev) => prev + 1);
   };
 
   const onPreviousClick = () => {
     reportInteraction('grafana_getting_started_button_to_basic_tutorials');
-    setState((prev) => ({ ...prev, currentStep: prev.currentStep - 1 }));
+    setCurrentStep((prev) => prev - 1);
   };
 
   const dismiss = async () => {
@@ -75,7 +63,6 @@ export const GettingStarted = memo(function GettingStarted({ id }: PanelProps) {
     await storage.setItem(STORAGE_KEY, 'true');
   };
 
-  const { checksDone, currentStep, steps } = state;
   const step = steps[currentStep];
 
   return (
