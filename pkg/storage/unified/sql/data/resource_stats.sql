@@ -15,8 +15,11 @@ WHERE 1 = 1
 {{ if .Resource }}
   AND {{ .Ident "resource" }} = {{ .Arg .Resource }}
 {{ end}}
-{{ if .Folder }}
+{{ if and .Folder (not .Folders) }}
   AND {{ .Ident "folder" }} = {{ .Arg .Folder }}
+{{ end}}
+{{ if .Folders }}
+  AND {{ .Ident "folder" }} IN ({{ .ArgList .Folders }}{{ if .Folder }}, {{ .Arg .Folder }}{{ end }})
 {{ end}}
 GROUP BY 
   {{ .Ident "namespace" }},

@@ -19,10 +19,22 @@ func (b *backend) GetStats(ctx context.Context, req *resourcepb.ResourceStatsReq
 	ctx, span := tracer.Start(ctx, "sql.backend.GetStats")
 	defer span.End()
 
+	folders := req.Folders
+	if len(folders) > 0 {
+		// Drop empty entries so they don't match rows with no folder.
+		filtered := folders[:0:0]
+		for _, f := range folders {
+			if f != "" {
+				filtered = append(filtered, f)
+			}
+		}
+		folders = filtered
+	}
 	sreq := &sqlStatsRequest{
 		SQLTemplate: sqltemplate.New(b.dialect),
 		Namespace:   req.Namespace,
 		Folder:      req.Folder,
+		Folders:     folders,
 	}
 
 	rsp := &resourcepb.ResourceStatsResponse{}

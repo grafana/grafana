@@ -494,6 +494,23 @@ func TestUnifiedStorageQueries(t *testing.T) {
 					},
 				},
 				{
+					Name: "folders",
+					Data: &sqlStatsRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "default",
+						Folders:     []string{"a", "b", "c"},
+					},
+				},
+				{
+					Name: "folder_with_folders",
+					Data: &sqlStatsRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "default",
+						Folder:      "root",
+						Folders:     []string{"a", "b"},
+					},
+				},
+				{
 					Name: "resource",
 					Data: &sqlStatsRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),

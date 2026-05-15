@@ -199,6 +199,7 @@ func (b *FolderAPIBuilder) storageForVersion(
 	}
 	storage[folders.StoragePath("counts")] = &subCountREST{
 		getter:   b.storage,
+		lister:   b.storage,
 		searcher: b.searcher,
 	}
 	storage[folders.StoragePath("access")] = &subAccessREST{
