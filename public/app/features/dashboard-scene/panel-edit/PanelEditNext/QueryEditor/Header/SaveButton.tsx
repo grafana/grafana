@@ -75,7 +75,6 @@ export function SaveButton({ parentRef }: SaveButtonProps) {
     onUpdateSuccess,
     onSelectQuery,
     undefined,
-    parentRef,
-    true
+    parentRef
   );
 }
