@@ -10,7 +10,12 @@ import { setPluginLinksHook } from '@grafana/runtime';
 import { mockComboboxRect } from '@grafana/test-utils';
 import { contextSrv } from 'app/core/services/context_srv';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
-import { grantUserPermissions, mockAlertmanagerAlert, mockDataSource, mockFolder } from 'app/features/alerting/unified/mocks';
+import {
+  grantUserPermissions,
+  mockAlertmanagerAlert,
+  mockDataSource,
+  mockFolder,
+} from 'app/features/alerting/unified/mocks';
 import {
   grafanaRulerGroup,
   grafanaRulerNamespace,
@@ -422,15 +427,11 @@ describe('PolicyTreeSelector - feature toggle ON', () => {
 
     it('forwards the policy name from the __grafana_managed_route__ label to the routing preview', async () => {
       // Simulate the preview API returning an instance so the routing tree fetch is triggered
-      mockPreviewApiResponse(server, [
-        mockAlertmanagerAlert({ labels: { severity: 'critical' } }),
-      ]);
+      mockPreviewApiResponse(server, [mockAlertmanagerAlert({ labels: { severity: 'critical' } })]);
 
       // Capture all GET requests to the k8s routing tree API so we can verify
       // the preview fetched the named policy tree, not the default root.
-      const capture = captureRequests(
-        (r) => r.method === 'GET' && r.url.includes('/routingtrees/')
-      );
+      const capture = captureRequests((r) => r.method === 'GET' && r.url.includes('/routingtrees/'));
 
       renderRuleEditor(grafanaRulerRule.grafana_alert.uid);
 
