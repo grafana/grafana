@@ -27,9 +27,9 @@ func TestGetKubernetesRedirectFromShortURL(t *testing.T) {
 		wantLocation string
 	}{
 		{
-			name:         "invalid uid redirects to AppURL with 302",
+			name:         "invalid uid redirects to AppURL with 308",
 			uid:          "!!!invalid",
-			wantStatus:   http.StatusFound,
+			wantStatus:   http.StatusPermanentRedirect,
 			wantLocation: appURL,
 		},
 		{
@@ -41,11 +41,39 @@ func TestGetKubernetesRedirectFromShortURL(t *testing.T) {
 			wantLocation: appURL + "explore",
 		},
 		{
-			name:         "not found redirects to AppURL with 308",
-			uid:          validUID,
-			statusCode:   http.StatusNotFound,
-			responseBody: mustMarshal(t, metav1.Status{Status: metav1.StatusFailure, Reason: metav1.StatusReasonNotFound, Code: http.StatusNotFound}),
+			name:       "ShortURL resource not found redirects to AppURL with 308",
+			uid:        validUID,
+			statusCode: http.StatusNotFound,
+			responseBody: mustMarshal(t, metav1.Status{
+				TypeMeta: metav1.TypeMeta{Kind: "Status", APIVersion: "v1"},
+				Status:   metav1.StatusFailure,
+				Reason:   metav1.StatusReasonNotFound,
+				Code:     http.StatusNotFound,
+				Details: &metav1.StatusDetails{
+					Group: v1beta1.APIGroup,
+					Kind:  v1beta1.ShortURLKind().Plural(),
+					Name:  validUID,
+				},
+			}),
 			wantStatus:   http.StatusPermanentRedirect,
+			wantLocation: appURL,
+		},
+		{
+			name:       "404 from unrelated resource (e.g. missing CRD) redirects to AppURL with 307",
+			uid:        validUID,
+			statusCode: http.StatusNotFound,
+			responseBody: mustMarshal(t, metav1.Status{
+				TypeMeta: metav1.TypeMeta{Kind: "Status", APIVersion: "v1"},
+				Status:   metav1.StatusFailure,
+				Reason:   metav1.StatusReasonNotFound,
+				Code:     http.StatusNotFound,
+				Details: &metav1.StatusDetails{
+					Group: "other.grafana.app",
+					Kind:  "widgets",
+					Name:  validUID,
+				},
+			}),
+			wantStatus:   http.StatusTemporaryRedirect,
 			wantLocation: appURL,
 		},
 		{

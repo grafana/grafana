@@ -162,7 +162,7 @@ func (sk8s *shortURLK8sHandler) getKubernetesRedirectFromShortURL(c *contextmode
 	uid := web.Params(c.Req)[":uid"]
 	if !util.IsValidShortUID(uid) {
 		c.Logger.Warn("Invalid short URL UID format", "uid", uid)
-		c.Redirect(sk8s.cfg.AppURL, http.StatusFound)
+		c.Redirect(sk8s.cfg.AppURL, http.StatusPermanentRedirect)
 		return
 	}
 
@@ -183,7 +183,15 @@ func (sk8s *shortURLK8sHandler) getKubernetesRedirectFromShortURL(c *contextmode
 		Do(c.Req.Context())
 
 	if err = result.Error(); err != nil {
-		if errors.IsNotFound(err) {
+		// Only emit a 308 when the 404 is from our API group. errors.IsNotFound
+		// matches any 404 from the apiserver, including infrastructure problems
+		// (CRD not registered, wrong API path) — those surface with
+		// Details.Group="meta.k8s.io" and must not be cached as a permanent
+		// redirect, or a client would keep bypassing a working link after the
+		// backend issue is fixed.
+		if statusErr, ok := err.(*errors.StatusError); ok && errors.IsNotFound(err) &&
+			statusErr.ErrStatus.Details != nil &&
+			statusErr.ErrStatus.Details.Group == v1beta1.APIGroup {
 			c.Logger.Debug("Not redirecting short URL since not found", "uid", uid)
 			c.Redirect(sk8s.cfg.AppURL, http.StatusPermanentRedirect)
 			return
