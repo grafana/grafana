@@ -19,7 +19,7 @@ import { useAlertmanagerNotificationRoutingPreview } from './useAlertmanagerNoti
 // Use the manual __mocks__ version that delegates to routeGroupsMatcher synchronously
 jest.mock('../../../useRouteGroupsMatcher');
 
-const server = setupMswServer();
+setupMswServer();
 
 // A named policy that exists in the default MSW mock routing tree map
 const EXISTING_NAMED_POLICY = 'Managed Policy - Empty Provisioned';
@@ -65,10 +65,9 @@ describe('useAlertmanagerNotificationRoutingPreview', () => {
   it('preserves root object_matchers when no policyName is provided', async () => {
     const instances = [{ team: 'ops' }];
 
-    renderHook(
-      () => useAlertmanagerNotificationRoutingPreview(GRAFANA_RULES_SOURCE_NAME, instances, undefined),
-      { wrapper }
-    );
+    renderHook(() => useAlertmanagerNotificationRoutingPreview(GRAFANA_RULES_SOURCE_NAME, instances, undefined), {
+      wrapper,
+    });
 
     await waitFor(() => {
       expect(matchSpy).toHaveBeenCalled();
@@ -89,10 +88,9 @@ describe('useAlertmanagerNotificationRoutingPreview', () => {
     // Instance carries the named-route label pointing to an existing policy
     const instances = [{ [NAMED_ROOT_LABEL_NAME]: EXISTING_NAMED_POLICY, severity: 'warning' }];
 
-    renderHook(
-      () => useAlertmanagerNotificationRoutingPreview(GRAFANA_RULES_SOURCE_NAME, instances, undefined),
-      { wrapper }
-    );
+    renderHook(() => useAlertmanagerNotificationRoutingPreview(GRAFANA_RULES_SOURCE_NAME, instances, undefined), {
+      wrapper,
+    });
 
     await waitFor(() => {
       expect(matchSpy).toHaveBeenCalled();
@@ -110,10 +108,9 @@ describe('useAlertmanagerNotificationRoutingPreview', () => {
   it('handles the default root route when policyName is ROOT_ROUTE_NAME', async () => {
     const instances = [{ severity: 'critical' }];
 
-    renderHook(
-      () => useAlertmanagerNotificationRoutingPreview(GRAFANA_RULES_SOURCE_NAME, instances, ROOT_ROUTE_NAME),
-      { wrapper }
-    );
+    renderHook(() => useAlertmanagerNotificationRoutingPreview(GRAFANA_RULES_SOURCE_NAME, instances, ROOT_ROUTE_NAME), {
+      wrapper,
+    });
 
     await waitFor(() => {
       expect(matchSpy).toHaveBeenCalled();
