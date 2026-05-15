@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
-import { Badge, Tooltip, Button, ConfirmModal } from '@grafana/ui';
+import { Button, ConfirmModal } from '@grafana/ui';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { useDispatch } from 'app/types/store';
@@ -48,23 +48,7 @@ export const DataSourceDefaultButton = ({ uid }: { uid: string }) => {
   };
 
   if (!editable) {
-    return dataSource.isDefault ? (
-      <Badge
-        text={
-          <Tooltip
-            content={[
-              t('datasources.default-button.active', 'This data source is currently set as the default.'),
-              t('datasources.default-button.tooltip', 'The default data source is preselected in new panels.'),
-            ].join(' ')}
-          >
-            <span>
-              <Trans i18nKey="datasources.default-button.label">Default</Trans>
-            </span>
-          </Tooltip>
-        }
-        color="blue"
-      />
-    ) : null;
+    return null;
   }
 
   return (

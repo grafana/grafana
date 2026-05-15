@@ -8163,7 +8163,6 @@
       "cancel": "Cancel",
       "confirm": "Confirm",
       "error": "Failed to update default data source",
-      "label": "Default",
       "make": "Make default",
       "make-confirm": "Are you sure you want to set this data source as the default for all users?",
       "remove": "Remove default",

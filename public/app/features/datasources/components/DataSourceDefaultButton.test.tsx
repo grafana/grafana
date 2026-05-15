@@ -58,30 +58,23 @@ describe('DataSourceDefaultButton', () => {
     expect(screen.queryByText('Make default')).not.toBeInTheDocument();
   });
 
-  it('should not render make default button when data source is not default but not editable', () => {
+  it('should not render either button when data source is not editable', () => {
     mockUseDataSource.mockReturnValue({ ...mockDataSource, isDefault: false });
-    mockUseDataSourceRights.mockReturnValue({ hasWriteRights: false, readOnly: true });
+    mockUseDataSourceRights.mockReturnValue({ ...mockDataSourceRights, readOnly: true });
 
     render(<DataSourceDefaultButton uid="test-uid" />);
 
     expect(screen.queryByLabelText('Make default')).not.toBeInTheDocument();
-  });
-
-  it('should not render remove default button when data source is default but not editable', () => {
-    mockUseDataSource.mockReturnValue({ ...mockDataSource, isDefault: true });
-    mockUseDataSourceRights.mockReturnValue({ hasWriteRights: false, readOnly: true });
-
-    render(<DataSourceDefaultButton uid="test-uid" />);
-
     expect(screen.queryByLabelText('Remove default')).not.toBeInTheDocument();
   });
 
-  it('should render default badge when data source is default but not editable', () => {
-    mockUseDataSource.mockReturnValue({ ...mockDataSource, isDefault: true });
-    mockUseDataSourceRights.mockReturnValue({ hasWriteRights: true, readOnly: true });
+  it('should not render either button when user lacks write permissions', () => {
+    mockUseDataSource.mockReturnValue({ ...mockDataSource, isDefault: false });
+    mockUseDataSourceRights.mockReturnValue({ ...mockDataSourceRights, hasWriteRights: false });
 
     render(<DataSourceDefaultButton uid="test-uid" />);
 
-    expect(screen.getByText('Default')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Make default')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Remove default')).not.toBeInTheDocument();
   });
 });
