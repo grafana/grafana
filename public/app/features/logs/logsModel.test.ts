@@ -1395,6 +1395,51 @@ describe('logSeriesToLogsModel', () => {
     ]);
   });
 
+  it('should not produce undefined uid or timeEpochNs when id and tsNs fields have empty value arrays', () => {
+    const logSeries: DataFrame[] = [
+      createDataFrame({
+        fields: [
+          {
+            name: 'time',
+            type: FieldType.time,
+            values: ['2019-04-26T09:28:11.352440161Z', '2019-04-26T14:42:50.991981292Z'],
+          },
+          {
+            name: 'message',
+            type: FieldType.string,
+            values: ['log line 1', 'log line 2'],
+          },
+          {
+            name: 'id',
+            type: FieldType.string,
+            values: [],
+          },
+          {
+            name: 'tsNs',
+            type: FieldType.string,
+            values: [],
+          },
+        ],
+        refId: 'A',
+      }),
+    ];
+
+    const logsModel = logSeriesToLogsModel(logSeries);
+    expect(logsModel?.rows).toHaveLength(2);
+
+    for (const row of logsModel!.rows) {
+      expect(row.uid).not.toBeUndefined();
+      expect(row.uid).not.toContain('undefined');
+      expect(row.timeEpochNs).not.toBeUndefined();
+      expect(row.rowId).toBeUndefined();
+    }
+
+    expect(logsModel!.rows[0].uid).toBe('A_0');
+    expect(logsModel!.rows[1].uid).toBe('A_1');
+    expect(logsModel!.rows[0].timeEpochNs).toBe('1556270891352000000');
+    expect(logsModel!.rows[1].timeEpochNs).toBe('1556289770991000000');
+  });
+
   it('should return empty string if message field is undefined', () => {
     const logSeries: DataFrame[] = [
       toDataFrame({
