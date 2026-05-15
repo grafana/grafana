@@ -1534,6 +1534,22 @@
     },
     {
       "metadata": {
+        "name": "dashboardCreatorLanding",
+        "resourceVersion": "1778615547636",
+        "creationTimestamp": "2026-05-12T19:49:03Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-05-12 19:52:27.636411 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables the Dashboard Creator landing page at /dashboard/create with an Assistant prompt and template/import shortcuts",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardDefaultLayoutSelector",
         "resourceVersion": "1775132912690",
         "creationTimestamp": "2026-03-19T12:33:56Z",

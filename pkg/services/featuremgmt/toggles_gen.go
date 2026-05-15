@@ -359,6 +359,10 @@ const (
 	// Enables a flow to get started with a new dashboard from a template
 	FlagDashboardTemplates = "dashboardTemplates"
 
+	// FlagDashboardCreatorLanding
+	// Enables the Dashboard Creator landing page at /dashboard/create with an Assistant prompt and template/import shortcuts
+	FlagDashboardCreatorLanding = "dashboardCreatorLanding"
+
 	// FlagAlertingNavigationV2
 	// Enables the new Alerting navigation structure with improved menu grouping
 	FlagAlertingNavigationV2 = "alertingNavigationV2"

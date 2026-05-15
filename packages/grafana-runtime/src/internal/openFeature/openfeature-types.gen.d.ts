@@ -18,6 +18,7 @@ declare module "@openfeature/core" {
     | "newSavedQueriesExperience"
     | "grafana.orgDashboardTemplates"
     | "dashboardTemplatesAssistantButton"
+    | "dashboardCreatorLanding"
     | "suggestedDashboardsAssistantButton"
     | "newLogsPanel"
     | "recentlyViewedDashboards"

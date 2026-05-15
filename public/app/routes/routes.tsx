@@ -56,6 +56,13 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPageProxy')
       ),
     },
+    config.featureToggles.dashboardCreatorLanding && {
+      path: '/dashboard/create',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate]),
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "DashboardCreator" */ '../features/dashboard-creator/DashboardCreatorPage')
+      ),
+    },
     {
       path: '/dashboard/assistant-preview/*',
       roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate]),

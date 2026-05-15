@@ -69,6 +69,8 @@ export default function CreateNewButton({
     renderPreBuiltDashboardAction = testDataSources.length > 0;
   }
 
+  const newDashboardUrl = config.featureToggles.dashboardCreatorLanding ? '/dashboard/create' : '/dashboard/new';
+
   const onCreateFolder = async (folderName: string, teamOwnerRefs?: OwnerReference[]) => {
     try {
       const folder = await newFolder({
@@ -109,11 +111,11 @@ export default function CreateNewButton({
             iconColor={dashboardIconColor}
             onClick={() =>
               reportInteraction('grafana_menu_item_clicked', {
-                url: buildUrl('/dashboard/new', parentFolder?.uid),
+                url: buildUrl(newDashboardUrl, parentFolder?.uid),
                 from: location.pathname,
               })
             }
-            url={buildUrl('/dashboard/new', parentFolder?.uid)}
+            url={buildUrl(newDashboardUrl, parentFolder?.uid)}
           />
           {renderPreBuiltDashboardAction && (
             <Menu.Item

@@ -6660,6 +6660,52 @@
       }
     }
   },
+  "dashboard-creator": {
+    "footer": {
+      "import-json": "Import from JSON",
+      "start-blank": "Start with a blank dashboard"
+    },
+    "header": {
+      "badge": {
+        "beta": "BETA"
+      },
+      "description": "A purpose-built assistant for Grafana that helps you draft new dashboards — panels, queries, and layout — from a plain English description.",
+      "greeting": "Hi, I'm",
+      "title": "Dashboard Creator"
+    },
+    "page-nav": {
+      "text": "Dashboard Creator"
+    },
+    "prompt": {
+      "label": "Dashboard prompt",
+      "mode-chip": "Assistant",
+      "placeholder": "Describe the dashboard you want to create…",
+      "submit-aria": "Send to Assistant",
+      "unavailable": "The Grafana Assistant isn't available in this environment. You can still start from a template, a blank dashboard, or by importing JSON below."
+    },
+    "template": {
+      "application": {
+        "hint": "Web application",
+        "label": "Application"
+      },
+      "cloud": {
+        "hint": "AWS EC2 fleet",
+        "label": "Cloud"
+      },
+      "database": {
+        "hint": "PostgreSQL",
+        "label": "Database"
+      },
+      "infrastructure": {
+        "hint": "Kubernetes cluster",
+        "label": "Infrastructure"
+      }
+    },
+    "templates": {
+      "heading": "Or start from a template",
+      "label": "Templates"
+    }
+  },
   "dashboard-import": {
     "file-dropzone": {
       "primary-text": "Upload dashboard JSON file",

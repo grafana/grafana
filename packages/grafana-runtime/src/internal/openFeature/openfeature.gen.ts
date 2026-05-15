@@ -19,6 +19,8 @@ export const FlagKeys = {
   AssistantFrontendToolsDashboardTemplates: "assistant.frontend.tools.dashboardTemplates",
   /** Enables the created by me search filter on the browse dashboards page */
   CreatedByMeSearchFilter: "createdByMeSearchFilter",
+  /** Enables the Dashboard Creator landing page at /dashboard/create with an Assistant prompt and template/import shortcuts */
+  DashboardCreatorLanding: "dashboardCreatorLanding",
   /** Enables support for section level variables (rows and tabs) */
   DashboardSectionVariables: "dashboardSectionVariables",
   /** Enables the Assistant button in the dashboard templates card */
@@ -112,6 +114,17 @@ export const useFlagAssistantFrontendToolsDashboardTemplates = (options?: ReactF
  */
 export const useFlagCreatedByMeSearchFilter = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("createdByMeSearchFilter", false, options).value;
+};
+
+/**
+ * Enables the Dashboard Creator landing page at /dashboard/create with an Assistant prompt and template/import shortcuts
+ *
+ * **Details:**
+ * - flag key: `dashboardCreatorLanding`
+ * - default value: `false`
+ */
+export const useFlagDashboardCreatorLanding = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dashboardCreatorLanding", false, options).value;
 };
 
 /**

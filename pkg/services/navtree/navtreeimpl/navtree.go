@@ -417,8 +417,13 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 	}
 
 	if hasAccess(ac.EvalPermission(dashboards.ActionDashboardsCreate)) {
+		newDashboardURL := "/dashboard/new"
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagDashboardCreatorLanding) {
+			newDashboardURL = "/dashboard/create"
+		}
 		dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
-			Text: "New dashboard", Icon: "plus", Url: s.cfg.AppSubURL + "/dashboard/new", HideFromTabs: true, Id: "dashboards/new", IsCreateAction: true,
+			Text: "New dashboard", Icon: "plus", Url: s.cfg.AppSubURL + newDashboardURL, HideFromTabs: true, Id: "dashboards/new", IsCreateAction: true,
 		})
 
 		dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{

@@ -1124,6 +1124,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "dashboardCreatorLanding",
+			Description: "Enables the Dashboard Creator landing page at /dashboard/create with an Assistant prompt and template/import shortcuts",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSharingSquad,
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true},
+			Expression:  "false",
+		},
+		{
 			Name:        "suggestedDashboardsAssistantButton",
 			Description: "Enables the 'Customize with Assistant' button on suggested dashboard cards",
 			Stage:       FeatureStageExperimental,

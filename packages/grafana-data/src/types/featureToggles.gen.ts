@@ -634,6 +634,11 @@ export interface FeatureToggles {
   */
   dashboardTemplatesAssistantButton?: boolean;
   /**
+  * Enables the Dashboard Creator landing page at /dashboard/create with an Assistant prompt and template/import shortcuts
+  * @default false
+  */
+  dashboardCreatorLanding?: boolean;
+  /**
   * Enables the 'Customize with Assistant' button on suggested dashboard cards
   * @default false
   */
