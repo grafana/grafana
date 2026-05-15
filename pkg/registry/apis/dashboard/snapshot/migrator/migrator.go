@@ -137,15 +137,13 @@ func (m *snapshotMigrator) MigrateSnapshots(ctx context.Context, orgId int64, op
 			} else if len(row.dashboardEncrypted) > 0 {
 				plain, err := m.secrets.Decrypt(ctx, row.dashboardEncrypted)
 				if err != nil {
-					opts.Progress(count, fmt.Sprintf("WARN: failed to decrypt snapshot %q, skipping dashboard data: %v", row.key, err))
-				} else {
-					j, err := simplejson.NewJson(plain)
-					if err != nil {
-						opts.Progress(count, fmt.Sprintf("WARN: failed to parse dashboard JSON for snapshot %q, skipping dashboard data: %v", row.key, err))
-					} else {
-						snap.Spec.Dashboard = j.MustMap()
-					}
+					return fmt.Errorf("decrypt snapshot %q: %w", row.key, err)
 				}
+				j, err := simplejson.NewJson(plain)
+				if err != nil {
+					return fmt.Errorf("parse dashboard JSON for snapshot %q: %w", row.key, err)
+				}
+				snap.Spec.Dashboard = j.MustMap()
 			}
 
 			// Mirror the logic in conversions.go: treat dates past year 2070 as "never expires".
