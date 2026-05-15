@@ -24,7 +24,13 @@ func (b *AppPluginAPIBuilder) getSettings(ctx context.Context) (*apppluginV0.Set
 	if !ok {
 		return nil, nil, fmt.Errorf("unexpected type %T when getting plugin settings", raw)
 	}
-	if !settings.Spec.Enabled {
+
+	// Read the status
+	status, err := b.opts.StatusGetter(ctx, b.pluginJSON.ID)
+	if err != nil {
+		return nil, nil, fmt.Errorf("unable to get plugin info")
+	}
+	if !status.Enabled {
 		return nil, nil, k8serrors.NewBadRequest("plugin is not enabled")
 	}
 
@@ -50,7 +56,7 @@ func (b *AppPluginAPIBuilder) getPluginContext(ctx context.Context) (context.Con
 	instance := &backend.AppInstanceSettings{
 		APIVersion: b.groupVersion.Version,
 	}
-	instance.JSONData, err = json.Marshal(settings.Spec.JsonData)
+	instance.JSONData, err = json.Marshal(settings.Spec.Object)
 	if err != nil {
 		return ctx, backend.PluginContext{}, fmt.Errorf("error marshalling JsonData: %w", err)
 	}

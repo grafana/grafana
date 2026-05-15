@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
+	"github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
@@ -25,6 +26,7 @@ import (
 	pluginspec "github.com/grafana/grafana/pkg/plugins/openapi"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/setting"
@@ -49,12 +51,19 @@ type PluginContextWrapper interface {
 	PluginContextForApp(ctx context.Context, pluginID string, appSettings *backend.AppInstanceSettings) (context.Context, backend.PluginContext, error)
 }
 
+// Function to read enabled+pinned (eventually backed by k8s client + watch)
+type AppStatusGetter func(ctx context.Context, name string) (v0alpha1.AppSpec, error)
+
+// The optional inputs
 type AppPluginRunnerOptions struct {
 	RegisterProxy bool
 
 	DataProxyLogging         bool // from cfg
 	SendUserHeader           bool // from cfg
 	PluginsAppsSkipVerifyTLS bool // from cfg
+
+	// Get enabled/pinned
+	StatusGetter AppStatusGetter
 
 	// When this exists, dual write settings will be used
 	LegacyStore grafanarest.Storage
@@ -147,6 +156,24 @@ func RegisterAPIService(
 		return nil, fmt.Errorf("error getting list of datasource plugins: %s", err)
 	}
 
+	statusGetter := func(ctx context.Context, name string) (v0alpha1.AppSpec, error) {
+		rsp := v0alpha1.AppSpec{}
+		nsInfo, err := request.NamespaceInfoFrom(ctx, true)
+		if err != nil {
+			return rsp, err
+		}
+		dto, err := pluginSettings.GetPluginSettingByPluginID(ctx, &pluginsettings.GetByPluginIDArgs{
+			OrgID:    nsInfo.OrgID,
+			PluginID: name,
+		})
+		if err != nil {
+			return rsp, err
+		}
+		rsp.Enabled = dto.Enabled
+		rsp.Pinned = dto.Pinned
+		return rsp, nil
+	}
+
 	var last *AppPluginAPIBuilder
 	for _, plugin := range pluginInfos {
 		b, err := NewAppPluginAPIBuilder(plugin,
@@ -159,6 +186,7 @@ func RegisterAPIService(
 				RegisterProxy: registerProxy, // FROM feature toggles
 				LegacyStore:   NewLegacySettingsStore(plugin.JSONData.ID, pluginSettings),
 				AccessControl: accessControl,
+				StatusGetter:  statusGetter,
 
 				DataProxyLogging:         cfg.DataProxyLogging,
 				SendUserHeader:           cfg.SendUserHeader,
