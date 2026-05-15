@@ -515,7 +515,8 @@
         "edit-yaml": "YAML szerkesztése",
         "save": "Mentés"
       },
-      "error-title": ""
+      "error-title": "",
+      "no-group-success": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "név",
@@ -1171,6 +1172,7 @@
     },
     "evaluate-every-validation-options": {
       "message": {
+        "none-not-allowed": "",
         "required": "Szükséges."
       }
     },
@@ -2875,6 +2877,11 @@
         },
         "group-name": "Értékelési csoport neve",
         "group-text": "A kijelölt csoport összes szabálya kiértékelésének gyakorisága: {{evaluateEvery}}.",
+        "interval-label": "",
+        "mode": {
+          "legacy": "",
+          "new": ""
+        },
         "new-group": "Új értékelési csoport",
         "pause": {
           "alerting": "Kapcsolja be az ehhez a riasztási szabályhoz tartozó értékelés szüneteltetéséhez.",
@@ -11350,6 +11357,8 @@
       "clear-search": "Törlés",
       "close-inline-details": "A napló részleteinek bezárása",
       "close-sidebar-details": "A napló részleteit tartalmazó oldalsáv bezárása",
+      "copy-log-line": "",
+      "copy-log-line-json": "",
       "copy-shortlink": "Rövid hivatkozás másolása",
       "copy-to-clipboard": "Másolás vágólapra",
       "displayed-fields-section": "Megjelenített mezők rendezése",
@@ -11398,7 +11407,8 @@
     },
     "log-line-menu": {
       "copy-link": "Hivatkozás másolása a naplósorba",
-      "copy-log": "Naplósor másolása",
+      "copy-log-contents": "",
+      "copy-log-message": "",
       "hide-details": "Napló részleteinek megjelenítése",
       "icon-label": "Naplómenü",
       "log-line": "Naplósor",
@@ -15146,6 +15156,8 @@
     },
     "support-bundles-unconnected": {
       "created-on": "Létrehozva:",
+      "deprecation-warning-message": "",
+      "deprecation-warning-title": "",
       "download": "Letöltés",
       "expires": "Lejár",
       "requested-by": "Kérelmező:",
@@ -15546,8 +15558,8 @@
     },
     "legend": {
       "category": "Jelmagyarázat",
-      "description-faceted-filter": "Sorozatláthatósági szűrő megjelenítése a címkék alapján",
-      "name-faceted-filter": "Többdimenziós szűrő"
+      "description-faceted-filter": "",
+      "name-faceted-filter": ""
     },
     "line-style-editor": {
       "line-fill-options": {

@@ -515,7 +515,8 @@
         "edit-yaml": "Redigera YAML",
         "save": "Spara"
       },
-      "error-title": ""
+      "error-title": "",
+      "no-group-success": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "namn",
@@ -1171,6 +1172,7 @@
     },
     "evaluate-every-validation-options": {
       "message": {
+        "none-not-allowed": "",
         "required": "Krävs."
       }
     },
@@ -2875,6 +2877,11 @@
         },
         "group-name": "Namn för utvärderingsgrupp",
         "group-text": "Alla regler i den valda gruppen utvärderas varje {{evaluateEvery}}.",
+        "interval-label": "",
+        "mode": {
+          "legacy": "",
+          "new": ""
+        },
         "new-group": "Ny utvärderingsgrupp",
         "pause": {
           "alerting": "Aktivera om du vill pausa utvärderingen för den här varningsregeln.",
@@ -11350,6 +11357,8 @@
       "clear-search": "Rensa",
       "close-inline-details": "Stäng detaljer för den här loggen",
       "close-sidebar-details": "Stäng sidofältet för loggdetaljer",
+      "copy-log-line": "",
+      "copy-log-line-json": "",
       "copy-shortlink": "Kopiera kortlänk",
       "copy-to-clipboard": "Kopiera till urklippet",
       "displayed-fields-section": "Organisera visade fält",
@@ -11398,7 +11407,8 @@
     },
     "log-line-menu": {
       "copy-link": "Kopiera länk till loggrad",
-      "copy-log": "Kopiera loggrad",
+      "copy-log-contents": "",
+      "copy-log-message": "",
       "hide-details": "Visa loggdetaljer",
       "icon-label": "Loggmeny",
       "log-line": "Loggrad",
@@ -15146,6 +15156,8 @@
     },
     "support-bundles-unconnected": {
       "created-on": "Skapad den",
+      "deprecation-warning-message": "",
+      "deprecation-warning-title": "",
       "download": "Ladda ner",
       "expires": "Löper ut",
       "requested-by": "Begärd av",
@@ -15546,8 +15558,8 @@
     },
     "legend": {
       "category": "Förklaringar",
-      "description-faceted-filter": "Visa synlighetsfilter för serier baserat på etiketter",
-      "name-faceted-filter": "Facetterat filter"
+      "description-faceted-filter": "",
+      "name-faceted-filter": ""
     },
     "line-style-editor": {
       "line-fill-options": {
