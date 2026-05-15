@@ -1,4 +1,4 @@
-import {render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { dateTime, dateTimeAsMoment, dateTimeForTimeZone, getTimeZone, setTimeZoneResolver } from '@grafana/data';
