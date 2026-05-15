@@ -105,7 +105,7 @@ describe('LogGroupsSelector', () => {
     const defer = new Deferred();
     const fetchLogGroups = jest.fn(async () => {
       await Promise.all([defer.promise]);
-      return { results: [] } as LogGroupsResponse;
+      return { results: [] } satisfies LogGroupsResponse;
     });
     render(<LogGroupsSelector {...defaultProps} fetchLogGroups={fetchLogGroups} />);
     await userEvent.click(screen.getByText('Select log groups'));
