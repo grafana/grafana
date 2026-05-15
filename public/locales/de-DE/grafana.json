@@ -11357,6 +11357,8 @@
       "clear-search": "Löschen",
       "close-inline-details": "Details für dieses Log schließen",
       "close-sidebar-details": "Seitenleiste mit Log-Details schließen",
+      "copy-log-line": "",
+      "copy-log-line-json": "",
       "copy-shortlink": "Shortlink kopieren",
       "copy-to-clipboard": "In die Zwischenablage kopieren",
       "displayed-fields-section": "Angezeigte Felder organisieren",
@@ -11405,7 +11407,8 @@
     },
     "log-line-menu": {
       "copy-link": "Link zur Protokollzeile kopieren",
-      "copy-log": "Protokollzeile kopieren",
+      "copy-log-contents": "",
+      "copy-log-message": "",
       "hide-details": "Logdetails anzeigen",
       "icon-label": "Protokollmenü",
       "log-line": "Log-Zeile",
@@ -15555,8 +15558,8 @@
     },
     "legend": {
       "category": "Legende",
-      "description-faceted-filter": "Reihen-Sichtbarkeitsfilter basierend auf Labels anzeigen",
-      "name-faceted-filter": "Facettenfilter"
+      "description-faceted-filter": "",
+      "name-faceted-filter": ""
     },
     "line-style-editor": {
       "line-fill-options": {
