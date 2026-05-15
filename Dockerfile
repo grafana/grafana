@@ -168,8 +168,9 @@ RUN if [ ! "$(getent group "$GF_GID")" ]; then \
   cp conf/ldap.toml /etc/grafana/ldap.toml && \
   chown -R "grafana:$GF_GID_NAME" "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING" "$GF_PATHS_HOME/data/plugins-bundled" && \
   chmod -R 777 "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING" "$GF_PATHS_HOME/data/plugins-bundled" && \
-  printf 'root:x:0:0:root:/root:/sbin/nologin\nnobody:x:65534:65534:nobody:/nonexistent:/sbin/nologin\ngrafana:x:%s:0::/usr/share/grafana:/sbin/nologin\n' "$GF_UID" > /tmp/distroless-passwd && \
+  printf 'root:x:0:0:root:/root:/sbin/nologin\nnobody:x:65534:65534:nobody:/nonexistent:/sbin/nologin\ngrafana:x:%s:%s::/usr/share/grafana:/sbin/nologin\n' "$GF_UID" "$GF_GID" > /tmp/distroless-passwd && \
   printf 'root:x:0:\nnobody:x:65534:\n' > /tmp/distroless-group && \
+  if [ "$GF_GID" != "0" ]; then printf 'grafana:x:%s:\n' "$GF_GID" >> /tmp/distroless-group; fi && \
   grafana server --homepath="$GF_PATHS_HOME" -v | sed -e 's/Version //' > /.grafana-version && \
   chmod 644 /.grafana-version
 
@@ -330,9 +331,10 @@ ENTRYPOINT [ "/run.sh" ]
 # No shell, no package manager, no OS utilities: significantly reduces CVE surface.
 # Requires a static binary (CGO_ENABLED=0). The run.sh entrypoint is replaced by a
 # direct grafana server invocation, so these run.sh features are unavailable:
-#   - GF_*__FILE secret expansion
+#   - GF_*__FILE secret expansion (reading config values from mounted secret files)
 #   - AWS credential file generation from GF_AWS_* env vars
 #   - GF_INSTALL_PLUGINS (deprecated; use GF_PLUGINS_PREINSTALL instead)
+# GF_PATHS_* env vars work normally — they are not overridden by cfg: flags in this entrypoint.
 #
 # Filesystem layout (dirs, users, config) is prepared by distroless-prep and
 # binaries/assets are copied directly from go-src/js-src. No Alpine OS packages,
@@ -343,6 +345,7 @@ LABEL maintainer="Grafana Labs <hello@grafana.com>"
 LABEL org.opencontainers.image.source="https://github.com/grafana/grafana"
 
 ARG GF_UID="472"
+ARG GF_GID="0"
 
 ENV PATH="/usr/share/grafana/bin:$PATH" \
   GF_PATHS_CONFIG="/etc/grafana/grafana.ini" \
@@ -357,13 +360,13 @@ WORKDIR $GF_PATHS_HOME
 COPY --from=distroless-prep /tmp/distroless-passwd /etc/passwd
 COPY --from=distroless-prep /tmp/distroless-group /etc/group
 COPY --from=distroless-prep /etc/grafana /etc/grafana
-COPY --chown=472:0 --from=distroless-prep /var/lib/grafana /var/lib/grafana
-COPY --chown=472:0 --from=distroless-prep /var/log/grafana /var/log/grafana
+COPY --chown=${GF_UID}:${GF_GID} --from=distroless-prep /var/lib/grafana /var/lib/grafana
+COPY --chown=${GF_UID}:${GF_GID} --from=distroless-prep /var/log/grafana /var/log/grafana
 COPY --from=distroless-prep /usr/share/grafana/conf /usr/share/grafana/conf
-COPY --chown=472:0 --from=distroless-prep /usr/share/grafana/.aws /usr/share/grafana/.aws
-COPY --chown=472:0 --from=distroless-prep /usr/share/grafana/data /usr/share/grafana/data
+COPY --chown=${GF_UID}:${GF_GID} --from=distroless-prep /usr/share/grafana/.aws /usr/share/grafana/.aws
+COPY --chown=${GF_UID}:${GF_GID} --from=distroless-prep /usr/share/grafana/data /usr/share/grafana/data
 COPY --from=distroless-prep /.grafana-version /.grafana-version
-COPY --chown=472:0 --from=go-src /tmp/grafana/bin/grafana* /tmp/grafana/bin/*/grafana* ./bin/
+COPY --chown=${GF_UID}:${GF_GID} --from=go-src /tmp/grafana/bin/grafana* /tmp/grafana/bin/*/grafana* ./bin/
 COPY --from=js-src /tmp/grafana/public ./public
 COPY --from=js-src /tmp/grafana/LICENSE ./
 
@@ -371,7 +374,7 @@ EXPOSE 3000
 
 USER $GF_UID
 
-ENTRYPOINT ["/usr/share/grafana/bin/grafana", "server", "--homepath=/usr/share/grafana", "--config=/etc/grafana/grafana.ini", "--packaging=docker", "cfg:default.log.mode=console", "cfg:default.paths.data=/var/lib/grafana", "cfg:default.paths.logs=/var/log/grafana", "cfg:default.paths.plugins=/var/lib/grafana/plugins", "cfg:default.paths.provisioning=/etc/grafana/provisioning"]
+ENTRYPOINT ["/usr/share/grafana/bin/grafana", "server", "--homepath=/usr/share/grafana", "--config=/etc/grafana/grafana.ini", "--packaging=docker", "cfg:default.log.mode=console"]
 
 # Default stage — alpine. Builds without --target produce an alpine image.
 # Use --target=final-ubuntu to build the ubuntu variant instead.
