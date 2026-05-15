@@ -11489,6 +11489,8 @@
       "clear-search": "Vymazat",
       "close-inline-details": "Zavřít podrobnosti tohoto protokolu",
       "close-sidebar-details": "Zavřít postranní panel s podrobnostmi protokolu",
+      "copy-log-line": "",
+      "copy-log-line-json": "",
       "copy-shortlink": "Kopírovat krátký odkaz",
       "copy-to-clipboard": "Kopírovat do schránky",
       "displayed-fields-section": "Uspořádat zobrazená pole",
@@ -11537,7 +11539,8 @@
     },
     "log-line-menu": {
       "copy-link": "Kopírovat odkaz na řádek protokolu",
-      "copy-log": "Kopírovat řádek protokolu",
+      "copy-log-contents": "",
+      "copy-log-message": "",
       "hide-details": "Zobrazit podrobnosti protokolu",
       "icon-label": "Nabídka protokolu",
       "log-line": "Řádek protokolu",
@@ -15741,8 +15744,8 @@
     },
     "legend": {
       "category": "Legenda",
-      "description-faceted-filter": "Zobrazit filtr viditelnosti řad na základě štítků",
-      "name-faceted-filter": "Fasetová filtrace"
+      "description-faceted-filter": "",
+      "name-faceted-filter": ""
     },
     "line-style-editor": {
       "line-fill-options": {
