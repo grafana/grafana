@@ -32,3 +32,10 @@ grafana.meticulousAIRecorder:
     disabled: false
   defaultRule:
     variation: disabled
+
+grafana.meticulousAIRecorderHighVolume:
+  variations:
+    enabled: true
+    disabled: false
+  defaultRule:
+    variation: disabled

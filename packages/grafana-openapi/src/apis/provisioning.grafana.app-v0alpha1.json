@@ -4035,6 +4035,14 @@
               }
             ]
           },
+          "githubEnterprise": {
+            "description": "GitHub Enterprise Server connection configuration Only applicable when provider is \"githubEnterprise\"",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GitHubEnterpriseConnectionConfig"
+              }
+            ]
+          },
           "gitlab": {
             "description": "Gitlab connection configuration Only applicable when provider is \"gitlab\"",
             "allOf": [
@@ -4049,10 +4057,10 @@
             "default": ""
           },
           "type": {
-            "description": "The connection provider type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"github\"`\n - `\"gitlab\"`",
+            "description": "The connection provider type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"gitlab\"`",
             "type": "string",
             "default": "",
-            "enum": ["bitbucket", "github", "gitlab"]
+            "enum": ["bitbucket", "github", "githubEnterprise", "gitlab"]
           },
           "url": {
             "description": "The connection URL",
@@ -4333,6 +4341,56 @@
             "description": "GitHub App installation ID",
             "type": "string",
             "default": ""
+          }
+        }
+      },
+      "GitHubEnterpriseConnectionConfig": {
+        "description": "GitHubEnterpriseConnectionConfig describes a GitHub App installation against a self-managed GitHub Enterprise Server (GHES) instance.",
+        "type": "object",
+        "required": ["appID", "installationID", "serverUrl"],
+        "properties": {
+          "appID": {
+            "description": "GitHub App ID",
+            "type": "string",
+            "default": ""
+          },
+          "installationID": {
+            "description": "GitHub App installation ID",
+            "type": "string",
+            "default": ""
+          },
+          "serverUrl": {
+            "description": "The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`).",
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "GitHubEnterpriseRepositoryConfig": {
+        "description": "GitHubEnterpriseRepositoryConfig describes a repository hosted on a self-managed GitHub Enterprise Server (GHES) instance.",
+        "type": "object",
+        "required": ["branch"],
+        "properties": {
+          "branch": {
+            "description": "The branch to use in the repository.",
+            "type": "string",
+            "default": ""
+          },
+          "generateDashboardPreviews": {
+            "description": "Whether we should show dashboard previews for pull requests.",
+            "type": "boolean"
+          },
+          "path": {
+            "description": "Path is the subdirectory for the Grafana data inside the repository.",
+            "type": "string"
+          },
+          "serverUrl": {
+            "description": "The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`).",
+            "type": "string"
+          },
+          "url": {
+            "description": "The repository URL on the GHES server (e.g. `https://ghes.example.com/example/test`).",
+            "type": "string"
           }
         }
       },
@@ -5192,6 +5250,14 @@
               }
             ]
           },
+          "githubEnterprise": {
+            "description": "The repository on a self-managed GitHub Enterprise Server (GHES). Mutually exclusive with local | github | git.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GitHubEnterpriseRepositoryConfig"
+              }
+            ]
+          },
           "gitlab": {
             "description": "The repository on GitLab. Mutually exclusive with local | github | git.",
             "allOf": [
@@ -5223,10 +5289,10 @@
             "default": ""
           },
           "type": {
-            "description": "The repository type.  When selected oneOf the values below should be non-nil\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"git\"`\n - `\"github\"`\n - `\"gitlab\"`\n - `\"local\"`",
+            "description": "The repository type.  When selected oneOf the values below should be non-nil\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"git\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"gitlab\"`\n - `\"local\"`",
             "type": "string",
             "default": "",
-            "enum": ["bitbucket", "git", "github", "gitlab", "local"]
+            "enum": ["bitbucket", "git", "github", "githubEnterprise", "gitlab", "local"]
           },
           "webhook": {
             "description": "Webhook settings for the repository. When specified, the base URL overrides the auto-detected Grafana public URL used to register webhooks with the external Git provider.",
@@ -5408,10 +5474,10 @@
             "default": ""
           },
           "type": {
-            "description": "The repository type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"git\"`\n - `\"github\"`\n - `\"gitlab\"`\n - `\"local\"`",
+            "description": "The repository type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"git\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"gitlab\"`\n - `\"local\"`",
             "type": "string",
             "default": "",
-            "enum": ["bitbucket", "git", "github", "gitlab", "local"]
+            "enum": ["bitbucket", "git", "github", "githubEnterprise", "gitlab", "local"]
           },
           "url": {
             "description": "For git, this is the target URL",
@@ -5457,7 +5523,7 @@
             "items": {
               "type": "string",
               "default": "",
-              "enum": ["bitbucket", "git", "github", "gitlab", "local"]
+              "enum": ["bitbucket", "git", "github", "githubEnterprise", "gitlab", "local"]
             }
           },
           "items": {
@@ -5670,10 +5736,10 @@
             "default": ""
           },
           "type": {
-            "description": "The repository type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"git\"`\n - `\"github\"`\n - `\"gitlab\"`\n - `\"local\"`",
+            "description": "The repository type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"git\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"gitlab\"`\n - `\"local\"`",
             "type": "string",
             "default": "",
-            "enum": ["bitbucket", "git", "github", "gitlab", "local"]
+            "enum": ["bitbucket", "git", "github", "githubEnterprise", "gitlab", "local"]
           }
         }
       },

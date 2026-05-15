@@ -57,3 +57,6 @@ func (s *NoopTeamGroupsREST) NewConnectOptions() (runtime.Object, bool, string) 
 func (s *NoopTeamGroupsREST) ConnectMethods() []string {
 	return []string{http.MethodGet}
 }
+
+// SetTeamGetter implements TeamGroupsHandler.
+func (s *NoopTeamGroupsREST) SetTeamGetter(rest.Getter) {}

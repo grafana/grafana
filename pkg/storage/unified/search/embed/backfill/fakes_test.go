@@ -224,6 +224,9 @@ func (f *fakeVector) markExists(ns, model, res, uid string) {
 func (f *fakeVector) Search(context.Context, string, string, string, []float32, int, ...vector.SearchFilter) ([]vector.VectorSearchResult, error) {
 	return nil, nil
 }
+func (f *fakeVector) UpsertReplaceSubresources(ctx context.Context, vs []vector.Vector) error {
+	return f.Upsert(ctx, vs)
+}
 func (f *fakeVector) Upsert(_ context.Context, vs []vector.Vector) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -263,6 +266,10 @@ func (f *fakeVector) Exists(_ context.Context, ns, model, res, uid string) (bool
 	return f.existsSet[existsKey(ns, model, res, uid)], nil
 }
 func (f *fakeVector) GetLatestRV(context.Context) (int64, error) { return 0, nil }
+func (f *fakeVector) SetLatestRV(context.Context, int64) error   { return nil }
+func (f *fakeVector) TryAcquireReconcilerLock(context.Context) (func(), bool, error) {
+	return func() {}, true, nil
+}
 func (f *fakeVector) ListIncompleteBackfillJobs(_ context.Context, model string) ([]vector.BackfillJob, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
