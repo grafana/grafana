@@ -50,25 +50,25 @@ var (
 )
 
 const (
-	gceAuthentication              = "gce"
-	jwtAuthentication              = "jwt"
-	oauthPassthroughAuthentication = "oauthPassthrough"
-	annotationQueryType            = dataquery.QueryTypeANNOTATION
-	timeSeriesListQueryType        = dataquery.QueryTypeTIMESERIESLIST
-	timeSeriesQueryQueryType       = dataquery.QueryTypeTIMESERIESQUERY
-	sloQueryType                   = dataquery.QueryTypeSLO
-	promQLQueryType                = dataquery.QueryTypePROMQL
-	crossSeriesReducerDefault      = "REDUCE_NONE"
-	perSeriesAlignerDefault        = "ALIGN_MEAN"
+	gceAuthentication                  = "gce"
+	jwtAuthentication                  = "jwt"
+	forwardOAuthIdentityAuthentication = "forwardOAuthIdentity"
+	annotationQueryType                = dataquery.QueryTypeANNOTATION
+	timeSeriesListQueryType            = dataquery.QueryTypeTIMESERIESLIST
+	timeSeriesQueryQueryType           = dataquery.QueryTypeTIMESERIESQUERY
+	sloQueryType                       = dataquery.QueryTypeSLO
+	promQLQueryType                    = dataquery.QueryTypePROMQL
+	crossSeriesReducerDefault          = "REDUCE_NONE"
+	perSeriesAlignerDefault            = "ALIGN_MEAN"
 )
 
 const fromAlertHeaderName = "FromAlert"
 
 const (
-	oauthPassthroughMissingDefaultProjectMessage = "Default project is required when using OAuth passthrough authentication."
-	oauthPassthroughUnauthorizedMessage          = "401 Unauthorized: Usage of this data source requires you to be authenticated via Google OAuth. If you are signed in via Google, your session token may have expired — sign out and back in to refresh it."
-	oauthPassthroughForbiddenMessage             = "403 Forbidden: Permission denied. Make sure the https://www.googleapis.com/auth/monitoring.read scope is configured in Grafana's Google OAuth settings, and that the signed-in user has the Monitoring Viewer role on the default project."
-	oauthPassthroughAlertingNotSupportedMessage  = "alerting queries are not supported with the Forward OAuth Identity authentication type; use Google JWT File or GCE Default Service Account for data sources used by alerting rules"
+	forwardOAuthIdentityMissingDefaultProjectMessage = "Default project is required when using OAuth passthrough authentication."
+	forwardOAuthIdentityUnauthorizedMessage          = "401 Unauthorized: Usage of this data source requires you to be authenticated via Google OAuth. If you are signed in via Google, your session token may have expired — sign out and back in to refresh it."
+	forwardOAuthIdentityForbiddenMessage             = "403 Forbidden: Permission denied. Make sure the https://www.googleapis.com/auth/monitoring.read scope is configured in Grafana's Google OAuth settings, and that the signed-in user has the Monitoring Viewer role on the default project."
+	forwardOAuthIdentityAlertingNotSupportedMessage  = "alerting queries are not supported with the Forward OAuth Identity authentication type; use Google JWT File or GCE Default Service Account for data sources used by alerting rules"
 )
 
 func ProvideService(httpClientProvider *httpclient.Provider) *Service {
@@ -106,7 +106,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	if dsInfo.oauthPassThru && defaultProject == "" {
 		return &backend.CheckHealthResult{
 			Status:  backend.HealthStatusError,
-			Message: oauthPassthroughMissingDefaultProjectMessage,
+			Message: forwardOAuthIdentityMissingDefaultProjectMessage,
 		}, nil
 	}
 
@@ -134,9 +134,9 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 		if dsInfo.oauthPassThru {
 			switch res.StatusCode {
 			case http.StatusUnauthorized:
-				message = oauthPassthroughUnauthorizedMessage
+				message = forwardOAuthIdentityUnauthorizedMessage
 			case http.StatusForbidden:
-				message = oauthPassthroughForbiddenMessage
+				message = forwardOAuthIdentityForbiddenMessage
 			}
 		}
 	}
@@ -226,7 +226,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			return nil, err
 		}
 
-		if jsonData.AuthenticationType == oauthPassthroughAuthentication {
+		if jsonData.AuthenticationType == forwardOAuthIdentityAuthentication {
 			opts.ForwardHTTPHeaders = true
 		}
 
@@ -384,7 +384,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	// Alert rule evaluations run without a user context, so fail fast with a clear
 	// message rather than letting the request reach GCM with no Authorization header.
 	if dsInfo.oauthPassThru && req.Headers[fromAlertHeaderName] == "true" {
-		return nil, backend.DownstreamError(errors.New(oauthPassthroughAlertingNotSupportedMessage))
+		return nil, backend.DownstreamError(errors.New(forwardOAuthIdentityAlertingNotSupportedMessage))
 	}
 
 	// There aren't any possible downstream errors here

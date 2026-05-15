@@ -49,15 +49,15 @@ func TestNewInstanceSettings(t *testing.T) {
 		assert.Equal(t, "test", dsInfoCasted.tokenUri)
 	})
 
-	t.Run("should parse oauthPassthrough authentication", func(t *testing.T) {
+	t.Run("should parse forwardOAuthIdentity authentication", func(t *testing.T) {
 		cli := httpclient.NewProvider()
 		f := newInstanceSettings(*cli)
 		dsInfo, err := f(context.Background(), backend.DataSourceInstanceSettings{
-			JSONData: json.RawMessage(`{"authenticationType": "oauthPassthrough", "oauthPassThru": true, "defaultProject": "p1"}`),
+			JSONData: json.RawMessage(`{"authenticationType": "forwardOAuthIdentity", "oauthPassThru": true, "defaultProject": "p1"}`),
 		})
 		require.NoError(t, err)
 		dsInfoCasted := dsInfo.(*datasourceInfo)
-		assert.Equal(t, oauthPassthroughAuthentication, dsInfoCasted.authenticationType)
+		assert.Equal(t, forwardOAuthIdentityAuthentication, dsInfoCasted.authenticationType)
 		assert.True(t, dsInfoCasted.oauthPassThru)
 		assert.Equal(t, "p1", dsInfoCasted.defaultProject)
 		assert.NotNil(t, dsInfoCasted.services[cloudMonitor].client)
@@ -1184,10 +1184,10 @@ func TestCheckHealth(t *testing.T) {
 		}, res)
 	})
 
-	t.Run("oauthPassthrough without a default project returns an error", func(t *testing.T) {
+	t.Run("forwardOAuthIdentity without a default project returns an error", func(t *testing.T) {
 		im := datasource.NewInstanceManager(func(_ context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return &datasourceInfo{
-				authenticationType: oauthPassthroughAuthentication,
+				authenticationType: forwardOAuthIdentityAuthentication,
 				oauthPassThru:      true,
 				defaultProject:     "",
 			}, nil
@@ -1203,7 +1203,7 @@ func TestCheckHealth(t *testing.T) {
 		assert.Contains(t, res.Message, "Default project is required")
 	})
 
-	t.Run("oauthPassthrough surfaces friendlier message on 401 Unauthorized", func(t *testing.T) {
+	t.Run("forwardOAuthIdentity surfaces friendlier message on 401 Unauthorized", func(t *testing.T) {
 		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 			w.WriteHeader(http.StatusUnauthorized)
 		}))
@@ -1211,7 +1211,7 @@ func TestCheckHealth(t *testing.T) {
 
 		im := datasource.NewInstanceManager(func(_ context.Context, _ backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return &datasourceInfo{
-				authenticationType: oauthPassthroughAuthentication,
+				authenticationType: forwardOAuthIdentityAuthentication,
 				oauthPassThru:      true,
 				defaultProject:     "p1",
 				services: map[string]datasourceService{
@@ -1230,7 +1230,7 @@ func TestCheckHealth(t *testing.T) {
 		assert.Contains(t, res.Message, "authenticated via Google OAuth")
 	})
 
-	t.Run("oauthPassthrough surfaces friendlier message on 403 Forbidden", func(t *testing.T) {
+	t.Run("forwardOAuthIdentity surfaces friendlier message on 403 Forbidden", func(t *testing.T) {
 		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 			w.WriteHeader(http.StatusForbidden)
 		}))
@@ -1238,7 +1238,7 @@ func TestCheckHealth(t *testing.T) {
 
 		im := datasource.NewInstanceManager(func(_ context.Context, _ backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return &datasourceInfo{
-				authenticationType: oauthPassthroughAuthentication,
+				authenticationType: forwardOAuthIdentityAuthentication,
 				oauthPassThru:      true,
 				defaultProject:     "p1",
 				services: map[string]datasourceService{
@@ -1257,7 +1257,7 @@ func TestCheckHealth(t *testing.T) {
 		assert.Contains(t, res.Message, "Monitoring Viewer role")
 	})
 
-	t.Run("non-oauthPassthrough preserves the original response status on errors", func(t *testing.T) {
+	t.Run("non-forwardOAuthIdentity preserves the original response status on errors", func(t *testing.T) {
 		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 			w.WriteHeader(http.StatusForbidden)
 		}))
@@ -1284,11 +1284,11 @@ func TestCheckHealth(t *testing.T) {
 	})
 }
 
-func TestQueryData_oauthPassthrough(t *testing.T) {
+func TestQueryData_forwardOAuthIdentity(t *testing.T) {
 	t.Run("rejects alerting queries when oauthPassThru is set", func(t *testing.T) {
 		im := datasource.NewInstanceManager(func(_ context.Context, _ backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return &datasourceInfo{
-				authenticationType: oauthPassthroughAuthentication,
+				authenticationType: forwardOAuthIdentityAuthentication,
 				oauthPassThru:      true,
 				defaultProject:     "p1",
 			}, nil

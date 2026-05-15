@@ -34,7 +34,7 @@ var routes = map[string]routeInfo{
 }
 
 func getMiddleware(model *datasourceInfo, routePath string) (httpclient.Middleware, error) {
-	if model.authenticationType == oauthPassthroughAuthentication {
+	if model.authenticationType == forwardOAuthIdentityAuthentication {
 		return nil, nil
 	}
 
