@@ -1,5 +1,4 @@
-import { render, screen } from '@testing-library/react';
-import { TestProvider } from 'test/helpers/TestProvider';
+import { render, screen } from 'test/test-utils';
 
 import { behaviors, SceneTimeRange } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
@@ -120,21 +119,13 @@ describe('GeneralSettingsEditView', () => {
   describe('Folder field visibility', () => {
     it('renders the Folder field for a normal dashboard', async () => {
       const { settings } = await buildTestScene();
-      render(
-        <TestProvider>
-          <settings.Component model={settings} />
-        </TestProvider>
-      );
+      render(<settings.Component model={settings} />);
       expect(await screen.findByText('Folder')).toBeInTheDocument();
     });
 
     it('hides the Folder field when the dashboard is a template', async () => {
       const { settings } = await buildTestScene({ canEdit: true, isDashboardTemplate: true });
-      render(
-        <TestProvider>
-          <settings.Component model={settings} />
-        </TestProvider>
-      );
+      render(<settings.Component model={settings} />);
 
       // Other labels still render
       expect(await screen.findByText('Tags')).toBeInTheDocument();

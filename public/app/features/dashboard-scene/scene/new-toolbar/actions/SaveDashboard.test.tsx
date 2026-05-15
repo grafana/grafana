@@ -1,12 +1,10 @@
-import { OpenFeatureProvider } from '@openfeature/react-sdk';
-import { act, render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { act, render, screen, userEvent } from 'test/test-utils';
 
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction, setPluginImportUtils } from '@grafana/runtime';
 import { SceneGridLayout, SceneTimeRange, VizPanel } from '@grafana/scenes';
-import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 import { registerSaveAsTemplateForm } from 'app/features/dashboard-scene/saving/enterprise-components/SaveAsTemplateFormExtension';
 import { activateFullSceneTree } from 'app/features/dashboard-scene/utils/test-utils';
@@ -69,10 +67,6 @@ function buildTestScene(opts: BuildSceneOpts = {}) {
   return scene;
 }
 
-function renderWithProviders(ui: React.ReactElement) {
-  return render(<OpenFeatureProvider client={getTestFeatureFlagClient()}>{ui}</OpenFeatureProvider>);
-}
-
 describe('SaveDashboard (toolbar)', () => {
   let originalHasEditPermissionInFolders: boolean;
 
@@ -96,7 +90,7 @@ describe('SaveDashboard (toolbar)', () => {
   describe('Template edit flow', () => {
     it('renders a single Save button without the More options dropdown', async () => {
       const scene = buildTestScene({ isDashboardTemplate: true, canSave: true });
-      renderWithProviders(<SaveDashboard dashboard={scene} />);
+      render(<SaveDashboard dashboard={scene} />);
 
       const saveBtn = await screen.findByTestId(selectors.components.NavToolbar.editDashboard.saveButton);
       expect(saveBtn).toBeInTheDocument();
@@ -107,15 +101,15 @@ describe('SaveDashboard (toolbar)', () => {
 
     it('calls openSaveDrawer with saveDashboardTemplate when clicked', async () => {
       const scene = buildTestScene({ isDashboardTemplate: true, canSave: true });
-      renderWithProviders(<SaveDashboard dashboard={scene} />);
+      const { user } = render(<SaveDashboard dashboard={scene} />);
 
-      await userEvent.click(await screen.findByTestId(selectors.components.NavToolbar.editDashboard.saveButton));
+      await user.click(await screen.findByTestId(selectors.components.NavToolbar.editDashboard.saveButton));
       expect(scene.openSaveDrawer).toHaveBeenCalledWith({ saveDashboardTemplate: true });
     });
 
     it('returns null when canSave is false', () => {
       const scene = buildTestScene({ isDashboardTemplate: true, canSave: false });
-      const { container } = renderWithProviders(<SaveDashboard dashboard={scene} />);
+      const { container } = render(<SaveDashboard dashboard={scene} />);
       expect(container.firstChild).toBeNull();
     });
   });
@@ -124,18 +118,18 @@ describe('SaveDashboard (toolbar)', () => {
     it('is hidden when the feature flag is off', async () => {
       registerSaveAsTemplateForm(() => null);
       const scene = buildTestScene({ canSave: true });
-      renderWithProviders(<SaveDashboard dashboard={scene} />);
+      const { user } = render(<SaveDashboard dashboard={scene} />);
 
-      await userEvent.click(await screen.findByRole('button', { name: /More save options/i }));
+      await user.click(await screen.findByRole('button', { name: /More save options/i }));
       expect(screen.queryByRole('menuitem', { name: /Save as template/i })).not.toBeInTheDocument();
     });
 
     it('is hidden when the flag is on but no extension form is registered', async () => {
       setTestFlags({ 'grafana.orgDashboardTemplates': true });
       const scene = buildTestScene({ canSave: true });
-      renderWithProviders(<SaveDashboard dashboard={scene} />);
+      const { user } = render(<SaveDashboard dashboard={scene} />);
 
-      await userEvent.click(await screen.findByRole('button', { name: /More save options/i }));
+      await user.click(await screen.findByRole('button', { name: /More save options/i }));
       expect(screen.queryByRole('menuitem', { name: /Save as template/i })).not.toBeInTheDocument();
     });
 
@@ -144,11 +138,11 @@ describe('SaveDashboard (toolbar)', () => {
       registerSaveAsTemplateForm(() => null);
 
       const scene = buildTestScene({ canSave: true });
-      renderWithProviders(<SaveDashboard dashboard={scene} />);
+      const { user } = render(<SaveDashboard dashboard={scene} />);
 
-      await userEvent.click(await screen.findByRole('button', { name: /More save options/i }));
+      await user.click(await screen.findByRole('button', { name: /More save options/i }));
       const menuItem = await screen.findByRole('menuitem', { name: /Save as template/i });
-      await userEvent.click(menuItem);
+      await user.click(menuItem);
 
       expect(scene.openSaveDrawer).toHaveBeenCalledWith({ saveAsDashboardTemplate: true });
     });
@@ -157,11 +151,11 @@ describe('SaveDashboard (toolbar)', () => {
   describe('Save as copy', () => {
     it('reports the interaction and opens the drawer in copy mode', async () => {
       const scene = buildTestScene({ canSave: true });
-      renderWithProviders(<SaveDashboard dashboard={scene} />);
+      const { user } = render(<SaveDashboard dashboard={scene} />);
 
-      await userEvent.click(await screen.findByRole('button', { name: /More save options/i }));
+      await user.click(await screen.findByRole('button', { name: /More save options/i }));
       const menuItem = await screen.findByRole('menuitem', { name: /Save as copy/i });
-      await userEvent.click(menuItem);
+      await user.click(menuItem);
 
       expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboard_save_as_copy_clicked');
       expect(scene.openSaveDrawer).toHaveBeenCalledWith({ saveAsCopy: true });
