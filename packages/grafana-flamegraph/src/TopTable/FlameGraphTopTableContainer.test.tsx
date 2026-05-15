@@ -96,15 +96,16 @@ describe('buildFilteredTable', () => {
 [3][4]
     `);
 
-    const result = buildFilteredTable(container!);
+    const { table, otherData } = buildFilteredTable(container!);
 
-    expect(result).toEqual({
+    expect(table).toEqual({
       '0': { self: 1, total: 7, totalRight: 0 },
       '1': { self: 0, total: 3, totalRight: 0 },
       '2': { self: 0, total: 3, totalRight: 0 },
       '3': { self: 3, total: 3, totalRight: 0 },
       '4': { self: 3, total: 3, totalRight: 0 },
     });
+    expect(otherData).toBeNull();
   });
 
   it('should sum values for duplicate labels', () => {
@@ -113,9 +114,9 @@ describe('buildFilteredTable', () => {
 [1][1]
     `);
 
-    const result = buildFilteredTable(container!);
+    const { table } = buildFilteredTable(container!);
 
-    expect(result).toEqual({
+    expect(table).toEqual({
       '0': { self: 0, total: 6, totalRight: 0 },
       '1': { self: 6, total: 6, totalRight: 0 },
     });
@@ -129,9 +130,9 @@ describe('buildFilteredTable', () => {
     `);
 
     const matchedLabels = new Set(['1', '3']);
-    const result = buildFilteredTable(container!, matchedLabels);
+    const { table } = buildFilteredTable(container!, matchedLabels);
 
-    expect(result).toEqual({
+    expect(table).toEqual({
       '1': { self: 0, total: 3, totalRight: 0 },
       '3': { self: 3, total: 3, totalRight: 0 },
     });
@@ -145,9 +146,9 @@ describe('buildFilteredTable', () => {
     `);
 
     const matchedLabels = new Set<string>();
-    const result = buildFilteredTable(container!, matchedLabels);
+    const { table } = buildFilteredTable(container!, matchedLabels);
 
-    expect(result).toEqual({});
+    expect(table).toEqual({});
   });
 
   it('should handle data with no matches', () => {
@@ -158,9 +159,9 @@ describe('buildFilteredTable', () => {
     `);
 
     const matchedLabels = new Set(['9']);
-    const result = buildFilteredTable(container!, matchedLabels);
+    const { table } = buildFilteredTable(container!, matchedLabels);
 
-    expect(result).toEqual({});
+    expect(table).toEqual({});
   });
 
   it('should work without matchedLabels filter', () => {
@@ -169,13 +170,14 @@ describe('buildFilteredTable', () => {
 [1]
     `);
 
-    const result = buildFilteredTable(container!);
+    const { table } = buildFilteredTable(container!);
 
-    expect(result).toEqual({
+    expect(table).toEqual({
       '0': { self: 0, total: 3, totalRight: 0 },
       '1': { self: 3, total: 3, totalRight: 0 },
     });
   });
+
   it('should not inflate totals for recursive calls', () => {
     const container = textToDataContainer(`
 [0////]
@@ -184,14 +186,35 @@ describe('buildFilteredTable', () => {
 [0]
     `);
 
-    const result = buildFilteredTable(container!);
+    const { table } = buildFilteredTable(container!);
 
-    expect(result).toEqual({
+    expect(table).toEqual({
       '0': { self: 4, total: 7, totalRight: 0 },
       '1': { self: 0, total: 3, totalRight: 0 },
       '2': { self: 0, total: 3, totalRight: 0 },
       '3': { self: 0, total: 3, totalRight: 0 },
       '4': { self: 3, total: 3, totalRight: 0 },
     });
+  });
+
+  it('should exclude "other" from the table and return it in otherData', () => {
+    const container = textToDataContainer(`
+[0////]
+[1][2]
+    `);
+
+    // Manually inject an 'other' label into the data for testing
+    const rawContainer = container!;
+    const originalGetLabel = rawContainer.getLabel.bind(rawContainer);
+    // Simulate label '2' being named 'other'
+    rawContainer.getLabel = (i: number) => (originalGetLabel(i) === '2' ? 'other' : originalGetLabel(i));
+
+    const { table, otherData } = buildFilteredTable(rawContainer);
+
+    expect(table).not.toHaveProperty('other');
+    expect(table).toHaveProperty('0');
+    expect(table).toHaveProperty('1');
+    expect(otherData).not.toBeNull();
+    expect(otherData!.self).toBeGreaterThan(0);
   });
 });

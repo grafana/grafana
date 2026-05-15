@@ -54,49 +54,63 @@ const FlameGraphTopTableContainer = memo(
     onTableSort,
     colorScheme,
   }: Props) => {
-    const table = useMemo(() => buildFilteredTable(data, matchedLabels), [data, matchedLabels]);
+    const { table, otherData } = useMemo(() => buildFilteredTable(data, matchedLabels), [data, matchedLabels]);
 
     const styles = useStyles2(getStyles);
     const theme = useTheme2();
 
     const [sort, setSort] = useState<TableSortByFieldState[]>([{ displayName: 'Self', desc: true }]);
 
+    let otherNote: string | undefined;
+    if (otherData) {
+      const display = data.valueDisplayProcessor(otherData.self);
+      const formatted = `${display.text}${display.suffix ?? ''}`;
+      otherNote = `${formatted} has been truncated and is represented as 'other' in the flamegraph.`;
+    }
+
     return (
       <div className={styles.topTableContainer} data-testid="topTable">
-        <AutoSizer style={{ width: '100%' }}>
-          {({ width, height }) => {
-            if (width < 3 || height < 3) {
-              return null;
-            }
+        <div className={styles.tableWrapper}>
+          <AutoSizer style={{ width: '100%' }}>
+            {({ width, height }) => {
+              if (width < 3 || height < 3) {
+                return null;
+              }
 
-            const frame = buildTableDataFrame(
-              data,
-              table,
-              width,
-              onSymbolClick,
-              onSearch,
-              onSandwich,
-              theme,
-              colorScheme,
-              search,
-              sandwichItem
-            );
-            return (
-              <Table
-                initialSortBy={sort}
-                onSortByChange={(s) => {
-                  if (s && s.length) {
-                    onTableSort?.(s[0].displayName + '_' + (s[0].desc ? 'desc' : 'asc'));
-                  }
-                  setSort(s);
-                }}
-                data={frame}
-                width={width}
-                height={height}
-              />
-            );
-          }}
-        </AutoSizer>
+              const frame = buildTableDataFrame(
+                data,
+                table,
+                width,
+                onSymbolClick,
+                onSearch,
+                onSandwich,
+                theme,
+                colorScheme,
+                search,
+                sandwichItem
+              );
+              return (
+                <Table
+                  initialSortBy={sort}
+                  onSortByChange={(s) => {
+                    if (s && s.length) {
+                      onTableSort?.(s[0].displayName + '_' + (s[0].desc ? 'desc' : 'asc'));
+                    }
+                    setSort(s);
+                  }}
+                  data={frame}
+                  width={width}
+                  height={height}
+                />
+              );
+            }}
+          </AutoSizer>
+        </div>
+        {otherNote && (
+          <p className={styles.otherNote} data-testid="other-note">
+            {otherNote}
+          </p>
+        )}
       </div>
     );
   }
@@ -104,10 +118,16 @@ const FlameGraphTopTableContainer = memo(
 
 FlameGraphTopTableContainer.displayName = 'FlameGraphTopTableContainer';
 
-function buildFilteredTable(data: FlameGraphDataContainer, matchedLabels?: Set<string>) {
+type FilteredTableResult = {
+  table: { [key: string]: TableData };
+  otherData: TableData | null;
+};
+
+function buildFilteredTable(data: FlameGraphDataContainer, matchedLabels?: Set<string>): FilteredTableResult {
   // Group the data by label, we show only one row per label and sum the values
   // TODO: should be by filename + funcName + linenumber?
   let filteredTable: { [key: string]: TableData } = Object.create(null);
+  let otherData: TableData | null = null;
 
   // Track call stack to detect recursive calls
   const callStack: string[] = [];
@@ -127,8 +147,19 @@ function buildFilteredTable(data: FlameGraphDataContainer, matchedLabels?: Set<s
     // Check if this is a recursive call (same label already in call stack)
     const isRecursive = callStack.some((entry) => entry === label);
 
-    // If user is doing text search we filter out labels in the same way we highlight them in flame graph.
-    if (!matchedLabels || matchedLabels.has(label)) {
+    // The 'other' node represents truncated stacktraces and is not actionable in the table.
+    // Accumulate its values separately so a note can be shown below the table.
+    if (label === 'other') {
+      if (!otherData) {
+        otherData = { self: 0, total: 0, totalRight: 0 };
+      }
+      otherData.self += self;
+      if (!isRecursive) {
+        otherData.total += value;
+        otherData.totalRight += valueRight;
+      }
+    } else if (!matchedLabels || matchedLabels.has(label)) {
+      // If user is doing text search we filter out labels in the same way we highlight them in flame graph.
       filteredTable[label] = filteredTable[label] || {};
       filteredTable[label].self = filteredTable[label].self ? filteredTable[label].self + self : self;
 
@@ -145,7 +176,7 @@ function buildFilteredTable(data: FlameGraphDataContainer, matchedLabels?: Set<s
     callStack.push(label);
   }
 
-  return filteredTable;
+  return { table: filteredTable, otherData };
 }
 
 function buildTableDataFrame(
@@ -367,9 +398,23 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     topTableContainer: css({
       label: 'topTableContainer',
+      display: 'flex',
+      flexDirection: 'column',
       padding: theme.spacing(1),
       backgroundColor: theme.colors.background.secondary,
       height: '100%',
+    }),
+    tableWrapper: css({
+      label: 'tableWrapper',
+      flex: 1,
+      minHeight: 0,
+    }),
+    otherNote: css({
+      label: 'otherNote',
+      marginTop: theme.spacing(0.5),
+      marginBottom: 0,
+      color: theme.colors.text.secondary,
+      fontSize: theme.typography.bodySmall.fontSize,
     }),
   };
 };
