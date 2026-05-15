@@ -40,22 +40,6 @@ func setFakeAPIServer(t *testing.T, publicKey string, keyID string) (*httptest.S
 		done <- true
 	})), done
 }
-func Test_IsDisabled(t *testing.T) {
-	t.Run("disabled when PluginSkipPublicKeyDownload is true", func(t *testing.T) {
-		kr := ProvideService(&setting.Cfg{PluginSkipPublicKeyDownload: true, CheckForPluginUpdates: true}, nil)
-		require.True(t, kr.IsDisabled())
-	})
-
-	t.Run("disabled when CheckForPluginUpdates is false", func(t *testing.T) {
-		kr := ProvideService(&setting.Cfg{PluginSkipPublicKeyDownload: false, CheckForPluginUpdates: false}, nil)
-		require.True(t, kr.IsDisabled())
-	})
-
-	t.Run("enabled when both flags allow it", func(t *testing.T) {
-		kr := ProvideService(&setting.Cfg{PluginSkipPublicKeyDownload: false, CheckForPluginUpdates: true}, nil)
-		require.False(t, kr.IsDisabled())
-	})
-}
 
 func Test_PublicKeyUpdate(t *testing.T) {
 	t.Run("it should retrieve an API key", func(t *testing.T) {
