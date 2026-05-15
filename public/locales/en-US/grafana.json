@@ -7952,8 +7952,8 @@
       "hide-time-picker": "Hide time picker",
       "now-delay-description": "Exclude recent data that may be incomplete.",
       "now-delay-label": "Now delay",
-      "refresh-live-dashboards-description": "Continuously update panels when the time range includes the current time",
-      "refresh-live-dashboards-label": "Refresh live dashboards",
+      "smooth-streaming-description": "Redraws panels at a high rate so streaming data and time-relative axes update smoothly. This is a rendering setting, not a query refresh — it does not fetch new data.",
+      "smooth-streaming-label": "Smooth streaming visualization",
       "time-options-label": "Time options",
       "time-zone-label": "Time zone",
       "week-start-label": "Week start"

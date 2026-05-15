@@ -116,13 +116,13 @@ export const TimePickerSettings = memo(
           <Switch id="hide-time-picker-toggle" value={!!timePickerHidden} onChange={handleHideTimePickerChange} />
         </Field>
         <Field
-          label={t('dashboard-settings.time-picker.refresh-live-dashboards-label', 'Refresh live dashboards')}
+          label={t('dashboard-settings.time-picker.smooth-streaming-label', 'Smooth streaming visualization')}
           description={t(
-            'dashboard-settings.time-picker.refresh-live-dashboards-description',
-            'Continuously update panels when the time range includes the current time'
+            'dashboard-settings.time-picker.smooth-streaming-description',
+            'Redraws panels at a high rate so streaming data and time-relative axes update smoothly. This is a rendering setting, not a query refresh — it does not fetch new data.'
           )}
         >
-          <Switch id="refresh-live-dashboards-toggle" value={!!liveNow} onChange={handleLiveNowChange} />
+          <Switch id="smooth-streaming-toggle" value={!!liveNow} onChange={handleLiveNowChange} />
         </Field>
       </CollapsableSection>
     );
