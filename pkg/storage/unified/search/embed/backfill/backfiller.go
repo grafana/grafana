@@ -327,15 +327,20 @@ func (b *VectorBackfiller) shouldSkipForZeroViews(ctx context.Context, builder e
 	if builder.Group() != dashboardGroup || builder.Resource() != dashboardResource {
 		return false
 	}
-	if name == "" {
+	if name == "" || namespace == "" {
 		return false
 	}
 	stats, err := b.dashboardStats.GetDashboardStats(ctx, namespace, name)
 	if err != nil {
+		b.log.Error("backfiller dashboard stats check failed", "namespace", namespace, "name", name, "err", err)
 		return false
 	}
 	views, ok := stats[viewsLast30DaysKey]
-	if !ok || views > 0 {
+	if !ok {
+		return false
+	}
+	if views > 0 {
+		b.log.Info("backfiller embedding dashboard with views in last 30 days", "namespace", namespace, "name", name, "views", views)
 		return false
 	}
 	b.log.FromContext(ctx).Debug("backfill: skipping dashboard with zero views in last 30 days",
