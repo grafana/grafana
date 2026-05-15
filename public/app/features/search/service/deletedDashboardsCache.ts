@@ -94,10 +94,14 @@ class DeletedDashboardsCache {
         };
       }
 
+      // The backend may return multiple soft-deleted versions of the same dashboard
+      // after restore+re-delete cycles. Keep only the newest per UID.
+      const deduped = deduplicateByUid(items);
+
       return {
         ...lastResponse,
         metadata: { ...lastResponse.metadata, continue: continueToken },
-        items,
+        items: deduped,
       };
     } catch (error) {
       console.error('Failed to fetch deleted dashboards:', error);
@@ -112,6 +116,23 @@ class DeletedDashboardsCache {
 }
 
 export const deletedDashboardsCache = new DeletedDashboardsCache();
+
+/**
+ * Deduplicates items by `metadata.name` (UID), keeping the entry with the highest
+ * `resourceVersion`. The backend can return multiple soft-deleted rows for the same
+ * dashboard after restore+re-delete cycles.
+ */
+function deduplicateByUid(items: Array<Resource<DashboardDataDTO>>): Array<Resource<DashboardDataDTO>> {
+  const map = new Map<string, Resource<DashboardDataDTO>>();
+  for (const item of items) {
+    const uid = item.metadata.name;
+    const existing = map.get(uid);
+    if (!existing || (item.metadata.resourceVersion ?? '') > (existing.metadata.resourceVersion ?? '')) {
+      map.set(uid, item);
+    }
+  }
+  return map.size === items.length ? items : Array.from(map.values());
+}
 
 /**
  * Max UIDs per `getDisplayMapping` request. Keeps the URL well under nginx's default

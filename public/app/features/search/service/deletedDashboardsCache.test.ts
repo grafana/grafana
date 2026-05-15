@@ -477,4 +477,55 @@ describe('DeletedDashboardsCache', () => {
     expect(result[0].field.deletedBy).toBe('Alice');
     expect(mockListDeletedDashboards).toHaveBeenCalledTimes(2);
   });
+
+  it('deduplicates items by UID keeping the newest resourceVersion', async () => {
+    const duplicateList = {
+      apiVersion: 'v1' as const,
+      kind: 'List' as const,
+      metadata: { resourceVersion: '1' },
+      items: [
+        {
+          metadata: {
+            name: 'dash-a',
+            resourceVersion: '200',
+            annotations: { [AnnoKeyUpdatedBy]: 'user:alice' },
+          },
+          spec: { title: 'Dashboard A (new)' },
+        },
+        {
+          metadata: {
+            name: 'dash-a',
+            resourceVersion: '100',
+            annotations: { [AnnoKeyUpdatedBy]: 'user:alice' },
+          },
+          spec: { title: 'Dashboard A (old)' },
+        },
+        {
+          metadata: {
+            name: 'dash-b',
+            resourceVersion: '150',
+            annotations: { [AnnoKeyUpdatedBy]: 'user:bob' },
+          },
+          spec: { title: 'Dashboard B' },
+        },
+      ],
+    };
+
+    const mockListDeletedDashboards = jest.fn().mockResolvedValue(duplicateList);
+    getDashboardAPI.mockResolvedValue({ listDeletedDashboards: mockListDeletedDashboards });
+
+    mockDispatch.mockReturnValue(
+      mockSubscription({
+        data: makeDisplayList([
+          { identity: { type: 'user', name: 'alice' }, displayName: 'Alice' },
+          { identity: { type: 'user', name: 'bob' }, displayName: 'Bob' },
+        ]),
+      })
+    );
+
+    const result = await deletedDashboardsCache.get();
+
+    expect(result).toHaveLength(2);
+    expect(result.map((r) => r.title)).toEqual(['Dashboard A (new)', 'Dashboard B']);
+  });
 });
