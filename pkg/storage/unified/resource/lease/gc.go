@@ -257,11 +257,12 @@ func (gc *garbageCollector) runCycle(ctx context.Context) (int, error) {
 			continue
 		}
 
-		totalDeleted += len(toDelete)
 		if err := gc.store.BatchDelete(ctx, kv.LeasesSection, toDelete); err != nil {
 			gc.logError(err, "failed to batch delete leases", "count", len(toDelete))
 			continue
 		}
+
+		totalDeleted += len(toDelete)
 	}
 }
 

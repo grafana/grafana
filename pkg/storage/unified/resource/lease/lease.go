@@ -233,7 +233,7 @@ func (m *Manager) Acquire(ctx context.Context, name string, opts ...AcquireOptio
 	}
 
 	for attempt := 0; ; attempt++ {
-		if attempt >= maxAcquireAttempts-1 {
+		if attempt >= maxAcquireAttempts {
 			return nil, fmt.Errorf("%w: exhausted retries acquiring %s", ErrLeaseAlreadyHeld, name)
 		}
 
@@ -330,11 +330,10 @@ func (m *Manager) Release(ctx context.Context, lease *Lease) error {
 
 	meta, err := m.read(ctx, lease.key)
 	if err != nil {
-		var message string
 		if errors.Is(err, kv.ErrNotFound) {
-			message = " (not found)"
+			return fmt.Errorf("releasing %s~%d: %w (not found)", lease.key.name, lease.key.generation, ErrLeaseLost)
 		}
-		return fmt.Errorf("releasing %s~%d: %w%s", lease.key.name, lease.key.generation, err, message)
+		return fmt.Errorf("releasing %s~%d: %w", lease.key.name, lease.key.generation, err)
 	}
 
 	// Note that we're not guaranteed to return ErrLeaseLost if two managers for
@@ -535,7 +534,7 @@ func validateLeaseName(name string) error {
 		return fmt.Errorf("invalid lease name %q: %q not allowed", name, generationSeparator)
 	}
 	if strings.HasPrefix(name, internalPrefix) {
-		return fmt.Errorf("cannot use reserved lease name %q", gcKey)
+		return fmt.Errorf("cannot use reserved lease name %q", name)
 	}
 	return nil
 }
