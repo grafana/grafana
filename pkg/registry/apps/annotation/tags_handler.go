@@ -8,11 +8,11 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 )
 
-type tagResponse struct {
-	Tags []tagItem `json:"tags"`
+type TagResponse struct {
+	Tags []TagItem `json:"tags"`
 }
 
-type tagItem struct {
+type TagItem struct {
 	Tag   string `json:"tag"`
 	Count int64  `json:"count"`
 }
@@ -39,15 +39,15 @@ func newTagsHandler(tagProvider TagProvider) func(ctx context.Context, writer ap
 		if err != nil {
 			return err
 		}
-		items := make([]tagItem, len(tags))
+		items := make([]TagItem, len(tags))
 		for i, tag := range tags {
-			items[i] = tagItem{
+			items[i] = TagItem{
 				Tag:   tag.Name,
 				Count: tag.Count,
 			}
 		}
 
-		response := tagResponse{
+		response := TagResponse{
 			Tags: items,
 		}
 
