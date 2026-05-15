@@ -261,7 +261,6 @@ func (m *Manager) Release(ctx context.Context, lease *Lease) (err error) {
 	ctx, span := tracer.Start(ctx, "lease.Manager.Release", trace.WithAttributes(
 		attribute.String("lease.name", lease.name),
 		attribute.String("lease.holder", lease.holder),
-		attribute.Int64("lease.generation", lease.generation),
 	))
 	defer span.End()
 	defer func() { recordSpanError(span, err) }()
