@@ -104,13 +104,14 @@ func (gc *garbageCollector) loop(ctx context.Context) {
 			return
 
 		case <-next:
+			start := time.Now()
 			deleted, err := gc.runOnce(ctx)
 			if err != nil {
 				gc.logError(err, "error running gc cycle")
 			}
 
 			if deleted > 0 {
-				gc.log.Info("leases deleted", "count", deleted)
+				gc.log.Info("leases deleted", "count", deleted, "duration", time.Since(start))
 			}
 		}
 	}
