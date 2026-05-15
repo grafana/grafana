@@ -5,6 +5,7 @@ import { type IconName } from '@grafana/data';
 export interface HomepageTab {
   id: string;
   label: string;
+  activeLabel?: string;
   icon?: IconName;
   /** Tab renders content inline */
   content?: ReactNode;

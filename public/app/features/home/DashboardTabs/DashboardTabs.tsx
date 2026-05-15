@@ -84,11 +84,13 @@ export function DashboardTabs() {
     {
       id: RECENT_TAB_ID,
       label: t('home.dashboard-tabs.recent', 'Recent'),
+      activeLabel: t('home.dashboard-tabs.recent-active', 'Recent dashboards'),
       counter: recentDashboards?.length,
     },
     {
       id: STARRED_TAB_ID,
       label: t('home.dashboard-tabs.starred', 'Starred'),
+      activeLabel: t('home.dashboard-tabs.starred-active', 'Starred dashboards'),
       counter: starredDashboards?.length,
     },
   ];
@@ -99,16 +101,18 @@ export function DashboardTabs() {
   return (
     <Box backgroundColor="primary" borderRadius="default" padding={3} direction="column" display="flex" gap={2}>
       <TabsBar>
-        {contentTabs.map((tab) => (
-          <Tab
-            key={tab.id}
-            label={tab.label}
-            icon={tab.icon}
-            active={activeTab === tab.id}
-            counter={tab.counter}
-            onChangeTab={() => setActiveTab(tab.id)}
-          />
-        ))}
+        {contentTabs.map((tab) => {
+          const isActive = activeTab === tab.id;
+          return (
+            <Tab
+              key={tab.id}
+              label={isActive ? (tab.activeLabel ?? tab.label) : tab.label}
+              active={isActive}
+              counter={tab.counter}
+              onChangeTab={() => setActiveTab(tab.id)}
+            />
+          );
+        })}
         {linkTabs.length > 0 && <div className={styles.linkTabsSpacer} />}
         {linkTabs.map((tab) => (
           <Tab key={tab.id} label={tab.label} icon={tab.icon} href={tab.href!} />
