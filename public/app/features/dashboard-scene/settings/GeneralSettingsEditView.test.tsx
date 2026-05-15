@@ -1,5 +1,9 @@
+import { render, screen } from '@testing-library/react';
+import { TestProvider } from 'test/helpers/TestProvider';
+
 import { behaviors, SceneTimeRange } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
+import { type DashboardMeta } from 'app/types/dashboard';
 
 import * as utils from '../pages/utils';
 import { DashboardControls } from '../scene/DashboardControls';
@@ -112,18 +116,45 @@ describe('GeneralSettingsEditView', () => {
       expect(settings.getDashboardControls()?.state.hideTimeControls).toBe(true);
     });
   });
+
+  describe('Folder field visibility', () => {
+    it('renders the Folder field for a normal dashboard', async () => {
+      const { settings } = await buildTestScene();
+      render(
+        <TestProvider>
+          <settings.Component model={settings} />
+        </TestProvider>
+      );
+      expect(await screen.findByText('Folder')).toBeInTheDocument();
+    });
+
+    it('hides the Folder field when the dashboard is a template', async () => {
+      const { settings } = await buildTestScene({ canEdit: true, isDashboardTemplate: true });
+      render(
+        <TestProvider>
+          <settings.Component model={settings} />
+        </TestProvider>
+      );
+
+      // Other labels still render
+      expect(await screen.findByText('Tags')).toBeInTheDocument();
+      // Folder field is gone
+      expect(screen.queryByText('Folder')).not.toBeInTheDocument();
+    });
+  });
 });
 
-async function buildTestScene() {
+async function buildTestScene(metaOverrides: Partial<DashboardMeta> = {}) {
   const settings = new GeneralSettingsEditView({});
   const dashboard = new DashboardScene({
     $timeRange: new SceneTimeRange({}),
-    $behaviors: [new behaviors.CursorSync({ sync: DashboardCursorSync.Off })],
+    $behaviors: [new behaviors.CursorSync({ sync: DashboardCursorSync.Off }), new behaviors.LiveNowTimer({})],
     controls: new DashboardControls({}),
     title: 'hello',
     uid: 'dash-1',
     meta: {
       canEdit: true,
+      ...metaOverrides,
     },
     editview: settings,
   });

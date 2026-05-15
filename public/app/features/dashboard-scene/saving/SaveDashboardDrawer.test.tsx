@@ -14,6 +14,14 @@ import { transformSaveModelToScene } from '../serialization/transformSaveModelTo
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 
 import { type SaveDashboardDrawer } from './SaveDashboardDrawer';
+import {
+  registerSaveAsTemplateForm,
+  type SaveAsTemplateFormProps,
+} from './enterprise-components/SaveAsTemplateFormExtension';
+import {
+  registerSaveDashboardTemplateForm,
+  type SaveDashboardTemplateFormProps,
+} from './enterprise-components/SaveDashboardTemplateFormExtension';
 
 jest.mock('app/features/manage-dashboards/services/ValidationSrv', () => ({
   validationSrv: {
@@ -303,6 +311,51 @@ describe('SaveDashboardDrawer', () => {
       expect(dataSent.dashboard.uid).toEqual('');
     });
   });
+
+  describe('Template save flows', () => {
+    afterEach(() => {
+      registerSaveAsTemplateForm(null as unknown as Parameters<typeof registerSaveAsTemplateForm>[0]);
+      registerSaveDashboardTemplateForm(null as unknown as Parameters<typeof registerSaveDashboardTemplateForm>[0]);
+    });
+
+    it('renders the registered SaveAsTemplateForm when saveAsDashboardTemplate is true', async () => {
+      const StubForm = (_: SaveAsTemplateFormProps) => (
+        <div data-testid="stub-save-as-template-form">SaveAsTemplateForm stub</div>
+      );
+      registerSaveAsTemplateForm(StubForm);
+
+      const { openAndRender } = setup();
+      openAndRender({ saveAsDashboardTemplate: true });
+
+      expect(await screen.findByTestId('stub-save-as-template-form')).toBeInTheDocument();
+      expect(await screen.findByText('Save as template')).toBeInTheDocument();
+      // Drawer tabs are hidden for save-as-template
+      expect(screen.queryByRole('tab', { name: /Details/i })).not.toBeInTheDocument();
+    });
+
+    it('renders the registered SaveDashboardTemplateForm when saveDashboardTemplate is true', async () => {
+      const StubForm = (_: SaveDashboardTemplateFormProps) => (
+        <div data-testid="stub-update-template-form">SaveDashboardTemplateForm stub</div>
+      );
+      registerSaveDashboardTemplateForm(StubForm);
+
+      const { openAndRender } = setup();
+      openAndRender({ saveDashboardTemplate: true });
+
+      expect(await screen.findByTestId('stub-update-template-form')).toBeInTheDocument();
+      expect(await screen.findByText('Save template')).toBeInTheDocument();
+    });
+
+    it('falls back to the standard save form when saveAsDashboardTemplate is true but no form is registered', async () => {
+      const { openAndRender } = setup();
+      openAndRender({ saveAsDashboardTemplate: true });
+
+      // No crash, drawer still mounts with the save-as-template title even without the extension form
+      expect(await screen.findByText('Save as template')).toBeInTheDocument();
+      // The standard save form should be rendered as the fallback
+      expect(screen.queryByTestId('stub-save-as-template-form')).not.toBeInTheDocument();
+    });
+  });
 });
 
 interface MockBackendApiOptions {
@@ -368,8 +421,11 @@ function setup(overrides?: Partial<DashboardSceneState>) {
 
   dashboard.onEnterEditMode();
 
-  const openAndRender = (saveAsCopy?: boolean) => {
-    dashboard.openSaveDrawer({ saveAsCopy });
+  const openAndRender = (
+    opts?: boolean | { saveAsCopy?: boolean; saveAsDashboardTemplate?: boolean; saveDashboardTemplate?: boolean }
+  ) => {
+    const flags = typeof opts === 'boolean' ? { saveAsCopy: opts } : (opts ?? {});
+    dashboard.openSaveDrawer(flags);
     const drawer = dashboard.state.overlay as SaveDashboardDrawer;
     render(
       <TestProvider>
