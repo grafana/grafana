@@ -278,6 +278,7 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
         },
       },
     },
+    githubEnterprise: {},
   };
 };
 

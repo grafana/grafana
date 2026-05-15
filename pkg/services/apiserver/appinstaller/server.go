@@ -129,7 +129,7 @@ func (s *serverWrapper) configureStorage(gr schema.GroupResource, dualWriteSuppo
 			if provider, ok := s.installer.(NamespaceScopedStorageAuthorizerProvider); ok {
 				authz := provider.GetNamespaceScopedStorageAuthorizer(gr)
 				if authz != nil {
-					return storewrapper.New(gs, authz)
+					return storewrapper.New(gs, gr, authz)
 				}
 			}
 
@@ -160,7 +160,7 @@ func (s *serverWrapper) configureStorage(gr schema.GroupResource, dualWriteSuppo
 			authz = &storewrapper.DenyAuthorizer{}
 		}
 
-		return storewrapper.New(gs, authz)
+		return storewrapper.New(gs, gr, authz)
 	}
 
 	// if the storage is a status store, we need to extract the underlying generic registry store

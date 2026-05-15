@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 )
 
@@ -20,6 +21,9 @@ const (
 
 	// minimum TTL accepted. Returns an error if the caller passes a lower duration.
 	defaultMinTTL = 10 * time.Second
+
+	// max TTL accepted
+	maxTTL = 10 * time.Minute
 
 	// maximum tolerated clock skew across hosts when deciding whether an
 	// existing lease is still held by another process.
@@ -44,9 +48,12 @@ var (
 	ErrLeaseAlreadyHeld = errors.New("lease already held")
 
 	// ErrLeaseLost is returned by Release when the lease being released is no
-	// longer owned by the caller — typically because it has expired or has
-	// already been released.
+	// longer owned by the caller — typically because it has expired, has
+	// already been released, or was superseded by another holder. When
+	// auto-renewal is enabled, this error also triggers the Lost() channel.
 	ErrLeaseLost = errors.New("lease lost")
+
+	log = logging.DefaultLogger.With("logger", "lease-manager")
 )
 
 type Lease struct {
@@ -55,13 +62,16 @@ type Lease struct {
 	generation int64
 	lostCh     chan struct{}
 	lostOnce   sync.Once
-	lostTimer  *time.Timer
+	stop       chan struct{}
+	stopOnce   sync.Once
+	done       chan struct{}
 }
 
-// Lost returns a channel that is closed when this lease ends, i.e., when its TTL
-// elapses or when Release succeeds. Calling Lost multiple times returns the
-// same channel; the channel is closed at most once. Safe to call from any
-// goroutine.
+// Lost returns a channel that is closed when this lease ends: when its TTL
+// elapses without auto-renewal, when Release succeeds, or when an
+// auto-renewal fails because another holder has acquired the lease.
+// Calling Lost multiple times returns the same channel; the channel is
+// closed at most once. Safe to call from any goroutine.
 func (l *Lease) Lost() <-chan struct{} {
 	return l.lostCh
 }
@@ -74,13 +84,14 @@ func (l *Lease) notifyLoss() {
 
 // leaseMetadata is the data saved in the KV store for each lease.
 type leaseMetadata struct {
-	Holder  string `json:"holder"`
-	Expires int64  `json:"expires"`
-	Deleted bool   `json:"deleted"`
+	Holder     string `json:"holder"`
+	Expires    int64  `json:"expires"`
+	Deleted    bool   `json:"deleted,omitempty"` // TODO: remove this field once every pod is running with `ReleasedAt` support
+	ReleasedAt int64  `json:"released_at,omitempty"`
 }
 
 func (meta *leaseMetadata) ValidAsOf(ts time.Time) bool {
-	return !meta.Deleted && ts.Before(time.Unix(0, meta.Expires))
+	return !meta.Deleted && meta.ReleasedAt == 0 && ts.Before(time.Unix(0, meta.Expires))
 }
 
 // Manager acquires and releases leases backed by a KV store.
@@ -123,12 +134,22 @@ func WithInternalMinTTL(d time.Duration) ManagerOption {
 type AcquireOption func(*acquireOptions)
 
 type acquireOptions struct {
-	ttl time.Duration
+	ttl       time.Duration
+	autoRenew bool
 }
 
 // WithTTL overrides the default lease TTL for this acquisition.
 func WithTTL(d time.Duration) AcquireOption {
 	return func(o *acquireOptions) { o.ttl = d }
+}
+
+// WithAutoRenew enables automatic lease renewal. A background goroutine
+// extends the lease every ttl/3 by creating the next generation.
+// Lost() is notified only when a renewal fails with ErrLeaseLost.
+func WithAutoRenew() AcquireOption {
+	return func(o *acquireOptions) {
+		o.autoRenew = true
+	}
 }
 
 // Acquire grabs the lease for `name` on behalf of the manager's holder. On
@@ -149,6 +170,10 @@ func (m *Manager) Acquire(ctx context.Context, name string, opts ...AcquireOptio
 
 	if cfg.ttl < m.minTTL {
 		return nil, fmt.Errorf("invalid TTL: %s < %s", cfg.ttl, m.minTTL)
+	}
+
+	if cfg.ttl > maxTTL {
+		return nil, fmt.Errorf("invalid TTL: %s > %s", cfg.ttl, maxTTL)
 	}
 
 	for attempt := 0; ; attempt++ {
@@ -202,8 +227,16 @@ func (m *Manager) Acquire(ctx context.Context, name string, opts ...AcquireOptio
 			holder:     m.holder,
 			generation: generation,
 			lostCh:     make(chan struct{}),
+			stop:       make(chan struct{}),
+			done:       make(chan struct{}),
 		}
-		l.lostTimer = time.AfterFunc(time.Until(expires), l.notifyLoss)
+
+		if cfg.autoRenew {
+			renewInterval := cfg.ttl / 3
+			go m.autoRenewLoop(l, expires, cfg.ttl, renewInterval)
+		} else {
+			go m.expiryLoop(l, time.Until(expires))
+		}
 		return l, nil
 	}
 }
@@ -211,6 +244,10 @@ func (m *Manager) Acquire(ctx context.Context, name string, opts ...AcquireOptio
 // Release releases lease. It is not idempotent: releasing a lease that has
 // already been released — or one that has expired — returns ErrLeaseLost.
 func (m *Manager) Release(ctx context.Context, lease *Lease) error {
+	lease.stopOnce.Do(func() { close(lease.stop) })
+	<-lease.done
+	defer lease.notifyLoss()
+
 	key := leaseKey(lease.name, lease.generation)
 	meta, err := m.read(ctx, key)
 	if err != nil {
@@ -228,13 +265,108 @@ func (m *Manager) Release(ctx context.Context, lease *Lease) error {
 	}
 
 	meta.Deleted = true
+	meta.ReleasedAt = time.Now().UnixNano()
 	if err := m.save(ctx, key, meta); err != nil {
 		return fmt.Errorf("releasing %s/%d: %w", lease.name, lease.generation, err)
 	}
 
-	lease.lostTimer.Stop()
-	lease.notifyLoss()
 	return nil
+}
+
+func (m *Manager) extendGeneration(ctx context.Context, lease *Lease, ttl time.Duration) (time.Time, error) {
+	key := leaseKey(lease.name, lease.generation)
+	meta, err := m.read(ctx, key)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("extending %s/%d: %w", lease.name, lease.generation, err)
+	}
+
+	now := time.Now()
+	if meta.Holder != m.holder || !meta.ValidAsOf(now) {
+		return time.Time{}, fmt.Errorf("extending %s/%d: %w", lease.name, lease.generation, ErrLeaseLost)
+	}
+
+	newGeneration := lease.generation + 1
+	expires := now.Add(ttl)
+	state := leaseMetadata{
+		Holder:  m.holder,
+		Expires: expires.UnixNano(),
+	}
+	value, err := json.Marshal(state)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	meta.Deleted = true
+	meta.ReleasedAt = time.Now().UnixNano()
+	tombstone, err := json.Marshal(meta)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	newKey := leaseKey(lease.name, newGeneration)
+	err = m.store.Batch(ctx, kv.LeasesSection, []kv.BatchOp{
+		{Mode: kv.BatchOpCreate, Key: newKey, Value: value},
+		{Mode: kv.BatchOpUpdate, Key: key, Value: tombstone},
+	})
+	if errors.Is(err, kv.ErrKeyAlreadyExists) {
+		return time.Time{}, fmt.Errorf("extending %s/%d: %w", lease.name, lease.generation, ErrLeaseLost)
+	}
+	if err != nil {
+		return time.Time{}, fmt.Errorf("extending %s/%d: %w", lease.name, lease.generation, err)
+	}
+
+	lease.generation = newGeneration
+	return expires, nil
+}
+
+func (m *Manager) expiryLoop(lease *Lease, remaining time.Duration) {
+	defer close(lease.done)
+	timer := time.NewTimer(remaining)
+	defer timer.Stop()
+	select {
+	case <-lease.stop:
+		return
+	case <-timer.C:
+		lease.notifyLoss()
+	}
+}
+
+func (m *Manager) autoRenewLoop(lease *Lease, expiry time.Time, ttl, renewInterval time.Duration) {
+	defer close(lease.done)
+	ticker := time.NewTicker(renewInterval)
+	defer ticker.Stop()
+
+	for {
+		log := log.With("lease", lease.name, "holder", lease.holder, "generation", lease.generation)
+
+		select {
+		case <-lease.stop:
+			return
+		case <-ticker.C:
+			newExpiry, err := m.renewOnce(lease, ttl, renewInterval)
+			if errors.Is(err, ErrLeaseLost) {
+				log.Warn("lease lost to another holder during renewal", "err", err)
+				lease.notifyLoss()
+				return
+			}
+			if err != nil {
+				if time.Now().After(expiry) {
+					log.Error("lease lost: renewal retries exhausted before expiry", "err", err)
+					lease.notifyLoss()
+					return
+				}
+				log.Warn("lease renewal failed, will retry", "time_until_expiry", time.Until(expiry), "err", err)
+				continue
+			}
+			expiry = newExpiry
+		}
+	}
+}
+
+func (m *Manager) renewOnce(lease *Lease, ttl, renewInterval time.Duration) (time.Time, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), renewInterval*3/4)
+	defer cancel()
+	return m.extendGeneration(ctx, lease, ttl)
 }
 
 func (m *Manager) latest(ctx context.Context, name string) (string, int64, error) {

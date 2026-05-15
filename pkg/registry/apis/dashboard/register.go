@@ -43,6 +43,7 @@ import (
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard/home"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/snapshot"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -100,9 +101,7 @@ func (p *simpleFolderClientProvider) GetOrCreateHandler(namespace string) client
 
 // This is used just so wire has something unique to return
 type DashboardsAPIBuilder struct {
-	dashboardService dashboards.DashboardService
-	features         featuremgmt.FeatureToggles
-
+	dashboardService         dashboards.DashboardService
 	accessControl            accesscontrol.AccessControl
 	accessClient             authlib.AccessClient
 	legacy                   legacy.DashboardAccessor
@@ -118,10 +117,12 @@ type DashboardsAPIBuilder struct {
 	dualWriter               dualwrite.Service
 	folderClientProvider     client.K8sHandlerProvider
 	libraryPanels            libraryelements.Service // for legacy library panels
+	libraryPanelsEnabled     bool
 	publicDashboardService   publicdashboards.Service
 	snapshotService          dashboardsnapshots.Service
 	snapshotOptions          dashv0.SnapshotSharingOptions
-	snapshotStorage          rest.Storage // for dual-write support in routes
+	snapshotStorage          rest.Storage             // for dual-write support in routes
+	homeDashboard            home.HomeDashboardGetter // On-prem home dashboard support
 	namespacer               request.NamespaceMapper
 	dashboardActivityChannel live.DashboardActivityChannel
 	dashboardK8sClient       client.K8sHandler // for provisioning checks during delete validation
@@ -176,7 +177,6 @@ func RegisterAPIService(
 		dashboardService:         dashboardService,
 		dashboardPermissions:     dashboardPermissions,
 		dashboardPermissionsSvc:  dashboardPermissionsSvc,
-		features:                 features,
 		accessControl:            accessControl,
 		accessClient:             accessClient,
 		unified:                  unified,
@@ -188,12 +188,14 @@ func RegisterAPIService(
 		dashboardK8sClient:       dashboardClient,
 		folderClientProvider:     newSimpleFolderClientProvider(folderClient),
 		libraryPanels:            libraryPanels,
+		libraryPanelsEnabled:     features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs), // nolint:staticcheck
 		publicDashboardService:   publicDashboardService,
 		snapshotService:          snapshotService,
 		snapshotOptions:          snapshotOptions,
 		namespacer:               namespacer,
 		dashboardActivityChannel: dashboardActivityChannel,
 		legacy:                   legacy.NewDashboardSQLAccess(dbp, namespacer, provisioning, accessControl),
+		homeDashboard:            home.NewHomeDashboardSupport(cfg),
 	}
 
 	migration.RegisterMetrics(reg)
@@ -228,7 +230,6 @@ func NewAPIService(ac authlib.AccessClient, features featuremgmt.FeatureToggles,
 	return &DashboardsAPIBuilder{
 		minRefreshInterval:     "10s",
 		accessClient:           ac,
-		features:               features,
 		dashboardService:       &dashsvc.DashboardServiceImpl{}, // for validation helpers only
 		folderClientProvider:   folderClientProvider,
 		resourcePermissionsSvc: resourcePermissionsSvc,
@@ -238,28 +239,20 @@ func NewAPIService(ac authlib.AccessClient, features featuremgmt.FeatureToggles,
 }
 
 func (b *DashboardsAPIBuilder) GetGroupVersions() []schema.GroupVersion {
-	if featuremgmt.AnyEnabled(b.features, featuremgmt.FlagDashboardNewLayouts) {
-		return []schema.GroupVersion{
-			dashv2.DashboardResourceInfo.GroupVersion(),
-			dashv2beta1.DashboardResourceInfo.GroupVersion(),
-			dashv2alpha1.DashboardResourceInfo.GroupVersion(),
-			dashv0.DashboardResourceInfo.GroupVersion(),
-			dashv1.DashboardResourceInfo.GroupVersion(),
-			dashv1beta1.DashboardResourceInfo.GroupVersion(),
-		}
-	}
-
 	return []schema.GroupVersion{
-		dashv1.DashboardResourceInfo.GroupVersion(),
-		dashv1beta1.DashboardResourceInfo.GroupVersion(),
-		dashv0.DashboardResourceInfo.GroupVersion(),
 		dashv2.DashboardResourceInfo.GroupVersion(),
 		dashv2beta1.DashboardResourceInfo.GroupVersion(),
 		dashv2alpha1.DashboardResourceInfo.GroupVersion(),
+		dashv0.DashboardResourceInfo.GroupVersion(),
+		dashv1.DashboardResourceInfo.GroupVersion(),
+		dashv1beta1.DashboardResourceInfo.GroupVersion(),
 	}
 }
 
 func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
+	if b.homeDashboard != nil {
+		b.homeDashboard.RegisterSchema(scheme)
+	}
 	b.scheme = scheme
 	if err := dashv0.AddToScheme(scheme); err != nil {
 		return err
@@ -319,6 +312,10 @@ func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 
 	switch a.GetResource().Resource {
 	case dashv0.DASHBOARD_RESOURCE:
+		if a.GetName() == home.DASHBOARD_NAME && op != admission.Connect {
+			return fmt.Errorf("no operations are allowed on the home dashboard")
+		}
+
 		// Handle different operations
 		switch op {
 		case admission.Delete:
@@ -639,17 +636,10 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		storageOpts.Permissions = b.dashboardPermissions.SetDefaultPermissionsAfterCreate
 	}
 
-	// Split dashboards when they are large
-	var largeObjects apistore.LargeObjectSupport
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if b.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageBigObjectsSupport) {
-		largeObjects = NewDashboardLargeObjectSupport(opts.Scheme, opts.StorageOpts.BlobThresholdBytes)
-		storageOpts.LargeObjectSupport = largeObjects
-	}
 	opts.StorageOptsRegister(dashv0.DashboardResourceInfo.GroupResource(), storageOpts)
 
 	// v0alpha1
-	if err := b.storageForVersion(apiGroupInfo, opts, largeObjects,
+	if err := b.storageForVersion(apiGroupInfo, opts,
 		dashv0.DashboardResourceInfo,
 		&dashv0.LibraryPanelResourceInfo,
 		&dashv0.SnapshotResourceInfo,
@@ -668,7 +658,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	}
 
 	// v1beta1
-	if err := b.storageForVersion(apiGroupInfo, opts, largeObjects,
+	if err := b.storageForVersion(apiGroupInfo, opts,
 		dashv1beta1.DashboardResourceInfo,
 		nil, // do not register library panel
 		nil,
@@ -687,7 +677,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	}
 
 	// v1 (identical schema to v1beta1, thin wrapper)
-	if err := b.storageForVersion(apiGroupInfo, opts, largeObjects,
+	if err := b.storageForVersion(apiGroupInfo, opts,
 		dashv1.DashboardResourceInfo,
 		nil, // do not register library panel
 		nil,
@@ -706,7 +696,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	}
 
 	// v2alpha1
-	if err := b.storageForVersion(apiGroupInfo, opts, largeObjects,
+	if err := b.storageForVersion(apiGroupInfo, opts,
 		dashv2alpha1.DashboardResourceInfo,
 		nil, // do not register library panel
 		nil,
@@ -724,7 +714,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		return err
 	}
 
-	if err := b.storageForVersion(apiGroupInfo, opts, largeObjects,
+	if err := b.storageForVersion(apiGroupInfo, opts,
 		dashv2beta1.DashboardResourceInfo,
 		nil, // do not register library panel
 		nil,
@@ -743,7 +733,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	}
 
 	// v2
-	if err := b.storageForVersion(apiGroupInfo, opts, largeObjects,
+	if err := b.storageForVersion(apiGroupInfo, opts,
 		dashv2.DashboardResourceInfo,
 		nil, // do not register library panel
 		nil,
@@ -767,7 +757,6 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 func (b *DashboardsAPIBuilder) storageForVersion(
 	apiGroupInfo *genericapiserver.APIGroupInfo,
 	opts builder.APIGroupOptions,
-	largeObjects apistore.LargeObjectSupport,
 	dashboards utils.ResourceInfo,
 	libraryPanels *utils.ResourceInfo,
 	snapshots *utils.ResourceInfo,
@@ -775,7 +764,9 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 ) error {
 	// Register the versioned storage
 	storage := map[string]rest.Storage{}
-	apiGroupInfo.VersionedResourcesStorageMap[dashboards.GroupVersion().Version] = storage
+
+	apiVersion := dashboards.GroupVersion().Version
+	apiGroupInfo.VersionedResourcesStorageMap[apiVersion] = storage
 
 	unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, dashboards, opts.OptsGetter)
 	if err != nil {
@@ -787,7 +778,6 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		storage[dashboards.StoragePath()] = unified
 		storage[dashboards.StoragePath("dto")], err = NewDTOConnector(
 			unified,
-			largeObjects,
 			b.unified,
 			b.accessClient,
 			newDTOFunc,
@@ -802,6 +792,8 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 
 	storage[dashboards.StoragePath()] = dashboardStorageWrapper{
 		Storage:                 unified,
+		homeDashboard:           b.homeDashboard,
+		apiVersion:              apiVersion,
 		dashboardPermissionsSvc: b.dashboardPermissionsSvc,
 		live:                    b.dashboardActivityChannel,
 	}
@@ -809,7 +801,6 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	// Register the DTO endpoint that will consolidate all dashboard bits
 	storage[dashboards.StoragePath("dto")], err = NewDTOConnector(
 		storage[dashboards.StoragePath()].(rest.Getter),
-		largeObjects,
 		b.unified,
 		b.accessClient,
 		newDTOFunc,
@@ -821,7 +812,7 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 
 	// Expose read library panels
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	if libraryPanels != nil && b.features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
+	if libraryPanels != nil && b.libraryPanelsEnabled {
 		legacyLibraryStore := &LibraryPanelStore{
 			Access:       b.legacy,
 			ResourceInfo: *libraryPanels,
@@ -1125,34 +1116,24 @@ func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 		})
 }
 
-func (b *DashboardsAPIBuilder) verifyFolderAccessPermissions(ctx context.Context, user identity.Requester, folderIds ...string) error {
+func (b *DashboardsAPIBuilder) verifyFolderAccessPermissions(ctx context.Context, user identity.Requester, folderID string) error {
 	ns, err := request.NamespaceInfoFrom(ctx, false)
 	if err != nil {
 		return err
 	}
-	folderClient := b.folderClientProvider.GetOrCreateHandler(ns.Value)
 
-	for _, folderId := range folderIds {
-		resp, err := folderClient.Get(ctx, folderId, ns.OrgID, metav1.GetOptions{}, "access")
-		if err != nil {
-			if apierrors.IsNotFound(err) {
-				return apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), folderId)
-			}
-			if apierrors.IsForbidden(err) {
-				return apierrors.NewForbidden(folders.FolderResourceInfo.GroupResource(), folderId, folder.ErrAccessDenied)
-			}
-			return err
-		}
-		var accessInfo folders.FolderAccessInfo
-		err = runtime.DefaultUnstructuredConverter.FromUnstructured(resp.Object, &accessInfo)
-		if err != nil {
-			logging.FromContext(ctx).Error("Failed to convert folder access response", "error", err)
-			return err
-		}
-
-		if !accessInfo.CanEdit {
-			return apierrors.NewForbidden(folders.FolderResourceInfo.GroupResource(), folderId, folder.ErrAccessDenied)
-		}
+	gvr := dashv1.DashboardResourceInfo.GroupVersionResource()
+	resp, err := b.accessClient.Check(ctx, user, authlib.CheckRequest{
+		Verb:      utils.VerbCreate,
+		Group:     gvr.Group,
+		Resource:  gvr.Resource,
+		Namespace: ns.Value,
+	}, folderID)
+	if err != nil {
+		return err
+	}
+	if !resp.Allowed {
+		return apierrors.NewForbidden(folders.FolderResourceInfo.GroupResource(), folderID, folder.ErrAccessDenied)
 	}
 
 	return nil

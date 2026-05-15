@@ -515,7 +515,8 @@
         "edit-yaml": "Edit YAML",
         "save": "Save"
       },
-      "error-title": "Failed to save alert rule"
+      "error-title": "Failed to save alert rule",
+      "no-group-success": "Rule added successfully"
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "name",
@@ -1164,10 +1165,14 @@
       "content-show-all-errors": "Show all errors"
     },
     "errors": {
+      "api-machinery": {
+        "with-causes": "{{-baseMessage}}: {{-causes}}"
+      },
       "failedWith": "{{-config}} failed with {{status}}: {{-message}}"
     },
     "evaluate-every-validation-options": {
       "message": {
+        "none-not-allowed": "Evaluation interval cannot be None and must be a valid duration.",
         "required": "Required."
       }
     },
@@ -2872,6 +2877,11 @@
         },
         "group-name": "Evaluation group name",
         "group-text": "All rules in the selected group are evaluated every {{evaluateEvery}}.",
+        "interval-label": "Evaluation interval",
+        "mode": {
+          "legacy": "Use groups (Legacy)",
+          "new": "Set interval"
+        },
         "new-group": "New evaluation group",
         "pause": {
           "alerting": "Turn on to pause evaluation for this alert rule.",
@@ -10851,6 +10861,21 @@
     "name-line-width": "Line width",
     "name-stacking": "Stacking"
   },
+  "home": {
+    "home-page": {
+      "edition": {
+        "cloud": "Grafana Cloud",
+        "enterprise": "Grafana Enterprise",
+        "open-source": "Grafana"
+      },
+      "greeting": {
+        "afternoon": "Good afternoon.",
+        "evening": "Good evening.",
+        "morning": "Good morning."
+      },
+      "placeholder": "Welcome to {{edition}}."
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "Loading",
@@ -11332,6 +11357,8 @@
       "clear-search": "Clear",
       "close-inline-details": "Close details for this log",
       "close-sidebar-details": "Close log details sidebar",
+      "copy-log-line": "Copy log line message",
+      "copy-log-line-json": "Copy log contents as JSON",
       "copy-shortlink": "Copy shortlink",
       "copy-to-clipboard": "Copy to clipboard",
       "displayed-fields-section": "Organize displayed fields",
@@ -11380,7 +11407,8 @@
     },
     "log-line-menu": {
       "copy-link": "Copy link to log line",
-      "copy-log": "Copy log line",
+      "copy-log-contents": "Copy log line contents as JSON",
+      "copy-log-message": "Copy log line message",
       "hide-details": "Show log details",
       "icon-label": "Log menu",
       "log-line": "Log line",
@@ -14829,9 +14857,6 @@
       "home-dashboard-placeholder": "Default dashboard",
       "language-preference-label": "Language",
       "language-preference-placeholder": "Choose language",
-      "locale-preference-description": "Choose your region to see the corresponding date, time, and number format",
-      "locale-preference-label": "Region format",
-      "locale-preference-placeholder": "Choose region",
       "theme-description": "Enjoying the experimental themes? Tell us what you'd like to see <2>here.</2>",
       "theme-label": "Interface theme",
       "week-start-label": "Week start"
@@ -15131,6 +15156,8 @@
     },
     "support-bundles-unconnected": {
       "created-on": "Created on",
+      "deprecation-warning-message": "Support bundles are deprecated and will be removed soon. For troubleshooting, collect the relevant server logs, configuration, and diagnostic details manually, then attach them to your Grafana Support ticket.",
+      "deprecation-warning-title": "Deprecated feature",
       "download": "Download",
       "expires": "Expires",
       "requested-by": "Requested by",
@@ -15531,8 +15558,8 @@
     },
     "legend": {
       "category": "Legend",
-      "description-faceted-filter": "Show series visibility filter based on labels",
-      "name-faceted-filter": "Faceted filter"
+      "description-faceted-filter": "Enable filter to display series based on labels or names",
+      "name-faceted-filter": "Series visibility"
     },
     "line-style-editor": {
       "line-fill-options": {
@@ -16022,7 +16049,9 @@
       "description": {
         "group-by-field-value": "Group data by a field value and create nested tables with the grouped data."
       },
+      "description-expand-nested-rows": "If enabled, all nested rows will be expanded when the panel loads",
       "description-show-field-names": "If enabled nested tables will show field names as a table header",
+      "label-expand-nested-rows-by-default": "Expand nested rows by default",
       "label-show-field-names-in-nested-tables": "Show field names in nested tables",
       "name": {
         "group-to-nested-tables": "Group to nested tables"

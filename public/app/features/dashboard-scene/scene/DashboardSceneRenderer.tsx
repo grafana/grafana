@@ -31,10 +31,20 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   const scopesServices = useScopesServices();
 
   // Disable scope redirects while in edit mode so users aren't navigated away mid-edit.
+  // Also close the scopes dashboards drawer while editing and restore it on exit.
   useEffect(() => {
     scopesServices?.scopesSelectorService.setRedirectEnabled(!isEditing);
+
+    const drawerWasOpen = Boolean(isEditing && scopesServices?.scopesDashboardsService.state.drawerOpened);
+    if (drawerWasOpen) {
+      scopesServices?.scopesDashboardsService.toggleDrawer();
+    }
+
     return () => {
       scopesServices?.scopesSelectorService.setRedirectEnabled(true);
+      if (drawerWasOpen && !scopesServices?.scopesDashboardsService.state.drawerOpened) {
+        scopesServices?.scopesDashboardsService.toggleDrawer();
+      }
     };
   }, [scopesServices, isEditing]);
 

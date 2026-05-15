@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -242,6 +243,140 @@ func TestCheckTypesRegisterer_Run(t *testing.T) {
 	}
 }
 
+func TestCheckTypesRegisterer_CleanupStale(t *testing.T) {
+	registeredCheck := &mockCheck{
+		id: "check1",
+		steps: []checks.Step{
+			&mockStep{id: "step1", title: "Step 1", description: "Description 1"},
+		},
+	}
+	makeCheckType := func(name string) advisorv0alpha1.CheckType {
+		return advisorv0alpha1.CheckType{
+			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: "stack-123"},
+			Spec:       advisorv0alpha1.CheckTypeSpec{Name: name},
+		}
+	}
+
+	tests := []struct {
+		name            string
+		registered      []checks.Check
+		existing        []advisorv0alpha1.CheckType
+		listErr         error
+		deleteErr       error
+		expectedDeletes []string
+		expectedErr     string
+	}{
+		{
+			name:            "deletes check types not in registry",
+			registered:      []checks.Check{registeredCheck},
+			existing:        []advisorv0alpha1.CheckType{makeCheckType("check1"), makeCheckType("stale1"), makeCheckType("stale2")},
+			expectedDeletes: []string{"stale1", "stale2"},
+		},
+		{
+			name:            "keeps all check types when registry matches",
+			registered:      []checks.Check{registeredCheck},
+			existing:        []advisorv0alpha1.CheckType{makeCheckType("check1")},
+			expectedDeletes: nil,
+		},
+		{
+			name:            "nothing to delete when no existing types",
+			registered:      []checks.Check{registeredCheck},
+			existing:        nil,
+			expectedDeletes: nil,
+		},
+		{
+			name:            "ignores not found on delete",
+			registered:      []checks.Check{registeredCheck},
+			existing:        []advisorv0alpha1.CheckType{makeCheckType("stale1")},
+			deleteErr:       k8sErrs.NewNotFound(schema.GroupResource{}, "stale1"),
+			expectedDeletes: []string{"stale1"},
+		},
+		{
+			name:        "list error is propagated",
+			registered:  []checks.Check{registeredCheck},
+			listErr:     errors.New("list failure"),
+			expectedErr: "list failure",
+		},
+		{
+			name:            "delete error is propagated",
+			registered:      []checks.Check{registeredCheck},
+			existing:        []advisorv0alpha1.CheckType{makeCheckType("stale1")},
+			deleteErr:       errors.New("delete failure"),
+			expectedDeletes: []string{"stale1"},
+			expectedErr:     "delete failure",
+		},
+		{
+			name:            "shutting down on list is treated as no-op",
+			registered:      []checks.Check{registeredCheck},
+			existing:        []advisorv0alpha1.CheckType{makeCheckType("stale1")},
+			listErr:         errors.New("apiserver is shutting down"),
+			expectedDeletes: nil,
+		},
+		{
+			name:            "shutting down on delete is treated as no-op",
+			registered:      []checks.Check{registeredCheck},
+			existing:        []advisorv0alpha1.CheckType{makeCheckType("stale1"), makeCheckType("stale2")},
+			deleteErr:       errors.New("apiserver is shutting down"),
+			expectedDeletes: []string{"stale1"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var deleted []string
+			items := make([]advisorv0alpha1.CheckType, len(tt.existing))
+			copy(items, tt.existing)
+			r := &Runner{
+				checkRegistry: &mockCheckRegistry{checks: tt.registered},
+				client: &mockClient{
+					getFunc: func(ctx context.Context, id resource.Identifier) (resource.Object, error) {
+						return nil, k8sErrs.NewNotFound(schema.GroupResource{}, id.Name)
+					},
+					createFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.CreateOptions) (resource.Object, error) {
+						return obj, nil
+					},
+					listFunc: func(ctx context.Context, namespace string, opts resource.ListOptions) (resource.ListObject, error) {
+						if tt.listErr != nil {
+							return nil, tt.listErr
+						}
+						return &advisorv0alpha1.CheckTypeList{Items: items}, nil
+					},
+					deleteFunc: func(ctx context.Context, id resource.Identifier, opts resource.DeleteOptions) error {
+						deleted = append(deleted, id.Name)
+						return tt.deleteErr
+					},
+				},
+				stackID:       "123",
+				orgService:    &mockOrgService{orgs: []*org.OrgDTO{}},
+				log:           logging.DefaultLogger,
+				retryAttempts: 1,
+				retryDelay:    0,
+			}
+
+			err := r.Run(context.Background())
+			if tt.expectedErr != "" {
+				if err == nil {
+					t.Fatalf("expected error containing %q, got nil", tt.expectedErr)
+				}
+				if !strings.Contains(err.Error(), tt.expectedErr) {
+					t.Fatalf("expected error containing %q, got %v", tt.expectedErr, err)
+				}
+			} else if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			if len(deleted) != len(tt.expectedDeletes) {
+				t.Fatalf("expected %d deletes (%v), got %d (%v)", len(tt.expectedDeletes), tt.expectedDeletes, len(deleted), deleted)
+			}
+			for i, name := range tt.expectedDeletes {
+				if deleted[i] != name {
+					t.Errorf("expected delete[%d] to be %q, got %q", i, name, deleted[i])
+				}
+			}
+		})
+	}
+}
+
 type mockCheckRegistry struct {
 	checks []checks.Check
 }
@@ -311,6 +446,8 @@ type mockClient struct {
 	getFunc    func(ctx context.Context, id resource.Identifier) (resource.Object, error)
 	createFunc func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.CreateOptions) (resource.Object, error)
 	updateFunc func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.UpdateOptions) (resource.Object, error)
+	listFunc   func(ctx context.Context, namespace string, opts resource.ListOptions) (resource.ListObject, error)
+	deleteFunc func(ctx context.Context, id resource.Identifier, opts resource.DeleteOptions) error
 }
 
 func (m *mockClient) Get(ctx context.Context, id resource.Identifier) (resource.Object, error) {
@@ -332,6 +469,20 @@ func (m *mockClient) Update(ctx context.Context, id resource.Identifier, obj res
 		return m.updateFunc(ctx, id, obj, opts)
 	}
 	return nil, errors.New("not implemented")
+}
+
+func (m *mockClient) List(ctx context.Context, namespace string, opts resource.ListOptions) (resource.ListObject, error) {
+	if m.listFunc != nil {
+		return m.listFunc(ctx, namespace, opts)
+	}
+	return &advisorv0alpha1.CheckTypeList{}, nil
+}
+
+func (m *mockClient) Delete(ctx context.Context, id resource.Identifier, opts resource.DeleteOptions) error {
+	if m.deleteFunc != nil {
+		return m.deleteFunc(ctx, id, opts)
+	}
+	return nil
 }
 
 type mockOrgService struct {
