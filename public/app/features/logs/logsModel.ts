@@ -326,7 +326,7 @@ function parseTime(
   const time = toUtc(ts);
   const timeEpochMs = time.valueOf();
 
-  if (timeNsField) {
+  if (timeNsField?.values[index]) {
     return { ts, timeEpochMs, timeEpochNs: timeNsField.values[index] };
   }
 
