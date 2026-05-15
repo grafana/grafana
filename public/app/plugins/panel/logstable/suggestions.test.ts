@@ -5,21 +5,10 @@ import {
   getPanelDataSummary,
   VisualizationSuggestionScore,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 
 import { logstableSuggestionsSupplier } from './suggestions';
 
 describe('logstable suggestions', () => {
-  const originalLogsTablePanelNG = config.featureToggles.logsTablePanelNG;
-
-  beforeAll(() => {
-    config.featureToggles.logsTablePanelNG = true;
-  });
-
-  afterAll(() => {
-    config.featureToggles.logsTablePanelNG = originalLogsTablePanelNG;
-  });
-
   it('does not suggest logs table for non-log data', () => {
     const dataSummary = getPanelDataSummary([
       createDataFrame({
