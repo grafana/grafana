@@ -1,6 +1,7 @@
 {
   "openapi": "3.0.0",
   "info": {
+    "description": "Configure user, team, and org preferences",
     "title": "preferences.grafana.app/v1alpha1"
   },
   "paths": {
@@ -835,10 +836,6 @@
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesQueryHistoryPreference"
               }
             ]
-          },
-          "regionalFormat": {
-            "description": "Selected locale (beta)",
-            "type": "string"
           },
           "theme": {
             "description": "user interface theme",

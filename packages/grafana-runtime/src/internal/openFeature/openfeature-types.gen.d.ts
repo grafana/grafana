@@ -15,6 +15,7 @@ declare module "@openfeature/core" {
     | "provisioningFolderMetadata"
     | "provisioning.readmes"
     | "stateTimeline.nameAboveBars"
+    | "sqlExpressionsCodeMirror"
     | "newSavedQueriesExperience"
     | "grafana.orgDashboardTemplates"
     | "dashboardTemplatesAssistantButton"
@@ -28,6 +29,7 @@ declare module "@openfeature/core" {
     | "newLogContext"
     | "plugins.useMTPlugins"
     | "dashboardSectionVariables"
+    | "globalDashboardVariables"
     | "queryEditorNext"
     | "queryEditorNextMultiSelect"
     | "managedPluginsV2"
@@ -43,7 +45,10 @@ declare module "@openfeature/core" {
     | "datasources.apiserver.useNewAPIsForDatasourceResources"
     | "reporting.anyPageReporting"
     | "assistant.frontend.tools.dashboardTemplates"
-    | "grafana.unifiedHomepage";
+    | "grafana.unifiedHomepage"
+    | "alerting.syncExternalAlertmanager"
+    | "grafana.enableScopesFirstMode"
+    | "grafana.logLevelInference";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;
