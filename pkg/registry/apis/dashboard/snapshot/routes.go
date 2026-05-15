@@ -218,6 +218,11 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 						return
 					}
 
+					if cmd.External && options.PublicMode {
+						wrap.JsonApiErr(http.StatusForbidden, "External snapshots are not supported in public mode", nil)
+						return
+					}
+
 					if cmd.Dashboard == nil {
 						wrap.JsonApiErr(http.StatusBadRequest, "dashboard data is required", nil)
 						return
@@ -262,10 +267,13 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 
 						metrics.MApiDashboardSnapshotExternal.Inc()
 					} else {
-						originalDashboardURL, err := dashboardsnapshots.CreateOriginalDashboardURL(&cmd)
-						if err != nil {
-							errhttp.Write(ctx, fmt.Errorf("invalid app url: %w", err), w)
-							return
+						var originalDashboardURL string
+						if !options.PublicMode {
+							originalDashboardURL, err = dashboardsnapshots.CreateOriginalDashboardURL(&cmd)
+							if err != nil {
+								errhttp.Write(ctx, fmt.Errorf("invalid app url: %w", err), w)
+								return
+							}
 						}
 
 						snapshotURL, err = dashboardsnapshots.PrepareLocalSnapshot(&cmd, originalDashboardURL)
