@@ -18,7 +18,7 @@ import (
 )
 
 // grafanaSQLQuery extends schemas.Query with fields from the dsabstraction tabular model
-// that are not on schemas.Query (same pattern as grafana-prometheus-datasource/pkg/promlib).
+// that are not on schemas.Query.
 type grafanaSQLQuery struct {
 	schemas.Query
 	Aggregation *aggregationHint `json:"aggregation,omitempty"`
@@ -38,6 +38,23 @@ type sqlKind string
 const (
 	sqlKindLog    sqlKind = "log"
 	sqlKindMetric sqlKind = "metric"
+)
+
+// Grafana SQL table hint keys (TableHintValues; uppercase matches schemads / dsabstraction).
+const (
+	grafanaSQLHintStep      = "STEP"
+	grafanaSQLHintRate      = "RATE"
+	grafanaSQLHintDirection = "DIRECTION"
+	grafanaSQLHintInstant   = "INSTANT"
+	lokiQueryTypeRange      = "range"
+	lokiQueryTypeInstant    = "instant"
+	logDirectionForward     = "forward"
+	logDirectionBackward    = "backward"
+	logqlAggregateOpSum     = "sum"
+	logqlAggregateOpAvg     = "avg"
+	logqlAggregateOpMin     = "min"
+	logqlAggregateOpMax     = "max"
+	metricColumnBytes       = "bytes"
 )
 
 // dsAbstractionSQLRewriteEnabled reports whether PluginContext.GrafanaConfig enables dsAbstractionApp.
@@ -147,13 +164,13 @@ type sqlHints struct {
 func parseSQLHints(hints map[string]string) (sqlHints, error) {
 	var h sqlHints
 	var err error
-	if h.stepStr, h.stepDur, err = parseDurationHint(hints, "STEP"); err != nil {
+	if h.stepStr, h.stepDur, err = parseDurationHint(hints, grafanaSQLHintStep); err != nil {
 		return h, fmt.Errorf("loki grafana sql: %w", err)
 	}
-	if h.rateStr, h.rateDur, err = parseDurationHint(hints, "RATE"); err != nil {
+	if h.rateStr, h.rateDur, err = parseDurationHint(hints, grafanaSQLHintRate); err != nil {
 		return h, fmt.Errorf("loki grafana sql: %w", err)
 	}
-	h.direction = strings.ToLower(hintGet(hints, "DIRECTION"))
+	h.direction = strings.ToLower(hintGet(hints, grafanaSQLHintDirection))
 	h.instant = instantHintEnabled(hints)
 	return h, nil
 }
@@ -164,7 +181,7 @@ func parseSQLHints(hints map[string]string) (sqlHints, error) {
 // override q.Interval).
 type queryPlan struct {
 	expr         string
-	queryType    string        // "range" or "instant"
+	queryType    string        // lokiQueryTypeRange or lokiQueryTypeInstant
 	intervalStep time.Duration // 0 means don't override q.Interval/MaxDataPoints
 	modelStep    string        // "" means don't set model.Step
 	maxLines     int64         // 0 means don't set model.MaxLines
@@ -177,7 +194,7 @@ type queryPlan struct {
 func buildLogPlan(selector string, sq grafanaSQLQuery, hints sqlHints) queryPlan {
 	plan := queryPlan{
 		expr:      selector,
-		queryType: "range",
+		queryType: lokiQueryTypeRange,
 		modelStep: hints.stepStr,
 		direction: directionPtr(hints.direction),
 		kind:      sqlKindLog,
@@ -219,9 +236,9 @@ func buildMetricPlan(selector string, sq grafanaSQLQuery, hints sqlHints, queryD
 		kind: sqlKindMetric,
 	}
 	if hints.instant {
-		plan.queryType = "instant"
+		plan.queryType = lokiQueryTypeInstant
 	} else {
-		plan.queryType = "range"
+		plan.queryType = lokiQueryTypeRange
 		plan.modelStep = stepStr
 	}
 	if stepStr != "" && stepDur > 0 {
@@ -248,7 +265,7 @@ func rewriteSQLQuery(q backend.DataQuery, sq grafanaSQLQuery, tableLabel string)
 
 	isMetric := sq.Aggregation != nil || hints.rateStr != ""
 	if hints.instant && !isMetric {
-		return q, "", fmt.Errorf("loki grafana sql: INSTANT hint requires a metric query (aggregation or RATE)")
+		return q, "", fmt.Errorf("loki grafana sql: %s hint requires a metric query (aggregation or %s)", grafanaSQLHintInstant, grafanaSQLHintRate)
 	}
 
 	var plan queryPlan
@@ -328,11 +345,11 @@ func dataqueryFromExpr(refID, expr, queryType string, maxLines int64, step strin
 
 func directionPtr(dir string) *string {
 	switch dir {
-	case "forward":
-		s := "forward"
+	case logDirectionForward:
+		s := logDirectionForward
 		return &s
-	case "backward":
-		s := "backward"
+	case logDirectionBackward:
+		s := logDirectionBackward
 		return &s
 	default:
 		return nil
@@ -355,7 +372,7 @@ func instantHintEnabled(hints map[string]string) bool {
 		return false
 	}
 	for k := range hints {
-		if strings.EqualFold(k, "INSTANT") {
+		if strings.EqualFold(k, grafanaSQLHintInstant) {
 			return true
 		}
 	}
@@ -393,16 +410,18 @@ func buildGrafanaSQLMetricExpr(selector string, agg *aggregationHint, window tim
 
 	grouping := aggregationGroupLabels(agg)
 	switch fn {
+	// COUNT uses outer sum(): inner already counts per stream (count_over_time / rate); sum merges
+	// those partial counts into one value per SQL GROUP BY bucket (PromQL/Loki idiom).
 	case "COUNT":
-		return wrapLogQLAggregate("sum", grouping, inner), nil
+		return wrapLogQLAggregate(logqlAggregateOpSum, grouping, inner), nil
 	case "SUM":
-		return wrapLogQLAggregate("sum", grouping, inner), nil
+		return wrapLogQLAggregate(logqlAggregateOpSum, grouping, inner), nil
 	case "AVG":
-		return wrapLogQLAggregate("avg", grouping, inner), nil
+		return wrapLogQLAggregate(logqlAggregateOpAvg, grouping, inner), nil
 	case "MIN":
-		return wrapLogQLAggregate("min", grouping, inner), nil
+		return wrapLogQLAggregate(logqlAggregateOpMin, grouping, inner), nil
 	case "MAX":
-		return wrapLogQLAggregate("max", grouping, inner), nil
+		return wrapLogQLAggregate(logqlAggregateOpMax, grouping, inner), nil
 	default:
 		return "", fmt.Errorf("unsupported aggregation function %q", agg.Function)
 	}
@@ -412,7 +431,7 @@ func wrapLogQLRate(selector string, column string, d time.Duration) string {
 	w := gtime.FormatInterval(d)
 	bracket := "[" + w + "]"
 	col := strings.ToLower(strings.TrimSpace(column))
-	if col == "bytes" {
+	if col == metricColumnBytes {
 		return fmt.Sprintf("bytes_rate(%s%s)", selector, bracket)
 	}
 	return fmt.Sprintf("rate(%s%s)", selector, bracket)
@@ -450,7 +469,7 @@ func innerMetricRangeVector(selector string, sqlFunc string, column string, wind
 	switch col {
 	case "", "*", "line", "value", "count":
 		return fmt.Sprintf("count_over_time(%s%s)", selector, bracket), nil
-	case "bytes":
+	case metricColumnBytes:
 		return fmt.Sprintf("bytes_over_time(%s%s)", selector, bracket), nil
 	default:
 		return "", fmt.Errorf("unsupported aggregation column %q for loki metric pushdown", column)

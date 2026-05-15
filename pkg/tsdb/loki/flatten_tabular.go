@@ -50,6 +50,7 @@ func flattenMetricsToTabular(frames data.Frames, logger log.Logger) data.Frames 
 				continue
 			}
 			for k := range f.Labels {
+				// __name__ is the Prometheus metric-name label; omit it so tabular columns are user dimensions only.
 				if k != "__name__" {
 					labelKeysSet[k] = struct{}{}
 				}
