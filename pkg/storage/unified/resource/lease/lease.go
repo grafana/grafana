@@ -234,6 +234,10 @@ func (m *Manager) Acquire(ctx context.Context, name string, opts ...AcquireOptio
 	}
 
 	for attempt := 0; ; attempt++ {
+		if attempt >= maxAcquireAttempts-1 {
+			return nil, fmt.Errorf("%w: exhausted retries acquiring %s", ErrLeaseAlreadyHeld, name)
+		}
+
 		latestKey, err := m.latest(ctx, name)
 		if err != nil {
 			return nil, fmt.Errorf("acquiring %s: %w", name, err)
@@ -244,6 +248,13 @@ func (m *Manager) Acquire(ctx context.Context, name string, opts ...AcquireOptio
 		if latestKey.name != "" {
 			latest, err := m.read(ctx, latestKey)
 			if err != nil {
+				if errors.Is(err, kv.ErrNotFound) {
+					// While unlikely, it's possible that the key has since
+					// been deleted by the garbage collection process if it
+					// was close to the grace period by the time it was read.
+					// Retry.
+					continue
+				}
 				return nil, err
 			}
 			// Bias acquisition toward treating a remote lease as still held
@@ -287,9 +298,6 @@ func (m *Manager) Acquire(ctx context.Context, name string, opts ...AcquireOptio
 		}
 		err = m.store.Batch(ctx, kv.LeasesSection, ops)
 		if errors.Is(err, kv.ErrKeyAlreadyExists) || errors.Is(err, kv.ErrNotFound) {
-			if attempt >= maxAcquireAttempts-1 {
-				return nil, fmt.Errorf("%w: exhausted retries acquiring %s", ErrLeaseAlreadyHeld, name)
-			}
 			continue
 		}
 		if err != nil {
@@ -323,7 +331,11 @@ func (m *Manager) Release(ctx context.Context, lease *Lease) error {
 
 	meta, err := m.read(ctx, lease.key)
 	if err != nil {
-		return fmt.Errorf("releasing %s~%d: %w", lease.key.name, lease.key.generation, err)
+		var message string
+		if errors.Is(err, kv.ErrNotFound) {
+			message = " (not found)"
+		}
+		return fmt.Errorf("releasing %s~%d: %w%s", lease.key.name, lease.key.generation, err, message)
 	}
 
 	// Note that we're not guaranteed to return ErrLeaseLost if two managers for
