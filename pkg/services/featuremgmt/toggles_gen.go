@@ -954,6 +954,10 @@ const (
 	// Enable Meticulous AI session recorder for automated UI test generation
 	FlagGrafanaMeticulousAIRecorder = "grafana.meticulousAIRecorder"
 
+	// FlagGrafanaMeticulousAIRecorderHighVolume
+	// When true, increases the volume of data transferred before abandoning sessions for Meticulous AI session recorder.
+	FlagGrafanaMeticulousAIRecorderHighVolume = "grafana.meticulousAIRecorderHighVolume"
+
 	// FlagDatasourcesUseNewStackInfoToSettingsCache
 	// Use the new cache for datasource.StackInfoToSettings, backend flag
 	FlagDatasourcesUseNewStackInfoToSettingsCache = "datasources.useNewStackInfoToSettingsCache"
