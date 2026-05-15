@@ -52,18 +52,21 @@ func TestIntegrationUserSearch(t *testing.T) {
 			setupUsers(t, helper)
 
 			t.Run("search by title", func(t *testing.T) {
+				t.Parallel()
 				res := searchUsers(t, helper, "Alice")
 				require.Len(t, res.Hits, 1)
 				require.Equal(t, "TestUser Alice", res.Hits[0].Title)
 			})
 
 			t.Run("search by login", func(t *testing.T) {
+				t.Parallel()
 				res := searchUsers(t, helper, "bob")
 				require.Len(t, res.Hits, 1)
 				require.Equal(t, "bob", res.Hits[0].Login)
 			})
 
 			t.Run("search by email", func(t *testing.T) {
+				t.Parallel()
 				res := searchUsers(t, helper, "charlie@example.com")
 				require.Len(t, res.Hits, 1)
 				require.Equal(t, "charlie@example.com", res.Hits[0].Email)

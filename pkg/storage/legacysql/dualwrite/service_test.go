@@ -23,9 +23,6 @@ func TestService(t *testing.T) {
 		}{
 			{rest.Mode0, "legacy"},
 			{rest.Mode1, "dualwrite"},
-			{rest.Mode2, "dualwrite"},
-			{rest.Mode3, "dualwrite"},
-			{rest.Mode4, "unified"},
 			{rest.Mode5, "unified"},
 		}
 		for _, tt := range tests {

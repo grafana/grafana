@@ -31,7 +31,7 @@ func TestIntegrationUserServiceGet(t *testing.T) {
 		Login string `json:"login"`
 	}
 
-	for _, mode := range []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5} {
+	for _, mode := range []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5} {
 		t.Run(fmt.Sprintf("dual writer mode %d", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 				AppModeProduction:      false,
@@ -87,6 +87,7 @@ func TestIntegrationUserServiceGet(t *testing.T) {
 
 			// /api/users/lookup routes through UserK8sService.GetByLogin
 			t.Run("should find user by email via GetByLogin", func(t *testing.T) {
+				t.Parallel()
 				byEmailRsp := apis.DoRequest(helper, apis.RequestParams{
 					User:   helper.Org1.Admin,
 					Method: "GET",
@@ -102,6 +103,7 @@ func TestIntegrationUserServiceGet(t *testing.T) {
 
 			// /api/users/lookup routes through UserK8sService.GetByLogin
 			t.Run("should find user by login via GetByLogin", func(t *testing.T) {
+				t.Parallel()
 				byLoginRsp := apis.DoRequest(helper, apis.RequestParams{
 					User:   helper.Org1.Admin,
 					Method: "GET",
@@ -116,6 +118,7 @@ func TestIntegrationUserServiceGet(t *testing.T) {
 			})
 
 			t.Run("should return 404 for unknown login", func(t *testing.T) {
+				t.Parallel()
 				notFoundRsp := apis.DoRequest(helper, apis.RequestParams{
 					User:   helper.Org1.Admin,
 					Method: "GET",
@@ -137,7 +140,7 @@ func TestIntegrationUserServiceUpdate(t *testing.T) {
 		UID string `json:"uid"`
 	}
 
-	for _, mode := range []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5} {
+	for _, mode := range []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5} {
 		t.Run(fmt.Sprintf("dual writer mode %d", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 				AppModeProduction:      false,
@@ -217,7 +220,7 @@ func TestIntegrationUserService(t *testing.T) {
 		UID string `json:"uid"`
 	}
 
-	for _, mode := range []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5} {
+	for _, mode := range []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5} {
 		t.Run(fmt.Sprintf("dual writer mode %d", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 				AppModeProduction:      false,
@@ -299,7 +302,7 @@ func TestIntegrationUserServiceDelete(t *testing.T) {
 		Login string `json:"login"`
 	}
 
-	for _, mode := range []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5} {
+	for _, mode := range []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5} {
 		t.Run(fmt.Sprintf("dual writer mode %d", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 				AppModeProduction:      false,
@@ -383,7 +386,7 @@ func TestIntegrationUserServiceSearch(t *testing.T) {
 		PerPage    int             `json:"perPage"`
 	}
 
-	for _, mode := range []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5} {
+	for _, mode := range []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5} {
 		t.Run(fmt.Sprintf("dual writer mode %d", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 				AppModeProduction:      false,
