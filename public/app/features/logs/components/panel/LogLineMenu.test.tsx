@@ -1,8 +1,10 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { CoreApp, createTheme, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
+import { type DataSourceSrv, getDataSourceSrv } from '@grafana/runtime';
 
+import * as logsUtils from '../../utils';
 import { createLogLine } from '../mocks/logRow';
 
 import { LogDetailsContextProvider } from './LogDetailsContext';
@@ -26,6 +28,7 @@ jest.mock('@grafana/assistant', () => ({
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   isAssistantAvailable: true,
+  getDataSourceSrv: jest.fn(),
 }));
 
 const theme = createTheme();
@@ -47,13 +50,16 @@ describe('LogLineMenu', () => {
   let log: LogListModel;
   beforeEach(() => {
     log = createLogLine({ labels: { place: 'luna' }, rowId: '1' });
+    jest.mocked(getDataSourceSrv).mockReturnValue({
+      get: jest.fn().mockResolvedValue({}),
+    } as unknown as DataSourceSrv);
   });
 
   test('Renders the component', async () => {
     render(<LogLineMenu log={log} styles={styles} />);
-    expect(screen.queryByText('Copy log line')).not.toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: /Copy log line message/i })).not.toBeInTheDocument();
     await userEvent.click(screen.getByLabelText('Log menu'));
-    expect(screen.getByText('Copy log line')).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: /Copy log line message/i })).toBeInTheDocument();
   });
 
   describe('Options', () => {
@@ -69,7 +75,32 @@ describe('LogLineMenu', () => {
       expect(onPermalinkClick).toHaveBeenCalledTimes(1);
     });
 
-    test('Allows to copy a permalink', async () => {
+    test('Copy log line as JSON copies structured JSON from the log', async () => {
+      const copyTextSpy = jest.spyOn(logsUtils, 'copyText').mockResolvedValue(undefined);
+
+      render(
+        <LogListContextProvider {...contextProps}>
+          <LogLineMenu log={log} styles={styles} />
+        </LogListContextProvider>
+      );
+      await userEvent.click(screen.getByLabelText('Log menu'));
+      const jsonMenuItem = screen.getAllByRole('menuitem').find((el) => /JSON/i.test(el.textContent ?? ''));
+      expect(jsonMenuItem).toBeTruthy();
+      await userEvent.click(jsonMenuItem!);
+
+      await waitFor(() => {
+        expect(copyTextSpy).toHaveBeenCalled();
+        const text = copyTextSpy.mock.calls[0][0] as string;
+        const parsed = JSON.parse(text);
+        expect(parsed).toMatchObject({
+          line: expect.any(String),
+          labels: expect.objectContaining({ place: 'luna' }),
+        });
+      });
+      copyTextSpy.mockRestore();
+    });
+
+    test('Renders custom log line menu items', async () => {
       const customOption1onClick = jest.fn();
       const logLineMenuCustomItems: LogLineMenuCustomItem[] = [
         {

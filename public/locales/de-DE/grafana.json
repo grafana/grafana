@@ -515,7 +515,8 @@
         "edit-yaml": "YAML bearbeiten",
         "save": "Speichern"
       },
-      "error-title": ""
+      "error-title": "",
+      "no-group-success": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "Name",
@@ -1171,6 +1172,7 @@
     },
     "evaluate-every-validation-options": {
       "message": {
+        "none-not-allowed": "",
         "required": "Erforderlich."
       }
     },
@@ -2875,6 +2877,11 @@
         },
         "group-name": "Name der Evaluierungsgruppe",
         "group-text": "Alle Regeln in der ausgewählten Gruppe werden alle {{evaluateEvery}} evaluiert.",
+        "interval-label": "",
+        "mode": {
+          "legacy": "",
+          "new": ""
+        },
         "new-group": "Neue Evaluierungsgruppe",
         "pause": {
           "alerting": "Aktivieren, um die Evaluierung für diese Warnregel zu pausieren.",
@@ -11350,6 +11357,8 @@
       "clear-search": "Löschen",
       "close-inline-details": "Details für dieses Log schließen",
       "close-sidebar-details": "Seitenleiste mit Log-Details schließen",
+      "copy-log-line": "",
+      "copy-log-line-json": "",
       "copy-shortlink": "Shortlink kopieren",
       "copy-to-clipboard": "In die Zwischenablage kopieren",
       "displayed-fields-section": "Angezeigte Felder organisieren",
@@ -11398,7 +11407,8 @@
     },
     "log-line-menu": {
       "copy-link": "Link zur Protokollzeile kopieren",
-      "copy-log": "Protokollzeile kopieren",
+      "copy-log-contents": "",
+      "copy-log-message": "",
       "hide-details": "Logdetails anzeigen",
       "icon-label": "Protokollmenü",
       "log-line": "Log-Zeile",
@@ -15146,6 +15156,8 @@
     },
     "support-bundles-unconnected": {
       "created-on": "Erstellt am",
+      "deprecation-warning-message": "",
+      "deprecation-warning-title": "",
       "download": "Download",
       "expires": "Läuft ab",
       "requested-by": "Angefragt von",
@@ -15546,8 +15558,8 @@
     },
     "legend": {
       "category": "Legende",
-      "description-faceted-filter": "Reihen-Sichtbarkeitsfilter basierend auf Labels anzeigen",
-      "name-faceted-filter": "Facettenfilter"
+      "description-faceted-filter": "",
+      "name-faceted-filter": ""
     },
     "line-style-editor": {
       "line-fill-options": {
