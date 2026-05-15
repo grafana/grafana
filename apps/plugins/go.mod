@@ -17,8 +17,8 @@ replace github.com/grafana/grafana/pkg/semconv => ../../pkg/semconv
 require (
 	github.com/emicklei/go-restful/v3 v3.13.0
 	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
-	github.com/grafana/grafana-app-sdk v0.54.1
-	github.com/grafana/grafana-app-sdk/logging v0.54.1
+	github.com/grafana/grafana-app-sdk v0.55.0
+	github.com/grafana/grafana-app-sdk/logging v0.55.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0
 	github.com/grafana/grafana/pkg/apiserver v0.0.0
 	github.com/grafana/grafana/pkg/plugins v0.0.0
@@ -34,7 +34,6 @@ require (
 require (
 	cel.dev/expr v0.25.1 // indirect
 	dario.cat/mergo v1.0.2 // indirect
-	filippo.io/edwards25519 v1.2.0 // indirect
 	github.com/Machiel/slugify v1.0.1 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver/v3 v3.4.0 // indirect

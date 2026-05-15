@@ -11357,6 +11357,8 @@
       "clear-search": "Wissen",
       "close-inline-details": "Details voor dit logboek sluiten",
       "close-sidebar-details": "Zijbalk met logboekdetails sluiten",
+      "copy-log-line": "",
+      "copy-log-line-json": "",
       "copy-shortlink": "Snelkoppeling kopiëren",
       "copy-to-clipboard": "Kopiëren naar klembord",
       "displayed-fields-section": "Weergegeven velden ordenen",
@@ -11405,7 +11407,8 @@
     },
     "log-line-menu": {
       "copy-link": "Link naar logboekregel kopiëren",
-      "copy-log": "Logboekregel kopiëren",
+      "copy-log-contents": "",
+      "copy-log-message": "",
       "hide-details": "Logboekdetails weergeven",
       "icon-label": "Logboekmenu",
       "log-line": "Logregel",
@@ -15555,8 +15558,8 @@
     },
     "legend": {
       "category": "Legenda",
-      "description-faceted-filter": "Zichtbaarheidsfilter voor reeksen weergeven op basis van labels",
-      "name-faceted-filter": "Gefacetteerde filter"
+      "description-faceted-filter": "",
+      "name-faceted-filter": ""
     },
     "line-style-editor": {
       "line-fill-options": {

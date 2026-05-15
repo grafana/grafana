@@ -88,7 +88,7 @@ func newModuleServer(opts Options,
 ) (*ModuleServer, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 
-	searchClient, err := unified.NewStorageApiSearchClient(cfg, features)
+	searchClient, err := unified.NewStorageApiSearchClient(cfg)
 	if err != nil {
 		shutdownFn()
 		return nil, fmt.Errorf("failed to create storage api search client: %w", err)

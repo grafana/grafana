@@ -28,6 +28,7 @@ declare module "@openfeature/core" {
     | "newLogContext"
     | "plugins.useMTPlugins"
     | "dashboardSectionVariables"
+    | "globalDashboardVariables"
     | "queryEditorNext"
     | "queryEditorNextMultiSelect"
     | "managedPluginsV2"

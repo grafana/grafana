@@ -11291,6 +11291,8 @@
       "clear-search": "清除",
       "close-inline-details": "關閉此記錄的詳細資訊",
       "close-sidebar-details": "關閉記錄詳細資訊側邊欄",
+      "copy-log-line": "",
+      "copy-log-line-json": "",
       "copy-shortlink": "複製短連結",
       "copy-to-clipboard": "複製至剪貼簿",
       "displayed-fields-section": "組織顯示的欄位",
@@ -11339,7 +11341,8 @@
     },
     "log-line-menu": {
       "copy-link": "將連結複製到日誌行",
-      "copy-log": "複製日誌行",
+      "copy-log-contents": "",
+      "copy-log-message": "",
       "hide-details": "顯示記錄詳細資料",
       "icon-label": "日誌功能表",
       "log-line": "記錄行",
@@ -15462,8 +15465,8 @@
     },
     "legend": {
       "category": "圖例",
-      "description-faceted-filter": "根據標籤顯示序列可見性篩選條件",
-      "name-faceted-filter": "多面向篩選條件"
+      "description-faceted-filter": "",
+      "name-faceted-filter": ""
     },
     "line-style-editor": {
       "line-fill-options": {
