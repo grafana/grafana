@@ -950,8 +950,6 @@ jobs:
     name: Run Meticulous tests
     runs-on: ubuntu-x64-small
     continue-on-error: true
-    env:
-      IMAGE_TAG: grafana/grafana-dev:${{ needs.setup.outputs.version }}
     permissions:
       actions: write
       contents: read
@@ -965,7 +963,15 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Compute image tag
+        id: tag
+        env:
+          VERSION: ${{ needs.setup.outputs.version }}
+        run: echo "value=grafana/grafana-dev:${VERSION//+/-}" >> "$GITHUB_OUTPUT"
+
       - name: Pull image from Dockerhub
+        env:
+          IMAGE_TAG: ${{ steps.tag.outputs.value }}
         run: docker pull "$IMAGE_TAG"
 
       - name: Get vault secrets
@@ -979,7 +985,7 @@ jobs:
         uses: alwaysmeticulous/report-diffs-action/upload-container@89c6081b30d17cfcc410b5c19c269cd7a4d67cdf # v1
         with:
           api-token: ${{ env.METICULOUS_API_TOKEN }}
-          image-tag: ${{ env.IMAGE_TAG }}
+          image-tag: ${{ steps.tag.outputs.value }}
           container-port: 3000
           container-env: |
             GF_AUTH_ANONYMOUS_ENABLED=true
