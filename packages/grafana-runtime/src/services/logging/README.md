@@ -76,7 +76,7 @@ Creates a logger for every entry in the `Loggers` object and stores it in the re
 
 ### `getLogger(source: LoggerSource): MonitoringLogger`
 
-Returns the logger for the given source. If the registry hasn't been initialized yet, it logs a warning to the console and:
+Returns the logger for the given source. If the registry hasn't been initialized yet, it logs a warning to the console and reports it to Faro via `logWarning` (both skipped in tests) and:
 
 - In **development** (`NODE_ENV=development`): throws an error.
 - In **production / test**: returns a fallback logger (not stored in the registry) so the caller doesn't crash.

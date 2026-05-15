@@ -26,7 +26,7 @@ const esModules = [
   'lodash-es',
   'vscode-languageserver-types',
   '@bsull/augurs',
-  'react-data-grid',
+  '@grafana/react-data-grid',
   '@grafana/llm',
   'pkce-challenge',
   'quickselect',
@@ -94,7 +94,6 @@ module.exports = {
     '<rootDir>/public/app/plugins/datasource/opentsdb',
     '<rootDir>/public/app/plugins/datasource/parca',
     '<rootDir>/public/app/plugins/datasource/tempo',
-    '<rootDir>/public/app/plugins/datasource/zipkin',
   ],
   projects: ['<rootDir>'],
 };

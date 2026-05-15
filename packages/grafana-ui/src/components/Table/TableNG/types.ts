@@ -1,5 +1,4 @@
 import { type FC, type SyntheticEvent } from 'react';
-import { type CellRendererProps, type Column } from 'react-data-grid';
 
 import {
   type DataFrame,
@@ -14,7 +13,8 @@ import {
   type SelectableValue,
   type FieldState,
 } from '@grafana/data';
-import { type TableCellHeight, type TableFieldOptions } from '@grafana/schema';
+import { type CellRendererProps, type Column } from '@grafana/react-data-grid';
+import { type MatcherScope, type TableCellHeight, type TableFieldOptions } from '@grafana/schema';
 
 import { type TableCellInspectorMode } from '../TableCellInspector';
 import { type TableCellOptions } from '../types';
@@ -27,7 +27,11 @@ export const FILTER_OUT_OPERATOR = '!=';
 export type AdHocFilterOperator = typeof FILTER_FOR_OPERATOR | typeof FILTER_OUT_OPERATOR;
 export type AdHocFilterItem = { key: string; value: string; operator: AdHocFilterOperator };
 export type TableFilterActionCallback = (item: AdHocFilterItem) => void;
-export type TableColumnResizeActionCallback = (fieldDisplayName: string, width: number) => void;
+export type TableColumnResizeActionCallback = (
+  fieldDisplayName: string,
+  width: number,
+  fieldScope?: MatcherScope
+) => void;
 export type TableSortByActionCallback = (state: TableSortByFieldState[]) => void;
 export type FooterItem = Array<KeyValue<string>> | string | undefined;
 

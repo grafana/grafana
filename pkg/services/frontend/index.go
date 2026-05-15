@@ -166,6 +166,7 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		if p.config.AppSubURL != "" {
 			cookiePath = data.AppSubUrl
 		}
+		// #nosec G124 -- HttpOnly/Secure/SameSite are explicitly set above
 		http.SetCookie(writer, &http.Cookie{
 			Name:     "login_error",
 			Value:    "",

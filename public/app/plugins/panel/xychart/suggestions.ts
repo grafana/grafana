@@ -1,7 +1,6 @@
 import { FieldType, VisualizationSuggestionScore, type VisualizationSuggestionsSupplier } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { LegendDisplayMode } from '@grafana/ui';
 
 import { type Options, type FieldConfig, SeriesMapping } from './panelcfg.gen';
 import { prepConfig } from './scatter';
@@ -31,7 +30,6 @@ export const xychartSuggestionsSupplier: VisualizationSuggestionsSupplier<Option
         previewModifier: (s) => {
           s.options!.legend = s.options?.legend ?? {
             showLegend: false,
-            displayMode: LegendDisplayMode.Hidden,
             calcs: [],
             placement: 'bottom',
           };

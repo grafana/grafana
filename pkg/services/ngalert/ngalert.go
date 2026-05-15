@@ -62,6 +62,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -76,7 +77,7 @@ func ProvideService(
 	expressionService *expr.Service,
 	dataProxy *datasourceproxy.DataSourceProxyService,
 	quotaService quota.Service,
-	secretsService secrets.Service,
+	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	notificationService notifications.Service,
 	m *metrics.NGAlert,
 	folderService folder.Service,
@@ -152,7 +153,7 @@ type AlertNG struct {
 	ExpressionService     *expr.Service
 	DataProxy             *datasourceproxy.DataSourceProxyService
 	QuotaService          quota.Service
-	SecretsService        secrets.Service
+	SecretsService        secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	Metrics               *metrics.NGAlert
 	NotificationService   notifications.Service
 	Log                   log.Logger
@@ -283,6 +284,14 @@ func (ng *AlertNG) init() error {
 
 	decryptFn := ng.SecretsService.GetDecryptedValue
 	multiOrgMetrics := ng.Metrics.GetMultiOrgAlertmanagerMetrics()
+	// Reuse the validator wired into the user-driven datasource proxy so the sync
+	// worker honours the same allow/deny rules. Tests construct ngalert without a
+	// DataProxy — fall back to the no-op OSS validator so they don't NPE.
+	var dsRequestValidator validations.DataSourceRequestValidator = &validations.OSSDataSourceRequestValidator{}
+	if ng.DataProxy != nil && ng.DataProxy.DataSourceRequestValidator != nil {
+		dsRequestValidator = ng.DataProxy.DataSourceRequestValidator
+	}
+
 	moa, err := notifier.NewMultiOrgAlertmanager(
 		ng.Cfg,
 		ng.store,
@@ -299,6 +308,10 @@ func (ng *AlertNG) init() error {
 		ng.FeatureToggles,
 		notificationHistorian,
 		skipClustering,
+		ng.store,
+		ng.DataSourceService,
+		ng.httpClientProvider,
+		dsRequestValidator,
 		opts...,
 	)
 	if err != nil {
@@ -415,7 +428,7 @@ func (ng *AlertNG) init() error {
 	ng.stateManager = state.NewManager(stateManagerCfg, statePersister)
 
 	var apiStateManager state.AlertInstanceManager
-	var apiStatusReader apiprometheus.StatusReader
+	var ruleMutator apiprometheus.RuleMutator
 	if ng.Cfg.UnifiedAlerting.HASingleNodeEvaluation {
 		peer := ng.MultiOrgAlertmanager.Peer()
 		if peer == nil {
@@ -431,7 +444,7 @@ func (ng *AlertNG) init() error {
 		// because non-primary nodes have no in-memory state
 		storeStateReader := state.NewStoreStateReader(ng.InstanceStore, ng.Log)
 		apiStateManager = storeStateReader
-		apiStatusReader = storeStateReader
+		ruleMutator = apiprometheus.NewDBRuleMutator(storeStateReader)
 	} else {
 		// No need for a real evaluation coordinator in non-HA mode.
 		ng.evaluationCoordinator = cluster.NewNoopEvaluationCoordinator()
@@ -439,7 +452,7 @@ func (ng *AlertNG) init() error {
 		// Use in-memory state/scheduler for API calls
 		apiStateManager = ng.stateManager
 		ng.schedule = schedule.NewScheduler(ng.schedCfg, ng.stateManager)
-		apiStatusReader = ng.schedule
+		ruleMutator = apiprometheus.NewInMemoryRuleMutator(ng.schedule, ng.stateManager)
 	}
 
 	configStore := legacy_storage.NewAlertmanagerConfigStore(ng.store, notifier.NewExtraConfigsCrypto(ng.SecretsService), ng.FeatureToggles)
@@ -474,7 +487,8 @@ func (ng *AlertNG) init() error {
 		ng.tracer,
 		validation.NewPermissionAwareValidator(ng.accesscontrol),
 		//nolint:staticcheck // not yet migrated to OpenFeature
-		ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI),
+		ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingMultiplePolicies) &&
+			ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI),
 		ng.Cfg.UnifiedAlerting.AllowedIntegrations,
 		emailValidator,
 	)
@@ -564,7 +578,7 @@ func (ng *AlertNG) init() error {
 		ProvenanceStore:       ng.store,
 		MultiOrgAlertmanager:  ng.MultiOrgAlertmanager,
 		StateManager:          apiStateManager,
-		RuleStatusReader:      apiStatusReader,
+		RuleMutator:           ruleMutator,
 		AccessControl:         ng.accesscontrol,
 		Policies:              policyService,
 		RouteService:          routeService,

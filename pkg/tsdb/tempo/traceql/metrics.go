@@ -15,7 +15,7 @@ import (
 
 func TransformMetricsResponse(query string, resp tempopb.QueryRangeResponse) []*data.Frame {
 	// prealloc frames
-	frames := make([]*data.Frame, len(resp.Series))
+	frames := make([]*data.Frame, len(resp.Series)) //nolint:prealloc
 	var exemplarFrames []*data.Frame
 
 	for i, series := range resp.Series {

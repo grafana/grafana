@@ -1,3 +1,4 @@
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { cloneDeep } from 'lodash';
@@ -18,6 +19,7 @@ import {
 import { setGetObservablePluginLinks, setPanelPluginMetas } from '@grafana/runtime/internal';
 import { VizPanel } from '@grafana/scenes';
 import { type Dashboard } from '@grafana/schema';
+import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
 import { getRouteComponentProps } from 'app/core/navigation/mocks/routeProps';
 import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { type DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
@@ -72,18 +74,22 @@ function setup({ routeProps }: { routeProps?: Partial<GrafanaRouteComponentProps
 
   const renderResult = render(
     <TestProvider grafanaContext={context}>
-      <LocationServiceProvider service={locationService}>
-        <DashboardScenePage {...props} />
-      </LocationServiceProvider>
+      <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+        <LocationServiceProvider service={locationService}>
+          <DashboardScenePage {...props} />
+        </LocationServiceProvider>
+      </OpenFeatureProvider>
     </TestProvider>
   );
 
   const rerender = (newProps: Props) => {
     renderResult.rerender(
       <TestProvider grafanaContext={context}>
-        <LocationServiceProvider service={locationService}>
-          <DashboardScenePage {...newProps} />
-        </LocationServiceProvider>
+        <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+          <LocationServiceProvider service={locationService}>
+            <DashboardScenePage {...newProps} />
+          </LocationServiceProvider>
+        </OpenFeatureProvider>
       </TestProvider>
     );
   };

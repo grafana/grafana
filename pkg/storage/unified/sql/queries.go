@@ -464,9 +464,6 @@ type sqlResourceListModifiedSinceRequest struct {
 }
 
 func (r sqlResourceListModifiedSinceRequest) Validate() error {
-	if r.Namespace == "" {
-		return fmt.Errorf("missing namespace")
-	}
 	if r.Group == "" {
 		return fmt.Errorf("missing group")
 	}

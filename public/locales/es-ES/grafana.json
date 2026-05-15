@@ -515,7 +515,8 @@
         "edit-yaml": "Editar YAML",
         "save": "Guardar"
       },
-      "error-title": ""
+      "error-title": "",
+      "no-group-success": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "nombre",
@@ -1153,6 +1154,9 @@
         "rule-viewer-section-extension": "No se ha podido cargar la sección de enriquecimiento del visor de reglas"
       }
     },
+    "entities": {
+      "group": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "Error al actualizar tu configuración:",
       "title-something-went-wrong": "Algo ha salido mal"
@@ -1161,10 +1165,14 @@
       "content-show-all-errors": "Mostrar todos los errores"
     },
     "errors": {
+      "api-machinery": {
+        "with-causes": ""
+      },
       "failedWith": "{{-config}} falló con {{status}}: {{-message}}"
     },
     "evaluate-every-validation-options": {
       "message": {
+        "none-not-allowed": "",
         "required": "Este valor es obligatorio."
       }
     },
@@ -2869,6 +2877,11 @@
         },
         "group-name": "Nombre del grupo de evaluación",
         "group-text": "Todas las reglas del grupo seleccionado se evalúan cada {{evaluateEvery}}.",
+        "interval-label": "",
+        "mode": {
+          "legacy": "",
+          "new": ""
+        },
         "new-group": "Nuevo grupo de evaluación",
         "pause": {
           "alerting": "Activa para pausar la evaluación de esta regla de alerta.",
@@ -3174,9 +3187,7 @@
       "deleting": "Eliminando",
       "text-federated": "Federado",
       "text-provisioned": "Provisionado",
-      "ungrouped": "Sin agrupar",
-      "ungrouped-suffix": "{{ruleName}} (sin agrupar)",
-      "unknown-rule": "Regla desconocida"
+      "ungrouped": "Sin agrupar"
     },
     "saved-searches": {
       "actions-aria-label": "Acciones",
@@ -4322,6 +4333,7 @@
         "repository-not-found-message": "No se ha podido encontrar el repositorio de la carpeta seleccionada. Asegúrate de que la carpeta esté aprovisionada correctamente.",
         "repository-not-found-title": "Repositorio no encontrado"
       },
+      "error-already-in-target-folder": "",
       "error-moving-resources": "Error al mover los recursos",
       "error-no-target-folder-path": "La ruta de la carpeta de destino no es válida o está vacía. Selecciona otra.",
       "move-total": "En total, esto afectará a:",
@@ -4460,6 +4472,14 @@
       "request-extension": "Solicitar ampliación de la cuota",
       "resource-detail-dashboards": "Has creado {{usage}} de {{limit}} dashboards ({{percentage}} %).",
       "resource-detail-folders": "Has creado {{usage}} de {{limit}} carpetas ({{percentage}} %)."
+    },
+    "readme": {
+      "add-readme": "",
+      "edit-tooltip": "",
+      "empty-message": "",
+      "load-error-retry": "",
+      "load-error-title": "",
+      "parse-error": ""
     },
     "recently-viewed": {
       "clear": "Borrar historial",
@@ -5269,7 +5289,7 @@
   },
   "dashboard": {
     "actions": {
-      "open-settings": "Configuración"
+      "open-settings": ""
     },
     "add": {
       "new-panel": {
@@ -5671,7 +5691,7 @@
         "title": "Variables"
       },
       "variable": {
-        "change-type": "Cambiar",
+        "change-type": "",
         "change-type-aria-label": "Cambiar tipo de variable",
         "custom-options": {
           "apply": "Aplicar",
@@ -5988,7 +6008,7 @@
       "cancel": "Cancelar",
       "common": {
         "copy": "Copiar",
-        "copy-or-duplicate": "Copiar/pegar o duplicar",
+        "copy-tooltip": "",
         "delete": "Eliminar",
         "duplicate": "Duplicar",
         "layout": "Diseño",
@@ -6027,7 +6047,7 @@
     },
     "new-panel": {
       "aria-label": "Panel sin configurar. Pulsa la tecla Tab para ver las opciones de configuración.",
-      "configure-button": "Configurar",
+      "configure-button": "",
       "configure-button-menu": "Activar o desactivar menú",
       "configure-visualization": "Configurar visualización",
       "empty-state-message": "Ejecuta una consulta para visualizarla aquí o ve a todas las visualizaciones para añadir otros tipos de panel",
@@ -6269,10 +6289,8 @@
       "title-provisioned": "Dashboard aprovisionado"
     },
     "save-dashboard-error-proxy": {
-      "body-name-exists": "Ya existe un dashboard con el mismo nombre en la carpeta seleccionada.<br/><2>¿Seguro que quieres guardar este dashboard?</2>",
       "body-version-mismatch": "Otra persona ha actualizado este dashboard.<br/><2>¿Seguro que quieres guardar este dashboard?</2>",
       "confirmText-save-and-overwrite": "Guardar y sobrescribir",
-      "title-name-exists": "Conflicto",
       "title-version-mismatch": "Conflicto"
     },
     "save-dashboard-form": {
@@ -7313,6 +7331,7 @@
       "terraform": "Administrado por: Terraform"
     },
     "move-provisioned-dashboard-form": {
+      "already-in-folder": "",
       "api-error": "No se ha podido mover el dashboard",
       "cancel-action": "Cancelar",
       "current-file-not-found": "No se ha podido encontrar el archivo del dashboard actual",
@@ -7325,10 +7344,6 @@
       "success-message": "Dashboard movido correctamente",
       "target-path-label": "Ruta de destino",
       "title-this-repository-is-read-only": "Este repositorio es de solo lectura"
-    },
-    "name-already-exists-error": {
-      "body-name-already-exists": "Ya existe un dashboard con el mismo nombre en la carpeta seleccionada. ¿Seguro que quieres guardar este dashboard?",
-      "title-name-already-exists": "Este nombre ya existe"
     },
     "on-open-snapshot-original-dashboard": {
       "confirmText": {
@@ -8037,19 +8052,6 @@
       "aria-label-explore-data": "Explorar datos",
       "aria-label-suggested-dashboards": "Dashboards sugeridos"
     },
-    "alerting-enabled": {
-      "text-alerting-not-supported": "Alertas no compatibles",
-      "text-alerting-supported": "Alertas compatibles"
-    },
-    "basic-serttings": {
-      "tooltip-name": "El nombre se utiliza cuando se selecciona la fuente de datos en los paneles. La fuente de datos predeterminada está preseleccionada en los paneles nuevos."
-    },
-    "basic-settings": {
-      "aria-label-datasource-settings-page-basic": "Ajustes básicos de la página de configuración de la fuente de datos",
-      "basic-settings-name-placeholder-name": "Nombre",
-      "label-default": "Por defecto",
-      "label-name": "Nombre"
-    },
     "build-a-dashboard-button": {
       "blank": "En blanco",
       "build-a-dashboard": "Crear un dashboard",
@@ -8144,6 +8146,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Añadir a favoritos",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "Explorar datos",
       "open-in-explore": "Abrir en Explorar vista",
       "remove-favorite": "Eliminar de favoritos"
@@ -10853,6 +10861,21 @@
     "name-line-width": "Espesor de la línea",
     "name-stacking": "Apilamiento"
   },
+  "home": {
+    "home-page": {
+      "edition": {
+        "cloud": "",
+        "enterprise": "",
+        "open-source": ""
+      },
+      "greeting": {
+        "afternoon": "",
+        "evening": "",
+        "morning": ""
+      },
+      "placeholder": ""
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "Cargando",
@@ -11247,7 +11270,7 @@
     "description-order": "Muestra primero los logs más recientes o los más antiguos. Si se selecciona «Más antiguos primero», la vista se desplaza automáticamente hasta los logs más recientes, situados en la parte inferior.",
     "description-prettify-json": "Da formato a las entradas de log JSON con sangría y saltos de línea.",
     "description-show-controls": "Muestra controles para saltar a la última o primera línea de log y filtra por nivel de log.",
-    "description-show-log-attributes": "Experimental. Cuando se muestran los logs de OTel, añade un campo adicional con los pares clave-valor relevantes de las etiquetas y los metadatos.",
+    "description-show-log-attributes": "",
     "description-unwrapped-columns": "Alinea los valores mediante columnas al utilizar los campos mostrados.",
     "description-wrap-lines": "Muestra los logs en una sola línea o ajusta las entradas de logs largas para que se adapten al panel.",
     "field-selector": {
@@ -11334,6 +11357,8 @@
       "clear-search": "Borrar",
       "close-inline-details": "Cerrar detalles de este log",
       "close-sidebar-details": "Cerrar la barra lateral de detalles del log",
+      "copy-log-line": "",
+      "copy-log-line-json": "",
       "copy-shortlink": "Copiar enlace corto",
       "copy-to-clipboard": "Copiar al portapapeles",
       "displayed-fields-section": "Organizar los campos mostrados",
@@ -11382,7 +11407,8 @@
     },
     "log-line-menu": {
       "copy-link": "Copiar enlace a la línea de registro",
-      "copy-log": "Copiar línea de registro",
+      "copy-log-contents": "",
+      "copy-log-message": "",
       "hide-details": "Mostrar detalles del log",
       "icon-label": "Menú de registro",
       "log-line": "Línea de log",
@@ -11573,7 +11599,7 @@
       "line-contains-not": "Añadir como filtro «la línea no contiene»",
       "search-text": "Buscar en resultados"
     },
-    "show-log-attributes": "Mostrar atributos del log para logs OTel",
+    "show-log-attributes": "",
     "timestamp-format": "Resolución de marca de tiempo",
     "un-themed-log-details": {
       "aria-label-data-links": "Enlaces de datos",
@@ -14243,6 +14269,8 @@
       "alerts-loading": "Alertas",
       "card-click": "Seleccionar tarjeta {{id}}",
       "data": "Datos",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "Nueva {{type}}",
       "queries-expressions": "Consultas y expresiones",
       "toggle-size": "Alternar tamaño de la barra lateral",
@@ -14829,9 +14857,6 @@
       "home-dashboard-placeholder": "Panel de control por defecto",
       "language-preference-label": "Idioma",
       "language-preference-placeholder": "Cambiar idioma",
-      "locale-preference-description": "Selecciona tu región para ver el formato correspondiente de fecha, hora y número",
-      "locale-preference-label": "Formato de región",
-      "locale-preference-placeholder": "Elige la región",
       "theme-description": "¿Te gustan los temas experimentales? Dinos lo que te gustaría ver <2>aquí.</2>",
       "theme-label": "Tema de interfaz de usuario",
       "week-start-label": "Inicio de la semana"
@@ -14959,10 +14984,13 @@
       "title": "Pon en marcha dashboards con sugerencias y plantillas."
     },
     "nav": {
+      "counter": "",
       "go-to": "Ir a la diapositiva {{number}}",
-      "next": "Siguiente",
-      "prev": "Anterior"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "Explicar consulta",
@@ -15128,6 +15156,8 @@
     },
     "support-bundles-unconnected": {
       "created-on": "Creado el",
+      "deprecation-warning-message": "",
+      "deprecation-warning-title": "",
       "download": "Descargar",
       "expires": "Caduca",
       "requested-by": "Solicitado por",
@@ -15442,7 +15472,6 @@
       "forwards-time-aria-label": "Adelantar el intervalo de tiempo",
       "to": "hasta",
       "zoom-out-button": "Reducir el intervalo de tiempo",
-      "zoom-out-tooltip": "Alejar rango de tiempo <br/> CTRL+Z",
       "zoom-out-tooltip-new": "Alejar rango de tiempo <br/> t -"
     },
     "time-range": {
@@ -15529,8 +15558,8 @@
     },
     "legend": {
       "category": "Leyenda",
-      "description-faceted-filter": "Mostrar filtro de visibilidad de series en función de las etiquetas",
-      "name-faceted-filter": "Filtro por facetas"
+      "description-faceted-filter": "",
+      "name-faceted-filter": ""
     },
     "line-style-editor": {
       "line-fill-options": {
@@ -16020,7 +16049,9 @@
       "description": {
         "group-by-field-value": "Agrupa los datos por un valor de campo y crea tablas anidadas con los datos agrupados."
       },
+      "description-expand-nested-rows": "",
       "description-show-field-names": "Si está habilitado, las tablas anidadas mostrarán los nombres de los campos como encabezado de la tabla",
+      "label-expand-nested-rows-by-default": "",
       "label-show-field-names-in-nested-tables": "Mostrar nombres de campo en tablas anidadas",
       "name": {
         "group-to-nested-tables": "Agrupar en tablas anidadas"

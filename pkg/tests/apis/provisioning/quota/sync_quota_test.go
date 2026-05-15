@@ -280,22 +280,13 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		helper.RequireRepoDashboardCount(t, repo, 2)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonWithinQuota)
 
-		// Verify we have 3 folders (root + subfolder + subfolder/nested)
-		folders, err := helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
-		require.NoError(t, err)
-		var managedFolderCount int
-		for _, f := range folders.Items {
-			managerID, _, _ := unstructured.NestedString(f.Object, "metadata", "annotations", "grafana.app/managerId")
-			if managerID == repo {
-				managedFolderCount++
-			}
-		}
-		require.Equal(t, 3, managedFolderCount, "should have 3 folders: root + subfolder + subfolder/nested")
+		// Should have 3 folders: root + subfolder + subfolder/nested
+		helper.RequireRepoFolderCount(t, repo, 3)
 
 		// Step 2: Add 2 dashboards in new subfolders (each creates a folder + a dashboard).
 		// This would bring total to 9 (5 existing + 2 folders + 2 dashboards), exceeding limit of 6.
 		newDash1Content := helper.LoadFile("../testdata/timeline-demo.json")
-		err = os.MkdirAll(filepath.Join(repoPath, "new_a"), 0o750)
+		err := os.MkdirAll(filepath.Join(repoPath, "new_a"), 0o750)
 		require.NoError(t, err)
 		err = os.WriteFile(filepath.Join(repoPath, "new_a", "dashboard_new1.json"), newDash1Content, 0o600)
 		require.NoError(t, err, "should be able to write new_a/dashboard_new1.json")
@@ -362,18 +353,8 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 				"should still have only 2 dashboards: both new dashboards were skipped due to quota")
 		}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 
-		// Verify 1 new folder was created and 1 was skipped (4 total managed folders)
-		folders, err = helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
-		require.NoError(t, err)
-		managedFolderCount = 0
-		for _, f := range folders.Items {
-			managerID, _, _ := unstructured.NestedString(f.Object, "metadata", "annotations", "grafana.app/managerId")
-			if managerID == repo {
-				managedFolderCount++
-			}
-		}
-		require.Equal(t, 4, managedFolderCount,
-			"should have 4 folders: root + subfolder + subfolder/nested + 1 new (the other was skipped)")
+		// Should have 4 folders: root + subfolder + subfolder/nested + 1 new (the other was skipped)
+		helper.RequireRepoFolderCount(t, repo, 4)
 
 		// Step 6: Verify the repo is now at quota (4 folders + 2 dashboards = 6/6)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)

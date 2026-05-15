@@ -174,10 +174,19 @@ func buildSnapshotOptions(cfg *setting.Cfg, minBuildVersion *semver.Version) (Sn
 	owner := fmt.Sprintf("%s/%s", ownerBase, lockOwnerSuffix.String())
 
 	lockTTL := DefaultSnapshotLockTTL
-	lockHeartbeat := snapshotLockHeartbeat(lockTTL)
+	lockOpts := LockOptions{
+		TTL:               lockTTL,
+		HeartbeatInterval: snapshotLockHeartbeat(lockTTL),
+	}
 
 	return SnapshotOptions{
-		Store:              NewBucketRemoteIndexStore(bucket, lockBackend, owner, lockTTL, lockHeartbeat),
+		Store: NewBucketRemoteIndexStore(BucketRemoteIndexStoreConfig{
+			Bucket:      bucket,
+			LockBackend: lockBackend,
+			LockOwner:   owner,
+			BuildLock:   lockOpts,
+			CleanupLock: lockOpts,
+		}),
 		MinDocCount:        int64(cfg.IndexSnapshotThreshold),
 		MaxIndexAge:        cfg.IndexSnapshotMaxAge,
 		MinBuildVersion:    minBuildVersion,

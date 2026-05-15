@@ -86,6 +86,7 @@ func RegisterAPIService(
 	roleBindingsApiInstaller RoleBindingApiInstaller,
 	teamGroupsHandlerImpl externalgroupmapping.TeamGroupsHandler,
 	externalGroupMappingSearchHandler externalgroupmapping.SearchHandler,
+	externalGroupReconciler legacy.ExternalGroupReconciler,
 	dual dualwrite.Service,
 	unified resource.ResourceClient,
 	orgService org.Service,
@@ -132,7 +133,8 @@ func RegisterAPIService(
 		store:                             store,
 		userLegacyStore:                   user.NewLegacyStore(store, accessClient, tracing),
 		saLegacyStore:                     serviceaccount.NewLegacyStore(store, accessClient, tracing),
-		legacyTeamStore:                   team.NewLegacyStore(store, accessClient, tracing),
+		legacyTeamStore:                   team.NewLegacyStore(store, accessClient, tracing, externalGroupReconciler),
+		externalGroupReconciler:           externalGroupReconciler,
 		teamBindingLegacyStore:            teambinding.NewLegacyBindingStore(store, tracing),
 		ssoLegacyStore:                    sso.NewLegacyStore(ssoService, tracing),
 		roleApiInstaller:                  roleApiInstaller,
@@ -372,6 +374,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	enableServiceAccountTokensApi := client.Boolean(ctx, featuremgmt.FlagKubernetesServiceAccountTokensApi, false, openfeature.TransactionContext(ctx))
 	enableExternalGroupMappingsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesExternalGroupMappingsApi, false, openfeature.TransactionContext(ctx))
 	enableSsoSettingsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesSsoSettingsApi, false, openfeature.TransactionContext(ctx))
+	enableSaResourcePermissions := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzServiceAccountResourcePermissions, false, openfeature.TransactionContext(ctx))
 
 	// teams + users must have shorter names because they are often used as part of another name
 	opts.StorageOptsRegister(iamv0.TeamResourceInfo.GroupResource(), apistore.StorageOptions{
@@ -383,13 +386,13 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	})
 
 	if enableTeamsApi {
-		if err := b.UpdateTeamsAPIGroup(opts, storage, enableExternalGroupMappingsApi); err != nil {
+		if err := b.UpdateTeamsAPIGroup(opts, storage, enableExternalGroupMappingsApi, enableZanzanaSync); err != nil {
 			return err
 		}
 	}
 
 	if enableTeamsApi {
-		if err := b.UpdateTeamBindingsAPIGroup(opts, storage, enableZanzanaSync); err != nil {
+		if err := b.UpdateTeamBindingsAPIGroup(opts, storage); err != nil {
 			return err
 		}
 	}
@@ -446,6 +449,19 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if b.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) {
+		if enableSaResourcePermissions {
+			// BasicRole is excluded: built-in roles already cover all service accounts globally,
+			// so granting a ResourcePermission to a BasicRole on a specific SA is not permitted.
+			b.mappers.RegisterMapper(
+				schema.GroupResource{Group: "iam.grafana.app", Resource: "serviceaccounts"},
+				resourcepermission.NewMapperWithAttribute("serviceaccounts", []string{"Edit", "Admin"}, resourcepermission.ScopeAttributeID,
+					[]iamv0.ResourcePermissionSpecPermissionKind{
+						iamv0.ResourcePermissionSpecPermissionKindUser,
+						iamv0.ResourcePermissionSpecPermissionKindServiceAccount,
+						iamv0.ResourcePermissionSpecPermissionKindTeam,
+					}), nil,
+			)
+		}
 		if err := b.UpdateResourcePermissionsAPIGroup(apiGroupInfo, opts, storage, enableZanzanaSync); err != nil {
 			return err
 		}
@@ -455,14 +471,25 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	return nil
 }
 
-func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.APIGroupOptions, storage map[string]rest.Storage, enableExternalGroupMappingsApi bool) error {
+func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.APIGroupOptions, storage map[string]rest.Storage, enableExternalGroupMappingsApi bool, enableZanzanaSync bool) error {
 	teamResource := iamv0.TeamResourceInfo
 	teamUniStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, teamResource, opts.OptsGetter)
 	if err != nil {
 		return err
 	}
+
+	// Team membership is sourced from team.spec.members; sync those changes
+	// to Zanzana from the Team hooks (TeamBinding is deprecated).
+	if enableZanzanaSync {
+		b.logger.Info("Enabling hooks for Team to sync members to Zanzana")
+		teamUniStore.AfterCreate = b.AfterTeamCreate
+		teamUniStore.AfterDelete = b.AfterTeamDelete
+		teamUniStore.BeginUpdate = b.BeginTeamUpdate
+	}
+
 	storage[teamResource.StoragePath()] = teamUniStore
 	b.teamGetter = teamUniStore
+	teamStorage := rest.Storage(teamUniStore)
 
 	if b.legacyTeamStore != nil {
 		dw, err := opts.DualWriteBuilder(teamResource.GroupResource(), b.legacyTeamStore, teamUniStore)
@@ -471,12 +498,22 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.AP
 		}
 
 		storage[teamResource.StoragePath()] = dw
+		teamStorage = dw
 		if getter, ok := dw.(rest.Getter); ok {
 			b.teamGetter = getter
 		}
 	}
 
 	storage[teamResource.StoragePath("members")] = team.NewTeamMembersREST(b.teamGetter, b.tracing, b.features)
+
+	if b.teamSearch != nil {
+		b.teamSearch.teamGetter = b.teamGetter
+	}
+
+	// addmember / removemember mutate a single Spec.Members entry through
+	// the dual-writer storage, so they work uniformly across all modes.
+	storage[teamResource.StoragePath("addmember")] = team.NewTeamAddMemberREST(teamStorage, b.tracing)
+	storage[teamResource.StoragePath("removemember")] = team.NewTeamRemoveMemberREST(teamStorage, b.tracing)
 
 	if enableExternalGroupMappingsApi && b.teamGroupsHandler != nil {
 		storage[teamResource.StoragePath("groups")] = b.teamGroupsHandler
@@ -485,7 +522,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.AP
 	return nil
 }
 
-func (b *IdentityAccessManagementAPIBuilder) UpdateTeamBindingsAPIGroup(opts builder.APIGroupOptions, storage map[string]rest.Storage, enableZanzanaSync bool) error {
+func (b *IdentityAccessManagementAPIBuilder) UpdateTeamBindingsAPIGroup(opts builder.APIGroupOptions, storage map[string]rest.Storage) error {
 	teamBindingResource := iamv0.TeamBindingResourceInfo
 
 	selectableFieldsOpts := grafanaregistry.SelectableFieldsOptions{
@@ -497,15 +534,9 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamBindingsAPIGroup(opts bui
 		return err
 	}
 
+	// Zanzana sync for team membership lives on the Team hooks now;
+	// team.spec.members is the source of truth.
 	var teamBindingStore storewrapper.K8sStorage = teamBindingUniStore
-
-	// Only teamBindingStore exposes the AfterCreate, AfterDelete, and BeginUpdate hooks
-	if enableZanzanaSync {
-		b.logger.Info("Enabling hooks for TeamBinding to sync to Zanzana")
-		teamBindingUniStore.AfterCreate = b.AfterTeamBindingCreate
-		teamBindingUniStore.AfterDelete = b.AfterTeamBindingDelete
-		teamBindingUniStore.BeginUpdate = b.BeginTeamBindingUpdate
-	}
 
 	if b.teamBindingLegacyStore != nil {
 		dw, err := opts.DualWriteBuilder(teamBindingResource.GroupResource(), b.teamBindingLegacyStore, teamBindingUniStore)
@@ -520,11 +551,13 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamBindingsAPIGroup(opts bui
 		}
 	}
 
-	authzWrapper := storewrapper.New(teamBindingStore, iamauthorizer.NewTeamBindingAuthorizer(b.accessClient))
+	authzWrapper := storewrapper.New(
+		teamBindingStore,
+		teamBindingResource.GroupResource(),
+		iamauthorizer.NewTeamBindingAuthorizer(b.accessClient),
+		storewrapper.WithObserver(storageObserver{}),
+	)
 	storage[teamBindingResource.StoragePath()] = authzWrapper
-	if b.teamSearch != nil {
-		b.teamSearch.teamBindingStore = authzWrapper
-	}
 	return nil
 }
 
@@ -562,7 +595,13 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.AP
 	}
 
 	b.userGetter = userStore
-	storage[userResource.StoragePath()] = storewrapper.New(userStore, user.NewStoreWrapper(b.cfgProvider, b.settingService), storewrapper.WithPreserveIdentity())
+	storage[userResource.StoragePath()] = storewrapper.New(
+		userStore,
+		iamv0.UserResourceInfo.GroupResource(),
+		user.NewStoreWrapper(b.cfgProvider, b.settingService),
+		storewrapper.WithPreserveIdentity(),
+		storewrapper.WithObserver(storageObserver{}),
+	)
 
 	if b.dual != nil && b.unified != nil {
 		teamSearchClient := resource.NewSearchClient(
@@ -684,7 +723,12 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateResourcePermissionsAPIGroup(
 		}
 	}
 
-	authzWrapper := storewrapper.New(regStoreDW, iamauthorizer.NewResourcePermissionsAuthorizer(b.accessClient, b.resourceParentProvider))
+	authzWrapper := storewrapper.New(
+		regStoreDW,
+		iamv0.ResourcePermissionInfo.GroupResource(),
+		iamauthorizer.NewResourcePermissionsAuthorizer(b.accessClient, b.resourceParentProvider),
+		storewrapper.WithObserver(storageObserver{}),
+	)
 
 	storage[iamv0.ResourcePermissionInfo.StoragePath()] = authzWrapper
 
@@ -754,47 +798,89 @@ func (b *IdentityAccessManagementAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenA
 	serviceaccounttoken.PostProcessOpenAPI(oas)
 
 	if oas.Paths != nil && oas.Paths.Paths != nil {
-		pathsToUpdate := []string{
+		// Team subresources still expose offset/page pagination.
+		offsetPagedPaths := []string{
 			"/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/teams/{name}/groups",
 			"/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/teams/{name}/members",
-			"/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/users/{name}/teams",
+		}
+		for _, path := range offsetPagedPaths {
+			p, ok := oas.Paths.Paths[path]
+			if !ok || p.Get == nil {
+				continue
+			}
+			p.Get.Parameters = append(p.Get.Parameters,
+				&spec3.Parameter{
+					ParameterProps: spec3.ParameterProps{
+						Name:        "limit",
+						In:          "query",
+						Description: "number of results to return",
+						Example:     30,
+						Required:    false,
+						Schema:      spec.Int64Property(),
+					},
+				},
+				&spec3.Parameter{
+					ParameterProps: spec3.ParameterProps{
+						Name:        "page",
+						In:          "query",
+						Description: "page number (starting from 1)",
+						Example:     1,
+						Required:    false,
+						Schema:      spec.Int64Property(),
+					},
+				},
+				&spec3.Parameter{
+					ParameterProps: spec3.ParameterProps{
+						Name:        "offset",
+						In:          "query",
+						Description: "number of results to skip",
+						Example:     0,
+						Required:    false,
+						Schema:      spec.Int64Property(),
+					},
+				},
+			)
 		}
 
-		for _, path := range pathsToUpdate {
-			if p, ok := oas.Paths.Paths[path]; ok {
-				if p.Get != nil {
-					p.Get.Parameters = append(p.Get.Parameters,
-						&spec3.Parameter{
-							ParameterProps: spec3.ParameterProps{
-								Name:        "limit",
-								In:          "query",
-								Description: "number of results to return",
-								Example:     30,
-								Required:    false,
-								Schema:      spec.Int64Property(),
-							},
-						},
-						&spec3.Parameter{
-							ParameterProps: spec3.ParameterProps{
-								Name:        "page",
-								In:          "query",
-								Description: "page number (starting from 1)",
-								Example:     1,
-								Required:    false,
-								Schema:      spec.Int64Property(),
-							},
-						},
-						&spec3.Parameter{
-							ParameterProps: spec3.ParameterProps{
-								Name:        "offset",
-								In:          "query",
-								Description: "number of results to skip",
-								Example:     0,
-								Required:    false,
-								Schema:      spec.Int64Property(),
-							},
-						},
-					)
+		// /users/{name}/teams uses keyset pagination: limit + opaque continue
+		// token returned in metadata.continue. offset/page are not honored.
+		userTeamsPath := "/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/users/{name}/teams"
+		if p, ok := oas.Paths.Paths[userTeamsPath]; ok && p.Get != nil {
+			p.Get.Parameters = append(p.Get.Parameters,
+				&spec3.Parameter{
+					ParameterProps: spec3.ParameterProps{
+						Name:        "limit",
+						In:          "query",
+						Description: "maximum number of results to return per page",
+						Example:     30,
+						Required:    false,
+						Schema:      spec.Int64Property(),
+					},
+				},
+				&spec3.Parameter{
+					ParameterProps: spec3.ParameterProps{
+						Name: "continue",
+						In:   "query",
+						Description: "Opaque token from a previous response's metadata.continue; resumes listing after the last team returned. " +
+							"The token is base64 ('+', '/', '=' may appear) — clients MUST URL-encode it when appending to the query string, " +
+							"otherwise '+' will silently decode to a space on the server and pagination will fail.",
+						Required: false,
+						Schema:   spec.StringProperty(),
+					},
+				},
+			)
+
+			// Wire the 200 response to the generated GetUserTeamsResponse
+			// schema (embeds metav1.ListMeta, so metadata.continue is part
+			// of the documented contract).
+			if p.Get.Responses != nil && p.Get.Responses.StatusCodeResponses != nil {
+				if r200, ok := p.Get.Responses.StatusCodeResponses[200]; ok && r200.Content != nil {
+					ref := spec.MustCreateRef("#/components/schemas/" + iamv0.GetUserTeamsResponse{}.OpenAPIModelName())
+					for ct, mt := range r200.Content {
+						mt.Schema = &spec.Schema{SchemaProps: spec.SchemaProps{Ref: ref}}
+						r200.Content[ct] = mt
+					}
+					p.Get.Responses.StatusCodeResponses[200] = r200
 				}
 			}
 		}
@@ -866,7 +952,7 @@ func (b *IdentityAccessManagementAPIBuilder) validateCreate(ctx context.Context,
 	case *iamv0.ServiceAccount:
 		return serviceaccount.ValidateOnCreate(ctx, typedObj)
 	case *iamv0.Team:
-		return team.ValidateOnCreate(ctx, typedObj)
+		return team.ValidateOnCreate(ctx, typedObj, b.externalGroupReconciler)
 	case *iamv0.TeamBinding:
 		return teambinding.ValidateOnCreate(ctx, typedObj, b.teamGetter, b.userGetter)
 	case *iamv0.ResourcePermission:
@@ -906,7 +992,7 @@ func (b *IdentityAccessManagementAPIBuilder) validateUpdate(ctx context.Context,
 		if !ok {
 			return fmt.Errorf("expected old object to be a Team, got %T", oldObj)
 		}
-		return team.ValidateOnUpdate(ctx, typedObj, oldTeamObj)
+		return team.ValidateOnUpdate(ctx, typedObj, oldTeamObj, b.externalGroupReconciler)
 	case *iamv0.TeamBinding:
 		oldTeamBindingObj, ok := oldObj.(*iamv0.TeamBinding)
 		if !ok {
@@ -975,6 +1061,8 @@ func (b *IdentityAccessManagementAPIBuilder) Mutate(ctx context.Context, a admis
 			return user.MutateOnCreateAndUpdate(ctx, typedObj)
 		case *iamv0.ServiceAccount:
 			return serviceaccount.MutateOnCreate(ctx, typedObj)
+		case *iamv0.Team:
+			return team.MutateOnCreateAndUpdate(ctx, typedObj)
 		case *iamv0.Role:
 			return b.roleApiInstaller.MutateOnCreate(ctx, typedObj)
 		case *iamv0.GlobalRole:
@@ -990,6 +1078,8 @@ func (b *IdentityAccessManagementAPIBuilder) Mutate(ctx context.Context, a admis
 			if a.GetSubresource() != "status" {
 				return user.MutateOnCreateAndUpdate(ctx, typedObj)
 			}
+		case *iamv0.Team:
+			return team.MutateOnCreateAndUpdate(ctx, typedObj)
 		case *iamv0.Role:
 			oldObj, ok := a.GetOldObject().(*iamv0.Role)
 			if !ok {

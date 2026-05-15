@@ -172,6 +172,7 @@ module.exports = [
       '@grafana/no-unreduced-motion': 'error',
       '@grafana/no-restricted-img-srcs': 'error',
       '@grafana/no-direct-date-fns': 'error',
+      '@grafana/no-direct-create-monitoring-logger': 'error',
       'react-prefer-function-component/react-prefer-function-component': ['error', { allowJsxUtilityClass: true }],
       'react/prop-types': 'off',
       // need to ignore emotion's `css` prop, see https://github.com/jsx-eslint/eslint-plugin-react/blob/master/docs/rules/no-unknown-property.md#rule-options
@@ -221,6 +222,12 @@ module.exports = [
       'no-constant-condition': 'error',
       '@grafana/define-feature-events': 'error',
       '@grafana/no-plain-links': 'error',
+      'react-hooks/exhaustive-deps': [
+        'error',
+        {
+          additionalHooks: 'use(Async)$',
+        },
+      ],
     },
   },
 
@@ -477,7 +484,6 @@ module.exports = [
       'public/app/plugins/datasource/opentsdb/**/*.{ts,tsx}',
       'public/app/plugins/datasource/parca/**/*.{ts,tsx}',
       'public/app/plugins/datasource/tempo/**/*.{ts,tsx}',
-      'public/app/plugins/datasource/zipkin/**/*.{ts,tsx}',
     ],
     plugins: {
       import: importPlugin,

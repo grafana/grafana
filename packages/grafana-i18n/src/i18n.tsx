@@ -5,7 +5,6 @@ import React from 'react';
 import { initReactI18next, setDefaults, setI18n, Trans as I18NextTrans, getI18n } from 'react-i18next';
 
 import { DEFAULT_LANGUAGE, PSEUDO_LOCALE } from './constants';
-import { initRegionalFormat } from './dates';
 import { LANGUAGES } from './languages';
 import { type ResourceLoader, type Resources, type TFunction, type TransProps, type TransType } from './types';
 
@@ -186,11 +185,11 @@ export async function changeLanguage(language?: string) {
   await getI18nInstance().changeLanguage(validLanguage);
 }
 
-export async function initializeI18n(
-  { language, ns, module }: InitializeI18nOptions,
-  regionalFormat: string
-): Promise<{ language: string | undefined }> {
-  initRegionalFormat(regionalFormat);
+export async function initializeI18n({
+  language,
+  ns,
+  module,
+}: InitializeI18nOptions): Promise<{ language: string | undefined }> {
   return initTranslations({ language, ns, module });
 }
 

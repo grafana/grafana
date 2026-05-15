@@ -18,7 +18,6 @@ import { t, Trans } from '@grafana/i18n';
 import { type TimeZone } from '@grafana/schema';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { getFeatureToggle } from '../../utils/featureToggle';
 import { ButtonGroup } from '../Button/ButtonGroup';
 import { Stack } from '../Layout/Stack/Stack';
 import { getModalStyles } from '../Modal/getModalStyles';
@@ -249,19 +248,10 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
 TimeRangePicker.displayName = 'TimeRangePicker';
 
 const ZoomOutTooltip = () => {
-  const newShortcuts = getFeatureToggle('newTimeRangeZoomShortcuts');
   return (
-    <>
-      {newShortcuts ? (
-        <Trans i18nKey="time-picker.range-picker.zoom-out-tooltip-new">
-          Time range zoom out <br /> t -
-        </Trans>
-      ) : (
-        <Trans i18nKey="time-picker.range-picker.zoom-out-tooltip">
-          Time range zoom out <br /> CTRL+Z
-        </Trans>
-      )}
-    </>
+    <Trans i18nKey="time-picker.range-picker.zoom-out-tooltip-new">
+      Time range zoom out <br /> t -
+    </Trans>
   );
 };
 
