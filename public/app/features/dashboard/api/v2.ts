@@ -15,6 +15,7 @@ import {
   type ResourceClient,
   type ResourceForCreate,
   type ResourceList,
+  type TableResponse,
 } from 'app/features/apiserver/types';
 import { convertSpecToWireFormat } from 'app/features/dashboard-scene/serialization/transformationCompat';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
@@ -252,8 +253,12 @@ export class K8sDashboardV2API
     });
   }
 
-  listDeletedDashboards(options: ListDeletedDashboardsOptions) {
-    return this.client.list({ ...options, labelSelector: 'grafana.app/get-trash=true' });
+  async listDeletedDashboards(options: ListDeletedDashboardsOptions): Promise<TableResponse> {
+    return this.client.listAsTable({ ...options, labelSelector: 'grafana.app/get-trash=true' });
+  }
+
+  async getDashboard(name: string, params?: Record<string, unknown>): Promise<Resource<DashboardV2Spec>> {
+    return this.client.get(name, params);
   }
 
   restoreDashboard(dashboard: Resource<DashboardV2Spec>) {

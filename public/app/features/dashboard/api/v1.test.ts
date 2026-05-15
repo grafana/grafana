@@ -550,16 +550,24 @@ describe('v1 dashboard API', () => {
   });
 
   describe('listDeletedDashboards', () => {
-    it('should return list of deleted dashboards', async () => {
+    it('should return table of deleted dashboards', async () => {
       const mockDeletedDashboards = {
-        items: [
+        apiVersion: 'meta.k8s.io/v1',
+        kind: 'Table',
+        metadata: { resourceVersion: '1' },
+        columnDefinitions: [
+          { name: 'Name', type: 'string' },
+          { name: 'Title', type: 'string' },
+          { name: 'Created At', type: 'date' },
+        ],
+        rows: [
           {
-            ...mockDashboardDto,
-            metadata: { ...mockDashboardDto.metadata, name: 'deleted-dash-1' },
+            cells: ['deleted-dash-1'],
+            object: { metadata: { ...mockDashboardDto.metadata, name: 'deleted-dash-1' } },
           },
           {
-            ...mockDashboardDto,
-            metadata: { ...mockDashboardDto.metadata, name: 'deleted-dash-2' },
+            cells: ['deleted-dash-2'],
+            object: { metadata: { ...mockDashboardDto.metadata, name: 'deleted-dash-2' } },
           },
         ],
       };
@@ -570,7 +578,7 @@ describe('v1 dashboard API', () => {
       const result = await api.listDeletedDashboards({ limit: 10 });
 
       expect(result).toEqual(mockDeletedDashboards);
-      expect(result.items).toHaveLength(2);
+      expect(result.rows).toHaveLength(2);
     });
   });
 

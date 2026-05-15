@@ -43,13 +43,18 @@ describe('RecentlyDeletedActions', () => {
       folder: {},
     });
 
-    (deletedDashboardsCache.clear as jest.Mock) = jest.fn();
-    (deletedDashboardsCache.getAsResourceList as jest.Mock) = jest.fn().mockResolvedValue({
-      items: [
+    (deletedDashboardsCache.removeItems as jest.Mock) = jest.fn();
+    (deletedDashboardsCache.getAsTable as jest.Mock) = jest.fn().mockResolvedValue({
+      rows: [
         {
-          metadata: { name: 'dashboard-1' },
+          cells: [],
+          object: {
+            metadata: { name: 'dashboard-1', resourceVersion: '1', creationTimestamp: '2024-01-01T00:00:00Z' },
+          },
         },
       ],
+      columnDefinitions: [],
+      metadata: { resourceVersion: '1' },
     });
   });
 

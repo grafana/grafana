@@ -97,6 +97,7 @@ describe('ImportOverviewV2', () => {
       deleteDashboard: jest.fn(),
       listDeletedDashboards: jest.fn(),
       restoreDashboard: jest.fn(),
+      getDashboard: jest.fn(),
       listDashboardHistory: jest.fn(),
       getDashboardHistoryVersions: jest.fn(),
       restoreDashboardVersion: jest.fn(),

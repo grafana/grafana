@@ -16,9 +16,9 @@ import {
   DeprecatedInternalId,
   ManagerKind,
   type Resource,
-  type ResourceClient,
   type ResourceForCreate,
   type ResourceList,
+  type TableResponse,
 } from 'app/features/apiserver/types';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { type DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
@@ -48,7 +48,7 @@ export function getK8sV1DashboardApiConfig() {
 }
 
 export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
-  private client: ResourceClient<DashboardDataDTO, Status>;
+  private client: ScopedResourceClient<DashboardDataDTO, Status>;
 
   constructor() {
     this.client = new ScopedResourceClient<DashboardDataDTO>(getK8sV1DashboardApiConfig());
@@ -307,8 +307,12 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
     });
   }
 
-  async listDeletedDashboards(options: ListDeletedDashboardsOptions) {
-    return await this.client.list({ ...options, labelSelector: 'grafana.app/get-trash=true' });
+  async listDeletedDashboards(options: ListDeletedDashboardsOptions): Promise<TableResponse> {
+    return this.client.listAsTable({ ...options, labelSelector: 'grafana.app/get-trash=true' });
+  }
+
+  async getDashboard(name: string, params?: Record<string, unknown>): Promise<Resource<DashboardDataDTO>> {
+    return this.client.get(name, params);
   }
 
   restoreDashboard(dashboard: Resource<DashboardDataDTO>) {

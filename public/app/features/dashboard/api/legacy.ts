@@ -3,7 +3,7 @@ import { t } from '@grafana/i18n';
 import { type FetchError, getBackendSrv } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
-import { type Resource, type ResourceList } from 'app/features/apiserver/types';
+import { type Resource, type TableResponse } from 'app/features/apiserver/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { type DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
 import { type SaveDashboardResponseDTO, type DashboardDTO } from 'app/types/dashboard';
@@ -138,13 +138,21 @@ export class LegacyDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard>
   /**
    * No-op for legacy API
    */
-  listDeletedDashboards(options: ListDeletedDashboardsOptions): Promise<ResourceList<Dashboard>> {
+  listDeletedDashboards(_options: ListDeletedDashboardsOptions): Promise<TableResponse> {
     return Promise.resolve({
-      apiVersion: 'v1',
-      kind: 'List',
+      apiVersion: 'meta.k8s.io/v1',
+      kind: 'Table',
       metadata: { resourceVersion: '0' },
-      items: [],
+      columnDefinitions: [],
+      rows: [],
     });
+  }
+
+  /**
+   * No-op for legacy API
+   */
+  getDashboard(_name: string, _params?: Record<string, unknown>): Promise<Resource<Dashboard>> {
+    return Promise.reject(new Error('getDashboard not supported in legacy API'));
   }
 
   /**
