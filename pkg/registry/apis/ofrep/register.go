@@ -280,7 +280,7 @@ func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		b.proxyFlagReq(ctx, flagKey, isAuthedReq, w, r)
+		b.proxyFlagReq(ctx, flagKey, isAuthedReq, authNamespace, w, r)
 		return
 	}
 
@@ -317,7 +317,7 @@ func (b *APIBuilder) allFlagsHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		b.proxyAllFlagReq(ctx, isAuthedReq, w, r)
+		b.proxyAllFlagReq(ctx, isAuthedReq, authNamespace, w, r)
 		return
 	}
 
