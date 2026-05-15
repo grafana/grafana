@@ -43,10 +43,6 @@ jest.mock('./BuildDashboardButton', () => ({
   ),
 }));
 
-jest.mock('./DataSourceDefaultButton', () => ({
-  DataSourceDefaultButton: () => <div data-testid="datasource-default-button" />,
-}));
-
 // Set default plugin links hook
 setPluginLinksHook(() => ({ links: [], isLoading: false }));
 

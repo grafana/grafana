@@ -44,6 +44,8 @@ export interface ConfirmContentProps {
   onAlternative?(): void;
   /** Disable the confirm button and the confirm text input if needed */
   disabled?: boolean;
+  /** Control event propagation on submit */
+  propagate?: boolean;
 }
 
 export const ConfirmContent = ({
@@ -60,6 +62,7 @@ export const ConfirmContent = ({
   description,
   justifyButtons = 'flex-end',
   disabled,
+  propagate = true,
 }: ConfirmContentProps) => {
   const [isDisabled, setIsDisabled] = useState(disabled);
   const styles = useStyles2(getStyles);
@@ -91,11 +94,20 @@ export const ConfirmContent = ({
   };
 
   const { handleSubmit } = useForm();
+  const stopPropagation = (callback: (event: React.FormEvent) => void) => {
+    return (event: React.FormEvent) => {
+      if (!propagate) {
+        event.stopPropagation();
+      }
+      callback(event);
+    };
+  };
+
   const placeholder = t('grafana-ui.confirm-content.placeholder', 'Type "{{confirmPromptText}}" to confirm', {
     confirmPromptText,
   });
   return (
-    <form onSubmit={handleSubmit(onConfirmClick)}>
+    <form onSubmit={stopPropagation(handleSubmit(onConfirmClick))}>
       <div className={styles.text}>
         {body}
         {description ? <div className={styles.description}>{description}</div> : null}

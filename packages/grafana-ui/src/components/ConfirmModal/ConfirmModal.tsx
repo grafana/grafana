@@ -45,6 +45,8 @@ export interface ConfirmModalProps {
   onAlternative?(): void;
   /** Disable the confirm button and the confirm text input if needed */
   disabled?: boolean;
+  /** Control event propagation on submit */
+  propagate?: boolean;
 }
 
 /**
@@ -69,6 +71,7 @@ export const ConfirmModal = ({
   onAlternative,
   confirmButtonVariant,
   disabled,
+  propagate = true,
 }: ConfirmModalProps): JSX.Element => {
   const styles = useStyles2(getStyles);
 
@@ -87,6 +90,7 @@ export const ConfirmModal = ({
         onDismiss={onDismiss}
         onAlternative={onAlternative}
         disabled={disabled}
+        propagate={propagate}
       />
     </Modal>
   );

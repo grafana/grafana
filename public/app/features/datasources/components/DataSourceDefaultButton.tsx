@@ -71,7 +71,6 @@ export const DataSourceDefaultButton = ({ uid }: { uid: string }) => {
     <>
       <Button
         variant="secondary"
-        size="sm"
         tooltip={[
           dataSource.isDefault &&
             t('datasources.default-button.active', 'This data source is currently set as the default.'),
@@ -115,6 +114,7 @@ export const DataSourceDefaultButton = ({ uid }: { uid: string }) => {
         dismissText={t('datasources.default-button.cancel', 'Cancel')}
         onConfirm={() => onChangeDefault(!dataSource.isDefault)}
         onDismiss={() => setConfirming(false)}
+        propagate={false}
       />
     </>
   );
