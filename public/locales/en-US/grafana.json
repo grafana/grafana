@@ -515,7 +515,8 @@
         "edit-yaml": "Edit YAML",
         "save": "Save"
       },
-      "error-title": "Failed to save alert rule"
+      "error-title": "Failed to save alert rule",
+      "no-group-success": "Rule added successfully"
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "name",
@@ -1171,6 +1172,7 @@
     },
     "evaluate-every-validation-options": {
       "message": {
+        "none-not-allowed": "Evaluation interval cannot be None and must be a valid duration.",
         "required": "Required."
       }
     },
@@ -2875,6 +2877,11 @@
         },
         "group-name": "Evaluation group name",
         "group-text": "All rules in the selected group are evaluated every {{evaluateEvery}}.",
+        "interval-label": "Evaluation interval",
+        "mode": {
+          "legacy": "Use groups (Legacy)",
+          "new": "Set interval"
+        },
         "new-group": "New evaluation group",
         "pause": {
           "alerting": "Turn on to pause evaluation for this alert rule.",
@@ -11350,6 +11357,8 @@
       "clear-search": "Clear",
       "close-inline-details": "Close details for this log",
       "close-sidebar-details": "Close log details sidebar",
+      "copy-log-line": "Copy log line message",
+      "copy-log-line-json": "Copy log contents as JSON",
       "copy-shortlink": "Copy shortlink",
       "copy-to-clipboard": "Copy to clipboard",
       "displayed-fields-section": "Organize displayed fields",
@@ -11398,7 +11407,8 @@
     },
     "log-line-menu": {
       "copy-link": "Copy link to log line",
-      "copy-log": "Copy log line",
+      "copy-log-contents": "Copy log line contents as JSON",
+      "copy-log-message": "Copy log line message",
       "hide-details": "Show log details",
       "icon-label": "Log menu",
       "log-line": "Log line",
@@ -15548,8 +15558,8 @@
     },
     "legend": {
       "category": "Legend",
-      "description-faceted-filter": "Show series visibility filter based on labels",
-      "name-faceted-filter": "Faceted filter"
+      "description-faceted-filter": "Enable filter to display series based on labels or names",
+      "name-faceted-filter": "Series visibility"
     },
     "line-style-editor": {
       "line-fill-options": {

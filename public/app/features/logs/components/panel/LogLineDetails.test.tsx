@@ -21,6 +21,7 @@ import { createLokiDatasource } from 'app/plugins/datasource/loki/mocks/datasour
 import { createTempoDatasource } from 'app/plugins/datasource/tempo/test/mocks';
 
 import { DATAPLANE_LABEL_TYPES_NAME, DATAPLANE_LABELS_NAME } from '../../logsFrame';
+import * as logsUtils from '../../utils';
 import { getFieldSelectorWidth } from '../fieldSelector/fieldSelectorUtils';
 import { LOG_LINE_BODY_FIELD_NAME } from '../fieldSelector/logFields';
 import { createLogLine } from '../mocks/logRow';
@@ -154,6 +155,27 @@ describe('LogLineDetails', () => {
           },
         }) as unknown as DataSourceSrv
     );
+  });
+
+  test('Copy log as JSON from header copies structured JSON from the log', async () => {
+    const copyTextSpy = jest.spyOn(logsUtils, 'copyText').mockResolvedValue(undefined);
+
+    await setup(undefined, { labels: { svc: 'api' } });
+
+    await userEvent.click(screen.getByRole('button', { name: /Copy to clipboard/i }));
+    await userEvent.click(screen.getByRole('menuitem', { name: /JSON/i }));
+
+    await waitFor(() => {
+      expect(copyTextSpy).toHaveBeenCalled();
+      const text = copyTextSpy.mock.calls[0][0];
+      const parsed = JSON.parse(text);
+      expect(parsed).toMatchObject({
+        line: expect.any(String),
+        labels: expect.objectContaining({ svc: 'api' }),
+        timeEpochMs: expect.any(Number),
+      });
+    });
+    copyTextSpy.mockRestore();
   });
 
   describe('Toggleable filters', () => {

@@ -23,6 +23,16 @@ func (qb *queryBuilder) buildGetQuery(keyPath string) (string, []interface{}) {
 	return query, []interface{}{keyPath}
 }
 
+func (qb *queryBuilder) buildExistsQuery(keyPath string) (string, []interface{}) {
+	query := fmt.Sprintf(
+		"SELECT 1 FROM %s WHERE %s = %s",
+		qb.dialect.QuoteIdent(qb.tableName),
+		qb.dialect.QuoteIdent("key_path"),
+		qb.dialect.Placeholder(1),
+	)
+	return query, []interface{}{keyPath}
+}
+
 // buildKeysQuery generates SELECT query for listing keys
 func (qb *queryBuilder) buildKeysQuery(startKey, endKey string, sortAsc bool, limit int64) (string, []interface{}) {
 	order := "ASC"
