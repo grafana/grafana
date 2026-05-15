@@ -47,6 +47,7 @@ describe('addPanelsOnLoadBehavior', () => {
   describe('when there is no data in localStorage', () => {
     it('does not call scene.addPanel and does not throw', () => {
       const scene = buildTestScene();
+      scene.state.editPane.activate();
       const addPanelSpy = jest.spyOn(scene, 'addPanel');
 
       addPanelsOnLoadBehavior(scene);
@@ -60,6 +61,7 @@ describe('addPanelsOnLoadBehavior', () => {
     it('always clears the LS key', () => {
       store.setObject(DASHBOARD_FROM_LS_KEY, buildTestDTO());
       const scene = buildTestScene();
+      scene.state.editPane.activate();
 
       addPanelsOnLoadBehavior(scene);
       expect(store.exists(DASHBOARD_FROM_LS_KEY)).toBe(false);
@@ -97,32 +99,19 @@ describe('addPanelsOnLoadBehavior', () => {
     });
   });
 
-  describe('editPane activation timing', () => {
-    it('adds panels immediately when editPane is already active', () => {
-      store.setObject(DASHBOARD_FROM_LS_KEY, buildTestDTO());
-      const scene = buildTestScene();
-      scene.state.editPane.activate();
-      const addPanelSpy = jest.spyOn(scene, 'addPanel');
+  it('defers panel addition until editPane activates when it is not yet active', () => {
+    store.setObject(DASHBOARD_FROM_LS_KEY, buildTestDTO());
+    const scene = buildTestScene();
+    const addPanelSpy = jest.spyOn(scene, 'addPanel');
 
-      addPanelsOnLoadBehavior(scene);
+    addPanelsOnLoadBehavior(scene);
 
-      expect(addPanelSpy).toHaveBeenCalledTimes(1);
-    });
+    expect(addPanelSpy).not.toHaveBeenCalled();
 
-    it('defers panel addition until editPane activates when it is not yet active', () => {
-      store.setObject(DASHBOARD_FROM_LS_KEY, buildTestDTO());
-      const scene = buildTestScene();
-      const addPanelSpy = jest.spyOn(scene, 'addPanel');
+    scene.state.editPane.activate();
 
-      addPanelsOnLoadBehavior(scene);
-
-      expect(addPanelSpy).not.toHaveBeenCalled();
-
-      scene.state.editPane.activate();
-
-      expect(addPanelSpy).toHaveBeenCalledTimes(1);
-      expect(addPanelSpy).toHaveBeenCalledWith(expect.any(VizPanel));
-    });
+    expect(addPanelSpy).toHaveBeenCalledTimes(1);
+    expect(addPanelSpy).toHaveBeenCalledWith(expect.any(VizPanel));
   });
 
   describe('time range', () => {

@@ -8,14 +8,14 @@ import { type DashboardScene } from '../scene/DashboardScene';
 import { buildGridItemForPanel } from '../serialization/transformSaveModelToScene';
 
 export function addPanelsOnLoadBehavior(scene: DashboardScene) {
-  const dto = store.getObject<DashboardDTO>(DASHBOARD_FROM_LS_KEY);
-  if (!dto) {
-    return;
-  }
-
-  store.delete(DASHBOARD_FROM_LS_KEY);
-
   const addPanels = () => {
+    const dto = store.getObject<DashboardDTO>(DASHBOARD_FROM_LS_KEY);
+    if (!dto) {
+      return;
+    }
+
+    store.delete(DASHBOARD_FROM_LS_KEY);
+
     const model = new DashboardModel(dto.dashboard);
 
     for (const panel of model.panels) {
