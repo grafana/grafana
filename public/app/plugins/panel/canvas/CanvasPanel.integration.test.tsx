@@ -1062,6 +1062,7 @@ describe('Canvas', () => {
               expect(target.querySelector('svg [id="blade"]')).toBeVisible();
             });
 
+            // Flaking in CI after double click not working
             it('Metric value mapping sets element background color using field mapping config', async () => {
               const target = await selectElementOptionsSetup();
               expect(target).toHaveStyle(`background-color: ${colors.none};`);
@@ -1091,8 +1092,12 @@ describe('Canvas', () => {
               // And then double click to trigger the field mapping select to get added to the UI
               await user.dblClick(metricPointerTarget);
               // Inline editor replaces the placeholder after editModeEnabled & React update
-              await waitFor(() => {
-                expect(screen.queryByText(/Double click to set field/i)).not.toBeInTheDocument();
+              await waitFor(async () => {
+                const doubleClickElement = screen.queryByText(/Double click to set field/i);
+                if (doubleClickElement === null) {
+                  await user.dblClick(metricPointerTarget);
+                }
+                expect(doubleClickElement).not.toBeInTheDocument();
               });
 
               // Click into the select combobox
