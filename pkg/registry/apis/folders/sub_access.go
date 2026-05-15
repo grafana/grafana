@@ -71,13 +71,13 @@ type folderAccessAction struct {
 // Zanzana via the authzLimitedClient allowlist in
 // pkg/storage/unified/resource/access.go — `folders` and `dashboards`. For
 // these, Check returns an authoritative answer (verified empirically against a
-// running Zanzana).
+// running Zanzana, including the *.permissions verbs).
 //
-// Out of scope (returns false even when the user has the permission via legacy
-// SQL): `library.panels:*`, `alert.rules:*`, `alert.silences:*`,
-// `annotations:*`, and `dashboards.permissions:*`. Adding them would mislead
-// clients. Revisit once those resources land on unified storage with their own
-// API groups.
+// Out of scope (Check returns false even when the user has the permission via
+// legacy SQL — Zanzana has no tuples for these resources): `library.panels:*`,
+// `alert.rules:*`, `alert.silences:*`, `annotations:*`. Adding them would
+// mislead clients. Revisit once those resources land on unified storage with
+// their own API groups.
 var folderAccessActions = []folderAccessAction{
 	// Folder domain — Name = this folder, folder hint = immediate parent.
 	{Action: "folders:read", Verb: utils.VerbGet},
@@ -93,6 +93,8 @@ var folderAccessActions = []folderAccessAction{
 	{Action: "dashboards:write", Verb: utils.VerbUpdate, Group: "dashboard.grafana.app", Resource: "dashboards"},
 	{Action: "dashboards:create", Verb: utils.VerbCreate, Group: "dashboard.grafana.app", Resource: "dashboards"},
 	{Action: "dashboards:delete", Verb: utils.VerbDelete, Group: "dashboard.grafana.app", Resource: "dashboards"},
+	{Action: "dashboards.permissions:read", Verb: utils.VerbGetPermissions, Group: "dashboard.grafana.app", Resource: "dashboards"},
+	{Action: "dashboards.permissions:write", Verb: utils.VerbSetPermissions, Group: "dashboard.grafana.app", Resource: "dashboards"},
 }
 
 func (r *subAccessREST) getAccessInfo(ctx context.Context, name string) (*foldersV1.FolderAccessInfo, error) {
