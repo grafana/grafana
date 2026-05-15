@@ -126,6 +126,28 @@ RUN mkdir -p data/plugins-bundled
 FROM ${GO_SRC} AS go-src
 FROM ${JS_SRC} AS js-src
 
+# Collects all Grafana binaries and frontend assets into one place.
+# Every final stage (alpine, ubuntu, distroless) copies from here with identical
+# instructions, guaranteeing the same layer hash across all variants.
+# plugins-bundled is set to 472:0 777 to match the setup RUN in each final stage
+# so its directory entry is absent from the COPY layer (no metadata diff → shared hash).
+FROM alpine-base AS grafana-assets
+
+ENV GF_PATHS_HOME="/usr/share/grafana"
+WORKDIR $GF_PATHS_HOME
+
+COPY --from=go-src /tmp/grafana/bin/grafana* /tmp/grafana/bin/*/grafana* ./bin/
+COPY --from=js-src /tmp/grafana/public ./public
+COPY --from=js-src /tmp/grafana/LICENSE ./
+
+RUN mkdir -p data/plugins-bundled && \
+  chown 472:0 data/plugins-bundled && \
+  chmod 777 data/plugins-bundled
+
+ARG SLIM=false
+RUN --mount=type=bind,from=go-src,source=/tmp/grafana/data/plugins-bundled,target=/mnt/plugins-bundled \
+  [ "$SLIM" = "true" ] || cp -a /mnt/plugins-bundled/. ./data/plugins-bundled/
+
 # Intermediate filesystem setup for the distroless target.
 # Uses an Alpine shell to create directories, users, and config files
 # since distroless has no shell. No network access required.
@@ -174,10 +196,6 @@ RUN if [ ! "$(getent group "$GF_GID")" ]; then \
   grafana server --homepath="$GF_PATHS_HOME" -v | sed -e 's/Version //' > /.grafana-version && \
   chmod 644 /.grafana-version
 
-ARG SLIM=false
-RUN --mount=type=bind,from=go-src,source=/tmp/grafana/data/plugins-bundled,target=/mnt/plugins-bundled \
-  [ "$SLIM" = "true" ] || cp -a /mnt/plugins-bundled/. "$GF_PATHS_HOME/data/plugins-bundled/"
-
 # Alpine final stage
 FROM alpine-base AS final-alpine
 
@@ -205,7 +223,7 @@ RUN apk add --no-cache ca-certificates bash bubblewrap curl tzdata musl-utils &&
 ARG GLIBC_VERSION=2.40
 
 RUN if [ "$(arch)" = "x86_64" ]; then \
-  wget -qO- "https://dl.grafana.com/glibc/glibc-bin-$GLIBC_VERSION.tar.gz" | tar zxf - -C / \
+  curl -fsSL "https://dl.grafana.com/glibc/glibc-bin-$GLIBC_VERSION.tar.gz" | tar zxf - -C / \
   usr/glibc-compat/lib/ld-linux-x86-64.so.2 \
   usr/glibc-compat/lib/libc.so.6 \
   usr/glibc-compat/lib/libdl.so.2 \
@@ -240,16 +258,10 @@ RUN if [ ! "$(getent group "$GF_GID")" ]; then \
   chown -R "grafana:$GF_GID_NAME" "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING" "$GF_PATHS_HOME/data/plugins-bundled" && \
   chmod -R 777 "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING" "$GF_PATHS_HOME/data/plugins-bundled"
 
-COPY --from=go-src /tmp/grafana/bin/grafana* /tmp/grafana/bin/*/grafana* ./bin/
-COPY --from=js-src /tmp/grafana/public ./public
-COPY --from=js-src /tmp/grafana/LICENSE ./
+COPY --link --from=grafana-assets /usr/share/grafana /usr/share/grafana
 
 RUN grafana server -v | sed -e 's/Version //' > /.grafana-version
 RUN chmod 644 /.grafana-version
-
-ARG SLIM=false
-RUN --mount=type=bind,from=go-src,source=/tmp/grafana/data/plugins-bundled,target=/mnt/plugins-bundled \
-  [ "$SLIM" = "true" ] || cp -a /mnt/plugins-bundled/. ./data/plugins-bundled/
 
 EXPOSE 3000
 
@@ -307,16 +319,10 @@ RUN if [ ! "$(getent group "$GF_GID")" ]; then \
   chown -R "grafana:$GF_GID_NAME" "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING" "$GF_PATHS_HOME/data/plugins-bundled" && \
   chmod -R 777 "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING" "$GF_PATHS_HOME/data/plugins-bundled"
 
-COPY --from=go-src /tmp/grafana/bin/grafana* /tmp/grafana/bin/*/grafana* ./bin/
-COPY --from=js-src /tmp/grafana/public ./public
-COPY --from=js-src /tmp/grafana/LICENSE ./
+COPY --link --from=grafana-assets /usr/share/grafana /usr/share/grafana
 
 RUN grafana server -v | sed -e 's/Version //' > /.grafana-version
 RUN chmod 644 /.grafana-version
-
-ARG SLIM=false
-RUN --mount=type=bind,from=go-src,source=/tmp/grafana/data/plugins-bundled,target=/mnt/plugins-bundled \
-  [ "$SLIM" = "true" ] || cp -a /mnt/plugins-bundled/. ./data/plugins-bundled/
 
 EXPOSE 3000
 
@@ -365,10 +371,8 @@ COPY --chown=${GF_UID}:${GF_GID} --from=distroless-prep /var/log/grafana /var/lo
 COPY --from=distroless-prep /usr/share/grafana/conf /usr/share/grafana/conf
 COPY --chown=${GF_UID}:${GF_GID} --from=distroless-prep /usr/share/grafana/.aws /usr/share/grafana/.aws
 COPY --chown=${GF_UID}:${GF_GID} --from=distroless-prep /usr/share/grafana/data /usr/share/grafana/data
+COPY --link --from=grafana-assets /usr/share/grafana /usr/share/grafana
 COPY --from=distroless-prep /.grafana-version /.grafana-version
-COPY --chown=${GF_UID}:${GF_GID} --from=go-src /tmp/grafana/bin/grafana* /tmp/grafana/bin/*/grafana* ./bin/
-COPY --from=js-src /tmp/grafana/public ./public
-COPY --from=js-src /tmp/grafana/LICENSE ./
 
 EXPOSE 3000
 
