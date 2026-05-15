@@ -11291,6 +11291,8 @@
       "clear-search": "초기화",
       "close-inline-details": "이 로그의 세부 정보 닫기",
       "close-sidebar-details": "로그 세부 정보 사이드바 닫기",
+      "copy-log-line": "",
+      "copy-log-line-json": "",
       "copy-shortlink": "단축 링크 복사",
       "copy-to-clipboard": "클립보드로 복사",
       "displayed-fields-section": "표시된 필드 구성",
@@ -11339,7 +11341,8 @@
     },
     "log-line-menu": {
       "copy-link": "링크를 로그 라인에 복사",
-      "copy-log": "로그 라인 복사",
+      "copy-log-contents": "",
+      "copy-log-message": "",
       "hide-details": "로그 세부 정보 표시",
       "icon-label": "로그 메뉴",
       "log-line": "로그 라인",
@@ -15462,8 +15465,8 @@
     },
     "legend": {
       "category": "범례",
-      "description-faceted-filter": "라벨을 토대로 계열 표시 여부 필터 표시",
-      "name-faceted-filter": "조건별 필터"
+      "description-faceted-filter": "",
+      "name-faceted-filter": ""
     },
     "line-style-editor": {
       "line-fill-options": {

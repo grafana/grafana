@@ -148,7 +148,6 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 		HomeDashboardID:  dtoCmd.HomeDashboardID, // nolint:staticcheck
 		HomeDashboardUID: dtoCmd.HomeDashboardUID,
 		Language:         dtoCmd.Language,
-		RegionalFormat:   dtoCmd.RegionalFormat,
 		QueryHistory:     dtoCmd.QueryHistory,
 		Navbar:           dtoCmd.Navbar,
 	}

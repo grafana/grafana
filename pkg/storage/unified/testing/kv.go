@@ -1080,6 +1080,25 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 		require.NoError(t, err)
 	})
 
+	t.Run("batch update succeeds for existing key with same value", func(t *testing.T) {
+		saveKVHelper(t, kv, ctx, section, nk("update-same-value-key"), strings.NewReader("same-value"))
+
+		ops := []resource.BatchOp{
+			{Mode: kvpkg.BatchOpUpdate, Key: nk("update-same-value-key"), Value: []byte("same-value")},
+		}
+
+		err := kv.Batch(ctx, section, ops)
+		require.NoError(t, err)
+
+		reader, err := kv.Get(ctx, section, nk("update-same-value-key"))
+		require.NoError(t, err)
+		value, err := io.ReadAll(reader)
+		require.NoError(t, err)
+		assert.Equal(t, "same-value", string(value))
+		err = reader.Close()
+		require.NoError(t, err)
+	})
+
 	t.Run("batch update fails for non-existent key", func(t *testing.T) {
 		ops := []resource.BatchOp{
 			{Mode: kvpkg.BatchOpUpdate, Key: nk("update-nonexistent-key"), Value: []byte("new-value")},

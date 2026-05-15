@@ -11291,6 +11291,8 @@
       "clear-search": "クリア",
       "close-inline-details": "このログの詳細を閉じる",
       "close-sidebar-details": "ログの詳細サイドバーを閉じる",
+      "copy-log-line": "",
+      "copy-log-line-json": "",
       "copy-shortlink": "ショートリンクをコピー",
       "copy-to-clipboard": "クリップボードにコピー",
       "displayed-fields-section": "表示フィールドを整理",
@@ -11339,7 +11341,8 @@
     },
     "log-line-menu": {
       "copy-link": "ログ行へのリンクをコピー",
-      "copy-log": "ログ行をコピー",
+      "copy-log-contents": "",
+      "copy-log-message": "",
       "hide-details": "ログの詳細を表示",
       "icon-label": "ログメニュー",
       "log-line": "ログ行",
@@ -15462,8 +15465,8 @@
     },
     "legend": {
       "category": "凡例",
-      "description-faceted-filter": "ラベルに基づく系列の表示状態フィルターを表示",
-      "name-faceted-filter": "ファセットフィルター"
+      "description-faceted-filter": "",
+      "name-faceted-filter": ""
     },
     "line-style-editor": {
       "line-fill-options": {
