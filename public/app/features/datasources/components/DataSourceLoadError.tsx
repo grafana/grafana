@@ -1,5 +1,5 @@
 import { t, Trans } from '@grafana/i18n';
-import { Alert, Button, EmptyState, Link, Stack } from '@grafana/ui';
+import { Alert, Button, EmptyState, Stack } from '@grafana/ui';
 
 import { type DataSourceRights } from '../types';
 
