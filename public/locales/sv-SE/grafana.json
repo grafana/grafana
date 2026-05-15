@@ -11357,6 +11357,8 @@
       "clear-search": "Rensa",
       "close-inline-details": "Stäng detaljer för den här loggen",
       "close-sidebar-details": "Stäng sidofältet för loggdetaljer",
+      "copy-log-line": "",
+      "copy-log-line-json": "",
       "copy-shortlink": "Kopiera kortlänk",
       "copy-to-clipboard": "Kopiera till urklippet",
       "displayed-fields-section": "Organisera visade fält",
@@ -11405,7 +11407,8 @@
     },
     "log-line-menu": {
       "copy-link": "Kopiera länk till loggrad",
-      "copy-log": "Kopiera loggrad",
+      "copy-log-contents": "",
+      "copy-log-message": "",
       "hide-details": "Visa loggdetaljer",
       "icon-label": "Loggmeny",
       "log-line": "Loggrad",
@@ -15555,8 +15558,8 @@
     },
     "legend": {
       "category": "Förklaringar",
-      "description-faceted-filter": "Visa synlighetsfilter för serier baserat på etiketter",
-      "name-faceted-filter": "Facetterat filter"
+      "description-faceted-filter": "",
+      "name-faceted-filter": ""
     },
     "line-style-editor": {
       "line-fill-options": {
