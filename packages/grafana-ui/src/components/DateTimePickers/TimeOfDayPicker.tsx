@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 
-import { dateTime, dateTimeFormat, type DateTime } from '@grafana/data';
+import { dateTime, type DateTime } from '@grafana/data';
 
 import { Combobox } from '../Combobox/Combobox';
 import { type ComboboxOption } from '../Combobox/types';
