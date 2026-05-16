@@ -1,4 +1,4 @@
-import { act, render, screen, userEvent } from 'test/test-utils';
+import { render, screen } from 'test/test-utils';
 
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
