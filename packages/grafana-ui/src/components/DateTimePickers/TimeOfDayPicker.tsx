@@ -58,7 +58,7 @@ export const TimeOfDayPicker = ({
   }, [minuteStep, disabledHours]);
 
   const initValue = useMemo(
-    () => (value ? dateTimeFormat(value, { format: showSeconds ? 'HH:mm:ss' : 'HH:mm' }) : null),
+    () => (value ? value.format(showSeconds ? 'HH:mm:ss' : 'HH:mm') : null),
     [value, showSeconds]
   );
 
