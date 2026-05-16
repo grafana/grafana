@@ -1,6 +1,6 @@
 # Virtual Datasources — implementation plan
 
-> Status: **DRAFT v2 (after first reviewer pass)**.
+> Status: **DRAFT v3 (AdHoc filter applier rework)**.
 > Author: `sj` (with assistant).
 > Target repo: `grafana/grafana` (OSS-first).
 >
@@ -13,7 +13,20 @@
 
 ## Changelog
 
-- **v2 (this revision)** — incorporates first-pass review:
+- **v3 (this revision)** — AdHoc filters are applied in **Go on
+  `data.Frame`**, not via a synthetic terminal SQL node:
+  - §4.5 rewritten: post-pipeline frame filter applier shared by
+    interactive and alerting call sites; no DuckDB round-trip.
+  - Removed PoC restrictions that were artefacts of the SQL
+    choice: cell-limit errors, `format: alerting` carve-out,
+    tabular-only filtering, and disallowing AdHoc on alert-rule
+    VDS targets (§8b decision 6).
+  - `spec.schema.shape` (`tabular` | `timeseries-wide`) now
+    selects the filter strategy (row filter vs label/series
+    filter), not whether filtering is allowed.
+  - §10 follow-ups for wide time-series AdHoc and alert-rule
+    AdHoc folded into PoC scope.
+- **v2** — incorporates first-pass review:
   - Added a dedicated **alerting / `expr.Request` integration** path
     (§4.6). The previous draft only hooked into
     `parseMetricRequest`, which alerting **does not** call —
@@ -67,9 +80,8 @@
 - Per-row column-level RBAC on VDS output.
 - Pushdown of AdHoc filters _into_ upstream datasources (e.g.
   rewriting BigQuery SQL to add a `WHERE`). The PoC applies AdHoc
-  filters to the **output** of the VDS via a synthetic terminal
-  `SELECT ... WHERE` node. Per-source pushdown can be added later
-  as an opt-in optimisation.
+  filters to the **output frame** of the VDS in Go (see §4.5).
+  Per-source pushdown can be added later as an opt-in optimisation.
 - A schema editor UI. PoC ships with manual schema declaration in
   the VDS spec.
 - Replacing the existing query library. VDS coexists with it; we
@@ -78,13 +90,13 @@
 
 ## 3. How it fits with existing systems
 
-| System                                                                   | Today                                                       | After VDS                                                                                                                               |
-| ------------------------------------------------------------------------ | ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| Saved queries (`queryLibrary`)                                           | Templates copied into consumers; no cascade.                | Still exists; gains an action "Promote to Virtual Datasource".                                                                          |
-| Library elements (panels)                                                | Pre-existing "by reference" panel reuse.                    | VDS is the query-level analogue.                                                                                                        |
-| `pkg/services/query/query.go`                                            | Single entry point for `QueryData`.                         | Adds a VDS expansion step in `parseMetricRequest` (or a wrapper layer in `pkg/registry/apis/query`).                                    |
-| Expressions (`__expr__`)                                                 | Sentinel UID; evaluator runs DAG of frame-level operations. | VDS reuses the expression engine at evaluation time but is _not_ an expression itself — it is a real DS plugin from the consumer's POV. |
-| AdHoc filter API (`getTagKeys`/`getTagValues`, `applyTemplateVariables`) | Per-DS, brittle for composite queries.                      | VDS implements them off the declared schema. Filters arrive in the `QueryDataRequest` and are applied server-side as a final `WHERE`.   |
+| System                                                                   | Today                                                       | After VDS                                                                                                                                            |
+| ------------------------------------------------------------------------ | ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Saved queries (`queryLibrary`)                                           | Templates copied into consumers; no cascade.                | Still exists; gains an action "Promote to Virtual Datasource".                                                                                       |
+| Library elements (panels)                                                | Pre-existing "by reference" panel reuse.                    | VDS is the query-level analogue.                                                                                                                     |
+| `pkg/services/query/query.go`                                            | Single entry point for `QueryData`.                         | Adds a VDS expansion step in `parseMetricRequest` (or a wrapper layer in `pkg/registry/apis/query`).                                                 |
+| Expressions (`__expr__`)                                                 | Sentinel UID; evaluator runs DAG of frame-level operations. | VDS reuses the expression engine at evaluation time but is _not_ an expression itself — it is a real DS plugin from the consumer's POV.              |
+| AdHoc filter API (`getTagKeys`/`getTagValues`, `applyTemplateVariables`) | Per-DS, brittle for composite queries.                      | VDS implements them off the declared schema. Filters arrive in the `QueryDataRequest` and are applied server-side on the output `data.Frame` (§4.5). |
 
 ## 4. Architecture
 
@@ -107,8 +119,9 @@ spec: {
     outputRefId: string
 
     // Declared schema of the output frame (used for AdHoc keys,
-    // editor hints, and validation).
+    // editor hints, validation, and filter strategy).
     schema: {
+        shape: "tabular" | "timeseries-wide"
         fields: [...{
             name:        string
             type:        "string" | "number" | "time" | "boolean"
@@ -209,17 +222,19 @@ for q in req.Queries:
             innerQueries.append(inner)
 
         outRef := prefix + vds.spec.outputRefId
-        if q.Filters not empty:
-            // Validates per §4.5. Errors if VDS output is not
-            // tabular or if a filter targets a non-allowed column.
-            innerQueries.append(adhocFilterNode(
-                refID=q.RefID, input=outRef, filters=q.Filters,
-                schema=vds.spec.schema))
-        else:
-            innerQueries.append(aliasNode(refID=q.RefID, input=outRef))
-
+        innerQueries.append(aliasNode(refID=q.RefID, input=outRef))
         replace q with innerQueries
+
+        if q.Filters not empty:
+            // Validated per §4.5; applied post-pipeline (§4.5.2).
+            pendingAdHoc[q.RefID] = {filters: q.Filters, schema: vds.spec.schema}
 ```
+
+After the pipeline runs, each call site walks `pendingAdHoc`,
+loads the frame at the consumer `refId`, runs `applyAdHocFilters`,
+and stores the filtered frame back under that `refId` (§4.5.2).
+
+````
 
 Notes:
 
@@ -275,52 +290,7 @@ The plan adds an admission validator
 1. Builds an `expr.Request` from `spec.queries` using a fake DS
    resolver and calls `expr.Service.BuildPipeline`. If the engine
    rejects the graph, the VDS spec is rejected.
-2. Checks that `spec.outputRefId` exists and is not an
-   intermediate node whose successor would be wrapped by AdHoc
-   filtering (i.e. the AdHoc wrapper, when needed, must be able
-   to consume `outputRefId` as a SQL input — see §4.5).
-
-#### Expansion algorithm (pseudo-code)
-
-```
-for q in req.Queries:
-    if isVirtualDatasource(q.datasource):
-        vds := lookupVDS(ctx, q.datasource.UID)
-        prefix := q.RefID + "/"
-        innerQueries := []
-        for inner in vds.spec.queries:
-            inner.RefID = prefix + inner.RefID
-            // Rewrite refId references in __expr__ SQL/math.
-            inner = rewriteExprRefIds(inner, prefix)
-            innerQueries.append(inner)
-
-        // Output goes through a synthetic SQL node that applies
-        // adhoc filters as a final WHERE.
-        outRef := prefix + vds.spec.outputRefId
-        if q.Filters not empty:
-            innerQueries.append(syntheticFilterNode(
-                refID=q.RefID, input=outRef, filters=q.Filters))
-        else:
-            // No filters → alias the output to q.RefID.
-            innerQueries.append(aliasNode(
-                refID=q.RefID, input=outRef))
-
-        replace q with innerQueries
-```
-
-Notes:
-
-- We must rewrite `varsToQuery` inside any `__expr__` SQL nodes
-  (and `expression` strings inside math nodes) when prefixing
-  refIDs. `pkg/expr/sql_command.go` already extracts the table
-  list — we can reuse it for rewriting.
-- Time range and `intervalMs` flow from the consumer's request to
-  the inner queries; they are not stored on the VDS spec.
-- Recursion: a VDS may not reference another VDS (PoC). We detect
-  this and return a 4xx.
-- Identity: the VDS expands using the _caller's_ identity. There
-  is no "service account" mode in the PoC. (Same posture as
-  expressions today.)
+2. Checks that `spec.outputRefId` exists in `spec.queries`.
 
 ### 4.4 Datasource resolution: synthetic `*datasources.DataSource`
 
@@ -341,21 +311,21 @@ resolution call sites:
    if isVirtualDatasource(uid) {
        return virtualdatasource.SyntheticDataSource(uid), nil
    }
-   ```
+````
 
-   `SyntheticDataSource` returns a `*datasources.DataSource` with
-   `Type = "grafana-virtual-datasource"`, `UID = uid`, empty
-   `JsonData` / `SecureJsonData`, and `URL = ""`. This is the same
-   pattern used by `expr.DataSourceModelFromNodeType` and
-   `grafanads.DataSourceModel`.
+`SyntheticDataSource` returns a `*datasources.DataSource` with
+`Type = "grafana-virtual-datasource"`, `UID = uid`, empty
+`JsonData` / `SecureJsonData`, and `URL = ""`. This is the same
+pattern used by `expr.DataSourceModelFromNodeType` and
+`grafanads.DataSourceModel`.
 
-   In practice, the expander runs _before_ `parseMetricRequest`
-   so the synthetic DS code path is only a defence-in-depth
-   fallback. We still want it: if a downstream consumer ever
-   calls `getDataSourceFromQuery` on a request that wasn't
-   expanded (e.g. an integration test, or a future caller),
-   they get a clear synthetic DS rather than a confusing
-   "datasource not found" error.
+In practice, the expander runs _before_ `parseMetricRequest`
+so the synthetic DS code path is only a defence-in-depth
+fallback. We still want it: if a downstream consumer ever
+calls `getDataSourceFromQuery` on a request that wasn't
+expanded (e.g. an integration test, or a future caller),
+they get a clear synthetic DS rather than a confusing
+"datasource not found" error.
 
 3. **Alerting** (§4.6): the alerting eval call site expands
    `condition.Data` before the existing
@@ -368,60 +338,90 @@ The CR client used by the resolver is constructed via
 are cached for the lifetime of one request — VDS spec is
 effectively immutable for the duration of one query/eval.
 
-### 4.5 AdHoc filter wrapping (PoC: tabular outputs only)
+### 4.5 AdHoc filter application (Go, post-pipeline)
 
-The plan applies AdHoc filters to the **output frame** of the VDS
-via a synthetic terminal SQL node:
+AdHoc filters are flat `(column, operator, value)` triplets ANDed
+together. They do not need SQL expressiveness. Applying them via the
+expression engine's DuckDB SQL node (`__expr__` `SQLCommand`) was
+path-of-least-resistance wiring, but it introduced PoC restrictions
+(cell limits on wide frames, `format: alerting` shape conflicts,
+awkward wide-frame semantics, quoting/injection surface) that are
+artefacts of the SQL choice, not inherent to AdHoc.
 
-```sql
-SELECT * FROM ${prefix}${outputRefId}
-WHERE ${col} ${op} ${val} AND …
-```
+**Decision:** filter on the server, in **Go**, on the `data.Frame`
+returned for `outputRefId`, **after** the inner pipeline runs and
+**before** the frame is mapped back to the consumer's `refId`.
+The same applier runs on both expansion call sites (§4.3) so
+interactive dashboards and alert eval stay consistent.
 
-Constraints surfaced by review:
+#### 4.5.1 Why Go, not TypeScript
 
-1. **Cell limits.** `pkg/expr/sql_command.go` `NewSQLCommand`
-   enforces query-length, input-cell, output-cell, and timeout
-   limits from config. A `SELECT *` over a wide time-series
-   frame can exceed `inputLimit` _before_ filtering. The PoC
-   handles this by:
-   - Rejecting AdHoc filters at expansion time when the VDS
-     output is not declared as `tabular` in `spec.schema.shape`
-     (see §4.1 schema field). Wide time-series VDSes simply
-     cannot accept AdHoc filters in v1.
-   - Surfacing the existing limit errors as
-     `400 Bad Request` with a `vds.adhoc.cell_limit_exceeded`
-     reason code, not the opaque DuckDB error.
-2. **`format: alerting`.** When alerting consumes a SQL
-   expression's output, `extractNumberSetFromSQLForAlerting`
-   expects a specific frame shape. AdHoc-filtered SQL output
-   may not satisfy that. The PoC **disallows AdHoc filters on
-   VDS targets used by alert rules** (§4.6) — alert rule edits
-   referencing a VDS show the AdHoc UI as disabled with a
-   tooltip pointing at this doc.
-3. **Schema validation.** Each filter `(col, op, val)` is
-   validated against `spec.schema.fields[*]` where
-   `adHocFilter == true`. Filters on disallowed columns are
-   rejected with a `vds.adhoc.unknown_column` error.
-4. **Quoting and SQL injection.** We never string-format `val`
-   into the SQL. Instead we build a parameterised SQL node and
-   pass `val` through the existing SQL expression placeholder
-   path. (If parameterised placeholders are not yet supported
-   in `SQLCommand`, the PoC adds them as a prerequisite.)
+- **Alerting is server-only.** A TS-only filter would silently drop
+  filters for alert rules; we would still need a Go path, yielding
+  two implementations.
+- **Wire payload.** TS filtering ships unfiltered rows to the browser
+  and discards most of them — costly for large VDS outputs.
+- **Single source of truth.** Interactive and alert paths already
+  share the `Expander`; they share `applyAdHocFilters` too.
 
-`spec.schema` therefore gains a `shape` discriminator:
+#### 4.5.2 Expansion vs application
 
-```cue
-schema: {
-    shape: "tabular" | "timeseries-wide"  // PoC: AdHoc requires tabular
-    fields: [...{
-        name:        string
-        type:        "string" | "number" | "time" | "boolean"
-        adHocFilter?: bool
-        description?: string
-    }]
+The expander **does not** append a synthetic expression node for
+AdHoc. It:
+
+1. Inlines inner queries and aliases `outputRefId` → consumer
+   `refId` (as today).
+2. Records `{consumerRefId → filters, schema}` on a side channel
+   when `q.Filters` is non-empty (validated at record time).
+
+After `executeConcurrentQueries` / `ExecutePipeline` returns, the
+call site walks the side channel, loads the frame at each consumer
+`refId`, calls `applyAdHocFilters`, and replaces that response slot.
+
+```go
+// pkg/services/virtualdatasource/adhoc.go
+func applyAdHocFilters(
+    frame *data.Frame,
+    filters []backend.AdHocFilter,
+    schema Schema,
+) (*data.Frame, error) {
+    switch schema.Shape {
+    case ShapeTabular:
+        return filterTabular(frame, filters, schema)
+    case ShapeTimeseriesWide:
+        return filterTimeseriesWide(frame, filters, schema)
+    }
 }
 ```
+
+- **`filterTabular`:** for each filter, resolve the field by
+  `schema.fields[*].name`, build a typed predicate from
+  `(operator, value)` and the field type, walk row indices, keep
+  matching rows, return a new frame. Column semantics match SQL
+  `WHERE col = val` on a table.
+- **`filterTimeseriesWide`:** walk value fields (skip the time
+  field). Keep a series when its `field.Labels` satisfy every
+  filter's `(label key, operator, value)`. For wide frames, filter
+  targets are **label keys** declared in `schema.fields` with
+  `adHocFilter == true` — not column names in a tabular sense.
+
+`spec.schema.shape` (see §4.1) selects the strategy; both shapes
+support AdHoc in the PoC.
+
+#### 4.5.3 Validation
+
+At expansion/record time (before the pipeline runs):
+
+- Each filter's column/label must match a `schema.fields[*]` entry
+  with `adHocFilter == true` → else `vds.adhoc.unknownColumn`.
+- Operator must be allowed for the declared field type → else
+  `vds.adhoc.invalidOperator`.
+- At apply time, if the frame's field set disagrees with the
+  declared schema, log a warning; do not fail the query unless a
+  filter references a missing field (then `vds.adhoc.unknownColumn`).
+
+No cell-limit guard is required: filtering walks fields/rows in
+process memory and does not round-trip through DuckDB.
 
 ### 4.6 Alerting integration
 
@@ -456,13 +456,9 @@ The plan adds:
   `virtualDatasources`), walks `condition.Data` and replaces VDS
   entries with their inlined inner queries. RefId rewriting per
   §4.3.1 applies. The condition's `Condition` (the alert's chosen
-  refId) is preserved by the alias/AdHoc node.
-- A guard: if any VDS target inside an alert rule has
-  `q.Filters` set, expansion fails with a clear error pointing
-  at §4.5.3. This is enforced at rule save time as well, via the
-  existing rule validation hook in
-  `pkg/services/ngalert/api/api_ruler_validation.go` (or its
-  equivalent — TBD during PoC; we will not bypass validation).
+  refId) is preserved by the alias node. AdHoc filters on VDS
+  targets are validated at expansion and applied post-pipeline via
+  the same `applyAdHocFilters` path as interactive queries (§4.5).
 - Recording-rule path: same expander call. Recording rules use
   the same `getExprRequest`.
 - Identity considerations are folded into §4.6.1 below.
@@ -501,7 +497,8 @@ subsystem `virtualdatasource`):
   expansion — tracks fan-out).
 - `vds_resource_version_age_seconds` (gauge sampled at expansion;
   catches stale CR reads).
-- `vds_adhoc_filter_rejected_total{reason="unknown_column|disallowed_shape|cell_limit"}`.
+- `vds_adhoc_filter_rejected_total{reason="unknown_column|invalid_operator"}`.
+- `vds_adhoc_filter_applied_total{shape="tabular|timeseries-wide"}`.
 
 Logs at INFO include `vds_uid`, `vds_resource_version`, `caller`,
 `outer_refid`, `inner_count`. WARN/ERROR include the failure
@@ -517,16 +514,15 @@ expanded query/eval spans.
 User-facing errors use the standard `errutil` framework
 (`pkg/apimachinery/errutil`). Reason codes:
 
-| Code                          | HTTP | Meaning                                                     |
-| ----------------------------- | ---- | ----------------------------------------------------------- |
-| `vds.notFound`                | 404  | VDS UID does not resolve                                    |
-| `vds.cycle`                   | 400  | VDS-in-VDS detected                                         |
-| `vds.invalidGraph`            | 400  | Inner graph violates expression engine constraints (§4.3.2) |
-| `vds.adhoc.unknownColumn`     | 400  | AdHoc filter targets a column not declared adHocFilter=true |
-| `vds.adhoc.disallowedShape`   | 400  | AdHoc filter against non-tabular VDS                        |
-| `vds.adhoc.cellLimitExceeded` | 400  | SQL expression cell limits hit during AdHoc evaluation      |
-| `vds.upstreamForbidden`       | 403  | Caller lacks read on at least one upstream DS               |
-| `vds.outputRefIdMissing`      | 400  | `spec.outputRefId` not present in `spec.queries`            |
+| Code                        | HTTP | Meaning                                                           |
+| --------------------------- | ---- | ----------------------------------------------------------------- |
+| `vds.notFound`              | 404  | VDS UID does not resolve                                          |
+| `vds.cycle`                 | 400  | VDS-in-VDS detected                                               |
+| `vds.invalidGraph`          | 400  | Inner graph violates expression engine constraints (§4.3.2)       |
+| `vds.adhoc.unknownColumn`   | 400  | AdHoc filter targets a column/label not declared adHocFilter=true |
+| `vds.adhoc.invalidOperator` | 400  | Operator not allowed for the declared field type                  |
+| `vds.upstreamForbidden`     | 403  | Caller lacks read on at least one upstream DS                     |
+| `vds.outputRefIdMissing`    | 400  | `spec.outputRefId` not present in `spec.queries`                  |
 
 Inner refIds are surfaced in panel inspect under a `vds.inner`
 group (frame metadata) so debugging is possible without
@@ -628,10 +624,10 @@ deletes a VDS via the Resource API.
    reduce/resample/threshold string `expression`, classic
    conditions. Unit-tested against fixtures from
    `pkg/expr/query_convert_test.go`.
-3. Synthetic AdHoc filter node builder
-   (`pkg/services/virtualdatasource/adhoc.go`) using the existing
-   SQL expression machinery (`expr.NewSQLCommand`). Schema
-   validation, parameterised values (no string-formatted SQL).
+3. AdHoc filter applier (`pkg/services/virtualdatasource/adhoc.go`):
+   `applyAdHocFilters`, `filterTabular`, `filterTimeseriesWide`;
+   schema validation at expansion; post-pipeline application hook
+   in both call sites.
 4. Cycle detection (VDS-in-VDS reject) and a max-fanout guard.
 5. **Interactive call site:** `service.QueryData` in
    `pkg/services/query/query.go` — call `ExpandMetricRequest`
@@ -658,8 +654,9 @@ deletes a VDS via the Resource API.
 
 - **Unit:** all rewriting cases (SQL, math, reduce, resample,
   threshold, classic). Cycle detection. Engine-constraint
-  validation rejects SQL-on-SQL. AdHoc unknown-column,
-  disallowed-shape, and cell-limit errors classified correctly.
+  validation rejects SQL-on-SQL. AdHoc unknown-column and
+  invalid-operator errors classified correctly. Tabular and
+  wide time-series filter paths unit-tested.
 - **Integration (interactive):**
   `pkg/registry/apis/query/query_test.go` — POST to
   `/apis/query.grafana.app/v0alpha1/.../query` referencing a
@@ -671,9 +668,11 @@ deletes a VDS via the Resource API.
   expanded condition produces the same result as the inlined
   equivalent.
 - **Failure modes:** missing VDS, deleted VDS mid-eval, bad
-  `outputRefId`, AdHoc filter on disallowed column, AdHoc
-  filter on non-tabular VDS, AdHoc filter on a VDS used by
-  an alert rule.
+  `outputRefId`, AdHoc filter on disallowed column/label,
+  invalid operator for field type.
+- **AdHoc (alerting):** alert rule with VDS target + AdHoc
+  filters evaluates identically to interactive path (contract
+  test).
 - **Bench:** VDS-with-no-filters adds < 5% overhead vs.
   equivalent inline request (alerting query mix, p50 and p95).
 
@@ -761,8 +760,8 @@ deletes a VDS via the Resource API.
   `Expander.ExpandAlertCondition` at the top of `getExprRequest`
   (gated on `virtualDatasourcesInAlerts`).
 - `pkg/services/ngalert/api/api_ruler_validation.go` (or
-  equivalent) — reject rules with VDS targets carrying AdHoc
-  filters; verify caller has read on upstream DSes.
+  equivalent) — verify caller has read on upstream DSes for
+  VDS references.
 - `pkg/services/publicdashboards/...` — reject VDS targets in the
   public DB query handler.
 - `pkg/server/wire.go` — VDS resolver service, expander.
@@ -781,10 +780,9 @@ deletes a VDS via the Resource API.
     detection, missing VDS error, missing `outputRefId` error,
     fan-out cap.
   - `refids`: each rewriter against fixtures.
-  - `adhoc`: synthetic SQL node assembly, validation against
-    schema, rejection of filters on non-allowed columns,
-    parameterised values (no string-formatted SQL),
-    cell-limit handling.
+  - `adhoc`: `filterTabular` / `filterTimeseriesWide` against
+    fixture frames; validation against schema; unknown-column and
+    invalid-operator errors; contract with expander's side channel.
   - **Contract test**: `ExpandMetricRequest` and
     `ExpandAlertCondition` produce equivalent expanded forms
     over the same fixtures.
@@ -797,11 +795,14 @@ deletes a VDS via the Resource API.
   - `pkg/registry/apis/query/query_test.go` — end-to-end query
     referencing a VDS that wraps a `testdata` random walk;
     assert frame shape and refId mapping.
-  - Same with two AdHoc filters; assert frame is filtered.
+  - Same with two AdHoc filters (tabular VDS); assert frame is
+    filtered.
+  - Same with a `timeseries-wide` VDS; assert series are filtered
+    by label match.
   - `pkg/services/ngalert/eval/eval_test.go` — alert condition
-    referencing a VDS evaluates to the same result as inlined
-    equivalent. Identity check rejects rules that lack
-    upstream-DS read.
+    referencing a VDS (with and without AdHoc filters) evaluates
+    to the same result as the interactive path. Identity check
+    rejects rules that lack upstream-DS read.
   - VDS deletion mid-eval surfaces `vds.notFound` (not a panic).
 - **Migration smoke**: VDS resource roundtrips through unified
   storage (apistore tests).
@@ -817,8 +818,8 @@ deletes a VDS via the Resource API.
     referencing it, filter with AdHoc, save, reload.
   - Update the VDS spec; reload the dashboard; confirm
     cascading update.
-  - Try to add AdHoc on a wide-timeseries VDS; assert UI
-    affordance is disabled with a tooltip.
+  - Add AdHoc on a wide-timeseries VDS; assert series filtered by
+    label (not row filter).
 
 ### Manual
 
@@ -852,9 +853,10 @@ deletes a VDS via the Resource API.
    today. PoC avoids this by not supporting consumer variables
    in inner queries beyond the time range and `intervalMs`. We
    document the limitation.
-5. **AdHoc filter UX divergence.** VDS filters apply post-merge,
-   not pre-source, and only on tabular outputs. Document this
-   prominently; otherwise users will be surprised.
+5. **AdHoc filter UX divergence.** VDS filters apply post-merge on
+   the output frame, not pre-source. Tabular VDSes filter rows;
+   wide time-series VDSes filter series by label — different
+   semantics, same control. Document prominently.
 6. **DS picker performance.** Listing VDSes on every page load
    adds an API call. Mitigation: standard list cache + watch.
 7. **Watch fanout / unified storage pressure.** Every editor
@@ -897,15 +899,15 @@ for the PoC; reviewers please push back if any of them are wrong.
 5. **Naming**: keep **"Virtual Datasource"** for now. We add a
    short product glossary blurb to disambiguate from "virtual
    machine" / driver-abstraction usages of "virtual".
-6. **AdHoc filters** in the PoC apply only to **tabular** VDS
-   outputs and are **disallowed** on VDS targets used by alert
-   rules. Wide time-series VDSes get AdHoc support later, after
-   we have a non-SQL filter path or a per-source pushdown story.
+6. **AdHoc filters** apply in Go on the output `data.Frame` for
+   both `tabular` and `timeseries-wide` VDS shapes (strategy per
+   §4.5), on **interactive and alert-eval** paths via the shared
+   applier. Not pushed into upstream datasources in the PoC.
 7. **Public dashboards / public-facing surfaces** cannot
    reference a VDS in the PoC; the public DB query handler
    returns `vds.disallowedInPublicDashboard`.
 
-## 9. Open questions for review (v2)
+## 9. Open questions for review (v3)
 
 Most of the v1 open questions are now locked in §8b. Remaining
 questions for reviewers:
@@ -915,19 +917,15 @@ questions for reviewers:
    `AlertQuery.Model` in the rule API)? Earlier means the
    expanded form is stored on the rule; later means the rule
    stays small and the VDS is resolved per-eval.
-2. **Should AdHoc filters on a VDS be allowed in dashboards but
-   silently dropped during alert eval**, instead of rejecting
-   the rule? Less surprising for users who copy panels into
-   alerts.
-3. **Should the admission validator run a real
+2. **Should the admission validator run a real
    `expr.Service.BuildPipeline`** (with a fake DS resolver), or
    a lighter-weight static analysis? Real pipeline is more
    accurate but couples admission to the expression engine's
    error messages.
-4. **Reverse index**: is "warn on delete + post-PoC reverse
+3. **Reverse index**: is "warn on delete + post-PoC reverse
    index" enough, or does the PoC need referential integrity
    from day one?
-5. **Saved-queries promote-to-VDS UX**: editor creates a new
+4. **Saved-queries promote-to-VDS UX**: editor creates a new
    VDS and rewrites the original panel's target to reference
    it; or only offers to create the VDS and lets the user
    manually re-pick. The first is more magical but more risky.
@@ -936,10 +934,6 @@ questions for reviewers:
 
 - Per-source AdHoc filter pushdown (column-aware rewriting into
   Loki/BigQuery/etc.).
-- AdHoc filters for **wide time-series** VDSes (non-SQL filter
-  path).
-- AdHoc filters in alert rules (PoC disallows; follow-up requires
-  agreement on alert-eval semantics).
 - Caching integration with `querycaching` CR.
 - Folder-scoped RBAC.
 - VDS-references-VDS.
