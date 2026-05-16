@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/federated"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
+	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
@@ -40,16 +41,17 @@ import (
 )
 
 type Options struct {
-	Cfg           *setting.Cfg
-	Features      featuremgmt.FeatureToggles
-	DB            infraDB.DB
-	Tracer        tracing.Tracer
-	Reg           prometheus.Registerer
-	Authzc        types.AccessClient
-	Docs          resource.DocumentBuilderSupplier
-	SecureValues  secrets.InlineSecureValueSupport
-	VectorBackend vector.VectorBackend
-	Embedder      *embedder.Embedder
+	Cfg            *setting.Cfg
+	Features       featuremgmt.FeatureToggles
+	DB             infraDB.DB
+	Tracer         tracing.Tracer
+	Reg            prometheus.Registerer
+	Authzc         types.AccessClient
+	Docs           resource.DocumentBuilderSupplier
+	SecureValues   secrets.InlineSecureValueSupport
+	VectorBackend  vector.VectorBackend
+	Embedder       *embedder.Embedder
+	DashboardStats builders.DashboardStats
 }
 
 type clientMetrics struct {
@@ -71,7 +73,7 @@ func ProvideUnifiedStorageClient(opts *Options,
 		BlobStoreURL:            apiserverCfg.Key("blob_url").MustString(""),
 		BlobThresholdBytes:      apiserverCfg.Key("blob_threshold_bytes").MustInt(options.BlobThresholdDefault),
 		GrpcClientKeepaliveTime: apiserverCfg.Key("grpc_client_keepalive_time").MustDuration(0),
-	}, opts.Cfg, opts.Features, opts.DB, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, opts.SecureValues, opts.VectorBackend, opts.Embedder)
+	}, opts.Cfg, opts.Features, opts.DB, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, opts.SecureValues, opts.VectorBackend, opts.Embedder, opts.DashboardStats)
 	if err == nil {
 		// Used to get the folder stats
 		// Pass cfg directly so the federated client reads the current dual-writer mode
@@ -100,6 +102,7 @@ func newClient(opts options.StorageOptions,
 	secure secrets.InlineSecureValueSupport,
 	vectorBackend vector.VectorBackend,
 	embedderInstance *embedder.Embedder,
+	dashboardStats builders.DashboardStats,
 ) (resource.ResourceClient, error) {
 	ctx := context.Background()
 
@@ -181,6 +184,7 @@ func newClient(opts options.StorageOptions,
 			IndexMetrics:   indexMetrics,
 			Features:       features,
 			SecureValues:   secure,
+			DashboardStats: dashboardStats,
 		}
 
 		if cfg.QOSEnabled {

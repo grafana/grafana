@@ -428,6 +428,15 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		require.NoError(t, err)
 	}
 
+	if opts.EnableAnnotationAppPlatform {
+		annotationSect, err := cfg.NewSection("annotations.app_platform")
+		require.NoError(t, err)
+		_, err = annotationSect.NewKey("enabled", "true")
+		require.NoError(t, err)
+		_, err = annotationSect.NewKey("store_backend", "memory")
+		require.NoError(t, err)
+	}
+
 	if opts.LicensePath != "" {
 		section, err := cfg.NewSection("enterprise")
 		require.NoError(t, err)
@@ -1006,6 +1015,8 @@ type GrafanaOpts struct {
 	HARedisAddr            string
 	HARedisPeerName        string
 	HASingleNodeEvaluation bool
+
+	EnableAnnotationAppPlatform bool
 }
 
 func CreateUser(t *testing.T, store db.DB, cfg *setting.Cfg, cmd user.CreateUserCommand) *user.User {

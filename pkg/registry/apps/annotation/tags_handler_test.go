@@ -198,7 +198,7 @@ func TestTagsHandler(t *testing.T) {
 			err := handler(ctx, writer, mockRequest)
 			require.NoError(t, err)
 
-			var result tagResponse
+			var result TagResponse
 			err = json.Unmarshal(writer.body.Bytes(), &result)
 			require.NoError(t, err)
 
