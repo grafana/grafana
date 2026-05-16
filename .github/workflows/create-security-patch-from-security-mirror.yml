@@ -14,6 +14,10 @@ on:
       - "release-*.*.*"
 
 # This is run before the pull request has been merged, so we'll run against the src branch
+
+permissions:
+  contents: read
+
 jobs:
   trigger_downstream_create_security_patch:
     concurrency: create-patch-${{ github.ref_name }}
