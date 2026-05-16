@@ -77,14 +77,13 @@ describe('SaveDashboard (toolbar)', () => {
   });
 
   afterEach(async () => {
-    // setTestFlags fires async OpenFeature events that trigger React state updates;
-    // wrap in act() so those don't leak past the test boundary.
-    await act(async () => {
-      setTestFlags({});
-    });
     registerSaveAsTemplateForm(null as unknown as Parameters<typeof registerSaveAsTemplateForm>[0]);
     contextSrv.hasEditPermissionInFolders = originalHasEditPermissionInFolders;
     jest.clearAllMocks();
+  });
+
+  afterAll(() => {
+    setTestFlags({});
   });
 
   describe('Template edit flow', () => {
@@ -116,7 +115,7 @@ describe('SaveDashboard (toolbar)', () => {
 
   describe('Save as template menu item', () => {
     it('is hidden when the feature flag is off', async () => {
-      registerSaveAsTemplateForm(() => null);
+      setTestFlags({ 'grafana.orgDashboardTemplates': false });
       const scene = buildTestScene({ canSave: true });
       const { user } = render(<SaveDashboard dashboard={scene} />);
 

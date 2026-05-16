@@ -1,6 +1,6 @@
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
-import { render, screen } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
@@ -33,8 +33,6 @@ import { DashboardScene } from './DashboardScene';
 jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
     hasEditPermissionInFolders: false,
-    // test-utils' configureStore reads contextSrv.user at module load.
-    user: { orgId: 1, timezone: '', weekStart: '' },
   },
 }));
 
@@ -66,8 +64,6 @@ function renderInGrafanaContext(child: React.ReactNode, kioskMode?: KioskMode) {
   if (kioskMode !== undefined) {
     context.chrome.update({ kioskMode: KioskMode.Full });
   }
-  // Inner GrafanaContext.Provider overrides the default mock that test-utils' render injects,
-  // letting us inject a context with kiosk mode toggled.
   return render(<GrafanaContext.Provider value={context}>{child}</GrafanaContext.Provider>);
 }
 

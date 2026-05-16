@@ -299,7 +299,7 @@ describe('SaveDashboardDrawer', () => {
   describe('Save as copy', () => {
     it('Should show save as form', async () => {
       const { openAndRender } = setup();
-      openAndRender(true);
+      openAndRender({ saveAsCopy: true });
 
       expect(await screen.findByText('Save dashboard copy')).toBeInTheDocument();
 
@@ -329,8 +329,7 @@ describe('SaveDashboardDrawer', () => {
 
       expect(await screen.findByTestId('stub-save-as-template-form')).toBeInTheDocument();
       expect(await screen.findByText('Save as template')).toBeInTheDocument();
-      // Drawer tabs are hidden for save-as-template
-      expect(screen.queryByRole('tab', { name: /Details/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('tab', { name: /Details/i })).toBeInTheDocument();
     });
 
     it('renders the registered SaveDashboardTemplateForm when saveDashboardTemplate is true', async () => {
@@ -344,6 +343,7 @@ describe('SaveDashboardDrawer', () => {
 
       expect(await screen.findByTestId('stub-update-template-form')).toBeInTheDocument();
       expect(await screen.findByText('Save template')).toBeInTheDocument();
+      expect(screen.queryByRole('tab', { name: /Details/i })).toBeInTheDocument();
     });
 
     it('falls back to the standard save form when saveAsDashboardTemplate is true but no form is registered', async () => {
@@ -422,10 +422,9 @@ function setup(overrides?: Partial<DashboardSceneState>) {
   dashboard.onEnterEditMode();
 
   const openAndRender = (
-    opts?: boolean | { saveAsCopy?: boolean; saveAsDashboardTemplate?: boolean; saveDashboardTemplate?: boolean }
+    opts: { saveAsCopy?: boolean; saveAsDashboardTemplate?: boolean; saveDashboardTemplate?: boolean } = {}
   ) => {
-    const flags = typeof opts === 'boolean' ? { saveAsCopy: opts } : (opts ?? {});
-    dashboard.openSaveDrawer(flags);
+    dashboard.openSaveDrawer(opts);
     const drawer = dashboard.state.overlay as SaveDashboardDrawer;
     render(
       <TestProvider>

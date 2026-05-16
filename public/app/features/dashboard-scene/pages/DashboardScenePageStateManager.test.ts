@@ -1784,10 +1784,7 @@ describe('DashboardScenePageStateManager v2', () => {
 
     afterEach(async () => {
       jest.restoreAllMocks();
-      await new Promise<void>((resolve) => {
-        setTestFlags({});
-        resolve();
-      });
+      setTestFlags({});
     });
 
     it('edit-template flow: sets isDashboardTemplate + dashboardTemplateUid, scene is clean', async () => {
@@ -2464,7 +2461,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
     });
   });
 
-  describe('Template dashboards', () => {
+  describe('Dashboard templates', () => {
     let originalGetLocation: typeof locationService.getLocation;
 
     beforeEach(() => {
@@ -2483,7 +2480,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
       locationService.getLocation = originalGetLocation;
     });
 
-    it('should always use v1 manager for template dashboards even when dashboardNewLayouts is enabled', async () => {
+    it('should always use v1 manager for Grafana dashboard templates even when dashboardNewLayouts is enabled', async () => {
       config.featureToggles.dashboardNewLayouts = true;
       config.featureToggles.suggestedDashboards = true;
 
@@ -2515,7 +2512,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
 
       await manager.loadDashboard({ uid: '', route: DashboardRoutes.Template });
 
-      // Should switch to V1 manager for template dashboards
+      // Should switch to V1 manager for Grafana dashboard templates
       expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManager);
     });
 
@@ -2535,7 +2532,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
           if (url.includes('/api/gnet/dashboards/')) {
             return Promise.resolve({
               json: {
-                title: 'Template Dashboard',
+                title: 'Dashboard Template',
                 uid: '',
                 panels: [],
                 schemaVersion: 40,
@@ -2558,7 +2555,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
       expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManagerV2);
     });
 
-    it('uses V2 manager for org template route when dashboardTemplateUid is set', async () => {
+    it('uses V2 manager for Custom dashboard template route when dashboardTemplateUid is set', async () => {
       // Mock the template extension so the V2 manager's loadDashboardTemplate has something to consume.
       const fakeTemplateResource = {
         apiVersion: 'v0alpha1',
