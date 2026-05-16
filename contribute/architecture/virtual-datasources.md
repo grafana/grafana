@@ -10,6 +10,11 @@
 > behaves to consumers like a normal datasource. Updates to the VDS
 > definition cascade to every dashboard panel and alert that
 > references it.
+>
+> **Variant:** [Semantic Virtual Datasources](./virtual-datasources-semantic-layer.md)
+> (metrics/dimensions → compile SQL → delegate to an existing SQL datasource)
+> is the **likely first implementation** and may supersede this general
+> composite-query design.
 
 ## Changelog
 
