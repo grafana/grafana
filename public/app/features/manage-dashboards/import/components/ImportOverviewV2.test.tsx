@@ -1,23 +1,28 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { HttpResponse, delay, http } from 'msw';
+import { render } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
 import {
   defaultSpec,
   defaultGridLayoutKind,
   type Spec as DashboardV2Spec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
+import server from '@grafana/test-utils/server';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
-import {
-  useGetResourceRepositoryView,
-  RepoViewStatus,
-} from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
+import { setupProvisioningMswServer } from 'app/features/provisioning/mocks/server';
 
 import { type DashboardInputs, DashboardSource, InputType } from '../../types';
 import { useImportProvisionedSave } from '../hooks/useImportProvisionedSave';
 
 import { ImportOverviewV2 } from './ImportOverviewV2';
+
+// --- Mocks ---
 
 jest.mock('app/features/dashboard/api/dashboard_api', () => ({
   getDashboardAPI: jest.fn(),
@@ -62,55 +67,18 @@ jest.mock('app/features/datasources/components/picker/DataSourcePicker', () => (
   ),
 }));
 
-jest.mock('app/features/provisioning/hooks/useGetResourceRepositoryView', () => ({
-  useGetResourceRepositoryView: jest.fn(),
-  RepoViewStatus: {
-    Disabled: 'disabled',
-    Loading: 'loading',
-    Ready: 'ready',
-    Error: 'error',
-    Orphaned: 'orphaned',
-  },
-}));
-
 jest.mock('../hooks/useImportProvisionedSave', () => ({
   useImportProvisionedSave: jest.fn(),
 }));
 
-jest.mock('app/features/provisioning/components/Shared/ResourceEditFormSharedFields', () => ({
-  ResourceEditFormSharedFields: () => <div data-testid="resource-edit-shared-fields" />,
-}));
-
-jest.mock('app/features/provisioning/components/Shared/RepoInvalidStateBanner', () => ({
-  RepoInvalidStateBanner: ({ noRepository, isReadOnlyRepo }: { noRepository: boolean; isReadOnlyRepo: boolean }) => (
-    <div data-testid="repo-invalid-banner" data-no-repo={noRepository} data-read-only={isReadOnlyRepo} />
-  ),
-}));
-
-jest.mock('app/features/provisioning/Shared/ProvisioningAlert', () => ({
-  ProvisioningAlert: ({ error }: { error: string }) => <div data-testid="provisioning-alert">{error}</div>,
-}));
-
-jest.mock('app/features/provisioning/components/defaults', () => ({
-  getDefaultWorkflow: jest.fn().mockReturnValue('write'),
-  getDefaultRef: jest.fn().mockReturnValue('main'),
-  getCanPushToConfiguredBranch: jest.fn().mockReturnValue(true),
-}));
-
-jest.mock('app/features/provisioning/components/utils/path', () => ({
-  generatePath: jest.fn().mockReturnValue('test-dashboard.json'),
-  slugifyForFilename: jest.fn().mockReturnValue('test-dashboard'),
-  splitPath: jest.fn().mockReturnValue({ directory: '', filename: 'test-dashboard.json' }),
-  joinPath: jest.fn((_dir: string, file: string) => file),
-}));
-
-jest.mock('app/features/provisioning/components/utils/timestamp', () => ({
-  generateTimestamp: jest.fn().mockReturnValue('2026-05-04-abc12'),
-}));
+setupProvisioningMswServer();
 
 const mockGetDashboardAPI = jest.mocked(getDashboardAPI);
-const mockUseGetResourceRepositoryView = jest.mocked(useGetResourceRepositoryView);
 const mockUseImportProvisionedSave = jest.mocked(useImportProvisionedSave);
+
+// --- Helpers ---
+
+const FOLDER_BASE = '/apis/folder.grafana.app/v1beta1/namespaces/:namespace';
 
 const mockRepository: RepositoryView = {
   name: 'test-repo',
@@ -120,6 +88,105 @@ const mockRepository: RepositoryView = {
   title: 'Test Repo',
   workflows: ['write', 'branch'],
 };
+
+function makeFolderResponse(uid: string, repoName?: string) {
+  return {
+    kind: 'Folder',
+    apiVersion: 'folder.grafana.app/v1beta1',
+    metadata: {
+      name: uid,
+      namespace: 'default',
+      uid,
+      creationTimestamp: '2023-01-01T00:00:00Z',
+      annotations: {
+        'grafana.app/createdBy': 'user:1',
+        'grafana.app/updatedBy': 'user:2',
+        ...(repoName
+          ? {
+              [AnnoKeyManagerKind]: ManagerKind.Repo,
+              [AnnoKeyManagerIdentity]: repoName,
+            }
+          : {}),
+      },
+    },
+    spec: { title: 'Test Folder', description: '' },
+  };
+}
+
+function makeSettingsResponse(repos: RepositoryView[]) {
+  return { items: repos, allowImageRendering: true, availableRepositoryTypes: ['github'] };
+}
+
+function setupRepoState({
+  isProvisioned = false,
+  isReadOnlyRepo = false,
+  isOrphaned = false,
+  isLoading = false,
+  isError = false,
+}: {
+  isProvisioned?: boolean;
+  isReadOnlyRepo?: boolean;
+  isOrphaned?: boolean;
+  isLoading?: boolean;
+  isError?: boolean;
+} = {}) {
+  const mockSave = jest.fn();
+  mockUseImportProvisionedSave.mockReturnValue({
+    save: mockSave,
+    isLoading: false,
+    error: undefined,
+  });
+
+  if (isLoading) {
+    server.use(
+      http.get(`${BASE}/settings`, async () => {
+        await delay('infinite');
+        return HttpResponse.json(makeSettingsResponse([]));
+      })
+    );
+    return { mockSave };
+  }
+
+  if (isError) {
+    server.use(
+      http.get(`${BASE}/settings`, () => HttpResponse.json({ message: 'settings fetch failed' }, { status: 500 }))
+    );
+    return { mockSave };
+  }
+
+  if (isProvisioned || isReadOnlyRepo) {
+    const repo: RepositoryView = {
+      ...mockRepository,
+      workflows: isReadOnlyRepo ? [] : ['write', 'branch'],
+    };
+    server.use(
+      http.get(`${BASE}/settings`, () => HttpResponse.json(makeSettingsResponse([repo]))),
+      http.get(`${FOLDER_BASE}/folders/:folderUid`, ({ params }) =>
+        HttpResponse.json(makeFolderResponse(params.folderUid as string, 'test-repo'))
+      )
+    );
+    return { mockSave };
+  }
+
+  if (isOrphaned) {
+    server.use(
+      http.get(`${BASE}/settings`, () => HttpResponse.json(makeSettingsResponse([mockRepository]))),
+      http.get(`${FOLDER_BASE}/folders/:folderUid`, ({ params }) =>
+        HttpResponse.json(makeFolderResponse(params.folderUid as string, 'dead-repo'))
+      )
+    );
+    return { mockSave };
+  }
+
+  // Non-provisioned: no repos, folder without annotations
+  server.use(
+    http.get(`${FOLDER_BASE}/folders/:folderUid`, ({ params }) =>
+      HttpResponse.json(makeFolderResponse(params.folderUid as string))
+    )
+  );
+  return { mockSave };
+}
+
 describe('ImportOverviewV2', () => {
   let saveDashboard = jest.fn().mockResolvedValue({ url: '/d/test-uid/test-dashboard' });
 
@@ -156,6 +223,7 @@ describe('ImportOverviewV2', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    config.featureToggles.provisioning = true;
     saveDashboard = jest.fn().mockResolvedValue({ url: '/d/test-uid/test-dashboard' });
     mockGetDashboardAPI.mockResolvedValue({
       saveDashboard,
@@ -168,18 +236,12 @@ describe('ImportOverviewV2', () => {
       restoreDashboardVersion: jest.fn(),
     });
 
-    // Default: non-provisioned mode for existing tests
-    mockUseGetResourceRepositoryView.mockReturnValue({
-      status: RepoViewStatus.Ready,
-      isLoading: false,
-      isInstanceManaged: false,
-      isReadOnlyRepo: false,
-    });
-    mockUseImportProvisionedSave.mockReturnValue({
-      save: jest.fn(),
-      isLoading: false,
-      error: undefined,
-    });
+    // Default: non-provisioned mode
+    setupRepoState({ isProvisioned: false });
+  });
+
+  afterEach(() => {
+    config.featureToggles.provisioning = false;
   });
 
   describe('float grid items warning', () => {
@@ -340,38 +402,26 @@ describe('ImportOverviewV2', () => {
   });
 
   describe('provisioned mode', () => {
-    function setupProvisioned() {
-      const mockSave = jest.fn();
-      mockUseGetResourceRepositoryView.mockReturnValue({
-        repository: mockRepository,
-        status: RepoViewStatus.Ready,
-        isLoading: false,
-        isInstanceManaged: false,
-        isReadOnlyRepo: false,
-      });
-      mockUseImportProvisionedSave.mockReturnValue({
-        save: mockSave,
-        isLoading: false,
-        error: undefined,
-      });
-      return { mockSave };
-    }
-
     it('renders ResourceEditFormSharedFields when folder is repo-managed', async () => {
-      setupProvisioned();
+      setupRepoState({ isProvisioned: true });
       const layout = defaultGridLayoutKind();
       renderCmp(layout);
 
       await waitFor(() => {
-        expect(screen.getByTestId('resource-edit-shared-fields')).toBeInTheDocument();
+        expect(screen.getByRole('textbox', { name: /filename/i })).toBeInTheDocument();
       });
     });
 
     it('submits via provisioned save hook', async () => {
-      const { mockSave } = setupProvisioned();
+      const { mockSave } = setupRepoState({ isProvisioned: true });
       const user = userEvent.setup();
       const layout = defaultGridLayoutKind();
       renderCmp(layout);
+
+      // Wait for provisioning state to resolve
+      await waitFor(() => {
+        expect(screen.getByRole('textbox', { name: /filename/i })).toBeInTheDocument();
+      });
 
       const datasourcePicker = screen.getByTestId('datasource-picker-prometheus');
       await user.type(datasourcePicker, 'prom-uid');
@@ -388,10 +438,14 @@ describe('ImportOverviewV2', () => {
     });
 
     it('does not call standard API in provisioned mode', async () => {
-      setupProvisioned();
+      setupRepoState({ isProvisioned: true });
       const user = userEvent.setup();
       const layout = defaultGridLayoutKind();
       renderCmp(layout);
+
+      await waitFor(() => {
+        expect(screen.getByRole('textbox', { name: /filename/i })).toBeInTheDocument();
+      });
 
       const datasourcePicker = screen.getByTestId('datasource-picker-prometheus');
       await user.type(datasourcePicker, 'prom-uid');
@@ -402,41 +456,18 @@ describe('ImportOverviewV2', () => {
       });
     });
 
-    it('renders RepoInvalidStateBanner when repo is read-only', async () => {
-      mockUseGetResourceRepositoryView.mockReturnValue({
-        repository: mockRepository,
-        status: RepoViewStatus.Ready,
-        isLoading: false,
-        isInstanceManaged: false,
-        isReadOnlyRepo: true,
-      });
-      mockUseImportProvisionedSave.mockReturnValue({
-        save: jest.fn(),
-        isLoading: false,
-        error: undefined,
-      });
+    it('renders read-only banner when repo is read-only', async () => {
+      setupRepoState({ isProvisioned: true, isReadOnlyRepo: true });
       const layout = defaultGridLayoutKind();
       renderCmp(layout);
 
       await waitFor(() => {
-        const banner = screen.getByTestId('repo-invalid-banner');
-        expect(banner).toHaveAttribute('data-read-only', 'true');
+        expect(screen.getByText(/This repository is read only/i)).toBeInTheDocument();
       });
     });
 
     it('disables submit when repo is read-only', async () => {
-      mockUseGetResourceRepositoryView.mockReturnValue({
-        repository: mockRepository,
-        status: RepoViewStatus.Ready,
-        isLoading: false,
-        isInstanceManaged: false,
-        isReadOnlyRepo: true,
-      });
-      mockUseImportProvisionedSave.mockReturnValue({
-        save: jest.fn(),
-        isLoading: false,
-        error: undefined,
-      });
+      setupRepoState({ isProvisioned: true, isReadOnlyRepo: true });
       const layout = defaultGridLayoutKind();
       renderCmp(layout);
 
@@ -448,19 +479,7 @@ describe('ImportOverviewV2', () => {
 
   describe('blocked-submit guards', () => {
     it('read-only provisioned submit does not call either save path via programmatic submit', async () => {
-      const mockSave = jest.fn();
-      mockUseGetResourceRepositoryView.mockReturnValue({
-        repository: mockRepository,
-        status: RepoViewStatus.Ready,
-        isLoading: false,
-        isInstanceManaged: false,
-        isReadOnlyRepo: true,
-      });
-      mockUseImportProvisionedSave.mockReturnValue({
-        save: mockSave,
-        isLoading: false,
-        error: undefined,
-      });
+      const { mockSave } = setupRepoState({ isProvisioned: true, isReadOnlyRepo: true });
       const layout = defaultGridLayoutKind();
       renderCmp(layout);
 
@@ -478,18 +497,7 @@ describe('ImportOverviewV2', () => {
     });
 
     it('orphaned folder programmatic submit does not call standard API', async () => {
-      mockUseGetResourceRepositoryView.mockReturnValue({
-        status: RepoViewStatus.Orphaned,
-        isLoading: false,
-        isInstanceManaged: false,
-        isReadOnlyRepo: false,
-        orphanedRepoName: 'dead-repo',
-      });
-      mockUseImportProvisionedSave.mockReturnValue({
-        save: jest.fn(),
-        isLoading: false,
-        error: undefined,
-      });
+      setupRepoState({ isOrphaned: true });
       const layout = defaultGridLayoutKind();
       renderCmp(layout);
 
@@ -502,17 +510,7 @@ describe('ImportOverviewV2', () => {
     });
 
     it('loading state programmatic submit does not call standard API', async () => {
-      mockUseGetResourceRepositoryView.mockReturnValue({
-        status: RepoViewStatus.Loading,
-        isLoading: true,
-        isInstanceManaged: false,
-        isReadOnlyRepo: false,
-      });
-      mockUseImportProvisionedSave.mockReturnValue({
-        save: jest.fn(),
-        isLoading: false,
-        error: undefined,
-      });
+      setupRepoState({ isLoading: true });
       const layout = defaultGridLayoutKind();
       renderCmp(layout);
 
@@ -525,18 +523,7 @@ describe('ImportOverviewV2', () => {
     });
 
     it('error state programmatic submit does not call standard API', async () => {
-      mockUseGetResourceRepositoryView.mockReturnValue({
-        status: RepoViewStatus.Error,
-        isLoading: false,
-        isInstanceManaged: false,
-        isReadOnlyRepo: false,
-        error: new Error('settings fetch failed'),
-      });
-      mockUseImportProvisionedSave.mockReturnValue({
-        save: jest.fn(),
-        isLoading: false,
-        error: undefined,
-      });
+      setupRepoState({ isError: true });
       const layout = defaultGridLayoutKind();
       renderCmp(layout);
 
@@ -550,26 +537,13 @@ describe('ImportOverviewV2', () => {
   });
 
   describe('orphaned folder banner', () => {
-    it('renders RepoInvalidStateBanner when folder is orphaned', async () => {
-      mockUseGetResourceRepositoryView.mockReturnValue({
-        status: RepoViewStatus.Orphaned,
-        isLoading: false,
-        isInstanceManaged: false,
-        isReadOnlyRepo: false,
-        orphanedRepoName: 'dead-repo',
-      });
-      mockUseImportProvisionedSave.mockReturnValue({
-        save: jest.fn(),
-        isLoading: false,
-        error: undefined,
-      });
+    it('renders repository-not-found banner when folder is orphaned', async () => {
+      setupRepoState({ isOrphaned: true });
       const layout = defaultGridLayoutKind();
       renderCmp(layout);
 
       await waitFor(() => {
-        const banner = screen.getByTestId('repo-invalid-banner');
-        expect(banner).toBeInTheDocument();
-        expect(banner).toHaveAttribute('data-no-repo', 'true');
+        expect(screen.getByText(/Repository not found/i)).toBeInTheDocument();
       });
     });
   });

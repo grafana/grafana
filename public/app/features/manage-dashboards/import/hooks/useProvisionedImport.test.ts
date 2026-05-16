@@ -1,50 +1,28 @@
-import { renderHook } from '@testing-library/react';
+import { renderHook, waitFor } from '@testing-library/react';
+import { HttpResponse, delay, http } from 'msw';
+import { getWrapper } from 'test/test-utils';
 
+import { config } from '@grafana/runtime';
+import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
+import server from '@grafana/test-utils/server';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
-import {
-  useGetResourceRepositoryView,
-  RepoViewStatus,
-} from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
+import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
+import { setupProvisioningMswServer } from 'app/features/provisioning/mocks/server';
 
 import { useImportProvisionedSave } from './useImportProvisionedSave';
 import { useProvisionedImport, type UseProvisionedImportArgs } from './useProvisionedImport';
 
 // --- Mocks ---
 
-jest.mock('app/features/provisioning/hooks/useGetResourceRepositoryView', () => ({
-  useGetResourceRepositoryView: jest.fn(),
-  RepoViewStatus: {
-    Disabled: 'disabled',
-    Loading: 'loading',
-    Ready: 'ready',
-    Error: 'error',
-    Orphaned: 'orphaned',
-  },
-}));
-
 jest.mock('./useImportProvisionedSave', () => ({
   useImportProvisionedSave: jest.fn(),
 }));
 
-jest.mock('app/features/provisioning/components/defaults', () => ({
-  getDefaultWorkflow: jest.fn().mockReturnValue('write'),
-  getDefaultRef: jest.fn().mockReturnValue('main'),
-  getCanPushToConfiguredBranch: jest.fn().mockReturnValue(true),
-}));
-
-jest.mock('app/features/provisioning/components/utils/path', () => ({
-  generatePath: jest.fn().mockReturnValue('test-dashboard.json'),
-  slugifyForFilename: jest.fn().mockReturnValue('test-dashboard'),
-}));
-
-jest.mock('app/features/provisioning/components/utils/timestamp', () => ({
-  generateTimestamp: jest.fn().mockReturnValue('2026-05-04-abc12'),
-}));
-
-const mockUseGetResourceRepositoryView = jest.mocked(useGetResourceRepositoryView);
-const mockUseImportProvisionedSave = jest.mocked(useImportProvisionedSave);
+setupProvisioningMswServer();
 
 // --- Helpers ---
+
+const FOLDER_BASE = '/apis/folder.grafana.app/v1beta1/namespaces/:namespace';
 
 const mockRepository: RepositoryView = {
   name: 'test-repo',
@@ -56,24 +34,97 @@ const mockRepository: RepositoryView = {
 };
 
 const mockSave = jest.fn();
+const mockUseImportProvisionedSave = jest.mocked(useImportProvisionedSave);
 
-function setupMock(
-  overrides: Partial<ReturnType<typeof useGetResourceRepositoryView>> = {},
-  saveOverrides: Partial<ReturnType<typeof useImportProvisionedSave>> = {}
-) {
-  mockUseGetResourceRepositoryView.mockReturnValue({
-    status: RepoViewStatus.Ready,
-    isLoading: false,
-    isInstanceManaged: false,
-    isReadOnlyRepo: false,
-    ...overrides,
-  });
-  mockUseImportProvisionedSave.mockReturnValue({
-    save: mockSave,
-    isLoading: false,
-    error: undefined,
-    ...saveOverrides,
-  });
+function makeFolderResponse(uid: string, repoName?: string) {
+  return {
+    kind: 'Folder',
+    apiVersion: 'folder.grafana.app/v1beta1',
+    metadata: {
+      name: uid,
+      namespace: 'default',
+      uid,
+      creationTimestamp: '2023-01-01T00:00:00Z',
+      annotations: {
+        'grafana.app/createdBy': 'user:1',
+        'grafana.app/updatedBy': 'user:2',
+        ...(repoName
+          ? {
+              [AnnoKeyManagerKind]: ManagerKind.Repo,
+              [AnnoKeyManagerIdentity]: repoName,
+            }
+          : {}),
+      },
+    },
+    spec: { title: 'Test Folder', description: '' },
+  };
+}
+
+function makeSettingsResponse(repos: RepositoryView[]) {
+  return { items: repos, allowImageRendering: true, availableRepositoryTypes: ['github'] };
+}
+
+function setupRepoState({
+  isProvisioned = false,
+  isReadOnlyRepo = false,
+  isOrphaned = false,
+  isLoading = false,
+  isError = false,
+}: {
+  isProvisioned?: boolean;
+  isReadOnlyRepo?: boolean;
+  isOrphaned?: boolean;
+  isLoading?: boolean;
+  isError?: boolean;
+} = {}) {
+  if (isLoading) {
+    server.use(
+      http.get(`${BASE}/settings`, async () => {
+        await delay('infinite');
+        return HttpResponse.json(makeSettingsResponse([]));
+      })
+    );
+    return;
+  }
+
+  if (isError) {
+    server.use(
+      http.get(`${BASE}/settings`, () => HttpResponse.json({ message: 'settings fetch failed' }, { status: 500 }))
+    );
+    return;
+  }
+
+  if (isProvisioned || isReadOnlyRepo) {
+    const repo: RepositoryView = {
+      ...mockRepository,
+      workflows: isReadOnlyRepo ? [] : ['write', 'branch'],
+    };
+    server.use(
+      http.get(`${BASE}/settings`, () => HttpResponse.json(makeSettingsResponse([repo]))),
+      http.get(`${FOLDER_BASE}/folders/:folderUid`, ({ params }) =>
+        HttpResponse.json(makeFolderResponse(params.folderUid as string, 'test-repo'))
+      )
+    );
+    return;
+  }
+
+  if (isOrphaned) {
+    // Settings has repos, but NOT the one the folder's annotation references → orphaned
+    server.use(
+      http.get(`${BASE}/settings`, () => HttpResponse.json(makeSettingsResponse([mockRepository]))),
+      http.get(`${FOLDER_BASE}/folders/:folderUid`, ({ params }) =>
+        HttpResponse.json(makeFolderResponse(params.folderUid as string, 'dead-repo'))
+      )
+    );
+    return;
+  }
+
+  // Non-provisioned default: no repos, plain folder
+  server.use(
+    http.get(`${FOLDER_BASE}/folders/:folderUid`, ({ params }) =>
+      HttpResponse.json(makeFolderResponse(params.folderUid as string))
+    )
+  );
 }
 
 function defaultArgs(overrides: Partial<UseProvisionedImportArgs> = {}): UseProvisionedImportArgs {
@@ -90,41 +141,72 @@ function defaultArgs(overrides: Partial<UseProvisionedImportArgs> = {}): UseProv
 describe('useProvisionedImport', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    config.featureToggles.provisioning = true;
+    mockUseImportProvisionedSave.mockReturnValue({
+      save: mockSave,
+      isLoading: false,
+      error: undefined,
+    });
   });
 
-  it('returns isProvisioned=false when status is not Ready', () => {
-    setupMock({ status: RepoViewStatus.Loading, isLoading: true });
-    const { result } = renderHook(() => useProvisionedImport(defaultArgs()));
+  afterEach(() => {
+    config.featureToggles.provisioning = false;
+  });
+
+  it('returns isProvisioned=false when status is not Ready', async () => {
+    setupRepoState({ isLoading: true });
+    const { result } = renderHook(() => useProvisionedImport(defaultArgs()), {
+      wrapper: getWrapper({ renderWithRouter: true }),
+    });
+
+    // Hook stays in loading state because settings query never resolves
+    await waitFor(() => {
+      expect(result.current.isRepoLoading).toBe(true);
+    });
 
     expect(result.current.isProvisioned).toBe(false);
-    expect(result.current.isRepoLoading).toBe(true);
     expect(result.current.submitDisabled).toBe(true);
   });
 
-  it('returns isOrphaned=true and shouldRenderProvisionedFields=true when orphaned', () => {
-    setupMock({ status: RepoViewStatus.Orphaned });
-    const { result } = renderHook(() => useProvisionedImport(defaultArgs()));
+  it('returns isOrphaned=true and shouldRenderProvisionedFields=true when orphaned', async () => {
+    setupRepoState({ isOrphaned: true });
+    const { result } = renderHook(() => useProvisionedImport(defaultArgs()), {
+      wrapper: getWrapper({ renderWithRouter: true }),
+    });
 
-    expect(result.current.isOrphaned).toBe(true);
+    await waitFor(() => {
+      expect(result.current.isOrphaned).toBe(true);
+    });
+
     expect(result.current.shouldRenderProvisionedFields).toBe(true);
     expect(result.current.submitDisabled).toBe(true);
   });
 
-  it('returns isProvisioned=true when status is Ready with repository', () => {
-    setupMock({ repository: mockRepository, status: RepoViewStatus.Ready });
-    const { result } = renderHook(() => useProvisionedImport(defaultArgs()));
+  it('returns isProvisioned=true when status is Ready with repository', async () => {
+    setupRepoState({ isProvisioned: true });
+    const { result } = renderHook(() => useProvisionedImport(defaultArgs()), {
+      wrapper: getWrapper({ renderWithRouter: true }),
+    });
 
-    expect(result.current.isProvisioned).toBe(true);
+    await waitFor(() => {
+      expect(result.current.isProvisioned).toBe(true);
+    });
+
     expect(result.current.shouldRenderProvisionedFields).toBe(true);
     expect(result.current.submitDisabled).toBe(false);
   });
 
-  it('applies defaults once when provisioned', () => {
-    setupMock({ repository: mockRepository, status: RepoViewStatus.Ready });
+  it('applies defaults once when provisioned', async () => {
+    setupRepoState({ isProvisioned: true });
     const applyDefaults = jest.fn();
-    renderHook(() => useProvisionedImport(defaultArgs({ applyDefaults })));
+    renderHook(() => useProvisionedImport(defaultArgs({ applyDefaults })), {
+      wrapper: getWrapper({ renderWithRouter: true }),
+    });
 
-    expect(applyDefaults).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      expect(applyDefaults).toHaveBeenCalledTimes(1);
+    });
+
     expect(applyDefaults).toHaveBeenCalledWith({
       workflow: 'write',
       ref: 'main',
@@ -133,84 +215,129 @@ describe('useProvisionedImport', () => {
     });
   });
 
-  it('reapplies defaults when repository changes', () => {
+  it('reapplies defaults when repository changes', async () => {
     const applyDefaults = jest.fn();
-    setupMock({ repository: mockRepository, status: RepoViewStatus.Ready });
+    const otherRepo: RepositoryView = { ...mockRepository, name: 'other-repo' };
+
+    // Set up both repos in settings; folder handler returns per-folder annotations
+    server.use(
+      http.get(`${BASE}/settings`, () => HttpResponse.json(makeSettingsResponse([mockRepository, otherRepo]))),
+      http.get(`${FOLDER_BASE}/folders/:folderUid`, ({ params }) => {
+        const uid = params.folderUid as string;
+        const repoName = uid === 'folder-1' ? 'test-repo' : 'other-repo';
+        return HttpResponse.json(makeFolderResponse(uid, repoName));
+      })
+    );
 
     const { rerender } = renderHook((props: UseProvisionedImportArgs) => useProvisionedImport(props), {
       initialProps: defaultArgs({ applyDefaults }),
+      wrapper: getWrapper({ renderWithRouter: true }),
     });
 
-    expect(applyDefaults).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      expect(applyDefaults).toHaveBeenCalledTimes(1);
+    });
 
     // Simulate folder change to a different repo
-    const newRepo: RepositoryView = { ...mockRepository, name: 'other-repo' };
-    mockUseGetResourceRepositoryView.mockReturnValue({
-      repository: newRepo,
-      status: RepoViewStatus.Ready,
-      isLoading: false,
-      isInstanceManaged: false,
-      isReadOnlyRepo: false,
-    });
     rerender(defaultArgs({ applyDefaults, folderUid: 'folder-2' }));
 
-    expect(applyDefaults).toHaveBeenCalledTimes(2);
+    await waitFor(() => {
+      expect(applyDefaults).toHaveBeenCalledTimes(2);
+    });
   });
 
-  it('does not reseed defaults when only getDefaultTitle return value changes', () => {
+  it('does not reseed defaults when only getDefaultTitle return value changes', async () => {
     const applyDefaults = jest.fn();
     // Stable callback identity — the function always returns the same reference
     const stableGetTitle = jest.fn().mockReturnValue('Title A');
-    setupMock({ repository: mockRepository, status: RepoViewStatus.Ready });
+    setupRepoState({ isProvisioned: true });
 
     const { rerender } = renderHook((props: UseProvisionedImportArgs) => useProvisionedImport(props), {
       initialProps: defaultArgs({ applyDefaults, getDefaultTitle: stableGetTitle }),
+      wrapper: getWrapper({ renderWithRouter: true }),
     });
 
-    expect(applyDefaults).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      expect(applyDefaults).toHaveBeenCalledTimes(1);
+    });
 
     // Title changes but callback identity is stable
     stableGetTitle.mockReturnValue('Title B');
     rerender(defaultArgs({ applyDefaults, getDefaultTitle: stableGetTitle }));
 
     // Should NOT re-call because the callback reference didn't change
+    // Wait a tick to confirm no additional call
+    await new Promise((r) => setTimeout(r, 50));
     expect(applyDefaults).toHaveBeenCalledTimes(1);
   });
 
-  it('returns isLPBlocked=true and submitDisabled=true when hasLibraryPanels', () => {
-    setupMock({ repository: mockRepository, status: RepoViewStatus.Ready });
-    const { result } = renderHook(() => useProvisionedImport(defaultArgs({ hasLibraryPanels: true })));
+  it('returns isLPBlocked=true and submitDisabled=true when hasLibraryPanels', async () => {
+    setupRepoState({ isProvisioned: true });
+    const { result } = renderHook(() => useProvisionedImport(defaultArgs({ hasLibraryPanels: true })), {
+      wrapper: getWrapper({ renderWithRouter: true }),
+    });
+
+    await waitFor(() => {
+      expect(result.current.isProvisioned).toBe(true);
+    });
 
     expect(result.current.isLPBlocked).toBe(true);
     expect(result.current.submitDisabled).toBe(true);
   });
 
-  it('returns submitDisabled=true when read-only repo', () => {
-    setupMock({ repository: mockRepository, status: RepoViewStatus.Ready, isReadOnlyRepo: true });
-    const { result } = renderHook(() => useProvisionedImport(defaultArgs()));
+  it('returns submitDisabled=true when read-only repo', async () => {
+    setupRepoState({ isProvisioned: true, isReadOnlyRepo: true });
+    const { result } = renderHook(() => useProvisionedImport(defaultArgs()), {
+      wrapper: getWrapper({ renderWithRouter: true }),
+    });
 
-    expect(result.current.isReadOnlyRepo).toBe(true);
+    await waitFor(() => {
+      expect(result.current.isReadOnlyRepo).toBe(true);
+    });
+
     expect(result.current.submitDisabled).toBe(true);
   });
 
-  it('returns submitDisabled=true when repo lookup errors', () => {
-    setupMock({ status: RepoViewStatus.Error, error: new Error('settings fetch failed') });
-    const { result } = renderHook(() => useProvisionedImport(defaultArgs()));
+  it('returns submitDisabled=true when repo lookup errors', async () => {
+    setupRepoState({ isError: true });
+    const { result } = renderHook(() => useProvisionedImport(defaultArgs()), {
+      wrapper: getWrapper({ renderWithRouter: true }),
+    });
+
+    await waitFor(() => {
+      expect(result.current.submitDisabled).toBe(true);
+    });
 
     expect(result.current.isProvisioned).toBe(false);
-    expect(result.current.submitDisabled).toBe(true);
   });
 
-  it('forwards save from useImportProvisionedSave', () => {
-    setupMock({ repository: mockRepository, status: RepoViewStatus.Ready });
-    const { result } = renderHook(() => useProvisionedImport(defaultArgs()));
+  it('forwards save from useImportProvisionedSave', async () => {
+    setupRepoState({ isProvisioned: true });
+    const { result } = renderHook(() => useProvisionedImport(defaultArgs()), {
+      wrapper: getWrapper({ renderWithRouter: true }),
+    });
+
+    await waitFor(() => {
+      expect(result.current.isProvisioned).toBe(true);
+    });
 
     expect(result.current.save).toBe(mockSave);
   });
 
-  it('forwards error from useImportProvisionedSave', () => {
-    setupMock({ repository: mockRepository, status: RepoViewStatus.Ready }, { error: 'save failed' });
-    const { result } = renderHook(() => useProvisionedImport(defaultArgs()));
+  it('forwards error from useImportProvisionedSave', async () => {
+    setupRepoState({ isProvisioned: true });
+    mockUseImportProvisionedSave.mockReturnValue({
+      save: mockSave,
+      isLoading: false,
+      error: 'save failed',
+    });
+    const { result } = renderHook(() => useProvisionedImport(defaultArgs()), {
+      wrapper: getWrapper({ renderWithRouter: true }),
+    });
+
+    await waitFor(() => {
+      expect(result.current.isProvisioned).toBe(true);
+    });
 
     expect(result.current.error).toBe('save failed');
   });

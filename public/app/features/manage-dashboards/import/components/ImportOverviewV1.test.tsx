@@ -1,14 +1,17 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { HttpResponse, delay, http } from 'msw';
+import { render } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
+import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
+import server from '@grafana/test-utils/server';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
-import {
-  useGetResourceRepositoryView,
-  RepoViewStatus,
-} from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
+import { setupProvisioningMswServer } from 'app/features/provisioning/mocks/server';
 
 import { type DashboardInputs, DashboardSource, LibraryPanelInputState } from '../../types';
 import { useImportProvisionedSave } from '../hooks/useImportProvisionedSave';
@@ -56,57 +59,18 @@ jest.mock('app/features/datasources/components/picker/DataSourcePicker', () => (
   ),
 }));
 
-jest.mock('app/features/provisioning/hooks/useGetResourceRepositoryView', () => ({
-  useGetResourceRepositoryView: jest.fn(),
-  RepoViewStatus: {
-    Disabled: 'disabled',
-    Loading: 'loading',
-    Ready: 'ready',
-    Error: 'error',
-    Orphaned: 'orphaned',
-  },
-}));
-
 jest.mock('../hooks/useImportProvisionedSave', () => ({
   useImportProvisionedSave: jest.fn(),
 }));
 
-jest.mock('app/features/provisioning/components/Shared/ResourceEditFormSharedFields', () => ({
-  ResourceEditFormSharedFields: () => <div data-testid="resource-edit-shared-fields" />,
-}));
-
-jest.mock('app/features/provisioning/components/Shared/RepoInvalidStateBanner', () => ({
-  RepoInvalidStateBanner: ({ noRepository, isReadOnlyRepo }: { noRepository: boolean; isReadOnlyRepo: boolean }) => (
-    <div data-testid="repo-invalid-banner" data-no-repo={noRepository} data-read-only={isReadOnlyRepo} />
-  ),
-}));
-
-jest.mock('app/features/provisioning/Shared/ProvisioningAlert', () => ({
-  ProvisioningAlert: ({ error }: { error: string }) => <div data-testid="provisioning-alert">{error}</div>,
-}));
-
-jest.mock('app/features/provisioning/components/defaults', () => ({
-  getDefaultWorkflow: jest.fn().mockReturnValue('write'),
-  getDefaultRef: jest.fn().mockReturnValue('main'),
-  getCanPushToConfiguredBranch: jest.fn().mockReturnValue(true),
-}));
-
-jest.mock('app/features/provisioning/components/utils/path', () => ({
-  generatePath: jest.fn().mockReturnValue('test-dashboard.json'),
-  slugifyForFilename: jest.fn().mockReturnValue('test-dashboard'),
-  splitPath: jest.fn().mockReturnValue({ directory: '', filename: 'test-dashboard.json' }),
-  joinPath: jest.fn((_dir: string, file: string) => file),
-}));
-
-jest.mock('app/features/provisioning/components/utils/timestamp', () => ({
-  generateTimestamp: jest.fn().mockReturnValue('2026-05-04-abc12'),
-}));
+setupProvisioningMswServer();
 
 const mockGetDashboardAPI = jest.mocked(getDashboardAPI);
-const mockUseGetResourceRepositoryView = jest.mocked(useGetResourceRepositoryView);
 const mockUseImportProvisionedSave = jest.mocked(useImportProvisionedSave);
 
 // --- Helpers ---
+
+const FOLDER_BASE = '/apis/folder.grafana.app/v1beta1/namespaces/:namespace';
 
 const mockRepository: RepositoryView = {
   name: 'test-repo',
@@ -140,7 +104,35 @@ const inputsWithLP: DashboardInputs = {
   ],
 };
 
-function setupMocks({
+function makeFolderResponse(uid: string, repoName?: string) {
+  return {
+    kind: 'Folder',
+    apiVersion: 'folder.grafana.app/v1beta1',
+    metadata: {
+      name: uid,
+      namespace: 'default',
+      uid,
+      creationTimestamp: '2023-01-01T00:00:00Z',
+      annotations: {
+        'grafana.app/createdBy': 'user:1',
+        'grafana.app/updatedBy': 'user:2',
+        ...(repoName
+          ? {
+              [AnnoKeyManagerKind]: ManagerKind.Repo,
+              [AnnoKeyManagerIdentity]: repoName,
+            }
+          : {}),
+      },
+    },
+    spec: { title: 'Test Folder', description: '' },
+  };
+}
+
+function makeSettingsResponse(repos: RepositoryView[]) {
+  return { items: repos, allowImageRendering: true, availableRepositoryTypes: ['github'] };
+}
+
+function setupRepoState({
   isProvisioned = false,
   isReadOnlyRepo = false,
   isOrphaned = false,
@@ -160,46 +152,53 @@ function setupMocks({
     error: undefined,
   });
 
-  if (isError) {
-    mockUseGetResourceRepositoryView.mockReturnValue({
-      status: RepoViewStatus.Error,
-      isLoading: false,
-      isInstanceManaged: false,
-      isReadOnlyRepo: false,
-      error: new Error('settings fetch failed'),
-    });
-  } else if (isLoading) {
-    mockUseGetResourceRepositoryView.mockReturnValue({
-      status: RepoViewStatus.Loading,
-      isLoading: true,
-      isInstanceManaged: false,
-      isReadOnlyRepo: false,
-    });
-  } else if (isOrphaned) {
-    mockUseGetResourceRepositoryView.mockReturnValue({
-      status: RepoViewStatus.Orphaned,
-      isLoading: false,
-      isInstanceManaged: false,
-      isReadOnlyRepo: false,
-      orphanedRepoName: 'dead-repo',
-    });
-  } else if (isProvisioned) {
-    mockUseGetResourceRepositoryView.mockReturnValue({
-      repository: mockRepository,
-      status: RepoViewStatus.Ready,
-      isLoading: false,
-      isInstanceManaged: false,
-      isReadOnlyRepo,
-    });
-  } else {
-    mockUseGetResourceRepositoryView.mockReturnValue({
-      status: RepoViewStatus.Ready,
-      isLoading: false,
-      isInstanceManaged: false,
-      isReadOnlyRepo: false,
-    });
+  if (isLoading) {
+    server.use(
+      http.get(`${BASE}/settings`, async () => {
+        await delay('infinite');
+        return HttpResponse.json(makeSettingsResponse([]));
+      })
+    );
+    return { mockSave };
   }
 
+  if (isError) {
+    server.use(
+      http.get(`${BASE}/settings`, () => HttpResponse.json({ message: 'settings fetch failed' }, { status: 500 }))
+    );
+    return { mockSave };
+  }
+
+  if (isProvisioned || isReadOnlyRepo) {
+    const repo: RepositoryView = {
+      ...mockRepository,
+      workflows: isReadOnlyRepo ? [] : ['write', 'branch'],
+    };
+    server.use(
+      http.get(`${BASE}/settings`, () => HttpResponse.json(makeSettingsResponse([repo]))),
+      http.get(`${FOLDER_BASE}/folders/:folderUid`, ({ params }) =>
+        HttpResponse.json(makeFolderResponse(params.folderUid as string, 'test-repo'))
+      )
+    );
+    return { mockSave };
+  }
+
+  if (isOrphaned) {
+    server.use(
+      http.get(`${BASE}/settings`, () => HttpResponse.json(makeSettingsResponse([mockRepository]))),
+      http.get(`${FOLDER_BASE}/folders/:folderUid`, ({ params }) =>
+        HttpResponse.json(makeFolderResponse(params.folderUid as string, 'dead-repo'))
+      )
+    );
+    return { mockSave };
+  }
+
+  // Non-provisioned: no repos, folder without annotations
+  server.use(
+    http.get(`${FOLDER_BASE}/folders/:folderUid`, ({ params }) =>
+      HttpResponse.json(makeFolderResponse(params.folderUid as string))
+    )
+  );
   return { mockSave };
 }
 
@@ -223,6 +222,7 @@ describe('ImportOverviewV1', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    config.featureToggles.provisioning = true;
     saveDashboard = jest.fn().mockResolvedValue({ url: '/d/test-uid/test-dashboard' });
     mockGetDashboardAPI.mockResolvedValue({
       saveDashboard,
@@ -236,9 +236,13 @@ describe('ImportOverviewV1', () => {
     });
   });
 
+  afterEach(() => {
+    config.featureToggles.provisioning = false;
+  });
+
   describe('standard (non-provisioned) path', () => {
     it('renders the import form', async () => {
-      setupMocks({ isProvisioned: false });
+      setupRepoState({ isProvisioned: false });
       renderOverview();
 
       await waitFor(() => {
@@ -247,16 +251,17 @@ describe('ImportOverviewV1', () => {
     });
 
     it('does not render provisioning shared fields', async () => {
-      setupMocks({ isProvisioned: false });
+      setupRepoState({ isProvisioned: false });
       renderOverview();
 
       await waitFor(() => {
-        expect(screen.queryByTestId('resource-edit-shared-fields')).not.toBeInTheDocument();
+        expect(screen.getByTestId(selectors.components.ImportDashboardForm.submit)).toBeInTheDocument();
       });
+      expect(screen.queryByRole('textbox', { name: /filename/i })).not.toBeInTheDocument();
     });
 
     it('submits via standard API', async () => {
-      setupMocks({ isProvisioned: false });
+      setupRepoState({ isProvisioned: false });
       renderOverview();
       const user = userEvent.setup();
 
@@ -270,18 +275,23 @@ describe('ImportOverviewV1', () => {
 
   describe('provisioned mode', () => {
     it('renders ResourceEditFormSharedFields when folder is repo-managed', async () => {
-      setupMocks({ isProvisioned: true });
+      setupRepoState({ isProvisioned: true });
       renderOverview();
 
       await waitFor(() => {
-        expect(screen.getByTestId('resource-edit-shared-fields')).toBeInTheDocument();
+        expect(screen.getByRole('textbox', { name: /filename/i })).toBeInTheDocument();
       });
     });
 
     it('submits via provisioned save hook', async () => {
-      const { mockSave } = setupMocks({ isProvisioned: true });
+      const { mockSave } = setupRepoState({ isProvisioned: true });
       renderOverview();
       const user = userEvent.setup();
+
+      // Wait for provisioning state to resolve
+      await waitFor(() => {
+        expect(screen.getByRole('textbox', { name: /filename/i })).toBeInTheDocument();
+      });
 
       await user.click(screen.getByTestId(selectors.components.ImportDashboardForm.submit));
 
@@ -297,9 +307,13 @@ describe('ImportOverviewV1', () => {
     });
 
     it('does not call standard API in provisioned mode', async () => {
-      setupMocks({ isProvisioned: true });
+      setupRepoState({ isProvisioned: true });
       renderOverview();
       const user = userEvent.setup();
+
+      await waitFor(() => {
+        expect(screen.getByRole('textbox', { name: /filename/i })).toBeInTheDocument();
+      });
 
       await user.click(screen.getByTestId(selectors.components.ImportDashboardForm.submit));
 
@@ -311,7 +325,7 @@ describe('ImportOverviewV1', () => {
 
   describe('library panel block', () => {
     it('disables submit when LP inputs exist and folder is provisioned', async () => {
-      setupMocks({ isProvisioned: true });
+      setupRepoState({ isProvisioned: true });
       renderOverview(inputsWithLP);
 
       await waitFor(() => {
@@ -321,7 +335,7 @@ describe('ImportOverviewV1', () => {
     });
 
     it('shows LP blocked alert when folder is provisioned', async () => {
-      setupMocks({ isProvisioned: true });
+      setupRepoState({ isProvisioned: true });
       renderOverview(inputsWithLP);
 
       await waitFor(() => {
@@ -330,29 +344,28 @@ describe('ImportOverviewV1', () => {
     });
 
     it('does not show LP alert in non-provisioned mode', async () => {
-      setupMocks({ isProvisioned: false });
+      setupRepoState({ isProvisioned: false });
       renderOverview(inputsWithLP);
 
       await waitFor(() => {
-        expect(screen.queryByText(/library panels not supported/i)).not.toBeInTheDocument();
+        expect(screen.getByTestId(selectors.components.ImportDashboardForm.submit)).toBeInTheDocument();
       });
+      expect(screen.queryByText(/library panels not supported/i)).not.toBeInTheDocument();
     });
   });
 
   describe('read-only repo', () => {
-    it('renders RepoInvalidStateBanner when repo is read-only', async () => {
-      setupMocks({ isProvisioned: true, isReadOnlyRepo: true });
+    it('renders read-only banner when repo is read-only', async () => {
+      setupRepoState({ isProvisioned: true, isReadOnlyRepo: true });
       renderOverview();
 
       await waitFor(() => {
-        const banner = screen.getByTestId('repo-invalid-banner');
-        expect(banner).toBeInTheDocument();
-        expect(banner).toHaveAttribute('data-read-only', 'true');
+        expect(screen.getByText(/This repository is read only/i)).toBeInTheDocument();
       });
     });
 
     it('disables submit when repo is read-only', async () => {
-      setupMocks({ isProvisioned: true, isReadOnlyRepo: true });
+      setupRepoState({ isProvisioned: true, isReadOnlyRepo: true });
       renderOverview();
 
       await waitFor(() => {
@@ -363,7 +376,7 @@ describe('ImportOverviewV1', () => {
 
   describe('orphaned folder', () => {
     it('disables submit when folder is orphaned', async () => {
-      setupMocks({ isOrphaned: true });
+      setupRepoState({ isOrphaned: true });
       renderOverview();
 
       await waitFor(() => {
@@ -374,7 +387,7 @@ describe('ImportOverviewV1', () => {
 
   describe('loading state', () => {
     it('disables submit while repository is loading', async () => {
-      setupMocks({ isLoading: true });
+      setupRepoState({ isLoading: true });
       renderOverview();
 
       await waitFor(() => {
@@ -384,7 +397,7 @@ describe('ImportOverviewV1', () => {
   });
   describe('blocked-submit guards', () => {
     it('LP-blocked provisioned submit does not call either save path via programmatic submit', async () => {
-      const { mockSave } = setupMocks({ isProvisioned: true });
+      const { mockSave } = setupRepoState({ isProvisioned: true });
       renderOverview(inputsWithLP);
 
       await waitFor(() => {
@@ -402,7 +415,7 @@ describe('ImportOverviewV1', () => {
     });
 
     it('read-only provisioned submit does not call either save path via programmatic submit', async () => {
-      const { mockSave } = setupMocks({ isProvisioned: true, isReadOnlyRepo: true });
+      const { mockSave } = setupRepoState({ isProvisioned: true, isReadOnlyRepo: true });
       renderOverview();
 
       await waitFor(() => {
@@ -419,7 +432,7 @@ describe('ImportOverviewV1', () => {
     });
 
     it('orphaned folder programmatic submit does not call standard API', async () => {
-      setupMocks({ isOrphaned: true });
+      setupRepoState({ isOrphaned: true });
       renderOverview();
 
       const form = screen.getByTestId(selectors.components.ImportDashboardForm.submit).closest('form')!;
@@ -431,7 +444,7 @@ describe('ImportOverviewV1', () => {
     });
 
     it('loading state programmatic submit does not call standard API', async () => {
-      setupMocks({ isLoading: true });
+      setupRepoState({ isLoading: true });
       renderOverview();
 
       const form = screen.getByTestId(selectors.components.ImportDashboardForm.submit).closest('form')!;
@@ -444,7 +457,7 @@ describe('ImportOverviewV1', () => {
   });
 
   it('error state programmatic submit does not call standard API', async () => {
-    setupMocks({ isError: true });
+    setupRepoState({ isError: true });
     renderOverview();
 
     const form = screen.getByTestId(selectors.components.ImportDashboardForm.submit).closest('form')!;
@@ -456,14 +469,12 @@ describe('ImportOverviewV1', () => {
   });
 
   describe('orphaned folder banner', () => {
-    it('renders RepoInvalidStateBanner when folder is orphaned', async () => {
-      setupMocks({ isOrphaned: true });
+    it('renders repository-not-found banner when folder is orphaned', async () => {
+      setupRepoState({ isOrphaned: true });
       renderOverview();
 
       await waitFor(() => {
-        const banner = screen.getByTestId('repo-invalid-banner');
-        expect(banner).toBeInTheDocument();
-        expect(banner).toHaveAttribute('data-no-repo', 'true');
+        expect(screen.getByText(/Repository not found/i)).toBeInTheDocument();
       });
     });
   });
