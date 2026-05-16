@@ -488,7 +488,7 @@ describe('HeatmapTooltip', () => {
       expect(screen.getByText(/1970-01-01/)).toBeVisible();
     });
 
-    it('uses string fallback when x field has no display and is not time type', () => {
+    it('uses xBucketMin for tooltip header when x field is numeric (not time)', () => {
       const heatmap = createDataFrame({
         meta: { type: DataFrameType.HeatmapCells },
         fields: [
@@ -510,7 +510,8 @@ describe('HeatmapTooltip', () => {
       render(<HeatmapTooltip {...defaultProps} dataRef={dataRef} dataIdxs={[0, 0, 0]} />);
 
       expect(screen.getByTestId(selectors.components.Panels.Visualization.Tooltip.Wrapper)).toBeVisible();
-      expect(screen.getByText('200')).toBeVisible();
+      // numeric x-axis uses xBucketMin to avoid off-by-one (xBucketMin=100, xBucketMax=200)
+      expect(screen.getByText('100')).toBeVisible();
     });
   });
 
