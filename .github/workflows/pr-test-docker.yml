@@ -1,5 +1,7 @@
 name: Test Dockerfile
 
+permissions: {}
+
 on:
   pull_request:
     paths:
@@ -21,9 +23,7 @@ on:
       - .yarn/**
       - tsconfig.json
       - '**.js'
-      # We only want the top directory here.
       - '*.ts'
-      # But this one we want all
       - '**.config.ts'
       - scripts/**
       - emails/**
@@ -32,17 +32,111 @@ on:
       - embed.go
       - packaging/docker/**
       - .github/workflows/pr-test-docker.yml
+      - .github/workflows/build-docker-variants.yml
 
 jobs:
-  build-dockerfile:
-    runs-on: ubuntu-x64-large-io
+  # ── Path 1 ────────────────────────────────────────────────────────────────
+  # Full source build inside Docker. Validates that the complete compilation
+  # pipeline (go-builder + js-builder + final stage) works end-to-end.
+  build-full:
+    name: build / full source (alpine)
+    runs-on: ubuntu-x64-large
     permissions:
       contents: read
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
       - uses: docker/setup-docker-action@3fb92d6d9c634363128c8cce4bc3b2826526370a # v4
-      - name: Build Dockerfile
-        run: make build-docker-full
+      - name: Set up Docker Buildx
+        run: docker buildx create --use
+      - name: Build alpine (full source)
+        run: make build-docker-full DOCKER_BUILD_ARGS=--load
+
+  # ── Path 2 ────────────────────────────────────────────────────────────────
+  # Prod-like build: compile frontend + backend in parallel → assemble tarball
+  # → build all 6 Docker variants. Mirrors the release-build.yml structure so
+  # the same code paths are exercised on every PR.
+
+  build-frontend:
+    name: build / frontend
+    runs-on: ubuntu-x64-large
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-node
+      - name: Install JS dependencies
+        run: yarn install --immutable
+      - name: Build frontend
+        run: yarn build
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        with:
+          name: pr-frontend
+          path: public
+          retention-days: 1
+
+  build-backend:
+    name: build / backend (linux-amd64)
+    runs-on: ubuntu-x64-large
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.build.outputs.version }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - id: build
+        uses: ./.github/actions/build-go
+        with:
+          build-number: ${{ github.run_id }}
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        with:
+          name: pr-backend-linux-amd64
+          path: bin/linux/amd64
+          retention-days: 1
+
+  build-source-targz:
+    name: build / source tarball
+    runs-on: ubuntu-x64-large
+    needs:
+      - build-frontend
+      - build-backend
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ needs.build-backend.outputs.version }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/build-targz
+        with:
+          build-number: ${{ github.run_id }}
+          build-version: ${{ needs.build-backend.outputs.version }}
+          frontend-artifact: pr-frontend
+          backend-artifact: pr-backend-linux-amd64
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        with:
+          name: pr-source-targz
+          path: dist/*.tar.gz
+          retention-days: 1
+
+  build-docker-variants:
+    name: build / variants (targz)
+    needs: build-source-targz
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/build-docker-variants.yml
+    with:
+      targz-artifact-name: pr-source-targz
+      name: linux-amd64
+      os: linux
+      arch: amd64
+      arch-tag: amd64
+      version: ${{ needs.build-source-targz.outputs.version }}
+      build-number: ${{ github.run_id }}

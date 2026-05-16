@@ -199,13 +199,6 @@ func schema_pkg_apis_preferences_v1alpha1_PreferencesSpec(ref common.ReferenceCa
 							Format:      "",
 						},
 					},
-					"regionalFormat": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Selected locale (beta)",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
 					"queryHistory": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Explore query history preferences",

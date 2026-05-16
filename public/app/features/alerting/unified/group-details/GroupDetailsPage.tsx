@@ -112,6 +112,7 @@ function GroupDetailsPageContent({ dataSourceUid, namespaceId, groupName }: Grou
 
   return (
     <AlertingPageWrapper
+      key={groupName}
       pageNav={{
         text: groupName,
         parentItem: {

@@ -11,6 +11,9 @@ type TeamGroupsHandler interface {
 	rest.Scoper
 	rest.StorageMetadata
 	rest.Connecter
+	// SetTeamGetter must be called once during apiserver setup, after the
+	// Team storage is built and before Connect serves traffic.
+	SetTeamGetter(rest.Getter)
 }
 
 type SearchHandler interface {
