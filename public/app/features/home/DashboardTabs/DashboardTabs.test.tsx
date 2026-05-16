@@ -84,7 +84,7 @@ describe('DashboardTabs', () => {
     render(<DashboardTabs />);
 
     await waitFor(() => {
-      expect(screen.getByText('Dashboards you\u2019ve recently viewed will appear here.')).toBeInTheDocument();
+      expect(screen.getByText("Dashboards you've recently viewed will appear here.")).toBeInTheDocument();
     });
   });
 
