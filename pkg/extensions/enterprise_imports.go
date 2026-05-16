@@ -449,6 +449,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/pluginsintegration/sandbox"
 	_ "github.com/grafana/grafana/pkg/services/pluginsintegration/serviceregistration"
 	_ "github.com/grafana/grafana/pkg/services/preference"
+	_ "github.com/grafana/grafana/pkg/services/preference/prefapi"
 	_ "github.com/grafana/grafana/pkg/services/preference/prefimpl"
 	_ "github.com/grafana/grafana/pkg/services/promtypemigration"
 	_ "github.com/grafana/grafana/pkg/services/provisioning"

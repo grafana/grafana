@@ -17,6 +17,7 @@ import (
 
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard/home"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errhttp"
@@ -32,7 +33,7 @@ type merger struct {
 }
 
 func newMerger(cfg *setting.Cfg) *merger {
-	return &merger{
+	m := &merger{
 		defaults: preferences.PreferencesSpec{
 			Theme:     &cfg.DefaultTheme,
 			Timezone:  &cfg.DateFormats.DefaultTimezone,
@@ -40,6 +41,10 @@ func newMerger(cfg *setting.Cfg) *merger {
 			Language:  &cfg.DefaultLanguage,
 		},
 	}
+	if home.HasCustomHome(cfg) {
+		m.defaults.HomeDashboardUID = new(home.DASHBOARD_NAME)
+	}
+	return m
 }
 
 func (s *merger) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *builder.APIRoutes {

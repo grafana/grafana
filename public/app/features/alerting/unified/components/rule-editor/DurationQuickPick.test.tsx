@@ -26,4 +26,10 @@ describe('PendingPeriodQuickPick', () => {
     await userEvent.click(screen.getByRole('option', { name: 'None' }));
     expect(onSelect).toHaveBeenCalledWith('0s');
   });
+
+  it('renders a single None pill when the interval is incomplete mid-keystroke', () => {
+    render(<DurationQuickPick onSelect={jest.fn()} groupEvaluationInterval="3" selectedDuration="0s" />);
+
+    expect(screen.getAllByRole('option', { name: 'None' })).toHaveLength(1);
+  });
 });

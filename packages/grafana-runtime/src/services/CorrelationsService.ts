@@ -66,6 +66,7 @@ export interface CorrelationsData {
   page: number;
   limit: number;
   totalCount: number;
+  doesContinue?: boolean;
 }
 
 /**

@@ -224,9 +224,15 @@ func (hs *HTTPServer) DeleteDashboardSnapshot(c *contextmodel.ReqContext) respon
 	// to the user’s org role, which for editors and admins would essentially always be allowed here. With RBAC,
 	// all permissions must be explicit, so the lack of a rule for dashboard 0 means the guardian will reject.
 	dashboardID := queryResult.Dashboard.Get("id").MustInt64()
+	dashboardUID := queryResult.Dashboard.Get("uid").MustString()
 
-	if dashboardID != 0 {
-		evaluator := ac.EvalPermission(dashboards.ActionDashboardsWrite, dashboards.ScopeDashboardsProvider.GetResourceScope(strconv.FormatInt(dashboardID, 10)))
+	if dashboardID != 0 || dashboardUID != "" {
+		var evaluator ac.Evaluator
+		if dashboardID != 0 {
+			evaluator = ac.EvalPermission(dashboards.ActionDashboardsWrite, dashboards.ScopeDashboardsProvider.GetResourceScope(strconv.FormatInt(dashboardID, 10)))
+		} else {
+			evaluator = ac.EvalPermission(dashboards.ActionDashboardsWrite, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dashboardUID))
+		}
 		canEdit, err := hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluator)
 		// check for permissions only if the dashboard is found
 		if err != nil && !errors.Is(err, dashboards.ErrDashboardNotFound) {
