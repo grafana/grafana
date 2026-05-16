@@ -1,16 +1,11 @@
-import { Box, LoadingPlaceholder } from '@grafana/ui';
+import { PageLoader as PageLoaderUI } from '@grafana/ui';
 
-interface Props {
-  pageName?: string;
-}
+import { Branding } from '../Branding/Branding';
 
-const PageLoader = ({ pageName = '' }: Props) => {
-  const loadingText = `Loading ${pageName}...`;
+export default function PageLoader() {
   return (
-    <Box display="flex" alignItems="center" direction="column" justifyContent="center" paddingTop={10}>
-      <LoadingPlaceholder text={loadingText} />
-    </Box>
+    <PageLoaderUI>
+      <Branding.LoginLogo />
+    </PageLoaderUI>
   );
-};
-
-export default PageLoader;
+}
