@@ -45,7 +45,7 @@ export function RecentDashboardsTab({ dashboards, loading, error, retry, folders
       <EmptyState
         hideImage
         variant="call-to-action"
-        message={t('home.recent-dashboards-tab.empty', 'Dashboards you\u2019ve recently viewed will appear here.')}
+        message={t('home.recent-dashboards-tab.empty', "Dashboards you've recently viewed will appear here.")}
         button={
           canCreate ? (
             <LinkButton icon="plus" href="/dashboard/new">
