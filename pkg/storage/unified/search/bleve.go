@@ -1918,7 +1918,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 			}
 			queries = append(queries, disjoin)
 		} else {
-			// When using a
+			// Free-text search uses explicit query fields so each title field can use the query type that matches its analyzer.
 			searchrequest.Fields = append(searchrequest.Fields, resource.SEARCH_FIELD_SCORE)
 			disjoin := bleve.NewDisjunctionQuery()
 			queries = append(queries, disjoin)
@@ -1940,19 +1940,6 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 						Boost: 1, // ngram analyzer (partial/prefix matching)
 					},
 				}
-			} else if b.indexMetrics != nil && b.indexMetrics.SearchLegacyQueryFields != nil {
-				// Track requests from clients that don't yet include title_ngram in their query fields.
-				// When this counter stops incrementing, it is safe to remove the ngram mapping from the title field.
-				hasNgram := false
-				for _, f := range queryFields {
-					if f.Name == resource.SEARCH_FIELD_TITLE_NGRAM {
-						hasNgram = true
-						break
-					}
-				}
-				if !hasNgram {
-					b.indexMetrics.SearchLegacyQueryFields.Inc()
-				}
 			}
 
 			for _, field := range queryFields {
@@ -1966,12 +1953,14 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 					disjoin.AddQuery(q)
 
 				case resourcepb.QueryFieldType_KEYWORD:
+					// Bleve TermQuery is an exact token lookup: it does not analyze or lowercase the query.
 					q := bleve.NewTermQuery(strings.ToLower(req.Query))
 					q.SetBoost(float64(field.Boost))
 					q.SetField(field.Name)
 					disjoin.AddQuery(q)
 
 				case resourcepb.QueryFieldType_PHRASE:
+					// Bleve phrase queries are different from our title_phrase field: they match adjacent analyzed tokens.
 					q := bleve.NewMatchPhraseQuery(req.Query)
 					q.SetBoost(float64(field.Boost))
 					q.SetField(field.Name)
@@ -2256,9 +2245,13 @@ var textSortFields = map[string]string{
 	resource.SEARCH_FIELD_TITLE: resource.SEARCH_FIELD_TITLE_PHRASE,
 }
 
-const lowerCase = "phrase"
+const (
+	lowerCase            = "phrase"
+	whitespaceCharacters = " \t\r\n"
+)
 
-// termField fields to use termQuery for filtering
+// termFields are fields where filter values with separators are split and matched token-by-token.
+// This is unrelated to Bleve TermQuery, which is an exact lookup of one indexed token.
 var termFields = []string{
 	resource.SEARCH_FIELD_TITLE,
 }
@@ -2301,12 +2294,12 @@ func requirementQuery(req *resourcepb.Requirement, prefix string) (query.Query, 
 
 		if len(req.Values) == 1 {
 			filter := filterValue(req.Key, req.Values[0])
-			return newQuery(req.Key, filter, prefix), nil
+			return newFilterQuery(req.Key, filter, prefix), nil
 		}
 
 		conjuncts := []query.Query{}
 		for _, v := range req.Values {
-			q := newQuery(req.Key, filterValue(req.Key, v), prefix)
+			q := newFilterQuery(req.Key, filterValue(req.Key, v), prefix)
 			conjuncts = append(conjuncts, q)
 		}
 
@@ -2321,7 +2314,7 @@ func requirementQuery(req *resourcepb.Requirement, prefix string) (query.Query, 
 			if useExactTermQuery {
 				return newExactTermsQuery(req.Key, req.Values[0], prefix), nil
 			}
-			q := newQuery(req.Key, filterValue(req.Key, req.Values[0]), prefix)
+			q := newFilterQuery(req.Key, filterValue(req.Key, req.Values[0]), prefix)
 			return q, nil
 		}
 
@@ -2331,7 +2324,7 @@ func requirementQuery(req *resourcepb.Requirement, prefix string) (query.Query, 
 			if useExactTermQuery {
 				q = newExactTermsQuery(req.Key, v, prefix)
 			} else {
-				q = newQuery(req.Key, filterValue(req.Key, v), prefix)
+				q = newFilterQuery(req.Key, filterValue(req.Key, v), prefix)
 			}
 			disjuncts = append(disjuncts, q)
 		}
@@ -2343,7 +2336,7 @@ func requirementQuery(req *resourcepb.Requirement, prefix string) (query.Query, 
 
 		var mustNotQueries []query.Query
 		for _, value := range req.Values {
-			q := newQuery(req.Key, filterValue(req.Key, value), prefix)
+			q := newFilterQuery(req.Key, filterValue(req.Key, value), prefix)
 			mustNotQueries = append(mustNotQueries, q)
 		}
 		boolQuery.AddMustNot(mustNotQueries...)
@@ -2371,6 +2364,12 @@ func requirementQuery(req *resourcepb.Requirement, prefix string) (query.Query, 
 // matches word-level wildcards like "hell*") and "title_phrase" (keyword-analyzed,
 // matches full-phrase wildcards like "*grafana dev overview*").
 func addWildcardQueries(disjoin *query.DisjunctionQuery, pattern string, field string) {
+	if field == resource.SEARCH_FIELD_TITLE {
+		// Bleve does not analyze wildcard patterns. The title field is lowercased by the standard analyzer,
+		// and title_phrase is lowercased when the document is prepared.
+		pattern = strings.ToLower(pattern)
+	}
+
 	wq := bleve.NewWildcardQuery(pattern)
 	wq.SetField(field)
 	disjoin.AddQuery(wq)
@@ -2380,6 +2379,40 @@ func addWildcardQueries(disjoin *query.DisjunctionQuery, pattern string, field s
 		wPhrase.SetField(resource.SEARCH_FIELD_TITLE_PHRASE)
 		disjoin.AddQuery(wPhrase)
 	}
+}
+
+func newFilterQuery(key string, value string, prefix string) query.Query {
+	if key != resource.SEARCH_FIELD_TITLE {
+		return newQuery(key, value, prefix)
+	}
+
+	// Title exact matching and partial matching live in separate index fields,
+	// but the title filter API predates those internal fields.
+	queries := []query.Query{
+		newExactTermsQuery(resource.SEARCH_FIELD_TITLE_PHRASE, strings.ToLower(value), prefix),
+		newQuery(resource.SEARCH_FIELD_TITLE, value, prefix),
+	}
+	// Only use title_ngram for single-token title filters. Multi-word filters are handled by title_phrase/title;
+	// adding title_ngram can broaden them after removeSmallTerms drops short words, for example "what\"s up" becomes "what".
+	if !strings.ContainsAny(value, whitespaceCharacters) {
+		queries = append(queries, newTitleNgramQuery(value, prefix))
+	}
+	return bleve.NewDisjunctionQuery(queries...)
+}
+
+func newTitleNgramQuery(value string, prefix string) query.Query {
+	q := bleve.NewMatchQuery(removeSmallTerms(splitTermCharacters(value)))
+	q.SetField(prefix + resource.SEARCH_FIELD_TITLE_NGRAM)
+	q.Analyzer = TITLE_ANALYZER
+	q.Operator = query.MatchQueryOperatorAnd
+	return q
+}
+
+func splitTermCharacters(value string) string {
+	for _, c := range TermCharacters {
+		value = strings.ReplaceAll(value, c, " ")
+	}
+	return value
 }
 
 // newQuery will create a query that will match the value or the tokens of the value
@@ -2393,7 +2426,7 @@ func newQuery(key string, value string, prefix string) query.Query {
 		q.SetField(prefix + key)
 		return q
 	}
-	delimiter, ok := hasTerms(value)
+	delimiter, ok := firstTermSeparator(value)
 	if slices.Contains(termFields, key) && ok {
 		return newTermsQuery(key, value, delimiter, prefix)
 	}
@@ -2411,7 +2444,8 @@ func newTermsQuery(key string, value string, delimiter string, prefix string) qu
 	return bleve.NewDisjunctionQuery(q, cq)
 }
 
-// newExactTermsQuery will create a query that will match on term without any extra queries
+// newExactTermsQuery uses Bleve TermQuery for exact token matching.
+// The input must already match how the field was indexed; TermQuery does not run an analyzer.
 func newExactTermsQuery(key string, value string, prefix string) query.Query {
 	// won't match with ending space
 	value = strings.TrimSuffix(value, " ")
@@ -2425,7 +2459,7 @@ func newExactTermsQuery(key string, value string, prefix string) query.Query {
 func newMatchAllTokensQuery(tokens []string, key string, prefix string) query.Query {
 	cq := bleve.NewConjunctionQuery()
 	for _, token := range tokens {
-		_, ok := hasTerms(token)
+		_, ok := firstTermSeparator(token)
 		if ok {
 			tq := bleve.NewTermQuery(token)
 			tq.SetField(prefix + key)
@@ -2848,8 +2882,9 @@ func (s *batchAuthzSearcher) Weight() float64 {
 	return s.searcher.Weight()
 }
 
-// hasTerms - any value that will be split into multiple tokens
-var hasTerms = func(v string) (string, bool) {
+// firstTermSeparator returns the first configured separator found in v.
+// Title filters use the returned separator to preserve legacy token-by-token matching for values like "foo-bar".
+func firstTermSeparator(v string) (string, bool) {
 	for _, c := range TermCharacters {
 		if strings.Contains(v, c) {
 			return c, true
