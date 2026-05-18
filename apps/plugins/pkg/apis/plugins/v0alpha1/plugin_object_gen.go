@@ -21,14 +21,11 @@ type Plugin struct {
 
 	// Spec is the spec of the Plugin
 	Spec PluginSpec `json:"spec" yaml:"spec"`
-
-	Status PluginStatus `json:"status" yaml:"status"`
 }
 
 func NewPlugin() *Plugin {
 	return &Plugin{
-		Spec:   *NewPluginSpec(),
-		Status: *NewPluginStatus(),
+		Spec: *NewPluginSpec(),
 	}
 }
 
@@ -46,15 +43,11 @@ func (o *Plugin) SetSpec(spec any) error {
 }
 
 func (o *Plugin) GetSubresources() map[string]any {
-	return map[string]any{
-		"status": o.Status,
-	}
+	return map[string]any{}
 }
 
 func (o *Plugin) GetSubresource(name string) (any, bool) {
 	switch name {
-	case "status":
-		return o.Status, true
 	default:
 		return nil, false
 	}
@@ -62,13 +55,6 @@ func (o *Plugin) GetSubresource(name string) (any, bool) {
 
 func (o *Plugin) SetSubresource(name string, value any) error {
 	switch name {
-	case "status":
-		cast, ok := value.(PluginStatus)
-		if !ok {
-			return fmt.Errorf("cannot set status type %#v, not of type PluginStatus", value)
-		}
-		o.Status = cast
-		return nil
 	default:
 		return fmt.Errorf("subresource '%s' does not exist", name)
 	}
@@ -240,7 +226,6 @@ func (o *Plugin) DeepCopyInto(dst *Plugin) {
 	dst.TypeMeta.Kind = o.TypeMeta.Kind
 	o.ObjectMeta.DeepCopyInto(&dst.ObjectMeta)
 	o.Spec.DeepCopyInto(&dst.Spec)
-	o.Status.DeepCopyInto(&dst.Status)
 }
 
 func (Plugin) OpenAPIModelName() string {
@@ -318,17 +303,5 @@ func (s *PluginSpec) DeepCopy() *PluginSpec {
 
 // DeepCopyInto deep copies Spec into another Spec object
 func (s *PluginSpec) DeepCopyInto(dst *PluginSpec) {
-	resource.CopyObjectInto(dst, s)
-}
-
-// DeepCopy creates a full deep copy of PluginStatus
-func (s *PluginStatus) DeepCopy() *PluginStatus {
-	cpy := &PluginStatus{}
-	s.DeepCopyInto(cpy)
-	return cpy
-}
-
-// DeepCopyInto deep copies PluginStatus into another PluginStatus object
-func (s *PluginStatus) DeepCopyInto(dst *PluginStatus) {
 	resource.CopyObjectInto(dst, s)
 }

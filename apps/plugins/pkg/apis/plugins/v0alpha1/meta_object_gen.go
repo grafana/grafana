@@ -21,14 +21,11 @@ type Meta struct {
 
 	// Spec is the spec of the Meta
 	Spec MetaSpec `json:"spec" yaml:"spec"`
-
-	Status MetaStatus `json:"status" yaml:"status"`
 }
 
 func NewMeta() *Meta {
 	return &Meta{
-		Spec:   *NewMetaSpec(),
-		Status: *NewMetaStatus(),
+		Spec: *NewMetaSpec(),
 	}
 }
 
@@ -46,15 +43,11 @@ func (o *Meta) SetSpec(spec any) error {
 }
 
 func (o *Meta) GetSubresources() map[string]any {
-	return map[string]any{
-		"status": o.Status,
-	}
+	return map[string]any{}
 }
 
 func (o *Meta) GetSubresource(name string) (any, bool) {
 	switch name {
-	case "status":
-		return o.Status, true
 	default:
 		return nil, false
 	}
@@ -62,13 +55,6 @@ func (o *Meta) GetSubresource(name string) (any, bool) {
 
 func (o *Meta) SetSubresource(name string, value any) error {
 	switch name {
-	case "status":
-		cast, ok := value.(MetaStatus)
-		if !ok {
-			return fmt.Errorf("cannot set status type %#v, not of type MetaStatus", value)
-		}
-		o.Status = cast
-		return nil
 	default:
 		return fmt.Errorf("subresource '%s' does not exist", name)
 	}
@@ -240,7 +226,6 @@ func (o *Meta) DeepCopyInto(dst *Meta) {
 	dst.TypeMeta.Kind = o.TypeMeta.Kind
 	o.ObjectMeta.DeepCopyInto(&dst.ObjectMeta)
 	o.Spec.DeepCopyInto(&dst.Spec)
-	o.Status.DeepCopyInto(&dst.Status)
 }
 
 func (Meta) OpenAPIModelName() string {
@@ -318,17 +303,5 @@ func (s *MetaSpec) DeepCopy() *MetaSpec {
 
 // DeepCopyInto deep copies Spec into another Spec object
 func (s *MetaSpec) DeepCopyInto(dst *MetaSpec) {
-	resource.CopyObjectInto(dst, s)
-}
-
-// DeepCopy creates a full deep copy of MetaStatus
-func (s *MetaStatus) DeepCopy() *MetaStatus {
-	cpy := &MetaStatus{}
-	s.DeepCopyInto(cpy)
-	return cpy
-}
-
-// DeepCopyInto deep copies MetaStatus into another MetaStatus object
-func (s *MetaStatus) DeepCopyInto(dst *MetaStatus) {
 	resource.CopyObjectInto(dst, s)
 }

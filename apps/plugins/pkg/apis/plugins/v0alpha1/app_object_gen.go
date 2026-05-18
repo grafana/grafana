@@ -21,14 +21,11 @@ type App struct {
 
 	// Spec is the spec of the App
 	Spec AppSpec `json:"spec" yaml:"spec"`
-
-	Status AppStatus `json:"status" yaml:"status"`
 }
 
 func NewApp() *App {
 	return &App{
-		Spec:   *NewAppSpec(),
-		Status: *NewAppStatus(),
+		Spec: *NewAppSpec(),
 	}
 }
 
@@ -46,15 +43,11 @@ func (o *App) SetSpec(spec any) error {
 }
 
 func (o *App) GetSubresources() map[string]any {
-	return map[string]any{
-		"status": o.Status,
-	}
+	return map[string]any{}
 }
 
 func (o *App) GetSubresource(name string) (any, bool) {
 	switch name {
-	case "status":
-		return o.Status, true
 	default:
 		return nil, false
 	}
@@ -62,13 +55,6 @@ func (o *App) GetSubresource(name string) (any, bool) {
 
 func (o *App) SetSubresource(name string, value any) error {
 	switch name {
-	case "status":
-		cast, ok := value.(AppStatus)
-		if !ok {
-			return fmt.Errorf("cannot set status type %#v, not of type AppStatus", value)
-		}
-		o.Status = cast
-		return nil
 	default:
 		return fmt.Errorf("subresource '%s' does not exist", name)
 	}
@@ -240,7 +226,6 @@ func (o *App) DeepCopyInto(dst *App) {
 	dst.TypeMeta.Kind = o.TypeMeta.Kind
 	o.ObjectMeta.DeepCopyInto(&dst.ObjectMeta)
 	o.Spec.DeepCopyInto(&dst.Spec)
-	o.Status.DeepCopyInto(&dst.Status)
 }
 
 func (App) OpenAPIModelName() string {
@@ -318,17 +303,5 @@ func (s *AppSpec) DeepCopy() *AppSpec {
 
 // DeepCopyInto deep copies Spec into another Spec object
 func (s *AppSpec) DeepCopyInto(dst *AppSpec) {
-	resource.CopyObjectInto(dst, s)
-}
-
-// DeepCopy creates a full deep copy of AppStatus
-func (s *AppStatus) DeepCopy() *AppStatus {
-	cpy := &AppStatus{}
-	s.DeepCopyInto(cpy)
-	return cpy
-}
-
-// DeepCopyInto deep copies AppStatus into another AppStatus object
-func (s *AppStatus) DeepCopyInto(dst *AppStatus) {
 	resource.CopyObjectInto(dst, s)
 }

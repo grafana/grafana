@@ -3,11 +3,13 @@ package plugins
 config: {
 	codegen: {
 		goGenPath: "./pkg/apis"
+
+		// should this apply to everything?
+		enableOperatorStatusGeneration: false
 	}
 	definitions: {
-		genManifest:                    false
-		genCRDs:                        false
-		enableOperatorStatusGeneration: true // ???? do we always want this?
+		genManifest: false
+		genCRDs:     false
 	}
 	kinds: {
 		grouping: "group"
