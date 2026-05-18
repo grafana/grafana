@@ -934,6 +934,84 @@ func withIndexMinUpdateInterval(d time.Duration) setupOption {
 	}
 }
 
+func TestMemoryBleveIndexCanBeCopiedToFilesystem(t *testing.T) {
+	mapper, err := GetBleveMappings(nil, nil)
+	require.NoError(t, err)
+
+	buildTime := time.Date(2026, 5, 18, 10, 0, 0, 0, time.UTC)
+	selectableFields := []string{"team"}
+	source, err := newBleveIndex("", mapper, buildTime, buildVersion, selectableFields)
+	require.NoError(t, err)
+	defer func() { require.NoError(t, source.Close()) }()
+
+	key := &resourcepb.ResourceKey{
+		Namespace: "default",
+		Group:     "dashboard.grafana.app",
+		Resource:  "dashboards",
+		Name:      "dash-1",
+	}
+	wrapped := &bleveIndex{index: source}
+	require.NoError(t, wrapped.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+		{
+			Action: resource.ActionIndex,
+			Doc: &resource.IndexableDocument{
+				Key:   key,
+				Name:  key.Name,
+				Title: "Production Overview",
+			},
+		},
+		{
+			Action: resource.ActionIndex,
+			Doc: &resource.IndexableDocument{
+				Key: &resourcepb.ResourceKey{
+					Namespace: key.Namespace,
+					Group:     key.Group,
+					Resource:  key.Resource,
+					Name:      "dash-2",
+				},
+				Name:  "dash-2",
+				Title: "Staging Overview",
+			},
+		},
+	}}))
+	require.NoError(t, setRV(source, 42))
+
+	copyable, ok := source.(bleve.IndexCopyable)
+	require.True(t, ok)
+
+	destDir := filepath.Join(t.TempDir(), "filesystem-index")
+	require.NoError(t, copyable.CopyTo(bleve.FileSystemDirectory(destDir)))
+
+	copied, err := bleve.OpenUsing(destDir, map[string]interface{}{"bolt_timeout": boltTimeout})
+	require.NoError(t, err)
+	defer func() { require.NoError(t, copied.Close()) }()
+
+	count, err := copied.DocCount()
+	require.NoError(t, err)
+	assert.Equal(t, uint64(2), count)
+
+	query := bleve.NewTermQuery("production overview")
+	query.SetField(resource.SEARCH_FIELD_TITLE_PHRASE)
+	result, err := copied.Search(bleve.NewSearchRequest(query))
+	require.NoError(t, err)
+	require.Len(t, result.Hits, 1)
+	assert.Equal(t, resource.SearchID(key), result.Hits[0].ID)
+
+	rv, err := getRV(copied)
+	require.NoError(t, err)
+	assert.Equal(t, int64(42), rv)
+
+	buildInfo, err := getBuildInfo(copied)
+	require.NoError(t, err)
+	assert.Equal(t, buildTime.Unix(), buildInfo.BuildTime)
+	assert.Equal(t, buildVersion, buildInfo.BuildVersion)
+	assert.Equal(t, selectableFields, buildInfo.SelectableFields)
+
+	snapshotMutationCount, err := readSnapshotMutationCount(copied)
+	require.NoError(t, err)
+	assert.Equal(t, int64(2), snapshotMutationCount)
+}
+
 func TestBuildIndexExpiration(t *testing.T) {
 	ns := resource.NamespacedResource{
 		Namespace: "test",
