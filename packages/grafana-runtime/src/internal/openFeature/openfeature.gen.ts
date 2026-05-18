@@ -41,6 +41,8 @@ export const FlagKeys = {
   GlobalDashboardVariables: "globalDashboardVariables",
   /** Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button) */
   GrafanaEnableScopesFirstMode: "grafana.enableScopesFirstMode",
+  /** Initializes data source instance settings asynchronously from the API instead of synchronously from boot data */
+  GrafanaInitDataSourcesAsync: "grafana.initDataSourcesAsync",
   /** Enables log level inference from log line contents when level is not defined as a field or a label */
   GrafanaLogLevelInference: "grafana.logLevelInference",
   /** Whether to use the new SharedPreferences functional component */
@@ -243,6 +245,17 @@ export const useFlagGlobalDashboardVariables = (options?: ReactFlagEvaluationOpt
  */
 export const useFlagGrafanaEnableScopesFirstMode = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.enableScopesFirstMode", false, options).value;
+};
+
+/**
+ * Initializes data source instance settings asynchronously from the API instead of synchronously from boot data
+ *
+ * **Details:**
+ * - flag key: `grafana.initDataSourcesAsync`
+ * - default value: `false`
+ */
+export const useFlagGrafanaInitDataSourcesAsync = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.initDataSourcesAsync", false, options).value;
 };
 
 /**

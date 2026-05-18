@@ -3137,6 +3137,14 @@ var (
 			Expression:   "false",
 			Generate:     Generate{React: true},
 		},
+		{
+			Name:        "grafana.initDataSourcesAsync",
+			Description: "Initializes data source instance settings asynchronously from the API instead of synchronously from boot data",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaCatalogSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//
 		// Adding a new feature flag? Be sure to check out the updated docs at /contribute/feature-toggles.md#Steps-to-adding-a-feature-toggle

@@ -2739,6 +2739,21 @@
     },
     {
       "metadata": {
+        "name": "grafana.asyncDataSourceApis",
+        "resourceVersion": "1779095951788",
+        "creationTimestamp": "2026-05-18T09:19:11Z",
+        "deletionTimestamp": "2026-05-18T09:39:32Z"
+      },
+      "spec": {
+        "description": "Enables async data source APIs that fetch instance settings from the API instead of using boot data",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-catalog",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.correlationsSkipLegacy",
         "resourceVersion": "1777299668594",
         "creationTimestamp": "2026-04-27T14:21:08Z"
@@ -2775,6 +2790,23 @@
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "frontend": true,
         "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.initDataSourcesAsync",
+        "resourceVersion": "1779097309433",
+        "creationTimestamp": "2026-05-18T09:39:32Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-05-18 09:41:49.433173 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Initializes data source instance settings asynchronously from the API instead of synchronously from boot data",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-catalog",
+        "frontend": true,
         "expression": "false"
       }
     },
