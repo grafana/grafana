@@ -12,7 +12,7 @@
 
     [[if .MeticulousAIEnabled]]
     <script
-      data-is-production-environment="true"
+      data-is-production-environment="[[.MeticulousAIProductionEnvironmentFlag]]"
       data-recording-token="[[.MeticulousAIRecordingToken]]"
       nonce="[[.Nonce]]"
       src="https://snippet.meticulous.ai/v1/meticulous.js"

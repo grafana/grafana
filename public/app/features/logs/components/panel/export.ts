@@ -1,7 +1,7 @@
 import { groupBy } from 'lodash';
-import { parse } from 'lossless-json';
+import { parse, stringify } from 'lossless-json';
 
-import { DataFrameType, type DataSourceApi, hasLogsLabelTypesSupport, type Labels } from '@grafana/data';
+import { type DataSourceApi, hasLogsLabelTypesSupport, type Labels } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 
 import { getLabelTypeFromRow } from '../../utils';
@@ -57,17 +57,9 @@ export function formatGroupedLabelsForJson(groupedLabels: Record<string, LabelEn
   return nested;
 }
 
-function fieldDefsWithoutLinks(log: LogListModel) {
-  if (log.dataFrame.meta?.type === DataFrameType.LogLines) {
-    return [];
-  }
-  return log.fields.filter((f) => f.links?.length === 0 && f.fieldIndex !== log.entryFieldIndex).sort();
-}
-
 function dataframeFieldsToRecord(log: LogListModel): Record<string, string | string[] | unknown> {
-  const fields = fieldDefsWithoutLinks(log);
   const out: Record<string, string | string[] | unknown> = {};
-  for (const field of fields) {
+  for (const field of log.fields) {
     const name = field.keys.join(' | ');
     out[name] = field.values.length === 1 ? prettifyIfJson(field.values[0]) : field.values;
   }
@@ -87,6 +79,8 @@ function prettifyIfJson(raw: string): unknown {
 }
 
 export function buildLogLineFullJsonObject(log: LogListModel, ds: DataSourceApi): Record<string, unknown> {
+  void log.body;
+
   const payload: Record<string, unknown> = {
     timestamp: log.timestamp,
     timeEpochMs: log.timeEpochMs,
@@ -115,5 +109,5 @@ export function buildLogLineFullJsonObject(log: LogListModel, ds: DataSourceApi)
 
 export async function getLogAsJSON(log: LogListModel): Promise<string> {
   const ds = await getDataSourceSrv().get(log.datasourceUid);
-  return JSON.stringify(buildLogLineFullJsonObject(log, ds), null, 2);
+  return stringify(buildLogLineFullJsonObject(log, ds), null, 2) ?? log.entry;
 }

@@ -3,11 +3,14 @@ package backfill
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/dashboard"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
@@ -339,4 +342,135 @@ func uniqName(i int) string {
 		out = append(out, letters[(i/(26*26))%26])
 	}
 	return string(out)
+}
+
+// newBackfillerWithStats mirrors newBackfiller but wires a stats provider.
+func newBackfillerWithStats(t *testing.T, storage *fakeStorage, vec *fakeVector, stats builders.DashboardStats) *VectorBackfiller {
+	t.Helper()
+	emb := newFakeEmbedder(&fakeText{dim: 4})
+	b, err := NewVectorBackfiller(Options{
+		Storage:        storage,
+		VectorBackend:  vec,
+		BatchEmbedder:  embedder.NewBatchEmbedder(*emb),
+		Builders:       []embed.Builder{dashboard.New()},
+		DashboardStats: stats,
+	})
+	require.NoError(t, err)
+	return b
+}
+
+// Integration: prove the views filter actually wires through the
+// backfill pipeline. Asserts UID identity of what got embedded and that
+// the job still completes when items are filtered.
+func TestRunBackfillJob_ViewsFilter_SkipsZeroViewDashboards(t *testing.T) {
+	storage := newFakeStorage()
+	storage.listItems = []listItem{
+		makeListItem("ns", "cold", 50),
+		makeListItem("ns", "hot", 60),
+	}
+
+	vec := newFakeVector()
+	vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", StoppingRV: 100}}
+
+	stats := newFakeDashboardStats()
+	stats.set("ns", "cold", map[string]int64{"views_last_30_days": 0})
+	stats.set("ns", "hot", map[string]int64{"views_last_30_days": 12})
+
+	o := newBackfillerWithStats(t, storage, vec, stats)
+	o.runBackfill(context.Background())
+
+	require.Len(t, vec.upserts, 1, "only the viewed dashboard should be embedded")
+	assert.Equal(t, "hot", vec.upserts[0][0].UID)
+	require.Len(t, vec.completedJobIDs, 1, "job still completes when items are filtered")
+}
+
+// Integration: the Exists short-circuit must run before the stats
+// lookup so already-indexed dashboards don't burn a usageinsights call.
+// This ordering isn't covered by the predicate-level tests below.
+func TestRunBackfillJob_ViewsFilter_ExistsShortCircuitSkipsStats(t *testing.T) {
+	storage := newFakeStorage()
+	storage.listItems = []listItem{makeListItem("ns", "already-indexed", 50)}
+
+	vec := newFakeVector()
+	vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", StoppingRV: 100}}
+	vec.markExists("ns", "test-model", "dashboards", "already-indexed")
+
+	stats := newFakeDashboardStats()
+	stats.set("ns", "already-indexed", map[string]int64{"views_last_30_days": 0})
+
+	o := newBackfillerWithStats(t, storage, vec, stats)
+	o.runBackfill(context.Background())
+
+	assert.Empty(t, vec.upserts)
+	assert.Equal(t, 0, stats.calls, "Exists short-circuit must come before stats lookup")
+}
+
+// shouldSkipForZeroViews branch coverage. Tests bypass the full backfill
+// pipeline and call the predicate directly; the integration tests above
+// cover wiring.
+
+func TestShouldSkipForZeroViews_ZeroViews_Skips(t *testing.T) {
+	stats := newFakeDashboardStats()
+	stats.set("ns", "uid", map[string]int64{"views_last_30_days": 0})
+	b := newBackfillerWithStats(t, newFakeStorage(), newFakeVector(), stats)
+	assert.True(t, b.shouldSkipForZeroViews(context.Background(), dashboard.New(), "ns", "uid"))
+}
+
+func TestShouldSkipForZeroViews_HasViews_DoesNotSkip(t *testing.T) {
+	stats := newFakeDashboardStats()
+	stats.set("ns", "uid", map[string]int64{"views_last_30_days": 1})
+	b := newBackfillerWithStats(t, newFakeStorage(), newFakeVector(), stats)
+	assert.False(t, b.shouldSkipForZeroViews(context.Background(), dashboard.New(), "ns", "uid"))
+}
+
+func TestShouldSkipForZeroViews_MissingKey_DoesNotSkip(t *testing.T) {
+	stats := newFakeDashboardStats()
+	// Map present but views_last_30_days key absent.
+	stats.set("ns", "uid", map[string]int64{"views_total": 9})
+	b := newBackfillerWithStats(t, newFakeStorage(), newFakeVector(), stats)
+	assert.False(t, b.shouldSkipForZeroViews(context.Background(), dashboard.New(), "ns", "uid"))
+}
+
+func TestShouldSkipForZeroViews_ProviderError_DoesNotSkip(t *testing.T) {
+	stats := newFakeDashboardStats()
+	stats.err = fmt.Errorf("boom")
+	b := newBackfillerWithStats(t, newFakeStorage(), newFakeVector(), stats)
+	assert.False(t, b.shouldSkipForZeroViews(context.Background(), dashboard.New(), "ns", "uid"))
+}
+
+func TestShouldSkipForZeroViews_NilProvider_DoesNotConsultAndDoesNotSkip(t *testing.T) {
+	b := newBackfillerWithStats(t, newFakeStorage(), newFakeVector(), nil)
+	assert.False(t, b.shouldSkipForZeroViews(context.Background(), dashboard.New(), "ns", "uid"))
+}
+
+func TestShouldSkipForZeroViews_NonDashboardBuilder_DoesNotConsult(t *testing.T) {
+	// Wiring only attaches the provider for dashboards today; the
+	// builder-identity guard is defensive against future builders that
+	// might travel with a non-nil DashboardStats. Asserts the provider
+	// is never called.
+	stats := newFakeDashboardStats()
+	stats.set("ns", "uid", map[string]int64{"views_last_30_days": 0})
+	b := newBackfillerWithStats(t, newFakeStorage(), newFakeVector(), stats)
+	skip := b.shouldSkipForZeroViews(context.Background(), fakeNonDashboardBuilder{}, "ns", "uid")
+	assert.False(t, skip)
+	assert.Equal(t, 0, stats.calls)
+}
+
+func TestShouldSkipForZeroViews_EmptyName_DoesNotConsult(t *testing.T) {
+	stats := newFakeDashboardStats()
+	b := newBackfillerWithStats(t, newFakeStorage(), newFakeVector(), stats)
+	skip := b.shouldSkipForZeroViews(context.Background(), dashboard.New(), "ns", "")
+	assert.False(t, skip)
+	assert.Equal(t, 0, stats.calls)
+}
+
+// fakeNonDashboardBuilder satisfies embed.Builder with a non-dashboard
+// identity. Only used to exercise the builder-identity guard.
+type fakeNonDashboardBuilder struct{}
+
+func (fakeNonDashboardBuilder) Group() string            { return "folder.grafana.app" }
+func (fakeNonDashboardBuilder) Resource() string         { return "folders" }
+func (fakeNonDashboardBuilder) MaxItemsPerResource() int { return 0 }
+func (fakeNonDashboardBuilder) Extract(context.Context, *resourcepb.ResourceKey, []byte, string) ([]embed.Item, error) {
+	return nil, nil
 }
