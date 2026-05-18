@@ -108,28 +108,16 @@ func TestIntegrationGetTeamByIDAPI(t *testing.T) {
 	directK8sTeam := getTeamViaK8sAPI(t, helper, uid)
 	assertRedirectMatchesK8sAPI(t, k8sTeam, directK8sTeam)
 
-	t.Run("memberCount reflects Spec.Members after add", func(t *testing.T) {
-		editorID, err := helper.Org1.Editor.Identity.GetInternalID()
-		require.NoError(t, err)
+	// Add a member; toggle off because the K8s adapter path needs FlagKubernetesUsersApi.
+	editorID, err := helper.Org1.Editor.Identity.GetInternalID()
+	require.NoError(t, err)
+	setTeamK8sFeatureToggle(t, false)
+	addTeamMemberViaAPI(t, helper, teamID, editorID)
 
-		// Add via legacy; addTeamMemberViaAPI through the K8s adapter would need
-		// FlagKubernetesUsersApi, which setupTeamTestHelper does not enable.
-		setTeamK8sFeatureToggle(t, false)
-		addTeamMemberViaAPI(t, helper, teamID, editorID)
-
-		// GET via K8s adapter
-		setTeamK8sFeatureToggle(t, true)
-		resp := apis.DoRequest(helper, apis.RequestParams{
-			User:   helper.Org1.Admin,
-			Method: http.MethodGet,
-			Path:   fmt.Sprintf("/api/teams/%d", teamID),
-		}, &struct {
-			MemberCount int64 `json:"memberCount"`
-		}{})
-		require.Equal(t, http.StatusOK, resp.Response.StatusCode, "body=%s", string(resp.Body))
-		assert.EqualValues(t, 2, resp.Result.MemberCount,
-			"memberCount must reflect Spec.Members (creator-admin + editor)")
-	})
+	// GET via K8s adapter — memberCount must reflect Spec.Members (creator-admin + editor)
+	setTeamK8sFeatureToggle(t, true)
+	teamWithMembers := getTeamByIDViaAPI(t, helper, teamID)
+	assert.EqualValues(t, 2, teamWithMembers.MemberCount)
 }
 
 // go test -timeout 120s -run ^TestIntegrationUpdateTeamAPI$ github.com/grafana/grafana/pkg/tests/apis/iam -count=1
@@ -190,6 +178,7 @@ type teamResponse struct {
 	Email         string `json:"email"`
 	ExternalUID   string `json:"externalUID"`
 	IsProvisioned bool   `json:"isProvisioned"`
+	MemberCount   int64  `json:"memberCount"`
 }
 
 func setupTeamTestHelper(t *testing.T) *apis.K8sTestHelper {
