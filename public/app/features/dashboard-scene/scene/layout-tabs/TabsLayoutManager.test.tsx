@@ -1,13 +1,13 @@
 import { SceneGridLayout, VizPanel } from '@grafana/scenes';
 
 import { dashboardEditActions } from '../../edit-pane/shared';
+import { getLegacySlugForRowOrTab } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
-import { getLegacySlugForRowOrTab } from '../layouts-shared/utils';
 
 import { TabItem } from './TabItem';
 import { getTabsLayoutUrlKeysToTry, TabsLayoutManager } from './TabsLayoutManager';

@@ -19,6 +19,7 @@ import {
 } from '@grafana/scenes';
 import { type Dashboard, type Panel, type RowPanel } from '@grafana/schema';
 import { createLogger } from '@grafana/ui';
+import kbn from 'app/core/utils/kbn';
 import { initialIntervalVariableModelState } from 'app/features/variables/interval/reducer';
 
 import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
@@ -447,6 +448,28 @@ export function interpolateSectionTitle<T extends RepeatableSectionState>(
     return sceneGraph.interpolate(scene, value, getRepeatLocalScopedVars(scene), 'text');
   }
   return sceneGraph.interpolate(scene, value, undefined, 'text');
+}
+
+type SectionItemSceneObject = SceneObject<RepeatableSectionState & { title?: string }>;
+
+const getSectionItemSlug = (item: SectionItemSceneObject) =>
+  interpolateSectionTitle(item, item.state.title || '').replace(/ +/g, '-');
+
+export function getSlugForRowOrTab<T extends SectionItemSceneObject>(newItem: T, items: T[]): string {
+  const baseSlug = getSectionItemSlug(newItem);
+  const sameSlugs = items.filter((item) => getSectionItemSlug(item) === baseSlug);
+
+  if (sameSlugs.length > 1) {
+    const slugIndex = sameSlugs.findIndex((item) => item === newItem);
+    if (slugIndex > 0) {
+      return `${baseSlug}__${slugIndex + 1}`;
+    }
+  }
+  return baseSlug;
+}
+
+export function getLegacySlugForRowOrTab(tab: SectionItemSceneObject): string {
+  return kbn.slugifyForUrl(interpolateSectionTitle(tab, tab.state.title || ''));
 }
 
 function getRepeatLocalScopedVars<T extends RepeatableSectionState>(scene: SceneObject<T>): ScopedVars | undefined {

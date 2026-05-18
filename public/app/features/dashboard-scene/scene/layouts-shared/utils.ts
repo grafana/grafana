@@ -2,11 +2,7 @@ import { useEffect, useRef } from 'react';
 
 import { type SceneObject } from '@grafana/scenes';
 import { contextSrv } from 'app/core/services/context_srv';
-import kbn from 'app/core/utils/kbn';
 
-import { interpolateSectionTitle } from '../../utils/utils';
-import { type RowItem } from '../layout-rows/RowItem';
-import { type TabItem } from '../layout-tabs/TabItem';
 import { type DashboardLayoutManager, isDashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { isLayoutParent } from '../types/LayoutParent';
 
@@ -100,23 +96,4 @@ export function mapIdToGridLayoutType(id?: string): GridLayoutType | undefined {
     default:
       return undefined;
   }
-}
-
-const getSlug = (item: TabItem | RowItem) => interpolateSectionTitle(item, item.state.title || '').replace(/ +/g, '-');
-
-export function getSlugForRowOrTab<T extends TabItem | RowItem>(newItem: T, items: T[]): string {
-  const baseSlug = getSlug(newItem);
-  const sameSlugs = items.filter((item) => getSlug(item) === baseSlug);
-
-  if (sameSlugs.length > 1) {
-    const slugIndex = sameSlugs.findIndex((item) => item === newItem);
-    if (slugIndex > 0) {
-      return `${baseSlug}__${slugIndex + 1}`;
-    }
-  }
-  return baseSlug;
-}
-
-export function getLegacySlugForRowOrTab(tab: TabItem | RowItem): string {
-  return kbn.slugifyForUrl(interpolateSectionTitle(tab, tab.state.title || ''));
 }
