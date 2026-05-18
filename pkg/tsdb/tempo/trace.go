@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"regexp"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -18,6 +19,8 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
+
+var traceIDPattern = regexp.MustCompile(`^[0-9A-Fa-f]+$`)
 
 func (s *Service) getTrace(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) (*backend.DataResponse, error) {
 	ctxLogger := s.logger.FromContext(ctx)
@@ -198,6 +201,10 @@ func (s *Service) createRequest(ctx context.Context, dsInfo *DatasourceInfo, api
 	ctxLogger := s.logger.FromContext(ctx)
 	var baseUrl string
 	var tempoQuery string
+
+	if !traceIDPattern.MatchString(traceID) {
+		return nil, backend.DownstreamErrorf("invalid trace id")
+	}
 
 	if apiVersion == TraceRequestApiVersionV1 {
 		baseUrl = fmt.Sprintf("%s/api/traces/%s", dsInfo.URL, traceID)
