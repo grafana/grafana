@@ -1375,23 +1375,18 @@ func TestFolderFilterSet(t *testing.T) {
 			expected: nil,
 		},
 		{
-			name:     "single folder field",
-			req:      &resourcepb.ResourceStatsRequest{Folder: "root"},
+			name:     "single folder",
+			req:      &resourcepb.ResourceStatsRequest{Folder: []string{"root"}},
 			expected: []string{"root"},
 		},
 		{
-			name:     "folders slice only",
-			req:      &resourcepb.ResourceStatsRequest{Folders: []string{"a", "b"}},
+			name:     "multiple folders",
+			req:      &resourcepb.ResourceStatsRequest{Folder: []string{"a", "b"}},
 			expected: []string{"a", "b"},
 		},
 		{
-			name:     "union of folder and folders",
-			req:      &resourcepb.ResourceStatsRequest{Folder: "root", Folders: []string{"a", "b"}},
-			expected: []string{"root", "a", "b"},
-		},
-		{
 			name:     "dedupes overlap and drops empties",
-			req:      &resourcepb.ResourceStatsRequest{Folder: "a", Folders: []string{"a", "", "b", "b"}},
+			req:      &resourcepb.ResourceStatsRequest{Folder: []string{"a", "", "b", "b", "a"}},
 			expected: []string{"a", "b"},
 		},
 	}

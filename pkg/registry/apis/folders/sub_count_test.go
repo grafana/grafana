@@ -5,13 +5,12 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
+	"google.golang.org/grpc"
 
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 func TestCollectDescendantFolders(t *testing.T) {
@@ -21,16 +20,13 @@ func TestCollectDescendantFolders(t *testing.T) {
 	//   a1   → a11
 	//   b    → b1, b2
 	//   c    → c1            (sibling subtree; must be excluded)
-	tree := []folders.Folder{
-		mkFolder("root", ""),
-		mkFolder("a", "root"),
-		mkFolder("b", "root"),
-		mkFolder("a1", "a"),
-		mkFolder("a11", "a1"),
-		mkFolder("b1", "b"),
-		mkFolder("b2", "b"),
-		mkFolder("c", ""),
-		mkFolder("c1", "c"),
+	tree := map[string][]string{
+		"":     {"root", "c"},
+		"root": {"a", "b"},
+		"a":    {"a1"},
+		"a1":   {"a11"},
+		"b":    {"b1", "b2"},
+		"c":    {"c1"},
 	}
 
 	tests := []struct {
@@ -62,8 +58,9 @@ func TestCollectDescendantFolders(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := &subCountREST{lister: &fakeFolderLister{items: tree}}
-			got, err := r.collectDescendantFolders(context.Background(), tt.root)
+			searcher := newTreeSearcher(t, tree)
+			r := &subCountREST{searcher: searcher}
+			got, err := r.collectDescendantFolders(context.Background(), "stacks-1", tt.root)
 			require.NoError(t, err)
 			sort.Strings(got)
 			require.Equal(t, tt.expected, got)
@@ -72,57 +69,109 @@ func TestCollectDescendantFolders(t *testing.T) {
 }
 
 func TestCollectDescendantFolders_Pagination(t *testing.T) {
-	// Split a 6-folder linear chain across two pages to exercise the
-	// continue-token loop. root → 1 → 2 → 3 → 4 → 5
-	chain := []folders.Folder{
-		mkFolder("root", ""),
-		mkFolder("1", "root"),
-		mkFolder("2", "1"),
-		mkFolder("3", "2"),
-		mkFolder("4", "3"),
-		mkFolder("5", "4"),
+	// A single level with descendantsPageSize+1 children forces a second
+	// Search page via NextPageToken before traversal can continue.
+	n := descendantsPageSize + 1
+	children := make([]string, n)
+	for i := range children {
+		children[i] = childUID(i)
 	}
-	lister := &fakeFolderLister{pages: [][]folders.Folder{chain[:3], chain[3:]}}
 
-	r := &subCountREST{lister: lister}
-	got, err := r.collectDescendantFolders(context.Background(), "root")
-	require.NoError(t, err)
-	sort.Strings(got)
-	require.Equal(t, []string{"1", "2", "3", "4", "5"}, got)
-}
+	sm := resource.NewMockResourceClient(t)
 
-func mkFolder(name, parent string) folders.Folder {
-	f := folders.Folder{ObjectMeta: metav1.ObjectMeta{Name: name}}
-	if parent != "" {
-		meta, _ := utils.MetaAccessor(&f)
-		meta.SetFolder(parent)
-	}
-	return f
-}
-
-type fakeFolderLister struct {
-	items []folders.Folder   // single-page mode
-	pages [][]folders.Folder // multi-page mode (each call consumes one)
-	calls int
-}
-
-func (f *fakeFolderLister) NewList() runtime.Object {
-	return &folders.FolderList{}
-}
-
-func (f *fakeFolderLister) List(_ context.Context, _ *internalversion.ListOptions) (runtime.Object, error) {
-	if len(f.pages) > 0 {
-		page := f.pages[f.calls]
-		f.calls++
-		list := &folders.FolderList{Items: page}
-		if f.calls < len(f.pages) {
-			list.Continue = "next"
+	// First page: full pageSize hits, NextPageToken signals more.
+	sm.On("Search", mock.Anything, matchSearchOffset("stacks-1", []string{"root"}, 0)).
+		Return(buildSearchResp(children[:descendantsPageSize], "more"), nil).Once()
+	// Second page: remaining 1 child, no NextPageToken.
+	sm.On("Search", mock.Anything, matchSearchOffset("stacks-1", []string{"root"}, descendantsPageSize)).
+		Return(buildSearchResp(children[descendantsPageSize:], ""), nil).Once()
+	// Each child is a leaf — searchChildren is called once per chunked level
+	// of the BFS. With descendantsBatchSize=100 and n=1001, that's 11 chunks.
+	for chunk := 0; chunk*descendantsBatchSize < n; chunk++ {
+		start := chunk * descendantsBatchSize
+		end := start + descendantsBatchSize
+		if end > n {
+			end = n
 		}
-		return list, nil
+		sm.On("Search", mock.Anything, matchSearchOffset("stacks-1", children[start:end], 0)).
+			Return(buildSearchResp(nil, ""), nil).Once()
 	}
-	return &folders.FolderList{Items: f.items}, nil
+
+	r := &subCountREST{searcher: sm}
+	got, err := r.collectDescendantFolders(context.Background(), "stacks-1", "root")
+	require.NoError(t, err)
+	require.Len(t, got, n)
 }
 
-func (f *fakeFolderLister) ConvertToTable(_ context.Context, _ runtime.Object, _ runtime.Object) (*metav1.Table, error) {
-	return nil, nil
+// newTreeSearcher returns a mocked ResourceClient that resolves Search by
+// `In` filter on SEARCH_FIELD_FOLDER against the supplied parent→children
+// map. Calls outside that map are unexpected and fail the test.
+func newTreeSearcher(t *testing.T, tree map[string][]string) *resource.MockResourceClient {
+	sm := resource.NewMockResourceClient(t)
+	sm.On("Search", mock.Anything, mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
+		return req != nil && req.Options != nil && len(req.Options.Fields) > 0
+	})).Return(func(_ context.Context, req *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) *resourcepb.ResourceSearchResponse {
+		var hits []string
+		for _, parent := range req.Options.Fields[0].Values {
+			hits = append(hits, tree[parent]...)
+		}
+		return buildSearchResp(hits, "")
+	}, nil).Maybe()
+	return sm
+}
+
+func matchSearchOffset(namespace string, parents []string, offset int64) interface{} {
+	parentSet := map[string]struct{}{}
+	for _, p := range parents {
+		parentSet[p] = struct{}{}
+	}
+	return mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
+		if req == nil || req.Options == nil || req.Options.Key == nil {
+			return false
+		}
+		if req.Options.Key.Namespace != namespace {
+			return false
+		}
+		if req.Offset != offset {
+			return false
+		}
+		if len(req.Options.Fields) != 1 {
+			return false
+		}
+		got := req.Options.Fields[0].Values
+		if len(got) != len(parentSet) {
+			return false
+		}
+		for _, v := range got {
+			if _, ok := parentSet[v]; !ok {
+				return false
+			}
+		}
+		return true
+	})
+}
+
+func buildSearchResp(uids []string, nextPage string) *resourcepb.ResourceSearchResponse {
+	rows := make([]*resourcepb.ResourceTableRow, len(uids))
+	for i, uid := range uids {
+		rows[i] = &resourcepb.ResourceTableRow{Key: &resourcepb.ResourceKey{Name: uid}}
+	}
+	return &resourcepb.ResourceSearchResponse{
+		Results: &resourcepb.ResourceTable{
+			Rows:          rows,
+			NextPageToken: nextPage,
+		},
+	}
+}
+
+func childUID(i int) string {
+	const alphabet = "abcdefghijklmnopqrstuvwxyz"
+	out := ""
+	i++
+	for i > 0 {
+		i--
+		out = string(alphabet[i%26]) + out
+		i /= 26
+	}
+	return out
 }

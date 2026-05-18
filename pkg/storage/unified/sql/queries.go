@@ -129,17 +129,16 @@ type sqlStatsRequest struct {
 	Namespace string
 	Group     string
 	Resource  string
-	Folder    string
 	// Folders, when non-empty, restricts the count to rows whose folder is in
-	// this set. Used by callers that pre-expand a folder subtree to get
-	// recursive descendant counts in a single query. The set is combined with
-	// Folder via UNION semantics.
+	// this set. A single UID counts that exact folder (no recursion); callers
+	// that need recursive descendant counts pre-expand the subtree and pass
+	// every UID here.
 	Folders  []string
 	MinCount int
 }
 
 func (r sqlStatsRequest) Validate() error {
-	if (r.Folder != "" || len(r.Folders) > 0) && r.Namespace == "" {
+	if len(r.Folders) > 0 && r.Namespace == "" {
 		return fmt.Errorf("folder constraint requires a namespace")
 	}
 	return nil

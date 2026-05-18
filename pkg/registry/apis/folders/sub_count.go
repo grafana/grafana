@@ -2,23 +2,33 @@ package folders
 
 import (
 	"context"
-	"fmt"
 	"net/http"
+	"slices"
 
-	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
+// descendantsBatchSize bounds how many parent UIDs are sent in a single
+// Search `In` filter when walking a subtree. Keeps individual requests
+// well under the default 4 MiB gRPC max message size on wide levels.
+const descendantsBatchSize = 100
+
+// descendantsPageSize bounds per-page hits when paginating a single Search.
+const descendantsPageSize = 1000
+
+// descendantsMaxLevels caps tree traversal depth. The visited map catches
+// genuine cycles; this is a backstop against pathological depth that would
+// blow up request counts.
+const descendantsMaxLevels = 64
+
 type subCountREST struct {
 	getter   rest.Getter
-	lister   rest.Lister
 	searcher resourcepb.ResourceIndexClient
 }
 
@@ -61,7 +71,7 @@ func (r *subCountREST) Connect(ctx context.Context, name string, _ runtime.Objec
 			return
 		}
 
-		descendants, err := r.collectDescendantFolders(ctx, name)
+		descendants, err := r.collectDescendantFolders(ctx, ns.Value, name)
 		if err != nil {
 			responder.Error(err)
 			return
@@ -69,8 +79,7 @@ func (r *subCountREST) Connect(ctx context.Context, name string, _ runtime.Objec
 
 		stats, err := r.searcher.GetStats(ctx, &resourcepb.ResourceStatsRequest{
 			Namespace: ns.Value,
-			Folder:    name,
-			Folders:   descendants,
+			Folder:    append([]string{name}, descendants...),
 		})
 		if err != nil {
 			responder.Error(err)
@@ -90,57 +99,64 @@ func (r *subCountREST) Connect(ctx context.Context, name string, _ runtime.Objec
 	}), nil
 }
 
-// collectDescendantFolders walks the folder tree under root and returns every
-// descendant folder UID (excluding root itself — the root is passed to
-// GetStats via the singular Folder field). Returns nil when there are no
-// descendants, which falls back to a single-folder count.
+// collectDescendantFolders walks the folder tree under root via Search and
+// returns every descendant folder UID (excluding root itself — the caller
+// prepends root to the GetStats request). Returns nil when there are no
+// descendants. Cost scales with subtree size, not org size.
 //
 // Move/Delete confirmation dialogs need recursive counts: legacy
 // /api/folders/:uid/counts walked the SQL folder table with a recursive CTE;
 // the unified-storage backend only filters by direct parent, so we expand
 // the subtree here before calling GetStats.
-func (r *subCountREST) collectDescendantFolders(ctx context.Context, root string) ([]string, error) {
-	if r.lister == nil {
-		return nil, nil
-	}
-
-	childrenOf := map[string][]string{}
-	opts := &internalversion.ListOptions{}
-	for {
-		obj, err := r.lister.List(ctx, opts)
-		if err != nil {
-			return nil, err
-		}
-		page, ok := obj.(*folders.FolderList)
-		if !ok {
-			return nil, fmt.Errorf("could not list folders")
-		}
-		for i := range page.Items {
-			f := &page.Items[i]
-			meta, err := utils.MetaAccessor(f)
-			if err != nil {
-				continue
-			}
-			parent := meta.GetFolder()
-			childrenOf[parent] = append(childrenOf[parent], f.Name)
-		}
-		if page.Continue == "" {
-			break
-		}
-		opts.Continue = page.Continue
-	}
-
-	if len(childrenOf[root]) == 0 {
+func (r *subCountREST) collectDescendantFolders(ctx context.Context, namespace, root string) ([]string, error) {
+	if r.searcher == nil {
 		return nil, nil
 	}
 
 	var out []string
-	queue := append([]string(nil), childrenOf[root]...)
-	for len(queue) > 0 {
-		cur := queue[0]
-		queue = queue[1:]
-		out = append(out, cur)
-		queue = append(queue, childrenOf[cur]...)
+	visited := map[string]bool{root: true}
+	queue := []string{root}
+
+	for level := 0; len(queue) > 0 && level < descendantsMaxLevels; level++ {
+		parents := queue
+		queue = nil
+
+		for chunk := range slices.Chunk(parents, descendantsBatchSize) {
+			children, err := r.searchChildren(ctx, namespace, chunk)
+			if err != nil {
+				return nil, err
+			}
+			for _, uid := range children {
+				if visited[uid] {
+					continue
+				}
+				visited[uid] = true
+				out = append(out, uid)
+				queue = append(queue, uid)
+			}
+		}
+	}
+
+	if len(out) == 0 {
+		return nil, nil
 	}
 	return out, nil
+}
+
+// searchChildren returns all direct children of any of the given parent UIDs
+// via Search (multi-value `In` filter on SEARCH_FIELD_FOLDER), paginating to
+// exhaustion. Reuses getChildrenBatch from validate.go.
+func (r *subCountREST) searchChildren(ctx context.Context, namespace string, parents []string) ([]string, error) {
+	var all []string
+	for offset := int64(0); ; {
+		children, hasMore, err := getChildrenBatch(ctx, r.searcher, namespace, parents, descendantsPageSize, offset)
+		if err != nil {
+			return nil, err
+		}
+		all = append(all, children...)
+		if !hasMore {
+			return all, nil
+		}
+		offset += descendantsPageSize
+	}
 }

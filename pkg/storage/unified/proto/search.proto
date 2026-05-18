@@ -33,17 +33,12 @@ message ResourceStatsRequest {
   // NOTE, this query may need to federate across a few storage instances
   repeated string kinds = 2;
 
-  // Limit the stats to documents whose direct folder equals this UID.
-  // Not recursive on its own — for descendant counts, pre-expand the
-  // folder tree on the caller side and pass the full set via `folders`.
-  string folder = 3;
-
   // Limit the stats to documents whose direct folder is in this set.
-  // Used by callers that have already enumerated a folder subtree
-  // (e.g. Move/Delete confirmation in the folders apiserver) to get
-  // counts across all descendants in a single call. When both `folder`
-  // and `folders` are set, the union is used.
-  repeated string folders = 4;
+  // A single UID counts that exact folder (no recursion). Callers that
+  // need recursive descendant counts (e.g. Move/Delete confirmation in
+  // the folders apiserver) pre-expand the folder subtree and pass every
+  // UID here.
+  repeated string folder = 3;
 }
 
 message ResourceStatsResponse {

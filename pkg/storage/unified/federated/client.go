@@ -35,10 +35,10 @@ func (s *federatedClient) GetStats(ctx context.Context, in *resourcepb.ResourceS
 		return nil, err
 	}
 
-	// When folder stats are requested -- join in the legacy values. Folders
+	// When folder stats are requested -- join in the legacy values. Folder
 	// holds the pre-expanded descendant set passed by callers that need
 	// recursive counts (see folders apiserver /counts subresource).
-	if in.Folder != "" || len(in.Folders) > 0 {
+	if len(in.Folder) > 0 {
 		more, err := s.stats.GetStats(ctx, in)
 		if err != nil {
 			return rsp, err

@@ -489,7 +489,7 @@ func TestUnifiedStorageQueries(t *testing.T) {
 					Data: &sqlStatsRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Namespace:   "default",
-						Folder:      "folder",
+						Folders:     []string{"folder"},
 						MinCount:    10, // Not yet used in query (only response filter)
 					},
 				},
@@ -499,15 +499,6 @@ func TestUnifiedStorageQueries(t *testing.T) {
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Namespace:   "default",
 						Folders:     []string{"a", "b", "c"},
-					},
-				},
-				{
-					Name: "folder_with_folders",
-					Data: &sqlStatsRequest{
-						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						Namespace:   "default",
-						Folder:      "root",
-						Folders:     []string{"a", "b"},
 					},
 				},
 				{

@@ -772,7 +772,7 @@ func (s *searchServer) GetStats(ctx context.Context, req *resourcepb.ResourceSta
 	}
 
 	stats := NewSearchStats("GetStats")
-	defer s.logStats(ctx, stats, span, "namespace", req.Namespace, "group", strings.Join(req.Kinds, ","), "folder", req.Folder)
+	defer s.logStats(ctx, stats, span, "namespace", req.Namespace, "group", strings.Join(req.Kinds, ","), "folder", strings.Join(req.Folder, ","))
 
 	rsp := &resourcepb.ResourceStatsResponse{}
 	folderSet := folderFilterSet(req)
@@ -852,28 +852,24 @@ func (s *searchServer) GetStats(ctx context.Context, req *resourcepb.ResourceSta
 	return rsp, nil
 }
 
-// folderFilterSet returns the de-duplicated union of req.Folder and req.Folders.
-// Empty entries are dropped. Returns nil when no folder filter is set, which
-// means "count everything in the namespace".
+// folderFilterSet returns req.Folder de-duplicated, with empty entries dropped.
+// Returns nil when no folder filter is set, which means "count everything in
+// the namespace".
 func folderFilterSet(req *resourcepb.ResourceStatsRequest) []string {
-	if req.Folder == "" && len(req.Folders) == 0 {
+	if len(req.Folder) == 0 {
 		return nil
 	}
-	seen := make(map[string]struct{}, len(req.Folders)+1)
-	out := make([]string, 0, len(req.Folders)+1)
-	add := func(f string) {
+	seen := make(map[string]struct{}, len(req.Folder))
+	out := make([]string, 0, len(req.Folder))
+	for _, f := range req.Folder {
 		if f == "" {
-			return
+			continue
 		}
 		if _, ok := seen[f]; ok {
-			return
+			continue
 		}
 		seen[f] = struct{}{}
 		out = append(out, f)
-	}
-	add(req.Folder)
-	for _, f := range req.Folders {
-		add(f)
 	}
 	return out
 }

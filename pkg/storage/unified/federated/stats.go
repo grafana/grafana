@@ -80,27 +80,23 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 	return rsp, err
 }
 
-// folderSet returns the deduped union of in.Folder and in.Folders.
-// Empty entries are dropped. Returns nil when no folder filter is set.
+// folderSet returns in.Folder deduped, with empty entries dropped. Returns
+// nil when no folder filter is set.
 func folderSet(in *resourcepb.ResourceStatsRequest) []string {
-	if in.Folder == "" && len(in.Folders) == 0 {
+	if len(in.Folder) == 0 {
 		return nil
 	}
-	seen := make(map[string]struct{}, len(in.Folders)+1)
-	out := make([]string, 0, len(in.Folders)+1)
-	add := func(f string) {
+	seen := make(map[string]struct{}, len(in.Folder))
+	out := make([]string, 0, len(in.Folder))
+	for _, f := range in.Folder {
 		if f == "" {
-			return
+			continue
 		}
 		if _, ok := seen[f]; ok {
-			return
+			continue
 		}
 		seen[f] = struct{}{}
 		out = append(out, f)
-	}
-	add(in.Folder)
-	for _, f := range in.Folders {
-		add(f)
 	}
 	return out
 }
