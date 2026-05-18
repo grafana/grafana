@@ -994,25 +994,33 @@ func (b *bleveBackend) createEmptyBuildIndex(resourceDir string, mapper mapping.
 }
 
 func (b *bleveBackend) createEmptyFileIndex(resourceDir string, mapper mapping.IndexMapping, selectableFields []string, logger log.Logger) (preparedBuildIndex, error) {
-	indexDir, fileIndexName, err := b.reserveIndexDir(resourceDir)
-	if err != nil {
-		return preparedBuildIndex{}, err
-	}
+	for {
+		indexDir, fileIndexName, err := b.reserveIndexDir(resourceDir)
+		if err != nil {
+			return preparedBuildIndex{}, err
+		}
 
-	idx, err := newBleveIndex(indexDir, mapper, time.Now(), b.opts.BuildVersion, selectableFields)
-	if err != nil {
-		return preparedBuildIndex{}, fmt.Errorf("error creating new bleve index: %s %w", indexDir, err)
-	}
+		idx, err := newBleveIndex(indexDir, mapper, time.Now(), b.opts.BuildVersion, selectableFields)
+		if errors.Is(err, bleve.ErrorIndexPathExists) {
+			if idx != nil {
+				_ = idx.Close()
+			}
+			continue
+		}
+		if err != nil {
+			return preparedBuildIndex{}, fmt.Errorf("error creating new bleve index: %s %w", indexDir, err)
+		}
 
-	logger.Info("Building index using filesystem", "directory", indexDir)
-	b.registerInFlightBuildDir(indexDir)
-	return preparedBuildIndex{
-		index:         idx,
-		fileIndexName: fileIndexName,
-		indexStorage:  indexStorageFile,
-		source:        buildIndexSourceNew,
-		cleanupDir:    indexDir,
-	}, nil
+		logger.Info("Building index using filesystem", "directory", indexDir)
+		b.registerInFlightBuildDir(indexDir)
+		return preparedBuildIndex{
+			index:         idx,
+			fileIndexName: fileIndexName,
+			indexStorage:  indexStorageFile,
+			source:        buildIndexSourceNew,
+			cleanupDir:    indexDir,
+		}, nil
+	}
 }
 
 func (b *bleveBackend) createEmptyMemoryIndex(mapper mapping.IndexMapping, selectableFields []string, logger log.Logger) (preparedBuildIndex, error) {
@@ -1044,10 +1052,13 @@ type adaptiveBuildIndex struct {
 	// Embed the current delegate so this build-only wrapper implements resource.ResourceIndex.
 	*bleveIndex
 
-	mu        sync.Mutex
 	threshold int64
 	promote   promoteBuildIndexFunc
 
+	// mu protects promotion state below. Other ResourceIndex methods are only delegated
+	// through the embedded bleveIndex while the builder is running; builders are
+	// expected to call BulkIndex only.
+	mu            sync.Mutex
 	fileIndexName string
 	cleanupDir    string
 }
