@@ -96,6 +96,8 @@ Available in [Grafana Cloud](/docs/grafana-cloud).
 
 On Grafana Cloud, Grafana Labs automatically keeps plugins up to date. When a new version is available, it's updated on your behalf — you don't need to take any action.
 
+For third-party plugins, automatic updates only apply within the same major version. If a plugin releases a new major version, you need to update it manually through the plugin catalog.
+
 ### Uninstall a plugin
 
 To uninstall a plugin:
