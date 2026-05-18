@@ -53,6 +53,9 @@ func NewPyroscopeDatasource(ctx context.Context, httpClientProvider httpclient.P
 	if err != nil {
 		return nil, backend.DownstreamErrorf("failed to get HTTP client options: %w. function: %s", err, logEntrypoint())
 	}
+
+	opt.ForwardHTTPHeaders = true
+
 	httpClient, err := httpClientProvider.New(opt)
 	if err != nil {
 		return nil, backend.DownstreamErrorf("failed to create HTTP client: %w. function: %s", err, logEntrypoint())
