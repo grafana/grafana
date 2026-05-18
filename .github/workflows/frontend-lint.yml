@@ -66,10 +66,15 @@ jobs:
         persist-credentials: false
     - name: Setup Node.js
       uses: ./.github/actions/setup-node
+    - name: Get GitHub App token
+      id: get-github-app-token
+      uses: grafana/shared-workflows/actions/create-github-app-token@e5b7989c92b55fe3ac6dd006d6de49082ba8c507 # create-github-app-token (github-script/v9)
+      with:
+        github_app: grafana-ci-bot
     - name: Setup Enterprise
       uses: ./.github/actions/setup-enterprise
       with:
-        github-app-name: 'grafana-ci-bot'
+        token: ${{ steps.get-github-app-token.outputs.token }}
     - name: Install yarn dependencies
       uses: ./.github/actions/yarn-install
     - run: yarn run prettier:check
@@ -112,10 +117,15 @@ jobs:
         persist-credentials: false
     - name: Setup Node
       uses: ./.github/actions/setup-node
+    - name: Get GitHub App token
+      id: get-github-app-token
+      uses: grafana/shared-workflows/actions/create-github-app-token@e5b7989c92b55fe3ac6dd006d6de49082ba8c507 # create-github-app-token (github-script/v9)
+      with:
+        github_app: grafana-ci-bot
     - name: Setup Enterprise
       uses: ./.github/actions/setup-enterprise
       with:
-        github-app-name: 'grafana-ci-bot'
+        token: ${{ steps.get-github-app-token.outputs.token }}
     - name: Install yarn dependencies
       uses: ./.github/actions/yarn-install
     - run: yarn run typecheck
@@ -137,10 +147,15 @@ jobs:
         persist-credentials: false
     - name: Setup Node
       uses: ./.github/actions/setup-node
+    - name: Get GitHub App token
+      id: get-github-app-token
+      uses: grafana/shared-workflows/actions/create-github-app-token@e5b7989c92b55fe3ac6dd006d6de49082ba8c507 # create-github-app-token (github-script/v9)
+      with:
+        github_app: grafana-ci-bot
     - name: Setup Enterprise
       uses: ./.github/actions/setup-enterprise
       with:
-        github-app-name: 'grafana-ci-bot'
+        token: ${{ steps.get-github-app-token.outputs.token }}
     - name: Install yarn dependencies
       uses: ./.github/actions/yarn-install
     - run: yarn run typecheck:tsgo
@@ -223,10 +238,15 @@ jobs:
         persist-credentials: false
     - name: Setup Node
       uses: ./.github/actions/setup-node
+    - name: Get GitHub App token
+      id: get-github-app-token
+      uses: grafana/shared-workflows/actions/create-github-app-token@e5b7989c92b55fe3ac6dd006d6de49082ba8c507 # create-github-app-token (github-script/v9)
+      with:
+        github_app: grafana-ci-bot
     - name: Setup Enterprise
       uses: ./.github/actions/setup-enterprise
       with:
-        github-app-name: 'grafana-ci-bot'
+        token: ${{ steps.get-github-app-token.outputs.token }}
     - name: Install yarn dependencies
       uses: ./.github/actions/yarn-install
     - name: Generate API clients
