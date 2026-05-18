@@ -218,24 +218,32 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 						return
 					}
 
+					if cmd.External && options.PublicMode {
+						wrap.JsonApiErr(http.StatusForbidden, "External snapshots are not supported in public mode", nil)
+						return
+					}
+
 					if cmd.Dashboard == nil {
 						wrap.JsonApiErr(http.StatusBadRequest, "dashboard data is required", nil)
 						return
 					}
 
-					// Validate that the dashboard exists
-					dashboardUID, _ := cmd.Dashboard.Object["uid"].(string)
-					if dashboardUID == "" {
-						wrap.JsonApiErr(http.StatusBadRequest, "dashboard UID is required", nil)
-						return
-					}
-					_, err = dashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{
-						UID:   dashboardUID,
-						OrgID: signedInUser.GetOrgID(),
-					})
-					if err != nil {
-						wrap.JsonApiErr(http.StatusBadRequest, fmt.Sprintf("dashboard with UID %q not found", dashboardUID), nil)
-						return
+					// In public mode, skip dashboard existence validation
+					if !options.PublicMode {
+						// Validate that the dashboard exists
+						dashboardUID, _ := cmd.Dashboard.Object["uid"].(string)
+						if dashboardUID == "" {
+							wrap.JsonApiErr(http.StatusBadRequest, "dashboard UID is required", nil)
+							return
+						}
+						_, err = dashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{
+							UID:   dashboardUID,
+							OrgID: signedInUser.GetOrgID(),
+						})
+						if err != nil {
+							wrap.JsonApiErr(http.StatusBadRequest, fmt.Sprintf("dashboard with UID %q not found", dashboardUID), nil)
+							return
+						}
 					}
 
 					cmd.OrgID = signedInUser.GetOrgID()
@@ -259,10 +267,13 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 
 						metrics.MApiDashboardSnapshotExternal.Inc()
 					} else {
-						originalDashboardURL, err := dashboardsnapshots.CreateOriginalDashboardURL(&cmd)
-						if err != nil {
-							errhttp.Write(ctx, fmt.Errorf("invalid app url: %w", err), w)
-							return
+						var originalDashboardURL string
+						if !options.PublicMode {
+							originalDashboardURL, err = dashboardsnapshots.CreateOriginalDashboardURL(&cmd)
+							if err != nil {
+								errhttp.Write(ctx, fmt.Errorf("invalid app url: %w", err), w)
+								return
+							}
 						}
 
 						snapshotURL, err = dashboardsnapshots.PrepareLocalSnapshot(&cmd, originalDashboardURL)

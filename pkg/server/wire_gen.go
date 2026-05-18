@@ -565,16 +565,17 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 		return nil, err
 	}
 	options := &unified.Options{
-		Cfg:           cfg,
-		Features:      featureToggles,
-		DB:            sqlStore,
-		Tracer:        tracingService,
-		Reg:           registerer,
-		Authzc:        accessClient,
-		Docs:          documentBuilderSupplier,
-		SecureValues:  inlineSecureValueSupport,
-		VectorBackend: vectorBackend,
-		Embedder:      embedder,
+		Cfg:            cfg,
+		Features:       featureToggles,
+		DB:             sqlStore,
+		Tracer:         tracingService,
+		Reg:            registerer,
+		Authzc:         accessClient,
+		Docs:           documentBuilderSupplier,
+		SecureValues:   inlineSecureValueSupport,
+		VectorBackend:  vectorBackend,
+		Embedder:       embedder,
+		DashboardStats: ossDashboardStats,
 	}
 	storageMetrics := resource.ProvideStorageMetrics(registerer)
 	bleveIndexMetrics := resource.ProvideIndexMetrics(registerer)
@@ -846,7 +847,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	annotationAppInstaller, err := annotation.RegisterAppInstaller(cfg, repositoryImpl, cleanupServiceImpl, accessClient)
+	annotationAppInstaller, err := annotation.RegisterAppInstaller(cfg, repositoryImpl, cleanupServiceImpl, accessClient, eventualRestConfigProvider, tracer, registerer)
 	if err != nil {
 		return nil, err
 	}
@@ -1280,16 +1281,17 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	options := &unified.Options{
-		Cfg:           cfg,
-		Features:      featureToggles,
-		DB:            sqlStore,
-		Tracer:        tracingService,
-		Reg:           registerer,
-		Authzc:        accessClient,
-		Docs:          documentBuilderSupplier,
-		SecureValues:  inlineSecureValueSupport,
-		VectorBackend: vectorBackend,
-		Embedder:      embedder,
+		Cfg:            cfg,
+		Features:       featureToggles,
+		DB:             sqlStore,
+		Tracer:         tracingService,
+		Reg:            registerer,
+		Authzc:         accessClient,
+		Docs:           documentBuilderSupplier,
+		SecureValues:   inlineSecureValueSupport,
+		VectorBackend:  vectorBackend,
+		Embedder:       embedder,
+		DashboardStats: ossDashboardStats,
 	}
 	storageMetrics := resource.ProvideStorageMetrics(registerer)
 	bleveIndexMetrics := resource.ProvideIndexMetrics(registerer)
@@ -1563,7 +1565,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	annotationAppInstaller, err := annotation.RegisterAppInstaller(cfg, repositoryImpl, cleanupServiceImpl, accessClient)
+	annotationAppInstaller, err := annotation.RegisterAppInstaller(cfg, repositoryImpl, cleanupServiceImpl, accessClient, eventualRestConfigProvider, tracer, registerer)
 	if err != nil {
 		return nil, err
 	}

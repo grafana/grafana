@@ -2712,6 +2712,20 @@
     },
     {
       "metadata": {
+        "name": "globalDashboardVariables",
+        "resourceVersion": "1774390852180",
+        "creationTimestamp": "2026-03-24T22:20:52Z"
+      },
+      "spec": {
+        "description": "Enables global and folder-scoped dashboard variables via dashboard.grafana.app",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.assetSriChecks",
         "resourceVersion": "1777026827859",
         "creationTimestamp": "2026-04-24T10:33:47Z"
@@ -2766,6 +2780,21 @@
     },
     {
       "metadata": {
+        "name": "grafana.logLevelInference",
+        "resourceVersion": "1778252024619",
+        "creationTimestamp": "2026-05-08T14:53:44Z"
+      },
+      "spec": {
+        "description": "Enables log level inference from log line contents when level is not defined as a field or a label",
+        "stage": "deprecated",
+        "codeowner": "@grafana/observability-logs",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.meticulousAIRecorder",
         "resourceVersion": "1777401759422",
         "creationTimestamp": "2026-04-28T17:20:14Z",
@@ -2775,6 +2804,20 @@
       },
       "spec": {
         "description": "Enable Meticulous AI session recorder for automated UI test generation",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.meticulousAIRecorderHighVolume",
+        "resourceVersion": "1778789600371",
+        "creationTimestamp": "2026-05-14T20:13:20Z"
+      },
+      "spec": {
+        "description": "When true, increases the volume of data transferred before abandoning sessions for Meticulous AI session recorder.",
         "stage": "experimental",
         "codeowner": "@grafana/dataviz-squad",
         "hideFromDocs": true,
@@ -4016,7 +4059,8 @@
       "metadata": {
         "name": "localeFormatPreference",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-03-31T13:59:07Z"
+        "creationTimestamp": "2025-03-31T13:59:07Z",
+        "deletionTimestamp": "2026-05-06T12:35:47Z"
       },
       "spec": {
         "description": "Specifies the locale so the correct format for numbers and dates can be shown",
@@ -6304,7 +6348,8 @@
       "metadata": {
         "name": "unifiedStorageGrpcConnectionPool",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-03-21T13:24:54Z"
+        "creationTimestamp": "2025-03-21T13:24:54Z",
+        "deletionTimestamp": "2026-05-14T17:53:20Z"
       },
       "spec": {
         "description": "Enables the unified storage grpc connection pool",

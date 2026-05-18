@@ -1254,6 +1254,8 @@ embed.go @grafana/grafana-as-code
 /.github/actions/setup-go/action.yml @grafana/grafana-backend-group
 /.github/actions/report-go-cache-sizes/ @grafana/grafana-backend-group
 /.github/actions/setup-grafana-bench/ @Proximyst
+/.github/actions/build-go @grafana/grafana-backend-services-squad
+/.github/actions/build-targz @grafana/grafana-backend-services-squad
 /.github/actions/change-detection @grafana/grafana-backend-services-squad
 /.github/actions/setup-fpm @grafana/grafana-backend-services-squad
 /.github/actions/setup-node @grafana/grafana-frontend-platform
@@ -1360,6 +1362,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/update-schema-types.yml @grafana/grafana-frontend-platform
 /.github/workflows/defaults-ini-docs-reminder.yml @grafana/docs-tooling @jtvdez
 /.github/workflows/pr-build-grafana.yml @grafana/grafana-backend-services-squad
+/.github/workflows/build-docker-variants.yml @grafana/grafana-backend-services-squad
 
 # Generated files not requiring owner approval
 /packages/grafana-data/src/types/featureToggles.gen.ts @grafanabot
