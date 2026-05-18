@@ -14,17 +14,15 @@ jest.mock('app/features/provisioning/hooks/useIsProvisionedInstance', () => ({
   useIsProvisionedInstance: jest.fn(),
 }));
 
-jest.mock('@grafana/runtime', () => {
-  return {
-    ...jest.requireActual('@grafana/runtime'),
-    useInstanceSettingsList: jest.fn().mockReturnValue({
-      items: [{ name: 'Test Data Source', uid: 'test-data-source-uid', type: 'grafana-testdata-datasource' }],
-      isLoading: false,
-      hasMore: false,
-      fetchMore: jest.fn(),
-    }),
-  };
-});
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  useDataSourceInstanceSettingsList: jest.fn().mockReturnValue({
+    items: [{ name: 'Test Data Source', uid: 'test-data-source-uid', type: 'grafana-testdata-datasource' }],
+    isLoading: false,
+    hasMore: false,
+    fetchMore: jest.fn(),
+  }),
+}));
 
 const mockUseIsProvisionedInstance = useIsProvisionedInstance as jest.MockedFunction<typeof useIsProvisionedInstance>;
 

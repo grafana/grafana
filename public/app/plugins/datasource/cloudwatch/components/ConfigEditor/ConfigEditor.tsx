@@ -13,7 +13,8 @@ import {
   type GrafanaTheme2,
 } from '@grafana/data';
 import { ConfigSection, DataSourceDescription } from '@grafana/plugin-ui';
-import { getAppEvents, usePluginInteractionReporter, getDataSourcePlugin, config } from '@grafana/runtime';
+import { getAppEvents, usePluginInteractionReporter, config } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { Alert, Input, type FieldProps, Field, Divider, useStyles2 } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../datasource';
@@ -209,7 +210,7 @@ function useDatasource(props: Props) {
 
   useEffect(() => {
     if (props.options.version) {
-      getDataSourcePlugin(props.options.name).then((ds) => {
+      getDataSourceInstance(props.options.name).then((ds) => {
         if (ds instanceof CloudWatchDatasource) {
           setDatasource(ds);
         }

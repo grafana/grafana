@@ -4,7 +4,8 @@ import React, { memo } from 'react';
 import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { config, useInstanceSettingsList, type ScopesContextValue } from '@grafana/runtime';
+import { config, type ScopesContextValue } from '@grafana/runtime';
+import { useDataSourceInstanceSettingsList } from '@grafana/runtime/internal';
 import { Icon, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { MEGA_MENU_TOGGLE_ID } from 'app/core/constants';
 import { useGrafana } from 'app/core/context/GrafanaContext';
@@ -63,7 +64,7 @@ export const SingleTopBar = memo(function SingleTopBar({
   const isSmallScreen = !useMediaQueryMinWidth('sm');
   const isLargeScreen = useMediaQueryMinWidth('lg');
   const topLevelScopes = !showToolbarLevel && isLargeScreen && scopes?.state.enabled;
-  const { items: testDataSources, isLoading: isTestDsLoading } = useInstanceSettingsList(
+  const { items: testDataSources, isLoading: isTestDsLoading } = useDataSourceInstanceSettingsList(
     config.featureToggles.dashboardTemplates ? testDsFilters : undefined
   );
   const hasTestDataSource = config.featureToggles.dashboardTemplates && !isTestDsLoading && testDataSources.length > 0;

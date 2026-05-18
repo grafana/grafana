@@ -1,18 +1,23 @@
 import { renderHook, waitFor } from '@testing-library/react';
 
 import { type DataSourceInstanceSettings } from '@grafana/data';
-import { getInstanceSettings, isExpressionReference } from '@grafana/runtime';
+import { isExpressionReference } from '@grafana/runtime';
+import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { useAlertQueriesStatus } from './useAlertQueriesStatus';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getInstanceSettings: jest.fn(),
   isExpressionReference: jest.fn(),
 }));
 
-const mockGetInstanceSettings = jest.mocked(getInstanceSettings);
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstanceSettings: jest.fn(),
+}));
+
+const mockGetInstanceSettings = jest.mocked(getDataSourceInstanceSettings);
 const mockIsExpressionReference = jest.mocked(isExpressionReference);
 
 function makeQuery(uid: string): AlertQuery {

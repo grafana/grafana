@@ -40,9 +40,9 @@ jest.mock('app/features/dashboard/dashgrid/DashboardLibrary/SuggestedDashboardsM
     ) : null,
 }));
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getInstanceSettings: jest.fn((uid?: string) =>
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstanceSettings: jest.fn((uid?: string) =>
     Promise.resolve(uid ? { uid, type: 'test-datasource', name: 'Test DS' } : undefined)
   ),
 }));

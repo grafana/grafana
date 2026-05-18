@@ -4,7 +4,8 @@ import { useLocation } from 'react-router-dom-v5-compat';
 
 import { locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, useInstanceSettingsList, locationService, reportInteraction } from '@grafana/runtime';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
+import { useDataSourceInstanceSettingsList } from '@grafana/runtime/internal';
 import { Button, Drawer, Dropdown, Icon, Menu, useTheme2 } from '@grafana/ui';
 import { type OwnerReference } from 'app/api/clients/folder/v1beta1';
 import { useCreateFolder } from 'app/api/clients/folder/v1beta1/hooks';
@@ -55,7 +56,7 @@ export default function CreateNewButton({
   const isProvisionedInstance = useIsProvisionedInstance();
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
   const theme = useTheme2();
-  const { items: testDataSources } = useInstanceSettingsList(
+  const { items: testDataSources } = useDataSourceInstanceSettingsList(
     config.featureToggles.dashboardTemplates ? testDsFilters : undefined
   );
   const renderPreBuiltDashboardAction = config.featureToggles.dashboardTemplates && testDataSources.length > 0;

@@ -9,7 +9,7 @@ import {
   type PluginMetaInfo,
   PluginType,
 } from '@grafana/data';
-import { getDataSourcePlugin } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 
 import { CloudWatchDatasource } from '../../datasource';
 import {
@@ -42,7 +42,6 @@ jest.mock('@grafana/runtime', () => ({
     put: putMock,
     get: getMock,
   }),
-  getDataSourcePlugin: jest.fn(),
   getAppEvents: () => mockAppEvents,
   config: {
     ...jest.requireActual('@grafana/runtime').config,
@@ -51,6 +50,11 @@ jest.mock('@grafana/runtime', () => ({
       cloudWatchCrossAccountQuerying: true,
     },
   },
+}));
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: jest.fn(),
 }));
 
 const props: Props = {
@@ -122,7 +126,7 @@ describe('Render', () => {
     jest.resetAllMocks();
     putMock.mockImplementation(async () => ({ datasource: setupMockedDataSource().datasource }));
     getMock.mockImplementation(async () => ({ datasource: setupMockedDataSource().datasource }));
-    jest.mocked(getDataSourcePlugin).mockResolvedValue(datasource as unknown as DataSourceApi);
+    jest.mocked(getDataSourceInstance).mockResolvedValue(datasource as unknown as DataSourceApi);
     datasource.resources.getRegions = jest.fn().mockResolvedValue([
       {
         label: 'ap-east-1',
@@ -252,14 +256,14 @@ describe('Render', () => {
 
   it('should load the data source when version is set', async () => {
     setup({ version: 2 });
-    await waitFor(() => expect(getDataSourcePlugin).toHaveBeenCalledWith('CloudWatch'));
+    await waitFor(() => expect(getDataSourceInstance).toHaveBeenCalledWith('CloudWatch'));
   });
 
   it('should not load the data source when version is not set', async () => {
     setup({ version: undefined });
     // Wait for the component to finish rendering before asserting the negative.
     await waitFor(() => expect(screen.getByText('Namespaces of Custom Metrics')).toBeInTheDocument());
-    expect(getDataSourcePlugin).not.toHaveBeenCalled();
+    expect(getDataSourceInstance).not.toHaveBeenCalled();
   });
 
   it('should show error message if Select log group button is clicked when data source is never saved', async () => {
