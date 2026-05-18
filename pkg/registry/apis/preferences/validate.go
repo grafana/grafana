@@ -3,8 +3,10 @@ package preferences
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/admission"
 
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
@@ -28,13 +30,45 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 		return apierrors.NewBadRequest(fmt.Sprintf("expected Preferences object, got %T", obj))
 	}
 
+	var errors []v1.StatusCause
+
+	if p.Spec.HomeURL != nil {
+		errors = append(errors, newInvalidField(
+			"May only set the home URL from the system configuration",
+			"homeURL"))
+	}
+
 	if p.Spec.Timezone != nil && !pref.IsValidTimezone(*p.Spec.Timezone) {
-		return apierrors.NewBadRequest("invalid timezone: must be a valid IANA timezone (e.g., America/New_York), 'utc', 'browser', or empty string")
+		errors = append(errors, newInvalidField(
+			"must be a valid IANA timezone (e.g., America/New_York), 'utc', 'browser', or empty string",
+			"timezone"))
 	}
 
 	if p.Spec.Theme != nil && *p.Spec.Theme != "" && !pref.IsValidThemeID(*p.Spec.Theme) {
-		return apierrors.NewBadRequest("invalid theme")
+		errors = append(errors, newInvalidField(
+			"Invalid theme: must match a configured theme",
+			"theme"))
+	}
+
+	if len(errors) > 0 {
+		return &apierrors.StatusError{v1.Status{
+			Status:  v1.StatusFailure,
+			Code:    http.StatusBadRequest,
+			Reason:  v1.StatusReasonBadRequest,
+			Message: "Invalid request",
+			Details: &v1.StatusDetails{
+				Causes: errors,
+			},
+		}}
 	}
 
 	return nil
+}
+
+func newInvalidField(details string, key string) v1.StatusCause {
+	return v1.StatusCause{
+		Type:    v1.CauseTypeFieldValueInvalid,
+		Message: details,
+		Field:   fmt.Sprintf("spec.%s", key),
+	}
 }
