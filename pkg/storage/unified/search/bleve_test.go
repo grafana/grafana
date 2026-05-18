@@ -1065,11 +1065,11 @@ func TestBuildIndexExpiration(t *testing.T) {
 				return tc.owned, tc.ownedCheckError
 			}))
 
-			size := int64(1)
+			docs := 1
 			if !tc.inMemory {
-				size = 100 // above defaultFileTreshold
+				docs = defaultFileThreshold
 			}
-			builtIndex, err := backend.BuildIndex(context.Background(), ns, size, nil, "test", indexTestDocs(ns, 1, 100), nil, false, time.Time{}, 0)
+			builtIndex, err := backend.BuildIndex(context.Background(), ns, int64(docs), nil, "test", indexTestDocs(ns, docs, 100), nil, false, time.Time{}, 0)
 			require.NoError(t, err)
 
 			// Evict indexes.
@@ -1090,7 +1090,7 @@ func TestBuildIndexExpiration(t *testing.T) {
 
 				cnt, err := builtIndex.DocCount(context.Background(), "", nil)
 				require.NoError(t, err)
-				require.Equal(t, int64(1), cnt)
+				require.Equal(t, int64(docs), cnt)
 
 				// Verify that index is still open
 				if tc.inMemory {
@@ -1119,7 +1119,7 @@ func TestCloseAllIndexes(t *testing.T) {
 	backend1, reg := setupBleveBackend(t, withRootDir(tmpDir))
 	_, err := backend1.BuildIndex(context.Background(), ns, 10 /* file based */, nil, "test", indexTestDocs(ns, 10, 100), nil, false, time.Time{}, 0)
 	require.NoError(t, err)
-	_, err = backend1.BuildIndex(context.Background(), ns2, 1 /* memory based */, nil, "test", indexTestDocs(ns, 10, 100), nil, false, time.Time{}, 0)
+	_, err = backend1.BuildIndex(context.Background(), ns2, 1 /* memory based */, nil, "test", indexTestDocs(ns2, 1, 100), nil, false, time.Time{}, 0)
 	require.NoError(t, err)
 
 	// Verify two open indexes.
@@ -1180,6 +1180,107 @@ func TestBuildIndex(t *testing.T) {
 	}
 }
 
+func TestBuildIndexAdaptivePromotion(t *testing.T) {
+	ns := resource.NamespacedResource{
+		Namespace: "test",
+		Group:     "group",
+		Resource:  "resource",
+	}
+
+	t.Run("small build stays in memory", func(t *testing.T) {
+		backend, reg := setupBleveBackend(t, withFileThreshold(5))
+
+		idx, err := backend.BuildIndex(t.Context(), ns, 100, nil, "test", indexTestDocs(ns, 4, 100), nil, false, time.Time{}, 0)
+		require.NoError(t, err)
+
+		bleveIdx := idx.(*bleveIndex)
+		assert.Equal(t, indexStorageMemory, bleveIdx.indexStorage)
+		assert.False(t, bleveIdx.expiration.IsZero())
+		verifyDirEntriesCount(t, backend.getResourceDir(ns), 0)
+		checkOpenIndexes(t, reg, 1, 0)
+	})
+
+	t.Run("build crossing threshold promotes to filesystem", func(t *testing.T) {
+		backend, reg := setupBleveBackend(t, withFileThreshold(5))
+
+		idx, err := backend.BuildIndex(t.Context(), ns, 1, nil, "test", indexTestDocs(ns, 5, 100), nil, false, time.Time{}, 0)
+		require.NoError(t, err)
+
+		bleveIdx := idx.(*bleveIndex)
+		assert.Equal(t, indexStorageFile, bleveIdx.indexStorage)
+		assert.True(t, bleveIdx.expiration.IsZero())
+		verifyDirEntriesCount(t, backend.getResourceDir(ns), 1)
+		checkOpenIndexes(t, reg, 0, 1)
+
+		cnt, err := idx.DocCount(t.Context(), "", nil)
+		require.NoError(t, err)
+		assert.Equal(t, int64(5), cnt)
+
+		resp := searchTitle(t, idx, "Document", 10, ns)
+		assert.Equal(t, int64(5), resp.TotalHits)
+
+		assert.Equal(t, int64(100), bleveIdx.resourceVersion.Load())
+		rv, err := getRV(bleveIdx.index)
+		require.NoError(t, err)
+		assert.Equal(t, int64(100), rv)
+
+		buildInfo, err := getBuildInfo(bleveIdx.index)
+		require.NoError(t, err)
+		assert.Equal(t, buildVersion, buildInfo.BuildVersion)
+		assert.NotZero(t, buildInfo.BuildTime)
+
+		mutationCount, err := bleveIdx.getSnapshotMutationCount()
+		require.NoError(t, err)
+		assert.Equal(t, int64(5), mutationCount)
+	})
+
+	t.Run("incremental update does not promote memory index", func(t *testing.T) {
+		backend, reg := setupBleveBackend(t, withFileThreshold(5))
+
+		idx, err := backend.BuildIndex(t.Context(), ns, 1, nil, "test", indexTestDocs(ns, 1, 100), updateTestDocs(ns, 5), false, time.Time{}, 0)
+		require.NoError(t, err)
+		bleveIdx := idx.(*bleveIndex)
+		require.Equal(t, indexStorageMemory, bleveIdx.indexStorage)
+
+		_, err = idx.UpdateIndex(t.Context())
+		require.NoError(t, err)
+
+		assert.Equal(t, indexStorageMemory, bleveIdx.indexStorage)
+		verifyDirEntriesCount(t, backend.getResourceDir(ns), 0)
+		checkOpenIndexes(t, reg, 1, 0)
+
+		cnt, err := idx.DocCount(t.Context(), "", nil)
+		require.NoError(t, err)
+		assert.Equal(t, int64(5), cnt)
+	})
+
+	t.Run("build failure before promotion leaves no filesystem directory", func(t *testing.T) {
+		backend, _ := setupBleveBackend(t, withFileThreshold(5))
+
+		idx, err := backend.BuildIndex(t.Context(), ns, 100, nil, "test", func(resource.ResourceIndex) (int64, error) {
+			return 0, errors.New("fail before promotion")
+		}, nil, false, time.Time{}, 0)
+		require.Error(t, err)
+		require.Nil(t, idx)
+		verifyDirEntriesCount(t, backend.getResourceDir(ns), 0)
+		require.Empty(t, backend.inFlightBuildDirs)
+	})
+
+	t.Run("build failure after promotion removes filesystem directory", func(t *testing.T) {
+		backend, _ := setupBleveBackend(t, withFileThreshold(5))
+
+		idx, err := backend.BuildIndex(t.Context(), ns, 100, nil, "test", func(index resource.ResourceIndex) (int64, error) {
+			_, buildErr := indexTestDocs(ns, 5, 100)(index)
+			require.NoError(t, buildErr)
+			return 0, errors.New("fail after promotion")
+		}, nil, false, time.Time{}, 0)
+		require.Error(t, err)
+		require.Nil(t, idx)
+		verifyDirEntriesCount(t, backend.getResourceDir(ns), 0)
+		require.Empty(t, backend.inFlightBuildDirs)
+	})
+}
+
 func TestRebuildingIndexClosesPreviousCachedIndex(t *testing.T) {
 	ns := resource.NamespacedResource{
 		Namespace: "test",
@@ -1199,11 +1300,11 @@ func TestRebuildingIndexClosesPreviousCachedIndex(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			backend, reg := setupBleveBackend(t, withIndexCacheTTL(time.Nanosecond))
 
-			firstSize := 100
+			firstDocs := 100
 			if testCase.firstInMemory {
-				firstSize = 1
+				firstDocs = 1
 			}
-			firstIndex, err := backend.BuildIndex(context.Background(), ns, int64(firstSize), nil, "test", indexTestDocs(ns, firstSize, 100), nil, false, time.Time{}, 0)
+			firstIndex, err := backend.BuildIndex(context.Background(), ns, int64(firstDocs), nil, "test", indexTestDocs(ns, firstDocs, 100), nil, false, time.Time{}, 0)
 			require.NoError(t, err)
 
 			if testCase.firstInMemory {
@@ -1214,12 +1315,12 @@ func TestRebuildingIndexClosesPreviousCachedIndex(t *testing.T) {
 
 			openInMemoryIndexes := 0
 
-			secondSize := 100
+			secondDocs := 100
 			if testCase.secondInMemory {
-				secondSize = 1
+				secondDocs = 1
 				openInMemoryIndexes = 1
 			}
-			secondIndex, err := backend.BuildIndex(context.Background(), ns, int64(secondSize), nil, "test", indexTestDocs(ns, secondSize, 100), nil, false, time.Time{}, 0)
+			secondIndex, err := backend.BuildIndex(context.Background(), ns, int64(secondDocs), nil, "test", indexTestDocs(ns, secondDocs, 100), nil, false, time.Time{}, 0)
 			require.NoError(t, err)
 
 			if testCase.secondInMemory {
@@ -1236,7 +1337,7 @@ func TestRebuildingIndexClosesPreviousCachedIndex(t *testing.T) {
 
 			cnt, err := secondIndex.DocCount(context.Background(), "", nil)
 			require.NoError(t, err)
-			require.Equal(t, int64(secondSize), cnt)
+			require.Equal(t, int64(secondDocs), cnt)
 
 			checkOpenIndexes(t, reg, openInMemoryIndexes, 1-openInMemoryIndexes)
 		})
@@ -1422,21 +1523,30 @@ func TestBuildIndexConcurrentBuildsForSameKeyDoNotDeleteEachOthersDirs(t *testin
 	// the cold-start reuse path (which would otherwise collide on the bolt
 	// lock of the already-open initial index).
 	_, err := backend.BuildIndex(t.Context(), ns, 100, nil, "init",
-		func(_ resource.ResourceIndex) (int64, error) { return 1, nil },
+		indexTestDocs(ns, 1, 1),
 		nil, false, time.Time{}, 0)
 	require.NoError(t, err)
 	initDirs := dirEntryNames(t, resourceDir)
 	require.Len(t, initDirs, 1)
 
-	// Start build A and park its builder, so A's directory is on disk and
-	// registered as in-flight while B runs.
+	// Start build A and park its builder after promotion, so A's directory is on
+	// disk and registered as in-flight while B runs.
 	aEntered := make(chan struct{})
 	aRelease := make(chan struct{})
 	aDone := make(chan struct{})
 	go func() {
 		defer close(aDone)
 		_, _ = backend.BuildIndex(t.Context(), ns, 100, nil, "build-a",
-			func(_ resource.ResourceIndex) (int64, error) {
+			func(index resource.ResourceIndex) (int64, error) {
+				if err := index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{{
+					Action: resource.ActionIndex,
+					Doc: &resource.IndexableDocument{
+						Key:   &resourcepb.ResourceKey{Namespace: ns.Namespace, Group: ns.Group, Resource: ns.Resource, Name: "doc-a"},
+						Title: "Document A",
+					},
+				}}}); err != nil {
+					return 0, err
+				}
 				close(aEntered)
 				<-aRelease
 				return 1, nil
@@ -1456,7 +1566,7 @@ func TestBuildIndexConcurrentBuildsForSameKeyDoNotDeleteEachOthersDirs(t *testin
 
 	// Run B to completion. B's cleanOldIndexes runs while A is still in flight.
 	_, err = backend.BuildIndex(t.Context(), ns, 100, nil, "build-b",
-		func(_ resource.ResourceIndex) (int64, error) { return 2, nil },
+		indexTestDocs(ns, 1, 2),
 		nil, true, time.Time{}, 0)
 	require.NoError(t, err)
 
@@ -1526,18 +1636,21 @@ func testBleveIndexWithFailures(t *testing.T, fileBased bool) {
 		Resource:  "resource",
 	}
 
-	size := int64(1)
+	docs := 1
 	if fileBased {
-		// size=100 is above FileThreshold (5), make it a file-based index.
-		size = 100
+		docs = defaultFileThreshold
 	}
-	_, err := backend.BuildIndex(context.Background(), ns, size, nil, "test", func(index resource.ResourceIndex) (int64, error) {
+	_, err := backend.BuildIndex(context.Background(), ns, int64(docs), nil, "test", func(index resource.ResourceIndex) (int64, error) {
+		if fileBased {
+			_, buildErr := indexTestDocs(ns, docs, 100)(index)
+			require.NoError(t, buildErr)
+		}
 		return 0, fmt.Errorf("fail")
 	}, nil, false, time.Time{}, 0)
 	require.Error(t, err)
 
 	// Even though previous build of the index failed, new building of the index should work.
-	_, err = backend.BuildIndex(context.Background(), ns, size, nil, "test", indexTestDocs(ns, int(size), 100), nil, false, time.Time{}, 0)
+	_, err = backend.BuildIndex(context.Background(), ns, int64(docs), nil, "test", indexTestDocs(ns, docs, 100), nil, false, time.Time{}, 0)
 	require.NoError(t, err)
 }
 

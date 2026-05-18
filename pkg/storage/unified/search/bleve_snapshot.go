@@ -254,7 +254,7 @@ func (b *bleveBackend) downloadSelectedSnapshot(
 	// Pick a fresh destination directory name. DownloadIndexSnapshot refuses to
 	// overwrite an existing destDir; the bump-on-exists loop mirrors what
 	// BuildIndex does when creating new file-based indexes.
-	destDir, name, err := b.reserveSnapshotDir(resourceDir)
+	destDir, name, err := b.reserveIndexDir(resourceDir)
 	if err != nil {
 		outcome = snapshotStatusDownloadError
 		return nil, "", 0, fmt.Errorf("reserving local snapshot dir: %w", err)
@@ -418,10 +418,10 @@ func snapshotTier(v, minVersion, running *semver.Version) int {
 	return 0
 }
 
-// reserveSnapshotDir returns an absolute path (and its base name) inside
+// reserveIndexDir returns an absolute path (and its base name) inside
 // resourceDir that does not exist yet. It bumps the timestamp if a collision
-// happens, mirroring the fresh-build naming in BuildIndex.
-func (b *bleveBackend) reserveSnapshotDir(resourceDir string) (string, string, error) {
+// happens.
+func (b *bleveBackend) reserveIndexDir(resourceDir string) (string, string, error) {
 	if err := os.MkdirAll(resourceDir, 0o750); err != nil {
 		return "", "", err
 	}
