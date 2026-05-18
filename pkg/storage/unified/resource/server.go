@@ -1911,13 +1911,49 @@ func (s *server) IsHealthy(ctx context.Context, req *resourcepb.HealthCheckReque
 	return s.diagnostics.IsHealthy(ctx, req) //nolint:staticcheck
 }
 
-// GetBlob implements BlobStore.
+// PutBlob implements BlobStore.
+// NOTE: This request only expects calls delegated from other services -- it is not directly accessible to end users
+// The access control must be handled in the exposed service
 func (s *server) PutBlob(ctx context.Context, req *resourcepb.PutBlobRequest) (*resourcepb.PutBlobResponse, error) {
 	if s.blob == nil {
 		return &resourcepb.PutBlobResponse{Error: &resourcepb.ErrorResult{
 			Message: "blob store not configured",
 			Code:    http.StatusNotImplemented,
 		}}, nil
+	}
+
+	user, ok := claims.AuthInfoFrom(ctx)
+	if !ok || user == nil {
+		return &resourcepb.PutBlobResponse{
+			Error: &resourcepb.ErrorResult{
+				Message: "no user found in context",
+				Code:    http.StatusUnauthorized,
+			}}, nil
+	}
+
+	key := req.Resource
+	rr := s.backend.ReadResource(ctx, &resourcepb.ReadRequest{Key: key})
+	if rr == nil || rr.Error != nil {
+		return &resourcepb.PutBlobResponse{Error: &resourcepb.ErrorResult{
+			Message: "unable to read parent resource",
+			Code:    http.StatusNotFound,
+		}}, nil
+	}
+
+	// Check that the user also has permissions to update the parent object
+	checkresult, err := s.access.Check(ctx, user, claims.CheckRequest{
+		Verb:      utils.VerbUpdate,
+		Group:     key.Group,
+		Resource:  key.Resource,
+		Namespace: key.Namespace,
+		Name:      key.Name,
+	}, rr.Folder)
+	if err != nil || !checkresult.Allowed {
+		return &resourcepb.PutBlobResponse{
+			Error: &resourcepb.ErrorResult{
+				Message: "not allowed to post blob",
+				Code:    http.StatusUnauthorized,
+			}}, nil
 	}
 
 	rsp, err := s.blob.PutResourceBlob(ctx, req)
