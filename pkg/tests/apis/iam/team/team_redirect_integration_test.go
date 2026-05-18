@@ -109,20 +109,15 @@ func TestIntegrationGetTeamByIDAPI(t *testing.T) {
 	assertRedirectMatchesK8sAPI(t, k8sTeam, directK8sTeam)
 
 	t.Run("memberCount reflects Spec.Members after add", func(t *testing.T) {
-		// Prior to the fix in teamk8s.GetTeamByID, the response mapping omitted
-		// MemberCount, defaulting it to 0 even when the team had real members.
-		// Mirrors the precedent set by PR #124903 for the search endpoint —
-		// Spec.Members is the source of truth for membership.
-		//
-		// POST /api/teams auto-adds the creator (Org1.Admin) as a team Admin,
-		// so after one explicit add we have two members: {creator-admin, editor}.
-		// Toggle redirect off for the add to avoid the K8s users API path
-		// (FlagKubernetesUsersApi not enabled in setupTeamTestHelper).
 		editorID, err := helper.Org1.Editor.Identity.GetInternalID()
 		require.NoError(t, err)
+
+		// Add via legacy; addTeamMemberViaAPI through the K8s adapter would need
+		// FlagKubernetesUsersApi, which setupTeamTestHelper does not enable.
 		setTeamK8sFeatureToggle(t, false)
 		addTeamMemberViaAPI(t, helper, teamID, editorID)
 
+		// GET via K8s adapter
 		setTeamK8sFeatureToggle(t, true)
 		resp := apis.DoRequest(helper, apis.RequestParams{
 			User:   helper.Org1.Admin,
@@ -133,7 +128,7 @@ func TestIntegrationGetTeamByIDAPI(t *testing.T) {
 		}{})
 		require.Equal(t, http.StatusOK, resp.Response.StatusCode, "body=%s", string(resp.Body))
 		assert.EqualValues(t, 2, resp.Result.MemberCount,
-			"GET /api/teams/{id} must return memberCount derived from Spec.Members (creator-admin + editor)")
+			"memberCount must reflect Spec.Members (creator-admin + editor)")
 	})
 }
 
