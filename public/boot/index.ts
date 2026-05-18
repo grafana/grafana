@@ -164,6 +164,33 @@ async function fetchBootData(): Promise<FetchBootDataResult> {
   return rawBootData;
 }
 
+interface MergedPreferencesSpec {
+  language?: string;
+  theme?: string;
+  timezone?: string;
+  weekStart?: string;
+  queryHistory?: { homeTab?: string };
+  navbar?: { bookmarkUrls?: string[] };
+}
+
+interface MergedPreferencesResponse {
+  spec: MergedPreferencesSpec;
+}
+
+async function fetchMergedPreferences(namespace: string): Promise<MergedPreferencesResponse | undefined> {
+  try {
+    const url = `/apis/preferences.grafana.app/v1alpha1/namespaces/${namespace}/preferences/merged`;
+    const resp = await fetch(url, { headers: { Accept: 'application/json' } });
+    if (!resp.ok) {
+      return undefined;
+    }
+    return resp.json();
+  } catch (err) {
+    console.warn('Failed to fetch merged preferences', err);
+    return undefined;
+  }
+}
+
 /**
  * Loads the boot data from the server, retrying if it's unavailable.
  **/
@@ -224,6 +251,27 @@ async function initGrafana() {
   window.grafanaBootData.user = bootData.user;
   if (bootData.settings?.buildInfo?.edition) {
     window.grafanaBootData.settings.buildInfo.edition = bootData.settings.buildInfo.edition;
+  }
+
+  //Fetch merged prefs and overwrite the user fields that depend on them
+  const namespace = window.grafanaBootData.settings.namespace;
+  if (window.grafanaBootData.user.isSignedIn && !publicDashboardAccessToken && namespace) {
+    const merged = await fetchMergedPreferences(namespace);
+    if (merged?.spec) {
+      const { theme, language, weekStart, timezone } = merged.spec;
+      if (theme !== undefined) {
+        window.grafanaBootData.user.theme = theme;
+      }
+      if (language !== undefined) {
+        window.grafanaBootData.user.language = language;
+      }
+      if (weekStart !== undefined) {
+        window.grafanaBootData.user.weekStart = weekStart;
+      }
+      if (timezone !== undefined) {
+        window.grafanaBootData.user.timezone = timezone;
+      }
+    }
   }
 
   // The per-theme CSS still contains some global styles needed
