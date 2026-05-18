@@ -47,13 +47,21 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
   const showManagePermissions = showManageContactPointPermissions(selectedAlertmanager!, contactPoint);
 
   const k8sRoutesInUse = getAnnotation(contactPoint, K8sAnnotations.InUseRoutes);
+
   /**
-   * Number of policies that reference this contact point.
+   * Non-k8s: policies that reference this contact point, excluding auto-generated simplified-routing
+   * policies (which are managed by the simplified-routing feature and cannot be edited by the user).
+   */
+  const regularPolicyReferences = policies.filter((ref) => ref.route.type !== 'auto-generated');
+
+  /**
+   * Number of policies that reference this contact point (for display purposes).
    *
    * When the k8s API is being used this is sourced from the InUseRoutes annotation, which
    * only counts regular policies (auto-generated simplified-routing policies are excluded).
+   * On the non-k8s path we likewise exclude auto-generated policies.
    */
-  const numberOfPolicies = usingK8sApi ? Number(k8sRoutesInUse) : policies.length;
+  const numberOfPolicies = usingK8sApi ? Number(k8sRoutesInUse) : regularPolicyReferences.length;
 
   /** Number of rules that use this contact point for simplified routing */
   const numberOfRules = Number(getAnnotation(contactPoint, K8sAnnotations.InUseRules)) || 0;
@@ -67,8 +75,13 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
   /** Can the contact point actually be edited? Ability encapsulates provisioning + k8s annotation + RBAC. */
   const canEdit = isGranted(editAbility);
 
-  /** Can the contact point be deleted? Ability encapsulates RBAC, provisioning, and in-use checks. */
-  const canBeDeleted = isGranted(deleteAbility);
+  /**
+   * Can the contact point be deleted?
+   * On the k8s path this is fully encapsulated by the ability (RBAC + provisioning + in-use annotations).
+   * On the non-k8s path the ability covers RBAC + provisioning, and we additionally enforce the
+   * in-use check here using the policy/rule data fetched from the legacy API.
+   */
+  const canBeDeleted = isGranted(deleteAbility) && (usingK8sApi || (!regularPolicyReferences.length && !numberOfRules));
 
   const menuActions: JSX.Element[] = [];
   if (showManagePermissions) {
@@ -118,11 +131,16 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
     );
 
     const inUseAbility = isInUse(deleteAbility) ? deleteAbility : null;
+    // On the k8s path, in-use state is sourced from the ability's blockedBy field.
+    // On the non-k8s path, in-use state is derived from the fetched policies/rules arrays.
+    const routesBlockDeletion =
+      inUseAbility?.blockedBy.includes('routes') || (!usingK8sApi && regularPolicyReferences.length > 0);
+    const rulesBlockDeletion = inUseAbility?.blockedBy.includes('rules') || (!usingK8sApi && numberOfRules > 0);
     const reasonsDeleteIsDisabled = [
       isInsufficientPermissions(deleteAbility) ? cannotDeleteNoPermissions : '',
       isProvisioned ? cannotDeleteProvisioned : '',
-      inUseAbility?.blockedBy.includes('routes') ? cannotDeletePolicies : '',
-      inUseAbility?.blockedBy.includes('rules') ? cannotDeleteRules : '',
+      routesBlockDeletion ? cannotDeletePolicies : '',
+      rulesBlockDeletion ? cannotDeleteRules : '',
     ].filter(Boolean);
 
     const deleteTooltipContent = (

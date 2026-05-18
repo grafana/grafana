@@ -7,23 +7,37 @@ import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { CloudReceiverForm } from './form/CloudReceiverForm';
 import { GrafanaReceiverForm } from './form/GrafanaReceiverForm';
 
-interface Props {
-  alertmanagerName: string;
-  contactPoint: GrafanaManagedContactPoint | Receiver;
-}
+type Props =
+  | { alertmanagerName: typeof GRAFANA_RULES_SOURCE_NAME; contactPoint: GrafanaManagedContactPoint }
+  | { alertmanagerName: string; contactPoint: Receiver };
 
-export const EditReceiverView = ({ contactPoint, alertmanagerName }: Props) => {
-  const editAbility = useContactPointAbility({ action: ContactPointAction.Update, context: {} });
+export const EditReceiverView = (props: Props) => {
+  // GrafanaManagedContactPoint satisfies EntityToCheck structurally (has metadata?: ObjectMeta).
+  // TypeScript cannot narrow through a ternary argument, so we use a cast here.
+  // On the cloud AM branch hasConfigurationAPI is false, so makeScopedAbility returns NotSupported
+  // before ever inspecting the entity.
+  const editAbility = useContactPointAbility({
+    action: ContactPointAction.Update,
+    context:
+      props.alertmanagerName === GRAFANA_RULES_SOURCE_NAME
+        ? // GrafanaManagedContactPoint works as EntityToCheck (has metadata?: ObjectMeta).
+          // TypeScript can't narrow the type here due to the discriminated-union Props, so a cast
+          // is needed. On the cloud AM branch hasConfigurationAPI is false and makeScopedAbility
+          // returns NotSupported without checking the entity.
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+          (props.contactPoint as GrafanaManagedContactPoint)
+        : {},
+  });
 
   const readOnly = !editAbility.granted;
 
-  if (alertmanagerName === GRAFANA_RULES_SOURCE_NAME) {
-    return <GrafanaReceiverForm contactPoint={contactPoint} readOnly={readOnly} editMode />;
+  if (props.alertmanagerName === GRAFANA_RULES_SOURCE_NAME) {
+    return <GrafanaReceiverForm contactPoint={props.contactPoint} readOnly={readOnly} editMode />;
   } else {
     return (
       <CloudReceiverForm
-        alertManagerSourceName={alertmanagerName}
-        contactPoint={contactPoint}
+        alertManagerSourceName={props.alertmanagerName}
+        contactPoint={props.contactPoint}
         readOnly={readOnly}
         editMode
       />

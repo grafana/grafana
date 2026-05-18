@@ -55,9 +55,14 @@ export const TemplatesTable = ({ alertManagerName, templates }: Props) => {
   };
 
   const canCreate = isGranted(useNotificationTemplateAbility({ action: NotificationTemplateAction.Create }));
-  const canUpdate = isGranted(useNotificationTemplateAbility({ action: NotificationTemplateAction.Update }));
-  const canDelete = isGranted(useNotificationTemplateAbility({ action: NotificationTemplateAction.Delete }));
-  const showActionsColumn = canCreate || canUpdate || canDelete;
+  // For Update/Delete the relevant check is whether the user can act on at least one non-provisioned
+  // template. We use the context-free ability here (same RBAC, no provisioning check) together with
+  // whether any template is not provisioned, to match what TemplateRow renders per row.
+  const canUpdateAny = isGranted(useNotificationTemplateAbility({ action: NotificationTemplateAction.Update }));
+  const canDeleteAny = isGranted(useNotificationTemplateAbility({ action: NotificationTemplateAction.Delete }));
+  const hasEditableTemplates = templates.some((t) => !isProvisionedResource(t.provenance));
+  const showActionsColumn =
+    canCreate || (canUpdateAny && hasEditableTemplates) || (canDeleteAny && hasEditableTemplates);
 
   return (
     <>

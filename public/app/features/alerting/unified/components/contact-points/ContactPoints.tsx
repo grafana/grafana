@@ -19,7 +19,10 @@ import { shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 import { makeAMLink, stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 
 import { isGranted, isSupported } from '../../hooks/abilities/abilityUtils';
-import { useContactPointAbility } from '../../hooks/abilities/alertmanager/useContactPointAbility';
+import {
+  useContactPointAbility,
+  useGlobalContactPointAbility,
+} from '../../hooks/abilities/alertmanager/useContactPointAbility';
 import { useNotificationTemplateAbility } from '../../hooks/abilities/alertmanager/useNotificationTemplateAbility';
 import { ContactPointAction, NotificationTemplateAction } from '../../hooks/abilities/types';
 import { usePagination } from '../../hooks/usePagination';
@@ -54,8 +57,10 @@ const ContactPointsTab = () => {
   // If we're using the K8S API, then we don't need to fetch the policies info within the hook,
   // as we get metadata about this from the API
   const fetchPolicies = !shouldUseK8sApi(selectedAlertmanager!);
-  // User may have access to list contact points, but not permission to fetch the status endpoint
-  const fetchStatuses = isGranted(useContactPointAbility({ action: ContactPointAction.View }));
+  // User may have access to list contact points, but not permission to fetch the status endpoint.
+  // This is a pure RBAC check — it must not be gated on hasConfigurationAPI because status fetching
+  // is independent of which configuration API is available.
+  const fetchStatuses = isGranted(useGlobalContactPointAbility(ContactPointAction.View));
 
   const { isLoading, error, contactPoints } = useContactPointsWithStatus({
     alertmanager: selectedAlertmanager!,
