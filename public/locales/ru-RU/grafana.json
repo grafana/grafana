@@ -11489,6 +11489,8 @@
       "clear-search": "Очистить",
       "close-inline-details": "Закрыть сведения об этом журнале",
       "close-sidebar-details": "Закрыть боковую панель со сведениями о журнале",
+      "copy-log-line": "",
+      "copy-log-line-json": "",
       "copy-shortlink": "Копировать короткую ссылку",
       "copy-to-clipboard": "Копировать в буфер обмена",
       "displayed-fields-section": "Организовать отображаемые поля",
@@ -11537,7 +11539,8 @@
     },
     "log-line-menu": {
       "copy-link": "Копировать ссылку в строку журнала",
-      "copy-log": "Копировать строку журнала",
+      "copy-log-contents": "",
+      "copy-log-message": "",
       "hide-details": "Показать сведения о журнале",
       "icon-label": "Меню журнала",
       "log-line": "Строка журнала",
@@ -15741,8 +15744,8 @@
     },
     "legend": {
       "category": "Условные обозначения",
-      "description-faceted-filter": "Показывать фильтр видимости рядов на основе меток",
-      "name-faceted-filter": "Многоаспектный фильтр"
+      "description-faceted-filter": "",
+      "name-faceted-filter": ""
     },
     "line-style-editor": {
       "line-fill-options": {
