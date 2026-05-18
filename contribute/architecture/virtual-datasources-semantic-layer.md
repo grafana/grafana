@@ -1,16 +1,19 @@
 # Semantic Virtual Datasources — implementation plan
 
-> Status: **DRAFT v2**.
+> Status: **DRAFT v3**.
 > Author: `sj` (with assistant).
 > Target repo: `grafana/grafana` (OSS-first).
-> Companion to [virtual-datasources.md](./virtual-datasources.md) (general / composite VDS).
+> Related (may never ship): [virtual-datasources.md](./virtual-datasources.md)
+> — composite saved-query graphs; **separate** `VirtualDataSource` CR if built.
 >
-> **Likely build order:** this variant first. The general VDS (saved-query
-> graphs + expression fan-in) may never ship if semantic VDS meets the
-> product need.
+> **This track** uses its own App Platform kind — `SemanticDataSource` — not a
+> `spec.kind` discriminator on general VDS. General composite VDS is optional
+> reference material only.
 
 ## Changelog
 
+- **v3** — locked storage: dedicated `apps/semanticdatasource/` +
+  `SemanticDataSource` kind; no shared CR with composite VDS.
 - **v2** — reviewer pass: Steep-influenced PoC query shape (not
   Cube-compatible JSON as a goal); explicit goal to **not** run Cube;
   multi-model joins as a near-term requirement; richer semantic-layer
@@ -72,16 +75,17 @@ entry, uid reference, cascade on model edit), but the implementation is
 
 ## 2. Relationship to general Virtual Datasources
 
-| Aspect           | General VDS ([plan](./virtual-datasources.md))             | Semantic VDS (this doc)                         |
-| ---------------- | ---------------------------------------------------------- | ----------------------------------------------- |
-| Primary use case | Saved composite queries (multi-DS + `__expr__`)            | Metrics/dimensions over one SQL warehouse       |
-| Definition       | `spec.queries[]` + `outputRefId` + frame schema            | `spec.model` (YAML) + `spec.upstream`           |
-| Evaluation       | Expand to inner `DataQuery` graph; run expression pipeline | `semantic-layer.Generate` → one SQL `DataQuery` |
-| Upstream         | N datasources + optional SQL/math nodes                    | **One** SQL datasource uid                      |
-| AdHoc (PoC)      | Post-pipeline filter on `data.Frame`                       | **Compile-time** `WHERE` in SQL                 |
-| Cube server      | Not used                                                   | **Must not** be used (explicit goal)            |
-| Panel query API  | Grafana query graph                                        | Semantic query JSON (Steep-like PoC; not Cube)  |
-| Maturity         | v3 draft, not implemented                                  | **First candidate to implement**                |
+| Aspect           | General VDS ([plan](./virtual-datasources.md))             | Semantic VDS (this doc)                                                    |
+| ---------------- | ---------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Primary use case | Saved composite queries (multi-DS + `__expr__`)            | Metrics/dimensions over one SQL warehouse                                  |
+| Definition       | `spec.queries[]` + `outputRefId` + frame schema            | `spec.model` (YAML) + `spec.upstream`                                      |
+| Evaluation       | Expand to inner `DataQuery` graph; run expression pipeline | `semantic-layer.Generate` → one SQL `DataQuery`                            |
+| Upstream         | N datasources + optional SQL/math nodes                    | **One** SQL datasource uid                                                 |
+| AdHoc (PoC)      | Post-pipeline filter on `data.Frame`                       | **Compile-time** `WHERE` in SQL                                            |
+| Cube server      | Not used                                                   | **Must not** be used (explicit goal)                                       |
+| Panel query API  | Grafana query graph                                        | Semantic query JSON (Steep-like PoC; not Cube)                             |
+| Maturity         | v3 draft, not implemented                                  | **First candidate to implement**                                           |
+| Storage (CR)     | `VirtualDataSource` (`virtualdatasource.grafana.app`)      | **`SemanticDataSource`** (`semanticdatasource.grafana.app`) — separate app |
 
 Shared infrastructure we **reuse** from the general plan where it still fits:
 
@@ -97,8 +101,11 @@ We **do not** reuse for PoC:
 - `Expander` graph inlining, refId prefix rewriting, `__expr__` DAG
   constraints, post-pipeline frame AdHoc applier.
 
-If semantic VDS ships and stabilises, treat general VDS as **optional /
-deferred** unless a concrete composite-query requirement appears.
+General composite VDS may **never ship**. We do not design semantic storage
+around it: no `spec.kind: semantic | composite` on a shared CR, no polymorphic
+spec, no uid namespace shared with `VirtualDataSource`. If composite VDS is
+ever needed, it gets its own app/kind per the general plan; the two features
+do not share a resource type.
 
 ## 3. Goals
 
@@ -186,11 +193,22 @@ flowchart LR
   Q --> SQLDS2["Upstream SQL DS"]
 ```
 
-### 5.2 Storage — App Platform CR
+### 5.2 Storage — App Platform CR (semantic-only)
 
-New app `apps/semanticdatasource/` (name TBD — avoid colliding with
-`virtualdatasource` if both exist). Kind `SemanticDataSource`,
-group `semanticdatasource.grafana.app`, version `v0alpha1`.
+Dedicated app — **not** a variant of general VDS storage:
+
+| Item        | Value                                                     |
+| ----------- | --------------------------------------------------------- |
+| App path    | `apps/semanticdatasource/`                                |
+| Kind        | `SemanticDataSource`                                      |
+| API group   | `semanticdatasource.grafana.app`                          |
+| Version     | `v0alpha1`                                                |
+| Plugin type | `grafana-semantic-datasource` (sentinel uid per instance) |
+
+`VirtualDataSource` / `apps/virtualdatasource/` from the composite plan are
+**out of scope** for this track. Colliding names in docs (“virtual” in the
+product sense) are fine; colliding **CR kinds** are not — semantic ships
+without waiting on or accommodating composite VDS schema.
 
 ```cue
 spec: {
@@ -523,27 +541,27 @@ data as raw SQL DS query against equivalent `SELECT`.
 7. **Multi-model joins** required in the first release (engine parallel work).
 8. **Build semantic VDS before general VDS** — general plan remains reference
    only until a composite-query requirement is validated.
+9. **Dedicated `SemanticDataSource` CR** — separate app and API group; no
+   `spec.kind` discriminator shared with composite `VirtualDataSource`.
 
 ## 12. Open questions
 
-1. **App name / kind:** `SemanticDataSource` separate app vs `VirtualDataSource`
-   with `spec.kind: semantic | composite` discriminator?
-2. **Plugin strategy:** new built-in vs feature module in core — default is
+1. **Plugin strategy:** new built-in vs feature module in core — default is
    built-in, not dual-mode Cube plugin.
-3. **Panel query API:** exact Steep mapping (metrics-only vs dims+measures).
-4. **Model storage:** inline YAML on CR only, or separate `SemanticModel` CR
+2. **Panel query API:** exact Steep mapping (metrics-only vs dims+measures).
+3. **Model storage:** inline YAML on CR only, or separate `SemanticModel` CR
    referenced by many instances?
-5. **Upstream allowlist:** which SQL plugins in PoC — BQ only, or BQ + Postgres?
-6. **Alerting toggle:** separate `semanticDatasourcesInAlerts` like general VDS,
+4. **Upstream allowlist:** which SQL plugins in PoC — BQ only, or BQ + Postgres?
+5. **Alerting toggle:** separate `semanticDatasourcesInAlerts` like general VDS,
    or ship together?
-7. **Join model in YAML:** Steep `joinPaths` vs OSI relationships vs
+6. **Join model in YAML:** Steep `joinPaths` vs OSI relationships vs
    Cube-style `joins` — decided in engine repo, consumed by Grafana.
 
 ## 13. References
 
-| Repo                                                                                    | Role                                          |
-| --------------------------------------------------------------------------------------- | --------------------------------------------- |
-| [`grafana/semantic-layer`](https://github.com/grafana/semantic-layer)                   | YAML → SQL compiler (Go)                      |
-| [`grafana/grafana-cube-datasource`](https://github.com/grafana/grafana-cube-datasource) | Separate Cube proxy plugin (not on this path) |
-| [`grafana/cube-models`](https://github.com/grafana/cube-models)                         | Related Cube YAML; not a migration target     |
-| [General VDS plan](./virtual-datasources.md)                                            | Composite-query variant (deferred)            |
+| Repo                                                                                    | Role                                                          |
+| --------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| [`grafana/semantic-layer`](https://github.com/grafana/semantic-layer)                   | YAML → SQL compiler (Go)                                      |
+| [`grafana/grafana-cube-datasource`](https://github.com/grafana/grafana-cube-datasource) | Separate Cube proxy plugin (not on this path)                 |
+| [`grafana/cube-models`](https://github.com/grafana/cube-models)                         | Related Cube YAML; not a migration target                     |
+| [General VDS plan](./virtual-datasources.md)                                            | Composite-query variant (optional; separate CR if ever built) |

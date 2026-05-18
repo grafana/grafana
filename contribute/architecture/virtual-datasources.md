@@ -11,10 +11,10 @@
 > definition cascade to every dashboard panel and alert that
 > references it.
 >
-> **Variant:** [Semantic Virtual Datasources](./virtual-datasources-semantic-layer.md)
-> (metrics/dimensions → compile SQL → delegate to an existing SQL datasource)
-> is the **likely first implementation** and may supersede this general
-> composite-query design.
+> **Separate track (likely to ship first):** [Semantic Virtual Datasources](./virtual-datasources-semantic-layer.md)
+> uses its own `SemanticDataSource` CR (`semanticdatasource.grafana.app`) —
+> not a `spec.kind` on this resource. This composite-query plan may never
+> ship; if it does, it remains `VirtualDataSource` in `virtualdatasource.grafana.app`.
 
 ## Changelog
 
