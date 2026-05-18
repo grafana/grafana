@@ -798,7 +798,7 @@ describe('optionsPickerReducer', () => {
         value: v,
       }));
 
-      const expect: VariableOption[] = 'C CD AC BC'.split(' ').map((v) => ({
+      const expected: VariableOption[] = 'C CD AC BC'.split(' ').map((v) => ({
         selected: false,
         text: v,
         value: v,
@@ -813,7 +813,7 @@ describe('optionsPickerReducer', () => {
         .whenActionIsDispatched(updateOptionsAndFilter(options))
         .thenStateShouldEqual({
           ...cloneDeep(initialState),
-          options: expect,
+          options: expected,
           selectedValues: [],
           queryValue: 'C',
           highlightIndex: 0,
@@ -829,7 +829,7 @@ describe('optionsPickerReducer', () => {
         value: v,
       }));
 
-      const expect: VariableOption[] = [
+      const expected: VariableOption[] = [
         {
           selected: false,
           text: '> ' + searchQuery,
@@ -852,7 +852,7 @@ describe('optionsPickerReducer', () => {
         .whenActionIsDispatched(updateOptionsAndFilter(options))
         .thenStateShouldEqual({
           ...cloneDeep(initialState),
-          options: expect,
+          options: expected,
           selectedValues: [],
           queryValue: searchQuery,
           highlightIndex: 1,
@@ -870,7 +870,7 @@ describe('optionsPickerReducer', () => {
         value: v,
       }));
 
-      const expect: VariableOption[] = [
+      const expected: VariableOption[] = [
         {
           selected: false,
           text: '> ' + searchQuery,
@@ -893,7 +893,128 @@ describe('optionsPickerReducer', () => {
         .whenActionIsDispatched(updateOptionsAndFilter(options))
         .thenStateShouldEqual({
           ...cloneDeep(initialState),
-          options: expect,
+          options: expected,
+          selectedValues: [],
+          queryValue: searchQuery,
+          highlightIndex: 1,
+        });
+    });
+
+    it('should match non-latin chars without requiring exact case', () => {
+      const searchQuery = 'åle';
+
+      const options: VariableOption[] = ['Ålesund', 'Maqv-Å', 'Oslo'].map((v) => ({
+        selected: false,
+        text: v,
+        value: v,
+      }));
+
+      const expected: VariableOption[] = [
+        {
+          selected: false,
+          text: '> ' + searchQuery,
+          value: searchQuery,
+        },
+        {
+          selected: false,
+          text: 'Ålesund',
+          value: 'Ålesund',
+        },
+      ];
+
+      const { initialState } = getVariableTestContext({
+        queryValue: searchQuery,
+      });
+
+      reducerTester<OptionsPickerState>()
+        .givenReducer(optionsPickerReducer, cloneDeep(initialState))
+        .whenActionIsDispatched(updateOptionsAndFilter(options))
+        .thenStateShouldEqual({
+          ...cloneDeep(initialState),
+          options: expected,
+          selectedValues: [],
+          queryValue: searchQuery,
+          highlightIndex: 1,
+        });
+    });
+
+    it('should match non-latin chars in array text options', () => {
+      const searchQuery = 'åle';
+
+      const options: VariableOption[] = [
+        {
+          selected: false,
+          text: ['City', 'Ålesund'],
+          value: 'alesund',
+        },
+        {
+          selected: false,
+          text: ['City', 'Oslo'],
+          value: 'oslo',
+        },
+      ];
+
+      const expected: VariableOption[] = [
+        {
+          selected: false,
+          text: '> ' + searchQuery,
+          value: searchQuery,
+        },
+        {
+          selected: false,
+          text: ['City', 'Ålesund'],
+          value: 'alesund',
+        },
+      ];
+
+      const { initialState } = getVariableTestContext({
+        queryValue: searchQuery,
+      });
+
+      reducerTester<OptionsPickerState>()
+        .givenReducer(optionsPickerReducer, cloneDeep(initialState))
+        .whenActionIsDispatched(updateOptionsAndFilter(options))
+        .thenStateShouldEqual({
+          ...cloneDeep(initialState),
+          options: expected,
+          selectedValues: [],
+          queryValue: searchQuery,
+          highlightIndex: 1,
+        });
+    });
+
+    it('should match uppercase non-latin search text', () => {
+      const searchQuery = 'ÅLE';
+
+      const options: VariableOption[] = ['Ålesund', 'Oslo'].map((v) => ({
+        selected: false,
+        text: v,
+        value: v,
+      }));
+
+      const expected: VariableOption[] = [
+        {
+          selected: false,
+          text: '> ' + searchQuery,
+          value: searchQuery,
+        },
+        {
+          selected: false,
+          text: 'Ålesund',
+          value: 'Ålesund',
+        },
+      ];
+
+      const { initialState } = getVariableTestContext({
+        queryValue: searchQuery,
+      });
+
+      reducerTester<OptionsPickerState>()
+        .givenReducer(optionsPickerReducer, cloneDeep(initialState))
+        .whenActionIsDispatched(updateOptionsAndFilter(options))
+        .thenStateShouldEqual({
+          ...cloneDeep(initialState),
+          options: expected,
           selectedValues: [],
           queryValue: searchQuery,
           highlightIndex: 1,

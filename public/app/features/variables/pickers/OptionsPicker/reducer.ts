@@ -45,6 +45,11 @@ const ufuzzy = new uFuzzy({
   intraDel: 1,
 });
 
+const optionTextIncludes = (option: VariableOption, normalizedNeedle: string) => {
+  const text = Array.isArray(option.text) ? option.text.toString() : option.text;
+  return text.toLowerCase().includes(normalizedNeedle);
+};
+
 const optionsToRecord = (options: VariableOption[]): Record<string, VariableOption> => {
   if (!Array.isArray(options)) {
     return {};
@@ -255,7 +260,8 @@ const optionsPickerSlice = createSlice({
       if (needle === '') {
         opts = action.payload;
       } else if (REGEXP_NON_ASCII.test(needle)) {
-        opts = action.payload.filter((o) => o.text.includes(needle));
+        const normalizedNeedle = needle.toLowerCase();
+        opts = action.payload.filter((option) => optionTextIncludes(option, normalizedNeedle));
       } else {
         // with current API, not seeing a way to cache this on state using action.payload's uniqueness
         // since it's recreated and includes selected state on each item :(
