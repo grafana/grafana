@@ -68,19 +68,11 @@ jobs:
       id-token: write
     name: Dispatch grafana-enterprise build
     steps:
-      - id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+      - name: Get GitHub App token
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@e5b7989c92b55fe3ac6dd006d6de49082ba8c507 # create-github-app-token (github-script/v9)
         with:
-          repo_secrets: |
-            GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
-      - name: Generate token
-        id: generate_token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        with:
-          app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
-          private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
-          repositories: '["grafana-enterprise"]'
-          permissions: '{"actions": "write"}'
+          github_app: grafana-delivery-bot
       - uses: actions/github-script@v8
         env:
           REF: ${{ github.ref_name }}
@@ -91,7 +83,7 @@ jobs:
           SOURCE_EVENT: ${{ inputs.source-event || github.event_name }}
           REPO: ${{ github.repository }}
         with:
-          github-token: ${{ steps.generate_token.outputs.token }}
+          github-token: ${{ steps.get-github-app-token.outputs.token }}
           script: |
             const {REF, VERSION, BUILD_ID, BUCKET, GRAFANA_COMMIT, SOURCE_EVENT, REPO} = process.env;
             let workflow = 'release-build-enterprise.yml';
@@ -1010,24 +1002,16 @@ jobs:
     needs:
       - setup
     steps:
-      - id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+      - name: Get GitHub App token
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@e5b7989c92b55fe3ac6dd006d6de49082ba8c507 # create-github-app-token (github-script/v9)
         with:
-          repo_secrets: |
-            GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
-      - name: Generate token
-        id: generate_token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        with:
-          app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
-          private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
-          repositories: '["grafana"]'
-          permissions: '{"issues": "write", "pull_requests": "write", "contents": "read"}'
+          github_app: grafana-delivery-bot
       - name: Find PR
         continue-on-error: true
         id: find-pr
         env:
-          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
+          GITHUB_TOKEN: ${{ steps.get-github-app-token.outputs.token }}
           GRAFANA_COMMIT: ${{ needs.setup.outputs.grafana-commit }}
           REPO: ${{ github.repository }}
         run: |
@@ -1043,12 +1027,12 @@ jobs:
           issue-number: ${{ env.ISSUE_NUMBER }}
           comment-author: 'grafana-delivery-bot[bot]'
           body-includes: GitHub Actions Build
-          token: ${{ steps.generate_token.outputs.token }}
+          token: ${{ steps.get-github-app-token.outputs.token }}
       - name: Create or update comment # zizmor: ignore[superfluous-actions]
         uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v4
         if: ${{ steps.find-pr.outcome == 'success' }}
         with:
-          token: ${{ steps.generate_token.outputs.token }}
+          token: ${{ steps.get-github-app-token.outputs.token }}
           comment-id: ${{ steps.fc.outputs.comment-id }}
           issue-number: ${{ env.ISSUE_NUMBER }}
           body: |
