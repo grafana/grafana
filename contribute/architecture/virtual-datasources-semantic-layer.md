@@ -1,22 +1,25 @@
-# Semantic Virtual Datasources — implementation plan
+# Semantic datasource views — implementation plan
 
 > Status: **DRAFT v4**.
 > Author: `sj` (with assistant).
 > Target repo: `grafana/grafana` (OSS-first).
-> Related (may never ship): [virtual-datasources.md](./virtual-datasources.md)
-> — composite saved-query graphs; **separate** `VirtualDataSource` CR if built.
+> Related (may never ship): [Datasource Views](./virtual-datasources.md)
+> — saved query graphs evaluated inside Grafana; **separate** `VirtualDataSource` CR if built.
 >
 > **This track** uses its own App Platform kind — `SemanticDataSource` — not a
-> `spec.kind` discriminator on general VDS. General composite VDS is optional
-> reference material only.
+> `spec.kind` discriminator on general datasource views (**DV**). The DV /
+> query-graph plan is optional reference material only.
 
 ## Changelog
 
+- **v5 (this revision)** — **Product naming:** title and prose use **Semantic
+  datasource view**; cross-links point at **Datasource Views** for the
+  `VirtualDataSource` track; technical ids unchanged.
 - **v4** — packaging: closed-source **plugin** (not OSS built-in); model YAML
   on `SemanticDataSource` CR (no separate `SemanticModel` kind for PoC); PoC
   upstream **Postgres only** (BigQuery deferred).
 - **v3** — locked storage: dedicated `apps/semanticdatasource/` +
-  `SemanticDataSource` kind; no shared CR with composite VDS.
+  `SemanticDataSource` kind; no shared CR with general DV / composite-query plan.
 - **v2** — reviewer pass: Steep-influenced PoC query shape (not
   Cube-compatible JSON as a goal); explicit goal to **not** run Cube;
   multi-model joins as a near-term requirement; richer semantic-layer
@@ -72,14 +75,14 @@ A **by-reference semantic layer inside Grafana** that:
 4. **Executes** the SQL through an **existing** Grafana SQL datasource
    (BigQuery, Postgres, …) — **one** credential store.
 
-This is still a “virtual” datasource from the consumer’s perspective (picker
+This is still a **logical datasource** from the consumer’s perspective (picker
 entry, uid reference, cascade on model edit), but the implementation is
 **compile-and-delegate**, not **inline an expression query graph**.
 
-## 2. Relationship to general Virtual Datasources
+## 2. Relationship to general Datasource Views
 
-| Aspect           | General VDS ([plan](./virtual-datasources.md))             | Semantic VDS (this doc)                                                    |
-| ---------------- | ---------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Aspect           | General DV ([plan](./virtual-datasources.md))              | Semantic datasource view (this doc)                                         |
+| ---------------- | ---------------------------------------------------------- | --------------------------------------------------------------------------- |
 | Primary use case | Saved composite queries (multi-DS + `__expr__`)            | Metrics/dimensions over one SQL warehouse                                  |
 | Definition       | `spec.queries[]` + `outputRefId` + frame schema            | `spec.model` (YAML) + `spec.upstream`                                      |
 | Evaluation       | Expand to inner `DataQuery` graph; run expression pipeline | `semantic-layer.Generate` → one SQL `DataQuery`                            |
@@ -104,11 +107,26 @@ We **do not** reuse for PoC:
 - `Expander` graph inlining, refId prefix rewriting, `__expr__` DAG
   constraints, post-pipeline frame AdHoc applier.
 
-General composite VDS may **never ship**. We do not design semantic storage
+General DV / composite-query plan may **never ship**. We do not design semantic storage
 around it: no `spec.kind: semantic | composite` on a shared CR, no polymorphic
-spec, no uid namespace shared with `VirtualDataSource`. If composite VDS is
+spec, no uid namespace shared with `VirtualDataSource`. If that query-graph DV is
 ever needed, it gets its own app/kind per the general plan; the two features
 do not share a resource type.
+
+### 2.1 Product naming vs general Datasource Views
+
+The [Datasource Views](./virtual-datasources.md) plan uses **Datasource View**
+(**DV**) as user-facing language for `VirtualDataSource` — a **logical surface**
+that can be simple or can fan in multiple datasources / expressions.
+
+This track is different: PoC evaluation is **compile → one SQL `DataQuery` →
+delegate to a single upstream warehouse/lake SQL datasource** (multi-model
+joins still produce **one** delegated query through that DS, not N DS edges).
+Prefer vocabulary around **semantic layer**, **model/metrics**, or **Semantic
+datasource view** aligned with the `SemanticDataSource` kind. **Composite** as a
+product label fits the general DV track’s multi-leg cases more than it fits the
+usual semantic path — but **Datasource View** is still a useful analogy (named
+logical surface); avoid implying this track is the same CR as DV.
 
 ## 3. Goals
 
@@ -120,7 +138,7 @@ do not share a resource type.
    `spec.upstream.datasourceUid` — an existing Grafana SQL DS. One place to
    rotate credentials and project defaults.
 3. **By-reference model — single source of truth for business metrics.**
-   Model YAML lives in a CR; panels and alerts reference the semantic VDS uid
+   Model YAML lives in a CR; panels and alerts reference the semantic datasource view uid
    only. Renaming a measure, fixing a definition, or adding a dimension
    updates every consumer on next eval. No copied query graphs, no divergent
    panel SQL.
@@ -130,14 +148,14 @@ do not share a resource type.
    queries (no TS-only filtering).
 6. **Multi-model joins immediately after launch.** The Go engine does not
    support joins today, but cross-model queries are a **day-one product
-   requirement** once Semantic VDS exists — not a distant follow-up. Engine
+   requirement** once **Semantic datasource view** exists — not a distant follow-up. Engine
    work (join paths, multi-model YAML) runs in parallel with Grafana wiring;
    PoC may ship single-model first only if join support lands in the same
    release train.
 
 ### 3.1 Why a semantic layer (not just “better AdHoc”)
 
-Compared to general VDS (post-hoc frame filters) or raw SQL datasources, a
+Compared to general DV (post-hoc frame filters) or raw SQL datasources, a
 semantic layer buys:
 
 | Benefit                   | What it means                                                                                                                   |
@@ -149,7 +167,7 @@ semantic layer buys:
 | **Joins across entities** | Orders + customers + products in one query without hand-written join SQL in every panel.                                        |
 | **Cascade on change**     | Fix the model → every panel and alert picks it up; contrasts with saved queries (copy) and duplicated BQ DS config (Cube path). |
 
-General VDS solves **by-reference composite graphs**. Semantic VDS solves
+General DV solves **by-reference composite graphs**. **Semantic datasource view** solves
 **by-reference business semantics** over SQL warehouses.
 
 ## 4. Non-goals (PoC)
@@ -159,10 +177,10 @@ General VDS solves **by-reference composite graphs**. Semantic VDS solves
   Initial UX may be closer to Steep (metrics-first, required time per
   metric, allowlisted breakdown dimensions). Reusing `grafana-cube-datasource`
   query-editor code is optional, not a requirement.
-- Multi-warehouse queries (one upstream SQL DS per semantic VDS instance).
+- Multi-warehouse queries (one upstream SQL DS per semantic datasource view instance).
 - Model authoring UI beyond minimal YAML editor (LLM-authored YAML is the
   near-term authoring story per semantic-layer `AGENTS.md`).
-- General VDS composite graphs (explicitly out of scope for this track).
+- General DV composite graphs (explicitly out of scope for this track).
 - Production migration from `cube-models` / `cube-bigquery` — almost nothing
   runs on that stack today; no seamless migration narrative required.
 
@@ -174,7 +192,7 @@ General VDS solves **by-reference composite graphs**. Semantic VDS solves
 flowchart TB
   subgraph grafana [Grafana]
     Panel["Panel / Alert<br/>semantic query JSON"]
-    SVD["Semantic VDS plugin<br/>grafana-semantic-datasource"]
+    SVD["Semantic datasource view plugin<br/>grafana-semantic-datasource"]
     Compiler["semantic-layer<br/>Generate + filters/time"]
     SQLDS["Existing SQL DS<br/>e.g. BigQuery uid"]
   end
@@ -198,7 +216,7 @@ flowchart LR
 
 ### 5.2 Storage — App Platform CR (semantic-only)
 
-Dedicated app — **not** a variant of general VDS storage:
+Dedicated app — **not** a variant of general DV storage:
 
 | Item        | Value                                                     |
 | ----------- | --------------------------------------------------------- |
@@ -208,10 +226,10 @@ Dedicated app — **not** a variant of general VDS storage:
 | Version     | `v0alpha1`                                                |
 | Plugin type | `grafana-semantic-datasource` (sentinel uid per instance) |
 
-`VirtualDataSource` / `apps/virtualdatasource/` from the composite plan are
-**out of scope** for this track. Colliding names in docs (“virtual” in the
-product sense) are fine; colliding **CR kinds** are not — semantic ships
-without waiting on or accommodating composite VDS schema.
+`VirtualDataSource` / `apps/virtualdatasource/` from the Datasource View plan are
+**out of scope** for this track. Product names may overlap (**view** / logical
+datasource); colliding **CR kinds** are not — semantic ships without waiting on
+or accommodating general DV schema.
 
 ```cue
 spec: {
@@ -315,7 +333,7 @@ current `Query` until the engine catches up.
 
 **Not an OSS built-in.** The team direction is fewer built-ins, not more.
 The Steep-influenced editor and product surface are likely **closed source**.
-The earlier “built-in” suggestion followed the general VDS draft (which put
+The earlier “built-in” suggestion followed the general DV draft (which put
 `public/app/plugins/datasource/grafana-virtual-datasource/` in core) and
 first-party velocity — it did not account for licensing or the fewer-built-ins
 goal.
@@ -350,6 +368,18 @@ Alternative (heavier): fat enterprise plugin linked against Grafana Enterprise
 module APIs to invoke `QueryService` internally — avoids OSS hook but couples
 the plugin binary to enterprise builds. Prefer **thin plugin + enterprise
 expander** unless we want zero enterprise changes to `query.go`.
+
+**PoC staging (optional — velocity):** The **recommended eventual packaging**
+above is unchanged: thin private plugin + **small hook in Grafana’s normal query /
+alert pipeline** (`ExpandSemanticQueries`-style seams in §5.5–5.7). For early
+experiments only, teams may instead land that hook inside **a private Grafana
+fork/mirror or a long‑lived branch** (often OSS-shaped builds), produce **custom
+container images**, and deploy to sandbox clusters — same narrow code paths,
+fewer repos to choreograph than jumping straight into **`grafana` +
+`grafana-enterprise` workflows**. Treat this as **time‑bounded**: drifting from
+upstream is costly, so prefer **tracking `main` closely** over a frozen snapshot,
+and **keep hook diffs small** so the work can relocate to upstream or enterprise
+wire without rewriting plugin + `semantic-layer` integration.
 
 **CR app placement:** If the whole feature is enterprise-gated, register
 `apps/semanticdatasource/` from **grafana-enterprise** (CR never exists on OSS
@@ -388,7 +418,7 @@ func (c *Compiler) Compile(
 **Alerting path** (`pkg/services/ngalert/eval/eval.go`):
 
 - Same `ExpandSemanticQueries` (or shared helper) at top of `getExprRequest`.
-- Alert rules store semantic JSON on the VDS target; expansion happens each
+- Alert rules store semantic JSON on the semantic datasource view target; expansion happens each
   eval — model cascade works without rewriting the rule.
 
 **No expression pipeline** for the semantic path in PoC. The inner graph is
@@ -431,7 +461,7 @@ IAM/project coupling while the engine and Steep UX are still moving.
 
 ### 5.6 Synthetic datasource resolution
 
-Same defence-in-depth as general VDS §4.4:
+Same defence-in-depth as general DV §4.4:
 
 - `getDataSourceFromQuery` returns `SyntheticDataSource(uid)` for
   `grafana-semantic-datasource` before hitting `data_source` table.
@@ -467,11 +497,11 @@ Layout ideas may be borrowed from the Cube plugin repo; no Cube query JSON (§4)
 ### 5.9 Identity and RBAC
 
 - **Interactive:** caller must have **query** permission on upstream SQL DS
-  (semantic VDS is a façade). Eval uses caller identity when delegating.
+  (**Semantic datasource view** is a façade). Eval uses caller identity when delegating.
 - **Alerts:** at rule save + eval, verify rule identity can query upstream DS.
-  Semantic VDS read permission alone is insufficient.
+  Semantic datasource view read permission alone is insufficient.
 - **Model CR:** separate `semanticdatasources:read|write` verbs (mirror general
-  VDS).
+  DV).
 
 ### 5.10 Observability
 
@@ -528,7 +558,7 @@ layer; it passes the compiled SQL through.
 
 ## 7. Comparison: three ways to get “metrics in Grafana”
 
-|                          | Cube plugin          | General VDS           | Semantic VDS                   |
+|                          | Cube plugin          | General DV            | Semantic datasource view       |
 | ------------------------ | -------------------- | --------------------- | ------------------------------ |
 | Warehouse creds          | Cube                 | N upstream DS configs | **One** Grafana SQL DS         |
 | Query language           | Cube JSON            | Grafana query graph   | Semantic JSON (Steep-like PoC) |
@@ -544,7 +574,7 @@ layer; it passes the compiled SQL through.
 
 ### Phase 0 — Plans (this doc + review)
 
-- Align with Sharing / 2h / data-transform on “semantic first, general VDS
+- Align with Sharing / 2h / data-transform on “semantic first, general DV
   optional”.
 - Lock PoC panel query shape (Steep-influenced API sketch).
 - Confirm join design in `semantic-layer` (parallel track).
@@ -571,7 +601,7 @@ data as raw SQL DS query against equivalent `SELECT`.
 
 ### Phase 3 — Engine + product parity
 
-1. **Multi-model joins** in `semantic-layer` + end-to-end tests through Semantic VDS.
+1. **Multi-model joins** in `semantic-layer` + end-to-end tests via **Semantic datasource view**.
 2. Time grain + filter support in compiler (library + Grafana wrapper).
 3. Alerting hardening (identity checks, rule validation).
 
@@ -581,7 +611,7 @@ data as raw SQL DS query against equivalent `SELECT`.
 - Folder-scoped RBAC on model CRs.
 - Public dashboards policy (likely disallow until upstream access analysed).
 
-**Explicitly not scheduled:** general VDS graph expansion unless requested.
+**Explicitly not scheduled:** general DV graph expansion unless requested.
 
 ## 9. File-by-file sketch (Phases 1–2)
 
@@ -613,23 +643,24 @@ data as raw SQL DS query against equivalent `SELECT`.
 3. **Model authoring.** YAML-only is brittle for non-expert users. Mitigation:
    LLM-assisted authoring, later UI.
 4. **Join engine schedule.** Product wants joins at launch; engine is
-   single-model today. Mitigation: parallel engine track; do not GA Semantic VDS
+   single-model today. Mitigation: parallel engine track; do not GA **Semantic datasource view**
    without cross-model queries.
-5. **General VDS confusion.** Two “virtual” docs. Mitigation: this doc states
-   build order; general doc gets a banner pointing here.
+5. **Cross-doc naming.** Two architecture plans (**Datasource Views** vs **Semantic
+   datasource views**) — both “logical datasource” surfaces with different CRs.
+   Mitigation: this doc states build order; general doc links here for semantics.
 
 ## 11. Decisions locked for PoC
 
 1. **Do not run Cube** on this path — semantics in Grafana + semantic-layer only.
-2. **One upstream SQL datasource per semantic VDS** — no multi-warehouse.
+2. **One upstream SQL datasource per semantic datasource view** — no multi-warehouse.
 3. **Compile-and-delegate** — not expression-graph expansion.
 4. **semantic-layer** is the model + SQL generator; Grafana owns filter/time/
    AdHoc + upstream shaping.
-5. **Warehouse credentials live only in the existing SQL DS** — semantic VDS
+5. **Warehouse credentials live only in the existing SQL DS** — **Semantic datasource view**
    stores no secrets.
 6. **Panel query shape: Steep-influenced for PoC** — not Cube-compatible JSON.
 7. **Multi-model joins** required in the first release (engine parallel work).
-8. **Build semantic VDS before general VDS** — general plan remains reference
+8. **Build semantic datasource views before general DV** — general plan remains reference
    only until a composite-query requirement is validated.
 9. **Dedicated `SemanticDataSource` CR** — separate app and API group; no
    `spec.kind` discriminator shared with composite `VirtualDataSource`.
@@ -646,7 +677,7 @@ data as raw SQL DS query against equivalent `SELECT`.
 1. **Panel query API:** exact Steep mapping (metrics-only vs dims+measures).
 2. **CR app in OSS vs enterprise:** public API schema vs enterprise-only
    registration.
-3. **Alerting toggle:** separate `semanticDatasourcesInAlerts` like general VDS,
+3. **Alerting toggle:** separate `semanticDatasourcesInAlerts` like general DV,
    or ship together?
 4. **Join model in YAML:** Steep `joinPaths` vs OSI relationships vs
    Cube-style `joins` — decided in engine repo, consumed by Grafana.
@@ -658,4 +689,4 @@ data as raw SQL DS query against equivalent `SELECT`.
 | [`grafana/semantic-layer`](https://github.com/grafana/semantic-layer)                   | YAML → SQL compiler (Go)                                      |
 | [`grafana/grafana-cube-datasource`](https://github.com/grafana/grafana-cube-datasource) | Separate Cube proxy plugin (not on this path)                 |
 | [`grafana/cube-models`](https://github.com/grafana/cube-models)                         | Related Cube YAML; not a migration target                     |
-| [General VDS plan](./virtual-datasources.md)                                            | Composite-query variant (optional; separate CR if ever built) |
+| [Datasource Views](./virtual-datasources.md)                                           | Query-graph DV variant (`VirtualDataSource`; optional if ever built) |

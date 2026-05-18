@@ -1,23 +1,35 @@
-# Virtual Datasources — implementation plan
+# Datasource Views — implementation plan
 
 > Status: **DRAFT v3 (AdHoc filter applier rework)**.
 > Author: `sj` (with assistant).
 > Target repo: `grafana/grafana` (OSS-first).
 >
-> A Virtual Datasource (VDS) is a server-side, by-reference, named
-> view over one or more queries (across one or more real
-> datasources, optionally combined by expression nodes) that
-> behaves to consumers like a normal datasource. Updates to the VDS
-> definition cascade to every dashboard panel and alert that
-> references it.
+> **Datasource View (DV)** is the user-facing name for a server-side,
+> by-reference, named logical dataset over one or more queries (across one or
+> more real datasources, optionally combined by expression nodes) that behaves
+> to consumers like a normal datasource. Updates to the DV definition cascade to
+> every dashboard panel and alert that references it.
 >
-> **Separate track (likely to ship first):** [Semantic Virtual Datasources](./virtual-datasources-semantic-layer.md)
-> uses its own `SemanticDataSource` CR (`semanticdatasource.grafana.app`) —
-> not a `spec.kind` on this resource. This composite-query plan may never
-> ship; if it does, it remains `VirtualDataSource` in `virtualdatasource.grafana.app`.
+> **Technical identifiers** for this feature remain **`VirtualDataSource`** /
+> `virtualdatasource.grafana.app` / `grafana-virtual-datasource` (feature flags,
+> metrics subsystem, …) unless/until a full API rename is justified — prose in
+> this doc uses **DV** / **Datasource View** for product language.
+>
+> **Teaching:** many users will hear **view** as “one SQL catalog.” A DV may still
+> **fan in multiple Grafana datasources** or apply Grafana-side frame logic;
+> user-facing copy should clarify **logical datasource** where that matters.
+>
+> **Separate track (likely to ship first):** [Semantic datasource views](./virtual-datasources-semantic-layer.md)
+> use `SemanticDataSource` (`semanticdatasource.grafana.app`) — not a `spec.kind`
+> on this resource. This query-graph plan may never ship; if it does, it keeps
+> `VirtualDataSource` in `virtualdatasource.grafana.app`.
 
 ## Changelog
 
+- **v4 (this revision)** — **Product naming:** prose adopts **Datasource View**
+  (**DV**) instead of older **“Virtual datasource”** / **VDS** wording; CR kinds, API groups,
+  package paths, plugin ids, and `vds.*` error-code prefixes are unchanged until
+  a deliberate rename. See §8b.5 and §9 (naming subsection).
 - **v3 (this revision)** — AdHoc filters are applied in **Go on
   `data.Frame`**, not via a synthetic terminal SQL node:
   - §4.5 rewritten: post-pipeline frame filter applier shared by
@@ -25,7 +37,7 @@
   - Removed PoC restrictions that were artefacts of the SQL
     choice: cell-limit errors, `format: alerting` carve-out,
     tabular-only filtering, and disallowing AdHoc on alert-rule
-    VDS targets (§8b decision 6).
+    DV targets (§8b decision 6).
   - `spec.schema.shape` (`tabular` | `timeseries-wide`) now
     selects the filter strategy (row filter vs label/series
     filter), not whether filtering is allowed.
@@ -38,7 +50,7 @@
     alert eval builds `expr.Request` directly via `getExprRequest`
     in `pkg/services/ngalert/eval/eval.go`.
   - Added **synthetic `*datasources.DataSource` resolution** in
-    `getDataSourceFromQuery` (§4.4), so a bare VDS UID never hits
+    `getDataSourceFromQuery` (§4.4), so a bare DV UID never hits
     `dataSourceCache.GetDatasourceByUID`.
   - Tightened **inner-graph constraints**: `pkg/expr/graph.go`
     forbids SQL-on-SQL edges and forbids non-DS inputs to a SQL
@@ -50,31 +62,31 @@
     (§4.3.1).
   - Reworked **AdHoc filter wrapping** to cover non-tabular frames
     and the `format: alerting` path; PoC limits AdHoc to **tabular
-    VDS outputs** explicitly (§4.5).
+    DV outputs** explicitly (§4.5).
   - Added §4.7 **observability**, §4.8 **error model**,
     §4.9 **lifecycle / referential integrity**,
     §4.10 **performance budget**, §4.11 **public dashboards /
     snapshots / rendering**.
   - Locked decisions tightened (§8b): "no SQL-on-SQL inputs"
-    documented as an engine-enforced constraint (not just a VDS
+    documented as an engine-enforced constraint (not just a DV
     one); identity decision narrowed to "interactive paths only,
     rule eval gets a separate decision before Phase 2 ships".
 
 ## 1. Goals
 
-1. **By-reference reuse.** A panel/alert references a VDS by uid;
-   updates to the VDS are picked up on next evaluation. No copy of
+1. **By-reference reuse.** A panel/alert references a DV by uid;
+   updates to the DV are picked up on next evaluation. No copy of
    the inner query graph is kept on the consumer.
-2. **Composite queries as first-class.** A VDS may wrap N upstream
+2. **Composite queries as first-class.** A DV may wrap N upstream
    datasource queries plus zero or more SQL/math expression nodes
    that fan-in into one output frame.
-3. **AdHoc filter support.** Because a VDS declares its output
+3. **AdHoc filter support.** Because a DV declares its output
    schema, it can implement `getTagKeys` / `getTagValues` and accept
    AdHoc filter pushdown predictably.
 4. **Server-side evaluation.** The DS multi-tenant querier
-   (`pkg/registry/apis/query`) resolves and evaluates VDSes — the
-   browser only sees the VDS reference and the merged result frame.
-5. **App-Platform native.** The VDS definition is a custom resource
+   (`pkg/registry/apis/query`) resolves and evaluates DVs — the
+   browser only sees the DV reference and the merged result frame.
+5. **App-Platform native.** The DV definition is a custom resource
    in unified storage with the standard Resource API affordances
    (versioning, watch, RBAC, audit, observability-as-code).
 
@@ -82,26 +94,26 @@
 
 - Materialised views (caching is opt-in, on top of the same
   evaluation path).
-- Per-row column-level RBAC on VDS output.
+- Per-row column-level RBAC on DV output.
 - Pushdown of AdHoc filters _into_ upstream datasources (e.g.
   rewriting BigQuery SQL to add a `WHERE`). The PoC applies AdHoc
-  filters to the **output frame** of the VDS in Go (see §4.5).
+  filters to the **output frame** of the DV in Go (see §4.5).
   Per-source pushdown can be added later as an opt-in optimisation.
 - A schema editor UI. PoC ships with manual schema declaration in
-  the VDS spec.
-- Replacing the existing query library. VDS coexists with it; we
-  add a "Save as Virtual Datasource" affordance from the query
+  the DV spec.
+- Replacing the existing query library. DV coexists with it; we
+  add a "Save as Datasource View" affordance from the query
   library.
 
 ## 3. How it fits with existing systems
 
-| System                                                                   | Today                                                       | After VDS                                                                                                                                            |
+| System                                                                   | Today                                                       | After DV                                                                                                                                            |
 | ------------------------------------------------------------------------ | ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Saved queries (`queryLibrary`)                                           | Templates copied into consumers; no cascade.                | Still exists; gains an action "Promote to Virtual Datasource".                                                                                       |
-| Library elements (panels)                                                | Pre-existing "by reference" panel reuse.                    | VDS is the query-level analogue.                                                                                                                     |
-| `pkg/services/query/query.go`                                            | Single entry point for `QueryData`.                         | Adds a VDS expansion step in `parseMetricRequest` (or a wrapper layer in `pkg/registry/apis/query`).                                                 |
-| Expressions (`__expr__`)                                                 | Sentinel UID; evaluator runs DAG of frame-level operations. | VDS reuses the expression engine at evaluation time but is _not_ an expression itself — it is a real DS plugin from the consumer's POV.              |
-| AdHoc filter API (`getTagKeys`/`getTagValues`, `applyTemplateVariables`) | Per-DS, brittle for composite queries.                      | VDS implements them off the declared schema. Filters arrive in the `QueryDataRequest` and are applied server-side on the output `data.Frame` (§4.5). |
+| Saved queries (`queryLibrary`)                                           | Templates copied into consumers; no cascade.                | Still exists; gains an action "Promote to Datasource View".                                                                                       |
+| Library elements (panels)                                                | Pre-existing "by reference" panel reuse.                    | DV is the query-level analogue.                                                                                                                     |
+| `pkg/services/query/query.go`                                            | Single entry point for `QueryData`.                         | Adds a DV expansion step in `parseMetricRequest` (or a wrapper layer in `pkg/registry/apis/query`).                                                 |
+| Expressions (`__expr__`)                                                 | Sentinel UID; evaluator runs DAG of frame-level operations. | DV reuses the expression engine at evaluation time but is _not_ an expression itself — it is a real DS plugin from the consumer's POV.              |
+| AdHoc filter API (`getTagKeys`/`getTagValues`, `applyTemplateVariables`) | Per-DS, brittle for composite queries.                      | DV implements them off the declared schema. Filters arrive in the `QueryDataRequest` and are applied server-side on the output `data.Frame` (§4.5). |
 
 ## 4. Architecture
 
@@ -120,7 +132,7 @@ spec: {
     // (a list of DataQuery, possibly including __expr__ nodes).
     queries: [...#DataQuery]
 
-    // The refId in `queries` whose frame is the VDS output.
+    // The refId in `queries` whose frame is the DV output.
     outputRefId: string
 
     // Declared schema of the output frame (used for AdHoc keys,
@@ -135,7 +147,7 @@ spec: {
         }]
     }
 
-    // Optional: parameters the VDS exposes to callers. If empty,
+    // Optional: parameters the DV exposes to callers. If empty,
     // ambient ${var} from the caller's scope is allowed.
     parameters?: [...{
         name:    string
@@ -167,25 +179,25 @@ A built-in (core, not a plugin workspace) datasource:
   backend datasources via `DataSourceWithBackend`). Because the
   request body carries `datasource.type === 'grafana-virtual-datasource'`
   and a real `uid`, the backend can route it.
-- `getTagKeys()` returns the VDS spec's `schema.fields` filtered by
+- `getTagKeys()` returns the DV spec's `schema.fields` filtered by
   `adHocFilter == true`.
 - `getTagValues()` for the PoC returns an empty list with a note
-  ("values not yet supported"). Phase 2: it executes the VDS
+  ("values not yet supported"). Phase 2: it executes the DV
   with a `SELECT DISTINCT field` injected.
 - `applyTemplateVariables()` is a no-op — filters travel as
   `request.filters` into the request body and the _backend_
   evaluator applies them. Documenting this is important.
 
-VDS instances surface in the datasource picker via:
+DV instances surface in the datasource picker via:
 
 1. A list call to `/apis/virtualdatasource.grafana.app/v0alpha1/...`
    on app boot.
-2. A synthetic `DataSourceInstanceSettings` for each VDS, registered
+2. A synthetic `DataSourceInstanceSettings` for each DV, registered
    with the runtime datasource registry.
 
 ### 4.3 Backend evaluation
 
-VDS expansion has to happen on **two distinct codepaths**, because
+DV expansion has to happen on **two distinct codepaths**, because
 Grafana's interactive query path and its alerting eval path do not
 share an entry point:
 
@@ -199,13 +211,13 @@ We therefore add **two thin call sites** that delegate to a single
 
 1. **Interactive path** — call `Expander.ExpandMetricRequest(ctx, dtos.MetricRequest) (dtos.MetricRequest, error)` at the top of
    `service.QueryData` (or, equivalently, before
-   `parseMetricRequest`). Returns the request with all VDS
-   targets inlined; downstream code sees no VDS.
+   `parseMetricRequest`). Returns the request with all DV
+   targets inlined; downstream code sees no DV.
 2. **Alerting path** — call `Expander.ExpandAlertCondition(ctx,
 condition models.Condition) (models.Condition, error)` from
    `getExprRequest` _before_ the loop that resolves
    `q.DatasourceUID`. By the time `getExprRequest` walks
-   `condition.Data`, no entry has a VDS UID, so the existing
+   `condition.Data`, no entry has a DV UID, so the existing
    `expr.NodeTypeFromDatasourceUID` switch keeps working.
 
 Both call sites are gated on the `virtualDatasources` feature
@@ -217,7 +229,7 @@ adapters differ.
 ```
 for q in req.Queries:
     if isVirtualDatasource(q.datasource):
-        vds := lookupVDS(ctx, q.datasource.UID)
+        vds := lookupDV(ctx, q.datasource.UID)
         validateInnerGraph(vds)            // §4.3.2
         prefix := q.RefID + "/"
         innerQueries := []
@@ -244,8 +256,8 @@ and stores the filtered frame back under that `refId` (§4.5.2).
 Notes:
 
 - Time range and `intervalMs` flow from the consumer's request to
-  the inner queries; they are not stored on the VDS spec.
-- Recursion: a VDS may not reference another VDS (PoC). Rejected
+  the inner queries; they are not stored on the DV spec.
+- Recursion: a DV may not reference another DV (PoC). Rejected
   at admission and again at expansion (defence in depth).
 - Identity: see §4.6.
 
@@ -281,7 +293,7 @@ is unit-tested against fixture queries from
 - **Classic conditions may not be inputs to other expressions.**
 - **A node may not reference itself.**
 
-Therefore a valid VDS spec is shaped like one of:
+Therefore a valid DV spec is shaped like one of:
 
 - N data-source queries fanning into **one** terminal SQL node
   (the typical "Loki + BigQuery joined by SQL" case the user
@@ -294,12 +306,12 @@ The plan adds an admission validator
 
 1. Builds an `expr.Request` from `spec.queries` using a fake DS
    resolver and calls `expr.Service.BuildPipeline`. If the engine
-   rejects the graph, the VDS spec is rejected.
+   rejects the graph, the DV spec is rejected.
 2. Checks that `spec.outputRefId` exists in `spec.queries`.
 
 ### 4.4 Datasource resolution: synthetic `*datasources.DataSource`
 
-A bare VDS UID must never reach `dataSourceCache.GetDatasourceByUID`
+A bare DV UID must never reach `dataSourceCache.GetDatasourceByUID`
 — there is no row in the `data_source` table. There are two
 resolution call sites:
 
@@ -340,7 +352,7 @@ they get a clear synthetic DS rather than a confusing
 
 The CR client used by the resolver is constructed via
 `K8sHandler` (`pkg/services/apiserver/client/client.go`). Reads
-are cached for the lifetime of one request — VDS spec is
+are cached for the lifetime of one request — DV spec is
 effectively immutable for the duration of one query/eval.
 
 ### 4.5 AdHoc filter application (Go, post-pipeline)
@@ -365,7 +377,7 @@ interactive dashboards and alert eval stay consistent.
   filters for alert rules; we would still need a Go path, yielding
   two implementations.
 - **Wire payload.** TS filtering ships unfiltered rows to the browser
-  and discards most of them — costly for large VDS outputs.
+  and discards most of them — costly for large DV outputs.
 - **Single source of truth.** Interactive and alert paths already
   share the `Expander`; they share `applyAdHocFilters` too.
 
@@ -450,7 +462,7 @@ func getExprRequest(ctx EvaluationContext, condition models.Condition,
 }
 ```
 
-If we don't intercept here, an alert rule that references a VDS
+If we don't intercept here, an alert rule that references a DV
 fails with "datasource not found" the moment the rule is
 evaluated.
 
@@ -458,10 +470,10 @@ The plan adds:
 
 - `Expander.ExpandAlertCondition(ctx, condition) (condition, error)`
   which, at the top of `getExprRequest` (gated on
-  `virtualDatasources`), walks `condition.Data` and replaces VDS
+  `virtualDatasources`), walks `condition.Data` and replaces DV
   entries with their inlined inner queries. RefId rewriting per
   §4.3.1 applies. The condition's `Condition` (the alert's chosen
-  refId) is preserved by the alias node. AdHoc filters on VDS
+  refId) is preserved by the alias node. AdHoc filters on DV
   targets are validated at expansion and applied post-pipeline via
   the same `applyAdHocFilters` path as interactive queries (§4.5).
 - Recording-rule path: same expander call. Recording rules use
@@ -477,19 +489,19 @@ is more nuanced:
 - Today, alert rule eval runs as the rule's owning identity
   (typically the editor of last record), with read-only access
   to the referenced datasources.
-- A VDS reference inside a rule effectively widens the surface:
-  the rule now reads from N upstream DSes via the VDS.
+- A DV reference inside a rule effectively widens the surface:
+  the rule now reads from N upstream DSes via the DV.
 
 The PoC mitigates by:
 
-- **Forbidding rule-eval VDS references** unless the rule
+- **Forbidding rule-eval DV references** unless the rule
   identity has read on every upstream DS at rule save time.
   Validation runs in the rule API and re-runs at eval time
   (defence in depth).
 - Logging at eval time: `vds.eval.identity = rule_identity` and
   `vds.eval.upstream_ds = [...]` so audit trails are intact.
 
-A "VDS-owner / service-account" mode is a follow-up (§10).
+A "DV-owner / service-account" mode is a follow-up (§10).
 
 ### 4.7 Observability
 
@@ -521,8 +533,8 @@ User-facing errors use the standard `errutil` framework
 
 | Code                        | HTTP | Meaning                                                           |
 | --------------------------- | ---- | ----------------------------------------------------------------- |
-| `vds.notFound`              | 404  | VDS UID does not resolve                                          |
-| `vds.cycle`                 | 400  | VDS-in-VDS detected                                               |
+| `vds.notFound`              | 404  | DV UID does not resolve                                          |
+| `vds.cycle`                 | 400  | DV-in-DV detected                                               |
 | `vds.invalidGraph`          | 400  | Inner graph violates expression engine constraints (§4.3.2)       |
 | `vds.adhoc.unknownColumn`   | 400  | AdHoc filter targets a column/label not declared adHocFilter=true |
 | `vds.adhoc.invalidOperator` | 400  | Operator not allowed for the declared field type                  |
@@ -535,7 +547,7 @@ reverse-engineering the prefix scheme.
 
 ### 4.9 Lifecycle and referential integrity
 
-- **Delete VDS while referenced.** Out of the box, deletion
+- **Delete DV while referenced.** Out of the box, deletion
   succeeds and consumers see `vds.notFound` on next eval. The
   PoC adds a soft guard: a CR finalizer that attempts a fast
   reverse-index lookup ("any dashboard / alert rule references
@@ -552,17 +564,17 @@ reverse-engineering the prefix scheme.
 
 ### 4.10 Performance budget
 
-- **Max inner queries per VDS:** 32 (admission-validated).
+- **Max inner queries per DV:** 32 (admission-validated).
 - **Max expansion fan-out per request:** 128 (request-level cap;
   exceeded → `vds.fanoutExceeded`).
-- **Max VDS spec size:** 256 KiB (admission-validated; protects
+- **Max DV spec size:** 256 KiB (admission-validated; protects
   unified storage / watch fanout).
 - **Concurrency:** post-expansion, the existing
   `concurrent_query_limit` applies to inner queries. We
-  intentionally do not give VDS-expanded subgraphs special
+  intentionally do not give DV-expanded subgraphs special
   budget; large composites should pay the same cost as their
   inline equivalents.
-- **Bench target:** VDS-with-no-filters adds < 5% wall-time
+- **Bench target:** DV-with-no-filters adds < 5% wall-time
   overhead vs. an equivalent inline request (alerting query
   mix, p50 and p95).
 
@@ -570,11 +582,11 @@ reverse-engineering the prefix scheme.
 
 - **Public dashboards** (`pkg/services/publicdashboards`) post
   query bodies to a dedicated handler with a narrow auth scope.
-  The PoC explicitly **disallows** VDS in public dashboards in
+  The PoC explicitly **disallows** DV in public dashboards in
   v1 — public-DB query handler validates and returns
   `vds.disallowedInPublicDashboard`. Lifting this requires a
   proper data-leakage analysis (which upstream DSes does the
-  public token effectively have access to via the VDS?).
+  public token effectively have access to via the DV?).
 - **Snapshots** capture frame data, not queries, so they are
   unaffected.
 - **Image rendering** runs as a service identity; the same
@@ -587,7 +599,7 @@ Out of scope for PoC, but the design is forward-compatible:
 - Cache key: `vdsUID + vdsResourceVersion + from + to + intervalMs +
 scopedVars + filters`.
 - Backed by the existing `querycaching` app (`pkg/registry/apps/querycaching`).
-- We mark VDS-expanded queries with a header so the cache layer
+- We mark DV-expanded queries with a header so the cache layer
   can short-circuit the post-expansion graph.
 
 ## 5. Phased delivery
@@ -609,15 +621,15 @@ scopedVars + filters`.
    codegen via `apps/sdk.mk`).
 3. `pkg/registry/apps/virtualdatasource/register.go` — App SDK
    wiring, RBAC verbs, fixed roles.
-4. `pkg/services/virtualdatasource/` — VDS resolver service:
+4. `pkg/services/virtualdatasource/` — DV resolver service:
    `Get(ctx, uid) (*VirtualDataSource, error)`. Wired via Wire
    (`make gen-go`).
-5. **No expansion yet.** End state: you can CRUD a VDS via
+5. **No expansion yet.** End state: you can CRUD a DV via
    `/apis/virtualdatasource.grafana.app/...` and hit it in
    `kubectl`-style.
 
 **Acceptance**: integration test that creates, lists, gets, and
-deletes a VDS via the Resource API.
+deletes a DV via the Resource API.
 
 ### Phase 2 — Backend expansion (interactive + alerting)
 
@@ -633,7 +645,7 @@ deletes a VDS via the Resource API.
    `applyAdHocFilters`, `filterTabular`, `filterTimeseriesWide`;
    schema validation at expansion; post-pipeline application hook
    in both call sites.
-4. Cycle detection (VDS-in-VDS reject) and a max-fanout guard.
+4. Cycle detection (DV-in-DV reject) and a max-fanout guard.
 5. **Interactive call site:** `service.QueryData` in
    `pkg/services/query/query.go` — call `ExpandMetricRequest`
    before `parseMetricRequest`, gated on
@@ -665,20 +677,20 @@ deletes a VDS via the Resource API.
 - **Integration (interactive):**
   `pkg/registry/apis/query/query_test.go` — POST to
   `/apis/query.grafana.app/v0alpha1/.../query` referencing a
-  VDS, expect a frame back. Use `testdata` for the inner
+  DV, expect a frame back. Use `testdata` for the inner
   queries.
 - **Integration (alerting):**
   `pkg/services/ngalert/eval/eval_test.go` — evaluate a
-  condition where one entry is a VDS UID; assert the
+  condition where one entry is a DV UID; assert the
   expanded condition produces the same result as the inlined
   equivalent.
-- **Failure modes:** missing VDS, deleted VDS mid-eval, bad
+- **Failure modes:** missing DV, deleted DV mid-eval, bad
   `outputRefId`, AdHoc filter on disallowed column/label,
   invalid operator for field type.
-- **AdHoc (alerting):** alert rule with VDS target + AdHoc
+- **AdHoc (alerting):** alert rule with DV target + AdHoc
   filters evaluates identically to interactive path (contract
   test).
-- **Bench:** VDS-with-no-filters adds < 5% overhead vs.
+- **Bench:** DV-with-no-filters adds < 5% overhead vs.
   equivalent inline request (alerting query mix, p50 and p95).
 
 ### Phase 3 — Frontend datasource
@@ -690,21 +702,21 @@ deletes a VDS via the Resource API.
 2. Sentinel constant `GRAFANA_VIRTUAL_DATASOURCE` analogous to
    `__expr__`.
 3. `query()` delegates to the standard backend-DS pipeline.
-4. `getTagKeys()` reads from the VDS spec's `schema`.
+4. `getTagKeys()` reads from the DV spec's `schema`.
 5. DS picker integration: synthetic `DataSourceInstanceSettings`
    list populated from the CR API at app boot.
-6. Editor: minimal "select VDS" + "show declared schema" panel.
+6. Editor: minimal "select DV" + "show declared schema" panel.
 
 **Acceptance**:
 
-- Playwright e2e: create VDS via API, open a panel, pick the VDS,
+- Playwright e2e: create DV via API, open a panel, pick the DV,
   see a frame, add an AdHoc filter from the dashboard variable bar,
   see filtered frame.
 
 ### Phase 4 — Saved queries integration
 
 1. In the saved queries flow (enterprise hook point — gate on
-   `queryLibrary` flag), add "Promote to Virtual Datasource" action.
+   `queryLibrary` flag), add "Promote to Datasource View" action.
 2. Mapping logic: `SavedQuery.targets` -> `VirtualDataSource.spec.queries`,
    `outputRefId` defaults to last refId.
 3. Documentation in `docs/sources/...`.
@@ -717,7 +729,7 @@ deletes a VDS via the Resource API.
 - AdHoc filter values via sample query.
 - Per-source filter pushdown (declared per-field).
 - Folder-scoped RBAC.
-- Service-account-style identity for VDS evaluation.
+- Service-account-style identity for DV evaluation.
 
 ## 6. File-by-file change list (Phases 1–3)
 
@@ -760,19 +772,19 @@ deletes a VDS via the Resource API.
   before `parseMetricRequest`; add synthetic-DS branch in
   `getDataSourceFromQuery` (gated).
 - `pkg/registry/apis/query/query.go` — extend
-  `getValidDataSourceRef` with a VDS short-circuit.
+  `getValidDataSourceRef` with a DV short-circuit.
 - `pkg/services/ngalert/eval/eval.go` — call
   `Expander.ExpandAlertCondition` at the top of `getExprRequest`
   (gated on `virtualDatasourcesInAlerts`).
 - `pkg/services/ngalert/api/api_ruler_validation.go` (or
   equivalent) — verify caller has read on upstream DSes for
-  VDS references.
-- `pkg/services/publicdashboards/...` — reject VDS targets in the
+  DV references.
+- `pkg/services/publicdashboards/...` — reject DV targets in the
   public DB query handler.
-- `pkg/server/wire.go` — VDS resolver service, expander.
+- `pkg/server/wire.go` — DV resolver service, expander.
 - `pkg/server/wire_gen.go` — generated.
 - `public/app/features/datasources/state/buildCategories.ts` (or
-  equivalent) — add a "Virtual" category to the picker.
+  equivalent) — add a "Datasource views" category to the picker.
 - `docs/sources/...` — user-facing docs (post-PoC).
 
 ## 7. Testing strategy
@@ -782,7 +794,7 @@ deletes a VDS via the Resource API.
 - **Unit** (`pkg/services/virtualdatasource/...`):
   - `expand`: refId prefixing, expression refId rewriting (SQL,
     math, reduce, resample, threshold, classic), cycle
-    detection, missing VDS error, missing `outputRefId` error,
+    detection, missing DV error, missing `outputRefId` error,
     fan-out cap.
   - `refids`: each rewriter against fixtures.
   - `adhoc`: `filterTabular` / `filterTimeseriesWide` against
@@ -798,18 +810,18 @@ deletes a VDS via the Resource API.
   - Reject specs > 256 KiB.
 - **Integration**:
   - `pkg/registry/apis/query/query_test.go` — end-to-end query
-    referencing a VDS that wraps a `testdata` random walk;
+    referencing a DV that wraps a `testdata` random walk;
     assert frame shape and refId mapping.
-  - Same with two AdHoc filters (tabular VDS); assert frame is
+  - Same with two AdHoc filters (tabular DV); assert frame is
     filtered.
-  - Same with a `timeseries-wide` VDS; assert series are filtered
+  - Same with a `timeseries-wide` DV; assert series are filtered
     by label match.
   - `pkg/services/ngalert/eval/eval_test.go` — alert condition
-    referencing a VDS (with and without AdHoc filters) evaluates
+    referencing a DV (with and without AdHoc filters) evaluates
     to the same result as the interactive path. Identity check
     rejects rules that lack upstream-DS read.
-  - VDS deletion mid-eval surfaces `vds.notFound` (not a panic).
-- **Migration smoke**: VDS resource roundtrips through unified
+  - DV deletion mid-eval surfaces `vds.notFound` (not a panic).
+- **Migration smoke**: DV resource roundtrips through unified
   storage (apistore tests).
 
 ### Frontend
@@ -819,20 +831,20 @@ deletes a VDS via the Resource API.
   - `query()` posts the right body to
     `/apis/query.grafana.app/...`.
 - **e2e** (Playwright):
-  - Create a VDS via the API, then build a dashboard panel
+  - Create a DV via the API, then build a dashboard panel
     referencing it, filter with AdHoc, save, reload.
-  - Update the VDS spec; reload the dashboard; confirm
+  - Update the DV spec; reload the dashboard; confirm
     cascading update.
-  - Add AdHoc on a wide-timeseries VDS; assert series filtered by
+  - Add AdHoc on a wide-timeseries DV; assert series filtered by
     label (not row filter).
 
 ### Manual
 
 - Feature flag matrix: `virtualDatasources` on/off,
   `virtualDatasourcesInAlerts` on/off, `queryLibrary` on/off.
-- Alert rule referencing a VDS — full path with rule save,
+- Alert rule referencing a DV — full path with rule save,
   scheduler, eval, annotations.
-- Public dashboard referencing a VDS — assert clean rejection.
+- Public dashboard referencing a DV — assert clean rejection.
 
 ## 8. Risks
 
@@ -844,31 +856,31 @@ deletes a VDS via the Resource API.
    same private `expand` function operating on a generic
    `[]DataQuery`-like slice. Contract tests run both paths over
    the same fixtures.
-2. **Expression engine constraints leak into VDS UX.** The
-   engine's "no SQL-on-SQL" rule means some natural VDS shapes
+2. **Expression engine constraints leak into DV UX.** The
+   engine's "no SQL-on-SQL" rule means some natural DV shapes
    (e.g. "filter the joined SQL output further with another
-   SQL") are not expressible. Mitigation: the editor's VDS
+   SQL") are not expressible. Mitigation: the editor's DV
    builder UI surfaces this explicitly and the admission
    validator returns precise error messages.
 3. **Enterprise saved-queries divergence.** Most saved-queries
-   storage code is in `grafana-enterprise`. Mitigation: VDS
+   storage code is in `grafana-enterprise`. Mitigation: DV
    lives in OSS, saved-queries integration goes in enterprise
    behind the existing flag.
 4. **Server-side template variable interpolation** is partial
    today. PoC avoids this by not supporting consumer variables
    in inner queries beyond the time range and `intervalMs`. We
    document the limitation.
-5. **AdHoc filter UX divergence.** VDS filters apply post-merge on
-   the output frame, not pre-source. Tabular VDSes filter rows;
-   wide time-series VDSes filter series by label — different
+5. **AdHoc filter UX divergence.** DV filters apply post-merge on
+   the output frame, not pre-source. Tabular DVs filter rows;
+   wide time-series DVs filter series by label — different
    semantics, same control. Document prominently.
-6. **DS picker performance.** Listing VDSes on every page load
+6. **DS picker performance.** Listing DVs on every page load
    adds an API call. Mitigation: standard list cache + watch.
 7. **Watch fanout / unified storage pressure.** Every editor
    session opens a watch on `VirtualDataSource`. Mitigation:
    shared per-org watch in the runtime (one per browser tab is
    wasteful), and a `spec` size limit (256 KiB).
-8. **Alert rule referential integrity.** A VDS deletion silently
+8. **Alert rule referential integrity.** A DV deletion silently
    breaks every rule that references it. PoC mitigates with
    a finalizer warning; full prevention is a follow-up.
 
@@ -883,33 +895,36 @@ for the PoC; reviewers please push back if any of them are wrong.
    (helper is post-PoC). At evaluation time we **warn** when
    actual frames disagree with the declared schema and **reject**
    AdHoc filters whose target column type doesn't match.
-2. **VDS-references-VDS** is **rejected** in the PoC. Plus the
+2. **DV-references-DV** is **rejected** in the PoC. Plus the
    stricter, **engine-enforced** rule: inner graphs cannot have
    SQL-as-input-to-SQL or any `CMDNode → SQLCommand` edge
    (`pkg/expr/graph.go`). The admission validator runs
    `expr.Service.BuildPipeline` on each spec to enforce both.
 3. **Identity model**:
    - **Interactive paths** (Explore, dashboard panel, MT
-     querier): VDS evaluates with the **caller's** identity.
+     querier): DV evaluates with the **caller's** identity.
      Same posture as expressions today.
    - **Alert / recording rule eval**: rule's identity is checked
      for read on every upstream DS _at rule save time_ and
      re-checked at eval time. Eval logs `vds.eval.identity` and
      `vds.eval.upstream_ds`.
-   - A "VDS-owner / service-account" mode is a follow-up.
-4. **VDS plugin location**: **built-in core**
+   - A "DV-owner / service-account" mode is a follow-up.
+4. **DV plugin location**: **built-in core**
    (`public/app/plugins/datasource/grafana-virtual-datasource/`),
    not a Yarn workspace. Simpler ownership and release cadence
    matches the rest of core.
-5. **Naming**: keep **"Virtual Datasource"** for now. We add a
-   short product glossary blurb to disambiguate from "virtual
-   machine" / driver-abstraction usages of "virtual".
+5. **Naming (user-facing):** **Datasource View** (**DV**). Technical
+   identifiers (`VirtualDataSource`, `virtualdatasource.*`,
+   `grafana-virtual-datasource`, `vds.*` error codes, …) stay until an explicit
+   rename. Picker, saved-query actions, and user docs should say **Datasource
+   View**; teach that **view** means a **logical datasource surface**, not
+   necessarily one SQL warehouse (see §9).
 6. **AdHoc filters** apply in Go on the output `data.Frame` for
-   both `tabular` and `timeseries-wide` VDS shapes (strategy per
+   both `tabular` and `timeseries-wide` DV shapes (strategy per
    §4.5), on **interactive and alert-eval** paths via the shared
    applier. Not pushed into upstream datasources in the PoC.
 7. **Public dashboards / public-facing surfaces** cannot
-   reference a VDS in the PoC; the public DB query handler
+   reference a DV in the PoC; the public DB query handler
    returns `vds.disallowedInPublicDashboard`.
 
 ## 9. Open questions for review (v3)
@@ -921,7 +936,7 @@ questions for reviewers:
    instead intercept earlier (e.g. when materialising
    `AlertQuery.Model` in the rule API)? Earlier means the
    expanded form is stored on the rule; later means the rule
-   stays small and the VDS is resolved per-eval.
+   stays small and the DV is resolved per-eval.
 2. **Should the admission validator run a real
    `expr.Service.BuildPipeline`** (with a fake DS resolver), or
    a lighter-weight static analysis? Real pipeline is more
@@ -930,10 +945,32 @@ questions for reviewers:
 3. **Reverse index**: is "warn on delete + post-PoC reverse
    index" enough, or does the PoC need referential integrity
    from day one?
-4. **Saved-queries promote-to-VDS UX**: editor creates a new
-   VDS and rewrites the original panel's target to reference
-   it; or only offers to create the VDS and lets the user
+4. **Saved-queries promote-to-DV UX**: editor creates a new
+   DV and rewrites the original panel's target to reference
+   it; or only offers to create the DV and lets the user
    manually re-pick. The first is more magical but more risky.
+
+### Naming (product language vs technical identifiers)
+
+**Choice in this doc:** user-facing **Datasource View** (**DV**). **Why
+“view”:** it fits both **simple** surfaces (tabular output, AdHoc, reuse across
+panels) and **composite** inner graphs without making “composite” the product
+name for everyone.
+
+**Technical identifiers** remain **`VirtualDataSource`** /
+`virtualdatasource.grafana.app` / `grafana-virtual-datasource` (and `vds.*`
+error-code prefixes) until a deliberate rename — stable APIs decouple from
+English product labels.
+
+**Alternatives considered:** **Composite Datasource** (accurate for multi-leg
+graphs but weak for single-source / delegate-shaped DVs); **Live Saved Query**
+(reads like one promoted query, not a datasource in the picker); **Virtual
+Datasource** (valid indirection metaphor, easy to confuse with unrelated
+“virtual” in computing).
+
+**Teaching / UX:** some users will equate **view** with one DB catalog. Where a
+DV **fans in multiple Grafana datasources** or applies Grafana-side frame
+logic, prefer **logical datasource** (or spell out the behaviour in UI).
 
 ## 10. Out-of-scope follow-ups (filed as separate issues)
 
@@ -941,15 +978,15 @@ questions for reviewers:
   Loki/BigQuery/etc.).
 - Caching integration with `querycaching` CR.
 - Folder-scoped RBAC.
-- VDS-references-VDS.
+- DV-references-DV.
 - Schema inference UI (auto-populate `spec.schema` from a sample
   run).
-- VDS evaluation under a service-account identity (relevant for
+- DV evaluation under a service-account identity (relevant for
   cross-team sharing).
-- Migration: bulk "Promote all saved queries to VDSes" admin tool.
+- Migration: bulk "Promote all saved queries to DVs" admin tool.
 - Public dashboards / public-facing surfaces support (requires
   data-leakage analysis).
-- Hard referential integrity on VDS deletion (reverse index API +
+- Hard referential integrity on DV deletion (reverse index API +
   block-on-references finalizer).
 - Snapshot of inner query graph at panel save time (a hybrid
   "live by default, pinned on demand" mode).
