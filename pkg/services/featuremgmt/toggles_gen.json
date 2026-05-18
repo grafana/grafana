@@ -1651,6 +1651,19 @@
     },
     {
       "metadata": {
+        "name": "dashboardPulseEmail",
+        "resourceVersion": "1779117136980",
+        "creationTimestamp": "2026-05-18T15:12:16Z"
+      },
+      "spec": {
+        "description": "Sends email notifications to Pulse mention and subscription recipients. Requires dashboardPulse to be enabled and SMTP to be configured.",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardScene",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2023-11-13T08:51:21Z",

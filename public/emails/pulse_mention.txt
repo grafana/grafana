@@ -1,0 +1,14 @@
+{{HiddenSubject .Subject "{{.AuthorName}} mentioned you in {{.ThreadTitle}}"}}
+
+Hi {{.RecipientName}},
+
+{{.AuthorName}} mentioned you in "{{.ThreadTitle}}".
+
+{{if .BodyPreview}}> {{.BodyPreview}}
+
+{{end}}Open the thread:
+{{.ThreadURL}}
+
+You are receiving this email because someone mentioned you in a Pulse thread on Grafana.
+
+Sent by Grafana v{{.BuildVersion}} (c) {{now | date "2006"}} Grafana Labs

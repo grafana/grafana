@@ -662,6 +662,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "dashboardPulseEmail",
+			Description: "Sends email notifications to Pulse mention and subscription recipients. Requires dashboardPulse to be enabled and SMTP to be configured.",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{LegacyGo: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "dashboardDefaultLayoutSelector",
 			Description: "Enables default layout selector in dashboard settings",
 			Stage:       FeatureStageGeneralAvailability,

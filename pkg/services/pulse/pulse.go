@@ -16,8 +16,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -71,6 +73,7 @@ type PulseConfig struct {
 
 // ProvideService is the wire entry point for the Pulse service.
 func ProvideService(
+	cfg *setting.Cfg,
 	sqlStore db.DB,
 	routeRegister routing.RouteRegister,
 	ac accesscontrol.AccessControl,
@@ -81,6 +84,7 @@ func ProvideService(
 	dashSvc dashboards.DashboardService,
 	folderSvc folder.Service,
 	channelPub ChannelPublisher,
+	notificationSvc notifications.Service,
 ) (*PulseService, error) {
 	if err := RegisterAccessControlRoles(acService); err != nil {
 		return nil, err
@@ -90,7 +94,7 @@ func ProvideService(
 		cfg:           PulseConfig{MaxBodyBytes: MaxBodyBytes},
 		store:         newStore(sqlStore),
 		live:          NewLivePublisher(channelPub),
-		notifier:      &LogOnlyNotifier{Log: logger},
+		notifier:      buildNotifier(cfg, features, notificationSvc, userSvc, logger),
 		accessControl: ac,
 		routeRegister: routeRegister,
 		features:      features,
@@ -103,6 +107,22 @@ func ProvideService(
 
 	s.registerAPIEndpoints()
 	return s, nil
+}
+
+// buildNotifier composes the Pulse fanout chain. The LogOnlyNotifier is
+// always included so dev/demo visibility is preserved; EmailNotifier is
+// layered in only when the dashboardPulseEmail toggle is on and a mailer
+// is wired up. SMTP-not-configured failures are handled inside the email
+// notifier so callers don't need to gate on cfg.Smtp.Enabled here.
+func buildNotifier(cfg *setting.Cfg, features featuremgmt.FeatureToggles, ns notifications.Service, users user.Service, logger log.Logger) Notifier {
+	chain := []Notifier{&LogOnlyNotifier{Log: logger}}
+	if features != nil && features.IsEnabledGlobally(featuremgmt.FlagDashboardPulseEmail) && ns != nil && users != nil && cfg != nil {
+		chain = append(chain, NewEmailNotifier(ns, users, cfg, logger))
+	}
+	if len(chain) == 1 {
+		return chain[0]
+	}
+	return &MultiNotifier{Log: logger, Notifiers: chain}
 }
 
 // SetPublisher swaps the live publisher after construction. wire calls this

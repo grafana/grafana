@@ -72,3 +72,27 @@ func truncate(s string, n int) string {
 	}
 	return s[:n] + "…"
 }
+
+// MultiNotifier dispatches a PulseNotification to every child notifier. A
+// failure in one child is logged but does not stop the rest from running and
+// never propagates upward — fanout is best-effort by design.
+type MultiNotifier struct {
+	Log       log.Logger
+	Notifiers []Notifier
+}
+
+func (m *MultiNotifier) NotifyPulse(ctx context.Context, e PulseNotification) error {
+	for _, n := range m.Notifiers {
+		if n == nil {
+			continue
+		}
+		if err := n.NotifyPulse(ctx, e); err != nil {
+			m.Log.Warn("pulse notifier failed",
+				"err", err,
+				"threadUID", e.ThreadUID,
+				"pulseUID", e.PulseUID,
+			)
+		}
+	}
+	return nil
+}
