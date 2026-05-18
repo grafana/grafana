@@ -1,3 +1,5 @@
+import { Fill, Stroke } from 'ol/style';
+
 import { getPublicOrAbsoluteUrl } from 'app/features/dimensions/resource';
 
 import {
@@ -10,6 +12,9 @@ import {
   offsetExpression,
   getMarkerMaker,
   circleMarker,
+  getFillColor,
+  getStrokeStyle,
+  getMarkerAsPath,
 } from './markers';
 import { defaultStyleConfig } from './types';
 
@@ -127,5 +132,51 @@ describe('Icon Path Consistency', () => {
     const defaultMaker = await getMarkerMaker(); // No symbol
 
     expect(defaultMaker).toBe(circleMarker);
+  });
+});
+
+describe('getFillColor', () => {
+  it('returns a solid Fill when opacity is 1', () => {
+    const fill = getFillColor({ color: '#37872d', opacity: 1 });
+    expect(fill).toBeInstanceOf(Fill);
+    expect(fill?.getColor()).toBe('#37872d');
+  });
+
+  it('applies alpha via tinycolor when opacity is between 0 and 1', () => {
+    const fill = getFillColor({ color: '#37872d', opacity: 0.5 });
+    expect(fill).toBeInstanceOf(Fill);
+    // tinycolor's rgba string includes the alpha channel.
+    expect(String(fill?.getColor())).toMatch(/rgba\(.*0\.5\)/);
+  });
+
+  it('returns undefined when opacity is 0', () => {
+    expect(getFillColor({ color: '#37872d', opacity: 0 })).toBeUndefined();
+  });
+});
+
+describe('getStrokeStyle', () => {
+  it('returns a Stroke with the configured color and lineWidth at opacity 1', () => {
+    const stroke = getStrokeStyle({ color: '#000', opacity: 1, lineWidth: 3 });
+    expect(stroke).toBeInstanceOf(Stroke);
+    expect(stroke?.getColor()).toBe('#000');
+    expect(stroke?.getWidth()).toBe(3);
+  });
+
+  it('applies opacity via tinycolor when opacity is between 0 and 1', () => {
+    const stroke = getStrokeStyle({ color: '#000', opacity: 0.25 });
+    expect(stroke).toBeInstanceOf(Stroke);
+    expect(String(stroke?.getColor())).toMatch(/rgba\(.*0\.25\)/);
+    // lineWidth defaults to 1 when not supplied.
+    expect(stroke?.getWidth()).toBe(1);
+  });
+});
+
+describe('getMarkerAsPath', () => {
+  it('returns the icon path for a known marker shape and undefined for an unknown one', () => {
+    const known = getMarkerAsPath('circle');
+    expect(typeof known).toBe('string');
+    expect(known).toMatch(/\.svg$/);
+
+    expect(getMarkerAsPath('not-a-marker-shape')).toBeUndefined();
   });
 });
