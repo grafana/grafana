@@ -171,7 +171,7 @@ func (a *AppInstaller) GetLegacyStorage(gvr schema.GroupVersionResource) grafana
 	case alertrule.ResourceInfo.GroupVersionResource():
 		return alertrule.NewStorage(*a.ng.Api.AlertRules, namespacer)
 	case prometheusrule.ResourceInfo.GroupVersionResource():
-		return prometheusrule.NewStorage(*a.ng.Api.AlertRules, a.ng.Api.RuleStore, a.ng.Api.AccessControl, namespacer, a.ng.Cfg.UnifiedAlerting.BaseInterval)
+		return prometheusrule.NewStorage(*a.ng.Api.AlertRules, a.ng.Api.RuleStore, namespacer, a.ng.Cfg.UnifiedAlerting.BaseInterval)
 	default:
 		panic("unknown legacy storage requested: " + gvr.String())
 	}

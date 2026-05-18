@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
@@ -23,14 +22,12 @@ type NamespaceResolver interface {
 func NewStorage(
 	ruleSvc provisioning.AlertRuleService,
 	resolver NamespaceResolver,
-	ac accesscontrol.AccessControl,
 	namespacer request.NamespaceMapper,
 	defaultInterval time.Duration,
 ) grafanarest.Storage {
 	return &legacyStorage{
 		service:         ruleSvc,
 		resolver:        resolver,
-		ac:              ac,
 		namespacer:      namespacer,
 		defaultInterval: defaultInterval,
 		tableConverter:  rest.NewDefaultTableConvertor(ResourceInfo.GroupResource()),
