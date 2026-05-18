@@ -13,13 +13,20 @@ import (
 	"sync"
 	"time"
 
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	otelcodes "go.opentelemetry.io/otel/codes"
+
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 )
+
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/search/embed/reconciler")
 
 const DefaultInterval = time.Minute
 
@@ -74,6 +81,9 @@ type Options struct {
 	Builders          []embed.Builder
 	Interval          time.Duration
 	LockRetryInterval time.Duration
+	// Metrics is optional; when nil the reconciler runs without
+	// observability instrumentation (handy for unit tests).
+	Metrics *resource.VectorMetrics
 }
 
 // Reconciler keeps the vector index in sync with ongoing writes. The
@@ -89,6 +99,7 @@ type Reconciler struct {
 	interval          time.Duration
 	lockRetryInterval time.Duration
 	log               log.Logger
+	metrics           *resource.VectorMetrics
 
 	// broadcaster is attached after construction by the resource server,
 	broadcaster resource.Broadcaster[*resource.WrittenEvent]
@@ -126,6 +137,7 @@ func New(opts Options) (*Reconciler, error) {
 		interval:          opts.Interval,
 		lockRetryInterval: opts.LockRetryInterval,
 		log:               log.New("embeddings_reconciler"),
+		metrics:           opts.Metrics,
 		pending:           make(map[string]*pendingEvent),
 	}, nil
 }
@@ -145,17 +157,22 @@ func (s *Reconciler) enqueue(ev *pendingEvent) {
 	}
 	k := pendingKey(ev.group, ev.resource, ev.namespace, ev.name)
 	s.pendingMu.Lock()
-	defer s.pendingMu.Unlock()
 	if existing, ok := s.pending[k]; ok && existing.rv >= ev.rv {
+		s.pendingMu.Unlock()
 		return
 	}
 	s.pending[k] = ev
+	size := len(s.pending)
+	s.pendingMu.Unlock()
+	if s.metrics != nil {
+		s.metrics.ReconcilerPendingEvents.Set(float64(size))
+	}
 }
 
 func (s *Reconciler) drainPending() []*pendingEvent {
 	s.pendingMu.Lock()
-	defer s.pendingMu.Unlock()
 	if len(s.pending) == 0 {
+		s.pendingMu.Unlock()
 		return nil
 	}
 	out := make([]*pendingEvent, 0, len(s.pending))
@@ -163,6 +180,10 @@ func (s *Reconciler) drainPending() []*pendingEvent {
 		out = append(out, ev)
 	}
 	s.pending = make(map[string]*pendingEvent)
+	s.pendingMu.Unlock()
+	if s.metrics != nil {
+		s.metrics.ReconcilerPendingEvents.Set(0)
+	}
 	return out
 }
 
@@ -535,12 +556,43 @@ func (s *Reconciler) processEvents(ctx context.Context, sinceRv int64, batch []*
 	return maxRv, lowestFailedRv, failed, successes, false
 }
 
-func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev *pendingEvent) error {
+func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev *pendingEvent) (retErr error) {
+	ctx, span := tracer.Start(ctx, "unified.reconciler.processEvent")
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("group", ev.group),
+		attribute.String("resource", ev.resource),
+		attribute.String("action", ev.action.String()),
+		attribute.Int64("rv", ev.rv),
+		attribute.Int("attempt", ev.attempts),
+	)
+
+	start := time.Now()
+	statusLabel := "success"
+	defer func() {
+		if retErr != nil {
+			span.RecordError(retErr)
+			span.SetStatus(otelcodes.Error, retErr.Error())
+		}
+		if s.metrics != nil {
+			metricutil.ObserveWithExemplar(ctx,
+				s.metrics.ReconcilerProcessDuration.WithLabelValues(ev.group, ev.resource, statusLabel),
+				time.Since(start).Seconds(),
+			)
+		}
+	}()
+
 	switch ev.action {
 	case resourcepb.WatchEvent_DELETED:
-		return s.vectorBackend.Delete(ctx, ev.namespace, s.batchEmbedder.Model(), builder.Resource(), ev.name)
+		if err := s.vectorBackend.Delete(ctx, ev.namespace, s.batchEmbedder.Model(), builder.Resource(), ev.name); err != nil {
+			statusLabel = "upsert_error"
+			return err
+		}
+		return nil
 	case resourcepb.WatchEvent_ADDED, resourcepb.WatchEvent_MODIFIED:
-		return s.embedAndUpsert(ctx, builder, ev)
+		st, err := s.embedAndUpsert(ctx, builder, ev)
+		statusLabel = st
+		return err
 	default:
 		return fmt.Errorf("unknown action %v", ev.action)
 	}
@@ -549,14 +601,15 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev
 // embedAndUpsert routes through UpsertReplaceSubresources so removing
 // stale subresources and writing the new ones commit atomically — a
 // failure mid-way leaves the dashboard in its previous self-consistent
-// state.
+// state. Returns ("success", nil) on the happy path or a stage-keyed
+// status string + the wrapped error on failure.
 //
 // TODO: only re-embed subresources whose content actually changed
 // since the last write. Today every dashboard write re-embeds every
 // panel, which is wasteful when only one panel changed.
-func (s *Reconciler) embedAndUpsert(ctx context.Context, builder embed.Builder, ev *pendingEvent) error {
+func (s *Reconciler) embedAndUpsert(ctx context.Context, builder embed.Builder, ev *pendingEvent) (string, error) {
 	if len(ev.value) == 0 {
-		return nil
+		return "success", nil
 	}
 	key := &resourcepb.ResourceKey{
 		Group:     builder.Group(),
@@ -564,9 +617,17 @@ func (s *Reconciler) embedAndUpsert(ctx context.Context, builder embed.Builder, 
 		Namespace: ev.namespace,
 		Name:      ev.name,
 	}
-	items, err := builder.Extract(ctx, key, ev.value, "")
+
+	// Extract stage
+	extractCtx, extractSpan := tracer.Start(ctx, "unified.embed.builder.Extract")
+	extractSpan.SetAttributes(
+		attribute.String("group", builder.Group()),
+		attribute.String("resource", builder.Resource()),
+	)
+	items, err := builder.Extract(extractCtx, key, ev.value, "")
+	extractSpan.End()
 	if err != nil {
-		return fmt.Errorf("extract: %w", err)
+		return "extract_error", fmt.Errorf("extract: %w", err)
 	}
 	if maxItems := builder.MaxItemsPerResource(); maxItems > 0 && len(items) > maxItems {
 		items = items[:maxItems]
@@ -575,20 +636,29 @@ func (s *Reconciler) embedAndUpsert(ctx context.Context, builder embed.Builder, 
 	// An empty extract means the dashboard has no embeddable content;
 	// drop everything stored under this UID rather than leaving orphans.
 	if len(items) == 0 {
-		return s.vectorBackend.Delete(ctx, ev.namespace, s.batchEmbedder.Model(), builder.Resource(), ev.name)
+		if err := s.vectorBackend.Delete(ctx, ev.namespace, s.batchEmbedder.Model(), builder.Resource(), ev.name); err != nil {
+			return "upsert_error", err
+		}
+		return "success", nil
 	}
 
+	// Embed stage
 	vectors, err := s.batchEmbedder.Embed(ctx, ev.namespace, builder.Resource(), ev.rv, items)
 	if err != nil {
-		return fmt.Errorf("embed: %w", err)
+		return "embed_error", fmt.Errorf("embed: %w", err)
 	}
 	if len(vectors) == 0 {
-		return s.vectorBackend.Delete(ctx, ev.namespace, s.batchEmbedder.Model(), builder.Resource(), ev.name)
+		if err := s.vectorBackend.Delete(ctx, ev.namespace, s.batchEmbedder.Model(), builder.Resource(), ev.name); err != nil {
+			return "upsert_error", err
+		}
+		return "success", nil
 	}
+
+	// Upsert stage
 	if err := s.vectorBackend.UpsertReplaceSubresources(ctx, vectors); err != nil {
-		return fmt.Errorf("upsert: %w", err)
+		return "upsert_error", fmt.Errorf("upsert: %w", err)
 	}
-	return nil
+	return "success", nil
 }
 
 // requeue is the catch-all path when we can't tell what's persisted
@@ -598,6 +668,9 @@ func (s *Reconciler) embedAndUpsert(ctx context.Context, builder embed.Builder, 
 func (s *Reconciler) requeue(events []*pendingEvent) {
 	for _, ev := range events {
 		s.enqueue(ev)
+		if s.metrics != nil {
+			s.metrics.ReconcilerRetriesTotal.WithLabelValues(ev.group, ev.resource).Inc()
+		}
 	}
 }
 
@@ -609,6 +682,16 @@ func (s *Reconciler) recordFailure(ev *pendingEvent, failed *[]*pendingEvent, lo
 		logger.Error("reconciler: dropping event past retry cap; cursor will advance past it",
 			"namespace", ev.namespace, "name", ev.name,
 			"rv", ev.rv, "attempts", ev.attempts, "action", ev.action)
+		if s.metrics != nil {
+			// Histogram observation with status="retries_exhausted" so a query
+			// like rate(_count{status="retries_exhausted"}[5m]) directly answers
+			// "how many events did we give up on". The value here is just a
+			// marker (we already observed the actual processing duration on the
+			// final attempt) so we record 0.
+			s.metrics.ReconcilerProcessDuration.
+				WithLabelValues(ev.group, ev.resource, "retries_exhausted").
+				Observe(0)
+		}
 		return lowestFailedRv
 	}
 	*failed = append(*failed, ev)

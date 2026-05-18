@@ -7,7 +7,17 @@ package embedder
 
 import (
 	"context"
+	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+
+	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 )
+
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder")
 
 // VectorType is dense or sparse. We only do dense in this package.
 type VectorType string
@@ -87,6 +97,10 @@ type Embedder struct {
 	// vectors. ShouldNormalize uses it to decide whether to ask for
 	// client-side normalization.
 	Normalized bool
+	// Duration is an optional histogram observed inside EmbedText. nil-safe.
+	// Labels: model, task, status. Wired in by the provider package from
+	// VectorMetrics so this package doesn't import the resource package.
+	Duration *prometheus.HistogramVec
 }
 
 // ShouldNormalize reports whether to set EmbedTextInput.Normalize=true for
@@ -95,6 +109,38 @@ type Embedder struct {
 // provider doesn't already.
 func (e Embedder) ShouldNormalize() bool {
 	return e.VectorType == VectorTypeDense && e.Metric == CosineDistance && !e.Normalized
+}
+
+// EmbedText shadows the promoted TextEmbedder.EmbedText to wrap the provider
+// call in an OTel span and (optionally) record a latency histogram. The
+// provider call is the dominant latency source on every path that touches an
+// embedder (VectorSearch query embed, reconciler + backfiller document
+// batches), so spanning + measuring here gives one diagnostic anchor for all
+// of them.
+func (e Embedder) EmbedText(ctx context.Context, input EmbedTextInput) (EmbedTextOutput, error) {
+	ctx, span := tracer.Start(ctx, "unified.embedder.EmbedText")
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("model", e.Model),
+		attribute.String("task", string(input.Task)),
+		attribute.Int("input_count", len(input.Texts)),
+	)
+
+	start := time.Now()
+	out, err := e.TextEmbedder.EmbedText(ctx, input)
+	status := "success"
+	if err != nil {
+		status = "error"
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+	}
+	if e.Duration != nil {
+		metricutil.ObserveWithExemplar(ctx,
+			e.Duration.WithLabelValues(e.Model, string(input.Task), status),
+			time.Since(start).Seconds(),
+		)
+	}
+	return out, err
 }
 
 // Registry is a name → Embedder lookup, populated at wiring time. Multiple

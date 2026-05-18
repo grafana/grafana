@@ -29,6 +29,7 @@ import (
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
@@ -158,6 +159,7 @@ type searchServer struct {
 	embedder      *embedder.Embedder
 	search        SearchBackend
 	indexMetrics  *BleveIndexMetrics
+	vectorMetrics *VectorMetrics
 	access        types.AccessClient
 	builders      *builderCache
 	initWorkers   int
@@ -222,7 +224,7 @@ var (
 )
 
 // newSearchServer creates a new search server implementation.
-func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend vector.VectorBackend, embedder *embedder.Embedder, access types.AccessClient, blob BlobSupport, indexMetrics *BleveIndexMetrics, ownsIndexFn func(key NamespacedResource) (bool, error)) (*searchServer, error) {
+func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend vector.VectorBackend, embedder *embedder.Embedder, access types.AccessClient, blob BlobSupport, indexMetrics *BleveIndexMetrics, vectorMetrics *VectorMetrics, ownsIndexFn func(key NamespacedResource) (bool, error)) (*searchServer, error) {
 	// No backend search support
 	if opts.Backend == nil {
 		return nil, nil
@@ -253,6 +255,7 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 		rebuildWorkers: opts.IndexRebuildWorkers,
 		initMinSize:    opts.InitMinCount,
 		indexMetrics:   indexMetrics,
+		vectorMetrics:  vectorMetrics,
 		ownsIndexFn:    ownsIndexFn,
 
 		dashboardIndexMaxAge:      opts.DashboardIndexMaxAge,
@@ -535,9 +538,41 @@ func (s *searchServer) Search(ctx context.Context, req *resourcepb.ResourceSearc
 // (lower score = closer match — passes through pgvector's <=> output).
 //
 // Returns Unimplemented when no embedding provider or vector backend is configured
-func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorSearchRequest) (*resourcepb.VectorSearchResponse, error) {
+func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorSearchRequest) (resp *resourcepb.VectorSearchResponse, retErr error) {
 	ctx, span := tracer.Start(ctx, "resource.searchServer.VectorSearch")
 	defer span.End()
+
+	start := time.Now()
+	// Default labels are "unknown"; refined once we read the request key.
+	// We capture them before validation so the histogram is labeled even
+	// for the missing-key early return.
+	group, resource := "unknown", "unknown"
+	if req != nil && req.Key != nil {
+		if g := req.Key.GetGroup(); g != "" {
+			group = g
+		}
+		if r := req.Key.GetResource(); r != "" {
+			resource = r
+		}
+	}
+	defer func() {
+		// Validation early-returns wrap a BadRequestError in the response but
+		// don't return an error — map those to InvalidArgument so the histogram
+		// doesn't conflate them with successful searches.
+		code := codes.OK
+		switch {
+		case retErr != nil:
+			code = status.Code(retErr)
+		case resp != nil && resp.Error != nil:
+			code = codes.InvalidArgument
+		}
+		if s.vectorMetrics != nil {
+			metricutil.ObserveWithExemplar(ctx,
+				s.vectorMetrics.SearchDuration.WithLabelValues(group, resource, code.String()),
+				time.Since(start).Seconds(),
+			)
+		}
+	}()
 
 	if s.embedder == nil || s.vectorBackend == nil {
 		return nil, status.Error(codes.Unimplemented, "vector search not configured")
@@ -648,7 +683,7 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		}
 	}
 
-	resp := &resourcepb.VectorSearchResponse{
+	resp = &resourcepb.VectorSearchResponse{
 		Results: make([]*resourcepb.VectorSearchResult, 0, len(results)),
 	}
 	for _, r := range results {
