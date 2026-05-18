@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 
 	"github.com/prometheus/client_golang/prometheus"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	authlib "github.com/grafana/authlib/types"
@@ -18,7 +17,6 @@ import (
 	pluginsapp "github.com/grafana/grafana/apps/plugins/pkg/app"
 	"github.com/grafana/grafana/apps/plugins/pkg/app/meta"
 	"github.com/grafana/grafana/apps/plugins/pkg/app/metrics"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/plugins/pluginassets/modulehash"
@@ -96,34 +94,13 @@ func ProvideAppInstaller(
 
 func (a *AppInstaller) GetLegacyStorage(requested schema.GroupVersionResource) grafanarest.Storage {
 	gvr := pluginsv0alpha1.AppKind().GroupVersionResource()
-	if requested.String() != gvr.String() {
-		return nil
+	if requested.String() == gvr.String() {
+		return &legacyStorage{
+			pluginSettings: a.pluginSettings,
+			tableConverter: newAppsTableConverter(),
+		}
 	}
-
-	return &legacyStorage{
-		pluginSettings: a.pluginSettings,
-		tableConverter: utils.NewTableConverter(
-			gvr.GroupResource(),
-			utils.TableColumns{
-				Definition: []metav1.TableColumnDefinition{
-					{Name: "Name", Type: "string", Format: "name"},
-					{Name: "Enabled", Type: "boolean"},
-					{Name: "Pinned", Type: "boolean"},
-				},
-				Reader: func(obj any) ([]any, error) {
-					m, ok := obj.(*pluginsv0alpha1.App)
-					if !ok {
-						return nil, fmt.Errorf("expected app plugin")
-					}
-					return []any{
-						m.Name,
-						m.Spec.Enabled,
-						m.Spec.Pinned,
-					}, nil
-				},
-			},
-		),
-	}
+	return nil
 }
 
 func getStaticRootPath(cfgProvider configprovider.ConfigProvider, logger logging.Logger) (string, error) {
