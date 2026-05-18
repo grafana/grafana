@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 
 import { useAppPluginEnabled } from '@grafana/runtime';
-
 import { contextSrv as ctx } from 'app/core/services/context_srv';
 import { useFolder } from 'app/features/alerting/unified/hooks/useFolder';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
@@ -173,9 +172,7 @@ export function useRulePluginImmutability(rule: RulerRuleDTO | GrafanaPromRuleDT
 } {
   const pluginOrigin = getRulePluginOrigin(rule);
   // Empty string returns false immediately without a network call
-  const { value: isPluginInstalled = false, loading: isLoading } = useAppPluginEnabled(
-    pluginOrigin?.pluginId ?? ''
-  );
+  const { value: isPluginInstalled = false, loading: isLoading } = useAppPluginEnabled(pluginOrigin?.pluginId ?? '');
 
   return useMemo(
     () => ({
