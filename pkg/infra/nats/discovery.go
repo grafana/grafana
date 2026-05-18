@@ -64,7 +64,7 @@ func (s *Service) register(ctx context.Context, routeURL string) error {
 		return err
 	}
 
-	w, err := s.kv.Save(ctx, defaultDiscoverySection, rec.NodeID)
+	w, err := s.kv.Save(ctx, kv.NATSPeersSection, rec.NodeID)
 	if err != nil {
 		return err
 	}
@@ -76,13 +76,13 @@ func (s *Service) register(ctx context.Context, routeURL string) error {
 }
 
 func (s *Service) unregister(ctx context.Context) error {
-	return s.kv.Delete(ctx, defaultDiscoverySection, s.nodeID())
+	return s.kv.Delete(ctx, kv.NATSPeersSection, s.nodeID())
 }
 
 func (s *Service) discoverRoutes(ctx context.Context, selfRouteURL string) ([]*url.URL, error) {
 	now := time.Now()
 	var routes []string
-	for key, err := range s.kv.Keys(ctx, defaultDiscoverySection, kv.ListOptions{Sort: kv.SortOrderAsc}) {
+	for key, err := range s.kv.Keys(ctx, kv.NATSPeersSection, kv.ListOptions{Sort: kv.SortOrderAsc}) {
 		if err != nil {
 			return nil, err
 		}
@@ -105,7 +105,7 @@ func (s *Service) discoverRoutes(ctx context.Context, selfRouteURL string) ([]*u
 
 func (s *Service) cleanupStalePeers(ctx context.Context) error {
 	now := time.Now()
-	for key, err := range s.kv.Keys(ctx, defaultDiscoverySection, kv.ListOptions{Sort: kv.SortOrderAsc}) {
+	for key, err := range s.kv.Keys(ctx, kv.NATSPeersSection, kv.ListOptions{Sort: kv.SortOrderAsc}) {
 		if err != nil {
 			return err
 		}
@@ -117,7 +117,7 @@ func (s *Service) cleanupStalePeers(ctx context.Context) error {
 			return err
 		}
 		if now.Sub(rec.UpdatedAt) > s.cfg.DiscoveryTTL {
-			if err := s.kv.Delete(ctx, defaultDiscoverySection, key); err != nil {
+			if err := s.kv.Delete(ctx, kv.NATSPeersSection, key); err != nil {
 				return err
 			}
 		}
@@ -126,7 +126,7 @@ func (s *Service) cleanupStalePeers(ctx context.Context) error {
 }
 
 func (s *Service) readPeer(ctx context.Context, key string) (peerRecord, error) {
-	r, err := s.kv.Get(ctx, defaultDiscoverySection, key)
+	r, err := s.kv.Get(ctx, kv.NATSPeersSection, key)
 	if err != nil {
 		return peerRecord{}, err
 	}

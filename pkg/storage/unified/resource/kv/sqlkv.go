@@ -27,6 +27,8 @@ const (
 	LastImportTimeSection = "unified/lastimport"
 	PendingDeleteSection  = "unified/pendingdelete"
 	LeasesSection         = "unified/leases"
+	// NATSPeersSection stores embedded NATS cluster peer advertisements (infra/nats discovery).
+	NATSPeersSection = "nats/peers"
 )
 
 var _ KV = &SqlKV{}
@@ -104,6 +106,8 @@ func (k *SqlKV) getQueryBuilder(section string) (*queryBuilder, error) {
 		tableName = "pending_tenant_deletions"
 	case LeasesSection:
 		tableName = "kv_leases"
+	case NATSPeersSection:
+		tableName = "nats_discovery_peers"
 	default:
 		return nil, fmt.Errorf("invalid section: %s", section)
 	}
@@ -382,7 +386,7 @@ func (k *SqlKV) Save(ctx context.Context, section string, key string) (io.WriteC
 	if key == "" {
 		return nil, fmt.Errorf("key is required")
 	}
-	if section != DataSection && section != EventsSection && section != PendingDeleteSection && section != LastImportTimeSection && section != LeasesSection {
+	if section != DataSection && section != EventsSection && section != PendingDeleteSection && section != LastImportTimeSection && section != LeasesSection && section != NATSPeersSection {
 		return nil, fmt.Errorf("invalid section: %s", section)
 	}
 
@@ -439,7 +443,7 @@ func (w *sqlWriteCloser) Close() error {
 	// Used for sections that map to dedicated key-value tables (resource_events,
 	// pending_tenant_deletions, kv_leases). DataSection still goes through the
 	// resource_history-specific path below until the legacy columns are dropped.
-	if w.section == EventsSection || w.section == PendingDeleteSection || w.section == LeasesSection {
+	if w.section == EventsSection || w.section == PendingDeleteSection || w.section == LeasesSection || w.section == NATSPeersSection {
 		query, args := qb.buildUpsertQuery(keyPath, value)
 		_, err := w.kv.conn(w.ctx).ExecContext(w.ctx, query, args...)
 		if err != nil {

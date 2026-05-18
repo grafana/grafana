@@ -44,6 +44,6 @@ func TestDiscoveryRegisterDiscoverAndCleanup(t *testing.T) {
 
 	s.cfg.DiscoveryTTL = -time.Second
 	require.NoError(t, s.cleanupStalePeers(context.Background()))
-	_, err = s.kv.Get(context.Background(), defaultDiscoverySection, "node-a")
+	_, err = s.kv.Get(context.Background(), kv.NATSPeersSection, "node-a")
 	require.ErrorIs(t, err, kv.ErrNotFound)
 }

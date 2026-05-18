@@ -253,6 +253,16 @@ func initResourceTables(mg *migrator.Migrator) string {
 	mg.AddMigration("create table "+kv_leases_table.Name, migrator.NewAddTableMigration(kv_leases_table))
 	mg.AddMigration("Change key_path collation of kv_leases in postgres", migrator.NewRawSQLMigration("").Postgres(`ALTER TABLE kv_leases ALTER COLUMN key_path TYPE VARCHAR(2048) COLLATE "C";`))
 
+	nats_discovery_peers_table := migrator.Table{
+		Name: "nats_discovery_peers",
+		Columns: []*migrator.Column{
+			{Name: "key_path", Type: migrator.DB_NVarchar, Length: 2048, Nullable: false, IsPrimaryKey: true, IsLatin: true},
+			{Name: "value", Type: migrator.DB_MediumText, Nullable: false},
+		},
+	}
+	mg.AddMigration("create table "+nats_discovery_peers_table.Name, migrator.NewAddTableMigration(nats_discovery_peers_table))
+	mg.AddMigration("Change key_path collation of nats_discovery_peers in postgres", migrator.NewRawSQLMigration("").Postgres(`ALTER TABLE nats_discovery_peers ALTER COLUMN key_path TYPE VARCHAR(2048) COLLATE "C";`))
+
 	return marker
 }
 

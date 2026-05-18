@@ -13,10 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-const (
-	defaultDiscoverySection = "nats/peers"
-)
-
 var ErrDisabled = errors.New("nats is disabled")
 
 type ClientProvider interface {
