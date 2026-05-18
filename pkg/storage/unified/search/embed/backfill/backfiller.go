@@ -8,7 +8,7 @@ import (
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
-	otelcodes "go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/codes"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
@@ -299,7 +299,7 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 		if retErr != nil {
 			statusLabel = "error"
 			span.RecordError(retErr)
-			span.SetStatus(otelcodes.Error, retErr.Error())
+			span.SetStatus(codes.Error, retErr.Error())
 		}
 		if b.metrics != nil {
 			metricutil.ObserveWithExemplar(ctx,
@@ -337,7 +337,6 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 		Name:      name,
 	}
 
-	// Extract stage
 	extractCtx, extractSpan := tracer.Start(ctx, "unified.embed.builder.Extract")
 	extractSpan.SetAttributes(
 		attribute.String("group", group),
@@ -356,13 +355,11 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 		return nil
 	}
 
-	// Embed stage
 	vectors, err := b.batchEmbedder.Embed(ctx, namespace, res, rv, items)
 	if err != nil {
 		return fmt.Errorf("embed %s/%s: %w", namespace, name, err)
 	}
 
-	// Upsert stage
 	if err := b.vectorBackend.Upsert(ctx, vectors); err != nil {
 		return fmt.Errorf("upsert %s/%s: %w", namespace, name, err)
 	}

@@ -27,6 +27,13 @@ type VectorMetrics struct {
 	ReconcilerProcessDuration *prometheus.HistogramVec
 	ReconcilerPendingEvents   prometheus.Gauge
 	ReconcilerRetriesTotal    *prometheus.CounterVec
+	// ReconcilerEventsDroppedTotal counts events the reconciler gave up on.
+	// Labels:
+	//   group, resource — bounded resource identifiers
+	//   reason          — currently always "retries_exhausted"; future reasons
+	//                     (e.g. "unknown_action") can be added without
+	//                     changing the metric shape.
+	ReconcilerEventsDroppedTotal *prometheus.CounterVec
 
 	BackfillItemDuration *prometheus.HistogramVec
 }
@@ -69,6 +76,10 @@ func ProvideVectorMetrics(reg prometheus.Registerer) *VectorMetrics {
 			Name: "storage_server_vector_reconciler_retries_total",
 			Help: "Total number of reconciler events re-queued after a failure.",
 		}, []string{"group", "resource"}),
+		ReconcilerEventsDroppedTotal: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "storage_server_vector_reconciler_events_dropped_total",
+			Help: "Total number of reconciler events dropped (gave up on), labeled by reason.",
+		}, []string{"group", "resource", "reason"}),
 
 		BackfillItemDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 			Namespace:                       "storage_server",

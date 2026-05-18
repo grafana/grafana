@@ -55,15 +55,15 @@ func newVertexEmbedder(cfg *setting.Cfg, duration *prometheus.HistogramVec) (*em
 	if err != nil {
 		return nil, fmt.Errorf("vertex client: %w", err)
 	}
+	model := "vertex/" + cfg.VertexModel
 	dense := vertex.NewDenseEmbedder(client, cfg.VertexModel, cfg.VertexDimensions)
 	return &embedder.Embedder{
-		TextEmbedder: dense,
-		Model:        "vertex/" + cfg.VertexModel,
+		TextEmbedder: embedder.Instrument(dense, model, duration),
+		Model:        model,
 		VectorType:   embedder.VectorTypeDense,
 		Metric:       embedder.CosineDistance,
 		Dimensions:   uint32(cfg.VertexDimensions),
 		Normalized:   false, // Vertex returns un-normalized vectors
-		Duration:     duration,
 	}, nil
 }
 
@@ -76,14 +76,14 @@ func newBedrockEmbedder(cfg *setting.Cfg, duration *prometheus.HistogramVec) (*e
 	}
 	rt := bedrockruntime.NewFromConfig(awsCfg)
 	client := bedrock.NewClient(rt)
+	model := "bedrock/" + cfg.BedrockModel
 	dense := bedrock.NewDenseEmbedder(client, cfg.BedrockModel, cfg.BedrockDimensions)
 	return &embedder.Embedder{
-		TextEmbedder: dense,
-		Model:        "bedrock/" + cfg.BedrockModel,
+		TextEmbedder: embedder.Instrument(dense, model, duration),
+		Model:        model,
 		VectorType:   embedder.VectorTypeDense,
 		Metric:       embedder.CosineDistance,
 		Dimensions:   uint32(cfg.BedrockDimensions),
 		Normalized:   false, // Cohere on Bedrock returns un-normalized vectors
-		Duration:     duration,
 	}, nil
 }

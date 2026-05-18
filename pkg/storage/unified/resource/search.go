@@ -578,22 +578,8 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		return nil, status.Error(codes.Unimplemented, "vector search not configured")
 	}
 
-	if req.Key == nil || req.Key.Namespace == "" || req.Key.Group == "" || req.Key.Resource == "" {
-		return &resourcepb.VectorSearchResponse{
-			Error: NewBadRequestError("missing namespace, group or resource"),
-		}, nil
-	}
-	if strings.TrimSpace(req.Query) == "" {
-		return &resourcepb.VectorSearchResponse{
-			Error: NewBadRequestError("query must not be empty"),
-		}, nil
-	}
-
-	// TODO decide on appropriate max query length. Using 1k for now.
-	if len(req.Query) > 1000 {
-		return &resourcepb.VectorSearchResponse{
-			Error: NewBadRequestError("query exceeds maximum length of 1000 bytes"),
-		}, nil
+	if errResp := validateVectorSearchRequest(req); errResp != nil {
+		return errResp, nil
 	}
 
 	limit := int(req.Limit)
@@ -628,11 +614,9 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		return nil, status.Error(codes.Internal, "embed query: empty result")
 	}
 
-	filters := translateVectorSearchFilters(req.Filters)
-
 	results, err := s.vectorBackend.Search(ctx,
 		req.Key.Namespace, s.embedder.Model, req.Key.Resource,
-		out.Embeddings[0].Dense, limit, filters...)
+		out.Embeddings[0].Dense, limit, translateVectorSearchFilters(req.Filters)...)
 	if err != nil {
 		s.log.Error("vector search: backend", "err", err)
 		return nil, status.Error(codes.Internal, "vector search backend")
@@ -646,52 +630,17 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		return nil, status.Error(codes.Unauthenticated, "no user in context")
 	}
 
-	// Dedupe per-(UID, Folder) so sub-resources of the same parent (e.g. dashboard panels) share a single batch-check entry.
-	type checkKey struct{ uid, folder string }
-	correlationIDs := make(map[checkKey]string, len(results))
-	checks := make([]types.BatchCheckItem, 0, len(results))
-	for _, r := range results {
-		key := checkKey{r.UID, r.Folder}
-		if _, ok := correlationIDs[key]; ok {
-			continue
-		}
-		id := fmt.Sprintf("%d", len(checks))
-		correlationIDs[key] = id
-		checks = append(checks, types.BatchCheckItem{
-			CorrelationID: id,
-			Verb:          utils.VerbGet,
-			Group:         req.Key.Group,
-			Resource:      req.Key.Resource,
-			Name:          r.UID,
-			Folder:        r.Folder,
-		})
-	}
-
-	checkResults := make(map[string]types.BatchCheckResult, len(checks))
-	for start := 0; start < len(checks); start += batchCheckChunkSize {
-		end := min(start+batchCheckChunkSize, len(checks))
-		batchResp, err := s.access.BatchCheck(ctx, user, types.BatchCheckRequest{
-			Namespace: req.Key.Namespace,
-			Checks:    checks[start:end],
-		})
-		if err != nil {
-			s.log.Error("vector search: authz batch check", "err", err)
-			return nil, status.Error(codes.Internal, "authz batch check")
-		}
-		for id, result := range batchResp.Results {
-			checkResults[id] = result
-		}
+	allowed, err := s.batchCheckVectorSearchResults(ctx, user, req.Key, results)
+	if err != nil {
+		s.log.Error("vector search: authz batch check", "err", err)
+		return nil, status.Error(codes.Internal, "authz batch check")
 	}
 
 	resp = &resourcepb.VectorSearchResponse{
 		Results: make([]*resourcepb.VectorSearchResult, 0, len(results)),
 	}
 	for _, r := range results {
-		id, ok := correlationIDs[checkKey{r.UID, r.Folder}]
-		if !ok {
-			continue
-		}
-		if !checkResults[id].Allowed {
+		if !allowed[vectorAuthzKey{r.UID, r.Folder}] {
 			continue
 		}
 		resp.Results = append(resp.Results, &resourcepb.VectorSearchResult{
@@ -705,6 +654,85 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		})
 	}
 	return resp, nil
+}
+
+// validateVectorSearchRequest returns a non-nil response with a
+// BadRequestError when the request fails validation; nil means valid.
+// Pulled out of VectorSearch to keep that function under the cyclomatic
+// complexity threshold.
+func validateVectorSearchRequest(req *resourcepb.VectorSearchRequest) *resourcepb.VectorSearchResponse {
+	if req.Key == nil || req.Key.Namespace == "" || req.Key.Group == "" || req.Key.Resource == "" {
+		return &resourcepb.VectorSearchResponse{
+			Error: NewBadRequestError("missing namespace, group or resource"),
+		}
+	}
+	if strings.TrimSpace(req.Query) == "" {
+		return &resourcepb.VectorSearchResponse{
+			Error: NewBadRequestError("query must not be empty"),
+		}
+	}
+	// TODO decide on appropriate max query length. Using 1k for now.
+	if len(req.Query) > 1000 {
+		return &resourcepb.VectorSearchResponse{
+			Error: NewBadRequestError("query exceeds maximum length of 1000 bytes"),
+		}
+	}
+	return nil
+}
+
+// vectorAuthzKey de-dupes (UID, Folder) so sub-resources of the same
+// parent (e.g. dashboard panels) share a single batch-check entry.
+type vectorAuthzKey struct{ uid, folder string }
+
+// batchCheckVectorSearchResults runs authz checks in chunks of
+// batchCheckChunkSize over the unique (UID, Folder) pairs in `results`
+// and returns the set of pairs the user is allowed to read.
+func (s *searchServer) batchCheckVectorSearchResults(
+	ctx context.Context,
+	user types.AuthInfo,
+	key *resourcepb.ResourceKey,
+	results []vector.VectorSearchResult,
+) (map[vectorAuthzKey]bool, error) {
+	// seen de-dupes per (UID, Folder) so sub-resources share one entry.
+	// correlation maps the batch-check correlation ID back to its pair.
+	seen := make(map[vectorAuthzKey]struct{}, len(results))
+	correlation := make(map[string]vectorAuthzKey, len(results))
+	checks := make([]types.BatchCheckItem, 0, len(results))
+	for _, r := range results {
+		k := vectorAuthzKey{r.UID, r.Folder}
+		if _, dup := seen[k]; dup {
+			continue
+		}
+		seen[k] = struct{}{}
+		id := fmt.Sprintf("%d", len(checks))
+		correlation[id] = k
+		checks = append(checks, types.BatchCheckItem{
+			CorrelationID: id,
+			Verb:          utils.VerbGet,
+			Group:         key.Group,
+			Resource:      key.Resource,
+			Name:          r.UID,
+			Folder:        r.Folder,
+		})
+	}
+
+	allowed := make(map[vectorAuthzKey]bool, len(checks))
+	for start := 0; start < len(checks); start += batchCheckChunkSize {
+		end := min(start+batchCheckChunkSize, len(checks))
+		batchResp, err := s.access.BatchCheck(ctx, user, types.BatchCheckRequest{
+			Namespace: key.Namespace,
+			Checks:    checks[start:end],
+		})
+		if err != nil {
+			return nil, err
+		}
+		for id, result := range batchResp.Results {
+			if result.Allowed {
+				allowed[correlation[id]] = true
+			}
+		}
+	}
+	return allowed, nil
 }
 
 // translateVectorSearchFilters maps the proto Requirement shape into the

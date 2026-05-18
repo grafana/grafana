@@ -97,10 +97,6 @@ type Embedder struct {
 	// vectors. ShouldNormalize uses it to decide whether to ask for
 	// client-side normalization.
 	Normalized bool
-	// Duration is an optional histogram observed inside EmbedText. nil-safe.
-	// Labels: model, task, status. Wired in by the provider package from
-	// VectorMetrics so this package doesn't import the resource package.
-	Duration *prometheus.HistogramVec
 }
 
 // ShouldNormalize reports whether to set EmbedTextInput.Normalize=true for
@@ -111,32 +107,46 @@ func (e Embedder) ShouldNormalize() bool {
 	return e.VectorType == VectorTypeDense && e.Metric == CosineDistance && !e.Normalized
 }
 
-// EmbedText shadows the promoted TextEmbedder.EmbedText to wrap the provider
-// call in an OTel span and (optionally) record a latency histogram. The
-// provider call is the dominant latency source on every path that touches an
+// Instrument wraps a TextEmbedder so each EmbedText call emits an OTel
+// span and (optionally) a latency histogram observation. The provider
+// call is the dominant latency source on every path that touches an
 // embedder (VectorSearch query embed, reconciler + backfiller document
-// batches), so spanning + measuring here gives one diagnostic anchor for all
-// of them.
-func (e Embedder) EmbedText(ctx context.Context, input EmbedTextInput) (EmbedTextOutput, error) {
+// batches), so wrapping here gives a single diagnostic anchor.
+//
+// The wrapped embedder is returned as a plain TextEmbedder so the caller
+// can assign it directly to Embedder.TextEmbedder — no special integration
+// with the Embedder struct required. duration may be nil; the span is
+// still emitted in that case.
+func Instrument(inner TextEmbedder, model string, duration *prometheus.HistogramVec) TextEmbedder {
+	return &instrumentedTextEmbedder{inner: inner, model: model, duration: duration}
+}
+
+type instrumentedTextEmbedder struct {
+	inner    TextEmbedder
+	model    string
+	duration *prometheus.HistogramVec
+}
+
+func (i *instrumentedTextEmbedder) EmbedText(ctx context.Context, input EmbedTextInput) (EmbedTextOutput, error) {
 	ctx, span := tracer.Start(ctx, "unified.embedder.EmbedText")
 	defer span.End()
 	span.SetAttributes(
-		attribute.String("model", e.Model),
+		attribute.String("model", i.model),
 		attribute.String("task", string(input.Task)),
 		attribute.Int("input_count", len(input.Texts)),
 	)
 
 	start := time.Now()
-	out, err := e.TextEmbedder.EmbedText(ctx, input)
+	out, err := i.inner.EmbedText(ctx, input)
 	status := "success"
 	if err != nil {
 		status = "error"
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 	}
-	if e.Duration != nil {
+	if i.duration != nil {
 		metricutil.ObserveWithExemplar(ctx,
-			e.Duration.WithLabelValues(e.Model, string(input.Task), status),
+			i.duration.WithLabelValues(i.model, string(input.Task), status),
 			time.Since(start).Seconds(),
 		)
 	}

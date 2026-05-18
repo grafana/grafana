@@ -15,7 +15,7 @@ import (
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
-	otelcodes "go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/codes"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
@@ -556,6 +556,13 @@ func (s *Reconciler) processEvents(ctx context.Context, sinceRv int64, batch []*
 	return maxRv, lowestFailedRv, failed, successes, false
 }
 
+// processEvent dispatches on the event action and runs the per-event
+// pipeline. The status label tracked through the function powers the
+// reconciler_process_duration histogram observed in the deferred closure.
+//
+// TODO: only re-embed subresources whose content actually changed
+// since the last write. Today every dashboard write re-embeds every
+// panel, which is wasteful when only one panel changed.
 func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev *pendingEvent) (retErr error) {
 	ctx, span := tracer.Start(ctx, "unified.reconciler.processEvent")
 	defer span.End()
@@ -572,7 +579,7 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev
 	defer func() {
 		if retErr != nil {
 			span.RecordError(retErr)
-			span.SetStatus(otelcodes.Error, retErr.Error())
+			span.SetStatus(codes.Error, retErr.Error())
 		}
 		if s.metrics != nil {
 			metricutil.ObserveWithExemplar(ctx,
@@ -585,31 +592,19 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev
 	switch ev.action {
 	case resourcepb.WatchEvent_DELETED:
 		if err := s.vectorBackend.Delete(ctx, ev.namespace, s.batchEmbedder.Model(), builder.Resource(), ev.name); err != nil {
-			statusLabel = "upsert_error"
+			statusLabel = "delete_error"
 			return err
 		}
 		return nil
 	case resourcepb.WatchEvent_ADDED, resourcepb.WatchEvent_MODIFIED:
-		st, err := s.embedAndUpsert(ctx, builder, ev)
-		statusLabel = st
-		return err
+		// fall through to extract → embed → upsert below
 	default:
+		statusLabel = "unknown_action"
 		return fmt.Errorf("unknown action %v", ev.action)
 	}
-}
 
-// embedAndUpsert routes through UpsertReplaceSubresources so removing
-// stale subresources and writing the new ones commit atomically — a
-// failure mid-way leaves the dashboard in its previous self-consistent
-// state. Returns ("success", nil) on the happy path or a stage-keyed
-// status string + the wrapped error on failure.
-//
-// TODO: only re-embed subresources whose content actually changed
-// since the last write. Today every dashboard write re-embeds every
-// panel, which is wasteful when only one panel changed.
-func (s *Reconciler) embedAndUpsert(ctx context.Context, builder embed.Builder, ev *pendingEvent) (string, error) {
 	if len(ev.value) == 0 {
-		return "success", nil
+		return nil
 	}
 	key := &resourcepb.ResourceKey{
 		Group:     builder.Group(),
@@ -618,7 +613,6 @@ func (s *Reconciler) embedAndUpsert(ctx context.Context, builder embed.Builder, 
 		Name:      ev.name,
 	}
 
-	// Extract stage
 	extractCtx, extractSpan := tracer.Start(ctx, "unified.embed.builder.Extract")
 	extractSpan.SetAttributes(
 		attribute.String("group", builder.Group()),
@@ -627,7 +621,8 @@ func (s *Reconciler) embedAndUpsert(ctx context.Context, builder embed.Builder, 
 	items, err := builder.Extract(extractCtx, key, ev.value, "")
 	extractSpan.End()
 	if err != nil {
-		return "extract_error", fmt.Errorf("extract: %w", err)
+		statusLabel = "extract_error"
+		return fmt.Errorf("extract: %w", err)
 	}
 	if maxItems := builder.MaxItemsPerResource(); maxItems > 0 && len(items) > maxItems {
 		items = items[:maxItems]
@@ -637,28 +632,33 @@ func (s *Reconciler) embedAndUpsert(ctx context.Context, builder embed.Builder, 
 	// drop everything stored under this UID rather than leaving orphans.
 	if len(items) == 0 {
 		if err := s.vectorBackend.Delete(ctx, ev.namespace, s.batchEmbedder.Model(), builder.Resource(), ev.name); err != nil {
-			return "upsert_error", err
+			statusLabel = "delete_error"
+			return err
 		}
-		return "success", nil
+		return nil
 	}
 
-	// Embed stage
 	vectors, err := s.batchEmbedder.Embed(ctx, ev.namespace, builder.Resource(), ev.rv, items)
 	if err != nil {
-		return "embed_error", fmt.Errorf("embed: %w", err)
+		statusLabel = "embed_error"
+		return fmt.Errorf("embed: %w", err)
 	}
 	if len(vectors) == 0 {
 		if err := s.vectorBackend.Delete(ctx, ev.namespace, s.batchEmbedder.Model(), builder.Resource(), ev.name); err != nil {
-			return "upsert_error", err
+			statusLabel = "delete_error"
+			return err
 		}
-		return "success", nil
+		return nil
 	}
 
-	// Upsert stage
+	// UpsertReplaceSubresources commits the stale-delete and the new
+	// inserts atomically — a failure mid-way leaves the dashboard in
+	// its previous self-consistent state.
 	if err := s.vectorBackend.UpsertReplaceSubresources(ctx, vectors); err != nil {
-		return "upsert_error", fmt.Errorf("upsert: %w", err)
+		statusLabel = "upsert_error"
+		return fmt.Errorf("upsert: %w", err)
 	}
-	return "success", nil
+	return nil
 }
 
 // requeue is the catch-all path when we can't tell what's persisted
@@ -683,14 +683,9 @@ func (s *Reconciler) recordFailure(ev *pendingEvent, failed *[]*pendingEvent, lo
 			"namespace", ev.namespace, "name", ev.name,
 			"rv", ev.rv, "attempts", ev.attempts, "action", ev.action)
 		if s.metrics != nil {
-			// Histogram observation with status="retries_exhausted" so a query
-			// like rate(_count{status="retries_exhausted"}[5m]) directly answers
-			// "how many events did we give up on". The value here is just a
-			// marker (we already observed the actual processing duration on the
-			// final attempt) so we record 0.
-			s.metrics.ReconcilerProcessDuration.
+			s.metrics.ReconcilerEventsDroppedTotal.
 				WithLabelValues(ev.group, ev.resource, "retries_exhausted").
-				Observe(0)
+				Inc()
 		}
 		return lowestFailedRv
 	}
