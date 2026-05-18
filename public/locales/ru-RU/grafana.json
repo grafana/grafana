@@ -521,7 +521,8 @@
         "edit-yaml": "Редактировать YAML",
         "save": "Сохранить"
       },
-      "error-title": ""
+      "error-title": "",
+      "no-group-success": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "имя",
@@ -1174,10 +1175,14 @@
       "content-show-all-errors": "Показать все ошибки"
     },
     "errors": {
+      "api-machinery": {
+        "with-causes": ""
+      },
       "failedWith": "Ошибка {{-config}} со статусом {{status}}: {{-message}}"
     },
     "evaluate-every-validation-options": {
       "message": {
+        "none-not-allowed": "",
         "required": "Обязательно."
       }
     },
@@ -2904,6 +2909,11 @@
         },
         "group-name": "Имя группы оценки",
         "group-text": "Все правила в выбранной группе оцениваются каждые {{evaluateEvery}}.",
+        "interval-label": "",
+        "mode": {
+          "legacy": "",
+          "new": ""
+        },
         "new-group": "Новая группа оценки",
         "pause": {
           "alerting": "Включите, чтобы приостановить оценку для этого правила оповещения.",
@@ -10967,6 +10977,21 @@
     "name-line-width": "Ширина линии",
     "name-stacking": "Расположение в стеке"
   },
+  "home": {
+    "home-page": {
+      "edition": {
+        "cloud": "",
+        "enterprise": "",
+        "open-source": ""
+      },
+      "greeting": {
+        "afternoon": "",
+        "evening": "",
+        "morning": ""
+      },
+      "placeholder": ""
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "Загрузка",
@@ -11464,6 +11489,8 @@
       "clear-search": "Очистить",
       "close-inline-details": "Закрыть сведения об этом журнале",
       "close-sidebar-details": "Закрыть боковую панель со сведениями о журнале",
+      "copy-log-line": "",
+      "copy-log-line-json": "",
       "copy-shortlink": "Копировать короткую ссылку",
       "copy-to-clipboard": "Копировать в буфер обмена",
       "displayed-fields-section": "Организовать отображаемые поля",
@@ -11512,7 +11539,8 @@
     },
     "log-line-menu": {
       "copy-link": "Копировать ссылку в строку журнала",
-      "copy-log": "Копировать строку журнала",
+      "copy-log-contents": "",
+      "copy-log-message": "",
       "hide-details": "Показать сведения о журнале",
       "icon-label": "Меню журнала",
       "log-line": "Строка журнала",
@@ -15013,9 +15041,6 @@
       "home-dashboard-placeholder": "Дашборд по умолчанию",
       "language-preference-label": "Язык",
       "language-preference-placeholder": "Выбрать язык",
-      "locale-preference-description": "Выберите свой регион, чтобы установить соответствующий формат даты, времени и чисел.",
-      "locale-preference-label": "Региональный формат",
-      "locale-preference-placeholder": "Выбрать регион",
       "theme-description": "Нравится экспериментировать? Выразите свои пожелания по поводу темы <2>здесь.</2>",
       "theme-label": "Тема интерфейса",
       "week-start-label": "Начало недели"
@@ -15317,6 +15342,8 @@
     },
     "support-bundles-unconnected": {
       "created-on": "Дата создания",
+      "deprecation-warning-message": "",
+      "deprecation-warning-title": "",
       "download": "Загрузить",
       "expires": "Срок действия",
       "requested-by": "Запрос от",
@@ -15717,8 +15744,8 @@
     },
     "legend": {
       "category": "Условные обозначения",
-      "description-faceted-filter": "Показывать фильтр видимости рядов на основе меток",
-      "name-faceted-filter": "Многоаспектный фильтр"
+      "description-faceted-filter": "",
+      "name-faceted-filter": ""
     },
     "line-style-editor": {
       "line-fill-options": {
@@ -16208,7 +16235,9 @@
       "description": {
         "group-by-field-value": "Группируйте данные по значениям полей и создавайте вложенные таблицы со сгруппированными данными."
       },
+      "description-expand-nested-rows": "",
       "description-show-field-names": "Если параметр включен, вложенные таблицы будут отображать имена полей в качестве заголовка таблицы.",
+      "label-expand-nested-rows-by-default": "",
       "label-show-field-names-in-nested-tables": "Показывать названия полей во вложенных таблицах",
       "name": {
         "group-to-nested-tables": "Группировать во вложенные таблицы"

@@ -9,15 +9,15 @@ import {
   type CSSProperties,
   useEffect,
 } from 'react';
+
+import { type DataFrame, type Field, FieldType, formattedValueToString, reduceField, ReducerID } from '@grafana/data';
 import {
   type Column,
   type ColumnWidths,
   type DataGridHandle,
   type DataGridProps,
   type SortColumn,
-} from 'react-data-grid';
-
-import { type DataFrame, type Field, FieldType, formattedValueToString, reduceField, ReducerID } from '@grafana/data';
+} from '@grafana/react-data-grid';
 import { type MatcherScope } from '@grafana/schema';
 
 import { type TableColumnResizeActionCallback } from '../types';

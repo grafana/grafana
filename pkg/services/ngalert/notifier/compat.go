@@ -54,16 +54,20 @@ func IntegrationToIntegrationConfig(i models.Integration) (alertingModels.Integr
 	}, nil
 }
 
-func PostableAPIConfigToNotificationsConfiguration(c *apimodels.PostableUserConfig, limits alertingNotify.DynamicLimits) alertingNotify.NotificationsConfiguration {
+func PostableAPIConfigToNotificationsConfiguration(c *apimodels.PostableUserConfig, limits alertingNotify.DynamicLimits) (alertingNotify.NotificationsConfiguration, error) {
+	receivers, err := alertingNotify.PostableAPIReceiversToReceiverConfigs(c.AlertmanagerConfig.Receivers)
+	if err != nil {
+		return alertingNotify.NotificationsConfiguration{}, err
+	}
 	return alertingNotify.NotificationsConfiguration{
 		RoutingTree:       c.AlertmanagerConfig.Route,
 		InhibitRules:      c.AlertmanagerConfig.InhibitRules,
 		MuteTimeIntervals: c.AlertmanagerConfig.MuteTimeIntervals,
 		TimeIntervals:     c.AlertmanagerConfig.TimeIntervals,
 		Templates:         alertingNotify.PostableAPITemplatesToTemplateDefinitions(c.GetMergedTemplateDefinitions()),
-		Receivers:         alertingNotify.PostableAPIReceiversToAPIReceivers(c.AlertmanagerConfig.Receivers),
+		Receivers:         receivers,
 		Limits:            limits,
-	}
+	}, nil
 }
 
 func NotificationsConfigurationToPostableAPIConfig(config alertingNotify.NotificationsConfiguration) apimodels.PostableApiAlertingConfig {
@@ -80,7 +84,7 @@ func NotificationsConfigurationToPostableAPIConfig(config alertingNotify.Notific
 	}
 }
 
-func APIReceiversToPostableAPIReceivers(r []*alertingNotify.APIReceiver) []*definition.PostableApiReceiver {
+func APIReceiversToPostableAPIReceivers(r []alertingModels.ReceiverConfig) []*definition.PostableApiReceiver {
 	result := make([]*definition.PostableApiReceiver, 0, len(r))
 	for _, receiver := range r {
 		result = append(result, APIReceiverToPostableAPIReceiver(receiver))
@@ -88,14 +92,14 @@ func APIReceiversToPostableAPIReceivers(r []*alertingNotify.APIReceiver) []*defi
 	return result
 }
 
-func APIReceiverToPostableAPIReceiver(r *alertingNotify.APIReceiver) *definition.PostableApiReceiver {
+func APIReceiverToPostableAPIReceiver(r alertingModels.ReceiverConfig) *definition.PostableApiReceiver {
 	receivers := make([]*definition.PostableGrafanaReceiver, 0, len(r.Integrations))
 	for _, p := range r.Integrations {
 		receivers = append(receivers, IntegrationConfigToPostableGrafanaReceiver(p))
 	}
 
 	return &definition.PostableApiReceiver{
-		Receiver: r.ConfigReceiver,
+		Receiver: definition.Receiver{Name: r.Name},
 		PostableGrafanaReceivers: definition.PostableGrafanaReceivers{
 			GrafanaManagedReceivers: receivers,
 		},

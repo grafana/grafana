@@ -6,16 +6,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"pgregory.net/rapid"
+
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/storage/secret/encryption"
-	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/utils/ptr"
-	"pgregory.net/rapid"
 )
 
 func TestBasic(t *testing.T) {
@@ -114,7 +114,7 @@ func TestBasic(t *testing.T) {
 			},
 			Spec: secretv1beta1.SecureValueSpec{
 				Description: "desc1",
-				Ref:         ptr.To("ref1"),
+				Ref:         new("ref1"),
 				Decrypters:  []string{"decrypter1"},
 			},
 		}))
@@ -198,7 +198,7 @@ func TestGCDoesNotDeleteInFlightVersion(t *testing.T) {
 		},
 		Spec: secretv1beta1.SecureValueSpec{
 			Description: "v2",
-			Value:       ptr.To(secretv1beta1.NewExposedSecureValue("new-value")),
+			Value:       new(secretv1beta1.NewExposedSecureValue("new-value")),
 			Decrypters:  []string{"decrypter1"},
 		},
 	}, "actor-uid")

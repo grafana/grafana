@@ -26,6 +26,9 @@ function getTableSuggestionScore(dataSummary: PanelDataSummary): VisualizationSu
 export const logstableSuggestionsSupplier: VisualizationSuggestionsSupplier<Options, TableFieldConfig> = (
   dataSummary
 ) => {
+  if (!config.featureToggles.logsTablePanelNG) {
+    return;
+  }
   const score = getTableSuggestionScore(dataSummary);
   if (score === undefined) {
     return;

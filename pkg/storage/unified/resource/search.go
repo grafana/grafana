@@ -41,7 +41,6 @@ const maxBatchSize = 1000
 const (
 	defaultVectorSearchLimit = 50
 	maxVectorSearchLimit     = 200
-
 	// authz BatchCheck enforces a per-request cap; chunk to stay under it.
 	batchCheckChunkSize = 50
 )

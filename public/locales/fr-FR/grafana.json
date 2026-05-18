@@ -515,7 +515,8 @@
         "edit-yaml": "Modifier le fichier YAML",
         "save": "Enregistrer"
       },
-      "error-title": ""
+      "error-title": "",
+      "no-group-success": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "nom",
@@ -1164,10 +1165,14 @@
       "content-show-all-errors": "Afficher toutes les erreurs"
     },
     "errors": {
+      "api-machinery": {
+        "with-causes": ""
+      },
       "failedWith": "{{-config}} a échoué avec le statut {{status}} : {{-message}}"
     },
     "evaluate-every-validation-options": {
       "message": {
+        "none-not-allowed": "",
         "required": "Obligatoire."
       }
     },
@@ -2872,6 +2877,11 @@
         },
         "group-name": "Nom du groupe d'évaluation",
         "group-text": "Toutes les règles du groupe sélectionné sont évaluées tous les {{evaluateEvery}}.",
+        "interval-label": "",
+        "mode": {
+          "legacy": "",
+          "new": ""
+        },
         "new-group": "Nouveau groupe d'évaluation",
         "pause": {
           "alerting": "Activez pour mettre en pause l'évaluation de cette règle d'alerte.",
@@ -10851,6 +10861,21 @@
     "name-line-width": "Épaisseur de ligne",
     "name-stacking": "Empilement"
   },
+  "home": {
+    "home-page": {
+      "edition": {
+        "cloud": "",
+        "enterprise": "",
+        "open-source": ""
+      },
+      "greeting": {
+        "afternoon": "",
+        "evening": "",
+        "morning": ""
+      },
+      "placeholder": ""
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "Chargement en cours",
@@ -11332,6 +11357,8 @@
       "clear-search": "Effacer",
       "close-inline-details": "Fermer les détails de ce journal",
       "close-sidebar-details": "Fermer la barre latérale des détails du journal",
+      "copy-log-line": "",
+      "copy-log-line-json": "",
       "copy-shortlink": "Copier le lien court",
       "copy-to-clipboard": "Copier dans le presse-papiers",
       "displayed-fields-section": "Organiser les champs affichés",
@@ -11380,7 +11407,8 @@
     },
     "log-line-menu": {
       "copy-link": "Copier le lien vers la ligne de journal",
-      "copy-log": "Copier la ligne de journal",
+      "copy-log-contents": "",
+      "copy-log-message": "",
       "hide-details": "Afficher les détails du journal",
       "icon-label": "Menu du journal",
       "log-line": "Ligne de journal",
@@ -14829,9 +14857,6 @@
       "home-dashboard-placeholder": "Tableau de bord par défaut",
       "language-preference-label": "Langue",
       "language-preference-placeholder": "Choisir une langue",
-      "locale-preference-description": "Choisissez votre région pour voir la date, l’heure et le format numérique correspondants",
-      "locale-preference-label": "Format de la région",
-      "locale-preference-placeholder": "Choisir une région",
       "theme-description": "Vous aimez les thèmes expérimentaux ? Dites-nous ce que vous aimeriez voir <2>ici.</2>",
       "theme-label": "Thème de l'interface utilisateur",
       "week-start-label": "Début de la semaine"
@@ -15131,6 +15156,8 @@
     },
     "support-bundles-unconnected": {
       "created-on": "Créé le",
+      "deprecation-warning-message": "",
+      "deprecation-warning-title": "",
       "download": "Télécharger",
       "expires": "Expire",
       "requested-by": "Demandé par",
@@ -15531,8 +15558,8 @@
     },
     "legend": {
       "category": "Légende",
-      "description-faceted-filter": "Afficher le filtre de visibilité des séries en fonction des étiquettes",
-      "name-faceted-filter": "Filtre à facettes"
+      "description-faceted-filter": "",
+      "name-faceted-filter": ""
     },
     "line-style-editor": {
       "line-fill-options": {
@@ -16022,7 +16049,9 @@
       "description": {
         "group-by-field-value": "Regroupez les données selon la valeur d’un champ et créez des tableaux imbriqués avec les données regroupées."
       },
+      "description-expand-nested-rows": "",
       "description-show-field-names": "Si activés, les tableaux imbriqués afficheront les noms de champs comme en-tête de tableau",
+      "label-expand-nested-rows-by-default": "",
       "label-show-field-names-in-nested-tables": "Afficher les noms de champs dans les tableaux imbriqués",
       "name": {
         "group-to-nested-tables": "Regrouper en tableaux imbriqués"

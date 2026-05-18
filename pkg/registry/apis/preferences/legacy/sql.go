@@ -8,6 +8,7 @@ import (
 	"time"
 
 	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	pref "github.com/grafana/grafana/pkg/services/preference"
@@ -74,17 +75,9 @@ func (s *LegacySQL) listPreferences(ctx context.Context,
 		}
 	}()
 
-	for rows.Next() {
-		// SELECT p.id, p.org_id,
-		//   p.json_data,
-		//   p.timezone,
-		//   p.theme,
-		//   p.week_start,
-		//   p.home_dashboard_uid,
-		//   u.uid as user_uid,
-		//   t.uid as team_uid,
-		//   p.created, p.updated
+	var userID, teamID int64 // detect orphan users & teams
 
+	for rows.Next() {
 		pref := preferenceModel{}
 		err := rows.Scan(&pref.ID, &pref.OrgID,
 			&pref.JSONData,
@@ -92,11 +85,22 @@ func (s *LegacySQL) listPreferences(ctx context.Context,
 			&pref.Theme,
 			&pref.WeekStart,
 			&pref.HomeDashboardUID,
-			&pref.UserUID, &pref.TeamUID,
+			&userID, &pref.UserUID,
+			&teamID, &pref.TeamUID,
 			&pref.Created, &pref.Updated)
 		if err != nil {
 			return nil, 0, err
 		}
+
+		if userID > 0 && !pref.UserUID.Valid {
+			logging.FromContext(ctx).Warn("skipping orphan user", "userID", userID)
+			continue
+		}
+		if teamID > 0 && !pref.TeamUID.Valid {
+			logging.FromContext(ctx).Warn("skipping orphan team", "teamID", teamID)
+			continue
+		}
+
 		if pref.Updated.After(rv.Time) {
 			rv.Time = pref.Updated
 		}

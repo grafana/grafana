@@ -384,8 +384,6 @@ export type PreferencesSpec = {
   navbar?: PreferencesNavbarPreference;
   /** Explore query history preferences */
   queryHistory?: PreferencesQueryHistoryPreference;
-  /** Selected locale (beta) */
-  regionalFormat?: string;
   /** user interface theme */
   theme?: string;
   /** The timezone selection */
