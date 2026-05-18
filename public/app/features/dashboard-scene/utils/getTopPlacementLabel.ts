@@ -1,15 +1,14 @@
 import { t } from '@grafana/i18n';
 import { type SceneObject } from '@grafana/scenes';
 
-import { RowItem } from '../scene/layout-rows/RowItem';
-import { TabItem } from '../scene/layout-tabs/TabItem';
+import { isRowItem, isTabItem } from '../scene/types/LayoutItemTypeGuards';
 
 export function getTopPlacementLabel(sectionOwner: SceneObject): string | undefined {
-  if (sectionOwner instanceof RowItem) {
+  if (isRowItem(sectionOwner)) {
     return t('dashboard-scene.section-placement.top-row', 'Top of row');
   }
 
-  if (sectionOwner instanceof TabItem) {
+  if (isTabItem(sectionOwner)) {
     return t('dashboard-scene.section-placement.top-tab', 'Top of tab');
   }
 
