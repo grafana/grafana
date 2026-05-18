@@ -31,8 +31,6 @@ const (
 
 var _ KV = &SqlKV{}
 
-var sqlKVLog = logging.DefaultLogger.With("logger", "resource-sqlkv")
-
 // DataImportRow represents a single append-only resource_history row written during bulk import.
 type DataImportRow struct {
 	GUID    string
@@ -62,6 +60,7 @@ type DataImportLegacyFields struct {
 type SqlKV struct {
 	db         *sql.DB
 	dialect    Dialect
+	log        logging.Logger
 	DriverName string // TODO: remove when backwards compatibility is no longer needed.
 }
 
@@ -84,6 +83,7 @@ func NewSQLKV(db *sql.DB, driverName string) (KV, error) {
 	return &SqlKV{
 		db:         db,
 		dialect:    dialect,
+		log:        logging.DefaultLogger.With("logger", "sqlkv"),
 		DriverName: driverName, // for usage in datastore
 	}, nil
 }
@@ -210,7 +210,7 @@ func (k *SqlKV) InsertDataImportBatch(ctx context.Context, rows []DataImportRow)
 			return fmt.Errorf("failed to build data import batch query: %w", err)
 		}
 		if _, err = conn.ExecContext(ctx, query, args...); err != nil {
-			sqlKVLog.Error("sqlkv bulk import insert failed",
+			k.log.Error("sqlkv bulk import insert failed",
 				"error", err,
 				"dialect", k.dialect.Name(),
 				"rows", len(rows),
@@ -231,7 +231,7 @@ func (k *SqlKV) InsertDataImportBatch(ctx context.Context, rows []DataImportRow)
 
 	insertDuration := time.Since(insertStart)
 	if insertDuration > 500*time.Millisecond {
-		sqlKVLog.Warn("slow sqlkv bulk import insert",
+		k.log.Warn("slow sqlkv bulk import insert",
 			"dialect", k.dialect.Name(),
 			"rows", len(rows),
 			"statements", statementCount,
@@ -241,7 +241,7 @@ func (k *SqlKV) InsertDataImportBatch(ctx context.Context, rows []DataImportRow)
 			"insert", insertDuration,
 		)
 	} else {
-		sqlKVLog.Debug("sqlkv bulk import insert timing",
+		k.log.Debug("sqlkv bulk import insert timing",
 			"dialect", k.dialect.Name(),
 			"rows", len(rows),
 			"statements", statementCount,

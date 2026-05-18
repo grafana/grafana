@@ -1,0 +1,163 @@
+name: Build Docker Variants
+
+# Reusable workflow that builds all six Docker variants (alpine, alpine-slim,
+# ubuntu, ubuntu-slim, distroless, distroless-slim) from a pre-built source
+# tarball for a single OS/arch combination.
+#
+# Called from release-build.yml (once per arch, tarball from build-targz) and
+# from pr-test-docker.yml (amd64 only, tarball built from source in the PR).
+
+on:
+  workflow_call:
+    inputs:
+      targz-artifact-name:
+        description: Name of the Actions artifact containing the source tarball
+        type: string
+        required: true
+      name:
+        description: Arch label used in artifact names, e.g. "linux-amd64"
+        type: string
+        required: true
+      os:
+        type: string
+        required: false
+        default: linux
+      arch:
+        type: string
+        required: false
+        default: amd64
+      arch-tag:
+        type: string
+        required: false
+        default: amd64
+      arm:
+        type: string
+        required: false
+        default: ''
+      version:
+        type: string
+        required: false
+        default: '0.0.0-dev'
+      build-number:
+        type: string
+        required: false
+        default: '0'
+      tag-prefix:
+        description: >
+          Docker image tag prefix, e.g. "grafana/grafana-image-tags:".
+          Leave empty to skip tagging (useful in PR builds).
+        type: string
+        required: false
+        default: ''
+
+jobs:
+  build:
+    name: ${{ matrix.variant }}
+    runs-on: ubuntu-x64-large
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - variant: alpine
+            make-target: build-docker
+            slim: false
+            artifact-glob: "dist/*.docker.tar.gz"
+            artifact-name-prefix: artifacts-docker
+            # Tag: VERSION-ARCH  (no variant prefix — matches existing convention)
+            tag-suffix: ""
+          - variant: alpine-slim
+            make-target: build-docker
+            slim: true
+            artifact-glob: "dist/*-slim.docker.tar.gz"
+            artifact-name-prefix: artifacts-docker-alpine-slim
+            tag-suffix: "-slim"
+          - variant: ubuntu
+            make-target: build-docker-ubuntu
+            slim: false
+            artifact-glob: "dist/*.ubuntu.docker.tar.gz"
+            artifact-name-prefix: artifacts-docker-ubuntu
+            tag-suffix: "-ubuntu"
+          - variant: ubuntu-slim
+            make-target: build-docker-ubuntu
+            slim: true
+            artifact-glob: "dist/*.ubuntu-slim.docker.tar.gz"
+            artifact-name-prefix: artifacts-docker-ubuntu-slim
+            tag-suffix: "-ubuntu-slim"
+          - variant: distroless
+            make-target: build-docker-distroless
+            slim: false
+            artifact-glob: "dist/*.distroless.docker.tar.gz"
+            artifact-name-prefix: artifacts-docker-distroless
+            tag-suffix: "-distroless"
+          - variant: distroless-slim
+            make-target: build-docker-distroless
+            slim: true
+            artifact-glob: "dist/*.distroless-slim.docker.tar.gz"
+            artifact-name-prefix: artifacts-docker-distroless-slim
+            tag-suffix: "-distroless-slim"
+    steps:
+      - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ${{ inputs.targz-artifact-name }}
+          path: dist
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@7e10951aea186e886cef2f1a25a7bbf4e593d710
+        with:
+          image: docker.io/tonistiigi/binfmt:qemu-v10.2.1-65
+      - name: Set up Docker Buildx
+        run: docker buildx create --use
+      - name: Build docker image (${{ matrix.variant }})
+        env:
+          GOOS: ${{ inputs.os }}
+          GOARCH: ${{ inputs.arch }}
+          GOARM: ${{ inputs.arm }}
+          BUILD_NUMBER: ${{ inputs.build-number }}
+          BUILD_VERSION: ${{ inputs.version }}
+          ARCH_TAG: ${{ inputs.arch-tag }}
+          TAG_PREFIX: ${{ inputs.tag-prefix }}
+          TAG_SUFFIX: ${{ matrix.tag-suffix }}
+        run: |
+          set -euo pipefail
+          for TARGZ in dist/*.tar.gz; do break; done
+          TAG_VERSION="${BUILD_VERSION//+/-}"
+          EXTRA_ARGS=()
+          if [ -n "$TAG_PREFIX" ]; then
+            EXTRA_ARGS+=("DOCKER_TAG=${TAG_PREFIX}${TAG_VERSION}${TAG_SUFFIX}-${ARCH_TAG}")
+          fi
+          make ${{ matrix.make-target }} \
+            -o "$TARGZ" \
+            BUILD_VERSION="$BUILD_VERSION" \
+            BUILD_NUMBER="$BUILD_NUMBER" \
+            SLIM=${{ matrix.slim }} \
+            "${EXTRA_ARGS[@]}"
+      - name: Generate checksums
+        run: |
+          set -euo pipefail
+          for f in ${{ matrix.artifact-glob }}; do
+            [ -e "$f" ] || continue
+            sha256sum "$f" | awk '{print $1}' > "${f}.sha256"
+          done
+      - name: Stage artifacts for upload
+        env:
+          ARTIFACT_NAME: ${{ matrix.artifact-name-prefix }}-${{ inputs.name }}
+          ARTIFACT_GLOB: ${{ matrix.artifact-glob }}
+        run: |
+          set -euo pipefail
+          mkdir -p "upload/${ARTIFACT_NAME}"
+          for f in ${ARTIFACT_GLOB}; do
+            [ -e "$f" ] || continue
+            cp "$f" "upload/${ARTIFACT_NAME}/"
+            cp "${f}.sha256" "upload/${ARTIFACT_NAME}/"
+          done
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        with:
+          name: ${{ matrix.artifact-name-prefix }}-${{ inputs.name }}
+          path: upload/${{ matrix.artifact-name-prefix }}-${{ inputs.name }}
+          retention-days: 1

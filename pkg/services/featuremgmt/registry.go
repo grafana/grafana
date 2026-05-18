@@ -1750,23 +1750,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "localeFormatPreference",
-			Description: "Specifies the locale so the correct format for numbers and dates can be shown",
-			Stage:       FeatureStageDeprecated, // not continuing the work for now, will be removed
-			Owner:       grafanaFrontendPlatformSquad,
-			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:         "unifiedStorageGrpcConnectionPool",
-			Description:  "Enables the unified storage grpc connection pool",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaSearchAndStorageSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:         "alertingRulePermanentlyDelete",
 			Description:  "Enables UI functionality to permanently delete alert rules",
 			Generate:     Generate{LegacyFrontend: true},
@@ -2464,6 +2447,15 @@ var (
 			Expression:  "true", // enabled by default
 		},
 		{
+			Name:            "globalDashboardVariables",
+			Description:     "Enables global and folder-scoped dashboard variables via dashboard.grafana.app",
+			Stage:           FeatureStageExperimental,
+			Generate:        Generate{LegacyGo: true, LegacyFrontend: true, React: true},
+			Owner:           grafanaDashboardsSquad,
+			RequiresRestart: true,
+			Expression:      "false",
+		},
+		{
 			Name:        "smoothingTransformation",
 			Description: "Enables the ASAP smoothing transformation for time series data",
 			Stage:       FeatureStageExperimental,
@@ -3076,6 +3068,15 @@ var (
 			Generate:     Generate{Go: true},
 		},
 		{
+			Name:         "grafana.meticulousAIRecorderHighVolume",
+			Description:  "When true, increases the volume of data transferred before abandoning sessions for Meticulous AI session recorder.",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
+			HideFromDocs: true,
+			Generate:     Generate{Go: true},
+		},
+		{
 			Name:        "datasources.useNewStackInfoToSettingsCache",
 			Description: "Use the new cache for datasource.StackInfoToSettings, backend flag",
 			Stage:       FeatureStageGeneralAvailability,
@@ -3123,6 +3124,15 @@ var (
 			Description:  "Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button)",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaOperatorExperienceSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
+			Name:         "grafana.logLevelInference",
+			Description:  "Enables log level inference from log line contents when level is not defined as a field or a label",
+			Stage:        FeatureStageDeprecated,
+			Owner:        grafanaObservabilityLogsSquad,
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{React: true},
