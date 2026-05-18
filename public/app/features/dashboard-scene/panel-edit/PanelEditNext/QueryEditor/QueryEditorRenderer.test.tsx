@@ -5,6 +5,7 @@ import {
   type DataQueryError,
   DataSourceApi,
   type DataSourceJsonData,
+  CoreApp,
   type DataQueryResponse,
   getDefaultTimeRange,
   LoadingState,
@@ -125,6 +126,22 @@ describe('QueryEditorRenderer', () => {
     } finally {
       consoleErrorSpy.mockRestore();
     }
+  });
+
+  it('renders datasource query editors with panel editor app context', () => {
+    const QueryEditor = jest.fn(({ query }: { query: DataQuery }) => (
+      <div data-testid="query-editor-app">{getLegendFormat(query)}</div>
+    ));
+    const datasource = new MockDataSourceApi({ QueryEditor });
+
+    renderRenderer(queryA, {
+      selectedQueryDsData: {
+        datasource,
+        dsSettings: ds1SettingsMock,
+      },
+    });
+
+    expect(QueryEditor.mock.calls[0][0]).toEqual(expect.objectContaining({ app: CoreApp.PanelEditor }));
   });
 
   it('remounts the query editor when switching queries, resetting uncontrolled input state', () => {
