@@ -1,6 +1,6 @@
 # Semantic Virtual Datasources — implementation plan
 
-> Status: **DRAFT v1**.
+> Status: **DRAFT v2**.
 > Author: `sj` (with assistant).
 > Target repo: `grafana/grafana` (OSS-first).
 > Companion to [virtual-datasources.md](./virtual-datasources.md) (general / composite VDS).
@@ -11,6 +11,10 @@
 
 ## Changelog
 
+- **v2** — reviewer pass: Steep-influenced PoC query shape (not
+  Cube-compatible JSON as a goal); explicit goal to **not** run Cube;
+  multi-model joins as a near-term requirement; richer semantic-layer
+  value prop; drop production migration framing.
 - **v1** — initial plan: semantic-layer compile path, upstream SQL
   datasource delegation, Cube-datasource problem framing, phased delivery.
 
@@ -53,8 +57,9 @@ A **by-reference semantic layer inside Grafana** that:
 
 1. Stores a **model** (YAML: dimensions, measures, `sql_table`) in unified
    storage — updates cascade to panels and alerts.
-2. Accepts a **semantic query** (JSON: dimensions + measures + filters + time)
-   from the panel.
+2. Accepts a **semantic query** from the panel (shape TBD for PoC — likely
+   closer to [Steep](https://github.com/grafana/semantic-layer/blob/main/docs/steep-analysis.md)
+   than Cube; see §5.3).
 3. **Compiles** that query to SQL using
    [`github.com/grafana/semantic-layer`](https://github.com/grafana/semantic-layer)
    (Go library, Cube-flavoured YAML).
@@ -73,8 +78,9 @@ entry, uid reference, cascade on model edit), but the implementation is
 | Definition       | `spec.queries[]` + `outputRefId` + frame schema            | `spec.model` (YAML) + `spec.upstream`           |
 | Evaluation       | Expand to inner `DataQuery` graph; run expression pipeline | `semantic-layer.Generate` → one SQL `DataQuery` |
 | Upstream         | N datasources + optional SQL/math nodes                    | **One** SQL datasource uid                      |
-| AdHoc (PoC)      | Post-pipeline filter on `data.Frame`                       | **Compile-time** `WHERE` in SQL (natural fit)   |
-| Cube server      | Not used                                                   | Not used                                        |
+| AdHoc (PoC)      | Post-pipeline filter on `data.Frame`                       | **Compile-time** `WHERE` in SQL                 |
+| Cube server      | Not used                                                   | **Must not** be used (explicit goal)            |
+| Panel query API  | Grafana query graph                                        | Semantic query JSON (Steep-like PoC; not Cube)  |
 | Maturity         | v3 draft, not implemented                                  | **First candidate to implement**                |
 
 Shared infrastructure we **reuse** from the general plan where it still fits:
@@ -96,29 +102,59 @@ deferred** unless a concrete composite-query requirement appears.
 
 ## 3. Goals
 
-1. **Single warehouse config.** Semantic definitions reference
-   `spec.upstream.datasourceUid` — an existing Grafana SQL DS. No parallel
-   Cube deployment required for this path.
-2. **By-reference model.** Model YAML lives in a CR; panel/alert references
-   the semantic VDS uid only. Model edits cascade on next eval.
-3. **Cube-compatible query JSON** at the panel boundary so we can reuse
-   query-editor patterns from `grafana-cube-datasource` and migrate users
-   without relearning the shape.
-4. **Server-side compile + execute.** Browser sends semantic JSON; backend
+1. **Do not run Cube.** No Cube server, Cube Cloud, or Cube REST API on the
+   query path. Semantics and SQL generation live in Grafana +
+   `github.com/grafana/semantic-layer`. The existing Cube datasource plugin
+   remains a separate product; this feature does not depend on it.
+2. **Single warehouse config.** Semantic definitions reference
+   `spec.upstream.datasourceUid` — an existing Grafana SQL DS. One place to
+   rotate credentials and project defaults.
+3. **By-reference model — single source of truth for business metrics.**
+   Model YAML lives in a CR; panels and alerts reference the semantic VDS uid
+   only. Renaming a measure, fixing a definition, or adding a dimension
+   updates every consumer on next eval. No copied query graphs, no divergent
+   panel SQL.
+4. **Server-side compile + execute.** Browser sends a semantic query; backend
    compiles SQL and delegates to the upstream plugin’s query path.
 5. **Alerting parity.** Same compile path in `getExprRequest` as interactive
    queries (no TS-only filtering).
+6. **Multi-model joins immediately after launch.** The Go engine does not
+   support joins today, but cross-model queries are a **day-one product
+   requirement** once Semantic VDS exists — not a distant follow-up. Engine
+   work (join paths, multi-model YAML) runs in parallel with Grafana wiring;
+   PoC may ship single-model first only if join support lands in the same
+   release train.
+
+### 3.1 Why a semantic layer (not just “better AdHoc”)
+
+Compared to general VDS (post-hoc frame filters) or raw SQL datasources, a
+semantic layer buys:
+
+| Benefit                   | What it means                                                                                                                   |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| **Governed metrics**      | `total_revenue` is defined once (`SUM(amount - discount)`), not re-derived per dashboard.                                       |
+| **Safe exploration**      | Consumers pick from declared dimensions/measures; they cannot reference arbitrary columns.                                      |
+| **Consistent time**       | Model-level `time_dimension` (and Steep-style per-metric time, if we adopt it) keeps time semantics aligned across panels.      |
+| **Filter pushdown**       | AdHoc and dashboard filters compile into `WHERE` on the warehouse query — efficient and correct for aggregates.                 |
+| **Joins across entities** | Orders + customers + products in one query without hand-written join SQL in every panel.                                        |
+| **Cascade on change**     | Fix the model → every panel and alert picks it up; contrasts with saved queries (copy) and duplicated BQ DS config (Cube path). |
+
+General VDS solves **by-reference composite graphs**. Semantic VDS solves
+**by-reference business semantics** over SQL warehouses.
 
 ## 4. Non-goals (PoC)
 
-- Running or hosting Cube as part of this feature.
-- Multi-model joins (semantic-layer engine does not support them yet).
+- **Cube-compatible panel query JSON** — we are not committing to
+  `dimensions` / `measures` / `timeDimensions` as the panel API for PoC.
+  Initial UX may be closer to Steep (metrics-first, required time per
+  metric, allowlisted breakdown dimensions). Reusing `grafana-cube-datasource`
+  query-editor code is optional, not a requirement.
 - Multi-warehouse queries (one upstream SQL DS per semantic VDS instance).
-- Replacing `cube-models` / `cube-bigquery` in production overnight — parallel
-  paths during migration.
-- Model authoring UI beyond minimal YAML editor / import (LLM-authored YAML
-  is the near-term authoring story per semantic-layer `AGENTS.md`).
+- Model authoring UI beyond minimal YAML editor (LLM-authored YAML is the
+  near-term authoring story per semantic-layer `AGENTS.md`).
 - General VDS composite graphs (explicitly out of scope for this track).
+- Production migration from `cube-models` / `cube-bigquery` — almost nothing
+  runs on that stack today; no seamless migration narrative required.
 
 ## 5. Architecture
 
@@ -127,7 +163,7 @@ deferred** unless a concrete composite-query requirement appears.
 ```mermaid
 flowchart TB
   subgraph grafana [Grafana]
-    Panel["Panel / Alert<br/>Cube-shaped JSON"]
+    Panel["Panel / Alert<br/>semantic query JSON"]
     SVD["Semantic VDS plugin<br/>grafana-semantic-datasource"]
     Compiler["semantic-layer<br/>Generate + filters/time"]
     SQLDS["Existing SQL DS<br/>e.g. BigQuery uid"]
@@ -189,31 +225,35 @@ spec: {
 3. Model `sql_table` references are consistent with upstream capabilities
    (lightweight static check where possible; full check deferred).
 
-**Model vs instance:** One CR = one semantic datasource instance in the picker
-(one model bundle per CR for PoC; semantic-layer today supports one model per
-YAML file — multi-model YAML is rejected).
+**Model vs instance:** One CR = one semantic datasource instance in the picker.
+PoC engine today accepts one model per YAML file; **multi-model YAML + joins**
+are required in the first product release (see §3 goal 6).
 
-### 5.3 Consumer query shape
+### 5.3 Consumer query shape (PoC: Steep-influenced, not Cube)
 
-Panel JSON aligns with Cube / `grafana-cube-datasource` (`CubeQuery`):
+The panel query format is **not** locked to Cube’s REST shape. For PoC we
+expect something closer to **Steep** (metrics-first, explicit time, constrained
+breakdowns) — see
+[`semantic-layer/docs/steep-analysis.md`](https://github.com/grafana/semantic-layer/blob/main/docs/steep-analysis.md).
+
+Illustrative direction (names and fields TBD in a follow-up API sketch):
 
 ```json
 {
-  "dimensions": ["payments.payment_method"],
-  "measures": ["payments.total_amount"],
+  "metrics": ["payments.total_amount"],
+  "breakdown": ["payments.payment_method"],
+  "time": {
+    "from": "$__from",
+    "to": "$__to",
+    "granularity": "day"
+  },
   "filters": [],
-  "timeDimensions": [
-    {
-      "dimension": "payments.created_at",
-      "dateRange": ["2025-01-01", "2025-01-31"],
-      "granularity": "day"
-    }
-  ],
   "limit": 10000
 }
 ```
 
-Mapped to semantic-layer today:
+The compiler maps this to whatever the engine accepts. **Today** the library
+only implements a simpler Cube-like slice:
 
 ```go
 semanticlayer.Query{
@@ -222,18 +262,18 @@ semanticlayer.Query{
 }
 ```
 
-**PoC extensions** (implemented in Grafana wrapper, not necessarily in the
-library yet):
+PoC work includes either (a) extending the library toward Steep’s query model,
+or (b) a thin adapter in Grafana from the Steep-shaped panel JSON to the
+current `Query` until the engine catches up.
 
-| Field            | Compile behaviour                                                                               |
-| ---------------- | ----------------------------------------------------------------------------------------------- |
-| `filters`        | Append parameterized `WHERE` clauses                                                            |
-| `timeDimensions` | Use model `time_dimension` + range + granularity → `WHERE` + time bucket in `SELECT`/`GROUP BY` |
-| `limit`          | Append `LIMIT` (dialect-aware)                                                                  |
-| AdHoc filters    | Merge into `filters` before compile (dashboard variable bar)                                    |
+**Compile-time extensions** (Grafana wrapper + engine):
 
-This is the main advantage over general VDS AdHoc: filters belong in SQL
-generation, not as a post-hoc frame walk.
+| Concern            | Compile behaviour                                                                                                   |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------- |
+| `filters` / AdHoc  | Parameterized `WHERE`                                                                                               |
+| Time range + grain | `WHERE` + bucketed time in `SELECT` / `GROUP BY` using model `time_dimension` (and per-metric time if Steep-shaped) |
+| `limit`            | Dialect-aware `LIMIT`                                                                                               |
+| Multi-model        | `JOIN` from declared join paths (engine; blocks “GA” until present)                                                 |
 
 ### 5.4 Backend evaluation — compile and delegate
 
@@ -296,32 +336,19 @@ Same defence-in-depth as general VDS §4.4:
 
 ### 5.6 Frontend plugin
 
-**Recommendation:** evolve **`grafana-cube-datasource`** into a dual-mode
-plugin rather than a second built-in from scratch.
+**Default assumption:** new built-in `grafana-semantic-datasource` (or
+`public/app/features/semantic/`) with a **Steep-influenced** query editor —
+metric picker, allowlisted breakdown dimensions, time range from dashboard.
 
-| Mode             | `jsonData.mode` | Backend behaviour              |
-| ---------------- | --------------- | ------------------------------ |
-| `cube` (default) | Existing        | Proxy to Cube API              |
-| `semantic`       | New             | Compile + delegate (this plan) |
+We may borrow layout patterns from `grafana-cube-datasource`, but we are **not**
+targeting Cube query JSON compatibility (§4). Dual-mode in the Cube plugin
+(remains Cube-backed) is possible but not the plan’s default — it couples
+release cadence and UX to a product we are explicitly not running on this path.
 
-`semantic` mode config:
+Config:
 
-- **Required:** `upstreamDatasourceUid` — picker of existing SQL datasources
-  (replaces Cube URL + secrets for warehouse access).
-- **Model source:** CR uid (semantic VDS instance) **or** inline model on the
-  datasource (admin-only PoC shortcut).
-
-Reuse from current plugin:
-
-- `QueryEditor`, `normalizeCubeQuery`, AdHoc mapping, time dimension variable,
-  `getTagKeys` / `getTagValues` (backed by semantic metadata instead of
-  `/v1/meta`).
-- Drop Cube-only resources in semantic mode (`db-schema`, `generate-schema`,
-  Continue-wait polling).
-
-Alternative (if dual-mode is too heavy): new built-in
-`grafana-semantic-datasource` in core; copy editor components from the Cube
-plugin repo.
+- **Required:** `upstreamDatasourceUid` — existing SQL datasource.
+- **Model:** CR uid for the semantic VDS instance (or inline YAML admin shortcut).
 
 ### 5.7 Metadata and AdHoc
 
@@ -387,24 +414,24 @@ Tracing: span `semantic.compile` → child span on upstream plugin query.
 Keep **pure generate** in the library; keep **Grafana integration** (AdHoc,
 template vars, upstream plugin JSON shapes) in Grafana.
 
-**Cube YAML migration:** production `cube-models` uses `cubes:` and `views:`.
-PoC adapter:
-
-- Either maintain parallel `models:` YAML in semantic-layer shape, or
-- Small conversion tool `cubes[]` → `models[]` for import (views flattened to
-  public dimensions/measures list).
+**Joins (engine, blocking for GA):** extend `semantic-layer` with multi-model
+YAML and join-path compilation (Steep-style `joinPaths` or OSI relationships —
+decision in engine repo). Grafana does not implement joins in the delegate
+layer; it passes the compiled SQL through.
 
 ## 7. Comparison: three ways to get “metrics in Grafana”
 
-|                          | Cube plugin          | General VDS           | Semantic VDS               |
-| ------------------------ | -------------------- | --------------------- | -------------------------- |
-| Warehouse creds          | Cube                 | N upstream DS configs | **One** Grafana SQL DS     |
-| Query language           | Cube JSON            | Grafana query graph   | Cube JSON → SQL            |
-| Model storage            | Git → Cube           | CR (query graph)      | CR (YAML model)            |
-| Cascade on edit          | Redeploy/sync Cube   | Yes                   | Yes                        |
-| Multi-DS join            | Via Cube             | Via `__expr__` SQL    | Not in PoC                 |
-| Alerting                 | Supported            | Planned               | Planned (same expand hook) |
-| Operational moving parts | Cube server + plugin | Grafana only          | Grafana only               |
+|                          | Cube plugin          | General VDS           | Semantic VDS                   |
+| ------------------------ | -------------------- | --------------------- | ------------------------------ |
+| Warehouse creds          | Cube                 | N upstream DS configs | **One** Grafana SQL DS         |
+| Query language           | Cube JSON            | Grafana query graph   | Semantic JSON (Steep-like PoC) |
+| Model storage            | Git → Cube           | CR (query graph)      | CR (YAML model)                |
+| Cascade on edit          | Redeploy/sync Cube   | Yes                   | Yes                            |
+| Governed metrics         | Via Cube model       | No (opaque graph)     | Yes (declared measures)        |
+| Multi-entity join        | Via Cube             | Via `__expr__` SQL    | Via semantic layer (required)  |
+| Runs Cube server         | Yes                  | No                    | **No (explicit goal)**         |
+| Alerting                 | Supported            | Planned               | Planned (same expand hook)     |
+| Operational moving parts | Cube server + plugin | Grafana only          | Grafana only                   |
 
 ## 8. Phased delivery
 
@@ -412,7 +439,8 @@ PoC adapter:
 
 - Align with Sharing / 2h / data-transform on “semantic first, general VDS
   optional”.
-- Confirm dual-mode vs new plugin with Cube plugin owners.
+- Lock PoC panel query shape (Steep-influenced API sketch).
+- Confirm join design in `semantic-layer` (parallel track).
 
 ### Phase 1 — Backend compile + delegate (no new UI)
 
@@ -426,19 +454,18 @@ PoC adapter:
 **Acceptance:** curl/query API with hand-crafted semantic target returns same
 data as raw SQL DS query against equivalent `SELECT`.
 
-### Phase 2 — Frontend (semantic mode)
+### Phase 2 — Frontend
 
 1. `upstreamDatasourceUid` in config; model picker from CR API.
-2. Query editor reusing Cube plugin components.
+2. Steep-influenced query editor (metrics + breakdown + time).
 3. `getTagKeys` / `getTagValues` via compile+delegate.
-4. Playwright: pick measures/dimensions, AdHoc filter, time range.
+4. Playwright: pick metric, breakdown, AdHoc filter, time range.
 
-### Phase 3 — Parity and migration aids
+### Phase 3 — Engine + product parity
 
-1. Time grain + filter support in compiler wrapper (library + Grafana).
-2. Import path from `cube-models` YAML.
-3. Side-by-side benchmark vs Cube plugin on same warehouse.
-4. Alerting hardening (identity checks, rule validation).
+1. **Multi-model joins** in `semantic-layer` + end-to-end tests through Semantic VDS.
+2. Time grain + filter support in compiler (library + Grafana wrapper).
+3. Alerting hardening (identity checks, rule validation).
 
 ### Phase 4 — Hardening
 
@@ -465,7 +492,7 @@ data as raw SQL DS query against equivalent `SELECT`.
 - `pkg/services/query/query.go` — expand before `parseMetricRequest`
 - `pkg/services/ngalert/eval/eval.go` — expand in `getExprRequest`
 - `pkg/services/featuremgmt/registry.go` — `semanticDatasources`
-- `grafana-cube-datasource` **or** new core plugin — semantic mode UI
+- `public/app/plugins/datasource/grafana-semantic-datasource/` (or equivalent)
 
 ## 10. Risks
 
@@ -476,46 +503,47 @@ data as raw SQL DS query against equivalent `SELECT`.
    semantics. Mitigation: honest UX; target warehouses where raw SQL is
    acceptable for PoC dashboards.
 3. **Model authoring.** YAML-only is brittle for non-expert users. Mitigation:
-   LLM-assisted authoring, import from cube-models, later UI.
-4. **Dual-plugin complexity.** If Cube + semantic modes share one plugin,
-   regression risk on Cube path. Mitigation: feature-flagged integration tests
-   per mode.
+   LLM-assisted authoring, later UI.
+4. **Join engine schedule.** Product wants joins at launch; engine is
+   single-model today. Mitigation: parallel engine track; do not GA Semantic VDS
+   without cross-model queries.
 5. **General VDS confusion.** Two “virtual” docs. Mitigation: this doc states
    build order; general doc gets a banner pointing here.
 
 ## 11. Decisions locked for PoC
 
-1. **One upstream SQL datasource per semantic VDS** — no multi-warehouse.
-2. **Compile-and-delegate** — not expression-graph expansion.
-3. **semantic-layer** is the model + SQL generator; Grafana owns filter/time/
+1. **Do not run Cube** on this path — semantics in Grafana + semantic-layer only.
+2. **One upstream SQL datasource per semantic VDS** — no multi-warehouse.
+3. **Compile-and-delegate** — not expression-graph expansion.
+4. **semantic-layer** is the model + SQL generator; Grafana owns filter/time/
    AdHoc + upstream shaping.
-4. **Warehouse credentials live only in the existing SQL DS** — semantic VDS
+5. **Warehouse credentials live only in the existing SQL DS** — semantic VDS
    stores no secrets.
-5. **Cube-shaped panel JSON** — migration-friendly; not inventing a third query
-   shape.
-6. **AdHoc → SQL `WHERE`** at compile time, not frame filter post-pipeline.
-7. **Build semantic VDS before general VDS** — general plan remains reference
+6. **Panel query shape: Steep-influenced for PoC** — not Cube-compatible JSON.
+7. **Multi-model joins** required in the first release (engine parallel work).
+8. **Build semantic VDS before general VDS** — general plan remains reference
    only until a composite-query requirement is validated.
 
 ## 12. Open questions
 
 1. **App name / kind:** `SemanticDataSource` separate app vs `VirtualDataSource`
    with `spec.kind: semantic | composite` discriminator?
-2. **Plugin strategy:** dual-mode Cube plugin vs new `grafana-semantic-datasource`
-   built-in?
-3. **Model storage:** inline YAML on CR only, or separate `SemanticModel` CR
+2. **Plugin strategy:** new built-in vs feature module in core — default is
+   built-in, not dual-mode Cube plugin.
+3. **Panel query API:** exact Steep mapping (metrics-only vs dims+measures).
+4. **Model storage:** inline YAML on CR only, or separate `SemanticModel` CR
    referenced by many instances?
-4. **Upstream allowlist:** which SQL plugins in PoC — BQ only, or BQ + Postgres?
-5. **Alerting toggle:** separate `semanticDatasourcesInAlerts` like general VDS,
+5. **Upstream allowlist:** which SQL plugins in PoC — BQ only, or BQ + Postgres?
+6. **Alerting toggle:** separate `semanticDatasourcesInAlerts` like general VDS,
    or ship together?
-6. **cube-models investment:** freeze new Cube models for Grafana paths, or
-   maintain both until semantic path proves out?
+7. **Join model in YAML:** Steep `joinPaths` vs OSI relationships vs
+   Cube-style `joins` — decided in engine repo, consumed by Grafana.
 
 ## 13. References
 
-| Repo                                                                                    | Role                                    |
-| --------------------------------------------------------------------------------------- | --------------------------------------- |
-| [`grafana/semantic-layer`](https://github.com/grafana/semantic-layer)                   | YAML → SQL compiler (Go)                |
-| [`grafana/grafana-cube-datasource`](https://github.com/grafana/grafana-cube-datasource) | Cube proxy plugin; UX reference         |
-| [`grafana/cube-models`](https://github.com/grafana/cube-models)                         | Production Cube YAML (migration source) |
-| [General VDS plan](./virtual-datasources.md)                                            | Composite-query variant (deferred)      |
+| Repo                                                                                    | Role                                          |
+| --------------------------------------------------------------------------------------- | --------------------------------------------- |
+| [`grafana/semantic-layer`](https://github.com/grafana/semantic-layer)                   | YAML → SQL compiler (Go)                      |
+| [`grafana/grafana-cube-datasource`](https://github.com/grafana/grafana-cube-datasource) | Separate Cube proxy plugin (not on this path) |
+| [`grafana/cube-models`](https://github.com/grafana/cube-models)                         | Related Cube YAML; not a migration target     |
+| [General VDS plan](./virtual-datasources.md)                                            | Composite-query variant (deferred)            |
