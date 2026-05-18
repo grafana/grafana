@@ -565,16 +565,17 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 		return nil, err
 	}
 	options := &unified.Options{
-		Cfg:           cfg,
-		Features:      featureToggles,
-		DB:            sqlStore,
-		Tracer:        tracingService,
-		Reg:           registerer,
-		Authzc:        accessClient,
-		Docs:          documentBuilderSupplier,
-		SecureValues:  inlineSecureValueSupport,
-		VectorBackend: vectorBackend,
-		Embedder:      embedder,
+		Cfg:            cfg,
+		Features:       featureToggles,
+		DB:             sqlStore,
+		Tracer:         tracingService,
+		Reg:            registerer,
+		Authzc:         accessClient,
+		Docs:           documentBuilderSupplier,
+		SecureValues:   inlineSecureValueSupport,
+		VectorBackend:  vectorBackend,
+		Embedder:       embedder,
+		DashboardStats: ossDashboardStats,
 	}
 	storageMetrics := resource.ProvideStorageMetrics(registerer)
 	bleveIndexMetrics := resource.ProvideIndexMetrics(registerer)
@@ -1284,16 +1285,17 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	options := &unified.Options{
-		Cfg:           cfg,
-		Features:      featureToggles,
-		DB:            sqlStore,
-		Tracer:        tracingService,
-		Reg:           registerer,
-		Authzc:        accessClient,
-		Docs:          documentBuilderSupplier,
-		SecureValues:  inlineSecureValueSupport,
-		VectorBackend: vectorBackend,
-		Embedder:      embedder,
+		Cfg:            cfg,
+		Features:       featureToggles,
+		DB:             sqlStore,
+		Tracer:         tracingService,
+		Reg:            registerer,
+		Authzc:         accessClient,
+		Docs:           documentBuilderSupplier,
+		SecureValues:   inlineSecureValueSupport,
+		VectorBackend:  vectorBackend,
+		Embedder:       embedder,
+		DashboardStats: ossDashboardStats,
 	}
 	storageMetrics := resource.ProvideStorageMetrics(registerer)
 	bleveIndexMetrics := resource.ProvideIndexMetrics(registerer)
