@@ -34,6 +34,7 @@ import (
 
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	infranats "github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/gcom"
 	"github.com/grafana/grafana/pkg/setting"
@@ -109,6 +110,7 @@ func NewStorageBackend(
 	reg prometheus.Registerer,
 	storageMetrics *resource.StorageMetrics,
 	disableStorageServices bool,
+	natsClientProvider infranats.ClientProvider,
 ) (resource.StorageBackend, error) {
 	storageType := options.StorageType(cfg.SectionWithEnvOverrides("grafana-apiserver").Key("storage_type").
 		MustString(string(options.StorageTypeUnified)))
@@ -197,6 +199,7 @@ func NewStorageBackend(
 		EventPruningInterval:    cfg.EventPruningInterval,
 		SearchLookback:          cfg.SearchLookback,
 		WatchOptions:            resource.WatchOptions{SettleDelay: cfg.NotifierSettleDelay},
+		NATSClientProvider:      natsClientProvider,
 		DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
 	}
 

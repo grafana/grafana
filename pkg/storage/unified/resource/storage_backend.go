@@ -30,6 +30,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
+	infranats "github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/lease"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -157,6 +158,7 @@ type KVBackendOptions struct {
 	GarbageCollection    GarbageCollectionConfig
 
 	UseChannelNotifier bool
+	NATSClientProvider infranats.ClientProvider
 	WatchOptions       WatchOptions
 	// Adding RvManager overrides the RV generated with snowflake in order to keep backwards compatibility with
 	// unified/sql
@@ -254,7 +256,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		bulkLock:                NewBulkLock(),
 		dataStore:               newDataStore(kv, metrics),
 		eventStore:              eventStore,
-		notifier:                newNotifier(eventStore, notifierOptions{log: logger, useChannelNotifier: opts.UseChannelNotifier}),
+		notifier:                newNotifier(eventStore, notifierOptions{log: logger, useChannelNotifier: opts.UseChannelNotifier, natsClientProvider: opts.NATSClientProvider}),
 		watchOpts:               opts.WatchOptions.normalize(),
 		snowflake:               s,
 		log:                     logger,

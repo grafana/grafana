@@ -44,6 +44,12 @@ func withSettleDelay(d time.Duration) func(*KVBackendOptions) {
 	}
 }
 
+func withNATSClientProvider(provider *testNATSClientProvider) func(*KVBackendOptions) {
+	return func(opts *KVBackendOptions) {
+		opts.NATSClientProvider = provider
+	}
+}
+
 func setupTestStorageBackend(t *testing.T, configs ...func(*KVBackendOptions)) *kvStorageBackend {
 	kv := setupBadgerKV(t)
 	opts := KVBackendOptions{
@@ -370,6 +376,96 @@ func TestIntegrationKvStorageBackend_WatchWriteEvents_ConcurrentWrites(t *testin
 		backend := setupTestStorageBackend(t, withChannelNotifier, withKV(setupSqlKV(t)), withSettleDelay(settleDelay))
 		testConcurrentWatchWriteEvents(t, backend)
 	})
+}
+
+func TestIntegrationKvStorageBackend_WatchWriteEvents_NATSNotifier(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	srv, nc := startTestNATSServer(t)
+	defer srv.Shutdown()
+	defer nc.Close()
+
+	provider := &testNATSClientProvider{conn: nc}
+	backend := setupTestStorageBackend(t, withKV(setupSqlKV(t)), withNATSClientProvider(provider))
+
+	ctx, stop := context.WithTimeout(t.Context(), 5*time.Second)
+	defer stop()
+
+	stream, err := backend.WatchWriteEvents(ctx)
+	require.NoError(t, err)
+	require.Eventually(t, func() bool {
+		return nc.NumSubscriptions() == 1
+	}, time.Second, 10*time.Millisecond)
+
+	testObj, err := createTestObject()
+	require.NoError(t, err)
+	metaAccessor, err := utils.MetaAccessor(testObj)
+	require.NoError(t, err)
+
+	resourceName := "nats-resource"
+	events := []WriteEvent{
+		{
+			Type: resourcepb.WatchEvent_ADDED,
+			Key: &resourcepb.ResourceKey{
+				Namespace: "default",
+				Group:     "apps",
+				Resource:  "resources",
+				Name:      resourceName,
+			},
+			Value:      objectToJSONBytes(t, testObj),
+			Object:     metaAccessor,
+			ObjectOld:  metaAccessor,
+			PreviousRV: 0,
+		},
+		{
+			Type: resourcepb.WatchEvent_MODIFIED,
+			Key: &resourcepb.ResourceKey{
+				Namespace: "default",
+				Group:     "apps",
+				Resource:  "resources",
+				Name:      resourceName,
+			},
+			Value:      objectToJSONBytes(t, testObj),
+			Object:     metaAccessor,
+			ObjectOld:  metaAccessor,
+			PreviousRV: 0,
+		},
+		{
+			Type: resourcepb.WatchEvent_DELETED,
+			Key: &resourcepb.ResourceKey{
+				Namespace: "default",
+				Group:     "apps",
+				Resource:  "resources",
+				Name:      resourceName,
+			},
+			Value:      objectToJSONBytes(t, testObj),
+			Object:     metaAccessor,
+			ObjectOld:  metaAccessor,
+			PreviousRV: 0,
+		},
+	}
+
+	rvs := make([]int64, len(events))
+	for i := range events {
+		if i > 0 {
+			events[i].PreviousRV = rvs[i-1]
+		}
+		rvs[i], err = backend.WriteEvent(ctx, events[i])
+		require.NoError(t, err)
+	}
+
+	for i, event := range events {
+		select {
+		case writtenEvent := <-stream:
+			require.Equal(t, event.Key, writtenEvent.Key)
+			require.Equal(t, event.Type, writtenEvent.Type)
+			require.Equal(t, event.Value, writtenEvent.Value)
+			require.Equal(t, rvs[i], writtenEvent.ResourceVersion)
+			require.Equal(t, event.PreviousRV, writtenEvent.PreviousRV)
+		case <-ctx.Done():
+			require.FailNow(t, "timed out waiting for nats-backed watch event")
+		}
+	}
 }
 
 func testConcurrentWatchWriteEvents(t *testing.T, backend *kvStorageBackend) {

@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/dskit/backoff"
 	"github.com/grafana/grafana/pkg/infra/log"
+	infranats "github.com/grafana/grafana/pkg/infra/nats"
 
 	"time"
 )
@@ -39,6 +40,7 @@ type pollingNotifier struct {
 type notifierOptions struct {
 	log                log.Logger
 	useChannelNotifier bool
+	natsClientProvider infranats.ClientProvider
 }
 
 type WatchOptions struct {
@@ -65,6 +67,9 @@ func (opts WatchOptions) normalize() WatchOptions {
 }
 
 func newNotifier(eventStore *eventStore, opts notifierOptions) notifier {
+	if opts.natsClientProvider != nil && opts.natsClientProvider.Enabled() {
+		return newNATSNotifier(opts.natsClientProvider, opts.log.New("notifier", "natsNotifier"))
+	}
 	if opts.useChannelNotifier {
 		return newChannelNotifier(opts.log.New("notifier", "channelNotifier"))
 	}

@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/dskit/middleware"
 	"github.com/grafana/dskit/services"
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
+	infranats "github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
@@ -50,6 +51,7 @@ type Options struct {
 	SecureValues  secrets.InlineSecureValueSupport
 	VectorBackend vector.VectorBackend
 	Embedder      *embedder.Embedder
+	NATS          infranats.ClientProvider
 }
 
 type clientMetrics struct {
@@ -71,7 +73,7 @@ func ProvideUnifiedStorageClient(opts *Options,
 		BlobStoreURL:            apiserverCfg.Key("blob_url").MustString(""),
 		BlobThresholdBytes:      apiserverCfg.Key("blob_threshold_bytes").MustInt(options.BlobThresholdDefault),
 		GrpcClientKeepaliveTime: apiserverCfg.Key("grpc_client_keepalive_time").MustDuration(0),
-	}, opts.Cfg, opts.Features, opts.DB, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, opts.SecureValues, opts.VectorBackend, opts.Embedder)
+	}, opts.Cfg, opts.Features, opts.DB, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, opts.SecureValues, opts.VectorBackend, opts.Embedder, opts.NATS)
 	if err == nil {
 		// Used to get the folder stats
 		// Pass cfg directly so the federated client reads the current dual-writer mode
@@ -100,6 +102,7 @@ func newClient(opts options.StorageOptions,
 	secure secrets.InlineSecureValueSupport,
 	vectorBackend vector.VectorBackend,
 	embedderInstance *embedder.Embedder,
+	natsClientProvider infranats.ClientProvider,
 ) (resource.ResourceClient, error) {
 	ctx := context.Background()
 
@@ -157,7 +160,7 @@ func newClient(opts options.StorageOptions,
 			return nil, err
 		}
 
-		backend, err := sql.NewStorageBackend(cfg, db, reg, storageMetrics, false)
+		backend, err := sql.NewStorageBackend(cfg, db, reg, storageMetrics, false, natsClientProvider)
 		if err != nil {
 			return nil, err
 		}
