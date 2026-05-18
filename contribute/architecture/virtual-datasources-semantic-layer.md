@@ -1,6 +1,6 @@
 # Semantic Virtual Datasources — implementation plan
 
-> Status: **DRAFT v3**.
+> Status: **DRAFT v4**.
 > Author: `sj` (with assistant).
 > Target repo: `grafana/grafana` (OSS-first).
 > Related (may never ship): [virtual-datasources.md](./virtual-datasources.md)
@@ -12,6 +12,9 @@
 
 ## Changelog
 
+- **v4** — packaging: closed-source **plugin** (not OSS built-in); model YAML
+  on `SemanticDataSource` CR (no separate `SemanticModel` kind for PoC); PoC
+  upstream **Postgres only** (BigQuery deferred).
 - **v3** — locked storage: dedicated `apps/semanticdatasource/` +
   `SemanticDataSource` kind; no shared CR with composite VDS.
 - **v2** — reviewer pass: Steep-influenced PoC query shape (not
@@ -220,16 +223,14 @@ spec: {
     // by compiling with github.com/grafana/semantic-layer.
     model: string
 
-    // Exactly one warehouse entry point — an existing Grafana datasource.
+    // Exactly one warehouse entry point — existing Grafana Postgres DS (PoC).
     upstream: {
-        datasourceUid: string!   // e.g. existing BigQuery DS
+        datasourceUid: string!   // grafana-postgresql-datasource uid
     }
 
-    // Optional defaults passed to the upstream SQL plugin (dialect-specific).
+    // Optional defaults passed to the upstream SQL plugin (PoC: postgres).
     upstreamQueryDefaults?: {
-        // BigQuery: dataset, location, etc. — only if not inferrable from model
         database?: string
-        project?: string
     }
 }
 ```
@@ -237,15 +238,32 @@ spec: {
 **Admission validation:**
 
 1. `semanticlayer.New(spec.model)` succeeds.
-2. `upstream.datasourceUid` resolves to a datasource whose type is in an
-   allowlist (`grafana-bigquery-datasource`, `postgres`, `mysql`, … — exact
-   list decided during PoC).
+2. `upstream.datasourceUid` resolves to a datasource whose type is
+   `grafana-postgresql-datasource` (PoC allowlist; §5.5.2).
 3. Model `sql_table` references are consistent with upstream capabilities
    (lightweight static check where possible; full check deferred).
 
 **Model vs instance:** One CR = one semantic datasource instance in the picker.
 PoC engine today accepts one model per YAML file; **multi-model YAML + joins**
 are required in the first product release (see §3 goal 6).
+
+#### 5.2.1 Model storage — on the CR (not a shared `SemanticModel` kind)
+
+**PoC:** the full model YAML lives in `SemanticDataSource.spec.model`. One CR
+= one picker entry = one model bundle.
+
+A separate **`SemanticModel` CR** would mean splitting “model definition” from
+“datasource instance” (e.g. `spec.modelRef: {uid}`). That helps when:
+
+- The **same model** must be queryable through **different upstream** SQL DSes
+  (prod vs staging Postgres) without copying YAML.
+- **RBAC split:** central team owns models; line-of-business teams only create
+  instances pointing at approved models.
+- **Very large** model repos (many modules) shared by multiple thin instances.
+
+None of these are required for the first PoC. They add a second kind, list/watch
+UI, referential integrity, and admission cross-checks. **Defer `SemanticModel`**
+until a concrete reuse story appears; avoid the extra abstraction layer until then.
 
 ### 5.3 Consumer query shape (PoC: Steep-influenced, not Cube)
 
@@ -293,9 +311,56 @@ current `Query` until the engine catches up.
 | `limit`            | Dialect-aware `LIMIT`                                                                                               |
 | Multi-model        | `JOIN` from declared join paths (engine; blocks “GA” until present)                                                 |
 
-### 5.4 Backend evaluation — compile and delegate
+### 5.4 Packaging — plugin, CR, and where code lives
 
-New package `pkg/services/semanticdatasource/`:
+**Not an OSS built-in.** The team direction is fewer built-ins, not more.
+The Steep-influenced editor and product surface are likely **closed source**.
+The earlier “built-in” suggestion followed the general VDS draft (which put
+`public/app/plugins/datasource/grafana-virtual-datasource/` in core) and
+first-party velocity — it did not account for licensing or the fewer-built-ins
+goal.
+
+**Recommended split:**
+
+| Piece                                                    | Where                                                                      | License (default)   |
+| -------------------------------------------------------- | -------------------------------------------------------------------------- | ------------------- |
+| Query editor, Steep UX, plugin `plugin.json`             | Private repo (e.g. `grafana-semantic-datasource`)                          | Closed              |
+| `QueryData` orchestration (load CR → compile → delegate) | Plugin Go backend **or** enterprise `pkg/services/semanticdatasource` hook | Closed / enterprise |
+| `SemanticDataSource` CR app (`apps/semanticdatasource/`) | Enterprise (or OSS if we want the schema public)                           | TBD — see below     |
+| `github.com/grafana/semantic-layer`                      | Existing Go module                                                         | Can stay open       |
+
+**CR coupling does not block a private plugin.** The plugin (or enterprise
+service) reads the model via the standard Resource API
+(`/apis/semanticdatasource.grafana.app/...`) with the caller’s identity — same
+as any backend plugin using `CallResource` or an injected K8s client. The CR
+does not have to live in the same repo as the plugin.
+
+**Delegate requires core (or enterprise) query path.** A plugin cannot
+reliably reuse another datasource’s `secureJsonData` by opening its own DB
+connection. Compiled SQL must run through Grafana’s existing Postgres plugin
+via the normal query pipeline. So:
+
+- **Private plugin** = panel UX + semantic query JSON + optional thin
+  `QueryData` wrapper.
+- **Enterprise hook** in `pkg/services/query` (or equivalent) =
+  `ExpandSemanticQueries` + `upstreamPluginShape(sql)` — small, not a
+  user-facing “built-in datasource” in `public/app/plugins/`.
+
+Alternative (heavier): fat enterprise plugin linked against Grafana Enterprise
+module APIs to invoke `QueryService` internally — avoids OSS hook but couples
+the plugin binary to enterprise builds. Prefer **thin plugin + enterprise
+expander** unless we want zero enterprise changes to `query.go`.
+
+**CR app placement:** If the whole feature is enterprise-gated, register
+`apps/semanticdatasource/` from **grafana-enterprise** (CR never exists on OSS
+Grafana). If the API shape should be public, keep the app in OSS and gate
+usage with license + feature toggle — model YAML is usually not the secret;
+the Steep editor is.
+
+### 5.5 Backend evaluation — compile and delegate
+
+New package `pkg/services/semanticdatasource/` (enterprise wire; not under
+`public/app/plugins/`):
 
 ```go
 type Compiler struct {
@@ -316,7 +381,7 @@ func (c *Compiler) Compile(
    - Load CR by uid (cached per request).
    - Merge panel query + request-level AdHoc filters + template variables.
    - `Compile` → single `DataQuery` with `datasource.uid = spec.upstream.datasourceUid`
-     and SQL body appropriate for that plugin (e.g. BQ `rawSql` / editor mode).
+     and SQL body appropriate for Postgres (`rawSql` via `@grafana/sql` shape).
    - Replace semantic target with that `DataQuery` (same outer `refId`).
 2. Continue normal `parseMetricRequest` / plugin dispatch.
 
@@ -344,7 +409,27 @@ for q in req.Queries:
         }
 ```
 
-### 5.5 Synthetic datasource resolution
+#### 5.5.2 Upstream delegation — Postgres first
+
+**PoC allowlist:** `grafana-postgresql-datasource` only. **BigQuery is
+deferred** — not a PoC blocker.
+
+Effort to add a second upstream type later is **moderate, not a rewrite**:
+
+- The compile path is unchanged (ANSI-ish SQL from `semantic-layer`).
+- Add one **`UpstreamDelegate`** implementation per plugin family that maps
+  `(compiledSQL, defaults)` → that plugin’s query JSON (Postgres uses
+  `@grafana/sql` `SQLQuery` / `rawSql`; BigQuery has its own shape and
+  project/dataset quirks).
+- Integration test per upstream type.
+
+Rough order of magnitude: **a few days** for BigQuery once Postgres delegation
+works — mostly adapter + SQL dialect edge cases, not new architecture.
+
+Postgres first matches local dev (`semantic-layer` dev-env) and avoids BQ
+IAM/project coupling while the engine and Steep UX are still moving.
+
+### 5.6 Synthetic datasource resolution
 
 Same defence-in-depth as general VDS §4.4:
 
@@ -352,23 +437,26 @@ Same defence-in-depth as general VDS §4.4:
   `grafana-semantic-datasource` before hitting `data_source` table.
 - After expansion, only the **upstream** uid appears in the request.
 
-### 5.6 Frontend plugin
+### 5.7 Frontend — closed-source plugin
 
-**Default assumption:** new built-in `grafana-semantic-datasource` (or
-`public/app/features/semantic/`) with a **Steep-influenced** query editor —
-metric picker, allowlisted breakdown dimensions, time range from dashboard.
+**Private plugin repo** (pattern: `grafana-cube-datasource`), type e.g.
+`grafana-semantic-datasource`:
 
-We may borrow layout patterns from `grafana-cube-datasource`, but we are **not**
-targeting Cube query JSON compatibility (§4). Dual-mode in the Cube plugin
-(remains Cube-backed) is possible but not the plan’s default — it couples
-release cadence and UX to a product we are explicitly not running on this path.
+- **Steep-influenced** query editor — metric picker, allowlisted breakdowns,
+  dashboard time range.
+- Lists `SemanticDataSource` CRs for picker entries (Resource API), registers
+  synthetic `DataSourceInstanceSettings` per instance.
+- Does **not** duplicate Cube plugin or add dual-mode to it.
 
-Config:
+Per-instance config (in plugin jsonData or implied by CR):
 
-- **Required:** `upstreamDatasourceUid` — existing SQL datasource.
-- **Model:** CR uid for the semantic VDS instance (or inline YAML admin shortcut).
+- **Required:** `upstreamDatasourceUid` → existing **Postgres** datasource
+  (PoC allowlist §5.5.2).
+- **Model:** inline on the `SemanticDataSource` CR (`spec.model`); see §5.2.1.
 
-### 5.7 Metadata and AdHoc
+Layout ideas may be borrowed from the Cube plugin repo; no Cube query JSON (§4).
+
+### 5.8 Metadata and AdHoc
 
 - `getTagKeys`: expose dimensions with `adHocFilter` semantics from compiled
   model (all string dimensions by default in PoC).
@@ -376,7 +464,7 @@ Config:
   delegate (same path as panel query, scoped by existing filters).
 - AdHoc filters compile to `WHERE` — **no** post-pipeline frame filter needed.
 
-### 5.8 Identity and RBAC
+### 5.9 Identity and RBAC
 
 - **Interactive:** caller must have **query** permission on upstream SQL DS
   (semantic VDS is a façade). Eval uses caller identity when delegating.
@@ -385,7 +473,7 @@ Config:
 - **Model CR:** separate `semanticdatasources:read|write` verbs (mirror general
   VDS).
 
-### 5.9 Observability
+### 5.10 Observability
 
 Metrics (subsystem `semanticdatasource`):
 
@@ -399,7 +487,7 @@ prod logs by default), `dimension_count`, `measure_count`.
 
 Tracing: span `semantic.compile` → child span on upstream plugin query.
 
-### 5.10 Error model
+### 5.11 Error model
 
 | Code                               | HTTP | Meaning                                 |
 | ---------------------------------- | ---- | --------------------------------------- |
@@ -413,8 +501,9 @@ Tracing: span `semantic.compile` → child span on upstream plugin query.
 
 ## 6. semantic-layer library integration
 
-**Dependency:** add `github.com/grafana/semantic-layer` to Grafana’s `go.mod`
-(vendor or pseudo-version during active development).
+**Dependency:** `github.com/grafana/semantic-layer` in **enterprise** and/or
+the private plugin’s `go.mod` (vendor or pseudo-version during active
+development). Not required in OSS `grafana/grafana` unless the CR app lives there.
 
 **Today (library):**
 
@@ -462,20 +551,21 @@ layer; it passes the compiled SQL through.
 
 ### Phase 1 — Backend compile + delegate (no new UI)
 
-1. Feature toggle `semanticDatasources`.
-2. App `apps/semanticdatasource/` + CRD.
-3. `pkg/services/semanticdatasource/` — compile, expand, upstream delegation.
+1. Feature toggle `semanticDatasources` (enterprise).
+2. App `apps/semanticdatasource/` + CRD (enterprise unless schema is public).
+3. Enterprise `pkg/services/semanticdatasource/` — compile, expand, Postgres
+   delegation only.
 4. Hook `ExpandSemanticQueries` in `service.QueryData` and `getExprRequest`.
-5. Synthetic DS resolution.
-6. Integration test: CR with `payments.yml` + test Postgres/BQ DS → frame.
+5. Synthetic DS resolution (enterprise build or minimal OSS stub).
+6. Integration test: CR with `payments.yml` + test **Postgres** DS → frame.
 
 **Acceptance:** curl/query API with hand-crafted semantic target returns same
 data as raw SQL DS query against equivalent `SELECT`.
 
-### Phase 2 — Frontend
+### Phase 2 — Closed-source plugin (frontend + thin backend)
 
-1. `upstreamDatasourceUid` in config; model picker from CR API.
-2. Steep-influenced query editor (metrics + breakdown + time).
+1. Private plugin repo; `upstreamDatasourceUid` (Postgres only).
+2. Steep-influenced query editor; list `SemanticDataSource` CRs for picker.
 3. `getTagKeys` / `getTagValues` via compile+delegate.
 4. Playwright: pick metric, breakdown, AdHoc filter, time range.
 
@@ -510,7 +600,7 @@ data as raw SQL DS query against equivalent `SELECT`.
 - `pkg/services/query/query.go` — expand before `parseMetricRequest`
 - `pkg/services/ngalert/eval/eval.go` — expand in `getExprRequest`
 - `pkg/services/featuremgmt/registry.go` — `semanticDatasources`
-- `public/app/plugins/datasource/grafana-semantic-datasource/` (or equivalent)
+- Private plugin repo `grafana-semantic-datasource` (not OSS `public/app/plugins/`)
 
 ## 10. Risks
 
@@ -543,18 +633,22 @@ data as raw SQL DS query against equivalent `SELECT`.
    only until a composite-query requirement is validated.
 9. **Dedicated `SemanticDataSource` CR** — separate app and API group; no
    `spec.kind` discriminator shared with composite `VirtualDataSource`.
+10. **Closed-source plugin** — not an OSS built-in; Steep UX in private repo
+    (pattern: `grafana-cube-datasource`).
+11. **Enterprise compile/delegate hook** — upstream query via query pipeline;
+    not a second warehouse connection inside the plugin.
+12. **Model on CR** — `spec.model` inline; no `SemanticModel` kind for PoC.
+13. **Upstream PoC: Postgres only** — BigQuery adapter deferred (~days of work
+    once Postgres delegation exists).
 
 ## 12. Open questions
 
-1. **Plugin strategy:** new built-in vs feature module in core — default is
-   built-in, not dual-mode Cube plugin.
-2. **Panel query API:** exact Steep mapping (metrics-only vs dims+measures).
-3. **Model storage:** inline YAML on CR only, or separate `SemanticModel` CR
-   referenced by many instances?
-4. **Upstream allowlist:** which SQL plugins in PoC — BQ only, or BQ + Postgres?
-5. **Alerting toggle:** separate `semanticDatasourcesInAlerts` like general VDS,
+1. **Panel query API:** exact Steep mapping (metrics-only vs dims+measures).
+2. **CR app in OSS vs enterprise:** public API schema vs enterprise-only
+   registration.
+3. **Alerting toggle:** separate `semanticDatasourcesInAlerts` like general VDS,
    or ship together?
-6. **Join model in YAML:** Steep `joinPaths` vs OSI relationships vs
+4. **Join model in YAML:** Steep `joinPaths` vs OSI relationships vs
    Cube-style `joins` — decided in engine repo, consumed by Grafana.
 
 ## 13. References
