@@ -16,36 +16,30 @@ export class AlertRuleViewPage {
     return this.page.getByRole('heading', { level: 1 });
   }
 
-  // "Every 1m" in the metadata strip (i18n key alerting.rule-viewer.evaluation-interval)
   get evaluationIntervalText(): Locator {
     return this.page.getByText(/^Every /);
   }
 
-  // Pending-period value rendered by `DetailText` (label "Pending period",
-  // value `<Text aria-labelledby="pending-period">`). getByLabel matches via the
-  // aria-labelledby association.
+  // DetailText renders the value as `<Text aria-labelledby="pending-period">`;
+  // getByLabel matches via the aria-labelledby association.
   get pendingPeriodValue(): Locator {
     return this.page.getByLabel('Pending period');
   }
 
-  // Contact-point link in the sidebar "Notification configuration" group.
-  // The link also appears in the metadata strip, so scope to avoid strict-mode violations.
+  // Scope to the sidebar group; the contact-point link also appears in the metadata strip.
   contactPointLink(name: string): Locator {
     return this.page.getByRole('group', { name: 'Notification configuration' }).getByRole('link', { name });
   }
 
-  // Individual label in the metadata strip. aria-label format is "{key}: {value}" (colon).
   label(key: string, value: string): Locator {
     return this.page.getByRole('list', { name: 'Labels' }).getByRole('listitem', { name: `${key}: ${value}` });
   }
 
-  // Annotation value from the sidebar. Uses getByLabel via aria-labelledby association.
   // Requires DetailGroup to expose role="group" aria-label="Annotations" (Details.tsx).
   annotationValue(key: string): Locator {
     return this.page.getByRole('group', { name: 'Annotations' }).getByLabel(key);
   }
 
-  // Folder or group link in the top-bar breadcrumb navigation.
   // exact: false because long names can be visually truncated in the breadcrumb bar.
   breadcrumbLink(name: string): Locator {
     return this.page.getByRole('navigation', { name: 'Breadcrumbs' }).getByRole('link', { name, exact: false });

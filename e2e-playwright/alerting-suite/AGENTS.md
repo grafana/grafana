@@ -93,10 +93,10 @@ specs.
 
 ### Documentation
 
-- Add a class-level JSDoc summarizing the page's purpose and any conventions
-  (e.g. accessibility-first).
 - Comment non-obvious locator choices inline — particularly when you've worked
-  around a UI quirk. The next agent will thank you.
+  around a UI quirk (e.g. label double-match, dropdown race, hidden-when-flag-off
+  inputs). Skip JSDoc for self-explanatory methods/getters; the comments should
+  earn their place by explaining _why_ a selector looks the way it does.
 
 ## Authentication
 
