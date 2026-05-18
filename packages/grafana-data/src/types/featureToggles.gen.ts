@@ -1256,11 +1256,6 @@ export interface FeatureToggles {
   */
   pluginInstallAPISync?: boolean;
   /**
-  * Enable new visualization suggestions
-  * @default true
-  */
-  newVizSuggestions?: boolean;
-  /**
   * Enable style actions (copy/paste) in the panel editor
   * @default false
   */
