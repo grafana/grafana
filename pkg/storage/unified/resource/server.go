@@ -1890,6 +1890,9 @@ func (s *server) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequ
 	return s.search.GetStats(ctx, req)
 }
 
+// ListManagedObjects implements ManagedObjectIndexServer.
+// NOTE: This request only expects calls delegated from other services -- it is not directly accessible to end users
+// The access control must be handled in the exposed service
 func (s *server) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {
 	if s.search == nil {
 		return nil, fmt.Errorf("search index not configured")
@@ -1898,6 +1901,9 @@ func (s *server) ListManagedObjects(ctx context.Context, req *resourcepb.ListMan
 	return s.search.ListManagedObjects(ctx, req)
 }
 
+// CountManagedObjects implements ManagedObjectIndexServer.
+// NOTE: This request only expects calls delegated from other services -- it is not directly accessible to end users
+// The access control must be handled in the exposed service
 func (s *server) CountManagedObjects(ctx context.Context, req *resourcepb.CountManagedObjectsRequest) (*resourcepb.CountManagedObjectsResponse, error) {
 	if s.search == nil {
 		return nil, fmt.Errorf("search index not configured")
@@ -2021,6 +2027,8 @@ func (s *server) getPartialObject(ctx context.Context, key *resourcepb.ResourceK
 }
 
 // GetBlob implements BlobStore.
+// NOTE: This request only expects calls delegated from other services -- it is not directly accessible to end users
+// The access control must be handled in the exposed service
 func (s *server) GetBlob(ctx context.Context, req *resourcepb.GetBlobRequest) (*resourcepb.GetBlobResponse, error) {
 	if s.blob == nil {
 		return &resourcepb.GetBlobResponse{Error: &resourcepb.ErrorResult{
@@ -2105,6 +2113,9 @@ func (s *server) runInQueue(ctx context.Context, tenantID string, runnable func(
 	}
 }
 
+// RebuildIndexes implements ResourceIndexServer.
+// NOTE: This request only expects calls delegated from other services -- it is not directly accessible to end users
+// The access control must be handled in the exposed service
 func (s *server) RebuildIndexes(ctx context.Context, req *resourcepb.RebuildIndexesRequest) (*resourcepb.RebuildIndexesResponse, error) {
 	if s.search == nil {
 		return nil, fmt.Errorf("search index not configured")

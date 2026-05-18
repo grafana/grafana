@@ -1833,3 +1833,169 @@ func TestFolderDeletePermissionChecks(t *testing.T) {
 		require.NotEqual(t, folderName, capturedFolder)
 	})
 }
+
+// stubBlobSupport records whether PutResourceBlob was reached. Tests use it to
+// confirm that PutBlob's authorization gate either delegates to the blob backend
+// or short-circuits before it.
+type stubBlobSupport struct {
+	putReached bool
+}
+
+func (s *stubBlobSupport) SupportsSignedURLs() bool { return false }
+
+func (s *stubBlobSupport) PutResourceBlob(_ context.Context, _ *resourcepb.PutBlobRequest) (*resourcepb.PutBlobResponse, error) {
+	s.putReached = true
+	return &resourcepb.PutBlobResponse{Uid: "blob-uid"}, nil
+}
+
+func (s *stubBlobSupport) GetResourceBlob(_ context.Context, _ *resourcepb.ResourceKey, _ *utils.BlobInfo, _ bool) (*resourcepb.GetBlobResponse, error) {
+	return &resourcepb.GetBlobResponse{}, nil
+}
+
+func TestPutBlobPermissionChecks(t *testing.T) {
+	user := &identity.StaticRequester{
+		Type:      authlib.TypeUser,
+		Login:     "testuser",
+		UserID:    123,
+		UserUID:   "u123",
+		OrgRole:   identity.RoleEditor,
+		Namespace: "default",
+	}
+	ctxWithUser := authlib.WithAuthInfo(context.Background(), user)
+
+	const (
+		group     = "playlist.grafana.app"
+		resource  = "playlists"
+		namespace = "default"
+		name      = "test-resource"
+	)
+
+	key := &resourcepb.ResourceKey{
+		Group:     group,
+		Resource:  resource,
+		Namespace: namespace,
+		Name:      name,
+	}
+
+	value := []byte(`{"apiVersion":"playlist.grafana.app/v0alpha1","kind":"Playlist","metadata":{"name":"` + name + `","uid":"test-uid","namespace":"` + namespace + `"},"spec":{"title":"t","interval":"5m","items":[]}}`)
+
+	newServer := func(t *testing.T, ac authlib.AccessClient, blob BlobSupport) *server {
+		t.Helper()
+		db, err := badger.Open(badger.DefaultOptions("").WithInMemory(true).WithLogger(nil))
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = db.Close() })
+
+		kvStore := NewBadgerKV(db)
+		store, err := NewKVStorageBackend(KVBackendOptions{KvStore: kvStore})
+		require.NoError(t, err)
+
+		srv, err := NewResourceServer(ResourceServerOptions{
+			Backend:      store,
+			AccessClient: ac,
+			Blob:         BlobConfig{Backend: blob},
+		})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			stopCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			_ = srv.Stop(stopCtx)
+		})
+		return srv
+	}
+
+	// createParentResource seeds the parent so that ReadResource inside PutBlob
+	// returns successfully. The ACL is flipped to allow during creation, then
+	// the caller is free to switch ac.fn before calling PutBlob.
+	createParentResource := func(t *testing.T, srv *server, ac *callbackAccessClient) {
+		t.Helper()
+		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return allow() }
+		rsp, err := srv.Create(ctxWithUser, &resourcepb.CreateRequest{Key: key, Value: value})
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+	}
+
+	t.Run("rejects when no user in context", func(t *testing.T) {
+		ac := &callbackAccessClient{fn: func(authlib.CheckRequest, string) (authlib.CheckResponse, error) { return allow() }}
+		blob := &stubBlobSupport{}
+		srv := newServer(t, ac, blob)
+
+		rsp, err := srv.PutBlob(context.Background(), &resourcepb.PutBlobRequest{Resource: key})
+		require.NoError(t, err)
+		require.NotNil(t, rsp.Error)
+		require.Equal(t, int32(http.StatusUnauthorized), rsp.Error.Code)
+		require.False(t, blob.putReached, "must not delegate to blob backend without a user")
+	})
+
+	t.Run("returns 404 when parent resource does not exist", func(t *testing.T) {
+		ac := &callbackAccessClient{fn: func(authlib.CheckRequest, string) (authlib.CheckResponse, error) { return allow() }}
+		blob := &stubBlobSupport{}
+		srv := newServer(t, ac, blob)
+
+		// No createParentResource — the backend has nothing under key.
+		rsp, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key})
+		require.NoError(t, err)
+		require.NotNil(t, rsp.Error)
+		require.Equal(t, int32(http.StatusNotFound), rsp.Error.Code)
+		require.False(t, blob.putReached, "must not delegate when parent resource is missing")
+	})
+
+	t.Run("rejects when access.Check denies update on parent", func(t *testing.T) {
+		ac := &callbackAccessClient{}
+		blob := &stubBlobSupport{}
+		srv := newServer(t, ac, blob)
+		createParentResource(t, srv, ac)
+
+		ac.fn = func(authlib.CheckRequest, string) (authlib.CheckResponse, error) { return deny() }
+
+		rsp, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key})
+		require.NoError(t, err)
+		require.NotNil(t, rsp.Error)
+		require.Equal(t, int32(http.StatusUnauthorized), rsp.Error.Code)
+		require.False(t, blob.putReached, "must not delegate when caller lacks update on parent")
+	})
+
+	t.Run("rejects when access.Check returns an error", func(t *testing.T) {
+		ac := &callbackAccessClient{}
+		blob := &stubBlobSupport{}
+		srv := newServer(t, ac, blob)
+		createParentResource(t, srv, ac)
+
+		ac.fn = func(authlib.CheckRequest, string) (authlib.CheckResponse, error) {
+			return authlib.CheckResponse{}, errors.New("authz backend unavailable")
+		}
+
+		rsp, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key})
+		require.NoError(t, err)
+		require.NotNil(t, rsp.Error)
+		require.Equal(t, int32(http.StatusUnauthorized), rsp.Error.Code)
+		require.False(t, blob.putReached, "must not delegate when the access check errors out")
+	})
+
+	t.Run("delegates to blob backend when access.Check allows update on parent", func(t *testing.T) {
+		ac := &callbackAccessClient{}
+		blob := &stubBlobSupport{}
+		srv := newServer(t, ac, blob)
+		createParentResource(t, srv, ac)
+
+		var capturedReq authlib.CheckRequest
+		var capturedFolder string
+		ac.fn = func(req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+			capturedReq, capturedFolder = req, folder
+			return allow()
+		}
+
+		rsp, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key})
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+		require.True(t, blob.putReached, "must delegate to blob backend on allow")
+
+		// Authz must be asked about "update" on the parent's group/resource/name.
+		require.Equal(t, utils.VerbUpdate, capturedReq.Verb)
+		require.Equal(t, group, capturedReq.Group)
+		require.Equal(t, resource, capturedReq.Resource)
+		require.Equal(t, namespace, capturedReq.Namespace)
+		require.Equal(t, name, capturedReq.Name)
+		// Test resource has no folder annotation, so the folder passed to Check is empty.
+		require.Equal(t, "", capturedFolder)
+	})
+}
