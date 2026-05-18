@@ -2,6 +2,7 @@ package preferences
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -33,8 +34,9 @@ func TestAPIBuilder_Validate(t *testing.T) {
 		op         admission.Operation
 		resource   schema.GroupVersionResource
 		wantErr    bool
-		errMessage string   // expected substring of err.Error()
-		errFields  []string // expected spec.<field> paths in StatusDetails causes, in order
+		errMessage string             // expected substring of err.Error()
+		errFields  []string           // expected spec.<field> paths in StatusDetails causes, in order
+		errTypes   []metav1.CauseType // expected cause types per field, in same order as errFields
 	}{
 		{
 			name:     "valid create with empty spec",
@@ -66,8 +68,9 @@ func TestAPIBuilder_Validate(t *testing.T) {
 			op:         admission.Create,
 			resource:   prefsGVR,
 			wantErr:    true,
-			errMessage: "Invalid request",
+			errMessage: "is invalid",
 			errFields:  []string{"spec.theme"},
+			errTypes:   []metav1.CauseType{metav1.CauseTypeFieldValueInvalid},
 		},
 		{
 			name:     "valid update with valid theme",
@@ -83,8 +86,9 @@ func TestAPIBuilder_Validate(t *testing.T) {
 			op:         admission.Update,
 			resource:   prefsGVR,
 			wantErr:    true,
-			errMessage: "Invalid request",
+			errMessage: "is invalid",
 			errFields:  []string{"spec.theme"},
+			errTypes:   []metav1.CauseType{metav1.CauseTypeFieldValueInvalid},
 		},
 		{
 			name:     "valid utc timezone",
@@ -116,8 +120,9 @@ func TestAPIBuilder_Validate(t *testing.T) {
 			op:         admission.Create,
 			resource:   prefsGVR,
 			wantErr:    true,
-			errMessage: "Invalid request",
+			errMessage: "is invalid",
 			errFields:  []string{"spec.timezone"},
+			errTypes:   []metav1.CauseType{metav1.CauseTypeFieldValueInvalid},
 		},
 		{
 			name:       "invalid timezone on update",
@@ -126,8 +131,9 @@ func TestAPIBuilder_Validate(t *testing.T) {
 			op:         admission.Update,
 			resource:   prefsGVR,
 			wantErr:    true,
-			errMessage: "Invalid request",
+			errMessage: "is invalid",
 			errFields:  []string{"spec.timezone"},
+			errTypes:   []metav1.CauseType{metav1.CauseTypeFieldValueInvalid},
 		},
 		{
 			name:     "valid theme and timezone together",
@@ -141,8 +147,9 @@ func TestAPIBuilder_Validate(t *testing.T) {
 			op:         admission.Create,
 			resource:   prefsGVR,
 			wantErr:    true,
-			errMessage: "Invalid request",
+			errMessage: "is invalid",
 			errFields:  []string{"spec.homeURL"},
+			errTypes:   []metav1.CauseType{metav1.CauseTypeForbidden},
 		},
 		{
 			name:       "homeURL is rejected even when empty",
@@ -150,8 +157,9 @@ func TestAPIBuilder_Validate(t *testing.T) {
 			op:         admission.Create,
 			resource:   prefsGVR,
 			wantErr:    true,
-			errMessage: "Invalid request",
+			errMessage: "is invalid",
 			errFields:  []string{"spec.homeURL"},
+			errTypes:   []metav1.CauseType{metav1.CauseTypeForbidden},
 		},
 		{
 			name:       "homeURL is rejected on update",
@@ -160,8 +168,9 @@ func TestAPIBuilder_Validate(t *testing.T) {
 			op:         admission.Update,
 			resource:   prefsGVR,
 			wantErr:    true,
-			errMessage: "Invalid request",
+			errMessage: "is invalid",
 			errFields:  []string{"spec.homeURL"},
+			errTypes:   []metav1.CauseType{metav1.CauseTypeForbidden},
 		},
 		{
 			name: "all invalid fields are reported together",
@@ -173,8 +182,13 @@ func TestAPIBuilder_Validate(t *testing.T) {
 			op:         admission.Create,
 			resource:   prefsGVR,
 			wantErr:    true,
-			errMessage: "Invalid request",
+			errMessage: "is invalid",
 			errFields:  []string{"spec.homeURL", "spec.timezone", "spec.theme"},
+			errTypes: []metav1.CauseType{
+				metav1.CauseTypeForbidden,
+				metav1.CauseTypeFieldValueInvalid,
+				metav1.CauseTypeFieldValueInvalid,
+			},
 		},
 		{
 			name: "invalid timezone and theme are both reported",
@@ -185,8 +199,12 @@ func TestAPIBuilder_Validate(t *testing.T) {
 			op:         admission.Create,
 			resource:   prefsGVR,
 			wantErr:    true,
-			errMessage: "Invalid request",
+			errMessage: "is invalid",
 			errFields:  []string{"spec.timezone", "spec.theme"},
+			errTypes: []metav1.CauseType{
+				metav1.CauseTypeFieldValueInvalid,
+				metav1.CauseTypeFieldValueInvalid,
+			},
 		},
 		{
 			name:     "delete operation is skipped",
@@ -246,18 +264,22 @@ func TestAPIBuilder_Validate(t *testing.T) {
 				return
 			}
 
-			statusErr, ok := err.(*apierrors.StatusError)
+			statusErr, ok := errors.AsType[*apierrors.StatusError](err)
 			require.True(t, ok, "expected *apierrors.StatusError, got %T", err)
-			require.Equal(t, metav1.StatusReasonBadRequest, statusErr.ErrStatus.Reason)
+			require.Equal(t, metav1.StatusReasonInvalid, statusErr.ErrStatus.Reason)
 			require.NotNil(t, statusErr.ErrStatus.Details, "expected StatusDetails to be populated")
 
 			gotFields := make([]string, 0, len(statusErr.ErrStatus.Details.Causes))
+			gotTypes := make([]metav1.CauseType, 0, len(statusErr.ErrStatus.Details.Causes))
 			for _, cause := range statusErr.ErrStatus.Details.Causes {
-				require.Equal(t, metav1.CauseTypeFieldValueInvalid, cause.Type)
 				require.NotEmpty(t, cause.Message, "cause message must not be empty for field %s", cause.Field)
 				gotFields = append(gotFields, cause.Field)
+				gotTypes = append(gotTypes, cause.Type)
 			}
 			require.Equal(t, tt.errFields, gotFields)
+			if tt.errTypes != nil {
+				require.Equal(t, tt.errTypes, gotTypes)
+			}
 		})
 	}
 }

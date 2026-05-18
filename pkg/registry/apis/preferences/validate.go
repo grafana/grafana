@@ -3,10 +3,9 @@ package preferences
 import (
 	"context"
 	"fmt"
-	"net/http"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
 
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
@@ -18,57 +17,34 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 	if a.GetResource().Resource != "preferences" {
 		return nil
 	}
-
-	op := a.GetOperation()
-	if op != admission.Create && op != admission.Update {
+	if op := a.GetOperation(); op != admission.Create && op != admission.Update {
 		return nil
 	}
 
-	obj := a.GetObject()
-	p, ok := obj.(*preferences.Preferences)
+	p, ok := a.GetObject().(*preferences.Preferences)
 	if !ok {
-		return apierrors.NewBadRequest(fmt.Sprintf("expected Preferences object, got %T", obj))
+		return apierrors.NewBadRequest(fmt.Sprintf("expected Preferences object, got %T", a.GetObject()))
 	}
 
-	var errors []v1.StatusCause
+	spec := field.NewPath("spec")
+	var errs field.ErrorList
 
 	if p.Spec.HomeURL != nil {
-		errors = append(errors, newInvalidField(
-			"May only set the home URL from the system configuration",
-			"homeURL"))
+		errs = append(errs, field.Forbidden(spec.Child("homeURL"),
+			"may only be set from system configuration"))
 	}
-
 	if p.Spec.Timezone != nil && !pref.IsValidTimezone(*p.Spec.Timezone) {
-		errors = append(errors, newInvalidField(
-			"must be a valid IANA timezone (e.g., America/New_York), 'utc', 'browser', or empty string",
-			"timezone"))
+		errs = append(errs, field.Invalid(spec.Child("timezone"), *p.Spec.Timezone,
+			"must be a valid IANA timezone (e.g., America/New_York), 'utc', 'browser', or empty"))
 	}
-
 	if p.Spec.Theme != nil && *p.Spec.Theme != "" && !pref.IsValidThemeID(*p.Spec.Theme) {
-		errors = append(errors, newInvalidField(
-			"Invalid theme: must match a configured theme",
-			"theme"))
+		errs = append(errs, field.Invalid(spec.Child("theme"), *p.Spec.Theme,
+			"must match a configured theme"))
 	}
 
-	if len(errors) > 0 {
-		return &apierrors.StatusError{v1.Status{
-			Status:  v1.StatusFailure,
-			Code:    http.StatusBadRequest,
-			Reason:  v1.StatusReasonBadRequest,
-			Message: "Invalid request",
-			Details: &v1.StatusDetails{
-				Causes: errors,
-			},
-		}}
+	if len(errs) > 0 {
+		return apierrors.NewInvalid(
+			preferences.PreferencesResourceInfo.GroupVersionKind().GroupKind(), p.Name, errs)
 	}
-
 	return nil
-}
-
-func newInvalidField(details string, key string) v1.StatusCause {
-	return v1.StatusCause{
-		Type:    v1.CauseTypeFieldValueInvalid,
-		Message: details,
-		Field:   fmt.Sprintf("spec.%s", key),
-	}
 }
