@@ -345,12 +345,8 @@ func dataqueryFromExpr(refID, expr, queryType string, maxLines int64, step strin
 
 func directionPtr(dir string) *string {
 	switch dir {
-	case logDirectionForward:
-		s := logDirectionForward
-		return &s
-	case logDirectionBackward:
-		s := logDirectionBackward
-		return &s
+	case logDirectionForward, logDirectionBackward:
+		return &dir
 	default:
 		return nil
 	}

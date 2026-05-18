@@ -19,7 +19,7 @@ func flattenMetricsToTabular(frames data.Frames, logger log.Logger) data.Frames 
 	}
 
 	type row struct {
-		t      time.Time
+		time   time.Time
 		value  *float64
 		labels data.Labels
 	}
@@ -68,7 +68,7 @@ func flattenMetricsToTabular(frames data.Frames, logger log.Logger) data.Frames 
 				}
 				val := v
 				rows = append(rows, row{
-					t:      tv,
+					time:   tv,
 					value:  &val,
 					labels: f.Labels,
 				})
@@ -87,7 +87,7 @@ func flattenMetricsToTabular(frames data.Frames, logger log.Logger) data.Frames 
 	sort.Strings(labelKeys)
 
 	sort.SliceStable(rows, func(i, j int) bool {
-		return rows[i].t.Before(rows[j].t)
+		return rows[i].time.Before(rows[j].time)
 	})
 
 	timestamps := make([]time.Time, len(rows))
@@ -98,7 +98,7 @@ func flattenMetricsToTabular(frames data.Frames, logger log.Logger) data.Frames 
 	}
 
 	for i, r := range rows {
-		timestamps[i] = r.t
+		timestamps[i] = r.time
 		values[i] = r.value
 		for _, k := range labelKeys {
 			if v, ok := r.labels[k]; ok {
