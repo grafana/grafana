@@ -14,7 +14,7 @@ import { getAnnotation, isProvisionedResource, shouldUseK8sApi } from 'app/featu
 
 import { isGranted, isSupported } from '../../hooks/abilities/abilityUtils';
 import { useContactPointAbility } from '../../hooks/abilities/alertmanager/useContactPointAbility';
-import { ContactPointAction } from '../../hooks/abilities/types';
+import { ContactPointAction, isInUse, isInsufficientPermissions } from '../../hooks/abilities/types';
 import { createRelativeUrl } from '../../utils/url';
 import MoreButton from '../MoreButton';
 import { ProvisioningBadge } from '../Provisioning';
@@ -38,7 +38,7 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
 
   const isProvisioned = isProvisionedResource(provenance);
 
-  // Entity-scoped ability checks — fold provisioning and k8s access annotations together
+  // Entity-scoped ability checks
   const exportAbility = useContactPointAbility({ action: ContactPointAction.Export, context: contactPoint });
   const editAbility = useContactPointAbility({ action: ContactPointAction.Update, context: contactPoint });
   const deleteAbility = useContactPointAbility({ action: ContactPointAction.Delete, context: contactPoint });
@@ -46,18 +46,14 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
 
   const showManagePermissions = showManageContactPointPermissions(selectedAlertmanager!, contactPoint);
 
-  const regularPolicyReferences = policies.filter((ref) => ref.route.type !== 'auto-generated');
-
   const k8sRoutesInUse = getAnnotation(contactPoint, K8sAnnotations.InUseRoutes);
   /**
-   * Number of policies that reference this contact point
+   * Number of policies that reference this contact point.
    *
-   * When the k8s API is being used, this number will only be the regular policies
-   * (will not include the auto generated simplified routing policies in the count)
+   * When the k8s API is being used this is sourced from the InUseRoutes annotation, which
+   * only counts regular policies (auto-generated simplified-routing policies are excluded).
    */
   const numberOfPolicies = usingK8sApi ? Number(k8sRoutesInUse) : policies.length;
-
-  const numberOfPoliciesPreventingDeletion = usingK8sApi ? Number(k8sRoutesInUse) : regularPolicyReferences.length;
 
   /** Number of rules that use this contact point for simplified routing */
   const numberOfRules = Number(getAnnotation(contactPoint, K8sAnnotations.InUseRules)) || 0;
@@ -71,8 +67,8 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
   /** Can the contact point actually be edited? Ability encapsulates provisioning + k8s annotation + RBAC. */
   const canEdit = isGranted(editAbility);
 
-  /** Can the contact point actually be deleted? Ability covers permissions; policies/rules checked separately. */
-  const canBeDeleted = isGranted(deleteAbility) && !numberOfPoliciesPreventingDeletion && !numberOfRules;
+  /** Can the contact point be deleted? Ability encapsulates RBAC, provisioning, and in-use checks. */
+  const canBeDeleted = isGranted(deleteAbility);
 
   const menuActions: JSX.Element[] = [];
   if (showManagePermissions) {
@@ -121,11 +117,12 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
       'Contact point is referenced by one or more alert rules'
     );
 
+    const inUseAbility = isInUse(deleteAbility) ? deleteAbility : null;
     const reasonsDeleteIsDisabled = [
-      !deleteAbility.granted ? cannotDeleteNoPermissions : '',
+      isInsufficientPermissions(deleteAbility) ? cannotDeleteNoPermissions : '',
       isProvisioned ? cannotDeleteProvisioned : '',
-      numberOfPoliciesPreventingDeletion > 0 ? cannotDeletePolicies : '',
-      numberOfRules ? cannotDeleteRules : '',
+      inUseAbility?.blockedBy.includes('routes') ? cannotDeletePolicies : '',
+      inUseAbility?.blockedBy.includes('rules') ? cannotDeleteRules : '',
     ].filter(Boolean);
 
     const deleteTooltipContent = (

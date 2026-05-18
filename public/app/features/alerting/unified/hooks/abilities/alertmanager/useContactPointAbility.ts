@@ -4,9 +4,10 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { useAlertmanager } from '../../../state/AlertmanagerContext';
 import { notificationsPermissions } from '../../../utils/access-control';
-import { type EntityToCheck, canDeleteEntity, canEditEntity } from '../../../utils/k8s/utils';
+import { K8sAnnotations } from '../../../utils/k8s/constants';
+import { type EntityToCheck, canDeleteEntity, canEditEntity, getAnnotation } from '../../../utils/k8s/utils';
 import { makeAbility, makeScopedAbility } from '../abilityUtils';
-import { type Ability, ContactPointAction } from '../types';
+import { type Ability, ContactPointAction, Granted, InUse, InsufficientPermissions } from '../types';
 
 export type ContactPointAbilityParam =
   | { action: ContactPointAction.View }
@@ -54,7 +55,8 @@ export function useContactPointAbility(payload: ContactPointAbilityParam): Abili
           hasConfigurationAPI,
           PERMISSIONS[ContactPointAction.Update],
           payload.context,
-          canEditEntity
+          (entity) =>
+            canEditEntity(entity) ? Granted : InsufficientPermissions(PERMISSIONS[ContactPointAction.Update])
         );
 
       case ContactPointAction.Delete:
@@ -62,11 +64,37 @@ export function useContactPointAbility(payload: ContactPointAbilityParam): Abili
           hasConfigurationAPI,
           PERMISSIONS[ContactPointAction.Delete],
           payload.context,
-          canDeleteEntity
+          canDeleteContactPoint
         );
 
       case ContactPointAction.Export:
         return makeScopedAbility(hasConfigurationAPI, PERMISSIONS[ContactPointAction.Export], payload.context);
     }
   }, [payload, hasConfigurationAPI]);
+}
+
+/**
+ * Entity-check function for the Delete action on a contact point.
+ *
+ * Checks the server-set access annotation first (same as {@link canDeleteEntity}), then
+ * inspects the in-use annotations to surface whether the contact point is still referenced
+ * by notification policy routes, alert rules using simplified routing, or both.
+ */
+function canDeleteContactPoint(entity: EntityToCheck): Ability {
+  if (!canDeleteEntity(entity)) {
+    return InsufficientPermissions(PERMISSIONS[ContactPointAction.Delete]);
+  }
+
+  const blockedBy: Extract<Ability, { cause: 'IN_USE' }>['blockedBy'] = [];
+  if ((Number(getAnnotation(entity, K8sAnnotations.InUseRoutes)) || 0) > 0) {
+    blockedBy.push('routes');
+  }
+  if ((Number(getAnnotation(entity, K8sAnnotations.InUseRules)) || 0) > 0) {
+    blockedBy.push('rules');
+  }
+  if (blockedBy.length > 0) {
+    return InUse(blockedBy);
+  }
+
+  return Granted;
 }
