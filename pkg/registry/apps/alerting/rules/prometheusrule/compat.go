@@ -60,7 +60,10 @@ func convertToDomainGroups(
 
 	groups := make([]*ngmodels.AlertRuleGroup, 0, len(pr.Spec.Groups))
 	for i, g := range pr.Spec.Groups {
-		promGroup := specGroupToProm(g)
+		promGroup, err := specGroupToProm(g)
+		if err != nil {
+			return nil, "", fmt.Errorf("groups[%d] %q: %w", i, g.Name, err)
+		}
 		grafGroup, err := converter.PrometheusRulesToGrafana(orgID, folderUID, promGroup)
 		if err != nil {
 			return nil, "", fmt.Errorf("groups[%d] %q: %w", i, g.Name, err)
@@ -84,9 +87,9 @@ func convertToDomainGroups(
 	return groups, ngmodels.ProvenanceConvertedPrometheus, nil
 }
 
-func specGroupToProm(g model.PrometheusRulePrometheusRuleGroup) prom.PrometheusRuleGroup {
+func specGroupToProm(g model.PrometheusRulePrometheusRuleGroup) (prom.PrometheusRuleGroup, error) {
 	rules := make([]prom.PrometheusRule, 0, len(g.Rules))
-	for _, r := range g.Rules {
+	for i, r := range g.Rules {
 		pr := prom.PrometheusRule{
 			Expr:        r.Expr,
 			Labels:      r.Labels,
@@ -99,14 +102,18 @@ func specGroupToProm(g model.PrometheusRulePrometheusRuleGroup) prom.PrometheusR
 			pr.Record = *r.Record
 		}
 		if r.For != nil {
-			if d, err := prom_model.ParseDuration(string(*r.For)); err == nil {
-				pr.For = &d
+			d, err := prom_model.ParseDuration(string(*r.For))
+			if err != nil {
+				return prom.PrometheusRuleGroup{}, fmt.Errorf("rules[%d]: invalid 'for' duration %q: %w", i, *r.For, err)
 			}
+			pr.For = &d
 		}
 		if r.KeepFiringFor != nil {
-			if d, err := prom_model.ParseDuration(string(*r.KeepFiringFor)); err == nil {
-				pr.KeepFiringFor = &d
+			d, err := prom_model.ParseDuration(string(*r.KeepFiringFor))
+			if err != nil {
+				return prom.PrometheusRuleGroup{}, fmt.Errorf("rules[%d]: invalid 'keep_firing_for' duration %q: %w", i, *r.KeepFiringFor, err)
 			}
+			pr.KeepFiringFor = &d
 		}
 		rules = append(rules, pr)
 	}
@@ -116,19 +123,23 @@ func specGroupToProm(g model.PrometheusRulePrometheusRuleGroup) prom.PrometheusR
 		Labels: g.Labels,
 	}
 	if g.Interval != nil {
-		if d, err := prom_model.ParseDuration(string(*g.Interval)); err == nil {
-			out.Interval = d
+		d, err := prom_model.ParseDuration(string(*g.Interval))
+		if err != nil {
+			return prom.PrometheusRuleGroup{}, fmt.Errorf("invalid 'interval' duration %q: %w", *g.Interval, err)
 		}
+		out.Interval = d
 	}
 	if g.QueryOffset != nil {
-		if d, err := prom_model.ParseDuration(string(*g.QueryOffset)); err == nil {
-			out.QueryOffset = &d
+		d, err := prom_model.ParseDuration(string(*g.QueryOffset))
+		if err != nil {
+			return prom.PrometheusRuleGroup{}, fmt.Errorf("invalid 'query_offset' duration %q: %w", *g.QueryOffset, err)
 		}
+		out.QueryOffset = &d
 	}
 	if g.Limit != nil {
 		out.Limit = int(*g.Limit)
 	}
-	return out
+	return out, nil
 }
 
 // reassembleResource builds a PrometheusRule from the set of AlertRuleGroups that

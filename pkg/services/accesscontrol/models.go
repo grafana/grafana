@@ -513,6 +513,15 @@ const (
 	ActionAlertingAlertmanagerImportsWrite  = AlertingAlertmanagerImportsKind + ":update"
 	ActionAlertingAlertmanagerImportsDelete = AlertingAlertmanagerImportsKind + ":delete"
 
+	AlertingRulesApiGroup           = "rules.alerting.grafana.app"
+	AlertingPrometheusRulesResource = "prometheusrules"
+	AlertingPrometheusRulesKind     = AlertingRulesApiGroup + "/" + AlertingPrometheusRulesResource
+	// PrometheusRule kind actions (scoped per resource UID).
+	ActionAlertingPrometheusRulesRead   = AlertingPrometheusRulesKind + ":get"
+	ActionAlertingPrometheusRulesCreate = AlertingPrometheusRulesKind + ":create"
+	ActionAlertingPrometheusRulesWrite  = AlertingPrometheusRulesKind + ":update"
+	ActionAlertingPrometheusRulesDelete = AlertingPrometheusRulesKind + ":delete"
+
 	// External alerting rule actions. We can only narrow it down to writes or reads, as we don't control the atomicity in the external system.
 	ActionAlertingRuleExternalWrite = "alert.rules.external:write"
 	ActionAlertingRuleExternalRead  = "alert.rules.external:read"

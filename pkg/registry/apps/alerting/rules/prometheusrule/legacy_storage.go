@@ -15,6 +15,7 @@ import (
 
 	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -182,7 +183,10 @@ func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createVa
 		return nil, k8serrors.NewBadRequest("metadata.name is required")
 	}
 
-	folderUID := annotationValue(pr.Annotations, model.FolderAnnotationKey)
+	folderUID, err := readFolderUID(pr)
+	if err != nil {
+		return nil, err
+	}
 	if folderUID == "" {
 		folderUID, err = s.resolveDefaultFolder(ctx, user)
 		if err != nil {
@@ -235,7 +239,10 @@ func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.Up
 		return nil, false, k8serrors.NewBadRequest("expected a PrometheusRule object")
 	}
 
-	folderUID := annotationValue(pr.Annotations, model.FolderAnnotationKey)
+	folderUID, err := readFolderUID(pr)
+	if err != nil {
+		return nil, false, err
+	}
 	if folderUID == "" {
 		folderUID, err = s.resolveDefaultFolder(ctx, user)
 		if err != nil {
@@ -322,6 +329,17 @@ func (s *legacyStorage) pruneRemovedGroups(ctx context.Context, user identity.Re
 	return nil
 }
 
+// readFolderUID returns the folder UID from the canonical grafana.app/folder
+// annotation via the shared GrafanaMetaAccessor. Returns an empty string when
+// the annotation is absent so the caller can decide whether to auto-create.
+func readFolderUID(pr *model.PrometheusRule) (string, error) {
+	accessor, err := utils.MetaAccessor(pr)
+	if err != nil {
+		return "", fmt.Errorf("reading object metadata: %w", err)
+	}
+	return accessor.GetFolder(), nil
+}
+
 func (s *legacyStorage) resolveDefaultFolder(ctx context.Context, user identity.Requester) (string, error) {
 	if s.resolver == nil {
 		return "", fmt.Errorf("no folder annotation set and no default-folder resolver configured")
@@ -340,7 +358,7 @@ func (s *legacyStorage) resolveDefaultFolder(ctx context.Context, user identity.
 			return "", k8serrors.NewForbidden(
 				ResourceInfo.GroupResource(),
 				"",
-				fmt.Errorf("auto-create requires %q; set the %q annotation to target an existing folder", folder.ActionFoldersCreate, model.FolderAnnotationKey),
+				fmt.Errorf("auto-create requires %q; set the %q annotation to target an existing folder", folder.ActionFoldersCreate, utils.AnnoKeyFolder),
 			)
 		}
 	}

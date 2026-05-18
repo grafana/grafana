@@ -10,6 +10,7 @@ import (
 
 	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/config"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 func NewValidator(cfg config.RuntimeConfig) *simple.Validator {
@@ -20,11 +21,11 @@ func NewValidator(cfg config.RuntimeConfig) *simple.Validator {
 				return fmt.Errorf("object is not of type *v0alpha1.PrometheusRule")
 			}
 
-			folderUID := ""
-			if pr.Annotations != nil {
-				folderUID = pr.Annotations[model.FolderAnnotationKey]
+			accessor, err := utils.MetaAccessor(pr)
+			if err != nil {
+				return fmt.Errorf("failed to read object metadata: %w", err)
 			}
-			if folderUID != "" && cfg.FolderValidator != nil {
+			if folderUID := accessor.GetFolder(); folderUID != "" && cfg.FolderValidator != nil {
 				ok, verr := cfg.FolderValidator(ctx, folderUID)
 				if verr != nil {
 					return fmt.Errorf("failed to validate folder: %w", verr)

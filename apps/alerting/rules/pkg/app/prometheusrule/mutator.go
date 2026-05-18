@@ -8,6 +8,7 @@ import (
 
 	v1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/config"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 func NewMutator(_ config.RuntimeConfig) *simple.Mutator {
@@ -18,11 +19,11 @@ func NewMutator(_ config.RuntimeConfig) *simple.Mutator {
 				return nil, nil
 			}
 
-			folderUID := ""
-			if pr.Annotations != nil {
-				folderUID = pr.Annotations[v1.FolderAnnotationKey]
+			accessor, err := utils.MetaAccessor(pr)
+			if err != nil {
+				return nil, err
 			}
-			if folderUID != "" {
+			if folderUID := accessor.GetFolder(); folderUID != "" {
 				if pr.Labels == nil {
 					pr.Labels = make(map[string]string)
 				}
