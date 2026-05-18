@@ -77,12 +77,11 @@ func convertToDomainGroups(
 		groups = append(groups, grafGroup)
 	}
 
-	provenance := ngmodels.ProvenanceConvertedPrometheus
-	sourceProv := pr.GetProvenanceStatus()
-	if sourceProv != "" && sourceProv != model.ProvenanceStatusNone {
-		provenance = ngmodels.Provenance(sourceProv)
-	}
-	return groups, provenance, nil
+	// Provenance is forced; rules produced by this kind always carry the
+	// converted-prometheus provenance regardless of any caller-supplied
+	// annotation. This prevents a caller from disguising rules as api- or
+	// file-provisioned via the grafana.com/provenance annotation.
+	return groups, ngmodels.ProvenanceConvertedPrometheus, nil
 }
 
 func specGroupToProm(g model.PrometheusRulePrometheusRuleGroup) prom.PrometheusRuleGroup {

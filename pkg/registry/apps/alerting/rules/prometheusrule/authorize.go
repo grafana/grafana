@@ -20,6 +20,10 @@ func Authorize(ctx context.Context, ac accesscontrol.AccessControl, attr authori
 
 	var action accesscontrol.Evaluator
 	defaultEvaluator := accesscontrol.EvalPermission(accesscontrol.ActionAlertingRuleRead)
+	// Writes also need alert.provisioning.provenance:write because rules
+	// produced by this kind always carry the converted-prometheus provenance.
+	// Matches the /api/convert/prometheus middleware.
+	setStatus := accesscontrol.EvalPermission(accesscontrol.ActionAlertingProvisioningSetStatus)
 
 	switch attr.GetVerb() {
 	case "get", "list", "watch":
@@ -28,16 +32,19 @@ func Authorize(ctx context.Context, ac accesscontrol.AccessControl, attr authori
 		action = accesscontrol.EvalAll(
 			defaultEvaluator,
 			accesscontrol.EvalPermission(accesscontrol.ActionAlertingRuleCreate),
+			setStatus,
 		)
 	case "patch", "update":
 		action = accesscontrol.EvalAll(
 			defaultEvaluator,
 			accesscontrol.EvalPermission(accesscontrol.ActionAlertingRuleUpdate),
+			setStatus,
 		)
 	case "delete", "deletecollection":
 		action = accesscontrol.EvalAll(
 			defaultEvaluator,
 			accesscontrol.EvalPermission(accesscontrol.ActionAlertingRuleDelete),
+			setStatus,
 		)
 	}
 
