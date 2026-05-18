@@ -2,6 +2,7 @@ package folders
 
 import (
 	"context"
+	"net/url"
 	"sort"
 	"testing"
 
@@ -9,9 +10,36 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
+
+func TestConvertURLValuesToDescendantCountsOptions(t *testing.T) {
+	// Pinned at the conversion layer (not the HTTP layer) because the apiserver
+	// is what hands us a *url.Values — keeping the test at the same boundary
+	// matches how the scheme exercises this code path in production.
+	tests := []struct {
+		name   string
+		values url.Values
+		want   bool
+	}{
+		{"absent", url.Values{}, false},
+		{"bare presence", url.Values{"recursive": []string{""}}, true},
+		{"true", url.Values{"recursive": []string{"true"}}, true},
+		{"1", url.Values{"recursive": []string{"1"}}, true},
+		{"false", url.Values{"recursive": []string{"false"}}, false},
+		{"0", url.Values{"recursive": []string{"0"}}, false},
+		{"garbage falls back to presence-truthy", url.Values{"recursive": []string{"yes"}}, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			out := &folders.DescendantCountsOptions{}
+			require.NoError(t, convertURLValuesToDescendantCountsOptions(&tt.values, out, nil))
+			require.Equal(t, tt.want, out.Recursive)
+		})
+	}
+}
 
 func TestCollectDescendantFolders(t *testing.T) {
 	// Tree under test (parent → children):

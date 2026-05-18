@@ -2,10 +2,16 @@ package folders
 
 import (
 	"context"
+	"errors"
 	"net/http"
+	"net/url"
 	"slices"
+	"strconv"
+	"time"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/conversion"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
@@ -26,6 +32,11 @@ const descendantsPageSize = 1000
 // genuine cycles; this is a backstop against pathological depth that would
 // blow up request counts.
 const descendantsMaxLevels = 64
+
+// recursiveTimeout caps the recursive subtree walk + final GetStats call.
+// The walk's cost scales with subtree size, so on pathological trees we'd
+// rather fail fast with 504 than hold the request indefinitely.
+const recursiveTimeout = 10 * time.Second
 
 type subCountREST struct {
 	getter   rest.Getter
@@ -56,13 +67,21 @@ func (r *subCountREST) ProducesObject(verb string) interface{} {
 	return &folders.DescendantCounts{}
 }
 
+// NewConnectOptions advertises the typed DescendantCountsOptions to the
+// apiserver. Returning a registered runtime.Object is what makes the
+// `recursive` query parameter visible on the generated swagger spec — the
+// apiserver reflects over the struct's json tags via AddObjectParams.
 func (r *subCountREST) NewConnectOptions() (runtime.Object, bool, string) {
-	return nil, false, "" // true means you can use the trailing path as a variable
+	return &folders.DescendantCountsOptions{}, false, ""
 }
 
-func (r *subCountREST) Connect(ctx context.Context, name string, _ runtime.Object, responder rest.Responder) (http.Handler, error) {
+func (r *subCountREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	if _, err := r.getter.Get(ctx, name, &v1.GetOptions{}); err != nil {
 		return nil, err
+	}
+	recursive := false
+	if options, ok := opts.(*folders.DescendantCountsOptions); ok && options != nil {
+		recursive = options.Recursive
 	}
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		ns, err := request.NamespaceInfoFrom(ctx, true)
@@ -71,17 +90,35 @@ func (r *subCountREST) Connect(ctx context.Context, name string, _ runtime.Objec
 			return
 		}
 
-		descendants, err := r.collectDescendantFolders(ctx, ns.Value, name)
-		if err != nil {
-			responder.Error(err)
-			return
+		folderList := []string{name}
+		callCtx := ctx
+
+		if recursive {
+			var cancel context.CancelFunc
+			callCtx, cancel = context.WithTimeout(ctx, recursiveTimeout)
+			defer cancel()
+
+			descendants, err := r.collectDescendantFolders(callCtx, ns.Value, name)
+			if err != nil {
+				if errors.Is(err, context.DeadlineExceeded) {
+					responder.Error(apierrors.NewTimeoutError("recursive folder count exceeded deadline; retry without ?recursive for a shallow count", 0))
+					return
+				}
+				responder.Error(err)
+				return
+			}
+			folderList = append(folderList, descendants...)
 		}
 
-		stats, err := r.searcher.GetStats(ctx, &resourcepb.ResourceStatsRequest{
+		stats, err := r.searcher.GetStats(callCtx, &resourcepb.ResourceStatsRequest{
 			Namespace: ns.Value,
-			Folder:    append([]string{name}, descendants...),
+			Folder:    folderList,
 		})
 		if err != nil {
+			if errors.Is(err, context.DeadlineExceeded) {
+				responder.Error(apierrors.NewTimeoutError("recursive folder count exceeded deadline; retry without ?recursive for a shallow count", 0))
+				return
+			}
 			responder.Error(err)
 			return
 		}
@@ -99,10 +136,44 @@ func (r *subCountREST) Connect(ctx context.Context, name string, _ runtime.Objec
 	}), nil
 }
 
+// convertURLValuesToDescendantCountsOptions is registered with the scheme so
+// that ParameterCodec.DecodeParameters can turn the request URL into a typed
+// DescendantCountsOptions object. The scheme's default URL-values converter
+// would reject the bare `?recursive` form (empty string is not a valid bool);
+// we want presence-as-truthy here, so we own the parsing.
+//
+// Semantics: absent → false; present + empty value (bare `?recursive`) → true;
+// present + parseable bool → that bool; present + unparseable value → true
+// (presence wins). Keep in sync with the swagger description on the type.
+func convertURLValuesToDescendantCountsOptions(in interface{}, out interface{}, _ conversion.Scope) error {
+	values := in.(*url.Values)
+	opts := out.(*folders.DescendantCountsOptions)
+
+	if !values.Has("recursive") {
+		opts.Recursive = false
+		return nil
+	}
+	raw := values.Get("recursive")
+	if raw == "" {
+		opts.Recursive = true
+		return nil
+	}
+	b, err := strconv.ParseBool(raw)
+	if err != nil {
+		opts.Recursive = true
+		return nil
+	}
+	opts.Recursive = b
+	return nil
+}
+
 // collectDescendantFolders walks the folder tree under root via Search and
 // returns every descendant folder UID (excluding root itself — the caller
 // prepends root to the GetStats request). Returns nil when there are no
 // descendants. Cost scales with subtree size, not org size.
+//
+// Only invoked on the recursive path; the caller bounds the supplied
+// context with recursiveTimeout so a pathological subtree fails fast.
 //
 // Move/Delete confirmation dialogs need recursive counts: legacy
 // /api/folders/:uid/counts walked the SQL folder table with a recursive CTE;

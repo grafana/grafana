@@ -76,6 +76,25 @@ func (DescendantCounts) OpenAPIModelName() string {
 	return OpenAPIPrefix + "DescendantCounts"
 }
 
+// DescendantCountsOptions tunes the /counts subresource. Without options the
+// endpoint returns counts of resources directly inside the named folder. With
+// `?recursive` (bare or `=true`) the server walks the subtree under a 10s
+// timeout and returns aggregated counts; on timeout it returns 504.
+//
+// +k8s:deepcopy-gen=true
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type DescendantCountsOptions struct {
+	metav1.TypeMeta `json:",inline"`
+
+	// Recursive enables traversal of the full folder subtree. When false (or
+	// absent) the response only reflects resources directly inside the folder.
+	Recursive bool `json:"recursive,omitempty"`
+}
+
+func (DescendantCountsOptions) OpenAPIModelName() string {
+	return OpenAPIPrefix + "DescendantCountsOptions"
+}
+
 type ResourceStats struct {
 	Group    string `json:"group"`
 	Resource string `json:"resource"`
