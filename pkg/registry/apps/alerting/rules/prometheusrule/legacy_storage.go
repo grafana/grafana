@@ -16,6 +16,7 @@ import (
 	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/folder"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -31,6 +32,7 @@ const defaultFolderTitle = "PrometheusRules"
 type legacyStorage struct {
 	service         provisioning.AlertRuleService
 	resolver        NamespaceResolver
+	ac              accesscontrol.AccessControl
 	namespacer      request.NamespaceMapper
 	defaultInterval time.Duration
 	tableConverter  rest.TableConvertor
@@ -324,10 +326,30 @@ func (s *legacyStorage) resolveDefaultFolder(ctx context.Context, user identity.
 	if s.resolver == nil {
 		return "", fmt.Errorf("no folder annotation set and no default-folder resolver configured")
 	}
+
+	// Gate auto-creation on folders:create so a caller without folder-create
+	// permission can't implicitly provision a folder; they must supply an
+	// existing folder UID via the grafana.app/folder annotation.
+	if s.ac != nil {
+		ok, err := s.ac.Evaluate(ctx, user, accesscontrol.EvalPermission(folder.ActionFoldersCreate))
+		if err != nil {
+			return "", fmt.Errorf("evaluating folders:create permission: %w", err)
+		}
+
+		if !ok {
+			return "", k8serrors.NewForbidden(
+				ResourceInfo.GroupResource(),
+				"",
+				fmt.Errorf("auto-create requires %q; set the %q annotation to target an existing folder", folder.ActionFoldersCreate, model.FolderAnnotationKey),
+			)
+		}
+	}
+
 	ref, _, err := s.resolver.GetOrCreateNamespaceByTitle(ctx, defaultFolderTitle, user.GetOrgID(), user, folder.RootFolderUID)
 	if err != nil {
 		return "", fmt.Errorf("failed to resolve default folder %q: %w", defaultFolderTitle, err)
 	}
+
 	return ref.UID, nil
 }
 
