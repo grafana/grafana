@@ -76,6 +76,7 @@ func ProvideBackgroundServiceRegistry(
 	secretsGarbageCollectionWorker *secretsgarbagecollectionworker.Worker,
 	fixedRolesLoader *accesscontrol.FixedRolesLoader,
 	noopIAMRolesSyncer *accesscontrol.NoopIAMRolesSyncer,
+	noopGlobalRoleSeeder *accesscontrol.NoopGlobalRoleSeeder,
 	installSync installsync.Syncer,
 	zanzanaService *authz.EmbeddedZanzanaService,
 	// Need to make sure these are initialized, is there a better place to put them?
@@ -125,6 +126,7 @@ func ProvideBackgroundServiceRegistry(
 		secretsGarbageCollectionWorker,
 		fixedRolesLoader,
 		noopIAMRolesSyncer,
+		noopGlobalRoleSeeder,
 		installSync,
 		zanzanaService,
 	)
