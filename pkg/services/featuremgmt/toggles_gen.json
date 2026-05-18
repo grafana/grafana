@@ -740,7 +740,8 @@
       "metadata": {
         "name": "alertingQueryAndExpressionsStepMode",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2024-09-26T06:33:14Z"
+        "creationTimestamp": "2024-09-26T06:33:14Z",
+        "deletionTimestamp": "2026-05-18T11:23:10Z"
       },
       "spec": {
         "description": "Enables step mode for alerting queries and expressions",

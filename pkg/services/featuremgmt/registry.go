@@ -1335,14 +1335,6 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "alertingQueryAndExpressionsStepMode",
-			Description: "Enables step mode for alerting queries and expressions",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaAlertingSquad,
-			Generate:    Generate{LegacyFrontend: true},
-			Expression:  "true",
-		},
-		{
 			Name:        "improvedExternalSessionHandling",
 			Description: "Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.",
 			Stage:       FeatureStageGeneralAvailability,
