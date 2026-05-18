@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	dashv1beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	dashv2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
@@ -1496,4 +1497,116 @@ func TestConversionError(t *testing.T) {
 		// Test that it implements the error interface
 		var _ error = err
 	})
+}
+
+func TestNewDashboardObject(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       string
+		expected    runtime.Object
+		expectedErr string
+	}{
+		// Bare version strings → all supported versions return the correct concrete type.
+		{
+			name:     "v0alpha1 bare version",
+			input:    dashv0.VERSION,
+			expected: &dashv0.Dashboard{},
+		},
+		{
+			name:     "dashv1beta1 version",
+			input:    dashv1beta1.VERSION,
+			expected: &dashv1beta1.Dashboard{},
+		},
+		{
+			name:     "v1 bare version",
+			input:    dashv1.VERSION,
+			expected: &dashv1.Dashboard{},
+		},
+		{
+			name:     "v2alpha1 bare version",
+			input:    dashv2alpha1.VERSION,
+			expected: &dashv2alpha1.Dashboard{},
+		},
+		{
+			name:     "v2beta1 bare version",
+			input:    dashv2beta1.VERSION,
+			expected: &dashv2beta1.Dashboard{},
+		},
+		{
+			name:     "v2 bare version",
+			input:    dashv2.VERSION,
+			expected: &dashv2.Dashboard{},
+		},
+		// Full "group/version" strings → group is stripped before the version switch.
+		{
+			name:     "v0alpha1 full apiVersion",
+			input:    dashv0.APIVERSION,
+			expected: &dashv0.Dashboard{},
+		},
+		{
+			name:     "v1 full apiVersion",
+			input:    dashv1.APIVERSION,
+			expected: &dashv1.Dashboard{},
+		},
+		{
+			name:     "v2alpha1 full apiVersion",
+			input:    dashv2alpha1.APIVERSION,
+			expected: &dashv2alpha1.Dashboard{},
+		},
+		{
+			name:     "v2beta1 full apiVersion",
+			input:    dashv2beta1.APIVERSION,
+			expected: &dashv2beta1.Dashboard{},
+		},
+		{
+			name:     "v2 full apiVersion",
+			input:    dashv2.APIVERSION,
+			expected: &dashv2.Dashboard{},
+		},
+		// Error paths.
+		{
+			name:        "wrong group rejected",
+			input:       "wrong.group/v0alpha1",
+			expectedErr: "expected group: " + dashv0.GROUP,
+		},
+		{
+			name:        "empty group rejected",
+			input:       "/v0alpha1",
+			expectedErr: "invalid version",
+		},
+		{
+			name:        "valid group with unknown version",
+			input:       dashv0.GROUP + "/v99",
+			expectedErr: "invalid version",
+		},
+		{
+			name:        "valid group with empty version",
+			input:       dashv0.GROUP + "/",
+			expectedErr: "invalid version",
+		},
+		{
+			name:        "unknown bare version",
+			input:       "v9999",
+			expectedErr: "invalid version",
+		},
+		{
+			name:        "empty string",
+			input:       "",
+			expectedErr: "invalid version",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			out, err := NewDashboardObject(tt.input)
+			if tt.expectedErr != "" {
+				require.Error(t, err)
+				require.EqualError(t, err, tt.expectedErr)
+				require.Nil(t, out)
+				return
+			}
+			require.NoError(t, err)
+			require.IsType(t, tt.expected, out)
+		})
+	}
 }

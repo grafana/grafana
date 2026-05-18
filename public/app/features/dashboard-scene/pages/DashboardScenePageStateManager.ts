@@ -1406,7 +1406,7 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
       this.setActiveManager(newDashboardVersion);
     }
 
-    // Template dashboards: org templates use V2, gnet templates use V1
+    // Dashboard templates: Grafana templates use V1, Custom templates use V2
     if (options.route === DashboardRoutes.Template) {
       if (options.dashboardTemplateUid) {
         this.setActiveManager('v2');
