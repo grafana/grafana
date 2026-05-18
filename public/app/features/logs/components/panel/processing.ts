@@ -108,7 +108,7 @@ export class LogListModel implements LogRowModel {
     this.uniqueLabels = log.uniqueLabels;
 
     // LogListModel
-    this.displayLevel = logLevelToDisplayLevel(log.logLevel);
+    this.displayLevel = logLevelToDisplayLevel(log);
     this._getFieldLinks = getFieldLinks;
     this._grammar = grammar;
     this._prettifyJSON = Boolean(prettifyJSON);
@@ -343,17 +343,22 @@ const preProcessLog = (log: LogRowModel, options: PreProcessLogOptions): LogList
   return new LogListModel(log, options);
 };
 
-function logLevelToDisplayLevel(level = '') {
-  switch (level) {
+function logLevelToDisplayLevel(log: LogRowModel) {
+  switch (log.logLevel) {
     case LogLevel.critical:
       return 'crit';
     case LogLevel.warning:
       return 'warn';
     case LogLevel.unknown:
-      return '';
+      return hasExplicitUnknownLevel(log.labels) ? LogLevel.unknown : '';
     default:
-      return level;
+      return log.logLevel;
   }
+}
+
+function hasExplicitUnknownLevel(labels: Labels) {
+  const level = labels.level ?? labels.detected_level ?? labels.lvl ?? labels.loglevel;
+  return typeof level === 'string' && level.toLowerCase() === LogLevel.unknown;
 }
 
 function countNewLines(log: string, limit = Infinity) {

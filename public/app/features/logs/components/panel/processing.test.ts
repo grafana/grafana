@@ -381,6 +381,35 @@ Value"
     expect(processedLogs[2].displayLevel).toBe('error');
   });
 
+  test('Keeps documented trace and explicit unknown levels visible', () => {
+    const logs = preProcessLogs(
+      [
+        createLogRow({ uid: 'trace', logLevel: LogLevel.trace }),
+        createLogRow({ uid: 'unknown', labels: { level: 'unknown' }, logLevel: LogLevel.unknown }),
+      ],
+      {
+        escape: false,
+        order: LogsSortOrder.Ascending,
+        timeZone: 'browser',
+        wrapLogMessage: true,
+      }
+    );
+
+    expect(logs[0].displayLevel).toBe('trace');
+    expect(logs[1].displayLevel).toBe('unknown');
+  });
+
+  test('Keeps inferred unknown levels hidden when no level label is present', () => {
+    const logs = preProcessLogs([createLogRow({ uid: 'fallback', logLevel: LogLevel.unknown })], {
+      escape: false,
+      order: LogsSortOrder.Ascending,
+      timeZone: 'browser',
+      wrapLogMessage: true,
+    });
+
+    expect(logs[0].displayLevel).toBe('');
+  });
+
   test('Sets the log fields links', () => {
     expect(processedLogs[0].fields).toEqual([
       {
