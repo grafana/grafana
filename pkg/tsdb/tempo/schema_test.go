@@ -10,11 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const (
-	testTagScopeResource = "resource"
-	testTagScopeSpan     = "span"
-)
-
 func TestGlobalColumnValuesErrors(t *testing.T) {
 	errs := globalColumnValuesErrors([]string{tempoSpanColTraceIDHidden, "resource.service.name"}, "upstream failed")
 	require.Len(t, errs, 1)
