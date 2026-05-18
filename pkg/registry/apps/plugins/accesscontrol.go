@@ -1,6 +1,11 @@
 package plugins
 
 import (
+	"context"
+
+	"k8s.io/apiserver/pkg/authorization/authorizer"
+
+	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
 )
@@ -129,4 +134,16 @@ func FixedRoleRegistrations() []accesscontrol.RoleRegistration {
 
 func registerAccessControlRoles(service accesscontrol.Service) error {
 	return service.DeclareFixedRoles(FixedRoleRegistrations()...)
+}
+
+// Temporary authorizer
+type tempAuthorizerWrapper struct {
+	parent authorizer.Authorizer
+}
+
+func (p *tempAuthorizerWrapper) Authorize(ctx context.Context, a authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
+	if a.GetResource() == pluginsv0alpha1.AppKind().Plural() {
+		return authorizer.DecisionAllow, "", nil // ????
+	}
+	return p.parent.Authorize(ctx, a)
 }
