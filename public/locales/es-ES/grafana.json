@@ -11357,6 +11357,8 @@
       "clear-search": "Borrar",
       "close-inline-details": "Cerrar detalles de este log",
       "close-sidebar-details": "Cerrar la barra lateral de detalles del log",
+      "copy-log-line": "",
+      "copy-log-line-json": "",
       "copy-shortlink": "Copiar enlace corto",
       "copy-to-clipboard": "Copiar al portapapeles",
       "displayed-fields-section": "Organizar los campos mostrados",
@@ -11405,7 +11407,8 @@
     },
     "log-line-menu": {
       "copy-link": "Copiar enlace a la línea de registro",
-      "copy-log": "Copiar línea de registro",
+      "copy-log-contents": "",
+      "copy-log-message": "",
       "hide-details": "Mostrar detalles del log",
       "icon-label": "Menú de registro",
       "log-line": "Línea de log",
@@ -15555,8 +15558,8 @@
     },
     "legend": {
       "category": "Leyenda",
-      "description-faceted-filter": "Mostrar filtro de visibilidad de series en función de las etiquetas",
-      "name-faceted-filter": "Filtro por facetas"
+      "description-faceted-filter": "",
+      "name-faceted-filter": ""
     },
     "line-style-editor": {
       "line-fill-options": {

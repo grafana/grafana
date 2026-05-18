@@ -74,11 +74,6 @@ export interface FeatureToggles {
   */
   influxdbBackendMigration?: boolean;
   /**
-  * Registers a live apiserver
-  * @default false
-  */
-  liveAPIServer?: boolean;
-  /**
   * populate star status from apiserver
   * @default false
   */
@@ -243,21 +238,6 @@ export interface FeatureToggles {
   * @default false
   */
   kubernetesQueryCaching?: boolean;
-  /**
-  * Disable schema validation for dashboards/v1
-  * @default false
-  */
-  dashboardDisableSchemaValidationV1?: boolean;
-  /**
-  * Disable schema validation for dashboards/v2
-  * @default false
-  */
-  dashboardDisableSchemaValidationV2?: boolean;
-  /**
-  * Log schema validation errors so they can be analyzed later
-  * @default false
-  */
-  dashboardSchemaValidationLogging?: boolean;
   /**
   * Register legacy datasource apis that use the numeric id
   * @default false
@@ -513,6 +493,11 @@ export interface FeatureToggles {
   * @default false
   */
   sqlExpressionsColumnAutoComplete?: boolean;
+  /**
+  * Enables CodeMirror editor for SQL Expressions
+  * @default false
+  */
+  sqlExpressionsCodeMirror?: boolean;
   /**
   * Enable grafana's embedded kube-aggregator
   * @default false
@@ -995,17 +980,6 @@ export interface FeatureToggles {
   */
   azureMonitorLogsBuilderEditor?: boolean;
   /**
-  * Specifies the locale so the correct format for numbers and dates can be shown
-  * @deprecated
-  * @default false
-  */
-  localeFormatPreference?: boolean;
-  /**
-  * Enables the unified storage grpc connection pool
-  * @default false
-  */
-  unifiedStorageGrpcConnectionPool?: boolean;
-  /**
   * Enables UI functionality to permanently delete alert rules
   * @default true
   */
@@ -1327,11 +1301,6 @@ export interface FeatureToggles {
   */
   pluginStoreServiceLoading?: boolean;
   /**
-  * Increases panel padding globally
-  * @default true
-  */
-  newPanelPadding?: boolean;
-  /**
   * When storing dashboard and folder resource permissions, only store action sets and not the full list of underlying permission
   * @default true
   */
@@ -1406,6 +1375,11 @@ export interface FeatureToggles {
   * @default true
   */
   dashboardSectionVariables?: boolean;
+  /**
+  * Enables global and folder-scoped dashboard variables via dashboard.grafana.app
+  * @default false
+  */
+  globalDashboardVariables?: boolean;
   /**
   * Enables the ASAP smoothing transformation for time series data
   * @default false
@@ -1676,4 +1650,9 @@ export interface FeatureToggles {
   * @default false
   */
   ['alerting.notificationsAPIV1Beta1']?: boolean;
+  /**
+  * Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana
+  * @default false
+  */
+  ['alerting.syncExternalAlertmanager']?: boolean;
 }

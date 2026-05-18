@@ -107,7 +107,7 @@ var (
 			Expression:  "true", // enabled by default
 		},
 		{
-			Name:            "liveAPIServer",
+			Name:            "live.runAPIServer",
 			Description:     "Registers a live apiserver",
 			Stage:           FeatureStageExperimental,
 			RequiresDevMode: true,
@@ -115,7 +115,17 @@ var (
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true,
 			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
+			Generate:        Generate{Go: true},
+		},
+		{
+			Name:            "live.keepHAPrefixInCloud",
+			Description:     "keep the prefix (just in case)",
+			Stage:           FeatureStageExperimental,
+			HideFromDocs:    true,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true,
+			Expression:      "false",
+			Generate:        Generate{Go: true},
 		},
 		{
 			Name:         "starsFromAPIServer",
@@ -424,30 +434,6 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "dashboardDisableSchemaValidationV1",
-			Description: "Disable schema validation for dashboards/v1",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaAppPlatformSquad,
-			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:        "dashboardDisableSchemaValidationV2",
-			Description: "Disable schema validation for dashboards/v2",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaAppPlatformSquad,
-			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:        "dashboardSchemaValidationLogging",
-			Description: "Log schema validation errors so they can be analyzed later",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaAppPlatformSquad,
-			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:            "datasources.queryTypes",
 			Description:     "Load Query types from spec.{version}.query.{yaml|json}",
 			Stage:           FeatureStageExperimental,
@@ -641,7 +627,7 @@ var (
 			Name:        "dashboardNewLayouts",
 			Description: "Enables new dashboard layouts",
 			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true}, // The restore backend feature changes behavior based on this flag
+			Generate:    Generate{LegacyFrontend: true},
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "true",
 		},
@@ -916,6 +902,14 @@ var (
 			Description: "Enables column autocomplete for SQL Expressions",
 			Stage:       FeatureStageExperimental,
 			Generate:    Generate{LegacyFrontend: true},
+			Owner:       grafanaDataProSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "sqlExpressionsCodeMirror",
+			Description: "Enables CodeMirror editor for SQL Expressions",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{LegacyFrontend: true, React: true},
 			Owner:       grafanaDataProSquad,
 			Expression:  "false",
 		},
@@ -1756,23 +1750,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "localeFormatPreference",
-			Description: "Specifies the locale so the correct format for numbers and dates can be shown",
-			Stage:       FeatureStageDeprecated, // not continuing the work for now, will be removed
-			Owner:       grafanaFrontendPlatformSquad,
-			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:         "unifiedStorageGrpcConnectionPool",
-			Description:  "Enables the unified storage grpc connection pool",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaSearchAndStorageSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:         "alertingRulePermanentlyDelete",
 			Description:  "Enables UI functionality to permanently delete alert rules",
 			Generate:     Generate{LegacyFrontend: true},
@@ -2324,14 +2301,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "newPanelPadding",
-			Description: "Increases panel padding globally",
-			Stage:       FeatureStagePublicPreview,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaDashboardsSquad,
-			Expression:  "true",
-		},
-		{
 			Name:         "onlyStoreActionSets",
 			Description:  "When storing dashboard and folder resource permissions, only store action sets and not the full list of underlying permission",
 			Stage:        FeatureStageGeneralAvailability,
@@ -2476,6 +2445,15 @@ var (
 			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "true", // enabled by default
+		},
+		{
+			Name:            "globalDashboardVariables",
+			Description:     "Enables global and folder-scoped dashboard variables via dashboard.grafana.app",
+			Stage:           FeatureStageExperimental,
+			Generate:        Generate{LegacyGo: true, LegacyFrontend: true, React: true},
+			Owner:           grafanaDashboardsSquad,
+			RequiresRestart: true,
+			Expression:      "false",
 		},
 		{
 			Name:        "smoothingTransformation",
@@ -2816,7 +2794,7 @@ var (
 		{
 			Name:        "flameGraphWithCallTree",
 			Description: "Enables the new Flame Graph UI containing the Call Tree view",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaObservabilityTracesAndProfilingSquad,
 			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 			Expression:  "false",
@@ -3090,6 +3068,15 @@ var (
 			Generate:     Generate{Go: true},
 		},
 		{
+			Name:         "grafana.meticulousAIRecorderHighVolume",
+			Description:  "When true, increases the volume of data transferred before abandoning sessions for Meticulous AI session recorder.",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
+			HideFromDocs: true,
+			Generate:     Generate{Go: true},
+		},
+		{
 			Name:        "datasources.useNewStackInfoToSettingsCache",
 			Description: "Use the new cache for datasource.StackInfoToSettings, backend flag",
 			Stage:       FeatureStageGeneralAvailability,
@@ -3126,7 +3113,7 @@ var (
 			Name:            "alerting.syncExternalAlertmanager",
 			Description:     "Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana",
 			Stage:           FeatureStageExperimental,
-			Generate:        Generate{Go: true},
+			Generate:        Generate{Go: true, React: true, LegacyFrontend: true},
 			Owner:           grafanaAlertingSquad,
 			HideFromDocs:    true,
 			RequiresRestart: true,
@@ -3137,6 +3124,15 @@ var (
 			Description:  "Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button)",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaOperatorExperienceSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
+			Name:         "grafana.logLevelInference",
+			Description:  "Enables log level inference from log line contents when level is not defined as a field or a label",
+			Stage:        FeatureStageDeprecated,
+			Owner:        grafanaObservabilityLogsSquad,
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{React: true},
