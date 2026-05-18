@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	scope "github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1"
 	"github.com/grafana/grafana/pkg/tsdb/loki/kinds/dataquery"
+	schemas "github.com/grafana/schemads"
 )
 
 const (
@@ -31,6 +32,7 @@ const (
 	flagLokiRunQueriesInParallel  = "lokiRunQueriesInParallel"
 	flagLogQLScope                = "logQLScope"
 	flagLokiExperimentalStreaming = "lokiExperimentalStreaming"
+	flagDsAbstractionApp          = "dsAbstractionApp"
 	fromAlertHeaderName           = "FromAlert"
 )
 
@@ -47,10 +49,11 @@ var (
 )
 
 func ProvideService(httpClientProvider *httpclient.Provider, tracer trace.Tracer) *Service {
+	logger := backend.NewLoggerWith("logger", "tsdb.loki")
 	return &Service{
-		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
+		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider, logger, tracer)),
 		tracer: tracer,
-		logger: backend.NewLoggerWith("logger", "tsdb.loki"),
+		logger: logger,
 	}
 }
 
@@ -69,6 +72,9 @@ type datasourceInfo struct {
 	// open streams
 	streams   map[string]data.FrameJSONCache
 	streamsMu sync.RWMutex
+
+	schemaDatasource *schemas.SchemaDatasource
+	schemaProvider   *SchemaProvider
 }
 
 type QueryJSONModel struct {
@@ -91,7 +97,7 @@ func parseQueryModel(raw json.RawMessage) (*QueryJSONModel, error) {
 	return model, nil
 }
 
-func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.InstanceFactoryFunc {
+func newInstanceSettings(httpClientProvider *httpclient.Provider, logger log.Logger, tracer trace.Tracer) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		opts, err := settings.HTTPClientOptions(ctx)
 		if err != nil {
@@ -104,10 +110,27 @@ func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.Ins
 			return nil, backend.DownstreamError(fmt.Errorf("error creating http client: %w", err))
 		}
 
+		var schemaDs *schemas.SchemaDatasource
+		var schemaProv *SchemaProvider
+		grafCfg := config.GrafanaConfigFromContext(ctx)
+		if grafCfg != nil && grafCfg.FeatureToggles().IsEnabled(flagDsAbstractionApp) {
+			schemaProv = NewSchemaProvider(client, settings.URL, logger, tracer)
+			schemaDs = schemas.NewSchemaDatasource(
+				schemaProv,
+				schemaProv,
+				schemaProv,
+				nil,
+				schemaProv,
+				nil,
+			)
+		}
+
 		model := &datasourceInfo{
-			HTTPClient: client,
-			URL:        settings.URL,
-			streams:    make(map[string]data.FrameJSONCache),
+			HTTPClient:       client,
+			URL:              settings.URL,
+			streams:          make(map[string]data.FrameJSONCache),
+			schemaDatasource: schemaDs,
+			schemaProvider:   schemaProv,
 		}
 		return model, nil
 	}
@@ -124,6 +147,10 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 }
 
 func callResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender, dsInfo *datasourceInfo, plog log.Logger, tracer trace.Tracer) error {
+	if strings.HasPrefix(req.Path, schemas.BaseResourcePath) && dsInfo.schemaDatasource != nil {
+		return dsInfo.schemaDatasource.CallResource(ctx, req, sender)
+	}
+
 	url := req.URL
 
 	lokiURL := fmt.Sprintf("/loki/api/v1/%s", url)
@@ -198,6 +225,20 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datasourceInfo, responseOpts ResponseOpts, tracer trace.Tracer, plog log.Logger, runInParallel bool, logQLScopes bool) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 
+	req, schemadsRefIDs, sqlErrs := normalizeGrafanaSQLRequest(ctx, req, dsInfo)
+	for refID, e := range sqlErrs {
+		result.Responses[refID] = backend.DataResponse{
+			Error:       e,
+			ErrorSource: backend.ErrorSourceDownstream,
+		}
+	}
+	if len(req.Queries) == 0 {
+		if len(result.Responses) > 0 {
+			return result, nil
+		}
+		return result, fmt.Errorf("query contains no queries")
+	}
+
 	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, plog, tracer)
 
 	start := time.Now()
@@ -238,6 +279,17 @@ func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datas
 		}
 	}
 	plog.Debug("Executed queries", "duration", time.Since(start), "queriesLength", len(queries), "runInParallel", runInParallel)
+
+	if len(schemadsRefIDs) > 0 {
+		for refID, dr := range result.Responses {
+			if _, ok := schemadsRefIDs[refID]; !ok || dr.Error != nil {
+				continue
+			}
+			dr.Frames = flattenLogsToTabular(dr.Frames, responseOpts.logsDataplane, plog)
+			result.Responses[refID] = dr
+		}
+	}
+
 	return result, err
 }
 

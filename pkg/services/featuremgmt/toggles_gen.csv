@@ -203,8 +203,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-05-21,alertingImportYAMLUI,GA,@grafana/alerting-squad,false,false,true
 2026-02-18,alertingMigrationWizardUI,experimental,@grafana/alerting-squad,false,false,true
 2025-04-02,azureMonitorLogsBuilderEditor,preview,@grafana/data-sources-plugins,false,false,false
-2025-03-31,localeFormatPreference,deprecated,@grafana/grafana-frontend-platform,false,false,false
-2025-03-21,unifiedStorageGrpcConnectionPool,experimental,@grafana/search-and-storage,false,false,false
 2025-04-03,alertingRulePermanentlyDelete,GA,@grafana/alerting-squad,false,false,true
 2025-03-27,alertingRuleRecoverDeleted,GA,@grafana/alerting-squad,false,false,false
 2025-04-02,multiTenantTempCredentials,experimental,@grafana/data-sources-plugins,false,false,false
@@ -287,6 +285,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-08,plugins.useMTPlugins,experimental,@grafana/grafana-catalog,false,false,true
 2025-12-09,multiPropsVariables,GA,@grafana/dashboards-squad,false,false,true
 2026-03-02,dashboardSectionVariables,GA,@grafana/dashboards-squad,false,false,true
+2026-03-24,globalDashboardVariables,experimental,@grafana/dashboards-squad,false,true,false
 2026-01-05,smoothingTransformation,experimental,@grafana/datapro,false,false,true
 2026-01-06,secretsManagementAppPlatformAwsKeeper,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 2026-01-07,profilesExemplars,preview,@grafana/observability-traces-and-profiling,false,false,false
@@ -358,9 +357,11 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-04-23,assistant.frontend.tools.dashboardTemplates,experimental,@grafana/sharing-squad,false,false,true
 2026-04-27,grafana.correlationsSkipLegacy,experimental,@grafana/datapro,false,false,false
 2026-04-28,grafana.meticulousAIRecorder,experimental,@grafana/dataviz-squad,false,false,false
+2026-05-14,grafana.meticulousAIRecorderHighVolume,experimental,@grafana/dataviz-squad,false,false,false
 2026-04-30,datasources.useNewStackInfoToSettingsCache,GA,@grafana/grafana-datasources-core-services,false,false,false
 2026-05-06,grafana.unifiedHomepage,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2026-05-06,preferences.rerouteLegacyAPIs,experimental,@grafana/grafana-frontend-platform,false,false,false
 2026-05-05,plugins.marketplaceLicensing,experimental,@grafana/grafana-catalog,false,true,false
 2026-05-11,alerting.syncExternalAlertmanager,experimental,@grafana/alerting-squad,false,true,false
 2026-05-12,grafana.enableScopesFirstMode,experimental,@grafana/grafana-operator-experience-squad,false,false,true
+2026-05-08,grafana.logLevelInference,deprecated,@grafana/observability-logs,false,false,true
