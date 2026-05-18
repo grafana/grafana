@@ -399,15 +399,22 @@ Value"
     expect(logs[1].displayLevel).toBe('unknown');
   });
 
-  test('Keeps inferred unknown levels hidden when no level label is present', () => {
-    const logs = preProcessLogs([createLogRow({ uid: 'fallback', logLevel: LogLevel.unknown })], {
-      escape: false,
-      order: LogsSortOrder.Ascending,
-      timeZone: 'browser',
-      wrapLogMessage: true,
-    });
+  test('Keeps inferred unknown levels hidden when no level label is present or empty', () => {
+    const logs = preProcessLogs(
+      [
+        createLogRow({ uid: 'fallback', logLevel: LogLevel.unknown }),
+        createLogRow({ uid: 'empty', labels: { level: '' }, logLevel: LogLevel.unknown }),
+      ],
+      {
+        escape: false,
+        order: LogsSortOrder.Ascending,
+        timeZone: 'browser',
+        wrapLogMessage: true,
+      }
+    );
 
     expect(logs[0].displayLevel).toBe('');
+    expect(logs[1].displayLevel).toBe('');
   });
 
   test('Sets the log fields links', () => {
