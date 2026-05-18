@@ -13,18 +13,14 @@ type Props =
 
 export const EditReceiverView = (props: Props) => {
   // GrafanaManagedContactPoint satisfies EntityToCheck structurally (has metadata?: ObjectMeta).
-  // TypeScript cannot narrow through a ternary argument, so we use a cast here.
-  // On the cloud AM branch hasConfigurationAPI is false, so makeScopedAbility returns NotSupported
-  // before ever inspecting the entity.
+  // TypeScript cannot narrow a ternary argument through the discriminated-union Props, so a cast
+  // is required. On the cloud AM branch hasConfigurationAPI is false and makeScopedAbility
+  // returns NotSupported before ever inspecting the entity.
   const editAbility = useContactPointAbility({
     action: ContactPointAction.Update,
     context:
       props.alertmanagerName === GRAFANA_RULES_SOURCE_NAME
-        ? // GrafanaManagedContactPoint works as EntityToCheck (has metadata?: ObjectMeta).
-          // TypeScript can't narrow the type here due to the discriminated-union Props, so a cast
-          // is needed. On the cloud AM branch hasConfigurationAPI is false and makeScopedAbility
-          // returns NotSupported without checking the entity.
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        ? // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
           (props.contactPoint as GrafanaManagedContactPoint)
         : {},
   });
