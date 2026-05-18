@@ -137,8 +137,9 @@ function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
 
   const stateList = useMemo(() => getStateList(props.options.stateFilter), [props.options.stateFilter]);
   const { options, replaceVariables } = props;
+  const resolvedDatasource = options.datasource ? replaceVariables(options.datasource) : options.datasource;
   const dataSourceName =
-    options.datasource === GRAFANA_DATASOURCE_NAME ? GRAFANA_RULES_SOURCE_NAME : options.datasource;
+    resolvedDatasource === GRAFANA_DATASOURCE_NAME ? GRAFANA_RULES_SOURCE_NAME : resolvedDatasource;
   const parsedOptions: UnifiedAlertListOptions = {
     ...props.options,
     alertName: replaceVariables(options.alertName),
@@ -391,12 +392,13 @@ function filterRules(props: PanelProps<UnifiedAlertListOptions>, rules: Combined
     });
   }
   if (options.datasource) {
-    const isGrafanaDS = options.datasource === GRAFANA_DATASOURCE_NAME;
+    const resolvedDatasource = replaceVariables(options.datasource);
+    const isGrafanaDS = resolvedDatasource === GRAFANA_DATASOURCE_NAME;
 
     filteredRules = filteredRules.filter(
       isGrafanaDS
         ? ({ dataSourceName }) => dataSourceName === GRAFANA_RULES_SOURCE_NAME
-        : ({ dataSourceName }) => dataSourceName === options.datasource
+        : ({ dataSourceName }) => dataSourceName === resolvedDatasource
     );
   }
 
