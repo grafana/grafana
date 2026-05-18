@@ -60,9 +60,7 @@ describe('SectionFiltersList', () => {
   });
 
   it('renders a plain top-level filters heading without a count', () => {
-    const row = buildRow({ includeFilter: true, includeCustom: true });
-
-    render(<SectionFiltersCategoryTitle sectionOwner={row} isExpanded={false} />);
+    render(<SectionFiltersCategoryTitle />);
 
     expect(screen.getByText('Filters')).toBeInTheDocument();
     expect(screen.queryByText('Filters (1)')).not.toBeInTheDocument();
