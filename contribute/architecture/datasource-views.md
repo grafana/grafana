@@ -19,13 +19,16 @@
 > **fan in multiple Grafana datasources** or apply Grafana-side frame logic;
 > user-facing copy should clarify **logical datasource** where that matters.
 >
-> **Separate track (likely to ship first):** [Semantic datasource views](./virtual-datasources-semantic-layer.md)
+> **Separate track (likely to ship first):** [Semantic datasource](./semantic-datasource.md)
 > use `SemanticDataSource` (`semanticdatasource.grafana.app`) — not a `spec.kind`
 > on this resource. This query-graph plan may never ship; if it does, it keeps
 > `VirtualDataSource` in `virtualdatasource.grafana.app`.
 
 ## Changelog
 
+- **v5 (this revision)** — Doc path renamed to
+  `contribute/architecture/datasource-views.md` (was `virtual-datasources.md`);
+  semantic track doc is `semantic-datasource.md`.
 - **v4 (this revision)** — **Product naming:** prose adopts **Datasource View**
   (**DV**) instead of older **“Virtual datasource”** / **VDS** wording; CR kinds, API groups,
   package paths, plugin ids, and `vds.*` error-code prefixes are unchanged until
@@ -606,7 +609,7 @@ scopedVars + filters`.
 
 ### Phase 0 — Plan & socialise (this doc)
 
-- Land plan in `contribute/architecture/virtual-datasources.md`
+- Land plan in `contribute/architecture/datasource-views.md`
   on a `sj/virtual-datasources-plan` branch.
 - Cross-review with: Sharing squad (saved queries), Alerting
   (eval impact), Dashboards (DS picker), Expressions (SQL pushdown).
@@ -971,6 +974,10 @@ Datasource** (valid indirection metaphor, easy to confuse with unrelated
 **Teaching / UX:** some users will equate **view** with one DB catalog. Where a
 DV **fans in multiple Grafana datasources** or applies Grafana-side frame
 logic, prefer **logical datasource** (or spell out the behaviour in UI).
+
+**Sibling doc:** compile-and-delegate semantics use **Semantic datasource**
+(product language) — see [`semantic-datasource.md`](./semantic-datasource.md)
+(`SemanticDataSource` CR), distinct from this DV / `VirtualDataSource` track.
 
 ## 10. Out-of-scope follow-ups (filed as separate issues)
 
