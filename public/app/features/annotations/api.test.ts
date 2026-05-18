@@ -82,6 +82,15 @@ describe('annotationServer with FE flag OFF', () => {
     expect(tags).toEqual([{ term: 't', count: 2 }]);
   });
 
+  // Guards against the `TypeError: Cannot read properties of undefined (reading 'legacy')`
+  // regression when callers pass the method as a detached callback, e.g.
+  // `tagOptions={annotationServer().tags}` in TagFilter.
+  it('tags works when passed as a detached callback (no `this` binding)', async () => {
+    getFn.mockResolvedValue({ result: { tags: [{ tag: 't', count: 2 }] } });
+    const detached = annotationServer().tags;
+    await expect(detached()).resolves.toEqual([{ term: 't', count: 2 }]);
+  });
+
   it('does not consult discovery when FE flag is off', async () => {
     await annotationServer().save({ time: 1, text: 'x', dashboardUID: 'd', panelId: 1 });
     expect(mockIsAnnotationApiAvailable).not.toHaveBeenCalled();

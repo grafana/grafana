@@ -10,7 +10,7 @@ import { type AnnotationTagsResponse } from './types';
 export interface AnnotationServer {
   query(params: Record<string, unknown>, requestId: string): Promise<DataFrame>;
   forAlert(alertUID: string): Promise<StateHistoryItem[]>;
-  save(annotation: AnnotationEvent, scopes?: string[]): Promise<unknown>;
+  save(annotation: AnnotationEvent, scopes?: string[]): Promise<AnnotationEvent>;
   update(annotation: AnnotationEvent, scopes?: string[]): Promise<unknown>;
   delete(annotation: AnnotationEvent): Promise<unknown>;
   tags(): Promise<Array<{ term: string; count: number }>>;
@@ -120,13 +120,14 @@ class K8sAnnotationServer implements AnnotationServer {
     return annotationK8sClient.remove(annotation.id);
   }
 
-  async tags() {
+  // Arrow-bound so `this` is preserved when callers pass it as a detached callback
+  tags = async (): Promise<Array<{ term: string; count: number }>> => {
     if (!(await isK8sAnnotationsClientEnabled())) {
       return this.legacy.tags();
     }
     const items = await annotationK8sClient.tags();
     return items.map(({ tag, count }) => ({ term: tag, count }));
-  }
+  };
 }
 
 let instance: AnnotationServer | null = null;
