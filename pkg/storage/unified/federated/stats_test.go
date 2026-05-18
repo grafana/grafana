@@ -123,4 +123,33 @@ func TestIntegrationDirectSQLStats(t *testing.T) {
 			}
 		]`, string(jj))
 	})
+
+	// Folder1 has no rules directly but folder2 (its child) does. With
+	// Folders pre-expanded by the caller, the legacy count must include
+	// the child folder's rule — same recursive semantics as the unified
+	// path.
+	t.Run("GetStatsForFolder1Recursive", func(t *testing.T) {
+		ctx := context.Background()
+		ctx = request.WithNamespace(ctx, "default")
+
+		stats, err := store.GetStats(ctx, &resourcepb.ResourceStatsRequest{
+			Namespace: "default",
+			Folder:    folder1UID,
+			Folders:   []string{folder2UID},
+		})
+		require.NoError(t, err)
+
+		jj, _ := json.MarshalIndent(stats.Stats, "", "  ")
+		require.JSONEq(t, `[
+			{
+				"group": "sql-fallback",
+				"resource": "alertrules",
+				"count": 1
+			},
+			{
+				"group": "sql-fallback",
+				"resource": "library_elements"
+			}
+		]`, string(jj))
+	})
 }
