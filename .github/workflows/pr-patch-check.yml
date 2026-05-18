@@ -42,26 +42,15 @@ jobs:
       PR_COMMIT_SHA: ${{ inputs.pr_commit_sha }}
     runs-on: ubuntu-latest
     steps:
-      - name: "Get vault secrets"
-        id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+      - name: Get GitHub App token
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@e5b7989c92b55fe3ac6dd006d6de49082ba8c507 # create-github-app-token (github-script/v9)
         with:
-          # Secrets placed in the ci/data/repo/grafana/grafana/delivery-bot-app path in Vault
-          repo_secrets: |
-            GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
-      - name: "Generate token"
-        id: generate_token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        with:
-          # App needs Actions: Read/Write for the grafana/security-patch-actions repo
-          app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
-          private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
-          permissions: "{\"actions\": \"write\", \"workflows\": \"write\"}"
-          repositories: "[\"security-patch-actions\"]"
+          github_app: grafana-delivery-bot
       - name: "Dispatch job"
         uses: actions/github-script@v8
         with:
-          github-token: ${{ steps.generate_token.outputs.token }}
+          github-token: ${{ steps.get-github-app-token.outputs.token }}
           script: |
             const {HEAD_REF, BASE_REF, REPO, SENDER, SHA, PR_COMMIT_SHA} = process.env;
 
@@ -85,7 +74,7 @@ jobs:
         # since the security-patch-actions workflow output must not be exposed.
         uses: actions/github-script@v8
         with:
-          github-token: ${{ steps.generate_token.outputs.token }}
+          github-token: ${{ steps.get-github-app-token.outputs.token }}
           script: |
             const {HEAD_REF, REPO} = process.env;
 
