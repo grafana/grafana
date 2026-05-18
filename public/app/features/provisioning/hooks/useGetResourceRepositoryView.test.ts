@@ -289,4 +289,18 @@ describe('useGetResourceRepositoryView', () => {
       expect(result.current.isInstanceManaged).toBe(false);
     });
   });
+
+  describe('instance-level fallback without name or folderName', () => {
+    it('queries settings even when neither name nor folderName is provided', () => {
+      const instanceRepo = repoView({ name: 'instance-repo', target: 'instance' });
+      setupMocks({ settingsItems: [instanceRepo] });
+
+      const { result } = renderHook(() => useGetResourceRepositoryView({}));
+
+      expect(result.current.status).toBe(RepoViewStatus.Ready);
+      expect(result.current.repository).toBe(instanceRepo);
+      expect(result.current.isInstanceManaged).toBe(true);
+      expect(mockUseGetFrontendSettingsQuery).not.toHaveBeenCalledWith(expect.anything());
+    });
+  });
 });

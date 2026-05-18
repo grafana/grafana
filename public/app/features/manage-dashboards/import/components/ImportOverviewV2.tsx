@@ -86,6 +86,10 @@ export function ImportOverviewV2({ dashboard, dashboardUid, inputs, meta, source
     applyDefaults,
   });
 
+  const hasProvisionedConflict =
+    isProvisioned && Boolean(formState.errors.dashboard?.title || formState.errors.k8s?.name);
+  const effectiveSubmitDisabled = submitDisabled || hasProvisionedConflict;
+
   const buildDashboardSpec = useCallback(
     (form: ImportFormDataV2): DashboardV2Spec => {
       const base: DashboardV2Spec = hasFloatGridItems ? { ...dashboard, layout: normalizedLayout } : dashboard;
@@ -156,7 +160,7 @@ export function ImportOverviewV2({ dashboard, dashboardUid, inputs, meta, source
             onSubmit={onSubmit}
             watch={watch}
             hasFloatGridItems={hasFloatGridItems}
-            submitDisabled={submitDisabled}
+            submitDisabled={effectiveSubmitDisabled}
           >
             {shouldRenderProvisionedFields && (
               <ProvisionedImportFields

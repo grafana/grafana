@@ -74,6 +74,9 @@ export function ImportOverviewV1({ dashboard, inputs, meta, source, folderUid, o
     hasLibraryPanels: inputs.libraryPanels.length > 0,
   });
 
+  const hasProvisionedConflict = isProvisioned && Boolean(formState.errors.title || formState.errors.uid);
+  const effectiveSubmitDisabled = submitDisabled || hasProvisionedConflict;
+
   const onStandardSubmit = useCallback(
     async (form: ImportDashboardDTO) => {
       reportInteraction(IMPORT_FINISHED_EVENT_NAME);
@@ -153,7 +156,7 @@ export function ImportOverviewV1({ dashboard, inputs, meta, source, folderUid, o
             onUidReset={() => setUidReset(true)}
             onSubmit={onSubmit}
             watch={watch}
-            submitDisabled={submitDisabled}
+            submitDisabled={effectiveSubmitDisabled}
           >
             {shouldRenderProvisionedFields && (
               <ProvisionedImportFields

@@ -341,4 +341,25 @@ describe('useProvisionedImport', () => {
 
     expect(result.current.error).toBe('save failed');
   });
+
+  it('detects instance-level provisioning when folderUid is empty string', async () => {
+    // Instance-level repo (target: instance, not folder)
+    const instanceRepo: RepositoryView = {
+      ...mockRepository,
+      name: 'instance-repo',
+      target: 'instance',
+    };
+
+    server.use(http.get(`${BASE}/settings`, () => HttpResponse.json(makeSettingsResponse([instanceRepo]))));
+
+    const { result } = renderHook(() => useProvisionedImport(defaultArgs({ folderUid: '' })), {
+      wrapper: getWrapper({ renderWithRouter: true }),
+    });
+
+    await waitFor(() => {
+      expect(result.current.isProvisioned).toBe(true);
+    });
+
+    expect(result.current.repository?.name).toBe('instance-repo');
+  });
 });

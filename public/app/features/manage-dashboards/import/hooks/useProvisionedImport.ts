@@ -65,7 +65,7 @@ export function useProvisionedImport({
   hasLibraryPanels = false,
 }: UseProvisionedImportArgs): UseProvisionedImportResult {
   const { repository, status, isReadOnlyRepo } = useGetResourceRepositoryView({
-    folderName: folderUid || undefined,
+    folderName: folderUid,
   });
 
   const isProvisioned = status === RepoViewStatus.Ready && !!repository;

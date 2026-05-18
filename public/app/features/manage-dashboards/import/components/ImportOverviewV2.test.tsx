@@ -547,4 +547,43 @@ describe('ImportOverviewV2', () => {
       });
     });
   });
+
+  describe('provisioned UID conflict', () => {
+    it('disables submit when UID validation fails in provisioned mode', async () => {
+      const { validateUid } = jest.requireMock('../utils/validation');
+      validateUid.mockResolvedValue('Dashboard with the same UID already exists');
+
+      setupRepoState({ isProvisioned: true });
+      const layout = defaultGridLayoutKind();
+      renderCmp(layout, 'existing-uid');
+
+      await waitFor(() => {
+        expect(screen.getByTestId(selectors.components.ImportDashboardForm.submit)).toBeDisabled();
+      });
+
+      validateUid.mockResolvedValue(true);
+    });
+
+    it('does not call provisioned save when UID conflicts and form is submitted programmatically', async () => {
+      const { validateUid } = jest.requireMock('../utils/validation');
+      validateUid.mockResolvedValue('Dashboard with the same UID already exists');
+
+      const { mockSave } = setupRepoState({ isProvisioned: true });
+      const layout = defaultGridLayoutKind();
+      renderCmp(layout, 'existing-uid');
+
+      await waitFor(() => {
+        expect(screen.getByTestId(selectors.components.ImportDashboardForm.submit)).toBeDisabled();
+      });
+
+      const form = screen.getByTestId(selectors.components.ImportDashboardForm.submit).closest('form')!;
+      fireEvent.submit(form);
+
+      await waitFor(() => {
+        expect(mockSave).not.toHaveBeenCalled();
+      });
+
+      validateUid.mockResolvedValue(true);
+    });
+  });
 });
