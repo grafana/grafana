@@ -101,8 +101,8 @@ func mkFolder(name, parent string) folders.Folder {
 }
 
 type fakeFolderLister struct {
-	items []folders.Folder        // single-page mode
-	pages [][]folders.Folder      // multi-page mode (each call consumes one)
+	items []folders.Folder   // single-page mode
+	pages [][]folders.Folder // multi-page mode (each call consumes one)
 	calls int
 }
 
