@@ -78,9 +78,9 @@ func convertToDomainGroups(
 	}
 
 	// Provenance is forced; rules produced by this kind always carry the
-	// converted-prometheus provenance regardless of any caller-supplied
-	// annotation. This prevents a caller from disguising rules as api- or
-	// file-provisioned via the grafana.com/provenance annotation.
+	// converted-prometheus provenance. The k8s view still exposes the stored
+	// provenance on read (for parity with other alerting kinds), but writes
+	// never honor a caller-supplied grafana.com/provenance annotation.
 	return groups, ngmodels.ProvenanceConvertedPrometheus, nil
 }
 

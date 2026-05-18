@@ -3,7 +3,6 @@ package prometheusrule
 import (
 	"context"
 	"fmt"
-	"slices"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/simple"
@@ -19,11 +18,6 @@ func NewValidator(cfg config.RuntimeConfig) *simple.Validator {
 			pr, ok := req.Object.(*model.PrometheusRule)
 			if !ok {
 				return fmt.Errorf("object is not of type *v0alpha1.PrometheusRule")
-			}
-
-			sourceProv := pr.GetProvenanceStatus()
-			if !slices.Contains(model.AcceptedProvenanceStatuses, sourceProv) {
-				return fmt.Errorf("invalid provenance status: %s", sourceProv)
 			}
 
 			folderUID := ""
