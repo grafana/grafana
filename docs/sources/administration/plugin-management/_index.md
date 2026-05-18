@@ -88,7 +88,7 @@ To update a plugin:
 
 When the update is complete, a confirmation message will indicate the installation was successful.
 
-### Managed plugin updates
+### Update managed plugins
 
 {{< admonition type="note" >}}
 Available in [Grafana Cloud](/docs/grafana-cloud).
