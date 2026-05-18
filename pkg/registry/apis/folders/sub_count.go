@@ -33,9 +33,7 @@ const descendantsPageSize = 1000
 // blow up request counts.
 const descendantsMaxLevels = 64
 
-// recursiveTimeout caps the recursive subtree walk + final GetStats call.
-// The walk's cost scales with subtree size, so on pathological trees we'd
-// rather fail fast with 504 than hold the request indefinitely.
+// recursiveTimeout caps the recursive walk + final GetStats; over budget → 504.
 const recursiveTimeout = 10 * time.Second
 
 type subCountREST struct {
@@ -67,10 +65,8 @@ func (r *subCountREST) ProducesObject(verb string) interface{} {
 	return &folders.DescendantCounts{}
 }
 
-// NewConnectOptions advertises the typed DescendantCountsOptions to the
-// apiserver. Returning a registered runtime.Object is what makes the
-// `recursive` query parameter visible on the generated swagger spec — the
-// apiserver reflects over the struct's json tags via AddObjectParams.
+// NewConnectOptions returns the typed options so the apiserver surfaces
+// `recursive` on the swagger spec.
 func (r *subCountREST) NewConnectOptions() (runtime.Object, bool, string) {
 	return &folders.DescendantCountsOptions{}, false, ""
 }
@@ -136,15 +132,9 @@ func (r *subCountREST) Connect(ctx context.Context, name string, opts runtime.Ob
 	}), nil
 }
 
-// convertURLValuesToDescendantCountsOptions is registered with the scheme so
-// that ParameterCodec.DecodeParameters can turn the request URL into a typed
-// DescendantCountsOptions object. The scheme's default URL-values converter
-// would reject the bare `?recursive` form (empty string is not a valid bool);
-// we want presence-as-truthy here, so we own the parsing.
-//
-// Semantics: absent → false; present + empty value (bare `?recursive`) → true;
-// present + parseable bool → that bool; present + unparseable value → true
-// (presence wins). Keep in sync with the swagger description on the type.
+// convertURLValuesToDescendantCountsOptions decodes ?recursive with
+// presence-as-truthy semantics (bare `?recursive` → true), which the
+// default URL-values converter doesn't support.
 func convertURLValuesToDescendantCountsOptions(in interface{}, out interface{}, _ conversion.Scope) error {
 	values := in.(*url.Values)
 	opts := out.(*folders.DescendantCountsOptions)
@@ -167,18 +157,9 @@ func convertURLValuesToDescendantCountsOptions(in interface{}, out interface{}, 
 	return nil
 }
 
-// collectDescendantFolders walks the folder tree under root via Search and
-// returns every descendant folder UID (excluding root itself — the caller
-// prepends root to the GetStats request). Returns nil when there are no
-// descendants. Cost scales with subtree size, not org size.
-//
-// Only invoked on the recursive path; the caller bounds the supplied
-// context with recursiveTimeout so a pathological subtree fails fast.
-//
-// Move/Delete confirmation dialogs need recursive counts: legacy
-// /api/folders/:uid/counts walked the SQL folder table with a recursive CTE;
-// the unified-storage backend only filters by direct parent, so we expand
-// the subtree here before calling GetStats.
+// collectDescendantFolders walks the subtree under root via Search and returns
+// every descendant UID (root excluded — caller prepends it for GetStats). Only
+// invoked on the recursive path; ctx must carry recursiveTimeout.
 func (r *subCountREST) collectDescendantFolders(ctx context.Context, namespace, root string) ([]string, error) {
 	if r.searcher == nil {
 		return nil, nil
