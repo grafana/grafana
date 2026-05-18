@@ -1,6 +1,8 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 
 import { useMergedPreferencesQuery } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
+import { locationUtil } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import { useFlagGrafanaUnifiedHomepage } from '@grafana/runtime/internal';
 import { LoadingPlaceholder } from '@grafana/ui';
 
@@ -19,7 +21,19 @@ function HomeRouteInner(props: DashboardPageProxyProps) {
 function UnifiedHomeRoute(props: DashboardPageProxyProps) {
   const { data, isLoading, isError } = useMergedPreferencesQuery();
 
-  if (isLoading) {
+  // TODO remove type check after BE support and schema is added
+  const rawRedirectUri = data?.spec?.redirectUri;
+  const redirectUri = typeof rawRedirectUri === 'string' ? rawRedirectUri : '';
+
+  useEffect(() => {
+    if (!redirectUri) {
+      return;
+    }
+    const newUrl = locationUtil.processRedirectUri(redirectUri, locationService.getLocation());
+    locationService.replace(newUrl);
+  }, [redirectUri]);
+
+  if (isLoading || redirectUri) {
     return <LoadingPlaceholder text="" />;
   }
 
@@ -29,6 +43,7 @@ function UnifiedHomeRoute(props: DashboardPageProxyProps) {
     return <DashboardPageProxy {...props} />;
   }
 
+  // TODO remove type check after BE schema is updated
   const rawUID = data.spec?.homeDashboardUID;
   const homeDashboardUID = typeof rawUID === 'string' ? rawUID : '';
   if (homeDashboardUID) {

@@ -1,8 +1,8 @@
 import { http, HttpResponse } from 'msw';
 import { type ComponentProps } from 'react';
-import { act, render, screen } from 'test/test-utils';
+import { act, render, screen, waitFor } from 'test/test-utils';
 
-import { setBackendSrv, setPluginComponentsHook } from '@grafana/runtime';
+import { locationService, setBackendSrv, setPluginComponentsHook } from '@grafana/runtime';
 import { MERGED_PREFS_URL } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { setTestFlags } from '@grafana/test-utils/unstable';
@@ -104,5 +104,18 @@ describe('HomeRoute', () => {
     render(<HomeRoute {...props} />);
 
     expect(await screen.findByTestId('dashboard-page-proxy-stub')).toBeInTheDocument();
+  });
+
+  it('flag on + redirectUri present → calls locationService.replace', async () => {
+    setTestFlags({ 'grafana.unifiedHomepage': true });
+    stubMergedPreferences({ redirectUri: '/d/abc' });
+
+    render(<HomeRoute {...props} />);
+
+    // test-utils render replaces the locationService singleton with a fresh HistoryWrapper,
+    // so spy-before-render doesn't work. Assert on the resulting location instead.
+    await waitFor(() => {
+      expect(locationService.getLocation().pathname).toContain('/d/abc');
+    });
   });
 });
