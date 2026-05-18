@@ -4,6 +4,7 @@ import {
   VisualizationSuggestionScore,
   type VisualizationSuggestionsSupplier,
 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import { type FieldConfig as TableFieldConfig } from '../table/panelcfg.gen';
 
