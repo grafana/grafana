@@ -6,7 +6,7 @@ import { type Field, type FieldConfig, FieldType, type NumericRange } from '../t
 import { type Threshold } from '../types/thresholds';
 
 import { getFieldColorModeForField } from './fieldColor';
-import { getActiveThresholdForValue } from './thresholds';
+import { fallBackThreshold, getActiveThresholdForValue } from './thresholds';
 
 export interface ColorScaleValue {
   percent: number; // 0-1
@@ -118,4 +118,28 @@ export function getFieldConfigWithMinMax(field: Field, local?: boolean): FieldCo
   }
 
   return { ...config, ...field.state.range };
+}
+
+/**
+ * @alpha
+ * Function that will return a series color for any given color mode. If the color mode is a by value color
+ * mode it will use the field.config.color.seriesBy property to figure out which value to use
+ */
+export function getFieldSeriesColor(field: Field, theme: GrafanaTheme2): ColorScaleValue {
+  const mode = getFieldColorModeForField(field);
+
+  if (!mode.isByValue) {
+    return {
+      color: mode.getCalculator(field, theme)(0, 0),
+      threshold: fallBackThreshold,
+      percent: 1,
+    };
+  }
+
+  const scale = getScaleCalculator(field, theme);
+  const stat = field.config.color?.seriesBy ?? 'last';
+  const calcs = reduceField({ field, reducers: [stat] });
+  const value = calcs[stat] ?? 0;
+
+  return scale(value);
 }
