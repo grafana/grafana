@@ -80,11 +80,14 @@ func (s *Service) Authenticate(ctx context.Context, req *authnv1.AuthenticateReq
 		resp, err := c.Authenticate(ctx, req)
 		if err != nil {
 			s.log.Error("Client authentication error", "client", c.Name(), "error", err)
+			fields := grpclog.Fields{"authn.client", c.Name(), "authn.namespace", req.GetNamespace()}
+			if resp != nil {
+				fields = append(fields, "authn.code", resp.Code.String())
+			}
+			grpclog.AddFields(ctx, fields)
 			if resp != nil && resp.Code != authnv1.AuthenticateCode_AUTHENTICATE_CODE_UNSPECIFIED {
-				grpclog.AddFields(ctx, grpclog.Fields{"authn.client", c.Name(), "authn.code", resp.Code.String(), "authn.namespace", req.GetNamespace()})
 				return resp, nil
 			}
-			grpclog.AddFields(ctx, grpclog.Fields{"authn.client", c.Name(), "authn.namespace", req.GetNamespace()})
 			return nil, err
 		}
 
