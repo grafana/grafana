@@ -27,6 +27,12 @@ func (PrometheusRuleFilestatusOperatorState) OpenAPIModelName() string {
 
 // +k8s:openapi-gen=true
 type PrometheusRuleFileStatus struct {
+	// managedFolders is the set of Folder resource names currently owned by this PrometheusRuleFile.
+	ManagedFolders []string `json:"managedFolders,omitempty"`
+	// managedAlertRules is the set of AlertRule resource names currently owned by this PrometheusRuleFile.
+	ManagedAlertRules []string `json:"managedAlertRules,omitempty"`
+	// managedRecordingRules is the set of RecordingRule resource names currently owned by this PrometheusRuleFile.
+	ManagedRecordingRules []string `json:"managedRecordingRules,omitempty"`
 	// operatorStates is a map of operator ID to operator state evaluations.
 	// Any operator which consumes this kind SHOULD add its state evaluation information to this field.
 	OperatorStates map[string]PrometheusRuleFilestatusOperatorState `json:"operatorStates,omitempty"`

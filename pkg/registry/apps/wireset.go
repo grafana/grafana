@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/historian"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules"
+	rulesextensions "github.com/grafana/grafana/pkg/registry/apps/alerting/rules-extensions"
 	"github.com/grafana/grafana/pkg/registry/apps/annotation"
 	"github.com/grafana/grafana/pkg/registry/apps/correlations"
 	"github.com/grafana/grafana/pkg/registry/apps/dashvalidator"
@@ -26,6 +27,7 @@ var WireSet = wire.NewSet(
 	shorturl.RegisterAppInstaller,
 	correlations.RegisterAppInstaller,
 	rules.RegisterAppInstaller,
+	rulesextensions.RegisterAppInstaller,
 	live.RegisterAppInstaller,
 	notifications.RegisterAppInstaller,
 	historian.RegisterAppInstaller,

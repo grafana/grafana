@@ -2388,6 +2388,15 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:            "kubernetesAlertingRulesExtensions",
+			Description:     "Enables the PrometheusRuleFile API which reconciles into AlertRule, RecordingRule and Folder resources",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAlertingSquad,
+			RequiresRestart: true,
+			Expression:      "false",
+			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
 			Name:         "plugins.useMTPlugins",
 			Description:  "Enables plugins decoupling from bootdata",
 			Stage:        FeatureStageExperimental,

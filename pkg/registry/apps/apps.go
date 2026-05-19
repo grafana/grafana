@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/historian"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules"
+	rulesextensions "github.com/grafana/grafana/pkg/registry/apps/alerting/rules-extensions"
 	"github.com/grafana/grafana/pkg/registry/apps/annotation"
 	"github.com/grafana/grafana/pkg/registry/apps/correlations"
 	"github.com/grafana/grafana/pkg/registry/apps/dashvalidator"
@@ -40,6 +41,7 @@ func ProvideAppInstallers(
 	liveAppInstaller *live.AppInstaller,
 	shorturlAppInstaller *shorturl.ShortURLAppInstaller,
 	rulesAppInstaller *rules.AppInstaller,
+	rulesExtensionsAppInstaller *rulesextensions.AppInstaller,
 	correlationsAppInstaller *correlations.AppInstaller,
 	alertingNotificationAppInstaller *notifications.AppInstaller,
 	logsdrilldownAppInstaller *logsdrilldown.LogsDrilldownAppInstaller,
@@ -60,6 +62,10 @@ func ProvideAppInstallers(
 
 	if rulesAppInstaller != nil {
 		installers = append(installers, rulesAppInstaller)
+	}
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesAlertingRulesExtensions) && rulesExtensionsAppInstaller != nil {
+		installers = append(installers, rulesExtensionsAppInstaller)
 	}
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesCorrelations) {

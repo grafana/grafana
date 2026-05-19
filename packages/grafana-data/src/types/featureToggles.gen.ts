@@ -895,7 +895,7 @@ export interface FeatureToggles {
   */
   alertingJiraIntegration?: boolean;
   /**
-  * 
+  *
   * @default true
   */
   alertingUseNewSimplifiedRoutingHashAlgorithm?: boolean;
@@ -1310,6 +1310,11 @@ export interface FeatureToggles {
   * @default false
   */
   kubernetesAlertingHistorian?: boolean;
+  /**
+  * Enables the PrometheusRuleFile API which reconciles into AlertRule, RecordingRule and Folder resources
+  * @default false
+  */
+  kubernetesAlertingRulesExtensions?: boolean;
   /**
   * Deprecated. Enables support for variables whose values can have multiple properties
   * @deprecated

@@ -2937,6 +2937,83 @@
     },
     {
       "metadata": {
+        "name": "kubernetesAlertingRules",
+        "resourceVersion": "1771434338561",
+        "creationTimestamp": "2025-07-31T22:56:50Z",
+        "deletionTimestamp": "2025-08-01T11:30:17Z"
+      },
+      "spec": {
+        "description": "Adds support for Kubernetes alerting and recording rules",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesAlertingRulesExtensions",
+        "resourceVersion": "1779223262724",
+        "creationTimestamp": "2026-05-19T20:41:02Z"
+      },
+      "spec": {
+        "description": "Enables the PrometheusRuleFile API which reconciles into AlertRule, RecordingRule and Folder resources",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesAnnotations",
+        "resourceVersion": "1771434338561",
+        "creationTimestamp": "2025-11-06T18:22:20Z",
+        "deletionTimestamp": "2026-02-19T21:17:23Z"
+      },
+      "spec": {
+        "description": "Enables app platform API for annotations",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-backend-services-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesAnnotationsClient",
+        "resourceVersion": "1778163715528",
+        "creationTimestamp": "2026-05-07T00:00:00Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-05-07 14:21:55.528883 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables usage of the new annotations API client",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesAuthZHandlerRedirect",
+        "resourceVersion": "1773696968793",
+        "creationTimestamp": "2025-08-29T14:46:39Z",
+        "deletionTimestamp": "2025-09-01T09:33:33Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-03-16 21:36:08.79386 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Deprecated: Use kubernetesAuthZResourcePermissionsRedirect and kubernetesAuthZRolesAndRoleBindingsRedirect instead",
+        "stage": "deprecated",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesAuthZResourcePermissionsRedirect",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"

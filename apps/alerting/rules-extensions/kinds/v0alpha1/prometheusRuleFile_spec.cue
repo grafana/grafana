@@ -2,9 +2,15 @@ package v0alpha1
 
 #PromDuration: string & =~"^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$" & !~"hmuµn"
 
+#DatasourceUID: string & =~"^[a-zA-Z0-9_-]+$"
+
 // PrometheusRuleFileSpec mirrors the structure of a Prometheus rules file:
 // a list of named groups, each holding alerting and/or recording rules.
+// datasourceUID, when set, pins every rule generated from this file to a specific
+// Grafana datasource. If omitted, the rules-extensions app falls back to its
+// configured DefaultDatasourceUID at reconcile time.
 PrometheusRuleFileSpec: {
+	datasourceUID?: #DatasourceUID
 	groups: [...#PrometheusRuleGroup]
 }
 

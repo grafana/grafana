@@ -49,8 +49,12 @@ func (PrometheusRuleFileRuleEntry) OpenAPIModelName() string {
 }
 
 // +k8s:openapi-gen=true
+type PrometheusRuleFileDatasourceUID string
+
+// +k8s:openapi-gen=true
 type PrometheusRuleFileSpec struct {
-	Groups []PrometheusRuleFilePrometheusRuleGroup `json:"groups"`
+	DatasourceUID *PrometheusRuleFileDatasourceUID        `json:"datasourceUID,omitempty"`
+	Groups        []PrometheusRuleFilePrometheusRuleGroup `json:"groups"`
 }
 
 // NewPrometheusRuleFileSpec creates a new PrometheusRuleFileSpec object.

@@ -730,6 +730,10 @@ const (
 	// Adds support for Kubernetes alerting historian APIs
 	FlagKubernetesAlertingHistorian = "kubernetesAlertingHistorian"
 
+	// FlagKubernetesAlertingRulesExtensions
+	// Enables the PrometheusRuleFile API which reconciles into AlertRule, RecordingRule and Folder resources
+	FlagKubernetesAlertingRulesExtensions = "kubernetesAlertingRulesExtensions"
+
 	// FlagGlobalDashboardVariables
 	// Enables global and folder-scoped dashboard variables via dashboard.grafana.app
 	FlagGlobalDashboardVariables = "globalDashboardVariables"
