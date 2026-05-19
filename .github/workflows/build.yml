@@ -25,7 +25,7 @@ jobs:
           branch_name="${GITHUB_REF#refs/heads/}"
           
           if [ "$branch_name" = "main" ]; then
-            image_version="v$tag_number-ni"
+            image_version="v$tag_number-$short_hash-ni"
           else
             sanitized_branch=$(echo "$branch_name" | sed 's/[/_]/-/g' | cut -c1-20)
             image_version="v$tag_number-$short_hash-$sanitized_branch-ni"
