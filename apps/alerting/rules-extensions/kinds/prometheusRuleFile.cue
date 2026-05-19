@@ -4,14 +4,14 @@ import (
 	"github.com/grafana/grafana/apps/alerting/rules-extensions/kinds/v0alpha1"
 )
 
-prometheusRuleGroupKind: {
-	kind:       "PrometheusRuleGroup"
-	pluralName: "PrometheusRuleGroups"
+prometheusRuleFileKind: {
+	kind:       "PrometheusRuleFile"
+	pluralName: "PrometheusRuleFiles"
 }
 
-prometheusRuleGroupv0alpha1: prometheusRuleGroupKind & {
+prometheusRuleFilev0alpha1: prometheusRuleFileKind & {
 	schema: {
-		spec: v0alpha1.PrometheusRuleSpec
+		spec: v0alpha1.PrometheusRuleFileSpec
 	}
 	validation: {
 		operations: [
@@ -26,5 +26,4 @@ prometheusRuleGroupv0alpha1: prometheusRuleGroupKind & {
 		]
 	}
 	selectableFields: []
-
 }
