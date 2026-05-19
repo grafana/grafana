@@ -6,6 +6,7 @@ import {
   applyFieldOverrides,
   type DataFrame,
   type FieldConfigSource,
+  type InterpolateFunction,
   type TimeZone,
   transformDataFrame,
   useDataLinksContext,
@@ -20,9 +21,10 @@ interface Props {
   rawTableFrame: DataFrame | null;
   fieldConfig?: FieldConfigSource;
   timeZone: TimeZone;
+  replaceVariables: InterpolateFunction;
 }
 
-export function useExtractFields({ rawTableFrame, fieldConfig, timeZone }: Props) {
+export function useExtractFields({ rawTableFrame, fieldConfig, timeZone, replaceVariables }: Props) {
   const dataLinksContext = useDataLinksContext();
   const isMounted = useMountedState();
   const dataLinkPostProcessor = dataLinksContext.dataLinkPostProcessor;
@@ -47,7 +49,7 @@ export function useExtractFields({ rawTableFrame, fieldConfig, timeZone }: Props
           data,
           fieldConfig,
           fieldConfigRegistry: getLogsTableFieldConfigRegistry(),
-          replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
+          replaceVariables: replaceVariables ?? getTemplateSrv().replace.bind(getTemplateSrv()),
           theme,
           timeZone,
           dataLinkPostProcessor,
@@ -61,7 +63,7 @@ export function useExtractFields({ rawTableFrame, fieldConfig, timeZone }: Props
       });
     // @todo hook re-renders unexpectedly when data frame isn't changing if we add `rawTableFrame` as dependency, so we check for changes in the timestamps instead
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dataLinkPostProcessor, fieldConfig, rawTableFrame?.fields[1]?.values, theme, timeZone]);
+  }, [dataLinkPostProcessor, fieldConfig, rawTableFrame?.fields[1]?.values, replaceVariables, theme, timeZone]);
 
   return { extractedFrame };
 }

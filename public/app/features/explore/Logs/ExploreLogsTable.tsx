@@ -10,6 +10,7 @@ import {
   store,
   urlUtil,
 } from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
 import { type AdHocFilterItem, PanelContextProvider } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
 import { LogsTable } from 'app/plugins/panel/logstable/LogsTable';
@@ -177,6 +178,7 @@ export function ExploreLogsTable(props: Props) {
         eventBus={props.eventBus}
         onOptionsChange={onOptionsChange}
         onFieldConfigChange={handleFieldConfigChange}
+        replaceVariables={getTemplateSrv().replace.bind(getTemplateSrv())}
         onChangeTimeRange={props.onChangeTimeRange}
       />
     </PanelContextProvider>

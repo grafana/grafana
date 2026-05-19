@@ -1,6 +1,14 @@
 import { renderHook, waitFor } from '@testing-library/react';
 
-import { DataFrameType, FieldMatcherID, FieldType, standardEditorsRegistry, toDataFrame } from '@grafana/data';
+import {
+  type DataLink,
+  DataFrameType,
+  FieldMatcherID,
+  FieldType,
+  type InterpolateFunction,
+  standardEditorsRegistry,
+  toDataFrame,
+} from '@grafana/data';
 import { setTemplateSrv } from '@grafana/runtime';
 import { getAllOptionEditors } from 'app/core/components/OptionsUI/registry';
 import { type ContextSrv, setContextSrv } from 'app/core/services/context_srv';
@@ -130,8 +138,13 @@ describe('useExtractFields', () => {
       hasAccessToExplore: () => true,
     } as ContextSrv);
     setLinkSrv({
-      getDataLinkUIModel() {
-        return { href: '', title: '', target: '_blank' };
+      getDataLinkUIModel(link: DataLink, _replaceVariables: InterpolateFunction | undefined, origin) {
+        return {
+          href: link.url,
+          title: link.title,
+          target: '_blank',
+          origin,
+        };
       },
       getAnchorInfo(link) {
         return { ...link, href: link.url ?? '' };
