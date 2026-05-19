@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Alert, Button, EmptyState, LinkButton, useStyles2 } from '@grafana/ui';
+import { Alert, Button, EmptyState, LinkButton, Stack, useStyles2 } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { contextSrv } from 'app/core/services/context_srv';
 import impressionSrv from 'app/core/services/impression_srv';
@@ -27,15 +27,19 @@ export function RecentDashboardsTab({ dashboards, loading, error, retry, folders
 
   if (error) {
     return (
-      <Alert
-        severity="warning"
-        title={t('home.recent-dashboards-tab.error-title', 'Could not load recently viewed dashboards')}
-        action={
-          <Button onClick={retry} variant="secondary" size="sm">
-            <Trans i18nKey="home.recent-dashboards-tab.retry">Retry</Trans>
-          </Button>
-        }
-      />
+      <Stack grow={1} direction="column" alignItems="center" justifyContent="center">
+        <div>
+          <Alert
+            severity="warning"
+            title={t('home.recent-dashboards-tab.error-title', 'Could not load recently viewed dashboards')}
+            action={
+              <Button onClick={retry} variant="secondary" size="sm">
+                <Trans i18nKey="home.recent-dashboards-tab.retry">Retry</Trans>
+              </Button>
+            }
+          />
+        </div>
+      </Stack>
     );
   }
 
@@ -43,27 +47,29 @@ export function RecentDashboardsTab({ dashboards, loading, error, retry, folders
     const canCreate = contextSrv.hasPermission(AccessControlAction.DashboardsCreate);
 
     return (
-      <EmptyState
-        hideImage
-        variant="call-to-action"
-        message={t('home.recent-dashboards-tab.empty', "Dashboards you've recently viewed will appear here.")}
-        button={
-          canCreate ? (
-            <LinkButton icon="plus" href="/dashboard/new">
-              <Trans i18nKey="home.recent-dashboards-tab.create">Create your first dashboard</Trans>
-            </LinkButton>
-          ) : (
-            <LinkButton icon="apps" href="/dashboards" variant="secondary">
-              <Trans i18nKey="home.recent-dashboards-tab.browse">Browse dashboards</Trans>
-            </LinkButton>
-          )
-        }
-      >
-        <Trans i18nKey="home.recent-dashboards-tab.empty-description">
-          After you&apos;ve connected data, you can use dashboards to query and visualize your data with charts, stats
-          and tables or create lists, markdowns and other widgets.
-        </Trans>
-      </EmptyState>
+      <Stack grow={1} direction="column" alignItems="center" justifyContent="center">
+        <EmptyState
+          hideImage
+          variant="call-to-action"
+          message={t('home.recent-dashboards-tab.empty', "Dashboards you've recently viewed will appear here.")}
+          button={
+            canCreate ? (
+              <LinkButton icon="plus" href="/dashboard/new">
+                <Trans i18nKey="home.recent-dashboards-tab.create">Create your first dashboard</Trans>
+              </LinkButton>
+            ) : (
+              <LinkButton icon="apps" href="/dashboards" variant="secondary">
+                <Trans i18nKey="home.recent-dashboards-tab.browse">Browse dashboards</Trans>
+              </LinkButton>
+            )
+          }
+        >
+          <Trans i18nKey="home.recent-dashboards-tab.empty-description">
+            After you&apos;ve connected data, you can use dashboards to query and visualize your data with charts, stats
+            and tables or create lists, markdowns and other widgets.
+          </Trans>
+        </EmptyState>
+      </Stack>
     );
   }
 
@@ -73,7 +79,7 @@ export function RecentDashboardsTab({ dashboards, loading, error, retry, folders
   };
 
   return (
-    <div className={styles.wrapper}>
+    <Stack grow={1} direction="column">
       <ul className={styles.list}>
         {dashboards.map((dash) => (
           <li key={dash.uid}>
@@ -93,16 +99,11 @@ export function RecentDashboardsTab({ dashboards, loading, error, retry, folders
           <Trans i18nKey="home.recent-dashboards-tab.clear">Clear history</Trans>
         </Button>
       </div>
-    </div>
+    </Stack>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css({
-    display: 'flex',
-    flexDirection: 'column',
-    flex: 1,
-  }),
   list: css({
     listStyle: 'none',
     padding: 0,
