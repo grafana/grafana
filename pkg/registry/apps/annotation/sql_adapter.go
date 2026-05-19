@@ -188,7 +188,7 @@ func (a *sqlAdapter) Delete(ctx context.Context, namespace, name string) error {
 	})
 }
 
-// before is ignored: the legacy SQL cleaner derives its own cutoff from cleanupSettings.
+// Cleanup runs the legacy SQL cleaner; before is ignored because cleanupSettings carries its own cutoff.
 func (a *sqlAdapter) Cleanup(ctx context.Context, _ time.Time) (int64, error) {
 	if a.cleaner == nil {
 		return 0, nil
