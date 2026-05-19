@@ -297,27 +297,23 @@ describe('useSidebar', () => {
       restore();
     });
 
-    test('forces isDocked to true regardless of defaultToDocked', () => {
-      const { result } = renderHook(() => useSidebar({ defaultToDocked: false }));
-      expect(result.current.isDocked).toBe(true);
+    test('forces isDocked to false regardless of defaultToDocked', () => {
+      const { result } = renderHook(() => useSidebar({ defaultToDocked: true }));
+      expect(result.current.isDocked).toBe(false);
     });
 
-    test('keeps isDocked true even after onToggleDock is called', () => {
-      const { result } = renderHook(() => useSidebar({ defaultToDocked: false }));
-
-      expect(result.current.isDocked).toBe(true);
-
-      act(() => result.current.onToggleDock?.());
-
-      expect(result.current.isDocked).toBe(true);
+    test('does not expose onToggleDock so the user cannot dock on mobile', () => {
+      const { result } = renderHook(() => useSidebar({ defaultToDocked: true }));
+      expect(result.current.onToggleDock).toBeUndefined();
     });
 
-    test('includes pane width in outerWrapperProps when a pane is open', () => {
-      const { result } = renderHook(() => useSidebar({ hasOpenPane: true }));
+    test('does not push the body content when a pane is open (undocked overlay)', () => {
+      const { result } = renderHook(() => useSidebar({ hasOpenPane: true, defaultToDocked: true }));
 
       const style = result.current.outerWrapperProps.style as Record<string, number>;
       const paneWidth = result.current.paneWidth;
-      expect(style?.paddingRight).toBeGreaterThan(paneWidth);
+      // Only the toolbar reserves space; the pane floats over the content as an overlay
+      expect(style?.paddingRight).toBeLessThan(paneWidth);
     });
   });
 });

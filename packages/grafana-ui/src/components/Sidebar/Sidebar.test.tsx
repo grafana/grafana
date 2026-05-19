@@ -154,13 +154,14 @@ describe('Sidebar', () => {
       expect(screen.queryByTestId(selectors.components.Sidebar.dockToggle)).not.toBeInTheDocument();
     });
 
-    it('forces docked layout without user interaction', () => {
+    it('renders the open pane as an undocked overlay (does not push content)', () => {
       render(<TestSetup />);
 
       act(() => screen.getByLabelText('Settings').click());
 
       const wrapper = screen.getByTestId('sidebar-test-wrapper');
-      expect(wrapper).toHaveStyle('padding-right: 312px');
+      // Only the toolbar reserves space; the pane floats over the content as an overlay
+      expect(wrapper).toHaveStyle('padding-right: 72px');
     });
   });
 });

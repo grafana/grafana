@@ -103,8 +103,9 @@ export function useSidebar({
   const isMobile = useMedia(`(max-width: ${theme.breakpoints.values.sm}px)`);
   const isTemporarilyShown = isHidden && Boolean(hasOpenPane);
   const effectiveIsHidden = isHidden && !isTemporarilyShown;
-  /** Undocked/floating sidebar is not used on small viewports; keep layout and behavior docked. */
-  const effectiveIsDocked = !isTemporarilyShown && (Boolean(isMobile) || isDocked);
+  // On small viewports the sidebar is always rendered as an undocked overlay so it doesn't
+  // permanently steal horizontal space — docking only applies on larger viewports.
+  const effectiveIsDocked = !isTemporarilyShown && !isMobile && isDocked;
 
   // Used to accumulate drag distance to know when to change compact mode
   const [_, setCompactDrag] = React.useState(0);
