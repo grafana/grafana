@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
@@ -15,25 +16,35 @@ import (
 
 const backfillPageSize = 100
 
+// dashboardGroup / dashboardResource gate the views filter to dashboard
+// builders; the filter is a no-op for any other resource type.
+const (
+	dashboardGroup    = "dashboard.grafana.app"
+	dashboardResource = "dashboards"
+)
+
+// viewsLast30DaysKey matches pkg/extensions/usageinsights.statsToMap.
+const viewsLast30DaysKey = "views_last_30_days"
+
 type Options struct {
 	Storage       resource.StorageBackend
 	VectorBackend vector.VectorBackend
-	Embedder      *embedder.Embedder
 	BatchEmbedder *embedder.BatchEmbedder
 	Builders      []embed.Builder
-	Log           log.Logger
+	// DashboardStats is optional; nil disables the views filter.
+	DashboardStats builders.DashboardStats
 }
 
 type VectorBackfiller struct {
 	storage       resource.StorageBackend
 	vectorBackend vector.VectorBackend
-	embedder      *embedder.Embedder
 	batchEmbedder *embedder.BatchEmbedder
 	builders      map[string]embed.Builder
 	// sortedBuilders is builders sorted by Resource() so iteration order
 	// is stable across pod restarts. Precomputed because the set is
 	// immutable after construction.
 	sortedBuilders []embed.Builder
+	dashboardStats builders.DashboardStats
 	log            log.Logger
 }
 
@@ -44,17 +55,11 @@ func NewVectorBackfiller(opts Options) (*VectorBackfiller, error) {
 	if opts.VectorBackend == nil {
 		return nil, fmt.Errorf("backfill: VectorBackend is required")
 	}
-	if opts.Embedder == nil {
-		return nil, fmt.Errorf("backfill: Embedder is required")
-	}
 	if opts.BatchEmbedder == nil {
 		return nil, fmt.Errorf("backfill: BatchEmbedder is required")
 	}
 	if len(opts.Builders) == 0 {
 		return nil, fmt.Errorf("backfill: at least one Builder is required")
-	}
-	if opts.Log == nil {
-		opts.Log = log.New("backfill")
 	}
 
 	builders := make(map[string]embed.Builder, len(opts.Builders))
@@ -78,11 +83,11 @@ func NewVectorBackfiller(opts Options) (*VectorBackfiller, error) {
 	return &VectorBackfiller{
 		storage:        opts.Storage,
 		vectorBackend:  opts.VectorBackend,
-		embedder:       opts.Embedder,
 		batchEmbedder:  opts.BatchEmbedder,
 		builders:       builders,
 		sortedBuilders: sorted,
-		log:            opts.Log,
+		dashboardStats: opts.DashboardStats,
+		log:            log.New("backfill"),
 	}, nil
 }
 
@@ -107,7 +112,7 @@ func (b *VectorBackfiller) Run(ctx context.Context) error {
 func (b *VectorBackfiller) runBackfill(ctx context.Context) {
 	log := b.log.FromContext(ctx)
 
-	jobs, err := b.vectorBackend.ListIncompleteBackfillJobs(ctx, b.embedder.Model)
+	jobs, err := b.vectorBackend.ListIncompleteBackfillJobs(ctx, b.batchEmbedder.Model())
 	if err != nil {
 		log.Error("backfill: list jobs", "err", err)
 		return
@@ -278,6 +283,10 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 		return nil
 	}
 
+	if b.shouldSkipForZeroViews(ctx, builder, namespace, name) {
+		return nil
+	}
+
 	key := &resourcepb.ResourceKey{
 		Group:     builder.Group(),
 		Resource:  builder.Resource(),
@@ -305,4 +314,36 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 		return fmt.Errorf("upsert %s/%s: %w", namespace, name, err)
 	}
 	return nil
+}
+
+// shouldSkipForZeroViews returns true only when the stats provider
+// definitively reports zero views in the last 30 days for this
+// dashboard. Anything ambiguous (nil provider, non-dashboard builder,
+// lookup error, missing key) returns false — embed it.
+func (b *VectorBackfiller) shouldSkipForZeroViews(ctx context.Context, builder embed.Builder, namespace, name string) bool {
+	if b.dashboardStats == nil {
+		return false
+	}
+	if builder.Group() != dashboardGroup || builder.Resource() != dashboardResource {
+		return false
+	}
+	if name == "" || namespace == "" {
+		return false
+	}
+	stats, err := b.dashboardStats.GetDashboardStats(ctx, namespace, name)
+	if err != nil {
+		b.log.Error("backfiller dashboard stats check failed", "namespace", namespace, "name", name, "err", err)
+		return false
+	}
+	views, ok := stats[viewsLast30DaysKey]
+	if !ok {
+		return false
+	}
+	if views > 0 {
+		b.log.Info("backfiller embedding dashboard with views in last 30 days", "namespace", namespace, "name", name, "views", views)
+		return false
+	}
+	b.log.FromContext(ctx).Debug("backfill: skipping dashboard with zero views in last 30 days",
+		"namespace", namespace, "name", name)
+	return true
 }

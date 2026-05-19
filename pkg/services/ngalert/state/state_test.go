@@ -1143,7 +1143,7 @@ func TestPatch(t *testing.T) {
 		orig := state.Copy()
 		current := randomState(key)
 
-		patch(&state, &current, result)
+		patch(state, current, result)
 
 		// Fields that should not change
 		assert.Equal(t, orig.OrgID, state.OrgID)
@@ -1184,7 +1184,7 @@ func TestPatch(t *testing.T) {
 			Instance: ngmodels.GenerateAlertLabels(5, "result-"),
 		}
 
-		patch(&state, &current, result)
+		patch(state, current, result)
 
 		assert.EqualValues(t, expectedAnnotations, state.Annotations)
 		assert.Equal(t, current.State, state.State)

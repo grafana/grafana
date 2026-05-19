@@ -153,6 +153,9 @@ type bleveBackend struct {
 	// is empty. Guaranteed non-nil when opts.Snapshot.Store is set.
 	runningBuildVersion *semver.Version
 
+	// maxSupportedIndexFormat is the newest Bleve segment format this process can read.
+	maxSupportedIndexFormat string
+
 	bgTasksCancel func()
 	bgTasksWg     sync.WaitGroup
 
@@ -202,10 +205,14 @@ func NewBleveBackend(opts BleveOptions, indexMetrics *resource.BleveIndexMetrics
 	if opts.Snapshot.Store != nil && runningBuildVersion == nil {
 		return nil, fmt.Errorf("bleve backend requires non-empty BuildVersion when snapshot store is configured")
 	}
+	maxSupportedFormat := maxSupportedIndexFormat()
 
 	l := opts.Logger
 	if l == nil {
 		l = log.New("bleve-backend")
+	}
+	if opts.Snapshot.Store != nil && maxSupportedFormat == "" {
+		l.Warn("could not detect bleve index format version; snapshot format compatibility gate disabled")
 	}
 
 	ownFn := opts.OwnsIndex
@@ -215,15 +222,16 @@ func NewBleveBackend(opts BleveOptions, indexMetrics *resource.BleveIndexMetrics
 	}
 
 	be := &bleveBackend{
-		log:                 l,
-		cache:               map[resource.NamespacedResource]*bleveIndex{},
-		opts:                opts,
-		ownsIndexFn:         ownFn,
-		indexMetrics:        indexMetrics,
-		selectableFields:    opts.SelectableFieldsForKinds,
-		runningBuildVersion: runningBuildVersion,
-		lastUploadTime:      map[resource.NamespacedResource]time.Time{},
-		inFlightBuildDirs:   map[string]int{},
+		log:                     l,
+		cache:                   map[resource.NamespacedResource]*bleveIndex{},
+		opts:                    opts,
+		ownsIndexFn:             ownFn,
+		indexMetrics:            indexMetrics,
+		selectableFields:        opts.SelectableFieldsForKinds,
+		runningBuildVersion:     runningBuildVersion,
+		maxSupportedIndexFormat: maxSupportedFormat,
+		lastUploadTime:          map[resource.NamespacedResource]time.Time{},
+		inFlightBuildDirs:       map[string]int{},
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())

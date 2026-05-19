@@ -1,57 +1,41 @@
+import { of } from 'rxjs';
+
 import { setupMockedResourcesAPI } from '../mocks/ResourcesAPI';
 
 describe('ResourcesAPI', () => {
-  describe('describeLogGroup', () => {
+  describe('getLogGroups', () => {
     it('replaces region correctly in the query', async () => {
-      const { api, resourceRequestMock } = setupMockedResourcesAPI();
+      const { api, fetchMock } = setupMockedResourcesAPI();
       await api.getLogGroups({ region: 'default' });
-      expect(resourceRequestMock.mock.calls[0][1].region).toBe('us-west-1');
+      expect(fetchMock.mock.calls[0][0].params.region).toBe('us-west-1');
 
       await api.getLogGroups({ region: 'eu-east' });
-      expect(resourceRequestMock.mock.calls[1][1].region).toBe('eu-east');
+      expect(fetchMock.mock.calls[1][0].params.region).toBe('eu-east');
     });
 
-    it('should return log groups as an array of options', async () => {
-      const response = [
+    it('extracts results and nextToken from bare array response with Link header', async () => {
+      const results = [
         {
-          text: '/aws/containerinsights/dev303-workshop/application',
-          value: '/aws/containerinsights/dev303-workshop/application',
-          label: '/aws/containerinsights/dev303-workshop/application',
+          value: {
+            arn: 'arn:aws:logs:us-west-1:123456789:log-group:/aws/containerinsights/dev303-workshop/application',
+            name: '/aws/containerinsights/dev303-workshop/application',
+          },
         },
         {
-          text: '/aws/containerinsights/dev303-workshop/flowlogs',
-          value: '/aws/containerinsights/dev303-workshop/flowlogs',
-          label: '/aws/containerinsights/dev303-workshop/flowlogs',
-        },
-        {
-          text: '/aws/containerinsights/dev303-workshop/dataplane',
-          value: '/aws/containerinsights/dev303-workshop/dataplane',
-          label: '/aws/containerinsights/dev303-workshop/dataplane',
+          value: {
+            arn: 'arn:aws:logs:us-west-1:123456789:log-group:/aws/containerinsights/dev303-workshop/flowlogs',
+            name: '/aws/containerinsights/dev303-workshop/flowlogs',
+          },
         },
       ];
-
-      const { api } = setupMockedResourcesAPI({ response });
-      const expectedLogGroups = [
-        {
-          text: '/aws/containerinsights/dev303-workshop/application',
-          value: '/aws/containerinsights/dev303-workshop/application',
-          label: '/aws/containerinsights/dev303-workshop/application',
-        },
-        {
-          text: '/aws/containerinsights/dev303-workshop/flowlogs',
-          value: '/aws/containerinsights/dev303-workshop/flowlogs',
-          label: '/aws/containerinsights/dev303-workshop/flowlogs',
-        },
-        {
-          text: '/aws/containerinsights/dev303-workshop/dataplane',
-          value: '/aws/containerinsights/dev303-workshop/dataplane',
-          label: '/aws/containerinsights/dev303-workshop/dataplane',
-        },
-      ];
+      const headers = new Headers({ Link: '<?nextToken=some_token>; rel="next"' });
+      const fetchMock = jest.fn().mockReturnValue(of({ data: results, headers }));
+      const { api } = setupMockedResourcesAPI({ fetchMock });
 
       const logGroups = await api.getLogGroups({ region: 'default' });
 
-      expect(logGroups).toEqual(expectedLogGroups);
+      expect(logGroups.results).toHaveLength(2);
+      expect(logGroups.nextToken).toBe('some_token');
     });
   });
 

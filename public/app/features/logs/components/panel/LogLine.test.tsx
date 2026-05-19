@@ -297,9 +297,9 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
           <LogLine {...defaultProps} />
         </LogListContextProvider>
       );
-      expect(screen.queryByText('Copy log line')).not.toBeInTheDocument();
+      expect(screen.queryByRole('menuitem', { name: /Copy log line message/i })).not.toBeInTheDocument();
       await userEvent.click(screen.getByLabelText('Log menu'));
-      expect(screen.getByText('Copy log line')).toBeInTheDocument();
+      expect(screen.getByRole('menuitem', { name: /Copy log line message/i })).toBeInTheDocument();
     });
 
     test('The menu can be clicked', async () => {
@@ -308,9 +308,9 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
           <LogLine {...defaultProps} />
         </LogListContextProvider>
       );
-      expect(screen.queryByText('Copy log line')).not.toBeInTheDocument();
+      expect(screen.queryByRole('menuitem', { name: /Copy log line message/i })).not.toBeInTheDocument();
       await userEvent.click(screen.getByRole('button'));
-      expect(screen.getByText('Copy log line')).toBeInTheDocument();
+      expect(screen.getByRole('menuitem', { name: /Copy log line message/i })).toBeInTheDocument();
     });
   });
 

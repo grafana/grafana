@@ -367,6 +367,33 @@ type ResourceServerOptions struct {
 	// VectorSearch RPC. nil when no [vector_embedder] provider is configured;
 	// the RPC then returns Unimplemented.
 	Embedder *embedder.Embedder
+
+	// VectorBackfiller, when non-nil, is launched in a background
+	// goroutine after Init. The server tracks it in its WaitGroup so
+	// Stop blocks until it returns. nil = backfill feature off.
+	VectorBackfiller Runnable
+
+	// VectorReconciler, when non-nil, is launched alongside the
+	// backfiller; the server attaches its own broadcaster to it before
+	// starting Run so the reconciler's watch path lights up. nil =
+	// reconciler feature off.
+	VectorReconciler BroadcasterConsumer
+}
+
+// Runnable is anything the server can launch in a goroutine and that
+// exits cleanly on context cancel. Stays abstract so the resource
+// package doesn't have to import the concrete indexer packages, which
+// would cycle.
+type Runnable interface {
+	Run(ctx context.Context) error
+}
+
+// BroadcasterConsumer is a Runnable that wants the server's write-events
+// broadcaster attached before Run. The server sets this up once
+// initWatcher has populated its broadcaster.
+type BroadcasterConsumer interface {
+	Runnable
+	UseBroadcaster(b Broadcaster[*WrittenEvent])
 }
 
 func (opts ResourceServerOptions) bulkBatchOptions() BulkBatchOptions {
@@ -500,6 +527,8 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		quotasConfig:                   opts.QuotasConfig,
 		artificialSuccessfulWriteDelay: opts.Search.IndexMinUpdateInterval,
 		bookmarkFrequency:              opts.BookmarkFrequency,
+		vectorBackfiller:               opts.VectorBackfiller,
+		vectorWriteReconciler:          opts.VectorReconciler,
 	}
 
 	if opts.Search.Resources != nil {
@@ -599,6 +628,12 @@ type server struct {
 	storageEnabled                 bool
 
 	bookmarkFrequency time.Duration
+
+	// Async vector indexers (backfiller + reconciler).
+	// Started in Init, joined in Stop via indexersWG.
+	vectorBackfiller      Runnable
+	vectorWriteReconciler BroadcasterConsumer
+	indexersWG            sync.WaitGroup
 }
 
 // Init implements ResourceServer.
@@ -619,11 +654,42 @@ func (s *server) Init(ctx context.Context) error {
 			s.initErr = s.initWatcher()
 		}
 
+		// Launch async vector indexers (backfiller + reconciler) once
+		// the broadcaster is up. They run for the server's lifetime
+		// and Stop() joins them via indexersWG.
+		if s.initErr == nil {
+			s.startVectorIndexers()
+		}
+
 		if s.initErr != nil {
 			s.log.Error("error running resource server init", "error", s.initErr)
 		}
 	})
 	return s.initErr
+}
+
+// startVectorIndexers launches the configured backfiller and
+// reconciler. Both are optional (nil = feature off). The reconciler
+// gets the server's broadcaster via UseBroadcaster before Run; the
+// backfiller doesn't need the watch path.
+func (s *server) startVectorIndexers() {
+	if s.vectorBackfiller != nil {
+		s.indexersWG.Go(func() {
+			if err := s.vectorBackfiller.Run(s.ctx); err != nil && !errors.Is(err, context.Canceled) {
+				s.log.Error("vector backfiller stopped", "err", err)
+			}
+		})
+	}
+	if s.vectorWriteReconciler != nil {
+		if s.broadcaster != nil {
+			s.vectorWriteReconciler.UseBroadcaster(s.broadcaster)
+		}
+		s.indexersWG.Go(func() {
+			if err := s.vectorWriteReconciler.Run(s.ctx); err != nil && !errors.Is(err, context.Canceled) {
+				s.log.Error("vector reconciler stopped", "err", err)
+			}
+		})
+	}
 }
 
 // trackWrite atomically checks the stopping flag and increments the in-flight
@@ -663,6 +729,20 @@ func (s *server) Stop(ctx context.Context) error {
 		s.log.Debug("all in-flight write operations completed")
 	case <-ctx.Done():
 		s.log.Warn("timed out waiting for in-flight write operations to complete")
+	}
+
+	// Wait for async vector indexers (backfiller, reconciler) to wind
+	// down. They observe s.ctx, so the cancel above unblocks them.
+	indexersDone := make(chan struct{})
+	go func() {
+		s.indexersWG.Wait()
+		close(indexersDone)
+	}()
+	select {
+	case <-indexersDone:
+		s.log.Debug("vector indexers stopped")
+	case <-ctx.Done():
+		s.log.Warn("timed out waiting for vector indexers to stop")
 	}
 
 	var stopFailed bool
