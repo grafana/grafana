@@ -92,6 +92,49 @@ describe('Sidebar', () => {
       render(<TestSetup defaultIsHidden persistanceKey="hidden-persist" />);
       expect(screen.getByTestId(selectors.components.Sidebar.container)).toBeInTheDocument();
     });
+
+    it('renders the sidebar temporarily when hidden and a pane opens', () => {
+      render(<TestSetup defaultIsHidden />);
+
+      // Sidebar is hidden — only the show toggle is rendered
+      expect(screen.queryByTestId(selectors.components.Sidebar.container)).not.toBeInTheDocument();
+
+      // Open a pane externally (simulating selecting an element while hidden)
+      act(() => screen.getByLabelText('Open settings externally').click());
+
+      // Sidebar appears with the pane visible
+      expect(screen.getByTestId(selectors.components.Sidebar.container)).toBeInTheDocument();
+      expect(screen.getByTestId(selectors.components.Sidebar.headerTitle)).toBeInTheDocument();
+    });
+
+    it('re-hides the sidebar when the temporarily-opened pane closes', () => {
+      render(<TestSetup defaultIsHidden />);
+
+      act(() => screen.getByLabelText('Open settings externally').click());
+      expect(screen.getByTestId(selectors.components.Sidebar.container)).toBeInTheDocument();
+
+      // Close the pane via the X button
+      act(() => screen.getByLabelText('Close').click());
+
+      // Sidebar disappears again — back to the persisted-hidden state
+      expect(screen.queryByTestId(selectors.components.Sidebar.container)).not.toBeInTheDocument();
+      expect(screen.getByTestId(selectors.components.Sidebar.showHideToggle)).toBeInTheDocument();
+    });
+
+    it('shares hidden state across instances via hiddenPersistanceKey', () => {
+      const { unmount } = render(<TestSetup persistanceKey="mode-x" hiddenPersistanceKey="shared-hide" />);
+
+      // Hide the sidebar (defaults to visible)
+      act(() => screen.getByLabelText('Hide').click());
+      expect(screen.getByTestId(selectors.components.Sidebar.showHideToggle)).toBeInTheDocument();
+
+      unmount();
+
+      // A different consumer with a different persistanceKey but the same hiddenPersistanceKey
+      // observes the shared hidden state.
+      render(<TestSetup persistanceKey="mode-y" hiddenPersistanceKey="shared-hide" />);
+      expect(screen.getByTestId(selectors.components.Sidebar.showHideToggle)).toBeInTheDocument();
+    });
   });
 
   describe('mobile viewport', () => {
@@ -125,20 +168,26 @@ describe('Sidebar', () => {
 interface TestSetupProps {
   persistanceKey?: string;
   defaultIsHidden?: boolean;
+  hiddenPersistanceKey?: string;
 }
 
-function TestSetup({ persistanceKey, defaultIsHidden }: TestSetupProps) {
+function TestSetup({ persistanceKey, defaultIsHidden, hiddenPersistanceKey }: TestSetupProps) {
   const [openPane, setOpenPane] = React.useState('');
   const contextValue = useSidebar({
     position: 'right',
     hasOpenPane: openPane !== '',
     persistanceKey,
+    hiddenPersistanceKey,
     onClosePane: () => setOpenPane(''),
     defaultIsHidden,
   });
 
   return (
     <div {...contextValue.outerWrapperProps} data-testid="sidebar-test-wrapper">
+      {/* Button outside the sidebar to simulate opening a pane programmatically (e.g. element selection) */}
+      <button onClick={() => setOpenPane('settings')} aria-label="Open settings externally">
+        external
+      </button>
       <Sidebar contextValue={contextValue}>
         {openPane === 'settings' && (
           <Sidebar.OpenPane>
@@ -149,6 +198,7 @@ function TestSetup({ persistanceKey, defaultIsHidden }: TestSetupProps) {
           <Sidebar.Button icon="cog" title="Settings" onClick={() => setOpenPane('settings')} />
           <Sidebar.Button icon="process" title="Data" tooltip="Data transformations" />
           <Sidebar.Button icon="bell" title="Alerts" />
+          <Sidebar.Button icon="arrow-to-right" title="Hide" onClick={() => contextValue.setIsHidden(true)} />
         </Sidebar.Toolbar>
       </Sidebar>
     </div>

@@ -168,6 +168,124 @@ describe('useSidebar', () => {
     expect(result.current.outerWrapperProps).toHaveProperty('style');
   });
 
+  test('setIsHidden sets the persisted hidden value', () => {
+    const { result } = renderHook(() => useSidebar({ defaultIsHidden: false }));
+    expect(result.current.isHidden).toBe(false);
+
+    act(() => result.current.setIsHidden(true));
+    expect(result.current.isHidden).toBe(true);
+
+    // Idempotent — setting the same value again keeps it
+    act(() => result.current.setIsHidden(true));
+    expect(result.current.isHidden).toBe(true);
+
+    act(() => result.current.setIsHidden(false));
+    expect(result.current.isHidden).toBe(false);
+  });
+
+  describe('temporary-show on open pane', () => {
+    test('shows the sidebar undocked when persisted hidden but a pane is open', () => {
+      const { result, rerender } = renderHook(
+        ({ hasOpenPane }: { hasOpenPane: boolean }) =>
+          useSidebar({ defaultIsHidden: true, defaultToDocked: true, hasOpenPane }),
+        { initialProps: { hasOpenPane: false } }
+      );
+
+      // No pane open — sidebar effectively hidden
+      expect(result.current.isHidden).toBe(true);
+
+      // Pane opens — sidebar effectively shown, forced undocked
+      rerender({ hasOpenPane: true });
+      expect(result.current.isHidden).toBe(false);
+      expect(result.current.isDocked).toBe(false);
+      // Dock toggle is hidden during temporary show
+      expect(result.current.onToggleDock).toBeUndefined();
+
+      // Pane closes — sidebar re-hides, persisted state was never flipped
+      rerender({ hasOpenPane: false });
+      expect(result.current.isHidden).toBe(true);
+    });
+
+    test('does not push body when temporarily shown', () => {
+      const { result } = renderHook(() =>
+        useSidebar({ defaultIsHidden: true, defaultToDocked: true, hasOpenPane: true })
+      );
+
+      // The body should not reserve space — the temp-shown sidebar floats over content
+      expect(result.current.outerWrapperProps).toEqual({});
+    });
+
+    test('does not affect the not-hidden case', () => {
+      const { result } = renderHook(() =>
+        useSidebar({ defaultIsHidden: false, defaultToDocked: true, hasOpenPane: true })
+      );
+
+      expect(result.current.isHidden).toBe(false);
+      expect(result.current.isDocked).toBe(true);
+      expect(result.current.onToggleDock).toBeDefined();
+    });
+  });
+
+  describe('hiddenPersistanceKey', () => {
+    test('reads the hidden state from the override key, not persistanceKey', () => {
+      mockedStore.getBool.mockImplementation((key: string, defaultValue: boolean) => {
+        if (key === 'grafana.ui.sidebar.shared.hidden') {
+          return true;
+        }
+        return defaultValue;
+      });
+
+      const { result } = renderHook(() => useSidebar({ persistanceKey: 'mode-a', hiddenPersistanceKey: 'shared' }));
+
+      expect(result.current.isHidden).toBe(true);
+    });
+
+    test('writes the hidden state under the override key', () => {
+      const { result } = renderHook(() => useSidebar({ persistanceKey: 'mode-a', hiddenPersistanceKey: 'shared' }));
+
+      act(() => result.current.setIsHidden(true));
+
+      expect(mockedStore.set).toHaveBeenCalledWith('grafana.ui.sidebar.shared.hidden', 'true');
+    });
+
+    test('different persistanceKey consumers share hidden state via hiddenPersistanceKey', () => {
+      const storeState: Record<string, string> = {};
+      mockedStore.getBool.mockImplementation(
+        (key: string, defaultValue: boolean) => (storeState[key] ?? String(defaultValue)) === 'true'
+      );
+      mockedStore.set.mockImplementation((key, value) => {
+        storeState[key] = String(value);
+      });
+
+      // First consumer hides the sidebar
+      const { result: firstResult } = renderHook(() =>
+        useSidebar({ persistanceKey: 'mode-a', hiddenPersistanceKey: 'shared' })
+      );
+      act(() => firstResult.current.setIsHidden(true));
+      expect(firstResult.current.isHidden).toBe(true);
+
+      // A second consumer with a different persistanceKey but the same hiddenPersistanceKey
+      // should observe the shared hidden state.
+      const { result: secondResult } = renderHook(() =>
+        useSidebar({ persistanceKey: 'mode-b', hiddenPersistanceKey: 'shared' })
+      );
+      expect(secondResult.current.isHidden).toBe(true);
+    });
+
+    test('falls back to persistanceKey when hiddenPersistanceKey is not provided', () => {
+      mockedStore.getBool.mockImplementation((key: string, defaultValue: boolean) => {
+        if (key === 'grafana.ui.sidebar.fallback.hidden') {
+          return true;
+        }
+        return defaultValue;
+      });
+
+      const { result } = renderHook(() => useSidebar({ persistanceKey: 'fallback' }));
+
+      expect(result.current.isHidden).toBe(true);
+    });
+  });
+
   describe('on mobile viewport', () => {
     let restore: () => void;
 

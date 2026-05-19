@@ -28,6 +28,7 @@ export interface SidebarContextValue {
   /** Open previous pane */
   onGoBack?: () => void;
   onToggleIsHidden: () => void;
+  setIsHidden: (value: boolean) => void;
 }
 
 export const SidebarContext: React.Context<SidebarContextValue | undefined> = React.createContext<
@@ -63,6 +64,12 @@ export interface UseSideBarOptions {
   persistanceKey?: string;
   /** Whether the sidebar is hidden by default */
   defaultIsHidden?: boolean;
+  /**
+   * Optional override for the persistance key used to store the hidden state.
+   * Allows the hidden preference to be shared across consumers that otherwise use different
+   * persistanceKeys (e.g. dashboard view vs edit mode share a single hide preference).
+   */
+  hiddenPersistanceKey?: string;
 }
 
 export const SIDE_BAR_WIDTH_ICON_ONLY = 5;
@@ -82,15 +89,22 @@ export function useSidebar({
   onGoBack,
   canGoBack,
   defaultIsHidden = false,
+  hiddenPersistanceKey,
 }: UseSideBarOptions): SidebarContextValue {
   const theme = useTheme2();
   const [isDocked, setIsDocked] = useSidebarSavedState(persistanceKey, 'docked', defaultToDocked);
   const [compact, setCompact] = useSidebarSavedState(persistanceKey, 'compact', defaultToCompact);
   const [paneWidth, setPaneWidth] = useSidebarSavedState(persistanceKey, 'size', 240);
-  const [isHidden, setIsHidden] = useSidebarSavedState(persistanceKey, 'hidden', defaultIsHidden);
+  const [isHidden, setIsHidden] = useSidebarSavedState(
+    hiddenPersistanceKey ?? persistanceKey,
+    'hidden',
+    defaultIsHidden
+  );
   const isMobile = useMedia(`(max-width: ${theme.breakpoints.values.sm}px)`);
+  const isTemporarilyShown = isHidden && Boolean(hasOpenPane);
+  const effectiveIsHidden = isHidden && !isTemporarilyShown;
   /** Undocked/floating sidebar is not used on small viewports; keep layout and behavior docked. */
-  const effectiveIsDocked = Boolean(isMobile) || isDocked;
+  const effectiveIsDocked = !isTemporarilyShown && (Boolean(isMobile) || isDocked);
 
   // Used to accumulate drag distance to know when to change compact mode
   const [_, setCompactDrag] = React.useState(0);
@@ -105,13 +119,14 @@ export function useSidebar({
     ((compact ? SIDE_BAR_WIDTH_ICON_ONLY : SIDE_BAR_WIDTH_WITH_TEXT) + edgeMargin + contentMargin) *
     theme.spacing.gridSize;
 
-  const outerWrapperProps = isHidden
-    ? {}
-    : {
-        style: {
-          [prop]: effectiveIsDocked && hasOpenPane ? paneWidth + toolbarWidth : toolbarWidth,
-        },
-      };
+  const outerWrapperProps =
+    effectiveIsHidden || isTemporarilyShown
+      ? {}
+      : {
+          style: {
+            [prop]: effectiveIsDocked && hasOpenPane ? paneWidth + toolbarWidth : toolbarWidth,
+          },
+        };
 
   const onResize = useCallback(
     (diff: number) => {
@@ -142,10 +157,11 @@ export function useSidebar({
   );
 
   const onToggleIsHidden = useCallback(() => setIsHidden((prev) => !prev), [setIsHidden]);
+  const setIsHiddenValue = useCallback((value: boolean) => setIsHidden(() => value), [setIsHidden]);
 
   return {
     isDocked: effectiveIsDocked,
-    onToggleDock: isMobile ? undefined : onToggleDock,
+    onToggleDock: isMobile || isTemporarilyShown ? undefined : onToggleDock,
     onResize,
     outerWrapperProps,
     position,
@@ -156,11 +172,12 @@ export function useSidebar({
     edgeMargin,
     bottomMargin,
     contentMargin,
-    isHidden,
+    isHidden: effectiveIsHidden,
     onClosePane,
     onGoBack,
     canGoBack,
     onToggleIsHidden,
+    setIsHidden: setIsHiddenValue,
   };
 }
 
