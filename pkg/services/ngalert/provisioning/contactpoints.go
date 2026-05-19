@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/grafana/alerting/definition"
 	alertingModels "github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/receivers/schema"
@@ -159,7 +160,7 @@ func (ecp *ContactPointService) getContactPointDecrypted(ctx context.Context, or
 			continue
 		}
 		embeddedContactPoint, err := PostableGrafanaReceiverToEmbeddedContactPoint(
-			receiver,
+			new(definition.PostableGrafanaReceiver(*receiver)),
 			models.ProvenanceNone, // TODO should be correct provenance?
 			ecp.decryptValueOrRedacted(true, receiver.UID),
 		)

@@ -221,22 +221,7 @@ func (moa *MultiOrgAlertmanager) GetAlertmanagerConfiguration(ctx context.Contex
 		return definitions.GettableUserConfig{}, fmt.Errorf("failed to get latest configuration: %w", err)
 	}
 
-	cfg, err := moa.gettableUserConfigFromAMConfigString(ctx, org, amConfig.AlertmanagerConfiguration)
-	if err != nil {
-		return definitions.GettableUserConfig{}, err
-	}
-
-	if withAutogen {
-		// We validate the notification settings in a similar way to when we POST.
-		// Otherwise, broken settings (e.g. a receiver that doesn't exist) will cause the config returned here to be
-		// different than the config currently in-use.
-		// TODO: Preferably, we'd be getting the config directly from the in-memory AM so adding the autogen config would not be necessary.
-		err := AddAutogenConfig(ctx, moa.logger, moa.configStore, org, &cfg.AlertmanagerConfig, LogInvalidReceivers, moa.featureManager)
-		if err != nil {
-			return definitions.GettableUserConfig{}, err
-		}
-	}
-	return cfg, nil
+	return moa.gettableUserConfigFromAMConfigString(ctx, org, amConfig.AlertmanagerConfiguration, withAutogen)
 }
 
 // ActivateHistoricalConfiguration will set the current alertmanager configuration to a previous value based on the provided
@@ -302,7 +287,7 @@ func (moa *MultiOrgAlertmanager) GetAppliedAlertmanagerConfigurations(ctx contex
 	gettableHistoricConfigs := make([]*definitions.GettableHistoricUserConfig, 0, len(configs))
 	for _, config := range configs {
 		appliedAt := strfmt.DateTime(time.Unix(config.LastApplied, 0).UTC())
-		gettableConfig, err := moa.gettableUserConfigFromAMConfigString(ctx, org, config.AlertmanagerConfiguration)
+		gettableConfig, err := moa.gettableUserConfigFromAMConfigString(ctx, org, config.AlertmanagerConfiguration, false)
 		if err != nil {
 			// If there are invalid records, skip them and return the valid ones.
 			moa.logger.Warn("Invalid configuration found in alert configuration history table", "id", config.ID, "orgID", org)
@@ -322,7 +307,7 @@ func (moa *MultiOrgAlertmanager) GetAppliedAlertmanagerConfigurations(ctx contex
 	return gettableHistoricConfigs, nil
 }
 
-func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx context.Context, orgID int64, config string) (definitions.GettableUserConfig, error) {
+func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx context.Context, orgID int64, config string, withAutogen bool) (definitions.GettableUserConfig, error) {
 	cfg, err := Load([]byte(config))
 	if err != nil {
 		return definitions.GettableUserConfig{}, fmt.Errorf("failed to unmarshal alertmanager configuration: %w", err)
@@ -336,12 +321,23 @@ func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx contex
 	alertmanagerConfig := cfg.AlertmanagerConfig
 	templateFiles := cfg.TemplateFiles
 
+	if withAutogen {
+		// We validate the notification settings in a similar way to when we POST.
+		// Otherwise, broken settings (e.g. a receiver that doesn't exist) will cause the config returned here to be
+		// different than the config currently in-use.
+		// TODO: Preferably, we'd be getting the config directly from the in-memory AM so adding the autogen config would not be necessary.
+		err := AddAutogenConfig(ctx, moa.logger, moa.configStore, orgID, &alertmanagerConfig, LogInvalidReceivers, moa.featureManager)
+		if err != nil {
+			return definitions.GettableUserConfig{}, err
+		}
+	}
+
 	result := definitions.GettableUserConfig{
 		TemplateFiles: templateFiles,
 		AlertmanagerConfig: definitions.GettableApiAlertingConfig{
-			Config: alertmanagerConfig.Config,
+			Config: PostableApiAlertingConfigToAPI(alertmanagerConfig).Config,
 		},
-		ExtraConfigs: cfg.ExtraConfigs,
+		ExtraConfigs: ExtraConfigsToAPI(cfg.ExtraConfigs),
 	}
 
 	// First we encrypt the secure settings.
@@ -674,7 +670,7 @@ func (moa *MultiOrgAlertmanager) saveAndApplyConfig(ctx context.Context, orgID i
 	moa.alertmanagersMtx.RLock()
 	defer moa.alertmanagersMtx.RUnlock()
 
-	cfgToSave, err := json.Marshal(&cfg)
+	cfgToSave, err := legacy_storage.SerializeAlertmanagerConfig(*cfg)
 	if err != nil {
 		return fmt.Errorf("failed to serialize to the Alertmanager configuration: %w", err)
 	}
