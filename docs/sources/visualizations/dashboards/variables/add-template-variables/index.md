@@ -68,8 +68,6 @@ refs:
 
 The following table lists the types of variables shipped with Grafana.
 
-<!-- vale Grafana.Spelling = NO -->
-
 <!-- prettier-ignore-start -->
 
 | Variable type     | Description                                                                                                                          |
@@ -159,37 +157,41 @@ Query expressions are different for each data source. For more information, refe
 {{< /admonition >}}
 
 1. [Enter general options](#enter-general-options).
-1. Under the **Query options** section of the page, select a target data source in the **Data source** drop-down list.
-   You can also click **Open advanced data source picker** to see more options, including adding a data source (Admins only).
-   For more information about data sources, refer to [Add a data source](ref:add-a-data-source).
+1. Configure the following options:
 
-1. In the **Query type** drop-down list, select an option and fill in the query fields accordingly.
-   - The query field varies according to your data source. Some data sources have custom query editors.
-   - Each data source defines how the variable values are extracted. The typical implementation uses every string value returned from the data source response as a variable value. Make sure to double-check the documentation for the data source.
-   - Some data sources let you provide custom "display names" for the values. For instance, the PostgreSQL, MySQL, and Microsoft SQL Server plugins handle this by looking for fields named `__text` and `__value` in the result. Other data sources may look for `text` and `value` or use a different approach. Always remember to double-check the documentation for the data source.
-   - If you need more room in a single input field query editor, then hover your cursor over the lines in the lower right corner of the field and drag downward to expand.
-
-1. (Optional) In the **Regex** field, type a regular expression to filter or capture specific parts of the names returned by your data source query. To see examples, refer to [Filter variables with a regular expression](#filter-variables-with-regex).
-1. Under **Apply regex to**, select **Variable value** or **Display text** to choose where the regex pattern is applied. The default is **Variable value**.
-1. In the **Sort** drop-down list, select the sort order for values to be displayed in the dropdown list. The default option, **Disabled**, means that the order of options returned by your data source query is used.
-1. Under **Refresh**, select when the variable should update options:
-   - **On dashboard load** - Queries the data source every time the dashboard loads. This slows down dashboard loading, because the variable query needs to be completed before dashboard can be initialized.
-   - **On time range change** - Queries the data source every time the dashboard loads and when the dashboard time range changes. Use this option if your variable options query contains a time range filter or is dependent on the dashboard time range.
-
-1. (Optional) In the **Static options** section of the page, toggle on the **Use static options** switch to add custom options in addition to the query results:
-   - Make entries in the **Value** and **Display text** fields.
-   - Click **+ Add new option** to add another static option.
-   - Repeat these steps as many times as needed.
-
-1. (Optional) Configure the settings in the [Selection Options](#configure-variable-selection-options) section:
-   - **Multi-value** - Enables multiple values to be selected at the same time.
-   - **Allow custom values** - Enables users to add custom values to the list.
-   - **Include All option** - Enables an option to include all variables. Enter a value in the **Custom all value** field to set your own "all" option.
+   | Option | Description |
+   | --- | --- |
+   | Data source | Select a target data source in the **Data source** drop-down list. You can also click **Open advanced data source picker** to see more options, including adding a data source (Admins only). For more information about data sources, refer to [Add a data source](ref:add-a-data-source). |
+   | Query type | Select an option in the drop-down list and fill in the query fields accordingly. For more information, refer to the [Query type](#query-type) section following these steps. |
+   | Regex | (Optional) Type a regular expression in the field to filter or capture specific parts of the names returned by your data source query. To see examples, refer to [Filter variables with a regular expression](#filter-variables-with-regex). |
+   | Apply regex to | Select **Variable value** or **Display text** to choose where the regex pattern is applied. The default is **Variable value**. |
+   | Sort | Select the sort order for values to be displayed in the drop-down list. The default option, **Disabled**, means that the order of options returned by your data source query is used. |
+   | Refresh | Select when the variable should update options:<ul><li>**On dashboard load** - Queries the data source every time the dashboard loads. This slows down dashboard loading, because the variable query needs to be completed before dashboard can be initialized.</li><li>**On time range change** - Queries the data source every time the dashboard loads and when the dashboard time range changes. Use this option if your variable options query contains a time range filter or is dependent on the dashboard time range.</li></ul> |
+   | Use static options | (Optional) Toggle on the switch to add custom options in addition to the query results:<ul><li>Make entries in the **Value** and **Display text** fields.</li><li>Click **+ Add new option** to add another static option.</li></ul> Repeat these steps as many times as needed. |
+   | Multi-value | Enables multiple values to be selected at the same time. For more information, refer to [Selection Options](#configure-variable-selection-options). |
+   | Allow custom values | Enables users to add custom values to the list. For more information, refer to [Selection Options](#configure-variable-selection-options). |
+   | Include All option | Enables an option to include all variables. Enter a value in the **Custom all value** field to set your own "all" option. |
 
 1. In the **Preview of values** section, Grafana displays a list of the current variable values. Review them to ensure they match what you expect.
 1. Click **Save** in the top-right corner.
 1. Enter an optional description of your changes and click **Save**.
 1. Click **Back to dashboard** and then **Exit edit**.
+
+### Query type
+
+The query field varies according to your data source.
+Some data sources have custom query editors.
+
+Each data source defines how the variable values are extracted.
+The typical implementation uses every string value returned from the data source response as a variable value.
+Make sure to double-check the documentation for the data source.
+
+Some data sources let you provide custom "display names" for the values.
+For instance, the PostgreSQL, MySQL, and Microsoft SQL Server plugins handle this by looking for fields named `__text` and `__value` in the result.
+Other data sources may look for `text` and `value` or use a different approach.
+Always remember to double-check the documentation for the data source.
+
+If you need more room in a single input field query editor, then hover your cursor over the lines in the lower right corner of the field and drag downward to expand.
 
 ## Add a custom variable
 
@@ -198,14 +200,15 @@ Use a _custom_ variable for a value that does not change, such as a number or a 
 For example, if you have server names or region names that never change, then you might want to create them as custom variables rather than query variables. Because they do not change, you might use them in [chained variables](#chained-variables) rather than other query variables. That would reduce the number of queries Grafana must send when chained variables are updated.
 
 1. [Enter general options](#enter-general-options).
-1. Under the **Custom options** section of the page, select one of the following:
-   - **CSV** - Enter a flat list of values for the variable in a comma-separated list. You can include numbers, strings, or key/value pairs separated by a space and a colon. For example, `key1 : value1,key2 : value2`.
-   - **JSON** - Provide a JSON array of objects where each object can have any number of properties that can be referenced. For more information refer, to [Configure multi-property variables](#configure-multi-property-variables).
+1. Configure the following options:
 
-1. (Optional) Configure the settings in the [Selection Options](#configure-variable-selection-options) section:
-   - **Multi-value** - Enables multiple values to be selected at the same time.
-   - **Allow custom values** - Enables users to add custom values to the list. Only applies to CSV custom values.
-   - **Include All option** - Enables an option to include all variables.
+   | Option | Description |
+   | --- | --- |
+   | CSV | Enter a flat list of values for the variable in a comma-separated list. You can include numbers, strings, or key/value pairs separated by a space and a colon. For example, `key1 : value1,key2 : value2`. |
+   | JSON | Provide a JSON array of objects where each object can have any number of properties that can be referenced. For more information refer, to [Configure multi-property variables](#configure-multi-property-variables). |
+   | Multi-value | Enables multiple values to be selected at the same time. For more information, refer to [Selection Options](#configure-variable-selection-options). |
+   | Allow custom values | Enables users to add custom values to the list. Only applies to CSV custom values. For more information, refer to [Selection Options](#configure-variable-selection-options). |
+   | Include All option | Enables an option to include all variables. For more information, refer to [Selection Options](#configure-variable-selection-options). |
 
 1. In the **Preview of values** section, Grafana displays a list of the current variable values. If you've entered a JSON array, the preview is a table that includes all the value properties. Review them to ensure they match what you expect.
 1. Click **Save** in the top-right corner.
