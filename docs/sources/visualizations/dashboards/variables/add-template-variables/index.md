@@ -433,17 +433,13 @@ _Switch_ variables display a switch with two configurable values representing en
 - Control boolean parameters in your data sources
 
 1. [Enter general options](#enter-general-options).
-1. Under the **Switch options** section of the page, configure the switch values:
+1. Configure the following options:
 
-   In the **Value pair type** drop-down list, select one of the following predefined options or choose **Custom** to define your own values:
-   - **True / False** - Uses boolean values `true` and `false`
-   - **1 / 0** - Uses numeric values `1` and `0`
-   - **Yes / No** - Uses string values `yes` and `no`
-   - **Custom** - Allows you to define custom values for both enabled and disabled states
-
-1. If you selected **Custom** in the previous step, configure the custom values:
-   - **Enabled value** - Enter the value that represents the enabled state (for example, "on").
-   - **Disabled value** - Enter the value that represents the disabled state (for example, "off").
+   | Option | Description |
+   | --- | --- |
+   | Value pair type | Select one of the following predefined options:<ul><li>**True / False** - Uses boolean values `true` and `false`.</li><li>**1 / 0** - Uses numeric values `1` and `0`.</li><li>**Yes / No** - Uses string values `yes` and `no`.</li><li>**Custom** - Allows you to define custom values for both enabled and disabled states.</li></ul> |
+   | Enabled value | If you selected **Custom**, configure the custom values. Enter the value that represents the enabled state (for example, "on"). |
+   | Disabled value | If you selected **Custom**, enter the value that represents the disabled state (for example, "off"). |
 
 1. Click **Save dashboard**.
 1. Click **Back to dashboard** and **Exit edit**.
@@ -523,7 +519,7 @@ If you do not want Grafana to do this automatic regular expression escaping and 
 
 ### Include All option
 
-Grafana adds an `All` option to the variable dropdown list. If a user selects this option, then all variable options are selected.
+Grafana adds an `All` option to the variable drop-down list. If a user selects this option, then all variable options are selected.
 
 ### Custom all value
 
@@ -533,7 +529,7 @@ Enter regular expressions, globs, or Lucene syntax in the **Custom all value** f
 
 By default the `All` value includes all options in combined expression. This can become very long and can have performance problems. Sometimes it can be better to specify a custom all value, like a wildcard regular expression.
 
-In order to have custom regular expression, globs, or Lucene syntax in the **Custom all value** option, it is never escaped so you have to think about what is a valid value for your data source.
+In order to have custom regular expression, globs, or Lucene syntax in the **Custom all value** option, it's never escaped so you have to think about what's a valid value for your data source.
 
 ## Configure multi-property variables
 
@@ -560,7 +556,7 @@ To create a custom variable with multiple properties, define a JSON array, like 
   { "value": "1", "text": "Development", "aws": "dev", "azure": "development", "google": "googledev" },
   { "value": "2", "text": "Staging", "aws": "stag", "azure": "staging", "google": "googlestag" },
   { "value": "3", "text": "Production", "aws": "prod", "azure": "production", "google": "googleprod" }
-]
+] 
 ```
 
 This is how those values are displayed in a preview:
@@ -569,7 +565,7 @@ This is how those values are displayed in a preview:
 
 Then you can use `${varName.someProperty}` syntax to reference any property in your dashboard panels or metrics:
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-multipropvar-used-12.4.png" max-width=750px" alt="Multi-property variable used in a text panel" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-multipropvar-used-12.4.png" max-width="750px" alt="Multi-property variable used in a text panel" >}}
 
 You can even deeply nest properties and still access them using familiar variable syntax. In the following example, each user has an address property with all the elements of an address nested within it:
 
