@@ -109,6 +109,12 @@ func (r *Reconciler) reconcile(ctx context.Context, req operator.TypedReconcileR
 		operator.ReconcileActionResynced:
 		if err := r.applyChildren(ctx, req.Object); err != nil {
 			logger.Error("failed to apply child resources", "error", err)
+			// Surface the failure on the PrometheusRuleFile's status so the user can see
+			// what went wrong without scraping operator logs. Best-effort: ignore the
+			// status-write error since the real failure is already being returned.
+			if statusErr := r.writeFailureOperatorState(ctx, req.Object, err); statusErr != nil {
+				logger.Warn("failed to write failure operator state", "error", statusErr)
+			}
 			return operator.ReconcileResult{}, err
 		}
 		return operator.ReconcileResult{}, nil
@@ -267,18 +273,50 @@ func deleteByName(ctx context.Context, c resource.Client, namespace, name string
 	return nil
 }
 
-// updateStatus rewrites the file's status subresource with the supplied desired inventory.
-// It uses resource.UpdateObject so the SDK handles ResourceVersion conflicts by re-fetching
-// and re-applying our mutator.
+// operatorStateID is the key under PrometheusRuleFileStatus.OperatorStates that this app
+// writes. Other operators consuming the same kind would write under their own key so we
+// don't stomp each other's state.
+const operatorStateID = "rules-extensions.alerting.grafana.app"
+
+// updateStatus rewrites the file's status subresource with the supplied desired inventory
+// and records a successful evaluation under OperatorStates. It uses resource.UpdateObject
+// so the SDK handles ResourceVersion conflicts by re-fetching and re-applying our mutator.
 func (r *Reconciler) updateStatus(ctx context.Context, file *model.PrometheusRuleFile, fileFolder string, folders, alertRules, recordingRules []string) error {
 	_, err := resource.UpdateObject(ctx, r.files, file.GetStaticMetadata().Identifier(), func(obj *model.PrometheusRuleFile, _ bool) (*model.PrometheusRuleFile, error) {
 		obj.Status.ManagedFileFolder = fileFolder
 		obj.Status.ManagedFolders = folders
 		obj.Status.ManagedAlertRules = alertRules
 		obj.Status.ManagedRecordingRules = recordingRules
+		setOperatorState(obj, model.PrometheusRuleFileStatusOperatorStateStateSuccess, obj.GetResourceVersion(), "")
 		return obj, nil
 	}, resource.UpdateOptions{Subresource: "status"})
 	return err
+}
+
+// writeFailureOperatorState records that this reconcile failed. It does NOT touch the
+// managed-inventory fields — those reflect the last successful reconcile and should not
+// be invalidated just because a transient failure occurred. The error message is stamped
+// into DescriptiveState so a `kubectl describe` reveals what broke.
+func (r *Reconciler) writeFailureOperatorState(ctx context.Context, file *model.PrometheusRuleFile, applyErr error) error {
+	_, err := resource.UpdateObject(ctx, r.files, file.GetStaticMetadata().Identifier(), func(obj *model.PrometheusRuleFile, _ bool) (*model.PrometheusRuleFile, error) {
+		setOperatorState(obj, model.PrometheusRuleFileStatusOperatorStateStateFailed, obj.GetResourceVersion(), applyErr.Error())
+		return obj, nil
+	}, resource.UpdateOptions{Subresource: "status"})
+	return err
+}
+
+func setOperatorState(obj *model.PrometheusRuleFile, state model.PrometheusRuleFileStatusOperatorStateState, lastEvaluation, descriptive string) {
+	if obj.Status.OperatorStates == nil {
+		obj.Status.OperatorStates = map[string]model.PrometheusRuleFilestatusOperatorState{}
+	}
+	entry := model.PrometheusRuleFilestatusOperatorState{
+		LastEvaluation: lastEvaluation,
+		State:          state,
+	}
+	if descriptive != "" {
+		entry.DescriptiveState = &descriptive
+	}
+	obj.Status.OperatorStates[operatorStateID] = entry
 }
 
 // ensureFileFolder creates the per-file root folder under the user-supplied parent folder.
