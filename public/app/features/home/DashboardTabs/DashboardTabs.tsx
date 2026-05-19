@@ -90,17 +90,31 @@ export function DashboardTabs() {
     if (didAutoSwitch.current || recentLoading || starredLoading) {
       return;
     }
-    didAutoSwitch.current = true;
 
     const recentEmpty = !recentDashboards?.length;
     const starredEmpty = !starredDashboards?.length;
 
     if (activeTab === RECENT_TAB_ID && recentEmpty && !starredEmpty) {
       setActiveTab(STARRED_TAB_ID);
-    } else if (activeTab === STARRED_TAB_ID && starredEmpty && !recentEmpty) {
-      setActiveTab(RECENT_TAB_ID);
+      didAutoSwitch.current = true;
+      return;
     }
-  }, [recentLoading, starredLoading, recentDashboards, starredDashboards, activeTab]);
+
+    if (activeTab === STARRED_TAB_ID && starredEmpty && !recentEmpty) {
+      setActiveTab(RECENT_TAB_ID);
+      didAutoSwitch.current = true;
+      return;
+    }
+
+    if ((activeTab === RECENT_TAB_ID || activeTab === STARRED_TAB_ID) && recentEmpty && starredEmpty) {
+      const extensionTab = extensionTabs.find((tab) => !tab.href);
+      if (extensionTab) {
+        setActiveTab(extensionTab.id);
+        didAutoSwitch.current = true;
+        return;
+      }
+    }
+  }, [recentLoading, starredLoading, recentDashboards, starredDashboards, extensionTabs, activeTab]);
 
   const builtInTabs: HomepageTab[] = [
     {
