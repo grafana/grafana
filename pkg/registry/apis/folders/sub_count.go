@@ -17,6 +17,7 @@ import (
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -124,6 +125,10 @@ func (r *subCountREST) Connect(ctx context.Context, name string, opts runtime.Ob
 				return
 			}
 			responder.Error(err)
+			return
+		}
+		if stats.Error != nil {
+			responder.Error(resource.GetError(stats.Error))
 			return
 		}
 		rsp := &folders.DescendantCounts{
