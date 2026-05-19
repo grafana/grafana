@@ -594,7 +594,7 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev
 		}
 		return nil
 	case resourcepb.WatchEvent_ADDED, resourcepb.WatchEvent_MODIFIED:
-		// fall through to extract → embed → upsert below
+		// code execution continues below to extract → embed → upsert
 	default:
 		statusLabel = "unknown_action"
 		return fmt.Errorf("unknown action %v", ev.action)
@@ -610,13 +610,7 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev
 		Name:      ev.name,
 	}
 
-	extractCtx, extractSpan := tracer.Start(ctx, "unified.embed.builder.Extract")
-	extractSpan.SetAttributes(
-		attribute.String("group", builder.Group()),
-		attribute.String("resource", builder.Resource()),
-	)
-	items, err := builder.Extract(extractCtx, key, ev.value, "")
-	extractSpan.End()
+	items, err := builder.Extract(ctx, key, ev.value, "")
 	if err != nil {
 		statusLabel = "extract_error"
 		return fmt.Errorf("extract: %w", err)

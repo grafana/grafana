@@ -337,13 +337,7 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 		Name:      name,
 	}
 
-	extractCtx, extractSpan := tracer.Start(ctx, "unified.embed.builder.Extract")
-	extractSpan.SetAttributes(
-		attribute.String("group", group),
-		attribute.String("resource", res),
-	)
-	items, err := builder.Extract(extractCtx, key, iter.Value(), "")
-	extractSpan.End()
+	items, err := builder.Extract(ctx, key, iter.Value(), "")
 	if err != nil {
 		return fmt.Errorf("extract %s/%s: %w", namespace, name, err)
 	}

@@ -15,9 +15,14 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/authlib/types"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -1330,4 +1335,30 @@ func TestRebuildIndexNoFollowUpWhenNotInFlight(t *testing.T) {
 	support.inFlightRebuildsMu.Unlock()
 	require.False(t, inFlight, "in-flight tracker should be cleared")
 	require.Equal(t, 0, support.rebuildQueue.Len(), "no follow-up should be re-enqueued")
+}
+
+// TestSearchServer_VectorSearch_ObservesDuration verifies the RPC histogram
+// fires when VectorSearch returns. The Unimplemented path is the cheapest
+// reachable code path (no embedder/vectorBackend needed), and is enough to
+// confirm the wiring between VectorSearch and VectorMetrics is intact.
+func TestSearchServer_VectorSearch_ObservesDuration(t *testing.T) {
+	reg := prometheus.NewPedanticRegistry()
+	m := ProvideVectorMetrics(reg)
+	s := &searchServer{
+		log:           log.New("test-vector-search"),
+		vectorMetrics: m,
+	}
+
+	_, err := s.VectorSearch(context.Background(), &resourcepb.VectorSearchRequest{
+		Key: &resourcepb.ResourceKey{
+			Namespace: "stack-1",
+			Group:     "dashboard.grafana.app",
+			Resource:  "dashboards",
+		},
+		Query: "test",
+	})
+	require.Error(t, err)
+	require.Equal(t, codes.Unimplemented, status.Code(err))
+
+	require.Equal(t, 1, testutil.CollectAndCount(m.SearchDuration, "storage_server_vector_search_duration_seconds"))
 }
