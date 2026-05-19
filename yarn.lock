@@ -4493,6 +4493,7 @@ __metadata:
     i18next-browser-languagedetector: "npm:^8.0.0"
     immutable: "npm:^5.1.5"
     is-hotkey: "npm:0.2.0"
+    jest-canvas-mock-compare: "npm:0.0.4"
     jquery: "npm:3.7.1"
     lodash: "npm:^4.17.23"
     micro-memoize: "npm:^4.1.2"
