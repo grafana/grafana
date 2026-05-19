@@ -90,6 +90,8 @@ export const BarGauge = memo(function BarGauge(props: Props) {
     valueDisplayMode,
   } = props;
 
+  console.log('my little change to test CI');
+
   const renderBasicAndGradientBars = () => {
     const styles = getBasicAndGradientStyles(props);
 
