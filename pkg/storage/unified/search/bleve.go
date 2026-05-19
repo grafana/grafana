@@ -765,6 +765,9 @@ func (b *bleveBackend) BuildIndex(
 
 		buildErr := b.buildIndexFromScratch(buildTarget, indexBuildReason, builder, logWithDetails)
 		if adaptive != nil {
+			// If the adaptive wrapper promoted the index, copy the final file-backed
+			// delegate and directory metadata back into prepared so the normal cache,
+			// cleanup, and in-flight unregister paths handle the promoted index.
 			idx, prepared.fileIndexName, prepared.cleanupDir = adaptive.finalState()
 			prepared.index = idx.index
 			prepared.indexStorage = idx.indexStorage
@@ -1004,14 +1007,15 @@ func (b *bleveBackend) createEmptyFileIndex(resourceDir string, mapper mapping.I
 
 		idx, err := newBleveIndex(indexDir, mapper, time.Now(), b.opts.BuildVersion, selectableFields)
 		if errors.Is(err, bleve.ErrorIndexPathExists) {
+			b.unregisterInFlightBuildDir(indexDir)
 			continue
 		}
 		if err != nil {
+			b.unregisterInFlightBuildDir(indexDir)
 			return preparedBuildIndex{}, fmt.Errorf("error creating new bleve index: %s %w", indexDir, err)
 		}
 
 		logger.Info("Building index using filesystem", "directory", indexDir)
-		b.registerInFlightBuildDir(indexDir)
 		return preparedBuildIndex{
 			index:         idx,
 			fileIndexName: fileIndexName,
@@ -1132,7 +1136,6 @@ func (b *bleveBackend) promoteBuildIndexToFile(
 	if err != nil {
 		return nil, "", "", err
 	}
-	b.registerInFlightBuildDir(indexDir)
 	cleanup := true
 	defer func() {
 		if cleanup {
@@ -1292,6 +1295,34 @@ func (b *bleveBackend) cleanOldIndexes(resourceDir string, skipName string) {
 	}
 }
 
+// reserveIndexDir returns an absolute path (and its base name) inside
+// resourceDir that does not exist yet. It reserves the not-yet-created path in
+// inFlightBuildDirs before returning, and bumps the timestamp if a collision
+// happens.
+func (b *bleveBackend) reserveIndexDir(resourceDir string) (string, string, error) {
+	if err := os.MkdirAll(resourceDir, 0o750); err != nil {
+		return "", "", err
+	}
+
+	t := time.Now()
+	for {
+		name := formatIndexName(t)
+		dir := filepath.Join(resourceDir, name)
+		if !isPathWithinRoot(dir, b.opts.Root) {
+			return "", "", fmt.Errorf("invalid path %s", dir)
+		}
+		if _, err := os.Stat(dir); err != nil {
+			if !errors.Is(err, os.ErrNotExist) {
+				return "", "", err
+			}
+			if b.tryReserveInFlightBuildDir(dir) {
+				return dir, name, nil
+			}
+		}
+		t = t.Add(time.Second)
+	}
+}
+
 // registerInFlightBuildDir marks an absolute directory path as actively used
 // by an in-flight BuildIndex call. cleanOldIndexes will skip such paths.
 // Must be paired with a call to unregisterInFlightBuildDir; the refcount
@@ -1304,6 +1335,21 @@ func (b *bleveBackend) registerInFlightBuildDir(path string) {
 	b.inFlightBuildDirsMu.Lock()
 	defer b.inFlightBuildDirsMu.Unlock()
 	b.inFlightBuildDirs[path]++
+}
+
+// tryReserveInFlightBuildDir registers path only if no in-process build is
+// already using it. It is used before the directory exists on disk.
+func (b *bleveBackend) tryReserveInFlightBuildDir(path string) bool {
+	if path == "" {
+		return false
+	}
+	b.inFlightBuildDirsMu.Lock()
+	defer b.inFlightBuildDirsMu.Unlock()
+	if _, ok := b.inFlightBuildDirs[path]; ok {
+		return false
+	}
+	b.inFlightBuildDirs[path] = 1
+	return true
 }
 
 func (b *bleveBackend) unregisterInFlightBuildDir(path string) {

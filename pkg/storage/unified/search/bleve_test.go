@@ -1497,6 +1497,26 @@ func TestCleanOldIndexes(t *testing.T) {
 	})
 }
 
+func TestReserveIndexDirSkipsInFlightReservation(t *testing.T) {
+	dir := t.TempDir()
+	b, _ := setupBleveBackend(t, withRootDir(dir))
+	resourceDir := filepath.Join(dir, "resource")
+
+	firstDir, firstName, err := b.reserveIndexDir(resourceDir)
+	require.NoError(t, err)
+	defer b.unregisterInFlightBuildDir(firstDir)
+
+	secondDir, secondName, err := b.reserveIndexDir(resourceDir)
+	require.NoError(t, err)
+	defer b.unregisterInFlightBuildDir(secondDir)
+
+	require.NotEqual(t, firstName, secondName)
+	require.NotEqual(t, firstDir, secondDir)
+	require.NoDirExists(t, firstDir)
+	require.NoDirExists(t, secondDir)
+	require.Len(t, b.inFlightBuildDirs, 2)
+}
+
 func dirEntryNames(t *testing.T, dir string) []string {
 	t.Helper()
 	entries, err := os.ReadDir(dir)
