@@ -8,7 +8,7 @@ import { appEvents } from 'app/core/app_events';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 
 import { type DashboardInputs, DashboardSource, type ImportFormDataV2 } from '../../types';
-import { useProvisionedImport, type ProvisionedImportDefaults } from '../hooks/useProvisionedImport';
+import { useProvisionedImport } from '../hooks/useProvisionedImport';
 import { truncateFloatGridItems } from '../utils/floatingGridItems';
 import { applyV2Inputs } from '../utils/inputs';
 
@@ -60,16 +60,6 @@ export function ImportOverviewV2({ dashboard, dashboardUid, inputs, meta, source
     return formTitle || dashboard.title || '';
   }, [getValues, dashboard.title]);
 
-  const applyDefaults = useCallback(
-    ({ workflow, ref, path, repo }: ProvisionedImportDefaults) => {
-      setValue('workflow', workflow, { shouldDirty: false });
-      setValue('ref', ref, { shouldDirty: false });
-      setValue('path', path, { shouldDirty: false });
-      setValue('repo', repo, { shouldDirty: false });
-    },
-    [setValue]
-  );
-
   const {
     isProvisioned,
     shouldRenderProvisionedFields,
@@ -83,7 +73,7 @@ export function ImportOverviewV2({ dashboard, dashboardUid, inputs, meta, source
   } = useProvisionedImport({
     folderUid: typeof watchedFolderUid === 'string' ? watchedFolderUid : '',
     getDefaultTitle,
-    applyDefaults,
+    setValue,
   });
 
   const hasProvisionedConflict =
@@ -136,9 +126,9 @@ export function ImportOverviewV2({ dashboard, dashboardUid, inputs, meta, source
             workflow: form.workflow != null ? String(form.workflow) : undefined,
           },
         });
-        return;
+      } else {
+        onStandardSubmit(form);
       }
-      onStandardSubmit(form);
     },
     [submitDisabled, isProvisioned, saveProvisionedImport, buildDashboardSpec, dashboardUid, onStandardSubmit]
   );

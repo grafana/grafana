@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
+import { type SetValueConfig } from 'react-hook-form';
 
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import {
@@ -15,12 +16,12 @@ import {
 
 import { useImportProvisionedSave } from './useImportProvisionedSave';
 
-export interface ProvisionedImportDefaults {
-  workflow?: string;
-  ref: string;
-  path: string;
-  repo: string;
-}
+/** Minimal setValue signature covering only the provisioning fields the hook needs to set. */
+type SetProvisioningField = (
+  name: 'workflow' | 'ref' | 'path' | 'repo',
+  value: string | undefined,
+  options?: SetValueConfig
+) => void;
 
 export interface UseProvisionedImportArgs {
   /** Watched folder UID — string or undefined. */
@@ -32,11 +33,8 @@ export interface UseProvisionedImportArgs {
    * fires only on repo/folder transitions, not on title edits.
    */
   getDefaultTitle: () => string;
-  /**
-   * Caller writes the seeded values into the form.
-   * **Identity must be stable** — wrap in `useCallback` with narrow deps.
-   */
-  applyDefaults: (defaults: ProvisionedImportDefaults) => void;
+  /** react-hook-form `setValue` — the hook writes provisioning fields directly. */
+  setValue: SetProvisioningField;
   /** V1 only — pass true when inputs.libraryPanels.length > 0. */
   hasLibraryPanels?: boolean;
 }
@@ -61,7 +59,7 @@ export interface UseProvisionedImportResult {
 export function useProvisionedImport({
   folderUid,
   getDefaultTitle,
-  applyDefaults,
+  setValue,
   hasLibraryPanels = false,
 }: UseProvisionedImportArgs): UseProvisionedImportResult {
   const { repository, status, isReadOnlyRepo } = useGetResourceRepositoryView({
@@ -75,22 +73,26 @@ export function useProvisionedImport({
   const isLPBlocked = isProvisioned && hasLibraryPanels;
 
   // Seed provisioning form defaults when a repo becomes available or the folder changes.
-  // getDefaultTitle and applyDefaults must have stable identities (useCallback) so this
-  // effect does not re-fire on unrelated renders such as title edits.
+  // getDefaultTitle must have a stable identity (useCallback) so this effect does not
+  // re-fire on unrelated renders such as title edits.
+  const applyDefaults = useCallback(
+    (repository: RepositoryView) => {
+      setValue('workflow', getDefaultWorkflow(repository), { shouldDirty: false });
+      setValue('ref', getDefaultRef(repository, 'import'), { shouldDirty: false });
+      setValue('path', generatePath({ timestamp: generateTimestamp(), slug: slugifyForFilename(getDefaultTitle()) }), {
+        shouldDirty: false,
+      });
+      setValue('repo', repository.name, { shouldDirty: false });
+    },
+    [setValue, getDefaultTitle]
+  );
+
   useEffect(() => {
     if (!isProvisioned || !repository) {
       return;
     }
-    applyDefaults({
-      workflow: getDefaultWorkflow(repository),
-      ref: getDefaultRef(repository, 'import'),
-      path: generatePath({
-        timestamp: generateTimestamp(),
-        slug: slugifyForFilename(getDefaultTitle()),
-      }),
-      repo: repository.name,
-    });
-  }, [isProvisioned, repository, folderUid, getDefaultTitle, applyDefaults]);
+    applyDefaults(repository);
+  }, [isProvisioned, repository, folderUid, applyDefaults]);
 
   const provisionedSave = useImportProvisionedSave({ repository });
 

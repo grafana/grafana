@@ -11,7 +11,7 @@ import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { addLibraryPanel } from 'app/features/library-panels/state/api';
 
 import { type DashboardInputs, DashboardSource, type ImportDashboardDTO, LibraryPanelInputState } from '../../types';
-import { useProvisionedImport, type ProvisionedImportDefaults } from '../hooks/useProvisionedImport';
+import { useProvisionedImport } from '../hooks/useProvisionedImport';
 import { applyV1Inputs, interpolateLibraryPanelDatasources, stripExportMetadata } from '../utils/inputs';
 
 import { GcomDashboardInfo } from './GcomDashboardInfo';
@@ -46,15 +46,6 @@ export function ImportOverviewV1({ dashboard, inputs, meta, source, folderUid, o
   const watchedFolder = watch('folder');
 
   const getDefaultTitle = useCallback(() => getValues('title') || dashboard.title || '', [getValues, dashboard.title]);
-  const applyDefaults = useCallback(
-    ({ workflow, ref, path, repo }: ProvisionedImportDefaults) => {
-      setValue('workflow', workflow, { shouldDirty: false });
-      setValue('ref', ref, { shouldDirty: false });
-      setValue('path', path, { shouldDirty: false });
-      setValue('repo', repo, { shouldDirty: false });
-    },
-    [setValue]
-  );
 
   const {
     isProvisioned,
@@ -70,7 +61,7 @@ export function ImportOverviewV1({ dashboard, inputs, meta, source, folderUid, o
   } = useProvisionedImport({
     folderUid: watchedFolder?.uid,
     getDefaultTitle,
-    applyDefaults,
+    setValue,
     hasLibraryPanels: inputs.libraryPanels.length > 0,
   });
 
@@ -131,9 +122,9 @@ export function ImportOverviewV1({ dashboard, inputs, meta, source, folderUid, o
           title: form.title,
           form: { ref: form.ref ?? '', path: form.path ?? '', comment: form.comment, workflow: form.workflow },
         });
-        return;
+      } else {
+        onStandardSubmit(form);
       }
-      onStandardSubmit(form);
     },
     [submitDisabled, isProvisioned, saveProvisionedImport, dashboard, inputs, uidReset, onStandardSubmit]
   );

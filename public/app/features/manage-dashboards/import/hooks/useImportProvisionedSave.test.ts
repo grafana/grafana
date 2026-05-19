@@ -65,7 +65,7 @@ describe('useImportProvisionedSave', () => {
     server.use(
       http.post(`${BASE}/repositories/:name/files/*`, async ({ request, params }) => {
         const url = new URL(request.url);
-        capturedRequest = { name: params.name, url, body: await request.json() };
+        capturedRequest = { name: params.name!, url, body: await request.json() };
         return HttpResponse.json({ resource: { upsert: {} } });
       })
     );

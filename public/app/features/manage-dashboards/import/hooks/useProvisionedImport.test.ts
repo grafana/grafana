@@ -131,7 +131,7 @@ function defaultArgs(overrides: Partial<UseProvisionedImportArgs> = {}): UseProv
   return {
     folderUid: 'folder-1',
     getDefaultTitle: jest.fn().mockReturnValue('Test Dashboard'),
-    applyDefaults: jest.fn(),
+    setValue: jest.fn(),
     ...overrides,
   };
 }
@@ -198,25 +198,25 @@ describe('useProvisionedImport', () => {
 
   it('applies defaults once when provisioned', async () => {
     setupRepoState({ isProvisioned: true });
-    const applyDefaults = jest.fn();
-    renderHook(() => useProvisionedImport(defaultArgs({ applyDefaults })), {
+    const setValueSpy = jest.fn();
+    renderHook(() => useProvisionedImport(defaultArgs({ setValue: setValueSpy })), {
       wrapper: getWrapper({ renderWithRouter: true }),
     });
 
     await waitFor(() => {
-      expect(applyDefaults).toHaveBeenCalledTimes(1);
+      expect(setValueSpy).toHaveBeenCalled();
     });
 
-    expect(applyDefaults).toHaveBeenCalledWith({
-      workflow: 'write',
-      ref: 'main',
-      path: 'test-dashboard.json',
-      repo: 'test-repo',
-    });
+    expect(setValueSpy).toHaveBeenCalledWith('workflow', 'write', { shouldDirty: false });
+    expect(setValueSpy).toHaveBeenCalledWith('ref', 'main', { shouldDirty: false });
+    expect(setValueSpy).toHaveBeenCalledWith('path', 'test-dashboard.json', { shouldDirty: false });
+    expect(setValueSpy).toHaveBeenCalledWith('repo', 'test-repo', { shouldDirty: false });
+    // Exactly 4 calls — one per provisioning field, seeded once
+    expect(setValueSpy).toHaveBeenCalledTimes(4);
   });
 
   it('reapplies defaults when repository changes', async () => {
-    const applyDefaults = jest.fn();
+    const setValueSpy = jest.fn();
     const otherRepo: RepositoryView = { ...mockRepository, name: 'other-repo' };
 
     // Set up both repos in settings; folder handler returns per-folder annotations
@@ -230,45 +230,45 @@ describe('useProvisionedImport', () => {
     );
 
     const { rerender } = renderHook((props: UseProvisionedImportArgs) => useProvisionedImport(props), {
-      initialProps: defaultArgs({ applyDefaults }),
+      initialProps: defaultArgs({ setValue: setValueSpy }),
       wrapper: getWrapper({ renderWithRouter: true }),
     });
 
     await waitFor(() => {
-      expect(applyDefaults).toHaveBeenCalledTimes(1);
+      expect(setValueSpy).toHaveBeenCalledTimes(4);
     });
 
     // Simulate folder change to a different repo
-    rerender(defaultArgs({ applyDefaults, folderUid: 'folder-2' }));
+    rerender(defaultArgs({ setValue: setValueSpy, folderUid: 'folder-2' }));
 
     await waitFor(() => {
-      expect(applyDefaults).toHaveBeenCalledTimes(2);
+      expect(setValueSpy).toHaveBeenCalledTimes(8);
     });
   });
 
   it('does not reseed defaults when only getDefaultTitle return value changes', async () => {
-    const applyDefaults = jest.fn();
+    const setValueSpy = jest.fn();
     // Stable callback identity — the function always returns the same reference
     const stableGetTitle = jest.fn().mockReturnValue('Title A');
     setupRepoState({ isProvisioned: true });
 
     const { rerender } = renderHook((props: UseProvisionedImportArgs) => useProvisionedImport(props), {
-      initialProps: defaultArgs({ applyDefaults, getDefaultTitle: stableGetTitle }),
+      initialProps: defaultArgs({ setValue: setValueSpy, getDefaultTitle: stableGetTitle }),
       wrapper: getWrapper({ renderWithRouter: true }),
     });
 
     await waitFor(() => {
-      expect(applyDefaults).toHaveBeenCalledTimes(1);
+      expect(setValueSpy).toHaveBeenCalledTimes(4);
     });
 
     // Title changes but callback identity is stable
     stableGetTitle.mockReturnValue('Title B');
-    rerender(defaultArgs({ applyDefaults, getDefaultTitle: stableGetTitle }));
+    rerender(defaultArgs({ setValue: setValueSpy, getDefaultTitle: stableGetTitle }));
 
     // Should NOT re-call because the callback reference didn't change
     // Wait a tick to confirm no additional call
     await new Promise((r) => setTimeout(r, 50));
-    expect(applyDefaults).toHaveBeenCalledTimes(1);
+    expect(setValueSpy).toHaveBeenCalledTimes(4);
   });
 
   it('returns isLPBlocked=true and submitDisabled=true when hasLibraryPanels', async () => {
