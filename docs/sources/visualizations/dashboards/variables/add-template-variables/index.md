@@ -678,13 +678,19 @@ If the currently selected time zone is _Browser Time_, Grafana tries to determin
 
 ## Chained variables
 
-_Chained variables_, also called _linked variables_ or _nested variables_, are query variables with one or more other variables in their variable query. This section explains how chained variables work and provides links to example dashboards that use chained variables.
+_Chained variables_, also called _linked variables_ or _nested variables_, are query variables with one or more other variables in their variable query. 
 
-Chained variable queries are different for every data source, but the premise is the same for all. You can use chained variable queries in any data source that allows them.
+Chained variables create dependent relationships where the options available in one variable depend on the selections made in another.
+This pattern enables cascading filters that help users drill down through hierarchical data structures.
 
-Extremely complex linked templated dashboards are possible, 5 or 10 levels deep. Technically, there is no limit to how deep or complex you can go, but the more links you have, the greater the query load.
+Cascading filter patterns are common in multi-tier filtering scenarios such as region > cluster > namespace > pod.
+Each level narrows the available options based on the previous selection, creating an intuitive navigation experience through your infrastructure or data hierarchy.
+
+Technically, there is no limit to how many many variables you can chain together, but the more links you have, the greater the query load.
 
 ### Grafana Play dashboard examples
+
+<!-- If you update or replace the Play dashboards linked in this section, you must also update the text examples to match them -->
 
 The following Grafana Play dashboards contain fairly simple chained variables, only two layers deep. To view the variables and their settings, click **Edit**
 and then **Settings**; then go to the **Variables** tab. Both examples are expanded in the following section.
@@ -692,19 +698,13 @@ and then **Settings**; then go to the **Variables** tab. Both examples are expan
 - [Graphite Templated Nested](https://play.grafana.org/d/000000056/graphite-templated-nested?orgId=1&var-app=country&var-server=All&var-interval=1h)
 - [InfluxDB Templated](https://play.grafana.org/d/e7bad3ef-db0c-4bbd-8245-b85c0b2ca2b9/influx-2-73a-hourly-electric-grid-monitor-for-us?orgId=1&refresh=1m)
 
-### Examples explained
+While the examples are data source-specific, the concepts can be applied broadly.
 
-Variables are useful to reuse dashboards and dynamically change what is shown in dashboards. Chained variables are especially useful to filter what you see.
-
-Create parent/child relationship in a variable, sort of a tree structure where you can select different levels of filters.
-
-The following sections explain the linked examples in the dashboards above in depth and builds on them. While the examples are data source-specific, the concepts can be applied broadly.
-
-#### Graphite example
+#### Graphite example explained
 
 In this example, there are several applications. Each application has a different subset of servers. It is based on the [Graphite Templated Nested](https://play.grafana.org/d/000000056/graphite-templated-nested?orgId=1&var-app=country&var-server=All&var-interval=1h).
 
-Now, you could make separate variables for each metric source, but then you have to know which server goes with which app. A better solution is to use one variable to filter another. In this example, when the user changes the value of the `app` variable, it changes the dropdown options returned by the `server` variable. Both variables use the **Multi-value** option and **Include all option**, enabling users to select some or all options presented at any time.
+Now, you could make separate variables for each metric source, but then you have to know which server goes with which app. A better solution is to use one variable to filter another. In this example, when the user changes the value of the `app` variable, it changes the drop-down options returned by the `server` variable. Both variables use the **Multi-value** option and **Include all option**, enabling users to select some or all options presented at any time.
 
 ##### `app` variable
 
@@ -762,7 +762,7 @@ apps.{backend.backend_02,backend_03}.cpu.*
 apps.fakesite.web_server_01.cpu.*
 ```
 
-#### InfluxDB example
+#### InfluxDB example explained
 
 In this example, you have several data centers. Each data center has a different subset of hosts. It is based on the [InfluxDB Templated](https://play.grafana.org/d/e7bad3ef-db0c-4bbd-8245-b85c0b2ca2b9/influx-2-73a-hourly-electric-grid-monitor-for-us?orgId=1&refresh=1m) dashboard.
 
@@ -824,7 +824,7 @@ SHOW TAG VALUES WITH KEY = "cpu" WHERE "datacenter" =~ /^Africa/ AND "host" =~ /
 SHOW TAG VALUES WITH KEY = "cpu" WHERE "datacenter" =~ /^Europe/ AND "host" =~ /^server3+server4/
 ```
 
-### Best practices and tips
+### Best practices for chained variables
 
 The following practices make your dashboards and variables easier to use.
 
@@ -838,9 +838,9 @@ The following practices make your dashboards and variables easier to use.
 
 You can change the orders of variables in the dashboard variable list by clicking the up and down arrows on the right side of each entry. Grafana lists variable dropdowns left to right according to this list, with the variable at the top on the far left.
 
-- List variables that do not have dependencies at the top, before their child variables.
-- Each variable should follow the one it is dependent on.
-- Remember there is no indication in the UI of which variables have dependency relationships. List the variables in a logical order to make it easy on other users (and yourself).
+- List variables that don't have dependencies at the top, before their child variables.
+- Each variable should follow the one it's dependent on.
+- Remember there is no indication in the UI of which variables have dependency relationships. List the variables in a logical order to make it easier for others to use.
 
 #### Complexity consideration
 
@@ -851,8 +851,6 @@ For example, if you have a series of four linked variables (country, region, ser
 <!-- vale Grafana.WordList = NO -->
 
 ## Filter variables with regular expressions {#filter-variables-with-regex}
-
-<!-- vale Grafana.WordList = NO -->
 
 Using the **Regex** query option, you filter the list of options returned by the variable query or modify the options returned.
 
