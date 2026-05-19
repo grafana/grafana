@@ -176,7 +176,7 @@ Query expressions are different for each data source. For more information, refe
 1. In the **Preview of values** section, Grafana displays a list of the current variable values. Review them to ensure they match what you expect.
 1. Click **Save** in the top-right corner.
 1. Enter an optional description of your changes and click **Save**.
-1. Click **Back to dashboard** and then **Exit edit**.
+1. Click **Back to list** to add or edit other variables, or **Back to dashboard** and then **Exit edit**.
 
 ### Query type
 
@@ -215,7 +215,7 @@ For example, if you have server names or region names that never change, then yo
 1. In the **Preview of values** section, Grafana displays a list of the current variable values. If you've entered a JSON array, the preview is a table that includes all the value properties. Review them to ensure they match what you expect.
 1. Click **Save** in the top-right corner.
 1. Enter an optional description of your changes and click **Save**.
-1. Click **Back to dashboard** and then **Exit edit**.
+1. Click **Back to list** to add or edit other variables, or **Back to dashboard** and then **Exit edit**.
 
 ## Add a text box variable
 
@@ -230,7 +230,7 @@ For more information about cardinality, refer to [What are cardinality spikes an
 
 1. Click **Save** in the top-right corner.
 1. Enter an optional description of your changes and click **Save**.
-1. Click **Back to dashboard** and then **Exit edit**.
+1. Click **Back to list** to add or edit other variables, or **Back to dashboard** and then **Exit edit**.
 
 ## Add a constant variable
 
@@ -247,7 +247,7 @@ Constant variables are useful when you have complex values that you need to incl
 
 1. Click **Save** in the top-right corner.
 1. Enter an optional description of your changes and click **Save**.
-1. Click **Back to dashboard** and then **Exit edit**.
+1. Click **Back to list** to add or edit other variables, or **Back to dashboard** and then **Exit edit**.
 
 ## Add a data source variable
 
@@ -268,7 +268,7 @@ _Data source_ variables enable you to quickly change the data source for an enti
 1. In the **Preview of values** section, Grafana displays a list of the current variable values. Review them to ensure they match what you expect.
 1. Click **Save** in the top-right corner.
 1. Enter an optional description of your changes and click **Save**.
-1. Click **Back to dashboard** and then **Exit edit**.
+1. Click **Back to list** to add or edit other variables, or **Back to dashboard** and then **Exit edit**.
 
 ## Add an interval variable
 
@@ -290,7 +290,7 @@ You can use an interval variable as a parameter to group by time (for InfluxDB),
 1. In the **Preview of values** section, Grafana displays a list of the current variable values. Review them to ensure they match what you expect.
 1. Click **Save** in the top-right corner.
 1. Enter an optional description of your changes and click **Save**.
-1. Click **Back to dashboard** and then **Exit edit**.
+1. Click **Back to list** to add or edit other variables, or **Back to dashboard** and then **Exit edit**.
 
 ### Interval variable examples
 
@@ -396,7 +396,7 @@ To use filters on data from an unsupported data source, follow these steps:
 1. Configure any other needed options for the panel.
 1. Click **Save** in the top-right corner.
 1. Enter an optional description of your changes and click **Save**.
-1. Click **Back to dashboard** and then **Exit edit**.
+1. Click **Back to list** to add or edit other variables, or **Back to dashboard** and then **Exit edit**.
 
 Now you can filter the data from the source panel by way of the Dashboard data source.
 Add as many panels as you need.
@@ -446,7 +446,7 @@ _Switch_ variables display a switch with two configurable values representing en
    | Disabled value | If you selected **Custom**, enter the value that represents the disabled state (for example, "off"). |
 
 1. Click **Save dashboard**.
-1. Click **Back to dashboard** and **Exit edit**.
+1. Click **Back to list** to add or edit other variables, or **Back to dashboard** and then **Exit edit**.
 
 ### Switch variable examples
 
