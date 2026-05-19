@@ -28,18 +28,14 @@ func validateGroupLabels(r *model.AlertRule, oldObject resource.Object, action r
 	return util.ValidateGroupLabels(r.Labels, oldLabels, action)
 }
 
-func validateDelete(ctx context.Context, req *app.AdmissionRequest, cfg config.RuntimeConfig) error {
-	r, ok := req.OldObject.(*model.AlertRule)
-	if !ok {
-		return fmt.Errorf("old object is not of type *v0alpha1.AlertRule")
-	}
+func validateDelete(ctx context.Context, oldRule *model.AlertRule, cfg config.RuntimeConfig) error {
 	if cfg.MembershipResolver != nil {
-		memberships, err := cfg.MembershipResolver.Resolve(ctx, []string{r.Name})
+		memberships, err := cfg.MembershipResolver.Resolve(ctx, []string{oldRule.Name})
 		if err != nil {
-			return fmt.Errorf("failed to resolve sequence membership for rule %q: %w", r.Name, err)
+			return fmt.Errorf("failed to resolve sequence membership for rule %q: %w", oldRule.Name, err)
 		}
-		if memberships[r.Name].Found {
-			return fmt.Errorf("cannot delete rule %q because it belongs to rule sequence %q", r.Name, memberships[r.Name].SequenceUID)
+		if memberships[oldRule.Name].Found {
+			return fmt.Errorf("cannot delete rule %q because it belongs to rule sequence %q", oldRule.Name, memberships[oldRule.Name].SequenceUID)
 		}
 	}
 	return nil
@@ -106,10 +102,6 @@ func validateDurations(r *model.AlertRule) error {
 func NewValidator(cfg config.RuntimeConfig) *simple.Validator {
 	return &simple.Validator{
 		ValidateFunc: func(ctx context.Context, req *app.AdmissionRequest) error {
-			if req.Action == resource.AdmissionActionDelete {
-				return validateDelete(ctx, req, cfg)
-			}
-
 			r, ok := req.Object.(*model.AlertRule)
 			if !ok {
 				return fmt.Errorf("object is not of type *v0alpha1.AlertRule")
@@ -117,6 +109,10 @@ func NewValidator(cfg config.RuntimeConfig) *simple.Validator {
 			var oldRule *model.AlertRule
 			if req.OldObject != nil {
 				oldRule, _ = req.OldObject.(*model.AlertRule)
+			}
+
+			if req.Action == resource.AdmissionActionDelete {
+				return validateDelete(ctx, oldRule, cfg)
 			}
 
 			sourceProv := r.GetProvenanceStatus()

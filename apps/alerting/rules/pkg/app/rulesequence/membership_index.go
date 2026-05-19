@@ -26,6 +26,10 @@ import (
 // rule claimed by two sequences) should be detected and surfaced by a
 // reconciler.
 //
+// TODO: This membership index will not scale in MT since this code will be handling
+// ALL tenant's rules/sequences rather than a single tenant's, causing memory overhead
+// to grow unbounded.
+//
 // TODO: Add a RuleSequence reconciler that verifies membership invariants after
 // the fact and writes status conditions (e.g., MembershipValid=False) when a
 // rule is claimed by multiple sequences, references a nonexistent rule, or has
