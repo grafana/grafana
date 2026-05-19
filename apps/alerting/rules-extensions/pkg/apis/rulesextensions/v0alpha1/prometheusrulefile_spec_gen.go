@@ -3,6 +3,9 @@
 package v0alpha1
 
 // +k8s:openapi-gen=true
+type PrometheusRuleFileDatasourceUID string
+
+// +k8s:openapi-gen=true
 type PrometheusRuleFilePrometheusRuleGroup struct {
 	Name        string                          `json:"name"`
 	Interval    *PrometheusRuleFilePromDuration `json:"interval,omitempty"`
@@ -47,9 +50,6 @@ func NewPrometheusRuleFileRuleEntry() *PrometheusRuleFileRuleEntry {
 func (PrometheusRuleFileRuleEntry) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.alerting.rules-extensions.pkg.apis.rulesextensions.v0alpha1.PrometheusRuleFileRuleEntry"
 }
-
-// +k8s:openapi-gen=true
-type PrometheusRuleFileDatasourceUID string
 
 // +k8s:openapi-gen=true
 type PrometheusRuleFileSpec struct {

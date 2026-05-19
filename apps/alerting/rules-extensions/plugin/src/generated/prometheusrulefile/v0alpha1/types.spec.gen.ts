@@ -1,5 +1,9 @@
 // Code generated - EDITING IS FUTILE. DO NOT EDIT.
 
+export type DatasourceUID = string;
+
+export const defaultDatasourceUID = (): DatasourceUID => ("");
+
 export interface PrometheusRuleGroup {
 	name: string;
 	interval?: PromDuration;
@@ -33,6 +37,7 @@ export const defaultRuleEntry = (): RuleEntry => ({
 });
 
 export interface Spec {
+	datasourceUID?: DatasourceUID;
 	groups: PrometheusRuleGroup[];
 }
 
