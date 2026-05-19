@@ -2,7 +2,7 @@ package v0alpha1
 
 RuleSequenceSpec: {
 	trigger: #IntervalTrigger
-	// Non-empty constraint is enforced in Go admission validation (validator.go),
+	// FIXME: Non-empty constraint is enforced in Go admission validation (validator.go),
 	// not in CUE, because list.MinItems on a struct-typed list causes a codegen
 	// error in grafana-app-sdk ("unexpected node with kind '_|_'").
 
