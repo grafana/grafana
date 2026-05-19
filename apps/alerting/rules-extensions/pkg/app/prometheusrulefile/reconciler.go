@@ -377,8 +377,11 @@ func (r *Reconciler) ensureRecordingRule(
 	return upsert(ctx, r.recordingRules, desired)
 }
 
-// upsert performs a Create-or-Update on the desired object, copying the current ResourceVersion
-// from the storage layer when an Update is required.
+// upsert performs a Create-or-Update on the desired object. On Update it preserves any
+// metadata injected by admission/storage layers (provenance annotations, update timestamps,
+// updated-by, kubectl last-applied, user labels, etc.) so each reconcile doesn't churn that
+// state. The fields the reconciler owns — labels in our prefix, the folder annotation, our
+// owner reference, and the entire Spec — overlay the existing object.
 func upsert(ctx context.Context, c resource.Client, desired resource.Object) error {
 	ident := desired.GetStaticMetadata().Identifier()
 	existing, err := c.Get(ctx, ident)
@@ -389,9 +392,74 @@ func upsert(ctx context.Context, c resource.Client, desired resource.Object) err
 	if err != nil {
 		return err
 	}
-	desired.SetResourceVersion(existing.GetResourceVersion())
+	mergeIntoExisting(existing, desired)
 	_, updateErr := c.Update(ctx, ident, desired, resource.UpdateOptions{})
 	return updateErr
+}
+
+// mergeIntoExisting layers the reconciler-managed metadata of `desired` on top of the
+// metadata returned by Get, so admission/storage-injected annotations and labels survive
+// the Update.
+//
+// The reconciler owns:
+//   - `grafana.app/folder` annotation (parent/folder pointer)
+//   - the OwnerReference back to the PrometheusRuleFile (only meaningful for Folder, which
+//     lives in unified storage that preserves it; AlertRule/RecordingRule legacy storage
+//     drops OwnerReferences regardless, so this is a no-op for them)
+//   - the entire Spec, which is already what `desired` carries
+//
+// Everything else on the existing object — UID, ResourceVersion, Finalizers, CreationTimestamp,
+// Generation, ManagedFields, every non-folder annotation, every label — is kept.
+func mergeIntoExisting(existing, desired resource.Object) {
+	// ResourceVersion is required for the Update to succeed without a 409.
+	desired.SetResourceVersion(existing.GetResourceVersion())
+	desired.SetUID(existing.GetUID())
+	desired.SetGeneration(existing.GetGeneration())
+	desired.SetCreationTimestamp(existing.GetCreationTimestamp())
+	desired.SetFinalizers(existing.GetFinalizers())
+	desired.SetManagedFields(existing.GetManagedFields())
+
+	// Annotations: start from existing, overlay our managed ones from desired.
+	merged := map[string]string{}
+	for k, v := range existing.GetAnnotations() {
+		merged[k] = v
+	}
+	for k, v := range desired.GetAnnotations() {
+		merged[k] = v
+	}
+	desired.SetAnnotations(merged)
+
+	// Labels: same merge strategy. We currently don't set labels on any managed resource,
+	// so this just preserves whatever's there. Keeping the merge so adding a managed label
+	// later doesn't silently wipe user labels.
+	mergedLabels := map[string]string{}
+	for k, v := range existing.GetLabels() {
+		mergedLabels[k] = v
+	}
+	for k, v := range desired.GetLabels() {
+		mergedLabels[k] = v
+	}
+	desired.SetLabels(mergedLabels)
+
+	// OwnerReferences: merge by UID so other controllers' owner refs survive while we
+	// keep ours up to date (e.g. PrometheusRuleFile recreated under a new UID).
+	desired.SetOwnerReferences(mergeOwnerReferences(existing.GetOwnerReferences(), desired.GetOwnerReferences()))
+}
+
+func mergeOwnerReferences(existing, desired []metav1.OwnerReference) []metav1.OwnerReference {
+	out := make([]metav1.OwnerReference, 0, len(existing)+len(desired))
+	seen := make(map[types.UID]int, len(desired))
+	for i, ref := range desired {
+		seen[ref.UID] = i
+		out = append(out, ref)
+	}
+	for _, ref := range existing {
+		if _, ok := seen[ref.UID]; ok {
+			continue
+		}
+		out = append(out, ref)
+	}
+	return out
 }
 
 func ownerReferenceFor(file *model.PrometheusRuleFile) metav1.OwnerReference {
