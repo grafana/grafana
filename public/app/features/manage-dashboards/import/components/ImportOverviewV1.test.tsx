@@ -515,4 +515,41 @@ describe('ImportOverviewV1', () => {
       validateUid.mockResolvedValue(true);
     });
   });
+
+  describe('provisioned title conflict', () => {
+    it('disables submit when title validation fails in provisioned mode', async () => {
+      const { validateTitle } = jest.requireMock('../utils/validation');
+      validateTitle.mockResolvedValue('Dashboard with the same title already exists');
+
+      setupRepoState({ isProvisioned: true });
+      renderOverview();
+
+      await waitFor(() => {
+        expect(screen.getByTestId(selectors.components.ImportDashboardForm.submit)).toBeDisabled();
+      });
+
+      validateTitle.mockResolvedValue(true);
+    });
+
+    it('does not call provisioned save when title conflicts and form is submitted programmatically', async () => {
+      const { validateTitle } = jest.requireMock('../utils/validation');
+      validateTitle.mockResolvedValue('Dashboard with the same title already exists');
+
+      const { mockSave } = setupRepoState({ isProvisioned: true });
+      renderOverview();
+
+      await waitFor(() => {
+        expect(screen.getByTestId(selectors.components.ImportDashboardForm.submit)).toBeDisabled();
+      });
+
+      const form = screen.getByTestId(selectors.components.ImportDashboardForm.submit).closest('form')!;
+      fireEvent.submit(form);
+
+      await waitFor(() => {
+        expect(mockSave).not.toHaveBeenCalled();
+      });
+
+      validateTitle.mockResolvedValue(true);
+    });
+  });
 });

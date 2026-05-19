@@ -109,7 +109,7 @@ export function ImportOverviewV1({ dashboard, inputs, meta, source, folderUid, o
 
   const onSubmit = useCallback(
     (form: ImportDashboardDTO) => {
-      if (submitDisabled) {
+      if (effectiveSubmitDisabled) {
         return;
       }
       if (isProvisioned) {
@@ -126,7 +126,7 @@ export function ImportOverviewV1({ dashboard, inputs, meta, source, folderUid, o
         onStandardSubmit(form);
       }
     },
-    [submitDisabled, isProvisioned, saveProvisionedImport, dashboard, inputs, uidReset, onStandardSubmit]
+    [effectiveSubmitDisabled, isProvisioned, saveProvisionedImport, dashboard, inputs, uidReset, onStandardSubmit]
   );
 
   return (
