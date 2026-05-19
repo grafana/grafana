@@ -15,7 +15,6 @@ import (
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
 		DescendantCounts{}.OpenAPIModelName():                                       schema_pkg_apis_folder_v1_DescendantCounts(ref),
-		DescendantCountsOptions{}.OpenAPIModelName():                                schema_pkg_apis_folder_v1_DescendantCountsOptions(ref),
 		Folder{}.OpenAPIModelName():                                                 schema_pkg_apis_folder_v1_Folder(ref),
 		FolderAccessInfo{}.OpenAPIModelName():                                       schema_pkg_apis_folder_v1_FolderAccessInfo(ref),
 		"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1.FolderClient":    schema_pkg_apis_folder_v1_FolderClient(ref),
@@ -67,40 +66,6 @@ func schema_pkg_apis_folder_v1_DescendantCounts(ref common.ReferenceCallback) co
 		},
 		Dependencies: []string{
 			ResourceStats{}.OpenAPIModelName()},
-	}
-}
-
-func schema_pkg_apis_folder_v1_DescendantCountsOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "DescendantCountsOptions tunes the /counts subresource. Without options the endpoint returns counts of resources directly inside the named folder. With `?recursive` (bare or `=true`) the server walks the subtree under a 10s timeout and returns aggregated counts; on timeout it returns 504.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"kind": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"apiVersion": {
-						SchemaProps: spec.SchemaProps{
-							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"recursive": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Recursive enables traversal of the full folder subtree. When false (or absent) the response only reflects resources directly inside the folder.",
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
-				},
-			},
-		},
 	}
 }
 

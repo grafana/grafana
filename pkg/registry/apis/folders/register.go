@@ -3,7 +3,6 @@ package folders
 import (
 	"context"
 	"fmt"
-	"net/url"
 	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -122,7 +121,6 @@ func (b *FolderAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 		&foldersv1.FolderList{},
 		&foldersv1.FolderInfoList{},
 		&foldersv1.DescendantCounts{},
-		&foldersv1.DescendantCountsOptions{},
 		&foldersv1.FolderAccessInfo{},
 	)
 
@@ -131,7 +129,6 @@ func (b *FolderAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 		&foldersv1beta1.FolderList{},
 		&foldersv1beta1.FolderInfoList{},
 		&foldersv1beta1.DescendantCounts{},
-		&foldersv1beta1.DescendantCountsOptions{},
 		&foldersv1beta1.FolderAccessInfo{},
 	)
 	// Link v1beta1 to the internal representation.
@@ -145,13 +142,8 @@ func (b *FolderAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 		&foldersv1.FolderList{},
 		&foldersv1.FolderInfoList{},
 		&foldersv1.DescendantCounts{},
-		&foldersv1.DescendantCountsOptions{},
 		&foldersv1.FolderAccessInfo{},
 	)
-
-	if err := scheme.AddConversionFunc((*url.Values)(nil), (*foldersv1.DescendantCountsOptions)(nil), convertURLValuesToDescendantCountsOptions); err != nil {
-		return err
-	}
 
 	metav1.AddToGroupVersion(scheme, gvv1)
 	metav1.AddToGroupVersion(scheme, gvv1beta1)
@@ -206,9 +198,8 @@ func (b *FolderAPIBuilder) storageForVersion(
 		parents: b.parents,
 	}
 	storage[folders.StoragePath("counts")] = &subCountREST{
-		getter:               b.storage,
-		searcher:             b.searcher,
-		maxNestedFolderDepth: b.maxNestedFolderDepth,
+		getter:   b.storage,
+		searcher: b.searcher,
 	}
 	storage[folders.StoragePath("access")] = &subAccessREST{
 		getter:       b.storage,
@@ -226,10 +217,6 @@ func (b *FolderAPIBuilder) storageForVersion(
 }
 
 func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
-	// Use our scheme for query decoding; the default metav1.ParameterCodec
-	// doesn't know group-local connect-options types like DescendantCountsOptions.
-	apiGroupInfo.ParameterCodec = runtime.NewParameterCodec(opts.Scheme)
-
 	opts.StorageOptsRegister(foldersv1.FolderResourceInfo.GroupResource(), apistore.StorageOptions{
 		// Preserve apiVersion/kind from the client on write. Without Scheme, apistore.encode
 		// uses the global LegacyCodec and converts to a single preferred external version.
