@@ -25,11 +25,15 @@ weight: 200
 
 This document provides instructions for configuring the Microsoft SQL Server data source and explains available configuration options. For general information on adding and managing data sources, refer to [Grafana data sources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/) and [Data source management](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/).
 
+{{< admonition type="note" >}}
+This page documents the **Microsoft SQL Server data source**, which lets you query an existing SQL Server database and visualize the results in Grafana. This is different from the [Microsoft SQL Server integration](https://grafana.com/docs/grafana-cloud/monitor-infrastructure/integrations/integration-reference/integration-mssql/) (available in Grafana Cloud), which uses Grafana Alloy to collect performance metrics _about_ your SQL Server instance (CPU, memory, connections, and similar). If you want to monitor the health of SQL Server itself, refer to the integration documentation instead.
+{{< /admonition >}}
+
 ## Before you begin
 
 Before configuring the Microsoft SQL Server data source, ensure you have the following:
 
-- **Grafana permissions:** You must have the `Organization administrator` role to configure data sources. Organization administrators can also [configure the data source via YAML](#provision-the-data-source) with the Grafana provisioning system.
+- **Grafana permissions:** You must have the `Organization administrator` role to add and configure data sources. Users with the `Editor` or `Viewer` role cannot access the data source configuration form unless granted additional permissions through [RBAC](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/). Organization administrators can also [configure the data source via YAML](#provision-the-data-source) with the Grafana provisioning system.
 
 - **A running SQL Server instance:** Microsoft SQL Server 2012 or newer, Azure SQL Database, or Azure SQL Managed Instance.
 
@@ -82,18 +86,45 @@ Kerberos is not supported in Grafana Cloud.
 | **Host**     | Sets the IP address or hostname (and optional port) of your MSSQL instance. The default port is `0`, which uses the driver's default. You can include additional connection properties (for example, `ApplicationIntent`) by separating them with semicolons (`;`). |
 | **Database** | Sets the name of the MSSQL database to connect to.                                                                                                                                                                                                                |
 
-**TLS/SSL Auth:**
+{{< admonition type="caution" >}}
+If you add `ApplicationIntent=ReadOnly` to the Host field to route queries to a read-only replica, be aware that read-only replicas may be significantly slower than the primary. This can cause dashboard load times of several minutes. Only use `ApplicationIntent=ReadOnly` if your replica is sized for the query workload and you've tested performance.
+{{< /admonition >}}
 
-Encrypt - Determines whether or to which extent a secure SSL TCP/IP connection will be negotiated with the server.
+**TLS/SSL encryption:**
 
-| Encrypt Setting | Description                                                                                      |
-| --------------- | ------------------------------------------------------------------------------------------------ |
-| **Disable**     | Data sent between the client and server is **not encrypted**.                                    |
-| **False**       | The default setting. Only the login packet is encrypted; **all other data is sent unencrypted**. |
-| **True**        | **All data** sent between the client and server is **encrypted**.                                |
+The **Encrypt** setting determines whether and to what extent a secure TLS/SSL connection is negotiated with the server.
+
+| Encrypt setting | Description                                                                                      | When to use |
+| --------------- | ------------------------------------------------------------------------------------------------ | --- |
+| **Disable**     | Data sent between the client and server is **not encrypted**.                                     | Legacy environments where encryption isn't supported or required. Not recommended for production. |
+| **False**       | The default setting. Only the login packet is encrypted; **all other data is sent unencrypted**. | Development environments or when SQL Server doesn't have a valid certificate. |
+| **True**        | **All data** sent between the client and server is **encrypted**.                                | Production environments. Required for Azure SQL Database. |
+
+When **Encrypt** is set to **True**, the following additional TLS options are available:
+
+| Setting | Description | Default |
+| --- | --- | --- |
+| **Skip TLS Verify** | If enabled, the server's certificate chain and hostname aren't validated. Equivalent to `trustServerCertificate=true` in the connection string. | Disabled |
+| **TLS/SSL Root Certificate** | Path to a PEM-encoded CA certificate file used to verify the server's certificate. Required when the SQL Server uses a certificate signed by a private CA. | System CA bundle |
+| **Hostname in server certificate** | The expected hostname in the server's TLS certificate. Use this when the certificate's Common Name (CN) or Subject Alternative Name (SAN) doesn't match the configured hostname (for example, when connecting through a load balancer or PDC). | Value from **Host** field |
+
+**Choosing the right encryption configuration:**
+
+| Scenario | Encrypt | Skip TLS Verify | Root Certificate | Notes |
+| --- | --- | --- | --- | --- |
+| Azure SQL Database | True | No | Not needed | Azure SQL always requires encryption and uses a publicly trusted certificate. |
+| SQL Server with public CA certificate | True | No | Not needed | Certificate is already in the system trust store. |
+| SQL Server with private/self-signed certificate | True | No | Path to CA cert | Upload or reference the CA certificate that signed the SQL Server certificate. |
+| SQL Server with unverified certificate (testing only) | True | Yes | Not needed | Skips certificate validation entirely. Don't use in production. |
+| SQL Server 2008/2008R2 without valid certificate | Disable or False | N/A | N/A | Older versions may not support TLS negotiation. |
+| Grafana Cloud with PDC | True | No | Not needed (usually) | PDC tunnels are encrypted at the SSH layer; the TLS certificate must still be valid from the PDC agent's perspective. |
 
 {{< admonition type="note" >}}
-If you're using an older version of Microsoft SQL Server like 2008 and 2008R2, you may need to disable encryption to be able to connect.
+If you're using an older version of Microsoft SQL Server like 2008 or 2008R2, you may need to set Encrypt to **Disable** or **False** to connect.
+{{< /admonition >}}
+
+{{< admonition type="caution" >}}
+Grafana builds using BoringCrypto (FIPS-compliant builds) enforce FIPS 140-3 cipher requirements. If your SQL Server only supports older cipher suites (for example, TLS 1.0 or RC4-based ciphers), connections from a FIPS-enabled Grafana instance fail with a TLS handshake error. Upgrade your SQL Server TLS configuration to support TLS 1.2 with FIPS-approved cipher suites.
 {{< /admonition >}}
 
 **Authentication:**
@@ -116,7 +147,9 @@ As of Grafana v13.0, passwords and usernames that contain semicolons (`;`) or cl
 
 Additional settings are optional settings you configure for more control over your data source. This includes connection limits, connection timeout, group-by time interval, and Secure Socks Proxy.
 
-**Connection limits**:
+**Connection limits:**
+
+Grafana maintains a connection pool for each configured MSSQL data source. These settings control pool behavior and directly affect performance, especially under concurrent load from dashboards and alerting.
 
 | Setting           | Description                                                                                                                                                                                  |
 | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -125,6 +158,10 @@ Additional settings are optional settings you configure for more control over yo
 | **Max idle**      | The maximum number of idle connections in the pool. If `max open` is set and is lower than `max idle`, then `max idle` is reduced to match. If set to `0`, no idle connections are retained. |
 | **Max lifetime**  | The maximum time (in seconds) a connection can be reused before being closed and replaced. If set to `0`, connections are reused indefinitely.                                               |
 
+{{< admonition type="caution" >}}
+If **Max open** is set too low, concurrent dashboard panels and alert rule evaluations compete for connections. Alerting queries may fail with "failed to connect to server" while dashboards continue to work, because alert evaluations use a separate execution path that can't wait indefinitely for a free connection. Increase **Max open** if you see intermittent alert failures.
+{{< /admonition >}}
+
 **Connection details:**
 
 | **Setting**            | **Description**                                                                                                                                                                                                                                                   |
@@ -132,19 +169,66 @@ Additional settings are optional settings you configure for more control over yo
 | **Min time interval**  | Specifies the lower bound for the auto-generated `GROUP BY` time interval. Grafana recommends matching this value to your data's write frequency—for example, `1m` if data is written every minute. Refer to [Min time interval](#min-time-interval) for details. |
 | **Connection timeout** | Specifies the maximum number of seconds to wait when attempting to connect to the database before timing out. A value of `0` (the default) disables the timeout.                                                                                                  |
 
-**Windows ADS Advanced Settings**
+**Windows AD Advanced settings:**
 
 | Setting                   | Description                                                                                                                                                                                                             | Default              |
 | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
-| **UDP Preference Limit**  | Defines the maximum packet size (in bytes) that Kerberos libraries will attempt to send over UDP before retrying with TCP. A value of `1` forces all communication to use TCP.                                          | `1` (always use TCP) |
+| **UDP Preference Limit**  | Defines the maximum packet size (in bytes) that Kerberos libraries attempt to send over UDP before retrying with TCP. A value of `1` forces all communication to use TCP.                                               | `1` (always use TCP) |
 | **DNS Lookup KDC**        | Controls whether DNS `SRV` records are used to locate [Key Distribution Centers (KDCs)](https://web.mit.edu/kerberos/krb5-latest/doc/admin/realm_config.html#key-distribution-centers) and other servers for the realm. | `true`               |
 | **krb5 config file path** | Specifies the path to the Kerberos configuration file used by the [MIT krb5 package](https://web.mit.edu/kerberos/krb5-1.12/doc/admin/conf_files/krb5_conf.html).                                                       | `/etc/krb5.conf`     |
 
-**Private data source connect** - _Only for Grafana Cloud users._
+<!-- vale Grafana.Spelling = NO -->
 
-Private data source connect, or PDC, allows you to establish a private, secured connection between a Grafana Cloud instance, or stack, and data sources secured within a private network. Click the drop-down to locate the URL for PDC. For more information regarding Grafana PDC refer to [Private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) and [Configure Grafana private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc) for instructions on setting up a PDC connection.
+{{< admonition type="note" >}}
+Windows AD (Kerberos) authentication is only available for self-managed Grafana installations. It is not supported in Grafana Cloud. For Grafana Cloud deployments connecting to SQL Server, use SQL Server Authentication or Azure Entra ID.
+{{< /admonition >}}
+
+**Kerberos SPN requirements:**
+
+For Kerberos authentication to succeed, a Service Principal Name (SPN) must be registered for the SQL Server instance that matches the hostname Grafana uses to connect. This is especially important when connecting through Availability Group Listeners or DNS aliases.
+
+Register SPNs using the `setspn` command on the SQL Server host:
+
+```text
+setspn -S MSSQLSvc/<SQL_SERVER_FQDN>:1433 <DOMAIN>\<SERVICE_ACCOUNT>
+setspn -S MSSQLSvc/<SQL_SERVER_FQDN> <DOMAIN>\<SERVICE_ACCOUNT>
+```
+
+If Grafana connects through a Listener or alias, register an additional SPN for that name. Verify registered SPNs with `setspn -L <DOMAIN>\<SERVICE_ACCOUNT>`.
+
+<!-- vale Grafana.Spelling = YES -->
+
+### Connect to on-premises SQL Server from Grafana Cloud
+
+If your SQL Server instance is in a private network (on-premises, VPN, or VPC), Grafana Cloud cannot reach it directly over the internet. You must use **Private data source connect (PDC)** to establish a secure tunnel between your Grafana Cloud stack and your private network.
+
+{{< admonition type="note" >}}
+PDC is required for any SQL Server that isn't publicly accessible from the internet. Firewall allowlisting alone is not sufficient because Grafana Cloud doesn't use static IP addresses for data source connections.
+{{< /admonition >}}
+
+**Network prerequisites:**
+
+- **Port 22 (SSH):** The PDC agent on your network must be able to reach the Grafana Cloud PDC endpoint over port 22 for the SSH tunnel.
+- **Port 1433 (SQL Server):** The PDC agent must be able to reach your SQL Server instance on port 1433 (or your custom SQL Server port).
+- **DNS resolution:** The PDC agent must be able to resolve the SQL Server hostname from within your private network.
+
+**Set up PDC for Microsoft SQL Server:**
+
+1. In your Grafana Cloud stack, navigate to **Connections** > **Private data source connect**.
+1. Create a new PDC connection or use an existing one.
+1. Install and configure the PDC agent on a host within your private network that has access to the SQL Server instance. For detailed instructions, refer to [Configure Grafana private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc).
+1. Return to the Microsoft SQL Server data source configuration.
+1. Under **Private data source connect**, select your PDC connection from the drop-down.
+1. Enter the SQL Server hostname as it's resolvable from within your private network (not a public DNS name).
+1. Click **Save & test** to verify connectivity.
 
 Click **Manage private data source connect** to open your PDC connection page and view your configuration details.
+
+For more information about PDC, refer to [Private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/).
+
+{{< admonition type="caution" >}}
+If you previously connected using a self-managed Grafana instance and are migrating to Grafana Cloud, you must configure PDC before your private SQL Server is accessible. Direct network access methods that worked with self-managed Grafana (VPN peering, private endpoints) don't apply to Grafana Cloud.
+{{< /admonition >}}
 
 After configuring your MSSQL data source options, click **Save & test** at the bottom to test the connection. You should see a confirmation dialog box that says:
 
@@ -154,12 +238,23 @@ After configuring your MSSQL data source options, click **Save & test** at the b
 
 The following Azure authentication methods are supported:
 
-- Current User authentication
-- App Registration
+- App Registration (service principal)
 - Managed Identity
+- Current User authentication
 - Azure Entra Password
 
-The Azure SQL Server that you are connecting to should support Azure Entra authentication to support adding the App Registration as a user in the database. For configuration details, refer to the [Azure SQL documentation](https://learn.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-configure?view=azuresql&tabs=azure-portal).
+The Azure SQL Server that you are connecting to must support Azure Entra authentication. For configuration details, refer to the [Azure SQL documentation](https://learn.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-configure?view=azuresql&tabs=azure-portal).
+
+#### Required server configuration
+
+Before you can use any Azure Entra ID authentication method, you must enable Azure authentication in the Grafana server configuration. Add the following to your `grafana.ini` or `custom.ini` file:
+
+```ini
+[azure]
+azure_auth_enabled = true
+```
+
+Depending on the method you choose, additional flags are required (documented in each section below). After changing the `.ini` file, restart the Grafana server for the changes to take effect.
 
 #### Current User authentication
 
@@ -201,49 +296,72 @@ This method of authentication doesn't inherently support all backend functionali
 
 2. In the SQL Server data source configuration, set **Authentication** to **Azure AD Authentication** and the Azure Authentication type to **Current User**.
 
-### App Registration
+#### App Registration
 
-You must create an app registration and service principal in Azure Entra to authenticate the data source.
-For configuration details, refer to the [Azure documentation for service principals](https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal#get-tenant-and-app-id-values-for-signing-in).
+Use an app registration (service principal) to authenticate the data source with a client ID and secret. This is the recommended method for automated, non-interactive access to Azure SQL.
 
-After the app registration has been created, make note of the tenant ID, client ID, and client secret. Take the following steps to add the app registration as a SQL user:
+**Prerequisites:**
 
-1. Connect to your Azure SQL database as a user with administrative permissions (the user used here must have the ability to read your Azure Entra directory, for example, by possessing the `Directory Readers` role).
-2. Run `CREATE USER [$IDENTITY_NAME] FROM EXTERNAL PROVIDER;`, substituting `IDENTITY_NAME` with the app registration name.
-3. Grant the created user the appropriate level of permissions for your use-case. It is recommended that users configured for data sources only have reader permissions.
+- An app registration created in Azure Entra. For instructions, refer to the [Azure documentation for service principals](https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal#get-tenant-and-app-id-values-for-signing-in).
+- The tenant ID, client (application) ID, and a client secret from the app registration.
 
-After the appropriate permissions have been granted, configure the SQL Server data source to use the app registration:
+**Step 1: Add the app registration as a database user**
+
+1. Connect to your Azure SQL database as a user with administrative permissions (the user must have the ability to read your Azure Entra directory, for example, by possessing the `Directory Readers` role).
+1. Run the following SQL to create a user for the app registration:
+
+   ```sql
+   CREATE USER [<APP_REGISTRATION_NAME>] FROM EXTERNAL PROVIDER;
+   ```
+
+1. Grant the created user appropriate permissions. Grafana recommends read-only access:
+
+   ```sql
+   ALTER ROLE db_datareader ADD MEMBER [<APP_REGISTRATION_NAME>];
+   ```
+
+**Step 2: Configure the Grafana server**
+
+Ensure `azure_auth_enabled` is set in your `grafana.ini`:
+
+```ini
+[azure]
+azure_auth_enabled = true
+```
+
+**Step 3: Configure the data source**
 
 1. In the SQL Server data source configuration, set **Authentication** to **Azure AD Authentication** and the Azure Authentication type to **App Registration**.
-2. Set the **Azure Cloud** value to the correct value. If you are using the Azure public cloud this will be **Azure**.
-3. Set the **Directory (tenant) ID**, **Application (client) ID**, and **Client Secret** values to those for your app registration.
+1. Set **Azure Cloud** to **Azure** (for the Azure public cloud).
+1. Enter the **Directory (tenant) ID**, **Application (client) ID**, and **Client Secret** from your app registration.
 
-### Managed Identity
+#### Managed Identity
 
 {{< admonition type="note" >}}
-Managed Identity is available only in [Azure Managed Grafana](https://azure.microsoft.com/en-us/products/managed-grafana) or Grafana OSS/Enterprise when deployed in Azure. It is not available in Grafana Cloud.
+Managed Identity is available only in [Azure Managed Grafana](https://azure.microsoft.com/en-us/products/managed-grafana) or self-managed Grafana deployed in Azure. It is not available in Grafana Cloud.
 {{< /admonition >}}
 
 You can use managed identity to configure SQL Server in Grafana if you host Grafana in Azure (such as an App Service or with Azure Virtual Machines) and have managed identity enabled on your VM.
-This lets you securely authenticate data sources without manually configuring credentials via Azure AD App Registrations.
+This lets you securely authenticate data sources without manually configuring credentials.
 For details on Azure managed identities, refer to the [Azure documentation](https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview).
 
 **To enable managed identity for Grafana:**
 
-1. Set the `managed_identity_enabled` flag in the `[azure]` section of the [Grafana server configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#azure).
+1. Set both `azure_auth_enabled` and `managed_identity_enabled` in the `[azure]` section of the [Grafana server configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#azure):
 
    ```ini
    [azure]
+   azure_auth_enabled = true
    managed_identity_enabled = true
    ```
 
-2. In the SQL Server data source configuration, set **Authentication** to **Azure AD Authentication** and the Azure Authentication type to **Managed Identity**.
+1. In the SQL Server data source configuration, set **Authentication** to **Azure AD Authentication** and the Azure Authentication type to **Managed Identity**.
 
    This hides the directory ID, application ID, and client secret fields, and the data source uses managed identity to authenticate to SQL Server.
 
-3. You can set the `managed_identity_client_id` field in the `[azure]` section of the [Grafana server configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#azure) to allow a user-assigned managed identity to be used instead of the default system-assigned identity.
+1. Optionally, set `managed_identity_client_id` in the `[azure]` section to use a user-assigned managed identity instead of the default system-assigned identity.
 
-Ensure that the managed identity used is added to your Azure SQL instance as a user.
+Ensure that the managed identity is added to your Azure SQL instance as a user.
 
 ### Azure Entra Password
 

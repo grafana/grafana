@@ -51,16 +51,20 @@ The Microsoft SQL Server data source supports the following authentication metho
 
 <!-- vale Grafana.Spelling = NO -->
 
-| Method                                       | Best for                                 | Grafana Cloud |
-| -------------------------------------------- | ---------------------------------------- | ------------- |
-| SQL Server Authentication                    | Any deployment                           | Yes           |
-| Windows Authentication (Integrated Security) | On-premises with Windows SSO             | No            |
-| Windows AD (Kerberos)                        | Enterprise Active Directory environments | No            |
-| Azure Entra ID (App Registration)            | Azure SQL with service principal         | Yes           |
-| Azure Entra ID (Managed Identity)            | Grafana hosted in Azure                  | No            |
-| Azure Entra ID (Current User)                | User-level access control with Azure SQL | Yes           |
+| Method                                       | Best for                                 | Grafana Cloud | Self-managed | Supports alerting |
+| -------------------------------------------- | ---------------------------------------- | ------------- | ------------ | ----------------- |
+| SQL Server Authentication                    | Any deployment                           | Yes           | Yes          | Yes               |
+| Windows Authentication (Integrated Security) | On-premises with Windows SSO             | No            | Yes          | Yes               |
+| Windows AD (Kerberos)                        | Enterprise Active Directory environments | No            | Yes          | Yes               |
+| Azure Entra ID (App Registration)            | Azure SQL with service principal         | Yes           | Yes          | Yes               |
+| Azure Entra ID (Managed Identity)            | Grafana hosted in Azure                  | No            | Yes          | Yes               |
+| Azure Entra ID (Current User)                | User-level access control with Azure SQL | Yes           | Yes          | No                |
 
 <!-- vale Grafana.Spelling = YES -->
+
+{{< admonition type="note" >}}
+Azure Entra ID (Current User) authentication doesn't support alerting, reporting, or recorded queries because these features run on the backend without a user session.
+{{< /admonition >}}
 
 For configuration details, refer to [Configure the Microsoft SQL Server data source](configure/).
 
