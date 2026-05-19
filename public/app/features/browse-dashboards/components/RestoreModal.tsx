@@ -99,7 +99,7 @@ export const RestoreModal = ({
           ? t('recently-deleted.restore-modal.restore-loading', 'Restoring...')
           : t('recently-deleted.restore-modal.restore-button', 'Restore')
       }
-      confirmButtonVariant="primary"
+      confirmVariant="primary"
       isOpen
       onDismiss={onDismiss}
       onConfirm={onRestore}
