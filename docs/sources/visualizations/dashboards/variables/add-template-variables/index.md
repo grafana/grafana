@@ -47,46 +47,21 @@ title: Add variables
 description: Learn about the types of variables you can add to dashboards and how
 weight: 100
 refs:
-  add:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/variables/add-template-variables/
-  inspect:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/inspect-variable/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/variables/inspect-variable/
   prometheus-query-variables:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/template-variables/#use-**rate_interval
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/prometheus/template-variables/#use-**rate_interval
-  raw-variable-format:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/#raw
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/variables/variable-syntax/#raw
   data-source:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/
-  raw-format:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/#raw
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/variables/variable-syntax/#raw
   add-a-data-source:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/#add-a-data-source
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/#add-a-data-source
-  filter-dashboard:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/use-dashboards/#filter-dashboard-data
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/use-dashboards/#filter-dashboard-data
 ---
 
 # Add variables
@@ -263,7 +238,7 @@ Constant variables are useful when you have complex values that you need to incl
 1. [Enter general options](#enter-general-options).
 1. Under the **Constant options** section of the page, in the **Value** field, enter the variable value.
 
-   You can enter letters, numbers, and symbols. You can even use wildcards if you use [raw format](ref:raw-format).
+   You can enter letters, numbers, and symbols. You can even use wildcards if you use [raw format](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/variable-syntax/#raw).
 
 1. Click **Save** in the top-right corner.
 1. Enter an optional description of your changes and click **Save**.
@@ -369,7 +344,7 @@ To create a filter, follow these steps:
 1. Enter an optional description of your changes and click **Save**.
 1. Click **Back to dashboard** and then **Exit edit**.
 
-Now you can [filter data on the dashboard](ref:filter-dashboard).
+Now you can [filter data on the dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/use-dashboards/#filter-dashboard-data).
 
 {{< admonition type="tip" >}}
 You can use data links to link back to the dashboard you are currently on. This enables "panel-to-panel filtering," where clicking a data point in one panel updates the dashboard variables and filters the rest of the dashboard.
@@ -541,7 +516,7 @@ Automatic escaping and formatting can cause problems and it can be tricky to gra
 If you do not want Grafana to do this automatic regular expression escaping and formatting, then you must do one of the following:
 
 - Turn off the **Multi-value** or **Include All option** options.
-- Use the [raw variable format](ref:raw-variable-format).
+- Use the [raw variable format](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/variable-syntax/#raw).
 
 ### Include All option
 
