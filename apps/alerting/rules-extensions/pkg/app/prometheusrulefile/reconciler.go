@@ -116,10 +116,21 @@ func (r *Reconciler) reconcile(ctx context.Context, req operator.TypedReconcileR
 	return operator.ReconcileResult{}, nil
 }
 
-// applyChildren ensures that the desired set of child resources (one folder per group, plus
-// alerting/recording rules) exists and matches the file's spec. The desired set is computed
-// from the spec; the previous set is read from the file's status. Children in
-// (previous \ desired) are deleted, and the status is rewritten to match the new desired set.
+// applyChildren ensures that the desired set of child resources (one root folder for the file,
+// one folder per group, and the alerting/recording rules) exists and matches the file's spec.
+//
+// Folder layout:
+//
+//	<user-supplied parent folder>
+//	└── <file folder>     (one per PrometheusRuleFile, title = file.Name)
+//	    ├── <group A>     (title = groupA.Name, unique within this file)
+//	    │   ├── AlertRule
+//	    │   └── RecordingRule
+//	    └── <group B>
+//	        └── ...
+//
+// The desired set is computed from the spec; the previous set is read from the file's status.
+// Children in (previous \ desired) are deleted, and the status is rewritten to match.
 func (r *Reconciler) applyChildren(ctx context.Context, file *model.PrometheusRuleFile) error {
 	parentFolderUID := file.GetParentFolderUID()
 	if parentFolderUID == "" {
@@ -130,6 +141,13 @@ func (r *Reconciler) applyChildren(ctx context.Context, file *model.PrometheusRu
 		return fmt.Errorf("build converter: %w", err)
 	}
 
+	// Ensure the per-file root folder first. Every group folder is parented under it, so
+	// group titles only need to be unique within one PrometheusRuleFile.
+	fileFolder := fileFolderName(file.GetName())
+	if err := r.ensureFileFolder(ctx, file, fileFolder, parentFolderUID); err != nil {
+		return fmt.Errorf("ensure file folder: %w", err)
+	}
+
 	desiredFolders := make([]string, 0, len(file.Spec.Groups))
 	desiredAlertRules := make([]string, 0)
 	desiredRecordingRules := make([]string, 0)
@@ -137,7 +155,7 @@ func (r *Reconciler) applyChildren(ctx context.Context, file *model.PrometheusRu
 	for _, g := range file.Spec.Groups {
 		folderName := childFolderName(file.GetName(), g.Name)
 		desiredFolders = append(desiredFolders, folderName)
-		if err := r.ensureFolder(ctx, file, folderName, parentFolderUID, g.Name); err != nil {
+		if err := r.ensureGroupFolder(ctx, file, folderName, fileFolder, g.Name); err != nil {
 			return fmt.Errorf("ensure folder for group %s: %w", g.Name, err)
 		}
 
@@ -171,12 +189,16 @@ func (r *Reconciler) applyChildren(ctx context.Context, file *model.PrometheusRu
 	}
 
 	// Record the new inventory in status so the next reconcile knows what we own.
-	return r.updateStatus(ctx, file, desiredFolders, desiredAlertRules, desiredRecordingRules)
+	return r.updateStatus(ctx, file, fileFolder, desiredFolders, desiredAlertRules, desiredRecordingRules)
 }
 
 // cleanupChildren deletes every child still recorded in the file's status. It is invoked when
 // the PrometheusRuleFile itself has been marked for deletion; the OpinionatedReconciler holds
 // the finalizer until this returns successfully.
+//
+// Order matters: rules → group folders → file folder. Group folders cannot be deleted while
+// they still contain rules, and the file folder cannot be deleted while it still contains
+// group folders.
 func (r *Reconciler) cleanupChildren(ctx context.Context, file *model.PrometheusRuleFile) error {
 	if err := deleteAll(ctx, r.alertRules, file.GetNamespace(), file.Status.ManagedAlertRules); err != nil {
 		return fmt.Errorf("delete alert rules: %w", err)
@@ -185,7 +207,12 @@ func (r *Reconciler) cleanupChildren(ctx context.Context, file *model.Prometheus
 		return fmt.Errorf("delete recording rules: %w", err)
 	}
 	if err := deleteAll(ctx, r.folders, file.GetNamespace(), file.Status.ManagedFolders); err != nil {
-		return fmt.Errorf("delete folders: %w", err)
+		return fmt.Errorf("delete group folders: %w", err)
+	}
+	if file.Status.ManagedFileFolder != "" {
+		if err := deleteByName(ctx, r.folders, file.GetNamespace(), file.Status.ManagedFileFolder); err != nil {
+			return fmt.Errorf("delete file folder: %w", err)
+		}
 	}
 	return nil
 }
@@ -230,8 +257,9 @@ func deleteByName(ctx context.Context, c resource.Client, namespace, name string
 // updateStatus rewrites the file's status subresource with the supplied desired inventory.
 // It uses resource.UpdateObject so the SDK handles ResourceVersion conflicts by re-fetching
 // and re-applying our mutator.
-func (r *Reconciler) updateStatus(ctx context.Context, file *model.PrometheusRuleFile, folders, alertRules, recordingRules []string) error {
+func (r *Reconciler) updateStatus(ctx context.Context, file *model.PrometheusRuleFile, fileFolder string, folders, alertRules, recordingRules []string) error {
 	_, err := resource.UpdateObject(ctx, r.files, file.GetStaticMetadata().Identifier(), func(obj *model.PrometheusRuleFile, _ bool) (*model.PrometheusRuleFile, error) {
+		obj.Status.ManagedFileFolder = fileFolder
 		obj.Status.ManagedFolders = folders
 		obj.Status.ManagedAlertRules = alertRules
 		obj.Status.ManagedRecordingRules = recordingRules
@@ -240,10 +268,13 @@ func (r *Reconciler) updateStatus(ctx context.Context, file *model.PrometheusRul
 	return err
 }
 
-func (r *Reconciler) ensureFolder(
+// ensureFileFolder creates the per-file root folder under the user-supplied parent folder.
+// Its title is the PrometheusRuleFile's name, guaranteeing it does not collide with the
+// titles of folders this app creates for other PrometheusRuleFiles.
+func (r *Reconciler) ensureFileFolder(
 	ctx context.Context,
 	file *model.PrometheusRuleFile,
-	name, parentFolderUID, groupName string,
+	name, parentFolderUID string,
 ) error {
 	desired := &folderv1.Folder{
 		ObjectMeta: metav1.ObjectMeta{
@@ -252,8 +283,35 @@ func (r *Reconciler) ensureFolder(
 			Annotations: map[string]string{
 				model.FolderAnnotationKey: parentFolderUID,
 			},
-			// Folder lives in unified storage which preserves ownerReferences, so we use them
-			// as a secondary safety net for orphan cleanup via the k8s garbage collector.
+			OwnerReferences: []metav1.OwnerReference{ownerReferenceFor(file)},
+		},
+		Spec: folderv1.FolderSpec{
+			Title: file.GetName(),
+		},
+	}
+	desired.SetGroupVersionKind(folderv1.FolderKind().GroupVersionKind())
+	return upsert(ctx, r.folders, desired)
+}
+
+// ensureGroupFolder creates a per-group folder under the file's root folder. Group titles
+// only have to be unique inside one PrometheusRuleFile, which the spec validator already
+// enforces, so the group's name can be used verbatim.
+//
+// TODO: sanitize groupName before stamping it on the folder title — group names are
+// user-supplied and the Folder API may reject titles containing certain characters
+// (slashes, control chars, very long strings, etc.). Track and address in a follow-up.
+func (r *Reconciler) ensureGroupFolder(
+	ctx context.Context,
+	file *model.PrometheusRuleFile,
+	name, fileFolderUID, groupName string,
+) error {
+	desired := &folderv1.Folder{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: file.GetNamespace(),
+			Annotations: map[string]string{
+				model.FolderAnnotationKey: fileFolderUID,
+			},
 			OwnerReferences: []metav1.OwnerReference{ownerReferenceFor(file)},
 		},
 		Spec: folderv1.FolderSpec{
@@ -349,11 +407,18 @@ func ownerReferenceFor(file *model.PrometheusRuleFile) metav1.OwnerReference {
 	}
 }
 
-// childFolderName produces a deterministic, DNS-1123-compliant child folder name.
-// Group names are user-provided so we hash them to keep the resulting resource name valid
-// regardless of the group's character set. The model.ChildNamePrefix prefix marks the
-// resource as ours for human readability; the authoritative ownership signal is the parent
-// file's status subresource.
+// fileFolderName produces a deterministic, DNS-1123-compliant name for the per-file root
+// folder. It is derived from the PrometheusRuleFile's own name, which is immutable, so the
+// same file always resolves to the same folder name across reconciles.
+func fileFolderName(fileName string) string {
+	return truncate(model.ChildNamePrefix+shortHash(fileName), 253)
+}
+
+// childFolderName produces a deterministic, DNS-1123-compliant child folder name for a
+// group folder. Group names are user-provided so we hash them to keep the resulting
+// resource name valid regardless of the group's character set. The model.ChildNamePrefix
+// prefix marks the resource as ours for human readability; the authoritative ownership
+// signal is the parent file's status subresource.
 func childFolderName(fileName, groupName string) string {
 	return truncate(fmt.Sprintf("%s%s-%s", model.ChildNamePrefix, shortHash(fileName), shortHash(groupName)), 253)
 }

@@ -17,7 +17,13 @@ prometheusRuleFilev0alpha1: prometheusRuleFileKind & {
 		// appear in the spec — AlertRules and RecordingRules live in legacy storage which does
 		// not preserve arbitrary labels, so name-based bookkeeping in status is the only
 		// reliable way to find what we previously created.
+		//
+		// The reconciler builds a folder hierarchy: a single per-file root folder
+		// (managedFileFolder) sits under the user-supplied parent folder, and one
+		// per-group folder (in managedFolders) sits under that root. This layout means
+		// group folder titles only need to be unique within one PrometheusRuleFile.
 		status: {
+			managedFileFolder?: string
 			managedFolders?: [...string]
 			managedAlertRules?: [...string]
 			managedRecordingRules?: [...string]
