@@ -9,12 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 )
 
-// DefaultBatchSize is the per-call text count used when no override is
-// configured. Vertex's hard ceiling is 250 instances per predict call,
-// but the practical limit is per-call token budget — 50 is a safe default
-// that stays well under typical token caps for the inputs we embed.
-const DefaultBatchSize = 50
-
 // callTimeout is the per-RPC deadline. Retries/hedging belong above this
 // layer; this is just a hang-prevention ceiling.
 const callTimeout = 30 * time.Second
@@ -32,13 +26,11 @@ var _ embedder.TextEmbedder = (*DenseEmbedder)(nil)
 
 // NewDenseEmbedder builds a DenseEmbedder. dim is the requested output
 // dimensionality (passed as `outputDimensionality` to Vertex); 0 means
-// "use the model default." batchSize caps the texts per Vertex call; 0
-// falls back to DefaultBatchSize. Lower it when inputs are long enough
-// that the provider-max would blow past per-call token limits.
+// "use the model default." batchSize is the texts-per-call ceiling and
+// must be positive; the config layer owns the default. Vertex's hard
+// ceiling is 250 per predict call, but operators should size batchSize
+// to stay under per-call token limits.
 func NewDenseEmbedder(client Client, model string, dim, batchSize int) *DenseEmbedder {
-	if batchSize <= 0 {
-		batchSize = DefaultBatchSize
-	}
 	return &DenseEmbedder{
 		client:    client,
 		model:     model,

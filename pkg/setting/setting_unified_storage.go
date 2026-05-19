@@ -292,14 +292,11 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.VertexLocation = embedSection.Key("vertex_location").MustString("us-central1")
 	cfg.VertexModel = embedSection.Key("vertex_model").MustString("gemini-embedding-001")
 	cfg.VertexDimensions = embedSection.Key("vertex_dimensions").MustInt(768)
+	cfg.VertexBatchSize = embedSection.Key("vertex_batch_size").MustInt(50)
 	cfg.BedrockRegion = embedSection.Key("bedrock_region").MustString("us-east-1")
 	cfg.BedrockModel = embedSection.Key("bedrock_model").MustString("cohere.embed-v4:0")
 	cfg.BedrockDimensions = embedSection.Key("bedrock_dimensions").MustInt(1024)
-	// Texts per provider call. 0 means "use the active provider's default"
-	// (currently 50 for both Vertex and Bedrock — well under each provider's
-	// max but conservative on per-call token budget). Raise it for short
-	// inputs; lower it if per-call token limits are still being hit.
-	cfg.EmbeddingBatchSize = embedSection.Key("batch_size").MustInt(0)
+	cfg.BedrockBatchSize = embedSection.Key("bedrock_batch_size").MustInt(50)
 }
 
 // applyMigrationEnforcements enforces unified storage migration configs when migrations should run,

@@ -50,7 +50,7 @@ func (f *fakeClient) PredictEmbeddings(_ context.Context, _ string, texts []stri
 
 func TestDenseEmbedder_EmbedText_ChunksAtDefaultBatchSize(t *testing.T) {
 	fc := &fakeClient{dim: 3, failAfter: -1}
-	e := NewDenseEmbedder(fc, "text-embedding-005", 0, 0)
+	e := NewDenseEmbedder(fc, "text-embedding-005", 0, 50)
 
 	// 130 inputs at DefaultBatchSize=50 → 3 chunks (50 + 50 + 30).
 	texts := make([]string, 130)
@@ -99,7 +99,7 @@ func TestDenseEmbedder_EmbedText_HonorsConfiguredBatchSize(t *testing.T) {
 
 func TestDenseEmbedder_EmbedText_PassesTaskType(t *testing.T) {
 	fc := &fakeClient{dim: 3, failAfter: -1}
-	e := NewDenseEmbedder(fc, "text-embedding-005", 0, 0)
+	e := NewDenseEmbedder(fc, "text-embedding-005", 0, 50)
 	_, err := e.EmbedText(context.Background(), embedder.EmbedTextInput{
 		Texts: []string{"a"},
 		Task:  embedder.TaskRetrievalQuery,
@@ -110,7 +110,7 @@ func TestDenseEmbedder_EmbedText_PassesTaskType(t *testing.T) {
 
 func TestDenseEmbedder_EmbedText_DefaultsToDocumentTask(t *testing.T) {
 	fc := &fakeClient{dim: 3, failAfter: -1}
-	e := NewDenseEmbedder(fc, "text-embedding-005", 0, 0)
+	e := NewDenseEmbedder(fc, "text-embedding-005", 0, 50)
 	_, err := e.EmbedText(context.Background(), embedder.EmbedTextInput{Texts: []string{"a"}})
 	require.NoError(t, err)
 	assert.Equal(t, "RETRIEVAL_DOCUMENT", fc.wantTask)
@@ -120,7 +120,7 @@ func TestDenseEmbedder_EmbedText_NormalizesWhenAsked(t *testing.T) {
 	// fake returns vectors with first element == len(text); normalization should
 	// scale to unit length.
 	fc := &fakeClient{dim: 3, failAfter: -1}
-	e := NewDenseEmbedder(fc, "text-embedding-005", 0, 0)
+	e := NewDenseEmbedder(fc, "text-embedding-005", 0, 50)
 	out, err := e.EmbedText(context.Background(), embedder.EmbedTextInput{
 		Texts:     []string{"abcd"},
 		Normalize: true,
@@ -135,7 +135,7 @@ func TestDenseEmbedder_EmbedText_NormalizesWhenAsked(t *testing.T) {
 
 func TestDenseEmbedder_EmbedText_EmptyInput(t *testing.T) {
 	fc := &fakeClient{dim: 3, failAfter: -1}
-	e := NewDenseEmbedder(fc, "text-embedding-005", 0, 0)
+	e := NewDenseEmbedder(fc, "text-embedding-005", 0, 50)
 	out, err := e.EmbedText(context.Background(), embedder.EmbedTextInput{})
 	require.NoError(t, err)
 	assert.Empty(t, out.Embeddings)
@@ -144,7 +144,7 @@ func TestDenseEmbedder_EmbedText_EmptyInput(t *testing.T) {
 
 func TestDenseEmbedder_EmbedText_PropagatesError(t *testing.T) {
 	fc := &fakeClient{dim: 3, failAfter: 1}
-	e := NewDenseEmbedder(fc, "text-embedding-005", 0, 0)
+	e := NewDenseEmbedder(fc, "text-embedding-005", 0, 50)
 	_, err := e.EmbedText(context.Background(), embedder.EmbedTextInput{Texts: []string{"a", "b"}})
 	require.Error(t, err)
 }

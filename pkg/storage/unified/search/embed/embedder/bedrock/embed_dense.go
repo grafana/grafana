@@ -8,12 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 )
 
-// DefaultBatchSize is the per-call text count used when no override is
-// configured. Cohere embed-v4 on Bedrock accepts up to 96 texts per
-// invocation, but the practical limit is per-call token budget — 50 is a
-// safe default that stays well under typical token caps.
-const DefaultBatchSize = 50
-
 // callTimeout is the per-RPC deadline. Bedrock's invoke is generally fast;
 // 30s leaves room for cold start without papering over real hangs.
 const callTimeout = 30 * time.Second
@@ -31,12 +25,10 @@ var _ embedder.TextEmbedder = (*DenseEmbedder)(nil)
 
 // NewDenseEmbedder builds a DenseEmbedder for a Cohere-family Bedrock
 // embedding model. dim is the requested output dimensionality (Cohere
-// supports 256 / 512 / 1024 / 1536); 0 means model default. batchSize
-// caps the texts per InvokeModel call; 0 falls back to DefaultBatchSize.
+// supports 256 / 512 / 1024 / 1536); 0 means model default. batchSize is
+// the texts-per-call ceiling and must be positive; the config layer owns
+// the default. Cohere embed-v4 on Bedrock accepts up to 96 per call.
 func NewDenseEmbedder(client Client, model string, dim, batchSize int) *DenseEmbedder {
-	if batchSize <= 0 {
-		batchSize = DefaultBatchSize
-	}
 	return &DenseEmbedder{
 		client:    client,
 		model:     model,
