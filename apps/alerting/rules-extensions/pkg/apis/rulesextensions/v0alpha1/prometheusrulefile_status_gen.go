@@ -32,6 +32,9 @@ func (PrometheusRuleFilestatusOperatorState) OpenAPIModelName() string {
 // reliable way to find what we previously created.
 // +k8s:openapi-gen=true
 type PrometheusRuleFileStatus struct {
+	// managedFileFolder is the name of the per-file root folder the reconciler created
+	// under the user-supplied parent folder. All managedFolders live inside it.
+	ManagedFileFolder string   `json:"managedFileFolder,omitempty"`
 	ManagedFolders    []string `json:"managedFolders,omitempty"`
 	ManagedAlertRules []string `json:"managedAlertRules,omitempty"`
 	// operatorStates is a map of operator ID to operator state evaluations.
