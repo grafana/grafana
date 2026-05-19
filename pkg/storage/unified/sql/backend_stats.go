@@ -22,7 +22,7 @@ func (b *backend) GetStats(ctx context.Context, req *resourcepb.ResourceStatsReq
 	folders := req.Folder
 	if len(folders) > 0 {
 		// Drop empty entries so they don't match rows with no folder.
-		filtered := folders[:0:0]
+		filtered := make([]string, 0, len(folders))
 		for _, f := range folders {
 			if f != "" {
 				filtered = append(filtered, f)
