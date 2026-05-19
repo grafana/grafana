@@ -3629,6 +3629,38 @@ func TestIntegration_ListAlertRulesPaginatedFilters(t *testing.T) {
 		require.ElementsMatch(t, []string{p1.UID, p2.UID}, gotUIDs)
 	})
 
+	t.Run("RoutingPolicyExact with DefaultRoutingTreeName matches rules with no routing override", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		noOverrideGen := ruleGen.With(ruleGen.WithNoNotificationSettings())
+		contactPointGen := ruleGen.With(ruleGen.WithContactPointRouting(models.NewDefaultContactPointRouting("recv-1")))
+		namedPolicyGen := ruleGen.With(ruleGen.WithPolicyRouting(models.PolicyRouting{Policy: "my-team"}))
+
+		// Rules with no routing override — should match
+		n1 := createRule(t, store, noOverrideGen)
+		n2 := createRule(t, store, noOverrideGen)
+		// Rules with an explicit routing override — should not match
+		createRule(t, store, contactPointGen)
+		createRule(t, store, namedPolicyGen)
+
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:              orgID,
+				RoutingPolicyExact: models.DefaultRoutingTreeName,
+			},
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		gotUIDs := make([]string, 0, len(result))
+		for _, r := range result {
+			gotUIDs = append(gotUIDs, r.UID)
+		}
+		require.ElementsMatch(t, []string{n1.UID, n2.UID}, gotUIDs)
+	})
+
 	t.Run("ExcludeRoutingPolicy includes rules with no policy", func(t *testing.T) {
 		sqlStore := db.InitTestDB(t)
 		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())

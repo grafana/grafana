@@ -1212,7 +1212,14 @@ func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.Lis
 		q = q.Where("NOT (" + clause + ")")
 	}
 	if query.RoutingPolicyExact != "" {
-		q = q.Where("alert_routing_policy = ?", query.RoutingPolicyExact)
+		if query.RoutingPolicyExact == ngmodels.DefaultRoutingTreeName {
+			// 'user-defined' is the default notification policy tree. Rules pointing to it are
+			// stored with alert_routing_policy = NULL (PolicyRouting.Validate prevents storing
+			// the sentinel value explicitly). Match rules with no routing override at all.
+			q = q.Where("alert_routing_policy IS NULL AND (notification_settings IS NULL OR notification_settings = '' OR notification_settings = 'null' OR notification_settings = '[]')")
+		} else {
+			q = q.Where("alert_routing_policy = ?", query.RoutingPolicyExact)
+		}
 	}
 	if query.ExcludeRoutingPolicy != "" {
 		// alert_routing_policy is nullable; NULL should satisfy `!=` to match k8s field-selector semantics.
