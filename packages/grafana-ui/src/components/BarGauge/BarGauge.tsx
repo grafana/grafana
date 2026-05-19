@@ -61,6 +61,8 @@ export interface Props extends Themeable2 {
   isOverflow?: boolean;
 }
 
+// don't mind this little comment
+
 /**
  * https://developers.grafana.com/ui/latest/index.html?path=/docs/plugins-bargauge--docs
  */
