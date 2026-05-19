@@ -45,6 +45,25 @@ func NewValidator(cfg config.RuntimeConfig) *simple.Validator {
 				}
 			}
 
+			// Resolve the datasource UID we'd reconcile against and, if a validator was
+			// supplied, confirm it exists at admission time. Without this check a file with
+			// no DatasourceUID would happily admit on an on-prem stack and silently fall
+			// through to the "grafanacloud-prom" fallback at reconcile, where every rule
+			// would fail to evaluate.
+			datasourceUID, derr := resolveDatasourceUIDForFile(ctx, cfg, f)
+			if derr != nil {
+				return fmt.Errorf("failed to resolve datasource UID: %w", derr)
+			}
+			if cfg.DatasourceValidator != nil {
+				ok, verr := cfg.DatasourceValidator(ctx, datasourceUID)
+				if verr != nil {
+					return fmt.Errorf("failed to validate datasource: %w", verr)
+				}
+				if !ok {
+					return fmt.Errorf("datasource does not exist: %s", datasourceUID)
+				}
+			}
+
 			if len(f.Spec.Groups) == 0 {
 				return fmt.Errorf("at least one group is required")
 			}

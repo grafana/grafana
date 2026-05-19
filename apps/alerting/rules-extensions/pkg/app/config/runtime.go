@@ -32,6 +32,13 @@ type RuntimeConfig struct {
 	// datasource in the calling org). Returning ("", nil) signals "use DefaultDatasourceUID".
 	// When nil, the reconciler falls back to DefaultDatasourceUID for every rule.
 	DatasourceUIDResolver func(ctx context.Context) (string, error)
+
+	// DatasourceValidator, when set, is invoked by the admission validator to confirm that
+	// the datasource UID a PrometheusRuleFile will reconcile against actually exists. It
+	// receives the already-resolved UID (file spec → resolver → default → fallback) so the
+	// registration code only has to know how to look up a datasource by UID, not how to
+	// reproduce the resolution chain. When nil, no admission-time existence check runs.
+	DatasourceValidator func(ctx context.Context, uid string) (bool, error)
 }
 
 // ResolveDatasourceUID returns the datasource UID to use for a rule, applying the configured
