@@ -647,8 +647,8 @@ type preparedBuildIndex struct {
 
 // BuildIndex builds an index from scratch or retrieves it from the filesystem.
 // If built successfully, the new index replaces the old index in the cache (if there was any).
-// Existing index in the file system is reused, if it exists, and if docCount indicates that we should use file-based index,
-// and lastImportTime check passes (if the index was built before lastImportTime, it will be rebuilt).
+// Existing index in the file system is reused, if it exists, and lastImportTime
+// check passes (if the index was built before lastImportTime, it will be rebuilt).
 // The return value of "builder" should be the RV returned from List. This will be stored as the index RV.
 //
 // maxFreshSnapshotAge is the maximum age (by BuildTime) of a remote snapshot
@@ -656,6 +656,8 @@ type preparedBuildIndex struct {
 // rebuild path. Zero disables the strict same-version fast path; the snapshot
 // store, if configured, is still consulted on the initial-startup path via
 // pickBestSnapshot.
+//
+//nolint:gocyclo
 func (b *bleveBackend) BuildIndex(
 	ctx context.Context,
 	key resource.NamespacedResource,
@@ -1002,9 +1004,6 @@ func (b *bleveBackend) createEmptyFileIndex(resourceDir string, mapper mapping.I
 
 		idx, err := newBleveIndex(indexDir, mapper, time.Now(), b.opts.BuildVersion, selectableFields)
 		if errors.Is(err, bleve.ErrorIndexPathExists) {
-			if idx != nil {
-				_ = idx.Close()
-			}
 			continue
 		}
 		if err != nil {
@@ -1084,7 +1083,7 @@ func (a *adaptiveBuildIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 		return nil
 	}
 
-	count, err := a.bleveIndex.index.DocCount()
+	count, err := a.index.DocCount()
 	if err != nil {
 		return err
 	}
