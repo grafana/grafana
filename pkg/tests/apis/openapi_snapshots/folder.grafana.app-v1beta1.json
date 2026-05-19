@@ -790,15 +790,6 @@
             "type": "string",
             "uniqueItems": true
           }
-        },
-        {
-          "name": "recursive",
-          "in": "query",
-          "description": "When true (or bare `?recursive`), walk the folder subtree under a server-side 10s timeout and return aggregated counts; on timeout the server returns 504. When absent or false, the response only reflects resources directly inside the folder.",
-          "schema": {
-            "type": "boolean",
-            "uniqueItems": true
-          }
         }
       ]
     },
