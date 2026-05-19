@@ -17,10 +17,18 @@ export const defaultOperatorState = (): OperatorState => ({
 	state: "success",
 });
 
+// status tracks the child resources currently owned by this PrometheusRuleFile.
+// It is the source of truth used by the reconciler to prune children that no longer
+// appear in the spec — AlertRules and RecordingRules live in legacy storage which does
+// not preserve arbitrary labels, so name-based bookkeeping in status is the only
+// reliable way to find what we previously created.
 export interface Status {
+	managedFolders?: string[];
+	managedAlertRules?: string[];
 	// operatorStates is a map of operator ID to operator state evaluations.
 	// Any operator which consumes this kind SHOULD add its state evaluation information to this field.
 	operatorStates?: Record<string, OperatorState>;
+	managedRecordingRules?: string[];
 	// additionalFields is reserved for future use
 	additionalFields?: Record<string, any>;
 }

@@ -25,17 +25,19 @@ func (PrometheusRuleFilestatusOperatorState) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.alerting.rules-extensions.pkg.apis.rulesextensions.v0alpha1.PrometheusRuleFilestatusOperatorState"
 }
 
+// status tracks the child resources currently owned by this PrometheusRuleFile.
+// It is the source of truth used by the reconciler to prune children that no longer
+// appear in the spec — AlertRules and RecordingRules live in legacy storage which does
+// not preserve arbitrary labels, so name-based bookkeeping in status is the only
+// reliable way to find what we previously created.
 // +k8s:openapi-gen=true
 type PrometheusRuleFileStatus struct {
-	// managedFolders is the set of Folder resource names currently owned by this PrometheusRuleFile.
-	ManagedFolders []string `json:"managedFolders,omitempty"`
-	// managedAlertRules is the set of AlertRule resource names currently owned by this PrometheusRuleFile.
+	ManagedFolders    []string `json:"managedFolders,omitempty"`
 	ManagedAlertRules []string `json:"managedAlertRules,omitempty"`
-	// managedRecordingRules is the set of RecordingRule resource names currently owned by this PrometheusRuleFile.
-	ManagedRecordingRules []string `json:"managedRecordingRules,omitempty"`
 	// operatorStates is a map of operator ID to operator state evaluations.
 	// Any operator which consumes this kind SHOULD add its state evaluation information to this field.
-	OperatorStates map[string]PrometheusRuleFilestatusOperatorState `json:"operatorStates,omitempty"`
+	OperatorStates        map[string]PrometheusRuleFilestatusOperatorState `json:"operatorStates,omitempty"`
+	ManagedRecordingRules []string                                         `json:"managedRecordingRules,omitempty"`
 	// additionalFields is reserved for future use
 	AdditionalFields map[string]interface{} `json:"additionalFields,omitempty"`
 }

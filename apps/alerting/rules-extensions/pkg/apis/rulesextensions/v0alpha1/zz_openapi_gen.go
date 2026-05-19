@@ -269,6 +269,12 @@ func schema_pkg_apis_rulesextensions_v0alpha1_PrometheusRuleFileSpec(ref common.
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
+					"datasourceUID": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 					"groups": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
@@ -295,8 +301,37 @@ func schema_pkg_apis_rulesextensions_v0alpha1_PrometheusRuleFileStatus(ref commo
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
+				Description: "status tracks the child resources currently owned by this PrometheusRuleFile. It is the source of truth used by the reconciler to prune children that no longer appear in the spec — AlertRules and RecordingRules live in legacy storage which does not preserve arbitrary labels, so name-based bookkeeping in status is the only reliable way to find what we previously created.",
+				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
+					"managedFolders": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"managedAlertRules": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
 					"operatorStates": {
 						SchemaProps: spec.SchemaProps{
 							Description: "operatorStates is a map of operator ID to operator state evaluations. Any operator which consumes this kind SHOULD add its state evaluation information to this field.",
@@ -307,6 +342,20 @@ func schema_pkg_apis_rulesextensions_v0alpha1_PrometheusRuleFileStatus(ref commo
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
 										Ref:     ref(PrometheusRuleFilestatusOperatorState{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+					"managedRecordingRules": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
 									},
 								},
 							},

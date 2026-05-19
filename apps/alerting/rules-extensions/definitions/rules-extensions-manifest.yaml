@@ -22,6 +22,9 @@ spec:
       kind: PrometheusRuleFile
       plural: PrometheusRuleFiles
       schemas:
+        DatasourceUID:
+          pattern: ^[a-zA-Z0-9_-]+$
+          type: string
         OperatorState:
           additionalProperties: false
           properties:
@@ -113,6 +116,8 @@ spec:
         spec:
           additionalProperties: false
           properties:
+            datasourceUID:
+              $ref: '#/components/schemas/DatasourceUID'
             groups:
               items:
                 $ref: '#/components/schemas/PrometheusRuleGroup'
@@ -122,11 +127,29 @@ spec:
           type: object
         status:
           additionalProperties: false
+          description: |-
+            status tracks the child resources currently owned by this PrometheusRuleFile.
+            It is the source of truth used by the reconciler to prune children that no longer
+            appear in the spec — AlertRules and RecordingRules live in legacy storage which does
+            not preserve arbitrary labels, so name-based bookkeeping in status is the only
+            reliable way to find what we previously created.
           properties:
             additionalFields:
               additionalProperties: true
               description: additionalFields is reserved for future use
               type: object
+            managedAlertRules:
+              items:
+                type: string
+              type: array
+            managedFolders:
+              items:
+                type: string
+              type: array
+            managedRecordingRules:
+              items:
+                type: string
+              type: array
             operatorStates:
               additionalProperties:
                 $ref: '#/components/schemas/OperatorState'
