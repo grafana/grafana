@@ -16,6 +16,7 @@ labels:
     - enterprise
     - oss
 menuTitle: Configure
+review_date: 2026-05-19
 title: Configure the Microsoft SQL Server data source
 weight: 200
 ---
@@ -30,7 +31,7 @@ Before configuring the Microsoft SQL Server data source, ensure you have the fol
 
 - **Grafana permissions:** You must have the `Organization administrator` role to configure data sources. Organization administrators can also [configure the data source via YAML](#provision-the-data-source) with the Grafana provisioning system.
 
-- **A running SQL Server instance:** Microsoft SQL Server 2005 or newer, Azure SQL Database, or Azure SQL Managed Instance.
+- **A running SQL Server instance:** Microsoft SQL Server 2012 or newer, Azure SQL Database, or Azure SQL Managed Instance.
 
 - **Network access:** Grafana must be able to reach your SQL Server. The default port is `1433`.
 
@@ -78,7 +79,7 @@ Kerberos is not supported in Grafana Cloud.
 
 | Setting      | Description                                                                                                                                                                                                                                                       |
 | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Host**     | Sets the IP address or hostname (and optional port) of your MSSQL instance. The default port is `0`, which uses the driver's default. <br> You can include additional connection properties (e.g., `ApplicationIntent`) by separating them with semicolons (`;`). |
+| **Host**     | Sets the IP address or hostname (and optional port) of your MSSQL instance. The default port is `0`, which uses the driver's default. You can include additional connection properties (for example, `ApplicationIntent`) by separating them with semicolons (`;`). |
 | **Database** | Sets the name of the MSSQL database to connect to.                                                                                                                                                                                                                |
 
 **TLS/SSL Auth:**
@@ -106,6 +107,10 @@ If you're using an older version of Microsoft SQL Server like 2008 and 2008R2, y
 | **Windows AD**<br>(Credential Cache)                  | Uses a Kerberos credential cache already loaded in memory (e.g., from a prior `kinit` command). No file needed.                 | - **Credential cache path**: Path to in-memory credential (e.g., `/tmp/krb5cc_1000`)                                                                                                      |
 | **Windows AD**<br>(Credential Cache File)             | Authenticates a domain user using a credential cache file (`.ccache`).                                                          | - **Username**: `user@example.com`<br>- **Credential cache file path**: e.g., `/home/grot/cache.json`                                                                                     |
 | **Azure Entra ID (formerly Azure AD) Authentication** | Authenticates the data source using Azure authentication methods.                                                               | Details on the supported authentication methods and how to configure them can be found in the [Azure authentication section](./index.md#azure-entra-id-formerly-azure-ad-authentication). |
+
+{{< admonition type="note" >}}
+As of Grafana v13.0, passwords and usernames that contain semicolons (`;`) or closing braces (`}`) are handled correctly. If you previously encountered connection failures due to special characters in credentials, upgrade to Grafana v13.0 or later.
+{{< /admonition >}}
 
 **Additional settings:**
 
@@ -203,7 +208,7 @@ For configuration details, refer to the [Azure documentation for service princip
 
 After the app registration has been created, make note of the tenant ID, client ID, and client secret. Take the following steps to add the app registration as a SQL user:
 
-1. Connect to your Azure SQL database as a user with administrative permissions (the user used here must have the ability to read your Azure Entra directory e.g. by possessing the `Directory Readers` role).
+1. Connect to your Azure SQL database as a user with administrative permissions (the user used here must have the ability to read your Azure Entra directory, for example, by possessing the `Directory Readers` role).
 2. Run `CREATE USER [$IDENTITY_NAME] FROM EXTERNAL PROVIDER;`, substituting `IDENTITY_NAME` with the app registration name.
 3. Grant the created user the appropriate level of permissions for your use-case. It is recommended that users configured for data sources only have reader permissions.
 
@@ -368,6 +373,6 @@ After configuring your Microsoft SQL Server data source, you can:
 
 - [Write queries](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/mssql/query-editor/) using the query editor to explore and visualize your data
 - [Create template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/mssql/template-variables/) to build dynamic, reusable dashboards
-- [Add annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/) to overlay SQL Server events on your graphs
-- [Set up alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/) to create alert rules based on your SQL Server data
+- [Add annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/mssql/annotations/) to overlay SQL Server events on your graphs
+- [Set up alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/mssql/alerting/) to create alert rules based on your SQL Server data
 - [Troubleshoot issues](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/mssql/troubleshooting/) if you encounter problems with your data source

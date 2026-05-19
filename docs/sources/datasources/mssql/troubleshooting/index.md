@@ -13,6 +13,7 @@ labels:
     - enterprise
     - oss
 menuTitle: Troubleshooting
+review_date: 2026-05-19
 title: Troubleshoot Microsoft SQL Server data source issues
 weight: 400
 ---
@@ -95,6 +96,17 @@ These errors occur when there are issues with authentication credentials or perm
 1. Ensure the user has access to the specified database.
 1. For Windows Authentication, verify that the credentials are in the correct format (`DOMAIN\User`).
 1. Check that the SQL Server authentication mode allows the type of login you're using (SQL Server Authentication, Windows Authentication, or Mixed Mode).
+
+### Connection fails when password contains special characters
+
+**Error message:** "Login failed for user" or "Connection string parse error" when credentials contain semicolons (`;`) or closing braces (`}`)
+
+**Cause:** In Grafana versions prior to v13.0, semicolons and closing braces in usernames or passwords were not properly escaped in the MSSQL connection string, causing authentication failures.
+
+**Solution:**
+
+1. Upgrade to Grafana v13.0 or later, which correctly handles these special characters.
+1. If you cannot upgrade, change the SQL Server password to avoid `;` and `}` characters.
 
 ### Access denied to database
 
