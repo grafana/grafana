@@ -59,6 +59,7 @@ type FolderAPIBuilder struct {
 	// Flags
 	useZanzana          bool // features.IsEnabledGlobally(featuremgmt.FlagZanzana)
 	permissionsOnCreate bool // cfg.RBAC.PermissionsOnCreation("folder")
+	features            featuremgmt.FeatureToggles
 
 	// Legacy services -- these will not exist in the MT environment
 	resourcePermissionsSvc *dynamic.NamespaceableResourceInterface
@@ -80,6 +81,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 		accessClient:         accessClient,
 		permissionsOnCreate:  cfg.RBAC.PermissionsOnCreation("folder"),
 		useZanzana:           features.IsEnabledGlobally(featuremgmt.FlagZanzana), //nolint:staticcheck
+		features:             features,
 		searcher:             unified,
 		permissionStore:      NewZanzanaPermissionStore(zanzanaClient),
 		maxNestedFolderDepth: cfg.MaxNestedFolderDepth,
@@ -96,6 +98,7 @@ func NewAPIService(ac authlib.AccessClient, searcher resource.ResourceClient, fe
 		resourcePermissionsSvc: resourcePermissionsSvc,
 		maxNestedFolderDepth:   maxNestedFolderDepth,
 		useZanzana:             features.IsEnabledGlobally(featuremgmt.FlagZanzana), //nolint:staticcheck
+		features:               features,
 	}
 }
 
@@ -410,7 +413,7 @@ func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 		if !ok {
 			return fmt.Errorf("expected v1.DeleteOptions")
 		}
-		return validateOnDelete(ctx, f, b.searcher, deleteOptions)
+		return validateOnDelete(ctx, f, b.searcher, deleteOptions, kubernetesFolderCascadeDeleteEnabled(ctx, b.features))
 	case admission.Update:
 		old, ok := a.GetOldObject().(*foldersv1.Folder)
 		if !ok {

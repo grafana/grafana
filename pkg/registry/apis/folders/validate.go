@@ -362,10 +362,11 @@ func validateOnDelete(ctx context.Context,
 	f *folders.Folder,
 	searcher resourcepb.ResourceIndexClient,
 	deleteOptions *metav1.DeleteOptions,
+	cascadeDeleteEnabled bool,
 ) error {
-	// Cascade delete of non-empty folders is opt-in via DeleteOptions.gracePeriodSeconds=0
-	// (same pattern as dashboard delete validation; works with kubectl --grace-period=0).
-	if forceDeleteFromDeleteOptions(deleteOptions) {
+	// Non-empty folder cascade delete is opt-in via gracePeriodSeconds=0 when
+	// kubernetesFolderCascadeDelete is enabled (same pattern as dashboard delete validation).
+	if cascadeDeleteEnabled && clientRequestedCascadeDelete(deleteOptions) {
 		return nil
 	}
 

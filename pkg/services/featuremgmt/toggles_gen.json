@@ -3685,6 +3685,20 @@
     },
     {
       "metadata": {
+        "name": "kubernetesFolderCascadeDelete",
+        "resourceVersion": "1779199630323",
+        "creationTimestamp": "2026-05-19T14:07:10Z"
+      },
+      "spec": {
+        "description": "Enable folder.grafana.app cascade deletion: opt-in non-empty delete via gracePeriodSeconds=0 and asynchronous cleanup of child folders and contained resources",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesLibraryPanels",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-06-25T22:21:56Z"

@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -183,10 +184,11 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 	zeroGrace := int64(0)
 
 	tests := []struct {
-		name          string
-		statsResponse []*resourcepb.ResourceStatsResponse_Stats
-		deleteOptions *metav1.DeleteOptions
-		wantErr       bool
+		name                 string
+		statsResponse        []*resourcepb.ResourceStatsResponse_Stats
+		deleteOptions        *metav1.DeleteOptions
+		cascadeDeleteEnabled bool
+		wantErr              bool
 	}{
 		{
 			name: "should allow deletion when folder is empty",
@@ -265,6 +267,23 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 			statsResponse: []*resourcepb.ResourceStatsResponse_Stats{},
 			wantErr:       false,
 		},
+		{
+			name: "should reject force delete when cascade gate disabled",
+			statsResponse: []*resourcepb.ResourceStatsResponse_Stats{
+				{Resource: "folders", Count: 1, Group: "folders.grafana.app"},
+			},
+			deleteOptions:        &metav1.DeleteOptions{GracePeriodSeconds: &zeroGrace},
+			cascadeDeleteEnabled: false,
+			wantErr:              true,
+		},
+		{
+			name: "should allow force delete when cascade gate enabled",
+			statsResponse: []*resourcepb.ResourceStatsResponse_Stats{
+				{Resource: "folders", Count: 1, Group: "folders.grafana.app"},
+			},
+			deleteOptions:        &metav1.DeleteOptions{GracePeriodSeconds: &zeroGrace},
+			cascadeDeleteEnabled: true,
+		},
 	}
 
 	obj := &folders.Folder{
@@ -283,17 +302,24 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 			sm := resource.NewMockResourceClient(t)
 
 			deleteOptions := tt.deleteOptions
-			if !forceDeleteFromDeleteOptions(deleteOptions) {
+			shortCircuit := tt.cascadeDeleteEnabled && forceDeleteFromDeleteOptions(deleteOptions)
+			if !shortCircuit {
 				sm.On("GetStats", mock.Anything, &resourcepb.ResourceStatsRequest{Namespace: obj.Namespace, Kinds: countedKinds, Folder: []string{obj.Name}}).Return(
 					&resourcepb.ResourceStatsResponse{Stats: tt.statsResponse},
 					nil,
 				).Once()
 			}
 
+			features := featuremgmt.WithFeatures()
+			if tt.cascadeDeleteEnabled {
+				features = featuremgmt.WithFeatures(featuremgmt.FlagKubernetesFolderCascadeDelete)
+			}
+
 			b := &FolderAPIBuilder{
 				namespacer: func(_ int64) string { return "123" },
 				storage:    us,
 				searcher:   sm,
+				features:   features,
 			}
 
 			err := b.Validate(context.Background(), admission.NewAttributesRecord(
@@ -319,33 +345,6 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 		})
 	}
 
-	t.Run("should allow deletion of non-empty folder when gracePeriodSeconds=0", func(t *testing.T) {
-		us := grafanarest.NewMockStorage(t)
-		sm := resource.NewMockResourceClient(t)
-
-		b := &FolderAPIBuilder{
-			namespacer: func(_ int64) string { return "123" },
-			storage:    us,
-			searcher:   sm,
-		}
-
-		err := b.Validate(context.Background(), admission.NewAttributesRecord(
-			nil,
-			obj,
-			folders.SchemeGroupVersion.WithKind("folder"),
-			obj.Namespace,
-			obj.Name,
-			folders.SchemeGroupVersion.WithResource("folders"),
-			"",
-			admission.Delete,
-			&metav1.DeleteOptions{GracePeriodSeconds: &zeroGrace},
-			true,
-			&user.SignedInUser{},
-		),
-			nil)
-
-		require.NoError(t, err)
-	})
 }
 
 func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
