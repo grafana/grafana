@@ -83,7 +83,7 @@ func PostableApiReceiverToModel(in *definition.PostableApiReceiver) *PostableApi
 	return &PostableApiReceiver{
 		Receiver: in.Receiver,
 		PostableGrafanaReceivers: PostableGrafanaReceivers{
-			GrafanaManagedReceivers: PostableGrafanaReceiversToModel(in.PostableGrafanaReceivers.GrafanaManagedReceivers),
+			GrafanaManagedReceivers: PostableGrafanaReceiversToModel(in.GrafanaManagedReceivers),
 		},
 	}
 }
@@ -266,7 +266,7 @@ func PostableApiReceiverToDB(in *PostableApiReceiver) *definition.PostableApiRec
 	return &definition.PostableApiReceiver{
 		Receiver: in.Receiver,
 		PostableGrafanaReceivers: definition.PostableGrafanaReceivers{
-			GrafanaManagedReceivers: PostableGrafanaReceiversToDB(in.PostableGrafanaReceivers.GrafanaManagedReceivers),
+			GrafanaManagedReceivers: PostableGrafanaReceiversToDB(in.GrafanaManagedReceivers),
 		},
 	}
 }
