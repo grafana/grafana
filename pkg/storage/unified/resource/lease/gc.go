@@ -217,7 +217,7 @@ func (gc *garbageCollector) runCycle(ctx context.Context) (int, error) {
 		keys := make([]string, 0, batchSize)
 		for key, err := range gc.store.Keys(ctx, kv.LeasesSection, opts) {
 			if err != nil {
-				return 0, err
+				return totalDeleted, err
 			}
 			if isInternal(key) {
 				continue
