@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"reflect"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/operator"
@@ -382,6 +383,11 @@ func (r *Reconciler) ensureRecordingRule(
 // updated-by, kubectl last-applied, user labels, etc.) so each reconcile doesn't churn that
 // state. The fields the reconciler owns — labels in our prefix, the folder annotation, our
 // owner reference, and the entire Spec — overlay the existing object.
+//
+// If nothing the reconciler owns has changed relative to the storage state, the Update is
+// skipped entirely. This matters because the informer resync delivers every object on a
+// periodic interval; without the no-op skip every PrometheusRuleFile would generate a
+// useless Update for every child on every resync.
 func upsert(ctx context.Context, c resource.Client, desired resource.Object) error {
 	ident := desired.GetStaticMetadata().Identifier()
 	existing, err := c.Get(ctx, ident)
@@ -393,8 +399,39 @@ func upsert(ctx context.Context, c resource.Client, desired resource.Object) err
 		return err
 	}
 	mergeIntoExisting(existing, desired)
+	if reconcilerOwnedFieldsEqual(existing, desired) {
+		return nil
+	}
 	_, updateErr := c.Update(ctx, ident, desired, resource.UpdateOptions{})
 	return updateErr
+}
+
+// reconcilerOwnedFieldsEqual returns true if every reconciler-owned field on `desired`
+// already matches the corresponding field on `existing`. It is the gate for the no-op skip
+// in upsert.
+//
+// We compare:
+//   - GetSpec() — covers the entire Spec of every kind we manage.
+//   - GetAnnotations() / GetLabels() — already merged into desired by mergeIntoExisting, so
+//     this comparison flags only the keys the reconciler actually wrote.
+//   - GetOwnerReferences() — likewise already merged.
+//
+// Status (subresource) is updated through a separate path and is intentionally not
+// considered here.
+func reconcilerOwnedFieldsEqual(existing, desired resource.Object) bool {
+	if !reflect.DeepEqual(existing.GetSpec(), desired.GetSpec()) {
+		return false
+	}
+	if !reflect.DeepEqual(existing.GetAnnotations(), desired.GetAnnotations()) {
+		return false
+	}
+	if !reflect.DeepEqual(existing.GetLabels(), desired.GetLabels()) {
+		return false
+	}
+	if !reflect.DeepEqual(existing.GetOwnerReferences(), desired.GetOwnerReferences()) {
+		return false
+	}
+	return true
 }
 
 // mergeIntoExisting layers the reconciler-managed metadata of `desired` on top of the
