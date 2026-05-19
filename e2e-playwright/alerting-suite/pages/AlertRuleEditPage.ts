@@ -49,7 +49,7 @@ export class AlertRuleEditPage {
     await this.ungroupedIntervalInput.fill(interval);
   }
 
-  async switchEvaluationMode(mode: 'rule-based' | 'group-based'): Promise<void> {
+  async setEvaluationMode(mode: 'rule-based' | 'group-based'): Promise<void> {
     await this.ensureEvaluationMode(mode);
   }
 
@@ -93,15 +93,15 @@ export class AlertRuleEditPage {
     await this.page.getByTestId('add-labels-button').click();
 
     const dialog = this.page.getByRole('dialog');
-    // The dialog opens with a pre-existing empty row (index 0); "Add more" creates a second
-    // row at index 1, which is the one we'll fill.
+    // The dialog opens with a pre-existing empty row. "Add more" appends a new row at the end;
+    // target it via prefix selector + .last() rather than a hardcoded index.
     await dialog.getByRole('button', { name: /add more/i }).click();
 
     // Each combobox is an `AlertLabelDropdown` (grafana-ui Combobox) with `createCustomValue=true`.
     // Press-and-Enter races with async option loading and silently drops the keystrokes —
     // clicking the explicit custom-value option in the dropdown is the deterministic path.
-    await this.fillLabelCombobox(dialog.getByTestId('labelsInSubform-key-1'), key);
-    await this.fillLabelCombobox(dialog.getByTestId('labelsInSubform-value-1'), value);
+    await this.fillLabelCombobox(dialog.locator('[data-testid^="labelsInSubform-key-"]').last(), key);
+    await this.fillLabelCombobox(dialog.locator('[data-testid^="labelsInSubform-value-"]').last(), value);
 
     await dialog.getByRole('button', { name: 'Save', exact: true }).click();
     await expect(dialog).toBeHidden();
@@ -119,10 +119,10 @@ export class AlertRuleEditPage {
 
   async setAnnotations(annotations: { summary?: string; description?: string }): Promise<void> {
     if (annotations.summary !== undefined) {
-      await this.page.getByTestId('annotation-value-0').fill(annotations.summary);
+      await this.page.getByLabel(/summary \(optional\)/i).fill(annotations.summary);
     }
     if (annotations.description !== undefined) {
-      await this.page.getByTestId('annotation-value-1').fill(annotations.description);
+      await this.page.getByLabel(/description \(optional\)/i).fill(annotations.description);
     }
   }
 
@@ -156,6 +156,10 @@ export class AlertRuleEditPage {
   // Distinct from the viewer's metadata-strip "Every X" (AlertRuleViewPage.evaluationIntervalText).
   groupIntervalHelperText(every: string): Locator {
     return this.page.getByText(new RegExp(`evaluated every ${every}\\.`, 'i'));
+  }
+
+  selectedGroupText(name: string): Locator {
+    return this.page.getByTestId('group-picker').getByText(name, { exact: true });
   }
 
   protected get saveButton(): Locator {

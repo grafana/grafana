@@ -1,6 +1,5 @@
 import { type APIRequestContext } from '@playwright/test';
 
-import { type GrafanaConfig } from '@grafana/data';
 import { test, expect } from '@grafana/plugin-e2e';
 
 import { AlertRuleEditPage } from './pages/AlertRuleEditPage';
@@ -147,7 +146,7 @@ test.describe('Grafana-managed alert rule creation', () => {
       // Resolve the k8s namespace from the Grafana boot config, the same way the
       // frontend does (getAPINamespace → config.namespace).
       const settings = await request.get('/api/frontend/settings');
-      const { namespace } = (await settings.json()) as GrafanaConfig;
+      const { namespace } = await settings.json();
 
       const response = await request.post(
         `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/${namespace}/alertrules`,
@@ -239,16 +238,16 @@ test.describe('Grafana-managed alert rule creation', () => {
       await editor.useExistingGroup(seededGroup);
 
       // Switching to rule-based hides the group select and exposes the bare interval input.
-      await editor.switchEvaluationMode('rule-based');
+      await editor.setEvaluationMode('rule-based');
       await expect(editor.evaluationModeRadio('rule-based')).toBeChecked();
       await expect(editor.ungroupedIntervalInput).toBeVisible();
       await expect(editor.groupSelect).toBeHidden();
 
       // Switching back restores the group via lastSelectedGroup. The selected value renders
       // as visible text inside the group picker.
-      await editor.switchEvaluationMode('group-based');
+      await editor.setEvaluationMode('group-based');
       await expect(editor.groupSelect).toBeVisible();
-      await expect(page.getByTestId('group-picker').getByText(seededGroup, { exact: true })).toBeVisible();
+      await expect(editor.selectedGroupText(seededGroup)).toBeVisible();
 
       await editor.setManualRouting(contactPoint);
       await editor.save();

@@ -17,7 +17,10 @@ export class AlertRuleViewPage {
   }
 
   get evaluationIntervalText(): Locator {
-    return this.page.getByText(/^Every /);
+    return this.page
+      .getByText('Evaluation interval')
+      .locator('..')
+      .getByText(/^Every /);
   }
 
   // DetailText renders the value as `<Text aria-labelledby="pending-period">`;
