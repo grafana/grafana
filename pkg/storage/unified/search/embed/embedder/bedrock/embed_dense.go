@@ -8,8 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 )
 
-// callTimeout is the per-RPC deadline. Bedrock's invoke is generally fast;
-// 30s leaves room for cold start without papering over real hangs.
 const callTimeout = 30 * time.Second
 
 // DenseEmbedder embeds text via Bedrock InvokeModel and returns dense
@@ -23,11 +21,6 @@ type DenseEmbedder struct {
 
 var _ embedder.TextEmbedder = (*DenseEmbedder)(nil)
 
-// NewDenseEmbedder builds a DenseEmbedder for a Cohere-family Bedrock
-// embedding model. dim is the requested output dimensionality (Cohere
-// supports 256 / 512 / 1024 / 1536); 0 means model default. batchSize is
-// the texts-per-call ceiling and must be positive; the config layer owns
-// the default. Cohere embed-v4 on Bedrock accepts up to 96 per call.
 func NewDenseEmbedder(client Client, model string, dim, batchSize int) *DenseEmbedder {
 	return &DenseEmbedder{
 		client:    client,

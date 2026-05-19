@@ -9,8 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 )
 
-// callTimeout is the per-RPC deadline. Retries/hedging belong above this
-// layer; this is just a hang-prevention ceiling.
 const callTimeout = 30 * time.Second
 
 // DenseEmbedder embeds text via Vertex AI's predict endpoint and returns
@@ -24,12 +22,6 @@ type DenseEmbedder struct {
 
 var _ embedder.TextEmbedder = (*DenseEmbedder)(nil)
 
-// NewDenseEmbedder builds a DenseEmbedder. dim is the requested output
-// dimensionality (passed as `outputDimensionality` to Vertex); 0 means
-// "use the model default." batchSize is the texts-per-call ceiling and
-// must be positive; the config layer owns the default. Vertex's hard
-// ceiling is 250 per predict call, but operators should size batchSize
-// to stay under per-call token limits.
 func NewDenseEmbedder(client Client, model string, dim, batchSize int) *DenseEmbedder {
 	return &DenseEmbedder{
 		client:    client,
