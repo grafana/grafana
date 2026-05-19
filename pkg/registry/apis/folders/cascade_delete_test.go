@@ -13,9 +13,6 @@ import (
 
 func setKubernetesFolderCascadeDeleteToggle(t *testing.T, enabled bool) {
 	t.Helper()
-	if !enabled {
-		return
-	}
 	variant := "off"
 	if enabled {
 		variant = "on"
@@ -31,7 +28,7 @@ func setKubernetesFolderCascadeDeleteToggle(t *testing.T, enabled bool) {
 		},
 	})))
 	t.Cleanup(func() {
-		_ = openfeature.SetProviderAndWait(openfeature.NoopProvider{})
+		require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{}))
 	})
 }
 

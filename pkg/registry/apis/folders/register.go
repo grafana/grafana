@@ -356,24 +356,18 @@ func (b *FolderAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return grafanaauthorizer.NewServiceAuthorizer()
 }
 
-func (b *FolderAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, oi admission.ObjectInterfaces) error {
-	switch a.GetOperation() {
-	case admission.Create, admission.Update:
+func (b *FolderAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
+	verb := a.GetOperation()
+	if verb == admission.Create || verb == admission.Update {
 		obj := a.GetObject()
-		if obj == nil {
-			return nil
-		}
 		f, ok := obj.(*foldersv1.Folder)
 		if !ok {
 			return fmt.Errorf("obj is not folders.Folder")
 		}
 		f.Spec.Title = strings.Trim(f.Spec.Title, " ")
 		return nil
-	case admission.Delete:
-		return nil
-	default:
-		return nil
 	}
+	return nil
 }
 
 func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
