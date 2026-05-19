@@ -66,6 +66,15 @@ func NewValidator(cfg config.RuntimeConfig) *simple.Validator {
 					return err
 				}
 
+				// Reject the Prometheus `limit` field. It caps the number of alerts a group
+				// may produce per evaluation, but Grafana's alerting engine has no equivalent
+				// — the prom convert API (pkg/services/ngalert/prom) rejects it for the same
+				// reason. Accepting it silently would mislead users into thinking it took
+				// effect.
+				if g.Limit != nil && *g.Limit > 0 {
+					return fmt.Errorf("group[%s]: limit is not supported", g.Name)
+				}
+
 				if len(g.Rules) == 0 {
 					return fmt.Errorf("group[%s]: at least one rule is required", g.Name)
 				}
