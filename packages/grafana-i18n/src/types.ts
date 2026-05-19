@@ -1,3 +1,4 @@
+import { type TOptions } from 'i18next';
 /**
  * Hook type for translation function that takes an ID, default message, and optional values
  * @returns A function that returns the translated string
@@ -11,17 +12,15 @@ type UseTranslateHook = () => (id: string, defaultMessage: string, values?: Reco
 type TransChild = React.ReactNode | Record<string, unknown>;
 
 /**
- * Props interface for the Trans component used for internationalization
+ * Shared props for the Trans component used for internationalization.
+ * Either `children` or `defaults` must be provided so that the component
+ * always has fallback text when translations are not loaded.
  */
-interface TransProps {
+interface TransPropsBase {
   /**
    * The translation key to look up
    */
   i18nKey: string;
-  /**
-   * Child elements or values to interpolate
-   */
-  children?: TransChild | readonly TransChild[];
   /**
    * React elements to use for interpolation
    */
@@ -30,10 +29,6 @@ interface TransProps {
    * Count value for pluralization
    */
   count?: number;
-  /**
-   * Default text if translation is not found
-   */
-  defaults?: string;
   /**
    * Namespace for the translation key
    */
@@ -50,7 +45,30 @@ interface TransProps {
    * Class name for the Trans component
    */
   className?: string;
+  /**
+   * Options to pass to the internal t function. Needed for plural forms.
+   * Note: use the separate `context` prop rather than setting context here.
+   */
+  tOptions?: Omit<TOptions, 'context'>;
 }
+
+interface TransPropsWithChildren extends TransPropsBase {
+  /**
+   * Child elements or values to interpolate — also serves as fallback text
+   */
+  children: TransChild | readonly TransChild[];
+  defaults?: string;
+}
+
+interface TransPropsWithDefaults extends TransPropsBase {
+  children?: TransChild | readonly TransChild[];
+  /**
+   * Default text if translation is not found
+   */
+  defaults: string;
+}
+
+type TransProps = TransPropsWithChildren | TransPropsWithDefaults;
 
 /**
  * Function declaration for the Trans component

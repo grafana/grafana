@@ -546,6 +546,17 @@ func (f *FakeAuthService) RemoveExternalService(ctx context.Context, pluginID st
 	return nil
 }
 
+type FakeRBACCleaner struct {
+	CleanupFunc func(ctx context.Context, pluginIDs []string) error
+}
+
+func (f *FakeRBACCleaner) CleanupPluginRBAC(ctx context.Context, pluginIDs ...string) error {
+	if f.CleanupFunc != nil {
+		return f.CleanupFunc(ctx, pluginIDs)
+	}
+	return nil
+}
+
 type FakeDiscoverer struct {
 	DiscoverFunc func(ctx context.Context, src plugins.PluginSource) ([]*plugins.FoundBundle, error)
 }

@@ -1,9 +1,9 @@
-import { render, RenderResult } from '@testing-library/react';
+import { render, type RenderResult } from '@testing-library/react';
 
-import { FieldDisplay } from '@grafana/data';
+import { type FieldDisplay } from '@grafana/data';
 
-import { RadialArcPathEndpointMarks, RadialArcPathEndpointMarksProps } from './RadialArcPathEndpointMarks';
-import { RadialGaugeDimensions } from './types';
+import { RadialArcPathEndpointMarks, type RadialArcPathEndpointMarksProps } from './RadialArcPathEndpointMarks';
+import { type RadialGaugeDimensions } from './types';
 
 const ser = new XMLSerializer();
 
@@ -86,7 +86,7 @@ describe('RadialArcPathEndpointMarks', () => {
           <RadialArcPathEndpointMarks {...defaultProps} endpointMarker="glow" color="#FF0000" />
         </svg>
       ),
-      '<svg role=\"img\"><path d=\"M 113.89185421335443 21.215379759023364 A 80 80 0 0 1 150 50\" fill=\"none\" stroke-width=\"20\" stroke-linecap=\"butt\"/></svg>'
+      '<svg role=\"img\"><path d=\"M 113.89185421335443 21.215379759023364 A 80 80 0 0 1 150 50\" fill=\"none\" stroke-width=\"20\" stroke-linecap=\"round\"/></svg>'
     );
   });
 
@@ -104,7 +104,7 @@ describe('RadialArcPathEndpointMarks', () => {
           />
         </svg>
       ),
-      '<svg role=\"img\"><path d=\"M 113.89185421335443 21.215379759023364 A 80 80 0 0 1 150 50\" fill=\"none\" stroke-width=\"20\" stroke-linecap=\"butt\"/></svg>'
+      '<svg role=\"img\"><path d=\"M 113.89185421335443 21.215379759023364 A 80 80 0 0 1 150 50\" fill=\"none\" stroke-width=\"20\" stroke-linecap=\"round\"/></svg>'
     );
   });
 

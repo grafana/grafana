@@ -1,16 +1,22 @@
 import { of } from 'rxjs';
 
-import { DataQueryError, DataQueryRequest, DataQueryResponse, dateTime, LoadingState } from '@grafana/data';
+import {
+  type DataQueryError,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  dateTime,
+  LoadingState,
+} from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { LokiQueryType, LokiQueryDirection } from './dataquery.gen';
-import { LokiDatasource } from './datasource';
+import { type LokiDatasource } from './datasource';
 import { createLokiDatasource } from './mocks/datasource';
 import { getMockFrames } from './mocks/frames';
 import { runSplitQuery } from './querySplitting';
 import { LOKI_MAX_QUERY_BYTES_READ_ERROR_MSG_PREFIX, LOKI_TIMEOUT_ERROR_MSG } from './responseUtils';
 import { trackGroupedQueries } from './tracking';
-import { LokiQuery } from './types';
+import { type LokiQuery } from './types';
 
 jest.mock('./tracking');
 jest.mock('uuid', () => ({
@@ -19,6 +25,7 @@ jest.mock('uuid', () => ({
 
 const originalShardingFlagState = config.featureToggles.lokiShardSplitting;
 const originalLokiQueryLimitsContextState = config.featureToggles.lokiQueryLimitsContext;
+const originalLokiAlignedQuerySplitting = config.featureToggles.lokiAlignedQuerySplitting;
 const originalErr = console.error;
 beforeEach(() => {
   jest.spyOn(console, 'error').mockImplementation(() => {});
@@ -35,10 +42,11 @@ afterAll(() => {
   jest.mocked(global.setTimeout).mockReset();
   config.featureToggles.lokiShardSplitting = originalShardingFlagState;
   config.featureToggles.lokiQueryLimitsContext = originalLokiQueryLimitsContextState;
+  config.featureToggles.lokiAlignedQuerySplitting = originalLokiAlignedQuerySplitting;
   console.error = originalErr;
 });
 
-describe('runSplitQuery()', () => {
+describe.each([false, true])('runSplitQuery(aligned = %s)', (lokiAlignedQuerySplitting: boolean) => {
   let datasource: LokiDatasource;
   const from = dateTime('2023-02-08T05:00:00.000Z');
   const to = dateTime('2023-02-10T06:00:00.000Z');
@@ -59,14 +67,16 @@ describe('runSplitQuery()', () => {
     Object.assign(request, overrides);
     return request;
   };
-  const request = createRequest([{ expr: 'count_over_time({a="b"}[1m])', refId: 'A' }]);
+  let globalRequest = createRequest([{ expr: 'count_over_time({a="b"}[1m])', refId: 'A' }]);
   beforeEach(() => {
+    config.featureToggles.lokiAlignedQuerySplitting = lokiAlignedQuerySplitting;
+    globalRequest = createRequest([{ expr: 'count_over_time({a="b"}[1m])', refId: 'A' }]);
     datasource = createLokiDatasource();
     jest.spyOn(datasource, 'runQuery').mockReturnValue(of({ data: [] }));
   });
 
   test('Splits datasource queries', async () => {
-    await expect(runSplitQuery(datasource, request)).toEmitValuesWith((emitted) => {
+    await expect(runSplitQuery(datasource, globalRequest)).toEmitValuesWith((emitted) => {
       // 3 days, 3 chunks, 3 requests.
       expect(datasource.runQuery).toHaveBeenCalledTimes(3);
       // 3 sub-requests + complete
@@ -90,7 +100,7 @@ describe('runSplitQuery()', () => {
   });
 
   test('Skips partial updates as an option', async () => {
-    await expect(runSplitQuery(datasource, request, { skipPartialUpdates: true })).toEmitValuesWith((emitted) => {
+    await expect(runSplitQuery(datasource, globalRequest, { skipPartialUpdates: true })).toEmitValuesWith((emitted) => {
       // 3 days, 3 chunks, 3 requests.
       expect(datasource.runQuery).toHaveBeenCalledTimes(3);
       // partial updates skipped
@@ -104,7 +114,7 @@ describe('runSplitQuery()', () => {
       .mockReturnValueOnce(
         of({ state: LoadingState.Error, errors: [{ refId: 'A', message: LOKI_TIMEOUT_ERROR_MSG }], data: [] })
       );
-    await expect(runSplitQuery(datasource, request)).toEmitValuesWith((response) => {
+    await expect(runSplitQuery(datasource, globalRequest)).toEmitValuesWith((response) => {
       expect(response[0].state).toBe(LoadingState.Done);
       // 3 days, 3 chunks, 1 retry = 4 requests.
       expect(datasource.runQuery).toHaveBeenCalledTimes(4);
@@ -119,7 +129,7 @@ describe('runSplitQuery()', () => {
         data: [],
       })
     );
-    await expect(runSplitQuery(datasource, request)).toEmitValuesWith((response) => {
+    await expect(runSplitQuery(datasource, globalRequest)).toEmitValuesWith((response) => {
       expect(response[0].state).toBe(LoadingState.Error);
       // Stop immediately
       expect(datasource.runQuery).toHaveBeenCalledTimes(1);
@@ -138,7 +148,7 @@ describe('runSplitQuery()', () => {
           data: [],
         })
       );
-    await expect(runSplitQuery(datasource, request)).toEmitValuesWith((response) => {
+    await expect(runSplitQuery(datasource, globalRequest)).toEmitValuesWith((response) => {
       expect(response[0].state).toBe(LoadingState.Error);
       // Stop immediately after error
       expect(datasource.runQuery).toHaveBeenCalledTimes(2);
@@ -151,7 +161,7 @@ describe('runSplitQuery()', () => {
       .mockReturnValueOnce(
         of({ state: LoadingState.Error, errors: [{ refId: 'A', message: LOKI_TIMEOUT_ERROR_MSG }], data: [] })
       );
-    await expect(runSplitQuery(datasource, request, { disableRetry: true })).toEmitValuesWith(() => {
+    await expect(runSplitQuery(datasource, globalRequest, { disableRetry: true })).toEmitValuesWith(() => {
       // No retries
       expect(datasource.runQuery).toHaveBeenCalledTimes(1);
     });
@@ -161,7 +171,7 @@ describe('runSplitQuery()', () => {
     jest
       .mocked(datasource.runQuery)
       .mockReturnValueOnce(of({ state: LoadingState.Error, errors: [{ refId: 'A', message: 'nope nope' }], data: [] }));
-    await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
+    await expect(runSplitQuery(datasource, globalRequest)).toEmitValuesWith(() => {
       // 3 days, 3 chunks, 3 requests.
       expect(datasource.runQuery).toHaveBeenCalledTimes(1);
     });
@@ -184,7 +194,7 @@ describe('runSplitQuery()', () => {
   });
 
   test('Returns a DataQueryResponse with the expected attributes', async () => {
-    await expect(runSplitQuery(datasource, request)).toEmitValuesWith((response) => {
+    await expect(runSplitQuery(datasource, globalRequest)).toEmitValuesWith((response) => {
       expect(response[0].data).toBeDefined();
       expect(response[0].state).toBe(LoadingState.Done);
       expect(response[0].key).toBeDefined();
@@ -192,182 +202,356 @@ describe('runSplitQuery()', () => {
   });
 
   test('Correctly splits queries without step', async () => {
-    await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
-      expect(datasource.runQuery).toHaveBeenNthCalledWith(
-        1,
-        expect.objectContaining({
-          requestId: 'TEST_3',
-          intervalMs: 60000,
-          range: expect.objectContaining({
-            from: expect.objectContaining({
-              //2023-02-10T05:00:00.000Z
-              _i: 1676005200000,
+    await expect(runSplitQuery(datasource, globalRequest)).toEmitValuesWith(() => {
+      if (lokiAlignedQuerySplitting) {
+        expect(datasource.runQuery).toHaveBeenNthCalledWith(
+          1,
+          expect.objectContaining({
+            requestId: 'TEST_3',
+            intervalMs: 60000,
+            range: expect.objectContaining({
+              from: expect.objectContaining({
+                //2023-02-10T00:00:00.000Z
+                _i: 1675987200000,
+              }),
+              to: expect.objectContaining({
+                // 2023-02-10T06:00:00.000Z
+                _i: 1676008800000,
+              }),
             }),
-            to: expect.objectContaining({
-              // 2023-02-10T06:00:00.000Z
-              _i: 1676008800000,
-            }),
-          }),
-          targets: [
-            {
-              expr: 'count_over_time({a="b"}[1m])',
-              legendFormat: undefined,
-              refId: 'A',
-              step: undefined,
-              limitsContext: {
+            targets: [
+              {
                 expr: 'count_over_time({a="b"}[1m])',
-                from: from.valueOf(),
-                to: to.valueOf(),
+                legendFormat: undefined,
+                refId: 'A',
+                step: undefined,
+                limitsContext: {
+                  expr: 'count_over_time({a="b"}[1m])',
+                  from: from.valueOf(),
+                  to: to.valueOf(),
+                },
               },
-            },
-          ],
-        })
-      );
+            ],
+          })
+        );
 
-      expect(datasource.runQuery).toHaveBeenNthCalledWith(
-        2,
-        expect.objectContaining({
-          requestId: 'TEST_2',
-          intervalMs: 60000,
-          range: expect.objectContaining({
-            from: expect.objectContaining({
-              // 2023-02-09T05:00:00.000Z
-              _i: 1675918800000,
+        expect(datasource.runQuery).toHaveBeenNthCalledWith(
+          2,
+          expect.objectContaining({
+            requestId: 'TEST_2',
+            intervalMs: 60000,
+            range: expect.objectContaining({
+              from: expect.objectContaining({
+                // 2023-02-09T00:00:00.000Z
+                _i: 1675900800000,
+              }),
+              to: expect.objectContaining({
+                // 2023-02-09T23:59:00.000Z
+                _i: 1675987140000,
+              }),
             }),
-            to: expect.objectContaining({
-              // 2023-02-10T04:59:00.000Z
-              _i: 1676005140000,
-            }),
-          }),
-          targets: [
-            {
-              expr: 'count_over_time({a="b"}[1m])',
-              legendFormat: undefined,
-              refId: 'A',
-              step: undefined,
-              limitsContext: undefined,
-            },
-          ],
-        })
-      );
+            targets: [
+              {
+                expr: 'count_over_time({a="b"}[1m])',
+                legendFormat: undefined,
+                refId: 'A',
+                step: undefined,
+                limitsContext: undefined,
+              },
+            ],
+          })
+        );
 
-      expect(datasource.runQuery).toHaveBeenNthCalledWith(
-        3,
-        expect.objectContaining({
-          requestId: 'TEST_1',
-          intervalMs: 60000,
-          range: expect.objectContaining({
-            from: expect.objectContaining({
-              // 2023-02-08T05:00:00.000Z
-              _i: 1675832400000,
+        expect(datasource.runQuery).toHaveBeenNthCalledWith(
+          3,
+          expect.objectContaining({
+            requestId: 'TEST_1',
+            intervalMs: 60000,
+            range: expect.objectContaining({
+              from: expect.objectContaining({
+                // 2023-02-08T05:00:00.000Z
+                _i: 1675832400000,
+              }),
+              to: expect.objectContaining({
+                // 2023-02-08T23:59:00.000Z
+                _i: 1675900740000,
+              }),
             }),
-            to: expect.objectContaining({
-              // 2023-02-09T04:59:00.000Z
-              _i: 1675918740000,
+            targets: [
+              {
+                expr: 'count_over_time({a="b"}[1m])',
+                legendFormat: undefined,
+                refId: 'A',
+                step: undefined,
+                limitsContext: undefined,
+              },
+            ],
+          })
+        );
+      } else {
+        expect(datasource.runQuery).toHaveBeenNthCalledWith(
+          1,
+          expect.objectContaining({
+            requestId: 'TEST_3',
+            intervalMs: 60000,
+            range: expect.objectContaining({
+              from: expect.objectContaining({
+                //2023-02-10T05:00:00.000Z
+                _i: 1676005200000,
+              }),
+              to: expect.objectContaining({
+                // 2023-02-10T06:00:00.000Z
+                _i: 1676008800000,
+              }),
             }),
-          }),
-          targets: [
-            {
-              expr: 'count_over_time({a="b"}[1m])',
-              legendFormat: undefined,
-              refId: 'A',
-              step: undefined,
-              limitsContext: undefined,
-            },
-          ],
-        })
-      );
+            targets: [
+              {
+                expr: 'count_over_time({a="b"}[1m])',
+                legendFormat: undefined,
+                refId: 'A',
+                step: undefined,
+                limitsContext: {
+                  expr: 'count_over_time({a="b"}[1m])',
+                  from: from.valueOf(),
+                  to: to.valueOf(),
+                },
+              },
+            ],
+          })
+        );
+
+        expect(datasource.runQuery).toHaveBeenNthCalledWith(
+          2,
+          expect.objectContaining({
+            requestId: 'TEST_2',
+            intervalMs: 60000,
+            range: expect.objectContaining({
+              from: expect.objectContaining({
+                // 2023-02-09T05:00:00.000Z
+                _i: 1675918800000,
+              }),
+              to: expect.objectContaining({
+                // 2023-02-10T04:59:00.000Z
+                _i: 1676005140000,
+              }),
+            }),
+            targets: [
+              {
+                expr: 'count_over_time({a="b"}[1m])',
+                legendFormat: undefined,
+                refId: 'A',
+                step: undefined,
+                limitsContext: undefined,
+              },
+            ],
+          })
+        );
+
+        expect(datasource.runQuery).toHaveBeenNthCalledWith(
+          3,
+          expect.objectContaining({
+            requestId: 'TEST_1',
+            intervalMs: 60000,
+            range: expect.objectContaining({
+              from: expect.objectContaining({
+                // 2023-02-08T05:00:00.000Z
+                _i: 1675832400000,
+              }),
+              to: expect.objectContaining({
+                // 2023-02-09T04:59:00.000Z
+                _i: 1675918740000,
+              }),
+            }),
+            targets: [
+              {
+                expr: 'count_over_time({a="b"}[1m])',
+                legendFormat: undefined,
+                refId: 'A',
+                step: undefined,
+                limitsContext: undefined,
+              },
+            ],
+          })
+        );
+      }
     });
   });
 
   test('Correctly splits queries with step', async () => {
-    const req = { ...request };
+    const req = createRequest([{ expr: 'count_over_time({a="b"}[1m])', refId: 'A' }]);
     req.targets[0].step = '10s';
-    await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
-      expect(datasource.runQuery).toHaveBeenNthCalledWith(
-        1,
-        expect.objectContaining({
-          requestId: 'TEST_3',
-          intervalMs: 60000,
-          range: expect.objectContaining({
-            from: expect.objectContaining({
-              //2023-02-10T05:00:00.000Z
-              _i: 1676005200000,
+    await expect(runSplitQuery(datasource, req)).toEmitValuesWith(() => {
+      if (lokiAlignedQuerySplitting) {
+        expect(datasource.runQuery).toHaveBeenNthCalledWith(
+          1,
+          expect.objectContaining({
+            requestId: 'TEST_3',
+            intervalMs: 60000,
+            range: expect.objectContaining({
+              from: expect.objectContaining({
+                // 2023-02-10T00:00:00.000Z
+                _i: 1675987200000,
+              }),
+              to: expect.objectContaining({
+                // 2023-02-10T06:00:00.000Z
+                _i: 1676008800000,
+              }),
             }),
-            to: expect.objectContaining({
-              // 2023-02-10T06:00:00.000Z
-              _i: 1676008800000,
-            }),
-          }),
-          targets: [
-            {
-              expr: 'count_over_time({a="b"}[1m])',
-              legendFormat: undefined,
-              refId: 'A',
-              step: '10s',
-              limitsContext: {
+            targets: [
+              {
                 expr: 'count_over_time({a="b"}[1m])',
-                from: from.valueOf(),
-                to: to.valueOf(),
+                legendFormat: undefined,
+                refId: 'A',
+                step: '10s',
+                limitsContext: {
+                  expr: 'count_over_time({a="b"}[1m])',
+                  from: from.valueOf(),
+                  to: to.valueOf(),
+                },
               },
-            },
-          ],
-        })
-      );
+            ],
+          })
+        );
 
-      expect(datasource.runQuery).toHaveBeenNthCalledWith(
-        2,
-        expect.objectContaining({
-          requestId: 'TEST_2',
-          intervalMs: 60000,
-          range: expect.objectContaining({
-            from: expect.objectContaining({
-              // 2023-02-09T05:00:00.000Z
-              _i: 1675918800000,
+        expect(datasource.runQuery).toHaveBeenNthCalledWith(
+          2,
+          expect.objectContaining({
+            requestId: 'TEST_2',
+            intervalMs: 60000,
+            range: expect.objectContaining({
+              from: expect.objectContaining({
+                // 2023-02-09T00:00:00.000Z
+                _i: 1675900800000,
+              }),
+              to: expect.objectContaining({
+                // 2023-02-09T23:59:50.000Z
+                _i: 1675987190000,
+              }),
             }),
-            to: expect.objectContaining({
-              // 2023-02-10T04:59:50.000Z
-              _i: 1676005190000,
-            }),
-          }),
-          targets: [
-            {
-              expr: 'count_over_time({a="b"}[1m])',
-              legendFormat: undefined,
-              refId: 'A',
-              step: '10s',
-              limitsContext: undefined,
-            },
-          ],
-        })
-      );
+            targets: [
+              {
+                expr: 'count_over_time({a="b"}[1m])',
+                legendFormat: undefined,
+                refId: 'A',
+                step: '10s',
+                limitsContext: undefined,
+              },
+            ],
+          })
+        );
 
-      expect(datasource.runQuery).toHaveBeenNthCalledWith(
-        3,
-        expect.objectContaining({
-          requestId: 'TEST_1',
-          intervalMs: 60000,
-          range: expect.objectContaining({
-            from: expect.objectContaining({
-              // 2023-02-08T05:00:00.000Z
-              _i: 1675832400000,
+        expect(datasource.runQuery).toHaveBeenNthCalledWith(
+          3,
+          expect.objectContaining({
+            requestId: 'TEST_1',
+            intervalMs: 60000,
+            range: expect.objectContaining({
+              from: expect.objectContaining({
+                // 2023-02-08T05:00:00.000Z
+                _i: 1675832400000,
+              }),
+              to: expect.objectContaining({
+                // 2023-02-08T23:59:50.000Z
+                _i: 1675900790000,
+              }),
             }),
-            to: expect.objectContaining({
-              // 2023-02-09T04:59:50.000Z
-              _i: 1675918790000,
+            targets: [
+              {
+                expr: 'count_over_time({a="b"}[1m])',
+                legendFormat: undefined,
+                refId: 'A',
+                step: '10s',
+                limitsContext: undefined,
+              },
+            ],
+          })
+        );
+      } else {
+        expect(datasource.runQuery).toHaveBeenNthCalledWith(
+          1,
+          expect.objectContaining({
+            requestId: 'TEST_3',
+            intervalMs: 60000,
+            range: expect.objectContaining({
+              from: expect.objectContaining({
+                // 2023-02-10T05:00:00.000Z
+                _i: 1676005200000,
+              }),
+              to: expect.objectContaining({
+                // 2023-02-10T06:00:00.000Z
+                _i: 1676008800000,
+              }),
             }),
-          }),
-          targets: [
-            {
-              expr: 'count_over_time({a="b"}[1m])',
-              legendFormat: undefined,
-              refId: 'A',
-              step: '10s',
-              limitsContext: undefined,
-            },
-          ],
-        })
-      );
+            targets: [
+              {
+                expr: 'count_over_time({a="b"}[1m])',
+                legendFormat: undefined,
+                refId: 'A',
+                step: '10s',
+                limitsContext: {
+                  expr: 'count_over_time({a="b"}[1m])',
+                  from: from.valueOf(),
+                  to: to.valueOf(),
+                },
+              },
+            ],
+          })
+        );
+
+        expect(datasource.runQuery).toHaveBeenNthCalledWith(
+          2,
+          expect.objectContaining({
+            requestId: 'TEST_2',
+            intervalMs: 60000,
+            range: expect.objectContaining({
+              from: expect.objectContaining({
+                // 2023-02-09T05:00:00.000Z
+                _i: 1675918800000,
+              }),
+              to: expect.objectContaining({
+                // 2023-02-10T04:59:50.000Z
+                _i: 1676005190000,
+              }),
+            }),
+            targets: [
+              {
+                expr: 'count_over_time({a="b"}[1m])',
+                legendFormat: undefined,
+                refId: 'A',
+                step: '10s',
+                limitsContext: undefined,
+              },
+            ],
+          })
+        );
+
+        expect(datasource.runQuery).toHaveBeenNthCalledWith(
+          3,
+          expect.objectContaining({
+            requestId: 'TEST_1',
+            intervalMs: 60000,
+            range: expect.objectContaining({
+              from: expect.objectContaining({
+                // 2023-02-08T05:00:00.000Z
+                _i: 1675832400000,
+              }),
+              to: expect.objectContaining({
+                // 2023-02-09T04:59:50.000Z
+                _i: 1675918790000,
+              }),
+            }),
+            targets: [
+              {
+                expr: 'count_over_time({a="b"}[1m])',
+                legendFormat: undefined,
+                refId: 'A',
+                step: '10s',
+                limitsContext: undefined,
+              },
+            ],
+          })
+        );
+      }
     });
   });
 
@@ -382,7 +566,7 @@ describe('runSplitQuery()', () => {
       errors: [error],
     };
     jest.spyOn(datasource, 'runQuery').mockReturnValue(of(response));
-    await expect(runSplitQuery(datasource, request)).toEmitValuesWith((values) => {
+    await expect(runSplitQuery(datasource, globalRequest)).toEmitValuesWith((values) => {
       expect(values).toHaveLength(1);
       expect(values[0]).toEqual(
         expect.objectContaining({
@@ -405,7 +589,7 @@ describe('runSplitQuery()', () => {
       errors: [error],
     };
     jest.spyOn(datasource, 'runQuery').mockReturnValue(of(response));
-    await expect(runSplitQuery(datasource, request)).toEmitValuesWith((values) => {
+    await expect(runSplitQuery(datasource, globalRequest)).toEmitValuesWith((values) => {
       expect(values).toHaveLength(1);
       expect(values[0]).toEqual(
         expect.objectContaining({
@@ -427,7 +611,7 @@ describe('runSplitQuery()', () => {
         key: 'uuid',
       })
     );
-    await expect(runSplitQuery(datasource, request)).toEmitValuesWith((values) => {
+    await expect(runSplitQuery(datasource, globalRequest)).toEmitValuesWith((values) => {
       expect(values).toHaveLength(1);
       expect(values[0]).toEqual(
         expect.objectContaining({
@@ -661,19 +845,19 @@ describe('runSplitQuery()', () => {
     test('Groups mixed queries by stepMs', async () => {
       const request = createRequest(
         [
-          { expr: '{a="b"}', refId: 'A', resolution: 3 },
-          { expr: '{a="b"}', refId: 'B', resolution: 5 },
+          { expr: '{a="b"}', refId: 'A' },
+          { expr: '{a="b"}', refId: 'B' },
           { expr: 'count_over_time({a="b"}[1m])', refId: 'C', resolution: 3 },
           { expr: 'count_over_time{a="b"}[1m])', refId: 'D', resolution: 5 },
-          { expr: '{a="b"}', refId: 'E', resolution: 5, queryType: LokiQueryType.Instant },
+          { expr: '{a="b"}', refId: 'E', queryType: LokiQueryType.Instant },
           { expr: 'rate({a="b"}[5m])', refId: 'F', resolution: 5, step: '10' },
           { expr: 'rate({a="b"} | logfmt[5m])', refId: 'G', resolution: 5, step: '10s' },
         ],
         { range: range1d }
       );
       await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
-        // A, B, C, D, E, F+G
-        expect(datasource.runQuery).toHaveBeenCalledTimes(6);
+        // A+B, G, C, D+F, E
+        expect(datasource.runQuery).toHaveBeenCalledTimes(5);
       });
     });
     test('Chunked groups mixed queries by stepMs', async () => {

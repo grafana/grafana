@@ -2,10 +2,10 @@ import { css, cx } from '@emotion/css';
 import { useCallback, useState, useRef, memo, forwardRef } from 'react';
 import SVG from 'react-inlinesvg';
 
-import { GrafanaTheme2, isIconName } from '@grafana/data';
+import { type GrafanaTheme2, isIconName } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { IconName, IconType, IconSize } from '../../types/icon';
+import { type IconName, type IconType, type IconSize } from '../../types/icon';
 import { spin } from '../../utils/keyframes';
 
 import { getIconPath, getSvgSize } from './utils';
@@ -117,6 +117,7 @@ export const Icon = memo(
       );
 
       return (
+        // @ts-expect-error react-inlinesvg@4.3.0 return type includes bigint, which isn't in @types/react@18's ReactNode. Remove when we update @types/react.
         <SVG
           data-testid={`icon-${iconName}`}
           aria-hidden={

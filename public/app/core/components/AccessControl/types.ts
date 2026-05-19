@@ -1,4 +1,4 @@
-import { AccessControlAction } from 'app/types/accessControl';
+import { type AccessControlAction } from 'app/types/accessControl';
 
 export type ResourcePermission = {
   id: number;

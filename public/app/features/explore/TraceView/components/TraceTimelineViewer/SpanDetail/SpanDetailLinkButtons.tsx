@@ -3,23 +3,23 @@ import * as React from 'react';
 
 import {
   CoreApp,
-  GrafanaTheme2,
-  IconName,
-  LinkModel,
+  type GrafanaTheme2,
+  type IconName,
+  type LinkModel,
   PluginExtensionPoints,
-  RawTimeRange,
-  TimeRange,
+  type RawTimeRange,
+  type TimeRange,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
+import { type TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { config, locationService, reportInteraction, usePluginLinks } from '@grafana/runtime';
-import { DataSourceRef } from '@grafana/schema';
+import { type DataSourceRef } from '@grafana/schema';
 import { Button, DataLinkButton, Dropdown, Menu, useStyles2 } from '@grafana/ui';
 import { RelatedProfilesTitle } from '@grafana-plugins/tempo/resultTransformer';
 
 import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
-import { SpanLinkDef, SpanLinkFunc, SpanLinkType } from '../../types/links';
-import { TraceSpan } from '../../types/trace';
+import { type SpanLinkDef, type SpanLinkFunc, SpanLinkType } from '../../types/links';
+import { type TraceSpan } from '../../types/trace';
 
 export type ProfilesButtonContext = {
   serviceName: string;

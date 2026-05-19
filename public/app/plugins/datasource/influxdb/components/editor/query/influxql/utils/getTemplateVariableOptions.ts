@@ -1,4 +1,4 @@
-import { TypedVariableModel } from '@grafana/data';
+import { type TypedVariableModel } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
 export function getTemplateVariableOptions(wrapper: (v: TypedVariableModel) => string) {

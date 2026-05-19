@@ -67,23 +67,11 @@ An alert rule is a set of evaluation criteria for when an alert rule should fire
 1. An interval that specifies the frequency of [alert rule evaluation](ref:alert-rule-evaluation) and a duration indicating how long the condition must be met to trigger the alert instance.
 1. Other customizable options, including expressions, labels, annotations, error and no data handling, notification routing, and more.
 
-## Alert rule types
+## About Grafana-managed alert rules
 
-Grafana Alerting inherits the Prometheus Alerting model for defining alert rules and supports two alert rule types:
+Grafana-managed alert rules can query a wide range of backend data sources, including multiple data sources in a single alert rule. They support expression-based transformations, advanced alert conditions, images in notifications, handling of error and no data states, and [more](ref:comparison-ds-grafana-rules).
 
-- **Data source-managed alert rules**
-
-  These alert rules can only query Prometheus-based data sources such as Mimir, Loki, and Prometheus. The rules are stored in the data source.
-
-  Grafana Alerting supports this alert rule type for horizontal scalability with these data sources.
-
-- **Grafana-managed alert rules**
-
-  The recommended alert rule type in Grafana Alerting.
-
-  These alert rules can query a wider range of backend data sources, including multiple data sources in a single alert rule. They support expression-based transformations, advanced alert conditions, images in notifications, handling of error and no data states, and [more](ref:comparison-ds-grafana-rules).
-
-  You can find the supported public data sources in the [Grafana Plugins directory](/grafana/plugins/data-source-plugins/?features=alerting). For step-by-step instructions, see [Configure Grafana-managed alert rules](ref:configure-grafana-alerts).
+You can find the supported public data sources in the [Grafana Plugins directory](/grafana/plugins/data-source-plugins/?features=alerting). For step-by-step instructions, see [Configure Grafana-managed alert rules](ref:configure-grafana-alerts).
 
 ## Recording rules
 

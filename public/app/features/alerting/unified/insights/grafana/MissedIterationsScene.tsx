@@ -1,5 +1,5 @@
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes';
-import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
+import { type DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
 
 import { INSTANCE_ID, PANEL_STYLES } from '../../home/Insights';
 import { InsightsMenuButton } from '../InsightsMenuButton';

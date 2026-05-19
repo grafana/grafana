@@ -1,25 +1,32 @@
 import { css } from '@emotion/css';
 import { capitalize } from 'lodash';
 
-import { DataQueryRequest, dateMath, getDefaultTimeRange, GrafanaTheme2, rangeUtil, TimeRange } from '@grafana/data';
+import {
+  type DataQueryRequest,
+  dateMath,
+  getDefaultTimeRange,
+  type GrafanaTheme2,
+  rangeUtil,
+  type TimeRange,
+} from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
-  ExtraQueryDescriptor,
-  SceneComponentProps,
-  SceneDataQuery,
+  type ExtraQueryDescriptor,
+  type SceneComponentProps,
+  type SceneDataQuery,
   sceneGraph,
-  SceneTimeRangeLike,
-  SceneTimeRangeState,
+  type SceneTimeRangeLike,
+  type SceneTimeRangeState,
   SceneTimeRangeTransformerBase,
   VariableDependencyConfig,
   VizPanel,
 } from '@grafana/scenes';
 import { Icon, PanelChrome, Stack, TimePickerTooltip, Tooltip, useStyles2 } from '@grafana/ui';
-import { TimeOverrideResult } from 'app/features/dashboard/utils/panel';
+import { type TimeOverrideResult } from 'app/features/dashboard/utils/panel';
 
 import { getDashboardSceneFor } from '../../utils/utils';
 
-import { DEFAULT_COMPARE_OPTIONS, PanelTimeRangeDrawer, PanelTimeRangeZoomBehavior } from './PanelTimeRangeDrawer';
+import { DEFAULT_COMPARE_OPTIONS, PanelTimeRangeDrawer, type PanelTimeRangeZoomBehavior } from './PanelTimeRangeDrawer';
 import { getCompareTimeRange, timeShiftAlignmentProcessor } from './utils';
 
 export interface PanelTimeRangeState extends SceneTimeRangeState {

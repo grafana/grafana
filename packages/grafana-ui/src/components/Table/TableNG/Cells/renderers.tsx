@@ -1,10 +1,15 @@
 import { clsx } from 'clsx';
-import { memo, MemoExoticComponent, NamedExoticComponent } from 'react';
+import { memo, type MemoExoticComponent, type NamedExoticComponent } from 'react';
 
-import { Field, FieldType, GrafanaTheme2, isDataFrame, isTimeSeriesFrame } from '@grafana/data';
+import { type Field, FieldType, type GrafanaTheme2, isDataFrame, isTimeSeriesFrame } from '@grafana/data';
 
-import { TableCellDisplayMode, TableCellOptions, TableCustomCellOptions } from '../../types';
-import { TableCellRenderer, TableCellRendererProps, TableCellStyleOptions, TableCellStyles } from '../types';
+import { TableCellDisplayMode, type TableCellOptions, type TableCustomCellOptions } from '../../types';
+import {
+  type TableCellRenderer,
+  type TableCellRendererProps,
+  type TableCellStyleOptions,
+  type TableCellStyles,
+} from '../types';
 import { getCellOptions } from '../utils';
 
 import { ActionsCell, getStyles as getActionsCellStyles } from './ActionsCell';

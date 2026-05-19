@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { PluginSignatureStatus, PluginSignatureType, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { CatalogPlugin } from '../types';
+import { type CatalogPlugin } from '../types';
 
 import { PluginList } from './PluginList';
 
@@ -24,7 +24,6 @@ const mockPlugin: CatalogPlugin = {
   isInstalled: true,
   isDisabled: false,
   isDeprecated: false,
-  isManaged: false,
   isPreinstalled: { found: false, withVersion: false },
   isPublished: true,
   name: 'Test Plugin',
@@ -40,6 +39,10 @@ const mockPlugin: CatalogPlugin = {
   angularDetected: false,
   isFullyInstalled: true,
   accessControl: {},
+  managed: {
+    enabled: false,
+    strategy: undefined,
+  },
 };
 
 const mockPlugin2: CatalogPlugin = {

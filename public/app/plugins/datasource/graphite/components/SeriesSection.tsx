@@ -1,6 +1,6 @@
 import { SegmentSection } from '@grafana/ui';
 
-import { GraphiteQueryEditorState } from '../state/store';
+import { type GraphiteQueryEditorState } from '../state/store';
 
 import { MetricsSection } from './MetricsSection';
 import { TagsSection } from './TagsSection';

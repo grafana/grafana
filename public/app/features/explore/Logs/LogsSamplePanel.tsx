@@ -1,22 +1,23 @@
 import { css } from '@emotion/css';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useRef, type JSX } from 'react';
 
 import {
   CoreApp,
-  DataQueryResponse,
-  DataSourceApi,
-  GrafanaTheme2,
+  type DataQueryResponse,
+  type DataSourceApi,
+  type GrafanaTheme2,
   hasSupplementaryQuerySupport,
   LoadingState,
   LogsDedupStrategy,
-  SplitOpen,
+  type SplitOpen,
   store,
   SupplementaryQueryType,
-  TimeRange,
+  type TimeRange,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, reportInteraction } from '@grafana/runtime';
-import { DataQuery, LogsSortOrder, TimeZone } from '@grafana/schema';
+import { reportInteraction } from '@grafana/runtime';
+import { type DataQuery, LogsSortOrder, type TimeZone } from '@grafana/schema';
 import { Button, Collapse, Icon, Tooltip, useStyles2 } from '@grafana/ui';
 import { LogList } from 'app/features/logs/components/panel/LogList';
 
@@ -39,8 +40,9 @@ type Props = {
 
 export function LogsSamplePanel(props: Props) {
   const { queryResponse, timeZone, enabled, setLogsSampleEnabled, datasourceInstance, queries, splitOpen } = props;
+  const newLogsPanelEnabled = useBooleanFlagValue('newLogsPanel', true);
 
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2(getStyles, newLogsPanelEnabled);
 
   const logsContainerRef = useRef<HTMLDivElement | null>(null);
 
@@ -111,7 +113,7 @@ export function LogsSamplePanel(props: Props) {
   } else {
     const logs = dataFrameToLogsModel(queryResponse.data);
     LogsSamplePanelContent =
-      config.featureToggles.newLogsPanel && logsContainerRef.current ? (
+      newLogsPanelEnabled && logsContainerRef.current ? (
         <LogList
           app={CoreApp.Explore}
           containerElement={logsContainerRef.current}
@@ -166,7 +168,7 @@ export function LogsSamplePanel(props: Props) {
   ) : null;
 }
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, newLogsPanelEnabled: boolean) => {
   return {
     logSamplesButton: css({
       position: 'absolute',
@@ -174,7 +176,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       right: theme.spacing(1),
     }),
     logContainer: css({
-      overflow: config.featureToggles.newLogsPanel ? 'visible' : 'scroll',
+      overflow: newLogsPanelEnabled ? 'visible' : 'scroll',
     }),
     infoTooltip: css({
       marginLeft: theme.spacing(1),

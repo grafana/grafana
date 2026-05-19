@@ -71,6 +71,10 @@ export const trackExploreClicked = (props: DataSourceGeneralTrackingProps) => {
   reportInteraction('grafana_ds_explore_datasource_clicked', props);
 };
 
+export const trackBuildDashboardDropdownClicked = (props: DataSourceGeneralTrackingProps) => {
+  reportInteraction('grafana_ds_build_dashboard_dropdown_clicked', props);
+};
+
 export const trackCreateDashboardClicked = (props: DataSourceGeneralTrackingProps) => {
   reportInteraction('grafana_ds_create_dashboard_clicked', props);
 };

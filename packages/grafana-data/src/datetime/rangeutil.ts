@@ -1,13 +1,22 @@
-import { formatDateRange, t } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 
-import { RawTimeRange, TimeRange, TimeZone, IntervalValues, RelativeTimeRange, TimeOption } from '../types/time';
-import { getFeatureToggle } from '../utils/featureToggles';
+import {
+  type RawTimeRange,
+  type TimeRange,
+  type TimeZone,
+  type IntervalValues,
+  type RelativeTimeRange,
+  type TimeOption,
+} from '../types/time';
 
 import * as dateMath from './datemath';
-import { timeZoneAbbrevation, dateTimeFormat, dateTimeFormatTimeAgo, toIANATimezone } from './formatter';
-import { isDateTime, DateTime, dateTime } from './moment_wrapper';
+import { timeZoneAbbrevation, dateTimeFormat, dateTimeFormatTimeAgo } from './formatter';
+import { isDateTime, type DateTime, dateTime } from './moment_wrapper';
 import { dateTimeParse } from './parser';
 
+// `fQ` and `fy` are synthesized lookup keys matching the regex group `f[Qy]`
+// in `describeTextRange`; `datemath.parse` itself recognizes the base unit
+// (`Q` / `y`) with a separate fiscal flag, so these keys are local to display.
 const spans: { [key: string]: { display: string; section?: number } } = {
   s: { display: 'second' },
   m: { display: 'minute' },
@@ -15,7 +24,10 @@ const spans: { [key: string]: { display: string; section?: number } } = {
   d: { display: 'day' },
   w: { display: 'week' },
   M: { display: 'month' },
+  Q: { display: 'quarter' },
   y: { display: 'year' },
+  fQ: { display: 'fiscal quarter' },
+  fy: { display: 'fiscal year' },
 };
 
 const getLastNMinutesDisplay = (count: number) => {
@@ -389,7 +401,7 @@ export function describeTextRange(expr: string): TimeOption {
     opt = { from: 'now', to: expr, display: '' };
   }
 
-  const parts = /^now([-+])(\d+)(\w)/.exec(expr);
+  const parts = /^now([-+])(\d+)(f[Qy]|[yMwdhmsQ])/.exec(expr);
   if (parts) {
     const unit = parts[3];
     const amount = parseInt(parts[2], 10);
@@ -409,17 +421,6 @@ export function describeTextRange(expr: string): TimeOption {
 
   return opt;
 }
-
-// TODO: Should we keep these format presets somewhere common?
-const rangeFormatShort: Intl.DateTimeFormatOptions = {
-  dateStyle: 'short',
-  timeStyle: 'short',
-};
-
-const rangeFormatFull: Intl.DateTimeFormatOptions = {
-  dateStyle: 'short',
-  timeStyle: 'medium',
-};
 
 /**
  * Use this function to get a properly formatted string representation of a {@link @grafana/data:RawTimeRange | range}.
@@ -441,21 +442,7 @@ export function describeTimeRange(range: RawTimeRange, timeZone?: TimeZone, quic
   const options = { timeZone };
 
   if (isDateTime(range.from) && isDateTime(range.to)) {
-    const fromDate = range.from.toDate();
-    const toDate = range.to.toDate();
-
-    if (!getFeatureToggle('localeFormatPreference')) {
-      return dateTimeFormat(range.from, options) + ' to ' + dateTimeFormat(range.to, options);
-    }
-
-    const hasSeconds = fromDate.getSeconds() !== 0 || toDate.getSeconds() !== 0;
-    const intlFormat = hasSeconds ? rangeFormatFull : rangeFormatShort;
-    const intlFormatOptions = {
-      ...intlFormat,
-      timeZone: timeZone ? toIANATimezone(timeZone) : undefined,
-    };
-
-    return formatDateRange(fromDate, toDate, intlFormatOptions);
+    return dateTimeFormat(range.from, options) + ' to ' + dateTimeFormat(range.to, options);
   }
 
   // TODO: We could update these to all use Intl APIs.

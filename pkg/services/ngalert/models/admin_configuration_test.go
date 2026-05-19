@@ -42,7 +42,7 @@ func TestStringToAlertmanagersChoice(t *testing.T) {
 			"invalid string",
 			"invalid",
 			0,
-			errors.New("invalid alertmanager choice"),
+			errors.New("invalid alertmanager choice: \"invalid\""),
 		},
 	}
 

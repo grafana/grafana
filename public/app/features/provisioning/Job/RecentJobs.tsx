@@ -1,10 +1,10 @@
 import { useMemo, useRef } from 'react';
 
-import { intervalToAbbreviatedDurationString, TraceKeyValuePair } from '@grafana/data';
+import { intervalToAbbreviatedDurationString, type TraceKeyValuePair } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Badge, Box, Card, InteractiveTable, Spinner, Stack, Text } from '@grafana/ui';
 import { getErrorMessage } from 'app/api/clients/provisioning/utils/httpUtils';
-import { Job, Repository } from 'app/api/clients/provisioning/v0alpha1';
+import { type Job, type Repository } from 'app/api/clients/provisioning/v0alpha1';
 import KeyValuesTable from 'app/features/explore/TraceView/components/TraceTimelineViewer/SpanDetail/KeyValuesTable';
 
 import { ProvisioningAlert } from '../Shared/ProvisioningAlert';
@@ -92,11 +92,21 @@ function ExpandedRow({ row }: ExpandedRowProps) {
   // the action is already showing
   const data = useMemo(() => {
     const v: TraceKeyValuePair[] = [];
-    const action = row.spec?.action;
-    if (!action) {
+    const spec = row.spec;
+    const action = spec?.action;
+    if (!action || !spec) {
       return v;
     }
-    const def = row.spec?.[action];
+    const actionOptions: Record<string, object | undefined> = {
+      delete: spec.delete,
+      fixFolderMetadata: spec.fixFolderMetadata,
+      migrate: spec.migrate,
+      move: spec.move,
+      pr: spec.pr,
+      pull: spec.pull,
+      push: spec.push,
+    };
+    const def = actionOptions[action];
     if (!def) {
       return v;
     }

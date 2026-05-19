@@ -1,16 +1,16 @@
-import { AppEvents, UrlQueryMap } from '@grafana/data';
+import { AppEvents, type UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { FetchError, getBackendSrv } from '@grafana/runtime';
-import { Dashboard } from '@grafana/schema';
+import { type FetchError, getBackendSrv } from '@grafana/runtime';
+import { type Dashboard } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
-import { Resource, ResourceList } from 'app/features/apiserver/types';
+import { type Resource, type ResourceList } from 'app/features/apiserver/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
-import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
-import { SaveDashboardResponseDTO, DashboardDTO } from 'app/types/dashboard';
+import { type DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
+import { type SaveDashboardResponseDTO, type DashboardDTO } from 'app/types/dashboard';
 
-import { SaveDashboardCommand } from '../components/SaveDashboard/types';
+import { type SaveDashboardCommand } from '../components/SaveDashboard/types';
 
-import { DashboardAPI, ListDashboardHistoryOptions, ListDeletedDashboardsOptions } from './types';
+import { type DashboardAPI, type ListDashboardHistoryOptions, type ListDeletedDashboardsOptions } from './types';
 
 interface HistoryResult {
   continueToken?: string;

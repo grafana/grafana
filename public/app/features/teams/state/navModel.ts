@@ -1,4 +1,4 @@
-import { NavModelItem, NavModel } from '@grafana/data';
+import { type NavModelItem, type NavModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { featureEnabled } from '@grafana/runtime';
 import { ProBadge } from 'app/core/components/Upgrade/ProBadge';
@@ -7,7 +7,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { highlightTrial } from 'app/features/admin/utils';
 import { AccessControlAction } from 'app/types/accessControl';
 import { TeamPermissionLevel } from 'app/types/acl';
-import { Team } from 'app/types/teams';
+import { type Team } from 'app/types/teams';
 import userProfilePng from 'img/user_profile.png';
 
 const loadingTeam = {

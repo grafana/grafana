@@ -1,14 +1,14 @@
 import { css, cx } from '@emotion/css';
 import { forwardRef } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { Icon } from '../Icon/Icon';
 
 import { Counter } from './Counter';
-import { TabProps } from './Tab';
+import { type TabProps } from './Tab';
 
 export const VerticalTab = forwardRef<HTMLAnchorElement, TabProps>(
   ({ label, active, icon, counter, className, suffix: Suffix, onChangeTab, href, ...otherProps }, ref) => {

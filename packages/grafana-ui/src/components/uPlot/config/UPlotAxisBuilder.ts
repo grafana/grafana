@@ -1,14 +1,14 @@
-import uPlot, { Axis } from 'uplot';
+import { type default as uPlot, type Axis } from 'uplot';
 
 import {
   dateTimeFormat,
-  DecimalCount,
-  GrafanaTheme2,
+  type DecimalCount,
+  type GrafanaTheme2,
   guessDecimals,
   isBooleanUnit,
   roundDecimals,
   systemDateFormats,
-  TimeZone,
+  type TimeZone,
 } from '@grafana/data';
 import { AxisPlacement, ScaleDistribution } from '@grafana/schema';
 

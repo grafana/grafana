@@ -5,7 +5,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { createLokiDatasource } from '../../mocks/datasource';
 
 import MonacoQueryField from './MonacoQueryField';
-import { Props } from './MonacoQueryFieldProps';
+import { type Props } from './MonacoQueryFieldProps';
 
 function renderComponent({
   initialValue = '',

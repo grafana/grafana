@@ -23,6 +23,10 @@ Grafana supports user authentication through Okta, which is useful when you want
 
 ## Set up SAML with Okta
 
+{{< admonition type="caution" >}}
+These steps are for assistance only, refer to the [official Okta documentation](https://help.okta.com/) for the up-to-date instructions.
+{{< /admonition >}}
+
 1. Log in to the [Okta portal](https://login.okta.com/).
 1. Go to the Admin Console in your Okta organization by clicking **Admin** in the upper-right corner. If you are in the Developer Console, then click **Developer Console** in the upper-left corner and then click **Classic UI** to switch over to the Admin Console.
 1. In the Admin Console, navigate to **Applications** > **Applications**.

@@ -1,7 +1,7 @@
 import { ToolbarButtonRow } from '@grafana/ui';
 
 import { dynamicDashNavActions } from '../../utils/registerDynamicDashNavAction';
-import { DashboardScene } from '../DashboardScene';
+import { type DashboardScene } from '../DashboardScene';
 import { ManagedDashboardNavBarBadge } from '../ManagedDashboardNavBarBadge';
 
 import { OpenSnapshotOriginButton } from './actions/OpenSnapshotOriginButton';

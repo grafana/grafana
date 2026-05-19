@@ -5,7 +5,7 @@ import { lastValueFrom, of } from 'rxjs';
 
 import {
   VariableSupportType,
-  PanelData,
+  type PanelData,
   LoadingState,
   toDataFrame,
   getDefaultTimeRange,

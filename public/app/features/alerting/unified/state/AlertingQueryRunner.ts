@@ -1,13 +1,13 @@
 import { reject } from 'lodash';
-import { Observable, OperatorFunction, ReplaySubject, Unsubscribable, of } from 'rxjs';
+import { type Observable, type OperatorFunction, ReplaySubject, type Unsubscribable, of } from 'rxjs';
 import { catchError, map, share } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
 
 import {
-  DataFrameJSON,
+  type DataFrameJSON,
   LoadingState,
-  PanelData,
-  TimeRange,
+  type PanelData,
+  type TimeRange,
   dataFrameFromJSON,
   getDefaultTimeRange,
   preProcessPanelData,
@@ -15,14 +15,14 @@ import {
   withLoadingIndicator,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { DataSourceWithBackend, FetchResponse, getDataSourceSrv, toDataQueryError } from '@grafana/runtime';
-import { BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
+import { DataSourceWithBackend, type FetchResponse, getDataSourceSrv, toDataQueryError } from '@grafana/runtime';
+import { type BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { cancelNetworkRequestsOnUnsubscribe } from 'app/features/query/state/processing/canceler';
 import { setStructureRevision } from 'app/features/query/state/processing/revision';
-import { AlertQuery } from 'app/types/unified-alerting-dto';
+import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { LinkError, createDAGFromQueriesSafe, getDescendants } from '../components/rule-editor/dag';
+import { type LinkError, createDAGFromQueriesSafe, getDescendants } from '../components/rule-editor/dag';
 import { getTimeRangeForExpression } from '../utils/timeRange';
 
 export interface AlertingQueryResult {

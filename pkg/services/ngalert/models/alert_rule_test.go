@@ -4,8 +4,10 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"math/rand"
 	"reflect"
+	"slices"
 	"sort"
 	"strings"
 	"testing"
@@ -17,7 +19,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.yaml.in/yaml/v3"
-	"golang.org/x/exp/maps"
 
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -1099,7 +1100,7 @@ func TestGeneratorFillsAllFields(t *testing.T) {
 		for j := 0; j < tpe.NumField(); j++ {
 			field := tpe.Field(j)
 			value := v.Field(j)
-			if !value.IsValid() || value.Kind() == reflect.Ptr && value.IsNil() || value.IsZero() {
+			if !value.IsValid() || value.Kind() == reflect.Pointer && value.IsNil() || value.IsZero() {
 				continue
 			}
 			delete(fields, field.Name)
@@ -1109,7 +1110,7 @@ func TestGeneratorFillsAllFields(t *testing.T) {
 		}
 	}
 
-	require.FailNow(t, "AlertRule generator does not populate fields", "skipped fields: %v", maps.Keys(fields))
+	require.FailNow(t, "AlertRule generator does not populate fields", "skipped fields: %v", slices.Collect(maps.Keys(fields)))
 }
 
 func TestGeneratorFillsAllRecordingRuleFields(t *testing.T) {
@@ -1142,7 +1143,7 @@ func TestGeneratorFillsAllRecordingRuleFields(t *testing.T) {
 		for j := 0; j < tpe.NumField(); j++ {
 			field := tpe.Field(j)
 			value := v.Field(j)
-			if !value.IsValid() || value.Kind() == reflect.Ptr && value.IsNil() || value.IsZero() {
+			if !value.IsValid() || value.Kind() == reflect.Pointer && value.IsNil() || value.IsZero() {
 				continue
 			}
 			delete(fields, field.Name)
@@ -1152,7 +1153,7 @@ func TestGeneratorFillsAllRecordingRuleFields(t *testing.T) {
 		}
 	}
 
-	require.FailNow(t, "AlertRule generator does not populate fields", "skipped fields: %v", maps.Keys(fields))
+	require.FailNow(t, "AlertRule generator does not populate fields", "skipped fields: %v", slices.Collect(maps.Keys(fields)))
 }
 
 func TestValidateAlertRule(t *testing.T) {
@@ -1210,17 +1211,17 @@ func TestValidateAlertRule(t *testing.T) {
 			},
 			{
 				name:                        "should reject negative value",
-				missingSeriesEvalsToResolve: util.Pointer[int64](-1),
+				missingSeriesEvalsToResolve: new(int64(-1)),
 				expectedErrorContains:       "field `missing_series_evals_to_resolve` must be greater than 0",
 			},
 			{
 				name:                        "should reject 0",
-				missingSeriesEvalsToResolve: util.Pointer[int64](0),
+				missingSeriesEvalsToResolve: new(int64(0)),
 				expectedErrorContains:       "field `missing_series_evals_to_resolve` must be greater than 0",
 			},
 			{
 				name:                        "should accept positive value",
-				missingSeriesEvalsToResolve: util.Pointer[int64](2),
+				missingSeriesEvalsToResolve: new(int64(2)),
 			},
 		}
 

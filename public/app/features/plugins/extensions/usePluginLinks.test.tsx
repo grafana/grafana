@@ -1,7 +1,13 @@
 import { act, renderHook } from '@testing-library/react';
 import type { JSX } from 'react';
 
-import { AppPluginConfig, PluginContextProvider, PluginExtensionPoints, PluginMeta, PluginType } from '@grafana/data';
+import {
+  type AppPluginConfig,
+  PluginContextProvider,
+  PluginExtensionPoints,
+  type PluginMeta,
+  PluginType,
+} from '@grafana/data';
 
 import { ExtensionRegistriesProvider } from './ExtensionRegistriesContext';
 import * as errors from './errors';
@@ -11,7 +17,7 @@ import { AddedComponentsRegistry } from './registry/AddedComponentsRegistry';
 import { AddedFunctionsRegistry } from './registry/AddedFunctionsRegistry';
 import { AddedLinksRegistry } from './registry/AddedLinksRegistry';
 import { ExposedComponentsRegistry } from './registry/ExposedComponentsRegistry';
-import { PluginExtensionRegistries } from './registry/types';
+import { type PluginExtensionRegistries } from './registry/types';
 import { basicApp } from './test-fixtures/config.apps';
 import { useLoadAppPlugins } from './useLoadAppPlugins';
 import { usePluginLinks } from './usePluginLinks';

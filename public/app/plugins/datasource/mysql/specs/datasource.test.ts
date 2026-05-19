@@ -3,15 +3,15 @@ import { of } from 'rxjs';
 import {
   dataFrameToJSON,
   getDefaultTimeRange,
-  DataSourceInstanceSettings,
+  type DataSourceInstanceSettings,
   FieldType,
   createDataFrame,
 } from '@grafana/data';
-import { FetchResponse } from '@grafana/runtime';
-import { SQLQuery, makeVariable } from '@grafana/sql';
+import { type FetchResponse } from '@grafana/runtime';
+import { type SQLQuery, makeVariable } from '@grafana/sql';
 
 import { MySqlDatasource } from '../MySqlDatasource';
-import { MySQLOptions } from '../types';
+import { type MySQLOptions } from '../types';
 
 const fetchMock = jest.fn();
 jest.mock('@grafana/runtime', () => ({

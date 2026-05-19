@@ -1,13 +1,13 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { act, renderHook } from '@testing-library/react';
-import React, { ReactNode } from 'react';
+import React, { type ReactNode } from 'react';
 import { Provider } from 'react-redux';
 
-import { TraceSearchProps } from '@grafana/data';
+import { type TraceSearchProps } from '@grafana/data';
 
 import { DEFAULT_SPAN_FILTERS, randomId } from '../state/constants';
 
-import { TraceSpan } from './components/types/trace';
+import { type TraceSpan } from './components/types/trace';
 import { useSearch } from './useSearch';
 
 // Create a mock store with the necessary structure

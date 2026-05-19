@@ -11,13 +11,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -52,10 +50,8 @@ func TestSetDefaultPermissionsWhenCreatingFolder(t *testing.T) {
 
 			fs := folderStorage{
 				folderPermissionsSvc: folderPermService,
-				acService:            actest.FakeService{},
 				store:                store,
 				permissionsOnCreate:  cfg.RBAC.PermissionsOnCreation("folder"),
-				features:             featuremgmt.WithFeatures(),
 			}
 			obj := &folders.Folder{}
 

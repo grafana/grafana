@@ -2,13 +2,13 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, ConfirmModal, useStyles2 } from '@grafana/ui';
-import { SkeletonComponent, attachSkeleton } from '@grafana/ui/unstable';
+import { type SkeletonComponent, attachSkeleton } from '@grafana/ui/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
-import { Organization } from 'app/types/organization';
+import { type Organization } from 'app/types/organization';
 
 interface Props {
   orgs: Organization[];
@@ -63,7 +63,6 @@ function AdminOrgsTableComponent({ orgs, onDelete }: Props) {
       {deleteOrg && (
         <ConfirmModal
           isOpen
-          icon="trash-alt"
           title={t('admin.admin-orgs-table.title-delete', 'Delete')}
           body={
             <div>

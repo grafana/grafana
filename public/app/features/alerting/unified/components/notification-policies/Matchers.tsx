@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 import { take, takeRight, uniqueId } from 'lodash';
-import { FC } from 'react';
+import { type FC } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Stack, getTagColorsFromName, useStyles2 } from '@grafana/ui';
-import { ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
+import { type ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
 
-import { MatcherFormatter, matcherFormatter } from '../../utils/matchers';
+import { type MatcherFormatter, matcherFormatter } from '../../utils/matchers';
 import { PopupCard } from '../HoverCard';
 
 type MatchersProps = { matchers: ObjectMatcher[]; formatter?: MatcherFormatter };

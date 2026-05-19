@@ -1,10 +1,10 @@
 import React from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Button, Combobox, ComboboxOption, Label, Select } from '@grafana/ui';
+import { Button, Combobox, type ComboboxOption, Label, Select } from '@grafana/ui';
 
-import { BuilderQueryEditorWhereExpressionItems } from '../../dataquery.gen';
+import { type BuilderQueryEditorWhereExpressionItems } from '../../dataquery.gen';
 
 import { inputFieldSize, toOperatorOptions, valueToDefinition } from './utils';
 

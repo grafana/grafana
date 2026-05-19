@@ -39,7 +39,7 @@ func doSnapshotTests(t *testing.T, builder resource.DocumentBuilder, kind string
 			// nolint:gosec
 			expect, _ := os.ReadFile(outpath)
 			if !assert.JSONEq(t, string(expect), string(out)) {
-				err = os.WriteFile(outpath, out, 0600)
+				err = os.WriteFile(outpath, out, 0600) // #nosec G703 -- test golden-file regeneration on controlled path
 				require.NoError(t, err)
 			}
 		})
@@ -152,6 +152,39 @@ func TestDashboardDocumentBuilder(t *testing.T) {
 	}, []string{
 		"aaa",
 	})
+}
+
+func BenchmarkDashboardBuildDocument(b *testing.B) {
+	key := &resourcepb.ResourceKey{
+		Namespace: "default",
+		Group:     "dashboard.grafana.app",
+		Resource:  "dashboards",
+		Name:      "aaa",
+	}
+
+	info, err := DashboardBuilder(func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
+		return &DashboardDocumentBuilder{
+			Namespace:        namespace,
+			Blob:             blob,
+			DatasourceLookup: dashboard.CreateDatasourceLookup([]*dashboard.DatasourceQueryResult{{}}),
+		}, nil
+	})
+	require.NoError(b, err)
+
+	builder, err := info.Namespaced(context.Background(), key.Namespace, nil)
+	require.NoError(b, err)
+
+	data, err := os.ReadFile(filepath.Join("testdata", "doc", "dashboard-aaa.json"))
+	require.NoError(b, err)
+
+	b.ResetTimer()
+	b.ReportAllocs()
+	for b.Loop() {
+		_, err := builder.BuildDocument(context.Background(), key, 1234, data)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
 }
 
 func TestBuildSelectableFields(t *testing.T) {

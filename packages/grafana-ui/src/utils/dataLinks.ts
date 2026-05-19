@@ -1,6 +1,6 @@
-import { LinkModel } from '@grafana/data';
+import { type LinkModel } from '@grafana/data';
 
-import { MenuItemProps } from '../components/Menu/MenuItem';
+import { type MenuItemProps } from '../components/Menu/MenuItem';
 
 /**
  * Delays creating links until we need to open the ContextMenu

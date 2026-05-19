@@ -1,8 +1,8 @@
-import { ReactElement } from 'react';
+import { type ReactElement } from 'react';
 import * as React from 'react';
 
 import { usePluginBridge } from '../hooks/usePluginBridge';
-import { SupportedPlugin } from '../types/pluginBridges';
+import { type SupportedPlugin } from '../types/pluginBridges';
 
 export type PluginID = SupportedPlugin | string;
 

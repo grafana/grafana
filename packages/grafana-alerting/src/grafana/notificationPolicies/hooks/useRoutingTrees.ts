@@ -1,8 +1,8 @@
-import { type TypedUseQueryHookResult, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { type TypedUseQueryHookResult, type fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
 import {
-  ListRoutingTreeApiArg,
-  ListRoutingTreeApiResponse,
+  type ListRoutingTreeApiArg,
+  type ListRoutingTreeApiResponse,
   generatedAPI as notificationsAPIv0alpha1,
 } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 

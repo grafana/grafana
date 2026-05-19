@@ -1,8 +1,7 @@
 import { screen } from '@testing-library/react';
 import { render, testWithFeatureToggles } from 'test/test-utils';
 
-import { AssistantHook, useAssistant } from '@grafana/assistant';
-import { selectors } from '@grafana/e2e-selectors';
+import { type AssistantHook, useAssistant } from '@grafana/assistant';
 
 import { DashboardCard } from './DashboardCard';
 import { createMockGnetDashboard, createMockPluginDashboard } from './utils/test-utils';
@@ -44,9 +43,7 @@ describe('DashboardCard', () => {
       <DashboardCard title="My Dashboard" dashboard={dashboard} onClick={mockOnClick} kind="suggested_dashboard" />
     );
 
-    const cardHeading = screen.getByTestId(selectors.components.Card.heading);
-    expect(cardHeading).toBeInTheDocument();
-    expect(cardHeading).toHaveTextContent('My Dashboard');
+    expect(screen.getByRole('heading', { name: 'My Dashboard' })).toBeInTheDocument();
   });
 
   it('should render image when imageUrl is provided', () => {
@@ -85,16 +82,14 @@ describe('DashboardCard', () => {
     expect(screen.getByText('My custom description')).toBeInTheDocument();
   });
 
-  it('should not render description when empty', () => {
+  it('should render fallback text when description is empty', () => {
     const dashboard = createMockPluginDashboard({ description: '' });
     render(
       <DashboardCard title="Test Dashboard" dashboard={dashboard} onClick={mockOnClick} kind="suggested_dashboard" />
     );
 
-    const cardHeading = screen.getByTestId(selectors.components.Card.heading);
-    expect(cardHeading).toBeInTheDocument();
-    expect(cardHeading).toHaveTextContent('Test Dashboard');
-    expect(screen.queryByTestId('dashboard-card-description')).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Test Dashboard' })).toBeInTheDocument();
+    expect(screen.getByTestId('dashboard-card-description')).toHaveTextContent('No description available');
   });
 
   describe('Button interactions', () => {
@@ -108,7 +103,7 @@ describe('DashboardCard', () => {
         />
       );
 
-      await user.click(screen.getByRole('button', { name: 'Use dashboard' }));
+      await user.click(screen.getByRole('button', { name: 'View dashboard: Test Dashboard' }));
 
       expect(mockOnClick).toHaveBeenCalledTimes(1);
     });
@@ -123,8 +118,8 @@ describe('DashboardCard', () => {
         />
       );
 
-      expect(screen.getByRole('button', { name: 'View template' })).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'Use dashboard' })).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'View template: Test Dashboard' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'View dashboard: Test Dashboard' })).not.toBeInTheDocument();
     });
 
     it('should display dashboard button text', () => {
@@ -137,8 +132,8 @@ describe('DashboardCard', () => {
         />
       );
 
-      expect(screen.getByRole('button', { name: 'Use dashboard' })).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'View template' })).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'View dashboard: Test Dashboard' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'View template: Test Dashboard' })).not.toBeInTheDocument();
     });
   });
 
@@ -182,6 +177,34 @@ describe('DashboardCard', () => {
       );
 
       expect(screen.queryByText('Data source provided')).not.toBeInTheDocument();
+    });
+
+    it('should show community badge when showCommunityBadge is true', () => {
+      render(
+        <DashboardCard
+          title="Test Dashboard"
+          dashboard={createMockGnetDashboard()}
+          onClick={mockOnClick}
+          showCommunityBadge={true}
+          kind="suggested_dashboard"
+        />
+      );
+
+      expect(screen.getByText('Community')).toBeInTheDocument();
+    });
+
+    it('should not show community badge when showCommunityBadge is false', () => {
+      render(
+        <DashboardCard
+          title="Test Dashboard"
+          dashboard={createMockGnetDashboard()}
+          onClick={mockOnClick}
+          showCommunityBadge={false}
+          kind="suggested_dashboard"
+        />
+      );
+
+      expect(screen.queryByText('Community')).not.toBeInTheDocument();
     });
   });
 
@@ -331,9 +354,7 @@ describe('DashboardCard', () => {
         />
       );
 
-      const cardHeading = screen.getByTestId(selectors.components.Card.heading);
-      expect(cardHeading).toBeInTheDocument();
-      expect(cardHeading).toHaveTextContent('Community Dashboard');
+      expect(screen.getByRole('heading', { name: 'Community Dashboard' })).toBeInTheDocument();
     });
   });
 
@@ -476,7 +497,7 @@ describe('DashboardCard', () => {
       // With dashboardValidatorApp enabled, details button moves into the title row
       const buttons = screen.getAllByRole('button');
       expect(buttons[0]).toHaveAttribute('aria-label', 'Details');
-      expect(buttons[1]).toHaveTextContent('Use dashboard');
+      expect(buttons[1]).toHaveTextContent('View dashboard');
       expect(buttons[2]).toHaveTextContent('Check compatibility');
     });
   });

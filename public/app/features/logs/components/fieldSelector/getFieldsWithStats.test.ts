@@ -52,6 +52,33 @@ describe('getFieldsWithStats', () => {
     expect(fieldNames).toContain('hostname');
   });
 
+  it('should not include labels extracted as fields', () => {
+    const frame = createDataFrame({
+      fields: [
+        { name: 'timestamp', type: FieldType.time, values: [1000, 2000, 3000] },
+        { name: 'body', type: FieldType.string, values: ['a', 'b', 'c'] },
+        { name: 'severity', type: FieldType.string, values: ['info', 'warn', 'error'] },
+        {
+          name: 'labels',
+          type: FieldType.other,
+          values: [{ label1: 'value1' }, { label2: 'value2' }, { label3: 'value3' }],
+        },
+        { name: 'label1', type: FieldType.string, values: ['value1', undefined, undefined] },
+        { name: 'label2', type: FieldType.string, values: [undefined, 'value2', undefined] },
+        { name: 'label3', type: FieldType.string, values: [undefined, undefined, 'value3'] },
+      ],
+    });
+
+    const result = getFieldsWithStats([frame]);
+
+    expect(result).toEqual([
+      { name: 'label1', stats: { percentOfLinesWithLabel: 34 } },
+      { name: 'label2', stats: { percentOfLinesWithLabel: 34 } },
+      { name: 'label3', stats: { percentOfLinesWithLabel: 34 } },
+      { name: 'severity', stats: { percentOfLinesWithLabel: 100 } },
+    ]);
+  });
+
   it('should accumulate cardinality counts across multiple dataframes', () => {
     const frame1 = createDataFrame({
       fields: [

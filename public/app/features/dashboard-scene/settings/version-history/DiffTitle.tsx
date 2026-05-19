@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Icon } from '@grafana/ui';
 
 import { DiffValues } from './DiffValues';
-import { Diff, getDiffText } from './utils';
+import { type Diff, getDiffText } from './utils';
 
 type DiffTitleProps = {
   diff?: Diff;

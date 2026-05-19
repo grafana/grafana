@@ -6,8 +6,8 @@ import { Modal, ModalTabsHeader, TabContent } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { SharePublicDashboard } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboard';
 import { isPublicDashboardsEnabled } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { isPanelModelLibraryPanel } from 'app/features/library-panels/guard';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -17,7 +17,7 @@ import { ShareExport } from './ShareExport';
 import { ShareLibraryPanel } from './ShareLibraryPanel';
 import { ShareLink } from './ShareLink';
 import { ShareSnapshot } from './ShareSnapshot';
-import { ShareModalTabModel, ShareModalTabProps } from './types';
+import { type ShareModalTabModel, type ShareModalTabProps } from './types';
 import { getTrackingSource, shareDashboardType } from './utils';
 
 const customDashboardTabs: ShareModalTabModel[] = [];
@@ -119,9 +119,7 @@ export function ShareModal({ dashboard, panel, activeTab: initialActiveTab, onDi
   const ActiveTab = activeTabModel.component;
   const modalTitle = panel ? t('share-modal.panel.title', 'Share Panel') : t('share-modal.dashboard.title', 'Share');
 
-  const title = (
-    <ModalTabsHeader title={modalTitle} icon="share-alt" tabs={tabs} activeTab={activeTab} onChangeTab={onSelectTab} />
-  );
+  const title = <ModalTabsHeader title={modalTitle} tabs={tabs} activeTab={activeTab} onChangeTab={onSelectTab} />;
 
   return (
     <Modal ariaLabel={modalTitle} isOpen={true} title={title} onDismiss={onDismiss}>

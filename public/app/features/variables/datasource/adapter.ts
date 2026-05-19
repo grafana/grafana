@@ -1,9 +1,9 @@
 import { cloneDeep } from 'lodash';
 
-import { DataSourceVariableModel } from '@grafana/data';
+import { type DataSourceVariableModel } from '@grafana/data';
 
 import { dispatch } from '../../../store/store';
-import { VariableAdapter } from '../adapters';
+import { type VariableAdapter } from '../adapters';
 import { ALL_VARIABLE_TEXT } from '../constants';
 import { optionPickerFactory } from '../pickers/OptionsPicker/OptionsPicker';
 import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';

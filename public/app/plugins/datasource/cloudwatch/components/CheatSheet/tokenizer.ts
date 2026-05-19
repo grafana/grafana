@@ -1,6 +1,6 @@
 // import { Grammar } from 'prismjs';
 
-import { Grammar } from 'prismjs';
+import { type Grammar } from 'prismjs';
 
 import { FUNCTIONS, KEYWORDS, QUERY_COMMANDS } from '../../language/cloudwatch-logs/syntax';
 import * as sql from '../../language/cloudwatch-logs-sql/language';

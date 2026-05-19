@@ -17,7 +17,7 @@ import userEvent from '@testing-library/user-event';
 
 import { polyfill as polyfillAnimationFrame } from '../../utils/test/requestAnimationFrame';
 
-import ViewingLayer, { ViewingLayerProps } from './ViewingLayer';
+import ViewingLayer, { type ViewingLayerProps } from './ViewingLayer';
 
 function getViewRange(viewStart: number, viewEnd: number) {
   return {

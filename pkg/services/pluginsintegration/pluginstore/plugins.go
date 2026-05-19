@@ -85,7 +85,7 @@ func ToGrafanaDTO(p *plugins.Plugin) Plugin {
 	}
 
 	if p.Parent != nil {
-		dto.Parent = &ParentPlugin{ID: p.Parent.ID}
+		dto.Parent = &ParentPlugin{ID: p.Parent.ID, Version: p.Parent.Info.Version}
 	}
 
 	if len(p.Children) > 0 {
@@ -104,5 +104,6 @@ func ToGrafanaDTO(p *plugins.Plugin) Plugin {
 }
 
 type ParentPlugin struct {
-	ID string
+	ID      string
+	Version string
 }

@@ -2,8 +2,8 @@ import { useMemo } from 'react';
 
 import { t } from '@grafana/i18n';
 
-import { Step } from '../Stepper';
-import { GitHubAppMode, GitHubAuthType, WizardStep } from '../types';
+import { type Step } from '../Stepper';
+import { type GitHubAppMode, type GitHubAuthType, type WizardStep } from '../types';
 
 export interface UseWizardButtonsParams {
   activeStep: WizardStep;

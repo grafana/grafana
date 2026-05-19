@@ -1,4 +1,4 @@
-import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
+import { type PromAlertingRuleState, type PromRuleType } from 'app/types/unified-alerting-dto';
 
 import type { RuleHealth, RuleSource } from '../../search/rulesSearchParser';
 
@@ -15,4 +15,5 @@ export type AdvancedFilters = {
   plugins?: 'show' | 'hide';
   contactPoint?: string | null;
   ruleSource?: RuleSource | null;
+  policy?: string | null;
 };

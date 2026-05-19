@@ -17,39 +17,10 @@ keywords:
 # Grafana Advisor
 
 {{< admonition type="note" >}}
-Grafana Advisor is available in [public preview](https://grafana.com/docs/release-life-cycle/). Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
-
-Currently, Grafana Advisor performs regular checks on data sources, plugins, and your Grafana instance, but we're planning to expand its capabilities in future releases to cover more aspects of your Grafana environment. You can suggest new checks and provide feedback through this [form](https://docs.google.com/forms/d/e/1FAIpQLSf8T-xMZauFXZ1uHw09OjZLT_AaiY-cl-hJGwC6Krkj0ThmZQ/viewform).
+Grafana Advisor performs regular checks on data sources, plugins, and your Grafana instance, but will expand its capabilities in future releases to cover more aspects of your Grafana environment. You can suggest new checks and provide feedback through this [form](https://docs.google.com/forms/d/e/1FAIpQLSf8T-xMZauFXZ1uHw09OjZLT_AaiY-cl-hJGwC6Krkj0ThmZQ/viewform).
 {{< /admonition >}}
 
 Grafana Advisor is a monitoring tool that helps administrators keep their Grafana instances running smoothly and securely. It automatically performs regular health checks on your Grafana server, providing actionable insights and recommendations for maintaining optimal system performance.
-
-{{< youtube id="o84EfY-KP-c" >}}
-
-## Before you begin
-
-To set up Grafana Advisor you need:
-
-- Administration rights in your Grafana organization.
-- If you're running Grafana on-premise, enable the required feature toggle in your Grafana instance. Refer to [Enable required feature toggles](#enable-feature-toggles) for instructions. If you're using Grafana Cloud feature toggles are enabled by default.
-
-### Enable feature toggles
-
-To activate Grafana Advisor, you need to enable the `grafanaAdvisor` feature toggle. This will automatically install the Grafana Advisor application to your server if it's not already installed. For additional information about feature toggles, refer to [Configure feature toggles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/).
-
-To enable the required feature toggles, add them to your Grafana configuration file:
-
-1. Open your Grafana configuration file, either `grafana.ini` or `custom.ini`. For file location based on the operating system, refer to Configuration file location.
-1. Locate or add a `[feature_toggles]` section. Add this value:
-
-   ```ini
-   [feature_toggles]
-   grafanaAdvisor = true
-   ```
-
-1. Save the changes to the file and restart Grafana.
-
-## Access Grafana Advisor
 
 To access Grafana Advisor:
 
@@ -70,7 +41,7 @@ An Advisor report can contain the following tasks and action suggestions:
 
 {{< admonition type="note" >}}
 
-You can configure which checks Advisor will run. See how in [Configure application](#advisor-menu).
+You can configure which checks Advisor will run. Refer to [Configure application](#advisor-menu) for details.
 
 {{< /admonition >}}
 
@@ -119,4 +90,4 @@ To maintain system reliability and keep your Grafana instance secure and up to d
 - **Systematic Review:** After fixing flagged issues, use the "Refresh" button to confirm all checks pass.
 - **Proactive Updates:** Address plugin update recommendations under "Investigation needed" even if they haven't caused failures yet.
 
-You can also set up your own alerts with **Grafana Alerting**, which allows you to monitor your incoming data and set up alerts for specific events or circumstances. You can then create, manage, and take action on your alerts from a single, consolidated view.Refer to the [Grafana Alerting documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/index.md) for more information.
+You can also set up your own alerts with **Grafana Alerting**, which allows you to monitor your incoming data and set up alerts for specific events or circumstances. You can then create, manage, and take action on your alerts from a single, consolidated view. Refer to the [Grafana Alerting documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/) for more information. To learn how to create an alert based on Grafana Advisor results, refer to [Create an alert based on Grafana Advisor results](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/grafana-advisor/advisor-create-alert/).

@@ -1,8 +1,13 @@
 import { css } from '@emotion/css';
-import { Fragment, useMemo } from 'react';
+import { Fragment, type ReactNode, useMemo } from 'react';
 import { useMeasure } from 'react-use';
 
-import { GrafanaTheme2, PanelData, PanelPluginMeta, PanelPluginVisualizationSuggestion } from '@grafana/data';
+import {
+  type GrafanaTheme2,
+  type PanelData,
+  type PanelPluginMeta,
+  type PanelPluginVisualizationSuggestion,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Text, useStyles2 } from '@grafana/ui';
 import { MIN_MULTI_COLUMN_SIZE } from 'app/features/panel/suggestions/constants';
@@ -23,6 +28,7 @@ export interface Props {
   selectedKey?: string;
   minColumnWidth?: number;
   maxCardWidth?: number;
+  getBadge?: (item: PanelPluginVisualizationSuggestion) => ReactNode;
 }
 
 export function VisualizationCardGrid({
@@ -34,6 +40,7 @@ export function VisualizationCardGrid({
   selectedKey,
   minColumnWidth,
   maxCardWidth,
+  getBadge,
 }: Props) {
   const styles = useStyles2(getStyles, minColumnWidth, maxCardWidth);
   const [firstCardRef, { width }] = useMeasure<HTMLDivElement>();
@@ -60,6 +67,7 @@ export function VisualizationCardGrid({
   const renderCard = (item: PanelPluginVisualizationSuggestion, isFirst: boolean) => {
     const itemKey = getItemKey(item);
     const itemIndex = itemIndexMap.get(itemKey) ?? -1;
+    const badge = getBadge?.(item);
 
     return (
       <div
@@ -82,6 +90,7 @@ export function VisualizationCardGrid({
           isSelected={getItemKey(item) === selectedKey}
           onClick={() => onItemClick(item, itemIndex)}
         />
+        {badge}
       </div>
     );
   };

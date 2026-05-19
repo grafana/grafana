@@ -1,9 +1,9 @@
 import { render, screen, waitFor } from '@testing-library/react';
 
-import { DataSourceInstanceSettings, DataSourceSettings } from '@grafana/data';
-import { DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
+import { type DataSourceInstanceSettings, type DataSourceSettings } from '@grafana/data';
+import { type DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 
-import { TraceToProfilesData, TraceToProfilesSettings } from './TraceToProfilesSettings';
+import { type TraceToProfilesData, TraceToProfilesSettings } from './TraceToProfilesSettings';
 
 const defaultOption: DataSourceSettings<TraceToProfilesData> = {
   jsonData: {

@@ -1,6 +1,6 @@
 import { t } from '@grafana/i18n';
 
-import { NotificationsSourceOption, RulesSourceOption, StepKey, WizardStep } from './types';
+import { type NotificationsSourceOption, type RulesSourceOption, StepKey, type WizardStep } from './types';
 
 /**
  * Label name used in X-Grafana-Alerting-Merge-Matchers header.

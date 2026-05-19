@@ -1,4 +1,4 @@
-import { createDataFrame, LogLevel, LogRowModel, LogsSortOrder } from '@grafana/data';
+import { createDataFrame, LogLevel, type LogRowModel, LogsSortOrder } from '@grafana/data';
 import { sortLogRows } from 'app/features/logs/utils';
 export const makeLogs = (numberOfLogsToCreate: number, overrides?: Partial<LogRowModel>): LogRowModel[] => {
   const array: LogRowModel[] = [];

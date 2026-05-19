@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { act, getWrapper, renderHook, waitFor } from 'test/test-utils';
 
 import * as runtime from '@grafana/runtime';
@@ -7,7 +7,7 @@ import { getFolderFixtures } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { ManagerKind } from 'app/features/apiserver/types';
 
-import { DashboardViewItem } from '../../../features/search/types';
+import { type DashboardViewItem } from '../../../features/search/types';
 
 import { useFoldersQuery } from './useFoldersQuery';
 import { getCustomRootFolderItem, getRootFolderItem } from './utils';

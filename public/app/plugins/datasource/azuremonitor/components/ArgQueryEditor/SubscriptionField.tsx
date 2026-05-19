@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { FieldValidationMessage, MultiSelect } from '@grafana/ui';
 
 import { selectors } from '../../e2e/selectors';
-import { AzureMonitorQuery } from '../../types/query';
-import { AzureMonitorOption, AzureQueryEditorFieldProps } from '../../types/types';
+import { type AzureMonitorQuery } from '../../types/query';
+import { type AzureMonitorOption, type AzureQueryEditorFieldProps } from '../../types/types';
 import { findOptions } from '../../utils/common';
 import { Field } from '../shared/Field';
 

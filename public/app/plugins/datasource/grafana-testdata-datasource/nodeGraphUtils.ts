@@ -2,11 +2,11 @@ import { randomLcg } from 'd3-random';
 
 import {
   FieldColorModeId,
-  FieldDTO,
+  type FieldDTO,
   FieldType,
   MutableDataFrame,
   NodeGraphDataFrameFieldNames,
-  DataFrame,
+  type DataFrame,
   addRow,
 } from '@grafana/data';
 

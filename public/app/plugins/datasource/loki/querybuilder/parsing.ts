@@ -1,4 +1,4 @@
-import { SyntaxNode } from '@lezer/common';
+import { type SyntaxNode } from '@lezer/common';
 
 import {
   And,
@@ -53,7 +53,11 @@ import {
   OnOrIgnoringModifier,
   OrFilter,
 } from '@grafana/lezer-logql';
-import { QueryBuilderLabelFilter, QueryBuilderOperation, QueryBuilderOperationParamValue } from '@grafana/plugin-ui';
+import {
+  type QueryBuilderLabelFilter,
+  type QueryBuilderOperation,
+  type QueryBuilderOperationParamValue,
+} from '@grafana/plugin-ui';
 
 import { binaryScalarDefs } from './binaryScalarOperations';
 import { checkParamsAreValid, getDefinitionById } from './operations';
@@ -66,7 +70,7 @@ import {
   makeError,
   replaceVariables,
 } from './parsingUtils';
-import { LokiOperationId, LokiVisualQuery, LokiVisualQueryBinary } from './types';
+import { LokiOperationId, type LokiVisualQuery, type LokiVisualQueryBinary } from './types';
 
 interface Context {
   query: LokiVisualQuery;

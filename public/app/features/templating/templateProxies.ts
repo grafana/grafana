@@ -1,4 +1,4 @@
-import { Field, DataFrame, getFieldDisplayName, formatLabels } from '@grafana/data';
+import { type Field, type DataFrame, getFieldDisplayName, formatLabels } from '@grafana/data';
 
 /**
  * This object is created often, and only used when tmplates exist.  Using a proxy lets us delay

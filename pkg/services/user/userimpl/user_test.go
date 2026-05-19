@@ -24,7 +24,7 @@ import (
 func TestUserService(t *testing.T) {
 	userStore := newUserStoreFake()
 	orgService := orgtest.NewOrgServiceFake()
-	userService := Service{
+	userService := LegacyService{
 		store:        userStore,
 		orgService:   orgService,
 		cacheService: localcache.ProvideService(),
@@ -102,7 +102,7 @@ func TestUserService(t *testing.T) {
 	t.Run("Testing DB - return list users based on their is_disabled flag", func(t *testing.T) {
 		userStore := newUserStoreFake()
 		orgService := orgtest.NewOrgServiceFake()
-		userService := Service{
+		userService := LegacyService{
 			store:        userStore,
 			orgService:   orgService,
 			cacheService: localcache.ProvideService(),
@@ -156,8 +156,8 @@ func TestUserService(t *testing.T) {
 }
 
 func TestService_Update(t *testing.T) {
-	setup := func(opts ...func(svc *Service)) *Service {
-		service := &Service{
+	setup := func(opts ...func(svc *LegacyService)) *LegacyService {
+		service := &LegacyService{
 			store:  &FakeUserStore{},
 			tracer: tracing.InitializeTracerForTest(),
 		}
@@ -168,7 +168,7 @@ func TestService_Update(t *testing.T) {
 	}
 
 	t.Run("should return error if old password does not match stored password", func(t *testing.T) {
-		service := setup(func(svc *Service) {
+		service := setup(func(svc *LegacyService) {
 			stored, err := user.Password("test").Hash("salt")
 			require.NoError(t, err)
 
@@ -182,7 +182,7 @@ func TestService_Update(t *testing.T) {
 	})
 
 	t.Run("should return error new password is not valid", func(t *testing.T) {
-		service := setup(func(svc *Service) {
+		service := setup(func(svc *LegacyService) {
 			stored, err := user.Password("test").Hash("salt")
 			require.NoError(t, err)
 			svc.cfg = setting.NewCfg()
@@ -198,7 +198,7 @@ func TestService_Update(t *testing.T) {
 
 	t.Run("Can set using org", func(t *testing.T) {
 		orgID := int64(1)
-		service := setup(func(svc *Service) {
+		service := setup(func(svc *LegacyService) {
 			svc.orgService = &orgtest.FakeOrgService{ExpectedUserOrgDTO: []*org.UserOrgDTO{{OrgID: orgID}}}
 		})
 		err := service.Update(context.Background(), &user.UpdateUserCommand{UserID: 2, OrgID: &orgID})
@@ -207,7 +207,7 @@ func TestService_Update(t *testing.T) {
 
 	t.Run("Cannot set using org when user is not member of it", func(t *testing.T) {
 		orgID := int64(1)
-		service := setup(func(svc *Service) {
+		service := setup(func(svc *LegacyService) {
 			svc.orgService = &orgtest.FakeOrgService{ExpectedUserOrgDTO: []*org.UserOrgDTO{{OrgID: 2}}}
 		})
 		err := service.Update(context.Background(), &user.UpdateUserCommand{UserID: 2, OrgID: &orgID})
@@ -218,7 +218,7 @@ func TestService_Update(t *testing.T) {
 func TestUpdateLastSeenAt(t *testing.T) {
 	userStore := newUserStoreFake()
 	orgService := orgtest.NewOrgServiceFake()
-	userService := Service{
+	userService := LegacyService{
 		store:        userStore,
 		orgService:   orgService,
 		cacheService: localcache.ProvideService(),
@@ -247,7 +247,7 @@ func TestMetrics(t *testing.T) {
 	userStore := newUserStoreFake()
 	orgService := orgtest.NewOrgServiceFake()
 
-	userService := Service{
+	userService := LegacyService{
 		store:        userStore,
 		orgService:   orgService,
 		cacheService: localcache.ProvideService(),
@@ -283,7 +283,7 @@ func TestIntegrationCreateUser(t *testing.T) {
 	}
 
 	t.Run("create user should roll back created user if OrgUser cannot be created", func(t *testing.T) {
-		userService := Service{
+		userService := LegacyService{
 			store: userStore,
 			orgService: &orgtest.FakeOrgService{InsertOrgUserFn: func(ctx context.Context, orgUser *org.OrgUser) (int64, error) {
 				return 0, errors.New("some error")

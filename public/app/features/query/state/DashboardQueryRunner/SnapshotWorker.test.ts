@@ -1,9 +1,9 @@
-import { AnnotationEvent, AnnotationQuery, getDefaultTimeRange } from '@grafana/data';
-import { Dashboard } from '@grafana/schema';
+import { type AnnotationEvent, type AnnotationQuery, getDefaultTimeRange } from '@grafana/data';
+import { type Dashboard } from '@grafana/schema';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 import { SnapshotWorker } from './SnapshotWorker';
-import { DashboardQueryRunnerOptions } from './types';
+import { type DashboardQueryRunnerOptions } from './types';
 
 function getDefaultOptions(): DashboardQueryRunnerOptions {
   const dashboard = new DashboardModel({} as Dashboard);

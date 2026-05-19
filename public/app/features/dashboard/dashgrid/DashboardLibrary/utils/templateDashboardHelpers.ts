@@ -1,9 +1,9 @@
 import { getDataSourceSrv } from '@grafana/runtime';
 import { DASHBOARD_LIBRARY_ROUTES } from 'app/features/dashboard/dashgrid/types';
-import { PluginDashboard } from 'app/types/plugins';
+import { type PluginDashboard } from 'app/types/plugins';
 
-import { CONTENT_KINDS, CREATION_ORIGINS, SourceEntryPoint } from '../constants';
-import { GnetDashboard } from '../types';
+import { CONTENT_KINDS, CREATION_ORIGINS, type SourceEntryPoint } from '../constants';
+import { type GnetDashboard } from '../types';
 
 import { isGnetDashboard } from './dashboardLibraryHelpers';
 

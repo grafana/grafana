@@ -1,14 +1,14 @@
-import { BuildInfo } from '@grafana/data';
+import { type BuildInfo } from '@grafana/data';
 import {
-  EchoBackend,
+  type EchoBackend,
   EchoEventType,
   isExperimentViewEvent,
   isInteractionEvent,
   isPageviewEvent,
-  PageviewEchoEvent,
+  type PageviewEchoEvent,
 } from '@grafana/runtime';
 
-import { User } from '../../../context_srv';
+import { type User } from '../../../context_srv';
 import { loadScript } from '../../utils';
 
 type Properties = Record<string, string | boolean | number>;

@@ -1,12 +1,12 @@
 import {
-  GetIntegrationtypeschemasField,
-  GetIntegrationtypeschemasIntegrationTypeSchema,
-  GetIntegrationtypeschemasIntegrationTypeSchemaVersion,
+  type GetIntegrationtypeschemasField,
+  type GetIntegrationtypeschemasIntegrationTypeSchema,
+  type GetIntegrationtypeschemasIntegrationTypeSchemaVersion,
   useGetIntegrationtypeschemasQuery,
 } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import { config } from '@grafana/runtime';
 
-import { NotificationChannelOption, NotifierDTO, NotifierVersion } from '../types/alerting';
+import { type NotificationChannelOption, type NotifierDTO, type NotifierVersion } from '../types/alerting';
 
 import { alertmanagerApi } from './alertmanagerApi';
 

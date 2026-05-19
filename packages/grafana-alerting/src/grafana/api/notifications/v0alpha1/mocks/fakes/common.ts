@@ -1,6 +1,6 @@
 import { Factory } from 'fishery';
 
-import { AlertingEntityMetadataAnnotations } from '../../types';
+import { type AlertingEntityMetadataAnnotations } from '../../types';
 
 export const AlertingEntityMetadataAnnotationsFactory = Factory.define<AlertingEntityMetadataAnnotations>(() => ({
   'grafana.com/access/canAdmin': 'true',

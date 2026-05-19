@@ -1,0 +1,111 @@
+name: Verify release tar.gz
+
+on:
+  workflow_call:
+    inputs:
+      run-id:
+        description: Run ID where the target artifact was produced
+        required: true
+        type: string
+      targz-artifact-name:
+        description: Name of the uploaded targz artifact bundle
+        required: false
+        type: string
+        default: artifacts-targz-linux-amd64
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify ${{ inputs.targz-artifact-name }}
+    runs-on: ubuntu-x64-large
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: ./.github/actions/setup-node
+
+      - name: Install yarn dependencies
+        uses: ./.github/actions/yarn-install
+
+      - name: Build test plugins
+        run: yarn e2e:plugin:build
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ${{ inputs.targz-artifact-name }}
+          run-id: ${{ inputs.run-id }}
+          path: dist
+
+      - name: Extract tar.gz package
+        run: |
+          TARBALL="$(find dist -type f -name '*.tar.gz' ! -name '*.docker.tar.gz' | sort | sed -n '1p')"
+          if [ -z "$TARBALL" ]; then
+            echo "No tar.gz package found in dist/"
+            ls -laR dist
+            exit 1
+          fi
+          mkdir -p grafana-server
+          tar --strip-components=1 -xzf "$TARBALL" -C grafana-server
+
+      - name: Fix binary permissions
+        run: chmod +x grafana-server/bin/grafana*
+
+      - name: Configure for e2e tests
+        run: |
+          mkdir -p grafana-server/conf/provisioning/{datasources,dashboards,alerting,plugins}
+          cp scripts/grafana-server/custom.ini grafana-server/conf/custom.ini
+          cp devenv/datasources.yaml grafana-server/conf/provisioning/datasources/
+          cp devenv/dashboards.yaml grafana-server/conf/provisioning/dashboards/
+          cp devenv/alert_rules.yaml grafana-server/conf/provisioning/alerting/
+          cp devenv/plugins.yaml grafana-server/conf/provisioning/plugins/
+          mkdir -p grafana-server/data/plugins
+          cp -r e2e-playwright/test-plugins/. grafana-server/data/plugins/
+
+      - name: Start Grafana server
+        run: |
+          grafana-server/bin/grafana server \
+            --homepath="$PWD/grafana-server" \
+            cfg:server.http_port=3001 \
+            > grafana-server/grafana.log 2>&1 &
+
+      - name: Install Playwright browsers
+        run: yarn playwright install chromium --with-deps
+
+      - name: Wait for Grafana server to start
+        run: |
+          timeout=60
+          elapsed=0
+          while ! curl -s -f http://localhost:3001/health > /dev/null 2>&1; do
+            if [ $elapsed -ge $timeout ]; then
+              cat grafana-server/grafana.log
+              exit 1
+            fi
+            sleep 1
+            elapsed=$((elapsed + 1))
+          done
+
+      - name: Run acceptance suite
+        env:
+          GRAFANA_URL: http://localhost:3001
+          CI: true
+        run: yarn e2e:acceptance --reporter=dot,blob --output=playwright-test-results
+
+      - name: Upload Playwright blob report
+        if: success() || failure()
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        with:
+          name: release-verify-playwright-blob
+          path: blob-report
+          retention-days: 1
+
+      - name: Upload server log
+        if: always()
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        with:
+          name: release-verify-grafana-server-log
+          path: grafana-server/grafana.log
+          retention-days: 7

@@ -1,18 +1,20 @@
 import { memo, useCallback, useMemo } from 'react';
 
-import { DataFrame, FieldMatcherID, fieldMatchers, FieldType } from '@grafana/data';
+import { type DataFrame, FieldMatcherID, fieldMatchers, FieldType } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { type MatcherScope } from '@grafana/schema';
 
 import { getFieldTypeIconName } from '../../types/icon';
 import { Combobox } from '../Combobox/Combobox';
-import { ComboboxOption } from '../Combobox/types';
+import { type ComboboxOption } from '../Combobox/types';
+import { Stack } from '../Layout/Stack/Stack';
 
-import { FieldMatcherUIRegistryItem, MatcherUIProps } from './types';
+import { type FieldMatcherUIRegistryItem, type MatcherUIProps } from './types';
 
 export const FieldTypeMatcherEditor = memo<MatcherUIProps<string>>((props) => {
-  const { data, options, onChange: onChangeFromProps, id } = props;
+  const { data, options, onChange: onChangeFromProps, id, scope = 'series' } = props;
   const counts = useFieldCounts(data);
-  const selectOptions = useSelectOptions(counts, options);
+  const selectOptions = useCountSelectOptions(counts, scope, options);
 
   const onChange = useCallback(
     (selection: ComboboxOption) => {
@@ -22,7 +24,11 @@ export const FieldTypeMatcherEditor = memo<MatcherUIProps<string>>((props) => {
   );
 
   const selectedOption = selectOptions.find((v) => v.value === options);
-  return <Combobox id={id} value={selectedOption} options={selectOptions} onChange={onChange} />;
+  return (
+    <Stack direction="column" gap={1}>
+      <Combobox id={id} value={selectedOption} options={selectOptions} onChange={onChange} />
+    </Stack>
+  );
 });
 FieldTypeMatcherEditor.displayName = 'FieldTypeMatcherEditor';
 
@@ -66,37 +72,56 @@ export const getAllFieldTypeIconOptions: () => Array<ComboboxOption<FieldType>> 
   },
 ];
 
-const useFieldCounts = (data: DataFrame[]): Map<FieldType, number> => {
-  return useMemo(() => {
-    const counts: Map<FieldType, number> = new Map();
-    for (const t of getAllFieldTypeIconOptions()) {
-      counts.set(t.value!, 0);
-    }
-    for (const frame of data) {
-      for (const field of frame.fields) {
-        const key = field.type || FieldType.other;
-        let v = counts.get(key);
-        if (!v) {
-          v = 0;
-        }
-        counts.set(key, v + 1);
+type ScopedCounts = Map<MatcherScope, Map<FieldType, number>>;
+
+export const countScopedFields = (
+  data: DataFrame[],
+  scopeCounts: ScopedCounts = new Map(),
+  scope: MatcherScope = 'series'
+): ScopedCounts => {
+  let counts = scopeCounts.get(scope);
+  if (!counts) {
+    counts = new Map();
+    scopeCounts.set(scope, counts);
+  }
+
+  for (const t of getAllFieldTypeIconOptions()) {
+    counts.set(t.value!, 0);
+  }
+
+  for (const frame of data) {
+    for (const field of frame.fields) {
+      const key = field.type || FieldType.other;
+      if (key === FieldType.nestedFrames) {
+        countScopedFields(field.values[0], scopeCounts, 'nested');
+        continue;
       }
+      let v = counts.get(key);
+      if (!v) {
+        v = 0;
+      }
+      counts.set(key, v + 1);
     }
-    return counts;
-  }, [data]);
+  }
+
+  return scopeCounts;
 };
 
-const useSelectOptions = (counts: Map<string, number>, opt?: string): ComboboxOption[] => {
+const useFieldCounts = (data: DataFrame[]): ScopedCounts => {
+  return useMemo(() => countScopedFields(data), [data]);
+};
+
+const useCountSelectOptions = (counts: ScopedCounts, scope: MatcherScope, opt?: string): ComboboxOption[] => {
   return useMemo(() => {
     let found = false;
     const options: ComboboxOption[] = [];
     for (const t of getAllFieldTypeIconOptions()) {
-      const count = counts.get(t.value!);
+      const count = counts.get(scope ?? 'series')?.get(t.value!) ?? 0;
       const match = opt === t.value;
       if (count || match) {
         options.push({
           ...t,
-          label: `${t.label} (${counts.get(t.value!)})`,
+          label: `${t.label} (${count})`,
         });
       }
       if (match) {
@@ -110,7 +135,7 @@ const useSelectOptions = (counts: Map<string, number>, opt?: string): ComboboxOp
       });
     }
     return options;
-  }, [counts, opt]);
+  }, [counts, opt, scope]);
 };
 
 export const getFieldTypeMatcherItem: () => FieldMatcherUIRegistryItem<string> = () => ({

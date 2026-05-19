@@ -21,6 +21,7 @@ import (
 	ngfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -254,13 +255,10 @@ func TestMultiOrgAlertmanager_ActivateHistoricalConfiguration(t *testing.T) {
 
 	// Now let's save a new config for org 2.
 	newConfig := `{"template_files":null,"alertmanager_config":{"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"","name":"some other name","type":"email","disableResolveMessage":false,"settings":{"addresses":"\u003cexample@email.com\u003e"}}]}]}}`
-	am, err := mam.alertmanagerForOrg(2)
-	require.NoError(t, err)
-
 	postable, err := Load([]byte(newConfig))
 	require.NoError(t, err)
 
-	err = am.SaveAndApplyConfig(ctx, postable)
+	err = mam.saveAndApplyConfig(ctx, 2, mam.alertmanagers[2], postable)
 	require.NoError(t, err)
 
 	// Verify that the org has the new config.
@@ -393,10 +391,16 @@ func setupMam(t *testing.T, cfg *setting.Cfg) *MultiOrgAlertmanager {
 		m.GetMultiOrgAlertmanagerMetrics(),
 		nil,
 		ngfakes.NewFakeReceiverPermissionsService(),
+		ngfakes.NewFakeRoutePermissionsService(),
 		log.New("testlogger"),
 		secretsService,
 		featuremgmt.WithFeatures(),
 		nil,
+		false,
+		nil, // adminConfigStore - not needed in this test
+		nil, // datasourceService - not needed in this test
+		nil, // httpClientProvider - not needed in this test
+		&validations.OSSDataSourceRequestValidator{}, // requestValidator - not needed in this test
 	)
 	require.NoError(t, err)
 	return mam

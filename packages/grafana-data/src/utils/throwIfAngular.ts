@@ -1,5 +1,5 @@
-import { PanelPlugin } from '../panel/PanelPlugin';
-import { PluginMeta } from '../types/plugin';
+import { type PanelPlugin } from '../panel/PanelPlugin';
+import { type PluginMeta } from '../types/plugin';
 
 export function throwIfAngular(module?: System.Module): void;
 export function throwIfAngular(panel?: PanelPlugin): void;

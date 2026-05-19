@@ -1,18 +1,12 @@
-import { useCallback } from 'react';
-
 import { t } from '@grafana/i18n';
 import { Button, Dropdown, Menu } from '@grafana/ui';
-import { InspectTab } from 'app/features/inspector/types';
 
-import { PanelInspectDrawer } from '../../../../inspect/PanelInspectDrawer';
-import { getDashboardSceneFor } from '../../../../utils/utils';
-import { QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../constants';
+import { QueryEditorType } from '../../constants';
 import { trackQueryMenuAction } from '../../tracking';
-import { useActionsContext, usePanelContext, useQueryEditorUIContext } from '../QueryEditorContext';
+import { useActionsContext, useQueryEditorUIContext, useQueryEditorTypeConfig } from '../QueryEditorContext';
 
 export function QueryActionsMenu() {
   const { duplicateQuery } = useActionsContext();
-  const { panel } = usePanelContext();
   const {
     selectedQuery,
     selectedQueryDsData,
@@ -21,17 +15,13 @@ export function QueryActionsMenu() {
     toggleDatasourceHelp,
     cardType,
   } = useQueryEditorUIContext();
-
-  const onOpenInspector = useCallback(() => {
-    const dashboard = getDashboardSceneFor(panel);
-    dashboard.showModal(new PanelInspectDrawer({ panelRef: panel.getRef(), currentTab: InspectTab.Query }));
-  }, [panel]);
+  const typeConfig = useQueryEditorTypeConfig();
 
   if (!selectedQuery) {
     return null;
   }
 
-  const typeLabel = QUERY_EDITOR_TYPE_CONFIG[cardType].getLabel();
+  const typeLabel = typeConfig[cardType].getLabel();
   const isExpression = cardType === QueryEditorType.Expression;
   const hasEditorHelp = !selectedQueryDsLoading && selectedQueryDsData?.datasource?.components?.QueryEditorHelp;
 
@@ -48,7 +38,6 @@ export function QueryActionsMenu() {
             }}
           />
 
-          {/* Data source help (queries only, not expressions) */}
           {hasEditorHelp && !isExpression && (
             <Menu.Item
               label={
@@ -64,15 +53,6 @@ export function QueryActionsMenu() {
               active={showingDatasourceHelp}
             />
           )}
-
-          <Menu.Item
-            label={t('query-editor-next.action.inspector', 'Query inspector')}
-            icon="brackets-curly"
-            onClick={() => {
-              trackQueryMenuAction('open_inspector', cardType);
-              onOpenInspector();
-            }}
-          />
         </Menu>
       }
       placement="bottom-end"

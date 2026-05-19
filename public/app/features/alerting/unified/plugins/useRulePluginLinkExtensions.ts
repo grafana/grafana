@@ -1,8 +1,8 @@
 import { useMemo, useRef } from 'react';
 
-import { PluginExtensionLink, PluginExtensionPoints } from '@grafana/data';
+import { type PluginExtensionLink, PluginExtensionPoints } from '@grafana/data';
 import { usePluginLinks } from '@grafana/runtime';
-import { CombinedRule, Rule, RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
+import { type CombinedRule, type Rule, type RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
 import { PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { getRulePluginOrigin } from '../utils/rules';

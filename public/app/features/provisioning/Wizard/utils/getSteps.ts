@@ -1,9 +1,9 @@
-import { ErrorDetails } from '@grafana/api-clients/rtkq/provisioning/v0alpha1';
+import { type ErrorDetails } from '@grafana/api-clients/rtkq/provisioning/v0alpha1';
 import { t } from '@grafana/i18n';
 
 import { getFormErrors } from '../../utils/getFormErrors';
-import { Step } from '../Stepper';
-import { RepoType, StepStatusInfo, WizardStep } from '../types';
+import { type Step } from '../Stepper';
+import { type RepoType, type StepStatusInfo, type WizardStep } from '../types';
 
 export const getSteps = (type: RepoType): Array<Step<WizardStep>> => {
   const isLocal = type === 'local';

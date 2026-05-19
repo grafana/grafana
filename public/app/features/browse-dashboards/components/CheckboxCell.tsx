@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Checkbox, Tooltip, useStyles2 } from '@grafana/ui';
@@ -11,8 +11,8 @@ import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/tooltip'
 import { useSelector } from 'app/types/store';
 
 import { canEditItemType } from '../permissions';
-import { DashboardsTreeCellProps, SelectionState } from '../types';
-import { isSharedWithMe } from '../utils/dashboards';
+import { type DashboardsTreeCellProps, SelectionState } from '../types';
+import { isSharedWithMe, isUnderTeamFolders, isVirtualTeamFolder } from '../utils/dashboards';
 
 export default function CheckboxCell({
   row: { original: row },
@@ -24,7 +24,7 @@ export default function CheckboxCell({
 
   // Get current selection state for repository validation
   const selectedItems = useSelector((state) => state.browseDashboards.selectedItems);
-  const { selectedItemsRepoUID, isInLockedRepo, isUidInReadOnlyRepo } = useSelectionRepoValidation(selectedItems);
+  const { isInLockedRepo, isUidInReadOnlyRepo } = useSelectionRepoValidation(selectedItems);
   const isProvisionedInstance = useIsProvisionedInstance();
 
   // Early returns for cases where we should show a spacer instead of checkbox
@@ -41,7 +41,7 @@ export default function CheckboxCell({
     }
   }
 
-  if (isSharedWithMe(item.uid)) {
+  if (isSharedWithMe(item.uid) || isVirtualTeamFolder(item.uid) || isUnderTeamFolders(item.uid)) {
     return <CheckboxSpacer />;
   }
 
@@ -67,7 +67,7 @@ export default function CheckboxCell({
   }
 
   // check if current item uid has different repo uid than selected items
-  if (selectedItemsRepoUID && !isInLockedRepo(item.uid)) {
+  if (!isInLockedRepo(item.uid)) {
     return (
       <Tooltip
         content={t(

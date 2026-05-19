@@ -1,11 +1,12 @@
 import { isString } from 'lodash';
 
-import { QueryResultMeta } from '../types/data';
-import { Field, DataFrame, DataFrameDTO, FieldDTO, FieldType } from '../types/dataFrame';
+import { type QueryResultMeta } from '../types/data';
+import { type Field, type DataFrame, type DataFrameDTO, type FieldDTO, FieldType } from '../types/dataFrame';
 import { makeFieldParser } from '../utils/fieldParser';
 import { FunctionalVector } from '../vector/FunctionalVector';
 
-import { guessFieldTypeFromValue, guessFieldTypeForField, toDataFrameDTO } from './processDataFrame';
+import { guessFieldTypeFromValue, guessFieldTypeForField } from './guessFieldType';
+import { toDataFrameDTO } from './processDataFrame';
 
 /** @deprecated */
 export type MutableField<T = any> = Field<T>;

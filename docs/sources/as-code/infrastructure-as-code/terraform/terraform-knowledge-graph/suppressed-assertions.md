@@ -271,6 +271,8 @@ resource "grafana_asserts_suppressed_assertions_config" "example" {
 
 ## Best practices
 
+Consider the following best practices when managing suppressed assertions with Terraform.
+
 ### Suppression strategy
 
 - Use suppression rules for temporary situations rather than permanent solutions

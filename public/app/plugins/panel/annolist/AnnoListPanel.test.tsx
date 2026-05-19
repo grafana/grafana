@@ -1,15 +1,15 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { AnnotationEvent, FieldConfigSource, getDefaultTimeRange, LoadingState } from '@grafana/data';
+import { type AnnotationEvent, type FieldConfigSource, getDefaultTimeRange, LoadingState } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
 import { backendSrv } from '../../../core/services/backend_srv';
-import { DashboardSrv, setDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
+import { type DashboardSrv, setDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
 
-import { AnnoListPanel, Props } from './AnnoListPanel';
-import { Options } from './panelcfg.gen';
+import { AnnoListPanel, type Props } from './AnnoListPanel';
+import { type Options } from './panelcfg.gen';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),

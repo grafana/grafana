@@ -2,10 +2,10 @@ import { Chance } from 'chance';
 
 import {
   GrafanaAlertStateDecision,
-  GrafanaPromRulesResponse,
+  type GrafanaPromRulesResponse,
   PromAlertingRuleState,
   PromRuleType,
-  RulerRulesConfigDTO,
+  type RulerRulesConfigDTO,
 } from 'app/types/unified-alerting-dto';
 
 export function getRulerRulesResponse(folderName: string, folderUid: string, rule_uid: string): RulerRulesConfigDTO {

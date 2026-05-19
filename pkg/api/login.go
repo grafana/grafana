@@ -160,7 +160,7 @@ func (hs *HTTPServer) LoginView(c *contextmodel.ReqContext) {
 	c.HTML(http.StatusOK, getViewIndex(), viewData)
 }
 
-func (hs *HTTPServer) tryAutoLogin(c *contextmodel.ReqContext) bool {
+func (hs *HTTPServer) getAutoLoginRedirectURL(c *contextmodel.ReqContext) string {
 	samlAutoLogin := hs.samlAutoLoginEnabled()
 	oauthInfos := hs.SocialService.GetOAuthInfoProviders()
 
@@ -181,12 +181,12 @@ func (hs *HTTPServer) tryAutoLogin(c *contextmodel.ReqContext) bool {
 
 	if autoLoginProvidersLen > 1 {
 		c.Logger.Warn("Skipping auto login because multiple auth providers are configured with auto_login option")
-		return false
+		return ""
 	}
 
 	if hs.Cfg.OAuthAutoLogin && autoLoginProvidersLen == 0 {
 		c.Logger.Warn("Skipping auto login because no auth providers are configured")
-		return false
+		return ""
 	}
 
 	for providerName, provider := range oauthInfos {
@@ -196,9 +196,7 @@ func (hs *HTTPServer) tryAutoLogin(c *contextmodel.ReqContext) bool {
 			if hs.Features.IsEnabledGlobally(featuremgmt.FlagUseSessionStorageForRedirection) {
 				redirectUrl += hs.getRedirectToForAutoLogin(c)
 			}
-			c.Logger.Info("OAuth auto login enabled. Redirecting to " + redirectUrl)
-			c.Redirect(redirectUrl, 307)
-			return true
+			return redirectUrl
 		}
 	}
 
@@ -208,12 +206,20 @@ func (hs *HTTPServer) tryAutoLogin(c *contextmodel.ReqContext) bool {
 		if hs.Features.IsEnabledGlobally(featuremgmt.FlagUseSessionStorageForRedirection) {
 			redirectUrl += hs.getRedirectToForAutoLogin(c)
 		}
-		c.Logger.Info("SAML auto login enabled. Redirecting to " + redirectUrl)
-		c.Redirect(redirectUrl, 307)
-		return true
+		return redirectUrl
 	}
 
-	return false
+	return ""
+}
+
+func (hs *HTTPServer) tryAutoLogin(c *contextmodel.ReqContext) bool {
+	redirectUrl := hs.getAutoLoginRedirectURL(c)
+	if redirectUrl == "" {
+		return false
+	}
+	c.Logger.Info("Auto login enabled. Redirecting to " + redirectUrl)
+	c.Redirect(redirectUrl, 307)
+	return true
 }
 
 func (hs *HTTPServer) getRedirectToForAutoLogin(c *contextmodel.ReqContext) string {
@@ -251,26 +257,6 @@ func (hs *HTTPServer) LoginPost(c *contextmodel.ReqContext) response.Response {
 
 	metrics.MApiLoginPost.Inc()
 	return authn.HandleLoginResponse(c.Req, c.Resp, hs.Cfg, identity, hs.ValidateRedirectTo, hs.Features)
-}
-
-func (hs *HTTPServer) LoginPasswordless(c *contextmodel.ReqContext) response.Response {
-	identity, err := hs.authnService.Login(c.Req.Context(), authn.ClientPasswordless, &authn.Request{HTTPRequest: c.Req})
-	if err != nil {
-		tokenErr := &auth.CreateTokenErr{}
-		if errors.As(err, &tokenErr) {
-			return response.Error(tokenErr.StatusCode, tokenErr.ExternalErr, tokenErr.InternalErr)
-		}
-		return response.Err(err)
-	}
-	return authn.HandleLoginResponse(c.Req, c.Resp, hs.Cfg, identity, hs.ValidateRedirectTo, hs.Features)
-}
-
-func (hs *HTTPServer) StartPasswordless(c *contextmodel.ReqContext) {
-	redirect, err := hs.authnService.RedirectURL(c.Req.Context(), authn.ClientPasswordless, &authn.Request{HTTPRequest: c.Req})
-	if err != nil {
-		c.Redirect(hs.redirectURLWithErrorCookie(c, err))
-	}
-	c.JSON(http.StatusOK, redirect)
 }
 
 func (hs *HTTPServer) loginUserWithUser(user *user.User, c *contextmodel.ReqContext) error {

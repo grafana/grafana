@@ -3,13 +3,13 @@ import { noop } from 'lodash';
 import { useCallback, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
-import { CoreApp, DataSourcePluginContextProvider, GrafanaTheme2, LoadingState } from '@grafana/data';
+import { CoreApp, DataSourcePluginContextProvider, type GrafanaTheme2, LoadingState } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { PromQuery } from '@grafana/prometheus';
+import { type PromQuery } from '@grafana/prometheus';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 import { Alert, Button, useStyles2 } from '@grafana/ui';
-import { LokiQuery } from 'app/plugins/datasource/loki/types';
+import { type LokiQuery } from 'app/plugins/datasource/loki/types';
 
 import { isSupportedExternalRulesSourceType } from '../../utils/datasource';
 

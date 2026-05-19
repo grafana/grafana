@@ -28,7 +28,9 @@ test.describe(
       await datasourceList.getByText('gdev-jaeger').click();
 
       // Check that gdev-jaeger is visible in the query editor
-      await expect(page.getByTestId('query-editor-row').getByText('(gdev-jaeger)')).toBeVisible();
+      await expect(
+        page.getByTestId(selectors.components.QueryEditorRows.rows).getByText('(gdev-jaeger)')
+      ).toBeVisible();
 
       // Type the query
       const queryField = page

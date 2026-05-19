@@ -1,15 +1,15 @@
 import { v4 as uuidv4 } from 'uuid';
 
-import { DataSourceInstanceSettings, ScopedVars, VariableWithMultiSupport } from '@grafana/data';
-import { LanguageDefinition } from '@grafana/plugin-ui';
-import { TemplateSrv } from '@grafana/runtime';
+import { type DataSourceInstanceSettings, type ScopedVars, type VariableWithMultiSupport } from '@grafana/data';
+import { type LanguageDefinition } from '@grafana/plugin-ui';
+import { type TemplateSrv } from '@grafana/runtime';
 import {
   COMMON_FNS,
-  DB,
-  FuncParameter,
+  type DB,
+  type FuncParameter,
   MACRO_FUNCTIONS,
-  SQLQuery,
-  SQLSelectableValue,
+  type SQLQuery,
+  type SQLSelectableValue,
   SqlDatasource,
   SQLVariableSupport,
   formatSQL,
@@ -19,7 +19,7 @@ import { PostgresQueryModel } from './PostgresQueryModel';
 import { getSchema, getTimescaleDBVersion, getVersion, showTables } from './postgresMetaQuery';
 import { fetchColumns, fetchTables, getSqlCompletionProvider } from './sqlCompletionProvider';
 import { getFieldConfig, toRawSql } from './sqlUtil';
-import { PostgresOptions } from './types';
+import { type PostgresOptions } from './types';
 
 export class PostgresDatasource extends SqlDatasource {
   sqlLanguageDefinition: LanguageDefinition | undefined = undefined;

@@ -15,7 +15,8 @@ func WithPublicError(err errutil.Error) error {
 	return err
 }
 
-// If provided error is errutil.Error it appends fields that caused the error to public payload
+// makeProtectedFieldsAuthzError appends fields that caused the error to public payload.
+// If provided error is errutil.Error it adds the changed protected fields to the public payload.
 func makeProtectedFieldsAuthzError(err error, diff map[string][]schema.IntegrationFieldPath) error {
 	var authzErr errutil.Error
 	if !errors.As(err, &authzErr) {
@@ -34,4 +35,9 @@ func makeProtectedFieldsAuthzError(err error, diff map[string][]schema.Integrati
 	}
 	authzErr.PublicPayload["changed_protected_fields"] = fields
 	return authzErr
+}
+
+// MakeProtectedFieldsAuthzError is the exported version for use by other packages.
+func MakeProtectedFieldsAuthzError(err error, diff map[string][]schema.IntegrationFieldPath) error {
+	return makeProtectedFieldsAuthzError(err, diff)
 }

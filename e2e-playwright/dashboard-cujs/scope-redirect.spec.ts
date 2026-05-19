@@ -9,6 +9,7 @@ test.use({
     groupByVariable: true,
     reloadDashboardsOnParamsChange: true,
     useScopesNavigationEndpoint: true,
+    dashboardNewLayouts: false,
   },
 });
 
@@ -259,6 +260,7 @@ test.describe('Scope Redirect Functionality', () => {
     await test.step('Change scope while in edit mode and verify no redirect', async () => {
       // Select and apply a scope that would normally trigger a redirect
       await openScopesSelector(page, scopes);
+      expect(page.getByText('Select scopes')).toBeVisible();
       await selectScope(page, 'sn-redirect-fallback', scopes[1]);
       await applyScopes(page, [scopes[1]]);
 

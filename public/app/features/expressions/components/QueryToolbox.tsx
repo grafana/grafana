@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 import { useCallback, useEffect, useRef, useState, type JSX } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { IconButton, useStyles2, Stack, InlineToast, Tooltip, Icon } from '@grafana/ui';
 
-import { SqlExpressionQuery } from '../types';
+import { type SqlExpressionQuery } from '../types';
 
 interface QueryToolboxProps {
   onFormatCode?: () => void;

@@ -2,11 +2,11 @@ import { renderHook } from '@testing-library/react';
 import * as React from 'react';
 
 import {
-  DataSourceInstanceSettings,
+  type DataSourceInstanceSettings,
   DataSourcePluginContextProvider,
   PluginContextProvider,
-  PluginMeta,
-  PluginMetaInfo,
+  type PluginMeta,
+  type PluginMetaInfo,
   PluginSignatureStatus,
   PluginType,
 } from '@grafana/data';

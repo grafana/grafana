@@ -1,7 +1,7 @@
 import { Chance } from 'chance';
 import { HttpResponse, http } from 'msw';
 
-import { DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
+import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 
 import { wellFormedTree } from '../../../../fixtures/folders';
 
@@ -18,7 +18,7 @@ const typeFilterMap: Record<string, string> = {
   folders: 'folder',
 };
 
-const searchRoute = '/apis/dashboard.grafana.app/v0alpha1/namespaces/:namespace/search';
+export const searchRoute = '/apis/dashboard.grafana.app/v0alpha1/namespaces/:namespace/search';
 
 type HitFilterArray = Array<(hit: DashboardHit) => boolean>;
 
@@ -35,8 +35,10 @@ export function getCustomSearchHandler(hits: DashboardHit[]) {
     const limitFilter = parseInt(url.searchParams.get('limit') || '', 10) || hits.length;
     const folderFilter = url.searchParams.get('folder') || null;
     const typeFilter = url.searchParams.getAll('type');
+    const mappedTypeFilters = typeFilter.map((f) => typeMap[f] || f);
     const nameFilter = url.searchParams.getAll('name');
     const tagFilter = url.searchParams.getAll('tag');
+    const ownerReferenceFilter = url.searchParams.getAll('ownerReference');
     const offset = parseInt(url.searchParams.get('offset') || '', 10) || 0;
 
     const filters: HitFilterArray = [];
@@ -47,11 +49,17 @@ export function getCustomSearchHandler(hits: DashboardHit[]) {
     }
 
     if (typeFilter.length > 0) {
-      filters.push((hit) => typeFilter.includes(hit.resource));
+      filters.push((hit) => mappedTypeFilters.includes(hit.resource));
     }
 
     if (tagFilter.length > 0) {
       filters.push((hit) => Boolean(hit.tags?.some((tag) => tagFilter.includes(tag))));
+    }
+
+    if (ownerReferenceFilter.length > 0) {
+      filters.push((hit) =>
+        Boolean(hit.ownerReferences?.some((ownerReference) => ownerReferenceFilter.includes(ownerReference)))
+      );
     }
 
     if (folderFilter === 'general') {

@@ -7,6 +7,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
@@ -46,4 +47,7 @@ var FolderResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 var (
 	// SchemeGroupVersion is group version used to register these objects
 	SchemeGroupVersion = schema.GroupVersion{Group: GROUP, Version: VERSION}
+
+	// GetOpenAPIDefinitions is shared with v1 (identical schema); see pkg/registry/apis/folders/register.go.
+	GetOpenAPIDefinitions = folderv1.GetOpenAPIDefinitions
 )

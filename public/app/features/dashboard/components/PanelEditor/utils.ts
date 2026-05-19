@@ -1,9 +1,9 @@
 import { omit } from 'lodash';
 
-import { FieldConfigSource, PanelPlugin } from '@grafana/data';
+import { type FieldConfigSource, type PanelPlugin } from '@grafana/data';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 
-import { PanelModel } from '../../state/PanelModel';
+import { type PanelModel } from '../../state/PanelModel';
 
 import { DisplayMode } from './types';
 

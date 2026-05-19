@@ -1,6 +1,6 @@
 import { t } from '@grafana/i18n';
 
-import { ComponentSize } from '../../types/size';
+import { type ComponentSize } from '../../types/size';
 import { Button } from '../Button/Button';
 
 import { ConfirmButton } from './ConfirmButton';

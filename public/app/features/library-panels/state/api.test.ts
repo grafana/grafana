@@ -3,7 +3,50 @@ import { LibraryPanelBehavior } from 'app/features/dashboard-scene/scene/Library
 import { AutoGridItem } from 'app/features/dashboard-scene/scene/layout-auto-grid/AutoGridItem';
 import { vizPanelToPanel } from 'app/features/dashboard-scene/serialization/transformSceneToSaveModel';
 
-import { libraryVizPanelToSaveModel } from './api';
+import { LibraryElementKind } from '../types';
+
+import { addLibraryPanel, libraryVizPanelToSaveModel } from './api';
+
+const mockPost = jest.fn().mockResolvedValue({ result: {} });
+jest.mock('../../../core/services/backend_srv', () => ({
+  getBackendSrv: () => ({ post: mockPost }),
+}));
+
+describe('addLibraryPanel', () => {
+  beforeEach(() => {
+    mockPost.mockClear();
+  });
+
+  const panelSaveModel = {
+    libraryPanel: { name: 'My Panel', uid: 'original-uid' },
+    type: 'timeseries',
+  };
+
+  it('passes uid to the API when provided', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await addLibraryPanel(panelSaveModel as any, 'folder-uid', 'original-uid');
+
+    expect(mockPost).toHaveBeenCalledWith('/api/library-elements', {
+      folderUid: 'folder-uid',
+      name: 'My Panel',
+      model: panelSaveModel,
+      kind: LibraryElementKind.Panel,
+      uid: 'original-uid',
+    });
+  });
+
+  it('does not include uid when not provided', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await addLibraryPanel(panelSaveModel as any, 'folder-uid');
+
+    expect(mockPost).toHaveBeenCalledWith('/api/library-elements', {
+      folderUid: 'folder-uid',
+      name: 'My Panel',
+      model: panelSaveModel,
+      kind: LibraryElementKind.Panel,
+    });
+  });
+});
 
 describe('libraryVizPanelToSaveModel', () => {
   it('uses default gridPos when the parent is an AutoGridItem', () => {

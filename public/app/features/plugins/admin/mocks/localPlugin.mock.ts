@@ -1,4 +1,4 @@
-import { LocalPlugin } from '../types';
+import { type LocalPlugin } from '../types';
 
 // Copied from /api/plugins
 export default {

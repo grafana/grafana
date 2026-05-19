@@ -1,21 +1,22 @@
-import { config } from '@grafana/runtime';
-
-import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { getSuggestedFieldsForLogs } from '../otel/formats';
-import { LogListModel } from '../panel/processing';
+import { type LogListModel } from '../panel/processing';
 
-import { FieldWithStats } from './FieldSelector';
+import { type FieldWithStats } from './FieldSelector';
+import { LOG_LINE_BODY_FIELD_NAME } from './logFields';
 
 /**
+ * Builds suggested fields list from logs and defaults.
  *
  * @param logs
  * @param displayedFields
  * @param defaultFields
+ * @param otelLogsFormattingEnabled
  */
 export function getSuggestedFieldsFromLogList(
   logs: LogListModel[],
   displayedFields: string[],
-  defaultFields: string[] = []
+  defaultFields: string[] = [],
+  otelLogsFormattingEnabled = false
 ) {
   const suggestedFields: FieldWithStats[] = defaultFields.map((field) => ({
     name: field,
@@ -24,7 +25,7 @@ export function getSuggestedFieldsFromLogList(
     },
   }));
 
-  if (config.featureToggles.otelLogsFormatting) {
+  if (otelLogsFormattingEnabled) {
     getSuggestedFieldsForLogs(logs).forEach((field) => {
       suggestedFields.push({
         name: field,

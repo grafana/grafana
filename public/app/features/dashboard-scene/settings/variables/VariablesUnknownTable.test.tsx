@@ -5,12 +5,12 @@ import * as runtime from '@grafana/runtime';
 import { TestVariable } from '@grafana/scenes';
 
 import * as utils from '../../variables/utils';
-import { UsagesToNetwork } from '../../variables/utils';
+import { type UsagesToNetwork } from '../../variables/utils';
 
 import {
   SLOW_VARIABLES_EXPANSION_THRESHOLD,
   VariablesUnknownTable,
-  VariablesUnknownTableProps,
+  type VariablesUnknownTableProps,
 } from './VariablesUnknownTable';
 
 async function getTestContext(

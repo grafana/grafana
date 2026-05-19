@@ -3,7 +3,7 @@ import { render, screen } from 'test/test-utils';
 import { PluginSignatureStatus, PluginSignatureType, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { CatalogPlugin } from '../types';
+import { type CatalogPlugin } from '../types';
 
 import { PluginDetailsPage } from './PluginDetailsPage';
 
@@ -25,7 +25,6 @@ const plugin: CatalogPlugin = {
   isInstalled: true,
   isDisabled: false,
   isDeprecated: false,
-  isManaged: false,
   isPreinstalled: { found: false, withVersion: false },
   isPublished: true,
   name: 'Test Plugin',
@@ -63,13 +62,17 @@ const plugin: CatalogPlugin = {
   isFullyInstalled: true,
   accessControl: {},
   insights: { id: 1, name: 'test-plugin', version: '1.0.0', insights: [] },
+  managed: {
+    enabled: false,
+    strategy: undefined,
+  },
 };
 
 jest.mock('../state/hooks', () => ({
   useGetSingle: jest.fn(),
   useGetPluginInsights: jest.fn(),
   useFetchStatus: jest.fn().mockReturnValue({ isLoading: false }),
-  useFetchDetailsStatus: () => ({ isLoading: false }),
+  useFetchDetailsStatus: jest.fn().mockReturnValue({ isLoading: false }),
   useIsRemotePluginsAvailable: () => false,
   useInstallStatus: () => ({ error: null, isInstalling: false }),
   useUninstallStatus: () => ({ error: null, isUninstalling: false }),
@@ -96,8 +99,31 @@ describe('PluginDetailsPage', () => {
     jest.clearAllMocks();
   });
 
-  it('should show loader when fetching plugin details', () => {
+  it('should show loader on initial load when no plugin is available yet', () => {
+    mockUseGetSingle.mockReturnValue(undefined);
     jest.requireMock('../state/hooks').useFetchStatus.mockReturnValueOnce({ isLoading: true });
+    render(<PluginDetailsPage pluginId="test-plugin" />);
+    expect(screen.getByText('Loading...')).toBeInTheDocument();
+  });
+
+  it('should keep the page mounted when re-fetching while a plugin is already loaded', () => {
+    // Simulates the post-install fetchDetails refresh: useFetchDetailsStatus reports loading,
+    // but useGetSingle already returns the cached plugin (with details). The page must NOT swap
+    // to <Loader />, otherwise transient state in the actions slot (the "Refresh the page" notice)
+    // is lost.
+    jest.requireMock('../state/hooks').useFetchDetailsStatus.mockReturnValueOnce({ isLoading: true });
+    render(<PluginDetailsPage pluginId="test-plugin" />);
+    expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
+    expect(screen.getByText('Test Plugin')).toBeInTheDocument();
+  });
+
+  it('should still show loader on initial details fetch when only the plugin shell is available', () => {
+    // useFetchAll populates the shell first (no `details`), then useFetchDetails kicks in. Without
+    // gating on `plugin.details` the page would render mid-fetch and flash empty fallbacks in
+    // Overview/Changelog/Screenshots/Versions.
+    const { details, ...shellOnly } = plugin;
+    mockUseGetSingle.mockReturnValue(shellOnly as CatalogPlugin);
+    jest.requireMock('../state/hooks').useFetchDetailsStatus.mockReturnValueOnce({ isLoading: true });
     render(<PluginDetailsPage pluginId="test-plugin" />);
     expect(screen.getByText('Loading...')).toBeInTheDocument();
   });

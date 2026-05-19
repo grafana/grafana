@@ -1,16 +1,17 @@
 import { css } from '@emotion/css';
 import { memo, useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { DataLinkButton, Icon, Toggletip, useStyles2 } from '@grafana/ui';
 
-import { FieldDef } from '../logParser';
+import { type FieldDef } from '../logParser';
 
 import { useLogDetailsContext } from './LogDetailsContext';
 import { filterFields, MultipleValue, SingleValue } from './LogLineDetailsFields';
+import { type LogListFontSize } from './LogList';
 import { useLogListContext } from './LogListContext';
-import { LogListModel } from './processing';
+import { type LogListModel } from './processing';
 
 interface LogLineDetailsLinksProps {
   fields: FieldDef[];
@@ -20,7 +21,8 @@ interface LogLineDetailsLinksProps {
 }
 
 export const LogLineDetailsLinks = memo(({ fields, log, search }: LogLineDetailsLinksProps) => {
-  const styles = useStyles2(getFieldsStyles);
+  const { fontSize } = useLogListContext();
+  const styles = useStyles2(getFieldsStyles, fontSize);
   const filteredFields = useMemo(() => (search ? filterFields(fields, search) : fields), [fields, search]);
 
   if (!fields.length) {
@@ -39,10 +41,10 @@ export const LogLineDetailsLinks = memo(({ fields, log, search }: LogLineDetails
 });
 LogLineDetailsLinks.displayName = 'LogLineDetailsLinks';
 
-const getFieldsStyles = (theme: GrafanaTheme2) => ({
+const getFieldsStyles = (theme: GrafanaTheme2, fontSize: LogListFontSize) => ({
   linksTable: css({
     display: 'grid',
-    gap: theme.spacing(1),
+    gap: fontSize === 'small' ? theme.spacing(0.25, 0.5) : theme.spacing(0.5, 1),
     gridTemplateColumns: `fit-content(30%) 1fr`,
     marginBottom: theme.spacing(1),
   }),

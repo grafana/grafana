@@ -2,7 +2,7 @@ import { cx, css } from '@emotion/css';
 import { forwardRef } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2, LinkModel, LinkTarget } from '@grafana/data';
+import { type GrafanaTheme2, type LinkModel, type LinkTarget } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';

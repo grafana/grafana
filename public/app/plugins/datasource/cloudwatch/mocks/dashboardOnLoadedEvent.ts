@@ -1,6 +1,6 @@
 import { DashboardLoadedEvent } from '@grafana/data';
 
-import { CloudWatchQuery } from '../types';
+import { type CloudWatchQuery } from '../types';
 
 const baseLegacyLogsQuery = {
   datasource: {

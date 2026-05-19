@@ -1,11 +1,9 @@
-import React from 'react';
-
-import { CoreApp, TimeRange } from '@grafana/data';
+import { CoreApp, type TimeRange } from '@grafana/data';
 import { usePluginLinks } from '@grafana/runtime';
 import { RelatedProfilesTitle } from '@grafana-plugins/tempo/resultTransformer';
 
 import { SpanLinkType } from '../../types/links';
-import { TraceSpan } from '../../types/trace';
+import { type TraceSpan } from '../../types/trace';
 
 import { getSpanDetailLinkButtons, getProfileLinkButtonsContext } from './SpanDetailLinkButtons';
 
@@ -27,7 +25,7 @@ const timeRange = {
   to: new Date(1000),
 } as unknown as TimeRange;
 
-function getContent(result: React.ReactElement) {
+function getContent(result: ReturnType<typeof getSpanDetailLinkButtons>) {
   return result.props.children.props.children[0];
 }
 

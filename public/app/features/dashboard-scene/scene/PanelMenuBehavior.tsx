@@ -2,19 +2,19 @@ import { firstValueFrom } from 'rxjs';
 
 import {
   getTimeZone,
-  InterpolateFunction,
-  LinkModel,
+  type InterpolateFunction,
+  type LinkModel,
   locationUtil,
-  PanelMenuItem,
-  PanelPlugin,
-  PluginExtensionPanelContext,
+  type PanelMenuItem,
+  type PanelPlugin,
+  type PluginExtensionPanelContext,
   PluginExtensionPoints,
   urlUtil,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getObservablePluginLinks, locationService } from '@grafana/runtime';
-import { LocalValueVariable, sceneGraph, VizPanel, VizPanelMenu } from '@grafana/scenes';
-import { DataQuery, OptionsWithLegend } from '@grafana/schema';
+import { LocalValueVariable, sceneGraph, VizPanel, type VizPanelMenu } from '@grafana/scenes';
+import { type DataQuery, type OptionsWithLegend } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
@@ -34,11 +34,12 @@ import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { DashboardInteractions } from '../utils/interactions';
+import { getPanelStyleConfig } from '../utils/panelStyleConfigs';
 import { getEditPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
 import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor, isLibraryPanel } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
-import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
+import { VizPanelLinks, type VizPanelLinksMenu } from './PanelLinks';
 import { UnlinkLibraryPanelModal } from './UnlinkLibraryPanelModal';
 import { PanelTimeRangeDrawer } from './panel-timerange/PanelTimeRangeDrawer';
 
@@ -306,7 +307,11 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
     }
 
-    if (panel.state.pluginId === 'timeseries' && config.featureToggles.panelStyleActions && dashboard.state.isEditing) {
+    if (
+      getPanelStyleConfig(panel.state.pluginId) &&
+      config.featureToggles.panelStyleActions &&
+      dashboard.state.isEditing
+    ) {
       const stylesSubMenu: PanelMenuItem[] = [];
 
       stylesSubMenu.push({
@@ -322,7 +327,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         },
       });
 
-      if (DashboardScene.hasPanelStylesToPaste('timeseries')) {
+      if (DashboardScene.hasPanelStylesToPaste(panel.state.pluginId)) {
         stylesSubMenu.push({
           text: t('panel.header-menu.paste-styles', `Paste styles`),
           iconClassName: 'clipboard-alt',
@@ -530,7 +535,6 @@ export function onRemovePanel(dashboard: DashboardScene, panel: VizPanel) {
     new ShowConfirmModalEvent({
       title: t('dashboard-scene.on-remove-panel.title.remove-panel', 'Remove panel'),
       text: t('dashboard-scene.on-remove-panel.text.remove-panel', 'Are you sure you want to remove this panel?'),
-      icon: 'trash-alt',
       yesText: 'Remove',
       onConfirm: () => dashboard.removePanel(panel),
     })

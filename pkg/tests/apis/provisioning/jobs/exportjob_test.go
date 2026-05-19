@@ -13,13 +13,10 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationProvisioning_ExportUnifiedToRepository(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	// Write dashboards at
@@ -44,12 +41,13 @@ func TestIntegrationProvisioning_ExportUnifiedToRepository(t *testing.T) {
 	const repo = "local-repository"
 	testRepo := common.TestRepo{
 		Name:               repo,
-		Target:             "instance",          // Export is only supported for instance sync
+		SyncTarget:         "instance", // Export is only supported for instance sync
+		Workflows:          []string{"write"},
 		Copies:             map[string]string{}, // No initial files needed for export test
 		ExpectedDashboards: 4,                   // 4 dashboards created above (v0, v1, v2alpha1, v2beta1)
 		ExpectedFolders:    0,                   // No folders expected after sync
 	}
-	helper.CreateRepo(t, testRepo)
+	helper.CreateLocalRepo(t, testRepo)
 
 	// Now export
 	helper.DebugState(t, repo, "BEFORE EXPORT TO REPOSITORY")
@@ -77,7 +75,7 @@ func TestIntegrationProvisioning_ExportUnifiedToRepository(t *testing.T) {
 	// Check that each file was exported with its stored version and new UIDs
 	for _, test := range []props{
 		{title: "Test dashboard. Created at v0", apiVersion: "dashboard.grafana.app/v0alpha1", name: "test-v0", fileName: "test-dashboard-created-at-v0.json"},
-		{title: "Test dashboard. Created at v1", apiVersion: "dashboard.grafana.app/v1beta1", name: "test-v1", fileName: "test-dashboard-created-at-v1.json"},
+		{title: "Test dashboard. Created at v1", apiVersion: "dashboard.grafana.app/v1", name: "test-v1", fileName: "test-dashboard-created-at-v1.json"},
 		{title: "Test dashboard. Created at v2alpha1", apiVersion: "dashboard.grafana.app/v2alpha1", name: "test-v2alpha1", fileName: "test-dashboard-created-at-v2alpha1.json"},
 		{title: "Test dashboard. Created at v2beta1", apiVersion: "dashboard.grafana.app/v2beta1", name: "test-v2beta1", fileName: "test-dashboard-created-at-v2beta1.json"},
 	} {
@@ -109,9 +107,7 @@ func TestIntegrationProvisioning_ExportUnifiedToRepository(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_ExportDashboardsWithStoredVersions(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	// Test table for different dashboard versions
@@ -136,14 +132,14 @@ func TestIntegrationProvisioning_ExportDashboardsWithStoredVersions(t *testing.T
 			fileName:      "test-dashboard-created-at-v0.json",
 		},
 		{
-			name: "v1beta1",
+			name: "v1",
 			file: "../exportunifiedtorepository/dashboard-test-v1.yaml",
 			createFunc: func(dashboard *unstructured.Unstructured, opts metav1.CreateOptions) (*unstructured.Unstructured, error) {
 				return helper.DashboardsV1.Resource.Create(ctx, dashboard, opts)
 			},
 			expectedTitle: "Test dashboard. Created at v1",
 			expectedName:  "test-v1",
-			expectedVer:   "dashboard.grafana.app/v1beta1",
+			expectedVer:   "dashboard.grafana.app/v1",
 			fileName:      "test-dashboard-created-at-v1.json",
 		},
 		{
@@ -181,12 +177,13 @@ func TestIntegrationProvisioning_ExportDashboardsWithStoredVersions(t *testing.T
 	const repo = "version-test-repository"
 	testRepo := common.TestRepo{
 		Name:               repo,
-		Target:             "instance", // Export is only supported for instance sync
+		SyncTarget:         "instance", // Export is only supported for instance sync
+		Workflows:          []string{"write"},
 		Copies:             map[string]string{},
 		ExpectedDashboards: len(tests),
 		ExpectedFolders:    0,
 	}
-	helper.CreateRepo(t, testRepo)
+	helper.CreateLocalRepo(t, testRepo)
 
 	// Export dashboards
 	spec := provisioning.JobSpec{
@@ -271,46 +268,4 @@ func TestIntegrationProvisioning_ExportDashboardsWithStoredVersions(t *testing.T
 			}
 		}
 	}
-}
-
-func TestIntegrationProvisioning_ExportDisabledByConfiguration(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	// Run Grafana WITHOUT the export feature flag enabled
-	helper := common.RunGrafana(t, common.WithoutExportFeatureFlag)
-
-	// Create a repository
-	const repo = "test-repository"
-	testRepo := common.TestRepo{
-		Name:   repo,
-		Target: "instance",
-	}
-	helper.CreateRepo(t, testRepo)
-
-	// Try to trigger an export job (it should fail)
-	spec := provisioning.JobSpec{
-		Action: provisioning.JobActionPush,
-		Push: &provisioning.ExportJobOptions{
-			Folder: "",
-			Path:   "",
-		},
-	}
-
-	// Trigger job and wait for it to complete (will fail)
-	job := helper.TriggerJobAndWaitForComplete(t, repo, spec)
-
-	// Check that job failed with the expected error message
-	status, found, err := unstructured.NestedMap(job.Object, "status")
-	require.NoError(t, err)
-	require.True(t, found, "job should have status")
-
-	state, found, err := unstructured.NestedString(status, "state")
-	require.NoError(t, err)
-	require.True(t, found)
-	require.Equal(t, "error", state, "job should have error state")
-
-	message, found, err := unstructured.NestedString(status, "message")
-	require.NoError(t, err)
-	require.True(t, found)
-	require.Contains(t, message, "export functionality is disabled by configuration")
 }

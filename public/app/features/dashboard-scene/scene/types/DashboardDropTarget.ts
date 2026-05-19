@@ -1,4 +1,4 @@
-import { SceneObject, SceneGridItemLike } from '@grafana/scenes';
+import { type SceneObject, type SceneGridItemLike } from '@grafana/scenes';
 
 /** Data attribute used to identify auto grid items as drop targets */
 export const AUTO_GRID_ITEM_DROP_TARGET_ATTR = 'data-auto-grid-item-drop-target';

@@ -15,7 +15,6 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/setting"
@@ -65,9 +64,10 @@ func newDenyAllProvider(t *testing.T) grpcserver.Provider {
 	denyAll := interceptors.AuthenticatorFunc(func(context.Context) (context.Context, error) {
 		return nil, status.Error(codes.Unauthenticated, "denied by global auth")
 	})
+	cfg := setting.NewCfg()
+	cfg.GRPCServer.Enabled = true
 	provider, err := grpcserver.ProvideService(
-		setting.NewCfg(),
-		featuremgmt.WithFeatures(featuremgmt.FlagGrpcServer),
+		cfg,
 		denyAll,
 		noop.NewTracerProvider().Tracer(""),
 		prometheus.NewRegistry(),

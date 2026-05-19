@@ -11,7 +11,7 @@ import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { makeAMLink } from '../../utils/misc';
 import { isDisabled } from '../../utils/mute-timings';
 
-import { MuteTiming, useDeleteMuteTiming } from './useMuteTimings';
+import { type MuteTiming, useDeleteMuteTiming } from './useMuteTimings';
 
 interface MuteTimingActionsButtonsProps {
   muteTiming: MuteTiming;

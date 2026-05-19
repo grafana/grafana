@@ -1,36 +1,53 @@
 import { difference } from 'lodash';
 import { memo, useEffect } from 'react';
 
-import { fieldReducers, SelectableValue, FieldReducerInfo } from '@grafana/data';
+import { fieldReducers, type FieldReducerInfo } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
-import { Select } from '../Select/Select';
+import { Combobox, type ComboboxProps } from '../Combobox/Combobox';
+import { MultiCombobox, type MultiComboboxProps } from '../Combobox/MultiCombobox';
+import { type ComboboxOption } from '../Combobox/types';
+import { selectableValueToComboboxOption } from '../Combobox/utils';
 
-export interface Props {
-  placeholder?: string;
-  onChange: (stats: string[]) => void;
+import { pickComboboxLayout } from './pickComboboxLayout';
+
+/** Props managed by StatsPicker — forwarded combobox props must not replace these. */
+type ComboboxManagedProps = 'value' | 'options' | 'onChange' | 'isClearable' | 'width' | 'minWidth' | 'maxWidth';
+
+/** Forwarded props (managed keys + layout are applied after the spread). */
+type MultiSpread = Omit<MultiComboboxProps<string>, ComboboxManagedProps>;
+type SingleSpread = Omit<ComboboxProps<string>, ComboboxManagedProps>;
+
+interface BaseProps {
   stats: string[];
-  allowMultiple?: boolean;
+  onChange: (stats: string[]) => void;
   defaultStat?: string;
-  className?: string;
-  width?: number;
-  menuPlacement?: 'auto' | 'bottom' | 'top';
-  inputId?: string;
+  width?: number | 'auto';
+  minWidth?: number;
+  maxWidth?: number;
   filterOptions?: (ext: FieldReducerInfo) => boolean;
 }
 
-export const StatsPicker = memo<Props>(
+type MultiProps = MultiSpread & { allowMultiple: true };
+type SingleProps = SingleSpread & { allowMultiple?: false };
+
+export type StatsPickerProps = BaseProps & (MultiProps | SingleProps);
+
+export const StatsPicker = memo<StatsPickerProps>(
   ({
-    placeholder,
+    placeholder = t('grafana-ui.stats-picker.placeholder', 'Choose'),
     onChange,
     stats,
     allowMultiple = false,
     defaultStat,
-    className,
     width,
-    menuPlacement,
-    inputId,
+    minWidth,
+    maxWidth,
     filterOptions,
+    ...rest
   }) => {
+    const layout = pickComboboxLayout(width, minWidth, maxWidth);
+
     useEffect(() => {
       const current = fieldReducers.list(stats);
       if (current.length !== stats.length) {
@@ -52,28 +69,43 @@ export const StatsPicker = memo<Props>(
       }
     }, [stats, allowMultiple, defaultStat, onChange]);
 
-    const onSelectionChange = (item: SelectableValue<string>) => {
-      if (Array.isArray(item)) {
-        onChange(item.map((v) => v.value));
-      } else {
-        onChange(item && item.value ? [item.value] : []);
-      }
+    const select = fieldReducers.selectOptions(stats, filterOptions);
+    const options = select.options.map((v) => selectableValueToComboboxOption(v)).filter((v) => !!v);
+    const value = select.current.map((v) => selectableValueToComboboxOption(v)).filter((v) => !!v);
+
+    if (allowMultiple) {
+      return (
+        <MultiCombobox
+          {...rest}
+          {...layout}
+          value={value}
+          options={options}
+          placeholder={placeholder}
+          isClearable={!defaultStat}
+          onChange={(items: Array<ComboboxOption<string>>) => onChange(items.map((v) => v.value))}
+        />
+      );
+    }
+
+    const commonOptions = {
+      ...rest,
+      ...layout,
+      value: value[0],
+      options,
+      placeholder,
     };
 
-    const select = fieldReducers.selectOptions(stats, filterOptions);
-    return (
-      <Select
-        value={select.current}
-        className={className}
-        isClearable={!defaultStat}
-        isMulti={allowMultiple}
-        width={width}
-        isSearchable={true}
-        options={select.options}
-        placeholder={placeholder}
-        onChange={onSelectionChange}
-        menuPlacement={menuPlacement}
-        inputId={inputId}
+    return defaultStat ? (
+      <Combobox
+        {...commonOptions}
+        isClearable={false}
+        onChange={(item: ComboboxOption | null) => onChange(item && item.value ? [item.value] : [])}
+      />
+    ) : (
+      <Combobox
+        {...commonOptions}
+        isClearable={true}
+        onChange={(item: ComboboxOption | null) => onChange(item && item.value ? [item.value] : [])}
       />
     );
   }

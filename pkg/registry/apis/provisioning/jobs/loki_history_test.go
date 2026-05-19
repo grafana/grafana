@@ -47,6 +47,11 @@ func TestLokiJobHistory_WriteJob(t *testing.T) {
 				Folder:  "dashboards",
 				Branch:  "main",
 				Path:    "/exported",
+				Resources: []provisioning.ResourceRef{{
+					Name:  "selected-dashboard",
+					Kind:  "Dashboard",
+					Group: "dashboard.grafana.app",
+				}},
 			},
 			Migrate: &provisioning.MigrateJobOptions{
 				Message: "Migration test",

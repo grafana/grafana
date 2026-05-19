@@ -1,12 +1,12 @@
-import { IconName } from '@grafana/data';
+import { type IconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { BadgeColor } from '@grafana/ui';
-import { RevisionModel } from 'app/core/components/VersionHistory/VersionHistoryComparison';
+import { type BadgeColor } from '@grafana/ui';
+import { type RevisionModel } from 'app/core/components/VersionHistory/VersionHistoryComparison';
 import {
-  GrafanaAlertRuleDTOField,
-  GrafanaRuleDefinition,
-  RulerGrafanaRuleDTO,
-  TopLevelGrafanaRuleDTOField,
+  type GrafanaAlertRuleDTOField,
+  type GrafanaRuleDefinition,
+  type RulerGrafanaRuleDTO,
+  type TopLevelGrafanaRuleDTOField,
 } from 'app/types/unified-alerting-dto';
 
 import { grafanaAlertPropertiesToIgnore } from '../AlertVersionHistory';

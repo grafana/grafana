@@ -107,7 +107,7 @@ Notification template preview is only for Grafana Alertmanager.
 
 To preview your notification templates:
 
-1. Navigate to **Alerts&IRM** -> **Alerting** -> **Contact points** -> **Notification Templates**.
+1. Navigate to **Alerts & IRM** -> **Alerting** -> **Notification configuration**, then select the **Templates** tab.
 1. Click **+ New notification template** or edit an existing template group.
 1. Add or update your template content.
 

@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/dskit/services"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dataplaneaggregator "github.com/grafana/grafana/pkg/aggregator/apiserver"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -204,6 +205,13 @@ func ProvideService(
 			s.handler.ServeHTTP(resp, req)
 		}
 		k8sRoute.Any("/features.grafana.app/v0alpha1/*", handler)
+		// Allow unauthenticated GET access to snapshots and the dashboard subresource.
+		// Snapshots are shared via URL with the key, so they are always publicly accessible.
+		// Authorization is enforced by the snapshot authorizer.
+		snapshotPath := "/" + dashv0.GROUP + "/" + dashv0.VERSION + "/namespaces/:namespace/snapshots/:name"
+		k8sRoute.Get(snapshotPath, handler)
+		k8sRoute.Get(snapshotPath+"/dashboard", handler)
+
 		k8sRoute.Any("/", middleware.ReqSignedIn, handler)
 		k8sRoute.Any("/*", middleware.ReqSignedIn, handler)
 	}
@@ -289,6 +297,13 @@ func (s *service) start(ctx context.Context) error {
 	}
 	groupVersions = append(groupVersions, additionalGroupVersions...)
 
+	// reorder so the preferred version, if set in the config.ini, is first in the slice.
+	// this will impact what version is stored in unified storage.
+	groupVersions, err = ReorderGroupVersionsForLegacyCodec(s.log, s.cfg, s.scheme, groupVersions)
+	if err != nil {
+		return fmt.Errorf("preferred_api_version: %w", err)
+	}
+
 	o := grafanaapiserveroptions.NewOptions(s.codecs.LegacyCodec(groupVersions...))
 
 	// Register authorizers from app installers
@@ -323,6 +338,10 @@ func (s *service) start(ctx context.Context) error {
 	apiResourceConfig.EnableVersions(groupVersions...)
 
 	if err := o.APIEnablementOptions.ApplyTo(&serverConfig.Config, apiResourceConfig, s.scheme); err != nil {
+		return err
+	}
+
+	if err := applyPreferredAPIVersions(s.log, s.cfg, s.scheme, apiResourceConfig); err != nil {
 		return err
 	}
 
@@ -462,7 +481,7 @@ func (s *service) start(ctx context.Context) error {
 			if !isDataplaneAggregatorEnabled {
 				runningServer, err = s.aggregatorRunner.Run(ctx, transport, s.stoppedCh)
 				if err != nil {
-					s.log.Error("aggregator runner failed to run", "error", err)
+					s.log.Error("aggregator runner failed to run", "err", err)
 					return err
 				}
 			} else {

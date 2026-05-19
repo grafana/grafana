@@ -2,7 +2,7 @@ import { lazy, Suspense } from 'react';
 
 import { t } from '@grafana/i18n';
 
-import { AbsolutePathOptions, Props } from './AddToDashboardForm';
+import { type AbsolutePathOptions, type Props } from './AddToDashboardForm';
 
 // Lazy load the component
 const AddToDashboardFormLazy = lazy(() => import('./AddToDashboardForm'));

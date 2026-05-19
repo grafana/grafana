@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../../enterprise/auditing/
-description: Auditing
+description: Track and log important changes to your Grafana instance using audit logs.
 keywords:
   - grafana
   - auditing
@@ -17,33 +17,32 @@ weight: 800
 
 # Audit a Grafana instance
 
-Auditing allows you to track important changes to your Grafana instance. By default, audit logs are logged to file but the auditing feature also supports sending logs directly to Loki.
+Auditing allows you to track important changes to your Grafana instance. Depending on your deployment, you can send audit logs to a file, a Loki-compatible endpoint, or the Grafana default logger.
 
 {{< admonition type="note" >}}
-To enable sending Grafana Cloud audit logs to your Grafana Cloud Logs instance, please [file a support ticket](/profile/org/tickets/new). Note that standard ingest and retention rates apply for ingesting these audit logs.
+Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](https://grafana.com/docs/grafana-cloud/).
 {{< /admonition >}}
 
 Only API requests or UI actions that trigger an API request generate an audit log.
 
-{{< admonition type="note" >}}
-Available in [Grafana Enterprise](../../../introduction/grafana-enterprise/) and [Grafana Cloud](/docs/grafana-cloud).
-{{< /admonition >}}
+- **Grafana Enterprise** supports all three exporters: file, Loki, and console.
+- **Grafana Cloud** uses the Loki exporter. To enable audit logs for your Grafana Cloud instance, [file a support ticket](/profile/org/tickets/new). Standard ingest and retention rates apply.
 
-## Audit logs
+## Understand audit logs
 
 Audit logs are JSON objects representing user actions like:
 
 - Modifications to resources such as dashboards and data sources.
 - A user failing to log in.
 
-### Format
+### Review the audit log format
 
 Audit logs contain the following fields. The fields followed by **\*** are always available, the others depend on the type of action logged.
 
 | Field name              | Type    | Description                                                                                                                                                                                                              |
 | ----------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `timestamp`\*           | string  | The date and time the request was made, in coordinated universal time (UTC) using the [RFC3339](https://tools.ietf.org/html/rfc3339#section-5.6) format.                                                                 |
-| `user`\*                | object  | Information about the user that made the request. Either one of the `UserID` or `ApiKeyID` fields will contain content if `isAnonymous=false`.                                                                           |
+| `user`\*                | object  | Information about the user that made the request. Either one of the `UserID` or `ApiKeyID` fields contains content if `isAnonymous=false`.                                                                               |
 | `user.userId`           | number  | ID of the Grafana user that made the request.                                                                                                                                                                            |
 | `user.orgId`\*          | number  | Current organization of the user that made the request.                                                                                                                                                                  |
 | `user.orgRole`          | string  | Current role of the user that made the request.                                                                                                                                                                          |
@@ -79,7 +78,7 @@ The `additionalData` field can contain the following information:
 | `terminationReason` | `logout` | The reason why the user logged out, such as a manual logout or a token expiring. |
 | `billing_role` | `billing-information` | The billing role associated with the billing information being sent. |
 
-### Recorded actions
+### Identify recorded actions
 
 The audit logs include records about the following categories of actions. Each action is
 distinguished by the `action` and `resources[...].type` fields in the JSON record.
@@ -128,9 +127,7 @@ For example, creating an API key produces an audit log like this:
 Some actions can only be distinguished by their `requestUri` fields. For those actions, the relevant
 pattern of the `requestUri` field is given.
 
-Note that almost all these recorded actions are actions that correspond to API requests or UI actions that
-trigger an API request. Therefore, the action `{"action": "email", "resources": [{"type": "report"}]}` corresponds
-to the action when the user requests a report's preview to be sent through email, and not the scheduled ones.
+Almost all recorded actions correspond to API requests or UI actions that trigger an API request. For example, the action `{"action": "email", "resources": [{"type": "report"}]}` corresponds to a user-initiated email preview of a report, not a scheduled send.
 
 #### Sessions
 
@@ -145,7 +142,7 @@ to the action when the user requests a report's preview to be sent through email
 
 \* Where `AUTH-MODULE` is the name of the authentication module: `grafana`, `saml`,
 `ldap`, etc. \
-\*\* Includes manual log out, token expired/revoked, and [SAML Single Logout](../configure-authentication/saml/#single-logout).
+\*\* Includes manual log out, token expired/revoked, and [SAML Single Logout](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/#single-logout).
 
 #### Service accounts
 
@@ -340,7 +337,7 @@ external group.
 In addition to the actions listed above, any HTTP request (`POST`, `PATCH`, `PUT`, and `DELETE`)
 against the API is recorded with one of the following generic actions.
 
-Furthermore, you can also record `GET` requests. See below how to configure it.
+You can also record `GET` requests. Refer to [Configure audit logging](#configure-audit-logging) to enable this.
 
 | Action         | Distinguishing fields          |
 | -------------- | ------------------------------ |
@@ -350,18 +347,27 @@ Furthermore, you can also record `GET` requests. See below how to configure it.
 | DELETE request | `{"action": "delete"}`         |
 | GET request    | `{"action": "retrieve"}`       |
 
-## Configuration
+## Configure audit logging
 
 {{< admonition type="note" >}}
 The auditing feature is disabled by default.
 {{< /admonition >}}
 
-Audit logs can be saved into files, sent to a Loki instance or sent to the Grafana default logger. By default, only the file exporter is enabled.
-You can choose which exporter to use in the [configuration file](../../configure-grafana/).
+Audit logs can be saved into files, sent to a Loki-compatible endpoint, or sent to the Grafana default logger. You can choose which exporter to use in the [configuration file](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/).
 
 Options are `file`, `loki`, and `logger`. Use spaces to separate multiple modes, such as `file loki`.
 
-By default, when a user creates or updates a dashboard, its content will not appear in the logs as it can significantly increase the size of your logs. If this is important information for you and you can handle the amount of data generated, then you can enable this option in the configuration.
+Not all exporters are available in every deployment:
+
+| Exporter | Grafana Enterprise | Grafana Cloud |
+| -------- | ------------------ | ------------- |
+| File     | Yes (default)      | No            |
+| Loki     | Yes                | Yes (default) |
+| Console  | Yes                | No            |
+
+By default, dashboard content doesn't appear in audit logs because it can significantly increase log size. To include dashboard content, enable the `log_dashboard_content` option.
+
+Data source query request and response bodies are also excluded by default. Enabling `log_datasource_query_request_body` or `log_datasource_query_response_body` significantly increases log volume and may expose sensitive data such as query parameters, credentials, or personally identifiable information.
 
 ```ini
 [auditing]
@@ -389,6 +395,10 @@ Each exporter has its own configuration fields.
 
 ### File exporter
 
+{{< admonition type="note" >}}
+The file exporter is only available in Grafana Enterprise.
+{{< /admonition >}}
+
 Audit logs are saved into files. You can configure the folder to use to save these files. Logs are rotated when the file size is exceeded and at the start of a new day.
 
 ```ini
@@ -403,7 +413,7 @@ max_file_size_mb = 256
 
 ### Loki exporter
 
-Audit logs are sent to a [Loki](/oss/loki/) service, through HTTP or gRPC.
+Audit logs are sent to a [Loki](https://grafana.com/oss/loki/)-compatible endpoint through HTTP or gRPC. You can use this exporter to send logs to Grafana Cloud Logs, a self-hosted Loki instance, or any other service that accepts the Loki push API.
 
 {{< admonition type="note" >}}
 The HTTP option for the Loki exporter is available only in Grafana Enterprise version 7.4 and later.
@@ -421,7 +431,7 @@ tls = true
 # The tenant ID is required to interact with Loki running in multi-tenant mode.
 tenant_id =
 # Only available for the HTTP client. Disabled by default.
-# How long to wait before sending a request to Loki with the batch of events. Uses duration format: e.g. 5s, 1m
+# How long to wait before sending a request to Loki with the batch of events. Uses duration format, for example, 5s, 1m
 # Whichever threshold is hit first between `batch_wait_duration` and `batch_size_bytes` triggers the batch to be sent to Loki.
 # If the wait duration is very long and the `batch_size_bytes` is very high, events might take a long time to be sent.
 # To enable batching, you must also set the `batch_size_bytes` configuration option.
@@ -430,11 +440,11 @@ batch_wait_duration =
 # How many events, in bytes, to accumulate in a single batch before sending it to Loki.
 # Whichever threshold is hit first between `batch_wait_duration` and `batch_size_bytes` triggers the batch to be sent to Loki.
 # If you want to always wait for the `batch_wait_duration`, set `batch_size_bytes` to a very high number.
-#To enable batching, you must also set the `batch_wait_duration` configuration option.
+# To enable batching, you must also set the `batch_wait_duration` configuration option.
 batch_size_bytes =
 ```
 
-If you have multiple Grafana instances sending logs to the same Loki service or if you are using Loki for non-audit logs, audit logs come with additional labels to help identifying them:
+If you have multiple Grafana instances sending logs to the same Loki service or if you use Loki for non-audit logs, audit logs come with additional labels to help identify them:
 
 | Label            | Value                                                |
 | ---------------- | ---------------------------------------------------- |
@@ -442,7 +452,7 @@ If you have multiple Grafana instances sending logs to the same Loki service or 
 | grafana_instance | Application URL                                      |
 | kind             | `auditing`                                           |
 
-When basic authentication is needed to ingest logs in your Loki instance, you can specify credentials in the URL field. For example:
+If your Loki instance requires basic authentication, specify credentials in the URL field. For example:
 
 ```ini
 # Set the communication protocol to use with Loki (can be grpc or http)
@@ -453,4 +463,8 @@ url = user:password@localhost:3000
 
 ### Console exporter
 
-Audit logs are sent to the Grafana default logger. The audit logs use the `auditing.console` logger and are logged on `debug`-level, learn how to enable debug logging in the [log configuration](../../configure-grafana/#log) section of the documentation. Accessing the audit logs in this way is not recommended for production use.
+{{< admonition type="note" >}}
+The console exporter is only available in Grafana Enterprise.
+{{< /admonition >}}
+
+Audit logs are sent to the Grafana default logger. The audit logs use the `auditing.console` logger and are logged on `debug`-level. To learn how to enable debug logging, refer to the [log configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#log) section. Accessing the audit logs in this way isn't recommended for production use.

@@ -3,17 +3,17 @@ import { useState } from 'react';
 import { useDebounce, useDeepCompareEffect } from 'react-use';
 
 import { AlertLabels } from '@grafana/alerting/unstable';
-import { GrafanaTheme2, dateTime } from '@grafana/data';
+import { type GrafanaTheme2, dateTime } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Badge, Icon, LoadingPlaceholder, Tooltip, useStyles2 } from '@grafana/ui';
-import { MatcherFieldValue } from 'app/features/alerting/unified/types/silence-form';
+import { type MatcherFieldValue } from 'app/features/alerting/unified/types/silence-form';
 import { matcherFieldToMatcher } from 'app/features/alerting/unified/utils/alertmanager';
 import { MATCHER_ALERT_RULE_UID } from 'app/features/alerting/unified/utils/constants';
-import { AlertmanagerAlert, Matcher, MatcherOperator } from 'app/plugins/datasource/alertmanager/types';
+import { type AlertmanagerAlert, type Matcher, MatcherOperator } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { isNullDate } from '../../utils/time';
-import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
+import { DynamicTable, type DynamicTableColumnProps, type DynamicTableItemProps } from '../DynamicTable';
 
 import { AmAlertStateTag } from './AmAlertStateTag';
 

@@ -2,11 +2,11 @@ import { render, screen } from '@testing-library/react';
 
 import { config } from '@grafana/runtime';
 import { useGetRepositoryFilesWithPathQuery } from 'app/api/clients/provisioning/v0alpha1';
-import { DashboardPageRouteSearchParams } from 'app/features/dashboard/containers/types';
+import { type DashboardPageRouteSearchParams } from 'app/features/dashboard/containers/types';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 import { DashboardRoutes } from 'app/types/dashboard';
 
-import { useGetResourceRepositoryView } from '../../hooks/useGetResourceRepositoryView';
+import { RepoViewStatus, useGetResourceRepositoryView } from '../../hooks/useGetResourceRepositoryView';
 
 import { DashboardPreviewBanner } from './DashboardPreviewBanner';
 
@@ -25,9 +25,13 @@ jest.mock('app/features/provisioning/hooks/usePullRequestParam', () => ({
   usePullRequestParam: jest.fn(),
 }));
 
-jest.mock('../../hooks/useGetResourceRepositoryView', () => ({
-  useGetResourceRepositoryView: jest.fn(),
-}));
+jest.mock('../../hooks/useGetResourceRepositoryView', () => {
+  const actual = jest.requireActual('../../hooks/useGetResourceRepositoryView');
+  return {
+    ...actual,
+    useGetResourceRepositoryView: jest.fn(),
+  };
+});
 
 jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   useGetRepositoryFilesWithPathQuery: jest.fn(),
@@ -113,6 +117,7 @@ function setup(props: Partial<DashboardPreviewBannerProps> = {}, overrides: Setu
   mockUseGetResourceRepositoryView.mockReturnValue({
     repository: defaultRepositoryView,
     repoType: 'github',
+    status: RepoViewStatus.Ready,
     isLoading: false,
     isInstanceManaged: false,
     isReadOnlyRepo: false,

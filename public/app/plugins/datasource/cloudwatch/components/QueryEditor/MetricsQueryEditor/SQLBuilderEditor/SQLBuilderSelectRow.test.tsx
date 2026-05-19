@@ -2,10 +2,10 @@ import { act, render, screen } from '@testing-library/react';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
 import {
-  CloudWatchMetricsQuery,
+  type CloudWatchMetricsQuery,
   MetricEditorMode,
   MetricQueryType,
-  SQLExpression,
+  type SQLExpression,
   QueryEditorExpressionType,
   QueryEditorPropertyType,
 } from '../../../../dataquery.gen';

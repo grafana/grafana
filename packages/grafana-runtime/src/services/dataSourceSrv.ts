@@ -1,6 +1,11 @@
-import { ScopedVars, DataSourceApi, DataSourceInstanceSettings, DataSourceRef } from '@grafana/data';
+import {
+  type ScopedVars,
+  type DataSourceApi,
+  type DataSourceInstanceSettings,
+  type DataSourceRef,
+} from '@grafana/data';
 
-import { RuntimeDataSource } from './RuntimeDataSource';
+import { type RuntimeDataSource } from './RuntimeDataSource';
 
 /**
  * This is the entry point for communicating with a datasource that is added as

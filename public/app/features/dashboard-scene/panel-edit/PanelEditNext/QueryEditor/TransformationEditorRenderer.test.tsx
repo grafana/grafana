@@ -1,10 +1,10 @@
 import { screen } from '@testing-library/react';
 
-import { DataTransformerInfo, TransformerRegistryItem } from '@grafana/data';
+import { type DataTransformerInfo, type TransformerRegistryItem } from '@grafana/data';
 
 import { TransformationEditorRenderer } from './TransformationEditorRenderer';
 import { renderWithQueryEditorProvider } from './testUtils';
-import { Transformation } from './types';
+import { type Transformation } from './types';
 
 // Prevent the real hook from running subscriptions against transformDataFrame.
 jest.mock('./hooks/useTransformationInputData', () => ({
@@ -36,7 +36,7 @@ const mockTransformation: DataTransformerInfo = {
 const mockRegistryItem: TransformerRegistryItem = {
   id: 'test-transform',
   name: 'Test Transform',
-  transformation: mockTransformation,
+  transformation: () => Promise.resolve(mockTransformation),
   editor: () => null,
   imageDark: '',
   imageLight: '',

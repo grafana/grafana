@@ -1,5 +1,5 @@
-import { PanelData, LoadingState, DataSourceApi, urlUtil, CoreApp } from '@grafana/data';
-import { reportMetaAnalytics, MetaAnalyticsEventName, DataRequestEventPayload } from '@grafana/runtime';
+import { type PanelData, LoadingState, type DataSourceApi, urlUtil, CoreApp } from '@grafana/data';
+import { reportMetaAnalytics, MetaAnalyticsEventName, type DataRequestEventPayload } from '@grafana/runtime';
 
 import { getDashboardSrv } from '../../dashboard/services/DashboardSrv';
 
@@ -25,7 +25,6 @@ export function emitDataRequestEvent(datasource: DataSourceApi) {
       source: data.request.app,
       datasourceName: datasource.name,
       datasourceUid: datasource.uid,
-      datasourceId: datasource.id, // temporary while we migrate to datasourceUid
       datasourceType: datasource.type,
       dataSize: 0,
       panelId: 0,
@@ -67,7 +66,6 @@ export function emitDataRequestEvent(datasource: DataSourceApi) {
 
     const dashboard = getDashboardSrv().getCurrent();
     if (dashboard) {
-      eventData.dashboardId = dashboard.id;
       eventData.dashboardName = dashboard.title;
       eventData.dashboardUid = dashboard.uid;
       eventData.folderName = dashboard.meta.folderTitle;

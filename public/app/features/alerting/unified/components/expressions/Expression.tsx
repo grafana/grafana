@@ -1,14 +1,14 @@
 import { css, cx } from '@emotion/css';
 import { uniqueId } from 'lodash';
-import { FC, useCallback, useState } from 'react';
+import { type FC, Suspense, lazy, useCallback, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import {
   CoreApp,
-  DataFrame,
-  GrafanaTheme2,
+  type DataFrame,
+  type GrafanaTheme2,
   LoadingState,
-  PanelData,
+  type PanelData,
   dateTimeFormat,
   isTimeSeriesFrames,
 } from '@grafana/data';
@@ -18,18 +18,17 @@ import { ClassicConditions } from 'app/features/expressions/components/ClassicCo
 import { Math } from 'app/features/expressions/components/Math';
 import { Reduce } from 'app/features/expressions/components/Reduce';
 import { Resample } from 'app/features/expressions/components/Resample';
-import { SqlExpr } from 'app/features/expressions/components/SqlExpressions/SqlExpr';
 import { Threshold } from 'app/features/expressions/components/Threshold';
 import {
-  ExpressionQuery,
+  type ExpressionQuery,
   ExpressionQueryType,
   expressionTypes,
   getExpressionLabel,
 } from 'app/features/expressions/types';
-import { AlertQuery, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
+import { type AlertQuery, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { usePagination } from '../../hooks/usePagination';
-import { RuleFormValues } from '../../types/rule-form';
+import { type RuleFormValues } from '../../types/rule-form';
 import { isGrafanaRecordingRuleByType } from '../../utils/rules';
 import { PopupCard } from '../HoverCard';
 import { Spacer } from '../Spacer';
@@ -37,6 +36,12 @@ import { AlertStateTag } from '../rules/AlertStateTag';
 
 import { ExpressionStatusIndicator } from './ExpressionStatusIndicator';
 import { formatLabels, formatSeriesValue, getSeriesLabels, getSeriesName, getSeriesValue, isEmptySeries } from './util';
+
+const SqlExpr = lazy(() =>
+  import('app/features/expressions/components/SqlExpressions/SqlExpr').then((module) => ({
+    default: module.SqlExpr,
+  }))
+);
 
 interface ExpressionProps {
   isAlertCondition?: boolean;
@@ -132,13 +137,15 @@ export const Expression: FC<ExpressionProps> = ({
 
         case ExpressionQueryType.sql:
           return (
-            <SqlExpr
-              onChange={(query) => onChangeQuery(query)}
-              query={query}
-              refIds={availableRefIds}
-              alerting
-              queries={[]}
-            />
+            <Suspense fallback={null}>
+              <SqlExpr
+                onChange={(query) => onChangeQuery(query)}
+                query={query}
+                refIds={availableRefIds}
+                alerting
+                queries={[]}
+              />
+            </Suspense>
           );
 
         default:

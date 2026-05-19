@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 import { memo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 
-import { CanvasElementItem, CanvasElementProps } from '../element';
+import { type CanvasElementItem, type CanvasElementProps } from '../element';
 
 const NotFoundDisplay = memo(({ config }: CanvasElementProps) => {
   const styles = useStyles2(getStyles);

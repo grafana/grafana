@@ -14,8 +14,9 @@ import (
 )
 
 var (
-	errInvalidPassword    = errutil.Unauthorized("password-auth.invalid", errutil.WithPublicMessage("Invalid password or username"))
-	errPasswordAuthFailed = errutil.Unauthorized("password-auth.failed", errutil.WithPublicMessage("Invalid username or password"))
+	errInvalidPassword                    = errutil.Unauthorized("password-auth.invalid", errutil.WithPublicMessage("Invalid password or username"))
+	errPasswordAuthFailed                 = errutil.Unauthorized("password-auth.failed", errutil.WithPublicMessage("Invalid username or password"))
+	errPasswordClientTooManyLoginAttempts = errutil.Unauthorized("login-attempt.blocked", errutil.WithPublicMessage("Login temporarily blocked"))
 )
 
 var _ authn.PasswordClient = new(Password)
@@ -49,7 +50,7 @@ func (c *Password) AuthenticatePassword(ctx context.Context, r *authn.Request, u
 		return nil, err
 	}
 	if !ok {
-		return nil, errPasswordlessClientTooManyLoginAttempts.Errorf("too many consecutive incorrect login attempts for IP address - login for IP address temporarily blocked")
+		return nil, errPasswordClientTooManyLoginAttempts.Errorf("too many consecutive incorrect login attempts for IP address - login for IP address temporarily blocked")
 	}
 
 	if len(password) == 0 {

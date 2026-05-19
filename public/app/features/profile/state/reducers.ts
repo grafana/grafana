@@ -1,13 +1,13 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { isEmpty, isString, set } from 'lodash';
 
-import { dateTimeFormatTimeAgo, setWeekStart, TimeZone } from '@grafana/data';
-import { getWeekStart, WeekStart } from '@grafana/ui';
+import { dateTimeFormatTimeAgo, setWeekStart, type TimeZone } from '@grafana/data';
+import { getWeekStart, type WeekStart } from '@grafana/ui';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
-import { ThunkResult } from 'app/types/store';
-import { Team } from 'app/types/teams';
-import { UserDTO, UserOrg, UserSession } from 'app/types/user';
+import { type ThunkResult } from 'app/types/store';
+import { type Team } from 'app/types/teams';
+import { type UserDTO, type UserOrg, type UserSession } from 'app/types/user';
 
 export interface UserState {
   orgId: number;

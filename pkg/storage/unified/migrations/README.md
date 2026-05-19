@@ -14,6 +14,8 @@ The migration system transfers resources from legacy SQL tables to Grafana's uni
 | Dashboards | `dashboard.grafana.app` | `dashboard` |
 | Playlists | `playlist.grafana.app` | `playlist` |
 | Short URLs | `shorturl.grafana.app` | `short_url` |
+| Datasources | `*.datasource.grafana.app` | `data_source` |
+| Query cache configs | `querycaching.grafana.app` | `data_source_cache` |
 
 ## Architecture
 
@@ -50,6 +52,10 @@ The migration system transfers resources from legacy SQL tables to Grafana's uni
 - **`resources.go`**: Migration registration and config validation
 - **`migrator.go`**: `UnifiedMigrator` interface, BulkProcess streaming, and index rebuilding with retry
 - **`validator.go`**: `CountValidator` and `FolderTreeValidator` implementations
+- **`table_locker.go`**: `MigrationTableLocker` interface — locks legacy tables during migration
+- **`table_renamer.go`**: `MigrationTableRenamer` interface — renames legacy tables post-migration
+- **`status_reader.go`**: `MigrationStatusReader` — determines storage mode (Legacy/DualWrite/Unified) from migration log + config, with caching
+- **`contract/migrations.go`**: Shared interfaces (`UnifiedStorageMigrationService`, `MigrationStatusReader`) and `StorageMode` type, kept in a sub-package to avoid import cycles
 - **`service.go`**: `UnifiedStorageMigrationServiceImpl` — Wire-provided entry point that runs migrations on startup
 
 #### Migration registrars (owned by each team)
@@ -57,6 +63,8 @@ The migration system transfers resources from legacy SQL tables to Grafana's uni
 - **`pkg/registry/apis/dashboard/migration_registrar.go`**: `FoldersDashboardsMigration` — folders and dashboards definition
 - **`pkg/registry/apps/playlist/migration_registrar.go`**: `PlaylistMigration` — playlists definition
 - **`pkg/registry/apps/shorturl/migration_registrar.go`**: `ShortURLMigration` — short URLs definition
+- **`pkg/registry/apis/datasource/migrator/registrar.go`**: `DataSourceMigration` — datasources definition
+- **`pkg/registry/apps/querycaching/migration_registrar.go`**: `QueryCacheConfigMigration` — query cache configs definition
 
 Each team also provides a migrator interface in a `migrator/` subpackage (e.g., `pkg/registry/apis/dashboard/migrator/`).
 
@@ -122,15 +130,6 @@ Compares resource counts between legacy SQL and unified storage. Accounts for re
 
 Verifies folder parent-child relationships are preserved after migration by comparing parent maps built from both legacy and unified storage.
 
-## Configuration
-
-To enable migrations, set the following in your Grafana configuration:
-
-```ini
-[unified_storage]
-disable_data_migrations = false
-```
-
 ## Monitoring
 
 ### Log messages
@@ -138,14 +137,14 @@ disable_data_migrations = false
 Successful migration:
 
 ```
-info: storage.unified.migration_runner Starting migration for all organizations
-info: storage.unified.migration_runner Migration completed successfully for all organizations
+info: storage.unified.migration_runner.{id} Starting migration for all organizations
+info: storage.unified.migration_runner.{id} Migration completed successfully for all organizations
 ```
 
 Failed migration:
 
 ```
-error: storage.unified.migration_runner Migration validation failed
+error: storage.unified.migration_runner.{id} Migration validation failed
 ```
 
 ### Migration status
@@ -246,6 +245,9 @@ func MyResourceMigration(migrator migrator.MyResourceMigrator) migrations.Migrat
         },
         // Rename legacy tables after successful migration to prevent stale writes.
         RenameTables: []string{"my_resource_table"},
+        // Set to true if new deployments no longer create the legacy table.
+        // The migration will be skipped rather than failing when the table is absent.
+        SkipWhenMissing: false,
     }
 }
 ```
@@ -267,12 +269,14 @@ func provideMigrationRegistry(
     dashMigrator dashboardmigrator.FoldersDashboardsMigrator,
     playlistMigrator playlistmigrator.PlaylistMigrator,
     shortURLMigrator shorturlmigrator.ShortURLMigrator,
+    dataSourceMigrator dsmigrator.DataSourceMigrator,
     myResourceMigrator myresourcemigrator.MyResourceMigrator, // <-- add parameter
 ) *unifiedmigrations.MigrationRegistry {
     r := unifiedmigrations.NewMigrationRegistry()
     r.Register(dashboardmigration.FoldersDashboardsMigration(dashMigrator))
     r.Register(playlistmigration.PlaylistMigration(playlistMigrator))
     r.Register(shorturlmigration.ShortURLMigration(shortURLMigrator))
+    r.Register(dsmigrator.DataSourceMigration(dataSourceMigrator))
     r.Register(myresource.MyResourceMigration(myResourceMigrator)) // <-- register
     return r
 }
@@ -360,7 +364,10 @@ The `testcases/` package provides reusable test cases for each resource migratio
 type ResourceMigratorTestCase interface {
     Name() string
     Resources() []schema.GroupVersionResource
-    Setup(t *testing.T, helper *apis.K8sTestHelper)
+    FeatureToggles() []string
+    RenameTables() []string
+    AddLegacySQLMigrations(mg *migrator.Migrator)
+    Setup(t *testing.T, helper *apis.K8sTestHelper) bool
     Verify(t *testing.T, helper *apis.K8sTestHelper, shouldExist bool)
 }
 ```
@@ -371,5 +378,7 @@ Existing test cases:
 |-----------|------|----------------|
 | `NewFoldersAndDashboardsTestCase` | `testcases/folders_dashboards.go` | Nested folders, dashboards with library panels |
 | `NewPlaylistsTestCase` | `testcases/playlists.go` | Playlists with dashboard UID, tag, and mixed items |
+| `NewShortURLTestCase` | `testcases/shorturls.go` | Short URL entries |
+| `NewDataSourceTestCase` | `testcases/datasources.go` | Datasource entries with secure JSON data |
 
 Each resource owner is responsible for writing and maintaining a test case for their resource as part of the development process. When adding a new resource migration, create a corresponding test case in `testcases/` that sets up representative data via `Setup` and verifies it via `Verify`. Extend existing test cases to cover additional scenarios as needed (e.g., edge cases, specific field mappings, or error conditions).

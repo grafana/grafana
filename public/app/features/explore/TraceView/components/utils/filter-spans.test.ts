@@ -14,7 +14,7 @@
 
 import { DEFAULT_SPAN_FILTERS, DEFAULT_TAG_FILTERS } from 'app/features/explore/state/constants';
 
-import { TraceSpan } from '../types/trace';
+import { type TraceSpan } from '../types/trace';
 
 import { filterSpans } from './filter-spans';
 

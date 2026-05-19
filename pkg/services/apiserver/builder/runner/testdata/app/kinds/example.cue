@@ -1,23 +1,23 @@
 package core
 
 externalName: {
-	kind: "Example"
+	kind:  "Example"
 	group: "example"
 	apiResource: {
 		groupOverride: "example.grafana.app"
 	}
 	codegen: {
 		frontend: false
-		backend: true
+		backend:  true
 	}
 	pluralName: "Examples"
-	current: "v1"
+	current:    "v1"
 	versions: {
 		"v1": {
 			schema: {
 				spec: {
 					a: string
-                    b: string
+					b: string
 				}
 			}
 		}

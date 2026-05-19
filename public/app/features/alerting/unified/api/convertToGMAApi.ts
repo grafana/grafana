@@ -1,4 +1,4 @@
-import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import type { ConvertAlertmanagerResponse } from '../components/import-to-gma/types';
 
@@ -22,6 +22,8 @@ export const convertToGMAApi = alertingApi.injectEndpoints({
         targetDatasourceUID?: string;
         /** Extra labels to add to all imported rules (format: key=value,key2=value2) */
         extraLabels?: string;
+        /** JSON-encoded notification settings applied to all imported alerting rules */
+        notificationSettings?: string;
       }
     >({
       query: ({
@@ -32,6 +34,7 @@ export const convertToGMAApi = alertingApi.injectEndpoints({
         dataSourceUID,
         targetDatasourceUID,
         extraLabels,
+        notificationSettings,
       }) => ({
         url: `/api/convert/prometheus/config/v1/rules`,
         method: 'POST',
@@ -44,6 +47,7 @@ export const convertToGMAApi = alertingApi.injectEndpoints({
           ...(targetFolderUID ? { 'X-Grafana-Alerting-Folder-UID': targetFolderUID } : {}),
           ...(targetDatasourceUID ? { 'X-Grafana-Alerting-Target-Datasource-UID': targetDatasourceUID } : {}),
           ...(extraLabels ? { 'X-Grafana-Alerting-Extra-Labels': extraLabels } : {}),
+          ...(notificationSettings ? { 'X-Grafana-Alerting-Notification-Settings': notificationSettings } : {}),
         },
       }),
     }),

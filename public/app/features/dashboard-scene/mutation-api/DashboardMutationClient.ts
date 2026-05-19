@@ -56,10 +56,14 @@ export class DashboardMutationClient implements MutationClient {
       return { success: false, error: validationResult.error, changes: [] };
     }
 
+    // Zod may return frozen or shared default objects. Deep-clone write payloads
+    // so downstream code (e.g. getPanelOptionsWithDefaults) can mutate in-place.
+    const payload = registration.readOnly ? validationResult.data : structuredClone(validationResult.data);
+
     const context: MutationContext = { scene: this.scene };
 
     try {
-      const result = await registration.handler(validationResult.data, context);
+      const result = await registration.handler(payload, context);
 
       if (result.success && !registration.readOnly) {
         this.scene.forceRender();
@@ -73,6 +77,10 @@ export class DashboardMutationClient implements MutationClient {
         changes: [],
       };
     }
+  }
+
+  getAvailableCommands(): string[] {
+    return Array.from(this.commands.keys());
   }
 
   private registerCommand(cmd: MutationCommand): void {

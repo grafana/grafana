@@ -1,4 +1,4 @@
-import { SceneObject, SceneObjectRef, SceneObjectState } from '@grafana/scenes';
+import { type SceneObject, type SceneObjectRef, type SceneObjectState } from '@grafana/scenes';
 
 export interface ModalSceneObjectLike {
   onDismiss: () => void;

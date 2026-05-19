@@ -8,7 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 
-	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
+	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -31,6 +31,10 @@ func ConvertToK8sResources(orgID int64, rules []definitions.InhibitionRule, name
 
 func ConvertToK8sResource(orgID int64, rule definitions.InhibitionRule, namespacer request.NamespaceMapper) *model.InhibitionRule {
 	i := model.InhibitionRule{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: kind.GroupVersionKind().GroupVersion().String(),
+			Kind:       kind.Kind(),
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            rule.Name,
 			Namespace:       namespacer(orgID),
@@ -70,9 +74,13 @@ func convertLabelsMatchersToK8s(matchers config.Matchers) []model.InhibitionRule
 }
 
 func convertToDomainModel(rule *model.InhibitionRule) (definitions.InhibitionRule, error) {
+	prov, err := ngmodels.ProvenanceFromString(rule.GetProvenanceStatus())
+	if err != nil {
+		return definitions.InhibitionRule{}, ngmodels.MakeErrInhibitionRuleInvalid(err)
+	}
 	result := definitions.InhibitionRule{
 		Name:       rule.Name,
-		Provenance: definitions.Provenance(ngmodels.ProvenanceNone),
+		Provenance: definitions.Provenance(prov),
 	}
 
 	// Convert source matchers from K8s format to prometheus format

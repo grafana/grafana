@@ -4,7 +4,7 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { createLokiDatasource } from '../../mocks/datasource';
 
-import { MonacoQueryFieldWrapper, Props } from './MonacoQueryFieldWrapper';
+import { MonacoQueryFieldWrapper, type Props } from './MonacoQueryFieldWrapper';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),

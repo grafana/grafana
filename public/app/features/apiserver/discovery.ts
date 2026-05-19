@@ -1,8 +1,8 @@
 import { lastValueFrom, map } from 'rxjs';
 
-import { FetchResponse, getBackendSrv } from '@grafana/runtime';
+import { type FetchResponse, getBackendSrv } from '@grafana/runtime';
 
-import { GroupVersionKind, ListMeta } from './types';
+import { type GroupVersionKind, type ListMeta } from './types';
 
 export type GroupDiscoveryResource = {
   resource: string;

@@ -1,16 +1,16 @@
 import { useState, useMemo, useEffect } from 'react';
 
 import {
-  FieldConfigSource,
+  type FieldConfigSource,
   getTimeZone,
-  PanelPlugin,
+  type PanelPlugin,
   PluginContextProvider,
   getPanelOptionsWithDefaults,
-  OptionDefaults,
+  type OptionDefaults,
   useFieldOverrides,
 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { getTemplateSrv, PanelRendererProps } from '@grafana/runtime';
+import { getTemplateSrv, type PanelRendererProps } from '@grafana/runtime';
 import { ErrorBoundaryAlert, useTheme2 } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 

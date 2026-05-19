@@ -1,11 +1,11 @@
-import { FormEvent, useMemo, useState } from 'react';
+import { type FormEvent, useMemo, useState } from 'react';
 
-import { DataFrame, SelectableValue, standardTransformersRegistry } from '@grafana/data';
+import { type DataFrame, type SelectableValue, standardTransformersRegistry } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { IconButton } from '@grafana/ui';
 import { TransformationPickerNg } from 'app/features/dashboard/components/TransformationsEditor/TransformationPickerNg';
 import {
-  FilterCategory,
+  type FilterCategory,
   VIEW_ALL_VALUE,
 } from 'app/features/dashboard/components/TransformationsEditor/TransformationsEditor';
 
@@ -40,7 +40,11 @@ export function TransformationsDrawer(props: TransformationsDrawerProps) {
     setDrawerState({ ...drawerState, ...{ selectedFilter } });
 
   const allTransformations = useMemo(
-    () => standardTransformersRegistry.list().sort((a, b) => (a.name > b.name ? 1 : b.name > a.name ? -1 : 0)),
+    () =>
+      standardTransformersRegistry
+        .list()
+        .filter((t) => !t.excludeFromPicker)
+        .sort((a, b) => (a.name > b.name ? 1 : b.name > a.name ? -1 : 0)),
     []
   );
 

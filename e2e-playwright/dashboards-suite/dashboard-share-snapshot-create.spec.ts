@@ -1,11 +1,9 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
-import { SnapshotCreateResponse } from '../../public/app/features/dashboard/services/SnapshotSrv';
+import { type SnapshotCreateResponse } from '../../public/app/features/dashboard/services/SnapshotSrv';
 
 test.use({
   featureToggles: {
-    scenes: true,
-    kubernetesDashboards: process.env.FORCE_V2_DASHBOARDS_API === 'true',
     dashboardNewLayouts: process.env.FORCE_V2_DASHBOARDS_API === 'true',
   },
 });

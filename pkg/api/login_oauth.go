@@ -1,6 +1,8 @@
 package api
 
 import (
+	"net/url"
+
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
@@ -40,7 +42,7 @@ func (hs *HTTPServer) OAuthLogin(reqCtx *contextmodel.ReqContext) {
 
 		//nolint:staticcheck // not yet migrated to OpenFeature
 		if hs.Features.IsEnabledGlobally(featuremgmt.FlagUseSessionStorageForRedirection) {
-			cookies.WriteCookie(reqCtx.Resp, "redirectTo", redirectTo, hs.Cfg.OAuthCookieMaxAge, hs.CookieOptionsFromCfg)
+			cookies.WriteCookie(reqCtx.Resp, "redirectTo", url.QueryEscape(redirectTo), hs.Cfg.OAuthCookieMaxAge, hs.CookieOptionsFromCfg)
 		}
 		if pkce := redirect.Extra[authn.KeyOAuthPKCE]; pkce != "" {
 			cookies.WriteCookie(reqCtx.Resp, OauthPKCECookieName, pkce, hs.Cfg.OAuthCookieMaxAge, hs.CookieOptionsFromCfg)

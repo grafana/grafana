@@ -6,16 +6,18 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func Test_Settings_LoadCloudWatchSettings(t *testing.T) {
-	settingCtx := backend.WithGrafanaConfig(context.Background(), backend.NewGrafanaCfg(map[string]string{
+	settingCtx := config.WithGrafanaConfig(context.Background(), config.NewGrafanaCfg(map[string]string{
 		awsds.AllowedAuthProvidersEnvVarKeyName: "default,keys,credentials",
 		awsds.AssumeRoleEnabledEnvVarKeyName:    "false",
 		awsds.SessionDurationEnvVarKeyName:      "10m",
@@ -228,7 +230,7 @@ func Test_Settings_LoadCloudWatchSettings(t *testing.T) {
 	})
 
 	t.Run("Should load settings from context", func(t *testing.T) {
-		settingCtx := backend.WithGrafanaConfig(context.Background(), backend.NewGrafanaCfg(map[string]string{
+		settingCtx := config.WithGrafanaConfig(context.Background(), config.NewGrafanaCfg(map[string]string{
 			awsds.AllowedAuthProvidersEnvVarKeyName:  "foo , bar,baz",
 			awsds.AssumeRoleEnabledEnvVarKeyName:     "false",
 			awsds.SessionDurationEnvVarKeyName:       "10m",

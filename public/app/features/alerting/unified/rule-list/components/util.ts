@@ -1,10 +1,12 @@
-import { addMilliseconds, formatDistanceToNowStrict, isBefore } from 'date-fns';
-import { ComponentProps } from 'react';
+import { addMilliseconds } from 'date-fns/addMilliseconds';
+import { formatDistanceToNowStrict } from 'date-fns/formatDistanceToNowStrict';
+import { isBefore } from 'date-fns/isBefore';
+import { type ComponentProps } from 'react';
 
-import { StateIcon } from '@grafana/alerting/unstable';
+import { type StateIcon } from '@grafana/alerting/unstable';
 import { dateTime, dateTimeFormat, isValidDate } from '@grafana/data';
-import { RuleHealth } from 'app/types/unified-alerting';
-import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
+import { type RuleHealth } from 'app/types/unified-alerting';
+import { type PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { isNullDate, parsePrometheusDuration } from '../../utils/time';
 
@@ -116,6 +118,13 @@ export function normalizeState(state?: PromAlertingRuleState): NormalizedState {
 }
 
 function isValidState(state: string): state is NonNullable<NormalizedState> {
-  const valid: Array<NonNullable<NormalizedState>> = ['normal', 'firing', 'pending', 'unknown', 'recovering'] as const;
+  const valid: Array<NonNullable<NormalizedState>> = [
+    'normal',
+    'firing',
+    'pending',
+    'unknown',
+    'recovering',
+    'inhibited',
+  ] as const;
   return valid.some((v) => v === state);
 }

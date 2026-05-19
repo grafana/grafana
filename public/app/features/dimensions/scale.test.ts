@@ -1,5 +1,5 @@
-import { DataFrame, FieldType } from '@grafana/data';
-import { ScaleDimensionConfig } from '@grafana/schema';
+import { type DataFrame, FieldType } from '@grafana/data';
+import { type ScaleDimensionConfig } from '@grafana/schema';
 
 import { getScaledDimension, validateScaleConfig } from './scale';
 

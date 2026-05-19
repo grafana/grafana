@@ -1,6 +1,6 @@
 import { range } from 'lodash';
 
-import { NavModelItem } from '@grafana/data';
+import { type NavModelItem } from '@grafana/data';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 
 import { buildPluginSectionNav } from './utils';

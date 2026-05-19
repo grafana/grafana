@@ -1,7 +1,13 @@
-import { DataFrame } from '@grafana/data';
+import { type DataFrame } from '@grafana/data';
 
 import { FIELD_NAMES } from '../constants';
-import { AlertRuleRow, EmptyLabelValue, GenericGroupedRow, InstanceCounts, WorkbenchRow } from '../types';
+import {
+  type AlertRuleRow,
+  EmptyLabelValue,
+  type GenericGroupedRow,
+  type InstanceCounts,
+  type WorkbenchRow,
+} from '../types';
 
 const EMPTY_COUNTS: InstanceCounts = { firing: 0, pending: 0 };
 const collator = new Intl.Collator(undefined, { sensitivity: 'base' });
@@ -17,16 +23,20 @@ function sumCounts(rows: WorkbenchRow[]): InstanceCounts {
 }
 
 /**
- * Pre-computes a map of ruleUID → InstanceCounts by summing Values per (ruleUID, alertstate).
+ * Pre-computes a map of (ruleUID[+groupValues]) → InstanceCounts by summing Values per
+ * (ruleUID, alertstate[, groupValue…]).
  *
  * Expects single-timestamp instant query data where deduplication has already been done
  * at the PromQL level. When groupBy labels are active the query produces multiple rows
- * per (ruleUID, alertstate) — one per group value — which are summed together.
+ * per (ruleUID, alertstate) — one per group value combination. The composite key
+ * `ruleUID:groupVal1:groupVal2:…` preserves the per-group breakdown so that each group
+ * can display its own count rather than a global total.
  */
 function buildRuleCountsMap(
   frame: DataFrame,
   fieldIndex: Map<string, number>,
-  ruleUIDValues: DataFrame['fields'][number]['values']
+  ruleUIDValues: DataFrame['fields'][number]['values'],
+  groupByValueArrays: Array<DataFrame['fields'][number]['values'] | undefined>
 ): Map<string, InstanceCounts> {
   const alertstateIdx = fieldIndex.get(FIELD_NAMES.alertstate);
   const valueIdx = fieldIndex.get(FIELD_NAMES.value);
@@ -49,10 +59,15 @@ function buildRuleCountsMap(
       continue;
     }
 
-    let counts = result.get(ruleUID);
+    const key =
+      groupByValueArrays.length > 0
+        ? `${ruleUID}:${groupByValueArrays.map((arr) => arr?.[i] ?? '').join(':')}`
+        : ruleUID;
+
+    let counts = result.get(key);
     if (!counts) {
       counts = { firing: 0, pending: 0 };
-      result.set(ruleUID, counts);
+      result.set(key, counts);
     }
 
     if (alertstate === 'firing') {
@@ -126,18 +141,19 @@ export function convertToWorkbenchRows(series: DataFrame[], groupBy: string[] = 
 
   const { alertname: alertnameValues, folder: folderValues, ruleUID: ruleUIDValues } = fields;
 
-  // Pre-compute instance counts per rule
-  const ruleCountsMap = buildRuleCountsMap(frame, fieldIndex, ruleUIDValues);
-
-  function getRuleCounts(ruleUID: string): InstanceCounts {
-    return ruleCountsMap.get(ruleUID) ?? EMPTY_COUNTS;
-  }
-
   // Get groupBy field value arrays
   const groupByValueArrays = groupBy.map((key) => {
     const index = fieldIndex.get(key);
     return index !== undefined ? frame.fields[index]?.values : undefined;
   });
+
+  // Pre-compute instance counts per rule (keyed by ruleUID[:groupVal…] when groupBy is active)
+  const ruleCountsMap = buildRuleCountsMap(frame, fieldIndex, ruleUIDValues, groupByValueArrays);
+
+  function getRuleCounts(ruleUID: string, groupPath: string[] = []): InstanceCounts {
+    const key = groupPath.length > 0 ? `${ruleUID}:${groupPath.join(':')}` : ruleUID;
+    return ruleCountsMap.get(key) ?? EMPTY_COUNTS;
+  }
 
   // Fast path: no grouping - just dedupe alert rules
   if (groupBy.length === 0) {
@@ -200,9 +216,9 @@ export function convertToWorkbenchRows(series: DataFrame[], groupBy: string[] = 
   }
 
   // Convert tree to WorkbenchRow format
-  function nodeToRows(node: GroupNode, depth: number): WorkbenchRow[] {
+  function nodeToRows(node: GroupNode, depth: number, groupPath: string[] = []): WorkbenchRow[] {
     if (depth >= groupBy.length) {
-      // Leaf level - create alert rule rows
+      // Leaf level - create alert rule rows with per-group counts
       const seen = new Set<string>();
       const result: AlertRuleRow[] = [];
 
@@ -217,7 +233,7 @@ export function convertToWorkbenchRows(series: DataFrame[], groupBy: string[] = 
               folder: folderValues[rowIdx],
               ruleUID: ruleUID,
             },
-            instanceCounts: getRuleCounts(ruleUID),
+            instanceCounts: getRuleCounts(ruleUID, groupPath),
           });
         }
       }
@@ -230,7 +246,8 @@ export function convertToWorkbenchRows(series: DataFrame[], groupBy: string[] = 
     const emptyGroups: GenericGroupedRow[] = [];
 
     for (const [value, childNode] of node.children.entries()) {
-      const childRows = nodeToRows(childNode, depth + 1);
+      const rawGroupValue = value === EmptyLabelValue ? '' : String(value);
+      const childRows = nodeToRows(childNode, depth + 1, [...groupPath, rawGroupValue]);
       const group: GenericGroupedRow = {
         type: 'group',
         metadata: {

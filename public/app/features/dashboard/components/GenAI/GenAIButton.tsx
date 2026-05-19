@@ -2,14 +2,14 @@ import { css } from '@emotion/css';
 import { useCallback, useState } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { llm } from '@grafana/llm';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { type llm } from '@grafana/llm';
 import { Button, Spinner, useStyles2, Tooltip, Toggletip, Text, Stack } from '@grafana/ui';
 
 import { GenAIHistory } from './GenAIHistory';
 import { StreamStatus, TIMEOUT, useLLMStream } from './hooks';
-import { AutoGenerateItem, EventTrackingSrc, reportAutoGenerateInteraction } from './tracking';
-import { DEFAULT_LLM_MODEL, Message, sanitizeReply } from './utils';
+import { AutoGenerateItem, type EventTrackingSrc, reportAutoGenerateInteraction } from './tracking';
+import { DEFAULT_LLM_MODEL, type Message, sanitizeReply } from './utils';
 
 export interface GenAIButtonProps {
   // Button label text

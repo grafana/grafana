@@ -85,7 +85,7 @@ The default notification policy and its child policies are assigned to a [specif
 ## Edit the default notification policy
 
 1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
-1. Click **Notification policies**.
+1. Click **Notification configuration**, then select the **Notification policies** tab.
 1. From the **Choose Alertmanager** dropdown, select an external Alertmanager. By default, the **Grafana Alertmanager** is selected.
 1. In the Default policy section, click **...** -> **Edit**.
 1. In **Default contact point**, update the [contact point](ref:configure-contact-points) for where to send notifications when alert rules do not match any specific policy.
@@ -103,7 +103,7 @@ You can create a child policy under a default policy or under an existing child 
 If you want to choose where to position your policy, see the section on **Add a sibling policy**.
 
 1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
-1. Click **Notification policies**.
+1. Click **Notification configuration**, then select the **Notification policies** tab.
 1. From the **Choose Alertmanager** dropdown, select an Alertmanager. By default, the **Grafana Alertmanager** is selected.
 1. Click **+New child policy** from the default policy or an existing child policy.
 1. In the Matching labels section of the child policy, add one or more matching label rules to narrow down a specific case from the parent policy.
@@ -119,7 +119,7 @@ If you want to choose where to position your policy, see the section on **Add a 
 ## Add a sibling policy
 
 1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
-1. Click **Notification policies**.
+1. Click **Notification configuration**, then select the **Notification policies** tab.
 1. Find the child policy you want to create a sibling for.
 1. Click **Add new policy** -> **New sibling above** or **New sibling below**.
 
@@ -145,6 +145,18 @@ It is important to note that all matched policies are **exact** matches. Grafana
 ## Mute timings
 
 Mute timings are not inherited from a parent notification policy, and they have to be configured on each level. For instructions, refer to [Configure mute timings](ref:configure-mute-timings).
+
+## Manage multiple notification policies
+
+{{< admonition type="note" >}}
+Multiple notification policies require the `alertingMultiplePolicies` feature flag, which is in public preview. When the flag is disabled, the system uses a single notification policy tree as described above.
+{{< /admonition >}}
+
+By default, Grafana uses a single notification policy tree for all alert routing. As organizations grow in size and complexity, managing a single global tree can become difficult. Multiple notification policies allow you to split routing logic into separate, independently managed routing trees.
+
+Each notification policy contains a routing tree with its own name, root policy, and child policies which function similar to the default policy. You can create additional routing trees to organize routing logic by team, service, or domain.
+
+The Default Policy can't be deleted. You can, however, reset the policy to clear it.
 
 ## Example
 

@@ -2,13 +2,13 @@ import { css } from '@emotion/css';
 import { useCallback, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
-import { GrafanaTheme2, TimeRange } from '@grafana/data';
+import { type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { AccessoryButton } from '@grafana/plugin-ui';
-import { FetchError } from '@grafana/runtime';
+import { type FetchError } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 
-import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
-import { TempoDatasource } from '../datasource';
+import { type TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
+import { type TempoDatasource } from '../datasource';
 
 import SearchField from './SearchField';
 import { getFilteredTags } from './utils';

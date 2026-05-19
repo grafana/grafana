@@ -1,6 +1,6 @@
 import { isObject } from '@grafana/data';
 
-import { K8sStatusCause, Resource, ResourceList } from './types';
+import { type K8sStatusCause, type Resource, type ResourceList } from './types';
 
 /**
  * Type guard to check if an unknown value has all required fields to be a Resource

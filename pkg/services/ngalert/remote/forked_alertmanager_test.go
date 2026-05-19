@@ -3,10 +3,10 @@ package remote
 import (
 	"context"
 	"errors"
-	"fmt"
 	"testing"
 	"time"
 
+	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -33,16 +33,20 @@ func TestForkedAlertmanager_ModeRemoteSecondary(t *testing.T) {
 		{
 			// If the remote Alertmanager is not ready, ApplyConfig should be called on both Alertmanagers.
 			internal, remote, forked := genTestAlertmanagers(tt, modeRemoteSecondary, withSyncInterval(10*time.Minute))
-			internal.EXPECT().ApplyConfig(ctx, mock.Anything).Return(nil).Once()
+			internal.EXPECT().ApplyConfig(ctx, mock.Anything).Return(true, nil).Once()
 			readyCall := remote.EXPECT().Ready().Return(false).Once()
-			remote.EXPECT().ApplyConfig(ctx, mock.Anything).Return(nil).Once().NotBefore(readyCall)
-			require.NoError(tt, forked.ApplyConfig(ctx, &models.AlertConfiguration{}))
+			remote.EXPECT().ApplyConfig(ctx, mock.Anything).Return(true, nil).Once().NotBefore(readyCall)
+			applied, err := forked.ApplyConfig(ctx, alertingNotify.NotificationsConfiguration{})
+			require.True(tt, applied)
+			require.NoError(tt, err)
 
 			// Calling ApplyConfig again with a ready remote Alertmanager before the sync interval is elapsed
 			// should result in the forked Alertmanager calling ApplyConfig on the internal Alertmanager.
-			internal.EXPECT().ApplyConfig(ctx, mock.Anything).Return(nil).Once()
+			internal.EXPECT().ApplyConfig(ctx, mock.Anything).Return(true, nil).Once()
 			remote.EXPECT().Ready().Return(true).Once()
-			require.NoError(tt, forked.ApplyConfig(ctx, &models.AlertConfiguration{}))
+			applied, err = forked.ApplyConfig(ctx, alertingNotify.NotificationsConfiguration{})
+			require.True(tt, applied)
+			require.NoError(tt, err)
 		}
 
 		{
@@ -50,11 +54,15 @@ func TestForkedAlertmanager_ModeRemoteSecondary(t *testing.T) {
 			// the forked Alertmanager should sync the configuration on the remote Alertmanager
 			// and call ApplyConfig only on the internal Alertmanager.
 			internal, remote, forked := genTestAlertmanagers(tt, modeRemoteSecondary)
-			internal.EXPECT().ApplyConfig(ctx, mock.Anything).Return(nil).Twice()
+			internal.EXPECT().ApplyConfig(ctx, mock.Anything).Return(true, nil).Twice()
 			remote.EXPECT().Ready().Return(true).Twice()
-			remote.EXPECT().CompareAndSendConfiguration(ctx, mock.Anything).Return(nil).Twice()
-			require.NoError(tt, forked.ApplyConfig(ctx, &models.AlertConfiguration{}))
-			require.NoError(tt, forked.ApplyConfig(ctx, &models.AlertConfiguration{}))
+			remote.EXPECT().CompareAndSendConfiguration(ctx, mock.Anything).Return(true, nil).Twice()
+			applied, err := forked.ApplyConfig(ctx, alertingNotify.NotificationsConfiguration{})
+			require.True(tt, applied)
+			require.NoError(tt, err)
+			applied, err = forked.ApplyConfig(ctx, alertingNotify.NotificationsConfiguration{})
+			require.True(tt, applied)
+			require.NoError(tt, err)
 		}
 
 		{
@@ -62,28 +70,38 @@ func TestForkedAlertmanager_ModeRemoteSecondary(t *testing.T) {
 			// but it should result in the forked Alertmanager trying to sync
 			// the configuration in the next call to ApplyConfig, regardless of the sync interval.
 			internal, remote, forked := genTestAlertmanagers(tt, modeRemoteSecondary, withSyncInterval(10*time.Minute))
-			internal.EXPECT().ApplyConfig(ctx, mock.Anything).Return(nil).Twice()
+			internal.EXPECT().ApplyConfig(ctx, mock.Anything).Return(true, nil).Twice()
 			remote.EXPECT().Ready().Return(false).Twice()
-			remote.EXPECT().ApplyConfig(ctx, mock.Anything).Return(expErr).Twice()
-			require.NoError(tt, forked.ApplyConfig(ctx, &models.AlertConfiguration{}))
-			require.NoError(tt, forked.ApplyConfig(ctx, &models.AlertConfiguration{}))
+			remote.EXPECT().ApplyConfig(ctx, mock.Anything).Return(false, expErr).Twice()
+			applied, err := forked.ApplyConfig(ctx, alertingNotify.NotificationsConfiguration{})
+			require.True(tt, applied)
+			require.NoError(tt, err)
+			applied, err = forked.ApplyConfig(ctx, alertingNotify.NotificationsConfiguration{})
+			require.True(tt, applied)
+			require.NoError(tt, err)
 
 			// Let's try the same thing but starting from a ready Alertmanager.
 			internal, remote, forked = genTestAlertmanagers(tt, modeRemoteSecondary, withSyncInterval(10*time.Minute))
-			internal.EXPECT().ApplyConfig(ctx, mock.Anything).Return(nil).Twice()
+			internal.EXPECT().ApplyConfig(ctx, mock.Anything).Return(true, nil).Twice()
 			remote.EXPECT().Ready().Return(true).Twice()
-			remote.EXPECT().CompareAndSendConfiguration(ctx, mock.Anything).Return(expErr).Twice()
-			require.NoError(tt, forked.ApplyConfig(ctx, &models.AlertConfiguration{}))
-			require.NoError(tt, forked.ApplyConfig(ctx, &models.AlertConfiguration{}))
+			remote.EXPECT().CompareAndSendConfiguration(ctx, mock.Anything).Return(false, expErr).Twice()
+			applied, err = forked.ApplyConfig(ctx, alertingNotify.NotificationsConfiguration{})
+			require.True(tt, applied)
+			require.NoError(tt, err)
+			applied, err = forked.ApplyConfig(ctx, alertingNotify.NotificationsConfiguration{})
+			require.True(tt, applied)
+			require.NoError(tt, err)
 		}
 
 		{
 			// An error in the internal Alertmanager should be returned.
 			internal, remote, forked := genTestAlertmanagers(tt, modeRemoteSecondary)
-			internal.EXPECT().ApplyConfig(ctx, mock.Anything).Return(expErr).Once()
+			internal.EXPECT().ApplyConfig(ctx, mock.Anything).Return(false, expErr).Once()
 			readyCall := remote.EXPECT().Ready().Return(false).Once()
-			remote.EXPECT().ApplyConfig(ctx, mock.Anything).Return(nil).Once().NotBefore(readyCall)
-			require.ErrorIs(tt, forked.ApplyConfig(ctx, &models.AlertConfiguration{}), expErr)
+			remote.EXPECT().ApplyConfig(ctx, mock.Anything).Return(true, nil).Once().NotBefore(readyCall)
+			applied, err := forked.ApplyConfig(ctx, alertingNotify.NotificationsConfiguration{})
+			require.False(tt, applied)
+			require.ErrorIs(tt, err, expErr)
 		}
 	})
 
@@ -95,19 +113,23 @@ func TestForkedAlertmanager_ModeRemoteSecondary(t *testing.T) {
 			// 3. Apply the configuration to the internal Alertmanager
 			internal, remote, forked := genTestAlertmanagers(tt, modeRemoteSecondary, withRemoteState)
 			readyCall := remote.EXPECT().Ready().Return(false).Once()
-			remote.EXPECT().ApplyConfig(ctx, mock.Anything).Return(nil).Once().NotBefore(readyCall)
+			remote.EXPECT().ApplyConfig(ctx, mock.Anything).Return(true, nil).Once().NotBefore(readyCall)
 			remote.EXPECT().Ready().Return(true).Once()
 			remoteStateCall := remote.EXPECT().GetRemoteState(mock.Anything).Return(notifier.ExternalState{}, nil).Once()
-			internal.EXPECT().ApplyConfig(ctx, mock.Anything).Return(nil).Once().NotBefore(remoteStateCall)
-			require.NoError(tt, forked.ApplyConfig(ctx, &models.AlertConfiguration{}))
+			internal.EXPECT().ApplyConfig(ctx, mock.Anything).Return(true, nil).Once().NotBefore(remoteStateCall)
+			applied, err := forked.ApplyConfig(ctx, alertingNotify.NotificationsConfiguration{})
+			require.True(tt, applied)
+			require.NoError(tt, err)
 			require.True(tt, internal.mergeStateCalled)
 
 			// We shouldn't attempt to merge the remote state again on the next sync loop iteration.
 			internal.mergeStateCalled = false
 			remote.EXPECT().Ready().Return(true).Once()
-			internal.EXPECT().ApplyConfig(ctx, mock.Anything).Return(nil).Once()
-			remote.EXPECT().CompareAndSendConfiguration(ctx, mock.Anything).Return(nil).Once()
-			require.NoError(tt, forked.ApplyConfig(ctx, &models.AlertConfiguration{}))
+			internal.EXPECT().ApplyConfig(ctx, mock.Anything).Return(true, nil).Once()
+			remote.EXPECT().CompareAndSendConfiguration(ctx, mock.Anything).Return(true, nil).Once()
+			applied, err = forked.ApplyConfig(ctx, alertingNotify.NotificationsConfiguration{})
+			require.True(tt, applied)
+			require.NoError(tt, err)
 			require.False(tt, internal.mergeStateCalled)
 		}
 
@@ -115,19 +137,22 @@ func TestForkedAlertmanager_ModeRemoteSecondary(t *testing.T) {
 			// If we fail to apply the configuration in the remote Alertmanager, we should get an error and not start the internal Alertmanager.
 			internal, remote, forked := genTestAlertmanagers(tt, modeRemoteSecondary, withSyncInterval(10*time.Minute), withRemoteState)
 			readyCall := remote.EXPECT().Ready().Return(false).Once()
-			remote.EXPECT().ApplyConfig(ctx, mock.Anything).Return(expErr).Once().NotBefore(readyCall)
+			remote.EXPECT().ApplyConfig(ctx, mock.Anything).Return(false, expErr).Once().NotBefore(readyCall)
 			remote.EXPECT().Ready().Return(false).Once()
-			err := forked.ApplyConfig(ctx, &models.AlertConfiguration{})
+			applied, err := forked.ApplyConfig(ctx, alertingNotify.NotificationsConfiguration{})
+			require.False(tt, applied)
 			require.Equal(tt, "remote Alertmanager not ready, can't fetch remote state", err.Error())
 			require.False(tt, internal.mergeStateCalled)
 
 			// Calling ApplyConfig again should result in the forked Alertmanager calling ApplyConfig on both
 			// Alertmanagers and merging the remote state, even if the sync interval has not elapsed.
 			remote.EXPECT().Ready().Return(true).Twice()
-			remote.EXPECT().CompareAndSendConfiguration(ctx, mock.Anything).Return(nil).Once()
+			remote.EXPECT().CompareAndSendConfiguration(ctx, mock.Anything).Return(true, nil).Once()
 			remoteStateCall := remote.EXPECT().GetRemoteState(mock.Anything).Return(notifier.ExternalState{}, nil).Once()
-			internal.EXPECT().ApplyConfig(ctx, mock.Anything).Return(nil).Once().NotBefore(remoteStateCall)
-			require.NoError(tt, forked.ApplyConfig(ctx, &models.AlertConfiguration{}))
+			internal.EXPECT().ApplyConfig(ctx, mock.Anything).Return(true, nil).Once().NotBefore(remoteStateCall)
+			applied, err = forked.ApplyConfig(ctx, alertingNotify.NotificationsConfiguration{})
+			require.True(tt, applied)
+			require.NoError(tt, err)
 			require.True(tt, internal.mergeStateCalled)
 		}
 
@@ -135,51 +160,63 @@ func TestForkedAlertmanager_ModeRemoteSecondary(t *testing.T) {
 			// An error in the remote Alertmanager should be returned.
 			// The internal Alertmanager shouldn't be started.
 			internal, remote, forked := genTestAlertmanagers(tt, modeRemotePrimary)
-			remote.EXPECT().ApplyConfig(ctx, mock.Anything).Return(expErr).Once()
-			require.ErrorIs(tt, forked.ApplyConfig(ctx, &models.AlertConfiguration{}), expErr)
+			remote.EXPECT().ApplyConfig(ctx, mock.Anything).Return(false, expErr).Once()
+			applied, err := forked.ApplyConfig(ctx, alertingNotify.NotificationsConfiguration{})
+			require.False(tt, applied)
+			require.ErrorIs(tt, err, expErr)
 			require.False(t, internal.mergeStateCalled)
 		}
 
 		{
 			// An error in the internal Alertmanager should be returned.
 			internal, remote, forked := genTestAlertmanagers(tt, modeRemoteSecondary, withRemoteState)
-			internal.EXPECT().ApplyConfig(ctx, mock.Anything).Return(expErr).Once()
+			internal.EXPECT().ApplyConfig(ctx, mock.Anything).Return(false, expErr).Once()
 
 			// Simulate starting the remote Alertmanager and merging the remote state.
 			readyCall := remote.EXPECT().Ready().Return(false).Once()
-			remote.EXPECT().ApplyConfig(ctx, mock.Anything).Return(nil).Once().NotBefore(readyCall)
+			remote.EXPECT().ApplyConfig(ctx, mock.Anything).Return(true, nil).Once().NotBefore(readyCall)
 			remote.EXPECT().Ready().Return(true).Once()
 			remote.EXPECT().GetRemoteState(mock.Anything).Return(notifier.ExternalState{}, nil).Once()
 
-			require.ErrorIs(tt, forked.ApplyConfig(ctx, &models.AlertConfiguration{}), expErr)
+			applied, err := forked.ApplyConfig(ctx, alertingNotify.NotificationsConfiguration{})
+			require.False(tt, applied)
+			require.ErrorIs(tt, err, expErr)
 			require.True(t, internal.mergeStateCalled)
 		}
 	})
 
-	t.Run("SaveAndApplyConfig", func(tt *testing.T) {
-		// SaveAndApplyConfig should only be called on the remote Alertmanager.
-		// State and configuration are updated on an interval.
-		internal, _, forked := genTestAlertmanagers(tt, modeRemoteSecondary)
-		internal.EXPECT().SaveAndApplyConfig(ctx, mock.Anything).Return(nil).Once()
-		require.NoError(tt, forked.SaveAndApplyConfig(ctx, &apimodels.PostableUserConfig{}))
-
-		// If there's an error, it should be returned.
-		internal, _, forked = genTestAlertmanagers(tt, modeRemoteSecondary)
-		internal.EXPECT().SaveAndApplyConfig(ctx, mock.Anything).Return(expErr).Once()
-		require.ErrorIs(tt, forked.SaveAndApplyConfig(ctx, &apimodels.PostableUserConfig{}), expErr)
-	})
-
 	t.Run("SaveAndApplyDefaultConfig", func(tt *testing.T) {
-		// SaveAndApplyDefaultConfig should only be called on the internal Alertmanager.
-		// State and configuration are updated on an interval.
-		internal, _, forked := genTestAlertmanagers(tt, modeRemoteSecondary)
-		internal.EXPECT().SaveAndApplyDefaultConfig(ctx).Return(nil).Once()
-		require.NoError(tt, forked.SaveAndApplyDefaultConfig(ctx))
+		withMoa := func(am notifier.Alertmanager) *notifier.MultiOrgAlertmanager {
+			return notifier.NewTestMultiOrgAlertmanager(t,
+				notifier.WithAlertmanagers(map[int64]notifier.Alertmanager{
+					1: am,
+				}),
+				notifier.WithSkipLoad(),
+			)
+		}
+		// SaveAndApplyDefaultConfig should be called on both Alertmanagers.
+		internal, remote, forked := genTestAlertmanagers(tt, modeRemoteSecondary)
+		internal.EXPECT().Ready().Return(true).Once()
+		remote.EXPECT().Ready().Return(true).Once()
+		internal.EXPECT().ApplyConfig(ctx, mock.Anything).Return(true, nil).Once()
+		remote.EXPECT().CompareAndSendConfiguration(ctx, mock.Anything).Return(true, nil).Once()
+		require.NoError(tt, withMoa(forked).SaveAndApplyDefaultConfig(ctx, 1))
 
-		// If there's an error, it should be returned.
-		internal, _, forked = genTestAlertmanagers(tt, modeRemoteSecondary)
-		internal.EXPECT().SaveAndApplyDefaultConfig(ctx).Return(expErr).Once()
-		require.ErrorIs(tt, forked.SaveAndApplyDefaultConfig(ctx), expErr)
+		// An error in the internal Alertmanager should be returned.
+		internal, remote, forked = genTestAlertmanagers(tt, modeRemoteSecondary)
+		internal.EXPECT().Ready().Return(true).Once()
+		remote.EXPECT().Ready().Return(true).Once()
+		internal.EXPECT().ApplyConfig(ctx, mock.Anything).Return(false, expErr).Once()
+		remote.EXPECT().CompareAndSendConfiguration(ctx, mock.Anything).Return(true, nil).Once()
+		require.ErrorIs(tt, withMoa(forked).SaveAndApplyDefaultConfig(ctx, 1), expErr)
+
+		// An error in the remote Alertmanager should not be returned.
+		internal, remote, forked = genTestAlertmanagers(tt, modeRemoteSecondary)
+		internal.EXPECT().Ready().Return(true).Once()
+		remote.EXPECT().Ready().Return(true).Once()
+		internal.EXPECT().ApplyConfig(ctx, mock.Anything).Return(true, nil).Once()
+		remote.EXPECT().CompareAndSendConfiguration(ctx, mock.Anything).Return(false, expErr).Once()
+		require.NoError(tt, withMoa(forked).SaveAndApplyDefaultConfig(ctx, 1))
 	})
 
 	t.Run("GetStatus", func(tt *testing.T) {
@@ -354,14 +391,14 @@ func TestForkedAlertmanager_ModeRemoteSecondary(t *testing.T) {
 	t.Run("TestReceivers", func(tt *testing.T) {
 		// TestReceivers should be called only in the internal Alertmanager.
 		internal, _, forked := genTestAlertmanagers(tt, modeRemoteSecondary)
-		internal.EXPECT().TestReceivers(mock.Anything, mock.Anything).Return(nil, 0, nil).Once()
-		_, _, err := forked.TestReceivers(ctx, apimodels.TestReceiversConfigBodyParams{})
+		internal.EXPECT().TestIntegration(mock.Anything, "", mock.Anything, mock.Anything).Return(alertingModels.IntegrationStatus{}, nil).Once()
+		_, err := forked.TestIntegration(ctx, "", models.IntegrationGen()(), alertingModels.TestReceiversConfigAlertParams{})
 		require.NoError(tt, err)
 
 		// If there's an error in the internal Alertmanager, it should be returned.
 		internal, _, forked = genTestAlertmanagers(tt, modeRemoteSecondary)
-		internal.EXPECT().TestReceivers(mock.Anything, mock.Anything).Return(nil, 0, expErr).Once()
-		_, _, err = forked.TestReceivers(ctx, apimodels.TestReceiversConfigBodyParams{})
+		internal.EXPECT().TestIntegration(mock.Anything, "", mock.Anything, mock.Anything).Return(alertingModels.IntegrationStatus{}, expErr).Once()
+		_, err = forked.TestIntegration(ctx, "", models.IntegrationGen()(), alertingModels.TestReceiversConfigAlertParams{})
 		require.ErrorIs(tt, expErr, err)
 	})
 
@@ -386,7 +423,6 @@ func TestForkedAlertmanager_ModeRemoteSecondary(t *testing.T) {
 			internal, remote, forked := genTestAlertmanagers(tt, modeRemoteSecondary)
 			internal.EXPECT().StopAndWait().Once()
 			remote.EXPECT().StopAndWait().Once()
-			remote.EXPECT().CompareAndSendConfiguration(mock.Anything, mock.Anything).Return(nil).Once()
 			remote.EXPECT().SendState(mock.Anything).Return(nil).Once()
 			forked.StopAndWait()
 		}
@@ -395,21 +431,6 @@ func TestForkedAlertmanager_ModeRemoteSecondary(t *testing.T) {
 			// An error in the remote Alertmanager should't be a problem.
 			// These errors are caught and logged.
 			internal, remote, forked := genTestAlertmanagers(tt, modeRemoteSecondary)
-			internal.EXPECT().StopAndWait().Once()
-			remote.EXPECT().StopAndWait().Once()
-			remote.EXPECT().CompareAndSendConfiguration(mock.Anything, mock.Anything).Return(expErr).Once()
-			remote.EXPECT().SendState(mock.Anything).Return(expErr).Once()
-			forked.StopAndWait()
-		}
-
-		{
-			// An error when retrieving the configuration should cause
-			// CompareAndSendConfiguration not to be called.
-			internal, remote, forked := genTestAlertmanagers(tt, modeRemoteSecondary)
-			secondaryForked, ok := forked.(*RemoteSecondaryForkedAlertmanager)
-			require.True(t, ok)
-			secondaryForked.store = &errConfigStore{}
-
 			internal.EXPECT().StopAndWait().Once()
 			remote.EXPECT().StopAndWait().Once()
 			remote.EXPECT().SendState(mock.Anything).Return(expErr).Once()
@@ -436,59 +457,59 @@ func TestForkedAlertmanager_ModeRemotePrimary(t *testing.T) {
 		// If the remote Alertmanager is not ready, ApplyConfig should be called on both Alertmanagers,
 		// first on the remote, then on the internal.
 		internal, remote, forked := genTestAlertmanagers(tt, modeRemotePrimary)
-		remoteCall := remote.EXPECT().ApplyConfig(ctx, mock.Anything).Return(nil).Once()
-		internal.EXPECT().ApplyConfig(ctx, mock.Anything).Return(nil).Once().NotBefore(remoteCall)
-		require.NoError(tt, forked.ApplyConfig(ctx, &models.AlertConfiguration{}))
+		remoteCall := remote.EXPECT().ApplyConfig(ctx, mock.Anything).Return(true, nil).Once()
+		internal.EXPECT().ApplyConfig(ctx, mock.Anything).Return(true, nil).Once().NotBefore(remoteCall)
+		applied, err := forked.ApplyConfig(ctx, alertingNotify.NotificationsConfiguration{})
+		require.True(tt, applied)
+		require.NoError(tt, err)
 
 		// An error in the remote Alertmanager should be returned.
 		_, remote, forked = genTestAlertmanagers(tt, modeRemotePrimary)
-		remote.EXPECT().ApplyConfig(ctx, mock.Anything).Return(expErr).Once()
-		require.ErrorIs(tt, forked.ApplyConfig(ctx, &models.AlertConfiguration{}), expErr)
+		remote.EXPECT().ApplyConfig(ctx, mock.Anything).Return(false, expErr).Once()
+		applied, err = forked.ApplyConfig(ctx, alertingNotify.NotificationsConfiguration{})
+		require.False(tt, applied)
+		require.ErrorIs(tt, err, expErr)
 
 		// An error in the internal Alertmanager should not be returned.
 		internal, remote, forked = genTestAlertmanagers(tt, modeRemotePrimary)
-		remote.EXPECT().ApplyConfig(ctx, mock.Anything).Return(nil).Once()
-		internal.EXPECT().ApplyConfig(ctx, mock.Anything).Return(expErr).Once()
-		require.NoError(tt, forked.ApplyConfig(ctx, &models.AlertConfiguration{}))
+		remote.EXPECT().ApplyConfig(ctx, mock.Anything).Return(true, nil).Once()
+		internal.EXPECT().ApplyConfig(ctx, mock.Anything).Return(false, expErr).Once()
+		applied, err = forked.ApplyConfig(ctx, alertingNotify.NotificationsConfiguration{})
+		require.True(tt, applied)
+		require.NoError(tt, err)
 	})
 
 	t.Run("SaveAndApplyDefaultConfig", func(tt *testing.T) {
+		withMoa := func(am notifier.Alertmanager) *notifier.MultiOrgAlertmanager {
+			return notifier.NewTestMultiOrgAlertmanager(t,
+				notifier.WithAlertmanagers(map[int64]notifier.Alertmanager{
+					1: am,
+				}),
+				notifier.WithSkipLoad(),
+			)
+		}
 		// SaveAndApplyDefaultConfig should be called on both Alertmanagers.
 		internal, remote, forked := genTestAlertmanagers(tt, modeRemotePrimary)
-		remote.EXPECT().SaveAndApplyDefaultConfig(ctx).Return(nil).Once()
-		internal.EXPECT().SaveAndApplyDefaultConfig(ctx).Return(nil).Once()
-		require.NoError(tt, forked.SaveAndApplyDefaultConfig(ctx))
+		internal.EXPECT().Ready().Return(true).Once()
+		remote.EXPECT().Ready().Return(true).Once()
+		remote.EXPECT().ApplyConfig(ctx, mock.Anything).Return(true, nil).Once()
+		internal.EXPECT().ApplyConfig(ctx, mock.Anything).Return(true, nil).Once()
+		require.NoError(tt, withMoa(forked).SaveAndApplyDefaultConfig(ctx, 1))
 
 		// An error in the remote Alertmanager should be returned.
-		_, remote, forked = genTestAlertmanagers(tt, modeRemotePrimary)
-		remote.EXPECT().SaveAndApplyDefaultConfig(ctx).Return(expErr).Once()
-		require.ErrorIs(tt, forked.SaveAndApplyDefaultConfig(ctx), expErr)
+		internal, remote, forked = genTestAlertmanagers(tt, modeRemotePrimary)
+		internal.EXPECT().Ready().Return(true).Once()
+		remote.EXPECT().Ready().Return(true).Once()
+		remote.EXPECT().ApplyConfig(ctx, mock.Anything).Return(false, expErr).Once()
+		require.ErrorIs(tt, withMoa(forked).SaveAndApplyDefaultConfig(ctx, 1), expErr)
 
 		// An error in the internal Alertmanager should not be returned.
 		internal, remote, forked = genTestAlertmanagers(tt, modeRemotePrimary)
-		remote.EXPECT().SaveAndApplyDefaultConfig(ctx).Return(nil).Once()
-		internal.EXPECT().SaveAndApplyDefaultConfig(ctx).Return(expErr).Once()
-		require.NoError(tt, forked.SaveAndApplyDefaultConfig(ctx))
-	})
-
-	t.Run("SaveAndApplyConfig", func(tt *testing.T) {
-		// SaveAndApplyConfig should first be called on the remote Alertmanager
-		// and then on the internal one.
-		internal, remote, forked := genTestAlertmanagers(tt, modeRemotePrimary)
-		remoteCall := remote.EXPECT().SaveAndApplyConfig(ctx, mock.Anything).Return(nil).Once()
-		internal.EXPECT().SaveAndApplyConfig(ctx, mock.Anything).Return(nil).Once().NotBefore(remoteCall)
-		require.NoError(tt, forked.SaveAndApplyConfig(ctx, &apimodels.PostableUserConfig{}))
-
-		// If there's an error in the remote Alertmanager, it should be returned.
-		_, remote, forked = genTestAlertmanagers(tt, modeRemotePrimary)
-		remote.EXPECT().SaveAndApplyConfig(ctx, mock.Anything).Return(expErr).Once()
-		require.ErrorIs(tt, expErr, forked.SaveAndApplyConfig(ctx, &apimodels.PostableUserConfig{}))
-
-		// An error in the internal Alertmanager should not be returned.
-		internal, remote, forked = genTestAlertmanagers(tt, modeRemotePrimary)
-		remote.EXPECT().SaveAndApplyConfig(ctx, mock.Anything).Return(nil).Once()
-		internal.EXPECT().SaveAndApplyConfig(ctx, mock.Anything).Return(expErr).Once()
-		require.NoError(tt, forked.SaveAndApplyConfig(ctx, &apimodels.PostableUserConfig{}))
+		internal.EXPECT().Ready().Return(true).Once()
+		remote.EXPECT().Ready().Return(true).Once()
+		remote.EXPECT().ApplyConfig(ctx, mock.Anything).Return(true, nil).Once()
+		internal.EXPECT().ApplyConfig(ctx, mock.Anything).Return(false, expErr).Once()
+		require.NoError(tt, withMoa(forked).SaveAndApplyDefaultConfig(ctx, 1))
 	})
 
 	t.Run("GetStatus", func(tt *testing.T) {
@@ -512,16 +533,14 @@ func TestForkedAlertmanager_ModeRemotePrimary(t *testing.T) {
 	})
 
 	t.Run("CreateSilence", func(tt *testing.T) {
-		// We should create the silence in both Alertmanagers using the same uid.
+		// We should create the silence in the remote Alertmanager.
 		testSilence := &apimodels.PostableSilence{}
 		expID := "test-id"
 
-		internal, remote, forked := genTestAlertmanagers(tt, modeRemotePrimary)
+		_, remote, forked := genTestAlertmanagers(tt, modeRemotePrimary)
 		remote.EXPECT().CreateSilence(mock.Anything, testSilence).Return(expID, nil).Once()
-		internal.EXPECT().CreateSilence(mock.Anything, testSilence).Return(testSilence.ID, nil).Once()
 		id, err := forked.CreateSilence(ctx, testSilence)
 		require.NoError(tt, err)
-		require.Equal(tt, expID, testSilence.ID)
 		require.Equal(tt, expID, id)
 
 		// If there's an error in the remote Alertmanager, the error should be returned.
@@ -529,60 +548,19 @@ func TestForkedAlertmanager_ModeRemotePrimary(t *testing.T) {
 		remote.EXPECT().CreateSilence(mock.Anything, mock.Anything).Return("", expErr).Once()
 		_, err = forked.CreateSilence(ctx, testSilence)
 		require.ErrorIs(tt, expErr, err)
-
-		// An error in the internal Alertmanager should not be returned.
-		internal, remote, forked = genTestAlertmanagers(tt, modeRemotePrimary)
-		remote.EXPECT().CreateSilence(mock.Anything, mock.Anything).Return(expID, nil).Once()
-		internal.EXPECT().CreateSilence(mock.Anything, mock.Anything).Return("", expErr).Once()
-		id, err = forked.CreateSilence(ctx, testSilence)
-		require.NoError(tt, err)
-		require.Equal(tt, expID, id)
-
-		// If the silence ID changes, the internal Alertmanager should attempt to expire the old silence.
-		newID := "new"
-		internal, remote, forked = genTestAlertmanagers(tt, modeRemotePrimary)
-		remote.EXPECT().CreateSilence(mock.Anything, mock.Anything).Return(newID, nil).Once()
-		internal.EXPECT().DeleteSilence(mock.Anything, mock.Anything).Return(nil).Once()
-		// If internal.CreateSilence() returns a new id, it should be ignored.
-		internal.EXPECT().CreateSilence(mock.Anything, mock.Anything).Return("random-id", nil).Once()
-		id, err = forked.CreateSilence(ctx, testSilence)
-		require.NoError(tt, err)
-		require.Equal(tt, newID, testSilence.ID)
-		require.Equal(tt, newID, id)
-
-		// Restore original ID.
-		testSilence.ID = expID
-
-		// An error attempting to delete a silence in the internal Alertmanager not be returned.
-		internal, remote, forked = genTestAlertmanagers(tt, modeRemotePrimary)
-		remote.EXPECT().CreateSilence(mock.Anything, mock.Anything).Return(newID, nil).Once()
-		internal.EXPECT().DeleteSilence(mock.Anything, mock.Anything).Return(fmt.Errorf("test error")).Once()
-		// If internal.CreateSilence() returns a new id, it should be ignored.
-		internal.EXPECT().CreateSilence(mock.Anything, mock.Anything).Return("random-id", nil).Once()
-		id, err = forked.CreateSilence(ctx, testSilence)
-		require.NoError(tt, err)
-		require.Equal(tt, newID, testSilence.ID)
-		require.Equal(tt, newID, id)
 	})
 
 	t.Run("DeleteSilence", func(tt *testing.T) {
-		// We should delete the silence in both Alertmanagers.
+		// We should delete the silence in the remote Alertmanager.
 		testID := "test-id"
-		internal, remote, forked := genTestAlertmanagers(tt, modeRemotePrimary)
+		_, remote, forked := genTestAlertmanagers(tt, modeRemotePrimary)
 		remote.EXPECT().DeleteSilence(mock.Anything, testID).Return(nil).Once()
-		internal.EXPECT().DeleteSilence(mock.Anything, testID).Return(nil).Once()
 		require.NoError(tt, forked.DeleteSilence(ctx, testID))
 
 		// If there's an error in the remote Alertmanager, the error should be returned.
 		_, remote, forked = genTestAlertmanagers(tt, modeRemotePrimary)
-		remote.EXPECT().DeleteSilence(mock.Anything, testID).Return(expErr).Maybe()
+		remote.EXPECT().DeleteSilence(mock.Anything, testID).Return(expErr).Once()
 		require.ErrorIs(tt, expErr, forked.DeleteSilence(ctx, testID))
-
-		// An error in the internal Alertmanager should not be returned.
-		internal, remote, forked = genTestAlertmanagers(tt, modeRemotePrimary)
-		remote.EXPECT().DeleteSilence(mock.Anything, testID).Return(nil).Maybe()
-		internal.EXPECT().DeleteSilence(mock.Anything, testID).Return(nil).Maybe()
-		require.NoError(tt, forked.DeleteSilence(ctx, testID))
 	})
 
 	t.Run("GetSilence", func(tt *testing.T) {
@@ -713,17 +691,17 @@ func TestForkedAlertmanager_ModeRemotePrimary(t *testing.T) {
 		require.ErrorIs(tt, expErr, err)
 	})
 
-	t.Run("TestReceivers", func(tt *testing.T) {
+	t.Run("TestIntegration", func(tt *testing.T) {
 		// TestReceivers should be called only in the remote Alertmanager.
 		_, remote, forked := genTestAlertmanagers(tt, modeRemotePrimary)
-		remote.EXPECT().TestReceivers(mock.Anything, mock.Anything).Return(nil, 0, nil).Once()
-		_, _, err := forked.TestReceivers(ctx, apimodels.TestReceiversConfigBodyParams{})
+		remote.EXPECT().TestIntegration(mock.Anything, "", mock.Anything, mock.Anything).Return(alertingModels.IntegrationStatus{}, nil).Once()
+		_, err := forked.TestIntegration(ctx, "", models.IntegrationGen()(), alertingModels.TestReceiversConfigAlertParams{})
 		require.NoError(tt, err)
 
 		// If there's an error in the remote Alertmanager, it should be returned.
 		_, remote, forked = genTestAlertmanagers(tt, modeRemotePrimary)
-		remote.EXPECT().TestReceivers(mock.Anything, mock.Anything).Return(nil, 0, expErr).Once()
-		_, _, err = forked.TestReceivers(ctx, apimodels.TestReceiversConfigBodyParams{})
+		remote.EXPECT().TestIntegration(mock.Anything, "", mock.Anything, mock.Anything).Return(alertingModels.IntegrationStatus{}, expErr).Once()
+		_, err = forked.TestIntegration(ctx, "", models.IntegrationGen()(), alertingModels.TestReceiversConfigAlertParams{})
 		require.ErrorIs(tt, expErr, err)
 	})
 
@@ -818,11 +796,4 @@ func genTestAlertmanagers(t *testing.T, mode int, options ...func(RemoteSecondar
 		return internal, remote, forked
 	}
 	return internal, remote, newRemotePrimaryForkedAlertmanager(log.NewNopLogger(), internal, remote)
-}
-
-// errConfigStore returns an error when a method is called.
-type errConfigStore struct{}
-
-func (s *errConfigStore) GetLatestAlertmanagerConfiguration(context.Context, int64) (*models.AlertConfiguration, error) {
-	return nil, errors.New("test error")
 }

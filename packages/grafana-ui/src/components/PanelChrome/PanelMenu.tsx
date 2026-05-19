@@ -1,12 +1,12 @@
 import { cx } from '@emotion/css';
-import { ReactElement, useCallback } from 'react';
+import { type ReactElement, useCallback } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
 import { Button } from '../Button/Button';
 import { Dropdown } from '../Dropdown/Dropdown';
-import { TooltipPlacement } from '../Tooltip/types';
+import { type TooltipPlacement } from '../Tooltip/types';
 
 interface PanelMenuProps {
   menu: ReactElement | (() => ReactElement);

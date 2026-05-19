@@ -1,21 +1,21 @@
 import { css } from '@emotion/css';
 import { memo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
-import { DimensionContext } from 'app/features/dimensions/context';
+import { type DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
 
 import {
-  CanvasElementItem,
-  CanvasElementOptions,
-  CanvasElementProps,
+  type CanvasElementItem,
+  type CanvasElementOptions,
+  type CanvasElementProps,
   defaultBgColor,
   defaultTextColor,
 } from '../element';
-import { Align, TextConfig, TextData, VAlign } from '../types';
+import { Align, type TextConfig, type TextData, VAlign } from '../types';
 
 const RectangleDisplay = memo<CanvasElementProps<TextConfig, TextData>>(({ data }) => {
   const styles = useStyles2(getStyles, data);

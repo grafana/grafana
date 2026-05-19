@@ -5,7 +5,7 @@ import {
   FieldType,
   LogRowContextQueryDirection,
   LogsSortOrder,
-  SplitOpenOptions,
+  type SplitOpenOptions,
 } from '@grafana/data';
 
 import { dataFrameToLogsModel } from '../../logsModel';

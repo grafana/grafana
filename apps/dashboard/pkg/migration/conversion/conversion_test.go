@@ -20,7 +20,9 @@ import (
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	dashv1beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashv2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
@@ -177,13 +179,19 @@ func TestConversionErrorPathPreservesMetadataAndStatus(t *testing.T) {
 	conversionErr := errors.New("simulated conversion failure")
 
 	tests := []struct {
-		name   string
-		input  DashboardConversion
-		output DashboardConversion
-		verify func(t *testing.T, in DashboardConversion, out DashboardConversion)
+		name                  string
+		sourceAPIVersion      string
+		targetAPIVersion      string
+		expectedStoredVersion string
+		input                 DashboardConversion
+		output                DashboardConversion
+		verify                func(t *testing.T, in DashboardConversion, out DashboardConversion)
 	}{
 		{
-			name: "v2beta1 -> v0alpha1 error preserves metadata and sets status",
+			name:                  "v2beta1 -> v0alpha1 error preserves metadata and sets status",
+			sourceAPIVersion:      dashv2beta1.APIVERSION,
+			targetAPIVersion:      dashv0.APIVERSION,
+			expectedStoredVersion: dashv2beta1.VERSION,
 			input: &dashv2beta1.Dashboard{
 				ObjectMeta: metav1.ObjectMeta{
 					Namespace: "default",
@@ -203,7 +211,10 @@ func TestConversionErrorPathPreservesMetadataAndStatus(t *testing.T) {
 			},
 		},
 		{
-			name: "v1beta1 -> v2beta1 error preserves metadata and ensures default spec",
+			name:                  "v1beta1 -> v2beta1 error preserves metadata and ensures default spec",
+			sourceAPIVersion:      dashv1.APIVERSION,
+			targetAPIVersion:      dashv2beta1.APIVERSION,
+			expectedStoredVersion: dashv1.VERSION,
 			input: &dashv1.Dashboard{
 				ObjectMeta: metav1.ObjectMeta{
 					Namespace: "org-1",
@@ -224,7 +235,10 @@ func TestConversionErrorPathPreservesMetadataAndStatus(t *testing.T) {
 			},
 		},
 		{
-			name: "v0alpha1 -> v2alpha1 error preserves metadata and ensures default spec",
+			name:                  "v0alpha1 -> v2alpha1 error preserves metadata and ensures default spec",
+			sourceAPIVersion:      dashv0.APIVERSION,
+			targetAPIVersion:      dashv2alpha1.APIVERSION,
+			expectedStoredVersion: dashv0.VERSION,
 			input: &dashv0.Dashboard{
 				ObjectMeta: metav1.ObjectMeta{
 					Namespace: "default",
@@ -247,7 +261,7 @@ func TestConversionErrorPathPreservesMetadataAndStatus(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			failingFunc := normalizeConversion("source", "target",
+			failingFunc := normalizeConversion(tt.sourceAPIVersion, tt.targetAPIVersion,
 				func(a, b interface{}, scope conversion.Scope) error {
 					return conversionErr
 				},
@@ -258,8 +272,8 @@ func TestConversionErrorPathPreservesMetadataAndStatus(t *testing.T) {
 			require.NoError(t, err)
 
 			storedVersion := tt.output.GetStoredVersion()
-			require.Equal(t, tt.input.GetVersion(), storedVersion,
-				"storedVersion should fall back to input's short version")
+			require.Equal(t, tt.expectedStoredVersion, storedVersion,
+				"storedVersion should fall back to the registered source version")
 
 			tt.verify(t, tt.input, tt.output)
 
@@ -297,6 +311,7 @@ func TestConversionMatrixExist(t *testing.T) {
 		&dashv1.Dashboard{Spec: common.Unstructured{Object: map[string]any{"title": "dashboardV1"}}},
 		&dashv2alpha1.Dashboard{Spec: dashv2alpha1.DashboardSpec{Title: "dashboardV2alpha1"}},
 		&dashv2beta1.Dashboard{Spec: dashv2beta1.DashboardSpec{Title: "dashboardV2beta1"}},
+		&dashv2.Dashboard{Spec: dashv2.DashboardSpec{Title: "dashboardV2"}},
 	}
 
 	scheme := runtime.NewScheme()
@@ -459,6 +474,10 @@ func TestDashboardConversionToAllVersions(t *testing.T) {
 					var dash dashv2beta1.Dashboard
 					err = json.Unmarshal(inputData, &dash)
 					sourceDash = &dash
+				case "v2":
+					var dash dashv2.Dashboard
+					err = json.Unmarshal(inputData, &dash)
+					sourceDash = &dash
 				default:
 					t.Fatalf("Unsupported source version: %s", gv.Version)
 				}
@@ -505,12 +524,14 @@ func TestDashboardConversionToAllVersions(t *testing.T) {
 						switch version.Name {
 						case "v0alpha1":
 							targetVersions[filename] = &dashv0.Dashboard{TypeMeta: typeMeta}
-						case "v1beta1":
+						case "v1beta1", "v1":
 							targetVersions[filename] = &dashv1.Dashboard{TypeMeta: typeMeta}
 						case "v2alpha1":
 							targetVersions[filename] = &dashv2alpha1.Dashboard{TypeMeta: typeMeta}
 						case "v2beta1":
 							targetVersions[filename] = &dashv2beta1.Dashboard{TypeMeta: typeMeta}
+						case "v2":
+							targetVersions[filename] = &dashv2.Dashboard{TypeMeta: typeMeta}
 						default:
 							t.Logf("Unknown version %s, skipping", version.Name)
 						}
@@ -620,8 +641,9 @@ func TestMigratedDashboardsConversion(t *testing.T) {
 
 			// Get all Dashboard versions from the manifest
 			for _, version := range manifest.ManifestData.Versions {
-				// Skip v1beta1 since that's our source version
-				if version.Name == "v1beta1" {
+				// Skip v1beta1 and v1 since v1beta1 is our source version
+				// and v1 uses the same Go type (identity conversion not supported)
+				if version.Name == "v1beta1" || version.Name == "v1" {
 					continue
 				}
 				for _, kind := range version.Kinds {
@@ -638,10 +660,14 @@ func TestMigratedDashboardsConversion(t *testing.T) {
 						switch version.Name {
 						case "v0alpha1":
 							targetVersions[filename] = &dashv0.Dashboard{TypeMeta: typeMeta}
+						case "v1beta1", "v1":
+							targetVersions[filename] = &dashv1.Dashboard{TypeMeta: typeMeta}
 						case "v2alpha1":
 							targetVersions[filename] = &dashv2alpha1.Dashboard{TypeMeta: typeMeta}
 						case "v2beta1":
 							targetVersions[filename] = &dashv2beta1.Dashboard{TypeMeta: typeMeta}
+						case "v2":
+							targetVersions[filename] = &dashv2.Dashboard{TypeMeta: typeMeta}
 						default:
 							t.Logf("Unknown version %s, skipping", version.Name)
 						}
@@ -1471,4 +1497,116 @@ func TestConversionError(t *testing.T) {
 		// Test that it implements the error interface
 		var _ error = err
 	})
+}
+
+func TestNewDashboardObject(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       string
+		expected    runtime.Object
+		expectedErr string
+	}{
+		// Bare version strings → all supported versions return the correct concrete type.
+		{
+			name:     "v0alpha1 bare version",
+			input:    dashv0.VERSION,
+			expected: &dashv0.Dashboard{},
+		},
+		{
+			name:     "dashv1beta1 version",
+			input:    dashv1beta1.VERSION,
+			expected: &dashv1beta1.Dashboard{},
+		},
+		{
+			name:     "v1 bare version",
+			input:    dashv1.VERSION,
+			expected: &dashv1.Dashboard{},
+		},
+		{
+			name:     "v2alpha1 bare version",
+			input:    dashv2alpha1.VERSION,
+			expected: &dashv2alpha1.Dashboard{},
+		},
+		{
+			name:     "v2beta1 bare version",
+			input:    dashv2beta1.VERSION,
+			expected: &dashv2beta1.Dashboard{},
+		},
+		{
+			name:     "v2 bare version",
+			input:    dashv2.VERSION,
+			expected: &dashv2.Dashboard{},
+		},
+		// Full "group/version" strings → group is stripped before the version switch.
+		{
+			name:     "v0alpha1 full apiVersion",
+			input:    dashv0.APIVERSION,
+			expected: &dashv0.Dashboard{},
+		},
+		{
+			name:     "v1 full apiVersion",
+			input:    dashv1.APIVERSION,
+			expected: &dashv1.Dashboard{},
+		},
+		{
+			name:     "v2alpha1 full apiVersion",
+			input:    dashv2alpha1.APIVERSION,
+			expected: &dashv2alpha1.Dashboard{},
+		},
+		{
+			name:     "v2beta1 full apiVersion",
+			input:    dashv2beta1.APIVERSION,
+			expected: &dashv2beta1.Dashboard{},
+		},
+		{
+			name:     "v2 full apiVersion",
+			input:    dashv2.APIVERSION,
+			expected: &dashv2.Dashboard{},
+		},
+		// Error paths.
+		{
+			name:        "wrong group rejected",
+			input:       "wrong.group/v0alpha1",
+			expectedErr: "expected group: " + dashv0.GROUP,
+		},
+		{
+			name:        "empty group rejected",
+			input:       "/v0alpha1",
+			expectedErr: "invalid version",
+		},
+		{
+			name:        "valid group with unknown version",
+			input:       dashv0.GROUP + "/v99",
+			expectedErr: "invalid version",
+		},
+		{
+			name:        "valid group with empty version",
+			input:       dashv0.GROUP + "/",
+			expectedErr: "invalid version",
+		},
+		{
+			name:        "unknown bare version",
+			input:       "v9999",
+			expectedErr: "invalid version",
+		},
+		{
+			name:        "empty string",
+			input:       "",
+			expectedErr: "invalid version",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			out, err := NewDashboardObject(tt.input)
+			if tt.expectedErr != "" {
+				require.Error(t, err)
+				require.EqualError(t, err, tt.expectedErr)
+				require.Nil(t, out)
+				return
+			}
+			require.NoError(t, err)
+			require.IsType(t, tt.expected, out)
+		})
+	}
 }

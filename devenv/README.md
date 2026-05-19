@@ -87,7 +87,7 @@ You can access the web UI at http://localhost:12080/#/
 
 ## Debugging setup in VS Code
 
-An example of launch.json is provided in `.vscode/launch.json`. It basically does what Makefile and .bra.toml do. The 'program' field is set to the folder name so VS Code loads all \*.go files in it instead of just main.go.
+An example of launch.json is provided in `.vscode/launch.json`. It basically does what Makefile and .air.toml do. The 'program' field is set to the folder name so VS Code loads all \*.go files in it instead of just main.go.
 
 ## Troubleshooting
 

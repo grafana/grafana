@@ -14,7 +14,7 @@
 
 import { memoize } from 'lodash';
 
-import { TraceSpan } from '../types/trace';
+import { type TraceSpan } from '../types/trace';
 import { getServiceDisplayName } from '../utils/service-name';
 
 export function _getTraceNameImpl(spans: TraceSpan[]) {

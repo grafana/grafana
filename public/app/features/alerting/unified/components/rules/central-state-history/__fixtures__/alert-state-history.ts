@@ -1,4 +1,4 @@
-import { DataFrameJSON } from '@grafana/data';
+import { type DataFrameJSON } from '@grafana/data';
 
 const data: DataFrameJSON = {
   data: {

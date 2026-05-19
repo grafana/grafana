@@ -6,14 +6,14 @@ checktypev0alpha1: {
 	scope:  "Namespaced"
 	schema: {
 		#Step: {
-			title:			string
-			description:	string
-			stepID:			string
-			resolution:		string
-		}	
+			title:       string
+			description: string
+			stepID:      string
+			resolution:  string
+		}
 		spec: {
-			name: 	string
-			steps:	[...#Step]
+			name: string
+			steps: [...#Step]
 		}
 	}
 }

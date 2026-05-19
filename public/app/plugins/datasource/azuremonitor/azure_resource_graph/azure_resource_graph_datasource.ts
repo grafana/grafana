@@ -1,22 +1,22 @@
 import { filter, find, includes, startsWith } from 'lodash';
 
-import { ScopedVars } from '@grafana/data';
-import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import { type ScopedVars } from '@grafana/data';
+import { DataSourceWithBackend, getTemplateSrv, type TemplateSrv } from '@grafana/runtime';
 
 import { resourceTypes } from '../azureMetadata/resourceTypes';
 import { ARGScope, AzureQueryType } from '../dataquery.gen';
 import { createFilter } from '../resourcePicker/resourcePickerData';
-import { AzureMonitorQuery } from '../types/query';
+import { type AzureMonitorQuery } from '../types/query';
 import {
-  AzureGetResourceNamesQuery,
-  AzureGraphResponse,
-  AzureMonitorDataSourceInstanceSettings,
-  AzureMonitorDataSourceJsonData,
-  AzureResourceGraphOptions,
-  RawAzureResourceGroupItem,
-  RawAzureResourceItem,
-  RawAzureSubscriptionItem,
-  ResourceGraphFilters,
+  type AzureGetResourceNamesQuery,
+  type AzureGraphResponse,
+  type AzureMonitorDataSourceInstanceSettings,
+  type AzureMonitorDataSourceJsonData,
+  type AzureResourceGraphOptions,
+  type RawAzureResourceGroupItem,
+  type RawAzureResourceItem,
+  type RawAzureSubscriptionItem,
+  type ResourceGraphFilters,
 } from '../types/types';
 import { interpolateVariable, replaceTemplateVariables, routeNames } from '../utils/common';
 

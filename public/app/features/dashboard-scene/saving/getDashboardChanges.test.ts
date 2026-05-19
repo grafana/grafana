@@ -1,8 +1,9 @@
-import { AdHocVariableFilter, AdHocVariableModel } from '@grafana/data';
+import { type AdHocVariableFilter, type AdHocVariableModel } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Dashboard, VariableModel } from '@grafana/schema';
+import { type Dashboard, type VariableModel } from '@grafana/schema';
+import { type Spec as DashboardV2Spec, type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
-import { adHocVariableFiltersEqual, getRawDashboardChanges } from './getDashboardChanges';
+import { adHocVariableFiltersEqual, getRawDashboardChanges, getRawDashboardV2Changes } from './getDashboardChanges';
 
 describe('adHocVariableFiltersEqual', () => {
   it('should compare empty filters', () => {
@@ -495,6 +496,42 @@ describe('getDashboardChanges with adHocFilterDefaultValues', () => {
         { key: 'env', operator: '=', value: 'prod' },
       ]);
     });
+
+    it('should preserve origin filters and restore runtime filters when saveVariables is false', () => {
+      const initial = makeDashboardWithAdhoc([{ key: 'env', operator: '=', value: 'prod' }]);
+      const changed = makeDashboardWithAdhoc([
+        { key: 'host', operator: '=', value: 'localhost', origin: 'dashboard' },
+        { key: 'env', operator: '=', value: 'staging' },
+      ]);
+
+      getRawDashboardChanges(initial, changed, false, false, false);
+
+      const savedFilters = (changed.templating!.list![0] as AdHocVariableModel).filters;
+      expect(savedFilters).toEqual([
+        { key: 'host', operator: '=', value: 'localhost', origin: 'dashboard' },
+        { key: 'env', operator: '=', value: 'prod' },
+      ]);
+    });
+
+    it('should detect schema changes when origin filters are added', () => {
+      const initial = makeDashboardWithAdhoc([]);
+      const changed = makeDashboardWithAdhoc([{ key: 'host', operator: '=', value: 'localhost', origin: 'dashboard' }]);
+
+      const result = getRawDashboardChanges(initial, changed, false, false, false);
+
+      expect(result.hasVariableValueChanges).toBe(false);
+      expect(result.hasChanges).toBe(true);
+    });
+
+    it('should detect schema changes when origin filters are removed', () => {
+      const initial = makeDashboardWithAdhoc([{ key: 'host', operator: '=', value: 'localhost', origin: 'dashboard' }]);
+      const changed = makeDashboardWithAdhoc([]);
+
+      const result = getRawDashboardChanges(initial, changed, false, false, false);
+
+      expect(result.hasVariableValueChanges).toBe(false);
+      expect(result.hasChanges).toBe(true);
+    });
   });
 
   describe('when feature flag is disabled', () => {
@@ -523,5 +560,160 @@ describe('getDashboardChanges with adHocFilterDefaultValues', () => {
       const savedFilters = (changed.templating!.list![0] as AdHocVariableModel).filters;
       expect(savedFilters).toEqual([{ key: 'a', operator: '=', value: '1' }]);
     });
+  });
+});
+
+describe('getRawDashboardV2Changes - section variables', () => {
+  const makeSectionVariable = (value: string): VariableKind => ({
+    kind: 'CustomVariable',
+    spec: {
+      name: 'env',
+      label: 'Environment',
+      query: 'dev,prod',
+      current: { text: value, value },
+      options: [{ text: value, value, selected: true }],
+      multi: false,
+      includeAll: false,
+      hide: 'dontHide',
+      skipUrlSync: false,
+      allowCustomValue: false,
+    },
+  });
+
+  const getCurrentValue = (variables?: VariableKind[]): string | undefined => {
+    const v = variables?.[0];
+    if (v?.kind === 'CustomVariable') {
+      return v.spec.current?.value?.toString();
+    }
+    return undefined;
+  };
+
+  const makeV2Dashboard = (sectionValue: string): DashboardV2Spec => ({
+    title: 'Dashboard V2',
+    description: '',
+    cursorSync: 'Crosshair',
+    editable: true,
+    links: [],
+    tags: [],
+    preload: false,
+    liveNow: false,
+    timeSettings: {
+      from: 'now-6h',
+      to: 'now',
+      autoRefresh: '5m',
+      autoRefreshIntervals: [],
+      hideTimepicker: false,
+      fiscalYearStartMonth: 0,
+    },
+    variables: [],
+    elements: {},
+    annotations: [],
+    layout: {
+      kind: 'RowsLayout',
+      spec: {
+        rows: [
+          {
+            kind: 'RowsLayoutRow',
+            spec: {
+              title: 'Row with vars',
+              collapse: false,
+              layout: { kind: 'GridLayout', spec: { items: [] } },
+              variables: [makeSectionVariable(sectionValue)],
+            },
+          },
+        ],
+      },
+    },
+  });
+
+  it('restores section variable defaults when saveVariables is false', () => {
+    const initial = makeV2Dashboard('dev');
+    const changed = makeV2Dashboard('prod');
+
+    const result = getRawDashboardV2Changes(initial, changed, false, false, false);
+
+    const row =
+      result.changedSaveModel.layout.kind === 'RowsLayout' ? result.changedSaveModel.layout.spec.rows[0] : undefined;
+    expect(getCurrentValue(row?.spec.variables)).toBe('dev');
+    expect(result.hasVariableValueChanges).toBe(true);
+    expect(result.hasChanges).toBe(false);
+  });
+
+  it('persists section variable defaults when saveVariables is true', () => {
+    const initial = makeV2Dashboard('dev');
+    const changed = makeV2Dashboard('prod');
+
+    const result = getRawDashboardV2Changes(initial, changed, false, true, false);
+
+    const row =
+      result.changedSaveModel.layout.kind === 'RowsLayout' ? result.changedSaveModel.layout.spec.rows[0] : undefined;
+    expect(getCurrentValue(row?.spec.variables)).toBe('prod');
+    expect(result.hasVariableValueChanges).toBe(true);
+    expect(result.hasChanges).toBe(true);
+  });
+
+  it('restores nested section variable defaults when saveVariables is false', () => {
+    const makeNested = (value: string): DashboardV2Spec => ({
+      title: 'Nested Dashboard',
+      description: '',
+      cursorSync: 'Crosshair',
+      editable: true,
+      links: [],
+      tags: [],
+      preload: false,
+      liveNow: false,
+      timeSettings: {
+        from: 'now-6h',
+        to: 'now',
+        autoRefresh: '5m',
+        autoRefreshIntervals: [],
+        hideTimepicker: false,
+        fiscalYearStartMonth: 0,
+      },
+      variables: [],
+      elements: {},
+      annotations: [],
+      layout: {
+        kind: 'TabsLayout',
+        spec: {
+          tabs: [
+            {
+              kind: 'TabsLayoutTab',
+              spec: {
+                title: 'Main',
+                layout: {
+                  kind: 'RowsLayout',
+                  spec: {
+                    rows: [
+                      {
+                        kind: 'RowsLayoutRow',
+                        spec: {
+                          title: 'Nested Row',
+                          collapse: false,
+                          layout: { kind: 'GridLayout', spec: { items: [] } },
+                          variables: [makeSectionVariable(value)],
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+          ],
+        },
+      },
+    });
+
+    const initial = makeNested('dev');
+    const changed = makeNested('prod');
+
+    const result = getRawDashboardV2Changes(initial, changed, false, false, false);
+    const tab =
+      result.changedSaveModel.layout.kind === 'TabsLayout' ? result.changedSaveModel.layout.spec.tabs[0] : undefined;
+    const row = tab?.spec.layout.kind === 'RowsLayout' ? tab.spec.layout.spec.rows[0] : undefined;
+
+    expect(getCurrentValue(row?.spec.variables)).toBe('dev');
+    expect(result.hasVariableValueChanges).toBe(true);
+    expect(result.hasChanges).toBe(false);
   });
 });

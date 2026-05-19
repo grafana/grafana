@@ -5,7 +5,7 @@ import { renderMarkdown } from '@grafana/data';
 
 import { MaybeWrapWithLink } from '../components/MaybeWrapWithLink';
 import { getActiveCellSelector, isTableCellStylesKeyEqual } from '../styles';
-import { MarkdownCellProps, TableCellStyles } from '../types';
+import { type MarkdownCellProps, type TableCellStyles } from '../types';
 
 export function MarkdownCell({ field, rowIdx, disableSanitizeHtml }: MarkdownCellProps) {
   const rawValue = field.values[rowIdx];

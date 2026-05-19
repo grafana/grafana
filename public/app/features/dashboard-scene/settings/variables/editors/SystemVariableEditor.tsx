@@ -1,4 +1,4 @@
-import { SceneVariable, LocalValueVariable } from '@grafana/scenes';
+import { type SceneVariable, LocalValueVariable } from '@grafana/scenes';
 import { Stack } from '@grafana/ui';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 

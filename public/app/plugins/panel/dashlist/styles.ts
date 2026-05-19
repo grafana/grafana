@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2, colorManipulator } from '@grafana/data';
+import { type GrafanaTheme2, colorManipulator } from '@grafana/data';
 
 export const getStyles = (theme: GrafanaTheme2) => {
   const gradient = `linear-gradient(

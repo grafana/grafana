@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { memo, useCallback, useMemo, useState } from 'react';
 
-import { GrafanaTheme2, MappingType, StandardEditorProps, ValueMapping } from '@grafana/data';
+import { type GrafanaTheme2, MappingType, type StandardEditorProps, type ValueMapping } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { useStyles2, Stack, Icon, ColorPicker, Button, Modal } from '@grafana/ui';
 

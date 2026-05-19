@@ -4,7 +4,6 @@ const PAGE_UNDER_TEST = 'OY8Ghjt7k/repeating-a-panel-vertically';
 
 test.use({
   featureToggles: {
-    kubernetesDashboards: process.env.FORCE_V2_DASHBOARDS_API === 'true',
     dashboardNewLayouts: process.env.FORCE_V2_DASHBOARDS_API === 'true',
   },
 });

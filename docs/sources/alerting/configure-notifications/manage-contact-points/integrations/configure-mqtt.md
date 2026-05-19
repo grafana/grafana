@@ -41,7 +41,7 @@ Use the MQTT integration in contact points to send alert notifications to your M
 
 To create a contact point with MQTT integration, complete the following steps.
 
-1. Navigate to **Alerts & IRM** -> **Alerting** -> **Contact points**.
+1. Navigate to **Alerts & IRM** -> **Alerting** -> **Notification configuration**, then select the **Contact points** tab.
 1. Click **+ Add contact point**.
 1. Enter a name for the contact point.
 1. From the **Integration** list, select **MQTT**.

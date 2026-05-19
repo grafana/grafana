@@ -1,4 +1,4 @@
-import { CustomVariableModel, LoadingState, VariableHide } from '@grafana/data';
+import { type CustomVariableModel, LoadingState, VariableHide } from '@grafana/data';
 
 export function makeVariable(id: string, name: string, attributes?: Partial<CustomVariableModel>): CustomVariableModel {
   return {

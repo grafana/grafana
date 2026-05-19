@@ -6,7 +6,7 @@ import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { formatDate } from 'app/core/internationalization/dates';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
-import { UserSession } from 'app/types/user';
+import { type UserSession } from 'app/types/user';
 
 interface Props {
   sessions: UserSession[];

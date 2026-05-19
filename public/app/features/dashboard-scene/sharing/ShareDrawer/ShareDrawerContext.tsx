@@ -1,6 +1,6 @@
 import { createContext, useContext } from 'react';
 
-import { DashboardScene } from '../../scene/DashboardScene';
+import { type DashboardScene } from '../../scene/DashboardScene';
 
 interface Context {
   dashboard: DashboardScene;

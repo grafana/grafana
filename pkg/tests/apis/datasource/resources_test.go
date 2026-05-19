@@ -35,7 +35,7 @@ func setup(t *testing.T) *apis.K8sTestHelper {
 		DisableAnonymous: true,
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,       // Required to start the datasource api servers
-			featuremgmt.FlagQueryServiceWithConnections,                // enables CRUD endpoints
+			featuremgmt.FlagDatasourceUseNewCRUDAPIs,                   // enables CRUD endpoints
 			featuremgmt.FlagDatasourcesApiServerEnableResourceEndpoint, // enables resource endpoint
 		},
 	})
@@ -76,7 +76,7 @@ func TestIntegrationDatasourceResources(t *testing.T) {
 		raw := apis.DoRequest[any](helper, apis.RequestParams{
 			User:   helper.Org1.Admin,
 			Method: http.MethodGet,
-			Path:   "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test-resource/resource",
+			Path:   "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test-resource/resources",
 		}, nil)
 
 		require.Equal(t, http.StatusOK, raw.Response.StatusCode, "expected OK status, got body: %s", string(raw.Body))
@@ -89,7 +89,7 @@ func TestIntegrationDatasourceResources(t *testing.T) {
 		raw := apis.DoRequest[testdataResponse](helper, apis.RequestParams{
 			User:   helper.Org1.Admin,
 			Method: http.MethodGet,
-			Path:   "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test-resource/resource/test/json",
+			Path:   "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test-resource/resources/test/json",
 		}, &testdataResponse{})
 
 		require.Equal(t, http.StatusOK, raw.Response.StatusCode)
@@ -102,7 +102,7 @@ func TestIntegrationDatasourceResources(t *testing.T) {
 		raw := apis.DoRequest[testdataResponse](helper, apis.RequestParams{
 			User:   helper.Org1.Admin,
 			Method: http.MethodPost,
-			Path:   "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test-resource/resource/test/json",
+			Path:   "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test-resource/resources/test/json",
 			Body:   []byte(`{"foo": "bar", "count": 42}`),
 		}, &testdataResponse{})
 
@@ -122,7 +122,7 @@ func TestIntegrationDatasourceResourceHeaders(t *testing.T) {
 		raw := apis.DoRequest[testdataResponse](helper, apis.RequestParams{
 			User:   helper.Org1.Admin,
 			Method: http.MethodPost,
-			Path:   "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test-resource/resource/test/json",
+			Path:   "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test-resource/resources/test/json",
 			Headers: map[string]string{
 				"X-Custom-Header": "custom-value",
 			},
@@ -149,7 +149,7 @@ func TestIntegrationDatasourceResourceHeaders(t *testing.T) {
 		raw := apis.DoRequest[testdataResponse](helper, apis.RequestParams{
 			User:   helper.Org1.Admin,
 			Method: http.MethodGet,
-			Path:   "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test-resource/resource/test/json?param1=value1&param2=value2",
+			Path:   "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test-resource/resources/test/json?param1=value1&param2=value2",
 		}, &testdataResponse{})
 
 		require.Equal(t, http.StatusOK, raw.Response.StatusCode)
@@ -173,7 +173,7 @@ func TestIntegrationDatasourceStreamingResource(t *testing.T) {
 		raw := apis.DoRequest[any](helper, apis.RequestParams{
 			User:   helper.Org1.Admin,
 			Method: http.MethodGet,
-			Path:   "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test-resource/resource/test/stream",
+			Path:   "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test-resource/resources/test/stream",
 		}, nil)
 
 		require.NotNil(t, raw.Response.StatusCode)
@@ -190,7 +190,7 @@ func TestIntegrationDatasourceResourceAuthorization(t *testing.T) {
 		raw := apis.DoRequest[any](helper, apis.RequestParams{
 			User:   helper.Org1.Admin,
 			Method: http.MethodGet,
-			Path:   "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/default/datasources/does-not-exist/resource",
+			Path:   "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/default/datasources/does-not-exist/resources",
 		}, nil)
 
 		require.NotNil(t, raw.Status)
@@ -202,7 +202,7 @@ func TestIntegrationDatasourceResourceAuthorization(t *testing.T) {
 		raw := apis.DoRequest[any](helper, apis.RequestParams{
 			User:   helper.Org1.None,
 			Method: http.MethodGet,
-			Path:   "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test-resource/resource",
+			Path:   "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test-resource/resources",
 		}, nil)
 
 		require.NotNil(t, raw.Response)
@@ -214,7 +214,7 @@ func TestIntegrationDatasourceResourceAuthorization(t *testing.T) {
 		raw := apis.DoRequest[any](helper, apis.RequestParams{
 			User:   helper.OrgB.Admin,
 			Method: http.MethodGet,
-			Path:   "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test-resource/resource",
+			Path:   "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test-resource/resources",
 		}, nil)
 
 		require.NotNil(t, raw.Status)
@@ -244,7 +244,7 @@ func TestIntegrationDatasourceResourcesMethods(t *testing.T) {
 			raw := apis.DoRequest[testdataResponse](helper, apis.RequestParams{
 				User:   helper.Org1.Admin,
 				Method: method,
-				Path:   "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test-resource/resource/test/json",
+				Path:   "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test-resource/resources/test/json",
 				Body:   body,
 			}, &testdataResponse{})
 
@@ -266,7 +266,7 @@ func TestIntegrationDatasourceResourcesScenarios(t *testing.T) {
 		raw := apis.DoRequest[[]map[string]any](helper, apis.RequestParams{
 			User:   helper.Org1.Admin,
 			Method: http.MethodGet,
-			Path:   "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test-resource/resource/scenarios",
+			Path:   "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test-resource/resources/scenarios",
 		}, &[]map[string]any{})
 
 		require.Equal(t, http.StatusOK, raw.Response.StatusCode)

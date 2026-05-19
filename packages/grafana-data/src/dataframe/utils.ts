@@ -1,6 +1,6 @@
-import { GrafanaTheme2 } from '../themes/types';
-import { DataFrame, Field, FieldType } from '../types/dataFrame';
-import { TimeRange } from '../types/time';
+import { type GrafanaTheme2 } from '../themes/types';
+import { type DataFrame, type Field, FieldType } from '../types/dataFrame';
+import { type TimeRange } from '../types/time';
 
 import { getTimeField } from './processDataFrame';
 

@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
 
-import { CreateNotificationqueryNotificationEntry } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
-import { GrafanaTheme2, dateTimeFormat } from '@grafana/data';
+import { type CreateNotificationqueryNotificationEntry } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
+import { type GrafanaTheme2, dateTimeFormat } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Badge, Icon, IconName, LoadingPlaceholder, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { Badge, Icon, type IconName, LoadingPlaceholder, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
 
 import { INTEGRATION_ICONS } from '../types/contact-points';

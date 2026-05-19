@@ -1,4 +1,4 @@
-import { MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
+import { type MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 
 import { renderTimeIntervals } from './util';
 

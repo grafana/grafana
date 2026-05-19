@@ -1,8 +1,8 @@
 import { v5 as uuidv5 } from 'uuid';
 
-import { MutableDataFrame } from '@grafana/data';
+import { type MutableDataFrame } from '@grafana/data';
 
-import { LokiStreamResult, LokiTailResponse } from './types';
+import { type LokiStreamResult, type LokiTailResponse } from './types';
 
 const UUID_NAMESPACE = '6ec946da-0f49-47a8-983a-1d76d17e7c92';
 

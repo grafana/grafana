@@ -1,13 +1,13 @@
 import { toLonLat } from 'ol/proj';
 import { useMemo, useCallback, useId } from 'react';
 
-import { StandardEditorProps, SelectableValue } from '@grafana/data';
+import { type StandardEditorProps, type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, InlineField, InlineFieldRow, Select, Stack } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
 import { type Options, type MapViewConfig } from '../panelcfg.gen';
-import { GeomapInstanceState } from '../types';
+import { type GeomapInstanceState } from '../types';
 import { centerPointRegistry, MapCenterID } from '../view';
 
 import { CoordinatesMapViewEditor } from './CoordinatesMapViewEditor';

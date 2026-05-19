@@ -2,16 +2,20 @@ package jobs
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 )
 
 func newConflictError() error {
@@ -160,4 +164,266 @@ func TestOnProgress_MutexNotLeakedOnConflict(t *testing.T) {
 	case <-time.After(1 * time.Second):
 		t.Fatal("main thread cannot acquire d.mu — leaked goroutine from onProgress still holds the lock")
 	}
+}
+
+// --- processJob tests ---
+
+// makeOrphanJob creates a test job with the given action targeting a repo that
+// may not exist. Unlike makeTestJob it accepts an arbitrary action.
+func makeOrphanJob(action provisioning.JobAction) *provisioning.Job {
+	return &provisioning.Job{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-job",
+			Namespace: "test-ns",
+		},
+		Spec: provisioning.JobSpec{
+			Repository: "deleted-repo",
+			Action:     action,
+		},
+	}
+}
+
+// makeRepoConfig returns a minimal provisioning.Repository config for use
+// with mock repository objects.
+func makeRepoConfig(name string, deletionTimestamp *metav1.Time, labels map[string]string) *provisioning.Repository {
+	return &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:              name,
+			Namespace:         "test-ns",
+			DeletionTimestamp: deletionTimestamp,
+			Labels:            labels,
+		},
+		Spec: provisioning.RepositorySpec{
+			Type: provisioning.GitHubRepositoryType,
+		},
+	}
+}
+
+func newNotFoundError() error {
+	return apierrors.NewNotFound(
+		schema.GroupResource{Group: provisioning.GROUP, Resource: "repositories"},
+		"deleted-repo",
+	)
+}
+
+func setupDriverForProcessJob(worker *MockWorker, repoGetter *MockRepoGetter) *jobDriver {
+	return &jobDriver{
+		workers:    []Worker{worker},
+		repoGetter: repoGetter,
+	}
+}
+
+func TestProcessJob_OrphanCleanup_RepoNotFound(t *testing.T) {
+	for _, action := range []provisioning.JobAction{
+		provisioning.JobActionReleaseResources,
+		provisioning.JobActionDeleteResources,
+	} {
+		t.Run(string(action), func(t *testing.T) {
+			worker := &MockWorker{}
+			repoGetter := &MockRepoGetter{}
+			recorder := &MockJobProgressRecorder{}
+			driver := setupDriverForProcessJob(worker, repoGetter)
+			driver.currentJob = makeOrphanJob(action)
+
+			worker.EXPECT().IsSupported(mock.Anything, mock.Anything).Return(true)
+			repoGetter.EXPECT().GetRepository(mock.Anything, "test-ns", "deleted-repo").
+				Return(nil, newNotFoundError())
+			worker.EXPECT().Process(mock.Anything, nil, mock.Anything, recorder).Return(nil)
+
+			err := driver.processJob(context.Background(), recorder)
+			require.NoError(t, err)
+
+			// Verify worker.Process was called with nil repo
+			worker.AssertCalled(t, "Process", mock.Anything, nil, mock.Anything, recorder)
+		})
+	}
+}
+
+func TestProcessJob_OrphanCleanup_RepoTerminating(t *testing.T) {
+	for _, action := range []provisioning.JobAction{
+		provisioning.JobActionReleaseResources,
+		provisioning.JobActionDeleteResources,
+	} {
+		t.Run(string(action), func(t *testing.T) {
+			worker := &MockWorker{}
+			repoGetter := &MockRepoGetter{}
+			recorder := &MockJobProgressRecorder{}
+			driver := setupDriverForProcessJob(worker, repoGetter)
+			driver.currentJob = makeOrphanJob(action)
+
+			now := metav1.Now()
+			repoCfg := makeRepoConfig("deleted-repo", &now, nil)
+			mockRepo := &repository.MockRepository{}
+			mockRepo.On("Config").Return(repoCfg)
+
+			worker.EXPECT().IsSupported(mock.Anything, mock.Anything).Return(true)
+			repoGetter.EXPECT().GetRepository(mock.Anything, "test-ns", "deleted-repo").
+				Return(mockRepo, nil)
+			worker.EXPECT().Process(mock.Anything, mockRepo, mock.Anything, recorder).Return(nil)
+
+			err := driver.processJob(context.Background(), recorder)
+			require.NoError(t, err)
+
+			worker.AssertCalled(t, "Process", mock.Anything, mockRepo, mock.Anything, recorder)
+		})
+	}
+}
+
+func TestProcessJob_NormalAction_RepoNotFound_ReturnsError(t *testing.T) {
+	worker := &MockWorker{}
+	repoGetter := &MockRepoGetter{}
+	recorder := &MockJobProgressRecorder{}
+	driver := setupDriverForProcessJob(worker, repoGetter)
+	driver.currentJob = makeTestJob("1")
+
+	worker.EXPECT().IsSupported(mock.Anything, mock.Anything).Return(true)
+	repoGetter.EXPECT().GetRepository(mock.Anything, "test-ns", "test-repo").
+		Return(nil, newNotFoundError())
+
+	err := driver.processJob(context.Background(), recorder)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to get repository")
+
+	worker.AssertNotCalled(t, "Process", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+}
+
+func TestProcessJob_NormalAction_RepoTerminating_SkipsJob(t *testing.T) {
+	worker := &MockWorker{}
+	repoGetter := &MockRepoGetter{}
+	recorder := &MockJobProgressRecorder{}
+	driver := setupDriverForProcessJob(worker, repoGetter)
+	driver.currentJob = makeTestJob("1")
+
+	now := metav1.Now()
+	repoCfg := makeRepoConfig("test-repo", &now, nil)
+	mockRepo := &repository.MockRepository{}
+	mockRepo.On("Config").Return(repoCfg)
+
+	worker.EXPECT().IsSupported(mock.Anything, mock.Anything).Return(true)
+	repoGetter.EXPECT().GetRepository(mock.Anything, "test-ns", "test-repo").
+		Return(mockRepo, nil)
+
+	err := driver.processJob(context.Background(), recorder)
+	require.NoError(t, err)
+
+	worker.AssertNotCalled(t, "Process", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+}
+
+func TestProcessJob_NormalAction_RepoPendingDelete_SkipsJob(t *testing.T) {
+	worker := &MockWorker{}
+	repoGetter := &MockRepoGetter{}
+	recorder := &MockJobProgressRecorder{}
+	driver := setupDriverForProcessJob(worker, repoGetter)
+	driver.currentJob = makeTestJob("1")
+
+	repoCfg := makeRepoConfig("test-repo", nil, map[string]string{
+		appcontroller.LabelPendingDelete: "true",
+	})
+	mockRepo := &repository.MockRepository{}
+	mockRepo.On("Config").Return(repoCfg)
+
+	worker.EXPECT().IsSupported(mock.Anything, mock.Anything).Return(true)
+	repoGetter.EXPECT().GetRepository(mock.Anything, "test-ns", "test-repo").
+		Return(mockRepo, nil)
+	recorder.EXPECT().Record(mock.Anything, mock.Anything)
+
+	err := driver.processJob(context.Background(), recorder)
+	require.NoError(t, err)
+
+	worker.AssertNotCalled(t, "Process", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+}
+
+func TestProcessJob_HealthyRepo_CallsWorker(t *testing.T) {
+	worker := &MockWorker{}
+	repoGetter := &MockRepoGetter{}
+	recorder := &MockJobProgressRecorder{}
+	driver := setupDriverForProcessJob(worker, repoGetter)
+	driver.currentJob = makeTestJob("1")
+
+	repoCfg := makeRepoConfig("test-repo", nil, nil)
+	mockRepo := &repository.MockRepository{}
+	mockRepo.On("Config").Return(repoCfg)
+
+	worker.EXPECT().IsSupported(mock.Anything, mock.Anything).Return(true)
+	repoGetter.EXPECT().GetRepository(mock.Anything, "test-ns", "test-repo").
+		Return(mockRepo, nil)
+	worker.EXPECT().Process(mock.Anything, mockRepo, mock.Anything, recorder).Return(nil)
+
+	err := driver.processJob(context.Background(), recorder)
+	require.NoError(t, err)
+
+	worker.AssertCalled(t, "Process", mock.Anything, mockRepo, mock.Anything, recorder)
+}
+
+func TestProcessJob_HealthyRepo_WorkerError_PropagatesError(t *testing.T) {
+	worker := &MockWorker{}
+	repoGetter := &MockRepoGetter{}
+	recorder := &MockJobProgressRecorder{}
+	driver := setupDriverForProcessJob(worker, repoGetter)
+	driver.currentJob = makeTestJob("1")
+
+	repoCfg := makeRepoConfig("test-repo", nil, nil)
+	mockRepo := &repository.MockRepository{}
+	mockRepo.On("Config").Return(repoCfg)
+
+	worker.EXPECT().IsSupported(mock.Anything, mock.Anything).Return(true)
+	repoGetter.EXPECT().GetRepository(mock.Anything, "test-ns", "test-repo").
+		Return(mockRepo, nil)
+	worker.EXPECT().Process(mock.Anything, mockRepo, mock.Anything, recorder).
+		Return(errors.New("sync failed"))
+
+	err := driver.processJob(context.Background(), recorder)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "sync failed")
+}
+
+func TestProcessJob_NoSupportedWorkers_ReturnsError(t *testing.T) {
+	worker := &MockWorker{}
+	repoGetter := &MockRepoGetter{}
+	recorder := &MockJobProgressRecorder{}
+	driver := setupDriverForProcessJob(worker, repoGetter)
+	driver.currentJob = makeTestJob("1")
+
+	worker.EXPECT().IsSupported(mock.Anything, mock.Anything).Return(false)
+
+	err := driver.processJob(context.Background(), recorder)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "no workers were registered to handle the job")
+}
+
+func TestProcessJob_OrphanCleanup_RepoRecreated_ReturnsError(t *testing.T) {
+	for _, action := range []provisioning.JobAction{
+		provisioning.JobActionReleaseResources,
+		provisioning.JobActionDeleteResources,
+	} {
+		t.Run(string(action), func(t *testing.T) {
+			worker := &MockWorker{}
+			repoGetter := &MockRepoGetter{}
+			recorder := &MockJobProgressRecorder{}
+			driver := setupDriverForProcessJob(worker, repoGetter)
+			driver.currentJob = makeOrphanJob(action)
+
+			repoCfg := makeRepoConfig("deleted-repo", nil, nil)
+			mockRepo := &repository.MockRepository{}
+			mockRepo.On("Config").Return(repoCfg)
+
+			worker.EXPECT().IsSupported(mock.Anything, mock.Anything).Return(true)
+			repoGetter.EXPECT().GetRepository(mock.Anything, "test-ns", "deleted-repo").
+				Return(mockRepo, nil)
+
+			err := driver.processJob(context.Background(), recorder)
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), "exists and is healthy")
+
+			worker.AssertNotCalled(t, "Process", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+		})
+	}
+}
+
+func TestProcessJob_NilCurrentJob_ReturnsNil(t *testing.T) {
+	driver := &jobDriver{}
+	recorder := &MockJobProgressRecorder{}
+
+	err := driver.processJob(context.Background(), recorder)
+	require.NoError(t, err)
 }

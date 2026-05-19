@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"path"
 	"strings"
 	"time"
 
@@ -20,12 +19,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/simple"
 	shorturlv1beta1 "github.com/grafana/grafana/apps/shorturl/pkg/apis/shorturl/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-)
-
-// Local error definitions to avoid importing the main shorturls package
-var (
-	ErrShortURLAbsolutePath = fmt.Errorf("path should be relative")
-	ErrShortURLInvalidPath  = fmt.Errorf("invalid short URL path")
 )
 
 func New(cfg app.Config) (app.App, error) {
@@ -58,14 +51,7 @@ func New(cfg app.Config) (app.App, error) {
 							return fmt.Errorf("expected ShortURL object, got %T", req.Object)
 						}
 
-						relPath := strings.TrimSpace(shortURL.Spec.Path)
-						if path.IsAbs(relPath) {
-							return fmt.Errorf("%w: %s", ErrShortURLAbsolutePath, relPath)
-						}
-						if strings.Contains(relPath, "../") {
-							return fmt.Errorf("%w: %s", ErrShortURLInvalidPath, relPath)
-						}
-						return nil
+						return validateRelativePath(shortURL.Spec.Path)
 					},
 				},
 				CustomRoutes: simple.AppCustomRouteHandlers{
@@ -73,7 +59,7 @@ func New(cfg app.Config) (app.App, error) {
 						Method: "GET",
 						Path:   "goto",
 					}: func(ctx context.Context, w app.CustomRouteResponseWriter, req *app.CustomRouteRequest) error {
-						url, _, found := strings.Cut(req.URL.Path, "/apis/") // This will be settings.AppURL
+						appURL, _, found := strings.Cut(req.URL.Path, "/apis/") // This will be settings.AppURL
 						if !found {
 							return fmt.Errorf("unable to parse request URL")
 						}
@@ -85,6 +71,11 @@ func New(cfg app.Config) (app.App, error) {
 						info, err := client.Get(ctx, id)
 						if err != nil {
 							return err
+						}
+
+						// Safety net: validate the stored path before redirecting
+						if err := validateRelativePath(info.Spec.Path); err != nil {
+							return fmt.Errorf("stored short URL has invalid path: %w", err)
 						}
 
 						// Update lastSeenAt in the background
@@ -103,13 +94,13 @@ func New(cfg app.Config) (app.App, error) {
 							}
 						}()
 
-						url = url + "/" + info.Spec.Path
+						redirectURL := appURL + "/" + info.Spec.Path
 						if req.URL.Query().Get("redirect") == "false" { // helpful for testing
 							return json.NewEncoder(w).Encode(shorturlv1beta1.GetGotoResponse{
-								Url: url,
+								Url: redirectURL,
 							})
 						}
-						w.Header().Add("Location", url)
+						w.Header().Add("Location", redirectURL)
 						w.WriteHeader(http.StatusFound)
 						return nil
 					},

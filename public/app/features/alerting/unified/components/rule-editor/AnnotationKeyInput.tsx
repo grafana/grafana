@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 
 import { Annotation, annotationLabels } from '../../utils/constants';
 

@@ -1,12 +1,12 @@
 import moment from 'moment-timezone';
 
-import { DataLinkBuiltInVars, getTimeZone, ScopedVars, urlUtil } from '@grafana/data';
+import { DataLinkBuiltInVars, getTimeZone, type ScopedVars, urlUtil } from '@grafana/data';
 
 import { getTimeSrv } from '../dashboard/services/TimeSrv';
 import { getVariablesUrlParams } from '../variables/getAllVariableValuesForUrl';
 
 import { dataMacro, fieldMacro, seriesNameMacro, valueMacro } from './dataMacros';
-import { MacroHandler } from './types';
+import { type MacroHandler } from './types';
 
 export const macroRegistry: Record<string, MacroHandler> = {
   ['__value']: valueMacro,

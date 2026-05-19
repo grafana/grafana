@@ -2,9 +2,9 @@ import { useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
 import { RadioButtonGroup, Stack, Text } from '@grafana/ui';
-import { AlertQuery } from 'app/types/unified-alerting-dto';
+import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
+import { RuleFormType, type RuleFormValues } from '../../../types/rule-form';
 import { DOCS_URL_ALERT_RULE_TYPES } from '../../../utils/docs';
 import { NeedHelpInfo } from '../NeedHelpInfo';
 

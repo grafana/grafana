@@ -6,7 +6,7 @@ import {
   MOCK_SCOPE_DASHBOARD_BINDINGS,
   MOCK_SUB_SCOPE_LOKI_ITEMS,
   MOCK_SUB_SCOPE_MIMIR_ITEMS,
-  ScopeNavigation,
+  type ScopeNavigation,
 } from '../../../../fixtures/scopes';
 import { getErrorResponse } from '../../../helpers';
 

@@ -2,23 +2,13 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { VariableHide } from '@grafana/data';
+import { mockComboboxRect } from '@grafana/test-utils';
 
 import { VariableDisplaySelect } from './VariableDisplaySelect';
 
-// For testing combobox
 beforeAll(() => {
-  const mockGetBoundingClientRect = jest.fn(() => ({
-    width: 120,
-    height: 120,
-    top: 0,
-    left: 0,
-    bottom: 0,
-    right: 0,
-  }));
-
-  Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
-    value: mockGetBoundingClientRect,
-  });
+  // For testing combobox
+  mockComboboxRect();
 });
 
 describe('VariableDisplaySelect', () => {
@@ -33,6 +23,27 @@ describe('VariableDisplaySelect', () => {
     expect(await screen.findByText('Above dashboard')).toBeInTheDocument();
     expect(screen.getByText('Above dashboard, label hidden')).toBeInTheDocument();
     expect(screen.getByText('Controls menu')).toBeInTheDocument();
+    expect(screen.getByText('Hidden')).toBeInTheDocument();
+  });
+
+  it('should hide "Controls menu" when hideControlsMenuOption is true', async () => {
+    const onChange = jest.fn();
+    const user = userEvent.setup();
+    render(
+      <VariableDisplaySelect
+        onChange={onChange}
+        display={VariableHide.dontHide}
+        type="query"
+        hideControlsMenuOption={true}
+      />
+    );
+
+    const combobox = screen.getByRole('combobox');
+    await user.click(combobox);
+
+    expect(await screen.findByText('Above dashboard')).toBeInTheDocument();
+    expect(screen.getByText('Above dashboard, label hidden')).toBeInTheDocument();
+    expect(screen.queryByText('Controls menu')).not.toBeInTheDocument();
     expect(screen.getByText('Hidden')).toBeInTheDocument();
   });
 
@@ -73,7 +84,7 @@ describe('VariableDisplaySelect', () => {
 
     render(<VariableDisplaySelect onChange={onChange} display={VariableHide.inControlsMenu} type="query" />);
 
-    const combobox = screen.getByRole('combobox');
+    const combobox = screen.getByRole('combobox', { name: 'Display' });
     await user.click(combobox);
 
     const aboveDashboardOption = await screen.findByText('Above dashboard');

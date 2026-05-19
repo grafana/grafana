@@ -2,14 +2,14 @@ import { css, cx } from '@emotion/css';
 import { useCallback } from 'react';
 import * as React from 'react';
 
-import { formattedValueToString, GrafanaTheme2 } from '@grafana/data';
+import { formattedValueToString, type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { hoverColor } from '../../themes/mixins';
 
 import { VizLegendSeriesIcon } from './VizLegendSeriesIcon';
-import { VizLegendItem } from './types';
+import { type VizLegendItem } from './types';
 
 export interface Props {
   key?: React.Key;
@@ -25,6 +25,7 @@ export interface Props {
     event: React.MouseEvent<HTMLButtonElement> | React.FocusEvent<HTMLButtonElement>
   ) => void;
   readonly?: boolean;
+  hasMixedAxes?: boolean;
 }
 
 /**
@@ -37,6 +38,7 @@ export const LegendTableItem = ({
   onLabelMouseOut,
   className,
   readonly,
+  hasMixedAxes,
 }: Props) => {
   const styles = useStyles2(getStyles);
 
@@ -89,7 +91,7 @@ export const LegendTableItem = ({
             className={cx(styles.label, item.disabled && styles.labelDisabled)}
           >
             {item.label}{' '}
-            {item.yAxis === 2 && (
+            {item.yAxis === 2 && hasMixedAxes && (
               <span className={styles.yAxisLabel}>
                 <Trans i18nKey="grafana-ui.viz-legend.right-axis-indicator">(right y-axis)</Trans>
               </span>

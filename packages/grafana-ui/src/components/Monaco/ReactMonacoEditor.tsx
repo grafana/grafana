@@ -1,4 +1,4 @@
-import Editor, { loader as monacoEditorLoader, Monaco } from '@monaco-editor/react';
+import Editor, { loader as monacoEditorLoader, type Monaco } from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
 import { useCallback, useEffect } from 'react';
 

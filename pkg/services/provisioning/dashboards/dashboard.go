@@ -7,8 +7,8 @@ import (
 	"os"
 	"time"
 
-	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
-	folderV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	folderV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -58,7 +58,7 @@ func New(ctx context.Context, configDirectory string, provisioner dashboards.Das
 		return nil, fmt.Errorf("%v: %w", "Failed to read dashboards config", err)
 	}
 
-	fileReaders, err := getFileReaders(configs, logger, provisioner, dashboardStore, folderService)
+	fileReaders, err := getFileReaders(configs, logger, provisioner, dashboardStore, folderService, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "Failed to initialize file readers", err)
 	}
@@ -69,10 +69,6 @@ func New(ctx context.Context, configDirectory string, provisioner dashboards.Das
 			for _, reader := range fileReaders {
 				reader.foldersInUnified = true
 			}
-		}
-
-		if !dual.ShouldManage(dashboardV1.DashboardResourceInfo.GroupResource()) {
-			dual = nil // not actively managed
 		}
 	}
 
@@ -208,6 +204,7 @@ func getFileReaders(
 	service dashboards.DashboardProvisioningService,
 	store utils.DashboardStore,
 	folderService folder.Service,
+	cfg *setting.Cfg,
 ) ([]*FileReader, error) {
 	var readers []*FileReader
 
@@ -220,6 +217,7 @@ func getFileReaders(
 				service,
 				store,
 				folderService,
+				cfg,
 			)
 			if err != nil {
 				return nil, fmt.Errorf("failed to create file reader for config %v: %w", config.Name, err)

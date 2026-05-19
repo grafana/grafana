@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import memoize from 'micro-memoize';
 
 import { ActionButton } from '../../../Actions/ActionButton';
-import { ActionCellProps, TableCellStyles } from '../types';
+import { type ActionCellProps, type TableCellStyles } from '../types';
 
 export const ActionsCell = ({ field, rowIdx, getActions }: ActionCellProps) => {
   const actions = getActions(field, rowIdx);

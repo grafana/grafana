@@ -1,13 +1,15 @@
 {
   "kind": "ReceiverList",
-  "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+  "apiVersion": "notifications.alerting.grafana.app/v1beta1",
   "metadata": {},
   "items": [
     {
+      "kind": "Receiver",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "metadata": {
         "name": "ZW1wdHk",
         "namespace": "default",
-        "uid": "a1YdAlNiDl6P4Ub0Hgt2Unlh1vMLa3wVczyEoqIyevQX",
+        "uid": "LtUsLXN5g8PDXHGdoRiZc2ddeLB90xS0I8XgChMqxuYX",
         "resourceVersion": "d7c9689fe44f7d0b",
         "annotations": {
           "grafana.com/access/canAdmin": "true",
@@ -18,8 +20,7 @@
           "grafana.com/access/canWrite": "true",
           "grafana.com/canUse": "true",
           "grafana.com/inUse/routes": "1",
-          "grafana.com/inUse/rules": "0",
-          "grafana.com/provenance": "none"
+          "grafana.com/inUse/rules": "0"
         }
       },
       "spec": {
@@ -28,10 +29,12 @@
       }
     },
     {
+      "kind": "Receiver",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "metadata": {
         "name": "Z3JhZmFuYS1kZWZhdWx0LWVtYWls",
         "namespace": "default",
-        "uid": "zyXFk301pvwNz4HRPrTMKPMFO2934cPB7H1ZXmyM1TUX",
+        "uid": "Kv3aohRRhZZgwZRUOA62GbN6vjUAa6Xs4Ql2TTYE2XIX",
         "resourceVersion": "40409c09d2b2f217",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
@@ -48,11 +51,13 @@
       }
     },
     {
+      "kind": "Receiver",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "metadata": {
         "name": "ZGlzY29yZA",
         "namespace": "default",
-        "uid": "8cH8Ql2S6VhPEVUhwlQEKYWyPbRJS7YKj2lEXdrehH8X",
-        "resourceVersion": "06e437697f62ac59",
+        "uid": "qZZWlsquf3y9Jq7t4DPEHSRuBoeHemHgnoHgUVV43OYX",
+        "resourceVersion": "faa7705455991f0a",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -66,7 +71,7 @@
         "title": "discord",
         "integrations": [
           {
-            "uid": "",
+            "uid": "c1c176c3df57651f",
             "type": "discord",
             "version": "v0mimir1",
             "disableResolveMessage": false,
@@ -91,11 +96,13 @@
       }
     },
     {
+      "kind": "Receiver",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "metadata": {
         "name": "ZW1haWw",
         "namespace": "default",
-        "uid": "bhlvlN758xmnwVrHVPX0c5XvFHepenUbOXP0fuE6eUMX",
-        "resourceVersion": "9b3ffed277cee189",
+        "uid": "HqiXTxM48q3i9R6eNxGMsqRwFotgKfd2Y3Sgrg0QQagX",
+        "resourceVersion": "4d17750eb3c688f1",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -109,7 +116,7 @@
         "title": "email",
         "integrations": [
           {
-            "uid": "",
+            "uid": "4a969f287a552a6f",
             "type": "email",
             "version": "v0mimir1",
             "disableResolveMessage": false,
@@ -138,11 +145,13 @@
       }
     },
     {
+      "kind": "Receiver",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "metadata": {
         "name": "amlyYQ",
         "namespace": "default",
-        "uid": "7Pu4xcRXbvw4XEX279SoqyO8Ibo8cMl0vAJyYTsJ0NEX",
-        "resourceVersion": "deae9d34f8554205",
+        "uid": "lvjnZkpXPRYUr8kb6E5H009rCuobN8lPszXoThLzrxwX",
+        "resourceVersion": "20686dc4795761dc",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -156,7 +165,7 @@
         "title": "jira",
         "integrations": [
           {
-            "uid": "",
+            "uid": "1f256059131a67c5",
             "type": "jira",
             "version": "v0mimir1",
             "disableResolveMessage": false,
@@ -195,11 +204,13 @@
       }
     },
     {
+      "kind": "Receiver",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "metadata": {
         "name": "bXN0ZWFtcw",
         "namespace": "default",
-        "uid": "z7xTMDjrk1HAHXPEx78tQb63LXYA6ivXLOtz2Z09ucIX",
-        "resourceVersion": "95c8d082d65466a3",
+        "uid": "k7o0Hz5XWPoVRtr7MrhMlPY1E6Ap1XXda4da4wEKgBYX",
+        "resourceVersion": "c327781b22fb2375",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -213,7 +224,7 @@
         "title": "msteams",
         "integrations": [
           {
-            "uid": "",
+            "uid": "520485d002f9ae1f",
             "type": "teams",
             "version": "v0mimir1",
             "disableResolveMessage": false,
@@ -239,11 +250,13 @@
       }
     },
     {
+      "kind": "Receiver",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "metadata": {
         "name": "b3BzZ2VuaWU",
         "namespace": "default",
-        "uid": "XmkZ214Dj030hvynYiwNLq8i6uRCjUYXMXjE5m19OKAX",
-        "resourceVersion": "8ee2957ba150ba16",
+        "uid": "14bze1pZagWIKYELPXs1Mcy8cL1DAlqpzJ4JkoLDfvYX",
+        "resourceVersion": "c70e8e240efa3837",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -257,7 +270,7 @@
         "title": "opsgenie",
         "integrations": [
           {
-            "uid": "",
+            "uid": "041a1d3ac026892d",
             "type": "opsgenie",
             "version": "v0mimir1",
             "disableResolveMessage": false,
@@ -299,11 +312,13 @@
       }
     },
     {
+      "kind": "Receiver",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "metadata": {
         "name": "cGFnZXJkdXR5",
         "namespace": "default",
-        "uid": "QNitkUCkwzrIc7WVCCJGGDyvXLyo9csSUVqfyStyctQX",
-        "resourceVersion": "fe673d5dcd67ccf0",
+        "uid": "JV4UiQeX9R6UmwVHL7GXBskXRqvaunmRBIIaS7YMnl8X",
+        "resourceVersion": "f325da7f87ea80d2",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -317,7 +332,7 @@
         "title": "pagerduty",
         "integrations": [
           {
-            "uid": "",
+            "uid": "629b8e0bb4372373",
             "type": "pagerduty",
             "version": "v0mimir1",
             "disableResolveMessage": false,
@@ -369,11 +384,13 @@
       }
     },
     {
+      "kind": "Receiver",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "metadata": {
         "name": "cHVzaG92ZXI",
         "namespace": "default",
-        "uid": "t2TJSktI6vyGfdbLOKmxH4eBqgcIGsAuW8Qm9m0HRycX",
-        "resourceVersion": "6ae076725ab463e0",
+        "uid": "KmdEYNvIFqIhZXDgo72RJqKNeg8dBQDKam9ROun2tZAX",
+        "resourceVersion": "8a8a575957af1a21",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -387,7 +404,7 @@
         "title": "pushover",
         "integrations": [
           {
-            "uid": "",
+            "uid": "af53622258943669",
             "type": "pushover",
             "version": "v0mimir1",
             "disableResolveMessage": false,
@@ -421,11 +438,13 @@
       }
     },
     {
+      "kind": "Receiver",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "metadata": {
         "name": "c2xhY2s",
         "namespace": "default",
-        "uid": "xSB0hnoc9j1CnLCHR3VgeVGXdVXILM0p2dM64bbHN9oX",
-        "resourceVersion": "ec0e343029ff5d8b",
+        "uid": "MHKEKXAOzOMISzPH7eCi0c2CvT0wODhSfSk1TiuNnKgX",
+        "resourceVersion": "b21cb4295ac326aa",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -439,7 +458,7 @@
         "title": "slack",
         "integrations": [
           {
-            "uid": "",
+            "uid": "7fa35ded43c67d03",
             "type": "slack",
             "version": "v0mimir1",
             "disableResolveMessage": false,
@@ -504,11 +523,13 @@
       }
     },
     {
+      "kind": "Receiver",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "metadata": {
         "name": "c25z",
         "namespace": "default",
-        "uid": "vSP8NtFr23hnqZqLxRgzUKfr1wOemOvZm1S6MYkfRI4X",
-        "resourceVersion": "d45308fd19fecf7d",
+        "uid": "0hEMltsOTiMXbcfNFtajn9V7A5Dc9PuJo91i3jT0UIYX",
+        "resourceVersion": "ba1eccdb05772026",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -522,7 +543,7 @@
         "title": "sns",
         "integrations": [
           {
-            "uid": "",
+            "uid": "da82caaec85fc30f",
             "type": "sns",
             "version": "v0mimir1",
             "disableResolveMessage": false,
@@ -557,11 +578,13 @@
       }
     },
     {
+      "kind": "Receiver",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "metadata": {
         "name": "dGVsZWdyYW0",
         "namespace": "default",
-        "uid": "XLWjtmYcjP5PiqBCwZXX3YKHV1G8niRtpCakIpcHqoYX",
-        "resourceVersion": "d9850878a33e302e",
+        "uid": "o6LIJM0yt1aXox7EVBiZmDVXGSfShDYsk1gVEENSSGcX",
+        "resourceVersion": "cd6f78ff21dc390c",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -575,7 +598,7 @@
         "title": "telegram",
         "integrations": [
           {
-            "uid": "",
+            "uid": "54a04ffdd3bb93c7",
             "type": "telegram",
             "version": "v0mimir1",
             "disableResolveMessage": false,
@@ -602,11 +625,13 @@
       }
     },
     {
+      "kind": "Receiver",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "metadata": {
         "name": "dmljdG9yb3Bz",
         "namespace": "default",
-        "uid": "EWiwQ6TIW0GpEo46WusW7Nvg0HuD4QAbHf0JZ2OSOhEX",
-        "resourceVersion": "1e6886531440afc2",
+        "uid": "aiBEoHeP0XnxaWsteUm7JXYlOUMgcXoX03DuzxiZteMX",
+        "resourceVersion": "ccbc6a7976745166",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -620,7 +645,7 @@
         "title": "victorops",
         "integrations": [
           {
-            "uid": "",
+            "uid": "9593a5745d6e721f",
             "type": "victorops",
             "version": "v0mimir1",
             "disableResolveMessage": false,
@@ -650,11 +675,13 @@
       }
     },
     {
+      "kind": "Receiver",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "metadata": {
         "name": "d2ViZXg",
         "namespace": "default",
-        "uid": "wDNufI44UXHWq4ERRYenZ7XgXVV3Tjxaokz9IjMRZ54X",
-        "resourceVersion": "08fc955a08dfe9c0",
+        "uid": "UWNKI0plkKlibdMG2E31fXv7rSp1bj5En5Ly8y7PXuIX",
+        "resourceVersion": "174f0aa8a946eca8",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -668,7 +695,7 @@
         "title": "webex",
         "integrations": [
           {
-            "uid": "",
+            "uid": "b3f090b281ed7963",
             "type": "webex",
             "version": "v0mimir1",
             "disableResolveMessage": false,
@@ -697,11 +724,13 @@
       }
     },
     {
+      "kind": "Receiver",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "metadata": {
         "name": "d2ViaG9vaw",
         "namespace": "default",
-        "uid": "aKzigXATPp6HOh20yTrlTcuF2Y9IrPHridGIcWrJygsX",
-        "resourceVersion": "494392f899a7b410",
+        "uid": "Tb4lHkct27YZEAVtmU6UtYo31OKxl3aSZhvHUteYgQkX",
+        "resourceVersion": "45c922bee67f8fe5",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -715,7 +744,7 @@
         "title": "webhook",
         "integrations": [
           {
-            "uid": "",
+            "uid": "0d6fcc706b339a1f",
             "type": "webhook",
             "version": "v0mimir1",
             "disableResolveMessage": false,
@@ -741,11 +770,13 @@
       }
     },
     {
+      "kind": "Receiver",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "metadata": {
         "name": "d2VjaGF0",
         "namespace": "default",
-        "uid": "jkXCvNrNVw7XX5nmYFyrGiA4ckAvJ282u2scW8KZq7IX",
-        "resourceVersion": "135913515cbc156b",
+        "uid": "OjepUCGQaz7BU7QeECzRfv3L2jDQB4wnfCUQYGN5YBMX",
+        "resourceVersion": "6bf294b80b035167",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -759,7 +790,7 @@
         "title": "wechat",
         "integrations": [
           {
-            "uid": "",
+            "uid": "daf1a91b2842ea41",
             "type": "wechat",
             "version": "v0mimir1",
             "disableResolveMessage": false,

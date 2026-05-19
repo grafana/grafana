@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 import { type JSX, useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
-import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
+import { type CombinedRule, type RulesSource } from 'app/types/unified-alerting';
 
 import { isCloudRulesSource } from '../../utils/datasource';
 import { rulerRuleType } from '../../utils/rules';

@@ -147,46 +147,46 @@ Saved queries are available in:
 
 Learn more about saved queries:
 
-- [Saved queries drawer](#saved-queries-drawer)
+- [Saved queries dialog box](#saved-queries-dialog-box)
 - [Roles, permission, and RBAC](#roles-permissions-and-rbac)
 - [How to save a query](#save-a-query)
 - [Variables in saved queries](#variables-in-saved-queries)
 - [Known limitations](#known-limitations)
 
-### Saved queries drawer
+### Saved queries dialog box
 
-You can see a list of these queries in the **Saved queries** drawer:
+The **Saved queries** dialog box gives you access to all the saved queries in your organization:
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-saved-queries-drawer-v13.0.png" max-width="600px" alt="List of saved queries and the edit query form" caption="The **Saved queries** drawer accessed from Dashboards" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-saved-queries-v13.0.png" max-width="750px" alt="List of saved queries" caption="The **Saved queries** dialog box accessed from Dashboards" >}}
 
-{{< admonition type="tip">}}
-When you select a query with a Loki, Mimir, Tempo, or Pyroscope data source, the **Saved queries** drawer displays a **Drilldown** button.
-Click the button to open the associated Drilldown app, while maintaining the context of the query.
-Learn more about these apps in the [Drilldown documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/simplified-exploration/).
-{{< /admonition >}}
-
-When you first open the drawer, the list of queries in the **All** tab is filtered by the data source of the panel.
-However, you can clear that filter to display all saved queries.
-
-The list in the **Favorites** tab is also filtered by data source, by default.
-The **Recent** tab displays the last 20 queries across all data sources from your **Query history** in Explore.
-From this tab, you can save queries for reuse as well.
-
-In the **Saved queries** drawer, you can:
+From here, you can:
 
 - Search for queries by data source name, query content, title, or description.
 - Sort queries alphabetically or by creation date.
-- Filter by data source name, author name, and tags (the tag filter uses the `OR` operator, while the others use the `AND` operator).
-- Set queries as favorites.
-- Duplicate, lock and unlock a query for editing, or delete a saved query. By default, saved queries are locked for editing.
+- Filter by data source name, author name, and tags. The tag filter uses the `OR` operator, while the others use the `AND` operator.
+
+  {{< admonition type="tip">}}
+  Use the **Remember filters** switch to persist your filter selections across sessions in your local storage.
+  {{< /admonition >}}
+
+- Star queries so that they appear in the **Starred queries** filter view.
+- Duplicate, or delete a saved query.
 - Edit a query title, description, or tags.
-- When you access the **Saved queries** drawer from Explore, you can use the **Edit in Explore** option to edit the body of a query.
+- When you access the **Saved queries** dialog box from Explore, you can use the **Edit in Explore** option to edit the body of a query.
+
+You can apply all the same search, filter, and sort options in the **Starred queries** filter view.
 
 To access your saved queries, click **+ Add from saved queries** or open the **Saved queries** drop-down menu and click **Replace query** in the query editor:
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-use-saved-queries-v12.3.png" max-width="750px" alt="Access saved queries" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-add-save-reuse-query-v13.0.png" max-width="750px" alt="Access saved queries" >}}
 
 Clicking **+ Add from saved queries** adds an additional query, while clicking **Replace query** in the **Saved queries** drop-down menu updates your existing query.
+
+{{< admonition type="tip">}}
+When you select a query with a Loki, Mimir, Tempo, or Pyroscope data source, the **Saved queries** dialog box displays a **Drilldown** button.
+Click the button to open the associated Drilldown app, while maintaining the context of the query.
+Learn more about these apps in the [Drilldown documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/simplified-exploration/).
+{{< /admonition >}}
 
 ### Roles, permissions, and RBAC
 
@@ -208,9 +208,9 @@ To save a query you've created:
 
 1. From the query editor, open the **Saved queries** drop-down menu and click the **Save query** option:
 
-   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-save-query-v12.2.png" max-width="750px" alt="Save a query" >}}
+   {{< figure src="/media/docs/grafana/dashboards/screenshot-save-query-v13.0.png" max-width="750px" alt="Save a query" >}}
 
-1. In the **Saved queries** drawer, enter a title for the query that makes it easier to find later.
+1. In the **Saved queries** dialog box, enter a title for the query that makes it easier to find later.
 1. (Optional) Enter a description and relevant tags.
 1. Click **Save**.
 
@@ -224,7 +224,7 @@ You can map the original variables to either:
 - A variable in your dashboard
 - A custom value that you enter
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-saved-queries-variables-v13.0.png" max-width="600px" alt="A saved query with substituted variables" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-saved-query-variable-v13.0.png" max-width="450px" alt="A saved query with substituted variables" >}}
 
 Grafana applies your selections to the query before inserting it into the dashboard.
 However, the substitutions only apply to the query when it's reused, and the original saved query remains unchanged.
@@ -238,7 +238,7 @@ In Explore, you can map variables to custom values.
 - No validation is performed when you save a query, so it's possible to save an invalid query. You should confirm the query is working properly before you save it.
 - Saved queries are currently accessible from the query editors in Dashboards and Explore.
 - You can save a maximum of 1000 queries.
-- If you have multiple queries open in Explore and you edit one of them by way of the **Edit in Explore** function in the **Saved queries** drawer, the edited query replaces your open queries in Explore.
+- If you have multiple queries open in Explore and you edit one of them by way of the **Edit in Explore** function in the **Saved queries** dialog box, the edited query replaces your open queries in Explore.
 
 ## Navigate the Queries tab {#navigate-the-query-tab}
 

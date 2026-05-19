@@ -1,33 +1,33 @@
-import { SpanStatus } from '@opentelemetry/api';
-import { collectorTypes } from '@opentelemetry/exporter-collector';
+import { type SpanStatus } from '@opentelemetry/api';
+import { type collectorTypes } from '@opentelemetry/exporter-collector';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { isEqual } from 'lodash';
 
 import {
   createDataFrame,
   createTheme,
-  DataFrame,
-  DataLink,
+  type DataFrame,
+  type DataLink,
   DataLinkConfigOrigin,
-  DataQueryResponse,
-  DataSourceInstanceSettings,
-  DataSourceJsonData,
-  Field,
-  FieldDTO,
+  type DataQueryResponse,
+  type DataSourceInstanceSettings,
+  type DataSourceJsonData,
+  type Field,
+  type FieldDTO,
   FieldType,
   getDisplayProcessor,
   MutableDataFrame,
   toDataFrame,
-  TraceKeyValuePair,
-  TraceLog,
-  TraceSpanReference,
-  TraceSpanRow,
+  type TraceKeyValuePair,
+  type TraceLog,
+  type TraceSpanReference,
+  type TraceSpanRow,
 } from '@grafana/data';
-import { createNodeGraphFrames, TraceToProfilesData } from '@grafana/o11y-ds-frontend';
+import { createNodeGraphFrames, type TraceToProfilesData } from '@grafana/o11y-ds-frontend';
 import { getDataSourceSrv } from '@grafana/runtime';
 
 import { SearchTableType } from './dataquery.gen';
-import { Span, SpanAttributes, Spanset, TempoJsonData, TraceSearchMetadata } from './types';
+import { type Span, type SpanAttributes, type Spanset, type TempoJsonData, type TraceSearchMetadata } from './types';
 
 function getAttributeValue(value: collectorTypes.opentelemetryProto.common.v1.AnyValue): any {
   if (value.stringValue) {
@@ -225,7 +225,7 @@ export function transformToOTLP(data: MutableDataFrame): {
     const span = data.get(i);
 
     // Group spans based on service
-    if (!services[span.serviceName]) {
+    if (services[span.serviceName] === undefined) {
       services[span.serviceName] = result.batches.length;
       result.batches.push({
         resource: {

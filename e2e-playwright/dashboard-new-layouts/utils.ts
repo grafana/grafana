@@ -1,7 +1,7 @@
-import { Page } from '@playwright/test';
+import { type Page } from '@playwright/test';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { DashboardPage, E2ESelectorGroups, expect } from '@grafana/plugin-e2e';
+import { type DashboardPage, type E2ESelectorGroups, expect } from '@grafana/plugin-e2e';
 
 import testV2Dashboard from '../dashboards/TestV2Dashboard.json';
 
@@ -64,6 +64,11 @@ export const flows = {
     await dashboardPage
       .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.variableType(variable.type))
       .click();
+
+    // New variable creation schedules a delayed autofocus to name input
+    // Let that timer finish before we interact to prevent focus on the wrong input
+    await dashboardPage.ctx.page.waitForTimeout(250);
+
     const variableNameInput = dashboardPage.getByGrafanaSelector(
       selectors.components.PanelEditor.ElementEditPane.variableNameInput
     );
@@ -122,7 +127,12 @@ export async function saveDashboard(
     await page.getByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveAsTitleInput).fill(title);
   }
   await dashboardPage.getByGrafanaSelector(selectors.components.Drawer.DashboardSaveDrawer.saveButton).click();
-  await expect(page.getByText('Dashboard saved')).toBeVisible();
+
+  // wait for the toast
+  const toast = page.getByRole('status', { name: 'Dashboard saved' });
+  await expect(toast).toBeVisible();
+  // close toast, we do this to prevent any incorrect assertion when several saves occur fast. i.e. the 1st toast is still visible but the 2nd save has not occurred yet
+  await toast.getByRole('button', { name: 'Close alert' }).click();
 }
 
 export async function checkRepeatedPanelTitles(
@@ -193,6 +203,24 @@ interface ImportTestDashboardOptions {
   checkPanelsVisible?: boolean;
   requiresDataSourceSelection?: boolean;
 }
+
+export function stripMetadataNameFromImportJson(input: string): string {
+  // Keep fixture JSON intact, but remove a fixed resource name at import time so
+  // each test creates an isolated dashboard via generateName in parallel runs.
+  try {
+    const parsed = JSON.parse(input);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      const metadata = Reflect.get(parsed, 'metadata');
+      if (metadata && typeof metadata === 'object' && !Array.isArray(metadata)) {
+        Reflect.deleteProperty(metadata, 'name');
+      }
+    }
+    return JSON.stringify(parsed);
+  } catch {
+    return input;
+  }
+}
+
 export async function importTestDashboard(
   page: Page,
   selectors: E2ESelectorGroups,
@@ -201,10 +229,9 @@ export async function importTestDashboard(
   options: ImportTestDashboardOptions = {}
 ) {
   options = { checkPanelsVisible: true, requiresDataSourceSelection: true, ...options };
+  const importJson = stripMetadataNameFromImportJson(dashInput || JSON.stringify(testV2Dashboard));
   await page.goto(selectors.pages.ImportDashboard.url);
-  await page
-    .getByTestId(selectors.components.DashboardImportPage.textarea)
-    .fill(dashInput || JSON.stringify(testV2Dashboard));
+  await page.getByTestId(selectors.components.DashboardImportPage.textarea).fill(importJson);
   await page.getByTestId(selectors.components.DashboardImportPage.submit).click();
   await page.getByTestId(selectors.components.ImportDashboardForm.name).fill(title);
   if (options.requiresDataSourceSelection) {
@@ -380,4 +407,22 @@ export function getRowWrapper(dashboardPage: DashboardPage, selectors: E2ESelect
 export async function addNewPanelFromSidebar(dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
   await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.addButton).click();
   await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.newPanelButton).click();
+}
+
+export async function fillVariableValue(
+  page: Page,
+  dashboardPage: DashboardPage,
+  selectors: E2ESelectorGroups,
+  varName: string,
+  text: string
+) {
+  const variable = dashboardPage
+    .getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItemLabels(varName))
+    .locator('..')
+    .locator('input');
+  await variable.click();
+  await variable.clear();
+  await variable.fill(text);
+  await variable.press('Enter');
+  await page.waitForLoadState('networkidle');
 }

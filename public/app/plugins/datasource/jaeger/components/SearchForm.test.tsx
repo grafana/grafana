@@ -2,13 +2,19 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { of } from 'rxjs';
 
-import { DataQueryRequest, DataSourceInstanceSettings, dateTime, PluginMetaInfo, PluginType } from '@grafana/data';
-import { BackendSrv } from '@grafana/runtime';
+import {
+  type DataQueryRequest,
+  type DataSourceInstanceSettings,
+  dateTime,
+  type PluginMetaInfo,
+  PluginType,
+} from '@grafana/data';
+import { type BackendSrv } from '@grafana/runtime';
 
-import { JaegerDatasource, JaegerJsonData } from '../datasource';
+import { JaegerDatasource, type JaegerJsonData } from '../datasource';
 import { createFetchResponse } from '../helpers/createFetchResponse';
 import { testResponse } from '../testResponse';
-import { JaegerQuery } from '../types';
+import { type JaegerQuery } from '../types';
 
 import SearchForm from './SearchForm';
 

@@ -10,25 +10,22 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationProvisioning_WritePermissionValidation(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	const repoReadOnly = "job-validation-readonly"
 	testRepo := common.TestRepo{
 		Name:               repoReadOnly,
-		Template:           "../testdata/local-readonly.json.tmpl",
-		Target:             "folder",
+		SyncTarget:         "folder",
+		Workflows:          []string{},
 		Copies:             map[string]string{},
 		ExpectedDashboards: 0,
 		ExpectedFolders:    1,
 	}
-	helper.CreateRepo(t, testRepo)
+	helper.CreateLocalRepo(t, testRepo)
 
 	t.Run("write jobs should be rejected for read-only repositories", func(t *testing.T) {
 		writeJobs := []struct {

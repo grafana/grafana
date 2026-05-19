@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -32,21 +33,21 @@ const (
 //
 // Returns the number of annotation and annotation_tag rows deleted. If an
 // error occurs, it returns the number of rows affected so far.
-func (cs *CleanupServiceImpl) Run(ctx context.Context, cfg *setting.Cfg) (int64, int64, error) {
+func (cs *CleanupServiceImpl) Run(ctx context.Context, settings annotations.CleanupSettings) (int64, int64, error) {
 	var totalCleanedAnnotations int64
-	affected, err := cs.store.CleanAnnotations(ctx, cfg.AlertingAnnotationCleanupSetting, alertAnnotationType)
+	affected, err := cs.store.CleanAnnotations(ctx, settings.Alerting, alertAnnotationType)
 	totalCleanedAnnotations += affected
 	if err != nil {
 		return totalCleanedAnnotations, 0, err
 	}
 
-	affected, err = cs.store.CleanAnnotations(ctx, cfg.APIAnnotationCleanupSettings, apiAnnotationType)
+	affected, err = cs.store.CleanAnnotations(ctx, settings.API, apiAnnotationType)
 	totalCleanedAnnotations += affected
 	if err != nil {
 		return totalCleanedAnnotations, 0, err
 	}
 
-	affected, err = cs.store.CleanAnnotations(ctx, cfg.DashboardAnnotationCleanupSettings, dashboardAnnotationType)
+	affected, err = cs.store.CleanAnnotations(ctx, settings.Dashboard, dashboardAnnotationType)
 	totalCleanedAnnotations += affected
 	if err != nil {
 		return totalCleanedAnnotations, 0, err

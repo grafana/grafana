@@ -130,7 +130,6 @@ func (srv *CleanUpService) clean(ctx context.Context) {
 	cleanupJobs := []cleanUpJob{
 		{"clean up temporary files", srv.cleanUpTmpFiles},
 		{"delete expired snapshots", srv.deleteExpiredSnapshots},
-		{"delete expired dashboard versions", srv.deleteExpiredDashboardVersions},
 		{"delete expired images", srv.deleteExpiredImages},
 		{"cleanup old annotations", srv.cleanUpOldAnnotations},
 		{"expire old user invites", srv.expireOldUserInvites},
@@ -165,7 +164,11 @@ func (srv *CleanUpService) clean(ctx context.Context) {
 
 func (srv *CleanUpService) cleanUpOldAnnotations(ctx context.Context) {
 	logger := srv.log.FromContext(ctx)
-	affected, affectedTags, err := srv.annotationCleaner.Run(ctx, srv.Cfg)
+	affected, affectedTags, err := srv.annotationCleaner.Run(ctx, annotations.CleanupSettings{
+		Alerting:  srv.Cfg.AlertingAnnotationCleanupSetting,
+		API:       srv.Cfg.APIAnnotationCleanupSettings,
+		Dashboard: srv.Cfg.DashboardAnnotationCleanupSettings,
+	})
 	if err != nil && !errors.Is(err, context.DeadlineExceeded) {
 		logger.Error("failed to clean up old annotations", "error", err)
 	} else {
@@ -321,16 +324,6 @@ func (srv *CleanUpService) deleteKubernetesExpiredSnapshots(ctx context.Context)
 	}
 
 	logger.Debug("Deleted expired Kubernetes snapshots", "count", deletedCount)
-}
-
-func (srv *CleanUpService) deleteExpiredDashboardVersions(ctx context.Context) {
-	logger := srv.log.FromContext(ctx)
-	cmd := dashver.DeleteExpiredVersionsCommand{}
-	if err := srv.dashboardVersionService.DeleteExpired(ctx, &cmd); err != nil {
-		logger.Error("Failed to delete expired dashboard versions", "error", err.Error())
-	} else {
-		logger.Debug("Deleted old/expired dashboard versions", "rows affected", cmd.DeletedRows)
-	}
 }
 
 func (srv *CleanUpService) deleteExpiredImages(ctx context.Context) {

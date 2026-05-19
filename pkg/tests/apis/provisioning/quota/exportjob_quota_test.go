@@ -10,20 +10,15 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 
-	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/tests/testinfra"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationProvisioning_ExportQuota(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
 	t.Run("export succeeds when resources are within quota", func(t *testing.T) {
-		helper := common.RunGrafana(t, func(opts *testinfra.GrafanaOpts) {
-			opts.ProvisioningMaxResourcesPerRepository = 10
-		})
+		helper := sharedHelper(t)
+		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 10})
 		ctx := context.Background()
 
 		// Create 2 unmanaged dashboards directly in Grafana
@@ -39,12 +34,13 @@ func TestIntegrationProvisioning_ExportQuota(t *testing.T) {
 		const repo = "export-quota-success"
 		testRepo := common.TestRepo{
 			Name:               repo,
-			Target:             "instance",
+			SyncTarget:         "instance",
+			Workflows:          []string{"write"},
 			Copies:             map[string]string{},
 			ExpectedDashboards: 2,
 			ExpectedFolders:    0,
 		}
-		helper.CreateRepo(t, testRepo)
+		helper.CreateLocalRepo(t, testRepo)
 
 		// Wait for quota reconciliation to confirm limits are set on the repository
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonWithinQuota)
@@ -66,9 +62,8 @@ func TestIntegrationProvisioning_ExportQuota(t *testing.T) {
 	})
 
 	t.Run("export fails when existing resources already exceed the quota", func(t *testing.T) {
-		helper := common.RunGrafana(t, func(opts *testinfra.GrafanaOpts) {
-			opts.ProvisioningMaxResourcesPerRepository = 1
-		})
+		helper := sharedHelper(t)
+		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 1})
 		ctx := context.Background()
 
 		// Create 2 unmanaged dashboards — these alone will exceed the quota of 1
@@ -83,12 +78,13 @@ func TestIntegrationProvisioning_ExportQuota(t *testing.T) {
 		const repo = "export-quota-resources-exceeded"
 		testRepo := common.TestRepo{
 			Name:               repo,
-			Target:             "instance",
+			SyncTarget:         "instance",
+			Workflows:          []string{"write"},
 			Copies:             map[string]string{},
 			ExpectedDashboards: 2,
 			ExpectedFolders:    0,
 		}
-		helper.CreateRepo(t, testRepo)
+		helper.CreateLocalRepo(t, testRepo)
 
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonWithinQuota)
 
@@ -118,9 +114,8 @@ func TestIntegrationProvisioning_ExportQuota(t *testing.T) {
 	})
 
 	t.Run("export fails when exceeding folders and resources already exceed the quota", func(t *testing.T) {
-		helper := common.RunGrafana(t, func(opts *testinfra.GrafanaOpts) {
-			opts.ProvisioningMaxResourcesPerRepository = 2
-		})
+		helper := sharedHelper(t)
+		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 2})
 		ctx := context.Background()
 
 		// Create 1 unmanaged dashboard (alone would fit in quota of 2)
@@ -150,12 +145,13 @@ func TestIntegrationProvisioning_ExportQuota(t *testing.T) {
 		const repo = "export-quota-folders-exceeded"
 		testRepo := common.TestRepo{
 			Name:               repo,
-			Target:             "instance",
+			SyncTarget:         "instance",
+			Workflows:          []string{"write"},
 			Copies:             map[string]string{},
 			ExpectedDashboards: 1,
 			ExpectedFolders:    2,
 		}
-		helper.CreateRepo(t, testRepo)
+		helper.CreateLocalRepo(t, testRepo)
 
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonWithinQuota)
 

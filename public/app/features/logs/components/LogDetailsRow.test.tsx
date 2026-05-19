@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { ComponentProps } from 'react';
+import { type ComponentProps } from 'react';
 
-import { Field, CoreApp, FieldType, LinkModel } from '@grafana/data';
+import { type Field, CoreApp, FieldType, type LinkModel } from '@grafana/data';
 
 import { LogDetailsRow } from './LogDetailsRow';
 import { createLogRow } from './mocks/logRow';

@@ -1,4 +1,4 @@
-import { ListProps, AbstractList } from './AbstractList';
+import { type ListProps, AbstractList } from './AbstractList';
 
 /** @deprecated Use ul/li/arr.map directly instead */
 // no point converting, this is deprecated

@@ -1,21 +1,22 @@
 // Libraries
-import { AnyAction, createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { type AnyAction, createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { useCallback, useEffect, useMemo, useReducer } from 'react';
 import * as React from 'react';
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 
 import {
   AppEvents,
-  AppPlugin,
-  AppPluginMeta,
-  NavModel,
-  NavModelItem,
+  type AppPlugin,
+  type AppPluginMeta,
+  type NavModel,
+  type NavModelItem,
   OrgRole,
   PluginType,
   PluginContextProvider,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, locationSearchToObject } from '@grafana/runtime';
+import { getLogger } from '@grafana/runtime/unstable';
 import { Alert, ErrorWithStack } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
@@ -35,7 +36,7 @@ import {
 } from '../extensions/ExtensionRegistriesContext';
 import { pluginImporter } from '../importer/pluginImporter';
 import { getPluginSettings } from '../pluginSettings';
-import { buildPluginSectionNav, pluginsLogger } from '../utils';
+import { buildPluginSectionNav } from '../utils';
 
 import { PluginErrorBoundary } from './PluginErrorBoundary';
 import { buildPluginPageContext, PluginPageContext } from './PluginPageContext';
@@ -248,7 +249,7 @@ async function loadAppPlugin(pluginId: string, dispatch: React.Dispatch<AnyActio
       })
     );
     const error = err instanceof Error ? err : new Error(getMessageFromError(err));
-    pluginsLogger.logError(error);
+    getLogger('features.plugins').logError(error);
     console.error(error);
   }
 }

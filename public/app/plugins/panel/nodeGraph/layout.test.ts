@@ -1,7 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 
 import { useLayout } from './layout';
-import { EdgeDatum, NodeDatum } from './types';
+import { type EdgeDatum, type NodeDatum } from './types';
 
 let onmessage: jest.Mock;
 let postMessage: jest.Mock;

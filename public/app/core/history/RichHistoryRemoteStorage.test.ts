@@ -1,12 +1,12 @@
 import { of } from 'rxjs';
 
-import { PreferencesSpec as UserPreferencesDTO } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
-import { RichHistoryQuery } from 'app/types/explore';
+import { type PreferencesSpec as UserPreferencesDTO } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
+import { type RichHistoryQuery } from 'app/types/explore';
 
 import { DatasourceSrv } from '../../features/plugins/datasource_srv';
 import { SortOrder } from '../utils/richHistoryTypes';
 
-import RichHistoryRemoteStorage, { RichHistoryRemoteStorageDTO } from './RichHistoryRemoteStorage';
+import RichHistoryRemoteStorage, { type RichHistoryRemoteStorageDTO } from './RichHistoryRemoteStorage';
 
 const dsMock = new DatasourceSrv();
 dsMock.init(

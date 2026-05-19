@@ -1,4 +1,4 @@
-import { NodeType, SyntaxNode } from '@lezer/common';
+import { type NodeType, type SyntaxNode } from '@lezer/common';
 import { sortBy } from 'lodash';
 
 import {
@@ -22,7 +22,7 @@ import {
   Expr,
   LabelFormatExpr,
 } from '@grafana/lezer-logql';
-import { QueryBuilderLabelFilter } from '@grafana/plugin-ui';
+import { type QueryBuilderLabelFilter } from '@grafana/plugin-ui';
 
 import { unescapeLabelValue } from './languageUtils';
 import { getNodePositionsFromQuery } from './queryUtils';

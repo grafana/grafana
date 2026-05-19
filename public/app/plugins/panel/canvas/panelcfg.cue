@@ -90,9 +90,9 @@ composableKinds: PanelCfg: {
 					connections?: [...CanvasConnection]
 				} @cuetsy(kind="interface")
 				CanvasTooltip: {
-				  mode: ui.TooltipDisplayMode
-				  disableForOneClick?: bool
-			  } @cuetsy(kind="interface")
+					mode:                ui.TooltipDisplayMode
+					disableForOneClick?: bool
+				} @cuetsy(kind="interface")
 
 				Options: {
 					// Enable inline editing

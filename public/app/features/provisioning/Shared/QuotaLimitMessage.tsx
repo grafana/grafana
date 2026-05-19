@@ -1,8 +1,8 @@
 import { Trans } from '@grafana/i18n';
 import { TextLink } from '@grafana/ui';
+import { isOnPrem } from 'app/core/utils/isOnPrem';
 
 import { CONFIGURE_GRAFANA_DOCS_URL, UPGRADE_URL } from '../constants';
-import { isOnPrem } from '../utils/isOnPrem';
 
 interface QuotaLimitMessageProps {
   maxRepositories?: number;
@@ -41,7 +41,7 @@ export function QuotaLimitMessage({
           <Trans i18nKey="provisioning.quota-limit.to-increase-limits" values={{ type: limitType }}>
             To add more {{ type: limitType }},
           </Trans>{' '}
-          <TextLink href={url} external>
+          <TextLink href={url} external variant="bodySmall">
             {onPrem ? (
               <Trans i18nKey="provisioning.quota-limit.update-configuration-link">
                 update your Grafana configuration

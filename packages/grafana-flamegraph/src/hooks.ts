@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import { FlameGraphDataContainer } from './FlameGraph/dataTransform';
+import { type FlameGraphDataContainer } from './FlameGraph/dataTransform';
 import { ColorScheme, ColorSchemeDiff } from './types';
 
 /**

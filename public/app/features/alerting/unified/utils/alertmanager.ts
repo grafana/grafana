@@ -1,25 +1,25 @@
 import { isEqual, uniqWith } from 'lodash';
 
 import { matchLabelsSet } from '@grafana/alerting/unstable';
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import {
-  AlertManagerCortexConfig,
-  Matcher,
+  type AlertManagerCortexConfig,
+  type Matcher,
   MatcherOperator,
-  ObjectMatcher,
-  Route,
-  TimeInterval,
-  TimeRange,
+  type ObjectMatcher,
+  type Route,
+  type TimeInterval,
+  type TimeRange,
 } from 'app/plugins/datasource/alertmanager/types';
-import { Labels } from 'app/types/unified-alerting-dto';
+import { type Labels } from 'app/types/unified-alerting-dto';
 
-import { MatcherFieldValue } from '../types/silence-form';
+import { type MatcherFieldValue } from '../types/silence-form';
 
 import { getAllDataSources } from './config';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './datasource';
 import { objectLabelsToArray } from './labels';
 import {
-  MatcherFormatter,
+  type MatcherFormatter,
   convertObjectMatcherToAlertingPackageMatcher,
   parsePromQLStyleMatcherLooseSafe,
   unquoteWithUnescape,

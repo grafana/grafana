@@ -19,9 +19,15 @@ weight: 4100
 
 Grafana has an active provisioning system that uses configuration files. You can define data sources and dashboards using files that can be version controlled, making GitOps more natural.
 
+{{< admonition type="note" >}}
+
+For advanced as code options such as Infrastructure as code, Git Sync or on-prem file provisioning refer to [Deploy, configure and provision Grafana with as-code workflows](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/).
+
+{{< /admonition >}}
+
 ## Configuration file
 
-Refer to [Configuration](../../setup-grafana/configure-grafana/) for more information on what you can configure in `grafana.ini`.
+Refer to [Configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/) for more information on what you can configure in `grafana.ini`.
 
 ### Configuration file locations
 
@@ -78,19 +84,6 @@ datasources:
       password3: 'Pa$$sw0rd' # Resolved as Pa$sw0rd
       password4: 'Pa$sw0rd' # Resolved as Pa
 ```
-
-## Configuration management tools
-
-The Grafana community maintains libraries for many popular configuration management tools.
-
-| Tool      | Project                                                                                                                           |
-| --------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| Puppet    | <https://forge.puppet.com/puppet/grafana>                                                                                         |
-| Ansible   | <https://github.com/grafana/grafana-ansible-collection>                                                                           |
-| Chef      | <https://github.com/sous-chefs/chef-grafana>                                                                                      |
-| Saltstack | <https://github.com/salt-formulas/salt-formula-grafana>                                                                           |
-| Jsonnet   | <https://github.com/grafana/grafonnet-lib/>)                                                                                      |
-| NixOS     | [`services.grafana.provision` module](https://github.com/NixOS/nixpkgs/blob/master/nixos/modules/services/monitoring/grafana.nix) |
 
 ## Data sources
 
@@ -400,7 +393,7 @@ Or using a Kubernetes format, for example `kubernetes-dashboard.json`:
 ```json
 {
   "kind": "Dashboard",
-  "apiVersion": "dashboard.grafana.app/v1beta1",
+  "apiVersion": "dashboard.grafana.app/v1",
   "metadata": {
     "name": "dashboard-uid"
   },
@@ -465,12 +458,20 @@ If you set `allowUiUpdates` to `false`, you can't save changes to a provisioned 
 When you try to save changes to a provisioned dashboard, Grafana brings up a _Cannot save provisioned dashboard_ dialog box.
 
 Grafana offers options to export the JSON definition of a dashboard.
-Use either **Copy JSON to Clipboard** or **Save JSON to file** to sync your dashboard changes back to the provisioning source.
-Grafana removes the `id` field from the dashboard JSON to help the provisioning workflow.
+To export the dashboard JSON definition, follow these steps:
+
+1. Upon save, click **Advanced options** to expand the section, and then make the following selections:
+   - **Model**: Choose from **Classic** or **V2 Resource**. Choose **Classic** if you plan to use the dashboard in Grafana v12.4 or older.
+   - **Format**: For the V2 Resource only, choose from **JSON** or **YAML**
+
+1. Click either **Copy JSON to Clipboard** or **Save JSON to file**.
 
 The following screenshot illustrates this behavior.
 
 {{< figure src="/static/img/docs/v51/provisioning_cannot_save_dashboard.png" max-width="500px" class="docs-image--no-shadow" >}}
+
+Grafana removes the `id` field from the dashboard JSON to help the provisioning workflow.
+Now you sync your dashboard changes back to the provisioning source.
 
 ### Reusable dashboard URLs
 
@@ -521,7 +522,11 @@ To use `foldersFromFilesStructure`, you must unset the `folder` and `folderUid` 
 To provision dashboards to the root level, store them in the root of your `path`.
 
 {{< admonition type="note" >}}
-This feature doesn't let you create nested folder structures, where you have folders within folders.
+Nested folder structures are supported: the folder hierarchy on disk is recreated in Grafana.
+
+For example, `folderTwo/folderThree/dashboard3.json` creates a folder `folderTwo` containing a folder `folderThree` that contains the dashboard.
+
+The folder depth is limited to `4` levels.
 {{< /admonition >}}
 
 ## Alerting
@@ -746,3 +751,14 @@ Grafana Enterprise supports:
 
 - [Provisioning role-based access control with Grafana](../roles-and-permissions/access-control/rbac-grafana-provisioning/)
 - [Provisioning role-based access control with Terraform](../roles-and-permissions/access-control/rbac-terraform-provisioning/)
+
+## Configuration management tools
+
+The Grafana community maintains libraries for many popular configuration management tools.
+
+| Tool    | Project                                                                                                                           |
+| ------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| Puppet  | <https://forge.puppet.com/puppet/grafana>                                                                                         |
+| Ansible | <https://github.com/grafana/grafana-ansible-collection>                                                                           |
+| Chef    | <https://github.com/sous-chefs/chef-grafana>                                                                                      |
+| NixOS   | [`services.grafana.provision` module](https://github.com/NixOS/nixpkgs/blob/master/nixos/modules/services/monitoring/grafana.nix) |

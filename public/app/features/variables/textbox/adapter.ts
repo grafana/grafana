@@ -1,9 +1,9 @@
 import { cloneDeep } from 'lodash';
 
-import { TextBoxVariableModel } from '@grafana/data';
+import { type TextBoxVariableModel } from '@grafana/data';
 
 import { dispatch } from '../../../store/store';
-import { VariableAdapter } from '../adapters';
+import { type VariableAdapter } from '../adapters';
 import { setOptionAsCurrent } from '../state/actions';
 import { toKeyedVariableIdentifier } from '../utils';
 

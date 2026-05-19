@@ -1,4 +1,4 @@
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { RadioButtonGroup, Field } from '@grafana/ui';
 

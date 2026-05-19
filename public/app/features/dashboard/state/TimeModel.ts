@@ -1,4 +1,4 @@
-import { TimeRange, TimeZone } from '@grafana/data';
+import { type TimeRange, type TimeZone } from '@grafana/data';
 
 export interface TimeModel {
   time: any;

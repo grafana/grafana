@@ -38,7 +38,7 @@ Before you begin, ensure you have the following:
 
 To create a contact point with a Jira integration, complete the following steps:
 
-1. Navigate to **Alerts & IRM** -> **Alerting** -> **Contact points**.
+1. Navigate to **Alerts & IRM** -> **Alerting** -> **Notification configuration**, then select the **Contact points** tab.
 2. Click **+ Add contact point**.
 3. Enter a name for the contact point.
 4. From the **Integration** list, select **Jira**.

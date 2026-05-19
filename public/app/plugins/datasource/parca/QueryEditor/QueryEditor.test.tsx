@@ -2,14 +2,14 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { of } from 'rxjs';
 
-import { CoreApp, DataSourcePluginMeta, PluginType } from '@grafana/data';
+import { CoreApp, type DataSourcePluginMeta, PluginType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { BackendSrv, getBackendSrv, setBackendSrv } from '@grafana/runtime';
+import { type BackendSrv, getBackendSrv, setBackendSrv } from '@grafana/runtime';
 
 import { ParcaDataSource } from '../datasource';
-import { ProfileTypeMessage } from '../types';
+import { type ProfileTypeMessage } from '../types';
 
-import { Props, QueryEditor } from './QueryEditor';
+import { type Props, QueryEditor } from './QueryEditor';
 
 describe('QueryEditor', () => {
   let origBackendSrv: BackendSrv;

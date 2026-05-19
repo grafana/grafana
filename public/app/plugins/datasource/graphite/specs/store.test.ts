@@ -10,7 +10,7 @@ import {
   getTagValuesSelectables,
 } from '../state/providers';
 import { createStore } from '../state/store';
-import { GraphiteSegment } from '../types';
+import { type GraphiteSegment } from '../types';
 
 const mockPublish = jest.fn();
 jest.mock('@grafana/runtime', () => ({

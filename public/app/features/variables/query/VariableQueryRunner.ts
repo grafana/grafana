@@ -1,24 +1,24 @@
-import { merge, Observable, of, Subject, throwError, Unsubscribable } from 'rxjs';
+import { merge, type Observable, of, Subject, throwError, type Unsubscribable } from 'rxjs';
 import { catchError, filter, finalize, mergeMap, take, takeUntil } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
 
 import {
   CoreApp,
-  DataQuery,
-  DataQueryRequest,
-  DataSourceApi,
+  type DataQuery,
+  type DataQueryRequest,
+  type DataSourceApi,
   LoadingState,
-  PanelData,
-  QueryVariableModel,
-  ScopedVars,
+  type PanelData,
+  type QueryVariableModel,
+  type ScopedVars,
 } from '@grafana/data';
-import { StoreState, ThunkDispatch } from 'app/types/store';
+import { type StoreState, type ThunkDispatch } from 'app/types/store';
 
 import { dispatch, getState } from '../../../store/store';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import { runRequest } from '../../query/state/runRequest';
 import { getLastKey, getVariable } from '../state/selectors';
-import { KeyedVariableIdentifier } from '../state/types';
+import { type KeyedVariableIdentifier } from '../state/types';
 import { getTemplatedRegex } from '../utils';
 
 import { toMetricFindValuesOperator, updateOptionsState, validateVariableSelection } from './operators';

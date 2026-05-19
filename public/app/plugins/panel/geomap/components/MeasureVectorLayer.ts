@@ -1,8 +1,8 @@
-import { FeatureLike } from 'ol/Feature';
-import Map from 'ol/Map';
-import { Coordinate } from 'ol/coordinate';
-import { Geometry, LineString, Point, Polygon } from 'ol/geom';
-import { Type } from 'ol/geom/Geometry';
+import { type FeatureLike } from 'ol/Feature';
+import type Map from 'ol/Map';
+import { type Coordinate } from 'ol/coordinate';
+import { type Geometry, LineString, Point, Polygon } from 'ol/geom';
+import { type Type } from 'ol/geom/Geometry';
 import { Draw, Modify } from 'ol/interaction';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
@@ -11,7 +11,7 @@ import { Circle as CircleStyle, Fill, RegularShape, Stroke, Style, Text } from '
 
 import { formattedValueToString } from '@grafana/data';
 
-import { MapMeasureOptions, measures } from '../utils/measure';
+import { type MapMeasureOptions, measures } from '../utils/measure';
 
 export class MeasureVectorLayer extends VectorLayer<VectorSource> {
   opts: MapMeasureOptions = {

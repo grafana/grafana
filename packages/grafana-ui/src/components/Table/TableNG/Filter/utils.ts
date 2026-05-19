@@ -1,7 +1,7 @@
-import { Field, formattedValueToString, SelectableValue } from '@grafana/data';
+import { type Field, formattedValueToString, type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
-import { FilterOperator, TableRow } from '../types';
+import { FilterOperator, type TableRow } from '../types';
 import { getDisplayName } from '../utils';
 
 export function calculateUniqueFieldValues(rows: TableRow[], field?: Field) {

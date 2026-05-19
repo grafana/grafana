@@ -8,9 +8,9 @@ import { customBuilder } from '../shared/testing/builders';
 import {
   SLOW_VARIABLES_EXPANSION_THRESHOLD,
   VariablesUnknownTable,
-  VariablesUnknownTableProps,
+  type VariablesUnknownTableProps,
 } from './VariablesUnknownTable';
-import { UsagesToNetwork } from './types';
+import { type UsagesToNetwork } from './types';
 import * as utils from './utils';
 
 async function getTestContext(

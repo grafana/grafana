@@ -1,4 +1,4 @@
-import { Block, Document, Text, Value, SchemaProperties } from 'slate';
+import { Block, Document, Text, Value, type SchemaProperties } from 'slate';
 
 export const SCHEMA: SchemaProperties = {
   document: {

@@ -124,6 +124,13 @@ type ParsedResource struct {
 	// Create or Update
 	Action provisioning.ResourceAction
 
+	// SkipStrictValidation requests FieldValidation=Ignore on the apiserver
+	// write. Used by in-place renames so that a path/folder change cannot be
+	// blocked by strict schema validation of an unchanged spec — a dashboard
+	// that already lives in the cluster (e.g. saved before stricter CUE
+	// schemas were enforced) must remain renameable.
+	SkipStrictValidation bool
+
 	// The results from dry run
 	DryRunResponse *unstructured.Unstructured
 
@@ -216,8 +223,14 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 			// When folder metadata is enabled and the parent folder has a _folder.json,
 			// use the stable UID from that file instead of the hash-derived one.
 			if r.folderMetadataEnabled && r.reader != nil {
-				if meta, err := ReadFolderMetadata(ctx, r.reader, dirPath, ""); err == nil && meta.Name != "" {
+				if meta, _, err := ReadFolderMetadata(ctx, r.reader, dirPath, info.Ref); err == nil && meta.Name != "" {
 					folderID = meta.Name
+				} else if err != nil && errors.Is(err, repository.ErrRefNotFound) {
+					// Target branch doesn't exist yet (e.g. new PR branch). Fall back to
+					// the configured branch where _folder.json is already committed.
+					if meta, _, err := ReadFolderMetadata(ctx, r.reader, dirPath, ""); err == nil && meta.Name != "" {
+						folderID = meta.Name
+					}
 				}
 			}
 			parsed.Meta.SetFolder(folderID)
@@ -242,6 +255,30 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 	return parsed, nil
 }
 
+// SameIdentity reports whether f and other refer to the same Kubernetes
+// resource: same metadata.name, API group, and kind.
+func (f *ParsedResource) SameIdentity(other *ParsedResource) bool {
+	if f == nil || other == nil {
+		return false
+	}
+	return f.Obj.GetName() == other.Obj.GetName() &&
+		f.GVK.Group == other.GVK.Group &&
+		f.GVK.Kind == other.GVK.Kind
+}
+
+// ExistingFolder returns the grafana.app/folder annotation from the existing
+// Grafana object, or "" if Existing is nil or has no folder annotation.
+func (f *ParsedResource) ExistingFolder() string {
+	if f.Existing == nil {
+		return ""
+	}
+	meta, err := utils.MetaAccessor(f.Existing)
+	if err != nil {
+		return ""
+	}
+	return meta.GetFolder()
+}
+
 func (f *ParsedResource) DryRun(ctx context.Context) error {
 	if f.DryRunResponse != nil {
 		return nil // this already ran (and helpful for testing)
@@ -259,8 +296,8 @@ func (f *ParsedResource) DryRun(ctx context.Context) error {
 	}
 
 	fieldValidation := "Strict"
-	if f.GVR == DashboardResource {
-		fieldValidation = "Ignore" // FIXME: temporary while we improve validation
+	if f.SkipStrictValidation || f.GVR == DashboardResource {
+		fieldValidation = "Ignore" // FIXME: dashboard exemption is temporary while we improve validation
 	}
 
 	// Handle deletion action separately
@@ -341,8 +378,8 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 	identitySpan.End()
 
 	fieldValidation := "Strict"
-	if f.GVR == DashboardResource {
-		fieldValidation = "Ignore" // FIXME: temporary while we improve validation
+	if f.SkipStrictValidation || f.GVR == DashboardResource {
+		fieldValidation = "Ignore" // FIXME: dashboard exemption is temporary while we improve validation
 	}
 
 	// Check for ownership conflicts

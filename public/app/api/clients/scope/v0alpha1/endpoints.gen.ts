@@ -1,13 +1,13 @@
-import { api } from './baseAPI';
+import { api } from "./baseAPI";
 export const addTagTypes = [
-  'API Discovery',
-  'FindScopeDashboardBindingsResults',
-  'FindScopeNavigationsResults',
-  'FindScopeNodeChildrenResults',
-  'ScopeDashboardBinding',
-  'ScopeNavigation',
-  'ScopeNode',
-  'Scope',
+  "API Discovery",
+  "FindScopeDashboardBindingsResults",
+  "FindScopeNavigationsResults",
+  "FindScopeNodeChildrenResults",
+  "ScopeDashboardBinding",
+  "ScopeNavigation",
+  "ScopeNode",
+  "Scope",
 ] as const;
 const injectedRtkApi = api
   .enhanceEndpoints({
@@ -15,9 +15,12 @@ const injectedRtkApi = api
   })
   .injectEndpoints({
     endpoints: (build) => ({
-      getApiResources: build.query<GetApiResourcesApiResponse, GetApiResourcesApiArg>({
+      getApiResources: build.query<
+        GetApiResourcesApiResponse,
+        GetApiResourcesApiArg
+      >({
         query: () => ({ url: `/` }),
-        providesTags: ['API Discovery'],
+        providesTags: ["API Discovery"],
       }),
       getFindScopeDashboardBindingsResults: build.query<
         GetFindScopeDashboardBindingsResultsApiResponse,
@@ -27,9 +30,11 @@ const injectedRtkApi = api
           url: `/find/scope_dashboard_bindings`,
           params: {
             scope: queryArg.scope,
+            depth: queryArg.depth,
+            rootScope: queryArg.rootScope,
           },
         }),
-        providesTags: ['FindScopeDashboardBindingsResults'],
+        providesTags: ["FindScopeDashboardBindingsResults"],
       }),
       getFindScopeNavigationsResults: build.query<
         GetFindScopeNavigationsResultsApiResponse,
@@ -39,9 +44,11 @@ const injectedRtkApi = api
           url: `/find/scope_navigations`,
           params: {
             scope: queryArg.scope,
+            depth: queryArg.depth,
+            rootScope: queryArg.rootScope,
           },
         }),
-        providesTags: ['FindScopeNavigationsResults'],
+        providesTags: ["FindScopeNavigationsResults"],
       }),
       getFindScopeNodeChildrenResults: build.query<
         GetFindScopeNodeChildrenResultsApiResponse,
@@ -56,15 +63,18 @@ const injectedRtkApi = api
             limit: queryArg.limit,
           },
         }),
-        providesTags: ['FindScopeNodeChildrenResults'],
+        providesTags: ["FindScopeNodeChildrenResults"],
       }),
-      listScopeDashboardBinding: build.query<ListScopeDashboardBindingApiResponse, ListScopeDashboardBindingApiArg>({
+      listScopeDashboardBinding: build.query<
+        ListScopeDashboardBindingApiResponse,
+        ListScopeDashboardBindingApiArg
+      >({
         query: (queryArg) => ({
           url: `/scopedashboardbindings`,
           params: {
             pretty: queryArg.pretty,
             allowWatchBookmarks: queryArg.allowWatchBookmarks,
-            continue: queryArg['continue'],
+            continue: queryArg["continue"],
             fieldSelector: queryArg.fieldSelector,
             labelSelector: queryArg.labelSelector,
             limit: queryArg.limit,
@@ -75,7 +85,7 @@ const injectedRtkApi = api
             watch: queryArg.watch,
           },
         }),
-        providesTags: ['ScopeDashboardBinding'],
+        providesTags: ["ScopeDashboardBinding"],
       }),
       createScopeDashboardBinding: build.mutation<
         CreateScopeDashboardBindingApiResponse,
@@ -83,7 +93,7 @@ const injectedRtkApi = api
       >({
         query: (queryArg) => ({
           url: `/scopedashboardbindings`,
-          method: 'POST',
+          method: "POST",
           body: queryArg.scopeDashboardBinding,
           params: {
             pretty: queryArg.pretty,
@@ -92,7 +102,7 @@ const injectedRtkApi = api
             fieldValidation: queryArg.fieldValidation,
           },
         }),
-        invalidatesTags: ['ScopeDashboardBinding'],
+        invalidatesTags: ["ScopeDashboardBinding"],
       }),
       deletecollectionScopeDashboardBinding: build.mutation<
         DeletecollectionScopeDashboardBindingApiResponse,
@@ -100,14 +110,15 @@ const injectedRtkApi = api
       >({
         query: (queryArg) => ({
           url: `/scopedashboardbindings`,
-          method: 'DELETE',
+          method: "DELETE",
           params: {
             pretty: queryArg.pretty,
-            continue: queryArg['continue'],
+            continue: queryArg["continue"],
             dryRun: queryArg.dryRun,
             fieldSelector: queryArg.fieldSelector,
             gracePeriodSeconds: queryArg.gracePeriodSeconds,
-            ignoreStoreReadErrorWithClusterBreakingPotential: queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
+            ignoreStoreReadErrorWithClusterBreakingPotential:
+              queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
             labelSelector: queryArg.labelSelector,
             limit: queryArg.limit,
             orphanDependents: queryArg.orphanDependents,
@@ -118,16 +129,19 @@ const injectedRtkApi = api
             timeoutSeconds: queryArg.timeoutSeconds,
           },
         }),
-        invalidatesTags: ['ScopeDashboardBinding'],
+        invalidatesTags: ["ScopeDashboardBinding"],
       }),
-      getScopeDashboardBinding: build.query<GetScopeDashboardBindingApiResponse, GetScopeDashboardBindingApiArg>({
+      getScopeDashboardBinding: build.query<
+        GetScopeDashboardBindingApiResponse,
+        GetScopeDashboardBindingApiArg
+      >({
         query: (queryArg) => ({
           url: `/scopedashboardbindings/${queryArg.name}`,
           params: {
             pretty: queryArg.pretty,
           },
         }),
-        providesTags: ['ScopeDashboardBinding'],
+        providesTags: ["ScopeDashboardBinding"],
       }),
       replaceScopeDashboardBinding: build.mutation<
         ReplaceScopeDashboardBindingApiResponse,
@@ -135,7 +149,7 @@ const injectedRtkApi = api
       >({
         query: (queryArg) => ({
           url: `/scopedashboardbindings/${queryArg.name}`,
-          method: 'PUT',
+          method: "PUT",
           body: queryArg.scopeDashboardBinding,
           params: {
             pretty: queryArg.pretty,
@@ -144,7 +158,7 @@ const injectedRtkApi = api
             fieldValidation: queryArg.fieldValidation,
           },
         }),
-        invalidatesTags: ['ScopeDashboardBinding'],
+        invalidatesTags: ["ScopeDashboardBinding"],
       }),
       deleteScopeDashboardBinding: build.mutation<
         DeleteScopeDashboardBindingApiResponse,
@@ -152,17 +166,18 @@ const injectedRtkApi = api
       >({
         query: (queryArg) => ({
           url: `/scopedashboardbindings/${queryArg.name}`,
-          method: 'DELETE',
+          method: "DELETE",
           params: {
             pretty: queryArg.pretty,
             dryRun: queryArg.dryRun,
             gracePeriodSeconds: queryArg.gracePeriodSeconds,
-            ignoreStoreReadErrorWithClusterBreakingPotential: queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
+            ignoreStoreReadErrorWithClusterBreakingPotential:
+              queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
             orphanDependents: queryArg.orphanDependents,
             propagationPolicy: queryArg.propagationPolicy,
           },
         }),
-        invalidatesTags: ['ScopeDashboardBinding'],
+        invalidatesTags: ["ScopeDashboardBinding"],
       }),
       updateScopeDashboardBinding: build.mutation<
         UpdateScopeDashboardBindingApiResponse,
@@ -170,7 +185,7 @@ const injectedRtkApi = api
       >({
         query: (queryArg) => ({
           url: `/scopedashboardbindings/${queryArg.name}`,
-          method: 'PATCH',
+          method: "PATCH",
           body: queryArg.patch,
           params: {
             pretty: queryArg.pretty,
@@ -180,7 +195,7 @@ const injectedRtkApi = api
             force: queryArg.force,
           },
         }),
-        invalidatesTags: ['ScopeDashboardBinding'],
+        invalidatesTags: ["ScopeDashboardBinding"],
       }),
       getScopeDashboardBindingStatus: build.query<
         GetScopeDashboardBindingStatusApiResponse,
@@ -192,7 +207,7 @@ const injectedRtkApi = api
             pretty: queryArg.pretty,
           },
         }),
-        providesTags: ['ScopeDashboardBinding'],
+        providesTags: ["ScopeDashboardBinding"],
       }),
       replaceScopeDashboardBindingStatus: build.mutation<
         ReplaceScopeDashboardBindingStatusApiResponse,
@@ -200,7 +215,7 @@ const injectedRtkApi = api
       >({
         query: (queryArg) => ({
           url: `/scopedashboardbindings/${queryArg.name}/status`,
-          method: 'PUT',
+          method: "PUT",
           body: queryArg.scopeDashboardBinding,
           params: {
             pretty: queryArg.pretty,
@@ -209,7 +224,7 @@ const injectedRtkApi = api
             fieldValidation: queryArg.fieldValidation,
           },
         }),
-        invalidatesTags: ['ScopeDashboardBinding'],
+        invalidatesTags: ["ScopeDashboardBinding"],
       }),
       updateScopeDashboardBindingStatus: build.mutation<
         UpdateScopeDashboardBindingStatusApiResponse,
@@ -217,7 +232,7 @@ const injectedRtkApi = api
       >({
         query: (queryArg) => ({
           url: `/scopedashboardbindings/${queryArg.name}/status`,
-          method: 'PATCH',
+          method: "PATCH",
           body: queryArg.patch,
           params: {
             pretty: queryArg.pretty,
@@ -227,15 +242,18 @@ const injectedRtkApi = api
             force: queryArg.force,
           },
         }),
-        invalidatesTags: ['ScopeDashboardBinding'],
+        invalidatesTags: ["ScopeDashboardBinding"],
       }),
-      listScopeNavigation: build.query<ListScopeNavigationApiResponse, ListScopeNavigationApiArg>({
+      listScopeNavigation: build.query<
+        ListScopeNavigationApiResponse,
+        ListScopeNavigationApiArg
+      >({
         query: (queryArg) => ({
           url: `/scopenavigations`,
           params: {
             pretty: queryArg.pretty,
             allowWatchBookmarks: queryArg.allowWatchBookmarks,
-            continue: queryArg['continue'],
+            continue: queryArg["continue"],
             fieldSelector: queryArg.fieldSelector,
             labelSelector: queryArg.labelSelector,
             limit: queryArg.limit,
@@ -246,12 +264,15 @@ const injectedRtkApi = api
             watch: queryArg.watch,
           },
         }),
-        providesTags: ['ScopeNavigation'],
+        providesTags: ["ScopeNavigation"],
       }),
-      createScopeNavigation: build.mutation<CreateScopeNavigationApiResponse, CreateScopeNavigationApiArg>({
+      createScopeNavigation: build.mutation<
+        CreateScopeNavigationApiResponse,
+        CreateScopeNavigationApiArg
+      >({
         query: (queryArg) => ({
           url: `/scopenavigations`,
-          method: 'POST',
+          method: "POST",
           body: queryArg.scopeNavigation,
           params: {
             pretty: queryArg.pretty,
@@ -260,7 +281,7 @@ const injectedRtkApi = api
             fieldValidation: queryArg.fieldValidation,
           },
         }),
-        invalidatesTags: ['ScopeNavigation'],
+        invalidatesTags: ["ScopeNavigation"],
       }),
       deletecollectionScopeNavigation: build.mutation<
         DeletecollectionScopeNavigationApiResponse,
@@ -268,14 +289,15 @@ const injectedRtkApi = api
       >({
         query: (queryArg) => ({
           url: `/scopenavigations`,
-          method: 'DELETE',
+          method: "DELETE",
           params: {
             pretty: queryArg.pretty,
-            continue: queryArg['continue'],
+            continue: queryArg["continue"],
             dryRun: queryArg.dryRun,
             fieldSelector: queryArg.fieldSelector,
             gracePeriodSeconds: queryArg.gracePeriodSeconds,
-            ignoreStoreReadErrorWithClusterBreakingPotential: queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
+            ignoreStoreReadErrorWithClusterBreakingPotential:
+              queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
             labelSelector: queryArg.labelSelector,
             limit: queryArg.limit,
             orphanDependents: queryArg.orphanDependents,
@@ -286,21 +308,27 @@ const injectedRtkApi = api
             timeoutSeconds: queryArg.timeoutSeconds,
           },
         }),
-        invalidatesTags: ['ScopeNavigation'],
+        invalidatesTags: ["ScopeNavigation"],
       }),
-      getScopeNavigation: build.query<GetScopeNavigationApiResponse, GetScopeNavigationApiArg>({
+      getScopeNavigation: build.query<
+        GetScopeNavigationApiResponse,
+        GetScopeNavigationApiArg
+      >({
         query: (queryArg) => ({
           url: `/scopenavigations/${queryArg.name}`,
           params: {
             pretty: queryArg.pretty,
           },
         }),
-        providesTags: ['ScopeNavigation'],
+        providesTags: ["ScopeNavigation"],
       }),
-      replaceScopeNavigation: build.mutation<ReplaceScopeNavigationApiResponse, ReplaceScopeNavigationApiArg>({
+      replaceScopeNavigation: build.mutation<
+        ReplaceScopeNavigationApiResponse,
+        ReplaceScopeNavigationApiArg
+      >({
         query: (queryArg) => ({
           url: `/scopenavigations/${queryArg.name}`,
-          method: 'PUT',
+          method: "PUT",
           body: queryArg.scopeNavigation,
           params: {
             pretty: queryArg.pretty,
@@ -309,27 +337,34 @@ const injectedRtkApi = api
             fieldValidation: queryArg.fieldValidation,
           },
         }),
-        invalidatesTags: ['ScopeNavigation'],
+        invalidatesTags: ["ScopeNavigation"],
       }),
-      deleteScopeNavigation: build.mutation<DeleteScopeNavigationApiResponse, DeleteScopeNavigationApiArg>({
+      deleteScopeNavigation: build.mutation<
+        DeleteScopeNavigationApiResponse,
+        DeleteScopeNavigationApiArg
+      >({
         query: (queryArg) => ({
           url: `/scopenavigations/${queryArg.name}`,
-          method: 'DELETE',
+          method: "DELETE",
           params: {
             pretty: queryArg.pretty,
             dryRun: queryArg.dryRun,
             gracePeriodSeconds: queryArg.gracePeriodSeconds,
-            ignoreStoreReadErrorWithClusterBreakingPotential: queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
+            ignoreStoreReadErrorWithClusterBreakingPotential:
+              queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
             orphanDependents: queryArg.orphanDependents,
             propagationPolicy: queryArg.propagationPolicy,
           },
         }),
-        invalidatesTags: ['ScopeNavigation'],
+        invalidatesTags: ["ScopeNavigation"],
       }),
-      updateScopeNavigation: build.mutation<UpdateScopeNavigationApiResponse, UpdateScopeNavigationApiArg>({
+      updateScopeNavigation: build.mutation<
+        UpdateScopeNavigationApiResponse,
+        UpdateScopeNavigationApiArg
+      >({
         query: (queryArg) => ({
           url: `/scopenavigations/${queryArg.name}`,
-          method: 'PATCH',
+          method: "PATCH",
           body: queryArg.patch,
           params: {
             pretty: queryArg.pretty,
@@ -339,16 +374,19 @@ const injectedRtkApi = api
             force: queryArg.force,
           },
         }),
-        invalidatesTags: ['ScopeNavigation'],
+        invalidatesTags: ["ScopeNavigation"],
       }),
-      getScopeNavigationStatus: build.query<GetScopeNavigationStatusApiResponse, GetScopeNavigationStatusApiArg>({
+      getScopeNavigationStatus: build.query<
+        GetScopeNavigationStatusApiResponse,
+        GetScopeNavigationStatusApiArg
+      >({
         query: (queryArg) => ({
           url: `/scopenavigations/${queryArg.name}/status`,
           params: {
             pretty: queryArg.pretty,
           },
         }),
-        providesTags: ['ScopeNavigation'],
+        providesTags: ["ScopeNavigation"],
       }),
       replaceScopeNavigationStatus: build.mutation<
         ReplaceScopeNavigationStatusApiResponse,
@@ -356,7 +394,7 @@ const injectedRtkApi = api
       >({
         query: (queryArg) => ({
           url: `/scopenavigations/${queryArg.name}/status`,
-          method: 'PUT',
+          method: "PUT",
           body: queryArg.scopeNavigation,
           params: {
             pretty: queryArg.pretty,
@@ -365,7 +403,7 @@ const injectedRtkApi = api
             fieldValidation: queryArg.fieldValidation,
           },
         }),
-        invalidatesTags: ['ScopeNavigation'],
+        invalidatesTags: ["ScopeNavigation"],
       }),
       updateScopeNavigationStatus: build.mutation<
         UpdateScopeNavigationStatusApiResponse,
@@ -373,7 +411,7 @@ const injectedRtkApi = api
       >({
         query: (queryArg) => ({
           url: `/scopenavigations/${queryArg.name}/status`,
-          method: 'PATCH',
+          method: "PATCH",
           body: queryArg.patch,
           params: {
             pretty: queryArg.pretty,
@@ -383,31 +421,36 @@ const injectedRtkApi = api
             force: queryArg.force,
           },
         }),
-        invalidatesTags: ['ScopeNavigation'],
+        invalidatesTags: ["ScopeNavigation"],
       }),
-      listScopeNode: build.query<ListScopeNodeApiResponse, ListScopeNodeApiArg>({
+      listScopeNode: build.query<ListScopeNodeApiResponse, ListScopeNodeApiArg>(
+        {
+          query: (queryArg) => ({
+            url: `/scopenodes`,
+            params: {
+              pretty: queryArg.pretty,
+              allowWatchBookmarks: queryArg.allowWatchBookmarks,
+              continue: queryArg["continue"],
+              fieldSelector: queryArg.fieldSelector,
+              labelSelector: queryArg.labelSelector,
+              limit: queryArg.limit,
+              resourceVersion: queryArg.resourceVersion,
+              resourceVersionMatch: queryArg.resourceVersionMatch,
+              sendInitialEvents: queryArg.sendInitialEvents,
+              timeoutSeconds: queryArg.timeoutSeconds,
+              watch: queryArg.watch,
+            },
+          }),
+          providesTags: ["ScopeNode"],
+        },
+      ),
+      createScopeNode: build.mutation<
+        CreateScopeNodeApiResponse,
+        CreateScopeNodeApiArg
+      >({
         query: (queryArg) => ({
           url: `/scopenodes`,
-          params: {
-            pretty: queryArg.pretty,
-            allowWatchBookmarks: queryArg.allowWatchBookmarks,
-            continue: queryArg['continue'],
-            fieldSelector: queryArg.fieldSelector,
-            labelSelector: queryArg.labelSelector,
-            limit: queryArg.limit,
-            resourceVersion: queryArg.resourceVersion,
-            resourceVersionMatch: queryArg.resourceVersionMatch,
-            sendInitialEvents: queryArg.sendInitialEvents,
-            timeoutSeconds: queryArg.timeoutSeconds,
-            watch: queryArg.watch,
-          },
-        }),
-        providesTags: ['ScopeNode'],
-      }),
-      createScopeNode: build.mutation<CreateScopeNodeApiResponse, CreateScopeNodeApiArg>({
-        query: (queryArg) => ({
-          url: `/scopenodes`,
-          method: 'POST',
+          method: "POST",
           body: queryArg.scopeNode,
           params: {
             pretty: queryArg.pretty,
@@ -416,19 +459,23 @@ const injectedRtkApi = api
             fieldValidation: queryArg.fieldValidation,
           },
         }),
-        invalidatesTags: ['ScopeNode'],
+        invalidatesTags: ["ScopeNode"],
       }),
-      deletecollectionScopeNode: build.mutation<DeletecollectionScopeNodeApiResponse, DeletecollectionScopeNodeApiArg>({
+      deletecollectionScopeNode: build.mutation<
+        DeletecollectionScopeNodeApiResponse,
+        DeletecollectionScopeNodeApiArg
+      >({
         query: (queryArg) => ({
           url: `/scopenodes`,
-          method: 'DELETE',
+          method: "DELETE",
           params: {
             pretty: queryArg.pretty,
-            continue: queryArg['continue'],
+            continue: queryArg["continue"],
             dryRun: queryArg.dryRun,
             fieldSelector: queryArg.fieldSelector,
             gracePeriodSeconds: queryArg.gracePeriodSeconds,
-            ignoreStoreReadErrorWithClusterBreakingPotential: queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
+            ignoreStoreReadErrorWithClusterBreakingPotential:
+              queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
             labelSelector: queryArg.labelSelector,
             limit: queryArg.limit,
             orphanDependents: queryArg.orphanDependents,
@@ -439,7 +486,7 @@ const injectedRtkApi = api
             timeoutSeconds: queryArg.timeoutSeconds,
           },
         }),
-        invalidatesTags: ['ScopeNode'],
+        invalidatesTags: ["ScopeNode"],
       }),
       getScopeNode: build.query<GetScopeNodeApiResponse, GetScopeNodeApiArg>({
         query: (queryArg) => ({
@@ -448,12 +495,15 @@ const injectedRtkApi = api
             pretty: queryArg.pretty,
           },
         }),
-        providesTags: ['ScopeNode'],
+        providesTags: ["ScopeNode"],
       }),
-      replaceScopeNode: build.mutation<ReplaceScopeNodeApiResponse, ReplaceScopeNodeApiArg>({
+      replaceScopeNode: build.mutation<
+        ReplaceScopeNodeApiResponse,
+        ReplaceScopeNodeApiArg
+      >({
         query: (queryArg) => ({
           url: `/scopenodes/${queryArg.name}`,
-          method: 'PUT',
+          method: "PUT",
           body: queryArg.scopeNode,
           params: {
             pretty: queryArg.pretty,
@@ -462,27 +512,34 @@ const injectedRtkApi = api
             fieldValidation: queryArg.fieldValidation,
           },
         }),
-        invalidatesTags: ['ScopeNode'],
+        invalidatesTags: ["ScopeNode"],
       }),
-      deleteScopeNode: build.mutation<DeleteScopeNodeApiResponse, DeleteScopeNodeApiArg>({
+      deleteScopeNode: build.mutation<
+        DeleteScopeNodeApiResponse,
+        DeleteScopeNodeApiArg
+      >({
         query: (queryArg) => ({
           url: `/scopenodes/${queryArg.name}`,
-          method: 'DELETE',
+          method: "DELETE",
           params: {
             pretty: queryArg.pretty,
             dryRun: queryArg.dryRun,
             gracePeriodSeconds: queryArg.gracePeriodSeconds,
-            ignoreStoreReadErrorWithClusterBreakingPotential: queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
+            ignoreStoreReadErrorWithClusterBreakingPotential:
+              queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
             orphanDependents: queryArg.orphanDependents,
             propagationPolicy: queryArg.propagationPolicy,
           },
         }),
-        invalidatesTags: ['ScopeNode'],
+        invalidatesTags: ["ScopeNode"],
       }),
-      updateScopeNode: build.mutation<UpdateScopeNodeApiResponse, UpdateScopeNodeApiArg>({
+      updateScopeNode: build.mutation<
+        UpdateScopeNodeApiResponse,
+        UpdateScopeNodeApiArg
+      >({
         query: (queryArg) => ({
           url: `/scopenodes/${queryArg.name}`,
-          method: 'PATCH',
+          method: "PATCH",
           body: queryArg.patch,
           params: {
             pretty: queryArg.pretty,
@@ -492,7 +549,7 @@ const injectedRtkApi = api
             force: queryArg.force,
           },
         }),
-        invalidatesTags: ['ScopeNode'],
+        invalidatesTags: ["ScopeNode"],
       }),
       listScope: build.query<ListScopeApiResponse, ListScopeApiArg>({
         query: (queryArg) => ({
@@ -500,7 +557,7 @@ const injectedRtkApi = api
           params: {
             pretty: queryArg.pretty,
             allowWatchBookmarks: queryArg.allowWatchBookmarks,
-            continue: queryArg['continue'],
+            continue: queryArg["continue"],
             fieldSelector: queryArg.fieldSelector,
             labelSelector: queryArg.labelSelector,
             limit: queryArg.limit,
@@ -511,12 +568,12 @@ const injectedRtkApi = api
             watch: queryArg.watch,
           },
         }),
-        providesTags: ['Scope'],
+        providesTags: ["Scope"],
       }),
       createScope: build.mutation<CreateScopeApiResponse, CreateScopeApiArg>({
         query: (queryArg) => ({
           url: `/scopes`,
-          method: 'POST',
+          method: "POST",
           body: queryArg.scope,
           params: {
             pretty: queryArg.pretty,
@@ -525,19 +582,23 @@ const injectedRtkApi = api
             fieldValidation: queryArg.fieldValidation,
           },
         }),
-        invalidatesTags: ['Scope'],
+        invalidatesTags: ["Scope"],
       }),
-      deletecollectionScope: build.mutation<DeletecollectionScopeApiResponse, DeletecollectionScopeApiArg>({
+      deletecollectionScope: build.mutation<
+        DeletecollectionScopeApiResponse,
+        DeletecollectionScopeApiArg
+      >({
         query: (queryArg) => ({
           url: `/scopes`,
-          method: 'DELETE',
+          method: "DELETE",
           params: {
             pretty: queryArg.pretty,
-            continue: queryArg['continue'],
+            continue: queryArg["continue"],
             dryRun: queryArg.dryRun,
             fieldSelector: queryArg.fieldSelector,
             gracePeriodSeconds: queryArg.gracePeriodSeconds,
-            ignoreStoreReadErrorWithClusterBreakingPotential: queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
+            ignoreStoreReadErrorWithClusterBreakingPotential:
+              queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
             labelSelector: queryArg.labelSelector,
             limit: queryArg.limit,
             orphanDependents: queryArg.orphanDependents,
@@ -548,7 +609,7 @@ const injectedRtkApi = api
             timeoutSeconds: queryArg.timeoutSeconds,
           },
         }),
-        invalidatesTags: ['Scope'],
+        invalidatesTags: ["Scope"],
       }),
       getScope: build.query<GetScopeApiResponse, GetScopeApiArg>({
         query: (queryArg) => ({
@@ -557,41 +618,44 @@ const injectedRtkApi = api
             pretty: queryArg.pretty,
           },
         }),
-        providesTags: ['Scope'],
+        providesTags: ["Scope"],
       }),
-      replaceScope: build.mutation<ReplaceScopeApiResponse, ReplaceScopeApiArg>({
-        query: (queryArg) => ({
-          url: `/scopes/${queryArg.name}`,
-          method: 'PUT',
-          body: queryArg.scope,
-          params: {
-            pretty: queryArg.pretty,
-            dryRun: queryArg.dryRun,
-            fieldManager: queryArg.fieldManager,
-            fieldValidation: queryArg.fieldValidation,
-          },
-        }),
-        invalidatesTags: ['Scope'],
-      }),
+      replaceScope: build.mutation<ReplaceScopeApiResponse, ReplaceScopeApiArg>(
+        {
+          query: (queryArg) => ({
+            url: `/scopes/${queryArg.name}`,
+            method: "PUT",
+            body: queryArg.scope,
+            params: {
+              pretty: queryArg.pretty,
+              dryRun: queryArg.dryRun,
+              fieldManager: queryArg.fieldManager,
+              fieldValidation: queryArg.fieldValidation,
+            },
+          }),
+          invalidatesTags: ["Scope"],
+        },
+      ),
       deleteScope: build.mutation<DeleteScopeApiResponse, DeleteScopeApiArg>({
         query: (queryArg) => ({
           url: `/scopes/${queryArg.name}`,
-          method: 'DELETE',
+          method: "DELETE",
           params: {
             pretty: queryArg.pretty,
             dryRun: queryArg.dryRun,
             gracePeriodSeconds: queryArg.gracePeriodSeconds,
-            ignoreStoreReadErrorWithClusterBreakingPotential: queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
+            ignoreStoreReadErrorWithClusterBreakingPotential:
+              queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
             orphanDependents: queryArg.orphanDependents,
             propagationPolicy: queryArg.propagationPolicy,
           },
         }),
-        invalidatesTags: ['Scope'],
+        invalidatesTags: ["Scope"],
       }),
       updateScope: build.mutation<UpdateScopeApiResponse, UpdateScopeApiArg>({
         query: (queryArg) => ({
           url: `/scopes/${queryArg.name}`,
-          method: 'PATCH',
+          method: "PATCH",
           body: queryArg.patch,
           params: {
             pretty: queryArg.pretty,
@@ -601,7 +665,7 @@ const injectedRtkApi = api
             force: queryArg.force,
           },
         }),
-        invalidatesTags: ['Scope'],
+        invalidatesTags: ["Scope"],
       }),
     }),
     overrideExisting: false,
@@ -609,17 +673,28 @@ const injectedRtkApi = api
 export { injectedRtkApi as generatedAPI };
 export type GetApiResourcesApiResponse = /** status 200 OK */ ApiResourceList;
 export type GetApiResourcesApiArg = void;
-export type GetFindScopeDashboardBindingsResultsApiResponse = /** status 200 OK */ FindScopeDashboardBindingsResults;
+export type GetFindScopeDashboardBindingsResultsApiResponse =
+  /** status 200 OK */ FindScopeDashboardBindingsResults;
 export type GetFindScopeDashboardBindingsResultsApiArg = {
   /** A scope name (id) to match against, this parameter may be repeated */
   scope?: string[];
+  /** Extra levels of sub-scope items to include. 0 or omitted = direct scope only. */
+  depth?: number;
+  /** Root scope for hierarchical navigation context, allowing the backend to optimize sub-scope responses. */
+  rootScope?: string;
 };
-export type GetFindScopeNavigationsResultsApiResponse = /** status 200 OK */ FindScopeNavigationsResults;
+export type GetFindScopeNavigationsResultsApiResponse =
+  /** status 200 OK */ FindScopeNavigationsResults;
 export type GetFindScopeNavigationsResultsApiArg = {
   /** A scope name (id) to match against, this parameter may be repeated */
   scope?: string[];
+  /** Extra levels of sub-scope items to include. 0 or omitted = direct scope only. */
+  depth?: number;
+  /** Root scope for hierarchical navigation context, allowing the backend to optimize sub-scope responses. */
+  rootScope?: string;
 };
-export type GetFindScopeNodeChildrenResultsApiResponse = /** status 200 OK */ FindScopeNodeChildrenResults;
+export type GetFindScopeNodeChildrenResultsApiResponse =
+  /** status 200 OK */ FindScopeNodeChildrenResults;
 export type GetFindScopeNodeChildrenResultsApiArg = {
   /** The parent scope node */
   parent?: string;
@@ -627,7 +702,8 @@ export type GetFindScopeNodeChildrenResultsApiArg = {
   names?: string[];
   limit?: number;
 };
-export type ListScopeDashboardBindingApiResponse = /** status 200 OK */ ScopeDashboardBindingList;
+export type ListScopeDashboardBindingApiResponse =
+  /** status 200 OK */ ScopeDashboardBindingList;
 export type ListScopeDashboardBindingApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
@@ -687,7 +763,8 @@ export type CreateScopeDashboardBindingApiArg = {
   fieldValidation?: string;
   scopeDashboardBinding: ScopeDashboardBinding;
 };
-export type DeletecollectionScopeDashboardBindingApiResponse = /** status 200 OK */ Status;
+export type DeletecollectionScopeDashboardBindingApiResponse =
+  /** status 200 OK */ Status;
 export type DeletecollectionScopeDashboardBindingApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
@@ -738,7 +815,8 @@ export type DeletecollectionScopeDashboardBindingApiArg = {
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
 };
-export type GetScopeDashboardBindingApiResponse = /** status 200 OK */ ScopeDashboardBinding;
+export type GetScopeDashboardBindingApiResponse =
+  /** status 200 OK */ ScopeDashboardBinding;
 export type GetScopeDashboardBindingApiArg = {
   /** name of the ScopeDashboardBinding */
   name: string;
@@ -761,7 +839,9 @@ export type ReplaceScopeDashboardBindingApiArg = {
   fieldValidation?: string;
   scopeDashboardBinding: ScopeDashboardBinding;
 };
-export type DeleteScopeDashboardBindingApiResponse = /** status 200 OK */ Status | /** status 202 Accepted */ Status;
+export type DeleteScopeDashboardBindingApiResponse = /** status 200 OK */
+  | Status
+  | /** status 202 Accepted */ Status;
 export type DeleteScopeDashboardBindingApiArg = {
   /** name of the ScopeDashboardBinding */
   name: string;
@@ -796,16 +876,18 @@ export type UpdateScopeDashboardBindingApiArg = {
   force?: boolean;
   patch: Patch;
 };
-export type GetScopeDashboardBindingStatusApiResponse = /** status 200 OK */ ScopeDashboardBinding;
+export type GetScopeDashboardBindingStatusApiResponse =
+  /** status 200 OK */ ScopeDashboardBinding;
 export type GetScopeDashboardBindingStatusApiArg = {
   /** name of the ScopeDashboardBinding */
   name: string;
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
 };
-export type ReplaceScopeDashboardBindingStatusApiResponse = /** status 200 OK */
-  | ScopeDashboardBinding
-  | /** status 201 Created */ ScopeDashboardBinding;
+export type ReplaceScopeDashboardBindingStatusApiResponse =
+  /** status 200 OK */
+    | ScopeDashboardBinding
+    | /** status 201 Created */ ScopeDashboardBinding;
 export type ReplaceScopeDashboardBindingStatusApiArg = {
   /** name of the ScopeDashboardBinding */
   name: string;
@@ -837,7 +919,8 @@ export type UpdateScopeDashboardBindingStatusApiArg = {
   force?: boolean;
   patch: Patch;
 };
-export type ListScopeNavigationApiResponse = /** status 200 OK */ ScopeNavigationList;
+export type ListScopeNavigationApiResponse =
+  /** status 200 OK */ ScopeNavigationList;
 export type ListScopeNavigationApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
@@ -897,7 +980,8 @@ export type CreateScopeNavigationApiArg = {
   fieldValidation?: string;
   scopeNavigation: ScopeNavigation;
 };
-export type DeletecollectionScopeNavigationApiResponse = /** status 200 OK */ Status;
+export type DeletecollectionScopeNavigationApiResponse =
+  /** status 200 OK */ Status;
 export type DeletecollectionScopeNavigationApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
@@ -948,7 +1032,8 @@ export type DeletecollectionScopeNavigationApiArg = {
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
 };
-export type GetScopeNavigationApiResponse = /** status 200 OK */ ScopeNavigation;
+export type GetScopeNavigationApiResponse =
+  /** status 200 OK */ ScopeNavigation;
 export type GetScopeNavigationApiArg = {
   /** name of the ScopeNavigation */
   name: string;
@@ -971,7 +1056,9 @@ export type ReplaceScopeNavigationApiArg = {
   fieldValidation?: string;
   scopeNavigation: ScopeNavigation;
 };
-export type DeleteScopeNavigationApiResponse = /** status 200 OK */ Status | /** status 202 Accepted */ Status;
+export type DeleteScopeNavigationApiResponse = /** status 200 OK */
+  | Status
+  | /** status 202 Accepted */ Status;
 export type DeleteScopeNavigationApiArg = {
   /** name of the ScopeNavigation */
   name: string;
@@ -1006,7 +1093,8 @@ export type UpdateScopeNavigationApiArg = {
   force?: boolean;
   patch: Patch;
 };
-export type GetScopeNavigationStatusApiResponse = /** status 200 OK */ ScopeNavigation;
+export type GetScopeNavigationStatusApiResponse =
+  /** status 200 OK */ ScopeNavigation;
 export type GetScopeNavigationStatusApiArg = {
   /** name of the ScopeNavigation */
   name: string;
@@ -1165,7 +1253,9 @@ export type GetScopeNodeApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
 };
-export type ReplaceScopeNodeApiResponse = /** status 200 OK */ ScopeNode | /** status 201 Created */ ScopeNode;
+export type ReplaceScopeNodeApiResponse = /** status 200 OK */
+  | ScopeNode
+  | /** status 201 Created */ ScopeNode;
 export type ReplaceScopeNodeApiArg = {
   /** name of the ScopeNode */
   name: string;
@@ -1179,7 +1269,9 @@ export type ReplaceScopeNodeApiArg = {
   fieldValidation?: string;
   scopeNode: ScopeNode;
 };
-export type DeleteScopeNodeApiResponse = /** status 200 OK */ Status | /** status 202 Accepted */ Status;
+export type DeleteScopeNodeApiResponse = /** status 200 OK */
+  | Status
+  | /** status 202 Accepted */ Status;
 export type DeleteScopeNodeApiArg = {
   /** name of the ScopeNode */
   name: string;
@@ -1196,7 +1288,9 @@ export type DeleteScopeNodeApiArg = {
   /** Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground. */
   propagationPolicy?: string;
 };
-export type UpdateScopeNodeApiResponse = /** status 200 OK */ ScopeNode | /** status 201 Created */ ScopeNode;
+export type UpdateScopeNodeApiResponse = /** status 200 OK */
+  | ScopeNode
+  | /** status 201 Created */ ScopeNode;
 export type UpdateScopeNodeApiArg = {
   /** name of the ScopeNode */
   name: string;
@@ -1330,7 +1424,9 @@ export type GetScopeApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
 };
-export type ReplaceScopeApiResponse = /** status 200 OK */ Scope | /** status 201 Created */ Scope;
+export type ReplaceScopeApiResponse = /** status 200 OK */
+  | Scope
+  | /** status 201 Created */ Scope;
 export type ReplaceScopeApiArg = {
   /** name of the Scope */
   name: string;
@@ -1344,7 +1440,9 @@ export type ReplaceScopeApiArg = {
   fieldValidation?: string;
   scope: Scope;
 };
-export type DeleteScopeApiResponse = /** status 200 OK */ Status | /** status 202 Accepted */ Status;
+export type DeleteScopeApiResponse = /** status 200 OK */
+  | Status
+  | /** status 202 Accepted */ Status;
 export type DeleteScopeApiArg = {
   /** name of the Scope */
   name: string;
@@ -1361,7 +1459,9 @@ export type DeleteScopeApiArg = {
   /** Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground. */
   propagationPolicy?: string;
 };
-export type UpdateScopeApiResponse = /** status 200 OK */ Scope | /** status 201 Created */ Scope;
+export type UpdateScopeApiResponse = /** status 200 OK */
+  | Scope
+  | /** status 201 Created */ Scope;
 export type UpdateScopeApiArg = {
   /** name of the Scope */
   name: string;
@@ -1539,7 +1639,6 @@ export type FindScopeDashboardBindingsResults = {
 export type ScopeNavigationSpec = {
   /** Makes the subscope not selectable, only serving as a way to build the tree. */
   disableSubScopeSelection?: boolean;
-
   /** Preload the subscope children, as soon as the ScopeNavigation is loaded. */
   preLoadSubScopeChildren?: boolean;
   scope: string;
@@ -1581,7 +1680,7 @@ export type ScopeNodeSpec = {
   linkId?: string;
   /** Possible enum values:
      - `"scope"` */
-  linkType?: 'scope';
+  linkType?: "scope";
   nodeType: string;
   parentName?: string;
   /** Redirect to a specific path when this node is selected. */
@@ -1694,7 +1793,13 @@ export type ScopeFilter = {
      - `"one-of"`
      - `"regex-match"`
      - `"regex-not-match"` */
-  operator: 'equals' | 'not-equals' | 'not-one-of' | 'one-of' | 'regex-match' | 'regex-not-match';
+  operator:
+    | "equals"
+    | "not-equals"
+    | "not-one-of"
+    | "one-of"
+    | "regex-match"
+    | "regex-not-match";
   value: string;
   /** Values is used for operators that require multiple values (e.g. one-of and not-one-of). */
   values?: string[];

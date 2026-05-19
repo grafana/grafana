@@ -1,6 +1,6 @@
-import { TemplateSrv, getTemplateSrv } from '@grafana/runtime';
+import { type TemplateSrv, getTemplateSrv } from '@grafana/runtime';
 
-import Datasource from '../datasource';
+import type Datasource from '../datasource';
 
 export const createMockDatasource = (overrides?: Partial<Datasource>) => {
   const templateSrv = getTemplateSrv() as unknown as TemplateSrv;

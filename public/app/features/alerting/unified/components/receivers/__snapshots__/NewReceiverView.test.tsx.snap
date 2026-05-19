@@ -3,38 +3,6 @@
 exports[`new receiver should be able to test and save a receiver 1`] = `
 [
   {
-    "alert": {
-      "annotations": {
-        "description": "Test contact point",
-      },
-      "labels": {
-        "foo": "bar",
-      },
-    },
-    "receivers": [
-      {
-        "grafana_managed_receiver_configs": [
-          {
-            "disableResolveMessage": false,
-            "name": "test",
-            "secureFields": {},
-            "settings": {
-              "addresses": "tester@grafana.com",
-              "singleEmail": false,
-            },
-            "type": "email",
-          },
-        ],
-        "name": "",
-      },
-    ],
-  },
-]
-`;
-
-exports[`new receiver should be able to test and save a receiver 2`] = `
-[
-  {
     "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
     "kind": "Receiver",
     "metadata": {},

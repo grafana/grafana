@@ -1,10 +1,10 @@
-import { Observable } from 'rxjs';
+import { type Observable } from 'rxjs';
 
-import { ScopedVars } from './ScopedVars';
-import { DataSourceApi } from './datasource';
-import { PanelData } from './panel';
-import { DataQuery, DataSourceRef } from './query';
-import { TimeRange, TimeZone } from './time';
+import { type ScopedVars } from './ScopedVars';
+import { type DataSourceApi } from './datasource';
+import { type PanelData } from './panel';
+import { type DataQuery, type DataSourceRef } from './query';
+import { type TimeRange, type TimeZone } from './time';
 
 /**
  * Describes the options used when triggering a query via the {@link QueryRunner}.

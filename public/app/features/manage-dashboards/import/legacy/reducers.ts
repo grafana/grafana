@@ -1,10 +1,10 @@
 // Legacy Redux slice - will be removed when kubernetesDashboards feature is removed
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { createSlice, Draft, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, type Draft, type PayloadAction } from '@reduxjs/toolkit';
 
 import { LoadingState } from '@grafana/data';
 
-import { DashboardInputs, DashboardSource, InputType, LibraryPanelInput } from '../../types';
+import { type DashboardInputs, DashboardSource, InputType, type LibraryPanelInput } from '../../types';
 
 // Legacy-only type - Redux state shape
 export interface ImportDashboardState {

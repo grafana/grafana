@@ -1,4 +1,4 @@
-import { CorrelationExternal, CorrelationQuery } from '@grafana/runtime';
+import { type CorrelationExternal, type CorrelationQuery } from '@grafana/runtime';
 
 export interface AddCorrelationResponse {
   correlation: Correlation;

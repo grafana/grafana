@@ -1,23 +1,23 @@
-import uPlot, { Series } from 'uplot';
+import uPlot, { type Series } from 'uplot';
 
 import {
   colorManipulator,
-  DataFrameFieldIndex,
+  type DataFrameFieldIndex,
   FALLBACK_COLOR,
-  FieldColorMode,
+  type FieldColorMode,
   FieldColorModeId,
-  GrafanaTheme2,
-  ThresholdsConfig,
+  type GrafanaTheme2,
+  type ThresholdsConfig,
 } from '@grafana/data';
 import {
   BarAlignment,
-  BarConfig,
+  type BarConfig,
   GraphDrawStyle,
-  FillConfig,
+  type FillConfig,
   GraphGradientMode,
-  LineConfig,
+  type LineConfig,
   LineInterpolation,
-  PointsConfig,
+  type PointsConfig,
   VisibilityMode,
 } from '@grafana/schema';
 

@@ -2,14 +2,14 @@ import { useEffect, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { RefreshEvent } from '@grafana/runtime';
-import { TableOptions } from '@grafana/schema';
+import { type TableOptions } from '@grafana/schema';
 import { PanelChrome } from '@grafana/ui';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { PanelRenderer } from 'app/features/panel/components/PanelRenderer';
 
 import { getTimeSrv } from '../../services/TimeSrv';
-import { DashboardModel } from '../../state/DashboardModel';
-import { PanelModel } from '../../state/PanelModel';
+import { type DashboardModel } from '../../state/DashboardModel';
+import { type PanelModel } from '../../state/PanelModel';
 
 import PanelHeaderCorner from './PanelHeaderCorner';
 import { usePanelLatestData } from './usePanelLatestData';

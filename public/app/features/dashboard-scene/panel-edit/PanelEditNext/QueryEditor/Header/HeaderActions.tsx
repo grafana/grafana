@@ -1,4 +1,4 @@
-import { RefObject, useCallback } from 'react';
+import { type RefObject, useCallback } from 'react';
 
 import { CoreApp } from '@grafana/data';
 import { Stack } from '@grafana/ui';
@@ -23,7 +23,7 @@ interface HeaderActionsProps {
  *
  * @remarks
  * Manages actions (hide, delete) for the currently selected query or transformation.
- * Delete confirmation behavior is configured per type in QUERY_EDITOR_TYPE_CONFIG and
+ * Delete confirmation behavior is configured per type in getQueryEditorTypeConfig and
  * handled by the Actions component.
  * Child components like WarningBadges, SaveButton, and ActionsMenu determine their
  * own visibility by reading from QueryEditorUIContext.

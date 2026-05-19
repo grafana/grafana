@@ -102,9 +102,31 @@ type Authorizer interface {
 	// folder. For instance-scoped repositories the check runs against the root folder.
 	AuthorizeCreateAllSupported(ctx context.Context) error
 
+	// AuthorizeUpdateFolder checks if the current user has permission to update
+	// the folder at the specified path. This checks folders:update permission using
+	// the folder's own ID as the authorization context.
+	//
+	// Example:
+	//   - User wants to rename "team-a/" → checks update permission on "team-a"
+	//   - If user is Editor or Admin on "team-a", the operation is allowed
+	AuthorizeUpdateFolder(ctx context.Context, path string) error
+
 	// AuthorizeWrite checks if writes are allowed to the specified ref.
 	// This ensures operations on the configured branch are properly authorized.
 	AuthorizeWrite(ctx context.Context, ref string) error
+
+	// AuthorizeReadRawFile checks if the user has permission to read a raw
+	// (non-resource) file at the given path.
+	//
+	// Raw files such as README.md are returned as bytes rather than parsed as
+	// k8s resources, so we cannot derive a per-resource verb. We instead gate
+	// access on the read permission of the file's containing folder. For files
+	// at the repository root, the check uses the repository's root folder.
+	//
+	// Permissions on a parent folder grant at least that level of access to
+	// all children, so a user who can read the parent folder can read raw
+	// files inside it.
+	AuthorizeReadRawFile(ctx context.Context, path string) error
 }
 
 // ProvisioningAuthorizer implements Authorizer for provisioning operations.
@@ -287,6 +309,13 @@ func (a *ProvisioningAuthorizer) authorizeFolder(ctx context.Context, path, verb
 // Example:
 //   - Creating "team-a/new-project/" requires create permission on "team-a"
 //   - Creating "top-level-folder/" requires create permission on root
+func (a *ProvisioningAuthorizer) AuthorizeUpdateFolder(ctx context.Context, path string) error {
+	if path == "" {
+		return fmt.Errorf("path cannot be empty")
+	}
+	return a.authorizeFolder(ctx, path, utils.VerbUpdate)
+}
+
 func (a *ProvisioningAuthorizer) AuthorizeCreateFolder(ctx context.Context, path string) error {
 	// For create operations, check permission on the parent folder
 	if path == "" {
@@ -477,4 +506,32 @@ func (a *ProvisioningAuthorizer) AuthorizeCreateAllSupported(ctx context.Context
 // This delegates to the repository's write authorization logic.
 func (a *ProvisioningAuthorizer) AuthorizeWrite(ctx context.Context, ref string) error {
 	return repository.IsWriteAllowed(a.repo, ref)
+}
+
+// AuthorizeReadRawFile checks if the user has read permission on the folder
+// containing a raw (non-resource) file.
+//
+// Folder IDs are resolved from the configured branch (ref="") for the same
+// reasons documented on the Authorizer interface — caller-supplied refs can
+// be used to spoof folder UIDs.
+func (a *ProvisioningAuthorizer) AuthorizeReadRawFile(ctx context.Context, path string) error {
+	parentPath := safepath.Dir(path)
+
+	var folderID string
+	if parentPath == "" {
+		folderID = RootFolder(a.repo)
+	} else {
+		id, err := a.getFolderID(ctx, parentPath)
+		if err != nil {
+			return fmt.Errorf("get parent folder ID for %q: %w", path, err)
+		}
+		folderID = id
+	}
+
+	return a.access.Check(ctx, authlib.CheckRequest{
+		Group:    FolderResource.Group,
+		Resource: FolderResource.Resource,
+		Name:     folderID,
+		Verb:     utils.VerbGet,
+	}, folderID)
 }

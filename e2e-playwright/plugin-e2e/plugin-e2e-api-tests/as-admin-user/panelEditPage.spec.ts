@@ -97,8 +97,8 @@ test.describe(
         const axisOptions = await panelEditPage.getCustomOptions('Axis');
         const timeZonePicker = axisOptions.getSelect('Time zone');
 
-        await timeZonePicker.selectOption('Europe/Stockholm');
-        await expect(timeZonePicker).toHaveSelected('Europe/Stockholm');
+        await timeZonePicker.selectOption('Stockholm');
+        await expect(timeZonePicker).toHaveSelected('Stockholm');
       });
 
       test('select unit in unit picker', async ({ panelEditPage }) => {

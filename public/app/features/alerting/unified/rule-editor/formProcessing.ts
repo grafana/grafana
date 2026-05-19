@@ -1,12 +1,13 @@
 import { isEmpty, omit } from 'lodash';
 
+import { ReducerID, getNextRefId } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { isExpressionQuery } from 'app/features/expressions/guards';
-import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
+import { ExpressionDatasourceUID, type ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
 import { isStrictReducer } from 'app/features/expressions/utils/expressionTypes';
-import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
+import { type AlertDataQuery, type AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { KVObject, RuleFormValues } from '../types/rule-form';
+import { type KVObject, type RuleFormValues, type SimpleCondition } from '../types/rule-form';
 import { defaultAnnotations } from '../utils/constants';
 import { isSupportedExternalRulesSourceType } from '../utils/datasource';
 import { getInstantFromDataQuery } from '../utils/rule-form';
@@ -27,8 +28,51 @@ export function setQueryEditorSettings(values: RuleFormValues): RuleFormValues {
   // data queries only
   const dataQueries = values.queries.filter((query) => !isExpressionQuery(query.model));
 
-  // expression queries only
-  const expressionQueries = values.queries.filter((query) => isExpressionQueryInAlert(query));
+  // expression queries only - but filter out invalid ones that don't have a type field
+  const expressionQueries = values.queries.filter((query): query is AlertQuery<ExpressionQuery> => {
+    if (!isExpressionQueryInAlert(query)) {
+      return false;
+    }
+    // Some sources (e.g. dashboard panel, API) can yield expression-like queries without a type field
+    return 'type' in query.model && query.model.type !== undefined;
+  });
+
+  // If we have data queries but no VALID expressions (e.g., coming from dashboard panel with malformed expressions),
+  // remove the invalid expressions and set condition to empty so simplified mode can regenerate them
+  const hasDataQueries = dataQueries.length > 0;
+  const hasValidExpressions = expressionQueries.length > 0;
+  const totalExpressions = values.queries.filter((query) => isExpressionQueryInAlert(query)).length;
+  const hasInvalidExpressions = totalExpressions > expressionQueries.length;
+
+  if (hasDataQueries && hasInvalidExpressions) {
+    const validRefIds = new Set(expressionQueries.map((q) => q.refId));
+    const conditionRefStillValid = values.condition && validRefIds.has(values.condition);
+    const strippedQueries = [...dataQueries, ...expressionQueries];
+
+    return {
+      ...values,
+      queries: strippedQueries,
+      condition: conditionRefStillValid ? values.condition : (expressionQueries[0]?.refId ?? ''),
+      editorSettings: {
+        simplifiedQueryEditor: hasValidExpressions
+          ? areQueriesTransformableToSimpleCondition(dataQueries, expressionQueries)
+          : true,
+        simplifiedNotificationEditor: true,
+      },
+    };
+  }
+
+  if (hasDataQueries && !hasValidExpressions) {
+    return {
+      ...values,
+      queries: dataQueries,
+      condition: '',
+      editorSettings: {
+        simplifiedQueryEditor: true,
+        simplifiedNotificationEditor: true,
+      },
+    };
+  }
 
   const queryParamsAreTransformable = areQueriesTransformableToSimpleCondition(dataQueries, expressionQueries);
   return {
@@ -122,6 +166,73 @@ export function areQueriesTransformableToSimpleCondition(
   }
 
   return false;
+}
+
+/**
+ * Creates expression queries (reduce + threshold) from a simple condition configuration.
+ * Shared by the main rule form and the alert rule drawer to keep expression building in one place.
+ */
+export function createSimpleConditionExpressions(
+  simpleCondition: SimpleCondition,
+  dataQueries: AlertQuery[]
+): { queries: AlertQuery[]; condition: string } {
+  if (dataQueries.length === 0) {
+    return { queries: [], condition: '' };
+  }
+
+  const whenField = simpleCondition.whenField ?? ReducerID.last;
+  const lastDataQueryRefId = dataQueries[dataQueries.length - 1].refId;
+
+  const reduceRefId = getNextRefId(dataQueries);
+  const tempQueries = [...dataQueries, { refId: reduceRefId, datasourceUid: '', queryType: '', model: {} }];
+  const thresholdRefId = getNextRefId(tempQueries);
+
+  const reduceExpression: ExpressionQuery = {
+    refId: reduceRefId,
+    type: ExpressionQueryType.reduce,
+    datasource: { uid: ExpressionDatasourceUID, type: ExpressionDatasourceUID },
+    reducer: whenField,
+    expression: lastDataQueryRefId,
+  };
+
+  const thresholdExpression: ExpressionQuery = {
+    refId: thresholdRefId,
+    type: ExpressionQueryType.threshold,
+    datasource: { uid: ExpressionDatasourceUID, type: ExpressionDatasourceUID },
+    conditions: [
+      {
+        type: 'query',
+        evaluator: {
+          params: simpleCondition.evaluator.params,
+          type: simpleCondition.evaluator.type,
+        },
+        operator: { type: 'and' },
+        query: { params: [thresholdRefId] },
+        reducer: { params: [], type: 'last' as const },
+      },
+    ],
+    expression: reduceRefId,
+  };
+
+  const expressionQueries: AlertQuery[] = [
+    {
+      refId: reduceRefId,
+      datasourceUid: ExpressionDatasourceUID,
+      queryType: 'expression',
+      model: reduceExpression,
+    },
+    {
+      refId: thresholdRefId,
+      datasourceUid: ExpressionDatasourceUID,
+      queryType: 'expression',
+      model: thresholdExpression,
+    },
+  ];
+
+  return {
+    queries: [...dataQueries, ...expressionQueries],
+    condition: thresholdRefId,
+  };
 }
 
 export function isExpressionQueryInAlert(

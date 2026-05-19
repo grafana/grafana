@@ -3,20 +3,20 @@ import { autoUpdate, useFloating } from '@floating-ui/react';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import { FormEvent, ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import { type FormEvent, type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import * as React from 'react';
 import Calendar from 'react-calendar';
 import { useMedia } from 'react-use';
 
 import {
   dateTimeFormat,
-  DateTime,
+  type DateTime,
   dateTime,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   isDateTime,
   dateTimeForTimeZone,
   getTimeZone,
-  TimeZone,
+  type TimeZone,
 } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';

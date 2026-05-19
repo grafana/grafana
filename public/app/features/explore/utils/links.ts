@@ -2,32 +2,32 @@ import { first, uniqBy } from 'lodash';
 import { useCallback } from 'react';
 
 import {
-  Field,
-  LinkModel,
-  TimeRange,
+  type Field,
+  type LinkModel,
+  type TimeRange,
   mapInternalLinkToExplore,
-  InterpolateFunction,
-  ScopedVars,
-  DataFrame,
+  type InterpolateFunction,
+  type ScopedVars,
+  type DataFrame,
   getFieldDisplayValuesProxy,
-  SplitOpen,
-  DataLink,
-  DisplayValue,
+  type SplitOpen,
+  type DataLink,
+  type DisplayValue,
   DataLinkConfigOrigin,
   CoreApp,
-  SplitOpenOptions,
-  DataLinkPostProcessor,
-  ExploreUrlState,
+  type SplitOpenOptions,
+  type DataLinkPostProcessor,
+  type ExploreUrlState,
   urlUtil,
   DataFrameType,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getTemplateSrv, reportInteraction, VariableInterpolation } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
+import { getTemplateSrv, reportInteraction, type VariableInterpolation } from '@grafana/runtime';
+import { type DataQuery } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getTransformationVars } from 'app/features/correlations/transformations';
 import { parseDataplaneLogsFrame } from 'app/features/logs/logsFrame';
-import { ExploreItemState } from 'app/types/explore';
+import { type ExploreItemState } from 'app/types/explore';
 
 import { getLinkSrv } from '../../panel/panellinks/link_srv';
 import { getUrlStateFromPaneState } from '../hooks/useStateSync/external.utils';

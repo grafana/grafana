@@ -3,7 +3,7 @@ import { useAsync } from 'react-use';
 import { t } from '@grafana/i18n';
 import { EditorRows, EditorRow, EditorField } from '@grafana/plugin-ui';
 
-import { DB, QueryEditorProps, QueryRowFilter } from '../../types';
+import { type DB, type QueryEditorProps, type QueryRowFilter } from '../../types';
 import { QueryToolbox } from '../query-editor-raw/QueryToolbox';
 
 import { Preview } from './Preview';

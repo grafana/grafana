@@ -1,11 +1,12 @@
 import { useMemo } from 'react';
 
-import { StandardEditorProps, SelectableValue } from '@grafana/data';
+import { type StandardEditorProps, type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { LineStyle } from '@grafana/schema';
+import { config } from '@grafana/runtime';
+import { type LineStyle } from '@grafana/schema';
 import { IconButton, RadioButtonGroup, Select, Stack } from '@grafana/ui';
 
-type LineFill = 'solid' | 'dash' | 'dot';
+type LineFill = 'solid' | 'dash' | 'dot' | 'accessible';
 
 const dashOptions: Array<SelectableValue<string>> = [
   '10, 10', // default
@@ -55,6 +56,13 @@ export const LineStyleEditor = ({ value, onChange }: Props) => {
       value: 'dot',
     },
   ];
+
+  if (config.featureToggles.enableColorblindSafePanelOptions) {
+    lineFillOptions.push({
+      label: t('timeseries.line-style-editor.line-fill-options.label-accessible', 'Accessible'),
+      value: 'accessible',
+    });
+  }
   const options = useMemo(() => (value?.fill === 'dash' ? dashOptions : dotOptions), [value]);
   const current = useMemo(() => {
     if (!value?.dash?.length) {
@@ -71,6 +79,9 @@ export const LineStyleEditor = ({ value, onChange }: Props) => {
     return val;
   }, [value, options]);
 
+  // Only dash and dots use LineStyle.dash definitions
+  const hasDashPattern = value?.fill && value?.fill !== 'solid' && value?.fill !== 'accessible';
+
   return (
     <Stack wrap={true} alignItems="flex-end">
       <RadioButtonGroup
@@ -84,13 +95,12 @@ export const LineStyleEditor = ({ value, onChange }: Props) => {
             dash = parseText(dashOptions[0].value!);
           }
           onChange({
-            ...value,
             fill: v!,
             dash,
           });
         }}
       />
-      {value?.fill && value?.fill !== 'solid' && (
+      {hasDashPattern && (
         <>
           <Select
             allowCustomValue={true}

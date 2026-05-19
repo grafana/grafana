@@ -1,14 +1,14 @@
-import { Range } from 'uplot';
+import { type Range } from 'uplot';
 
 import {
   applyNullInsertThreshold,
   // colorManipulator,
-  DataFrame,
-  FieldConfig,
-  FieldSparkline,
+  type DataFrame,
+  type FieldConfig,
+  type FieldSparkline,
   FieldType,
   getFieldColorModeForField,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   guessDecimals,
   isLikelyAscendingVector,
   nullToValue,
@@ -19,7 +19,7 @@ import { t } from '@grafana/i18n';
 import {
   AxisPlacement,
   GraphDrawStyle,
-  GraphFieldConfig,
+  type GraphFieldConfig,
   VisibilityMode,
   ScaleDirection,
   ScaleOrientation,

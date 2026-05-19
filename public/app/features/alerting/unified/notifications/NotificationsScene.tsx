@@ -1,14 +1,14 @@
 import { css } from '@emotion/css';
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 
-import { GrafanaTheme2, VariableHide } from '@grafana/data';
+import { type GrafanaTheme2, VariableHide } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   AdHocFiltersVariable,
   CustomVariable,
   EmbeddedScene,
   PanelBuilders,
-  SceneComponentProps,
+  type SceneComponentProps,
   SceneControlsSpacer,
   SceneFlexItem,
   SceneFlexLayout,
@@ -28,7 +28,6 @@ import { GraphDrawStyle, VisibilityMode } from '@grafana/schema';
 import {
   Button,
   GraphGradientMode,
-  LegendDisplayMode,
   LineInterpolation,
   ScaleDistribution,
   StackingMode,
@@ -143,12 +142,15 @@ export const NotificationsScene = ({
     // Users will need to manually type label keys (allowCustomValue handles this).
     const labelsFilterVariable = new AdHocFiltersVariable({
       name: LABELS_FILTER,
-      label: t('alerting.notifications-scene.labels-filter-variable.label.labels', 'Labels'),
+      label: t('alerting.notifications-scene.labels-filter-variable.label.group-labels', 'Group Labels'),
       allowCustomValue: true,
-      layout: 'combobox',
       applyMode: 'manual',
       supportsMultiValueOperators: true,
       expressionBuilder: prometheusExpressionBuilder,
+      inputPlaceholder: t(
+        'alerting.notifications-scene.labels-filter-variable.placeholder',
+        'Filter by group label values'
+      ),
       filters: [],
       defaultKeys: availableKeys,
       // Note: AdHocFiltersVariable doesn't support providing default values without a datasource
@@ -272,7 +274,7 @@ export function getNotificationsGraphSceneFlexItem(ruleUID?: string) {
       .setCustomFieldConfig('stacking', { mode: StackingMode.None, group: 'A' })
       .setCustomFieldConfig('gradientMode', GraphGradientMode.Hue)
       .setCustomFieldConfig('scaleDistribution', { type: ScaleDistribution.Linear })
-      .setOption('legend', { showLegend: false, displayMode: LegendDisplayMode.Hidden })
+      .setOption('legend', { showLegend: false })
       .setOption('tooltip', { mode: TooltipDisplayMode.Single })
       .setNoValue('No events found')
       .build(),

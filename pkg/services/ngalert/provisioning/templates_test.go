@@ -548,7 +548,7 @@ func TestUpsertTemplate(t *testing.T) {
 		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceAPI, nil)
 
 		expectedErr := errors.New("test")
-		sut.validator = func(from, to models.Provenance) error {
+		sut.validator = func(_ context.Context, from, to models.Provenance) error {
 			assert.Equal(t, models.ProvenanceAPI, from)
 			assert.Equal(t, models.ProvenanceNone, to)
 			return expectedErr
@@ -1111,7 +1111,7 @@ func TestUpdateTemplate(t *testing.T) {
 		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceAPI, nil)
 
 		expectedErr := errors.New("test")
-		sut.validator = func(from, to models.Provenance) error {
+		sut.validator = func(_ context.Context, from, to models.Provenance) error {
 			assert.Equal(t, models.ProvenanceAPI, from)
 			assert.Equal(t, models.ProvenanceNone, to)
 			return expectedErr
@@ -1377,7 +1377,7 @@ func TestDeleteTemplate(t *testing.T) {
 		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceAPI, nil)
 
 		expectedErr := errors.New("test")
-		sut.validator = func(from, to models.Provenance) error {
+		sut.validator = func(_ context.Context, from, to models.Provenance) error {
 			assert.Equal(t, models.ProvenanceAPI, from)
 			assert.Equal(t, models.ProvenanceNone, to)
 			return expectedErr

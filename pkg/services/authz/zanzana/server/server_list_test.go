@@ -1,14 +1,23 @@
 package server
 
 import (
+	"context"
 	"testing"
+	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	zStore "github.com/grafana/grafana/pkg/services/authz/zanzana/store"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -178,11 +187,6 @@ func TestIntegrationServerListStreaming(t *testing.T) {
 
 	server := setupOpenFGAServer(t)
 	setup(t, server)
-	server.cfg.UseStreamedListObjects = true
-
-	t.Cleanup(func() {
-		server.cfg.UseStreamedListObjects = false
-	})
 
 	newList := func(subject, group, resource, subresource string) *authzv1.ListRequest {
 		return &authzv1.ListRequest{
@@ -337,5 +341,79 @@ func TestIntegrationServerListStreaming(t *testing.T) {
 		assert.Contains(t, res.GetFolders(), "4")
 		assert.Contains(t, res.GetFolders(), "5")
 		assert.Contains(t, res.GetFolders(), "6")
+	})
+}
+
+func TestIntegrationServerListCanceledContext(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	server := setupOpenFGAServer(t)
+	setup(t, server)
+
+	newList := func(subject, group, resource string) *authzv1.ListRequest {
+		return &authzv1.ListRequest{
+			Namespace: namespace,
+			Verb:      utils.VerbList,
+			Subject:   subject,
+			Group:     group,
+			Resource:  resource,
+		}
+	}
+
+	t.Run("canceled context returns an error instead of partial results", func(t *testing.T) {
+		ctx := newContextWithNamespace()
+		ctx, cancel := context.WithCancel(ctx)
+		cancel()
+
+		_, err := server.List(ctx, newList("user:1", dashboardGroup, dashboardResource))
+		require.Error(t, err)
+	})
+
+	t.Run("expired deadline returns an error instead of partial results", func(t *testing.T) {
+		ctx := newContextWithNamespace()
+		ctx, cancel := context.WithDeadline(ctx, time.Now().Add(-time.Second))
+		defer cancel()
+
+		_, err := server.List(ctx, newList("user:1", dashboardGroup, dashboardResource))
+		require.Error(t, err)
+	})
+}
+
+func TestIntegrationServerListStreamDeadline(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	cfg := setting.NewCfg()
+	cfg.ZanzanaServer.ListObjectsDeadline = 1 * time.Nanosecond
+
+	testStore := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
+
+	if testStore.GetDialect().DriverName() == migrator.MySQL {
+		if supported, err := testStore.RecursiveQueriesAreSupported(); !supported || err != nil {
+			t.Skip("skipping integration test")
+		}
+	}
+
+	store, err := zStore.NewEmbeddedStore(cfg, testStore, log.NewNopLogger())
+	require.NoError(t, err)
+
+	srv, err := NewEmbeddedZanzanaServer(cfg, store, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry(), nil, nil)
+	require.NoError(t, err)
+	t.Cleanup(func() { srv.Close() })
+
+	setup(t, srv)
+
+	newList := func(subject, group, resource string) *authzv1.ListRequest {
+		return &authzv1.ListRequest{
+			Namespace: namespace,
+			Verb:      utils.VerbList,
+			Subject:   subject,
+			Group:     group,
+			Resource:  resource,
+		}
+	}
+
+	t.Run("stream deadline exceeded returns an error instead of partial results", func(t *testing.T) {
+		_, err := srv.List(newContextWithNamespace(), newList("user:1", dashboardGroup, dashboardResource))
+		require.Error(t, err)
 	})
 }

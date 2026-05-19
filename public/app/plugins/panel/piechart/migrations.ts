@@ -1,7 +1,7 @@
-import { FieldColorModeId, FieldConfigProperty, FieldMatcherID, PanelModel } from '@grafana/data';
+import { FieldColorModeId, FieldConfigProperty, FieldMatcherID, type PanelModel } from '@grafana/data';
 import { LegendDisplayMode } from '@grafana/schema';
 
-import { Options, PieChartLabels, PieChartLegendValues, PieChartType } from './panelcfg.gen';
+import { type Options, PieChartLabels, PieChartLegendValues, PieChartType } from './panelcfg.gen';
 
 export const PieChartPanelChangedHandler = (
   panel: PanelModel<Partial<Options>> | any,

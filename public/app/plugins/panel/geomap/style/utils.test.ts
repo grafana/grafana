@@ -1,6 +1,6 @@
 import { ResourceDimensionMode } from '@grafana/schema';
 
-import { HorizontalAlign, VerticalAlign, StyleConfig, SymbolAlign } from './types';
+import { HorizontalAlign, VerticalAlign, type StyleConfig, type SymbolAlign } from './types';
 import { getDisplacement, getRGBValues, getStyleConfigState } from './utils';
 
 describe('style utils', () => {

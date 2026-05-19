@@ -1,4 +1,4 @@
-import { RefObject, useRef } from 'react';
+import { type RefObject, useRef } from 'react';
 
 export function useFocus(): [RefObject<HTMLInputElement | null>, () => void] {
   const ref = useRef<HTMLInputElement | null>(null);

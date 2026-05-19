@@ -8,7 +8,7 @@ import { SeriesVisibilityChangeMode, usePanelContext } from '../PanelChrome';
 
 import { VizLegendList } from './VizLegendList';
 import { VizLegendTable } from './VizLegendTable';
-import { LegendProps, SeriesVisibilityChangeBehavior, VizLegendItem } from './types';
+import { type LegendProps, SeriesVisibilityChangeBehavior, type VizLegendItem } from './types';
 import { mapMouseEventToMode } from './utils';
 
 /**
@@ -20,7 +20,7 @@ export function VizLegend<T>({
   items,
   thresholdItems,
   mappingItems,
-  displayMode,
+  displayMode = LegendDisplayMode.List,
   sortBy: sortKey,
   seriesVisibilityChangeBehavior = SeriesVisibilityChangeBehavior.Isolate,
   sortDesc,

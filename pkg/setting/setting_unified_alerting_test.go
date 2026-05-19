@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/alerting/receivers/schema"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
 )
@@ -416,6 +417,55 @@ func TestHARedisSentinelModeSettings(t *testing.T) {
 			require.Equal(t, tc.haRedisSentinelMasterName, cfg.UnifiedAlerting.HARedisSentinelMasterName)
 			require.Equal(t, tc.haRedisSentinelUsername, cfg.UnifiedAlerting.HARedisSentinelUsername)
 			require.Equal(t, tc.haRedisSentinelPassword, cfg.UnifiedAlerting.HARedisSentinelPassword)
+		})
+	}
+}
+
+func TestReadAllowedIntegrations(t *testing.T) {
+	testCases := []struct {
+		name    string
+		value   string
+		want    map[schema.IntegrationType]struct{}
+		wantErr bool
+	}{
+		{
+			name:  "blank leaves allowlist nil",
+			value: "",
+			want:  nil,
+		},
+		{
+			name:  "valid list builds canonical map",
+			value: "slack,email,pagerduty",
+			want: map[schema.IntegrationType]struct{}{
+				schema.SlackType:     {},
+				schema.EmailType:     {},
+				schema.PagerDutyType: {},
+			},
+		},
+		{
+			name:    "unknown type returns error",
+			value:   "slack,bogus",
+			wantErr: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			f := ini.Empty()
+			sec, err := f.NewSection("unified_alerting")
+			require.NoError(t, err)
+			_, err = sec.NewKey("allowed_integrations", tc.value)
+			require.NoError(t, err)
+
+			cfg := NewCfg()
+			cfg.IsFeatureToggleEnabled = func(string) bool { return false }
+			err = cfg.ReadUnifiedAlertingSettings(f)
+			if tc.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tc.want, cfg.UnifiedAlerting.AllowedIntegrations)
 		})
 	}
 }

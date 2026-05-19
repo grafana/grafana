@@ -3,37 +3,37 @@ import { groupBy, size } from 'lodash';
 import { from, isObservable, Observable } from 'rxjs';
 
 import {
-  AbsoluteTimeRange,
+  type AbsoluteTimeRange,
   createDataFrame,
-  DataFrame,
-  DataQuery,
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceApi,
-  DataSourceJsonData,
+  type DataFrame,
+  type DataQuery,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceApi,
+  type DataSourceJsonData,
   DataTopic,
   dateTimeFormat,
   dateTimeFormatTimeAgo,
-  DateTimeInput,
-  Field,
+  type DateTimeInput,
+  type Field,
   FieldCache,
   FieldColorModeId,
   FieldType,
   findCommonLabels,
   findUniqueLabels,
   getTimeField,
-  Labels,
+  type Labels,
   LoadingState,
   LogLevel,
-  LogRowModel,
+  type LogRowModel,
   LogsDedupStrategy,
-  LogsMetaItem,
+  type LogsMetaItem,
   LogsMetaKind,
-  LogsModel,
-  LogsVolumeCustomMetaData,
+  type LogsModel,
+  type LogsVolumeCustomMetaData,
   LogsVolumeType,
   rangeUtil,
-  ScopedVars,
+  type ScopedVars,
   sortDataFrame,
   textUtil,
   toDataFrame,
@@ -46,7 +46,7 @@ import { colors } from '@grafana/ui';
 import { getThemeColor } from 'app/core/utils/colors';
 import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
 
-import { LogsFrame, parseLogsFrame } from './logsFrame';
+import { type LogsFrame, parseLogsFrame } from './logsFrame';
 import { createLogRowsMap, getLogLevel, getLogLevelFromKey, sortInAscendingOrder } from './utils';
 
 export const LIMIT_LABEL = 'Line limit';
@@ -326,7 +326,7 @@ function parseTime(
   const time = toUtc(ts);
   const timeEpochMs = time.valueOf();
 
-  if (timeNsField) {
+  if (timeNsField?.values[index]) {
     return { ts, timeEpochMs, timeEpochNs: timeNsField.values[index] };
   }
 
@@ -448,12 +448,12 @@ export function logSeriesToLogsModel(
         raw: message,
         labels: labels || {},
         // prepend refId to uid to make it unique across all series in a case when series contain duplicates
-        uid: `${series.refId}_${idField ? idField.values[j] : j.toString()}`,
+        uid: `${series.refId}_${idField?.values[j] ? idField.values[j] : j.toString()}`,
         datasourceType,
         datasourceUid,
       };
 
-      if (idField !== null) {
+      if (idField?.values[j]) {
         row.rowId = idField.values[j];
       }
 

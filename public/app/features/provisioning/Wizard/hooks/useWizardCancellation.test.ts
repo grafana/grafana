@@ -3,9 +3,9 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { useDeleteRepositoryMutation } from 'app/api/clients/provisioning/v0alpha1';
 
 import { PROVISIONING_URL } from '../../constants';
-import { RepoType, WizardStep } from '../types';
+import { type RepoType, type WizardStep } from '../types';
 
-import { useWizardCancellation, UseWizardCancellationParams } from './useWizardCancellation';
+import { useWizardCancellation, type UseWizardCancellationParams } from './useWizardCancellation';
 
 const mockNavigate = jest.fn();
 jest.mock('react-router-dom-v5-compat', () => ({

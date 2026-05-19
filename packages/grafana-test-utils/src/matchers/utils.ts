@@ -1,5 +1,5 @@
 import { matcherHint, printExpected, printReceived } from 'jest-matcher-utils';
-import { asapScheduler, Subscription, timer, isObservable } from 'rxjs';
+import { asapScheduler, type Subscription, timer, isObservable } from 'rxjs';
 
 import { OBSERVABLE_TEST_TIMEOUT_IN_MS } from './types';
 

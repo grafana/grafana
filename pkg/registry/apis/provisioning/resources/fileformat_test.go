@@ -262,6 +262,32 @@ spec:
 	})
 }
 
+func TestReadClassicResource_TypeAssertions(t *testing.T) {
+	t.Run("numeric apiVersion does not panic", func(t *testing.T) {
+		_, _, _, err := ReadClassicResource(context.Background(), &repository.FileInfo{
+			Data: []byte(`{"apiVersion": 42}`),
+		})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "not a string")
+	})
+
+	t.Run("numeric Kind does not panic", func(t *testing.T) {
+		_, _, _, err := ReadClassicResource(context.Background(), &repository.FileInfo{
+			Data: []byte(`{"apiVersion": "playlist.grafana.app/v0alpha1", "Kind": 99}`),
+		})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "not a string")
+	})
+
+	t.Run("float64 apiVersion does not panic", func(t *testing.T) {
+		_, _, _, err := ReadClassicResource(context.Background(), &repository.FileInfo{
+			Data: []byte(`{"apiVersion": 1.5}`),
+		})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "not a string")
+	})
+}
+
 func TestParseFileResource(t *testing.T) {
 	t.Run("k8s resource parsed directly", func(t *testing.T) {
 		info := &repository.FileInfo{

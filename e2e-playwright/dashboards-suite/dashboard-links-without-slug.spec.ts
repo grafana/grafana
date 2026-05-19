@@ -4,7 +4,6 @@ import testDashboard from '../dashboards/DataLinkWithoutSlugTest.json';
 
 test.use({
   featureToggles: {
-    kubernetesDashboards: process.env.FORCE_V2_DASHBOARDS_API === 'true',
     dashboardNewLayouts: process.env.FORCE_V2_DASHBOARDS_API === 'true',
   },
 });

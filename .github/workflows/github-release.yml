@@ -31,13 +31,14 @@ on:
         default: false
         type: boolean
 
-permissions:
-  # contents: write allows the action(s) to create github releases
-  contents: write
-  id-token: write
+permissions: {}
 
 jobs:
   main:
+    permissions:
+      # contents: write allows the action(s) to create github releases
+      contents: write
+      id-token: write
     runs-on: ubuntu-latest
     steps:
       - name: Create GitHub release (manually invoked)
@@ -47,3 +48,12 @@ jobs:
           version: ${{ inputs.version }}
           latest: ${{ inputs.latest }}
           dry_run: ${{ inputs.dry_run }}
+  deploy-storybook:
+    needs: main
+    if: ${{ !inputs.dry_run && inputs.latest == '1' }}
+    permissions:
+      contents: read
+      id-token: write
+    uses: grafana/grafana/.github/workflows/deploy-storybook.yml@main
+    with:
+      version: ${{ inputs.version }}

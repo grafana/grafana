@@ -5,7 +5,7 @@ import {
   isCurrentPath,
   serializeFolderPath,
 } from './scopeNavgiationUtils';
-import { SuggestedNavigationsFoldersMap } from './types';
+import { type SuggestedNavigationsFoldersMap } from './types';
 
 describe('scopeNavgiationUtils', () => {
   it('should return the correct path for a dashboard', () => {

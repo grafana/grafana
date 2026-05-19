@@ -17,27 +17,27 @@ import { from, lastValueFrom, merge, Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
 import {
-  AnnotationEvent,
-  DataFrame,
-  DataQueryRequest,
-  DataQueryResponse,
+  type AnnotationEvent,
+  type DataFrame,
+  type DataQueryRequest,
+  type DataQueryResponse,
   dateMath,
-  DateTime,
-  ScopedVars,
+  type DateTime,
+  type ScopedVars,
   toDataFrame,
 } from '@grafana/data';
 import {
   config,
   DataSourceWithBackend,
-  FetchResponse,
+  type FetchResponse,
   getBackendSrv,
   getTemplateSrv,
-  TemplateSrv,
+  type TemplateSrv,
 } from '@grafana/runtime';
 
 import { AnnotationEditor } from './components/AnnotationEditor';
 import { prepareAnnotation } from './migrations';
-import { OpenTsdbFilter, OpenTsdbOptions, OpenTsdbQuery } from './types';
+import { type OpenTsdbFilter, type OpenTsdbOptions, type OpenTsdbQuery } from './types';
 
 export default class OpenTsDatasource extends DataSourceWithBackend<OpenTsdbQuery, OpenTsdbOptions> {
   type: 'opentsdb';

@@ -1,7 +1,7 @@
 import { cx } from '@emotion/css';
 import { Global } from '@emotion/react';
 import SliderComponent from '@rc-component/slider';
-import { useState, useCallback, ChangeEvent, FocusEvent, useEffect } from 'react';
+import { useState, useCallback, type ChangeEvent, type FocusEvent, useEffect } from 'react';
 import { usePrevious } from 'react-use';
 
 import { t } from '@grafana/i18n';
@@ -10,7 +10,7 @@ import { useStyles2 } from '../../themes/ThemeContext';
 import { Input } from '../Input/Input';
 
 import { getStyles } from './styles';
-import { SliderProps } from './types';
+import { type SliderProps } from './types';
 
 function stripAndParseNumber(raw: string): number {
   const str = raw.replace(/^0+/, '');

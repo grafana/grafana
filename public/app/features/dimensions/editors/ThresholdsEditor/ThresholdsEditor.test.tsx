@@ -1,10 +1,10 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { createTheme, Threshold, ThresholdsMode } from '@grafana/data';
+import { createTheme, type Threshold, ThresholdsMode } from '@grafana/data';
 import { mockThemeContext } from '@grafana/ui';
 
-import { ThresholdsEditor, Props } from './ThresholdsEditor';
+import { ThresholdsEditor, type Props } from './ThresholdsEditor';
 
 let props: Props;
 
@@ -177,6 +177,47 @@ describe('ThresholdsEditor', () => {
         ],
       },
     });
+
+    expect(document.body).toHaveFocus();
+  });
+
+  it('should focus the new threshold input when user adds a threshold', async () => {
+    setup({
+      thresholds: {
+        mode: ThresholdsMode.Absolute,
+        steps: [{ value: -Infinity, color: 'green' }],
+      },
+    });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Add threshold' }));
+
+    const newInput = screen.getByRole('spinbutton', { name: 'Threshold 1' });
+    expect(newInput).toHaveFocus();
+  });
+
+  it('should not steal focus when thresholds change externally', () => {
+    const { rerender } = render(
+      <ThresholdsEditor
+        thresholds={{ mode: ThresholdsMode.Absolute, steps: [{ value: -Infinity, color: 'green' }] }}
+        onChange={jest.fn()}
+      />
+    );
+
+    expect(document.body).toHaveFocus();
+
+    rerender(
+      <ThresholdsEditor
+        thresholds={{
+          mode: ThresholdsMode.Absolute,
+          steps: [
+            { value: -Infinity, color: 'green' },
+            { value: 50, color: '#EAB839' },
+            { value: 80, color: 'red' },
+          ],
+        }}
+        onChange={jest.fn()}
+      />
+    );
 
     expect(document.body).toHaveFocus();
   });

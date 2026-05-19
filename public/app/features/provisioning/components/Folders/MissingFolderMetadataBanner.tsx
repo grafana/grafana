@@ -1,3 +1,4 @@
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
@@ -75,11 +76,9 @@ interface FolderPermissionsProps {
 }
 
 export function FolderPermissions({ folderUID, canSetPermissions, isProvisionedFolder }: FolderPermissionsProps) {
-  if (
-    !isProvisionedFolder ||
-    !config.featureToggles.provisioning ||
-    !config.featureToggles.provisioningFolderMetadata
-  ) {
+  const provisioningFolderMetadataEnabled = useBooleanFlagValue('provisioningFolderMetadata', false);
+
+  if (!isProvisionedFolder || !config.featureToggles.provisioning || !provisioningFolderMetadataEnabled) {
     return <Permissions resource="folders" resourceId={folderUID} canSetPermissions={canSetPermissions} />;
   }
 

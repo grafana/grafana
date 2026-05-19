@@ -1,7 +1,7 @@
 import { render, screen, act } from '@testing-library/react';
 import { useAsync } from 'react-use';
 
-import { store, EventBusSrv, EventBus, ExtensionInfo } from '@grafana/data';
+import { store, EventBusSrv, type EventBus, type ExtensionInfo } from '@grafana/data';
 import { getAppEvents, setAppEvents, locationService } from '@grafana/runtime';
 import { OpenExtensionSidebarEvent, CloseExtensionSidebarEvent, ToggleExtensionSidebarEvent } from 'app/types/events';
 

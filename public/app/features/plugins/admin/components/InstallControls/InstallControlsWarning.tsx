@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2, PluginType } from '@grafana/data';
+import { type GrafanaTheme2, PluginType } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, featureEnabled } from '@grafana/runtime';
 import { LinkButton, useStyles2, Alert, TextLink, Stack } from '@grafana/ui';
@@ -10,7 +10,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { getExternalManageLink } from '../../helpers';
 import { useIsRemotePluginsAvailable } from '../../state/hooks';
-import { CatalogPlugin, PluginStatus, Version } from '../../types';
+import { type CatalogPlugin, PluginStatus, type Version } from '../../types';
 
 interface Props {
   plugin: CatalogPlugin;

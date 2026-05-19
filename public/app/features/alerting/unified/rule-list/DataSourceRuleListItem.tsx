@@ -1,7 +1,7 @@
 import React from 'react';
 
-import { DataSourceRuleGroupIdentifier, Rule, RuleIdentifier } from 'app/types/unified-alerting';
-import { PromRuleType, RulerRuleDTO, RulesSourceApplication } from 'app/types/unified-alerting-dto';
+import { type DataSourceRuleGroupIdentifier, type Rule, type RuleIdentifier } from 'app/types/unified-alerting';
+import { PromRuleType, type RulerRuleDTO, type RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
 import { createReturnTo } from '../hooks/useReturnTo';
 import { Annotation } from '../utils/constants';
@@ -13,7 +13,7 @@ import { createRelativeUrl } from '../utils/url';
 import {
   AlertRuleListItem,
   RecordingRuleListItem,
-  RuleListItemCommonProps,
+  type RuleListItemCommonProps,
   UnknownRuleListItem,
 } from './components/AlertRuleListItem';
 

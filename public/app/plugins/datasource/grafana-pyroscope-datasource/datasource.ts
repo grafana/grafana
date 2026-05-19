@@ -1,25 +1,26 @@
 import Prism from 'prismjs';
-import { map, Observable, of } from 'rxjs';
+import { map, type Observable, of } from 'rxjs';
 
 import {
-  AbstractQuery,
-  AdHocVariableFilter,
+  type AbstractQuery,
+  type AdHocVariableFilter,
   CoreApp,
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceGetTagKeysOptions,
-  DataSourceGetTagValuesOptions,
-  DataSourceInstanceSettings,
-  MetricFindValue,
-  ScopedVars,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceGetTagKeysOptions,
+  type DataSourceGetTagValuesOptions,
+  type DataSourceInstanceSettings,
+  type MetricFindValue,
+  type ScopedVars,
 } from '@grafana/data';
-import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import { DataSourceWithBackend, getTemplateSrv, type TemplateSrv } from '@grafana/runtime';
 
 import { VariableSupport } from './VariableSupport';
 import { defaultGrafanaPyroscopeDataQuery, defaultPyroscopeQueryType } from './dataquery.gen';
-import { PyroscopeDataSourceOptions, Query, ProfileTypeMessage } from './types';
+import { type PyroscopeDataSourceOptions, type Query, type ProfileTypeMessage } from './types';
 import {
   addLabelToQuery,
+  formatLabelName,
   extractLabelMatchers,
   grammar,
   toPromLikeExpr,
@@ -100,7 +101,8 @@ export class PyroscopeDataSource extends DataSourceWithBackend<Query, PyroscopeD
   private adhocFilterData(options: DataSourceGetTagKeysOptions<Query> | DataSourceGetTagValuesOptions<Query>) {
     const from = options.timeRange?.from.valueOf() ?? Date.now() - 1000 * 60 * 60 * 24;
     const to = options.timeRange?.to.valueOf() ?? Date.now();
-    const query = '{' + options.filters.map((f) => `${f.key}${f.operator}"${f.value}"`).join(',') + '}';
+    const query =
+      '{' + options.filters.map((f) => `${formatLabelName(f.key)}${f.operator}"${f.value}"`).join(',') + '}';
     return { from, to, query };
   }
 
@@ -130,6 +132,8 @@ export class PyroscopeDataSource extends DataSourceWithBackend<Query, PyroscopeD
       profileTypeId: '',
       groupBy: [],
       includeExemplars: false,
+      includeHeatmap: false,
+      heatmapType: 'individual',
     };
   }
 

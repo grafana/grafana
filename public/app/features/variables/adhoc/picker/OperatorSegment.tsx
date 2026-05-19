@@ -1,4 +1,4 @@
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { Segment } from '@grafana/ui';
 
 interface Props {

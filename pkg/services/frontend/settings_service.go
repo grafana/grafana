@@ -26,6 +26,7 @@ import (
 // url =
 // qps =
 // burst =
+// cache_ttl =
 //
 // Returns nil if not configured (this is not an error condition). Errors returned should
 // be considered critical.
@@ -34,6 +35,7 @@ func setupSettingsService(cfg *setting.Cfg, promRegister prometheus.Registerer) 
 	settingsServiceURL := settingsSec.Key("url").String()
 	settingsServiceQPS := float32(settingsSec.Key("qps").MustFloat64(0))
 	settingsServiceBurst := settingsSec.Key("burst").MustInt(0)
+	settingsServiceCacheTTL := settingsSec.Key("cache_ttl").MustDuration(0)
 	if settingsServiceURL == "" {
 		// If settings service URL is not configured, return nil *without* error
 		return nil, nil
@@ -69,6 +71,7 @@ func setupSettingsService(cfg *setting.Cfg, promRegister prometheus.Registerer) 
 		TLSClientConfig:     tlsConfig,
 		QPS:                 settingsServiceQPS,
 		Burst:               settingsServiceBurst,
+		CacheTTL:            settingsServiceCacheTTL,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create settings service client: %w", err)

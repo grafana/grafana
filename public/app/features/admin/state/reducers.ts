@@ -1,17 +1,17 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
-import { LdapState, LdapConnectionInfo, LdapError, SyncInfo, LdapUser } from 'app/types/ldap';
+import { type LdapState, type LdapConnectionInfo, type LdapError, type SyncInfo, type LdapUser } from 'app/types/ldap';
 import {
-  UserAdminState,
-  UserDTO,
-  UserOrg,
-  UserSession,
-  UserAdminError,
-  UserListAdminState,
-  UserFilter,
-  UserListAnonymousDevicesState,
-  UserAnonymousDeviceDTO,
-  AnonUserFilter,
+  type UserAdminState,
+  type UserDTO,
+  type UserOrg,
+  type UserSession,
+  type UserAdminError,
+  type UserListAdminState,
+  type UserFilter,
+  type UserListAnonymousDevicesState,
+  type UserAnonymousDeviceDTO,
+  type AnonUserFilter,
 } from 'app/types/user';
 
 const initialLdapState: LdapState = {

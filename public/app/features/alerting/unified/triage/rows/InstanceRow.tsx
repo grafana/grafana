@@ -3,20 +3,12 @@ import { isEmpty } from 'lodash';
 import { useCallback, useMemo, useState } from 'react';
 
 import { AlertLabels } from '@grafana/alerting/unstable';
-import { DataFrame, GrafanaTheme2, Labels, LoadingState, TimeRange } from '@grafana/data';
+import { type DataFrame, type GrafanaTheme2, type Labels, LoadingState, type TimeRange } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { SceneDataNode, VizConfigBuilders } from '@grafana/scenes';
 import { SceneContextProvider, VizPanel } from '@grafana/scenes-react';
 import { GraphDrawStyle, VisibilityMode } from '@grafana/schema';
-import {
-  AxisPlacement,
-  BarAlignment,
-  LegendDisplayMode,
-  StackingMode,
-  Text,
-  TooltipDisplayMode,
-  useStyles2,
-} from '@grafana/ui';
+import { AxisPlacement, BarAlignment, StackingMode, Text, TooltipDisplayMode, useStyles2 } from '@grafana/ui';
 
 import { overrideToFixedColor } from '../../home/Insights';
 import { InstanceDetailsDrawer } from '../instance-details/InstanceDetailsDrawer';
@@ -43,15 +35,14 @@ const chartConfig = VizConfigBuilders.timeseries()
   .setCustomFieldConfig('barWidthFactor', 1)
   .setCustomFieldConfig('barAlignment', BarAlignment.After)
   .setCustomFieldConfig('showPoints', VisibilityMode.Never)
-  .setCustomFieldConfig('fillOpacity', 60)
+  .setCustomFieldConfig('fillOpacity', 80)
   .setCustomFieldConfig('lineWidth', 0)
-  .setCustomFieldConfig('stacking', { mode: StackingMode.None })
+  .setCustomFieldConfig('stacking', { mode: StackingMode.Normal })
   .setCustomFieldConfig('axisPlacement', AxisPlacement.Hidden)
   .setCustomFieldConfig('axisGridShow', false)
   .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
   .setOption('legend', {
     showLegend: false,
-    displayMode: LegendDisplayMode.Hidden,
   })
   .setMin(0)
   .setMax(1)
@@ -120,6 +111,7 @@ export function InstanceRow({
           <OpenDrawerButton
             aria-label={t('alerting.triage.open-in-sidebar', 'Open in sidebar')}
             onClick={handleDrawerOpen}
+            text={t('alerting.open-drawer-icon-button.instance-details', 'Instance details')}
           />
         }
         content={
@@ -132,6 +124,7 @@ export function InstanceRow({
           />
         }
         depth={depth}
+        showIndentBorder
       />
 
       {isDrawerOpen && (
@@ -141,7 +134,12 @@ export function InstanceRow({
             to: typeof timeRange.raw.to === 'string' ? timeRange.raw.to : timeRange.raw.to.toISOString(),
           }}
         >
-          <InstanceDetailsDrawer ruleUID={ruleUID} instanceLabels={instance.labels} onClose={handleDrawerClose} />
+          <InstanceDetailsDrawer
+            ruleUID={ruleUID}
+            instanceLabels={instance.labels}
+            commonLabels={commonLabels}
+            onClose={handleDrawerClose}
+          />
         </SceneContextProvider>
       )}
     </>

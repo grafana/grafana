@@ -6,7 +6,7 @@ import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { MoveActionAvailableTargetWarning } from 'app/features/provisioning/components/Shared/MoveActionAvailableTargetWarning';
 import { ProvisioningAwareFolderPicker } from 'app/features/provisioning/components/Shared/ProvisioningAwareFolderPicker';
 
-import { DashboardTreeSelection } from '../../types';
+import { type DashboardTreeSelection } from '../../types';
 
 import { DescendantCount } from './DescendantCount';
 

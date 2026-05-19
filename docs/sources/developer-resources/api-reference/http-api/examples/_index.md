@@ -12,7 +12,7 @@ labels:
     - oss
 title: 'HTTP API examples'
 menuTitle: 'Examples'
-weight: 02
+weight: 1100
 ---
 
 # HTTP API examples

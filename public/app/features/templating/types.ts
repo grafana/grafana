@@ -1,5 +1,5 @@
-import { ScopedVars } from '@grafana/data';
-import { VariableCustomFormatterFn } from '@grafana/scenes';
+import { type ScopedVars } from '@grafana/data';
+import { type VariableCustomFormatterFn } from '@grafana/scenes';
 
 export interface MacroHandler {
   (

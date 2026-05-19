@@ -17,6 +17,12 @@ import (
 )
 
 func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.CheckResponse, error) {
+	release, err := s.acquireSlot("Check", r.GetNamespace())
+	if err != nil {
+		return nil, err
+	}
+	defer release()
+
 	ctx, span := s.tracer.Start(ctx, "server.Check")
 	defer span.End()
 	span.SetAttributes(attribute.String("namespace", r.GetNamespace()))
@@ -117,7 +123,7 @@ func (s *Server) checkTyped(ctx context.Context, subject, relation string, resou
 
 	if resource.HasSubresource() {
 		// Check if subject has access as a subresource
-		res, err := s.openfgaCheck(ctx, store, subject, subresourceRelation, resourceIdent, contextuals, resourceCtx)
+		res, err := s.openfgaCheck(ctx, store, subject, common.SubresourcePermissionRelation(subresourceRelation), resourceIdent, contextuals, resourceCtx)
 		if err != nil {
 			return nil, err
 		}
@@ -174,7 +180,7 @@ func (s *Server) checkGeneric(ctx context.Context, subject, relation string, res
 
 	if folderIdent != "" && common.IsSubresourceRelation(folderRelation) {
 		// Check if subject has access as a sub resource for the folder
-		res, err := s.openfgaCheck(ctx, store, subject, folderRelation, folderIdent, contextuals, resourceCtx)
+		res, err := s.openfgaCheck(ctx, store, subject, common.SubresourcePermissionRelation(folderRelation), folderIdent, contextuals, resourceCtx)
 		if err != nil {
 			return nil, err
 		}
@@ -212,9 +218,7 @@ func (s *Server) openfgaCheck(ctx context.Context, store *zanzana.StoreInfo, sub
 	})
 
 	if err != nil {
-		// error is decorated by openfga with a public-facing error message, so we need to unwrap it to get the actual error and log it server-side,
-		// but we want to return wrapped error to the client to prevent leaking internal error details
-		s.logger.Error("failed to perform check", "error", errors.Unwrap(err), "subject", subject, "relation", relation, "object", object)
+		s.logger.Error("failed to perform check", "error", err, "subject", subject, "relation", relation, "object", object)
 		return nil, fmt.Errorf("failed to perform openfga Check request: %w", err)
 	}
 

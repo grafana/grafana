@@ -1,5 +1,5 @@
 import {
-  SceneGridItemLike,
+  type SceneGridItemLike,
   SceneGridLayout,
   SceneGridRow,
   SceneQueryRunner,
@@ -9,7 +9,7 @@ import {
 } from '@grafana/scenes';
 
 import { findVizPanelByKey, getQueryRunnerFor } from '../../utils/utils';
-import { DashboardScene, DashboardSceneState } from '../DashboardScene';
+import { DashboardScene, type DashboardSceneState } from '../DashboardScene';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';

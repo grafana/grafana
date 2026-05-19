@@ -1,6 +1,12 @@
 import { t } from '@grafana/i18n';
-import { SceneComponentProps, SceneObjectBase, SceneObjectRef, SceneObjectState, VizPanel } from '@grafana/scenes';
-import { LibraryPanel } from '@grafana/schema';
+import {
+  type SceneComponentProps,
+  SceneObjectBase,
+  type SceneObjectRef,
+  type SceneObjectState,
+  type VizPanel,
+} from '@grafana/scenes';
+import { type LibraryPanel } from '@grafana/schema';
 import { Drawer } from '@grafana/ui';
 import {
   LibraryPanelsSearch,

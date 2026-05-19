@@ -1,19 +1,19 @@
-import { DragDropContext, DragStart, Droppable, DropResult } from '@hello-pangea/dnd';
-import { PureComponent, ReactNode } from 'react';
+import { DragDropContext, type DragStart, Droppable, type DropResult } from '@hello-pangea/dnd';
+import { PureComponent, type ReactNode } from 'react';
 
 import {
   CoreApp,
-  DataQuery,
-  DataSourceInstanceSettings,
-  EventBusExtended,
-  HistoryItem,
-  PanelData,
+  type DataQuery,
+  type DataSourceInstanceSettings,
+  type EventBusExtended,
+  type HistoryItem,
+  type PanelData,
   getDataSourceRef,
   isSystemOverrideWithRef,
 } from '@grafana/data';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
-import { SceneObjectRef, VizPanel } from '@grafana/scenes';
-import { DataSourceRef } from '@grafana/schema';
+import { type SceneObjectRef, type VizPanel } from '@grafana/scenes';
+import { type DataSourceRef } from '@grafana/schema';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 

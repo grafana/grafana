@@ -2,7 +2,7 @@ import { FieldConfigProperty, PanelPlugin } from '@grafana/data';
 import { checkFields } from '@grafana/flamegraph';
 
 import { FlameGraphPanel } from './FlameGraphPanel';
-import { Options } from './types';
+import { type Options } from './types';
 
 const flamegraphConfigOptions = [FieldConfigProperty.Unit, FieldConfigProperty.Decimals];
 

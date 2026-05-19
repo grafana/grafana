@@ -180,6 +180,82 @@ describe('useNotificationConfigNav', () => {
       expect(activeTabs?.[0].id).toBe('notification-config-time-intervals');
     });
 
+    it('should show all tabs when user has only legacy AlertingNotificationsRead permission', () => {
+      mockHasPermission.mockImplementation((action: AccessControlAction) => {
+        return action === AccessControlAction.AlertingNotificationsRead;
+      });
+
+      const { result } = renderHook(() => useNotificationConfigNav());
+
+      // eslint-disable-next-line testing-library/no-node-access
+      expect(result.current.pageNav?.children).toHaveLength(4);
+      // eslint-disable-next-line testing-library/no-node-access
+      expect(result.current.pageNav?.children?.[0].id).toBe('notification-config-contact-points');
+      // eslint-disable-next-line testing-library/no-node-access
+      expect(result.current.pageNav?.children?.[1].id).toBe('notification-config-policies');
+      // eslint-disable-next-line testing-library/no-node-access
+      expect(result.current.pageNav?.children?.[2].id).toBe('notification-config-templates');
+      // eslint-disable-next-line testing-library/no-node-access
+      expect(result.current.pageNav?.children?.[3].id).toBe('notification-config-time-intervals');
+    });
+
+    it('should show all tabs when user has legacy and some granular permissions', () => {
+      mockHasPermission.mockImplementation((action: AccessControlAction) => {
+        return (
+          action === AccessControlAction.AlertingNotificationsRead ||
+          action === AccessControlAction.AlertingReceiversRead
+        );
+      });
+
+      const { result } = renderHook(() => useNotificationConfigNav());
+
+      // Legacy permission covers all tabs; granular is redundant but harmless
+      // eslint-disable-next-line testing-library/no-node-access
+      expect(result.current.pageNav?.children).toHaveLength(4);
+    });
+
+    it('should include notification policies when user has only AlertingRoutesRead (granular legacy permission)', () => {
+      mockHasPermission.mockImplementation((action: AccessControlAction) => {
+        return (
+          action === AccessControlAction.AlertingRoutesRead || action === AccessControlAction.AlertingReceiversRead
+        );
+      });
+
+      const { result } = renderHook(() => useNotificationConfigNav());
+
+      // eslint-disable-next-line testing-library/no-node-access
+      const tabs = result.current.pageNav?.children;
+      expect(tabs).toHaveLength(2);
+      // eslint-disable-next-line testing-library/no-node-access
+      expect(tabs?.[0].id).toBe('notification-config-contact-points');
+      // eslint-disable-next-line testing-library/no-node-access
+      expect(tabs?.[1].id).toBe('notification-config-policies');
+    });
+
+    it('should include notification policies when user has only ActionAlertingManagedRoutesRead (k8s API permission)', () => {
+      // This covers the case where a user has the newer Kubernetes API-style routingtrees:get
+      // permission but neither the legacy alert.notifications:read nor alert.notifications.routes:read.
+      // When only one tab is visible the tabs bar is suppressed (children === undefined) but the page
+      // itself is still accessible, so we verify pageNav exists and that combining this permission with
+      // at least one other causes the policies tab to appear.
+      mockHasPermission.mockImplementation((action: AccessControlAction) => {
+        return (
+          action === AccessControlAction.ActionAlertingManagedRoutesRead ||
+          action === AccessControlAction.AlertingReceiversRead
+        );
+      });
+
+      const { result } = renderHook(() => useNotificationConfigNav());
+
+      // eslint-disable-next-line testing-library/no-node-access
+      const tabs = result.current.pageNav?.children;
+      expect(tabs).toHaveLength(2);
+      // eslint-disable-next-line testing-library/no-node-access
+      expect(tabs?.[0].id).toBe('notification-config-contact-points');
+      // eslint-disable-next-line testing-library/no-node-access
+      expect(tabs?.[1].id).toBe('notification-config-policies');
+    });
+
     it('should not show tabs bar when only one tab is visible', () => {
       // Only allow contact points
       mockHasPermission.mockImplementation((action: AccessControlAction) => {

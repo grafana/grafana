@@ -1,4 +1,4 @@
-import { getDefaultNormalizer, RenderResult, SelectorMatcherOptions, waitFor } from '@testing-library/react';
+import { getDefaultNormalizer, type RenderResult, type SelectorMatcherOptions, waitFor } from '@testing-library/react';
 import { Routes, Route } from 'react-router-dom-v5-compat';
 import { render } from 'test/test-utils';
 
@@ -7,7 +7,7 @@ import {
   PluginSignatureStatus,
   PluginType,
   dateTimeFormatTimeAgo,
-  WithAccessControlMetadata,
+  type WithAccessControlMetadata,
 } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { selectors } from '@grafana/e2e-selectors';
@@ -19,11 +19,11 @@ import { usePluginConfig } from '../hooks/usePluginConfig';
 import { mockPluginApis, getCatalogPluginMock, getPluginsStateMock, mockUserPermissions } from '../mocks/mockHelpers';
 import { fetchRemotePlugins } from '../state/actions';
 import {
-  CatalogPlugin,
-  CatalogPluginDetails,
+  type CatalogPlugin,
+  type CatalogPluginDetails,
   PluginTabIds,
   PluginTabLabels,
-  ReducerState,
+  type ReducerState,
   RequestStatus,
 } from '../types';
 
@@ -168,7 +168,7 @@ describe('Plugin details page', () => {
 
       const { findByText, queryByText } = renderPluginDetails({ id, details });
       expect(await findByText('4.2.2')).toBeInTheDocument();
-      expect(queryByText(/>=8.0.0/i)).toBeInTheDocument();
+      expect(queryByText(/8.0.0 or later/i)).toBeInTheDocument();
     });
 
     it('should display description in the header', async () => {
@@ -261,7 +261,12 @@ describe('Plugin details page', () => {
     });
 
     it('should not display an update button for a plugin that is managed', async () => {
-      const { queryByRole } = renderPluginDetails({ id, isInstalled: true, hasUpdate: true, isManaged: true });
+      const { queryByRole } = renderPluginDetails({
+        id,
+        isInstalled: true,
+        hasUpdate: true,
+        managed: { enabled: true },
+      });
 
       // Does not display an "update" button
       expect(await queryByRole('button', { name: /update/i })).not.toBeInTheDocument();
@@ -359,7 +364,7 @@ describe('Plugin details page', () => {
       });
 
       // Wait for the dependencies part to be loaded
-      expect(await queryByText('Grafana >=8.0.0')).toBeInTheDocument();
+      expect(await queryByText('Grafana 8.0.0 or later')).toBeInTheDocument();
     });
 
     it('should show a confirm modal when trying to uninstall a plugin', async () => {

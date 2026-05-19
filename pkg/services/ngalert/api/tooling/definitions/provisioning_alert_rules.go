@@ -10,8 +10,11 @@ import (
 //
 // Get all the alert rules.
 //
+// Deprecated: true
+//
 //     Responses:
 //       200: ProvisionedAlertRules
+//       403: ForbiddenError
 
 // swagger:route GET /v1/provisioning/alert-rules/export provisioning stable RouteGetAlertRulesExport
 //
@@ -26,14 +29,18 @@ import (
 //
 //     Responses:
 //       200: AlertingFileExport
+//       403: ForbiddenError
 //       404: description: Not found.
 
 // swagger:route GET /v1/provisioning/alert-rules/{UID} provisioning stable RouteGetAlertRule
 //
 // Get a specific alert rule by UID.
 //
+// Deprecated: true
+//
 //     Responses:
 //       200: ProvisionedAlertRule
+//       403: ForbiddenError
 //       404: description: Not found.
 
 // swagger:route GET /v1/provisioning/alert-rules/{UID}/export provisioning stable RouteGetAlertRuleExport
@@ -49,11 +56,14 @@ import (
 //
 //     Responses:
 //       200: AlertingFileExport
+//       403: ForbiddenError
 //       404: description: Not found.
 
 // swagger:route POST /v1/provisioning/alert-rules provisioning stable RoutePostAlertRule
 //
 // Create a new alert rule.
+//
+// Deprecated: true
 //
 //     Consumes:
 //     - application/json
@@ -61,10 +71,13 @@ import (
 //     Responses:
 //       201: ProvisionedAlertRule
 //       400: ValidationError
+//       403: ForbiddenError
 
 // swagger:route PUT /v1/provisioning/alert-rules/{UID} provisioning stable RoutePutAlertRule
 //
 // Update an existing alert rule.
+//
+// Deprecated: true
 //
 //     Consumes:
 //     - application/json
@@ -72,13 +85,17 @@ import (
 //     Responses:
 //       200: ProvisionedAlertRule
 //       400: ValidationError
+//       403: ForbiddenError
 
 // swagger:route DELETE /v1/provisioning/alert-rules/{UID} provisioning stable RouteDeleteAlertRule
 //
 // Delete a specific alert rule by UID.
 //
+// Deprecated: true
+//
 //     Responses:
 //       204: description: The alert rule was deleted successfully.
+//       403: ForbiddenError
 
 // swagger:parameters RouteGetAlertRulesExport RouteGetRulesForExport
 type AlertRulesExportParameters struct {
@@ -181,13 +198,18 @@ type ProvisionedAlertRule struct {
 //
 // Get a rule group.
 //
+// Deprecated: true
+//
 //     Responses:
 //       200: AlertRuleGroup
+//       403: ForbiddenError
 //       404: description: Not found.
 
 // swagger:route DELETE /v1/provisioning/folder/{FolderUID}/rule-groups/{Group} provisioning stable RouteDeleteAlertRuleGroup
 //
 // Delete rule group
+//
+// Deprecated: true
 //
 //     Responses:
 //       204: description: The alert rule group was deleted successfully.
@@ -207,11 +229,14 @@ type ProvisionedAlertRule struct {
 //
 //     Responses:
 //       200: AlertingFileExport
+//       403: ForbiddenError
 //       404: description: Not found.
 
 // swagger:route PUT /v1/provisioning/folder/{FolderUID}/rule-groups/{Group} provisioning stable RoutePutAlertRuleGroup
 //
 // Create or update alert rule group.
+//
+// Deprecated: true
 //
 //     Consumes:
 //     - application/json
@@ -219,6 +244,7 @@ type ProvisionedAlertRule struct {
 //     Responses:
 //       200: AlertRuleGroup
 //       400: ValidationError
+//       403: ForbiddenError
 
 // swagger:parameters RouteGetAlertRuleGroup RoutePutAlertRuleGroup RouteGetAlertRuleGroupExport RouteDeleteAlertRuleGroup
 type FolderUIDPathParam struct {

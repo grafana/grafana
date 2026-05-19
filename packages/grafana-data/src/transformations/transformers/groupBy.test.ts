@@ -1,6 +1,6 @@
 import { toDataFrame } from '../../dataframe/processDataFrame';
-import { FieldType, Field } from '../../types/dataFrame';
-import { DataTransformerConfig } from '../../types/transformations';
+import { FieldType, type Field } from '../../types/dataFrame';
+import { type DataTransformerConfig } from '../../types/transformations';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { ReducerID } from '../fieldReducer';
 import { transformDataFrame } from '../transformDataFrame';
@@ -8,7 +8,7 @@ import { transformDataFrame } from '../transformDataFrame';
 import {
   GroupByOperationID,
   groupByTransformer,
-  GroupByTransformerOptions,
+  type GroupByTransformerOptions,
   groupValuesByKey,
   shouldCalculateField,
 } from './groupBy';

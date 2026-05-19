@@ -1,10 +1,10 @@
 import { isNil, omitBy } from 'lodash';
 
-import { FieldConfigSource, PanelTypeChangedHandler } from '@grafana/data';
+import { type FieldConfigSource, type PanelTypeChangedHandler } from '@grafana/data';
 import { LegendDisplayMode, SortOrder, StackingMode, TooltipDisplayMode } from '@grafana/schema';
 
 import { defaultHistogramConfig } from './config';
-import { FieldConfig as HistogramFieldConfig, Options } from './panelcfg.gen';
+import { type FieldConfig as HistogramFieldConfig, type Options } from './panelcfg.gen';
 
 /*
  * This is called when the panel changes from another panel

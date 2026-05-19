@@ -9,18 +9,18 @@ import {
   EventBusSrv,
   getDefaultTimeRange,
   LoadingState,
-  PanelData,
-  PanelPlugin,
-  TimeRange,
+  type PanelData,
+  type PanelPlugin,
+  type TimeRange,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { getTimeSrv, TimeSrv, setTimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { getTimeSrv, type TimeSrv, setTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
-import { PanelQueryRunner } from '../../../query/state/PanelQueryRunner';
+import { type PanelQueryRunner } from '../../../query/state/PanelQueryRunner';
 import { PanelModel } from '../../state/PanelModel';
 import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
 
-import { PanelEditorTableView, Props } from './PanelEditorTableView';
+import { PanelEditorTableView, type Props } from './PanelEditorTableView';
 
 jest.mock('../../utils/panel', () => ({
   applyPanelTimeOverrides: jest.fn((panel, timeRange) => ({

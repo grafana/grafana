@@ -1,16 +1,16 @@
 import { useState } from 'react';
-import { connect, MapStateToProps } from 'react-redux';
+import { connect, type MapStateToProps } from 'react-redux';
 import { useLocation } from 'react-router-dom-v5-compat';
 
-import { PanelPlugin } from '@grafana/data';
+import { type PanelPlugin } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { InspectTab } from 'app/features/inspector/types';
 import { getPanelStateForModel } from 'app/features/panel/state/selectors';
-import { StoreState } from 'app/types/store';
+import { type StoreState } from 'app/types/store';
 
-import { GetDataOptions } from '../../../query/state/PanelQueryRunner';
+import { type GetDataOptions } from '../../../query/state/PanelQueryRunner';
 import { HelpWizard } from '../HelpWizard/HelpWizard';
 import { usePanelLatestData } from '../PanelEditor/usePanelLatestData';
 

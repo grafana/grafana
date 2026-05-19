@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 import { useEffectOnce } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
@@ -25,23 +25,23 @@ import {
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import {
   ExpressionDatasourceUID,
-  ExpressionQuery,
+  type ExpressionQuery,
   ExpressionQueryType,
   expressionTypes,
 } from 'app/features/expressions/types';
-import { AlertQuery } from 'app/types/unified-alerting-dto';
+import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import {
   areQueriesTransformableToSimpleCondition,
   isExpressionQueryInAlert,
 } from '../../../rule-editor/formProcessing';
-import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
+import { RuleFormType, type RuleFormValues } from '../../../types/rule-form';
 import {
   GRAFANA_RULES_SOURCE_NAME,
   getDefaultOrFirstCompatibleDataSource,
   getRulesDataSources,
 } from '../../../utils/datasource';
-import { PromOrLokiQuery, isPromOrLokiQuery } from '../../../utils/rule-form';
+import { type PromOrLokiQuery, isPromOrLokiQuery } from '../../../utils/rule-form';
 import {
   isCloudAlertingRuleByType,
   isCloudRecordingRuleByType,
@@ -673,7 +673,6 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
           </div>
         }
         confirmText={t('alerting.query-and-expressions-step.confirmText-deactivate', 'Deactivate')}
-        icon="exclamation-triangle"
         onConfirm={() => {
           setValue('editorSettings.simplifiedQueryEditor', true);
           setShowResetModal(false);

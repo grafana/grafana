@@ -3,12 +3,12 @@ package accesscontrol
 import (
 	"context"
 	"fmt"
-
-	"golang.org/x/exp/maps"
+	"maps"
+	"slices"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
@@ -23,14 +23,14 @@ const (
 
 var (
 	// asserts full read-only access to silences
-	readAllSilencesEvaluator = ac.EvalAny(ac.EvalPermission(instancesRead), ac.EvalPermission(silenceRead, dashboards.ScopeFoldersProvider.GetResourceAllScope()))
+	readAllSilencesEvaluator = ac.EvalAny(ac.EvalPermission(instancesRead), ac.EvalPermission(silenceRead, folder.ScopeFoldersProvider.GetResourceAllScope()))
 	// shortcut assertion that to check if user can read silences
 	readSomeSilenceEvaluator = ac.EvalAny(ac.EvalPermission(instancesRead), ac.EvalPermission(silenceRead))
 	// asserts whether user has read access to rules in a specific folder
 	readRuleSilenceEvaluator = func(folderUID string) ac.Evaluator {
 		return ac.EvalAny(
 			ac.EvalPermission(instancesRead),
-			ac.EvalPermission(silenceRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID)),
+			ac.EvalPermission(silenceRead, folder.ScopeFoldersProvider.GetResourceScopeUID(folderUID)),
 		)
 	}
 
@@ -50,7 +50,7 @@ var (
 		return ac.EvalAll(
 			ac.EvalAny(
 				ac.EvalPermission(instancesCreate),
-				ac.EvalPermission(silenceCreate, dashboards.ScopeFoldersProvider.GetResourceScopeUID(uid)),
+				ac.EvalPermission(silenceCreate, folder.ScopeFoldersProvider.GetResourceScopeUID(uid)),
 			),
 			readRuleSilenceEvaluator(uid),
 		)
@@ -72,7 +72,7 @@ var (
 		return ac.EvalAll(
 			ac.EvalAny(
 				ac.EvalPermission(instancesWrite),
-				ac.EvalPermission(silenceWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(uid)),
+				ac.EvalPermission(silenceWrite, folder.ScopeFoldersProvider.GetResourceScopeUID(uid)),
 			),
 			readRuleSilenceEvaluator(uid),
 		)
@@ -361,7 +361,7 @@ func (s SilenceService) withFolders(ctx context.Context, orgID int64, silences .
 		return result, nil
 	}
 
-	namespaceByRuleUID, err := s.store.GetNamespacesByRuleUID(ctx, orgID, maps.Keys(ruleUIDs)...)
+	namespaceByRuleUID, err := s.store.GetNamespacesByRuleUID(ctx, orgID, slices.Collect(maps.Keys(ruleUIDs))...)
 	if err != nil {
 		return nil, err
 	}

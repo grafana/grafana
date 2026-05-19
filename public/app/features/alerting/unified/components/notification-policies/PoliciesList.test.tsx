@@ -1,4 +1,5 @@
 import userEvent from '@testing-library/user-event';
+import { HttpResponse, http } from 'msw';
 import { render, screen, within } from 'test/test-utils';
 import { byTestId } from 'testing-library-selector';
 
@@ -17,8 +18,15 @@ import { DataSourceType } from '../../utils/datasource';
 import { K8sAnnotations } from '../../utils/k8s/constants';
 
 import { countPolicies } from './PoliciesList';
+import * as analytics from './notificationPolicyAnalytics';
 
 jest.mock('../../useRouteGroupsMatcher');
+
+// The export drawer uses IntersectionObserver which is not available in JSDOM.
+// Mock it out so we can test the tracking call without rendering the drawer.
+jest.mock('../export/GrafanaPoliciesExporter', () => ({
+  GrafanaPoliciesExporter: () => null,
+}));
 
 jest.mock('../../hooks/useAbilities', () => ({
   ...jest.requireActual('../../hooks/useAbilities'),
@@ -31,7 +39,7 @@ const mocks = {
   useAlertmanagerAbility: jest.mocked(useAlertmanagerAbility),
 };
 
-setupMswServer();
+const server = setupMswServer();
 
 const renderNotificationPolicies = () =>
   render(
@@ -281,6 +289,83 @@ describe('PoliciesList', () => {
         // No actions available = no more-actions button rendered
         expect(within(defaultPolicyEl).queryByTestId('more-actions')).not.toBeInTheDocument();
       });
+    });
+  });
+
+  describe('Analytics', () => {
+    beforeEach(() => {
+      jest.spyOn(analytics, 'trackNotificationPolicyExported');
+      jest.spyOn(analytics, 'trackNotificationPoliciesToggledAll');
+      // Add a handler for the export API to prevent unhandled request errors
+      server.use(http.get('/api/v1/provisioning/policies/export', () => HttpResponse.text('')));
+      // The measureText utility in @grafana/ui caches the canvas context at module level.
+      // jest.resetAllMocks() between tests resets the cached context's measureText mock, causing
+      // crashes when uncached text is measured. We patch the context directly to fix this.
+      const { getCanvasContext } = require('@grafana/ui');
+      const ctx = getCanvasContext();
+      ctx.measureText = jest.fn().mockReturnValue({ width: 100 } as TextMetrics);
+    });
+
+    it('tracks export click for the default policy', async () => {
+      grantAlertmanagerAbilities(allPolicyActions);
+      const user = userEvent.setup();
+
+      renderNotificationPolicies();
+
+      const allRoots = await ui.rootRouteContainer.findAll();
+      const defaultPolicyEl = allRoots[0];
+      await user.click(within(defaultPolicyEl).getByTestId('more-actions'));
+      await user.click(screen.getByRole('menuitem', { name: 'Export' }));
+
+      expect(analytics.trackNotificationPolicyExported).toHaveBeenCalledWith({ isDefaultPolicy: true });
+    });
+
+    it('tracks export click for a custom policy', async () => {
+      grantAlertmanagerAbilities(allPolicyActions);
+      const user = userEvent.setup();
+
+      renderNotificationPolicies();
+
+      const allRoots = await ui.rootRouteContainer.findAll();
+      // The second root container is a custom policy tree (not ROOT_ROUTE_NAME)
+      const customPolicyEl = allRoots[1];
+      await user.click(within(customPolicyEl).getByTestId('more-actions'));
+      await user.click(screen.getByRole('menuitem', { name: 'Export' }));
+
+      expect(analytics.trackNotificationPolicyExported).toHaveBeenCalledWith({ isDefaultPolicy: false });
+    });
+
+    it('tracks expand all click', async () => {
+      grantAlertmanagerAbilities(allPolicyActions);
+      const user = userEvent.setup();
+
+      renderNotificationPolicies();
+
+      // Wait for policies to load
+      await ui.rootRouteContainer.findAll();
+
+      const expandAllButton = await screen.findByRole('button', { name: /expand all/i });
+      await user.click(expandAllButton);
+
+      expect(analytics.trackNotificationPoliciesToggledAll).toHaveBeenCalledWith(
+        expect.objectContaining({ action: 'expand' })
+      );
+    });
+
+    it('tracks collapse all click after expanding', async () => {
+      grantAlertmanagerAbilities(allPolicyActions);
+      const user = userEvent.setup();
+
+      renderNotificationPolicies();
+      await ui.rootRouteContainer.findAll();
+
+      // Expand all, then collapse all
+      await user.click(await screen.findByRole('button', { name: /expand all/i }));
+      await user.click(await screen.findByRole('button', { name: /collapse all/i }));
+
+      expect(analytics.trackNotificationPoliciesToggledAll).toHaveBeenCalledWith(
+        expect.objectContaining({ action: 'collapse' })
+      );
     });
   });
 });

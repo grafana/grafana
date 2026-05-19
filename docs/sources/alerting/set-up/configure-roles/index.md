@@ -85,7 +85,7 @@ Refer to the following table for details on the additional access provided by co
 
 To manage contact point permissions, complete the following steps:
 
-1. In the left-side menu, click **Contact points**.
+1. In the left-side menu, click **Notification configuration**, then select the **Contact points** tab.
 1. Hover your mouse cursor over a contact point and click **More**.
 1. Click **Manage permissions** from the actions menu.
 1. Update or add permissions as required.

@@ -9,6 +9,8 @@ WHERE
   {{ end }}
   {{ if .Query.TeamUID }}
     AND t.uid = {{ .Arg .Query.TeamUID }}
+  {{ else if .Query.TeamUIDs }}
+    AND t.uid IN ({{ .ArgList .Query.TeamUIDs }})
   {{ end }}
   {{ if .Query.UserUID }}
     AND u.uid = {{ .Arg .Query.UserUID }}
@@ -19,5 +21,5 @@ WHERE
   {{- if ne .Query.External nil }}
     AND tm.external = {{ .Arg .ExternalValue }}
   {{- end }}
-ORDER BY t.id ASC
+ORDER BY tm.id ASC
 LIMIT {{ .Arg .Query.Pagination.Limit }};

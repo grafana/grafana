@@ -2,11 +2,12 @@ package common
 
 import (
 	"slices"
+	"sort"
 
 	authlib "github.com/grafana/authlib/types"
 
-	dashboards "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	dashboards "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 )
 
 const (
@@ -37,22 +38,22 @@ type resourceTranslation struct {
 	typ      string
 	group    string
 	resource string
-	mapping  map[string]actionMappig
+	mapping  map[string]actionMapping
 }
 
-type actionMappig struct {
+type actionMapping struct {
 	relation    string
 	group       string
 	resource    string
 	subresource string
 }
 
-func newMapping(relation, subresource string) actionMappig {
+func newMapping(relation, subresource string) actionMapping {
 	return newScopedMapping(relation, "", "", subresource)
 }
 
-func newScopedMapping(relation, group, resource, subresource string) actionMappig {
-	return actionMappig{relation, group, resource, subresource}
+func newScopedMapping(relation, group, resource, subresource string) actionMapping {
+	return actionMapping{relation, group, resource, subresource}
 }
 
 var (
@@ -68,7 +69,7 @@ var resourceTranslations = map[string]resourceTranslation{
 		typ:      TypeFolder,
 		group:    folderGroup,
 		resource: folderResource,
-		mapping: map[string]actionMappig{
+		mapping: map[string]actionMapping{
 			"folders:read":      newMapping(RelationGet, ""),
 			"folders:write":     newMapping(RelationUpdate, ""),
 			"folders:create":    newMapping(RelationCreate, ""),
@@ -90,7 +91,7 @@ var resourceTranslations = map[string]resourceTranslation{
 		typ:      TypeResource,
 		group:    dashboardGroup,
 		resource: dashboardResource,
-		mapping: map[string]actionMappig{
+		mapping: map[string]actionMapping{
 			"dashboards:read":   newMapping(RelationGet, ""),
 			"dashboards:write":  newMapping(RelationUpdate, ""),
 			"dashboards:create": newMapping(RelationCreate, ""),
@@ -162,4 +163,100 @@ func TranslateBasicRole(name string) string {
 
 func IsBasicRole(name string) bool {
 	return slices.Contains(basicRolesUIDs, name)
+}
+
+func actionListParams(translation resourceTranslation, m actionMapping) (group, resource, verb string, ok bool) {
+	group = translation.group
+	resource = translation.resource
+	if m.group != "" && m.resource != "" {
+		group = m.group
+		resource = m.resource
+	}
+
+	verb, ok = RelationToVerbMapping[m.relation]
+	if !ok {
+		return "", "", "", false
+	}
+
+	return group, resource, verb, true
+}
+
+// TranslateActionToListParams translates an RBAC action to Zanzana List request parameters (group, resource, verb).
+// Returns empty strings if the action cannot be translated.
+func TranslateActionToListParams(action string) (group, resource, verb string) {
+	translationTypes := make([]string, 0, len(resourceTranslations))
+	for typ := range resourceTranslations {
+		translationTypes = append(translationTypes, typ)
+	}
+	sort.Strings(translationTypes)
+
+	for _, typ := range translationTypes {
+		translation := resourceTranslations[typ]
+		if m, ok := translation.mapping[action]; ok {
+			group, resource, verb, ok := actionListParams(translation, m)
+			if !ok {
+				return "", "", ""
+			}
+			return group, resource, verb
+		}
+	}
+	return "", "", ""
+}
+
+// ActionListEntry describes an action that Zanzana supports, along with
+// its List request parameters.
+type ActionListEntry struct {
+	Action   string
+	Group    string
+	Resource string
+	Verb     string
+}
+
+// supportedActions is the memoized result of building the action list from
+// resourceTranslations. The translation table is constant at runtime, so this
+// slice can be computed once and reused.
+var supportedActions = func() []ActionListEntry {
+	translationTypes := make([]string, 0, len(resourceTranslations))
+	for typ := range resourceTranslations {
+		translationTypes = append(translationTypes, typ)
+	}
+	sort.Strings(translationTypes)
+
+	var out []ActionListEntry
+	seen := make(map[string]struct{})
+	for _, typ := range translationTypes {
+		translation := resourceTranslations[typ]
+
+		actions := make([]string, 0, len(translation.mapping))
+		for action := range translation.mapping {
+			actions = append(actions, action)
+		}
+		sort.Strings(actions)
+
+		for _, action := range actions {
+			m := translation.mapping[action]
+			if _, ok := seen[action]; ok {
+				continue
+			}
+			group, resource, verb, ok := actionListParams(translation, m)
+			if !ok {
+				continue
+			}
+
+			seen[action] = struct{}{}
+			out = append(out, ActionListEntry{
+				Action:   action,
+				Group:    group,
+				Resource: resource,
+				Verb:     verb,
+			})
+		}
+	}
+	return out
+}()
+
+// SupportedActions returns every RBAC action that Zanzana can resolve,
+// derived from the resource translation table.
+func SupportedActions() []ActionListEntry {
+	return supportedActions
 }

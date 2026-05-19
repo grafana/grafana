@@ -1,4 +1,4 @@
-import { Field, FieldType } from '../types/dataFrame';
+import { type Field, FieldType } from '../types/dataFrame';
 
 import { ArrayVector } from './ArrayVector';
 

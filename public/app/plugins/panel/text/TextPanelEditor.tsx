@@ -1,15 +1,15 @@
 import { css, cx } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { GrafanaTheme2, StandardEditorProps } from '@grafana/data';
+import { type GrafanaTheme2, type StandardEditorProps } from '@grafana/data';
 import {
   CodeEditor,
   useStyles2,
-  CodeEditorSuggestionItem,
+  type CodeEditorSuggestionItem,
   variableSuggestionToCodeEditorSuggestion,
 } from '@grafana/ui';
 
-import { Options, TextMode } from './panelcfg.gen';
+import { type Options, TextMode } from './panelcfg.gen';
 
 export const TextPanelEditor = ({ value, onChange, context }: StandardEditorProps<string, {}, Options>) => {
   const language = useMemo(() => context.options?.mode ?? TextMode.Markdown, [context]);

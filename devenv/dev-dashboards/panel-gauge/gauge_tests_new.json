@@ -1498,7 +1498,7 @@
       },
       "gridPos": {
         "h": 6,
-        "w": 24,
+        "w": 18,
         "x": 0,
         "y": 33
       },
@@ -1555,6 +1555,87 @@
         "defaults": {
           "color": {
             "fixedColor": "blue",
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 6,
+        "x": 18,
+        "y": 33
+      },
+      "id": 41,
+      "maxDataPoints": 20,
+      "options": {
+        "barShape": "rounded",
+        "barWidth": 12,
+        "barWidthFactor": 0.4,
+        "effects": {
+          "barGlow": true,
+          "centerGlow": true,
+          "gradient": true
+        },
+        "endpointMarker": "glow",
+        "glow": "both",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "segmentCount": 1,
+        "segmentSpacing": 0.3,
+        "shape": "gauge",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": false,
+        "sparkline": true
+      },
+      "pluginVersion": "13.0.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "max": 98,
+          "min": 5,
+          "noise": 22,
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "seriesCount": 2,
+          "spread": 12,
+          "startValue": 50
+        }
+      ],
+      "title": "Horizontal orientation",
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "blue",
             "mode": "continuous-GrYlRd"
           },
           "mappings": [],
@@ -1579,7 +1660,7 @@
       },
       "gridPos": {
         "h": 6,
-        "w": 24,
+        "w": 18,
         "x": 0,
         "y": 39
       },

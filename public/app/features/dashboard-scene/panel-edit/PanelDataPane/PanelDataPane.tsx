@@ -1,17 +1,17 @@
 import { css } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import {
-  SceneComponentProps,
+  type SceneComponentProps,
   SceneObjectBase,
-  SceneObjectRef,
-  SceneObjectState,
+  type SceneObjectRef,
+  type SceneObjectState,
   SceneObjectUrlSyncConfig,
-  SceneObjectUrlValues,
-  VizPanel,
+  type SceneObjectUrlValues,
+  type VizPanel,
 } from '@grafana/scenes';
 import { Button, Container, ScrollContainer, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
@@ -19,19 +19,16 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { getRulesPermissions } from 'app/features/alerting/unified/utils/access-control';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 
-import { PanelDataPaneNext } from '../PanelEditNext/PanelDataPaneNext';
-
-import { PanelDataAlertingTab } from './PanelDataAlertingTab';
-import { PanelDataQueriesTab } from './PanelDataQueriesTab';
-import { PanelDataTransformationsTab } from './PanelDataTransformationsTab';
-import { PanelDataPaneTab, PanelEditorInterface, TabId } from './types';
-
-function isTabId(value: string): value is TabId {
-  return Object.values<string>(TabId).includes(value);
-}
+import { type PanelDataPaneTab, type PanelEditorInterface, TabId } from './types';
 
 function isPanelEditor(obj: object): obj is PanelEditorInterface {
   return 'onToggleQueryEditorVersion' in obj && typeof obj.onToggleQueryEditorVersion === 'function';
+}
+
+const VALID_TAB_IDS: Set<string> = new Set(Object.values(TabId));
+
+function isValidTabId(value: string): value is TabId {
+  return VALID_TAB_IDS.has(value);
 }
 
 export interface PanelDataPaneState extends SceneObjectState {
@@ -43,36 +40,6 @@ export interface PanelDataPaneState extends SceneObjectState {
 export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
   static Component = PanelDataPaneRendered;
   protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['tab'] });
-
-  /**
-   * Create a data pane for the given panel.
-   * @param panel The VizPanel to create the data pane for
-   * @param useQueryEditorNext Signals whether to use the query editor v2 experience or the original (v1) experience.
-   */
-  public static createFor(panel: VizPanel, useQueryEditorNext: boolean | undefined) {
-    const panelRef = panel.getRef();
-
-    // Query experience v2
-    if (useQueryEditorNext) {
-      return new PanelDataPaneNext({ panelRef });
-    }
-
-    // Original experience
-    const tabs: PanelDataPaneTab[] = [
-      new PanelDataQueriesTab({ panelRef }),
-      new PanelDataTransformationsTab({ panelRef }),
-    ];
-
-    if (shouldShowAlertingTab(panel.state.pluginId)) {
-      tabs.push(new PanelDataAlertingTab({ panelRef }));
-    }
-
-    return new PanelDataPane({
-      panelRef,
-      tabs,
-      tab: TabId.Queries,
-    });
-  }
 
   public onChangeTab = (tab: PanelDataPaneTab) => {
     this.setState({ tab: tab.tabId });
@@ -92,7 +59,7 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
     if (!values.tab) {
       return;
     }
-    if (typeof values.tab === 'string' && isTabId(values.tab)) {
+    if (typeof values.tab === 'string' && isValidTabId(values.tab)) {
       this.setState({ tab: values.tab });
     }
   }

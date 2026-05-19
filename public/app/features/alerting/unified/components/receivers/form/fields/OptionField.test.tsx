@@ -3,9 +3,9 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { render, screen, waitFor } from 'test/test-utils';
 
 import {
-  NotificationChannelOption,
-  NotificationChannelSecureFields,
-  OptionMeta,
+  type NotificationChannelOption,
+  type NotificationChannelSecureFields,
+  type OptionMeta,
 } from 'app/features/alerting/unified/types/alerting';
 
 import { OptionField } from './OptionField';

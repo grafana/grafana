@@ -1,11 +1,11 @@
-import { HTMLAttributes, memo, useId, useMemo } from 'react';
+import { type HTMLAttributes, memo, useId, useMemo } from 'react';
 
-import { FieldDisplay } from '@grafana/data';
+import { type FieldDisplay } from '@grafana/data';
 
 import { RadialArcPathEndpointMarks } from './RadialArcPathEndpointMarks';
 import { getBarEndcapColors, getGradientCss } from './colors';
 import { ARC_END, ARC_START } from './constants';
-import { RadialShape, RadialGaugeDimensions, GradientStop } from './types';
+import { type RadialShape, type RadialGaugeDimensions, type GradientStop } from './types';
 import { drawRadialArcPath, toRad, IS_SAFARI } from './utils';
 
 export interface RadialArcPathPropsBase {

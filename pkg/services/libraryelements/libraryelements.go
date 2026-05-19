@@ -32,9 +32,12 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.Rout
 		treeCache:         newFolderTreeCache(folderService),
 	}
 
-	l.registerAPIEndpoints()
-	ac.RegisterScopeAttributeResolver(LibraryPanelUIDScopeResolver(l, l.folderService))
-
+	if routeRegister != nil {
+		l.registerAPIEndpoints()
+	}
+	if folderService != nil {
+		ac.RegisterScopeAttributeResolver(LibraryPanelUIDScopeResolver(l, l.folderService))
+	}
 	return l
 }
 
@@ -44,9 +47,6 @@ type Service interface {
 	PatchLibraryElement(c context.Context, signedInUser identity.Requester, cmd model.PatchLibraryElementCommand, uid string) (model.LibraryElementDTO, error)
 	DeleteLibraryElement(c context.Context, signedInUser identity.Requester, uid string) (int64, error)
 	GetElement(c context.Context, signedInUser identity.Requester, cmd model.GetLibraryElementCommand) (model.LibraryElementDTO, error)
-	GetElementsForDashboard(c context.Context, dashboardID int64) (map[string]model.LibraryElementDTO, error)
-	ConnectElementsToDashboard(c context.Context, signedInUser identity.Requester, elementUIDs []string, dashboardID int64) error
-	DisconnectElementsFromDashboard(c context.Context, dashboardID int64) error
 	DeleteLibraryElementsInFolder(c context.Context, signedInUser identity.Requester, folderUID string) error
 	GetAllElements(c context.Context, signedInUser identity.Requester, query model.SearchLibraryElementsQuery) (model.LibraryElementSearchResult, error)
 }
@@ -70,21 +70,6 @@ var _ Service = (*LibraryElementService)(nil)
 // GetElement gets an element from a UID.
 func (l *LibraryElementService) GetElement(c context.Context, signedInUser identity.Requester, cmd model.GetLibraryElementCommand) (model.LibraryElementDTO, error) {
 	return l.getLibraryElementByUid(c, signedInUser, cmd, nil)
-}
-
-// GetElementsForDashboard gets all connected elements for a specific dashboard.
-func (l *LibraryElementService) GetElementsForDashboard(c context.Context, dashboardID int64) (map[string]model.LibraryElementDTO, error) {
-	return l.getElementsForDashboardID(c, dashboardID)
-}
-
-// ConnectElementsToDashboard connects elements to a specific dashboard.
-func (l *LibraryElementService) ConnectElementsToDashboard(c context.Context, signedInUser identity.Requester, elementUIDs []string, dashboardID int64) error {
-	return l.connectElementsToDashboardID(c, signedInUser, elementUIDs, dashboardID)
-}
-
-// DisconnectElementsFromDashboard disconnects elements from a specific dashboard.
-func (l *LibraryElementService) DisconnectElementsFromDashboard(c context.Context, dashboardID int64) error {
-	return l.disconnectElementsFromDashboardID(c, dashboardID)
 }
 
 // DeleteLibraryElementsInFolder deletes all elements for a specific folder.

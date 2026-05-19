@@ -20,7 +20,7 @@ import { createTheme } from '@grafana/data';
 import traceGenerator from '../demo/trace-generators';
 import transformTraceData from '../model/transform-trace-data';
 
-import TraceTimelineViewer, { TProps } from './index';
+import TraceTimelineViewer, { type TProps } from './index';
 
 jest.mock('@grafana/runtime', () => {
   return {

@@ -1,14 +1,14 @@
 import { useCallback, useEffect } from 'react';
 import * as React from 'react';
 
-import { SelectableValue, TimeRange } from '@grafana/data';
+import { type SelectableValue, type TimeRange } from '@grafana/data';
 import { EditorRows } from '@grafana/plugin-ui';
 import { Stack } from '@grafana/ui';
 
-import { AlignmentTypes, QueryType, TimeSeriesList, TimeSeriesQuery } from '../dataquery.gen';
-import CloudMonitoringDatasource from '../datasource';
-import { CloudMonitoringQuery } from '../types/query';
-import { CustomMetaData } from '../types/types';
+import { AlignmentTypes, QueryType, type TimeSeriesList, type TimeSeriesQuery } from '../dataquery.gen';
+import type CloudMonitoringDatasource from '../datasource';
+import { type CloudMonitoringQuery } from '../types/query';
+import { type CustomMetaData } from '../types/types';
 
 import { AliasBy } from './AliasBy';
 import { GraphPeriod } from './GraphPeriod';

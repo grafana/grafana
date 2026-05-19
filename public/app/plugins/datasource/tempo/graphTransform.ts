@@ -1,12 +1,12 @@
 import {
-  DataFrame,
+  type DataFrame,
   DataFrameView,
-  DataQueryResponse,
+  type DataQueryResponse,
   FieldColorModeId,
-  FieldDTO,
+  type FieldDTO,
   MutableDataFrame,
   NodeGraphDataFrameFieldNames as Fields,
-  TimeRange,
+  type TimeRange,
   FieldType,
   toDataFrame,
 } from '@grafana/data';

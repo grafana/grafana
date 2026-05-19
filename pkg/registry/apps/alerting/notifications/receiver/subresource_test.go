@@ -7,27 +7,26 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 )
 
 func TestValidateCreateReceiverIntegrationTestRequestBody(t *testing.T) {
 	testCases := []struct {
 		name        string
 		receiverUID string
-		body        v0alpha1.CreateReceiverIntegrationTestRequestBody
+		body        v1beta1.CreateReceiverIntegrationTestRequestBody
 		expectError string
 	}{
 		{
 			name:        "new receiver with integration UID should fail",
 			receiverUID: "",
-			body: v0alpha1.CreateReceiverIntegrationTestRequestBody{
-				Integration: v0alpha1.CreateReceiverIntegrationTestRequestIntegration{
-					Uid:      utils.Pointer("integration-uid"),
+			body: v1beta1.CreateReceiverIntegrationTestRequestBody{
+				Integration: v1beta1.CreateReceiverIntegrationTestRequestIntegration{
+					Uid:      new("integration-uid"),
 					Type:     "slack",
 					Settings: map[string]any{},
 				},
@@ -37,8 +36,8 @@ func TestValidateCreateReceiverIntegrationTestRequestBody(t *testing.T) {
 		{
 			name:        "new receiver with secure fields should fail",
 			receiverUID: "",
-			body: v0alpha1.CreateReceiverIntegrationTestRequestBody{
-				Integration: v0alpha1.CreateReceiverIntegrationTestRequestIntegration{
+			body: v1beta1.CreateReceiverIntegrationTestRequestBody{
+				Integration: v1beta1.CreateReceiverIntegrationTestRequestIntegration{
 					Type:         "slack",
 					Settings:     map[string]any{},
 					SecureFields: map[string]bool{"token": true},
@@ -49,8 +48,8 @@ func TestValidateCreateReceiverIntegrationTestRequestBody(t *testing.T) {
 		{
 			name:        "new integration without UID but with secure fields should fail",
 			receiverUID: "receiver-uid",
-			body: v0alpha1.CreateReceiverIntegrationTestRequestBody{
-				Integration: v0alpha1.CreateReceiverIntegrationTestRequestIntegration{
+			body: v1beta1.CreateReceiverIntegrationTestRequestBody{
+				Integration: v1beta1.CreateReceiverIntegrationTestRequestIntegration{
 					Type:         "slack",
 					Settings:     map[string]any{},
 					SecureFields: map[string]bool{"token": true},
@@ -61,9 +60,9 @@ func TestValidateCreateReceiverIntegrationTestRequestBody(t *testing.T) {
 		{
 			name:        "new integration with empty UID and secure fields should fail",
 			receiverUID: "receiver-uid",
-			body: v0alpha1.CreateReceiverIntegrationTestRequestBody{
-				Integration: v0alpha1.CreateReceiverIntegrationTestRequestIntegration{
-					Uid:          utils.Pointer(""),
+			body: v1beta1.CreateReceiverIntegrationTestRequestBody{
+				Integration: v1beta1.CreateReceiverIntegrationTestRequestIntegration{
+					Uid:          new(""),
 					Type:         "slack",
 					Settings:     map[string]any{},
 					SecureFields: map[string]bool{"token": true},
@@ -74,8 +73,8 @@ func TestValidateCreateReceiverIntegrationTestRequestBody(t *testing.T) {
 		{
 			name:        "valid new receiver with full integration",
 			receiverUID: "",
-			body: v0alpha1.CreateReceiverIntegrationTestRequestBody{
-				Integration: v0alpha1.CreateReceiverIntegrationTestRequestIntegration{
+			body: v1beta1.CreateReceiverIntegrationTestRequestBody{
+				Integration: v1beta1.CreateReceiverIntegrationTestRequestIntegration{
 					Type:     "slack",
 					Settings: map[string]any{"url": "https://slack.com/webhook"},
 				},
@@ -85,8 +84,8 @@ func TestValidateCreateReceiverIntegrationTestRequestBody(t *testing.T) {
 		{
 			name:        "valid existing receiver with new integration",
 			receiverUID: "receiver-uid",
-			body: v0alpha1.CreateReceiverIntegrationTestRequestBody{
-				Integration: v0alpha1.CreateReceiverIntegrationTestRequestIntegration{
+			body: v1beta1.CreateReceiverIntegrationTestRequestBody{
+				Integration: v1beta1.CreateReceiverIntegrationTestRequestIntegration{
 					Type:     "slack",
 					Settings: map[string]any{"url": "https://slack.com/webhook"},
 				},
@@ -96,9 +95,9 @@ func TestValidateCreateReceiverIntegrationTestRequestBody(t *testing.T) {
 		{
 			name:        "valid existing receiver with patched integration (has UID and secure fields)",
 			receiverUID: "receiver-uid",
-			body: v0alpha1.CreateReceiverIntegrationTestRequestBody{
-				Integration: v0alpha1.CreateReceiverIntegrationTestRequestIntegration{
-					Uid:          utils.Pointer("integration-uid"),
+			body: v1beta1.CreateReceiverIntegrationTestRequestBody{
+				Integration: v1beta1.CreateReceiverIntegrationTestRequestIntegration{
+					Uid:          new("integration-uid"),
 					Type:         "slack",
 					Settings:     map[string]any{"url": "https://slack.com/webhook"},
 					SecureFields: map[string]bool{"token": true},
@@ -127,7 +126,7 @@ func TestTestReceiver(t *testing.T) {
 	testCases := []struct {
 		name              string
 		receiverUID       string
-		body              v0alpha1.CreateReceiverIntegrationTestRequestBody
+		body              v1beta1.CreateReceiverIntegrationTestRequestBody
 		expectedMethod    string
 		expectedAssertion func(t *testing.T, call testingServiceCall)
 		expectError       bool
@@ -135,12 +134,12 @@ func TestTestReceiver(t *testing.T) {
 		{
 			name:        "uses TestNewReceiverIntegration when new receiver and integration provided",
 			receiverUID: "",
-			body: v0alpha1.CreateReceiverIntegrationTestRequestBody{
-				Integration: v0alpha1.CreateReceiverIntegrationTestRequestIntegration{
+			body: v1beta1.CreateReceiverIntegrationTestRequestBody{
+				Integration: v1beta1.CreateReceiverIntegrationTestRequestIntegration{
 					Type:     "slack",
 					Settings: map[string]any{"url": "https://slack.com/webhook"},
 				},
-				Alert: v0alpha1.CreateReceiverIntegrationTestRequestAlert{
+				Alert: v1beta1.CreateReceiverIntegrationTestRequestAlert{
 					Labels: map[string]string{"alertname": "test"},
 				},
 			},
@@ -153,12 +152,12 @@ func TestTestReceiver(t *testing.T) {
 		{
 			name:        "uses TestNewReceiverIntegration with placeholder receiver UID",
 			receiverUID: newReceiverNamePlaceholder,
-			body: v0alpha1.CreateReceiverIntegrationTestRequestBody{
-				Integration: v0alpha1.CreateReceiverIntegrationTestRequestIntegration{
+			body: v1beta1.CreateReceiverIntegrationTestRequestBody{
+				Integration: v1beta1.CreateReceiverIntegrationTestRequestIntegration{
 					Type:     "slack",
 					Settings: map[string]any{"url": "https://slack.com/webhook"},
 				},
-				Alert: v0alpha1.CreateReceiverIntegrationTestRequestAlert{
+				Alert: v1beta1.CreateReceiverIntegrationTestRequestAlert{
 					Labels: map[string]string{"alertname": "test"},
 				},
 			},
@@ -170,14 +169,14 @@ func TestTestReceiver(t *testing.T) {
 		{
 			name:        "uses PatchIntegrationAndTest when existing receiver with integration provided",
 			receiverUID: "receiver-uid",
-			body: v0alpha1.CreateReceiverIntegrationTestRequestBody{
-				Integration: v0alpha1.CreateReceiverIntegrationTestRequestIntegration{
+			body: v1beta1.CreateReceiverIntegrationTestRequestBody{
+				Integration: v1beta1.CreateReceiverIntegrationTestRequestIntegration{
 					Uid:          uid("integration-uid"),
 					Type:         "slack",
 					Settings:     map[string]any{"url": "https://slack.com/webhook"},
 					SecureFields: map[string]bool{"token": true},
 				},
-				Alert: v0alpha1.CreateReceiverIntegrationTestRequestAlert{
+				Alert: v1beta1.CreateReceiverIntegrationTestRequestAlert{
 					Labels: map[string]string{"alertname": "test"},
 				},
 			},
@@ -192,12 +191,12 @@ func TestTestReceiver(t *testing.T) {
 		{
 			name:        "uses PatchIntegrationAndTest when existing receiver with new integration (no UID)",
 			receiverUID: "receiver-uid",
-			body: v0alpha1.CreateReceiverIntegrationTestRequestBody{
-				Integration: v0alpha1.CreateReceiverIntegrationTestRequestIntegration{
+			body: v1beta1.CreateReceiverIntegrationTestRequestBody{
+				Integration: v1beta1.CreateReceiverIntegrationTestRequestIntegration{
 					Type:     "slack",
 					Settings: map[string]any{"url": "https://slack.com/webhook"},
 				},
-				Alert: v0alpha1.CreateReceiverIntegrationTestRequestAlert{
+				Alert: v1beta1.CreateReceiverIntegrationTestRequestAlert{
 					Labels: map[string]string{"alertname": "test"},
 				},
 			},
@@ -212,7 +211,7 @@ func TestTestReceiver(t *testing.T) {
 		{
 			name:        "returns error when validation fails",
 			receiverUID: "receiver-uid",
-			body:        v0alpha1.CreateReceiverIntegrationTestRequestBody{},
+			body:        v1beta1.CreateReceiverIntegrationTestRequestBody{},
 			expectError: true,
 		},
 	}

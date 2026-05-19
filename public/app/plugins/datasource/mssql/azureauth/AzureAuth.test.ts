@@ -1,8 +1,8 @@
 import {
-  AzureCredentials,
+  type AzureCredentials,
   AzureCloud,
-  ConcealedSecret,
-  AzureClientSecretCredentials,
+  type ConcealedSecret,
+  type AzureClientSecretCredentials,
   instanceOfAzureCredential,
   updateDatasourceCredentials,
 } from '@grafana/azure-sdk';

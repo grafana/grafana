@@ -1,4 +1,4 @@
-import { StandardEditorProps } from '@grafana/data';
+import { type StandardEditorProps } from '@grafana/data';
 import { Switch } from '@grafana/ui';
 
 export const DEFAULT_CLUSTERING_ANNOTATION_SPACING = 24;

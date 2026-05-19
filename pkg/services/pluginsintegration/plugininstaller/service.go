@@ -78,7 +78,7 @@ func ProvideService(
 
 // IsDisabled disables background installation of plugins.
 func (s *Service) IsDisabled() bool {
-	return len(s.cfg.PreinstallPluginsAsync) == 0
+	return len(s.cfg.PreinstallPluginsAsync) == 0 && len(s.cfg.PreinstallPluginsSync) == 0
 }
 
 func (s *Service) shouldUpdate(ctx context.Context, pluginID, currentVersion string, pluginURL string) bool {

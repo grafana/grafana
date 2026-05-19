@@ -1,7 +1,7 @@
-import { ChannelValues, ReceiverFormValues } from '../../../types/receiver-form';
+import { type ChannelValues, type ReceiverFormValues } from '../../../types/receiver-form';
 
 import { matchesOnlyOneTemplate } from './fields/utils';
-import { DeprecatedAuthHTTPConfig, HTTPAuthConfig, normalizeFormValues } from './util';
+import { type DeprecatedAuthHTTPConfig, type HTTPAuthConfig, normalizeFormValues } from './util';
 
 describe('normalizeFormValues', () => {
   it('should leave the older config alone', () => {

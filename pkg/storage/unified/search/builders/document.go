@@ -98,7 +98,7 @@ func NewIndexableDocumentFromValue(key *resourcepb.ResourceKey, rv int64, value 
 		return nil, err
 	}
 
-	doc := resource.NewIndexableDocument(key, rv, obj)
+	doc := resource.NewIndexableDocument(key, rv, obj, "")
 	doc.Fields = make(map[string]any)
 	doc.SelectableFields, err = BuildSelectableFields(resObj, kind)
 	return doc, err

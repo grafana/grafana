@@ -3,8 +3,8 @@ import { createContext, useContext } from 'react';
 import { CoreApp, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
 import { checkLogsError, checkLogsSampled } from 'app/features/logs/utils';
 
-import { LogListContextData, Props } from '../LogListContext';
-import { LogListModel } from '../processing';
+import { type LogListContextData, type Props } from '../LogListContext';
+import { type LogListModel } from '../processing';
 
 jest.mock('@grafana/assistant', () => {
   return {
@@ -31,6 +31,7 @@ export const LogListContext = createContext<LogListContextData>({
   setLogListState: () => {},
   setPinnedLogs: () => {},
   setPrettifyJSON: () => {},
+  setShowLevel: () => {},
   setShowTime: () => {},
   setShowUniqueLabels: () => {},
   setSortOrder: () => {},
@@ -77,6 +78,7 @@ export const defaultValue: LogListContextData = {
   setForceEscape: jest.fn(),
   setLogListState: jest.fn(),
   setPinnedLogs: jest.fn(),
+  setShowLevel: jest.fn(),
   setShowTime: jest.fn(),
   setShowUniqueLabels: jest.fn(),
   setSortOrder: jest.fn(),

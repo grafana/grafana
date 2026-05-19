@@ -171,7 +171,7 @@ func MetaAccessor(raw interface{}) (GrafanaMetaAccessor, error) {
 
 	// reflection to find title and other non object properties
 	r := reflect.ValueOf(raw)
-	if r.Kind() == reflect.Ptr || r.Kind() == reflect.Interface {
+	if r.Kind() == reflect.Pointer || r.Kind() == reflect.Interface {
 		r = r.Elem()
 	}
 	return &grafanaMetaAccessor{raw, obj, r}, nil
@@ -853,6 +853,12 @@ func (m *grafanaMetaAccessor) GetSecureValues() (vals common.InlineSecureValues,
 				create, _, _ := unstructured.NestedString(sv, "create")
 				if create != "" {
 					inline.Create = common.NewSecretValue(create)
+
+					if rawDesc, _, _ := unstructured.NestedFieldNoCopy(sv, "description"); rawDesc != nil {
+						if desc, ok := rawDesc.(*string); ok && desc != nil && *desc != "" {
+							inline.Description = desc
+						}
+					}
 				}
 			}
 			vals[k] = inline

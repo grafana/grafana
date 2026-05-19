@@ -1,7 +1,7 @@
 import { capitalize, lowerCase } from 'lodash';
 
 import { t } from '@grafana/i18n';
-import { SceneObject, VizPanel } from '@grafana/scenes';
+import { type SceneObject, VizPanel } from '@grafana/scenes';
 
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { RowItem } from '../scene/layout-rows/RowItem';

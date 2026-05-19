@@ -16,7 +16,7 @@ import { CollapseToggle } from '../CollapseToggle';
 import { DetailsField } from '../DetailsField';
 import { ProvisioningBadge } from '../Provisioning';
 import {
-  NotificationTemplate,
+  type NotificationTemplate,
   useDeleteNotificationTemplate,
   useNotificationTemplateMetadata,
 } from '../contact-points/useNotificationTemplates';

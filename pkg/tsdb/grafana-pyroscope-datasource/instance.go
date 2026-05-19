@@ -19,6 +19,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
+	querierv1 "github.com/grafana/pyroscope/api/gen/proto/go/querier/v1"
 	typesv1 "github.com/grafana/pyroscope/api/gen/proto/go/types/v1"
 )
 
@@ -36,6 +37,7 @@ type ProfilingClient interface {
 	GetSeries(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, groupBy []string, limit *int64, step float64, exemplarType typesv1.ExemplarType) (*SeriesResponse, error)
 	GetProfile(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, maxNodes *int64, profileIdSelector []string) (*ProfileResponse, error)
 	GetSpanProfile(ctx context.Context, profileTypeID string, labelSelector string, spanSelector []string, start int64, end int64, maxNodes *int64) (*ProfileResponse, error)
+	GetHeatmap(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, groupBy []string, step float64, queryType querierv1.HeatmapQueryType, limit *int64, includeExemplars bool) (*HeatmapResponse, error)
 }
 
 // PyroscopeDatasource is a datasource for querying application performance profiles.
@@ -134,7 +136,7 @@ func (d *PyroscopeDatasource) labelNames(ctx context.Context, req *backend.CallR
 	start, _ := strconv.ParseInt(query.Get("start"), 10, 64)
 	end, _ := strconv.ParseInt(query.Get("end"), 10, 64)
 	labelSelector := query.Get("query")
-	matchers, err := parser.ParseMetricSelector(labelSelector)
+	matchers, err := parser.NewParser(parser.Options{}).ParseMetricSelector(labelSelector)
 	if err != nil {
 		return backend.DownstreamErrorf("failed parsing label selector: %w. function: %s", err, logEntrypoint())
 	}

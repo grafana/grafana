@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useForm } from 'react-hook-form';
 
-import { GrafanaTheme2, TimeRange } from '@grafana/data';
+import { type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Button, ClipboardButton, Field, Input, Stack, Label, ModalsController, Switch, useStyles2 } from '@grafana/ui';
@@ -10,9 +10,9 @@ import {
   usePauseOrResumePublicDashboardMutation,
   useUpdatePublicDashboardMutation,
 } from 'app/features/dashboard/api/publicDashboardApi';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
-import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { DeletePublicDashboardModal } from 'app/features/manage-dashboards/components/PublicDashboardListTable/DeletePublicDashboardModal';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -30,7 +30,7 @@ import {
   dashboardHasTemplateVariables,
   generatePublicDashboardUrl,
   isEmailSharingEnabled,
-  PublicDashboard,
+  type PublicDashboard,
 } from '../SharePublicDashboardUtils';
 
 import { Configuration } from './Configuration';

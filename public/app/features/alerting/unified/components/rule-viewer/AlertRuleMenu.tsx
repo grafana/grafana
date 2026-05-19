@@ -1,16 +1,21 @@
-import { PropsOf } from '@emotion/react';
+import { type PropsOf } from '@emotion/react';
 
 import { useAssistant } from '@grafana/assistant';
 import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Button, ComponentSize, Dropdown, Menu } from '@grafana/ui';
+import { type Button, type ComponentSize, Dropdown, Menu } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import MenuItemPauseRule from 'app/features/alerting/unified/components/MenuItemPauseRule';
 import MoreButton from 'app/features/alerting/unified/components/MoreButton';
 import { useRulePluginLinkExtension } from 'app/features/alerting/unified/plugins/useRulePluginLinkExtensions';
-import { EditableRuleIdentifier, Rule, RuleGroupIdentifierV2, RuleIdentifier } from 'app/types/unified-alerting';
-import { PromAlertingRuleState, RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import {
+  type EditableRuleIdentifier,
+  type Rule,
+  type RuleGroupIdentifierV2,
+  type RuleIdentifier,
+} from 'app/types/unified-alerting';
+import { PromAlertingRuleState, type RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import {
   AlertRuleAction,

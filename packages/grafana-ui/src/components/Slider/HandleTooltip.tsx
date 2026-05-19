@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import Tooltip, { TooltipRef } from '@rc-component/tooltip';
+import Tooltip, { type TooltipRef } from '@rc-component/tooltip';
 import { useEffect, useRef } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 

@@ -1,6 +1,6 @@
 import { isString } from 'lodash';
 import { type JSX, useState } from 'react';
-import { RequireAtLeastOne } from 'type-fest';
+import { type RequireAtLeastOne } from 'type-fest';
 
 import { Trans, t } from '@grafana/i18n';
 import { LinkButton, Stack } from '@grafana/ui';
@@ -10,13 +10,13 @@ import { useDeleteModal } from 'app/features/alerting/unified/components/rule-vi
 import { RedirectToCloneRule } from 'app/features/alerting/unified/components/rules/CloneRule';
 import SilenceGrafanaRuleDrawer from 'app/features/alerting/unified/components/silences/SilenceGrafanaRuleDrawer';
 import {
-  EditableRuleIdentifier,
-  GrafanaRuleIdentifier,
-  Rule,
-  RuleGroupIdentifierV2,
-  RuleIdentifier,
+  type EditableRuleIdentifier,
+  type GrafanaRuleIdentifier,
+  type Rule,
+  type RuleGroupIdentifierV2,
+  type RuleIdentifier,
 } from 'app/types/unified-alerting';
-import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import { type RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { logWarning } from '../../Analytics';
 import { AlertRuleAction, skipToken, useGrafanaPromRuleAbility, useRulerRuleAbility } from '../../hooks/useAbilities';

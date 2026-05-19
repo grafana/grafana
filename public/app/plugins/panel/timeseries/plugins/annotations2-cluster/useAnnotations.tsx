@@ -1,15 +1,15 @@
 import { useMemo } from 'react';
 import tinycolor from 'tinycolor2';
 
-import { arrayToDataFrame, DataFrame, DataTopic } from '@grafana/data';
+import { arrayToDataFrame, type DataFrame, DataTopic } from '@grafana/data';
 import { maybeSortFrame } from '@grafana/data/internal';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
-import { TimeRange2 } from '@grafana/ui/internal';
+import { type TimeRange2 } from '@grafana/ui/internal';
 
 import { getXAnnotationFrames, getXYAnnotationFrames } from '../utils';
 
 interface Props {
-  annotations: DataFrame[];
+  annotations?: DataFrame[];
   newRange: TimeRange2 | null;
 }
 
@@ -44,7 +44,7 @@ const buildWipAnnoFrame = (newRange: TimeRange2) => {
 
 export const useAnnotations = ({ annotations, newRange }: Props) => {
   return useMemo(() => {
-    let sortedAnnotations = annotations.map((frame) =>
+    let sortedAnnotations = annotations?.map((frame) =>
       maybeSortFrame(
         frame,
         frame.fields.findIndex((field) => field.name === 'time')

@@ -4,7 +4,7 @@
  * Remove a row by path. Optionally move contained panels to another group.
  */
 
-import { z } from 'zod';
+import { type z } from 'zod';
 
 import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
@@ -24,6 +24,7 @@ export const removeRowCommand: MutationCommand<RemoveRowPayload> = {
 
   payloadSchema: payloads.removeRow,
   permission: requiresNewDashboardLayouts,
+  readOnly: false,
 
   handler: async (payload, context) => {
     const { scene } = context;
@@ -62,7 +63,8 @@ export const removeRowCommand: MutationCommand<RemoveRowPayload> = {
 
       return {
         success: true,
-        changes: [{ path, previousValue: { title: resolved.item.state.title }, newValue: undefined }],
+        data: { path },
+        changes: [{ path, previousValue: { title: resolved.item.state.title }, newValue: null }],
       };
     } catch (error) {
       return {

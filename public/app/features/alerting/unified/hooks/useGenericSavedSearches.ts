@@ -8,7 +8,7 @@ import { UserStorage } from '@grafana/runtime/internal';
 import { useAppNotification } from '../../../../core/copy/appNotification';
 import { logError, logWarning } from '../Analytics';
 import {
-  SavedSearch,
+  type SavedSearch,
   savedSearchSchema,
   savedSearchesArraySchema,
   validateSearchName,

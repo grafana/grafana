@@ -1,20 +1,20 @@
-import Feature from 'ol/Feature';
+import type Feature from 'ol/Feature';
 import OpenLayersMap from 'ol/Map';
-import Geometry from 'ol/geom/Geometry';
-import Point from 'ol/geom/Point';
+import type Geometry from 'ol/geom/Geometry';
+import type Point from 'ol/geom/Point';
 import { defaults as interactionDefaults } from 'ol/interaction';
-import BaseLayer from 'ol/layer/Base';
+import type BaseLayer from 'ol/layer/Base';
 import LayerGroup from 'ol/layer/Group';
 import ImageLayer from 'ol/layer/Image';
 import TileLayer from 'ol/layer/Tile';
 import VectorLayer from 'ol/layer/Vector';
 import VectorImage from 'ol/layer/VectorImage';
 import WebGLPointsLayer from 'ol/layer/WebGLPoints';
-import ImageSource from 'ol/source/Image';
-import TileSource from 'ol/source/Tile';
-import VectorSource from 'ol/source/Vector';
+import type ImageSource from 'ol/source/Image';
+import type TileSource from 'ol/source/Tile';
+import type VectorSource from 'ol/source/Vector';
 
-import { DataFrame, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { type DataFrame, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { getColorDimension } from 'app/features/dimensions/color';
@@ -23,10 +23,10 @@ import { getScaledDimension } from 'app/features/dimensions/scale';
 import { getTextDimension } from 'app/features/dimensions/text';
 import { getGrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
 
-import { GeomapPanel } from '../GeomapPanel';
+import { type GeomapPanel } from '../GeomapPanel';
 import { type Options } from '../panelcfg.gen';
-import { defaultStyleConfig, StyleConfig, StyleConfigState, StyleDimensions } from '../style/types';
-import { MapLayerState } from '../types';
+import { defaultStyleConfig, type StyleConfig, type StyleConfigState, type StyleDimensions } from '../style/types';
+import { type MapLayerState } from '../types';
 
 export function getStyleDimension(
   frame: DataFrame | undefined,
@@ -162,15 +162,6 @@ export function isSegmentVisible(
   }
   return false;
 }
-
-export const isUrl = (url: string) => {
-  try {
-    const newUrl = new URL(url);
-    return newUrl.protocol.includes('http');
-  } catch (_) {
-    return false;
-  }
-};
 
 /**
  * Checks if a layer has data to display
