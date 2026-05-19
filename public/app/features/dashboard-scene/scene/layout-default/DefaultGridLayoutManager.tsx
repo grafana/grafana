@@ -95,6 +95,10 @@ export class DefaultGridLayoutManager
     this.addActivationHandler(() => this._activationHandler());
   }
 
+  public getAllGridTypes(): string[] {
+    return [DefaultGridLayoutManager.descriptor.id];
+  }
+
   public mergeGrid(other: DashboardLayoutGrid) {
     let offset = 0;
     for (const child of this.state.grid.state.children) {
@@ -679,7 +683,14 @@ function DefaultGridLayoutManagerRenderer({ model }: SceneComponentProps<Default
       className={cx(styles.container, isEditing && styles.containerEditing)}
       data-testid={selectors.components.LayoutContainer(getTestIdForLayout(model))}
     >
-      {model.state.grid.Component && <model.state.grid.Component model={model.state.grid} />}
+      {model.state.grid.Component && (
+        // #123563: Workaround, needs proper fixing downstream
+        // Force-remount when toggling between empty and populated. react-grid-layout caches its
+        // computed container height in internal state; without a fresh mount it stays sized to
+        // the last panel and overflows on top of the Add panel button below. Needs further investigation
+        // as part of #123563.
+        <model.state.grid.Component model={model.state.grid} key={children.length === 0 ? 'empty' : 'populated'} />
+      )}
       {showCanvasActions && (
         <div className={styles.actionsWrapper}>
           <CanvasGridAddActions layoutManager={model} />

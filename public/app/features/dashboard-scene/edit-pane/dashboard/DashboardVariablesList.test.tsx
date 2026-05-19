@@ -2,7 +2,8 @@ import { fireEvent, render, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { VariableHide } from '@grafana/data';
-import { ConstantVariable, SceneVariableSet, type SceneVariable } from '@grafana/scenes';
+import { config } from '@grafana/runtime';
+import { AdHocFiltersVariable, ConstantVariable, SceneVariableSet, type SceneVariable } from '@grafana/scenes';
 
 import { DashboardScene } from '../../scene/DashboardScene';
 import { SnapshotVariable } from '../../serialization/custom-variables/SnapshotVariable';
@@ -103,10 +104,7 @@ describe('<DashboardVariablesList />', () => {
 
         await user.click(getByText(visibleVar1.state.name));
 
-        expect(elements.dashboardScene.state.editPane.selectObject).toHaveBeenCalledWith(
-          visibleVar1,
-          visibleVar1.state.key
-        );
+        expect(elements.dashboardScene.state.editPane.selectObject).toHaveBeenCalledWith(visibleVar1);
       });
     });
 
@@ -148,6 +146,26 @@ describe('<DashboardVariablesList />', () => {
         const aboveNames = Array.from(elements.aboveListItems()).map((item) => item.textContent);
         expect(aboveNames).toEqual(['visibleVar2', 'visibleVar1']);
       });
+    });
+  });
+
+  describe('when dashboardUnifiedDrilldownControls is enabled', () => {
+    beforeEach(() => {
+      config.featureToggles.dashboardUnifiedDrilldownControls = true;
+    });
+
+    afterEach(() => {
+      config.featureToggles.dashboardUnifiedDrilldownControls = false;
+    });
+
+    test('excludes adhoc variables from the rendered list', () => {
+      const { visibleVar1 } = buildTestVariables();
+      const adhocFilter = new AdHocFiltersVariable({ name: 'adhocFilter', type: 'adhoc', hide: VariableHide.dontHide });
+      const { queryByText, elements } = renderVariablesList([visibleVar1, adhocFilter]);
+
+      const aboveNames = Array.from(elements.aboveListItems()).map((item) => item.textContent);
+      expect(aboveNames).toEqual(['visibleVar1']);
+      expect(queryByText('adhocFilter')).not.toBeInTheDocument();
     });
   });
 });

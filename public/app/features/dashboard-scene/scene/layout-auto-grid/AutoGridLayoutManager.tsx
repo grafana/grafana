@@ -116,6 +116,10 @@ export class AutoGridLayoutManager
     return children;
   }
 
+  public getAllGridTypes(): string[] {
+    return [AutoGridLayoutManager.descriptor.id];
+  }
+
   public addPanel(vizPanel: VizPanel) {
     const panelId = dashboardSceneGraph.getNextPanelId(this);
 

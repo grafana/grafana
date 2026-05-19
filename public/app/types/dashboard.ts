@@ -52,7 +52,6 @@ export interface DashboardMeta {
   canMakeEditable?: boolean;
   provisioned?: boolean;
   provisionedExternalId?: string;
-  isStarred?: boolean;
   showSettings?: boolean;
   expires?: string;
   isFolder?: boolean;
@@ -85,6 +84,9 @@ export interface DashboardMeta {
   // This is a property added specifically for edge cases where dashboards should be reloaded on scopes, time range or variables changes
   // This property is not persisted in the DB but its existence is controlled by the API
   reloadOnParamsChange?: boolean;
+
+  /** True when no custom home dashboard is configured (the platform default should be used). */
+  isDefaultHome?: boolean;
 
   // Conversion status from the API response, indicating if the dashboard was converted from another version
   conversionStatus?: {
@@ -161,6 +163,8 @@ export interface DashboardState {
 
 export const DASHBOARD_FROM_LS_KEY = 'DASHBOARD_FROM_LS_KEY';
 
-export function isRedirectResponse(dto: DashboardDTO | HomeDashboardRedirectDTO): dto is HomeDashboardRedirectDTO {
+export function isRedirectResponse<T extends object>(
+  dto: T | HomeDashboardRedirectDTO
+): dto is HomeDashboardRedirectDTO {
   return 'redirectUri' in dto;
 }

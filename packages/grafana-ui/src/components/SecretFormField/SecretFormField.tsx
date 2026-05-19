@@ -1,4 +1,3 @@
-import { omit } from 'lodash';
 import { type InputHTMLAttributes } from 'react';
 import * as React from 'react';
 
@@ -59,8 +58,8 @@ export const SecretFormField = ({
               type="text"
               className={`gf-form-input width-${inputWidth}`}
               disabled={true}
+              {...inputProps}
               value="configured"
-              {...omit(inputProps, 'value')}
             />
             <Button onClick={onReset} variant="secondary" type="button">
               <Trans i18nKey="grafana-ui.secret-form-field.reset">Reset</Trans>

@@ -9,13 +9,14 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/notify/notifytest"
 	"github.com/grafana/alerting/receivers/email"
 	"github.com/grafana/alerting/receivers/schema"
 	"github.com/grafana/alerting/receivers/slack"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -32,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/routes"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
@@ -443,6 +445,32 @@ func TestIntegrationContactPointService(t *testing.T) {
 			})
 		}
 	})
+
+	t.Run("email contact point create succeeds when validator passes", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+		sut.emailValidator = notifier.NewFakeEmailValidator(t, nil)
+
+		_, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, createTestEmailContactPoint(), models.ProvenanceAPI)
+		require.NoError(t, err)
+	})
+
+	t.Run("email contact point create fails when validator rejects email", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+		sut.emailValidator = notifier.NewFakeEmailValidator(t, fmt.Errorf("not an org member"))
+
+		_, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, createTestEmailContactPoint(), models.ProvenanceAPI)
+		require.Error(t, err)
+	})
+
+	t.Run("email contact point update fails when validator rejects email", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+		created, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, createTestEmailContactPoint(), models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		sut.emailValidator = notifier.NewFakeEmailValidator(t, fmt.Errorf("not an org member"))
+		err = sut.UpdateContactPoint(context.Background(), 1, adminUser, created, models.ProvenanceAPI)
+		require.Error(t, err)
+	})
 }
 
 func TestIntegrationContactPointServiceDecryptRedact(t *testing.T) {
@@ -718,9 +746,10 @@ func TestIntegrationAuthorization(t *testing.T) {
 	receiverC := "receiverC"
 	sut, authz := sutWithAuthz()
 	gen := models.IntegrationGen(models.IntegrationMuts.WithValidConfig(email.Type), models.IntegrationMuts.WithName(receiverA))
-	integration1 := GrafanaIntegrationConfigToEmbeddedContactPoint(util.Pointer(gen()), models.ProvenanceAPI)
-	integration2 := GrafanaIntegrationConfigToEmbeddedContactPoint(util.Pointer(gen()), models.ProvenanceAPI)
-	integration3 := GrafanaIntegrationConfigToEmbeddedContactPoint(util.Pointer(gen()), models.ProvenanceAPI)
+	g1, g2, g3 := gen(), gen(), gen()
+	integration1 := GrafanaIntegrationConfigToEmbeddedContactPoint(&g1, models.ProvenanceAPI)
+	integration2 := GrafanaIntegrationConfigToEmbeddedContactPoint(&g2, models.ProvenanceAPI)
+	integration3 := GrafanaIntegrationConfigToEmbeddedContactPoint(&g3, models.ProvenanceAPI)
 	t.Run("CreateContactPoint", func(t *testing.T) {
 		t.Run("authorize create if receiver is new", func(t *testing.T) {
 			authz.AuthorizeCreateFunc = func(ctx context.Context, requester identity.Requester) error {
@@ -868,14 +897,19 @@ func TestIntegrationAuthorization(t *testing.T) {
 	})
 }
 
-func createContactPointServiceSut(t *testing.T, secretService secrets.Service) *ContactPointService {
+func createContactPointServiceSut(t *testing.T,
+	secretService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+) *ContactPointService {
 	// Encrypt secure settings.
 	cfg := createEncryptedConfig(t, secretService)
 	store := fakes.NewFakeAlertmanagerConfigStore(cfg)
 	return createContactPointServiceSutWithConfigStore(t, secretService, store)
 }
 
-func createContactPointServiceSutWithConfigStore(t *testing.T, secretService secrets.Service, configStore legacy_storage.AMConfigStore) *ContactPointService {
+func createContactPointServiceSutWithConfigStore(t *testing.T,
+	secretService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+	configStore legacy_storage.AMConfigStore,
+) *ContactPointService {
 	t.Helper()
 	// Encrypt secure settings.
 	xact := newNopTransactionManager()
@@ -893,7 +927,10 @@ func createContactPointServiceSutWithConfigStore(t *testing.T, secretService sec
 		log.NewNopLogger(),
 		fakes.NewFakeReceiverPermissionsService(),
 		tracing.InitializeTracerForTest(),
+		validation.ValidateProvenanceRelaxed,
 		false,
+		nil,
+		&notifier.NoopOrgEmailValidator{},
 	)
 
 	return NewContactPointService(
@@ -906,6 +943,8 @@ func createContactPointServiceSutWithConfigStore(t *testing.T, secretService sec
 		log.NewNopLogger(),
 		&fakeAlertRuleNotificationStore{},
 		fakes.NewFakeReceiverPermissionsService(),
+		nil,
+		&notifier.NoopOrgEmailValidator{},
 	)
 }
 
@@ -914,6 +953,15 @@ func createTestContactPoint() definitions.EmbeddedContactPoint {
 	return definitions.EmbeddedContactPoint{
 		Name:     "test-contact-point",
 		Type:     "slack",
+		Settings: settings,
+	}
+}
+
+func createTestEmailContactPoint() definitions.EmbeddedContactPoint {
+	settings, _ := simplejson.NewJson([]byte(`{"addresses":"test@example.com"}`))
+	return definitions.EmbeddedContactPoint{
+		Name:     "test-email-contact-point",
+		Type:     "email",
 		Settings: settings,
 	}
 }
@@ -931,7 +979,9 @@ func cpsQueryWithName(orgID int64, name string) ContactPointQuery {
 	}
 }
 
-func createEncryptedConfig(t *testing.T, secretService secrets.Service) string {
+func createEncryptedConfig(t *testing.T,
+	secretService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+) string {
 	c := &definitions.PostableUserConfig{}
 	err := json.Unmarshal([]byte(defaultAlertmanagerConfigJSON), c)
 	require.NoError(t, err)
@@ -971,7 +1021,7 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "receiver-2",
 				Type: "teams",
 			},
-			expOldReceiver: util.Pointer("receiver-2"),
+			expOldReceiver: new("receiver-2"),
 			expCfg: definitions.PostableApiAlertingConfig{
 				Config: definitions.Config{
 					Route: &definitions.Route{
@@ -1032,7 +1082,7 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "new-receiver",
 				Type: "slack",
 			},
-			expOldReceiver:     util.Pointer("receiver-1"),
+			expOldReceiver:     new("receiver-1"),
 			expCreatedReceiver: true,
 			expFullRemoval:     true,
 			expCfg: definitions.PostableApiAlertingConfig{
@@ -1095,7 +1145,7 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "receiver-1",
 				Type: "slack",
 			},
-			expOldReceiver:     util.Pointer("receiver-2"),
+			expOldReceiver:     new("receiver-2"),
 			expCreatedReceiver: false,
 			expCfg: definitions.PostableApiAlertingConfig{
 				Config: definitions.Config{
@@ -1216,7 +1266,7 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "receiver-2",
 				Type: "slack",
 			},
-			expOldReceiver:     util.Pointer("receiver-1"),
+			expOldReceiver:     new("receiver-1"),
 			expCreatedReceiver: false,
 			expCfg: definitions.PostableApiAlertingConfig{
 				Config: definitions.Config{
@@ -1360,7 +1410,7 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "receiver-4",
 				Type: "slack",
 			},
-			expOldReceiver:     util.Pointer("receiver-1"),
+			expOldReceiver:     new("receiver-1"),
 			expCreatedReceiver: false,
 			expCfg: definitions.PostableApiAlertingConfig{
 				Config: definitions.Config{
@@ -1445,7 +1495,7 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "brand-new-group",
 				Type: "opsgenie",
 			},
-			expOldReceiver:     util.Pointer("receiver-2"),
+			expOldReceiver:     new("receiver-2"),
 			expCreatedReceiver: true,
 			expCfg: definitions.PostableApiAlertingConfig{
 				Config: definitions.Config{
@@ -1517,7 +1567,7 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "brand-new-group",
 				Type: "opsgenie",
 			},
-			expOldReceiver:     util.Pointer("receiver-2"), // Not the inconsistent receiver-3?
+			expOldReceiver:     new("receiver-2"), // Not the inconsistent receiver-3?
 			expCreatedReceiver: true,
 			expCfg: definitions.PostableApiAlertingConfig{
 				Config: definitions.Config{
@@ -1640,7 +1690,7 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "receiver-1",
 				Type: "slack",
 			},
-			expOldReceiver:     util.Pointer("receiver-2"),
+			expOldReceiver:     new("receiver-2"),
 			expCreatedReceiver: false,
 			expFullRemoval:     true,
 			expCfg: definitions.PostableApiAlertingConfig{
@@ -1815,5 +1865,65 @@ func createInconsistentTestConfigWithReceivers() *definitions.PostableUserConfig
 				},
 			},
 		},
+	}
+}
+
+func TestValidateContactPointAllowedIntegrations(t *testing.T) {
+	decryptFn := func(_ context.Context, _ map[string][]byte, _, fallback string) string {
+		return fallback
+	}
+	newCP := func(integrationType string) *definitions.EmbeddedContactPoint {
+		settings, _ := simplejson.NewJson([]byte(`{"recipient":"value_recipient","token":"value_token"}`))
+		return &definitions.EmbeddedContactPoint{
+			Name:     "test-cp",
+			Type:     integrationType,
+			Settings: settings,
+		}
+	}
+
+	testCases := []struct {
+		name            string
+		allowed         map[schema.IntegrationType]struct{}
+		integrationType string
+		wantErr         string
+	}{
+		{
+			name:            "nil allowlist permits any valid type",
+			integrationType: "slack",
+		},
+		{
+			name:            "type in allowlist is permitted",
+			allowed:         map[schema.IntegrationType]struct{}{"slack": {}},
+			integrationType: "slack",
+		},
+		{
+			name:            "type not in allowlist is rejected",
+			allowed:         map[schema.IntegrationType]struct{}{"email": {}},
+			integrationType: "slack",
+			wantErr:         "integration type slack is not allowed",
+		},
+		{
+			name:            "empty non-nil allowlist rejects all types",
+			allowed:         map[schema.IntegrationType]struct{}{},
+			integrationType: "slack",
+			wantErr:         "integration type slack is not allowed",
+		},
+		{
+			name:            "allowlist match is case-insensitive via canonical resolution",
+			allowed:         map[schema.IntegrationType]struct{}{"slack": {}},
+			integrationType: "SLACK",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := ValidateContactPoint(context.Background(), newCP(tc.integrationType), decryptFn, tc.allowed)
+			if tc.wantErr == "" {
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+				require.Equal(t, err.Error(), tc.wantErr)
+			}
+		})
 	}
 }

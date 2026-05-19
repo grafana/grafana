@@ -16,15 +16,20 @@ labels:
     - oss
     - cloud
 title: Dashboard HTTP API
+weight: 100
 ---
 
 # Dashboard APIs
 
 {{< admonition type="note" >}}
-To learn more about the new API structure, refer to [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
+Available in Grafana 12 and later.
+
+This API complies with the new Grafana API structure. To learn more refer to documentation about the [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis).
+{{< /admonition >}}
+
+## Requirements
 
 If you're running Grafana Enterprise, you'll need to have specific permissions for some endpoints. Refer to [Role-based access control permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.
-{{< /admonition >}}
 
 ## Create Dashboard
 
@@ -778,6 +783,10 @@ Status Codes:
 - **200** – OK
 - **401** – Unauthorized
 - **403** – Access denied
+
+## List dashboard history
+
+You can retrieve the full version history of a dashboard using the List endpoint with specific query parameters. For details and examples, refer to [Resource history HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/resource-history/).
 
 ## Delete Dashboard
 

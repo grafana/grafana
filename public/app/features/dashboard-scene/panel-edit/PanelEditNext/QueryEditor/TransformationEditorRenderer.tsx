@@ -49,6 +49,7 @@ export function TransformationEditorRenderer() {
     <>
       <TransformationFilterDisplay />
       <TransformationEditor
+        key={selectedTransformation.transformId}
         inputData={inputData}
         onUpdate={updateTransformation}
         transformation={selectedTransformation}

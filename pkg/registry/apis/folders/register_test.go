@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -45,7 +44,7 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 				},
 				name: "general",
 			},
-			err: dashboards.ErrFolderInvalidUID,
+			err: folder.ErrInvalidUID,
 		},
 		{
 			name: "should return no error if every validation passes",
@@ -68,7 +67,7 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 				},
 				name: "foo",
 			},
-			err: dashboards.ErrFolderTitleEmpty,
+			err: folder.ErrTitleEmpty,
 		},
 		{
 			name: "should return error if folder is a parent of itself",

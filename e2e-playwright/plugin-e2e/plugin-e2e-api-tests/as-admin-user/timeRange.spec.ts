@@ -31,7 +31,7 @@ test.describe(
 
       test('should set time range with time zone on existing dashboard', async ({ gotoDashboardPage }) => {
         const dashboardPage = await gotoDashboardPage(REACT_TABLE_DASHBOARD);
-        await dashboardPage.timeRange.set({ from: 'now-1h', to: 'now', zone: 'Europe/Stockholm' });
+        await dashboardPage.timeRange.set({ from: 'now-1h', to: 'now', zone: 'Stockholm' });
         await expect(
           dashboardPage.ctx.page.getByLabel('Time range selected'),
           formatExpectError('Expected time range picker to display the selected time range with time zone')

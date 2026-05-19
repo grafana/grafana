@@ -1,10 +1,11 @@
-import { DragDropContext, type DropResult } from '@hello-pangea/dnd';
+import { DragDropContext } from '@hello-pangea/dnd';
 import { useCallback, useMemo } from 'react';
 
 import { VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { type SceneVariableSet, type SceneVariable } from '@grafana/scenes';
+import { config } from '@grafana/runtime';
+import { type SceneVariableSet, type SceneVariable, sceneUtils } from '@grafana/scenes';
 import { Box, Button } from '@grafana/ui';
 
 import { type DashboardScene } from '../../scene/DashboardScene';
@@ -12,10 +13,10 @@ import { openAddVariablePane } from '../../settings/variables/VariableTypeSelect
 import { isEditableVariableType } from '../../settings/variables/utils';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getDashboardSceneFor } from '../../utils/utils';
-import { dashboardEditActions } from '../shared';
 
 import { DraggableList } from './DraggableList';
 import { partitionSceneObjects } from './helpers';
+import { createDragEndHandler } from './variablesDragEndHandler';
 
 const ID_VISIBLE_LIST = 'variables-list-visible';
 const ID_CONTROLS_MENU_LIST = 'variables-list-controls-menu';
@@ -29,70 +30,35 @@ const DROPPABLE_TO_HIDE: Record<string, VariableHide> = {
 
 export function DashboardVariablesList({ variableSet }: { variableSet: SceneVariableSet }) {
   const { variables } = variableSet.useState();
-  const { editable, nonEditable } = useMemo(() => partitionVariablesByEditability(variables), [variables]);
+  const editable = useMemo(() => {
+    const { editable } = partitionVariablesByEditability(variables);
+    if (!config.featureToggles.dashboardUnifiedDrilldownControls) {
+      return editable;
+    }
+    return editable.filter((v) => !sceneUtils.isAdHocVariable(v));
+  }, [variables]);
   const { visible, controlsMenu, hidden } = useMemo(() => partitionVariablesByDisplay(editable), [editable]);
 
   const onClickVariable = useCallback((variable: SceneVariable) => {
     const { editPane } = getDashboardSceneFor(variable).state;
-    editPane.selectObject(variable, variable.state.key!);
+    editPane.selectObject(variable);
   }, []);
 
-  const onDragEnd = useCallback(
-    (result: DropResult) => {
-      const { source, destination } = result;
-      if (!destination) {
-        return;
-      }
-
-      const isSameList = source.droppableId === destination.droppableId;
-      if (isSameList && source.index === destination.index) {
-        return;
-      }
-
-      const currentVariables = variableSet.state.variables;
-      const lists: Record<string, SceneVariable[]> = {
-        [ID_VISIBLE_LIST]: [...visible],
-        [ID_CONTROLS_MENU_LIST]: [...controlsMenu],
-        [ID_HIDDEN_LIST]: [...hidden],
-      };
-
-      const sourceList = lists[source.droppableId];
-      const destList = isSameList ? sourceList : lists[destination.droppableId];
-
-      const [moved] = sourceList.splice(source.index, 1);
-      destList.splice(destination.index, 0, moved);
-
-      const oldHide = moved.state.hide ?? VariableHide.dontHide;
-      const newHide = getTargetHide(destination.droppableId, oldHide);
-
-      dashboardEditActions.edit({
-        source: variableSet,
-        description: t(
+  const onDragEnd = useMemo(
+    () =>
+      createDragEndHandler(
+        variableSet,
+        { visible: ID_VISIBLE_LIST, controlsMenu: ID_CONTROLS_MENU_LIST, hidden: ID_HIDDEN_LIST },
+        visible,
+        controlsMenu,
+        hidden,
+        t(
           'dashboard-scene.variables-list.create-drag-end-handler.description.reorder-variables-list',
           'Reorder variables list'
         ),
-        perform: () => {
-          if (newHide !== oldHide) {
-            moved.setState({ hide: newHide });
-          }
-          variableSet.setState({
-            variables: [
-              ...nonEditable,
-              ...lists[ID_VISIBLE_LIST],
-              ...lists[ID_CONTROLS_MENU_LIST],
-              ...lists[ID_HIDDEN_LIST],
-            ],
-          });
-        },
-        undo: () => {
-          if (newHide !== oldHide) {
-            moved.setState({ hide: oldHide });
-          }
-          variableSet.setState({ variables: currentVariables });
-        },
-      });
-    },
-    [variableSet, nonEditable, visible, controlsMenu, hidden]
+        DROPPABLE_TO_HIDE
+      ),
+    [variableSet, visible, controlsMenu, hidden]
   );
 
   return (
@@ -127,15 +93,6 @@ export function DashboardVariablesList({ variableSet }: { variableSet: SceneVari
 }
 
 const renderItemLabel = (v: SceneVariable) => <span data-testid="variable-name">{v.state.name}</span>;
-
-function getTargetHide(droppableId: string, currentHide: VariableHide): VariableHide {
-  if (droppableId === ID_VISIBLE_LIST) {
-    return currentHide === VariableHide.dontHide || currentHide === VariableHide.hideLabel
-      ? currentHide
-      : VariableHide.dontHide;
-  }
-  return DROPPABLE_TO_HIDE[droppableId];
-}
 
 export function AddVariableButton({ dashboard }: { dashboard: DashboardScene }) {
   const onAddVariable = useCallback(() => {

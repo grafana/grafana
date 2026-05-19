@@ -137,6 +137,15 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/stale-alert-instances/
 ---
 
+{{< admonition type="caution" >}}
+Pre-provisioned Loki and Prometheus data source-managed alerts have been deprecated in Grafana Cloud and can not be created in new stacks.
+New Grafana Cloud stacks will use Grafana-managed alerting (GMA) by default. Datasource-managed alerting (DMA) is not provisioned in new stacks. Existing stacks are not affected.
+
+This applies to the default Loki and Prometheus Grafana Cloud data sources managed by Grafana Labs and Cloud Alertmanager, which will not be available nor will Grafana provision the data source for it. If you add your own Mimir, Loki, or Alertmanager data sources, you can continue to use data source-managed alerts.
+
+Cloud users can import DMA rules into GMA rules with the import tool. See the [import data source-managed alerts to Grafana-managed alerts documentation](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/alerting-migration/) for information on how to do this.
+{{< /admonition >}}
+
 # Configure data source-managed alert rules
 
 Data source-managed alert rules are alert rules that are stored in the data source, such as in Prometheus or Loki, rather than in Grafana.
@@ -199,14 +208,6 @@ For more information, refer to the [Mimir Ruler API](/docs/mimir/latest/referenc
 Alert rules for Mimir or Loki instances can be edited or deleted by users with **Editor** or **Admin** roles.
 
 If you do not want to manage alert rules for a particular data source, go to its settings and clear the **Manage alerts via Alerting UI** checkbox.
-
-#### Provisioning
-
-Note that if you delete an alert resource created in the UI, you can no longer retrieve it.
-
-To backup and manage alert rules, you can [provision alerting resources](ref:shared-provision-alerting-resources) using options such as configuration files, Terraform, or the Alerting API.
-
-[//]: <> ({{< docs/shared lookup="alerts/configure-provisioning-before-begin.md" source="grafana" version="<GRAFANA_VERSION>" >}})
 
 ### Set alert rule name
 

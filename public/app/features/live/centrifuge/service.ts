@@ -74,6 +74,7 @@ export class CentrifugeService implements CentrifugeSrv {
   readonly connectionBlocker: Promise<void>;
   private readonly dataStreamSubscriberReadiness: Observable<boolean>;
   private lastAuthCheck = 0;
+  private static CONNECTION_TIMEOUT_MS = 10_000;
 
   constructor(private deps: CentrifugeSrvDeps) {
     this.dataStreamSubscriberReadiness = deps.dataStreamSubscriberReadiness.pipe(share(), startWith(true));
@@ -164,6 +165,13 @@ export class CentrifugeService implements CentrifugeSrv {
     if (channel.currentStatus.state === LiveChannelConnectionState.Invalid) {
       return channel;
     }
+    // If Live is disabled, fail the channel immediately rather than waiting
+    // for the connection timeout.
+    if (!this.deps.liveEnabled) {
+      channel.shutdownWithError('Grafana Live is disabled');
+      return channel;
+    }
+
     channel.shutdownCallback = () => {
       this.open.delete(id);
 
@@ -187,7 +195,14 @@ export class CentrifugeService implements CentrifugeSrv {
 
   private async initChannel(channel: CentrifugeLiveChannel): Promise<void> {
     if (this.centrifuge.state !== State.Connected) {
-      await this.connectionBlocker;
+      // Wait for centrifuge to connect, but bail out after the timeout
+      // so the channel can fall back to polling instead of hanging forever.
+      await Promise.race([
+        this.connectionBlocker,
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject('Grafana Live connection timeout'), CentrifugeService.CONNECTION_TIMEOUT_MS)
+        ),
+      ]);
     }
     const subscription = this.centrifuge.newSubscription(channel.id, {
       data: channel.addr.data,

@@ -150,7 +150,7 @@ func buildCMDNode(ctx context.Context, rn *rawNode, toggles featuremgmt.FeatureT
 
 	switch commandType {
 	case TypeMath:
-		node.Command, err = UnmarshalMathCommand(rn)
+		node.Command, err = UnmarshalMathCommand(rn, cfg)
 	case TypeReduce:
 		node.Command, err = UnmarshalReduceCommand(rn)
 	case TypeResample:

@@ -4,7 +4,7 @@ import {
   EmailIntegrationFactory,
   GenericIntegrationFactory,
   SlackIntegrationFactory,
-} from '../api/notifications/v1beta1/mocks/fakes/Receivers';
+} from '../api/notifications/v0alpha1/mocks/fakes/Receivers';
 
 import { getContactPointDescription, isUsableContactPoint } from './utils';
 

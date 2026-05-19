@@ -9,14 +9,15 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgxpool"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
-	"github.com/jackc/pgx/v5/pgxpool"
-
-	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource/sqleng"
 )
 
@@ -78,7 +79,7 @@ func newPostgres(ctx context.Context, userFacingDefaultError string, rowLimit in
 
 func NewInstanceSettings(logger log.Logger) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		cfg := backend.GrafanaConfigFromContext(ctx)
+		cfg := config.GrafanaConfigFromContext(ctx)
 		sqlCfg, err := cfg.SQL()
 		if err != nil {
 			return nil, err

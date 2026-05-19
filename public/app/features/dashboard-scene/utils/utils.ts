@@ -1,6 +1,7 @@
 import { getDataSourceRef, type IntervalVariableModel, type ScopedVars } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
+import { useFlagGrafanaScenesFlickeringFix } from '@grafana/runtime/internal';
 import {
   type CancelActivationHandler,
   type CustomVariable,
@@ -9,6 +10,7 @@ import {
   SceneDataTransformer,
   sceneGraph,
   type SceneObject,
+  SceneObjectBase,
   type SceneObjectState,
   SceneQueryRunner,
   SceneVariableSet,
@@ -265,9 +267,7 @@ export function getClosestVizPanel(sceneObject: SceneObject): VizPanel | null {
 }
 
 export function getDefaultPluginId(): string {
-  return config.featureToggles.dashboardNewLayouts || config.featureToggles.newVizSuggestions
-    ? UNCONFIGURED_PANEL_PLUGIN_ID
-    : 'timeseries';
+  return config.featureToggles.dashboardNewLayouts ? UNCONFIGURED_PANEL_PLUGIN_ID : 'timeseries';
 }
 
 export function getDefaultVizPanel(): VizPanel {
@@ -535,10 +535,9 @@ export function hasActualSaveChanges(dashboard: DashboardScene) {
   return !!changes.diffCount;
 }
 
-export function isDashboardSceneEnabled(): boolean {
-  return !!(config.featureToggles.dashboardScene || config.featureToggles.dashboardNewLayouts);
-}
-
-export function isPublicDashboardsSceneEnabled(): boolean {
-  return !!(config.featureToggles.publicDashboardsScene || config.featureToggles.dashboardNewLayouts);
+export function useScenesFlickeringFix() {
+  const scenesFlickeringFix = useFlagGrafanaScenesFlickeringFix();
+  if (scenesFlickeringFix) {
+    SceneObjectBase.RENDER_BEFORE_ACTIVATION_DEFAULT = true;
+  }
 }

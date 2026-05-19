@@ -215,12 +215,15 @@ func (s *syncer) syncNamespace(ctx context.Context, namespace string, source ins
 	// register plugins that are installed
 	for _, p := range installedPlugins {
 		var parentID string
+		version := p.Info.Version
 		if p.Parent != nil {
 			parentID = p.Parent.ID
+			version = p.Parent.Version
 		}
+
 		err := s.installRegistrar.Register(ctx, namespace, &install.PluginInstall{
 			ID:       p.ID,
-			Version:  p.Info.Version,
+			Version:  version,
 			Source:   source,
 			ParentID: parentID,
 		})

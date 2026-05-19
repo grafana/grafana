@@ -13,6 +13,7 @@ import {
   ThresholdsMode,
   colorManipulator,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { AxisPlacement, FieldColorModeId, ScaleDirection, ScaleOrientation, VisibilityMode } from '@grafana/schema';
 import { UPlotConfigBuilder } from '@grafana/ui';
 import { type FacetedData, type FacetSeries } from '@grafana/ui/internal';
@@ -39,7 +40,7 @@ interface DrawBubblesOpts {
 
 export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
   if (xySeries.length === 0) {
-    return { builder: null, prepData: () => [] };
+    return { builder: null, prepData: () => [], warn: t('xychart.errors.nodata', 'No data') };
   }
 
   let qt: Quadtree;
@@ -506,7 +507,7 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
     ];
   }
 
-  return { builder, prepData };
+  return { builder, prepData, warn: null };
 };
 
 export type PrepData = (xySeries: XYSeries[]) => FacetedData;

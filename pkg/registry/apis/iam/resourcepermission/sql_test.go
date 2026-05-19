@@ -634,16 +634,24 @@ type fakeIdentityStore struct {
 	users           map[string]int64
 	serviceAccounts map[string]int64
 	teams           map[string]int64
-	expectedNs      types.NamespaceInfo
+
+	usersByID           map[int64]string
+	serviceAccountsByID map[int64]string
+	teamsByID           map[int64]string
+
+	expectedNs types.NamespaceInfo
 }
 
 func NewFakeIdentityStore(t *testing.T) *fakeIdentityStore {
 	return &fakeIdentityStore{
-		t:               t,
-		users:           map[string]int64{"captain": 101, "user-1": 1, "user-2": 2},
-		serviceAccounts: map[string]int64{"robot": 201, "sa-1": 3},
-		teams:           map[string]int64{"devs": 301},
-		expectedNs:      types.NamespaceInfo{Value: "default"},
+		t:                   t,
+		users:               map[string]int64{"captain": 101, "user-1": 1, "user-2": 2},
+		serviceAccounts:     map[string]int64{"robot": 201, "sa-1": 3},
+		teams:               map[string]int64{"devs": 301},
+		usersByID:           map[int64]string{101: "captain", 1: "user-1", 2: "user-2"},
+		serviceAccountsByID: map[int64]string{201: "robot", 3: "sa-1"},
+		teamsByID:           map[int64]string{301: "devs"},
+		expectedNs:          types.NamespaceInfo{Value: "default"},
 	}
 }
 
@@ -680,6 +688,30 @@ func (f *fakeIdentityStore) GetUserInternalID(ctx context.Context, ns types.Name
 	return &legacy.GetUserInternalIDResult{ID: id}, nil
 }
 
+func (f *fakeIdentityStore) GetTeamUIDByID(ctx context.Context, ns types.NamespaceInfo, query legacy.GetTeamUIDByIDQuery) (*legacy.GetTeamUIDByIDResult, error) {
+	uid, ok := f.teamsByID[query.ID]
+	if !ok {
+		return nil, errors.New("not found")
+	}
+	return &legacy.GetTeamUIDByIDResult{UID: uid}, nil
+}
+
+func (f *fakeIdentityStore) GetUserUIDByID(ctx context.Context, ns types.NamespaceInfo, query legacy.GetUserUIDByIDQuery) (*legacy.GetUserUIDByIDResult, error) {
+	uid, ok := f.usersByID[query.ID]
+	if !ok {
+		return nil, errors.New("not found")
+	}
+	return &legacy.GetUserUIDByIDResult{UID: uid}, nil
+}
+
+func (f *fakeIdentityStore) GetServiceAccountUIDByID(ctx context.Context, ns types.NamespaceInfo, query legacy.GetUserUIDByIDQuery) (*legacy.GetUserUIDByIDResult, error) {
+	uid, ok := f.serviceAccountsByID[query.ID]
+	if !ok {
+		return nil, errors.New("not found")
+	}
+	return &legacy.GetUserUIDByIDResult{UID: uid}, nil
+}
+
 func TestIntegration_ResourcePermSqlBackend_ListDirectPermissionsForSubject(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -692,7 +724,7 @@ func TestIntegration_ResourcePermSqlBackend_ListDirectPermissionsForSubject(t *t
 		name      string
 		namespace string
 		subject   string
-		wantPerms []v0alpha1.PermissionSpec // action → scope
+		wantPerms []v0alpha1.PermissionSpec
 		wantNil   bool
 	}{
 		{
@@ -758,6 +790,45 @@ func TestIntegration_ResourcePermSqlBackend_ListDirectPermissionsForSubject(t *t
 			require.Equal(t, want, got)
 		})
 	}
+}
+
+func TestIntegration_ResourcePermSqlBackend_ListDirectPermissionsForSubject_SAMapper(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	store := db.InitTestDB(t)
+	sqlHelper := &legacysql.LegacyDatabaseHelper{
+		DB:    store,
+		Table: func(name string) string { return name },
+	}
+	dbProvider := func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+		return sqlHelper, nil
+	}
+
+	backend := ProvideStorageBackend(dbProvider, saMapper())
+	backend.identityStore = NewFakeIdentityStore(t)
+	setupTestRoles(t, store)
+
+	// Seed a serviceaccounts:id:3 permission onto user-1's role.
+	// The backend should resolve it to serviceaccounts:uid:sa-1 on read.
+	sess := store.GetSqlxSession()
+	_, err := sess.Exec(context.Background(),
+		`INSERT INTO permission (role_id, action, scope, created, updated) VALUES (?, ?, ?, ?, ?)`,
+		1, "serviceaccounts:admin", "serviceaccounts:id:3", "2025-09-02", "2025-09-02",
+	)
+	require.NoError(t, err)
+
+	result, err := backend.ListDirectPermissionsForSubject(context.Background(), "default", "user-1")
+	require.NoError(t, err)
+
+	got := make(map[string]string, len(result))
+	for _, p := range result {
+		got[p.Action] = p.Scope
+	}
+	require.Equal(t, map[string]string{
+		"folders:view":          "folders:uid:fold1",
+		"dashboards:edit":       "dashboards:uid:dash1",
+		"serviceaccounts:admin": "serviceaccounts:uid:sa-1",
+	}, got)
 }
 
 func TestIntegration_UpdateResourcePermission_VerbChange(t *testing.T) {

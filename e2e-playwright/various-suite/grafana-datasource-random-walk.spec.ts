@@ -5,6 +5,7 @@ const test = base.extend({});
 test.use({
   featureToggles: {
     dashboardTemplates: true,
+    dashboardNewLayouts: false,
   },
 });
 

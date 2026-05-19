@@ -1,6 +1,6 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
-import { getCell, waitForTableLoad, getColumnIdx, getCellHeight } from './table-utils';
+import { getCell, waitForTableLoad, getColumnIdx, getCellHeight, getSelectedFilterCount } from './table-utils';
 
 const DASHBOARD_UID = 'dcb9f5e9-8066-4397-889e-864b99555dbb';
 const NESTED_COMPLEX_DASHBOARD_UID = '1846eebb-eb2f-4d86-a17e-f0084118cdad';
@@ -201,6 +201,8 @@ test.describe('Panels test: Table - Nested', { tag: ['@panels', '@table'] }, () 
     selectors,
     page,
   }) => {
+    test.slow();
+
     const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,
       queryParams: new URLSearchParams({ editPanel: '4' }),
@@ -234,20 +236,17 @@ test.describe('Panels test: Table - Nested', { tag: ['@panels', '@table'] }, () 
     const filterContainer = dashboardPage.getByGrafanaSelector(
       selectors.components.Panels.Visualization.TableNG.Filters.Container
     );
-    await expect(filterContainer).toBeVisible();
-
-    await filterContainer.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.SelectAll).click();
-    const allMinOptionCount = parseInt(
-      (
-        (await filterContainer
-          .getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.SelectAll)
-          .textContent()) ?? ''
-      ).match(/(\d+) selected/)?.[1] ?? '0',
-      10
-    );
-
+    await minHeader.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.HeaderButton).click();
+    const allMinOptionCount = await getSelectedFilterCount(filterContainer, selectors);
     await filterContainer.getByRole('button', { name: 'Cancel' }).click();
     await expect(filterContainer).not.toBeVisible();
+
+    // grab the value of the "Select all" checkbox to get the total count of Min options before filtering.
+    const secondNestedInfoColumnIdx = await getColumnIdx(secondNestedTable, 'Info');
+    const secondNestedMinColumnIdx = await getColumnIdx(secondNestedTable, 'Min');
+    const secondMinHeader = secondNestedTable.getByRole('columnheader').nth(secondNestedMinColumnIdx);
+    await secondMinHeader.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.HeaderButton).click();
+    const secondNestedMinOptionCountBefore = await getSelectedFilterCount(filterContainer, selectors);
 
     // sort the info column descending to ensure the "down fast" value is first
     const infoHeader = firstNestedTable.getByRole('columnheader').nth(infoColumnIdx);
@@ -279,14 +278,7 @@ test.describe('Panels test: Table - Nested', { tag: ['@panels', '@table'] }, () 
     await expect(filterContainer, 'filter container is visible after clicking min column header').toBeVisible();
 
     await filterContainer.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.SelectAll).click();
-    const crossFilteredMinOptionCount = parseInt(
-      (
-        (await filterContainer
-          .getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.SelectAll)
-          .textContent()) ?? ''
-      ).match(/(\d+) selected/)?.[1] ?? '0',
-      10
-    );
+    const crossFilteredMinOptionCount = await getSelectedFilterCount(filterContainer, selectors);
 
     // With Info filtered to "up", Min options must be a subset of the unfiltered set
     expect(
@@ -299,28 +291,13 @@ test.describe('Panels test: Table - Nested', { tag: ['@panels', '@table'] }, () 
 
     // --- Verify filter is scoped to the first nested table only ---
     // The second nested table should be unaffected by the first nested table's filter.
-    const secondNestedInfoColumnIdx = await getColumnIdx(secondNestedTable, 'Info');
-    const secondNestedMinColumnIdx = await getColumnIdx(secondNestedTable, 'Min');
-
-    const secondMinHeader = secondNestedTable.getByRole('columnheader').nth(secondNestedMinColumnIdx);
     await secondMinHeader.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.HeaderButton).click();
-    await expect(filterContainer, 'filter container is visible after clicking min column header').toBeVisible();
-
-    await filterContainer.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.SelectAll).click();
-    const secondNestedMinOptionCount = parseInt(
-      (
-        (await filterContainer
-          .getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.SelectAll)
-          .textContent()) ?? ''
-      ).match(/(\d+) selected/)?.[1] ?? '0',
-      10
-    );
+    const secondNestedMinOptionCountAfter = await getSelectedFilterCount(filterContainer, selectors);
 
     // Second nested table sees its own full set of Min options (not restricted by first table's filter)
-    expect(
-      secondNestedMinOptionCount,
-      'second nested table min option count is greater than cross-filtered min option count'
-    ).toBeGreaterThan(crossFilteredMinOptionCount);
+    expect(secondNestedMinOptionCountBefore, 'second nested table min option count has not changed').toBe(
+      secondNestedMinOptionCountAfter
+    );
 
     await filterContainer.getByRole('button', { name: 'Cancel' }).click();
     // Verify second nested table still shows all Info values (not filtered)
@@ -427,6 +404,101 @@ test.describe('Panels test: Table - Nested', { tag: ['@panels', '@table'] }, () 
 
     const firstNestedTable = page.locator('.rdg').nth(1);
     await expect(firstNestedTable.getByRole('columnheader', { name: 'Gauge' })).toBeVisible();
+  });
+
+  test('datalinks resolve field variables in nested table context', async ({ gotoDashboardPage, selectors, page }) => {
+    // --- Part 1: Info column "Google this term" link interpolates ${__value:percentencode} ---
+    // Panel 4 groups by State; Info is a nested field with 1 link + 1 action (→ tooltip on click).
+    const dashboardPage = await gotoDashboardPage({
+      uid: DASHBOARD_UID,
+      queryParams: new URLSearchParams({ editPanel: '4' }),
+    });
+
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Nested tables'))
+    ).toBeVisible();
+
+    await waitForTableLoad(page);
+
+    await dashboardPage
+      .getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.RowExpander)
+      .first()
+      .click();
+    await dashboardPage
+      .getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.RowExpander)
+      .last()
+      .click();
+
+    const firstNestedTableKs = page.locator('.rdg').nth(1);
+    const infoIdx = await getColumnIdx(firstNestedTableKs, 'Info');
+    const infoCell = getCell(firstNestedTableKs, 1, infoIdx);
+    const infoCellValue = (await infoCell.textContent())?.trim() ?? '';
+    expect(infoCellValue, 'Info cell has a non-empty value').not.toBe('');
+
+    // 1 link + 1 action renders as <a aria-haspopup="menu"> — click to open the tooltip.
+    await infoCell.locator('a[aria-haspopup]').click();
+
+    const tooltip = page.getByTestId(selectors.components.DataLinksActionsTooltip.tooltipWrapper);
+    await expect(tooltip, 'data link tooltip appears after clicking Info cell').toBeVisible();
+
+    const googleHref = await tooltip.getByRole('link', { name: 'Google this term' }).getAttribute('href');
+    expect(googleHref, '"Google this term" href contains the Info cell value').toContain(
+      `q=${encodeURIComponent(infoCellValue)}`
+    );
+
+    // --- Part 2: Data Link column resolves ${__data.fields.Min.numeric} from nested row context ---
+    // The "Table - Nested Kitchen Sink" panel groups by Info; nested rows have a "Data Link" column
+    // with a "Min param" link whose URL contains ${__data.fields.Min.numeric}.
+    const nestedDashboardPage = await gotoDashboardPage({
+      uid: NESTED_COMPLEX_DASHBOARD_UID,
+      queryParams: new URLSearchParams({ editPanel: '1' }),
+    });
+
+    await waitForTableLoad(page);
+
+    await nestedDashboardPage
+      .getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.RowExpander)
+      .first()
+      .click();
+
+    const firstNestedTable = page.locator('.rdg').nth(1);
+    const dataLinkIdx = await getColumnIdx(firstNestedTable, 'Data Link');
+
+    // The "Min param" link is rendered directly in the DataLinksCell as an <a> tag.
+    const minParamLink = getCell(firstNestedTable, 1, dataLinkIdx).getByRole('link', { name: 'Min param' });
+    const minParamHref = await minParamLink.getAttribute('href');
+
+    expect(minParamHref, '"Min param" href is not null').not.toBeNull();
+    expect(minParamHref, '"Min param" href does not contain unresolved template variable').not.toContain('${');
+    expect(minParamHref, '"Min param" href contains min= with a numeric value').toMatch(/min=[\d.]+/);
+  });
+
+  test('expand nested rows by default', async ({ gotoPanelEditPage, selectors, page }) => {
+    const panelEditPage = await gotoPanelEditPage({
+      dashboard: {
+        uid: NESTED_COMPLEX_DASHBOARD_UID,
+      },
+      id: '2',
+    });
+
+    await waitForTableLoad(page);
+
+    // With expandAllRows: true the expander buttons should report aria-expanded=true
+    // and nested rows should be visible without any user interaction.
+    const expanders = panelEditPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.RowExpander);
+
+    await expect(expanders.first()).toBeVisible();
+
+    // Every expander should be in the expanded state — no user clicks required.
+    const expanderCount = await expanders.count();
+    expect(expanderCount, 'at least one row expander is present').toBeGreaterThan(0);
+
+    for (let i = 0; i < expanderCount; i++) {
+      await expect(expanders.nth(i)).toHaveAttribute('aria-expanded', 'true');
+    }
+
+    // The nested table is visible immediately — a second .rdg grid should exist.
+    await expect(page.locator('.rdg').nth(1)).toBeVisible();
   });
 
   test('tooltip from field', async ({ gotoPanelEditPage, page, selectors }) => {

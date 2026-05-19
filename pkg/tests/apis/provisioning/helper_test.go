@@ -8,6 +8,7 @@ import (
 )
 
 var env = common.NewSharedEnv(
+	common.WithoutProvisioningFolderMetadata,
 	func(opts *testinfra.GrafanaOpts) {
 		opts.SecretsManagerEnableDBMigrations = true
 	},

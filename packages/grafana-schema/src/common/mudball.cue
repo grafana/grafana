@@ -38,7 +38,7 @@ ScaleDirection: 1 | 1 | -1 | -1 @cuetsy(kind="enum",memberNames="Up|Right|Down|L
 
 // TODO docs
 LineStyle: {
-	fill?: "solid" | "dash" | "dot" | "square"
+	fill?: "solid" | "dash" | "dot" | "square" | "accessible"
 	dash?: [...number]
 } @cuetsy(kind="interface")
 
@@ -258,15 +258,16 @@ GraphFieldConfig: {
 
 // TODO docs
 VizLegendOptions: {
-	displayMode: LegendDisplayMode
-	placement:   LegendPlacement
-	showLegend:  bool
-	asTable?:    bool
-	isVisible?:  bool
-	sortBy?:     string
-	sortDesc?:   bool
-	width?:      number
-	limit?:      number
+	displayMode?: LegendDisplayMode
+	placement:    LegendPlacement
+	showLegend:   bool
+	// @deprecated Use LegendDisplayMode.Table
+	asTable?:   bool
+	isVisible?: bool
+	sortBy?:    string
+	sortDesc?:  bool
+	width?:     number
+	limit?:     number
 	calcs: [...string]
 } @cuetsy(kind="interface")
 

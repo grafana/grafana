@@ -88,6 +88,22 @@ describe('EditableTitle', () => {
     });
   });
 
+  it('clicking cancel does not call onEdit and restores the original title', async () => {
+    render(<EditableTitle value={value} onEdit={mockEdit} />);
+
+    await user.click(screen.getByRole('button', { name: 'Edit title' }));
+
+    const input = screen.getByRole('textbox');
+    await user.clear(input);
+    await user.type(input, 'New value');
+
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    expect(mockEdit).not.toHaveBeenCalled();
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: value })).toBeInTheDocument();
+  });
+
   it('displays an error message when attempting to save an empty value', async () => {
     render(<EditableTitle value={value} onEdit={mockEdit} />);
 

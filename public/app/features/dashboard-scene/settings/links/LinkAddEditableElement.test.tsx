@@ -107,10 +107,10 @@ describe('LinkAddEditableElement', () => {
       const editPane = dashboard.state.editPane;
 
       openAddLinkPane(dashboard);
-      expect(editPane.state.selection).toBeDefined();
+      expect(editPane.getSelectedObject()).toBeDefined();
 
       act(() => editPane.undoAction());
-      expect(editPane.state.selection).toBeUndefined();
+      expect(editPane.getSelectedObject()).toBeUndefined();
     });
 
     it('reselects the link on redo after undo', () => {
@@ -118,13 +118,13 @@ describe('LinkAddEditableElement', () => {
       const editPane = dashboard.state.editPane;
 
       openAddLinkPane(dashboard);
-      expect(editPane.state.selection).toBeDefined();
+      expect(editPane.getSelectedObject()).toBeDefined();
 
       act(() => editPane.undoAction());
-      expect(editPane.state.selection).toBeUndefined();
+      expect(editPane.getSelectedObject()).toBeUndefined();
 
       act(() => editPane.redoAction());
-      expect(editPane.state.selection).toBeDefined();
+      expect(editPane.getSelectedObject()).toBeDefined();
       expect(dashboard.state.links).toHaveLength(1);
     });
   });

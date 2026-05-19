@@ -4325,6 +4325,12 @@
           },
           "subject": {
             "type": "string"
+          },
+          "urls": {
+            "items": {
+              "$ref": "#/components/schemas/ReportURLItem"
+            },
+            "type": "array"
           }
         },
         "type": "object"
@@ -4688,9 +4694,6 @@
             "type": "boolean"
           },
           "isSnapshot": {
-            "type": "boolean"
-          },
-          "isStarred": {
             "type": "boolean"
           },
           "provisioned": {
@@ -5752,6 +5755,29 @@
             "type": "string"
           },
           "uid": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "FooterItem": {
+        "properties": {
+          "color": {
+            "type": "string"
+          },
+          "fontSize": {
+            "type": "string"
+          },
+          "fontStyle": {
+            "type": "string"
+          },
+          "fontWeight": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "value": {
             "type": "string"
           }
         },
@@ -8265,9 +8291,6 @@
           "queryHistory": {
             "$ref": "#/components/schemas/QueryHistoryPreference"
           },
-          "regionalFormat": {
-            "type": "string"
-          },
           "theme": {
             "enum": [
               "light",
@@ -8924,7 +8947,7 @@
             "type": "string"
           },
           "language": {
-            "description": "Selected language (beta)",
+            "description": "Selected language",
             "type": "string"
           },
           "navbar": {
@@ -8933,16 +8956,12 @@
           "queryHistory": {
             "$ref": "#/components/schemas/PreferencesQueryHistoryPreference"
           },
-          "regionalFormat": {
-            "description": "Selected locale (beta)",
-            "type": "string"
-          },
           "theme": {
-            "description": "light, dark, empty is default",
+            "description": "user interface theme",
             "type": "string"
           },
           "timezone": {
-            "description": "The timezone selection\nTODO: this should use the timezone defined in common",
+            "description": "The timezone selection",
             "type": "string"
           },
           "weekStart": {
@@ -9960,6 +9979,12 @@
             "format": "date-time",
             "type": "string"
           },
+          "urls": {
+            "items": {
+              "$ref": "#/components/schemas/ReportURLItem"
+            },
+            "type": "array"
+          },
           "userId": {
             "format": "int64",
             "type": "integer"
@@ -10097,6 +10122,15 @@
           "embeddedImageTheme": {
             "type": "string"
           },
+          "footerFontFamily": {
+            "type": "string"
+          },
+          "footerItems": {
+            "items": {
+              "$ref": "#/components/schemas/FooterItem"
+            },
+            "type": "array"
+          },
           "id": {
             "format": "int64",
             "type": "integer"
@@ -10130,6 +10164,17 @@
             "type": "string"
           },
           "to": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ReportURLItem": {
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "url": {
             "type": "string"
           }
         },
@@ -11615,6 +11660,7 @@
             "type": "string"
           },
           "uid": {
+            "description": "Deprecated: always empty; no per-entry id.",
             "type": "string"
           }
         },
@@ -12464,9 +12510,6 @@
           },
           "queryHistory": {
             "$ref": "#/components/schemas/QueryHistoryPreference"
-          },
-          "regionalFormat": {
-            "type": "string"
           },
           "theme": {
             "enum": [
@@ -25972,6 +26015,7 @@
     },
     "/v1/provisioning/contact-points": {
       "get": {
+        "deprecated": true,
         "operationId": "RouteGetContactpoints",
         "parameters": [
           {
@@ -26011,6 +26055,7 @@
         ]
       },
       "post": {
+        "deprecated": true,
         "operationId": "RoutePostContactpoints",
         "parameters": [
           {
@@ -26184,6 +26229,7 @@
     },
     "/v1/provisioning/contact-points/{UID}": {
       "delete": {
+        "deprecated": true,
         "operationId": "RouteDeleteContactpoints",
         "parameters": [
           {
@@ -26217,6 +26263,7 @@
         ]
       },
       "put": {
+        "deprecated": true,
         "operationId": "RoutePutContactpoint",
         "parameters": [
           {
@@ -26580,6 +26627,7 @@
     },
     "/v1/provisioning/mute-timings": {
       "get": {
+        "deprecated": true,
         "operationId": "RouteGetMuteTimings",
         "responses": {
           "200": {
@@ -26609,6 +26657,7 @@
         ]
       },
       "post": {
+        "deprecated": true,
         "operationId": "RoutePostMuteTiming",
         "parameters": [
           {
@@ -26765,6 +26814,7 @@
     },
     "/v1/provisioning/mute-timings/{name}": {
       "delete": {
+        "deprecated": true,
         "operationId": "RouteDeleteMuteTiming",
         "parameters": [
           {
@@ -26823,6 +26873,7 @@
         ]
       },
       "get": {
+        "deprecated": true,
         "operationId": "RouteGetMuteTiming",
         "parameters": [
           {
@@ -26866,6 +26917,7 @@
         ]
       },
       "put": {
+        "deprecated": true,
         "operationId": "RoutePutMuteTiming",
         "parameters": [
           {
@@ -27050,6 +27102,7 @@
     },
     "/v1/provisioning/policies": {
       "delete": {
+        "deprecated": true,
         "operationId": "RouteResetPolicyTree",
         "responses": {
           "202": {
@@ -27079,6 +27132,7 @@
         ]
       },
       "get": {
+        "deprecated": true,
         "operationId": "RouteGetPolicyTree",
         "responses": {
           "200": {
@@ -27108,6 +27162,7 @@
         ]
       },
       "put": {
+        "deprecated": true,
         "operationId": "RoutePutPolicyTree",
         "parameters": [
           {
@@ -27270,6 +27325,7 @@
     },
     "/v1/provisioning/templates": {
       "get": {
+        "deprecated": true,
         "operationId": "RouteGetTemplates",
         "responses": {
           "200": {
@@ -27301,6 +27357,7 @@
     },
     "/v1/provisioning/templates/{name}": {
       "delete": {
+        "deprecated": true,
         "operationId": "RouteDeleteTemplate",
         "parameters": [
           {
@@ -27352,6 +27409,7 @@
         ]
       },
       "get": {
+        "deprecated": true,
         "operationId": "RouteGetTemplate",
         "parameters": [
           {
@@ -27402,6 +27460,7 @@
         ]
       },
       "put": {
+        "deprecated": true,
         "operationId": "RoutePutTemplate",
         "parameters": [
           {

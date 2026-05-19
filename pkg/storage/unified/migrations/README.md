@@ -15,6 +15,7 @@ The migration system transfers resources from legacy SQL tables to Grafana's uni
 | Playlists | `playlist.grafana.app` | `playlist` |
 | Short URLs | `shorturl.grafana.app` | `short_url` |
 | Datasources | `*.datasource.grafana.app` | `data_source` |
+| Query cache configs | `querycaching.grafana.app` | `data_source_cache` |
 
 ## Architecture
 
@@ -63,6 +64,7 @@ The migration system transfers resources from legacy SQL tables to Grafana's uni
 - **`pkg/registry/apps/playlist/migration_registrar.go`**: `PlaylistMigration` — playlists definition
 - **`pkg/registry/apps/shorturl/migration_registrar.go`**: `ShortURLMigration` — short URLs definition
 - **`pkg/registry/apis/datasource/migrator/registrar.go`**: `DataSourceMigration` — datasources definition
+- **`pkg/registry/apps/querycaching/migration_registrar.go`**: `QueryCacheConfigMigration` — query cache configs definition
 
 Each team also provides a migrator interface in a `migrator/` subpackage (e.g., `pkg/registry/apis/dashboard/migrator/`).
 

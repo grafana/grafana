@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
@@ -17,6 +16,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/grafana/grafana-app-sdk/resource"
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/routingtree"
@@ -419,50 +420,92 @@ func TestIntegrationProvisioning(t *testing.T) {
 	ctx := context.Background()
 	helper := getTestHelper(t)
 
-	org := helper.Org1
-
-	admin := org.Admin
-	adminClient, err := v1beta1.NewRoutingTreeClientFromGenerator(admin.GetClientRegistry())
-	require.NoError(t, err)
-
-	env := helper.GetEnv()
-	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
-	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
-	require.NoError(t, err)
-
-	current, err := adminClient.Get(ctx, defaultTreeIdentifier)
-	require.NoError(t, err)
-	require.Equal(t, "none", current.GetProvenanceStatus())
-
-	t.Run("should provide provenance status", func(t *testing.T) {
-		require.NoError(t, db.SetProvenance(ctx, &definitions.Route{}, admin.Identity.GetOrgID(), "API"))
-
-		got, err := adminClient.Get(ctx, current.GetStaticMetadata().Identifier())
-		require.NoError(t, err)
-		require.Equal(t, "API", got.GetProvenanceStatus())
-	})
-	t.Run("should not let update if provisioned", func(t *testing.T) {
-		updated := current.Copy().(*v1beta1.RoutingTree)
-		updated.Spec.Routes = []v1beta1.RoutingTreeRoute{
-			{
-				Matchers: []v1beta1.RoutingTreeMatcher{
-					{
-						Label: "test",
-						Type:  v1beta1.RoutingTreeMatcherTypeNotEqual,
-						Value: "123",
-					},
-				},
+	// writer has resource write actions but NO provenance set-status permission.
+	writer := helper.CreateUser("RoutingTreeWriter", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+		{
+			Actions: []string{
+				accesscontrol.ActionAlertingRoutesRead,
+				accesscontrol.ActionAlertingRoutesWrite,
 			},
+		},
+	})
+	writerClient, err := v1beta1.NewRoutingTreeClientFromGenerator(writer.GetClientRegistry())
+	require.NoError(t, err)
+
+	// provisioner has the same write actions PLUS provenance set-status permission.
+	provisioner := helper.CreateUser("RoutingTreeProvisioner", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+		{
+			Actions: []string{
+				accesscontrol.ActionAlertingRoutesRead,
+				accesscontrol.ActionAlertingRoutesWrite,
+				accesscontrol.ActionAlertingProvisioningSetStatus,
+			},
+		},
+	})
+	provisionerClient, err := v1beta1.NewRoutingTreeClientFromGenerator(provisioner.GetClientRegistry())
+	require.NoError(t, err)
+
+	t.Run("update", func(t *testing.T) {
+		current, err := provisionerClient.Get(ctx, defaultTreeIdentifier)
+		require.NoError(t, err)
+		require.Empty(t, current.GetProvenanceStatus())
+
+		t.Run("writer cannot set provenance", func(t *testing.T) {
+			updated := current.Copy().(*v1beta1.RoutingTree)
+			updated.SetProvenanceStatus(string(models.ProvenanceAPI))
+			_, err := writerClient.Update(ctx, updated, resource.UpdateOptions{})
+			require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+		})
+
+		t.Run("provisioner can set provenance", func(t *testing.T) {
+			current, err := provisionerClient.Get(ctx, defaultTreeIdentifier)
+			require.NoError(t, err)
+			updated := current.Copy().(*v1beta1.RoutingTree)
+			updated.SetProvenanceStatus(string(models.ProvenanceAPI))
+			got, err := provisionerClient.Update(ctx, updated, resource.UpdateOptions{})
+			require.NoError(t, err)
+			require.Equal(t, string(models.ProvenanceAPI), got.GetProvenanceStatus())
+		})
+
+		t.Run("writer cannot update provisioned tree", func(t *testing.T) {
+			current, err := provisionerClient.Get(ctx, defaultTreeIdentifier)
+			require.NoError(t, err)
+			updated := current.Copy().(*v1beta1.RoutingTree)
+			updated.Spec.Defaults.GroupBy = append(updated.Spec.Defaults.GroupBy, "test-label")
+			_, err = writerClient.Update(ctx, updated, resource.UpdateOptions{})
+			require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+		})
+
+		t.Run("provisioner can update provisioned tree", func(t *testing.T) {
+			current, err := provisionerClient.Get(ctx, defaultTreeIdentifier)
+			require.NoError(t, err)
+			updated := current.Copy().(*v1beta1.RoutingTree)
+			updated.Spec.Defaults.GroupBy = append(updated.Spec.Defaults.GroupBy, "region")
+			_, err = provisionerClient.Update(ctx, updated, resource.UpdateOptions{})
+			require.NoError(t, err)
+		})
+	})
+
+	t.Run("delete", func(t *testing.T) {
+		// Ensure tree is provisioned before delete tests.
+		current, err := provisionerClient.Get(ctx, defaultTreeIdentifier)
+		require.NoError(t, err)
+		if current.GetProvenanceStatus() != string(models.ProvenanceAPI) {
+			updated := current.Copy().(*v1beta1.RoutingTree)
+			updated.SetProvenanceStatus(string(models.ProvenanceAPI))
+			_, err = provisionerClient.Update(ctx, updated, resource.UpdateOptions{})
+			require.NoError(t, err)
 		}
 
-		_, err := adminClient.Update(ctx, updated, resource.UpdateOptions{})
-		require.Error(t, err)
-		require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
-	})
+		t.Run("writer cannot delete provisioned tree", func(t *testing.T) {
+			err := writerClient.Delete(ctx, defaultTreeIdentifier, resource.DeleteOptions{})
+			require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+		})
 
-	t.Run("should not let delete if provisioned", func(t *testing.T) {
-		err := adminClient.Delete(ctx, current.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
-		require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+		t.Run("provisioner can delete provisioned tree", func(t *testing.T) {
+			err := provisionerClient.Delete(ctx, defaultTreeIdentifier, resource.DeleteOptions{})
+			require.NoError(t, err)
+		})
 	})
 }
 
@@ -659,9 +702,9 @@ func TestIntegrationDataConsistency(t *testing.T) {
 	route := definitions.Route{
 		Receiver:       receiver,
 		GroupByStr:     []string{"test-123", "test-456"},
-		GroupWait:      util.Pointer(model.Duration(30 * time.Second)),
-		GroupInterval:  util.Pointer(model.Duration(1 * time.Minute)),
-		RepeatInterval: util.Pointer(model.Duration(24 * time.Hour)),
+		GroupWait:      new(model.Duration(30 * time.Second)),
+		GroupInterval:  new(model.Duration(1 * time.Minute)),
+		RepeatInterval: new(model.Duration(24 * time.Hour)),
 		Routes: []*definitions.Route{
 			{
 				ObjectMatchers: definitions.ObjectMatchers{
@@ -672,9 +715,9 @@ func TestIntegrationDataConsistency(t *testing.T) {
 				},
 				Receiver:            receiver,
 				GroupByStr:          []string{"test-789"},
-				GroupWait:           util.Pointer(model.Duration(2 * time.Minute)),
-				GroupInterval:       util.Pointer(model.Duration(5 * time.Minute)),
-				RepeatInterval:      util.Pointer(model.Duration(30 * time.Hour)),
+				GroupWait:           new(model.Duration(2 * time.Minute)),
+				GroupInterval:       new(model.Duration(5 * time.Minute)),
+				RepeatInterval:      new(model.Duration(30 * time.Hour)),
 				MuteTimeIntervals:   []string{timeInterval},
 				ActiveTimeIntervals: []string{timeInterval},
 				Continue:            true,
@@ -689,18 +732,18 @@ func TestIntegrationDataConsistency(t *testing.T) {
 		assert.Equal(t, v1beta1.RoutingTreeRouteDefaults{
 			Receiver:       receiver,
 			GroupBy:        []string{"test-123", "test-456"},
-			GroupWait:      util.Pointer("30s"),
-			GroupInterval:  util.Pointer("1m"),
-			RepeatInterval: util.Pointer("1d"),
+			GroupWait:      new("30s"),
+			GroupInterval:  new("1m"),
+			RepeatInterval: new("1d"),
 		}, tree.Spec.Defaults)
 		assert.Len(t, tree.Spec.Routes, 1)
 		assert.Equal(t, v1beta1.RoutingTreeRoute{
 			Continue:            true,
-			Receiver:            util.Pointer(receiver),
+			Receiver:            new(receiver),
 			GroupBy:             []string{"test-789"},
-			GroupWait:           util.Pointer("2m"),
-			GroupInterval:       util.Pointer("5m"),
-			RepeatInterval:      util.Pointer("1d6h"),
+			GroupWait:           new("2m"),
+			GroupInterval:       new("5m"),
+			RepeatInterval:      new("1d6h"),
 			MuteTimeIntervals:   []string{timeInterval},
 			ActiveTimeIntervals: []string{timeInterval},
 			Matchers: []v1beta1.RoutingTreeMatcher{
@@ -802,7 +845,7 @@ func TestIntegrationExtraConfigsConflicts(t *testing.T) {
 
 	ctx := context.Background()
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles: []string{"alertingImportAlertmanagerAPI"},
+		EnableFeatureToggles: []string{"alertingMultiplePolicies", "alertingImportAlertmanagerAPI"},
 	})
 
 	cliCfg := helper.Org1.Admin.NewRestConfig()
@@ -1057,14 +1100,13 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 			}
 		})
 
-		t.Run("Update on provisioned should fail", func(t *testing.T) {
+		t.Run("Update on provisioned should succeed for admin", func(t *testing.T) {
 			for name := range policies {
 				t.Run(fmt.Sprintf("Policy %s", name), func(t *testing.T) {
 					require.NoError(t, db.SetProvenance(ctx, legacy_storage.NewManagedRoute(name, &definitions.Route{}), org1.OrgID, "API"))
 
 					_, err := adminClient.Update(ctx, k8sRoute(t, name, policy_exports.Empty()), resource.UpdateOptions{ResourceVersion: ""}) // Bypass version check.
-					require.Error(t, err)
-					require.ErrorContains(t, err, "provenance")
+					require.NoError(t, err)
 				})
 			}
 		})

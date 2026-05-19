@@ -135,8 +135,6 @@ export class RudderstackBackend implements EchoBackend<PageviewEchoEvent, Rudder
         apiOptions
       );
     }
-
-    window.rudderanalytics?.page?.();
   }
 
   addEvent = (e: PageviewEchoEvent) => {

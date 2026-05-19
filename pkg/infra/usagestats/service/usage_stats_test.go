@@ -116,9 +116,13 @@ func TestMetrics(t *testing.T) {
 		})
 		usageStatsURL = ts.URL
 
+		var wg sync.WaitGroup
+		wg.Add(1)
+		t.Cleanup(wg.Wait)
 		go func() {
+			defer wg.Done()
 			_, err := uss.sendUsageStats(context.Background())
-			require.NoError(t, err)
+			assert.NoError(t, err)
 		}()
 
 		// Wait for fake HTTP server to receive a request

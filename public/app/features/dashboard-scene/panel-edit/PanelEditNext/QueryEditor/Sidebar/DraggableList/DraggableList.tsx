@@ -63,6 +63,7 @@ export function DraggableList<T>({
                       ref={dragProvided.innerRef}
                       {...dragProvided.draggableProps}
                       {...dragProvided.dragHandleProps}
+                      tabIndex={-1}
                       className={styles.draggableItem}
                       data-is-dragging={dragSnapshot.isDragging || undefined}
                     >

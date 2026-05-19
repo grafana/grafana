@@ -12,10 +12,12 @@ import {
   SceneVariableSet,
   VizPanel,
 } from '@grafana/scenes';
+import { type ElementSelectionContextItem } from '@grafana/ui';
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
 import { SceneGridRowEditableElement } from '../scene/layout-default/SceneGridRowEditableElement';
+import { type BulkActionElement, isBulkActionElement } from '../scene/types/BulkActionElement';
 import { type EditableDashboardElement, isEditableDashboardElement } from '../scene/types/EditableDashboardElement';
 import { AnnotationEditableElement } from '../settings/annotations/AnnotationEditableElement';
 import { AnnotationSetEditableElement } from '../settings/annotations/AnnotationSetEditableElement';
@@ -23,25 +25,55 @@ import { LinkEdit, LinkEditEditableElement } from '../settings/links/LinkAddEdit
 import { LocalVariableEditableElement } from '../settings/variables/LocalVariableEditableElement';
 import { VariableEditableElement } from '../settings/variables/VariableEditableElement';
 import { VariableSetEditableElement } from '../settings/variables/VariableSetEditableElement';
-import {
-  SectionVariableAdd,
-  SectionVariableAddEditableElement,
-  VariableAdd,
-  VariableAddEditableElement,
-  VariableTypeChange,
-  VariableTypeChangeEditableElement,
-} from '../settings/variables/VariableTypeSelectionPane';
 import { isSceneVariable } from '../settings/variables/utils';
 
+import { type DashboardEditPane } from './DashboardEditPane';
+import { MultiSelectedObjectsEditableElement } from './MultiSelectedObjectsEditableElement';
 import { VizPanelEditableElement } from './VizPanelEditableElement';
 import { DashboardEditableElement } from './dashboard/DashboardEditableElement';
 import { DashboardEditActionEvent, type DashboardEditActionEventPayload } from './events';
 
+export const EDIT_PANE_COLLAPSED_KEY = 'grafana.dashboards.edit-pane.isCollapsed';
+
 export function useEditPaneCollapsed() {
-  return useSessionStorage('grafana.dashboards.edit-pane.isCollapsed', false);
+  return useSessionStorage(EDIT_PANE_COLLAPSED_KEY, false);
 }
 
-export function getEditableElementFor(sceneObj: SceneObject | undefined): EditableDashboardElement | undefined {
+export function getEditableElementForSelection(
+  editPane: DashboardEditPane,
+  selected: ElementSelectionContextItem[]
+): EditableDashboardElement | undefined {
+  if (selected.length === 1) {
+    const obj = editPane.getSelectedObject(selected[0].id);
+    if (obj) {
+      return getEditableElementFor(obj);
+    }
+  }
+
+  if (selected.length > 1) {
+    const objects = selected.map((s) => editPane.getSelectedObject(s.id));
+    const elements: BulkActionElement[] = objects
+      .map((obj) => getEditableElementFor(obj))
+      .filter((e): e is BulkActionElement => Boolean(e) && isBulkActionElement(e!));
+
+    if (elements.length === 0) {
+      return undefined;
+    }
+
+    const first = elements[0];
+    const allSameType = elements.every((e) => e.constructor.name === first.constructor.name);
+
+    if (allSameType && first.createMultiSelectedElement) {
+      return first.createMultiSelectedElement(elements);
+    }
+
+    return new MultiSelectedObjectsEditableElement(elements);
+  }
+
+  return undefined;
+}
+
+export function getEditableElementFor(sceneObj: SceneObject | undefined | null): EditableDashboardElement | undefined {
   if (!sceneObj) {
     return undefined;
   }
@@ -72,18 +104,6 @@ export function getEditableElementFor(sceneObj: SceneObject | undefined): Editab
 
   if (isSceneVariable(sceneObj)) {
     return new VariableEditableElement(sceneObj);
-  }
-
-  if (sceneObj instanceof VariableAdd) {
-    return new VariableAddEditableElement(sceneObj);
-  }
-
-  if (sceneObj instanceof SectionVariableAdd) {
-    return new SectionVariableAddEditableElement(sceneObj);
-  }
-
-  if (sceneObj instanceof VariableTypeChange) {
-    return new VariableTypeChangeEditableElement(sceneObj);
   }
 
   if (sceneObj instanceof LinkEdit) {
@@ -271,8 +291,8 @@ export const dashboardEditActions = {
     dashboardEditActions.edit({
       description: t('dashboard.variable.type.action', 'Change variable type'),
       source,
-      selectedObjectOnPerform: newVariable,
-      selectedObjectOnUndo: oldVariable,
+      addedObject: newVariable,
+      removedObject: oldVariable,
       perform() {
         source.setState({ variables: varsAfterChange });
       },

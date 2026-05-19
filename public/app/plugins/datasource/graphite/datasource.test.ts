@@ -227,6 +227,62 @@ describe('graphiteDatasource', () => {
       expect(result.data[0].refId).toBe('A');
       expect(result.data[1].refId).toBe('B');
     });
+    it('strips refID suffix and full tagged path from tags.name (Metrictank aliasSub regression)', () => {
+      // Metrictank sets tags['name'] to the full internal series key when aliasSub
+      // is applied (e.g. "BytesReceived;host=web01;cluster=md1b;... A"). The
+      // joinByLabels(value:'name') transformation breaks because every series has a
+      // unique full path. Restore tags['name'] to the base metric name only.
+      const refIDMap = {
+        refIDA: 'A',
+        refIDB: 'B',
+      };
+      const result = ctx.ds.convertResponseToDataFrames(
+        createFetchResponse({
+          series: [
+            {
+              // target has the refID suffix; tags.name has the full Metrictank path without suffix
+              target: 'BytesReceived;host=web01;cluster=md1b refIDA',
+              tags: { name: 'BytesReceived;host=web01;cluster=md1b', host: 'web01', cluster: 'md1b' },
+              datapoints: [[100, 200]],
+            },
+            {
+              target: 'BytesReceived;host=web02;cluster=md1b refIDB',
+              tags: { name: 'BytesReceived;host=web02;cluster=md1b', host: 'web02', cluster: 'md1b' },
+              datapoints: [[200, 300]],
+            },
+          ],
+        }),
+        refIDMap
+      );
+
+      expect(result.data.length).toBe(2);
+      // tags['name'] must be just the base metric name — no semicolons, no refID suffix
+      const frame0Labels = result.data[0].fields[1]?.labels ?? {};
+      expect(frame0Labels['name']).toBe('BytesReceived');
+      const frame1Labels = result.data[1].fields[1]?.labels ?? {};
+      expect(frame1Labels['name']).toBe('BytesReceived');
+    });
+
+    it('leaves tags.name unchanged for standard graphite-web responses', () => {
+      // Standard graphite-web returns tags['name'] as the plain metric name with no
+      // semicolons, so the normalization should be a no-op.
+      const refIDMap = { refIDA: 'A' };
+      const result = ctx.ds.convertResponseToDataFrames(
+        createFetchResponse({
+          series: [
+            {
+              target: 'cpu.usage refIDA',
+              tags: { name: 'cpu.usage', host: 'web01' },
+              datapoints: [[100, 200]],
+            },
+          ],
+        }),
+        refIDMap
+      );
+
+      const frame0Labels = result.data[0].fields[1]?.labels ?? {};
+      expect(frame0Labels['name']).toBe('cpu.usage');
+    });
   });
 
   describe('When querying graphite with one target using query editor target spec', () => {

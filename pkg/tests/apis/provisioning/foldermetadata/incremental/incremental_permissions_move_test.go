@@ -40,7 +40,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMovePermissions(t *testin
 			"teamB/_folder.json": folderMetadataJSON("team-b-uid", "Team B"),
 		})
 
-		common.SyncAndWaitWithSuccess(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 
 		requireGitFolderState(t, helper, ctx, "team-a-uid", "Team A", "teamA", repoName)
 		requireGitFolderState(t, helper, ctx, "team-b-uid", "Team B", "teamB", repoName)
@@ -88,7 +88,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMovePermissions(t *testin
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
 
 		// teamB should now live under teamA with the same stable UID.
 		requireGitFolderState(t, helper, ctx, "team-b-uid", "Team B", "teamA/teamB", "team-a-uid")
@@ -127,7 +127,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMovePermissions(t *testin
 			"plain/.keep":         {},
 		})
 
-		common.SyncAndWaitWithWarning(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Warning())
 
 		requireGitFolderState(t, helper, ctx, "parent-uid", "Parent", "parent", repoName)
 		plainUID := findGitFolderUIDBySourcePath(t, helper, ctx, repoName, "plain")
@@ -158,7 +158,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMovePermissions(t *testin
 
 		// parent/plain still has no _folder.json after the move, so the incremental
 		// sync warns about missing metadata.
-		common.SyncAndWaitIncrementalWithWarning(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Warning())
 
 		// The old folder object must be gone — without metadata the path change
 		// causes a delete-and-recreate rather than an in-place update.
@@ -199,7 +199,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMovePermissions(t *testin
 			"destination/_folder.json":           folderMetadataJSON("destination-uid", "Destination"),
 		})
 
-		common.SyncAndWaitWithSuccess(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 
 		requireGitFolderState(t, helper, ctx, "root-uid", "Root", "root", repoName)
 		requireGitFolderState(t, helper, ctx, "child-uid", "Child", "root/child", "root-uid")
@@ -229,7 +229,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMovePermissions(t *testin
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
 
 		requireGitFolderState(t, helper, ctx, "destination-uid", "Destination", "destination", repoName)
 		requireGitFolderState(t, helper, ctx, "child-uid", "Child", "destination/child", "destination-uid")
@@ -253,7 +253,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMovePermissions(t *testin
 			"container/inner/_folder.json": folderMetadataJSON("inner-uid", "Inner"),
 		})
 
-		common.SyncAndWaitWithSuccess(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 
 		requireGitFolderState(t, helper, ctx, "top-uid", "Top", "top", repoName)
 		requireGitFolderState(t, helper, ctx, "container-uid", "Container", "container", repoName)
@@ -282,7 +282,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMovePermissions(t *testin
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
 
 		requireGitFolderState(t, helper, ctx, "top-uid", "Top", "container/inner/top", "inner-uid")
 
@@ -309,7 +309,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMovePermissions(t *testin
 			"parent/deep/leaf/_folder.json": folderMetadataJSON("ltroot-leaf-uid", "Leaf"),
 		})
 
-		common.SyncAndWaitWithSuccess(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 
 		requireGitFolderState(t, helper, ctx, "ltroot-parent-uid", "Parent", "parent", repoName)
 		requireGitFolderState(t, helper, ctx, "ltroot-deep-uid", "Deep", "parent/deep", "ltroot-parent-uid")
@@ -338,7 +338,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMovePermissions(t *testin
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
 
 		requireGitFolderState(t, helper, ctx, "ltroot-leaf-uid", "Leaf", "leaf", repoName)
 
@@ -361,7 +361,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMovePermissions(t *testin
 		})
 
 		// legacy-parent has no _folder.json, so the sync correctly warns about missing metadata.
-		common.SyncAndWaitWithWarning(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Warning())
 
 		requireGitFolderState(t, helper, ctx, "child-meta-uid", "Child With Meta", "child-with-meta", repoName)
 		legacyParentUID := findGitFolderUIDBySourcePath(t, helper, ctx, repoName, "legacy-parent")
@@ -392,7 +392,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMovePermissions(t *testin
 
 		// After the move, legacy-parent still has no _folder.json, so the incremental sync
 		// also warns about missing metadata.
-		common.SyncAndWaitIncrementalWithWarning(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Warning())
 
 		// The legacy parent keeps its original hash-based UID (its path did not change).
 		requireGitFolderState(t, helper, ctx, legacyParentUID, "legacy-parent", "legacy-parent", repoName)

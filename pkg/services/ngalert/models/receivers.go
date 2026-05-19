@@ -396,7 +396,8 @@ func (integration *Integration) Validate(decryptFn DecryptFn) error {
 	return ValidateIntegration(context.Background(), models.IntegrationConfig{
 		UID:                   decrypted.UID,
 		Name:                  decrypted.Name,
-		Type:                  string(decrypted.Config.Type()),
+		Type:                  decrypted.Config.Type(),
+		Version:               decrypted.Config.Version,
 		DisableResolveMessage: decrypted.DisableResolveMessage,
 		Settings:              jsonBytes,
 		SecureSettings:        decrypted.SecureSettings,
@@ -411,10 +412,8 @@ func ValidateIntegration(ctx context.Context, integration models.IntegrationConf
 		return fmt.Errorf("settings should not be empty")
 	}
 
-	_, err := alertingNotify.BuildReceiverConfiguration(ctx, &alertingNotify.APIReceiver{
-		ReceiverConfig: models.ReceiverConfig{
-			Integrations: []*models.IntegrationConfig{&integration},
-		},
+	_, err := alertingNotify.BuildReceiverConfiguration(ctx, models.ReceiverConfig{
+		Integrations: []*models.IntegrationConfig{&integration},
 	}, alertingNotify.DecodeSecretsFromBase64, decryptFunc)
 	if err != nil {
 		return err

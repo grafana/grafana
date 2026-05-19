@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { lazy, Suspense, useCallback, useEffect, useMemo } from 'react';
 import { useLocalStorage, useMeasure } from 'react-use';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
@@ -13,28 +13,14 @@ import { Button, Stack, useStyles2 } from '@grafana/ui';
 
 import { type ExpressionQueryEditorProps } from '../../ExpressionQueryEditor';
 import { type SqlExpressionQuery } from '../../types';
-import { fetchSQLFields } from '../../utils/metaSqlExpr';
+import { fetchSQLFields, type FetchSQLFieldsOptions } from '../../utils/metaSqlExpr';
 import { QueryToolbox } from '../QueryToolbox';
 
 import { getSqlCompletionProvider } from './CompletionProvider/sqlCompletionProvider';
-import { useSQLExplanations } from './GenAI/hooks/useSQLExplanations';
-import { useSQLSuggestions } from './GenAI/hooks/useSQLSuggestions';
 import { SchemaInspectorPanel } from './SchemaInspector/SchemaInspectorPanel';
-import { type SqlExprContextValue, SqlExprProvider } from './SqlExprContext';
 import { SqlQueryActions } from './SqlQueryActions';
 import { useSQLSchemas } from './hooks/useSQLSchemas';
 
-const GenAISuggestionsDrawer = lazy(() =>
-  import('./GenAI/GenAISuggestionsDrawer').then((module) => ({
-    default: module.GenAISuggestionsDrawer,
-  }))
-);
-
-const GenAIExplanationDrawer = lazy(() =>
-  import('./GenAI/GenAIExplanationDrawer').then((module) => ({
-    default: module.GenAIExplanationDrawer,
-  }))
-);
 const SQLEditor = lazy(() =>
   import('@grafana/plugin-ui').then((module) => ({
     default: module.SQLEditor,
@@ -58,13 +44,21 @@ export interface SqlExprProps {
 
 export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, metadata, onRunQuery }: SqlExprProps) => {
   const vars = useMemo(() => refIds.map((v) => v.value!), [refIds]);
+  const interpolationScopedVars = metadata?.data?.request?.scopedVars;
+  const interpolationFilters = metadata?.data?.request?.filters;
+  const interpolationRange = metadata?.range;
   const completionProvider = useMemo(
     () =>
       getSqlCompletionProvider({
-        getFields: (identifier: TableIdentifier) => fetchFields(identifier, queries || []),
+        getFields: (identifier: TableIdentifier) =>
+          fetchFields(identifier, queries || [], {
+            range: interpolationRange,
+            scopedVars: interpolationScopedVars,
+            filters: interpolationFilters,
+          }),
         refIds,
       }),
-    [queries, refIds]
+    [interpolationFilters, interpolationRange, interpolationScopedVars, queries, refIds]
   );
 
   // Define the language definition for MySQL syntax highlighting and autocomplete
@@ -85,18 +79,6 @@ LIMIT
   const [isSchemaInspectorOpen = true, setIsSchemaInspectorOpen] = useLocalStorage(SCHEMA_INSPECTOR_OPEN_KEY, true);
 
   const styles = useStyles2((theme) => getStyles(theme));
-  const { handleApplySuggestion, handleCloseDrawer, handleHistoryUpdate, handleOpenDrawer, isDrawerOpen, suggestions } =
-    useSQLSuggestions();
-
-  const {
-    explanation,
-    handleCloseExplanation,
-    handleOpenExplanation,
-    handleExplain,
-    isExplanationOpen,
-    shouldShowViewExplanation,
-    updatePrevExpression,
-  } = useSQLExplanations(query.expression || '');
 
   const {
     schemas,
@@ -106,8 +88,10 @@ LIMIT
     refetch: refetchSchemas,
   } = useSQLSchemas({
     queries,
-    enabled: isSchemaInspectorOpen,
-    timeRange: metadata?.range,
+    enabled: true,
+    timeRange: interpolationRange,
+    scopedVars: interpolationScopedVars,
+    filters: interpolationFilters,
   });
 
   const queryContext = useMemo(
@@ -125,7 +109,6 @@ LIMIT
         ? metadata?.data?.request?.endTime - metadata?.data?.request?.startTime
         : -1,
       numberOfQueries: metadata?.data?.request?.targets?.length ?? 0,
-      seriesData: metadata?.data?.series,
     }),
     [alerting, metadata]
   );
@@ -155,12 +138,6 @@ LIMIT
       expression,
       format: alerting ? 'alerting' : undefined,
     });
-    updatePrevExpression(expression);
-  };
-
-  const onApplySuggestion = (suggestion: string) => {
-    onEditorChange(suggestion);
-    handleApplySuggestion(suggestion);
   };
 
   const executeQuery = useCallback(() => {
@@ -174,15 +151,12 @@ LIMIT
       onRunQuery();
     }
 
-    // Refetch schemas when query is run (only if inspector is open)
-    if (isSchemaInspectorOpen) {
-      refetchSchemas();
-    }
-  }, [onRunQuery, refetchSchemas, isSchemaInspectorOpen]);
+    refetchSchemas();
+  }, [onRunQuery, refetchSchemas]);
 
+  // Call the onChange method once so we have access to the initial query in consuming components
+  // But only if expression is empty
   useEffect(() => {
-    // Call the onChange method once so we have access to the initial query in consuming components
-    // But only if expression is empty
     if (!query.expression) {
       onEditorChange(initialQuery);
     }
@@ -206,23 +180,6 @@ LIMIT
     return () => document.removeEventListener('keydown', handleKeyDown, true);
   }, [executeQuery]);
 
-  const contextValue: SqlExprContextValue = {
-    // Explanations
-    explanation,
-    isExplanationOpen,
-    shouldShowViewExplanation,
-    handleExplain,
-    handleOpenExplanation,
-    handleCloseExplanation,
-    // Suggestions
-    suggestions,
-    isDrawerOpen,
-    handleHistoryUpdate,
-    handleApplySuggestion,
-    handleOpenDrawer,
-    handleCloseDrawer,
-  };
-
   const renderButtons = () => (
     <Stack direction="row" alignItems="center" justifyContent="space-between" wrap>
       <SqlQueryActions
@@ -232,6 +189,7 @@ LIMIT
         refIds={vars}
         initialQuery={initialQuery}
         errorContext={errorContext}
+        schemas={schemas?.sqlSchemas ?? null}
       />
       {isSchemasFeatureEnabled && (
         <Button
@@ -255,10 +213,10 @@ LIMIT
     >
       <div className={styles.editorContainer}>
         <AutoSizer>
-          {({ width, height }) => (
+          {({ width, height }: Size) => (
             <Suspense fallback={null}>
               <SQLEditor
-                query={query.expression || initialQuery}
+                query={query.expression ?? initialQuery}
                 onChange={onEditorChange}
                 language={EDITOR_LANGUAGE_DEFINITION}
                 width={width}
@@ -282,34 +240,13 @@ LIMIT
     </div>
   );
 
-  const renderSQLEditor = () => (
-    <Stack direction="column" gap={1}>
-      {renderButtons()}
-      {renderMainContent()}
-    </Stack>
-  );
-
   return (
-    <SqlExprProvider value={contextValue}>
-      <div className={styles.mainContainer}>
-        {renderSQLEditor()}
-        <Suspense fallback={null}>
-          <GenAISuggestionsDrawer
-            isOpen={isDrawerOpen}
-            onApplySuggestion={onApplySuggestion}
-            onClose={handleCloseDrawer}
-            suggestions={suggestions}
-          />
-        </Suspense>
-        <Suspense fallback={null}>
-          <GenAIExplanationDrawer
-            isOpen={isExplanationOpen}
-            onClose={handleCloseExplanation}
-            explanation={explanation}
-          />
-        </Suspense>
-      </div>
-    </SqlExprProvider>
+    <div className={styles.mainContainer} data-testid="sql-expression-editor">
+      <Stack direction="column" gap={1}>
+        {renderButtons()}
+        {renderMainContent()}
+      </Stack>
+    </div>
   );
 };
 
@@ -352,7 +289,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-async function fetchFields(identifier: TableIdentifier, queries: DataQuery[]) {
-  const fields = await fetchSQLFields({ table: identifier.table }, queries);
+async function fetchFields(identifier: TableIdentifier, queries: DataQuery[], options: FetchSQLFieldsOptions) {
+  const fields = await fetchSQLFields({ table: identifier.table }, queries, options);
   return fields.map((t) => ({ name: t.name, completion: t.value, kind: CompletionItemKind.Field }));
 }

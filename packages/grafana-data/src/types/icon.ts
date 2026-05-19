@@ -67,6 +67,7 @@ export const availableIconsIndex = {
   check: true,
   'check-circle': true,
   'check-square': true,
+  'checkbox-multiple': true,
   circle: true,
   'circle-mono': true,
   'clipboard-alt': true,
@@ -169,6 +170,7 @@ export const availableIconsIndex = {
   'gf-traces': true,
   globe: true,
   grafana: true,
+  grid: true,
   'graph-bar': true,
   'hand-pointer': true,
   heart: true,
@@ -243,6 +245,7 @@ export const availableIconsIndex = {
   'share-alt': true,
   shield: true,
   'shield-exclamation': true,
+  sigil: true,
   signal: true,
   signin: true,
   signout: true,
@@ -301,6 +304,10 @@ export const availableIconsIndex = {
   'cmab-logo': true,
   'lightbulb-alt': true,
   vial: true,
+  'anthropic-logo': true,
+  'cursor-logo': true,
+  'github-copilot-logo': true,
+  robot: true,
 };
 
 export type IconName = keyof typeof availableIconsIndex;

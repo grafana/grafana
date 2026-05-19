@@ -16,7 +16,6 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	acMock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -156,7 +155,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 					return nil
 				}
 				if q.Name == "GetNamespaceByUID" {
-					return dashboards.ErrFolderAccessDenied
+					return folder.ErrAccessDenied
 				}
 				return nil
 			}

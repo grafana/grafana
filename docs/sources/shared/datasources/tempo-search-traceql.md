@@ -71,13 +71,25 @@ The field type determines the available operators.
 For example, **Span Name** and **Service Name** are string fields so the comparison operators are equals (`=`), not equal (`!=`), matches regular expressions (`=~`), or doesn't match regular expression (`!~`).
 **Duration** is a duration field type and uses range selections (`>`, `>=`, `<`, `<=`).
 
-When you select multiple values for the same filter, Grafana automatically changes the operator to the regular expression (regex) operator `=~` and concatenates the values with a `|`.
+You can select multiple values for the same filter.
+The generated query depends on the operator you choose:
+
+- Equals (`=`) or other non-regular expression operators: Each value becomes a separate condition joined with `||` inside parentheses. For the not-equals (`!=`) operator, conditions are joined with `&&` instead.
+- Regular expressions match (`=~`) or not match (`!~`): Values are concatenated with `|` inside a single quoted string.
+
 This capability only applies to fields with drop-down value selection.
 
-For example, if you choose **Span Name** `= get` and then **Span Name** `= log_results_cache,` operator drop-down list changes from `=` to `=~` and both `get` and `log_results_cache` are listed in the **Span Name** field.
-The resulting query is updated with this:
+For example, if you select **Span Name** with the `=` operator and choose both `get` and `log_results_cache` as values, the generated query uses separate conditions:
 
-`{duration>5ms && duration<10ms && name=~"get|log_results_cache"}`
+```traceql
+{ name="get" || name="log_results_cache" }
+```
+
+If you select the regular expression operator `=~` instead, the values are combined into a single regular expression pattern:
+
+```traceql
+{ name=~"get|log_results_cache" }
+```
 
 To define filters, follow these steps:
 
@@ -110,7 +122,7 @@ It will be removed in a future release.
 {{< /admonition >}}
 
 Using **Aggregate by**, you can calculate RED metrics (total span count, percent erroring spans, and latency information) for spans of `kind=server` that match your filter criteria, grouped by one or more attributes.
-This capability is based on the [metrics summary API](/docs/grafana-cloud/monitor-infrastructure/traces/metrics-summary-api/).
+This capability is based on the [metrics summary API](/docs/grafana-cloud/send-data/traces/metrics-summary-api/).
 Metrics summary only calculates summaries based on spans received within the last hour.
 For additional information, refer to [Traces to metrics: Ad-hoc RED metrics in Grafana Tempo with `Aggregate by`](https://grafana.com/blog/2023/12/07/traces-to-metrics-ad-hoc-red-metrics-in-grafana-tempo-with-aggregate-by/).
 

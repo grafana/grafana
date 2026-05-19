@@ -1,4 +1,4 @@
-import { type Meta, type StoryFn, type StoryObj } from '@storybook/react';
+import { type Meta, type StoryFn, type StoryObj } from '@storybook/react-webpack5';
 import { useCallback, useMemo, useState } from 'react';
 import { type CellProps } from 'react-table';
 
@@ -336,4 +336,17 @@ export const WithCustomHeader: TableStoryObj = {
     getRowId: (r) => r.id,
   },
 };
+export const WithColumnWidths: TableStoryObj = {
+  args: {
+    columns: [
+      { id: 'firstName', header: 'First name (fixed 150px)', sortType: 'string', width: 150 },
+      { id: 'lastName', header: 'Last name (min 200px)', sortType: 'string', minWidth: 200 },
+      { id: 'car', header: 'Car (max 120px)', sortType: 'string', maxWidth: 120 },
+      { id: 'age', header: 'Age (80px)', width: 80 },
+    ],
+    data: pageableData.slice(0, 10),
+    getRowId: (r) => r.id,
+  },
+};
+
 export default meta;

@@ -84,3 +84,34 @@ func TestManagedResourceIndex_DuplicatePaths(t *testing.T) {
 		require.Empty(t, index.DirectChildrenOf("anything/"))
 	})
 }
+
+func TestManagedResourceIndex_ExistingByName(t *testing.T) {
+	index := newManagedResourceIndex(&provisioning.ResourceList{
+		Items: []provisioning.ResourceListItem{
+			{Name: "folder-a", Group: resources.FolderResource.Group, Resource: resources.FolderResource.Resource, Path: "path-a"},
+			{Name: "folder-b", Group: resources.FolderResource.Group, Resource: resources.FolderResource.Resource, Path: "path-b"},
+			{Name: "shared-name", Group: resources.FolderResource.Group, Resource: resources.FolderResource.Resource, Path: "path-c"},
+			{Name: "shared-name", Group: "dashboards", Resource: "dashboards", Path: "path-c/dash.json"},
+		},
+	})
+
+	t.Run("returns items matching the name", func(t *testing.T) {
+		items := index.ExistingByName("folder-a")
+		require.Len(t, items, 1)
+		require.Equal(t, "path-a", items[0].Path)
+	})
+
+	t.Run("returns multiple items when different kinds share the same name", func(t *testing.T) {
+		items := index.ExistingByName("shared-name")
+		require.Len(t, items, 2)
+	})
+
+	t.Run("returns nil for unknown name", func(t *testing.T) {
+		require.Empty(t, index.ExistingByName("unknown"))
+	})
+
+	t.Run("returns nil on nil target", func(t *testing.T) {
+		empty := newManagedResourceIndex(nil)
+		require.Empty(t, empty.ExistingByName("folder-a"))
+	})
+}

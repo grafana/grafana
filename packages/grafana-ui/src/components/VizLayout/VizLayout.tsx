@@ -4,6 +4,7 @@ import * as React from 'react';
 import { useMeasure } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { type LegendPlacement } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
@@ -45,7 +46,7 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
   if (!legend) {
     return (
       <>
-        <div style={containerStyle} className={styles.viz}>
+        <div style={containerStyle} className={styles.viz} data-testid={selectors.components.VizLayout.container}>
           {children(width, height)}
         </div>
       </>
@@ -97,9 +98,9 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
   }
 
   return (
-    <div style={containerStyle}>
+    <div style={containerStyle} data-testid={selectors.components.VizLayout.container}>
       <div className={styles.viz}>{size && children(size.width, size.height)}</div>
-      <div style={legendStyle} ref={legendRef}>
+      <div style={legendStyle} ref={legendRef} data-testid={selectors.components.VizLayout.legend}>
         <ScrollContainer>{legend}</ScrollContainer>
       </div>
     </div>

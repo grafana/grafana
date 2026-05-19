@@ -8,7 +8,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/useragent"
-
+	"github.com/grafana/grafana-plugin-sdk-go/config"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/adapters"
@@ -57,7 +57,7 @@ func (p *BaseProvider) GetBasePluginContext(ctx context.Context, plugin pluginst
 	}
 
 	settings := p.pluginRequestConfigProvider.PluginRequestConfig(ctx, plugin.ID, plugin.ExternalService)
-	pCtx.GrafanaConfig = backend.NewGrafanaCfg(settings)
+	pCtx.GrafanaConfig = config.NewGrafanaCfg(settings)
 
 	ua, err := useragent.New(p.cfg.BuildVersion, runtime.GOOS, runtime.GOARCH)
 	if err != nil {

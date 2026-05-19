@@ -2,11 +2,21 @@ import { type Page, type Locator } from '@playwright/test';
 
 import { test, expect, type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
-import { getCell, getCellHeight, getColumnIdx, waitForTableLoad } from './table-utils';
+import { getCell, getCellHeight, getColumnIdx, getSelectedFilterCount, waitForTableLoad } from './table-utils';
 
 const DASHBOARD_UID = 'dcb9f5e9-8066-4397-889e-864b99555dbb';
 
 test.use({ viewport: { width: 2000, height: 1080 } });
+
+/** Color-background mode applies a gradient or image via the `background` shorthand (TableNG). */
+const assertCellHasBackground = (cell: Locator, expected: boolean) =>
+  expect(async () => {
+    const hasBackground = await cell.evaluate((el) => {
+      const s = window.getComputedStyle(el);
+      return s.background.includes('linear-gradient') || (s.backgroundImage !== 'none' && s.backgroundImage !== '');
+    });
+    expect(hasBackground, `cell ${expected ? 'has' : 'does not have'} background linear-gradient`).toBe(expected);
+  }).toPass();
 
 const disableAllTextWrap = async (loc: Page | Locator, selectors: E2ESelectorGroups) => {
   // disable text wrapping for all of the columns, since long text with links in them can push the links off the screen.
@@ -388,11 +398,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     // The List component is virtualized so we can't rely on DOM element count — instead click
     // "Select all" (which operates on the full data array) and parse the "N selected" label.
     await minFilterContainer.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.SelectAll).click();
-    const allMinSelectAllText =
-      (await minFilterContainer
-        .getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.SelectAll)
-        .textContent()) ?? '';
-    const allMinOptionCount = parseInt(allMinSelectAllText.match(/(\d+) selected/)?.[1] ?? '0', 10);
+    const allMinOptionCount = await getSelectedFilterCount(minFilterContainer, selectors);
 
     // Close without applying
     await minFilterContainer.getByRole('button', { name: 'Cancel' }).click();
@@ -426,11 +432,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     await expect(minFilterContainer, 'filter popup for min is visible after click').toBeVisible();
 
     await minFilterContainer.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.SelectAll).click();
-    const crossFilteredSelectAllText =
-      (await minFilterContainer
-        .getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.SelectAll)
-        .textContent()) ?? '';
-    const crossFilteredMinOptionCount = parseInt(crossFilteredSelectAllText.match(/(\d+) selected/)?.[1] ?? '0', 10);
+    const crossFilteredMinOptionCount = await getSelectedFilterCount(minFilterContainer, selectors);
 
     // With Info filtered to "up" only, Min options must be a subset of (or equal to) the full set.
     // In practice the data has multiple Info values, so the Min option list should be smaller.
@@ -564,5 +566,54 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     await expect(
       dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink'))
     ).not.toBeVisible();
+  });
+
+  test('Multi-frame table: frame selector combobox switches active frame', async ({
+    gotoDashboardPage,
+    selectors,
+    page,
+  }) => {
+    const dashboardPage = await gotoDashboardPage({
+      uid: DASHBOARD_UID,
+      queryParams: new URLSearchParams({ editPanel: '11' }),
+    });
+
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Multi-frame table'))
+    ).toBeVisible();
+
+    const panelContent = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content).first();
+    await waitForTableLoad(panelContent);
+
+    const table = panelContent.locator('.rdg');
+
+    const frameCombobox = panelContent.getByRole('combobox');
+    await expect(frameCombobox).toBeVisible();
+    await expect(frameCombobox, 'combobox starts with A').toHaveValue('A');
+    await expect(getCell(table, 0, 1), 'frame A header has correct text').toContainText('A');
+    await assertCellHasBackground(getCell(table, 1, 3), true);
+    for (const colIdx of [0, 1, 2, 4, 5]) {
+      await assertCellHasBackground(getCell(table, 1, colIdx), false);
+    }
+
+    await frameCombobox.click();
+    await page.getByRole('option', { name: 'B', exact: true }).click();
+    await expect(frameCombobox, 'combobox changed to B').toHaveValue('B');
+    await waitForTableLoad(panelContent);
+    await expect(getCell(table, 0, 1), 'frame B header has correct text').toContainText('B');
+    await assertCellHasBackground(getCell(table, 1, 3), true);
+    for (const colIdx of [0, 1, 2, 4, 5]) {
+      await assertCellHasBackground(getCell(table, 1, colIdx), false);
+    }
+
+    await frameCombobox.click();
+    await page.getByRole('option', { name: 'C', exact: true }).click();
+    await expect(frameCombobox, 'combobox changed to C').toHaveValue('C');
+    await waitForTableLoad(panelContent);
+    await expect(getCell(table, 0, 1), 'frame C header has correct text').toContainText('C');
+    await assertCellHasBackground(getCell(table, 1, 3), true);
+    for (const colIdx of [0, 1, 2, 4, 5]) {
+      await assertCellHasBackground(getCell(table, 1, colIdx), false);
+    }
   });
 });

@@ -7,14 +7,12 @@ import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { appEvents } from 'app/core/app_events';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { updateDashboardName } from 'app/core/reducers/navBarTree';
 import { useSaveDashboardMutation } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import {
   type SaveDashboardAsOptions,
   type SaveDashboardOptions,
 } from 'app/features/dashboard/components/SaveDashboard/types';
 import { DashboardSavedEvent } from 'app/types/events';
-import { useDispatch } from 'app/types/store';
 
 import { updateDashboardUidLastUsedDatasource } from '../../dashboard/utils/dashboard';
 import { type DashboardScene } from '../scene/DashboardScene';
@@ -22,7 +20,6 @@ import { DashboardInteractions } from '../utils/interactions';
 import { trackDashboardSceneCreatedOrSaved } from '../utils/tracking';
 
 export function useSaveDashboard(isCopy = false) {
-  const dispatch = useDispatch();
   const notifyApp = useAppNotification();
   const [saveDashboardRtkQuery] = useSaveDashboardMutation();
 
@@ -100,20 +97,10 @@ export function useSaveDashboard(isCopy = false) {
           });
         }
 
-        if (scene.state.meta.isStarred) {
-          dispatch(
-            updateDashboardName({
-              id: resultData.uid,
-              title: scene.state.title,
-              url: newUrl,
-            })
-          );
-        }
-
         return result.data;
       }
     },
-    [dispatch, notifyApp]
+    [notifyApp]
   );
 
   return { state, onSaveDashboard };

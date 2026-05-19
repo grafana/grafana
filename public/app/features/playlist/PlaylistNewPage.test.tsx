@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event';
 import { of } from 'rxjs';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import { selectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
 
 import { createFetchResponse } from '../../../test/helpers/createFetchResponse';
@@ -65,7 +64,9 @@ describe('PlaylistNewPage', () => {
 
       expect(locationService.getLocation().pathname).toEqual('/');
 
-      await userEvent.type(screen.getByRole('textbox', { name: selectors.pages.PlaylistForm.name }), 'A new name');
+      await userEvent.type(screen.getByRole('textbox', { name: 'Name' }), 'A new name');
+      await userEvent.clear(screen.getByRole('textbox', { name: 'Interval' }));
+      await userEvent.type(screen.getByRole('textbox', { name: 'Interval' }), '10m');
       fireEvent.submit(screen.getByRole('button', { name: /save/i }));
       await waitFor(() => expect(postSpy).toHaveBeenCalledTimes(1));
 
@@ -75,7 +76,7 @@ describe('PlaylistNewPage', () => {
           body: expect.objectContaining({
             spec: {
               title: 'A new name',
-              interval: '5m',
+              interval: '10m',
               items: [],
             },
           }),

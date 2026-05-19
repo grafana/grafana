@@ -3,6 +3,7 @@ package teambinding
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math"
 	"testing"
 
@@ -185,13 +186,8 @@ func TestLegacyTeamBindingSearchClient_Search(t *testing.T) {
 		require.NotNil(t, resp)
 	})
 
-	t.Run("should cap limit at 100", func(t *testing.T) {
-		mockStore := &mockLegacyStore{
-			listTeamBindingsFunc: func(ctx context.Context, ns claims.NamespaceInfo, query legacy.ListTeamBindingsQuery) (*legacy.ListTeamBindingsResult, error) {
-				require.Equal(t, int64(100), query.Pagination.Limit)
-				return &legacy.ListTeamBindingsResult{Bindings: []legacy.TeamMember{}, Continue: 0}, nil
-			},
-		}
+	t.Run("should return error when limit exceeds common.MaxListLimit", func(t *testing.T) {
+		mockStore := &mockLegacyStore{}
 		client := NewLegacyTeamBindingSearchClient(mockStore, tracing.NewNoopTracerService())
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
@@ -200,7 +196,7 @@ func TestLegacyTeamBindingSearchClient_Search(t *testing.T) {
 		})
 
 		req := &resourcepb.ResourceSearchRequest{
-			Limit: 150,
+			Limit: common.MaxListLimit + 1,
 			Page:  1,
 			Options: &resourcepb.ListOptions{
 				Key: &resourcepb.ResourceKey{
@@ -218,14 +214,15 @@ func TestLegacyTeamBindingSearchClient_Search(t *testing.T) {
 		}
 
 		resp, err := client.Search(ctx, req)
-		require.NoError(t, err)
-		require.NotNil(t, resp)
+		require.Error(t, err)
+		require.Nil(t, resp)
+		require.Contains(t, err.Error(), fmt.Sprintf("limit cannot be greater than %d", common.MaxListLimit))
 	})
 
-	t.Run("should default limit to 50 when limit is 0", func(t *testing.T) {
+	t.Run("should default limit to common.DefaultListLimit when limit is 0", func(t *testing.T) {
 		mockStore := &mockLegacyStore{
 			listTeamBindingsFunc: func(ctx context.Context, ns claims.NamespaceInfo, query legacy.ListTeamBindingsQuery) (*legacy.ListTeamBindingsResult, error) {
-				require.Equal(t, int64(50), query.Pagination.Limit)
+				require.Equal(t, int64(common.DefaultListLimit), query.Pagination.Limit)
 				return &legacy.ListTeamBindingsResult{Bindings: []legacy.TeamMember{}, Continue: 0}, nil
 			},
 		}
@@ -259,10 +256,10 @@ func TestLegacyTeamBindingSearchClient_Search(t *testing.T) {
 		require.NotNil(t, resp)
 	})
 
-	t.Run("should default limit to 50 when limit is negative", func(t *testing.T) {
+	t.Run("should default limit to common.DefaultListLimit when limit is negative", func(t *testing.T) {
 		mockStore := &mockLegacyStore{
 			listTeamBindingsFunc: func(ctx context.Context, ns claims.NamespaceInfo, query legacy.ListTeamBindingsQuery) (*legacy.ListTeamBindingsResult, error) {
-				require.Equal(t, int64(50), query.Pagination.Limit)
+				require.Equal(t, int64(common.DefaultListLimit), query.Pagination.Limit)
 				return &legacy.ListTeamBindingsResult{Bindings: []legacy.TeamMember{}, Continue: 0}, nil
 			},
 		}
@@ -658,6 +655,10 @@ func (m *mockLegacyStore) UpdateUser(ctx context.Context, ns claims.NamespaceInf
 	return nil, nil
 }
 
+func (m *mockLegacyStore) UpdateLastSeenAt(ctx context.Context, ns claims.NamespaceInfo, cmd legacy.UpdateUserLastSeenAtCommand) error {
+	return nil
+}
+
 func (m *mockLegacyStore) DeleteUser(ctx context.Context, ns claims.NamespaceInfo, cmd legacy.DeleteUserCommand) error {
 	return nil
 }
@@ -680,6 +681,18 @@ func (m *mockLegacyStore) DeleteServiceAccount(ctx context.Context, ns claims.Na
 
 func (m *mockLegacyStore) ListServiceAccountTokens(ctx context.Context, ns claims.NamespaceInfo, query legacy.ListServiceAccountTokenQuery) (*legacy.ListServiceAccountTokenResult, error) {
 	return nil, nil
+}
+
+func (m *mockLegacyStore) GetServiceAccountToken(ctx context.Context, ns claims.NamespaceInfo, query legacy.GetServiceAccountTokenQuery) (*legacy.ServiceAccountToken, error) {
+	return nil, nil
+}
+
+func (m *mockLegacyStore) DeleteServiceAccountToken(ctx context.Context, ns claims.NamespaceInfo, cmd legacy.DeleteServiceAccountTokenCommand) (int64, error) {
+	return 0, nil
+}
+
+func (m *mockLegacyStore) CreateServiceAccountTokenWithHash(ctx context.Context, ns claims.NamespaceInfo, cmd legacy.CreateServiceAccountTokenWithHashCommand) error {
+	return nil
 }
 
 func (m *mockLegacyStore) GetTeamInternalID(ctx context.Context, ns claims.NamespaceInfo, query legacy.GetTeamInternalIDQuery) (*legacy.GetTeamInternalIDResult, error) {
@@ -723,5 +736,17 @@ func (m *mockLegacyStore) ListTeamBindings(ctx context.Context, ns claims.Namesp
 }
 
 func (m *mockLegacyStore) ListTeamMembers(ctx context.Context, ns claims.NamespaceInfo, query legacy.ListTeamMembersQuery) (*legacy.ListTeamMembersResult, error) {
+	return nil, nil
+}
+
+func (m *mockLegacyStore) GetUserUIDByID(ctx context.Context, ns claims.NamespaceInfo, query legacy.GetUserUIDByIDQuery) (*legacy.GetUserUIDByIDResult, error) {
+	return nil, nil
+}
+
+func (m *mockLegacyStore) GetServiceAccountUIDByID(ctx context.Context, ns claims.NamespaceInfo, query legacy.GetUserUIDByIDQuery) (*legacy.GetUserUIDByIDResult, error) {
+	return nil, nil
+}
+
+func (m *mockLegacyStore) GetTeamUIDByID(ctx context.Context, ns claims.NamespaceInfo, query legacy.GetTeamUIDByIDQuery) (*legacy.GetTeamUIDByIDResult, error) {
 	return nil, nil
 }

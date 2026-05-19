@@ -11,10 +11,11 @@ import { useWorkbenchContext } from '../WorkbenchContext';
 import { GenericRow } from '../rows/GenericRow';
 import { InstanceRow } from '../rows/InstanceRow';
 
+import { alertStateFrameOrder } from './dataFrameUtils';
 import { alertRuleInstancesQuery } from './queries';
 import { useQueryFilter } from './utils';
 
-function extractInstancesFromData(series: DataFrame[] | undefined) {
+export function extractInstancesFromData(series: DataFrame[] | undefined) {
   if (!series) {
     return [];
   }
@@ -36,20 +37,24 @@ function extractInstancesFromData(series: DataFrame[] | undefined) {
     groups.get(key)!.series.push(series);
   });
 
-  return Array.from(groups.values());
+  return Array.from(groups.values()).map((instance) => ({
+    ...instance,
+    series: instance.series.slice().sort(alertStateFrameOrder),
+  }));
 }
 
 type AlertRuleInstancesProps = {
   ruleUID: string;
   depth?: number;
+  groupLabels?: Record<string, string>;
 };
 
-export function AlertRuleInstances({ ruleUID, depth = 0 }: AlertRuleInstancesProps) {
+export function AlertRuleInstances({ ruleUID, depth = 0, groupLabels }: AlertRuleInstancesProps) {
   const { leftColumnWidth } = useWorkbenchContext();
   const [timeRange] = useTimeRange();
   const queryFilter = useQueryFilter();
 
-  const queryRunner = useQueryRunner({ queries: [alertRuleInstancesQuery(ruleUID, queryFilter)] });
+  const queryRunner = useQueryRunner({ queries: [alertRuleInstancesQuery(ruleUID, queryFilter, groupLabels)] });
 
   const isLoading = !queryRunner.isDataReadyToDisplay();
   const { data } = queryRunner.useState();

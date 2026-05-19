@@ -33,7 +33,7 @@ import {
   type ListDashboardHistoryOptions,
   type ListDeletedDashboardsOptions,
 } from './types';
-import { isV0V1StoredVersion } from './utils';
+import { buildRestorePayload, isV0V1StoredVersion } from './utils';
 
 export function getK8sV2DashboardApiConfig() {
   return {
@@ -147,16 +147,18 @@ export class K8sDashboardV2API
       };
     }
 
+    obj.metadata.annotations = {
+      ...obj.metadata.annotations,
+      [AnnoKeyGrantPermissions]: 'default',
+    };
+
     if (obj.metadata.name) {
       // remove resource version when updating
       delete obj.metadata.resourceVersion;
       delete obj.metadata.labels?.[DeprecatedInternalId];
       return this.client.update(obj).then((v) => this.asSaveDashboardResponseDTO(v));
     }
-    obj.metadata.annotations = {
-      ...obj.metadata.annotations,
-      [AnnoKeyGrantPermissions]: 'default',
-    };
+
     // clear the deprecated id label so the backend generates a new unique id to prevent duplicate ids.
     delete obj.metadata.labels?.[DeprecatedInternalId];
     return await this.client.create(obj).then((v) => this.asSaveDashboardResponseDTO(v));
@@ -233,14 +235,18 @@ export class K8sDashboardV2API
 
   async restoreDashboardVersion(uid: string, version: number): Promise<SaveDashboardResponseDTO> {
     // get version to restore to, and save as new one
-    const [historicalVersion] = await this.getDashboardHistoryVersions(uid, [version]);
+    // fetch current dashboard in parallel to preserve its folder location
+    const [historicalVersion, currentDashboard] = await Promise.all([
+      this.getDashboardHistoryVersions(uid, [version]).then((v) => v[0]),
+      this.client.get(uid),
+    ]);
     return await this.saveDashboard({
       dashboard: historicalVersion.spec,
       k8s: {
         name: uid,
       },
       message: `Restored from version ${version}`,
-      folderUid: historicalVersion.metadata?.annotations?.[AnnoKeyFolder],
+      folderUid: currentDashboard.metadata?.annotations?.[AnnoKeyFolder],
     });
   }
 
@@ -249,12 +255,6 @@ export class K8sDashboardV2API
   }
 
   restoreDashboard(dashboard: Resource<DashboardV2Spec>) {
-    // reset the resource version to create a new resource
-    dashboard.metadata.resourceVersion = '';
-    dashboard.metadata.annotations = {
-      ...dashboard.metadata.annotations,
-      [AnnoKeyGrantPermissions]: 'default',
-    };
-    return this.client.create(dashboard);
+    return this.client.create(buildRestorePayload(dashboard));
   }
 }

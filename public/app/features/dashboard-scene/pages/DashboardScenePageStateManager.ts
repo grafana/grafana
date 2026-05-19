@@ -24,9 +24,15 @@ import {
   AnnoKeySourcePath,
 } from 'app/features/apiserver/types';
 import { dashboardAPIVersionResolver } from 'app/features/dashboard/api/DashboardAPIVersionResolver';
-import { ensureV2Response, transformDashboardV2SpecToV1 } from 'app/features/dashboard/api/ResponseTransformers';
+import { ensureV2Response } from 'app/features/dashboard/api/ResponseTransformers';
 import { DashboardVersionError, type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
-import { isDashboardV2Resource, isDashboardV2Spec, isV2StoredVersion } from 'app/features/dashboard/api/utils';
+import {
+  isDashboardResource,
+  isDashboardV1Resource,
+  isDashboardV2Resource,
+  isDashboardV2Spec,
+  isV2StoredVersion,
+} from 'app/features/dashboard/api/utils';
 import { initializeDashboardAnalyticsAggregator } from 'app/features/dashboard/services/DashboardAnalyticsAggregator';
 import { dashboardLoaderSrv, DashboardLoaderSrvV2 } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
@@ -35,6 +41,7 @@ import { initializeReportRenderReadinessObserver } from 'app/features/dashboard/
 import { initializeScenePerformanceLogger } from 'app/features/dashboard/services/ScenePerformanceLogger';
 import { emitDashboardViewEvent } from 'app/features/dashboard/state/analyticsProcessor';
 import { trackDashboardSceneLoaded } from 'app/features/dashboard-scene/utils/tracking';
+import { interpolateV1Dashboard } from 'app/features/manage-dashboards/import/utils/inputs';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { type ProvisioningPreview } from 'app/features/provisioning/types';
 import { dispatch } from 'app/store/store';
@@ -107,6 +114,17 @@ export type HomeDashboardDTO = DashboardDTO & {
   dashboard: DashboardDataDTO | DashboardV2Spec;
 };
 
+/**
+ * Possible non-redirect return shapes of `/api/dashboards/home`. Either a
+ * classic `{ meta, dashboard }` envelope (legacy `home.json`) or a
+ * Kubernetes-style dashboard resource returned verbatim from the backend when
+ * `default_home_dashboard_path` points at a `dashboard.grafana.app/*` file.
+ */
+export type HomeDashboardFetchResult =
+  | HomeDashboardDTO
+  | DashboardWithAccessInfo<DashboardV2Spec>
+  | DashboardWithAccessInfo<DashboardDataDTO>;
+
 interface DashboardScenePageStateManagerLike<T> {
   fetchDashboard(options: LoadDashboardOptions): Promise<T | null>;
   getDashboardFromCache(cacheKey: string): T | null;
@@ -168,8 +186,18 @@ abstract class DashboardScenePageStateManagerBase<T>
     return this.cache;
   }
 
-  protected async fetchHomeDashboard(): Promise<DashboardDTO | null> {
-    const rsp = await getBackendSrv().get<HomeDashboardDTO | HomeDashboardRedirectDTO>('/api/dashboards/home');
+  /**
+   * `/api/dashboards/home` can return one of three shapes:
+   *   1. A redirect to another dashboard ({@link HomeDashboardRedirectDTO}).
+   *   2. The legacy classic wrapper {@link HomeDashboardDTO} (`{ meta, dashboard }`) for
+   *      classic `home.json`-style files.
+   *   3. A Kubernetes-style dashboard resource ({@link DashboardWithAccessInfo}) when
+   *      `default_home_dashboard_path` points at a `dashboard.grafana.app/*`
+   *      manifest. In that case the backend returns the file verbatim with an
+   *      injected `access` block.
+   */
+  protected async fetchHomeDashboard(): Promise<HomeDashboardFetchResult | null> {
+    const rsp = await getBackendSrv().get<HomeDashboardFetchResult | HomeDashboardRedirectDTO>('/api/dashboards/home');
 
     if (isRedirectResponse(rsp)) {
       const newUrl = locationUtil.processRedirectUri(rsp.redirectUri, locationService.getLocation());
@@ -177,32 +205,56 @@ abstract class DashboardScenePageStateManagerBase<T>
       return null;
     }
 
-    // If dashboard is on v2 schema convert to v1 schema, there's curently no v2 API for home dashboard
-    if (isDashboardV2Spec(rsp.dashboard)) {
-      rsp.dashboard = transformDashboardV2SpecToV1(rsp.dashboard, {
-        name: '',
-        generation: 0,
-        resourceVersion: '0',
-        creationTimestamp: '',
-      });
+    // k8s-format responses already carry an `access` block from the backend;
+    // classic responses still use the legacy `meta` flags.
+    if (isDashboardResource(rsp)) {
+      return rsp;
     }
 
-    if (rsp?.meta) {
+    if (rsp.meta) {
       rsp.meta.canSave = false;
       rsp.meta.canShare = false;
       rsp.meta.canStar = false;
     }
-
     return rsp;
   }
 
   private async loadHomeDashboard(): Promise<DashboardScene | null> {
     const rsp = await this.fetchHomeDashboard();
-    if (rsp) {
-      return transformSaveModelToScene(rsp, undefined, getSceneCreationOptions());
+    if (!rsp) {
+      return null;
     }
 
-    return null;
+    // k8s-format home dashboards (dashboard.grafana.app/*) are returned
+    // verbatim by the backend. Route them through the native v1/v2 scene
+    // builders directly. In particular, v2 resources go through the v2
+    // builder which supports RowsLayout / TabsLayout / AutoGridLayout — not
+    // just GridLayout, which was the only shape the old v2->v1 downconverter
+    // could handle.
+    if (isDashboardV2Resource(rsp)) {
+      return transformSaveModelSchemaV2ToScene(rsp);
+    }
+    if (isDashboardV1Resource(rsp)) {
+      return transformSaveModelToScene(
+        {
+          dashboard: rsp.spec,
+          meta: {
+            canSave: false,
+            canShare: false,
+            canStar: false,
+            canEdit: false,
+            canDelete: false,
+            canAdmin: false,
+            k8s: rsp.metadata,
+          },
+        },
+        undefined,
+        getSceneCreationOptions()
+      );
+    }
+
+    // Neither v1 nor v2 k8s resource - must be the classic DashboardDTO shape.
+    return transformSaveModelToScene(rsp, undefined, getSceneCreationOptions());
   }
 
   public async loadSnapshot(slug: string) {
@@ -416,7 +468,6 @@ abstract class DashboardScenePageStateManagerBase<T>
 
       if (options.route !== DashboardRoutes.New) {
         emitDashboardViewEvent({
-          id: dashboard.state.id,
           meta: dashboard.state.meta,
           uid: dashboard.state.uid,
           title: dashboard.state.title,
@@ -523,19 +574,24 @@ abstract class DashboardScenePageStateManagerBase<T>
 
 export class DashboardScenePageStateManager extends DashboardScenePageStateManagerBase<DashboardDTO> {
   transformResponseToScene(rsp: DashboardDTO | null, options: LoadDashboardOptions): DashboardScene | null {
-    const fromCache = this.getSceneFromCache(options.uid);
+    // Public dashboards are not part of a session and therefore should not use the cache
+    const skipSceneCache = options.route === DashboardRoutes.Public;
 
-    if (
-      fromCache &&
-      fromCache.state.version === rsp?.dashboard.version &&
-      fromCache.state.meta.created === rsp?.meta.created
-    ) {
-      const profiler = getDashboardSceneProfiler();
-      profiler.setMetadata({
-        dashboardUID: fromCache.state.uid,
-        dashboardTitle: fromCache.state.title,
-      });
-      return fromCache;
+    if (!skipSceneCache) {
+      const fromCache = this.getSceneFromCache(options.uid);
+
+      if (
+        fromCache &&
+        fromCache.state.version === rsp?.dashboard.version &&
+        fromCache.state.meta.created === rsp?.meta.created
+      ) {
+        const profiler = getDashboardSceneProfiler();
+        profiler.setMetadata({
+          dashboardUID: fromCache.state.uid,
+          dashboardTitle: fromCache.state.title,
+        });
+        return fromCache;
+      }
     }
 
     if (rsp?.dashboard) {
@@ -554,8 +610,8 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
         scene.setState({ isDirty: true });
       }
 
-      // Cache scene only if not coming from Explore, we don't want to cache temporary dashboard
-      if (options.uid) {
+      // We don't want to cache temporary dashboards (e.g from Explore) or public dashboards
+      if (options.uid && !skipSceneCache) {
         this.setSceneCache(options.uid, scene);
       }
 
@@ -661,21 +717,17 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     // The dashboard JSON is in the 'json' property
     const dashboardJson = gnetDashboard.json;
 
-    const data = {
-      dashboard: dashboardJson,
-      overwrite: true,
-      inputs: [
-        {
-          name: '*',
-          type: 'datasource',
-          pluginId: pluginId,
-          value: datasource,
-        },
-      ],
-    };
-
-    const interpolatedDashboard = await getBackendSrv().post('/api/dashboards/interpolate', data);
-    return this.buildDashboardDTOFromInterpolated(interpolatedDashboard);
+    // Interpolate in the frontend — no backend round-trip needed
+    const interpolatedDashboard = interpolateV1Dashboard(dashboardJson, [
+      {
+        name: '*',
+        type: 'datasource',
+        pluginId: pluginId ?? undefined,
+        value: datasource ?? '',
+      },
+    ]);
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return this.buildDashboardDTOFromInterpolated(interpolatedDashboard as DashboardDataDTO);
   }
 
   private async loadCommunityTemplateDashboard(gnetId: number | string): Promise<DashboardDTO> {
@@ -701,15 +753,10 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     // The dashboard JSON is in the 'json' property
     const dashboardJson = gnetDashboard.json;
 
-    // Call interpolate endpoint with the dashboard JSON and mappings
-    const data = {
-      dashboard: dashboardJson,
-      overwrite: true,
-      inputs: mappings,
-    };
-
-    const interpolatedDashboard = await getBackendSrv().post('/api/dashboards/interpolate', data);
-    return this.buildDashboardDTOFromInterpolated(interpolatedDashboard);
+    // Interpolate in the frontend — no backend round-trip needed
+    const interpolatedDashboard = interpolateV1Dashboard(dashboardJson, mappings);
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return this.buildDashboardDTOFromInterpolated(interpolatedDashboard as DashboardDataDTO);
   }
 
   public async fetchDashboard({
@@ -731,7 +778,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
 
     try {
       switch (route) {
-        case DashboardRoutes.Home:
+        case DashboardRoutes.Home: {
           // For legacy dashboarding we keep this logic here, as dashboard can be loaded through state manager's fetchDashboard method directly
           // See DashboardPageProxy.
           const homeDashboard = await this.fetchHomeDashboard();
@@ -740,8 +787,34 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
             return null;
           }
 
-          rsp = homeDashboard;
+          // A v2 k8s home resource cannot be represented as the legacy
+          // DashboardDTO shape this method returns. Signal it the same way
+          // other v2 paths in this method do so DashboardVersionError
+          // handling can switch over to the v2 state manager.
+          if (isDashboardV2Resource(homeDashboard)) {
+            throw new DashboardVersionError('v2beta1', 'Home dashboard is a v2 resource');
+          }
+
+          // For v1 k8s resources, unwrap to the classic `{ meta, dashboard }`
+          // shape the rest of this method expects.
+          if (isDashboardV1Resource(homeDashboard)) {
+            rsp = {
+              dashboard: homeDashboard.spec,
+              meta: {
+                canSave: false,
+                canShare: false,
+                canStar: false,
+                canEdit: false,
+                canDelete: false,
+                canAdmin: false,
+                k8s: homeDashboard.metadata,
+              },
+            };
+          } else {
+            rsp = homeDashboard;
+          }
           break;
+        }
         case DashboardRoutes.New:
           rsp = await buildNewDashboardSaveModel(urlFolderUid);
           break;
@@ -919,22 +992,27 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     rsp: DashboardWithAccessInfo<DashboardV2Spec> | null,
     options: LoadDashboardOptions
   ): DashboardScene | null {
-    const fromCache = this.getSceneFromCache(options.uid);
+    // Public dashboards are not part of a session and therefore should not use the cache
+    const skipSceneCache = options.route === DashboardRoutes.Public;
 
-    if (fromCache && fromCache.state.version === rsp?.metadata.generation) {
-      const profiler = getDashboardSceneProfiler();
-      profiler.setMetadata({
-        dashboardUID: fromCache.state.uid,
-        dashboardTitle: fromCache.state.title,
-      });
-      return fromCache;
+    if (!skipSceneCache) {
+      const fromCache = this.getSceneFromCache(options.uid);
+
+      if (fromCache && fromCache.state.version === rsp?.metadata.generation) {
+        const profiler = getDashboardSceneProfiler();
+        profiler.setMetadata({
+          dashboardUID: fromCache.state.uid,
+          dashboardTitle: fromCache.state.title,
+        });
+        return fromCache;
+      }
     }
 
     if (rsp) {
       const scene = transformSaveModelSchemaV2ToScene(rsp, options);
 
-      // Cache scene only if not coming from Explore, we don't want to cache temporary dashboard
-      if (options.uid) {
+      // We don't want to cache temporary dashboards (e.g from Explore) or public dashboards
+      if (options.uid && !skipSceneCache) {
         this.setSceneCache(options.uid, scene);
       }
 

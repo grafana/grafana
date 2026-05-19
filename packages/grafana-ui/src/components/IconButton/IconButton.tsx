@@ -81,7 +81,7 @@ export const IconButton = React.forwardRef<HTMLButtonElement, Props>((props, ref
 
   // When using tooltip, ref is forwarded to Tooltip component instead for https://github.com/grafana/grafana/issues/65632
   if ('tooltip' in props) {
-    const { name, iconType, className, tooltip, tooltipPlacement, ...restProps } = props;
+    const { name, iconType, className, tooltip, tooltipPlacement, type, ...restProps } = props;
     return (
       <Tooltip ref={ref} content={tooltip} placement={tooltipPlacement}>
         <button
@@ -89,21 +89,21 @@ export const IconButton = React.forwardRef<HTMLButtonElement, Props>((props, ref
           ref={buttonRef}
           aria-label={ariaLabel}
           className={cx(styles.button, className)}
-          type="button"
+          type={type || 'button'}
         >
           <IconRenderer icon={name} size={limitedIconSize} className={styles.icon} iconType={iconType} />
         </button>
       </Tooltip>
     );
   } else {
-    const { name, iconType, className, ...restProps } = props;
+    const { name, iconType, className, type, ...restProps } = props;
     return (
       <button
         {...restProps}
         ref={buttonRef}
         aria-label={ariaLabel}
         className={cx(styles.button, className)}
-        type="button"
+        type={type || 'button'}
       >
         <IconRenderer icon={name} size={limitedIconSize} className={styles.icon} iconType={iconType} />
       </button>

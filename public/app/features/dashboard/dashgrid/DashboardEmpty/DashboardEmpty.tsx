@@ -7,6 +7,7 @@ import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, useStyles2, Text, Box, Stack, TextLink, Icon, FilterPill, Tooltip } from '@grafana/ui';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { AddNewEditPane } from 'app/features/dashboard-scene/edit-pane/add-new/AddNewEditPane';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { AutoGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-auto-grid/AutoGridLayoutManager';
 import { DefaultGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-default/DefaultGridLayoutManager';
@@ -70,8 +71,8 @@ const NewLayoutEmpty = ({ dashboard, styles }: NewLayoutEmptyProps) => {
   // open the edit pane when the dashboard is new and in editing mode
   // will only happen when the default empty state is shown (not overridden by extension point)
   useEffect(() => {
-    if (isEditingNewDashboard && editPane.state.openPane !== 'add') {
-      editPane.openPane('add');
+    if (isEditingNewDashboard && editPane.state.openPane?.getId() !== 'add') {
+      editPane.openPane(new AddNewEditPane({}));
     }
   }, [isEditingNewDashboard, editPane]);
 
@@ -110,6 +111,7 @@ const NewLayoutEmpty = ({ dashboard, styles }: NewLayoutEmptyProps) => {
                 <Trans i18nKey="dashboard.empty.select-layout-header">Select layout</Trans>
               </Text>
               <Tooltip
+                placement="top"
                 content={
                   <Trans i18nKey="dashboard.empty.layout-default-hint">
                     The selected layout will also be used as the default for all new tabs and rows. You can change this

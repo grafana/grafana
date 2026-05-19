@@ -373,36 +373,15 @@ func (b *batchRunner) NextBatch() bool {
 		}
 	}
 
-	if opts.MaxIdle <= 0 {
-		for {
-			select {
-			case result, ok := <-b.recvChannel():
-				if !ok {
-					return true
-				}
-				switch {
-				case result.eof || result.err != nil:
-					b.pending = &result
-					return true
-				case result.request == nil:
-					b.pending = &batchStreamResult{
-						err:      fmt.Errorf("missing request"),
-						rollback: true,
-					}
-					return true
-				default:
-					if appendRequest(result.request) {
-						return true
-					}
-				}
-			default:
-				return true
-			}
-		}
+	var (
+		timer  *time.Timer
+		timerC <-chan time.Time
+	)
+	if opts.MaxIdle > 0 {
+		timer = time.NewTimer(opts.MaxIdle)
+		defer stopAndDrainTimer(timer)
+		timerC = timer.C
 	}
-
-	timer := time.NewTimer(opts.MaxIdle)
-	defer stopAndDrainTimer(timer)
 
 	for {
 		select {
@@ -424,9 +403,11 @@ func (b *batchRunner) NextBatch() bool {
 				if appendRequest(result.request) {
 					return true
 				}
-				resetTimer(timer, opts.MaxIdle)
+				if timer != nil {
+					resetTimer(timer, opts.MaxIdle)
+				}
 			}
-		case <-timer.C:
+		case <-timerC:
 			return true
 		}
 	}

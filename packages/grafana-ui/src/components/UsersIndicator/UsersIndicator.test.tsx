@@ -2,6 +2,8 @@ import { render, screen } from '@testing-library/react';
 
 import { UsersIndicator } from './UsersIndicator';
 
+const handleClick = jest.fn();
+
 describe('UsersIndicator', () => {
   const users = [
     { user: { name: 'John Doe' }, lastActiveAt: '2022-04-19T10:30:00.000Z' },
@@ -11,26 +13,26 @@ describe('UsersIndicator', () => {
 
   it('renders the user icons correctly', () => {
     render(<UsersIndicator users={users.slice(0, 2)} limit={2} />);
-    const johnUserIcon = screen.getByRole('button', { name: 'John Doe icon' });
-    const janeUserIcon = screen.getByRole('button', { name: 'Jane Johnson icon' });
+    const johnUserIcon = screen.getByLabelText('John Doe icon');
+    const janeUserIcon = screen.getByLabelText('Jane Johnson icon');
     expect(johnUserIcon).toBeInTheDocument();
     expect(janeUserIcon).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Extra users icon' })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Extra users icon')).not.toBeInTheDocument();
   });
 
   it('collapses the user icons when the limit is reached', () => {
     render(<UsersIndicator users={users} limit={2} />);
-    const johnUserIcon = screen.getByRole('button', { name: 'John Doe icon' });
-    const janeUserIcon = screen.getByRole('button', { name: 'Jane Johnson icon' });
-    const moreUsersIcon = screen.getByRole('button', { name: 'Extra users icon' });
+    const johnUserIcon = screen.getByLabelText('John Doe icon');
+    const janeUserIcon = screen.getByLabelText('Jane Johnson icon');
+    const moreUsersIcon = screen.getByLabelText('Extra users icon');
     expect(johnUserIcon).toBeInTheDocument();
     expect(janeUserIcon).toBeInTheDocument();
     expect(moreUsersIcon).toBeInTheDocument();
   });
 
   it("shows the '+' when there are too many users to display", () => {
-    render(<UsersIndicator users={users} limit={1} />);
-    const johnUserIcon = screen.getByRole('button', { name: 'John Doe icon' });
+    render(<UsersIndicator users={users} limit={1} onClick={handleClick} />);
+    const johnUserIcon = screen.getByLabelText('John Doe icon');
     const moreUsersIcon = screen.getByRole('button', { name: 'Extra users icon' });
     expect(moreUsersIcon).toHaveTextContent('+2');
     expect(johnUserIcon).toBeInTheDocument();
@@ -38,7 +40,6 @@ describe('UsersIndicator', () => {
   });
 
   it('calls the onClick function when the user number indicator is clicked', () => {
-    const handleClick = jest.fn();
     render(<UsersIndicator users={users} onClick={handleClick} limit={2} />);
     const moreUsersIcon = screen.getByRole('button', { name: 'Extra users icon' });
     expect(moreUsersIcon).toHaveTextContent('+1');

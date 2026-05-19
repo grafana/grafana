@@ -28,9 +28,8 @@ import { GroupRow } from './rows/GroupRow';
 import { generateRowKey } from './rows/utils';
 import { GenericRowSkeleton } from './scene/AlertRuleInstances';
 import { SummaryChartReact } from './scene/SummaryChart';
-import { SummaryStatsReact } from './scene/SummaryStats';
 import { LabelsColumn } from './scene/filters/LabelsColumn';
-import { type Domain, type Filter, type WorkbenchRow } from './types';
+import { type Domain, EmptyLabelValue, type Filter, type WorkbenchRow } from './types';
 
 type WorkbenchProps = {
   domain: Domain;
@@ -43,7 +42,7 @@ type WorkbenchProps = {
   hasActiveFilters?: boolean;
 };
 
-const initialSize = 1 / 2;
+const initialSize = 2 / 3;
 
 // Helper function to recursively render WorkbenchRow items with children pattern
 function renderWorkbenchRow(
@@ -52,7 +51,8 @@ function renderWorkbenchRow(
   domain: Domain,
   key: React.Key,
   enableFolderMeta: boolean,
-  depth = 0
+  depth = 0,
+  groupLabels: Record<string, string> = {}
 ): React.ReactElement {
   if (row.type === 'alertRule') {
     return (
@@ -63,9 +63,17 @@ function renderWorkbenchRow(
         rowKey={key}
         depth={depth}
         enableFolderMeta={enableFolderMeta}
+        groupLabels={groupLabels}
       />
     );
   } else {
+    // Accumulate this group's label=value so child AlertRuleRows can scope their instance queries.
+    // EmptyLabelValue (instances missing this label) maps to "" which produces label="" in PromQL.
+    const childGroupLabels = {
+      ...groupLabels,
+      [row.metadata.label]: row.metadata.value === EmptyLabelValue ? '' : row.metadata.value,
+    };
+
     const children = row.rows.map((childRow, childIndex) =>
       renderWorkbenchRow(
         childRow,
@@ -73,7 +81,8 @@ function renderWorkbenchRow(
         domain,
         `${key}-${generateRowKey(childRow, childIndex)}`,
         enableFolderMeta,
-        depth + 1
+        depth + 1,
+        childGroupLabels
       )
     );
 
@@ -164,7 +173,7 @@ export function Workbench({
   // splitter for template and payload editor
   const splitter = useSplitter({
     direction: 'row',
-    // if Grafana Alertmanager, split 50/50, otherwise 100/0 because there is no payload editor
+    // if Grafana Alertmanager, split 2/3 : 1/3, otherwise 100/0 because there is no payload editor
     initialSize: initialSize,
     dragPosition: 'middle',
   });
@@ -224,7 +233,7 @@ export function Workbench({
           ) : (
             <>
               <div className={cx(styles.groupItemWrapper(leftColumnWidth), styles.summaryContainer)}>
-                <SummaryStatsReact />
+                <div />
                 <SummaryChartReact />
               </div>
               {groupBy && groupBy.length > 0 && (
@@ -314,6 +323,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       overflow: 'hidden', // Let AutoSizer handle the overflow
     }),
     summaryContainer: css({
+      height: theme.spacing(20),
       marginBottom: theme.spacing(2),
       alignItems: 'stretch',
     }),

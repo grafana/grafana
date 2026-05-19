@@ -869,7 +869,7 @@ describe('calculateField transformer w/ timeseries', () => {
       },
     };
 
-    const data = setupTransformationScene(seriesA, cfg, [
+    const data = await setupTransformationScene(seriesA, cfg, [
       new TestVariable({ name: 'var1', value: 'Test' }),
       new TestVariable({ name: 'var2', value: 5 }),
     ]);
@@ -1629,7 +1629,7 @@ function setupTransformationScene(
   inputData: DataFrame,
   cfg: DataTransformerConfig,
   variables: SceneVariable[]
-): DataFrame[] {
+): Promise<DataFrame[]> {
   class TestSceneObject extends SceneObjectBase<{}> {}
   const dataNode = new SceneDataNode({
     data: {
@@ -1655,5 +1655,11 @@ function setupTransformationScene(
 
   activateFullSceneTree(scene);
 
-  return sceneGraph.getData(consumer).state.data?.series!;
+  return new Promise<DataFrame[]>((resolve) => {
+    const dataProvider = sceneGraph.getData(consumer);
+    const sub = dataProvider.subscribeToState((state) => {
+      sub.unsubscribe();
+      resolve(state.data?.series ?? []);
+    });
+  });
 }

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { formatDistanceToNowStrict } from 'date-fns';
+import { formatDistanceToNowStrict } from 'date-fns/formatDistanceToNowStrict';
 import { isEmpty, isUndefined } from 'lodash';
 import { Fragment } from 'react/jsx-runtime';
 

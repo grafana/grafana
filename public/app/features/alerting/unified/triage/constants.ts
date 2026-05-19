@@ -33,11 +33,21 @@ export const METRIC_NAME = config.unifiedAlerting.stateHistory?.prometheusMetric
 export const SERVICE_FILTER_LABEL_KEYS = ['service', 'service_name'] as const;
 export const CLUSTER_FILTER_LABEL_KEYS = ['cluster', 'cluster_name'] as const;
 export const NAMESPACE_FILTER_LABEL_KEYS = ['namespace', 'exported_namespace', 'namespace_extracted'] as const;
+export const SEVERITY_FILTER_LABEL_KEYS = [
+  'severity',
+  'priority',
+  'level',
+  'loglevel',
+  'logLevel',
+  'lvl',
+  'detected_level',
+] as const;
 
 export const COMBINED_FILTER_LABEL_KEYS = {
   service: SERVICE_FILTER_LABEL_KEYS,
   cluster: CLUSTER_FILTER_LABEL_KEYS,
   namespace: NAMESPACE_FILTER_LABEL_KEYS,
+  severity: SEVERITY_FILTER_LABEL_KEYS,
 } as const;
 
 /**

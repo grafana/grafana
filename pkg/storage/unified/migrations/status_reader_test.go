@@ -210,7 +210,7 @@ func TestMigrationStatusReader_OnlyCfgRecoveryWhenTableAppears(t *testing.T) {
 	typed := reader.(*migrationStatusReader)
 
 	// Simulate bootstrap failure.
-	typed.onlyCfg = true
+	typed.onlyCfg.Store(true)
 
 	// Insert a successful migration log row. Since the table exists, the retry in
 	// resolveStorageMode should detect it, clear onlyCfg, and read the log.
@@ -219,7 +219,7 @@ func TestMigrationStatusReader_OnlyCfgRecoveryWhenTableAppears(t *testing.T) {
 	mode, err := reader.GetStorageMode(context.Background(), playlistGR)
 	require.NoError(t, err)
 	require.Equal(t, contract.StorageModeUnified, mode, "should recover and use migration log")
-	require.False(t, typed.onlyCfg, "onlyCfg should be cleared after table is found")
+	require.False(t, typed.onlyCfg.Load(), "onlyCfg should be cleared after table is found")
 }
 
 func TestMigrationStatusReader_OnlyCfgPersistsWhenTableMissing(t *testing.T) {
@@ -240,12 +240,12 @@ func TestMigrationStatusReader_OnlyCfgPersistsWhenTableMissing(t *testing.T) {
 		_, err := sess.Exec("DROP TABLE IF EXISTS " + migrationLogTableName)
 		return err
 	}))
-	typed.onlyCfg = true
+	typed.onlyCfg.Store(true)
 
 	mode, err := reader.GetStorageMode(context.Background(), playlistGR)
 	require.NoError(t, err)
 	require.Equal(t, contract.StorageModeDualWrite, mode, "should use config when table is missing")
-	require.True(t, typed.onlyCfg, "onlyCfg should remain set when table is still missing")
+	require.True(t, typed.onlyCfg.Load(), "onlyCfg should remain set when table is still missing")
 }
 
 func TestMigrationStatusReader_GetStorageMode_DBErrorFallsBackToConfig(t *testing.T) {
@@ -266,7 +266,7 @@ func TestMigrationStatusReader_GetStorageMode_DBErrorFallsBackToConfig(t *testin
 	require.NoError(t, err)
 
 	typed := reader.(*migrationStatusReader)
-	require.False(t, typed.onlyCfg, "onlyCfg should not be set when bootstrap succeeds")
+	require.False(t, typed.onlyCfg.Load(), "onlyCfg should not be set when bootstrap succeeds")
 	typed.metrics = &statusReaderMetrics{bootstrapFailures: bootstrapCounter}
 
 	failingDB.fail = true
@@ -293,7 +293,7 @@ func TestMigrationStatusReader_GetStorageMode_NoErrorWhenBootstrapSucceeds(t *te
 	require.NoError(t, err)
 
 	typed := reader.(*migrationStatusReader)
-	require.False(t, typed.onlyCfg)
+	require.False(t, typed.onlyCfg.Load())
 	typed.metrics = &statusReaderMetrics{bootstrapFailures: bootstrapCounter}
 
 	mode, err := reader.GetStorageMode(context.Background(), playlistGR)

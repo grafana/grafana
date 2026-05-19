@@ -5,13 +5,12 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/grafana/alerting/definition"
-
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/merge"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -31,14 +30,14 @@ type NotificationPolicyService struct {
 }
 
 func NewNotificationPolicyService(am alertmanagerConfigStore, prov ProvisioningStore,
-	xact TransactionManager, routeService managedRoutesService, settings setting.UnifiedAlertingSettings, log log.Logger) *NotificationPolicyService {
+	xact TransactionManager, routeService managedRoutesService, settings setting.UnifiedAlertingSettings, log log.Logger, validator validation.ProvenanceStatusTransitionValidator) *NotificationPolicyService {
 	return &NotificationPolicyService{
 		configStore:     am,
 		provenanceStore: prov,
 		xact:            xact,
 		log:             log,
 		settings:        settings,
-		validator:       validation.ValidateProvenanceRelaxed,
+		validator:       validator,
 		routeService:    routeService,
 	}
 }
@@ -84,7 +83,7 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 	if err != nil {
 		return definitions.Route{}, "", err
 	}
-	if err := nps.validator(storedProvenance, p); err != nil {
+	if err := nps.validator(ctx, storedProvenance, p); err != nil {
 		return definitions.Route{}, "", err
 	}
 
@@ -94,9 +93,9 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 
 	revision.Config.AlertmanagerConfig.Route = &tree
 
-	_, err = revision.Config.GetMergedAlertmanagerConfig()
+	_, err = merge.MergeExtraConfig(ctx, revision.Config)
 	if err != nil {
-		if errors.Is(err, definition.ErrSubtreeMatchersConflict) {
+		if errors.Is(err, merge.ErrSubtreeMatchersConflict) {
 			// TODO temporarily get the conflicting matchers
 			return definitions.Route{}, "", models.MakeErrRouteConflictingMatchers(fmt.Sprintf("%s", revision.Config.ExtraConfigs[0].MergeMatchers))
 		}
@@ -120,7 +119,7 @@ func (nps *NotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID
 	if err != nil {
 		return definitions.Route{}, err
 	}
-	if err := nps.validator(storedProvenance, provenance); err != nil {
+	if err := nps.validator(ctx, storedProvenance, provenance); err != nil {
 		return definitions.Route{}, err
 	}
 

@@ -13,23 +13,21 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 var orgID = rand.Int63()
 
 func TestFilterByAccess(t *testing.T) {
 	global := testSilence("global", nil)
-	ruleSilence1 := testSilence("rule-1", utils.Pointer("rule-1-uid"))
+	ruleSilence1 := testSilence("rule-1", new("rule-1-uid"))
 	folder1 := "rule-1-folder-uid"
-	folder1Scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder1)
-	ruleSilence2 := testSilence("rule-2", utils.Pointer("rule-2-uid"))
+	folder1Scope := folder.ScopeFoldersProvider.GetResourceScopeUID(folder1)
+	ruleSilence2 := testSilence("rule-2", new("rule-2-uid"))
 	folder2 := "rule-2-folder-uid"
-	notFoundRule := testSilence("unknown-rule", utils.Pointer("unknown-rule-uid"))
+	notFoundRule := testSilence("unknown-rule", new("unknown-rule-uid"))
 
 	silences := []*models.Silence{
 		global,
@@ -65,7 +63,7 @@ func TestFilterByAccess(t *testing.T) {
 		},
 		{
 			name: "silence wildcard should get all",
-			user: newUser(ac.Permission{Action: silenceRead, Scope: dashboards.ScopeFoldersProvider.GetResourceAllScope()}),
+			user: newUser(ac.Permission{Action: silenceRead, Scope: folder.ScopeFoldersProvider.GetResourceAllScope()}),
 			expected: []*models.Silence{
 				global,
 				ruleSilence1,
@@ -85,7 +83,7 @@ func TestFilterByAccess(t *testing.T) {
 		},
 		{
 			name: "silence reader with no accessible rule silences, global only",
-			user: newUser(ac.Permission{Action: silenceRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("unknown-folder")}),
+			user: newUser(ac.Permission{Action: silenceRead, Scope: folder.ScopeFoldersProvider.GetResourceScopeUID("unknown-folder")}),
 			expected: []*models.Silence{
 				global,
 			},
@@ -124,12 +122,12 @@ func TestFilterByAccess(t *testing.T) {
 
 func TestAuthorizeReadSilence(t *testing.T) {
 	global := testSilence("global", nil)
-	ruleSilence1 := testSilence("rule-1", utils.Pointer("rule-1-uid"))
+	ruleSilence1 := testSilence("rule-1", new("rule-1-uid"))
 	folder1 := "rule-1-folder-uid"
-	folder1Scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder1)
-	ruleSilence2 := testSilence("rule-2", utils.Pointer("rule-2-uid"))
+	folder1Scope := folder.ScopeFoldersProvider.GetResourceScopeUID(folder1)
+	ruleSilence2 := testSilence("rule-2", new("rule-2-uid"))
 	folder2 := "rule-2-folder-uid"
-	notFoundRule := testSilence("unknown-rule", utils.Pointer("unknown-rule-uid"))
+	notFoundRule := testSilence("unknown-rule", new("unknown-rule-uid"))
 
 	testCases := []struct {
 		name             string
@@ -154,7 +152,7 @@ func TestAuthorizeReadSilence(t *testing.T) {
 		},
 		{
 			name:             "silence wildcard reader can read any silence",
-			user:             newUser(ac.Permission{Action: silenceRead, Scope: dashboards.ScopeFoldersProvider.GetResourceAllScope()}),
+			user:             newUser(ac.Permission{Action: silenceRead, Scope: folder.ScopeFoldersProvider.GetResourceAllScope()}),
 			silence:          []*models.Silence{global, ruleSilence1, notFoundRule},
 			expectedErr:      nil,
 			expectedDbAccess: false,
@@ -227,13 +225,13 @@ func TestAuthorizeReadSilence(t *testing.T) {
 
 func TestAuthorizeCreateSilence(t *testing.T) {
 	global := testSilence("global", nil)
-	ruleSilence1 := testSilence("rule-1", utils.Pointer("rule-1-uid"))
+	ruleSilence1 := testSilence("rule-1", new("rule-1-uid"))
 	folder1 := "rule-1-folder-uid"
-	folder1Scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder1)
-	ruleSilence2 := testSilence("rule-2", utils.Pointer("rule-2-uid"))
+	folder1Scope := folder.ScopeFoldersProvider.GetResourceScopeUID(folder1)
+	ruleSilence2 := testSilence("rule-2", new("rule-2-uid"))
 	folder2 := "rule-2-folder-uid"
-	folder2Scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder2)
-	notFoundRule := testSilence("unknown-rule", utils.Pointer("unknown-rule-uid"))
+	folder2Scope := folder.ScopeFoldersProvider.GetResourceScopeUID(folder2)
+	notFoundRule := testSilence("unknown-rule", new("unknown-rule-uid"))
 
 	silences := []*models.Silence{
 		global,
@@ -265,7 +263,7 @@ func TestAuthorizeCreateSilence(t *testing.T) {
 		},
 		{
 			name:        "no create access, silence wildcard reader",
-			user:        newUser(ac.Permission{Action: silenceRead, Scope: dashboards.ScopeFoldersProvider.GetResourceAllScope()}),
+			user:        newUser(ac.Permission{Action: silenceRead, Scope: folder.ScopeFoldersProvider.GetResourceAllScope()}),
 			expectedErr: ErrAuthorizationBase,
 		},
 		{
@@ -290,7 +288,7 @@ func TestAuthorizeCreateSilence(t *testing.T) {
 		},
 		{
 			name:        "silence wildcard read + instance create can do everything",
-			user:        newUser(ac.Permission{Action: instancesCreate}, ac.Permission{Action: silenceRead, Scope: dashboards.ScopeFoldersProvider.GetResourceAllScope()}),
+			user:        newUser(ac.Permission{Action: instancesCreate}, ac.Permission{Action: silenceRead, Scope: folder.ScopeFoldersProvider.GetResourceAllScope()}),
 			expectedErr: nil,
 		},
 		{
@@ -327,7 +325,7 @@ func TestAuthorizeCreateSilence(t *testing.T) {
 		},
 		{
 			name: "silence read + silence wildcard create",
-			user: newUser(ac.Permission{Action: silenceRead, Scope: folder1Scope}, ac.Permission{Action: silenceCreate, Scope: dashboards.ScopeFoldersProvider.GetResourceAllScope()}),
+			user: newUser(ac.Permission{Action: silenceRead, Scope: folder1Scope}, ac.Permission{Action: silenceCreate, Scope: folder.ScopeFoldersProvider.GetResourceAllScope()}),
 			overrides: map[*models.Silence]override{
 				global: {
 					expectedErr:      ErrAuthorizationBase,
@@ -404,13 +402,13 @@ func TestAuthorizeCreateSilence(t *testing.T) {
 
 func TestAuthorizeUpdateSilence(t *testing.T) {
 	global := testSilence("global", nil)
-	ruleSilence1 := testSilence("rule-1", utils.Pointer("rule-1-uid"))
+	ruleSilence1 := testSilence("rule-1", new("rule-1-uid"))
 	folder1 := "rule-1-folder-uid"
-	folder1Scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder1)
-	ruleSilence2 := testSilence("rule-2", utils.Pointer("rule-2-uid"))
+	folder1Scope := folder.ScopeFoldersProvider.GetResourceScopeUID(folder1)
+	ruleSilence2 := testSilence("rule-2", new("rule-2-uid"))
 	folder2 := "rule-2-folder-uid"
-	folder2Scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder2)
-	notFoundRule := testSilence("unknown-rule", utils.Pointer("unknown-rule-uid"))
+	folder2Scope := folder.ScopeFoldersProvider.GetResourceScopeUID(folder2)
+	notFoundRule := testSilence("unknown-rule", new("unknown-rule-uid"))
 
 	silences := []*models.Silence{
 		global,
@@ -442,7 +440,7 @@ func TestAuthorizeUpdateSilence(t *testing.T) {
 		},
 		{
 			name:        "no write access, silence wildcard reader",
-			user:        newUser(ac.Permission{Action: silenceRead, Scope: dashboards.ScopeFoldersProvider.GetResourceAllScope()}),
+			user:        newUser(ac.Permission{Action: silenceRead, Scope: folder.ScopeFoldersProvider.GetResourceAllScope()}),
 			expectedErr: ErrAuthorizationBase,
 		},
 		{
@@ -467,7 +465,7 @@ func TestAuthorizeUpdateSilence(t *testing.T) {
 		},
 		{
 			name:        "silence wildcard read + instance write can do everything",
-			user:        newUser(ac.Permission{Action: instancesWrite}, ac.Permission{Action: silenceRead, Scope: dashboards.ScopeFoldersProvider.GetResourceAllScope()}),
+			user:        newUser(ac.Permission{Action: instancesWrite}, ac.Permission{Action: silenceRead, Scope: folder.ScopeFoldersProvider.GetResourceAllScope()}),
 			expectedErr: nil,
 		},
 		{
@@ -504,7 +502,7 @@ func TestAuthorizeUpdateSilence(t *testing.T) {
 		},
 		{
 			name: "silence read + silence wildcard write",
-			user: newUser(ac.Permission{Action: silenceRead, Scope: folder1Scope}, ac.Permission{Action: silenceWrite, Scope: dashboards.ScopeFoldersProvider.GetResourceAllScope()}),
+			user: newUser(ac.Permission{Action: silenceRead, Scope: folder1Scope}, ac.Permission{Action: silenceWrite, Scope: folder.ScopeFoldersProvider.GetResourceAllScope()}),
 			overrides: map[*models.Silence]override{
 				global: {
 					expectedErr:      ErrAuthorizationBase,
@@ -581,13 +579,13 @@ func TestAuthorizeUpdateSilence(t *testing.T) {
 
 func TestSilenceAccess(t *testing.T) {
 	global := testSilence("global", nil)
-	ruleSilence1 := testSilence("rule-1", utils.Pointer("rule-1-uid"))
+	ruleSilence1 := testSilence("rule-1", new("rule-1-uid"))
 	folder1 := "rule-1-folder-uid"
-	folder1Scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder1)
-	ruleSilence2 := testSilence("rule-2", utils.Pointer("rule-2-uid"))
+	folder1Scope := folder.ScopeFoldersProvider.GetResourceScopeUID(folder1)
+	ruleSilence2 := testSilence("rule-2", new("rule-2-uid"))
 	folder2 := "rule-2-folder-uid"
-	folder2Scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder2)
-	notFoundRule := testSilence("unknown-rule", utils.Pointer("unknown-rule-uid"))
+	folder2Scope := folder.ScopeFoldersProvider.GetResourceScopeUID(folder2)
+	notFoundRule := testSilence("unknown-rule", new("unknown-rule-uid"))
 
 	silences := []*models.Silence{
 		global,
@@ -636,7 +634,7 @@ func TestSilenceAccess(t *testing.T) {
 		},
 		{
 			name: "silence wildcard read gives read access to everything",
-			user: newUser(ac.Permission{Action: silenceRead, Scope: dashboards.ScopeFoldersProvider.GetResourceAllScope()}),
+			user: newUser(ac.Permission{Action: silenceRead, Scope: folder.ScopeFoldersProvider.GetResourceAllScope()}),
 			expectedPermissions: models.SilencePermissionSet{
 				models.SilencePermissionRead: true,
 			},
@@ -663,7 +661,7 @@ func TestSilenceAccess(t *testing.T) {
 		},
 		{
 			name: "silence wildcard read + instance write+create can do everything",
-			user: newUser(ac.Permission{Action: silenceRead, Scope: dashboards.ScopeFoldersProvider.GetResourceAllScope()}, ac.Permission{Action: instancesWrite}, ac.Permission{Action: instancesCreate}),
+			user: newUser(ac.Permission{Action: silenceRead, Scope: folder.ScopeFoldersProvider.GetResourceAllScope()}, ac.Permission{Action: instancesWrite}, ac.Permission{Action: instancesCreate}),
 			expectedPermissions: models.SilencePermissionSet{
 				models.SilencePermissionRead:   true,
 				models.SilencePermissionCreate: true,
@@ -680,7 +678,7 @@ func TestSilenceAccess(t *testing.T) {
 		},
 		{
 			name: "silence wildcard read + instance write can read and write",
-			user: newUser(ac.Permission{Action: silenceRead, Scope: dashboards.ScopeFoldersProvider.GetResourceAllScope()}, ac.Permission{Action: instancesWrite}),
+			user: newUser(ac.Permission{Action: silenceRead, Scope: folder.ScopeFoldersProvider.GetResourceAllScope()}, ac.Permission{Action: instancesWrite}),
 			expectedPermissions: models.SilencePermissionSet{
 				models.SilencePermissionRead:  true,
 				models.SilencePermissionWrite: true,
@@ -696,7 +694,7 @@ func TestSilenceAccess(t *testing.T) {
 		},
 		{
 			name: "silence wildcard read + instance create can read and create",
-			user: newUser(ac.Permission{Action: silenceRead, Scope: dashboards.ScopeFoldersProvider.GetResourceAllScope()}, ac.Permission{Action: instancesCreate}),
+			user: newUser(ac.Permission{Action: silenceRead, Scope: folder.ScopeFoldersProvider.GetResourceAllScope()}, ac.Permission{Action: instancesCreate}),
 			expectedPermissions: models.SilencePermissionSet{
 				models.SilencePermissionRead:   true,
 				models.SilencePermissionCreate: true,
@@ -709,7 +707,7 @@ func TestSilenceAccess(t *testing.T) {
 		},
 		{
 			name:                "cannot write/create without read - silence permissions",
-			user:                newUser(ac.Permission{Action: silenceWrite, Scope: dashboards.ScopeFoldersProvider.GetResourceAllScope()}, ac.Permission{Action: silenceCreate, Scope: dashboards.ScopeFoldersProvider.GetResourceAllScope()}),
+			user:                newUser(ac.Permission{Action: silenceWrite, Scope: folder.ScopeFoldersProvider.GetResourceAllScope()}, ac.Permission{Action: silenceCreate, Scope: folder.ScopeFoldersProvider.GetResourceAllScope()}),
 			expectedPermissions: models.SilencePermissionSet{},
 		},
 		{
@@ -756,7 +754,7 @@ func TestSilenceAccess(t *testing.T) {
 		},
 		{
 			name: "silence wildcard write doesn't provide global write but does provide unknown rule write",
-			user: newUser(ac.Permission{Action: silenceRead, Scope: dashboards.ScopeFoldersProvider.GetResourceAllScope()}, ac.Permission{Action: silenceWrite, Scope: dashboards.ScopeFoldersProvider.GetResourceAllScope()}),
+			user: newUser(ac.Permission{Action: silenceRead, Scope: folder.ScopeFoldersProvider.GetResourceAllScope()}, ac.Permission{Action: silenceWrite, Scope: folder.ScopeFoldersProvider.GetResourceAllScope()}),
 			overrides: map[*models.Silence]override{
 				global:       deny(models.SilencePermissionWrite),
 				notFoundRule: deny(models.SilencePermissionWrite), // This is arguable, can consider changing this in the future.
@@ -769,7 +767,7 @@ func TestSilenceAccess(t *testing.T) {
 		},
 		{
 			name: "silence wildcard create doesn't provide global create but does provide unknown rule create",
-			user: newUser(ac.Permission{Action: silenceRead, Scope: dashboards.ScopeFoldersProvider.GetResourceAllScope()}, ac.Permission{Action: silenceCreate, Scope: dashboards.ScopeFoldersProvider.GetResourceAllScope()}),
+			user: newUser(ac.Permission{Action: silenceRead, Scope: folder.ScopeFoldersProvider.GetResourceAllScope()}, ac.Permission{Action: silenceCreate, Scope: folder.ScopeFoldersProvider.GetResourceAllScope()}),
 			overrides: map[*models.Silence]override{
 				global:       deny(models.SilencePermissionCreate),
 				notFoundRule: deny(models.SilencePermissionCreate), // This is arguable, can consider changing this in the future.
@@ -840,9 +838,9 @@ func testSilence(id string, ruleUID *string) *models.Silence {
 	s := &models.Silence{ID: &id}
 	if ruleUID != nil {
 		s.Matchers = amv2.Matchers{{
-			IsEqual: util.Pointer(true),
-			IsRegex: util.Pointer(false),
-			Name:    util.Pointer(alertingModels.RuleUIDLabel),
+			IsEqual: new(true),
+			IsRegex: new(false),
+			Name:    new(alertingModels.RuleUIDLabel),
 			Value:   ruleUID,
 		}}
 	}

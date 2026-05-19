@@ -1,8 +1,22 @@
+import { type Props as AutoSizerProps } from 'react-virtualized-auto-sizer';
 import { render, testWithFeatureToggles, userEvent, waitFor } from 'test/test-utils';
 
+import { type AdHocVariableFilter, type DataFrame, type DataQueryRequest, type ScopedVars } from '@grafana/data';
+
+import { dataSource } from '../../ExpressionDatasource';
 import { type ExpressionQuery, ExpressionQueryType } from '../../types';
+import { fetchSQLFields } from '../../utils/metaSqlExpr';
 
 import { SqlExpr, type SqlExprProps } from './SqlExpr';
+
+function mockMetadata(request: Partial<DataQueryRequest<ExpressionQuery>>): SqlExprProps['metadata'] {
+  return {
+    data: {
+      series: [],
+      request,
+    },
+  } as unknown as SqlExprProps['metadata'];
+}
 
 jest.mock('@grafana/ui', () => ({
   ...jest.requireActual('@grafana/ui'),
@@ -10,47 +24,24 @@ jest.mock('@grafana/ui', () => ({
 }));
 
 jest.mock('@grafana/plugin-ui', () => ({
-  SQLEditor: () => <div data-testid="sql-editor">SQL Editor Mock</div>,
-}));
-
-// Mock lazy loaded GenAI components
-jest.mock('./GenAI/GenAISQLSuggestionsButton', () => ({
-  GenAISQLSuggestionsButton: ({ currentQuery, initialQuery }: { currentQuery: string; initialQuery: string }) => {
-    const text = !currentQuery || currentQuery === initialQuery ? 'Generate suggestion' : 'Improve query';
-    return <div data-testid="suggestions-button">{text}</div>;
+  QueryFormat: {
+    Table: 'table',
   },
+  SQLEditor: ({ query, onChange }: { query: string; onChange: (query: string) => void }) => (
+    <div>
+      <div data-testid="sql-editor">{query}</div>
+      <button onClick={() => onChange('')}>Clear SQL</button>
+    </div>
+  ),
 }));
 
-jest.mock('./GenAI/GenAISQLExplainButton', () => ({
-  GenAISQLExplainButton: () => <div data-testid="explain-button">Explain query</div>,
+jest.mock('react-virtualized-auto-sizer', () => ({
+  __esModule: true,
+  default: ({ children }: AutoSizerProps) => (
+    <div>{children({ width: 800, scaledWidth: 800, height: 600, scaledHeight: 600 })}</div>
+  ),
 }));
 
-// Mock custom hooks for GenAI features
-jest.mock('./GenAI/hooks/useSQLSuggestions', () => ({
-  useSQLSuggestions: jest.fn(() => ({
-    handleApplySuggestion: jest.fn(),
-    handleHistoryUpdate: jest.fn(),
-    handleCloseDrawer: jest.fn(),
-    handleOpenDrawer: jest.fn(),
-    isDrawerOpen: false,
-    suggestions: [],
-  })),
-}));
-
-jest.mock('./GenAI/hooks/useSQLExplanations', () => ({
-  useSQLExplanations: jest.fn((currentExpression: string) => ({
-    explanation: '',
-    handleCloseExplanation: jest.fn(),
-    handleOpenExplanation: jest.fn(),
-    handleExplain: jest.fn(),
-    isExplanationOpen: false,
-    shouldShowViewExplanation: false,
-    updatePrevExpression: jest.fn(),
-    prevExpression: currentExpression,
-  })),
-}));
-
-// Mock the backend API
 const mockBackendSrv = {
   post: jest.fn().mockResolvedValue({
     kind: 'SQLSchemaResponse',
@@ -72,8 +63,6 @@ jest.mock('@grafana/runtime', () => ({
   getDataSourceSrv: () => mockDataSourceSrv,
 }));
 
-// Note: Add more mocks if needed for other lazy components
-
 describe('SqlExpr', () => {
   it('initializes new expressions with default query', async () => {
     const onChange = jest.fn();
@@ -82,12 +71,10 @@ describe('SqlExpr', () => {
 
     render(<SqlExpr onChange={onChange} refIds={refIds} query={query} queries={[]} />);
 
-    // Verify onChange was called
     await waitFor(() => {
       expect(onChange).toHaveBeenCalled();
     });
 
-    // Verify essential SQL structure without exact string matching
     const updatedQuery = onChange.mock.calls[0][0];
     expect(updatedQuery.expression.toUpperCase()).toContain('SELECT');
   });
@@ -100,10 +87,29 @@ describe('SqlExpr', () => {
 
     render(<SqlExpr onChange={onChange} refIds={refIds} query={query} queries={[]} />);
 
-    // The SQLEditor should receive the existing expression
     await waitFor(() => {
       expect(query.expression).toBe(existingExpression);
     });
+  });
+
+  it('allows clearing an existing expression without restoring the default query', async () => {
+    const onChange = jest.fn();
+    const refIds = [{ value: 'A' }];
+    const existingExpression = 'SELECT 1 AS foo';
+    const query = { refId: 'expr1', type: 'sql', expression: existingExpression } as ExpressionQuery;
+    const { findByTestId, getByRole, rerender } = render(
+      <SqlExpr onChange={onChange} refIds={refIds} query={query} queries={[]} />
+    );
+
+    expect(await findByTestId('sql-editor')).toHaveTextContent(existingExpression);
+
+    await userEvent.click(getByRole('button', { name: 'Clear SQL' }));
+
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ expression: '' }));
+
+    rerender(<SqlExpr onChange={onChange} refIds={refIds} query={{ ...query, expression: '' }} queries={[]} />);
+
+    expect(await findByTestId('sql-editor')).toBeEmptyDOMElement();
   });
 
   it('adds alerting format when alerting prop is true', async () => {
@@ -133,10 +139,14 @@ describe('Schema Inspector feature toggle', () => {
 
     afterEach(() => {
       localStorage.removeItem('grafana.sql-expression.schema-inspector-open');
+      jest.clearAllMocks();
       mockBackendSrv.post.mockResolvedValue({
         kind: 'SQLSchemaResponse',
         apiVersion: 'query.grafana.app/v0alpha1',
         sqlSchemas: {},
+      });
+      mockDataSourceSrv.get.mockResolvedValue({
+        getRef: () => ({ uid: 'mock-ds-uid', type: 'mock-ds-type' }),
       });
     });
 
@@ -194,6 +204,70 @@ describe('Schema Inspector feature toggle', () => {
       expect(await findByRole('tab', { name: 'B' })).toBeInTheDocument();
       expect(await findByRole('tab', { name: 'C' })).toBeInTheDocument();
     });
+
+    it('sends interpolated source queries to sqlschemas', async () => {
+      const sourceQuery = {
+        refId: 'A',
+        datasource: { uid: 'prometheus-uid', type: 'prometheus' },
+        expr: 'up{job="$job"}',
+      };
+      const interpolatedQuery = {
+        ...sourceQuery,
+        expr: 'up{job="api"}',
+      };
+      const scopedVars: ScopedVars = {
+        job: { text: 'api', value: 'api' },
+      };
+      const filters: AdHocVariableFilter[] = [{ key: 'cluster', operator: '=', value: 'prod' }];
+      const interpolateVariablesInQueries = jest.fn().mockReturnValue([interpolatedQuery]);
+
+      mockDataSourceSrv.get.mockResolvedValueOnce({ interpolateVariablesInQueries });
+
+      render(<SqlExpr {...defaultProps} queries={[sourceQuery]} metadata={mockMetadata({ scopedVars, filters })} />);
+
+      await waitFor(() => {
+        expect(mockBackendSrv.post).toHaveBeenCalled();
+      });
+
+      expect(interpolateVariablesInQueries).toHaveBeenCalledWith([sourceQuery], scopedVars, filters);
+
+      const calls = mockBackendSrv.post.mock.calls;
+      expect(calls[calls.length - 1][1].queries).toEqual([interpolatedQuery]);
+    });
+
+    it('refetches sqlschemas when interpolation context arrives after mount', async () => {
+      const sourceQuery = {
+        refId: 'A',
+        datasource: { uid: 'prometheus-uid', type: 'prometheus' },
+        expr: 'up{job="$job"}',
+      };
+      const scopedVars: ScopedVars = {
+        job: { text: 'api', value: 'api' },
+      };
+      const interpolateVariablesInQueries = jest.fn(([query], vars) => [
+        {
+          ...query,
+          expr: vars.job ? 'up{job="api"}' : query.expr,
+        },
+      ]);
+
+      mockDataSourceSrv.get.mockResolvedValue({ interpolateVariablesInQueries });
+
+      const { rerender } = render(<SqlExpr {...defaultProps} queries={[sourceQuery]} />);
+
+      await waitFor(() => {
+        expect(mockBackendSrv.post).toHaveBeenCalledTimes(1);
+      });
+
+      rerender(<SqlExpr {...defaultProps} queries={[sourceQuery]} metadata={mockMetadata({ scopedVars })} />);
+
+      await waitFor(() => {
+        expect(mockBackendSrv.post).toHaveBeenCalledTimes(2);
+      });
+
+      expect(mockBackendSrv.post.mock.calls[0][1].queries).toEqual([sourceQuery]);
+      expect(mockBackendSrv.post.mock.calls[1][1].queries).toEqual([{ ...sourceQuery, expr: 'up{job="api"}' }]);
+    });
   });
 
   describe('when feature disabled', () => {
@@ -208,32 +282,39 @@ describe('Schema Inspector feature toggle', () => {
   });
 });
 
-describe('SqlExpr with GenAI features', () => {
-  const defaultProps: SqlExprProps = {
-    onChange: jest.fn(),
-    refIds: [{ value: 'A' }],
-    query: { refId: 'expression_1', type: ExpressionQueryType.sql, expression: `SELECT * FROM A LIMIT 10` },
-    queries: [],
-  };
-
-  it('renders suggestions drawer when isDrawerOpen is true', async () => {
-    // TODO this inline require breaks future tests - do it differently!
-    const { useSQLSuggestions } = require('./GenAI/hooks/useSQLSuggestions');
-    useSQLSuggestions.mockImplementation(() => ({
-      isDrawerOpen: true,
-      suggestions: ['suggestion1', 'suggestion2'],
-    }));
-
-    const { findByTestId } = render(<SqlExpr {...defaultProps} />);
-    expect(await findByTestId('suggestions-drawer')).toBeInTheDocument();
+describe('fetchSQLFields', () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+    jest.clearAllMocks();
+    mockDataSourceSrv.get.mockResolvedValue({
+      getRef: () => ({ uid: 'mock-ds-uid', type: 'mock-ds-type' }),
+    });
   });
 
-  it('renders explanation drawer when isExplanationOpen is true', async () => {
-    // TODO this inline require breaks future tests - do it differently!
-    const { useSQLExplanations } = require('./GenAI/hooks/useSQLExplanations');
-    useSQLExplanations.mockImplementation(() => ({ isExplanationOpen: true }));
+  it('uses interpolated source queries for autocomplete metadata queries', async () => {
+    const sourceQuery = {
+      refId: 'A',
+      datasource: { uid: 'prometheus-uid', type: 'prometheus' },
+      expr: 'up{job="$job"}',
+    };
+    const interpolatedQuery = {
+      ...sourceQuery,
+      expr: 'up{job="api"}',
+    };
+    const scopedVars = {
+      job: { text: 'api', value: 'api' },
+    };
+    const filters: AdHocVariableFilter[] = [{ key: 'cluster', operator: '=', value: 'prod' }];
+    const interpolateVariablesInQueries = jest.fn().mockReturnValue([interpolatedQuery]);
+    const runMetaSQLExprQuery = jest
+      .spyOn(dataSource, 'runMetaSQLExprQuery')
+      .mockResolvedValue({ fields: [], length: 0 } as DataFrame);
 
-    const { findByTestId } = render(<SqlExpr {...defaultProps} />);
-    expect(await findByTestId('explanation-drawer')).toBeInTheDocument();
+    mockDataSourceSrv.get.mockResolvedValueOnce({ interpolateVariablesInQueries });
+
+    await fetchSQLFields({ table: 'A' }, [sourceQuery], { scopedVars, filters });
+
+    expect(interpolateVariablesInQueries).toHaveBeenCalledWith([sourceQuery], scopedVars, filters);
+    expect(runMetaSQLExprQuery.mock.calls[0][2]).toEqual([interpolatedQuery]);
   });
 });

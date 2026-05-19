@@ -1,4 +1,4 @@
-// POST /apis/notifications.alerting.grafana.app/v1beta1/namespaces/default/timeintervals
+// POST /apis/notifications.alerting.grafana.app/v0alpha1/namespaces/default/timeintervals
 
 import { HttpResponse, type HttpResponseResolver, http } from 'msw';
 

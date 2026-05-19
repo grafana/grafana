@@ -87,7 +87,7 @@ export const VariableOptions = memo(
         <div className={styles.variableOptionsWrapper}>
           <ul
             className={styles.variableOptionsColumn}
-            aria-label={selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown}
+            data-testid={selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown}
             {...restProps}
           >
             {renderMultiToggle()}

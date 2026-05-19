@@ -238,10 +238,8 @@ describe('ProvisioningWizard', () => {
 
       // Wait for async operations (useConnectionOptions fetches) to settle
       expect(await screen.findByRole('heading', { name: /Connect/i })).toBeInTheDocument();
-      expect(screen.getByRole('radio', { name: /Use a personal access token to authenticate/i })).toBeInTheDocument();
-      expect(
-        screen.getByRole('radio', { name: /Use a GitHub App for enhanced security and team colla/i })
-      ).toBeInTheDocument();
+      expect(screen.getByRole('radio', { name: /Connect with Personal Access Token/i })).toBeInTheDocument();
+      expect(screen.getByRole('radio', { name: /Connect with GitHub App/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /Configure repository$/i })).toBeInTheDocument();
     });
 
@@ -593,8 +591,8 @@ describe('ProvisioningWizard', () => {
       expect(finishButton).toBeDisabled();
     });
 
-    it('shows an error alert and keeps the finish button disabled when the jobs watch stream errors', async () => {
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    it('continues showing job progress when the watch stream errors (polling fallback)', async () => {
+      const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
       try {
         setupWorkingJobHandlers();
 
@@ -605,11 +603,17 @@ describe('ProvisioningWizard', () => {
           getMockLiveSrv().emitWatchError('jobs', new Error('connection lost'));
         });
 
-        expect(await screen.findByText('Error running job')).toBeInTheDocument();
-        expect(screen.getByText('Error: connection lost')).toBeInTheDocument();
+        // The polling fallback intercepts the watch error and re-fetches the job.
+        // The UI continues showing real job progress instead of an error.
+        await waitFor(() => {
+          expect(screen.getByText('Pulling...')).toBeInTheDocument();
+        });
+
+        // No error is displayed — the fallback is transparent to the user.
+        expect(screen.queryByText('Error running job')).not.toBeInTheDocument();
         expect(finishButton).toBeDisabled();
       } finally {
-        consoleErrorSpy.mockRestore();
+        consoleWarnSpy.mockRestore();
       }
     });
 
@@ -763,5 +767,26 @@ describe('ProvisioningWizard', () => {
 
       expect(screen.getByDisplayValue('test-user')).toBeInTheDocument();
     });
+  });
+
+  it('commits typed path text without Enter when user clicks Choose what to synchronize', async () => {
+    const mockSubmitData = setupMockSubmitData();
+    const { user } = setup(<ProvisioningWizard type="github" />);
+
+    await navigateToConnectionStep(user, 'github', {
+      token: 'ghp_xxxxxxxxxxxxxxxxxxxx',
+      url: 'https://github.com/test/repo',
+    });
+
+    const pathCombobox = screen.getAllByRole('combobox')[1];
+    await user.click(pathCombobox);
+    await user.type(pathCombobox, 'docs/dashboards');
+    // No Enter — this is the bug scenario: typed text should survive the blur.
+
+    await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
+
+    await waitFor(() => expect(mockSubmitData).toHaveBeenCalledTimes(2));
+    const connectionSubmitSpec = mockSubmitData.mock.calls[1][0];
+    expect(connectionSubmitSpec.github).toMatchObject({ path: 'docs/dashboards' });
   });
 });

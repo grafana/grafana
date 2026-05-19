@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
 
+	provisioningadmission "github.com/grafana/grafana/apps/provisioning/pkg/apis/admission"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
@@ -75,6 +76,11 @@ func (v *RepositoryValidator) Validate(ctx context.Context, cfg *provisioning.Re
 			cfg.Spec.GitHub, "Github config only valid when type is github"))
 	}
 
+	if cfg.Spec.Type != provisioning.GitHubEnterpriseRepositoryType && cfg.Spec.GitHubEnterprise != nil {
+		list = append(list, field.Invalid(field.NewPath("spec", "githubEnterprise"),
+			cfg.Spec.GitHubEnterprise, "GitHub Enterprise config only valid when type is githubEnterprise"))
+	}
+
 	if cfg.Spec.Type != provisioning.GitRepositoryType && cfg.Spec.Git != nil {
 		list = append(list, field.Invalid(field.NewPath("spec", "git"),
 			cfg.Spec.Git, "Git config only valid when type is git"))
@@ -128,18 +134,28 @@ func (v *RepositoryValidator) Validate(ctx context.Context, cfg *provisioning.Re
 		}
 	}
 
-	if !v.allowImageRendering && cfg.Spec.GitHub != nil && cfg.Spec.GitHub.GenerateDashboardPreviews {
-		list = append(list,
-			field.Invalid(field.NewPath("spec", "generateDashboardPreviews"),
-				cfg.Spec.GitHub.GenerateDashboardPreviews,
-				"image rendering is not enabled"))
-	}
+	list = append(list, v.validateDashboardPreviews(cfg)...)
 
 	if cfg.Spec.Webhook != nil && cfg.Spec.Webhook.BaseURL != "" {
 		list = append(list, validateWebhookBaseURL(cfg.Spec.Webhook.BaseURL)...)
 	}
 
 	return list
+}
+
+func (v *RepositoryValidator) validateDashboardPreviews(cfg *provisioning.Repository) field.ErrorList {
+	if v.allowImageRendering {
+		return nil
+	}
+	if cfg.Spec.GitHub != nil && cfg.Spec.GitHub.GenerateDashboardPreviews {
+		return field.ErrorList{field.Invalid(field.NewPath("spec", "generateDashboardPreviews"),
+			cfg.Spec.GitHub.GenerateDashboardPreviews, "image rendering is not enabled")}
+	}
+	if cfg.Spec.GitHubEnterprise != nil && cfg.Spec.GitHubEnterprise.GenerateDashboardPreviews {
+		return field.ErrorList{field.Invalid(field.NewPath("spec", "generateDashboardPreviews"),
+			cfg.Spec.GitHubEnterprise.GenerateDashboardPreviews, "image rendering is not enabled")}
+	}
+	return nil
 }
 
 func validateWebhookBaseURL(baseURL string) field.ErrorList {
@@ -223,6 +239,12 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 	meta, _ := utils.MetaAccessor(obj)
 	if meta.GetDeletionTimestamp() != nil {
 		return nil
+	}
+
+	// Block creations of pending-deleted resources and mutations on resources whose namespace is pending deletion.
+	// Allows for updates that remove the pending-delete label (explicit unlock).
+	if err := provisioningadmission.ValidatePendingDeletion(a, meta); err != nil {
+		return err
 	}
 
 	r, ok := obj.(*provisioning.Repository)

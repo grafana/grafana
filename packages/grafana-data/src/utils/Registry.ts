@@ -82,7 +82,11 @@ export class Registry<T extends RegistryItem> {
     return v;
   }
 
-  selectOptions(current?: string[], filter?: (ext: T) => boolean): RegistrySelectInfo {
+  selectOptions(
+    current?: string[],
+    filter?: (ext: T) => boolean,
+    formatLabel: (ext: T) => string = (ext) => ext.name
+  ): RegistrySelectInfo {
     if (!this.initialized) {
       this.initialize();
     }
@@ -109,7 +113,7 @@ export class Registry<T extends RegistryItem> {
 
       const option = {
         value: ext.id,
-        label: ext.name,
+        label: formatLabel(ext),
         description: ext.description,
       };
 

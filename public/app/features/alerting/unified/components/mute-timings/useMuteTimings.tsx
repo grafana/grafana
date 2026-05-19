@@ -6,7 +6,7 @@ import {
   API_VERSION,
   type ObjectMeta,
   type TimeInterval,
-} from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
+} from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
 import { timeIntervalsApi } from 'app/features/alerting/unified/api/timeIntervalsApi';
 import { mergeTimeIntervals } from 'app/features/alerting/unified/components/mute-timings/util';

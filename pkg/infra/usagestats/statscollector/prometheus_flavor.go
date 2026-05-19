@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -49,14 +50,20 @@ func (s *Service) detectPrometheusVariants(ctx context.Context) (map[string]int6
 	dsAmazonProm := &datasources.GetDataSourcesByTypeQuery{Type: "grafana-amazonprometheus-datasource"}
 	dataSourcesAmazonProm, err := s.datasources.GetDataSourcesByType(ctx, dsAmazonProm)
 	if err != nil {
-		s.log.Error("Failed to read all Amazon Prometheus data sources", "error", err)
-		return nil, err
+		if !isPluginNotFoundError(err) {
+			s.log.Error("Failed to read all Amazon Prometheus data sources", "error", err)
+			return nil, err
+		}
+		s.log.Debug("Amazon Prometheus plugin not installed, skipping", "error", err)
 	}
 	dsAzureProm := &datasources.GetDataSourcesByTypeQuery{Type: "grafana-azureprometheus-datasource"}
 	dataSourcesAzureProm, err := s.datasources.GetDataSourcesByType(ctx, dsAzureProm)
 	if err != nil {
-		s.log.Error("Failed to read all Azure Prometheus data sources", "error", err)
-		return nil, err
+		if !isPluginNotFoundError(err) {
+			s.log.Error("Failed to read all Azure Prometheus data sources", "error", err)
+			return nil, err
+		}
+		s.log.Debug("Azure Prometheus plugin not installed, skipping", "error", err)
 	}
 
 	allPromDataSources := append(append(dataSources, dataSourcesAmazonProm...), dataSourcesAzureProm...)
@@ -171,4 +178,9 @@ func (s *Service) detectPrometheusVariant(ctx context.Context, ds *datasources.D
 	}
 
 	return "vanilla", nil
+}
+
+// isPluginNotFoundError checks if the error is due to a plugin not being installed.
+func isPluginNotFoundError(err error) bool {
+	return err != nil && strings.Contains(err.Error(), "not found")
 }

@@ -38,6 +38,7 @@ import { useRuleViewExtensionsNav } from '../../enterprise-components/rule-view-
 import { shouldUseAlertingListViewV2, shouldUsePrometheusRulesPrimary } from '../../featureToggles';
 import { isError, useAsync } from '../../hooks/useAsync';
 import { useRuleLocation } from '../../hooks/useCombinedRule';
+import { useEnrichmentUrlParams } from '../../hooks/useEnrichmentUrlParams';
 import { useHasInhibitedInstances } from '../../hooks/useHasInhibitedInstances';
 import { useHasRulerV2 } from '../../hooks/useHasRuler';
 import { useRuleGroupConsistencyCheck } from '../../hooks/usePrometheusConsistencyCheck';
@@ -46,10 +47,13 @@ import { getAlertRulesNavId } from '../../navigation/useAlertRulesNav';
 import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { normalizeHealth, normalizeState } from '../../rule-list/components/util';
 import { Annotation } from '../../utils/constants';
-import { getRulesSourceUid, ruleIdentifierToRuleSourceIdentifier } from '../../utils/datasource';
+import {
+  GRAFANA_RULES_SOURCE_NAME,
+  getRulesSourceUid,
+  ruleIdentifierToRuleSourceIdentifier,
+} from '../../utils/datasource';
 import { labelsSize } from '../../utils/labels';
 import { makeDashboardLink, makePanelLink, stringifyErrorLike } from '../../utils/misc';
-import { createListFilterLink, groups } from '../../utils/navigation';
 import {
   type RulePluginOrigin,
   getRulePluginOrigin,
@@ -69,6 +73,8 @@ import { ContactPointLink } from './ContactPointLink';
 import { Details } from './Details';
 import { FederatedRuleWarning } from './FederatedRuleWarning';
 import { useAlertRule } from './RuleContext';
+import { ActiveTab } from './activeTab';
+import { type RuleViewerNamespaceInfo, buildRuleViewerParentItem } from './pageNav';
 import { AlertVersionHistory } from './tabs/AlertVersionHistory';
 import { History } from './tabs/History';
 import { InstancesList } from './tabs/Instances';
@@ -76,16 +82,6 @@ import { Notifications } from './tabs/Notifications';
 import { QueryResults } from './tabs/Query';
 import { Routing } from './tabs/Routing';
 import { RulePageEnrichmentSectionExtension } from './tabs/extensions/RuleViewerExtension';
-
-export enum ActiveTab {
-  Query = 'query',
-  Instances = 'instances',
-  History = 'history',
-  Notifications = 'notifications',
-  Routing = 'routing',
-  VersionHistory = 'version-history',
-  Enrichment = 'enrichment',
-}
 
 const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
 const alertingListViewV2 = shouldUseAlertingListViewV2();
@@ -171,7 +167,7 @@ const RuleViewer = () => {
     >
       {shouldUseConsistencyCheck && <PrometheusConsistencyCheck ruleIdentifier={identifier} />}
       <div className={styles.layout}>
-        <Stack direction="column" gap={2}>
+        <Stack direction="column" gap={2} minWidth={0}>
           {/* tabs and tab content */}
           <TabContent>
             {activeTab === ActiveTab.Query && <QueryResults rule={rule} />}
@@ -452,6 +448,7 @@ function isValidTab(tab: UrlQueryValue): tab is ActiveTab {
 
 function usePageNav(rule: CombinedRule) {
   const [activeTab, setActiveTab] = useActiveTab();
+  useEnrichmentUrlParams({ activeTab, setActiveTab });
 
   const { annotations, promRule, rulerRule } = rule;
 
@@ -459,7 +456,7 @@ function usePageNav(rule: CombinedRule) {
   const isAlertType = prometheusRuleType.alertingRule(promRule);
   const numberOfInstance = isAlertType ? calculateTotalInstances(rule.instanceTotals) : undefined;
 
-  const namespaceName = decodeGrafanaNamespace(rule.namespace).name;
+  const { name: namespaceName, parents: namespaceParents } = decodeGrafanaNamespace(rule.namespace);
   const groupName = rule.group.name;
 
   const isGrafanaAlertRule = rulerRuleType.grafana.alertingRule(rulerRule);
@@ -468,8 +465,14 @@ function usePageNav(rule: CombinedRule) {
 
   const dataSourceUID = getRulesSourceUid(rule.namespace.rulesSource);
   const namespaceString = getNamespaceString(rule);
+  const isGrafanaManaged = dataSourceUID === GRAFANA_RULES_SOURCE_NAME;
 
-  const groupDetailsUrl = groups.detailsPageLink(dataSourceUID, namespaceString, groupName);
+  const namespaceInfo: RuleViewerNamespaceInfo = {
+    displayName: namespaceName,
+    parentNames: namespaceParents,
+    identifier: isGrafanaManaged ? { uid: namespaceString } : { name: namespaceString },
+    dataSourceUID,
+  };
 
   const setActiveTabFromString = (tab: string) => {
     if (isValidTab(tab)) {
@@ -527,15 +530,7 @@ function usePageNav(rule: CombinedRule) {
         hideFromTabs: !isGrafanaAlertRule && !isGrafanaRecordingRule,
       },
     ],
-    parentItem: {
-      text: groupName,
-      url: groupDetailsUrl,
-      // @TODO support nested folders here
-      parentItem: {
-        text: namespaceName,
-        url: createListFilterLink([['namespace', namespaceName]]),
-      },
-    },
+    parentItem: buildRuleViewerParentItem(groupName, namespaceInfo),
   };
 
   return {

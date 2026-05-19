@@ -5,12 +5,13 @@ import (
 	"fmt"
 
 	"github.com/grafana/authlib/types"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type ExternalGroupMappingAuthorizer struct {
@@ -64,6 +65,17 @@ func (r *ExternalGroupMappingAuthorizer) AfterGet(ctx context.Context, obj runti
 
 // BeforeCreate implements ResourceStorageAuthorizer.
 func (r *ExternalGroupMappingAuthorizer) BeforeCreate(ctx context.Context, obj runtime.Object) error {
+	// FIXME: Remove this when the namegenerator can be configured for the API
+	concreteObj, ok := obj.(*iamv0.ExternalGroupMapping)
+	if !ok {
+		return apierrors.NewInternalError(fmt.Errorf("expected ExternalGroupMapping, got %T: %w", obj, storewrapper.ErrUnexpectedType))
+	}
+
+	if concreteObj.GenerateName != "" {
+		concreteObj.Name = concreteObj.GenerateName + util.GenerateShortUID()
+		concreteObj.GenerateName = ""
+	}
+
 	return r.beforeWrite(ctx, obj)
 }
 
@@ -112,6 +124,12 @@ func (r *ExternalGroupMappingAuthorizer) beforeWrite(ctx context.Context, obj ru
 		)
 	}
 	return nil
+}
+
+// WatchFilter implements ResourceStorageAuthorizer.
+// TODO: implement proper watch filtering using Compile or BatchCheck.
+func (r *ExternalGroupMappingAuthorizer) WatchFilter(_ context.Context) (storewrapper.WatchEventFilter, error) {
+	return storewrapper.RejectAllWatchFilter, nil
 }
 
 // FilterList implements ResourceStorageAuthorizer.

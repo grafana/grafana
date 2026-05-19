@@ -51,11 +51,7 @@ func NewFolderClient(t *testing.T, user apis.User) *apis.TypedClient[folders.Fol
 }
 
 func GetTestHelper(t *testing.T) *apis.K8sTestHelper {
-	return apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles: []string{
-			"kubernetesAlertingRules",
-		},
-	})
+	return apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{})
 }
 
 func CreateTestFolder(t *testing.T, helper *apis.K8sTestHelper, folderUID string) {

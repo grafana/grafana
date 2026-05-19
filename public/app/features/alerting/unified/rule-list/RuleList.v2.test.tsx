@@ -72,9 +72,11 @@ alertingFactory.dataSource.build({ name: 'Mimir', uid: 'mimir' });
 alertingFactory.dataSource.build({ name: 'Prometheus', uid: 'prometheus' });
 
 describe('RuleListPage v2', () => {
-  it('should show grouped view by default', () => {
+  it('should show grouped view by default', async () => {
     render(<RuleListPage />);
 
+    // Wait for the lazy-loaded RulesFilterV2 (Suspense) to settle before asserting
+    await waitFor(() => expect(ui.searchInput.get()).toBeInTheDocument());
     expect(ui.groupedView.get()).toBeInTheDocument();
     expect(ui.filterView.query()).not.toBeInTheDocument();
   });
@@ -543,7 +545,7 @@ describe('RuleListPage v2 - Default search auto-apply', () => {
   // These tests verify that the default search is applied at the page level,
   // BEFORE child components mount, preventing double API requests.
 
-  testWithFeatureToggles({ enable: ['alertingListViewV2', 'alertingSavedSearches'] });
+  testWithFeatureToggles({ enable: ['alertingListViewV2'] });
 
   beforeEach(() => {
     // Clear the visited flag so the hook detects this as a first visit

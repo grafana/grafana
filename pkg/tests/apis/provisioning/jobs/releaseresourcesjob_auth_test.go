@@ -72,12 +72,12 @@ func TestIntegrationProvisioning_ReleaseResourcesJobAuthorization(t *testing.T) 
 		const repo = "release-conflict-test"
 		testRepo := common.TestRepo{
 			Name:               repo,
-			Target:             "folder",
+			SyncTarget:         "folder",
 			Copies:             map[string]string{},
 			ExpectedDashboards: 0,
 			ExpectedFolders:    1,
 		}
-		helper.CreateRepo(t, testRepo)
+		helper.CreateLocalRepo(t, testRepo)
 
 		existingRepoBody := common.AsJSON(provisioning.JobSpec{
 			Action:     provisioning.JobActionReleaseResources,

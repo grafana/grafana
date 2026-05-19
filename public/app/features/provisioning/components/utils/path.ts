@@ -1,3 +1,5 @@
+import kbn from 'app/core/utils/kbn';
+
 /**
  * Parameters for generating a dashboard path
  */
@@ -55,6 +57,15 @@ export function joinPath(directory: string, filename: string): string {
   const cleanDir = directory.replace(/\/+$/, '');
   const cleanFile = filename.replace(/^\/+/, '');
   return cleanDir ? `${cleanDir}/${cleanFile}` : cleanFile;
+}
+
+/**
+ * Converts a dashboard title into a filesystem-safe filename slug.
+ * Delegates to kbn.slugifyForUrl and strips leading/trailing dashes
+ * that slugifyForUrl can leave behind (e.g. titles starting with special chars).
+ */
+export function slugifyForFilename(title: string): string {
+  return kbn.slugifyForUrl(title).replace(/^-+|-+$/g, '');
 }
 
 /**

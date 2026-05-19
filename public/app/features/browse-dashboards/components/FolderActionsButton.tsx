@@ -18,6 +18,7 @@ import { ShowModalReactEvent } from 'app/types/events';
 import { type FolderDTO } from 'app/types/folders';
 
 import { useDeleteFolderMutationFacade, useMoveFolderMutationFacade } from '../../../api/clients/folder/v1beta1/hooks';
+import { extractErrorMessage } from '../../../api/utils';
 import { ManagerKind } from '../../apiserver/types';
 import { getFolderPermissions } from '../permissions';
 
@@ -73,14 +74,14 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
     const result = await deleteFolder(folder);
 
     if (result.error) {
+      const fallbackMessage = t(
+        'browse-dashboards.folder-actions-button.delete-folder-error',
+        'Error deleting folder. Please try again later.'
+      );
+
       appEvents.publish({
         type: AppEvents.alertError.name,
-        payload: [
-          t(
-            'browse-dashboards.folder-actions-button.delete-folder-error',
-            'Error deleting folder. Please try again later.'
-          ),
-        ],
+        payload: [extractErrorMessage(result.error, fallbackMessage)],
       });
       return;
     }

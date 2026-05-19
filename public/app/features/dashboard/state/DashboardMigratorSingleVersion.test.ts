@@ -134,7 +134,6 @@ describe('Backend / Frontend single version migration result comparison', () => 
           }
         }
       }
-      delete frontendMigrationResult.id;
       expect(backendMigrationResult).toEqual(frontendMigrationResult);
     });
   });

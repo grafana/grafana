@@ -2,6 +2,12 @@ import { test, expect } from '@grafana/plugin-e2e';
 
 import testDashboard from '../dashboards/TestDashboard.json';
 
+// Unique suffix to avoid UID/title collisions with parallel specs that share this fixture.
+const SUFFIX = Date.now().toString(36);
+const dashName = `E2E Import ${SUFFIX}`;
+const dashUid = `e2e-import-${SUFFIX}`;
+const uniqueDashboard = { ...testDashboard, uid: dashUid, title: dashName };
+
 test.use({
   featureToggles: {
     dashboardNewLayouts: process.env.FORCE_V2_DASHBOARDS_API === 'true',
@@ -25,7 +31,7 @@ test.describe(
 
       // Fill in the dashboard JSON and name
       const textarea = dashboardPage.getByGrafanaSelector(selectors.components.DashboardImportPage.textarea);
-      await textarea.fill(JSON.stringify(testDashboard));
+      await textarea.fill(JSON.stringify(uniqueDashboard));
 
       // Submit the JSON
       await dashboardPage.getByGrafanaSelector(selectors.components.DashboardImportPage.submit).click();
@@ -35,7 +41,7 @@ test.describe(
       await expect(nameField).toBeVisible();
       await nameField.click();
       await nameField.clear();
-      await nameField.fill(testDashboard.title);
+      await nameField.fill(dashName);
 
       await dashboardPage.getByGrafanaSelector(selectors.components.ImportDashboardForm.submit).click();
 
@@ -49,7 +55,7 @@ test.describe(
 
       // Verify the dashboard title is present in the breadcrumbs
       await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.Breadcrumbs.breadcrumb(testDashboard.title))
+        dashboardPage.getByGrafanaSelector(selectors.components.Breadcrumbs.breadcrumb(dashName))
       ).toBeVisible();
 
       // Verify that specific panels from the test dashboard are loaded

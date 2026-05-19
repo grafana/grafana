@@ -8,15 +8,18 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/fullstorydev/grpchan"
 	"github.com/fullstorydev/grpchan/inprocgrpc"
 	"github.com/go-jose/go-jose/v4"
 	"github.com/go-jose/go-jose/v4/jwt"
+	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/grpcutils"
@@ -96,12 +99,18 @@ func NewLegacyResourceClient(channel grpc.ClientConnInterface, indexChannel grpc
 	return newResourceClient(cc, cci)
 }
 
-func NewLocalResourceClient(server ResourceServer) ResourceClient {
+func NewLocalResourceClient(srv ResourceServer) ResourceClient {
 	// scenario: local in-proc
 	channel := &inprocgrpc.Channel{}
 	tracer := otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/resource")
 
 	grpcAuthInt := grpcutils.NewUnsafeAuthenticator(tracer)
+
+	var metricsInt grpc.UnaryServerInterceptor
+	if s, ok := srv.(*server); ok {
+		metricsInt = UnaryRequestDurationInterceptor(s.storageMetrics)
+	}
+
 	for _, desc := range []*grpc.ServiceDesc{
 		&resourcepb.ResourceStore_ServiceDesc,
 		&resourcepb.ResourceIndex_ServiceDesc,
@@ -111,13 +120,17 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 		&resourcepb.Diagnostics_ServiceDesc,
 		&resourcepb.Quotas_ServiceDesc,
 	} {
+		wrapped := desc
+		if metricsInt != nil && desc == &resourcepb.ResourceStore_ServiceDesc {
+			wrapped = grpchan.InterceptServer(wrapped, metricsInt, nil)
+		}
 		channel.RegisterService(
 			grpchan.InterceptServer(
-				desc,
+				wrapped,
 				grpcAuth.UnaryServerInterceptor(grpcAuthInt),
 				grpcAuth.StreamServerInterceptor(grpcAuthInt),
 			),
-			server,
+			srv,
 		)
 	}
 
@@ -127,6 +140,15 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 	)
 
 	cc := grpchan.InterceptClientConn(channel, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
+
+	// Add retry interceptor for transient conflict errors (same config as remote client).
+	retryInterceptor := grpc_retry.UnaryClientInterceptor(
+		grpc_retry.WithMax(3),
+		grpc_retry.WithBackoff(grpc_retry.BackoffExponentialWithJitter(time.Second, 0.1)),
+		grpc_retry.WithCodes(codes.ResourceExhausted, codes.Unavailable, codes.Aborted),
+	)
+	cc = grpchan.InterceptClientConn(cc, retryInterceptor, nil)
+
 	return newResourceClient(cc, cc)
 }
 

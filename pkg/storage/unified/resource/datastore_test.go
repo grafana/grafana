@@ -54,7 +54,7 @@ func setupSqlKV(t *testing.T) kv.KV {
 }
 
 func setupTestDataStore(t *testing.T) *dataStore {
-	return newDataStore(setupBadgerKV(t))
+	return newDataStore(setupBadgerKV(t), nil)
 }
 
 func TestNewDataStore(t *testing.T) {
@@ -63,7 +63,7 @@ func TestNewDataStore(t *testing.T) {
 }
 
 func setupTestDataStoreSqlKv(t *testing.T) *dataStore {
-	return newDataStore(setupSqlKV(t))
+	return newDataStore(setupSqlKV(t), nil)
 }
 
 func TestDataKey_String(t *testing.T) {
@@ -3186,7 +3186,7 @@ func testDataStoreBatchGet(t *testing.T, ctx context.Context, ds *dataStore) {
 
 	t.Run("batch get with some non-existent keys", func(t *testing.T) {
 		// Create 3 existing keys
-		existingKeys := make([]DataKey, 3)
+		existingKeys := make([]DataKey, 3) //nolint:prealloc
 		for i := 0; i < 3; i++ {
 			rv := node.Generate().Int64()
 			existingKeys[i] = DataKey{

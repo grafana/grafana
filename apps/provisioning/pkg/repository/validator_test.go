@@ -15,6 +15,7 @@ import (
 	"k8s.io/apiserver/pkg/authentication/user"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
@@ -145,6 +146,25 @@ func TestValidator_Validate(t *testing.T) {
 						Title:  "Test Repo",
 						Type:   provisioning.GitHubRepositoryType,
 						GitHub: &provisioning.GitHubRepositoryConfig{GenerateDashboardPreviews: true},
+					},
+				}
+			}(),
+			expectedErrs: 1,
+			validateError: func(t *testing.T, errors field.ErrorList) {
+				require.Contains(t, errors.ToAggregate().Error(), "spec.generateDashboardPreviews: Invalid value")
+			},
+		},
+		{
+			name: "githubEnterprise enabled when image rendering is not allowed",
+			repository: func() *provisioning.Repository {
+				return &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Finalizers: []string{CleanFinalizer},
+					},
+					Spec: provisioning.RepositorySpec{
+						Title:            "Test Repo",
+						Type:             provisioning.GitHubEnterpriseRepositoryType,
+						GitHubEnterprise: &provisioning.GitHubEnterpriseRepositoryConfig{GenerateDashboardPreviews: true},
 					},
 				}
 			}(),
@@ -540,6 +560,106 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 			operation:       admission.Update,
 			wantErr:         true,
 			wantErrContains: "Changing sync target after running sync is not supported",
+		},
+		{
+			name: "blocks UPDATE when both old and new objects have the pending-delete label",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "test",
+					Finalizers: []string{CleanFinalizer},
+					Labels:     map[string]string{appcontroller.LabelPendingDelete: "true"},
+				},
+				Spec: provisioning.RepositorySpec{
+					Title: "Test Repo (modified)",
+					Type:  provisioning.GitHubRepositoryType,
+				},
+			},
+			old: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:   "test",
+					Labels: map[string]string{appcontroller.LabelPendingDelete: "true"},
+				},
+				Spec: provisioning.RepositorySpec{
+					Title: "Test Repo",
+					Type:  provisioning.GitHubRepositoryType,
+				},
+			},
+			operation:       admission.Update,
+			wantErr:         true,
+			wantErrContains: "namespace is pending deletion",
+		},
+		{
+			name: "allows UPDATE that removes the pending-delete label (explicit unlock)",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "test",
+					Finalizers: []string{CleanFinalizer},
+				},
+				Spec: provisioning.RepositorySpec{
+					Title: "Test Repo",
+					Type:  provisioning.GitHubRepositoryType,
+					Sync:  provisioning.SyncOptions{IntervalSeconds: 60},
+				},
+			},
+			old: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "test",
+					Finalizers: []string{CleanFinalizer},
+					Labels:     map[string]string{appcontroller.LabelPendingDelete: "true"},
+				},
+				Spec: provisioning.RepositorySpec{
+					Title: "Test Repo",
+					Type:  provisioning.GitHubRepositoryType,
+					Sync:  provisioning.SyncOptions{IntervalSeconds: 60},
+				},
+			},
+			operation: admission.Update,
+			wantErr:   false,
+		},
+		{
+			name: "allows the UPDATE that sets the pending-delete label (old without label → new with label)",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "test",
+					Finalizers: []string{CleanFinalizer},
+					Labels:     map[string]string{appcontroller.LabelPendingDelete: "true"},
+				},
+				Spec: provisioning.RepositorySpec{
+					Title: "Test Repo",
+					Type:  provisioning.GitHubRepositoryType,
+					Sync:  provisioning.SyncOptions{IntervalSeconds: 60},
+				},
+			},
+			old: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "test",
+					Finalizers: []string{CleanFinalizer},
+				},
+				Spec: provisioning.RepositorySpec{
+					Title: "Test Repo",
+					Type:  provisioning.GitHubRepositoryType,
+					Sync:  provisioning.SyncOptions{IntervalSeconds: 60},
+				},
+			},
+			operation: admission.Update,
+			wantErr:   false,
+		},
+		{
+			name: "blocks CREATE when incoming object carries the pending-delete label",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "test",
+					Finalizers: []string{CleanFinalizer},
+					Labels:     map[string]string{appcontroller.LabelPendingDelete: "true"},
+				},
+				Spec: provisioning.RepositorySpec{
+					Title: "Test Repo",
+					Type:  provisioning.GitHubRepositoryType,
+				},
+			},
+			operation:       admission.Create,
+			wantErr:         true,
+			wantErrContains: "namespace is pending deletion",
 		},
 	}
 

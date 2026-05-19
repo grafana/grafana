@@ -87,7 +87,7 @@ func (p *grpcPlugin) Start(_ context.Context) error {
 		p.state = pluginStateStartFail
 		return errors.New("plugin protocol version not supported")
 	}
-	p.pluginClient, err = newClientV2(p.descriptor, p.logger, rpcClient)
+	p.pluginClient, err = newClientV2(rpcClient)
 	if err != nil {
 		p.state = pluginStateStartFail
 		return err

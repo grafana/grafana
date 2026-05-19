@@ -2,9 +2,8 @@ import { reportMetaAnalytics, MetaAnalyticsEventName, type DashboardViewEventPay
 
 import { type DashboardModel } from './DashboardModel';
 
-export function emitDashboardViewEvent(dashboard: Pick<DashboardModel, 'title' | 'uid' | 'meta' | 'id'>) {
+export function emitDashboardViewEvent(dashboard: Pick<DashboardModel, 'title' | 'uid' | 'meta'>) {
   const eventData: DashboardViewEventPayload = {
-    dashboardId: dashboard.id,
     dashboardName: dashboard.title,
     dashboardUid: dashboard.uid,
     folderName: dashboard.meta.folderTitle,

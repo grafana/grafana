@@ -14,13 +14,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/alerting/notify/notifytest"
 	prometheus "github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/timeinterval"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/alerting/notify/notifytest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/bus"
@@ -44,6 +45,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/routes"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	ngalertfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -406,7 +408,7 @@ func TestIntegrationProvisioningApi(t *testing.T) {
 			})
 
 			t.Run("PUT without MissingSeriesEvalsToResolve clears the field", func(t *testing.T) {
-				oldValue := util.Pointer[int64](5)
+				oldValue := new(int64(5))
 				sut := createProvisioningSrvSut(t)
 				rc := createTestRequestCtx()
 				rule := createTestAlertRule("rule", 1)
@@ -423,8 +425,8 @@ func TestIntegrationProvisioningApi(t *testing.T) {
 			})
 
 			t.Run("PUT with MissingSeriesEvalsToResolve updates the value", func(t *testing.T) {
-				oldValue := util.Pointer[int64](5)
-				newValue := util.Pointer[int64](10)
+				oldValue := new(int64(5))
+				newValue := new(int64(10))
 				sut := createProvisioningSrvSut(t)
 				rc := createTestRequestCtx()
 				rule := createTestAlertRule("rule", 1)
@@ -739,7 +741,7 @@ func TestIntegrationProvisioningApi(t *testing.T) {
 				require.Nil(t, updated.Rules[0].MissingSeriesEvalsToResolve)
 
 				// Put the same group with a new value
-				group.Rules[0].MissingSeriesEvalsToResolve = util.Pointer[int64](5)
+				group.Rules[0].MissingSeriesEvalsToResolve = new(int64(5))
 				response = sut.RoutePutAlertRuleGroup(&rc, group, "folder-uid", group.Title)
 				require.Equal(t, 200, response.Status())
 				updated = deserializeRuleGroup(t, response.Body())
@@ -2135,7 +2137,7 @@ func TestApiNotificationPolicyExportSnapshot(t *testing.T) {
 
 // testEnvironment binds together common dependencies for testing alerting APIs.
 type testEnvironment struct {
-	secrets          secrets.Service
+	secrets          secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	log              log.Logger
 	store            store.DBstore
 	folderService    folder.Service
@@ -2244,7 +2246,7 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		OrgID: 1,
 		/*
 			Permissions: map[int64]map[string][]string{
-				1: {dashboards.ActionFoldersCreate: {}, dashboards.ActionFoldersRead: {dashboards.ScopeFoldersAll}},
+				1: {folder.ActionFoldersCreate: {}, folder.ActionFoldersRead: {folder.ScopeFoldersAll}},
 			},
 		*/
 	}
@@ -2308,14 +2310,17 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 		env.log,
 		ngalertfakes.NewFakeReceiverPermissionsService(),
 		tracer,
+		validation.ValidateProvenanceRelaxed,
 		false,
+		nil,
+		&notifier.NoopOrgEmailValidator{},
 	)
 	return ProvisioningSrv{
 		log:                 env.log,
 		policies:            newFakeNotificationPolicyService(rev),
-		contactPointService: provisioning.NewContactPointService(receiverAuthz, configStore, env.secrets, env.prov, env.xact, receiverSvc, env.log, env.store, ngalertfakes.NewFakeReceiverPermissionsService()),
-		templates:           provisioning.NewTemplateService(configStore, env.prov, env.xact, env.log),
-		muteTimings:         provisioning.NewMuteTimingService(configStore, env.prov, env.xact, env.log, env.store, rs),
+		contactPointService: provisioning.NewContactPointService(receiverAuthz, configStore, env.secrets, env.prov, env.xact, receiverSvc, env.log, env.store, ngalertfakes.NewFakeReceiverPermissionsService(), nil, &notifier.NoopOrgEmailValidator{}),
+		templates:           provisioning.NewTemplateService(configStore, env.prov, env.xact, env.log, validation.ValidateProvenanceRelaxed),
+		muteTimings:         provisioning.NewMuteTimingService(configStore, env.prov, env.xact, env.log, env.store, rs, validation.ValidateProvenanceRelaxed),
 		alertRules:          provisioning.NewAlertRuleService(env.store, env.prov, env.folderService, env.quotas, env.xact, 60, 10, 100, env.log, env.nsValidator, env.rulesAuthz),
 		folderSvc:           env.folderService,
 		featureManager:      env.features,
@@ -2334,7 +2339,7 @@ func createTestRequestCtx() contextmodel.ReqContext {
 		SignedInUser: &user.SignedInUser{
 			OrgID: 1,
 			Permissions: map[int64]map[string][]string{
-				1: {dashboards.ActionFoldersRead: {dashboards.ScopeFoldersAll}},
+				1: {folder.ActionFoldersRead: {folder.ScopeFoldersAll}},
 			},
 		},
 		Logger: &logtest.Fake{},
@@ -2511,9 +2516,9 @@ func createTestAlertRule(title string, orgID int64) definitions.ProvisionedAlert
 		NotificationSettings: &definitions.AlertRuleNotificationSettings{
 			Receiver:            "Test-Receiver",
 			GroupBy:             []string{"alertname", "grafana_folder", "test"},
-			GroupWait:           util.Pointer(model.Duration(1 * time.Second)),
-			GroupInterval:       util.Pointer(model.Duration(5 * time.Second)),
-			RepeatInterval:      util.Pointer(model.Duration(5 * time.Minute)),
+			GroupWait:           new(model.Duration(1 * time.Second)),
+			GroupInterval:       new(model.Duration(5 * time.Second)),
+			RepeatInterval:      new(model.Duration(5 * time.Minute)),
 			MuteTimeIntervals:   []string{"test-mute"},
 			ActiveTimeIntervals: []string{"test-active"},
 		},

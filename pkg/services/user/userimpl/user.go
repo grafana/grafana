@@ -4,6 +4,8 @@ import (
 	"context"
 
 	"github.com/open-feature/go-sdk/openfeature"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -11,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -25,6 +28,9 @@ type Service struct {
 	legacyService     user.Service
 	k8sService        user.Service
 	openFeatureClient *openfeature.Client
+	logger            log.Logger
+	tracer            tracing.Tracer
+	cfg               *setting.Cfg
 }
 
 var _ user.Service = (*Service)(nil)
@@ -47,12 +53,19 @@ func ProvideService(db db.DB,
 		legacyService:     legacyService,
 		k8sService:        k8sService,
 		openFeatureClient: openfeature.NewDefaultClient(),
+		logger:            log.New("user"),
+		tracer:            tracer,
+		cfg:               cfg,
 	}, nil
 }
 
 func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
-	if s.isKubernetesUserServiceEnabled(ctx) {
-		return s.k8sService.Create(ctx, cmd)
+	if s.isKubernetesUserServiceEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
+		k8sCtx := ctx
+		if !hasOrgID(ctx) {
+			k8sCtx = identity.WithOrgID(ctx, s.cfg.DefaultOrgID())
+		}
+		return s.k8sService.Create(k8sCtx, cmd)
 	}
 
 	return s.legacyService.Create(ctx, cmd)
@@ -63,10 +76,39 @@ func (s *Service) CreateServiceAccount(ctx context.Context, cmd *user.CreateUser
 }
 
 func (s *Service) Delete(ctx context.Context, cmd *user.DeleteUserCommand) error {
+	if s.isKubernetesUserServiceEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
+		k8sCtx := ctx
+		if !hasOrgID(ctx) {
+			k8sCtx = identity.WithOrgID(ctx, s.cfg.DefaultOrgID())
+		}
+		return s.k8sService.Delete(k8sCtx, cmd)
+	}
+
 	return s.legacyService.Delete(ctx, cmd)
 }
 
 func (s *Service) GetByID(ctx context.Context, cmd *user.GetUserByIDQuery) (*user.User, error) {
+	ctx, span := s.tracer.Start(ctx, "user.wrapper.GetByID", trace.WithAttributes(
+		attribute.Int64("userID", cmd.ID),
+	))
+	defer span.End()
+
+	ctxLogger := s.logger.FromContext(ctx)
+
+	if s.isKubernetesUserServiceEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
+		k8sCtx := ctx
+		if !hasOrgID(ctx) {
+			k8sCtx = identity.WithOrgID(ctx, s.cfg.DefaultOrgID())
+		}
+		result, err := s.k8sService.GetByID(k8sCtx, cmd)
+		if err == nil {
+			span.SetAttributes(attribute.Bool("fallback_to_legacy", false))
+			return result, nil
+		}
+		ctxLogger.Warn("k8s GetByID failed, falling back to legacy", "userID", cmd.ID, "err", err)
+	}
+
+	span.SetAttributes(attribute.Bool("fallback_to_legacy", true))
 	return s.legacyService.GetByID(ctx, cmd)
 }
 
@@ -78,48 +120,95 @@ func (s *Service) ListByIdOrUID(ctx context.Context, uids []string, ids []int64)
 	return s.legacyService.ListByIdOrUID(ctx, uids, ids)
 }
 
+func (s *Service) GetByLoginWithPassword(ctx context.Context, cmd *user.GetUserByLoginQuery) (*user.User, error) {
+	// Redirect to legacy service as support for passwords is not implemented in the k8s service
+	return s.legacyService.GetByLoginWithPassword(ctx, cmd)
+}
+
 func (s *Service) GetByLogin(ctx context.Context, cmd *user.GetUserByLoginQuery) (*user.User, error) {
-	if s.isKubernetesUserServiceEnabled(ctx) {
-		// UserK8sService.GetByLogin resolves the k8s namespace from the requester's org ID.
-		// During password authentication the requester has not been established yet, so we
-		// fall back to the legacy service for that call. All other callers carry a requester
-		// and are correctly routed to the k8s service.
-		if _, err := identity.GetRequester(ctx); err == nil {
-			return s.k8sService.GetByLogin(ctx, cmd)
+	if s.isKubernetesUserServiceEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
+		k8sCtx := ctx
+		if !hasOrgID(ctx) {
+			k8sCtx = identity.WithOrgID(ctx, s.cfg.DefaultOrgID())
 		}
+		return s.k8sService.GetByLogin(k8sCtx, cmd)
 	}
 
 	return s.legacyService.GetByLogin(ctx, cmd)
 }
 
 func (s *Service) GetByEmail(ctx context.Context, cmd *user.GetUserByEmailQuery) (*user.User, error) {
-	if s.isKubernetesUserServiceEnabled(ctx) {
-		// Same as GetByLogin: fall back to legacy when there is no requester in the context.
-		if _, err := identity.GetRequester(ctx); err == nil {
-			return s.k8sService.GetByEmail(ctx, cmd)
+	if s.isKubernetesUserServiceEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
+		k8sCtx := ctx
+		if !hasOrgID(ctx) {
+			k8sCtx = identity.WithOrgID(ctx, s.cfg.DefaultOrgID())
 		}
+		return s.k8sService.GetByEmail(k8sCtx, cmd)
 	}
 
 	return s.legacyService.GetByEmail(ctx, cmd)
 }
 
 func (s *Service) Update(ctx context.Context, cmd *user.UpdateUserCommand) error {
-	if s.isKubernetesUserServiceEnabled(ctx) {
-		return s.k8sService.Update(ctx, cmd)
+	if s.isKubernetesUserServiceEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
+		k8sCtx := ctx
+		if !hasOrgID(ctx) {
+			k8sCtx = identity.WithOrgID(ctx, s.cfg.DefaultOrgID())
+		}
+		return s.k8sService.Update(k8sCtx, cmd)
 	}
 
 	return s.legacyService.Update(ctx, cmd)
 }
 
 func (s *Service) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLastSeenAtCommand) error {
+	if s.isKubernetesUserServiceEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
+		k8sCtx := ctx
+		if !hasOrgID(ctx) {
+			k8sCtx = identity.WithOrgID(ctx, s.cfg.DefaultOrgID())
+		}
+		return s.k8sService.UpdateLastSeenAt(k8sCtx, cmd)
+	}
+
 	return s.legacyService.UpdateLastSeenAt(ctx, cmd)
 }
 
 func (s *Service) GetSignedInUser(ctx context.Context, cmd *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
+	ctx, span := s.tracer.Start(ctx, "user.wrapper.GetSignedInUser", trace.WithAttributes(
+		attribute.Int64("userID", cmd.UserID),
+		attribute.Int64("orgID", cmd.OrgID),
+	))
+	defer span.End()
+
+	ctxLogger := s.logger.FromContext(ctx)
+
+	if s.isKubernetesUserServiceEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
+		k8sCmd := *cmd
+		if !hasOrgID(ctx) && k8sCmd.OrgID == 0 {
+			k8sCmd.OrgID = s.cfg.DefaultOrgID()
+		}
+
+		result, err := s.k8sService.GetSignedInUser(ctx, &k8sCmd)
+		if err == nil {
+			span.SetAttributes(attribute.Bool("fallback_to_legacy", false))
+			return result, nil
+		}
+		ctxLogger.Warn("k8s GetSignedInUser failed, falling back to legacy", "userID", cmd.UserID, "err", err)
+	}
+
+	span.SetAttributes(attribute.Bool("fallback_to_legacy", true))
 	return s.legacyService.GetSignedInUser(ctx, cmd)
 }
 
 func (s *Service) Search(ctx context.Context, cmd *user.SearchUsersQuery) (*user.SearchUserQueryResult, error) {
+	if s.isKubernetesUserServiceEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
+		k8sCtx := ctx
+		if !hasOrgID(ctx) {
+			k8sCtx = identity.WithOrgID(ctx, s.cfg.DefaultOrgID())
+		}
+		return s.k8sService.Search(k8sCtx, cmd)
+	}
+
 	return s.legacyService.Search(ctx, cmd)
 }
 
@@ -128,6 +217,14 @@ func (s *Service) BatchDisableUsers(ctx context.Context, cmd *user.BatchDisableU
 }
 
 func (s *Service) GetProfile(ctx context.Context, cmd *user.GetUserProfileQuery) (*user.UserProfileDTO, error) {
+	if s.isKubernetesUserServiceEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
+		k8sCtx := ctx
+		if !hasOrgID(ctx) {
+			k8sCtx = identity.WithOrgID(ctx, s.cfg.DefaultOrgID())
+		}
+		return s.k8sService.GetProfile(k8sCtx, cmd)
+	}
+
 	return s.legacyService.GetProfile(ctx, cmd)
 }
 
@@ -141,4 +238,23 @@ func (s *Service) isKubernetesUserServiceEnabled(ctx context.Context) bool {
 	}
 
 	return s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesUsersRedirect, false, openfeature.TransactionContext(ctx))
+}
+
+// shouldFallbackToLegacy determines whether to fall back to the legacy service
+// for a given request. The k8s redirect path builds its rest.Config from the
+// request context's *contextmodel.ReqContext so that the K8s apiserver sees
+// the original end-user identity; non-HTTP callers (authn sign-in sync,
+// grafana-cli) run as a service identity with no ReqContext on the context
+// and must keep working via the legacy path.
+func (s *Service) shouldFallbackToLegacy(ctx context.Context) bool {
+	return identity.IsServiceIdentity(ctx) && contexthandler.FromContext(ctx) == nil
+}
+
+func hasOrgID(ctx context.Context) bool {
+	if requester, err := identity.GetRequester(ctx); err == nil {
+		return requester.GetOrgID() != 0
+	}
+
+	orgID, ok := identity.OrgIDFrom(ctx)
+	return ok && orgID != 0
 }

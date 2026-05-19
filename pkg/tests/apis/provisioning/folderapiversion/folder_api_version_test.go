@@ -52,10 +52,10 @@ func TestIntegrationProvisioning_FolderAPIVersionConfig(t *testing.T) {
 
 			const repoName = "folder-version-repo"
 			repoPath := filepath.Join(helper.ProvisioningPath, repoName)
-			helper.CreateRepo(t, common.TestRepo{
-				Name:   repoName,
-				Path:   repoPath,
-				Target: "folder",
+			helper.CreateLocalRepo(t, common.TestRepo{
+				Name:       repoName,
+				LocalPath:  repoPath,
+				SyncTarget: "folder",
 				Copies: map[string]string{
 					"../testdata/all-panels.json": "subfolder/dashboard.json",
 				},

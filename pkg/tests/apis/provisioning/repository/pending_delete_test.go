@@ -6,16 +6,13 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
-
-// labelPendingDelete mirrors the constant defined in the repository controller
-// (pkg/registry/apis/provisioning/controller/repository.go) and written by the
-// tenant watcher (pkg/storage/unified/resource/tenant_watcher.go).
-const labelPendingDelete = "cloud.grafana.com/pending-delete"
 
 // TestIntegrationProvisioning_PendingDeleteLabel_SkipsReconciliation verifies that
 // when a repository carries the pending-delete label the controller skips further
@@ -25,9 +22,9 @@ func TestIntegrationProvisioning_PendingDeleteLabel_SkipsReconciliation(t *testi
 	helper := sharedHelper(t)
 
 	const repoName = "pending-delete-skip-test"
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:                   repoName,
-		Target:                 "folder",
+		SyncTarget:             "folder",
 		SkipSync:               true,
 		SkipResourceAssertions: true,
 	})
@@ -38,7 +35,7 @@ func TestIntegrationProvisioning_PendingDeleteLabel_SkipsReconciliation(t *testi
 	repoObj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
 	require.NoError(t, err)
 
-	initialRepo := common.UnstructuredToRepository(t, repoObj)
+	initialRepo := common.MustFromUnstructured[provisioning.Repository](t, repoObj)
 	require.Equal(t, initialRepo.Generation, initialRepo.Status.ObservedGeneration,
 		"generation and observedGeneration should match after initial sync")
 
@@ -52,7 +49,7 @@ func TestIntegrationProvisioning_PendingDeleteLabel_SkipsReconciliation(t *testi
 	if labels == nil {
 		labels = make(map[string]string)
 	}
-	labels[labelPendingDelete] = "true"
+	labels[common.LabelPendingDelete] = "true"
 	repoObj.SetLabels(labels)
 
 	updatedObj, err := helper.Repositories.Resource.Update(t.Context(), repoObj, metav1.UpdateOptions{})
@@ -73,7 +70,7 @@ func TestIntegrationProvisioning_PendingDeleteLabel_SkipsReconciliation(t *testi
 		if err != nil {
 			return false
 		}
-		repo := common.UnstructuredToRepository(t, obj)
+		repo := common.MustFromUnstructured[provisioning.Repository](t, obj)
 		return repo.Status.ObservedGeneration >= newGeneration
 	}, 10*time.Second, 200*time.Millisecond,
 		"ObservedGeneration must not advance while the pending-delete label is set (reconciliation should be skipped)")
@@ -84,7 +81,7 @@ func TestIntegrationProvisioning_PendingDeleteLabel_SkipsReconciliation(t *testi
 	require.NoError(t, err)
 
 	labels = repoObj.GetLabels()
-	delete(labels, labelPendingDelete)
+	delete(labels, common.LabelPendingDelete)
 	repoObj.SetLabels(labels)
 
 	_, err = helper.Repositories.Resource.Update(t.Context(), repoObj, metav1.UpdateOptions{})
@@ -98,9 +95,128 @@ func TestIntegrationProvisioning_PendingDeleteLabel_SkipsReconciliation(t *testi
 		if err != nil {
 			return
 		}
-		repo := common.UnstructuredToRepository(t, obj)
+		repo := common.MustFromUnstructured[provisioning.Repository](t, obj)
 		assert.Equal(collect, provisioning.JobStateSuccess, repo.Status.Sync.State,
 			"repository should reach success sync state after label removal")
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault,
 		"repository should reconcile successfully once the pending-delete label is removed")
+}
+
+// TestIntegrationProvisioning_RepositoryPendingDeleteAdmission verifies that the
+// admission webhook enforces pending-delete semantics on Repository resources.
+func TestIntegrationProvisioning_RepositoryPendingDeleteAdmission(t *testing.T) {
+	helper := sharedHelper(t)
+
+	// createRepo creates a local repository and returns immediately — no health wait.
+	// Sufficient for tests that exercise the admission webhook synchronously.
+	createRepo := func(t *testing.T, name string) {
+		t.Helper()
+		repoObj := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Repository",
+			"metadata": map[string]any{
+				"name":      name,
+				"namespace": "default",
+			},
+			"spec": map[string]any{
+				"title": "Pending Delete Admission Test",
+				"type":  "local",
+				"sync": map[string]any{
+					"enabled": false,
+				},
+				"local": map[string]any{
+					"path": helper.ProvisioningPath,
+				},
+			},
+		}}
+		_, err := helper.Repositories.Resource.Create(t.Context(), repoObj, metav1.CreateOptions{})
+		require.NoError(t, err)
+	}
+
+	t.Run("create with pending-delete label is forbidden", func(t *testing.T) {
+		repoObj := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Repository",
+			"metadata": map[string]any{
+				"name":      "pd-repo-admission-create",
+				"namespace": "default",
+				"labels": map[string]any{
+					common.LabelPendingDelete: "true",
+				},
+			},
+			"spec": map[string]any{
+				"title": "Pending Delete Admission Test",
+				"type":  "local",
+				"sync": map[string]any{
+					"enabled": false,
+				},
+				"local": map[string]any{
+					"path": helper.ProvisioningPath,
+				},
+			},
+		}}
+		_, err := helper.Repositories.Resource.Create(t.Context(), repoObj, metav1.CreateOptions{})
+		require.Error(t, err)
+		require.True(t, k8serrors.IsForbidden(err),
+			"expected Forbidden when creating a repository with the pending-delete label, got: %v", err)
+	})
+
+	t.Run("update blocked when both old and new have pending-delete label", func(t *testing.T) {
+		const repoName = "pd-repo-admission-update-blocked"
+		createRepo(t, repoName)
+		common.SetPendingDeleteLabel(t, helper.Repositories.Resource, repoName)
+
+		// Always re-Get to avoid stale resourceVersion conflicts from concurrent status updates.
+		err := common.RetryOnConflict(t, func() error {
+			obj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
+			if err != nil {
+				return err
+			}
+			obj.Object["spec"].(map[string]interface{})["title"] = "Modified Title"
+			_, err = helper.Repositories.Resource.Update(t.Context(), obj, metav1.UpdateOptions{})
+			return err
+		})
+		require.Error(t, err)
+		require.True(t, k8serrors.IsForbidden(err),
+			"expected Forbidden when mutating a pending-delete repository, got: %v", err)
+	})
+
+	t.Run("status subresource update allowed with pending-delete label", func(t *testing.T) {
+		const repoName = "pd-repo-admission-status-update"
+		createRepo(t, repoName)
+		common.SetPendingDeleteLabel(t, helper.Repositories.Resource, repoName)
+
+		// Echo back the current object via UpdateStatus. The admission webhook must
+		// pass status-subresource requests through without a Forbidden rejection,
+		// regardless of whether the pending-delete label is set.
+		err := common.RetryOnConflict(t, func() error {
+			obj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
+			if err != nil {
+				return err
+			}
+			_, err = helper.Repositories.Resource.UpdateStatus(t.Context(), obj, metav1.UpdateOptions{})
+			return err
+		})
+		require.NoError(t, err, "status subresource update must be allowed even when the pending-delete label is set")
+	})
+
+	t.Run("removing pending-delete label via update is allowed", func(t *testing.T) {
+		const repoName = "pd-repo-admission-remove-label"
+		createRepo(t, repoName)
+		common.SetPendingDeleteLabel(t, helper.Repositories.Resource, repoName)
+
+		// Always re-Get to avoid stale resourceVersion conflicts from concurrent status updates.
+		err := common.RetryOnConflict(t, func() error {
+			obj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
+			if err != nil {
+				return err
+			}
+			labels := obj.GetLabels()
+			delete(labels, common.LabelPendingDelete)
+			obj.SetLabels(labels)
+			_, err = helper.Repositories.Resource.Update(t.Context(), obj, metav1.UpdateOptions{})
+			return err
+		})
+		require.NoError(t, err, "removing the pending-delete label should be allowed")
+	})
 }

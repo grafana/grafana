@@ -16,6 +16,7 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -327,7 +328,7 @@ func mapToBindingObject(ns claims.NamespaceInfo, tm legacy.TeamMember) iamv0alph
 		ct = tm.Created
 	}
 
-	return iamv0alpha1.TeamBinding{
+	result := iamv0alpha1.TeamBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              tm.UID,
 			Namespace:         ns.Value,
@@ -346,4 +347,9 @@ func mapToBindingObject(ns claims.NamespaceInfo, tm legacy.TeamMember) iamv0alph
 			External:   tm.External,
 		},
 	}
+
+	meta, _ := utils.MetaAccessor(&result)
+	meta.SetDeprecatedInternalID(tm.TeamID) // nolint:staticcheck
+
+	return result
 }

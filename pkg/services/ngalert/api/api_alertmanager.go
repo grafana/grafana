@@ -69,7 +69,7 @@ func (srv AlertmanagerSrv) RouteGetAMStatus(c *contextmodel.ReqContext) response
 
 func (srv AlertmanagerSrv) RouteGetAlertingConfig(c *contextmodel.ReqContext) response.Response {
 	canSeeAutogen := c.HasRole(org.RoleAdmin)
-	config, err := srv.mam.GetAlertmanagerConfiguration(c.Req.Context(), c.GetOrgID(), canSeeAutogen, false)
+	config, err := srv.mam.GetAlertmanagerConfiguration(c.Req.Context(), c.GetOrgID(), canSeeAutogen)
 	if err != nil {
 		if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
 			return ErrResp(http.StatusNotFound, err, "")
@@ -192,7 +192,7 @@ func (srv AlertmanagerSrv) RouteGetReceivers(c *contextmodel.ReqContext) respons
 	}
 	statuses, err = srv.receiverAuthz.FilterRead(c.Req.Context(), c.SignedInUser, statuses...)
 	if err != nil {
-		response.ErrOrFallback(http.StatusInternalServerError, "failed to apply permissions to the receivers", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to apply permissions to the receivers", err)
 	}
 	return response.JSON(http.StatusOK, statuses)
 }

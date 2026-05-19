@@ -66,6 +66,8 @@ const failDataSourceTest = async (error: object) => {
           testDatasource: jest.fn().mockImplementation(() => {
             throw error;
           }),
+          meta: { id: 'azure-monitor' },
+          uid: 'azM0nit0R',
         }),
       }) as Pick<DataSourceSrv, 'get'>,
     getBackendSrv: getBackendSrvMock,
@@ -228,7 +230,7 @@ describe('testDataSource', () => {
                 status: 'success',
                 message: '',
               }),
-              type: 'cloudwatch',
+              meta: { id: 'cloudwatch' },
               uid: 'CW1234',
             }),
           }) as Pick<DataSourceSrv, 'get'>,
@@ -263,7 +265,7 @@ describe('testDataSource', () => {
               testDatasource: jest.fn().mockImplementation(() => {
                 throw new Error('Error testing datasource');
               }),
-              type: 'azure-monitor',
+              meta: { id: 'azure-monitor' },
               uid: 'azM0nit0R',
             }),
           }) as Pick<DataSourceSrv, 'get'>,
@@ -348,7 +350,7 @@ describe('testDataSource', () => {
               status: 'success',
               message: '',
             }),
-            type: 'cloudwatch',
+            meta: { id: 'cloudwatch' },
             uid: 'CW1234',
           }),
         }),
@@ -371,6 +373,66 @@ describe('testDataSource', () => {
       };
       await failDataSourceTest(error);
       expect(appEvents.publish).toHaveBeenCalledWith({ type: 'datasource-test-failed' });
+    });
+
+    it('tracks the specific plugin id for Prometheus-based datasources on success', async () => {
+      // Prometheus subclasses (e.g. Amazon Managed Prometheus, Azure Prometheus) override
+      // this.type = 'prometheus' in their constructor, so dsApi.type is always 'prometheus'.
+      // We must use dsApi.meta.id to get the actual plugin identifier.
+      const dependencies: TestDataSourceDependencies = {
+        getDatasourceSrv: () =>
+          ({
+            get: jest.fn().mockReturnValue({
+              testDatasource: jest.fn().mockReturnValue({
+                status: 'success',
+                message: '',
+              }),
+              type: 'prometheus', // simulates the class-level override
+              meta: { id: 'grafana-amazon-prometheus-datasource' },
+              uid: 'amp-uid-1',
+            }),
+          }) as Pick<DataSourceSrv, 'get'>,
+        getBackendSrv: getBackendSrvMock,
+      };
+      await thunkTester({})
+        .givenThunk(testDataSource)
+        .whenThunkIsDispatched('Amazon Prometheus', DATASOURCES_ROUTES.Edit, dependencies);
+
+      expect(trackDataSourceTested).toHaveBeenCalledWith(
+        expect.objectContaining({
+          plugin_id: 'grafana-amazon-prometheus-datasource',
+          datasource_uid: 'amp-uid-1',
+          success: true,
+        })
+      );
+    });
+
+    it('tracks the specific plugin id for Prometheus-based datasources on failure', async () => {
+      const dependencies: TestDataSourceDependencies = {
+        getDatasourceSrv: () =>
+          ({
+            get: jest.fn().mockReturnValue({
+              testDatasource: jest.fn().mockImplementation(() => {
+                throw new Error('connection refused');
+              }),
+              type: 'prometheus', // simulates the class-level override
+              meta: { id: 'grafana-azure-prometheus-datasource' },
+              uid: 'azprom-uid-1',
+            }),
+          }) as Pick<DataSourceSrv, 'get'>,
+        getBackendSrv: getBackendSrvMock,
+      };
+      await thunkTester({})
+        .givenThunk(testDataSource)
+        .whenThunkIsDispatched('Azure Prometheus', DATASOURCES_ROUTES.Edit, dependencies);
+
+      expect(trackDataSourceTested).toHaveBeenCalledWith(
+        expect.objectContaining({
+          plugin_id: 'grafana-azure-prometheus-datasource',
+          datasource_uid: 'azprom-uid-1',
+          success: false,
+        })
+      );
     });
   });
 });
