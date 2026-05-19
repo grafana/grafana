@@ -3,15 +3,16 @@ package v0alpha1
 RuleSequenceSpec: {
 	trigger: #IntervalTrigger
 	// Non-empty constraint is enforced in Go admission validation (validator.go),
-	// not in CUE. Using [...#RuleRef] instead of [#RuleRef, ...#RuleRef] avoids
-	// a codegen bug where the CUE default generates invalid Go/TS defaults
-	// (empty-UID RuleRef in Go, `uid: <nil>` in TypeScript).
+	// not in CUE, because list.MinItems on a struct-typed list causes a codegen
+	// error in grafana-app-sdk ("unexpected node with kind '_|_'").
+
 	recordingRules: [...#RuleRef]
 	alertingRules?: [...#RuleRef]
 }
 
 #RuleRef: {
-	uid: #RuleUID
+	// name is the metadata.name of an AlertRule or RecordingRule resource.
+	name: #RuleUID
 }
 
 #RuleUID: string & =~"^[a-zA-Z0-9_-]+$"

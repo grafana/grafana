@@ -22,7 +22,8 @@ type RuleSequencePromDuration string
 
 // +k8s:openapi-gen=true
 type RuleSequenceRuleRef struct {
-	Uid RuleSequenceRuleUID `json:"uid"`
+	// name is the metadata.name of an AlertRule or RecordingRule resource.
+	Name RuleSequenceRuleUID `json:"name"`
 }
 
 // NewRuleSequenceRuleRef creates a new RuleSequenceRuleRef object.
@@ -40,13 +41,9 @@ type RuleSequenceRuleUID string
 
 // +k8s:openapi-gen=true
 type RuleSequenceSpec struct {
-	Trigger RuleSequenceIntervalTrigger `json:"trigger"`
-	// Non-empty constraint is enforced in Go admission validation (validator.go),
-	// not in CUE. Using [...#RuleRef] instead of [#RuleRef, ...#RuleRef] avoids
-	// a codegen bug where the CUE default generates invalid Go/TS defaults
-	// (empty-UID RuleRef in Go, `uid: <nil>` in TypeScript).
-	RecordingRules []RuleSequenceRuleRef `json:"recordingRules"`
-	AlertingRules  []RuleSequenceRuleRef `json:"alertingRules,omitempty"`
+	Trigger        RuleSequenceIntervalTrigger `json:"trigger"`
+	RecordingRules []RuleSequenceRuleRef       `json:"recordingRules"`
+	AlertingRules  []RuleSequenceRuleRef       `json:"alertingRules,omitempty"`
 }
 
 // NewRuleSequenceSpec creates a new RuleSequenceSpec object.

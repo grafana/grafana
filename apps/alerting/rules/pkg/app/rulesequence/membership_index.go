@@ -157,12 +157,12 @@ func (m *MembershipIndex) Delete(_ context.Context, obj resource.Object) error {
 func collectRuleUIDs(seq *model.RuleSequence) []string {
 	refs := make([]string, 0, len(seq.Spec.RecordingRules)+len(seq.Spec.AlertingRules))
 	for _, ref := range seq.Spec.RecordingRules {
-		if uid := string(ref.Uid); uid != "" {
+		if uid := string(ref.Name); uid != "" {
 			refs = append(refs, uid)
 		}
 	}
 	for _, ref := range seq.Spec.AlertingRules {
-		if uid := string(ref.Uid); uid != "" {
+		if uid := string(ref.Name); uid != "" {
 			refs = append(refs, uid)
 		}
 	}

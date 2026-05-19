@@ -63,7 +63,7 @@ func NewValidator(cfg config.RuntimeConfig) *simple.Validator {
 			if cfg.MembershipResolver != nil {
 				allUIDs := make([]string, 0, len(allRefs))
 				for _, ref := range allRefs {
-					if uid := string(ref.Uid); uid != "" {
+					if uid := string(ref.Name); uid != "" {
 						allUIDs = append(allUIDs, uid)
 					}
 				}
@@ -75,9 +75,9 @@ func NewValidator(cfg config.RuntimeConfig) *simple.Validator {
 			}
 
 			for _, ref := range allRefs {
-				ruleUID := string(ref.Uid)
+				ruleUID := string(ref.Name)
 				if ruleUID == "" {
-					return fmt.Errorf("rule ref uid must not be empty")
+					return fmt.Errorf("rule ref name must not be empty")
 				}
 				if _, exists := seen[ruleUID]; exists {
 					return fmt.Errorf("rule %q appears multiple times in rule sequence", ruleUID)

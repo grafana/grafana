@@ -500,7 +500,6 @@ func baseRecordingRule() *v1.RecordingRule {
 	return r
 }
 
-
 // --- RuleSequence helpers ---
 
 func baseRuleSequence() *v1.RuleSequence {
@@ -513,10 +512,10 @@ func baseRuleSequence() *v1.RuleSequence {
 	r.Spec = v1.RuleSequenceSpec{
 		Trigger: v1.RuleSequenceIntervalTrigger{Interval: v1.RuleSequencePromDuration("60s")},
 		RecordingRules: []v1.RuleSequenceRuleRef{
-			{Uid: "rec-1"},
+			{Name: "rec-1"},
 		},
 		AlertingRules: []v1.RuleSequenceRuleRef{
-			{Uid: "alert-1"},
+			{Name: "alert-1"},
 		},
 	}
 	return r
@@ -585,31 +584,31 @@ func TestRuleSequenceValidation_Errors(t *testing.T) {
 		require.Error(t, err)
 	})
 
-	t.Run("empty uid in ref", func(t *testing.T) {
+	t.Run("empty name in ref", func(t *testing.T) {
 		err := mk(func(r *v1.RuleSequence) {
-			r.Spec.RecordingRules = []v1.RuleSequenceRuleRef{{Uid: ""}}
+			r.Spec.RecordingRules = []v1.RuleSequenceRuleRef{{Name: ""}}
 		})
 		require.Error(t, err)
 	})
 
-	t.Run("duplicate uid", func(t *testing.T) {
+	t.Run("duplicate name", func(t *testing.T) {
 		err := mk(func(r *v1.RuleSequence) {
-			r.Spec.RecordingRules = []v1.RuleSequenceRuleRef{{Uid: "rec-1"}}
-			r.Spec.AlertingRules = []v1.RuleSequenceRuleRef{{Uid: "rec-1"}}
+			r.Spec.RecordingRules = []v1.RuleSequenceRuleRef{{Name: "rec-1"}}
+			r.Spec.AlertingRules = []v1.RuleSequenceRuleRef{{Name: "rec-1"}}
 		})
 		require.Error(t, err)
 	})
 
 	t.Run("rule does not exist", func(t *testing.T) {
 		err := mk(func(r *v1.RuleSequence) {
-			r.Spec.RecordingRules = []v1.RuleSequenceRuleRef{{Uid: "nonexistent"}}
+			r.Spec.RecordingRules = []v1.RuleSequenceRuleRef{{Name: "nonexistent"}}
 		})
 		require.Error(t, err)
 	})
 
 	t.Run("rule in wrong folder", func(t *testing.T) {
 		err := mk(func(r *v1.RuleSequence) {
-			r.Spec.RecordingRules = []v1.RuleSequenceRuleRef{{Uid: "other-folder-rule"}}
+			r.Spec.RecordingRules = []v1.RuleSequenceRuleRef{{Name: "other-folder-rule"}}
 			r.Spec.AlertingRules = nil
 		})
 		require.Error(t, err)

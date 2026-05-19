@@ -16,11 +16,11 @@ func makeRuleSequence(name string, recordingUIDs, alertingUIDs []string) *model.
 	seq.Name = name
 	seq.Spec.RecordingRules = make([]model.RuleSequenceRuleRef, len(recordingUIDs))
 	for i, uid := range recordingUIDs {
-		seq.Spec.RecordingRules[i] = model.RuleSequenceRuleRef{Uid: model.RuleSequenceRuleUID(uid)}
+		seq.Spec.RecordingRules[i] = model.RuleSequenceRuleRef{Name: model.RuleSequenceRuleUID(uid)}
 	}
 	seq.Spec.AlertingRules = make([]model.RuleSequenceRuleRef, len(alertingUIDs))
 	for i, uid := range alertingUIDs {
-		seq.Spec.AlertingRules[i] = model.RuleSequenceRuleRef{Uid: model.RuleSequenceRuleUID(uid)}
+		seq.Spec.AlertingRules[i] = model.RuleSequenceRuleRef{Name: model.RuleSequenceRuleUID(uid)}
 	}
 	return seq
 }

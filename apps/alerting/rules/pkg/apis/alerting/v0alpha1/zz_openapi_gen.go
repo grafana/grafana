@@ -1092,15 +1092,16 @@ func schema_pkg_apis_alerting_v0alpha1_RuleSequenceRuleRef(ref common.ReferenceC
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"uid": {
+					"name": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Description: "name is the metadata.name of an AlertRule or RecordingRule resource.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 				},
-				Required: []string{"uid"},
+				Required: []string{"name"},
 			},
 		},
 	}
@@ -1120,8 +1121,7 @@ func schema_pkg_apis_alerting_v0alpha1_RuleSequenceSpec(ref common.ReferenceCall
 					},
 					"recordingRules": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Non-empty constraint is enforced in Go admission validation (validator.go), not in CUE. Using [...#RuleRef] instead of [#RuleRef, ...#RuleRef] avoids a codegen bug where the CUE default generates invalid Go/TS defaults (empty-UID RuleRef in Go, `uid: <nil>` in TypeScript).",
-							Type:        []string{"array"},
+							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{

@@ -13,11 +13,12 @@ export type PromDuration = string;
 export const defaultPromDuration = (): PromDuration => ("");
 
 export interface RuleRef {
-	uid: RuleUID;
+	// name is the metadata.name of an AlertRule or RecordingRule resource.
+	name: RuleUID;
 }
 
 export const defaultRuleRef = (): RuleRef => ({
-	uid: defaultRuleUID(),
+	name: defaultRuleUID(),
 });
 
 export type RuleUID = string;
@@ -26,10 +27,6 @@ export const defaultRuleUID = (): RuleUID => ("");
 
 export interface Spec {
 	trigger: IntervalTrigger;
-	// Non-empty constraint is enforced in Go admission validation (validator.go),
-	// not in CUE. Using [...#RuleRef] instead of [#RuleRef, ...#RuleRef] avoids
-	// a codegen bug where the CUE default generates invalid Go/TS defaults
-	// (empty-UID RuleRef in Go, `uid: <nil>` in TypeScript).
 	recordingRules: RuleRef[];
 	alertingRules?: RuleRef[];
 }
