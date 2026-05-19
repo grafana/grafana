@@ -44,7 +44,7 @@ labels:
     - oss
 menuTitle: Add variables
 title: Add variables
-description: Learn about the types of variables you can add to dashboards and how
+description: Learn about the types of variables you can create and add to dashboards and how to do so
 weight: 100
 refs:
   prometheus-query-variables:
@@ -66,7 +66,8 @@ refs:
 
 # Add variables
 
-The following table lists the types of variables shipped with Grafana.
+In addition to the built-in global variables that are already in Grafana, you can create your own variables.
+The following table lists the types of variables you can create:
 
 <!-- prettier-ignore-start -->
 
@@ -85,7 +86,6 @@ The following table lists the types of variables shipped with Grafana.
 
 ## Enter General options
 
-You must enter general options for any type of variable that you create.
 To create a variable, follow these steps:
 
 {{< docs/list >}}
@@ -153,6 +153,8 @@ Query expressions can contain references to other variables and in effect create
 {{< admonition type="note" >}}
 Query expressions are different for each data source. For more information, refer to the documentation for your [data source](ref:data-source).
 {{< /admonition >}}
+
+To add a query variable, follow these steps:
 
 1. [Enter general options](#enter-general-options).
 1. Configure the following options:
