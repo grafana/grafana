@@ -3,6 +3,7 @@ package federated
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 
 	claims "github.com/grafana/authlib/types"
@@ -12,6 +13,11 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
+
+// folderBatchSize caps how many folder UIDs are bound into a single IN (...)
+// clause. SQLite's default SQLITE_MAX_VARIABLE_NUMBER is 999, so 500 leaves
+// headroom for the orgID placeholder and stays well under MySQL/Postgres limits.
+const folderBatchSize = 500
 
 // Read stats from legacy SQL
 type LegacyStatsGetter struct {
@@ -48,15 +54,33 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 				}
 			}
 
-			where, args := buildFolderWhere(folderCol, info.OrgID, folders)
-			count, err := sess.Table(helper.Table(table)).Where(where, args...).Count()
-			if err != nil {
-				return err
+			tableName := helper.Table(table)
+			countChunk := func(chunk []string) (int64, error) {
+				where, args := buildFolderWhere(folderCol, info.OrgID, chunk)
+				return sess.Table(tableName).Where(where, args...).Count()
 			}
+
+			var total int64
+			if len(folders) == 0 {
+				c, err := countChunk(nil)
+				if err != nil {
+					return err
+				}
+				total = c
+			} else {
+				for chunk := range slices.Chunk(folders, folderBatchSize) {
+					c, err := countChunk(chunk)
+					if err != nil {
+						return err
+					}
+					total += c
+				}
+			}
+
 			rsp.Stats = append(rsp.Stats, &resourcepb.ResourceStatsResponse_Stats{
 				Group:    g, // all legacy for now
 				Resource: r,
-				Count:    count,
+				Count:    total,
 			})
 			return nil
 		}

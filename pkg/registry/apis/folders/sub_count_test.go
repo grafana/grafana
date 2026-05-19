@@ -108,10 +108,10 @@ func TestCollectDescendantFolders_Pagination(t *testing.T) {
 	sm := resource.NewMockResourceClient(t)
 
 	// First page: full pageSize hits, NextPageToken signals more.
-	sm.On("Search", mock.Anything, matchSearchOffset("stacks-1", []string{"root"}, 0)).
+	sm.EXPECT().Search(mock.Anything, matchSearchOffset("stacks-1", []string{"root"}, 0)).
 		Return(buildSearchResp(children[:descendantsPageSize], "more"), nil).Once()
 	// Second page: remaining 1 child, no NextPageToken.
-	sm.On("Search", mock.Anything, matchSearchOffset("stacks-1", []string{"root"}, descendantsPageSize)).
+	sm.EXPECT().Search(mock.Anything, matchSearchOffset("stacks-1", []string{"root"}, descendantsPageSize)).
 		Return(buildSearchResp(children[descendantsPageSize:], ""), nil).Once()
 	// Each child is a leaf — searchChildren is called once per chunked level
 	// of the BFS. With descendantsBatchSize=100 and n=1001, that's 11 chunks.
@@ -121,7 +121,7 @@ func TestCollectDescendantFolders_Pagination(t *testing.T) {
 		if end > n {
 			end = n
 		}
-		sm.On("Search", mock.Anything, matchSearchOffset("stacks-1", children[start:end], 0)).
+		sm.EXPECT().Search(mock.Anything, matchSearchOffset("stacks-1", children[start:end], 0)).
 			Return(buildSearchResp(nil, ""), nil).Once()
 	}
 
@@ -136,15 +136,15 @@ func TestCollectDescendantFolders_Pagination(t *testing.T) {
 // map. Calls outside that map are unexpected and fail the test.
 func newTreeSearcher(t *testing.T, tree map[string][]string) *resource.MockResourceClient {
 	sm := resource.NewMockResourceClient(t)
-	sm.On("Search", mock.Anything, mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
+	sm.EXPECT().Search(mock.Anything, mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
 		return req != nil && req.Options != nil && len(req.Options.Fields) > 0
-	})).Return(func(_ context.Context, req *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) *resourcepb.ResourceSearchResponse {
+	})).RunAndReturn(func(_ context.Context, req *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
 		var hits []string
 		for _, parent := range req.Options.Fields[0].Values {
 			hits = append(hits, tree[parent]...)
 		}
-		return buildSearchResp(hits, "")
-	}, nil).Maybe()
+		return buildSearchResp(hits, ""), nil
+	}).Maybe()
 	return sm
 }
 

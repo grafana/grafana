@@ -31,6 +31,17 @@ const descendantsPageSize = 1000
 // recursiveTimeout caps the recursive walk + final GetStats; over budget → 504.
 const recursiveTimeout = 10 * time.Second
 
+// countedKinds is the explicit "group/resource" list passed to GetStats.
+// Without it, the search server enumerates every kind in the namespace first
+// (very expensive on KV-backed storage). The set matches what the browse-
+// dashboards UI consumes in normalizeDescendantCounts.
+var countedKinds = []string{
+	"folder.grafana.app/folders",
+	"dashboard.grafana.app/dashboards",
+	"dashboard.grafana.app/librarypanels",
+	"rules.alerting.grafana.app/alertrules",
+}
+
 type subCountREST struct {
 	getter               rest.Getter
 	searcher             resourcepb.ResourceIndexClient
@@ -104,6 +115,7 @@ func (r *subCountREST) Connect(ctx context.Context, name string, opts runtime.Ob
 
 		stats, err := r.searcher.GetStats(callCtx, &resourcepb.ResourceStatsRequest{
 			Namespace: ns.Value,
+			Kinds:     countedKinds,
 			Folder:    folderList,
 		})
 		if err != nil {
