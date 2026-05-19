@@ -46,7 +46,7 @@ func newVertexEmbedder(cfg *setting.Cfg) (*embedder.Embedder, error) {
 	if err != nil {
 		return nil, fmt.Errorf("vertex client: %w", err)
 	}
-	dense := vertex.NewDenseEmbedder(client, cfg.VertexModel, cfg.VertexDimensions)
+	dense := vertex.NewDenseEmbedder(client, cfg.VertexModel, cfg.VertexDimensions, cfg.EmbeddingBatchSize)
 	return &embedder.Embedder{
 		TextEmbedder: dense,
 		Model:        "vertex/" + cfg.VertexModel,
@@ -66,7 +66,7 @@ func newBedrockEmbedder(cfg *setting.Cfg) (*embedder.Embedder, error) {
 	}
 	rt := bedrockruntime.NewFromConfig(awsCfg)
 	client := bedrock.NewClient(rt)
-	dense := bedrock.NewDenseEmbedder(client, cfg.BedrockModel, cfg.BedrockDimensions)
+	dense := bedrock.NewDenseEmbedder(client, cfg.BedrockModel, cfg.BedrockDimensions, cfg.EmbeddingBatchSize)
 	return &embedder.Embedder{
 		TextEmbedder: dense,
 		Model:        "bedrock/" + cfg.BedrockModel,

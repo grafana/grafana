@@ -713,14 +713,15 @@ type Cfg struct {
 	VectorPromoterInterval   time.Duration // promoter tick interval; 0 disables
 
 	// Embedding provider used by the VectorSearch RPC. "" = disabled.
-	EmbeddingProvider string // "vertex" | "bedrock" | ""
-	VertexProjectID   string
-	VertexLocation    string // default "us-central1"
-	VertexModel       string // default "gemini-embedding-001"
-	VertexDimensions  int    // default 768
-	BedrockRegion     string // default "us-east-1"
-	BedrockModel      string // default "cohere.embed-v4:0"
-	BedrockDimensions int    // default 1024
+	EmbeddingProvider  string // "vertex" | "bedrock" | ""
+	EmbeddingBatchSize int    // texts per provider call; 0 = use provider default (50 for both Vertex and Bedrock)
+	VertexProjectID    string
+	VertexLocation     string // default "us-central1"
+	VertexModel        string // default "gemini-embedding-001"
+	VertexDimensions   int    // default 768
+	BedrockRegion      string // default "us-east-1"
+	BedrockModel       string // default "cohere.embed-v4:0"
+	BedrockDimensions  int    // default 1024
 
 	// Overrides/Quotas
 	OverridesFilePath             string

@@ -8,9 +8,11 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 )
 
-// Cohere embed-v4 (and embed-english-v3) accepts up to 96 texts per
-// invocation. This is the default for our DenseEmbedder.
-const batchSize = 96
+// DefaultBatchSize is the per-call text count used when no override is
+// configured. Cohere embed-v4 on Bedrock accepts up to 96 texts per
+// invocation, but the practical limit is per-call token budget — 50 is a
+// safe default that stays well under typical token caps.
+const DefaultBatchSize = 50
 
 // callTimeout is the per-RPC deadline. Bedrock's invoke is generally fast;
 // 30s leaves room for cold start without papering over real hangs.
@@ -19,34 +21,40 @@ const callTimeout = 30 * time.Second
 // DenseEmbedder embeds text via Bedrock InvokeModel and returns dense
 // float32 vectors.
 type DenseEmbedder struct {
-	client Client
-	model  string
-	dim    int
+	client    Client
+	model     string
+	dim       int
+	batchSize int
 }
 
 var _ embedder.TextEmbedder = (*DenseEmbedder)(nil)
 
 // NewDenseEmbedder builds a DenseEmbedder for a Cohere-family Bedrock
 // embedding model. dim is the requested output dimensionality (Cohere
-// supports 256 / 512 / 1024 / 1536); 0 means model default.
-func NewDenseEmbedder(client Client, model string, dim int) *DenseEmbedder {
+// supports 256 / 512 / 1024 / 1536); 0 means model default. batchSize
+// caps the texts per InvokeModel call; 0 falls back to DefaultBatchSize.
+func NewDenseEmbedder(client Client, model string, dim, batchSize int) *DenseEmbedder {
+	if batchSize <= 0 {
+		batchSize = DefaultBatchSize
+	}
 	return &DenseEmbedder{
-		client: client,
-		model:  model,
-		dim:    dim,
+		client:    client,
+		model:     model,
+		dim:       dim,
+		batchSize: batchSize,
 	}
 }
 
-// EmbedText splits inputs into batches of 96, calls the Bedrock client
-// concurrently per batch, optionally L2-normalizes, and returns embeddings
-// 1:1 with input.Texts.
+// EmbedText splits inputs into batches sized to e.batchSize, calls the
+// Bedrock client concurrently per batch, optionally L2-normalizes, and
+// returns embeddings 1:1 with input.Texts.
 func (e *DenseEmbedder) EmbedText(ctx context.Context, input embedder.EmbedTextInput) (embedder.EmbedTextOutput, error) {
 	if len(input.Texts) == 0 {
 		return embedder.EmbedTextOutput{}, nil
 	}
 	inputType := cohereInputType(input.Task)
 
-	results, err := embedder.BatchProcess(ctx, input.Texts, batchSize, func(ctx context.Context, texts []string) ([]embedder.Embedding, error) {
+	results, err := embedder.BatchProcess(ctx, input.Texts, e.batchSize, func(ctx context.Context, texts []string) ([]embedder.Embedding, error) {
 		callCtx, cancel := context.WithTimeoutCause(ctx, callTimeout, ErrCallTimeout)
 		defer cancel()
 
