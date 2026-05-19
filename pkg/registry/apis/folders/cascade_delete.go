@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/open-feature/go-sdk/openfeature"
 )
 
 // kubernetesFolderCascadeDeleteEnabled is the master switch for folder.grafana.app cascade
@@ -13,9 +14,11 @@ import (
 // Until that reconciliation exists, allowing non-empty delete only skips admission validation;
 // the folder CR is removed and dashboards, nested folders, library elements, and alert rules
 // in the tree remain as orphan resources.
-func kubernetesFolderCascadeDeleteEnabled(ctx context.Context, features featuremgmt.FeatureToggles) bool {
-	if features == nil {
-		return false
-	}
-	return features.IsEnabled(ctx, featuremgmt.FlagKubernetesFolderCascadeDelete)
+func kubernetesFolderCascadeDeleteEnabled(ctx context.Context) bool {
+	return openfeature.NewDefaultClient().Boolean(
+		ctx,
+		featuremgmt.FlagKubernetesFolderCascadeDelete,
+		false,
+		openfeature.TransactionContext(ctx),
+	)
 }

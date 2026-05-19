@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -310,16 +309,12 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 				).Once()
 			}
 
-			features := featuremgmt.WithFeatures()
-			if tt.cascadeDeleteEnabled {
-				features = featuremgmt.WithFeatures(featuremgmt.FlagKubernetesFolderCascadeDelete)
-			}
+			setKubernetesFolderCascadeDeleteToggle(t, tt.cascadeDeleteEnabled)
 
 			b := &FolderAPIBuilder{
 				namespacer: func(_ int64) string { return "123" },
 				storage:    us,
 				searcher:   sm,
-				features:   features,
 			}
 
 			err := b.Validate(context.Background(), admission.NewAttributesRecord(
