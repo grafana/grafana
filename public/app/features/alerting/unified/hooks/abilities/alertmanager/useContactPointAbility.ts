@@ -22,8 +22,8 @@ const PERMISSIONS: Record<ContactPointAction, AccessControlAction[]> = {
   [ContactPointAction.Create]: [notificationsPermissions.create.grafana, AccessControlAction.AlertingReceiversCreate],
   [ContactPointAction.Update]: [notificationsPermissions.update.grafana, AccessControlAction.AlertingReceiversWrite],
   [ContactPointAction.Delete]: [notificationsPermissions.delete.grafana, AccessControlAction.AlertingReceiversDelete],
-  [ContactPointAction.Export]: [notificationsPermissions.read.grafana],
-  [ContactPointAction.BulkExport]: [notificationsPermissions.read.grafana],
+  [ContactPointAction.Export]: [notificationsPermissions.read.grafana, AccessControlAction.AlertingReceiversRead],
+  [ContactPointAction.BulkExport]: [notificationsPermissions.read.grafana, AccessControlAction.AlertingReceiversRead],
 };
 
 export const PERMISSIONS_CONTACT_POINTS: AccessControlAction[] = Object.values(PERMISSIONS).flatMap(
