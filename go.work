@@ -10,6 +10,7 @@ use (
 	./apps/alerting/historian
 	./apps/alerting/notifications
 	./apps/alerting/rules
+	./apps/alerting/rules-extensions
 	./apps/annotation
 	./apps/collections
 	./apps/correlations
