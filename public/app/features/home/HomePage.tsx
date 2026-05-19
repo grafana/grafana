@@ -1,8 +1,10 @@
+import { css } from '@emotion/css';
+
 import { PageLayoutType, PluginExtensionPoints } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { config, renderLimitedComponents, usePluginComponents } from '@grafana/runtime';
-import { Box, Stack } from '@grafana/ui';
+import { Box, Stack, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { isOnPrem } from 'app/core/utils/isOnPrem';
 
@@ -22,6 +24,7 @@ const getEdition = () => {
 };
 
 export default function HomePage() {
+  const styles = useStyles2(getStyles);
   const greeting = useHomeGreeting();
 
   const { components: preComponents } = usePluginComponents({
@@ -57,15 +60,28 @@ export default function HomePage() {
             props: {},
             components: extraComponents,
             pluginId: 'grafana-setupguide-app',
-            wrapper: ({ children }) =>
-              children && (
+            wrapper: ({ children }) => (
+              <div className={styles.extra}>
                 <Box backgroundColor="canvas" borderRadius="default" padding={4}>
                   {children}
                 </Box>
-              ),
+              </div>
+            ),
           })}
         </Stack>
       </Page.Contents>
     </Page>
   );
 }
+
+const getStyles = () => ({
+  extra: css({
+    display: 'contents',
+
+    '> div': {
+      '&:empty': {
+        display: 'none',
+      },
+    },
+  }),
+});
