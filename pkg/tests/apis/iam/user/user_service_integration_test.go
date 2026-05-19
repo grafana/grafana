@@ -571,20 +571,6 @@ func TestIntegrationUserServiceSearch(t *testing.T) {
 }
 
 // go test --tags "pro" -timeout 120s -run ^TestIntegrationUserServiceSearchAuthorization$ github.com/grafana/grafana/pkg/tests/apis/iam -count=1
-//
-// Exercises the authorization of /api/users/search under the
-// kubernetesUsersRedirect flag.
-//
-// The K8s redirect routes `userimpl.Service.Search` through the
-// iam.grafana.app/users custom route on the apiserver. The mapper
-// translates VerbGet/List/Watch for the users resource to the global
-// users:read action (matching every legacy /api/users/* route at
-// pkg/api/api.go:317-323). End-user identity is propagated to the
-// apiserver via apiserver.DirectRestConfigProvider, so the bleve
-// permission filter sees the original caller — not the service.
-//
-// Test setup loops over every DualWriterMode so we can see which modes
-// produce a passing authorization chain end-to-end and which don't.
 func TestIntegrationUserServiceSearchAuthorization(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -643,11 +629,24 @@ func TestIntegrationUserServiceSearchAuthorization(t *testing.T) {
 			//   1) users:read — required by the /api/users/search route gate (see the
 			//      editor_route_gate sub-test above). Any scope is fine here; the
 			//      gate only checks the action.
-			//   2) org.users:read scoped to users:id:<alphaID> — the legacy SQL
-			//      filter at pkg/services/org/orgimpl/store.go:555 reads this scope
-			//      via accesscontrol.Filter(..., "org_user.user_id", "users:id:",
-			//      accesscontrol.ActionOrgUsersRead) and builds
-			//      `org_user.user_id IN (alphaID)`, so only alpha is returned.
+			//   2) org.users:read scoped to a single user — the data filter consults
+			//      this. The scope format depends on which filter serves the
+			//      response:
+			//        Mode 0-3 (legacy SQL filter): accesscontrol.Filter at
+			//          pkg/services/org/orgimpl/store.go:555 expects "users:id:" and
+			//          builds `org_user.user_id IN (alphaID)`.
+			//        Mode 4-5 (bleve via authzLimitedClient -> RBAC): the iam/users
+			//          mapper uses attribute "uid", and the scope resolver translates
+			//          stored "users:id:<N>" by reading the legacy SQL `user` table.
+			//          In unified-only modes alpha isn't in legacy SQL, so we store
+			//          the scope already in "users:uid:<UID>" form to bypass the
+			//          resolver.
+			orgUsersReadScopeAttr := "id"
+			orgUsersReadScopeID := strconv.FormatInt(alphaID, 10)
+			if mode >= rest.Mode4 {
+				orgUsersReadScopeAttr = "uid"
+				orgUsersReadScopeID = alphaResp.Result.UID
+			}
 			scopedUser := helper.CreateUser(
 				"scoped-search-user",
 				apis.Org1,
@@ -662,8 +661,8 @@ func TestIntegrationUserServiceSearchAuthorization(t *testing.T) {
 					{
 						Actions:           []string{accesscontrol.ActionOrgUsersRead},
 						Resource:          "users",
-						ResourceAttribute: "id",
-						ResourceID:        strconv.FormatInt(alphaID, 10),
+						ResourceAttribute: orgUsersReadScopeAttr,
+						ResourceID:        orgUsersReadScopeID,
 					},
 				},
 			)
@@ -700,21 +699,6 @@ func TestIntegrationUserServiceSearchAuthorization(t *testing.T) {
 			})
 
 			t.Run("scoped users:read returns only the allowed user", func(t *testing.T) {
-				if mode >= rest.Mode4 {
-					// In Mode4/5 (StorageModeUnified) the user-visible response comes
-					// from bleve. The RBAC service's mapper at pkg/services/authz/rbac/
-					// mapper.go translates iam.grafana.app/users VerbGet/List to
-					// org.users:read with attribute "uid", and the scope resolver at
-					// pkg/services/authz/rbac/resolver.go translates the stored
-					// users:id:<N> scope by reading from the legacy SQL `user` table
-					// via identityStore.ListUsers. In Mode4/5 the K8s create writes
-					// only to unified storage — alpha never lands in legacy SQL — so
-					// the resolver can't translate users:id:<alphaID> to a UID and
-					// every check denies. Closing this requires either a unified-
-					// storage-aware resolver or storing the scope as users:uid:<UID>
-					// directly. Skipped pending that follow-up.
-					t.Skipf("Mode%d: the legacy-SQL-backed scope resolver can't translate users:id:<N> for K8s-only users; see comment for follow-up", mode)
-				}
 				rsp := apis.DoRequest(helper, apis.RequestParams{
 					User:   scopedUser,
 					Method: "GET",
