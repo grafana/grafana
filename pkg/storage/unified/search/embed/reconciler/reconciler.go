@@ -157,22 +157,20 @@ func (s *Reconciler) enqueue(ev *pendingEvent) {
 	}
 	k := pendingKey(ev.group, ev.resource, ev.namespace, ev.name)
 	s.pendingMu.Lock()
+	defer s.pendingMu.Unlock()
 	if existing, ok := s.pending[k]; ok && existing.rv >= ev.rv {
-		s.pendingMu.Unlock()
 		return
 	}
 	s.pending[k] = ev
-	size := len(s.pending)
-	s.pendingMu.Unlock()
 	if s.metrics != nil {
-		s.metrics.ReconcilerPendingEvents.Set(float64(size))
+		s.metrics.ReconcilerPendingEvents.Set(float64(len(s.pending)))
 	}
 }
 
 func (s *Reconciler) drainPending() []*pendingEvent {
 	s.pendingMu.Lock()
+	defer s.pendingMu.Unlock()
 	if len(s.pending) == 0 {
-		s.pendingMu.Unlock()
 		return nil
 	}
 	out := make([]*pendingEvent, 0, len(s.pending))
@@ -180,7 +178,6 @@ func (s *Reconciler) drainPending() []*pendingEvent {
 		out = append(out, ev)
 	}
 	s.pending = make(map[string]*pendingEvent)
-	s.pendingMu.Unlock()
 	if s.metrics != nil {
 		s.metrics.ReconcilerPendingEvents.Set(0)
 	}
