@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import { type ReactNode, useState } from 'react';
 import { useMeasure } from 'react-use';
 
@@ -200,11 +200,6 @@ function BulkTransformationActions({ barWidth }: BulkTransformationActionsProps)
   );
 }
 
-interface BulkActionsBarProps {
-  /** Optional class for layout/animation overrides applied by the consumer. */
-  className?: string;
-}
-
 interface BulkActionsVisibilityOptions {
   selectedQueryCount: number;
   selectedTransformationCount: number;
@@ -219,8 +214,8 @@ interface BulkActionsVisibility {
 
 // In explicit multi-select mode any selection is actionable. Outside of it
 // (keyboard-shortcut path: Cmd/Ctrl+click, Shift+click) the bar opens at 2+
-// to avoid noise on every plain single-card click. Exported so the parent
-// (SidebarFooter) can ternary-render the bar vs. counts off the same rule.
+// to avoid noise on every plain single-card click. Exported so SidebarFooter
+// can decide whether to show the bar vs. the counts using the same rule.
 export function hasActionableSelection(selectionCount: number, multiSelectMode: boolean): boolean {
   return multiSelectMode ? selectionCount >= 1 : selectionCount >= 2;
 }
@@ -240,7 +235,7 @@ function getBulkActionsVisibility({
   };
 }
 
-export function BulkActionsBar({ className }: BulkActionsBarProps = {}) {
+export function BulkActionsBar() {
   const styles = useStyles2(getStyles);
   const [barRef, { width: barWidth }] = useMeasure<HTMLDivElement>();
   const { selectedQueryRefIds, selectedTransformationIds, clearSelection, multiSelectMode, setMultiSelectMode } =
@@ -268,7 +263,7 @@ export function BulkActionsBar({ className }: BulkActionsBarProps = {}) {
   return (
     <div
       ref={barRef}
-      className={cx(styles.bar, className)}
+      className={styles.bar}
       role="toolbar"
       aria-label={t('query-editor-next.bulk-actions.toolbar-label', 'Bulk actions')}
     >

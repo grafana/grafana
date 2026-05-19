@@ -8,6 +8,8 @@ import { Checkbox, Icon, useStyles2, useTheme2 } from '@grafana/ui';
 import { type ActionItem, Actions } from '../../../Actions';
 import { QueryEditorType, SIDEBAR_CARD_HEIGHT, SIDEBAR_CARD_INDENT, SIDEBAR_CARD_SPACING } from '../../../constants';
 import { useQueryEditorTypeConfig, useQueryEditorUIContext } from '../../QueryEditorContext';
+import { slideInFromLeft, slideOutToLeft } from '../../animations';
+import { useDelayedUnmount } from '../../hooks/useDelayedUnmount';
 import { getEditorBorderColor } from '../../utils';
 import { AddCardButton } from '../AddCardButton';
 import { getGhostCardVisuals } from '../SidebarCardGhostStyles';
@@ -61,6 +63,10 @@ export const SidebarCard = ({
   // of the selection (checkbox-style) instead of replacing it.
   const showSelectionControls =
     multiSelectMode || selectedQueryRefIds.length >= 2 || selectedTransformationIds.length >= 2;
+
+  // Keep the checkbox mounted for the exit animation duration before unmounting.
+  const exitMs = theme.transitions.duration.short;
+  const shouldRenderCheckbox = useDelayedUnmount(showSelectionControls, exitMs);
 
   const styles = useStyles2(getStyles, { isSelected, isPartOfSelection, item });
 
@@ -128,16 +134,18 @@ export const SidebarCard = ({
         aria-pressed={isSelected || isPartOfSelection}
       >
         <div className={styles.cardContent}>
-          {showSelectionControls && (
-            <div aria-hidden className={styles.checkboxWrapper}>
-              <Checkbox
-                className={styles.roundedCheckbox}
-                tabIndex={-1}
-                value={isSelected || isPartOfSelection}
-                onChange={() => {}}
-              />
-            </div>
-          )}
+          <div aria-hidden className={cx(styles.checkboxWrapper, showSelectionControls && styles.checkboxWrapperOpen)}>
+            {shouldRenderCheckbox && (
+              <div className={showSelectionControls ? styles.checkboxEnter : styles.checkboxExit}>
+                <Checkbox
+                  className={styles.roundedCheckbox}
+                  tabIndex={-1}
+                  value={isSelected || isPartOfSelection}
+                  onChange={() => {}}
+                />
+              </div>
+            )}
+          </div>
           {children}
         </div>
         {/** Alerts don't have actions and cannot be hidden so we don't need to show the hidden icon or hover actions. */}
@@ -376,9 +384,52 @@ function getStyles(
 
     // Local Checkbox styles override for PanelEditorNext UI/UX experimentation.
     // The checkbox is purely presentational — clicks/focus go to the card itself.
+    //
+    // Two animation surfaces work in concert here, and they mean different
+    // things — keep them straight:
+    //   * `checkboxWrapper` + `checkboxWrapperOpen`: the *slot* layout. Width
+    //     + margin-right transition together, pushing card content sideways.
+    //     `Open` is the steady "expanded" state, not an animation phase.
+    //   * `checkboxEnter` / `checkboxExit`: animation phases for the inner
+    //     Checkbox, which slides + fades within the slot.
+    //
+    // The wrapper is always rendered so it can animate the slot in both
+    // directions. The negative margin-right when closed cancels cardContent's
+    // flex gap so neighbours sit flush. `flexShrink: 0` keeps the slot at its
+    // declared width even when sibling content is long — without it, a long
+    // query title would squeeze the slot and clip the Checkbox. `lineHeight: 0`
+    // stops the inherited body line-height from inflating the inner block-level
+    // animation div into a line-box taller than the 16px Checkbox — which would
+    // otherwise get clipped by `overflow: hidden`.
     checkboxWrapper: css({
       display: 'flex',
+      alignItems: 'center',
       pointerEvents: 'none',
+      overflow: 'hidden',
+      width: 0,
+      flexShrink: 0,
+      lineHeight: 0,
+      marginRight: `-${theme.spacing(1)}`,
+      [theme.transitions.handleMotion('no-preference')]: {
+        transition: theme.transitions.create(['width', 'margin-right'], {
+          duration: theme.transitions.duration.short,
+          easing: theme.transitions.easing.easeOut,
+        }),
+      },
+    }),
+    checkboxWrapperOpen: css({
+      width: theme.spacing(2),
+      marginRight: 0,
+    }),
+    checkboxEnter: css({
+      [theme.transitions.handleMotion('no-preference')]: {
+        animation: `${slideInFromLeft} ${theme.transitions.duration.short}ms ${theme.transitions.easing.easeOut} both`,
+      },
+    }),
+    checkboxExit: css({
+      [theme.transitions.handleMotion('no-preference')]: {
+        animation: `${slideOutToLeft} ${theme.transitions.duration.short}ms ${theme.transitions.easing.easeIn} both`,
+      },
     }),
     roundedCheckbox: css({
       '& span': {

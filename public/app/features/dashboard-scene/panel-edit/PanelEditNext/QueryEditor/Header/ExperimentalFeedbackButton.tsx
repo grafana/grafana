@@ -1,4 +1,4 @@
-import { css, cx, keyframes } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useRef } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -7,6 +7,7 @@ import { Button, Dropdown, Menu, useStyles2 } from '@grafana/ui';
 
 import { startIntercomSurvey } from '../../tracking';
 import { useActionsContext, useQueryEditorUIContext } from '../QueryEditorContext';
+import { slideInAndPulse } from '../animations';
 
 export function ExperimentalFeedbackButton() {
   const { showVersionBanner } = useQueryEditorUIContext();
@@ -57,24 +58,6 @@ export function ExperimentalFeedbackButton() {
     </div>
   );
 }
-
-const slideInAndPulse = keyframes({
-  '0%': {
-    opacity: 0,
-    transform: 'translateX(24px) scale(0.6)',
-  },
-  '60%': {
-    opacity: 1,
-    transform: 'translateX(0) scale(1.2)',
-  },
-  '80%': {
-    transform: 'translateX(0) scale(0.9)',
-  },
-  '100%': {
-    opacity: 1,
-    transform: 'translateX(0) scale(1)',
-  },
-});
 
 const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css({
