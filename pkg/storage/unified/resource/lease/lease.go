@@ -165,13 +165,17 @@ func WithAutoRenew() AcquireOption {
 // On failure, Acquire returns an error. ErrLeaseAlreadyHeld indicates that
 // an unexpired lease for name is currently owned by some holder (including
 // possibly the caller).
-func (m *Manager) Acquire(ctx context.Context, name string, opts ...AcquireOption) (lease *Lease, err error) {
+func (m *Manager) Acquire(ctx context.Context, name string, opts ...AcquireOption) (lease *Lease, retErr error) {
 	ctx, span := tracer.Start(ctx, "lease.Manager.Acquire", trace.WithAttributes(
 		attribute.String("lease.name", name),
 		attribute.String("lease.holder", m.holder),
 	))
-	defer span.End()
-	defer func() { recordSpanError(span, err) }()
+	var attempts int
+	defer func() {
+		recordSpanError(span, retErr)
+		span.SetAttributes(attribute.Int("attempts", attempts))
+		span.End()
+	}()
 
 	if err := validateLeaseName(name); err != nil {
 		return nil, err
@@ -190,7 +194,7 @@ func (m *Manager) Acquire(ctx context.Context, name string, opts ...AcquireOptio
 		return nil, fmt.Errorf("invalid TTL: %s > %s", cfg.ttl, maxTTL)
 	}
 
-	for attempt := 0; ; attempt++ {
+	for ; ; attempts++ {
 		latestKey, latestGeneration, err := m.latest(ctx, name)
 		if err != nil {
 			return nil, fmt.Errorf("acquiring %s: %w", name, err)
@@ -227,7 +231,7 @@ func (m *Manager) Acquire(ctx context.Context, name string, opts ...AcquireOptio
 			Value: value,
 		}})
 		if errors.Is(err, kv.ErrKeyAlreadyExists) {
-			if attempt >= maxAcquireAttempts-1 {
+			if attempts >= maxAcquireAttempts-1 {
 				return nil, fmt.Errorf("%w: exhausted retries acquiring %s", ErrLeaseAlreadyHeld, name)
 			}
 			continue
@@ -257,13 +261,15 @@ func (m *Manager) Acquire(ctx context.Context, name string, opts ...AcquireOptio
 
 // Release releases lease. It is not idempotent: releasing a lease that has
 // already been released — or one that has expired — returns ErrLeaseLost.
-func (m *Manager) Release(ctx context.Context, lease *Lease) (err error) {
+func (m *Manager) Release(ctx context.Context, lease *Lease) (retErr error) {
 	ctx, span := tracer.Start(ctx, "lease.Manager.Release", trace.WithAttributes(
 		attribute.String("lease.name", lease.name),
 		attribute.String("lease.holder", lease.holder),
 	))
-	defer span.End()
-	defer func() { recordSpanError(span, err) }()
+	defer func() {
+		recordSpanError(span, retErr)
+		span.End()
+	}()
 
 	lease.stopOnce.Do(func() { close(lease.stop) })
 	<-lease.done
@@ -390,12 +396,14 @@ func (m *Manager) renewOnce(lease *Lease, ttl, renewInterval time.Duration) (tim
 	return m.extendGeneration(ctx, lease, ttl)
 }
 
-func (m *Manager) latest(ctx context.Context, name string) (key string, generation int64, err error) {
+func (m *Manager) latest(ctx context.Context, name string) (key string, generation int64, retError error) {
 	ctx, span := tracer.Start(ctx, "lease.Manager.latest", trace.WithAttributes(
 		attribute.String("lease.name", name),
 	))
-	defer span.End()
-	defer func() { recordSpanError(span, err) }()
+	defer func() {
+		recordSpanError(span, retError)
+		span.End()
+	}()
 
 	prefix := name + generationSeparator
 	opts := kv.ListOptions{
@@ -419,12 +427,14 @@ func (m *Manager) latest(ctx context.Context, name string) (key string, generati
 	return "", 0, nil
 }
 
-func (m *Manager) read(ctx context.Context, key string) (state leaseMetadata, err error) {
+func (m *Manager) read(ctx context.Context, key string) (state leaseMetadata, retError error) {
 	ctx, span := tracer.Start(ctx, "lease.Manager.read", trace.WithAttributes(
 		attribute.String("lease.key", key),
 	))
-	defer span.End()
-	defer func() { recordSpanError(span, err) }()
+	defer func() {
+		recordSpanError(span, retError)
+		span.End()
+	}()
 
 	r, err := m.store.Get(ctx, kv.LeasesSection, key)
 	if err != nil {
@@ -443,12 +453,14 @@ func (m *Manager) read(ctx context.Context, key string) (state leaseMetadata, er
 	return state, nil
 }
 
-func (m *Manager) save(ctx context.Context, key string, state leaseMetadata) (err error) {
+func (m *Manager) save(ctx context.Context, key string, state leaseMetadata) (retError error) {
 	ctx, span := tracer.Start(ctx, "lease.Manager.save", trace.WithAttributes(
 		attribute.String("lease.key", key),
 	))
-	defer span.End()
-	defer func() { recordSpanError(span, err) }()
+	defer func() {
+		recordSpanError(span, retError)
+		span.End()
+	}()
 
 	data, err := json.Marshal(state)
 	if err != nil {
