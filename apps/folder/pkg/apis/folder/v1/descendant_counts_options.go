@@ -1,38 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
-// Hand-written deepcopy for DescendantCountsOptions to avoid mixing into the
-// codegen-managed zz_generated.deepcopy.go. The type is too small and too
-// stable to be worth a codegen round-trip.
-
 package v1
-
-import (
-	runtime "k8s.io/apimachinery/pkg/runtime"
-)
-
-// DeepCopyInto copies the receiver into out. in must be non-nil.
-func (in *DescendantCountsOptions) DeepCopyInto(out *DescendantCountsOptions) {
-	*out = *in
-	out.TypeMeta = in.TypeMeta
-}
-
-// DeepCopy creates a new DescendantCountsOptions.
-func (in *DescendantCountsOptions) DeepCopy() *DescendantCountsOptions {
-	if in == nil {
-		return nil
-	}
-	out := new(DescendantCountsOptions)
-	in.DeepCopyInto(out)
-	return out
-}
-
-// DeepCopyObject implements runtime.Object.
-func (in *DescendantCountsOptions) DeepCopyObject() runtime.Object {
-	if c := in.DeepCopy(); c != nil {
-		return c
-	}
-	return nil
-}
 
 // SwaggerDoc supplies field-level descriptions to the apiserver's
 // AddObjectParams reflection: that's what surfaces a human-readable note
