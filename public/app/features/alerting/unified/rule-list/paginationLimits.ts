@@ -1,4 +1,3 @@
-import { shouldUseBackendFilters, shouldUseFullyCompatibleBackendFilters } from '../featureToggles';
 import { type RulesFilter } from '../search/rulesSearchParser';
 
 import { hasDatasourceClientSideFilters } from './hooks/datasourceFilter';
@@ -35,14 +34,9 @@ export function getFilteredRulesLimits(filterState: RulesFilter): FetchGroupsLim
 }
 
 function getGrafanaFilterLimits(filterState: RulesFilter) {
-  const backendFiltersEnabled = shouldUseFullyCompatibleBackendFilters() || shouldUseBackendFilters();
-
-  const frontendFiltersInUse = hasGrafanaClientSideFilters(filterState);
-  const onlyBackendFiltersInUse = frontendFiltersInUse === false;
-
-  if (backendFiltersEnabled && onlyBackendFiltersInUse) {
+  if (!hasGrafanaClientSideFilters(filterState)) {
     return { ruleLimit: RULE_LIMIT_WITH_BACKEND_FILTERS };
   }
 
-  return { groupLimit: getSearchApiGroupPageSize(frontendFiltersInUse) };
+  return { groupLimit: getSearchApiGroupPageSize(true) };
 }
