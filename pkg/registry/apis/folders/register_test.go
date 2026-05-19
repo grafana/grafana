@@ -180,9 +180,12 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 }
 
 func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
+	zeroGrace := int64(0)
+
 	tests := []struct {
 		name          string
 		statsResponse []*resourcepb.ResourceStatsResponse_Stats
+		deleteOptions *metav1.DeleteOptions
 		wantErr       bool
 	}{
 		{
@@ -278,10 +281,14 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			us := grafanarest.NewMockStorage(t)
 			sm := resource.NewMockResourceClient(t)
-			sm.On("GetStats", mock.Anything, &resourcepb.ResourceStatsRequest{Namespace: obj.Namespace, Kinds: countedKinds, Folder: []string{obj.Name}}).Return(
-				&resourcepb.ResourceStatsResponse{Stats: tt.statsResponse},
-				nil,
-			).Once()
+
+			deleteOptions := tt.deleteOptions
+			if !forceDeleteFromDeleteOptions(deleteOptions) {
+				sm.On("GetStats", mock.Anything, &resourcepb.ResourceStatsRequest{Namespace: obj.Namespace, Kinds: countedKinds, Folder: []string{obj.Name}}).Return(
+					&resourcepb.ResourceStatsResponse{Stats: tt.statsResponse},
+					nil,
+				).Once()
+			}
 
 			b := &FolderAPIBuilder{
 				namespacer: func(_ int64) string { return "123" },
@@ -297,8 +304,8 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 				obj.Name,
 				folders.SchemeGroupVersion.WithResource("folders"),
 				"",
-				"DELETE",
-				nil,
+				admission.Delete,
+				deleteOptions,
 				true,
 				&user.SignedInUser{},
 			),
@@ -311,6 +318,34 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 			require.NoError(t, err)
 		})
 	}
+
+	t.Run("should allow deletion of non-empty folder when gracePeriodSeconds=0", func(t *testing.T) {
+		us := grafanarest.NewMockStorage(t)
+		sm := resource.NewMockResourceClient(t)
+
+		b := &FolderAPIBuilder{
+			namespacer: func(_ int64) string { return "123" },
+			storage:    us,
+			searcher:   sm,
+		}
+
+		err := b.Validate(context.Background(), admission.NewAttributesRecord(
+			nil,
+			obj,
+			folders.SchemeGroupVersion.WithKind("folder"),
+			obj.Namespace,
+			obj.Name,
+			folders.SchemeGroupVersion.WithResource("folders"),
+			"",
+			admission.Delete,
+			&metav1.DeleteOptions{GracePeriodSeconds: &zeroGrace},
+			true,
+			&user.SignedInUser{},
+		),
+			nil)
+
+		require.NoError(t, err)
+	})
 }
 
 func TestFolderAPIBuilder_Validate_Update(t *testing.T) {

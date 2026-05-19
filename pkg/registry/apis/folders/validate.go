@@ -361,7 +361,14 @@ func getChildrenBatch(ctx context.Context, searcher resourcepb.ResourceIndexClie
 func validateOnDelete(ctx context.Context,
 	f *folders.Folder,
 	searcher resourcepb.ResourceIndexClient,
+	deleteOptions *metav1.DeleteOptions,
 ) error {
+	// Cascade delete of non-empty folders is opt-in via DeleteOptions.gracePeriodSeconds=0
+	// (same pattern as dashboard delete validation; works with kubectl --grace-period=0).
+	if forceDeleteFromDeleteOptions(deleteOptions) {
+		return nil
+	}
+
 	resp, err := searcher.GetStats(ctx, &resourcepb.ResourceStatsRequest{Namespace: f.Namespace, Kinds: countedKinds, Folder: []string{f.Name}})
 	if err != nil {
 		return err
