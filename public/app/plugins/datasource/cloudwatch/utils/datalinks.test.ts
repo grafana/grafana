@@ -1,6 +1,6 @@
 import { type DataQueryRequest, type DataQueryResponse, dateMath, FieldType, type DataSourceApi } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 
 import { type CloudWatchQuery } from '../types';
 
@@ -8,7 +8,7 @@ import { addDataLinksToLogsResponse } from './datalinks';
 
 jest.mock('@grafana/runtime/unstable', () => ({
   ...jest.requireActual('@grafana/runtime/unstable'),
-  getDataSourceInstance: jest.fn(),
+  getDataSourceInstanceSettings: jest.fn(),
 }));
 
 describe('addDataLinksToLogsResponse', () => {
@@ -61,7 +61,7 @@ describe('addDataLinksToLogsResponse', () => {
       range: { ...time, raw: time },
     } as DataQueryRequest<CloudWatchQuery>;
 
-    jest.mocked(getDataSourceInstance).mockResolvedValue({ name: 'Xray' } as unknown as DataSourceApi);
+    jest.mocked(getDataSourceInstanceSettings).mockResolvedValue({ name: 'Xray' } as unknown as DataSourceApi);
 
     await addDataLinksToLogsResponse(
       mockResponse,
