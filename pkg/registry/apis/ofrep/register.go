@@ -3,11 +3,14 @@ package ofrep
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 
 	"github.com/gorilla/mux"
 	"github.com/grafana/authlib/types"
@@ -54,21 +57,30 @@ var groupVersion = schema.GroupVersion{
 type APIBuilder struct {
 	providerType    setting.OpenFeatureProviderType
 	url             *url.URL
-	insecure        bool
-	caFile          string
+	transport       *http.Transport
 	staticEvaluator featuremgmt.StaticFlagEvaluator
 	logger          log.Logger
 }
 
-func NewAPIBuilder(providerType setting.OpenFeatureProviderType, url *url.URL, insecure bool, caFile string, staticEvaluator featuremgmt.StaticFlagEvaluator) *APIBuilder {
+func NewAPIBuilder(providerType setting.OpenFeatureProviderType, url *url.URL, insecure bool, caFile string, staticEvaluator featuremgmt.StaticFlagEvaluator) (*APIBuilder, error) {
+	caRoot, err := getCARoot(caFile)
+	if err != nil {
+		return nil, err
+	}
+
+	// raise per-host idle conn limit above the default of 2 to avoid TCP connection piling up at high request rates
+	transport := &http.Transport{
+		TLSClientConfig:     &tls.Config{InsecureSkipVerify: insecure, RootCAs: caRoot},
+		MaxIdleConnsPerHost: 10,
+	}
+
 	return &APIBuilder{
 		providerType:    providerType,
 		url:             url,
-		insecure:        insecure,
-		caFile:          caFile,
+		transport:       transport,
 		staticEvaluator: staticEvaluator,
 		logger:          log.New("grafana-apiserver.feature-flags"),
-	}
+	}, nil
 }
 
 func RegisterAPIService(apiregistration builder.APIRegistrar, cfg *setting.Cfg) (*APIBuilder, error) {
@@ -81,7 +93,10 @@ func RegisterAPIService(apiregistration builder.APIRegistrar, cfg *setting.Cfg) 
 		}
 	}
 
-	b := NewAPIBuilder(cfg.OpenFeature.ProviderType, cfg.OpenFeature.URL, true, "", staticEvaluator)
+	b, err := NewAPIBuilder(cfg.OpenFeature.ProviderType, cfg.OpenFeature.URL, true, "", staticEvaluator)
+	if err != nil {
+		return nil, err
+	}
 	apiregistration.RegisterAPI(b)
 	return b, nil
 }
@@ -377,6 +392,21 @@ func (b *APIBuilder) isAuthenticatedRequest(r *http.Request) bool {
 		return false
 	}
 	return user.GetIdentityType() != types.TypeUnauthenticated
+}
+
+func getCARoot(caFile string) (*x509.CertPool, error) {
+	if caFile == "" {
+		return nil, nil
+	}
+	// It should be safe to ignore since caFile is passed as --internal.root-ca-file flag of apiserver
+	// nolint:gosec
+	caCert, err := os.ReadFile(caFile)
+	if err != nil {
+		return nil, err
+	}
+	caCertPool := x509.NewCertPool()
+	caCertPool.AppendCertsFromPEM(caCert)
+	return caCertPool, nil
 }
 
 // validateNamespace checks if the namespace in the evaluation context matches the auth namespace.

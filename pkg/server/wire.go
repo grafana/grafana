@@ -15,7 +15,6 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-
 	ghconnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/pkg/api"
@@ -50,6 +49,7 @@ import (
 	snapshotmigration "github.com/grafana/grafana/pkg/registry/apis/dashboard/snapshot"
 	snapshotmigrator "github.com/grafana/grafana/pkg/registry/apis/dashboard/snapshot/migrator"
 	dsmigrator "github.com/grafana/grafana/pkg/registry/apis/datasource/migrator"
+	legacypreferences "github.com/grafana/grafana/pkg/registry/apis/preferences/legacy"
 	secretclock "github.com/grafana/grafana/pkg/registry/apis/secret/clock"
 	secretcontracts "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	secretdecrypt "github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
@@ -138,6 +138,7 @@ import (
 	pluginDashboards "github.com/grafana/grafana/pkg/services/pluginsintegration/dashboards"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/installsync"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/preference/prefapi"
 	"github.com/grafana/grafana/pkg/services/preference/prefimpl"
 	promTypeMigration "github.com/grafana/grafana/pkg/services/promtypemigration"
 	"github.com/grafana/grafana/pkg/services/provisioning"
@@ -252,6 +253,7 @@ var wireBasicSet = wire.NewSet(
 	shorturlmigrator.ProvideShortURLMigrator,
 	snapshotmigrator.ProvideSnapshotMigrator,
 	legacystars.ProvideStarsMigrator,
+	legacypreferences.ProvidePreferencesMigrator,
 	dsmigrator.ProvideDataSourceMigrator,
 	provideMigrationRegistry,
 	unifiedmigrations.ProvideUnifiedMigrator,
@@ -390,6 +392,8 @@ var wireBasicSet = wire.NewSet(
 	publicdashboards.ProvideMetricsService,
 	publicdashboards.ProvideApi,
 	starApi.ProvideApi,
+	prefapi.ProvideK8sHandler,
+	starApi.ProvideK8sClients,
 	userimpl.ProvideService,
 	wire.Bind(new(user.Service), new(*userimpl.Service)),
 	orgimpl.ProvideService,
@@ -592,6 +596,7 @@ func provideMigrationRegistry(
 	snapshotMigrator snapshotmigrator.SnapshotMigrator,
 	dataSourceMigrator dsmigrator.DataSourceMigrator,
 	starsMigrator legacystars.StarsMigrator,
+	preferencesMigrator legacypreferences.PreferencesMigrator,
 	queryCacheConfigMigrator querycachingmigrator.QueryCacheConfigMigrator,
 ) *unifiedmigrations.MigrationRegistry {
 	r := unifiedmigrations.NewMigrationRegistry()
@@ -601,6 +606,7 @@ func provideMigrationRegistry(
 	r.Register(snapshotmigration.SnapshotMigration(snapshotMigrator))
 	r.Register(dsmigrator.DataSourceMigration(dataSourceMigrator))
 	r.Register(legacystars.StarsMigrationDefinition(starsMigrator))
+	r.Register(legacypreferences.PreferencesMigrationDefinition(preferencesMigrator))
 	r.Register(querycachingmigration.QueryCacheConfigMigration(queryCacheConfigMigrator))
 	return r
 }
