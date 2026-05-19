@@ -206,8 +206,9 @@ func (b *FolderAPIBuilder) storageForVersion(
 		parents: b.parents,
 	}
 	storage[folders.StoragePath("counts")] = &subCountREST{
-		getter:   b.storage,
-		searcher: b.searcher,
+		getter:               b.storage,
+		searcher:             b.searcher,
+		maxNestedFolderDepth: b.maxNestedFolderDepth,
 	}
 	storage[folders.StoragePath("access")] = &subAccessREST{
 		getter:       b.storage,

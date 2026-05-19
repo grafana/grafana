@@ -28,17 +28,13 @@ const descendantsBatchSize = 100
 // descendantsPageSize bounds per-page hits when paginating a single Search.
 const descendantsPageSize = 1000
 
-// descendantsMaxLevels caps tree traversal depth. The visited map catches
-// genuine cycles; this is a backstop against pathological depth that would
-// blow up request counts.
-const descendantsMaxLevels = 64
-
 // recursiveTimeout caps the recursive walk + final GetStats; over budget → 504.
 const recursiveTimeout = 10 * time.Second
 
 type subCountREST struct {
-	getter   rest.Getter
-	searcher resourcepb.ResourceIndexClient
+	getter               rest.Getter
+	searcher             resourcepb.ResourceIndexClient
+	maxNestedFolderDepth int
 }
 
 var (
@@ -169,7 +165,7 @@ func (r *subCountREST) collectDescendantFolders(ctx context.Context, namespace, 
 	visited := map[string]bool{root: true}
 	queue := []string{root}
 
-	for level := 0; len(queue) > 0 && level < descendantsMaxLevels; level++ {
+	for level := 0; len(queue) > 0 && level < r.maxNestedFolderDepth; level++ {
 		parents := queue
 		queue = nil
 

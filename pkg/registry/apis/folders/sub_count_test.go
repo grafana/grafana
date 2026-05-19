@@ -87,7 +87,7 @@ func TestCollectDescendantFolders(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			searcher := newTreeSearcher(t, tree)
-			r := &subCountREST{searcher: searcher}
+			r := &subCountREST{searcher: searcher, maxNestedFolderDepth: 7}
 			got, err := r.collectDescendantFolders(context.Background(), "stacks-1", tt.root)
 			require.NoError(t, err)
 			sort.Strings(got)
@@ -125,7 +125,7 @@ func TestCollectDescendantFolders_Pagination(t *testing.T) {
 			Return(buildSearchResp(nil, ""), nil).Once()
 	}
 
-	r := &subCountREST{searcher: sm}
+	r := &subCountREST{searcher: sm, maxNestedFolderDepth: 7}
 	got, err := r.collectDescendantFolders(context.Background(), "stacks-1", "root")
 	require.NoError(t, err)
 	require.Len(t, got, n)
