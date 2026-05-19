@@ -1208,11 +1208,14 @@
     {
       "metadata": {
         "name": "awsAsyncQueryCaching",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2023-07-21T15:34:07Z"
+        "resourceVersion": "1778791334157",
+        "creationTimestamp": "2023-07-21T15:34:07Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-05-14 20:42:14.157684 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled",
+        "description": "Enable caching for async queries for Redshift and Athena. Requires that the data source has caching and async query support enabled",
         "stage": "GA",
         "codeowner": "@grafana/data-sources-plugins",
         "expression": "true"
@@ -3771,16 +3774,19 @@
     {
       "metadata": {
         "name": "kubernetesShortURLs",
-        "resourceVersion": "1771434338561",
+        "resourceVersion": "1778791334157",
         "creationTimestamp": "2025-07-31T22:56:50Z",
-        "deletionTimestamp": "2025-08-01T11:30:17Z"
+        "deletionTimestamp": "2025-08-01T11:30:17Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-05-14 20:42:14.157684 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Enables k8s short url api and uses it under the hood when handling legacy /api",
-        "stage": "experimental",
+        "description": "Enables k8s short URL API and uses it under the hood when handling legacy /api",
+        "stage": "GA",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -6406,16 +6412,19 @@
     {
       "metadata": {
         "name": "useKubernetesShortURLsAPI",
-        "resourceVersion": "1771434338561",
+        "resourceVersion": "1778790053769",
         "creationTimestamp": "2025-08-29T14:46:39Z",
-        "deletionTimestamp": "2025-09-01T09:33:33Z"
+        "deletionTimestamp": "2025-09-01T09:33:33Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-05-14 20:20:53.769927 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Routes short url requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs",
-        "stage": "experimental",
+        "description": "Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs",
+        "stage": "GA",
         "codeowner": "@grafana/sharing-squad",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
