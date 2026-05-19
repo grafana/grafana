@@ -200,19 +200,31 @@ func (r *Reconciler) applyChildren(ctx context.Context, file *model.PrometheusRu
 // Order matters: rules → group folders → file folder. Group folders cannot be deleted while
 // they still contain rules, and the file folder cannot be deleted while it still contains
 // group folders.
+//
+// Folder deletes are best-effort: if a folder contains anything we don't manage (a stray
+// dashboard, a user-added sub-folder), the Folder API rejects the delete and we'd be stuck
+// holding the finalizer forever. Log and continue instead — better to leak a folder than
+// to leave the PrometheusRuleFile undeletable.
 func (r *Reconciler) cleanupChildren(ctx context.Context, file *model.PrometheusRuleFile) error {
+	logger := logging.FromContext(ctx).With(
+		"component", "PrometheusRuleFileReconciler",
+		"name", file.GetName(),
+		"namespace", file.GetNamespace(),
+	)
 	if err := deleteAll(ctx, r.alertRules, file.GetNamespace(), file.Status.ManagedAlertRules); err != nil {
 		return fmt.Errorf("delete alert rules: %w", err)
 	}
 	if err := deleteAll(ctx, r.recordingRules, file.GetNamespace(), file.Status.ManagedRecordingRules); err != nil {
 		return fmt.Errorf("delete recording rules: %w", err)
 	}
-	if err := deleteAll(ctx, r.folders, file.GetNamespace(), file.Status.ManagedFolders); err != nil {
-		return fmt.Errorf("delete group folders: %w", err)
+	for _, name := range file.Status.ManagedFolders {
+		if err := deleteByName(ctx, r.folders, file.GetNamespace(), name); err != nil {
+			logger.Warn("could not delete group folder during cleanup; leaving it in place", "folder", name, "error", err)
+		}
 	}
 	if file.Status.ManagedFileFolder != "" {
 		if err := deleteByName(ctx, r.folders, file.GetNamespace(), file.Status.ManagedFileFolder); err != nil {
-			return fmt.Errorf("delete file folder: %w", err)
+			logger.Warn("could not delete file folder during cleanup; leaving it in place", "folder", file.Status.ManagedFileFolder, "error", err)
 		}
 	}
 	return nil
