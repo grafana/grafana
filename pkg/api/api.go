@@ -38,6 +38,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
+	"github.com/grafana/grafana/pkg/registry/apis/query/directclient"
 	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ssoutils"
@@ -598,6 +599,11 @@ func (hs *HTTPServer) registerRoutes() {
 
 	// Snapshots delete for public mode or using the deleteKey
 	r.Get("/api/snapshots-delete/:deleteKey", reqSnapshotPublicModeOrDelete, routing.Wrap(hs.DeleteDashboardSnapshotByDeleteKey))
+
+	// wrapper to send requests from ST Grafana to the query service.
+	if hs.Features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections) {
+		r.Any("/apis/query.grafana.app/v0alpha1/namespaces/:namespace/*", authorize(ac.EvalPermission(datasources.ActionQuery)), directclient.QueryEndpoint)
+	}
 }
 
 func middlewareUserUIDResolver(userService user.Service, paramName string) web.Handler {
