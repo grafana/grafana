@@ -52,8 +52,6 @@ var (
 	// already been released, or was superseded by another holder. When
 	// auto-renewal is enabled, this error also triggers the Lost() channel.
 	ErrLeaseLost = errors.New("lease lost")
-
-	log = logging.DefaultLogger.With("logger", "lease-manager")
 )
 
 type Lease struct {
@@ -100,6 +98,7 @@ type Manager struct {
 	holder       string
 	minTTL       time.Duration
 	maxClockSkew time.Duration
+	log          logging.Logger
 }
 
 // NewManager returns a Manager that uses store for persistence and identifies
@@ -110,6 +109,7 @@ func NewManager(store kv.KV, holder string, opts ...ManagerOption) *Manager {
 		holder:       holder,
 		minTTL:       defaultMinTTL,
 		maxClockSkew: defaultMaxClockSkew,
+		log:          logging.DefaultLogger.With("logger", "lease-manager"),
 	}
 	for _, opt := range opts {
 		opt(m)
@@ -337,7 +337,7 @@ func (m *Manager) autoRenewLoop(lease *Lease, expiry time.Time, ttl, renewInterv
 	defer ticker.Stop()
 
 	for {
-		log := log.With("lease", lease.name, "holder", lease.holder, "generation", lease.generation)
+		log := m.log.With("lease", lease.name, "holder", lease.holder, "generation", lease.generation)
 
 		select {
 		case <-lease.stop:
