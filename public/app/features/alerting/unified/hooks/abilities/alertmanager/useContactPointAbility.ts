@@ -5,7 +5,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { useAlertmanager } from '../../../state/AlertmanagerContext';
 import { notificationsPermissions } from '../../../utils/access-control';
-import { type EntityToCheck, canDeleteEntity, canEditEntity } from '../../../utils/k8s/utils';
+import { type EntityToCheck, canDeleteEntity, canEditEntity, shouldUseK8sApi } from '../../../utils/k8s/utils';
 import { makeAbility, makeScopedAbility } from '../abilityUtils';
 import { type Ability, ContactPointAction, Granted, InUse, InsufficientPermissions } from '../types';
 
@@ -13,10 +13,11 @@ export type ContactPointAbilityParam =
   | { action: ContactPointAction.View }
   | { action: ContactPointAction.Create }
   | { action: ContactPointAction.BulkExport }
-  | { action: ContactPointAction.Update; context: EntityToCheck }
+  | { action: ContactPointAction.Update; context?: EntityToCheck }
   | { action: ContactPointAction.Delete; context: EntityToCheck }
   | { action: ContactPointAction.Export; context: EntityToCheck };
 
+/** Permissions for the Grafana-managed alertmanager (internal k8s API). */
 const PERMISSIONS: Record<ContactPointAction, AccessControlAction[]> = {
   [ContactPointAction.View]: [notificationsPermissions.read.grafana, AccessControlAction.AlertingReceiversRead],
   [ContactPointAction.Create]: [notificationsPermissions.create.grafana, AccessControlAction.AlertingReceiversCreate],
@@ -24,6 +25,16 @@ const PERMISSIONS: Record<ContactPointAction, AccessControlAction[]> = {
   [ContactPointAction.Delete]: [notificationsPermissions.delete.grafana, AccessControlAction.AlertingReceiversDelete],
   [ContactPointAction.Export]: [notificationsPermissions.read.grafana, AccessControlAction.AlertingReceiversRead],
   [ContactPointAction.BulkExport]: [notificationsPermissions.read.grafana, AccessControlAction.AlertingReceiversRead],
+};
+
+/** Permissions for external alertmanagers (Mimir, Cortex, Vanilla Alertmanager, etc.). */
+const EXTERNAL_AM_PERMISSIONS: Record<ContactPointAction, AccessControlAction[]> = {
+  [ContactPointAction.View]: [notificationsPermissions.read.external],
+  [ContactPointAction.Create]: [notificationsPermissions.create.external],
+  [ContactPointAction.Update]: [notificationsPermissions.update.external],
+  [ContactPointAction.Delete]: [notificationsPermissions.delete.external],
+  [ContactPointAction.Export]: [notificationsPermissions.read.external],
+  [ContactPointAction.BulkExport]: [], // Not applicable — gated by isGrafanaAlertmanager
 };
 
 export const PERMISSIONS_CONTACT_POINTS: AccessControlAction[] = Object.values(PERMISSIONS).flatMap(
@@ -41,36 +52,59 @@ export function useGlobalContactPointAbility(action: ContactPointAction): Abilit
 }
 
 export function useContactPointAbility(payload: ContactPointAbilityParam): Ability {
-  const { hasConfigurationAPI } = useAlertmanager();
+  const { selectedAlertmanager, hasConfigurationAPI, isGrafanaAlertmanager } = useAlertmanager();
 
   return useMemo(() => {
+    const usingK8sApi = shouldUseK8sApi(selectedAlertmanager!);
+    // Select the permission set that matches the current alertmanager type so that
+    // Grafana AM permissions are never checked against an external AM and vice-versa.
+    const permissions = isGrafanaAlertmanager ? PERMISSIONS : EXTERNAL_AM_PERMISSIONS;
+
     switch (payload.action) {
       case ContactPointAction.View:
+        // View is always supported — contact points can be listed from any AM type.
+        return makeAbility(true, permissions[ContactPointAction.View]);
+
       case ContactPointAction.Create:
+        return makeAbility(hasConfigurationAPI, permissions[ContactPointAction.Create]);
+
       case ContactPointAction.BulkExport:
-        return makeAbility(hasConfigurationAPI, PERMISSIONS[payload.action]);
+        // Grafana-managed AM only (mirrors the legacy [isGrafanaFlavoredAlertmanager, …] tuple).
+        return makeAbility(isGrafanaAlertmanager, PERMISSIONS[ContactPointAction.BulkExport]);
 
       case ContactPointAction.Update:
+        // External AM contact points are plain receivers without k8s access annotations.
+        // Skip the entity check and use pure RBAC when no k8s API is in use, or when the
+        // caller has no entity to pass (e.g. EditReceiverView for cloud AMs).
+        if (payload.context === undefined || !usingK8sApi) {
+          return makeAbility(hasConfigurationAPI, permissions[ContactPointAction.Update]);
+        }
         return makeScopedAbility(
           hasConfigurationAPI,
-          PERMISSIONS[ContactPointAction.Update],
+          permissions[ContactPointAction.Update],
           payload.context,
           (entity) =>
-            canEditEntity(entity) ? Granted : InsufficientPermissions(PERMISSIONS[ContactPointAction.Update])
+            canEditEntity(entity) ? Granted : InsufficientPermissions(permissions[ContactPointAction.Update])
         );
 
       case ContactPointAction.Delete:
+        if (!usingK8sApi) {
+          return makeAbility(hasConfigurationAPI, permissions[ContactPointAction.Delete]);
+        }
         return makeScopedAbility(
           hasConfigurationAPI,
-          PERMISSIONS[ContactPointAction.Delete],
+          permissions[ContactPointAction.Delete],
           payload.context,
           canDeleteContactPoint
         );
 
       case ContactPointAction.Export:
-        return makeScopedAbility(hasConfigurationAPI, PERMISSIONS[ContactPointAction.Export], payload.context);
+        if (!usingK8sApi) {
+          return makeAbility(hasConfigurationAPI, permissions[ContactPointAction.Export]);
+        }
+        return makeScopedAbility(hasConfigurationAPI, permissions[ContactPointAction.Export], payload.context);
     }
-  }, [payload, hasConfigurationAPI]);
+  }, [payload, hasConfigurationAPI, isGrafanaAlertmanager, selectedAlertmanager]);
 }
 
 /**
@@ -79,6 +113,9 @@ export function useContactPointAbility(payload: ContactPointAbilityParam): Abili
  * Checks the server-set access annotation first (same as {@link canDeleteEntity}), then
  * inspects the in-use annotations to surface whether the contact point is still referenced
  * by notification policy routes, alert rules using simplified routing, or both.
+ *
+ * Only called when `usingK8sApi = true` (Grafana AM), so `PERMISSIONS[Delete]` (Grafana-only)
+ * is always the correct permission set to surface in the InsufficientPermissions result.
  */
 function canDeleteContactPoint(entity: EntityToCheck): Ability {
   if (!canDeleteEntity(entity)) {
