@@ -98,7 +98,7 @@ func TestCollectDescendantFolders(t *testing.T) {
 
 func TestCollectDescendantFolders_Pagination(t *testing.T) {
 	// A single level with descendantsPageSize+1 children forces a second
-	// Search page via NextPageToken before traversal can continue.
+	// Search page driven by TotalHits before traversal can continue.
 	n := descendantsPageSize + 1
 	children := make([]string, n)
 	for i := range children {
@@ -107,12 +107,12 @@ func TestCollectDescendantFolders_Pagination(t *testing.T) {
 
 	sm := resource.NewMockResourceClient(t)
 
-	// First page: full pageSize hits, NextPageToken signals more.
+	// First page: full pageSize hits, TotalHits indicates more to come.
 	sm.EXPECT().Search(mock.Anything, matchSearchOffset("stacks-1", []string{"root"}, 0)).
-		Return(buildSearchResp(children[:descendantsPageSize], "more"), nil).Once()
-	// Second page: remaining 1 child, no NextPageToken.
+		Return(buildSearchResp(children[:descendantsPageSize], int64(n)), nil).Once()
+	// Second page: remaining 1 child; offset+len reaches TotalHits.
 	sm.EXPECT().Search(mock.Anything, matchSearchOffset("stacks-1", []string{"root"}, descendantsPageSize)).
-		Return(buildSearchResp(children[descendantsPageSize:], ""), nil).Once()
+		Return(buildSearchResp(children[descendantsPageSize:], int64(n)), nil).Once()
 	// Each child is a leaf — searchChildren is called once per chunked level
 	// of the BFS. With descendantsBatchSize=100 and n=1001, that's 11 chunks.
 	for chunk := 0; chunk*descendantsBatchSize < n; chunk++ {
@@ -122,7 +122,7 @@ func TestCollectDescendantFolders_Pagination(t *testing.T) {
 			end = n
 		}
 		sm.EXPECT().Search(mock.Anything, matchSearchOffset("stacks-1", children[start:end], 0)).
-			Return(buildSearchResp(nil, ""), nil).Once()
+			Return(buildSearchResp(nil, 0), nil).Once()
 	}
 
 	r := &subCountREST{searcher: sm, maxNestedFolderDepth: 7}
@@ -143,7 +143,7 @@ func newTreeSearcher(t *testing.T, tree map[string][]string) *resource.MockResou
 		for _, parent := range req.Options.Fields[0].Values {
 			hits = append(hits, tree[parent]...)
 		}
-		return buildSearchResp(hits, ""), nil
+		return buildSearchResp(hits, int64(len(hits))), nil
 	}).Maybe()
 	return sm
 }
@@ -179,16 +179,16 @@ func matchSearchOffset(namespace string, parents []string, offset int64) interfa
 	})
 }
 
-func buildSearchResp(uids []string, nextPage string) *resourcepb.ResourceSearchResponse {
+func buildSearchResp(uids []string, totalHits int64) *resourcepb.ResourceSearchResponse {
 	rows := make([]*resourcepb.ResourceTableRow, len(uids))
 	for i, uid := range uids {
 		rows[i] = &resourcepb.ResourceTableRow{Key: &resourcepb.ResourceKey{Name: uid}}
 	}
 	return &resourcepb.ResourceSearchResponse{
 		Results: &resourcepb.ResourceTable{
-			Rows:          rows,
-			NextPageToken: nextPage,
+			Rows: rows,
 		},
+		TotalHits: totalHits,
 	}
 }
 
