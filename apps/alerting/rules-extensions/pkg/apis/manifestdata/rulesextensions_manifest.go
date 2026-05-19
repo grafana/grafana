@@ -20,9 +20,9 @@ import (
 )
 
 var (
-	rawSchemaPrometheusRuleGroupv0alpha1     = []byte(`{"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":true,"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"PromDuration":{"not":{"pattern":"hmuµn"},"pattern":"^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$","type":"string"},"PrometheusRuleGroup":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"RuleEntry":{"additionalProperties":false,"properties":{"alert":{"type":"string"},"annotations":{"additionalProperties":{"type":"string"},"type":"object"},"expr":{"type":"string"},"for":{"$ref":"#/components/schemas/PromDuration"},"keepFiringFor":{"$ref":"#/components/schemas/PromDuration"},"labels":{"additionalProperties":{"type":"string"},"type":"object"},"record":{"type":"string"}},"required":["expr"],"type":"object"},"spec":{"additionalProperties":false,"properties":{"groups":{"items":{"$ref":"#/components/schemas/PrometheusRuleGroup"},"type":"array"}},"required":["groups"],"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":true,"description":"additionalFields is reserved for future use","type":"object"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
-	versionSchemaPrometheusRuleGroupv0alpha1 app.VersionSchema
-	_                                        = json.Unmarshal(rawSchemaPrometheusRuleGroupv0alpha1, &versionSchemaPrometheusRuleGroupv0alpha1)
+	rawSchemaPrometheusRuleFilev0alpha1     = []byte(`{"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":true,"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"PromDuration":{"not":{"pattern":"hmuµn"},"pattern":"^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$","type":"string"},"PrometheusRuleFile":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"PrometheusRuleGroup":{"additionalProperties":false,"properties":{"interval":{"$ref":"#/components/schemas/PromDuration"},"labels":{"additionalProperties":{"type":"string"},"type":"object"},"limit":{"minimum":0,"type":"integer"},"name":{"type":"string"},"queryOffset":{"$ref":"#/components/schemas/PromDuration"},"rules":{"items":{"$ref":"#/components/schemas/RuleEntry"},"type":"array"}},"required":["name","rules"],"type":"object"},"RuleEntry":{"additionalProperties":false,"properties":{"alert":{"type":"string"},"annotations":{"additionalProperties":{"type":"string"},"type":"object"},"expr":{"type":"string"},"for":{"$ref":"#/components/schemas/PromDuration"},"keepFiringFor":{"$ref":"#/components/schemas/PromDuration"},"labels":{"additionalProperties":{"type":"string"},"type":"object"},"record":{"type":"string"}},"required":["expr"],"type":"object"},"spec":{"additionalProperties":false,"properties":{"groups":{"items":{"$ref":"#/components/schemas/PrometheusRuleGroup"},"type":"array"}},"required":["groups"],"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":true,"description":"additionalFields is reserved for future use","type":"object"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
+	versionSchemaPrometheusRuleFilev0alpha1 app.VersionSchema
+	_                                       = json.Unmarshal(rawSchemaPrometheusRuleFilev0alpha1, &versionSchemaPrometheusRuleFilev0alpha1)
 )
 
 var appManifestData = app.ManifestData{
@@ -36,8 +36,8 @@ var appManifestData = app.ManifestData{
 			Served: true,
 			Kinds: []app.ManifestVersionKind{
 				{
-					Kind:       "PrometheusRuleGroup",
-					Plural:     "PrometheusRuleGroups",
+					Kind:       "PrometheusRuleFile",
+					Plural:     "PrometheusRuleFiles",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Admission: &app.AdmissionCapabilities{
@@ -54,7 +54,7 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					Schema: &versionSchemaPrometheusRuleGroupv0alpha1,
+					Schema: &versionSchemaPrometheusRuleFilev0alpha1,
 				},
 			},
 			Routes: app.ManifestVersionRoutes{
@@ -75,7 +75,7 @@ func RemoteManifest() app.Manifest {
 }
 
 var kindVersionToGoType = map[string]resource.Kind{
-	"PrometheusRuleGroup/v0alpha1": v0alpha1.PrometheusRuleGroupKind(),
+	"PrometheusRuleFile/v0alpha1": v0alpha1.PrometheusRuleFileKind(),
 }
 
 // ManifestGoTypeAssociator returns the associated resource.Kind instance for a given Kind and Version, if one exists.

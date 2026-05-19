@@ -2,9 +2,9 @@ package v0alpha1
 
 #PromDuration: string & =~"^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$" & !~"hmuµn"
 
-// PrometheusRuleSpec mirrors the structure of a Prometheus rules file:
+// PrometheusRuleFileSpec mirrors the structure of a Prometheus rules file:
 // a list of named groups, each holding alerting and/or recording rules.
-PrometheusRuleSpec: {
+PrometheusRuleFileSpec: {
 	groups: [...#PrometheusRuleGroup]
 }
 

@@ -10,7 +10,7 @@ manifest: {
 				go: {enabled: true}
 			}
 			kinds: [
-				prometheusRuleGroupv0alpha1,
+				prometheusRuleFilev0alpha1,
 			]
 		}
 	}
