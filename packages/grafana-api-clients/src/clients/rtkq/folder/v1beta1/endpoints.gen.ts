@@ -106,12 +106,7 @@ const injectedRtkApi = api
         providesTags: ['Folder'],
       }),
       getFolderCounts: build.query<GetFolderCountsApiResponse, GetFolderCountsApiArg>({
-        query: (queryArg) => ({
-          url: `/folders/${queryArg.name}/counts`,
-          params: {
-            recursive: queryArg.recursive,
-          },
-        }),
+        query: (queryArg) => ({ url: `/folders/${queryArg.name}/counts` }),
         providesTags: ['Folder'],
       }),
       getFolderParents: build.query<GetFolderParentsApiResponse, GetFolderParentsApiArg>({
@@ -275,8 +270,6 @@ export type GetFolderCountsApiResponse = /** status 200 OK */ DescendantCounts;
 export type GetFolderCountsApiArg = {
   /** name of the DescendantCounts */
   name: string;
-  /** When true (or bare `?recursive`), walk the folder subtree under a server-side 10s timeout and return aggregated counts; on timeout the server returns 504. When absent or false, the response only reflects resources directly inside the folder. */
-  recursive?: boolean;
 };
 export type GetFolderParentsApiResponse = /** status 200 OK */ FolderInfoList;
 export type GetFolderParentsApiArg = {
