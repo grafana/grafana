@@ -111,12 +111,8 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
   const isGrafanaAlertManager = alertmanager === GRAFANA_RULES_SOURCE_NAME;
 
   // Check if user has permission to test templates.
-  // For new templates (no originalTemplate) provenance is empty — never provisioned.
   const canTestTemplates = isGranted(
-    useNotificationTemplateAbility({
-      action: NotificationTemplateAction.Test,
-      context: originalTemplate ?? { provenance: '', uid: '', title: '', content: '', kind: 'grafana' },
-    })
+    useNotificationTemplateAbility({ action: NotificationTemplateAction.Test, context: originalTemplate })
   );
 
   // Only show preview and payload panels if both conditions are met:
