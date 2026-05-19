@@ -1371,6 +1371,11 @@ export interface FeatureToggles {
   */
   kubernetesAlertingHistorian?: boolean;
   /**
+  * Enables the PrometheusRuleFile API which reconciles into AlertRule, RecordingRule and Folder resources
+  * @default false
+  */
+  kubernetesAlertingRulesExtensions?: boolean;
+  /**
   * Enables support for variables whose values can have multiple properties
   * @default true
   */

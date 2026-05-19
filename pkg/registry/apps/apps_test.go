@@ -54,6 +54,7 @@ func TestProvideAppInstallers_Table(t *testing.T) {
 				nil, // live
 				nil, // ShortURL
 				tt.rulesInst,
+				nil, // rules-extensions
 				correlationsAppInstaller,
 				notificationsAppInstaller,
 				nil,

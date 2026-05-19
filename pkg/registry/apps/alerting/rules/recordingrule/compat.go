@@ -220,6 +220,14 @@ func convertDeletedToK8sResources(
 	return out, nil
 }
 
+// ConvertToDomainModel is an exported wrapper around convertToDomainModel. It is intended
+// for callers outside the legacy storage package — currently only the rules-extensions
+// cross-validation tests — that need to roundtrip a k8s RecordingRule through the same
+// compat path the legacy storage uses on PUT/POST.
+func ConvertToDomainModel(orgID int64, k8sRule *model.RecordingRule) (*ngmodels.AlertRule, ngmodels.Provenance, error) {
+	return convertToDomainModel(orgID, k8sRule)
+}
+
 func convertToDomainModel(orgID int64, k8sRule *model.RecordingRule) (*ngmodels.AlertRule, ngmodels.Provenance, error) {
 	domainRule, err := convertToBaseDomainModel(orgID, k8sRule)
 	if err != nil {
