@@ -74,6 +74,9 @@ export function ImportOverviewV1({ dashboard, inputs, meta, source, folderUid, o
       try {
         const dashboardWithDS = applyV1Inputs(dashboard, inputs, form);
 
+        // Import new library panels first.
+        // Library panel models from __elements may contain ${DS_...} placeholders
+        // that need to be resolved before creating the library element.
         for (const lp of inputs.libraryPanels.filter((lp) => lp.state === LibraryPanelInputState.New)) {
           const model = new PanelModel(interpolateLibraryPanelDatasources(lp.model.model, inputs, form));
           const { scopedVars, ...saveModel } = model.getSaveModel();
