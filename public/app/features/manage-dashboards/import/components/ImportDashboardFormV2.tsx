@@ -72,7 +72,7 @@ export const ImportDashboardFormV2 = ({
         <Input
           {...register('dashboard.title', {
             required: 'Name is required',
-            validate: async (v) => await validateTitle(String(v ?? ''), getValues().folderUid ?? ''),
+            validate: async (v) => await validateTitle(v ?? '', getValues().folderUid ?? ''),
           })}
           type="text"
           data-testid={selectors.components.ImportDashboardForm.name}
@@ -108,7 +108,7 @@ export const ImportDashboardFormV2 = ({
             <Input
               disabled
               {...register('k8s.name', {
-                validate: async (v) => (!v ? true : await validateUid(String(v))),
+                validate: async (v) => (!v ? true : await validateUid(v)),
               })}
               addonAfter={
                 !uidReset && (
@@ -121,7 +121,7 @@ export const ImportDashboardFormV2 = ({
           ) : (
             <Input
               {...register('k8s.name', {
-                validate: async (v) => (!v ? true : await validateUid(String(v))),
+                validate: async (v) => (!v ? true : await validateUid(v)),
               })}
             />
           )}

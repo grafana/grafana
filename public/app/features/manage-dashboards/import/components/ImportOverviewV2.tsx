@@ -54,11 +54,10 @@ export function ImportOverviewV2({ dashboard, dashboardUid, inputs, meta, source
 
   const watchedFolderUid = watch('folderUid');
 
-  const getDefaultTitle = useCallback(() => {
-    const dashVal = getValues('dashboard');
-    const formTitle = dashVal && typeof dashVal === 'object' && 'title' in dashVal ? String(dashVal.title) : '';
-    return formTitle || dashboard.title || '';
-  }, [getValues, dashboard.title]);
+  const getDefaultTitle = useCallback(
+    () => getValues('dashboard').title || dashboard.title || '',
+    [getValues, dashboard.title]
+  );
 
   const {
     isProvisioned,
@@ -71,7 +70,7 @@ export function ImportOverviewV2({ dashboard, dashboardUid, inputs, meta, source
     save: saveProvisionedImport,
     error: provisionedError,
   } = useProvisionedImport({
-    folderUid: typeof watchedFolderUid === 'string' ? watchedFolderUid : '',
+    folderUid: watchedFolderUid,
     getDefaultTitle,
     setValue,
   });
@@ -117,13 +116,13 @@ export function ImportOverviewV2({ dashboard, dashboardUid, inputs, meta, source
           spec: buildDashboardSpec(form),
           apiVersion: 'v2',
           uid: form.k8s?.name || dashboardUid || undefined,
-          folderUid: String(form.folderUid ?? ''),
+          folderUid: form.folderUid ?? '',
           title: form.dashboard.title,
           form: {
-            ref: String(form.ref ?? ''),
-            path: String(form.path ?? ''),
-            comment: form.comment != null ? String(form.comment) : undefined,
-            workflow: form.workflow != null ? String(form.workflow) : undefined,
+            ref: form.ref ?? '',
+            path: form.path ?? '',
+            comment: form.comment,
+            workflow: form.workflow,
           },
         });
       } else {

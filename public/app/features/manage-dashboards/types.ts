@@ -99,8 +99,8 @@ export interface DashboardInputs {
 
 export type DatasourceSelection = { uid: string; type: string; name?: string };
 
-// Provisioning-optional fields are widened on the Record<string, unknown> side so the same
-// useForm instance can drive both standard and provisioned import paths.
+// Record<string, unknown> lets dynamic `datasource-${name}` / `constant-${name}` keys
+// satisfy FieldPath<ImportFormDataV2>. Explicit keys keep their declared types.
 export type ImportFormDataV2 = SaveDashboardCommand<DashboardV2Spec> &
   Record<string, unknown> & {
     ref?: string;
