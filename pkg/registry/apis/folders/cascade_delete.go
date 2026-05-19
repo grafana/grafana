@@ -3,8 +3,6 @@ package folders
 import (
 	"context"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
@@ -20,11 +18,4 @@ func kubernetesFolderCascadeDeleteEnabled(ctx context.Context, features featurem
 		return false
 	}
 	return features.IsEnabled(ctx, featuremgmt.FlagKubernetesFolderCascadeDelete)
-}
-
-// clientRequestedCascadeDelete reports whether the delete request opts into deleting a
-// non-empty folder (gracePeriodSeconds=0). Requires kubernetesFolderCascadeDelete. Child
-// resources are not deleted automatically until cascade reconciliation is implemented.
-func clientRequestedCascadeDelete(options *metav1.DeleteOptions) bool {
-	return forceDeleteFromDeleteOptions(options)
 }

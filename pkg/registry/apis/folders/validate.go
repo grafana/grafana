@@ -367,7 +367,7 @@ func validateOnDelete(ctx context.Context,
 	// Non-empty folder delete is opt-in via gracePeriodSeconds=0 when kubernetesFolderCascadeDelete
 	// is enabled (same pattern as dashboard delete validation). This only bypasses the empty-folder
 	// check; until cascade reconciliation runs, child resources are left orphaned.
-	if cascadeDeleteEnabled && clientRequestedCascadeDelete(deleteOptions) {
+	if cascadeDeleteEnabled && forceDeleteFromDeleteOptions(deleteOptions) {
 		return nil
 	}
 
