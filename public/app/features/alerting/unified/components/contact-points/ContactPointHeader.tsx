@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { Fragment, type JSX, useState } from 'react';
 
+import { getContactPointInUse } from '@grafana/alerting/unstable';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
@@ -9,8 +10,7 @@ import ConditionalWrap from 'app/features/alerting/unified/components/Conditiona
 import { useExportContactPoint } from 'app/features/alerting/unified/components/contact-points/useExportContactPoint';
 import { ManagePermissionsDrawer } from 'app/features/alerting/unified/components/permissions/ManagePermissions';
 import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
-import { K8sAnnotations } from 'app/features/alerting/unified/utils/k8s/constants';
-import { getAnnotation, isProvisionedResource, shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
+import { isProvisionedResource, shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 
 import { isGranted, isSupported } from '../../hooks/abilities/abilityUtils';
 import { useContactPointAbility } from '../../hooks/abilities/alertmanager/useContactPointAbility';
@@ -46,7 +46,7 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
 
   const showManagePermissions = showManageContactPointPermissions(selectedAlertmanager!, contactPoint);
 
-  const k8sRoutesInUse = getAnnotation(contactPoint, K8sAnnotations.InUseRoutes);
+  const { routes: k8sRoutesInUse, rules: k8sRulesInUse } = getContactPointInUse(contactPoint);
 
   /**
    * Non-k8s: policies that reference this contact point, excluding auto-generated simplified-routing
@@ -61,10 +61,10 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
    * only counts regular policies (auto-generated simplified-routing policies are excluded).
    * On the non-k8s path we likewise exclude auto-generated policies.
    */
-  const numberOfPolicies = usingK8sApi ? Number(k8sRoutesInUse) : regularPolicyReferences.length;
+  const numberOfPolicies = usingK8sApi ? k8sRoutesInUse : regularPolicyReferences.length;
 
   /** Number of rules that use this contact point for simplified routing */
-  const numberOfRules = Number(getAnnotation(contactPoint, K8sAnnotations.InUseRules)) || 0;
+  const numberOfRules = usingK8sApi ? k8sRulesInUse : 0;
 
   /**
    * Is the contact point referenced by anything such as notification policies or as a simplified routing contact point?

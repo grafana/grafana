@@ -1,11 +1,11 @@
 import { useMemo } from 'react';
 
+import { getContactPointInUseRoutes, getContactPointInUseRules } from '@grafana/alerting/unstable';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { useAlertmanager } from '../../../state/AlertmanagerContext';
 import { notificationsPermissions } from '../../../utils/access-control';
-import { K8sAnnotations } from '../../../utils/k8s/constants';
-import { type EntityToCheck, canDeleteEntity, canEditEntity, getAnnotation } from '../../../utils/k8s/utils';
+import { type EntityToCheck, canDeleteEntity, canEditEntity } from '../../../utils/k8s/utils';
 import { makeAbility, makeScopedAbility } from '../abilityUtils';
 import { type Ability, ContactPointAction, Granted, InUse, InsufficientPermissions } from '../types';
 
@@ -86,10 +86,10 @@ function canDeleteContactPoint(entity: EntityToCheck): Ability {
   }
 
   const blockedBy: Extract<Ability, { cause: 'IN_USE' }>['blockedBy'] = [];
-  if ((Number(getAnnotation(entity, K8sAnnotations.InUseRoutes)) || 0) > 0) {
+  if (getContactPointInUseRoutes(entity) > 0) {
     blockedBy.push('routes');
   }
-  if ((Number(getAnnotation(entity, K8sAnnotations.InUseRules)) || 0) > 0) {
+  if (getContactPointInUseRules(entity) > 0) {
     blockedBy.push('rules');
   }
   if (blockedBy.length > 0) {
