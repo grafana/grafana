@@ -79,10 +79,17 @@ func (r *Reconciler) converterForFile(ctx context.Context, file *model.Prometheu
 // resolveDatasourceUID picks the datasource UID for a rule by checking, in order: the file's
 // spec, the runtime resolver, the static default, and finally the fallback expression UID.
 func (r *Reconciler) resolveDatasourceUID(ctx context.Context, file *model.PrometheusRuleFile) (string, error) {
+	return resolveDatasourceUIDForFile(ctx, r.cfg, file)
+}
+
+// resolveDatasourceUIDForFile is the shared resolution chain used by both the validator
+// (at admission time) and the reconciler (at apply time). File spec wins over the runtime
+// config so users can override the org default per-file.
+func resolveDatasourceUIDForFile(ctx context.Context, cfg config.RuntimeConfig, file *model.PrometheusRuleFile) (string, error) {
 	if file.Spec.DatasourceUID != nil && *file.Spec.DatasourceUID != "" {
 		return string(*file.Spec.DatasourceUID), nil
 	}
-	return r.cfg.ResolveDatasourceUID(ctx)
+	return cfg.ResolveDatasourceUID(ctx)
 }
 
 func (r *Reconciler) reconcile(ctx context.Context, req operator.TypedReconcileRequest[*model.PrometheusRuleFile]) (operator.ReconcileResult, error) {
