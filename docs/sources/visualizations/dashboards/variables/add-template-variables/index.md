@@ -121,7 +121,7 @@ To create a variable, follow these steps:
 
 1. Click **Edit** in the top-right corner of the dashboard.
 1. In the toolbar, click the **Dashboard options** icon to open the sidebar.
-1. In the sidebar, click **Settings**.
+1. In the sidebar, click **View all settings**.
 1. Go to the **Variables** tab.
 1. Click **Add variable**, or if there are already existing variables, **+ New variable**.
 1. Choose an option in the **Select variable type** drop-down list.
