@@ -162,5 +162,4 @@ describe('useExtractFields', () => {
       expect(links![0].href).not.toContain('__V_');
     });
   });
-
 });
