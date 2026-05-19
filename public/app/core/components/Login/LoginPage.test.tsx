@@ -17,6 +17,7 @@ jest.mock('@grafana/runtime', () => ({
     ...jest.requireActual('@grafana/runtime').config,
     auth: {
       disableLogin: false,
+      disableForgotPassword: false,
     },
     loginError: false,
     buildInfo: {
@@ -55,6 +56,13 @@ describe('Login Page', () => {
 
     expect(screen.getByRole('link', { name: 'Sign up' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Sign up' })).toHaveAttribute('href', '/signup');
+  });
+
+  it('hides forgot password link when disableForgotPassword is true', () => {
+    (runtimeMock.config as any).auth.disableForgotPassword = true;
+    render(<LoginPage />);
+    expect(screen.queryByRole('link', { name: 'Forgot your password?' })).not.toBeInTheDocument();
+    (runtimeMock.config as any).auth.disableForgotPassword = false;
   });
 
   it('should pass validation checks for username field', async () => {

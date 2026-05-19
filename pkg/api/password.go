@@ -15,7 +15,7 @@ import (
 )
 
 func (hs *HTTPServer) SendResetPasswordEmail(c *contextmodel.ReqContext) response.Response {
-	if hs.Cfg.DisableLoginForm || hs.Cfg.DisableLogin {
+	if hs.Cfg.DisableLoginForm || hs.Cfg.DisableLogin || hs.Cfg.DisableForgotPassword {
 		return response.Error(http.StatusUnauthorized, "Not allowed to reset password when login form is disabled", nil)
 	}
 
@@ -54,7 +54,7 @@ func (hs *HTTPServer) SendResetPasswordEmail(c *contextmodel.ReqContext) respons
 }
 
 func (hs *HTTPServer) ResetPassword(c *contextmodel.ReqContext) response.Response {
-	if hs.Cfg.DisableLoginForm || hs.Cfg.DisableLogin {
+	if hs.Cfg.DisableLoginForm || hs.Cfg.DisableLogin || hs.Cfg.DisableForgotPassword {
 		return response.Error(http.StatusUnauthorized,
 			"Not allowed to reset password when grafana authentication is disabled", nil)
 	}

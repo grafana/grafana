@@ -57,3 +57,14 @@ disable_login_form = true
 ```
 
 This can be helpful in setups where authentication is handled entirely through external mechanisms or single sign-on (SSO).
+
+## Hide the forgot password link
+
+To hide the "Forgot your password?" link on the login page, use the following configuration setting:
+
+```bash
+[auth]
+disable_forgot_password = true
+```
+
+This is useful in mixed authentication environments, such as when LDAP is enabled for regular users alongside basic authentication for admin accounts. In such setups, LDAP users cannot reset their passwords through Grafana, so hiding the link reduces confusion.
