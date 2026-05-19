@@ -194,7 +194,8 @@ func (b *FolderAPIBuilder) storageForVersion(
 		return err
 	}
 	b.registerPermissionHooks(unified)
-	b.storage = unified
+	st := newFinalizerStorage(unified)
+	b.storage = st
 
 	// This is the ST wrapper
 	if b.folderPermissionsSvc != nil {
@@ -203,7 +204,7 @@ func (b *FolderAPIBuilder) storageForVersion(
 			tableConverter:       folders.TableConverter(),
 			folderPermissionsSvc: b.folderPermissionsSvc,
 			permissionsOnCreate:  b.permissionsOnCreate,
-			store:                unified,
+			store:                st,
 		}
 	}
 
@@ -451,18 +452,25 @@ func (b *FolderAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return grafanaauthorizer.NewServiceAuthorizer()
 }
 
-func (b *FolderAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
-	verb := a.GetOperation()
-	if verb == admission.Create || verb == admission.Update {
+func (b *FolderAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, oi admission.ObjectInterfaces) error {
+	switch a.GetOperation() {
+	case admission.Create, admission.Update:
 		obj := a.GetObject()
+		if obj == nil {
+			return nil
+		}
 		f, ok := obj.(*foldersv1.Folder)
 		if !ok {
 			return fmt.Errorf("obj is not folders.Folder")
 		}
+		ensureCascadeFinalizerOnObject(f)
 		f.Spec.Title = strings.Trim(f.Spec.Title, " ")
 		return nil
+	case admission.Delete:
+		return nil
+	default:
+		return nil
 	}
-	return nil
 }
 
 func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
