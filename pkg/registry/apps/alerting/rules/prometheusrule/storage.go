@@ -14,8 +14,9 @@ import (
 )
 
 // NamespaceResolver is the narrow slice of the ngalert rule store we need to
-// auto-create a default folder when the caller doesn't supply one.
+// resolve and auto-create folders for PrometheusRule rules.
 type NamespaceResolver interface {
+	GetNamespaceByUID(ctx context.Context, uid string, orgID int64, user identity.Requester) (*folder.Folder, error)
 	GetOrCreateNamespaceByTitle(ctx context.Context, title string, orgID int64, user identity.Requester, parentUID string) (*folder.FolderReference, bool, error)
 }
 

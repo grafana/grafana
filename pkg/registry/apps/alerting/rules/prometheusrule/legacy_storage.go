@@ -181,15 +181,13 @@ func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createVa
 		return nil, k8serrors.NewBadRequest("metadata.name is required")
 	}
 
-	folderUID, err := readFolderUID(pr)
+	folderRef, err := readFolderUID(pr)
 	if err != nil {
 		return nil, err
 	}
-	if folderUID == "" {
-		folderUID, err = s.resolveDefaultFolder(ctx, user)
-		if err != nil {
-			return nil, err
-		}
+	folderUID, err := s.resolveFolder(ctx, user, folderRef)
+	if err != nil {
+		return nil, err
 	}
 	datasourceUID := annotationValue(pr.Annotations, DatasourceUIDAnnotationKey)
 
@@ -237,15 +235,13 @@ func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.Up
 		return nil, false, k8serrors.NewBadRequest("expected a PrometheusRule object")
 	}
 
-	folderUID, err := readFolderUID(pr)
+	folderRef, err := readFolderUID(pr)
 	if err != nil {
 		return nil, false, err
 	}
-	if folderUID == "" {
-		folderUID, err = s.resolveDefaultFolder(ctx, user)
-		if err != nil {
-			return nil, false, err
-		}
+	folderUID, err := s.resolveFolder(ctx, user, folderRef)
+	if err != nil {
+		return nil, false, err
 	}
 	datasourceUID := annotationValue(pr.Annotations, DatasourceUIDAnnotationKey)
 
@@ -338,19 +334,37 @@ func readFolderUID(pr *model.PrometheusRule) (string, error) {
 	return accessor.GetFolder(), nil
 }
 
-func (s *legacyStorage) resolveDefaultFolder(ctx context.Context, user identity.Requester) (string, error) {
+// resolveFolder maps the grafana.app/folder annotation value to a real
+// upstream folder UID. The hardcoded "PrometheusRules" parent is always
+// ensured. When ref is empty the parent itself is used. When ref is an
+// existing folder UID it is returned as-is (preserves Spec.FolderUID /
+// FolderRef intent from the operator). Otherwise ref is treated as a folder
+// title and find-or-created under the parent (the path that drop-in
+// migrations from VMRule / prometheus-operator manifests hit by default).
+// folder-create permission is enforced internally by the folder service
+// during the Create calls below, matching what /api/convert/prometheus does.
+func (s *legacyStorage) resolveFolder(ctx context.Context, user identity.Requester, ref string) (string, error) {
 	if s.resolver == nil {
-		return "", fmt.Errorf("no folder annotation set and no default-folder resolver configured")
+		return "", fmt.Errorf("no folder resolver configured")
 	}
 
-	// Folder-create permission is enforced internally by the folder service
-	// during the Create call below, matching what /api/convert/prometheus does.
-	ref, _, err := s.resolver.GetOrCreateNamespaceByTitle(ctx, defaultFolderTitle, user.GetOrgID(), user, folder.RootFolderUID)
+	parent, _, err := s.resolver.GetOrCreateNamespaceByTitle(ctx, defaultFolderTitle, user.GetOrgID(), user, folder.RootFolderUID)
 	if err != nil {
-		return "", fmt.Errorf("failed to resolve default folder %q: %w", defaultFolderTitle, err)
+		return "", fmt.Errorf("resolving %q parent folder: %w", defaultFolderTitle, err)
+	}
+	if ref == "" {
+		return parent.UID, nil
 	}
 
-	return ref.UID, nil
+	if existing, err := s.resolver.GetNamespaceByUID(ctx, ref, user.GetOrgID(), user); err == nil && existing != nil {
+		return existing.UID, nil
+	}
+
+	child, _, err := s.resolver.GetOrCreateNamespaceByTitle(ctx, ref, user.GetOrgID(), user, parent.UID)
+	if err != nil {
+		return "", fmt.Errorf("resolving folder %q under %q: %w", ref, defaultFolderTitle, err)
+	}
+	return child.UID, nil
 }
 
 func annotationValue(annotations map[string]string, key string) string {
