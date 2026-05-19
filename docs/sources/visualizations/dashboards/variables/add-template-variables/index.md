@@ -252,14 +252,15 @@ Constant variables are useful when you have complex values that you need to incl
 _Data source_ variables enable you to quickly change the data source for an entire dashboard. They are useful if you have multiple instances of a data source, perhaps in different environments.
 
 1. [Enter general options](#enter-general-options).
-1. Under the **Data source options** section of the page, in the **Type** drop-down list, select the target data source for the variable.
-1. (Optional) In **Instance name filter**, enter a regular expression filter for which data source instances to choose from in the variable value drop-down list.
+1. Configure the following options:
 
-   Leave this field empty to display all instances.
-
-1. (Optional) Configure the settings in the [Selection Options](#configure-variable-selection-options) section:
-   - **Multi-value** - Enables multiple values to be selected at the same time.
-   - **Include All option** - Enables an option to include all variables.
+   | Option | Description |
+   | --- | --- |
+   | Type | Select the target data source for the variable. |
+   | Instance name filter | (Optional) Enter a regular expression filter for which data source instances to choose from in the variable value drop-down list. Leave this field empty to display all instances. |
+   | Multi-value | Enables multiple values to be selected at the same time. For more information, refer to [Selection Options](#configure-variable-selection-options). |
+   | Allow custom values | Enables users to add custom values to the list. For more information, refer to [Selection Options](#configure-variable-selection-options). |
+   | Include All option | Enables an option to include all variables. For more information, refer to [Selection Options](#configure-variable-selection-options). |
 
 1. In the **Preview of values** section, Grafana displays a list of the current variable values. Review them to ensure they match what you expect.
 1. Click **Save** in the top-right corner.
@@ -273,15 +274,14 @@ Use an _interval_ variable to represents time spans such as `1m`,`1h`, `1d`. You
 You can use an interval variable as a parameter to group by time (for InfluxDB), date histogram interval (for Elasticsearch), or as a summarize function parameter (for Graphite).
 
 1. [Enter general options](#enter-general-options).
-1. Under the **Interval options** section, in the **Values** field, enter the time range intervals that you want to appear in the variable drop-down list.
+1. Configure the following options:
 
-   The following time units are supported: `s (seconds)`, `m (minutes)`, `h (hours)`, `d (days)`, `w (weeks)`, `M (months)`, and `y (years)`. You can also accept or edit the default values: `1m,10m,30m,1h,6h,12h,1d,7d,14d,30d`.
-
-1. (Optional) Select on the **Auto option** checkbox if you want to add the `auto` option to the list.
-
-   This option allows you to specify how many times the current time range should be divided to calculate the current `auto` time span. If you turn it on, then two more options appear:
-   - **Step count** - Select the number of times the current time range is divided to calculate the value, similar to the **Max data points** query option. For example, if the current visible time range is 30 minutes, then the `auto` interval groups the data into 30 one-minute increments. The default value is 30 steps.
-   - **Min interval** - The minimum threshold below which the step count intervals does not divide the time. To continue the 30 minute example, if the minimum interval is set to 2m, then Grafana would group the data into 15 two-minute increments.
+   | Option | Description |
+   | --- | --- |
+   | Values | Enter the time range intervals that you want to appear in the variable drop-down list. The following time units are supported: `s (seconds)`, `m (minutes)`, `h (hours)`, `d (days)`, `w (weeks)`, `M (months)`, and `y (years)`. You can also accept or edit the default values: `1m,10m,30m,1h,6h,12h,1d,7d,14d,30d`. |
+   | Auto option | (Optional) Select on the checkbox if you want to add the `auto` option to the list. This option allows you to specify how many times the current time range should be divided to calculate the current `auto` time span. |
+   | Step count | Select the number of times the current time range is divided to calculate the value, similar to the **Max data points** query option. For example, if the current visible time range is 30 minutes, then the `auto` interval groups the data into 30 one-minute increments. The default value is 30 steps. Only displayed when you select the **Auto option** checkbox. |
+   | Min interval | The minimum threshold below which the step count intervals does not divide the time. To continue the 30 minute example, if the minimum interval is set to 2m, then Grafana would group the data into 15 two-minute increments. Only displayed when you select the **Auto option** checkbox. |
 
 1. In the **Preview of values** section, Grafana displays a list of the current variable values. Review them to ensure they match what you expect.
 1. Click **Save** in the top-right corner.
@@ -364,7 +364,7 @@ Learn more in:
 
 - [Configure data links and actions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/configure-data-links/)
 - [Create dashboard URL variables – Filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard-url-variables/#ad-hoc-filters)
-  {{< /admonition >}}
+{{< /admonition >}}
 
 ### Filter any data using the Dashboard data source
 
