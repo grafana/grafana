@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import useMountedState from 'react-use/lib/useMountedState';
 import { lastValueFrom } from 'rxjs';
 
@@ -12,7 +12,6 @@ import {
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { useTheme2 } from '@grafana/ui';
-import { replaceVariables } from '@grafana-plugins/loki/querybuilder/parsingUtils';
 
 import { getLogsTableFieldConfigRegistry } from '../logsTableFieldConfig';
 import { extractLogsFieldsTransform } from '../transforms/extractLogsFieldsTransform';
@@ -48,7 +47,7 @@ export function useExtractFields({ rawTableFrame, fieldConfig, timeZone }: Props
           data,
           fieldConfig,
           fieldConfigRegistry: getLogsTableFieldConfigRegistry(),
-          replaceVariables: replaceVariables ?? getTemplateSrv().replace.bind(getTemplateSrv()),
+          replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
           theme,
           timeZone,
           dataLinkPostProcessor,
