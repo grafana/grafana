@@ -11,10 +11,15 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -845,6 +850,7 @@ func TestValidateUpdate(t *testing.T) {
 					return tt.parents, tt.parentsError
 				},
 				&mockSearchClient{folders: tt.allFolders},
+				nil,
 				maxDepth)
 
 			if tt.expectedErr == "" {
@@ -1385,6 +1391,138 @@ func (m *mockSearchClient) Search(ctx context.Context, req *resourcepb.ResourceS
 		resp.TotalHits = total
 	}
 	return resp, nil
+}
+
+func TestCheckMoveAccess(t *testing.T) {
+	const orgID int64 = 1
+	scope := folder.ScopeFoldersProvider.GetResourceScopeUID
+	const (
+		sourceUID     = "source"
+		destUID       = "dest"
+		destParentUID = "destParent"
+	)
+	destAncestors := []folders.FolderInfo{
+		{Name: destUID, Parent: destParentUID},
+		{Name: destParentUID, Parent: folder.GeneralFolderUID},
+		{Name: folder.GeneralFolderUID},
+	}
+
+	tests := []struct {
+		name         string
+		newParentUID string
+		ancestors    []folders.FolderInfo
+		permissions  map[string][]string
+		accessNil    bool
+		expectedErr  string
+	}{
+		{
+			name:         "nil accessControl is a no-op",
+			newParentUID: destUID,
+			ancestors:    destAncestors,
+			accessNil:    true,
+		},
+		{
+			name:         "write on destination matches on source, no escalation",
+			newParentUID: destUID,
+			ancestors:    destAncestors,
+			permissions: map[string][]string{
+				folder.ActionFoldersWrite: {scope(destUID), scope(sourceUID)},
+			},
+		},
+		{
+			name:         "create on destination matches on source, no escalation",
+			newParentUID: destUID,
+			ancestors:    destAncestors,
+			permissions: map[string][]string{
+				folder.ActionFoldersCreate: {scope(destUID), scope(sourceUID)},
+			},
+		},
+		{
+			name:         "move to root requires create on general folder",
+			newParentUID: folder.RootFolderUID,
+			permissions: map[string][]string{
+				folder.ActionFoldersCreate: {scope(folder.GeneralFolderUID), scope(sourceUID)},
+			},
+		},
+		{
+			name:         "move to root denied without create on general",
+			newParentUID: folder.RootFolderUID,
+			permissions: map[string][]string{
+				folder.ActionFoldersWrite: {scope(folder.GeneralFolderUID)},
+			},
+			expectedErr: "folders.forbiddenMove",
+		},
+		{
+			name:         "no write or create on destination",
+			newParentUID: destUID,
+			ancestors:    destAncestors,
+			permissions: map[string][]string{
+				folder.ActionFoldersRead: {scope(destUID)},
+			},
+			expectedErr: "folders.forbiddenMove",
+		},
+		{
+			name:         "escalation via permission on destination only",
+			newParentUID: destUID,
+			ancestors:    destAncestors,
+			permissions: map[string][]string{
+				folder.ActionFoldersWrite: {scope(destUID)},
+				folder.ActionFoldersRead:  {scope(destUID)},
+			},
+			expectedErr: "folders.accessEscalation",
+		},
+		{
+			name:         "escalation via permission on destination ancestor",
+			newParentUID: destUID,
+			ancestors:    destAncestors,
+			permissions: map[string][]string{
+				folder.ActionFoldersWrite: {scope(destUID)},
+				folder.ActionFoldersRead:  {scope(destParentUID)},
+			},
+			expectedErr: "folders.accessEscalation",
+		},
+		{
+			name:         "matching permission on source prevents escalation",
+			newParentUID: destUID,
+			ancestors:    destAncestors,
+			permissions: map[string][]string{
+				folder.ActionFoldersWrite: {scope(destUID), scope(sourceUID)},
+				folder.ActionFoldersRead:  {scope(destUID), scope(sourceUID)},
+			},
+		},
+		{
+			name:         "wildcard on every action satisfies escalation check",
+			newParentUID: destUID,
+			ancestors:    destAncestors,
+			permissions: map[string][]string{
+				folder.ActionFoldersWrite: {folder.ScopeFoldersAll},
+				folder.ActionFoldersRead:  {folder.ScopeFoldersAll},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := identity.WithRequester(context.Background(), &user.SignedInUser{
+				UserID:      1,
+				OrgID:       orgID,
+				Permissions: map[int64]map[string][]string{orgID: tt.permissions},
+			})
+
+			var ac accesscontrol.AccessControl
+			if !tt.accessNil {
+				ac = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
+			}
+
+			err := checkMoveAccess(ctx, sourceUID, tt.newParentUID, tt.ancestors, ac)
+			if tt.expectedErr == "" {
+				require.NoError(t, err)
+				return
+			}
+			require.Error(t, err)
+			require.Contains(t, err.Error(), tt.expectedErr)
+		})
+	}
 }
 
 // RebuildIndexes implements resourcepb.ResourceIndexClient.

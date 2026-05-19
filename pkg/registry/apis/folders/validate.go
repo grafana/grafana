@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -139,6 +140,7 @@ func validateOnUpdate(ctx context.Context,
 	getter rest.Getter,
 	parents parentsGetter,
 	searcher resourcepb.ResourceIndexClient,
+	accessControl accesscontrol.AccessControl,
 	maxDepth int,
 ) error {
 	folderObj, err := utils.MetaAccessor(obj)
@@ -171,6 +173,34 @@ func validateOnUpdate(ctx context.Context,
 
 	// Validate the move operation
 	newParent := folderObj.GetFolder()
+
+	// folder cannot be moved to a k6 folder
+	if newParent == accesscontrol.K6FolderUID {
+		return folder.ErrFolderCannotBeMovedToK6.Errorf("k6 project may not be moved")
+	}
+
+	// Resolve the destination's ancestor chain once — reused for the
+	// escalation check below and the depth/circular checks further down.
+	var destinationAncestors []folders.FolderInfo
+	if newParent != folder.RootFolderUID {
+		parentObj, err := getter.Get(ctx, newParent, &metav1.GetOptions{})
+		if err != nil {
+			return fmt.Errorf("move target not found %w", err)
+		}
+		parent, ok := parentObj.(*folders.Folder)
+		if !ok {
+			return fmt.Errorf("expected folder, found %T", parentObj)
+		}
+		info, err := parents(ctx, parent)
+		if err != nil {
+			return err
+		}
+		destinationAncestors = info.Items
+	}
+
+	if err := checkMoveAccess(ctx, obj.Name, newParent, destinationAncestors, accessControl); err != nil {
+		return err
+	}
 
 	// If we move to root, we don't need to validate the depth, because the folder already existed
 	// before and wasn't too deep. This move will make it more shallow.
@@ -228,6 +258,78 @@ func validateOnUpdate(ctx context.Context,
 	}
 
 	return checkSubtreeDepth(ctx, searcher, obj.Namespace, obj.Name, allowedDepth, maxDepth)
+}
+
+// checkMoveAccess enforces destination-write permission and the
+// access-escalation guard. destinationAncestors must contain the new parent
+// followed by its ancestors up to and including the root entry, or nil when
+// moving to root. A nil accessControl makes this a no-op so the cloud
+// apiserver path (where the service is not wired) is unchanged.
+func checkMoveAccess(
+	ctx context.Context,
+	sourceUID string,
+	newParentUID string,
+	destinationAncestors []folders.FolderInfo,
+	accessControl accesscontrol.AccessControl,
+) error {
+	if accessControl == nil {
+		return nil
+	}
+
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return err
+	}
+
+	destinationParentUID := newParentUID
+	if destinationParentUID == folder.RootFolderUID {
+		destinationParentUID = folder.GeneralFolderUID
+	}
+
+	var writeEvaluator accesscontrol.Evaluator
+	if newParentUID == folder.RootFolderUID {
+		writeEvaluator = accesscontrol.EvalPermission(folder.ActionFoldersCreate, folder.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID))
+	} else {
+		writeEvaluator = accesscontrol.EvalAny(
+			accesscontrol.EvalPermission(folder.ActionFoldersWrite, folder.ScopeFoldersProvider.GetResourceScopeUID(newParentUID)),
+			accesscontrol.EvalPermission(folder.ActionFoldersCreate, folder.ScopeFoldersProvider.GetResourceScopeUID(newParentUID)),
+		)
+	}
+	if hasAccess, err := accessControl.Evaluate(ctx, user, writeEvaluator); err != nil {
+		return err
+	} else if !hasAccess {
+		return folder.ErrMoveAccessDenied.Errorf("user does not have permissions to move a folder to folder with UID %s", destinationParentUID)
+	}
+
+	scopes := []string{folder.ScopeFoldersProvider.GetResourceScopeUID(destinationParentUID)}
+	for _, ancestor := range destinationAncestors {
+		if ancestor.Name == "" || ancestor.Name == destinationParentUID || ancestor.Name == folder.RootFolderUID {
+			continue
+		}
+		scopes = append(scopes, folder.ScopeFoldersProvider.GetResourceScopeUID(ancestor.Name))
+	}
+
+	permissions := user.GetPermissions()
+	currentFolderScope := folder.ScopeFoldersProvider.GetResourceScopeUID(sourceUID)
+	var requiredOnSource []accesscontrol.Evaluator
+	for action, userScopes := range permissions {
+		for _, scope := range scopes {
+			if slices.Contains(userScopes, scope) {
+				requiredOnSource = append(requiredOnSource, accesscontrol.EvalPermission(action, currentFolderScope))
+				break
+			}
+		}
+	}
+
+	if len(requiredOnSource) == 0 {
+		return nil
+	}
+	if hasAccess, err := accessControl.Evaluate(ctx, user, accesscontrol.EvalAll(requiredOnSource...)); err != nil {
+		return err
+	} else if !hasAccess {
+		return folder.ErrAccessEscalation.Errorf("user cannot move a folder to another folder where they have higher permissions")
+	}
+	return nil
 }
 
 // canSkipChildrenCheck determines if we can skip the expensive children depth check.
