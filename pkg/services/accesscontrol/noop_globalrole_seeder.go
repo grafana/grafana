@@ -21,8 +21,13 @@ type NoopGlobalRoleSeeder struct {
 }
 
 func ProvideNoopGlobalRoleSeeder() *NoopGlobalRoleSeeder {
+	var (
+		startingFn = func(ctx context.Context) error { return nil }
+		stoppingFn = func(failureCase error) error { return nil }
+	)
+
 	s := &NoopGlobalRoleSeeder{}
-	s.NamedService = services.NewIdleService(nil, nil).
+	s.NamedService = services.NewIdleService(startingFn, stoppingFn).
 		WithName(GlobalRoleSeederServiceName)
 	return s
 }
@@ -32,6 +37,4 @@ func ProvideNoopGlobalRoleSeeder() *NoopGlobalRoleSeeder {
 func (s *NoopGlobalRoleSeeder) IsDisabled() bool { return true }
 
 // Run satisfies the registry.BackgroundService interface.
-func (s *NoopGlobalRoleSeeder) Run(_ context.Context) error {
-	return nil
-}
+func (s *NoopGlobalRoleSeeder) Run(_ context.Context) error { return nil }
