@@ -676,12 +676,12 @@ func TestValidateDelete(t *testing.T) {
 	zeroGrace := int64(0)
 
 	tests := []struct {
-		name               string
-		folder             *folders.Folder
-		searcher           *mockSearchClient
-		deleteOptions      *metav1.DeleteOptions
+		name                 string
+		folder               *folders.Folder
+		searcher             *mockSearchClient
+		deleteOptions        *metav1.DeleteOptions
 		cascadeDeleteEnabled bool
-		expectedErr        string
+		expectedErr          string
 	}{{
 		name: "simple delete",
 		folder: &folders.Folder{
@@ -750,7 +750,7 @@ func TestValidateDelete(t *testing.T) {
 				},
 			},
 		},
-		deleteOptions:      &metav1.DeleteOptions{GracePeriodSeconds: &zeroGrace},
+		deleteOptions:        &metav1.DeleteOptions{GracePeriodSeconds: &zeroGrace},
 		cascadeDeleteEnabled: true,
 	}, {
 		name: "folder not empty with gracePeriodSeconds=0 is blocked when feature is disabled",
@@ -770,9 +770,9 @@ func TestValidateDelete(t *testing.T) {
 				},
 			},
 		},
-		deleteOptions:      &metav1.DeleteOptions{GracePeriodSeconds: &zeroGrace},
+		deleteOptions:        &metav1.DeleteOptions{GracePeriodSeconds: &zeroGrace},
 		cascadeDeleteEnabled: false,
-		expectedErr:        "[folder.not-empty]",
+		expectedErr:          "[folder.not-empty]",
 	}, {
 		name: "folder not empty - contains dashboards",
 		folder: &folders.Folder{
