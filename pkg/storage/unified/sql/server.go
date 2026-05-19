@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/dashboard"
 	"github.com/prometheus/client_golang/prometheus"
@@ -50,6 +51,9 @@ type ServerOptions struct {
 	QOSQueue         QOSEnqueueDequeuer
 	SecureValues     secrets.InlineSecureValueSupport
 	OwnsIndexFn      func(key resource.NamespacedResource) (bool, error)
+
+	// DashboardStats is optional; nil disables the backfill views filter.
+	DashboardStats builders.DashboardStats
 
 	// DisableStorageServices is used for standalone search server
 	DisableStorageServices bool
@@ -225,10 +229,11 @@ func withVectorIndexers(opts *ServerOptions, resourceOpts *resource.ResourceServ
 
 	var err error
 	resourceOpts.VectorBackfiller, err = backfill.NewVectorBackfiller(backfill.Options{
-		Storage:       opts.Backend,
-		VectorBackend: opts.VectorBackend,
-		BatchEmbedder: batchEmbedder,
-		Builders:      builders,
+		Storage:        opts.Backend,
+		VectorBackend:  opts.VectorBackend,
+		BatchEmbedder:  batchEmbedder,
+		Builders:       builders,
+		DashboardStats: opts.DashboardStats,
 	})
 	if err != nil {
 		return fmt.Errorf("create vector backfiller: %w", err)

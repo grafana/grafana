@@ -29,7 +29,6 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		GetServiceAccountTokenResponse{}.OpenAPIModelName():                                 schema_pkg_apis_iam_v0alpha1_GetServiceAccountTokenResponse(ref),
 		GetServiceAccountTokenToken{}.OpenAPIModelName():                                    schema_pkg_apis_iam_v0alpha1_GetServiceAccountTokenToken(ref),
 		GetTeamGroupsBody{}.OpenAPIModelName():                                              schema_pkg_apis_iam_v0alpha1_GetTeamGroupsBody(ref),
-		GetTeamGroupsExternalGroupMapping{}.OpenAPIModelName():                              schema_pkg_apis_iam_v0alpha1_GetTeamGroupsExternalGroupMapping(ref),
 		GetTeamGroupsResponse{}.OpenAPIModelName():                                          schema_pkg_apis_iam_v0alpha1_GetTeamGroupsResponse(ref),
 		GetTeamMembersBody{}.OpenAPIModelName():                                             schema_pkg_apis_iam_v0alpha1_GetTeamMembersBody(ref),
 		GetTeamMembersResponse{}.OpenAPIModelName():                                         schema_pkg_apis_iam_v0alpha1_GetTeamMembersResponse(ref),
@@ -989,50 +988,22 @@ func schema_pkg_apis_iam_v0alpha1_GetTeamGroupsBody(ref common.ReferenceCallback
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"items": {
+					"externalGroups": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(GetTeamGroupsExternalGroupMapping{}.OpenAPIModelName()),
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
 									},
 								},
 							},
 						},
 					},
 				},
-				Required: []string{"items"},
-			},
-		},
-		Dependencies: []string{
-			GetTeamGroupsExternalGroupMapping{}.OpenAPIModelName()},
-	}
-}
-
-func schema_pkg_apis_iam_v0alpha1_GetTeamGroupsExternalGroupMapping(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"name": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"externalGroup": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-				},
-				Required: []string{"name", "externalGroup"},
+				Required: []string{"externalGroups"},
 			},
 		},
 	}
@@ -1058,25 +1029,24 @@ func schema_pkg_apis_iam_v0alpha1_GetTeamGroupsResponse(ref common.ReferenceCall
 							Format:      "",
 						},
 					},
-					"items": {
+					"externalGroups": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(GetTeamGroupsExternalGroupMapping{}.OpenAPIModelName()),
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
 									},
 								},
 							},
 						},
 					},
 				},
-				Required: []string{"items"},
+				Required: []string{"externalGroups"},
 			},
 		},
-		Dependencies: []string{
-			GetTeamGroupsExternalGroupMapping{}.OpenAPIModelName()},
 	}
 }
 

@@ -11357,6 +11357,8 @@
       "clear-search": "Temizle",
       "close-inline-details": "Bu günlük kaydı ayrıntılarını kapat",
       "close-sidebar-details": "Günlük kaydı ayrıntıları kenar çubuğunu kapat",
+      "copy-log-line": "",
+      "copy-log-line-json": "",
       "copy-shortlink": "Kısa bağlantıyı kopyala",
       "copy-to-clipboard": "Panoya kopyala",
       "displayed-fields-section": "Görüntülenen alanları düzenle",
@@ -11405,7 +11407,8 @@
     },
     "log-line-menu": {
       "copy-link": "Bağlantıyı günlük satırına kopyala",
-      "copy-log": "Günlük satırını kopyala",
+      "copy-log-contents": "",
+      "copy-log-message": "",
       "hide-details": "Günlük ayrıntılarını göster",
       "icon-label": "Günlük menüsü",
       "log-line": "Günlük satırı",
@@ -15555,8 +15558,8 @@
     },
     "legend": {
       "category": "Gösterge",
-      "description-faceted-filter": "Etiketlere göre seri görünürlüğü filtresini göster",
-      "name-faceted-filter": "Çok yönlü filtre"
+      "description-faceted-filter": "",
+      "name-faceted-filter": ""
     },
     "line-style-editor": {
       "line-fill-options": {

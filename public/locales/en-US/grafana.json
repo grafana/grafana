@@ -440,7 +440,10 @@
       "label-value": "Value"
     },
     "alert-instance-extension-point": {
-      "aria-label-actions": "Actions"
+      "n-contact-points_one": "{{count}} contact point",
+      "n-contact-points_other": "{{count}} contact points",
+      "view-route_one": "View route",
+      "view-route_other": "View routes"
     },
     "alert-instance-modal-selector": {
       "add-alert-data-to-payload": "Add alert data to payload",
@@ -456,6 +459,7 @@
     },
     "alert-instances-table": {
       "created": "Created",
+      "destination": "Destination",
       "labels": "Labels",
       "state": "State"
     },
@@ -2341,6 +2345,7 @@
     },
     "notification-route": {
       "no-labels": "No labels",
+      "notification-policies": "Notification policies",
       "notification-policy": "Notification policy"
     },
     "notification-route-header": {
@@ -4380,7 +4385,6 @@
       "button-cancel": "Cancel",
       "button-delete": "Delete",
       "button-deleting": "Deleting...",
-      "commit": "Delete folder",
       "delete-warning": "This will delete this folder and all its descendants. In total, this will affect:",
       "missing-info": "Missing required fields",
       "success-message": "Folder deleted successfully"
@@ -4494,7 +4498,6 @@
       "button-cancel": "Cancel",
       "button-rename": "Rename",
       "button-renaming": "Renaming...",
-      "commit": "Rename folder",
       "error-saving": "Failed to rename folder",
       "label-folder-name": "Folder name",
       "missing-info": "Missing required fields",
@@ -10862,6 +10865,12 @@
     "name-stacking": "Stacking"
   },
   "home": {
+    "dashboard-tabs": {
+      "recent": "Recent",
+      "recent-active": "Recent dashboards",
+      "starred": "Starred",
+      "starred-active": "Starred dashboards"
+    },
     "home-page": {
       "edition": {
         "cloud": "Grafana Cloud",
@@ -10874,6 +10883,23 @@
         "morning": "Good morning."
       },
       "placeholder": "Welcome to {{edition}}."
+    },
+    "recent-dashboards-tab": {
+      "browse": "Browse dashboards",
+      "clear": "Clear history",
+      "create": "Create your first dashboard",
+      "empty": "Dashboards you've recently viewed will appear here.",
+      "empty-description": "After you've connected data, you can use dashboards to query and visualize your data with charts, stats and tables or create lists, markdowns and other widgets.",
+      "error-title": "Could not load recently viewed dashboards",
+      "loading": "Loading recently viewed dashboards...",
+      "retry": "Retry"
+    },
+    "starred-dashboards-tab": {
+      "empty": "Your starred dashboards will appear here.",
+      "empty-description": "You can star your favorite dashboards by clicking the <1></1> from the dashboard page.",
+      "error-title": "Could not load starred dashboards",
+      "loading": "Loading starred dashboards...",
+      "retry": "Retry"
     }
   },
   "inspector": {
@@ -11357,6 +11383,8 @@
       "clear-search": "Clear",
       "close-inline-details": "Close details for this log",
       "close-sidebar-details": "Close log details sidebar",
+      "copy-log-line": "Copy log line message",
+      "copy-log-line-json": "Copy log contents as JSON",
       "copy-shortlink": "Copy shortlink",
       "copy-to-clipboard": "Copy to clipboard",
       "displayed-fields-section": "Organize displayed fields",
@@ -11405,7 +11433,8 @@
     },
     "log-line-menu": {
       "copy-link": "Copy link to log line",
-      "copy-log": "Copy log line",
+      "copy-log-contents": "Copy log line contents as JSON",
+      "copy-log-message": "Copy log line message",
       "hide-details": "Show log details",
       "icon-label": "Log menu",
       "log-line": "Log line",
@@ -12563,6 +12592,9 @@
       "save-tooltip": "Save"
     }
   },
+  "page-loader": {
+    "default": "Loading ..."
+  },
   "panel": {
     "dashlist": {
       "empty-state-message": "No dashboard groups configured",
@@ -13230,11 +13262,24 @@
     "code-block": {
       "aria-label-copy": "Copy code to clipboard"
     },
+    "commit-message": {
+      "dashboard-create-default": "New dashboard: {{title}}",
+      "dashboard-delete-default": "Delete dashboard: {{title}}",
+      "dashboard-move-default": "Move dashboard: {{title}}",
+      "dashboard-rename-default": "Rename dashboard: {{title}}",
+      "dashboard-update-default": "Save dashboard: {{title}}",
+      "folder-create-default": "Create folder: {{title}}",
+      "folder-delete-default": "Delete folder: {{title}}",
+      "folder-move-default": "Move folder: {{title}}",
+      "folder-rename-default": "Rename folder: {{title}}",
+      "folder-update-default": "Save folder: {{title}}"
+    },
     "config-form": {
       "alert-repository-settings-saved": "Repository settings saved",
       "alert-repository-settings-updated": "Repository settings updated",
       "button-save": "Save",
       "button-saving": "Saving...",
+      "description-commit-message-template": "Default commit message when saving a provisioned resource. Available placeholders: {{actionVar}} (create/update/delete/move/rename), {{kindVar}} (dashboard/folder), {{idVar}}, {{titleVar}}. Leave empty to use the built-in defaults.",
       "description-connection": "Select the GitHub App connection to use",
       "description-enabled": "Once automatic pulling is enabled, the target cannot be changed.",
       "description-read-only": "Resources can't be modified through Grafana.",
@@ -13245,6 +13290,7 @@
       "error-save-failed": "Failed to save repository setting",
       "error-save-repository": "Failed to save repository settings",
       "label-automatic-pulling": "Automatic pulling",
+      "label-commit-message-template": "Commit message template",
       "label-connection": "GitHub App connection",
       "label-enabled": "Enabled",
       "label-interval-seconds": "Interval (seconds)",
@@ -13253,6 +13299,7 @@
       "label-title": "Title",
       "option-entire-instance": "Entire instance",
       "option-managed-folder": "Managed folder",
+      "placeholder-commit-message-template": "feat(dashboards): {{actionVar}} {{titleVar}}",
       "placeholder-interval-seconds": "60",
       "placeholder-my-config": "My config"
     },
@@ -15555,8 +15602,8 @@
     },
     "legend": {
       "category": "Legend",
-      "description-faceted-filter": "Show series visibility filter based on labels",
-      "name-faceted-filter": "Faceted filter"
+      "description-faceted-filter": "Enable filter to display series based on labels or names",
+      "name-faceted-filter": "Series visibility"
     },
     "line-style-editor": {
       "line-fill-options": {
