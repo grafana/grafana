@@ -147,7 +147,7 @@ func TestReconciler_ObservesProcessDuration(t *testing.T) {
 
 	// One successful observation under the (group, resource, status) labels
 	// the production code uses.
-	require.Equal(t, 1, testutil.CollectAndCount(m.ReconcilerProcessDuration, "storage_server_vector_reconciler_process_duration_seconds"))
+	require.Equal(t, 1, testutil.CollectAndCount(m.ReconcilerProcessDuration, "vector_storage_reconciler_process_duration_seconds"))
 }
 
 func TestReconciler_HappyPath_PerDashboardEmbed(t *testing.T) {

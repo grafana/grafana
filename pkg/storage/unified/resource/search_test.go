@@ -1360,5 +1360,5 @@ func TestSearchServer_VectorSearch_ObservesDuration(t *testing.T) {
 	require.Error(t, err)
 	require.Equal(t, codes.Unimplemented, status.Code(err))
 
-	require.Equal(t, 1, testutil.CollectAndCount(m.SearchDuration, "storage_server_vector_search_duration_seconds"))
+	require.Equal(t, 1, testutil.CollectAndCount(m.SearchDuration, "vector_storage_search_duration_seconds"))
 }
