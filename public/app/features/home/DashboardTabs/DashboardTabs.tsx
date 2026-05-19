@@ -5,7 +5,7 @@ import { useAsyncRetry } from 'react-use';
 import { type GrafanaTheme2, PluginExtensionPoints } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { usePluginComponents } from '@grafana/runtime';
-import { Box, ScrollContainer, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
+import { ScrollContainer, Stack, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 import { getRecentlyViewedDashboards } from 'app/features/browse-dashboards/api/recentlyViewed';
 import { useDashboardLocationInfo } from 'app/features/search/hooks/useDashboardLocationInfo';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
@@ -99,7 +99,7 @@ export function DashboardTabs() {
   const linkTabs = extensionTabs.filter((tab) => tab.href);
 
   return (
-    <Box backgroundColor="primary" borderRadius="default" padding={3} direction="column" display="flex" gap={2}>
+    <Stack direction="column" gap={2}>
       <TabsBar>
         {contentTabs.map((tab) => {
           const isActive = activeTab === tab.id;
@@ -150,13 +150,14 @@ export function DashboardTabs() {
       {extensionComponents.map((Component, i) => (
         <Component key={i} registerTab={registerTab} />
       ))}
-    </Box>
+    </Stack>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
   tabContent: css({
     padding: 0,
+    borderRadius: theme.shape.radius.default,
   }),
   linkTabsSpacer: css({
     flex: 1,

@@ -2,6 +2,7 @@ import { PageLayoutType } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
+import { Box } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { isOnPrem } from 'app/core/utils/isOnPrem';
 
@@ -34,7 +35,9 @@ export default function HomePage() {
       layout={PageLayoutType.Home}
     >
       <Page.Contents>
-        <DashboardTabs />
+        <Box backgroundColor="canvas" borderRadius="default" padding={4}>
+          <DashboardTabs />
+        </Box>
       </Page.Contents>
     </Page>
   );

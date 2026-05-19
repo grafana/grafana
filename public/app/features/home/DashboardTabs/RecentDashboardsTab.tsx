@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Alert, Button, EmptyState, LinkButton, useStyles2 } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
@@ -88,7 +89,7 @@ export function RecentDashboardsTab({ dashboards, loading, error, retry, folders
         ))}
       </ul>
       <div className={styles.clearButton}>
-        <Button icon="times" size="xs" variant="secondary" fill="text" onClick={handleClearHistory}>
+        <Button icon="times" size="sm" variant="secondary" fill="text" onClick={handleClearHistory}>
           <Trans i18nKey="home.recent-dashboards-tab.clear">Clear history</Trans>
         </Button>
       </div>
@@ -96,7 +97,7 @@ export function RecentDashboardsTab({ dashboards, loading, error, retry, folders
   );
 }
 
-const getStyles = () => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css({
     display: 'flex',
     flexDirection: 'column',
@@ -110,7 +111,12 @@ const getStyles = () => ({
   clearButton: css({
     display: 'flex',
     justifyContent: 'flex-end',
-    paddingTop: 4,
+    padding: theme.spacing(1),
     marginTop: 'auto',
+
+    svg: {
+      position: 'relative',
+      top: 1,
+    },
   }),
 });
