@@ -156,6 +156,8 @@ export function buildLibraryPanel(panel: LibraryPanelKind, id?: number): VizPane
     }),
     pluginId: LibraryPanelBehavior.LOADING_VIZ_PANEL_PLUGIN_ID,
     title: panel.spec.title,
+    hoverHeader: !panel.spec.title,
+    hoverHeaderOffset: 0,
     options: {},
     fieldConfig: {
       defaults: {},

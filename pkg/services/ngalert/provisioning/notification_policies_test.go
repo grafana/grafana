@@ -8,12 +8,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/alerting/definition"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/alerting/definition"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -476,9 +477,9 @@ func TestRoute_Fingerprint(t *testing.T) {
 			MuteTimeIntervals:   []string{"MuteTimeIntervals1", "MuteTimeIntervals2"},
 			ActiveTimeIntervals: []string{"ActiveTimeIntervals1", "ActiveTimeIntervals2"},
 			Continue:            true,
-			GroupWait:           util.Pointer(model.Duration(2 * time.Minute)),
-			GroupInterval:       util.Pointer(model.Duration(5 * time.Minute)),
-			RepeatInterval:      util.Pointer(model.Duration(30 * time.Hour)),
+			GroupWait:           new(model.Duration(2 * time.Minute)),
+			GroupInterval:       new(model.Duration(5 * time.Minute)),
+			RepeatInterval:      new(model.Duration(30 * time.Hour)),
 			Provenance:          definitions.Provenance(models.ProvenanceAPI),
 			Routes:              nil, // Nested routes are not included in the fingerprint test for simplicity.
 		}
@@ -507,9 +508,9 @@ func TestRoute_Fingerprint(t *testing.T) {
 		MuteTimeIntervals:   []string{"MuteTimeIntervals1_2", "MuteTimeIntervals2_2"},
 		ActiveTimeIntervals: []string{"ActiveTimeIntervals1_2", "ActiveTimeIntervals2_2"},
 		Continue:            false,
-		GroupWait:           util.Pointer(model.Duration(20 * time.Minute)),
-		GroupInterval:       util.Pointer(model.Duration(50 * time.Minute)),
-		RepeatInterval:      util.Pointer(model.Duration(300 * time.Hour)),
+		GroupWait:           new(model.Duration(20 * time.Minute)),
+		GroupInterval:       new(model.Duration(50 * time.Minute)),
+		RepeatInterval:      new(model.Duration(300 * time.Hour)),
 		Provenance:          definitions.Provenance(models.ProvenanceFile),
 		Routes:              nil, // Nested routes are not included in the fingerprint test for simplicity, recursive fingerprinting is assumed.
 	}

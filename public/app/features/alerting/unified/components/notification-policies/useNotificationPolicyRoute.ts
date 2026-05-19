@@ -14,6 +14,7 @@ import {
 import { type BaseAlertmanagerArgs, type Skippable } from 'app/features/alerting/unified/types/hooks';
 import {
   MatcherOperator,
+  type ObjectMatcher,
   ROUTES_META_SYMBOL,
   type Route,
   type RouteWithID,
@@ -422,6 +423,11 @@ export function createKubernetesRoutingTreeSpec(rootRoute: Route): RoutingTree {
 }
 
 export const NAMED_ROOT_LABEL_NAME = '__grafana_managed_route__';
+
+/** Returns true when the ObjectMatcher targets the internal routing label added by k8sRouteToRoute. */
+export function isNamedRootMatcher(matcher: ObjectMatcher): boolean {
+  return matcher[0] === NAMED_ROOT_LABEL_NAME;
+}
 
 export function k8sRouteToRoute(route: RoutingTree): Route {
   return {

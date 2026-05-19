@@ -76,11 +76,12 @@ import { NAMESPACES, GRAFANA_NAMESPACE } from './core/internationalization/const
 import { loadTranslations } from './core/internationalization/loadTranslations';
 import { postInitTasks, preInitTasks } from './core/lifecycle-hooks';
 import { setMonacoEnv } from './core/monacoEnv';
+import { handleRedirectTo } from './core/navigation/handleRedirectTo';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
 import { CorrelationsService } from './core/services/CorrelationsService';
 import { NewFrontendAssetsChecker } from './core/services/NewFrontendAssetsChecker';
 import { backendSrv } from './core/services/backend_srv';
-import { contextSrv, RedirectToUrlKey } from './core/services/context_srv';
+import { contextSrv } from './core/services/context_srv';
 import { initEchoSrv } from './core/services/echo/init';
 import { KeybindingSrv } from './core/services/keybindingSrv';
 import { startMeasure, stopMeasure } from './core/utils/metrics';
@@ -152,18 +153,11 @@ export class GrafanaApp {
         }
       }
 
-      const regionalFormat = config.featureToggles.localeFormatPreference
-        ? config.regionalFormat
-        : contextSrv.user.language;
-
-      const initI18nPromise = initializeI18n(
-        {
-          language: contextSrv.user.language,
-          ns: NAMESPACES,
-          module: loadTranslations,
-        },
-        regionalFormat
-      );
+      const initI18nPromise = initializeI18n({
+        language: contextSrv.user.language,
+        ns: NAMESPACES,
+        module: loadTranslations,
+      });
 
       // This is a placeholder so we can put a 'comment' in the message json files.
       // Starts with an underscore so it's sorted to the top of the file. Even though it is in a comment the following line is still extracted
@@ -180,7 +174,7 @@ export class GrafanaApp {
       // This needs to be done after the `initEchoSrv` since it is being used under the hood.
       startMeasure('frontend_app_init');
 
-      setLocale(config.regionalFormat);
+      setLocale(contextSrv.user.language);
       setWeekStart(contextSrv.user.weekStart);
       setPanelRenderer(PanelRenderer);
       setPluginPage(PluginPage);
@@ -258,9 +252,9 @@ export class GrafanaApp {
 
       if (contextSrv.user.orgRole !== '') {
         preloadPlugins(await getAppPluginsToPreload());
+        getPluginExtensionRegistries();
       }
 
-      getPluginExtensionRegistries();
       await getPanelPluginMetas();
 
       setHelpNavItemHook(useHelpNode);
@@ -333,46 +327,6 @@ function initExtensions() {
   if (extensionsExports.length > 0) {
     extensionsExports[0].init();
   }
-}
-
-function handleRedirectTo(): void {
-  const queryParams = locationService.getSearch();
-  const redirectToParamKey = 'redirectTo';
-
-  if (queryParams.has('auth_token')) {
-    // URL Login should not be redirected
-    window.sessionStorage.removeItem(RedirectToUrlKey);
-    return;
-  }
-
-  if (queryParams.has(redirectToParamKey) && window.location.pathname !== '/') {
-    const rawRedirectTo = queryParams.get(redirectToParamKey)!;
-    window.sessionStorage.setItem(RedirectToUrlKey, encodeURIComponent(rawRedirectTo));
-    queryParams.delete(redirectToParamKey);
-    window.history.replaceState({}, '', `${window.location.pathname}${queryParams.size > 0 ? `?${queryParams}` : ''}`);
-    return;
-  }
-
-  if (!contextSrv.user.isSignedIn) {
-    return;
-  }
-
-  const redirectTo = window.sessionStorage.getItem(RedirectToUrlKey);
-  if (!redirectTo) {
-    return;
-  }
-
-  window.sessionStorage.removeItem(RedirectToUrlKey);
-  let decodedRedirectTo = decodeURIComponent(redirectTo);
-  if (decodedRedirectTo.startsWith('/goto/')) {
-    // In this case there should be a request to the backend
-    const urlToRedirectTo = locationUtil.assureBaseUrl(decodedRedirectTo);
-    window.location.replace(urlToRedirectTo);
-    return;
-  }
-  // Ensure that the appsuburl is stripped from the redirect to in case of a frontend redirect
-  const stripped = locationUtil.stripBaseFromUrl(decodedRedirectTo);
-  locationService.replace(stripped);
 }
 
 export default new GrafanaApp();

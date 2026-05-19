@@ -2,6 +2,7 @@ package collections
 
 import (
 	"context"
+	"fmt"
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -36,9 +37,10 @@ func (s *starStorage) List(ctx context.Context, options *internalversion.ListOpt
 		obj, _ := s.Get(ctx, "user-"+user.GetIdentifier(), &v1.GetOptions{})
 		if obj != nil {
 			s, ok := obj.(*collections.Stars)
-			if ok {
-				stars.Items = []collections.Stars{*s}
+			if !ok {
+				return nil, fmt.Errorf("expected star object")
 			}
+			stars.Items = []collections.Stars{*s}
 		}
 		return stars, nil
 

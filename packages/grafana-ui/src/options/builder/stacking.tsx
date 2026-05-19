@@ -67,6 +67,7 @@ export function addStackingConfig(
     path: 'stacking',
     name: t('grafana-ui.builder.stacking.name-stack-series', 'Stack series'),
     category: category,
+    useFieldset: true,
     defaultValue: defaultConfig,
     editor: StackingEditor,
     override: StackingEditor,

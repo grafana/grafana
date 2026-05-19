@@ -57,7 +57,6 @@ func AddKnownTypes(scheme *runtime.Scheme, version string) {
 	scheme.AddKnownTypes(
 		schema.GroupVersion{Group: GROUP, Version: version},
 		&UserTeamList{},
-		&ServiceAccountTokenList{},
 		&DisplayList{},
 		&SSOSetting{},
 		&SSOSettingList{},

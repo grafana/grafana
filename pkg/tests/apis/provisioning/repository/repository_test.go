@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -279,7 +280,7 @@ func TestIntegrationProvisioning_ViewerSettings_CustomRepositoryTypes(t *testing
 	if !extensions.IsEnterprise {
 		helper = common.RunGrafana(t, common.WithRepositoryTypes([]string{"local", "github"}))
 	} else {
-		helper = common.RunGrafana(t, common.WithRepositoryTypes([]string{"local", "git", "github", "bitbucket"}))
+		helper = common.RunGrafana(t, common.WithRepositoryTypes([]string{"local", "git", "github", "bitbucket", "githubEnterprise"}))
 	}
 
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
@@ -304,6 +305,7 @@ func TestIntegrationProvisioning_ViewerSettings_CustomRepositoryTypes(t *testing
 				provisioning.GitRepositoryType,
 				provisioning.GitHubRepositoryType,
 				provisioning.BitbucketRepositoryType,
+				provisioning.GitHubEnterpriseRepositoryType,
 			}, settings.AvailableRepositoryTypes)
 		} else {
 			assert.ElementsMatch(collect, []provisioning.RepositoryType{
@@ -636,6 +638,175 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 		require.ErrorContains(t, err, provisioningAPIServer.ErrRepositoryParentFolderConflict.Error())
 	})
 
+	t.Run("Git repository branch-scoped path validation with sync enabled", func(t *testing.T) {
+		baseURL := "https://github.com/grafana/test-repo-branch-validation"
+
+		branchTests := []struct {
+			name        string
+			branch      string
+			path        string
+			expectError error
+		}{
+			{
+				name:        "first repo with branch main and path grafana should succeed",
+				branch:      "main",
+				path:        "grafana/",
+				expectError: nil,
+			},
+			{
+				name:        "second repo with branch develop and same path grafana should succeed",
+				branch:      "develop",
+				path:        "grafana/",
+				expectError: nil,
+			},
+			{
+				name:        "third repo with branch main and duplicate path grafana should fail",
+				branch:      "main",
+				path:        "grafana/",
+				expectError: provisioningAPIServer.ErrRepositoryDuplicatePath,
+			},
+			{
+				name:        "fourth repo with branch develop and child path should fail",
+				branch:      "develop",
+				path:        "grafana/dashboards/",
+				expectError: provisioningAPIServer.ErrRepositoryParentFolderConflict,
+			},
+			{
+				name:        "fifth repo with branch main and child path should fail",
+				branch:      "main",
+				path:        "grafana/dashboards/",
+				expectError: provisioningAPIServer.ErrRepositoryParentFolderConflict,
+			},
+		}
+
+		for i, test := range branchTests {
+			t.Run(test.name, func(t *testing.T) {
+				repoName := fmt.Sprintf("git-branch-test-%d", i+1)
+				gitRepo := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
+					"Name":          repoName,
+					"URL":           baseURL,
+					"Branch":        test.branch,
+					"Path":          test.path,
+					"SyncEnabled":   true,
+					"SyncTarget":    "folder",
+					"WorkflowsJSON": `[]`,
+				})
+
+				_, err := helper.Repositories.Resource.Create(ctx, gitRepo, metav1.CreateOptions{FieldValidation: "Strict"})
+
+				if test.expectError != nil {
+					require.Error(t, err, "Expected error for repo branch=%s path=%s", test.branch, test.path)
+					require.ErrorContains(t, err, test.expectError.Error(), "Error should contain expected message for branch=%s path=%s", test.branch, test.path)
+					var statusError *apierrors.StatusError
+					if errors.As(err, &statusError) {
+						require.Equal(t, metav1.StatusReasonInvalid, statusError.ErrStatus.Reason, "Should be a validation error")
+						require.Equal(t, http.StatusUnprocessableEntity, int(statusError.ErrStatus.Code), "Should return 422 status code")
+					}
+				} else {
+					require.NoError(t, err, "Expected success for repo branch=%s path=%s", test.branch, test.path)
+				}
+			})
+		}
+	})
+
+	t.Run("Git repository rejects duplicate empty paths on same branch when sync is enabled", func(t *testing.T) {
+		baseURL := "https://github.com/grafana/test-repo-empty-path-branch"
+
+		firstRepo := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
+			"Name":          "git-empty-branch-1",
+			"URL":           baseURL,
+			"Branch":        "main",
+			"Path":          "",
+			"SyncEnabled":   true,
+			"SyncTarget":    "folder",
+			"WorkflowsJSON": `[]`,
+		})
+		_, err := helper.Repositories.Resource.Create(ctx, firstRepo, metav1.CreateOptions{FieldValidation: "Strict"})
+		require.NoError(t, err, "First repository with empty path should succeed")
+
+		secondRepo := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
+			"Name":          "git-empty-branch-2",
+			"URL":           baseURL,
+			"Branch":        "main",
+			"Path":          "",
+			"SyncEnabled":   true,
+			"SyncTarget":    "folder",
+			"WorkflowsJSON": `[]`,
+		})
+		_, err = helper.Repositories.Resource.Create(ctx, secondRepo, metav1.CreateOptions{FieldValidation: "Strict"})
+		require.Error(t, err, "Second repository with same URL, branch, and empty path should fail")
+		require.ErrorContains(t, err, provisioningAPIServer.ErrRepositoryDuplicatePath.Error())
+		var statusError *apierrors.StatusError
+		if errors.As(err, &statusError) {
+			require.Equal(t, metav1.StatusReasonInvalid, statusError.ErrStatus.Reason, "Should be a validation error")
+			require.Equal(t, http.StatusUnprocessableEntity, int(statusError.ErrStatus.Code), "Should return 422 status code")
+		}
+
+		thirdRepo := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
+			"Name":          "git-empty-branch-3",
+			"URL":           baseURL,
+			"Branch":        "develop",
+			"Path":          "",
+			"SyncEnabled":   true,
+			"SyncTarget":    "folder",
+			"WorkflowsJSON": `[]`,
+		})
+		_, err = helper.Repositories.Resource.Create(ctx, thirdRepo, metav1.CreateOptions{FieldValidation: "Strict"})
+		require.NoError(t, err, "Third repository with different branch and empty path should succeed")
+	})
+
+	t.Run("Git repository allows conflicting paths when sync is disabled", func(t *testing.T) {
+		baseURL := "https://github.com/grafana/test-repo-branch-sync-disabled"
+
+		firstRepo := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
+			"Name":          "git-branch-disabled-1",
+			"URL":           baseURL,
+			"Branch":        "main",
+			"Path":          "demo/",
+			"SyncEnabled":   false,
+			"SyncTarget":    "folder",
+			"WorkflowsJSON": `[]`,
+		})
+		_, err := helper.Repositories.Resource.Create(ctx, firstRepo, metav1.CreateOptions{FieldValidation: "Strict"})
+		require.NoError(t, err, "First repository with sync disabled should succeed")
+
+		secondRepo := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
+			"Name":          "git-branch-disabled-2",
+			"URL":           baseURL,
+			"Branch":        "main",
+			"Path":          "demo/",
+			"SyncEnabled":   false,
+			"SyncTarget":    "folder",
+			"WorkflowsJSON": `[]`,
+		})
+		_, err = helper.Repositories.Resource.Create(ctx, secondRepo, metav1.CreateOptions{FieldValidation: "Strict"})
+		require.NoError(t, err, "Second repository with duplicate path should succeed when sync is disabled")
+
+		thirdRepo := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
+			"Name":          "git-branch-disabled-3",
+			"URL":           baseURL,
+			"Branch":        "develop",
+			"Path":          "demo/",
+			"SyncEnabled":   false,
+			"SyncTarget":    "folder",
+			"WorkflowsJSON": `[]`,
+		})
+		_, err = helper.Repositories.Resource.Create(ctx, thirdRepo, metav1.CreateOptions{FieldValidation: "Strict"})
+		require.NoError(t, err, "Third repository with different branch should succeed when sync is disabled")
+
+		fourthRepo := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
+			"Name":          "git-branch-disabled-4",
+			"URL":           baseURL,
+			"Branch":        "main",
+			"Path":          "demo/dashboards/",
+			"SyncEnabled":   false,
+			"SyncTarget":    "folder",
+			"WorkflowsJSON": `[]`,
+		})
+		_, err = helper.Repositories.Resource.Create(ctx, fourthRepo, metav1.CreateOptions{FieldValidation: "Strict"})
+		require.NoError(t, err, "Fourth repository with parent-child path should succeed when sync is disabled")
+	})
+
 	t.Run("should update sync interval", func(t *testing.T) {
 		r := helper.RenderObject(t, common.TestdataPath("local.json.tmpl"), map[string]any{
 			"Name":                "valid-repo-testinterval",
@@ -814,17 +985,8 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 	err = helper.Repositories.Resource.Delete(ctx, repo, metav1.DeleteOptions{})
 	require.NoError(t, err, "should delete values")
 
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		found, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
-		assert.NoError(t, err, "can list values")
-		assert.Equal(collect, 0, len(found.Items), "expected dashboards to be deleted")
-	}, time.Second*20, time.Millisecond*10, "Expected dashboards to be deleted")
-
-	// Wait for repository to be fully deleted before subtests run
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
-		assert.True(collect, apierrors.IsNotFound(err), "repository should be deleted")
-	}, time.Second*10, time.Millisecond*50, "repository should be deleted before subtests")
+	common.WaitForResourcesDeleted(t, ctx, helper.DashboardsV1.Resource, "dashboards")
+	helper.WaitForRepositoryDeleted(t, ctx, repo)
 
 	t.Run("github url cleanup", func(t *testing.T) {
 		tests := []struct {
@@ -899,6 +1061,79 @@ func TestIntegrationProvisioning_ReadOnlyRepositoryNoWebhook(t *testing.T) {
 		require.Empty(t, repo.Spec.Workflows, "repository should have no workflows (read-only)")
 		require.Nil(t, repo.Status.Webhook, "read-only repository should not have a webhook")
 	})
+}
+
+func TestIntegrationProvisioning_WebhookFailureDoesNotRetryImmediately(t *testing.T) {
+	helper := sharedHelper(t)
+	ctx := context.Background()
+
+	var webhookCreateCalls atomic.Int32
+
+	repoFactory := helper.GetEnv().GithubRepoFactory
+	repoFactory.Client = ghmock.NewMockedHTTPClient(
+		ghmock.WithRequestMatchHandler(
+			ghmock.GetReposBranchesProtectionByOwnerByRepoByBranch,
+			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusNotFound)
+				_, _ = w.Write(ghmock.MustMarshal(&github.ErrorResponse{
+					Message: "Branch not protected",
+				}))
+			}),
+		),
+		ghmock.WithRequestMatchHandler(
+			ghmock.GetReposRulesBranchesByOwnerByRepoByBranch,
+			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				_, _ = w.Write([]byte("[]"))
+			}),
+		),
+		ghmock.WithRequestMatchHandler(
+			ghmock.PostReposHooksByOwnerByRepo,
+			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				webhookCreateCalls.Add(1)
+				w.WriteHeader(http.StatusInternalServerError)
+				_, _ = w.Write(ghmock.MustMarshal(&github.ErrorResponse{
+					Message: "failed to create webhook",
+				}))
+			}),
+		),
+	)
+	helper.SetGithubRepositoryFactory(repoFactory)
+
+	repoName := "webhook-create-failure-cooldown"
+	input := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
+		"Name":          repoName,
+		"SyncEnabled":   false,
+		"WorkflowsJSON": `["write"]`,
+		"Token":         "test-token",
+	})
+	input.Object["spec"].(map[string]any)["webhook"] = map[string]any{
+		"baseUrl": "https://grafana.example.com",
+	}
+
+	_, err := helper.Repositories.Resource.Create(ctx, input, metav1.CreateOptions{})
+	require.NoError(t, err, "failed to create repository")
+
+	t.Cleanup(func() {
+		_ = helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{})
+	})
+
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		repoObj, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "failed to get repository") {
+			return
+		}
+
+		repo := common.MustFromUnstructured[provisioning.Repository](t, repoObj)
+		assert.GreaterOrEqual(collect, webhookCreateCalls.Load(), int32(1), "webhook creation should have been attempted")
+		assert.False(collect, repo.Status.Health.Healthy, "repository should remain unhealthy after hook failure")
+		assert.Equal(collect, provisioning.HealthFailureHook, repo.Status.Health.Error, "repository should record hook failure")
+		assert.Nil(collect, repo.Status.Webhook, "webhook status should remain unset when creation fails")
+	}, 30*time.Second, 200*time.Millisecond, "repository should record the initial webhook failure")
+
+	require.Never(t, func() bool {
+		return webhookCreateCalls.Load() > 1
+	}, 5*time.Second, 100*time.Millisecond, "webhook creation should not be retried immediately after a hook failure")
 }
 
 func TestIntegrationProvisioning_WebhookConfig(t *testing.T) {
@@ -1446,32 +1681,9 @@ func TestIntegrationProvisioning_DeleteRepositoryAndReleaseResources(t *testing.
 	err = helper.Repositories.Resource.Delete(ctx, repo, metav1.DeleteOptions{})
 	require.NoError(t, err, "should delete repository")
 
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
-		assert.True(collect, apierrors.IsNotFound(err), "repository should be deleted")
-	}, time.Second*10, time.Millisecond*50, "repository should be deleted")
-
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		foundDashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
-		assert.NoError(t, err, "can list values")
-		for _, v := range foundDashboards.Items {
-			assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeyManagerKind)
-			assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeyManagerIdentity)
-			assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeySourcePath)
-			assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeySourceChecksum)
-		}
-	}, time.Second*20, time.Millisecond*10, "Expected dashboards to be released")
-
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		foundFolders, err := helper.Folders.Resource.List(ctx, metav1.ListOptions{})
-		assert.NoError(t, err, "can list values")
-		for _, v := range foundFolders.Items {
-			assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeyManagerKind)
-			assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeyManagerIdentity)
-			assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeySourcePath)
-			assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeySourceChecksum)
-		}
-	}, time.Second*20, time.Millisecond*10, "Expected folders to be released")
+	helper.WaitForRepositoryDeleted(t, ctx, repo)
+	common.WaitForResourcesReleased(t, ctx, helper.DashboardsV1.Resource, "dashboards")
+	common.WaitForResourcesReleased(t, ctx, helper.Folders.Resource, "folders")
 }
 
 func TestIntegrationProvisioning_DeleteRepositoryAndCleanupClassicDashboards(t *testing.T) {
@@ -1510,10 +1722,7 @@ func TestIntegrationProvisioning_DeleteRepositoryAndCleanupClassicDashboards(t *
 		err = helper.Repositories.Resource.Delete(ctx, repo, metav1.DeleteOptions{})
 		require.NoError(t, err, "should delete repository")
 
-		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
-			assert.True(collect, apierrors.IsNotFound(err), "repository should be deleted")
-		}, time.Second*20, time.Millisecond*50, "repository should be deleted")
+		helper.WaitForRepositoryDeleted(t, ctx, repo)
 
 		_, err = helper.DashboardsV1.Resource.Get(ctx, "finalizer-remove-classic-uid", metav1.GetOptions{})
 		require.Error(t, err, "classic dashboard should be deleted by remove-orphan-resources finalizer")
@@ -1557,10 +1766,7 @@ func TestIntegrationProvisioning_DeleteRepositoryAndCleanupClassicDashboards(t *
 		err = helper.Repositories.Resource.Delete(ctx, repo, metav1.DeleteOptions{})
 		require.NoError(t, err, "should delete repository")
 
-		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
-			assert.True(collect, apierrors.IsNotFound(err), "repository should be deleted")
-		}, time.Second*20, time.Millisecond*50, "repository should be deleted")
+		helper.WaitForRepositoryDeleted(t, ctx, repo)
 
 		dashboard, err = helper.DashboardsV1.Resource.Get(ctx, "finalizer-release-classic-uid", metav1.GetOptions{})
 		require.NoError(t, err, "classic dashboard should still exist after release")
@@ -1746,9 +1952,10 @@ func TestIntegrationProvisioning_EmptyPath(t *testing.T) {
 		// Clean up
 		err = helper.Repositories.Resource.Delete(ctx, repo, metav1.DeleteOptions{})
 		require.NoError(t, err)
+		helper.WaitForRepositoryDeleted(t, ctx, repo)
 	})
 
-	t.Run("multiple repositories with empty path - creation succeeds but sync warns on ownership conflicts", func(t *testing.T) {
+	t.Run("multiple repositories with empty path - duplicate sync-enabled root path is rejected", func(t *testing.T) {
 		const repo1 = "empty-path-repo-1"
 		const repo2 = "empty-path-repo-2"
 
@@ -1763,49 +1970,28 @@ func TestIntegrationProvisioning_EmptyPath(t *testing.T) {
 		}
 		helper.CreateLocalRepo(t, testRepo1)
 
-		// Step 2: Create second repository with same empty path
-		// Creation should succeed (no duplicate path validation error)
-		// but sync should warn because dashboards are owned by repo1
-		testRepo2 := common.TestRepo{
-			Name:                   repo2,
-			Template:               common.TestdataPath("github.json.tmpl"),
-			SyncTarget:             "folder",
-			Workflows:              []string{},
-			SkipResourceAssertions: true, // Skip because we can't easily count per-repo resources
-		}
-		helper.CreateLocalRepo(t, testRepo2)
+		// Step 2: Create second repository with same URL, branch, and empty path.
+		// Empty path represents the repository root, so this is a duplicate path.
+		secondRepo := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
+			"Name":          repo2,
+			"SyncEnabled":   true,
+			"SyncTarget":    "folder",
+			"WorkflowsJSON": `[]`,
+		})
+		_, err := helper.Repositories.Resource.Create(ctx, secondRepo, metav1.CreateOptions{})
+		require.Error(t, err, "Second repository with same URL, branch, and empty path should fail")
+		require.ErrorContains(t, err, provisioningAPIServer.ErrRepositoryDuplicatePath.Error())
 
-		// Verify both repositories have empty paths
+		// Verify first repository has empty path
 		repo1Obj, err := helper.Repositories.Resource.Get(ctx, repo1, metav1.GetOptions{})
 		require.NoError(t, err)
 		path1, _, _ := unstructured.NestedString(repo1Obj.Object, "spec", "github", "path")
 		require.Equal(t, "", path1, "repo1 should have empty path")
 
-		repo2Obj, err := helper.Repositories.Resource.Get(ctx, repo2, metav1.GetOptions{})
-		require.NoError(t, err)
-		path2, _, _ := unstructured.NestedString(repo2Obj.Object, "spec", "github", "path")
-		require.Equal(t, "", path2, "repo2 should have empty path")
-
-		// Verify repo2 sync completed with warning state (ownership conflicts)
-		syncState, _, _ := unstructured.NestedString(repo2Obj.Object, "status", "sync", "state")
-		require.Equal(t, "warning", syncState, "repo2 sync should complete with warning state due to ownership conflicts")
-
-		// Verify global resource counts:
-		// - Folders: 12 total (6 from repo1 + 6 from repo2) - folders are duplicated per repository
-		// - Dashboards: 3 total (only from repo1) - repo2's dashboards fail with ownership conflicts
-		dashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
-		require.NoError(t, err)
-		require.Len(t, dashboards.Items, 3, "should have 3 dashboards (only from repo1)")
-
-		folders, err := helper.Folders.Resource.List(ctx, metav1.ListOptions{})
-		require.NoError(t, err)
-		require.Len(t, folders.Items, 12, "should have 12 folders (6 from repo1 + 6 from repo2)")
-
 		// Clean up
 		err = helper.Repositories.Resource.Delete(ctx, repo1, metav1.DeleteOptions{})
 		require.NoError(t, err)
-		err = helper.Repositories.Resource.Delete(ctx, repo2, metav1.DeleteOptions{})
-		require.NoError(t, err)
+		helper.WaitForRepositoryDeleted(t, ctx, repo1)
 	})
 }
 
@@ -2313,8 +2499,8 @@ func TestIntegrationRepositoryController_DefaultBranch(t *testing.T) {
 			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 				w.WriteHeader(http.StatusOK)
 				repo := &github.Repository{
-					ID:            github.Ptr(int64(12345)),
-					Name:          github.Ptr("name"),
+					ID:            new(int64(12345)),
+					Name:          new("name"),
 					DefaultBranch: &defaultBranchName,
 				}
 				_, _ = w.Write(ghmock.MustMarshal(repo))
@@ -2407,7 +2593,7 @@ func TestIntegrationProvisioning_ConcurrentRepositoryCreation(t *testing.T) {
 	results := make(chan result, numRepos)
 
 	// Create repositories concurrently
-	for i := 0; i < numRepos; i++ {
+	for i := range numRepos {
 		wg.Add(1)
 		go func(idx int) {
 			defer wg.Done()
@@ -2482,7 +2668,7 @@ func TestIntegrationProvisioning_ConcurrentRepositoryCreation(t *testing.T) {
 	require.Equal(t, numRepos, successCount, "All repositories should be created successfully")
 
 	// Verify all repositories exist and have their secure tokens
-	for i := 0; i < numRepos; i++ {
+	for i := range numRepos {
 		repoName := fmt.Sprintf("concurrent-repo-%d", i)
 		repo, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
 		require.NoError(t, err, "Repository %s should exist", repoName)

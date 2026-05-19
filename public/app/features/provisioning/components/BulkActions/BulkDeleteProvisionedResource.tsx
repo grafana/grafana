@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { AppEvents } from '@grafana/data';
@@ -143,9 +143,15 @@ export function BulkDeleteProvisionedResource({
   const isRootPage = !folderUid || folderUid === GENERAL_FOLDER_UID;
   const { selectedItemsRepoUID } = useSelectionRepoValidation(selectedItems);
 
+  // Capture the repo UID so it survives selection state changes during/after job execution
+  const resolvedRepoUID = useRef(selectedItemsRepoUID);
+  if (selectedItemsRepoUID) {
+    resolvedRepoUID.current = selectedItemsRepoUID;
+  }
+
   // For root provisioned folders, the folder UID is the repository name
   const { repository, isReadOnlyRepo } = useGetResourceRepositoryView({
-    folderName: isRootPage ? selectedItemsRepoUID : folderUid,
+    folderName: isRootPage ? resolvedRepoUID.current : folderUid,
   });
   const canPushToConfiguredBranch = getCanPushToConfiguredBranch(repository);
   const timestamp = generateTimestamp();

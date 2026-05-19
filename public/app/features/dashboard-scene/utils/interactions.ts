@@ -120,7 +120,7 @@ export const DashboardInteractions = {
 
   // dashboards_new_section_variable_type_selected
   // when a user selects a variable type when creating a new section (row/tab) variable
-  sectionVariableTypeSelected: (properties: { type: string }) => {
+  sectionVariableTypeSelected: (properties: { type: string; sectionOwner: 'row' | 'tab' | undefined }) => {
     reportDashboardInteraction('new_section_variable_type_selected', properties);
   },
 
@@ -218,14 +218,17 @@ export const DashboardInteractions = {
   toolbarShareClick: () => {
     reportDashboardInteraction('toolbar_actions_clicked', { item: 'share' });
   },
-  toolbarShareDropdownClick: () => {
-    reportDashboardInteraction('toolbar_actions_clicked', { item: 'share_dropdown' });
-  },
   toolbarAddClick: () => {
     reportDashboardInteraction('toolbar_actions_clicked', { item: 'add' });
   },
-
   // Sharing interactions:
+  toolbarShareDropdownClick: () => {
+    reportDashboardInteraction('toolbar_actions_clicked', { item: 'share_dropdown' });
+  },
+  // clicking on a specific share option in the toolbar share button dropdown
+  toolbarShareDropdownOptionClick: (option: string) => {
+    reportDashboardInteraction('toolbar_share_option_clicked', { item: 'share_dropdown_option', option });
+  },
   sharingCategoryClicked: (properties?: Record<string, unknown>) => {
     reportSharingInteraction('sharing_category_clicked', properties);
   },

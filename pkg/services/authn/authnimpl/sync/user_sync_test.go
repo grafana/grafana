@@ -7,16 +7,16 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
-
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	oftesting "github.com/open-feature/go-sdk/openfeature/testing"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	claims "github.com/grafana/authlib/types"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -31,17 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
-
-func ptrString(s string) *string {
-	return &s
-}
-
-func ptrBool(b bool) *bool {
-	return &b
-}
 
 var (
 	provider            = oftesting.NewTestProvider()
@@ -247,7 +237,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 					Email: "test",
 					ClientParams: authn.ClientParams{
 						LookUpParams: login.UserLookupParams{
-							Email: ptrString("test"),
+							Email: new("test"),
 							Login: nil,
 						},
 					},
@@ -260,7 +250,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				Email: "test",
 				ClientParams: authn.ClientParams{
 					LookUpParams: login.UserLookupParams{
-						Email: ptrString("test"),
+						Email: new("test"),
 						Login: nil,
 					},
 				},
@@ -281,7 +271,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 					ClientParams: authn.ClientParams{
 						SyncUser: true,
 						LookUpParams: login.UserLookupParams{
-							Email: ptrString("test"),
+							Email: new("test"),
 							Login: nil,
 						},
 					},
@@ -296,11 +286,11 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				Login:          "test",
 				Name:           "test",
 				Email:          "test",
-				IsGrafanaAdmin: ptrBool(false),
+				IsGrafanaAdmin: new(false),
 				ClientParams: authn.ClientParams{
 					SyncUser: true,
 					LookUpParams: login.UserLookupParams{
-						Email: ptrString("test"),
+						Email: new("test"),
 						Login: nil,
 					},
 				},
@@ -322,7 +312,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 						SyncUser: true,
 						LookUpParams: login.UserLookupParams{
 							Email: nil,
-							Login: ptrString("test"),
+							Login: new("test"),
 						},
 					},
 				},
@@ -336,11 +326,11 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				Login:          "test",
 				Name:           "test",
 				Email:          "test",
-				IsGrafanaAdmin: ptrBool(false),
+				IsGrafanaAdmin: new(false),
 				ClientParams: authn.ClientParams{
 					LookUpParams: login.UserLookupParams{
 						Email: nil,
-						Login: ptrString("test"),
+						Login: new("test"),
 					},
 					SyncUser: true,
 				},
@@ -380,7 +370,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				Login:           "test",
 				Name:            "test",
 				Email:           "test",
-				IsGrafanaAdmin:  ptrBool(false),
+				IsGrafanaAdmin:  new(false),
 				ClientParams: authn.ClientParams{
 					SyncUser: true,
 					LookUpParams: login.UserLookupParams{
@@ -426,7 +416,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				id: &authn.Identity{
 					Login:           "test_create",
 					Name:            "test_create",
-					IsGrafanaAdmin:  ptrBool(true),
+					IsGrafanaAdmin:  new(true),
 					Email:           "test_create",
 					AuthenticatedBy: "oauth",
 					AuthID:          "2032",
@@ -435,7 +425,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 						AllowSignUp: true,
 						EnableUser:  true,
 						LookUpParams: login.UserLookupParams{
-							Email: ptrString("test_create"),
+							Email: new("test_create"),
 							Login: nil,
 						},
 					},
@@ -451,13 +441,13 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				Email:           "test_create",
 				AuthenticatedBy: "oauth",
 				AuthID:          "2032",
-				IsGrafanaAdmin:  ptrBool(true),
+				IsGrafanaAdmin:  new(true),
 				ClientParams: authn.ClientParams{
 					SyncUser:    true,
 					AllowSignUp: true,
 					EnableUser:  true,
 					LookUpParams: login.UserLookupParams{
-						Email: ptrString("test_create"),
+						Email: new("test_create"),
 						Login: nil,
 					},
 				},
@@ -476,13 +466,13 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 					Name:           "test_mod",
 					Email:          "test_mod",
 					IsDisabled:     false,
-					IsGrafanaAdmin: ptrBool(true),
+					IsGrafanaAdmin: new(true),
 					ClientParams: authn.ClientParams{
 						SyncUser:   true,
 						EnableUser: true,
 						LookUpParams: login.UserLookupParams{
 							Email: nil,
-							Login: ptrString("test"),
+							Login: new("test"),
 						},
 					},
 				},
@@ -496,13 +486,13 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				Name:           "test_mod",
 				Email:          "test_mod",
 				IsDisabled:     false,
-				IsGrafanaAdmin: ptrBool(true),
+				IsGrafanaAdmin: new(true),
 				ClientParams: authn.ClientParams{
 					SyncUser:   true,
 					EnableUser: true,
 					LookUpParams: login.UserLookupParams{
 						Email: nil,
-						Login: ptrString("test"),
+						Login: new("test"),
 					},
 				},
 			},
@@ -521,13 +511,13 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 					Email:          "test_mod@test.com",
 					EmailVerified:  true,
 					IsDisabled:     false,
-					IsGrafanaAdmin: ptrBool(true),
+					IsGrafanaAdmin: new(true),
 					ClientParams: authn.ClientParams{
 						SyncUser:   true,
 						EnableUser: true,
 						LookUpParams: login.UserLookupParams{
 							Email: nil,
-							Login: ptrString("test"),
+							Login: new("test"),
 						},
 					},
 				},
@@ -542,13 +532,13 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				Email:          "test_mod@test.com",
 				IsDisabled:     false,
 				EmailVerified:  false,
-				IsGrafanaAdmin: ptrBool(true),
+				IsGrafanaAdmin: new(true),
 				ClientParams: authn.ClientParams{
 					SyncUser:   true,
 					EnableUser: true,
 					LookUpParams: login.UserLookupParams{
 						Email: nil,
-						Login: ptrString("test"),
+						Login: new("test"),
 					},
 				},
 			},
@@ -633,7 +623,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				Email:           "user1@test.com",
 				Name:            "User One",
 				ExternalUID:     "matching-uid",
-				IsGrafanaAdmin:  ptrBool(false),
+				IsGrafanaAdmin:  new(false),
 				ClientParams:    authn.ClientParams{SyncUser: true},
 			},
 		},
@@ -647,7 +637,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 						// Call the original mockUpdateFn for assertions
 						err := mockUpdateFn(t, &user.UpdateUserCommand{
 							UserID:         scimUserNotAdminInitial.ID,
-							IsGrafanaAdmin: ptrBool(true),
+							IsGrafanaAdmin: new(true),
 						}, true, scimUserNotAdminInitial.Email)(ctx, cmd)
 						if err != nil {
 							return err
@@ -673,7 +663,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 					Login:           "saml.login. متفاوت",             // SAML sends different login
 					Email:           "saml.email. متفاوت@example.com", // SAML sends different email
 					Name:            "SAML Name متفاوت",               // SAML sends different name
-					IsGrafanaAdmin:  ptrBool(true),                    // Key change: SAML says user IS admin
+					IsGrafanaAdmin:  new(true),                        // Key change: SAML says user IS admin
 					ClientParams: authn.ClientParams{
 						SyncUser: true,
 						// LookUpParams not strictly needed if AuthID + AuthenticatedBy + ExternalUID is enough
@@ -688,7 +678,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				Login:           "saml.login. متفاوت",             // Reflects actual behavior: SAML input value persists
 				Email:           "saml.email. متفاوت@example.com", // Reflects actual behavior: SAML input value persists
 				Name:            "SAML Name متفاوت",               // Reflects actual behavior: SAML input value persists
-				IsGrafanaAdmin:  ptrBool(true),                    // This SHOULD be updated
+				IsGrafanaAdmin:  new(true),                        // This SHOULD be updated
 				EmailVerified:   false,                            // Reflects actual behavior: becomes false
 				AuthID:          "id_from_saml_assertion",
 				AuthenticatedBy: "saml",
@@ -708,7 +698,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 						// Call the original mockUpdateFn for assertions
 						err := mockUpdateFn(t, &user.UpdateUserCommand{
 							UserID:         scimUserIsAdminInitial.ID,
-							IsGrafanaAdmin: ptrBool(false),
+							IsGrafanaAdmin: new(false),
 						}, true, scimUserIsAdminInitial.Email)(ctx, cmd)
 						if err != nil {
 							return err
@@ -731,7 +721,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 					AuthID:          "id_from_saml_assertion",
 					AuthenticatedBy: "saml",
 					ExternalUID:     "external_id_demote",
-					IsGrafanaAdmin:  ptrBool(false), // Key change: SAML says user is NOT admin
+					IsGrafanaAdmin:  new(false), // Key change: SAML says user is NOT admin
 					ClientParams: authn.ClientParams{
 						SyncUser: true,
 					},
@@ -745,7 +735,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				Login:           scimUserIsAdminInitial.Login,
 				Email:           scimUserIsAdminInitial.Email,
 				Name:            scimUserIsAdminInitial.Name,
-				IsGrafanaAdmin:  ptrBool(false), // Updated
+				IsGrafanaAdmin:  new(false), // Updated
 				EmailVerified:   scimUserIsAdminInitial.EmailVerified,
 				AuthID:          "id_from_saml_assertion",
 				AuthenticatedBy: "saml",
@@ -766,7 +756,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 						// In this case, IsGrafanaAdmin from SAML (false) matches DB (false), so it *will* be in the command.
 						err := mockUpdateFn(t, &user.UpdateUserCommand{
 							UserID:         scimUserNotAdminInitial.ID,
-							IsGrafanaAdmin: ptrBool(false), // SAML says false, DB is false
+							IsGrafanaAdmin: new(false), // SAML says false, DB is false
 						}, true, scimUserNotAdminInitial.Email)(ctx, cmd)
 						if err != nil {
 							return err
@@ -792,7 +782,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 					Login:           "saml.login.new",             // SAML sends different login
 					Email:           "saml.email.new@example.com", // SAML sends different email
 					Name:            "SAML Name New",              // SAML sends different name
-					IsGrafanaAdmin:  ptrBool(false),               // SAML says not admin (same as DB)
+					IsGrafanaAdmin:  new(false),                   // SAML says not admin (same as DB)
 					ClientParams: authn.ClientParams{
 						SyncUser: true,
 					},
@@ -806,7 +796,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				Login:           "saml.login.new",             // Reflects actual behavior: SAML input value persists
 				Email:           "saml.email.new@example.com", // Reflects actual behavior: SAML input value persists
 				Name:            "SAML Name New",              // Reflects actual behavior: SAML input value persists
-				IsGrafanaAdmin:  ptrBool(false),               // Unchanged, matches DB
+				IsGrafanaAdmin:  new(false),                   // Unchanged, matches DB
 				EmailVerified:   false,                        // Reflects actual behavior: becomes false
 				AuthID:          "id_from_saml_assertion",
 				AuthenticatedBy: "saml",
@@ -827,7 +817,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 						// Email changes, IsGrafanaAdmin changes.
 						expectedCmd := &user.UpdateUserCommand{
 							UserID:         nonScimUserInitial.ID,
-							IsGrafanaAdmin: ptrBool(true),
+							IsGrafanaAdmin: new(true),
 							Email:          "nonscim.new.email@example.com",
 							Login:          "", // Login not changing, so should be empty in cmd
 							Name:           "", // Name not changing, so should be empty in cmd
@@ -876,11 +866,11 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 					Login:          nonScimUserInitial.Login,        // Use initial login for lookup
 					Email:          "nonscim.new.email@example.com", // SAML sends new email
 					Name:           nonScimUserInitial.Name,         // Name is same
-					IsGrafanaAdmin: ptrBool(true),                   // SAML promotes to admin
+					IsGrafanaAdmin: new(true),                       // SAML promotes to admin
 					ClientParams: authn.ClientParams{
 						SyncUser: true,
 						LookUpParams: login.UserLookupParams{
-							Login: ptrString(nonScimUserInitial.Login), // Lookup by existing login
+							Login: new(nonScimUserInitial.Login), // Lookup by existing login
 						},
 					},
 				},
@@ -893,13 +883,13 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				Login:           nonScimUserInitial.Login,        // Login updated if it was in UpdateUserCommand
 				Email:           "nonscim.new.email@example.com", // Email updated
 				Name:            nonScimUserInitial.Name,         // Name updated if it was in UpdateUserCommand
-				IsGrafanaAdmin:  ptrBool(true),                   // IsAdmin updated
+				IsGrafanaAdmin:  new(true),                       // IsAdmin updated
 				EmailVerified:   false,                           // Email changed, so should be unverified
 				AuthenticatedBy: "saml",
 				ClientParams: authn.ClientParams{
 					SyncUser: true,
 					LookUpParams: login.UserLookupParams{
-						Login: ptrString(nonScimUserInitial.Login),
+						Login: new(nonScimUserInitial.Login),
 					},
 				},
 			},
@@ -920,7 +910,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 					ClientParams: authn.ClientParams{
 						SyncUser: true,
 						LookUpParams: login.UserLookupParams{
-							Email: ptrString("test"),
+							Email: new("test"),
 							Login: nil,
 						},
 					},
@@ -935,11 +925,11 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				Login:          "test",
 				Name:           "test",
 				Email:          "test",
-				IsGrafanaAdmin: ptrBool(false),
+				IsGrafanaAdmin: new(false),
 				ClientParams: authn.ClientParams{
 					SyncUser: true,
 					LookUpParams: login.UserLookupParams{
-						Email: ptrString("test"),
+						Email: new("test"),
 						Login: nil,
 					},
 				},
@@ -960,7 +950,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 					ClientParams: authn.ClientParams{
 						SyncUser: true,
 						LookUpParams: login.UserLookupParams{
-							Email: ptrString("test"),
+							Email: new("test"),
 							Login: nil,
 						},
 					},
@@ -974,11 +964,11 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				Login:          "test",
 				Name:           "test",
 				Email:          "test",
-				IsGrafanaAdmin: ptrBool(false),
+				IsGrafanaAdmin: new(false),
 				ClientParams: authn.ClientParams{
 					SyncUser: true,
 					LookUpParams: login.UserLookupParams{
-						Email: ptrString("test"),
+						Email: new("test"),
 						Login: nil,
 					},
 				},
@@ -1231,11 +1221,12 @@ func initUserSyncService() *UserSync {
 	}
 	quotaSvc := &quotatest.FakeQuotaService{}
 	return &UserSync{
-		userService:     userSvc,
-		authInfoService: authInfoSvc,
-		quotaService:    quotaSvc,
-		tracer:          tracing.InitializeTracerForTest(),
-		log:             log,
+		userService:       userSvc,
+		authInfoService:   authInfoSvc,
+		quotaService:      quotaSvc,
+		tracer:            tracing.InitializeTracerForTest(),
+		log:               log,
+		openFeatureClient: openfeature.NewDefaultClient(),
 	}
 }
 
@@ -1647,6 +1638,7 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
+			provider.UsingFlags(t, defaultFeatureFlags)
 			userSyncService := tt.userSyncServiceSetup()
 			err := userSyncService.ValidateUserProvisioningHook(context.Background(), tt.identity, nil)
 			require.ErrorIs(t, err, tt.expectedErr)
@@ -1999,6 +1991,7 @@ func TestUserSync_GetUsageStats(t *testing.T) {
 }
 
 func TestUserSync_SCIMLoginUsageStatSet(t *testing.T) {
+	provider.UsingFlags(t, defaultFeatureFlags)
 	userSync := initUserSyncService()
 	userSync.rejectNonProvisionedUsers = true
 	userSync.isUserProvisioningEnabled = true
@@ -2259,4 +2252,25 @@ func TestUserSync_SyncUserHook_SCIMUserAllowsGCOMLogin(t *testing.T) {
 	}, nil)
 
 	require.NoError(t, err)
+}
+
+// Pins: id.Groups ← usr.TeamUIDs; id.ExternalGroups preserved.
+func TestSyncSignedInUserToIdentity_GroupsContract(t *testing.T) {
+	usr := &user.SignedInUser{
+		UserID:   42,
+		UserUID:  "uid-42",
+		Login:    "alice",
+		TeamUIDs: []string{"team-uid-1", "team-uid-2"},
+	}
+
+	id := &authn.Identity{
+		ExternalGroups: []string{"ldap-admins", "ldap-devs"},
+	}
+
+	syncSignedInUserToIdentity(usr, id)
+
+	assert.Equal(t, []string{"team-uid-1", "team-uid-2"}, id.Groups,
+		"Groups must be populated from usr.TeamUIDs")
+	assert.Equal(t, []string{"ldap-admins", "ldap-devs"}, id.ExternalGroups,
+		"ExternalGroups (set by the auth client) must not be clobbered by the user-sync hook")
 }

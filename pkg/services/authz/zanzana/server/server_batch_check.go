@@ -31,6 +31,12 @@ type batchCheckItem struct {
 }
 
 func (s *Server) BatchCheck(ctx context.Context, r *authzv1.BatchCheckRequest) (*authzv1.BatchCheckResponse, error) {
+	release, err := s.acquireSlot("BatchCheck", r.GetNamespace())
+	if err != nil {
+		return nil, err
+	}
+	defer release()
+
 	ctx, span := s.tracer.Start(ctx, "server.BatchCheck")
 	defer span.End()
 	span.SetAttributes(

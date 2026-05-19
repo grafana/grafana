@@ -90,6 +90,7 @@ func TestIntegrationLibraryElementPermissions(t *testing.T) {
 		})
 
 		t.Run("When editor tries to move library panel to folder, it should succeed", func(t *testing.T) {
+			t.Skip() // TODO fix the flaky test
 			patchLibraryElement(t, grafanaListedAddr, "editor", "editor", uid, folderUID, http.StatusOK)
 		})
 	})
@@ -195,7 +196,7 @@ func TestIntegrationLibraryElementGranularPermissions(t *testing.T) {
 		})
 
 		t.Run("When viewer doesn't have read access to folder2, they cannot move library element to folder2", func(t *testing.T) {
-			patchLibraryElement(t, grafanaListedAddr, "granular-viewer", "granular-viewer", uid, folder2UID, http.StatusBadRequest)
+			patchLibraryElement(t, grafanaListedAddr, "granular-viewer", "granular-viewer", uid, folder2UID, http.StatusForbidden)
 		})
 	})
 

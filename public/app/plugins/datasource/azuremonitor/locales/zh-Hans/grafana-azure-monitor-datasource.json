@@ -4,7 +4,6 @@
       "label-advanced": "高级"
     },
     "advanced-resource-picker": {
-      "aria-label-add": "添加",
       "aria-label-remove": "删除",
       "button-add-resource": "添加资源",
       "button-add-resource-uri": "添加资源 URI",

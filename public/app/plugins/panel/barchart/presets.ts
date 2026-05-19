@@ -10,20 +10,21 @@ import { AxisPlacement, GraphGradientMode, StackingMode } from '@grafana/schema'
 import { SUGGESTIONS_LEGEND_OPTIONS } from 'app/features/panel/suggestions/utils';
 
 import { type FieldConfig, type Options } from './panelcfg.gen';
+import { BARCHART_CARD_OPTIONS } from './suggestions';
 
 const MAX_PREVIEW_ROWS = 20;
 
 const previewModifier = (s: VisualizationSuggestion<Options, FieldConfig>) => {
+  s.options!.barWidth = 0.8;
   s.options!.legend = SUGGESTIONS_LEGEND_OPTIONS;
   s.fieldConfig!.defaults.custom!.axisPlacement = AxisPlacement.Hidden;
-  s.options!.barWidth = 0.8;
 };
 
 function makePreset(
   preset: Omit<VisualizationSuggestion<Options, FieldConfig>, 'cardOptions'>,
   maxRows?: number
 ): VisualizationSuggestion<Options, FieldConfig> {
-  return { ...preset, cardOptions: { previewModifier, maxRows } };
+  return { ...preset, cardOptions: { ...BARCHART_CARD_OPTIONS, previewModifier, maxRows } };
 }
 
 const CLASSIC_CUSTOM: Partial<FieldConfig> = {

@@ -11,6 +11,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	mock "github.com/stretchr/testify/mock"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -883,7 +884,7 @@ func TestReleaseExistingItems_ResourcesConcurrent(t *testing.T) {
 	)
 
 	items := provisioning.ResourceList{Items: []provisioning.ResourceListItem{}}
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		items.Items = append(items.Items, provisioning.ResourceListItem{
 			Group:    "dashboard.grafana.app",
 			Resource: "dashboards",
@@ -979,7 +980,7 @@ func TestFinalizer_processExistingItems_Concurrency(t *testing.T) {
 
 			items := provisioning.ResourceList{Items: []provisioning.ResourceListItem{}}
 
-			for i := 0; i < tc.dashboardCount; i++ {
+			for i := range tc.dashboardCount {
 				items.Items = append(items.Items, provisioning.ResourceListItem{
 					Group:    "dashboard.grafana.app",
 					Resource: "dashboards",
@@ -987,7 +988,7 @@ func TestFinalizer_processExistingItems_Concurrency(t *testing.T) {
 				})
 			}
 
-			for i := 0; i < tc.folderCount; i++ {
+			for i := range tc.folderCount {
 				items.Items = append(items.Items, provisioning.ResourceListItem{
 					Group:    folders.GroupVersion.Group,
 					Resource: "folders",
@@ -1072,4 +1073,145 @@ func TestFinalizer_processExistingItems_Concurrency(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestReleaseExistingItems_RetriesOnConflict verifies that a transient
+// ResourceVersion conflict from the storage backend is retried rather than
+// failing the finalizer run.
+func TestReleaseExistingItems_RetriesOnConflict(t *testing.T) {
+	items := provisioning.ResourceList{
+		Items: []provisioning.ResourceListItem{
+			{Group: folders.GroupVersion.Group, Resource: "folders", Name: "folder-a", Path: "a"},
+		},
+	}
+
+	resourceLister := resources.NewMockResourceLister(t)
+	resourceLister.On("List", mock.Anything, "default", "my-repo").Return(&items, nil)
+
+	clientFactory := resources.NewMockClientFactory(t)
+	clients := resources.NewMockResourceClients(t)
+	clientFactory.On("Clients", mock.Anything, "default").Return(clients, nil)
+
+	var calls int32
+	client := &mockDynamicClient{
+		patchFunc: func(ctx context.Context, name string, pt types.PatchType, data []byte, options metav1.PatchOptions, subresources ...string) (*unstructured.Unstructured, error) {
+			n := atomic.AddInt32(&calls, 1)
+			if n == 1 {
+				// Mirror the error returned by the unified storage backend when
+				// a Write is rejected because of RV mismatch.
+				return nil, apierrors.NewConflict(
+					schema.GroupResource{Group: folders.GroupVersion.Group, Resource: "folders"},
+					name,
+					fmt.Errorf("requested RV does not match current RV"),
+				)
+			}
+			return nil, nil
+		},
+	}
+	clients.On("ForResource", mock.Anything, mock.Anything).Return(client, schema.GroupVersionKind{}, nil)
+
+	f := &finalizer{
+		lister:           resourceLister,
+		clientFactory:    clientFactory,
+		metrics:          func() *finalizerMetrics { m := registerFinalizerMetrics(prometheus.NewRegistry()); return &m }(),
+		maxWorkers:       1,
+		folderAPIVersion: "v1",
+	}
+
+	repo := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"}}
+	count, err := f.releaseExistingItems(context.Background(), repo)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, count)
+	assert.Equal(t, int32(2), atomic.LoadInt32(&calls), "patch should have been retried once after the initial conflict")
+}
+
+// TestDeleteExistingItems_RetriesOnConflict mirrors the release-path test for
+// the delete path so both cb invocations are covered by retry.
+func TestDeleteExistingItems_RetriesOnConflict(t *testing.T) {
+	items := provisioning.ResourceList{
+		Items: []provisioning.ResourceListItem{
+			{Group: folders.GroupVersion.Group, Resource: "folders", Name: "folder-a", Path: "a"},
+		},
+	}
+
+	resourceLister := resources.NewMockResourceLister(t)
+	resourceLister.On("List", mock.Anything, "default", "my-repo").Return(&items, nil)
+
+	clientFactory := resources.NewMockClientFactory(t)
+	clients := resources.NewMockResourceClients(t)
+	clientFactory.On("Clients", mock.Anything, "default").Return(clients, nil)
+
+	var calls int32
+	client := &mockDynamicClient{
+		deleteFunc: func(ctx context.Context, name string, options metav1.DeleteOptions, subresources ...string) error {
+			n := atomic.AddInt32(&calls, 1)
+			if n == 1 {
+				return apierrors.NewConflict(
+					schema.GroupResource{Group: folders.GroupVersion.Group, Resource: "folders"},
+					name,
+					fmt.Errorf("requested RV does not match current RV"),
+				)
+			}
+			return nil
+		},
+	}
+	clients.On("ForResource", mock.Anything, mock.Anything).Return(client, schema.GroupVersionKind{}, nil)
+
+	f := &finalizer{
+		lister:           resourceLister,
+		clientFactory:    clientFactory,
+		metrics:          func() *finalizerMetrics { m := registerFinalizerMetrics(prometheus.NewRegistry()); return &m }(),
+		maxWorkers:       1,
+		folderAPIVersion: "v1",
+	}
+
+	repo := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"}}
+	count, err := f.deleteExistingItems(context.Background(), repo)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, count)
+	assert.Equal(t, int32(2), atomic.LoadInt32(&calls), "delete should have been retried once after the initial conflict")
+}
+
+// TestReleaseExistingItems_ReturnsErrorWhenConflictPersists ensures the retry
+// budget is bounded: if every attempt returns Conflict, the finalizer surfaces
+// the error rather than looping forever.
+func TestReleaseExistingItems_ReturnsErrorWhenConflictPersists(t *testing.T) {
+	items := provisioning.ResourceList{
+		Items: []provisioning.ResourceListItem{
+			{Group: folders.GroupVersion.Group, Resource: "folders", Name: "folder-a", Path: "a"},
+		},
+	}
+
+	resourceLister := resources.NewMockResourceLister(t)
+	resourceLister.On("List", mock.Anything, "default", "my-repo").Return(&items, nil)
+
+	clientFactory := resources.NewMockClientFactory(t)
+	clients := resources.NewMockResourceClients(t)
+	clientFactory.On("Clients", mock.Anything, "default").Return(clients, nil)
+
+	var calls int32
+	client := &mockDynamicClient{
+		patchFunc: func(ctx context.Context, name string, pt types.PatchType, data []byte, options metav1.PatchOptions, subresources ...string) (*unstructured.Unstructured, error) {
+			atomic.AddInt32(&calls, 1)
+			return nil, apierrors.NewConflict(
+				schema.GroupResource{Group: folders.GroupVersion.Group, Resource: "folders"},
+				name,
+				fmt.Errorf("requested RV does not match current RV"),
+			)
+		},
+	}
+	clients.On("ForResource", mock.Anything, mock.Anything).Return(client, schema.GroupVersionKind{}, nil)
+
+	f := &finalizer{
+		lister:           resourceLister,
+		clientFactory:    clientFactory,
+		metrics:          func() *finalizerMetrics { m := registerFinalizerMetrics(prometheus.NewRegistry()); return &m }(),
+		maxWorkers:       1,
+		folderAPIVersion: "v1",
+	}
+
+	repo := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"}}
+	_, err := f.releaseExistingItems(context.Background(), repo)
+	assert.Error(t, err)
+	assert.Greater(t, atomic.LoadInt32(&calls), int32(1), "finalizer should have retried at least once before giving up")
 }

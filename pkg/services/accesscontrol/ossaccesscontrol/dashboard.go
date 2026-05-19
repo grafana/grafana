@@ -35,8 +35,11 @@ var DashboardViewActions = []string{dashboards.ActionDashboardsRead, accesscontr
 var DashboardEditActions = append(DashboardViewActions, []string{dashboards.ActionDashboardsWrite, dashboards.ActionDashboardsDelete, accesscontrol.ActionAnnotationsWrite, accesscontrol.ActionAnnotationsDelete, accesscontrol.ActionAnnotationsCreate}...)
 var DashboardAdminActions = append(DashboardEditActions, []string{dashboards.ActionDashboardsPermissionsRead, dashboards.ActionDashboardsPermissionsWrite}...)
 
-func registerDashboardRoles(cfg *setting.Cfg, _ featuremgmt.FeatureToggles, service accesscontrol.Service) error {
-	if !cfg.RBAC.PermissionsWildcardSeed("dashboard") {
+// DashboardFixedRoleRegistrations returns the wildcard seed role registrations
+// for dashboards. When wildcardSeed is false an empty slice is returned
+// (the feature is disabled for this instance).
+func DashboardFixedRoleRegistrations(wildcardSeed bool) []accesscontrol.RoleRegistration {
+	if !wildcardSeed {
 		return nil
 	}
 
@@ -76,7 +79,11 @@ func registerDashboardRoles(cfg *setting.Cfg, _ featuremgmt.FeatureToggles, serv
 		Grants: []string{"Admin"},
 	}
 
-	return service.DeclareFixedRoles(viewer, editor, admin)
+	return []accesscontrol.RoleRegistration{viewer, editor, admin}
+}
+
+func registerDashboardRoles(cfg *setting.Cfg, _ featuremgmt.FeatureToggles, service accesscontrol.Service) error {
+	return service.DeclareFixedRoles(DashboardFixedRoleRegistrations(cfg.RBAC.PermissionsWildcardSeed("dashboard"))...)
 }
 
 func ProvideDashboardPermissions(
