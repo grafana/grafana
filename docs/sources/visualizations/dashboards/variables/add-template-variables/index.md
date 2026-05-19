@@ -96,7 +96,7 @@ To create a variable, follow these steps:
 1. In the toolbar, click the **Dashboard options** icon to open the sidebar.
 1. In the sidebar, click **Settings**.
 1. Go to the **Variables** tab.
-1. Click **Add variable**, or if there are already existing variables, **+ New variable**.
+1. Click **Add variable**, or if there are already variables, **+ New variable**.
 1. Choose an option in the **Select variable type** drop-down list.
 
 {{< shared id="add-variable" >}}
@@ -196,9 +196,9 @@ If you need more room in a single input field query editor, then hover your curs
 
 ## Add a custom variable
 
-Use a _custom_ variable for a value that does not change, such as a number or a string.
+Use a _custom_ variable for a value that doesn't change, such as a number or a string.
 
-For example, if you have server names or region names that never change, then you might want to create them as custom variables rather than query variables. Because they do not change, you might use them in [chained variables](#chained-variables) rather than other query variables. That would reduce the number of queries Grafana must send when chained variables are updated.
+For example, if you have server names or region names that never change, then you might want to create them as custom variables rather than query variables. Because they don't change, you might use them in [chained variables](#chained-variables) rather than other query variables. That would reduce the number of queries Grafana must send when chained variables are updated.
 
 1. [Enter general options](#enter-general-options).
 1. Configure the following options:
@@ -471,16 +471,16 @@ You can also use switch variables in panel titles and other dashboard elements:
 <!-- vale Grafana.Spelling = YES -->
 <!-- vale Grafana.WordList = YES -->
 
-## Configure variable selection options
+## Variable selection options {#configure-variable-selection-options}
 
-**Selection Options** are a feature you can use to manage variable option selections. All selection options are optional, and they are off by default.
+**Selection Options** are a feature you can use to manage variable option selections for query and custom variables. All selection options are optional, and they are off by default.
 
 ### Multi-value variables
 
-Interpolating a variable with multiple values selected is tricky as it is not straight forward how to format the multiple values into a string that is valid in the given context where the variable is used. Grafana tries to solve this by allowing each data source plugin to inform the templating interpolation engine what format to use for multiple values.
+Interpolating a variable with multiple values selected is tricky as it's not straight forward how to format the multiple values into a string that's valid in the given context where the variable is used. Grafana tries to solve this by allowing each data source plugin to inform the templating interpolation engine what format to use for multiple values.
 
 {{< admonition type="note" >}}
-The **Custom all value** option on the variable must be blank for Grafana to format all values into a single string. If it is left blank, then Grafana concatenates (adds together) all the values in the query. Something like `value1,value2,value3`. If a custom `all` value is used, then instead the value is something like `*` or `all`.
+The **Custom all value** option on the variable must be blank for Grafana to format all values into a single string. If it's left blank, then Grafana concatenates (adds together) all the values in the query. Something like `value1,value2,value3`. If a custom `all` value is used, then instead the value is something like `*` or `all`.
 {{< /admonition >}}
 
 #### Multi-value variables with a Graphite data source
@@ -535,7 +535,7 @@ By default the `All` value includes all options in combined expression. This can
 
 In order to have custom regular expression, globs, or Lucene syntax in the **Custom all value** option, it's never escaped so you have to think about what's a valid value for your data source.
 
-## Configure multi-property variables
+## Multi-property variables
 
 If you have a multi-source dashboard that uses multiple variables for the same logical concept&mdash;for example, an environment identified as `dev` vs `development`&mdash;, you can set up a multi-property variable to let you reference all those values. Instead of creating and keeping multiple variables for the same logical concept in sync, you can map all of those identifiers to one variable and then reference any property you need in panels and queries.
 
