@@ -13,6 +13,24 @@ exports[`TableNG SparklineCell threshold wiring (canvas) renders hue gradient wh
   },
   {
     "props": {
+      "x0": 0,
+      "x1": 0,
+      "y0": 0,
+      "y1": 25,
+    },
+    "type": "createLinearGradient",
+  },
+  {
+    "props": {
+      "x0": 0,
+      "x1": 0,
+      "y0": 0,
+      "y1": 25,
+    },
+    "type": "createLinearGradient",
+  },
+  {
+    "props": {
       "value": CanvasGradient {
         "addColorStop": [MockFunction] {
           "calls": [
@@ -177,6 +195,24 @@ exports[`TableNG SparklineCell threshold wiring (canvas) renders hue gradient wh
   },
   {
     "props": {
+      "x0": 0,
+      "x1": 0,
+      "y0": 0,
+      "y1": 25,
+    },
+    "type": "createLinearGradient",
+  },
+  {
+    "props": {
+      "x0": 0,
+      "x1": 0,
+      "y0": 0,
+      "y1": 25,
+    },
+    "type": "createLinearGradient",
+  },
+  {
+    "props": {
       "value": CanvasGradient {
         "addColorStop": [MockFunction] {
           "calls": [
@@ -338,6 +374,24 @@ exports[`TableNG SparklineCell threshold wiring (canvas) renders scheme gradient
       "y": 0,
     },
     "type": "clearRect",
+  },
+  {
+    "props": {
+      "x0": 0,
+      "x1": 0,
+      "y0": 25,
+      "y1": 5,
+    },
+    "type": "createLinearGradient",
+  },
+  {
+    "props": {
+      "x0": 0,
+      "x1": 0,
+      "y0": 25,
+      "y1": 5,
+    },
+    "type": "createLinearGradient",
   },
   {
     "props": {

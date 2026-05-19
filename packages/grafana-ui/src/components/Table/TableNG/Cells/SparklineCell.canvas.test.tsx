@@ -13,6 +13,7 @@ import {
 } from '@grafana/data';
 import { TableCellDisplayMode } from '@grafana/schema';
 
+import * as measureTextModule from '../../../../utils/measureText';
 import * as sparklineUtils from '../../../Sparkline/utils';
 import { type UPlotConfigBuilder } from '../../../uPlot/config/UPlotConfigBuilder';
 
@@ -54,7 +55,9 @@ function renderSparklineCell(field: Field) {
 
 describe('TableNG SparklineCell threshold wiring (canvas)', () => {
   const realPrepareConfig = sparklineUtils.prepareConfig;
+  const realGetCanvasContext = measureTextModule.getCanvasContext;
   let prepareConfigSpy: jest.SpyInstance;
+  let getCanvasContextSpy: jest.SpyInstance;
   let uPlotInstance: InstanceType<typeof uPlot> | undefined;
 
   const assertCanvasOutput = async () => {
@@ -64,9 +67,17 @@ describe('TableNG SparklineCell threshold wiring (canvas)', () => {
 
   beforeEach(() => {
     uPlotInstance = undefined;
+    // gradientFills.ts creates linear gradients on the shared measureText canvas
+    // (getCanvasContext) — separate from uPlot's own ctx — so the createLinearGradient
+    // geometry never lands in uPlotInstance.ctx events and the viewer can't replay it.
+    // Routing both to the same ctx makes the snapshot self-contained.
+    getCanvasContextSpy = jest
+      .spyOn(measureTextModule, 'getCanvasContext')
+      .mockImplementation(() => uPlotInstance?.ctx ?? realGetCanvasContext());
+
     prepareConfigSpy = jest.spyOn(sparklineUtils, 'prepareConfig').mockImplementation((...args) => {
       const builder: UPlotConfigBuilder = realPrepareConfig(...args);
-      builder.addHook('draw', (u: uPlot) => {
+      builder.addHook('init', (u: uPlot) => {
         uPlotInstance = u;
       });
       return builder;
@@ -75,6 +86,7 @@ describe('TableNG SparklineCell threshold wiring (canvas)', () => {
 
   afterEach(() => {
     prepareConfigSpy.mockRestore();
+    getCanvasContextSpy.mockRestore();
   });
 
   it('renders scheme gradient when color mode is Thresholds with steps', async () => {
