@@ -10,14 +10,12 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	authlib "github.com/grafana/authlib/types"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -1393,128 +1391,94 @@ func (m *mockSearchClient) Search(ctx context.Context, req *resourcepb.ResourceS
 	return resp, nil
 }
 
+// allow is a single (verb, name, folder) tuple the mock authlib client treats
+// as Allowed; everything else is denied.
+type allow struct{ verb, name, folder string }
+
 func TestCheckMoveAccess(t *testing.T) {
-	const orgID int64 = 1
-	scope := folder.ScopeFoldersProvider.GetResourceScopeUID
 	const (
-		sourceUID     = "source"
-		destUID       = "dest"
-		destParentUID = "destParent"
+		namespace    = "default"
+		orgID        = int64(1)
+		sourceUID    = "source"
+		oldParentUID = "oldParent"
+		newParentUID = "newParent"
 	)
-	destAncestors := []folders.FolderInfo{
-		{Name: destUID, Parent: destParentUID},
-		{Name: destParentUID, Parent: folder.GeneralFolderUID},
-		{Name: folder.GeneralFolderUID},
-	}
+
+	// Common allows: user can update source under its current parent (so the
+	// escalation check passes for "update" when present), and can create
+	// folders in the new parent (so destination-write passes). Tests override
+	// these via additionalAllows / nilClient / no destination-write entry.
+	canCreateInNew := allow{verb: utils.VerbCreate, folder: newParentUID}
+	canUpdateOnSourceUnderOld := allow{verb: utils.VerbUpdate, name: sourceUID, folder: oldParentUID}
+	canUpdateOnSourceUnderNew := allow{verb: utils.VerbUpdate, name: sourceUID, folder: newParentUID}
 
 	tests := []struct {
-		name         string
-		newParentUID string
-		ancestors    []folders.FolderInfo
-		permissions  map[string][]string
-		accessNil    bool
-		expectedErr  string
+		name        string
+		newParent   string
+		oldParent   string
+		nilClient   bool
+		allows      []allow
+		expectedErr string
 	}{
 		{
-			name:         "nil accessControl is a no-op",
-			newParentUID: destUID,
-			ancestors:    destAncestors,
-			accessNil:    true,
+			name:      "nil accessClient is a no-op",
+			newParent: newParentUID,
+			oldParent: oldParentUID,
+			nilClient: true,
 		},
 		{
-			name:         "write on destination matches on source, no escalation",
-			newParentUID: destUID,
-			ancestors:    destAncestors,
-			permissions: map[string][]string{
-				folder.ActionFoldersWrite: {scope(destUID), scope(sourceUID)},
-			},
-		},
-		{
-			name:         "create on destination matches on source, no escalation",
-			newParentUID: destUID,
-			ancestors:    destAncestors,
-			permissions: map[string][]string{
-				folder.ActionFoldersCreate: {scope(destUID), scope(sourceUID)},
-			},
-		},
-		{
-			name:         "move to root requires create on general folder",
-			newParentUID: folder.RootFolderUID,
-			permissions: map[string][]string{
-				folder.ActionFoldersCreate: {scope(folder.GeneralFolderUID), scope(sourceUID)},
-			},
-		},
-		{
-			name:         "move to root denied without create on general",
-			newParentUID: folder.RootFolderUID,
-			permissions: map[string][]string{
-				folder.ActionFoldersWrite: {scope(folder.GeneralFolderUID)},
-			},
+			name:      "no create on new parent denies the move",
+			newParent: newParentUID,
+			oldParent: oldParentUID,
+			// no canCreateInNew → destination-write fails
 			expectedErr: "folders.forbiddenMove",
 		},
 		{
-			name:         "no write or create on destination",
-			newParentUID: destUID,
-			ancestors:    destAncestors,
-			permissions: map[string][]string{
-				folder.ActionFoldersRead: {scope(destUID)},
-			},
+			name:      "create on new parent and no extra capabilities is allowed",
+			newParent: newParentUID,
+			oldParent: oldParentUID,
+			allows:    []allow{canCreateInNew},
+		},
+		{
+			name:      "verb allowed on source only under new parent is escalation",
+			newParent: newParentUID,
+			oldParent: oldParentUID,
+			allows:    []allow{canCreateInNew, canUpdateOnSourceUnderNew},
+			expectedErr: "folders.accessEscalation",
+		},
+		{
+			name:      "verb allowed on source under both parents is not escalation",
+			newParent: newParentUID,
+			oldParent: oldParentUID,
+			allows:    []allow{canCreateInNew, canUpdateOnSourceUnderNew, canUpdateOnSourceUnderOld},
+		},
+		{
+			name:      "move to root requires create at root",
+			newParent: folder.RootFolderUID,
+			oldParent: oldParentUID,
+			allows:    []allow{{verb: utils.VerbCreate, folder: ""}},
+		},
+		{
+			name:      "move to root denied without create at root",
+			newParent: folder.RootFolderUID,
+			oldParent: oldParentUID,
 			expectedErr: "folders.forbiddenMove",
-		},
-		{
-			name:         "escalation via permission on destination only",
-			newParentUID: destUID,
-			ancestors:    destAncestors,
-			permissions: map[string][]string{
-				folder.ActionFoldersWrite: {scope(destUID)},
-				folder.ActionFoldersRead:  {scope(destUID)},
-			},
-			expectedErr: "folders.accessEscalation",
-		},
-		{
-			name:         "escalation via permission on destination ancestor",
-			newParentUID: destUID,
-			ancestors:    destAncestors,
-			permissions: map[string][]string{
-				folder.ActionFoldersWrite: {scope(destUID)},
-				folder.ActionFoldersRead:  {scope(destParentUID)},
-			},
-			expectedErr: "folders.accessEscalation",
-		},
-		{
-			name:         "matching permission on source prevents escalation",
-			newParentUID: destUID,
-			ancestors:    destAncestors,
-			permissions: map[string][]string{
-				folder.ActionFoldersWrite: {scope(destUID), scope(sourceUID)},
-				folder.ActionFoldersRead:  {scope(destUID), scope(sourceUID)},
-			},
-		},
-		{
-			name:         "wildcard on every action satisfies escalation check",
-			newParentUID: destUID,
-			ancestors:    destAncestors,
-			permissions: map[string][]string{
-				folder.ActionFoldersWrite: {folder.ScopeFoldersAll},
-				folder.ActionFoldersRead:  {folder.ScopeFoldersAll},
-			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := identity.WithRequester(context.Background(), &user.SignedInUser{
-				UserID:      1,
-				OrgID:       orgID,
-				Permissions: map[int64]map[string][]string{orgID: tt.permissions},
+				UserID: 1,
+				OrgID:  orgID,
 			})
 
-			var ac accesscontrol.AccessControl
-			if !tt.accessNil {
-				ac = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
+			var client authlib.AccessClient
+			if !tt.nilClient {
+				client = newMockAccessClient(tt.allows)
 			}
 
-			err := checkMoveAccess(ctx, sourceUID, tt.newParentUID, tt.ancestors, ac)
+			err := checkMoveAccess(ctx, namespace, sourceUID, tt.oldParent, tt.newParent, client)
 			if tt.expectedErr == "" {
 				require.NoError(t, err)
 				return
@@ -1523,6 +1487,36 @@ func TestCheckMoveAccess(t *testing.T) {
 			require.Contains(t, err.Error(), tt.expectedErr)
 		})
 	}
+}
+
+type mockAccessClient struct {
+	allowed map[allow]struct{}
+}
+
+func newMockAccessClient(allows []allow) *mockAccessClient {
+	m := &mockAccessClient{allowed: make(map[allow]struct{}, len(allows))}
+	for _, a := range allows {
+		m.allowed[a] = struct{}{}
+	}
+	return m
+}
+
+func (m *mockAccessClient) Check(_ context.Context, _ authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+	_, ok := m.allowed[allow{verb: req.Verb, name: req.Name, folder: folder}]
+	return authlib.CheckResponse{Allowed: ok, Zookie: authlib.NoopZookie{}}, nil
+}
+
+func (m *mockAccessClient) BatchCheck(_ context.Context, _ authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	results := make(map[string]authlib.BatchCheckResult, len(req.Checks))
+	for _, c := range req.Checks {
+		_, ok := m.allowed[allow{verb: c.Verb, name: c.Name, folder: c.Folder}]
+		results[c.CorrelationID] = authlib.BatchCheckResult{Allowed: ok}
+	}
+	return authlib.BatchCheckResponse{Results: results}, nil
+}
+
+func (m *mockAccessClient) Compile(_ context.Context, _ authlib.AuthInfo, _ authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
+	return func(string, string) bool { return false }, authlib.NoopZookie{}, nil
 }
 
 // RebuildIndexes implements resourcepb.ResourceIndexClient.

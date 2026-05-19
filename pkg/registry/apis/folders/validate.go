@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
@@ -140,7 +141,7 @@ func validateOnUpdate(ctx context.Context,
 	getter rest.Getter,
 	parents parentsGetter,
 	searcher resourcepb.ResourceIndexClient,
-	accessControl accesscontrol.AccessControl,
+	accessClient authlib.AccessClient,
 	maxDepth int,
 ) error {
 	folderObj, err := utils.MetaAccessor(obj)
@@ -179,8 +180,9 @@ func validateOnUpdate(ctx context.Context,
 		return folder.ErrFolderCannotBeMovedToK6.Errorf("k6 project may not be moved")
 	}
 
-	// Resolve the destination's ancestor chain once — reused for the
-	// escalation check below and the depth/circular checks further down.
+	// Resolve the destination's ancestor chain for the depth and circular
+	// reference checks below. Access checks rely on Zanzana for inheritance
+	// and don't need this chain enumerated.
 	var destinationAncestors []folders.FolderInfo
 	if newParent != folder.RootFolderUID {
 		parentObj, err := getter.Get(ctx, newParent, &metav1.GetOptions{})
@@ -198,7 +200,7 @@ func validateOnUpdate(ctx context.Context,
 		destinationAncestors = info.Items
 	}
 
-	if err := checkMoveAccess(ctx, obj.Name, newParent, destinationAncestors, accessControl); err != nil {
+	if err := checkMoveAccess(ctx, obj.Namespace, obj.Name, oldFolder.GetFolder(), newParent, accessClient); err != nil {
 		return err
 	}
 
@@ -260,19 +262,38 @@ func validateOnUpdate(ctx context.Context,
 	return checkSubtreeDepth(ctx, searcher, obj.Namespace, obj.Name, allowedDepth, maxDepth)
 }
 
+// escalationVerbs are the folder-resource verbs the access-escalation guard
+// compares between source and destination. If the user can perform any of
+// these on the destination but not the source, the move would grant them new
+// capabilities and is rejected.
+var escalationVerbs = []string{
+	utils.VerbGet,
+	utils.VerbUpdate,
+	utils.VerbDelete,
+	utils.VerbCreate,
+	utils.VerbSetPermissions,
+}
+
 // checkMoveAccess enforces destination-write permission and the
-// access-escalation guard. destinationAncestors must contain the new parent
-// followed by its ancestors up to and including the root entry, or nil when
-// moving to root. A nil accessControl makes this a no-op so the cloud
-// apiserver path (where the service is not wired) is unchanged.
+// access-escalation guard via authlib (Zanzana in MT, legacy-backed in
+// single-tenant). A nil accessClient makes this a no-op for callers that have
+// not wired one yet.
+//
+// The escalation guard asks, for each verb in escalationVerbs: "would moving
+// source under newParent grant the user a capability on source that they
+// don't currently have?" Concretely, we Check(Name=source) twice — once with
+// Folder=oldParent (current state) and once with Folder=newParent
+// (hypothetical post-move state) — and reject the move if any verb is allowed
+// under the new parent but not the current one.
 func checkMoveAccess(
 	ctx context.Context,
+	namespace string,
 	sourceUID string,
+	oldParentUID string,
 	newParentUID string,
-	destinationAncestors []folders.FolderInfo,
-	accessControl accesscontrol.AccessControl,
+	accessClient authlib.AccessClient,
 ) error {
-	if accessControl == nil {
+	if accessClient == nil {
 		return nil
 	}
 
@@ -281,55 +302,88 @@ func checkMoveAccess(
 		return err
 	}
 
-	destinationParentUID := newParentUID
-	if destinationParentUID == folder.RootFolderUID {
-		destinationParentUID = folder.GeneralFolderUID
+	gvr := folders.FolderResourceInfo.GroupVersionResource()
+	newParentFolder := folderFieldFor(newParentUID)
+	oldParentFolder := folderFieldFor(oldParentUID)
+
+	// Destination-write: can the user create a child folder under the new
+	// parent? Zanzana resolves inheritance, so a single Check on the parent
+	// folder (empty string for root) is sufficient.
+	writeResp, err := accessClient.Check(ctx, user, authlib.CheckRequest{
+		Verb:      utils.VerbCreate,
+		Group:     gvr.Group,
+		Resource:  gvr.Resource,
+		Namespace: namespace,
+	}, newParentFolder)
+	if err != nil {
+		return err
+	}
+	if !writeResp.Allowed {
+		destLabel := newParentUID
+		if destLabel == folder.RootFolderUID {
+			destLabel = folder.GeneralFolderUID
+		}
+		return folder.ErrMoveAccessDenied.Errorf("user does not have permissions to move a folder to folder with UID %s", destLabel)
 	}
 
-	var writeEvaluator accesscontrol.Evaluator
-	if newParentUID == folder.RootFolderUID {
-		writeEvaluator = accesscontrol.EvalPermission(folder.ActionFoldersCreate, folder.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID))
-	} else {
-		writeEvaluator = accesscontrol.EvalAny(
-			accesscontrol.EvalPermission(folder.ActionFoldersWrite, folder.ScopeFoldersProvider.GetResourceScopeUID(newParentUID)),
-			accesscontrol.EvalPermission(folder.ActionFoldersCreate, folder.ScopeFoldersProvider.GetResourceScopeUID(newParentUID)),
+	const newPrefix, oldPrefix = "new|", "old|"
+	checks := make([]authlib.BatchCheckItem, 0, 2*len(escalationVerbs))
+	for _, verb := range escalationVerbs {
+		checks = append(checks,
+			authlib.BatchCheckItem{
+				CorrelationID: newPrefix + verb,
+				Verb:          verb,
+				Group:         gvr.Group,
+				Resource:      gvr.Resource,
+				Name:          sourceUID,
+				Folder:        newParentFolder,
+			},
+			authlib.BatchCheckItem{
+				CorrelationID: oldPrefix + verb,
+				Verb:          verb,
+				Group:         gvr.Group,
+				Resource:      gvr.Resource,
+				Name:          sourceUID,
+				Folder:        oldParentFolder,
+			},
 		)
 	}
-	if hasAccess, err := accessControl.Evaluate(ctx, user, writeEvaluator); err != nil {
+
+	batchResp, err := accessClient.BatchCheck(ctx, user, authlib.BatchCheckRequest{
+		Namespace: namespace,
+		Checks:    checks,
+	})
+	if err != nil {
 		return err
-	} else if !hasAccess {
-		return folder.ErrMoveAccessDenied.Errorf("user does not have permissions to move a folder to folder with UID %s", destinationParentUID)
 	}
 
-	scopes := []string{folder.ScopeFoldersProvider.GetResourceScopeUID(destinationParentUID)}
-	for _, ancestor := range destinationAncestors {
-		if ancestor.Name == "" || ancestor.Name == destinationParentUID || ancestor.Name == folder.RootFolderUID {
+	for _, verb := range escalationVerbs {
+		newState, nOk := batchResp.Results[newPrefix+verb]
+		oldState, oOk := batchResp.Results[oldPrefix+verb]
+		if !nOk || !oOk {
 			continue
 		}
-		scopes = append(scopes, folder.ScopeFoldersProvider.GetResourceScopeUID(ancestor.Name))
-	}
-
-	permissions := user.GetPermissions()
-	currentFolderScope := folder.ScopeFoldersProvider.GetResourceScopeUID(sourceUID)
-	var requiredOnSource []accesscontrol.Evaluator
-	for action, userScopes := range permissions {
-		for _, scope := range scopes {
-			if slices.Contains(userScopes, scope) {
-				requiredOnSource = append(requiredOnSource, accesscontrol.EvalPermission(action, currentFolderScope))
-				break
-			}
+		if newState.Error != nil {
+			return newState.Error
+		}
+		if oldState.Error != nil {
+			return oldState.Error
+		}
+		if newState.Allowed && !oldState.Allowed {
+			return folder.ErrAccessEscalation.Errorf("user cannot move a folder to another folder where they have higher permissions")
 		}
 	}
-
-	if len(requiredOnSource) == 0 {
-		return nil
-	}
-	if hasAccess, err := accessControl.Evaluate(ctx, user, accesscontrol.EvalAll(requiredOnSource...)); err != nil {
-		return err
-	} else if !hasAccess {
-		return folder.ErrAccessEscalation.Errorf("user cannot move a folder to another folder where they have higher permissions")
-	}
 	return nil
+}
+
+// folderFieldFor returns the folder UID to use as the authlib `folder`
+// argument: RootFolderUID is the empty-string sentinel for root, but authlib
+// expects the literal empty string for resources at the root.
+func folderFieldFor(parentUID string) string {
+	if parentUID == folder.RootFolderUID {
+		return ""
+	}
+	return parentUID
 }
 
 // canSkipChildrenCheck determines if we can skip the expensive children depth check.
