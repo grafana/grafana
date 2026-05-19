@@ -5010,6 +5010,7 @@
   "connections": {
     "add-new-connection": {
       "category": "Category",
+      "clear": "Clear",
       "filter-by-category": "Filter by category",
       "filter-by-options": {
         "label": {
@@ -5021,6 +5022,7 @@
       "filter-by-state-disabled": "This filter has been disabled because the Grafana server cannot access grafana.com",
       "filter-by-type": "Filter by type",
       "filters": "Filters",
+      "give-feedback": "Give feedback",
       "group-by": "Group by",
       "group-by-options": {
         "label": {

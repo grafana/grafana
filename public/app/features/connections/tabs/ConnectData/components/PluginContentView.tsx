@@ -35,10 +35,7 @@ export function PluginContentView({
       <>
         {datasourceCardGridItems.length > 0 && (
           <>
-            <CategoryHeader
-              iconName="database"
-              label={t('connections.connect-data.datasources-header', 'Data Sources')}
-            />
+            <CategoryHeader iconName="database" label={t('connections.connect-data.datasources-header', 'Data Sources')} />
             <CardGrid items={datasourceCardGridItems} onClickItem={onClickCardGridItem} />
           </>
         )}
@@ -59,7 +56,7 @@ export function PluginContentView({
       {pluginsByCategory.map(({ label, items }, index) => (
         <div key={label}>
           {index > 0 && <div className={styles.spacer} />}
-          <CategoryHeader iconName="folder" label={label} />
+          <CategoryHeader label={label} />
           <CardGrid items={items} onClickItem={onClickCardGridItem} />
         </div>
       ))}

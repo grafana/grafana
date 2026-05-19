@@ -8,12 +8,13 @@ import {
   LoadingPlaceholder,
   EmptyState,
   Field,
-  IconButton,
+  Button,
   RadioButtonGroup,
   useStyles2,
   Sidebar,
   useSidebar,
   Stack,
+  Text,
 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -31,29 +32,25 @@ import { useConnectionFiltersFromQuery } from './hooks/useConnectionFiltersFromQ
 import { useCategoryFilterOptions, useFilteredPlugins, usePluginsByCategory } from './hooks/usePluginFiltering';
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  pageWrapper: css({
+    display: 'flex',
+    flexDirection: 'column',
+    flex: 1,
+    minHeight: 0,
+    overflow: 'hidden',
+  }),
   searchHeader: css({
     paddingBottom: theme.spacing(2),
-    borderBottom: `1px solid ${theme.colors.border.weak}`,
   }),
   searchField: css({
     flex: 1,
-  }),
-  groupByControl: css({
-    minWidth: '200px',
   }),
   contentWrap: css({
     flex: 1,
     overflowY: 'auto',
     padding: theme.spacing(2),
+    borderTop: `1px solid ${theme.colors.border.weak}`,
     minHeight: 0,
-  }),
-  mainContent: css({
-    display: 'flex',
-    flexDirection: 'column',
-    flex: 1,
-    minWidth: 0,
-    minHeight: 0,
-    overflow: 'hidden',
   }),
   filterButtonWrapper: css({
     marginTop: theme.spacing(1),
@@ -79,6 +76,16 @@ const getStyles = (theme: GrafanaTheme2) => ({
     minHeight: 0,
     position: 'relative',
     overflow: 'hidden',
+  }),
+  paneHeader: css({
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: theme.spacing(1, 1, 1.5, 1.5),
+    borderBottom: `1px solid ${theme.colors.border.weak}`,
+  }),
+  clearButton: css({
+    color: theme.colors.text.secondary,
   }),
 });
 
@@ -123,7 +130,12 @@ export function AddNewConnection() {
     onClosePane: () => setIsPaneOpen(false),
     edgeMargin: 0,
     bottomMargin: 0,
+    contentMargin: 0,
   });
+
+  // Hide the dock/undock and close buttons in the sidebar pane header
+  sidebarContextValue.onToggleDock = undefined;
+  sidebarContextValue.onClosePane = undefined;
 
   const handleSearchChange = useCallback(
     (val: string) => {
@@ -182,23 +194,23 @@ export function AddNewConnection() {
   return (
     <>
       {selectedItem && <NoAccessModal item={selectedItem} isOpen={true} onDismiss={handleCloseModal} />}
-      <div className={styles.outerWrapper} {...sidebarContextValue.outerWrapperProps}>
-        <div className={styles.mainContent}>
-          <div className={styles.searchHeader}>
-            <Stack direction="row" alignItems="center" justifyContent="space-between">
-              <div className={styles.searchField}>
-                <Field label={t('common.search', 'Search')} noMargin>
-                  <SearchField value={searchTerm} onSearch={handleSearchChange} id="connections-search-field" />
-                </Field>
-              </div>
-              <div className={styles.groupByControl}>
-                <Field label={t('connections.add-new-connection.group-by', 'Group by')} noMargin>
-                  <RadioButtonGroup value={groupBy} onChange={handlers.onGroupByChange} options={GROUP_BY_OPTIONS()} />
-                </Field>
-              </div>
-            </Stack>
-          </div>
+      <div className={styles.pageWrapper}>
+        <div className={styles.searchHeader}>
+          <Stack direction="row" alignItems="center" justifyContent="space-between">
+            <div className={styles.searchField}>
+              <Field label={t('common.search', 'Search')} noMargin>
+                <SearchField value={searchTerm} onSearch={handleSearchChange} id="connections-search-field" />
+              </Field>
+            </div>
+            <div>
+              <Field label={t('connections.add-new-connection.group-by', 'Group by')} noMargin>
+                <RadioButtonGroup value={groupBy} onChange={handlers.onGroupByChange} options={GROUP_BY_OPTIONS()} />
+              </Field>
+            </div>
+          </Stack>
+        </div>
 
+        <div className={styles.outerWrapper} {...sidebarContextValue.outerWrapperProps}>
           <div className={styles.contentWrap}>
             {isLoading && <LoadingPlaceholder text={t('common.loading', 'Loading...')} />}
             {error && <EmptyState variant="not-found" message={String(error)} />}
@@ -218,52 +230,59 @@ export function AddNewConnection() {
               />
             )}
           </div>
-        </div>
-        <Sidebar contextValue={sidebarContextValue}>
-          <Sidebar.Toolbar>
-            <div className={styles.filterButtonWrapper}>
-              {hasActiveFilters && <div className={styles.activeFilterDot} />}
-              <Sidebar.Button
-                icon="filter"
-                title={t('connections.add-new-connection.filters', 'Filters')}
-                onClick={() => setIsPaneOpen(!isPaneOpen)}
-              />
-            </div>
-          </Sidebar.Toolbar>
-          {isPaneOpen && (
-            <Sidebar.OpenPane>
-              <Sidebar.PaneHeader title={t('connections.add-new-connection.filters', 'Filters')}>
-                <IconButton
-                  name="history-alt"
-                  size="md"
-                  tooltip={t('connections.add-new-connection.reset-filters', 'Reset filters')}
-                  aria-label={t('connections.add-new-connection.reset-filters', 'Reset filters')}
-                  onClick={handlers.onResetFilters}
-                  disabled={!hasActiveFilters}
+          <Sidebar contextValue={sidebarContextValue}>
+            <Sidebar.Toolbar>
+              <div className={styles.filterButtonWrapper}>
+                {hasActiveFilters && <div className={styles.activeFilterDot} />}
+                <Sidebar.Button
+                  icon="filter"
+                  title={t('connections.add-new-connection.filters', 'Filters')}
+                  onClick={() => setIsPaneOpen(!isPaneOpen)}
                 />
-              </Sidebar.PaneHeader>
-              <FilterSidebar
-                state={{
-                  groupBy,
-                  categoryFilter,
-                  typeFilter,
-                  filterBy,
-                  sortBy,
-                }}
-                handlers={{
-                  onCategoryFilterChange: handlers.onCategoryFilterChange,
-                  onTypeFilterChange: handlers.onTypeFilterChange,
-                  onFilterByChange: handlers.onFilterByChange,
-                  onSortByChange: handlers.onSortByChange,
-                }}
-                categoryFilterOptions={categoryFilterOptions}
-                typeFilterOptions={TYPE_FILTER_OPTIONS()}
-                filterByOptions={FILTER_BY_OPTIONS()}
-                remotePluginsAvailable={remotePluginsAvailable}
-              />
-            </Sidebar.OpenPane>
-          )}
-        </Sidebar>
+              </div>
+            </Sidebar.Toolbar>
+            {isPaneOpen && (
+              <Sidebar.OpenPane>
+                <div className={styles.paneHeader}>
+                  <Text weight="medium" variant="h6">
+                    {t('connections.add-new-connection.filters', 'Filters')}
+                  </Text>
+                  <Button
+                    className={styles.clearButton}
+                    icon="history"
+                    size="sm"
+                    variant="secondary"
+                    fill="text"
+                    tooltip={t('connections.add-new-connection.reset-filters', 'Reset filters')}
+                    onClick={handlers.onResetFilters}
+                    disabled={!hasActiveFilters}
+                  >
+                    {t('connections.add-new-connection.clear', 'Clear')}
+                  </Button>
+                </div>
+                <FilterSidebar
+                  state={{
+                    groupBy,
+                    categoryFilter,
+                    typeFilter,
+                    filterBy,
+                    sortBy,
+                  }}
+                  handlers={{
+                    onCategoryFilterChange: handlers.onCategoryFilterChange,
+                    onTypeFilterChange: handlers.onTypeFilterChange,
+                    onFilterByChange: handlers.onFilterByChange,
+                    onSortByChange: handlers.onSortByChange,
+                  }}
+                  categoryFilterOptions={categoryFilterOptions}
+                  typeFilterOptions={TYPE_FILTER_OPTIONS()}
+                  filterByOptions={FILTER_BY_OPTIONS()}
+                  remotePluginsAvailable={remotePluginsAvailable}
+                />
+              </Sidebar.OpenPane>
+            )}
+          </Sidebar>
+        </div>
       </div>
     </>
   );

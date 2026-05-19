@@ -1,8 +1,8 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 
 import type { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Field, RadioButtonList, Tooltip, Select, Combobox, useStyles2 } from '@grafana/ui';
+import { Button, Field, RadioButtonList, Tooltip, Select, Combobox, useStyles2 } from '@grafana/ui';
 
 import { SORT_OPTIONS } from '../constants';
 
@@ -48,6 +48,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   filterLabel: css({
     color: theme.colors.text.secondary,
   }),
+  feedbackButton: css({
+    width: '100%',
+    justifyContent: 'center',
+  }),
   activeDot: css({
     position: 'absolute',
     top: 0,
@@ -73,6 +77,39 @@ export function FilterSidebar({
 
   return (
     <div className={styles.filterSection}>
+      {/* Filter by installed / all */}
+      <div className={styles.filterField}>
+        {state.filterBy !== 'all' && <div className={styles.activeDot} />}
+        <Field
+          label={<span className={styles.filterLabel}>{t('connections.add-new-connection.state', 'State')}</span>}
+          noMargin
+        >
+          {remotePluginsAvailable ? (
+            <RadioButtonList
+              name="filterBy"
+              value={state.filterBy}
+              onChange={handlers.onFilterByChange}
+              options={filterByOptions}
+            />
+          ) : (
+            <Tooltip
+              content={t(
+                'connections.add-new-connection.filter-by-state-disabled',
+                'This filter has been disabled because the Grafana server cannot access grafana.com'
+              )}
+              placement="top"
+            >
+              <RadioButtonList
+                name="filterBy"
+                disabled={true}
+                value={state.filterBy}
+                onChange={handlers.onFilterByChange}
+                options={filterByOptions}
+              />
+            </Tooltip>
+          )}
+        </Field>
+      </div>
       {/* Filter by category (when grouped by type) or by type (when grouped by category) */}
       {state.groupBy === 'type' ? (
         <div className={styles.filterField}>
@@ -108,42 +145,8 @@ export function FilterSidebar({
         </div>
       )}
 
-      {/* Filter by installed / all */}
-      <div className={styles.filterField}>
-        {state.filterBy !== 'all' && <div className={styles.activeDot} />}
-        <Field
-          label={<span className={styles.filterLabel}>{t('connections.add-new-connection.state', 'State')}</span>}
-          noMargin
-        >
-          {remotePluginsAvailable ? (
-            <RadioButtonList
-              name="filterBy"
-              value={state.filterBy}
-              onChange={handlers.onFilterByChange}
-              options={filterByOptions}
-            />
-          ) : (
-            <Tooltip
-              content={t(
-                'connections.add-new-connection.filter-by-state-disabled',
-                'This filter has been disabled because the Grafana server cannot access grafana.com'
-              )}
-              placement="top"
-            >
-              <RadioButtonList
-                name="filterBy"
-                disabled={true}
-                value={state.filterBy}
-                onChange={handlers.onFilterByChange}
-                options={filterByOptions}
-              />
-            </Tooltip>
-          )}
-        </Field>
-      </div>
-
       {/* Sorting */}
-      <div className={cx(styles.filterField, styles.filterFieldLast)}>
+      <div className={styles.filterField}>
         {state.sortBy !== 'nameAsc' && <div className={styles.activeDot} />}
         <Field
           label={<span className={styles.filterLabel}>{t('connections.add-new-connection.sort', 'Sort')}</span>}
@@ -157,6 +160,22 @@ export function FilterSidebar({
           />
         </Field>
       </div>
+
+      <Button
+        className={styles.feedbackButton}
+        icon="comment-alt-message"
+        size="md"
+        variant="secondary"
+        fill="outline"
+        onClick={() =>
+          window.open(
+            'https://docs.google.com/forms/d/e/1FAIpQLSdsey0TxZXshPWA2rrwcvWBpk-177SquXITFpjH5PAGaOQBew/viewform?usp=dialog',
+            '_blank'
+          )
+        }
+      >
+        {t('connections.add-new-connection.give-feedback', 'Give feedback')}
+      </Button>
     </div>
   );
 }

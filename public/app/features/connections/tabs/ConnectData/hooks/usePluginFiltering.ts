@@ -31,7 +31,7 @@ export function useCategoryFilterOptions(plugins: CatalogPlugin[]): SelectableVa
   const predefinedCategories = getPredefinedCategoryLabels();
   return useMemo(() => {
     const uniqueCategories = new Set<string>();
-    plugins.forEach((p) => uniqueCategories.add(p.category || 'other'));
+    plugins.forEach((p) => uniqueCategories.add(p.isEnterprise ? 'enterprise' : p.category || 'other'));
 
     const options: SelectableValue[] = [
       { value: 'all', label: t('connections.add-new-connection.filter-by-options.label.all', 'All') },
@@ -82,9 +82,13 @@ export function useFilteredPlugins(
 
     // For "group by type" view: apply category filter
     const filteredDataSources =
-      categoryFilter === 'all' ? dataSources : dataSources.filter((p) => (p.category || 'other') === categoryFilter);
+      categoryFilter === 'all'
+        ? dataSources
+        : dataSources.filter((p) => (p.isEnterprise ? 'enterprise' : p.category || 'other') === categoryFilter);
     const filteredApps =
-      categoryFilter === 'all' ? apps : apps.filter((p) => (p.category || 'other') === categoryFilter);
+      categoryFilter === 'all'
+        ? apps
+        : apps.filter((p) => (p.isEnterprise ? 'enterprise' : p.category || 'other') === categoryFilter);
 
     // For "group by type" view: also apply type filter (hide entire section)
     const typeFilteredDataSources = typeFilter === 'all' || typeFilter === PluginType.datasource ? dataSources : [];
@@ -117,7 +121,7 @@ export function usePluginsByCategory(
 
     const grouped: Record<string, CardGridItem[]> = {};
     allPlugins.forEach((plugin) => {
-      const category = plugin.category || 'other';
+      const category = plugin.isEnterprise ? 'enterprise' : plugin.category || 'other';
       if (!grouped[category]) {
         grouped[category] = [];
       }
