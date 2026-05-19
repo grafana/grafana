@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAsyncRetry } from 'react-use';
 
-import { type GrafanaTheme2, PluginExtensionPoints } from '@grafana/data';
+import { type ComponentTypeWithExtensionMeta, PluginExtensionPoints, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { usePluginComponents } from '@grafana/runtime';
 import { ScrollContainer, Stack, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
@@ -12,15 +12,41 @@ import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 
 import { RecentDashboardsTab } from './RecentDashboardsTab';
 import { StarredDashboardsTab } from './StarredDashboardsTab';
-import { type HomepageTab } from './types';
+import { type HomepageTabExtensionProps, isHomepageTab, type HomepageTab } from './types';
 
 const RECENT_TAB_ID = 'recent';
 const STARRED_TAB_ID = 'starred';
 const MAX_RECENT = 20;
 const MAX_STARRED = 30;
 
-interface HomepageTabExtensionProps {
-  registerTab: (tab: HomepageTab) => void;
+function DashboardExtensionTab({
+  Component,
+  registerTab,
+  activeTab,
+}: {
+  Component: ComponentTypeWithExtensionMeta<HomepageTabExtensionProps>;
+  registerTab: (tab: HomepageTab) => () => void;
+  activeTab: string;
+}) {
+  const [id, setId] = useState<string | null>(null);
+  const register = useCallback(
+    (tab: unknown) => {
+      if (!isHomepageTab(tab)) {
+        throw new Error(`Invalid tab object returned from extension: ${JSON.stringify(tab)}`);
+      }
+
+      setId(tab.id);
+      const unregister = registerTab(tab);
+
+      return () => {
+        setId(null);
+        unregister();
+      };
+    },
+    [registerTab]
+  );
+
+  return <Component register={register} active={activeTab === id} />;
 }
 
 export function DashboardTabs() {
@@ -54,12 +80,8 @@ export function DashboardTabs() {
   });
 
   const registerTab = useCallback((tab: HomepageTab) => {
-    setExtensionTabs((prev) => {
-      if (prev.some((t) => t.id === tab.id)) {
-        return prev;
-      }
-      return [...prev, tab];
-    });
+    setExtensionTabs((prev) => [...prev, tab]);
+    return () => setExtensionTabs((prev) => prev.filter((t) => t !== tab));
   }, []);
 
   // Auto-switch to the non-empty tab when initial data finishes loading
@@ -95,7 +117,7 @@ export function DashboardTabs() {
     },
   ];
 
-  const contentTabs = [...builtInTabs, ...extensionTabs.filter((tab) => tab.content)];
+  const contentTabs = [...builtInTabs, ...extensionTabs.filter((tab) => !tab.href)];
   const linkTabs = extensionTabs.filter((tab) => tab.href);
 
   return (
@@ -118,38 +140,38 @@ export function DashboardTabs() {
           <Tab key={tab.id} label={tab.label} icon={tab.icon} href={tab.href!} />
         ))}
       </TabsBar>
-      <TabContent className={styles.tabContent}>
-        <ScrollContainer showScrollIndicators maxHeight="256px" minHeight="256px">
-          {activeTab === RECENT_TAB_ID && (
-            <RecentDashboardsTab
-              dashboards={recentDashboards ?? []}
-              loading={recentLoading}
-              error={recentError}
-              retry={recentRetry}
-              foldersByUid={foldersByUid}
-            />
-          )}
-          {activeTab === STARRED_TAB_ID && (
-            <StarredDashboardsTab
-              dashboards={starredDashboards ?? []}
-              loading={starredLoading}
-              error={starredError}
-              retry={starredRetry}
-              foldersByUid={foldersByUid}
-            />
-          )}
-          {extensionTabs
-            .filter((tab) => tab.content && activeTab === tab.id)
-            .map((tab) => (
-              <div key={tab.id}>{tab.content}</div>
-            ))}
-        </ScrollContainer>
-      </TabContent>
 
-      {/* Render extension components (they return null, just register tabs) */}
-      {extensionComponents.map((Component, i) => (
-        <Component key={i} registerTab={registerTab} />
-      ))}
+      {(activeTab === RECENT_TAB_ID || activeTab === STARRED_TAB_ID) && (
+        <TabContent className={styles.tabContent}>
+          <ScrollContainer showScrollIndicators maxHeight="256px" minHeight="256px">
+            {activeTab === RECENT_TAB_ID && (
+              <RecentDashboardsTab
+                dashboards={recentDashboards ?? []}
+                loading={recentLoading}
+                error={recentError}
+                retry={recentRetry}
+                foldersByUid={foldersByUid}
+              />
+            )}
+            {activeTab === STARRED_TAB_ID && (
+              <StarredDashboardsTab
+                dashboards={starredDashboards ?? []}
+                loading={starredLoading}
+                error={starredError}
+                retry={starredRetry}
+                foldersByUid={foldersByUid}
+              />
+            )}
+          </ScrollContainer>
+        </TabContent>
+      )}
+
+      {/* Render extension component tabs without background + scroller */}
+      {extensionComponents
+        .filter((Component) => Component.meta.pluginId === 'grafana-setupguide-app')
+        .map((Component, i) => (
+          <DashboardExtensionTab key={i} Component={Component} registerTab={registerTab} activeTab={activeTab} />
+        ))}
     </Stack>
   );
 }
