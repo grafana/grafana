@@ -25,8 +25,9 @@ export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLa
     meta: { isEmbedded },
   } = useDashboardState(model);
   const layoutManager = sceneGraph.getAncestor(model, AutoGridLayoutManager);
-  const { fillScreen, dropPosition } = layoutManager.useState();
+  const { fillScreen, fitContent, matchRowHeights, dropPosition } = layoutManager.useState();
   const soloPanelContext = useSoloPanelContext();
+  const noStretchSiblings = fitContent === true && matchRowHeights === false;
 
   if (isHidden || !layoutOrchestrator) {
     return null;
@@ -63,7 +64,12 @@ export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLa
   return (
     <div
       data-testid={selectors.components.LayoutContainer(getTestIdForLayout(model))}
-      className={cx(styles.container, fillScreen && styles.containerFillScreen, isEditing && styles.containerEditing)}
+      className={cx(
+        styles.container,
+        fillScreen && styles.containerFillScreen,
+        noStretchSiblings && styles.containerNoStretch,
+        isEditing && styles.containerEditing
+      )}
       ref={model.containerRef}
       {...{ [DASHBOARD_DROP_TARGET_KEY_ATTR]: layoutManager.state.key }}
     >
@@ -105,6 +111,7 @@ const getStyles = (theme: GrafanaTheme2, state: AutoGridLayoutState) => ({
     ...dashboardCanvasAddButtonHoverStyles,
   }),
   containerFillScreen: css({ flexGrow: 1 }),
+  containerNoStretch: css({ alignItems: 'start' }),
   containerEditing: css({ paddingBottom: theme.spacing(5), position: 'relative' }),
   dropPlaceholder: css({
     border: `1px dashed ${theme.colors.primary.main}`,

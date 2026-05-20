@@ -910,6 +910,10 @@ export interface AutoGridLayoutSpec {
 	rowHeightMode: "short" | "standard" | "tall" | "custom";
 	rowHeight?: number;
 	fillScreen?: boolean;
+	fitContent?: boolean;
+	maxHeightMode?: "unlimited" | "short" | "standard" | "tall" | "custom" | "screen";
+	maxHeight?: number;
+	matchRowHeights?: boolean;
 	items: AutoGridLayoutItemKind[];
 }
 
@@ -918,6 +922,8 @@ export const defaultAutoGridLayoutSpec = (): AutoGridLayoutSpec => ({
 	columnWidthMode: "standard",
 	rowHeightMode: "standard",
 	fillScreen: false,
+	fitContent: false,
+	matchRowHeights: true,
 	items: [],
 });
 

@@ -1018,6 +1018,30 @@ func schema_pkg_apis_dashboard_v2_DashboardAutoGridLayoutSpec(ref common.Referen
 							Format: "",
 						},
 					},
+					"fitContent": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
+					"maxHeightMode": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"maxHeight": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"number"},
+							Format: "double",
+						},
+					},
+					"matchRowHeights": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
 					"items": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},

@@ -2,7 +2,13 @@ import { css, cx } from '@emotion/css';
 import { memo, useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { LazyLoader, sceneGraph, type SceneComponentProps, type VizPanel } from '@grafana/scenes';
+import {
+  LazyLoader,
+  sceneGraph,
+  type SceneComponentProps,
+  useVizPanelNaturalHeight,
+  type VizPanel,
+} from '@grafana/scenes';
 import { useElementSelection, useStyles2 } from '@grafana/ui';
 
 import { type ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
@@ -14,7 +20,7 @@ import { getIsLazy } from '../layouts-shared/utils';
 import { AUTO_GRID_ITEM_DROP_TARGET_ATTR } from '../types/DashboardDropTarget';
 
 import { type AutoGridItem } from './AutoGridItem';
-import { AutoGridLayoutManager } from './AutoGridLayoutManager';
+import { AutoGridLayoutManager, getMaxHeightInPixels, getNamedHeightInPixels } from './AutoGridLayoutManager';
 import { AutoGridResizeIntercept } from './AutoGridResizeIntercept';
 import { DRAGGED_ITEM_HEIGHT, DRAGGED_ITEM_LEFT, DRAGGED_ITEM_TOP, DRAGGED_ITEM_WIDTH } from './const';
 
@@ -26,9 +32,26 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
   const soloPanelContext = useSoloPanelContext();
   const isLazy = useMemo(() => getIsLazy(preload), [preload]);
 
-  // Check if this grid is a drop target for external drags
   const layoutManager = sceneGraph.getAncestor(model, AutoGridLayoutManager);
-  const { isDropTarget } = layoutManager.useState();
+  const { isDropTarget, fitContent, rowHeight, maxHeightMode, maxHeight, matchRowHeights } = layoutManager.useState();
+  const minHeight = getNamedHeightInPixels(rowHeight);
+  const matchRowHeightsOn = matchRowHeights !== false;
+  const fitContentOn = fitContent === true;
+
+  const panelHeight = useVizPanelNaturalHeight(body, {
+    enabled: fitContentOn,
+    containerRef: model.containerRef,
+    minHeight,
+    maxHeight: getMaxHeightInPixels(maxHeightMode, maxHeight),
+    watchViewportResize: maxHeightMode === 'screen',
+  });
+
+  const itemHeight = panelHeight ?? minHeight;
+  const fitContentStyle: React.CSSProperties | undefined = fitContentOn
+    ? matchRowHeightsOn
+      ? { minHeight: itemHeight }
+      : { height: itemHeight }
+    : undefined;
 
   const Wrapper = useMemo(
     () =>
@@ -43,6 +66,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
           isRepeat = false,
           isLastPanel = false,
           isSelected = false,
+          extraStyle,
         }: {
           item: VizPanel;
           conditionalRendering?: ConditionalRenderingGroup;
@@ -52,6 +76,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
           isRepeat?: boolean;
           isLastPanel?: boolean;
           isSelected?: boolean;
+          extraStyle?: React.CSSProperties;
         }) => {
           const [isConditionallyHidden, conditionalRenderingClass, conditionalRenderingOverlay, renderHidden] =
             useIsConditionallyHidden(conditionalRendering);
@@ -80,7 +105,11 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
               {...(addDndContainer
                 ? { ref: model.containerRef, [AUTO_GRID_ITEM_DROP_TARGET_ATTR]: showDropTarget ? key : undefined }
                 : {})}
-              className={cx(isConditionallyHidden && !isEditing && styles.hidden)}
+              className={cx(
+                isConditionallyHidden && !isEditing && styles.hidden,
+                fitContentOn && styles.itemFitContent
+              )}
+              style={extraStyle}
             >
               {isDragged && <div className={styles.draggedPlaceholder} />}
               {
@@ -97,22 +126,18 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
           );
         }
       ),
-    [model, isLazy, key, styles, isEditing]
+    [model, isLazy, key, styles, isEditing, fitContentOn]
   );
 
   const { isSelected: isSourceSelected } = useElementSelection(body.state.key);
 
   if (soloPanelContext) {
-    // Use lazy loading only for panel search layout (SoloPanelContextValueWithSearchStringFilter)
-    // as it renders multiple panels in a grid. Skip lazy loading for viewPanel URL param
-    // (SoloPanelContextWithPathIdFilter) since single panels should render immediately.
     const useLazyForSoloPanel = isLazy && soloPanelContext instanceof SoloPanelContextValueWithSearchStringFilter;
     return renderMatchingSoloPanels(soloPanelContext, [body, ...repeatedPanels], useLazyForSoloPanel);
   }
 
   const isDragging = !!draggingKey;
   const isDragged = draggingKey === key;
-  // Show drop target attribute for both internal drags and external drags (when this grid is a drop target)
   const showDropTarget = isDragging || !!isDropTarget;
 
   return (
@@ -125,6 +150,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
         isDragged={isDragged}
         showDropTarget={showDropTarget}
         isLastPanel={repeatedPanels.length === 0}
+        extraStyle={fitContentStyle}
       />
       {repeatedPanels.map((item, idx) => (
         <Wrapper
@@ -137,6 +163,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
           isRepeat={true}
           isLastPanel={idx === repeatedPanels.length - 1}
           isSelected={isSourceSelected}
+          extraStyle={fitContentStyle}
         />
       ))}
     </>
@@ -154,8 +181,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: `var(${DRAGGED_ITEM_HEIGHT})`,
     opacity: 0.8,
 
-    // Unfortunately, we need to re-enforce the absolute position here. Otherwise, the position will be overwritten with
-    //  a relative position by .dashboard-visible-hidden-element
     '&.dashboard-visible-hidden-element': {
       position: 'absolute',
     },
@@ -172,5 +197,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   hidden: css({
     display: 'none',
+  }),
+  itemFitContent: css({
+    width: '100%',
   }),
 });
