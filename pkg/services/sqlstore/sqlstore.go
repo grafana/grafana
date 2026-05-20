@@ -39,6 +39,11 @@ import (
 // ContextSessionKey is used as key to save values in `context.Context`
 type ContextSessionKey struct{}
 
+// ServiceName is the name used to register SQLStore in the background services
+// dependency graph. It must match the type name produced by the background-services
+// adapter (reflect.TypeOf(*SQLStore).String()).
+const ServiceName = "*sqlstore.SQLStore"
+
 type SQLStore struct {
 	cfg         *setting.Cfg
 	features    featuremgmt.FeatureToggles
@@ -144,6 +149,24 @@ func (ss *SQLStore) Migrate(isDatabaseLockingEnabled bool) error {
 	defer span.End()
 
 	return migrator.RunMigrations(ctx, isDatabaseLockingEnabled, ss.dbCfg.MigrationLockAttemptTimeout)
+}
+
+// Run is the background service lifecycle hook. It blocks until the provided
+// context is cancelled (i.e. Grafana shutdown), then closes the underlying
+// xorm engine so the database driver can send a clean disconnect (e.g. the
+// Postgres protocol-level Terminate message) and release pooled connections.
+//
+// SQLStore is wired into the background-services dependency graph such that
+// every other background service (and Core) transitively depends on it,
+// guaranteeing this Close runs last during shutdown.
+func (ss *SQLStore) Run(ctx context.Context) error {
+	<-ctx.Done()
+	ss.log.Info("Closing database engine")
+	if err := ss.engine.Close(); err != nil {
+		ss.log.Error("Failed to close database engine", "error", err)
+		return err
+	}
+	return nil
 }
 
 // Reset resets database state.
