@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -73,7 +72,6 @@ func TestMultiOrgAlertmanager_SaveAndApplyExtraConfiguration(t *testing.T) {
 
 		extraConfig := definitions.ExtraConfiguration{
 			Identifier:    "test-alertmanager-config",
-			MergeMatchers: definitions.Matchers{&labels.Matcher{Type: labels.MatchEqual, Name: "env", Value: "prod"}},
 			TemplateFiles: map[string]string{"test.tmpl": "{{ define \"test\" }}Test{{ end }}"},
 			AlertmanagerConfig: `route:
   receiver: test-receiver
@@ -108,7 +106,6 @@ receivers:
 
 		extraConfig := definitions.ExtraConfiguration{
 			Identifier:    "dry-run-config",
-			MergeMatchers: definitions.Matchers{&labels.Matcher{Type: labels.MatchEqual, Name: "env", Value: "test"}},
 			TemplateFiles: map[string]string{"test.tmpl": "{{ define \"test\" }}Test{{ end }}"},
 			AlertmanagerConfig: `route:
   receiver: test-receiver
@@ -135,8 +132,7 @@ receivers:
 
 		// First add a configuration
 		originalConfig := definitions.ExtraConfiguration{
-			Identifier:    identifier,
-			MergeMatchers: definitions.Matchers{&labels.Matcher{Type: labels.MatchEqual, Name: "env", Value: "original"}},
+			Identifier: identifier,
 			AlertmanagerConfig: `route:
   receiver: original-receiver
 receivers:
@@ -149,7 +145,6 @@ receivers:
 		// Now replace it
 		updatedConfig := definitions.ExtraConfiguration{
 			Identifier:    identifier,
-			MergeMatchers: definitions.Matchers{&labels.Matcher{Type: labels.MatchEqual, Name: "env", Value: "updated"}},
 			TemplateFiles: map[string]string{"updated.tmpl": "{{ define \"updated\" }}Updated{{ end }}"},
 			AlertmanagerConfig: `route:
   receiver: updated-receiver
@@ -174,8 +169,7 @@ receivers:
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 
 		firstConfig := definitions.ExtraConfiguration{
-			Identifier:    "first-config",
-			MergeMatchers: definitions.Matchers{&labels.Matcher{Type: labels.MatchEqual, Name: "env", Value: "first"}},
+			Identifier: "first-config",
 			AlertmanagerConfig: `{
 				"route": {
 					"receiver": "first-receiver"
@@ -192,8 +186,7 @@ receivers:
 		require.NoError(t, err)
 
 		secondConfig := definitions.ExtraConfiguration{
-			Identifier:    "second-config",
-			MergeMatchers: definitions.Matchers{&labels.Matcher{Type: labels.MatchEqual, Name: "env", Value: "second"}},
+			Identifier: "second-config",
 			AlertmanagerConfig: `{
 				"route": {
 					"receiver": "second-receiver"
@@ -262,8 +255,7 @@ receivers:
 		require.NoError(t, err)
 
 		originalConfig := definitions.ExtraConfiguration{
-			Identifier:    identifier,
-			MergeMatchers: definitions.Matchers{&labels.Matcher{Type: labels.MatchEqual, Name: "env", Value: "original"}},
+			Identifier: identifier,
 			AlertmanagerConfig: `route:
   receiver: original-receiver
 receivers:
@@ -286,8 +278,7 @@ func TestMultiOrgAlertmanager_DeleteExtraConfiguration(t *testing.T) {
 		identifier := "test-identifier"
 
 		extraConfig := definitions.ExtraConfiguration{
-			Identifier:    identifier,
-			MergeMatchers: definitions.Matchers{&labels.Matcher{Type: labels.MatchEqual, Name: "env", Value: "delete"}},
+			Identifier: identifier,
 			AlertmanagerConfig: `route:
   receiver: test-receiver
 receivers:

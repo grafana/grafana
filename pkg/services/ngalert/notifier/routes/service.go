@@ -2,7 +2,6 @@ package routes
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"go.opentelemetry.io/otel/attribute"
@@ -15,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/merge"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -274,15 +272,6 @@ func (nps *Service) UpdateManagedRoute(ctx context.Context, orgID int64, name st
 	}
 	updated.Provenance = p
 
-	_, err = merge.MergeExtraConfig(ctx, revision.Config)
-	if err != nil {
-		if errors.Is(err, merge.ErrSubtreeMatchersConflict) {
-			// TODO temporarily get the conflicting matchers
-			return nil, models.MakeErrRouteConflictingMatchers(fmt.Sprintf("%s", revision.Config.ExtraConfigs[0].MergeMatchers))
-		}
-		nps.log.FromContext(ctx).Warn("Unable to validate the combined routing tree because of an error during merging. This could be a sign of broken external configuration. Skipping", "error", err)
-	}
-
 	err = nps.xact.InTransaction(ctx, func(ctx context.Context) error {
 		if err := nps.configStore.Save(ctx, revision, orgID); err != nil {
 			return err
@@ -366,11 +355,6 @@ func (nps *Service) DeleteManagedRoute(ctx context.Context, orgID int64, name st
 		action = "Reset"
 	} else {
 		revision.DeleteManagedRoute(name)
-	}
-
-	_, err = merge.MergeExtraConfig(ctx, revision.Config)
-	if err != nil {
-		return fmt.Errorf("new routing tree is not compatible with extra configuration: %w", err)
 	}
 
 	err = nps.xact.InTransaction(ctx, func(ctx context.Context) error {
