@@ -215,7 +215,7 @@ A table can display sub-tables inside expandable rows. You can add these nested 
 
 Click the expand icon on a row to toggle the visibility of its nested table:
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-nested-expanded-v13.x.png" max-width="750px" alt="Table with one row expanded showing a nested sub-table" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-nested-table-expanded-v13.1.png" max-width="750px" alt="Table with two rows expanded showing nested sub-tables" >}}
 
 To sort nested and top-level rows in nested tables, click a column title to change the sort order from default to descending to ascending.
 Each time you click, the sort order changes to the next option in the cycle.
