@@ -211,11 +211,11 @@ This option is only available when you're editing the panel.
 
 A table can display sub-tables inside expandable rows. You can add these nested tables using the [Group to nested tables transformation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/#group-to-nested-tables), which groups rows by one or more fields, and can summarize nested row data by applying calculations.
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-nested-table-collapsed-v13.1.png" max-width="750px" alt="Table with all rows collapsed" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-nested-table-collapsed-v13.1.png" max-width="650px" alt="Table with all rows collapsed" >}}
 
 Click the expand icon on a row to toggle the visibility of its nested table:
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-nested-table-expanded-v13.1.png" max-width="750px" alt="Table with two rows expanded showing nested sub-tables" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-nested-table-expanded-v13.1.png" max-width="650px" alt="Table with two rows expanded showing nested sub-tables" >}}
 
 To sort nested and top-level rows in nested tables, click a column title to change the sort order from default to descending to ascending.
 Each time you click, the sort order changes to the next option in the cycle.
