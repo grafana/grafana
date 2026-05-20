@@ -252,7 +252,27 @@ export function prepConfig(opts: PrepConfigOpts) {
             // uPlot auto-ranges from the yMin facet data, so we grow by one bucket factor.
             // When yMin values are all 0, multiplicative expansion stays 0; fall back to max(yMax).
             const bucketFactor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
-            dataMax *= bucketFactor;
+
+            // Native histograms with custom bounds (NHCB) can carry unbounded
+            // tail buckets such as (-Inf, first] and (last, +Inf]. uPlot's
+            // dataMin/dataMax can be ±Inf in that case, which breaks the
+            // downstream log-scale math. Substitute the finite bucket extrema
+            // and give each unbounded end one geometric bucket of room.
+            const bounds = findFiniteBucketBounds(yMinValues, yMaxValues);
+            if (bounds.finiteMin != null) {
+              dataMin = bounds.finiteMin;
+            }
+            if (bounds.finiteMax != null) {
+              dataMax = bounds.finiteMax;
+            }
+            if (bounds.hasUnboundedLower && bounds.finiteMin != null && bucketFactor > 1) {
+              dataMin = bounds.finiteMin / bucketFactor;
+            }
+            if (bounds.hasUnboundedUpper && bounds.finiteMax != null && bucketFactor > 1) {
+              dataMax = bounds.finiteMax * bucketFactor;
+            } else {
+              dataMax *= bucketFactor;
+            }
             if (dataMax <= 0) {
               dataMax = yMaxValues.reduce<number>((acc, v) => (typeof v === 'number' && v > acc ? v : acc), 1);
             }
@@ -827,6 +847,16 @@ export function heatmapPathsSparse(opts: PathbuilderOpts) {
         let xOffs = new Map();
         let yOffs = new Map();
 
+        // Native histograms with custom bounds (NHCB) can carry unbounded
+        // tail buckets, surfacing yMin = -Infinity or yMax = +Infinity.
+        // valToPosY of a non-finite value on a log scale returns NaN, which
+        // would otherwise silently drop the cell (Canvas2D rect with NaN
+        // dimensions is a no-op). Substitute the scale's resolved bounds —
+        // these are finite by construction, since the range callback above
+        // computes scaleMin/scaleMax from the finite bucket extrema.
+        const scaleYMin = scaleY.min!;
+        const scaleYMax = scaleY.max!;
+
         for (let i = 0; i < xMaxs.length; i++) {
           let xMax = xMaxs[i];
           let yMin = yMins[i];
@@ -837,11 +867,13 @@ export function heatmapPathsSparse(opts: PathbuilderOpts) {
           }
 
           if (!yOffs.has(yMin)) {
-            yOffs.set(yMin, round(valToPosY(yMin, scaleY, yDim, yOff)));
+            const yMinSafe = Number.isFinite(yMin) ? yMin : scaleYMin;
+            yOffs.set(yMin, round(valToPosY(yMinSafe, scaleY, yDim, yOff)));
           }
 
           if (!yOffs.has(yMax)) {
-            yOffs.set(yMax, round(valToPosY(yMax, scaleY, yDim, yOff)));
+            const yMaxSafe = Number.isFinite(yMax) ? yMax : scaleYMax;
+            yOffs.set(yMax, round(valToPosY(yMaxSafe, scaleY, yDim, yOff)));
           }
         }
 
@@ -893,6 +925,47 @@ export function heatmapPathsSparse(opts: PathbuilderOpts) {
     );
 
     return null;
+  };
+}
+
+/**
+ * Returns the smallest finite yMin, the largest finite yMax, and whether
+ * either tail of the bucket sequence is unbounded (e.g., NHCB's (-Inf, first]
+ * and (last, +Inf] tail buckets).
+ *
+ * @param yMinValues - Array of yMin bucket boundary values
+ * @param yMaxValues - Array of yMax bucket boundary values
+ */
+export function findFiniteBucketBounds(yMinValues: unknown[], yMaxValues: unknown[]) {
+  let finiteMin = Infinity;
+  let finiteMax = -Infinity;
+  let hasUnboundedLower = false;
+  let hasUnboundedUpper = false;
+
+  for (let i = 0; i < yMinValues.length; i++) {
+    const yMin = yMinValues[i];
+    const yMax = yMaxValues[i];
+    if (typeof yMin === 'number') {
+      if (Number.isFinite(yMin)) {
+        finiteMin = Math.min(finiteMin, yMin);
+      } else {
+        hasUnboundedLower = true;
+      }
+    }
+    if (typeof yMax === 'number') {
+      if (Number.isFinite(yMax)) {
+        finiteMax = Math.max(finiteMax, yMax);
+      } else {
+        hasUnboundedUpper = true;
+      }
+    }
+  }
+
+  return {
+    finiteMin: Number.isFinite(finiteMin) ? finiteMin : null,
+    finiteMax: Number.isFinite(finiteMax) ? finiteMax : null,
+    hasUnboundedLower,
+    hasUnboundedUpper,
   };
 }
 
