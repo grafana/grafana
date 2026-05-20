@@ -1175,6 +1175,51 @@ describe('transformSceneToSaveModel', () => {
       expect(saveModel.panels?.[1].gridPos?.h).toBe(34);
     });
   });
+
+  describe('Dashboard intent', () => {
+    const intentBlock = {
+      schemaVersion: 1,
+      purpose: 'Monitor latency for the payments service.',
+      owner: 'payments-team',
+      expectedBehavior: {
+        normalRange: 'p99 < 200ms',
+        alertThreshold: '500ms',
+        notes: 'Spikes expected during batch settlement windows.',
+      },
+      failureModes: [
+        { tag: 'db-slow', description: 'Database queries exceed threshold.' },
+        { tag: 'downstream-timeout', description: 'External payment provider unreachable.' },
+      ],
+      relatedSlos: [{ name: 'Payments latency SLO', target: '99.9%', url: 'https://example.com/slo' }],
+      runbooks: [{ title: 'Payments on-call runbook', url: 'https://example.com/runbook' }],
+      provenance: {
+        purpose: 'author-written',
+        owner: 'author-written',
+        'expectedBehavior.alertThreshold': 'lifted-from-alert',
+        failureModes: 'assistant-unconfirmed',
+      },
+      lastVerifiedAt: '2026-05-20T12:00:00Z',
+    };
+
+    it('should preserve the intent block through a serialize → deserialize round-trip', () => {
+      const dashboardWithIntent = {
+        ...dashboard_to_load1,
+        intent: intentBlock,
+      };
+
+      const scene = transformSaveModelToScene({ dashboard: dashboardWithIntent as DashboardDataDTO, meta: {} });
+      const saveModel = transformSceneToSaveModel(scene);
+
+      expect(saveModel.intent).toEqual(intentBlock);
+    });
+
+    it('should produce no intent field when none was provided', () => {
+      const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as DashboardDataDTO, meta: {} });
+      const saveModel = transformSceneToSaveModel(scene);
+
+      expect(saveModel.intent).toBeUndefined();
+    });
+  });
 });
 
 describe('Given a scene with custom quick ranges', () => {
