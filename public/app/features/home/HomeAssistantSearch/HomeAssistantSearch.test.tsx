@@ -189,4 +189,34 @@ describe('HomeAssistantSearch', () => {
 
     expect(reportInteraction).toHaveBeenCalledWith('grafana_home_assistant_upgrade_click', {});
   });
+
+  it('renders nothing while terms are loading', () => {
+    setTerms({ loading: true });
+    const { container } = render(<HomeAssistantSearch />);
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it('renders nothing while limits are loading', () => {
+    setLimits({ loading: true });
+    const { container } = render(<HomeAssistantSearch />);
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it('submits animated placeholder when input is only whitespace', async () => {
+    render(<HomeAssistantSearch />);
+
+    const input = screen.getByRole('textbox');
+    await userEvent.type(input, '   ');
+    await userEvent.click(screen.getByRole('button', { name: 'Ask Assistant' }));
+
+    await waitFor(() => {
+      expect(mockOpenAssistant).toHaveBeenCalledWith(
+        expect.objectContaining({ origin: 'grafana/home', autoSend: true })
+      );
+    });
+
+    // The prompt should be the placeholder, not whitespace
+    const call = mockOpenAssistant.mock.calls[0][0];
+    expect(call.prompt.trim().length).toBeGreaterThan(0);
+  });
 });

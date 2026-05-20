@@ -1,7 +1,7 @@
 import { css, cx, keyframes } from '@emotion/css';
 import { type FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 
-import { useAssistant, useLimits, useTerms } from '@grafana/assistant';
+import { type OpenAssistantProps, useAssistant, useLimits, useTerms } from '@grafana/assistant';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
@@ -14,10 +14,21 @@ import { usePlaceholder } from './usePlaceholder';
 const LOADING_ARTIFICIAL_MS = 1000;
 
 export function HomeAssistantSearch() {
-  const styles = useStyles2(getStyles);
   const { isAvailable, openAssistant } = useAssistant();
+  if (!isAvailable || !openAssistant) {
+    return null;
+  }
+  return <HomeAssistantSearchInner openAssistant={openAssistant} />;
+}
+
+interface HomeAssistantSearchInnerProps {
+  openAssistant: (props: OpenAssistantProps) => void;
+}
+
+function HomeAssistantSearchInner({ openAssistant }: HomeAssistantSearchInnerProps) {
+  const styles = useStyles2(getStyles);
   const { accepted, termsType, loading: termsLoading, error: termsError } = useTerms();
-  const { isLimitReached } = useLimits();
+  const { isLimitReached, loading: limitsLoading } = useLimits();
   const admin = contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
   const needsAutoAccept = termsType === 'msa' && !accepted && !termsError && !termsLoading && !isLimitReached && admin;
 
@@ -47,7 +58,7 @@ export function HomeAssistantSearch() {
           promptLength: prompt.length,
           autoAcceptedTerms: needsAutoAccept,
         });
-        openAssistant?.({ origin: 'grafana/home', prompt, autoSend: true });
+        openAssistant({ origin: 'grafana/home', prompt, autoSend: true });
       } finally {
         clearTimeout(timeoutRef.current);
         timeoutRef.current = setTimeout(() => {
@@ -59,7 +70,7 @@ export function HomeAssistantSearch() {
     [needsAutoAccept, openAssistant]
   );
 
-  if (!isAvailable || !openAssistant) {
+  if (termsLoading || limitsLoading) {
     return null;
   }
 
@@ -69,7 +80,7 @@ export function HomeAssistantSearch() {
   }
 
   // Use the animated placeholder as default prompt when input is empty
-  const prompt = input || placeholderCurrent;
+  const prompt = input.trim() || placeholderCurrent;
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
