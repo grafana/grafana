@@ -7,8 +7,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search"
+	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 
 	"github.com/stretchr/testify/require"
 )
@@ -34,6 +39,63 @@ const verbose = false
 func BenchmarkBleveQuery(b *testing.B) {
 	testIndex := setupIndex(b)
 	runBenchmark(b, testIndex)
+}
+
+// BenchmarkBleveBuildIndexStorageSelection compares direct filesystem builds
+// with adaptive memory-to-filesystem builds. It is intended to catch obvious
+// regressions in adaptive promotion overhead, not to model end-to-end search
+// server build latency.
+func BenchmarkBleveBuildIndexStorageSelection(b *testing.B) {
+	for _, docs := range []int{100, 1000} {
+		b.Run(fmt.Sprintf("docs=%d", docs), func(b *testing.B) {
+			b.Run("direct-file", func(b *testing.B) {
+				benchmarkBuildIndex(b, docs, 0)
+			})
+			b.Run("adaptive", func(b *testing.B) {
+				benchmarkBuildIndex(b, docs, 50)
+			})
+		})
+	}
+}
+
+func benchmarkBuildIndex(b *testing.B, docs int, fileThreshold int64) {
+	backend, err := search.NewBleveBackend(search.BleveOptions{
+		Root:          b.TempDir(),
+		FileThreshold: fileThreshold,
+		BuildVersion:  "12.3.45-789",
+	}, nil)
+	require.NoError(b, err)
+	defer backend.Stop()
+
+	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
+	key := resource.NamespacedResource{
+		Namespace: "default",
+		Group:     "dashboard.grafana.app",
+		Resource:  "dashboards",
+	}
+	info, err := builders.DashboardBuilder(func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
+		return &builders.DashboardDocumentBuilder{
+			Namespace:        namespace,
+			Blob:             blob,
+			Stats:            make(map[string]map[string]int64),
+			DatasourceLookup: dashboard.CreateDatasourceLookup([]*dashboard.DatasourceQueryResult{{}}),
+		}, nil
+	})
+	require.NoError(b, err)
+	writer := newTestWriter(docs, docs)
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for range b.N {
+		idx, err := backend.BuildIndex(ctx, key, int64(docs), info.Fields, "benchmark", writer, nil, true, time.Time{}, 0)
+		require.NoError(b, err)
+
+		b.StopTimer()
+		count, err := idx.DocCount(ctx, "", nil)
+		require.NoError(b, err)
+		require.Equal(b, int64(docs), count)
+		b.StartTimer()
+	}
 }
 
 func runBenchmark(b *testing.B, testIndex resource.ResourceIndex) {

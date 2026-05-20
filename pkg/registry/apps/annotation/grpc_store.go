@@ -19,6 +19,7 @@ import (
 // LifecycleManager, and TagProvider interfaces
 type storeGRPC struct {
 	client storev1.AnnotationStoreClient
+	conn   *grpc.ClientConn
 }
 
 var _ Store = (*storeGRPC)(nil)
@@ -26,10 +27,19 @@ var _ LifecycleManager = (*storeGRPC)(nil)
 var _ TagProvider = (*storeGRPC)(nil)
 
 // NewStoreGRPC creates a new gRPC-based annotation store client
-func NewStoreGRPC(conn grpc.ClientConnInterface) *storeGRPC {
+func NewStoreGRPC(conn *grpc.ClientConn) *storeGRPC {
 	return &storeGRPC{
 		client: storev1.NewAnnotationStoreClient(conn),
+		conn:   conn,
 	}
+}
+
+// Close shuts down the underlying gRPC connection
+func (s *storeGRPC) Close() error {
+	if s.conn == nil {
+		return nil
+	}
+	return s.conn.Close()
 }
 
 func (s *storeGRPC) Get(ctx context.Context, namespace, name string) (*annotationV0.Annotation, error) {
@@ -212,11 +222,11 @@ func mapGRPCError(err error) error {
 
 	switch st.Code() {
 	case codes.NotFound:
-		return ErrNotFound
+		return fmt.Errorf("%w: %s", ErrNotFound, st.Message())
 	case codes.AlreadyExists:
-		return fmt.Errorf("annotation already exists")
+		return fmt.Errorf("%w: %s", ErrAlreadyExists, st.Message())
 	case codes.InvalidArgument:
-		return fmt.Errorf("invalid argument: %s", st.Message())
+		return fmt.Errorf("%w: %s", ErrInvalidInput, st.Message())
 	default:
 		return fmt.Errorf("grpc error: %s", st.Message())
 	}
@@ -228,8 +238,13 @@ func mapToGRPCStatus(err error) error {
 		return nil
 	}
 
-	if errors.Is(err, ErrNotFound) {
+	switch {
+	case errors.Is(err, ErrNotFound):
 		return status.Error(codes.NotFound, err.Error())
+	case errors.Is(err, ErrAlreadyExists):
+		return status.Error(codes.AlreadyExists, err.Error())
+	case errors.Is(err, ErrInvalidInput):
+		return status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	return status.Error(codes.Internal, err.Error())

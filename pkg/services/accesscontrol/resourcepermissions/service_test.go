@@ -690,6 +690,13 @@ func TestMapPermission_ServiceAccount(t *testing.T) {
 		require.Len(t, actions, 1)
 		assert.Equal(t, saOpts.GetActionSetName("Edit"), actions[0])
 	})
+
+	t.Run("invalid level returns ErrInvalidPermission", func(t *testing.T) {
+		svc := &Service{options: saOpts}
+		_, err := svc.mapPermission("View")
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrInvalidPermission)
+	})
 }
 
 func TestIsActionSetEnabledResource_ServiceAccount(t *testing.T) {

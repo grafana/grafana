@@ -10,7 +10,6 @@ import (
 
 	"github.com/grafana/alerting/definition"
 	"github.com/prometheus/alertmanager/config"
-	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -339,8 +338,7 @@ func TestExtraConfiguration_Validate(t *testing.T) {
 		{
 			name: "valid configuration",
 			config: ExtraConfiguration{
-				Identifier:    "test-config",
-				MergeMatchers: config.Matchers{{Type: labels.MatchEqual, Name: "env", Value: "prod"}},
+				Identifier: "test-config",
 				AlertmanagerConfig: `route:
   receiver: default
 receivers:
@@ -351,28 +349,14 @@ receivers:
 			name: "empty identifier",
 			config: ExtraConfiguration{
 				Identifier:         "",
-				MergeMatchers:      config.Matchers{{Type: labels.MatchEqual, Name: "env", Value: "prod"}},
 				AlertmanagerConfig: `route: {receiver: default}`,
 			},
 			expectedError: "identifier is required",
 		},
 		{
-			name: "invalid matcher type",
-			config: ExtraConfiguration{
-				Identifier:    "test-config",
-				MergeMatchers: config.Matchers{{Type: labels.MatchNotEqual, Name: "env", Value: "prod"}},
-				AlertmanagerConfig: `route:
-  receiver: default
-receivers:
-  - name: default`,
-			},
-			expectedError: "only matchers with type equal are supported",
-		},
-		{
 			name: "invalid YAML alertmanager config",
 			config: ExtraConfiguration{
 				Identifier:         "test-config",
-				MergeMatchers:      config.Matchers{{Type: labels.MatchEqual, Name: "env", Value: "prod"}},
 				AlertmanagerConfig: `invalid: yaml: content: [`,
 			},
 			expectedError: "failed to parse alertmanager config",
@@ -380,8 +364,7 @@ receivers:
 		{
 			name: "missing route in alertmanager config",
 			config: ExtraConfiguration{
-				Identifier:    "test-config",
-				MergeMatchers: config.Matchers{{Type: labels.MatchEqual, Name: "env", Value: "prod"}},
+				Identifier: "test-config",
 				AlertmanagerConfig: `receivers:
   - name: default`,
 			},
@@ -390,8 +373,7 @@ receivers:
 		{
 			name: "missing receivers in alertmanager config",
 			config: ExtraConfiguration{
-				Identifier:    "test-config",
-				MergeMatchers: config.Matchers{{Type: labels.MatchEqual, Name: "env", Value: "prod"}},
+				Identifier: "test-config",
 				AlertmanagerConfig: `route:
   receiver: default`,
 			},
@@ -401,7 +383,6 @@ receivers:
 			name: "empty alertmanager config",
 			config: ExtraConfiguration{
 				Identifier:         "test-config",
-				MergeMatchers:      config.Matchers{{Type: labels.MatchEqual, Name: "env", Value: "prod"}},
 				AlertmanagerConfig: "",
 			},
 			expectedError: "failed to parse alertmanager config",

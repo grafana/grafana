@@ -7,7 +7,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -1966,7 +1965,6 @@ const defaultAlertmanagerConfigJSON = `
 func getExtraConfig() *definitions.ExtraConfiguration {
 	return &definitions.ExtraConfiguration{
 		Identifier:         "import",
-		MergeMatchers:      []*labels.Matcher{{Type: labels.MatchEqual, Name: "__imported", Value: "true"}},
 		TemplateFiles:      nil,
 		AlertmanagerConfig: defaultExtraConfig,
 	}
