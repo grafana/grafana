@@ -118,13 +118,11 @@ func (r *subAccessREST) getAccessInfo(ctx context.Context, name string) (*folder
 	}
 	parent := obj.GetFolder()
 
-	// Issue one Check per action. We deliberately use Check (not BatchCheck)
-	// because Zanzana's BatchCheck is still being completed for some resource
-	// types — see the SA1019 nolints across pkg/storage/unified/resource/ and
-	// pkg/registry/apis/iam/ that note "BatchCheck is not yet fully implemented".
-	// authlib + Zanzana walk the parent chain internally given the immediate
-	// parent UID, so we don't need to enumerate ancestors ourselves.
-	allowed := make(map[string]bool, len(folderAccessActions))
+	// One BatchCheck for all actions. authlib + Zanzana walk the parent chain
+	// internally given the immediate parent UID, so we don't need to enumerate
+	// ancestors ourselves. The legacy action key is reused as CorrelationID so
+	// we can map results back without a second lookup table.
+	checks := make([]authlib.BatchCheckItem, 0, len(folderAccessActions))
 	for _, a := range folderAccessActions {
 		group := a.Group
 		if group == "" {
@@ -145,17 +143,27 @@ func (r *subAccessREST) getAccessInfo(ctx context.Context, name string) (*folder
 			reqName, reqFolder = "", name
 		}
 
-		resp, err := r.accessClient.Check(ctx, user, authlib.CheckRequest{
-			Verb:      a.Verb,
-			Group:     group,
-			Resource:  resource,
-			Namespace: ns.Value,
-			Name:      reqName,
-		}, reqFolder)
-		if err != nil {
-			return nil, err
-		}
-		allowed[a.Action] = resp.Allowed
+		checks = append(checks, authlib.BatchCheckItem{
+			CorrelationID: a.Action,
+			Verb:          a.Verb,
+			Group:         group,
+			Resource:      resource,
+			Name:          reqName,
+			Folder:        reqFolder,
+		})
+	}
+
+	batchResp, err := r.accessClient.BatchCheck(ctx, user, authlib.BatchCheckRequest{
+		Namespace: ns.Value,
+		Checks:    checks,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	allowed := make(map[string]bool, len(folderAccessActions))
+	for _, a := range folderAccessActions {
+		allowed[a.Action] = batchResp.Results[a.Action].Allowed
 	}
 
 	rsp := &foldersV1.FolderAccessInfo{}

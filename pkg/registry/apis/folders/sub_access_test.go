@@ -30,8 +30,8 @@ func TestSubAccessREST_getAccessInfo(t *testing.T) {
 		parentFolder      string
 		expect            folders.FolderAccessInfo
 		expectErr         bool
-		expectFolderInReq string // verify parent folder is passed to folder-domain Check
-		assertReq         func(t *testing.T, req authlib.CheckRequest, folder string)
+		expectFolderInReq string // verify parent folder is passed to folder-domain checks
+		assertItem        func(t *testing.T, item authlib.BatchCheckItem)
 	}
 
 	const folderGroup, folderRes = "folder.grafana.app", "folders"
@@ -123,16 +123,16 @@ func TestSubAccessREST_getAccessInfo(t *testing.T) {
 				{group: folderGroup, resource: folderRes, verb: utils.VerbGet}: true,
 				{group: dashGroup, resource: dashRes, verb: utils.VerbGet}:     true,
 			},
-			assertReq: func(t *testing.T, req authlib.CheckRequest, folder string) {
-				switch req.Group {
+			assertItem: func(t *testing.T, item authlib.BatchCheckItem) {
+				switch item.Group {
 				case folderGroup:
-					require.Equal(t, "this-folder", req.Name, "folder-domain Check should target THIS folder")
-					require.Equal(t, "parent-uid", folder, "folder-domain Check folder hint should be the immediate parent")
+					require.Equal(t, "this-folder", item.Name, "folder-domain check should target THIS folder")
+					require.Equal(t, "parent-uid", item.Folder, "folder-domain check folder hint should be the immediate parent")
 				case dashGroup:
-					require.Equal(t, "", req.Name, "cross-domain Check should use empty Name (any new resource)")
-					require.Equal(t, "this-folder", folder, "cross-domain Check folder hint should be THIS folder")
+					require.Equal(t, "", item.Name, "cross-domain check should use empty Name (any new resource)")
+					require.Equal(t, "this-folder", item.Folder, "cross-domain check folder hint should be THIS folder")
 				default:
-					t.Fatalf("unexpected group in Check: %q", req.Group)
+					t.Fatalf("unexpected group in check: %q", item.Group)
 				}
 			},
 			expect: folders.FolderAccessInfo{
@@ -164,22 +164,29 @@ func TestSubAccessREST_getAccessInfo(t *testing.T) {
 			store.On("Get", mock.Anything, "this-folder", &metav1.GetOptions{}).Return(f, nil)
 
 			ac := &mockAccessClient{
-				checkFunc: func(_ context.Context, _ authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+				batchCheckFunc: func(_ context.Context, _ authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
 					if tc.checkErr != nil {
-						return authlib.CheckResponse{}, tc.checkErr
+						return authlib.BatchCheckResponse{}, tc.checkErr
 					}
-					if tc.assertReq != nil {
-						tc.assertReq(t, req, folder)
+					results := make(map[string]authlib.BatchCheckResult, len(req.Checks))
+					for _, item := range req.Checks {
+						if tc.assertItem != nil {
+							tc.assertItem(t, item)
+						}
+						if tc.expectFolderInReq != "" {
+							require.Equal(t, tc.expectFolderInReq, item.Folder,
+								"expected folder=%q on check for verb %q", tc.expectFolderInReq, item.Verb)
+						}
+						// Fine-grained map wins if set; otherwise fall back to verb-only.
+						var allowed bool
+						if tc.allowedByCheck != nil {
+							allowed = tc.allowedByCheck[checkKey{item.Group, item.Resource, item.Verb}]
+						} else {
+							allowed = tc.allowed[item.Verb]
+						}
+						results[item.CorrelationID] = authlib.BatchCheckResult{Allowed: allowed}
 					}
-					if tc.expectFolderInReq != "" {
-						require.Equal(t, tc.expectFolderInReq, folder,
-							"expected folder=%q on Check for verb %q", tc.expectFolderInReq, req.Verb)
-					}
-					// Fine-grained map wins if set; otherwise fall back to verb-only.
-					if tc.allowedByCheck != nil {
-						return authlib.CheckResponse{Allowed: tc.allowedByCheck[checkKey{req.Group, req.Resource, req.Verb}]}, nil
-					}
-					return authlib.CheckResponse{Allowed: tc.allowed[req.Verb]}, nil
+					return authlib.BatchCheckResponse{Results: results}, nil
 				},
 			}
 
@@ -206,13 +213,10 @@ func TestSubAccessREST_getAccessInfo(t *testing.T) {
 
 // mockAccessClient is a minimal authlib.AccessClient used by subAccessREST tests.
 type mockAccessClient struct {
-	checkFunc func(ctx context.Context, info authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error)
+	batchCheckFunc func(ctx context.Context, info authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error)
 }
 
-func (m *mockAccessClient) Check(ctx context.Context, info authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
-	if m.checkFunc != nil {
-		return m.checkFunc(ctx, info, req, folder)
-	}
+func (m *mockAccessClient) Check(_ context.Context, _ authlib.AuthInfo, _ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) {
 	return authlib.CheckResponse{}, nil
 }
 
@@ -220,6 +224,9 @@ func (m *mockAccessClient) Compile(_ context.Context, _ authlib.AuthInfo, _ auth
 	return nil, nil, nil
 }
 
-func (m *mockAccessClient) BatchCheck(_ context.Context, _ authlib.AuthInfo, _ authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+func (m *mockAccessClient) BatchCheck(ctx context.Context, info authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	if m.batchCheckFunc != nil {
+		return m.batchCheckFunc(ctx, info, req)
+	}
 	return authlib.BatchCheckResponse{}, nil
 }
