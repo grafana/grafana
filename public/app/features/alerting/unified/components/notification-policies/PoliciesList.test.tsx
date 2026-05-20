@@ -10,7 +10,15 @@ import { setupDataSources } from 'app/features/alerting/unified/testSetup/dataso
 
 import { AccessControlAction } from '../../../../../types/accessControl';
 import NotificationPolicies from '../../NotificationPoliciesPage';
-import { AlertmanagerAction, useAlertmanagerAbilities, useAlertmanagerAbility } from '../../hooks/useAbilities';
+import { useContactPointAbility } from '../../hooks/abilities/alertmanager/useContactPointAbility';
+import { useNotificationPolicyAbility } from '../../hooks/abilities/alertmanager/useNotificationPolicyAbility';
+import {
+  type Ability,
+  Granted,
+  InsufficientPermissions,
+  NotSupported,
+  NotificationPolicyAction,
+} from '../../hooks/abilities/types';
 import { grantUserPermissions, mockDataSource } from '../../mocks';
 import { getRoutingTree, getRoutingTreeList, resetRoutingTreeMap } from '../../mocks/server/entities/k8s/routingtrees';
 import { KnownProvenance } from '../../types/knownProvenance';
@@ -28,15 +36,25 @@ jest.mock('../export/GrafanaPoliciesExporter', () => ({
   GrafanaPoliciesExporter: () => null,
 }));
 
-jest.mock('../../hooks/useAbilities', () => ({
-  ...jest.requireActual('../../hooks/useAbilities'),
-  useAlertmanagerAbilities: jest.fn(),
-  useAlertmanagerAbility: jest.fn(),
+jest.mock('../../hooks/abilities/alertmanager/useContactPointAbility', () => ({
+  ...jest.requireActual('../../hooks/abilities/alertmanager/useContactPointAbility'),
+  useContactPointAbility: jest.fn(),
+}));
+jest.mock('../../hooks/abilities/alertmanager/useNotificationPolicyAbility', () => ({
+  ...jest.requireActual('../../hooks/abilities/alertmanager/useNotificationPolicyAbility'),
+  useNotificationPolicyAbility: jest.fn(),
 }));
 
+function toAbility(supported: boolean, allowed: boolean): Ability {
+  if (!supported) {
+    return NotSupported;
+  }
+  return allowed ? Granted : InsufficientPermissions([]);
+}
+
 const mocks = {
-  useAlertmanagerAbilities: jest.mocked(useAlertmanagerAbilities),
-  useAlertmanagerAbility: jest.mocked(useAlertmanagerAbility),
+  useContactPointAbility: jest.mocked(useContactPointAbility),
+  useNotificationPolicyAbility: jest.mocked(useNotificationPolicyAbility),
 };
 
 const server = setupMswServer();
@@ -67,24 +85,21 @@ const ui = {
 };
 
 const allPolicyActions = [
-  AlertmanagerAction.CreateNotificationPolicy,
-  AlertmanagerAction.ViewNotificationPolicyTree,
-  AlertmanagerAction.UpdateNotificationPolicyTree,
-  AlertmanagerAction.DeleteNotificationPolicy,
-  AlertmanagerAction.ExportNotificationPolicies,
+  NotificationPolicyAction.Create,
+  NotificationPolicyAction.ViewTree,
+  NotificationPolicyAction.UpdateTree,
+  NotificationPolicyAction.Delete,
+  NotificationPolicyAction.Export,
 ];
 
-const grantAlertmanagerAbilities = (allowed: AlertmanagerAction[]) => {
-  mocks.useAlertmanagerAbility.mockImplementation((action) => {
-    const included = allowed.includes(action);
-    return [true, included];
-  });
+const grantAlertmanagerAbilities = (allowed: readonly NotificationPolicyAction[]) => {
+  // useContactPointAbility is called for View checks — always grant it
+  mocks.useContactPointAbility.mockReturnValue(Granted);
 
-  mocks.useAlertmanagerAbilities.mockImplementation((actions) => {
-    return actions.map((action) => {
-      const included = allowed.includes(action);
-      return [true, included];
-    });
+  // useNotificationPolicyAbility is called with { action, context } — check action against allowed list
+  mocks.useNotificationPolicyAbility.mockImplementation(({ action }) => {
+    const included = (allowed as readonly string[]).includes(action);
+    return toAbility(true, included);
   });
 };
 
@@ -180,16 +195,13 @@ describe('PoliciesList', () => {
   describe('Table action permissions', () => {
     describe('Create', () => {
       it('enable if user has permission', async () => {
-        grantAlertmanagerAbilities([
-          AlertmanagerAction.CreateNotificationPolicy,
-          AlertmanagerAction.ViewNotificationPolicyTree,
-        ]);
+        grantAlertmanagerAbilities([NotificationPolicyAction.Create, NotificationPolicyAction.ViewTree]);
         renderNotificationPolicies();
         expect(await ui.createPolicyButton.find()).toBeInTheDocument();
         expect(ui.createPolicyButton.query()).toBeEnabled();
       });
       it('disable if user does not have permission', async () => {
-        grantAlertmanagerAbilities([AlertmanagerAction.ViewNotificationPolicyTree]);
+        grantAlertmanagerAbilities([NotificationPolicyAction.ViewTree]);
 
         renderNotificationPolicies();
         expect(await ui.createPolicyButton.find()).toBeInTheDocument();
@@ -201,10 +213,7 @@ describe('PoliciesList', () => {
   describe('Policy action permissions', () => {
     describe('Edit', () => {
       it('shows edit menu item if user has edit permission', async () => {
-        grantAlertmanagerAbilities([
-          AlertmanagerAction.ViewNotificationPolicyTree,
-          AlertmanagerAction.UpdateNotificationPolicyTree,
-        ]);
+        grantAlertmanagerAbilities([NotificationPolicyAction.ViewTree, NotificationPolicyAction.UpdateTree]);
 
         const user = userEvent.setup();
         renderNotificationPolicies();
@@ -214,7 +223,7 @@ describe('PoliciesList', () => {
         expect(screen.getByRole('menuitem', { name: 'Edit' })).toBeInTheDocument();
       });
       it('does not show more actions if user has no edit permission', async () => {
-        grantAlertmanagerAbilities([AlertmanagerAction.ViewNotificationPolicyTree]);
+        grantAlertmanagerAbilities([NotificationPolicyAction.ViewTree]);
 
         renderNotificationPolicies();
         const allRoots = await ui.rootRouteContainer.findAll();
@@ -223,10 +232,7 @@ describe('PoliciesList', () => {
         expect(within(defaultPolicyEl).queryByTestId('more-actions')).not.toBeInTheDocument();
       });
       it('shows edit as disabled if policy is provisioned', async () => {
-        grantAlertmanagerAbilities([
-          AlertmanagerAction.ViewNotificationPolicyTree,
-          AlertmanagerAction.UpdateNotificationPolicyTree,
-        ]);
+        grantAlertmanagerAbilities([NotificationPolicyAction.ViewTree, NotificationPolicyAction.UpdateTree]);
 
         const user = userEvent.setup();
         renderNotificationPolicies();
@@ -242,10 +248,7 @@ describe('PoliciesList', () => {
     });
     describe('Export', () => {
       it('enable if user has permission', async () => {
-        grantAlertmanagerAbilities([
-          AlertmanagerAction.ViewNotificationPolicyTree,
-          AlertmanagerAction.ExportNotificationPolicies,
-        ]);
+        grantAlertmanagerAbilities([NotificationPolicyAction.ViewTree, NotificationPolicyAction.Export]);
 
         const user = userEvent.setup();
         renderNotificationPolicies();
@@ -255,7 +258,7 @@ describe('PoliciesList', () => {
         expect(screen.getByRole('menuitem', { name: 'Export' })).toBeInTheDocument();
       });
       it('does not show more actions if user has no export or edit permission', async () => {
-        grantAlertmanagerAbilities([AlertmanagerAction.ViewNotificationPolicyTree]);
+        grantAlertmanagerAbilities([NotificationPolicyAction.ViewTree]);
 
         renderNotificationPolicies();
         const allRoots = await ui.rootRouteContainer.findAll();
@@ -267,10 +270,7 @@ describe('PoliciesList', () => {
 
     describe('Reset', () => {
       it('enable on default policy if user has permission', async () => {
-        grantAlertmanagerAbilities([
-          AlertmanagerAction.ViewNotificationPolicyTree,
-          AlertmanagerAction.DeleteNotificationPolicy,
-        ]);
+        grantAlertmanagerAbilities([NotificationPolicyAction.ViewTree, NotificationPolicyAction.Delete]);
 
         const user = userEvent.setup();
         renderNotificationPolicies();
@@ -281,7 +281,7 @@ describe('PoliciesList', () => {
         expect(resetItem).toBeInTheDocument();
       });
       it('does not show more actions on default policy if user has no permission', async () => {
-        grantAlertmanagerAbilities([AlertmanagerAction.ViewNotificationPolicyTree]);
+        grantAlertmanagerAbilities([NotificationPolicyAction.ViewTree]);
 
         renderNotificationPolicies();
         const allRoots = await ui.rootRouteContainer.findAll();

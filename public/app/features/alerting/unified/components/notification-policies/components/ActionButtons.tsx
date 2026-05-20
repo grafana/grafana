@@ -1,10 +1,12 @@
-import { type JSX, useState } from 'react';
+import { useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { LinkButton, Stack, Tooltip } from '@grafana/ui';
 
 import { ROUTES_META_SYMBOL, type Route } from '../../../../../../plugins/datasource/alertmanager/types';
-import { AlertmanagerAction, useAlertmanagerAbilities } from '../../../hooks/useAbilities';
+import { isAvailable } from '../../../hooks/abilities/abilityUtils';
+import { useNotificationPolicyAbility } from '../../../hooks/abilities/alertmanager/useNotificationPolicyAbility';
+import { NotificationPolicyAction } from '../../../hooks/abilities/types';
 import { ROOT_ROUTE_NAME } from '../../../utils/k8s/constants';
 import { createRelativeUrl } from '../../../utils/url';
 import ConditionalWrap from '../../ConditionalWrap';
@@ -22,21 +24,16 @@ export const ActionButtons = ({ route }: ActionButtonsProps) => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
 
-  const [
-    [updatePoliciesSupported, updatePoliciesAllowed],
-    [deletePoliciesSupported, deletePoliciesAllowed],
-    [exportPoliciesSupported, exportPoliciesAllowed],
-  ] = useAlertmanagerAbilities([
-    AlertmanagerAction.UpdateNotificationPolicyTree,
-    AlertmanagerAction.DeleteNotificationPolicy,
-    AlertmanagerAction.ExportNotificationPolicies,
-  ]);
+  const context = { provenance: route[ROUTES_META_SYMBOL]?.provenance ?? route.provenance };
+  const updateAbility = useNotificationPolicyAbility({ action: NotificationPolicyAction.UpdateTree, context });
+  const deleteAbility = useNotificationPolicyAbility({ action: NotificationPolicyAction.Delete, context });
+  const exportAbility = useNotificationPolicyAbility({ action: NotificationPolicyAction.Export, context });
 
   const [ExportDrawer, showExportDrawer] = useExportRoutingTree();
   const [deleteTrigger] = useDeleteRoutingTree();
 
   const provisioned = isRouteProvisioned(route);
-  const canEdit = updatePoliciesSupported && updatePoliciesAllowed && !provisioned;
+  const canEdit = updateAbility.granted && !provisioned;
 
   const actions: JSX.Element[] = [];
   actions.push(
@@ -56,7 +53,7 @@ export const ActionButtons = ({ route }: ActionButtonsProps) => {
     </LinkButton>
   );
 
-  if (exportPoliciesSupported) {
+  if (isAvailable(exportAbility)) {
     actions.push(
       <LinkButton
         key="export-routing-tree"
@@ -64,7 +61,7 @@ export const ActionButtons = ({ route }: ActionButtonsProps) => {
         variant="secondary"
         size="sm"
         data-testid="export-action"
-        disabled={!exportPoliciesAllowed}
+        disabled={!exportAbility.granted}
         onClick={() => {
           trackNotificationPolicyExported({ isDefaultPolicy: route.name === ROOT_ROUTE_NAME });
           showExportDrawer(route.name ?? '');
@@ -75,8 +72,8 @@ export const ActionButtons = ({ route }: ActionButtonsProps) => {
     );
   }
 
-  if (deletePoliciesSupported) {
-    const canBeDeleted = deletePoliciesAllowed && !provisioned;
+  if (isAvailable(deleteAbility)) {
+    const canBeDeleted = deleteAbility.granted && !provisioned;
     const isDefaultPolicy = route.name === ROOT_ROUTE_NAME;
 
     const cannotDeleteNoPermissions = isDefaultPolicy
@@ -102,7 +99,7 @@ export const ActionButtons = ({ route }: ActionButtonsProps) => {
       : t('alerting.policies-list.delete-text', 'Notification policy cannot be deleted for the following reasons:');
 
     const reasonsDeleteIsDisabled = [
-      !deletePoliciesAllowed ? cannotDeleteNoPermissions : '',
+      !deleteAbility.granted ? cannotDeleteNoPermissions : '',
       provisioned ? cannotDeleteProvisioned : '',
     ].filter(Boolean);
 

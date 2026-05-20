@@ -7,10 +7,6 @@ import {
   PERMISSIONS_TIME_INTERVALS_MODIFY,
   PERMISSIONS_TIME_INTERVALS_READ,
 } from 'app/features/alerting/unified/components/mute-timings/permissions';
-import {
-  PERMISSIONS_NOTIFICATION_POLICIES_MODIFY,
-  PERMISSIONS_NOTIFICATION_POLICIES_READ,
-} from 'app/features/alerting/unified/components/notification-policies/permissions';
 import { useFolder } from 'app/features/alerting/unified/hooks/useFolder';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -131,6 +127,19 @@ export enum AlertingAction {
 // these just makes it easier to read the code :)
 const AlwaysSupported = true;
 const NotSupported = false;
+
+// Formerly in components/notification-policies/permissions.ts — inlined here
+// so that file can be deleted while useAbilities.ts is still being migrated.
+const PERMISSIONS_NOTIFICATION_POLICIES_READ = [
+  AccessControlAction.AlertingRoutesRead,
+  AccessControlAction.ActionAlertingManagedRoutesRead,
+];
+const PERMISSIONS_NOTIFICATION_POLICIES_MODIFY = [
+  AccessControlAction.AlertingRoutesWrite,
+  AccessControlAction.ActionAlertingManagedRoutesCreate,
+  AccessControlAction.ActionAlertingManagedRoutesWrite,
+  AccessControlAction.ActionAlertingManagedRoutesDelete,
+];
 
 export type Action = AlertmanagerAction | AlertingAction | AlertRuleAction | FolderBulkAction | EnrichmentAction;
 
