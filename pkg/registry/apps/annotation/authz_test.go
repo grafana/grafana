@@ -17,7 +17,27 @@ import (
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 )
+
+// newTestAdapter builds a k8sRESTAdapter with the observability deps wired to
+// no-op test implementations. An optional folderResolver may be passed; otherwise
+// a no-op resolver is used (sufficient for tests that don't exercise dashboard authz).
+func newTestAdapter(store Store, ac authtypes.AccessClient, fr ...DashboardFolderResolver) *k8sRESTAdapter {
+	var resolver DashboardFolderResolver = NoopDashboardFolderResolver{}
+	if len(fr) > 0 && fr[0] != nil {
+		resolver = fr[0]
+	}
+	return &k8sRESTAdapter{
+		store:          store,
+		accessClient:   ac,
+		folderResolver: resolver,
+		tracer:         tracing.InitializeTracerForTest(),
+		logger:         log.NewNopLogger(),
+		metrics:        ProvideMetrics(nil),
+	}
+}
 
 // fakeAccessClient delegates allow/deny to fn. Single Check is synthesized into a BatchCheckItem
 // so tests can assert on item.Folder.
@@ -264,13 +284,9 @@ func TestK8sRESTAdapter_UpdateScopeEscalation(t *testing.T) {
 
 	// Allow writes on org annotations (annotation.grafana.app) but deny on dashboard scope.
 	// The update attempts to move an org annotation onto a dashboard the caller cannot write.
-	adapter := &k8sRESTAdapter{
-		store: store,
-		accessClient: &fakeAccessClient{fn: func(req authtypes.BatchCheckItem) bool {
-			return req.Group == "annotation.grafana.app"
-		}},
-		folderResolver: newFakeFolderResolver(map[string]string{dashUID: ""}),
-	}
+	adapter := newTestAdapter(store, &fakeAccessClient{fn: func(req authtypes.BatchCheckItem) bool {
+		return req.Group == "annotation.grafana.app"
+	}}, newFakeFolderResolver(map[string]string{dashUID: ""}))
 
 	orgAnno.Spec.DashboardUID = &dashUID
 	_, _, err = adapter.Update(ctx, orgAnno.Name, registryrest.DefaultUpdatedObjectInfo(orgAnno), nil, nil, false, nil)
@@ -298,13 +314,9 @@ func TestK8sRESTAdapter_ListFiltersUnauthorized(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("filters out denied annotations", func(t *testing.T) {
-		adapter := &k8sRESTAdapter{
-			store: store,
-			accessClient: &fakeAccessClient{fn: func(req authtypes.BatchCheckItem) bool {
-				return req.Group == "annotation.grafana.app"
-			}},
-			folderResolver: newFakeFolderResolver(map[string]string{dashUID: ""}),
-		}
+		adapter := newTestAdapter(store, &fakeAccessClient{fn: func(req authtypes.BatchCheckItem) bool {
+			return req.Group == "annotation.grafana.app"
+		}}, newFakeFolderResolver(map[string]string{dashUID: ""}))
 
 		obj, err := adapter.List(ctx, &internalversion.ListOptions{})
 		require.NoError(t, err)
@@ -315,11 +327,7 @@ func TestK8sRESTAdapter_ListFiltersUnauthorized(t *testing.T) {
 	})
 
 	t.Run("returns all when all allowed", func(t *testing.T) {
-		adapter := &k8sRESTAdapter{
-			store:          store,
-			accessClient:   &fakeAccessClient{fn: func(_ authtypes.BatchCheckItem) bool { return true }},
-			folderResolver: newFakeFolderResolver(map[string]string{dashUID: ""}),
-		}
+		adapter := newTestAdapter(store, &fakeAccessClient{fn: func(_ authtypes.BatchCheckItem) bool { return true }}, newFakeFolderResolver(map[string]string{dashUID: ""}))
 
 		obj, err := adapter.List(ctx, &internalversion.ListOptions{})
 		require.NoError(t, err)
@@ -329,11 +337,7 @@ func TestK8sRESTAdapter_ListFiltersUnauthorized(t *testing.T) {
 	})
 
 	t.Run("returns empty when all denied", func(t *testing.T) {
-		adapter := &k8sRESTAdapter{
-			store:          store,
-			accessClient:   &fakeAccessClient{fn: func(_ authtypes.BatchCheckItem) bool { return false }},
-			folderResolver: newFakeFolderResolver(map[string]string{dashUID: ""}),
-		}
+		adapter := newTestAdapter(store, &fakeAccessClient{fn: func(_ authtypes.BatchCheckItem) bool { return false }}, newFakeFolderResolver(map[string]string{dashUID: ""}))
 
 		obj, err := adapter.List(ctx, &internalversion.ListOptions{})
 		require.NoError(t, err)

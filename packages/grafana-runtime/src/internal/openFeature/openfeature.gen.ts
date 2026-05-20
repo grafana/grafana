@@ -37,8 +37,12 @@ export const FlagKeys = {
   FaroSessionReplay: "faroSessionReplay",
   /** Enables the new Flame Graph UI containing the Call Tree view */
   FlameGraphWithCallTree: "flameGraphWithCallTree",
+  /** Enables global and folder-scoped dashboard variables via dashboard.grafana.app */
+  GlobalDashboardVariables: "globalDashboardVariables",
   /** Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button) */
   GrafanaEnableScopesFirstMode: "grafana.enableScopesFirstMode",
+  /** Enables log level inference from log line contents when level is not defined as a field or a label */
+  GrafanaLogLevelInference: "grafana.logLevelInference",
   /** Whether to use the new SharedPreferences functional component */
   GrafanaNewPreferencesPage: "grafana.newPreferencesPage",
   /** Enables org-defined dashboard templates for enterprise */
@@ -220,6 +224,17 @@ export const useFlagFlameGraphWithCallTree = (options?: ReactFlagEvaluationOptio
 };
 
 /**
+ * Enables global and folder-scoped dashboard variables via dashboard.grafana.app
+ *
+ * **Details:**
+ * - flag key: `globalDashboardVariables`
+ * - default value: `false`
+ */
+export const useFlagGlobalDashboardVariables = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("globalDashboardVariables", false, options).value;
+};
+
+/**
  * Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button)
  *
  * **Details:**
@@ -228,6 +243,17 @@ export const useFlagFlameGraphWithCallTree = (options?: ReactFlagEvaluationOptio
  */
 export const useFlagGrafanaEnableScopesFirstMode = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.enableScopesFirstMode", false, options).value;
+};
+
+/**
+ * Enables log level inference from log line contents when level is not defined as a field or a label
+ *
+ * **Details:**
+ * - flag key: `grafana.logLevelInference`
+ * - default value: `false`
+ */
+export const useFlagGrafanaLogLevelInference = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.logLevelInference", false, options).value;
 };
 
 /**

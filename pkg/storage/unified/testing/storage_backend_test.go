@@ -76,12 +76,12 @@ func TestIntegrationSQLKVConcurrentCreateNoAlreadyExists(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("Without RvManager", func(t *testing.T) {
-		backend, _ := NewTestSqlKvBackend(t, t.Context(), false)
+		backend, _ := NewTestSqlKvBackend(t, t.Context(), SQLKVBackendModeLeases)
 		runConcurrentCreateNoAlreadyExists(t, backend, "sqlkv-no-already-exists")
 	})
 
 	t.Run("With RvManager", func(t *testing.T) {
-		backend, _ := NewTestSqlKvBackend(t, t.Context(), true)
+		backend, _ := NewTestSqlKvBackend(t, t.Context(), SQLKVBackendModeRVManager)
 		runConcurrentCreateNoAlreadyExists(t, backend, "sqlkv-rvmanager-no-already-exists")
 	})
 }
@@ -167,25 +167,25 @@ func TestIntegrationSQLKVConcurrentCreateClientRetry(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("Without RvManager/Local", func(t *testing.T) {
-		backend, _ := NewTestSqlKvBackend(t, t.Context(), false)
+		backend, _ := NewTestSqlKvBackend(t, t.Context(), SQLKVBackendModeLeases)
 		client := newLocalClient(t, backend)
 		runConcurrentCreateRetry(t, client, "sqlkv-retry-local")
 	})
 
 	t.Run("Without RvManager/Remote", func(t *testing.T) {
-		backend, _ := NewTestSqlKvBackend(t, t.Context(), false)
+		backend, _ := NewTestSqlKvBackend(t, t.Context(), SQLKVBackendModeLeases)
 		client := newRemoteClient(t, backend)
 		runConcurrentCreateRetry(t, client, "sqlkv-retry-remote")
 	})
 
 	t.Run("With RvManager/Local", func(t *testing.T) {
-		backend, _ := NewTestSqlKvBackend(t, t.Context(), true)
+		backend, _ := NewTestSqlKvBackend(t, t.Context(), SQLKVBackendModeRVManager)
 		client := newLocalClient(t, backend)
 		runConcurrentCreateRetry(t, client, "sqlkv-rvmanager-retry-local")
 	})
 
 	t.Run("With RvManager/Remote", func(t *testing.T) {
-		backend, _ := NewTestSqlKvBackend(t, t.Context(), true)
+		backend, _ := NewTestSqlKvBackend(t, t.Context(), SQLKVBackendModeRVManager)
 		client := newRemoteClient(t, backend)
 		runConcurrentCreateRetry(t, client, "sqlkv-rvmanager-retry-remote")
 	})
@@ -319,7 +319,7 @@ func TestIntegrationConcurrentWritesWithLeasesSqlKV(t *testing.T) {
 		testutil.SkipIntegrationTestInShortMode(t)
 
 		runConcurrentWritesWithLeases(t, func() resource.StorageBackend {
-			backend, _ := NewTestSqlKvBackend(t, t.Context(), false)
+			backend, _ := NewTestSqlKvBackend(t, t.Context(), SQLKVBackendModeLeases)
 			return backend
 		}, "sqlkv-leases")
 	})
@@ -449,15 +449,19 @@ func runConcurrentDeletesWithLeases(t *testing.T, backend resource.StorageBacken
 }
 
 func TestIntegrationBenchmarkSQLKVStorageBackend(t *testing.T) {
-	for _, withRvManager := range []bool{true, false} {
-		t.Run(fmt.Sprintf("rvmanager=%t", withRvManager), func(t *testing.T) {
+	for _, mode := range []SQLKVBackendMode{
+		SQLKVBackendModeRVManager,
+		SQLKVBackendModeLeases,
+		SQLKVBackendModeOptimisticLocking,
+	} {
+		t.Run(string(mode), func(t *testing.T) {
 			testutil.SkipIntegrationTestInShortMode(t)
 
 			opts := DefaultBenchmarkOptions(t)
 			if db.IsTestDbSQLite() {
 				opts.Concurrency = 1 // to avoid SQLite database is locked error
 			}
-			backend, dbConn := NewTestSqlKvBackend(t, t.Context(), withRvManager)
+			backend, dbConn := NewTestSqlKvBackend(t, t.Context(), mode)
 			dbConn.SqlDB().SetMaxOpenConns(min(max(10, opts.Concurrency), 100))
 			RunStorageBackendBenchmark(t, backend, opts)
 		})
@@ -465,14 +469,14 @@ func TestIntegrationBenchmarkSQLKVStorageBackend(t *testing.T) {
 }
 
 func TestIntegrationBenchmarkSQLKVStorageAndSearch(t *testing.T) {
-	for _, withRvManager := range []bool{true, false} {
-		t.Run(fmt.Sprintf("rvmanager=%t", withRvManager), func(t *testing.T) {
+	for _, mode := range []SQLKVBackendMode{SQLKVBackendModeRVManager, SQLKVBackendModeLeases} {
+		t.Run(string(mode), func(t *testing.T) {
 			testutil.SkipIntegrationTestInShortMode(t)
 			opts := DefaultBenchmarkOptions(t)
 			if db.IsTestDbSQLite() {
 				t.Skip("concurrency benchmark skipped with sqlite")
 			}
-			backend, _ := NewTestSqlKvBackend(t, t.Context(), withRvManager)
+			backend, _ := NewTestSqlKvBackend(t, t.Context(), mode)
 			searchBackend, err := search.NewBleveBackend(search.BleveOptions{
 				Root:                   t.TempDir(),
 				FileThreshold:          0,
@@ -505,7 +509,7 @@ func TestIntegrationSQLKVStorageBackend(t *testing.T) {
 
 	t.Run("Without RvManager", func(t *testing.T) {
 		RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
-			backend, _ := NewTestSqlKvBackend(t, ctx, false)
+			backend, _ := NewTestSqlKvBackend(t, ctx, SQLKVBackendModeLeases)
 			return backend
 		}, &TestOptions{
 			NSPrefix:  "sqlkvstoragetest",
@@ -515,7 +519,7 @@ func TestIntegrationSQLKVStorageBackend(t *testing.T) {
 
 	t.Run("With RvManager", func(t *testing.T) {
 		RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
-			backend, _ := NewTestSqlKvBackend(t, ctx, true)
+			backend, _ := NewTestSqlKvBackend(t, ctx, SQLKVBackendModeRVManager)
 			return backend
 		}, &TestOptions{
 			NSPrefix:  "sqlkvstoragetest-rvmanager",

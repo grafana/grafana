@@ -2,6 +2,7 @@ package models
 
 import (
 	"context"
+	"net/http"
 	"net/url"
 
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatch"
@@ -16,6 +17,8 @@ import (
 type RequestContextFactoryFunc func(ctx context.Context, region string) (reqCtx RequestContext, err error)
 
 type RouteHandlerFunc func(ctx context.Context, parameters url.Values) ([]byte, *HttpError)
+
+type RouteHandlerWithHeadersFunc func(ctx context.Context, parameters url.Values) ([]byte, http.Header, *HttpError)
 
 type RequestContext struct {
 	MetricsClientProvider  MetricsClientProvider
@@ -34,7 +37,7 @@ type ListMetricsProvider interface {
 }
 
 type LogGroupsProvider interface {
-	GetLogGroups(ctx context.Context, request resources.LogGroupsRequest) ([]resources.ResourceResponse[resources.LogGroup], error)
+	GetLogGroups(ctx context.Context, request resources.LogGroupsRequest) ([]resources.ResourceResponse[resources.LogGroup], *string, error)
 	GetLogGroupFields(ctx context.Context, request resources.LogGroupFieldsRequest) ([]resources.ResourceResponse[resources.LogGroupField], error)
 }
 
