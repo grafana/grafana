@@ -14,10 +14,7 @@ concurrency:
   # If a new commit is applied, just give up.
   cancel-in-progress: true
 
-permissions:
-  id-token: write
-  contents: read
-  statuses: write
+permissions: {}
 
 # Since this is run on a pull request, we want to apply the patches intended for the
 # target branch onto the source branch, to verify compatibility before merging.
@@ -35,6 +32,10 @@ jobs:
       SHA: ${{ github.sha }}
       PR_COMMIT_SHA: ${{ github.event.pull_request.head.sha }}
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+      statuses: write
     steps:
       - name: Get GitHub App token
         id: get-github-app-token
