@@ -207,7 +207,6 @@ The tooltip also provides the following options:
 - **Clear all**: Reset the filter.
 - **Pin to sidebar**: Dock the filter alongside the panel so it stays open while you work.
 
-
 ### Axis options
 
 {{< docs/shared lookup="visualizations/axis-options-1.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
