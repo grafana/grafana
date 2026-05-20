@@ -15,7 +15,6 @@ import (
 	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 )
@@ -29,7 +28,7 @@ type TemplateService interface {
 	GetTemplates(ctx context.Context, orgID int64) ([]v1.TemplateGroup, error)
 	CreateTemplate(ctx context.Context, orgID int64, tmpl v1.TemplateGroup) (v1.TemplateGroup, error)
 	UpdateTemplate(ctx context.Context, orgID int64, tmpl v1.TemplateGroup) (v1.TemplateGroup, error)
-	DeleteTemplate(ctx context.Context, orgID int64, nameOrUid string, provenance models.Provenance, version string) error
+	DeleteTemplate(ctx context.Context, orgID int64, nameOrUid string, provenance ngmodels.Provenance, version string) error
 }
 
 type legacyStorage struct {
@@ -226,7 +225,7 @@ func (s *legacyStorage) defaultTemplate() (v1.TemplateGroup, error) {
 		Title: model.DefaultTemplateTitle, // User friendly name.
 		ResourceMetadata: v1.ResourceMetadata{
 			UID:        v1.ResourceUID(defaultTemplate.Name),
-			Provenance: models.Provenance("system"),
+			Provenance: ngmodels.Provenance("system"),
 		},
 		Content: defaultTemplate.Template,
 		Kind:    v1.TemplateKindGrafana,
