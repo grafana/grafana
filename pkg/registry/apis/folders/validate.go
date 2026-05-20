@@ -15,6 +15,7 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
+	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -262,10 +263,6 @@ func validateOnUpdate(ctx context.Context,
 	return checkSubtreeDepth(ctx, searcher, obj.Namespace, obj.Name, allowedDepth, maxDepth)
 }
 
-// escalationVerbs are the folder-resource verbs the access-escalation guard
-// compares between source and destination. If the user can perform any of
-// these on the destination but not the source, the move would grant them new
-// capabilities and is rejected.
 var escalationVerbs = []string{
 	utils.VerbGet,
 	utils.VerbUpdate,
@@ -275,17 +272,6 @@ var escalationVerbs = []string{
 	utils.VerbSetPermissions,
 }
 
-// checkMoveAccess enforces destination-write permission and the
-// access-escalation guard via authlib (Zanzana in MT, legacy-backed in
-// single-tenant). A nil accessClient makes this a no-op for callers that have
-// not wired one yet.
-//
-// The escalation guard asks, for each verb in escalationVerbs: "would moving
-// source under newParent grant the user a capability on source that they
-// don't currently have?" Concretely, we Check(Name=source) twice — once with
-// Folder=oldParent (current state) and once with Folder=newParent
-// (hypothetical post-move state) — and reject the move if any verb is allowed
-// under the new parent but not the current one.
 func checkMoveAccess(
 	ctx context.Context,
 	namespace string,
@@ -303,16 +289,12 @@ func checkMoveAccess(
 		return err
 	}
 
-	gvr := folders.FolderResourceInfo.GroupVersionResource()
+	folderGVR := folders.FolderResourceInfo.GroupVersionResource()
 
-	// Destination-write: can the user create a child folder under the new
-	// parent? Zanzana resolves inheritance, so a single Check on the parent
-	// folder (folder.RootFolderUID is "", which authlib treats as root) is
-	// sufficient.
 	writeResp, err := accessClient.Check(ctx, user, authlib.CheckRequest{
 		Verb:      utils.VerbCreate,
-		Group:     gvr.Group,
-		Resource:  gvr.Resource,
+		Group:     folderGVR.Group,
+		Resource:  folderGVR.Resource,
 		Namespace: namespace,
 	}, newParentUID)
 	if err != nil {
@@ -333,16 +315,16 @@ func checkMoveAccess(
 			authlib.BatchCheckItem{
 				CorrelationID: newPrefix + verb,
 				Verb:          verb,
-				Group:         gvr.Group,
-				Resource:      gvr.Resource,
+				Group:         folderGVR.Group,
+				Resource:      folderGVR.Resource,
 				Name:          sourceUID,
 				Folder:        newParentUID,
 			},
 			authlib.BatchCheckItem{
 				CorrelationID: oldPrefix + verb,
 				Verb:          verb,
-				Group:         gvr.Group,
-				Resource:      gvr.Resource,
+				Group:         folderGVR.Group,
+				Resource:      folderGVR.Resource,
 				Name:          sourceUID,
 				Folder:        oldParentUID,
 			},
@@ -360,9 +342,7 @@ func checkMoveAccess(
 	for _, verb := range escalationVerbs {
 		newState, nOk := batchResp.Results[newPrefix+verb]
 		oldState, oOk := batchResp.Results[oldPrefix+verb]
-		// Fail closed: we built both correlation IDs ourselves, so a missing
-		// result indicates an authlib bug or transport problem rather than a
-		// "no opinion" answer. Skipping would silently disable the guard.
+		// Fail closed on missing result: we built both correlation IDs ourselves.
 		if !nOk || !oOk {
 			return fmt.Errorf("access escalation check returned no result for verb %q", verb)
 		}
@@ -376,6 +356,36 @@ func checkMoveAccess(
 			return folder.ErrAccessEscalation.Errorf("user cannot move a folder to another folder where they have higher permissions")
 		}
 	}
+
+	// Dashboards inside source inherit from the destination post-move.
+	dashGVR := dashv1.DashboardResourceInfo.GroupVersionResource()
+	for _, verb := range escalationVerbs {
+		newResp, err := accessClient.Check(ctx, user, authlib.CheckRequest{
+			Verb:      verb,
+			Group:     dashGVR.Group,
+			Resource:  dashGVR.Resource,
+			Namespace: namespace,
+		}, newParentUID)
+		if err != nil {
+			return err
+		}
+		if !newResp.Allowed {
+			continue
+		}
+		todayResp, err := accessClient.Check(ctx, user, authlib.CheckRequest{
+			Verb:      verb,
+			Group:     dashGVR.Group,
+			Resource:  dashGVR.Resource,
+			Namespace: namespace,
+		}, sourceUID)
+		if err != nil {
+			return err
+		}
+		if !todayResp.Allowed {
+			return folder.ErrAccessEscalation.Errorf("user cannot move a folder to another folder where they have higher permissions")
+		}
+	}
+
 	return nil
 }
 

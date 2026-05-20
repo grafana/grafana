@@ -11,6 +11,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	authlib "github.com/grafana/authlib/types"
+	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -1391,9 +1392,9 @@ func (m *mockSearchClient) Search(ctx context.Context, req *resourcepb.ResourceS
 	return resp, nil
 }
 
-// allow is a single (verb, name, folder) tuple the mock authlib client treats
-// as Allowed; everything else is denied.
-type allow struct{ verb, name, folder string }
+// allow is a single (group, resource, verb, name, folder) tuple the mock
+// authlib client treats as Allowed; everything else is denied.
+type allow struct{ group, resource, verb, name, folder string }
 
 func TestCheckMoveAccess(t *testing.T) {
 	const (
@@ -1404,13 +1405,22 @@ func TestCheckMoveAccess(t *testing.T) {
 		newParentUID = "newParent"
 	)
 
+	folderGVR := folders.FolderResourceInfo.GroupVersionResource()
+	dashGVR := dashv1.DashboardResourceInfo.GroupVersionResource()
+	allowFolder := func(verb, name, folderUID string) allow {
+		return allow{group: folderGVR.Group, resource: folderGVR.Resource, verb: verb, name: name, folder: folderUID}
+	}
+	allowDash := func(verb, name, folderUID string) allow {
+		return allow{group: dashGVR.Group, resource: dashGVR.Resource, verb: verb, name: name, folder: folderUID}
+	}
+
 	// Common allows: user can update source under its current parent (so the
 	// escalation check passes for "update" when present), and can create
 	// folders in the new parent (so destination-write passes). Tests override
 	// these via additionalAllows / nilClient / no destination-write entry.
-	canCreateInNew := allow{verb: utils.VerbCreate, folder: newParentUID}
-	canUpdateOnSourceUnderOld := allow{verb: utils.VerbUpdate, name: sourceUID, folder: oldParentUID}
-	canUpdateOnSourceUnderNew := allow{verb: utils.VerbUpdate, name: sourceUID, folder: newParentUID}
+	canCreateFolderInNew := allowFolder(utils.VerbCreate, "", newParentUID)
+	canUpdateOnSourceUnderOld := allowFolder(utils.VerbUpdate, sourceUID, oldParentUID)
+	canUpdateOnSourceUnderNew := allowFolder(utils.VerbUpdate, sourceUID, newParentUID)
 
 	tests := []struct {
 		name        string
@@ -1430,39 +1440,70 @@ func TestCheckMoveAccess(t *testing.T) {
 			name:      "no create on new parent denies the move",
 			newParent: newParentUID,
 			oldParent: oldParentUID,
-			// no canCreateInNew → destination-write fails
+			// no canCreateFolderInNew → destination-write fails
 			expectedErr: "folders.forbiddenMove",
 		},
 		{
 			name:      "create on new parent and no extra capabilities is allowed",
 			newParent: newParentUID,
 			oldParent: oldParentUID,
-			allows:    []allow{canCreateInNew},
+			allows:    []allow{canCreateFolderInNew},
 		},
 		{
-			name:        "verb allowed on source only under new parent is escalation",
+			name:        "folder verb allowed on source only under new parent is escalation",
 			newParent:   newParentUID,
 			oldParent:   oldParentUID,
-			allows:      []allow{canCreateInNew, canUpdateOnSourceUnderNew},
+			allows:      []allow{canCreateFolderInNew, canUpdateOnSourceUnderNew},
 			expectedErr: "folders.accessEscalation",
 		},
 		{
-			name:      "verb allowed on source under both parents is not escalation",
+			name:      "folder verb allowed on source under both parents is not escalation",
 			newParent: newParentUID,
 			oldParent: oldParentUID,
-			allows:    []allow{canCreateInNew, canUpdateOnSourceUnderNew, canUpdateOnSourceUnderOld},
+			allows:    []allow{canCreateFolderInNew, canUpdateOnSourceUnderNew, canUpdateOnSourceUnderOld},
 		},
 		{
 			name:      "move to root requires create at root",
 			newParent: folder.RootFolderUID,
 			oldParent: oldParentUID,
-			allows:    []allow{{verb: utils.VerbCreate, folder: ""}},
+			allows:    []allow{allowFolder(utils.VerbCreate, "", "")},
 		},
 		{
 			name:        "move to root denied without create at root",
 			newParent:   folder.RootFolderUID,
 			oldParent:   oldParentUID,
 			expectedErr: "folders.forbiddenMove",
+		},
+		{
+			name:      "dashboards read on new parent only is escalation",
+			newParent: newParentUID,
+			oldParent: oldParentUID,
+			allows: []allow{
+				canCreateFolderInNew,
+				allowDash(utils.VerbGet, "", newParentUID),
+			},
+			expectedErr: "folders.accessEscalation",
+		},
+		{
+			name:      "dashboards read on source folder today is not escalation",
+			newParent: newParentUID,
+			oldParent: oldParentUID,
+			allows: []allow{
+				canCreateFolderInNew,
+				allowDash(utils.VerbGet, "", newParentUID),
+				// direct grant on source folder, unaffected by the move
+				allowDash(utils.VerbGet, "", sourceUID),
+			},
+		},
+		{
+			name:      "dashboards write on new parent only is escalation",
+			newParent: newParentUID,
+			oldParent: oldParentUID,
+			allows: []allow{
+				canCreateFolderInNew,
+				allowDash(utils.VerbUpdate, "", newParentUID),
+			},
+			expectedErr: "folders.accessEscalation",
 		},
 	}
 
@@ -1502,14 +1543,14 @@ func newMockAccessClient(allows []allow) *mockAccessClient {
 }
 
 func (m *mockAccessClient) Check(_ context.Context, _ authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
-	_, ok := m.allowed[allow{verb: req.Verb, name: req.Name, folder: folder}]
+	_, ok := m.allowed[allow{group: req.Group, resource: req.Resource, verb: req.Verb, name: req.Name, folder: folder}]
 	return authlib.CheckResponse{Allowed: ok, Zookie: authlib.NoopZookie{}}, nil
 }
 
 func (m *mockAccessClient) BatchCheck(_ context.Context, _ authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
 	results := make(map[string]authlib.BatchCheckResult, len(req.Checks))
 	for _, c := range req.Checks {
-		_, ok := m.allowed[allow{verb: c.Verb, name: c.Name, folder: c.Folder}]
+		_, ok := m.allowed[allow{group: c.Group, resource: c.Resource, verb: c.Verb, name: c.Name, folder: c.Folder}]
 		results[c.CorrelationID] = authlib.BatchCheckResult{Allowed: ok}
 	}
 	return authlib.BatchCheckResponse{Results: results}, nil
