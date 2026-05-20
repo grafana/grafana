@@ -12,6 +12,11 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	otelcodes "go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 )
 
@@ -40,6 +45,8 @@ const (
 	// of conflicting with other leases names that share the same prefix.
 	generationSeparator = "~"
 )
+
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/resource/lease")
 
 var (
 	// ErrLeaseAlreadyHeld is returned by Acquire when an unexpired lease for
@@ -214,7 +221,18 @@ func WithAutoRenew() AcquireOption {
 // On failure, Acquire returns an error. ErrLeaseAlreadyHeld indicates that
 // an unexpired lease for name is currently owned by some holder (including
 // possibly the caller).
-func (m *Manager) Acquire(ctx context.Context, name string, opts ...AcquireOption) (*Lease, error) {
+func (m *Manager) Acquire(ctx context.Context, name string, opts ...AcquireOption) (lease *Lease, retErr error) {
+	ctx, span := tracer.Start(ctx, "lease.Manager.Acquire", trace.WithAttributes(
+		attribute.String("lease.name", name),
+		attribute.String("lease.holder", m.holder),
+	))
+	var attempts int
+	defer func() {
+		recordSpanError(span, retErr)
+		span.SetAttributes(attribute.Int("attempts", attempts))
+		span.End()
+	}()
+
 	if err := validateLeaseName(name); err != nil {
 		return nil, err
 	}
@@ -232,8 +250,8 @@ func (m *Manager) Acquire(ctx context.Context, name string, opts ...AcquireOptio
 		return nil, fmt.Errorf("invalid TTL: %s > %s", cfg.ttl, maxTTL)
 	}
 
-	for attempt := 0; ; attempt++ {
-		if attempt >= maxAcquireAttempts {
+	for ; ; attempts++ {
+		if attempts >= maxAcquireAttempts {
 			return nil, fmt.Errorf("%w: exhausted retries acquiring %s", ErrLeaseAlreadyHeld, name)
 		}
 
@@ -323,7 +341,16 @@ func (m *Manager) Acquire(ctx context.Context, name string, opts ...AcquireOptio
 
 // Release releases lease. It is not idempotent: releasing a lease that has
 // already been released — or one that has expired — returns ErrLeaseLost.
-func (m *Manager) Release(ctx context.Context, lease *Lease) error {
+func (m *Manager) Release(ctx context.Context, lease *Lease) (retErr error) {
+	ctx, span := tracer.Start(ctx, "lease.Manager.Release", trace.WithAttributes(
+		attribute.String("lease.name", lease.name),
+		attribute.String("lease.holder", lease.holder),
+	))
+	defer func() {
+		recordSpanError(span, retErr)
+		span.End()
+	}()
+
 	lease.stopOnce.Do(func() { close(lease.stop) })
 	<-lease.done
 	defer lease.notifyLoss()
@@ -465,7 +492,15 @@ func (m *Manager) renewOnce(lease *Lease, ttl, renewInterval time.Duration) (tim
 	return m.extendGeneration(ctx, lease, ttl)
 }
 
-func (m *Manager) latest(ctx context.Context, name string) (leaseKey, error) {
+func (m *Manager) latest(ctx context.Context, name string) (key leaseKey, retError error) {
+	ctx, span := tracer.Start(ctx, "lease.Manager.latest", trace.WithAttributes(
+		attribute.String("lease.name", name),
+	))
+	defer func() {
+		recordSpanError(span, retError)
+		span.End()
+	}()
+
 	prefix := name + generationSeparator
 	opts := kv.ListOptions{
 		Sort:     kv.SortOrderDesc,
@@ -484,8 +519,16 @@ func (m *Manager) latest(ctx context.Context, name string) (leaseKey, error) {
 	return leaseKey{}, nil
 }
 
-func (m *Manager) read(ctx context.Context, key leaseKey) (leaseMetadata, error) {
-	r, err := m.store.Get(ctx, kv.LeasesSection, key.String())
+func (m *Manager) read(ctx context.Context, key leaseKey) (state leaseMetadata, retError error) {
+	ctx, span := tracer.Start(ctx, "lease.Manager.read", trace.WithAttributes(
+		attribute.String("lease.key", key),
+	))
+	defer func() {
+		recordSpanError(span, retError)
+		span.End()
+	}()
+
+	r, err := m.store.Get(ctx, kv.LeasesSection, key)
 	if err != nil {
 		return leaseMetadata{}, fmt.Errorf("fetching lease key: %w", err)
 	}
@@ -496,14 +539,21 @@ func (m *Manager) read(ctx context.Context, key leaseKey) (leaseMetadata, error)
 		return leaseMetadata{}, fmt.Errorf("reading lease key: %w", err)
 	}
 
-	var state leaseMetadata
 	if err := json.Unmarshal(data, &state); err != nil {
 		return leaseMetadata{}, fmt.Errorf("unmarshaling lease metadata: %w", err)
 	}
 	return state, nil
 }
 
-func (m *Manager) save(ctx context.Context, key leaseKey, state leaseMetadata) error {
+func (m *Manager) save(ctx context.Context, key leaseKey, state leaseMetadata) (retError error) {
+	ctx, span := tracer.Start(ctx, "lease.Manager.save", trace.WithAttributes(
+		attribute.String("lease.key", key),
+	))
+	defer func() {
+		recordSpanError(span, retError)
+		span.End()
+	}()
+
 	data, err := json.Marshal(state)
 	if err != nil {
 		return err
@@ -524,6 +574,20 @@ func (m *Manager) save(ctx context.Context, key leaseKey, state leaseMetadata) e
 	}
 
 	return nil
+}
+
+func recordSpanError(span trace.Span, err error) {
+	if err == nil {
+		return
+	}
+	span.RecordError(err)
+	span.SetStatus(otelcodes.Error, err.Error())
+}
+
+// leaseKey generates a 20-digit generation suffix so leases sort
+// lexicographically in generation order.
+func leaseKey(name string, generation int64) string {
+	return fmt.Sprintf("%s%s%020d", name, generationSeparator, generation)
 }
 
 func validateLeaseName(name string) error {
