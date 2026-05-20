@@ -2166,6 +2166,7 @@ func TestApiGetSnapshots(t *testing.T) {
 			models.IntegrationMuts.WithName(allIntegrationsName),
 			models.IntegrationMuts.WithUID(fmt.Sprintf("%s-uid", strings.ToLower(string(integrationType)))),
 			models.IntegrationMuts.WithValidConfig(integrationType),
+			models.IntegrationMuts.RemoveSetting("http_config"),
 		)()
 		integration.DisableResolveMessage = false
 		allIntegrations = append(allIntegrations, integration)
@@ -2202,7 +2203,7 @@ func TestApiGetSnapshots(t *testing.T) {
 				{InclusiveRange: timeinterval.InclusiveRange{Begin: 2020, End: 2022}},
 				{InclusiveRange: timeinterval.InclusiveRange{Begin: 2025, End: 2026}},
 			},
-			Location: &timeinterval.Location{location},
+			Location: &timeinterval.Location{Location: location},
 		}
 	}
 	cfg.AlertmanagerConfig.MuteTimeIntervals = append(cfg.AlertmanagerConfig.MuteTimeIntervals,
@@ -2381,12 +2382,13 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		Bus:            bus.ProvideBus(tracing.InitializeTracerForTest()),
 		FeatureToggles: featuremgmt.WithFeatures(),
 	}
-	store.SaveAlertmanagerConfiguration(context.Background(), &models.SaveAlertmanagerConfigurationCmd{
+	err = store.SaveAlertmanagerConfiguration(context.Background(), &models.SaveAlertmanagerConfigurationCmd{
 		AlertmanagerConfiguration: string(raw),
 		ConfigurationVersion:      "v1",
 		Default:                   false,
 		OrgID:                     1,
 	})
+	require.NoError(t, err)
 	user := &user.SignedInUser{
 		OrgID: 1,
 		/*
