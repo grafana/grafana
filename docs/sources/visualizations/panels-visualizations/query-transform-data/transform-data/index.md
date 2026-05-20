@@ -751,8 +751,6 @@ After choosing the field by which you want to group your data, you can add vario
 | Show field names in nested tables | Show or hide the column headers inside each nested table. On by default.                                                   |
 | Expand nested rows by default     | Expand all nested rows automatically when the panel loads, instead of starting with all columns collapsed. Off by default. |
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-expand-nested-rows-v12.x.png" max-width="750px" alt="Nested table panel with all rows expanded by default" >}}
-
 ### Create heatmap
 
 Use this transformation to prepare histogram data for visualizing trends over time. Similar to the heatmap visualization, this transformation converts histogram metrics into temporal buckets.
@@ -1554,6 +1552,7 @@ The transformation preserves all original time points while reducing noise, resu
 [Table panel]: ref:table-panel
 [Calculation types]: ref:calculation-types
 [sparkline cell type]: ref:sparkline-cell-type
+[configuration file]: ref:configuration-file
 [Time series panel]: ref:time-series-panel
 [feature toggle]: ref:feature-toggle
 [dashboard variable]: ref:dashboard-variable
