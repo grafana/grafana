@@ -8,7 +8,12 @@ import { t } from '@grafana/i18n';
 import { Button, Combobox, type ComboboxOption, Field, InlineSwitch, Input, Stack, useStyles2 } from '@grafana/ui';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import { type AutoGridColumnWidth, type AutoGridRowHeight, type AutoGridLayoutManager } from './AutoGridLayoutManager';
+import {
+  type AutoGridColumnWidth,
+  type AutoGridMaxHeightMode,
+  type AutoGridRowHeight,
+  type AutoGridLayoutManager,
+} from './AutoGridLayoutManager';
 
 export function getEditOptions(layoutManager: AutoGridLayoutManager): OptionsPaneItemDescriptor[] {
   const options: OptionsPaneItemDescriptor[] = [];
@@ -103,6 +108,7 @@ function GridLayoutColumns({ layoutManager }: { layoutManager: AutoGridLayoutMan
             : undefined
         }
         className={styles.wideSelector}
+        noMargin
       >
         {isStandardMinWidth ? (
           <Combobox
@@ -140,7 +146,11 @@ function GridLayoutColumns({ layoutManager }: { layoutManager: AutoGridLayoutMan
           />
         )}
       </Field>
-      <Field label={t('dashboard.auto-grid.options.max-columns', 'Max columns')} className={styles.narrowSelector}>
+      <Field
+        label={t('dashboard.auto-grid.options.max-columns', 'Max columns')}
+        className={styles.narrowSelector}
+        noMargin
+      >
         <Combobox
           id="max-columns"
           options={colOptions}
@@ -155,10 +165,14 @@ function GridLayoutColumns({ layoutManager }: { layoutManager: AutoGridLayoutMan
 }
 
 function GridLayoutRows({ layoutManager }: { layoutManager: AutoGridLayoutManager }) {
-  const { rowHeight, fillScreen } = layoutManager.useState();
+  const { rowHeight, fillScreen, fitContent, maxHeightMode, maxHeight, matchRowHeights } = layoutManager.useState();
+  const matchRowHeightsOn = matchRowHeights !== false;
   const [inputRef, setInputRef] = React.useState<HTMLInputElement | null>(null);
   const [focusInput, setFocusInput] = React.useState(false);
+  const [maxHeightFocusInput, setMaxHeightFocusInput] = React.useState(false);
+  const [maxHeightInputRef, setMaxHeightInputRef] = React.useState<HTMLInputElement | null>(null);
   const [customMinWidthError, setCustomMinWidthError] = React.useState(false);
+  const [maxHeightError, setMaxHeightError] = React.useState(false);
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
@@ -167,6 +181,22 @@ function GridLayoutRows({ layoutManager }: { layoutManager: AutoGridLayoutManage
       setFocusInput(false);
     }
   }, [focusInput, inputRef]);
+
+  useEffect(() => {
+    if (maxHeightFocusInput && maxHeightInputRef) {
+      maxHeightInputRef.focus();
+      setMaxHeightFocusInput(false);
+    }
+  }, [maxHeightFocusInput, maxHeightInputRef]);
+
+  const maxHeightOptions: Array<ComboboxOption<AutoGridMaxHeightMode>> = [
+    { label: t('dashboard.auto-grid.options.max-height-unlimited', 'Unlimited'), value: 'unlimited' as const },
+    { label: t('dashboard.auto-grid.options.max-height-short', 'Short'), value: 'short' as const },
+    { label: t('dashboard.auto-grid.options.max-height-standard', 'Standard'), value: 'standard' as const },
+    { label: t('dashboard.auto-grid.options.max-height-tall', 'Tall'), value: 'tall' as const },
+    { label: t('dashboard.auto-grid.options.max-height-custom', 'Custom'), value: 'custom' as const },
+    { label: t('dashboard.auto-grid.options.max-height-screen', 'Screen'), value: 'screen' as const },
+  ];
 
   const minWidthOptions: Array<ComboboxOption<AutoGridRowHeight>> = [
     'short' as const,
@@ -179,9 +209,11 @@ function GridLayoutRows({ layoutManager }: { layoutManager: AutoGridLayoutManage
   }));
 
   const isStandardHeight = typeof rowHeight === 'string';
-  const rowHeightLabel = rowHeight
-    ? t('dashboard.auto-grid.options.min-height', 'Row height')
-    : t('dashboard.auto-grid.options.min-height-custom', 'Custom row height');
+  const rowHeightLabel = fitContent
+    ? t('dashboard.auto-grid.options.min-height-fit', 'Minimum height')
+    : rowHeight
+      ? t('dashboard.auto-grid.options.min-height', 'Row height')
+      : t('dashboard.auto-grid.options.min-height-custom', 'Custom row height');
 
   const onCustomHeightChanged = (e: React.ChangeEvent<HTMLInputElement>) => {
     const pixels = parseInt(e.target.value, 10);
@@ -221,6 +253,7 @@ function GridLayoutRows({ layoutManager }: { layoutManager: AutoGridLayoutManage
             : undefined
         }
         className={styles.wideSelector}
+        noMargin
       >
         {isStandardHeight ? (
           <Combobox
@@ -258,14 +291,111 @@ function GridLayoutRows({ layoutManager }: { layoutManager: AutoGridLayoutManage
           />
         )}
       </Field>
-      <Field label={t('dashboard.auto-grid.options.height-fill', 'Fill screen')} className={styles.narrowSelector}>
+      {!fitContent && (
+        <Field
+          label={t('dashboard.auto-grid.options.height-fill', 'Fill screen')}
+          className={styles.narrowSelector}
+          noMargin
+        >
+          <InlineSwitch
+            id="fill-screen-toggle"
+            value={fillScreen}
+            onChange={() => layoutManager.onFillScreenChanged(!fillScreen)}
+            data-testid={selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.fillScreen}
+          />
+        </Field>
+      )}
+      {fitContent && (
+        <Field
+          label={
+            maxHeightMode === 'custom'
+              ? t('dashboard.auto-grid.options.max-height-custom-label', 'Custom max height')
+              : t('dashboard.auto-grid.options.max-height', 'Max height')
+          }
+          invalid={maxHeightError}
+          error={
+            maxHeightError
+              ? t('dashboard.auto-grid.options.max-height-error', 'A number between 50 and 10000 is required')
+              : undefined
+          }
+          className={styles.wideSelector}
+          noMargin
+        >
+          {maxHeightMode === 'custom' ? (
+            <Input
+              id="max-height"
+              defaultValue={maxHeight}
+              onBlur={(e) => {
+                const pixels = parseInt(e.target.value, 10);
+                if (isNaN(pixels) || pixels < 50 || pixels > 10000) {
+                  setMaxHeightError(true);
+                  return;
+                }
+                setMaxHeightError(false);
+                layoutManager.onMaxHeightCustomChanged(pixels);
+              }}
+              ref={(ref) => {
+                setMaxHeightInputRef(ref);
+              }}
+              type="number"
+              min={50}
+              max={10000}
+              invalid={maxHeightError}
+              suffix={
+                <Button
+                  size="sm"
+                  fill="text"
+                  icon="times"
+                  tooltip={t('dashboard.auto-grid.options.max-height-clear', 'Back to unlimited')}
+                  onClick={() => {
+                    setMaxHeightError(false);
+                    layoutManager.onMaxHeightModeChanged('unlimited');
+                  }}
+                >
+                  {t('dashboard.auto-grid.options.max-height-clear-label', 'Clear')}
+                </Button>
+              }
+            />
+          ) : (
+            <Combobox
+              id="max-height"
+              options={maxHeightOptions}
+              value={maxHeightMode ?? 'unlimited'}
+              onChange={(option) => {
+                if (option.value === 'custom') {
+                  setMaxHeightFocusInput(true);
+                }
+                setMaxHeightError(false);
+                layoutManager.onMaxHeightModeChanged(option.value);
+              }}
+            />
+          )}
+        </Field>
+      )}
+      <Field
+        label={t('dashboard.auto-grid.options.fit-content', 'Auto fit content')}
+        className={styles.narrowSelector}
+        noMargin
+      >
         <InlineSwitch
-          id="fill-screen-toggle"
-          value={fillScreen}
-          onChange={() => layoutManager.onFillScreenChanged(!fillScreen)}
-          data-testid={selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.fillScreen}
+          id="fit-content-toggle"
+          value={!!fitContent}
+          onChange={() => layoutManager.onFitContentChanged(!fitContent)}
         />
       </Field>
+      {fitContent && (
+        <Field
+          label={t('dashboard.auto-grid.options.match-row-heights', 'Match row heights')}
+          className={styles.narrowSelector}
+          noMargin
+        >
+          <InlineSwitch
+            id="match-row-heights-toggle"
+            value={matchRowHeightsOn}
+            onChange={() => layoutManager.onMatchRowHeightsChanged(!matchRowHeightsOn)}
+          />
+        </Field>
+      )}
     </Stack>
   );
 }

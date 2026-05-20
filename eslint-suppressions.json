@@ -1539,11 +1539,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/scene/layout-auto-grid/AutoGridLayoutManagerEditor.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 4
-    }
-  },
   "public/app/features/dashboard-scene/scene/layout-default/DashboardGridItemEditor.tsx": {
     "react-hooks/rules-of-hooks": {
       "count": 1

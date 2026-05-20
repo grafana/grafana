@@ -43,6 +43,10 @@ interface AutoGridLayoutManagerState extends SceneObjectState {
   rowHeight: AutoGridRowHeight;
   columnWidth: AutoGridColumnWidth;
   fillScreen: boolean;
+  fitContent?: boolean;
+  maxHeightMode?: AutoGridMaxHeightMode;
+  maxHeight?: number;
+  matchRowHeights?: boolean;
   /** Whether this grid is currently a drop target */
   isDropTarget?: boolean;
   /** Position index where a placeholder should be shown for external drops */
@@ -51,6 +55,7 @@ interface AutoGridLayoutManagerState extends SceneObjectState {
 
 export type AutoGridColumnWidth = 'narrow' | 'standard' | 'wide' | 'custom' | number;
 export type AutoGridRowHeight = 'short' | 'standard' | 'tall' | 'custom' | number;
+export type AutoGridMaxHeightMode = 'unlimited' | 'short' | 'standard' | 'tall' | 'custom' | 'screen';
 
 const AUTO_GRID_DEFAULT_MAX_COLUMN_COUNT = 3;
 export const AUTO_GRID_DEFAULT_COLUMN_WIDTH = 'standard';
@@ -89,6 +94,7 @@ export class AutoGridLayoutManager
     const columnWidth = state.columnWidth ?? AUTO_GRID_DEFAULT_COLUMN_WIDTH;
     const rowHeight = state.rowHeight ?? AUTO_GRID_DEFAULT_ROW_HEIGHT;
     const fillScreen = state.fillScreen ?? false;
+    const fitContent = state.fitContent ?? false;
 
     super({
       ...state,
@@ -96,12 +102,13 @@ export class AutoGridLayoutManager
       columnWidth,
       rowHeight,
       fillScreen,
+      fitContent,
       layout:
         state.layout ??
         new AutoGridLayout({
           isDraggable: true,
           templateColumns: getTemplateColumnsTemplate(maxColumnCount, columnWidth),
-          autoRows: getAutoRowsTemplate(rowHeight, fillScreen),
+          autoRows: getAutoRowsTemplate(rowHeight, fillScreen, fitContent),
         }),
     });
   }
@@ -323,10 +330,33 @@ export class AutoGridLayoutManager
   }
 
   public onFillScreenChanged(fillScreen: boolean) {
-    this.setState({ fillScreen });
+    const fitContent = fillScreen ? false : this.state.fitContent;
+    this.setState({ fillScreen, fitContent });
     this.state.layout.setState({
-      autoRows: getAutoRowsTemplate(this.state.rowHeight, fillScreen),
+      autoRows: getAutoRowsTemplate(this.state.rowHeight, fillScreen, fitContent),
     });
+  }
+
+  public onFitContentChanged(fitContent: boolean) {
+    const fillScreen = fitContent ? false : this.state.fillScreen;
+    this.setState({ fitContent, fillScreen });
+    this.state.layout.setState({
+      autoRows: getAutoRowsTemplate(this.state.rowHeight, fillScreen, fitContent),
+    });
+  }
+
+  public onMaxHeightModeChanged(maxHeightMode: AutoGridMaxHeightMode | undefined) {
+    const maxHeight =
+      maxHeightMode === 'custom' ? (this.state.maxHeight ?? getNamedHeightInPixels('standard')) : this.state.maxHeight;
+    this.setState({ maxHeightMode, maxHeight });
+  }
+
+  public onMaxHeightCustomChanged(maxHeight: number) {
+    this.setState({ maxHeightMode: 'custom', maxHeight });
+  }
+
+  public onMatchRowHeightsChanged(matchRowHeights: boolean) {
+    this.setState({ matchRowHeights });
   }
 
   public onRowHeightChanged(rowHeight: AutoGridRowHeight) {
@@ -336,7 +366,7 @@ export class AutoGridLayoutManager
 
     this.setState({ rowHeight });
     this.state.layout.setState({
-      autoRows: getAutoRowsTemplate(rowHeight, this.state.fillScreen),
+      autoRows: getAutoRowsTemplate(rowHeight, this.state.fillScreen, this.state.fitContent),
     });
   }
 
@@ -477,7 +507,27 @@ function getNamedColumWidthInPixels(columnWidth: AutoGridColumnWidth) {
   }
 }
 
-function getNamedHeightInPixels(rowHeight: AutoGridRowHeight) {
+export function getMaxHeightInPixels(
+  mode: AutoGridMaxHeightMode | undefined,
+  customPixels: number | undefined
+): number {
+  switch (mode) {
+    case 'short':
+    case 'standard':
+    case 'tall':
+      return getNamedHeightInPixels(mode);
+    case 'custom':
+      return customPixels ?? Number.POSITIVE_INFINITY;
+    case 'screen':
+      return window.innerHeight;
+    case 'unlimited':
+    case undefined:
+    default:
+      return Number.POSITIVE_INFINITY;
+  }
+}
+
+export function getNamedHeightInPixels(rowHeight: AutoGridRowHeight) {
   if (typeof rowHeight === 'number') {
     return rowHeight;
   }
@@ -494,7 +544,10 @@ function getNamedHeightInPixels(rowHeight: AutoGridRowHeight) {
   }
 }
 
-export function getAutoRowsTemplate(rowHeight: AutoGridRowHeight, fillScreen: boolean) {
+export function getAutoRowsTemplate(rowHeight: AutoGridRowHeight, fillScreen: boolean, fitContent?: boolean) {
+  if (fitContent) {
+    return 'max-content';
+  }
   const rowHeightPixels = getNamedHeightInPixels(rowHeight);
   const maxRowHeightValue = fillScreen ? 'auto' : `${rowHeightPixels}px`;
   return `minmax(${rowHeightPixels}px, ${maxRowHeightValue})`;

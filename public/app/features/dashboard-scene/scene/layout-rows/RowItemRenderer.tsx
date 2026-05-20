@@ -312,6 +312,7 @@ function getStyles(theme: GrafanaTheme2) {
       flexDirection: 'column',
       flex: 1,
       minHeight: 0,
+      height: '100%',
     }),
   };
 }

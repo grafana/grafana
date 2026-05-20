@@ -1457,6 +1457,10 @@ type DashboardAutoGridLayoutSpec struct {
 	RowHeightMode   DashboardAutoGridLayoutSpecRowHeightMode   `json:"rowHeightMode"`
 	RowHeight       *float64                                   `json:"rowHeight,omitempty"`
 	FillScreen      *bool                                      `json:"fillScreen,omitempty"`
+	FitContent      *bool                                      `json:"fitContent,omitempty"`
+	MaxHeightMode   *DashboardAutoGridLayoutSpecMaxHeightMode  `json:"maxHeightMode,omitempty"`
+	MaxHeight       *float64                                   `json:"maxHeight,omitempty"`
+	MatchRowHeights *bool                                      `json:"matchRowHeights,omitempty"`
 	Items           []DashboardAutoGridLayoutItemKind          `json:"items"`
 }
 
@@ -1467,6 +1471,8 @@ func NewDashboardAutoGridLayoutSpec() *DashboardAutoGridLayoutSpec {
 		ColumnWidthMode: DashboardAutoGridLayoutSpecColumnWidthModeStandard,
 		RowHeightMode:   DashboardAutoGridLayoutSpecRowHeightModeStandard,
 		FillScreen:      (func(input bool) *bool { return &input })(false),
+		FitContent:      (func(input bool) *bool { return &input })(false),
+		MatchRowHeights: (func(input bool) *bool { return &input })(true),
 		Items:           []DashboardAutoGridLayoutItemKind{},
 	}
 }
@@ -2808,6 +2814,23 @@ const (
 // OpenAPIModelName returns the OpenAPI model name for DashboardAutoGridLayoutSpecRowHeightMode.
 func (DashboardAutoGridLayoutSpecRowHeightMode) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardAutoGridLayoutSpecRowHeightMode"
+}
+
+// +k8s:openapi-gen=true
+type DashboardAutoGridLayoutSpecMaxHeightMode string
+
+const (
+	DashboardAutoGridLayoutSpecMaxHeightModeUnlimited DashboardAutoGridLayoutSpecMaxHeightMode = "unlimited"
+	DashboardAutoGridLayoutSpecMaxHeightModeShort     DashboardAutoGridLayoutSpecMaxHeightMode = "short"
+	DashboardAutoGridLayoutSpecMaxHeightModeStandard  DashboardAutoGridLayoutSpecMaxHeightMode = "standard"
+	DashboardAutoGridLayoutSpecMaxHeightModeTall      DashboardAutoGridLayoutSpecMaxHeightMode = "tall"
+	DashboardAutoGridLayoutSpecMaxHeightModeCustom    DashboardAutoGridLayoutSpecMaxHeightMode = "custom"
+	DashboardAutoGridLayoutSpecMaxHeightModeScreen    DashboardAutoGridLayoutSpecMaxHeightMode = "screen"
+)
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardAutoGridLayoutSpecMaxHeightMode.
+func (DashboardAutoGridLayoutSpecMaxHeightMode) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardAutoGridLayoutSpecMaxHeightMode"
 }
 
 // +k8s:openapi-gen=true
