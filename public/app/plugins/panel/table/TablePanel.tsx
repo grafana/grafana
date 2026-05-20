@@ -138,16 +138,24 @@ function getCurrentFrameIndex(frames: DataFrame[], options: Options) {
   return options.frameIndex > 0 && options.frameIndex < frames.length ? options.frameIndex : 0;
 }
 
-function onColumnResize(fieldDisplayName: string, width: number, fieldScope: MatcherScope = 'series', props: Props) {
+export function onColumnResize(
+  fieldDisplayName: string,
+  width: number,
+  fieldScope: MatcherScope = 'series',
+  props: Pick<Props, 'fieldConfig' | 'onFieldConfigChange'>
+) {
   const { fieldConfig } = props;
   const { overrides } = fieldConfig;
 
   const matcherId = FieldMatcherID.byName;
   const propId = 'custom.width';
 
-  // look for existing override
+  // look for existing override. an unscoped override is treated as implicitly 'series'.
   const override = overrides.find(
-    (o) => o.matcher.id === matcherId && o.matcher.options === fieldDisplayName && o.matcher.scope === fieldScope
+    (o) =>
+      o.matcher.id === matcherId &&
+      o.matcher.options === fieldDisplayName &&
+      (o.matcher.scope ?? 'series') === fieldScope
   );
 
   if (override) {

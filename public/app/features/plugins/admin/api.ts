@@ -221,7 +221,7 @@ export async function getProvisionedPlugins(): Promise<ProvisionedPlugin[]> {
 }
 
 export async function installPlugin(id: string, version?: string) {
-  // Install via K8s PluginMeta API (no-op when useMTPlugins is off).
+  // Install via K8s PluginMeta API (no-op when plugins.useMTPlugins is off).
   // We call both this and the legacy path because the K8s settings API doesn't cover all
   // plugin types yet — the legacy call keeps the UI in sync across browser refreshes.
   // TODO(@hugohaggmark): return early once all plugin types support the K8s Settings API.
@@ -246,7 +246,7 @@ export async function installPlugin(id: string, version?: string) {
 }
 
 export async function uninstallPlugin(id: string) {
-  // Uninstall via K8s PluginMeta API (no-op when useMTPlugins is off).
+  // Uninstall via K8s PluginMeta API (no-op when plugins.useMTPlugins is off).
   // We call both this and the legacy path because the K8s settings API doesn't cover all
   // plugin types yet — the legacy call keeps the UI in sync across browser refreshes.
   // TODO(@hugohaggmark): return early once all plugin types support the K8s Settings API.

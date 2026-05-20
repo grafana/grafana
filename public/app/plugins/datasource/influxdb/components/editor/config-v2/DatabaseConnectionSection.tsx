@@ -9,7 +9,7 @@ import { InfluxSQLDBConnection } from './InfluxSQLDBConnection';
 import { CONFIG_SECTION_HEADERS, CONTAINER_MIN_WIDTH } from './constants';
 import { type Props } from './types';
 
-export const DatabaseConnectionSection = ({ options, onOptionsChange }: Props) => (
+export const DatabaseConnectionSection = ({ options, onOptionsChange, validation }: Props) => (
   <>
     <Box
       borderStyle="solid"
@@ -50,13 +50,13 @@ export const DatabaseConnectionSection = ({ options, onOptionsChange }: Props) =
         )}
         <>
           {options.jsonData.version === InfluxVersion.InfluxQL && (
-            <InfluxInfluxQLDBConnection options={options} onOptionsChange={onOptionsChange} />
+            <InfluxInfluxQLDBConnection options={options} onOptionsChange={onOptionsChange} validation={validation} />
           )}
           {options.jsonData.version === InfluxVersion.Flux && (
-            <InfluxFluxDBConnection options={options} onOptionsChange={onOptionsChange} />
+            <InfluxFluxDBConnection options={options} onOptionsChange={onOptionsChange} validation={validation} />
           )}
           {options.jsonData.version === InfluxVersion.SQL && (
-            <InfluxSQLDBConnection options={options} onOptionsChange={onOptionsChange} />
+            <InfluxSQLDBConnection options={options} onOptionsChange={onOptionsChange} validation={validation} />
           )}
           {options.jsonData.version && (
             <AdvancedDbConnectionSettings options={options} onOptionsChange={onOptionsChange} />

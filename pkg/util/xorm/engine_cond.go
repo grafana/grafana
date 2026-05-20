@@ -74,7 +74,7 @@ func (engine *Engine) buildConds(table *core.Table, bean any,
 			}
 		}
 
-		if fieldType.Kind() == reflect.Ptr {
+		if fieldType.Kind() == reflect.Pointer {
 			if fieldValue.IsNil() {
 				if includeNil {
 					conds = append(conds, builder.Eq{colName: nil})

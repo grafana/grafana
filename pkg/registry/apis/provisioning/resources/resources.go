@@ -217,7 +217,28 @@ func (r *ResourcesManager) WriteResourceFileFromObject(ctx context.Context, obj 
 	return fileName, nil
 }
 
-func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path string, ref string) (string, schema.GroupVersionKind, error) {
+// WriteResourceOption configures optional behavior for resource write operations.
+type WriteResourceOption func(*writeResourceConfig)
+
+type writeResourceConfig struct {
+	existingHash string
+}
+
+// WithExistingHash provides the content hash of the resource as it currently
+// exists. When the new file's hash matches, strict schema validation is
+// skipped — the spec is unchanged and may predate stricter rules.
+func WithExistingHash(hash string) WriteResourceOption {
+	return func(cfg *writeResourceConfig) {
+		cfg.existingHash = hash
+	}
+}
+
+func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path string, ref string, opts ...WriteResourceOption) (string, schema.GroupVersionKind, error) {
+	var cfg writeResourceConfig
+	for _, o := range opts {
+		o(&cfg)
+	}
+
 	// Read the referenced file
 	readCtx, readSpan := tracing.Start(ctx, "provisioning.resources.write_resource_from_file.read_file")
 	fileInfo, err := r.repo.Read(readCtx, path, ref)
@@ -236,6 +257,14 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 		return "", schema.GroupVersionKind{}, fmt.Errorf("failed to parse file: %w", err)
 	}
 	parseSpan.End()
+
+	// When the caller provides an existing content hash and it matches the new
+	// file, the spec is unchanged — only metadata (path, folder) differs. Skip
+	// strict validation so the unchanged spec is not rejected by rules introduced
+	// after the resource was first persisted (e.g. legacy dashboards).
+	if cfg.existingHash != "" && cfg.existingHash == fileInfo.Hash {
+		parsed.SkipStrictValidation = true
+	}
 
 	return r.writeResourceFromParsed(ctx, path, ref, parsed)
 }
@@ -297,8 +326,8 @@ func (r *ResourcesManager) writeResourceFromParsed(ctx context.Context, path, re
 // ReplaceResourceFromFile writes a resource from file and, if the resource name
 // changed compared to oldName, deletes the old resource to prevent orphans.
 // Used by full sync where the old identity is known from Changes().Existing.
-func (r *ResourcesManager) ReplaceResourceFromFile(ctx context.Context, path, ref string, oldName string, oldGVR schema.GroupVersionResource) (string, schema.GroupVersionKind, error) {
-	newName, gvk, err := r.WriteResourceFromFile(ctx, path, ref)
+func (r *ResourcesManager) ReplaceResourceFromFile(ctx context.Context, path, ref string, oldName string, oldGVR schema.GroupVersionResource, opts ...WriteResourceOption) (string, schema.GroupVersionKind, error) {
+	newName, gvk, err := r.WriteResourceFromFile(ctx, path, ref, opts...)
 	if err != nil || oldName == "" || oldName == newName {
 		return newName, gvk, err
 	}
@@ -310,7 +339,7 @@ func (r *ResourcesManager) ReplaceResourceFromFile(ctx context.Context, path, re
 // if the resource identity changed compared to the previous version at
 // path/previousRef, deletes the old resource to prevent orphans.
 // Used by incremental sync where the previous git ref is available.
-func (r *ResourcesManager) ReplaceResourceFromFileByRef(ctx context.Context, path, ref, previousRef string) (string, schema.GroupVersionKind, error) {
+func (r *ResourcesManager) ReplaceResourceFromFileByRef(ctx context.Context, path, ref, previousRef string, opts ...WriteResourceOption) (string, schema.GroupVersionKind, error) {
 	oldInfo, err := r.repo.Read(ctx, path, previousRef)
 	if err != nil {
 		return "", schema.GroupVersionKind{}, fmt.Errorf("reading previous file: %w", err)
@@ -321,7 +350,12 @@ func (r *ResourcesManager) ReplaceResourceFromFileByRef(ctx context.Context, pat
 		return "", schema.GroupVersionKind{}, fmt.Errorf("parsing previous file: %w", err)
 	}
 
-	newName, gvk, writeErr := r.WriteResourceFromFile(ctx, path, ref)
+	// Inject the previous file's hash so WriteResourceFromFile can skip strict
+	// validation when the content is unchanged (identity change only).
+	if oldInfo.Hash != "" {
+		opts = append(opts, WithExistingHash(oldInfo.Hash))
+	}
+	newName, gvk, writeErr := r.WriteResourceFromFile(ctx, path, ref, opts...)
 	if writeErr != nil {
 		return newName, gvk, writeErr
 	}
@@ -414,6 +448,18 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 		oldParsed.Action = provisioning.ResourceActionDelete
 		if err := oldParsed.DryRun(ctx); err != nil {
 			return "", "", schema.GroupVersionKind{}, err
+		}
+		// Pure path-only rename (git blob hash unchanged): the file content is
+		// byte-identical, so the UPDATE we are about to send carries the same
+		// spec the cluster already accepted. Skip strict schema validation so
+		// a path/folder change is not blocked by stricter rules introduced
+		// after the resource was first persisted (e.g. legacy dashboards
+		// saved before the CUE validator was enforced).
+		// Rename-with-edits (different hashes) keeps strict validation: the
+		// new content is a real change and any validation failure must be
+		// surfaced rather than silently admitted.
+		if oldInfo.Hash != "" && oldInfo.Hash == newInfo.Hash {
+			newParsed.SkipStrictValidation = true
 		}
 	}
 

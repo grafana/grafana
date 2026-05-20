@@ -92,7 +92,7 @@ func Test_healthcheck(t *testing.T) {
 	t.Run("should do a successful health check", func(t *testing.T) {
 		httpProvider := getMockProvider[*healthCheckSuccessRoundTripper]()
 		s := &Service{
-			im:     datasource.NewInstanceManager(newInstanceSettings(httpProvider)),
+			im:     datasource.NewInstanceManager(newInstanceSettings(httpProvider, backend.NewLoggerWith("logger", "loki test"), tracing.DefaultTracer())),
 			tracer: tracing.DefaultTracer(),
 			logger: backend.NewLoggerWith("logger", "loki test"),
 		}
@@ -110,7 +110,7 @@ func Test_healthcheck(t *testing.T) {
 	t.Run("should return an error for an unsuccessful health check", func(t *testing.T) {
 		httpProvider := getMockProvider[*healthCheckFailRoundTripper]()
 		s := &Service{
-			im:     datasource.NewInstanceManager(newInstanceSettings(httpProvider)),
+			im:     datasource.NewInstanceManager(newInstanceSettings(httpProvider, backend.NewLoggerWith("logger", "loki test"), tracing.DefaultTracer())),
 			tracer: tracing.DefaultTracer(),
 			logger: backend.NewLoggerWith("logger", "loki test"),
 		}

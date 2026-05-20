@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { memo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -13,7 +12,6 @@ import { useAlertingContext, useQueryEditorUIContext } from '../QueryEditorConte
 import { EMPTY_ALERT } from '../types';
 
 import { AlertsView } from './Alerts/AlertsView';
-import { BulkActionsBar } from './BulkActionsBar';
 import { SidebarFooter } from './Footer/SidebarFooter';
 import { QueriesAndTransformationsView } from './QueriesAndTransformationsView';
 import { SidebarHeaderActions } from './SidebarHeaderActions';
@@ -27,7 +25,6 @@ export const Sidebar = memo(function Sidebar({ sidebarSize, setSidebarSize }: Si
   const styles = useStyles2(getStyles);
   const { setSelectedAlert, cardType } = useQueryEditorUIContext();
   const { alertRules, loading } = useAlertingContext();
-  const isMultiSelectEnabled = useBooleanFlagValue('queryEditorNextMultiSelect', false);
 
   const handleViewChange = (view: QueryEditorType) => {
     trackSidebarViewChange(view);
@@ -56,7 +53,6 @@ export const Sidebar = memo(function Sidebar({ sidebarSize, setSidebarSize }: Si
           showBackground={false}
         />
       </SidebarHeaderActions>
-      {!isMultiSelectEnabled && <BulkActionsBar />}
       {/** The translateX property of the hoverActions in SidebarCard causes the scroll container to overflow by 8px. */}
       <ScrollContainer overflowX="hidden">
         <div className={styles.content}>

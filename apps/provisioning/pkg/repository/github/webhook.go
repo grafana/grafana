@@ -76,11 +76,11 @@ func (r *githubWebhookRepository) Webhook(ctx context.Context, req *http.Request
 		return nil, apierrors.NewUnauthorized("invalid signature")
 	}
 
-	return r.parseWebhook(github.WebHookType(req), payload)
+	return r.parseWebhook(ctx, github.WebHookType(req), payload)
 }
 
 // This method does not include context because it does delegate any more requests
-func (r *githubWebhookRepository) parseWebhook(messageType string, payload []byte) (*provisioning.WebhookResponse, error) {
+func (r *githubWebhookRepository) parseWebhook(ctx context.Context, messageType string, payload []byte) (*provisioning.WebhookResponse, error) {
 	event, err := github.ParseWebHook(messageType, payload)
 	if err != nil {
 		return nil, apierrors.NewBadRequest("invalid payload")
@@ -88,7 +88,7 @@ func (r *githubWebhookRepository) parseWebhook(messageType string, payload []byt
 
 	switch event := event.(type) {
 	case *github.PushEvent:
-		return r.parsePushEvent(event)
+		return r.parsePushEvent(ctx, event)
 	case *github.PullRequestEvent:
 		return r.parsePullRequestEvent(event)
 	case *github.PingEvent:
@@ -104,12 +104,16 @@ func (r *githubWebhookRepository) parseWebhook(messageType string, payload []byt
 	}
 }
 
-func (r *githubWebhookRepository) parsePushEvent(event *github.PushEvent) (*provisioning.WebhookResponse, error) {
+func (r *githubWebhookRepository) parsePushEvent(ctx context.Context, event *github.PushEvent) (*provisioning.WebhookResponse, error) {
+	_, logger := r.logger(ctx, "")
+
 	if event.GetRepo() == nil {
 		return nil, fmt.Errorf("missing repository in push event")
 	}
-	if event.GetRepo().GetFullName() != fmt.Sprintf("%s/%s", r.owner, r.repo) {
-		return nil, fmt.Errorf("repository mismatch")
+	expected := fmt.Sprintf("%s/%s", r.owner, r.repo)
+	if event.GetRepo().GetFullName() != expected {
+		logger.Warn("webhook push event repository mismatch", "expected", expected, "got", event.GetRepo().GetFullName())
+		return nil, repository.ErrRepositoryMismatch
 	}
 
 	// No need to sync if not enabled
@@ -153,8 +157,10 @@ func (r *githubWebhookRepository) parsePullRequestEvent(event *github.PullReques
 		return nil, fmt.Errorf("missing GitHub config")
 	}
 
-	if event.GetRepo().GetFullName() != fmt.Sprintf("%s/%s", r.owner, r.repo) {
-		return nil, fmt.Errorf("repository mismatch")
+	expected := fmt.Sprintf("%s/%s", r.owner, r.repo)
+	if event.GetRepo().GetFullName() != expected {
+		slog.Warn("webhook pull request event repository mismatch", "expected", expected, "got", event.GetRepo().GetFullName())
+		return nil, repository.ErrRepositoryMismatch
 	}
 	pr := event.GetPullRequest()
 	if pr == nil {

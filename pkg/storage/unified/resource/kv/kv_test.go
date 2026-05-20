@@ -242,6 +242,9 @@ func TestIsValidKey(t *testing.T) {
 		{"underscores", "a_b", true},
 		{"key with underscores and mixed chars", "4_D6mSh4z", true},
 		{"complex key with underscores", "ns/group_name/resource-name/Name_123~action-type", true},
+		{"colon in name segment", "a:b", true},
+		{"user-storage key with colon",
+			"userstorage.grafana.app/user-storage/default/grafana-splash-screen:myuser1234abcd/2052318477101322240~created~", true},
 
 		// invalid keys
 		{"empty key", "", false},

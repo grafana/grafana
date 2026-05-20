@@ -20,6 +20,7 @@ import {
   SwitchVariable,
   TextBoxVariable,
 } from '@grafana/scenes';
+import { VariableRefresh } from '@grafana/schema';
 import {
   type AdhocVariableKind,
   type ConstantVariableKind,
@@ -409,6 +410,9 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       valuesFormat: variable.spec.valuesFormat || 'csv',
     });
   } else if (variable.kind === defaultQueryVariableKind().kind) {
+    const refresh = config.publicDashboardAccessToken
+      ? VariableRefresh.never
+      : transformVariableRefreshToEnumV1(variable.spec.refresh);
     return new QueryVariable({
       ...commonProperties,
       value: variable.spec.current?.value ?? '',
@@ -416,7 +420,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       query: getDataQueryForVariable(variable),
       datasource: getRuntimeVariableDataSource(variable),
       sort: transformSortVariableToEnumV1(variable.spec.sort),
-      refresh: transformVariableRefreshToEnumV1(variable.spec.refresh),
+      refresh,
       regex: variable.spec.regex,
       regexApplyTo: variable.spec.regexApplyTo,
       allValue: variable.spec.allValue || undefined,

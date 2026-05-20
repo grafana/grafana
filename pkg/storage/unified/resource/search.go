@@ -29,6 +29,7 @@ import (
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
@@ -38,10 +39,13 @@ import (
 
 const maxBatchSize = 1000
 
+// unknownBuildSize is passed when the caller does not have a cheap size hint.
+// Backends should treat it as unknown, not as an empty resource.
+const unknownBuildSize int64 = -1
+
 const (
 	defaultVectorSearchLimit = 50
 	maxVectorSearchLimit     = 200
-
 	// authz BatchCheck enforces a per-request cap; chunk to stay under it.
 	batchCheckChunkSize = 50
 )
@@ -122,7 +126,8 @@ type SearchBackend interface {
 	GetIndex(key NamespacedResource) ResourceIndex
 
 	// BuildIndex builds an index from scratch.
-	// Depending on the size, the backend may choose different options (eg: memory vs disk).
+	// Depending on the size hint, the backend may choose different options (eg: memory vs disk).
+	// A negative size means the caller does not have a cheap size hint.
 	// The last known resource version can be used to detect that nothing has changed, and existing on-disk index can be reused.
 	// The builder will write all documents before returning.
 	// Updater function is used to update the index before performing the search.
@@ -159,6 +164,7 @@ type searchServer struct {
 	embedder      *embedder.Embedder
 	search        SearchBackend
 	indexMetrics  *BleveIndexMetrics
+	vectorMetrics *VectorMetrics
 	access        types.AccessClient
 	builders      *builderCache
 	initWorkers   int
@@ -181,6 +187,15 @@ type searchServer struct {
 
 	rebuildQueue   *debouncer.Queue[rebuildRequest]
 	rebuildWorkers int
+
+	// inFlightRebuilds tracks rebuilds currently being executed by a worker.
+	// Presence of a key means a worker is rebuilding the index for that key,
+	// so other workers that pick up requests for the same key should defer
+	// their work to a follow-up rebuild rather than running concurrently.
+	// Concurrent rebuilds for the same key would corrupt each other's on-disk
+	// index directories via cleanOldIndexes.
+	inFlightRebuildsMu sync.Mutex
+	inFlightRebuilds   map[NamespacedResource]*rebuildState
 
 	injectFailuresPercent     int
 	indexModificationCacheTTL time.Duration
@@ -214,7 +229,7 @@ var (
 )
 
 // newSearchServer creates a new search server implementation.
-func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend vector.VectorBackend, embedder *embedder.Embedder, access types.AccessClient, blob BlobSupport, indexMetrics *BleveIndexMetrics, ownsIndexFn func(key NamespacedResource) (bool, error)) (*searchServer, error) {
+func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend vector.VectorBackend, embedder *embedder.Embedder, access types.AccessClient, blob BlobSupport, indexMetrics *BleveIndexMetrics, vectorMetrics *VectorMetrics, ownsIndexFn func(key NamespacedResource) (bool, error)) (*searchServer, error) {
 	// No backend search support
 	if opts.Backend == nil {
 		return nil, nil
@@ -245,6 +260,7 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 		rebuildWorkers: opts.IndexRebuildWorkers,
 		initMinSize:    opts.InitMinCount,
 		indexMetrics:   indexMetrics,
+		vectorMetrics:  vectorMetrics,
 		ownsIndexFn:    ownsIndexFn,
 
 		dashboardIndexMaxAge:      opts.DashboardIndexMaxAge,
@@ -257,6 +273,7 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 	}
 
 	s.rebuildQueue = debouncer.NewQueue(combineRebuildRequests)
+	s.inFlightRebuilds = map[NamespacedResource]*rebuildState{}
 
 	info, err := opts.Resources.GetDocumentBuilders()
 	if err != nil {
@@ -526,30 +543,48 @@ func (s *searchServer) Search(ctx context.Context, req *resourcepb.ResourceSearc
 // (lower score = closer match — passes through pgvector's <=> output).
 //
 // Returns Unimplemented when no embedding provider or vector backend is configured
-func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorSearchRequest) (*resourcepb.VectorSearchResponse, error) {
+func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorSearchRequest) (resp *resourcepb.VectorSearchResponse, retErr error) {
 	ctx, span := tracer.Start(ctx, "resource.searchServer.VectorSearch")
 	defer span.End()
+
+	start := time.Now()
+	// Default labels are "unknown"; refined once we read the request key.
+	// We capture them before validation so the histogram is labeled even
+	// for the missing-key early return.
+	group, resource := "unknown", "unknown"
+	if req != nil && req.Key != nil {
+		if g := req.Key.GetGroup(); g != "" {
+			group = g
+		}
+		if r := req.Key.GetResource(); r != "" {
+			resource = r
+		}
+	}
+	defer func() {
+		// Validation early-returns wrap a BadRequestError in the response but
+		// don't return an error — map those to InvalidArgument so the histogram
+		// doesn't conflate them with successful searches.
+		code := codes.OK
+		switch {
+		case retErr != nil:
+			code = status.Code(retErr)
+		case resp != nil && resp.Error != nil:
+			code = codes.InvalidArgument
+		}
+		if s.vectorMetrics != nil {
+			metricutil.ObserveWithExemplar(ctx,
+				s.vectorMetrics.SearchDuration.WithLabelValues(group, resource, code.String()),
+				time.Since(start).Seconds(),
+			)
+		}
+	}()
 
 	if s.embedder == nil || s.vectorBackend == nil {
 		return nil, status.Error(codes.Unimplemented, "vector search not configured")
 	}
 
-	if req.Key == nil || req.Key.Namespace == "" || req.Key.Group == "" || req.Key.Resource == "" {
-		return &resourcepb.VectorSearchResponse{
-			Error: NewBadRequestError("missing namespace, group or resource"),
-		}, nil
-	}
-	if strings.TrimSpace(req.Query) == "" {
-		return &resourcepb.VectorSearchResponse{
-			Error: NewBadRequestError("query must not be empty"),
-		}, nil
-	}
-
-	// TODO decide on appropriate max query length. Using 1k for now.
-	if len(req.Query) > 1000 {
-		return &resourcepb.VectorSearchResponse{
-			Error: NewBadRequestError("query exceeds maximum length of 1000 bytes"),
-		}, nil
+	if errResp := validateVectorSearchRequest(req); errResp != nil {
+		return errResp, nil
 	}
 
 	limit := int(req.Limit)
@@ -584,11 +619,9 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		return nil, status.Error(codes.Internal, "embed query: empty result")
 	}
 
-	filters := translateVectorSearchFilters(req.Filters)
-
 	results, err := s.vectorBackend.Search(ctx,
 		req.Key.Namespace, s.embedder.Model, req.Key.Resource,
-		out.Embeddings[0].Dense, limit, filters...)
+		out.Embeddings[0].Dense, limit, translateVectorSearchFilters(req.Filters)...)
 	if err != nil {
 		s.log.Error("vector search: backend", "err", err)
 		return nil, status.Error(codes.Internal, "vector search backend")
@@ -602,52 +635,17 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		return nil, status.Error(codes.Unauthenticated, "no user in context")
 	}
 
-	// Dedupe per-(UID, Folder) so sub-resources of the same parent (e.g. dashboard panels) share a single batch-check entry.
-	type checkKey struct{ uid, folder string }
-	correlationIDs := make(map[checkKey]string, len(results))
-	checks := make([]types.BatchCheckItem, 0, len(results))
-	for _, r := range results {
-		key := checkKey{r.UID, r.Folder}
-		if _, ok := correlationIDs[key]; ok {
-			continue
-		}
-		id := fmt.Sprintf("%d", len(checks))
-		correlationIDs[key] = id
-		checks = append(checks, types.BatchCheckItem{
-			CorrelationID: id,
-			Verb:          utils.VerbGet,
-			Group:         req.Key.Group,
-			Resource:      req.Key.Resource,
-			Name:          r.UID,
-			Folder:        r.Folder,
-		})
+	allowed, err := s.batchCheckVectorSearchResults(ctx, user, req.Key, results)
+	if err != nil {
+		s.log.Error("vector search: authz batch check", "err", err)
+		return nil, status.Error(codes.Internal, "authz batch check")
 	}
 
-	checkResults := make(map[string]types.BatchCheckResult, len(checks))
-	for start := 0; start < len(checks); start += batchCheckChunkSize {
-		end := min(start+batchCheckChunkSize, len(checks))
-		batchResp, err := s.access.BatchCheck(ctx, user, types.BatchCheckRequest{
-			Namespace: req.Key.Namespace,
-			Checks:    checks[start:end],
-		})
-		if err != nil {
-			s.log.Error("vector search: authz batch check", "err", err)
-			return nil, status.Error(codes.Internal, "authz batch check")
-		}
-		for id, result := range batchResp.Results {
-			checkResults[id] = result
-		}
-	}
-
-	resp := &resourcepb.VectorSearchResponse{
+	resp = &resourcepb.VectorSearchResponse{
 		Results: make([]*resourcepb.VectorSearchResult, 0, len(results)),
 	}
 	for _, r := range results {
-		id, ok := correlationIDs[checkKey{r.UID, r.Folder}]
-		if !ok {
-			continue
-		}
-		if !checkResults[id].Allowed {
+		if !allowed[vectorAuthzKey{r.UID, r.Folder}] {
 			continue
 		}
 		resp.Results = append(resp.Results, &resourcepb.VectorSearchResult{
@@ -661,6 +659,85 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		})
 	}
 	return resp, nil
+}
+
+// validateVectorSearchRequest returns a non-nil response with a
+// BadRequestError when the request fails validation; nil means valid.
+// Pulled out of VectorSearch to keep that function under the cyclomatic
+// complexity threshold.
+func validateVectorSearchRequest(req *resourcepb.VectorSearchRequest) *resourcepb.VectorSearchResponse {
+	if req.Key == nil || req.Key.Namespace == "" || req.Key.Group == "" || req.Key.Resource == "" {
+		return &resourcepb.VectorSearchResponse{
+			Error: NewBadRequestError("missing namespace, group or resource"),
+		}
+	}
+	if strings.TrimSpace(req.Query) == "" {
+		return &resourcepb.VectorSearchResponse{
+			Error: NewBadRequestError("query must not be empty"),
+		}
+	}
+	// TODO decide on appropriate max query length. Using 1k for now.
+	if len(req.Query) > 1000 {
+		return &resourcepb.VectorSearchResponse{
+			Error: NewBadRequestError("query exceeds maximum length of 1000 bytes"),
+		}
+	}
+	return nil
+}
+
+// vectorAuthzKey de-dupes (UID, Folder) so sub-resources of the same
+// parent (e.g. dashboard panels) share a single batch-check entry.
+type vectorAuthzKey struct{ uid, folder string }
+
+// batchCheckVectorSearchResults runs authz checks in chunks of
+// batchCheckChunkSize over the unique (UID, Folder) pairs in `results`
+// and returns the set of pairs the user is allowed to read.
+func (s *searchServer) batchCheckVectorSearchResults(
+	ctx context.Context,
+	user types.AuthInfo,
+	key *resourcepb.ResourceKey,
+	results []vector.VectorSearchResult,
+) (map[vectorAuthzKey]bool, error) {
+	// seen de-dupes per (UID, Folder) so sub-resources share one entry.
+	// correlation maps the batch-check correlation ID back to its pair.
+	seen := make(map[vectorAuthzKey]struct{}, len(results))
+	correlation := make(map[string]vectorAuthzKey, len(results))
+	checks := make([]types.BatchCheckItem, 0, len(results))
+	for _, r := range results {
+		k := vectorAuthzKey{r.UID, r.Folder}
+		if _, dup := seen[k]; dup {
+			continue
+		}
+		seen[k] = struct{}{}
+		id := fmt.Sprintf("%d", len(checks))
+		correlation[id] = k
+		checks = append(checks, types.BatchCheckItem{
+			CorrelationID: id,
+			Verb:          utils.VerbGet,
+			Group:         key.Group,
+			Resource:      key.Resource,
+			Name:          r.UID,
+			Folder:        r.Folder,
+		})
+	}
+
+	allowed := make(map[vectorAuthzKey]bool, len(checks))
+	for start := 0; start < len(checks); start += batchCheckChunkSize {
+		end := min(start+batchCheckChunkSize, len(checks))
+		batchResp, err := s.access.BatchCheck(ctx, user, types.BatchCheckRequest{
+			Namespace: key.Namespace,
+			Checks:    checks[start:end],
+		})
+		if err != nil {
+			return nil, err
+		}
+		for id, result := range batchResp.Results {
+			if result.Allowed {
+				allowed[correlation[id]] = true
+			}
+		}
+	}
+	return allowed, nil
 }
 
 // translateVectorSearchFilters maps the proto Requirement shape into the
@@ -700,9 +777,10 @@ func (s *searchServer) GetStats(ctx context.Context, req *resourcepb.ResourceSta
 	}
 
 	stats := NewSearchStats("GetStats")
-	defer s.logStats(ctx, stats, span, "namespace", req.Namespace, "group", strings.Join(req.Kinds, ","), "folder", req.Folder)
+	defer s.logStats(ctx, stats, span, "namespace", req.Namespace, "group", strings.Join(req.Kinds, ","), "folder", strings.Join(req.Folder, ","))
 
 	rsp := &resourcepb.ResourceStatsResponse{}
+	folderSet := folderFilterSet(req)
 
 	// Explicit list of kinds
 	if len(req.Kinds) > 0 {
@@ -718,7 +796,7 @@ func (s *searchServer) GetStats(ctx context.Context, req *resourcepb.ResourceSta
 				rsp.Error = AsErrorResult(err)
 				return rsp, nil
 			}
-			count, err := index.DocCount(ctx, req.Folder, stats)
+			count, err := sumDocCount(ctx, index, folderSet, stats)
 			if err != nil {
 				rsp.Error = AsErrorResult(err)
 				return rsp, nil
@@ -743,8 +821,8 @@ func (s *searchServer) GetStats(ctx context.Context, req *resourcepb.ResourceSta
 	}
 	rsp.Stats = make([]*resourcepb.ResourceStatsResponse_Stats, len(resourceStats))
 
-	// When not filtered by folder or repository, we can use the results directly
-	if req.Folder == "" {
+	// When not filtered by folder, we can use the results directly
+	if len(folderSet) == 0 {
 		for i, stat := range resourceStats {
 			rsp.Stats[i] = &resourcepb.ResourceStatsResponse_Stats{
 				Group:    stat.Group,
@@ -765,7 +843,7 @@ func (s *searchServer) GetStats(ctx context.Context, req *resourcepb.ResourceSta
 			rsp.Error = AsErrorResult(err)
 			return rsp, nil
 		}
-		count, err := index.DocCount(ctx, req.Folder, stats)
+		count, err := sumDocCount(ctx, index, folderSet, stats)
 		if err != nil {
 			rsp.Error = AsErrorResult(err)
 			return rsp, nil
@@ -777,6 +855,48 @@ func (s *searchServer) GetStats(ctx context.Context, req *resourcepb.ResourceSta
 		}
 	}
 	return rsp, nil
+}
+
+// folderFilterSet returns req.Folder de-duplicated, with empty entries dropped.
+// Returns nil when no folder filter is set, which means "count everything in
+// the namespace".
+func folderFilterSet(req *resourcepb.ResourceStatsRequest) []string {
+	if len(req.Folder) == 0 {
+		return nil
+	}
+	seen := make(map[string]struct{}, len(req.Folder))
+	out := make([]string, 0, len(req.Folder))
+	for _, f := range req.Folder {
+		if f == "" {
+			continue
+		}
+		if _, ok := seen[f]; ok {
+			continue
+		}
+		seen[f] = struct{}{}
+		out = append(out, f)
+	}
+	return out
+}
+
+// sumDocCount returns the document count across the given folders. When
+// folders is empty it returns the total document count of the index. Bleve
+// has no native multi-folder count, so we issue one DocCount per folder and
+// sum — fine for the move/delete confirmation flow which only spans a
+// folder subtree.
+func sumDocCount(ctx context.Context, index ResourceIndex, folders []string, stats *SearchStats) (int64, error) {
+	if len(folders) == 0 {
+		return index.DocCount(ctx, "", stats)
+	}
+	var total int64
+	for _, f := range folders {
+		c, err := index.DocCount(ctx, f, stats)
+		if err != nil {
+			return 0, err
+		}
+		total += c
+	}
+	return total, nil
 }
 
 func (s *searchServer) RebuildIndexes(ctx context.Context, req *resourcepb.RebuildIndexesRequest) (*resourcepb.RebuildIndexesResponse, error) {
@@ -1095,31 +1215,62 @@ func (s *searchServer) rebuildIndex(ctx context.Context, req rebuildRequest) {
 		return
 	}
 
+	// Coordinate with any other worker that is already rebuilding this key.
+	// Concurrent rebuilds for the same key would race in cleanOldIndexes and
+	// delete each other's on-disk directories.
+	s.inFlightRebuildsMu.Lock()
+	if state, inFlight := s.inFlightRebuilds[req.NamespacedResource]; inFlight {
+		// Another worker is already rebuilding. Stash this request as a follow-up
+		// so its conditions (e.g. a newer lastImportTime) are re-evaluated against
+		// the just-built index when the in-flight rebuild finishes.
+		if state.deferred == nil {
+			// new(req), not &req: we mutate req.completeChannels = nil below,
+			// and state.deferred must observe the values seen here, not those.
+			state.deferred = new(req)
+		} else {
+			merged, _ := combineRebuildRequests(*state.deferred, req)
+			state.deferred = &merged
+		}
+		// The follow-up rebuild will close these completion channels (or close
+		// them as a no-op via the recheck path); clear them here so the top-level
+		// defer in this function does not close them prematurely.
+		req.completeChannels = nil
+		s.inFlightRebuildsMu.Unlock()
+		span.AddEvent("rebuild already in flight, deferring as follow-up")
+		l.Info("rebuild already in flight for key, deferring as follow-up")
+		return
+	}
+	state := &rebuildState{}
+	s.inFlightRebuilds[req.NamespacedResource] = state
+	s.inFlightRebuildsMu.Unlock()
+
+	defer func() {
+		s.inFlightRebuildsMu.Lock()
+		deferred := state.deferred
+		delete(s.inFlightRebuilds, req.NamespacedResource)
+		s.inFlightRebuildsMu.Unlock()
+
+		if deferred != nil {
+			// Re-enqueue the follow-up. The worker that picks it up will re-check
+			// shouldRebuildIndex against the just-built BuildTime and either run
+			// another rebuild or close the deferred completion channels as a no-op.
+			s.rebuildQueue.Add(*deferred)
+			if s.indexMetrics != nil {
+				s.indexMetrics.RebuildQueueLength.Set(float64(s.rebuildQueue.Len()))
+			}
+		}
+	}()
+
 	if req.Resource == dashboardv1.DASHBOARD_RESOURCE {
 		// we need to clear the cache to make sure we get the latest usage insights data
 		s.builders.clearNamespacedCache(req.NamespacedResource)
 	}
 
-	// Get the correct value of size + RV for building the index. This is important for our Bleve
-	// backend to decide whether to build index in-memory or as file-based.
-	nsr := NamespacedResource{
-		Namespace: req.Namespace,
-		Group:     req.Group,
-		Resource:  req.Resource,
-	}
-	stats, err := s.storage.GetResourceStats(ctx, nsr, 0)
+	size, err := idx.DocCount(ctx, "", nil)
 	if err != nil {
-		span.RecordError(fmt.Errorf("failed to get resource stats: %w", err))
-		l.Error("failed to get resource stats", "error", err)
-		return
-	}
-
-	size := int64(0)
-	for _, stat := range stats {
-		if stat.Namespace == req.Namespace && stat.Group == req.Group && stat.Resource == req.Resource {
-			size = stat.Count
-			break
-		}
+		span.RecordError(fmt.Errorf("failed to get current index doc count: %w", err))
+		l.Warn("failed to get current index doc count, using unknown size", "error", err)
+		size = unknownBuildSize
 	}
 
 	// Pass rebuild=true to force rebuild of any existing file-based index.
@@ -1194,6 +1345,13 @@ func newSelectableFieldsAdded(indexSelectableFields, selectableFields []string) 
 	return false
 }
 
+// rebuildState tracks an in-flight rebuild for a single key. The deferred
+// field accumulates requests that arrived while this rebuild was running, so
+// they can be re-enqueued as a follow-up once it finishes.
+type rebuildState struct {
+	deferred *rebuildRequest
+}
+
 type rebuildRequest struct {
 	NamespacedResource
 
@@ -1250,24 +1408,6 @@ func (s *searchServer) getOrCreateIndex(ctx context.Context, stats *SearchStats,
 				return idx, nil
 			}
 
-			// Get correct value of size + RV for building the index. This is important for our Bleve
-			// backend to decide whether to build index in-memory or as file-based.
-			nsr := NamespacedResource{
-				Namespace: key.Namespace,
-			}
-			stats, err := s.storage.GetResourceStats(ctx, nsr, 0)
-			if err != nil {
-				return nil, fmt.Errorf("failed to get resource stats: %w", err)
-			}
-
-			size := int64(0)
-			for _, stat := range stats {
-				if stat.Namespace == key.Namespace && stat.Group == key.Group && stat.Resource == key.Resource {
-					size = stat.Count
-					break
-				}
-			}
-
 			// Get last import time to pass to BuildIndex, which will check if the file-based
 			// index needs to be rebuilt before opening it.
 			var lastImportTime time.Time
@@ -1279,7 +1419,7 @@ func (s *searchServer) getOrCreateIndex(ctx context.Context, stats *SearchStats,
 				lastImportTime = importTimes[key]
 			}
 
-			idx, err = s.build(ctx, key, size, reason, false, lastImportTime)
+			idx, err = s.build(ctx, key, unknownBuildSize, reason, false, lastImportTime)
 			if err != nil {
 				return nil, fmt.Errorf("error building search index, %w", err)
 			}

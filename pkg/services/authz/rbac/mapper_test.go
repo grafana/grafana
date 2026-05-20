@@ -186,6 +186,41 @@ func TestMapperRegistry_SubresourceLookup(t *testing.T) {
 	})
 }
 
+// TestMapper_ServiceAccountTranslation_ActionSets verifies that service account verbs map to the
+// correct action sets. There is no View level — Edit verbs map to both edit+admin, and admin-only
+// verbs (delete, permissions) map to admin only.
+func TestMapper_ServiceAccountTranslation_ActionSets(t *testing.T) {
+	reg := NewMapperRegistry()
+	mapping, ok := reg.Get("iam.grafana.app", "serviceaccounts", "")
+	require.True(t, ok)
+
+	editAndAdmin := []string{"serviceaccounts:edit", "serviceaccounts:admin"}
+	adminOnly := []string{"serviceaccounts:admin"}
+	empty := []string(nil)
+
+	tests := []struct {
+		verb     string
+		expected []string
+	}{
+		{utils.VerbGet, editAndAdmin},
+		{utils.VerbList, editAndAdmin},
+		{utils.VerbWatch, editAndAdmin},
+		{utils.VerbUpdate, editAndAdmin},
+		{utils.VerbPatch, editAndAdmin},
+		{utils.VerbDelete, adminOnly},
+		{utils.VerbDeleteCollection, adminOnly},
+		{utils.VerbGetPermissions, adminOnly},
+		{utils.VerbSetPermissions, adminOnly},
+		{utils.VerbCreate, empty},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.verb, func(t *testing.T) {
+			assert.Equal(t, tt.expected, mapping.ActionSets(tt.verb))
+		})
+	}
+}
+
 // TestMapper_AnnotationSubresource_ActionSets verifies that managed roles (dashboards:view etc.)
 // flow through to annotation verbs via the subresource action set mapping.
 func TestMapper_AnnotationSubresource_ActionSets(t *testing.T) {

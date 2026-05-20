@@ -13,7 +13,9 @@ declare module "@openfeature/core" {
     | "lokiShardSplitting"
     | "faroSessionReplay"
     | "provisioningFolderMetadata"
+    | "provisioning.readmes"
     | "stateTimeline.nameAboveBars"
+    | "sqlExpressionsCodeMirror"
     | "newSavedQueriesExperience"
     | "grafana.orgDashboardTemplates"
     | "dashboardTemplatesAssistantButton"
@@ -24,8 +26,9 @@ declare module "@openfeature/core" {
     | "createdByMeSearchFilter"
     | "otelLogsFormatting"
     | "newLogContext"
-    | "useMTPlugins"
+    | "plugins.useMTPlugins"
     | "dashboardSectionVariables"
+    | "globalDashboardVariables"
     | "queryEditorNext"
     | "queryEditorNextMultiSelect"
     | "managedPluginsV2"
@@ -34,14 +37,17 @@ declare module "@openfeature/core" {
     | "datasourcesApiServerEnableHealthEndpointFrontend"
     | "flameGraphWithCallTree"
     | "inlineLogDetailsNoScrolls"
-    | "useMTPluginSettings"
+    | "plugins.useMTPluginSettings"
     | "splashScreen"
     | "grafana.newPreferencesPage"
     | "datasources.config.ui.useNewDatasourceCRUDAPIs"
     | "datasources.apiserver.useNewAPIsForDatasourceResources"
     | "reporting.anyPageReporting"
     | "assistant.frontend.tools.dashboardTemplates"
-    | "grafana.unifiedHomepage";
+    | "grafana.unifiedHomepage"
+    | "alerting.syncExternalAlertmanager"
+    | "grafana.enableScopesFirstMode"
+    | "grafana.logLevelInference";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;

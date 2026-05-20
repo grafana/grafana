@@ -1,5 +1,6 @@
 import { type DataQuery, store } from '@grafana/data';
-import { createMonitoringLogger, type MonitoringLogger } from '@grafana/runtime';
+import { type MonitoringLogger } from '@grafana/runtime';
+import { mockLogger } from '@grafana/test-utils/unstable';
 import { type RichHistoryQuery } from 'app/types/explore';
 
 import { DatasourceSrv } from '../../features/plugins/datasource_srv';
@@ -26,14 +27,9 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
   getDataSourceSrv: () => dsMock,
-  createMonitoringLogger: jest.fn().mockReturnValue({ logWarning: jest.fn() }),
 }));
 
-// logger is created at import so we cannot initialize inside the test
-const loggerIndex = (createMonitoringLogger as jest.Mock).mock.calls.findIndex(
-  (args) => args[0] === 'features.query-history.local-storage'
-);
-const loggerMock: MonitoringLogger = (createMonitoringLogger as jest.Mock).mock.results[loggerIndex]?.value;
+let loggerMock: MonitoringLogger;
 
 interface MockQuery extends DataQuery {
   query: string;
@@ -80,10 +76,9 @@ describe('RichHistoryLocalStorage', () => {
 
     jest.useFakeTimers();
     jest.setSystemTime(now);
+    loggerMock = mockLogger('features.query-history.local-storage');
     storage = new RichHistoryLocalStorage();
     await storage.deleteAll();
-
-    (loggerMock.logWarning as jest.Mock).mockReset();
   });
 
   afterEach(() => {
