@@ -70,7 +70,7 @@ export function useContactPointAbility(payload: ContactPointAbilityParam): Abili
 
       case ContactPointAction.BulkExport:
         // Grafana-managed AM only (mirrors the legacy [isGrafanaFlavoredAlertmanager, …] tuple).
-        return makeAbility(isGrafanaAlertmanager, PERMISSIONS[ContactPointAction.BulkExport]);
+        return makeAbility(isGrafanaAlertmanager, permissions[ContactPointAction.BulkExport]);
 
       case ContactPointAction.Update:
         // External AM contact points are plain receivers without k8s access annotations.
