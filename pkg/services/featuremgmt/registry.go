@@ -1586,6 +1586,14 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:        "grafanaAgenticTesting",
+			Description: "Promote the Agentic Testing app into the Testing & synthetics nav section",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaK6AgenticTestingSquad,
+			Expression:  "false",
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
 			Name:        "elasticsearchImprovedParsing",
 			Description: "Enables less memory intensive Elasticsearch result parsing",
 			Stage:       FeatureStageExperimental,

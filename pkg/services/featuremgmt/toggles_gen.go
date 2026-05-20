@@ -519,6 +519,10 @@ const (
 	// Enables Advisor app
 	FlagGrafanaAdvisor = "grafanaAdvisor"
 
+	// FlagGrafanaAgenticTesting
+	// Promote the Agentic Testing app into the Testing & synthetics nav section
+	FlagGrafanaAgenticTesting = "grafanaAgenticTesting"
+
 	// FlagElasticsearchImprovedParsing
 	// Enables less memory intensive Elasticsearch result parsing
 	FlagElasticsearchImprovedParsing = "elasticsearchImprovedParsing"
