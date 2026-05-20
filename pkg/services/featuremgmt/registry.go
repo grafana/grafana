@@ -2239,10 +2239,10 @@ var (
 		{
 			Name:        "vizPresets",
 			Description: "Enable visualization presets",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{LegacyFrontend: true},
 			Owner:       grafanaDatavizSquad,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:        "nestedFramesFieldOverrides",

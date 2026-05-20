@@ -1267,7 +1267,7 @@ export interface FeatureToggles {
   panelStyleActions?: boolean;
   /**
   * Enable visualization presets
-  * @default false
+  * @default true
   */
   vizPresets?: boolean;
   /**

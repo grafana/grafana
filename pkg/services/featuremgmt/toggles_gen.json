@@ -6590,15 +6590,18 @@
     {
       "metadata": {
         "name": "vizPresets",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2026-02-18T17:05:38Z"
+        "resourceVersion": "1779296184831",
+        "creationTimestamp": "2026-02-18T17:05:38Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-05-20 16:56:24.831547 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable visualization presets",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
