@@ -10,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/prometheus/alertmanager/pkg/labels"
 	prommodel "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -1995,14 +1994,12 @@ func TestRouteConvertPrometheusPostAlertmanagerConfig(t *testing.T) {
 	t.Run("should parse headers and call SaveAndApplyExtraConfiguration", func(t *testing.T) {
 		mockAM.On("SaveAndApplyExtraConfiguration", mock.Anything, int64(1), mock.Anything, mock.Anything, mock.MatchedBy(func(extraConfig apimodels.ExtraConfiguration) bool {
 			return extraConfig.Identifier == identifier &&
-				len(extraConfig.MergeMatchers) == 2 &&
 				len(extraConfig.TemplateFiles) == 1 &&
 				extraConfig.TemplateFiles["test.tmpl"] == "{{ define \"test\" }}Hello{{ end }}"
 		}), false, false).Return(merge.RenameResources{}, nil).Once()
 
 		rc := createRequestCtx()
 		rc.Req.Header.Set(configIdentifierHeader, identifier)
-		rc.Req.Header.Set(mergeMatchersHeader, "environment=production,team=backend")
 
 		amCfg := apimodels.AlertmanagerUserConfig{
 			AlertmanagerConfig: `{
@@ -2028,7 +2025,6 @@ func TestRouteConvertPrometheusPostAlertmanagerConfig(t *testing.T) {
 
 	t.Run("should use default identifier when header is missing", func(t *testing.T) {
 		rc := createRequestCtx()
-		rc.Req.Header.Set(mergeMatchersHeader, "test=value")
 		mockAM := &mockAlertmanager{}
 		mockAM.On("IsExternalAMSyncConfiguredForOrg", mock.Anything, int64(1)).Return(false, nil).Maybe()
 		mockAM.On("SaveAndApplyExtraConfiguration", mock.Anything, int64(1), mock.Anything, mock.Anything, mock.MatchedBy(func(extraConfig apimodels.ExtraConfiguration) bool {
@@ -2157,22 +2153,9 @@ func TestRouteConvertPrometheusPostAlertmanagerConfig(t *testing.T) {
 		mockAM.AssertExpectations(t)
 	})
 
-	t.Run("should return error when merge matchers header has invalid format", func(t *testing.T) {
-		rc := createRequestCtx()
-		rc.Req.Header.Set(configIdentifierHeader, identifier)
-		rc.Req.Header.Set(mergeMatchersHeader, "invalid-format")
-
-		amCfg := apimodels.AlertmanagerUserConfig{}
-		response := srv.RouteConvertPrometheusPostAlertmanagerConfig(rc, amCfg)
-
-		require.Equal(t, http.StatusBadRequest, response.Status())
-		require.Contains(t, string(response.Body()), "format should be 'key=value,key2=value2'")
-	})
-
 	t.Run("should return error when alertmanager config has empty route", func(t *testing.T) {
 		rc := createRequestCtx()
 		rc.Req.Header.Set(configIdentifierHeader, identifier)
-		rc.Req.Header.Set(mergeMatchersHeader, "env=prod")
 
 		amCfg := apimodels.AlertmanagerUserConfig{
 			AlertmanagerConfig: `{
@@ -2396,83 +2379,6 @@ receivers:
 	})
 }
 
-func TestParseMergeMatchersHeader(t *testing.T) {
-	testCases := []struct {
-		name             string
-		headerValue      string
-		expectedError    bool
-		expectedMatchers apimodels.Matchers
-	}{
-		{
-			name:          "empty header should not return error",
-			headerValue:   "",
-			expectedError: false,
-		},
-		{
-			name:          "single matcher should parse correctly",
-			headerValue:   "env=prod",
-			expectedError: false,
-			expectedMatchers: apimodels.Matchers{
-				{Type: labels.MatchEqual, Name: "env", Value: "prod"},
-			},
-		},
-		{
-			name:          "multiple matchers should be parsed correctly",
-			headerValue:   "env=prod,team=alerting",
-			expectedError: false,
-			expectedMatchers: apimodels.Matchers{
-				{Type: labels.MatchEqual, Name: "env", Value: "prod"},
-				{Type: labels.MatchEqual, Name: "team", Value: "alerting"},
-			},
-		},
-		{
-			name:          "matchers with spaces should be parsed correctly",
-			headerValue:   " env = prod , team = alerting ",
-			expectedError: false,
-			expectedMatchers: apimodels.Matchers{
-				{Type: labels.MatchEqual, Name: "env", Value: "prod"},
-				{Type: labels.MatchEqual, Name: "team", Value: "alerting"},
-			},
-		},
-		{
-			name:          "invalid format without equals should return error",
-			headerValue:   "env:prod",
-			expectedError: true,
-		},
-		{
-			name:          "empty key should return error",
-			headerValue:   "=prod",
-			expectedError: true,
-		},
-		{
-			name:          "empty value should return error",
-			headerValue:   "env=",
-			expectedError: true,
-		},
-		{
-			name:          "missing value should return error",
-			headerValue:   "env",
-			expectedError: true,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			rc := createRequestCtx()
-			rc.Req.Header.Set(mergeMatchersHeader, tc.headerValue)
-
-			matchers, err := parseMergeMatchersHeader(rc)
-
-			if tc.expectedError {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
-				require.ElementsMatch(t, tc.expectedMatchers, matchers)
-			}
-		})
-	}
-}
-
 func TestParseConfigIdentifierHeader(t *testing.T) {
 	testCases := []struct {
 		name          string
@@ -2523,42 +2429,6 @@ func TestParseConfigIdentifierHeader(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestFormatMergeMatchers(t *testing.T) {
-	t.Run("empty matchers should return empty string", func(t *testing.T) {
-		result := formatMergeMatchers(nil)
-		require.Equal(t, "", result)
-	})
-
-	t.Run("single matcher should format correctly", func(t *testing.T) {
-		matchers := apimodels.Matchers{
-			&labels.Matcher{
-				Type:  labels.MatchEqual,
-				Name:  "env",
-				Value: "prod",
-			},
-		}
-		result := formatMergeMatchers(matchers)
-		require.Equal(t, "env=prod", result)
-	})
-
-	t.Run("multiple matchers should format correctly", func(t *testing.T) {
-		matchers := apimodels.Matchers{
-			&labels.Matcher{
-				Type:  labels.MatchEqual,
-				Name:  "env",
-				Value: "prod",
-			},
-			&labels.Matcher{
-				Type:  labels.MatchEqual,
-				Name:  "team",
-				Value: "backend",
-			},
-		}
-		result := formatMergeMatchers(matchers)
-		require.Equal(t, "env=prod,team=backend", result)
-	})
 }
 
 func TestRouteConvertPrometheusDeleteAlertmanagerConfig(t *testing.T) {

@@ -100,6 +100,7 @@ jobs:
             tag-suffix: "-distroless-slim"
     steps:
       - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
       - uses: actions/checkout@v6
         with:
           persist-credentials: false

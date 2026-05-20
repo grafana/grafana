@@ -716,14 +716,14 @@ func (am *Alertmanager) shouldSendConfig(ctx context.Context, newCfg remoteClien
 	if newCfg.Hash == "" { // empty hash means that something went wrong while calculating it. In this case, always send the config.
 		return true
 	}
-	rc, err := am.mimirClient.GetGrafanaAlertmanagerConfig(ctx)
+	rc, err := am.mimirClient.GetGrafanaAlertmanagerConfigStatus(ctx)
 	if err != nil {
 		// Log the error and return true so we try to upload our config anyway.
 		am.log.Warn("Unable to get the remote Alertmanager configuration for comparison, sending the configuration without comparing", "err", err)
 		return true
 	}
 	if rc.Hash != newCfg.Hash {
-		am.log.Debug("Hash of the remote Alertmanager configuration is different, sending the configuration", "remoteHash", rc.Hash, "hash", newCfg.Hash)
+		am.log.Info("Hash of the remote Alertmanager configuration is different, sending the configuration", "remoteHash", rc.Hash, "remoteCreatedAt", rc.CreatedAt, "hash", newCfg.Hash, "createdAt", newCfg.CreatedAt)
 		return true
 	}
 	return false
