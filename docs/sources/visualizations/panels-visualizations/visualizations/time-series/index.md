@@ -207,7 +207,6 @@ The tooltip also provides the following options:
 - **Clear all**: Reset the filter.
 - **Pin to sidebar**: Dock the filter alongside the panel so it stays open while you work.
 
-Use the faceted filter when a panel renders many series and you want to focus on a subset without editing the query.
 
 ### Axis options
 
