@@ -40,7 +40,7 @@ func TestSubAccessREST_getAccessInfo(t *testing.T) {
 
 	tcs := []testCase{
 		{
-			name: "admin: every verb allowed → all bools true and full map (folder + dashboard)",
+			name: "admin: every verb allowed → all bools true and full map (folder + dashboards:create)",
 			allowed: map[string]bool{
 				utils.VerbGet:            true,
 				utils.VerbUpdate:         true,
@@ -52,18 +52,13 @@ func TestSubAccessREST_getAccessInfo(t *testing.T) {
 			expect: folders.FolderAccessInfo{
 				CanSave: true, CanEdit: true, CanAdmin: true, CanDelete: true,
 				AccessControl: map[string]bool{
-					"folders:read":                 true,
-					"folders:write":                true,
-					"folders:delete":               true,
-					"folders:create":               true,
-					"folders.permissions:read":     true,
-					"folders.permissions:write":    true,
-					"dashboards:read":              true,
-					"dashboards:write":             true,
-					"dashboards:create":            true,
-					"dashboards:delete":            true,
-					"dashboards.permissions:read":  true,
-					"dashboards.permissions:write": true,
+					"folders:read":              true,
+					"folders:write":             true,
+					"folders:delete":            true,
+					"folders:create":            true,
+					"folders.permissions:read":  true,
+					"folders.permissions:write": true,
+					"dashboards:create":         true,
 				},
 			},
 		},
@@ -82,15 +77,13 @@ func TestSubAccessREST_getAccessInfo(t *testing.T) {
 			},
 		},
 		{
-			name: "dashboard-domain only allowed (folder checks all false)",
+			name: "dashboard-create only allowed (folder checks all false)",
 			allowedByCheck: map[checkKey]bool{
-				{group: dashGroup, resource: dashRes, verb: utils.VerbGet}:    true,
 				{group: dashGroup, resource: dashRes, verb: utils.VerbCreate}: true,
 			},
 			expect: folders.FolderAccessInfo{
 				CanSave: false, CanEdit: false, CanAdmin: false, CanDelete: false,
 				AccessControl: map[string]bool{
-					"dashboards:read":   true,
 					"dashboards:create": true,
 				},
 			},
@@ -118,11 +111,11 @@ func TestSubAccessREST_getAccessInfo(t *testing.T) {
 			},
 		},
 		{
-			name:         "request semantics: folder-domain uses Name=this, folder hint=parent; cross-domain flips to Name='', folder hint=this",
+			name:         "request semantics: folder-domain uses Name=this, folder hint=parent; dashboards:create flips to Name='', folder hint=this",
 			parentFolder: "parent-uid",
 			allowedByCheck: map[checkKey]bool{
-				{group: folderGroup, resource: folderRes, verb: utils.VerbGet}: true,
-				{group: dashGroup, resource: dashRes, verb: utils.VerbGet}:     true,
+				{group: folderGroup, resource: folderRes, verb: utils.VerbGet}:    true,
+				{group: dashGroup, resource: dashRes, verb: utils.VerbCreate}:     true,
 			},
 			assertItem: func(t *testing.T, item authlib.BatchCheckItem) {
 				switch item.Group {
@@ -139,8 +132,8 @@ func TestSubAccessREST_getAccessInfo(t *testing.T) {
 			expect: folders.FolderAccessInfo{
 				CanSave: false, CanEdit: false, CanAdmin: false, CanDelete: false,
 				AccessControl: map[string]bool{
-					"folders:read":    true,
-					"dashboards:read": true,
+					"folders:read":      true,
+					"dashboards:create": true,
 				},
 			},
 		},

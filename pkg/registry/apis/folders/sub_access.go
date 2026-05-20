@@ -84,14 +84,15 @@ var folderAccessActions = []folderAccessAction{
 	{Action: "folders.permissions:read", Verb: utils.VerbGetPermissions},
 	{Action: "folders.permissions:write", Verb: utils.VerbSetPermissions},
 
-	// Dashboard domain — Name = "", folder hint = this folder. Asks
-	// "can the user act on a dashboard within this folder".
-	{Action: "dashboards:read", Verb: utils.VerbGet, Group: "dashboard.grafana.app", Resource: "dashboards"},
-	{Action: "dashboards:write", Verb: utils.VerbUpdate, Group: "dashboard.grafana.app", Resource: "dashboards"},
+	// Dashboard domain — only `create` is correct here. The RBAC service short-
+	// circuits non-Create checks when Name=="" (pkg/services/authz/rbac/service.go
+	// checkPermission) and returns true if the user has the action on any scope,
+	// ignoring the folder hint. Create is the one verb that walks the parent
+	// chain via checkInheritedPermissions. The remaining dashboards:* keys
+	// (read/write/delete/.permissions:*) need either a service-side fix to honor
+	// the folder hint for non-Create verbs, or a Name-based call shape; until
+	// then they must come from the legacy /api/folders/{uid}?accesscontrol=true.
 	{Action: "dashboards:create", Verb: utils.VerbCreate, Group: "dashboard.grafana.app", Resource: "dashboards"},
-	{Action: "dashboards:delete", Verb: utils.VerbDelete, Group: "dashboard.grafana.app", Resource: "dashboards"},
-	{Action: "dashboards.permissions:read", Verb: utils.VerbGetPermissions, Group: "dashboard.grafana.app", Resource: "dashboards"},
-	{Action: "dashboards.permissions:write", Verb: utils.VerbSetPermissions, Group: "dashboard.grafana.app", Resource: "dashboards"},
 }
 
 func (r *subAccessREST) getAccessInfo(ctx context.Context, name string) (*foldersV1.FolderAccessInfo, error) {
@@ -130,11 +131,12 @@ func (r *subAccessREST) getAccessInfo(ctx context.Context, name string) (*folder
 			resource = foldersV1.RESOURCE
 		}
 
-		// Semantics:
-		//   folder-domain  → "can the user do <verb> on THIS folder"
-		//                    Name=this folder UID, folder hint=immediate parent.
-		//   cross-domain   → "can the user do <verb> on resources WITHIN this folder"
-		//                    Name="", folder hint=this folder UID.
+		// Folder-domain checks ask "can the user do <verb> on THIS folder":
+		// Name=this folder UID, folder hint=immediate parent.
+		// Cross-domain checks (currently only dashboards:create) ask "can the
+		// user create within this folder": Name="", folder hint=this folder
+		// UID; Create walks the parent chain via the RBAC service's
+		// checkInheritedPermissions path.
 		reqName, reqFolder := name, parent
 		if group != foldersV1.GROUP || resource != foldersV1.RESOURCE {
 			reqName, reqFolder = "", name
