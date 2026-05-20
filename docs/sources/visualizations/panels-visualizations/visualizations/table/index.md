@@ -409,7 +409,7 @@ Labels displayed alongside of the gauges can be set to be colored by value, matc
 This cell type shows values rendered as a sparkline.
 To show sparklines on data with multiple time series, use the [Time series to table transformation](ref:time-series-to-table-transformation) to process it into a format the table can show.
 
-You can color sparklines using thresholds by setting the field's color scheme to **From thresholds (by value)** in the [standard color scheme options](ref:color-scheme). When thresholds are defined, the sparkline automatically uses the **Scheme** gradient mode to reflect threshold levels along the line.
+You can color sparklines using thresholds by setting the field's color scheme to **From thresholds (by value)** in the [standard color scheme options](ref:color-scheme), using an override. When thresholds are defined, the sparkline automatically uses the **Scheme** gradient mode to reflect threshold levels along the line.
 
 ![Table using sparkline cell type](/media/docs/grafana/panels-visualizations/screenshot-table-as-sparkline-v11.3.png)
 
