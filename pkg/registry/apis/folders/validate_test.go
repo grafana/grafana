@@ -86,41 +86,6 @@ func TestValidateCreate(t *testing.T) {
 			expectedErr: folder.ErrInvalidUID,
 		},
 		{
-			name: "reserved name - parent",
-			folder: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{Name: "parent"},
-			},
-			expectedErr: folder.ErrInvalidUID,
-		},
-		{
-			name: "reserved name - child",
-			folder: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{Name: "child"},
-			},
-			expectedErr: folder.ErrInvalidUID,
-		},
-		{
-			name: "reserved name - children",
-			folder: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{Name: "children"},
-			},
-			expectedErr: folder.ErrInvalidUID,
-		},
-		{
-			name: "reserved name - dot",
-			folder: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{Name: "dot"},
-			},
-			expectedErr: folder.ErrInvalidUID,
-		},
-		{
-			name: "reserved name - slash",
-			folder: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{Name: "slash"},
-			},
-			expectedErr: folder.ErrInvalidUID,
-		},
-		{
 			name: "empty title rejected",
 			folder: &folders.Folder{
 				ObjectMeta: metav1.ObjectMeta{Name: "abc"},

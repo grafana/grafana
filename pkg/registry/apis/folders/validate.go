@@ -79,7 +79,6 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 		folder.RootFolderName, // "root"
 		folder.GeneralFolderUID,
 		folder.SharedWithMeFolderUID,
-		"parent", "child", "children", "dot", "slash", // reserved names (we can enable later)
 	}, id) {
 		return folder.ErrAPIInvalidUID
 	}
