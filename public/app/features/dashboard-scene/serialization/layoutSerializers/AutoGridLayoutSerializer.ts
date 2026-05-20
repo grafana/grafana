@@ -24,7 +24,17 @@ export function serializeAutoGridLayout(
   layoutManager: AutoGridLayoutManager,
   isSnapshot?: boolean
 ): DashboardV2Spec['layout'] {
-  const { maxColumnCount, fillScreen, columnWidth, rowHeight, layout } = layoutManager.state;
+  const {
+    maxColumnCount,
+    fillScreen,
+    fitContent,
+    maxHeightMode,
+    maxHeight,
+    matchRowHeights,
+    columnWidth,
+    rowHeight,
+    layout,
+  } = layoutManager.state;
   const defaults = defaultAutoGridLayoutSpec();
 
   const items = isSnapshot
@@ -36,6 +46,10 @@ export function serializeAutoGridLayout(
     spec: {
       maxColumnCount,
       fillScreen: fillScreen === defaults.fillScreen ? undefined : fillScreen,
+      fitContent: fitContent === defaults.fitContent ? undefined : fitContent,
+      maxHeightMode: !maxHeightMode || maxHeightMode === 'unlimited' ? undefined : maxHeightMode,
+      maxHeight: maxHeightMode === 'custom' ? maxHeight : undefined,
+      matchRowHeights: matchRowHeights === false ? false : undefined,
       ...serializeAutoGridColumnWidth(columnWidth),
       ...serializeAutoGridRowHeight(rowHeight),
       items,
@@ -114,24 +128,45 @@ export function deserializeAutoGridLayout(
   }
 
   const defaults = defaultAutoGridLayoutSpec();
-  const { maxColumnCount, columnWidthMode, columnWidth, rowHeightMode, rowHeight, fillScreen } = layout.spec;
+  const {
+    maxColumnCount,
+    columnWidthMode,
+    columnWidth,
+    rowHeightMode,
+    rowHeight,
+    fillScreen,
+    fitContent,
+    maxHeightMode,
+    maxHeight,
+    matchRowHeights,
+  } = layout.spec;
 
   const children = layout.spec.items.map((item) => deserializeAutoGridItem(item, elements, panelIdGenerator));
 
   const columnWidthCombined = columnWidthMode === 'custom' ? columnWidth : columnWidthMode;
   const rowHeightCombined = rowHeightMode === 'custom' ? rowHeight : rowHeightMode;
+  const fillScreenResolved = fillScreen ?? defaults.fillScreen ?? false;
+  const fitContentResolved = fitContent ?? defaults.fitContent ?? false;
 
   return new AutoGridLayoutManager({
     maxColumnCount,
     columnWidth: columnWidthCombined,
     rowHeight: rowHeightCombined,
-    fillScreen: fillScreen ?? defaults.fillScreen,
+    fillScreen: fillScreenResolved,
+    fitContent: fitContentResolved,
+    maxHeightMode,
+    maxHeight,
+    matchRowHeights,
     layout: new AutoGridLayout({
       templateColumns: getTemplateColumnsTemplate(
         maxColumnCount ?? defaults.maxColumnCount!,
         columnWidthCombined ?? AUTO_GRID_DEFAULT_COLUMN_WIDTH
       ),
-      autoRows: getAutoRowsTemplate(rowHeightCombined ?? AUTO_GRID_DEFAULT_ROW_HEIGHT, fillScreen ?? false),
+      autoRows: getAutoRowsTemplate(
+        rowHeightCombined ?? AUTO_GRID_DEFAULT_ROW_HEIGHT,
+        fillScreenResolved,
+        fitContentResolved
+      ),
       children,
     }),
   });

@@ -12,6 +12,7 @@ import {
   type PanelMigrationHandler,
   type PanelTypeChangedHandler,
   type PanelPluginDataSupport,
+  type PanelNaturalHeightSupplier,
 } from '../types/panel';
 import { GrafanaPlugin } from '../types/plugin';
 import {
@@ -127,6 +128,12 @@ export class PanelPlugin<
   onPanelMigration?: PanelMigrationHandler<TOptions>;
   shouldMigrate?: (panel: PanelModel) => boolean;
   onPanelTypeChanged?: PanelTypeChangedHandler<TOptions>;
+  /**
+   * Optional callback returning the inner content natural height in pixels.
+   * When implemented, content-aware layouts can size the panel to fit. See
+   * {@link PanelNaturalHeightSupplier}.
+   */
+  getNaturalHeight?: PanelNaturalHeightSupplier<TOptions>;
   noPadding?: boolean;
   dataSupport: PanelPluginDataSupport = {
     annotations: false,
@@ -231,6 +238,19 @@ export class PanelPlugin<
    */
   setPanelChangeHandler(handler: PanelTypeChangedHandler) {
     this.onPanelTypeChanged = handler;
+    return this;
+  }
+
+  /**
+   * Registers a callback that returns the panel's natural inner content
+   * height in pixels for given data + options + width. Content-aware layouts
+   * use this to size the panel to fit its content without rendering it first.
+   *
+   * Plugins that opt out (don't call this) will be sized to the layout's
+   * default height.
+   */
+  setNaturalHeight(supplier: PanelNaturalHeightSupplier<TOptions>) {
+    this.getNaturalHeight = supplier;
     return this;
   }
 

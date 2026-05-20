@@ -162,7 +162,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
             </div>
           )}
           {!isCollapsed && (
-            <div>
+            <div className={styles.rowLayoutWrapper}>
               {sectionVariablesEnabled && rowVariablesSet && <SectionVariableControls variableSet={rowVariablesSet} />}
               <layout.Component model={layout} />
             </div>
@@ -297,6 +297,13 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       alignItems: 'center',
       paddingLeft: theme.spacing(1),
+    }),
+    rowLayoutWrapper: css({
+      display: 'flex',
+      flexDirection: 'column',
+      flex: 1,
+      minHeight: 0,
+      height: '100%',
     }),
   };
 }

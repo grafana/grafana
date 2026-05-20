@@ -656,12 +656,16 @@ AutoGridLayoutKind: {
 }
 
 AutoGridLayoutSpec: {
-	maxColumnCount?: number | *3
-	columnWidthMode: "narrow" | *"standard" | "wide" | "custom"
-	columnWidth?:    number
-	rowHeightMode:   "short" | *"standard" | "tall" | "custom"
-	rowHeight?:      number
-	fillScreen?:     bool | *false
+	maxColumnCount?:  number | *3
+	columnWidthMode:  "narrow" | *"standard" | "wide" | "custom"
+	columnWidth?:     number
+	rowHeightMode:    "short" | *"standard" | "tall" | "custom"
+	rowHeight?:       number
+	fillScreen?:      bool | *false
+	fitContent?:      bool | *false
+	maxHeightMode?:   "unlimited" | "short" | "standard" | "tall" | "custom" | "screen"
+	maxHeight?:       number
+	matchRowHeights?: bool | *true
 	items: [...AutoGridLayoutItemKind]
 }
 
