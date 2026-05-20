@@ -106,9 +106,9 @@ describe('HomeRoute', () => {
     expect(await screen.findByTestId('dashboard-page-proxy-stub')).toBeInTheDocument();
   });
 
-  it('flag on + redirectUri present → calls locationService.replace', async () => {
+  it('flag on + homeURL present → calls locationService.replace', async () => {
     setTestFlags({ 'grafana.unifiedHomepage': true });
-    stubMergedPreferences({ redirectUri: '/d/abc' });
+    stubMergedPreferences({ homeURL: '/d/abc' });
 
     render(<HomeRoute {...props} />);
 
