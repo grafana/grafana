@@ -1,5 +1,5 @@
 import { css, cx, keyframes } from '@emotion/css';
-import { type FormEvent, useCallback, useEffect, useRef, useState } from 'react';
+import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useAssistant, useLimits, useTerms } from '@grafana/assistant';
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -13,17 +13,6 @@ import { usePlaceholder } from './usePlaceholder';
 
 const LOADING_ARTIFICIAL_MS = 1000;
 
-const EXAMPLES = [
-  'How do I create a dashboard?',
-  'Explain this PromQL query',
-  'What alerts are firing right now?',
-  'Show me errors from the last hour',
-  'How do I set up a data source?',
-  'Help me write a Loki query',
-];
-
-const PLACEHOLDER_LIMIT = "You've hit the monthly limit for Assistant\u2026 Upgrade to keep going!";
-
 export function HomeAssistantSearch() {
   const styles = useStyles2(getStyles);
   const { isAvailable, openAssistant } = useAssistant();
@@ -32,10 +21,27 @@ export function HomeAssistantSearch() {
   const admin = contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
   const needsAutoAccept = termsType === 'msa' && !accepted && !termsError && !termsLoading && !isLimitReached && admin;
 
+  const examples = useMemo(
+    () => [
+      t('home.assistant.example.create-dashboard', 'How do I create a dashboard?'),
+      t('home.assistant.example.promql', 'Explain this PromQL query'),
+      t('home.assistant.example.alerts-firing', 'What alerts are firing right now?'),
+      t('home.assistant.example.errors', 'Show me errors from the last hour'),
+      t('home.assistant.example.data-source', 'How do I set up a data source?'),
+      t('home.assistant.example.loki-query', 'Help me write a Loki query'),
+    ],
+    []
+  );
+
+  const placeholderLimit = t(
+    'home.assistant.placeholder-limit',
+    "You've hit the monthly limit for Assistant... Upgrade to keep going!"
+  );
+
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [inputRef, placeholderCurrent, placeholderInitial] = usePlaceholder(
-    isLimitReached ? PLACEHOLDER_LIMIT : EXAMPLES
+    isLimitReached ? placeholderLimit : examples
   );
 
   const formRef = useRef<HTMLFormElement>(null);
@@ -101,11 +107,8 @@ export function HomeAssistantSearch() {
           ref={inputRef}
           aria-label={
             isLimitReached
-              ? t(
-                  'home.assistant.placeholder-limit',
-                  "You've hit the monthly limit for Assistant\u2026 Upgrade to keep going!"
-                )
-              : t('home.assistant.placeholder-default', 'Ask Assistant anything about Grafana\u2026')
+              ? placeholderLimit
+              : t('home.assistant.placeholder-default', 'Ask Assistant anything about Grafana...')
           }
           prefix={<Icon name="ai-sparkle" size="xl" className={styles.icon} />}
           suffix={
