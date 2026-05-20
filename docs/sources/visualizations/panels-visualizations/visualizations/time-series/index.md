@@ -198,7 +198,7 @@ Use the series visibility filter when a panel renders many series and you want t
 
 After you've toggled the switch on, click the **Series visibility** icon  to open a tooltip with one or two sections depending on your dataset:
 
-- **By name**: Lists each unique series name. Select one or more names to limit the legend to those series.
+- **By name**: Lists each unique series name. Select one or more names to limit the visualization to those series.
 - **By labels**: Lists each label key with its values. Select label values to filter series that match.
 
 The popover also provides:
