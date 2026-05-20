@@ -47,6 +47,7 @@ type ServerOptions struct {
 	SearchClient     resourcepb.ResourceIndexClient
 	StorageMetrics   *resource.StorageMetrics
 	IndexMetrics     *resource.BleveIndexMetrics
+	VectorMetrics    *resource.VectorMetrics
 	Features         featuremgmt.FeatureToggles
 	QOSQueue         QOSEnqueueDequeuer
 	SecureValues     secrets.InlineSecureValueSupport
@@ -73,6 +74,7 @@ func NewUninitializedResourceServer(opts ServerOptions) (resource.ResourceServer
 		withBackend,
 		withVectorBackend,
 		withEmbedder,
+		withVectorMetrics,
 		withVectorIndexers,
 		withQOSQueue,
 		withOverridesService,
@@ -109,6 +111,7 @@ func NewUninitializedSearchServer(opts ServerOptions) (resource.SearchServer, er
 		withBackend,
 		withVectorBackend,
 		withEmbedder,
+		withVectorMetrics,
 		withSearch,
 	)
 	if err != nil {
@@ -234,6 +237,7 @@ func withVectorIndexers(opts *ServerOptions, resourceOpts *resource.ResourceServ
 		BatchEmbedder:  batchEmbedder,
 		Builders:       builders,
 		DashboardStats: opts.DashboardStats,
+		Metrics:        resourceOpts.VectorMetrics,
 	})
 	if err != nil {
 		return fmt.Errorf("create vector backfiller: %w", err)
@@ -245,6 +249,7 @@ func withVectorIndexers(opts *ServerOptions, resourceOpts *resource.ResourceServ
 		BatchEmbedder: batchEmbedder,
 		Builders:      builders,
 		Interval:      opts.Cfg.VectorReconcilerInterval,
+		Metrics:       resourceOpts.VectorMetrics,
 	})
 	if err != nil {
 		return fmt.Errorf("create vector reconciler: %w", err)
@@ -288,6 +293,11 @@ func withQuotaConfig(opts *ServerOptions, resourceOpts *resource.ResourceServerO
 
 func withStorageMetrics(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
 	resourceOpts.StorageMetrics = opts.StorageMetrics
+	return nil
+}
+
+func withVectorMetrics(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	resourceOpts.VectorMetrics = opts.VectorMetrics
 	return nil
 }
 

@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/grafana/alerting/definition"
-	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -20,12 +19,6 @@ func TestConfigRevisionImported(t *testing.T) {
 		require.Error(t, err)
 	})
 
-	t.Run("should return imported config if extra config is valid even if it cannot be fully merged", func(t *testing.T) {
-		rev := getConfigRevisionForTest(withExtraConfigAndConflictingMatchers())
-		imported, err := rev.Imported()
-		require.NoError(t, err)
-		require.NotNil(t, imported)
-	})
 	t.Run("should return imported config if extra config is valid", func(t *testing.T) {
 		rev := getConfigRevisionForTest(withExtraConfig(extraConfig(extraConfigurationYaml)))
 
@@ -370,10 +363,7 @@ receivers:
 
 func extraConfig(yamlString string) definitions.ExtraConfiguration {
 	return definitions.ExtraConfiguration{
-		Identifier: "test",
-		MergeMatchers: config.Matchers{
-			&labels.Matcher{Type: labels.MatchEqual, Name: "__imported", Value: "test"},
-		},
+		Identifier:         "test",
 		AlertmanagerConfig: yamlString,
 	}
 }
@@ -382,25 +372,6 @@ func withExtraConfig(extra definitions.ExtraConfiguration) opt {
 	return func(rev *ConfigRevision) {
 		rev.Config.ExtraConfigs = []definitions.ExtraConfiguration{
 			extra,
-		}
-	}
-}
-
-func withExtraConfigAndConflictingMatchers() opt {
-	return func(rev *ConfigRevision) {
-		matcher := &labels.Matcher{Type: labels.MatchEqual, Name: "__imported", Value: "test"}
-		rev.Config.AlertmanagerConfig.Route.Routes = append(rev.Config.AlertmanagerConfig.Route.Routes, &definitions.Route{
-			Matchers: []*labels.Matcher{matcher},
-		})
-		rev.Config.ExtraConfigs = []definitions.ExtraConfiguration{
-			{
-				Identifier: "test",
-				MergeMatchers: config.Matchers{
-					matcher,
-				},
-				TemplateFiles:      nil,
-				AlertmanagerConfig: extraConfigurationYaml,
-			},
 		}
 	}
 }
