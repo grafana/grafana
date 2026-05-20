@@ -154,7 +154,7 @@ export interface FeatureToggles {
   */
   grafanaAPIServerEnsureKubectlAccess?: boolean;
   /**
-  * Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled
+  * Enable caching for async queries for Redshift and Athena. Requires that the data source has caching and async query support enabled
   * @default true
   */
   awsAsyncQueryCaching?: boolean;
@@ -219,13 +219,13 @@ export interface FeatureToggles {
   */
   kubernetesAnnotationsClient?: boolean;
   /**
-  * Enables k8s short url api and uses it under the hood when handling legacy /api
-  * @default false
+  * Enables k8s short URL API and uses it under the hood when handling legacy /api
+  * @default true
   */
   kubernetesShortURLs?: boolean;
   /**
-  * Routes short url requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs
-  * @default false
+  * Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs
+  * @default true
   */
   useKubernetesShortURLsAPI?: boolean;
   /**
