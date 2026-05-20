@@ -269,6 +269,7 @@ func validateOnUpdate(ctx context.Context,
 var escalationVerbs = []string{
 	utils.VerbGet,
 	utils.VerbUpdate,
+	utils.VerbPatch,
 	utils.VerbDelete,
 	utils.VerbCreate,
 	utils.VerbSetPermissions,
@@ -303,18 +304,17 @@ func checkMoveAccess(
 	}
 
 	gvr := folders.FolderResourceInfo.GroupVersionResource()
-	newParentFolder := folderFieldFor(newParentUID)
-	oldParentFolder := folderFieldFor(oldParentUID)
 
 	// Destination-write: can the user create a child folder under the new
 	// parent? Zanzana resolves inheritance, so a single Check on the parent
-	// folder (empty string for root) is sufficient.
+	// folder (folder.RootFolderUID is "", which authlib treats as root) is
+	// sufficient.
 	writeResp, err := accessClient.Check(ctx, user, authlib.CheckRequest{
 		Verb:      utils.VerbCreate,
 		Group:     gvr.Group,
 		Resource:  gvr.Resource,
 		Namespace: namespace,
-	}, newParentFolder)
+	}, newParentUID)
 	if err != nil {
 		return err
 	}
@@ -336,7 +336,7 @@ func checkMoveAccess(
 				Group:         gvr.Group,
 				Resource:      gvr.Resource,
 				Name:          sourceUID,
-				Folder:        newParentFolder,
+				Folder:        newParentUID,
 			},
 			authlib.BatchCheckItem{
 				CorrelationID: oldPrefix + verb,
@@ -344,7 +344,7 @@ func checkMoveAccess(
 				Group:         gvr.Group,
 				Resource:      gvr.Resource,
 				Name:          sourceUID,
-				Folder:        oldParentFolder,
+				Folder:        oldParentUID,
 			},
 		)
 	}
@@ -360,8 +360,11 @@ func checkMoveAccess(
 	for _, verb := range escalationVerbs {
 		newState, nOk := batchResp.Results[newPrefix+verb]
 		oldState, oOk := batchResp.Results[oldPrefix+verb]
+		// Fail closed: we built both correlation IDs ourselves, so a missing
+		// result indicates an authlib bug or transport problem rather than a
+		// "no opinion" answer. Skipping would silently disable the guard.
 		if !nOk || !oOk {
-			continue
+			return fmt.Errorf("access escalation check returned no result for verb %q", verb)
 		}
 		if newState.Error != nil {
 			return newState.Error
@@ -374,16 +377,6 @@ func checkMoveAccess(
 		}
 	}
 	return nil
-}
-
-// folderFieldFor returns the folder UID to use as the authlib `folder`
-// argument: RootFolderUID is the empty-string sentinel for root, but authlib
-// expects the literal empty string for resources at the root.
-func folderFieldFor(parentUID string) string {
-	if parentUID == folder.RootFolderUID {
-		return ""
-	}
-	return parentUID
 }
 
 // canSkipChildrenCheck determines if we can skip the expensive children depth check.
