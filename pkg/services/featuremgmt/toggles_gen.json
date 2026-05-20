@@ -4690,15 +4690,18 @@
     {
       "metadata": {
         "name": "panelStyleActions",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2026-02-18T17:05:38Z"
+        "resourceVersion": "1779296829158",
+        "creationTimestamp": "2026-02-18T17:05:38Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-05-20 17:07:09.158003 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable style actions (copy/paste) in the panel editor",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {

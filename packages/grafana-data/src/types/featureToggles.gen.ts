@@ -1262,7 +1262,7 @@ export interface FeatureToggles {
   newVizSuggestions?: boolean;
   /**
   * Enable style actions (copy/paste) in the panel editor
-  * @default false
+  * @default true
   */
   panelStyleActions?: boolean;
   /**
