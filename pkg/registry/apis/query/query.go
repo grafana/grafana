@@ -12,6 +12,7 @@ import (
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	errorsK8s "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -22,6 +23,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	apifilters "github.com/grafana/grafana/pkg/apiserver/endpoints/filters"
 	query "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
@@ -64,7 +66,15 @@ func (mcs *MyCacheService) GetDatasourceByUID(ctx context.Context, datasourceUID
 func (b *QueryAPIBuilder) QueryDatasources(w http.ResponseWriter, httpreq *http.Request) {
 	w.Header().Set("X-Ds-Querier", b.instanceProvider.GetMode())
 
-	ctx, span := b.tracer.Start(httpreq.Context(), "QueryService.Query")
+	// Re-establish upstream trace context. The k8s apiserver framework severs
+	// req.Context() during request routing, but the original headers survive
+	// on httpreq. Re-parenting here puts QueryService.Query (and its children)
+	// back into the upstream trace.
+	parentCtx := httpreq.Context()
+	if sc := apifilters.ExtractUpstreamSpanContext(httpreq); sc.IsValid() {
+		parentCtx = trace.ContextWithRemoteSpanContext(parentCtx, sc)
+	}
+	ctx, span := b.tracer.Start(parentCtx, "QueryService.Query")
 	defer span.End()
 	traceId := span.SpanContext().TraceID()
 	connectLogger := b.log.New(
