@@ -549,6 +549,11 @@ func findFreshSnapshot(
 	return ulid.ULID{}, nil, nil
 }
 
+const (
+	snapshotBuildFlowColdStart = "cold_start"
+	snapshotBuildFlowRebuild   = "rebuild"
+)
+
 // Outcome labels for the IndexSnapshotColdStarts metric.
 const (
 	coldStartOutcomeAcquiredLock        = "acquired_lock"
@@ -560,8 +565,9 @@ const (
 
 // Wait-for-leader timing. Package-level vars so tests can shrink them.
 var (
-	coldStartPollInterval = 30 * time.Second
-	coldStartTotalWait    = 15 * time.Minute
+	coldStartPollInterval           = 30 * time.Second
+	coldStartTotalWait              = 15 * time.Minute
+	rebuildCoordinationPollInterval = 30 * time.Second
 )
 
 // coordinateColdStartBuild coordinates from-scratch index builds across
@@ -703,6 +709,111 @@ func (b *bleveBackend) tryDownloadColdStartSnapshot(
 			return nil, "", 0, ctxErr
 		}
 		logger.Warn("Cold-start probe failed; will keep coordinating", "err", err)
+		return nil, "", 0, nil
+	}
+	return idx, name, rv, nil
+}
+
+// coordinateRebuild coordinates periodic rebuilds across same-version replicas.
+// It uses the same remote build lock as cold-start coordination, but probes
+// with the rebuild freshness window so waiting replicas only accept snapshots
+// fresh enough to satisfy the rebuild condition.
+//
+// Outcomes:
+//   - (idx, name, rv, nil, nil) -- another replica's fresh snapshot was downloaded; caller skips build.
+//   - (nil, "", 0, lock, nil)   -- caller is the leader; build, upload immediately, then release lock.
+//   - (nil, "", 0, nil, nil)    -- lock backend failed; caller falls back to building alone.
+//   - (nil, "", 0, nil, err)    -- context canceled mid-coordination.
+func (b *bleveBackend) coordinateRebuild(
+	ctx context.Context,
+	key resource.NamespacedResource,
+	resourceDir string,
+	lastImportTime time.Time,
+	maxFreshSnapshotAge time.Duration,
+	logger log.Logger,
+) (_ bleve.Index, _ string, _ int64, _ IndexStoreLock, retErr error) {
+	ctx, span := tracer.Start(ctx, "search.remote_index_snapshot.rebuild_coordination")
+	start := time.Now()
+	outcome := "fallback"
+	defer func() {
+		span.SetAttributes(
+			attribute.String("namespace", key.Namespace),
+			attribute.String("group", key.Group),
+			attribute.String("resource", key.Resource),
+			attribute.String("outcome", outcome),
+		)
+		if retErr != nil {
+			span.RecordError(retErr)
+			span.SetStatus(codes.Error, retErr.Error())
+		}
+		logger.Info("Rebuild coordination completed", "elapsed", time.Since(start), "outcome", outcome)
+		span.End()
+	}()
+
+	logger.Info("Rebuild coordination started", "max_fresh_snapshot_age", maxFreshSnapshotAge, "last_import_time", lastImportTime)
+
+	ticker := time.NewTicker(rebuildCoordinationPollInterval)
+	defer ticker.Stop()
+
+	for {
+		idx, name, rv, err := b.tryDownloadRebuildSnapshot(ctx, key, resourceDir, lastImportTime, maxFreshSnapshotAge, logger)
+		if err != nil {
+			outcome = "context_canceled"
+			return nil, "", 0, nil, err
+		}
+		if idx != nil {
+			outcome = "downloaded_after_wait"
+			return idx, name, rv, nil, nil
+		}
+
+		lock, err := b.opts.Snapshot.Store.LockBuildIndex(ctx, key, b.opts.BuildVersion)
+		switch {
+		case err == nil:
+			outcome = "acquired_lock"
+			return nil, "", 0, lock, nil
+		case errors.Is(err, errLockHeld):
+			logger.Debug("Rebuild coordination waiting for snapshot build lock")
+		default:
+			if ctxErr := ctx.Err(); ctxErr != nil {
+				outcome = "context_canceled"
+				return nil, "", 0, nil, ctxErr
+			}
+			logger.Warn("Rebuild coordination lock acquire failed; will build alone", "err", err)
+			outcome = "lock_error"
+			return nil, "", 0, nil, nil
+		}
+
+		select {
+		case <-ctx.Done():
+			outcome = "context_canceled"
+			return nil, "", 0, nil, ctx.Err()
+		case <-ticker.C:
+		}
+	}
+}
+
+// tryDownloadRebuildSnapshot checks whether a fresh same-version snapshot
+// exists for the rebuild path, and downloads it if so. Probe failures are
+// treated as "no hit" so coordination can still elect a leader and rebuild;
+// only context cancellation aborts the loop.
+func (b *bleveBackend) tryDownloadRebuildSnapshot(
+	ctx context.Context,
+	key resource.NamespacedResource,
+	resourceDir string,
+	lastImportTime time.Time,
+	maxFreshSnapshotAge time.Duration,
+	logger log.Logger,
+) (bleve.Index, string, int64, error) {
+	idx, name, rv, err := b.tryDownloadFreshSameVersionSnapshot(
+		ctx, key, resourceDir, lastImportTime, maxFreshSnapshotAge,
+		snapshotPolicySameVersion, "search.remote_index_snapshot.download_fresh",
+		logger,
+	)
+	if err != nil {
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return nil, "", 0, ctxErr
+		}
+		logger.Warn("Rebuild coordination probe failed; will keep coordinating", "err", err)
 		return nil, "", 0, nil
 	}
 	return idx, name, rv, nil

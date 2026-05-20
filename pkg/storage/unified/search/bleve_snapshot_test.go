@@ -658,6 +658,115 @@ func TestBuildIndex_RebuildFallsBackToBuilder(t *testing.T) {
 	assert.Zero(t, store.downloadCalls.Load(), "older snapshot must not be downloaded on the rebuild path")
 }
 
+// TestBuildIndex_RebuildLeaderUploads verifies that a periodic rebuild leader
+// holds the remote build lock through the rebuild and uploads the fresh snapshot
+// immediately so waiting replicas can download it.
+func TestBuildIndex_RebuildLeaderUploads(t *testing.T) {
+	store := newHookableStore(t)
+	ns := newTestNsResource()
+	be, metrics := newTestBleveBackend(t, SnapshotOptions{
+		Store:       store,
+		MinDocCount: 1,
+		MaxIndexAge: 24 * time.Hour,
+	})
+
+	builderCalled := atomic.Int32{}
+	idx, err := be.BuildIndex(t.Context(), ns, 10, nil, "rebuild",
+		func(index resource.ResourceIndex) (int64, error) {
+			builderCalled.Add(1)
+			return 7, nil
+		},
+		nil, true /*rebuild*/, time.Time{}, time.Hour /*maxFreshSnapshotAge*/)
+	require.NoError(t, err)
+	require.NotNil(t, idx)
+
+	assert.Equal(t, int32(1), builderCalled.Load(), "builder must run on the leader path")
+	assert.Equal(t, int32(1), store.lockAcquireCalls.Load(), "leader must acquire the build lock")
+	assert.Equal(t, int32(1), store.uploadCalls.Load(), "leader must upload immediately")
+	assert.Equal(t, int32(1), store.lockReleaseCalls.Load(), "leader must release the build lock")
+	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotUploads.WithLabelValues(snapshotUploadStatusSuccess)))
+}
+
+// TestBuildIndex_RebuildWaiterDownloadsFreshSnapshot verifies that a periodic
+// rebuild waits behind an existing build lock and downloads the fresh snapshot
+// instead of rebuilding locally.
+func TestBuildIndex_RebuildLeaderLockLostDuringBuild(t *testing.T) {
+	store := newHookableStore(t)
+	ns := newTestNsResource()
+	be, metrics := newTestBleveBackend(t, SnapshotOptions{
+		Store:       store,
+		MinDocCount: 1,
+		MaxIndexAge: 24 * time.Hour,
+	})
+
+	builderCalled := atomic.Int32{}
+	idx, err := be.BuildIndex(t.Context(), ns, 10, nil, "rebuild",
+		func(resource.ResourceIndex) (int64, error) {
+			builderCalled.Add(1)
+			store.signalLockLost()
+			return 7, nil
+		},
+		nil, true /*rebuild*/, time.Time{}, time.Hour /*maxFreshSnapshotAge*/)
+	require.NoError(t, err)
+	require.NotNil(t, idx)
+
+	assert.Equal(t, int32(1), builderCalled.Load(), "builder must run on the leader path")
+	assert.Zero(t, store.uploadCalls.Load(), "leader must skip immediate upload after lock loss")
+	assert.Equal(t, int32(1), store.lockReleaseCalls.Load(), "leader still releases the build lock")
+	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotUploads.WithLabelValues(snapshotUploadStatusSkipLockLost)))
+	assert.Zero(t, testutil.ToFloat64(metrics.IndexSnapshotUploads.WithLabelValues(snapshotUploadStatusSuccess)))
+}
+
+func TestBuildIndex_RebuildWaiterDownloadsFreshSnapshot(t *testing.T) {
+	store := newHookableStore(t)
+	ns := newTestNsResource()
+	be, _ := newTestBleveBackend(t, SnapshotOptions{
+		Store:       store,
+		MinDocCount: 1,
+		MaxIndexAge: 24 * time.Hour,
+	})
+	withRebuildCoordinationPollInterval(t, 5*time.Millisecond)
+
+	heldLock, err := store.inner.LockBuildIndex(t.Context(), ns, "11.5.0")
+	require.NoError(t, err)
+	defer func() { require.NoError(t, heldLock.Release()) }()
+
+	ctx, cancel := context.WithTimeout(t.Context(), 2*time.Second)
+	defer cancel()
+
+	builderCalled := atomic.Int32{}
+	type buildResult struct {
+		idx resource.ResourceIndex
+		err error
+	}
+	resultCh := make(chan buildResult, 1)
+	go func() {
+		idx, err := be.BuildIndex(ctx, ns, 10, nil, "rebuild",
+			func(resource.ResourceIndex) (int64, error) {
+				builderCalled.Add(1)
+				return 1, nil
+			},
+			nil, true /*rebuild*/, time.Time{}, time.Hour /*maxFreshSnapshotAge*/)
+		resultCh <- buildResult{idx: idx, err: err}
+	}()
+
+	require.Eventually(t, func() bool {
+		return store.lockAcquireCalls.Load() > 0
+	}, time.Second, 5*time.Millisecond)
+	seedDownloadableSnapshot(t, t.Context(), store.bucket, ns, makeULID(t, time.Now()), freshSnapshot(time.Minute))
+
+	select {
+	case result := <-resultCh:
+		require.NoError(t, result.err)
+		require.NotNil(t, result.idx)
+	case <-ctx.Done():
+		t.Fatal("timed out waiting for rebuild waiter")
+	}
+
+	assert.Zero(t, builderCalled.Load(), "waiter must not rebuild when a fresh snapshot appears")
+	assert.Positive(t, store.downloadCalls.Load(), "waiter must download the fresh snapshot")
+}
+
 // TestBuildIndex_RebuildSkipsFastPathWhenDisabled verifies that passing
 // maxFreshSnapshotAge=0 disables the rebuild-path fast path entirely (no
 // list/get calls against the store).
@@ -682,6 +791,7 @@ func TestBuildIndex_RebuildSkipsFastPathWhenDisabled(t *testing.T) {
 	require.NotNil(t, idx)
 	assert.Equal(t, int32(1), builderCalled.Load())
 	assert.Zero(t, store.downloadCalls.Load())
+	assert.Zero(t, store.lockAcquireCalls.Load())
 }
 
 // TestBuildIndex_SkipsDownloadBelowMinDocCount ensures ListIndexSnapshots is not called
@@ -1223,6 +1333,15 @@ func withColdStartTimings(t *testing.T, poll, total time.Duration) {
 	t.Cleanup(func() {
 		coldStartPollInterval = prevPoll
 		coldStartTotalWait = prevTotal
+	})
+}
+
+func withRebuildCoordinationPollInterval(t *testing.T, poll time.Duration) {
+	t.Helper()
+	prev := rebuildCoordinationPollInterval
+	rebuildCoordinationPollInterval = poll
+	t.Cleanup(func() {
+		rebuildCoordinationPollInterval = prev
 	})
 }
 
