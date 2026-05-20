@@ -3,6 +3,8 @@ package resource
 import (
 	"cmp"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"hash/fnv"
 	"math/rand"
@@ -165,6 +167,12 @@ type searchServer struct {
 	initWorkers   int
 	initMinSize   int
 
+	// VectorSearch query-embedding cache + per-tenant rate limiter.
+	// Both are always on when the backend supports them; limits are
+	// fixed by the vectorQueryCache* / vectorRateLimit* consts below.
+	queryCache  vector.QueryEmbeddingCache
+	rateLimiter vector.RateLimiter
+
 	ownsIndexFn func(key NamespacedResource) (bool, error)
 
 	buildIndex singleflight.Group
@@ -265,6 +273,9 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 		selectableFields:          opts.SelectableFieldsForKinds,
 		injectFailuresPercent:     opts.InjectFailuresPercent,
 		indexModificationCacheTTL: opts.IndexModificationCacheTTL,
+
+		queryCache:  opts.QueryCache,
+		rateLimiter: opts.RateLimiter,
 	}
 
 	s.rebuildQueue = debouncer.NewQueue(combineRebuildRequests)
@@ -597,26 +608,87 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		attribute.Int("limit", limit),
 	)
 
-	// Embed the query as a retrieval *query* (different task hint than the
-	// retrieval *document* hint used at index time — providers tune
-	// projections per side of the retrieval pair).
-	out, err := s.embedder.EmbedText(ctx, embedder.EmbedTextInput{
-		Texts:     []string{req.Query},
-		Normalize: s.embedder.ShouldNormalize(),
-		Task:      embedder.TaskRetrievalQuery,
-	})
-	if err != nil {
-		s.log.Error("vector search: embed query", "err", err)
-		return nil, status.Error(codes.Internal, "embed query")
+	// Per-tenant rate limit covers ALL VectorSearch requests (cache hits
+	// included) so a noisy tenant can't starve the cluster with cheap
+	// hits either. DB-backed so multiple pods share the counter without
+	// a distributor. Fail closed: if the limiter is broken we'd rather
+	// reject than let the embedder be overrun.
+	if s.rateLimiter != nil {
+		allowed, count, err := s.rateLimiter.Allow(ctx, req.Key.Namespace, vectorRateLimitWindow, vectorRateLimitPerTenant)
+		if err != nil {
+			s.log.Error("vector search: rate-limit check failed, fail-closed", "err", err, "namespace", req.Key.Namespace)
+			if s.vectorMetrics != nil {
+				s.vectorMetrics.RateLimiterErrorsTotal.Inc()
+			}
+			return nil, status.Error(codes.Unavailable, "rate limiter unavailable")
+		}
+		if !allowed {
+			if s.vectorMetrics != nil {
+				s.vectorMetrics.RateLimitedRequestsTotal.Inc()
+			}
+			return nil, status.Errorf(codes.ResourceExhausted, "tenant rate limit exceeded: %d requests in window", count)
+		}
 	}
-	if len(out.Embeddings) != 1 || len(out.Embeddings[0].Dense) == 0 {
-		s.log.Error("vector search: embedder returned no vectors")
-		return nil, status.Error(codes.Internal, "embed query: empty result")
+
+	queryHash := sha256Hex(req.Query)
+	var dense []float32
+
+	if s.queryCache != nil {
+		emb, hit, err := s.queryCache.Get(ctx, req.Key.Namespace, s.embedder.Model, queryHash)
+		if err != nil {
+			// Cache failures are non-fatal — fall through to embed.
+			s.log.Warn("vector search: cache lookup failed, falling through", "err", err)
+		} else if hit {
+			if s.vectorMetrics != nil {
+				s.vectorMetrics.QueryCacheHitsTotal.WithLabelValues(s.embedder.Model).Inc()
+			}
+			dense = emb
+		}
+	}
+
+	if len(dense) == 0 {
+		// Embed the query as a retrieval *query* (different task hint than
+		// the retrieval *document* hint used at index time — providers tune
+		// projections per side of the retrieval pair).
+		out, err := s.embedder.EmbedText(ctx, embedder.EmbedTextInput{
+			Texts:     []string{req.Query},
+			Normalize: s.embedder.ShouldNormalize(),
+			Task:      embedder.TaskRetrievalQuery,
+		})
+		if err != nil {
+			s.log.Error("vector search: embed query", "err", err)
+			return nil, status.Error(codes.Internal, "embed query")
+		}
+		if len(out.Embeddings) != 1 || len(out.Embeddings[0].Dense) == 0 {
+			s.log.Error("vector search: embedder returned no vectors")
+			return nil, status.Error(codes.Internal, "embed query: empty result")
+		}
+		dense = out.Embeddings[0].Dense
+		if s.vectorMetrics != nil {
+			s.vectorMetrics.QueryCacheMissesTotal.WithLabelValues(s.embedder.Model).Inc()
+		}
+
+		// Cache write is best-effort: a write failure should not fail the
+		// search the user just paid for. Eviction races between pods are
+		// bounded by the LIMIT clause in query_cache_evict_oldest.sql.
+		if s.queryCache != nil {
+			if n, err := s.queryCache.Count(ctx, req.Key.Namespace); err == nil && int(n) >= vectorQueryCacheMaxPerTenant {
+				evictN := int(n) - vectorQueryCacheMaxPerTenant + 1
+				if deleted, err := s.queryCache.EvictOldest(ctx, req.Key.Namespace, evictN); err != nil {
+					s.log.Warn("vector search: cache evict failed", "err", err)
+				} else if deleted > 0 && s.vectorMetrics != nil {
+					s.vectorMetrics.QueryCacheEvictionsTotal.Add(float64(deleted))
+				}
+			}
+			if err := s.queryCache.Put(ctx, req.Key.Namespace, s.embedder.Model, queryHash, dense); err != nil {
+				s.log.Warn("vector search: cache put failed", "err", err)
+			}
+		}
 	}
 
 	results, err := s.vectorBackend.Search(ctx,
 		req.Key.Namespace, s.embedder.Model, req.Key.Resource,
-		out.Embeddings[0].Dense, limit, translateVectorSearchFilters(req.Filters)...)
+		dense, limit, translateVectorSearchFilters(req.Filters)...)
 	if err != nil {
 		s.log.Error("vector search: backend", "err", err)
 		return nil, status.Error(codes.Internal, "vector search backend")
@@ -980,6 +1052,8 @@ func (s *searchServer) init(ctx context.Context) error {
 	s.bgTaskWg.Add(1)
 	go s.runPeriodicScanForIndexesToRebuild(subctx)
 
+	s.startRateBucketSweeper(subctx)
+
 	end := time.Now().Unix()
 	s.log.Info("search index initialized", "duration_secs", end-start, "total_docs", s.search.TotalDocs())
 	return nil
@@ -1030,6 +1104,62 @@ func (s *searchServer) runPeriodicScanForIndexesToRebuild(ctx context.Context) {
 			s.findIndexesToRebuild(importTimes, nil, time.Now(), true)
 		}
 	}
+}
+
+// sha256Hex returns the lowercase hex SHA-256 of s. Used as the cache key
+// for query-embedding lookups so equal queries collide deterministically
+// and bad inputs can't escape into a SQL LIKE.
+func sha256Hex(s string) string {
+	h := sha256.Sum256([]byte(s))
+	return hex.EncodeToString(h[:])
+}
+
+// Fixed limits for the VectorSearch query-embedding cache and per-tenant
+// rate limiter. Both features are always on whenever the backend supports
+// them; if these limits ever need to be tunable they should move to a
+// dedicated config section rather than back into setting.Cfg one-by-one.
+const (
+	vectorQueryCacheMaxPerTenant = 1000
+	vectorRateLimitPerTenant     = 60
+	vectorRateLimitWindow        = time.Minute
+	vectorRateBucketSweepCutoff  = 2 * vectorRateLimitWindow
+)
+
+// startRateBucketSweeper runs while the server is alive and periodically
+// deletes rate-limit buckets that have aged past vectorRateBucketSweepCutoff.
+// Old buckets never affect Allow() — they only bloat the table — so the
+// sweep is purely housekeeping. Lifecycle uses the shared bgTaskWg /
+// bgTaskCancel pair so shutdown waits for it like the other background tasks.
+func (s *searchServer) startRateBucketSweeper(ctx context.Context) {
+	if s.rateLimiter == nil {
+		return
+	}
+	s.bgTaskWg.Add(1)
+	go func() {
+		defer s.bgTaskWg.Done()
+		interval := vectorRateLimitWindow / 2
+		if interval < time.Minute {
+			interval = time.Minute
+		}
+		t := time.NewTicker(interval)
+		defer t.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-t.C:
+				cutoff := time.Now().Add(-vectorRateBucketSweepCutoff)
+				deleted, err := s.rateLimiter.SweepOlderThan(ctx, cutoff)
+				if err != nil {
+					s.log.Warn("rate-bucket sweep failed", "err", err)
+					continue
+				}
+				if deleted > 0 {
+					s.log.Debug("rate-bucket sweep", "deleted", deleted, "cutoff", cutoff)
+				}
+			}
+		}
+	}()
 }
 
 // jitterForKey returns a deterministic jitter duration for the given key,

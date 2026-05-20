@@ -125,4 +125,41 @@ func initVectorTables(mg *migrator.Migrator) {
 		migrator.NewAddTableMigration(backfillJobs))
 	mg.AddMigration("create vector_backfill_jobs (model, resource) index",
 		migrator.NewAddIndexMigration(backfillJobs, backfillJobs.Indices[0]))
+
+	// Per-tenant cache of (query_hash → embedding). halfvec(1024) matches the
+	// embeddings table; not expressible via xorm so raw SQL. The raw query
+	// text is intentionally NOT stored — the SHA-256 hash is the cache key
+	// and persisting user input would create a data-handling burden with no
+	// read path.
+	mg.AddMigration("create query_embedding_cache",
+		migrator.NewRawSQLMigration("").Postgres(`
+			CREATE TABLE IF NOT EXISTS query_embedding_cache (
+				namespace VARCHAR(256) NOT NULL,
+				model VARCHAR(256) NOT NULL,
+				query_hash CHAR(64) NOT NULL,
+				embedding halfvec(1024) NOT NULL,
+				created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+				PRIMARY KEY (namespace, model, query_hash)
+			);
+		`))
+	// Eviction is FIFO by created_at — see EvictOldest. Get is a pure
+	// SELECT (no per-hit UPDATE) so true LRU ordering isn't tracked; the
+	// trade-off avoids row-lock contention on hot cache rows.
+	mg.AddMigration("create query_embedding_cache eviction index",
+		migrator.NewRawSQLMigration("").Postgres(
+			`CREATE INDEX IF NOT EXISTS query_embedding_cache_eviction_idx
+				ON query_embedding_cache (namespace, created_at);`,
+		))
+
+	// Per-tenant per-window request counter used by the rate limiter. State
+	// lives in DB so multiple pods share the same view without a distributor.
+	mg.AddMigration("create vector_search_rate_buckets",
+		migrator.NewRawSQLMigration("").Postgres(`
+			CREATE TABLE IF NOT EXISTS vector_search_rate_buckets (
+				namespace VARCHAR(256) NOT NULL,
+				window_start TIMESTAMPTZ NOT NULL,
+				request_count BIGINT NOT NULL DEFAULT 0,
+				PRIMARY KEY (namespace, window_start)
+			);
+		`))
 }
