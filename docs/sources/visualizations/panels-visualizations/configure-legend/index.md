@@ -139,7 +139,7 @@ You can add more context to a visualization by adding series data values or [cal
 
 ![Legend showing values](/media/docs/grafana/panels-visualizations/screenshot-legend-values-10.3.png)
 
-### Faceted filter
+### Series visibility
 
 Filter visible series in the legend by name or by label without editing the query. Click the filter control next to the legend to open a popover with **By name** and **By labels** sections, then select the names or label values you want to keep.
 
