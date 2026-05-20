@@ -154,12 +154,7 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
   };
 
   return (
-    <Drawer
-      title={title}
-      subtitle={dashboard.state.title}
-      onClose={model.onClose}
-      tabs={saveAsDashboardTemplate ? undefined : tabs}
-    >
+    <Drawer title={title} subtitle={dashboard.state.title} onClose={model.onClose} tabs={tabs}>
       {renderBody()}
     </Drawer>
   );
