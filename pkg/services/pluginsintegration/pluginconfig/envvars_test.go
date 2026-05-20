@@ -785,3 +785,160 @@ func TestPluginEnvVarsProvider_azureEnvVars(t *testing.T) {
 		}, envVars)
 	})
 }
+
+func TestPluginEnvVarsProvider_azureHostEnvVars(t *testing.T) {
+	tcs := []struct {
+		name                    string
+		pluginID                string
+		forwardSettingsPlugins  []string
+		managedIdentityEnabled  bool
+		workloadIdentityEnabled bool
+		hostEnvVars             map[string]string
+		expectedKeys            []string
+		unexpectedKeys          []string
+	}{
+		{
+			name:                   "forwards managed identity host vars when MSI enabled and plugin allowlisted",
+			pluginID:               "grafana-azure-data-explorer-datasource",
+			forwardSettingsPlugins: []string{"grafana-azure-data-explorer-datasource"},
+			managedIdentityEnabled: true,
+			hostEnvVars: map[string]string{
+				"IDENTITY_ENDPOINT": "http://localhost:42356/msi/token",
+				"IDENTITY_HEADER":   "header-value",
+			},
+			expectedKeys: []string{
+				"IDENTITY_ENDPOINT=http://localhost:42356/msi/token",
+				"IDENTITY_HEADER=header-value",
+			},
+		},
+		{
+			name:                    "forwards workload identity host vars when WI enabled and plugin allowlisted",
+			pluginID:                "grafana-azure-data-explorer-datasource",
+			forwardSettingsPlugins:  []string{"grafana-azure-data-explorer-datasource"},
+			workloadIdentityEnabled: true,
+			hostEnvVars: map[string]string{
+				"AZURE_TENANT_ID":            "tenant",
+				"AZURE_CLIENT_ID":            "client",
+				"AZURE_FEDERATED_TOKEN_FILE": "/var/run/secrets/azure/tokens/azure-identity-token",
+				"AZURE_AUTHORITY_HOST":       "https://login.microsoftonline.com/",
+			},
+			expectedKeys: []string{
+				"AZURE_TENANT_ID=tenant",
+				"AZURE_CLIENT_ID=client",
+				"AZURE_FEDERATED_TOKEN_FILE=/var/run/secrets/azure/tokens/azure-identity-token",
+				"AZURE_AUTHORITY_HOST=https://login.microsoftonline.com/",
+			},
+		},
+		{
+			name:                    "forwards both sets when both auth modes enabled",
+			pluginID:                "grafana-azure-monitor-datasource",
+			forwardSettingsPlugins:  []string{"grafana-azure-monitor-datasource"},
+			managedIdentityEnabled:  true,
+			workloadIdentityEnabled: true,
+			hostEnvVars: map[string]string{
+				"IDENTITY_ENDPOINT":          "http://localhost/msi",
+				"AZURE_FEDERATED_TOKEN_FILE": "/var/run/token",
+			},
+			expectedKeys: []string{
+				"IDENTITY_ENDPOINT=http://localhost/msi",
+				"AZURE_FEDERATED_TOKEN_FILE=/var/run/token",
+			},
+		},
+		{
+			name:                   "does not forward MSI host vars when MSI disabled even if plugin allowlisted",
+			pluginID:               "grafana-azure-data-explorer-datasource",
+			forwardSettingsPlugins: []string{"grafana-azure-data-explorer-datasource"},
+			managedIdentityEnabled: false,
+			hostEnvVars: map[string]string{
+				"IDENTITY_ENDPOINT": "http://localhost/msi",
+				"IDENTITY_HEADER":   "header",
+			},
+			unexpectedKeys: []string{"IDENTITY_ENDPOINT", "IDENTITY_HEADER"},
+		},
+		{
+			name:                    "does not forward workload identity host vars when WI disabled",
+			pluginID:                "grafana-azure-data-explorer-datasource",
+			forwardSettingsPlugins:  []string{"grafana-azure-data-explorer-datasource"},
+			workloadIdentityEnabled: false,
+			hostEnvVars: map[string]string{
+				"AZURE_FEDERATED_TOKEN_FILE": "/var/run/token",
+				"AZURE_CLIENT_ID":            "client",
+			},
+			unexpectedKeys: []string{"AZURE_FEDERATED_TOKEN_FILE", "AZURE_CLIENT_ID"},
+		},
+		{
+			name:                    "does not forward to plugins not in azure forward_settings_to_plugins",
+			pluginID:                "some-other-plugin",
+			forwardSettingsPlugins:  []string{"grafana-azure-data-explorer-datasource"},
+			managedIdentityEnabled:  true,
+			workloadIdentityEnabled: true,
+			hostEnvVars: map[string]string{
+				"IDENTITY_ENDPOINT":          "http://localhost/msi",
+				"AZURE_FEDERATED_TOKEN_FILE": "/var/run/token",
+			},
+			unexpectedKeys: []string{"IDENTITY_ENDPOINT", "AZURE_FEDERATED_TOKEN_FILE"},
+		},
+		{
+			name:                    "only forwards host vars that are actually set",
+			pluginID:                "grafana-azure-data-explorer-datasource",
+			forwardSettingsPlugins:  []string{"grafana-azure-data-explorer-datasource"},
+			managedIdentityEnabled:  true,
+			workloadIdentityEnabled: true,
+			hostEnvVars: map[string]string{
+				"IDENTITY_ENDPOINT": "http://localhost/msi",
+				"AZURE_CLIENT_ID":   "client",
+			},
+			expectedKeys: []string{
+				"IDENTITY_ENDPOINT=http://localhost/msi",
+				"AZURE_CLIENT_ID=client",
+			},
+			unexpectedKeys: []string{
+				"IDENTITY_HEADER", "MSI_ENDPOINT", "MSI_SECRET", "IMDS_ENDPOINT",
+				"AZURE_TENANT_ID", "AZURE_FEDERATED_TOKEN_FILE", "AZURE_AUTHORITY_HOST",
+			},
+		},
+	}
+
+	for _, tc := range tcs {
+		t.Run(tc.name, func(t *testing.T) {
+			// Clear any pre-existing Azure host env vars (e.g., from CI) that aren't
+			// explicitly set by this test case, so they don't leak into results.
+			for _, envVarName := range append(append([]string{}, azureManagedIdentityHostEnvVarNames...), azureWorkloadIdentityHostEnvVarNames...) {
+				if _, ok := tc.hostEnvVars[envVarName]; !ok {
+					require.NoError(t, os.Unsetenv(envVarName))
+				}
+			}
+			for k, v := range tc.hostEnvVars {
+				t.Setenv(k, v)
+			}
+
+			p := &plugins.Plugin{
+				JSONData: plugins.JSONData{
+					ID: tc.pluginID,
+				},
+			}
+			cfg := &setting.Cfg{
+				Raw: ini.Empty(),
+				Azure: &azsettings.AzureSettings{
+					ManagedIdentityEnabled:  tc.managedIdentityEnabled,
+					WorkloadIdentityEnabled: tc.workloadIdentityEnabled,
+					ForwardSettingsPlugins:  tc.forwardSettingsPlugins,
+				},
+			}
+
+			pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+			require.NoError(t, err)
+
+			provider := NewEnvVarsProvider(pCfg, nil, &fakeSSOSettingsProvider{})
+			envVars := provider.PluginEnvVars(context.Background(), p)
+
+			for _, expected := range tc.expectedKeys {
+				assert.Contains(t, envVars, expected, "expected env var %s to be forwarded", expected)
+			}
+			for _, key := range tc.unexpectedKeys {
+				_, ok := getEnvVarWithExists(envVars, key)
+				assert.False(t, ok, "env var %s should not be forwarded", key)
+			}
+		})
+	}
+}
