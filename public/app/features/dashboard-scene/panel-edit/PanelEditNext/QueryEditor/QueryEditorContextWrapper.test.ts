@@ -234,3 +234,54 @@ describe('QueryEditorContextWrapper - delete actions', () => {
     expect(result.current.ui.selectedTransformationIds).toEqual([]);
   });
 });
+
+describe('QueryEditorContextWrapper - stacked mode', () => {
+  beforeEach(() => {
+    mockUseAlertRulesForPanel.mockReturnValue({
+      alertRules: [],
+      loading: false,
+      isDashboardSaved: true,
+    });
+  });
+
+  it('plain query selection in stacked mode requests scrolling to that query', () => {
+    const dataPane = makeMockDataPane();
+    const { result } = renderWithWrapper(dataPane);
+
+    act(() => result.current.stackedMode.enter());
+    act(() => result.current.toggleQuerySelection({ refId: 'B' } as DataQuery));
+
+    expect(result.current.selectedQueryRefIds).toEqual(['B']);
+    expect(result.current.stackedMode.scrollTarget).toEqual({ type: 'query', id: 'B' });
+  });
+
+  it('entering stacked mode collapses existing multi-selection to the primary item', () => {
+    const dataPane = makeMockDataPane();
+    const { result } = renderWithWrapper(dataPane);
+
+    act(() => result.current.toggleQuerySelection({ refId: 'A' } as DataQuery));
+    act(() => result.current.toggleQuerySelection({ refId: 'B' } as DataQuery, { multi: true }));
+    act(() => result.current.setMultiSelectMode(true));
+
+    expect(result.current.selectedQueryRefIds).toEqual(['A', 'B']);
+    expect(result.current.multiSelectMode).toBe(true);
+
+    act(() => result.current.stackedMode.enter());
+
+    expect(result.current.multiSelectMode).toBe(false);
+    expect(result.current.selectedQueryRefIds).toEqual(['B']);
+  });
+
+  it('entering multi-select mode exits stacked mode', () => {
+    const dataPane = makeMockDataPane();
+    const { result } = renderWithWrapper(dataPane);
+
+    act(() => result.current.stackedMode.enter());
+    expect(result.current.stackedMode.enabled).toBe(true);
+
+    act(() => result.current.setMultiSelectMode(true));
+
+    expect(result.current.multiSelectMode).toBe(true);
+    expect(result.current.stackedMode.enabled).toBe(false);
+  });
+});

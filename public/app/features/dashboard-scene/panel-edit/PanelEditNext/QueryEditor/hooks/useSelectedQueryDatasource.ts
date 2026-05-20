@@ -5,21 +5,18 @@ import { config, getDataSourceSrv } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 
 /**
- * Hook to load the datasource for the currently selected query.
+ * Hook to load the datasource for a query.
  * Falls back to the panel's datasource if the query doesn't specify one.
  */
-export function useSelectedQueryDatasource(
-  selectedQuery: DataQuery | null,
-  panelDsSettings: DataSourceInstanceSettings | undefined
-) {
-  const { value: selectedQueryDsData, loading: selectedQueryDsLoading } = useAsync(async () => {
-    if (!selectedQuery) {
+export function useQueryDatasource(query: DataQuery | null, panelDsSettings: DataSourceInstanceSettings | undefined) {
+  const { value: queryDsData, loading: queryDsLoading } = useAsync(async () => {
+    if (!query) {
       return undefined;
     }
 
     try {
       // If query has explicit datasource, use it; otherwise fall back to panel datasource
-      let dsRef = selectedQuery.datasource;
+      let dsRef = query.datasource;
 
       if (!dsRef && panelDsSettings) {
         // Special handling for Mixed datasource:
@@ -52,15 +49,31 @@ export function useSelectedQueryDatasource(
       return undefined;
     }
   }, [
-    selectedQuery?.refId,
-    selectedQuery?.datasource?.uid,
-    selectedQuery?.datasource?.type,
+    query?.refId,
+    query?.datasource?.uid,
+    query?.datasource?.type,
     panelDsSettings?.uid,
     panelDsSettings?.meta.mixed,
   ]);
 
   return {
-    selectedQueryDsData: selectedQueryDsData ?? null,
-    selectedQueryDsLoading,
+    queryDsData: queryDsData ?? null,
+    queryDsLoading,
+  };
+}
+
+/**
+ * Hook to load the datasource for the currently selected query.
+ * Falls back to the panel's datasource if the query doesn't specify one.
+ */
+export function useSelectedQueryDatasource(
+  selectedQuery: DataQuery | null,
+  panelDsSettings: DataSourceInstanceSettings | undefined
+) {
+  const { queryDsData, queryDsLoading } = useQueryDatasource(selectedQuery, panelDsSettings);
+
+  return {
+    selectedQueryDsData: queryDsData,
+    selectedQueryDsLoading: queryDsLoading,
   };
 }

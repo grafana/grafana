@@ -145,6 +145,15 @@ export const mockUIStateBase = {
   toggleTransformationSelection: jest.fn(),
   clearSelection: jest.fn(),
   setMultiSelectMode: jest.fn(),
+  stackedMode: {
+    enabled: false,
+    enter: jest.fn(),
+    exit: jest.fn(),
+    syncActiveItem: jest.fn(),
+    scrollTarget: null,
+    requestScroll: jest.fn(),
+    clearScrollTarget: jest.fn(),
+  },
 };
 
 export const mockTransformToggles = {
@@ -270,6 +279,15 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
     pendingTransformation: null,
     setPendingTransformation: jest.fn(),
     finalizePendingTransformation: jest.fn(),
+    stackedMode: {
+      enabled: false,
+      enter: jest.fn(),
+      exit: jest.fn(),
+      syncActiveItem: jest.fn(),
+      scrollTarget: null,
+      requestScroll: jest.fn(),
+      clearScrollTarget: jest.fn(),
+    },
     selectedAlert: null,
     setSelectedAlert: jest.fn(),
     pendingSavedQuery: null,

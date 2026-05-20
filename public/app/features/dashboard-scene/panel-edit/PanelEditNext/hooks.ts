@@ -21,6 +21,8 @@ const MIN_SIDEBAR_PIXELS = 250;
 const vizResizerClassName = css({ height: 2, width: '100%' });
 // Pre-mount placeholder — useLayoutEffect replaces this with the responsive default before the first paint.
 const FALLBACK_SIDEBAR_RATIO = 0.25;
+const STACKED_MODE_VIZ_RATIO = 0.25;
+export const STACKED_MODE_LAYOUT_TRANSITION_MS = 180;
 
 type UseRatioResizeOptions = {
   direction: 'horizontal' | 'vertical';
@@ -35,6 +37,7 @@ type UseRatioResizeOptions = {
   minRatio?: number;
   maxRatio?: number;
   className?: string;
+  onManualResize?: () => void;
 };
 
 export function useRatioResize({
@@ -45,6 +48,7 @@ export function useRatioResize({
   minRatio = 0,
   maxRatio = 1,
   className,
+  onManualResize,
 }: UseRatioResizeOptions) {
   const [ratio, setRatio] = useState(initialRatio);
   const styles = useStyles2(getDragStyles, 'middle');
@@ -90,6 +94,7 @@ export function useRatioResize({
 
       const onPointerDown = (e: PointerEvent) => {
         e.preventDefault();
+        onManualResize?.();
         startPos = direction === 'horizontal' ? e.clientX : e.clientY;
         startRatio = ratioRef.current;
         // Read exact dimensions at the moment of interaction — no continuous measurement needed.
@@ -111,7 +116,7 @@ export function useRatioResize({
         }
       };
     },
-    [containerRef, direction]
+    [containerRef, direction, onManualResize]
   );
 
   // dragHandleVertical = a vertical bar the user drags horizontally (col-resize cursor)
@@ -196,6 +201,37 @@ export function useVizAndDataPaneLayout(
   const isScrollingLayout = useScrollReflowLimit();
 
   const panelToShow = tableView ?? panel;
+  const stackedLayoutStateRef = useRef<{ active: boolean; restoreRatio: number | null }>({
+    active: false,
+    restoreRatio: null,
+  });
+  const stackedLayoutAnimationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [animateVizResize, setAnimateVizResize] = useState(false);
+
+  const startVizResizeAnimation = useCallback(() => {
+    if (stackedLayoutAnimationTimerRef.current) {
+      clearTimeout(stackedLayoutAnimationTimerRef.current);
+    }
+    setAnimateVizResize(true);
+    stackedLayoutAnimationTimerRef.current = setTimeout(() => {
+      setAnimateVizResize(false);
+      stackedLayoutAnimationTimerRef.current = null;
+    }, STACKED_MODE_LAYOUT_TRANSITION_MS);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (stackedLayoutAnimationTimerRef.current) {
+        clearTimeout(stackedLayoutAnimationTimerRef.current);
+      }
+    };
+  }, []);
+
+  const handleVizManualResize = useCallback(() => {
+    if (stackedLayoutStateRef.current.active) {
+      stackedLayoutStateRef.current.restoreRatio = null;
+    }
+  }, []);
 
   const sidebarResize = useRatioResize({
     direction: 'horizontal',
@@ -213,7 +249,43 @@ export function useVizAndDataPaneLayout(
     minRatio: 0.1,
     maxRatio: 0.9,
     className: vizResizerClassName,
+    onManualResize: handleVizManualResize,
   });
+  const setVizRatio = vizResize.setRatio;
+  const vizRatioRef = useRef(vizResize.ratio);
+  vizRatioRef.current = vizResize.ratio;
+
+  const setStackedMode = useCallback(
+    (enabled: boolean) => {
+      const stackedLayoutState = stackedLayoutStateRef.current;
+
+      if (enabled) {
+        if (stackedLayoutState.active) {
+          return;
+        }
+
+        stackedLayoutState.active = true;
+        stackedLayoutState.restoreRatio = vizRatioRef.current;
+        startVizResizeAnimation();
+        setVizRatio(STACKED_MODE_VIZ_RATIO);
+        return;
+      }
+
+      if (!stackedLayoutState.active) {
+        return;
+      }
+
+      stackedLayoutState.active = false;
+      const restoreRatio = stackedLayoutState.restoreRatio;
+      stackedLayoutState.restoreRatio = null;
+
+      if (restoreRatio !== null) {
+        startVizResizeAnimation();
+        setVizRatio(restoreRatio);
+      }
+    },
+    [setVizRatio, startVizResizeAnimation]
+  );
 
   const gridStyles = useMemo(
     () =>
@@ -239,6 +311,8 @@ export function useVizAndDataPaneLayout(
       setSidebarSize,
       isScrollingLayout,
       gridStyles,
+      animateVizResize,
+      setStackedMode,
       sidebarResizeHandle: {
         ref: sidebarResize.handleRef,
         className: sidebarResize.className,

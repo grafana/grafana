@@ -1,4 +1,4 @@
-import { type ReactNode, useCallback, useMemo, useRef, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { type DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { SceneDataTransformer } from '@grafana/scenes';
@@ -9,7 +9,7 @@ import { type ExpressionQuery } from 'app/features/expressions/types';
 
 import { getQueryRunnerFor } from '../../../utils/utils';
 import { type PanelDataPaneNext } from '../PanelDataPaneNext';
-import { getQueryEditorTypeConfig } from '../constants';
+import { getQueryEditorTypeConfig, QueryEditorType } from '../constants';
 
 import {
   type PendingExpression,
@@ -17,6 +17,7 @@ import {
   type PendingTransformation,
   QueryEditorProvider,
   type SelectionModifiers,
+  type StackedEditorItem,
 } from './QueryEditorContext';
 import { useAlertRulesForPanel } from './hooks/useAlertRulesForPanel';
 import { usePendingExpression } from './hooks/usePendingExpression';
@@ -37,11 +38,13 @@ import { getEditorType, getTransformId } from './utils';
 export function QueryEditorContextWrapper({
   dataPane,
   onSwitchToClassic,
+  onStackedModeChange,
   showVersionBanner,
   children,
 }: {
   dataPane: PanelDataPaneNext;
   onSwitchToClassic?: () => void;
+  onStackedModeChange?: (enabled: boolean) => void;
   showVersionBanner?: boolean;
   children: ReactNode;
 }) {
@@ -75,6 +78,18 @@ export function QueryEditorContextWrapper({
   const clearSideEffectsRef = useRef<() => void>(() => {});
   const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
   const [multiSelectMode, setMultiSelectMode] = useState(false);
+  const [isStackedMode, setIsStackedMode] = useState(false);
+  const [stackedScrollTarget, setStackedScrollTarget] = useState<StackedEditorItem | null>(null);
+
+  useEffect(() => {
+    onStackedModeChange?.(isStackedMode);
+
+    return () => {
+      if (isStackedMode) {
+        onStackedModeChange?.(false);
+      }
+    };
+  }, [isStackedMode, onStackedModeChange]);
 
   const {
     selectedQueryRefIds,
@@ -105,17 +120,29 @@ export function QueryEditorContextWrapper({
   const toggleQuerySelection = useCallback(
     (query: DataQuery | ExpressionQuery, modifiers?: SelectionModifiers) => {
       setSelectedAlertId(null);
+      if (isStackedMode) {
+        const item: StackedEditorItem = { type: getEditorType(query), id: query.refId };
+        onCardSelectionChange(query.refId, null);
+        setStackedScrollTarget(item);
+        return;
+      }
       toggleQuerySelectionRaw(query, modifiers);
     },
-    [toggleQuerySelectionRaw]
+    [isStackedMode, onCardSelectionChange, toggleQuerySelectionRaw]
   );
 
   const toggleTransformationSelection = useCallback(
     (transformation: Transformation, modifiers?: SelectionModifiers) => {
       setSelectedAlertId(null);
+      if (isStackedMode) {
+        const item: StackedEditorItem = { type: QueryEditorType.Transformation, id: transformation.transformId };
+        onCardSelectionChange(null, transformation.transformId);
+        setStackedScrollTarget(item);
+        return;
+      }
       toggleTransformationSelectionRaw(transformation, modifiers);
     },
-    [toggleTransformationSelectionRaw]
+    [isStackedMode, onCardSelectionChange, toggleTransformationSelectionRaw]
   );
 
   const clearSelection = useCallback(() => {
@@ -125,11 +152,63 @@ export function QueryEditorContextWrapper({
 
   const selectAlert = useCallback(
     (alertId: string | null) => {
+      setIsStackedMode(false);
+      setStackedScrollTarget(null);
       setSelectedAlertId(alertId);
       clearSelectionRaw();
     },
     [clearSelectionRaw]
   );
+
+  const setMultiSelectModeForView = useCallback((enabled: boolean) => {
+    if (enabled) {
+      setIsStackedMode(false);
+      setStackedScrollTarget(null);
+    }
+    setMultiSelectMode(enabled);
+  }, []);
+
+  const enterStackedMode = useCallback(() => {
+    setSelectedAlertId(null);
+    setMultiSelectMode(false);
+    setStackedScrollTarget(null);
+    const primaryTransformationId = selectedTransformationIds.at(-1);
+    const primaryQueryRefId = selectedQueryRefIds.at(-1);
+    if (primaryTransformationId) {
+      onCardSelectionChange(null, primaryTransformationId);
+    } else if (primaryQueryRefId) {
+      onCardSelectionChange(primaryQueryRefId, null);
+    }
+    setIsStackedMode(true);
+  }, [onCardSelectionChange, selectedQueryRefIds, selectedTransformationIds]);
+
+  const exitStackedMode = useCallback(() => {
+    setIsStackedMode(false);
+    setStackedScrollTarget(null);
+  }, []);
+
+  const syncStackedActiveItem = useCallback(
+    (item: StackedEditorItem) => {
+      if (item.type === QueryEditorType.Transformation) {
+        onCardSelectionChange(null, item.id);
+      } else {
+        onCardSelectionChange(item.id, null);
+      }
+    },
+    [onCardSelectionChange]
+  );
+
+  const requestStackedScroll = useCallback(
+    (item: StackedEditorItem) => {
+      syncStackedActiveItem(item);
+      setStackedScrollTarget(item);
+    },
+    [syncStackedActiveItem]
+  );
+
+  const clearStackedScrollTarget = useCallback(() => {
+    setStackedScrollTarget(null);
+  }, []);
 
   // Wraps onCardSelectionChange with a UI reset for use in finalizePendingExpression /
   // finalizePendingTransformation — those paths bypass clearSideEffects entirely, so
@@ -254,7 +333,7 @@ export function QueryEditorContextWrapper({
       setSelectedAlert: (alert: AlertRule | null) => {
         selectAlert(alert?.alertId ?? null);
       },
-      setMultiSelectMode,
+      setMultiSelectMode: setMultiSelectModeForView,
       queryOptions: {
         options: queryOptions,
         isQueryOptionsOpen,
@@ -279,6 +358,8 @@ export function QueryEditorContextWrapper({
       pendingExpression,
       setPendingExpression: (pending: PendingExpression | null) => {
         if (pending) {
+          setIsStackedMode(false);
+          setStackedScrollTarget(null);
           clearPendingTransformation();
           setPendingSavedQueryState(null);
         }
@@ -288,6 +369,8 @@ export function QueryEditorContextWrapper({
       pendingSavedQuery,
       setPendingSavedQuery: (pending: PendingSavedQuery | null) => {
         if (pending) {
+          setIsStackedMode(false);
+          setStackedScrollTarget(null);
           clearPendingExpression();
           clearPendingTransformation();
         }
@@ -296,12 +379,23 @@ export function QueryEditorContextWrapper({
       pendingTransformation,
       setPendingTransformation: (pending: PendingTransformation | null) => {
         if (pending) {
+          setIsStackedMode(false);
+          setStackedScrollTarget(null);
           clearPendingExpression();
           setPendingSavedQueryState(null);
         }
         setPendingTransformation(pending);
       },
       finalizePendingTransformation,
+      stackedMode: {
+        enabled: isStackedMode,
+        enter: enterStackedMode,
+        exit: exitStackedMode,
+        syncActiveItem: syncStackedActiveItem,
+        scrollTarget: stackedScrollTarget,
+        requestScroll: requestStackedScroll,
+        clearScrollTarget: clearStackedScrollTarget,
+      },
       showVersionBanner: Boolean(showVersionBanner),
     }),
     [
@@ -316,6 +410,7 @@ export function QueryEditorContextWrapper({
       clearSelection,
       onCardSelectionChange,
       selectAlert,
+      setMultiSelectModeForView,
       clearSideEffects,
       queryOptions,
       isQueryOptionsOpen,
@@ -330,6 +425,13 @@ export function QueryEditorContextWrapper({
       toggleHelp,
       toggleDebug,
       pendingExpression,
+      isStackedMode,
+      enterStackedMode,
+      exitStackedMode,
+      syncStackedActiveItem,
+      stackedScrollTarget,
+      requestStackedScroll,
+      clearStackedScrollTarget,
       setPendingExpression,
       finalizePendingExpression,
       clearPendingExpression,

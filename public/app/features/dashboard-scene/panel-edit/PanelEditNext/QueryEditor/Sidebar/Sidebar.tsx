@@ -3,7 +3,7 @@ import { memo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { ScrollContainer, useStyles2 } from '@grafana/ui';
+import { IconButton, ScrollContainer, useStyles2 } from '@grafana/ui';
 
 import { SegmentedToggle, type SegmentedToggleProps } from '../../SegmentedToggle';
 import { QueryEditorType, type SidebarSize } from '../../constants';
@@ -23,7 +23,8 @@ interface SidebarProps {
 
 export const Sidebar = memo(function Sidebar({ sidebarSize, setSidebarSize }: SidebarProps) {
   const styles = useStyles2(getStyles);
-  const { setSelectedAlert, cardType } = useQueryEditorUIContext();
+  const { setSelectedAlert, cardType, pendingExpression, pendingTransformation, stackedMode } =
+    useQueryEditorUIContext();
   const { alertRules, loading } = useAlertingContext();
 
   const handleViewChange = (view: QueryEditorType) => {
@@ -42,6 +43,11 @@ export const Sidebar = memo(function Sidebar({ sidebarSize, setSidebarSize }: Si
     { value: QueryEditorType.Alert, label: alertsLabel, icon: 'bell' },
   ];
 
+  const showStackedModeAction = cardType !== QueryEditorType.Alert && !pendingExpression && !pendingTransformation;
+  const stackedModeLabel = stackedMode.enabled
+    ? t('query-editor-next.sidebar.exit-stacked-view', 'Exit stacked view')
+    : t('query-editor-next.sidebar.enter-stacked-view', 'Enter stacked view');
+
   return (
     <div className={styles.container}>
       <SidebarHeaderActions sidebarSize={sidebarSize} setSidebarSize={setSidebarSize}>
@@ -52,6 +58,19 @@ export const Sidebar = memo(function Sidebar({ sidebarSize, setSidebarSize }: Si
           aria-label={t('query-editor-next.sidebar.view-toggle', 'View')}
           showBackground={false}
         />
+        {showStackedModeAction && (
+          <div className={styles.stackedModeAction}>
+            <IconButton
+              name="layer-group"
+              size="sm"
+              variant="secondary"
+              className={stackedMode.enabled ? styles.stackedModeActionButtonActive : undefined}
+              onClick={stackedMode.enabled ? stackedMode.exit : stackedMode.enter}
+              aria-label={stackedModeLabel}
+              aria-pressed={stackedMode.enabled}
+            />
+          </div>
+        )}
       </SidebarHeaderActions>
       {/** The translateX property of the hoverActions in SidebarCard causes the scroll container to overflow by 8px. */}
       <ScrollContainer overflowX="hidden">
@@ -82,6 +101,16 @@ function getStyles(theme: GrafanaTheme2) {
       background: theme.colors.background.primary,
       paddingLeft: theme.spacing(1),
       paddingRight: theme.spacing(1),
+    }),
+    stackedModeAction: css({
+      marginLeft: 'auto',
+    }),
+    stackedModeActionButtonActive: css({
+      color: theme.colors.primary.text,
+      '&::before, &:hover::before': {
+        backgroundColor: theme.colors.primary.transparent,
+        opacity: 1,
+      },
     }),
   };
 }
