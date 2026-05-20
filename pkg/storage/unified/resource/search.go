@@ -772,9 +772,10 @@ func (s *searchServer) GetStats(ctx context.Context, req *resourcepb.ResourceSta
 	}
 
 	stats := NewSearchStats("GetStats")
-	defer s.logStats(ctx, stats, span, "namespace", req.Namespace, "group", strings.Join(req.Kinds, ","), "folder", req.Folder)
+	defer s.logStats(ctx, stats, span, "namespace", req.Namespace, "group", strings.Join(req.Kinds, ","), "folder", strings.Join(req.Folder, ","))
 
 	rsp := &resourcepb.ResourceStatsResponse{}
+	folderSet := folderFilterSet(req)
 
 	// Explicit list of kinds
 	if len(req.Kinds) > 0 {
@@ -790,7 +791,7 @@ func (s *searchServer) GetStats(ctx context.Context, req *resourcepb.ResourceSta
 				rsp.Error = AsErrorResult(err)
 				return rsp, nil
 			}
-			count, err := index.DocCount(ctx, req.Folder, stats)
+			count, err := sumDocCount(ctx, index, folderSet, stats)
 			if err != nil {
 				rsp.Error = AsErrorResult(err)
 				return rsp, nil
@@ -815,8 +816,8 @@ func (s *searchServer) GetStats(ctx context.Context, req *resourcepb.ResourceSta
 	}
 	rsp.Stats = make([]*resourcepb.ResourceStatsResponse_Stats, len(resourceStats))
 
-	// When not filtered by folder or repository, we can use the results directly
-	if req.Folder == "" {
+	// When not filtered by folder, we can use the results directly
+	if len(folderSet) == 0 {
 		for i, stat := range resourceStats {
 			rsp.Stats[i] = &resourcepb.ResourceStatsResponse_Stats{
 				Group:    stat.Group,
@@ -837,7 +838,7 @@ func (s *searchServer) GetStats(ctx context.Context, req *resourcepb.ResourceSta
 			rsp.Error = AsErrorResult(err)
 			return rsp, nil
 		}
-		count, err := index.DocCount(ctx, req.Folder, stats)
+		count, err := sumDocCount(ctx, index, folderSet, stats)
 		if err != nil {
 			rsp.Error = AsErrorResult(err)
 			return rsp, nil
@@ -849,6 +850,48 @@ func (s *searchServer) GetStats(ctx context.Context, req *resourcepb.ResourceSta
 		}
 	}
 	return rsp, nil
+}
+
+// folderFilterSet returns req.Folder de-duplicated, with empty entries dropped.
+// Returns nil when no folder filter is set, which means "count everything in
+// the namespace".
+func folderFilterSet(req *resourcepb.ResourceStatsRequest) []string {
+	if len(req.Folder) == 0 {
+		return nil
+	}
+	seen := make(map[string]struct{}, len(req.Folder))
+	out := make([]string, 0, len(req.Folder))
+	for _, f := range req.Folder {
+		if f == "" {
+			continue
+		}
+		if _, ok := seen[f]; ok {
+			continue
+		}
+		seen[f] = struct{}{}
+		out = append(out, f)
+	}
+	return out
+}
+
+// sumDocCount returns the document count across the given folders. When
+// folders is empty it returns the total document count of the index. Bleve
+// has no native multi-folder count, so we issue one DocCount per folder and
+// sum — fine for the move/delete confirmation flow which only spans a
+// folder subtree.
+func sumDocCount(ctx context.Context, index ResourceIndex, folders []string, stats *SearchStats) (int64, error) {
+	if len(folders) == 0 {
+		return index.DocCount(ctx, "", stats)
+	}
+	var total int64
+	for _, f := range folders {
+		c, err := index.DocCount(ctx, f, stats)
+		if err != nil {
+			return 0, err
+		}
+		total += c
+	}
+	return total, nil
 }
 
 func (s *searchServer) RebuildIndexes(ctx context.Context, req *resourcepb.RebuildIndexesRequest) (*resourcepb.RebuildIndexesResponse, error) {

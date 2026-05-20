@@ -1362,3 +1362,70 @@ func TestSearchServer_VectorSearch_ObservesDuration(t *testing.T) {
 
 	require.Equal(t, 1, testutil.CollectAndCount(m.SearchDuration, "vector_storage_search_duration_seconds"))
 }
+
+func TestFolderFilterSet(t *testing.T) {
+	cases := []struct {
+		name     string
+		req      *resourcepb.ResourceStatsRequest
+		expected []string
+	}{
+		{
+			name:     "no filter",
+			req:      &resourcepb.ResourceStatsRequest{},
+			expected: nil,
+		},
+		{
+			name:     "single folder",
+			req:      &resourcepb.ResourceStatsRequest{Folder: []string{"root"}},
+			expected: []string{"root"},
+		},
+		{
+			name:     "multiple folders",
+			req:      &resourcepb.ResourceStatsRequest{Folder: []string{"a", "b"}},
+			expected: []string{"a", "b"},
+		},
+		{
+			name:     "dedupes overlap and drops empties",
+			req:      &resourcepb.ResourceStatsRequest{Folder: []string{"a", "", "b", "b", "a"}},
+			expected: []string{"a", "b"},
+		},
+	}
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.expected, folderFilterSet(tt.req))
+		})
+	}
+}
+
+// countingIndex records each DocCount call for use by TestSumDocCount.
+type countingIndex struct {
+	MockResourceIndex
+	counts map[string]int64
+	calls  []string
+}
+
+func (c *countingIndex) DocCount(_ context.Context, folder string, _ *SearchStats) (int64, error) {
+	c.calls = append(c.calls, folder)
+	return c.counts[folder], nil
+}
+
+func TestSumDocCount(t *testing.T) {
+	idx := &countingIndex{counts: map[string]int64{
+		"":     7, // total of the index when no filter applied
+		"root": 3,
+		"a":    5,
+		"b":    2,
+	}}
+
+	// Empty folder set means "count the whole index".
+	got, err := sumDocCount(t.Context(), idx, nil, nil)
+	require.NoError(t, err)
+	require.Equal(t, int64(7), got)
+	require.Equal(t, []string{""}, idx.calls)
+
+	idx.calls = nil
+	got, err = sumDocCount(t.Context(), idx, []string{"root", "a", "b"}, nil)
+	require.NoError(t, err)
+	require.Equal(t, int64(10), got)
+	require.Equal(t, []string{"root", "a", "b"}, idx.calls)
+}
