@@ -239,9 +239,7 @@ function getStyles(
     },
   });
 
-  const cardBorder = !!item.error
-    ? `1px solid ${theme.colors.error.border}`
-    : `1px solid ${isSelected ? borderColor : theme.colors.border.medium}`;
+  const cardBorder = `1px solid ${isSelected ? borderColor : theme.colors.border.medium}`;
 
   // Selection-based styling
   const cardBackground = isSelected ? selectedBg : theme.colors.background.primary;
