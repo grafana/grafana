@@ -40,22 +40,6 @@ menuTitle: Add variables
 title: Add variables
 description: Learn about the types of variables you can create and add to dashboards and how to do so
 weight: 100
-refs:
-  prometheus-query-variables:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/template-variables/#use-**rate_interval
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/prometheus/template-variables/#use-**rate_interval
-  data-source:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/
-  add-a-data-source:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/#add-a-data-source
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/#add-a-data-source
 ---
 
 # Add variables
@@ -145,7 +129,7 @@ Query variables are generally only supported for strings. If your query returns 
 Query expressions can contain references to other variables and in effect create linked variables. Grafana detects this and automatically refreshes a variable when one of its linked variables change.
 
 {{< admonition type="note" >}}
-Query expressions are different for each data source. For more information, refer to the documentation for your [data source](ref:data-source).
+Query expressions are different for each data source. For more information, refer to the documentation for your [data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/).
 {{< /admonition >}}
 
 1. [Enter general options](#enter-general-options-for-any-variable).
@@ -153,7 +137,7 @@ Query expressions are different for each data source. For more information, refe
 
    | Option | Description |
    | --- | --- |
-   | Data source | Select a target data source in the **Data source** drop-down list. You can also click **Open advanced data source picker** to see more options, including adding a data source (Admins only). For more information about data sources, refer to [Add a data source](ref:add-a-data-source). |
+   | Data source | Select a target data source in the **Data source** drop-down list. You can also click **Open advanced data source picker** to see more options, including adding a data source (Admins only). For more information about data sources, refer to [Add a data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/#add-a-data-source). |
    | Query type | Select an option in the drop-down list and fill in the query fields accordingly. For more information, refer to the [Query type](#query-type) section following these steps. |
    | Regex | (Optional) Type a regular expression in the field to filter or capture specific parts of the names returned by your data source query. To see examples, refer to [Filter variables with a regular expression](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/advanced-variables/#filter-variables-with-regex). |
    | Apply regex to | Select **Variable value** or **Display text** to choose where the regex pattern is applied. The default is **Variable value**. |
@@ -336,7 +320,7 @@ To create a filter, follow these steps:
 1. Under the **Filter options** section of the page, select a target data source in the **Data source** drop-down list.
 
    You can also click **Open advanced data source picker** to see more options, including adding a data source (Admins only).
-   For more information about data sources, refer to [Add a data source](ref:add-a-data-source).
+   For more information about data sources, refer to [Add a data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/#add-a-data-source).
 
 1. (Optional) To provide the filter dimensions as comma-separated values (CSV), toggle the **Use static key dimensions** switch on, and then enter the values in the space provided.
 1. Click **Save** in the top-right corner.
