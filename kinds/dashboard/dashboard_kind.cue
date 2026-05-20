@@ -97,6 +97,12 @@ lineage: schemas: [{
 			// Links with references to other dashboards or external websites.
 			links?: [...#DashboardLink]
 
+			// Operational intent declared by the dashboard author.
+			// Provides machine-readable context (purpose, expected behavior, failure modes,
+			// owner, runbooks, SLOs) for the Grafana Assistant and external agents.
+			// This block is optional and has no effect on rendering.
+			intent?: #DashboardIntent
+
 			// Snapshot options. They are present only if the dashboard is a snapshot.
 			snapshot?: #Snapshot @grafanamaturity(NeedsExpertReview)
 
@@ -695,6 +701,11 @@ lineage: schemas: [{
 			// For example "1d" to compare current period but shifted back 1 day
 			timeCompare?: string
 
+			// Operational intent declared by the panel author.
+			// Provides machine-readable context for the Grafana Assistant and panel context chips.
+			// This block is optional and has no effect on rendering.
+			intent?: #PanelIntent
+
 			// Dynamically load the panel
 			libraryPanel?: #LibraryPanelRef
 
@@ -863,6 +874,96 @@ lineage: schemas: [{
 		}
 
 		#ControlSourceRef: #DatasourceControlSourceRef
+
+		// Expected operating behavior for a dashboard or panel.
+		#IntentExpectedBehavior: {
+			// Human-readable description of what metric values look like during normal operation.
+			normalRange?: string
+			// The alert threshold as declared in a linked alert rule (lifted verbatim when available).
+			alertThreshold?: string
+			// Additional notes about expected behavior not captured by the structured fields above.
+			notes?: string
+		}
+
+		// A known failure mode for the dashboard or panel.
+		#IntentFailureMode: {
+			// Short tag identifying the failure mode (e.g. "db-slow", "pod-oom").
+			tag: string
+			// Human-readable description of what this failure mode looks like.
+			description?: string
+		}
+
+		// A related SLO reference.
+		#IntentRelatedSLO: {
+			// Human-readable name of the SLO.
+			name: string
+			// Target value expressed as a percentage string (e.g. "99.9%").
+			target?: string
+			// URL to the SLO definition.
+			url?: string
+		}
+
+		// A runbook link.
+		#IntentRunbook: {
+			// Human-readable title of the runbook.
+			title: string
+			// URL to the runbook.
+			url: string
+		}
+
+		// Dashboard-level operational intent block.
+		// Authored by the dashboard owner; consumed by the Grafana Assistant,
+		// panel context chips, the dashboard summary bar, and external agents via MCP.
+		// All fields are optional — omitting a field means "not declared".
+		#DashboardIntent: {
+			// Version of the intent schema. Always 1 for this revision.
+			schemaVersion?: uint8 | *1
+			// One-sentence description of what this dashboard monitors and why it exists.
+			purpose?: string
+			// Team or individual responsible for this dashboard.
+			owner?: string
+			// Expected operating behavior at the dashboard level.
+			expectedBehavior?: #IntentExpectedBehavior
+			// Known failure modes that this dashboard is designed to surface.
+			failureModes?: [...#IntentFailureMode]
+			// Related SLO definitions.
+			relatedSlos?: [...#IntentRelatedSLO]
+			// Links to runbooks relevant to this dashboard.
+			runbooks?: [...#IntentRunbook]
+			// Per-field provenance tags. Keys match field names above.
+			// Valid values: author-written, assistant-confirmed, assistant-unconfirmed,
+			// lifted-from-alert, lifted-from-slo, computed-from-history.
+			provenance?: {[string]: string}
+			// ISO 8601 timestamp of the last time the intent was reviewed and verified.
+			lastVerifiedAt?: string
+		}
+
+		// Panel-level operational intent block.
+		// Authored by the panel owner; consumed by the Grafana Assistant
+		// and panel context chips.
+		// All fields are optional — omitting a field means "not declared".
+		#PanelIntent: {
+			// Version of the intent schema. Always 1 for this revision.
+			schemaVersion?: uint8 | *1
+			// One-sentence description of what this panel measures and why it matters.
+			purpose?: string
+			// Team or individual responsible for this panel.
+			owner?: string
+			// Expected operating behavior for this panel's metric.
+			expectedBehavior?: #IntentExpectedBehavior
+			// Known failure modes that this panel is designed to surface.
+			failureModes?: [...#IntentFailureMode]
+			// Related SLO definitions.
+			relatedSlos?: [...#IntentRelatedSLO]
+			// Links to runbooks relevant to this panel.
+			runbooks?: [...#IntentRunbook]
+			// Per-field provenance tags. Keys match field names above.
+			// Valid values: author-written, assistant-confirmed, assistant-unconfirmed,
+			// lifted-from-alert, lifted-from-slo, computed-from-history.
+			provenance?: {[string]: string}
+			// ISO 8601 timestamp of the last time the intent was reviewed and verified.
+			lastVerifiedAt?: string
+		}
 	}
 },
 ]
