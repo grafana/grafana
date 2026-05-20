@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/grafana/alerting/definition"
-	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
