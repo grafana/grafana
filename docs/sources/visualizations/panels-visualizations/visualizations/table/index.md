@@ -613,4 +613,4 @@ To target columns inside a nested table, set the **Target fields** option on the
 
 All standard override properties&mdash;including thresholds, value mappings, units, data links, and cell type&mdash;apply the same way to nested fields.
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-nested-override-applied-v13.x.png" max-width="750px" alt="Nested table with a threshold override applied to a column inside an expanded sub-table" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-nested-table-w-overrides-v13.1.png" max-width="750px" alt="Nested table with a threshold override applied to a column inside an expanded sub-table" >}}
