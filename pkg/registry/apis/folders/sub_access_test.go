@@ -27,6 +27,7 @@ func TestSubAccessREST_getAccessInfo(t *testing.T) {
 		allowed           map[string]bool // verb -> allowed (folder-domain shorthand)
 		allowedByCheck    map[checkKey]bool
 		checkErr          error
+		itemErr           error // attached to the first BatchCheckItem's result
 		parentFolder      string
 		expect            folders.FolderAccessInfo
 		expectErr         bool
@@ -148,6 +149,11 @@ func TestSubAccessREST_getAccessInfo(t *testing.T) {
 			checkErr:  fmt.Errorf("authz unavailable"),
 			expectErr: true,
 		},
+		{
+			name:      "per-item error is propagated (not silently treated as denied)",
+			itemErr:   fmt.Errorf("zanzana lookup failed"),
+			expectErr: true,
+		},
 	}
 
 	for _, tc := range tcs {
@@ -169,7 +175,7 @@ func TestSubAccessREST_getAccessInfo(t *testing.T) {
 						return authlib.BatchCheckResponse{}, tc.checkErr
 					}
 					results := make(map[string]authlib.BatchCheckResult, len(req.Checks))
-					for _, item := range req.Checks {
+					for idx, item := range req.Checks {
 						if tc.assertItem != nil {
 							tc.assertItem(t, item)
 						}
@@ -184,7 +190,11 @@ func TestSubAccessREST_getAccessInfo(t *testing.T) {
 						} else {
 							allowed = tc.allowed[item.Verb]
 						}
-						results[item.CorrelationID] = authlib.BatchCheckResult{Allowed: allowed}
+						res := authlib.BatchCheckResult{Allowed: allowed}
+						if tc.itemErr != nil && idx == 0 {
+							res.Error = tc.itemErr
+						}
+						results[item.CorrelationID] = res
 					}
 					return authlib.BatchCheckResponse{Results: results}, nil
 				},

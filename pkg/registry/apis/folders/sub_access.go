@@ -3,6 +3,7 @@ package folders
 import (
 	"context"
 	"net/http"
+	"strconv"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -66,18 +67,14 @@ type folderAccessAction struct {
 }
 
 // folderAccessActions lists the legacy RBAC actions surfaced in AccessControl.
-//
-// Scope today: domains with a real *.grafana.app API group that are routed to
-// Zanzana via the authzLimitedClient allowlist in
-// pkg/storage/unified/resource/access.go — `folders` and `dashboards`. For
-// these, Check returns an authoritative answer (verified empirically against a
-// running Zanzana, including the *.permissions verbs).
-//
-// Out of scope (Check returns false even when the user has the permission via
-// legacy SQL — Zanzana has no tuples for these resources): `library.panels:*`,
-// `alert.rules:*`, `alert.silences:*`, `annotations:*`. Adding them would
-// mislead clients. Revisit once those resources land on unified storage with
-// their own API groups.
+// Currently limited to the folder and dashboard domains. The legacy endpoint
+// (pkg/api/folder.go getFolderACMetadata) flattens every action scoped to
+// folders:uid:<UID>, which also includes library.panels, annotations, and
+// alerting actions when granted on a folder. Those domains are not yet
+// represented here, so clients that depend on them must keep calling
+// /api/folders/{uid}?accesscontrol=true. Expanding this list is tracked
+// separately — it needs RBAC-mapper coverage (alerting still has none) and
+// frontend coordination before the dual call can be dropped.
 var folderAccessActions = []folderAccessAction{
 	// Folder domain — Name = this folder, folder hint = immediate parent.
 	{Action: "folders:read", Verb: utils.VerbGet},
@@ -120,10 +117,10 @@ func (r *subAccessREST) getAccessInfo(ctx context.Context, name string) (*folder
 
 	// One BatchCheck for all actions. authlib + Zanzana walk the parent chain
 	// internally given the immediate parent UID, so we don't need to enumerate
-	// ancestors ourselves. The legacy action key is reused as CorrelationID so
-	// we can map results back without a second lookup table.
-	checks := make([]authlib.BatchCheckItem, 0, len(folderAccessActions))
-	for _, a := range folderAccessActions {
+	// ancestors ourselves. CorrelationID must match OpenFGA's [\w-]{1,36} regex,
+	// so we use the slice index instead of the legacy "domain:verb" action key.
+	checks := make([]authlib.BatchCheckItem, len(folderAccessActions))
+	for i, a := range folderAccessActions {
 		group := a.Group
 		if group == "" {
 			group = foldersV1.GROUP
@@ -143,14 +140,14 @@ func (r *subAccessREST) getAccessInfo(ctx context.Context, name string) (*folder
 			reqName, reqFolder = "", name
 		}
 
-		checks = append(checks, authlib.BatchCheckItem{
-			CorrelationID: a.Action,
+		checks[i] = authlib.BatchCheckItem{
+			CorrelationID: strconv.Itoa(i),
 			Verb:          a.Verb,
 			Group:         group,
 			Resource:      resource,
 			Name:          reqName,
 			Folder:        reqFolder,
-		})
+		}
 	}
 
 	batchResp, err := r.accessClient.BatchCheck(ctx, user, authlib.BatchCheckRequest{
@@ -162,8 +159,12 @@ func (r *subAccessREST) getAccessInfo(ctx context.Context, name string) (*folder
 	}
 
 	allowed := make(map[string]bool, len(folderAccessActions))
-	for _, a := range folderAccessActions {
-		allowed[a.Action] = batchResp.Results[a.Action].Allowed
+	for i, a := range folderAccessActions {
+		result := batchResp.Results[strconv.Itoa(i)]
+		if result.Error != nil {
+			return nil, result.Error
+		}
+		allowed[a.Action] = result.Allowed
 	}
 
 	rsp := &foldersV1.FolderAccessInfo{}
