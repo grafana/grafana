@@ -261,7 +261,7 @@ describe('Filter sidebar', () => {
 
     await userEvent.click(await screen.findByLabelText('Filters'));
 
-    expect(screen.getByLabelText('Reset filters')).toBeDisabled();
+    expect(screen.getByRole('button', { name: /Clear/ })).toHaveAttribute('aria-disabled', 'true');
   });
 
   test('reset button is enabled when filters are active', async () => {
@@ -269,6 +269,6 @@ describe('Filter sidebar', () => {
 
     await userEvent.click(await screen.findByLabelText('Filters'));
 
-    expect(screen.getByLabelText('Reset filters')).toBeEnabled();
+    expect(screen.getByRole('button', { name: /Clear/ })).toBeEnabled();
   });
 });

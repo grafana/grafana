@@ -35,7 +35,10 @@ export function PluginContentView({
       <>
         {datasourceCardGridItems.length > 0 && (
           <>
-            <CategoryHeader iconName="database" label={t('connections.connect-data.datasources-header', 'Data Sources')} />
+            <CategoryHeader
+              iconName="database"
+              label={t('connections.connect-data.datasources-header', 'Data Sources')}
+            />
             <CardGrid items={datasourceCardGridItems} onClickItem={onClickCardGridItem} />
           </>
         )}
