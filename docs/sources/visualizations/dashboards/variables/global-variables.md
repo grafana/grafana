@@ -1,5 +1,7 @@
 ---
 aliases:
+  - ../../../variables/global-variables/ # /docs/grafana/next/variables/global-variables/
+  - ../../../variables/variable-types/global-variables/ # /docs/grafana/next/variables/variable-types/global-variables/
 keywords:
   - variables
   - global
