@@ -209,6 +209,11 @@ export interface FeatureToggles {
   */
   kubernetesSnapshots?: boolean;
   /**
+  * When kubernetesSnapshots is enabled, push/delete external snapshots via the K8s API. When off, the K8s snapshots handler falls back to the legacy /api/snapshots endpoint on the external instance.
+  * @default false
+  */
+  externalSnapshotsK8SAPIPush?: boolean;
+  /**
   * Routes library panel requests from /api to the /apis endpoint
   * @default false
   */
