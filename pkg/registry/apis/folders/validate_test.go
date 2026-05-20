@@ -1515,23 +1515,58 @@ func TestCheckMoveAccess(t *testing.T) {
 			})
 
 			var client authlib.AccessClient
+			var mock *mockAccessClient
 			if !tt.nilClient {
-				client = newMockAccessClient(tt.allows)
+				mock = newMockAccessClient(tt.allows)
+				client = mock
 			}
 
 			err := checkMoveAccess(ctx, namespace, sourceUID, tt.oldParent, tt.newParent, client)
 			if tt.expectedErr == "" {
 				require.NoError(t, err)
-				return
+			} else {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tt.expectedErr)
 			}
-			require.Error(t, err)
-			require.Contains(t, err.Error(), tt.expectedErr)
+
+			// All access checks must be batched into one BatchCheck round-trip.
+			if mock != nil {
+				require.Equal(t, 1, mock.batchCheckCall, "expected exactly one BatchCheck call")
+			}
 		})
 	}
+
+	t.Run("surfaces BatchCheck transport error", func(t *testing.T) {
+		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{UserID: 1, OrgID: orgID})
+		mock := newMockAccessClient(nil)
+		mock.batchCheckErr = fmt.Errorf("boom")
+		err := checkMoveAccess(ctx, namespace, sourceUID, oldParentUID, newParentUID, mock)
+		require.ErrorContains(t, err, "boom")
+		require.Equal(t, 1, mock.batchCheckCall)
+	})
+
+	t.Run("fails closed when BatchCheck omits the write-destination result", func(t *testing.T) {
+		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{UserID: 1, OrgID: orgID})
+		mock := newMockAccessClient([]allow{canCreateFolderInNew})
+		mock.dropResultFor = "writeDest"
+		err := checkMoveAccess(ctx, namespace, sourceUID, oldParentUID, newParentUID, mock)
+		require.ErrorContains(t, err, "no result for destination write")
+	})
+
+	t.Run("fails closed when BatchCheck omits an escalation verb result", func(t *testing.T) {
+		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{UserID: 1, OrgID: orgID})
+		mock := newMockAccessClient([]allow{canCreateFolderInNew})
+		mock.dropResultFor = "newFolder|" + utils.VerbGet
+		err := checkMoveAccess(ctx, namespace, sourceUID, oldParentUID, newParentUID, mock)
+		require.ErrorContains(t, err, "no result for verb")
+	})
 }
 
 type mockAccessClient struct {
-	allowed map[allow]struct{}
+	allowed        map[allow]struct{}
+	batchCheckCall int
+	batchCheckErr  error
+	dropResultFor  string // CorrelationID to omit from BatchCheckResponse, simulating a bad server
 }
 
 func newMockAccessClient(allows []allow) *mockAccessClient {
@@ -1548,8 +1583,15 @@ func (m *mockAccessClient) Check(_ context.Context, _ authlib.AuthInfo, req auth
 }
 
 func (m *mockAccessClient) BatchCheck(_ context.Context, _ authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	m.batchCheckCall++
+	if m.batchCheckErr != nil {
+		return authlib.BatchCheckResponse{}, m.batchCheckErr
+	}
 	results := make(map[string]authlib.BatchCheckResult, len(req.Checks))
 	for _, c := range req.Checks {
+		if c.CorrelationID == m.dropResultFor {
+			continue
+		}
 		_, ok := m.allowed[allow{group: c.Group, resource: c.Resource, verb: c.Verb, name: c.Name, folder: c.Folder}]
 		results[c.CorrelationID] = authlib.BatchCheckResult{Allowed: ok}
 	}

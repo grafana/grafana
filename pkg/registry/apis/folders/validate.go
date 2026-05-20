@@ -290,30 +290,32 @@ func checkMoveAccess(
 	}
 
 	folderGVR := folders.FolderResourceInfo.GroupVersionResource()
+	dashGVR := dashv1.DashboardResourceInfo.GroupVersionResource()
 
-	writeResp, err := accessClient.Check(ctx, user, authlib.CheckRequest{
-		Verb:      utils.VerbCreate,
-		Group:     folderGVR.Group,
-		Resource:  folderGVR.Resource,
-		Namespace: namespace,
-	}, newParentUID)
-	if err != nil {
-		return err
-	}
-	if !writeResp.Allowed {
-		destLabel := newParentUID
-		if destLabel == folder.RootFolderUID {
-			destLabel = folder.GeneralFolderUID
-		}
-		return folder.ErrMoveAccessDenied.Errorf("user does not have permissions to move a folder to folder with UID %s", destLabel)
-	}
+	const (
+		writeDestKey     = "writeDest"
+		newFolderPrefix  = "newFolder|"
+		oldFolderPrefix  = "oldFolder|"
+		newDashPrefix    = "newDash|"
+		sourceDashPrefix = "sourceDash|"
+	)
 
-	const newPrefix, oldPrefix = "new|", "old|"
-	checks := make([]authlib.BatchCheckItem, 0, 2*len(escalationVerbs))
+	checks := make([]authlib.BatchCheckItem, 0, 1+4*len(escalationVerbs))
+
+	// Destination-write check: can the user create folders under newParentUID?
+	checks = append(checks, authlib.BatchCheckItem{
+		CorrelationID: writeDestKey,
+		Verb:          utils.VerbCreate,
+		Group:         folderGVR.Group,
+		Resource:      folderGVR.Resource,
+		Folder:        newParentUID,
+	})
+
 	for _, verb := range escalationVerbs {
+		// Folder escalation: source folder permissions under new vs old parent.
 		checks = append(checks,
 			authlib.BatchCheckItem{
-				CorrelationID: newPrefix + verb,
+				CorrelationID: newFolderPrefix + verb,
 				Verb:          verb,
 				Group:         folderGVR.Group,
 				Resource:      folderGVR.Resource,
@@ -321,12 +323,31 @@ func checkMoveAccess(
 				Folder:        newParentUID,
 			},
 			authlib.BatchCheckItem{
-				CorrelationID: oldPrefix + verb,
+				CorrelationID: oldFolderPrefix + verb,
 				Verb:          verb,
 				Group:         folderGVR.Group,
 				Resource:      folderGVR.Resource,
 				Name:          sourceUID,
 				Folder:        oldParentUID,
+			},
+		)
+		// Dashboard escalation: dashboards inside source inherit from the
+		// destination post-move, so flag if the user gains a permission they
+		// don't already hold inside the source folder today.
+		checks = append(checks,
+			authlib.BatchCheckItem{
+				CorrelationID: newDashPrefix + verb,
+				Verb:          verb,
+				Group:         dashGVR.Group,
+				Resource:      dashGVR.Resource,
+				Folder:        newParentUID,
+			},
+			authlib.BatchCheckItem{
+				CorrelationID: sourceDashPrefix + verb,
+				Verb:          verb,
+				Group:         dashGVR.Group,
+				Resource:      dashGVR.Resource,
+				Folder:        sourceUID,
 			},
 		)
 	}
@@ -339,49 +360,39 @@ func checkMoveAccess(
 		return err
 	}
 
-	for _, verb := range escalationVerbs {
-		newState, nOk := batchResp.Results[newPrefix+verb]
-		oldState, oOk := batchResp.Results[oldPrefix+verb]
-		// Fail closed on missing result: we built both correlation IDs ourselves.
-		if !nOk || !oOk {
-			return fmt.Errorf("access escalation check returned no result for verb %q", verb)
+	writeRes, ok := batchResp.Results[writeDestKey]
+	if !ok {
+		return fmt.Errorf("access check returned no result for destination write")
+	}
+	if writeRes.Error != nil {
+		return writeRes.Error
+	}
+	if !writeRes.Allowed {
+		destLabel := newParentUID
+		if destLabel == folder.RootFolderUID {
+			destLabel = folder.GeneralFolderUID
 		}
-		if newState.Error != nil {
-			return newState.Error
-		}
-		if oldState.Error != nil {
-			return oldState.Error
-		}
-		if newState.Allowed && !oldState.Allowed {
-			return folder.ErrAccessEscalation.Errorf("user cannot move a folder to another folder where they have higher permissions")
-		}
+		return folder.ErrMoveAccessDenied.Errorf("user does not have permissions to move a folder to folder with UID %s", destLabel)
 	}
 
-	// Dashboards inside source inherit from the destination post-move.
-	dashGVR := dashv1.DashboardResourceInfo.GroupVersionResource()
 	for _, verb := range escalationVerbs {
-		newResp, err := accessClient.Check(ctx, user, authlib.CheckRequest{
-			Verb:      verb,
-			Group:     dashGVR.Group,
-			Resource:  dashGVR.Resource,
-			Namespace: namespace,
-		}, newParentUID)
-		if err != nil {
-			return err
+		newFolderState, nfOk := batchResp.Results[newFolderPrefix+verb]
+		oldFolderState, ofOk := batchResp.Results[oldFolderPrefix+verb]
+		newDashState, ndOk := batchResp.Results[newDashPrefix+verb]
+		sourceDashState, sdOk := batchResp.Results[sourceDashPrefix+verb]
+		// Fail closed on missing result: we built all correlation IDs ourselves.
+		if !nfOk || !ofOk || !ndOk || !sdOk {
+			return fmt.Errorf("access escalation check returned no result for verb %q", verb)
 		}
-		if !newResp.Allowed {
-			continue
+		for _, state := range []authlib.BatchCheckResult{newFolderState, oldFolderState, newDashState, sourceDashState} {
+			if state.Error != nil {
+				return state.Error
+			}
 		}
-		todayResp, err := accessClient.Check(ctx, user, authlib.CheckRequest{
-			Verb:      verb,
-			Group:     dashGVR.Group,
-			Resource:  dashGVR.Resource,
-			Namespace: namespace,
-		}, sourceUID)
-		if err != nil {
-			return err
+		if newFolderState.Allowed && !oldFolderState.Allowed {
+			return folder.ErrAccessEscalation.Errorf("user cannot move a folder to another folder where they have higher permissions")
 		}
-		if !todayResp.Allowed {
+		if newDashState.Allowed && !sourceDashState.Allowed {
 			return folder.ErrAccessEscalation.Errorf("user cannot move a folder to another folder where they have higher permissions")
 		}
 	}
