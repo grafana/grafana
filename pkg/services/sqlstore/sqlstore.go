@@ -45,9 +45,13 @@ type ContextSessionKey struct{}
 const ServiceName = "*sqlstore.SQLStore"
 
 type SQLStore struct {
-	cfg         *setting.Cfg
-	features    featuremgmt.FeatureToggles
-	sqlxsession *session.SessionDB
+	cfg      *setting.Cfg
+	features featuremgmt.FeatureToggles
+	// skipCloseOnShutdown disables closing the underlying xorm engine in Run.
+	// Set for the shared test SQLStore, which is reused across multiple
+	// server lifecycles within a single test binary.
+	skipCloseOnShutdown bool
+	sqlxsession         *session.SessionDB
 
 	bus                          bus.Bus
 	dbCfg                        *DatabaseConfig
@@ -86,7 +90,15 @@ func ProvideService(cfg *setting.Cfg,
 }
 
 func ProvideServiceForTests(t sqlutil.ITestDB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, bus bus.Bus, migrations registry.DatabaseMigrator) (*SQLStore, error) {
-	return initTestDB(t, cfg, features, migrations, bus, InitTestDBOpt{})
+	ss, err := initTestDB(t, cfg, features, migrations, bus, InitTestDBOpt{})
+	if err != nil {
+		return nil, err
+	}
+	// The test SQLStore is a process-wide singleton that outlives any
+	// individual server lifecycle (see initTestDB/CleanupTestDB). Closing the
+	// engine on shutdown would break subsequent tests that reuse it.
+	ss.skipCloseOnShutdown = true
+	return ss, nil
 }
 
 // NewSQLStoreWithoutSideEffects creates a new *SQLStore without side-effects such as
@@ -161,6 +173,9 @@ func (ss *SQLStore) Migrate(isDatabaseLockingEnabled bool) error {
 // guaranteeing this Close runs last during shutdown.
 func (ss *SQLStore) Run(ctx context.Context) error {
 	<-ctx.Done()
+	if ss.skipCloseOnShutdown {
+		return nil
+	}
 	ss.log.Info("Closing database engine")
 	if err := ss.engine.Close(); err != nil {
 		ss.log.Error("Failed to close database engine", "error", err)
