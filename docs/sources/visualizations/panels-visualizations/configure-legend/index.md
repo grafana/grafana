@@ -146,7 +146,7 @@ Filter visible series in the legend by name or by label without editing the quer
 Pin the filter to the sidebar to keep it open while you explore the panel.
 
 {{< admonition type="note" >}}
-The faceted filter is currently supported in the [time series](ref:time-series) visualization only.
+The series visibility filter is currently supported in the [time series](ref:time-series) visualization only.
 {{< /admonition >}}
 
 ## Change a series color
