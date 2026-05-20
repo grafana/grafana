@@ -26,6 +26,7 @@ export interface Props {
   ) => void;
   readonly?: boolean;
   hasMixedAxes?: boolean;
+  wrapName?: boolean;
 }
 
 /**
@@ -39,8 +40,9 @@ export const LegendTableItem = ({
   className,
   readonly,
   hasMixedAxes,
+  wrapName = false,
 }: Props) => {
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2(getStyles, wrapName);
 
   const onMouseOver = useCallback(
     (event: React.MouseEvent<HTMLButtonElement, MouseEvent> | React.FocusEvent<HTMLButtonElement>) => {
@@ -113,7 +115,7 @@ export const LegendTableItem = ({
 
 LegendTableItem.displayName = 'LegendTableItem';
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, wrapName = false) => {
   const rowHoverBg = hoverColor(theme.colors.background.primary, theme);
 
   return {
@@ -132,7 +134,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     label: css({
       label: 'LegendLabel',
-      whiteSpace: 'nowrap',
+      whiteSpace: wrapName ? 'normal' : 'nowrap',
+      textAlign: wrapName ? 'left' : undefined,
       background: 'none',
       border: 'none',
       fontSize: 'inherit',

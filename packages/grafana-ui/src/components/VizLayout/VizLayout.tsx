@@ -74,15 +74,18 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
       break;
     case 'right':
       containerStyle.flexDirection = 'row';
-      legendStyle.maxWidth = maxWidth;
 
       if (legendMeasure.width) {
         size = { width: width - legendMeasure.width, height };
       }
 
-      if (legend.props.width) {
+      if (legend.props.width != null) {
         legendStyle.width = legend.props.width;
-        size = { width: width - legend.props.width, height };
+
+        if (typeof legend.props.width === 'number') {
+          legendStyle.maxWidth = maxWidth;
+          size = { width: width - legend.props.width, height };
+        }
       }
       break;
   }
@@ -128,8 +131,9 @@ export interface VizLayoutLegendProps {
   placement: LegendPlacement;
   children: React.ReactNode;
   maxHeight?: string;
-  maxWidth?: string;
-  width?: number;
+  maxWidth?: number | string;
+  minWidth?: number;
+  width?: number | string; // `${number}%`;
 }
 
 /**

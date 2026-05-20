@@ -46,12 +46,12 @@ export function addLegendOptions<T extends OptionsWithLegend>(
       },
       showIf: (c) => c.legend.showLegend,
     })
-    .addNumberInput({
+    .addTextInput({
       path: 'legend.width',
       name: t('grafana-ui.builder.legend.name-width', 'Width'),
       category,
       settings: {
-        placeholder: 'Auto',
+        placeholder: t('grafana-ui.builder.legend.placeholder-width', 'Auto, px, or % (e.g. 220 or 35%)'),
       },
       showIf: (c) => c.legend.showLegend && c.legend.placement === 'right',
     })
