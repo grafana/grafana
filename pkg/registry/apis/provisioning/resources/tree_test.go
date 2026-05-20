@@ -4,10 +4,11 @@ import (
 	"context"
 	"testing"
 
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
-	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
 func TestFolderTree(t *testing.T) {
@@ -199,18 +200,18 @@ func TestFolderTree(t *testing.T) {
 
 	t.Run("remove cascades deep and across branches", func(t *testing.T) {
 		tree := NewEmptyFolderTree()
-		tree.Add(Folder{ID: "root", Title: "Root", Path: "root/"}, "")
-		tree.Add(Folder{ID: "b", Title: "B", Path: "root/b/"}, "root")
-		tree.Add(Folder{ID: "c", Title: "C", Path: "root/b/c/"}, "b")
-		tree.Add(Folder{ID: "d", Title: "D", Path: "root/b/d/"}, "b")
-		tree.Add(Folder{ID: "e", Title: "E", Path: "root/e/"}, "root")
-		tree.Add(Folder{ID: "f", Title: "F", Path: "root/e/f/"}, "e")
-		tree.Add(Folder{ID: "g", Title: "G", Path: "root/e/g/"}, "e")
+		tree.Add(Folder{ID: "r", Title: "Root", Path: "r/"}, "")
+		tree.Add(Folder{ID: "b", Title: "B", Path: "r/b/"}, "r")
+		tree.Add(Folder{ID: "c", Title: "C", Path: "r/b/c/"}, "b")
+		tree.Add(Folder{ID: "d", Title: "D", Path: "r/b/d/"}, "b")
+		tree.Add(Folder{ID: "e", Title: "E", Path: "r/e/"}, "r")
+		tree.Add(Folder{ID: "f", Title: "F", Path: "r/e/f/"}, "e")
+		tree.Add(Folder{ID: "g", Title: "G", Path: "r/e/g/"}, "e")
 		tree.Add(Folder{ID: "x", Title: "X", Path: "x/"}, "")
 
 		// Verify all folders are in the tree.
 		assert.Equal(t, 8, tree.Count())
-		assert.True(t, tree.In("root"))
+		assert.True(t, tree.In("r"))
 		assert.True(t, tree.In("b"))
 		assert.True(t, tree.In("c"))
 		assert.True(t, tree.In("d"))
@@ -220,9 +221,9 @@ func TestFolderTree(t *testing.T) {
 		assert.True(t, tree.In("x"))
 
 		// Only x should remain in the tree.
-		tree.Remove("root")
+		tree.Remove("r")
 		assert.Equal(t, 1, tree.Count())
-		assert.False(t, tree.In("root"))
+		assert.False(t, tree.In("r"))
 		assert.False(t, tree.In("b"))
 		assert.False(t, tree.In("c"))
 		assert.False(t, tree.In("d"))
@@ -363,10 +364,10 @@ func TestFolderTree_Add_SetsParentID(t *testing.T) {
 	assert.Equal(t, "parent-uid", got.ParentID, "Add should set ParentID to parent")
 
 	// Root folder
-	root := Folder{ID: "root", Title: "Root", Path: "root/"}
+	root := Folder{ID: "r", Title: "Root", Path: "r/"}
 	tree.Add(root, "")
 
-	gotRoot, ok := tree.Get("root")
+	gotRoot, ok := tree.Get("r")
 	require.True(t, ok)
 	assert.Empty(t, gotRoot.ParentID, "root folder should have empty ParentID")
 }
