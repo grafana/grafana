@@ -132,8 +132,7 @@ export interface VizLayoutLegendProps {
   children: React.ReactNode;
   maxHeight?: string;
   maxWidth?: number | string;
-  minWidth?: number;
-  width?: number | string; // `${number}%`;
+  width?: number | string;
 }
 
 /**
