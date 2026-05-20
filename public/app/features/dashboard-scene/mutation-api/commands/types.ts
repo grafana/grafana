@@ -26,6 +26,14 @@ export type PermissionCheck = (scene: DashboardScene) => PermissionCheckResult;
  * Each command file exports a single MutationCommand. The registry collects
  * them and the DashboardMutationClient iterates over them generically.
  */
+/**
+ * Declares which state slice a command modifies.
+ * DashboardMutationClient snapshots this slice before execution and registers
+ * perform/undo callbacks automatically — no per-handler undo logic required.
+ * Extend with new literals as new command domains are wired up.
+ */
+export type UndoDomain = 'variables';
+
 export interface MutationCommand<T = unknown> {
   /** Command name -- must be UPPER_CASE. Used as the MutationType value. */
   name: string;
@@ -37,6 +45,9 @@ export interface MutationCommand<T = unknown> {
   permission: PermissionCheck;
   /** When true, the command only reads state and will not trigger a forceRender. */
   readOnly?: boolean;
+  /** Declares which state slice this command modifies. When set, the client automatically
+   *  snapshots the domain before execution and registers an undo/redo history entry. */
+  undoDomain?: UndoDomain;
   /** The handler function. */
   handler: (payload: T, context: MutationContext) => Promise<MutationResult>;
 }
