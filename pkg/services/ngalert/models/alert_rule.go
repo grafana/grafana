@@ -582,6 +582,9 @@ func (alertRule *AlertRule) GetEvalCondition() Condition {
 		"Type":    string(alertRule.Type()),
 		"Version": strconv.FormatInt(alertRule.Version, 10),
 	}
+	if origin := alertRule.Labels[PluginGrafanaOriginLabel]; origin != "" {
+		meta["Origin"] = origin
+	}
 	if alertRule.Type() == RuleTypeRecording {
 		return Condition{
 			Metadata:  meta,
