@@ -12,7 +12,7 @@ labels:
     - oss
 title: Global variables
 description: Learn about the Grafana built-in global variables and how you can use them in your dashboards
-weight: 150
+weight: 200
 refs:
   prometheus-query-variables:
     - pattern: /docs/grafana/

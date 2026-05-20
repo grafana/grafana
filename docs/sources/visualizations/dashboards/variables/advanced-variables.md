@@ -14,7 +14,7 @@ labels:
     - oss
 title: Advanced variable usage
 description: Learn advanced variable actions to make them more dynamic in your dashboards
-weight: 250
+weight: 300
 refs:
   prometheus-query-variables:
     - pattern: /docs/grafana/
