@@ -37,8 +37,6 @@ func projectLegacyFolder(f *dtos.Folder) folderProjection {
 		UID:       f.UID,
 		Title:     f.Title,
 		ParentUID: f.ParentUID,
-		// dtos.Folder has no Description field — the legacy API never
-		// surfaced it, so we leave it empty and let the k8s side match.
 	}
 }
 
@@ -55,16 +53,11 @@ func projectK8sFolder(t *testing.T, u *unstructured.Unstructured) folderProjecti
 	}
 }
 
-// normaliseProjection drops fields we know are not in parity yet so the
-// rest of the diff stays meaningful. Right now legacy never exposes
-// description, so we zero it on both sides for comparison.
 func normaliseProjection(p folderProjection) folderProjection {
 	p.Description = ""
 	return p
 }
 
-// accessProjection mirrors foldersV1.FolderAccessInfo and the four
-// can-* booleans embedded in dtos.Folder.
 type accessProjection struct {
 	CanSave   bool
 	CanEdit   bool
@@ -90,28 +83,18 @@ func projectK8sAccess(a *foldersV1.FolderAccessInfo) accessProjection {
 	}
 }
 
-// parityFixture sets up a folder tree once per outer test and exposes the
-// uids/users the subtests need. The tree:
+// parityFixture tree:
 //
 //	root
-//	├── parityA       (parityA)
-//	│   ├── parityA1  (parityA1)        depth-2
-//	│   │   └── parityA1a (parityA1a)   depth-3
-//	│   └── parityA2  (parityA2)
-//	└── parityB       (parityB)         sibling under root
-//	    ├── parityB1
-//	    ├── parityB2
-//	    ├── parityB3
-//	    ├── parityB4
-//	    └── parityB5                    wide-tree case
+//	├── parityA
+//	│   ├── parityA1
+//	│   │   └── parityA1a
+//	│   └── parityA2
+//	└── parityB
+//	    ├── parityB1 … parityB5
 type parityFixture struct {
-	helper *apis.K8sTestHelper
-
-	// k8s client scoped to Org1 Admin — used for non-RBAC reads.
-	adminK8s *apis.K8sResourceClient
-
-	// rbacEditorOnA is a custom user with folders:write on parityA only
-	// (no perms anywhere else). Drives the C-MOVE escalation test.
+	helper        *apis.K8sTestHelper
+	adminK8s      *apis.K8sResourceClient
 	rbacEditorOnA apis.User
 }
 
@@ -129,7 +112,6 @@ func newParityFixture(t *testing.T) *parityFixture {
 		GVR:  gvr,
 	})
 
-	// Build the tree via legacy POST so both surfaces see it identically.
 	create := func(uid, title, parentUID string) {
 		body, err := json.Marshal(map[string]string{
 			"uid":       uid,
@@ -157,10 +139,6 @@ func newParityFixture(t *testing.T) *parityFixture {
 		create(fmt.Sprintf("parityB%d", i), fmt.Sprintf("parityB%d", i), "parityB")
 	}
 
-	// Custom user: editor in org1, with folders:write granted on parityA
-	// only. This is the user that should be allowed to move *within*
-	// parityA but should NOT be allowed to move out of it into a folder
-	// they have no perms on. Catches C-MOVE.
 	rbacEditorOnA := helper.CreateUser(
 		"parity-elevated-A", apis.Org1,
 		org.RoleEditor,
@@ -226,8 +204,6 @@ func TestIntegrationFolderAPIParity(t *testing.T) {
 	f := newParityFixture(t)
 
 	t.Run("GET /folders/{uid} parity", func(t *testing.T) {
-		// One scalar Folder lookup. Project both sides through
-		// folderProjection and diff. Runs across the basic RBAC matrix.
 		users := []struct {
 			name string
 			u    apis.User
@@ -236,7 +212,7 @@ func TestIntegrationFolderAPIParity(t *testing.T) {
 			{"editor", f.helper.Org1.Editor},
 			{"viewer", f.helper.Org1.Viewer},
 		}
-		uids := []string{"parityA", "parityA1a", "parityB"} // root, deep, sibling
+		uids := []string{"parityA", "parityA1a", "parityB"}
 		for _, u := range users {
 			for _, uid := range uids {
 				t.Run(fmt.Sprintf("%s/%s", u.name, uid), func(t *testing.T) {
@@ -247,10 +223,6 @@ func TestIntegrationFolderAPIParity(t *testing.T) {
 	})
 
 	t.Run("GET /folders/id/{id} parity", func(t *testing.T) {
-		// The legacy `id` lookup has no direct k8s twin — it's
-		// reconstructed from the deprecatedInternalID label. Confirm
-		// the round-trip: id → legacy Folder, then k8s Folder by UID,
-		// and verify the label matches the input id.
 		legacy := &dtos.Folder{}
 		resp, body := f.legacyGet(t, f.helper.Org1.Admin, "/api/folders/parityA", legacy)
 		require.Equal(t, http.StatusOK, resp.StatusCode, body)
@@ -272,16 +244,10 @@ func TestIntegrationFolderAPIParity(t *testing.T) {
 	})
 
 	t.Run("GET /folders/{uid}/access parity", func(t *testing.T) {
-		// Single-level: access info for a root-level folder.
-		// Should agree because there's no parent chain to walk.
 		t.Run("root-level folder (admin)", func(t *testing.T) {
 			assertAccessParity(t, f, f.helper.Org1.Admin, "parityA")
 		})
 
-		// Nested case: access on parityA1a depends on perms inherited
-		// from parityA. The new /access subresource doesn't flatten
-		// the parent chain today, so it disagrees with legacy
-		// for the elevated-on-A user.
 		t.Run("nested folder with inherited permission", func(t *testing.T) {
 			t.Skip("blocked by — sub_access.go does not walk parents; un-skip when A1.1 lands")
 			assertAccessParity(t, f, f.rbacEditorOnA, "parityA1a")
@@ -289,9 +255,6 @@ func TestIntegrationFolderAPIParity(t *testing.T) {
 	})
 
 	t.Run("POST /folders/{uid}/move parity", func(t *testing.T) {
-		// Happy-path move. Run by Admin — both sides should accept.
-		// assertMoveStatusParity restores the original parent itself,
-		// so later subtests see the tree shape from newParityFixture.
 		t.Run("admin moves between accessible folders", func(t *testing.T) {
 			assertMoveStatusParity(t, f, f.helper.Org1.Admin,
 				"parityB1", "parityA",
@@ -299,10 +262,6 @@ func TestIntegrationFolderAPIParity(t *testing.T) {
 			)
 		})
 
-		// Escalation: rbacEditorOnA has folders:write on parityA but
-		// not on parityB. Legacy `canMove` returns 403; the new API
-		// (validateOnUpdate) does NOT enforce the destination check
-		// today. Both should agree on 403 once A1.3 lands.
 		t.Run("editor without destination perm is forbidden", func(t *testing.T) {
 			t.Skip("blocked by — validateOnUpdate misses the escalation check; un-skip when A1.3 lands")
 			assertMoveStatusParity(t, f, f.rbacEditorOnA,
@@ -311,13 +270,8 @@ func TestIntegrationFolderAPIParity(t *testing.T) {
 			)
 		})
 
-		// K6 source vs destination divergence. Legacy blocks
-		// source==K6FolderUID, new blocks destination==K6FolderUID.
-		// Test both directions so the eventual fix has to converge.
 		t.Run("K6 source is rejected by both", func(t *testing.T) {
 			t.Skip("blocked by — only legacy blocks K6 source; un-skip when A1.3 ports the guard")
-			// We do not actually move the K6 folder — we just check
-			// that both sides reject the attempt with the same code.
 			assertMoveStatusParity(t, f, f.helper.Org1.Admin,
 				accesscontrol.K6FolderUID, "parityA",
 				/*expectStatus*/ http.StatusBadRequest,
@@ -326,10 +280,6 @@ func TestIntegrationFolderAPIParity(t *testing.T) {
 	})
 
 	t.Run("GET /folders/{uid}/children pagination", func(t *testing.T) {
-		// Legacy never exposed a /children endpoint per se — wide
-		// listing is done via GET /folders?parentUid=. Here we
-		// verify that the new /children subresource at least returns
-		// all 5 children of parityB and does not error.
 		t.Skip("blocked by — sub_children.go caps at 500 items; un-skip when A1.4 paginates with continue tokens")
 
 		resp, body := f.k8sGetSubresource(t, f.helper.Org1.Admin, "parityB", "children")
@@ -350,8 +300,6 @@ func TestIntegrationFolderAPIParity(t *testing.T) {
 	})
 
 	t.Run("PUT /folders/{uid} parity", func(t *testing.T) {
-		// Update via k8s, then read both sides and diff the
-		// projection. Catches drift in title/parent reflection.
 		const uid = "parityA2"
 		got, err := f.adminK8s.Resource.Get(context.Background(), uid, metav1.GetOptions{})
 		require.NoError(t, err)
@@ -363,19 +311,8 @@ func TestIntegrationFolderAPIParity(t *testing.T) {
 
 		assertGetFolderParity(t, f, f.helper.Org1.Admin, uid)
 	})
-
-	t.Run("aggregator coverage", func(t *testing.T) {
-		// Per the workflow doc: a single smoke test that runs the
-		// monolith → aggregator → MT folder-apiserver pod path. Not
-		// runnable in-process — needs devenv/mt-tilt wiring. Tracked
-		// separately so the failure mode (skip vs fail) doesn't get
-		// lost.
-		t.Skip("aggregator smoke test lives outside go-test; see devenv/mt-tilt and the workflow-a doc")
-	})
 }
 
-// assertGetFolderParity does GET /api/folders/{uid} and a k8s Get on the
-// same uid, projects both sides, and diffs them.
 func assertGetFolderParity(t *testing.T, f *parityFixture, user apis.User, uid string) {
 	t.Helper()
 
@@ -398,8 +335,6 @@ func assertGetFolderParity(t *testing.T, f *parityFixture, user apis.User, uid s
 	}
 }
 
-// assertAccessParity diffs the four can-* booleans between the legacy
-// dtos.Folder response and the new /access subresource.
 func assertAccessParity(t *testing.T, f *parityFixture, user apis.User, uid string) {
 	t.Helper()
 
@@ -424,16 +359,9 @@ func assertAccessParity(t *testing.T, f *parityFixture, user apis.User, uid stri
 	}
 }
 
-// assertMoveStatusParity issues the same move via legacy POST /move and
-// via k8s Update (changing the folder annotation) and asserts both sides
-// agree on the resulting HTTP status. Body shape differs by surface, so
-// only the status is compared.
 func assertMoveStatusParity(t *testing.T, f *parityFixture, user apis.User, uid, newParent string, expectStatus int) {
 	t.Helper()
 
-	// Capture original parent so we can restore the tree afterwards on
-	// success paths. The status-code-only contract here makes restore
-	// only meaningful when both sides actually moved the folder.
 	original := lookupParent(t, f, user, uid)
 
 	body, err := json.Marshal(map[string]string{"parentUid": newParent})
@@ -451,13 +379,10 @@ func assertMoveStatusParity(t *testing.T, f *parityFixture, user apis.User, uid,
 			legacyRsp.Response.StatusCode, expectStatus, string(legacyRsp.Body))
 	}
 
-	// Reset the tree so the k8s arm sees the same starting state as
-	// the legacy arm did.
 	if legacyRsp.Response.StatusCode == http.StatusOK {
 		restoreParent(t, f, f.helper.Org1.Admin, uid, original)
 	}
 
-	// k8s arm: read, mutate annotation, update.
 	client := f.helper.GetResourceClient(apis.ResourceClientArgs{User: user, GVR: gvr})
 	got, err := client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
 	require.NoError(t, err)
@@ -479,7 +404,6 @@ func assertMoveStatusParity(t *testing.T, f *parityFixture, user apis.User, uid,
 			gotStatus, expectStatus, k8sErr)
 	}
 
-	// Restore for downstream tests.
 	if gotStatus == http.StatusOK {
 		restoreParent(t, f, f.helper.Org1.Admin, uid, original)
 	}
@@ -509,9 +433,6 @@ func restoreParent(t *testing.T, f *parityFixture, user apis.User, uid, parentUI
 		"restoreParent %s → %s: %s", uid, parentUID, string(rsp.Body))
 }
 
-// statusCodeFromK8sError pulls the HTTP status out of a k8s dynamic-client
-// error. The dynamic client wraps apierrors.StatusError; non-StatusError
-// failures degrade to 500 so the assertion still produces a useful diff.
 func statusCodeFromK8sError(err error) int {
 	type statusCoder interface{ Status() metav1.Status }
 	if sc, ok := err.(statusCoder); ok {
