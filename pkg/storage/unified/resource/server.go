@@ -1269,6 +1269,9 @@ func (s *server) delete(ctx context.Context, user claims.AuthInfo, req *resource
 }
 
 func (s *server) Read(ctx context.Context, req *resourcepb.ReadRequest) (*resourcepb.ReadResponse, error) {
+	ctx, span := tracer.Start(ctx, "resource.server.Read")
+	defer span.End()
+
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
 		return &resourcepb.ReadResponse{
