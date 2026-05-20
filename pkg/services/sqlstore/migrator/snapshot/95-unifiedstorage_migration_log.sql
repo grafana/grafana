@@ -14,7 +14,10 @@
 -- Dumping data for table `unifiedstorage_migration_log`
 --
 
-INSERT INTO `unifiedstorage_migration_log` (`id`, `migration_id`, `sql`, `success`, `error`, `timestamp`) VALUES (1,'create unifiedstorage_migration_log table','CREATE TABLE IF NOT EXISTS `unifiedstorage_migration_log` (\n`id` BIGINT(20) PRIMARY KEY AUTO_INCREMENT NOT NULL\n, `migration_id` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `sql` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `success` TINYINT(1) NOT NULL\n, `error` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `timestamp` DATETIME NOT NULL\n) ENGINE=InnoDB DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_unicode_ci;',1,'','2022-01-01 00:00:00'),(2,'playlists migration','unified storage data migration: playlists',1,'','2022-01-01 00:00:00'),(3,'folders and dashboards migration','unified storage data migration: folders-dashboards',1,'','2026-05-20 15:25:50');
+INSERT INTO `unifiedstorage_migration_log` (`migration_id`, `sql`, `success`, `error`, `timestamp`) VALUES
+  ('create unifiedstorage_migration_log table','CREATE TABLE IF NOT EXISTS `unifiedstorage_migration_log` (\n`id` BIGINT(20) PRIMARY KEY AUTO_INCREMENT NOT NULL\n, `migration_id` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `sql` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `success` TINYINT(1) NOT NULL\n, `error` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `timestamp` DATETIME NOT NULL\n) ENGINE=InnoDB DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_unicode_ci;',1,'','2022-01-01 00:00:00'),
+  ('playlists migration','unified storage data migration: playlists',1,'','2022-01-01 00:00:00'),
+  ('folders and dashboards migration','unified storage data migration: folders-dashboards',1,'','2022-01-01 00:00:00');
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
@@ -22,4 +25,3 @@ INSERT INTO `unifiedstorage_migration_log` (`id`, `migration_id`, `sql`, `succes
 /*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-05-20 14:32:28
