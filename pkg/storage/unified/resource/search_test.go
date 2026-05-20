@@ -36,6 +36,7 @@ type MockResourceIndex struct {
 	updateIndexCalls int
 
 	buildInfo IndexBuildInfo
+	docCount  int64
 }
 
 func (m *MockResourceIndex) BuildInfo() (IndexBuildInfo, error) {
@@ -55,7 +56,7 @@ func (m *MockResourceIndex) CountManagedObjects(_ context.Context, _ *SearchStat
 }
 
 func (m *MockResourceIndex) DocCount(_ context.Context, _ string, _ *SearchStats) (int64, error) {
-	return 0, nil
+	return m.docCount, nil
 }
 
 func (m *MockResourceIndex) ListManagedObjects(_ context.Context, _ *resourcepb.ListManagedObjectsRequest, _ *SearchStats) (*resourcepb.ListManagedObjectsResponse, error) {
@@ -82,9 +83,11 @@ func (f *fakeDocumentBuilder) BuildDocument(_ context.Context, _ *resourcepb.Res
 type mockStorageBackend struct {
 	resourceStats   []ResourceStats
 	lastImportTimes []ResourceLastImportTime
+	statsCalls      atomic.Int32
 }
 
 func (m *mockStorageBackend) GetResourceStats(ctx context.Context, nsr NamespacedResource, minCount int) ([]ResourceStats, error) {
+	m.statsCalls.Add(1)
 	var result []ResourceStats
 	for _, stat := range m.resourceStats {
 		// Apply the minCount filter like the real implementation does
@@ -235,7 +238,8 @@ func TestSearchGetOrCreateIndex(t *testing.T) {
 
 	require.NotEmpty(t, search.buildIndexCalls)
 	require.Less(t, len(search.buildIndexCalls), concurrency, "Should not have built index more than a few times (ideally once)")
-	require.Equal(t, int64(50), search.buildIndexCalls[0].size)
+	require.Equal(t, unknownBuildSize, search.buildIndexCalls[0].size)
+	require.Zero(t, storage.statsCalls.Load(), "lazy index build should not call GetResourceStats for a size hint")
 }
 
 func TestSearchGetOrCreateIndexWithIndexUpdate(t *testing.T) {
@@ -1302,7 +1306,7 @@ func TestRebuildIndexNoFollowUpWhenNotInFlight(t *testing.T) {
 
 	search := &mockSearchBackend{
 		cache: map[NamespacedResource]ResourceIndex{
-			key: &MockResourceIndex{buildInfo: IndexBuildInfo{BuildTime: time.Now().Add(-2 * time.Hour)}},
+			key: &MockResourceIndex{buildInfo: IndexBuildInfo{BuildTime: time.Now().Add(-2 * time.Hour)}, docCount: 50},
 		},
 	}
 	storage := &mockStorageBackend{
@@ -1335,6 +1339,9 @@ func TestRebuildIndexNoFollowUpWhenNotInFlight(t *testing.T) {
 	support.inFlightRebuildsMu.Unlock()
 	require.False(t, inFlight, "in-flight tracker should be cleared")
 	require.Equal(t, 0, support.rebuildQueue.Len(), "no follow-up should be re-enqueued")
+	require.Len(t, search.buildIndexCalls, 1)
+	require.Equal(t, int64(50), search.buildIndexCalls[0].size)
+	require.Zero(t, storage.statsCalls.Load(), "rebuild should use the current index doc count instead of GetResourceStats")
 }
 
 // TestSearchServer_VectorSearch_ObservesDuration verifies the RPC histogram
