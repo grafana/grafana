@@ -15,12 +15,6 @@ labels:
 title: Global variables
 description: Learn about the Grafana built-in global variables and how you can use them in your dashboards
 weight: 200
-refs:
-  prometheus-query-variables:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/template-variables/#use-**rate_interval
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/prometheus/template-variables/#use-**rate_interval
 ---
 
 # Global variables
@@ -96,7 +90,7 @@ Currently only supported for Prometheus and Loki data sources. This variable rep
 
 ### `$__rate_interval`
 
-Currently only supported for Prometheus data sources. The `$__rate_interval` variable is meant to be used in the rate function. Refer to [Prometheus query variables](ref:prometheus-query-variables) for details.
+Currently only supported for Prometheus data sources. The `$__rate_interval` variable is meant to be used in the rate function. Refer to [Prometheus query variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/template-variables/#use-**rate_interval) for details.
 
 ### `$__rate_interval_ms`
 

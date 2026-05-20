@@ -19,18 +19,12 @@ labels:
 title: Manage and inspect variables
 menuTitle: Inspect variables
 description: Review and manage your dashboard variables
-refs:
-  add:
-    - pattern: /docs/grafana/
-      destination: https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/
-    - pattern: /docs/grafana-cloud/
-      destination: https://grafana.com/docs/grafana-cloud/visualizations/dashboards/variables/add-template-variables/
 weight: 500
 ---
 
 # Manage and inspect variables
 
-In the **Variables** tab, you can [add](ref:add) variables and [manage](#manage-variables) existing variables. You can also [inspect](#inspect-variables) variables to identify any dependencies between them. <!--whether a variable is being referenced (or used) in other variables or dashboard.-->
+In the **Variables** tab, you can [add](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/) variables and [manage](#manage-variables) existing variables. You can also [inspect](#inspect-variables) variables to identify any dependencies between them. <!--whether a variable is being referenced (or used) in other variables or dashboard.-->
 
 ## Manage variables
 
@@ -46,7 +40,7 @@ In addition to [managing variables](#manage-variables), the **Variables** tab le
 
 <!-- Update and comment this back in when the reference functionality is working again
 
-The variables page lets you easily identify whether a variable is being referenced (or used) in other variables or dashboard. In addition, you can also [add](ref:add) and [manage variables](#manage-variables) on this page.
+The variables page lets you easily identify whether a variable is being referenced (or used) in other variables or dashboard. In addition, you can also [add](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/) and [manage variables](#manage-variables) on this page.
 
 ![Variables list](/static/img/docs/variables-templates/variables-list-7-4.png)
 
