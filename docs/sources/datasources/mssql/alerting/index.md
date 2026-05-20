@@ -17,7 +17,7 @@ labels:
 menuTitle: Alerting
 review_date: 2026-05-19
 title: Microsoft SQL Server alerting
-weight: 450
+weight: 550
 ---
 
 # Microsoft SQL Server alerting
