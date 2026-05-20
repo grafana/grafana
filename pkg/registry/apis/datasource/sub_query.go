@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -17,7 +16,6 @@ import (
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	dsV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
-	apifilters "github.com/grafana/grafana/pkg/apiserver/endpoints/filters"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/chunked"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -89,14 +87,10 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		defer m.Record()
 
-		// Re-establish upstream trace context. The k8s apiserver framework severs
-		// req.Context() during routing, but the original headers survive on req.
-		// Re-parenting here puts the query's inner spans back into the upstream trace.
-		if sc := apifilters.ExtractUpstreamSpanContext(req); sc.IsValid() {
-			ctx = trace.ContextWithRemoteSpanContext(ctx, sc)
-		}
-
-		reqCtx, reqSpan := tracing.Start(ctx, "datasource.query.request",
+		// req.Context() carries the upstream trace context re-attached by the
+		// builder's reparentingConnecter wrap; use it instead of the captured
+		// Connect-time ctx so this span lands in the upstream trace.
+		reqCtx, reqSpan := tracing.Start(req.Context(), "datasource.query.request",
 			attribute.String("namespace", namespace),
 			attribute.String("plugin_id", r.builder.pluginJSON.ID),
 			attribute.String("datasource_uid", name),

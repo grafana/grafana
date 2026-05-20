@@ -28,6 +28,24 @@ func WithExtractUpstreamTraceLink(handler http.Handler) http.Handler {
 	})
 }
 
+// WithUpstreamSpanContext re-parents req.Context() onto the upstream trace by
+// extracting traceparent (or Grafana-Upstream-Traceparent) from the headers
+// and attaching the result as a remote span context. Handlers that start spans
+// from req.Context() will then create those spans as children of the upstream
+// caller — bypassing the k8s apiserver framework's internal trace severance.
+//
+// Returns http.HandlerFunc (also satisfies http.Handler) so call sites that
+// require either type can use it. No-op if the headers don't contain a valid
+// upstream span context.
+func WithUpstreamSpanContext(next http.Handler) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+		if sc := ExtractUpstreamSpanContext(req); sc.IsValid() {
+			req = req.WithContext(trace.ContextWithRemoteSpanContext(req.Context(), sc))
+		}
+		next.ServeHTTP(w, req)
+	}
+}
+
 // ExtractUpstreamSpanContext recovers the upstream trace context from a request's
 // headers. The k8s apiserver framework severs req.Context()'s trace context
 // during routing, so REST handlers can use this helper to re-parent inner spans
