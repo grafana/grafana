@@ -150,4 +150,12 @@ func addDataSourceMigration(mg *Migrator) {
 	mg.AddMigration("Update json_data column to MediumText", NewRawSQLMigration("").
 		Mysql("ALTER TABLE data_source MODIFY COLUMN json_data MEDIUMTEXT;"),
 	)
+
+	mg.AddMigration("Add allowed_teams column", NewAddColumnMigration(tableV2, &Column{
+		Name: "allowed_teams", Type: DB_Varchar, Nullable: true, Length: 255,
+	}))
+
+	mg.AddMigration("Add allowed_roles column", NewAddColumnMigration(tableV2, &Column{
+		Name: "allowed_roles", Type: DB_Varchar, Nullable: true, Length: 255,
+	}))
 }

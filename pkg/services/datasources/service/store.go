@@ -320,6 +320,8 @@ func (ss *SqlStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataS
 			UID:             cmd.UID,
 			IsPrunable:      cmd.IsPrunable,
 			APIVersion:      cmd.APIVersion,
+			AllowedTeams:    cmd.AllowedTeams,
+			AllowedRoles:    cmd.AllowedRoles,
 		}
 
 		if _, err := sess.Insert(ds); err != nil {
@@ -392,6 +394,8 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 			UID:             cmd.UID,
 			IsPrunable:      cmd.IsPrunable,
 			APIVersion:      cmd.APIVersion,
+			AllowedTeams:    cmd.AllowedTeams,
+			AllowedRoles:    cmd.AllowedRoles,
 		}
 
 		sess.UseBool("is_default")

@@ -41,6 +41,7 @@ import { DataSourcePluginConfigPage } from './DataSourcePluginConfigPage';
 import { DataSourcePluginSettings } from './DataSourcePluginSettings';
 import { DataSourcePluginState } from './DataSourcePluginState';
 import { DataSourceReadOnlyMessage } from './DataSourceReadOnlyMessage';
+import { DataSourceTeamPermissions } from './DataSourceTeamPermissions';
 import { DataSourceTestingStatus } from './DataSourceTestingStatus';
 
 export type Props = {
@@ -251,6 +252,13 @@ export function EditDataSourceView({
             validation={validation}
           />
         </DataSourcePluginContextProvider>
+      )}
+
+      {hasWriteRights && !readOnly && (
+        <DataSourceTeamPermissions
+          allowedTeams={dataSource.allowedTeams || ''}
+          onChange={(allowedTeams) => onOptionsChange({ ...dataSource, allowedTeams })}
+        />
       )}
 
       {/* Extension point */}

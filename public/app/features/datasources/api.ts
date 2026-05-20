@@ -39,6 +39,8 @@ export interface DatasourceInstanceK8sSpec {
   basicAuthUser: string;
   isDefault?: boolean;
   readOnly?: boolean;
+  allowedTeams?: string;
+  allowedRoles?: string;
 }
 
 export interface DatasourceAccessK8s {
@@ -112,6 +114,8 @@ export const convertLegacyDatasourceSettingsToK8sDatasourceSettings = (
     readOnly: dsSettings.readOnly,
     user: dsSettings.user ? dsSettings.user : '',
     database: dsSettings.database ? dsSettings.database : '',
+    allowedTeams: dsSettings.allowedTeams,
+    allowedRoles: dsSettings.allowedRoles,
   };
   let dsK8sSettings: DataSourceSettingsK8s = {
     kind: 'DataSource',

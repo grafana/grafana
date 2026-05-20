@@ -3,6 +3,8 @@ package datasources
 import (
 	"encoding/json"
 	"errors"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -70,6 +72,17 @@ type DataSource struct {
 	// swagger:ignore
 	IsPrunable bool `xorm:"is_prunable"`
 
+	// AllowedTeams restricts access to users belonging to these teams with specific permissions.
+	// Format: "teamID:permission,teamID:permission" where permission is "Admin" or "Member"
+	// Examples: "1:Admin,2:Member" - Team 1 requires Admin, Team 2 requires Member
+	//           "1:Admin" - Only team 1 admins can access
+	// If empty, no team-based restriction is applied
+	AllowedTeams string `json:"allowedTeams,omitempty" xorm:"allowed_teams"`
+
+	// AllowedRoles restricts access to users with these org roles (comma-separated: Admin,Editor,Viewer)
+	// If empty, no role-based restriction is applied
+	AllowedRoles string `json:"allowedRoles,omitempty" xorm:"allowed_roles"`
+
 	Created time.Time `json:"created,omitempty"`
 	Updated time.Time `json:"updated,omitempty"`
 
@@ -86,6 +99,91 @@ func (ds *DataSource) IsSecureSocksDSProxyEnabled() bool {
 		ds.isSecureSocksDSProxyEnabled = &enabled
 	}
 	return *ds.isSecureSocksDSProxyEnabled
+}
+
+// TeamPermission represents a team member's permission within a team
+type TeamPermission string
+
+const (
+	TeamPermissionAdmin  TeamPermission = "Admin"
+	TeamPermissionMember TeamPermission = "Member"
+)
+
+// TeamAccessRule represents a team ID with its required permission level
+type TeamAccessRule struct {
+	TeamID     int64
+	Permission TeamPermission
+}
+
+// ParseAllowedTeams parses the AllowedTeams string into TeamAccessRule slice
+// Format: "teamID:permission,teamID:permission" e.g., "1:Admin,2:Member"
+// Also supports legacy format "teamID" where permission defaults to Member
+func (ds *DataSource) ParseAllowedTeams() []TeamAccessRule {
+	if ds.AllowedTeams == "" {
+		return nil
+	}
+	rules := make([]TeamAccessRule, 0)
+	entries := strings.Split(ds.AllowedTeams, ",")
+	for _, entry := range entries {
+		entry = strings.TrimSpace(entry)
+		if entry == "" {
+			continue
+		}
+		parts := strings.Split(entry, ":")
+		teamID, err := strconv.ParseInt(strings.TrimSpace(parts[0]), 10, 64)
+		if err != nil {
+			continue
+		}
+		// New format: teamID:permission (e.g., "1:Admin" or "2:Member")
+		// Legacy format: teamID only (defaults to Member permission)
+		var perm TeamPermission
+		if len(parts) >= 2 {
+			perm = TeamPermission(strings.TrimSpace(parts[1]))
+			if perm != TeamPermissionAdmin && perm != TeamPermissionMember {
+				continue
+			}
+		} else {
+			// Legacy format - default to Member permission
+			perm = TeamPermissionMember
+		}
+		rules = append(rules, TeamAccessRule{TeamID: teamID, Permission: perm})
+	}
+	return rules
+}
+
+// IsTeamAllowed checks if the given team ID with specified permission is allowed to access this datasource.
+// If AllowedTeams is empty, all teams are allowed.
+// If team has no permission requirement in AllowedTeams, the team is not allowed.
+func (ds *DataSource) IsTeamAllowed(teamID int64, teamPermission TeamPermission) bool {
+	if ds.AllowedTeams == "" {
+		return true
+	}
+	rules := ds.ParseAllowedTeams()
+	for _, rule := range rules {
+		if rule.TeamID == teamID {
+			return rule.Permission == teamPermission
+		}
+	}
+	return false
+}
+
+// IsTeamMemberAllowed checks if user is a member of a team with required permission
+type IsTeamMemberAllowed func(teamID int64, requiredPermission TeamPermission) bool
+
+// IsRoleAllowed checks if the given org role is allowed to access this datasource.
+// If AllowedRoles is empty, all roles are allowed.
+// Role comparison is case-sensitive.
+func (ds *DataSource) IsRoleAllowed(role string) bool {
+	if ds.AllowedRoles == "" {
+		return true
+	}
+	allowedRoles := strings.Split(ds.AllowedRoles, ",")
+	for _, allowedRole := range allowedRoles {
+		if strings.TrimSpace(allowedRole) == role {
+			return true
+		}
+	}
+	return false
 }
 
 type TeamHTTPHeadersJSONData struct {
@@ -185,6 +283,9 @@ type AddDataSourceCommand struct {
 	ReadOnly                bool              `json:"-"`
 	EncryptedSecureJsonData map[string][]byte `json:"-"`
 	UpdateSecretFn          UpdateSecretFn    `json:"-"`
+
+	AllowedTeams string `json:"allowedTeams"`
+	AllowedRoles string `json:"allowedRoles"`
 }
 
 // Also acts as api DTO
@@ -219,6 +320,9 @@ type UpdateDataSourceCommand struct {
 	IgnoreOldSecureJsonData bool              `json:"-"`
 
 	AllowLBACRuleUpdates bool `json:"-"`
+
+	AllowedTeams string `json:"allowedTeams"`
+	AllowedRoles string `json:"allowedRoles"`
 }
 
 // DeleteDataSourceCommand will delete a DataSource based on OrgID as well as the UID (preferred), ID, or Name.

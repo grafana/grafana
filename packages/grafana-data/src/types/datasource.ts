@@ -773,6 +773,8 @@ export interface DataSourceSettings<T extends DataSourceJsonData = DataSourceJso
   withCredentials: boolean;
   version?: number;
   apiVersion?: string;
+  allowedTeams?: string;
+  allowedRoles?: string;
 }
 
 /**
