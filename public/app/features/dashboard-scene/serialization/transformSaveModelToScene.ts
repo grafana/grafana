@@ -423,6 +423,7 @@ export function createDashboardSceneFromDashboardModel(
       tags: oldModel.tags || [],
       title: oldModel.title,
       version: oldModel.version,
+      intent: oldModel.intent,
       scopeMeta,
       body,
       $timeRange: new SceneTimeRange({

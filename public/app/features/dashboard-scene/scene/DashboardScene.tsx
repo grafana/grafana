@@ -190,6 +190,8 @@ export interface DashboardSceneState extends SceneObjectState {
   meta: Omit<DashboardMeta, 'isNew'>;
   /** Version of the dashboard */
   version?: number;
+  /** Operational intent declared by the dashboard author. Passed through opaquely; not interpreted by the scene. */
+  intent?: Dashboard['intent'];
   /** Panel to inspect */
   inspectPanelKey?: string;
   /** Panel key to view in fullscreen */

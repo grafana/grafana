@@ -93,6 +93,7 @@ export class DashboardModel implements TimeModel {
   links: DashboardLink[];
   gnetId: any;
   panels: PanelModel[];
+  intent?: Dashboard['intent'];
   panelInEdit?: PanelModel;
   panelInView?: PanelModel;
   fiscalYearStartMonth?: number;
@@ -157,6 +158,7 @@ export class DashboardModel implements TimeModel {
     this.time = data.time ?? { from: 'now-6h', to: 'now' };
     this.timepicker = data.timepicker ?? {};
     this.liveNow = data.liveNow;
+    this.intent = data.intent;
     this.templating = this.removeNullValuesFromVariables(this.ensureListExist(data.templating));
     this.annotations = this.ensureListExist(data.annotations);
     this.refresh = data.refresh;

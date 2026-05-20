@@ -165,6 +165,7 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     graphTooltip,
     liveNow,
     schemaVersion: DASHBOARD_SCHEMA_VERSION,
+    intent: state.intent,
     refresh: refreshPicker?.state.refresh,
     // @ts-expect-error not in dashboard schema because it's experimental
     scopeMeta: state.scopeMeta,
