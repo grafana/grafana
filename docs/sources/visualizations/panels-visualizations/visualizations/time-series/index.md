@@ -201,7 +201,7 @@ After you've toggled the switch on, click the **Series visibility** icon  to ope
 - **By name**: Lists each unique series name. Select one or more names to limit the visualization to those series.
 - **By labels**: Lists each label key with its values. Select label values to filter series that match.
 
-The popover also provides:
+The tooltip also provides the following options:
 
 - **Select all** and **Deselect all**: Toggle every value in a section.
 - **Clear all**: Reset the filter.
