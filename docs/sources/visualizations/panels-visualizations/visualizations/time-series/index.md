@@ -189,7 +189,12 @@ The following example shows three series: Min, Max, and Value. The Min and Max s
 
 #### Faceted filter
 
-Toggle the **Faceted filter** switch on to add a filter control next to the legend that lets you narrow the visible series by name or by label.
+Toggle the **Series visibility** switch on to add the control next to or above the legend.
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-series-visibility-v13.1.png" max-width="400px" alt="Series visibility filter switch" >}}
+
+This lets you narrow the visible series by name or by label.
+Use the series visibility filter when a panel renders many series and you want to focus on a subset without editing the query.
 
 Click the filter control to open a popover with two sections:
 
