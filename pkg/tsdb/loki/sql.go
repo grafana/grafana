@@ -57,8 +57,8 @@ const (
 	metricColumnBytes       = "bytes"
 )
 
-// dsAbstractionSQLRewriteEnabled reports whether PluginContext.GrafanaConfig enables dsAbstractionApp.
-func dsAbstractionSQLRewriteEnabled(req *backend.QueryDataRequest) bool {
+// dsAbstractionEnabled reports whether PluginContext.GrafanaConfig enables dsAbstractionApp.
+func dsAbstractionEnabled(req *backend.QueryDataRequest) bool {
 	if req == nil {
 		return false
 	}
@@ -75,7 +75,7 @@ func dsAbstractionSQLRewriteEnabled(req *backend.QueryDataRequest) bool {
 // sqlErrors maps refId to conversion errors for Grafana SQL queries that could not be rewritten;
 // those queries are omitted from the returned request (callers attach sqlErrors to the response).
 //
-// Eligibility: runs only when dsAbstractionSQLRewriteEnabled(req) is true. The first Grafana SQL
+// Eligibility: runs only when dsAbstractionEnabled(req) is true. The first Grafana SQL
 // row resolves the stream table label via resolveTableLabel; that requires a non-nil datasource
 // instance with SchemaProvider.
 //
@@ -102,7 +102,7 @@ func normalizeGrafanaSQLRequest(ctx context.Context, req *backend.QueryDataReque
 		return req, nil, nil
 	}
 
-	if !dsAbstractionSQLRewriteEnabled(req) {
+	if !dsAbstractionEnabled(req) {
 		return req, nil, nil
 	}
 
