@@ -969,4 +969,8 @@ const (
 	// FlagAlertingSyncExternalAlertmanager
 	// Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana
 	FlagAlertingSyncExternalAlertmanager = "alerting.syncExternalAlertmanager"
+
+	// FlagFrontendServiceReducedBootDataAPI
+	// Frontend Service doesn't rely on the /bootdata API, instead loads configuration as needed
+	FlagFrontendServiceReducedBootDataAPI = "frontendService.reducedBootDataAPI"
 )
