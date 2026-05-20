@@ -1,5 +1,5 @@
 import { css, cx, keyframes } from '@emotion/css';
-import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { type FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 
 import { useAssistant, useLimits, useTerms } from '@grafana/assistant';
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -21,28 +21,9 @@ export function HomeAssistantSearch() {
   const admin = contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
   const needsAutoAccept = termsType === 'msa' && !accepted && !termsError && !termsLoading && !isLimitReached && admin;
 
-  const examples = useMemo(
-    () => [
-      t('home.assistant.example.create-dashboard', 'How do I create a dashboard?'),
-      t('home.assistant.example.promql', 'Explain this PromQL query'),
-      t('home.assistant.example.alerts-firing', 'What alerts are firing right now?'),
-      t('home.assistant.example.errors', 'Show me errors from the last hour'),
-      t('home.assistant.example.data-source', 'How do I set up a data source?'),
-      t('home.assistant.example.loki-query', 'Help me write a Loki query'),
-    ],
-    []
-  );
-
-  const placeholderLimit = t(
-    'home.assistant.placeholder-limit',
-    "You've hit the monthly limit for Assistant... Upgrade to keep going!"
-  );
-
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [inputRef, placeholderCurrent, placeholderInitial] = usePlaceholder(
-    isLimitReached ? placeholderLimit : examples
-  );
+  const [inputRef, placeholderCurrent, placeholderInitial] = usePlaceholder(isLimitReached);
 
   const formRef = useRef<HTMLFormElement>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
@@ -105,11 +86,7 @@ export function HomeAssistantSearch() {
           onChange={(e) => setInput(e.currentTarget.value)}
           placeholder={placeholderInitial}
           ref={inputRef}
-          aria-label={
-            isLimitReached
-              ? placeholderLimit
-              : t('home.assistant.placeholder-default', 'Ask Assistant anything about Grafana...')
-          }
+          aria-label={placeholderInitial}
           prefix={<Icon name="ai-sparkle" size="xl" className={styles.icon} />}
           suffix={
             isLimitReached && admin ? (

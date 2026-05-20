@@ -1,21 +1,36 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { t } from '@grafana/i18n';
+
 const PLACEHOLDER_PAUSE_MS = 4000;
 const PLACEHOLDER_TYPE_MS = 40;
 
 type Phase = 'pausing' | 'deleting' | 'typing';
 
+function getExamples() {
+  return [
+    t('home.assistant.example.create-dashboard', 'How do I create a dashboard?'),
+    t('home.assistant.example.promql', 'Explain this PromQL query'),
+    t('home.assistant.example.alerts-firing', 'What alerts are firing right now?'),
+    t('home.assistant.example.errors', 'Show me errors from the last hour'),
+    t('home.assistant.example.data-source', 'How do I set up a data source?'),
+    t('home.assistant.example.loki-query', 'Help me write a Loki query'),
+  ];
+}
+
+function getLimitPlaceholder() {
+  return t('home.assistant.placeholder-limit', "You've hit the monthly limit for Assistant... Upgrade to keep going!");
+}
+
 /**
- * Animated placeholder that cycles through prompts with a typing effect.
- * Returns [inputRef, currentFullString, initialPlaceholder].
+ * Animated placeholder that cycles through example prompts with a typing effect.
+ * When the limit is reached, shows a static limit message instead.
  *
  * Ported from grafana-setupguide-app — imperative animation loop that
  * runs entirely inside a single useEffect (no React state per tick).
  */
-export function usePlaceholder(
-  value?: string | string[]
-): readonly [React.RefObject<HTMLInputElement>, string, string] {
-  const options = useMemo(() => (Array.isArray(value) ? value : [value]), [value]);
+export function usePlaceholder(isLimitReached: boolean) {
+  const options = useMemo(() => (isLimitReached ? [getLimitPlaceholder()] : getExamples()), [isLimitReached]);
   const initial = options[0] ?? '';
   const [full, setFull] = useState(initial);
   const ref = useRef<HTMLInputElement>(null);
@@ -50,7 +65,6 @@ export function usePlaceholder(
         setAnimated(current);
 
         timeout = setTimeout(() => {
-          // Compute common prefix length for the next transition
           common = 0;
           while (common < current.length && common < next.length && current[common] === next[common]) {
             common++;
