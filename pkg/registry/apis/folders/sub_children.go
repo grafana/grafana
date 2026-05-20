@@ -100,7 +100,7 @@ func (r *subChildrenREST) Connect(ctx context.Context, name string, _ runtime.Ob
 			return
 		}
 
-		children := &folders.FolderList{}
+		children := &folders.FolderList{Items: []folders.Folder{}}
 		if resp.Results != nil {
 			titleIdx := -1
 			for i, col := range resp.Results.Columns {
