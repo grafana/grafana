@@ -185,7 +185,6 @@ func ExtraConfigsToModel(in []definitions.ExtraConfiguration) []ExtraConfigurati
 func ExtraConfigToModel(in definitions.ExtraConfiguration) ExtraConfiguration {
 	return ExtraConfiguration{
 		Identifier:         in.Identifier,
-		MergeMatchers:      slices.Clone(in.MergeMatchers),
 		TemplateFiles:      maps.Clone(in.TemplateFiles),
 		AlertmanagerConfig: in.AlertmanagerConfig,
 	}
@@ -368,7 +367,6 @@ func ExtraConfigsToDB(in []ExtraConfiguration) []definitions.ExtraConfiguration 
 func ExtraConfigToDB(in ExtraConfiguration) definitions.ExtraConfiguration {
 	return definitions.ExtraConfiguration{
 		Identifier:         in.Identifier,
-		MergeMatchers:      slices.Clone(in.MergeMatchers),
 		TemplateFiles:      maps.Clone(in.TemplateFiles),
 		AlertmanagerConfig: in.AlertmanagerConfig,
 	}

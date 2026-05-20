@@ -168,7 +168,6 @@ func TestRoundTripConversion(t *testing.T) {
 		"extra_config": [
 			{
 				"identifier": "remote-primary",
-				"merge_matchers": ["cluster=\"remote-1\""],
 				"template_files": {
 					"remote-template.tmpl": "{{ define \"remote\" }}Remote alert{{ end }}"
 				},

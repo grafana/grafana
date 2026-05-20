@@ -154,7 +154,6 @@ func sortMatchers(matchers []*labels.Matcher) []*labels.Matcher {
 
 type ExtraConfiguration struct {
 	Identifier         string
-	MergeMatchers      config.Matchers
 	TemplateFiles      map[string]string
 	AlertmanagerConfig string
 }
@@ -221,12 +220,6 @@ func (c *ExtraConfiguration) GetSanitizedAlertmanagerConfigYAML() (string, error
 func (c ExtraConfiguration) Validate() error {
 	if c.Identifier == "" {
 		return errors.New("identifier is required")
-	}
-
-	for _, m := range c.MergeMatchers {
-		if m.Type != labels.MatchEqual {
-			return errInvalidExtraConfiguration(errors.New("only matchers with type equal are supported"))
-		}
 	}
 
 	cfg, err := c.GetAlertmanagerConfig()
