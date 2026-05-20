@@ -23,12 +23,9 @@ weight: 300
 
 # Microsoft SQL Server query editor
 
-Grafana provides a query editor for the Microsoft SQL Server data source, which is located on the [Explore page](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/). You can also access the MSSQL query editor from a dashboard panel. Click the menu in the upper right of the panel and select **Edit**.
+The MSSQL query editor lets you write Transact-SQL queries directly in Grafana, with built-in macros and formatting options designed for time series and table visualizations. You can open it from [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/) or from any dashboard panel in edit mode.
 
-This topic explains querying specific to the MSSQL data source.
-For general documentation on querying data sources in Grafana, refer to [Query and transform data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/). For options and functions common to all query editors, refer to [Query editors](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/).
-
-For more information on writing Transact-SQL statements, refer to [Write Transact-SQL statements](https://learn.microsoft.com/en-us/sql/t-sql/tutorial-writing-transact-sql-statements?view=sql-server-ver17) and [Transact-SQL reference](https://learn.microsoft.com/en-us/sql/t-sql/language-reference?view=sql-server-ver17) in the Microsoft SQL Server documentation.
+This page covers MSSQL-specific query features. For general querying concepts shared across all data sources, refer to [Query and transform data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/). For Transact-SQL syntax, refer to [Write Transact-SQL statements](https://learn.microsoft.com/en-us/sql/t-sql/tutorial-writing-transact-sql-statements?view=sql-server-ver17) and [Transact-SQL reference](https://learn.microsoft.com/en-us/sql/t-sql/language-reference?view=sql-server-ver17) in the Microsoft documentation.
 
 The Microsoft SQL Server query editor has two modes:
 
