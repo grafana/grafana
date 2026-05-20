@@ -2,14 +2,17 @@ package notifier
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/grafana/alerting/definition"
 	alertingModels "github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/templates"
+	"github.com/prometheus/alertmanager/config"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 )
 
 // Silence-specific compat functions to convert between grafana/alerting and model types.
@@ -54,21 +57,75 @@ func IntegrationToIntegrationConfig(i models.Integration) (alertingModels.Integr
 	}, nil
 }
 
-func PostableAPIConfigToNotificationsConfiguration(c *apimodels.PostableUserConfig, limits alertingNotify.DynamicLimits) (alertingNotify.NotificationsConfiguration, error) {
-	receivers, err := alertingNotify.PostableAPIReceiversToReceiverConfigs(c.AlertmanagerConfig.Receivers)
+func PostableAPIConfigToNotificationsConfiguration(c *v1.AMConfigV1, limits alertingNotify.DynamicLimits) (alertingNotify.NotificationsConfiguration, error) {
+	receivers, err := ModelToAPIReceivers(c.AlertmanagerConfig.Receivers)
 	if err != nil {
 		return alertingNotify.NotificationsConfiguration{}, err
 	}
 	return alertingNotify.NotificationsConfiguration{
-		RoutingTree:       c.AlertmanagerConfig.Route,
+		RoutingTree:       RouteToAPI(c.AlertmanagerConfig.Route),
 		InhibitRules:      c.AlertmanagerConfig.InhibitRules,
-		MuteTimeIntervals: c.AlertmanagerConfig.MuteTimeIntervals,
-		TimeIntervals:     c.AlertmanagerConfig.TimeIntervals,
+		MuteTimeIntervals: ModelToMuteTimeIntervals(c.AlertmanagerConfig.MuteTimeIntervals),
+		TimeIntervals:     ModelToTimeIntervals(c.AlertmanagerConfig.TimeIntervals),
 		Templates:         alertingNotify.PostableAPITemplatesToTemplateDefinitions(c.GetMergedTemplateDefinitions()),
 		Receivers:         receivers,
 		Limits:            limits,
 	}, nil
 }
+
+func ModelToAPIReceivers(recvs []*v1.PostableApiReceiver) ([]alertingModels.ReceiverConfig, error) {
+	result := make([]alertingModels.ReceiverConfig, 0, len(recvs))
+	for _, r := range recvs {
+		recv, err := ModelToReceiverConfig(r)
+		if err != nil {
+			return nil, fmt.Errorf("invalid receiver %s: %w", r.Name, err)
+		}
+		result = append(result, recv)
+	}
+	return result, nil
+}
+
+func ModelToReceiverConfig(r *v1.PostableApiReceiver) (alertingModels.ReceiverConfig, error) {
+	result := alertingModels.ReceiverConfig{
+		Name:         r.Name,
+		Integrations: make([]*alertingModels.IntegrationConfig, 0, len(r.GrafanaManagedReceivers)),
+	}
+	for idx, p := range r.GrafanaManagedReceivers {
+		i, err := alertingNotify.PostableGrafanaReceiverToIntegrationConfig(new(definition.PostableGrafanaReceiver(*p)))
+		if err != nil {
+			return alertingModels.ReceiverConfig{}, fmt.Errorf("invalid integration at index %d: %w", idx, err)
+		}
+		result.Integrations = append(result.Integrations, i)
+	}
+	return result, nil
+}
+
+func ModelToTimeIntervals(in []v1.TimeInterval) []alertingNotify.TimeInterval {
+	out := make([]alertingNotify.TimeInterval, 0, len(in))
+	for _, t := range in {
+		out = append(out, config.TimeInterval{
+			Name:          t.Name,
+			TimeIntervals: t.TimeIntervals,
+		})
+	}
+	return out
+}
+
+func ModelToMuteTimeIntervals(in []v1.MuteTimeInterval) []alertingNotify.MuteTimeInterval {
+	out := make([]alertingNotify.MuteTimeInterval, 0, len(in))
+	for _, m := range in {
+		out = append(out, config.MuteTimeInterval{
+			Name:          m.Name,
+			TimeIntervals: m.TimeIntervals,
+		})
+	}
+	return out
+}
+
+// TODO: Temporary until DB model and API model separate. Doing it this way makes caller intent clearer.
+var RouteToAPI = v1.RouteToDB
+var PostableApiAlertingConfigToAPI = v1.PostableApiAlertingConfigToDB
+var ExtraConfigsToAPI = v1.ExtraConfigsToDB
 
 func NotificationsConfigurationToPostableAPIConfig(config alertingNotify.NotificationsConfiguration) apimodels.PostableApiAlertingConfig {
 	return apimodels.PostableApiAlertingConfig{

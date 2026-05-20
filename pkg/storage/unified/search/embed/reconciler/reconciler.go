@@ -13,13 +13,20 @@ import (
 	"sync"
 	"time"
 
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 )
+
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/search/embed/reconciler")
 
 const DefaultInterval = time.Minute
 
@@ -74,6 +81,9 @@ type Options struct {
 	Builders          []embed.Builder
 	Interval          time.Duration
 	LockRetryInterval time.Duration
+	// Metrics is optional; when nil the reconciler runs without
+	// observability instrumentation (handy for unit tests).
+	Metrics *resource.VectorMetrics
 }
 
 // Reconciler keeps the vector index in sync with ongoing writes. The
@@ -89,6 +99,7 @@ type Reconciler struct {
 	interval          time.Duration
 	lockRetryInterval time.Duration
 	log               log.Logger
+	metrics           *resource.VectorMetrics
 
 	// broadcaster is attached after construction by the resource server,
 	broadcaster resource.Broadcaster[*resource.WrittenEvent]
@@ -126,6 +137,7 @@ func New(opts Options) (*Reconciler, error) {
 		interval:          opts.Interval,
 		lockRetryInterval: opts.LockRetryInterval,
 		log:               log.New("embeddings_reconciler"),
+		metrics:           opts.Metrics,
 		pending:           make(map[string]*pendingEvent),
 	}, nil
 }
@@ -150,6 +162,9 @@ func (s *Reconciler) enqueue(ev *pendingEvent) {
 		return
 	}
 	s.pending[k] = ev
+	if s.metrics != nil {
+		s.metrics.ReconcilerPendingEvents.Set(float64(len(s.pending)))
+	}
 }
 
 func (s *Reconciler) drainPending() []*pendingEvent {
@@ -163,6 +178,9 @@ func (s *Reconciler) drainPending() []*pendingEvent {
 		out = append(out, ev)
 	}
 	s.pending = make(map[string]*pendingEvent)
+	if s.metrics != nil {
+		s.metrics.ReconcilerPendingEvents.Set(0)
+	}
 	return out
 }
 
@@ -535,26 +553,53 @@ func (s *Reconciler) processEvents(ctx context.Context, sinceRv int64, batch []*
 	return maxRv, lowestFailedRv, failed, successes, false
 }
 
-func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev *pendingEvent) error {
-	switch ev.action {
-	case resourcepb.WatchEvent_DELETED:
-		return s.vectorBackend.Delete(ctx, ev.namespace, s.batchEmbedder.Model(), builder.Resource(), ev.name)
-	case resourcepb.WatchEvent_ADDED, resourcepb.WatchEvent_MODIFIED:
-		return s.embedAndUpsert(ctx, builder, ev)
-	default:
-		return fmt.Errorf("unknown action %v", ev.action)
-	}
-}
-
-// embedAndUpsert routes through UpsertReplaceSubresources so removing
-// stale subresources and writing the new ones commit atomically — a
-// failure mid-way leaves the dashboard in its previous self-consistent
-// state.
+// processEvent dispatches on the event action and runs the per-event
+// pipeline. The status label tracked through the function powers the
+// reconciler_process_duration histogram observed in the deferred closure.
 //
 // TODO: only re-embed subresources whose content actually changed
 // since the last write. Today every dashboard write re-embeds every
 // panel, which is wasteful when only one panel changed.
-func (s *Reconciler) embedAndUpsert(ctx context.Context, builder embed.Builder, ev *pendingEvent) error {
+func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev *pendingEvent) (retErr error) {
+	ctx, span := tracer.Start(ctx, "unified.reconciler.processEvent")
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("group", ev.group),
+		attribute.String("resource", ev.resource),
+		attribute.String("action", ev.action.String()),
+		attribute.Int64("rv", ev.rv),
+		attribute.Int("attempt", ev.attempts),
+	)
+
+	start := time.Now()
+	statusLabel := "success"
+	defer func() {
+		if retErr != nil {
+			span.RecordError(retErr)
+			span.SetStatus(codes.Error, retErr.Error())
+		}
+		if s.metrics != nil {
+			metricutil.ObserveWithExemplar(ctx,
+				s.metrics.ReconcilerProcessDuration.WithLabelValues(ev.group, ev.resource, statusLabel),
+				time.Since(start).Seconds(),
+			)
+		}
+	}()
+
+	switch ev.action {
+	case resourcepb.WatchEvent_DELETED:
+		if err := s.vectorBackend.Delete(ctx, ev.namespace, s.batchEmbedder.Model(), builder.Resource(), ev.name); err != nil {
+			statusLabel = "delete_error"
+			return err
+		}
+		return nil
+	case resourcepb.WatchEvent_ADDED, resourcepb.WatchEvent_MODIFIED:
+		// code execution continues below to extract → embed → upsert
+	default:
+		statusLabel = "unknown_action"
+		return fmt.Errorf("unknown action %v", ev.action)
+	}
+
 	if len(ev.value) == 0 {
 		return nil
 	}
@@ -564,8 +609,10 @@ func (s *Reconciler) embedAndUpsert(ctx context.Context, builder embed.Builder, 
 		Namespace: ev.namespace,
 		Name:      ev.name,
 	}
+
 	items, err := builder.Extract(ctx, key, ev.value, "")
 	if err != nil {
+		statusLabel = "extract_error"
 		return fmt.Errorf("extract: %w", err)
 	}
 	if maxItems := builder.MaxItemsPerResource(); maxItems > 0 && len(items) > maxItems {
@@ -575,17 +622,31 @@ func (s *Reconciler) embedAndUpsert(ctx context.Context, builder embed.Builder, 
 	// An empty extract means the dashboard has no embeddable content;
 	// drop everything stored under this UID rather than leaving orphans.
 	if len(items) == 0 {
-		return s.vectorBackend.Delete(ctx, ev.namespace, s.batchEmbedder.Model(), builder.Resource(), ev.name)
+		if err := s.vectorBackend.Delete(ctx, ev.namespace, s.batchEmbedder.Model(), builder.Resource(), ev.name); err != nil {
+			statusLabel = "delete_error"
+			return err
+		}
+		return nil
 	}
 
 	vectors, err := s.batchEmbedder.Embed(ctx, ev.namespace, builder.Resource(), ev.rv, items)
 	if err != nil {
+		statusLabel = "embed_error"
 		return fmt.Errorf("embed: %w", err)
 	}
 	if len(vectors) == 0 {
-		return s.vectorBackend.Delete(ctx, ev.namespace, s.batchEmbedder.Model(), builder.Resource(), ev.name)
+		if err := s.vectorBackend.Delete(ctx, ev.namespace, s.batchEmbedder.Model(), builder.Resource(), ev.name); err != nil {
+			statusLabel = "delete_error"
+			return err
+		}
+		return nil
 	}
+
+	// UpsertReplaceSubresources commits the stale-delete and the new
+	// inserts atomically — a failure mid-way leaves the dashboard in
+	// its previous self-consistent state.
 	if err := s.vectorBackend.UpsertReplaceSubresources(ctx, vectors); err != nil {
+		statusLabel = "upsert_error"
 		return fmt.Errorf("upsert: %w", err)
 	}
 	return nil
@@ -598,6 +659,9 @@ func (s *Reconciler) embedAndUpsert(ctx context.Context, builder embed.Builder, 
 func (s *Reconciler) requeue(events []*pendingEvent) {
 	for _, ev := range events {
 		s.enqueue(ev)
+		if s.metrics != nil {
+			s.metrics.ReconcilerRetriesTotal.WithLabelValues(ev.group, ev.resource).Inc()
+		}
 	}
 }
 
@@ -609,6 +673,11 @@ func (s *Reconciler) recordFailure(ev *pendingEvent, failed *[]*pendingEvent, lo
 		logger.Error("reconciler: dropping event past retry cap; cursor will advance past it",
 			"namespace", ev.namespace, "name", ev.name,
 			"rv", ev.rv, "attempts", ev.attempts, "action", ev.action)
+		if s.metrics != nil {
+			s.metrics.ReconcilerEventsDroppedTotal.
+				WithLabelValues(ev.group, ev.resource, "retries_exhausted").
+				Inc()
+		}
 		return lowestFailedRv
 	}
 	*failed = append(*failed, ev)

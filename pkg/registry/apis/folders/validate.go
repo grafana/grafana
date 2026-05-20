@@ -352,7 +352,9 @@ func getChildrenBatch(ctx context.Context, searcher resourcepb.ResourceIndexClie
 		}
 	}
 
-	hasMore := resp.Results.NextPageToken != ""
+	// The bleve Search path populates TotalHits but not Results.NextPageToken, so
+	// pagination must be driven off TotalHits + offset rather than the token.
+	hasMore := resp.Results.NextPageToken != "" || offset+int64(len(resp.Results.Rows)) < resp.TotalHits
 	return children, hasMore, nil
 }
 
@@ -360,7 +362,7 @@ func validateOnDelete(ctx context.Context,
 	f *folders.Folder,
 	searcher resourcepb.ResourceIndexClient,
 ) error {
-	resp, err := searcher.GetStats(ctx, &resourcepb.ResourceStatsRequest{Namespace: f.Namespace, Folder: f.Name})
+	resp, err := searcher.GetStats(ctx, &resourcepb.ResourceStatsRequest{Namespace: f.Namespace, Kinds: countedKinds, Folder: []string{f.Name}})
 	if err != nil {
 		return err
 	}

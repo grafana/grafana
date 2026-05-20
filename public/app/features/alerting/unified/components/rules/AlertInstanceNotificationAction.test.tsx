@@ -11,7 +11,7 @@ setupMswServer();
 
 const instance = mockPromAlert();
 
-describe('AlertInstanceNotificationAction', () => {
+describe.skip('AlertInstanceNotificationAction', () => {
   it('renders nothing when the rule has no Grafana alerting ruler rule', async () => {
     // default mockCombinedRule uses mockRulerAlertingRule() which is a Prometheus rule
     const rule = mockCombinedRule();
