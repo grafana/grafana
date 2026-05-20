@@ -166,7 +166,7 @@ func (f *parityFixture) namespace() string {
 	return f.helper.Namespacer(f.helper.Org1.Admin.Identity.GetOrgID())
 }
 
-func (f *parityFixture) legacyGet(t *testing.T, user apis.User, path string, out any) (*http.Response, []byte) {
+func (f *parityFixture) legacyGet(t *testing.T, user apis.User, path string, out any) (int, []byte) {
 	t.Helper()
 	rsp := apis.DoRequest(f.helper, apis.RequestParams{
 		User:   user,
@@ -178,10 +178,10 @@ func (f *parityFixture) legacyGet(t *testing.T, user apis.User, path string, out
 		require.NoError(t, json.Unmarshal(rsp.Body, out),
 			"legacy %s: body=%s", path, string(rsp.Body))
 	}
-	return rsp.Response, rsp.Body
+	return rsp.Response.StatusCode, rsp.Body
 }
 
-func (f *parityFixture) k8sGetSubresource(t *testing.T, user apis.User, uid, sub string) (*http.Response, []byte) {
+func (f *parityFixture) k8sGetSubresource(t *testing.T, user apis.User, uid, sub string) (int, []byte) {
 	t.Helper()
 	path := fmt.Sprintf("/apis/%s/%s/namespaces/%s/folders/%s/%s",
 		foldersV1.GROUP, foldersV1.VERSION, f.namespace(), uid, sub)
@@ -191,7 +191,7 @@ func (f *parityFixture) k8sGetSubresource(t *testing.T, user apis.User, uid, sub
 		Path:   path,
 	}, &json.RawMessage{})
 	require.NotNil(t, rsp.Response, "k8s %s: nil response", path)
-	return rsp.Response, rsp.Body
+	return rsp.Response.StatusCode, rsp.Body
 }
 
 func TestIntegrationFolderAPIParity(t *testing.T) {
@@ -224,14 +224,14 @@ func TestIntegrationFolderAPIParity(t *testing.T) {
 
 	t.Run("GET /folders/id/{id} parity", func(t *testing.T) {
 		legacy := &dtos.Folder{}
-		resp, body := f.legacyGet(t, f.helper.Org1.Admin, "/api/folders/parityA", legacy)
-		require.Equal(t, http.StatusOK, resp.StatusCode, body)
+		statuscode, body := f.legacyGet(t, f.helper.Org1.Admin, "/api/folders/parityA", legacy)
+		require.Equal(t, http.StatusOK, statuscode, body)
 		require.NotZero(t, legacy.ID) //nolint:staticcheck
 
 		byID := &dtos.Folder{}
-		resp, body = f.legacyGet(t, f.helper.Org1.Admin,
+		statuscode, body = f.legacyGet(t, f.helper.Org1.Admin,
 			fmt.Sprintf("/api/folders/id/%d", legacy.ID), byID) //nolint:staticcheck
-		require.Equal(t, http.StatusOK, resp.StatusCode, body)
+		require.Equal(t, http.StatusOK, statuscode, body)
 		require.Equal(t, "parityA", byID.UID)
 
 		k8s, err := f.adminK8s.Resource.Get(context.Background(), "parityA", metav1.GetOptions{})
@@ -282,8 +282,8 @@ func TestIntegrationFolderAPIParity(t *testing.T) {
 	t.Run("GET /folders/{uid}/children pagination", func(t *testing.T) {
 		t.Skip("blocked by — sub_children.go caps at 500 items; un-skip when A1.4 paginates with continue tokens")
 
-		resp, body := f.k8sGetSubresource(t, f.helper.Org1.Admin, "parityB", "children")
-		require.Equal(t, http.StatusOK, resp.StatusCode, string(body))
+		statuscode, body := f.k8sGetSubresource(t, f.helper.Org1.Admin, "parityB", "children")
+		require.Equal(t, http.StatusOK, statuscode, string(body))
 
 		var children foldersV1.FolderList
 		require.NoError(t, json.Unmarshal(body, &children),
@@ -317,10 +317,10 @@ func assertGetFolderParity(t *testing.T, f *parityFixture, user apis.User, uid s
 	t.Helper()
 
 	legacy := &dtos.Folder{}
-	resp, body := f.legacyGet(t, user, "/api/folders/"+uid, legacy)
-	if resp.StatusCode != http.StatusOK {
+	statuscode, body := f.legacyGet(t, user, "/api/folders/"+uid, legacy)
+	if statuscode != http.StatusOK {
 		t.Fatalf("legacy GET /api/folders/%s as %s returned %d: %s",
-			uid, user.Identity.GetLogin(), resp.StatusCode, string(body))
+			uid, user.Identity.GetLogin(), statuscode, string(body))
 	}
 
 	client := f.helper.GetResourceClient(apis.ResourceClientArgs{User: user, GVR: gvr})
@@ -339,11 +339,11 @@ func assertAccessParity(t *testing.T, f *parityFixture, user apis.User, uid stri
 	t.Helper()
 
 	legacy := &dtos.Folder{}
-	resp, body := f.legacyGet(t, user, "/api/folders/"+uid+"?accesscontrol=true", legacy)
-	require.Equal(t, http.StatusOK, resp.StatusCode, "legacy /folders/%s: %s", uid, body)
+	statuscode, body := f.legacyGet(t, user, "/api/folders/"+uid+"?accesscontrol=true", legacy)
+	require.Equal(t, http.StatusOK, statuscode, "legacy /folders/%s: %s", uid, body)
 
-	accResp, accBody := f.k8sGetSubresource(t, user, uid, "access")
-	require.Equal(t, http.StatusOK, accResp.StatusCode,
+	accStatuscode, accBody := f.k8sGetSubresource(t, user, uid, "access")
+	require.Equal(t, http.StatusOK, accStatuscode,
 		"k8s /folders/%s/access: %s", uid, accBody)
 
 	var access foldersV1.FolderAccessInfo
@@ -412,8 +412,8 @@ func assertMoveStatusParity(t *testing.T, f *parityFixture, user apis.User, uid,
 func lookupParent(t *testing.T, f *parityFixture, user apis.User, uid string) string {
 	t.Helper()
 	res := &dtos.Folder{}
-	resp, body := f.legacyGet(t, user, "/api/folders/"+uid, res)
-	require.Equal(t, http.StatusOK, resp.StatusCode,
+	statuscode, body := f.legacyGet(t, user, "/api/folders/"+uid, res)
+	require.Equal(t, http.StatusOK, statuscode,
 		"lookupParent legacy GET %s: %s", uid, body)
 	return res.ParentUID
 }
