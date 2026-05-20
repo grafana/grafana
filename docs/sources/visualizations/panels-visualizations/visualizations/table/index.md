@@ -609,7 +609,7 @@ The following image shows the "Info" field with the styling from the "Style" fie
 By default, field overrides apply only to columns in the parent table.
 To target columns inside a nested table, set the **Target fields** option on the override to **Nested**:
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-override-nested-scope-v13.x.png" max-width="500px" alt="Field override configuration with the Target fields selector showing Series and Nested options" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-override-nested-scope-v13.x.png" max-width="350px" alt="Field override configuration with the Target fields selector showing Series and Nested options" >}}
 
 All standard override properties&mdash;including thresholds, value mappings, units, data links, and cell type&mdash;apply the same way to nested fields.
 
