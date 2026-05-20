@@ -23,6 +23,7 @@ import (
 
 	"github.com/grafana/alerting/notify/notifytest"
 
+	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -61,6 +62,9 @@ import (
 
 //go:embed test-data/receiver-exports/*
 var receiverExportResponses embed.FS
+
+//go:embed test-data/provisioning_get_responses/*
+var provisioningGetResponses embed.FS
 
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
@@ -2137,6 +2141,140 @@ func TestApiNotificationPolicyExportSnapshot(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestApiGetSnapshots(t *testing.T) {
+	// This test should fail whenever a GET snapshot changes. If the change is expected, update
+	// the corresponding test response file(s) in test-data/provisioning_get_responses/
+	cfg := policy_exports.Config()
+
+	// Route
+	cfg.AlertmanagerConfig.Route = legacy_storage.WithManagedRoutes(cfg.AlertmanagerConfig.Route, cfg.ManagedRoutes)
+
+	// Templates
+	cfg.TemplateFiles = map[string]string{
+		"templateA": "{{ define \"templateA\" }}A{{ end }}",
+		"templateB": "{{ define \"templateB\" }}B{{ end }}",
+		"templateC": "{{ define \"templateC\" }}C{{ end }}",
+	}
+
+	// Contact Points
+	allIntegrationsName := "all-integrations"
+	allIntegrations := make([]models.Integration, 0, len(notifytest.AllKnownV1ConfigsForTesting))
+	for integrationType := range notifytest.AllKnownV1ConfigsForTesting {
+		integration := models.IntegrationGen(
+			models.IntegrationMuts.WithName(allIntegrationsName),
+			models.IntegrationMuts.WithUID(fmt.Sprintf("%s-uid", strings.ToLower(string(integrationType)))),
+			models.IntegrationMuts.WithValidConfig(integrationType),
+		)()
+		integration.DisableResolveMessage = false
+		allIntegrations = append(allIntegrations, integration)
+	}
+	receiver := models.ReceiverGen(models.ReceiverMuts.WithName(allIntegrationsName), models.ReceiverMuts.WithIntegrations(allIntegrations...))()
+	postableReceiver, err := legacy_storage.ReceiverToPostableApiReceiver(&receiver)
+	require.NoError(t, err)
+	cfg.AlertmanagerConfig.Receivers = append(cfg.AlertmanagerConfig.Receivers, postableReceiver)
+
+	// Mute Timings
+	location, err := time.LoadLocation("America/Montreal")
+	if err != nil {
+		t.Fatalf("Failed to load location America/Montreal: %s", err)
+	}
+	timeIntervalExample := func() timeinterval.TimeInterval {
+		return timeinterval.TimeInterval{
+			Times: []timeinterval.TimeRange{
+				{StartMinute: 10, EndMinute: 20},
+				{StartMinute: 50, EndMinute: 60},
+			},
+			Weekdays: []timeinterval.WeekdayRange{
+				{InclusiveRange: timeinterval.InclusiveRange{Begin: 1, End: 2}},
+				{InclusiveRange: timeinterval.InclusiveRange{Begin: 5, End: 6}},
+			},
+			DaysOfMonth: []timeinterval.DayOfMonthRange{
+				{InclusiveRange: timeinterval.InclusiveRange{Begin: 1, End: 10}},
+				{InclusiveRange: timeinterval.InclusiveRange{Begin: 20, End: 25}},
+			},
+			Months: []timeinterval.MonthRange{
+				{InclusiveRange: timeinterval.InclusiveRange{Begin: 1, End: 3}},
+				{InclusiveRange: timeinterval.InclusiveRange{Begin: 7, End: 9}},
+			},
+			Years: []timeinterval.YearRange{
+				{InclusiveRange: timeinterval.InclusiveRange{Begin: 2020, End: 2022}},
+				{InclusiveRange: timeinterval.InclusiveRange{Begin: 2025, End: 2026}},
+			},
+			Location: &timeinterval.Location{location},
+		}
+	}
+	cfg.AlertmanagerConfig.MuteTimeIntervals = append(cfg.AlertmanagerConfig.MuteTimeIntervals,
+		v1.MuteTimeInterval{
+			Name: "MuteTimeIntervalA",
+			TimeIntervals: []timeinterval.TimeInterval{
+				timeIntervalExample(),
+			},
+		},
+		v1.MuteTimeInterval{
+			Name: "MuteTimeIntervalB",
+			TimeIntervals: []timeinterval.TimeInterval{
+				timeIntervalExample(),
+			},
+		},
+	)
+	cfg.AlertmanagerConfig.TimeIntervals = append(cfg.AlertmanagerConfig.TimeIntervals,
+		v1.TimeInterval{
+			Name: "TimeIntervalA",
+			TimeIntervals: []timeinterval.TimeInterval{
+				timeIntervalExample(),
+			},
+		},
+		v1.TimeInterval{
+			Name: "TimeIntervalB",
+			TimeIntervals: []timeinterval.TimeInterval{
+				timeIntervalExample(),
+			},
+		},
+	)
+
+	amConfig, err := legacy_storage.SerializeAlertmanagerConfig(*cfg)
+	require.NoError(t, err)
+
+	env := createTestEnv(t, string(amConfig))
+	env.ac.Callback = func(user *user.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
+		return true, nil
+	}
+	sut := createProvisioningSrvSutFromEnv(t, &env)
+	rc := createTestRequestCtx()
+
+	verify := func(t *testing.T, res response.Response, expectedBodyFilename string) {
+		require.Equalf(t, 200, res.Status(), "expected 200, got %d, body: %q", res.Status(), res.Body())
+
+		// Indent the JSON for easier comparison.
+		// This isn't strictly necessary, but it makes the test output more readable.
+		out := new(bytes.Buffer)
+		err = json.Indent(out, res.Body(), "", " ")
+		require.NoError(t, err)
+		actualBody := out.Bytes()
+
+		p := path.Join("test-data", "provisioning_get_responses", expectedBodyFilename)
+
+		// To update these files:
+		//os.WriteFile(path.Join(p), actualBody, 0644)
+
+		exportRaw, err := provisioningGetResponses.ReadFile(p)
+		require.NoError(t, err)
+		require.JSONEq(t, string(exportRaw), string(actualBody))
+	}
+	t.Run("Routes", func(t *testing.T) {
+		verify(t, sut.RouteGetPolicyTree(&rc), "combined-route.json")
+	})
+	t.Run("Templates", func(t *testing.T) {
+		verify(t, sut.RouteGetTemplates(&rc), "templates.json")
+	})
+	t.Run("Contact Points", func(t *testing.T) {
+		verify(t, sut.RouteGetContactPoints(&rc), "all-integrations.json")
+	})
+	t.Run("Time Intervals", func(t *testing.T) {
+		verify(t, sut.RouteGetMuteTimings(&rc), "time-intervals.json")
+	})
 }
 
 // testEnvironment binds together common dependencies for testing alerting APIs.
