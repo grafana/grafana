@@ -56,13 +56,11 @@ For each item, one or more buttons appear:
 - Retry the check.
 - Hide the error. If you hide an error you can see it again by clicking the **Hide/Show silenced errors** eye icon on the top right corner.
 
+For details on how to update your plugins, refer to [Manage your plugins](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/plugin-management/#manage-your-plugins) if you're using OSS/Enterprise, or refer to [Find and use Grafana plugins](https://grafana.com/docs/grafana-cloud/introduction/find-and-use-plugins/) if you're using Grafana Cloud.
+
 ### Investigation needed
 
 This collapsible section provides information on issues that may not require immediate action but require your attention. For example, it provides information on plugins that require an upgrade. Similar to the **Action needed** section, clicking an item opens the plugin's upgrade page. From there, you can either update to the latest version or select a specific version from the version history tab.
-
-{{< admonition type="note" >}}
-On Grafana Cloud, plugins are automatically kept up to date. You don't need to act on plugin upgrade recommendations in this section.
-{{< /admonition >}}
 
 ### No action needed
 
@@ -92,6 +90,6 @@ To maintain system reliability and keep your Grafana instance secure and up to d
 - **Regular Monitoring:** Check the Advisor page often to identify and address emerging issues.
 - **Immediate Action:** Address "Action needed" items promptly to ensure system reliability.
 - **Systematic Review:** After fixing flagged issues, use the "Refresh" button to confirm all checks pass.
-- **Proactive Updates:** Address plugin update recommendations under "Investigation needed" even if they haven't caused failures yet. Refer to [Manage your plugins](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/plugin-management/#manage-your-plugins) for more details on how to update your plugins. If you're using Grafana Cloud, refer to [Find and use Grafana plugins](https://grafana.com/docs/grafana-cloud/introduction/find-and-use-plugins/).
+- **Proactive Updates:** Address plugin update recommendations under "Investigation needed" even if they haven't caused failures yet. 
 
 You can also set up your own alerts with **Grafana Alerting**, which allows you to monitor your incoming data and set up alerts for specific events or circumstances. You can then create, manage, and take action on your alerts from a single, consolidated view. Refer to the [Grafana Alerting documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/) for more information. To learn how to create an alert based on Grafana Advisor results, refer to [Create an alert based on Grafana Advisor results](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/grafana-advisor/advisor-create-alert/).
