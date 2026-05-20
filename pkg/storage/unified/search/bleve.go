@@ -2452,14 +2452,8 @@ const (
 	whitespaceCharacters = " \t\r\n"
 )
 
-// termFields are fields where filter values with separators are split and matched token-by-token.
-// This is unrelated to Bleve TermQuery, which is an exact lookup of one indexed token.
-var termFields = []string{
-	resource.SEARCH_FIELD_TITLE,
-}
-
-// exactTermFields fields to use termQuery for filtering without any extra queries
-var exactTermFields = []string{
+// exactTermQueryFields are fields where filters use Bleve TermQuery directly.
+var exactTermQueryFields = []string{
 	resource.SEARCH_FIELD_OWNER_REFERENCES,
 	resource.SEARCH_FIELD_CREATED_BY,
 	// FIXME: special case for login and email to use term query only because those fields are using keyword analyzer
@@ -2470,7 +2464,7 @@ var exactTermFields = []string{
 
 // Convert a "requirement" into a bleve query
 func requirementQuery(req *resourcepb.Requirement, prefix string) (query.Query, *resourcepb.ErrorResult) {
-	useExactTermQuery := slices.Contains(exactTermFields, req.Key) || strings.HasPrefix(req.Key, resource.SEARCH_SELECTABLE_FIELDS_PREFIX)
+	useExactTermQuery := slices.Contains(exactTermQueryFields, req.Key) || strings.HasPrefix(req.Key, resource.SEARCH_SELECTABLE_FIELDS_PREFIX)
 	switch selection.Operator(req.Operator) {
 	case selection.DoubleEquals:
 		// DoubleEquals does exact matching via TermQuery (single value only).
@@ -2482,63 +2476,31 @@ func requirementQuery(req *resourcepb.Requirement, prefix string) (query.Query, 
 				key = resource.SEARCH_FIELD_TITLE_PHRASE
 				value = strings.ToLower(value)
 			}
-			return newExactTermsQuery(key, value, prefix), nil
+			return exactFieldTermQuery(key, value, prefix), nil
 		}
 
 	case selection.Equals:
-		if len(req.Values) == 0 {
-			return query.NewMatchAllQuery(), nil
-		}
-
-		if len(req.Values) == 1 && useExactTermQuery {
-			return newExactTermsQuery(req.Key, req.Values[0], prefix), nil
-		}
-
-		if len(req.Values) == 1 {
-			filter := filterValue(req.Key, req.Values[0])
-			return newFilterQuery(req.Key, filter, prefix), nil
-		}
-
-		conjuncts := []query.Query{}
-		for _, v := range req.Values {
-			q := newFilterQuery(req.Key, filterValue(req.Key, v), prefix)
-			conjuncts = append(conjuncts, q)
-		}
-
-		return query.NewConjunctionQuery(conjuncts), nil
+		return allRequirementValuesQuery(req.Values, func(v string) query.Query {
+			if useExactTermQuery {
+				return exactFieldTermQuery(req.Key, v, prefix)
+			}
+			return fieldFilterQuery(req.Key, filterValue(req.Key, v), prefix)
+		}), nil
 
 	case selection.In:
-		if len(req.Values) == 0 {
-			return query.NewMatchAllQuery(), nil
-		}
-
-		if len(req.Values) == 1 {
+		return anyRequirementValueQuery(req.Values, func(v string) query.Query {
 			if useExactTermQuery {
-				return newExactTermsQuery(req.Key, req.Values[0], prefix), nil
+				return exactFieldTermQuery(req.Key, v, prefix)
 			}
-			q := newFilterQuery(req.Key, filterValue(req.Key, req.Values[0]), prefix)
-			return q, nil
-		}
-
-		disjuncts := []query.Query{}
-		for _, v := range req.Values {
-			var q query.Query
-			if useExactTermQuery {
-				q = newExactTermsQuery(req.Key, v, prefix)
-			} else {
-				q = newFilterQuery(req.Key, filterValue(req.Key, v), prefix)
-			}
-			disjuncts = append(disjuncts, q)
-		}
-
-		return query.NewDisjunctionQuery(disjuncts), nil
+			return fieldFilterQuery(req.Key, filterValue(req.Key, v), prefix)
+		}), nil
 
 	case selection.NotIn:
 		boolQuery := bleve.NewBooleanQuery()
 
 		var mustNotQueries []query.Query
 		for _, value := range req.Values {
-			q := newFilterQuery(req.Key, filterValue(req.Key, value), prefix)
+			q := fieldFilterQuery(req.Key, filterValue(req.Key, value), prefix)
 			mustNotQueries = append(mustNotQueries, q)
 		}
 		boolQuery.AddMustNot(mustNotQueries...)
@@ -2559,6 +2521,38 @@ func requirementQuery(req *resourcepb.Requirement, prefix string) (query.Query, 
 	return nil, resource.NewBadRequestError(
 		fmt.Sprintf("unsupported query operation (%s %s %v)", req.Key, req.Operator, req.Values),
 	)
+}
+
+// allRequirementValuesQuery preserves selector semantics where multiple "=" values are combined with AND.
+func allRequirementValuesQuery(values []string, valueQuery func(string) query.Query) query.Query {
+	if len(values) == 0 {
+		return query.NewMatchAllQuery()
+	}
+	if len(values) == 1 {
+		return valueQuery(values[0])
+	}
+
+	queries := make([]query.Query, 0, len(values))
+	for _, v := range values {
+		queries = append(queries, valueQuery(v))
+	}
+	return query.NewConjunctionQuery(queries)
+}
+
+// anyRequirementValueQuery preserves selector semantics where multiple "in" values are combined with OR.
+func anyRequirementValueQuery(values []string, valueQuery func(string) query.Query) query.Query {
+	if len(values) == 0 {
+		return query.NewMatchAllQuery()
+	}
+	if len(values) == 1 {
+		return valueQuery(values[0])
+	}
+
+	queries := make([]query.Query, 0, len(values))
+	for _, v := range values {
+		queries = append(queries, valueQuery(v))
+	}
+	return query.NewDisjunctionQuery(queries)
 }
 
 // addWildcardQueries adds wildcard queries for the given field to the disjunction.
@@ -2583,26 +2577,53 @@ func addWildcardQueries(disjoin *query.DisjunctionQuery, pattern string, field s
 	}
 }
 
-func newFilterQuery(key string, value string, prefix string) query.Query {
-	if key != resource.SEARCH_FIELD_TITLE {
-		return newQuery(key, value, prefix)
+// fieldFilterQuery builds the query for one field-filter value after requirementQuery has handled the selector operator.
+// It applies public field semantics, so a title filter can expand to multiple internal title fields.
+func fieldFilterQuery(key string, value string, prefix string) query.Query {
+	if key == resource.SEARCH_FIELD_TITLE {
+		return titleFieldFilterQuery(value, prefix)
 	}
+	if value == "*" {
+		return bleve.NewMatchAllQuery()
+	}
+	if strings.Contains(value, "*") {
+		return fieldWildcardQuery(key, value, prefix)
+	}
+	return fieldMatchQuery(key, value, prefix)
+}
 
+// titleFieldFilterQuery expands the public title filter across the internal title fields.
+func titleFieldFilterQuery(value string, prefix string) query.Query {
 	// Title exact matching and partial matching live in separate index fields,
 	// but the title filter API predates those internal fields.
 	queries := []query.Query{
-		newExactTermsQuery(resource.SEARCH_FIELD_TITLE_PHRASE, strings.ToLower(value), prefix),
-		newQuery(resource.SEARCH_FIELD_TITLE, value, prefix),
+		exactFieldTermQuery(resource.SEARCH_FIELD_TITLE_PHRASE, strings.ToLower(value), prefix),
+		titleFieldTokenQuery(value, prefix),
 	}
 	// Only use title_ngram for single-token title filters. Multi-word filters are handled by title_phrase/title;
 	// adding title_ngram can broaden them after removeSmallTerms drops short words, for example "what\"s up" becomes "what".
 	if !strings.ContainsAny(value, whitespaceCharacters) {
-		queries = append(queries, newTitleNgramQuery(value, prefix))
+		queries = append(queries, titleFieldNgramQuery(value, prefix))
 	}
 	return bleve.NewDisjunctionQuery(queries...)
 }
 
-func newTitleNgramQuery(value string, prefix string) query.Query {
+// titleFieldTokenQuery builds the part of title filtering that targets the standard-analyzed title field.
+func titleFieldTokenQuery(value string, prefix string) query.Query {
+	if value == "*" {
+		return bleve.NewMatchAllQuery()
+	}
+	if strings.Contains(value, "*") {
+		return fieldWildcardQuery(resource.SEARCH_FIELD_TITLE, value, prefix)
+	}
+	if delimiter, ok := firstTermSeparator(value); ok {
+		return fieldAllTokensQuery(resource.SEARCH_FIELD_TITLE, strings.Split(value, delimiter), prefix)
+	}
+	return fieldMatchQuery(resource.SEARCH_FIELD_TITLE, value, prefix)
+}
+
+// titleFieldNgramQuery builds the partial-match part of title filtering against title_ngram.
+func titleFieldNgramQuery(value string, prefix string) query.Query {
 	q := bleve.NewMatchQuery(removeSmallTerms(splitTermCharacters(value)))
 	q.SetField(prefix + resource.SEARCH_FIELD_TITLE_NGRAM)
 	q.Analyzer = TITLE_ANALYZER
@@ -2610,6 +2631,7 @@ func newTitleNgramQuery(value string, prefix string) query.Query {
 	return q
 }
 
+// splitTermCharacters normalizes punctuation separators before sending a title filter value through the ngram analyzer.
 func splitTermCharacters(value string) string {
 	for _, c := range TermCharacters {
 		value = strings.ReplaceAll(value, c, " ")
@@ -2617,38 +2639,24 @@ func splitTermCharacters(value string) string {
 	return value
 }
 
-// newQuery will create a query that will match the value or the tokens of the value
-func newQuery(key string, value string, prefix string) query.Query {
-	if value == "*" {
-		return bleve.NewMatchAllQuery()
-	}
-	if strings.Contains(value, "*") {
-		// wildcard query is expensive - should be used with caution
-		q := bleve.NewWildcardQuery(value)
-		q.SetField(prefix + key)
-		return q
-	}
-	delimiter, ok := firstTermSeparator(value)
-	if slices.Contains(termFields, key) && ok {
-		return newTermsQuery(key, value, delimiter, prefix)
-	}
+// fieldWildcardQuery builds a wildcard query against one concrete Bleve field.
+func fieldWildcardQuery(key string, value string, prefix string) query.Query {
+	// wildcard query is expensive - should be used with caution
+	q := bleve.NewWildcardQuery(value)
+	q.SetField(prefix + key)
+	return q
+}
+
+// fieldMatchQuery builds an analyzed match query against one concrete Bleve field.
+func fieldMatchQuery(key string, value string, prefix string) query.Query {
 	q := bleve.NewMatchQuery(value)
 	q.SetField(prefix + key)
 	return q
 }
 
-// newTermsQuery will create a query that will match on term or tokens
-func newTermsQuery(key string, value string, delimiter string, prefix string) query.Query {
-	q := newExactTermsQuery(key, value, prefix)
-
-	tokens := strings.Split(value, delimiter)
-	cq := newMatchAllTokensQuery(tokens, key, prefix)
-	return bleve.NewDisjunctionQuery(q, cq)
-}
-
-// newExactTermsQuery uses Bleve TermQuery for exact token matching.
+// exactFieldTermQuery uses Bleve TermQuery for exact token matching.
 // The input must already match how the field was indexed; TermQuery does not run an analyzer.
-func newExactTermsQuery(key string, value string, prefix string) query.Query {
+func exactFieldTermQuery(key string, value string, prefix string) query.Query {
 	// won't match with ending space
 	value = strings.TrimSuffix(value, " ")
 
@@ -2657,10 +2665,13 @@ func newExactTermsQuery(key string, value string, prefix string) query.Query {
 	return q
 }
 
-// newMatchAllTokensQuery will create a query that will match on all tokens
-func newMatchAllTokensQuery(tokens []string, key string, prefix string) query.Query {
+// fieldAllTokensQuery requires every token from a split filter value to match the same concrete Bleve field.
+func fieldAllTokensQuery(key string, tokens []string, prefix string) query.Query {
 	cq := bleve.NewConjunctionQuery()
 	for _, token := range tokens {
+		if token == "" {
+			continue
+		}
 		_, ok := firstTermSeparator(token)
 		if ok {
 			tq := bleve.NewTermQuery(token)
@@ -2668,9 +2679,7 @@ func newMatchAllTokensQuery(tokens []string, key string, prefix string) query.Qu
 			cq.AddQuery(tq)
 			continue
 		}
-		mq := bleve.NewMatchQuery(token)
-		mq.SetField(prefix + key)
-		cq.AddQuery(mq)
+		cq.AddQuery(fieldMatchQuery(key, token, prefix))
 	}
 	return cq
 }
