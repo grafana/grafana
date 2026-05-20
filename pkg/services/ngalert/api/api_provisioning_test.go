@@ -70,6 +70,11 @@ func TestIntegrationProvisioningApi(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("policies", func(t *testing.T) {
+		validRoute := func() definitions.Route {
+			return definitions.Route{
+				Receiver: "grafana-default-email",
+			}
+		}
 		t.Run("successful GET returns 200", func(t *testing.T) {
 			sut := createProvisioningSrvSut(t)
 			rc := createTestRequestCtx()
@@ -82,7 +87,7 @@ func TestIntegrationProvisioningApi(t *testing.T) {
 		t.Run("successful PUT returns 202", func(t *testing.T) {
 			sut := createProvisioningSrvSut(t)
 			rc := createTestRequestCtx()
-			tree := definitions.Route{}
+			tree := validRoute()
 
 			response := sut.RoutePutPolicyTree(&rc, tree)
 
@@ -101,17 +106,15 @@ func TestIntegrationProvisioningApi(t *testing.T) {
 		t.Run("when new policy tree is invalid", func(t *testing.T) {
 			t.Run("PUT returns 400", func(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
-				sut.policies = &fakeRejectingNotificationPolicyService{}
 				rc := createTestRequestCtx()
-				tree := definitions.Route{}
+				tree := definitions.Route{} // Invalid as it's missing a default receiver.
 
 				response := sut.RoutePutPolicyTree(&rc, tree)
 
 				require.Equal(t, 400, response.Status())
-				expBody := definitions.ValidationError{Message: "invalid object specification: invalid policy tree"}
-				expBodyJSON, marshalErr := json.Marshal(expBody)
-				require.NoError(t, marshalErr)
-				require.Equal(t, string(expBodyJSON), string(response.Body()))
+				body := string(response.Body())
+				require.Contains(t, body, "alerting.notifications.routes.invalidFormat")
+				require.Contains(t, body, "root route must specify a default receiver")
 			})
 		})
 
@@ -1542,7 +1545,7 @@ func TestIntegrationProvisioningApi(t *testing.T) {
 
 				rc.Req.Form.Add("format", "hcl")
 				expectedResponse := "resource \"grafana_notification_policy\" \"notification_policy_1\" {\n" +
-					"  contact_point = \"some-receiver\"\n" +
+					"  contact_point = \"grafana-default-email\"\n" +
 					"  group_by      = []\n" +
 					"}\n"
 
@@ -2143,7 +2146,6 @@ type testEnvironment struct {
 	store            store.DBstore
 	folderService    folder.Service
 	dashboardService dashboards.DashboardService
-	configs          legacy_storage.AMConfigStore
 	xact             provisioning.TransactionManager
 	quotas           provisioning.QuotaChecker
 	prov             provisioning.ProvisioningStore
@@ -2152,6 +2154,7 @@ type testEnvironment struct {
 	rulesAuthz       *fakes.FakeRuleService
 	features         featuremgmt.FeatureToggles
 	nsValidator      provisioning.NotificationSettingsValidatorProvider
+	settings         setting.UnifiedAlertingSettings
 }
 
 func createTestEnv(t *testing.T, testConfig string) testEnvironment {
@@ -2171,11 +2174,6 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 	require.NoError(t, err)
 
 	log := log.NewNopLogger()
-	configs := &legacy_storage.MockAMConfigStore{}
-	configs.EXPECT().
-		GetsConfig(models.AlertConfiguration{
-			AlertmanagerConfiguration: string(raw),
-		})
 	sqlStore, _ := db.InitTestDBWithCfg(t)
 
 	quotas := &provisioning.MockQuotaChecker{}
@@ -2233,16 +2231,24 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 	}
 	// if not one of the two above, return ErrFolderNotFound
 	folderService.ExpectedError = dashboards.ErrFolderNotFound
+	settings := setting.UnifiedAlertingSettings{
+		BaseInterval:         time.Second * 10,
+		DefaultConfiguration: setting.GetAlertmanagerDefaultConfiguration(),
+	}
 	store := store.DBstore{
-		Logger:   log,
-		SQLStore: sqlStore,
-		Cfg: setting.UnifiedAlertingSettings{
-			BaseInterval: time.Second * 10,
-		},
+		Logger:         log,
+		SQLStore:       sqlStore,
+		Cfg:            settings,
 		FolderService:  folderService,
 		Bus:            bus.ProvideBus(tracing.InitializeTracerForTest()),
 		FeatureToggles: featuremgmt.WithFeatures(),
 	}
+	store.SaveAlertmanagerConfiguration(context.Background(), &models.SaveAlertmanagerConfigurationCmd{
+		AlertmanagerConfiguration: string(raw),
+		ConfigurationVersion:      "v1",
+		Default:                   false,
+		OrgID:                     1,
+	})
 	user := &user.SignedInUser{
 		OrgID: 1,
 		/*
@@ -2259,7 +2265,6 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 	return testEnvironment{
 		secrets:          secretsService,
 		log:              log,
-		configs:          configs,
 		store:            store,
 		folderService:    folderService,
 		dashboardService: dashboardService,
@@ -2271,6 +2276,7 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		rulesAuthz:       ruleAuthz,
 		features:         features,
 		nsValidator:      &provisioning.NotificationSettingsValidatorProviderFake{},
+		settings:         settings,
 	}
 }
 
@@ -2285,20 +2291,10 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 	t.Helper()
 	tracer := tracing.InitializeTracerForTest()
 
-	rev := legacy_storage.ConfigRevision{
-		Config: &v1.AMConfigV1{
-			AlertmanagerConfig: v1.PostableApiAlertingConfig{
-				Config: v1.Config{
-					Route: &v1.Route{
-						Receiver: "some-receiver",
-					},
-				},
-			},
-		},
-	}
+	configStore := legacy_storage.NewAlertmanagerConfigStore(&env.store, notifier.NewExtraConfigsCrypto(env.secrets), env.features)
+	routeAccess := ac.NewRouteAccess[*legacy_storage.ManagedRoute](env.ac, ngalertfakes.NewFakeRoutePermissionsService(), true)
+	rs := routes.NewService(configStore, env.store, env.xact, env.settings, env.features, env.log, validation.ValidateProvenanceRelaxed, tracer, routeAccess)
 
-	configStore := legacy_storage.NewAlertmanagerConfigStore(env.configs, notifier.NewExtraConfigsCrypto(env.secrets), env.features)
-	rs := routes.NewFakeService(rev)
 	receiverAuthz := ac.NewReceiverAccess[*models.Receiver](env.ac, true)
 	receiverSvc := notifier.NewReceiverService(
 		receiverAuthz,
@@ -2316,9 +2312,20 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 		nil,
 		&notifier.NoopOrgEmailValidator{},
 	)
+	provisionRouteService := routes.NewService(
+		configStore,
+		env.prov,
+		env.xact,
+		env.settings,
+		env.features,
+		env.log,
+		validation.ValidateProvenanceRelaxed,
+		tracer,
+		routeAccess,
+	)
 	return ProvisioningSrv{
 		log:                 env.log,
-		policies:            newFakeNotificationPolicyService(rev),
+		policies:            provisioning.NewNotificationPolicyService(configStore, env.prov, env.xact, provisionRouteService, env.settings, env.log, validation.ValidateProvenanceRelaxed),
 		contactPointService: provisioning.NewContactPointService(receiverAuthz, configStore, env.secrets, env.prov, env.xact, receiverSvc, env.log, env.store, ngalertfakes.NewFakeReceiverPermissionsService(), nil, &notifier.NoopOrgEmailValidator{}),
 		templates:           provisioning.NewTemplateService(configStore, env.prov, env.xact, env.log, validation.ValidateProvenanceRelaxed),
 		muteTimings:         provisioning.NewMuteTimingService(configStore, env.prov, env.xact, env.log, env.store, rs, validation.ValidateProvenanceRelaxed),
@@ -2411,26 +2418,10 @@ func (f *fakeFailingNotificationPolicyService) ResetPolicyTree(ctx context.Conte
 	return definitions.Route{}, fmt.Errorf("something went wrong")
 }
 
-type fakeRejectingNotificationPolicyService struct {
-	NotificationPolicyService
-}
-
 type fakeRejectingNotificationSettingsValidatorProvider struct{}
 
 func (f *fakeRejectingNotificationSettingsValidatorProvider) Validator(ctx context.Context, orgID int64) (notifier.NotificationSettingsValidator, error) {
 	return notifier.RejectingValidation{}, nil
-}
-
-func (f *fakeRejectingNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, string, error) {
-	return definitions.Route{}, "", nil
-}
-
-func (f *fakeRejectingNotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p models.Provenance, version string) (definitions.Route, string, error) {
-	return definitions.Route{}, "", fmt.Errorf("%w: invalid policy tree", provisioning.ErrValidation)
-}
-
-func (f *fakeRejectingNotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64, provenance models.Provenance) (definitions.Route, error) {
-	return definitions.Route{}, nil
 }
 
 func createInvalidContactPoint() definitions.EmbeddedContactPoint {
