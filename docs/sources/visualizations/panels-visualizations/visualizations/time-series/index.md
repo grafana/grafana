@@ -196,7 +196,7 @@ Toggle the **Series visibility** switch on to add the control next to or above t
 This lets you narrow the visible series by name or by label.
 Use the series visibility filter when a panel renders many series and you want to focus on a subset without editing the query.
 
-Click the filter control to open a popover with two sections:
+After you've toggled the switch on, click the **Series visibility** icon  to open a tooltip with one or two sections depending on your dataset:
 
 - **By name**: Lists each unique series name. Select one or more names to limit the legend to those series.
 - **By labels**: Lists each label key with its values. Select label values to filter series that match.
