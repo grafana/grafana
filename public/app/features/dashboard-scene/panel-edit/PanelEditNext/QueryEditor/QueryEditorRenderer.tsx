@@ -73,20 +73,20 @@ export function QueryEditorRenderer() {
   return (
     <>
       <DataSourcePluginContextProvider instanceSettings={dsSettings}>
-        {/* <ErrorBoundaryAlert boundaryName="query-editor-renderer"> */}
-        <QueryEditorComponent
-          key={selectedQuery.refId}
-          app={CoreApp.Dashboard}
-          data={filteredData}
-          datasource={datasource}
-          onAddQuery={addQuery}
-          onChange={handleChange}
-          onRunQuery={runQueries}
-          queries={queries}
-          query={selectedQuery}
-          range={filteredData?.timeRange}
-        />
-        {/* </ErrorBoundaryAlert> */}
+        <ErrorBoundaryAlert boundaryName="query-editor-renderer">
+          <QueryEditorComponent
+            key={selectedQuery.refId}
+            app={CoreApp.Dashboard}
+            data={filteredData}
+            datasource={datasource}
+            onAddQuery={addQuery}
+            onChange={handleChange}
+            onRunQuery={runQueries}
+            queries={queries}
+            query={selectedQuery}
+            range={filteredData?.timeRange}
+          />
+        </ErrorBoundaryAlert>
       </DataSourcePluginContextProvider>
       {error && <QueryErrorAlert error={error} />}
     </>
