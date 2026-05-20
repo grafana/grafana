@@ -2,7 +2,6 @@ package provisioning
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -95,10 +94,6 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 
 	_, err = merge.MergeExtraConfig(ctx, revision.Config)
 	if err != nil {
-		if errors.Is(err, merge.ErrSubtreeMatchersConflict) {
-			// TODO temporarily get the conflicting matchers
-			return definitions.Route{}, "", models.MakeErrRouteConflictingMatchers(fmt.Sprintf("%s", revision.Config.ExtraConfigs[0].MergeMatchers))
-		}
 		nps.log.Warn("Unable to validate the combined routing tree because of an error during merging. This could be a sign of broken external configuration. Skipping", "error", err)
 	}
 

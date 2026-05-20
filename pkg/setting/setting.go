@@ -689,6 +689,7 @@ type Cfg struct {
 	MemberlistClusterLabel                     string
 	MemberlistClusterLabelVerificationDisabled bool
 	SearchRingReplicationFactor                int
+	SearchRingExtendReplicaSet                 bool
 	InstanceID                                 string
 	SprinklesApiServer                         string
 	SprinklesApiServerPageLimit                int

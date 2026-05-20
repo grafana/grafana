@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/alerting/definition/compat"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/config"
-	"github.com/prometheus/alertmanager/pkg/labels"
 	"go.yaml.in/yaml/v3"
 
 	"github.com/grafana/alerting/definition"
@@ -608,7 +607,6 @@ type DatasourceUIDReference struct {
 
 type ExtraConfiguration struct {
 	Identifier         string            `yaml:"identifier" json:"identifier"`
-	MergeMatchers      config.Matchers   `yaml:"merge_matchers" json:"merge_matchers"`
 	TemplateFiles      map[string]string `yaml:"template_files" json:"template_files"`
 	AlertmanagerConfig string            `yaml:"alertmanager_config" json:"alertmanager_config"`
 }
@@ -654,12 +652,6 @@ func (c *ExtraConfiguration) GetSanitizedAlertmanagerConfigYAML() (string, error
 func (c ExtraConfiguration) Validate() error {
 	if c.Identifier == "" {
 		return errors.New("identifier is required")
-	}
-
-	for _, m := range c.MergeMatchers {
-		if m.Type != labels.MatchEqual {
-			return errInvalidExtraConfiguration(errors.New("only matchers with type equal are supported"))
-		}
 	}
 
 	cfg, err := c.GetAlertmanagerConfig()

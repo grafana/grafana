@@ -302,14 +302,13 @@ var appManifestData = app.ManifestData{
 																					Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
 																				},
 																			},
-																			"items": {
+																			"externalGroups": {
 																				SchemaProps: spec.SchemaProps{
 																					Type: []string{"array"},
 																					Items: &spec.SchemaOrArray{
 																						Schema: &spec.Schema{
 																							SchemaProps: spec.SchemaProps{
-
-																								Ref: spec.MustCreateRef("#/components/schemas/getTeamGroupsExternalGroupMapping"),
+																								Type: []string{"string"},
 																							}},
 																					},
 																				},
@@ -322,7 +321,7 @@ var appManifestData = app.ManifestData{
 																			},
 																		},
 																		Required: []string{
-																			"items",
+																			"externalGroups",
 																			"apiVersion",
 																			"kind",
 																		},
