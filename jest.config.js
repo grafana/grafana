@@ -8,6 +8,7 @@ const esModules = [
   'ol',
   'd3',
   'd3-color',
+  'd3-force',
   'd3-interpolate',
   'delaunator',
   'get-user-locale',
@@ -73,6 +74,12 @@ module.exports = {
     '@bsull/augurs': '<rootDir>/public/test/mocks/augurs.ts',
     // Mock @grafana/assistant to prevent initialization errors in tests
     '^@grafana/assistant$': '<rootDir>/public/test/mocks/assistant.ts',
+    // d3-force and its dependencies use pure ESM (type: module). Map each to
+    // its UMD bundle so Jest can load them without experimental ESM mode.
+    '^d3-force$': '<rootDir>/node_modules/d3-force/dist/d3-force.min.js',
+    '^d3-quadtree$': '<rootDir>/node_modules/d3-quadtree/dist/d3-quadtree.min.js',
+    '^d3-dispatch$': '<rootDir>/node_modules/d3-dispatch/dist/d3-dispatch.min.js',
+    '^d3-timer$': '<rootDir>/node_modules/d3-timer/dist/d3-timer.min.js',
   },
   // Log the test results with dynamic Loki tags. Drone CI only
   reporters: ['default', ['<rootDir>/public/test/log-reporter.js', { enable: process.env.DRONE === 'true' }]],

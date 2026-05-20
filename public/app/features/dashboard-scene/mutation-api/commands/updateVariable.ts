@@ -6,14 +6,11 @@
 
 import { type z } from 'zod';
 
-import { sceneGraph, type SceneVariable } from '@grafana/scenes';
-import type { VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
-
-import { createSceneVariableFromVariableModel } from '../../serialization/transformSaveModelSchemaV2ToScene';
+import { sceneGraph } from '@grafana/scenes';
 
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
-import { isSceneNativeVariablePayload, replaceVariableSet } from './variableUtils';
+import { replaceVariableSet } from './variableUtils';
 
 export const updateVariablePayloadSchema = payloads.updateVariable;
 
@@ -26,45 +23,31 @@ export const updateVariableCommand: MutationCommand<UpdateVariablePayload> = {
   payloadSchema: payloads.updateVariable,
   permission: requiresEdit,
   readOnly: false,
-  undoDomain: 'variables',
 
   handler: async (payload, context) => {
     const { scene } = context;
     enterEditModeIfNeeded(scene);
 
     try {
-      let newSceneVariable: SceneVariable;
-      let name: string;
-
-      if (isSceneNativeVariablePayload(payload)) {
-        newSceneVariable = payload.__scenesPayload;
-        name = newSceneVariable.state.name;
-      } else {
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- validated by Zod in DashboardMutationClient
-        const typedPayload = payload as UpdateVariablePayload;
-        name = typedPayload.name;
-        const variableKind = typedPayload.variable;
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Zod output is structurally compatible with VariableKind
-        newSceneVariable = createSceneVariableFromVariableModel(variableKind as VariableKind);
-      }
-
+      const { name, variable: variableKind } = payload;
       const varSet = sceneGraph.getVariables(scene);
-      const currentVariables = [...varSet.state.variables];
-
-      const existingIndex = currentVariables.findIndex((v) => v.state.name === name);
-      if (existingIndex === -1) {
+      const existingVar = varSet.state.variables.find((v) => v.state.name === name);
+      if (!existingVar) {
         throw new Error(`Variable '${name}' not found`);
       }
+      const previousState = existingVar.state;
+      const variablesBeforeUpdate = varSet.state.variables.slice();
 
-      const previousState = currentVariables[existingIndex].state;
-      currentVariables[existingIndex] = newSceneVariable;
-
-      replaceVariableSet(scene, currentVariables);
+      scene.updateVariable(name, variableKind);
 
       return {
         success: true,
-        data: { name },
-        changes: [{ path: `/variables/${name}`, previousValue: previousState, newValue: name }],
+        data: { variable: variableKind },
+        changes: [{ path: `/variables/${name}`, previousValue: previousState, newValue: variableKind }],
+        _description: `Update variable '${name}'`,
+        _undo: () => {
+          replaceVariableSet(scene, variablesBeforeUpdate);
+        },
       };
     } catch (error) {
       return {
