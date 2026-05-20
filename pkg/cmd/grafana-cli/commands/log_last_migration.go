@@ -36,7 +36,7 @@ func lastMigration(sqlStore db.DB) (*migrationLogRow, error) {
 	err := sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 		var sErr error
 		has, sErr = sess.Table("migration_log").
-			Where("success = ?", true).
+			Where("success = ?", sqlStore.GetDialect().BooleanValue(true)).
 			OrderBy("timestamp DESC, id DESC").
 			Limit(1).
 			Get(&row)
