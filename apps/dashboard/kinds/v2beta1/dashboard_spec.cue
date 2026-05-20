@@ -74,7 +74,7 @@ LibraryPanelRef: {
 }
 
 AnnotationPanelFilter: {
-	// Should the specified panels be included or excluded
+	// When true, the listed panels are excluded; otherwise only those panels show the annotation
 	exclude?: bool | *false
 
 	// Panel IDs that should be included or excluded
@@ -472,14 +472,21 @@ VizConfigKind: {
 }
 
 AnnotationQuerySpec: {
-	query:     DataQueryKind
-	enable:    bool
-	hide:      bool
-	iconColor: string
-	name:      string
-	builtIn?:  bool | *false
-	filter?:   AnnotationPanelFilter
-	// Placement can be used to display the annotation query somewhere else on the dashboard other than the default location.
+	// Annotation query. For built-in dashboard annotations use group: "grafana".
+	query: DataQueryKind
+	// Whether the annotation is enabled by default
+	enable: bool | *true
+	// Whether the annotation toggle is hidden from the dashboard controls
+	hide: bool | *false
+	// Icon color for the annotation marker (e.g., "red", "blue", semantic color name)
+	iconColor: string | *"red"
+	// Annotation name. Must be unique within the dashboard.
+	name: string
+	// Built-in Grafana dashboard annotations layer. Exactly one built-in annotation exists per dashboard and is managed by Grafana.
+	builtIn?: bool | *false
+	// Limit the annotation to specific panels
+	filter?: AnnotationPanelFilter
+	// Render the annotation toggle in the dashboard controls dropdown menu instead of inline.
 	placement?: AnnotationQueryPlacement
 	// Mappings define how to convert data frame fields to annotation event fields.
 	mappings?: [string]: AnnotationEventFieldMapping
@@ -487,6 +494,7 @@ AnnotationQuerySpec: {
 	legacyOptions?: [string]: _
 }
 
+// Dashboard annotation layer (a query that produces event markers shown on time-series panels).
 AnnotationQueryKind: {
 	kind: "AnnotationQuery"
 	spec: AnnotationQuerySpec
@@ -504,15 +512,15 @@ QueryOptionsSpec: {
 }
 
 DataQueryKind: {
-	kind:    "DataQuery"
+	kind: "DataQuery"
+	// Datasource type (e.g., "prometheus", "loki", "mysql")
 	group:   string
 	version: string | *"v0"
 	labels?: [string]: string
-	// New type for datasource reference
-	// Not creating a new type until we figure out how to handle DS refs for group by, adhoc, and every place that uses DataSourceRef in TS.
 	datasource?: {
 		name?: string
 	}
+	// Query-specific fields (e.g., expr for Prometheus, rawSql for SQL)
 	spec: [string]: _
 }
 

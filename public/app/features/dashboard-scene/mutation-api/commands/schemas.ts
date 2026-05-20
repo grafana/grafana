@@ -23,6 +23,9 @@
 import { z } from 'zod';
 
 import type { AutoGridLayoutItemKind, GridLayoutItemKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { AnnotationQueryKindSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2/types.spec.zod.gen';
+
+export const annotationQueryKindSchema = AnnotationQueryKindSchema;
 
 export const dataQueryKindSchema = z.object({
   kind: z.literal('DataQuery').optional().default('DataQuery'),
@@ -546,58 +549,10 @@ export const partialTabSpecSchema = z
 
 // Annotation building-block schemas (v2beta1)
 
-const annotationPanelFilterSchema = z.object({
-  exclude: z
-    .boolean()
-    .optional()
-    .describe('When true, the listed panels are excluded; otherwise only those panels show the annotation'),
-  ids: z.array(z.number()).describe('Panel IDs to include or exclude'),
-});
-
 const annotationEventFieldMappingSchema = z.object({
   source: z.string().optional().describe('Source type for the field value (e.g., "field", "text")'),
   value: z.string().optional().describe('Constant value to use when source is "text"'),
   regex: z.string().optional().describe('Regular expression applied to the field value'),
-});
-
-export const annotationQueryKindSchema = z.object({
-  kind: z.literal('AnnotationQuery').optional().default('AnnotationQuery'),
-  spec: z.object({
-    name: z.string().describe('Annotation name. Must be unique within the dashboard.'),
-    enable: z.boolean().optional().default(true).describe('Whether the annotation is enabled by default'),
-    hide: z
-      .boolean()
-      .optional()
-      .default(false)
-      .describe('Whether the annotation toggle is hidden from the dashboard controls'),
-    iconColor: z
-      .string()
-      .optional()
-      .default('red')
-      .describe('Icon color for the annotation marker (e.g., "red", "blue", semantic color name)'),
-    builtIn: z
-      .boolean()
-      .optional()
-      .describe(
-        'Built-in Grafana dashboard annotations layer. Exactly one built-in annotation exists per dashboard and is managed by Grafana.'
-      ),
-    placement: z
-      .literal('inControlsMenu')
-      .optional()
-      .describe('Render the annotation toggle in the dashboard controls dropdown menu instead of inline'),
-    filter: annotationPanelFilterSchema.optional().describe('Limit the annotation to specific panels'),
-    mappings: z
-      .record(z.string(), annotationEventFieldMappingSchema)
-      .optional()
-      .describe('Map data frame fields to annotation event fields'),
-    legacyOptions: z
-      .record(z.string(), z.unknown())
-      .optional()
-      .describe('Catch-all bag for datasource-specific properties'),
-    query: dataQueryKindSchema.describe(
-      'Annotation query (DataQueryKind). For built-in dashboard annotations use group: "grafana".'
-    ),
-  }),
 });
 
 const partialAnnotationPanelFilterSchema = z.object({
@@ -659,11 +614,6 @@ export const removeVariablePayloadSchema = z.object({
 });
 
 // Annotation payload schemas
-
-export const addAnnotationPayloadSchema = z.object({
-  annotation: annotationQueryKindSchema.describe('Annotation definition (AnnotationQueryKind)'),
-  position: z.number().optional().describe('Position in annotations list (optional, appends if not set)'),
-});
 
 export const updateAnnotationPayloadSchema = z.object({
   name: z.string().describe('Annotation name to update'),
@@ -1127,7 +1077,6 @@ export const payloads = {
   removeVariable: removeVariablePayloadSchema.describe('Remove a template variable'),
   updateVariable: updateVariablePayloadSchema.describe('Update an existing template variable'),
   listVariables: emptyPayloadSchema.describe('List all template variables on the dashboard'),
-  addAnnotation: addAnnotationPayloadSchema.describe('Add a new dashboard annotation layer'),
   updateAnnotation: updateAnnotationPayloadSchema.describe(
     'Update an existing dashboard annotation layer by name (partial update, deep-merge)'
   ),

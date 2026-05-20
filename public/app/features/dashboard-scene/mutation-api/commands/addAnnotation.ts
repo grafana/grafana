@@ -15,7 +15,7 @@ import {
   hasBuiltInAnnotation,
   replaceAnnotationLayers,
 } from './annotationUtils';
-import { payloads } from './schemas';
+import { payloads } from './payloads';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
 
 type AddAnnotationPayload = z.infer<typeof payloads.addAnnotation>;

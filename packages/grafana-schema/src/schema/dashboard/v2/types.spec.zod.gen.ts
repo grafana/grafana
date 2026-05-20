@@ -24,34 +24,34 @@ export const DashboardSpecSchema = z.object({
 export const AnnotationQueryKindSchema = z.object({
 	kind: z.literal("AnnotationQuery").optional().default("AnnotationQuery"),
 	spec: z.lazy(() => AnnotationQuerySpecSchema),
-});
+}).describe("Dashboard annotation layer (a query that produces event markers shown on time-series panels).");
 
 export const AnnotationQuerySpecSchema = z.object({
-	query: z.lazy(() => DataQueryKindSchema),
-	enable: z.boolean(),
-	hide: z.boolean(),
-	iconColor: z.string(),
-	name: z.string(),
-	builtIn: z.boolean().optional().default(false),
-	filter: z.lazy(() => AnnotationPanelFilterSchema).optional(),
-	placement: z.literal("inControlsMenu").optional().describe("Placement can be used to display the annotation query somewhere else on the dashboard other than the default location."),
+	query: z.lazy(() => DataQueryKindSchema).describe("Annotation query. For built-in dashboard annotations use group: \"grafana\"."),
+	enable: z.boolean().optional().default(true).describe("Whether the annotation is enabled by default"),
+	hide: z.boolean().optional().default(false).describe("Whether the annotation toggle is hidden from the dashboard controls"),
+	iconColor: z.string().optional().default("red").describe("Icon color for the annotation marker (e.g., \"red\", \"blue\", semantic color name)"),
+	name: z.string().describe("Annotation name. Must be unique within the dashboard."),
+	builtIn: z.boolean().optional().default(false).describe("Built-in Grafana dashboard annotations layer. Exactly one built-in annotation exists per dashboard and is managed by Grafana."),
+	filter: z.lazy(() => AnnotationPanelFilterSchema).optional().describe("Limit the annotation to specific panels"),
+	placement: z.literal("inControlsMenu").optional().describe("Render the annotation toggle in the dashboard controls dropdown menu instead of inline."),
 	mappings: z.record(z.string(), z.lazy(() => AnnotationEventFieldMappingSchema)).optional().describe("Mappings define how to convert data frame fields to annotation event fields."),
 	legacyOptions: z.record(z.string(), z.unknown()).optional().describe("Catch-all field for datasource-specific properties. Should not be available in as code tooling."),
 });
 
 export const DataQueryKindSchema = z.object({
 	kind: z.literal("DataQuery").optional().default("DataQuery"),
-	group: z.string(),
+	group: z.string().describe("Datasource type (e.g., \"prometheus\", \"loki\", \"mysql\")"),
 	version: z.string().optional().default("v0"),
 	labels: z.record(z.string(), z.string()).optional(),
 	datasource: z.object({
 	name: z.string().optional(),
-}).optional().describe("New type for datasource reference\nNot creating a new type until we figure out how to handle DS refs for group by, adhoc, and every place that uses DataSourceRef in TS."),
-	spec: z.record(z.string(), z.unknown()),
+}).optional(),
+	spec: z.record(z.string(), z.unknown()).describe("Query-specific fields (e.g., expr for Prometheus, rawSql for SQL)"),
 });
 
 export const AnnotationPanelFilterSchema = z.object({
-	exclude: z.boolean().optional().default(false).describe("Should the specified panels be included or excluded"),
+	exclude: z.boolean().optional().default(false).describe("When true, the listed panels are excluded; otherwise only those panels show the annotation"),
 	ids: z.array(z.number().int()).describe("Panel IDs that should be included or excluded"),
 });
 
