@@ -1216,7 +1216,7 @@ func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.Lis
 			// 'user-defined' is the default notification policy tree. Rules pointing to it are
 			// stored with alert_routing_policy = NULL (PolicyRouting.Validate prevents storing
 			// the sentinel value explicitly). Match rules with no routing override at all.
-			q = q.Where("alert_routing_policy IS NULL AND (notification_settings IS NULL OR notification_settings = '' OR notification_settings = 'null' OR notification_settings = '[]')")
+			q = q.Where("alert_routing_policy IS NULL AND " + sqlNotificationSettingsUnset)
 		} else {
 			q = q.Where("alert_routing_policy = ?", query.RoutingPolicyExact)
 		}
@@ -1796,18 +1796,21 @@ func (st DBstore) filterByContentInNotificationSettings(value string, sess *xorm
 	return sess.And(sql, param), nil
 }
 
+// sqlNotificationSettingsUnset is a SQL predicate that matches rules with no contact-point
+// (SimplifiedRouting) settings: rows where notification_settings is NULL or empty.
+const sqlNotificationSettingsUnset = "(notification_settings IS NULL OR notification_settings = '' OR notification_settings = 'null' OR notification_settings = '[]')"
+
 // notificationSettingsTypeClause returns a SQL predicate matching rules whose effective
 // notification settings type equals t. Effective type is SimplifiedRouting when
 // notification_settings is set, otherwise NamedRoutingTree when alert_routing_policy is set.
 // SimplifiedRouting takes precedence on rules that have both columns populated.
 func notificationSettingsTypeClause(t ngmodels.NotificationSettingsType) (string, error) {
 	const simplifiedSet = "notification_settings IS NOT NULL AND notification_settings <> '' AND notification_settings <> 'null' AND notification_settings <> '[]'"
-	const simplifiedUnset = "(notification_settings IS NULL OR notification_settings = '' OR notification_settings = 'null' OR notification_settings = '[]')"
 	switch t {
 	case ngmodels.NotificationSettingsTypeSimplifiedRouting:
 		return simplifiedSet, nil
 	case ngmodels.NotificationSettingsTypeNamedRoutingTree:
-		return "alert_routing_policy IS NOT NULL AND " + simplifiedUnset, nil
+		return "alert_routing_policy IS NOT NULL AND " + sqlNotificationSettingsUnset, nil
 	default:
 		return "", fmt.Errorf("unsupported notification settings type %q", t)
 	}
