@@ -1058,14 +1058,7 @@ func TestApplyConfigWithExtraConfigs(t *testing.T) {
 
 	cfg.ExtraConfigs = []apimodels.ExtraConfiguration{
 		{
-			Identifier: "test-external",
-			MergeMatchers: []*labels.Matcher{
-				{
-					Type:  labels.MatchEqual,
-					Name:  "test",
-					Value: "value",
-				},
-			},
+			Identifier:    "test-external",
 			TemplateFiles: map[string]string{},
 			AlertmanagerConfig: `global:
   smtp_smarthost: localhost:587
@@ -1168,13 +1161,6 @@ func TestCompareAndSendConfigurationWithExtraConfigs(t *testing.T) {
 		ExtraConfigs: []apimodels.ExtraConfiguration{
 			{
 				Identifier: "test-external",
-				MergeMatchers: []*labels.Matcher{
-					{
-						Type:  labels.MatchEqual,
-						Name:  "test",
-						Value: "test",
-					},
-				},
 				AlertmanagerConfig: `global:
   smtp_smarthost: localhost:587
   smtp_from: alerts@grafana.com

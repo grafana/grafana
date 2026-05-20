@@ -66,12 +66,10 @@ func TestIntegrationConvertPrometheusAlertmanagerEndpoints(t *testing.T) {
 	t.Run("create and get alertmanager configuration", func(t *testing.T) {
 		identifier := "test-create-get-config"
 		defer cleanup(identifier)
-		mergeMatchers := "environment=production,team=backend"
 
 		headers := map[string]string{
 			"Content-Type":                         "application/yaml",
 			"X-Grafana-Alerting-Config-Identifier": identifier,
-			"X-Grafana-Alerting-Merge-Matchers":    mergeMatchers,
 		}
 
 		amConfig := apimodels.AlertmanagerUserConfig{
@@ -107,12 +105,10 @@ func TestIntegrationConvertPrometheusAlertmanagerEndpoints(t *testing.T) {
 	t.Run("delete alertmanager configuration", func(t *testing.T) {
 		identifier := "test-delete-config"
 		defer cleanup(identifier)
-		mergeMatchers := "environment=production,team=backend"
 
 		headers := map[string]string{
 			"Content-Type":                         "application/yaml",
 			"X-Grafana-Alerting-Config-Identifier": identifier,
-			"X-Grafana-Alerting-Merge-Matchers":    mergeMatchers,
 		}
 
 		amConfig := apimodels.AlertmanagerUserConfig{
@@ -143,8 +139,7 @@ func TestIntegrationConvertPrometheusAlertmanagerEndpoints(t *testing.T) {
 			defer cleanup("")
 
 			headers := map[string]string{
-				"Content-Type":                      "application/yaml",
-				"X-Grafana-Alerting-Merge-Matchers": "environment=test",
+				"Content-Type": "application/yaml",
 			}
 
 			amConfig := apimodels.AlertmanagerUserConfig{
@@ -176,26 +171,10 @@ func TestIntegrationConvertPrometheusAlertmanagerEndpoints(t *testing.T) {
 			requireStatusCode(t, http.StatusBadRequest, status, "")
 		})
 
-		t.Run("POST with invalid merge matchers format should fail", func(t *testing.T) {
-			headers := map[string]string{
-				"Content-Type":                         "application/yaml",
-				"X-Grafana-Alerting-Config-Identifier": "test-invalid-matchers",
-				"X-Grafana-Alerting-Merge-Matchers":    "invalid-no-equals-sign",
-			}
-
-			amConfig := apimodels.AlertmanagerUserConfig{
-				AlertmanagerConfig: string(configYaml),
-			}
-
-			_, status, _ := apiClient.RawConvertPrometheusPostAlertmanagerConfig(t, amConfig, headers)
-			requireStatusCode(t, http.StatusBadRequest, status, "")
-		})
-
 		t.Run("POST with invalid alertmanager configuration should fail", func(t *testing.T) {
 			headers := map[string]string{
 				"Content-Type":                         "application/yaml",
 				"X-Grafana-Alerting-Config-Identifier": "test-invalid-yaml",
-				"X-Grafana-Alerting-Merge-Matchers":    "environment=test",
 			}
 
 			amConfig := apimodels.AlertmanagerUserConfig{
@@ -208,8 +187,7 @@ func TestIntegrationConvertPrometheusAlertmanagerEndpoints(t *testing.T) {
 
 		t.Run("DELETE without config identifier header should use default identifier", func(t *testing.T) {
 			createHeaders := map[string]string{
-				"Content-Type":                      "application/yaml",
-				"X-Grafana-Alerting-Merge-Matchers": "environment=test",
+				"Content-Type": "application/yaml",
 			}
 
 			amConfig := apimodels.AlertmanagerUserConfig{
@@ -237,7 +215,6 @@ func TestIntegrationConvertPrometheusAlertmanagerEndpoints(t *testing.T) {
 		headers := map[string]string{
 			"Content-Type":                         "application/yaml",
 			"X-Grafana-Alerting-Config-Identifier": identifier,
-			"X-Grafana-Alerting-Merge-Matchers":    "environment=production",
 		}
 
 		amConfig1 := apimodels.AlertmanagerUserConfig{
@@ -297,7 +274,6 @@ receivers:
 		firstHeaders := map[string]string{
 			"Content-Type":                         "application/yaml",
 			"X-Grafana-Alerting-Config-Identifier": firstIdentifier,
-			"X-Grafana-Alerting-Merge-Matchers":    "environment=first",
 		}
 
 		amConfig1 := apimodels.AlertmanagerUserConfig{
@@ -315,7 +291,6 @@ receivers:
 		secondHeaders := map[string]string{
 			"Content-Type":                         "application/yaml",
 			"X-Grafana-Alerting-Config-Identifier": secondIdentifier,
-			"X-Grafana-Alerting-Merge-Matchers":    "environment=second",
 		}
 
 		amConfig2 := apimodels.AlertmanagerUserConfig{
@@ -416,7 +391,6 @@ func TestIntegrationConvertPrometheusAlertmanagerEndpoints_FeatureFlagDisabled(t
 	headers := map[string]string{
 		"Content-Type":                         "application/yaml",
 		"X-Grafana-Alerting-Config-Identifier": "test-config",
-		"X-Grafana-Alerting-Merge-Matchers":    "environment=test",
 	}
 	configYaml, err := testData.ReadFile(path.Join("test-data", "mimir-alertmanager-post.yaml"))
 	require.NoError(t, err)

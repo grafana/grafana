@@ -868,7 +868,6 @@ receivers:
 	headers := map[string]string{
 		"Content-Type":                         "application/yaml",
 		"X-Grafana-Alerting-Config-Identifier": "external-system",
-		"X-Grafana-Alerting-Merge-Matchers":    "imported=true",
 	}
 
 	// Post the configuration to Grafana
@@ -877,28 +876,20 @@ receivers:
 	}, headers)
 	require.Equal(t, "success", response.Status)
 
-	current, err := client.Get(ctx, defaultTreeIdentifier)
-	require.NoError(t, err)
-	updated := current.Copy().(*v1beta1.RoutingTree)
-	updated.Spec.Routes = append(updated.Spec.Routes, v1beta1.RoutingTreeRoute{
-		Matchers: []v1beta1.RoutingTreeMatcher{
-			{
-				Label: "imported",
-				Type:  v1beta1.RoutingTreeMatcherTypeEqual,
-				Value: "true",
-			},
-		},
-	})
-
-	_, err = client.Update(ctx, updated, resource.UpdateOptions{})
+	// The imported route is named after its identifier. Creating a managed route
+	// with the same name must fail while the import exists.
+	_, err = client.Create(ctx, k8sRoute(t, "external-system", &definitions.Route{Receiver: "empty"}), resource.CreateOptions{})
 	require.Error(t, err)
-	require.Truef(t, errors.IsBadRequest(err), "Should get BadRequest error but got: %s", err)
+	require.Truef(t, errors.IsConflict(err), "Should get Conflict error but got: %s", err)
 
-	// Now delete extra config
+	// After removing the imported config the name is free.
 	legacyCli.ConvertPrometheusDeleteAlertmanagerConfig(t, headers)
 
-	// and try again
-	_, err = client.Update(ctx, updated, resource.UpdateOptions{})
+	created, err := client.Create(ctx, k8sRoute(t, "external-system", &definitions.Route{Receiver: "empty"}), resource.CreateOptions{})
+	require.NoError(t, err)
+
+	// Clean up.
+	err = client.Delete(ctx, resource.Identifier{Namespace: apis.DefaultNamespace, Name: created.Name}, resource.DeleteOptions{})
 	require.NoError(t, err)
 }
 
