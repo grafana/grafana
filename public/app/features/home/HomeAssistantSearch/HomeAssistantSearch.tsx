@@ -164,6 +164,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     form: css({
       width: '100%',
+      overflow: 'hidden',
     }),
     wrapper: css({
       position: 'relative',
