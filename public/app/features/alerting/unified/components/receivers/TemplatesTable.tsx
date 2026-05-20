@@ -194,7 +194,7 @@ function TemplateRow({ notificationTemplate, idx, alertManagerName, onDeleteClic
               icon="file-alt"
             />
           )}
-          {!isProvisioned && canUpdate && (
+          {canUpdate && (
             <ActionIcon
               to={makeAMLink(`/alerting/notifications/templates/${encodeURIComponent(uid)}/edit`, alertManagerName)}
               tooltip={t('alerting.template-row.tooltip-edit-template-group', 'Edit template group')}
@@ -211,7 +211,7 @@ function TemplateRow({ notificationTemplate, idx, alertManagerName, onDeleteClic
               icon="copy"
             />
           )}
-          {!isProvisioned && canDelete && (
+          {canDelete && (
             <ActionIcon
               onClick={() => onDeleteClick(notificationTemplate)}
               tooltip={t('alerting.template-row.tooltip-delete-template-group', 'Delete template group')}
