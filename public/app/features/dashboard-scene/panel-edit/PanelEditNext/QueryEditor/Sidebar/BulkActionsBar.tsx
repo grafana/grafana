@@ -217,12 +217,11 @@ interface BulkActionsVisibility {
   shouldRender: boolean;
 }
 
-// In explicit multi-select mode any selection is actionable. Outside of it
-// (keyboard-shortcut path: Cmd/Ctrl+click, Shift+click) the bar opens at 2+
-// to avoid noise on every plain single-card click. Exported so the parent
-// (SidebarFooter) can ternary-render the bar vs. counts off the same rule.
+// Bulk actions are only available after explicitly entering multi-select mode.
+// Exported so the parent (SidebarFooter) can ternary-render the bar vs. counts
+// off the same rule.
 export function hasActionableSelection(selectionCount: number, multiSelectMode: boolean): boolean {
-  return multiSelectMode ? selectionCount >= 1 : selectionCount >= 2;
+  return multiSelectMode && selectionCount >= 1;
 }
 
 function getBulkActionsVisibility({

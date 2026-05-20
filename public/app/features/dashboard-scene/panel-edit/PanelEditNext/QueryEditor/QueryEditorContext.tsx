@@ -71,9 +71,7 @@ interface TransformationToggles extends TransformationToggleState {
 }
 
 export interface SelectionModifiers {
-  /** True when Ctrl or Cmd is held — toggles this card in/out of the selection without clearing others. */
-  multi?: boolean;
-  /** True when Shift is held — range-selects from the last selected card to this one. */
+  /** True when Shift is held on a checkbox — range-selects from the last checked card to this one. */
   range?: boolean;
 }
 

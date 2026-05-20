@@ -18,7 +18,8 @@ interface SidebarCardProps {
   isSelected: boolean;
   isPartOfSelection?: boolean;
   item: ActionItem;
-  onSelect: (modifiers?: { multi?: boolean; range?: boolean }) => void;
+  onSelect: () => void;
+  onToggleSelection?: (modifiers?: { range?: boolean }) => void;
   onDelete?: () => void;
   onDuplicate?: () => void;
   onToggleHide?: () => void;
@@ -44,6 +45,7 @@ export const SidebarCard = ({
   isPartOfSelection,
   item,
   onSelect,
+  onToggleSelection,
   onDelete,
   onDuplicate,
   onToggleHide,
@@ -54,13 +56,7 @@ export const SidebarCard = ({
   const addVariant = item.type === QueryEditorType.Transformation ? 'transformation' : 'query';
   const hasActions = onDelete || onDuplicate || onToggleHide;
   const [hasFocusWithin, setHasFocusWithin] = useState(false);
-  const { multiSelectMode, selectedQueryRefIds, selectedTransformationIds } = useQueryEditorUIContext();
-  // Selection-mode UI shows whenever the user has explicitly entered
-  // multi-select mode (Select… button) OR has accumulated 2+ items via
-  // Cmd/Shift+click. While in this mode, plain clicks toggle the card in/out
-  // of the selection (checkbox-style) instead of replacing it.
-  const showSelectionControls =
-    multiSelectMode || selectedQueryRefIds.length >= 2 || selectedTransformationIds.length >= 2;
+  const { multiSelectMode } = useQueryEditorUIContext();
 
   const styles = useStyles2(getStyles, { isSelected, isPartOfSelection, item });
 
@@ -79,8 +75,8 @@ export const SidebarCard = ({
     setHasFocusWithin(false);
   }, []);
 
-  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    onSelect({ multi: showSelectionControls || e.metaKey || e.ctrlKey, range: e.shiftKey });
+  const handleClick = () => {
+    onSelect();
   };
 
   // Using a div with role="button" instead of a native button for @hello-pangea/dnd compatibility,
@@ -92,7 +88,21 @@ export const SidebarCard = ({
 
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      onSelect({ multi: showSelectionControls });
+      onSelect();
+    }
+  };
+
+  const handleCheckboxMouseDown = (e: React.MouseEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onToggleSelection?.({ range: e.shiftKey });
+  };
+
+  const handleCheckboxKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    e.stopPropagation();
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onToggleSelection?.({ range: e.shiftKey });
     }
   };
 
@@ -113,7 +123,17 @@ export const SidebarCard = ({
   }
 
   return (
-    <div className={styles.wrapper}>
+    <div className={cx(styles.wrapper, multiSelectMode && styles.multiSelectWrapper)}>
+      {multiSelectMode && (
+        <Checkbox
+          className={cx(styles.checkboxWrapper, styles.roundedCheckbox)}
+          value={Boolean(isPartOfSelection)}
+          onMouseDown={handleCheckboxMouseDown}
+          onKeyDown={handleCheckboxKeyDown}
+          onChange={() => {}}
+          aria-label={t('query-editor-next.sidebar.card-checkbox', 'Select {{id}} for bulk actions', { id })}
+        />
+      )}
       <div
         className={styles.card}
         onClick={handleClick}
@@ -125,19 +145,9 @@ export const SidebarCard = ({
         tabIndex={0}
         data-query-sidebar-card={id}
         aria-label={t('query-editor-next.sidebar.card-click', 'Select card {{id}}', { id })}
-        aria-pressed={isSelected || isPartOfSelection}
+        aria-pressed={isSelected}
       >
         <div className={styles.cardContent}>
-          {showSelectionControls && (
-            <div aria-hidden className={styles.checkboxWrapper}>
-              <Checkbox
-                className={styles.roundedCheckbox}
-                tabIndex={-1}
-                value={isSelected || isPartOfSelection}
-                onChange={() => {}}
-              />
-            </div>
-          )}
           {children}
         </div>
         {/** Alerts don't have actions and cannot be hidden so we don't need to show the hidden icon or hover actions. */}
@@ -165,7 +175,7 @@ export const SidebarCard = ({
           </div>
         )}
       </div>
-      <AddCardButton variant={addVariant} afterId={id} />
+      {!multiSelectMode && <AddCardButton variant={addVariant} afterId={id} />}
     </div>
   );
 };
@@ -229,19 +239,12 @@ function getStyles(
     },
   });
 
-  const inSelection = isSelected || isPartOfSelection;
   const cardBorder = !!item.error
     ? `1px solid ${theme.colors.error.border}`
-    : `1px solid ${inSelection ? borderColor : theme.colors.border.medium}`;
-
-  const selectionTintBg = `color-mix(in srgb, ${borderColor} 5%, ${theme.colors.background.primary})`;
+    : `1px solid ${isSelected ? borderColor : theme.colors.border.medium}`;
 
   // Selection-based styling
-  const cardBackground = isSelected
-    ? selectedBg
-    : isPartOfSelection
-      ? selectionTintBg
-      : theme.colors.background.primary;
+  const cardBackground = isSelected ? selectedBg : theme.colors.background.primary;
   const cardBoxShadow = isSelected ? `0 0 4px 0 color-mix(in srgb, ${borderColor} 40%, transparent)` : 'none';
   const indicatorWidth = isSelected ? 3 : 2;
 
@@ -290,6 +293,13 @@ function getStyles(
         opacity: 1,
         pointerEvents: 'auto',
       },
+    }),
+    multiSelectWrapper: css({
+      display: 'grid',
+      gridTemplateColumns: `${theme.spacing(3)} minmax(0, 1fr)`,
+      alignItems: 'center',
+      columnGap: theme.spacing(0.75),
+      marginLeft: theme.spacing(0.5),
     }),
     ghostWrapper: css({
       marginTop: theme.spacing(SIDEBAR_CARD_SPACING),
@@ -375,14 +385,25 @@ function getStyles(
     }),
 
     // Local Checkbox styles override for PanelEditorNext UI/UX experimentation.
-    // The checkbox is purely presentational — clicks/focus go to the card itself.
     checkboxWrapper: css({
       display: 'flex',
-      pointerEvents: 'none',
+      justifySelf: 'center',
+      zIndex: 2,
     }),
     roundedCheckbox: css({
+      '& input': {
+        cursor: 'pointer',
+      },
+      '& input:hover + span': {
+        borderColor: theme.components.input.borderHover,
+      },
+      '& input:checked:hover + span': {
+        background: theme.colors.primary.shade,
+        borderColor: theme.colors.primary.shade,
+      },
       '& span': {
         borderRadius: theme.shape.radius.circle,
+        pointerEvents: 'none',
       },
       '& input:checked + span:after': {
         left: '50%',
@@ -393,7 +414,6 @@ function getStyles(
         borderWidth: '0 1.5px 1.5px 0',
       },
     }),
-
     ghostCard: css({
       border: `1px solid ${ghostBorderColor}`,
       background: ghostBackgroundColor,

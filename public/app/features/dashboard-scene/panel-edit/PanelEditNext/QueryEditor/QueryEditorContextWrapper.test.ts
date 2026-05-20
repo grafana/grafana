@@ -155,11 +155,10 @@ describe('QueryEditorContextWrapper - alert selection', () => {
     expect(result.current.selectedAlert).toBeNull();
   });
 
-  it('clears query and transformation selection when an alert is selected', () => {
+  it('clears query and transformation bulk selection when an alert is selected', () => {
     const { result } = renderWithWrapper(makeMockDataPane());
 
-    // Establish a non-empty query selection first so the assertion is meaningful
-    act(() => result.current.setSelectedQuery({ refId: 'A' } as DataQuery));
+    act(() => result.current.toggleQuerySelection({ refId: 'A' } as DataQuery));
     expect(result.current.selectedQueryRefIds).toEqual(['A']);
 
     act(() => result.current.setSelectedAlert(mockAlert));
@@ -178,6 +177,37 @@ describe('QueryEditorContextWrapper - alert selection', () => {
     act(() => result.current.setSelectedQuery({ refId: 'A' } as DataQuery));
 
     expect(result.current.selectedAlert).toBeNull();
+  });
+});
+
+describe('QueryEditorContextWrapper - multi-select mode', () => {
+  beforeEach(() => {
+    mockUseAlertRulesForPanel.mockReturnValue({
+      alertRules: [],
+      loading: false,
+      isDashboardSaved: true,
+    });
+  });
+
+  it('preselects the active query when entering multi-select mode', () => {
+    const { result } = renderWithWrapper(makeMockDataPane());
+    const query = { refId: 'A' } as DataQuery;
+
+    act(() => result.current.setSelectedQuery(query));
+    act(() => result.current.setMultiSelectMode(true));
+
+    expect(result.current.multiSelectMode).toBe(true);
+    expect(result.current.selectedQueryRefIds).toEqual(['A']);
+  });
+
+  it('clears bulk selection when leaving multi-select mode', () => {
+    const { result } = renderWithWrapper(makeMockDataPane());
+
+    act(() => result.current.toggleQuerySelection({ refId: 'A' } as DataQuery));
+    act(() => result.current.setMultiSelectMode(false));
+
+    expect(result.current.multiSelectMode).toBe(false);
+    expect(result.current.selectedQueryRefIds).toEqual([]);
   });
 });
 
@@ -206,7 +236,7 @@ describe('QueryEditorContextWrapper - delete actions', () => {
     const dataPane = makeMockDataPane();
     const { result } = renderWithBothContexts(dataPane);
 
-    act(() => result.current.ui.setSelectedQuery({ refId: 'A' } as DataQuery));
+    act(() => result.current.ui.toggleQuerySelection({ refId: 'A' } as DataQuery));
     expect(result.current.ui.selectedQueryRefIds).toEqual(['A']);
 
     act(() => result.current.actions.deleteQuery('A'));
@@ -226,7 +256,7 @@ describe('QueryEditorContextWrapper - delete actions', () => {
     const dataPane = makeMockDataPane();
     const { result } = renderWithBothContexts(dataPane);
 
-    act(() => result.current.ui.setSelectedTransformation(mockTransformation));
+    act(() => result.current.ui.toggleTransformationSelection(mockTransformation));
     expect(result.current.ui.selectedTransformationIds).toEqual(['reduce-0']);
 
     act(() => result.current.actions.deleteTransformation('reduce-0'));
