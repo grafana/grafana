@@ -514,33 +514,43 @@ func mergeIntoExisting(existing, desired resource.Object) {
 	desired.SetManagedFields(existing.GetManagedFields())
 
 	// Annotations: start from existing, overlay our managed ones from desired.
-	merged := map[string]string{}
-	for k, v := range existing.GetAnnotations() {
-		merged[k] = v
-	}
-	for k, v := range desired.GetAnnotations() {
-		merged[k] = v
-	}
-	desired.SetAnnotations(merged)
+	desired.SetAnnotations(mergeStringMapsForUpdate(existing.GetAnnotations(), desired.GetAnnotations()))
 
 	// Labels: same merge strategy. We currently don't set labels on any managed resource,
 	// so this just preserves whatever's there. Keeping the merge so adding a managed label
 	// later doesn't silently wipe user labels.
-	mergedLabels := map[string]string{}
-	for k, v := range existing.GetLabels() {
-		mergedLabels[k] = v
-	}
-	for k, v := range desired.GetLabels() {
-		mergedLabels[k] = v
-	}
-	desired.SetLabels(mergedLabels)
+	desired.SetLabels(mergeStringMapsForUpdate(existing.GetLabels(), desired.GetLabels()))
 
 	// OwnerReferences: merge by UID so other controllers' owner refs survive while we
 	// keep ours up to date (e.g. PrometheusRuleFile recreated under a new UID).
 	desired.SetOwnerReferences(mergeOwnerReferences(existing.GetOwnerReferences(), desired.GetOwnerReferences()))
 }
 
+// mergeStringMapsForUpdate is like mergeStringMaps but returns nil instead of an empty map
+// when both inputs are empty. The reconciler's no-op gate compares annotation / label maps
+// via reflect.DeepEqual, which treats nil and map[string]string{} as different, so handing
+// it nil when there's nothing to merge avoids a spurious "changed" verdict.
+func mergeStringMapsForUpdate(a, b map[string]string) map[string]string {
+	if len(a) == 0 && len(b) == 0 {
+		return nil
+	}
+	out := make(map[string]string, len(a)+len(b))
+	for k, v := range a {
+		out[k] = v
+	}
+	for k, v := range b {
+		out[k] = v
+	}
+	return out
+}
+
 func mergeOwnerReferences(existing, desired []metav1.OwnerReference) []metav1.OwnerReference {
+	if len(existing) == 0 && len(desired) == 0 {
+		// Returning a non-nil empty slice would defeat the no-op gate for kinds we don't
+		// set owner references on (AlertRule, RecordingRule), since reflect.DeepEqual
+		// distinguishes nil from []metav1.OwnerReference{}.
+		return nil
+	}
 	out := make([]metav1.OwnerReference, 0, len(existing)+len(desired))
 	seen := make(map[types.UID]int, len(desired))
 	for i, ref := range desired {
