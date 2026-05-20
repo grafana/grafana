@@ -84,13 +84,25 @@ func New(cfg app.Config, log logging.Logger) (app.Runnable, error) {
 	}, nil
 }
 
+// isMT reports whether the runner has neither a stack ID nor an org
+// service configured. In that mode the scheduler discovers namespaces from
+// the apiserver (see runMT in mtcheckscheduler.go) instead of resolving them
+// from local config.
+func (r *Runner) isMT() bool {
+	return r.stackID == "" && r.orgService == nil
+}
+
 func (r *Runner) Run(ctx context.Context) error {
 	logger := r.log.WithContext(ctx)
-	if r.stackID == "" && r.orgService == nil {
-		logger.Debug("Check scheduler disabled")
-		return nil
+	if r.isMT() {
+		return r.runMT(ctx, logger)
 	}
+	return r.runST(ctx, logger)
+}
 
+// runST runs the single-tenant scheduler loop, where namespaces are resolved
+// from the configured stack ID or org service and work is done serially.
+func (r *Runner) runST(ctx context.Context, logger logging.Logger) error {
 	// We still need the context to eventually be cancelled to exit this function
 	// but we don't want the requests to fail because of it
 	ctxWithoutCancel := context.WithoutCancel(ctx)
@@ -150,6 +162,10 @@ func (r *Runner) Run(ctx context.Context) error {
 				// If there are checks already created and they are older than the evaluation interval
 				// then we can automatically create more
 				if !lastCreated.IsZero() && lastCreated.Before(time.Now().Add(-r.defaultEvalInterval)) {
+					if err := r.waitForCheckTypesRegistered(ctx, nsLogger, namespace, len(r.checkRegistry.Checks())); err != nil {
+						nsLogger.Error("Error waiting for check types to be registered", "error", err)
+						return err
+					}
 					err = r.createChecks(ctx, nsLogger, namespace)
 					if err != nil {
 						nsLogger.Error("Error creating new check reports", "error", err)
@@ -235,48 +251,48 @@ func (r *Runner) markUnprocessedChecks(ctx context.Context, log logging.Logger, 
 	return nil
 }
 
-// createChecks creates a new check for each check type in the registry.
+// createChecks creates a new check for each check type known to this
+// process's in-process registry. The registry is the source of truth for
+// what this process can run; CheckType resources in the apiserver can lag
+// behind, especially in MT where per-tenant CheckType registration is
+// asynchronous relative to the global registry.
 func (r *Runner) createChecks(ctx context.Context, logger logging.Logger, namespace string) error {
-	// List existing CheckType objects
-	list, err := r.typesClient.List(ctx, namespace, resource.ListOptions{})
-	if err != nil {
-		return fmt.Errorf("error listing check types: %w", err)
-	}
-	// This may be run before the check types are registered, so we need to wait for them to be registered.
-	allChecksRegistered := len(list.GetItems()) == len(r.checkRegistry.Checks())
-	retryCount := 0
-	for !allChecksRegistered && retryCount < waitMaxRetries {
-		logger.Info("Waiting for all check types to be registered", "retryCount", retryCount, "waitInterval", waitInterval)
-		time.Sleep(waitInterval)
-		list, err = r.typesClient.List(ctx, namespace, resource.ListOptions{})
-		if err != nil {
-			return fmt.Errorf("error listing check types: %w", err)
-		}
-		allChecksRegistered = len(list.GetItems()) == len(r.checkRegistry.Checks())
-		retryCount++
-	}
-
-	// Create checks for each CheckType
-	for _, item := range list.GetItems() {
-		checkType, ok := item.(*advisorv0alpha1.CheckType)
-		if !ok {
-			continue
-		}
-
+	for _, check := range r.checkRegistry.Checks() {
 		obj := &advisorv0alpha1.Check{
 			ObjectMeta: metav1.ObjectMeta{
 				GenerateName: "check-",
 				Namespace:    namespace,
 				Labels: map[string]string{
-					checks.TypeLabel: checkType.Spec.Name,
+					checks.TypeLabel: check.ID(),
 				},
 			},
 			Spec: advisorv0alpha1.CheckSpec{},
 		}
 		id := obj.GetStaticMetadata().Identifier()
-		_, err := r.checksClient.Create(ctx, id, obj, resource.CreateOptions{})
-		if err != nil {
+		if _, err := r.checksClient.Create(ctx, id, obj, resource.CreateOptions{}); err != nil {
 			return fmt.Errorf("error creating check: %w", err)
+		}
+	}
+	return nil
+}
+
+// waitForCheckTypesRegistered polls the CheckType list in the given namespace
+// until it contains at least `expected` items or waitMaxRetries is exhausted.
+// At process startup the registerer can still be in-flight, so this gives
+// downstream consumers a chance to see consistent CheckType + Check
+// resources. Running out of retries is tolerated: a slow startup must not
+// permanently block check creation.
+func (r *Runner) waitForCheckTypesRegistered(ctx context.Context, logger logging.Logger, namespace string, expected int) error {
+	list, err := r.typesClient.List(ctx, namespace, resource.ListOptions{})
+	if err != nil {
+		return fmt.Errorf("error listing check types: %w", err)
+	}
+	for retry := 0; len(list.GetItems()) < expected && retry < waitMaxRetries; retry++ {
+		logger.Info("Waiting for all check types to be registered", "retryCount", retry, "waitInterval", waitInterval)
+		time.Sleep(waitInterval)
+		list, err = r.typesClient.List(ctx, namespace, resource.ListOptions{})
+		if err != nil {
+			return fmt.Errorf("error listing check types: %w", err)
 		}
 	}
 	return nil

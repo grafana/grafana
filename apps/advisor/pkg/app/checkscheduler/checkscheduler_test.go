@@ -281,7 +281,7 @@ func TestRunner_Run_Pagination(t *testing.T) {
 	})
 }
 
-// Helper functions
+// Shared test helpers and mocks
 
 // runAndTimeout runs a runner with a short timeout for testing purposes.
 // This is used to terminate the runner's infinite loop in tests that don't specifically test timeout behavior.
@@ -291,12 +291,13 @@ func runAndTimeout(runner *Runner) error {
 	return runner.Run(ctx)
 }
 
-// createTestRunner creates a test runner with mock clients
+// createTestRunner returns a single-tenant Runner with mock clients.
 func createTestRunner(checkClient, typesClient *MockClient) *Runner {
 	return createTestRunnerWithRegistry(checkClient, typesClient, &MockCheckService{checks: []checks.Check{}})
 }
 
-// createTestRunnerWithRegistry creates a test runner with mock clients and custom registry
+// createTestRunnerWithRegistry returns a single-tenant Runner with mock
+// clients and a caller-supplied check registry.
 func createTestRunnerWithRegistry(checkClient, typesClient *MockClient, checkRegistry checkregistry.CheckService) *Runner {
 	// Ensure mock clients have default implementations
 	if checkClient.listFunc == nil {

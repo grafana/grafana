@@ -49,6 +49,14 @@ func processCheck(ctx context.Context, log logging.Logger, client resource.Clien
 	if !ok {
 		return fmt.Errorf("invalid object type")
 	}
+	// processCheck is invoked from the validating admission webhook in a
+	// goroutine, so it can race with the apiserver finishing the write of
+	// the Check resource. Wait for the object to be persisted before any
+	// PATCH below (including the SetStatusAnnotation calls in the error
+	// paths) can hit a "not found" against the in-flight create.
+	if err := waitForItem(ctx, log, client, obj); err != nil {
+		return err
+	}
 	// Get the items to check
 	err := check.Init(ctx)
 	if err != nil {
@@ -83,11 +91,6 @@ func processCheck(ctx context.Context, log logging.Logger, client resource.Clien
 			return setErr
 		}
 		return fmt.Errorf("error running steps: %w", err)
-	}
-	// Wait for the item to be persisted before patching the object
-	err = waitForItem(ctx, log, client, obj)
-	if err != nil {
-		return err
 	}
 	report := &advisorv0alpha1.CheckReport{
 		Failures: failures,
