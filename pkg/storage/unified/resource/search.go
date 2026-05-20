@@ -39,6 +39,10 @@ import (
 
 const maxBatchSize = 1000
 
+// unknownBuildSize is passed when the caller does not have a cheap size hint.
+// Backends should treat it as unknown, not as an empty resource.
+const unknownBuildSize int64 = -1
+
 const (
 	defaultVectorSearchLimit = 50
 	maxVectorSearchLimit     = 200
@@ -122,7 +126,8 @@ type SearchBackend interface {
 	GetIndex(key NamespacedResource) ResourceIndex
 
 	// BuildIndex builds an index from scratch.
-	// Depending on the size, the backend may choose different options (eg: memory vs disk).
+	// Depending on the size hint, the backend may choose different options (eg: memory vs disk).
+	// A negative size means the caller does not have a cheap size hint.
 	// The last known resource version can be used to detect that nothing has changed, and existing on-disk index can be reused.
 	// The builder will write all documents before returning.
 	// Updater function is used to update the index before performing the search.
@@ -1261,26 +1266,11 @@ func (s *searchServer) rebuildIndex(ctx context.Context, req rebuildRequest) {
 		s.builders.clearNamespacedCache(req.NamespacedResource)
 	}
 
-	// Get the correct value of size + RV for building the index. This is important for our Bleve
-	// backend to decide whether to build index in-memory or as file-based.
-	nsr := NamespacedResource{
-		Namespace: req.Namespace,
-		Group:     req.Group,
-		Resource:  req.Resource,
-	}
-	stats, err := s.storage.GetResourceStats(ctx, nsr, 0)
+	size, err := idx.DocCount(ctx, "", nil)
 	if err != nil {
-		span.RecordError(fmt.Errorf("failed to get resource stats: %w", err))
-		l.Error("failed to get resource stats", "error", err)
-		return
-	}
-
-	size := int64(0)
-	for _, stat := range stats {
-		if stat.Namespace == req.Namespace && stat.Group == req.Group && stat.Resource == req.Resource {
-			size = stat.Count
-			break
-		}
+		span.RecordError(fmt.Errorf("failed to get current index doc count: %w", err))
+		l.Warn("failed to get current index doc count, using unknown size", "error", err)
+		size = unknownBuildSize
 	}
 
 	// Pass rebuild=true to force rebuild of any existing file-based index.
@@ -1418,24 +1408,6 @@ func (s *searchServer) getOrCreateIndex(ctx context.Context, stats *SearchStats,
 				return idx, nil
 			}
 
-			// Get correct value of size + RV for building the index. This is important for our Bleve
-			// backend to decide whether to build index in-memory or as file-based.
-			nsr := NamespacedResource{
-				Namespace: key.Namespace,
-			}
-			stats, err := s.storage.GetResourceStats(ctx, nsr, 0)
-			if err != nil {
-				return nil, fmt.Errorf("failed to get resource stats: %w", err)
-			}
-
-			size := int64(0)
-			for _, stat := range stats {
-				if stat.Namespace == key.Namespace && stat.Group == key.Group && stat.Resource == key.Resource {
-					size = stat.Count
-					break
-				}
-			}
-
 			// Get last import time to pass to BuildIndex, which will check if the file-based
 			// index needs to be rebuilt before opening it.
 			var lastImportTime time.Time
@@ -1447,7 +1419,7 @@ func (s *searchServer) getOrCreateIndex(ctx context.Context, stats *SearchStats,
 				lastImportTime = importTimes[key]
 			}
 
-			idx, err = s.build(ctx, key, size, reason, false, lastImportTime)
+			idx, err = s.build(ctx, key, unknownBuildSize, reason, false, lastImportTime)
 			if err != nil {
 				return nil, fmt.Errorf("error building search index, %w", err)
 			}
