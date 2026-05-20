@@ -71,25 +71,31 @@ interface TransformationToggles extends TransformationToggleState {
 }
 
 export interface SelectionModifiers {
-  /** True when Ctrl or Cmd is held — toggles this card in/out of the selection without clearing others. */
-  multi?: boolean;
-  /** True when Shift is held — range-selects from the last selected card to this one. */
+  /** True when Shift is held — range-selects from the last toggled checkbox to this one. */
   range?: boolean;
 }
 
 export interface QueryEditorUIState {
-  selectedQuery: DataQuery | ExpressionQuery | null;
-  selectedTransformation: Transformation | null;
-  selectedAlert: AlertRule | null;
+  /** The single card with the highlight border, shown in the editor pane. */
+  highlightedQuery: DataQuery | ExpressionQuery | null;
+  highlightedTransformation: Transformation | null;
+  highlightedAlert: AlertRule | null;
+  /** Checkbox selection set per type. Only non-empty inside multi-select mode. */
   selectedQueryRefIds: readonly string[];
   selectedTransformationIds: readonly string[];
   multiSelectMode: boolean;
-  setSelectedQuery: (query: DataQuery | ExpressionQuery | null) => void;
-  setSelectedTransformation: (transformation: Transformation | null) => void;
-  setSelectedAlert: (alert: AlertRule | null) => void;
+  setHighlightedQuery: (query: DataQuery | ExpressionQuery | null) => void;
+  setHighlightedTransformation: (transformation: Transformation | null) => void;
+  setHighlightedAlert: (alert: AlertRule | null) => void;
+  /** Enters/exits multi-select mode. Entering seeds the selection set with the highlighted card. */
   setMultiSelectMode: (enabled: boolean) => void;
+  /** Card-body click: moves the highlight to this card. Does not change the selection set. */
+  highlightQuery: (query: DataQuery | ExpressionQuery) => void;
+  highlightTransformation: (transformation: Transformation) => void;
+  /** Checkbox click: toggles this card in/out of the selection set. Does not change the highlight. */
   toggleQuerySelection: (query: DataQuery | ExpressionQuery, modifiers?: SelectionModifiers) => void;
   toggleTransformationSelection: (transformation: Transformation, modifiers?: SelectionModifiers) => void;
+  /** Bulk-actions "X" button: empties the selection sets and exits multi-select mode. */
   clearSelection: () => void;
   queryOptions: QueryOptionsState;
   selectedQueryDsData: {

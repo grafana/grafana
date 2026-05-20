@@ -24,7 +24,7 @@ describe('QueryEditorSidebar', () => {
 
     renderWithQueryEditorProvider(<QueriesAndTransformationsView />, {
       queries,
-      selectedQuery: queries[0],
+      highlightedQuery: queries[0],
     });
 
     expect(screen.getByText(/transformations/i)).toBeInTheDocument();
@@ -48,7 +48,7 @@ describe('QueryEditorSidebar', () => {
     renderWithQueryEditorProvider(<QueriesAndTransformationsView />, {
       queries,
       transformations,
-      selectedQuery: queries[0],
+      highlightedQuery: queries[0],
     });
 
     // Should render both transformation cards
@@ -77,7 +77,7 @@ describe('QueryEditorSidebar', () => {
     renderWithQueryEditorProvider(<QueriesAndTransformationsView />, {
       queries,
       transformations,
-      selectedQuery: queries[0],
+      highlightedQuery: queries[0],
     });
 
     // Should render both query cards
@@ -93,7 +93,7 @@ describe('QueryEditorSidebar', () => {
 
     const { user } = renderWithQueryEditorProvider(<QueriesAndTransformationsView />, {
       queries,
-      selectedQuery: queries[0],
+      highlightedQuery: queries[0],
     });
 
     // Verify query card is visible
@@ -128,7 +128,7 @@ describe('QueryEditorSidebar', () => {
     renderWithQueryEditorProvider(<QueriesAndTransformationsView />, {
       queries,
       transformations,
-      selectedQuery: queries[0],
+      highlightedQuery: queries[0],
     });
 
     // Query cards should have an "Add below" button
@@ -144,7 +144,7 @@ describe('QueryEditorSidebar', () => {
 
     const { user } = renderWithQueryEditorProvider(<QueriesAndTransformationsView />, {
       queries,
-      selectedQuery: queries[0],
+      highlightedQuery: queries[0],
       dsState: { dsSettings: dashboardDsSettingsMock },
     });
 

@@ -55,7 +55,7 @@ describe('TransformationEditorRenderer', () => {
     // The renderer is mounted regardless of selection state, so it must guard against
     // rendering the editor when nothing is selected (e.g. on initial load or after deselection).
     const { container } = renderWithQueryEditorProvider(<TransformationEditorRenderer />, {
-      selectedTransformation: null,
+      highlightedTransformation: null,
     });
 
     expect(container).toBeEmptyDOMElement();
@@ -65,7 +65,7 @@ describe('TransformationEditorRenderer', () => {
     // A transformation can exist in the config without a matching registry entry if a plugin
     // is missing or unloaded. The renderer must degrade gracefully rather than crash.
     renderWithQueryEditorProvider(<TransformationEditorRenderer />, {
-      selectedTransformation: makeTransformation(undefined),
+      highlightedTransformation: makeTransformation(undefined),
     });
 
     expect(screen.getByText(/transformation does not have an editor component/i)).toBeInTheDocument();
@@ -74,7 +74,7 @@ describe('TransformationEditorRenderer', () => {
 
   it('renders the full editor suite when a transformation with a valid editor is selected', () => {
     renderWithQueryEditorProvider(<TransformationEditorRenderer />, {
-      selectedTransformation: makeTransformation(mockRegistryItem),
+      highlightedTransformation: makeTransformation(mockRegistryItem),
     });
 
     // All four sections — filter, editor, help, debug — should be present. If any is missing

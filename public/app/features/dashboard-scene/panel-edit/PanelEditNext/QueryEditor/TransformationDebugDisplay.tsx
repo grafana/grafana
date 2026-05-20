@@ -9,7 +9,7 @@ import { usePanelContext, useQueryEditorUIContext, useQueryRunnerContext } from 
 import { useTransformationDebugData } from './hooks/useTransformationDebugData';
 
 export function TransformationDebugDisplay() {
-  const { selectedTransformation, transformToggles } = useQueryEditorUIContext();
+  const { highlightedTransformation, transformToggles } = useQueryEditorUIContext();
   const { data } = useQueryRunnerContext();
   const { transformations } = usePanelContext();
 
@@ -18,20 +18,20 @@ export function TransformationDebugDisplay() {
   const seriesData = useMemo(() => data?.series ?? [], [data?.series]);
 
   const { input, output } = useTransformationDebugData({
-    selectedTransformation,
+    selectedTransformation: highlightedTransformation,
     transformations,
     data: seriesData,
     isActive: transformToggles.showDebug,
   });
 
-  if (!transformToggles.showDebug || !selectedTransformation) {
+  if (!transformToggles.showDebug || !highlightedTransformation) {
     return null;
   }
 
   return (
     <Drawer
       title={t('query-editor-next.transformation-debug.title', 'Debug transformation')}
-      subtitle={selectedTransformation.registryItem?.name}
+      subtitle={highlightedTransformation.registryItem?.name}
       onClose={transformToggles.toggleDebug}
     >
       <Stack direction="row" gap={1}>

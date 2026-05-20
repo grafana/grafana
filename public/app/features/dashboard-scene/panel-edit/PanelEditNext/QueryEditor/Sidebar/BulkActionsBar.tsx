@@ -59,7 +59,7 @@ interface BulkQueryActionsProps {
 }
 
 function BulkQueryActions({ barWidth }: BulkQueryActionsProps) {
-  const { selectedQueryRefIds, clearSelection } = useQueryEditorUIContext();
+  const { selectedQueryRefIds, setMultiSelectMode } = useQueryEditorUIContext();
   const { bulkDeleteQueries, bulkToggleQueriesHide, bulkChangeDataSource } = useActionsContext();
   const { queries } = useQueryRunnerContext();
 
@@ -75,13 +75,15 @@ function BulkQueryActions({ barWidth }: BulkQueryActionsProps) {
   const handleConfirmedDelete = () => {
     bulkDeleteQueries(selectedQueryRefIds);
     setShowDeleteConfirm(false);
-    clearSelection();
+    // Exit multi-select after a destructive bulk action — also clears the
+    // selection set and validates the highlight against the remaining queries.
+    setMultiSelectMode(false);
   };
 
   const handleDatasourceChange = async (settings: DataSourceInstanceSettings) => {
     await bulkChangeDataSource(selectedQueryRefIds, settings);
     setShowDsModal(false);
-    clearSelection();
+    setMultiSelectMode(false);
   };
 
   return (
@@ -145,7 +147,7 @@ interface BulkTransformationActionsProps {
 }
 
 function BulkTransformationActions({ barWidth }: BulkTransformationActionsProps) {
-  const { selectedTransformationIds, clearSelection } = useQueryEditorUIContext();
+  const { selectedTransformationIds, setMultiSelectMode } = useQueryEditorUIContext();
   const { bulkDeleteTransformations, bulkToggleTransformationsDisabled } = useActionsContext();
   const { transformations } = usePanelContext();
 
@@ -161,7 +163,9 @@ function BulkTransformationActions({ barWidth }: BulkTransformationActionsProps)
   const handleConfirmedDelete = () => {
     bulkDeleteTransformations(selectedTransformationIds);
     setShowDeleteConfirm(false);
-    clearSelection();
+    // Exit multi-select after a destructive bulk action — also clears the
+    // selection set and validates the highlight against remaining transformations.
+    setMultiSelectMode(false);
   };
 
   return (
@@ -217,12 +221,13 @@ interface BulkActionsVisibility {
   shouldRender: boolean;
 }
 
-// In explicit multi-select mode any selection is actionable. Outside of it
-// (keyboard-shortcut path: Cmd/Ctrl+click, Shift+click) the bar opens at 2+
-// to avoid noise on every plain single-card click. Exported so the parent
-// (SidebarFooter) can ternary-render the bar vs. counts off the same rule.
+// The bar is gated strictly by multi-select mode + a non-empty checkbox set.
+// Outside multi-select mode the checkbox set is always empty by invariant, so
+// `multiSelectMode === true` is the dominant condition here. Exported so the
+// parent (SidebarFooter) can ternary-render the bar vs. counts off the same
+// rule.
 export function hasActionableSelection(selectionCount: number, multiSelectMode: boolean): boolean {
-  return multiSelectMode ? selectionCount >= 1 : selectionCount >= 2;
+  return multiSelectMode && selectionCount >= 1;
 }
 
 function getBulkActionsVisibility({
@@ -243,7 +248,7 @@ function getBulkActionsVisibility({
 export function BulkActionsBar({ className }: BulkActionsBarProps = {}) {
   const styles = useStyles2(getStyles);
   const [barRef, { width: barWidth }] = useMeasure<HTMLDivElement>();
-  const { selectedQueryRefIds, selectedTransformationIds, clearSelection, multiSelectMode, setMultiSelectMode } =
+  const { selectedQueryRefIds, selectedTransformationIds, multiSelectMode, setMultiSelectMode } =
     useQueryEditorUIContext();
 
   const { hasQueryActions, hasTransformationActions, shouldRender } = getBulkActionsVisibility({
@@ -256,13 +261,11 @@ export function BulkActionsBar({ className }: BulkActionsBarProps = {}) {
     return null;
   }
 
-  // When multi-select mode is active, closing the bar should also leave the
-  // mode so the sidebar returns to its default (single-selection) presentation.
+  // Closing the bar leaves multi-select mode entirely. setMultiSelectMode(false)
+  // also clears the checkbox set so the sidebar returns to its default
+  // (single-highlight) presentation.
   const handleClear = () => {
-    clearSelection();
-    if (multiSelectMode) {
-      setMultiSelectMode(false);
-    }
+    setMultiSelectMode(false);
   };
 
   return (

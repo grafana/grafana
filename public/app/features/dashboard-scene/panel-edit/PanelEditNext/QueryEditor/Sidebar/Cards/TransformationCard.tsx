@@ -9,12 +9,17 @@ import { GhostSidebarCard } from './GhostSidebarCard';
 import { SidebarCard } from './SidebarCard';
 
 export const TransformationCard = ({ transformation }: { transformation: Transformation }) => {
-  const { selectedTransformation, toggleTransformationSelection, selectedTransformationIds, pendingTransformation } =
-    useQueryEditorUIContext();
+  const {
+    highlightedTransformation,
+    highlightTransformation,
+    toggleTransformationSelection,
+    selectedTransformationIds,
+    pendingTransformation,
+  } = useQueryEditorUIContext();
   const { deleteTransformation, toggleTransformationDisabled } = useActionsContext();
   const typeConfig = useQueryEditorTypeConfig();
-  const isSelected = selectedTransformation?.transformId === transformation.transformId;
-  const isPartOfSelection = selectedTransformationIds.includes(transformation.transformId) && !isSelected;
+  const isHighlighted = highlightedTransformation?.transformId === transformation.transformId;
+  const isSelected = selectedTransformationIds.includes(transformation.transformId);
   const isHidden = !!transformation.transformConfig.disabled;
   const transformationName = transformation.registryItem?.name || transformation.transformConfig.id;
 
@@ -27,11 +32,12 @@ export const TransformationCard = ({ transformation }: { transformation: Transfo
   return (
     <>
       <SidebarCard
+        isHighlighted={isHighlighted}
         isSelected={isSelected}
-        isPartOfSelection={isPartOfSelection}
         id={transformation.transformId}
         item={item}
-        onSelect={(modifiers) => toggleTransformationSelection(transformation, modifiers)}
+        onHighlight={() => highlightTransformation(transformation)}
+        onToggleSelect={(modifiers) => toggleTransformationSelection(transformation, modifiers)}
         onDelete={() => deleteTransformation(transformation.transformId)}
         onToggleHide={() => toggleTransformationDisabled(transformation.transformId)}
       >

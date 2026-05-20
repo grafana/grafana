@@ -8,7 +8,7 @@ import { trackTransformationToolAction } from '../../tracking';
 import { useActionsContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
 
 export function TransformationActionButtons() {
-  const { selectedTransformation, transformToggles } = useQueryEditorUIContext();
+  const { highlightedTransformation, transformToggles } = useQueryEditorUIContext();
   const { updateTransformation } = useActionsContext();
   const { data } = useQueryRunnerContext();
 
@@ -16,11 +16,11 @@ export function TransformationActionButtons() {
   // Mirrors v1 (TransformationOperationRow): only `filter` is toggled here; `topic` is
   // managed independently by the filter UI and must not be clobbered on removal.
   const handleFilterToggle = useCallback(() => {
-    if (!selectedTransformation) {
+    if (!highlightedTransformation) {
       return;
     }
 
-    const current = selectedTransformation.transformConfig;
+    const current = highlightedTransformation.transformConfig;
 
     if (current.filter) {
       const { filter, ...restConfig } = current;
@@ -34,13 +34,13 @@ export function TransformationActionButtons() {
         },
       });
     }
-  }, [selectedTransformation, updateTransformation]);
+  }, [highlightedTransformation, updateTransformation]);
 
-  if (!selectedTransformation) {
+  if (!highlightedTransformation) {
     return null;
   }
 
-  const config = selectedTransformation.transformConfig;
+  const config = highlightedTransformation.transformConfig;
 
   // Show filter button as active if filter property exists on the transformation config
   // Note: `topic` is a related filter property for annotation filtering

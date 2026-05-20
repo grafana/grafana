@@ -8,7 +8,7 @@ import { useActionsContext, useQueryEditorUIContext, useQueryEditorTypeConfig } 
 export function QueryActionsMenu() {
   const { duplicateQuery } = useActionsContext();
   const {
-    selectedQuery,
+    highlightedQuery,
     selectedQueryDsData,
     selectedQueryDsLoading,
     showingDatasourceHelp,
@@ -17,7 +17,7 @@ export function QueryActionsMenu() {
   } = useQueryEditorUIContext();
   const typeConfig = useQueryEditorTypeConfig();
 
-  if (!selectedQuery) {
+  if (!highlightedQuery) {
     return null;
   }
 
@@ -34,7 +34,7 @@ export function QueryActionsMenu() {
             icon="copy"
             onClick={() => {
               trackQueryMenuAction('duplicate', cardType);
-              duplicateQuery(selectedQuery.refId);
+              duplicateQuery(highlightedQuery.refId);
             }}
           />
 

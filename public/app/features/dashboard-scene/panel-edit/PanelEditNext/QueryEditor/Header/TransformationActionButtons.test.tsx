@@ -55,7 +55,7 @@ function makeData(overrides: Partial<{ series: DataFrame[]; annotations: DataFra
 describe('TransformationActionButtons', () => {
   it('renders nothing when no transformation is selected', () => {
     const { container } = renderWithQueryEditorProvider(<TransformationActionButtons />, {
-      selectedTransformation: null,
+      highlightedTransformation: null,
     });
 
     expect(container).toBeEmptyDOMElement();
@@ -69,7 +69,7 @@ describe('TransformationActionButtons', () => {
       });
 
       const { user } = renderWithQueryEditorProvider(<TransformationActionButtons />, {
-        selectedTransformation: transformation,
+        highlightedTransformation: transformation,
         uiStateOverrides: {
           transformToggles: { ...mockTransformToggles, showHelp: false, toggleHelp },
         },
@@ -86,7 +86,7 @@ describe('TransformationActionButtons', () => {
       });
 
       renderWithQueryEditorProvider(<TransformationActionButtons />, {
-        selectedTransformation: transformation,
+        highlightedTransformation: transformation,
         uiStateOverrides: {
           transformToggles: { ...mockTransformToggles, showHelp: true },
         },
@@ -99,7 +99,7 @@ describe('TransformationActionButtons', () => {
       const toggleDebug = jest.fn();
 
       const { user } = renderWithQueryEditorProvider(<TransformationActionButtons />, {
-        selectedTransformation: makeTransformation(),
+        highlightedTransformation: makeTransformation(),
         uiStateOverrides: {
           transformToggles: { ...mockTransformToggles, showDebug: false, toggleDebug },
         },
@@ -114,7 +114,7 @@ describe('TransformationActionButtons', () => {
   describe('filter button visibility', () => {
     it('hides the filter button when there is no data and no filter configured', () => {
       renderWithQueryEditorProvider(<TransformationActionButtons />, {
-        selectedTransformation: makeTransformation(),
+        highlightedTransformation: makeTransformation(),
         qrState: { data: makeData() },
       });
 
@@ -123,7 +123,7 @@ describe('TransformationActionButtons', () => {
 
     it('shows the filter button when there are data series', () => {
       renderWithQueryEditorProvider(<TransformationActionButtons />, {
-        selectedTransformation: makeTransformation(),
+        highlightedTransformation: makeTransformation(),
         qrState: { data: makeData({ series: makeSeries() }) },
       });
 
@@ -132,7 +132,7 @@ describe('TransformationActionButtons', () => {
 
     it('shows the filter button when there are annotations', () => {
       renderWithQueryEditorProvider(<TransformationActionButtons />, {
-        selectedTransformation: makeTransformation(),
+        highlightedTransformation: makeTransformation(),
         qrState: { data: makeData({ annotations: [{ fields: [], length: 0 }] }) },
       });
 
@@ -143,7 +143,7 @@ describe('TransformationActionButtons', () => {
       // The filter button must remain visible when a filter is active so the user
       // can remove it — regardless of whether data is currently present.
       renderWithQueryEditorProvider(<TransformationActionButtons />, {
-        selectedTransformation: makeTransformation({
+        highlightedTransformation: makeTransformation({
           transformConfig: {
             id: 'test-transform',
             options: {},
@@ -161,7 +161,7 @@ describe('TransformationActionButtons', () => {
       // the label says "Add filter" — clicking will add a filter, not remove the topic.
       // This mirrors v1 (TransformationOperationRow) where toggleFilter only touches `filter`.
       renderWithQueryEditorProvider(<TransformationActionButtons />, {
-        selectedTransformation: makeTransformation({
+        highlightedTransformation: makeTransformation({
           transformConfig: {
             id: 'test-transform',
             options: {},
@@ -181,7 +181,7 @@ describe('TransformationActionButtons', () => {
       const transformation = makeTransformation();
 
       const { user } = renderWithQueryEditorProvider(<TransformationActionButtons />, {
-        selectedTransformation: transformation,
+        highlightedTransformation: transformation,
         qrState: { data: makeData({ series: makeSeries() }) },
         actionsOverrides: { updateTransformation },
       });
@@ -204,7 +204,7 @@ describe('TransformationActionButtons', () => {
       const transformation = makeTransformation({ transformConfig: config });
 
       const { user } = renderWithQueryEditorProvider(<TransformationActionButtons />, {
-        selectedTransformation: transformation,
+        highlightedTransformation: transformation,
         qrState: { data: makeData() },
         actionsOverrides: { updateTransformation },
       });
@@ -225,7 +225,7 @@ describe('TransformationActionButtons', () => {
       const transformation = makeTransformation({ transformConfig: config });
 
       const { user } = renderWithQueryEditorProvider(<TransformationActionButtons />, {
-        selectedTransformation: transformation,
+        highlightedTransformation: transformation,
         qrState: { data: makeData() },
         actionsOverrides: { updateTransformation },
       });
@@ -249,7 +249,7 @@ describe('TransformationActionButtons', () => {
       const transformation = makeTransformation({ transformConfig: config });
 
       const { user } = renderWithQueryEditorProvider(<TransformationActionButtons />, {
-        selectedTransformation: transformation,
+        highlightedTransformation: transformation,
         qrState: { data: makeData() },
         actionsOverrides: { updateTransformation },
       });
@@ -267,7 +267,7 @@ describe('TransformationActionButtons', () => {
   describe('debug button behaviour', () => {
     it('always shows the debug action for a selected transformation', () => {
       renderWithQueryEditorProvider(<TransformationActionButtons />, {
-        selectedTransformation: makeTransformation(),
+        highlightedTransformation: makeTransformation(),
       });
 
       expect(screen.getByRole('button', { name: /debug/i })).toBeInTheDocument();
@@ -276,7 +276,7 @@ describe('TransformationActionButtons', () => {
     it('toggles debug mode when clicked', async () => {
       const toggleDebug = jest.fn();
       const { user } = renderWithQueryEditorProvider(<TransformationActionButtons />, {
-        selectedTransformation: makeTransformation(),
+        highlightedTransformation: makeTransformation(),
         uiStateOverrides: {
           transformToggles: {
             showHelp: false,

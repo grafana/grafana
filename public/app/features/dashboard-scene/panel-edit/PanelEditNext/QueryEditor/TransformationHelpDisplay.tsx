@@ -11,17 +11,17 @@ import { useQueryEditorUIContext } from './QueryEditorContext';
  * Displays transformation help in a drawer when toggled from the actions menu.
  */
 export function TransformationHelpDisplay() {
-  const { selectedTransformation, transformToggles } = useQueryEditorUIContext();
+  const { highlightedTransformation, transformToggles } = useQueryEditorUIContext();
   const [helpHtml, setHelpHtml] = useState<string>(renderMarkdown(FALLBACK_DOCS_LINK));
 
   useEffect(() => {
-    if (!transformToggles.showHelp || !selectedTransformation?.registryItem) {
+    if (!transformToggles.showHelp || !highlightedTransformation?.registryItem) {
       return;
     }
 
     let cancelled = false;
 
-    getTransformationContent(selectedTransformation.registryItem.id)
+    getTransformationContent(highlightedTransformation.registryItem.id)
       .then(({ helperDocs }) => {
         if (!cancelled) {
           setHelpHtml(renderMarkdown(helperDocs));
@@ -36,15 +36,15 @@ export function TransformationHelpDisplay() {
     return () => {
       cancelled = true;
     };
-  }, [transformToggles.showHelp, selectedTransformation?.registryItem]);
+  }, [transformToggles.showHelp, highlightedTransformation?.registryItem]);
 
-  if (!transformToggles.showHelp || !selectedTransformation?.registryItem) {
+  if (!transformToggles.showHelp || !highlightedTransformation?.registryItem) {
     return null;
   }
 
   return (
     <Drawer
-      title={selectedTransformation.registryItem.name}
+      title={highlightedTransformation.registryItem.name}
       subtitle="Transformation help"
       onClose={transformToggles.toggleHelp}
     >

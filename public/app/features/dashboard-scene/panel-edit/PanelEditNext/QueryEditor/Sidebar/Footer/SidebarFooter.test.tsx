@@ -147,19 +147,21 @@ describe('SidebarFooter', () => {
       expect(screen.queryByRole('toolbar', { name: /bulk actions/i })).not.toBeInTheDocument();
     });
 
-    it('does not render the bar in the footer when multi-select mode is off and nothing is selected', () => {
+    it('does not render the bar in the footer when multi-select mode is off (even if selection IDs leak through)', () => {
+      // Under the new model the selection set is only populated inside
+      // multi-select mode. The visibility check must still gate on the mode.
       renderWithQueryEditorProvider(<SidebarFooter />, {
         queries,
-        uiStateOverrides: { selectedQueryRefIds: [], multiSelectMode: false },
+        uiStateOverrides: { selectedQueryRefIds: ['A', 'B'], multiSelectMode: false },
       });
 
       expect(screen.queryByRole('toolbar', { name: /bulk actions/i })).not.toBeInTheDocument();
     });
 
-    it('renders the bar inside the footer when 2+ queries are selected via keyboard shortcuts (no multi-select mode)', () => {
+    it('renders the bar inside the footer when multi-select mode is on and at least one query is selected', () => {
       renderWithQueryEditorProvider(<SidebarFooter />, {
         queries,
-        uiStateOverrides: { selectedQueryRefIds: ['A', 'B'], multiSelectMode: false },
+        uiStateOverrides: { selectedQueryRefIds: ['A'], multiSelectMode: true },
       });
 
       expect(screen.getByRole('toolbar', { name: /bulk actions/i })).toBeInTheDocument();
@@ -171,7 +173,7 @@ describe('SidebarFooter', () => {
       // screen-reader sequence.
       renderWithQueryEditorProvider(<SidebarFooter />, {
         queries,
-        uiStateOverrides: { selectedQueryRefIds: ['A', 'B'], multiSelectMode: false },
+        uiStateOverrides: { selectedQueryRefIds: ['A', 'B'], multiSelectMode: true },
       });
 
       expect(screen.getByRole('toolbar', { name: /bulk actions/i })).toBeInTheDocument();
@@ -179,7 +181,7 @@ describe('SidebarFooter', () => {
       expect(screen.queryByText('2 items')).not.toBeInTheDocument();
     });
 
-    it('renders the bar inside the footer when 2+ transformations are selected', () => {
+    it('renders the bar inside the footer when transformations are selected in multi-select mode', () => {
       renderWithQueryEditorProvider(<SidebarFooter />, {
         transformations,
         uiStateOverrides: { selectedTransformationIds: ['tx-0', 'tx-1'], multiSelectMode: true },
@@ -218,13 +220,15 @@ describe('SidebarFooter', () => {
       expect(screen.queryByRole('button', { name: /select multiple items/i })).not.toBeInTheDocument();
     });
 
-    it('still renders the bulk actions bar in the footer when 2+ items are selected via keyboard shortcuts', () => {
+    it('still renders the bulk actions bar in the footer when multi-select mode is on with a selection', () => {
+      // Even with the feature flag off, an existing multi-select session can
+      // still show the bar — the flag only gates the entry point ("Select..." button).
       renderWithQueryEditorProvider(<SidebarFooter />, {
         queries: [
           { refId: 'A', datasource: { type: 'test', uid: 'test' } },
           { refId: 'B', datasource: { type: 'test', uid: 'test' } },
         ],
-        uiStateOverrides: { selectedQueryRefIds: ['A', 'B'] },
+        uiStateOverrides: { selectedQueryRefIds: ['A', 'B'], multiSelectMode: true },
       });
 
       expect(screen.getByRole('toolbar', { name: /bulk actions/i })).toBeInTheDocument();

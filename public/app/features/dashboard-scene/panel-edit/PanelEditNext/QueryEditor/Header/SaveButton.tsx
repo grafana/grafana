@@ -15,7 +15,7 @@ interface SaveButtonProps {
 // TODO: Confirm this works as expected once we get the query content work completed
 export function SaveButton({ parentRef }: SaveButtonProps) {
   const { queryLibraryEnabled, renderSavedQueryButtons, isEditingQuery, setIsEditingQuery } = useQueryLibraryContext();
-  const { selectedQuery, setSelectedQuery, cardType, selectedQueryDsData } = useQueryEditorUIContext();
+  const { highlightedQuery, setHighlightedQuery, cardType, selectedQueryDsData } = useQueryEditorUIContext();
   const { updateSelectedQuery, runQueries } = useActionsContext();
 
   const onUpdateSuccess = useCallback(() => {
@@ -26,12 +26,12 @@ export function SaveButton({ parentRef }: SaveButtonProps) {
   // Callback when user selects a query from the library
   const onSelectQuery = useCallback(
     (query: DataQuery) => {
-      if (!selectedQuery) {
+      if (!highlightedQuery) {
         return;
       }
 
       // Replace the current query with the library query, preserving refId
-      const originalRefId = selectedQuery.refId;
+      const originalRefId = highlightedQuery.refId;
       updateSelectedQuery(
         {
           ...query,
@@ -40,13 +40,13 @@ export function SaveButton({ parentRef }: SaveButtonProps) {
         originalRefId
       );
 
-      // Update selected query to the new query
-      setSelectedQuery({ ...query, refId: originalRefId });
+      // Highlight the new query
+      setHighlightedQuery({ ...query, refId: originalRefId });
 
       // Run queries with the new query from library
       runQueries();
     },
-    [selectedQuery, updateSelectedQuery, setSelectedQuery, runQueries]
+    [highlightedQuery, updateSelectedQuery, setHighlightedQuery, runQueries]
   );
 
   // Only queries can be saved to library (expressions/transformations can't)
@@ -54,8 +54,8 @@ export function SaveButton({ parentRef }: SaveButtonProps) {
     return null;
   }
 
-  // Don't show if query library feature is disabled or no selected query
-  if (!queryLibraryEnabled || !selectedQuery) {
+  // Don't show if query library feature is disabled or no highlighted query
+  if (!queryLibraryEnabled || !highlightedQuery) {
     return null;
   }
 
@@ -68,8 +68,8 @@ export function SaveButton({ parentRef }: SaveButtonProps) {
 
   return renderSavedQueryButtons(
     {
-      ...selectedQuery,
-      datasource: datasource ? { uid: datasource.uid, type: datasource.type } : selectedQuery.datasource,
+      ...highlightedQuery,
+      datasource: datasource ? { uid: datasource.uid, type: datasource.type } : highlightedQuery.datasource,
     },
     CoreApp.PanelEditor,
     onUpdateSuccess,

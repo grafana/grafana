@@ -12,9 +12,17 @@ import { useActionsContext, useQueryEditorUIContext } from './QueryEditorContext
 import { QueryEditorContextWrapper } from './QueryEditorContextWrapper';
 import { type AlertRule, type Transformation } from './types';
 
+// Mock so tests can plug in their own queries via mockGetQueryRunnerFor.
+const mockGetQueryRunnerFor = jest.fn();
 jest.mock('../../../utils/utils', () => ({
-  getQueryRunnerFor: jest.fn().mockReturnValue(null),
+  getQueryRunnerFor: (...args: unknown[]) => mockGetQueryRunnerFor(...args),
 }));
+
+function makeMockQueryRunner(queries: DataQuery[] = []) {
+  return {
+    useState: () => ({ queries, data: undefined }),
+  };
+}
 
 jest.mock('app/features/explore/QueryLibrary/QueryLibraryContext', () => ({
   useQueryLibraryContext: () => ({ isDrawerOpen: false }),
@@ -108,6 +116,7 @@ function renderWithWrapper(dataPane: PanelDataPaneNext) {
 
 describe('QueryEditorContextWrapper - side effect clearing', () => {
   beforeEach(() => {
+    mockGetQueryRunnerFor.mockReturnValue(null);
     mockUseAlertRulesForPanel.mockReturnValue({
       alertRules: [],
       loading: false,
@@ -115,12 +124,12 @@ describe('QueryEditorContextWrapper - side effect clearing', () => {
     });
   });
 
-  it('clears pending expression when selecting a query', () => {
+  it('clears pending expression when highlighting a query', () => {
     const { usePendingExpression } = require('./hooks/usePendingExpression');
     const { result } = renderWithWrapper(makeMockDataPane());
     const { clearPendingExpression } = usePendingExpression.mock.results[0].value;
 
-    act(() => result.current.setSelectedQuery({ refId: 'A' } as DataQuery));
+    act(() => result.current.setHighlightedQuery({ refId: 'A' } as DataQuery));
 
     expect(clearPendingExpression).toHaveBeenCalled();
   });
@@ -128,6 +137,7 @@ describe('QueryEditorContextWrapper - side effect clearing', () => {
 
 describe('QueryEditorContextWrapper - alert selection', () => {
   beforeEach(() => {
+    mockGetQueryRunnerFor.mockReturnValue(null);
     mockUseAlertRulesForPanel.mockReturnValue({
       alertRules: [mockAlert],
       loading: false,
@@ -135,49 +145,54 @@ describe('QueryEditorContextWrapper - alert selection', () => {
     });
   });
 
-  it('sets selectedAlert when setSelectedAlert is called with an alert', () => {
+  it('sets highlightedAlert when setHighlightedAlert is called with an alert', () => {
     const { result } = renderWithWrapper(makeMockDataPane());
 
-    expect(result.current.selectedAlert).toBeNull();
+    expect(result.current.highlightedAlert).toBeNull();
 
-    act(() => result.current.setSelectedAlert(mockAlert));
+    act(() => result.current.setHighlightedAlert(mockAlert));
 
-    expect(result.current.selectedAlert).toEqual(mockAlert);
+    expect(result.current.highlightedAlert).toEqual(mockAlert);
   });
 
-  it('clears selectedAlert when setSelectedAlert is called with null', () => {
+  it('clears highlightedAlert when setHighlightedAlert is called with null', () => {
     const { result } = renderWithWrapper(makeMockDataPane());
 
-    act(() => result.current.setSelectedAlert(mockAlert));
-    expect(result.current.selectedAlert).toEqual(mockAlert);
+    act(() => result.current.setHighlightedAlert(mockAlert));
+    expect(result.current.highlightedAlert).toEqual(mockAlert);
 
-    act(() => result.current.setSelectedAlert(null));
-    expect(result.current.selectedAlert).toBeNull();
+    act(() => result.current.setHighlightedAlert(null));
+    expect(result.current.highlightedAlert).toBeNull();
   });
 
-  it('clears query and transformation selection when an alert is selected', () => {
+  it('clears query/transformation highlight when an alert is highlighted', () => {
+    const queryA: DataQuery = { refId: 'A' };
+    mockGetQueryRunnerFor.mockReturnValue(makeMockQueryRunner([queryA]));
+
     const { result } = renderWithWrapper(makeMockDataPane());
 
-    // Establish a non-empty query selection first so the assertion is meaningful
-    act(() => result.current.setSelectedQuery({ refId: 'A' } as DataQuery));
-    expect(result.current.selectedQueryRefIds).toEqual(['A']);
+    // Establish a non-null query highlight first so the assertion is meaningful.
+    act(() => result.current.setHighlightedQuery(queryA));
+    expect(result.current.highlightedQuery).toEqual(queryA);
 
-    act(() => result.current.setSelectedAlert(mockAlert));
+    act(() => result.current.setHighlightedAlert(mockAlert));
 
+    expect(result.current.highlightedQuery).toBeNull();
+    expect(result.current.highlightedTransformation).toBeNull();
     expect(result.current.selectedQueryRefIds).toEqual([]);
     expect(result.current.selectedTransformationIds).toEqual([]);
-    expect(result.current.selectedAlert).toEqual(mockAlert);
+    expect(result.current.highlightedAlert).toEqual(mockAlert);
   });
 
-  it('clears alert selection when a query is selected', () => {
+  it('clears the alert highlight when a query is highlighted', () => {
     const { result } = renderWithWrapper(makeMockDataPane());
 
-    act(() => result.current.setSelectedAlert(mockAlert));
-    expect(result.current.selectedAlert).toEqual(mockAlert);
+    act(() => result.current.setHighlightedAlert(mockAlert));
+    expect(result.current.highlightedAlert).toEqual(mockAlert);
 
-    act(() => result.current.setSelectedQuery({ refId: 'A' } as DataQuery));
+    act(() => result.current.setHighlightedQuery({ refId: 'A' } as DataQuery));
 
-    expect(result.current.selectedAlert).toBeNull();
+    expect(result.current.highlightedAlert).toBeNull();
   });
 });
 
@@ -195,6 +210,7 @@ function renderWithBothContexts(dataPane: PanelDataPaneNext) {
 
 describe('QueryEditorContextWrapper - delete actions', () => {
   beforeEach(() => {
+    mockGetQueryRunnerFor.mockReturnValue(null);
     mockUseAlertRulesForPanel.mockReturnValue({
       alertRules: [],
       loading: false,
@@ -202,35 +218,57 @@ describe('QueryEditorContextWrapper - delete actions', () => {
     });
   });
 
-  it('deleteQuery removes the deleted refId from selectedQueryRefIds', () => {
-    const dataPane = makeMockDataPane();
-    const { result } = renderWithBothContexts(dataPane);
+  it('deleteQuery falls the highlight back to the remaining query when the deleted refId was highlighted', () => {
+    // Simulates the dataPane.deleteQuery side effect (queries array shrinks) so
+    // we can observe the highlight rebinding via useSelectedCard's fallback.
+    const queryA: DataQuery = { refId: 'A' };
+    const queryB: DataQuery = { refId: 'B' };
+    let currentQueries: DataQuery[] = [queryA, queryB];
+    mockGetQueryRunnerFor.mockReturnValue({
+      useState: () => ({ queries: currentQueries, data: undefined }),
+    });
 
-    act(() => result.current.ui.setSelectedQuery({ refId: 'A' } as DataQuery));
-    expect(result.current.ui.selectedQueryRefIds).toEqual(['A']);
+    const dataPane = makeMockDataPane();
+    (dataPane.deleteQuery as jest.Mock).mockImplementation((refId: string) => {
+      currentQueries = currentQueries.filter((q) => q.refId !== refId);
+    });
+
+    const { result, rerender } = renderWithBothContexts(dataPane);
+
+    act(() => result.current.ui.setHighlightedQuery(queryA));
+    expect(result.current.ui.highlightedQuery).toEqual(queryA);
 
     act(() => result.current.actions.deleteQuery('A'));
+    rerender();
 
-    expect(result.current.ui.selectedQueryRefIds).toEqual([]);
+    // 'A' was removed and was the highlight; the highlight clears, then
+    // useSelectedCard falls back to queries[0] which is now 'B'.
+    expect(result.current.ui.highlightedQuery).toEqual(queryB);
   });
 
-  it('deleteTransformation removes the deleted id from selectedTransformationIds', () => {
+  it('deleteTransformation clears the transformation highlight when the deleted id was highlighted', () => {
     const { useTransformations } = require('./hooks/useTransformations');
     const mockTransformation: Transformation = {
       registryItem: undefined,
       transformId: 'reduce-0',
       transformConfig: { id: 'reduce', options: {} },
     };
-    useTransformations.mockReturnValue([mockTransformation]);
+    let currentTransformations = [mockTransformation];
+    useTransformations.mockImplementation(() => currentTransformations);
 
     const dataPane = makeMockDataPane();
-    const { result } = renderWithBothContexts(dataPane);
+    (dataPane.deleteTransformation as jest.Mock).mockImplementation((index: number) => {
+      currentTransformations = currentTransformations.filter((_, i) => i !== index);
+    });
 
-    act(() => result.current.ui.setSelectedTransformation(mockTransformation));
-    expect(result.current.ui.selectedTransformationIds).toEqual(['reduce-0']);
+    const { result, rerender } = renderWithBothContexts(dataPane);
+
+    act(() => result.current.ui.setHighlightedTransformation(mockTransformation));
+    expect(result.current.ui.highlightedTransformation).toEqual(mockTransformation);
 
     act(() => result.current.actions.deleteTransformation('reduce-0'));
+    rerender();
 
-    expect(result.current.ui.selectedTransformationIds).toEqual([]);
+    expect(result.current.ui.highlightedTransformation).toBeNull();
   });
 });

@@ -9,19 +9,19 @@ import { EMPTY_ALERT } from './types';
 
 export function AlertEditorRenderer() {
   const { alertRules, isDashboardSaved } = useAlertingContext();
-  const { selectedAlert } = useQueryEditorUIContext();
+  const { highlightedAlert } = useQueryEditorUIContext();
 
   const rule = useMemo(() => {
-    const alertRule = alertRules.find(({ alertId }) => alertId === selectedAlert?.alertId);
+    const alertRule = alertRules.find(({ alertId }) => alertId === highlightedAlert?.alertId);
     return alertRule?.rule ? [alertRule.rule] : [];
-  }, [alertRules, selectedAlert]);
+  }, [alertRules, highlightedAlert]);
 
-  if (!selectedAlert) {
+  if (!highlightedAlert) {
     return null;
   }
 
   // Show empty state when viewing alerts with no alerts
-  if (selectedAlert.alertId === EMPTY_ALERT.alertId) {
+  if (highlightedAlert.alertId === EMPTY_ALERT.alertId) {
     if (!isDashboardSaved) {
       return (
         <EmptyState

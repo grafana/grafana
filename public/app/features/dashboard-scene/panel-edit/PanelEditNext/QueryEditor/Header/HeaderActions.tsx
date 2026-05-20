@@ -29,32 +29,35 @@ interface HeaderActionsProps {
  * own visibility by reading from QueryEditorUIContext.
  */
 export function HeaderActions({ containerRef }: HeaderActionsProps) {
-  const { selectedQuery, selectedTransformation, cardType } = useQueryEditorUIContext();
+  const { highlightedQuery, highlightedTransformation, cardType } = useQueryEditorUIContext();
   const { toggleQueryHide, toggleTransformationDisabled, deleteQuery, deleteTransformation } = useActionsContext();
 
   const onToggleHide = useCallback(() => {
-    if (selectedQuery) {
-      toggleQueryHide(selectedQuery.refId);
-    } else if (selectedTransformation) {
-      toggleTransformationDisabled(selectedTransformation.transformId);
+    if (highlightedQuery) {
+      toggleQueryHide(highlightedQuery.refId);
+    } else if (highlightedTransformation) {
+      toggleTransformationDisabled(highlightedTransformation.transformId);
     }
-  }, [selectedQuery, selectedTransformation, toggleQueryHide, toggleTransformationDisabled]);
+  }, [highlightedQuery, highlightedTransformation, toggleQueryHide, toggleTransformationDisabled]);
 
   const onDelete = useCallback(() => {
-    if (selectedQuery) {
-      deleteQuery(selectedQuery.refId);
-    } else if (selectedTransformation) {
-      deleteTransformation(selectedTransformation.transformId);
+    if (highlightedQuery) {
+      deleteQuery(highlightedQuery.refId);
+    } else if (highlightedTransformation) {
+      deleteTransformation(highlightedTransformation.transformId);
     }
-  }, [selectedQuery, selectedTransformation, deleteQuery, deleteTransformation]);
+  }, [highlightedQuery, highlightedTransformation, deleteQuery, deleteTransformation]);
 
   const itemName =
-    selectedQuery?.refId ?? selectedTransformation?.registryItem?.name ?? selectedTransformation?.transformId ?? '';
+    highlightedQuery?.refId ??
+    highlightedTransformation?.registryItem?.name ??
+    highlightedTransformation?.transformId ??
+    '';
 
   const item = {
     name: itemName,
     type: cardType,
-    isHidden: selectedQuery?.hide || selectedTransformation?.transformConfig?.disabled || false,
+    isHidden: highlightedQuery?.hide || highlightedTransformation?.transformConfig?.disabled || false,
   };
 
   if (cardType === QueryEditorType.Alert) {

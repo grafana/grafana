@@ -9,8 +9,8 @@ import { useSidebarDragAndDrop } from './useSidebarDragAndDrop';
 
 const mockUpdateQueries = jest.fn();
 const mockReorderTransformations = jest.fn();
-const mockSetSelectedQuery = jest.fn();
-const mockSetSelectedTransformation = jest.fn();
+const mockSetHighlightedQuery = jest.fn();
+const mockSetHighlightedTransformation = jest.fn();
 
 const queries: DataQuery[] = [
   { refId: 'A', datasource: { type: 'prometheus', uid: 'prom1' } },
@@ -36,8 +36,8 @@ jest.mock('../../QueryEditorContext', () => ({
     reorderTransformations: mockReorderTransformations,
   }),
   useQueryEditorUIContext: () => ({
-    setSelectedQuery: mockSetSelectedQuery,
-    setSelectedTransformation: mockSetSelectedTransformation,
+    setHighlightedQuery: mockSetHighlightedQuery,
+    setHighlightedTransformation: mockSetHighlightedTransformation,
   }),
 }));
 
@@ -67,12 +67,12 @@ describe('useSidebarDragAndDrop', () => {
       expect(mockUpdateQueries).toHaveBeenCalledWith([queries[1], queries[2], queries[0]]);
     });
 
-    it('should select the dragged query after reorder', () => {
+    it('should highlight the dragged query after reorder', () => {
       const { result } = renderHook(() => useSidebarDragAndDrop());
 
       result.current.onQueryDragEnd(makeDropResult(0, 2));
 
-      expect(mockSetSelectedQuery).toHaveBeenCalledWith(queries[0]);
+      expect(mockSetHighlightedQuery).toHaveBeenCalledWith(queries[0]);
     });
 
     it('should not reorder when dropped outside droppable area', () => {
@@ -105,12 +105,12 @@ describe('useSidebarDragAndDrop', () => {
       ]);
     });
 
-    it('should select the dragged transformation with updated index-based id after reorder', () => {
+    it('should highlight the dragged transformation with updated index-based id after reorder', () => {
       const { result } = renderHook(() => useSidebarDragAndDrop());
 
       result.current.onTransformationDragEnd(makeDropResult(0, 2));
 
-      expect(mockSetSelectedTransformation).toHaveBeenCalledWith({
+      expect(mockSetHighlightedTransformation).toHaveBeenCalledWith({
         ...transformations[0],
         transformId: `${transformations[0].transformConfig.id}-2`,
       });

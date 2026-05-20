@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -15,35 +15,29 @@ import { getGhostCardVisuals } from '../SidebarCardGhostStyles';
 interface SidebarCardProps {
   children: React.ReactNode;
   id: string;
-  isSelected: boolean;
-  isPartOfSelection?: boolean;
+  /** This card has the highlight border and is shown in the editor pane. */
+  isHighlighted: boolean;
+  /** This card is checked via its checkbox (member of the multi-select set). */
+  isSelected?: boolean;
   item: ActionItem;
-  onSelect: (modifiers?: { multi?: boolean; range?: boolean }) => void;
+  /** Card body click — should only update the highlight, never the selection set. */
+  onHighlight: () => void;
+  /** Checkbox click — toggles this card in/out of the multi-select set. */
+  onToggleSelect?: (modifiers?: { range?: boolean }) => void;
   onDelete?: () => void;
   onDuplicate?: () => void;
   onToggleHide?: () => void;
   variant?: 'default' | 'ghost';
 }
 
-const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-  if (e.shiftKey) {
-    // Shift+Click is used for range-selection of cards, not text.
-    e.preventDefault();
-  }
-  // @hello-pangea/dnd's capture-phase mousedown listener calls preventDefault, so browser focus
-  // transfer never fires and Monaco never sees a natural blur. Force it imperatively.
-  if (document.activeElement instanceof HTMLElement && document.activeElement !== e.currentTarget) {
-    document.activeElement.blur();
-  }
-};
-
 export const SidebarCard = ({
   children,
   id,
-  isSelected,
-  isPartOfSelection,
+  isHighlighted,
+  isSelected = false,
   item,
-  onSelect,
+  onHighlight,
+  onToggleSelect,
   onDelete,
   onDuplicate,
   onToggleHide,
@@ -54,15 +48,9 @@ export const SidebarCard = ({
   const addVariant = item.type === QueryEditorType.Transformation ? 'transformation' : 'query';
   const hasActions = onDelete || onDuplicate || onToggleHide;
   const [hasFocusWithin, setHasFocusWithin] = useState(false);
-  const { multiSelectMode, selectedQueryRefIds, selectedTransformationIds } = useQueryEditorUIContext();
-  // Selection-mode UI shows whenever the user has explicitly entered
-  // multi-select mode (Select… button) OR has accumulated 2+ items via
-  // Cmd/Shift+click. While in this mode, plain clicks toggle the card in/out
-  // of the selection (checkbox-style) instead of replacing it.
-  const showSelectionControls =
-    multiSelectMode || selectedQueryRefIds.length >= 2 || selectedTransformationIds.length >= 2;
+  const { multiSelectMode } = useQueryEditorUIContext();
 
-  const styles = useStyles2(getStyles, { isSelected, isPartOfSelection, item });
+  const styles = useStyles2(getStyles, { isHighlighted, isSelected, item });
 
   const handleFocus = useCallback(() => {
     setHasFocusWithin(true);
@@ -79,8 +67,8 @@ export const SidebarCard = ({
     setHasFocusWithin(false);
   }, []);
 
-  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    onSelect({ multi: showSelectionControls || e.metaKey || e.ctrlKey, range: e.shiftKey });
+  const handleCardClick = () => {
+    onHighlight();
   };
 
   // Using a div with role="button" instead of a native button for @hello-pangea/dnd compatibility,
@@ -92,9 +80,48 @@ export const SidebarCard = ({
 
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      onSelect({ multi: showSelectionControls });
+      onHighlight();
     }
   };
+
+  // Captured at mousedown time on the card (which receives bubbled mousedown
+  // events from the checkbox area too). We can't read e.shiftKey reliably in
+  // the checkbox's `onClick`: clicking the styled checkmark hits the
+  // surrounding <label>, which dispatches a synthesized click on the input
+  // with modifier keys reset to false. Reading on mousedown — which fires on
+  // the actual hit target before label synthesis — preserves the shift state.
+  const lastMouseDownShiftKey = useRef(false);
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    lastMouseDownShiftKey.current = e.shiftKey;
+    // Stop the browser from starting a text selection on Shift+click. Without
+    // this, the first Shift+click leaves selected text behind, and subsequent
+    // Shift+clicks extend that selection instead of registering on the
+    // checkbox — breaking consecutive range-selects. Shift on the card body
+    // also has no functional effect (only checkboxes use modifiers) so this
+    // suppression is safe across the whole card.
+    if (e.shiftKey) {
+      e.preventDefault();
+    }
+    // @hello-pangea/dnd's capture-phase mousedown listener calls preventDefault, so browser focus
+    // transfer never fires and Monaco never sees a natural blur. Force it imperatively.
+    if (document.activeElement instanceof HTMLElement && document.activeElement !== e.currentTarget) {
+      document.activeElement.blur();
+    }
+  };
+
+  // Stop propagation so the click doesn't also bubble to the card and move
+  // the highlight — checkbox and card body are deliberately independent.
+  const handleCheckboxClick = (e: React.MouseEvent<HTMLInputElement>) => {
+    e.stopPropagation();
+    onToggleSelect?.({ range: lastMouseDownShiftKey.current });
+    lastMouseDownShiftKey.current = false;
+  };
+
+  // Native click already triggers the toggle (we read its shift modifier via
+  // the mousedown ref above). onChange is required to satisfy React's
+  // controlled input contract but intentionally does nothing.
+  const handleCheckboxChange = () => {};
 
   if (variant === 'ghost') {
     const config = typeConfig[item.type];
@@ -116,7 +143,7 @@ export const SidebarCard = ({
     <div className={styles.wrapper}>
       <div
         className={styles.card}
-        onClick={handleClick}
+        onClick={handleCardClick}
         onMouseDown={handleMouseDown}
         onKeyDown={handleKeyDown}
         onFocus={handleFocus}
@@ -125,16 +152,20 @@ export const SidebarCard = ({
         tabIndex={0}
         data-query-sidebar-card={id}
         aria-label={t('query-editor-next.sidebar.card-click', 'Select card {{id}}', { id })}
-        aria-pressed={isSelected || isPartOfSelection}
+        aria-pressed={isHighlighted}
       >
         <div className={styles.cardContent}>
-          {showSelectionControls && (
-            <div aria-hidden className={styles.checkboxWrapper}>
+          {multiSelectMode && (
+            <div className={styles.checkboxWrapper}>
               <Checkbox
                 className={styles.roundedCheckbox}
-                tabIndex={-1}
-                value={isSelected || isPartOfSelection}
-                onChange={() => {}}
+                tabIndex={0}
+                value={isSelected}
+                onChange={handleCheckboxChange}
+                onClick={handleCheckboxClick}
+                aria-label={t('query-editor-next.sidebar.card-select-checkbox', 'Select {{id}} for bulk actions', {
+                  id,
+                })}
               />
             </div>
           )}
@@ -173,12 +204,12 @@ export const SidebarCard = ({
 function getStyles(
   theme: GrafanaTheme2,
   {
+    isHighlighted,
     isSelected,
-    isPartOfSelection,
     item,
   }: {
+    isHighlighted?: boolean;
     isSelected?: boolean;
-    isPartOfSelection?: boolean;
     item: ActionItem;
   }
 ) {
@@ -190,9 +221,9 @@ function getStyles(
     isError: !!item.error,
   });
 
-  const selectedBg = `color-mix(in srgb, ${borderColor} 10%, ${theme.colors.background.primary})`;
-  const hoverBackgroundColor = isSelected ? selectedBg : colorManipulator.alpha(theme.colors.text.primary, 0.08);
-  const hoverSolidBg = isSelected ? selectedBg : theme.colors.background.secondary;
+  const highlightedBg = `color-mix(in srgb, ${borderColor} 10%, ${theme.colors.background.primary})`;
+  const hoverBackgroundColor = isHighlighted ? highlightedBg : colorManipulator.alpha(theme.colors.text.primary, 0.08);
+  const hoverSolidBg = isHighlighted ? highlightedBg : theme.colors.background.secondary;
 
   const {
     ghostBackgroundColor,
@@ -229,21 +260,16 @@ function getStyles(
     },
   });
 
-  const inSelection = isSelected || isPartOfSelection;
   const cardBorder = !!item.error
     ? `1px solid ${theme.colors.error.border}`
-    : `1px solid ${inSelection ? borderColor : theme.colors.border.medium}`;
+    : `1px solid ${isHighlighted ? borderColor : theme.colors.border.medium}`;
 
-  const selectionTintBg = `color-mix(in srgb, ${borderColor} 5%, ${theme.colors.background.primary})`;
-
-  // Selection-based styling
-  const cardBackground = isSelected
-    ? selectedBg
-    : isPartOfSelection
-      ? selectionTintBg
-      : theme.colors.background.primary;
-  const cardBoxShadow = isSelected ? `0 0 4px 0 color-mix(in srgb, ${borderColor} 40%, transparent)` : 'none';
-  const indicatorWidth = isSelected ? 3 : 2;
+  // Border and background are driven purely by the highlight. The checkbox
+  // (selection set) intentionally has no visual treatment on the card — the
+  // checkbox glyph itself is the only "is this selected" indicator.
+  const cardBackground = isHighlighted ? highlightedBg : theme.colors.background.primary;
+  const cardBoxShadow = isHighlighted ? `0 0 4px 0 color-mix(in srgb, ${borderColor} 40%, transparent)` : 'none';
+  const indicatorWidth = isHighlighted ? 3 : 2;
 
   return {
     cardContentIcons: css({
@@ -375,10 +401,10 @@ function getStyles(
     }),
 
     // Local Checkbox styles override for PanelEditorNext UI/UX experimentation.
-    // The checkbox is purely presentational — clicks/focus go to the card itself.
+    // The wrapper handles click capture so we can stopPropagation and read the
+    // shift modifier; the inner Checkbox is fully interactive.
     checkboxWrapper: css({
       display: 'flex',
-      pointerEvents: 'none',
     }),
     roundedCheckbox: css({
       '& span': {

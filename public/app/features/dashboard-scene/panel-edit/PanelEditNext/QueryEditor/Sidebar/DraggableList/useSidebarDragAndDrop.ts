@@ -28,7 +28,7 @@ export function useSidebarDragAndDrop() {
   const { queries } = useQueryRunnerContext();
   const { transformations } = usePanelContext();
   const { updateQueries, reorderTransformations } = useActionsContext();
-  const { setSelectedQuery, setSelectedTransformation } = useQueryEditorUIContext();
+  const { setHighlightedQuery, setHighlightedTransformation } = useQueryEditorUIContext();
 
   const onQueryDragEnd = useCallback(
     (result: DropResult) => {
@@ -39,9 +39,9 @@ export function useSidebarDragAndDrop() {
       const { startIndex, endIndex } = drop;
       trackReorder('query');
       updateQueries(reorder(queries, startIndex, endIndex));
-      setSelectedQuery(queries[startIndex]);
+      setHighlightedQuery(queries[startIndex]);
     },
-    [queries, updateQueries, setSelectedQuery]
+    [queries, updateQueries, setHighlightedQuery]
   );
 
   const onTransformationDragEnd = useCallback(
@@ -54,12 +54,12 @@ export function useSidebarDragAndDrop() {
       const draggedTransformation = transformations[startIndex];
       trackReorder('transformation');
       reorderTransformations(reorder(transformations, startIndex, endIndex).map((t) => t.transformConfig));
-      setSelectedTransformation({
+      setHighlightedTransformation({
         ...draggedTransformation,
         transformId: getTransformId(draggedTransformation.transformConfig.id, endIndex),
       });
     },
-    [transformations, reorderTransformations, setSelectedTransformation]
+    [transformations, reorderTransformations, setHighlightedTransformation]
   );
 
   return { onQueryDragEnd, onTransformationDragEnd };

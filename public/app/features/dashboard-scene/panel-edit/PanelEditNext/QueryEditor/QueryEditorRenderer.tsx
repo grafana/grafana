@@ -11,16 +11,16 @@ import { useActionsContext, useQueryEditorUIContext, useQueryRunnerContext } fro
 
 export function QueryEditorRenderer() {
   const { queries, data } = useQueryRunnerContext();
-  const { selectedQuery, selectedQueryDsData, selectedQueryDsLoading } = useQueryEditorUIContext();
+  const { highlightedQuery, selectedQueryDsData, selectedQueryDsLoading } = useQueryEditorUIContext();
   const { updateSelectedQuery, addQuery, runQueries } = useActionsContext();
-  const error = data?.errors?.find((e) => e.refId === selectedQuery?.refId);
+  const error = data?.errors?.find((e) => e.refId === highlightedQuery?.refId);
 
-  const selectedRefId = selectedQuery?.refId;
+  const highlightedRefId = highlightedQuery?.refId;
 
   // Filter panel data to only include data for this specific query
   const filteredData = useMemo(() => {
-    return selectedRefId && data ? filterPanelDataToQuery(data, selectedRefId) : undefined;
-  }, [data, selectedRefId]);
+    return highlightedRefId && data ? filterPanelDataToQuery(data, highlightedRefId) : undefined;
+  }, [data, highlightedRefId]);
 
   // Key off updatedQuery.refId so late onChange calls (e.g. editor unmount cleanup) hit the right query.
   const handleChange = useCallback(
@@ -30,7 +30,7 @@ export function QueryEditorRenderer() {
     [updateSelectedQuery]
   );
 
-  if (!selectedQuery) {
+  if (!highlightedQuery) {
     return null;
   }
 
@@ -74,7 +74,7 @@ export function QueryEditorRenderer() {
     <>
       <DataSourcePluginContextProvider instanceSettings={dsSettings}>
         <QueryEditorComponent
-          key={selectedQuery.refId}
+          key={highlightedQuery.refId}
           app={CoreApp.Dashboard}
           data={filteredData}
           datasource={datasource}
@@ -82,7 +82,7 @@ export function QueryEditorRenderer() {
           onChange={handleChange}
           onRunQuery={runQueries}
           queries={queries}
-          query={selectedQuery}
+          query={highlightedQuery}
           range={filteredData?.timeRange}
         />
       </DataSourcePluginContextProvider>
