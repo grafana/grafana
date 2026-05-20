@@ -342,6 +342,8 @@ type ResourceServerOptions struct {
 
 	IndexMetrics *BleveIndexMetrics
 
+	VectorMetrics *VectorMetrics
+
 	// MaxPageSizeBytes is the maximum size of a page in bytes.
 	MaxPageSizeBytes int
 
@@ -422,7 +424,7 @@ func NewUninitializedSearchServer(opts ResourceServerOptions) (SearchServer, err
 	}
 
 	// Create the search server using the search.go factory
-	searchServer, err := newSearchServer(opts.Search, opts.Backend, opts.VectorBackend, opts.Embedder, opts.AccessClient, blobstore, opts.IndexMetrics, opts.OwnsIndexFn)
+	searchServer, err := newSearchServer(opts.Search, opts.Backend, opts.VectorBackend, opts.Embedder, opts.AccessClient, blobstore, opts.IndexMetrics, opts.VectorMetrics, opts.OwnsIndexFn)
 	if err != nil || searchServer == nil {
 		return nil, fmt.Errorf("search server could not be created: %w", err)
 	}
@@ -533,7 +535,7 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 
 	if opts.Search.Resources != nil {
 		var err error
-		s.search, err = newSearchServer(opts.Search, s.backend, opts.VectorBackend, opts.Embedder, s.access, s.blob, opts.IndexMetrics, opts.OwnsIndexFn)
+		s.search, err = newSearchServer(opts.Search, s.backend, opts.VectorBackend, opts.Embedder, s.access, s.blob, opts.IndexMetrics, opts.VectorMetrics, opts.OwnsIndexFn)
 		if err != nil {
 			return nil, err
 		}
