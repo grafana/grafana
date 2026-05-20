@@ -15,12 +15,27 @@ labels:
 menuTitle: Troubleshooting
 review_date: 2026-05-19
 title: Troubleshoot Microsoft SQL Server data source issues
-weight: 400
+weight: 600
 ---
 
 # Troubleshoot Microsoft SQL Server data source issues
 
 This document provides solutions to common issues you may encounter when configuring or using the Microsoft SQL Server (MSSQL) data source in Grafana.
+
+## Configuration errors
+
+These errors occur when setting up or accessing the data source configuration in Grafana.
+
+### Configuration form not displaying
+
+**Symptoms:** The data source settings page shows only **Delete** and **Back** buttons with no configuration fields.
+
+**Cause:** The logged-in user has insufficient permissions to configure data sources. Only users with the `Organization administrator` role (or a custom RBAC role with `datasources:write` permissions) can access the data source configuration form.
+
+**Solution:**
+
+1. Ask an organization administrator to grant you the `Organization administrator` role, or assign you a custom RBAC role with data source write permissions.
+1. Alternatively, ask an administrator to configure the data source on your behalf or use [provisioning](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/) to define the data source in YAML.
 
 ## Connection errors
 
@@ -222,6 +237,8 @@ These errors occur when there are issues with authentication credentials or perm
 
 1. Check that the user doesn't have any conflicting permissions from the public role.
 
+<!-- vale Grafana.Spelling = NO -->
+
 ### Windows Authentication (Kerberos) issues
 
 **Error message:** "Kerberos authentication failed" or "Cannot initialize Kerberos"
@@ -239,8 +256,6 @@ These errors occur when there are issues with authentication credentials or perm
 {{< admonition type="note" >}}
 Kerberos authentication is not supported in Grafana Cloud. Use SQL Server Authentication or Azure Entra ID instead.
 {{< /admonition >}}
-
-<!-- vale Grafana.Spelling = NO -->
 
 ### KDC_ERR_C_PRINCIPAL_UNKNOWN with Availability Group Listeners
 
@@ -435,30 +450,34 @@ These issues relate to slow queries or high resource usage.
 1. Check the replica's replication lag and resource utilization (CPU, I/O) during slow periods.
 1. Consider creating a separate data source for replica queries and using it only for specific dashboards that don't require low latency.
 
-## Other common issues
+## Alert errors
 
-The following issues don't produce specific error messages but are commonly encountered.
+These errors occur when using Microsoft SQL Server queries in Grafana Alerting.
 
-### Configuration form not displaying
+### Alerts fail intermittently while dashboards work
 
-**Symptoms:** The data source settings page shows only **Delete** and **Back** buttons with no configuration fields.
-
-**Cause:** The logged-in user has insufficient permissions to configure data sources. Only users with the `Organization administrator` role (or a custom RBAC role with `datasources:write` permissions) can access the data source configuration form.
+**Cause:** Connection pool exhaustion. Alert evaluations and dashboard queries share the same connection pool. Under concurrent load, alert evaluations may time out waiting for a free connection.
 
 **Solution:**
 
-1. Ask an organization administrator to grant you the `Organization administrator` role, or assign you a custom RBAC role with data source write permissions.
-1. Alternatively, ask an administrator to configure the data source on your behalf or use [provisioning](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/) to define the data source in YAML.
+Refer to [Connection pool exhaustion](#connection-pool-exhaustion) in the Performance issues section above.
 
-### System databases appear in queries
+### Alert queries return no data
 
-**Cause:** Queries accidentally access system databases.
+**Cause:** Alert queries have different requirements than dashboard queries.
 
 **Solution:**
 
-1. The query editor automatically excludes `tempdb`, `model`, `msdb`, and `master` from the database dropdown.
-1. Always specify the database in your data source configuration to restrict access.
-1. Ensure the database user only has permissions on the intended database.
+1. Ensure the query format is set to **Time series** (Table format isn't supported for alerting).
+1. Verify the query doesn't use template variables (alert queries can't resolve dashboard variables).
+1. Check that the query returns data within the alert evaluation time range.
+1. Test the query in Explore with a fixed time range to confirm it returns results.
+
+For more information, refer to [Microsoft SQL Server alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/mssql/alerting/).
+
+## Template variable errors
+
+These errors occur when using template variables in queries.
 
 ### Template variable queries fail
 
@@ -470,6 +489,30 @@ The following issues don't produce specific error messages but are commonly enco
 1. Check that the data source connection is working.
 1. Ensure the user has permission to access the tables referenced in the variable query.
 1. Test the query in the query editor before using it as a variable query.
+
+### Double-quoting breaks queries with multi-value variables
+
+**Cause:** Since Grafana v11.3, multi-value variables used with `IN` are automatically quoted. If you manually wrapped the variable in quotes (for example, `WHERE col IN ('${var}')`), values are now double-quoted (for example, `''value''`), causing query failures.
+
+**Solution:**
+
+1. Remove manual quotes around the variable: use `WHERE col IN ($var)` instead of `WHERE col IN ('${var}')`.
+1. For single-value comparisons, use the `sqlstring` format: `WHERE col = ${var:sqlstring}`.
+1. Refer to [Template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/mssql/template-variables/) for formatting options.
+
+## Other common issues
+
+The following issues don't produce specific error messages but are commonly encountered.
+
+### System databases appear in queries
+
+**Cause:** Queries accidentally access system databases.
+
+**Solution:**
+
+1. The query editor automatically excludes `tempdb`, `model`, `msdb`, and `master` from the database dropdown.
+1. Always specify the database in your data source configuration to restrict access.
+1. Ensure the database user only has permissions on the intended database.
 
 ### Data appears incorrect or misaligned
 

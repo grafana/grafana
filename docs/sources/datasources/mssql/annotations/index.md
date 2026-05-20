@@ -17,7 +17,7 @@ labels:
 menuTitle: Annotations
 review_date: 2026-05-19
 title: Microsoft SQL Server annotations
-weight: 400
+weight: 500
 ---
 
 # Microsoft SQL Server annotations
