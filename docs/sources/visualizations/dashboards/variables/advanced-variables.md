@@ -12,7 +12,7 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Advanced variable usage
+title: Advanced variable configurations
 description: Learn advanced variable actions to make them more dynamic in your dashboards
 weight: 300
 refs:
@@ -33,7 +33,15 @@ refs:
       destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/#add-a-data-source
 ---
 
-# Advanced variable usage
+# Advanced variable configurations
+
+The advanced variable configurations described on this page help you build dashboards that adapt to complex data structures and user selections:
+
+- **Multi-property variables**: Map one logical value to multiple source-specific values.
+- **Chained variables**: Update the options in one variable based on the selections in another.
+- **Regular expression filtering**: Filter the values returned by a variable query.
+
+These configurations are useful for dashboards that span multiple environments, data sources, regions, clusters, namespaces, or other hierarchical data.
 
 ## Multi-property variables
 

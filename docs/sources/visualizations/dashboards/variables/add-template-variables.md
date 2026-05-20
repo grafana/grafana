@@ -66,7 +66,7 @@ refs:
 
 # Add variables
 
-In addition to the built-in global variables that are already in Grafana, you can create your own variables.
+In addition to the built-in global variables that come with Grafana, you can create your own variables.
 The following table lists the types of variables you can create:
 
 <!-- prettier-ignore-start -->

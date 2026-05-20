@@ -23,7 +23,9 @@ refs:
 
 # Global variables
 
-Grafana has global built-in variables that can be used in expressions in the query editor. This topic lists them in alphabetical order and defines them. These variables are useful in queries, dashboard links, panel links, and data links.
+Grafana has global built-in variables that can be used in expressions in the query editor.
+You can use these variables in queries, dashboard links, panel links, and data links.
+This page lists them in alphabetical order and defines them.
 
 ### `$__dashboard`
 

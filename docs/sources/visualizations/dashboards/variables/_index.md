@@ -16,6 +16,8 @@ weight: 800
 
 # Variables
 
+<!--TODO: Decide whether to use viewers or users language on this page -->
+
 A variable is a placeholder for a value that you can use in dashboard queries, panel titles, links, and other dashboard elements.
 When you change the value of a variable, Grafana updates every dashboard element that uses that variable.
 
@@ -34,6 +36,15 @@ Using variables also allows you to single-source dashboards.
 If you have multiple identical data sources or servers, you can make one dashboard and use variables to change what you are viewing.
 This reduces dashboard duplication and maintenance.
 
+You can use variables in:
+
+- Data source queries
+- [Panel repeating options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-panel-options/#configure-repeating-panels)
+- [Dashboard and panel links](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/manage-dashboard-links/)
+- Titles
+- Descriptions
+- [Transformations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/)
+
 To work with variables, you typically do the following:
 
 - Choose the type of variable that matches the value you want viewers to control.
@@ -49,34 +60,25 @@ To see variable settings, click **Edit** in the top-right corner of the dashboar
 
 Grafana supports two broad kinds of variables:
 
-- **Variables you create:** Dashboard-specific variables that you define and configure. Use these variables when viewers need to choose values such as a server, data source, region, environment, or interval. For configuration steps, refer to [Add variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/).
-- **Global variables:** Built-in variables that Grafana provides automatically, such as the current time range, dashboard name, organization, or signed-in user. For the full reference, refer to [Global variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/global-variables/).
+- **Variables you create**: Dashboard-specific variables that you define and configure. Use these variables when viewers need to choose values such as a server, data source, region, environment, or interval. For configuration steps, refer to [Add variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/).
+- **Global variables**: Built-in variables that Grafana provides automatically, such as the current time range, dashboard name, organization, or signed-in user. For the full reference, refer to [Global variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/global-variables/).
 
 ## Choose a variable type
 
-Choose a variable type based on how you want Grafana to get the value and how viewers interact with it.
+Choose a variable type based on how you want Grafana to get the value and how users interact with it.
 
-- **Query:** Use when the list of values comes from a data source query, such as server names, metric names, label values, or data centers.
-- **Custom:** Use when you want to define a fixed list of values manually.
-- **Text box:** Use when viewers need to enter a free-form value.
-- **Constant:** Use when a dashboard needs a reusable value that viewers don't change.
-- **Data source:** Use when viewers need to switch a dashboard or query between data source instances.
-- **Interval:** Use when viewers need to change the time grouping or aggregation interval in queries.
-- **Filters:** Use when viewers need dashboard-wide key/value filters for supported data sources.
-- **Switch:** Use when viewers need to toggle between two configured values.
+| Variable type | Use when |
+| ------------- | ---------- |
+| Query | The list of values comes from a data source query, such as server names, metric names, label values, or data centers. |
+| Custom | You want to define a fixed list of values manually. |
+| Text box | Users need to enter a free-form value. |
+| Constant | A dashboard needs a reusable value that users don't change. |
+| Data source | Users need to switch a dashboard or query between data source instances. |
+| Interval | Users need to change the time grouping or aggregation interval in queries. |
+| Filters | Users need dashboard-wide key/value filters for supported data sources. |
+| Switch | Users need to toggle between two configured values. |
 
 For the complete list of variable settings and type-specific steps, refer to [Add variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/).
-
-## Common ways to use variables
-
-You can use variables in:
-
-- Data source queries
-- [Panel repeating options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-panel-options/#configure-repeating-panels)
-- [Dashboard and panel links](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/manage-dashboard-links/)
-- Titles
-- Descriptions
-- [Transformations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/)
 
 ## Template variables {#templates}
 
