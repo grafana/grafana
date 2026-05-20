@@ -84,7 +84,7 @@ The following table lists the types of variables you can create:
 
 <!-- prettier-ignore-end -->
 
-## Enter General options
+## Enter General options for any variable
 
 To create a variable, follow these steps:
 
@@ -154,9 +154,7 @@ Query expressions can contain references to other variables and in effect create
 Query expressions are different for each data source. For more information, refer to the documentation for your [data source](ref:data-source).
 {{< /admonition >}}
 
-To add a query variable, follow these steps:
-
-1. [Enter general options](#enter-general-options).
+1. [Enter general options](#enter-general-options-for-any-variable).
 1. Configure the following options:
 
    | Option | Description |
@@ -200,7 +198,7 @@ Use a _custom_ variable for a value that doesn't change, such as a number or a s
 
 For example, if you have server names or region names that never change, then you might want to create them as custom variables rather than query variables. Because they don't change, you might use them in [chained variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/advanced-variables/#chained-variables) rather than other query variables. That would reduce the number of queries Grafana must send when chained variables are updated.
 
-1. [Enter general options](#enter-general-options).
+1. [Enter general options](#enter-general-options-for-any-variable).
 1. Configure the following options:
 
    | Option | Description |
@@ -223,7 +221,7 @@ _Text box_ variables display a free text input field with an optional default va
 
 For more information about cardinality, refer to [What are cardinality spikes and why do they matter?](https://grafana.com/blog/2022/02/15/what-are-cardinality-spikes-and-why-do-they-matter/)
 
-1. [Enter general options](#enter-general-options).
+1. [Enter general options](#enter-general-options-for-any-variable).
 1. (Optional) Under the **Text options** section of the page, in the **Default value** field, enter the default value for the variable.
 
    If you do not enter anything in this field, then Grafana displays an empty text box for users to type text into.
@@ -240,7 +238,7 @@ Constant variables are _not_ flexible. Each constant variable only holds one val
 
 Constant variables are useful when you have complex values that you need to include in queries but don't want to retype in every query. For example, if you had a server path called `i-0b6a61efe2ab843gg`, then you could replace it with a variable called `$path_gg`.
 
-1. [Enter general options](#enter-general-options).
+1. [Enter general options](#enter-general-options-for-any-variable).
 1. Under the **Constant options** section of the page, in the **Value** field, enter the variable value.
 
    You can enter letters, numbers, and symbols. You can even use wildcards if you use [raw format](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/variable-syntax/#raw).
@@ -253,7 +251,7 @@ Constant variables are useful when you have complex values that you need to incl
 
 _Data source_ variables enable you to quickly change the data source for an entire dashboard. They are useful if you have multiple instances of a data source, perhaps in different environments.
 
-1. [Enter general options](#enter-general-options).
+1. [Enter general options](#enter-general-options-for-any-variable).
 1. Configure the following options:
 
    | Option | Description |
@@ -276,7 +274,7 @@ Use an _interval_ variable to represents time spans such as `1m`,`1h`, `1d`. You
 
 You can use an interval variable as a parameter to group by time (for InfluxDB), date histogram interval (for Elasticsearch), or as a summarize function parameter (for Graphite).
 
-1. [Enter general options](#enter-general-options).
+1. [Enter general options](#enter-general-options-for-any-variable).
 1. Configure the following options:
 
    | Option | Description |
@@ -340,7 +338,7 @@ The following data sources support filters:
 
 To create a filter, follow these steps:
 
-1. [Enter general options](#enter-general-options).
+1. [Enter general options](#enter-general-options-for-any-variable).
 1. Under the **Filter options** section of the page, select a target data source in the **Data source** drop-down list.
 
    You can also click **Open advanced data source picker** to see more options, including adding a data source (Admins only).
@@ -436,7 +434,7 @@ _Switch_ variables display a switch with two configurable values representing en
 - Switch between different visualization modes
 - Control boolean parameters in your data sources
 
-1. [Enter general options](#enter-general-options).
+1. [Enter general options](#enter-general-options-for-any-variable).
 1. Configure the following options:
 
    | Option | Description |
