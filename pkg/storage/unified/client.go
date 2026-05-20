@@ -63,6 +63,7 @@ type clientMetrics struct {
 func ProvideUnifiedStorageClient(opts *Options,
 	storageMetrics *resource.StorageMetrics,
 	indexMetrics *resource.BleveIndexMetrics,
+	vectorMetrics *resource.VectorMetrics,
 ) (resource.ResourceClient, error) {
 	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
 	client, err := newClient(options.StorageOptions{
@@ -73,7 +74,7 @@ func ProvideUnifiedStorageClient(opts *Options,
 		BlobStoreURL:            apiserverCfg.Key("blob_url").MustString(""),
 		BlobThresholdBytes:      apiserverCfg.Key("blob_threshold_bytes").MustInt(options.BlobThresholdDefault),
 		GrpcClientKeepaliveTime: apiserverCfg.Key("grpc_client_keepalive_time").MustDuration(0),
-	}, opts.Cfg, opts.Features, opts.DB, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, opts.SecureValues, opts.VectorBackend, opts.Embedder, opts.DashboardStats)
+	}, opts.Cfg, opts.Features, opts.DB, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, vectorMetrics, opts.SecureValues, opts.VectorBackend, opts.Embedder, opts.DashboardStats)
 	if err == nil {
 		// Used to get the folder stats
 		// Pass cfg directly so the federated client reads the current dual-writer mode
@@ -99,6 +100,7 @@ func newClient(opts options.StorageOptions,
 	docs resource.DocumentBuilderSupplier,
 	storageMetrics *resource.StorageMetrics,
 	indexMetrics *resource.BleveIndexMetrics,
+	vectorMetrics *resource.VectorMetrics,
 	secure secrets.InlineSecureValueSupport,
 	vectorBackend vector.VectorBackend,
 	embedderInstance *embedder.Embedder,
@@ -182,6 +184,7 @@ func newClient(opts options.StorageOptions,
 			SearchOptions:  searchOptions,
 			StorageMetrics: storageMetrics,
 			IndexMetrics:   indexMetrics,
+			VectorMetrics:  vectorMetrics,
 			Features:       features,
 			SecureValues:   secure,
 			DashboardStats: dashboardStats,

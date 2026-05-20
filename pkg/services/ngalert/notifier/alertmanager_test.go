@@ -8,7 +8,6 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/client_golang/prometheus"
 	prommodel "github.com/prometheus/common/model"
@@ -102,8 +101,7 @@ func TestAlertmanager_SaveAndApplyExtraConfiguration_WithExternalSecrets(t *test
 	require.NoError(t, err)
 
 	_, err = moa.SaveAndApplyExtraConfiguration(context.Background(), 1, &user.SignedInUser{}, noopExtraConfigAuthz{}, definitions.ExtraConfiguration{
-		Identifier:    "external-prometheus",
-		MergeMatchers: []*labels.Matcher{{Type: labels.MatchEqual, Name: "cluster", Value: "prod"}},
+		Identifier: "external-prometheus",
 		AlertmanagerConfig: `
 route:
   receiver: webhook-receiver
@@ -194,13 +192,6 @@ func TestAlertmanager_ApplyConfig(t *testing.T) {
 				ExtraConfigs: []definitions.ExtraConfiguration{
 					{
 						Identifier: "mimir-prod",
-						MergeMatchers: config.Matchers{
-							{
-								Type:  labels.MatchEqual,
-								Name:  "__mimir__",
-								Value: "true",
-							},
-						},
 						TemplateFiles: map[string]string{
 							"mimir-template": "{{ define \"mimir.title\" }}Mimir Alert{{ end }}",
 						},
@@ -226,8 +217,7 @@ receivers:
 				AlertmanagerConfig: basicConfig(),
 				ExtraConfigs: []definitions.ExtraConfiguration{
 					{
-						Identifier:    "", // invalid: empty identifier
-						MergeMatchers: config.Matchers{},
+						Identifier: "", // invalid: empty identifier
 						AlertmanagerConfig: `route:
   receiver: test-receiver
 receivers:
@@ -357,10 +347,6 @@ func TestAlertmanager_HashStabilityAndChangeDetection(t *testing.T) {
 				cfg.ExtraConfigs = []definitions.ExtraConfiguration{
 					{
 						Identifier: "mimir-prod",
-						MergeMatchers: definitions.Matchers{
-							matcher("cluster", "prod"),
-							matcher("source", "external"),
-						},
 						TemplateFiles: map[string]string{
 							"extra-b.tmpl": "{{ define \"extra.b\" }}b{{ end }}",
 							"extra-a.tmpl": "{{ define \"extra.a\" }}a{{ end }}",
@@ -374,7 +360,7 @@ receivers:
 				return cfg
 			},
 			mutate: func(cfg *definitions.PostableUserConfig, _ map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting) {
-				cfg.ExtraConfigs[0].MergeMatchers[0].Value = "staging"
+				cfg.ExtraConfigs[0].TemplateFiles["extra-b.tmpl"] = "{{ define \"extra.b\" }}changed{{ end }}"
 			},
 		},
 		{
@@ -444,10 +430,6 @@ receivers:
 				cfg.ExtraConfigs = []definitions.ExtraConfiguration{
 					{
 						Identifier: "mimir-prod",
-						MergeMatchers: definitions.Matchers{
-							matcher("cluster", "prod"),
-							matcher("source", "external"),
-						},
 						TemplateFiles: map[string]string{
 							"extra-b.tmpl": "{{ define \"extra.b\" }}b{{ end }}",
 							"extra-a.tmpl": "{{ define \"extra.a\" }}a{{ end }}",
@@ -467,7 +449,7 @@ receivers:
 				return cfg
 			},
 			mutate: func(cfg *definitions.PostableUserConfig, _ map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting) {
-				cfg.ExtraConfigs[0].MergeMatchers[0].Value = "staging"
+				cfg.ExtraConfigs[0].TemplateFiles["extra-b.tmpl"] = "{{ define \"extra.b\" }}changed{{ end }}"
 			},
 		},
 	}

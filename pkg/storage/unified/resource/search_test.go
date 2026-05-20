@@ -15,9 +15,14 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/authlib/types"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -205,7 +210,7 @@ func TestSearchGetOrCreateIndex(t *testing.T) {
 		InitMinCount: 1, // set min count to default for this test
 	}
 
-	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -261,7 +266,7 @@ func TestSearchGetOrCreateIndexWithIndexUpdate(t *testing.T) {
 	}
 
 	// Enable searchAfterWrite
-	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -309,7 +314,7 @@ func TestSearchGetOrCreateIndexWithCancellation(t *testing.T) {
 		InitMinCount: 1, // set min count to default for this test
 	}
 
-	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -633,7 +638,7 @@ func TestFindIndexesForRebuild(t *testing.T) {
 		BuildVersion:         semver.MustParse("6.5.0"), // Running version
 	}
 
-	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -710,7 +715,7 @@ func TestRebuildIndexes(t *testing.T) {
 		Resources: supplier,
 	}
 
-	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -802,7 +807,7 @@ func TestRebuildIndexes(t *testing.T) {
 			InitMinCount: 1,
 		}
 
-		support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil)
+		support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
 		require.NoError(t, err)
 		require.NotNil(t, support)
 
@@ -915,7 +920,7 @@ func TestRebuildIndexesForResource(t *testing.T) {
 		InitMinCount: 1,
 	}
 
-	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -996,7 +1001,7 @@ func TestSearchValidatesNegativeLimitAndOffset(t *testing.T) {
 		InitMinCount: 1,
 	}
 
-	support, err := newSearchServer(opts, nil, nil, nil, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -1105,7 +1110,7 @@ func TestFindIndexesToRebuildWithJitter(t *testing.T) {
 		MinBuildVersion: semver.MustParse("5.0.0"),
 	}
 
-	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -1116,7 +1121,7 @@ func TestFindIndexesToRebuildWithJitter(t *testing.T) {
 	require.Equal(t, numIndexes, len(chsNoJitter))
 
 	// Create a second server with the same config to get a fresh rebuild queue.
-	support2, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil)
+	support2, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 
 	// With jitter: some indexes get extra tolerance, so fewer should be queued.
@@ -1176,7 +1181,7 @@ func TestRebuildIndexConcurrentRebuildsForSameKeyAreDeduplicated(t *testing.T) {
 	}
 
 	opts := SearchOptions{Backend: search, Resources: supplier}
-	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 
 	// Fire the first rebuild. It will claim the in-flight slot and block
@@ -1309,7 +1314,7 @@ func TestRebuildIndexNoFollowUpWhenNotInFlight(t *testing.T) {
 		GroupsResources: map[string]string{"group": "res"},
 	}
 	opts := SearchOptions{Backend: search, Resources: supplier}
-	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 
 	done := make(chan struct{})
@@ -1330,4 +1335,97 @@ func TestRebuildIndexNoFollowUpWhenNotInFlight(t *testing.T) {
 	support.inFlightRebuildsMu.Unlock()
 	require.False(t, inFlight, "in-flight tracker should be cleared")
 	require.Equal(t, 0, support.rebuildQueue.Len(), "no follow-up should be re-enqueued")
+}
+
+// TestSearchServer_VectorSearch_ObservesDuration verifies the RPC histogram
+// fires when VectorSearch returns. The Unimplemented path is the cheapest
+// reachable code path (no embedder/vectorBackend needed), and is enough to
+// confirm the wiring between VectorSearch and VectorMetrics is intact.
+func TestSearchServer_VectorSearch_ObservesDuration(t *testing.T) {
+	reg := prometheus.NewPedanticRegistry()
+	m := ProvideVectorMetrics(reg)
+	s := &searchServer{
+		log:           log.New("test-vector-search"),
+		vectorMetrics: m,
+	}
+
+	_, err := s.VectorSearch(context.Background(), &resourcepb.VectorSearchRequest{
+		Key: &resourcepb.ResourceKey{
+			Namespace: "stack-1",
+			Group:     "dashboard.grafana.app",
+			Resource:  "dashboards",
+		},
+		Query: "test",
+	})
+	require.Error(t, err)
+	require.Equal(t, codes.Unimplemented, status.Code(err))
+
+	require.Equal(t, 1, testutil.CollectAndCount(m.SearchDuration, "vector_storage_search_duration_seconds"))
+}
+
+func TestFolderFilterSet(t *testing.T) {
+	cases := []struct {
+		name     string
+		req      *resourcepb.ResourceStatsRequest
+		expected []string
+	}{
+		{
+			name:     "no filter",
+			req:      &resourcepb.ResourceStatsRequest{},
+			expected: nil,
+		},
+		{
+			name:     "single folder",
+			req:      &resourcepb.ResourceStatsRequest{Folder: []string{"root"}},
+			expected: []string{"root"},
+		},
+		{
+			name:     "multiple folders",
+			req:      &resourcepb.ResourceStatsRequest{Folder: []string{"a", "b"}},
+			expected: []string{"a", "b"},
+		},
+		{
+			name:     "dedupes overlap and drops empties",
+			req:      &resourcepb.ResourceStatsRequest{Folder: []string{"a", "", "b", "b", "a"}},
+			expected: []string{"a", "b"},
+		},
+	}
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.expected, folderFilterSet(tt.req))
+		})
+	}
+}
+
+// countingIndex records each DocCount call for use by TestSumDocCount.
+type countingIndex struct {
+	MockResourceIndex
+	counts map[string]int64
+	calls  []string
+}
+
+func (c *countingIndex) DocCount(_ context.Context, folder string, _ *SearchStats) (int64, error) {
+	c.calls = append(c.calls, folder)
+	return c.counts[folder], nil
+}
+
+func TestSumDocCount(t *testing.T) {
+	idx := &countingIndex{counts: map[string]int64{
+		"":     7, // total of the index when no filter applied
+		"root": 3,
+		"a":    5,
+		"b":    2,
+	}}
+
+	// Empty folder set means "count the whole index".
+	got, err := sumDocCount(t.Context(), idx, nil, nil)
+	require.NoError(t, err)
+	require.Equal(t, int64(7), got)
+	require.Equal(t, []string{""}, idx.calls)
+
+	idx.calls = nil
+	got, err = sumDocCount(t.Context(), idx, []string{"root", "a", "b"}, nil)
+	require.NoError(t, err)
+	require.Equal(t, int64(10), got)
+	require.Equal(t, []string{"root", "a", "b"}, idx.calls)
 }

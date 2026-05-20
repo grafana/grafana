@@ -7,7 +7,7 @@ SELECT
 FROM "resource"
 WHERE 1 = 1
   AND "namespace" = 'default'
-  AND "folder" IN ('folder')
+  AND "folder" IN ('a', 'b', 'c')
 GROUP BY 
   "namespace",
   "group",
