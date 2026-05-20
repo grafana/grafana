@@ -54,12 +54,10 @@ func (r *subChildrenREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (r *subChildrenREST) Connect(ctx context.Context, name string, _ runtime.Object, responder rest.Responder) (http.Handler, error) {
-	if _, err := r.getter.Get(ctx, name, &v1.GetOptions{}); err != nil {
-		return nil, err
-	}
-
 	if name == folder.GeneralFolderUID {
 		name = ""
+	} else if _, err := r.getter.Get(ctx, name, &v1.GetOptions{}); err != nil {
+		return nil, err
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
