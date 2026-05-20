@@ -453,7 +453,53 @@ export function prepConfig(opts: PrepConfigOpts) {
           }
           return splits;
         }
-      : undefined,
+      : isSparseHeatmap
+        ? (self: uPlot) => {
+            // Render bucket boundaries as y-axis ticks so the visualization
+            // mirrors the classic histogram heatmap (which is ordinal and
+            // labels each le= row). For NHCB the boundaries are exactly the
+            // explicit values in yMin/yMax; for exponential native histograms
+            // they're the discrete base^k step points. Thinning happens via
+            // the values callback below.
+            const yMinData = self.data[1]?.[1];
+            const yMaxData = self.data[1]?.[2];
+            const yMinVals = Array.isArray(yMinData) ? yMinData : [];
+            const yMaxVals = Array.isArray(yMaxData) ? yMaxData : [];
+            const bounds = findFiniteBucketBounds(yMinVals, yMaxVals);
+            const factor = calculateBucketExpansionFactor(yMinVals, yMaxVals);
+
+            const finite = new Set<number>();
+            for (const v of yMinVals) {
+              if (typeof v === 'number' && Number.isFinite(v)) {
+                finite.add(v);
+              }
+            }
+            for (const v of yMaxVals) {
+              if (typeof v === 'number' && Number.isFinite(v)) {
+                finite.add(v);
+              }
+            }
+            let splits = [...finite].sort((a, b) => a - b);
+
+            if (bounds.hasUnboundedLower && bounds.finiteMin != null && factor > 1) {
+              splits.unshift(bounds.finiteMin / factor);
+            }
+            if (bounds.hasUnboundedUpper && bounds.finiteMax != null && factor > 1) {
+              splits.push(bounds.finiteMax * factor);
+            }
+
+            // Thin labels when the y-axis is too short to fit them all.
+            if (self.height < 60 && splits.length > 2) {
+              splits = [splits[0], splits[splits.length - 1]];
+            } else {
+              while (splits.length > 3 && (self.height - 15) / splits.length < 10) {
+                splits = splits.filter((_v, idx) => idx % 2 === 0);
+              }
+            }
+
+            return splits;
+          }
+        : undefined,
     values: isOrdinalY
       ? (self: uPlot, splits) => {
           const meta = readHeatmapRowsCustomMeta(dataRef.current?.heatmap);
@@ -466,7 +512,38 @@ export function prepConfig(opts: PrepConfigOpts) {
           }
           return splits;
         }
-      : undefined,
+      : isSparseHeatmap
+        ? (self: uPlot, splits) => {
+            // Label synthetic axis bounds (introduced for unbounded NHCB
+            // tails) as the conventional "0" / "+Inf" used by the classic
+            // histogram heatmap; finite bucket boundaries use the normal
+            // display formatter.
+            const yMinData = self.data[1]?.[1];
+            const yMaxData = self.data[1]?.[2];
+            const yMinVals = Array.isArray(yMinData) ? yMinData : [];
+            const yMaxVals = Array.isArray(yMaxData) ? yMaxData : [];
+            const bounds = findFiniteBucketBounds(yMinVals, yMaxVals);
+            const factor = calculateBucketExpansionFactor(yMinVals, yMaxVals);
+            const syntheticLower =
+              bounds.hasUnboundedLower && bounds.finiteMin != null && factor > 1
+                ? bounds.finiteMin / factor
+                : null;
+            const syntheticUpper =
+              bounds.hasUnboundedUpper && bounds.finiteMax != null && factor > 1
+                ? bounds.finiteMax * factor
+                : null;
+
+            return splits.map((v) => {
+              if (syntheticLower != null && v === syntheticLower) {
+                return '0';
+              }
+              if (syntheticUpper != null && v === syntheticUpper) {
+                return '+Inf';
+              }
+              return formattedValueToString(dispY(v, undefined));
+            });
+          }
+        : undefined,
   });
 
   const pathBuilder = isSparseHeatmap ? heatmapPathsSparse : heatmapPathsDense;
