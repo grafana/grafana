@@ -343,7 +343,7 @@ func (m *Manager) Acquire(ctx context.Context, name string, opts ...AcquireOptio
 // already been released — or one that has expired — returns ErrLeaseLost.
 func (m *Manager) Release(ctx context.Context, lease *Lease) (retErr error) {
 	ctx, span := tracer.Start(ctx, "lease.Manager.Release", trace.WithAttributes(
-		attribute.String("lease.name", lease.name),
+		attribute.String("lease.name", lease.key.name),
 		attribute.String("lease.holder", lease.holder),
 	))
 	defer func() {
@@ -521,14 +521,14 @@ func (m *Manager) latest(ctx context.Context, name string) (key leaseKey, retErr
 
 func (m *Manager) read(ctx context.Context, key leaseKey) (state leaseMetadata, retError error) {
 	ctx, span := tracer.Start(ctx, "lease.Manager.read", trace.WithAttributes(
-		attribute.String("lease.key", key),
+		attribute.String("lease.key", key.String()),
 	))
 	defer func() {
 		recordSpanError(span, retError)
 		span.End()
 	}()
 
-	r, err := m.store.Get(ctx, kv.LeasesSection, key)
+	r, err := m.store.Get(ctx, kv.LeasesSection, key.String())
 	if err != nil {
 		return leaseMetadata{}, fmt.Errorf("fetching lease key: %w", err)
 	}
@@ -547,7 +547,7 @@ func (m *Manager) read(ctx context.Context, key leaseKey) (state leaseMetadata, 
 
 func (m *Manager) save(ctx context.Context, key leaseKey, state leaseMetadata) (retError error) {
 	ctx, span := tracer.Start(ctx, "lease.Manager.save", trace.WithAttributes(
-		attribute.String("lease.key", key),
+		attribute.String("lease.key", key.String()),
 	))
 	defer func() {
 		recordSpanError(span, retError)
@@ -582,12 +582,6 @@ func recordSpanError(span trace.Span, err error) {
 	}
 	span.RecordError(err)
 	span.SetStatus(otelcodes.Error, err.Error())
-}
-
-// leaseKey generates a 20-digit generation suffix so leases sort
-// lexicographically in generation order.
-func leaseKey(name string, generation int64) string {
-	return fmt.Sprintf("%s%s%020d", name, generationSeparator, generation)
 }
 
 func validateLeaseName(name string) error {
