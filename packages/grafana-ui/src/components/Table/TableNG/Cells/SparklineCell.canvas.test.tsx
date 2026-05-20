@@ -77,7 +77,9 @@ describe('TableNG SparklineCell threshold wiring (canvas)', () => {
 
     prepareConfigSpy = jest.spyOn(sparklineUtils, 'prepareConfig').mockImplementation((...args) => {
       const builder: UPlotConfigBuilder = realPrepareConfig(...args);
-      builder.addHook('init', (u: uPlot) => {
+      builder.addHook('drawAxes', (u: uPlot) => {
+        axisEvents = u.ctx.__getEvents();
+        u.ctx.__clearEvents();
         uPlotInstance = u;
       });
       return builder;
