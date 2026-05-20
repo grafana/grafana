@@ -1,10 +1,11 @@
 import { act, render, screen } from '@testing-library/react';
-import { useEffect, useRef, useState } from 'react';
+import { type ReactElement, useEffect, useRef, useState } from 'react';
 
 import {
   type DataQueryError,
   type DataSourceApi,
   type DataSourceJsonData,
+  type QueryEditorProps,
   getDefaultTimeRange,
   LoadingState,
 } from '@grafana/data';
@@ -41,6 +42,12 @@ interface TestQuery extends DataQuery {
 function UncontrolledQueryEditor({ query }: { query: TestQuery }) {
   const [legend] = useState(query.legendFormat ?? '');
   return <div data-testid="query-editor-legend">{legend}</div>;
+}
+
+function ThrowingQueryEditor(
+  _props: QueryEditorProps<DataSourceApi<DataQuery, DataSourceJsonData>, DataQuery, DataSourceJsonData>
+): ReactElement {
+  throw new Error('Query editor failed to render');
 }
 
 const mockDatasource: Partial<DataSourceApi<DataQuery, DataSourceJsonData>> = {
@@ -85,6 +92,27 @@ describe('QueryEditorRenderer', () => {
   it('renders the query editor for the selected query', () => {
     renderRenderer(queryA);
     expect(screen.getByTestId('query-editor-legend')).toHaveTextContent('series-a');
+  });
+
+  it('shows an error boundary alert when the datasource query editor throws', async () => {
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const throwingDatasource: Partial<DataSourceApi<DataQuery, DataSourceJsonData>> = {
+      components: { QueryEditor: ThrowingQueryEditor },
+    };
+
+    try {
+      renderRenderer(queryA, {
+        selectedQueryDsData: {
+          datasource: throwingDatasource as DataSourceApi,
+          dsSettings: ds1SettingsMock,
+        },
+      });
+
+      expect(await screen.findByText('An unexpected error happened')).toBeInTheDocument();
+      expect(screen.getByText(/Query editor failed to render/)).toBeInTheDocument();
+    } finally {
+      consoleSpy.mockRestore();
+    }
   });
 
   it('remounts the query editor when switching queries, resetting uncontrolled input state', () => {
