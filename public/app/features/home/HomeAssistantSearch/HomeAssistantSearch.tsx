@@ -30,7 +30,6 @@ export function HomeAssistantSearch() {
   const { accepted, termsType, loading: termsLoading, error: termsError } = useTerms();
   const { isLimitReached } = useLimits();
   const admin = contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
-
   const needsAutoAccept = termsType === 'msa' && !accepted && !termsError && !termsLoading && !isLimitReached && admin;
 
   const [input, setInput] = useState('');
