@@ -441,14 +441,11 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 				m.On("Get", mock.Anything, "p1", mock.Anything).Return(
 					&folders.Folder{
 						ObjectMeta: metav1.ObjectMeta{
-							Name:        "p1",
+							Name: "p1",
+							// p1 is at root: the canonical annotation is "general",
+							// and newParentsGetter must stop here without fetching
+							// "general" as a real folder (it is not a resource).
 							Annotations: map[string]string{"grafana.app/folder": folder.GeneralFolderUID},
-						},
-					}, nil)
-				m.On("Get", mock.Anything, folder.GeneralFolderUID, mock.Anything).Return(
-					&folders.Folder{
-						ObjectMeta: metav1.ObjectMeta{
-							Name: folder.GeneralFolderUID,
 						},
 					}, nil)
 			},

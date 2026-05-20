@@ -35,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -268,7 +269,7 @@ func (b *FolderAPIBuilder) setDefaultFolderPermissions(ctx context.Context, key 
 	}
 
 	// only set default permissions for root folders
-	if obj.GetFolder() != "" {
+	if !folder.IsRootFolderUID(obj.GetFolder()) {
 		return nil
 	}
 

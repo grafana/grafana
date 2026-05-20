@@ -67,6 +67,15 @@ func TestValidateCreate(t *testing.T) {
 			expectedErr: folder.ErrInvalidUID,
 		},
 		{
+			name: "reserved name - root",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: folder.RootFolderName,
+				},
+			},
+			expectedErr: folder.ErrInvalidUID,
+		},
+		{
 			name: "reserved name - sharedwithme",
 			folder: &folders.Folder{
 				ObjectMeta: metav1.ObjectMeta{
