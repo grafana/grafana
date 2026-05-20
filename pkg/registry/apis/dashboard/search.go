@@ -345,8 +345,6 @@ func (s *SearchHandler) DoSortable(w http.ResponseWriter, r *http.Request) {
 	s.write(w, sortable)
 }
 
-const rootFolder = "general"
-
 var errEmptyResults = fmt.Errorf("empty results")
 
 func permissionToActions(p dashboardaccess.PermissionType) (dashboardAction string, folderAction string) {
@@ -639,9 +637,9 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 		// hijacks the "name" query param to only search for shared dashboard UIDs
 		names = append(names, dashboardUIDs...)
 	} else if folder != "" {
-		if folder == rootFolder {
-			folder = "" // root folder is empty in the search index
-		}
+		// root folder is empty in the search index; collapse the canonical
+		// sentinels ("general", "root") to "" before querying.
+		folder = foldermodel.LegacyFolderUID(folder)
 		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
 			Key:      "folder",
 			Operator: "=",
