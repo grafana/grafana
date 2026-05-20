@@ -21,7 +21,7 @@ interface Props {
   rawTableFrame: DataFrame | null;
   fieldConfig?: FieldConfigSource;
   timeZone: TimeZone;
-  replaceVariables: InterpolateFunction;
+  replaceVariables?: InterpolateFunction;
 }
 
 export function useExtractFields({ rawTableFrame, fieldConfig, timeZone, replaceVariables }: Props) {
