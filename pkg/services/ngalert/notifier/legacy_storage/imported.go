@@ -4,11 +4,10 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/grafana/alerting/definition"
 	"github.com/prometheus/alertmanager/config"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/merge"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
 )
@@ -16,7 +15,7 @@ import (
 type ImportedConfigRevision struct {
 	identifier     string
 	rev            *ConfigRevision
-	importedConfig *definition.PostableApiAlertingConfig
+	importedConfig *v1.PostableApiAlertingConfig
 }
 
 func (rev *ConfigRevision) Imported() (ImportedConfigRevision, error) {
@@ -64,7 +63,7 @@ func (e ImportedConfigRevision) GetReceivers(uids []string) ([]*models.Receiver,
 	return result, nil
 }
 
-func (e ImportedConfigRevision) GetMuteTimeIntervals() ([]definitions.AmMuteTimeInterval, error) {
+func (e ImportedConfigRevision) GetMuteTimeIntervals() ([]v1.MuteTimeInterval, error) {
 	if e.importedConfig == nil {
 		return nil, nil
 	}
@@ -91,9 +90,9 @@ func (e ImportedConfigRevision) GetMuteTimeIntervals() ([]definitions.AmMuteTime
 	)
 
 	// Apply renames to imported intervals
-	result := make([]definitions.AmMuteTimeInterval, 0, len(importedTime)+len(importedMute))
+	result := make([]v1.MuteTimeInterval, 0, len(importedTime)+len(importedMute))
 
-	pushRenamed := func(mt definitions.AmMuteTimeInterval) {
+	pushRenamed := func(mt v1.MuteTimeInterval) {
 		if newName, renamed := renames[mt.Name]; renamed {
 			mt.Name = newName
 		}
@@ -101,7 +100,7 @@ func (e ImportedConfigRevision) GetMuteTimeIntervals() ([]definitions.AmMuteTime
 	}
 
 	for _, ti := range importedTime {
-		pushRenamed(definitions.AmMuteTimeInterval(ti))
+		pushRenamed(v1.MuteTimeInterval(ti))
 	}
 
 	for _, mti := range importedMute {
@@ -117,7 +116,7 @@ func (e ImportedConfigRevision) ReceiverUseByName() map[string]int {
 		return nil
 	}
 	m := make(map[string]int)
-	receiverUseCounts([]*definitions.Route{e.importedConfig.Route}, m)
+	receiverUseCounts([]*v1.Route{e.importedConfig.Route}, m)
 	_, renames := merge.MergeReceivers(e.rev.Config.AlertmanagerConfig.GetReceivers(), e.importedConfig.GetReceivers(), e.identifier)
 	for original, renamed := range renames {
 		if cnt, ok := m[original]; ok {
@@ -135,7 +134,7 @@ func (e ImportedConfigRevision) GetManagedRoute() (*ManagedRoute, error) {
 
 	renamed := merge.DeduplicateResources(e.rev.Config.AlertmanagerConfig, *e.importedConfig, e.identifier)
 
-	merge.RenameResourceUsagesInRoutes([]*definition.Route{e.importedConfig.Route}, renamed)
+	merge.RenameResourceUsagesInRoutes([]*v1.Route{e.importedConfig.Route}, renamed)
 
 	mr := NewManagedRoute(e.identifier, e.importedConfig.Route)
 	mr.Provenance = models.ProvenanceConvertedPrometheus
@@ -143,7 +142,7 @@ func (e ImportedConfigRevision) GetManagedRoute() (*ManagedRoute, error) {
 	return mr, nil
 }
 
-func (e ImportedConfigRevision) GetInhibitRules() (definitions.ManagedInhibitionRules, error) {
+func (e ImportedConfigRevision) GetInhibitRules() (v1.ManagedInhibitionRules, error) {
 	if e.importedConfig == nil {
 		return nil, nil
 	}
@@ -156,10 +155,10 @@ func (e ImportedConfigRevision) GetInhibitRules() (definitions.ManagedInhibition
 	return BuildManagedInhibitionRules(e.identifier, importedRules)
 }
 
-func BuildManagedInhibitionRules(identifier string, rules []definitions.InhibitRule) (definitions.ManagedInhibitionRules, error) {
+func BuildManagedInhibitionRules(identifier string, rules []config.InhibitRule) (v1.ManagedInhibitionRules, error) {
 	scopedRules := applyManagedRouteMatcher(identifier, rules)
 
-	res := make(definitions.ManagedInhibitionRules, len(scopedRules))
+	res := make(v1.ManagedInhibitionRules, len(scopedRules))
 	for i, rule := range scopedRules {
 		namePrefix := fmt.Sprintf("%s-imported-inhibition-rule-", identifier)
 
@@ -169,7 +168,7 @@ func BuildManagedInhibitionRules(identifier string, rules []definitions.InhibitR
 		}
 		name := fmt.Sprintf(namePrefix+intFmt, i)
 
-		ir, err := InhibitRuleToInhibitionRule(name, rule, definitions.Provenance(models.ProvenanceConvertedPrometheus))
+		ir, err := InhibitRuleToInhibitionRule(name, rule, v1.Provenance(models.ProvenanceConvertedPrometheus))
 		if err != nil {
 			return nil, err
 		}
@@ -179,7 +178,7 @@ func BuildManagedInhibitionRules(identifier string, rules []definitions.InhibitR
 	return res, nil
 }
 
-func applyManagedRouteMatcher(identifier string, rules []definitions.InhibitRule) []definitions.InhibitRule {
+func applyManagedRouteMatcher(identifier string, rules []config.InhibitRule) []config.InhibitRule {
 	result := make([]config.InhibitRule, 0, len(rules))
 	matcher := managedRouteMatcher(identifier)
 
@@ -192,7 +191,7 @@ func applyManagedRouteMatcher(identifier string, rules []definitions.InhibitRule
 		tm = append(tm, matcher)
 		tm = append(tm, rule.TargetMatchers...)
 
-		result = append(result, definitions.InhibitRule{
+		result = append(result, config.InhibitRule{
 			SourceMatchers: sm,
 			TargetMatchers: tm,
 			Equal:          slices.Clone(rule.Equal),
