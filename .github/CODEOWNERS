@@ -1298,7 +1298,6 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-mt-service-compatibility.yml @evictorero
 /.github/workflows/pr-commands.yml @tolzhabayev
 /.github/workflows/pr-external-labelling.yml @Proximyst
-/.github/workflows/pr-patch-check-event.yml @grafana/grafana-backend-services-squad
 /.github/workflows/pr-patch-check.yml @grafana/grafana-backend-services-squad
 /.github/workflows/pr-test-integration-pgvector.yml @grafana/grafana-search-and-storage
 /.github/workflows/pr-test-integration.yml @grafana/grafana-backend-group
