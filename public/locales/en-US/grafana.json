@@ -10865,6 +10865,20 @@
     "name-stacking": "Stacking"
   },
   "home": {
+    "assistant": {
+      "ask-aria-label": "Ask Assistant",
+      "auto-accept-disclaimer": "By using Grafana Assistant, you will be enabling this AI Feature for all users on your instance.",
+      "example": {
+        "alerts-firing": "What alerts are firing right now?",
+        "create-dashboard": "How do I create a dashboard?",
+        "data-source": "How do I set up a data source?",
+        "errors": "Show me errors from the last hour",
+        "loki-query": "Help me write a Loki query",
+        "promql": "Explain this PromQL query"
+      },
+      "placeholder-limit": "You've hit the monthly limit for Assistant... Upgrade to keep going!",
+      "upgrade": "Upgrade"
+    },
     "dashboard-tabs": {
       "recent": "Recent",
       "recent-active": "Recent dashboards",
