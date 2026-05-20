@@ -387,9 +387,6 @@ export default class RichHistoryIndexedDBStorage implements RichHistoryStorage, 
     await tx.done;
   }
 
-  // NOTE: DatasourceAZ/ZA sort labels are historically inverted in the existing
-  // localStorage implementation (richHistoryLocalStorageUtils.ts). We preserve
-  // this behavior for backward compatibility with the UI.
   private sortQueries(queries: RichHistoryQuery[], sortOrder: SortOrder): RichHistoryQuery[] {
     switch (sortOrder) {
       case SortOrder.Ascending:
@@ -398,11 +395,11 @@ export default class RichHistoryIndexedDBStorage implements RichHistoryStorage, 
         return queries.sort((a, b) => b.createdAt - a.createdAt);
       case SortOrder.DatasourceAZ:
         return queries.sort((a, b) =>
-          a.datasourceName < b.datasourceName ? 1 : a.datasourceName > b.datasourceName ? -1 : 0
+          a.datasourceName < b.datasourceName ? -1 : a.datasourceName > b.datasourceName ? 1 : 0
         );
       case SortOrder.DatasourceZA:
         return queries.sort((a, b) =>
-          a.datasourceName < b.datasourceName ? -1 : a.datasourceName > b.datasourceName ? 1 : 0
+          a.datasourceName < b.datasourceName ? 1 : a.datasourceName > b.datasourceName ? -1 : 0
         );
       default:
         return queries;

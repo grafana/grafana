@@ -576,6 +576,51 @@ describe('migrateToIndexedDB', () => {
       expect(complete).not.toBe(true);
     });
 
+    it('should not duplicate localStorage entries when Path A succeeds but Path B fails on retry', async () => {
+      store.setObject(RICH_HISTORY_KEY, [validEntry1, validEntry2]);
+      mockConfig.queryHistoryEnabled = true;
+
+      // First attempt: Path A succeeds, Path B fails (remote fetch throws)
+      mockFetch.mockImplementation(() => {
+        throw new Error('network error');
+      });
+
+      await migrateToIndexedDB(indexedDBStorage);
+
+      // Path A completed, Path B failed — migration not marked complete
+      const complete1 = await indexedDBStorage.getMetadata('migrationComplete');
+      expect(complete1).not.toBe(true);
+
+      // But localMigrationComplete should be set
+      const localDone = await indexedDBStorage.getMetadata('localMigrationComplete');
+      expect(localDone).toBe(true);
+
+      const result1 = await indexedDBStorage.getRichHistory(queryFilters());
+      expect(result1.total).toBe(2);
+
+      // Second attempt: Path B now succeeds
+      (reportInteraction as jest.Mock).mockReset();
+      mockFetch.mockReturnValue(mockRemoteResponse([remoteEntry1]));
+
+      await migrateToIndexedDB(indexedDBStorage);
+
+      // Path A should NOT have re-run (no localStorage telemetry)
+      expect(reportInteraction).not.toHaveBeenCalledWith(
+        'grafana_query_history_migration_started',
+        expect.objectContaining({ source: 'localStorage' })
+      );
+
+      // Path B should have run and succeeded
+      expect(reportInteraction).toHaveBeenCalledWith(
+        'grafana_query_history_migration_completed',
+        expect.objectContaining({ source: 'remote' })
+      );
+
+      // Total entries: 2 from localStorage + 1 from remote (no duplicates)
+      const result2 = await indexedDBStorage.getRichHistory(queryFilters());
+      expect(result2.total).toBe(3);
+    });
+
     it('should run both Path A and Path B when both sources have data', async () => {
       store.setObject(RICH_HISTORY_KEY, [validEntry1]);
       mockConfig.queryHistoryEnabled = true;

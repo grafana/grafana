@@ -9,6 +9,8 @@ import { RICH_HISTORY_SETTING_KEYS } from './richHistoryLocalStorageUtils';
 
 const METADATA_MIGRATION_COMPLETE = 'migrationComplete';
 const METADATA_MIGRATION_ATTEMPTS = 'migrationAttempts';
+const METADATA_LOCAL_MIGRATION_COMPLETE = 'localMigrationComplete';
+const METADATA_REMOTE_MIGRATION_COMPLETE = 'remoteMigrationComplete';
 const MAX_MIGRATION_ATTEMPTS = 3;
 
 // Support escape hatch: setting this localStorage key and reloading clears the
@@ -71,6 +73,8 @@ export async function migrateToIndexedDB(indexedDBStorage: IndexedDBMigrationAcc
     await db.clear('queries');
     await indexedDBStorage.setMetadata(METADATA_MIGRATION_COMPLETE, false);
     await indexedDBStorage.setMetadata(METADATA_MIGRATION_ATTEMPTS, 0);
+    await indexedDBStorage.setMetadata(METADATA_LOCAL_MIGRATION_COMPLETE, false);
+    await indexedDBStorage.setMetadata(METADATA_REMOTE_MIGRATION_COMPLETE, false);
     reportInteraction('grafana_query_history_migration_reset', {});
   }
 
@@ -103,14 +107,19 @@ export async function migrateToIndexedDB(indexedDBStorage: IndexedDBMigrationAcc
     return;
   }
 
-  // Path A and B are independent — failure of one should not block the other
+  // Path A and B are independent — failure of one should not block the other.
+  // Per-path flags prevent re-running a path that already succeeded on a prior attempt.
   let localSuccess = true;
   let remoteSuccess = true;
 
+  const localAlreadyDone = (await indexedDBStorage.getMetadata(METADATA_LOCAL_MIGRATION_COMPLETE)) === true;
+  const remoteAlreadyDone = (await indexedDBStorage.getMetadata(METADATA_REMOTE_MIGRATION_COMPLETE)) === true;
+
   // Path A: localStorage data exists
-  if (hasLocalStorageData) {
+  if (hasLocalStorageData && !localAlreadyDone) {
     try {
       await migrateFromLocalStorage(indexedDBStorage, rawData, attemptNumber);
+      await indexedDBStorage.setMetadata(METADATA_LOCAL_MIGRATION_COMPLETE, true);
     } catch (error) {
       localSuccess = false;
       // Telemetry already reported inside migrateFromLocalStorage
@@ -118,9 +127,10 @@ export async function migrateToIndexedDB(indexedDBStorage: IndexedDBMigrationAcc
   }
 
   // Path B: remote API data exists
-  if (hasRemoteData) {
+  if (hasRemoteData && !remoteAlreadyDone) {
     try {
       await migrateFromRemoteStorage(indexedDBStorage, attemptNumber);
+      await indexedDBStorage.setMetadata(METADATA_REMOTE_MIGRATION_COMPLETE, true);
     } catch (error) {
       remoteSuccess = false;
       // Telemetry already reported inside migrateFromRemoteStorage

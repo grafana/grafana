@@ -341,9 +341,8 @@ describe('RichHistoryIndexedDBStorage', () => {
       await storage.addToRichHistory({ ...mockItem2, datasourceName: 'Alpha' });
 
       const { richHistory } = await storage.getRichHistory(filtersWithTimeRange({ sortOrder: SortOrder.DatasourceAZ }));
-      // DatasourceAZ in existing code sorts Z first (descending by name)
-      expect(richHistory[0].datasourceName).toBe('Zebra');
-      expect(richHistory[1].datasourceName).toBe('Alpha');
+      expect(richHistory[0].datasourceName).toBe('Alpha');
+      expect(richHistory[1].datasourceName).toBe('Zebra');
     });
 
     it('should sort by datasource name Z-A', async () => {
@@ -352,9 +351,8 @@ describe('RichHistoryIndexedDBStorage', () => {
       await storage.addToRichHistory({ ...mockItem2, datasourceName: 'Alpha' });
 
       const { richHistory } = await storage.getRichHistory(filtersWithTimeRange({ sortOrder: SortOrder.DatasourceZA }));
-      // DatasourceZA in existing code sorts A first (ascending by name)
-      expect(richHistory[0].datasourceName).toBe('Alpha');
-      expect(richHistory[1].datasourceName).toBe('Zebra');
+      expect(richHistory[0].datasourceName).toBe('Zebra');
+      expect(richHistory[1].datasourceName).toBe('Alpha');
     });
   });
 
