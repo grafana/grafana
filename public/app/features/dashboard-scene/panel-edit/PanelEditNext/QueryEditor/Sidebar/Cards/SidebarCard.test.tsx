@@ -20,11 +20,11 @@ jest.mock('@grafana/runtime', () => ({
 
 interface RenderSidebarCardProps {
   id?: string;
-  isHighlighted?: boolean;
-  onHighlight?: jest.Mock;
+  isSelected?: boolean;
+  onSelect?: jest.Mock;
   onToggleSelect?: jest.Mock;
   addQuery?: jest.Mock;
-  setHighlightedQuery?: jest.Mock;
+  setSelectedQuery?: jest.Mock;
   setPendingExpression?: jest.Mock;
   isHidden?: boolean;
   actionsOverrides?: {
@@ -36,11 +36,11 @@ interface RenderSidebarCardProps {
 
 function renderSidebarCard({
   id = 'A',
-  isHighlighted = false,
-  onHighlight = jest.fn(),
+  isSelected = false,
+  onSelect = jest.fn(),
   onToggleSelect = jest.fn(),
   addQuery = jest.fn().mockReturnValue('B'),
-  setHighlightedQuery = jest.fn(),
+  setSelectedQuery = jest.fn(),
   setPendingExpression = jest.fn(),
   isHidden = false,
   actionsOverrides = {
@@ -58,9 +58,9 @@ function renderSidebarCard({
 
   const result = renderWithQueryEditorProvider(
     <SidebarCard
-      isHighlighted={isHighlighted}
+      isSelected={isSelected}
       id={id}
-      onHighlight={onHighlight}
+      onSelect={onSelect}
       onToggleSelect={onToggleSelect}
       onDelete={actionsOverrides.onDelete}
       onToggleHide={actionsOverrides.onToggleHide}
@@ -71,13 +71,13 @@ function renderSidebarCard({
     </SidebarCard>,
     {
       queries,
-      highlightedQuery: queries[0],
-      uiStateOverrides: { setHighlightedQuery, setPendingExpression },
+      selectedQuery: queries[0],
+      uiStateOverrides: { setSelectedQuery, setPendingExpression },
       actionsOverrides: { addQuery },
     }
   );
 
-  return { ...result, addQuery, setHighlightedQuery, setPendingExpression, onHighlight, onToggleSelect };
+  return { ...result, addQuery, setSelectedQuery, setPendingExpression, onSelect, onToggleSelect };
 }
 
 describe('SidebarCard', () => {
@@ -86,7 +86,7 @@ describe('SidebarCard', () => {
   });
 
   describe('card body click — highlight only', () => {
-    it('calls highlightQuery when clicking a query card body', async () => {
+    it('calls selectQuery when clicking a query card body', async () => {
       const query: DataQuery = { refId: 'A', datasource: { type: 'test', uid: 'test' } };
       const transformation: Transformation = {
         transformId: 'organize',
@@ -94,24 +94,24 @@ describe('SidebarCard', () => {
         transformConfig: { id: 'organize', options: {} },
       };
 
-      const highlightQuery = jest.fn();
+      const selectQuery = jest.fn();
 
       const user = userEvent.setup();
 
       renderWithQueryEditorProvider(<QueryCard query={query} />, {
         queries: [query],
         transformations: [transformation],
-        highlightedTransformation: transformation,
-        uiStateOverrides: { highlightQuery },
+        selectedTransformation: transformation,
+        uiStateOverrides: { selectQuery },
       });
 
       const queryCard = screen.getByRole('button', { name: /select card A/i });
       await user.click(queryCard);
 
-      expect(highlightQuery).toHaveBeenCalledWith(query);
+      expect(selectQuery).toHaveBeenCalledWith(query);
     });
 
-    it('calls highlightTransformation when clicking a transformation card body', async () => {
+    it('calls selectTransformation when clicking a transformation card body', async () => {
       const query: DataQuery = { refId: 'A', datasource: { type: 'test', uid: 'test' } };
       const transformation: Transformation = {
         transformId: 'organize',
@@ -119,35 +119,35 @@ describe('SidebarCard', () => {
         transformConfig: { id: 'organize', options: {} },
       };
 
-      const highlightTransformation = jest.fn();
+      const selectTransformation = jest.fn();
 
       const user = userEvent.setup();
 
       renderWithQueryEditorProvider(<TransformationCard transformation={transformation} />, {
         queries: [query],
         transformations: [transformation],
-        highlightedQuery: query,
-        uiStateOverrides: { highlightTransformation },
+        selectedQuery: query,
+        uiStateOverrides: { selectTransformation },
       });
 
       const transformCard = screen.getByRole('button', { name: /select card organize/i });
       await user.click(transformCard);
 
-      expect(highlightTransformation).toHaveBeenCalledWith(transformation);
+      expect(selectTransformation).toHaveBeenCalledWith(transformation);
     });
 
     it('does not call onToggleSelect when clicking the card body', async () => {
-      const { user, onHighlight, onToggleSelect } = renderSidebarCard();
+      const { user, onSelect, onToggleSelect } = renderSidebarCard();
 
       await user.click(screen.getByRole('button', { name: /select card A/i }));
 
-      expect(onHighlight).toHaveBeenCalledTimes(1);
+      expect(onSelect).toHaveBeenCalledTimes(1);
       expect(onToggleSelect).not.toHaveBeenCalled();
     });
 
     it('ignores modifier keys on the card body (no multi-select side effects)', async () => {
       const user = userEvent.setup();
-      const { onHighlight, onToggleSelect } = renderSidebarCard();
+      const { onSelect, onToggleSelect } = renderSidebarCard();
 
       const card = screen.getByRole('button', { name: /select card A/i });
 
@@ -159,23 +159,23 @@ describe('SidebarCard', () => {
       await user.click(card);
       await user.keyboard('[/ShiftLeft]');
 
-      // Both clicks fire onHighlight (no modifier shortcut on the card body).
-      expect(onHighlight).toHaveBeenCalledTimes(2);
+      // Both clicks fire onSelect (no modifier shortcut on the card body).
+      expect(onSelect).toHaveBeenCalledTimes(2);
       expect(onToggleSelect).not.toHaveBeenCalled();
     });
 
-    it('calls onHighlight when Enter is pressed on the focused card', async () => {
-      const onHighlight = jest.fn();
+    it('calls onSelect when Enter is pressed on the focused card', async () => {
+      const onSelect = jest.fn();
       const user = userEvent.setup();
-      renderSidebarCard({ id: 'A', onHighlight });
+      renderSidebarCard({ id: 'A', onSelect });
 
       const card = screen.getByRole('button', { name: /select card A/i });
       await user.click(card);
-      onHighlight.mockClear();
+      onSelect.mockClear();
 
       await user.keyboard('[Enter]');
 
-      expect(onHighlight).toHaveBeenCalled();
+      expect(onSelect).toHaveBeenCalled();
     });
 
     it('fires a DOM blur on the focused editor even when mousedown preventDefault blocks focus transfer', async () => {
@@ -183,10 +183,10 @@ describe('SidebarCard', () => {
       // browser's native focus transfer never fires a blur on the previously focused element.
       // Without the force-blur in handleMouseDown, Monaco-like editors never see a DOM blur and
       // their pending value is never flushed through onChange before the editor unmounts.
-      const onHighlight = jest.fn();
+      const onSelect = jest.fn();
       const onEditorBlur = jest.fn();
       const user = userEvent.setup();
-      renderSidebarCard({ id: 'A', onHighlight });
+      renderSidebarCard({ id: 'A', onSelect });
 
       const suppressFocusTransfer = (e: Event) => e.preventDefault();
       window.addEventListener('mousedown', suppressFocusTransfer, true);
@@ -200,15 +200,15 @@ describe('SidebarCard', () => {
         await user.click(screen.getByRole('button', { name: /select card A/i }));
 
         expect(onEditorBlur).toHaveBeenCalled();
-        expect(onHighlight).toHaveBeenCalled();
+        expect(onSelect).toHaveBeenCalled();
       } finally {
         window.removeEventListener('mousedown', suppressFocusTransfer, true);
         document.body.removeChild(editorLike);
       }
     });
 
-    it('sets aria-pressed to true when isHighlighted is true', () => {
-      renderSidebarCard({ id: 'A', isHighlighted: true });
+    it('sets aria-pressed to true when isSelected is true', () => {
+      renderSidebarCard({ id: 'A', isSelected: true });
       expect(screen.getByRole('button', { name: /select card A/i })).toHaveAttribute('aria-pressed', 'true');
     });
   });
@@ -219,7 +219,7 @@ describe('SidebarCard', () => {
 
     it('does not render the checkbox when multi-select mode is off', () => {
       renderWithQueryEditorProvider(
-        <SidebarCard id="A" isHighlighted={false} item={item} onHighlight={jest.fn()}>
+        <SidebarCard id="A" isSelected={false} item={item} onSelect={jest.fn()}>
           <span>Card content</span>
         </SidebarCard>,
         { queries }
@@ -230,7 +230,7 @@ describe('SidebarCard', () => {
 
     it('renders the checkbox when multi-select mode is on', () => {
       renderWithQueryEditorProvider(
-        <SidebarCard id="A" isHighlighted={false} item={item} onHighlight={jest.fn()}>
+        <SidebarCard id="A" isSelected={false} item={item} onSelect={jest.fn()}>
           <span>Card content</span>
         </SidebarCard>,
         { queries, uiStateOverrides: { multiSelectMode: true } }
@@ -249,7 +249,7 @@ describe('SidebarCard', () => {
         { refId: 'B', datasource: { type: 'test', uid: 'test' } },
       ];
       renderWithQueryEditorProvider(
-        <SidebarCard id="A" isHighlighted={false} item={item} onHighlight={jest.fn()}>
+        <SidebarCard id="A" isSelected={false} item={item} onSelect={jest.fn()}>
           <span>Card content</span>
         </SidebarCard>,
         { queries: queriesAB, uiStateOverrides: { selectedQueryRefIds: ['A', 'B'] } }
@@ -258,9 +258,9 @@ describe('SidebarCard', () => {
       expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
     });
 
-    it('checks the checkbox when isSelected is true', () => {
+    it('checks the checkbox when isPartOfSelection is true', () => {
       renderWithQueryEditorProvider(
-        <SidebarCard id="A" isHighlighted={false} isSelected item={item} onHighlight={jest.fn()}>
+        <SidebarCard id="A" isSelected={false} isPartOfSelection item={item} onSelect={jest.fn()}>
           <span>Card content</span>
         </SidebarCard>,
         { queries, uiStateOverrides: { multiSelectMode: true } }
@@ -270,10 +270,10 @@ describe('SidebarCard', () => {
     });
 
     it('clicking the checkbox calls onToggleSelect and stops propagation to the card body', async () => {
-      const onHighlight = jest.fn();
+      const onSelect = jest.fn();
       const onToggleSelect = jest.fn();
       const { user } = renderWithQueryEditorProvider(
-        <SidebarCard id="A" isHighlighted={false} item={item} onHighlight={onHighlight} onToggleSelect={onToggleSelect}>
+        <SidebarCard id="A" isSelected={false} item={item} onSelect={onSelect} onToggleSelect={onToggleSelect}>
           <span>Card content</span>
         </SidebarCard>,
         { queries, uiStateOverrides: { multiSelectMode: true } }
@@ -282,14 +282,14 @@ describe('SidebarCard', () => {
       await user.click(screen.getByRole('checkbox'));
 
       expect(onToggleSelect).toHaveBeenCalledWith({ range: false });
-      expect(onHighlight).not.toHaveBeenCalled();
+      expect(onSelect).not.toHaveBeenCalled();
     });
 
     it('Shift+click on the checkbox passes { range: true } to onToggleSelect', async () => {
       const onToggleSelect = jest.fn();
       const user = userEvent.setup({ pointerEventsCheck: 0 });
       renderWithQueryEditorProvider(
-        <SidebarCard id="A" isHighlighted={false} item={item} onHighlight={jest.fn()} onToggleSelect={onToggleSelect}>
+        <SidebarCard id="A" isSelected={false} item={item} onSelect={jest.fn()} onToggleSelect={onToggleSelect}>
           <span>Card content</span>
         </SidebarCard>,
         { queries, uiStateOverrides: { multiSelectMode: true } }
@@ -304,7 +304,7 @@ describe('SidebarCard', () => {
 
     it('preventDefaults the mousedown on Shift+click to stop text selection (which would break consecutive range-selects)', () => {
       renderWithQueryEditorProvider(
-        <SidebarCard id="A" isHighlighted={false} item={item} onHighlight={jest.fn()} onToggleSelect={jest.fn()}>
+        <SidebarCard id="A" isSelected={false} item={item} onSelect={jest.fn()} onToggleSelect={jest.fn()}>
           <span>Card content</span>
         </SidebarCard>,
         { queries, uiStateOverrides: { multiSelectMode: true } }
@@ -336,7 +336,7 @@ describe('SidebarCard', () => {
       // detect Shift even when the click event itself reports shiftKey: false.
       const onToggleSelect = jest.fn();
       renderWithQueryEditorProvider(
-        <SidebarCard id="A" isHighlighted={false} item={item} onHighlight={jest.fn()} onToggleSelect={onToggleSelect}>
+        <SidebarCard id="A" isSelected={false} item={item} onSelect={jest.fn()} onToggleSelect={onToggleSelect}>
           <span>Card content</span>
         </SidebarCard>,
         { queries, uiStateOverrides: { multiSelectMode: true } }
@@ -368,34 +368,34 @@ describe('SidebarCard', () => {
     });
 
     it('clicking "Add query" calls addQuery with the card refId as afterRefId', async () => {
-      const { user, addQuery, setHighlightedQuery } = renderSidebarCard({ id: 'A' });
+      const { user, addQuery, setSelectedQuery } = renderSidebarCard({ id: 'A' });
 
       await user.click(screen.getByRole('button', { name: /add below A/i }));
       await user.click(screen.getByRole('menuitem', { name: /add query/i }));
 
       expect(addQuery).toHaveBeenCalledWith(undefined, 'A');
-      expect(setHighlightedQuery).toHaveBeenCalledWith({ refId: 'B', hide: false });
+      expect(setSelectedQuery).toHaveBeenCalledWith({ refId: 'B', hide: false });
     });
 
     it('auto-highlights the newly added query', async () => {
       const addQuery = jest.fn().mockReturnValue('C');
-      const { user, setHighlightedQuery } = renderSidebarCard({ id: 'B', addQuery });
+      const { user, setSelectedQuery } = renderSidebarCard({ id: 'B', addQuery });
 
       await user.click(screen.getByRole('button', { name: /add below B/i }));
       await user.click(screen.getByRole('menuitem', { name: /add query/i }));
 
-      expect(setHighlightedQuery).toHaveBeenCalledWith({ refId: 'C', hide: false });
+      expect(setSelectedQuery).toHaveBeenCalledWith({ refId: 'C', hide: false });
     });
 
-    it('does not call setHighlightedQuery when addQuery returns undefined', async () => {
+    it('does not call setSelectedQuery when addQuery returns undefined', async () => {
       const addQuery = jest.fn().mockReturnValue(undefined);
-      const { user, setHighlightedQuery } = renderSidebarCard({ addQuery });
+      const { user, setSelectedQuery } = renderSidebarCard({ addQuery });
 
       await user.click(screen.getByRole('button', { name: /add below A/i }));
       await user.click(screen.getByRole('menuitem', { name: /add query/i }));
 
       expect(addQuery).toHaveBeenCalled();
-      expect(setHighlightedQuery).not.toHaveBeenCalled();
+      expect(setSelectedQuery).not.toHaveBeenCalled();
     });
   });
 

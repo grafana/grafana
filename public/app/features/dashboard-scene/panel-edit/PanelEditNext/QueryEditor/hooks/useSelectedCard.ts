@@ -23,68 +23,68 @@ import { type AlertRule, EMPTY_ALERT, type Transformation } from '../types';
  *   area shows the picker instead.
  */
 export function useSelectedCard(
-  highlightedQueryRefId: string | null,
-  highlightedTransformationId: string | null,
-  highlightedAlertId: string | null,
+  anchorQueryRefId: string | null,
+  anchorTransformationId: string | null,
+  anchorAlertId: string | null,
   queries: DataQuery[],
   transformations: Transformation[],
   alerts: AlertRule[],
   hasPendingPicker = false
 ) {
-  const highlightedQuery = useMemo(() => {
+  const selectedQuery = useMemo(() => {
     // Alert or picker takes precedence — short-circuit before resolving the
     // highlighted query so the alert/picker view always wins, even when
-    // `highlightedQueryRefId` is non-null (e.g. after `clearSelection`
+    // `anchorQueryRefId` is non-null (e.g. after `clearSelection`
     // restores the first-query default).
-    if (highlightedAlertId || hasPendingPicker) {
+    if (anchorAlertId || hasPendingPicker) {
       return null;
     }
 
-    if (highlightedQueryRefId) {
-      const query = queries.find(({ refId }) => refId === highlightedQueryRefId);
+    if (anchorQueryRefId) {
+      const query = queries.find(({ refId }) => refId === anchorQueryRefId);
       if (query) {
         return query;
       }
     }
 
     // If a transformation is highlighted, don't fall back to the first query.
-    if (highlightedTransformationId) {
+    if (anchorTransformationId) {
       return null;
     }
 
     return queries.length > 0 ? queries[0] : null;
-  }, [queries, highlightedQueryRefId, highlightedTransformationId, highlightedAlertId, hasPendingPicker]);
+  }, [queries, anchorQueryRefId, anchorTransformationId, anchorAlertId, hasPendingPicker]);
 
-  const highlightedTransformation = useMemo(() => {
-    if (highlightedTransformationId) {
-      const transformation = transformations.find(({ transformId }) => transformId === highlightedTransformationId);
+  const selectedTransformation = useMemo(() => {
+    if (anchorTransformationId) {
+      const transformation = transformations.find(({ transformId }) => transformId === anchorTransformationId);
       if (transformation) {
         return transformation;
       }
     }
 
     return null;
-  }, [transformations, highlightedTransformationId]);
+  }, [transformations, anchorTransformationId]);
 
-  const highlightedAlert = useMemo(() => {
-    if (highlightedAlertId) {
-      const alert = alerts.find(({ alertId }) => alertId === highlightedAlertId);
+  const selectedAlert = useMemo(() => {
+    if (anchorAlertId) {
+      const alert = alerts.find(({ alertId }) => alertId === anchorAlertId);
       if (alert) {
         return alert;
       }
       // Handle empty alert case when viewing alerts with no alerts
-      if (highlightedAlertId === EMPTY_ALERT.alertId) {
+      if (anchorAlertId === EMPTY_ALERT.alertId) {
         return EMPTY_ALERT;
       }
     }
 
     return null;
-  }, [alerts, highlightedAlertId]);
+  }, [alerts, anchorAlertId]);
 
   return {
-    highlightedQuery,
-    highlightedTransformation,
-    highlightedAlert,
-    primaryQueryRefId: highlightedQuery?.refId ?? null,
+    selectedQuery,
+    selectedTransformation,
+    selectedAlert,
+    primaryQueryRefId: selectedQuery?.refId ?? null,
   };
 }

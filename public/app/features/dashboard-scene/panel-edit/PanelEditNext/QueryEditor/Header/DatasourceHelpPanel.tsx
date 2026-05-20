@@ -8,27 +8,27 @@ import { IconButton, useStyles2 } from '@grafana/ui';
 import { useActionsContext, useQueryEditorUIContext } from '../QueryEditorContext';
 
 export function DatasourceHelpPanel() {
-  const { highlightedQuery, selectedQueryDsData, selectedQueryDsLoading, toggleDatasourceHelp } =
+  const { selectedQuery, selectedQueryDsData, selectedQueryDsLoading, toggleDatasourceHelp } =
     useQueryEditorUIContext();
   const { updateSelectedQuery } = useActionsContext();
   const datasource = selectedQueryDsData?.datasource;
 
   const styles = useStyles2(getStyles);
 
-  if (selectedQueryDsLoading || !datasource?.components?.QueryEditorHelp || !highlightedQuery) {
+  if (selectedQueryDsLoading || !datasource?.components?.QueryEditorHelp || !selectedQuery) {
     return null;
   }
 
   const DatasourceCheatsheet = datasource.components.QueryEditorHelp;
 
   const onClickExample = (exampleQuery: DataQuery) => {
-    // Preserve refId and datasource from the highlighted query
+    // Preserve refId and datasource from current query
     const updatedQuery = {
       ...exampleQuery,
-      refId: highlightedQuery.refId,
-      datasource: exampleQuery.datasource ?? highlightedQuery.datasource,
+      refId: selectedQuery.refId,
+      datasource: exampleQuery.datasource ?? selectedQuery.datasource,
     };
-    updateSelectedQuery(updatedQuery, highlightedQuery.refId);
+    updateSelectedQuery(updatedQuery, selectedQuery.refId);
     toggleDatasourceHelp();
   };
 
@@ -42,7 +42,7 @@ export function DatasourceHelpPanel() {
         className={styles.closeButton}
         aria-label={t('query-editor-next.help.close-aria', 'Close help panel')}
       />
-      <DatasourceCheatsheet query={highlightedQuery} datasource={datasource} onClickExample={onClickExample} />
+      <DatasourceCheatsheet query={selectedQuery} datasource={datasource} onClickExample={onClickExample} />
     </div>
   );
 }

@@ -21,8 +21,8 @@ export const QueryCard = ({ query }: { query: DataQuery }) => {
   const editorType = getEditorType(query);
   const queryDsSettings = useDatasource(query.datasource);
   const {
-    highlightedQuery,
-    highlightQuery,
+    selectedQuery,
+    selectQuery,
     toggleQuerySelection,
     selectedQueryRefIds,
     pendingExpression,
@@ -34,8 +34,8 @@ export const QueryCard = ({ query }: { query: DataQuery }) => {
 
   // Note: when a query is hidden, it is removed from the error list :(
   const error = data?.errors?.find((e) => e.refId === query.refId)?.message;
-  const isHighlighted = highlightedQuery?.refId === query.refId;
-  const isSelected = selectedQueryRefIds.includes(query.refId);
+  const isSelected = selectedQuery?.refId === query.refId;
+  const isPartOfSelection = selectedQueryRefIds.includes(query.refId);
   const isHidden = !!query.hide;
 
   const item: ActionItem = {
@@ -49,10 +49,10 @@ export const QueryCard = ({ query }: { query: DataQuery }) => {
     <>
       <SidebarCard
         id={query.refId}
-        isHighlighted={isHighlighted}
         isSelected={isSelected}
+        isPartOfSelection={isPartOfSelection}
         item={item}
-        onHighlight={() => highlightQuery(query)}
+        onSelect={() => selectQuery(query)}
         onToggleSelect={(modifiers) => toggleQuerySelection(query, modifiers)}
         onDelete={() => deleteQuery(query.refId)}
         onDuplicate={() => duplicateQuery(query.refId)}

@@ -56,12 +56,12 @@ const queryA: TestQuery = { refId: 'A', legendFormat: 'series-a' };
 const queryB: TestQuery = { refId: 'B', legendFormat: 'series-b' };
 
 function renderRenderer(
-  highlightedQuery: DataQuery | null,
+  selectedQuery: DataQuery | null,
   uiStateOverrides: NonNullable<Parameters<typeof renderWithQueryEditorProvider>[1]>['uiStateOverrides'] = {}
 ) {
   return renderWithQueryEditorProvider(<QueryEditorRenderer />, {
     queries: [queryA, queryB],
-    highlightedQuery,
+    selectedQuery,
     uiStateOverrides: { selectedQueryDsData, ...uiStateOverrides },
   });
 }
@@ -98,7 +98,7 @@ describe('QueryEditorRenderer', () => {
 
     // RTL's rerender requires a full ReactElement, so we construct the provider
     // tree directly here rather than going through renderWithQueryEditorProvider.
-    function buildJsx(highlightedQuery: DataQuery) {
+    function buildJsx(selectedQuery: DataQuery) {
       return (
         <QueryEditorProvider
           dsState={{ datasource: undefined, dsSettings: undefined, dsError: undefined }}
@@ -106,12 +106,12 @@ describe('QueryEditorRenderer', () => {
           panelState={{ panel: new VizPanel({ key: 'panel-1' }), transformations: [] }}
           alertingState={{ alertRules: [], loading: false, isDashboardSaved: true }}
           uiState={{
-            highlightedQuery,
-            highlightedTransformation: null,
-            highlightedAlert: null,
-            setHighlightedQuery: jest.fn(),
-            setHighlightedTransformation: jest.fn(),
-            setHighlightedAlert: jest.fn(),
+            selectedQuery,
+            selectedTransformation: null,
+            selectedAlert: null,
+            setSelectedQuery: jest.fn(),
+            setSelectedTransformation: jest.fn(),
+            setSelectedAlert: jest.fn(),
             queryOptions: mockQueryOptionsState,
             selectedQueryDsData,
             selectedQueryDsLoading: false,
@@ -132,8 +132,8 @@ describe('QueryEditorRenderer', () => {
             selectedTransformationIds: [],
             multiSelectMode: false,
             setMultiSelectMode: jest.fn(),
-            highlightQuery: jest.fn(),
-            highlightTransformation: jest.fn(),
+            selectQuery: jest.fn(),
+            selectTransformation: jest.fn(),
             toggleQuerySelection: jest.fn(),
             toggleTransformationSelection: jest.fn(),
             clearSelection: jest.fn(),
@@ -177,7 +177,7 @@ describe('QueryEditorRenderer', () => {
       components: { QueryEditor: CleanupOnChangeEditor },
     };
 
-    function buildJsx(highlightedQuery: DataQuery) {
+    function buildJsx(selectedQuery: DataQuery) {
       return (
         <QueryEditorProvider
           dsState={{ datasource: undefined, dsSettings: undefined, dsError: undefined }}
@@ -185,12 +185,12 @@ describe('QueryEditorRenderer', () => {
           panelState={{ panel: new VizPanel({ key: 'panel-1' }), transformations: [] }}
           alertingState={{ alertRules: [], loading: false, isDashboardSaved: true }}
           uiState={{
-            highlightedQuery,
-            highlightedTransformation: null,
-            highlightedAlert: null,
-            setHighlightedQuery: jest.fn(),
-            setHighlightedTransformation: jest.fn(),
-            setHighlightedAlert: jest.fn(),
+            selectedQuery,
+            selectedTransformation: null,
+            selectedAlert: null,
+            setSelectedQuery: jest.fn(),
+            setSelectedTransformation: jest.fn(),
+            setSelectedAlert: jest.fn(),
             queryOptions: mockQueryOptionsState,
             selectedQueryDsData: {
               datasource: mockDatasourceWithCleanup as DataSourceApi,
@@ -214,8 +214,8 @@ describe('QueryEditorRenderer', () => {
             selectedTransformationIds: [],
             multiSelectMode: false,
             setMultiSelectMode: jest.fn(),
-            highlightQuery: jest.fn(),
-            highlightTransformation: jest.fn(),
+            selectQuery: jest.fn(),
+            selectTransformation: jest.fn(),
             toggleQuerySelection: jest.fn(),
             toggleTransformationSelection: jest.fn(),
             clearSelection: jest.fn(),
@@ -243,7 +243,7 @@ describe('QueryEditorRenderer', () => {
   it('shows an error when the query has an error', () => {
     renderWithQueryEditorProvider(<QueryEditorRenderer />, {
       queries: [queryA, queryB],
-      highlightedQuery: queryA,
+      selectedQuery: queryA,
       uiStateOverrides: { selectedQueryDsData },
       qrState: {
         data: {

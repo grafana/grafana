@@ -43,7 +43,7 @@ export const AddCardButton = ({ variant, afterId, onAdd, alwaysVisible = false }
   const theme = useTheme2();
   const { dsSettings } = useDatasourceContext();
   const { addQuery } = useActionsContext();
-  const { setHighlightedQuery, setPendingExpression, setPendingTransformation, setPendingSavedQuery } =
+  const { setSelectedQuery, setPendingExpression, setPendingTransformation, setPendingSavedQuery } =
     useQueryEditorUIContext();
   const { openDrawer, queryLibraryEnabled } = useQueryLibraryContext();
 
@@ -58,16 +58,16 @@ export const AddCardButton = ({ variant, afterId, onAdd, alwaysVisible = false }
     ? contextSrv.hasPermission(AccessControlAction.QueriesRead)
     : contextSrv.isSignedIn;
 
-  const addAndHighlightQuery = useCallback(
+  const addAndSelectQuery = useCallback(
     (query?: Partial<DataQuery>) => {
       const newRefId = addQuery(query, afterId);
       if (newRefId) {
         const selectTarget: DataQuery = { refId: newRefId, hide: false };
-        setHighlightedQuery(selectTarget);
+        setSelectedQuery(selectTarget);
         onAdd?.();
       }
     },
-    [addQuery, afterId, setHighlightedQuery, onAdd]
+    [addQuery, afterId, setSelectedQuery, onAdd]
   );
 
   const handleMenuVisibleChange = useCallback((visible: boolean) => {
@@ -82,7 +82,7 @@ export const AddCardButton = ({ variant, afterId, onAdd, alwaysVisible = false }
           icon="question-circle"
           onClick={() => {
             trackAddQuery('new_query', afterId ? 'inline' : 'section_header');
-            addAndHighlightQuery();
+            addAndSelectQuery();
           }}
         />
         {queryLibraryEnabled && canReadQueries && (
@@ -96,7 +96,7 @@ export const AddCardButton = ({ variant, afterId, onAdd, alwaysVisible = false }
               openDrawer({
                 onSelectQuery: (query) => {
                   trackAddQuery('saved_query', cardSource);
-                  addAndHighlightQuery(query);
+                  addAndSelectQuery(query);
                 },
                 options: { context: CoreApp.PanelEditor },
               });
@@ -134,7 +134,7 @@ export const AddCardButton = ({ variant, afterId, onAdd, alwaysVisible = false }
       queryLibraryEnabled,
       canReadQueries,
       isDashboardDs,
-      addAndHighlightQuery,
+      addAndSelectQuery,
       setPendingSavedQuery,
       afterId,
       openDrawer,

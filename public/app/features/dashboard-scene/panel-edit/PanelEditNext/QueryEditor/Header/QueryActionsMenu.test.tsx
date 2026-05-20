@@ -21,7 +21,7 @@ describe('QueryActionsMenu', () => {
     const toggleDatasourceHelp = jest.fn();
 
     const { user } = renderWithQueryEditorProvider(<QueryActionsMenu />, {
-      highlightedQuery: { refId: 'A', datasource: { uid: 'test', type: 'test' } },
+      selectedQuery: { refId: 'A', datasource: { uid: 'test', type: 'test' } },
       uiStateOverrides: {
         cardType: QueryEditorType.Query,
         selectedQueryDsLoading: false,
@@ -55,7 +55,7 @@ describe('QueryActionsMenu', () => {
 
   it('uses hide-help label when datasource help is already shown', async () => {
     const { user } = renderWithQueryEditorProvider(<QueryActionsMenu />, {
-      highlightedQuery: { refId: 'A', datasource: { uid: 'test', type: 'test' } },
+      selectedQuery: { refId: 'A', datasource: { uid: 'test', type: 'test' } },
       uiStateOverrides: {
         cardType: QueryEditorType.Query,
         selectedQueryDsLoading: false,
@@ -79,7 +79,7 @@ describe('QueryActionsMenu', () => {
     const duplicateQuery = jest.fn();
 
     const { user } = renderWithQueryEditorProvider(<QueryActionsMenu />, {
-      highlightedQuery: { refId: 'B', datasource: { uid: 'test', type: 'test' } },
+      selectedQuery: { refId: 'B', datasource: { uid: 'test', type: 'test' } },
       uiStateOverrides: {
         cardType: QueryEditorType.Expression,
         selectedQueryDsLoading: false,

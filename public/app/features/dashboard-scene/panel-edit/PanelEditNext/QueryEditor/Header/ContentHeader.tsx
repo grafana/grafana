@@ -24,16 +24,16 @@ import { EditableQueryName } from './EditableQueryName';
 import { HeaderActions } from './HeaderActions';
 
 interface DatasourceSectionProps {
-  highlightedQuery: DataQuery;
+  selectedQuery: DataQuery;
   onChange: (ds: DataSourceInstanceSettings) => void;
 }
 
-function DatasourceSection({ highlightedQuery, onChange }: DatasourceSectionProps) {
+function DatasourceSection({ selectedQuery, onChange }: DatasourceSectionProps) {
   const styles = useStyles2(getDatasourceSectionStyles);
 
   return (
     <div className={styles.dataSourcePickerWrapper}>
-      <DataSourcePicker dashboard={true} variables={true} current={highlightedQuery.datasource} onChange={onChange} />
+      <DataSourcePicker dashboard={true} variables={true} current={selectedQuery.datasource} onChange={onChange} />
     </div>
   );
 }
@@ -75,9 +75,9 @@ function PendingPickerHeader({
  * This interface defines everything needed to render the header without Scene coupling.
  */
 export interface ContentHeaderProps {
-  highlightedAlert: AlertRule | null;
-  highlightedQuery: DataQuery | ExpressionQuery | null;
-  highlightedTransformation: Transformation | null;
+  selectedAlert: AlertRule | null;
+  selectedQuery: DataQuery | ExpressionQuery | null;
+  selectedTransformation: Transformation | null;
   queries: DataQuery[];
   cardType: QueryEditorType;
   pendingExpression?: boolean;
@@ -119,9 +119,9 @@ export interface ContentHeaderProps {
  * different architectural patterns.
  */
 export function ContentHeader({
-  highlightedAlert,
-  highlightedQuery,
-  highlightedTransformation,
+  selectedAlert,
+  selectedQuery,
+  selectedTransformation,
   queries,
   cardType,
   pendingExpression,
@@ -142,7 +142,7 @@ export function ContentHeader({
   // Use provided typeConfig or compute from theme (for standalone usage)
   const typeConfig = useMemo(() => typeConfigProp ?? getQueryEditorTypeConfig(theme), [typeConfigProp, theme]);
 
-  const styles = useStyles2(getStyles, { cardType, highlightedAlert });
+  const styles = useStyles2(getStyles, { cardType, selectedAlert });
 
   if (pendingExpression) {
     return (
@@ -170,7 +170,7 @@ export function ContentHeader({
     );
   }
 
-  if (!highlightedQuery && !highlightedTransformation && !highlightedAlert) {
+  if (!selectedQuery && !selectedTransformation && !selectedAlert) {
     return null;
   }
 
@@ -179,55 +179,54 @@ export function ContentHeader({
       <div className={styles.leftSection}>
         <Icon name={typeConfig[cardType].icon} size="sm" />
 
-        {cardType === QueryEditorType.Alert && highlightedAlert && (
+        {cardType === QueryEditorType.Alert && selectedAlert && (
           <>
             <Text weight="light" variant="body" color="primary">
               <Trans i18nKey="query-editor-next.header.alert">Alert</Trans>
             </Text>
             <NavToolbarSeparator />
             <Text weight="light" variant="code" color="primary">
-              {highlightedAlert.rule.name}
+              {selectedAlert.rule.name}
             </Text>
           </>
         )}
 
-        {cardType === QueryEditorType.Query && highlightedQuery && (
+        {cardType === QueryEditorType.Query && selectedQuery && (
           <>
             <DatasourceSection
-              highlightedQuery={highlightedQuery}
-              onChange={(ds) => onChangeDataSource(ds, highlightedQuery.refId)}
+              selectedQuery={selectedQuery}
+              onChange={(ds) => onChangeDataSource(ds, selectedQuery.refId)}
             />
             <NavToolbarSeparator />
           </>
         )}
 
-        {cardType === QueryEditorType.Expression && highlightedQuery && 'type' in highlightedQuery && (
+        {cardType === QueryEditorType.Expression && selectedQuery && 'type' in selectedQuery && (
           <>
             <Text weight="light" variant="body" color="primary">
-              {upperFirst(highlightedQuery.type)}{' '}
-              <Trans i18nKey="query-editor-next.header.expression">Expression</Trans>
+              {upperFirst(selectedQuery.type)} <Trans i18nKey="query-editor-next.header.expression">Expression</Trans>
             </Text>
             <NavToolbarSeparator />
           </>
         )}
 
-        {cardType === QueryEditorType.Transformation && highlightedTransformation && (
+        {cardType === QueryEditorType.Transformation && selectedTransformation && (
           <>
             <Text weight="light" variant="body" color="primary">
               <Trans i18nKey="query-editor-next.header.transformation">Transformation</Trans>
             </Text>
             <NavToolbarSeparator />
             <Text weight="light" variant="code" color="primary">
-              {highlightedTransformation.registryItem?.name || highlightedTransformation.transformConfig.id}
+              {selectedTransformation.registryItem?.name || selectedTransformation.transformConfig.id}
             </Text>
           </>
         )}
 
-        {highlightedQuery && cardType !== QueryEditorType.Alert && (
+        {selectedQuery && cardType !== QueryEditorType.Alert && (
           <>
             <EditableQueryName
-              key={highlightedQuery.refId}
-              query={highlightedQuery}
+              key={selectedQuery.refId}
+              query={selectedQuery}
               queries={queries}
               onQueryUpdate={onUpdateQuery}
               readOnly={isMultiSelection}
@@ -255,9 +254,9 @@ export function ContentHeaderSceneWrapper({
   renderHeaderExtras?: () => React.ReactNode;
 } = {}) {
   const {
-    highlightedAlert,
-    highlightedQuery,
-    highlightedTransformation,
+    selectedAlert,
+    selectedQuery,
+    selectedTransformation,
     selectedQueryRefIds,
     cardType,
     pendingExpression,
@@ -271,9 +270,9 @@ export function ContentHeaderSceneWrapper({
 
   return (
     <ContentHeader
-      highlightedAlert={highlightedAlert}
-      highlightedQuery={highlightedQuery}
-      highlightedTransformation={highlightedTransformation}
+      selectedAlert={selectedAlert}
+      selectedQuery={selectedQuery}
+      selectedTransformation={selectedTransformation}
       queries={queries}
       cardType={cardType}
       pendingExpression={!!pendingExpression}
@@ -291,9 +290,9 @@ export function ContentHeaderSceneWrapper({
 
 const getStyles = (
   theme: GrafanaTheme2,
-  { cardType, highlightedAlert }: { cardType: QueryEditorType; highlightedAlert: AlertRule | null }
+  { cardType, selectedAlert }: { cardType: QueryEditorType; selectedAlert: AlertRule | null }
 ) => {
-  const borderColor = getEditorBorderColor({ theme, editorType: cardType, alertState: highlightedAlert?.state });
+  const borderColor = getEditorBorderColor({ theme, editorType: cardType, alertState: selectedAlert?.state });
 
   return {
     container: css({

@@ -23,7 +23,7 @@ import { usePreviousTransformationOutput } from './hooks/usePreviousTransformati
  * Shows the output of the previous transformation (or raw query data if this is the first transformation).
  */
 export function TransformationFilterDisplay() {
-  const { highlightedTransformation } = useQueryEditorUIContext();
+  const { selectedTransformation } = useQueryEditorUIContext();
   const { data } = useQueryRunnerContext();
   const { transformations } = usePanelContext();
   const { updateTransformation } = useActionsContext();
@@ -31,7 +31,7 @@ export function TransformationFilterDisplay() {
   const styles = useStyles2(getStyles);
 
   const prevOutput = usePreviousTransformationOutput({
-    selectedTransformation: highlightedTransformation,
+    selectedTransformation: selectedTransformation,
     transformations,
     queryData: data?.series ?? [],
     queryTargets: data?.request?.targets,
@@ -39,15 +39,15 @@ export function TransformationFilterDisplay() {
 
   const onChange = useCallback(
     (newConfig: DataTransformerConfig) => {
-      if (highlightedTransformation) {
-        updateTransformation(highlightedTransformation.transformConfig, newConfig);
+      if (selectedTransformation) {
+        updateTransformation(selectedTransformation.transformConfig, newConfig);
       }
     },
-    [highlightedTransformation, updateTransformation]
+    [selectedTransformation, updateTransformation]
   );
 
   const filterOptions = useMemo(() => {
-    const config = highlightedTransformation?.transformConfig;
+    const config = selectedTransformation?.transformConfig;
 
     return {
       context: { data: prevOutput },
@@ -64,13 +64,13 @@ export function TransformationFilterDisplay() {
         },
       ],
     };
-  }, [highlightedTransformation, prevOutput]);
+  }, [selectedTransformation, prevOutput]);
 
-  if (!highlightedTransformation) {
+  if (!selectedTransformation) {
     return null;
   }
 
-  const config = highlightedTransformation.transformConfig;
+  const config = selectedTransformation.transformConfig;
 
   // Only show filter if it's configured on the transformation
   // Note: `topic` is a related filter property for annotation filtering

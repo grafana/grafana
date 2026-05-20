@@ -15,13 +15,13 @@ import { getGhostCardVisuals } from '../SidebarCardGhostStyles';
 interface SidebarCardProps {
   children: React.ReactNode;
   id: string;
-  /** This card has the highlight border and is shown in the editor pane. */
-  isHighlighted: boolean;
+  /** This card has the border and is shown in the editor pane. */
+  isSelected: boolean;
   /** This card is checked via its checkbox (member of the multi-select set). */
-  isSelected?: boolean;
+  isPartOfSelection?: boolean;
   item: ActionItem;
-  /** Card body click — should only update the highlight, never the selection set. */
-  onHighlight: () => void;
+  /** Card body click — should only update which card is active, never the selection set. */
+  onSelect: () => void;
   /** Checkbox click — toggles this card in/out of the multi-select set. */
   onToggleSelect?: (modifiers?: { range?: boolean }) => void;
   onDelete?: () => void;
@@ -33,10 +33,10 @@ interface SidebarCardProps {
 export const SidebarCard = ({
   children,
   id,
-  isHighlighted,
-  isSelected = false,
+  isSelected,
+  isPartOfSelection = false,
   item,
-  onHighlight,
+  onSelect,
   onToggleSelect,
   onDelete,
   onDuplicate,
@@ -50,7 +50,7 @@ export const SidebarCard = ({
   const [hasFocusWithin, setHasFocusWithin] = useState(false);
   const { multiSelectMode } = useQueryEditorUIContext();
 
-  const styles = useStyles2(getStyles, { isHighlighted, isSelected, item });
+  const styles = useStyles2(getStyles, { isSelected, isPartOfSelection, item });
 
   const handleFocus = useCallback(() => {
     setHasFocusWithin(true);
@@ -68,7 +68,7 @@ export const SidebarCard = ({
   }, []);
 
   const handleCardClick = () => {
-    onHighlight();
+    onSelect();
   };
 
   // Using a div with role="button" instead of a native button for @hello-pangea/dnd compatibility,
@@ -80,7 +80,7 @@ export const SidebarCard = ({
 
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      onHighlight();
+      onSelect();
     }
   };
 
@@ -152,7 +152,7 @@ export const SidebarCard = ({
         tabIndex={0}
         data-query-sidebar-card={id}
         aria-label={t('query-editor-next.sidebar.card-click', 'Select card {{id}}', { id })}
-        aria-pressed={isHighlighted}
+        aria-pressed={isSelected}
       >
         <div className={styles.cardContent}>
           {multiSelectMode && (
@@ -160,7 +160,7 @@ export const SidebarCard = ({
               <Checkbox
                 className={styles.roundedCheckbox}
                 tabIndex={0}
-                value={isSelected}
+                value={isPartOfSelection}
                 onChange={handleCheckboxChange}
                 onClick={handleCheckboxClick}
                 aria-label={t('query-editor-next.sidebar.card-select-checkbox', 'Select {{id}} for bulk actions', {
@@ -204,12 +204,12 @@ export const SidebarCard = ({
 function getStyles(
   theme: GrafanaTheme2,
   {
-    isHighlighted,
     isSelected,
+    isPartOfSelection,
     item,
   }: {
-    isHighlighted?: boolean;
     isSelected?: boolean;
+    isPartOfSelection?: boolean;
     item: ActionItem;
   }
 ) {
@@ -222,8 +222,8 @@ function getStyles(
   });
 
   const highlightedBg = `color-mix(in srgb, ${borderColor} 10%, ${theme.colors.background.primary})`;
-  const hoverBackgroundColor = isHighlighted ? highlightedBg : colorManipulator.alpha(theme.colors.text.primary, 0.08);
-  const hoverSolidBg = isHighlighted ? highlightedBg : theme.colors.background.secondary;
+  const hoverBackgroundColor = isSelected ? highlightedBg : colorManipulator.alpha(theme.colors.text.primary, 0.08);
+  const hoverSolidBg = isSelected ? highlightedBg : theme.colors.background.secondary;
 
   const {
     ghostBackgroundColor,
@@ -262,14 +262,14 @@ function getStyles(
 
   const cardBorder = !!item.error
     ? `1px solid ${theme.colors.error.border}`
-    : `1px solid ${isHighlighted ? borderColor : theme.colors.border.medium}`;
+    : `1px solid ${isSelected ? borderColor : theme.colors.border.medium}`;
 
   // Border and background are driven purely by the highlight. The checkbox
   // (selection set) intentionally has no visual treatment on the card — the
   // checkbox glyph itself is the only "is this selected" indicator.
-  const cardBackground = isHighlighted ? highlightedBg : theme.colors.background.primary;
-  const cardBoxShadow = isHighlighted ? `0 0 4px 0 color-mix(in srgb, ${borderColor} 40%, transparent)` : 'none';
-  const indicatorWidth = isHighlighted ? 3 : 2;
+  const cardBackground = isSelected ? highlightedBg : theme.colors.background.primary;
+  const cardBoxShadow = isSelected ? `0 0 4px 0 color-mix(in srgb, ${borderColor} 40%, transparent)` : 'none';
+  const indicatorWidth = isSelected ? 3 : 2;
 
   return {
     cardContentIcons: css({

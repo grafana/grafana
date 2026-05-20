@@ -73,16 +73,16 @@ export function QueryEditorContextWrapper({
   } = useQueryEditorUIToggles();
 
   const clearSideEffectsRef = useRef<() => void>(() => {});
-  const [highlightedAlertId, setHighlightedAlertId] = useState<string | null>(null);
+  const [anchorAlertId, setAnchorAlertId] = useState<string | null>(null);
   const [multiSelectMode, setMultiSelectModeState] = useState(false);
 
   const {
-    highlightedQueryRefId,
-    highlightedTransformationId,
+    anchorQueryRefId,
+    anchorTransformationId,
     selectedQueryRefIds,
     selectedTransformationIds,
-    highlightQuery: highlightQueryRaw,
-    highlightTransformation: highlightTransformationRaw,
+    selectQuery: selectQueryRaw,
+    selectTransformation: selectTransformationRaw,
     onCardSelectionChange: onCardSelectionChangeRaw,
     trackQueryRename,
     toggleQuerySelection: toggleQuerySelectionRaw,
@@ -101,31 +101,31 @@ export function QueryEditorContextWrapper({
   // Wrap each selection mutator to clear alert selection (cross-type exclusivity).
   const onCardSelectionChange = useCallback(
     (queryRefId: string | null, transformationId: string | null) => {
-      setHighlightedAlertId(null);
+      setAnchorAlertId(null);
       onCardSelectionChangeRaw(queryRefId, transformationId);
     },
     [onCardSelectionChangeRaw]
   );
 
-  const highlightQuery = useCallback(
+  const selectQuery = useCallback(
     (query: DataQuery | ExpressionQuery) => {
-      setHighlightedAlertId(null);
-      highlightQueryRaw(query);
+      setAnchorAlertId(null);
+      selectQueryRaw(query);
     },
-    [highlightQueryRaw]
+    [selectQueryRaw]
   );
 
-  const highlightTransformation = useCallback(
+  const selectTransformation = useCallback(
     (transformation: Transformation) => {
-      setHighlightedAlertId(null);
-      highlightTransformationRaw(transformation);
+      setAnchorAlertId(null);
+      selectTransformationRaw(transformation);
     },
-    [highlightTransformationRaw]
+    [selectTransformationRaw]
   );
 
   const toggleQuerySelection = useCallback(
     (query: DataQuery | ExpressionQuery, modifiers?: SelectionModifiers) => {
-      setHighlightedAlertId(null);
+      setAnchorAlertId(null);
       toggleQuerySelectionRaw(query, modifiers);
     },
     [toggleQuerySelectionRaw]
@@ -133,14 +133,14 @@ export function QueryEditorContextWrapper({
 
   const toggleTransformationSelection = useCallback(
     (transformation: Transformation, modifiers?: SelectionModifiers) => {
-      setHighlightedAlertId(null);
+      setAnchorAlertId(null);
       toggleTransformationSelectionRaw(transformation, modifiers);
     },
     [toggleTransformationSelectionRaw]
   );
 
   const clearSelection = useCallback(() => {
-    setHighlightedAlertId(null);
+    setAnchorAlertId(null);
     clearSelectionRaw();
   }, [clearSelectionRaw]);
 
@@ -162,7 +162,7 @@ export function QueryEditorContextWrapper({
 
   const selectAlert = useCallback(
     (alertId: string | null) => {
-      setHighlightedAlertId(alertId);
+      setAnchorAlertId(alertId);
       // Selecting an alert clears both the highlight and the selection set
       // for queries/transformations so the editor pane shows the alert only.
       onCardSelectionChangeRaw(null, null);
@@ -234,8 +234,8 @@ export function QueryEditorContextWrapper({
   );
 
   const queryError = useMemo(() => {
-    return queryRunnerState?.data?.errors?.find(({ refId }) => refId === highlightedQueryRefId);
-  }, [queryRunnerState?.data?.errors, highlightedQueryRefId]);
+    return queryRunnerState?.data?.errors?.find(({ refId }) => refId === anchorQueryRefId);
+  }, [queryRunnerState?.data?.errors, anchorQueryRefId]);
 
   const qrState = useMemo(
     () => ({
@@ -257,40 +257,40 @@ export function QueryEditorContextWrapper({
 
   const queryOptions = useQueryOptions({ panel, queryRunner, dsSettings });
 
-  const { highlightedQuery, highlightedTransformation, highlightedAlert } = useSelectedCard(
-    highlightedQueryRefId,
-    highlightedTransformationId,
-    highlightedAlertId,
+  const { selectedQuery, selectedTransformation, selectedAlert } = useSelectedCard(
+    anchorQueryRefId,
+    anchorTransformationId,
+    anchorAlertId,
     queryRunnerState?.queries ?? [],
     transformations,
     alertingState.alertRules,
     Boolean(pendingExpression) || Boolean(pendingTransformation)
   );
 
-  const { selectedQueryDsData, selectedQueryDsLoading } = useSelectedQueryDatasource(highlightedQuery, dsSettings);
+  const { selectedQueryDsData, selectedQueryDsLoading } = useSelectedQueryDatasource(selectedQuery, dsSettings);
 
   const uiState = useMemo(
     () => ({
-      highlightedQuery,
-      highlightedTransformation,
-      highlightedAlert,
+      selectedQuery,
+      selectedTransformation,
+      selectedAlert,
       selectedQueryRefIds,
       selectedTransformationIds,
       multiSelectMode,
-      highlightQuery,
-      highlightTransformation,
+      selectQuery,
+      selectTransformation,
       toggleQuerySelection,
       toggleTransformationSelection,
       clearSelection,
-      setHighlightedQuery: (query: DataQuery | ExpressionQuery | null) => {
+      setSelectedQuery: (query: DataQuery | ExpressionQuery | null) => {
         onCardSelectionChange(query ? query.refId : null, null);
         clearSideEffects();
       },
-      setHighlightedTransformation: (transformation: Transformation | null) => {
+      setSelectedTransformation: (transformation: Transformation | null) => {
         onCardSelectionChange(null, transformation ? transformation.transformId : null);
         clearSideEffects();
       },
-      setHighlightedAlert: (alert: AlertRule | null) => {
+      setSelectedAlert: (alert: AlertRule | null) => {
         selectAlert(alert?.alertId ?? null);
       },
       setMultiSelectMode,
@@ -306,7 +306,7 @@ export function QueryEditorContextWrapper({
       showingDatasourceHelp,
       toggleDatasourceHelp,
       cardType: getEditorType(
-        highlightedQuery || highlightedTransformation || highlightedAlert,
+        selectedQuery || selectedTransformation || selectedAlert,
         pendingExpression,
         pendingTransformation
       ),
@@ -344,14 +344,14 @@ export function QueryEditorContextWrapper({
       showVersionBanner: Boolean(showVersionBanner),
     }),
     [
-      highlightedQuery,
-      highlightedTransformation,
-      highlightedAlert,
+      selectedQuery,
+      selectedTransformation,
+      selectedAlert,
       selectedQueryRefIds,
       selectedTransformationIds,
       multiSelectMode,
-      highlightQuery,
-      highlightTransformation,
+      selectQuery,
+      selectTransformation,
       toggleQuerySelection,
       toggleTransformationSelection,
       clearSelection,

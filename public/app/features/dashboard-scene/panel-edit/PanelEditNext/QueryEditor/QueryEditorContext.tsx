@@ -76,23 +76,27 @@ export interface SelectionModifiers {
 }
 
 export interface QueryEditorUIState {
-  /** The single card with the highlight border, shown in the editor pane. */
-  highlightedQuery: DataQuery | ExpressionQuery | null;
-  highlightedTransformation: Transformation | null;
-  highlightedAlert: AlertRule | null;
+  /**
+   * The card with the border, shown in the editor pane.
+   * Single-valued; NOT the same concept as `selectedQueryRefIds` (the
+   * multi-select checkbox set). Driven by `anchorQueryRefId` internally.
+   */
+  selectedQuery: DataQuery | ExpressionQuery | null;
+  selectedTransformation: Transformation | null;
+  selectedAlert: AlertRule | null;
   /** Checkbox selection set per type. Only non-empty inside multi-select mode. */
   selectedQueryRefIds: readonly string[];
   selectedTransformationIds: readonly string[];
   multiSelectMode: boolean;
-  setHighlightedQuery: (query: DataQuery | ExpressionQuery | null) => void;
-  setHighlightedTransformation: (transformation: Transformation | null) => void;
-  setHighlightedAlert: (alert: AlertRule | null) => void;
-  /** Enters/exits multi-select mode. Entering seeds the selection set with the highlighted card. */
+  setSelectedQuery: (query: DataQuery | ExpressionQuery | null) => void;
+  setSelectedTransformation: (transformation: Transformation | null) => void;
+  setSelectedAlert: (alert: AlertRule | null) => void;
+  /** Enters/exits multi-select mode. Entering seeds the selection set with the active card. */
   setMultiSelectMode: (enabled: boolean) => void;
-  /** Card-body click: moves the highlight to this card. Does not change the selection set. */
-  highlightQuery: (query: DataQuery | ExpressionQuery) => void;
-  highlightTransformation: (transformation: Transformation) => void;
-  /** Checkbox click: toggles this card in/out of the selection set. Does not change the highlight. */
+  /** Card-body click: makes this the active card. Does not change the selection set. */
+  selectQuery: (query: DataQuery | ExpressionQuery) => void;
+  selectTransformation: (transformation: Transformation) => void;
+  /** Checkbox click: toggles this card in/out of the selection set. Does not change the active card. */
   toggleQuerySelection: (query: DataQuery | ExpressionQuery, modifiers?: SelectionModifiers) => void;
   toggleTransformationSelection: (transformation: Transformation, modifiers?: SelectionModifiers) => void;
   /** Bulk-actions "X" button: empties the selection sets and exits multi-select mode. */

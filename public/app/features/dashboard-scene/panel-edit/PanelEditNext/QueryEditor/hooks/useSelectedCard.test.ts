@@ -39,9 +39,9 @@ describe('useSelectedCard', () => {
         useSelectedCard(null, null, null, mockQueries, mockTransformations, mockAlerts)
       );
 
-      expect(result.current.highlightedQuery).toEqual(mockQueries[0]);
-      expect(result.current.highlightedTransformation).toBeNull();
-      expect(result.current.highlightedAlert).toBeNull();
+      expect(result.current.selectedQuery).toEqual(mockQueries[0]);
+      expect(result.current.selectedTransformation).toBeNull();
+      expect(result.current.selectedAlert).toBeNull();
     });
 
     it('should resolve the highlighted query by refId', () => {
@@ -49,9 +49,9 @@ describe('useSelectedCard', () => {
         useSelectedCard('B', null, null, mockQueries, mockTransformations, mockAlerts)
       );
 
-      expect(result.current.highlightedQuery).toEqual(mockQueries[1]);
-      expect(result.current.highlightedTransformation).toBeNull();
-      expect(result.current.highlightedAlert).toBeNull();
+      expect(result.current.selectedQuery).toEqual(mockQueries[1]);
+      expect(result.current.selectedTransformation).toBeNull();
+      expect(result.current.selectedAlert).toBeNull();
     });
 
     it('should not highlight a query when a transformation is highlighted', () => {
@@ -59,9 +59,9 @@ describe('useSelectedCard', () => {
         useSelectedCard(null, 'transform-1', null, mockQueries, mockTransformations, mockAlerts)
       );
 
-      expect(result.current.highlightedQuery).toBeNull();
-      expect(result.current.highlightedTransformation).toEqual(mockTransformations[0]);
-      expect(result.current.highlightedAlert).toBeNull();
+      expect(result.current.selectedQuery).toBeNull();
+      expect(result.current.selectedTransformation).toEqual(mockTransformations[0]);
+      expect(result.current.selectedAlert).toBeNull();
     });
 
     it('should not highlight a query when an alert is highlighted', () => {
@@ -69,9 +69,9 @@ describe('useSelectedCard', () => {
         useSelectedCard(null, null, 'alert-1', mockQueries, mockTransformations, mockAlerts)
       );
 
-      expect(result.current.highlightedQuery).toBeNull();
-      expect(result.current.highlightedTransformation).toBeNull();
-      expect(result.current.highlightedAlert).toEqual(mockAlerts[0]);
+      expect(result.current.selectedQuery).toBeNull();
+      expect(result.current.selectedTransformation).toBeNull();
+      expect(result.current.selectedAlert).toEqual(mockAlerts[0]);
     });
 
     it('should not highlight a query when an alert is highlighted, even if a query ref is provided', () => {
@@ -80,9 +80,9 @@ describe('useSelectedCard', () => {
         useSelectedCard('A', null, 'alert-1', mockQueries, mockTransformations, mockAlerts)
       );
 
-      expect(result.current.highlightedQuery).toBeNull();
-      expect(result.current.highlightedTransformation).toBeNull();
-      expect(result.current.highlightedAlert).toEqual(mockAlerts[0]);
+      expect(result.current.selectedQuery).toBeNull();
+      expect(result.current.selectedTransformation).toBeNull();
+      expect(result.current.selectedAlert).toEqual(mockAlerts[0]);
     });
 
     it('should not highlight a query while a picker is pending', () => {
@@ -90,7 +90,7 @@ describe('useSelectedCard', () => {
         useSelectedCard('A', null, null, mockQueries, mockTransformations, mockAlerts, true)
       );
 
-      expect(result.current.highlightedQuery).toBeNull();
+      expect(result.current.selectedQuery).toBeNull();
     });
 
     it('should fall back to the first query when the highlighted refId does not exist', () => {
@@ -99,17 +99,17 @@ describe('useSelectedCard', () => {
       );
 
       // Highlight refId not found and no other exclusion — defaults to first query
-      expect(result.current.highlightedQuery).toEqual(mockQueries[0]);
-      expect(result.current.highlightedTransformation).toBeNull();
-      expect(result.current.highlightedAlert).toBeNull();
+      expect(result.current.selectedQuery).toEqual(mockQueries[0]);
+      expect(result.current.selectedTransformation).toBeNull();
+      expect(result.current.selectedAlert).toBeNull();
     });
 
     it('should return null for query when queries array is empty', () => {
       const { result } = renderHook(() => useSelectedCard(null, null, null, [], mockTransformations, mockAlerts));
 
-      expect(result.current.highlightedQuery).toBeNull();
-      expect(result.current.highlightedTransformation).toBeNull();
-      expect(result.current.highlightedAlert).toBeNull();
+      expect(result.current.selectedQuery).toBeNull();
+      expect(result.current.selectedTransformation).toBeNull();
+      expect(result.current.selectedAlert).toBeNull();
     });
   });
 
@@ -119,9 +119,9 @@ describe('useSelectedCard', () => {
         useSelectedCard(null, 'transform-2', null, mockQueries, mockTransformations, mockAlerts)
       );
 
-      expect(result.current.highlightedQuery).toBeNull();
-      expect(result.current.highlightedTransformation).toEqual(mockTransformations[1]);
-      expect(result.current.highlightedAlert).toBeNull();
+      expect(result.current.selectedQuery).toBeNull();
+      expect(result.current.selectedTransformation).toEqual(mockTransformations[1]);
+      expect(result.current.selectedAlert).toBeNull();
     });
 
     it('should return null for transformation when not highlighted', () => {
@@ -129,9 +129,9 @@ describe('useSelectedCard', () => {
         useSelectedCard('A', null, null, mockQueries, mockTransformations, mockAlerts)
       );
 
-      expect(result.current.highlightedQuery).toEqual(mockQueries[0]);
-      expect(result.current.highlightedTransformation).toBeNull();
-      expect(result.current.highlightedAlert).toBeNull();
+      expect(result.current.selectedQuery).toEqual(mockQueries[0]);
+      expect(result.current.selectedTransformation).toBeNull();
+      expect(result.current.selectedAlert).toBeNull();
     });
 
     it('should return null for transformation when invalid id is provided', () => {
@@ -139,17 +139,17 @@ describe('useSelectedCard', () => {
         useSelectedCard(null, 'INVALID', null, mockQueries, mockTransformations, mockAlerts)
       );
 
-      expect(result.current.highlightedQuery).toBeNull();
-      expect(result.current.highlightedTransformation).toBeNull();
-      expect(result.current.highlightedAlert).toBeNull();
+      expect(result.current.selectedQuery).toBeNull();
+      expect(result.current.selectedTransformation).toBeNull();
+      expect(result.current.selectedAlert).toBeNull();
     });
 
     it('should return null for transformation when transformations array is empty', () => {
       const { result } = renderHook(() => useSelectedCard(null, 'transform-1', null, mockQueries, [], mockAlerts));
 
-      expect(result.current.highlightedQuery).toBeNull();
-      expect(result.current.highlightedTransformation).toBeNull();
-      expect(result.current.highlightedAlert).toBeNull();
+      expect(result.current.selectedQuery).toBeNull();
+      expect(result.current.selectedTransformation).toBeNull();
+      expect(result.current.selectedAlert).toBeNull();
     });
   });
 
@@ -159,9 +159,9 @@ describe('useSelectedCard', () => {
         useSelectedCard(null, null, 'alert-2', mockQueries, mockTransformations, mockAlerts)
       );
 
-      expect(result.current.highlightedQuery).toBeNull();
-      expect(result.current.highlightedTransformation).toBeNull();
-      expect(result.current.highlightedAlert).toEqual(mockAlerts[1]);
+      expect(result.current.selectedQuery).toBeNull();
+      expect(result.current.selectedTransformation).toBeNull();
+      expect(result.current.selectedAlert).toEqual(mockAlerts[1]);
     });
 
     it('should return null for alert when not highlighted', () => {
@@ -169,9 +169,9 @@ describe('useSelectedCard', () => {
         useSelectedCard('A', null, null, mockQueries, mockTransformations, mockAlerts)
       );
 
-      expect(result.current.highlightedQuery).toEqual(mockQueries[0]);
-      expect(result.current.highlightedTransformation).toBeNull();
-      expect(result.current.highlightedAlert).toBeNull();
+      expect(result.current.selectedQuery).toEqual(mockQueries[0]);
+      expect(result.current.selectedTransformation).toBeNull();
+      expect(result.current.selectedAlert).toBeNull();
     });
 
     it('should return null for alert when invalid id is provided', () => {
@@ -179,17 +179,17 @@ describe('useSelectedCard', () => {
         useSelectedCard(null, null, 'INVALID', mockQueries, mockTransformations, mockAlerts)
       );
 
-      expect(result.current.highlightedQuery).toBeNull();
-      expect(result.current.highlightedTransformation).toBeNull();
-      expect(result.current.highlightedAlert).toBeNull();
+      expect(result.current.selectedQuery).toBeNull();
+      expect(result.current.selectedTransformation).toBeNull();
+      expect(result.current.selectedAlert).toBeNull();
     });
 
     it('should return null for alert when alerts array is empty', () => {
       const { result } = renderHook(() => useSelectedCard(null, null, 'alert-1', mockQueries, mockTransformations, []));
 
-      expect(result.current.highlightedQuery).toBeNull();
-      expect(result.current.highlightedTransformation).toBeNull();
-      expect(result.current.highlightedAlert).toBeNull();
+      expect(result.current.selectedQuery).toBeNull();
+      expect(result.current.selectedTransformation).toBeNull();
+      expect(result.current.selectedAlert).toBeNull();
     });
   });
 
@@ -199,8 +199,8 @@ describe('useSelectedCard', () => {
         useSelectedCard(null, 'transform-1', null, mockQueries, mockTransformations, mockAlerts)
       );
 
-      expect(result.current.highlightedQuery).toBeNull();
-      expect(result.current.highlightedTransformation).toEqual(mockTransformations[0]);
+      expect(result.current.selectedQuery).toBeNull();
+      expect(result.current.selectedTransformation).toEqual(mockTransformations[0]);
     });
 
     it('should prevent default query highlight when alert is highlighted', () => {
@@ -208,8 +208,8 @@ describe('useSelectedCard', () => {
         useSelectedCard(null, null, 'alert-1', mockQueries, mockTransformations, mockAlerts)
       );
 
-      expect(result.current.highlightedQuery).toBeNull();
-      expect(result.current.highlightedAlert).toEqual(mockAlerts[0]);
+      expect(result.current.selectedQuery).toBeNull();
+      expect(result.current.selectedAlert).toEqual(mockAlerts[0]);
     });
   });
 
@@ -222,7 +222,7 @@ describe('useSelectedCard', () => {
         }
       );
 
-      expect(result.current.highlightedQuery).toEqual(mockQueries[1]);
+      expect(result.current.selectedQuery).toEqual(mockQueries[1]);
 
       // Update queries
       const newQueries: DataQuery[] = [
@@ -232,7 +232,7 @@ describe('useSelectedCard', () => {
 
       rerender({ queries: newQueries });
 
-      expect(result.current.highlightedQuery).toEqual(newQueries[0]);
+      expect(result.current.selectedQuery).toEqual(newQueries[0]);
     });
 
     it('should update when transformations change', () => {
@@ -243,7 +243,7 @@ describe('useSelectedCard', () => {
         }
       );
 
-      expect(result.current.highlightedTransformation).toEqual(mockTransformations[0]);
+      expect(result.current.selectedTransformation).toEqual(mockTransformations[0]);
 
       const newTransformations: Transformation[] = [
         {
@@ -255,7 +255,7 @@ describe('useSelectedCard', () => {
 
       rerender({ transformations: newTransformations });
 
-      expect(result.current.highlightedTransformation).toEqual(newTransformations[0]);
+      expect(result.current.selectedTransformation).toEqual(newTransformations[0]);
     });
 
     it('should update when alerts change', () => {
@@ -266,7 +266,7 @@ describe('useSelectedCard', () => {
         }
       );
 
-      expect(result.current.highlightedAlert).toEqual(mockAlerts[0]);
+      expect(result.current.selectedAlert).toEqual(mockAlerts[0]);
 
       const newAlerts: AlertRule[] = [
         {
@@ -278,7 +278,7 @@ describe('useSelectedCard', () => {
 
       rerender({ alerts: newAlerts });
 
-      expect(result.current.highlightedAlert).toEqual(newAlerts[0]);
+      expect(result.current.selectedAlert).toEqual(newAlerts[0]);
     });
 
     it('should fall back to the first query when the highlighted query is removed from the array', () => {
@@ -289,7 +289,7 @@ describe('useSelectedCard', () => {
         }
       );
 
-      expect(result.current.highlightedQuery).toEqual(mockQueries[1]);
+      expect(result.current.selectedQuery).toEqual(mockQueries[1]);
 
       const newQueries: DataQuery[] = [
         { refId: 'A', datasource: { type: 'prometheus', uid: 'prom-1' } },
@@ -298,7 +298,7 @@ describe('useSelectedCard', () => {
 
       rerender({ queries: newQueries });
 
-      expect(result.current.highlightedQuery).toEqual(newQueries[0]);
+      expect(result.current.selectedQuery).toEqual(newQueries[0]);
     });
   });
 });

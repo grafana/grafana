@@ -141,8 +141,8 @@ export const mockUIStateBase = {
   selectedQueryRefIds: [] satisfies readonly string[],
   selectedTransformationIds: [] satisfies readonly string[],
   multiSelectMode: false,
-  highlightQuery: jest.fn(),
-  highlightTransformation: jest.fn(),
+  selectQuery: jest.fn(),
+  selectTransformation: jest.fn(),
   toggleQuerySelection: jest.fn(),
   toggleTransformationSelection: jest.fn(),
   clearSelection: jest.fn(),
@@ -189,10 +189,10 @@ export const mockTypeConfig: QueryEditorTypeConfigState = {
 interface CreateQueryEditorProviderOptions {
   queries?: DataQuery[];
   transformations?: Transformation[];
-  /** Convenience: sets both highlightedQuery and the inferred cardType. */
-  highlightedQuery?: DataQuery | null;
-  /** Convenience: sets both highlightedTransformation and the inferred cardType. */
-  highlightedTransformation?: Transformation | null;
+  /** Convenience: sets both selectedQuery and the inferred cardType. */
+  selectedQuery?: DataQuery | null;
+  /** Convenience: sets both selectedTransformation and the inferred cardType. */
+  selectedTransformation?: Transformation | null;
   uiStateOverrides?: Partial<QueryEditorUIState>;
   actionsOverrides?: Partial<QueryEditorActions>;
   dsState?: Partial<DatasourceState>;
@@ -208,15 +208,15 @@ interface CreateQueryEditorProviderOptions {
  * @example
  * const { user, ...result } = renderWithQueryEditorProvider(
  *   <MyComponent />,
- *   { queries: [mockQuery], highlightedQuery: mockQuery }
+ *   { queries: [mockQuery], selectedQuery: mockQuery }
  * );
  */
 export function renderWithQueryEditorProvider(children: ReactElement, options: CreateQueryEditorProviderOptions = {}) {
   const {
     queries = [],
     transformations = [],
-    highlightedQuery = null,
-    highlightedTransformation = null,
+    selectedQuery = null,
+    selectedTransformation = null,
     uiStateOverrides = {},
     actionsOverrides = {},
     dsState = {},
@@ -250,16 +250,16 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
   };
 
   const defaultUiState: QueryEditorUIState = {
-    highlightedQuery,
-    highlightedTransformation,
+    selectedQuery,
+    selectedTransformation,
     selectedQueryRefIds: [],
     selectedTransformationIds: [],
     multiSelectMode: false,
-    setHighlightedQuery: jest.fn(),
-    setHighlightedTransformation: jest.fn(),
+    setSelectedQuery: jest.fn(),
+    setSelectedTransformation: jest.fn(),
     setMultiSelectMode: jest.fn(),
-    highlightQuery: jest.fn(),
-    highlightTransformation: jest.fn(),
+    selectQuery: jest.fn(),
+    selectTransformation: jest.fn(),
     toggleQuerySelection: jest.fn(),
     toggleTransformationSelection: jest.fn(),
     clearSelection: jest.fn(),
@@ -269,15 +269,15 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
     showingDatasourceHelp: false,
     toggleDatasourceHelp: jest.fn(),
     transformToggles: mockTransformToggles,
-    cardType: highlightedTransformation ? QueryEditorType.Transformation : QueryEditorType.Query,
+    cardType: selectedTransformation ? QueryEditorType.Transformation : QueryEditorType.Query,
     pendingExpression: null,
     setPendingExpression: jest.fn(),
     finalizePendingExpression: jest.fn(),
     pendingTransformation: null,
     setPendingTransformation: jest.fn(),
     finalizePendingTransformation: jest.fn(),
-    highlightedAlert: null,
-    setHighlightedAlert: jest.fn(),
+    selectedAlert: null,
+    setSelectedAlert: jest.fn(),
     pendingSavedQuery: null,
     setPendingSavedQuery: jest.fn(),
     showVersionBanner: false,

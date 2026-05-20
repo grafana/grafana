@@ -23,12 +23,12 @@ interface SidebarProps {
 
 export const Sidebar = memo(function Sidebar({ sidebarSize, setSidebarSize }: SidebarProps) {
   const styles = useStyles2(getStyles);
-  const { setHighlightedAlert, cardType } = useQueryEditorUIContext();
+  const { setSelectedAlert, cardType } = useQueryEditorUIContext();
   const { alertRules, loading } = useAlertingContext();
 
   const handleViewChange = (view: QueryEditorType) => {
     trackSidebarViewChange(view);
-    setHighlightedAlert(view === QueryEditorType.Alert ? (alertRules[0] ?? EMPTY_ALERT) : null);
+    setSelectedAlert(view === QueryEditorType.Alert ? (alertRules[0] ?? EMPTY_ALERT) : null);
   };
 
   const toggleValue = cardType === QueryEditorType.Alert ? QueryEditorType.Alert : QueryEditorType.Query;

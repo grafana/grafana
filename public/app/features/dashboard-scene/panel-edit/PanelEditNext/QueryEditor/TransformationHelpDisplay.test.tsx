@@ -49,7 +49,7 @@ describe('TransformationHelpDisplay', () => {
 
   it('does not render when showHelp is false', () => {
     renderWithQueryEditorProvider(<TransformationHelpDisplay />, {
-      highlightedTransformation: makeTransformation(),
+      selectedTransformation: makeTransformation(),
       uiStateOverrides: {
         transformToggles: { ...mockTransformToggles, showHelp: false },
       },
@@ -61,7 +61,7 @@ describe('TransformationHelpDisplay', () => {
 
   it('does not render when showHelp is true but no transformation is selected', () => {
     renderWithQueryEditorProvider(<TransformationHelpDisplay />, {
-      highlightedTransformation: null,
+      selectedTransformation: null,
       uiStateOverrides: {
         transformToggles: { ...mockTransformToggles, showHelp: true },
       },
@@ -73,7 +73,7 @@ describe('TransformationHelpDisplay', () => {
 
   it('renders the drawer with the correct title and subtitle when showHelp is true', async () => {
     renderWithQueryEditorProvider(<TransformationHelpDisplay />, {
-      highlightedTransformation: makeTransformation(),
+      selectedTransformation: makeTransformation(),
       uiStateOverrides: {
         transformToggles: { ...mockTransformToggles, showHelp: true },
       },
@@ -86,7 +86,7 @@ describe('TransformationHelpDisplay', () => {
 
   it('fetches and renders help content when the drawer opens', async () => {
     renderWithQueryEditorProvider(<TransformationHelpDisplay />, {
-      highlightedTransformation: makeTransformation(),
+      selectedTransformation: makeTransformation(),
       uiStateOverrides: {
         transformToggles: { ...mockTransformToggles, showHelp: true },
       },
@@ -100,7 +100,7 @@ describe('TransformationHelpDisplay', () => {
     mockGetTransformationContent.mockRejectedValue(new Error('Network error'));
 
     renderWithQueryEditorProvider(<TransformationHelpDisplay />, {
-      highlightedTransformation: makeTransformation(),
+      selectedTransformation: makeTransformation(),
       uiStateOverrides: {
         transformToggles: { ...mockTransformToggles, showHelp: true },
       },
@@ -115,7 +115,7 @@ describe('TransformationHelpDisplay', () => {
     const toggleHelp = jest.fn();
 
     renderWithQueryEditorProvider(<TransformationHelpDisplay />, {
-      highlightedTransformation: makeTransformation(),
+      selectedTransformation: makeTransformation(),
       uiStateOverrides: {
         transformToggles: { ...mockTransformToggles, showHelp: true, toggleHelp },
       },

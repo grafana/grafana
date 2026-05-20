@@ -64,7 +64,7 @@ describe('HeaderActions', () => {
     const deleteQuery = jest.fn();
 
     const { user } = renderWithQueryEditorProvider(<HeaderActions />, {
-      highlightedQuery: { refId: 'A', hide: false },
+      selectedQuery: { refId: 'A', hide: false },
       uiStateOverrides: { cardType: QueryEditorType.Query },
       actionsOverrides: { toggleQueryHide, deleteQuery },
     });
@@ -87,7 +87,7 @@ describe('HeaderActions', () => {
     const deleteQuery = jest.fn();
 
     const { user } = renderWithQueryEditorProvider(<HeaderActions />, {
-      highlightedQuery: { refId: 'B', hide: true },
+      selectedQuery: { refId: 'B', hide: true },
       uiStateOverrides: { cardType: QueryEditorType.Expression },
       actionsOverrides: { toggleQueryHide, deleteQuery },
     });
@@ -106,14 +106,14 @@ describe('HeaderActions', () => {
   it('renders transformation buttons and routes hide/delete to selected transformation handlers', async () => {
     const toggleTransformationDisabled = jest.fn();
     const deleteTransformation = jest.fn();
-    const highlightedTransformation = makeTransformation({
+    const selectedTransformation = makeTransformation({
       transformId: 'transform-42',
       transformConfig: { id: 'test-transform', options: {}, disabled: true },
       registryItem: { name: 'Reduce' } as Transformation['registryItem'],
     });
 
     const { user } = renderWithQueryEditorProvider(<HeaderActions />, {
-      highlightedTransformation,
+      selectedTransformation,
       uiStateOverrides: { cardType: QueryEditorType.Transformation },
       actionsOverrides: { toggleTransformationDisabled, deleteTransformation },
     });

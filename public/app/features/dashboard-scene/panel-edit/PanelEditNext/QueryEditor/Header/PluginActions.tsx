@@ -27,10 +27,10 @@ interface PluginActionsProps {
 export function PluginActions({ app }: PluginActionsProps) {
   const { queries, data } = useQueryRunnerContext();
   const { addQuery } = useActionsContext();
-  const { highlightedQuery, selectedQueryDsData, cardType } = useQueryEditorUIContext();
+  const { selectedQuery, selectedQueryDsData, cardType } = useQueryEditorUIContext();
 
   const extraActions = useMemo(() => {
-    if (!highlightedQuery) {
+    if (!selectedQuery) {
       return [];
     }
 
@@ -44,7 +44,7 @@ export function PluginActions({ app }: PluginActionsProps) {
     return [...unscopedActions, ...scopedActions]
       .map((action, index) =>
         action({
-          query: highlightedQuery,
+          query: selectedQuery,
           queries,
           timeRange: data?.timeRange,
           onAddQuery: addQuery,
@@ -53,11 +53,11 @@ export function PluginActions({ app }: PluginActionsProps) {
         })
       )
       .filter(Boolean);
-  }, [highlightedQuery, app, queries, data?.timeRange, addQuery, selectedQueryDsData?.dsSettings]);
+  }, [selectedQuery, app, queries, data?.timeRange, addQuery, selectedQueryDsData?.dsSettings]);
 
-  const telemetryComponents = useAdaptiveTelemetryComponents(highlightedQuery);
+  const telemetryComponents = useAdaptiveTelemetryComponents(selectedQuery);
 
-  if (!highlightedQuery || cardType === QueryEditorType.Expression) {
+  if (!selectedQuery || cardType === QueryEditorType.Expression) {
     return null;
   }
 

@@ -32,8 +32,8 @@ describe('useSelectionState', () => {
   describe('initial state', () => {
     it('highlights the first query by default', () => {
       const { result } = setup();
-      expect(result.current.highlightedQueryRefId).toBe('A');
-      expect(result.current.highlightedTransformationId).toBeNull();
+      expect(result.current.anchorQueryRefId).toBe('A');
+      expect(result.current.anchorTransformationId).toBeNull();
     });
 
     it('starts with empty selection sets (multi-select is off by default)', () => {
@@ -44,15 +44,15 @@ describe('useSelectionState', () => {
 
     it('leaves highlight empty when there are no queries', () => {
       const { result } = setup({ ...defaultProps, queries: [] });
-      expect(result.current.highlightedQueryRefId).toBeNull();
+      expect(result.current.anchorQueryRefId).toBeNull();
     });
   });
 
-  describe('highlightQuery', () => {
+  describe('selectQuery', () => {
     it('sets the highlight to the clicked query', () => {
       const { result } = setup();
-      act(() => result.current.highlightQuery({ refId: 'B' }));
-      expect(result.current.highlightedQueryRefId).toBe('B');
+      act(() => result.current.selectQuery({ refId: 'B' }));
+      expect(result.current.anchorQueryRefId).toBe('B');
     });
 
     it('does not touch the query selection set', () => {
@@ -61,50 +61,50 @@ describe('useSelectionState', () => {
       act(() => result.current.toggleQuerySelection({ refId: 'C' }));
       expect(result.current.selectedQueryRefIds).toEqual(['A', 'C']);
 
-      act(() => result.current.highlightQuery({ refId: 'B' }));
+      act(() => result.current.selectQuery({ refId: 'B' }));
 
       expect(result.current.selectedQueryRefIds).toEqual(['A', 'C']);
-      expect(result.current.highlightedQueryRefId).toBe('B');
+      expect(result.current.anchorQueryRefId).toBe('B');
     });
 
     it('clears transformation highlight and selection (cross-type exclusivity)', () => {
       const { result } = setup();
-      act(() => result.current.highlightTransformation(mockTransformations[0]));
+      act(() => result.current.selectTransformation(mockTransformations[0]));
       act(() => result.current.toggleTransformationSelection(mockTransformations[1]));
-      expect(result.current.highlightedTransformationId).toBe('tx-0');
+      expect(result.current.anchorTransformationId).toBe('tx-0');
       expect(result.current.selectedTransformationIds).toEqual(['tx-1']);
 
-      act(() => result.current.highlightQuery({ refId: 'B' }));
+      act(() => result.current.selectQuery({ refId: 'B' }));
 
-      expect(result.current.highlightedTransformationId).toBeNull();
+      expect(result.current.anchorTransformationId).toBeNull();
       expect(result.current.selectedTransformationIds).toEqual([]);
     });
 
     it('calls onClearSideEffects', () => {
       const onClearSideEffects = jest.fn();
       const { result } = setup({ ...defaultProps, onClearSideEffects });
-      act(() => result.current.highlightQuery({ refId: 'A' }));
+      act(() => result.current.selectQuery({ refId: 'A' }));
       expect(onClearSideEffects).toHaveBeenCalledTimes(1);
     });
   });
 
-  describe('highlightTransformation', () => {
+  describe('selectTransformation', () => {
     it('sets the highlight to the clicked transformation', () => {
       const { result } = setup();
-      act(() => result.current.highlightTransformation(mockTransformations[1]));
-      expect(result.current.highlightedTransformationId).toBe('tx-1');
+      act(() => result.current.selectTransformation(mockTransformations[1]));
+      expect(result.current.anchorTransformationId).toBe('tx-1');
     });
 
     it('clears query highlight and selection (cross-type exclusivity)', () => {
       const { result } = setup();
       // A query is highlighted by default and we can also populate selection.
       act(() => result.current.toggleQuerySelection({ refId: 'B' }));
-      expect(result.current.highlightedQueryRefId).toBe('A');
+      expect(result.current.anchorQueryRefId).toBe('A');
       expect(result.current.selectedQueryRefIds).toEqual(['B']);
 
-      act(() => result.current.highlightTransformation(mockTransformations[0]));
+      act(() => result.current.selectTransformation(mockTransformations[0]));
 
-      expect(result.current.highlightedQueryRefId).toBeNull();
+      expect(result.current.anchorQueryRefId).toBeNull();
       expect(result.current.selectedQueryRefIds).toEqual([]);
     });
   });
@@ -129,9 +129,9 @@ describe('useSelectionState', () => {
 
     it('does not change the highlight', () => {
       const { result } = setup();
-      const beforeHighlight = result.current.highlightedQueryRefId;
+      const beforeHighlight = result.current.anchorQueryRefId;
       act(() => result.current.toggleQuerySelection({ refId: 'D' }));
-      expect(result.current.highlightedQueryRefId).toBe(beforeHighlight);
+      expect(result.current.anchorQueryRefId).toBe(beforeHighlight);
     });
 
     it('allows emptying the selection set entirely', () => {
@@ -178,12 +178,12 @@ describe('useSelectionState', () => {
 
     it('does not change the transformation highlight', () => {
       const { result } = setup();
-      act(() => result.current.highlightTransformation(mockTransformations[1]));
-      const beforeHighlight = result.current.highlightedTransformationId;
+      act(() => result.current.selectTransformation(mockTransformations[1]));
+      const beforeHighlight = result.current.anchorTransformationId;
 
       act(() => result.current.toggleTransformationSelection(mockTransformations[0]));
 
-      expect(result.current.highlightedTransformationId).toBe(beforeHighlight);
+      expect(result.current.anchorTransformationId).toBe(beforeHighlight);
     });
 
     it('range-selects between the last toggle and the clicked one', () => {
@@ -197,7 +197,7 @@ describe('useSelectionState', () => {
   describe('seedSelectionWithHighlight', () => {
     it('seeds the query selection set with the currently highlighted query', () => {
       const { result } = setup();
-      act(() => result.current.highlightQuery({ refId: 'C' }));
+      act(() => result.current.selectQuery({ refId: 'C' }));
       expect(result.current.selectedQueryRefIds).toEqual([]);
 
       act(() => result.current.seedSelectionWithHighlight());
@@ -207,7 +207,7 @@ describe('useSelectionState', () => {
 
     it('seeds the transformation selection set when a transformation is highlighted', () => {
       const { result } = setup();
-      act(() => result.current.highlightTransformation(mockTransformations[1]));
+      act(() => result.current.selectTransformation(mockTransformations[1]));
       act(() => result.current.seedSelectionWithHighlight());
 
       expect(result.current.selectedTransformationIds).toEqual(['tx-1']);
@@ -227,9 +227,9 @@ describe('useSelectionState', () => {
 
     it('leaves the highlight untouched when it points to a still-existing query', () => {
       const { result } = setup();
-      act(() => result.current.highlightQuery({ refId: 'C' }));
+      act(() => result.current.selectQuery({ refId: 'C' }));
       act(() => result.current.clearSelection());
-      expect(result.current.highlightedQueryRefId).toBe('C');
+      expect(result.current.anchorQueryRefId).toBe('C');
     });
 
     it('falls back the highlight to queries[0] when the highlighted query no longer exists', () => {
@@ -238,13 +238,13 @@ describe('useSelectionState', () => {
         initialProps: defaultProps,
       });
 
-      act(() => result.current.highlightQuery({ refId: 'D' }));
+      act(() => result.current.selectQuery({ refId: 'D' }));
 
       // 'D' got bulk-deleted from queries.
       rerender({ ...defaultProps, queries: mockQueries.slice(0, 3) });
       act(() => result.current.clearSelection());
 
-      expect(result.current.highlightedQueryRefId).toBe('A');
+      expect(result.current.anchorQueryRefId).toBe('A');
     });
   });
 
@@ -261,16 +261,16 @@ describe('useSelectionState', () => {
 
     it('also clears the highlight when it pointed at the removed query', () => {
       const { result } = setup();
-      act(() => result.current.highlightQuery({ refId: 'C' }));
+      act(() => result.current.selectQuery({ refId: 'C' }));
       act(() => result.current.removeQueryFromSelection('C'));
-      expect(result.current.highlightedQueryRefId).toBeNull();
+      expect(result.current.anchorQueryRefId).toBeNull();
     });
 
     it('leaves the highlight alone when removing a different query', () => {
       const { result } = setup();
-      act(() => result.current.highlightQuery({ refId: 'C' }));
+      act(() => result.current.selectQuery({ refId: 'C' }));
       act(() => result.current.removeQueryFromSelection('A'));
-      expect(result.current.highlightedQueryRefId).toBe('C');
+      expect(result.current.anchorQueryRefId).toBe('C');
     });
   });
 
@@ -278,12 +278,12 @@ describe('useSelectionState', () => {
     it('sets the query highlight and clears everything else', () => {
       const { result } = setup();
       act(() => result.current.toggleQuerySelection({ refId: 'B' }));
-      act(() => result.current.highlightTransformation(mockTransformations[0]));
+      act(() => result.current.selectTransformation(mockTransformations[0]));
 
       act(() => result.current.onCardSelectionChange('A', null));
 
-      expect(result.current.highlightedQueryRefId).toBe('A');
-      expect(result.current.highlightedTransformationId).toBeNull();
+      expect(result.current.anchorQueryRefId).toBe('A');
+      expect(result.current.anchorTransformationId).toBeNull();
       expect(result.current.selectedQueryRefIds).toEqual([]);
       expect(result.current.selectedTransformationIds).toEqual([]);
     });
@@ -291,24 +291,24 @@ describe('useSelectionState', () => {
     it('sets the transformation highlight and clears queries', () => {
       const { result } = setup();
       act(() => result.current.onCardSelectionChange(null, 'tx-0'));
-      expect(result.current.highlightedTransformationId).toBe('tx-0');
-      expect(result.current.highlightedQueryRefId).toBeNull();
+      expect(result.current.anchorTransformationId).toBe('tx-0');
+      expect(result.current.anchorQueryRefId).toBeNull();
     });
 
     it('clears everything when both args are null', () => {
       const { result } = setup();
       act(() => result.current.onCardSelectionChange(null, null));
-      expect(result.current.highlightedQueryRefId).toBeNull();
-      expect(result.current.highlightedTransformationId).toBeNull();
+      expect(result.current.anchorQueryRefId).toBeNull();
+      expect(result.current.anchorTransformationId).toBeNull();
     });
   });
 
   describe('trackQueryRename', () => {
     it('updates the renamed refId in the highlight', () => {
       const { result } = setup();
-      act(() => result.current.highlightQuery({ refId: 'A' }));
+      act(() => result.current.selectQuery({ refId: 'A' }));
       act(() => result.current.trackQueryRename('A', 'A2'));
-      expect(result.current.highlightedQueryRefId).toBe('A2');
+      expect(result.current.anchorQueryRefId).toBe('A2');
     });
 
     it('updates the renamed refId in the selection set', () => {

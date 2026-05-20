@@ -17,23 +17,23 @@ import { useTransformationInputData } from './hooks/useTransformationInputData';
 
 export function TransformationEditorRenderer() {
   const { data } = useQueryRunnerContext();
-  const { highlightedTransformation } = useQueryEditorUIContext();
+  const { selectedTransformation } = useQueryEditorUIContext();
   const { transformations } = usePanelContext();
   const { updateTransformation } = useActionsContext();
 
   const rawData = useMemo(() => data?.series ?? [], [data]);
 
   const inputData = useTransformationInputData({
-    selectedTransformation: highlightedTransformation,
+    selectedTransformation: selectedTransformation,
     allTransformations: transformations,
     rawData,
   });
 
-  if (!highlightedTransformation) {
+  if (!selectedTransformation) {
     return null;
   }
 
-  if (!highlightedTransformation.registryItem?.editor) {
+  if (!selectedTransformation.registryItem?.editor) {
     return (
       <Alert
         severity="error"
@@ -49,10 +49,10 @@ export function TransformationEditorRenderer() {
     <>
       <TransformationFilterDisplay />
       <TransformationEditor
-        key={highlightedTransformation.transformId}
+        key={selectedTransformation.transformId}
         inputData={inputData}
         onUpdate={updateTransformation}
-        transformation={highlightedTransformation}
+        transformation={selectedTransformation}
       />
       <TransformationHelpDisplay />
       <TransformationDebugDisplay />

@@ -48,8 +48,8 @@ function SeverityBadge({ type, notices }: SeverityBadgeProps) {
 
 export function WarningBadges() {
   const { data } = useQueryRunnerContext();
-  const { highlightedQuery, cardType } = useQueryEditorUIContext();
-  const queryRefId = highlightedQuery?.refId;
+  const { selectedQuery, cardType } = useQueryEditorUIContext();
+  const queryRefId = selectedQuery?.refId;
 
   const severityGroups = useMemo<SeverityGroup[]>(() => {
     if (!data || !queryRefId) {

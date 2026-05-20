@@ -14,16 +14,16 @@ export interface UseSelectionStateOptions {
 
 export interface UseSelectionStateResult {
   // Single card per type that drives the editor pane and the border highlight.
-  highlightedQueryRefId: string | null;
-  highlightedTransformationId: string | null;
+  anchorQueryRefId: string | null;
+  anchorTransformationId: string | null;
   // Checkbox set per type. Only non-empty inside multi-select mode.
   selectedQueryRefIds: string[];
   selectedTransformationIds: string[];
   // Card body click: move the highlight to this card. Cross-type clears the
   // other type's highlight and selection set; same-type leaves the selection
   // set untouched.
-  highlightQuery: (query: DataQuery | ExpressionQuery) => void;
-  highlightTransformation: (transformation: Transformation) => void;
+  selectQuery: (query: DataQuery | ExpressionQuery) => void;
+  selectTransformation: (transformation: Transformation) => void;
   // Checkbox click: toggle this card in/out of the selection set. Does not
   // change the highlight. `range` extends from the last toggled id.
   toggleQuerySelection: (query: DataQuery | ExpressionQuery, modifiers?: SelectionModifiers) => void;
@@ -78,7 +78,7 @@ function computeRangeSelection(
  *
  * Two pieces of state per type, deliberately independent:
  * - `highlighted*Id` — single id, drives the editor pane and the card border.
- *   Mutated by card-body clicks (`highlightQuery` / `highlightTransformation`).
+ *   Mutated by card-body clicks (`selectQuery` / `selectTransformation`).
  * - `selected*Ids` — checkbox set, drives bulk actions. Only non-empty inside
  *   multi-select mode. Mutated by checkbox clicks (`toggleQuerySelection` /
  *   `toggleTransformationSelection`, with optional `{ range }` modifier).
@@ -94,8 +94,8 @@ export function useSelectionState({
 }: UseSelectionStateOptions): UseSelectionStateResult {
   // Eagerly highlight the first query when available at mount time so the
   // sidebar shows it without waiting for a user click.
-  const [highlightedQueryRefId, setHighlightedQueryRefId] = useState<string | null>(() => queries[0]?.refId ?? null);
-  const [highlightedTransformationId, setHighlightedTransformationId] = useState<string | null>(null);
+  const [anchorQueryRefId, setAnchorQueryRefId] = useState<string | null>(() => queries[0]?.refId ?? null);
+  const [anchorTransformationId, setAnchorTransformationId] = useState<string | null>(null);
   const [selectedQueryRefIds, setSelectedQueryRefIds] = useState<string[]>([]);
   const [selectedTransformationIds, setSelectedTransformationIds] = useState<string[]>([]);
 
@@ -111,11 +111,11 @@ export function useSelectionState({
   const transformationsRef = useRef(transformations);
   transformationsRef.current = transformations;
 
-  const highlightedQueryRefIdRef = useRef(highlightedQueryRefId);
-  highlightedQueryRefIdRef.current = highlightedQueryRefId;
+  const anchorQueryRefIdRef = useRef(anchorQueryRefId);
+  anchorQueryRefIdRef.current = anchorQueryRefId;
 
-  const highlightedTransformationIdRef = useRef(highlightedTransformationId);
-  highlightedTransformationIdRef.current = highlightedTransformationId;
+  const anchorTransformationIdRef = useRef(anchorTransformationId);
+  anchorTransformationIdRef.current = anchorTransformationId;
 
   const selectedQueryRefIdsRef = useRef(selectedQueryRefIds);
   selectedQueryRefIdsRef.current = selectedQueryRefIds;
@@ -130,30 +130,30 @@ export function useSelectionState({
    * single-card mode.
    */
   const onCardSelectionChange = useCallback((queryRefId: string | null, transformationId: string | null) => {
-    setHighlightedQueryRefId(queryRefId);
-    setHighlightedTransformationId(transformationId);
+    setAnchorQueryRefId(queryRefId);
+    setAnchorTransformationId(transformationId);
     setSelectedQueryRefIds([]);
     setSelectedTransformationIds([]);
   }, []);
 
   const trackQueryRename = useCallback((originalRefId: string, updatedRefId: string) => {
-    setHighlightedQueryRefId((current) => (current === originalRefId ? updatedRefId : current));
+    setAnchorQueryRefId((current) => (current === originalRefId ? updatedRefId : current));
     setSelectedQueryRefIds((current) => current.map((id) => (id === originalRefId ? updatedRefId : id)));
   }, []);
 
-  const highlightQuery = useCallback((query: DataQuery | ExpressionQuery) => {
-    setHighlightedQueryRefId(query.refId);
+  const selectQuery = useCallback((query: DataQuery | ExpressionQuery) => {
+    setAnchorQueryRefId(query.refId);
     // Cross-type exclusivity: switching highlight to a query clears any
     // transformation highlight + selection so the editor pane never shows
     // a mismatched card.
-    setHighlightedTransformationId(null);
+    setAnchorTransformationId(null);
     setSelectedTransformationIds([]);
     onClearSideEffectsRef.current?.();
   }, []);
 
-  const highlightTransformation = useCallback((transformation: Transformation) => {
-    setHighlightedTransformationId(transformation.transformId);
-    setHighlightedQueryRefId(null);
+  const selectTransformation = useCallback((transformation: Transformation) => {
+    setAnchorTransformationId(transformation.transformId);
+    setAnchorQueryRefId(null);
     setSelectedQueryRefIds([]);
     onClearSideEffectsRef.current?.();
   }, []);
@@ -164,7 +164,7 @@ export function useSelectionState({
     if (modifiers?.range) {
       // Shift+click on a checkbox range-selects from the last toggled id (or
       // the highlight as a fallback) to this one.
-      const anchorRefId = currentSelection.at(-1) ?? highlightedQueryRefIdRef.current ?? undefined;
+      const anchorRefId = currentSelection.at(-1) ?? anchorQueryRefIdRef.current ?? undefined;
       if (anchorRefId) {
         const rangeSelection = computeRangeSelection(
           queriesRef.current.map(({ refId }) => refId),
@@ -193,7 +193,7 @@ export function useSelectionState({
       const currentSelection = selectedTransformationIdsRef.current;
 
       if (modifiers?.range) {
-        const anchorId = currentSelection.at(-1) ?? highlightedTransformationIdRef.current ?? undefined;
+        const anchorId = currentSelection.at(-1) ?? anchorTransformationIdRef.current ?? undefined;
         if (anchorId) {
           const rangeSelection = computeRangeSelection(
             transformationsRef.current.map((t) => t.transformId),
@@ -225,12 +225,12 @@ export function useSelectionState({
    * one item selected (instead of an empty / degenerate state).
    */
   const seedSelectionWithHighlight = useCallback(() => {
-    if (highlightedQueryRefIdRef.current) {
-      setSelectedQueryRefIds([highlightedQueryRefIdRef.current]);
+    if (anchorQueryRefIdRef.current) {
+      setSelectedQueryRefIds([anchorQueryRefIdRef.current]);
       return;
     }
-    if (highlightedTransformationIdRef.current) {
-      setSelectedTransformationIds([highlightedTransformationIdRef.current]);
+    if (anchorTransformationIdRef.current) {
+      setSelectedTransformationIds([anchorTransformationIdRef.current]);
     }
   }, []);
 
@@ -244,19 +244,19 @@ export function useSelectionState({
     setSelectedTransformationIds([]);
 
     const queriesNow = queriesRef.current;
-    setHighlightedQueryRefId((current) => {
+    setAnchorQueryRefId((current) => {
       if (current && queriesNow.some((q) => q.refId === current)) {
         return current;
       }
       // Highlighted query no longer exists (likely bulk-deleted). If a
       // transformation is highlighted, leave the query highlight cleared so we
       // don't fight cross-type exclusivity.
-      if (highlightedTransformationIdRef.current) {
+      if (anchorTransformationIdRef.current) {
         return null;
       }
       return queriesNow[0]?.refId ?? null;
     });
-    setHighlightedTransformationId((current) => {
+    setAnchorTransformationId((current) => {
       if (current && transformationsRef.current.some((t) => t.transformId === current)) {
         return current;
       }
@@ -268,21 +268,21 @@ export function useSelectionState({
 
   const removeQueryFromSelection = useCallback((refId: string) => {
     setSelectedQueryRefIds((current) => current.filter((id) => id !== refId));
-    setHighlightedQueryRefId((current) => (current === refId ? null : current));
+    setAnchorQueryRefId((current) => (current === refId ? null : current));
   }, []);
 
   const removeTransformationFromSelection = useCallback((transformId: string) => {
     setSelectedTransformationIds((current) => current.filter((id) => id !== transformId));
-    setHighlightedTransformationId((current) => (current === transformId ? null : current));
+    setAnchorTransformationId((current) => (current === transformId ? null : current));
   }, []);
 
   return {
-    highlightedQueryRefId,
-    highlightedTransformationId,
+    anchorQueryRefId,
+    anchorTransformationId,
     selectedQueryRefIds,
     selectedTransformationIds,
-    highlightQuery,
-    highlightTransformation,
+    selectQuery,
+    selectTransformation,
     toggleQuerySelection,
     toggleTransformationSelection,
     onCardSelectionChange,

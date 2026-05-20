@@ -129,7 +129,7 @@ describe('QueryEditorContextWrapper - side effect clearing', () => {
     const { result } = renderWithWrapper(makeMockDataPane());
     const { clearPendingExpression } = usePendingExpression.mock.results[0].value;
 
-    act(() => result.current.setHighlightedQuery({ refId: 'A' } as DataQuery));
+    act(() => result.current.setSelectedQuery({ refId: 'A' } as DataQuery));
 
     expect(clearPendingExpression).toHaveBeenCalled();
   });
@@ -145,24 +145,24 @@ describe('QueryEditorContextWrapper - alert selection', () => {
     });
   });
 
-  it('sets highlightedAlert when setHighlightedAlert is called with an alert', () => {
+  it('sets selectedAlert when setSelectedAlert is called with an alert', () => {
     const { result } = renderWithWrapper(makeMockDataPane());
 
-    expect(result.current.highlightedAlert).toBeNull();
+    expect(result.current.selectedAlert).toBeNull();
 
-    act(() => result.current.setHighlightedAlert(mockAlert));
+    act(() => result.current.setSelectedAlert(mockAlert));
 
-    expect(result.current.highlightedAlert).toEqual(mockAlert);
+    expect(result.current.selectedAlert).toEqual(mockAlert);
   });
 
-  it('clears highlightedAlert when setHighlightedAlert is called with null', () => {
+  it('clears selectedAlert when setSelectedAlert is called with null', () => {
     const { result } = renderWithWrapper(makeMockDataPane());
 
-    act(() => result.current.setHighlightedAlert(mockAlert));
-    expect(result.current.highlightedAlert).toEqual(mockAlert);
+    act(() => result.current.setSelectedAlert(mockAlert));
+    expect(result.current.selectedAlert).toEqual(mockAlert);
 
-    act(() => result.current.setHighlightedAlert(null));
-    expect(result.current.highlightedAlert).toBeNull();
+    act(() => result.current.setSelectedAlert(null));
+    expect(result.current.selectedAlert).toBeNull();
   });
 
   it('clears query/transformation highlight when an alert is highlighted', () => {
@@ -172,27 +172,27 @@ describe('QueryEditorContextWrapper - alert selection', () => {
     const { result } = renderWithWrapper(makeMockDataPane());
 
     // Establish a non-null query highlight first so the assertion is meaningful.
-    act(() => result.current.setHighlightedQuery(queryA));
-    expect(result.current.highlightedQuery).toEqual(queryA);
+    act(() => result.current.setSelectedQuery(queryA));
+    expect(result.current.selectedQuery).toEqual(queryA);
 
-    act(() => result.current.setHighlightedAlert(mockAlert));
+    act(() => result.current.setSelectedAlert(mockAlert));
 
-    expect(result.current.highlightedQuery).toBeNull();
-    expect(result.current.highlightedTransformation).toBeNull();
+    expect(result.current.selectedQuery).toBeNull();
+    expect(result.current.selectedTransformation).toBeNull();
     expect(result.current.selectedQueryRefIds).toEqual([]);
     expect(result.current.selectedTransformationIds).toEqual([]);
-    expect(result.current.highlightedAlert).toEqual(mockAlert);
+    expect(result.current.selectedAlert).toEqual(mockAlert);
   });
 
   it('clears the alert highlight when a query is highlighted', () => {
     const { result } = renderWithWrapper(makeMockDataPane());
 
-    act(() => result.current.setHighlightedAlert(mockAlert));
-    expect(result.current.highlightedAlert).toEqual(mockAlert);
+    act(() => result.current.setSelectedAlert(mockAlert));
+    expect(result.current.selectedAlert).toEqual(mockAlert);
 
-    act(() => result.current.setHighlightedQuery({ refId: 'A' } as DataQuery));
+    act(() => result.current.setSelectedQuery({ refId: 'A' } as DataQuery));
 
-    expect(result.current.highlightedAlert).toBeNull();
+    expect(result.current.selectedAlert).toBeNull();
   });
 });
 
@@ -235,15 +235,15 @@ describe('QueryEditorContextWrapper - delete actions', () => {
 
     const { result, rerender } = renderWithBothContexts(dataPane);
 
-    act(() => result.current.ui.setHighlightedQuery(queryA));
-    expect(result.current.ui.highlightedQuery).toEqual(queryA);
+    act(() => result.current.ui.setSelectedQuery(queryA));
+    expect(result.current.ui.selectedQuery).toEqual(queryA);
 
     act(() => result.current.actions.deleteQuery('A'));
     rerender();
 
     // 'A' was removed and was the highlight; the highlight clears, then
     // useSelectedCard falls back to queries[0] which is now 'B'.
-    expect(result.current.ui.highlightedQuery).toEqual(queryB);
+    expect(result.current.ui.selectedQuery).toEqual(queryB);
   });
 
   it('deleteTransformation clears the transformation highlight when the deleted id was highlighted', () => {
@@ -263,12 +263,12 @@ describe('QueryEditorContextWrapper - delete actions', () => {
 
     const { result, rerender } = renderWithBothContexts(dataPane);
 
-    act(() => result.current.ui.setHighlightedTransformation(mockTransformation));
-    expect(result.current.ui.highlightedTransformation).toEqual(mockTransformation);
+    act(() => result.current.ui.setSelectedTransformation(mockTransformation));
+    expect(result.current.ui.selectedTransformation).toEqual(mockTransformation);
 
     act(() => result.current.actions.deleteTransformation('reduce-0'));
     rerender();
 
-    expect(result.current.ui.highlightedTransformation).toBeNull();
+    expect(result.current.ui.selectedTransformation).toBeNull();
   });
 });
