@@ -40,7 +40,7 @@ While that documentation reflects the generally available experience, the inform
 
 <!-- vale Grafana.Spelling = YES -->
 
-The filter and group by is one of the most complex and flexible variable options available.
+The filter and group by feature is one of the most complex and flexible variable options available.
 Instead of creating a variable for each dimension by which you want to filter, they automatically query your data source for available dimensions and let users add or remove filters and groupings on the dashboard dynamically.
 This allows you to quickly apply filters dashboard-wide.
 
@@ -72,8 +72,7 @@ To add a filter and group by, follow these steps:
 
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
-1. Click the **Add new element** icon (blue plus sign).
-   . Click **Filter and Group by**.
+1. Click the **Add new element** icon (blue plus sign), and then click **Filter and Group by**.
 1. Enter a **Name** for the filter.
 1. (Optional) In the **Label** field, enter the display name for the filter drop-down list.
 
@@ -104,7 +103,7 @@ To add a filter and group by, follow these steps:
 1. Enter an optional description of your dashboard changes, and then click **Save**.
 1. Click **Exit edit**.
 
-Now you can filter and group data on the dashboard.
+You can now filter and group data on the dashboard.
 
 You can remove and reset default filters and groupings, and see your recent ones:
 
@@ -128,7 +127,7 @@ Hover the cursor over any panel using the data source of the filter to show the 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-panel-groupby-v13.0.png" max-width="550px" alt="Group by control on a panel" >}}
 
 This can be helpful when you're working with a panel that's far away from the dashboard controls.
-Your selection is applied to the all the panels in the dashboard with the same data source.
+Your selection is applied to all the panels in the dashboard with the same data source.
 
 You can also further filter a time series panel, which allows you to drill down further into your data.
 After setting your group by and splitting your data, click on a series in a panel and click `Filter on this value` or `Filter out this value` which will filter by the labels found on that series, which are related to the set group by values.
@@ -145,7 +144,7 @@ However, you can create overrides to address specific fields.
 You can also do this programmatically by returning the data frame with the appropriate `filterable` property on the desired fields.
 
 With the override in place, you can click a series on a time series panel and filter it in or out.
-The new filter is shown in the dashboard filter control and the it's applied to the whole dashboard.
+The new filter is shown in the dashboard filter control, and it's applied to the whole dashboard.
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-panel-filters-v13.0.png" max-width="675px" alt="Panel with tooltip open showing options to filter on a value or filter it out" >}}
 
@@ -203,7 +202,7 @@ To add an annotation query, follow these steps:
 
 1. To add a query, do one of the following:
    - Click **Open query editor** to open **Annotation Query** dialog box and write or construct a query. The annotation query options are different for each data source. For information about annotations in a specific data source, refer to the specific [data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/) topic.
-   - Click **Use saved query** to open a the **Saved queries** drawer and select a [saved query](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#saved-queries).
+   - Click **Use saved query** to open the **Saved queries** drawer and select a [saved query](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#saved-queries).
 
    {{< admonition type="note" >}}
    [Saved queries](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#saved-queries) is currently in [public preview](https://grafana.com/docs/release-life-cycle/) in Grafana Enterprise and Grafana Cloud only.
