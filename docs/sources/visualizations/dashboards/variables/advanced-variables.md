@@ -1,5 +1,8 @@
 ---
 aliases:
+  - ../../../variables/chained-variables/ # /docs/grafana/next/variables/chained-variables/
+  - ../../../variables/filter-variables-with-regex/ # /docs/grafana/next/variables/filter-variables-with-regex/
+  - ../../../variables/variable-types/chained-variables/ # /docs/grafana/next/variables/variable-types/chained-variables/
 keywords:
   - variable
   - filter
