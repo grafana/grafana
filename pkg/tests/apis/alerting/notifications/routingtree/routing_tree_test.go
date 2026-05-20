@@ -879,14 +879,14 @@ receivers:
 
 	// The imported route is named after its identifier. Creating a managed route
 	// with the same name must fail while the import exists.
-	_, err = client.Create(ctx, k8sRoute(t, "external-system", &definitions.Route{Receiver: "empty"}), resource.CreateOptions{})
+	_, err = client.Create(ctx, k8sRoute(t, "external-system", &v1model.Route{Receiver: "empty"}), resource.CreateOptions{})
 	require.Error(t, err)
 	require.Truef(t, errors.IsConflict(err), "Should get Conflict error but got: %s", err)
 
 	// After removing the imported config the name is free.
 	legacyCli.ConvertPrometheusDeleteAlertmanagerConfig(t, headers)
 
-	created, err := client.Create(ctx, k8sRoute(t, "external-system", &definitions.Route{Receiver: "empty"}), resource.CreateOptions{})
+	created, err := client.Create(ctx, k8sRoute(t, "external-system", &v1model.Route{Receiver: "empty"}), resource.CreateOptions{})
 	require.NoError(t, err)
 
 	// Clean up.
