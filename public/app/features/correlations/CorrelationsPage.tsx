@@ -83,6 +83,8 @@ export default function CorrelationsPage(props: CorrelationsPageProps) {
   };
 
   const canWriteCorrelations = contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
+  const corrData = correlations?.correlations ?? [];
+  const hasWritable = corrData.some(negate(isCorrelationsReadOnly));
 
   const handleAdded = useCallback(() => {
     reportInteraction('grafana_correlations_added');
@@ -164,13 +166,12 @@ export default function CorrelationsPage(props: CorrelationsPageProps) {
         id: 'actions',
         cell: RowActions,
         disableGrow: true,
-        visible: (data) => canWriteCorrelations && data.some(negate(isCorrelationsReadOnly)),
+        visible: (data) => canWriteCorrelations && hasWritable,
       },
     ],
-    [RowActions, canWriteCorrelations]
+    [RowActions, canWriteCorrelations, hasWritable]
   );
 
-  const corrData = correlations?.correlations ?? [];
   const showEmptyListCTA = corrData.length === 0 && !isAdding && !error;
   const addButton = canWriteCorrelations && corrData.length !== 0 && !isAdding && (
     <Button icon="plus" onClick={() => setIsAdding(true)}>
