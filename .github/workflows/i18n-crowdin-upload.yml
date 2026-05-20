@@ -25,7 +25,7 @@ jobs:
           persist-credentials: false
       - name: 'Get vault secrets'
         id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main # zizmor: ignore[unpinned-uses]
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main
         with:
             # Vault secret paths:
             # - ci/repo/grafana/grafana/grafana-frontend-crowdin-token

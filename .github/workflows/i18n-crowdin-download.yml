@@ -18,10 +18,18 @@ jobs:
         uses: grafana/shared-workflows/actions/create-github-app-token@e5b7989c92b55fe3ac6dd006d6de49082ba8c507 # create-github-app-token (github-script/v9)
         with:
           github_app: grafana-pr-automation
+      - name: 'Get vault secrets'
+        id: vault-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        with:
+            # Vault secret paths:
+            # - ci/repo/grafana/grafana/grafana-frontend-crowdin-token
+            repo_secrets: |
+                CROWDIN_TOKEN=grafana-frontend-crowdin-token:access_token
       - name: Download from Crowdin
         uses: grafana/grafana-github-actions/crowdin-download@main
         with:
-          crowdin_token: ${{ secrets.CROWDIN_TOKEN }}
+          crowdin_token: ${{ env.CROWDIN_TOKEN }}
           crowdin_project_id: 5
           pr_labels: 'area/frontend, area/internationalization, no-changelog, no-backport'
           github_board_id: 78 # Frontend Platform project
