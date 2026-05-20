@@ -35,7 +35,6 @@ policy:
             - Workflow .github/workflows/pr-go-workspace-check.yml succeeded or skipped
             - Workflow .github/workflows/pr-k8s-codegen-check.yml succeeded or skipped
             - Workflow .github/workflows/pr-mt-service-compatibility.yml succeeded or skipped
-            - Workflow .github/workflows/pr-patch-check-event.yml succeeded or skipped
             - Workflow .github/workflows/pr-test-docker.yml succeeded or skipped
             - Workflow .github/workflows/pr-test-integration-pgvector.yml succeeded or skipped
             - Workflow .github/workflows/pr-test-integration.yml succeeded or skipped

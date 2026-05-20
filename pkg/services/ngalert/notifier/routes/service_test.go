@@ -6,8 +6,6 @@ import (
 	"testing"
 
 	"github.com/grafana/alerting/definition"
-	"github.com/prometheus/alertmanager/config"
-	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -82,10 +80,7 @@ func configRevisionWithImportedRoute() *legacy_storage.ConfigRevision {
 			},
 			ExtraConfigs: []definitions.ExtraConfiguration{
 				{
-					Identifier: "imported",
-					MergeMatchers: config.Matchers{
-						&labels.Matcher{Type: labels.MatchEqual, Name: "__imported", Value: "true"},
-					},
+					Identifier:         "imported",
 					AlertmanagerConfig: importedConfigYaml,
 				},
 			},

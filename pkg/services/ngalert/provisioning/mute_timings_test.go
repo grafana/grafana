@@ -7,8 +7,6 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/prometheus/alertmanager/config"
-	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/alertmanager/timeinterval"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -1473,7 +1471,6 @@ func createConfigWithImportedIntervals(grafanaIntervals []definitions.AmMuteTime
 		cfg.ExtraConfigs = []definitions.ExtraConfiguration{
 			{
 				Identifier:         "test-mimir",
-				MergeMatchers:      config.Matchers{&labels.Matcher{Type: labels.MatchEqual, Name: "__imported", Value: "test"}},
 				AlertmanagerConfig: mimirConfig,
 			},
 		}
