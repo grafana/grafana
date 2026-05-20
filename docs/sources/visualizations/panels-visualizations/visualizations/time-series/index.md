@@ -187,7 +187,7 @@ The following example shows three series: Min, Max, and Value. The Min and Max s
 
 {{< docs/shared lookup="visualizations/legend-options-1.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
 
-#### Faceted filter
+#### Series visibility
 
 Toggle the **Series visibility** switch on to add the control next to or above the legend.
 
