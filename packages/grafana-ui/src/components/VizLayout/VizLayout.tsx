@@ -134,7 +134,7 @@ export interface VizLayoutLegendProps {
   placement: LegendPlacement;
   children: React.ReactNode;
   maxHeight?: string;
-  maxWidth?: number | string;
+  maxWidth?: string;
   width?: number | string;
 }
 
