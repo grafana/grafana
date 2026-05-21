@@ -57,6 +57,13 @@ interface Props {
    *  Sampled at render time — the chip captures whatever was current
    *  when the user selected the suggestion. */
   currentTimeRange?: CurrentTimeRange;
+  /** Called when the user clicks a time mention chip. When set, the
+   *  renderer suppresses the chip's default anchor navigation and
+   *  routes through this callback instead, so the dashboard time
+   *  picker updates in place. Omit on surfaces without a mounted
+   *  dashboard (notification previews) — the chip then falls back
+   *  to plain anchor navigation. */
+  onTimeChipClick?: (from: number, to: number) => void;
   onMentionPanel?: (panelId: number) => void;
   onPanelFilterChange?: (panelId: number | undefined) => void;
   onAuthorFilterChange?: (userId: number | undefined) => void;
@@ -104,6 +111,7 @@ export function PulseDrawerContent({
   currentUserId,
   isAdmin = false,
   currentTimeRange,
+  onTimeChipClick,
   onMentionPanel,
   onPanelFilterChange,
   onAuthorFilterChange,
@@ -343,6 +351,7 @@ export function PulseDrawerContent({
           currentUserId={currentUserId}
           isAdmin={isAdmin}
           currentTimeRange={currentTimeRange}
+          onTimeChipClick={onTimeChipClick}
           onMentionPanel={onMentionPanel}
           onBack={() => setActiveThreadUID(null)}
           onThreadDeleted={() => setActiveThreadUID(null)}
@@ -482,6 +491,7 @@ export function PulseDrawerContent({
               key={t.uid}
               thread={t}
               panelTitlesById={panelTitlesById}
+              onTimeChipClick={onTimeChipClick}
               onClick={() => setActiveThreadUID(t.uid)}
             />
           ))}
@@ -511,10 +521,11 @@ export function PulseDrawerContent({
 interface ThreadCardProps {
   thread: PulseThread;
   panelTitlesById?: ReadonlyMap<number, string>;
+  onTimeChipClick?: (from: number, to: number) => void;
   onClick: () => void;
 }
 
-function ThreadCard({ thread, panelTitlesById, onClick }: ThreadCardProps): ReactNode {
+function ThreadCard({ thread, panelTitlesById, onTimeChipClick, onClick }: ThreadCardProps): ReactNode {
   const styles = useStyles2(getStyles);
   const authorLabel = thread.authorName || thread.authorLogin || t('pulse.drawer.thread-author-unknown', 'User');
   // Prefer rendering the first pulse's AST so mentions appear as styled
@@ -545,6 +556,7 @@ function ThreadCard({ thread, panelTitlesById, onClick }: ThreadCardProps): Reac
               body={thread.previewBody}
               panelTitlesById={panelTitlesById}
               dashboardUID={thread.resourceUID}
+              onTimeChipClick={onTimeChipClick}
             />
           ) : (
             headingFallback

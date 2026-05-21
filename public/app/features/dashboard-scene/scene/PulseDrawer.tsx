@@ -1,6 +1,6 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
-import { rangeUtil } from '@grafana/data';
+import { dateTime, rangeUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
@@ -245,7 +245,8 @@ function PulseDrawerRenderer({ model }: SceneComponentProps<PulseDrawer>) {
   // are always epoch-ms friendly. The label uses describeTimeRange
   // on the raw range so "Last 1 hour" stays readable while the
   // chip's frozen ms range stays exact.
-  const timeRangeState = sceneGraph.getTimeRange(dashboard).useState();
+  const sceneTimeRange = sceneGraph.getTimeRange(dashboard);
+  const timeRangeState = sceneTimeRange.useState();
   const currentTimeRange = useMemo<CurrentTimeRange>(() => {
     const value = timeRangeState.value;
     return {
@@ -254,6 +255,21 @@ function PulseDrawerRenderer({ model }: SceneComponentProps<PulseDrawer>) {
       label: rangeUtil.describeTimeRange(value.raw, timeRangeState.timeZone),
     };
   }, [timeRangeState.value, timeRangeState.timeZone]);
+
+  // Clicking a time chip inside the drawer must feel like dragging
+  // the date picker — update SceneTimeRange in place so panels
+  // re-query without a page navigation. The chip's anchor stays a
+  // real href so cmd/ctrl-click still opens a new tab (the renderer
+  // skips preventDefault when a modifier key is held).
+  const onTimeChipClick = useCallback(
+    (from: number, to: number) => {
+      sceneTimeRange.setState({
+        from: dateTime(from).toISOString(),
+        to: dateTime(to).toISOString(),
+      });
+    },
+    [sceneTimeRange]
+  );
 
   const resourceMentions = useMemo<ResourceMentionSource[]>(() => {
     const siblings = folderDashboards.items.filter((d) => d.uid !== resourceUID);
@@ -283,6 +299,7 @@ function PulseDrawerRenderer({ model }: SceneComponentProps<PulseDrawer>) {
         currentUserId={currentUserId}
         isAdmin={isAdmin}
         currentTimeRange={currentTimeRange}
+        onTimeChipClick={onTimeChipClick}
         initialThreadUID={initialThreadUID}
         onInitialThreadOpened={model.clearInitialThreadUID}
         onPanelFilterChange={model.setPanelFilter}

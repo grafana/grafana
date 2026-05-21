@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { Fragment, type ReactNode } from 'react';
+import { Fragment, type ReactNode, useEffect, useRef } from 'react';
 
 import { renderMarkdown, type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -33,6 +33,17 @@ interface Props {
    * chip then falls back to a static label.
    */
   dashboardUID?: string;
+  /**
+   * Optional handler invoked when the reader clicks a `time` mention
+   * chip. When provided, the renderer suppresses the chip's default
+   * anchor navigation (for plain clicks) and routes through this
+   * callback so the surrounding dashboard's time picker can update
+   * in place. Cmd/Ctrl-click is left alone so users can still open
+   * the time-pinned URL in a new tab. Omit on surfaces with no
+   * mounted dashboard (global Pulse overview, notification
+   * previews) — the chip then navigates via its anchor as usual.
+   */
+  onTimeChipClick?: (from: number, to: number) => void;
 }
 
 /**
@@ -42,8 +53,54 @@ interface Props {
  * bodies only carry the validated AST; we walk those node-by-node so
  * we never call dangerouslySetInnerHTML on unsanitized content.
  */
-export function PulseRenderer({ body, onMentionClick, panelTitlesById, dashboardUID }: Props): ReactNode {
+export function PulseRenderer({
+  body,
+  onMentionClick,
+  panelTitlesById,
+  dashboardUID,
+  onTimeChipClick,
+}: Props): ReactNode {
   const styles = useStyles2(getStyles);
+
+  // Delegated native click listener for the markdown render path.
+  // The chip itself is a real anchor (so keyboard activation /
+  // cmd-click / right-click "open in new tab" all just work via the
+  // browser); the wrapper only intercepts plain left-clicks to
+  // reroute them through the SceneTimeRange callback. Going through
+  // a ref + addEventListener (instead of a JSX onClick on the div)
+  // sidesteps the a11y lint that wants a keyboard handler on
+  // interactive divs — the div isn't interactive, the anchors
+  // inside it are.
+  const markdownRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const el = markdownRef.current;
+    if (!el || !onTimeChipClick) {
+      return undefined;
+    }
+    const handler = (e: globalThis.MouseEvent) => {
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) {
+        return;
+      }
+      const target = e.target;
+      if (!(target instanceof HTMLElement)) {
+        return;
+      }
+      const anchor = target.closest('a');
+      if (!anchor) {
+        return;
+      }
+      const href = anchor.getAttribute('href') ?? '';
+      const parsed = parseTimeChipHref(href);
+      if (!parsed) {
+        return;
+      }
+      e.preventDefault();
+      onTimeChipClick(parsed.from, parsed.to);
+    };
+    el.addEventListener('click', handler);
+    return () => el.removeEventListener('click', handler);
+  }, [onTimeChipClick]);
+
   if (!body) {
     return null;
   }
@@ -67,7 +124,13 @@ export function PulseRenderer({ body, onMentionClick, panelTitlesById, dashboard
     // styled to scope mention-style inline-code rendering to the pulse
     // body so we don't bleed into the rest of the page.
     const html = renderMarkdown(source);
-    return <div className={styles.markdown} dangerouslySetInnerHTML={{ __html: html }} />;
+    return (
+      <div
+        ref={markdownRef}
+        className={styles.markdown}
+        dangerouslySetInnerHTML={{ __html: html }}
+      />
+    );
   }
   if (!body.root) {
     return null;
@@ -78,8 +141,38 @@ export function PulseRenderer({ body, onMentionClick, panelTitlesById, dashboard
       onMentionClick={onMentionClick}
       panelTitlesById={panelTitlesById}
       dashboardUID={dashboardUID}
+      onTimeChipClick={onTimeChipClick}
     />
   );
+}
+
+/**
+ * parseTimeChipHref reverses timeChipHref. Returns the `from`/`to`
+ * encoded in an anchor's href when (and only when) it matches the
+ * shape we produce ourselves; any other URL — including hostile or
+ * unrelated `/d/...` links — yields undefined so the delegated
+ * click handler stays a no-op for non-chip clicks.
+ */
+function parseTimeChipHref(href: string): { from: number; to: number } | undefined {
+  if (!href.startsWith('/d/')) {
+    return undefined;
+  }
+  const queryStart = href.indexOf('?');
+  if (queryStart < 0) {
+    return undefined;
+  }
+  const params = new URLSearchParams(href.slice(queryStart + 1));
+  const fromStr = params.get('from');
+  const toStr = params.get('to');
+  if (!fromStr || !toStr) {
+    return undefined;
+  }
+  const from = Number(fromStr);
+  const to = Number(toStr);
+  if (!Number.isFinite(from) || !Number.isFinite(to) || from <= 0 || to <= 0 || from >= to) {
+    return undefined;
+  }
+  return { from, to };
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -144,15 +237,22 @@ interface NodeProps {
   onMentionClick?: (mention: PulseMention) => void;
   panelTitlesById?: ReadonlyMap<number, string>;
   dashboardUID?: string;
+  onTimeChipClick?: (from: number, to: number) => void;
 }
 
-function RenderNode({ node, onMentionClick, panelTitlesById, dashboardUID }: NodeProps): ReactNode {
+function RenderNode({
+  node,
+  onMentionClick,
+  panelTitlesById,
+  dashboardUID,
+  onTimeChipClick,
+}: NodeProps): ReactNode {
   switch (node.type) {
     case 'root':
       return (
         <>
           {node.children?.map((c, i) => (
-            <RenderNode key={i} node={c} onMentionClick={onMentionClick} panelTitlesById={panelTitlesById} dashboardUID={dashboardUID} />
+            <RenderNode key={i} node={c} onMentionClick={onMentionClick} panelTitlesById={panelTitlesById} dashboardUID={dashboardUID} onTimeChipClick={onTimeChipClick} />
           ))}
         </>
       );
@@ -161,7 +261,7 @@ function RenderNode({ node, onMentionClick, panelTitlesById, dashboardUID }: Nod
       return (
         <p style={{ margin: '0 0 0.5em' }}>
           {node.children?.map((c, i) => (
-            <RenderNode key={i} node={c} onMentionClick={onMentionClick} panelTitlesById={panelTitlesById} dashboardUID={dashboardUID} />
+            <RenderNode key={i} node={c} onMentionClick={onMentionClick} panelTitlesById={panelTitlesById} dashboardUID={dashboardUID} onTimeChipClick={onTimeChipClick} />
           ))}
         </p>
       );
@@ -170,7 +270,7 @@ function RenderNode({ node, onMentionClick, panelTitlesById, dashboardUID }: Nod
       return (
         <blockquote style={{ borderLeft: '3px solid currentColor', margin: 0, paddingLeft: '0.75em', opacity: 0.8 }}>
           {node.children?.map((c, i) => (
-            <RenderNode key={i} node={c} onMentionClick={onMentionClick} panelTitlesById={panelTitlesById} dashboardUID={dashboardUID} />
+            <RenderNode key={i} node={c} onMentionClick={onMentionClick} panelTitlesById={panelTitlesById} dashboardUID={dashboardUID} onTimeChipClick={onTimeChipClick} />
           ))}
         </blockquote>
       );
@@ -179,7 +279,7 @@ function RenderNode({ node, onMentionClick, panelTitlesById, dashboardUID }: Nod
       return (
         <code style={{ background: 'rgba(127,127,127,0.15)', padding: '0 4px', borderRadius: 3 }}>
           {node.children?.map((c, i) => (
-            <RenderNode key={i} node={c} onMentionClick={onMentionClick} panelTitlesById={panelTitlesById} dashboardUID={dashboardUID} />
+            <RenderNode key={i} node={c} onMentionClick={onMentionClick} panelTitlesById={panelTitlesById} dashboardUID={dashboardUID} onTimeChipClick={onTimeChipClick} />
           ))}
         </code>
       );
@@ -200,6 +300,7 @@ function RenderNode({ node, onMentionClick, panelTitlesById, dashboardUID }: Nod
           onClick={onMentionClick}
           panelTitlesById={panelTitlesById}
           dashboardUID={dashboardUID}
+          onTimeChipClick={onTimeChipClick}
         />
       );
 
@@ -211,7 +312,7 @@ function RenderNode({ node, onMentionClick, panelTitlesById, dashboardUID }: Nod
         return (
           <Fragment>
             {node.children?.map((c, i) => (
-              <RenderNode key={i} node={c} onMentionClick={onMentionClick} panelTitlesById={panelTitlesById} dashboardUID={dashboardUID} />
+              <RenderNode key={i} node={c} onMentionClick={onMentionClick} panelTitlesById={panelTitlesById} dashboardUID={dashboardUID} onTimeChipClick={onTimeChipClick} />
             ))}
           </Fragment>
         );
@@ -219,7 +320,7 @@ function RenderNode({ node, onMentionClick, panelTitlesById, dashboardUID }: Nod
       return (
         <a href={safe} target="_blank" rel="noopener noreferrer">
           {node.children?.map((c, i) => (
-            <RenderNode key={i} node={c} onMentionClick={onMentionClick} panelTitlesById={panelTitlesById} dashboardUID={dashboardUID} />
+            <RenderNode key={i} node={c} onMentionClick={onMentionClick} panelTitlesById={panelTitlesById} dashboardUID={dashboardUID} onTimeChipClick={onTimeChipClick} />
           ))}
         </a>
       );
@@ -231,7 +332,7 @@ function RenderNode({ node, onMentionClick, panelTitlesById, dashboardUID }: Nod
       return (
         <Fragment>
           {node.children?.map((c, i) => (
-            <RenderNode key={i} node={c} onMentionClick={onMentionClick} panelTitlesById={panelTitlesById} dashboardUID={dashboardUID} />
+            <RenderNode key={i} node={c} onMentionClick={onMentionClick} panelTitlesById={panelTitlesById} dashboardUID={dashboardUID} onTimeChipClick={onTimeChipClick} />
           ))}
         </Fragment>
       );

@@ -28,6 +28,15 @@ interface Props {
    * static label.
    */
   dashboardUID?: string;
+  /**
+   * Optional in-place click handler for `time` chips. When set, a
+   * plain left-click on the chip preventsDefault on the wrapping
+   * anchor and routes through this callback instead — used by the
+   * dashboard drawer to update the SceneTimeRange without a page
+   * navigation. The anchor's `href` is preserved either way so
+   * cmd/ctrl-click still opens the time-pinned URL in a new tab.
+   */
+  onTimeChipClick?: (from: number, to: number) => void;
 }
 
 /**
@@ -47,7 +56,13 @@ interface Props {
  * there's no XSS surface even if a malicious displayName slipped
  * through.
  */
-export function MentionChip({ mention, onClick, panelTitlesById, dashboardUID }: Props): ReactNode {
+export function MentionChip({
+  mention,
+  onClick,
+  panelTitlesById,
+  dashboardUID,
+  onTimeChipClick,
+}: Props): ReactNode {
   const styles = useStyles2(getStyles);
 
   // Prefer the live panel title for panel mentions so a renamed panel
@@ -104,8 +119,25 @@ export function MentionChip({ mention, onClick, panelTitlesById, dashboardUID }:
     // there's no XSS surface even if the displayName were hostile.
     const range = parseTimeMentionTarget(mention.targetId);
     if (dashboardUID && range) {
+      const handleClick = onTimeChipClick
+        ? (e: React.MouseEvent<HTMLAnchorElement>) => {
+            // Modifier-key clicks must still hit the anchor's
+            // default so users can open the time-pinned URL in a
+            // new tab (cmd-click, ctrl-click) or window (shift).
+            // Plain left-click routes to the in-place handler.
+            if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) {
+              return;
+            }
+            e.preventDefault();
+            onTimeChipClick(range.from, range.to);
+          }
+        : undefined;
       return (
-        <a className={styles.time} href={timeChipHref(dashboardUID, range.from, range.to)}>
+        <a
+          className={styles.time}
+          href={timeChipHref(dashboardUID, range.from, range.to)}
+          onClick={handleClick}
+        >
           <span>@{label}</span>
         </a>
       );

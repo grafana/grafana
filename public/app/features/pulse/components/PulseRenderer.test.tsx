@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 
 import { type PulseBody } from '../types';
 
@@ -214,6 +214,88 @@ describe('PulseRenderer', () => {
     // inert as a styled <code> block.
     expect(container.querySelector('a')).toBeNull();
     expect(container.textContent).toContain('@Last 1h');
+  });
+
+  it('routes a plain click on a markdown-rendered time chip through onTimeChipClick', () => {
+    const body: PulseBody = {
+      markdown: 'spike `@Last 1h`',
+      root: {
+        type: 'root',
+        children: [
+          {
+            type: 'paragraph',
+            children: [
+              { type: 'text', text: 'spike ' },
+              {
+                type: 'mention',
+                mention: { kind: 'time', targetId: '1716393600000|1716397200000', displayName: 'Last 1h' },
+              },
+            ],
+          },
+        ],
+      },
+    };
+    const onTimeChipClick = jest.fn();
+    const { container } = render(
+      <PulseRenderer body={body} dashboardUID="abc-123" onTimeChipClick={onTimeChipClick} />
+    );
+    const anchor = container.querySelector('a');
+    expect(anchor).not.toBeNull();
+    fireEvent.click(anchor!, { button: 0 });
+    expect(onTimeChipClick).toHaveBeenCalledWith(1716393600000, 1716397200000);
+  });
+
+  it('lets cmd/ctrl-click on a time chip fall through to native navigation', () => {
+    const body: PulseBody = {
+      markdown: 'spike `@Last 1h`',
+      root: {
+        type: 'root',
+        children: [
+          {
+            type: 'paragraph',
+            children: [
+              {
+                type: 'mention',
+                mention: { kind: 'time', targetId: '1716393600000|1716397200000', displayName: 'Last 1h' },
+              },
+            ],
+          },
+        ],
+      },
+    };
+    const onTimeChipClick = jest.fn();
+    const { container } = render(
+      <PulseRenderer body={body} dashboardUID="abc-123" onTimeChipClick={onTimeChipClick} />
+    );
+    const anchor = container.querySelector('a');
+    fireEvent.click(anchor!, { button: 0, metaKey: true });
+    expect(onTimeChipClick).not.toHaveBeenCalled();
+  });
+
+  it('routes a plain click on an AST-rendered time chip through onTimeChipClick', () => {
+    const body: PulseBody = {
+      root: {
+        type: 'root',
+        children: [
+          {
+            type: 'paragraph',
+            children: [
+              {
+                type: 'mention',
+                mention: { kind: 'time', targetId: '1716393600000|1716397200000', displayName: 'Last 1h' },
+              },
+            ],
+          },
+        ],
+      },
+    };
+    const onTimeChipClick = jest.fn();
+    const { container } = render(
+      <PulseRenderer body={body} dashboardUID="abc-123" onTimeChipClick={onTimeChipClick} />
+    );
+    const anchor = container.querySelector('a');
+    fireEvent.click(anchor!, { button: 0 });
+    expect(onTimeChipClick).toHaveBeenCalledWith(1716393600000, 1716397200000);
   });
 
   it('renders AST-only time mention chips as anchor tags (legacy bodies)', () => {

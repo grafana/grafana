@@ -49,6 +49,11 @@ interface Props {
    *  with the live window. Omit on surfaces (folder Pulse tab) that
    *  don't have a single dashboard time context. */
   currentTimeRange?: CurrentTimeRange;
+  /** Called when a reader clicks a `time` mention chip in this
+   *  thread. When set, the renderer routes through this handler
+   *  instead of letting the chip's anchor navigate, so the
+   *  surrounding dashboard's time picker updates in place. */
+  onTimeChipClick?: (from: number, to: number) => void;
   onMentionPanel?: (panelId: number) => void;
   onBack?: () => void;
   /** Called after the parent thread is deleted so the parent can navigate back. */
@@ -70,6 +75,7 @@ export function PulseThreadView({
   currentUserId,
   isAdmin = false,
   currentTimeRange,
+  onTimeChipClick,
   onMentionPanel,
   onBack,
   onThreadDeleted,
@@ -250,6 +256,7 @@ export function PulseThreadView({
             currentUserId={currentUserId}
             currentTimeRange={currentTimeRange}
             dashboardUID={thread.resourceUID}
+            onTimeChipClick={onTimeChipClick}
             onMention={handleMention}
           />
         ))}
@@ -290,6 +297,9 @@ interface RowProps {
    *  edit can drop fresh @now / @time chips. */
   dashboardUID?: string;
   currentTimeRange?: CurrentTimeRange;
+  /** Forwarded to PulseRenderer so a click on a row's time chip
+   *  updates the surrounding dashboard's picker in place. */
+  onTimeChipClick?: (from: number, to: number) => void;
   onMention: (m: PulseMention) => void;
 }
 
@@ -304,6 +314,7 @@ function PulseRow({
   currentUserId,
   dashboardUID,
   currentTimeRange,
+  onTimeChipClick,
   onMention,
 }: RowProps): ReactNode {
   const styles = useStyles2(getStyles);
@@ -391,6 +402,7 @@ function PulseRow({
             onMentionClick={onMention}
             panelTitlesById={panelTitlesById}
             dashboardUID={dashboardUID}
+            onTimeChipClick={onTimeChipClick}
           />
         )}
       </div>
