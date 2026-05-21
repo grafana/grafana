@@ -605,74 +605,13 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		attribute.Int("limit", limit),
 	)
 
-	if s.rateLimiter != nil {
-		allowed, count, err := s.rateLimiter.Allow(ctx, req.Key.Namespace, vectorRateLimitWindow, vectorRateLimitPerTenant)
-		if err != nil {
-			s.log.Error("vector search: rate-limit check failed, fail-closed", "err", err, "namespace", req.Key.Namespace)
-			if s.vectorMetrics != nil {
-				s.vectorMetrics.RateLimiterErrorsTotal.Inc()
-			}
-			return nil, status.Error(codes.Unavailable, "rate limiter unavailable")
-		}
-		if !allowed {
-			if s.vectorMetrics != nil {
-				s.vectorMetrics.RateLimitedRequestsTotal.Inc()
-			}
-			return nil, status.Errorf(codes.ResourceExhausted, "tenant rate limit exceeded: %d requests in window", count)
-		}
+	if err := s.checkVectorSearchRateLimit(ctx, req.Key.Namespace); err != nil {
+		return nil, err
 	}
 
-	queryHash := sha256Hex(req.Query)
-	var dense []float32
-
-	if s.queryCache != nil {
-		emb, hit, err := s.queryCache.Get(ctx, req.Key.Namespace, s.embedder.Model, queryHash)
-		if err != nil {
-			// Cache failures must not fail the user-facing search.
-			s.log.Warn("vector search: cache lookup failed, falling through", "err", err)
-		} else if hit {
-			if s.vectorMetrics != nil {
-				s.vectorMetrics.QueryCacheHitsTotal.WithLabelValues(s.embedder.Model).Inc()
-			}
-			dense = emb
-		}
-	}
-
-	if len(dense) == 0 {
-		// Embed the query as a retrieval *query* (different task hint than
-		// the retrieval *document* hint used at index time — providers tune
-		// projections per side of the retrieval pair).
-		out, err := s.embedder.EmbedText(ctx, embedder.EmbedTextInput{
-			Texts:     []string{req.Query},
-			Normalize: s.embedder.ShouldNormalize(),
-			Task:      embedder.TaskRetrievalQuery,
-		})
-		if err != nil {
-			s.log.Error("vector search: embed query", "err", err)
-			return nil, status.Error(codes.Internal, "embed query")
-		}
-		if len(out.Embeddings) != 1 || len(out.Embeddings[0].Dense) == 0 {
-			s.log.Error("vector search: embedder returned no vectors")
-			return nil, status.Error(codes.Internal, "embed query: empty result")
-		}
-		dense = out.Embeddings[0].Dense
-		if s.vectorMetrics != nil {
-			s.vectorMetrics.QueryCacheMissesTotal.WithLabelValues(s.embedder.Model).Inc()
-		}
-
-		if s.queryCache != nil {
-			if n, err := s.queryCache.Count(ctx, req.Key.Namespace); err == nil && int(n) >= vectorQueryCacheMaxPerTenant {
-				evictN := int(n) - vectorQueryCacheMaxPerTenant + 1
-				if deleted, err := s.queryCache.EvictOldest(ctx, req.Key.Namespace, evictN); err != nil {
-					s.log.Warn("vector search: cache evict failed", "err", err)
-				} else if deleted > 0 && s.vectorMetrics != nil {
-					s.vectorMetrics.QueryCacheEvictionsTotal.Add(float64(deleted))
-				}
-			}
-			if err := s.queryCache.Put(ctx, req.Key.Namespace, s.embedder.Model, queryHash, dense); err != nil {
-				s.log.Warn("vector search: cache put failed", "err", err)
-			}
-		}
+	dense, err := s.embedVectorSearchQuery(ctx, req.Key.Namespace, req.Query)
+	if err != nil {
+		return nil, err
 	}
 
 	results, err := s.vectorBackend.Search(ctx,
@@ -739,6 +678,103 @@ func validateVectorSearchRequest(req *resourcepb.VectorSearchRequest) *resourcep
 		}
 	}
 	return nil
+}
+
+// checkVectorSearchRateLimit returns a gRPC status error when the
+// request must be rejected (over quota or limiter unreachable), nil
+// when it should proceed.
+func (s *searchServer) checkVectorSearchRateLimit(ctx context.Context, namespace string) error {
+	if s.rateLimiter == nil {
+		return nil
+	}
+	allowed, count, err := s.rateLimiter.Allow(ctx, namespace, vectorRateLimitWindow, vectorRateLimitPerTenant)
+	if err != nil {
+		s.log.Error("vector search: rate-limit check failed, fail-closed", "err", err, "namespace", namespace)
+		if s.vectorMetrics != nil {
+			s.vectorMetrics.RateLimiterErrorsTotal.Inc()
+		}
+		return status.Error(codes.Unavailable, "rate limiter unavailable")
+	}
+	if !allowed {
+		if s.vectorMetrics != nil {
+			s.vectorMetrics.RateLimitedRequestsTotal.Inc()
+		}
+		return status.Errorf(codes.ResourceExhausted, "tenant rate limit exceeded: %d requests in window", count)
+	}
+	return nil
+}
+
+// embedVectorSearchQuery returns the query embedding, fetching it from
+// the cache on hit or calling the embedder on miss (and best-effort
+// writing back into the cache, enforcing the per-tenant cap).
+func (s *searchServer) embedVectorSearchQuery(ctx context.Context, namespace, query string) ([]float32, error) {
+	queryHash := sha256Hex(query)
+	if dense, ok := s.lookupCachedQueryEmbedding(ctx, namespace, queryHash); ok {
+		return dense, nil
+	}
+
+	// Embed the query as a retrieval *query* (different task hint than
+	// the retrieval *document* hint used at index time — providers tune
+	// projections per side of the retrieval pair).
+	out, err := s.embedder.EmbedText(ctx, embedder.EmbedTextInput{
+		Texts:     []string{query},
+		Normalize: s.embedder.ShouldNormalize(),
+		Task:      embedder.TaskRetrievalQuery,
+	})
+	if err != nil {
+		s.log.Error("vector search: embed query", "err", err)
+		return nil, status.Error(codes.Internal, "embed query")
+	}
+	if len(out.Embeddings) != 1 || len(out.Embeddings[0].Dense) == 0 {
+		s.log.Error("vector search: embedder returned no vectors")
+		return nil, status.Error(codes.Internal, "embed query: empty result")
+	}
+	dense := out.Embeddings[0].Dense
+	if s.vectorMetrics != nil {
+		s.vectorMetrics.QueryCacheMissesTotal.WithLabelValues(s.embedder.Model).Inc()
+	}
+	s.storeCachedQueryEmbedding(ctx, namespace, queryHash, dense)
+	return dense, nil
+}
+
+// lookupCachedQueryEmbedding returns (embedding, true) on hit; (nil,
+// false) on miss or any error (cache failures must not fail the search).
+func (s *searchServer) lookupCachedQueryEmbedding(ctx context.Context, namespace, queryHash string) ([]float32, bool) {
+	if s.queryCache == nil {
+		return nil, false
+	}
+	emb, hit, err := s.queryCache.Get(ctx, namespace, s.embedder.Model, queryHash)
+	if err != nil {
+		s.log.Warn("vector search: cache lookup failed, falling through", "err", err)
+		return nil, false
+	}
+	if !hit {
+		return nil, false
+	}
+	if s.vectorMetrics != nil {
+		s.vectorMetrics.QueryCacheHitsTotal.WithLabelValues(s.embedder.Model).Inc()
+	}
+	return emb, true
+}
+
+// storeCachedQueryEmbedding writes the freshly-embedded vector into the
+// cache (best-effort) and evicts the oldest entries past the per-tenant
+// cap before insert.
+func (s *searchServer) storeCachedQueryEmbedding(ctx context.Context, namespace, queryHash string, dense []float32) {
+	if s.queryCache == nil {
+		return
+	}
+	if n, err := s.queryCache.Count(ctx, namespace); err == nil && int(n) >= vectorQueryCacheMaxPerTenant {
+		evictN := int(n) - vectorQueryCacheMaxPerTenant + 1
+		if deleted, err := s.queryCache.EvictOldest(ctx, namespace, evictN); err != nil {
+			s.log.Warn("vector search: cache evict failed", "err", err)
+		} else if deleted > 0 && s.vectorMetrics != nil {
+			s.vectorMetrics.QueryCacheEvictionsTotal.Add(float64(deleted))
+		}
+	}
+	if err := s.queryCache.Put(ctx, namespace, s.embedder.Model, queryHash, dense); err != nil {
+		s.log.Warn("vector search: cache put failed", "err", err)
+	}
 }
 
 // vectorAuthzKey de-dupes (UID, Folder) so sub-resources of the same
@@ -1112,9 +1148,7 @@ func (s *searchServer) startRateBucketSweeper(ctx context.Context) {
 	if s.rateLimiter == nil {
 		return
 	}
-	s.bgTaskWg.Add(1)
-	go func() {
-		defer s.bgTaskWg.Done()
+	s.bgTaskWg.Go(func() {
 		interval := vectorRateLimitWindow / 2
 		if interval < time.Minute {
 			interval = time.Minute
@@ -1137,7 +1171,7 @@ func (s *searchServer) startRateBucketSweeper(ctx context.Context) {
 				}
 			}
 		}
-	}()
+	})
 }
 
 // jitterForKey returns a deterministic jitter duration for the given key,

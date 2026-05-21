@@ -143,13 +143,14 @@ func initVectorTables(mg *migrator.Migrator) {
 				ON query_embedding_cache (namespace, created_at);`,
 		))
 
+	rateBuckets := migrator.Table{
+		Name: "vector_search_rate_buckets",
+		Columns: []*migrator.Column{
+			{Name: "namespace", Type: migrator.DB_Varchar, Length: 256, Nullable: false, IsPrimaryKey: true},
+			{Name: "window_start", Type: migrator.DB_TimeStampz, Nullable: false, IsPrimaryKey: true},
+			{Name: "request_count", Type: migrator.DB_BigInt, Nullable: false, Default: "0"},
+		},
+	}
 	mg.AddMigration("create vector_search_rate_buckets",
-		migrator.NewRawSQLMigration("").Postgres(`
-			CREATE TABLE IF NOT EXISTS vector_search_rate_buckets (
-				namespace VARCHAR(256) NOT NULL,
-				window_start TIMESTAMPTZ NOT NULL,
-				request_count BIGINT NOT NULL DEFAULT 0,
-				PRIMARY KEY (namespace, window_start)
-			);
-		`))
+		migrator.NewAddTableMigration(rateBuckets))
 }

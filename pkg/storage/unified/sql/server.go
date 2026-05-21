@@ -267,8 +267,6 @@ func withSearch(opts *ServerOptions, resourceOpts *resource.ResourceServerOption
 	resourceOpts.IndexMetrics = opts.IndexMetrics
 	resourceOpts.OwnsIndexFn = opts.OwnsIndexFn
 
-	// Backends that don't implement these interfaces (non-pgvector) run
-	// without caching or rate limiting.
 	if opts.VectorBackend != nil {
 		if cache, ok := opts.VectorBackend.(vector.QueryEmbeddingCache); ok {
 			resourceOpts.Search.QueryCache = cache
