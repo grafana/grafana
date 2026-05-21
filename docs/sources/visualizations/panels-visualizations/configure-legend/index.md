@@ -141,12 +141,26 @@ You can add more context to a visualization by adding series data values or [cal
 
 ### Series visibility
 
-Filter visible series in the legend by name or by label without editing the query. Click the filter control next to the legend to open a popover with **By name** and **By labels** sections, then select the names or label values you want to keep.
+Toggle the **Series visibility** switch on to add the corresponding filter control next to or above the legend.
+This lets you narrow the visible series by name or by label without editing the query, which is useful when a panel renders many series and you want to focus on a subset.
 
-Pin the filter to the sidebar to keep it open while you explore the panel.
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-series-visibility-v13.1.png" max-width="400px" alt="Series visibility filter switch" >}}
+
+After toggling the switch on, click the **Series visibility** icon to open a tooltip that has one or two sections, depending on your dataset:
+
+- **By name**: Lists each unique series name. Select one or more names to limit the visualization to those series.
+- **By labels**: Lists each label key with its values. Select label values to filter series that match.
+
+The tooltip also provides the following options:
+
+- **Select all and Deselect all**: Toggle every value in a section.
+- **Clear all**: Reset the filter.
+- **Pin to sidebar**: Dock the filter alongside the panel so it stays open while you explore.
+
+{{< video-embed src="/media/docs/grafana/panels-visualizations/screenrecord-series-visibility-v13.1.mp4" >}}
 
 {{< admonition type="note" >}}
-The series visibility filter is currently supported in the [time series](ref:time-series) visualization only.
+The series visibility filter is currently only supported in the time series visualization.
 {{< /admonition >}}
 
 ## Change a series color
