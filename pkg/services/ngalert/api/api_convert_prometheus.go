@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/validation"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/merge"
 	"github.com/grafana/grafana/pkg/services/ngalert/prom"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
@@ -141,7 +142,7 @@ type ConvertPrometheusSrv struct {
 
 type Alertmanager interface {
 	DeleteExtraConfiguration(ctx context.Context, org int64, user identity.Requester, authz notifier.ExtraConfigAuthz, identifier string) error
-	SaveAndApplyExtraConfiguration(ctx context.Context, org int64, user identity.Requester, authz notifier.ExtraConfigAuthz, extraConfig apimodels.ExtraConfiguration, replace bool, dryRun bool) (merge.RenameResources, error)
+	SaveAndApplyExtraConfiguration(ctx context.Context, org int64, user identity.Requester, authz notifier.ExtraConfigAuthz, extraConfig v1.ExtraConfiguration, replace bool, dryRun bool) (merge.RenameResources, error)
 	GetAlertmanagerConfiguration(ctx context.Context, org int64, withAutogen bool) (apimodels.GettableUserConfig, error)
 	IsExternalAMSyncConfiguredForOrg(ctx context.Context, orgID int64) (bool, error)
 }
@@ -626,7 +627,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostAlertmanagerConfig(c 
 		return errorToResponse(err)
 	}
 
-	ec := apimodels.ExtraConfiguration{
+	ec := v1.ExtraConfiguration{
 		Identifier:         identifier,
 		TemplateFiles:      amCfg.TemplateFiles,
 		AlertmanagerConfig: amCfg.AlertmanagerConfig,

@@ -300,6 +300,22 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 		require.Equal(t, int64(1), rsp.TotalHits)
 		require.Equal(t, "bbb", rsp.Results.Rows[0].Key.Name)
 
+		// search by owner reference - multiple values with Equals (AND)
+		rsp, err = index.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true}), &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: key,
+				Fields: []*resourcepb.Requirement{{
+					Key:      resource.SEARCH_FIELD_OWNER_REFERENCES,
+					Operator: "=",
+					Values:   []string{"iam.grafana.app/Team/marketing", "iam.grafana.app/User/admin"},
+				}},
+			},
+			Limit: 100000,
+		}, nil, nil)
+		require.NoError(t, err)
+		require.Equal(t, int64(1), rsp.TotalHits)
+		require.Equal(t, "bbb", rsp.Results.Rows[0].Key.Name)
+
 		// search by owner reference - multiple values (OR)
 		rsp, err = index.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true}), &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{
