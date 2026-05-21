@@ -6,14 +6,10 @@
 
 import { type z } from 'zod';
 
-import { sceneGraph } from '@grafana/scenes';
-import type { VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
-
-import { createSceneVariableFromVariableModel } from '../../serialization/transformSaveModelSchemaV2ToScene';
+import { AddVariableCommand } from '../../user-actions/commands/AddVariableCommand';
 
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
-import { replaceVariableSet } from './variableUtils';
 
 export const addVariablePayloadSchema = payloads.addVariable;
 
@@ -31,43 +27,18 @@ export const addVariableCommand: MutationCommand<AddVariablePayload> = {
     const { scene } = context;
     enterEditModeIfNeeded(scene);
 
-    try {
-      const { variable: variableKind, position } = payload;
-      const name = variableKind.spec.name;
+    const { variable, position } = payload;
 
-      const existingVariables = scene.state.$variables;
-      if (existingVariables) {
-        const existing = existingVariables.state.variables.find((v) => v.state.name === name);
-        if (existing) {
-          throw new Error(`Variable '${name}' already exists`);
-        }
-      }
+    const result = scene.userActionsService.execute(new AddVariableCommand(scene, variable, position));
 
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Zod output is structurally compatible with VariableKind
-      const sceneVariable = createSceneVariableFromVariableModel(variableKind as VariableKind);
-
-      const varSet = sceneGraph.getVariables(scene);
-      const currentVariables = [...varSet.state.variables];
-
-      if (position !== undefined && position >= 0 && position < currentVariables.length) {
-        currentVariables.splice(position, 0, sceneVariable);
-      } else {
-        currentVariables.push(sceneVariable);
-      }
-
-      replaceVariableSet(scene, currentVariables);
-
-      return {
-        success: true,
-        data: { variable: variableKind },
-        changes: [{ path: `/variables/${name}`, previousValue: null, newValue: variableKind }],
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : String(error),
-        changes: [],
-      };
+    if (!result.success) {
+      return { success: false, error: result.error ?? 'Unknown error', changes: [] };
     }
+
+    return {
+      success: true,
+      data: { variable },
+      changes: [{ path: `/variables/${variable.spec.name}`, previousValue: null, newValue: variable }],
+    };
   },
 };

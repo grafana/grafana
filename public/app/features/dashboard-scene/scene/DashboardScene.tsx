@@ -84,6 +84,7 @@ import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
 import { normalizeTransformation } from '../serialization/transformationCompat';
 import { JsonModelEditView } from '../settings/JsonModelEditView';
 import { type DashboardEditView } from '../settings/utils';
+import { UserActionsService } from '../user-actions/UserActionsService';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
@@ -239,6 +240,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
    * Dashboard changes tracker
    */
   private _changeTracker: DashboardSceneChangeTracker;
+  private _userActionsService?: UserActionsService;
+
+  public get userActionsService(): UserActionsService {
+    if (!this._userActionsService) {
+      this._userActionsService = new UserActionsService(this);
+    }
+    return this._userActionsService;
+  }
 
   /**
    * Remember scroll position when going into panel edit
