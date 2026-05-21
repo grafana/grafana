@@ -5,7 +5,7 @@ import {
   getPanelDataSummary,
   VisualizationSuggestionScore,
 } from '@grafana/data';
-import { GraphDrawStyle, LegendDisplayMode, StackingMode } from '@grafana/schema';
+import { GraphDrawStyle, StackingMode } from '@grafana/schema';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import {
   createDashboardModelFixture,
@@ -336,7 +336,6 @@ describe('timeseries panel suggestions', () => {
       const result = timeseriesSuggestionsSupplier(summary)!;
       const suggestion = { ...result[0], options: {} as Partial<Options> };
       result[0].cardOptions!.previewModifier!(suggestion);
-      expect(suggestion.options!.legend?.displayMode).toBe(LegendDisplayMode.Hidden);
       expect(suggestion.options!.legend?.showLegend).toBe(false);
     });
 

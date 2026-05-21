@@ -33,6 +33,7 @@ type MimirClient interface {
 	DeleteGrafanaAlertmanagerState(ctx context.Context) error
 
 	GetGrafanaAlertmanagerConfig(ctx context.Context) (*UserGrafanaConfig, error)
+	GetGrafanaAlertmanagerConfigStatus(ctx context.Context) (*GrafanaAlertmanagerConfigStatus, error)
 	CreateGrafanaAlertmanagerConfig(ctx context.Context, config *UserGrafanaConfig) error
 	DeleteGrafanaAlertmanagerConfig(ctx context.Context) error
 

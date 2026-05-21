@@ -19,7 +19,7 @@ var NewLogGroupsService = func(logsClient models.CloudWatchLogsAPIProvider, isCr
 	return &LogGroupsService{logGroupsAPI: logsClient, isCrossAccountEnabled: isCrossAccountEnabled}
 }
 
-func (s *LogGroupsService) GetLogGroups(ctx context.Context, req resources.LogGroupsRequest) ([]resources.ResourceResponse[resources.LogGroup], error) {
+func (s *LogGroupsService) GetLogGroups(ctx context.Context, req resources.LogGroupsRequest) ([]resources.ResourceResponse[resources.LogGroup], *string, error) {
 	input := &cloudwatchlogs.DescribeLogGroupsInput{
 		Limit:              aws.Int32(req.Limit),
 		LogGroupNamePrefix: req.LogGroupNamePrefix,
@@ -35,12 +35,17 @@ func (s *LogGroupsService) GetLogGroups(ctx context.Context, req resources.LogGr
 			input.AccountIdentifiers = []string{*req.AccountId}
 		}
 	}
+
+	if req.NextToken != nil {
+		input.NextToken = req.NextToken
+	}
+
 	result := []resources.ResourceResponse[resources.LogGroup]{}
 
 	for {
 		response, err := s.logGroupsAPI.DescribeLogGroups(ctx, input)
 		if err != nil || response == nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		for _, logGroup := range response.LogGroups {
@@ -54,12 +59,10 @@ func (s *LogGroupsService) GetLogGroups(ctx context.Context, req resources.LogGr
 		}
 
 		if !req.ListAllLogGroups || response.NextToken == nil {
-			break
+			return result, response.NextToken, nil
 		}
 		input.NextToken = response.NextToken
 	}
-
-	return result, nil
 }
 
 func (s *LogGroupsService) GetLogGroupFields(ctx context.Context, request resources.LogGroupFieldsRequest) ([]resources.ResourceResponse[resources.LogGroupField], error) {

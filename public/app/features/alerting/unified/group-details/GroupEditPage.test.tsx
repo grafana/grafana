@@ -302,9 +302,7 @@ describe('GroupEditPage', () => {
       await user.type(intervalInput, 'invalid');
       await user.click(saveButton);
 
-      // The exact error message depends on your validation logic
-      // This is a common pattern for testing validation errors
-      expect(screen.getByText(/must be of format/i)).toBeInTheDocument();
+      expect(screen.getByText(/cannot be None and must be a valid duration/i)).toBeInTheDocument();
     });
 
     it('should handle API error when saving fails', async () => {
