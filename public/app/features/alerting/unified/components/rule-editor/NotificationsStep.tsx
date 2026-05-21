@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
+import { useDebounce } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -241,6 +242,17 @@ function AutomaticRooting({ alertUid }: AutomaticRootingProps) {
   ]);
   const selectedPolicy = watch('selectedPolicy');
 
+  // Debounce the alert name so NotificationPreview doesn't re-render on every keystroke.
+  // Other watched fields (labels, condition, folder) affect routing directly and are not debounced.
+  const [debouncedAlertName, setDebouncedAlertName] = useState(alertName);
+  useDebounce(
+    () => {
+      setDebouncedAlertName(alertName);
+    },
+    500,
+    [alertName]
+  );
+
   const multiplePoliciesEnabled = config.featureToggles.alertingMultiplePolicies ?? false;
   const policyRoutingSettingsEnabled = config.featureToggles.alertingPolicyRoutingSettings ?? false;
 
@@ -252,7 +264,7 @@ function AutomaticRooting({ alertUid }: AutomaticRootingProps) {
         customLabels={labels}
         condition={condition}
         folder={folder}
-        alertName={alertName}
+        alertName={debouncedAlertName}
         alertUid={alertUid}
         policyName={policyRoutingSettingsEnabled ? selectedPolicy : undefined}
       />
