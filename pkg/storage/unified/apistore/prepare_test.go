@@ -662,15 +662,6 @@ func TestEnsureRepoManagedByParentFolder(t *testing.T) {
 		obj := makeDashboard(t, folder.GeneralFolderUID, nil)
 		require.NoError(t, s.ensureRepoManagedByParentFolder(context.Background(), obj))
 	})
-
-	t.Run("skips when folder annotation is 'root' (canonical root)", func(t *testing.T) {
-		s := &Storage{
-			opts:         StorageOptions{EnableFolderSupport: true},
-			getDynClient: failingDynClient(errors.New("dynamic client should not be consulted for root parent")),
-		}
-		obj := makeDashboard(t, folder.RootFolderName, nil)
-		require.NoError(t, s.ensureRepoManagedByParentFolder(context.Background(), obj))
-	})
 }
 
 func TestVerifyFolder(t *testing.T) {
@@ -688,14 +679,14 @@ func TestVerifyFolder(t *testing.T) {
 		return acc
 	}
 
-	t.Run("support enabled, empty folder passes (root stamping is still TODO)", func(t *testing.T) {
+	t.Run("support enabled, empty folder passes", func(t *testing.T) {
 		s := &Storage{
 			gr:   dashv1.DashboardResourceInfo.GroupResource(),
 			opts: StorageOptions{EnableFolderSupport: true},
 		}
 		obj := makeDash(t, "")
 		require.NoError(t, s.verifyFolder(obj))
-		require.Empty(t, obj.GetFolder(), "verifyFolder must not yet stamp the root sentinel")
+		require.Empty(t, obj.GetFolder())
 	})
 
 	t.Run("support enabled, folder set passes unchanged", func(t *testing.T) {

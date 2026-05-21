@@ -49,23 +49,17 @@ var ErrCreationAccessDenied = errutil.Forbidden("folders.forbiddenCreation", err
 var ErrNameExists = errutil.BadRequest("folder.name-exists", errutil.WithPublicMessage("A folder with that name already exists"))
 
 const (
-	// RootFolderName is the fixed k8s name that explicitly identifies the
-	// root folder for resources managed under /apis/. The apistore will
-	// canonicalise root-parented resources to this value on write once
-	// folder support is enabled.
-	RootFolderName = "root"
-
-	// GeneralFolderUID is the legacy Grafana UID that historically
-	// identifies the root folder. It is still surfaced by the legacy /api/
-	// endpoints for backwards compatibility; new /apis/ code should prefer
-	// RootFolderName.
+	// GeneralFolderUID is the Grafana UID that identifies the root folder.
 	GeneralFolderUID = "general"
 
-	// RootFolderUID is the legacy root sentinel — an empty string — used by
-	// older /api/ responses and stored resources written before the apistore
-	// began stamping the canonical RootFolderName.
+	// RootFolderUID is the legacy root sentinel — an empty string — still
+	// surfaced by older /api/ responses and stored on resources written before
+	// folder annotations were populated.
 	RootFolderUID = ""
 
+	// SharedWithMeFolderUID is the UID for the special "Shared with me" folder,
+	// It is not a real folder but used to identify the location of resources that you
+	// can see, but do not have access to the containing folder
 	SharedWithMeFolderUID = "sharedwithme"
 )
 
@@ -129,26 +123,24 @@ func (f *Folder) IsGeneral() bool {
 	return f.ID == GeneralFolder.ID && f.Title == GeneralFolder.Title
 }
 
-// LegacyFolderUID maps the canonical/known root-folder sentinels back to the
+// LegacyFolderUID maps the GeneralFolderUID ("general") sentinel back to the
 // empty-for-root convention expected by legacy API responses
-// (/api/dashboards, /api/folders, /api/search). Both RootFolderName ("root")
-// and GeneralFolderUID ("general") collapse to the empty string; all other
-// UIDs are returned unchanged.
+// (/api/dashboards, /api/folders, /api/search). All other UIDs are returned
+// unchanged.
 func LegacyFolderUID(uid string) string {
-	if uid == RootFolderName || uid == GeneralFolderUID {
-		return RootFolderUID
+	if uid == GeneralFolderUID {
+		return RootFolderUID // ""
 	}
 	return uid
 }
 
 // IsRootFolderUID reports whether the given folder UID identifies the root
 // folder. Use this for "does this resource have a parent folder?" checks
-// where all three root sentinels must be treated equivalently:
+// where both root sentinels must be treated equivalently:
 //   - "" (legacy empty annotation)
-//   - "general" (legacy UI / fixed-role scope)
-//   - "root" (the canonical RootFolderName written by the apistore)
+//   - "general" (canonical root UID)
 func IsRootFolderUID(uid string) bool {
-	return uid == RootFolderUID || uid == GeneralFolderUID || uid == RootFolderName
+	return uid == RootFolderUID || uid == GeneralFolderUID
 }
 
 func (f *Folder) WithURL() *Folder {

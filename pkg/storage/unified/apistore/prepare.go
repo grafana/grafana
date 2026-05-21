@@ -84,16 +84,9 @@ func (v *objectForStorage) finish(ctx context.Context, err error, secrets secret
 // verifyFolder enforces the folder-annotation contract on write. When folder
 // support is disabled, any folder annotation is a validation error (422): the
 // resource does not live in the folder tree at all. When folder support is
-// enabled, the annotation is accepted as-is — a future change will normalize
-// missing values to the canonical folder.RootFolderName ("root") sentinel so
-// downstream readers (search index, authz, provisioning) can match on a
-// single value instead of "" OR "general" OR "root".
+// enabled, the annotation is accepted as-is.
 func (s *Storage) verifyFolder(obj utils.GrafanaMetaAccessor) error {
 	if s.opts.EnableFolderSupport {
-		// TODO: we will soon ensure a folder property is always written
-		// if obj.GetFolder() == "" {
-		// 	obj.SetFolder(folder.RootFolderName)
-		// }
 		return nil
 	}
 	if obj.GetFolder() == "" {

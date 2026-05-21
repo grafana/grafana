@@ -76,7 +76,6 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 	id := f.Name
 
 	if slices.Contains([]string{
-		folder.RootFolderName, // "root"
 		folder.GeneralFolderUID,
 		folder.SharedWithMeFolderUID,
 	}, id) {

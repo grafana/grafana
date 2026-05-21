@@ -638,7 +638,7 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 		names = append(names, dashboardUIDs...)
 	} else if folder != "" {
 		// root folder is empty in the search index; collapse the canonical
-		// sentinels ("general", "root") to "" before querying.
+		// "general" sentinel to "" before querying.
 		folder = foldermodel.LegacyFolderUID(folder)
 		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
 			Key:      "folder",

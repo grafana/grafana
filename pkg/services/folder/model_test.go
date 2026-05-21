@@ -13,7 +13,6 @@ func TestIsRootFolderUID(t *testing.T) {
 	}{
 		{"", true},
 		{GeneralFolderUID, true},
-		{RootFolderName, true},
 		{SharedWithMeFolderUID, false},
 		{"some-folder-uid", false},
 	}
@@ -31,7 +30,6 @@ func TestLegacyFolderUID(t *testing.T) {
 	}{
 		{"", ""},
 		{GeneralFolderUID, ""},
-		{RootFolderName, ""},
 		{SharedWithMeFolderUID, SharedWithMeFolderUID},
 		{"some-folder-uid", "some-folder-uid"},
 	}

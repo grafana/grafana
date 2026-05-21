@@ -68,15 +68,6 @@ func TestValidateCreate(t *testing.T) {
 			expectedErr: folder.ErrInvalidUID,
 		},
 		{
-			name: "reserved name - root",
-			folder: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: folder.RootFolderName,
-				},
-			},
-			expectedErr: folder.ErrInvalidUID,
-		},
-		{
 			name: "reserved name - sharedwithme",
 			folder: &folders.Folder{
 				ObjectMeta: metav1.ObjectMeta{
@@ -117,16 +108,6 @@ func TestValidateCreate(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:        "p1",
 					Annotations: map[string]string{"grafana.app/folder": folder.GeneralFolderUID},
-				},
-				Spec: folders.FolderSpec{Title: "ok"},
-			},
-		},
-		{
-			name: "root parent annotation - root",
-			folder: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:        "p1",
-					Annotations: map[string]string{"grafana.app/folder": folder.RootFolderName},
 				},
 				Spec: folders.FolderSpec{Title: "ok"},
 			},
@@ -536,7 +517,7 @@ func TestValidateUpdate(t *testing.T) {
 			folder: &folders.Folder{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:        "nnn",
-					Annotations: map[string]string{utils.AnnoKeyFolder: folder.RootFolderName},
+					Annotations: map[string]string{utils.AnnoKeyFolder: folder.GeneralFolderUID},
 				},
 				Spec: folders.FolderSpec{Title: "new title"},
 			},
