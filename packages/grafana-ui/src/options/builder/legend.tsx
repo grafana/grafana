@@ -46,7 +46,8 @@ export function addLegendOptions<T extends OptionsWithLegend>(
       },
       showIf: (c) => c.legend.showLegend,
     })
-    .addTextInput({
+    .addCustomEditor({
+      id: 'legend.width',
       path: 'legend.width',
       name: t('grafana-ui.builder.legend.name-width', 'Width'),
       category,
@@ -54,7 +55,26 @@ export function addLegendOptions<T extends OptionsWithLegend>(
         placeholder: t('grafana-ui.builder.legend.placeholder-width', 'Auto, px, or % (e.g. 220 or 35%)'),
       },
       showIf: (c) => c.legend.showLegend && c.legend.placement === 'right',
+      editor: ({ onChange, ...props }) => {
+        const typedOnChange = (value: string) => {
+          let numeric = Number(value);
+          onChange(Number.isNaN(numeric) ? value : numeric);
+        };
+
+        const TextEditor = standardEditorsRegistry.get('text').editor;
+
+        return <TextEditor {...props} onChange={typedOnChange} />;
+      },
     })
+    // .addTextInput({
+    //   path: 'legend.width',
+    //   name: t('grafana-ui.builder.legend.name-width', 'Width'),
+    //   category,
+    //   settings: {
+    //     placeholder: t('grafana-ui.builder.legend.placeholder-width', 'Auto, px, or % (e.g. 220 or 35%)'),
+    //   },
+    //   showIf: (c) => c.legend.showLegend && c.legend.placement === 'right',
+    // })
     .addNumberInput({
       path: 'legend.limit',
       name: t('grafana-ui.builder.legend.name-limit', 'Limit'),
