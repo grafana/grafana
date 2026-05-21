@@ -4,6 +4,7 @@ import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 
 export interface TemplateDashboardEnvelopeOpts {
   dashboardSpec: DashboardV2Spec;
+  dashboardVersion: string;
   resourceVersion?: string;
   canEdit?: boolean;
   canSave?: boolean;
@@ -20,7 +21,7 @@ export function transformTemplateToSaveModelSchemaV2(
   opts: TemplateDashboardEnvelopeOpts
 ): DashboardWithAccessInfo<DashboardV2Spec> {
   return {
-    apiVersion: dashboardAPIVersionResolver.getV2(),
+    apiVersion: opts.dashboardVersion ?? dashboardAPIVersionResolver.getV2(),
     kind: 'DashboardWithAccessInfo',
     metadata: {
       creationTimestamp: '',

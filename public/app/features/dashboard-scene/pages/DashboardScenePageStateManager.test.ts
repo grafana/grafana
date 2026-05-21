@@ -1825,20 +1825,21 @@ describe('DashboardScenePageStateManager v2', () => {
       expect(scene.state.isDirty).toBe(true);
     });
 
-    it('skips the template meta wiring when the feature flag is off', async () => {
+    it('throws DashboardVersionError when the feature flag is off', async () => {
       setTestFlags({ 'grafana.orgDashboardTemplates': false });
 
       const loader = new DashboardScenePageStateManagerV2({});
-      await loader.loadDashboard({
-        uid: '',
-        route: DashboardRoutes.Template,
-        dashboardTemplateUid: 'tpl-1',
-        editTemplate: true,
-      });
 
-      const scene = loader.state.dashboard!;
-      expect(scene.state.meta.isDashboardTemplate).toBeFalsy();
-      expect(scene.state.meta.dashboardTemplateUid).toBeUndefined();
+      await expect(
+        loader.loadDashboard({
+          uid: '',
+          route: DashboardRoutes.Template,
+          dashboardTemplateUid: 'tpl-1',
+          editTemplate: true,
+        })
+      ).rejects.toThrow(DashboardVersionError);
+
+      expect(loadTemplateSpy).not.toHaveBeenCalled();
     });
   });
 });
@@ -2556,6 +2557,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
     });
 
     it('uses V2 manager for Custom dashboard template route when dashboardTemplateUid is set', async () => {
+      setTestFlags({ 'grafana.orgDashboardTemplates': true });
       // Mock the template extension so the V2 manager's loadDashboardTemplate has something to consume.
       const fakeTemplateResource = {
         apiVersion: 'v0alpha1',

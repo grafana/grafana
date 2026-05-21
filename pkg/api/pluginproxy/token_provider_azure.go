@@ -2,6 +2,7 @@ package pluginproxy
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/grafana/grafana-azure-sdk-go/v2/azcredentials"
@@ -9,7 +10,6 @@ import (
 	"github.com/grafana/grafana-azure-sdk-go/v2/aztokenprovider"
 
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 type azureAccessTokenProvider struct {
@@ -18,9 +18,16 @@ type azureAccessTokenProvider struct {
 	scopes        []string
 }
 
-func newAzureAccessTokenProvider(ctx context.Context, cfg *setting.Cfg, authParams *plugins.JWTTokenAuth) (*azureAccessTokenProvider, error) {
-	credentials := getAzureCredentials(cfg.Azure, authParams)
-	tokenProvider, err := aztokenprovider.NewAzureAccessTokenProvider(cfg.Azure, credentials, false)
+func newAzureAccessTokenProvider(ctx context.Context, settings *DataSourceProxySettings, authParams *plugins.JWTTokenAuth) (*azureAccessTokenProvider, error) {
+	if settings.GetAzureSettings == nil {
+		return nil, fmt.Errorf("missing azure settings")
+	}
+	azureSettings, err := settings.GetAzureSettings(ctx)
+	if err != nil {
+		return nil, err
+	}
+	credentials := getAzureCredentials(azureSettings, authParams)
+	tokenProvider, err := aztokenprovider.NewAzureAccessTokenProvider(azureSettings, credentials, false)
 	if err != nil {
 		return nil, err
 	}
@@ -49,13 +56,12 @@ func getAzureCredentials(settings *azsettings.AzureSettings, authParams *plugins
 
 	if isManagedIdentity {
 		return &azcredentials.AzureManagedIdentityCredentials{}
-	} else {
-		return &azcredentials.AzureClientSecretCredentials{
-			AzureCloud:   authParams.Params["azure_cloud"],
-			Authority:    authParams.Url,
-			TenantId:     authParams.Params["tenant_id"],
-			ClientId:     authParams.Params["client_id"],
-			ClientSecret: authParams.Params["client_secret"],
-		}
+	}
+	return &azcredentials.AzureClientSecretCredentials{
+		AzureCloud:   authParams.Params["azure_cloud"],
+		Authority:    authParams.Url,
+		TenantId:     authParams.Params["tenant_id"],
+		ClientId:     authParams.Params["client_id"],
+		ClientSecret: authParams.Params["client_secret"],
 	}
 }

@@ -23,7 +23,7 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
   };
 
   // Template edit flow
-  if (meta.isDashboardTemplate) {
+  if (isDashboardTemplatesFlagEnabled && meta.isDashboardTemplate) {
     if (!meta.canSave) {
       return null;
     }

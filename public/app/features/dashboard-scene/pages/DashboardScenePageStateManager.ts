@@ -671,9 +671,9 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     const pluginId = searchParams.get('pluginId');
     const path = searchParams.get('path');
 
-    // Check if this is a template dashboard
+    // Check if this is a Grafana dashboard template
     if (gnetId && datasource && pluginId) {
-      return this.loadTemplateDashboard(gnetId, datasource, pluginId);
+      return this.loadGrafanaDashboardTemplate(gnetId, datasource, pluginId);
     }
 
     // Check if this is a community dashboard (has gnetId) or plugin dashboard
@@ -709,7 +709,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     return this.buildDashboardDTOFromInterpolated(interpolatedDashboard);
   }
 
-  private async loadTemplateDashboard(
+  private async loadGrafanaDashboardTemplate(
     gnetId: string,
     datasource: string | null,
     pluginId: string | null
@@ -1027,10 +1027,6 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
               ...scene.state.meta,
               isDashboardTemplate: true,
               dashboardTemplateUid: options.dashboardTemplateUid,
-              k8s: {
-                ...scene.state.meta.k8s,
-                resourceVersion: rsp.metadata.resourceVersion,
-              },
             },
           });
         }
@@ -1108,12 +1104,15 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
           return await this.dashboardLoader.loadDashboard('public', '', uid);
         }
         case DashboardRoutes.Template: {
-          if (dashboardTemplateUid) {
+          if (
+            getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaOrgDashboardTemplates, false) &&
+            dashboardTemplateUid
+          ) {
             rsp = await this.loadDashboardTemplate(dashboardTemplateUid, { editMode: !!editTemplate });
             break;
           }
-          // Non-org templates are V1 only — throw to fallback
-          throw new DashboardVersionError('v0alpha1', 'Non-org template dashboards use V1 schema');
+          // Grafana dashboard templates are V1 only — throw to fallback
+          throw new DashboardVersionError('v0alpha1', 'Grafana-provisioned dashboard templates use V1 schema');
         }
         default:
           if (config.featureToggles.reloadDashboardsOnParamsChange) {
@@ -1162,6 +1161,10 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     dashboardTemplateUid: string,
     { editMode }: { editMode: boolean }
   ): Promise<DashboardWithAccessInfo<DashboardV2Spec>> {
+    if (!getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaOrgDashboardTemplates, false)) {
+      throw new Error('Custom dashboard templates are not enabled');
+    }
+
     const response = await getDashboardTemplateExtension().loadTemplate(dashboardTemplateUid);
 
     const resourceVersion = response.metadata?.resourceVersion;
@@ -1172,6 +1175,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
       // canEdit and canSave will change in the future with specific RBAC permissions.
       return transformTemplateToSaveModelSchemaV2({
         dashboardSpec: response.spec.dashboard,
+        dashboardVersion: response.spec.dashboardVersion,
         resourceVersion,
         canEdit: true,
         canSave: true,
@@ -1184,6 +1188,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     // template, it's a cloning flow.
     return transformTemplateToSaveModelSchemaV2({
       dashboardSpec: response.spec.dashboard,
+      dashboardVersion: response.spec.dashboardVersion,
       canEdit: true,
       canSave: true,
     });
@@ -1408,7 +1413,10 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
 
     // Dashboard templates: Grafana templates use V1, Custom templates use V2
     if (options.route === DashboardRoutes.Template) {
-      if (options.dashboardTemplateUid) {
+      if (
+        options.dashboardTemplateUid &&
+        getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaOrgDashboardTemplates, false)
+      ) {
         this.setActiveManager('v2');
       } else {
         this.setActiveManager('v1');

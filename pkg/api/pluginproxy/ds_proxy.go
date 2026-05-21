@@ -24,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	pluginac "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 )
@@ -47,7 +46,7 @@ type DataSourceProxy struct {
 	proxyPath          string
 	matchedRoute       *plugins.Route
 	pluginRoutes       []*plugins.Route
-	cfg                *setting.Cfg
+	settings           *DataSourceProxySettings
 	clientProvider     httpclient.Provider
 	oAuthTokenService  oauthtoken.OAuthTokenService
 	dataSourcesService datasources.DataSourceService
@@ -61,7 +60,7 @@ type httpClient interface {
 
 // NewDataSourceProxy creates a new Datasource proxy
 func NewDataSourceProxy(ds *datasources.DataSource, pluginRoutes []*plugins.Route, ctx *contextmodel.ReqContext,
-	proxyPath string, cfg *setting.Cfg, clientProvider httpclient.Provider,
+	proxyPath string, settings *DataSourceProxySettings, clientProvider httpclient.Provider,
 	oAuthTokenService oauthtoken.OAuthTokenService, dsService datasources.DataSourceService,
 	tracer tracing.Tracer, features featuremgmt.FeatureToggles,
 ) (*DataSourceProxy, error) {
@@ -76,7 +75,7 @@ func NewDataSourceProxy(ds *datasources.DataSource, pluginRoutes []*plugins.Rout
 		ctx:                ctx,
 		proxyPath:          proxyPath,
 		targetUrl:          targetURL,
-		cfg:                cfg,
+		settings:           settings,
 		clientProvider:     clientProvider,
 		oAuthTokenService:  oAuthTokenService,
 		dataSourcesService: dsService,
@@ -237,11 +236,11 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 		req.Header.Set("Authorization", dsAuth)
 	}
 
-	proxyutil.ApplyUserHeader(proxy.cfg.SendUserHeader, req, proxy.ctx.SignedInUser)
+	proxyutil.ApplyUserHeader(proxy.settings.SendUserHeader, req, proxy.ctx.SignedInUser)
 
-	proxyutil.ClearCookieHeader(req, proxy.ds.AllowedCookies(), []string{proxy.cfg.LoginCookieName})
-	ua := proxy.cfg.DataProxyUserAgent
-	if proxy.cfg.DataProxyForwardUserAgent {
+	proxyutil.ClearCookieHeader(req, proxy.ds.AllowedCookies(), []string{proxy.settings.LoginCookieName})
+	ua := proxy.settings.DataProxyUserAgent
+	if proxy.settings.DataProxyForwardUserAgent {
 		if originalUA := req.Header.Get("User-Agent"); originalUA != "" {
 			if len(originalUA) > maxForwardedUserAgentLen {
 				originalUA = originalUA[:maxForwardedUserAgentLen]
@@ -277,7 +276,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 			Updated:                 proxy.ds.Updated,
 			JSONData:                jsonData,
 			DecryptedSecureJSONData: decryptedValues,
-		}, proxy.cfg)
+		}, proxy.settings)
 	}
 
 	if proxy.oAuthTokenService.IsOAuthPassThruEnabled(proxy.ds) {
@@ -384,7 +383,7 @@ func (proxy *DataSourceProxy) hasAccessToRoute(route *plugins.Route) bool {
 }
 
 func (proxy *DataSourceProxy) logRequest() {
-	if !proxy.cfg.DataProxyLogging {
+	if !proxy.settings.DataProxyLogging {
 		return
 	}
 
@@ -417,8 +416,8 @@ func (proxy *DataSourceProxy) logRequest() {
 }
 
 func (proxy *DataSourceProxy) checkWhiteList() bool {
-	if proxy.targetUrl.Host != "" && len(proxy.cfg.DataProxyWhiteList) > 0 {
-		if _, exists := proxy.cfg.DataProxyWhiteList[proxy.targetUrl.Host]; !exists {
+	if proxy.targetUrl.Host != "" && len(proxy.settings.DataProxyWhiteList) > 0 {
+		if _, exists := proxy.settings.DataProxyWhiteList[proxy.targetUrl.Host]; !exists {
 			proxy.ctx.JsonApiErr(403, "Data proxy hostname and ip are not included in whitelist", nil)
 			return false
 		}

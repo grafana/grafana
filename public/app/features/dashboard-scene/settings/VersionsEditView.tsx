@@ -111,14 +111,16 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
 
     const options = append ? { limit: this._limit, continueToken: this._continueToken } : { limit: this._limit };
 
-    const loader: Promise<ResourceList<unknown>> =
-      isDashboardTemplate && dashboardTemplateUid
-        ? getDashboardTemplateExtension().listHistory(dashboardTemplateUid, options)
-        : getDashboardAPI().then((api) => api.listDashboardHistory(uid!, options));
+    let loader: Promise<ResourceList<unknown>>;
+    if (isDashboardTemplate && dashboardTemplateUid) {
+      loader = getDashboardTemplateExtension().listHistory(dashboardTemplateUid, options);
+    } else {
+      loader = getDashboardAPI().then((api) => api.listDashboardHistory(uid!, options));
+    }
 
     loader
       .then((result) => {
-        const versions = this.transformToRevisionModels(result.items, isDashboardTemplate);
+        const versions = this.transformToRevisionModels(result.items);
         this.setState({
           isLoading: false,
           versions: [...(append ? (this.state.versions ?? []) : []), ...this.decorateVersions(versions)],
@@ -130,16 +132,9 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
       .finally(() => this.setState({ isAppending: false }));
   };
 
-  private transformToRevisionModels(items: Array<Resource<unknown>>, isDashboardTemplate = false): RevisionModel[] {
-    return items.map((item): RevisionModel => {
-      // For org templates the revision `data` should be the embedded dashboard spec so the
-      // Compare view diffs two embedded dashboards rather than two whole template specs —
-      // which matches what actually gets mutated on save/restore in this flow.
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      const spec = item.spec as { dashboard?: object } & object;
-      const data = isDashboardTemplate ? (spec.dashboard ?? {}) : spec;
-
-      return {
+  private transformToRevisionModels(items: Array<Resource<unknown>>): RevisionModel[] {
+    return items.map(
+      (item): RevisionModel => ({
         id: item.metadata.generation ?? 0,
         checked: false,
         uid: item.metadata.name,
@@ -150,9 +145,10 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
           new Date().toISOString(),
         createdBy: item.metadata.annotations?.[AnnoKeyUpdatedBy] ?? item.metadata.annotations?.[AnnoKeyCreatedBy] ?? '',
         message: item.metadata.annotations?.[AnnoKeyMessage] ?? '',
-        data,
-      };
-    });
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        data: item.spec as object,
+      })
+    );
   }
 
   public getDiff = () => {
