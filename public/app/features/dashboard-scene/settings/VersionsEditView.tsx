@@ -120,7 +120,7 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
 
     loader
       .then((result) => {
-        const versions = this.transformToRevisionModels(result.items);
+        const versions = this.transformToRevisionModels(result.items, isDashboardTemplate);
         this.setState({
           isLoading: false,
           versions: [...(append ? (this.state.versions ?? []) : []), ...this.decorateVersions(versions)],
@@ -132,9 +132,16 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
       .finally(() => this.setState({ isAppending: false }));
   };
 
-  private transformToRevisionModels(items: Array<Resource<unknown>>): RevisionModel[] {
-    return items.map(
-      (item): RevisionModel => ({
+  private transformToRevisionModels(items: Array<Resource<unknown>>, isDashboardTemplate = false): RevisionModel[] {
+    return items.map((item): RevisionModel => {
+      // For org templates the revision `data` should be the embedded dashboard spec so the
+      // Compare view diffs two embedded dashboards rather than two whole template specs —
+      // which matches what actually gets mutated on save/restore in this flow.
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      const spec = item.spec as { dashboard?: object } & object;
+      const data = isDashboardTemplate ? (spec.dashboard ?? {}) : spec;
+
+      return {
         id: item.metadata.generation ?? 0,
         checked: false,
         uid: item.metadata.name,
@@ -146,9 +153,9 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
         createdBy: item.metadata.annotations?.[AnnoKeyUpdatedBy] ?? item.metadata.annotations?.[AnnoKeyCreatedBy] ?? '',
         message: item.metadata.annotations?.[AnnoKeyMessage] ?? '',
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        data: item.spec as object,
-      })
-    );
+        data,
+      };
+    });
   }
 
   public getDiff = () => {
