@@ -23,7 +23,7 @@ func (s *StandardDocumentBuilders) GetDocumentBuilders() ([]resource.DocumentBui
 		return nil, err
 	}
 
-	result := []resource.DocumentBuilderInfo{
+	result := []resource.DocumentBuilderInfo{ //nolint:prealloc
 		{
 			Builder: resource.StandardDocumentBuilder(resource.AppManifests()),
 		},

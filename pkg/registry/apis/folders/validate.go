@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -352,15 +353,31 @@ func getChildrenBatch(ctx context.Context, searcher resourcepb.ResourceIndexClie
 		}
 	}
 
-	hasMore := resp.Results.NextPageToken != ""
+	// The bleve Search path populates TotalHits but not Results.NextPageToken, so
+	// pagination must be driven off TotalHits + offset rather than the token.
+	hasMore := resp.Results.NextPageToken != "" || offset+int64(len(resp.Results.Rows)) < resp.TotalHits
 	return children, hasMore, nil
 }
 
 func validateOnDelete(ctx context.Context,
 	f *folders.Folder,
 	searcher resourcepb.ResourceIndexClient,
+	deleteOptions *metav1.DeleteOptions,
+	cascadeDeleteEnabled bool,
 ) error {
-	resp, err := searcher.GetStats(ctx, &resourcepb.ResourceStatsRequest{Namespace: f.Namespace, Folder: f.Name})
+	// Non-empty folder delete is opt-in via gracePeriodSeconds=0 when kubernetesFolderCascadeDelete
+	// is enabled (same pattern as dashboard delete validation). This only bypasses the empty-folder
+	// check; until cascade reconciliation runs, child resources are left orphaned.
+	if cascadeDeleteEnabled && forceDeleteFromDeleteOptions(deleteOptions) {
+		logging.FromContext(ctx).Warn(
+			"folder force-delete bypassing empty check; cascade deletion is not yet wired up so sub-folders, dashboards, alert rules, and library elements under this folder will be orphaned. This is a temporary state during the cascade delete rollout.",
+			"folder", f.Name,
+			"namespace", f.Namespace,
+		)
+		return nil
+	}
+
+	resp, err := searcher.GetStats(ctx, &resourcepb.ResourceStatsRequest{Namespace: f.Namespace, Kinds: countedKinds, Folder: []string{f.Name}})
 	if err != nil {
 		return err
 	}

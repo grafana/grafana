@@ -10,7 +10,6 @@ import {
   type PanelPluginVisualizationSuggestion,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { useListedPanelPluginMetas } from '@grafana/runtime/internal';
 import { type VizPanel } from '@grafana/scenes';
 import { Alert, Button, EmptySearchResult, Icon, Spinner, Text, useStyles2 } from '@grafana/ui';
@@ -75,7 +74,6 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
   const suggestions = result?.suggestions;
   const hasLoadingErrors = result?.hasErrors ?? false;
   const [firstCardHash, setFirstCardHash] = useState<string | null>(null);
-  const isNewVizSuggestionsEnabled = config.featureToggles.newVizSuggestions;
   const isUnconfiguredPanel = panel?.type === UNCONFIGURED_PANEL_PLUGIN_ID;
 
   const panelState = useMemo((): PanelState => {
@@ -141,7 +139,7 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
   );
 
   useEffect(() => {
-    if (!isNewVizSuggestionsEnabled || !suggestions || suggestions.length === 0 || !isUnconfiguredPanel) {
+    if (!suggestions || suggestions.length === 0 || !isUnconfiguredPanel) {
       return;
     }
 
@@ -167,7 +165,7 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
       setFirstCardHash(newFirstCardHash);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [suggestions, firstCardHash, isNewVizSuggestionsEnabled, isUnconfiguredPanel]);
+  }, [suggestions, firstCardHash, isUnconfiguredPanel]);
 
   if (loading || !data) {
     return (
@@ -187,7 +185,7 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
     );
   }
 
-  if (isNewVizSuggestionsEnabled && !hasData(data)) {
+  if (!hasData(data)) {
     return <NoDataPanelList searchQuery={searchQuery} panel={panel} onChange={onChange} />;
   }
 
@@ -218,8 +216,8 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
         </Alert>
       )}
       <VisualizationCardGrid
-        groups={isNewVizSuggestionsEnabled ? suggestionsByVizType : undefined}
-        items={!isNewVizSuggestionsEnabled ? suggestions : undefined}
+        groups={suggestionsByVizType}
+        items={undefined}
         data={data!}
         onItemClick={(item) => handleSuggestionClick(item, suggestionIndexMap.get(item.hash) ?? -1)}
         getItemKey={(item) => item.hash}

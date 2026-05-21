@@ -331,6 +331,9 @@ func (k *kvStorageBackend) Stop(_ context.Context) error {
 	if k.tenantDeleter != nil {
 		k.tenantDeleter.Stop()
 	}
+	if k.leaseManager != nil {
+		k.leaseManager.Stop()
+	}
 	// Cancel the background context to stop runCleanups, GC, and other goroutines.
 	k.cancel()
 	return nil
@@ -2396,7 +2399,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 				rsp.Rejected = append(rsp.Rejected, &resourcepb.BulkResponse_Rejected{
 					Key:    req.Key,
 					Action: req.Action,
-					Error:  "unable to unmarshal json",
+					Error:  fmt.Sprintf("unable to unmarshal json: %s", err.Error()),
 				})
 				continue
 			}

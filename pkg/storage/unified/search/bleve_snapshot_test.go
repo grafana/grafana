@@ -73,6 +73,20 @@ func makeULID(t *testing.T, at time.Time) ulid.ULID {
 	return k
 }
 
+func testIndexFormat(t *testing.T) string {
+	t.Helper()
+	format := maxSupportedIndexFormat()
+	require.NotEmpty(t, format)
+	return format
+}
+
+func testIndexFormatDelta(t *testing.T, delta int) string {
+	t.Helper()
+	formatType, version, ok := parseIndexFormat(testIndexFormat(t))
+	require.True(t, ok)
+	return indexFormat(formatType, uint32(int(version)+delta))
+}
+
 func TestSnapshotTier(t *testing.T) {
 	running := semver.MustParse("11.5.0")
 	minV := semver.MustParse("11.4.0")
@@ -111,11 +125,14 @@ func TestPickBestSnapshot(t *testing.T) {
 		}
 	}
 
+	format := testIndexFormat(t)
+
 	newBackend := func(minVersion *semver.Version) *bleveBackend {
 		return &bleveBackend{
-			log:                 log.New("bleve-snapshot-test"),
-			opts:                BleveOptions{Snapshot: SnapshotOptions{MinBuildVersion: minVersion}},
-			runningBuildVersion: running,
+			log:                     log.New("bleve-snapshot-test"),
+			opts:                    BleveOptions{Snapshot: SnapshotOptions{MinBuildVersion: minVersion}},
+			runningBuildVersion:     running,
+			maxSupportedIndexFormat: format,
 		}
 	}
 	cutoff := func(maxAge time.Duration) time.Time { return now.Add(-maxAge) }
@@ -184,6 +201,32 @@ func TestPickBestSnapshot(t *testing.T) {
 		require.True(t, ok)
 		assert.Equal(t, only, c.key)
 		assert.Equal(t, 2, c.tier)
+	})
+
+	t.Run("index format gate", func(t *testing.T) {
+		older := makeULID(t, now.Add(-30*time.Second))
+		same := makeULID(t, now.Add(-20*time.Second))
+		legacy := makeULID(t, now.Add(-10*time.Second))
+		tooNew := makeULID(t, now)
+
+		all := map[ulid.ULID]*IndexMeta{
+			older:  snap("11.5.0", 100, time.Minute),
+			same:   snap("11.5.0", 200, time.Minute),
+			legacy: snap("11.5.0", 300, time.Minute),
+			tooNew: snap("11.5.0", 400, time.Minute),
+		}
+		all[older].IndexFormat = testIndexFormatDelta(t, -1)
+		all[same].IndexFormat = format
+		all[tooNew].IndexFormat = testIndexFormatDelta(t, 1)
+
+		c, ok := newBackend(minV).pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
+		require.True(t, ok)
+		assert.Equal(t, legacy, c.key, "empty legacy format remains compatible and normal tie-breaking still applies")
+
+		delete(all, legacy)
+		c, ok = newBackend(minV).pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
+		require.True(t, ok)
+		assert.Equal(t, same, c.key, "same format should beat older format by RV")
 	})
 
 	t.Run("within tier: version desc, then RV desc, then upload desc", func(t *testing.T) {
@@ -964,7 +1007,7 @@ type probeCase struct {
 	wantErr string
 }
 
-type probeFn func(ctx context.Context, s RemoteIndexStore, ns resource.NamespacedResource, notOlderThan time.Time, v string) (ulid.ULID, *IndexMeta, error)
+type probeFn func(ctx context.Context, s RemoteIndexStore, ns resource.NamespacedResource, notOlderThan time.Time, v string, f string, logger log.Logger) (ulid.ULID, *IndexMeta, error)
 
 func runProbeCases(t *testing.T, probe probeFn, cases []probeCase) {
 	t.Helper()
@@ -973,7 +1016,8 @@ func runProbeCases(t *testing.T, probe probeFn, cases []probeCase) {
 			store := newHookableStore(t)
 			ns := newTestNsResource()
 			want := tc.setup(t, store, ns)
-			k, meta, err := probe(t.Context(), store, ns, time.Now().Add(-time.Hour), "11.5.0")
+			format := testIndexFormat(t)
+			k, meta, err := probe(t.Context(), store, ns, time.Now().Add(-time.Hour), "11.5.0", format, log.New("bleve-snapshot-test"))
 			if tc.wantErr != "" {
 				require.Error(t, err)
 				assert.Contains(t, err.Error(), tc.wantErr)
@@ -1011,6 +1055,41 @@ func TestFindFreshSnapshotByUploadTime(t *testing.T) {
 				match := mk(-30 * time.Minute)
 				seedSnapshot(t, t.Context(), s.bucket, ns, match, &IndexMeta{BuildVersion: "11.5.0"})
 				seedSnapshot(t, t.Context(), s.bucket, ns, mk(-50*time.Minute), &IndexMeta{BuildVersion: "11.5.0"})
+				return match
+			},
+		},
+		{
+			name: "uses same index format",
+			setup: func(t *testing.T, s *hookableStore, ns resource.NamespacedResource) ulid.ULID {
+				format := testIndexFormat(t)
+				match := mk(-5 * time.Minute)
+				seedSnapshot(t, t.Context(), s.bucket, ns, match, &IndexMeta{BuildVersion: "11.5.0", IndexFormat: format})
+				return match
+			},
+		},
+		{
+			name: "uses older index format",
+			setup: func(t *testing.T, s *hookableStore, ns resource.NamespacedResource) ulid.ULID {
+				match := mk(-5 * time.Minute)
+				seedSnapshot(t, t.Context(), s.bucket, ns, match, &IndexMeta{BuildVersion: "11.5.0", IndexFormat: testIndexFormatDelta(t, -1)})
+				return match
+			},
+		},
+		{
+			name: "skips newer index format",
+			setup: func(t *testing.T, s *hookableStore, ns resource.NamespacedResource) ulid.ULID {
+				format := testIndexFormat(t)
+				seedSnapshot(t, t.Context(), s.bucket, ns, mk(-5*time.Minute), &IndexMeta{BuildVersion: "11.5.0", IndexFormat: testIndexFormatDelta(t, 1)})
+				match := mk(-10 * time.Minute)
+				seedSnapshot(t, t.Context(), s.bucket, ns, match, &IndexMeta{BuildVersion: "11.5.0", IndexFormat: format})
+				return match
+			},
+		},
+		{
+			name: "uses legacy empty index format",
+			setup: func(t *testing.T, s *hookableStore, ns resource.NamespacedResource) ulid.ULID {
+				match := mk(-5 * time.Minute)
+				seedSnapshot(t, t.Context(), s.bucket, ns, match, &IndexMeta{BuildVersion: "11.5.0"})
 				return match
 			},
 		},
