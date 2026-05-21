@@ -79,6 +79,7 @@ const setUp = (
   app = CoreApp.Dashboard,
   panelContext?: Partial<PanelContext>
 ) => {
+  const store = configureStore();
   return render(
     <PanelContextProvider
       value={{
@@ -121,7 +122,7 @@ const setUp = (
         {...props}
       />
     </PanelContextProvider>,
-    { wrapper: ({ children }) => <Provider store={configureStore()}>{children}</Provider> }
+    { wrapper: ({ children }) => <Provider store={store}>{children}</Provider> }
   );
 };
 
