@@ -8,10 +8,11 @@ import { useSelectionRepoValidation } from '../../hooks/useSelectionRepoValidati
 import { BulkDeleteProvisionedResource } from './BulkDeleteProvisionedResource';
 import { type ResponseType } from './useBulkActionJob';
 
-jest.mock('app/features/browse-dashboards/components/BrowseActions/DescendantCount', () => ({
-  DescendantCount: jest.fn(({ selectedItems }) => (
-    <div data-testid="descendant-count">
-      Mocked descendant count for {Object.keys(selectedItems.folder).length} folders and{' '}
+jest.mock('app/features/browse-dashboards/components/BrowseActions/AffectedFolderContents', () => ({
+  AffectedFolderContents: jest.fn(({ selectedItems, defaultMessage }) => (
+    <div data-testid="affected-folder-contents">
+      {defaultMessage}
+      Mocked affected folder contents for {Object.keys(selectedItems.folder).length} folders and{' '}
       {Object.keys(selectedItems.dashboard).length} dashboards
     </div>
   )),

@@ -36,13 +36,6 @@ export async function isProvisionedFolderCheck(
   }
 }
 
-const initialCounts: Record<string, number> = {
-  folder: 0,
-  dashboard: 0,
-  libraryPanel: 0,
-  alertRule: 0,
-};
-
 /**
  * Parses descendant counts into legacy-friendly format
  *
@@ -58,6 +51,13 @@ const initialCounts: Record<string, number> = {
  * entry later, the `dashboard.grafana.app` count will be used
  */
 export const getParsedCounts = (counts: ResourceStats[]) => {
+  const initialCounts: Record<string, number> = {
+    folder: 0,
+    dashboard: 0,
+    libraryPanel: 0,
+    alertRule: 0,
+  };
+
   return counts.reduce((acc, { resource, count }) => {
     // If there's no value already, then use that count, so a fallback count is not used
     if (!acc[resource]) {

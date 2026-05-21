@@ -5,11 +5,11 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getAppEvents, reportInteraction } from '@grafana/runtime';
-import { Box, Button, Field, Stack } from '@grafana/ui';
+import { Button, Field, Stack } from '@grafana/ui';
 import { useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import { type RepositoryView, type Job } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
-import { DescendantCount } from 'app/features/browse-dashboards/components/BrowseActions/DescendantCount';
+import { AffectedFolderContents } from 'app/features/browse-dashboards/components/BrowseActions/AffectedFolderContents';
 import { collectSelectedItems } from 'app/features/browse-dashboards/utils/dashboards';
 import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
 import {
@@ -163,12 +163,17 @@ function FormContent({
           ) : (
             <>
               <MoveActionAvailableTargetWarning />
-              <Box paddingBottom={2}>
-                <Trans i18nKey="browse-dashboards.bulk-move-resources-form.move-total">
-                  In total, this will affect:
-                </Trans>
-                <DescendantCount selectedItems={{ ...selectedItems, panel: {}, $all: false }} />
-              </Box>
+              <AffectedFolderContents
+                selectedItems={selectedItems}
+                nonEmptyMessage={t(
+                  'browse-dashboards.bulk-move-resources-form.folder-not-empty',
+                  'Selected folder contains other resources that will be moved with it',
+                  {
+                    count: Object.keys(selectedItems.folder || {}).filter((uid) => selectedItems.folder[uid]).length,
+                    defaultValue_other: 'Selected folders contain other resources that will be moved with them',
+                  }
+                )}
+              />
               {/* Target folder selection */}
               <Field
                 noMargin

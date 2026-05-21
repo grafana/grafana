@@ -4,9 +4,9 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getAppEvents, reportInteraction } from '@grafana/runtime';
-import { Box, Button, Stack } from '@grafana/ui';
+import { Button, Stack } from '@grafana/ui';
 import { type Job, type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
-import { DescendantCount } from 'app/features/browse-dashboards/components/BrowseActions/DescendantCount';
+import { AffectedFolderContents } from 'app/features/browse-dashboards/components/BrowseActions/AffectedFolderContents';
 import { collectSelectedItems } from 'app/features/browse-dashboards/utils/dashboards';
 import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
@@ -103,12 +103,30 @@ function FormContent({ initialValues, selectedItems, repository, canPushToConfig
             </>
           ) : (
             <>
-              <Box paddingBottom={2}>
-                <Trans i18nKey="browse-dashboards.bulk-delete-resources-form.delete-warning">
-                  This will delete selected folders and their descendants. In total, this will affect:
-                </Trans>
-                <DescendantCount selectedItems={{ ...selectedItems, panel: {}, $all: false }} />
-              </Box>
+              <AffectedFolderContents
+                selectedItems={selectedItems}
+                defaultMessage={
+                  <Trans i18nKey="browse-dashboards.bulk-delete-resources-form.delete-warning">
+                    This will delete selected folders and their descendants.
+                  </Trans>
+                }
+                emptyMessage={t(
+                  'browse-dashboards.bulk-delete-resources-form.folder-empty',
+                  'Selected folder is empty',
+                  {
+                    count: Object.keys(selectedItems.folder || {}).filter((uid) => selectedItems.folder[uid]).length,
+                    defaultValue_other: 'Selected folders are empty',
+                  }
+                )}
+                nonEmptyMessage={t(
+                  'browse-dashboards.bulk-delete-resources-form.folder-not-empty',
+                  'Selected folder contains other resources that will be deleted',
+                  {
+                    count: Object.keys(selectedItems.folder || {}).filter((uid) => selectedItems.folder[uid]).length,
+                    defaultValue_other: 'Selected folders contain other resources that will be deleted',
+                  }
+                )}
+              />
               <ResourceEditFormSharedFields
                 resourceType="folder"
                 isNew={false}

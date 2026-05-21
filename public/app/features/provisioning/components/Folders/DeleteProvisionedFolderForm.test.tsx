@@ -50,8 +50,10 @@ jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
 
 jest.mock('../../hooks/useProvisionedFolderFormData');
 
-jest.mock('app/features/browse-dashboards/components/BrowseActions/DescendantCount', () => ({
-  DescendantCount: () => <div data-testid="descendant-count">2 folders, 5 dashboards</div>,
+jest.mock('app/features/browse-dashboards/components/BrowseActions/AffectedFolderContents', () => ({
+  AffectedFolderContents: jest.fn(({ defaultMessage }) => (
+    <div data-testid="affected-folder-contents">{defaultMessage}</div>
+  )),
 }));
 
 jest.mock('../Shared/ResourceEditFormSharedFields', () => ({
@@ -209,7 +211,7 @@ describe('DeleteProvisionedFolderForm', () => {
       setup();
       // delete warning and descendant count
       expect(screen.getByText(/This will delete this folder and all its descendants/)).toBeInTheDocument();
-      expect(screen.getByTestId('descendant-count')).toBeInTheDocument();
+      expect(screen.getByTestId('affected-folder-contents')).toBeInTheDocument();
 
       // delete and cancel buttons
       expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
