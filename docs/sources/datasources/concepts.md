@@ -39,7 +39,7 @@ A data source is a connection to a specific database, monitoring system, service
 
 When you configure a data source in Grafana, you provide connection details, credentials, and endpoints that tell Grafana where to fetch data from. Data sources are the foundation for working with Grafana, without them, Grafana has nothing to visualize.
 
-After you configure a data source, you can query it to build dashboards. For example, you can query a Prometheus data source to display CPU metrics or query CloudWatch to visualize AWS infrastructure performance.
+Every data source is powered by a data source plugin. Grafana comes bundled with core data source plugins (like Prometheus, Loki, and MySQL), and hundreds more are available in the [plugin catalog](https://grafana.com/grafana/plugins/) for systems ranging from databases and cloud providers to tools like Jira, GitHub, and Datadog. After you configure a data source, you can query it to build dashboards. For example, you can query a Prometheus data source to display CPU metrics or query CloudWatch to visualize AWS infrastructure performance.
 
 ## Plugins
 
@@ -47,15 +47,15 @@ A plugin extends Grafana’s core functionality. Plugins can add new data source
 
 Plugins come in three types:
 
-- **Data source plugins** connect Grafana to **external data sources**. While Grafana comes with several built-in core data sources (like Prometheus, Loki, and MySQL), data source plugins extend this by letting you access and work with data from additional external sources or third parties. Examples include MSSQL, Databricks, and MongoDB.
+- **Data source plugins** enable Grafana to connect to specific types of databases or services. Core data source plugins like Prometheus, Loki, and MySQL come bundled with Grafana. You can install additional data source plugins to connect to other systems. Examples include MSSQL, Databricks, and MongoDB.
 
 - **Panel plugins** control how data appears in Grafana dashboards. While Grafana comes with several built-in panel types (like graphs, single stats, and tables), panel plugins extend this by providing specialized ways to display data. Examples include pie chart, candlestick, and traffic light. Note that in some cases, panels don't rely on a data source at all. The **Text** panel can render static or templated content without querying data. Panels can also support user-driven actions. For example, the **Button** panel can trigger workflows or external calls.
 
-- **App plugins** allow you to bundle data sources and panel plugins within a single package. They enable you to create custom pages within Grafana that can function like dashboards, providing dedicated spaces for documentation, sign-up forms, custom UI extensions, and integration with other services via HTTP. Cloud apps built as app plugins offer out-of-the-box observability solutions, such as Azure Cloud Native Monitoring and Redis Application, that provide comprehensive monitoring capabilities compared to standalone integrations.
+- **App plugins** package data sources, panels, and custom pages into a single install. When you add an app plugin, you get a purpose-built experience for a specific use case — for example, the Azure Cloud Native Monitoring app gives you pre-configured data sources, dashboards, and a dedicated management page for your Azure environment, all in one install. If you're a developer, you can also [build your own app plugin](https://grafana.com/developers/plugin-tools/how-to-guides/app-plugins/).
 
 ## Integrations
 
-_Integrations are exclusive to Grafana Cloud._ Integrations are pre-packaged monitoring solutions that bundle export instructions, scrape configurations for Alloy, pre-built dashboards, and alert and recording rules. They support a combination of metrics, logs, and potentially traces. Unlike standalone data sources, integrations provide an easy setup with tested configuration and ready-to-use dashboards and alerts. For example, a Linux integration provides instructions and configuration for collecting metrics and logs from your hosts, creates dashboards for monitoring, and sets up common alerts—all working together out of the box.
+_Integrations are exclusive to Grafana Cloud._ Integrations are pre-packaged monitoring solutions that bundle data collection instructions, pre-built dashboards, and alert and recording rules. They support metrics, logs, and traces. Unlike standalone data sources, integrations provide an easy setup with tested configuration and ready-to-use dashboards and alerts. For example, a Linux integration provides instructions and configuration for collecting metrics and logs from your hosts, creates dashboards for monitoring, and sets up common alerts—all working together out of the box.
 
 ## When to use each
 
@@ -79,10 +79,10 @@ Use an integration when:
 
 ## Relationships and interactions
 
-Data sources, plugins, and integrations work together to build observability solutions. The following diagram shows two paths: the manual path where you install plugins and configure data sources yourself, and the integration path where Grafana Cloud provides a pre-packaged setup.
+Data sources, plugins, and integrations work together to build observability solutions. The following diagram shows two paths: the custom path where you install plugins and configure data sources yourself, and the integration path where Grafana Cloud provides a pre-packaged setup.
 
 ```text
-  MANUAL PATH                      INTEGRATION PATH
+  CUSTOM PATH                      INTEGRATION PATH
   (Self-hosted & Cloud)            (Cloud only)
 
   ┌────────────────────┐           ┌────────────────────┐
@@ -91,7 +91,7 @@ Data sources, plugins, and integrations work together to build observability sol
             │ enables                        │ bundles
             ▼                                ▼
   ┌────────────────────┐           ┌────────────────────┐
-  │  Configure data    │           │  Alloy config,     │
+  │  Configure data    │           │  Collection config, │
   │  source (URL,      │           │  dashboards,       │
   │  auth, endpoint)   │           │  alerts, rules     │
   └─────────┬──────────┘           └─────────┬──────────┘
@@ -99,14 +99,16 @@ Data sources, plugins, and integrations work together to build observability sol
             ▼                                ▼
   ┌────────────────────┐           ┌────────────────────┐
   │  External backend  │           │  Grafana Cloud     │
-  │  (Prometheus,      │           │  backends (Mimir,  │
-  │   MySQL, etc.)     │           │  Loki, Tempo)      │
+  │  (Prometheus,      │           │  managed backends  │
+  │   MySQL, etc.)     │           │  (metrics, logs,   │
+  │                    │           │   traces)          │
   └─────────┬──────────┘           └─────────┬──────────┘
             │ queries                        │ queries
             ▼                                ▼
   ┌────────────────────┐           ┌────────────────────┐
-  │  Build panels and  │           │  Pre-built         │
-  │  dashboards        │           │  dashboards/alerts │
+  │  Build your own    │           │  Ready-to-use      │
+  │  panels and        │           │  dashboards and    │
+  │  dashboards        │           │  alerts            │
   └────────────────────┘           └────────────────────┘
 ```
 
@@ -151,7 +153,7 @@ No, integrations are much more than just dashboards. While dashboards are part o
 
 Data sources query data where it already lives. They connect Grafana to an external system or database, such as Prometheus, MySQL, or Elasticsearch, and fetch data on demand. You keep full control over your own data stores, schemas, and retention policies.
 
-In contrast, integrations focus on getting data into Grafana Cloud’s hosted backends. They ingest metrics, logs, and traces into systems like Mimir, Loki, or Tempo, using pre-configured agents and pipelines. Instead of querying an external database, Grafana queries its own managed storage where the integration has placed the data.
+In contrast, integrations focus on getting data into Grafana Cloud’s managed backends for metrics, logs, and traces. They ingest telemetry using pre-configured agents and pipelines. Instead of querying an external database, Grafana queries its own managed storage where the integration has placed the data.
 
 ## Summary reference
 
