@@ -1,4 +1,5 @@
 import { config, reportInteraction } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { createWarningNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
 import { dispatch } from 'app/store/store';
@@ -41,13 +42,13 @@ const getRichHistoryIndexedDBStorage = (): RichHistoryStorage => {
 /**
  * Returns the appropriate storage backend for query history operations.
  *
- * Note: When `queryHistoryLocalOnly` is toggled off after IndexedDB use, data stored in
+ * Note: When `queryHistory.localOnly` is toggled off after IndexedDB use, data stored in
  * IndexedDB remains but becomes inaccessible. If localStorage cleanup has already run,
  * the user will see empty history until the flag is re-enabled. This is expected behavior
  * for an experimental feature flag.
  */
 export const getRichHistoryStorage = (): RichHistoryStorage => {
-  if (config.featureToggles?.queryHistoryLocalOnly) {
+  if (getFeatureFlagClient().getBooleanValue(FlagKeys.QueryHistoryLocalOnly, false)) {
     return getRichHistoryIndexedDBStorage();
   }
   return config.queryHistoryEnabled ? richHistoryRemoteStorage : richHistoryLocalStorage;
@@ -55,7 +56,7 @@ export const getRichHistoryStorage = (): RichHistoryStorage => {
 
 // for autocomplete read and write operations
 export const getLocalRichHistoryStorage = (): RichHistoryStorage => {
-  if (config.featureToggles?.queryHistoryLocalOnly) {
+  if (getFeatureFlagClient().getBooleanValue(FlagKeys.QueryHistoryLocalOnly, false)) {
     return getRichHistoryIndexedDBStorage();
   }
   return richHistoryLocalStorage;
@@ -71,7 +72,7 @@ interface RichHistorySupportedFeatures {
 }
 
 export const supportedFeatures = (): RichHistorySupportedFeatures => {
-  if (config.featureToggles?.queryHistoryLocalOnly) {
+  if (getFeatureFlagClient().getBooleanValue(FlagKeys.QueryHistoryLocalOnly, false)) {
     return {
       availableFilters: [SortOrder.Descending, SortOrder.Ascending, SortOrder.DatasourceAZ, SortOrder.DatasourceZA],
       lastUsedDataSourcesAvailable: true,

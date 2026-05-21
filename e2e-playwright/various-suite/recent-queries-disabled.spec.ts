@@ -1,12 +1,10 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
 test.use({
-  featureToggles: {
-    queryHistoryLocalOnly: true,
-  },
   openFeature: {
     flags: {
-      queryHistoryRecentQueriesUI: false,
+      'queryHistory.localOnly': true,
+      'queryHistory.recentQueriesUI': false,
     },
   },
 });

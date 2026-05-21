@@ -12,7 +12,8 @@ declare module "@openfeature/core" {
   export type BooleanFlagKey =
     | "lokiShardSplitting"
     | "faroSessionReplay"
-    | "queryHistoryRecentQueriesUI"
+    | "queryHistory.localOnly"
+    | "queryHistory.recentQueriesUI"
     | "provisioningFolderMetadata"
     | "provisioning.readmes"
     | "stateTimeline.nameAboveBars"

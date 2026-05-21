@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useState } from 'react';
 
 import { CoreApp, type GrafanaTheme2 } from '@grafana/data';
 import { Components, selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
+import { useFlagQueryHistoryRecentQueriesUI } from '@grafana/runtime/internal';
 import { ToolbarButton, useTheme2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -49,7 +49,7 @@ export function SecondaryActions({
   const styles = getStyles(theme);
   const { queryLibraryEnabled, openDrawer: openQueryLibraryDrawer } = useQueryLibraryContext();
   const { drawerOpened, setDrawerOpened } = useQueriesDrawerContext();
-  const recentQueriesUI = useBooleanFlagValue('queryHistoryRecentQueriesUI', false);
+  const recentQueriesUI = useFlagQueryHistoryRecentQueriesUI();
   const [recentQueriesOpen, setRecentQueriesOpen] = useState(false);
   const canReadQueries = config.featureToggles.savedQueriesRBAC
     ? contextSrv.hasPermission(AccessControlAction.QueriesRead)

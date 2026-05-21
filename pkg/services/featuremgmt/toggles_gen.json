@@ -5343,9 +5343,38 @@
     },
     {
       "metadata": {
+        "name": "queryHistory.localOnly",
+        "resourceVersion": "1779392899441",
+        "creationTimestamp": "2026-05-21T19:48:19Z"
+      },
+      "spec": {
+        "description": "Store query history in browser IndexedDB instead of server-side",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-logs",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "queryHistory.recentQueriesUI",
+        "resourceVersion": "1779392899441",
+        "creationTimestamp": "2026-05-21T19:48:19Z"
+      },
+      "spec": {
+        "description": "Replace the Query History drawer with a new Recent Queries modal UI",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-logs",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "queryHistoryLocalOnly",
         "resourceVersion": "1774558005873",
-        "creationTimestamp": "2026-03-26T20:46:45Z"
+        "creationTimestamp": "2026-03-26T20:46:45Z",
+        "deletionTimestamp": "2026-05-21T19:48:19Z"
       },
       "spec": {
         "description": "Store query history in browser IndexedDB instead of server-side",
@@ -5359,7 +5388,8 @@
       "metadata": {
         "name": "queryHistoryRecentQueriesUI",
         "resourceVersion": "1777931263870",
-        "creationTimestamp": "2026-05-04T21:47:43Z"
+        "creationTimestamp": "2026-05-04T21:47:43Z",
+        "deletionTimestamp": "2026-05-21T19:48:19Z"
       },
       "spec": {
         "description": "Replace the Query History drawer with a new Recent Queries modal UI",

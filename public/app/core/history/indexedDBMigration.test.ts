@@ -17,7 +17,7 @@ interface MockQuery extends DataQuery {
 
 const mockFetch = jest.fn();
 
-const mockConfig = { queryHistoryEnabled: false, featureToggles: { queryHistoryLocalOnly: true } };
+const mockConfig = { queryHistoryEnabled: false };
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),

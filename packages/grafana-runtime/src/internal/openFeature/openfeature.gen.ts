@@ -77,8 +77,10 @@ export const FlagKeys = {
   QueryEditorNext: "queryEditorNext",
   /** Enables multi-select UX (card checkboxes and bulk-actions footer) in the next query editor */
   QueryEditorNextMultiSelect: "queryEditorNextMultiSelect",
+  /** Store query history in browser IndexedDB instead of server-side */
+  QueryHistoryLocalOnly: "queryHistory.localOnly",
   /** Replace the Query History drawer with a new Recent Queries modal UI */
-  QueryHistoryRecentQueriesUI: "queryHistoryRecentQueriesUI",
+  QueryHistoryRecentQueriesUI: "queryHistory.recentQueriesUI",
   /** Enables recently viewed dashboards section in the browsing dashboard page */
   RecentlyViewedDashboards: "recentlyViewedDashboards",
   /** Enables reporting for any page in Grafana */
@@ -446,14 +448,25 @@ export const useFlagQueryEditorNextMultiSelect = (options?: ReactFlagEvaluationO
 };
 
 /**
+ * Store query history in browser IndexedDB instead of server-side
+ *
+ * **Details:**
+ * - flag key: `queryHistory.localOnly`
+ * - default value: `false`
+ */
+export const useFlagQueryHistoryLocalOnly = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("queryHistory.localOnly", false, options).value;
+};
+
+/**
  * Replace the Query History drawer with a new Recent Queries modal UI
  *
  * **Details:**
- * - flag key: `queryHistoryRecentQueriesUI`
+ * - flag key: `queryHistory.recentQueriesUI`
  * - default value: `false`
  */
 export const useFlagQueryHistoryRecentQueriesUI = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("queryHistoryRecentQueriesUI", false, options).value;
+  return useFlag("queryHistory.recentQueriesUI", false, options).value;
 };
 
 /**

@@ -274,7 +274,7 @@ export default class RichHistoryIndexedDBStorage implements RichHistoryStorage, 
     // 3. Sort
     results = this.sortQueries(results, filters.sortOrder);
 
-    // TODO(v14): Re-enable localStorage cleanup once `queryHistoryLocalOnly` and
+    // TODO(v14): Re-enable localStorage cleanup once `queryHistory.localOnly` and
     // the remote API are retired. localStorage is preserved as the rollback path
     // while the flag still gates IndexedDB usage.
 

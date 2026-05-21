@@ -6,12 +6,12 @@ type Fixtures = Parameters<Parameters<typeof test>[2]>[0];
 
 test.use({
   featureToggles: {
-    queryHistoryLocalOnly: true,
     queryLibrary: false,
   },
   openFeature: {
     flags: {
-      queryHistoryRecentQueriesUI: true,
+      'queryHistory.localOnly': true,
+      'queryHistory.recentQueriesUI': true,
     },
   },
 });
