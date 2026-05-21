@@ -6,6 +6,7 @@ import { type ComponentTypeWithExtensionMeta, PluginExtensionPoints, type Grafan
 import { t } from '@grafana/i18n';
 import { usePluginComponents } from '@grafana/runtime';
 import { ScrollContainer, Stack, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
+import { SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
 import { getRecentlyViewedDashboards } from 'app/features/browse-dashboards/api/recentlyViewed';
 import { useDashboardLocationInfo } from 'app/features/search/hooks/useDashboardLocationInfo';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
@@ -182,7 +183,7 @@ export function DashboardTabs() {
 
       {/* Render extension component tabs without background + scroller */}
       {extensionComponents
-        .filter((Component) => Component.meta.pluginId === 'grafana-setupguide-app')
+        .filter((Component) => Component.meta.pluginId === SETUPGUIDE_PLUGIN_ID)
         .map((Component, i) => (
           <DashboardExtensionTab key={i} Component={Component} registerTab={registerTab} activeTab={activeTab} />
         ))}

@@ -6,6 +6,7 @@ import { t } from '@grafana/i18n';
 import { config, renderLimitedComponents, usePluginComponents } from '@grafana/runtime';
 import { Box, Stack, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
 import { isOnPrem } from 'app/core/utils/isOnPrem';
 
 import { DashboardTabs } from './DashboardTabs/DashboardTabs';
@@ -51,7 +52,7 @@ export default function HomePage() {
             {renderLimitedComponents({
               props: {},
               components: preComponents,
-              pluginId: 'grafana-setupguide-app',
+              pluginId: SETUPGUIDE_PLUGIN_ID,
             })}
             <DashboardTabs />
           </Box>
@@ -59,7 +60,7 @@ export default function HomePage() {
           {renderLimitedComponents({
             props: {},
             components: extraComponents,
-            pluginId: 'grafana-setupguide-app',
+            pluginId: SETUPGUIDE_PLUGIN_ID,
             wrapper: ({ children }) => (
               <div className={styles.extra}>
                 <Box backgroundColor="canvas" borderRadius="default" padding={4}>
