@@ -42,6 +42,7 @@ import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { type TabItem } from '../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
 import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
+import { PanelIntentChips } from '../scene/PanelIntentChips';
 import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { isLinkEditable } from '../settings/links/utils';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
@@ -291,6 +292,21 @@ export function vizPanelToPanel(
 
   if (!panel.transparent) {
     delete panel.transparent;
+  }
+
+  // Preserve the `intent` block (Dashboard Intent / Phase C) across the
+  // save round-trip. We carry it as a title-item on the VizPanel so the
+  // chips render at the panel header; on save we lift the intent back
+  // out of that title item so the dashboard JSON keeps it under
+  // `panels[].intent` for downstream consumers (assistant, exports, etc).
+  const titleItems = vizPanel.state.titleItems;
+  if (Array.isArray(titleItems)) {
+    const intentChips = titleItems.find(
+      (item): item is PanelIntentChips => item instanceof PanelIntentChips
+    );
+    if (intentChips) {
+      panel.intent = intentChips.state.intent;
+    }
   }
 
   return panel;

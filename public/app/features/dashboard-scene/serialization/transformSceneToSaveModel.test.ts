@@ -464,6 +464,39 @@ describe('transformSceneToSaveModel', () => {
         },
       ]);
     });
+
+    it('Given panel with intent block — round-trips intent in the save model', () => {
+      // Dashboard Intent (Phase C) lives under `panel.intent`. The scene
+      // carries it as a PanelIntentChips title item so the chips render
+      // at the panel header; saving must lift it back out so consumers
+      // (assistant, exports, version history) see the same intent block
+      // they would have seen before the scene round-trip.
+      const intent = {
+        schemaVersion: 1,
+        purpose: 'Track checkout p99 latency.',
+        owner: '@checkout-team',
+        expectedBehavior: {
+          normalRange: 'p99 < 250ms',
+          alertThreshold: 'p99 > 500ms for 5m',
+        },
+        failureModes: [{ tag: 'db-slow', description: 'DB latency spike.' }],
+        provenance: {
+          purpose: 'author-written',
+          'expected_behavior.normal_range': 'author-written',
+          'expected_behavior.alert_threshold': 'lifted-from-alert',
+          failure_modes: 'assistant-unconfirmed',
+        },
+      };
+      const gridItem = buildGridItemFromPanelSchema({
+        title: 'p99 latency',
+        type: 'timeseries',
+        gridPos: { x: 0, y: 0, w: 12, h: 8 },
+        intent,
+      });
+
+      const saveModel = gridItemToPanel(gridItem);
+      expect(saveModel.intent).toEqual(intent);
+    });
   });
 
   describe('Library panels', () => {
