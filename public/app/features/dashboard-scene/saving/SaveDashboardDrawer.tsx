@@ -120,14 +120,14 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
     if (saveDashboardTemplate) {
       const SaveDashboardTemplateForm = getSaveDashboardTemplateForm();
       if (SaveDashboardTemplateForm) {
-        return <SaveDashboardTemplateForm dashboard={dashboard} changeInfo={changeInfo} />;
+        return <SaveDashboardTemplateForm dashboard={dashboard} drawer={model} changeInfo={changeInfo} />;
       }
     }
 
     if (saveAsDashboardTemplate) {
       const SaveAsTemplateForm = getSaveAsTemplateForm();
       if (SaveAsTemplateForm) {
-        return <SaveAsTemplateForm dashboard={dashboard} changeInfo={changeInfo} />;
+        return <SaveAsTemplateForm dashboard={dashboard} />;
       }
     }
 
@@ -154,7 +154,12 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
   };
 
   return (
-    <Drawer title={title} subtitle={dashboard.state.title} onClose={model.onClose} tabs={tabs}>
+    <Drawer
+      title={title}
+      subtitle={dashboard.state.title}
+      onClose={model.onClose}
+      tabs={saveAsDashboardTemplate ? undefined : tabs}
+    >
       {renderBody()}
     </Drawer>
   );
