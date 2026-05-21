@@ -65,16 +65,16 @@ Grafana supports two broad kinds of variables:
 
 Choose a variable type based on how you want Grafana to get the value and how users interact with it.
 
-| Variable type | Use when |
-| ------------- | ---------- |
-| Query | The list of values comes from a data source query, such as server names, metric names, label values, or data centers. |
-| Custom | You want to define a fixed list of values manually. |
-| Text box | Viewers need to enter a free-form value. |
-| Constant | A dashboard needs a reusable value that viewers don't change. |
-| Data source | Viewers need to switch a dashboard or query between data source instances. |
-| Interval | Viewers need to change the time grouping or aggregation interval in queries. |
-| Filters | Viewers need dashboard-wide key/value filters for supported data sources. |
-| Switch | Viewers need to toggle between two configured values. |
+| Variable type | Use when                                                                                                              |
+| ------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Query         | The list of values comes from a data source query, such as server names, metric names, label values, or data centers. |
+| Custom        | You want to define a fixed list of values manually.                                                                   |
+| Text box      | Viewers need to enter a free-form value.                                                                              |
+| Constant      | A dashboard needs a reusable value that viewers don't change.                                                         |
+| Data source   | Viewers need to switch a dashboard or query between data source instances.                                            |
+| Interval      | Viewers need to change the time grouping or aggregation interval in queries.                                          |
+| Filters       | Viewers need dashboard-wide key/value filters for supported data sources.                                             |
+| Switch        | Viewers need to toggle between two configured values.                                                                 |
 
 For the complete list of variable settings and type-specific steps, refer to [Add variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/).
 

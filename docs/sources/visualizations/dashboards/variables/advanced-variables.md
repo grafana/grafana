@@ -55,7 +55,7 @@ To create a custom variable with multiple properties, define a JSON array, like 
   { "value": "1", "text": "Development", "aws": "dev", "azure": "development", "google": "googledev" },
   { "value": "2", "text": "Staging", "aws": "stag", "azure": "staging", "google": "googlestag" },
   { "value": "3", "text": "Production", "aws": "prod", "azure": "production", "google": "googleprod" }
-] 
+]
 ```
 
 This is how those values are displayed in a preview:
@@ -77,11 +77,9 @@ For PostgreSQL, refer to [PostgreSQL template variables](https://grafana.com/doc
 For other data sources, refer to the relevant [Data sources documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/) for preinstalled data source plugins.
 For configuration information on all other data source plugins, refer to the [Plugins documentation](https://grafana.com/docs/plugins/).
 
-
-
 ## Chained variables
 
-_Chained variables_, also called _linked variables_ or _nested variables_, are query variables with one or more other variables in their variable query. 
+_Chained variables_, also called _linked variables_ or _nested variables_, are query variables with one or more other variables in their variable query.
 
 Chained variables create dependent relationships where the options available in one variable depend on the selections made in another.
 This pattern enables cascading filters that help users drill down through hierarchical data structures.
@@ -217,7 +215,7 @@ The dashboard stops at two levels, but you could keep going. For example, if you
 SHOW TAG VALUES WITH KEY = "cpu" WHERE "datacenter" =~ /^$datacenter$/ AND "host" =~ /^$host$/
 ```
 
-This query  returns the CPU metrics for the selected host.
+This query returns the CPU metrics for the selected host.
 
 Depending on what variable options the user selects, you could get queries like:
 
