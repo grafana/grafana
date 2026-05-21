@@ -10,8 +10,10 @@ import (
 
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime"
+	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder/bedrock"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder/vertex"
@@ -21,24 +23,31 @@ import (
 // when no provider is configured. Callers (the search server) treat nil as
 // "vector search is disabled" and surface Unimplemented to clients.
 //
+// vectorMetrics is optional; when non-nil its EmbedDuration histogram is
+// wired into the constructed Embedder so each provider call is timed.
+//
 // The configured provider's connection fields (project ID for Vertex, region
 // + credentials for Bedrock) must be present when the provider is set;
 // missing required fields return an error so misconfiguration fails at
 // startup, not at first request.
-func ProvideEmbedder(cfg *setting.Cfg) (*embedder.Embedder, error) {
+func ProvideEmbedder(cfg *setting.Cfg, vectorMetrics *resource.VectorMetrics) (*embedder.Embedder, error) {
+	var hist *prometheus.HistogramVec
+	if vectorMetrics != nil {
+		hist = vectorMetrics.EmbedDuration
+	}
 	switch cfg.EmbeddingProvider {
 	case "":
 		return nil, nil
 	case "vertex":
-		return newVertexEmbedder(cfg)
+		return newVertexEmbedder(cfg, hist)
 	case "bedrock":
-		return newBedrockEmbedder(cfg)
+		return newBedrockEmbedder(cfg, hist)
 	default:
 		return nil, fmt.Errorf("unknown embedding provider %q (expected vertex, bedrock, or empty)", cfg.EmbeddingProvider)
 	}
 }
 
-func newVertexEmbedder(cfg *setting.Cfg) (*embedder.Embedder, error) {
+func newVertexEmbedder(cfg *setting.Cfg, duration *prometheus.HistogramVec) (*embedder.Embedder, error) {
 	if cfg.VertexProjectID == "" {
 		return nil, fmt.Errorf("vector_embedder.provider=vertex requires vertex_project_id")
 	}
@@ -46,10 +55,11 @@ func newVertexEmbedder(cfg *setting.Cfg) (*embedder.Embedder, error) {
 	if err != nil {
 		return nil, fmt.Errorf("vertex client: %w", err)
 	}
-	dense := vertex.NewDenseEmbedder(client, cfg.VertexModel, cfg.VertexDimensions)
+	model := "vertex/" + cfg.VertexModel
+	dense := vertex.NewDenseEmbedder(client, cfg.VertexModel, cfg.VertexDimensions, cfg.VertexBatchSize)
 	return &embedder.Embedder{
-		TextEmbedder: dense,
-		Model:        "vertex/" + cfg.VertexModel,
+		TextEmbedder: embedder.Instrument(dense, model, duration),
+		Model:        model,
 		VectorType:   embedder.VectorTypeDense,
 		Metric:       embedder.CosineDistance,
 		Dimensions:   uint32(cfg.VertexDimensions),
@@ -57,7 +67,7 @@ func newVertexEmbedder(cfg *setting.Cfg) (*embedder.Embedder, error) {
 	}, nil
 }
 
-func newBedrockEmbedder(cfg *setting.Cfg) (*embedder.Embedder, error) {
+func newBedrockEmbedder(cfg *setting.Cfg, duration *prometheus.HistogramVec) (*embedder.Embedder, error) {
 	awsCfg, err := awsconfig.LoadDefaultConfig(context.Background(),
 		awsconfig.WithRegion(cfg.BedrockRegion),
 	)
@@ -66,10 +76,11 @@ func newBedrockEmbedder(cfg *setting.Cfg) (*embedder.Embedder, error) {
 	}
 	rt := bedrockruntime.NewFromConfig(awsCfg)
 	client := bedrock.NewClient(rt)
-	dense := bedrock.NewDenseEmbedder(client, cfg.BedrockModel, cfg.BedrockDimensions)
+	model := "bedrock/" + cfg.BedrockModel
+	dense := bedrock.NewDenseEmbedder(client, cfg.BedrockModel, cfg.BedrockDimensions, cfg.VertexBatchSize)
 	return &embedder.Embedder{
-		TextEmbedder: dense,
-		Model:        "bedrock/" + cfg.BedrockModel,
+		TextEmbedder: embedder.Instrument(dense, model, duration),
+		Model:        model,
 		VectorType:   embedder.VectorTypeDense,
 		Metric:       embedder.CosineDistance,
 		Dimensions:   uint32(cfg.BedrockDimensions),
