@@ -33,7 +33,7 @@ import { useResourcePulseStream } from '../hooks/useResourcePulseStream';
 import { type PulseThread } from '../types';
 import { type PanelSuggestion } from '../utils/lookups';
 
-import { PulseComposer, type ResourceMentionSource } from './PulseComposer';
+import { PulseComposer, type CurrentTimeRange, type ResourceMentionSource } from './PulseComposer';
 import { PulseRenderer } from './PulseRenderer';
 import { PulseThreadView } from './PulseThreadView';
 
@@ -52,6 +52,11 @@ interface Props {
   resourceMentions?: ResourceMentionSource[];
   currentUserId?: number;
   isAdmin?: boolean;
+  /** Dashboard's live time range, forwarded to the composer so `@now`
+   *  / `@time` insertions can freeze the current window into a chip.
+   *  Sampled at render time — the chip captures whatever was current
+   *  when the user selected the suggestion. */
+  currentTimeRange?: CurrentTimeRange;
   onMentionPanel?: (panelId: number) => void;
   onPanelFilterChange?: (panelId: number | undefined) => void;
   onAuthorFilterChange?: (userId: number | undefined) => void;
@@ -98,6 +103,7 @@ export function PulseDrawerContent({
   resourceMentions,
   currentUserId,
   isAdmin = false,
+  currentTimeRange,
   onMentionPanel,
   onPanelFilterChange,
   onAuthorFilterChange,
@@ -336,6 +342,7 @@ export function PulseDrawerContent({
           resourceMentions={resourceMentions}
           currentUserId={currentUserId}
           isAdmin={isAdmin}
+          currentTimeRange={currentTimeRange}
           onMentionPanel={onMentionPanel}
           onBack={() => setActiveThreadUID(null)}
           onThreadDeleted={() => setActiveThreadUID(null)}
@@ -357,6 +364,7 @@ export function PulseDrawerContent({
             autoFocus
             pending={createThreadState.isLoading}
             currentUserId={currentUserId}
+            currentTimeRange={currentTimeRange}
             showTitle
             titlePlaceholder={t(
               'pulse.drawer.thread-title-placeholder',
@@ -533,7 +541,11 @@ function ThreadCard({ thread, panelTitlesById, onClick }: ThreadCardProps): Reac
       <Card.Heading>
         <div className={styles.previewBox}>
           {thread.previewBody ? (
-            <PulseRenderer body={thread.previewBody} panelTitlesById={panelTitlesById} />
+            <PulseRenderer
+              body={thread.previewBody}
+              panelTitlesById={panelTitlesById}
+              dashboardUID={thread.resourceUID}
+            />
           ) : (
             headingFallback
           )}

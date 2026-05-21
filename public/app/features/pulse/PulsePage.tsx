@@ -282,7 +282,7 @@ function ThreadCell({ thread }: { thread: PulseThread }): React.ReactElement {
       </TextLink>
       {showPreviewBody && thread.previewBody ? (
         <div className={styles.preview}>
-          <PulseRenderer body={thread.previewBody} />
+          <PulseRenderer body={thread.previewBody} dashboardUID={thread.resourceUID} />
         </div>
       ) : null}
       {thread.closed && (

@@ -5,7 +5,12 @@ import { renderMarkdown, type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 import { type PulseBody, type PulseBodyNode, type PulseMention } from '../types';
-import { collectMentions, isSafeUrl, rewritePanelMentionsInMarkdown } from '../utils/body';
+import {
+  collectMentions,
+  isSafeUrl,
+  rewritePanelMentionsInMarkdown,
+  rewriteTimeMentionsInMarkdown,
+} from '../utils/body';
 
 import { MentionChip } from './MentionChip';
 
@@ -20,6 +25,14 @@ interface Props {
    * historical displayName.
    */
   panelTitlesById?: ReadonlyMap<number, string>;
+  /**
+   * UID of the dashboard this thread belongs to. When set, `time`
+   * mention chips render as anchor tags that navigate to the
+   * dashboard with the chip's frozen `from`/`to` applied. Omit on
+   * surfaces with no dashboard target (notification previews) — the
+   * chip then falls back to a static label.
+   */
+  dashboardUID?: string;
 }
 
 /**
@@ -29,7 +42,7 @@ interface Props {
  * bodies only carry the validated AST; we walk those node-by-node so
  * we never call dangerouslySetInnerHTML on unsanitized content.
  */
-export function PulseRenderer({ body, onMentionClick, panelTitlesById }: Props): ReactNode {
+export function PulseRenderer({ body, onMentionClick, panelTitlesById, dashboardUID }: Props): ReactNode {
   const styles = useStyles2(getStyles);
   if (!body) {
     return null;
@@ -39,11 +52,17 @@ export function PulseRenderer({ body, onMentionClick, panelTitlesById }: Props):
     // the markdown source. Rewrite the source so renamed panels render
     // their current title — the AST mention sidecar tells us which
     // tokens were panel chips at compose time, so we don't risk
-    // touching unrelated backticked text.
-    const source =
-      panelTitlesById && panelTitlesById.size > 0
-        ? rewritePanelMentionsInMarkdown(body.markdown, collectMentions(body), panelTitlesById)
-        : body.markdown;
+    // touching unrelated backticked text. Time chips get a second
+    // rewrite that turns them into navigable anchor tags scoped to
+    // the source dashboard.
+    const mentions = collectMentions(body);
+    let source = body.markdown;
+    if (panelTitlesById && panelTitlesById.size > 0) {
+      source = rewritePanelMentionsInMarkdown(source, mentions, panelTitlesById);
+    }
+    if (dashboardUID) {
+      source = rewriteTimeMentionsInMarkdown(source, mentions, dashboardUID);
+    }
     // renderMarkdown returns sanitized HTML; the surrounding `<div>` is
     // styled to scope mention-style inline-code rendering to the pulse
     // body so we don't bleed into the rest of the page.
@@ -53,7 +72,14 @@ export function PulseRenderer({ body, onMentionClick, panelTitlesById }: Props):
   if (!body.root) {
     return null;
   }
-  return <RenderNode node={body.root} onMentionClick={onMentionClick} panelTitlesById={panelTitlesById} />;
+  return (
+    <RenderNode
+      node={body.root}
+      onMentionClick={onMentionClick}
+      panelTitlesById={panelTitlesById}
+      dashboardUID={dashboardUID}
+    />
+  );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -97,6 +123,19 @@ const getStyles = (theme: GrafanaTheme2) => ({
       color: theme.colors.primary.text,
       textDecoration: 'underline',
     },
+    // Time chips render as `<a><code>@<label></code></a>`. The chip
+    // styling on `<code>` already provides the affordance, so suppress
+    // the link's underline and let the code's color/background win.
+    // Hover keeps the underline so the link nature stays discoverable.
+    '& a code': {
+      textDecoration: 'none',
+    },
+    '& a:has(code)': {
+      textDecoration: 'none',
+    },
+    '& a:hover code': {
+      textDecoration: 'underline',
+    },
   }),
 });
 
@@ -104,15 +143,16 @@ interface NodeProps {
   node: PulseBodyNode;
   onMentionClick?: (mention: PulseMention) => void;
   panelTitlesById?: ReadonlyMap<number, string>;
+  dashboardUID?: string;
 }
 
-function RenderNode({ node, onMentionClick, panelTitlesById }: NodeProps): ReactNode {
+function RenderNode({ node, onMentionClick, panelTitlesById, dashboardUID }: NodeProps): ReactNode {
   switch (node.type) {
     case 'root':
       return (
         <>
           {node.children?.map((c, i) => (
-            <RenderNode key={i} node={c} onMentionClick={onMentionClick} panelTitlesById={panelTitlesById} />
+            <RenderNode key={i} node={c} onMentionClick={onMentionClick} panelTitlesById={panelTitlesById} dashboardUID={dashboardUID} />
           ))}
         </>
       );
@@ -121,7 +161,7 @@ function RenderNode({ node, onMentionClick, panelTitlesById }: NodeProps): React
       return (
         <p style={{ margin: '0 0 0.5em' }}>
           {node.children?.map((c, i) => (
-            <RenderNode key={i} node={c} onMentionClick={onMentionClick} panelTitlesById={panelTitlesById} />
+            <RenderNode key={i} node={c} onMentionClick={onMentionClick} panelTitlesById={panelTitlesById} dashboardUID={dashboardUID} />
           ))}
         </p>
       );
@@ -130,7 +170,7 @@ function RenderNode({ node, onMentionClick, panelTitlesById }: NodeProps): React
       return (
         <blockquote style={{ borderLeft: '3px solid currentColor', margin: 0, paddingLeft: '0.75em', opacity: 0.8 }}>
           {node.children?.map((c, i) => (
-            <RenderNode key={i} node={c} onMentionClick={onMentionClick} panelTitlesById={panelTitlesById} />
+            <RenderNode key={i} node={c} onMentionClick={onMentionClick} panelTitlesById={panelTitlesById} dashboardUID={dashboardUID} />
           ))}
         </blockquote>
       );
@@ -139,7 +179,7 @@ function RenderNode({ node, onMentionClick, panelTitlesById }: NodeProps): React
       return (
         <code style={{ background: 'rgba(127,127,127,0.15)', padding: '0 4px', borderRadius: 3 }}>
           {node.children?.map((c, i) => (
-            <RenderNode key={i} node={c} onMentionClick={onMentionClick} panelTitlesById={panelTitlesById} />
+            <RenderNode key={i} node={c} onMentionClick={onMentionClick} panelTitlesById={panelTitlesById} dashboardUID={dashboardUID} />
           ))}
         </code>
       );
@@ -154,7 +194,14 @@ function RenderNode({ node, onMentionClick, panelTitlesById }: NodeProps): React
       if (!node.mention) {
         return null;
       }
-      return <MentionChip mention={node.mention} onClick={onMentionClick} panelTitlesById={panelTitlesById} />;
+      return (
+        <MentionChip
+          mention={node.mention}
+          onClick={onMentionClick}
+          panelTitlesById={panelTitlesById}
+          dashboardUID={dashboardUID}
+        />
+      );
 
     case 'link': {
       const safe = isSafeUrl(node.url ?? '');
@@ -164,7 +211,7 @@ function RenderNode({ node, onMentionClick, panelTitlesById }: NodeProps): React
         return (
           <Fragment>
             {node.children?.map((c, i) => (
-              <RenderNode key={i} node={c} onMentionClick={onMentionClick} panelTitlesById={panelTitlesById} />
+              <RenderNode key={i} node={c} onMentionClick={onMentionClick} panelTitlesById={panelTitlesById} dashboardUID={dashboardUID} />
             ))}
           </Fragment>
         );
@@ -172,7 +219,7 @@ function RenderNode({ node, onMentionClick, panelTitlesById }: NodeProps): React
       return (
         <a href={safe} target="_blank" rel="noopener noreferrer">
           {node.children?.map((c, i) => (
-            <RenderNode key={i} node={c} onMentionClick={onMentionClick} panelTitlesById={panelTitlesById} />
+            <RenderNode key={i} node={c} onMentionClick={onMentionClick} panelTitlesById={panelTitlesById} dashboardUID={dashboardUID} />
           ))}
         </a>
       );
@@ -184,7 +231,7 @@ function RenderNode({ node, onMentionClick, panelTitlesById }: NodeProps): React
       return (
         <Fragment>
           {node.children?.map((c, i) => (
-            <RenderNode key={i} node={c} onMentionClick={onMentionClick} panelTitlesById={panelTitlesById} />
+            <RenderNode key={i} node={c} onMentionClick={onMentionClick} panelTitlesById={panelTitlesById} dashboardUID={dashboardUID} />
           ))}
         </Fragment>
       );

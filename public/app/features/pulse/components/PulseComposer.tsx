@@ -6,7 +6,7 @@ import { t } from '@grafana/i18n';
 import { Button, TabsBar, Tab, TabContent, useStyles2 } from '@grafana/ui';
 
 import { type PulseBody, type PulseMention } from '../types';
-import { bodyFromMarkdown, mentionMarkdownToken } from '../utils/body';
+import { bodyFromMarkdown, buildTimeMentionTarget, mentionMarkdownToken } from '../utils/body';
 import {
   filterPanels,
   filterResourceSuggestions,
@@ -35,6 +35,23 @@ export interface ResourceMentionSource {
   suggestions: ResourceSuggestion[];
 }
 
+/**
+ * CurrentTimeRange is the dashboard's live time window, surfaced to
+ * the composer so typing `@now` / `@time` inserts a chip pre-filled
+ * with that window. The chip freezes the range at insert time — no
+ * relative-time evaluation later — so a comment about a 1h window
+ * stays pinned to the exact period the author was looking at.
+ *
+ * `label` is the human-readable description (e.g. "Last 1 hour",
+ * "2026-05-21 14:00 – 15:00"); callers typically pass the output
+ * of `describeTimeRange` from `@grafana/data`.
+ */
+export interface CurrentTimeRange {
+  from: number;
+  to: number;
+  label: string;
+}
+
 interface Props {
   panels?: PanelSuggestion[];
   /** Opt-in resource-mention source (singular). Convenience wrapper
@@ -54,6 +71,11 @@ interface Props {
   pending?: boolean;
   /** Drop this user id from the @-mention suggestions (the current user). */
   currentUserId?: number;
+  /** Dashboard's current time range. When set, typing `@now` or `@time`
+   *  produces a one-row picker that inserts a time chip pinning the
+   *  pulse to that window. Omit on surfaces with no live time context
+   *  (e.g. the global Pulse overview) — the trigger then no-ops. */
+  currentTimeRange?: CurrentTimeRange;
   /** When true, render a required Title input above the textarea. Used
    *  for the parent pulse in a new thread so the thread row has a real
    *  summary instead of an auto-derived "first 80 chars of the body". */
@@ -101,6 +123,7 @@ export function PulseComposer({
   initialMentions,
   pending,
   currentUserId,
+  currentTimeRange,
   showTitle = false,
   initialTitle,
   titlePlaceholder,
@@ -268,19 +291,51 @@ export function PulseComposer({
     return out;
   }, [picker, panels, resourceMention, resourceMentions]);
 
+  // timeSuggestion is the synthetic top-row that the `@` picker renders
+  // when the query starts with `now` or `time`. Both keywords map to the
+  // same chip — discoverability for `@time`, muscle-memory for `@now`.
+  // The chip freezes the dashboard's current range at insert time so a
+  // later picker shift doesn't quietly mutate the comment's anchor.
+  const timeSuggestion: { label: string; sublabel?: string; mention: PulseMention } | null = useMemo(() => {
+    if (!picker || picker.kind !== 'user' || !currentTimeRange) {
+      return null;
+    }
+    const q = picker.query.toLowerCase();
+    // Require at least one character so a bare `@` (about to become
+    // `@alice`) doesn't surface the time row — it would otherwise
+    // become the default Enter target on every fresh mention.
+    if (q.length === 0 || !('now'.startsWith(q) || 'time'.startsWith(q))) {
+      return null;
+    }
+    return {
+      label: t('pulse.composer.time-suggestion-label', 'Insert dashboard time range'),
+      sublabel: currentTimeRange.label,
+      mention: {
+        kind: 'time',
+        targetId: buildTimeMentionTarget(currentTimeRange.from, currentTimeRange.to),
+        displayName: currentTimeRange.label,
+      },
+    };
+  }, [picker, currentTimeRange]);
+
   const suggestions: Array<{ label: string; sublabel?: string; mention: PulseMention }> = useMemo(() => {
     if (!picker) {
       return [];
     }
     if (picker.kind === 'user') {
-      return userSuggestions.map((u) => ({
+      const userRows = userSuggestions.map((u) => ({
         label: u.name || u.login,
         sublabel: u.login,
-        mention: { kind: 'user', targetId: String(u.id), displayName: u.name || u.login },
+        mention: { kind: 'user' as const, targetId: String(u.id), displayName: u.name || u.login },
       }));
+      // Time row sits at the top of the user-picker dropdown so the
+      // arrow-key default selection lands on it when the query is `now`
+      // / `time`, matching the user's expectation that hitting Enter
+      // after typing `@now` inserts the time chip.
+      return timeSuggestion ? [timeSuggestion, ...userRows] : userRows;
     }
     return resourceSuggestions;
-  }, [picker, userSuggestions, resourceSuggestions]);
+  }, [picker, userSuggestions, resourceSuggestions, timeSuggestion]);
 
   // Only the user picker has async/networked state — the panel picker
   // is filtered locally from props and goes empty silently. So status

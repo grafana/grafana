@@ -19,6 +19,10 @@ export type ResourceKind = 'dashboard';
  *   - `user`      → numeric user id, stringified
  *   - `panel`     → numeric panel id (dashboard-local), stringified
  *   - `dashboard` → dashboard UID (string)
+ *   - `time`      → frozen `<fromMs>|<toMs>` epoch range; click pushes
+ *                   `from=<ms>&to=<ms>` onto the dashboard URL. The
+ *                   backend validates the shape so renderers can
+ *                   split on `|` without re-validating.
  *
  * Mirrors `pkg/services/pulse/models.go::MentionKind`. Folder
  * mentions were dropped together with folder-as-a-resource; legacy
@@ -27,7 +31,7 @@ export type ResourceKind = 'dashboard';
  * navigable link. Future kinds (alert rule, SLO, etc.) widen this
  * union without reshaping existing rows.
  */
-export type MentionKind = 'user' | 'panel' | 'dashboard';
+export type MentionKind = 'user' | 'panel' | 'dashboard' | 'time';
 
 export type AuthorKind = 'user' | 'service_account';
 

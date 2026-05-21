@@ -21,7 +21,7 @@ import { type Pulse, type PulseBody, type PulseMention, type PulseThread } from 
 import { bodyToMarkdown } from '../utils/body';
 import { type PanelSuggestion } from '../utils/lookups';
 
-import { PulseComposer, type ResourceMentionSource } from './PulseComposer';
+import { PulseComposer, type CurrentTimeRange, type ResourceMentionSource } from './PulseComposer';
 import { PulseRenderer } from './PulseRenderer';
 
 interface Props {
@@ -44,6 +44,11 @@ interface Props {
   resourceMentions?: ResourceMentionSource[];
   currentUserId?: number;
   isAdmin?: boolean;
+  /** Dashboard's current time range, threaded to the reply / edit
+   *  composer so `@now` / `@time` insertions can pre-fill a chip
+   *  with the live window. Omit on surfaces (folder Pulse tab) that
+   *  don't have a single dashboard time context. */
+  currentTimeRange?: CurrentTimeRange;
   onMentionPanel?: (panelId: number) => void;
   onBack?: () => void;
   /** Called after the parent thread is deleted so the parent can navigate back. */
@@ -64,6 +69,7 @@ export function PulseThreadView({
   resourceMentions,
   currentUserId,
   isAdmin = false,
+  currentTimeRange,
   onMentionPanel,
   onBack,
   onThreadDeleted,
@@ -242,6 +248,8 @@ export function PulseThreadView({
             panels={panels}
             panelTitlesById={panelTitlesById}
             currentUserId={currentUserId}
+            currentTimeRange={currentTimeRange}
+            dashboardUID={thread.resourceUID}
             onMention={handleMention}
           />
         ))}
@@ -259,6 +267,7 @@ export function PulseThreadView({
           resourceMentions={resourceMentions}
           pending={addPulseState.isLoading}
           currentUserId={currentUserId}
+          currentTimeRange={currentTimeRange}
           onSubmit={handleSubmit}
           placeholder={replyPlaceholder(resourceMention, resourceMentions)}
         />
@@ -276,6 +285,11 @@ interface RowProps {
   panels?: PanelSuggestion[];
   panelTitlesById?: ReadonlyMap<number, string>;
   currentUserId?: number;
+  /** Forwarded to PulseRenderer so the row's time chips know which
+   *  dashboard to navigate to, and to PulseComposerForEdit so an
+   *  edit can drop fresh @now / @time chips. */
+  dashboardUID?: string;
+  currentTimeRange?: CurrentTimeRange;
   onMention: (m: PulseMention) => void;
 }
 
@@ -288,6 +302,8 @@ function PulseRow({
   panels,
   panelTitlesById,
   currentUserId,
+  dashboardUID,
+  currentTimeRange,
   onMention,
 }: RowProps): ReactNode {
   const styles = useStyles2(getStyles);
@@ -362,6 +378,7 @@ function PulseRow({
             pulse={pulse}
             panels={panels}
             currentUserId={currentUserId}
+            currentTimeRange={currentTimeRange}
             onCancel={() => setIsEditing(false)}
             onSubmit={async (body) => {
               await onEdit(body);
@@ -369,7 +386,12 @@ function PulseRow({
             }}
           />
         ) : (
-          <PulseRenderer body={pulse.body} onMentionClick={onMention} panelTitlesById={panelTitlesById} />
+          <PulseRenderer
+            body={pulse.body}
+            onMentionClick={onMention}
+            panelTitlesById={panelTitlesById}
+            dashboardUID={dashboardUID}
+          />
         )}
       </div>
     </div>
@@ -380,6 +402,7 @@ interface EditProps {
   pulse: Pulse;
   panels?: PanelSuggestion[];
   currentUserId?: number;
+  currentTimeRange?: CurrentTimeRange;
   onSubmit: (body: PulseBody) => Promise<void>;
   onCancel: () => void;
 }
@@ -390,7 +413,14 @@ interface EditProps {
  * authored before markdown support shipped have no `body.markdown`, so
  * we synthesize one from the AST (mentions become inline-code tokens).
  */
-function PulseComposerForEdit({ pulse, panels, currentUserId, onSubmit, onCancel }: EditProps): ReactNode {
+function PulseComposerForEdit({
+  pulse,
+  panels,
+  currentUserId,
+  currentTimeRange,
+  onSubmit,
+  onCancel,
+}: EditProps): ReactNode {
   const seed = useMemo(() => bodyToMarkdown(pulse.body), [pulse.body]);
   return (
     <PulseComposer
@@ -398,6 +428,7 @@ function PulseComposerForEdit({ pulse, panels, currentUserId, onSubmit, onCancel
       initialMarkdown={seed.text}
       initialMentions={seed.mentions}
       currentUserId={currentUserId}
+      currentTimeRange={currentTimeRange}
       onCancel={onCancel}
       onSubmit={onSubmit}
     />

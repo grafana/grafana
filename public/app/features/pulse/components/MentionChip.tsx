@@ -5,6 +5,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 import { type PulseMention } from '../types';
+import { parseTimeMentionTarget, timeChipHref } from '../utils/body';
 
 interface Props {
   mention: PulseMention;
@@ -20,6 +21,13 @@ interface Props {
    * surfaces that don't know about the dashboard's panels.
    */
   panelTitlesById?: ReadonlyMap<number, string>;
+  /**
+   * UID of the dashboard a `time` chip should navigate to when
+   * clicked. Required for time chips to be navigable; omit on
+   * surfaces with no dashboard target and the chip falls back to a
+   * static label.
+   */
+  dashboardUID?: string;
 }
 
 /**
@@ -39,7 +47,7 @@ interface Props {
  * there's no XSS surface even if a malicious displayName slipped
  * through.
  */
-export function MentionChip({ mention, onClick, panelTitlesById }: Props): ReactNode {
+export function MentionChip({ mention, onClick, panelTitlesById, dashboardUID }: Props): ReactNode {
   const styles = useStyles2(getStyles);
 
   // Prefer the live panel title for panel mentions so a renamed panel
@@ -86,6 +94,23 @@ export function MentionChip({ mention, onClick, panelTitlesById }: Props): React
 
   if (mention.kind === 'user') {
     return <span className={styles.user}>@{label}</span>;
+  }
+
+  if (mention.kind === 'time') {
+    // Time chips need a dashboard target and a well-formed range to
+    // be navigable. If either is missing, fall back to a static
+    // label so a chip with a corrupt TargetID can't render a broken
+    // link. The href is built by us (encoded UID + integer ms), so
+    // there's no XSS surface even if the displayName were hostile.
+    const range = parseTimeMentionTarget(mention.targetId);
+    if (dashboardUID && range) {
+      return (
+        <a className={styles.time} href={timeChipHref(dashboardUID, range.from, range.to)}>
+          <span>@{label}</span>
+        </a>
+      );
+    }
+    return <span className={styles.time}>@{label}</span>;
   }
 
   // Defensive fallback: any other kind (e.g. legacy `folder` chips
@@ -145,6 +170,30 @@ const getStyles = (theme: GrafanaTheme2) => ({
     '&:hover': {
       textDecoration: 'underline',
       color: theme.colors.success.text,
+    },
+  }),
+  // Time chips read as "this conversation pinned the dashboard at
+  // <range>". Visually distinct from user/panel/resource chips so a
+  // reader can scan a thread and tell at a glance which chips are
+  // temporal anchors. The hover underline matches the dashboard chip
+  // because both are navigable links — clicking a time chip jumps
+  // the dashboard to the chip's frozen `from`/`to` window.
+  time: css({
+    display: 'inline-block',
+    padding: '0 6px',
+    margin: '0 2px',
+    borderRadius: theme.shape.radius.pill,
+    background: theme.colors.info.transparent,
+    color: theme.colors.info.text,
+    fontSize: theme.typography.bodySmall.fontSize,
+    fontWeight: theme.typography.fontWeightMedium,
+    border: 'none',
+    cursor: 'pointer',
+    whiteSpace: 'nowrap',
+    textDecoration: 'none',
+    '&:hover': {
+      textDecoration: 'underline',
+      color: theme.colors.info.text,
     },
   }),
   // Inert fallback for legacy / unknown mention kinds — looks like

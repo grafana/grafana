@@ -64,9 +64,10 @@ export function bodyToText(body: PulseBody): string {
       return;
     }
     if (n.type === 'mention' && n.mention) {
-      // Anything that references a resource (panel / dashboard /
-      // folder) reads as `#name`; only user mentions use `@`.
-      const prefix = n.mention.kind === 'user' ? '@' : '#';
+      // Resource chips (panel / dashboard) read as `#name`; user and
+      // time chips share `@` because the author typed `@user` or
+      // `@now` / `@time` to insert them.
+      const prefix = n.mention.kind === 'user' || n.mention.kind === 'time' ? '@' : '#';
       out.push(prefix + (n.mention.displayName ?? n.mention.targetId));
       return;
     }
@@ -112,11 +113,97 @@ export function isSafeUrl(raw: string): string | undefined {
  * mention. We wrap it in backticks so it renders as inline `<code>` —
  * visually distinct from prose without needing a custom React node, and
  * it matches the user's earlier ask for an inline-code mention style.
+ *
+ * `user` and `time` chips use `@` (the trigger character the author
+ * typed); resource chips (`panel`, `dashboard`) use `#`.
  */
 export function mentionMarkdownToken(m: PulseMention): string {
-  const prefix = m.kind === 'user' ? '@' : '#';
+  const prefix = m.kind === 'user' || m.kind === 'time' ? '@' : '#';
   const label = m.displayName ?? m.targetId;
   return '`' + prefix + label + '`';
+}
+
+/**
+ * parseTimeMentionTarget splits a `time` mention's TargetID into its
+ * epoch-ms `from` / `to` halves. Returns undefined for anything that
+ * isn't two positive integers with from < to — defensive even though
+ * the backend already enforces the shape, so a hand-edited or
+ * pre-validation body never produces a chip with a malformed click
+ * URL.
+ */
+export function parseTimeMentionTarget(targetId: string): { from: number; to: number } | undefined {
+  const parts = targetId.split('|');
+  if (parts.length !== 2) {
+    return undefined;
+  }
+  const from = Number(parts[0]);
+  const to = Number(parts[1]);
+  if (!Number.isFinite(from) || !Number.isFinite(to) || from <= 0 || to <= 0 || from >= to) {
+    return undefined;
+  }
+  return { from, to };
+}
+
+/**
+ * buildTimeMentionTarget is the inverse: produces a `<fromMs>|<toMs>`
+ * TargetID from an explicit range so the composer doesn't reinvent
+ * the encoding in two places.
+ */
+export function buildTimeMentionTarget(from: number, to: number): string {
+  return `${Math.trunc(from)}|${Math.trunc(to)}`;
+}
+
+/**
+ * timeChipHref builds the dashboard URL a `time` mention chip navigates
+ * to: the source dashboard with `from` / `to` set to the chip's frozen
+ * range. Caller is responsible for handing in a non-empty resourceUID;
+ * we don't try to fabricate one because every surface that renders a
+ * pulse already knows which resource the thread belongs to.
+ */
+export function timeChipHref(dashboardUID: string, from: number, to: number): string {
+  return `/d/${encodeURIComponent(dashboardUID)}?from=${from}&to=${to}`;
+}
+
+/**
+ * rewriteTimeMentionsInMarkdown swaps `` `@<label>` `` inline-code time
+ * mention tokens for `` [`@<label>`](/d/<uid>?from=...&to=...) `` markdown
+ * links so the rendered HTML produces a real navigable anchor — the
+ * inline-code wrapper inside the link preserves the existing chip
+ * styling. Without this rewrite, markdown-rendered time chips would be
+ * inert (just styled <code>) like the existing panel/user chips, but
+ * the *whole point* of a time chip is being able to click it to jump
+ * the dashboard to that moment, so we hydrate it.
+ *
+ * Driven off the mention sidecar (not pattern-matched against raw
+ * markdown) so a literal backticked `@now` typed by a user as prose
+ * stays inert.
+ */
+export function rewriteTimeMentionsInMarkdown(
+  markdown: string,
+  mentions: readonly PulseMention[],
+  dashboardUID: string
+): string {
+  if (!markdown || mentions.length === 0 || !dashboardUID) {
+    return markdown;
+  }
+  let out = markdown;
+  for (const m of mentions) {
+    if (m.kind !== 'time') {
+      continue;
+    }
+    const range = parseTimeMentionTarget(m.targetId);
+    if (!range) {
+      continue;
+    }
+    const label = m.displayName ?? m.targetId;
+    const oldToken = '`@' + label + '`';
+    const newToken = '[`@' + label + '`](' + timeChipHref(dashboardUID, range.from, range.to) + ')';
+    // String#split/join sidesteps regex-escaping for labels containing
+    // dots, parens, or other regex metacharacters — same approach as
+    // rewritePanelMentionsInMarkdown.
+    out = out.split(oldToken).join(newToken);
+  }
+  return out;
 }
 
 /**

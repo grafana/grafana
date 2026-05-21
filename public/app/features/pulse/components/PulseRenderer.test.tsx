@@ -160,6 +160,110 @@ describe('PulseRenderer', () => {
     expect(screen.queryByText('#OldName')).toBeNull();
   });
 
+  it('rewrites markdown time mention chips into navigable anchor tags', () => {
+    const body: PulseBody = {
+      markdown: 'spike `@Last 1h`',
+      root: {
+        type: 'root',
+        children: [
+          {
+            type: 'paragraph',
+            children: [
+              { type: 'text', text: 'spike ' },
+              {
+                type: 'mention',
+                mention: { kind: 'time', targetId: '1716393600000|1716397200000', displayName: 'Last 1h' },
+              },
+            ],
+          },
+        ],
+      },
+    };
+    const { container } = render(<PulseRenderer body={body} dashboardUID="abc-123" />);
+    const anchor = container.querySelector('a');
+    expect(anchor).not.toBeNull();
+    expect(anchor!.getAttribute('href')).toBe('/d/abc-123?from=1716393600000&to=1716397200000');
+    // The chip styling comes from the nested <code>; checking the
+    // anchor wraps a `<code>` proves the markdown rewrite produced
+    // `[`@Last 1h`](href)` and not a plain `[@Last 1h](href)`.
+    expect(anchor!.querySelector('code')).not.toBeNull();
+    expect(container.textContent).toContain('@Last 1h');
+  });
+
+  it('leaves time mention chips static when no dashboard target is known', () => {
+    const body: PulseBody = {
+      markdown: 'spike `@Last 1h`',
+      root: {
+        type: 'root',
+        children: [
+          {
+            type: 'paragraph',
+            children: [
+              { type: 'text', text: 'spike ' },
+              {
+                type: 'mention',
+                mention: { kind: 'time', targetId: '1716393600000|1716397200000', displayName: 'Last 1h' },
+              },
+            ],
+          },
+        ],
+      },
+    };
+    const { container } = render(<PulseRenderer body={body} />);
+    // No dashboardUID → no anchor is synthesized; the chip stays
+    // inert as a styled <code> block.
+    expect(container.querySelector('a')).toBeNull();
+    expect(container.textContent).toContain('@Last 1h');
+  });
+
+  it('renders AST-only time mention chips as anchor tags (legacy bodies)', () => {
+    const body: PulseBody = {
+      root: {
+        type: 'root',
+        children: [
+          {
+            type: 'paragraph',
+            children: [
+              {
+                type: 'mention',
+                mention: { kind: 'time', targetId: '1716393600000|1716397200000', displayName: 'Last 1h' },
+              },
+            ],
+          },
+        ],
+      },
+    };
+    const { container } = render(<PulseRenderer body={body} dashboardUID="abc-123" />);
+    const anchor = container.querySelector('a');
+    expect(anchor).not.toBeNull();
+    expect(anchor!.getAttribute('href')).toBe('/d/abc-123?from=1716393600000&to=1716397200000');
+  });
+
+  it('falls back to a static chip when a time mention has a malformed range', () => {
+    const body: PulseBody = {
+      root: {
+        type: 'root',
+        children: [
+          {
+            type: 'paragraph',
+            children: [
+              {
+                type: 'mention',
+                // A malformed range can't happen via the API (the
+                // backend rejects it) but the chip must still degrade
+                // safely if a corrupt body somehow reaches the renderer.
+                mention: { kind: 'time', targetId: 'broken', displayName: 'Some time' },
+              },
+            ],
+          },
+        ],
+      },
+    };
+    const { container } = render(<PulseRenderer body={body} dashboardUID="abc-123" />);
+    expect(container.querySelector('a')).toBeNull();
+    expect(container.textContent).toContain('@Some time');
+  });
+
   it('renders an unknown node type as its plain children, not as HTML', () => {
     const body: PulseBody = {
       root: {

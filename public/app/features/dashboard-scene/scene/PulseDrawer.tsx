@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 
+import { rangeUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
@@ -14,7 +15,7 @@ import {
 } from '@grafana/scenes';
 import { Drawer } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
-import { type ResourceMentionSource } from 'app/features/pulse/components/PulseComposer';
+import { type CurrentTimeRange, type ResourceMentionSource } from 'app/features/pulse/components/PulseComposer';
 import { PulseDrawerContent } from 'app/features/pulse/components/PulseDrawerContent';
 import { useFolderDashboards } from 'app/features/pulse/hooks/useFolderDashboards';
 import { type PanelSuggestion } from 'app/features/pulse/utils/lookups';
@@ -236,6 +237,24 @@ function PulseDrawerRenderer({ model }: SceneComponentProps<PulseDrawer>) {
   // for undefined folderUID, but skipping the fetch entirely also
   // skips an avoidable searcher round-trip per dashboard view.
   const folderDashboards = useFolderDashboards(folderUID, Boolean(folderUID));
+
+  // Dashboard's live time range, fed to the composer so `@now` /
+  // `@time` insertions freeze the current window into a chip. The
+  // `value` from SceneTimeRange.useState() resolves any relative
+  // bounds (e.g. "now-1h") into absolute DateTimes, so .from / .to
+  // are always epoch-ms friendly. The label uses describeTimeRange
+  // on the raw range so "Last 1 hour" stays readable while the
+  // chip's frozen ms range stays exact.
+  const timeRangeState = sceneGraph.getTimeRange(dashboard).useState();
+  const currentTimeRange = useMemo<CurrentTimeRange>(() => {
+    const value = timeRangeState.value;
+    return {
+      from: value.from.valueOf(),
+      to: value.to.valueOf(),
+      label: rangeUtil.describeTimeRange(value.raw, timeRangeState.timeZone),
+    };
+  }, [timeRangeState.value, timeRangeState.timeZone]);
+
   const resourceMentions = useMemo<ResourceMentionSource[]>(() => {
     const siblings = folderDashboards.items.filter((d) => d.uid !== resourceUID);
     if (siblings.length === 0) {
@@ -263,6 +282,7 @@ function PulseDrawerRenderer({ model }: SceneComponentProps<PulseDrawer>) {
         resourceMentions={resourceMentions}
         currentUserId={currentUserId}
         isAdmin={isAdmin}
+        currentTimeRange={currentTimeRange}
         initialThreadUID={initialThreadUID}
         onInitialThreadOpened={model.clearInitialThreadUID}
         onPanelFilterChange={model.setPanelFilter}
