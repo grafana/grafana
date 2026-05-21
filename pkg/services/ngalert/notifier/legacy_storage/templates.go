@@ -12,6 +12,9 @@ func (rev *ConfigRevision) HasTemplateWithTitle(title string) bool {
 }
 
 func (rev *ConfigRevision) SetTemplate(tmpl v1.TemplateGroup) v1.TemplateGroup {
+	if rev.Config.Templates == nil {
+		rev.Config.Templates = make(map[v1.ResourceUID]v1.TemplateGroup, 1)
+	}
 	// Ensure template UID and Version are valid and set.
 	tmpl.UID = v1.TemplateUID(tmpl.Kind, tmpl.Title)
 	tmpl.Version = v1.CalculateTemplateFingerprint(tmpl)

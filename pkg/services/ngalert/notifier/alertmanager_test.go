@@ -269,8 +269,8 @@ func TestAlertmanager_HashStabilityAndChangeDetection(t *testing.T) {
 		}
 		return &v1.AMConfigV1{
 			Templates: map[v1.ResourceUID]v1.TemplateGroup{
-				"a-template.tmpl": {Title: "a-template.tmpl", Content: "{{ define \"a\" }}a{{ end }}"},
-				"b-template.tmpl": {Title: "b-template.tmpl", Content: "{{ define \"b\" }}b{{ end }}"},
+				v1.TemplateUID(v1.TemplateKindGrafana, "a-template.tmpl"): {Title: "a-template.tmpl", Content: "{{ define \"a\" }}a{{ end }}", Kind: v1.TemplateKindGrafana},
+				v1.TemplateUID(v1.TemplateKindGrafana, "b-template.tmpl"): {Title: "b-template.tmpl", Content: "{{ define \"b\" }}b{{ end }}", Kind: v1.TemplateKindGrafana},
 			},
 			AlertmanagerConfig: v1.PostableApiAlertingConfig{
 				Config: v1.Config{
@@ -327,7 +327,8 @@ func TestAlertmanager_HashStabilityAndChangeDetection(t *testing.T) {
 				return baseConfig("default-receiver", "extra-receiver")
 			},
 			mutate: func(cfg *v1.AMConfigV1, _ map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting) {
-				cfg.Templates["new.tmpl"] = v1.TemplateGroup{Title: "new.tmpl", Content: "{{ define \"new\" }}b{{ end }}"}
+				tmpl := v1.NewTemplateGroup("new.tmpl", "{{ define \"new\" }}b{{ end }}", v1.TemplateKindGrafana, ngmodels.ProvenanceNone)
+				cfg.Templates[tmpl.UID] = tmpl
 			},
 		},
 		{
