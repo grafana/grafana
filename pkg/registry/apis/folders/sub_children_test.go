@@ -98,13 +98,10 @@ func TestSubChildren_GeneralFolderSkipsGetterAndFiltersOnEmptyParent(t *testing.
 	}
 	rest := &subChildrenREST{getter: getter, searcher: search}
 
-	handler, err := rest.Connect(newChildrenCtx(), folder.GeneralFolderUID, nil, &recordingResponder{})
+	resp := &recordingResponder{}
+	handler, err := rest.Connect(newChildrenCtx(), folder.GeneralFolderUID, nil, resp)
 	require.NoError(t, err)
 	require.NotNil(t, handler)
-
-	resp := &recordingResponder{}
-	handler, err = rest.Connect(newChildrenCtx(), folder.GeneralFolderUID, nil, resp)
-	require.NoError(t, err)
 	handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest("GET", "/general/children", nil))
 
 	require.NoError(t, resp.err)

@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	childrenDefaultLimit = 100
+	childrenDefaultLimit = 500
 	childrenMaxLimit     = 500
 )
 
@@ -96,11 +96,14 @@ func (r *subChildrenREST) Connect(ctx context.Context, name string, _ runtime.Ob
 			return
 		}
 		if resp.Error != nil {
-			responder.Error(fmt.Errorf("search error: %s", resp.Error.Message))
+			responder.Error(resource.GetError(resp.Error))
 			return
 		}
 
 		children := &folders.FolderList{Items: []folders.Folder{}}
+		if resp.ResourceVersion > 0 {
+			children.ResourceVersion = strconv.FormatInt(resp.ResourceVersion, 10)
+		}
 		if resp.Results != nil {
 			titleIdx := -1
 			for i, col := range resp.Results.Columns {
@@ -115,6 +118,9 @@ func (r *subChildrenREST) Connect(ctx context.Context, name string, _ runtime.Ob
 				f := folders.Folder{}
 				f.Name = row.Key.Name
 				f.Namespace = row.Key.Namespace
+				if row.ResourceVersion > 0 {
+					f.ResourceVersion = strconv.FormatInt(row.ResourceVersion, 10)
+				}
 				if titleIdx >= 0 && titleIdx < len(row.Cells) {
 					f.Spec.Title = string(row.Cells[titleIdx])
 				}
@@ -122,9 +128,7 @@ func (r *subChildrenREST) Connect(ctx context.Context, name string, _ runtime.Ob
 			}
 
 			total := resp.TotalHits
-			if resp.Results.NextPageToken != "" {
-				children.Continue = resp.Results.NextPageToken
-			} else if offset+int64(len(resp.Results.Rows)) < total {
+			if offset+int64(len(resp.Results.Rows)) < total {
 				children.Continue = strconv.FormatInt(offset+int64(len(resp.Results.Rows)), 10)
 			}
 			if total > 0 {
@@ -139,6 +143,8 @@ func (r *subChildrenREST) Connect(ctx context.Context, name string, _ runtime.Ob
 	}), nil
 }
 
+// The continue token is a raw decimal offset, not an opaque k8s token.
+// Offset paging over a live index may skip or duplicate items across pages.
 func parseChildrenPaging(req *http.Request) (int64, int64, error) {
 	q := req.URL.Query()
 	limit := int64(childrenDefaultLimit)
