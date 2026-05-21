@@ -52,6 +52,7 @@ func TestProxyUserAgent(t *testing.T) {
 			providerType: setting.FeaturesServiceProviderType,
 			url:          u,
 			logger:       log.New("test"),
+			transport:    &http.Transport{},
 		}
 	}
 
