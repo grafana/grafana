@@ -440,7 +440,10 @@
       "label-value": "Value"
     },
     "alert-instance-extension-point": {
-      "aria-label-actions": "Actions"
+      "n-contact-points_one": "{{count}} contact point",
+      "n-contact-points_other": "{{count}} contact points",
+      "view-route_one": "View route",
+      "view-route_other": "View routes"
     },
     "alert-instance-modal-selector": {
       "add-alert-data-to-payload": "Add alert data to payload",
@@ -456,6 +459,7 @@
     },
     "alert-instances-table": {
       "created": "Created",
+      "destination": "Destination",
       "labels": "Labels",
       "state": "State"
     },
@@ -2341,6 +2345,7 @@
     },
     "notification-route": {
       "no-labels": "No labels",
+      "notification-policies": "Notification policies",
       "notification-policy": "Notification policy"
     },
     "notification-route-header": {
