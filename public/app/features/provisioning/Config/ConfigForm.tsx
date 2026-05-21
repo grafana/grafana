@@ -287,7 +287,6 @@ export function ConfigForm({ data }: ConfigFormProps) {
             {hasTokenInstructions && <TokenPermissionsInfo type={type} />}
             {gitFields.gpgSigningKeyConfig && !usesGitHubApp && (
               <Stack direction="column" gap={2}>
-                {hasTokenInstructions && <GPGSigningKeyInfo type={type} />}
                 {signingKeyConfigured ? (
                   <Field
                     noMargin
@@ -376,6 +375,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
                     </Field>
                   </>
                 )}
+                {hasTokenInstructions && <GPGSigningKeyInfo type={type} />}
               </Stack>
             )}
             <Field

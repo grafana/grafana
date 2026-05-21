@@ -88,7 +88,6 @@ export function RepositoryTokenInput() {
 
       {gitFields.gpgSigningKeyConfig && (
         <>
-          {hasTokenInstructions && <GPGSigningKeyInfo type={type} />}
           {signingKeyConfigured ? (
             <Field
               noMargin
@@ -174,6 +173,7 @@ export function RepositoryTokenInput() {
               </Field>
             </>
           )}
+          {hasTokenInstructions && <GPGSigningKeyInfo type={type} />}
         </>
       )}
     </>

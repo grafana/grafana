@@ -18,39 +18,39 @@ export function GPGSigningKeyInfo({ type }: { type: InstructionAvailability }) {
   }
   return (
     <div className={styles.container}>
-      <Stack direction="column" gap={1}>
+      <Stack gap={0.5} wrap={'wrap'}>
         <Trans i18nKey="provisioning.gpg-signing-key-info.intro">
-          Signed commits show as <strong>Verified</strong> on GitHub when three things match:
+          For GitHub to mark commits as Verified, three things must match:
         </Trans>
-        <ul className={styles.list}>
-          <li>
-            <Trans i18nKey="provisioning.gpg-signing-key-info.match-uid">
-              The GPG key's UID email is also the commit author/committer email set below.
-            </Trans>
-          </li>
-          <li>
-            <Trans i18nKey="provisioning.gpg-signing-key-info.match-account">
-              That same email is a verified email on the GitHub account where the public key is registered.
-            </Trans>
-          </li>
-          <li>
-            <Trans i18nKey="provisioning.gpg-signing-key-info.unencrypted">
-              The exported private key has no passphrase.
-            </Trans>
-          </li>
-        </ul>
-        <Stack gap={0.5} wrap="wrap">
-          <TextLink external href={GPG_GENERATE_KEY_URL}>
-            <Trans i18nKey="provisioning.gpg-signing-key-info.generate-link">Generate a GPG key</Trans>
-          </TextLink>
-          <Trans i18nKey="provisioning.gpg-signing-key-info.then">then</Trans>
-          <TextLink external href={GPG_ADD_KEY_URL}>
-            <Trans i18nKey="provisioning.gpg-signing-key-info.add-link">add the public key to your account</Trans>
-          </TextLink>
-          <Trans i18nKey="provisioning.gpg-signing-key-info.bot-tip">
-            — typically a dedicated bot user that also owns the access token above.
+      </Stack>
+      <ul className={styles.list}>
+        <li>
+          <Trans i18nKey="provisioning.gpg-signing-key-info.match-uid">
+            The GPG key's UID email is the commit author/committer email set above.
           </Trans>
-        </Stack>
+        </li>
+        <li>
+          <Trans i18nKey="provisioning.gpg-signing-key-info.match-account">
+            That same email is a verified email on the GitHub account where the public key is registered.
+          </Trans>
+        </li>
+        <li>
+          <Trans i18nKey="provisioning.gpg-signing-key-info.unencrypted">
+            The exported private key has no passphrase.
+          </Trans>
+        </li>
+      </ul>
+      <Stack gap={0.5} wrap={'wrap'}>
+        <TextLink external href={GPG_GENERATE_KEY_URL}>
+          <Trans i18nKey="provisioning.gpg-signing-key-info.generate-link">Generate a GPG key</Trans>
+        </TextLink>
+        <Trans i18nKey="provisioning.gpg-signing-key-info.then">then</Trans>
+        <TextLink external href={GPG_ADD_KEY_URL}>
+          <Trans i18nKey="provisioning.gpg-signing-key-info.add-link">add the public key to your account</Trans>
+        </TextLink>
+        <Trans i18nKey="provisioning.gpg-signing-key-info.bot-tip">
+          (typically a dedicated bot user that also owns the access token).
+        </Trans>
       </Stack>
     </div>
   );
@@ -60,16 +60,21 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     container: css({
       marginBottom: theme.spacing(1),
+      position: 'relative',
+      width: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      flex: '1 1 0',
       padding: theme.spacing(theme.components.panel.padding),
-      background: theme.colors.background.secondary,
-      borderRadius: theme.shape.radius.default,
     }),
     list: css({
-      margin: 0,
+      marginTop: theme.spacing(2),
+      marginBottom: theme.spacing(1),
       paddingLeft: theme.spacing(3),
-      li: {
-        marginBottom: theme.spacing(0.5),
-      },
+
+      li: css({
+        marginBottom: theme.spacing(1),
+      }),
     }),
   };
 }
