@@ -9,6 +9,7 @@ import {
   FieldType,
   getDefaultTimeRange,
   LoadingState,
+  toDataFrame,
 } from '@grafana/data';
 import { type PanelDataErrorViewProps } from '@grafana/runtime';
 import { usePanelContext } from '@grafana/ui';
@@ -148,6 +149,64 @@ describe('PanelDataErrorView', () => {
 
     expect(screen.getByText('No data')).toBeInTheDocument();
     expect(screen.queryByText(RUN_QUERY_MESSAGE)).not.toBeInTheDocument();
+  });
+});
+
+describe('missing field messages', () => {
+  const seriesWithRowsButNoTimeOrString = [
+    toDataFrame({
+      fields: [{ name: 'count', type: FieldType.number, values: [1, 2] }],
+    }),
+  ];
+
+  it('shows "Data is missing a time field" when needsTimeField and needsStringField are both set but only time is absent', () => {
+    renderWithProps({
+      needsTimeField: true,
+      needsStringField: true,
+      data: {
+        state: LoadingState.Done,
+        series: [
+          toDataFrame({
+            fields: [{ name: 'message', type: FieldType.string, values: ['a'] }],
+          }),
+        ],
+        timeRange: getDefaultTimeRange(),
+      },
+    });
+
+    expect(screen.getByText('Data is missing a time field')).toBeInTheDocument();
+  });
+
+  it('shows "Data is missing a time field" before "Data is missing a string field" when both fields are absent', () => {
+    renderWithProps({
+      needsTimeField: true,
+      needsStringField: true,
+      data: {
+        state: LoadingState.Done,
+        series: seriesWithRowsButNoTimeOrString,
+        timeRange: getDefaultTimeRange(),
+      },
+    });
+
+    expect(screen.getByText('Data is missing a time field')).toBeInTheDocument();
+    expect(screen.queryByText('Data is missing a string field')).not.toBeInTheDocument();
+  });
+
+  it('shows "Data is missing a string field" when needsStringField is set and only string is absent', () => {
+    renderWithProps({
+      needsStringField: true,
+      data: {
+        state: LoadingState.Done,
+        series: [
+          toDataFrame({
+            fields: [{ name: 'timestamp', type: FieldType.time, values: [1] }],
+          }),
+        ],
+        timeRange: getDefaultTimeRange(),
+      },
+    });
+
+    expect(screen.getByText('Data is missing a string field')).toBeInTheDocument();
   });
 });
 

@@ -538,7 +538,9 @@ export const LogsPanel = ({ data, timeZone, fieldConfig, options, onOptionsChang
   }, [controlsStorageKey, data.request, id]);
 
   if (!data || logRows.length === 0) {
-    return <PanelDataErrorView fieldConfig={fieldConfig} panelId={id} data={data} needsStringField />;
+    return (
+      <PanelDataErrorView fieldConfig={fieldConfig} panelId={id} data={data} needsStringField needsTimeField />
+    );
   }
 
   // Passing callbacks control the display of the filtering buttons. We want to pass it only if onAddAdHocFilter is defined.

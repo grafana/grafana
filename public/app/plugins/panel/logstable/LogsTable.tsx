@@ -278,7 +278,9 @@ export const LogsTable = ({
 
   // Show no data state if query returns nothing
   if ((noSeries || noValues || noLogsFrame) && data.state === LoadingState.Done) {
-    return <PanelDataErrorView fieldConfig={fieldConfig} panelId={id} data={data} needsStringField />;
+    return (
+      <PanelDataErrorView fieldConfig={fieldConfig} panelId={id} data={data} needsStringField needsTimeField />
+    );
   }
 
   // Don't render the table if we don't have the required data to show the visualization
