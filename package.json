@@ -482,7 +482,7 @@
   "engines": {
     "node": ">= 22 <25"
   },
-  "packageManager": "yarn@4.14.1",
+  "packageManager": "yarn@4.15.0",
   "dependenciesMeta": {
     "msw": {
       "built": true
