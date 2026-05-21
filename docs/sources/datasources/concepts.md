@@ -81,7 +81,9 @@ Use an integration when:
 
 Data sources, plugins, and integrations work together to build observability solutions. The following diagram shows two paths: the custom path where you install plugins and configure data sources yourself, and the integration path where Grafana Cloud provides a pre-packaged setup.
 
-```text
+{{< figure src="/media/docs/datasources/concepts-diagram-1.png" alt="Diagram showing the custom path and integration path for working with data in Grafana" >}}
+
+<!-- ```text
   CUSTOM PATH                      INTEGRATION PATH
   (Self-hosted & Cloud)            (Cloud only)
 
@@ -110,7 +112,7 @@ Data sources, plugins, and integrations work together to build observability sol
   │  panels and        │           │  dashboards and    │
   │  dashboards        │           │  alerts            │
   └────────────────────┘           └────────────────────┘
-```
+``` -->
 
 App plugins can combine both paths by bundling data source plugins, panel plugins, and custom pages into a single package.
 
