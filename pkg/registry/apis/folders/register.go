@@ -209,8 +209,8 @@ func (b *FolderAPIBuilder) storageForVersion(
 
 	// Adds a path to return children of a given folder
 	storage[folders.StoragePath("children")] = &subChildrenREST{
-		getter: b.storage,
-		lister: b.storage,
+		getter:   b.storage,
+		searcher: b.searcher,
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[folders.GroupVersion().Version] = storage

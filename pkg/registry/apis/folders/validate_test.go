@@ -553,6 +553,74 @@ func TestValidateUpdate(t *testing.T) {
 			expectedErr: "k6 project may not be moved",
 		},
 		{
+			name: "error to move the k6 folder itself",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "k6-app",
+					Annotations: map[string]string{
+						utils.AnnoKeyFolder: "somewhere",
+					},
+				},
+				Spec: folders.FolderSpec{
+					Title: "k6",
+				},
+			},
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "k6-app",
+				},
+				Spec: folders.FolderSpec{
+					Title: "k6",
+				},
+			},
+			expectedErr: "k6 project may not be moved",
+		},
+		{
+			name: "error to move the k6 folder to root",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "k6-app",
+					Annotations: map[string]string{
+						utils.AnnoKeyFolder: folder.RootFolderUID,
+					},
+				},
+				Spec: folders.FolderSpec{
+					Title: "k6",
+				},
+			},
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "k6-app",
+					Annotations: map[string]string{
+						utils.AnnoKeyFolder: "somewhere",
+					},
+				},
+				Spec: folders.FolderSpec{
+					Title: "k6",
+				},
+			},
+			expectedErr: "k6 project may not be moved",
+		},
+		{
+			name: "no-op update on k6 folder is allowed (title change, parent unchanged)",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "k6-app",
+				},
+				Spec: folders.FolderSpec{
+					Title: "renamed",
+				},
+			},
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "k6-app",
+				},
+				Spec: folders.FolderSpec{
+					Title: "k6",
+				},
+			},
+		},
+		{
 			name: "can move a folder to max depth",
 			folder: &folders.Folder{
 				ObjectMeta: metav1.ObjectMeta{
