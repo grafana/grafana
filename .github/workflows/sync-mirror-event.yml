@@ -41,7 +41,7 @@ jobs:
             await github.rest.actions.createWorkflowDispatch({
                 owner: 'grafana',
                 repo: 'security-patch-actions',
-                workflow_id: 'mirror-branch-and-apply-patches-event.yml',
+                workflow_id: 'mirror-branch-and-apply-patches.yml',
                 ref: 'main',
                 inputs: {
                   src_ref: REF_NAME,
