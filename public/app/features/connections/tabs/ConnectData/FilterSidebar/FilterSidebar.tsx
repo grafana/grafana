@@ -52,6 +52,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: '100%',
     justifyContent: 'center',
   }),
+  selectOptionLabel: css({
+    whiteSpace: 'normal',
+    wordBreak: 'break-word',
+  }),
+  selectValueLabel: css({
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+  }),
   activeDot: css({
     position: 'absolute',
     top: 0,
@@ -110,40 +119,48 @@ export function FilterSidebar({
           )}
         </Field>
       </div>
-      {/* Filter by category (when grouped by type) or by type (when grouped by category) */}
-      {state.groupBy === 'type' ? (
-        <div className={styles.filterField}>
-          {state.categoryFilter !== 'all' && <div className={styles.activeDot} />}
-          <Field
-            label={
-              <span className={styles.filterLabel}>{t('connections.add-new-connection.category', 'Category')}</span>
-            }
-            noMargin
-          >
-            <Select
-              aria-label={t('connections.add-new-connection.filter-by-category', 'Filter by category')}
-              value={state.categoryFilter}
-              onChange={handlers.onCategoryFilterChange}
-              options={categoryFilterOptions}
-            />
-          </Field>
-        </div>
-      ) : (
-        <div className={styles.filterField}>
-          {state.typeFilter !== 'all' && <div className={styles.activeDot} />}
-          <Field
-            label={<span className={styles.filterLabel}>{t('connections.add-new-connection.type', 'Type')}</span>}
-            noMargin
-          >
-            <Select
-              aria-label={t('connections.add-new-connection.filter-by-type', 'Filter by type')}
-              value={state.typeFilter}
-              onChange={handlers.onTypeFilterChange}
-              options={typeFilterOptions}
-            />
-          </Field>
-        </div>
-      )}
+      {/* Filter by category */}
+      <div className={styles.filterField}>
+        {state.categoryFilter !== 'all' && <div className={styles.activeDot} />}
+        <Field
+          label={
+            <span className={styles.filterLabel}>{t('connections.add-new-connection.category', 'Category')}</span>
+          }
+          noMargin
+        >
+          <Select
+            aria-label={t('connections.add-new-connection.filter-by-category', 'Filter by category')}
+            value={state.categoryFilter}
+            onChange={handlers.onCategoryFilterChange}
+            options={categoryFilterOptions}
+            formatOptionLabel={(option, meta) => (
+              <span className={meta.context === 'value' ? styles.selectValueLabel : styles.selectOptionLabel}>
+                {option.label}
+              </span>
+            )}
+          />
+        </Field>
+      </div>
+      {/* Filter by type */}
+      <div className={styles.filterField}>
+        {state.typeFilter !== 'all' && <div className={styles.activeDot} />}
+        <Field
+          label={<span className={styles.filterLabel}>{t('connections.add-new-connection.type', 'Type')}</span>}
+          noMargin
+        >
+          <Select
+            aria-label={t('connections.add-new-connection.filter-by-type', 'Filter by type')}
+            value={state.typeFilter}
+            onChange={handlers.onTypeFilterChange}
+            options={typeFilterOptions}
+            formatOptionLabel={(option, meta) => (
+              <span className={meta.context === 'value' ? styles.selectValueLabel : styles.selectOptionLabel}>
+                {option.label}
+              </span>
+            )}
+          />
+        </Field>
+      </div>
 
       {/* Sorting */}
       <div className={styles.filterField}>

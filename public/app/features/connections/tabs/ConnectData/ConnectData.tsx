@@ -3,7 +3,7 @@ import { useCallback, useMemo, useState, type MouseEvent } from 'react';
 
 import type { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import {
   LoadingPlaceholder,
   EmptyState,
@@ -11,8 +11,10 @@ import {
   Button,
   RadioButtonGroup,
   useStyles2,
+  useTheme2,
   Sidebar,
   useSidebar,
+  type SidebarContextValue,
   Stack,
   Text,
 } from '@grafana/ui';
@@ -24,6 +26,7 @@ import { useGetAll, useIsRemotePluginsAvailable } from 'app/features/plugins/adm
 import { AccessControlAction } from 'app/types/accessControl';
 
 import type { CardGridItem } from './CardGrid/CardGrid';
+import { AddNewConnectionLegacy } from './ConnectDataLegacy';
 import { FilterSidebar } from './FilterSidebar/FilterSidebar';
 import { NoAccessModal } from './NoAccessModal/NoAccessModal';
 import { PluginContentView } from './components/PluginContentView';
@@ -90,6 +93,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
 });
 
 export function AddNewConnection() {
+  if (config.featureToggles.connectionsFilterSidebar) {
+    return <AddNewConnectionWithSidebar />;
+  }
+
+  return <AddNewConnectionLegacy />;
+}
+
+function AddNewConnectionWithSidebar() {
   const [queryParams, setQueryParams] = useQueryParams();
   const searchTerm = queryParams.search ? String(queryParams.search) : '';
   const [selectedItem, setSelectedItem] = useState<CardGridItem | null>(null);
@@ -99,6 +110,7 @@ export function AddNewConnection() {
   const { sortBy, filterBy, groupBy, categoryFilter, typeFilter } = filterState;
   const canCreateDataSources = contextSrv.hasPermission(AccessControlAction.DataSourcesCreate);
   const styles = useStyles2(getStyles);
+  const theme = useTheme2();
 
   const updateFilter = useCallback(
     (params: Record<string, string>) => {
@@ -121,7 +133,7 @@ export function AddNewConnection() {
     [updateFilter]
   );
 
-  const sidebarContextValue = useSidebar({
+  const sidebar = useSidebar({
     hasOpenPane: isPaneOpen,
     position: 'right',
     persistanceKey: 'connections-sidebar',
@@ -133,9 +145,22 @@ export function AddNewConnection() {
     contentMargin: 0,
   });
 
-  // Hide the dock/undock and close buttons in the sidebar pane header
-  sidebarContextValue.onToggleDock = undefined;
-  sidebarContextValue.onClosePane = undefined;
+  const minPaneWidth = 200;
+  const clampedPaneWidth = Math.max(sidebar.paneWidth, minPaneWidth);
+  const toolbarWidth = 5 * theme.spacing.gridSize;
+
+  const sidebarContextValue: SidebarContextValue = {
+    ...sidebar,
+    onToggleDock: undefined,
+    onClosePane: undefined,
+    compact: true,
+    paneWidth: clampedPaneWidth,
+    outerWrapperProps: {
+      style: {
+        paddingRight: isPaneOpen ? clampedPaneWidth + toolbarWidth : toolbarWidth,
+      },
+    },
+  };
 
   const handleSearchChange = useCallback(
     (val: string) => {
@@ -157,17 +182,10 @@ export function AddNewConnection() {
     sortBy
   );
 
-  // Use filtering hooks with memoization
   const categoryFilterOptions = useCategoryFilterOptions(plugins);
-  const { datasourceCardGridItems, appsCardGridItems } = useFilteredPlugins(
-    plugins,
-    groupBy,
-    categoryFilter,
-    typeFilter
-  );
-  const pluginsByCategory = usePluginsByCategory(plugins, typeFilter);
+  const { datasourceCardGridItems, appsCardGridItems } = useFilteredPlugins(plugins, categoryFilter, typeFilter);
+  const pluginsByCategory = usePluginsByCategory(plugins, typeFilter, categoryFilter);
 
-  // Memoize card click handler
   const onClickCardGridItem = useCallback(
     (e: MouseEvent<HTMLElement>, item: CardGridItem) => {
       if (!canCreateDataSources) {

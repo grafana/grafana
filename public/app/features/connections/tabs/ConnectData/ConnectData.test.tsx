@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { PluginType } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getCatalogPluginMock, getPluginsStateMock } from 'app/features/plugins/admin/mocks/mockHelpers';
 import { type CatalogPlugin } from 'app/features/plugins/admin/types';
@@ -12,6 +12,14 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { AddNewConnection } from './ConnectData';
 
 jest.mock('app/features/datasources/api');
+
+beforeAll(() => {
+  config.featureToggles.connectionsFilterSidebar = true;
+});
+
+afterAll(() => {
+  config.featureToggles.connectionsFilterSidebar = false;
+});
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),

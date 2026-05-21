@@ -66,58 +66,45 @@ function pluginToCardGridItem(plugin: CatalogPlugin): CardGridItem {
   };
 }
 
-/**
- * Single hook that splits plugins by type, applies category/type filters,
- * and returns card grid items for both views.
- */
-export function useFilteredPlugins(
-  plugins: CatalogPlugin[],
-  groupBy: string,
-  categoryFilter: string,
-  typeFilter: string
-) {
+export function useFilteredPlugins(plugins: CatalogPlugin[], categoryFilter: string, typeFilter: string) {
   return useMemo(() => {
     const dataSources = plugins.filter((p) => p.type === PluginType.datasource);
     const apps = plugins.filter((p) => p.type === PluginType.app);
 
-    // For "group by type" view: apply category filter
-    const filteredDataSources =
+    const catFilteredDataSources =
       categoryFilter === 'all'
         ? dataSources
         : dataSources.filter((p) => (p.isEnterprise ? 'enterprise' : p.category || 'other') === categoryFilter);
-    const filteredApps =
+    const catFilteredApps =
       categoryFilter === 'all'
         ? apps
         : apps.filter((p) => (p.isEnterprise ? 'enterprise' : p.category || 'other') === categoryFilter);
 
-    // For "group by type" view: also apply type filter (hide entire section)
-    const typeFilteredDataSources = typeFilter === 'all' || typeFilter === PluginType.datasource ? dataSources : [];
-    const typeFilteredApps = typeFilter === 'all' || typeFilter === PluginType.app ? apps : [];
+    const typeFilteredDataSources =
+      typeFilter === 'all' || typeFilter === PluginType.datasource ? catFilteredDataSources : [];
+    const typeFilteredApps = typeFilter === 'all' || typeFilter === PluginType.app ? catFilteredApps : [];
 
-    // Build card grid items based on groupBy mode
-    const datasourceCardGridItems = (groupBy === 'type' ? filteredDataSources : typeFilteredDataSources).map(
-      pluginToCardGridItem
-    );
-    const appsCardGridItems = (groupBy === 'type' ? filteredApps : typeFilteredApps).map(pluginToCardGridItem);
+    const datasourceCardGridItems = typeFilteredDataSources.map(pluginToCardGridItem);
+    const appsCardGridItems = typeFilteredApps.map(pluginToCardGridItem);
 
     return {
       datasourceCardGridItems,
       appsCardGridItems,
     };
-  }, [plugins, groupBy, categoryFilter, typeFilter]);
+  }, [plugins, categoryFilter, typeFilter]);
 }
 
-/**
- * Groups plugins by category for the "group by category" view,
- * applying typeFilter and returning sorted { label, items } entries.
- */
 export function usePluginsByCategory(
   plugins: CatalogPlugin[],
-  typeFilter: string
+  typeFilter: string,
+  categoryFilter: string
 ): Array<{ label: string; items: CardGridItem[] }> {
   const categoryLabels = getPredefinedCategoryLabels();
   return useMemo(() => {
-    const allPlugins = typeFilter === 'all' ? plugins : plugins.filter((p) => p.type === typeFilter);
+    let allPlugins = typeFilter === 'all' ? plugins : plugins.filter((p) => p.type === typeFilter);
+    if (categoryFilter !== 'all') {
+      allPlugins = allPlugins.filter((p) => (p.isEnterprise ? 'enterprise' : p.category || 'other') === categoryFilter);
+    }
 
     const grouped: Record<string, CardGridItem[]> = {};
     allPlugins.forEach((plugin) => {
@@ -147,5 +134,5 @@ export function usePluginsByCategory(
         label: categoryLabels[category] || category,
         items,
       }));
-  }, [plugins, typeFilter, categoryLabels]);
+  }, [plugins, typeFilter, categoryFilter, categoryLabels]);
 }
