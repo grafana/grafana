@@ -161,11 +161,11 @@ In contrast, integrations focus on getting data into Grafana Cloud's managed bac
 
 The following table compares the three core concepts at a glance.
 
-| Concept | What it is | When to use it | Example |
-|---------|-----------|----------------|---------|
-| **Data source** | A configured connection to an external database or service. Available in self-managed and Cloud. | You want to query a specific system and build custom dashboards. | Prometheus, CloudWatch, PostgreSQL |
-| **Plugin** | An extension that adds new data source types, visualizations, or app experiences. Available in self-managed and Cloud. Comes in three types: data source, panel, and app. | You need functionality that isn't built into Grafana. | MongoDB data source, Geomap panel, Azure Cloud Native Monitoring app |
-| **Integration** | A pre-packaged monitoring solution with collection configuration, dashboards, and alerts. Grafana Cloud only. | You want a quick, ready-to-use setup with minimal configuration. | Linux, Redis, NGINX |
+| Concept         | What it is                                                                                                                                                                | When to use it                                                   | Example                                                              |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- | -------------------------------------------------------------------- |
+| **Data source** | A configured connection to an external database or service. Available in self-managed and Cloud.                                                                          | You want to query a specific system and build custom dashboards. | Prometheus, CloudWatch, PostgreSQL                                   |
+| **Plugin**      | An extension that adds new data source types, visualizations, or app experiences. Available in self-managed and Cloud. Comes in three types: data source, panel, and app. | You need functionality that isn't built into Grafana.            | MongoDB data source, Geomap panel, Azure Cloud Native Monitoring app |
+| **Integration** | A pre-packaged monitoring solution with collection configuration, dashboards, and alerts. Grafana Cloud only.                                                             | You want a quick, ready-to-use setup with minimal configuration. | Linux, Redis, NGINX                                                  |
 
 For detailed documentation and how-to guides related to data sources, plugins, and integrations, refer to the following references:
 
