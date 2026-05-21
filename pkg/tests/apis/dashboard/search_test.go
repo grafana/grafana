@@ -36,13 +36,8 @@ func TestIntegrationSearchDevDashboards(t *testing.T) {
 	ctx := context.Background()
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		AppModeProduction:    true,
-		DisableAnonymous:     true,
-		APIServerStorageType: "unified",
-		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-			"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode5},
-			"folders.folder.grafana.app":       {DualWriterMode: rest.Mode5},
-		},
+		AppModeProduction: true,
+		DisableAnonymous:  true,
 	})
 	defer helper.Shutdown()
 
