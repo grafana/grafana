@@ -40,8 +40,8 @@ export const TemplateDashboardModal = () => {
   const isOpen = searchParams.get('templateDashboards') === 'true';
   const entryPoint = searchParams.get('source') || '';
   const DashboardTemplatesTab = getDashboardTemplatesTab();
-  const showDashboardTemplates = useFlagGrafanaOrgDashboardTemplates() && DashboardTemplatesTab !== null;
-  const [activeTab, setActiveTab] = useState<TemplateTab>(showDashboardTemplates ? 'custom' : 'grafana');
+  const showCustomTemplates = useFlagGrafanaOrgDashboardTemplates() && DashboardTemplatesTab !== null;
+  const [activeTab, setActiveTab] = useState<TemplateTab>(showCustomTemplates ? 'custom' : 'grafana');
   const isDashboardTemplatesAssistantButtonEnabled = useFlagDashboardTemplatesAssistantButton();
   const isDashboardTemplatesAssistantToolEnabled = useFlagAssistantFrontendToolsDashboardTemplates();
   const isAnalyticsFrameworkEnabled = useFlagAnalyticsFramework();
@@ -129,47 +129,58 @@ export const TemplateDashboardModal = () => {
     }
   }, [isOpen, dashboards, entryPoint, testDataSource?.type, loading, isAnalyticsFrameworkEnabled]);
 
-  if (!testDataSource || (dashboards.length === 0 && !loading && !showDashboardTemplates)) {
+  const showGrafanaTemplates = testDataSource && (dashboards.length > 0 || loading);
+
+  if (!showGrafanaTemplates && !showCustomTemplates) {
     return null;
   }
 
-  const renderGrafanaTemplates = () => (
-    <Grid
-      gap={4}
-      columns={{
-        xs: 1,
-        sm: 2,
-        lg: 3,
-      }}
-    >
-      {loading
-        ? Array.from({ length: 4 }).map((_, index) => <DashboardCard.Skeleton key={index} />)
-        : dashboards?.map((dashboard) => {
-            const thumbnail = dashboard.screenshots?.[0]?.links.find((l: Link) => l.rel === 'image')?.href ?? '';
-            const thumbnailUrl = thumbnail ? `/api/gnet${thumbnail}` : '';
+  const renderGrafanaTemplates = () => {
+    if (!showGrafanaTemplates) {
+      return null;
+    }
+    return (
+      <Grid
+        gap={4}
+        columns={
+          showGrafanaTemplates
+            ? {
+                xs: 1,
+                sm: 2,
+                lg: 3,
+              }
+            : undefined
+        }
+      >
+        {loading
+          ? Array.from({ length: 4 }).map((_, index) => <DashboardCard.Skeleton key={index} />)
+          : dashboards?.map((dashboard) => {
+              const thumbnail = dashboard.screenshots?.[0]?.links.find((l: Link) => l.rel === 'image')?.href ?? '';
+              const thumbnailUrl = thumbnail ? `/api/gnet${thumbnail}` : '';
 
-            return (
-              <DashboardCard
-                key={dashboard.id}
-                title={dashboard.name}
-                imageUrl={thumbnailUrl}
-                onClick={(customizeWithAssistant?: boolean) =>
-                  onPreviewDashboardClick(dashboard, customizeWithAssistant)
-                }
-                onClose={onClose}
-                dashboard={dashboard}
-                kind="template_dashboard"
-                showAssistantButton={
-                  isDashboardTemplatesAssistantButtonEnabled && isDashboardTemplatesAssistantToolEnabled
-                }
-              />
-            );
-          })}
-    </Grid>
-  );
+              return (
+                <DashboardCard
+                  key={dashboard.id}
+                  title={dashboard.name}
+                  imageUrl={thumbnailUrl}
+                  onClick={(customizeWithAssistant?: boolean) =>
+                    onPreviewDashboardClick(dashboard, customizeWithAssistant)
+                  }
+                  onClose={onClose}
+                  dashboard={dashboard}
+                  kind="template_dashboard"
+                  showAssistantButton={
+                    isDashboardTemplatesAssistantButtonEnabled && isDashboardTemplatesAssistantToolEnabled
+                  }
+                />
+              );
+            })}
+      </Grid>
+    );
+  };
 
   const renderDashboardTemplates = () => {
-    if (!DashboardTemplatesTab) {
+    if (!DashboardTemplatesTab || !showCustomTemplates) {
       return null;
     }
     return <DashboardTemplatesTab isOpen={isOpen} onClose={onClose} />;
@@ -195,7 +206,7 @@ export const TemplateDashboardModal = () => {
             </Trans>
           )}
         </Text>
-        {showDashboardTemplates && (
+        {showCustomTemplates && showGrafanaTemplates && (
           <Box marginTop={2}>
             <TabsBar>
               <Tab
@@ -203,6 +214,7 @@ export const TemplateDashboardModal = () => {
                 active={activeTab === 'custom'}
                 onChangeTab={() => setActiveTab('custom')}
               />
+
               <Tab
                 label={t('dashboard-library.template-dashboard-modal.tab-grafana', 'Grafana-provisioned')}
                 active={activeTab === 'grafana'}
@@ -213,7 +225,7 @@ export const TemplateDashboardModal = () => {
         )}
       </div>
       <Box direction="column" gap={4} display="flex">
-        {showDashboardTemplates && activeTab === 'custom' ? renderDashboardTemplates() : renderGrafanaTemplates()}
+        {showCustomTemplates && activeTab === 'custom' ? renderDashboardTemplates() : renderGrafanaTemplates()}
       </Box>
     </Modal>
   );

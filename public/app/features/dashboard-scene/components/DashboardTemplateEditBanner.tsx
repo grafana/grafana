@@ -15,22 +15,22 @@ export function DashboardTemplateEditBanner({ dashboard }: { dashboard: Dashboar
   const location = useLocation();
   const { meta } = dashboard.useState();
 
+  const dashboardTemplateUid = meta.dashboardTemplateUid;
+
   const shouldRender =
     location.pathname === DASHBOARD_LIBRARY_ROUTES.Template &&
     Boolean(meta.isDashboardTemplate) &&
-    Boolean(meta.dashboardTemplateUid);
+    Boolean(dashboardTemplateUid);
 
   const [dismissed, setDismissed] = useState<boolean>(!shouldRender);
-  const [outerTitle, setOuterTitle] = useState<string | undefined>(undefined);
-
-  const dashboardTemplateUid = meta.dashboardTemplateUid;
+  const [outerTitle, setOuterTitle] = useState<string>();
 
   useEffect(() => {
     if (!shouldRender || !dashboardTemplateUid) {
       return;
     }
     getDashboardTemplateExtension()
-      .loadTemplate(dashboardTemplateUid)
+      .loadTemplate(dashboardTemplateUid!)
       .then((resource) => {
         setOuterTitle(resource.spec.title);
       });
@@ -42,7 +42,7 @@ export function DashboardTemplateEditBanner({ dashboard }: { dashboard: Dashboar
 
   const templateName = outerTitle ?? dashboard.state.title;
   const useTemplateUrl =
-    `${DASHBOARD_LIBRARY_ROUTES.Template}?dashboardTemplateUid=${encodeURIComponent(meta.dashboardTemplateUid!)}` +
+    `${DASHBOARD_LIBRARY_ROUTES.Template}?dashboardTemplateUid=${encodeURIComponent(dashboardTemplateUid!)}` +
     `&useTemplateBanner=true`;
 
   return (
