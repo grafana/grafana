@@ -267,10 +267,7 @@ func NewSearchClient(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (res
 	}
 
 	// When the modern grpc client auth is enabled, mirror NewRemoteResourceClient
-	// and use the authlib interceptor with IDTokenExtractor. This is required for
-	// the search fan-out triggered by the unified-grpc server itself, where the
-	// inbound authlib authenticator only seeds types.AuthInfo and never an
-	// identity.Requester — which the legacy interceptor needs.
+	// and use the authlib interceptor with IDTokenExtractor.
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features != nil && features.IsEnabledGlobally(featuremgmt.FlagAppPlatformGrpcClientAuth) {
 		clientCfg := authnGrpcUtils.ReadGrpcClientConfig(cfg)
