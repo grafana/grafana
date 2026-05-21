@@ -100,7 +100,7 @@ func TestIntegrationVariablesV2Beta1(t *testing.T) {
 			{UserID: &editorID, Level: ResourcePermissionLevelView},
 		})
 
-		restrictedFolderVariable := buildVariableObject("folder-editor-denied", "editorDenied", createdFolder2.GetName())
+		restrictedFolderVariable := buildVariableObject("", "editorDenied", createdFolder2.GetName())
 		_, err = editorVariableClient.Resource.Create(ctx, restrictedFolderVariable, metav1.CreateOptions{})
 		require.Error(t, err)
 		require.True(t, k8serrors.IsForbidden(err), "expected forbidden error, got: %v", err)
@@ -181,7 +181,7 @@ func TestIntegrationVariablesV2Beta1(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Len(t, list.Items, 1)
-		require.Equal(t, "folder-region", list.Items[0].GetName())
+		require.Equal(t, "region--"+createdFolder1.GetName(), list.Items[0].GetName())
 	})
 
 	annotations := createdFolderVariable.GetAnnotations()
@@ -198,8 +198,8 @@ func TestIntegrationVariablesV2Beta1(t *testing.T) {
 	require.Error(t, err)
 	require.True(t, k8serrors.IsBadRequest(err), "expected bad request, got: %v", err)
 
-	createdRootVariable.Object["spec"].(map[string]any)["spec"].(map[string]any)["name"] = "region_renamed"
-	_, err = variableClient.Resource.Update(ctx, createdRootVariable, metav1.UpdateOptions{})
+	updatedRootVariable.Object["spec"].(map[string]any)["spec"].(map[string]any)["name"] = "region_renamed"
+	_, err = variableClient.Resource.Update(ctx, updatedRootVariable, metav1.UpdateOptions{})
 	require.Error(t, err)
 	require.True(t, k8serrors.IsBadRequest(err), "expected bad request, got: %v", err)
 
