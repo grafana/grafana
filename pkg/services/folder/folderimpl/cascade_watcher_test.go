@@ -81,8 +81,16 @@ func TestListDirectChildFolderNames_search(t *testing.T) {
 	require.Equal(t, "folder1", gotParent)
 }
 
-func TestCascadeWatcher_Run_withoutRestConfig(t *testing.T) {
+func TestCascadeWatcher_Run_disabledByFeatureFlag(t *testing.T) {
 	w := ProvideCascadeWatcher(nil, apiserver.WithoutRestConfig, nil, nil)
+	w.flagEnabled = func(context.Context) bool { return false }
+	err := w.Run(context.Background())
+	require.NoError(t, err)
+}
+
+func TestCascadeWatcher_Run_enabledFlagWithoutRestConfig(t *testing.T) {
+	w := ProvideCascadeWatcher(nil, apiserver.WithoutRestConfig, nil, nil)
+	w.flagEnabled = func(context.Context) bool { return true }
 	err := w.Run(context.Background())
 	require.NoError(t, err)
 }
