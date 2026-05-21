@@ -557,7 +557,7 @@ func TestParsedResource_Run(t *testing.T) {
 				"metadata": map[string]any{"name": "x", "namespace": "default"},
 			}},
 		}
-		err := parsed.Run(context.Background())
+		err := parsed.Run(t.Context())
 		require.ErrorContains(t, err, "unable to find client")
 	})
 
@@ -568,7 +568,7 @@ func TestParsedResource_Run(t *testing.T) {
 		mc.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(successObj, nil)
 
 		parsed := newParsedResource(mc, withDryRun())
-		err := parsed.Run(context.Background())
+		err := parsed.Run(t.Context())
 
 		require.NoError(t, err)
 		require.Equal(t, provisioning.ResourceActionCreate, parsed.Action)
@@ -581,7 +581,7 @@ func TestParsedResource_Run(t *testing.T) {
 		mc.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, badRequestErr)
 
 		parsed := newParsedResource(mc, withDryRun())
-		err := parsed.Run(context.Background())
+		err := parsed.Run(t.Context())
 
 		require.True(t, apierrors.IsBadRequest(err))
 		mc.AssertNumberOfCalls(t, "Create", 1)
@@ -593,7 +593,7 @@ func TestParsedResource_Run(t *testing.T) {
 		mc.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, forbiddenErr)
 
 		parsed := newParsedResource(mc, withDryRun())
-		err := parsed.Run(context.Background())
+		err := parsed.Run(t.Context())
 
 		require.True(t, apierrors.IsForbidden(err))
 		mc.AssertNotCalled(t, "Update")
@@ -604,7 +604,7 @@ func TestParsedResource_Run(t *testing.T) {
 		mc.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, internalErr)
 
 		parsed := newParsedResource(mc, withDryRun())
-		err := parsed.Run(context.Background())
+		err := parsed.Run(t.Context())
 
 		require.True(t, apierrors.IsInternalError(err))
 		mc.AssertNotCalled(t, "Update")
@@ -616,7 +616,7 @@ func TestParsedResource_Run(t *testing.T) {
 		mc.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(successObj, nil)
 
 		parsed := newParsedResource(mc, withDryRun())
-		err := parsed.Run(context.Background())
+		err := parsed.Run(t.Context())
 
 		require.NoError(t, err)
 		require.Equal(t, provisioning.ResourceActionUpdate, parsed.Action)
@@ -633,7 +633,7 @@ func TestParsedResource_Run(t *testing.T) {
 		mc.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(successObj, nil)
 
 		parsed := newParsedResource(mc)
-		err := parsed.Run(context.Background())
+		err := parsed.Run(t.Context())
 
 		require.NoError(t, err)
 		require.Equal(t, provisioning.ResourceActionUpdate, parsed.Action)
@@ -647,7 +647,7 @@ func TestParsedResource_Run(t *testing.T) {
 		mc.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, badRequestErr)
 
 		parsed := newParsedResource(mc)
-		err := parsed.Run(context.Background())
+		err := parsed.Run(t.Context())
 
 		require.True(t, apierrors.IsBadRequest(err))
 		mc.AssertNotCalled(t, "Create")
@@ -660,7 +660,7 @@ func TestParsedResource_Run(t *testing.T) {
 		mc.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(successObj, nil)
 
 		parsed := newParsedResource(mc)
-		err := parsed.Run(context.Background())
+		err := parsed.Run(t.Context())
 
 		require.NoError(t, err)
 		require.Equal(t, provisioning.ResourceActionCreate, parsed.Action)
@@ -675,7 +675,7 @@ func TestParsedResource_Run(t *testing.T) {
 		mc.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, forbiddenErr)
 
 		parsed := newParsedResource(mc)
-		err := parsed.Run(context.Background())
+		err := parsed.Run(t.Context())
 
 		require.True(t, apierrors.IsForbidden(err))
 	})
@@ -688,7 +688,7 @@ func TestParsedResource_Run(t *testing.T) {
 		mc.On("Delete", mock.Anything, "my-dash", mock.Anything, mock.Anything).Return(nil)
 
 		parsed := newParsedResource(mc, withAction(provisioning.ResourceActionDelete), withDryRun(), withExisting(existing))
-		err := parsed.Run(context.Background())
+		err := parsed.Run(t.Context())
 
 		require.NoError(t, err)
 		require.NotNil(t, parsed.Upsert)
@@ -701,7 +701,7 @@ func TestParsedResource_Run(t *testing.T) {
 		mc.On("Delete", mock.Anything, "my-dash", mock.Anything, mock.Anything).Return(nil)
 
 		parsed := newParsedResource(mc, withAction(provisioning.ResourceActionDelete))
-		err := parsed.Run(context.Background())
+		err := parsed.Run(t.Context())
 
 		require.NoError(t, err)
 		mc.AssertNumberOfCalls(t, "Get", 1)
@@ -712,7 +712,7 @@ func TestParsedResource_Run(t *testing.T) {
 		mc.On("Get", mock.Anything, "my-dash", mock.Anything, mock.Anything).Return(nil, notFoundErr)
 
 		parsed := newParsedResource(mc, withAction(provisioning.ResourceActionDelete))
-		err := parsed.Run(context.Background())
+		err := parsed.Run(t.Context())
 
 		require.NoError(t, err)
 		mc.AssertNotCalled(t, "Delete")
@@ -724,7 +724,7 @@ func TestParsedResource_Run(t *testing.T) {
 		mc.On("Delete", mock.Anything, "my-dash", mock.Anything, mock.Anything).Return(notFoundErr)
 
 		parsed := newParsedResource(mc, withAction(provisioning.ResourceActionDelete), withDryRun(), withExisting(existing))
-		err := parsed.Run(context.Background())
+		err := parsed.Run(t.Context())
 
 		require.NoError(t, err)
 	})
@@ -735,7 +735,7 @@ func TestParsedResource_Run(t *testing.T) {
 		mc.On("Delete", mock.Anything, "my-dash", mock.Anything, mock.Anything).Return(internalErr)
 
 		parsed := newParsedResource(mc, withAction(provisioning.ResourceActionDelete), withDryRun(), withExisting(existing))
-		err := parsed.Run(context.Background())
+		err := parsed.Run(t.Context())
 
 		require.True(t, apierrors.IsInternalError(err))
 	})
@@ -754,7 +754,7 @@ func TestParsedResource_Run(t *testing.T) {
 		mc.On("Get", mock.Anything, "my-dash", mock.Anything, mock.Anything).Return(otherOwner, nil)
 
 		parsed := newParsedResource(mc)
-		err := parsed.Run(context.Background())
+		err := parsed.Run(t.Context())
 
 		require.Error(t, err)
 		mc.AssertNotCalled(t, "Create")
