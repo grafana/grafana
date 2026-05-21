@@ -1,8 +1,8 @@
--- MySQL dump 10.13  Distrib 8.4.5, for Linux (x86_64)
+-- MySQL dump 10.13  Distrib 8.4.9, for Linux (x86_64)
 --
 -- Host: localhost    Database: grafana
 -- ------------------------------------------------------
--- Server version	8.4.5
+-- Server version	8.4.9
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
