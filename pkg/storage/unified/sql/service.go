@@ -211,18 +211,7 @@ func newService(
 	embedder *embedder.Embedder,
 	searchClient resourcepb.ResourceIndexClient,
 ) *service {
-	// Opt-in unsafe authenticator for local multi-process setups (grafana +
-	// standalone unified-grpc + standalone search) that don't have a real
-	// signing keys server. The unsafe verifier accepts any well-formed JWT,
-	// which pairs with the in-proc static token exchanger used by
-	// NewAuthnGrpcClientInterceptor when TokenExchangeURL is empty. Must not
-	// be enabled in production.
-	var authn interceptors.AuthenticatorFunc
-	if cfg.SectionWithEnvOverrides("grpc_server_authentication").Key("unsafe").MustBool(false) {
-		authn = grpcutils.NewUnsafeAuthenticator(tracer)
-	} else {
-		authn = grpcutils.NewAuthenticator(ReadGrpcServerConfig(cfg), tracer)
-	}
+	authn := newGrpcAuthenticator(cfg, tracer)
 
 	return &service{
 		backend:            backend,
@@ -472,6 +461,13 @@ func ReadGrpcServerConfig(cfg *setting.Cfg) *grpcutils.AuthenticatorConfig {
 		AllowedAudiences: section.Key("allowed_audiences").Strings(","),
 		AllowInsecure:    cfg.Env == setting.Dev,
 	}
+}
+
+func newGrpcAuthenticator(cfg *setting.Cfg, tracer trace.Tracer) interceptors.AuthenticatorFunc {
+	if cfg.SectionWithEnvOverrides("grpc_server_authentication").Key("unsafe").MustBool(false) {
+		return grpcutils.NewUnsafeAuthenticator(tracer)
+	}
+	return grpcutils.NewAuthenticator(ReadGrpcServerConfig(cfg), tracer)
 }
 
 func toLifecyclerConfig(cfg *setting.Cfg, logger log.Logger) (ring.BasicLifecyclerConfig, error) {
