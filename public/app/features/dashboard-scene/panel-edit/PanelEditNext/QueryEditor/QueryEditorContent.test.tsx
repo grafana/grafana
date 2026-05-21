@@ -108,7 +108,6 @@ function stackedModeOverrides(overrides: Partial<StackedEditorState> = {}): Stac
     exit: jest.fn(),
     syncActiveItem: jest.fn(),
     scrollTarget: null,
-    requestScroll: jest.fn(),
     clearScrollTarget: jest.fn(),
     ...overrides,
   };

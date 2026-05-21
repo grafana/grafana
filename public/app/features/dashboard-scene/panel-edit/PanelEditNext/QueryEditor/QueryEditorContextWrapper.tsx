@@ -124,7 +124,10 @@ export function QueryEditorContextWrapper({
     (query: DataQuery | ExpressionQuery, modifiers?: SelectionModifiers) => {
       setSelectedAlertId(null);
       if (isStackedMode) {
-        const item: StackedEditorItem = { type: getEditorType(query), id: query.refId };
+        const item: StackedEditorItem = {
+          type: getEditorType(query) === QueryEditorType.Expression ? QueryEditorType.Expression : QueryEditorType.Query,
+          id: query.refId,
+        };
         onCardSelectionChange(query.refId, null);
         setStackedScrollTarget(item);
         return;
@@ -203,14 +206,6 @@ export function QueryEditorContextWrapper({
       }
     },
     [onCardSelectionChange]
-  );
-
-  const requestStackedScroll = useCallback(
-    (item: StackedEditorItem) => {
-      syncStackedActiveItem(item);
-      setStackedScrollTarget(item);
-    },
-    [syncStackedActiveItem]
   );
 
   const clearStackedScrollTarget = useCallback(() => {
@@ -400,7 +395,6 @@ export function QueryEditorContextWrapper({
         exit: exitStackedMode,
         syncActiveItem: syncStackedActiveItem,
         scrollTarget: stackedScrollTarget,
-        requestScroll: requestStackedScroll,
         clearScrollTarget: clearStackedScrollTarget,
       },
       showVersionBanner: Boolean(showVersionBanner),
@@ -439,7 +433,6 @@ export function QueryEditorContextWrapper({
       exitStackedMode,
       syncStackedActiveItem,
       stackedScrollTarget,
-      requestStackedScroll,
       clearStackedScrollTarget,
       setPendingExpression,
       finalizePendingExpression,

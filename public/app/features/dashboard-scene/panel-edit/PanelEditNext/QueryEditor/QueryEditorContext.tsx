@@ -88,7 +88,6 @@ export interface StackedEditorState {
   exit: () => void;
   syncActiveItem: (item: StackedEditorItem) => void;
   scrollTarget: StackedEditorItem | null;
-  requestScroll: (item: StackedEditorItem) => void;
   clearScrollTarget: () => void;
 }
 

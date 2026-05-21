@@ -20,7 +20,7 @@ import {
 } from './QueryEditorContext';
 import { QueryEditorPanel } from './QueryEditorRenderer';
 import { TransformationEditorPanel } from './TransformationEditorRenderer';
-import { useQueryDatasource } from './hooks/useSelectedQueryDatasource';
+import { useQueryDatasource } from './hooks/useQueryDatasource';
 import { type Transformation } from './types';
 import { getEditorType } from './utils';
 
