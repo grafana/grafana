@@ -2643,6 +2643,20 @@
     },
     {
       "metadata": {
+        "name": "frontendService.reducedBootDataAPI",
+        "resourceVersion": "1779301675561",
+        "creationTimestamp": "2026-05-20T18:27:55Z"
+      },
+      "spec": {
+        "description": "Frontend Service doesn't rely on the /bootdata API, instead loads configuration as needed",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "frontendService.settingsSourceFilter",
         "resourceVersion": "1776170446239",
         "creationTimestamp": "2026-04-14T12:40:46Z"
