@@ -2,9 +2,7 @@ package unified
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
-	"net/http"
 	"path/filepath"
 	"time"
 
@@ -21,7 +19,6 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/keepalive"
 
-	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/flagext"
 	"github.com/grafana/dskit/grpcclient"
@@ -277,24 +274,19 @@ func NewSearchClient(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (res
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features != nil && features.IsEnabledGlobally(featuremgmt.FlagAppPlatformGrpcClientAuth) {
 		clientCfg := authnGrpcUtils.ReadGrpcClientConfig(cfg)
-		exchangeOpts := []authnlib.ExchangeClientOpts{}
-		if cfg.Env == setting.Dev {
-			exchangeOpts = append(exchangeOpts, authnlib.WithHTTPClient(&http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}))
-		}
-		tc, err := authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
-			Token:            clientCfg.Token,
-			TokenExchangeURL: clientCfg.TokenExchangeURL,
-		}, exchangeOpts...)
-		if err != nil {
-			return nil, fmt.Errorf("could not create token exchange client for search client: %w", err)
-		}
-		clientInt := authnlib.NewGrpcClientInterceptor(
-			tc,
-			authnlib.WithClientInterceptorTracer(otel.Tracer("github.com/grafana/grafana/pkg/storage/unified")),
-			authnlib.WithClientInterceptorNamespace(clientCfg.TokenNamespace),
-			authnlib.WithClientInterceptorAudience([]string{"resourceStore"}),
-			authnlib.WithClientInterceptorIDTokenExtractor(resource.IDTokenExtractor),
+		clientInt, err := resource.NewAuthnGrpcClientInterceptor(
+			otel.Tracer("github.com/grafana/grafana/pkg/storage/unified"),
+			resource.RemoteResourceClientConfig{
+				Token:            clientCfg.Token,
+				TokenExchangeURL: clientCfg.TokenExchangeURL,
+				Audiences:        []string{"resourceStore"},
+				Namespace:        clientCfg.TokenNamespace,
+				AllowInsecure:    cfg.Env == setting.Dev,
+			},
 		)
+		if err != nil {
+			return nil, fmt.Errorf("could not create authn interceptor for search client: %w", err)
+		}
 		cc := grpchan.InterceptClientConn(conn, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
 		return resourcepb.NewResourceIndexClient(cc), nil
 	}

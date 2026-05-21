@@ -161,31 +161,50 @@ type RemoteResourceClientConfig struct {
 }
 
 func NewRemoteResourceClient(tracer trace.Tracer, conn grpc.ClientConnInterface, indexConn grpc.ClientConnInterface, cfg RemoteResourceClientConfig) (ResourceClient, error) {
-	exchangeOpts := []authnlib.ExchangeClientOpts{}
-
-	if cfg.AllowInsecure {
-		exchangeOpts = append(exchangeOpts, authnlib.WithHTTPClient(&http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}))
-	}
-
-	tc, err := authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
-		Token:            cfg.Token,
-		TokenExchangeURL: cfg.TokenExchangeURL,
-	}, exchangeOpts...)
-
+	clientInt, err := NewAuthnGrpcClientInterceptor(tracer, cfg)
 	if err != nil {
 		return nil, err
 	}
-	clientInt := authnlib.NewGrpcClientInterceptor(
+
+	cc := grpchan.InterceptClientConn(conn, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
+	cci := grpchan.InterceptClientConn(indexConn, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
+	return newResourceClient(cc, cci), nil
+}
+
+// NewAuthnGrpcClientInterceptor builds the authlib gRPC client interceptor
+// used to authenticate outbound calls to unified storage services. When
+// cfg.TokenExchangeURL is empty, it falls back to an in-process static
+// exchanger that mints a service-identity token signed by an ephemeral key.
+// This lets local multi-process setups (grafana + standalone unified-grpc +
+// standalone search) talk to each other without a real token exchange server.
+// The server-side authenticator accepts these tokens when running with
+// AllowInsecure (cfg.Env == Dev).
+func NewAuthnGrpcClientInterceptor(tracer trace.Tracer, cfg RemoteResourceClientConfig) (*authnlib.GrpcClientInterceptor, error) {
+	var tc authnlib.TokenExchanger
+	if cfg.TokenExchangeURL == "" {
+		tc = ProvideInProcExchanger()
+	} else {
+		exchangeOpts := []authnlib.ExchangeClientOpts{}
+		if cfg.AllowInsecure {
+			exchangeOpts = append(exchangeOpts, authnlib.WithHTTPClient(&http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}))
+		}
+		client, err := authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
+			Token:            cfg.Token,
+			TokenExchangeURL: cfg.TokenExchangeURL,
+		}, exchangeOpts...)
+		if err != nil {
+			return nil, err
+		}
+		tc = client
+	}
+
+	return authnlib.NewGrpcClientInterceptor(
 		tc,
 		authnlib.WithClientInterceptorTracer(tracer),
 		authnlib.WithClientInterceptorNamespace(cfg.Namespace),
 		authnlib.WithClientInterceptorAudience(cfg.Audiences),
 		authnlib.WithClientInterceptorIDTokenExtractor(IDTokenExtractor),
-	)
-
-	cc := grpchan.InterceptClientConn(conn, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
-	cci := grpchan.InterceptClientConn(indexConn, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
-	return newResourceClient(cc, cci), nil
+	), nil
 }
 
 var authLogger = log.New("resource-client-auth-interceptor")

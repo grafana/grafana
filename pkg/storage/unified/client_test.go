@@ -139,6 +139,16 @@ func TestNewSearchClient(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.EnableSearchClient = true
 		cfg.Raw.Section("grafana-apiserver").Key("search_server_address").SetValue("localhost:12345")
+
+		client, err := NewStorageApiSearchClient(cfg, featuremgmt.WithFeatures(featuremgmt.FlagAppPlatformGrpcClientAuth))
+		require.NoError(t, err)
+		require.NotNil(t, client)
+	})
+
+	t.Run("new search client uses authlib interceptor with real token exchange when configured", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		cfg.EnableSearchClient = true
+		cfg.Raw.Section("grafana-apiserver").Key("search_server_address").SetValue("localhost:12345")
 		cfg.Raw.Section("grpc_client_authentication").Key("token").SetValue("test-token")
 		cfg.Raw.Section("grpc_client_authentication").Key("token_exchange_url").SetValue("http://localhost:8080")
 
