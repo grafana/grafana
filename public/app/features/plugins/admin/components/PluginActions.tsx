@@ -38,7 +38,7 @@ export const PluginActions = ({ plugin }: Props) => {
   const isInstallControlsDisabled = getInstallControlsDisabled(plugin, latestCompatibleVersion);
 
   return (
-    <Stack direction="column">
+    <Stack direction="column" alignItems="flex-end">
       <Stack alignItems="center">
         {!isInstallControlsDisabled && (
           <InstallControlsButton

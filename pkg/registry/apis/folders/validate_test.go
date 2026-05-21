@@ -436,6 +436,74 @@ func TestValidateUpdate(t *testing.T) {
 			expectedErr: "k6 project may not be moved",
 		},
 		{
+			name: "error to move the k6 folder itself",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "k6-app",
+					Annotations: map[string]string{
+						utils.AnnoKeyFolder: "somewhere",
+					},
+				},
+				Spec: folders.FolderSpec{
+					Title: "k6",
+				},
+			},
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "k6-app",
+				},
+				Spec: folders.FolderSpec{
+					Title: "k6",
+				},
+			},
+			expectedErr: "k6 project may not be moved",
+		},
+		{
+			name: "error to move the k6 folder to root",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "k6-app",
+					Annotations: map[string]string{
+						utils.AnnoKeyFolder: folder.RootFolderUID,
+					},
+				},
+				Spec: folders.FolderSpec{
+					Title: "k6",
+				},
+			},
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "k6-app",
+					Annotations: map[string]string{
+						utils.AnnoKeyFolder: "somewhere",
+					},
+				},
+				Spec: folders.FolderSpec{
+					Title: "k6",
+				},
+			},
+			expectedErr: "k6 project may not be moved",
+		},
+		{
+			name: "no-op update on k6 folder is allowed (title change, parent unchanged)",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "k6-app",
+				},
+				Spec: folders.FolderSpec{
+					Title: "renamed",
+				},
+			},
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "k6-app",
+				},
+				Spec: folders.FolderSpec{
+					Title: "k6",
+				},
+			},
+		},
+		{
 			name: "can move a folder to max depth",
 			folder: &folders.Folder{
 				ObjectMeta: metav1.ObjectMeta{
@@ -673,11 +741,15 @@ func TestValidateUpdate(t *testing.T) {
 }
 
 func TestValidateDelete(t *testing.T) {
+	zeroGrace := int64(0)
+
 	tests := []struct {
-		name        string
-		folder      *folders.Folder
-		searcher    *mockSearchClient
-		expectedErr string
+		name                 string
+		folder               *folders.Folder
+		searcher             *mockSearchClient
+		deleteOptions        *metav1.DeleteOptions
+		cascadeDeleteEnabled bool
+		expectedErr          string
 	}{{
 		name: "simple delete",
 		folder: &folders.Folder{
@@ -728,6 +800,47 @@ func TestValidateDelete(t *testing.T) {
 			},
 		},
 		expectedErr: "could not verify if folder is empty",
+	}, {
+		name: "folder not empty with gracePeriodSeconds=0 is allowed",
+		folder: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "nnn",
+			},
+		},
+		searcher: &mockSearchClient{
+			stats: &resourcepb.ResourceStatsResponse{
+				Stats: []*resourcepb.ResourceStatsResponse_Stats{
+					{
+						Group:    "folders.grafana.app",
+						Resource: "folders",
+						Count:    2,
+					},
+				},
+			},
+		},
+		deleteOptions:        &metav1.DeleteOptions{GracePeriodSeconds: &zeroGrace},
+		cascadeDeleteEnabled: true,
+	}, {
+		name: "folder not empty with gracePeriodSeconds=0 is blocked when feature is disabled",
+		folder: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "nnn",
+			},
+		},
+		searcher: &mockSearchClient{
+			stats: &resourcepb.ResourceStatsResponse{
+				Stats: []*resourcepb.ResourceStatsResponse_Stats{
+					{
+						Group:    "folders.grafana.app",
+						Resource: "folders",
+						Count:    2,
+					},
+				},
+			},
+		},
+		deleteOptions:        &metav1.DeleteOptions{GracePeriodSeconds: &zeroGrace},
+		cascadeDeleteEnabled: false,
+		expectedErr:          "[folder.not-empty]",
 	}, {
 		name: "folder not empty - contains dashboards",
 		folder: &folders.Folder{
@@ -855,7 +968,7 @@ func TestValidateDelete(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := validateOnDelete(context.Background(), tt.folder, tt.searcher)
+			err := validateOnDelete(context.Background(), tt.folder, tt.searcher, tt.deleteOptions, tt.cascadeDeleteEnabled)
 
 			if tt.expectedErr == "" {
 				require.NoError(t, err)
@@ -867,6 +980,88 @@ func TestValidateDelete(t *testing.T) {
 	}
 }
 
+func TestGetChildrenBatchPagination(t *testing.T) {
+	const namespace = "default"
+	const parent = "p1"
+
+	makeFolders := func(n int) []folders.Folder {
+		out := make([]folders.Folder, 0, n)
+		for i := 0; i < n; i++ {
+			out = append(out, folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        fmt.Sprintf("c%d", i),
+					Annotations: map[string]string{"grafana.app/folder": parent},
+				},
+			})
+		}
+		return out
+	}
+
+	t.Run("hasMore true via TotalHits when more pages remain (bleve path)", func(t *testing.T) {
+		searcher := &mockSearchClient{folders: makeFolders(5), paginate: true}
+		children, hasMore, err := getChildrenBatch(context.Background(), searcher, namespace, []string{parent}, 2, 0)
+		require.NoError(t, err)
+		require.Len(t, children, 2)
+		require.True(t, hasMore)
+	})
+
+	t.Run("hasMore false on the final page", func(t *testing.T) {
+		searcher := &mockSearchClient{folders: makeFolders(5), paginate: true}
+		children, hasMore, err := getChildrenBatch(context.Background(), searcher, namespace, []string{parent}, 2, 4)
+		require.NoError(t, err)
+		require.Len(t, children, 1)
+		require.False(t, hasMore)
+	})
+
+	t.Run("hasMore true via NextPageToken even when TotalHits is missing", func(t *testing.T) {
+		searcher := &mockSearchClient{
+			folders:          makeFolders(5),
+			paginate:         true,
+			useNextPageToken: true,
+			dropTotalHits:    true,
+		}
+		children, hasMore, err := getChildrenBatch(context.Background(), searcher, namespace, []string{parent}, 2, 0)
+		require.NoError(t, err)
+		require.Len(t, children, 2)
+		require.True(t, hasMore)
+	})
+
+	t.Run("hasMore false when only one page exists and neither signal indicates more", func(t *testing.T) {
+		searcher := &mockSearchClient{folders: makeFolders(2), paginate: true}
+		children, hasMore, err := getChildrenBatch(context.Background(), searcher, namespace, []string{parent}, 10, 0)
+		require.NoError(t, err)
+		require.Len(t, children, 2)
+		require.False(t, hasMore)
+	})
+}
+
+func TestCheckSubtreeDepthIteratesAllPages(t *testing.T) {
+	// pageSize inside checkSubtreeDepthBatched is 1000, so we need >1000 children
+	// under a single parent to force more than one iteration of the pagination loop.
+	const namespace = "default"
+	const parent = "root"
+	const childCount = 1001
+
+	all := make([]folders.Folder, 0, childCount)
+	for i := 0; i < childCount; i++ {
+		all = append(all, folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:        fmt.Sprintf("c%d", i),
+				Annotations: map[string]string{"grafana.app/folder": parent},
+			},
+		})
+	}
+
+	searcher := &mockSearchClient{folders: all, paginate: true}
+	// remainingDepth is generous and children have no further descendants, so the
+	// recursion bottoms out cleanly and we only exercise the sibling pagination loop.
+	err := checkSubtreeDepth(context.Background(), searcher, namespace, parent, 10, 20)
+	require.NoError(t, err)
+	// 1 call for the first 1000 children + 1 call for the final partial page,
+	// plus 1 recursive call per page that finds no grandchildren = 4 total.
+	require.Equal(t, 4, searcher.searchCalls)
+}
+
 var (
 	_ = resourcepb.ResourceIndexClient(&mockSearchClient{})
 )
@@ -876,6 +1071,13 @@ type mockSearchClient struct {
 	statsErr error
 
 	folders []folders.Folder
+
+	// pagination controls (opt-in: zero values preserve the original "return everything" behavior)
+	paginate         bool
+	useNextPageToken bool
+	dropTotalHits    bool
+
+	searchCalls int
 }
 
 // GetStats implements resourcepb.ResourceIndexClient.
@@ -885,6 +1087,8 @@ func (m *mockSearchClient) GetStats(ctx context.Context, in *resourcepb.Resource
 
 // Search implements resourcepb.ResourceIndexClient.
 func (m *mockSearchClient) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest, opts ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
+	m.searchCalls++
+
 	// get the list of parents from the search request
 	parentSet := make(map[string]bool)
 	if req.Options != nil && req.Options.Fields != nil {
@@ -912,9 +1116,38 @@ func (m *mockSearchClient) Search(ctx context.Context, req *resourcepb.ResourceS
 		}
 	}
 
-	return &resourcepb.ResourceSearchResponse{
-		Results: &resourcepb.ResourceTable{Rows: rows},
-	}, nil
+	if !m.paginate {
+		return &resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{Rows: rows},
+		}, nil
+	}
+
+	total := int64(len(rows))
+	offset := req.Offset
+	if offset < 0 {
+		offset = 0
+	}
+	if offset > total {
+		offset = total
+	}
+	end := total
+	if req.Limit > 0 && offset+req.Limit < end {
+		end = offset + req.Limit
+	}
+	pageRows := rows[offset:end]
+
+	nextToken := ""
+	if m.useNextPageToken && end < total {
+		nextToken = fmt.Sprintf("next-%d", end)
+	}
+
+	resp := &resourcepb.ResourceSearchResponse{
+		Results: &resourcepb.ResourceTable{Rows: pageRows, NextPageToken: nextToken},
+	}
+	if !m.dropTotalHits {
+		resp.TotalHits = total
+	}
+	return resp, nil
 }
 
 // RebuildIndexes implements resourcepb.ResourceIndexClient.
