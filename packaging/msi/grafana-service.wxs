@@ -29,8 +29,8 @@
 
         <RegistryKey Root="HKLM" Key="SYSTEM\CurrentControlSet\Services\Grafana">
           <RegistryKey Key="Parameters">
-            <RegistryValue Name="AppDirectory" Value="[INSTALLDIR]grafana" Type="expandable" />
-            <RegistryValue Name="Application" Value="[INSTALLDIR]grafana\bin\grafana.exe" Type="expandable" />
+            <RegistryValue Name="AppDirectory" Value="[GrafanaX64Dir]" Type="expandable" />
+            <RegistryValue Name="Application" Value="[GrafanaX64Dir]bin\grafana.exe" Type="expandable" />
             <RegistryValue Name="AppParameters" Value='server' Type="expandable" />
 
             <RegistryValue Name="AppEnvironmentExtra" Type="multiString">

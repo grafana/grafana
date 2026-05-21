@@ -1838,12 +1838,6 @@ export type TeamList = {
   kind?: string;
   metadata: ListMeta;
 };
-export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1IdentityRef = {
-  /** Name is the unique identifier for identity, guaranteed to be a unique value for the type within a namespace. */
-  name: string;
-  /** Type of identity e.g. "user". For a full list see https://github.com/grafana/authlib/blob/d6737a7dc8f55e9d42834adb83b5da607ceed293/types/type.go#L15 */
-  type: string;
-};
 export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1TeamMember = {
   /** AvatarURL is the url where we can get the avatar for identity */
   avatarURL?: string;
@@ -1851,7 +1845,7 @@ export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1TeamMember = {
   displayName: string;
   /** External is set if member ship was synced from external IDP. */
   external?: boolean;
-  identity: GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1IdentityRef;
+  identity: IdentityRef;
   /** InternalID is the legacy numeric id for identity, Deprecated: use the identityRef where possible */
   internalId?: number;
   /** Permission member has in team.
@@ -1869,14 +1863,10 @@ export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1TeamMemberList = {
   kind?: string;
   metadata?: ListMeta;
 };
-export type GetTeamGroupsExternalGroupMapping = {
-  externalGroup: string;
-  name: string;
-};
 export type GetTeamGroupsResponse = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
-  items: GetTeamGroupsExternalGroupMapping[];
+  externalGroups: string[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
 };

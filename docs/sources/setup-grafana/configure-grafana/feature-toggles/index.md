@@ -32,8 +32,10 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `awsDatasourcesTempCredentials`              | Support temporary security credentials in AWS plugins for Grafana Cloud customers                                                                             | Yes                |
 | `provisioning`                               | Enables Git Sync and as-code provisioning for Grafana resources                                                                                               | Yes                |
 | `provisioningFolderMetadata`                 | Allow setting folder metadata for provisioned folders                                                                                                         | Yes                |
-| `awsAsyncQueryCaching`                       | Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled                            | Yes                |
+| `awsAsyncQueryCaching`                       | Enable caching for async queries for Redshift and Athena. Requires that the data source has caching and async query support enabled                           | Yes                |
 | `dashgpt`                                    | Enable AI powered features in dashboards                                                                                                                      | Yes                |
+| `kubernetesShortURLs`                        | Enables k8s short URL API and uses it under the hood when handling legacy /api                                                                                | Yes                |
+| `useKubernetesShortURLsAPI`                  | Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs                                                     | Yes                |
 | `cloudWatchBatchQueries`                     | Runs CloudWatch metrics queries as separate batches                                                                                                           |                    |
 | `annotationPermissionUpdate`                 | Change the way annotation permissions work by scoping them to folders and dashboards.                                                                         | Yes                |
 | `annotationsClustering`                      | Enables annotation clustering and switches to refactored annotation code                                                                                      | Yes                |
@@ -70,7 +72,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `sharingDashboardImage`                      | Enables image sharing functionality for dashboards                                                                                                            | Yes                |
 | `newClickhouseConfigPageDesign`              | Enables new design for the Clickhouse data source configuration page                                                                                          | Yes                |
 | `azureResourcePickerUpdates`                 | Enables the updated Azure Monitor resource picker                                                                                                             | Yes                |
-| `newVizSuggestions`                          | Enable new visualization suggestions                                                                                                                          | Yes                |
 | `opentsdbBackendMigration`                   | Run queries through the data source backend                                                                                                                   |                    |
 | `multiPropsVariables`                        | Enables support for variables whose values can have multiple properties                                                                                       | Yes                |
 | `dashboardSectionVariables`                  | Enables support for section level variables (rows and tabs)                                                                                                   | Yes                |
@@ -109,6 +110,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `transformationsEmptyPlaceholder` | Show transformation quick-start cards in empty transformations state                                   |
 | `profilesExemplars`               | Enables profiles exemplars support in profiles drilldown                                               |
 | `pyroscopeUTF8LabelNames`         | Enables support for UTF-8 label names in Pyroscope label selectors                                     |
+| `flameGraphWithCallTree`          | Enables the new Flame Graph UI containing the Call Tree view                                           |
 | `splashScreen`                    | Enables the splash screen modal for introducing new Grafana features on first session                  |
 
 ## Development feature toggles
