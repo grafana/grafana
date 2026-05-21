@@ -42,11 +42,11 @@ export function QueryEditorPanel({
   runQueries,
 }: QueryEditorPanelProps) {
   const error = data?.errors?.find((e) => e.refId === query?.refId);
-  const selectedRefId = query?.refId;
+  const queryRefId = query?.refId;
   // Filter panel data to only include data for this specific query
   const filteredData = useMemo(() => {
-    return selectedRefId && data ? filterPanelDataToQuery(data, selectedRefId) : undefined;
-  }, [data, selectedRefId]);
+    return queryRefId && data ? filterPanelDataToQuery(data, queryRefId) : undefined;
+  }, [data, queryRefId]);
 
   // Key off updatedQuery.refId so late onChange calls (e.g. editor unmount cleanup) hit the right query.
   const handleChange = useCallback(
