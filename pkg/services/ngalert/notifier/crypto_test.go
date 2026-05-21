@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 )
 
@@ -41,8 +41,8 @@ func TestEncryptExtraConfigs(t *testing.T) {
 				},
 			}
 
-			cfg := &definitions.PostableUserConfig{
-				ExtraConfigs: []definitions.ExtraConfiguration{
+			cfg := &v1.AMConfigV1{
+				ExtraConfigs: []v1.ExtraConfiguration{
 					{AlertmanagerConfig: tt.inputConfig},
 				},
 			}
@@ -90,8 +90,8 @@ func TestDecryptExtraConfigs(t *testing.T) {
 				},
 			}
 
-			cfg := &definitions.PostableUserConfig{
-				ExtraConfigs: []definitions.ExtraConfiguration{
+			cfg := &v1.AMConfigV1{
+				ExtraConfigs: []v1.ExtraConfiguration{
 					{AlertmanagerConfig: tt.inputConfig},
 				},
 			}

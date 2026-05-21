@@ -32,6 +32,7 @@ import {
   store,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { getConfig } from 'app/core/config';
 
 import { getLogsExtractFields } from '../explore/Logs/LogsTable';
@@ -47,8 +48,13 @@ import { DATAPLANE_LABELS_NAME, DATAPLANE_LABEL_TYPES_NAME, parseLogsFrame } fro
  * Parse the line for level words. If no level is found, it returns `LogLevel.unknown`.
  *
  * Example: `getLogLevel('WARN 1999-12-31 this is great') // LogLevel.warn`
+ * @deprecated
  */
 export function getLogLevel(line: string): LogLevel {
+  const enabled = getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaLogLevelInference, false);
+  if (!enabled) {
+    return LogLevel.unknown;
+  }
   if (!line) {
     return LogLevel.unknown;
   }

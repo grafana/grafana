@@ -280,7 +280,7 @@ func TestIntegrationProvisioning_ViewerSettings_CustomRepositoryTypes(t *testing
 	if !extensions.IsEnterprise {
 		helper = common.RunGrafana(t, common.WithRepositoryTypes([]string{"local", "github"}))
 	} else {
-		helper = common.RunGrafana(t, common.WithRepositoryTypes([]string{"local", "git", "github", "bitbucket"}))
+		helper = common.RunGrafana(t, common.WithRepositoryTypes([]string{"local", "git", "github", "bitbucket", "githubEnterprise"}))
 	}
 
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
@@ -305,6 +305,7 @@ func TestIntegrationProvisioning_ViewerSettings_CustomRepositoryTypes(t *testing
 				provisioning.GitRepositoryType,
 				provisioning.GitHubRepositoryType,
 				provisioning.BitbucketRepositoryType,
+				provisioning.GitHubEnterpriseRepositoryType,
 			}, settings.AvailableRepositoryTypes)
 		} else {
 			assert.ElementsMatch(collect, []provisioning.RepositoryType{
@@ -2498,8 +2499,8 @@ func TestIntegrationRepositoryController_DefaultBranch(t *testing.T) {
 			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 				w.WriteHeader(http.StatusOK)
 				repo := &github.Repository{
-					ID:            github.Ptr(int64(12345)),
-					Name:          github.Ptr("name"),
+					ID:            new(int64(12345)),
+					Name:          new("name"),
 					DefaultBranch: &defaultBranchName,
 				}
 				_, _ = w.Write(ghmock.MustMarshal(repo))

@@ -303,6 +303,45 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 		require.NotEmpty(t, updatedRule.FolderFullpath, "FolderFullpath should be populated")
 		assert.Equal(t, folderBTitle, updatedRule.FolderFullpath, "FolderFullpath should be updated to Folder B")
 	})
+
+	t.Run("should preserve guid and use correct table when called inside an outer transaction", func(t *testing.T) {
+		// Regression test for the ORM table inference bug where UpdateAlertRules was
+		// called from callers (UpdateRuleGroup, UpdateAlertRule) that already hold an
+		// outer InTransaction session on the context. A prior query on that shared
+		// session could leave xorm's table state pointing at the wrong model,
+		// causing "SELECT alert_rule columns FROM user" on PostgreSQL.
+		rule := createRule(t, store, gen)
+		require.NotEmpty(t, rule.GUID, "rule must have a guid after insert")
+		originalGUID := rule.GUID
+
+		newRule := models.CopyRule(rule)
+		newRule.Title = util.GenerateShortUID()
+
+		err := sqlStore.InTransaction(context.Background(), func(ctx context.Context) error {
+			// Simulate a prior query on the shared session using a different table,
+			// as would happen when the folder service or provenance store runs on
+			// the same transaction context before UpdateAlertRules is called.
+			_ = sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+				_, _ = sess.Table("alert_rule_version").Where("1=0").Count()
+				return nil
+			})
+			return store.UpdateAlertRules(ctx, &usr, []models.UpdateRule{{
+				Existing: rule,
+				New:      *newRule,
+			}})
+		})
+		require.NoError(t, err)
+
+		dbrule := &alertRule{}
+		err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+			exist, err := sess.Table(alertRule{}).ID(rule.ID).Get(dbrule)
+			require.Truef(t, exist, "rule with ID %d not found after update", rule.ID)
+			return err
+		})
+		require.NoError(t, err)
+		require.Equal(t, originalGUID, dbrule.GUID, "guid must not change on update — it is an immutable identifier")
+		require.Equal(t, newRule.Title, dbrule.Title)
+	})
 }
 
 func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
@@ -704,7 +743,7 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, versions, 2)
 
-		err = store.DeleteAlertRulesByUID(context.Background(), orgID, util.Pointer(models.UserUID("test")), false, uids...)
+		err = store.DeleteAlertRulesByUID(context.Background(), orgID, new(models.UserUID("test")), false, uids...)
 		require.NoError(t, err)
 
 		guids := make([]string, 0, len(rules))
@@ -771,7 +810,7 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, versions, 2)
 
-		err = store.DeleteAlertRulesByUID(context.Background(), orgID, util.Pointer(models.UserUID("test")), false, uids...)
+		err = store.DeleteAlertRulesByUID(context.Background(), orgID, new(models.UserUID("test")), false, uids...)
 		require.NoError(t, err)
 
 		guids := make([]string, 0, len(rules))
@@ -824,7 +863,7 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, versions, 2)
 
-		err = store.DeleteAlertRulesByUID(context.Background(), orgID, util.Pointer(models.UserUID("test")), true, uids...)
+		err = store.DeleteAlertRulesByUID(context.Background(), orgID, new(models.UserUID("test")), true, uids...)
 		require.NoError(t, err)
 
 		guids := make([]string, 0, len(rules))
@@ -2559,12 +2598,12 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 		}{
 			{
 				name:                   "should return only imported prometheus rules when filter is true",
-				importedPrometheusRule: util.Pointer(true),
+				importedPrometheusRule: new(true),
 				expectedRules:          []*models.AlertRule{importedRule},
 			},
 			{
 				name:                   "should return only non-imported rules when filter is false",
-				importedPrometheusRule: util.Pointer(false),
+				importedPrometheusRule: new(false),
 				expectedRules:          []*models.AlertRule{regularRule},
 			},
 			{
@@ -3855,12 +3894,12 @@ func TestIntegration_ListDeletedRules(t *testing.T) {
 
 	// delete the second rule
 	clk.Add(1 * time.Hour)
-	err = store.DeleteAlertRulesByUID(context.Background(), orgID, util.Pointer(models.UserUID("test")), false, rule2.UID)
+	err = store.DeleteAlertRulesByUID(context.Background(), orgID, new(models.UserUID("test")), false, rule2.UID)
 	require.NoError(t, err)
 
 	// and the first rule hour later
 	clk.Add(1 * time.Hour)
-	err = store.DeleteAlertRulesByUID(context.Background(), orgID, util.Pointer(models.UserUID("test")), false, rule1.UID)
+	err = store.DeleteAlertRulesByUID(context.Background(), orgID, new(models.UserUID("test")), false, rule1.UID)
 	require.NoError(t, err)
 
 	t.Run("should return deleted rules sorted by date desc", func(t *testing.T) {
@@ -3877,7 +3916,7 @@ func TestIntegration_ListDeletedRules(t *testing.T) {
 		assert.Empty(t, list[0].UID)
 		assert.Empty(t, rule1v2.Diff(list[0], "ID", "UID", "DashboardUID", "PanelID", "Updated", "UpdatedBy")) // ignore updated because it's not
 		assert.Equal(t, list[0].Updated.UTC(), clk.Now().UTC())
-		assert.EqualValues(t, list[0].UpdatedBy, util.Pointer(models.UserUID("test")))
+		assert.EqualValues(t, list[0].UpdatedBy, new(models.UserUID("test")))
 	})
 }
 
@@ -3925,7 +3964,7 @@ func TestIntegration_CleanUpDeletedAlertRules(t *testing.T) {
 		TimeNow = func() time.Time {
 			return t0.Add(time.Duration(idx) * 10 * time.Second)
 		}
-		err = store.DeleteAlertRulesByUID(context.Background(), orgID, util.Pointer(models.UserUID("test")), false, uid)
+		err = store.DeleteAlertRulesByUID(context.Background(), orgID, new(models.UserUID("test")), false, uid)
 		require.NoError(t, err)
 	}
 
