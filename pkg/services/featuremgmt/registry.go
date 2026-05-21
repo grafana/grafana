@@ -2912,10 +2912,10 @@ var (
 		{
 			Name:         "clearPreviousFieldValues",
 			Description:  "Mitigates React fiber's retention of previous props/state, causing 2x memory use: https://github.com/facebook/react/issues/36176",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Generate:     Generate{LegacyFrontend: true},
 			Owner:        grafanaDatavizSquad,
-			Expression:   "false",
+			Expression:   "true",
 			HideFromDocs: true,
 		},
 		{
