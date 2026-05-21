@@ -9,12 +9,15 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/dynamic/dynamicinformer"
 	"k8s.io/client-go/tools/cache"
+	"k8s.io/client-go/util/retry"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry"
@@ -32,24 +35,32 @@ import (
 
 const defaultCascadeWatcherResync = 60 * time.Second
 
-// folderSearcher is the subset of client.K8sHandler used to count child folders via unified search.
+// folderSearcher is the subset of client.K8sHandler used to list child folders via unified search.
 type folderSearcher interface {
 	Search(ctx context.Context, orgID int64, in *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error)
 }
 
-// CascadeWatcher watches Folder CRs that are terminating with the cascade-delete finalizer.
-// Reconcile logic will be added here when cascade delete is implemented.
+// folderMutator deletes Folder CRs and removes the cascade finalizer once children are gone.
+type folderMutator interface {
+	Delete(ctx context.Context, namespace, name string) error
+	RemoveCascadeFinalizer(ctx context.Context, namespace, name string) error
+}
+
+// CascadeWatcher watches Folder CRs that are terminating with the cascade-delete finalizer
+// and drives cascade deletion: it deletes direct child folders, and once a folder has no
+// remaining children it removes the cascade finalizer so the folder can be garbage-collected.
 //
-// Child folder counts use unified search (folder parent index), not a full folder List or
+// Child folder lookups use unified search (folder parent index), not a full folder List or
 // informer cache scan, so cost scales with the number of direct children, not org size.
 //
 // Note: the informer still performs an initial List+Watch of all folder CRs on startup.
 // At very large scale, consider replacing it with a targeted watch path.
 type CascadeWatcher struct {
-	restConfig   apiserver.RestConfigProvider
-	folderSearch folderSearcher
-	log          *slog.Logger
-	resync       time.Duration
+	restConfig    apiserver.RestConfigProvider
+	folderSearch  folderSearcher
+	folderMutator folderMutator
+	log           *slog.Logger
+	resync        time.Duration
 }
 
 func ProvideCascadeWatcher(
@@ -91,6 +102,8 @@ func (w *CascadeWatcher) Run(ctx context.Context) error {
 	}
 
 	gvr := foldersv1.FolderResourceInfo.GroupVersionResource()
+	w.folderMutator = &dynamicFolderMutator{client: dyn.Resource(gvr)}
+
 	factory := dynamicinformer.NewDynamicSharedInformerFactory(dyn, w.resync)
 	informer := factory.ForResource(gvr).Informer()
 
@@ -122,26 +135,46 @@ func (w *CascadeWatcher) onFolder(obj interface{}) {
 	}
 
 	svcCtx := identity.WithServiceIdentityContext(context.Background(), orgID)
-	childCount, err := countDirectChildFolders(svcCtx, w.folderSearch, orgID, f.Name)
+	childNames, err := listDirectChildFolderNames(svcCtx, w.folderSearch, orgID, f.Name)
 	if err != nil {
-		w.log.Warn("failed to count child folders", "namespace", f.Namespace, "name", f.Name, "error", err)
+		w.log.Warn("failed to list child folders", "namespace", f.Namespace, "name", f.Name, "error", err)
 		return
 	}
 
-	w.log.Info("observed terminating folder",
+	if len(childNames) == 0 {
+		if w.folderMutator == nil {
+			return
+		}
+		if err := w.folderMutator.RemoveCascadeFinalizer(svcCtx, f.Namespace, f.Name); err != nil && !apierrors.IsNotFound(err) {
+			w.log.Warn("failed to remove cascade finalizer", "namespace", f.Namespace, "name", f.Name, "error", err)
+			return
+		}
+		w.log.Info("removed cascade finalizer", "namespace", f.Namespace, "name", f.Name, "orgID", orgID)
+		return
+	}
+
+	w.log.Info("cascading delete to child folders",
 		"namespace", f.Namespace,
 		"name", f.Name,
 		"orgID", orgID,
-		"deletionTimestamp", f.DeletionTimestamp,
-		"childFolderCount", childCount,
+		"childFolderCount", len(childNames),
 	)
+
+	if w.folderMutator == nil {
+		return
+	}
+	for _, child := range childNames {
+		if err := w.folderMutator.Delete(svcCtx, f.Namespace, child); err != nil && !apierrors.IsNotFound(err) {
+			w.log.Warn("failed to delete child folder", "namespace", f.Namespace, "parent", f.Name, "child", child, "error", err)
+		}
+	}
 }
 
-// countDirectChildFolders counts folder CRs whose grafana.app/folder parent is parentUID
-// using unified search (same index as folder store GetDescendants / searchChildren).
-func countDirectChildFolders(ctx context.Context, searcher folderSearcher, orgID int64, parentUID string) (int, error) {
+// listDirectChildFolderNames returns the UIDs of folder CRs whose grafana.app/folder parent
+// is parentUID, using unified search (same index as folder store GetDescendants / searchChildren).
+func listDirectChildFolderNames(ctx context.Context, searcher folderSearcher, orgID int64, parentUID string) ([]string, error) {
 	if searcher == nil {
-		return 0, nil
+		return nil, nil
 	}
 	if parentUID == folder.GeneralFolderUID {
 		parentUID = ""
@@ -153,7 +186,7 @@ func countDirectChildFolders(ctx context.Context, searcher folderSearcher, orgID
 		Values:   []string{parentUID},
 	}}
 
-	var total int
+	var names []string
 	for offset := int64(0); ; {
 		resp, err := searcher.Search(ctx, orgID, &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{Fields: fields},
@@ -161,21 +194,57 @@ func countDirectChildFolders(ctx context.Context, searcher folderSearcher, orgID
 			Offset:  offset,
 		})
 		if err != nil {
-			return 0, err
+			return nil, err
 		}
 
 		parsed, err := dashboardsearch.ParseResults(resp, 0)
 		if err != nil {
-			return 0, err
+			return nil, err
 		}
 
-		n := len(parsed.Hits)
-		total += n
-		if int64(n) < searchPageSize {
-			return total, nil
+		for _, h := range parsed.Hits {
+			names = append(names, h.Name)
 		}
-		offset += int64(n)
+
+		n := int64(len(parsed.Hits))
+		if n < searchPageSize {
+			return names, nil
+		}
+		offset += n
 	}
+}
+
+// dynamicFolderMutator implements folderMutator on top of the folders dynamic client.
+type dynamicFolderMutator struct {
+	client dynamic.NamespaceableResourceInterface
+}
+
+func (d *dynamicFolderMutator) Delete(ctx context.Context, namespace, name string) error {
+	return d.client.Namespace(namespace).Delete(ctx, name, metav1.DeleteOptions{})
+}
+
+func (d *dynamicFolderMutator) RemoveCascadeFinalizer(ctx context.Context, namespace, name string) error {
+	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		obj, err := d.client.Namespace(namespace).Get(ctx, name, metav1.GetOptions{})
+		if err != nil {
+			return err
+		}
+
+		finalizers := obj.GetFinalizers()
+		remaining := make([]string, 0, len(finalizers))
+		for _, fin := range finalizers {
+			if fin != folders.CascadeDeleteFinalizer {
+				remaining = append(remaining, fin)
+			}
+		}
+		if len(remaining) == len(finalizers) {
+			return nil
+		}
+
+		obj.SetFinalizers(remaining)
+		_, err = d.client.Namespace(namespace).Update(ctx, obj, metav1.UpdateOptions{})
+		return err
+	})
 }
 
 func orgIDFromNamespace(ns string) (int64, error) {
