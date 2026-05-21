@@ -581,7 +581,7 @@ func TestValidateUpdate(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "k6-app",
 					Annotations: map[string]string{
-						utils.AnnoKeyFolder: folder.RootFolderUID,
+						utils.AnnoKeyFolder: folder.LegacyRootFolderUID, // nolint:staticcheck
 					},
 				},
 				Spec: folders.FolderSpec{
