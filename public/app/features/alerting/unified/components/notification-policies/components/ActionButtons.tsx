@@ -4,9 +4,10 @@ import { Trans, t } from '@grafana/i18n';
 import { LinkButton, Stack, Tooltip } from '@grafana/ui';
 
 import { ROUTES_META_SYMBOL, type Route } from '../../../../../../plugins/datasource/alertmanager/types';
-import { isAvailable } from '../../../hooks/abilities/abilityUtils';
+import { isSupported } from '../../../hooks/abilities/abilityUtils';
 import { useNotificationPolicyAbility } from '../../../hooks/abilities/alertmanager/useNotificationPolicyAbility';
 import { NotificationPolicyAction } from '../../../hooks/abilities/types';
+import { extractNotificationPolicyProvenance } from '../../../utils/amroutes';
 import { ROOT_ROUTE_NAME } from '../../../utils/k8s/constants';
 import { createRelativeUrl } from '../../../utils/url';
 import ConditionalWrap from '../../ConditionalWrap';
@@ -24,7 +25,7 @@ export const ActionButtons = ({ route }: ActionButtonsProps) => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
 
-  const context = { provenance: route[ROUTES_META_SYMBOL]?.provenance ?? route.provenance };
+  const context = { provenance: extractNotificationPolicyProvenance(route) };
   const updateAbility = useNotificationPolicyAbility({ action: NotificationPolicyAction.UpdateTree, context });
   const deleteAbility = useNotificationPolicyAbility({ action: NotificationPolicyAction.Delete, context });
   const exportAbility = useNotificationPolicyAbility({ action: NotificationPolicyAction.Export, context });
@@ -53,7 +54,7 @@ export const ActionButtons = ({ route }: ActionButtonsProps) => {
     </LinkButton>
   );
 
-  if (isAvailable(exportAbility)) {
+  if (isSupported(exportAbility)) {
     actions.push(
       <LinkButton
         key="export-routing-tree"
@@ -72,7 +73,7 @@ export const ActionButtons = ({ route }: ActionButtonsProps) => {
     );
   }
 
-  if (isAvailable(deleteAbility)) {
+  if (isSupported(deleteAbility)) {
     const canBeDeleted = deleteAbility.granted && !provisioned;
     const isDefaultPolicy = route.name === ROOT_ROUTE_NAME;
 

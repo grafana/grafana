@@ -14,8 +14,8 @@ import {
 import { type BaseAlertmanagerArgs, type Skippable } from 'app/features/alerting/unified/types/hooks';
 import {
   MatcherOperator,
-  ROUTES_META_SYMBOL,
   type ObjectMatcher,
+  ROUTES_META_SYMBOL,
   type Route,
   type RouteWithID,
 } from 'app/plugins/datasource/alertmanager/types';
@@ -31,7 +31,7 @@ import {
   updateRouteAction,
 } from '../../reducers/alertmanager/notificationPolicyRoutes';
 import { type FormAmRoute } from '../../types/amroutes';
-import { addUniqueIdentifierToRoute } from '../../utils/amroutes';
+import { addUniqueIdentifierToRoute, extractNotificationPolicyProvenance } from '../../utils/amroutes';
 import { K8sAnnotations, ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 import { getAnnotation, isProvisionedResource, shouldUseK8sApi } from '../../utils/k8s/utils';
 import { routeAdapter } from '../../utils/routeAdapter';
@@ -44,8 +44,7 @@ import {
 } from '../../utils/routeTree';
 
 export function isRouteProvisioned(route: Route): boolean {
-  const provenance = route[ROUTES_META_SYMBOL]?.provenance ?? route.provenance;
-  return isProvisionedResource(provenance);
+  return isProvisionedResource(extractNotificationPolicyProvenance(route));
 }
 
 const {
