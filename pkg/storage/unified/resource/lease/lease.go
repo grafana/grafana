@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	otelcodes "go.opentelemetry.io/otel/codes"
@@ -135,6 +136,7 @@ type Manager struct {
 	log              logging.Logger
 	garbageCollector *garbageCollector
 	now              func() time.Time
+	metrics          *Metrics
 }
 
 // NewManager returns a Manager that uses store for persistence and identifies
@@ -148,7 +150,7 @@ func NewManager(store kv.KV, holder string, opts ...ManagerOption) *Manager {
 		log:          logging.DefaultLogger.With("logger", "lease-manager"),
 		now:          time.Now,
 	}
-	m.garbageCollector = newGarbageCollector(store, m.log, m.now)
+	m.garbageCollector = newGarbageCollector(store, m.log, m.now, m.metrics)
 	for _, opt := range opts {
 		opt(m)
 	}
@@ -193,6 +195,24 @@ func WithGarbageCollectionDisabled(m *Manager) {
 	m.garbageCollector = nil
 }
 
+// WithRegisterer registers Prometheus metrics for the Manager (and its
+// background garbage collector, if enabled) with reg. When the option is not
+// supplied, no metrics are recorded.
+func WithRegisterer(reg prometheus.Registerer) ManagerOption {
+	return WithMetrics(NewMetrics(reg))
+}
+
+// WithMetrics attaches an existing *Metrics to the Manager. Useful for tests
+// that want to inspect specific collectors after exercising the Manager.
+func WithMetrics(metrics *Metrics) ManagerOption {
+	return func(m *Manager) {
+		m.metrics = metrics
+		if m.garbageCollector != nil {
+			m.garbageCollector.metrics = metrics
+		}
+	}
+}
+
 // AcquireOption configures a single Acquire call.
 type AcquireOption func(*acquireOptions)
 
@@ -222,6 +242,7 @@ func WithAutoRenew() AcquireOption {
 // an unexpired lease for name is currently owned by some holder (including
 // possibly the caller).
 func (m *Manager) Acquire(ctx context.Context, name string, opts ...AcquireOption) (lease *Lease, retErr error) {
+	start := time.Now()
 	ctx, span := tracer.Start(ctx, "lease.Manager.Acquire", trace.WithAttributes(
 		attribute.String("lease.name", name),
 		attribute.String("lease.holder", m.holder),
@@ -231,6 +252,8 @@ func (m *Manager) Acquire(ctx context.Context, name string, opts ...AcquireOptio
 		recordSpanError(span, retErr)
 		span.SetAttributes(attribute.Int("attempts", attempts))
 		span.End()
+		m.metrics.observeAcquireRetries(attempts)
+		m.metrics.observeAcquireDuration(time.Since(start), acquireOutcome(retErr))
 	}()
 
 	if err := validateLeaseName(name); err != nil {
@@ -342,6 +365,7 @@ func (m *Manager) Acquire(ctx context.Context, name string, opts ...AcquireOptio
 // Release releases lease. It is not idempotent: releasing a lease that has
 // already been released — or one that has expired — returns ErrLeaseLost.
 func (m *Manager) Release(ctx context.Context, lease *Lease) (retErr error) {
+	start := time.Now()
 	ctx, span := tracer.Start(ctx, "lease.Manager.Release", trace.WithAttributes(
 		attribute.String("lease.name", lease.key.name),
 		attribute.String("lease.holder", lease.holder),
@@ -349,6 +373,7 @@ func (m *Manager) Release(ctx context.Context, lease *Lease) (retErr error) {
 	defer func() {
 		recordSpanError(span, retErr)
 		span.End()
+		m.metrics.observeReleaseDuration(time.Since(start), releaseOutcome(retErr))
 	}()
 
 	lease.stopOnce.Do(func() { close(lease.stop) })
@@ -394,7 +419,7 @@ func (m *Manager) Stop() {
 // RunGarbageCollection runs one garbage collection attempt synchronously.
 // Used for testing.
 func (m *Manager) RunGarbageCollection(ctx context.Context) (int, error) {
-	return newGarbageCollector(m.store, m.log, m.now).runOnce(ctx)
+	return newGarbageCollector(m.store, m.log, m.now, m.metrics).runOnce(ctx)
 }
 
 func (m *Manager) extendGeneration(ctx context.Context, lease *Lease, ttl time.Duration) (time.Time, error) {
@@ -450,6 +475,7 @@ func (m *Manager) expiryLoop(lease *Lease, remaining time.Duration) {
 	case <-lease.stop:
 		return
 	case <-timer.C:
+		m.metrics.recordLoss(lossReasonExpired)
 		lease.notifyLoss()
 	}
 }
@@ -469,18 +495,21 @@ func (m *Manager) autoRenewLoop(lease *Lease, expiry time.Time, ttl, renewInterv
 			newExpiry, err := m.renewOnce(lease, ttl, renewInterval)
 			if errors.Is(err, ErrLeaseLost) {
 				log.Warn("lease lost to another holder during renewal", "err", err)
+				m.metrics.recordLoss(lossReasonLost)
 				lease.notifyLoss()
 				return
 			}
 			if err != nil {
 				if m.now().After(expiry) {
 					log.Error("lease lost: renewal retries exhausted before expiry", "err", err)
+					m.metrics.recordLoss(lossReasonError)
 					lease.notifyLoss()
 					return
 				}
 				log.Warn("lease renewal failed, will retry", "time_until_expiry", expiry.Sub(m.now()), "err", err)
 				continue
 			}
+			m.metrics.recordRenewal()
 			expiry = newExpiry
 		}
 	}
