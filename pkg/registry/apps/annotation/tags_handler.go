@@ -13,11 +13,11 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
-type tagResponse struct {
-	Tags []tagItem `json:"tags"`
+type TagResponse struct {
+	Tags []TagItem `json:"tags"`
 }
 
-type tagItem struct {
+type TagItem struct {
 	Tag   string `json:"tag"`
 	Count int64  `json:"count"`
 }
@@ -56,16 +56,16 @@ func newTagsHandler(
 		if err != nil {
 			return err
 		}
-		items := make([]tagItem, len(tags))
+		items := make([]TagItem, len(tags))
 		for i, tag := range tags {
-			items[i] = tagItem{
+			items[i] = TagItem{
 				Tag:   tag.Name,
 				Count: tag.Count,
 			}
 		}
 		span.SetAttributes(attribute.Int("item_count", len(items)))
 
-		response := tagResponse{
+		response := TagResponse{
 			Tags: items,
 		}
 

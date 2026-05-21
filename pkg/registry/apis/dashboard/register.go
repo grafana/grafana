@@ -1286,7 +1286,7 @@ func (b *DashboardsAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.API
 
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
 	searchAPIRoutes := b.search.GetAPIRoutes(defs)
-	snapshotAPIRoutes := snapshot.GetRoutes(b.snapshotService, b.snapshotOptions, b.accessControl, defs,
+	snapshotAPIRoutes := snapshot.GetRoutes(b.snapshotOptions, b.accessControl, defs,
 		func() rest.Storage {
 			return b.snapshotStorage
 		}, b.dashboardService)
