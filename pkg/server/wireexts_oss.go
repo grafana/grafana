@@ -8,7 +8,6 @@ import (
 	"github.com/google/wire"
 
 	"github.com/grafana/grafana/pkg/configprovider"
-	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -215,11 +214,6 @@ var wireExtsModuleServerSet = wire.NewSet(
 	// Overridden by enterprise
 	ProvideNoopModuleRegisterer,
 	sql.ProvideStorageBackend,
-	sql.ProvideKV,
-	sql.ProvideResourceDB,
-	// ModuleServer doesn't use Grafana's core DB; sql.ProvideResourceDB
-	// falls back to the [database] config section when grafanaDB is nil.
-	wire.InterfaceValue(new(infraDB.DB), infraDB.DB(nil)),
 	// Zanzana store provider
 	zStore.ProvideDefaultStoreProvider,
 	// Zanzana MT reconciler CRD list

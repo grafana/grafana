@@ -1924,25 +1924,12 @@ func InitializeModuleServer(cfg *setting.Cfg, opts Options, apiOpts api.ServerOp
 	}
 	storeProvider := store2.ProvideDefaultStoreProvider()
 	v := authz.ProvideReconcileCRDs()
-	db := _wireDBValue
-	dbProvider, err := sql.ProvideResourceDB(cfg, db)
-	if err != nil {
-		return nil, err
-	}
-	kv, err := sql.ProvideKV(cfg, dbProvider)
-	if err != nil {
-		return nil, err
-	}
-	moduleServer, err := NewModule(opts, apiOpts, featureToggles, cfg, storageMetrics, bleveIndexMetrics, vectorMetrics, registerer, gatherer, tracingService, ossLicensingService, moduleRegisterer, storageBackend, hooksService, storeProvider, v, kv, dbProvider)
+	moduleServer, err := NewModule(opts, apiOpts, featureToggles, cfg, storageMetrics, bleveIndexMetrics, vectorMetrics, registerer, gatherer, tracingService, ossLicensingService, moduleRegisterer, storageBackend, hooksService, storeProvider, v)
 	if err != nil {
 		return nil, err
 	}
 	return moduleServer, nil
 }
-
-var (
-	_wireDBValue = db.DB(nil)
-)
 
 // Initialize the standalone APIServer factory
 func InitializeAPIServerFactory() (standalone.APIServerFactory, error) {
