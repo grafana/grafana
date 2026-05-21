@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import type * as monacoNS from 'monaco-editor';
-import { useEffect, useRef, useState } from 'react';
+import { type MutableRefObject, useEffect, useRef, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Button, CodeEditor, type Monaco, type MonacoEditor, useStyles2 } from '@grafana/ui';
@@ -33,6 +33,9 @@ function injectNativeBlockStyles() {
       border-radius: 3px;
       border-bottom: 2px solid rgba(120, 80, 200, 0.6);
     }
+    .sql-proto-ds-name {
+      color: rgba(190, 140, 255, 1) !important;
+    }
   `;
   document.head.appendChild(style);
 }
@@ -43,15 +46,26 @@ interface Props {
   onRunQuery?: () => void;
   readOnly?: boolean;
   height?: string | number;
+  onCursorLineChange?: (line: number) => void;
+  setCursorLineRef?: MutableRefObject<((line: number) => void) | null>;
 }
 
 type DecorationsCollection = monacoNS.editor.IEditorDecorationsCollection;
 
-export function SqlEditor({ value, onChange, onRunQuery, readOnly = false, height = '100%' }: Props) {
+export function SqlEditor({
+  value,
+  onChange,
+  onRunQuery,
+  readOnly = false,
+  height = '100%',
+  onCursorLineChange,
+  setCursorLineRef,
+}: Props) {
   const styles = useStyles2(getStyles);
   const editorRef = useRef<MonacoEditor | null>(null);
   const monacoRef = useRef<Monaco | null>(null);
   const decorationsRef = useRef<DecorationsCollection | null>(null);
+  const dsNamesDecorationsRef = useRef<DecorationsCollection | null>(null);
   const [selectedText, setSelectedText] = useState('');
   const [aiMode, setAiMode] = useState<'explain' | 'generate' | null>(null);
 
@@ -98,6 +112,32 @@ export function SqlEditor({ value, onChange, onRunQuery, readOnly = false, heigh
       decorationsRef.current.set(decorations);
     } else {
       decorationsRef.current = editor.createDecorationsCollection(decorations);
+    }
+  };
+
+  const applyDsNameDecorations = (editor: MonacoEditor, monaco: Monaco) => {
+    const model = editor.getModel();
+    if (!model) {
+      return;
+    }
+    const text = model.getValue();
+    const dsDecorations: monacoNS.editor.IModelDeltaDecoration[] = [];
+    const dsRegex = /`(prometheus|loki)(?:::|`)/gi;
+    let dsMatch;
+    while ((dsMatch = dsRegex.exec(text)) !== null) {
+      const start = dsMatch.index + 1; // skip opening backtick
+      const name = dsMatch[1];
+      const startPos = model.getPositionAt(start);
+      const endPos = model.getPositionAt(start + name.length);
+      dsDecorations.push({
+        range: new monaco.Range(startPos.lineNumber, startPos.column, endPos.lineNumber, endPos.column),
+        options: { inlineClassName: 'sql-proto-ds-name' },
+      });
+    }
+    if (dsNamesDecorationsRef.current) {
+      dsNamesDecorationsRef.current.set(dsDecorations);
+    } else {
+      dsNamesDecorationsRef.current = editor.createDecorationsCollection(dsDecorations);
     }
   };
 
@@ -173,9 +213,11 @@ export function SqlEditor({ value, onChange, onRunQuery, readOnly = false, heigh
     injectNativeBlockStyles();
     setupAutocomplete(monaco);
     applyNativeDecorations(editor, monaco);
+    applyDsNameDecorations(editor, monaco);
 
     editor.onDidChangeModelContent(() => {
       applyNativeDecorations(editor, monaco);
+      applyDsNameDecorations(editor, monaco);
     });
 
     editor.onDidChangeCursorSelection(() => {
@@ -187,6 +229,18 @@ export function SqlEditor({ value, onChange, onRunQuery, readOnly = false, heigh
         setSelectedText('');
       }
     });
+
+    editor.onDidChangeCursorPosition((e) => {
+      onCursorLineChange?.(e.position.lineNumber);
+    });
+
+    if (setCursorLineRef) {
+      setCursorLineRef.current = (line: number) => {
+        editor.setPosition({ lineNumber: line, column: 1 });
+        editor.revealLineInCenter(line);
+        editor.focus();
+      };
+    }
 
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
       onRunQuery?.();
@@ -210,6 +264,7 @@ export function SqlEditor({ value, onChange, onRunQuery, readOnly = false, heigh
   useEffect(() => {
     return () => {
       decorationsRef.current?.clear();
+      dsNamesDecorationsRef.current?.clear();
     };
   }, []);
 

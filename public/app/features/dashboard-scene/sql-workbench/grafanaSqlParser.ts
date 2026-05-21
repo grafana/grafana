@@ -3,11 +3,13 @@ export interface SqlCteSource {
   datasourceType: string;
   datasourceName: string;
   tableName: string;
+  lineNumber: number;
 }
 
 export interface SqlJoinRef {
   left: string;
   right: string;
+  lineNumber: number;
 }
 
 export interface GrafanaSqlStructure {
@@ -36,7 +38,7 @@ function splitCtesBalanced(block: string): string[] {
 const CTE_NAME_RE = /^\s*(\w+)\s+AS\s*\(/i;
 const SOURCE_RE = /FROM\s+`([^`]+)`\.`([^`]+)`/i;
 
-function parseCte(chunk: string): SqlCteSource | null {
+function parseCte(chunk: string): Omit<SqlCteSource, 'lineNumber'> | null {
   const nameMatch = CTE_NAME_RE.exec(chunk);
   if (!nameMatch) {
     return null;
@@ -69,6 +71,20 @@ function parseCte(chunk: string): SqlCteSource | null {
   };
 }
 
+function charToLine(sql: string, idx: number): number {
+  return sql.slice(0, idx).split('\n').length;
+}
+
+function findCteLineNumber(sql: string, name: string): number {
+  const m = new RegExp(`\\b${name}\\s+AS\\s*\\(`, 'i').exec(sql);
+  return m ? charToLine(sql, m.index) : 1;
+}
+
+function findJoinLineNumber(sql: string, right: string): number {
+  const m = new RegExp(`\\bJOIN\\s+${right}\\b`, 'i').exec(sql);
+  return m ? charToLine(sql, m.index) : 1;
+}
+
 export function parseGrafanaSql(sql: string): GrafanaSqlStructure {
   const withIdx = sql.search(/\bWITH\b/i);
   if (withIdx === -1) {
@@ -97,7 +113,11 @@ export function parseGrafanaSql(sql: string): GrafanaSqlStructure {
   const outerSelect = sql.slice(lastCloseIdx + 1);
 
   const cteChunks = splitCtesBalanced(cteBlock);
-  const ctes = cteChunks.map(parseCte).filter((c): c is SqlCteSource => c !== null);
+  const rawCtes = cteChunks.map(parseCte).filter((c): c is Omit<SqlCteSource, 'lineNumber'> => c !== null);
+  const ctes: SqlCteSource[] = rawCtes.map((c) => ({
+    ...c,
+    lineNumber: findCteLineNumber(sql, c.name),
+  }));
 
   const cteNames = new Set(ctes.map((c) => c.name));
   const joins: SqlJoinRef[] = [];
@@ -105,7 +125,11 @@ export function parseGrafanaSql(sql: string): GrafanaSqlStructure {
   let m: RegExpExecArray | null;
   while ((m = joinPairRe.exec(outerSelect)) !== null) {
     if (cteNames.has(m[1]) && cteNames.has(m[2])) {
-      joins.push({ left: m[1], right: m[2] });
+      joins.push({
+        left: m[1],
+        right: m[2],
+        lineNumber: findJoinLineNumber(sql, m[2]),
+      });
     }
   }
 

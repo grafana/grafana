@@ -1,13 +1,19 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
+import { useEffect, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { type DataQuery } from '@grafana/schema';
 import { Icon, useStyles2 } from '@grafana/ui';
+import grafanaIconSvg from 'img/grafana_icon.svg';
+import lokiLogo from 'app/plugins/datasource/loki/img/loki_icon.svg';
+import prometheusLogo from 'app/plugins/datasource/prometheus/img/prometheus_logo.svg';
+
 import { DataSourceLogo } from 'app/features/datasources/components/picker/DataSourceLogo';
 import { useDatasource } from 'app/features/datasources/hooks';
 
 import { GRAFANA_SQL_DEFAULT_QUERY } from '../../../../../sql-workbench/GrafanaSqlMode';
-import { parseGrafanaSql } from '../../../../../sql-workbench/grafanaSqlParser';
+import { parseGrafanaSql, type SqlCteSource, type SqlJoinRef } from '../../../../../sql-workbench/grafanaSqlParser';
+import { setGrafanaSqlActiveLine, subscribeGrafanaSqlActiveLine } from '../../../../../sql-workbench/workbenchStore';
 import { type ActionItem } from '../../../Actions';
 import { PENDING_CARD_ID, QueryEditorType } from '../../../constants';
 import {
@@ -22,9 +28,6 @@ import { CardTitle } from './CardTitle';
 import { GhostSidebarCard } from './GhostSidebarCard';
 import { SidebarCard } from './SidebarCard';
 
-import lokiLogo from 'app/plugins/datasource/loki/img/loki_icon.svg';
-import prometheusLogo from 'app/plugins/datasource/prometheus/img/prometheus_logo.svg';
-
 const DS_LOGOS: Record<string, string> = {
   prometheus: prometheusLogo,
   loki: lokiLogo,
@@ -32,15 +35,52 @@ const DS_LOGOS: Record<string, string> = {
 
 const defaultStructure = parseGrafanaSql(GRAFANA_SQL_DEFAULT_QUERY);
 
+function getActiveKey(
+  activeLine: number | null,
+  ctes: SqlCteSource[],
+  joins: SqlJoinRef[]
+): string | null {
+  if (activeLine === null) {
+    return null;
+  }
+  const all = [
+    ...ctes.map((c) => ({ key: `cte-${c.name}`, line: c.lineNumber })),
+    ...joins.map((j, i) => ({ key: `join-${i}`, line: j.lineNumber })),
+  ].sort((a, b) => a.line - b.line);
+
+  let best: string | null = null;
+  for (const item of all) {
+    if (item.line <= activeLine) {
+      best = item.key;
+    }
+  }
+  return best;
+}
+
 function GrafanaSqlCardSchematic() {
   const styles = useStyles2(getSchematicStyles);
+  const [activeLine, setActiveLine] = useState<number | null>(null);
+
+  useEffect(() => {
+    return subscribeGrafanaSqlActiveLine(setActiveLine);
+  }, []);
+
+  const activeKey = getActiveKey(activeLine, defaultStructure.ctes, defaultStructure.joins);
 
   return (
     <div className={styles.schematic}>
       {defaultStructure.ctes.map((cte, i) => {
         const logo = DS_LOGOS[cte.datasourceType.toLowerCase()];
+        const isActive = activeKey === `cte-${cte.name}`;
         return (
-          <div key={cte.name} className={styles.row}>
+          <button
+            key={cte.name}
+            className={cx(styles.row, { [styles.rowActive]: isActive })}
+            onClick={(e) => {
+              e.stopPropagation();
+              setGrafanaSqlActiveLine(cte.lineNumber);
+            }}
+          >
             <span className={styles.iconWrap}>
               {logo ? (
                 <img src={logo} alt={cte.datasourceType} className={styles.dsLogo} />
@@ -48,18 +88,30 @@ function GrafanaSqlCardSchematic() {
                 <Icon name="database" size="xs" />
               )}
             </span>
-            <span className={i === 0 ? styles.cteBold : styles.cteLight}>{cte.name}</span>
-          </div>
+            <span className={cx(i === 0 ? styles.cteBold : styles.cteLight, { [styles.textActive]: isActive })}>
+              {cte.name}
+            </span>
+          </button>
         );
       })}
-      {defaultStructure.joins.map((_, i) => (
-        <div key={i} className={styles.row}>
-          <span className={styles.iconWrap}>
-            <Icon name="code-branch" size="xs" />
-          </span>
-          <span className={styles.cteLight}>join</span>
-        </div>
-      ))}
+      {defaultStructure.joins.map((join, i) => {
+        const isActive = activeKey === `join-${i}`;
+        return (
+          <button
+            key={i}
+            className={cx(styles.row, { [styles.rowActive]: isActive })}
+            onClick={(e) => {
+              e.stopPropagation();
+              setGrafanaSqlActiveLine(join.lineNumber);
+            }}
+          >
+            <span className={styles.iconWrap}>
+              <Icon name="code-branch" size="xs" />
+            </span>
+            <span className={cx(styles.cteLight, { [styles.textActive]: isActive })}>join</span>
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -71,12 +123,22 @@ function getSchematicStyles(theme: GrafanaTheme2) {
       flexDirection: 'column',
       gap: 6,
       paddingTop: theme.spacing(0.5),
+      paddingLeft: 20,
     }),
     row: css({
       display: 'flex',
       alignItems: 'center',
       gap: theme.spacing(0.5),
+      background: 'none',
+      border: 'none',
+      padding: 0,
+      cursor: 'pointer',
+      borderRadius: theme.shape.radius.default,
+      '&:hover span': {
+        color: theme.colors.primary.text,
+      },
     }),
+    rowActive: css({}),
     iconWrap: css({
       width: 14,
       height: 14,
@@ -107,6 +169,9 @@ function getSchematicStyles(theme: GrafanaTheme2) {
       whiteSpace: 'nowrap',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
+    }),
+    textActive: css({
+      color: `${theme.colors.primary.text} !important`,
     }),
   };
 }
@@ -151,7 +216,7 @@ export const QueryCard = ({ query }: { query: DataQuery }) => {
         {isGrafanaSql ? (
           <div className={styles.grafanaSqlContent}>
             <div className={styles.headerRow}>
-              <DataSourceLogo dataSource={queryDsSettings} size={14} />
+              <img src={grafanaIconSvg} alt="Grafana SQL" className={styles.grafanaIcon} />
               <CardTitle title={query.refId} isHidden={isHidden} />
             </div>
             <GrafanaSqlCardSchematic />
@@ -186,6 +251,12 @@ function getCardStyles(theme: GrafanaTheme2) {
       display: 'flex',
       alignItems: 'center',
       gap: theme.spacing(1),
+    }),
+    grafanaIcon: css({
+      width: 14,
+      height: 14,
+      objectFit: 'contain',
+      flexShrink: 0,
     }),
   };
 }
