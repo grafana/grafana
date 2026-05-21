@@ -8,10 +8,9 @@
 package v0alpha1
 
 import (
+	commonv0alpha1 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	common "k8s.io/kube-openapi/pkg/common"
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
-
-	commonv0alpha1 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
@@ -19,9 +18,9 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		Display{}.OpenAPIModelName():                                      schema_pkg_apis_iam_v0alpha1_Display(ref),
 		DisplayList{}.OpenAPIModelName():                                  schema_pkg_apis_iam_v0alpha1_DisplayList(ref),
 		IdentityRef{}.OpenAPIModelName():                                  schema_pkg_apis_iam_v0alpha1_IdentityRef(ref),
-		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.SSOSetting":     schema_pkg_apis_iam_v0alpha1_SSOSetting(ref),
-		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.SSOSettingList": schema_pkg_apis_iam_v0alpha1_SSOSettingList(ref),
-		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.SSOSettingSpec": schema_pkg_apis_iam_v0alpha1_SSOSettingSpec(ref),
+		SSOSetting{}.OpenAPIModelName():                                   schema_pkg_apis_iam_v0alpha1_SSOSetting(ref),
+		SSOSettingList{}.OpenAPIModelName():                               schema_pkg_apis_iam_v0alpha1_SSOSettingList(ref),
+		SSOSettingSpec{}.OpenAPIModelName():                               schema_pkg_apis_iam_v0alpha1_SSOSettingSpec(ref),
 		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamMember":     schema_pkg_apis_iam_v0alpha1_TeamMember(ref),
 		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamMemberList": schema_pkg_apis_iam_v0alpha1_TeamMemberList(ref),
 		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamRef":        schema_pkg_apis_iam_v0alpha1_TeamRef(ref),
@@ -227,14 +226,14 @@ func schema_pkg_apis_iam_v0alpha1_SSOSetting(ref common.ReferenceCallback) commo
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.SSOSettingSpec"),
+							Ref:     ref(SSOSettingSpec{}.OpenAPIModelName()),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.SSOSettingSpec", "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+			SSOSettingSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -271,7 +270,7 @@ func schema_pkg_apis_iam_v0alpha1_SSOSettingList(ref common.ReferenceCallback) c
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.SSOSetting"),
+										Ref:     ref(SSOSetting{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -282,7 +281,7 @@ func schema_pkg_apis_iam_v0alpha1_SSOSettingList(ref common.ReferenceCallback) c
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.SSOSetting", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
+			SSOSetting{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
