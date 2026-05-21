@@ -123,9 +123,7 @@ export function FilterSidebar({
       <div className={styles.filterField}>
         {state.categoryFilter !== 'all' && <div className={styles.activeDot} />}
         <Field
-          label={
-            <span className={styles.filterLabel}>{t('connections.add-new-connection.category', 'Category')}</span>
-          }
+          label={<span className={styles.filterLabel}>{t('connections.add-new-connection.category', 'Category')}</span>}
           noMargin
         >
           <Select

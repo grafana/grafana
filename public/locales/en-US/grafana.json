@@ -2560,6 +2560,7 @@
       },
       "update-errors": {
         "conflict": "The notification policy tree has been updated by another user.",
+        "error-code": "Error message: \"{{error}}\"",
         "routes": {
           "conflictingMatchers": "Cannot add or update route: matchers conflict with an external routing tree if we merged matchers {{-matchers}}. This would make the route unreachable.",
           "unknownMatchers": "<unknown matchers>"
@@ -12978,6 +12979,12 @@
       "message": {
         "ok": "OK"
       }
+    },
+    "filter": {
+      "disabled": "This filter has been disabled because the Grafana server cannot access grafana.com",
+      "sort": "Sort",
+      "sort-list": "Sort Plugins List",
+      "state": "State"
     },
     "get-feature-state-info": {
       "text": {
