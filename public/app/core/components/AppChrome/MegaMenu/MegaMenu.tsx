@@ -106,7 +106,7 @@ export const MegaMenu = memo(
       <div data-testid={selectors.components.NavMenu.Menu} ref={ref} {...restProps}>
         <MegaMenuHeader handleDockedMenu={handleDockedMenu} onClose={onClose} />
         <nav className={styles.content}>
-          <ScrollContainer height="100%" overflowX="hidden" showScrollIndicators>
+          <ScrollContainer height="100%" overflowX="hidden">
             <>
               <ul className={styles.itemList} aria-label={t('navigation.megamenu.list-label', 'Navigation')}>
                 {navItems.map((link, index) => (
@@ -139,16 +139,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       minHeight: 0,
       flexGrow: 1,
       position: 'relative',
-    }),
-    mobileHeader: css({
-      display: 'flex',
-      justifyContent: 'space-between',
-      padding: theme.spacing(1, 1, 1, 2),
-      borderBottom: `1px solid ${theme.colors.border.weak}`,
-
-      [theme.breakpoints.up('md')]: {
-        display: 'none',
-      },
     }),
     itemList: css({
       boxSizing: 'border-box',

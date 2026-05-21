@@ -56,7 +56,7 @@ export const Page: PageType = ({
     <div
       className={cx(
         styles.wrapper,
-        resolvedBg === 'primary' && styles.wrapperPrimary,
+        resolvedBg === 'page' && styles.wrapperPage,
         resolvedBg === 'gradient' && styles.wrapperGradient,
         className
       )}
@@ -111,10 +111,14 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexDirection: 'column',
       position: 'relative',
       container: 'page / inline-size',
+      borderRadius: theme.shape.radius.lg,
+      overflow: 'hidden',
+      margin: theme.spacing(0, 0.5, 0, 0.5),
+      border: `1px solid ${theme.colors.border.weak}`,
     }),
-    wrapperPrimary: css({
+    wrapperPage: css({
       label: 'page-wrapper-primary',
-      background: theme.colors.background.primary,
+      background: theme.colors.background.page,
     }),
     wrapperGradient: css({
       label: 'page-wrapper-gradient',
@@ -156,14 +160,14 @@ const getStyles = (theme: GrafanaTheme2) => {
 
 function getDefaultBackgroundForLayout(layout: PageLayoutType) {
   if (layout === PageLayoutType.Standard) {
-    return 'primary';
+    return 'page';
   }
 
   if (layout === PageLayoutType.Home) {
     return 'gradient';
   }
 
-  return 'canvas';
+  return 'page';
 }
 
 function getGradientBackgroundForTheme(theme: GrafanaTheme2) {

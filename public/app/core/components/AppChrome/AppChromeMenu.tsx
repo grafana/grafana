@@ -100,7 +100,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       zIndex: theme.zIndex.modal,
       position: 'fixed',
       top: 0,
-      backgroundColor: theme.colors.background.primary,
+      backgroundColor: theme.colors.background.canvas,
       flex: '1 1 0',
 
       [theme.breakpoints.up('md')]: {
@@ -145,7 +145,6 @@ const getAnimStyles = (theme: GrafanaTheme2, animationDuration: number) => {
   const overlayOpen = {
     width: '100%',
     [theme.breakpoints.up('md')]: {
-      borderRight: `1px solid ${theme.colors.border.weak}`,
       boxShadow: theme.shadows.z3,
       width: MENU_WIDTH,
     },

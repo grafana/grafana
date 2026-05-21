@@ -69,7 +69,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   header: css({
     alignItems: 'center',
-    borderBottom: `1px solid ${theme.colors.border.weak}`,
     display: 'flex',
     gap: theme.spacing(1),
     justifyContent: 'space-between',

@@ -214,8 +214,7 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
       paddingTop: 0,
     }),
     dockedMegaMenu: css({
-      background: theme.colors.background.primary,
-      borderRight: `1px solid ${theme.colors.border.weak}`,
+      background: theme.colors.background.canvas,
       display: 'none',
       height: '100%',
       position: 'fixed',
@@ -242,7 +241,7 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
       zIndex: theme.zIndex.navbarFixed,
       left: 0,
       right: 0,
-      background: theme.colors.background.primary,
+      background: theme.colors.background.canvas,
       flexDirection: 'column',
     }),
     topNavMenuDocked: css({

@@ -5,7 +5,8 @@
     "mode": "dark",
     "background": {
       "canvas": "palette.ink950",
-      "primary": "palette.ink900",
+      "page": "palette.ink900",
+      "primary": "palette.ink850",
       "secondary": "palette.ink800",
       "elevated": "palette.ink800"
     },
@@ -22,6 +23,11 @@
       "secondary": "palette.ink300",
       "disabled": "palette.ink500",
       "link": "palette.orange400"
+    },
+    "border": {
+      "weak": "palette.ink700",
+      "medium": "palette.ink600",
+      "strong": "palette.ink500"
     }
   }
 }

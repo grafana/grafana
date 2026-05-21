@@ -42,8 +42,7 @@ const getStyles = (theme: GrafanaTheme2, extensionSidebarWidth = 0) => {
   return {
     actionsBar: css({
       alignItems: 'center',
-      backgroundColor: theme.colors.background.primary,
-      borderBottom: `1px solid ${theme.colors.border.weak}`,
+      backgroundColor: theme.colors.background.canvas,
       display: 'flex',
       height: getChromeHeaderLevelHeight(),
       padding: theme.spacing(0, 1, 0, 2),

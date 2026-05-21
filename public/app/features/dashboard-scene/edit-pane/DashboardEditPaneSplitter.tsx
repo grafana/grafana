@@ -364,8 +364,8 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
         position: 'sticky',
         // above docked dashboard edit Sidebar (zIndex navBarFixed); otherwise time picker popover stays under it.
         zIndex: theme.zIndex.sidemenu,
-        background: theme.colors.background.canvas,
-        top: headerHeight,
+        background: theme.colors.background.page,
+        top: 0,
       },
     }),
   };

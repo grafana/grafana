@@ -255,6 +255,9 @@
             "canvas": {
               "type": "string"
             },
+            "page": {
+              "type": "string"
+            },
             "primary": {
               "type": "string"
             },
