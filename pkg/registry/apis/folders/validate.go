@@ -164,6 +164,11 @@ func validateOnUpdate(ctx context.Context,
 		return nil
 	}
 
+	// the k6 folder itself may not be moved (matches legacy folder.Service.Move)
+	if obj.Name == accesscontrol.K6FolderUID {
+		return folder.ErrBadRequest.Errorf("k6 project may not be moved")
+	}
+
 	// Validate the move operation
 	newParent := folderObj.GetFolder()
 
@@ -175,7 +180,7 @@ func validateOnUpdate(ctx context.Context,
 		return nil
 	}
 
-	// folder cannot be moved to a k6 folder
+	// folder cannot be moved into the k6 folder
 	if newParent == accesscontrol.K6FolderUID {
 		return folder.ErrFolderCannotBeMovedToK6.Errorf("k6 project may not be moved")
 	}

@@ -82,8 +82,7 @@ func TestIntegrationFolderAPIParity(t *testing.T) {
 			t.Skip("validateOnUpdate misses the escalation check; un-skip when fix lands")
 			assertMoveParity(t, f, f.rbacEditorOnA, "parityA1", "parityB", http.StatusForbidden)
 		})
-		t.Run("k6 source folder is rejected (KNOWN GAP)", func(t *testing.T) {
-			t.Skip("only legacy blocks K6 source; un-skip when fix lands")
+		t.Run("k6 source folder is rejected", func(t *testing.T) {
 			assertMoveParity(t, f, f.helper.Org1.Admin, accesscontrol.K6FolderUID, "parityA", http.StatusBadRequest)
 		})
 	})
