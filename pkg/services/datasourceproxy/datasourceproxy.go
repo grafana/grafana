@@ -35,7 +35,7 @@ func ProvideService(dataSourceCache datasources.CacheService, datasourceReqValid
 		DataSourceCache:            dataSourceCache,
 		DataSourceRequestValidator: datasourceReqValidator,
 		pluginStore:                pluginStore,
-		Cfg:                        cfg,
+		proxyCfg:                   pluginproxy.NewDataSourceProxySettings(cfg),
 		HTTPClientProvider:         httpClientProvider,
 		OAuthTokenService:          oauthTokenService,
 		DataSourcesService:         dsService,
@@ -49,7 +49,7 @@ type DataSourceProxyService struct {
 	DataSourceCache            datasources.CacheService
 	DataSourceRequestValidator validations.DataSourceRequestValidator
 	pluginStore                pluginstore.Store
-	Cfg                        *setting.Cfg
+	proxyCfg                   *pluginproxy.DataSourceProxySettings
 	HTTPClientProvider         httpclient.Provider
 	OAuthTokenService          *oauthtoken.Service
 	DataSourcesService         datasources.DataSourceService
@@ -125,7 +125,7 @@ func (p *DataSourceProxyService) proxyDatasourceRequest(c *contextmodel.ReqConte
 	}
 
 	proxyPath := getProxyPath(c)
-	proxy, err := pluginproxy.NewDataSourceProxy(ds, plugin.Routes, c, proxyPath, p.Cfg, p.HTTPClientProvider,
+	proxy, err := pluginproxy.NewDataSourceProxy(ds, plugin.Routes, c, proxyPath, p.proxyCfg, p.HTTPClientProvider,
 		p.OAuthTokenService, p.DataSourcesService, p.tracer, p.features)
 	if err != nil {
 		var urlValidationError datasource.URLValidationError

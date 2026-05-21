@@ -11,7 +11,7 @@ setupMswServer();
 
 const instance = mockPromAlert();
 
-describe.skip('AlertInstanceNotificationAction', () => {
+describe('AlertInstanceNotificationAction', () => {
   it('renders nothing when the rule has no Grafana alerting ruler rule', async () => {
     // default mockCombinedRule uses mockRulerAlertingRule() which is a Prometheus rule
     const rule = mockCombinedRule();
@@ -58,12 +58,12 @@ describe.skip('AlertInstanceNotificationAction', () => {
     });
     const rule = mockCombinedRule({ rulerRule: mockGrafanaRulerRule() });
     render(<AlertInstanceNotificationAction rule={rule} instance={multiReceiverInstance} />);
-    expect(await screen.findByRole('button', { name: /view route/i })).toBeInTheDocument();
     // singlePolicyReceiver is undefined when multiple receivers match — no contact point name shown
     expect(screen.queryByText('a-receiver')).not.toBeInTheDocument();
     expect(screen.queryByText('provisioned-contact-point')).not.toBeInTheDocument();
     // Instead, a clickable "N contact points" affordance is shown above the View policies button.
     // Tests render the singular source default; runtime uses the _other plural form.
-    expect(screen.getByRole('button', { name: /2 contact point/i })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /2 contact point/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /view route/i })).toBeInTheDocument();
   });
 });
