@@ -20,10 +20,7 @@ function HomeRouteInner(props: DashboardPageProxyProps) {
 
 function UnifiedHomeRoute(props: DashboardPageProxyProps) {
   const { data, isLoading, isError } = useMergedPreferencesQuery();
-
-  // TODO remove type check after BE support and schema is added in https://github.com/grafana/grafana/pull/125082
-  const rawRedirectUri = data?.spec?.homeURL;
-  const redirectUri = typeof rawRedirectUri === 'string' ? rawRedirectUri : '';
+  const redirectUri = data?.spec?.homeURL;
 
   useEffect(() => {
     if (!redirectUri) {
@@ -43,9 +40,7 @@ function UnifiedHomeRoute(props: DashboardPageProxyProps) {
     return <DashboardPageProxy {...props} />;
   }
 
-  // TODO remove type check after BE schema is updated
-  const rawUID = data.spec?.homeDashboardUID;
-  const homeDashboardUID = typeof rawUID === 'string' ? rawUID : '';
+  const homeDashboardUID = data.spec?.homeDashboardUID;
   if (homeDashboardUID) {
     return <DashboardPageProxy {...props} />;
   }
