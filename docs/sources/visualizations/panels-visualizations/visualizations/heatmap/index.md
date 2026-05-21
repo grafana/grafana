@@ -103,12 +103,12 @@ The following options control how data in the heatmap is calculated and grouped.
 | X Bucket | This setting determines how the x-axis is split into buckets. You can specify a time interval in the **Size** input. For example, a time range of `1h` makes the cells 1-hour wide on the x-axis. You can also set an interval based on **Count**.  |
 | Y Bucket | This setting determines how the y-axis is split into buckets. Choose from **Size** or **Count**. |
 | Y Bucket scale | When **Calculate from data** is **Yes**. Select one of the following y-axis value scales:<ul><li>**Linear** - Linear scale.</li><li>**Logarithmic** - Choose a **Log base** of **2** or **10**.</li><li>**Symlog** - Symlog scale. Choose a **Log base** of **2** or **10** and enter a value for the **Linear threshold**.</li></ul> |
-| Y bucket scale | When **Calculate from data** is **No**. Set the y-axis scale for pre-bucketed data in the wide, one-field-per-bucket data structure (not available when the response uses the heatmap-cells data frame type). Choose from:<ul><li>**Auto** - Uses the default scale behavior.</li><li>**Linear** - Linear scale. Logarithmic buckets are displayed with proportionally different heights.</li><li>**Log** - Logarithmic scale. Choose a **Log base** of **2** or **10**.</li><li>**Symlog** - Symmetrical logarithmic scale. Choose a **Log base** of **2** or **10** and enter a value for the **Linear threshold**.</li></ul> |
+| Y Bucket scale | When **Calculate from data** is **No**. Set the y-axis scale for pre-bucketed data in the wide, one-field-per-bucket data structure (not available when the response uses the heatmap-cells data frame type). Choose from:<ul><li>**Auto** - Uses the default scale behavior.</li><li>**Linear** - Linear scale. Logarithmic buckets are displayed with proportionally different heights.</li><li>**Log** - Logarithmic scale. Choose a **Log base** of **2** or **10**.</li><li>**Symlog** - Symmetrical logarithmic scale. Choose a **Log base** of **2** or **10** and enter a value for the **Linear threshold**.</li></ul> |
 
 <!-- prettier-ignore-end -->
 
 {{< admonition type="note" >}}
-The **Y bucket scale** option for pre-bucketed data requires the `heatmapRowsAxisOptions` [feature flag](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/) to be enabled. This is an experimental feature that's disabled by default.
+The **Y Bucket scale** option for pre-bucketed data requires the `heatmapRowsAxisOptions` [feature flag](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/) to be enabled. This is an experimental feature that's disabled by default.
 {{< /admonition >}}
 
 ### Y-Axis options
@@ -125,7 +125,7 @@ The following options define the display of the y-axis.
 | Min/Max value | These settings configure the axis range. |
 | Axis width | This setting configures the width for the axis. |
 | Axis label | This setting configures the axis value. |
-| Tick alignment | Sets the alignment of the tick marks on the visualization. Choose from: **Auto**, **Top (LE)**, **Middle**, and **Bottom (GE)**. This option is only displayed when your **Calculate from data** setting is **No** and **Y bucket scale** is set to **Auto**. |
+| Tick alignment | Sets the alignment of the tick marks on the visualization. Choose from: **Auto**, **Top (LE)**, **Middle**, and **Bottom (GE)**. This option is only displayed when your **Calculate from data** setting is **No** and **Y Bucket scale** is set to **Auto**. |
 | Reverse| When selected, the axis appears in reverse order. |
 
 <!-- prettier-ignore-end -->
