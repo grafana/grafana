@@ -280,7 +280,7 @@ function tableToSearchResult(table: TableResponse, deletedByDisplayMap?: Map<str
       title: titleIdx >= 0 ? String(row.cells[titleIdx] ?? '') : '',
       location: folder || 'general',
       folder: folder || 'general',
-      tags: tagsIdx >= 0 ? (Array.isArray(row.cells[tagsIdx]) ? (row.cells[tagsIdx] ?? []) : []) : [],
+      tags: tagsIdx >= 0 && Array.isArray(row.cells[tagsIdx]) ? row.cells[tagsIdx] : [],
       field,
       url: '',
     };
