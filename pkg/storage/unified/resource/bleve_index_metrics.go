@@ -9,19 +9,18 @@ import (
 )
 
 type BleveIndexMetrics struct {
-	IndexLatency            *prometheus.HistogramVec
-	IndexSize               prometheus.Gauge
-	IndexedKinds            *prometheus.GaugeVec
-	IndexCreationTime       *prometheus.HistogramVec
-	OpenIndexes             *prometheus.GaugeVec
-	IndexBuilds             *prometheus.CounterVec
-	IndexBuildFailures      prometheus.Counter
-	IndexBuildSkipped       prometheus.Counter
-	UpdateLatency           prometheus.Histogram
-	UpdatedDocuments        prometheus.Summary
-	SearchUpdateWaitTime    *prometheus.HistogramVec
-	RebuildQueueLength      prometheus.Gauge
-	SearchLegacyQueryFields prometheus.Counter
+	IndexLatency         *prometheus.HistogramVec
+	IndexSize            prometheus.Gauge
+	IndexedKinds         *prometheus.GaugeVec
+	IndexCreationTime    *prometheus.HistogramVec
+	OpenIndexes          *prometheus.GaugeVec
+	IndexBuilds          *prometheus.CounterVec
+	IndexBuildFailures   prometheus.Counter
+	IndexBuildSkipped    prometheus.Counter
+	UpdateLatency        prometheus.Histogram
+	UpdatedDocuments     prometheus.Summary
+	SearchUpdateWaitTime *prometheus.HistogramVec
+	RebuildQueueLength   prometheus.Gauge
 
 	IndexSnapshotDownloads                *prometheus.CounterVec
 	IndexSnapshotDownloadDuration         prometheus.Histogram
@@ -98,10 +97,6 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 		RebuildQueueLength: promauto.With(reg).NewGauge(prometheus.GaugeOpts{
 			Name: "index_server_rebuild_queue_length",
 			Help: "Number of indexes waiting for rebuild",
-		}),
-		SearchLegacyQueryFields: promauto.With(reg).NewCounter(prometheus.CounterOpts{
-			Name: "index_server_search_legacy_query_fields_total",
-			Help: "Search requests using query fields without title_ngram. Used to monitor when it is safe to remove ngram from title.",
 		}),
 		IndexSnapshotDownloads: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "index_server_snapshot_downloads_total",

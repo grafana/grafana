@@ -13,10 +13,14 @@ import (
 	"strings"
 
 	"github.com/PaesslerAG/jsonpath"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
 )
+
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/search/embed/dashboard")
 
 // defaultMaxPanels caps embeddings per dashboard. Anything past ~200
 // panels is unlikely to be human-authored; the cap saves provider
@@ -46,6 +50,13 @@ func (e *Extractor) MaxItemsPerResource() int { return e.maxPanels }
 
 // Extract folder title doesn't exist on unified storage resources - so need to provide that
 func (e *Extractor) Extract(ctx context.Context, key *resourcepb.ResourceKey, value []byte, folderTitle string) ([]embed.Item, error) {
+	ctx, span := tracer.Start(ctx, "unified.embed.dashboard.Extract")
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("namespace", key.GetNamespace()),
+		attribute.String("name", key.GetName()),
+	)
+
 	var dashboardJSON map[string]any
 	if err := json.Unmarshal(value, &dashboardJSON); err != nil {
 		return nil, fmt.Errorf("unmarshal dashboard: %w", err)
@@ -73,6 +84,7 @@ func (e *Extractor) Extract(ctx context.Context, key *resourcepb.ResourceKey, va
 			items = append(items, it)
 		}
 	}
+	span.SetAttributes(attribute.Int("panel_count", len(items)))
 	return items, nil
 }
 

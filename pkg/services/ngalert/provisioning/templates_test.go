@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	"github.com/grafana/grafana/pkg/services/ngalert/remote/client"
 	"github.com/grafana/grafana/pkg/util"
@@ -23,13 +24,13 @@ import (
 func TestGetTemplates(t *testing.T) {
 	orgID := int64(1)
 	revision := &legacy_storage.ConfigRevision{
-		Config: &definitions.PostableUserConfig{
+		Config: &v1.AMConfigV1{
 			TemplateFiles: map[string]string{
 				"template1": "test1",
 				"template2": "test2",
 				"template3": "test3",
 			},
-			ExtraConfigs: []definitions.ExtraConfiguration{
+			ExtraConfigs: []v1.ExtraConfiguration{
 				{
 					Identifier: "1234",
 					TemplateFiles: map[string]string{
@@ -86,7 +87,7 @@ func TestGetTemplates(t *testing.T) {
 		sut, store, prov := createTemplateServiceSut()
 		store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
 			return &legacy_storage.ConfigRevision{
-				Config: &definitions.PostableUserConfig{},
+				Config: &v1.AMConfigV1{},
 			}, nil
 		}
 
@@ -192,11 +193,11 @@ func TestGetTemplate(t *testing.T) {
 	importedTemplateName := "template2"
 	importedTemplateContent := "imported"
 	revision := &legacy_storage.ConfigRevision{
-		Config: &definitions.PostableUserConfig{
+		Config: &v1.AMConfigV1{
 			TemplateFiles: map[string]string{
 				templateName: templateContent,
 			},
-			ExtraConfigs: []definitions.ExtraConfiguration{
+			ExtraConfigs: []v1.ExtraConfiguration{
 				{
 					Identifier: "1234",
 					TemplateFiles: map[string]string{
@@ -338,7 +339,7 @@ func TestUpsertTemplate(t *testing.T) {
 	amConfigToken := util.GenerateShortUID()
 	revision := func() *legacy_storage.ConfigRevision {
 		return &legacy_storage.ConfigRevision{
-			Config: &definitions.PostableUserConfig{
+			Config: &v1.AMConfigV1{
 				TemplateFiles: map[string]string{
 					templateName: currentTemplateContent,
 				},
@@ -352,7 +353,7 @@ func TestUpsertTemplate(t *testing.T) {
 		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
 			assert.Equal(t, orgID, org)
 			return &legacy_storage.ConfigRevision{
-				Config:           &definitions.PostableUserConfig{},
+				Config:           &v1.AMConfigV1{},
 				ConcurrencyToken: amConfigToken,
 			}, nil
 		}
@@ -708,7 +709,7 @@ func TestCreateTemplate(t *testing.T) {
 
 	revision := func() *legacy_storage.ConfigRevision {
 		return &legacy_storage.ConfigRevision{
-			Config:           &definitions.PostableUserConfig{},
+			Config:           &v1.AMConfigV1{},
 			ConcurrencyToken: amConfigToken,
 		}
 	}
@@ -755,7 +756,7 @@ func TestCreateTemplate(t *testing.T) {
 		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
 			assert.Equal(t, orgID, org)
 			return &legacy_storage.ConfigRevision{
-				Config: &definitions.PostableUserConfig{
+				Config: &v1.AMConfigV1{
 					TemplateFiles: map[string]string{
 						tmpl.Name: "test",
 					},
@@ -876,7 +877,7 @@ func TestUpdateTemplate(t *testing.T) {
 	amConfigToken := util.GenerateShortUID()
 	revision := func() *legacy_storage.ConfigRevision {
 		return &legacy_storage.ConfigRevision{
-			Config: &definitions.PostableUserConfig{
+			Config: &v1.AMConfigV1{
 				TemplateFiles: map[string]string{
 					tmpl.Name: currentTemplateContent,
 				},
@@ -890,7 +891,7 @@ func TestUpdateTemplate(t *testing.T) {
 		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
 			assert.Equal(t, orgID, org)
 			return &legacy_storage.ConfigRevision{
-				Config:           &definitions.PostableUserConfig{},
+				Config:           &v1.AMConfigV1{},
 				ConcurrencyToken: amConfigToken,
 			}, nil
 		}
@@ -907,7 +908,7 @@ func TestUpdateTemplate(t *testing.T) {
 		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
 			assert.Equal(t, orgID, org)
 			return &legacy_storage.ConfigRevision{
-				Config: &definitions.PostableUserConfig{
+				Config: &v1.AMConfigV1{
 					TemplateFiles: map[string]string{
 						"not-found": "test", // create a template with name that matches UID to make sure we do not search by name
 						tmpl.Name:   "test",
@@ -1047,7 +1048,7 @@ func TestUpdateTemplate(t *testing.T) {
 		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, nil)
 		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
 			return &legacy_storage.ConfigRevision{
-				Config: &definitions.PostableUserConfig{
+				Config: &v1.AMConfigV1{
 					TemplateFiles: map[string]string{
 						tmpl.Name:           currentTemplateContent,
 						"new-template-name": "test",
@@ -1237,7 +1238,7 @@ func TestDeleteTemplate(t *testing.T) {
 	amConfigToken := util.GenerateShortUID()
 	revision := func() *legacy_storage.ConfigRevision {
 		return &legacy_storage.ConfigRevision{
-			Config: &definitions.PostableUserConfig{
+			Config: &v1.AMConfigV1{
 				TemplateFiles: map[string]string{
 					templateName: templateContent,
 				},
@@ -1323,7 +1324,7 @@ func TestDeleteTemplate(t *testing.T) {
 		sut, store, prov := createTemplateServiceSut()
 		store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
 			return &legacy_storage.ConfigRevision{
-				Config: &definitions.PostableUserConfig{
+				Config: &v1.AMConfigV1{
 					TemplateFiles: map[string]string{
 						templateName:     templateContent,
 						expectedToDelete: templateContent,
@@ -1496,7 +1497,7 @@ func TestTemplateService_LimitsValidation(t *testing.T) {
 			templates[fmt.Sprintf("existing-%d", i)] = "content"
 		}
 		return &legacy_storage.ConfigRevision{
-			Config: &definitions.PostableUserConfig{
+			Config: &v1.AMConfigV1{
 				TemplateFiles: templates,
 			},
 			ConcurrencyToken: amConfigToken,
@@ -1627,7 +1628,7 @@ func TestTemplateService_LimitsValidation(t *testing.T) {
 		}
 		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
 			return &legacy_storage.ConfigRevision{
-				Config: &definitions.PostableUserConfig{
+				Config: &v1.AMConfigV1{
 					TemplateFiles: map[string]string{
 						existingTemplateName: "short",
 					},
@@ -1666,7 +1667,7 @@ func TestTemplateService_LimitsValidation(t *testing.T) {
 		}
 		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
 			return &legacy_storage.ConfigRevision{
-				Config: &definitions.PostableUserConfig{
+				Config: &v1.AMConfigV1{
 					TemplateFiles: templates,
 				},
 				ConcurrencyToken: amConfigToken,
