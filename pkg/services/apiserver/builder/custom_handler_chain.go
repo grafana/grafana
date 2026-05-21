@@ -1,4 +1,4 @@
-// THIS FILE IS MOSTLY COPY/PASTA FROM k8s 
+// THIS FILE IS MOSTLY COPY/PASTA FROM k8s
 // PLEASE EDIT WITH GREAT CARE TO MINIMIZE FORK
 // SEE COMMENTS BELOW FOR MORE DETAILS
 
@@ -25,14 +25,14 @@ import (
 //     otelhttp configured as a public endpoint for non-system:privileged
 //     callers, which severs the upstream trace context — every request gets a
 //     fresh root span linked (not parented) to the caller. Our embedded
-//     apiservers only receive requests from trusted internal services, 
-// 	   and the outer WithTracing in GetDefaultBuildHandlerChainFunc already 
+//     apiservers only receive requests from trusted internal services,
+//     and the outer WithTracing in GetDefaultBuildHandlerChainFunc already
 //     creates the KubernetesAPI span with proper parent-child propagation.
 //
 //  2. It omits the WithRetryAfter and WithWatchTerminationDuringShutdown
 //     filters as these filteres depend on an unexported Config.lifecycleSignals
-//     field. Both are gated upstream on Config fields (ShutdownSendRetryAfter, 
-//     ShutdownWatchTerminationGracePeriod) that Grafana never sets, 
+//     field. Both are gated upstream on Config fields (ShutdownSendRetryAfter,
+//     ShutdownWatchTerminationGracePeriod) that Grafana never sets,
 //     so the filters were dead code. Dropping them lets us avoid reflection
 //     + unsafe.Pointer to reach into k8s internals.
 //
