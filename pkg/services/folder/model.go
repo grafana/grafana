@@ -52,10 +52,14 @@ const (
 	// GeneralFolderUID is the Grafana UID that identifies the root folder.
 	GeneralFolderUID = "general"
 
-	// RootFolderUID is the legacy root sentinel — an empty string — still
+	// LegacyRootFolderUID is the legacy root sentinel — an empty string — still
 	// surfaced by older /api/ responses and stored on resources written before
 	// folder annotations were populated.
-	RootFolderUID = ""
+	//
+	// Deprecated: use GeneralFolderUID for the canonical root folder UID. This
+	// constant is retained only for compatibility with legacy API responses and
+	// stored data that still uses the empty-string sentinel.
+	LegacyRootFolderUID = ""
 
 	// SharedWithMeFolderUID is the UID for the special "Shared with me" folder,
 	// It is not a real folder but used to identify the location of resources that you
@@ -129,7 +133,7 @@ func (f *Folder) IsGeneral() bool {
 // unchanged.
 func ToLegacyFolderUID(uid string) string {
 	if uid == GeneralFolderUID {
-		return RootFolderUID // ""
+		return LegacyRootFolderUID //nolint:staticcheck
 	}
 	return uid
 }
@@ -140,7 +144,7 @@ func ToLegacyFolderUID(uid string) string {
 //   - "" (legacy empty annotation)
 //   - "general" (canonical root UID)
 func IsRootFolderUID(uid string) bool {
-	return uid == RootFolderUID || uid == GeneralFolderUID
+	return uid == LegacyRootFolderUID || uid == GeneralFolderUID //nolint:staticcheck
 }
 
 func (f *Folder) WithURL() *Folder {
