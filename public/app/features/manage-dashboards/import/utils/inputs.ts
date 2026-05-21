@@ -213,7 +213,7 @@ export async function extractV2Inputs(dashboard: unknown): Promise<DashboardInpu
     }
   }
 
-  for (const dsType of dsTypes) {
+  for (const [_, dsType] of Object.entries(dsTypes)) {
     try {
       const datasource = await getDataSourceSrv().get({ type: dsType });
       if (datasource.meta?.builtIn) {
