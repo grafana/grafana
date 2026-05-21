@@ -10,6 +10,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	authlib "github.com/grafana/authlib/types"
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -58,41 +59,30 @@ func (r *subAccessREST) Connect(ctx context.Context, name string, opts runtime.O
 	}), nil
 }
 
-// folderAccessAction is one row in the access check matrix.
 type folderAccessAction struct {
-	Action   string // legacy key, e.g. "folders:write" / "dashboards:create"
-	Verb     string // authlib verb
-	Group    string // optional: defaults to folder.grafana.app
-	Resource string // optional: defaults to folders
+	Action   string // legacy RBAC key, e.g. "folders:write"
+	Verb     string
+	Group    string
+	Resource string
 }
 
-// folderAccessActions lists the legacy RBAC actions surfaced in AccessControl.
-// Currently limited to the folder and dashboard domains. The legacy endpoint
-// (pkg/api/folder.go getFolderACMetadata) flattens every action scoped to
-// folders:uid:<UID>, which also includes library.panels, annotations, and
-// alerting actions when granted on a folder. Those domains are not yet
-// represented here, so clients that depend on them must keep calling
-// /api/folders/{uid}?accesscontrol=true. Expanding this list is tracked
-// separately — it needs RBAC-mapper coverage (alerting still has none) and
-// frontend coordination before the dual call can be dropped.
+// folderAccessActions are limited to the folder and dashboard domains. The
+// legacy endpoint (pkg/api/folder.go getFolderACMetadata) also flattens
+// library.panels, annotations, and alerting actions scoped to a folder, so
+// clients that need those must keep calling /api/folders/{uid}?accesscontrol=true.
 var folderAccessActions = []folderAccessAction{
-	// Folder domain — Name = this folder, folder hint = immediate parent.
-	{Action: "folders:read", Verb: utils.VerbGet},
-	{Action: "folders:write", Verb: utils.VerbUpdate},
-	{Action: "folders:delete", Verb: utils.VerbDelete},
-	{Action: "folders:create", Verb: utils.VerbCreate},
-	{Action: "folders.permissions:read", Verb: utils.VerbGetPermissions},
-	{Action: "folders.permissions:write", Verb: utils.VerbSetPermissions},
+	{Action: "folders:read", Verb: utils.VerbGet, Group: foldersV1.GROUP, Resource: foldersV1.RESOURCE},
+	{Action: "folders:write", Verb: utils.VerbUpdate, Group: foldersV1.GROUP, Resource: foldersV1.RESOURCE},
+	{Action: "folders:delete", Verb: utils.VerbDelete, Group: foldersV1.GROUP, Resource: foldersV1.RESOURCE},
+	{Action: "folders:create", Verb: utils.VerbCreate, Group: foldersV1.GROUP, Resource: foldersV1.RESOURCE},
+	{Action: "folders.permissions:read", Verb: utils.VerbGetPermissions, Group: foldersV1.GROUP, Resource: foldersV1.RESOURCE},
+	{Action: "folders.permissions:write", Verb: utils.VerbSetPermissions, Group: foldersV1.GROUP, Resource: foldersV1.RESOURCE},
 
-	// Dashboard domain — only `create` is correct here. The RBAC service short-
-	// circuits non-Create checks when Name=="" (pkg/services/authz/rbac/service.go
-	// checkPermission) and returns true if the user has the action on any scope,
-	// ignoring the folder hint. Create is the one verb that walks the parent
-	// chain via checkInheritedPermissions. The remaining dashboards:* keys
-	// (read/write/delete/.permissions:*) need either a service-side fix to honor
-	// the folder hint for non-Create verbs, or a Name-based call shape; until
-	// then they must come from the legacy /api/folders/{uid}?accesscontrol=true.
-	{Action: "dashboards:create", Verb: utils.VerbCreate, Group: "dashboard.grafana.app", Resource: "dashboards"},
+	// Only `create` is correct cross-domain: the RBAC service short-circuits
+	// non-Create checks when Name=="" and returns true if the user has the
+	// action on any scope, ignoring the folder hint. Create is the one verb
+	// that walks the parent chain via checkInheritedPermissions.
+	{Action: "dashboards:create", Verb: utils.VerbCreate, Group: dashboardV1.GROUP, Resource: dashboardV1.DASHBOARD_RESOURCE},
 }
 
 func (r *subAccessREST) getAccessInfo(ctx context.Context, name string) (*foldersV1.FolderAccessInfo, error) {
@@ -105,7 +95,6 @@ func (r *subAccessREST) getAccessInfo(ctx context.Context, name string) (*folder
 		return nil, err
 	}
 
-	// Can view is managed here (and in the Authorizer)
 	f, err := r.getter.Get(ctx, name, &v1.GetOptions{})
 	if err != nil {
 		return nil, err
@@ -116,37 +105,25 @@ func (r *subAccessREST) getAccessInfo(ctx context.Context, name string) (*folder
 	}
 	parent := obj.GetFolder()
 
-	// One BatchCheck for all actions. authlib + Zanzana walk the parent chain
-	// internally given the immediate parent UID, so we don't need to enumerate
-	// ancestors ourselves. CorrelationID must match OpenFGA's [\w-]{1,36} regex,
-	// so we use the slice index instead of the legacy "domain:verb" action key.
+	// CorrelationID must match the [\w-]{1,36} regex enforced downstream, so
+	// we use the slice index instead of the legacy "domain:verb" action key.
 	checks := make([]authlib.BatchCheckItem, len(folderAccessActions))
 	for i, a := range folderAccessActions {
-		group := a.Group
-		if group == "" {
-			group = foldersV1.GROUP
-		}
-		resource := a.Resource
-		if resource == "" {
-			resource = foldersV1.RESOURCE
-		}
-
-		// Folder-domain checks ask "can the user do <verb> on THIS folder":
-		// Name=this folder UID, folder hint=immediate parent.
-		// Cross-domain checks (currently only dashboards:create) ask "can the
-		// user create within this folder": Name="", folder hint=this folder
-		// UID; Create walks the parent chain via the RBAC service's
-		// checkInheritedPermissions path.
+		// Cross-domain checks use Name="" + Folder=this folder UID as a
+		// workaround for an authlib gap: Name="" was designed for namespace-
+		// wide list/watch, not "in this folder". The legacy RBAC service's
+		// checkInheritedPermissions walks the parent chain for Create in this
+		// shape. Revisit once authlib grows a folder-scoped check API.
 		reqName, reqFolder := name, parent
-		if group != foldersV1.GROUP || resource != foldersV1.RESOURCE {
+		if a.Group != foldersV1.GROUP || a.Resource != foldersV1.RESOURCE {
 			reqName, reqFolder = "", name
 		}
 
 		checks[i] = authlib.BatchCheckItem{
 			CorrelationID: strconv.Itoa(i),
 			Verb:          a.Verb,
-			Group:         group,
-			Resource:      resource,
+			Group:         a.Group,
+			Resource:      a.Resource,
 			Name:          reqName,
 			Folder:        reqFolder,
 		}
@@ -171,15 +148,12 @@ func (r *subAccessREST) getAccessInfo(ctx context.Context, name string) (*folder
 
 	rsp := &foldersV1.FolderAccessInfo{}
 
-	// Preserve the legacy 4-bool surface. CanAdmin implies the other three
-	// (parity with the previous implementation).
+	// CanAdmin implies the other three, matching the legacy 4-bool surface.
 	rsp.CanAdmin = allowed["folders.permissions:write"]
 	rsp.CanDelete = rsp.CanAdmin || allowed["folders:delete"]
 	rsp.CanEdit = rsp.CanAdmin || allowed["folders:write"]
 	rsp.CanSave = rsp.CanAdmin || allowed["folders:create"]
 
-	// Build the AccessControl map: only keys for actions the user has are
-	// included, matching the legacy dtos.Folder.AccessControl shape.
 	ac := make(map[string]bool, len(folderAccessActions))
 	for _, a := range folderAccessActions {
 		if allowed[a.Action] {
