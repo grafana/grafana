@@ -4380,7 +4380,6 @@
       "button-cancel": "Annuleren",
       "button-delete": "Verwijderen",
       "button-deleting": "Bezig met verwijderen...",
-      "commit": "Map verwijderen",
       "delete-warning": "Hiermee worden deze map en alle onderliggende mappen verwijderd. In totaal heeft dit invloed op:",
       "missing-info": "Ontbrekende verplichte velden",
       "success-message": "Map is verwijderd"
@@ -4494,7 +4493,6 @@
       "button-cancel": "Annuleren",
       "button-rename": "Hernoemen",
       "button-renaming": "Naam wordt gewijzigd...",
-      "commit": "Map hernoemen",
       "error-saving": "Kan map niet hernoemen",
       "label-folder-name": "Mapnaam",
       "missing-info": "Ontbrekende verplichte velden",
@@ -10862,6 +10860,12 @@
     "name-stacking": "Opslaan"
   },
   "home": {
+    "dashboard-tabs": {
+      "recent": "",
+      "recent-active": "",
+      "starred": "",
+      "starred-active": ""
+    },
     "home-page": {
       "edition": {
         "cloud": "",
@@ -10874,6 +10878,23 @@
         "morning": ""
       },
       "placeholder": ""
+    },
+    "recent-dashboards-tab": {
+      "browse": "",
+      "clear": "",
+      "create": "",
+      "empty": "",
+      "empty-description": "",
+      "error-title": "",
+      "loading": "",
+      "retry": ""
+    },
+    "starred-dashboards-tab": {
+      "empty": "",
+      "empty-description": "",
+      "error-title": "",
+      "loading": "",
+      "retry": ""
     }
   },
   "inspector": {
@@ -12566,6 +12587,9 @@
       "save-tooltip": ""
     }
   },
+  "page-loader": {
+    "default": ""
+  },
   "panel": {
     "dashlist": {
       "empty-state-message": "Geen dashboardgroepen geconfigureerd",
@@ -13233,11 +13257,24 @@
     "code-block": {
       "aria-label-copy": "Code naar klembord kopiëren"
     },
+    "commit-message": {
+      "dashboard-create-default": "",
+      "dashboard-delete-default": "",
+      "dashboard-move-default": "",
+      "dashboard-rename-default": "",
+      "dashboard-update-default": "",
+      "folder-create-default": "",
+      "folder-delete-default": "",
+      "folder-move-default": "",
+      "folder-rename-default": "",
+      "folder-update-default": ""
+    },
     "config-form": {
       "alert-repository-settings-saved": "Instellingen voor repository zijn opgeslagen",
       "alert-repository-settings-updated": "Instellingen voor repository zijn bijgewerkt",
       "button-save": "Opslaan",
       "button-saving": "Aan het opslaan ...",
+      "description-commit-message-template": "",
       "description-connection": "Selecteer de te gebruiken GitHub App-verbinding",
       "description-enabled": "Zodra automatische pulling is ingeschakeld, kan het doel niet worden gewijzigd.",
       "description-read-only": "Bronnen kunnen niet worden gewijzigd via Grafana.",
@@ -13248,6 +13285,7 @@
       "error-save-failed": "Kan de repository-instelling niet opslaan",
       "error-save-repository": "Kan de repository-instellingen niet opslaan",
       "label-automatic-pulling": "Automatische pulling",
+      "label-commit-message-template": "",
       "label-connection": "GitHub-app-verbinding",
       "label-enabled": "Ingeschakeld",
       "label-interval-seconds": "Interval (seconden)",
@@ -13256,6 +13294,7 @@
       "label-title": "Titel",
       "option-entire-instance": "Gehele instantie",
       "option-managed-folder": "Beheerde map",
+      "placeholder-commit-message-template": "",
       "placeholder-interval-seconds": "60",
       "placeholder-my-config": "Mijn configuratie"
     },

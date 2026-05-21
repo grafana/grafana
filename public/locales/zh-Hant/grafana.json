@@ -4353,7 +4353,6 @@
       "button-cancel": "取消",
       "button-delete": "刪除",
       "button-deleting": "正在刪除…",
-      "commit": "刪除資料夾",
       "delete-warning": "這將刪除此資料夾及其所有子資料夾。總體而言，這會影響：",
       "missing-info": "缺少必要欄位",
       "success-message": "已成功刪除資料夾"
@@ -4467,7 +4466,6 @@
       "button-cancel": "取消",
       "button-rename": "重新命名",
       "button-renaming": "正在重新命名…",
-      "commit": "重新命名資料夾",
       "error-saving": "無法重新命名資料夾",
       "label-folder-name": "資料夾名稱",
       "missing-info": "缺少必要欄位",
@@ -10804,6 +10802,12 @@
     "name-stacking": "堆疊"
   },
   "home": {
+    "dashboard-tabs": {
+      "recent": "",
+      "recent-active": "",
+      "starred": "",
+      "starred-active": ""
+    },
     "home-page": {
       "edition": {
         "cloud": "",
@@ -10816,6 +10820,23 @@
         "morning": ""
       },
       "placeholder": ""
+    },
+    "recent-dashboards-tab": {
+      "browse": "",
+      "clear": "",
+      "create": "",
+      "empty": "",
+      "empty-description": "",
+      "error-title": "",
+      "loading": "",
+      "retry": ""
+    },
+    "starred-dashboards-tab": {
+      "empty": "",
+      "empty-description": "",
+      "error-title": "",
+      "loading": "",
+      "retry": ""
     }
   },
   "inspector": {
@@ -12497,6 +12518,9 @@
       "save-tooltip": ""
     }
   },
+  "page-loader": {
+    "default": ""
+  },
   "panel": {
     "dashlist": {
       "empty-state-message": "未設定儀表板群組",
@@ -13161,11 +13185,24 @@
     "code-block": {
       "aria-label-copy": "複製程式碼至剪貼簿"
     },
+    "commit-message": {
+      "dashboard-create-default": "",
+      "dashboard-delete-default": "",
+      "dashboard-move-default": "",
+      "dashboard-rename-default": "",
+      "dashboard-update-default": "",
+      "folder-create-default": "",
+      "folder-delete-default": "",
+      "folder-move-default": "",
+      "folder-rename-default": "",
+      "folder-update-default": ""
+    },
     "config-form": {
       "alert-repository-settings-saved": "儲存庫設定已儲存",
       "alert-repository-settings-updated": "儲存庫設定已更新",
       "button-save": "儲存",
       "button-saving": "正在儲存…",
+      "description-commit-message-template": "",
       "description-connection": "選取要使用的 GitHub 應用程式連線",
       "description-enabled": "一旦啟用自動拉取，目標便無法變更。",
       "description-read-only": "無法透過 Grafana 修改資源。",
@@ -13176,6 +13213,7 @@
       "error-save-failed": "無法儲存儲存庫設定",
       "error-save-repository": "無法儲存儲存庫設定",
       "label-automatic-pulling": "自動拉取",
+      "label-commit-message-template": "",
       "label-connection": "GitHub 應用程式連線",
       "label-enabled": "已啟用",
       "label-interval-seconds": "間隔（秒）",
@@ -13184,6 +13222,7 @@
       "label-title": "標題",
       "option-entire-instance": "整個執行個體",
       "option-managed-folder": "受管理的資料夾",
+      "placeholder-commit-message-template": "",
       "placeholder-interval-seconds": "60",
       "placeholder-my-config": "我的設定"
     },
