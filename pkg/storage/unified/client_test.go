@@ -111,7 +111,7 @@ func TestNewSearchClient(t *testing.T) {
 	t.Run("new search client fails when address is empty", func(t *testing.T) {
 		cfg := setting.NewCfg()
 
-		_, err := NewSearchClient(cfg)
+		_, err := NewSearchClient(cfg, featuremgmt.WithFeatures())
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "search_server_address")
 	})
@@ -120,7 +120,7 @@ func TestNewSearchClient(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.EnableSearchClient = false
 
-		client, err := NewStorageApiSearchClient(cfg)
+		client, err := NewStorageApiSearchClient(cfg, featuremgmt.WithFeatures())
 		require.NoError(t, err)
 		require.Nil(t, client)
 	})
@@ -130,7 +130,19 @@ func TestNewSearchClient(t *testing.T) {
 		cfg.EnableSearchClient = true
 		cfg.Raw.Section("grafana-apiserver").Key("search_server_address").SetValue("localhost:12345")
 
-		client, err := NewStorageApiSearchClient(cfg)
+		client, err := NewStorageApiSearchClient(cfg, featuremgmt.WithFeatures())
+		require.NoError(t, err)
+		require.NotNil(t, client)
+	})
+
+	t.Run("new search client uses authlib interceptor when AppPlatformGrpcClientAuth is enabled", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		cfg.EnableSearchClient = true
+		cfg.Raw.Section("grafana-apiserver").Key("search_server_address").SetValue("localhost:12345")
+		cfg.Raw.Section("grpc_client_authentication").Key("token").SetValue("test-token")
+		cfg.Raw.Section("grpc_client_authentication").Key("token_exchange_url").SetValue("http://localhost:8080")
+
+		client, err := NewStorageApiSearchClient(cfg, featuremgmt.WithFeatures(featuremgmt.FlagAppPlatformGrpcClientAuth))
 		require.NoError(t, err)
 		require.NotNil(t, client)
 	})

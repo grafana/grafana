@@ -2,7 +2,9 @@ package unified
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
+	"net/http"
 	"path/filepath"
 	"time"
 
@@ -14,10 +16,12 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	"go.opentelemetry.io/otel"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/keepalive"
 
+	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/flagext"
 	"github.com/grafana/dskit/grpcclient"
@@ -27,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
+	authnGrpcUtils "github.com/grafana/grafana/pkg/services/authn/grpcutils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
@@ -237,11 +242,11 @@ func newClient(opts options.StorageOptions,
 	}
 }
 
-func NewStorageApiSearchClient(cfg *setting.Cfg) (resourcepb.ResourceIndexClient, error) {
+func NewStorageApiSearchClient(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (resourcepb.ResourceIndexClient, error) {
 	var searchClient resourcepb.ResourceIndexClient
 	var err error
 	if cfg.EnableSearchClient {
-		searchClient, err = NewSearchClient(cfg)
+		searchClient, err = NewSearchClient(cfg, features)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create search client: %w", err)
 		}
@@ -249,7 +254,7 @@ func NewStorageApiSearchClient(cfg *setting.Cfg) (resourcepb.ResourceIndexClient
 	return searchClient, nil
 }
 
-func NewSearchClient(cfg *setting.Cfg) (resourcepb.ResourceIndexClient, error) {
+func NewSearchClient(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (resourcepb.ResourceIndexClient, error) {
 	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
 	searchServerAddress := apiserverCfg.Key("search_server_address").MustString("")
 	grpcClientKeepaliveTime := apiserverCfg.Key("grpc_client_keepalive_time").MustDuration(0)
@@ -262,6 +267,36 @@ func NewSearchClient(cfg *setting.Cfg) (resourcepb.ResourceIndexClient, error) {
 	conn, err := grpcConn(searchServerAddress, metrics, grpcClientKeepaliveTime)
 	if err != nil {
 		return nil, err
+	}
+
+	// When the modern grpc client auth is enabled, mirror NewRemoteResourceClient
+	// and use the authlib interceptor with IDTokenExtractor. This is required for
+	// the search fan-out triggered by the unified-grpc server itself, where the
+	// inbound authlib authenticator only seeds types.AuthInfo and never an
+	// identity.Requester — which the legacy interceptor needs.
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if features != nil && features.IsEnabledGlobally(featuremgmt.FlagAppPlatformGrpcClientAuth) {
+		clientCfg := authnGrpcUtils.ReadGrpcClientConfig(cfg)
+		exchangeOpts := []authnlib.ExchangeClientOpts{}
+		if cfg.Env == setting.Dev {
+			exchangeOpts = append(exchangeOpts, authnlib.WithHTTPClient(&http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}))
+		}
+		tc, err := authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
+			Token:            clientCfg.Token,
+			TokenExchangeURL: clientCfg.TokenExchangeURL,
+		}, exchangeOpts...)
+		if err != nil {
+			return nil, fmt.Errorf("could not create token exchange client for search client: %w", err)
+		}
+		clientInt := authnlib.NewGrpcClientInterceptor(
+			tc,
+			authnlib.WithClientInterceptorTracer(otel.Tracer("github.com/grafana/grafana/pkg/storage/unified")),
+			authnlib.WithClientInterceptorNamespace(clientCfg.TokenNamespace),
+			authnlib.WithClientInterceptorAudience([]string{"resourceStore"}),
+			authnlib.WithClientInterceptorIDTokenExtractor(resource.IDTokenExtractor),
+		)
+		cc := grpchan.InterceptClientConn(conn, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
+		return resourcepb.NewResourceIndexClient(cc), nil
 	}
 
 	cc := grpchan.InterceptClientConn(conn, grpcUtils.UnaryClientInterceptor, grpcUtils.StreamClientInterceptor)

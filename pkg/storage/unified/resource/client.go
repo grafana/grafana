@@ -136,7 +136,7 @@ func NewLocalResourceClient(srv ResourceServer) ResourceClient {
 
 	clientInt := authnlib.NewGrpcClientInterceptor(
 		ProvideInProcExchanger(),
-		authnlib.WithClientInterceptorIDTokenExtractor(idTokenExtractor),
+		authnlib.WithClientInterceptorIDTokenExtractor(IDTokenExtractor),
 	)
 
 	cc := grpchan.InterceptClientConn(channel, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
@@ -180,7 +180,7 @@ func NewRemoteResourceClient(tracer trace.Tracer, conn grpc.ClientConnInterface,
 		authnlib.WithClientInterceptorTracer(tracer),
 		authnlib.WithClientInterceptorNamespace(cfg.Namespace),
 		authnlib.WithClientInterceptorAudience(cfg.Audiences),
-		authnlib.WithClientInterceptorIDTokenExtractor(idTokenExtractor),
+		authnlib.WithClientInterceptorIDTokenExtractor(IDTokenExtractor),
 	)
 
 	cc := grpchan.InterceptClientConn(conn, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
@@ -190,7 +190,12 @@ func NewRemoteResourceClient(tracer trace.Tracer, conn grpc.ClientConnInterface,
 
 var authLogger = log.New("resource-client-auth-interceptor")
 
-func idTokenExtractor(ctx context.Context) (string, error) {
+// IDTokenExtractor reads the caller's ID token out of the AuthInfo on ctx so
+// the authlib gRPC client interceptor can forward it on outbound unified
+// storage calls. Returns "" (no error) for service-identity callers and for
+// AccessPolicy tokens, since those authenticate via the exchanged access
+// token rather than a user ID token.
+func IDTokenExtractor(ctx context.Context) (string, error) {
 	if identity.IsServiceIdentity(ctx) {
 		return "", nil
 	}
