@@ -56,7 +56,7 @@ func newVertexEmbedder(cfg *setting.Cfg, duration *prometheus.HistogramVec) (*em
 		return nil, fmt.Errorf("vertex client: %w", err)
 	}
 	model := "vertex/" + cfg.VertexModel
-	dense := vertex.NewDenseEmbedder(client, cfg.VertexModel, cfg.VertexDimensions)
+	dense := vertex.NewDenseEmbedder(client, cfg.VertexModel, cfg.VertexDimensions, cfg.VertexBatchSize)
 	return &embedder.Embedder{
 		TextEmbedder: embedder.Instrument(dense, model, duration),
 		Model:        model,
@@ -77,7 +77,7 @@ func newBedrockEmbedder(cfg *setting.Cfg, duration *prometheus.HistogramVec) (*e
 	rt := bedrockruntime.NewFromConfig(awsCfg)
 	client := bedrock.NewClient(rt)
 	model := "bedrock/" + cfg.BedrockModel
-	dense := bedrock.NewDenseEmbedder(client, cfg.BedrockModel, cfg.BedrockDimensions)
+	dense := bedrock.NewDenseEmbedder(client, cfg.BedrockModel, cfg.BedrockDimensions, cfg.VertexBatchSize)
 	return &embedder.Embedder{
 		TextEmbedder: embedder.Instrument(dense, model, duration),
 		Model:        model,
