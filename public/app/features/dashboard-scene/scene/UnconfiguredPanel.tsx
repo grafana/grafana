@@ -336,7 +336,7 @@ function NewUnconfiguredPanelComp(props: PanelProps) {
             {...(!isButtonsVisible ? { inert: '' } : {})}
           >
             {!isCompact && config.featureToggles.sqlAbstractionPrototype && (
-              <>
+              <div style={{ display: 'none' }}>
                 <Input
                   prefix={<span className={styles.aiSparkle}>✨</span>}
                   placeholder={t('dashboard.new-panel.ai-prompt-placeholder', 'What do you want to learn?')}
@@ -362,7 +362,7 @@ function NewUnconfiguredPanelComp(props: PanelProps) {
                     <Trans i18nKey="dashboard.new-panel.ai-or">or</Trans>
                   </Text>
                 </div>
-              </>
+              </div>
             )}
             {buttons.map((button, i) => (
               <div
