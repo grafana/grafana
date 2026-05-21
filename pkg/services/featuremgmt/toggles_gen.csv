@@ -365,3 +365,4 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-11,alerting.syncExternalAlertmanager,experimental,@grafana/alerting-squad,false,true,false
 2026-05-12,grafana.enableScopesFirstMode,experimental,@grafana/grafana-operator-experience-squad,false,false,true
 2026-05-08,grafana.logLevelInference,deprecated,@grafana/observability-logs,false,false,true
+2026-05-20,frontendService.reducedBootDataAPI,experimental,@grafana/grafana-frontend-platform,false,false,false
