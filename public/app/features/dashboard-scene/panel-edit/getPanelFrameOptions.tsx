@@ -20,6 +20,7 @@ import { vizPanelToPanel, transformSceneToSaveModel } from '../serialization/tra
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../utils/utils';
 
+import { PanelIntentEditor } from './PanelIntentEditor';
 import { PanelStylesSection } from './PanelStylesSection';
 
 export function createPresetApplyHandler(panel: VizPanel) {
@@ -151,6 +152,28 @@ export function getPanelStylesOptions(panel: VizPanel): OptionsPaneCategoryDescr
       <PanelStylesSection key="panel-styles" panel={panel} onApplyPreset={createPresetApplyHandler(panel)} />
     ),
   });
+}
+
+/**
+ * Edit-mode "Panel context" category — surfaces the panel `intent`
+ * block (Dashboard Intent / Phase C) for authoring. Collapsed by
+ * default so it doesn't push the more frequently used Title/Description
+ * fields off-screen, but mounted unconditionally so every panel can
+ * pick up authored intent.
+ */
+export function getPanelIntentOptions(panel: VizPanel): OptionsPaneCategoryDescriptor {
+  return new OptionsPaneCategoryDescriptor({
+    title: t('dashboard-scene.get-panel-intent-options.title', 'Panel context'),
+    id: 'panel-context',
+    isOpenDefault: false,
+  }).addItem(
+    new OptionsPaneItemDescriptor({
+      title: t('dashboard-scene.get-panel-intent-options.editor-title', 'Panel context'),
+      id: 'panel-intent-editor',
+      skipField: true,
+      render: () => <PanelIntentEditor panel={panel} />,
+    })
+  );
 }
 
 interface ScenePanelLinksEditorProps {

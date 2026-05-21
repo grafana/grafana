@@ -2,6 +2,7 @@ import { VizPanel, sceneGraph, behaviors, type SceneObject, SceneGridRow } from 
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { type DashboardScene } from '../scene/DashboardScene';
+import { PanelIntentChips } from '../scene/PanelIntentChips';
 import { VizPanelLinks } from '../scene/PanelLinks';
 import { RowItem } from '../scene/layout-rows/RowItem';
 import { TabItem } from '../scene/layout-tabs/TabItem';
@@ -23,6 +24,14 @@ function getPanelLinks(panel: VizPanel) {
     return panelLink ?? null;
   }
 
+  return null;
+}
+
+function getPanelIntentChips(panel: VizPanel): PanelIntentChips | null {
+  if (panel.state.titleItems && Array.isArray(panel.state.titleItems)) {
+    const chips = panel.state.titleItems.find((item) => item instanceof PanelIntentChips);
+    return chips ?? null;
+  }
   return null;
 }
 
@@ -111,6 +120,7 @@ export const dashboardSceneGraph = {
   getTimePicker,
   getRefreshPicker,
   getPanelLinks,
+  getPanelIntentChips,
   getVizPanels,
   getDataLayers,
   getCursorSync,
