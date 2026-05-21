@@ -1938,6 +1938,24 @@ describe('findFiniteBucketBounds', () => {
     });
   });
 
+  it('recovers boundaries from yMax when middle buckets are empty (sparse NHCB)', () => {
+    // Empty (1,10] and (10,100] buckets are omitted by NHCB's sparse encoding.
+    // The remaining samples are:
+    //   bucket A: yMin=-Inf, yMax=1   ← only place that yields finite boundary 1
+    //   bucket B: yMin=100,  yMax=1000
+    //   bucket C: yMin=1000, yMax=10000
+    // The smallest finite boundary (1) is only present in yMax, so a function
+    // that only considers yMin would incorrectly return finiteMin=100.
+    const yMins = [-Infinity, 100, 1000];
+    const yMaxs = [1, 1000, 10000];
+    expect(findFiniteBucketBounds(yMins, yMaxs)).toEqual({
+      finiteMin: 1,
+      finiteMax: 10000,
+      hasUnboundedLower: true,
+      hasUnboundedUpper: false,
+    });
+  });
+
   it('skips non-number values', () => {
     const yMins = [null, undefined, 'x', 1, 10];
     const yMaxs = [null, undefined, 'x', 10, 100];

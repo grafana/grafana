@@ -1014,28 +1014,34 @@ export function heatmapPathsSparse(opts: PathbuilderOpts) {
  * @param yMaxValues - Array of yMax bucket boundary values
  */
 export function findFiniteBucketBounds(yMinValues: unknown[], yMaxValues: unknown[]) {
+  // Every bucket boundary appears as either the yMin of one sample or the yMax
+  // of another (or both). For sparse encodings — NHCB omits empty buckets —
+  // some boundaries appear only in yMax (e.g., the upper bound of the lowest
+  // populated bucket when the bucket immediately above it is empty). Combine
+  // both fields when computing the smallest / largest finite boundary so we
+  // don't miss those.
   let finiteMin = Infinity;
   let finiteMax = -Infinity;
   let hasUnboundedLower = false;
   let hasUnboundedUpper = false;
 
+  const consider = (v: unknown, position: 'min' | 'max') => {
+    if (typeof v !== 'number') {
+      return;
+    }
+    if (Number.isFinite(v)) {
+      finiteMin = Math.min(finiteMin, v);
+      finiteMax = Math.max(finiteMax, v);
+    } else if (position === 'min') {
+      hasUnboundedLower = true;
+    } else {
+      hasUnboundedUpper = true;
+    }
+  };
+
   for (let i = 0; i < yMinValues.length; i++) {
-    const yMin = yMinValues[i];
-    const yMax = yMaxValues[i];
-    if (typeof yMin === 'number') {
-      if (Number.isFinite(yMin)) {
-        finiteMin = Math.min(finiteMin, yMin);
-      } else {
-        hasUnboundedLower = true;
-      }
-    }
-    if (typeof yMax === 'number') {
-      if (Number.isFinite(yMax)) {
-        finiteMax = Math.max(finiteMax, yMax);
-      } else {
-        hasUnboundedUpper = true;
-      }
-    }
+    consider(yMinValues[i], 'min');
+    consider(yMaxValues[i], 'max');
   }
 
   return {
