@@ -36,9 +36,9 @@ export function QueryEditorContent() {
         <>
           {shouldShowDatasourceHelp && <DatasourceHelpPanel />}
           <QueryEditorBody />
-          {shouldShowFooter && <QueryEditorFooter />}
         </>
       )}
+      {shouldShowFooter && !isGrafanaSql && <QueryEditorFooter />}
     </div>
   );
 }
