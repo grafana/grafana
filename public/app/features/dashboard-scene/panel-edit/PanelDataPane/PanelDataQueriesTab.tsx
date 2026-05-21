@@ -40,6 +40,8 @@ import { ExpressionDatasourceUID } from '../../../expressions/types';
 import { getDatasourceSrv } from '../../../plugins/datasource_srv';
 import { PanelInspectDrawer } from '../../inspect/PanelInspectDrawer';
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
+import { GrafanaSqlInlineEditor } from '../../sql-workbench/GrafanaSqlInlineEditor';
+import { GRAFANA_SQL_PROTOTYPE_UID } from '../../../datasources/components/picker/DataSourcePicker';
 import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
 import { getUpdatedHoverHeader } from '../getPanelFrameOptions';
 
@@ -50,6 +52,7 @@ interface PanelDataQueriesTabState extends SceneObjectState {
   datasource?: DataSourceApi;
   dsSettings?: DataSourceInstanceSettings;
   panelRef: SceneObjectRef<VizPanel>;
+  grafanaSqlActive?: boolean;
 }
 export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabState> implements PanelDataPaneTab {
   static Component = PanelDataQueriesTabRendered;
@@ -209,6 +212,12 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
   };
 
   public onChangeDataSource = async (newSettings: DataSourceInstanceSettings, defaultQueries?: SceneDataQuery[]) => {
+    if (newSettings.uid === GRAFANA_SQL_PROTOTYPE_UID) {
+      this.setState({ grafanaSqlActive: true, dsSettings: newSettings });
+      return;
+    }
+    this.setState({ grafanaSqlActive: false });
+
     const { dsSettings } = this.state;
     const queryRunner = this.queryRunner;
     const panelContext = this.getPanelContext();
@@ -365,7 +374,7 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
 }
 
 export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<PanelDataQueriesTab>) {
-  const { datasource, dsSettings } = model.useState();
+  const { datasource, dsSettings, grafanaSqlActive } = model.useState();
   const { data, queries, datasource: datasourceState } = model.queryRunner.useState();
   const { openDrawer: openQueryLibraryDrawer, queryLibraryEnabled } = useQueryLibraryContext();
   const canReadQueries = config.featureToggles.savedQueriesRBAC
@@ -395,6 +404,14 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
     }
     return {};
   }, [datasourceState?.uid, dsSettings?.uid, queries]);
+
+  if (grafanaSqlActive) {
+    return (
+      <div data-testid={selectors.components.QueryTab.content}>
+        <GrafanaSqlInlineEditor onChangeDatasource={model.onChangeDataSource} />
+      </div>
+    );
+  }
 
   if (!datasource || !dsSettings || !data) {
     return null;

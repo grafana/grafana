@@ -133,6 +133,8 @@ describe('QueryEditorRenderer', () => {
             toggleQuerySelection: jest.fn(),
             toggleTransformationSelection: jest.fn(),
             clearSelection: jest.fn(),
+            grafanaSqlActiveRefId: null,
+            setGrafanaSqlActiveRefId: jest.fn(),
           }}
           actions={mockActions}
           typeConfig={mockTypeConfig}

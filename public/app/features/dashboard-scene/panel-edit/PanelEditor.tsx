@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+
 import deepEqual from 'fast-deep-equal';
 import type * as H from 'history';
 import { debounce } from 'lodash';
@@ -31,6 +33,7 @@ import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { type DashboardLayoutItem, isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
+import { OPEN_GRAFANA_SQL_EVENT, OPEN_IN_WORKBENCH_EVENT } from '../sql-workbench/workbenchStore';
 import {
   activateSceneObjectAndParentTree,
   getDashboardSceneFor,
@@ -38,6 +41,7 @@ import {
   getPanelIdForVizPanel,
 } from '../utils/utils';
 
+import { GrafanaSqlModeShell } from './GrafanaSqlModeShell';
 import { DataProviderSharer } from './PanelDataPane/DataProviderSharer';
 import { type PanelDataPane } from './PanelDataPane/PanelDataPane';
 import { createPanelDataPane } from './PanelDataPane/PanelDataPaneFactory';
@@ -68,13 +72,34 @@ export interface PanelEditorState extends SceneObjectState {
    * Enable the v2 query editor experience
    */
   useQueryExperienceNext?: boolean;
-  /** SQL workbench mode: 'sql' switches to the SQL workbench layout */
-  sqlPrototypeMode?: 'classic' | 'sql';
+  /** SQL workbench mode: switches between layouts */
+  sqlPrototypeMode?: 'classic' | 'sql' | 'grafana-sql';
 }
 
 export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   static Component = ({ model }: SceneComponentProps<PanelEditor>) => {
     const { useQueryExperienceNext, sqlPrototypeMode } = model.useState();
+
+    useEffect(() => {
+      const handleOpenInWorkbench = () => {
+        if (model.state.sqlPrototypeMode !== 'sql') {
+          model.onToggleSqlPrototypeMode();
+        }
+      };
+      const handleOpenGrafanaSql = () => {
+        model.setState({ sqlPrototypeMode: 'grafana-sql' });
+      };
+      window.addEventListener(OPEN_IN_WORKBENCH_EVENT, handleOpenInWorkbench);
+      window.addEventListener(OPEN_GRAFANA_SQL_EVENT, handleOpenGrafanaSql);
+      return () => {
+        window.removeEventListener(OPEN_IN_WORKBENCH_EVENT, handleOpenInWorkbench);
+        window.removeEventListener(OPEN_GRAFANA_SQL_EVENT, handleOpenGrafanaSql);
+      };
+    }, [model]);
+
+    if (sqlPrototypeMode === 'grafana-sql') {
+      return <GrafanaSqlModeShell model={model} />;
+    }
     if (sqlPrototypeMode === 'sql') {
       return <SqlEditorModeShell model={model} />;
     }
@@ -409,6 +434,10 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   public onToggleSqlPrototypeMode = () => {
     const next = this.state.sqlPrototypeMode === 'sql' ? 'classic' : 'sql';
     this.setState({ sqlPrototypeMode: next });
+  };
+
+  public onSetSqlPrototypeMode = (mode: 'classic' | 'sql' | 'grafana-sql') => {
+    this.setState({ sqlPrototypeMode: mode });
   };
 
   public onToggleQueryEditorVersion = () => {

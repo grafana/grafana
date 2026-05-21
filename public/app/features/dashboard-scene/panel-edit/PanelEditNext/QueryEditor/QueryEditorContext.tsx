@@ -108,6 +108,9 @@ export interface QueryEditorUIState {
   setPendingTransformation: (pending: PendingTransformation | null) => void;
   finalizePendingTransformation: (transformationId: string) => void;
   showVersionBanner: boolean;
+  /** Prototype: set when 'grafana-sql-prototype' is the selected datasource for a query refId */
+  grafanaSqlActiveRefId: string | null;
+  setGrafanaSqlActiveRefId: (refId: string | null) => void;
 }
 
 export interface QueryEditorActions {

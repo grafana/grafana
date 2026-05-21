@@ -264,6 +264,8 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
     pendingSavedQuery: null,
     setPendingSavedQuery: jest.fn(),
     showVersionBanner: false,
+    grafanaSqlActiveRefId: null,
+    setGrafanaSqlActiveRefId: jest.fn(),
     ...uiStateOverrides,
   };
 

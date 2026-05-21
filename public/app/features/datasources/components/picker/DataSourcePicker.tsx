@@ -11,8 +11,29 @@ import { type Observable } from 'rxjs';
 import { type DataSourceInstanceSettings, type GrafanaTheme2, type ScopedVars } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { type FavoriteDatasources, reportInteraction, useFavoriteDatasources } from '@grafana/runtime';
+import { config, type FavoriteDatasources, reportInteraction, useFavoriteDatasources } from '@grafana/runtime';
 import { type DataQuery, type DataSourceJsonData, type DataSourceRef } from '@grafana/schema';
+
+import grafanaIconSvg from 'img/grafana_icon.svg';
+
+export const GRAFANA_SQL_PROTOTYPE_UID = 'grafana-sql-prototype';
+
+const GRAFANA_SQL_FAKE_DS = {
+  uid: GRAFANA_SQL_PROTOTYPE_UID,
+  id: -999,
+  type: 'grafana-sql',
+  name: 'Grafana SQL',
+  readOnly: false,
+  jsonData: {},
+  access: 'proxy',
+  isDefault: false,
+  meta: {
+    id: 'grafana-sql',
+    name: 'Grafana SQL',
+    builtIn: false,
+    info: { logos: { small: grafanaIconSvg, large: grafanaIconSvg } },
+  },
+} as unknown as DataSourceInstanceSettings;
 import { Button, floatingUtils, Icon, Input, ModalsController, Portal, ScrollContainer, useStyles2 } from '@grafana/ui';
 import { useKeyNavigationListener } from 'app/features/search/hooks/useSearchKeyboardSelection';
 import { type GrafanaQuery } from 'app/plugins/datasource/grafana/types';
@@ -97,7 +118,14 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
   const [markerElement, setMarkerElement] = useState<HTMLInputElement | null>();
   // Used to move the focus to the footer when tabbing from the input
   const [footerRef, setFooterRef] = useState<HTMLElement | null>();
-  const currentDataSourceInstanceSettings = useDatasource(current, props.scopedVars);
+  const currentFromService = useDatasource(current, props.scopedVars);
+  const isGrafanaSqlSelected =
+    config.featureToggles.sqlAbstractionPrototype &&
+    current != null &&
+    typeof current === 'object' &&
+    'uid' in current &&
+    (current as DataSourceRef).uid === GRAFANA_SQL_PROTOTYPE_UID;
+  const currentDataSourceInstanceSettings = isGrafanaSqlSelected ? GRAFANA_SQL_FAKE_DS : currentFromService;
   const currentValue = Boolean(!current && noDefault) ? undefined : currentDataSourceInstanceSettings;
   const prefixIcon =
     filterTerm && isOpen ? <DataSourceLogoPlaceHolder /> : <DataSourceLogo dataSource={currentValue} />;
@@ -294,7 +322,9 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
               onClose={onClose}
               onDismiss={onClose}
               onNavigateOutsiteFooter={onNavigateOutsiteFooter}
-              dataSources={dataSources}
+              dataSources={
+                config.featureToggles.sqlAbstractionPrototype ? [GRAFANA_SQL_FAKE_DS, ...dataSources] : dataSources
+              }
               favoriteDataSources={favoriteDataSources}
             />
           </div>

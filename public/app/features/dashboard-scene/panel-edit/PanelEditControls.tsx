@@ -21,8 +21,8 @@ export function PanelEditControls({ panelEditor }: Props) {
   }
 
   const sqlModeOptions = [
-    { label: 'Classic', value: 'classic' as const },
-    { label: '{ } SQL', value: 'sql' as const },
+    { label: t('dashboard-scene.panel-edit-controls.sql-mode-classic', 'Classic'), value: 'classic' as const },
+    { label: t('dashboard-scene.panel-edit-controls.sql-mode-sql', '{ } SQL'), value: 'sql' as const },
   ];
 
   return (

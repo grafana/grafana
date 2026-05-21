@@ -1,6 +1,7 @@
 import { type ReactNode, useCallback, useMemo, useRef, useState } from 'react';
 
 import { type DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
+import { GRAFANA_SQL_PROTOTYPE_UID } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { SceneDataTransformer } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { useTheme2 } from '@grafana/ui';
@@ -51,6 +52,7 @@ export function QueryEditorContextWrapper({
   const queryRunner = getQueryRunnerFor(panel);
   const queryRunnerState = queryRunner?.useState();
   const [pendingSavedQueryState, setPendingSavedQueryState] = useState<PendingSavedQuery | null>(null);
+  const [grafanaSqlActiveRefId, setGrafanaSqlActiveRefId] = useState<string | null>(null);
   const { isDrawerOpen } = useQueryLibraryContext();
   const pendingSavedQuery = isDrawerOpen ? pendingSavedQueryState : null;
 
@@ -300,6 +302,8 @@ export function QueryEditorContextWrapper({
       },
       finalizePendingTransformation,
       showVersionBanner: Boolean(showVersionBanner),
+      grafanaSqlActiveRefId,
+      setGrafanaSqlActiveRefId,
     }),
     [
       selectedQuery,
@@ -335,6 +339,8 @@ export function QueryEditorContextWrapper({
       finalizePendingTransformation,
       clearPendingTransformation,
       showVersionBanner,
+      grafanaSqlActiveRefId,
+      setGrafanaSqlActiveRefId,
     ]
   );
 
@@ -356,6 +362,11 @@ export function QueryEditorContextWrapper({
       toggleQueryHide: dataPane.toggleQueryHide,
       runQueries: dataPane.runQueries,
       changeDataSource: (settings: DataSourceInstanceSettings, queryRefId: string) => {
+        if (settings.uid === GRAFANA_SQL_PROTOTYPE_UID) {
+          setGrafanaSqlActiveRefId(queryRefId);
+          return;
+        }
+        setGrafanaSqlActiveRefId(null);
         dataPane.changeDataSource(getDataSourceRef(settings), queryRefId);
       },
       onQueryOptionsChange: dataPane.onQueryOptionsChange,
