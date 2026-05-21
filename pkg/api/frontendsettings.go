@@ -9,10 +9,9 @@ import (
 	"net/http"
 	"slices"
 	"sort"
-	"strings"
-	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/api/frontendsettings"
 	"github.com/grafana/grafana/pkg/api/webassets"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -20,7 +19,6 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -128,6 +126,12 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 	c, span := hs.injectSpan(c, "api.getFrontendSettings")
 	defer span.End()
 
+	frontendSettings, err := frontendsettings.GetBaseFrontendSettings(c, hs.Cfg)
+
+	if err != nil {
+		return nil, err
+	}
+
 	availablePlugins, err := hs.availablePlugins(c.Req.Context(), c.GetOrgID())
 	if err != nil {
 		return nil, err
@@ -145,13 +149,6 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 	dataSources, err := hs.getFSDataSources(c, availablePlugins)
 	if err != nil {
 		return nil, err
-	}
-
-	defaultDS := "-- Grafana --"
-	for n, ds := range dataSources {
-		if ds.IsDefault {
-			defaultDS = n
-		}
 	}
 
 	panels := make(map[string]plugins.PanelDTO)
@@ -181,6 +178,24 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		}
 	}
 
+	frontendSettings.Apps = apps
+	frontendSettings.Datasources = dataSources
+	frontendSettings.Panels = panels
+
+	// [TODO] Move back into GetBaseFrontendSettings?
+	frontendSettings.PluginCatalogManagedPlugins = hs.managedPluginsService.ManagedPlugins(c.Req.Context())
+
+	for n, ds := range dataSources {
+		if ds.IsDefault {
+			frontendSettings.DefaultDatasource = n
+		}
+	}
+
+	frontendSettings.FeatureToggles = hs.Features.GetEnabled(c.Req.Context())
+	// this is needed for backwards compatibility with external plugins
+	// we should remove this once we can be sure that no external plugins rely on this
+	frontendSettings.FeatureToggles["topnav"] = true
+
 	hideVersion := hs.Cfg.Anonymous.HideVersion && !c.IsSignedIn
 	version := setting.BuildVersion
 	commit := setting.BuildCommit
@@ -196,206 +211,36 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		buildstamp = 0
 	}
 
+	hs.managedPluginsService.ManagedPlugins(c.Req.Context())
+
+	frontendSettings.BuildInfo = dtos.FrontendSettingsBuildInfoDTO{
+		HideVersion:   hideVersion,
+		Version:       version,
+		VersionString: versionString,
+		Commit:        commit,
+		CommitShort:   commitShort,
+		Buildstamp:    buildstamp,
+		Edition:       hs.License.Edition(),
+		LatestVersion: hs.grafanaUpdateChecker.LatestVersion(),
+		HasUpdate:     hs.grafanaUpdateChecker.UpdateAvailable(),
+		Env:           hs.Cfg.Env,
+	}
+
 	hasAccess := accesscontrol.HasAccess(hs.AccessControl, c)
-	trustedTypesDefaultPolicyEnabled := (hs.Cfg.CSPEnabled && strings.Contains(hs.Cfg.CSPTemplate, "require-trusted-types-for")) || (hs.Cfg.CSPReportOnlyEnabled && strings.Contains(hs.Cfg.CSPReportOnlyTemplate, "require-trusted-types-for"))
-	isCloudMigrationTarget := hs.Cfg.CloudMigration.Enabled && hs.Cfg.CloudMigration.IsTarget
-	featureToggles := hs.Features.GetEnabled(c.Req.Context())
-	// this is needed for backwards compatibility with external plugins
-	// we should remove this once we can be sure that no external plugins rely on this
-	featureToggles["topnav"] = true
-
-	frontendSettings := &dtos.FrontendSettingsDTO{
-		DefaultDatasource:                    defaultDS,
-		Datasources:                          dataSources,
-		MinRefreshInterval:                   hs.Cfg.MinRefreshInterval,
-		Panels:                               panels,
-		Apps:                                 apps,
-		AppUrl:                               hs.Cfg.AppURL,
-		AppSubUrl:                            hs.Cfg.AppSubURL,
-		AllowOrgCreate:                       (hs.Cfg.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
-		AuthProxyEnabled:                     hs.Cfg.AuthProxy.Enabled,
-		LdapEnabled:                          hs.Cfg.LDAPAuthEnabled,
-		JwtHeaderName:                        hs.Cfg.JWTAuth.HeaderName,
-		JwtUrlLogin:                          hs.Cfg.JWTAuth.URLLogin,
-		LiveEnabled:                          hs.Cfg.LiveMaxConnections != 0,
-		LiveMessageSizeLimit:                 hs.Cfg.LiveMessageSizeLimit,
-		LiveNamespaced:                       true, // frontend will select a namespaced channel vs orgId channel
-		AutoAssignOrg:                        hs.Cfg.AutoAssignOrg,
-		VerifyEmailEnabled:                   hs.Cfg.VerifyEmailEnabled,
-		SigV4AuthEnabled:                     hs.Cfg.SigV4AuthEnabled,
-		AzureAuthEnabled:                     hs.Cfg.AzureAuthEnabled,
-		RbacEnabled:                          true,
-		ExploreEnabled:                       hs.Cfg.ExploreEnabled,
-		HelpEnabled:                          hs.Cfg.HelpEnabled,
-		ProfileEnabled:                       hs.Cfg.ProfileEnabled,
-		NewsFeedEnabled:                      hs.Cfg.NewsFeedEnabled,
-		QueryHistoryEnabled:                  hs.Cfg.QueryHistoryEnabled,
-		AnnotationAppPlatformEnabled:         hs.Cfg.AnnotationAppPlatform.Enabled,
-		GoogleAnalyticsId:                    hs.Cfg.GoogleAnalyticsID,
-		GoogleAnalytics4Id:                   hs.Cfg.GoogleAnalytics4ID,
-		GoogleAnalytics4SendManualPageViews:  hs.Cfg.GoogleAnalytics4SendManualPageViews,
-		RudderstackWriteKey:                  hs.Cfg.RudderstackWriteKey,
-		RudderstackDataPlaneUrl:              hs.Cfg.RudderstackDataPlaneURL,
-		RudderstackSdkUrl:                    hs.Cfg.RudderstackSDKURL,
-		RudderstackV3SdkUrl:                  hs.Cfg.RudderstackV3SDKURL,
-		RudderstackConfigUrl:                 hs.Cfg.RudderstackConfigURL,
-		RudderstackIntegrationsUrl:           hs.Cfg.RudderstackIntegrationsURL,
-		PostHogToken:                         hs.Cfg.PostHogToken,
-		PostHogHost:                          hs.Cfg.PostHogHost,
-		AnalyticsConsoleReporting:            hs.Cfg.FrontendAnalyticsConsoleReporting,
-		DashboardPerformanceMetrics:          hs.Cfg.DashboardPerformanceMetrics,
-		PanelSeriesLimit:                     hs.Cfg.PanelSeriesLimit,
-		FeedbackLinksEnabled:                 hs.Cfg.FeedbackLinksEnabled,
-		ApplicationInsightsConnectionString:  hs.Cfg.ApplicationInsightsConnectionString,
-		ApplicationInsightsEndpointUrl:       hs.Cfg.ApplicationInsightsEndpointUrl,
-		ApplicationInsightsAutoRouteTracking: hs.Cfg.ApplicationInsightsAutoRouteTracking,
-		DisableLoginForm:                     hs.Cfg.DisableLoginForm,
-		DisableUserSignUp:                    !hs.Cfg.AllowUserSignUp,
-		LoginHint:                            hs.Cfg.LoginHint,
-		PasswordHint:                         hs.Cfg.PasswordHint,
-		ExternalUserMngInfo:                  hs.Cfg.ExternalUserMngInfo,
-		ExternalUserMngLinkUrl:               hs.Cfg.ExternalUserMngLinkUrl,
-		ExternalUserMngLinkName:              hs.Cfg.ExternalUserMngLinkName,
-		ExternalUserMngAnalytics:             hs.Cfg.ExternalUserMngAnalytics,
-		ExternalUserMngAnalyticsParams:       hs.Cfg.ExternalUserMngAnalyticsParams,
-		ExternalUserUpgradeLinkUrl:           hs.Cfg.ExternalUserUpgradeLinkUrl,
-		//nolint:staticcheck // ViewersCanEdit is deprecated but still used for backward compatibility
-		ViewersCanEdit:                   hs.Cfg.ViewersCanEdit,
-		DisableSanitizeHtml:              hs.Cfg.DisableSanitizeHtml,
-		TrustedTypesDefaultPolicyEnabled: trustedTypesDefaultPolicyEnabled,
-		CSPReportOnlyEnabled:             hs.Cfg.CSPReportOnlyEnabled,
-		DateFormats:                      hs.Cfg.DateFormats,
-		QuickRanges:                      hs.Cfg.QuickRanges,
-		SecureSocksDSProxyEnabled:        hs.Cfg.SecureSocksDSProxy.Enabled && hs.Cfg.SecureSocksDSProxy.ShowUI,
-		EnableFrontendSandboxForPlugins:  hs.Cfg.EnableFrontendSandboxForPlugins,
-		PluginRestrictedAPIsAllowList:    hs.Cfg.PluginRestrictedAPIsAllowList,
-		PluginRestrictedAPIsBlockList:    hs.Cfg.PluginRestrictedAPIsBlockList,
-		PublicDashboardAccessToken:       c.PublicDashboardAccessToken,
-		PublicDashboardsEnabled:          hs.Cfg.PublicDashboardsEnabled,
-		CloudMigrationEnabled:            hs.Cfg.CloudMigration.Enabled,
-		CloudMigrationIsTarget:           isCloudMigrationTarget,
-		CloudMigrationPollIntervalMs:     int(hs.Cfg.CloudMigration.FrontendPollInterval.Milliseconds()),
-		SharedWithMeFolderUID:            folder.SharedWithMeFolderUID,
-		RootFolderUID:                    accesscontrol.GeneralFolderUID,
-		LocalFileSystemAvailable:         hs.Cfg.LocalFileSystemAvailable,
-		ReportingStaticContext:           hs.Cfg.ReportingStaticContext,
-		ExploreDefaultTimeOffset:         hs.Cfg.ExploreDefaultTimeOffset,
-		ExploreHideLogsDownload:          hs.Cfg.ExploreHideLogsDownload,
-
-		DefaultDatasourceManageAlertsUIToggle:          hs.Cfg.DefaultDatasourceManageAlertsUIToggle,
-		DefaultAllowRecordingRulesTargetAlertsUIToggle: hs.Cfg.DefaultAllowRecordingRulesTargetAlertsUIToggle,
-
-		BuildInfo: dtos.FrontendSettingsBuildInfoDTO{
-			HideVersion:   hideVersion,
-			Version:       version,
-			VersionString: versionString,
-			Commit:        commit,
-			CommitShort:   commitShort,
-			Buildstamp:    buildstamp,
-			Edition:       hs.License.Edition(),
-			LatestVersion: hs.grafanaUpdateChecker.LatestVersion(),
-			HasUpdate:     hs.grafanaUpdateChecker.UpdateAvailable(),
-			Env:           hs.Cfg.Env,
-		},
-
-		LicenseInfo: dtos.FrontendSettingsLicenseInfoDTO{
-			Expiry:          hs.License.Expiry(),
-			StateInfo:       hs.License.StateInfo(),
-			LicenseUrl:      hs.License.LicenseURL(hasAccess(licensing.PageAccess)),
-			Edition:         hs.License.Edition(),
-			EnabledFeatures: hs.License.EnabledFeatures(),
-		},
-
-		FeatureToggles:                      featureToggles,
-		AnonymousEnabled:                    hs.Cfg.Anonymous.Enabled,
-		AnonymousDeviceLimit:                hs.Cfg.Anonymous.DeviceLimit,
-		RendererAvailable:                   hs.RenderService.IsAvailable(c.Req.Context()),
-		RendererVersion:                     hs.RenderService.Version(),
-		RendererDefaultImageWidth:           hs.Cfg.RendererDefaultImageWidth,
-		RendererDefaultImageHeight:          hs.Cfg.RendererDefaultImageHeight,
-		RendererDefaultImageScale:           hs.Cfg.RendererDefaultImageScale,
-		Http2Enabled:                        hs.Cfg.Protocol == setting.HTTP2Scheme || hs.Cfg.Protocol == setting.SocketHTTP2Scheme,
-		GrafanaJavascriptAgent:              hs.Cfg.GrafanaJavascriptAgent,
-		PluginCatalogURL:                    hs.Cfg.PluginCatalogURL,
-		PluginAdminEnabled:                  hs.Cfg.PluginAdminEnabled,
-		PluginAdminExternalManageEnabled:    hs.Cfg.PluginAdminEnabled && hs.Cfg.PluginAdminExternalManageEnabled,
-		PluginCatalogHiddenPlugins:          hs.Cfg.PluginCatalogHiddenPlugins,
-		PluginCatalogManagedPlugins:         hs.managedPluginsService.ManagedPlugins(c.Req.Context()),
-		PluginCatalogPreinstalledPlugins:    append(hs.Cfg.PreinstallPluginsAsync, hs.Cfg.PreinstallPluginsSync...),
-		PluginCatalogPreinstalledAutoUpdate: hs.Cfg.PreinstallAutoUpdate,
-		ExpressionsEnabled:                  hs.Cfg.ExpressionsEnabled,
-		AwsAllowedAuthProviders:             hs.Cfg.AWSAllowedAuthProviders,
-		AwsAssumeRoleEnabled:                hs.Cfg.AWSAssumeRoleEnabled,
-		AwsPerDatasourceHTTPProxyEnabled:    hs.Cfg.AWSPerDatasourceHTTPProxyEnabled,
-		SupportBundlesEnabled:               isSupportBundlesEnabled(hs),
-
-		Azure: dtos.FrontendSettingsAzureDTO{
-			Cloud:                                  hs.Cfg.Azure.Cloud,
-			Clouds:                                 hs.Cfg.Azure.CustomClouds(),
-			ManagedIdentityEnabled:                 hs.Cfg.Azure.ManagedIdentityEnabled,
-			WorkloadIdentityEnabled:                hs.Cfg.Azure.WorkloadIdentityEnabled,
-			UserIdentityEnabled:                    hs.Cfg.Azure.UserIdentityEnabled,
-			UserIdentityFallbackCredentialsEnabled: hs.Cfg.Azure.UserIdentityFallbackCredentialsEnabled,
-			AzureEntraPasswordCredentialsEnabled:   hs.Cfg.Azure.AzureEntraPasswordCredentialsEnabled,
-		},
-
-		Caching: dtos.FrontendSettingsCachingDTO{
-			Enabled:           hs.Cfg.SectionWithEnvOverrides("caching").Key("enabled").MustBool(true),
-			CleanCacheEnabled: hs.Cfg.SectionWithEnvOverrides("caching").Key("clean_cache_enabled").MustBool(true),
-			DefaultTTLMs:      hs.Cfg.SectionWithEnvOverrides("caching").Key("ttl").MustDuration(time.Minute * 5).Milliseconds(),
-		},
-		RecordedQueries: dtos.FrontendSettingsRecordedQueriesDTO{
-			Enabled: hs.Cfg.SectionWithEnvOverrides("recorded_queries").Key("enabled").MustBool(true),
-		},
-		Reporting: dtos.FrontendSettingsReportingDTO{
-			Enabled: hs.Cfg.SectionWithEnvOverrides("reporting").Key("enabled").MustBool(true),
-		},
-		Analytics: dtos.FrontendSettingsAnalyticsDTO{
-			Enabled: hs.Cfg.SectionWithEnvOverrides("analytics").Key("enabled").MustBool(true),
-		},
-
-		UnifiedAlerting: dtos.FrontendSettingsUnifiedAlertingDTO{
-			MinInterval: hs.Cfg.UnifiedAlerting.MinInterval.String(),
-		},
-
-		Oauth:                   hs.getEnabledOAuthProviders(),
-		SamlEnabled:             hs.samlEnabled(),
-		SamlName:                hs.samlName(),
-		TokenExpirationDayLimit: hs.Cfg.SATokenExpirationDayLimit,
-
-		SnapshotEnabled: hs.Cfg.SnapshotEnabled,
-
-		SqlConnectionLimits: dtos.FrontendSettingsSqlConnectionLimitsDTO{
-			MaxOpenConns:    hs.Cfg.SqlDatasourceMaxOpenConnsDefault,
-			MaxIdleConns:    hs.Cfg.SqlDatasourceMaxIdleConnsDefault,
-			ConnMaxLifetime: hs.Cfg.SqlDatasourceMaxConnLifetimeDefault,
-		},
-		OpenFeatureContext: hs.Cfg.OpenFeature.ContextAttrs,
+	frontendSettings.LicenseInfo = dtos.FrontendSettingsLicenseInfoDTO{
+		Expiry:          hs.License.Expiry(),
+		StateInfo:       hs.License.StateInfo(),
+		LicenseUrl:      hs.License.LicenseURL(hasAccess(licensing.PageAccess)),
+		Edition:         hs.License.Edition(),
+		EnabledFeatures: hs.License.EnabledFeatures(),
 	}
 
-	if hs.Cfg.UnifiedAlerting.StateHistory.Enabled {
-		frontendSettings.UnifiedAlerting.StateHistory = &dtos.FrontendSettingsUnifiedAlertingStateHistoryDTO{
-			Backend: hs.Cfg.UnifiedAlerting.StateHistory.Backend,
-			Primary: hs.Cfg.UnifiedAlerting.StateHistory.MultiPrimary,
-		}
-		if hs.Cfg.UnifiedAlerting.StateHistory.PrometheusTargetDatasourceUID != "" {
-			frontendSettings.UnifiedAlerting.StateHistory.PrometheusTargetDatasourceUID = hs.Cfg.UnifiedAlerting.StateHistory.PrometheusTargetDatasourceUID
-		}
-		if hs.Cfg.UnifiedAlerting.StateHistory.PrometheusMetricName != "" {
-			frontendSettings.UnifiedAlerting.StateHistory.PrometheusMetricName = hs.Cfg.UnifiedAlerting.StateHistory.PrometheusMetricName
-		}
+	frontendSettings.RendererAvailable = hs.RenderService.IsAvailable(c.Req.Context())
+	frontendSettings.RendererVersion = hs.RenderService.Version()
 
-		// Populate deprecated fields for backward compatibility
-		frontendSettings.UnifiedAlerting.AlertStateHistoryBackend = hs.Cfg.UnifiedAlerting.StateHistory.Backend
-		frontendSettings.UnifiedAlerting.AlertStateHistoryPrimary = hs.Cfg.UnifiedAlerting.StateHistory.MultiPrimary
-	}
-
-	frontendSettings.UnifiedAlerting.RecordingRulesEnabled = hs.Cfg.UnifiedAlerting.RecordingRules.Enabled
-	frontendSettings.UnifiedAlerting.DefaultRecordingRulesTargetDatasourceUID = hs.Cfg.UnifiedAlerting.RecordingRules.DefaultDatasourceUID
-
-	if hs.Cfg.UnifiedAlerting.Enabled != nil {
-		frontendSettings.UnifiedAlertingEnabled = *hs.Cfg.UnifiedAlerting.Enabled
-	}
+	frontendSettings.Oauth = hs.getEnabledOAuthProviders()
+	frontendSettings.SamlEnabled = hs.samlEnabled()
+	frontendSettings.SamlName = hs.samlName()
 
 	// It returns false if the provider is not enabled or the skip org role sync is false.
 	parseSkipOrgRoleSyncEnabled := func(info *social.OAuthInfo) bool {
@@ -423,6 +268,17 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		DisableSignoutMenu:            hs.Cfg.DisableSignoutMenu,
 	}
 
+	frontendSettings.Namespace = hs.namespacer(c.OrgID)
+
+	// [TODO] Probably needs to be moved to GetBaseFrontendSettings, and toggle moved to open feature
+	// experimental scope features
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagScopeFilters) {
+		frontendSettings.ListScopesEndpoint = hs.Cfg.ScopesListScopesURL
+		frontendSettings.ListDashboardScopesEndpoint = hs.Cfg.ScopesListDashboardsURL
+	}
+
+	// [TODO] Move back to GetBaseFrontendSettings
 	if hs.pluginsCDNService != nil && hs.pluginsCDNService.IsEnabled() {
 		cdnBaseURL, err := hs.pluginsCDNService.BaseURL()
 		if err != nil {
@@ -431,36 +287,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		frontendSettings.PluginsCDNBaseURL = cdnBaseURL
 	}
 
-	if hs.Cfg.GeomapDefaultBaseLayerConfig != nil {
-		frontendSettings.GeomapDefaultBaseLayerConfig = &hs.Cfg.GeomapDefaultBaseLayerConfig
-	}
-
-	if !hs.Cfg.GeomapEnableCustomBaseLayers {
-		frontendSettings.GeomapDisableCustomBaseLayer = true
-	}
-
-	// Set the kubernetes namespace
-	frontendSettings.Namespace = hs.namespacer(c.OrgID)
-
-	// experimental scope features
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagScopeFilters) {
-		frontendSettings.ListScopesEndpoint = hs.Cfg.ScopesListScopesURL
-		frontendSettings.ListDashboardScopesEndpoint = hs.Cfg.ScopesListDashboardsURL
-	}
-
 	return frontendSettings, nil
-}
-
-func isSupportBundlesEnabled(hs *HTTPServer) bool {
-	return hs.Cfg.SectionWithEnvOverrides("support_bundles").Key("enabled").MustBool(true)
-}
-
-func getShortCommitHash(commitHash string, maxLength int) string {
-	if len(commitHash) > maxLength {
-		return commitHash[:maxLength]
-	}
-	return commitHash
 }
 
 //nolint:gocyclo
@@ -869,4 +696,11 @@ func (hs *HTTPServer) publicDashFilterUsedDataSources(c *contextmodel.ReqContext
 	}
 
 	return filtered, nil
+}
+
+func getShortCommitHash(commitHash string, maxLength int) string {
+	if len(commitHash) > maxLength {
+		return commitHash[:maxLength]
+	}
+	return commitHash
 }
