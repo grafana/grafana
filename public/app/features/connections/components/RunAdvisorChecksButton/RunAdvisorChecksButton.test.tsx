@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 
 import { reportInteraction } from '@grafana/runtime';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { contextSrv } from 'app/core/services/context_srv';
 import {
   isAdvisorEnabled,
   useCreateDatasourceAdvisorChecks,
@@ -40,6 +41,8 @@ describe('RunAdvisorChecksButton', () => {
       info: jest.fn(),
     });
     mockIsAdvisorEnabled.mockReturnValue(true);
+    jest.spyOn(contextSrv, 'hasRole').mockReturnValue(true);
+    contextSrv.isGrafanaAdmin = false;
     mockUseCreateDatasourceAdvisorChecks.mockReturnValue({
       createChecks: jest.fn(),
       isCreatingChecks: false,
@@ -50,6 +53,15 @@ describe('RunAdvisorChecksButton', () => {
 
   it('does not render when advisor is disabled', () => {
     mockIsAdvisorEnabled.mockReturnValue(false);
+
+    const { container } = render(<RunAdvisorChecksButton />);
+
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it('does not render when user is not an admin', () => {
+    jest.spyOn(contextSrv, 'hasRole').mockReturnValue(false);
+    contextSrv.isGrafanaAdmin = false;
 
     const { container } = render(<RunAdvisorChecksButton />);
 
