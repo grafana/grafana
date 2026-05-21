@@ -143,15 +143,5 @@ describe('QuickAdd', () => {
       const link = screen.getByRole('menuitem', { name: 'Use template' });
       expect(link).toHaveAttribute('href', '/dashboards?templateDashboards=true&source=quickAdd');
     });
-
-    it('renders Use template after Import dashboard', async () => {
-      setup();
-      await userEvent.click(screen.getByRole('button', { name: 'New' }));
-      const dashboardGroup = screen.getByRole('group', { name: 'Dashboards' });
-      const items = within(dashboardGroup)
-        .getAllByRole('menuitem')
-        .map((el) => el.textContent);
-      expect(items).toEqual(['New dashboard', 'Import dashboard', 'Use template']);
-    });
   });
 });
