@@ -258,6 +258,8 @@ export function ContentHeaderSceneWrapper({
     selectedQuery,
     selectedTransformation,
     selectedQueryRefIds,
+    selectedTransformationIds,
+    multiSelectMode,
     cardType,
     pendingExpression,
     setPendingExpression,
@@ -281,7 +283,7 @@ export function ContentHeaderSceneWrapper({
       onCancelPendingTransformation={() => setPendingTransformation(null)}
       onChangeDataSource={changeDataSource}
       onUpdateQuery={updateSelectedQuery}
-      isMultiSelection={selectedQueryRefIds.length > 1}
+      isMultiSelection={multiSelectMode && (selectedQueryRefIds.length > 0 || selectedTransformationIds.length > 0)}
       renderHeaderExtras={renderHeaderExtras}
       typeConfig={typeConfig}
     />

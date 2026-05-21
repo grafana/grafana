@@ -14314,6 +14314,7 @@
       "alerts_other": "Alerts ({{count}})",
       "alerts-loading": "Alerts",
       "card-click": "Select card {{id}}",
+      "card-multi-select": "Include card {{id}} in bulk selection",
       "data": "Data",
       "footer-items_one": "{{count}} items",
       "footer-items_other": "{{count}} items",

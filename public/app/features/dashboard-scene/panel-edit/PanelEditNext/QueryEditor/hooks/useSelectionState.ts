@@ -13,24 +13,26 @@ export interface UseSelectionStateOptions {
 }
 
 export interface UseSelectionStateResult {
+  activeQueryRefId: string | null;
+  activeTransformationId: string | null;
   selectedQueryRefIds: string[];
   selectedTransformationIds: string[];
   onCardSelectionChange: (queryRefId: string | null, transformationId: string | null) => void;
   trackQueryRename: (originalRefId: string, updatedRefId: string) => void;
+  activateQuery: (query: DataQuery | ExpressionQuery) => void;
+  activateTransformation: (transformation: Transformation) => void;
   toggleQuerySelection: (query: DataQuery | ExpressionQuery, modifiers?: SelectionModifiers) => void;
   toggleTransformationSelection: (transformation: Transformation, modifiers?: SelectionModifiers) => void;
   clearSelection: () => void;
+  clearMultiSelection: () => void;
+  /** Seeds bulk selection from the active card when entering multi-select mode. */
+  selectActiveInMultiSelection: () => void;
   removeQueryFromSelection: (refId: string) => void;
   removeTransformationFromSelection: (transformId: string) => void;
 }
 
 /**
- * Returns the new ordered selection after a Shift+Click (range-select).
- *
- * Unions the existing selection with the range between anchor and clicked item.
- * The range is always returned in DOM order, so the item with the higher index
- * becomes the last element (primary). Returns `null` if either the anchor or
- * the clicked ID cannot be found in the list.
+ * Returns the new ordered selection after a Shift+Click (range-select) in multi-select.
  */
 function computeRangeSelection(
   orderedIds: string[],
@@ -55,32 +57,24 @@ function computeRangeSelection(
 }
 
 /**
- * Manages the ordered selection state for queries and transformations.
- * The last element of each array is the "primary" item shown in the editor pane.
+ * Manages active (editor/highlight) and multi-select (bulk actions) state separately.
  *
- * Supports three click modes:
- * - Plain click: replace entire selection with just this card
- * - Ctrl/Cmd click (`multi: true`): toggle this card in/out of the current selection
- * - Shift click (`range: true`): range-select from the last anchor to this card
+ * - `activeQueryRefId` / `activeTransformationId`: active card for the editor pane.
+ * - `selectedQueryRefIds` / `selectedTransformationIds`: bulk selection set (checkbox / modifiers).
  *
- * Query and transformation selections are mutually exclusive — selecting one type
- * clears the other.
+ * Query and transformation active selections are mutually exclusive, as are query vs
+ * transformation multi-select sets.
  */
 export function useSelectionState({
   queries,
   transformations,
   onClearSideEffects,
 }: UseSelectionStateOptions): UseSelectionStateResult {
-  // Eagerly select the first query when available at mount time so the sidebar
-  // highlights it without waiting for a user click. Range-select has its own
-  // fallback in toggleQuerySelection for the late-loading case.
-  const [selectedQueryRefIds, setSelectedQueryRefIds] = useState<string[]>(() =>
-    queries[0]?.refId ? [queries[0].refId] : []
-  );
+  const [activeQueryRefId, setActiveQueryRefId] = useState<string | null>(() => queries[0]?.refId ?? null);
+  const [activeTransformationId, setActiveTransformationId] = useState<string | null>(null);
+  const [selectedQueryRefIds, setSelectedQueryRefIds] = useState<string[]>([]);
   const [selectedTransformationIds, setSelectedTransformationIds] = useState<string[]>([]);
 
-  // Store in refs so toggle callbacks stay stable without listing these as deps.
-  // This prevents callback recreation on every selection change, avoiding re-render cascades.
   const onClearSideEffectsRef = useRef(onClearSideEffects);
   onClearSideEffectsRef.current = onClearSideEffects;
 
@@ -90,35 +84,55 @@ export function useSelectionState({
   const transformationsRef = useRef(transformations);
   transformationsRef.current = transformations;
 
+  const activeQueryRefIdRef = useRef(activeQueryRefId);
+  activeQueryRefIdRef.current = activeQueryRefId;
+
+  const activeTransformationIdRef = useRef(activeTransformationId);
+  activeTransformationIdRef.current = activeTransformationId;
+
   const selectedQueryRefIdsRef = useRef(selectedQueryRefIds);
   selectedQueryRefIdsRef.current = selectedQueryRefIds;
 
   const selectedTransformationIdsRef = useRef(selectedTransformationIds);
   selectedTransformationIdsRef.current = selectedTransformationIds;
 
-  /**
-   * Used by usePendingExpression / usePendingTransformation to programmatically
-   * select a card after adding it (e.g. after finalizing an expression type picker).
-   */
   const onCardSelectionChange = useCallback((queryRefId: string | null, transformationId: string | null) => {
-    setSelectedQueryRefIds(queryRefId ? [queryRefId] : []);
-    setSelectedTransformationIds(transformationId ? [transformationId] : []);
+    setActiveQueryRefId(queryRefId);
+    setActiveTransformationId(transformationId);
+    setSelectedQueryRefIds([]);
+    setSelectedTransformationIds([]);
   }, []);
 
   const trackQueryRename = useCallback((originalRefId: string, updatedRefId: string) => {
+    setActiveQueryRefId((current) => (current === originalRefId ? updatedRefId : current));
     setSelectedQueryRefIds((current) => current.map((id) => (id === originalRefId ? updatedRefId : id)));
   }, []);
 
+  const activateQuery = useCallback((query: DataQuery | ExpressionQuery) => {
+    setActiveQueryRefId(query.refId);
+    setActiveTransformationId(null);
+    onClearSideEffectsRef.current?.();
+  }, []);
+
+  const activateTransformation = useCallback((transformation: Transformation) => {
+    setActiveQueryRefId(null);
+    setActiveTransformationId(transformation.transformId);
+    onClearSideEffectsRef.current?.();
+  }, []);
+
   const toggleQuerySelection = useCallback((query: DataQuery | ExpressionQuery, modifiers?: SelectionModifiers) => {
-    // Query selection always clears transformations (cross-type exclusivity).
     setSelectedTransformationIds([]);
 
     const currentSelection = selectedQueryRefIdsRef.current;
-    // useSelectedCard visually selects queries[0] when nothing is explicitly selected
-    // (no transformation either), so fall back to it as the range-select anchor.
-    const hasTransformationSelected = selectedTransformationIdsRef.current.length > 0;
+    // When a transformation is active and there's no current query selection, fall through
+    // to plain-click instead of range-selecting from queries[0] — avoids surprising ranges
+    // that cross card types.
+    const hasActiveTransformation = activeTransformationIdRef.current !== null;
     const anchorRefId =
-      currentSelection.at(-1) ?? (hasTransformationSelected ? undefined : queriesRef.current[0]?.refId);
+      currentSelection.at(-1) ??
+      activeQueryRefIdRef.current ??
+      (hasActiveTransformation ? undefined : queriesRef.current[0]?.refId);
+
     if (modifiers?.range && anchorRefId) {
       const rangeSelection = computeRangeSelection(
         queriesRef.current.map(({ refId }) => refId),
@@ -133,9 +147,6 @@ export function useSelectionState({
     }
 
     if (modifiers?.multi) {
-      // Ctrl/Cmd+Click: toggle this query in/out of the selection. Never empty
-      // the selection — keep the last item so we don't reach the "selection
-      // mode but nothing selected" state (matches `clearSelection` invariant).
       setSelectedQueryRefIds((prev) => {
         const idx = prev.indexOf(query.refId);
         if (idx === -1) {
@@ -144,20 +155,16 @@ export function useSelectionState({
         return prev.length === 1 ? prev : prev.filter((id) => id !== query.refId);
       });
     } else {
-      // Plain click: replace entire selection with just this card.
       setSelectedQueryRefIds([query.refId]);
-      onClearSideEffectsRef.current?.();
     }
   }, []);
 
   const toggleTransformationSelection = useCallback(
     (transformation: Transformation, modifiers?: SelectionModifiers) => {
-      // Transformation selection always clears queries (cross-type exclusivity).
       setSelectedQueryRefIds([]);
 
       const currentSelection = selectedTransformationIdsRef.current;
       if (modifiers?.range && currentSelection.length > 0) {
-        // Shift+Click: range-select from the last selected transformation to this one.
         const anchorId = currentSelection.at(-1)!;
         const rangeSelection = computeRangeSelection(
           transformationsRef.current.map((t) => t.transformId),
@@ -172,9 +179,6 @@ export function useSelectionState({
       }
 
       if (modifiers?.multi) {
-        // Ctrl/Cmd+Click: toggle this transformation in/out of the selection.
-        // Never empty the selection — keep the last item to mirror the query
-        // toggle behavior and avoid a "selection mode but nothing selected".
         setSelectedTransformationIds((prev) => {
           const idx = prev.indexOf(transformation.transformId);
           if (idx === -1) {
@@ -184,35 +188,68 @@ export function useSelectionState({
         });
       } else {
         setSelectedTransformationIds([transformation.transformId]);
-        onClearSideEffectsRef.current?.();
       }
     },
     []
   );
 
-  const clearSelection = useCallback(() => {
-    const firstQueryRefId = queriesRef.current[0]?.refId;
-    setSelectedQueryRefIds(firstQueryRefId ? [firstQueryRefId] : []);
+  const clearMultiSelection = useCallback(() => {
+    setSelectedQueryRefIds([]);
     setSelectedTransformationIds([]);
-    onClearSideEffectsRef.current?.();
   }, []);
+
+  const selectActiveInMultiSelection = useCallback(() => {
+    const transformationId = activeTransformationIdRef.current;
+    if (transformationId) {
+      setSelectedQueryRefIds([]);
+      setSelectedTransformationIds([transformationId]);
+      return;
+    }
+
+    const queryRefId = activeQueryRefIdRef.current;
+    if (queryRefId) {
+      setSelectedTransformationIds([]);
+      setSelectedQueryRefIds([queryRefId]);
+    }
+  }, []);
+
+  const clearSelection = useCallback(() => {
+    const firstQueryRefId = queriesRef.current[0]?.refId ?? null;
+    setActiveQueryRefId(firstQueryRefId);
+    setActiveTransformationId(null);
+    clearMultiSelection();
+    onClearSideEffectsRef.current?.();
+  }, [clearMultiSelection]);
 
   const removeQueryFromSelection = useCallback((refId: string) => {
     setSelectedQueryRefIds((current) => current.filter((id) => id !== refId));
+    setActiveQueryRefId((current) => {
+      if (current !== refId) {
+        return current;
+      }
+      return queriesRef.current[0]?.refId ?? null;
+    });
   }, []);
 
   const removeTransformationFromSelection = useCallback((transformId: string) => {
     setSelectedTransformationIds((current) => current.filter((id) => id !== transformId));
+    setActiveTransformationId((current) => (current === transformId ? null : current));
   }, []);
 
   return {
+    activeQueryRefId,
+    activeTransformationId,
     selectedQueryRefIds,
     selectedTransformationIds,
     onCardSelectionChange,
     trackQueryRename,
+    activateQuery,
+    activateTransformation,
     toggleQuerySelection,
     toggleTransformationSelection,
     clearSelection,
+    clearMultiSelection,
+    selectActiveInMultiSelection,
     removeQueryFromSelection,
     removeTransformationFromSelection,
   };

@@ -59,7 +59,7 @@ interface BulkQueryActionsProps {
 }
 
 function BulkQueryActions({ barWidth }: BulkQueryActionsProps) {
-  const { selectedQueryRefIds, clearSelection } = useQueryEditorUIContext();
+  const { selectedQueryRefIds, setMultiSelectMode } = useQueryEditorUIContext();
   const { bulkDeleteQueries, bulkToggleQueriesHide, bulkChangeDataSource } = useActionsContext();
   const { queries } = useQueryRunnerContext();
 
@@ -75,13 +75,13 @@ function BulkQueryActions({ barWidth }: BulkQueryActionsProps) {
   const handleConfirmedDelete = () => {
     bulkDeleteQueries(selectedQueryRefIds);
     setShowDeleteConfirm(false);
-    clearSelection();
+    setMultiSelectMode(false);
   };
 
   const handleDatasourceChange = async (settings: DataSourceInstanceSettings) => {
     await bulkChangeDataSource(selectedQueryRefIds, settings);
     setShowDsModal(false);
-    clearSelection();
+    setMultiSelectMode(false);
   };
 
   return (
@@ -145,7 +145,7 @@ interface BulkTransformationActionsProps {
 }
 
 function BulkTransformationActions({ barWidth }: BulkTransformationActionsProps) {
-  const { selectedTransformationIds, clearSelection } = useQueryEditorUIContext();
+  const { selectedTransformationIds, setMultiSelectMode } = useQueryEditorUIContext();
   const { bulkDeleteTransformations, bulkToggleTransformationsDisabled } = useActionsContext();
   const { transformations } = usePanelContext();
 
@@ -161,7 +161,7 @@ function BulkTransformationActions({ barWidth }: BulkTransformationActionsProps)
   const handleConfirmedDelete = () => {
     bulkDeleteTransformations(selectedTransformationIds);
     setShowDeleteConfirm(false);
-    clearSelection();
+    setMultiSelectMode(false);
   };
 
   return (
@@ -217,21 +217,15 @@ interface BulkActionsVisibility {
   shouldRender: boolean;
 }
 
-// In explicit multi-select mode any selection is actionable. Outside of it
-// (keyboard-shortcut path: Cmd/Ctrl+click, Shift+click) the bar opens at 2+
-// to avoid noise on every plain single-card click. Exported so the parent
+// Bulk actions are only available in explicit multi-select mode. Exported so the parent
 // (SidebarFooter) can ternary-render the bar vs. counts off the same rule.
-export function hasActionableSelection(selectionCount: number, multiSelectMode: boolean): boolean {
-  return multiSelectMode ? selectionCount >= 1 : selectionCount >= 2;
-}
-
-function getBulkActionsVisibility({
+export function getBulkActionsVisibility({
   selectedQueryCount,
   selectedTransformationCount,
   multiSelectMode,
 }: BulkActionsVisibilityOptions): BulkActionsVisibility {
-  const hasQueryActions = hasActionableSelection(selectedQueryCount, multiSelectMode);
-  const hasTransformationActions = hasActionableSelection(selectedTransformationCount, multiSelectMode);
+  const hasQueryActions = multiSelectMode && selectedQueryCount > 0;
+  const hasTransformationActions = multiSelectMode && selectedTransformationCount > 0;
 
   return {
     hasQueryActions,
@@ -243,7 +237,7 @@ function getBulkActionsVisibility({
 export function BulkActionsBar({ className }: BulkActionsBarProps = {}) {
   const styles = useStyles2(getStyles);
   const [barRef, { width: barWidth }] = useMeasure<HTMLDivElement>();
-  const { selectedQueryRefIds, selectedTransformationIds, clearSelection, multiSelectMode, setMultiSelectMode } =
+  const { selectedQueryRefIds, selectedTransformationIds, setMultiSelectMode, multiSelectMode } =
     useQueryEditorUIContext();
 
   const { hasQueryActions, hasTransformationActions, shouldRender } = getBulkActionsVisibility({
@@ -256,13 +250,8 @@ export function BulkActionsBar({ className }: BulkActionsBarProps = {}) {
     return null;
   }
 
-  // When multi-select mode is active, closing the bar should also leave the
-  // mode so the sidebar returns to its default (single-selection) presentation.
   const handleClear = () => {
-    clearSelection();
-    if (multiSelectMode) {
-      setMultiSelectMode(false);
-    }
+    setMultiSelectMode(false);
   };
 
   return (
