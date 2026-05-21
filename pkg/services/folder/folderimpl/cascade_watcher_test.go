@@ -87,18 +87,23 @@ func TestCascadeWatcher_Run_withoutRestConfig(t *testing.T) {
 	require.NoError(t, err)
 }
 
+type deletedFolder struct {
+	name         string
+	gracePeriod  *int64
+}
+
 type recordingFolderMutator struct {
 	mu              sync.Mutex
-	deleted         []string
+	deleted         []deletedFolder
 	finalizerRemove []string
 	deleteErr       error
 	removeErr       error
 }
 
-func (m *recordingFolderMutator) Delete(_ context.Context, _ string, name string) error {
+func (m *recordingFolderMutator) Delete(_ context.Context, _ string, name string, gracePeriodSeconds *int64) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	m.deleted = append(m.deleted, name)
+	m.deleted = append(m.deleted, deletedFolder{name: name, gracePeriod: gracePeriodSeconds})
 	return m.deleteErr
 }
 
@@ -107,6 +112,14 @@ func (m *recordingFolderMutator) RemoveCascadeFinalizer(_ context.Context, _ str
 	defer m.mu.Unlock()
 	m.finalizerRemove = append(m.finalizerRemove, name)
 	return m.removeErr
+}
+
+func (m *recordingFolderMutator) deletedNames() []string {
+	out := make([]string, 0, len(m.deleted))
+	for _, d := range m.deleted {
+		out = append(out, d.name)
+	}
+	return out
 }
 
 func newTerminatingFolder(name string) *foldersv1.Folder {
@@ -146,8 +159,42 @@ func TestCascadeWatcher_onFolder_deletesChildren(t *testing.T) {
 
 	w.onFolder(newTerminatingFolder("parent"))
 
-	require.Equal(t, []string{"child-a", "child-b"}, mut.deleted)
+	require.Equal(t, []string{"child-a", "child-b"}, mut.deletedNames())
+	require.Nil(t, mut.deleted[0].gracePeriod)
 	require.Empty(t, mut.finalizerRemove)
+}
+
+func TestCascadeWatcher_onFolder_propagatesGracePeriodToChildren(t *testing.T) {
+	searcher := &mockFolderSearcher{
+		search: func(_ context.Context, _ int64, _ *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
+			return &resourcepb.ResourceSearchResponse{
+				Results: &resourcepb.ResourceTable{
+					Columns: []*resourcepb.ResourceTableColumnDefinition{
+						{Name: resource.SEARCH_FIELD_FOLDER, Type: resourcepb.ResourceTableColumnDefinition_STRING},
+					},
+					Rows: []*resourcepb.ResourceTableRow{
+						{Key: &resourcepb.ResourceKey{Name: "child-a", Resource: "folder"}, Cells: [][]byte{[]byte("parent")}},
+					},
+				},
+			}, nil
+		},
+	}
+	mut := &recordingFolderMutator{}
+	w := &CascadeWatcher{
+		folderSearch:  searcher,
+		folderMutator: mut,
+		log:           slog.Default(),
+	}
+
+	parent := newTerminatingFolder("parent")
+	zero := int64(0)
+	parent.DeletionGracePeriodSeconds = &zero
+
+	w.onFolder(parent)
+
+	require.Len(t, mut.deleted, 1)
+	require.NotNil(t, mut.deleted[0].gracePeriod)
+	require.Equal(t, int64(0), *mut.deleted[0].gracePeriod)
 }
 
 func TestCascadeWatcher_onFolder_removesFinalizerWhenEmpty(t *testing.T) {
@@ -185,6 +232,6 @@ func TestCascadeWatcher_onFolder_skipsWhenNotTerminating(t *testing.T) {
 
 	w.onFolder(&foldersv1.Folder{ObjectMeta: metav1.ObjectMeta{Name: "alive", Namespace: "org-12"}})
 
-	require.Empty(t, mut.deleted)
+	require.Empty(t, mut.deletedNames())
 	require.Empty(t, mut.finalizerRemove)
 }
