@@ -42,7 +42,11 @@ function getStyles(theme: GrafanaTheme2) {
       flexDirection: 'column',
       overflow: 'hidden',
     }),
-    controls: css({ flexShrink: 0 }),
+    controls: css({
+      flexShrink: 0,
+      paddingTop: theme.spacing(1),
+      paddingBottom: theme.spacing(1),
+    }),
     workbench: css({ flex: 1, minHeight: 0, overflow: 'hidden' }),
   };
 }

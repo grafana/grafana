@@ -5,6 +5,7 @@ import { useToggle } from 'react-use';
 import {
   type FieldConfigSource,
   filterFieldConfigOverrides,
+  getPanelOptionsWithDefaults,
   type GrafanaTheme2,
   isStandardFieldProp,
   type PanelPluginMeta,
@@ -13,7 +14,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { config, locationService, reportInteraction } from '@grafana/runtime';
+import { locationService, reportInteraction } from '@grafana/runtime';
 import { useListedPanelPluginMetas } from '@grafana/runtime/internal';
 import {
   type DeepPartial,
@@ -30,8 +31,6 @@ import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPlugi
 import { vizSuggestionsTracker } from 'app/features/panel/components/VizTypePicker/interactions';
 import { type VizTypeChangeDetails } from 'app/features/panel/components/VizTypePicker/types';
 
-import { PanelInspectorModeToggle } from './PanelInspectorModeToggle';
-import { PanelInspectorTabs } from './PanelInspectorTabs';
 import { PanelOptions } from './PanelOptions';
 import { PanelVizTypePicker } from './PanelVizTypePicker';
 import { INTERACTION_EVENT_NAME, INTERACTION_ITEM } from './interaction';
@@ -44,8 +43,6 @@ export interface PanelOptionsPaneState extends SceneObjectState {
   panelRef: SceneObjectRef<VizPanel>;
   isNewPanel?: boolean;
   hasPickedViz?: boolean;
-  activeTab: 'viz' | 'style' | 'data' | 'rules';
-  inspectorMode: 'basic' | 'advanced';
 }
 
 interface PluginOptionsCache {
@@ -56,17 +53,6 @@ interface PluginOptionsCache {
 export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
   private _cachedPluginOptions: Record<string, PluginOptionsCache | undefined> = {};
 
-  constructor(state: Omit<PanelOptionsPaneState, 'activeTab' | 'inspectorMode'> & Partial<PanelOptionsPaneState>) {
-    const activeTab =
-      state.activeTab ??
-      ((localStorage.getItem('grafana.panel-edit.inspector.tab') as PanelOptionsPaneState['activeTab']) || 'style');
-    const inspectorMode =
-      state.inspectorMode ??
-      ((localStorage.getItem('grafana.panel-edit.inspector.mode') as PanelOptionsPaneState['inspectorMode']) ||
-        'basic');
-    super({ ...state, activeTab, inspectorMode });
-  }
-
   onToggleVizPicker = () => {
     const newState = !this.state.isVizPickerOpen;
 
@@ -74,6 +60,7 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
       item: INTERACTION_ITEM.TOGGLE_DROPDOWN,
       open: newState,
     });
+
     this.setState({
       isVizPickerOpen: newState,
       hasPickedViz: this.state.hasPickedViz || newState === false,
@@ -122,10 +109,28 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
     }
 
     if (options.fieldConfig) {
+      const presetDefaults = options.fieldConfig.defaults;
+
+      // if the preset doesn't specify a color, derive it from the plugin's preferred scheme
+      const plugin = panel.getPlugin();
+      const color =
+        presetDefaults?.color ??
+        (plugin
+          ? getPanelOptionsWithDefaults({
+              plugin,
+              currentOptions: panel.state.options,
+              currentFieldConfig: { defaults: {}, overrides: [] },
+              isAfterPluginChange: true,
+            }).fieldConfig.defaults.color
+          : undefined) ??
+        panel.state.fieldConfig.defaults.color;
+
       const fieldConfigWithOverrides = {
         defaults: {
           ...newFieldConfig.defaults,
-          custom: options.fieldConfig.defaults?.custom ?? {},
+          color,
+          custom: presetDefaults?.custom ?? {},
+          ...(presetDefaults?.thresholds && { thresholds: presetDefaults.thresholds }),
         },
         overrides: newFieldConfig.overrides,
       };
@@ -146,16 +151,6 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
     this.setState({ listMode });
   };
 
-  onSetActiveTab = (activeTab: PanelOptionsPaneState['activeTab']) => {
-    localStorage.setItem('grafana.panel-edit.inspector.tab', activeTab);
-    this.setState({ activeTab });
-  };
-
-  onSetInspectorMode = (inspectorMode: PanelOptionsPaneState['inspectorMode']) => {
-    localStorage.setItem('grafana.panel-edit.inspector.mode', inspectorMode);
-    this.setState({ inspectorMode });
-  };
-
   onOpenPanelJSON = (vizPanel: VizPanel) => {
     locationService.partial({
       inspect: vizPanel.state.key,
@@ -174,10 +169,9 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
 }
 
 function PanelOptionsPaneComponent({ model }: SceneComponentProps<PanelOptionsPane>) {
-  const { isVizPickerOpen, searchQuery, listMode, panelRef, isNewPanel, hasPickedViz, activeTab, inspectorMode } =
-    model.useState();
+  const { isVizPickerOpen, searchQuery, listMode, panelRef, isNewPanel, hasPickedViz } = model.useState();
   const panel = panelRef.resolve();
-  const { pluginId, title: panelTitle } = panel.useState();
+  const { pluginId } = panel.useState();
   const { data } = sceneGraph.getData(panel).useState();
   const styles = useStyles2(getStyles);
   const isSearching = searchQuery.length > 0;
@@ -205,7 +199,7 @@ function PanelOptionsPaneComponent({ model }: SceneComponentProps<PanelOptionsPa
               <img alt={pluginMeta.name} src={pluginMeta.info.logos.small} className={styles.pluginIcon} />
               <Text
                 data-testid={selectors.components.PanelEditor.OptionsPane.header}
-                element="h3"
+                element="h2"
                 variant="body"
                 weight="medium"
                 truncate
@@ -232,11 +226,7 @@ function PanelOptionsPaneComponent({ model }: SceneComponentProps<PanelOptionsPa
                   tooltip={t('dashboard.panel-edit.only-overrides-button-tooltip', 'Show only overrides')}
                   variant={onlyOverrides ? 'active' : 'canvas'}
                   onClick={() => {
-                    const next = onlyOverrides ? OptionFilter.All : OptionFilter.Overrides;
-                    model.onSetListMode(next);
-                    if (next === OptionFilter.Overrides) {
-                      model.onSetActiveTab('rules');
-                    }
+                    model.onSetListMode(onlyOverrides ? OptionFilter.All : OptionFilter.Overrides);
                   }}
                   aria-pressed={onlyOverrides}
                 />
@@ -265,21 +255,8 @@ function PanelOptionsPaneComponent({ model }: SceneComponentProps<PanelOptionsPa
               />
             </div>
           )}
-          {!isSearching && (
-            <>
-              <PanelInspectorTabs activeTab={activeTab} onChangeTab={model.onSetActiveTab} />
-              <PanelInspectorModeToggle mode={inspectorMode} onChangeMode={model.onSetInspectorMode} />
-            </>
-          )}
           <ScrollContainer minHeight={isScrollingLayout ? 'max-content' : 0}>
-            <PanelOptions
-              panel={panel}
-              searchQuery={searchQuery}
-              listMode={listMode}
-              data={data}
-              activeTab={activeTab}
-              inspectorMode={inspectorMode}
-            />
+            <PanelOptions panel={panel} searchQuery={searchQuery} listMode={listMode} data={data} />
           </ScrollContainer>
         </>
       )}
@@ -289,7 +266,7 @@ function PanelOptionsPaneComponent({ model }: SceneComponentProps<PanelOptionsPa
           onChange={model.onChangePanel}
           onClose={model.onToggleVizPicker}
           data={data}
-          showBackButton={config.featureToggles.newVizSuggestions ? hasPickedViz || !isNewPanel : true}
+          showBackButton={hasPickedViz || !isNewPanel}
           isNewPanel={isNewPanel}
           hasPickedViz={hasPickedViz}
         />

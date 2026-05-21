@@ -1,13 +1,18 @@
-import { css } from '@emotion/css';
-import { useState } from 'react';
+import { css, cx } from '@emotion/css';
+import { useCallback, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { getDragStyles, useStyles2 } from '@grafana/ui';
 
 import { ResultsTable } from './ResultsTable';
 import { DEFAULT_SQL, SqlEditor } from './SqlEditor';
 import { SourcesPanel } from './SourcesPanel';
 import { SummaryPanel } from './SummaryPanel';
+import { VizOptionsPanel } from './VizOptionsPanel';
+import { consumePendingWorkbenchSql } from './workbenchStore';
+
+type ViewMode = 'table' | 'viz';
 
 interface Props {
   initialSql?: string;
@@ -15,8 +20,11 @@ interface Props {
 
 export function SqlEditorMode({ initialSql }: Props = {}) {
   const styles = useStyles2(getStyles);
-  const [sql, setSql] = useState(initialSql ?? DEFAULT_SQL);
+  const dragStyles = getDragStyles(config.theme2);
+  const [sql, setSql] = useState(() => consumePendingWorkbenchSql() ?? initialSql ?? DEFAULT_SQL);
   const [runKey, setRunKey] = useState(0);
+  const [viewMode, setViewMode] = useState<ViewMode>('table');
+  const [editorHeight, setEditorHeight] = useState(350);
 
   const handleTableClick = (tableName: string) => {
     const fromRegex = /\bFROM\s+\S+/i;
@@ -27,6 +35,27 @@ export function SqlEditorMode({ initialSql }: Props = {}) {
     }
   };
 
+  const handleDragStart = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      const startY = e.clientY;
+      const startH = editorHeight;
+
+      const onMove = (ev: MouseEvent) => {
+        setEditorHeight(Math.max(80, startH + ev.clientY - startY));
+      };
+      const onUp = () => {
+        document.body.style.cursor = '';
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+      };
+      document.body.style.cursor = 'row-resize';
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    },
+    [editorHeight]
+  );
+
   return (
     <div className={styles.root}>
       <div className={styles.sources}>
@@ -34,7 +63,7 @@ export function SqlEditorMode({ initialSql }: Props = {}) {
       </div>
 
       <div className={styles.center}>
-        <div className={styles.editorPane}>
+        <div className={styles.editorPane} style={{ height: editorHeight }}>
           <SqlEditor
             value={sql}
             onChange={setSql}
@@ -42,13 +71,24 @@ export function SqlEditorMode({ initialSql }: Props = {}) {
             height="100%"
           />
         </div>
+        <div
+          className={cx(styles.dragHandle, dragStyles.dragHandleHorizontal)}
+          onMouseDown={handleDragStart}
+          role="separator"
+          aria-orientation="horizontal"
+        />
         <div className={styles.resultsPane}>
-          <ResultsTable key={runKey} sql={sql} />
+          <ResultsTable
+            key={runKey}
+            sql={sql}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+          />
         </div>
       </div>
 
-      <div className={styles.summary}>
-        <SummaryPanel sql={sql} />
+      <div className={styles.rightPanel}>
+        {viewMode === 'viz' ? <VizOptionsPanel /> : <SummaryPanel sql={sql} />}
       </div>
     </div>
   );
@@ -66,12 +106,24 @@ function getStyles(theme: GrafanaTheme2) {
     sources: css({ gridColumn: 1, overflow: 'hidden' }),
     center: css({
       gridColumn: 2,
-      display: 'grid',
-      gridTemplateRows: '1fr 280px',
+      display: 'flex',
+      flexDirection: 'column',
       overflow: 'hidden',
     }),
-    editorPane: css({ overflow: 'hidden', display: 'flex', flexDirection: 'column' }),
-    resultsPane: css({ overflow: 'hidden', display: 'flex', flexDirection: 'column' }),
-    summary: css({ gridColumn: 3, overflow: 'hidden' }),
+    editorPane: css({
+      flexShrink: 0,
+      overflow: 'hidden',
+      display: 'flex',
+      flexDirection: 'column',
+    }),
+    dragHandle: css({ flexShrink: 0 }),
+    resultsPane: css({
+      flex: 1,
+      minHeight: 0,
+      overflow: 'hidden',
+      display: 'flex',
+      flexDirection: 'column',
+    }),
+    rightPanel: css({ gridColumn: 3, overflow: 'hidden' }),
   };
 }
