@@ -61,6 +61,9 @@ type IndexViewData struct {
 
 	// Feature flag for enabling SRI checks on Grafana assets
 	AssetSriChecksEnabled bool
+
+	// Feature flag for reducing the usage of Bootdata
+	ReduceBootdataAPI bool
 }
 
 // Templates setup.
@@ -133,6 +136,7 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 	grafanaAssetSriChecks, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagGrafanaAssetSriChecks, false, openfeature.TransactionContext(ctx))
 	meticulousAIRecorderEnabled, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagGrafanaMeticulousAIRecorder, false, openfeature.TransactionContext(ctx))
 	meticulousAIRecorderHighVolume, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagGrafanaMeticulousAIRecorderHighVolume, false, openfeature.TransactionContext(ctx))
+	reduceBootdataAPI, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagFrontendServiceReducedBootDataAPI, false, openfeature.TransactionContext(ctx))
 
 	data := IndexViewData{
 		AppTitle:                              "Grafana",
@@ -148,6 +152,7 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		MeticulousAIEnabled:                   meticulousAIRecorderEnabled,
 		MeticulousAIRecordingToken:            p.config.MeticulousAIRecordingToken,
 		MeticulousAIProductionEnvironmentFlag: !meticulousAIRecorderHighVolume,
+		ReduceBootdataAPI:                     reduceBootdataAPI,
 	}
 
 	if compiledBootScript {
