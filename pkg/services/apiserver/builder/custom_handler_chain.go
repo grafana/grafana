@@ -1,14 +1,15 @@
+// THIS FILE IS MOSTLY COPY/PASTA FROM k8s 
+// PLEASE EDIT WITH GREAT CARE TO MINIMIZE FORK
+// SEE COMMENTS BELOW FOR MORE DETAILS
+
 package builder
 
 import (
 	"net/http"
-	"reflect"
-	"unsafe"
 
 	"k8s.io/apiserver/pkg/endpoints/filterlatency"
 	genericapifilters "k8s.io/apiserver/pkg/endpoints/filters"
 	"k8s.io/apiserver/pkg/endpoints/filters/impersonation"
-	apirequest "k8s.io/apiserver/pkg/endpoints/request"
 	genericfeatures "k8s.io/apiserver/pkg/features"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	genericfilters "k8s.io/apiserver/pkg/server/filters"
@@ -16,23 +17,34 @@ import (
 	flowcontrolrequest "k8s.io/apiserver/pkg/util/flowcontrol/request"
 )
 
-// CustomBuildHandlerChain mirrors k8s genericapiserver.DefaultBuildHandlerChain
-// verbatim except it omits the genericapifilters.WithTracing call.
+// CustomBuildHandlerChain is a Grafana-specific variant of k8s
+// genericapiserver.DefaultBuildHandlerChain. It differs in three ways, all of
+// which are deliberate:
 //
-// Why we omit it: k8s's WithTracing wraps the handler with otelhttp configured
-// as a public endpoint for non-system:privileged callers. That severs the
-// upstream trace context — every request gets a fresh root span linked
-// (rather than parented) to the caller. Our embedded apiservers only receive
-// requests from trusted internal services (ST grafana, grafana-ruler, etc.),
-// so the public-endpoint defense is unnecessary, and our outer WithTracing
-// in GetDefaultBuildHandlerChainFunc already creates the KubernetesAPI span
-// with proper parent-child propagation.
+//  1. It omits genericapifilters.WithTracing. k8s wraps the chain with
+//     otelhttp configured as a public endpoint for non-system:privileged
+//     callers, which severs the upstream trace context — every request gets a
+//     fresh root span linked (not parented) to the caller. Our embedded
+//     apiservers only receive requests from trusted internal services, 
+// 	   and the outer WithTracing in GetDefaultBuildHandlerChainFunc already 
+//     creates the KubernetesAPI span with proper parent-child propagation.
 //
-// Maintenance note: this function is a structural copy of
-// k8s.io/apiserver/pkg/server/config.go's DefaultBuildHandlerChain. When
-// bumping k8s, diff that function against this one and reconcile new filters.
-// custom_handler_chain_test.go runs reflection-based assertions that catch
-// silent drift in the lifecycleSignals private-field shape.
+//  2. It omits the WithRetryAfter and WithWatchTerminationDuringShutdown
+//     filters as these filteres depend on an unexported Config.lifecycleSignals
+//     field. Both are gated upstream on Config fields (ShutdownSendRetryAfter, 
+//     ShutdownWatchTerminationGracePeriod) that Grafana never sets, 
+//     so the filters were dead code. Dropping them lets us avoid reflection
+//     + unsafe.Pointer to reach into k8s internals.
+//
+//  3. It omits WithMuxAndDiscoveryComplete. That filter exists upstream to
+//     keep k8s GC/namespace controllers from acting on stray 404s during
+//     mux installation. Grafana apiservers are not consulted by those
+//     controllers, so the protection is unnecessary. Same lifecycleSignals
+//     reasoning as above.
+//
+// Maintenance: when bumping k8s, diff genericapiserver.DefaultBuildHandlerChain
+// (k8s.io/apiserver/pkg/server/config.go) against this function and reconcile
+// any new filters that appear.
 func CustomBuildHandlerChain(apiHandler http.Handler, c *genericapiserver.Config) http.Handler {
 	handler := apiHandler
 
@@ -67,7 +79,7 @@ func CustomBuildHandlerChain(apiHandler http.Handler, c *genericapiserver.Config
 	failedHandler := genericapifilters.Unauthorized(c.Serializer)
 	failedHandler = genericapifilters.WithFailedAuthenticationAudit(failedHandler, c.AuditBackend, c.AuditPolicyRuleEvaluator)
 
-	// OMITTED: genericapifilters.WithTracing — see file header comment.
+	// OMITTED: genericapifilters.WithTracing — see function header (1).
 
 	failedHandler = filterlatency.TrackCompleted(failedHandler)
 	handler = filterlatency.TrackCompleted(handler)
@@ -83,17 +95,13 @@ func CustomBuildHandlerChain(apiHandler http.Handler, c *genericapiserver.Config
 	handler = genericapifilters.WithRequestDeadline(handler, c.AuditBackend, c.AuditPolicyRuleEvaluator,
 		c.LongRunningFunc, c.Serializer, c.RequestTimeout)
 	handler = genericfilters.WithWaitGroup(handler, c.LongRunningFunc, c.NonLongRunningRequestWaitGroup)
-	if c.ShutdownWatchTerminationGracePeriod > 0 {
-		handler = genericfilters.WithWatchTerminationDuringShutdown(handler, shutdownSignalFromConfig(c), c.WatchRequestWaitGroup)
-	}
+	// OMITTED: genericfilters.WithWatchTerminationDuringShutdown — see function header (2).
 	if c.SecureServing != nil && !c.SecureServing.DisableHTTP2 && c.GoawayChance > 0 {
 		handler = genericfilters.WithProbabilisticGoaway(handler, c.GoawayChance)
 	}
 	handler = genericapifilters.WithCacheControl(handler)
 	handler = genericfilters.WithHSTS(handler, c.HSTSDirectives)
-	if c.ShutdownSendRetryAfter {
-		handler = genericfilters.WithRetryAfter(handler, lifecycleSignalCh(c, "NotAcceptingNewRequest"))
-	}
+	// OMITTED: genericfilters.WithRetryAfter — see function header (2).
 	handler = genericfilters.WithHTTPLogging(handler)
 	handler = genericapifilters.WithLatencyTrackers(handler)
 	if c.FeatureGate.Enabled(genericfeatures.APIServingWithRoutine) {
@@ -101,34 +109,8 @@ func CustomBuildHandlerChain(apiHandler http.Handler, c *genericapiserver.Config
 	}
 	handler = genericapifilters.WithRequestInfo(handler, c.RequestInfoResolver)
 	handler = genericapifilters.WithRequestReceivedTimestamp(handler)
-	handler = genericapifilters.WithMuxAndDiscoveryComplete(handler, lifecycleSignalCh(c, "MuxAndDiscoveryComplete"))
+	// OMITTED: genericapifilters.WithMuxAndDiscoveryComplete — see function header (3).
 	handler = genericfilters.WithPanicRecovery(handler, c.RequestInfoResolver)
 	handler = genericapifilters.WithAuditInit(handler)
 	return handler
-}
-
-// lifecycleSignalsValue returns the (unexported) lifecycleSignals field on
-// the Config, made addressable via the unsafe pointer trick so its methods
-// and exported subfields can be reached through reflection. Drift in the
-// upstream field name is caught by TestLifecycleSignalsAccessible.
-func lifecycleSignalsValue(c *genericapiserver.Config) reflect.Value {
-	field := reflect.ValueOf(c).Elem().FieldByName("lifecycleSignals")
-	return reflect.NewAt(field.Type(), unsafe.Pointer(field.UnsafeAddr())).Elem()
-}
-
-// shutdownSignalFromConfig returns lifecycleSignals as an apirequest.ServerShutdownSignal.
-// lifecycleSignals implements that interface upstream; we exploit that to pass it
-// to filters that take the exported interface type.
-func shutdownSignalFromConfig(c *genericapiserver.Config) apirequest.ServerShutdownSignal {
-	return lifecycleSignalsValue(c).Interface().(apirequest.ServerShutdownSignal)
-}
-
-// lifecycleSignalCh extracts a named signal channel from lifecycleSignals.
-// The named subfield is an unexported lifecycleSignal type with a Signaled()
-// method that returns <-chan struct{}.
-func lifecycleSignalCh(c *genericapiserver.Config, fieldName string) <-chan struct{} {
-	sub := lifecycleSignalsValue(c).FieldByName(fieldName)
-	sub = reflect.NewAt(sub.Type(), unsafe.Pointer(sub.UnsafeAddr())).Elem()
-	out := sub.MethodByName("Signaled").Call(nil)
-	return out[0].Interface().(<-chan struct{})
 }
