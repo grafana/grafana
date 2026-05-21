@@ -685,6 +685,7 @@ func TestBuildIndex_RebuildLeaderUploads(t *testing.T) {
 	assert.Equal(t, int32(1), store.uploadCalls.Load(), "leader must upload immediately")
 	assert.Equal(t, int32(1), store.lockReleaseCalls.Load(), "leader must release the build lock")
 	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotUploads.WithLabelValues(snapshotUploadStatusSuccess)))
+	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotBuildCoordinations.WithLabelValues(snapshotBuildFlowRebuild, snapshotBuildOutcomeAcquiredLock)))
 }
 
 // TestBuildIndex_RebuildLeaderLockLostDuringBuild verifies that if the rebuild
@@ -765,6 +766,54 @@ func TestBuildIndex_RebuildWaiterDownloadsFreshSnapshot(t *testing.T) {
 
 	assert.Zero(t, builderCalled.Load(), "waiter must not rebuild when a fresh snapshot appears")
 	assert.Positive(t, store.downloadCalls.Load(), "waiter must download the fresh snapshot")
+}
+
+// TestBuildIndex_RebuildWaiterRecordsDownloadedAfterWait verifies that the
+// rebuild waiter records the downloaded_after_wait outcome under the rebuild
+// flow on the shared build-coordination metric.
+func TestBuildIndex_RebuildWaiterRecordsDownloadedAfterWait(t *testing.T) {
+	store := newHookableStore(t)
+	ns := newTestNsResource()
+	be, metrics := newTestBleveBackend(t, SnapshotOptions{
+		Store:       store,
+		MinDocCount: 1,
+		MaxIndexAge: 24 * time.Hour,
+	})
+	withSnapshotBuildPollInterval(t, 5*time.Millisecond)
+
+	heldLock, err := store.inner.LockBuildIndex(t.Context(), ns, "11.5.0")
+	require.NoError(t, err)
+	defer func() { require.NoError(t, heldLock.Release()) }()
+
+	ctx, cancel := context.WithTimeout(t.Context(), 2*time.Second)
+	defer cancel()
+
+	type buildResult struct {
+		idx resource.ResourceIndex
+		err error
+	}
+	resultCh := make(chan buildResult, 1)
+	go func() {
+		idx, err := be.BuildIndex(ctx, ns, 10, nil, "rebuild",
+			func(resource.ResourceIndex) (int64, error) { return 1, nil },
+			nil, true /*rebuild*/, time.Time{}, time.Hour /*maxFreshSnapshotAge*/)
+		resultCh <- buildResult{idx: idx, err: err}
+	}()
+
+	require.Eventually(t, func() bool {
+		return store.lockAcquireCalls.Load() > 0
+	}, time.Second, 5*time.Millisecond)
+	seedDownloadableSnapshot(t, t.Context(), store.bucket, ns, makeULID(t, time.Now()), freshSnapshot(time.Minute))
+
+	select {
+	case result := <-resultCh:
+		require.NoError(t, result.err)
+		require.NotNil(t, result.idx)
+	case <-ctx.Done():
+		t.Fatal("timed out waiting for rebuild waiter")
+	}
+
+	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotBuildCoordinations.WithLabelValues(snapshotBuildFlowRebuild, snapshotBuildOutcomeDownloadedAfterWait)))
 }
 
 // TestBuildIndex_RebuildSkipsFastPathWhenDisabled verifies that passing
@@ -1388,7 +1437,7 @@ func (ct coldStartTest) coordinate(ctx context.Context, lastImportTime time.Time
 }
 
 func (ct coldStartTest) coldStartCounter(outcome string) float64 {
-	return testutil.ToFloat64(ct.metrics.IndexSnapshotColdStarts.WithLabelValues(outcome))
+	return testutil.ToFloat64(ct.metrics.IndexSnapshotBuildCoordinations.WithLabelValues(snapshotBuildFlowColdStart, outcome))
 }
 
 func TestColdStart_BecameLeader(t *testing.T) {
@@ -1586,7 +1635,7 @@ func TestBuildIndex_ColdStartLeaderUploads(t *testing.T) {
 	assert.Equal(t, int32(1), builderCalled.Load(), "builder must run on the leader path")
 	assert.Equal(t, int32(1), store.uploadCalls.Load(), "leader must upload immediately")
 	assert.Equal(t, int32(1), store.lockReleaseCalls.Load(), "leader must release the build lock")
-	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotColdStarts.WithLabelValues(snapshotBuildOutcomeAcquiredLock)))
+	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotBuildCoordinations.WithLabelValues(snapshotBuildFlowColdStart, snapshotBuildOutcomeAcquiredLock)))
 	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotUploads.WithLabelValues(snapshotUploadStatusSuccess)))
 }
 
@@ -1622,7 +1671,7 @@ func TestBuildIndex_ColdStartTimeoutBuildsAlone(t *testing.T) {
 
 	assert.Equal(t, int32(1), builderCalled.Load(), "build alone after timeout")
 	assert.Zero(t, store.uploadCalls.Load(), "no leader upload on timeout path")
-	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotColdStarts.WithLabelValues(snapshotBuildOutcomeWaitTimedOut)))
+	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotBuildCoordinations.WithLabelValues(snapshotBuildFlowColdStart, snapshotBuildOutcomeWaitTimedOut)))
 }
 
 // TestBuildIndex_ColdStartRunsWhenMaxIndexAgeZero verifies that
@@ -1651,7 +1700,7 @@ func TestBuildIndex_ColdStartRunsWhenMaxIndexAgeZero(t *testing.T) {
 	assert.Equal(t, int32(1), store.lockAcquireCalls.Load(), "cold-start must attempt the lock even when MaxIndexAge=0")
 	assert.Equal(t, int32(1), store.uploadCalls.Load(), "leader must upload immediately")
 	assert.Equal(t, int32(1), store.lockReleaseCalls.Load(), "leader must release the build lock")
-	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotColdStarts.WithLabelValues(snapshotBuildOutcomeAcquiredLock)))
+	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotBuildCoordinations.WithLabelValues(snapshotBuildFlowColdStart, snapshotBuildOutcomeAcquiredLock)))
 	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotUploads.WithLabelValues(snapshotUploadStatusSuccess)))
 }
 

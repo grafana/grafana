@@ -554,7 +554,7 @@ const (
 	snapshotBuildFlowRebuild   = "rebuild"
 )
 
-// Outcome labels for the IndexSnapshotColdStarts metric and the rebuild
+// Outcome labels for the IndexSnapshotBuildCoordinations metric and the
 // coordination span. Kept compatible with the metric label values.
 const (
 	snapshotBuildOutcomeAcquiredLock        = "acquired_lock"
@@ -727,7 +727,9 @@ func (b *bleveBackend) coordinateColdStartBuild(
 		probe: func(ctx context.Context) (bleve.Index, string, int64, error) {
 			return b.tryDownloadColdStartSnapshot(ctx, key, resourceDir, lastImportTime, probeMaxAge, logger)
 		},
-		recordOutcome: b.recordColdStartOutcome,
+		recordOutcome: func(outcome string) {
+			b.recordBuildCoordinationOutcome(snapshotBuildFlowColdStart, outcome)
+		},
 	}, logger)
 }
 
@@ -790,6 +792,9 @@ func (b *bleveBackend) coordinateRebuild(
 		probe: func(ctx context.Context) (bleve.Index, string, int64, error) {
 			return b.tryDownloadRebuildSnapshot(ctx, key, resourceDir, lastImportTime, maxFreshSnapshotAge, logger)
 		},
+		recordOutcome: func(outcome string) {
+			b.recordBuildCoordinationOutcome(snapshotBuildFlowRebuild, outcome)
+		},
 	}, logger)
 }
 
@@ -820,9 +825,9 @@ func (b *bleveBackend) tryDownloadRebuildSnapshot(
 	return idx, name, rv, nil
 }
 
-func (b *bleveBackend) recordColdStartOutcome(outcome string) {
+func (b *bleveBackend) recordBuildCoordinationOutcome(flow, outcome string) {
 	if b.indexMetrics == nil {
 		return
 	}
-	b.indexMetrics.IndexSnapshotColdStarts.WithLabelValues(outcome).Inc()
+	b.indexMetrics.IndexSnapshotBuildCoordinations.WithLabelValues(flow, outcome).Inc()
 }
