@@ -28,6 +28,7 @@ export function RecentDashboardsTab({ dashboards, loading, error, retry, folders
   if (error) {
     return (
       <Stack grow={1} direction="column" alignItems="center" justifyContent="center">
+        {/* Extra div as Alert will flex-grow by default, but we want it centered */}
         <div>
           <Alert
             severity="warning"
