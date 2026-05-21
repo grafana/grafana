@@ -47,12 +47,15 @@ const createThemeColorsBaseSchema = <TColor>(color: TColor) =>
          * themes it has a brighter shade to help give it contrast against the primary background.
          **/
         elevated: z.string().optional(),
+        subtle: z.string().optional(),
       }),
 
       border: z.object({
         weak: z.string().optional(),
         medium: z.string().optional(),
         strong: z.string().optional(),
+        primary: z.string().optional(),
+        subtle: z.string().optional(),
       }),
 
       gradients: z.object({
@@ -131,6 +134,8 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
     weak: `rgba(${this.whiteBase}, 0.12)`,
     medium: `rgba(${this.whiteBase}, 0.2)`,
     strong: `rgba(${this.whiteBase}, 0.30)`,
+    primary: newPalette.ink700,
+    subtle: newPalette.ink800,
   };
 
   text = {
@@ -181,9 +186,10 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   background = {
     canvas: palette.gray05,
     page: palette.gray05,
-    primary: palette.gray10,
-    secondary: palette.gray15,
+    primary: newPalette.ink800,
+    secondary: newPalette.ink700,
     elevated: palette.gray15,
+    subtle: newPalette.ink850,
   };
 
   action = {
@@ -232,6 +238,8 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
     weak: `rgba(${this.blackBase}, 0.12)`,
     medium: `rgba(${this.blackBase}, 0.3)`,
     strong: `rgba(${this.blackBase}, 0.4)`,
+    primary: newPalette.neutral100,
+    subtle: newPalette.neutral200,
   };
 
   secondary = {
@@ -275,6 +283,7 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
     primary: palette.white,
     secondary: palette.gray95,
     elevated: palette.white,
+    subtle: newPalette.neutral50,
   };
 
   action = {

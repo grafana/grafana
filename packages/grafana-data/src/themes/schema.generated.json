@@ -266,6 +266,9 @@
             },
             "elevated": {
               "type": "string"
+            },
+            "subtle": {
+              "type": "string"
             }
           },
           "additionalProperties": false
@@ -280,6 +283,12 @@
               "type": "string"
             },
             "strong": {
+              "type": "string"
+            },
+            "primary": {
+              "type": "string"
+            },
+            "subtle": {
               "type": "string"
             }
           },

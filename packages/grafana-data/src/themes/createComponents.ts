@@ -32,6 +32,8 @@ export interface ThemeComponents {
     borderColor: string;
     boxShadow: string;
     background: string;
+    contentBackground: string;
+    contentBorderColor: string;
   };
   dropdown: {
     background: string;
@@ -67,8 +69,10 @@ export function createComponents(colors: ThemeColors, shadows: ThemeShadows): Th
   const panel = {
     padding: 1,
     headerHeight: 5,
-    background: colors.background.primary,
-    borderColor: colors.border.weak,
+    background: colors.background.subtle,
+    borderColor: colors.border.subtle,
+    contentBackground: colors.background.primary,
+    contentBorderColor: colors.border.primary,
     boxShadow: 'none',
   };
 

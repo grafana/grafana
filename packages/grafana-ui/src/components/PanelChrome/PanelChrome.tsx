@@ -514,7 +514,7 @@ const getContentStyle = (
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const { background, borderColor } = theme.components.panel;
+  const { background, contentBackground, borderColor, contentBorderColor, } = theme.components.panel;
 
   return {
     container: css({
@@ -588,6 +588,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'panel-content',
       flexGrow: 1,
       contain: 'size layout',
+      backgroundColor: contentBackground,
+      border: `1px solid ${contentBorderColor}`,
+      borderRadius: '12px',
     }),
     headerContainer: css({
       label: 'panel-header',
