@@ -33,6 +33,8 @@ refs:
 
 When working with Grafana, you'll encounter three key concepts: data sources, plugins, and integrations. Each one is essential in building effective monitoring solutions, but they serve distinct purposes, and are often confused with one another. This document clarifies the meaning of each concept and what each one does, when to use it, and how they work together to create observability solutions in Grafana.
 
+The most important thing to remember: every data source is powered by a plugin. You _install_ a plugin, then _configure_ a data source. Core plugins like Prometheus come bundled with Grafana.
+
 ## Data sources
 
 A data source is a connection to a specific database, monitoring system, service, or other external location that stores metrics, logs, traces, or other data. Examples include Prometheus, InfluxDB, PostgreSQL, and Amazon CloudWatch.
