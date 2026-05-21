@@ -382,8 +382,9 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"grafana-exploretraces-app":        {SectionID: navtree.NavIDDrilldown, SortWeight: 3, Text: "Traces"},
 		"grafana-pyroscope-app":            {SectionID: navtree.NavIDDrilldown, SortWeight: 4, Text: "Profiles"},
 		"grafana-sqldrilldown-app":         {SectionID: navtree.NavIDDrilldown, SortWeight: 5, Text: "SQL"},
-		"k6-app":                           {SectionID: navtree.NavIDTestingAndSynthetics, SortWeight: 1, Text: "Performance"},
-		"grafana-synthetic-monitoring-app": {SectionID: navtree.NavIDTestingAndSynthetics, SortWeight: 2, Text: "Synthetics"},
+		"grafana-agentictesting-app":       {SectionID: navtree.NavIDTestingAndSynthetics, SortWeight: 1, Text: "Agentic Testing", IsNew: true},
+		"k6-app":                           {SectionID: navtree.NavIDTestingAndSynthetics, SortWeight: 2, Text: "Performance"},
+		"grafana-synthetic-monitoring-app": {SectionID: navtree.NavIDTestingAndSynthetics, SortWeight: 3, Text: "Synthetics"},
 		"grafana-servicecenter-app":        {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 1, Text: "Service center"},
 		"grafana-irm-app":                  {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 3, Text: "IRM"},
 		"grafana-slo-app":                  {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 4},
@@ -407,24 +408,6 @@ func (s *ServiceImpl) readNavigationSettings() {
 			SectionID: navtree.NavIDCfg,
 			Text:      "Advisor",
 			SubTitle:  "Run checks and get suggestions to fix issues",
-		}
-	}
-
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if s.features.IsEnabledGlobally(featuremgmt.FlagGrafanaAgenticTesting) {
-		s.navigationAppConfig["grafana-agentictesting-app"] = NavigationAppConfig{
-			SectionID:  navtree.NavIDTestingAndSynthetics,
-			SortWeight: 1,
-			Text:       "Agentic Testing",
-			IsNew:      true,
-		}
-		if k6, ok := s.navigationAppConfig["k6-app"]; ok {
-			k6.SortWeight = 2
-			s.navigationAppConfig["k6-app"] = k6
-		}
-		if syn, ok := s.navigationAppConfig["grafana-synthetic-monitoring-app"]; ok {
-			syn.SortWeight = 3
-			s.navigationAppConfig["grafana-synthetic-monitoring-app"] = syn
 		}
 	}
 

@@ -895,11 +895,6 @@ export interface FeatureToggles {
   */
   grafanaAdvisor?: boolean;
   /**
-  * Promote the Agentic Testing app into the Testing & synthetics nav section
-  * @default false
-  */
-  grafanaAgenticTesting?: boolean;
-  /**
   * Enables less memory intensive Elasticsearch result parsing
   * @default false
   */

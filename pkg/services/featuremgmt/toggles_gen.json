@@ -2937,22 +2937,6 @@
     },
     {
       "metadata": {
-        "name": "grafanaAgenticTesting",
-        "resourceVersion": "1779296596852",
-        "creationTimestamp": "2026-05-20T14:52:26Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2026-05-20 17:03:16.852939 +0000 UTC"
-        }
-      },
-      "spec": {
-        "description": "Promote the Agentic Testing app into the Testing \u0026 synthetics nav section",
-        "stage": "experimental",
-        "codeowner": "@grafana/k6-agentic-testing",
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
         "name": "grafanaAssistantInProfilesDrilldown",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-07-31T22:56:50Z",
