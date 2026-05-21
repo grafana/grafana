@@ -5,7 +5,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 )
 
 func decryptedGrafanaReceivers(receivers []*definitions.PostableApiReceiver, decryptFn models.DecryptFn) ([]*definitions.PostableApiReceiver, error) {
@@ -17,7 +16,7 @@ func decryptedGrafanaReceivers(receivers []*definitions.PostableApiReceiver, dec
 			PostableGrafanaReceivers: r.PostableGrafanaReceivers,
 		}
 		// We don't care about the provenance here, so we pass ProvenanceNone.
-		rcv, err := legacy_storage.PostableApiReceiverToReceiver(&grafanaOnlyReceiver, models.ProvenanceNone, models.ResourceOriginGrafana)
+		rcv, err := PostableApiReceiverToReceiver(&grafanaOnlyReceiver, models.ProvenanceNone, models.ResourceOriginGrafana)
 		if err != nil {
 			return nil, err
 		}
@@ -27,7 +26,7 @@ func decryptedGrafanaReceivers(receivers []*definitions.PostableApiReceiver, dec
 			return nil, fmt.Errorf("failed to decrypt receiver %q: %w", rcv.Name, err)
 		}
 
-		postable, err := legacy_storage.ReceiverToPostableApiReceiver(rcv)
+		postable, err := ReceiverToPostableApiReceiver(rcv)
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert Receiver %q to APIReceiver: %w", rcv.Name, err)
 		}
@@ -47,7 +46,7 @@ func encryptedGrafanaReceivers(receivers []*definitions.PostableApiReceiver, enc
 			PostableGrafanaReceivers: r.PostableGrafanaReceivers,
 		}
 		// We don't care about the provenance here, so we pass ProvenanceNone.
-		rcv, err := legacy_storage.PostableApiReceiverToReceiver(&grafanaOnlyReceiver, models.ProvenanceNone, models.ResourceOriginGrafana)
+		rcv, err := PostableApiReceiverToReceiver(&grafanaOnlyReceiver, models.ProvenanceNone, models.ResourceOriginGrafana)
 		if err != nil {
 			return nil, err
 		}
@@ -57,7 +56,7 @@ func encryptedGrafanaReceivers(receivers []*definitions.PostableApiReceiver, enc
 			return nil, fmt.Errorf("failed to decrypt receiver %q: %w", rcv.Name, err)
 		}
 
-		postable, err := legacy_storage.ReceiverToPostableApiReceiver(rcv)
+		postable, err := ReceiverToPostableApiReceiver(rcv)
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert Receiver %q to APIReceiver: %w", rcv.Name, err)
 		}

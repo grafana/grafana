@@ -276,6 +276,13 @@ func NewAPIService(
 					return authorizer.DecisionAllow, "", nil
 				}
 
+				if a.GetResource() == iamv0.TeamResourceInfo.GetName() {
+					if user.GetIdentityType() != types.TypeAccessPolicy {
+						return authorizer.DecisionDeny, "only access policy identities have access for now", nil
+					}
+					return resourceAuthorizer.Authorize(ctx, a)
+				}
+
 				if a.GetResource() == "users" {
 					if user.GetIdentityType() != types.TypeAccessPolicy {
 						return authorizer.DecisionDeny, "only access policy identities have access for now", nil
