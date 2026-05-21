@@ -35,6 +35,10 @@ func (hs *HTTPServer) getCreatedSnapshotHandler() web.Handler {
 	// to CreateDashboardSnapshotPublic when SnapshotPublicMode is set. Default
 	// off rejects anonymous legacy pushes; flip on during the migration window
 	// and off again once all senders have migrated.
+	//
+	// Not compatible with snapshot dual-write Mode5: in Mode5 unified storage
+	// is the only store, the k8s create API is mandatory, and this bypass
+	// would write to legacy SQL where reads will never find it.
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if hs.Cfg.SnapshotPublicMode &&
 		hs.Features.IsEnabledGlobally(featuremgmt.FlagExternalSnapshotsSupportLegacyAPI) {
