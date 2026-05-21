@@ -32,17 +32,25 @@ func (k ResourceKind) Valid() bool {
 // resource: the picker no longer surfaces them, and any legacy folder
 // chips persisted in old bodies render through the chip's defensive
 // fallback rather than as a real navigable link.
+//
+// `time` chips carry a frozen-at-insert epoch-ms range in their
+// TargetID (`<fromMs>|<toMs>`) so a comment like "look at this spike
+// at 14:32" can pin to the exact dashboard window the author was
+// viewing. They are NOT fan-out targets (no user/panel/dashboard id
+// to look up) and are intentionally skipped by the denormalized
+// pulse_mention table — see store.insertMentions.
 type MentionKind string
 
 const (
 	MentionKindUser      MentionKind = "user"
 	MentionKindPanel     MentionKind = "panel"
 	MentionKindDashboard MentionKind = "dashboard"
+	MentionKindTime      MentionKind = "time"
 )
 
 func (k MentionKind) Valid() bool {
 	switch k {
-	case MentionKindUser, MentionKindPanel, MentionKindDashboard:
+	case MentionKindUser, MentionKindPanel, MentionKindDashboard, MentionKindTime:
 		return true
 	}
 	return false

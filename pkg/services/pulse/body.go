@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"strconv"
 	"strings"
 )
 
@@ -108,10 +109,23 @@ func walkNode(n BodyNode, pb *ParsedBody, depth int) error {
 		if n.Mention == nil || !n.Mention.Kind.Valid() || n.Mention.TargetID == "" {
 			return ErrBodyInvalidMention
 		}
+		// Time chips encode a frozen `<fromMs>|<toMs>` range in TargetID.
+		// Validate at the body boundary so the rest of the system can
+		// trust that any time mention round-trips as two positive
+		// ints with from < to — that means renderers can split on `|`
+		// without re-validating, and the `from=<ms>&to=<ms>` URL the
+		// chip click produces is always well-formed.
+		if n.Mention.Kind == MentionKindTime {
+			if err := validateTimeMentionTarget(n.Mention.TargetID); err != nil {
+				return err
+			}
+		}
 		pb.Mentions = append(pb.Mentions, *n.Mention)
 		// Panel mentions read more naturally as `#` (matching the
 		// composer's trigger character) and trailing space keeps the
-		// preview from concatenating into the next text node.
+		// preview from concatenating into the next text node. Time
+		// chips use `@` because the author types `@now` / `@time` to
+		// insert them.
 		prefix := "@"
 		if n.Mention.Kind == MentionKindPanel {
 			prefix = "#"
@@ -140,6 +154,29 @@ func walkNode(n BodyNode, pb *ParsedBody, depth int) error {
 
 	if n.Type == "paragraph" || n.Type == "quote" {
 		pb.Text += "\n"
+	}
+	return nil
+}
+
+// validateTimeMentionTarget parses the `<fromMs>|<toMs>` TargetID used
+// by `time` mention chips. Returns ErrBodyInvalidMention for anything
+// that isn't two positive integers separated by exactly one `|`, with
+// from strictly less than to.
+func validateTimeMentionTarget(raw string) error {
+	parts := strings.Split(raw, "|")
+	if len(parts) != 2 {
+		return fmt.Errorf("%w: time targetId must be <fromMs>|<toMs>", ErrBodyInvalidMention)
+	}
+	from, err := strconv.ParseInt(parts[0], 10, 64)
+	if err != nil || from <= 0 {
+		return fmt.Errorf("%w: time targetId 'from' must be a positive epoch-ms integer", ErrBodyInvalidMention)
+	}
+	to, err := strconv.ParseInt(parts[1], 10, 64)
+	if err != nil || to <= 0 {
+		return fmt.Errorf("%w: time targetId 'to' must be a positive epoch-ms integer", ErrBodyInvalidMention)
+	}
+	if from >= to {
+		return fmt.Errorf("%w: time targetId 'from' must be strictly less than 'to'", ErrBodyInvalidMention)
 	}
 	return nil
 }

@@ -29,6 +29,11 @@ func TestParseAndValidateBody_AcceptsAllowedNodes(t *testing.T) {
 			want: "#CPU",
 		},
 		{
+			name: "time mention",
+			raw:  `{"root":{"type":"root","children":[{"type":"paragraph","children":[{"type":"text","text":"see "},{"type":"mention","mention":{"kind":"time","targetId":"1716393600000|1716397200000","displayName":"Last 1h"}}]}]}}`,
+			want: "see @Last 1h",
+		},
+		{
 			name: "https link is ok",
 			raw:  `{"root":{"type":"root","children":[{"type":"paragraph","children":[{"type":"link","url":"https://grafana.com","children":[{"type":"text","text":"docs"}]}]}]}}`,
 			want: "docs",
@@ -121,6 +126,13 @@ func TestParseAndValidateBody_RejectsInvalidMention(t *testing.T) {
 		`{"root":{"type":"root","children":[{"type":"paragraph","children":[{"type":"mention"}]}]}}`,
 		`{"root":{"type":"root","children":[{"type":"paragraph","children":[{"type":"mention","mention":{"kind":"weird","targetId":"x"}}]}]}}`,
 		`{"root":{"type":"root","children":[{"type":"paragraph","children":[{"type":"mention","mention":{"kind":"user","targetId":""}}]}]}}`,
+		// time chips must carry a well-formed `<fromMs>|<toMs>` range.
+		`{"root":{"type":"root","children":[{"type":"paragraph","children":[{"type":"mention","mention":{"kind":"time","targetId":"not-a-range"}}]}]}}`,
+		`{"root":{"type":"root","children":[{"type":"paragraph","children":[{"type":"mention","mention":{"kind":"time","targetId":"1716393600000"}}]}]}}`,
+		`{"root":{"type":"root","children":[{"type":"paragraph","children":[{"type":"mention","mention":{"kind":"time","targetId":"abc|def"}}]}]}}`,
+		`{"root":{"type":"root","children":[{"type":"paragraph","children":[{"type":"mention","mention":{"kind":"time","targetId":"-1|1716397200000"}}]}]}}`,
+		`{"root":{"type":"root","children":[{"type":"paragraph","children":[{"type":"mention","mention":{"kind":"time","targetId":"1716397200000|1716393600000"}}]}]}}`,
+		`{"root":{"type":"root","children":[{"type":"paragraph","children":[{"type":"mention","mention":{"kind":"time","targetId":"1716393600000|1716393600000"}}]}]}}`,
 	}
 	for i, c := range cases {
 		_, err := ParseAndValidateBody(json.RawMessage(c))

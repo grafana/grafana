@@ -129,6 +129,14 @@ func (s *store) insertMentions(sess *db.Session, p Pulse, mentions []Mention) er
 	}
 	rows := make([]MentionRow, 0, len(mentions))
 	for _, m := range mentions {
+		// Time chips carry a `<fromMs>|<toMs>` range, not an entity id —
+		// nothing looks them up in the denormalized table (no user / panel /
+		// dashboard target to match), so persisting them is just write
+		// amplification and would dirty the (kind, target_id) index with
+		// values that don't match its lookup shape.
+		if m.Kind == MentionKindTime {
+			continue
+		}
 		rows = append(rows, MentionRow{
 			PulseUID:  p.UID,
 			ThreadUID: p.ThreadUID,
@@ -137,6 +145,9 @@ func (s *store) insertMentions(sess *db.Session, p Pulse, mentions []Mention) er
 			TargetID:  m.TargetID,
 			Created:   p.Created,
 		})
+	}
+	if len(rows) == 0 {
+		return nil
 	}
 	_, err := sess.Insert(&rows)
 	return err
