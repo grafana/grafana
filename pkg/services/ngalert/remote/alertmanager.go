@@ -55,7 +55,6 @@ func (emptyAutogenRuleStore) ListContactPointRoutings(_ context.Context, _ model
 type Crypto interface {
 	Encrypt(ctx context.Context, payload []byte, opt secrets.EncryptionOptions) ([]byte, error)
 	Decrypt(ctx context.Context, payload []byte) ([]byte, error)
-	DecryptExtraConfigs(ctx context.Context, config *apimodels.PostableUserConfig) error
 }
 
 type Alertmanager struct {
