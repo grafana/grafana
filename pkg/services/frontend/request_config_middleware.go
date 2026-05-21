@@ -7,6 +7,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
+	"github.com/grafana/grafana/pkg/api/frontendsettings"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -30,6 +31,8 @@ func RequestConfigMiddleware(cfg *setting.Cfg, license licensing.Licensing, sett
 			ctx, span := tracing.Start(r.Context(), "frontend.RequestConfigMiddleware")
 			defer span.End()
 
+			ofClient := openfeature.NewDefaultClient()
+
 			reqCtx := contexthandler.FromContext(ctx)
 			logger := reqCtx.Logger
 
@@ -37,8 +40,14 @@ func RequestConfigMiddleware(cfg *setting.Cfg, license licensing.Licensing, sett
 			// This is the default configuration that will be used for all requests
 			requestConfig := NewFSRequestConfig(cfg, license)
 
+			// Behind flag, add full frontend settings to the struct to reduce what's used from the bootdata api in the frontend
+			reduceBootDataAPI, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagFrontendServiceReducedBootDataAPI, false, openfeature.TransactionContext(ctx))
+			if reduceBootDataAPI {
+				logger.Info("FlagFrontendServiceReducedBootDataAPI is enabled, populating FullFrontendSettings in request config")
+				requestConfig.FullFrontendSettings = frontendsettings.GetBaseFrontendSettings(ctx, cfg)
+			}
+
 			// Fetch tenant-specific configuration if the feature toggle is enabled and namespace is present
-			ofClient := openfeature.NewDefaultClient()
 			settingsEnabled, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagFrontendServiceUseSettingsService, false, openfeature.TransactionContext(ctx))
 
 			if settingsService != nil && settingsEnabled {

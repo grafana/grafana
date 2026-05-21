@@ -4,21 +4,23 @@
 package frontendsettings
 
 import (
+	"context"
 	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 // GetBaseFrontendSettings returns the JSON object with all the settings needed for
 // front end initialisation.
-func GetBaseFrontendSettings(c *contextmodel.ReqContext, cfg *setting.Cfg) (*dtos.FrontendSettingsDTO, error) {
+func GetBaseFrontendSettings(ctx context.Context, cfg *setting.Cfg) *dtos.FrontendSettingsDTO {
 	defaultDS := "-- Grafana --"
+	reqContext := contexthandler.FromContext(ctx)
 
 	// hasAccess := accesscontrol.HasAccess(hs.AccessControl, c)
 
@@ -33,7 +35,7 @@ func GetBaseFrontendSettings(c *contextmodel.ReqContext, cfg *setting.Cfg) (*dto
 		Apps:                                 make(map[string]*plugins.AppDTO, 0),
 		AppUrl:                               cfg.AppURL,
 		AppSubUrl:                            cfg.AppSubURL,
-		AllowOrgCreate:                       (cfg.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
+		AllowOrgCreate:                       (cfg.AllowUserOrgCreate && reqContext.IsSignedIn) || reqContext.IsGrafanaAdmin,
 		AuthProxyEnabled:                     cfg.AuthProxy.Enabled,
 		LdapEnabled:                          cfg.LDAPAuthEnabled,
 		JwtHeaderName:                        cfg.JWTAuth.HeaderName,
@@ -89,7 +91,7 @@ func GetBaseFrontendSettings(c *contextmodel.ReqContext, cfg *setting.Cfg) (*dto
 		EnableFrontendSandboxForPlugins:  cfg.EnableFrontendSandboxForPlugins,
 		PluginRestrictedAPIsAllowList:    cfg.PluginRestrictedAPIsAllowList,
 		PluginRestrictedAPIsBlockList:    cfg.PluginRestrictedAPIsBlockList,
-		PublicDashboardAccessToken:       c.PublicDashboardAccessToken,
+		PublicDashboardAccessToken:       reqContext.PublicDashboardAccessToken,
 		PublicDashboardsEnabled:          cfg.PublicDashboardsEnabled,
 		CloudMigrationEnabled:            cfg.CloudMigration.Enabled,
 		CloudMigrationIsTarget:           isCloudMigrationTarget,
@@ -212,7 +214,7 @@ func GetBaseFrontendSettings(c *contextmodel.ReqContext, cfg *setting.Cfg) (*dto
 
 	// [TODO] Restore namespace in the frontend service from baggage or context
 
-	return frontendSettings, nil
+	return frontendSettings
 }
 
 func isSupportBundlesEnabled(cfg *setting.Cfg) bool {

@@ -126,11 +126,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 	c, span := hs.injectSpan(c, "api.getFrontendSettings")
 	defer span.End()
 
-	frontendSettings, err := frontendsettings.GetBaseFrontendSettings(c, hs.Cfg)
-
-	if err != nil {
-		return nil, err
-	}
+	frontendSettings := frontendsettings.GetBaseFrontendSettings(c.Req.Context(), hs.Cfg)
 
 	availablePlugins, err := hs.availablePlugins(c.Req.Context(), c.GetOrgID())
 	if err != nil {
