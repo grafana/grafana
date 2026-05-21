@@ -208,4 +208,7 @@ func (p *IndexProvider) runIndexDataHooks(reqCtx *contextmodel.ReqContext, data 
 	p.hooksService.RunIndexDataHooks(&legacyIndexViewData, reqCtx)
 
 	data.Settings.BuildInfo = legacyIndexViewData.Settings.BuildInfo
+	if data.FullSettings != nil {
+		data.FullSettings.BuildInfo = legacyIndexViewData.Settings.BuildInfo
+	}
 }
