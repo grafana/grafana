@@ -54,7 +54,12 @@ export const QuickAdd = ({}: Props) => {
         // Matches NavIDDashboards ("dashboards/browse") from pkg/services/navtree/models.go
         const dashboardGroup = groups.find((g) => g.parentId === 'dashboards/browse');
         if (dashboardGroup) {
-          dashboardGroup.items.push(templateItem);
+          const newDashboardIdx = dashboardGroup.items.findIndex((item) => item.id === 'dashboards/new');
+          if (newDashboardIdx >= 0) {
+            dashboardGroup.items.splice(newDashboardIdx + 1, 0, templateItem);
+          } else {
+            dashboardGroup.items.push(templateItem);
+          }
         }
       }
     }
