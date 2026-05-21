@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { memo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -64,10 +64,11 @@ export const Sidebar = memo(function Sidebar({ sidebarSize, setSidebarSize }: Si
               name="layer-group"
               size="sm"
               variant="secondary"
-              className={stackedMode.enabled ? styles.stackedModeActionButtonActive : undefined}
+              className={cx({ [styles.stackedModeActionButtonActive]: stackedMode.enabled })}
               onClick={stackedMode.enabled ? stackedMode.exit : stackedMode.enter}
               aria-label={stackedModeLabel}
               aria-pressed={stackedMode.enabled}
+              tooltip={stackedModeLabel}
             />
           </div>
         )}

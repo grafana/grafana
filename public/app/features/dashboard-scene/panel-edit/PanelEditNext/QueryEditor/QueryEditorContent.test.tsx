@@ -31,7 +31,7 @@ function MockQueryEditor({ query, onChange }: { query: DataQuery; onChange: (que
   return (
     <div data-testid={`query-editor-${query.refId}`}>
       <span>Editor {query.refId}</span>
-      <button onClick={() => onChange({ ...query, testValue: `changed-${query.refId}` })}>Change {query.refId}</button>
+      <button onClick={() => onChange({ ...query, hide: true })}>Change {query.refId}</button>
     </div>
   );
 }
@@ -145,7 +145,7 @@ describe('QueryEditorContent stacked mode', () => {
 
     await user.click(screen.getByRole('button', { name: /change B/i }));
     expect(updateSelectedQuery).toHaveBeenCalledWith(
-      expect.objectContaining({ refId: 'B', testValue: 'changed-B' }),
+      expect.objectContaining({ refId: 'B', hide: true }),
       'B'
     );
 

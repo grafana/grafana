@@ -256,7 +256,7 @@ export function StackedEditorRenderer() {
         query,
       })),
       ...transformations.map((transformation) => ({
-        type: QueryEditorType.Transformation,
+        type: QueryEditorType.Transformation as const,
         id: transformation.transformId,
         transformation,
       })),

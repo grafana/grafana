@@ -20,9 +20,14 @@ jest.mock('../QueryEditorBanner', () => ({
   QueryEditorBanner: () => <div data-testid="query-editor-banner" />,
 }));
 
-const mockQueryEditorContextWrapper = jest.fn(({ children }: { children: React.ReactNode }) => <>{children}</>);
+type MockQueryEditorContextWrapperProps = {
+  children: React.ReactNode;
+  onStackedModeChange?: (enabled: boolean) => void;
+};
+
+const mockQueryEditorContextWrapper = jest.fn(({ children }: MockQueryEditorContextWrapperProps) => <>{children}</>);
 jest.mock('./QueryEditor/QueryEditorContextWrapper', () => ({
-  QueryEditorContextWrapper: (props: { children: React.ReactNode }) => mockQueryEditorContextWrapper(props),
+  QueryEditorContextWrapper: (props: MockQueryEditorContextWrapperProps) => mockQueryEditorContextWrapper(props),
 }));
 
 jest.mock('./QueryEditor/Sidebar/Sidebar', () => ({
