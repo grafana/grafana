@@ -84,7 +84,7 @@ func RegisterAPIService(
 	externalGroupMappingApiInstaller ExternalGroupMappingApiInstaller,
 	tracing *tracing.TracingService,
 	roleBindingsApiInstaller RoleBindingApiInstaller,
-	teamGroupsHandlerImpl externalgroupmapping.TeamGroupsHandler,
+	teamGroupsHandlerProvider externalgroupmapping.TeamGroupsHandlerProvider,
 	externalGroupMappingSearchHandler externalgroupmapping.SearchHandler,
 	externalGroupReconciler legacy.ExternalGroupReconciler,
 	dual dualwrite.Service,
@@ -144,7 +144,7 @@ func RegisterAPIService(
 		resourcePermissionsStorage:        rpStorage,
 		mappers:                           mappers,
 		roleBindingsApiInstaller:          roleBindingsApiInstaller,
-		teamGroupsHandler:                 teamGroupsHandlerImpl,
+		teamGroupsHandlerProvider:         teamGroupsHandlerProvider,
 		externalGroupMappingSearchHandler: externalGroupMappingSearchHandler,
 		sso:                               ssoService,
 		resourceParentProvider:            resourceParentProvider,
@@ -522,9 +522,8 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.AP
 	storage[teamResource.StoragePath("addmember")] = team.NewTeamAddMemberREST(teamStorage, b.tracing)
 	storage[teamResource.StoragePath("removemember")] = team.NewTeamRemoveMemberREST(teamStorage, b.tracing)
 
-	if b.teamGroupsHandler != nil {
-		b.teamGroupsHandler.SetTeamGetter(b.teamGetter)
-		storage[teamResource.StoragePath("groups")] = b.teamGroupsHandler
+	if b.teamGroupsHandlerProvider != nil {
+		storage[teamResource.StoragePath("groups")] = b.teamGroupsHandlerProvider(b.teamGetter)
 	}
 
 	return nil

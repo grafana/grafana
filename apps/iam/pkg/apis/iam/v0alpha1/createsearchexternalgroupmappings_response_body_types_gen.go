@@ -4,8 +4,10 @@ package v0alpha1
 
 // +k8s:openapi-gen=true
 type CreateSearchExternalGroupMappingsBody struct {
-	Teams     []string `json:"teams"`
-	TotalHits int64    `json:"totalHits"`
+	// Deduplicated team UIDs whose spec.externalGroups intersect the request set.
+	Teams []string `json:"teams"`
+	// Raw match count; may exceed len(teams) in legacy storage mode where one team can match through multiple group rows. Use to drive pagination, not as a team count.
+	TotalHits int64 `json:"totalHits"`
 }
 
 // NewCreateSearchExternalGroupMappingsBody creates a new CreateSearchExternalGroupMappingsBody object.

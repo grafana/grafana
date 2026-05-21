@@ -98,7 +98,8 @@ func schema_pkg_apis_iam_v0alpha1_CreateSearchExternalGroupMappingsBody(ref comm
 				Properties: map[string]spec.Schema{
 					"teams": {
 						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
+							Description: "Deduplicated team UIDs whose spec.externalGroups intersect the request set.",
+							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
@@ -112,9 +113,10 @@ func schema_pkg_apis_iam_v0alpha1_CreateSearchExternalGroupMappingsBody(ref comm
 					},
 					"totalHits": {
 						SchemaProps: spec.SchemaProps{
-							Default: 0,
-							Type:    []string{"integer"},
-							Format:  "int64",
+							Description: "Raw match count; may exceed len(teams) in legacy storage mode where one team can match through multiple group rows. Use to drive pagination, not as a team count.",
+							Default:     0,
+							Type:        []string{"integer"},
+							Format:      "int64",
 						},
 					},
 				},
@@ -146,7 +148,8 @@ func schema_pkg_apis_iam_v0alpha1_CreateSearchExternalGroupMappingsResponse(ref 
 					},
 					"teams": {
 						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
+							Description: "Deduplicated team UIDs whose spec.externalGroups intersect the request set.",
+							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
@@ -160,9 +163,10 @@ func schema_pkg_apis_iam_v0alpha1_CreateSearchExternalGroupMappingsResponse(ref 
 					},
 					"totalHits": {
 						SchemaProps: spec.SchemaProps{
-							Default: 0,
-							Type:    []string{"integer"},
-							Format:  "int64",
+							Description: "Raw match count; may exceed len(teams) in legacy storage mode where one team can match through multiple group rows. Use to drive pagination, not as a team count.",
+							Default:     0,
+							Type:        []string{"integer"},
+							Format:      "int64",
 						},
 					},
 				},

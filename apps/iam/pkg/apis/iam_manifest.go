@@ -884,7 +884,8 @@ var appManifestData = app.ManifestData{
 																		},
 																		"teams": {
 																			SchemaProps: spec.SchemaProps{
-																				Type: []string{"array"},
+																				Type:        []string{"array"},
+																				Description: "Deduplicated team UIDs whose spec.externalGroups intersect the request set.",
 																				Items: &spec.SchemaOrArray{
 																					Schema: &spec.Schema{
 																						SchemaProps: spec.SchemaProps{
@@ -895,7 +896,8 @@ var appManifestData = app.ManifestData{
 																		},
 																		"totalHits": {
 																			SchemaProps: spec.SchemaProps{
-																				Type: []string{"integer"},
+																				Type:        []string{"integer"},
+																				Description: "Raw match count; may exceed len(teams) in legacy storage mode where one team can match through multiple group rows. Use to drive pagination, not as a team count.",
 																			},
 																		},
 																	},
