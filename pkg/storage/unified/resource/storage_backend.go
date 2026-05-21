@@ -331,6 +331,9 @@ func (k *kvStorageBackend) Stop(_ context.Context) error {
 	if k.tenantDeleter != nil {
 		k.tenantDeleter.Stop()
 	}
+	if k.leaseManager != nil {
+		k.leaseManager.Stop()
+	}
 	// Cancel the background context to stop runCleanups, GC, and other goroutines.
 	k.cancel()
 	return nil
