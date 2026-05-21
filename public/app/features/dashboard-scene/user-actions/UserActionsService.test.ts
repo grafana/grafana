@@ -1,4 +1,4 @@
-import { sceneGraph, SceneVariableSet, TestVariable, type SceneVariable } from '@grafana/scenes';
+import { sceneGraph, SceneVariableSet, TestVariable } from '@grafana/scenes';
 import type { VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
 import type { DashboardScene } from '../scene/DashboardScene';
@@ -7,12 +7,13 @@ import { UserActionsService } from './UserActionsService';
 import { AddVariableCommand } from './commands/AddVariableCommand';
 import { RemoveVariableCommand } from './commands/RemoveVariableCommand';
 
-function replaceVariableSet(scene: DashboardScene, variables: SceneVariable[]): void {
-  const newVarSet = new SceneVariableSet({ variables });
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  (scene as unknown as { setState: (s: object) => void }).setState({ $variables: newVarSet });
-  newVarSet.activate();
-}
+// Avoid pulling the heavy serialization import chain into the test runtime.
+// The commands need a VariableKind -> SceneVariable converter; here a TestVariable
+// keyed by name is enough to exercise stack mechanics and index ordering.
+jest.mock('../serialization/transformSaveModelSchemaV2ToScene', () => ({
+  createSceneVariableFromVariableModel: (variable: { spec: { name: string } }) =>
+    new TestVariable({ name: variable.spec.name, query: '', value: '' }),
+}));
 
 function buildMockScene(options: { editable?: boolean } = {}): DashboardScene {
   const { editable = true } = options;
@@ -32,36 +33,6 @@ function buildMockScene(options: { editable?: boolean } = {}): DashboardScene {
         (vars as SceneVariableSet).activate();
       }
     }),
-  };
-
-  scene.addVariable = (variable: VariableKind, position?: number) => {
-    const name = variable.spec.name;
-    const varSet = sceneGraph.getVariables(scene as unknown as DashboardScene);
-    const existing = varSet.state.variables.find((v) => v.state.name === name);
-    if (existing) {
-      throw new Error(`Variable '${name}' already exists`);
-    }
-    // Use TestVariable to avoid pulling in the heavy serialization import chain.
-    const sceneVar = new TestVariable({ name, query: '', value: '' });
-    const current = [...varSet.state.variables];
-    if (position !== undefined && position >= 0 && position < current.length) {
-      current.splice(position, 0, sceneVar);
-    } else {
-      current.push(sceneVar);
-    }
-    replaceVariableSet(scene as unknown as DashboardScene, current);
-  };
-
-  scene.removeVariable = (name: string) => {
-    const varSet = sceneGraph.getVariables(scene as unknown as DashboardScene);
-    const existing = varSet.state.variables.find((v) => v.state.name === name);
-    if (!existing) {
-      throw new Error(`Variable '${name}' not found`);
-    }
-    replaceVariableSet(
-      scene as unknown as DashboardScene,
-      varSet.state.variables.filter((v) => v.state.name !== name)
-    );
   };
 
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -96,7 +67,7 @@ function getVariableNames(scene: DashboardScene): string[] {
 
 describe('UserActionsService', () => {
   // TestVariable instances trigger a Scenes lifecycle warning when moved between
-  // SceneVariableSets in the mock. Suppress it here — the real DashboardScene
+  // SceneVariableSets in the mock. Suppress it here -- the real DashboardScene
   // and replaceVariableSet handle activation correctly.
   let consoleWarnSpy: jest.SpyInstance;
   beforeEach(() => {
@@ -123,6 +94,15 @@ describe('UserActionsService', () => {
       expect(scene.forceRender).toHaveBeenCalledTimes(1);
     });
 
+    it('returns success: false when perform() throws (duplicate name)', () => {
+      const scene = buildMockScene();
+      const service = new UserActionsService(scene);
+      service.execute(new AddVariableCommand(scene, makeVar('env')));
+      const result = service.execute(new AddVariableCommand(scene, makeVar('env')));
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/already exists/);
+    });
+
     it('clears the redo stack on a new action', () => {
       const scene = buildMockScene();
       const service = new UserActionsService(scene);
@@ -133,7 +113,7 @@ describe('UserActionsService', () => {
     });
   });
 
-  describe('canonical undo test — remove middle of three, redo restores at the right index', () => {
+  describe('canonical undo test -- remove middle of three, redo restores at the right index', () => {
     it('restores index 1 after undo, re-removes on redo', () => {
       const scene = buildMockScene();
       const service = new UserActionsService(scene);
@@ -161,7 +141,7 @@ describe('UserActionsService', () => {
     });
   });
 
-  describe('multiplayer composition — mutations apply against latest state', () => {
+  describe('multiplayer composition -- mutations apply against latest state', () => {
     it('two sequential execute calls each read the latest scene state', () => {
       const scene = buildMockScene();
       const service = new UserActionsService(scene);

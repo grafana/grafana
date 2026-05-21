@@ -1,13 +1,17 @@
+import { sceneGraph } from '@grafana/scenes';
 import type { VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
+import { replaceVariableSet } from '../../mutation-api/commands/variableUtils';
 import type { DashboardScene } from '../../scene/DashboardScene';
+import { createSceneVariableFromVariableModel } from '../../serialization/transformSaveModelSchemaV2ToScene';
 import type { UserActionCommand } from '../UserActionCommand';
 
 /**
  * Adds a variable to the dashboard at the given position.
  *
- * Undo is declarative: uses the stored variable name to remove it.
- * No Scene-object references are captured in closures.
+ * Stores only declarative data (VariableKind + position): no SceneVariable
+ * references are held in the command, so redo recomputes a fresh SceneVariable
+ * each time and stays safe against intervening state changes.
  */
 export class AddVariableCommand implements UserActionCommand {
   title: string;
@@ -24,11 +28,31 @@ export class AddVariableCommand implements UserActionCommand {
   }
 
   perform(): void {
-    this.scene.addVariable(this.variableKind, this.position);
+    const name = this.variableKind.spec.name;
+    const varSet = sceneGraph.getVariables(this.scene);
+    const existing = varSet.state.variables.find((v) => v.state.name === name);
+    if (existing) {
+      throw new Error(`Variable '${name}' already exists`);
+    }
+
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- structurally compatible
+    const sceneVariable = createSceneVariableFromVariableModel(this.variableKind as VariableKind);
+    const current = [...varSet.state.variables];
+    if (this.position !== undefined && this.position >= 0 && this.position < current.length) {
+      current.splice(this.position, 0, sceneVariable);
+    } else {
+      current.push(sceneVariable);
+    }
+    replaceVariableSet(this.scene, current);
   }
 
   undo(): void {
     // Declarative inverse: remove by name. No Scene reference held.
-    this.scene.removeVariable(this.variableKind.spec.name);
+    const name = this.variableKind.spec.name;
+    const varSet = sceneGraph.getVariables(this.scene);
+    replaceVariableSet(
+      this.scene,
+      varSet.state.variables.filter((v) => v.state.name !== name)
+    );
   }
 }

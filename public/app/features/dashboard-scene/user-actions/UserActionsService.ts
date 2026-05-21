@@ -37,7 +37,15 @@ export class UserActionsService {
       };
     }
 
-    cmd.perform();
+    try {
+      cmd.perform();
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+        locked: false,
+      };
+    }
     this._undoStack.push(cmd);
     this._redoStack = [];
     this.scene.forceRender();
