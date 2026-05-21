@@ -1,16 +1,18 @@
 import { useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
-import { LinkButton, Stack, Tooltip } from '@grafana/ui';
+import { Button, LinkButton, Stack, Tooltip } from '@grafana/ui';
 
 import { ROUTES_META_SYMBOL, type Route } from '../../../../../../plugins/datasource/alertmanager/types';
 import { isSupported } from '../../../hooks/abilities/abilityUtils';
 import { useNotificationPolicyAbility } from '../../../hooks/abilities/alertmanager/useNotificationPolicyAbility';
 import { NotificationPolicyAction } from '../../../hooks/abilities/types';
 import { extractNotificationPolicyProvenance } from '../../../utils/amroutes';
-import { ROOT_ROUTE_NAME } from '../../../utils/k8s/constants';
+import { ROOT_ROUTE_NAME, ROUTES_RESOURCE_TYPE } from '../../../utils/k8s/constants';
+import { canAdminEntity, canDeleteEntity, canEditEntity } from '../../../utils/k8s/utils';
 import { createRelativeUrl } from '../../../utils/url';
 import ConditionalWrap from '../../ConditionalWrap';
+import { ManagePermissions } from '../../permissions/ManagePermissions';
 import { trackNotificationPolicyExported } from '../notificationPolicyAnalytics';
 import { useExportRoutingTree } from '../useExportRoutingTree';
 import { isRouteProvisioned, useDeleteRoutingTree } from '../useNotificationPolicyRoute';
@@ -34,9 +36,34 @@ export const ActionButtons = ({ route }: ActionButtonsProps) => {
   const [deleteTrigger] = useDeleteRoutingTree();
 
   const provisioned = isRouteProvisioned(route);
-  const canEdit = updateAbility.granted && !provisioned;
+
+  const routeMeta = route[ROUTES_META_SYMBOL];
+  const hasK8sMetadata = Boolean(routeMeta?.metadata);
+
+  // When K8s metadata is present use entity-level annotations; fall back to global RBAC abilities.
+  const canEdit = hasK8sMetadata
+    ? canEditEntity({ metadata: routeMeta?.metadata }) && !provisioned
+    : updateAbility.granted && !provisioned;
+
+  const showManagePermissions = canAdminEntity({ metadata: routeMeta?.metadata });
 
   const actions: JSX.Element[] = [];
+
+  if (showManagePermissions && routeMeta?.name) {
+    actions.push(
+      <ManagePermissions
+        key="manage-permissions"
+        resource={ROUTES_RESOURCE_TYPE}
+        resourceId={routeMeta.name}
+        resourceName={route.name}
+        renderButton={({ onClick }) => (
+          <Button icon="unlock" variant="secondary" size="sm" data-testid="manage-permissions-action" onClick={onClick}>
+            <Trans i18nKey="alerting.manage-permissions.button">Manage permissions</Trans>
+          </Button>
+        )}
+      />
+    );
+  }
   actions.push(
     <LinkButton
       key="view-routing-tree"
@@ -74,7 +101,11 @@ export const ActionButtons = ({ route }: ActionButtonsProps) => {
   }
 
   if (isSupported(deleteAbility)) {
-    const canBeDeleted = deleteAbility.granted && !provisioned;
+    // When K8s metadata is present use the entity-level annotation; fall back to global RBAC ability.
+    const hasDeletePermission = hasK8sMetadata
+      ? canDeleteEntity({ metadata: routeMeta?.metadata })
+      : deleteAbility.granted;
+    const canBeDeleted = hasDeletePermission && !provisioned;
     const isDefaultPolicy = route.name === ROOT_ROUTE_NAME;
 
     const cannotDeleteNoPermissions = isDefaultPolicy
@@ -100,7 +131,7 @@ export const ActionButtons = ({ route }: ActionButtonsProps) => {
       : t('alerting.policies-list.delete-text', 'Notification policy cannot be deleted for the following reasons:');
 
     const reasonsDeleteIsDisabled = [
-      !deleteAbility.granted ? cannotDeleteNoPermissions : '',
+      !hasDeletePermission ? cannotDeleteNoPermissions : '',
       provisioned ? cannotDeleteProvisioned : '',
     ].filter(Boolean);
 
