@@ -47,6 +47,21 @@ export function isRouteProvisioned(route: Route): boolean {
   return isProvisionedResource(extractNotificationPolicyProvenance(route));
 }
 
+/**
+ * Returns the k8s ObjectMeta for a notification policy route, or undefined
+ * if the route was not loaded via the k8s API.
+ *
+ * Unwraps the two-level indirection: route → ROUTES_META_SYMBOL → metadata.
+ */
+export function getRoutePolicyMeta(route: Route) {
+  return route[ROUTES_META_SYMBOL]?.metadata;
+}
+
+/** True when the route has k8s ObjectMeta attached (i.e. loaded via the k8s API). */
+export function routeHasK8sMeta(route: Route): boolean {
+  return Boolean(route[ROUTES_META_SYMBOL]?.metadata);
+}
+
 const {
   useCreateRoutingTreeMutation,
   useDeleteRoutingTreeMutation,

@@ -15,7 +15,7 @@ import ConditionalWrap from '../../ConditionalWrap';
 import { ManagePermissions } from '../../permissions/ManagePermissions';
 import { trackNotificationPolicyExported } from '../notificationPolicyAnalytics';
 import { useExportRoutingTree } from '../useExportRoutingTree';
-import { isRouteProvisioned, useDeleteRoutingTree } from '../useNotificationPolicyRoute';
+import { getRoutePolicyMeta, isRouteProvisioned, routeHasK8sMeta, useDeleteRoutingTree } from '../useNotificationPolicyRoute';
 
 import { DeleteModal, ResetModal } from './Modals';
 
@@ -36,25 +36,23 @@ export const ActionButtons = ({ route }: ActionButtonsProps) => {
   const [deleteTrigger] = useDeleteRoutingTree();
 
   const provisioned = isRouteProvisioned(route);
-
-  const routeMeta = route[ROUTES_META_SYMBOL];
-  const hasK8sMetadata = Boolean(routeMeta?.metadata);
+  const k8sMeta = getRoutePolicyMeta(route);
 
   // When K8s metadata is present use entity-level annotations; fall back to global RBAC abilities.
-  const canEdit = hasK8sMetadata
-    ? canEditEntity({ metadata: routeMeta?.metadata }) && !provisioned
+  const canEdit = routeHasK8sMeta(route)
+    ? canEditEntity({ metadata: k8sMeta }) && !provisioned
     : updateAbility.granted && !provisioned;
 
-  const showManagePermissions = canAdminEntity({ metadata: routeMeta?.metadata });
+  const showManagePermissions = canAdminEntity({ metadata: k8sMeta });
 
   const actions: JSX.Element[] = [];
 
-  if (showManagePermissions && routeMeta?.name) {
+  if (showManagePermissions && route[ROUTES_META_SYMBOL]?.name) {
     actions.push(
       <ManagePermissions
         key="manage-permissions"
         resource={ROUTES_RESOURCE_TYPE}
-        resourceId={routeMeta.name}
+        resourceId={route[ROUTES_META_SYMBOL].name!}
         resourceName={route.name}
         renderButton={({ onClick }) => (
           <Button icon="unlock" variant="secondary" size="sm" data-testid="manage-permissions-action" onClick={onClick}>
@@ -102,8 +100,8 @@ export const ActionButtons = ({ route }: ActionButtonsProps) => {
 
   if (isSupported(deleteAbility)) {
     // When K8s metadata is present use the entity-level annotation; fall back to global RBAC ability.
-    const hasDeletePermission = hasK8sMetadata
-      ? canDeleteEntity({ metadata: routeMeta?.metadata })
+    const hasDeletePermission = routeHasK8sMeta(route)
+      ? canDeleteEntity({ metadata: k8sMeta })
       : deleteAbility.granted;
     const canBeDeleted = hasDeletePermission && !provisioned;
     const isDefaultPolicy = route.name === ROOT_ROUTE_NAME;

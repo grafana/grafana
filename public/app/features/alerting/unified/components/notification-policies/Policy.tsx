@@ -57,6 +57,7 @@ import { Matchers } from './Matchers';
 import { useRoutesMatchingFilters } from './RoutesMatchingFiltersContext';
 import { trackNotificationPolicyExported } from './notificationPolicyAnalytics';
 import { type TimingOptions } from './timingOptions';
+import { getRoutePolicyMeta, routeHasK8sMeta } from './useNotificationPolicyRoute';
 
 const POLICIES_PER_PAGE = 20;
 
@@ -166,11 +167,12 @@ const Policy = (props: PolicyComponentProps) => {
 
   const [showExportDrawer, toggleShowExportDrawer] = useToggle(false);
   const [showPermissionsDrawer, setShowPermissionsDrawer] = useState(false);
-  const routeMeta = currentRoute[ROUTES_META_SYMBOL];
-  const showManagePermissions = canAdminEntity({ metadata: routeMeta?.metadata });
+  const routeMeta = currentRoute[ROUTES_META_SYMBOL]; // wrapper bag — used for name/resourceVersion
+  const k8sMeta = getRoutePolicyMeta(currentRoute);
+  const showManagePermissions = canAdminEntity({ metadata: k8sMeta });
   // When K8s metadata is present use the entity-level write annotation; fall back to true
   // (global RBAC is already checked by the <Authorize> wrapper around the button).
-  const canWriteToCurrentRoute = routeMeta?.metadata ? canEditEntity({ metadata: routeMeta?.metadata }) : true;
+  const canWriteToCurrentRoute = k8sMeta ? canEditEntity({ metadata: k8sMeta }) : true;
   const matchingAlertGroups = matchingInstancesPreview?.groupsMap?.get(currentRoute.id);
 
   // sum all alert instances for all groups we're handling
@@ -623,11 +625,12 @@ export const useCreateDropdownMenuActions = (
   const provisioned = isProvisionedResource(provenance);
 
   // When k8s metadata is available, use entity-level annotations for edit/delete permissions
-  const routeMeta = currentRoute[ROUTES_META_SYMBOL];
-  const hasK8sMetadata = Boolean(routeMeta?.metadata);
-  const hasAbilityToEdit = hasK8sMetadata ? canEditEntity({ metadata: routeMeta?.metadata }) : updateAbility.granted;
-  const hasAbilityToDelete = hasK8sMetadata
-    ? canDeleteEntity({ metadata: routeMeta?.metadata })
+  const k8sMeta = getRoutePolicyMeta(currentRoute);
+  const hasAbilityToEdit = routeHasK8sMeta(currentRoute)
+    ? canEditEntity({ metadata: k8sMeta })
+    : updateAbility.granted;
+  const hasAbilityToDelete = routeHasK8sMeta(currentRoute)
+    ? canDeleteEntity({ metadata: k8sMeta })
     : deleteAbility.granted;
 
   const dropdownMenuActions = [];
