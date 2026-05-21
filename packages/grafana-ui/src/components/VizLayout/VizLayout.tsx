@@ -114,6 +114,9 @@ export const getVizStyles = (theme: GrafanaTheme2) => {
   return {
     viz: css({
       flexGrow: 2,
+      // without this, minWidth becomes `min-content`, which means the canvas will
+      // never collapse down below its initial size. this means that the legend can never scale up in size
+      minWidth: 0,
       borderRadius: theme.shape.radius.default,
       '&:focus-visible': getFocusStyles(theme),
     }),
