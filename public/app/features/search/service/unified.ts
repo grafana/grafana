@@ -39,7 +39,6 @@ export type SearchHit = {
   resource: string; // dashboards | folders
   name: string;
   title: string;
-  location: string;
   folder: string;
   tags: string[];
 
@@ -267,12 +266,12 @@ export class UnifiedSearcher implements GrafanaSearcher {
     const locationInfo = await this.locationInfo;
     const hits = rsp.hits.map((hit) => {
       if (hit.folder === undefined) {
-        return { ...hit, location: 'general', folder: 'general' };
+        return { ...hit, folder: 'general' };
       }
 
       // this means a user has permission to see this dashboard, but not the folder contents
       if (locationInfo[hit.folder] === undefined) {
-        return { ...hit, location: 'sharedwithme', folder: 'sharedwithme' };
+        return { ...hit, folder: 'sharedwithme' };
       }
 
       return hit;
