@@ -51,16 +51,10 @@ export const QuickAdd = ({}: Props) => {
           },
         };
 
-        // Place "Use template" right before "Import dashboard" to match CreateNewButton order.
-        // Fall back to after "New dashboard", then to end of group.
+        // Matches NavIDDashboards ("dashboards/browse") from pkg/services/navtree/models.go
         const dashboardGroup = groups.find((g) => g.parentId === 'dashboards/browse');
         if (dashboardGroup) {
-          const importIdx = dashboardGroup.items.findIndex((item) => item.id === 'dashboards/import');
-          if (importIdx >= 0) {
-            dashboardGroup.items.splice(importIdx, 0, templateItem);
-          } else {
-            dashboardGroup.items.push(templateItem);
-          }
+          dashboardGroup.items.push(templateItem);
         }
       }
     }
