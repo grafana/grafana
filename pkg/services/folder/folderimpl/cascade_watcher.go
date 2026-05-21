@@ -42,7 +42,7 @@ type folderSearcher interface {
 
 // folderMutator deletes Folder CRs and removes the cascade finalizer once children are gone.
 type folderMutator interface {
-	Delete(ctx context.Context, namespace, name string) error
+	Delete(ctx context.Context, namespace, name string, gracePeriodSeconds *int64) error
 	RemoveCascadeFinalizer(ctx context.Context, namespace, name string) error
 }
 
@@ -163,8 +163,9 @@ func (w *CascadeWatcher) onFolder(obj interface{}) {
 	if w.folderMutator == nil {
 		return
 	}
+	gracePeriod := f.DeletionGracePeriodSeconds
 	for _, child := range childNames {
-		if err := w.folderMutator.Delete(svcCtx, f.Namespace, child); err != nil && !apierrors.IsNotFound(err) {
+		if err := w.folderMutator.Delete(svcCtx, f.Namespace, child, gracePeriod); err != nil && !apierrors.IsNotFound(err) {
 			w.log.Warn("failed to delete child folder", "namespace", f.Namespace, "parent", f.Name, "child", child, "error", err)
 		}
 	}
@@ -219,8 +220,8 @@ type dynamicFolderMutator struct {
 	client dynamic.NamespaceableResourceInterface
 }
 
-func (d *dynamicFolderMutator) Delete(ctx context.Context, namespace, name string) error {
-	return d.client.Namespace(namespace).Delete(ctx, name, metav1.DeleteOptions{})
+func (d *dynamicFolderMutator) Delete(ctx context.Context, namespace, name string, gracePeriodSeconds *int64) error {
+	return d.client.Namespace(namespace).Delete(ctx, name, metav1.DeleteOptions{GracePeriodSeconds: gracePeriodSeconds})
 }
 
 func (d *dynamicFolderMutator) RemoveCascadeFinalizer(ctx context.Context, namespace, name string) error {
