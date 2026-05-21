@@ -187,7 +187,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     toolbar: css({
       alignItems: 'center',
-      background: theme.colors.background.canvas,
+      background: theme.colors.background.page,
       display: 'flex',
       gap: theme.spacing(2),
       justifyContent: 'space-between',
