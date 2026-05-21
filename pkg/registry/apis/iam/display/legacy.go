@@ -10,15 +10,16 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+// Limited version of legacy.LegacyIdentityStore that has only one function
 type LegacyIdentityStore interface {
 	ListDisplay(ctx context.Context, ns authlib.NamespaceInfo, query legacy.ListDisplayQuery) (*legacy.ListUserResult, error)
 }
 
 type LegacyDisplayProvider struct {
-	store legacy.LegacyIdentityStore
+	store LegacyIdentityStore
 }
 
-func NewLegacyDisplayProvider(store legacy.LegacyIdentityStore) *LegacyDisplayProvider {
+func NewLegacyDisplayProvider(store LegacyIdentityStore) *LegacyDisplayProvider {
 	return &LegacyDisplayProvider{store}
 }
 

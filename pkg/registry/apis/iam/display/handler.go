@@ -3,6 +3,7 @@ package display
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -109,7 +110,7 @@ func (r *DisplayHandler) handleDisplay(w http.ResponseWriter, req *http.Request)
 
 	rsp, err := r.provider.GetDisplayList(ctx, ns, req.URL.Query()["key"])
 	if err != nil {
-		errhttp.Write(ctx, apierrors.NewUnauthorized("missing auth info"), w)
+		errhttp.Write(ctx, fmt.Errorf("error calling GetDisplayList %w", err), w) // 500
 		return
 	}
 
