@@ -382,7 +382,7 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"grafana-exploretraces-app":        {SectionID: navtree.NavIDDrilldown, SortWeight: 3, Text: "Traces"},
 		"grafana-pyroscope-app":            {SectionID: navtree.NavIDDrilldown, SortWeight: 4, Text: "Profiles"},
 		"grafana-sqldrilldown-app":         {SectionID: navtree.NavIDDrilldown, SortWeight: 5, Text: "SQL"},
-		"grafana-agentictesting-app":       {SectionID: navtree.NavIDTestingAndSynthetics, SortWeight: 1, Text: "Agentic Testing", IsNew: true},
+		"grafana-agentictesting-app":       {SectionID: navtree.NavIDTestingAndSynthetics, SortWeight: 1, Text: "Agentic testing", IsNew: true},
 		"k6-app":                           {SectionID: navtree.NavIDTestingAndSynthetics, SortWeight: 2, Text: "Performance"},
 		"grafana-synthetic-monitoring-app": {SectionID: navtree.NavIDTestingAndSynthetics, SortWeight: 3, Text: "Synthetics"},
 		"grafana-servicecenter-app":        {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 1, Text: "Service center"},
