@@ -23,7 +23,7 @@ func TestIsRootFolderUID(t *testing.T) {
 	}
 }
 
-func TestLegacyFolderUID(t *testing.T) {
+func TestToLegacyFolderUID(t *testing.T) {
 	cases := []struct {
 		in       string
 		expected string
@@ -35,7 +35,7 @@ func TestLegacyFolderUID(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.in, func(t *testing.T) {
-			require.Equal(t, c.expected, LegacyFolderUID(c.in))
+			require.Equal(t, c.expected, ToLegacyFolderUID(c.in))
 		})
 	}
 }

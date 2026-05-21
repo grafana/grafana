@@ -123,11 +123,11 @@ func (f *Folder) IsGeneral() bool {
 	return f.ID == GeneralFolder.ID && f.Title == GeneralFolder.Title
 }
 
-// LegacyFolderUID maps the GeneralFolderUID ("general") sentinel back to the
+// ToLegacyFolderUID maps the GeneralFolderUID ("general") sentinel back to the
 // empty-for-root convention expected by legacy API responses
 // (/api/dashboards, /api/folders, /api/search). All other UIDs are returned
 // unchanged.
-func LegacyFolderUID(uid string) string {
+func ToLegacyFolderUID(uid string) string {
 	if uid == GeneralFolderUID {
 		return RootFolderUID // ""
 	}

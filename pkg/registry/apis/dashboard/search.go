@@ -12,7 +12,6 @@ import (
 	"strconv"
 	"strings"
 
-	claims "github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,6 +20,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	claims "github.com/grafana/authlib/types"
 	dashboardv0alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -639,7 +639,7 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 	} else if folder != "" {
 		// root folder is empty in the search index; collapse the canonical
 		// "general" sentinel to "" before querying.
-		folder = foldermodel.LegacyFolderUID(folder)
+		folder = foldermodel.ToLegacyFolderUID(folder)
 		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
 			Key:      "folder",
 			Operator: "=",
