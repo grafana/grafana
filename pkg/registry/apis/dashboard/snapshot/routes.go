@@ -150,7 +150,7 @@ func createExternalSnapshotLegacy(cmd *dashboardsnapshots.CreateDashboardSnapsho
 }
 
 // nolint:gocyclo
-func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharingOptions, accessControl ac.AccessControl, defs map[string]common.OpenAPIDefinition, storageGetter func() rest.Storage, dashboardService dashboards.DashboardService) *builder.APIRoutes {
+func GetRoutes(options dashv0.SnapshotSharingOptions, accessControl ac.AccessControl, defs map[string]common.OpenAPIDefinition, storageGetter func() rest.Storage, dashboardService dashboards.DashboardService) *builder.APIRoutes {
 	prefix := dashv0.SnapshotResourceInfo.GroupResource().Resource
 	tags := []string{dashv0.SnapshotResourceInfo.GroupVersionKind().Kind}
 

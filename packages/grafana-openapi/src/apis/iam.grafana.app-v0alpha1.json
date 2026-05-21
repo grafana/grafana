@@ -6163,22 +6163,6 @@
           }
         }
       },
-      "github.com/grafana/grafana/pkg/apis/iam/v0alpha1.IdentityRef": {
-        "type": "object",
-        "required": ["type", "name"],
-        "properties": {
-          "name": {
-            "description": "Name is the unique identifier for identity, guaranteed to be a unique value for the type within a namespace.",
-            "type": "string",
-            "default": ""
-          },
-          "type": {
-            "description": "Type of identity e.g. \"user\". For a full list see https://github.com/grafana/authlib/blob/d6737a7dc8f55e9d42834adb83b5da607ceed293/types/type.go#L15",
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
       "github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamMember": {
         "type": "object",
         "required": ["identity", "displayName"],
@@ -6200,7 +6184,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1pkg~1apis~1iam~1v0alpha1.IdentityRef"
+                "$ref": "#/components/schemas/IdentityRef"
               }
             ]
           },

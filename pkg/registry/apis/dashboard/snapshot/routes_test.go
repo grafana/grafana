@@ -28,7 +28,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -123,12 +122,10 @@ func TestCreateSnapshotDashboardValidation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			snapshotService := dashboardsnapshots.NewMockService(t)
 			dashboardService := dashboards.NewFakeDashboardService(t)
 			tt.setupDashboardMock(dashboardService)
 
 			routes := GetRoutes(
-				snapshotService,
 				dashv0.SnapshotSharingOptions{SnapshotsEnabled: true},
 				acmock.New().WithPermissions([]accesscontrol.Permission{{Action: dashboards.ActionSnapshotsCreate}}),
 				map[string]common.OpenAPIDefinition{},
@@ -201,7 +198,6 @@ func TestCreateSnapshotPublicMode(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			snapshotService := dashboardsnapshots.NewMockService(t)
 			dashboardService := dashboards.NewFakeDashboardService(t)
 
 			var createdSnapshot *dashv0.Snapshot
@@ -213,7 +209,6 @@ func TestCreateSnapshotPublicMode(t *testing.T) {
 				Return(&dashv0.Snapshot{}, nil)
 
 			routes := GetRoutes(
-				snapshotService,
 				dashv0.SnapshotSharingOptions{SnapshotsEnabled: true, PublicMode: true},
 				acmock.New().WithPermissions([]accesscontrol.Permission{{Action: dashboards.ActionSnapshotsCreate}}),
 				map[string]common.OpenAPIDefinition{},
@@ -252,12 +247,10 @@ func TestCreateSnapshotPublicModeRejectsExternal(t *testing.T) {
 		OrgID:  orgID,
 	}
 
-	snapshotService := dashboardsnapshots.NewMockService(t)
 	dashboardService := dashboards.NewFakeDashboardService(t)
 	mockStorage := grafanarest.NewMockStorage(t)
 
 	routes := GetRoutes(
-		snapshotService,
 		dashv0.SnapshotSharingOptions{SnapshotsEnabled: true, PublicMode: true, ExternalEnabled: true},
 		acmock.New().WithPermissions([]accesscontrol.Permission{{Action: dashboards.ActionSnapshotsCreate}}),
 		map[string]common.OpenAPIDefinition{},
@@ -320,7 +313,6 @@ func TestCreateExternalSnapshot(t *testing.T) {
 			ExternalSnapshotToken: "test-token-123",
 		}
 
-		snapshotService := dashboardsnapshots.NewMockService(t)
 		dashboardService := dashboards.NewFakeDashboardService(t)
 		dashboardService.On("GetDashboard", mock.Anything, &dashboards.GetDashboardQuery{
 			UID:   "dash-1",
@@ -332,7 +324,6 @@ func TestCreateExternalSnapshot(t *testing.T) {
 			Return(&dashv0.Snapshot{}, nil)
 
 		routes := GetRoutes(
-			snapshotService,
 			options,
 			acmock.New().WithPermissions([]accesscontrol.Permission{{Action: dashboards.ActionSnapshotsCreate}}),
 			map[string]common.OpenAPIDefinition{},
@@ -386,7 +377,6 @@ func TestCreateExternalSnapshot(t *testing.T) {
 			ExternalSnapshotToken: "bad-token",
 		}
 
-		snapshotService := dashboardsnapshots.NewMockService(t)
 		dashboardService := dashboards.NewFakeDashboardService(t)
 		dashboardService.On("GetDashboard", mock.Anything, &dashboards.GetDashboardQuery{
 			UID:   "dash-1",
@@ -394,7 +384,6 @@ func TestCreateExternalSnapshot(t *testing.T) {
 		}).Return(&dashboards.Dashboard{UID: "dash-1", OrgID: orgID}, nil)
 
 		routes := GetRoutes(
-			snapshotService,
 			options,
 			acmock.New().WithPermissions([]accesscontrol.Permission{{Action: dashboards.ActionSnapshotsCreate}}),
 			map[string]common.OpenAPIDefinition{},
@@ -432,7 +421,6 @@ func TestCreateExternalSnapshot(t *testing.T) {
 			ExternalSnapshotToken: "test-token",
 		}
 
-		snapshotService := dashboardsnapshots.NewMockService(t)
 		dashboardService := dashboards.NewFakeDashboardService(t)
 		dashboardService.On("GetDashboard", mock.Anything, &dashboards.GetDashboardQuery{
 			UID:   "dash-1",
@@ -440,7 +428,6 @@ func TestCreateExternalSnapshot(t *testing.T) {
 		}).Return(&dashboards.Dashboard{UID: "dash-1", OrgID: orgID}, nil)
 
 		routes := GetRoutes(
-			snapshotService,
 			options,
 			acmock.New().WithPermissions([]accesscontrol.Permission{{Action: dashboards.ActionSnapshotsCreate}}),
 			map[string]common.OpenAPIDefinition{},
@@ -471,10 +458,8 @@ func TestCreateExternalSnapshot(t *testing.T) {
 			ExternalEnabled:  false,
 		}
 
-		snapshotService := dashboardsnapshots.NewMockService(t)
 		dashboardService := dashboards.NewFakeDashboardService(t)
 		routes := GetRoutes(
-			snapshotService,
 			options,
 			acmock.New().WithPermissions([]accesscontrol.Permission{{Action: dashboards.ActionSnapshotsCreate}}),
 			map[string]common.OpenAPIDefinition{},
@@ -515,7 +500,6 @@ func TestCreateExternalSnapshot(t *testing.T) {
 			ExternalSnapshotToken: "",
 		}
 
-		snapshotService := dashboardsnapshots.NewMockService(t)
 		dashboardService := dashboards.NewFakeDashboardService(t)
 		dashboardService.On("GetDashboard", mock.Anything, &dashboards.GetDashboardQuery{
 			UID:   "dash-1",
@@ -527,7 +511,6 @@ func TestCreateExternalSnapshot(t *testing.T) {
 			Return(&dashv0.Snapshot{}, nil)
 
 		routes := GetRoutes(
-			snapshotService,
 			options,
 			acmock.New().WithPermissions([]accesscontrol.Permission{{Action: dashboards.ActionSnapshotsCreate}}),
 			map[string]common.OpenAPIDefinition{},
@@ -763,7 +746,6 @@ func TestHandleDeleteByKey(t *testing.T) {
 			Return(&dashv0.Snapshot{}, true, nil)
 
 		routes := GetRoutes(
-			dashboardsnapshots.NewMockService(t),
 			dashv0.SnapshotSharingOptions{SnapshotsEnabled: true},
 			deletePerms(),
 			map[string]common.OpenAPIDefinition{},
@@ -788,7 +770,6 @@ func TestHandleDeleteByKey(t *testing.T) {
 			Return(&dashv0.SnapshotList{Items: []dashv0.Snapshot{}}, nil)
 
 		routes := GetRoutes(
-			dashboardsnapshots.NewMockService(t),
 			dashv0.SnapshotSharingOptions{SnapshotsEnabled: true},
 			deletePerms(),
 			map[string]common.OpenAPIDefinition{},
@@ -811,7 +792,6 @@ func TestHandleDeleteByKey(t *testing.T) {
 		mockStorage := grafanarest.NewMockStorage(t)
 
 		routes := GetRoutes(
-			dashboardsnapshots.NewMockService(t),
 			dashv0.SnapshotSharingOptions{SnapshotsEnabled: true},
 			acmock.New().WithPermissions([]accesscontrol.Permission{}),
 			map[string]common.OpenAPIDefinition{},
