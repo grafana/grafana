@@ -15,8 +15,10 @@ import {
   EmptyState,
   Icon,
   type IconName,
+  Input,
   Menu,
   Modal,
+  Spinner,
   Stack,
   Text,
   useElementSelection,
@@ -29,6 +31,7 @@ import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryL
 import { AccessControlAction } from 'app/types/accessControl';
 import emptyPanelSvg from 'img/dashboards/empty-panel.svg';
 
+import { DEFAULT_SQL, askAiStream } from '../assistant/mockAi';
 import { applyQueryToPanel, getVizSuggestionForQuery } from '../utils/getVizSuggestionForQuery';
 import { DashboardInteractions } from '../utils/interactions';
 import {
@@ -136,8 +139,9 @@ function NewUnconfiguredPanelComp(props: PanelProps) {
   const [isFocused, setIsFocused] = useState(false);
   const isActive = Boolean(isEditing && (isSelected || isHovered || isFocused));
 
+  const [aiInput, setAiInput] = useState('');
   const [aiPhase, setAiPhase] = useState<'idle' | 'loading' | 'preview'>('idle');
-  const [aiResult, _setAiResult] = useState<AiResult | null>(null);
+  const [aiResult, setAiResult] = useState<AiResult | null>(null);
   const [aiTab, setAiTab] = useState<'sql' | 'promql'>('sql');
 
   const handleBlur = (e: React.FocusEvent) => {
@@ -203,6 +207,25 @@ function NewUnconfiguredPanelComp(props: PanelProps) {
     }
 
     dashboard.onShowAddLibraryPanelDrawer(panel.getRef());
+  };
+
+  const handleAiSubmit = async () => {
+    if (!aiInput.trim()) {
+      return;
+    }
+    setAiPhase('loading');
+    let responseText = '';
+    const gen = askAiStream({ kind: 'generate-panel', payload: aiInput.trim() });
+    for await (const chunk of gen) {
+      responseText += chunk;
+    }
+    try {
+      const parsed: { sql: string; vizType: VizType } = JSON.parse(responseText);
+      setAiResult({ prompt: aiInput.trim(), sql: parsed.sql, vizType: parsed.vizType });
+    } catch {
+      setAiResult({ prompt: aiInput.trim(), sql: DEFAULT_SQL, vizType: 'timeseries' });
+    }
+    setAiPhase('preview');
   };
 
   const handleAiApply = () => {
@@ -312,6 +335,35 @@ function NewUnconfiguredPanelComp(props: PanelProps) {
             aria-hidden={!isButtonsVisible}
             {...(!isButtonsVisible ? { inert: '' } : {})}
           >
+            {!isCompact && config.featureToggles.sqlAbstractionPrototype && (
+              <>
+                <Input
+                  prefix={<span className={styles.aiSparkle}>✨</span>}
+                  placeholder={t('dashboard.new-panel.ai-prompt-placeholder', 'What do you want to learn?')}
+                  value={aiInput}
+                  onChange={(e) => setAiInput(e.currentTarget.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      void handleAiSubmit();
+                    }
+                  }}
+                  disabled={aiPhase === 'loading'}
+                />
+                {aiPhase === 'loading' && (
+                  <div className={styles.aiLoadingRow}>
+                    <Spinner size="sm" />
+                    <Text variant="bodySmall" color="secondary">
+                      <Trans i18nKey="dashboard.new-panel.ai-generating">Generating…</Trans>
+                    </Text>
+                  </div>
+                )}
+                <div className={styles.aiDivider}>
+                  <Text variant="bodySmall" color="disabled">
+                    <Trans i18nKey="dashboard.new-panel.ai-or">or</Trans>
+                  </Text>
+                </div>
+              </>
+            )}
             {buttons.map((button, i) => (
               <div
                 key={button.key}
