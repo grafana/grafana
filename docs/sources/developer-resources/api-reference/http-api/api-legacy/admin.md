@@ -34,7 +34,7 @@ If you're running Grafana Enterprise, for some endpoints you'll need to have spe
 
 `GET /api/admin/settings`
 
-Only works with Basic Authentication (username and password). See [introduction](/docs/grafana/<GRAFANA_VERSION>/http_api/admin/#admin-api) for an explanation.
+Only works with Basic Authentication (username and password). Refer to [Requirements](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/http_api/api-legacy/admin#requirements) for more information.
 
 **Required permissions**
 
