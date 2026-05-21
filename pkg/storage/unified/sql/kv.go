@@ -19,7 +19,16 @@ import (
 // ProvideResourceDB is a Wire provider that wraps dbimpl.ProvideResourceDB
 // with the package-level tracer so it can be injected into both ProvideKV
 // and NewStorageBackend — ensuring a single eDB instance per process.
+//
+// Returns nil for storage types that don't need a SQL-backed resource DB
+// (file, unified-grpc, unified-kv-grpc) so Wire DI doesn't open an unused
+// xorm engine / connection pool at startup.
 func ProvideResourceDB(cfg *setting.Cfg, grafanaDB infraDB.DB) (db.DBProvider, error) {
+	storageType := options.StorageType(cfg.SectionWithEnvOverrides("grafana-apiserver").Key("storage_type").
+		MustString(string(options.StorageTypeUnified)))
+	if storageType != options.StorageTypeUnified {
+		return nil, nil
+	}
 	return dbimpl.ProvideResourceDB(grafanaDB, cfg, tracer)
 }
 
