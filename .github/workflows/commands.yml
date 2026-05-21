@@ -1,8 +1,5 @@
 name: Run commands when issues are labeled or comments added
 
-# important: this workflow uses a github app that is strictly limited
-# to issues. If you want to change the triggers for this workflow,
-# please review if the permissions are still sufficient.
 on:
   issues:
     types: [labeled, unlabeled]
@@ -36,35 +33,15 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - name: "Get vault secrets"
-        id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main # zizmor: ignore[unpinned-uses]
+      - name: Get GitHub App token
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
         with:
-          # Secrets placed in the ci/repo/grafana/grafana/plugins_platform_issue_commands_github_bot path in Vault
-          repo_secrets: |
-            GITHUB_APP_ID=grafana_pr_automation_app:app_id
-            GITHUB_APP_PRIVATE_KEY=grafana_pr_automation_app:app_pem
+          github_app: grafana-pr-automation
 
-      - name: Generate token
-        id: generate_token
-        uses: actions/create-github-app-token@3ff1caaa28b64c9cc276ce0a02e2ff584f3900c5 # v2.0.2
-        with:
-          app-id: ${{ env.GITHUB_APP_ID }}
-          private-key: ${{ env.GITHUB_APP_PRIVATE_KEY }}
-
-      - name: Checkout Actions
-        uses: actions/checkout@v5
-        with:
-          repository: "grafana/grafana-github-actions"
-          path: ./actions
-          ref: main
-          persist-credentials: false
-
-      - name: Install Actions
-        run: npm install --production --prefix ./actions
-      - name: Run Commands
-        uses: ./actions/commands
+      - name: Run commands
+        uses: grafana/grafana-github-actions/commands@main
         with:
           metricsWriteAPIKey: ""
-          token: ${{ steps.generate_token.outputs.token }}
+          token: ${{ steps.get-github-app-token.outputs.token }}
           configPath: commands
