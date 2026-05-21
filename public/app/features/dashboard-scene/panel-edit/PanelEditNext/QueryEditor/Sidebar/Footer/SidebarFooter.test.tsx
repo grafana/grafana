@@ -156,13 +156,13 @@ describe('SidebarFooter', () => {
       expect(screen.queryByRole('toolbar', { name: /bulk actions/i })).not.toBeInTheDocument();
     });
 
-    it('renders the bar inside the footer when 2+ queries are selected via keyboard shortcuts (no multi-select mode)', () => {
+    it('does not render the bar for selected queries unless multi-select mode is on', () => {
       renderWithQueryEditorProvider(<SidebarFooter />, {
         queries,
         uiStateOverrides: { selectedQueryRefIds: ['A', 'B'], multiSelectMode: false },
       });
 
-      expect(screen.getByRole('toolbar', { name: /bulk actions/i })).toBeInTheDocument();
+      expect(screen.queryByRole('toolbar', { name: /bulk actions/i })).not.toBeInTheDocument();
     });
 
     it('does not keep the count layout in the DOM while the bar is shown (a11y)', () => {
@@ -171,7 +171,7 @@ describe('SidebarFooter', () => {
       // screen-reader sequence.
       renderWithQueryEditorProvider(<SidebarFooter />, {
         queries,
-        uiStateOverrides: { selectedQueryRefIds: ['A', 'B'], multiSelectMode: false },
+        uiStateOverrides: { selectedQueryRefIds: ['A', 'B'], multiSelectMode: true },
       });
 
       expect(screen.getByRole('toolbar', { name: /bulk actions/i })).toBeInTheDocument();
@@ -218,7 +218,7 @@ describe('SidebarFooter', () => {
       expect(screen.queryByRole('button', { name: /select multiple items/i })).not.toBeInTheDocument();
     });
 
-    it('still renders the bulk actions bar in the footer when 2+ items are selected via keyboard shortcuts', () => {
+    it('does not render the bulk actions bar from selected items while multi-select mode is off', () => {
       renderWithQueryEditorProvider(<SidebarFooter />, {
         queries: [
           { refId: 'A', datasource: { type: 'test', uid: 'test' } },
@@ -227,7 +227,7 @@ describe('SidebarFooter', () => {
         uiStateOverrides: { selectedQueryRefIds: ['A', 'B'] },
       });
 
-      expect(screen.getByRole('toolbar', { name: /bulk actions/i })).toBeInTheDocument();
+      expect(screen.queryByRole('toolbar', { name: /bulk actions/i })).not.toBeInTheDocument();
     });
   });
 

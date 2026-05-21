@@ -1,4 +1,4 @@
-import { type ReactNode, useCallback, useMemo, useRef, useState } from 'react';
+import { type ReactNode, useCallback, useMemo, useState } from 'react';
 
 import { type DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { SceneDataTransformer } from '@grafana/scenes';
@@ -72,11 +72,12 @@ export function QueryEditorContextWrapper({
     toggleDebug,
   } = useQueryEditorUIToggles();
 
-  const clearSideEffectsRef = useRef<() => void>(() => {});
   const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
   const [multiSelectMode, setMultiSelectMode] = useState(false);
 
   const {
+    activeQueryRefId,
+    activeTransformationId,
     selectedQueryRefIds,
     selectedTransformationIds,
     onCardSelectionChange: onCardSelectionChangeRaw,
@@ -84,13 +85,12 @@ export function QueryEditorContextWrapper({
     toggleQuerySelection: toggleQuerySelectionRaw,
     toggleTransformationSelection: toggleTransformationSelectionRaw,
     clearSelection: clearSelectionRaw,
+    setSelectionFromActiveCard,
     removeQueryFromSelection,
     removeTransformationFromSelection,
   } = useSelectionState({
     queries: queryRunnerState?.queries ?? [],
     transformations,
-    // Stable callback — always delegates to the latest clearSideEffects via ref.
-    onClearSideEffects: useCallback(() => clearSideEffectsRef.current(), []),
   });
 
   // Wrap each selection mutator to clear alert selection (cross-type exclusivity).
@@ -126,9 +126,22 @@ export function QueryEditorContextWrapper({
   const selectAlert = useCallback(
     (alertId: string | null) => {
       setSelectedAlertId(alertId);
+      onCardSelectionChangeRaw(null, null);
       clearSelectionRaw();
     },
-    [clearSelectionRaw]
+    [clearSelectionRaw, onCardSelectionChangeRaw]
+  );
+
+  const setMultiSelectModeForView = useCallback(
+    (enabled: boolean) => {
+      if (enabled) {
+        setSelectionFromActiveCard();
+      } else {
+        clearSelectionRaw();
+      }
+      setMultiSelectMode(enabled);
+    },
+    [clearSelectionRaw, setSelectionFromActiveCard]
   );
 
   // Wraps onCardSelectionChange with a UI reset for use in finalizePendingExpression /
@@ -181,10 +194,6 @@ export function QueryEditorContextWrapper({
     setPendingSavedQueryState(null);
   }, [resetUIToggles, clearPendingExpression, clearPendingTransformation]);
 
-  // Update the ref every render so the stable callback inside useSelectionState
-  // always delegates to the latest clearSideEffects.
-  clearSideEffectsRef.current = clearSideEffects;
-
   const dsState = useMemo(
     () => ({
       datasource,
@@ -194,11 +203,24 @@ export function QueryEditorContextWrapper({
     [datasource, dsSettings, dsError]
   );
 
-  const primaryQueryRefId = selectedQueryRefIds[selectedQueryRefIds.length - 1] ?? null;
-
   const queryError = useMemo(() => {
-    return queryRunnerState?.data?.errors?.find(({ refId }) => refId === primaryQueryRefId);
-  }, [queryRunnerState?.data?.errors, primaryQueryRefId]);
+    const activeQueryExists = queryRunnerState?.queries?.some(({ refId }) => refId === activeQueryRefId);
+    const queryRefId =
+      activeQueryExists
+        ? activeQueryRefId
+        : activeTransformationId || selectedAlertId || pendingExpression || pendingTransformation
+          ? undefined
+          : queryRunnerState?.queries?.[0]?.refId;
+    return queryRunnerState?.data?.errors?.find(({ refId }) => refId === queryRefId);
+  }, [
+    activeQueryRefId,
+    activeTransformationId,
+    pendingExpression,
+    pendingTransformation,
+    queryRunnerState?.data?.errors,
+    queryRunnerState?.queries,
+    selectedAlertId,
+  ]);
 
   const qrState = useMemo(
     () => ({
@@ -221,8 +243,8 @@ export function QueryEditorContextWrapper({
   const queryOptions = useQueryOptions({ panel, queryRunner, dsSettings });
 
   const { selectedQuery, selectedTransformation, selectedAlert } = useSelectedCard(
-    selectedQueryRefIds,
-    selectedTransformationIds,
+    activeQueryRefId,
+    activeTransformationId,
     selectedAlertId,
     queryRunnerState?.queries ?? [],
     transformations,
@@ -254,7 +276,7 @@ export function QueryEditorContextWrapper({
       setSelectedAlert: (alert: AlertRule | null) => {
         selectAlert(alert?.alertId ?? null);
       },
-      setMultiSelectMode,
+      setMultiSelectMode: setMultiSelectModeForView,
       queryOptions: {
         options: queryOptions,
         isQueryOptionsOpen,
@@ -316,6 +338,7 @@ export function QueryEditorContextWrapper({
       clearSelection,
       onCardSelectionChange,
       selectAlert,
+      setMultiSelectModeForView,
       clearSideEffects,
       queryOptions,
       isQueryOptionsOpen,

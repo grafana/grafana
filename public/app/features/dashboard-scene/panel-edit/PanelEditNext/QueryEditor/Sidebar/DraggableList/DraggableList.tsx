@@ -6,6 +6,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 
 import { SIDEBAR_CARD_HEIGHT, SIDEBAR_CARD_INDENT, SIDEBAR_CARD_SPACING } from '../../../constants';
+import { useQueryEditorUIContext } from '../../QueryEditorContext';
 
 import { useDropIndicator } from './useDropIndicator';
 
@@ -26,7 +27,8 @@ export function DraggableList<T>({
   onDragStart,
   onDragEnd,
 }: DraggableListProps<T>) {
-  const styles = useStyles2(getStyles);
+  const { multiSelectMode } = useQueryEditorUIContext();
+  const styles = useStyles2(getStyles, multiSelectMode);
   const theme = useTheme2();
 
   const { indicator, containerRef, handleBeforeCapture, handleDragStart, handleDragUpdate, handleDragEnd } =
@@ -84,7 +86,7 @@ export function DraggableList<T>({
   );
 }
 
-function getStyles(theme: GrafanaTheme2) {
+function getStyles(theme: GrafanaTheme2, multiSelectMode: boolean) {
   return {
     droppable: css({
       display: 'flex',
@@ -102,7 +104,7 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     dropIndicator: css({
       position: 'absolute',
-      left: theme.spacing(SIDEBAR_CARD_INDENT),
+      left: multiSelectMode ? theme.spacing(4.25) : theme.spacing(SIDEBAR_CARD_INDENT),
       right: theme.spacing(SIDEBAR_CARD_INDENT),
       background: theme.colors.primary.transparent,
       pointerEvents: 'none',

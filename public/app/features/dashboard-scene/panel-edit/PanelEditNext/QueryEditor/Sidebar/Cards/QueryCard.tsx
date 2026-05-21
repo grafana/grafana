@@ -20,8 +20,14 @@ import { SidebarCard } from './SidebarCard';
 export const QueryCard = ({ query }: { query: DataQuery }) => {
   const editorType = getEditorType(query);
   const queryDsSettings = useDatasource(query.datasource);
-  const { selectedQuery, toggleQuerySelection, selectedQueryRefIds, pendingExpression, pendingSavedQuery } =
-    useQueryEditorUIContext();
+  const {
+    selectedQuery,
+    setSelectedQuery,
+    toggleQuerySelection,
+    selectedQueryRefIds,
+    pendingExpression,
+    pendingSavedQuery,
+  } = useQueryEditorUIContext();
   const { duplicateQuery, deleteQuery, toggleQueryHide } = useActionsContext();
   const { data } = useQueryRunnerContext();
   const typeConfig = useQueryEditorTypeConfig();
@@ -29,7 +35,7 @@ export const QueryCard = ({ query }: { query: DataQuery }) => {
   // Note: when a query is hidden, it is removed from the error list :(
   const error = data?.errors?.find((e) => e.refId === query.refId)?.message;
   const isSelected = selectedQuery?.refId === query.refId;
-  const isPartOfSelection = selectedQueryRefIds.includes(query.refId) && !isSelected;
+  const isPartOfSelection = selectedQueryRefIds.includes(query.refId);
   const isHidden = !!query.hide;
 
   const item: ActionItem = {
@@ -46,7 +52,8 @@ export const QueryCard = ({ query }: { query: DataQuery }) => {
         isSelected={isSelected}
         isPartOfSelection={isPartOfSelection}
         item={item}
-        onSelect={(modifiers) => toggleQuerySelection(query, modifiers)}
+        onSelect={() => setSelectedQuery(query)}
+        onToggleSelection={(modifiers) => toggleQuerySelection(query, modifiers)}
         onDelete={() => deleteQuery(query.refId)}
         onDuplicate={() => duplicateQuery(query.refId)}
         onToggleHide={() => toggleQueryHide(query.refId)}
