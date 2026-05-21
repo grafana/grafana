@@ -1,4 +1,4 @@
-import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { type ReactNode, useCallback, useMemo, useRef, useState } from 'react';
 
 import { type DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { SceneDataTransformer } from '@grafana/scenes';
@@ -80,17 +80,15 @@ export function QueryEditorContextWrapper({
   const [multiSelectMode, setMultiSelectMode] = useState(false);
   const [isStackedMode, setIsStackedMode] = useState(false);
   const [stackedScrollTarget, setStackedScrollTarget] = useState<StackedEditorItem | null>(null);
-
-  useEffect(() => {
-    onStackedModeChange?.(isStackedMode);
-
-    return () => {
-      if (isStackedMode) {
-        onStackedModeChange?.(false);
-      }
-    };
-  }, [isStackedMode, onStackedModeChange]);
   const [confirmingDeleteActionKey, setConfirmingDeleteActionKey] = useState<string | null>(null);
+
+  const setStackedModeForView = useCallback(
+    (enabled: boolean) => {
+      setIsStackedMode(enabled);
+      onStackedModeChange?.(enabled);
+    },
+    [onStackedModeChange]
+  );
 
   const {
     selectedQueryRefIds,
@@ -161,22 +159,25 @@ export function QueryEditorContextWrapper({
 
   const selectAlert = useCallback(
     (alertId: string | null) => {
-      setIsStackedMode(false);
+      setStackedModeForView(false);
       setStackedScrollTarget(null);
       setSelectedAlertId(alertId);
       setConfirmingDeleteActionKey(null);
       clearSelectionRaw();
     },
-    [clearSelectionRaw]
+    [clearSelectionRaw, setStackedModeForView]
   );
 
-  const setMultiSelectModeForView = useCallback((enabled: boolean) => {
-    if (enabled) {
-      setIsStackedMode(false);
-      setStackedScrollTarget(null);
-    }
-    setMultiSelectMode(enabled);
-  }, []);
+  const setMultiSelectModeForView = useCallback(
+    (enabled: boolean) => {
+      if (enabled) {
+        setStackedModeForView(false);
+        setStackedScrollTarget(null);
+      }
+      setMultiSelectMode(enabled);
+    },
+    [setStackedModeForView]
+  );
 
   const enterStackedMode = useCallback(() => {
     setSelectedAlertId(null);
@@ -189,13 +190,13 @@ export function QueryEditorContextWrapper({
     } else if (primaryQueryRefId) {
       onCardSelectionChange(primaryQueryRefId, null);
     }
-    setIsStackedMode(true);
-  }, [onCardSelectionChange, selectedQueryRefIds, selectedTransformationIds]);
+    setStackedModeForView(true);
+  }, [onCardSelectionChange, selectedQueryRefIds, selectedTransformationIds, setStackedModeForView]);
 
   const exitStackedMode = useCallback(() => {
-    setIsStackedMode(false);
+    setStackedModeForView(false);
     setStackedScrollTarget(null);
-  }, []);
+  }, [setStackedModeForView]);
 
   const syncStackedActiveItem = useCallback(
     (item: StackedEditorItem) => {
@@ -360,7 +361,7 @@ export function QueryEditorContextWrapper({
       pendingExpression,
       setPendingExpression: (pending: PendingExpression | null) => {
         if (pending) {
-          setIsStackedMode(false);
+          setStackedModeForView(false);
           setStackedScrollTarget(null);
           clearPendingTransformation();
           setPendingSavedQueryState(null);
@@ -371,7 +372,7 @@ export function QueryEditorContextWrapper({
       pendingSavedQuery,
       setPendingSavedQuery: (pending: PendingSavedQuery | null) => {
         if (pending) {
-          setIsStackedMode(false);
+          setStackedModeForView(false);
           setStackedScrollTarget(null);
           clearPendingExpression();
           clearPendingTransformation();
@@ -381,7 +382,7 @@ export function QueryEditorContextWrapper({
       pendingTransformation,
       setPendingTransformation: (pending: PendingTransformation | null) => {
         if (pending) {
-          setIsStackedMode(false);
+          setStackedModeForView(false);
           setStackedScrollTarget(null);
           clearPendingExpression();
           setPendingSavedQueryState(null);
@@ -429,6 +430,7 @@ export function QueryEditorContextWrapper({
       toggleDebug,
       pendingExpression,
       isStackedMode,
+      setStackedModeForView,
       enterStackedMode,
       exitStackedMode,
       syncStackedActiveItem,

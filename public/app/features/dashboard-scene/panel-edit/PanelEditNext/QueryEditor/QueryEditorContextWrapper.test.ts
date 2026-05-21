@@ -98,9 +98,17 @@ function makeMockDataPane(): PanelDataPaneNext {
   } as unknown as PanelDataPaneNext;
 }
 
-function renderWithWrapper(dataPane: PanelDataPaneNext) {
+function renderWithWrapper(
+  dataPane: PanelDataPaneNext,
+  options: { onStackedModeChange?: (enabled: boolean) => void } = {}
+) {
   return renderHook(() => useQueryEditorUIContext(), {
-    wrapper: ({ children }) => React.createElement(QueryEditorContextWrapper, { dataPane, children }),
+    wrapper: ({ children }) =>
+      React.createElement(QueryEditorContextWrapper, {
+        dataPane,
+        onStackedModeChange: options.onStackedModeChange,
+        children,
+      }),
   });
 }
 
@@ -338,6 +346,19 @@ describe('QueryEditorContextWrapper - stacked mode', () => {
 
     expect(result.current.selectedQueryRefIds).toEqual(['B']);
     expect(result.current.stackedMode.scrollTarget).toEqual({ type: 'query', id: 'B' });
+  });
+
+  it('notifies the layout when stacked mode changes', () => {
+    const onStackedModeChange = jest.fn();
+    const { result } = renderWithWrapper(makeMockDataPane(), { onStackedModeChange });
+
+    expect(onStackedModeChange).not.toHaveBeenCalled();
+
+    act(() => result.current.stackedMode.enter());
+    expect(onStackedModeChange).toHaveBeenLastCalledWith(true);
+
+    act(() => result.current.stackedMode.exit());
+    expect(onStackedModeChange).toHaveBeenLastCalledWith(false);
   });
 
   it('entering stacked mode collapses existing multi-selection to the primary item', () => {
