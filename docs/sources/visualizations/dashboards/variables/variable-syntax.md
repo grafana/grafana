@@ -34,7 +34,7 @@ Panel titles and metric queries can refer to variables using two different synta
 
 Before queries are sent to your data source, the query is _interpolated_, meaning the variable is replaced with its current value.
 During interpolation, the variable value might be _escaped_ to conform to the syntax of the query language and where it's used.
-For example, a variable used in a regular expression in an InfluxDB or Prometheus query is regex escaped.
+For example, variables in InfluxDB or Prometheus regular expression queries are automatically escaped.
 Read the data source specific documentation topic for details on value escaping during interpolation.
 
 For advanced syntax to override data source default formatting, refer to [Advanced variable format options](#advanced-variable-format-options).
