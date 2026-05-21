@@ -426,6 +426,12 @@ export function prepConfig(opts: PrepConfigOpts) {
     label: yAxisConfig.axisLabel,
     theme: theme,
     formatValue: (v, decimals) => formattedValueToString(dispY(v, decimals)),
+    // Sparse heatmaps already do their own height-aware tick thinning in the
+    // splits callback (and need every remaining split labeled to match the
+    // classic histogram heatmap's row layout). Drop uPlot's default
+    // calculateSpace-based collision filter so it doesn't re-drop labels we
+    // explicitly asked for.
+    space: isSparseHeatmap ? 1 : undefined,
     splits: isOrdinalY
       ? (self: uPlot) => {
           const meta = readHeatmapRowsCustomMeta(dataRef.current?.heatmap);
