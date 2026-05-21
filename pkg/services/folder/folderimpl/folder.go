@@ -83,15 +83,12 @@ func ProvideService(
 
 	client.RegisterMetrics(r)
 
-	k8sHandler := client.NewK8sHandlerWithMetrics(
-		client.NewK8sHandler(
-			request.GetNamespaceMapper(cfg),
-			folderv1.FolderResourceInfo.GroupVersionResource(),
-			restConfig.GetRestConfig,
-			userService,
-			resourceClient,
-		),
-		"folder_service",
+	k8sHandler := client.NewK8sHandler(
+		request.GetNamespaceMapper(cfg),
+		folderv1.FolderResourceInfo.GroupVersionResource(),
+		restConfig.GetRestConfig,
+		userService,
+		resourceClient,
 	)
 
 	unifiedStore := ProvideUnifiedStore(k8sHandler, userService, tracer, cfg)
@@ -99,15 +96,12 @@ func ProvideService(
 	srv.unifiedStore = unifiedStore
 	srv.k8sclient = k8sHandler
 
-	dashHandler := client.NewK8sHandlerWithMetrics(
-		client.NewK8sHandler(
-			request.GetNamespaceMapper(cfg),
-			dashboardv1.DashboardResourceInfo.GroupVersionResource(),
-			restConfig.GetRestConfig,
-			userService,
-			resourceClient,
-		),
-		"folder_service",
+	dashHandler := client.NewK8sHandler(
+		request.GetNamespaceMapper(cfg),
+		dashboardv1.DashboardResourceInfo.GroupVersionResource(),
+		restConfig.GetRestConfig,
+		userService,
+		resourceClient,
 	)
 	srv.dashboardK8sClient = dashHandler
 

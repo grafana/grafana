@@ -31,26 +31,17 @@ func TestClassifyStatus(t *testing.T) {
 	}
 }
 
-func TestInstrumentedK8sHandler_EmitsLabelledMetrics(t *testing.T) {
+func TestRecordRequest_EmitsLabelledMetrics(t *testing.T) {
 	clientRequests.Reset()
 	clientRequestDuration.Reset()
 
-	inner := &k8sHandler{gvr: schema.GroupVersionResource{Group: "folder.grafana.app", Version: "v1", Resource: "folders"}}
-	h := &instrumentedK8sHandler{inner: inner, caller: "test_caller"}
+	RecordRequest("folder_service", "get", "folder.grafana.app", "folders", time.Now(), apierrors.NewNotFound(schema.GroupResource{Resource: "folders"}, "missing"))
+	RecordRequest("folder_service", "get", "folder.grafana.app", "folders", time.Now(), nil)
+	RecordRequest("folder_service", "create", "folder.grafana.app", "folders", time.Now(), nil)
 
-	h.observe("get", time.Now(), apierrors.NewNotFound(schema.GroupResource{Resource: "folders"}, "missing"))
-	h.observe("get", time.Now(), nil)
-	h.observe("create", time.Now(), nil)
-
-	require.Equal(t, float64(1), counterValue(t, "test_caller", "get", "folder.grafana.app", "folders", "4xx"))
-	require.Equal(t, float64(1), counterValue(t, "test_caller", "get", "folder.grafana.app", "folders", "2xx"))
-	require.Equal(t, float64(1), counterValue(t, "test_caller", "create", "folder.grafana.app", "folders", "2xx"))
-}
-
-func TestNewK8sHandlerWithMetrics_DefaultsToUnknownCaller(t *testing.T) {
-	inner := &k8sHandler{gvr: schema.GroupVersionResource{Group: "g", Resource: "r"}}
-	wrapped := NewK8sHandlerWithMetrics(inner, "").(*instrumentedK8sHandler)
-	require.Equal(t, CallerUnknown, wrapped.caller)
+	require.Equal(t, float64(1), counterValue(t, "folder_service", "get", "folder.grafana.app", "folders", "4xx"))
+	require.Equal(t, float64(1), counterValue(t, "folder_service", "get", "folder.grafana.app", "folders", "2xx"))
+	require.Equal(t, float64(1), counterValue(t, "folder_service", "create", "folder.grafana.app", "folders", "2xx"))
 }
 
 func counterValue(t *testing.T, caller, verb, group, resource, status string) float64 {

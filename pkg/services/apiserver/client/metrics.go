@@ -3,6 +3,7 @@ package client
 import (
 	"errors"
 	"sync"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -33,13 +34,22 @@ var (
 	registerMetricsOnce sync.Once
 )
 
-// RegisterMetrics registers K8sHandler client metrics with the supplied
-// registerer. Safe to call from multiple wiring sites — the underlying
-// registration runs once per process.
+// RegisterMetrics registers the apiserver-client metric vectors with the
+// supplied registerer. Safe to call from multiple wiring sites — registration
+// runs once per process.
 func RegisterMetrics(reg prometheus.Registerer) {
 	registerMetricsOnce.Do(func() {
 		reg.MustRegister(clientRequests, clientRequestDuration)
 	})
+}
+
+// RecordRequest emits one counter increment and one duration observation for
+// a K8sHandler call. Callers pass their own subsystem name (e.g.
+// "folder_service") so usage stays attributable when multiple packages share
+// the same backing client.
+func RecordRequest(caller, verb, group, resource string, start time.Time, err error) {
+	clientRequests.WithLabelValues(caller, verb, group, resource, classifyStatus(err)).Inc()
+	clientRequestDuration.WithLabelValues(caller, verb, group, resource).Observe(time.Since(start).Seconds())
 }
 
 // classifyStatus buckets an error into a low-cardinality label value.
