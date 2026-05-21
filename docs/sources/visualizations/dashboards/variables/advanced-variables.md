@@ -16,7 +16,7 @@ labels:
     - enterprise
     - oss
 title: Advanced variable configurations
-description: Learn advanced variable actions to make them more dynamic in your dashboards
+description: Configure multi-property, chained, and regular expression-filtered variables to build dashboards that adapt to complex data structures and user selections.
 weight: 300
 ---
 
@@ -32,10 +32,10 @@ These configurations are useful for dashboards that span multiple environments, 
 
 ## Multi-property variables
 
-If you have a multi-source dashboard that uses multiple variables for the same logical concept&mdash;for example, an environment identified as `dev` vs `development`&mdash;, you can set up a multi-property variable to let you reference all those values. Instead of creating and keeping multiple variables for the same logical concept in sync, you can map all of those identifiers to one variable and then reference any property you need in panels and queries.
+If a multi-source dashboard uses multiple values for the same logical concept, such as an environment identified as `dev` in one source and `development` in another, use a multi-property variable to reference those values from one variable. This lets you map related identifiers together and reference the property you need in panels and queries.
 
 To do so, configure a JSON array in which each object can have any number of properties.
-Then, you can reference any of the properties in as you use those variables.
+Then, you can reference any of the properties as you use those variables.
 
 This applies to the following variable types:
 
@@ -89,13 +89,13 @@ This pattern enables cascading filters that help users drill down through hierar
 Cascading filter patterns are common in multi-tier filtering scenarios such as region > cluster > namespace > pod.
 Each level narrows the available options based on the previous selection, creating an intuitive navigation experience through your infrastructure or data hierarchy.
 
-Technically, there is no limit to how many many variables you can chain together, but the more links you have, the greater the query load.
+Technically, there is no limit to how many variables you can chain together, but the more links you have, the greater the query load.
 
 ### Grafana Play dashboard examples
 
 <!-- If you update or replace the Play dashboards linked in this section, you must also update the text examples to match them -->
 
-The following Grafana Play dashboards contain fairly simple chained variables, only two layers deep. To view the variables and their settings, click **Edit**
+The following Grafana Play dashboards contain basic chained variables, only two layers deep. To view the variables and their settings, click **Edit**
 and then **Settings**; then go to the **Variables** tab. Both examples are expanded in the following section.
 
 - [Graphite Templated Nested](https://play.grafana.org/d/000000056/graphite-templated-nested?orgId=1&var-app=country&var-server=All&var-interval=1h)
@@ -105,13 +105,13 @@ While the examples are data source-specific, the concepts can be applied broadly
 
 #### Graphite example explained
 
-In this example, there are several applications. Each application has a different subset of servers. It is based on the [Graphite Templated Nested](https://play.grafana.org/d/000000056/graphite-templated-nested?orgId=1&var-app=country&var-server=All&var-interval=1h).
+In this example, there are several applications. Each application has a different subset of servers. It's based on the [Graphite Templated Nested](https://play.grafana.org/d/000000056/graphite-templated-nested?orgId=1&var-app=country&var-server=All&var-interval=1h).
 
 Now, you could make separate variables for each metric source, but then you have to know which server goes with which app. A better solution is to use one variable to filter another. In this example, when the user changes the value of the `app` variable, it changes the drop-down options returned by the `server` variable. Both variables use the **Multi-value** option and **Include all option**, enabling users to select some or all options presented at any time.
 
 ##### `app` variable
 
-The query for this variable basically says, "Find all the applications that exist."
+The query for this variable returns all the applications that exist.
 
 ```
 apps.*
@@ -121,7 +121,7 @@ The values returned are `backend`, `country`, `fakesite`, and `All`.
 
 ##### `server` variable
 
-The query for this variable basically says, "Find all servers for the currently chosen application."
+The query for this variable returns all servers for the currently selected application.
 
 ```
 apps.$app.*
@@ -146,7 +146,7 @@ The query returns all servers associated with `fakesite`, including `web_server_
 ##### More variables
 
 {{< admonition type="note" >}}
-This example is theoretical. The Graphite server used in the example does not contain CPU metrics.
+This example is theoretical. The Graphite server used in the example doesn't contain CPU metrics.
 {{< /admonition >}}
 
 The dashboard stops at two levels, but you could keep going. For example, if you wanted to get CPU metrics for selected servers, you could copy the `server` variable and extend the query so that it reads:
@@ -155,7 +155,7 @@ The dashboard stops at two levels, but you could keep going. For example, if you
 apps.$app.$server.cpu.*
 ```
 
-This query basically says, "Find the CPU metrics for the selected server."
+This query returns all the CPU metrics for the selected server.
 
 Depending on what variable options the user selects, you could get queries like:
 
@@ -167,13 +167,13 @@ apps.fakesite.web_server_01.cpu.*
 
 #### InfluxDB example explained
 
-In this example, you have several data centers. Each data center has a different subset of hosts. It is based on the [InfluxDB Templated](https://play.grafana.org/d/e7bad3ef-db0c-4bbd-8245-b85c0b2ca2b9/influx-2-73a-hourly-electric-grid-monitor-for-us?orgId=1&refresh=1m) dashboard.
+In this example, you have several data centers. Each data center has a different subset of hosts. It's based on the [InfluxDB Templated](https://play.grafana.org/d/e7bad3ef-db0c-4bbd-8245-b85c0b2ca2b9/influx-2-73a-hourly-electric-grid-monitor-for-us?orgId=1&refresh=1m) dashboard.
 
-In this example, when the user changes the value of the `datacenter` variable, it changes the dropdown options returned by the `host` variable. The `host` variable uses the **Multi-value** option and **Include all option**, allowing users to select some or all options presented at any time. The `datacenter` does not use either option, so you can only select one data center at a time.
+In this example, when the user changes the value of the `datacenter` variable, it changes the drop-down options returned by the `host` variable. The `host` variable uses the **Multi-value** option and **Include all option**, allowing users to select some or all options presented at any time. The `datacenter` does not use either option, so you can only select one data center at a time.
 
 ##### `datacenter` variable
 
-The query for this variable basically says, "Find all the data centers that exist."
+The query for this variable returns all the data centers that exist.
 
 ```
 SHOW TAG VALUES WITH KEY = "datacenter"
@@ -183,7 +183,7 @@ The values returned are `America`, `Africa`, `Asia`, and `Europe`.
 
 ##### `host` variable
 
-The query for this variable basically says, "Find all hosts for the currently chosen data center."
+The query for this variable returns all hosts for the currently selected data center.
 
 ```
 SHOW TAG VALUES WITH KEY = "hostname" WHERE "datacenter" =~ /^$datacenter$/
@@ -208,7 +208,7 @@ The query returns all servers associated with `Europe`, including `server3`, `se
 ##### More variables
 
 {{< admonition type="note" >}}
-This example is theoretical. The InfluxDB server used in the example does not contain CPU metrics.
+This example is theoretical. The InfluxDB server used in the example doesn't contain CPU metrics.
 {{< /admonition >}}
 
 The dashboard stops at two levels, but you could keep going. For example, if you wanted to get CPU metrics for selected hosts, you could copy the `host` variable and extend the query so that it reads:
@@ -217,7 +217,7 @@ The dashboard stops at two levels, but you could keep going. For example, if you
 SHOW TAG VALUES WITH KEY = "cpu" WHERE "datacenter" =~ /^$datacenter$/ AND "host" =~ /^$host$/
 ```
 
-This query basically says, "Find the CPU metrics for the selected host."
+This query  returns the CPU metrics for the selected host.
 
 Depending on what variable options the user selects, you could get queries like:
 
@@ -257,7 +257,7 @@ For example, if you have a series of four linked variables (country, region, ser
 
 Using the **Regex** query option, you filter the list of options returned by the variable query or modify the options returned.
 
-This page shows how to use a regular expression to filter/modify values in the variable dropdown.
+This page shows how to use a regular expression to filter/modify values in the variable drop-down list.
 
 Using the **Regex** query option, you filter the list of options returned by the Variable query or modify the options returned. For more information, refer to the Mozilla guide on [Regular expressions](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions).
 
@@ -270,7 +270,7 @@ backend_03
 backend_04
 ```
 
-### Filter so that only the options that end with `01` or `02` are returned:
+### Filter to return only the options that end with `01` or `02`
 
 **Regex**:
 
@@ -285,7 +285,7 @@ backend_01
 backend_02
 ```
 
-### Filter and modify the options using a regular expression to capture group to return part of the text:
+### Filter and modify the options using a regular expression to capture group to return part of the text
 
 **Regex**:
 
@@ -300,7 +300,7 @@ Result:
 02
 ```
 
-### Filter and modify - Prometheus Example
+### Filter and modify: Prometheus Example
 
 List of options:
 

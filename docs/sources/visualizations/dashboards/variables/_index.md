@@ -16,8 +16,6 @@ weight: 800
 
 # Variables
 
-<!--TODO: Decide whether to use viewers or users language on this page -->
-
 A variable is a placeholder for a value that you can use in dashboard queries, panel titles, links, and other dashboard elements.
 When you change the value of a variable, Grafana updates every dashboard element that uses that variable.
 
@@ -47,10 +45,10 @@ You can use variables in:
 
 To work with variables, you typically do the following:
 
-- Choose the type of variable that matches the value you want viewers to control.
-- Add the variable to the dashboard.
-- Use the variable in queries, titles, links, or other dashboard fields.
-- Manage the variable order, dependencies, and URL behavior as the dashboard grows.
+1. Choose the type of variable that matches the value you want viewers to control.
+1. Add the variable to the dashboard.
+1. Use the variable in queries, titles, links, or other dashboard fields.
+1. Manage the variable order, dependencies, and URL behavior as the dashboard grows.
 
 To see variable settings, click **Edit** in the top-right corner of the dashboard, click the **Dashboard options** icon, click **Settings**, and then click **Variables**.
 
@@ -71,12 +69,12 @@ Choose a variable type based on how you want Grafana to get the value and how us
 | ------------- | ---------- |
 | Query | The list of values comes from a data source query, such as server names, metric names, label values, or data centers. |
 | Custom | You want to define a fixed list of values manually. |
-| Text box | Users need to enter a free-form value. |
-| Constant | A dashboard needs a reusable value that users don't change. |
-| Data source | Users need to switch a dashboard or query between data source instances. |
-| Interval | Users need to change the time grouping or aggregation interval in queries. |
-| Filters | Users need dashboard-wide key/value filters for supported data sources. |
-| Switch | Users need to toggle between two configured values. |
+| Text box | Viewers need to enter a free-form value. |
+| Constant | A dashboard needs a reusable value that viewers don't change. |
+| Data source | Viewers need to switch a dashboard or query between data source instances. |
+| Interval | Viewers need to change the time grouping or aggregation interval in queries. |
+| Filters | Viewers need dashboard-wide key/value filters for supported data sources. |
+| Switch | Viewers need to toggle between two configured values. |
 
 For the complete list of variable settings and type-specific steps, refer to [Add variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/).
 
