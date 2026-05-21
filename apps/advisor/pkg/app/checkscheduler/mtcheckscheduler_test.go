@@ -151,7 +151,7 @@ func TestDiscoverNamespaces_IgnoresNonStacksNamespaces(t *testing.T) {
 				Items: []advisorv0alpha1.Check{
 					{
 						ObjectMeta: metav1.ObjectMeta{
-							Namespace:         "stacks-tenant",
+							Namespace:         "stacks-42",
 							Name:              "a",
 							CreationTimestamp: old,
 						},
@@ -170,6 +170,20 @@ func TestDiscoverNamespaces_IgnoresNonStacksNamespaces(t *testing.T) {
 							CreationTimestamp: old,
 						},
 					},
+					{
+						ObjectMeta: metav1.ObjectMeta{
+							Namespace:         "stacks-not-a-number",
+							Name:              "d",
+							CreationTimestamp: old,
+						},
+					},
+					{
+						ObjectMeta: metav1.ObjectMeta{
+							Namespace:         "org-2",
+							Name:              "e",
+							CreationTimestamp: old,
+						},
+					},
 				},
 			}, nil
 		},
@@ -180,9 +194,9 @@ func TestDiscoverNamespaces_IgnoresNonStacksNamespaces(t *testing.T) {
 	}
 	ns, last, err := r.discoverNamespaces(context.Background(), &logging.NoOpLogger{})
 	assert.NoError(t, err)
-	assert.Equal(t, []string{"stacks-tenant"}, ns)
+	assert.Equal(t, []string{"stacks-42"}, ns)
 	assert.Len(t, last, 1)
-	assert.Equal(t, old.Time, last["stacks-tenant"])
+	assert.Equal(t, old.Time, last["stacks-42"])
 }
 
 func TestRunner_MT_ErrorIsolation(t *testing.T) {
@@ -197,14 +211,14 @@ func TestRunner_MT_ErrorIsolation(t *testing.T) {
 					Items: []advisorv0alpha1.Check{
 						{
 							ObjectMeta: metav1.ObjectMeta{
-								Namespace: "stacks-ok", Name: "a", CreationTimestamp: old,
+								Namespace: "stacks-1", Name: "a", CreationTimestamp: old,
 								Labels:      map[string]string{checks.TypeLabel: "test-check"},
 								Annotations: map[string]string{checks.StatusAnnotation: checks.StatusAnnotationProcessed},
 							},
 						},
 						{
 							ObjectMeta: metav1.ObjectMeta{
-								Namespace: "stacks-bad", Name: "b", CreationTimestamp: old,
+								Namespace: "stacks-2", Name: "b", CreationTimestamp: old,
 								Labels:      map[string]string{checks.TypeLabel: "test-check"},
 								Annotations: map[string]string{checks.StatusAnnotation: checks.StatusAnnotationProcessed},
 							},
@@ -226,7 +240,7 @@ func TestRunner_MT_ErrorIsolation(t *testing.T) {
 		},
 		createFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.CreateOptions) (resource.Object, error) {
 			ns := obj.GetNamespace()
-			if ns == "stacks-bad" {
+			if ns == "stacks-2" {
 				return nil, errors.New("simulated create failure")
 			}
 			mu.Lock()
@@ -250,8 +264,8 @@ func TestRunner_MT_ErrorIsolation(t *testing.T) {
 	assert.ErrorIs(t, err, context.DeadlineExceeded)
 	mu.Lock()
 	defer mu.Unlock()
-	assert.Contains(t, created, "stacks-ok")
-	assert.NotContains(t, created, "stacks-bad")
+	assert.Contains(t, created, "stacks-1")
+	assert.NotContains(t, created, "stacks-2")
 }
 
 // TestRunTickParallelMT_NoDataRaceOnLastCreatedMap exercises the parallel
@@ -295,6 +309,52 @@ func TestRunTickParallelMT_NoDataRaceOnLastCreatedMap(t *testing.T) {
 	for _, ns := range namespaces {
 		assert.True(t, lastCreated[ns].After(stale), "expected updated timestamp for %s, got %v", ns, lastCreated[ns])
 	}
+}
+
+// TestRunner_MT_InitialDiscoveryFailure verifies that a failure on the
+// boot-time cluster-wide Check list tears down the runner with the underlying
+// error wrapped, so the app-sdk runtime can surface it rather than letting the
+// scheduler silently keep running with no namespaces.
+func TestRunner_MT_InitialDiscoveryFailure(t *testing.T) {
+	bootErr := errors.New("boom")
+	mockClient := &MockClient{
+		listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
+			return nil, bootErr
+		},
+	}
+	mockTypes := &MockClient{}
+	runner := createTestMTRunner(mockClient, mockTypes, &MockCheckService{checks: []checks.Check{}})
+
+	err := runAndTimeout(runner)
+	assert.ErrorIs(t, err, bootErr)
+	assert.NotErrorIs(t, err, context.DeadlineExceeded)
+}
+
+// TestTickNamespace_SkipsWhenNotStale verifies that tickNamespace does no work
+// (no Create call) when the namespace's last check is newer than the
+// evaluation interval, and returns the input lastCreated unchanged so the
+// caller does not overwrite it.
+func TestTickNamespace_SkipsWhenNotStale(t *testing.T) {
+	var createCalled atomic.Bool
+	mockClient := &MockClient{
+		listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
+			return &advisorv0alpha1.CheckList{Items: []advisorv0alpha1.Check{}}, nil
+		},
+		createFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.CreateOptions) (resource.Object, error) {
+			createCalled.Store(true)
+			return obj, nil
+		},
+	}
+	r := &Runner{
+		checksClient:        mockClient,
+		defaultEvalInterval: 1 * time.Hour,
+		log:                 &logging.NoOpLogger{},
+	}
+	recent := time.Now().Add(-1 * time.Minute)
+	newLast, err := r.tickNamespace(context.Background(), &logging.NoOpLogger{}, "stacks-1", recent)
+	assert.NoError(t, err)
+	assert.Equal(t, recent, newLast)
+	assert.False(t, createCalled.Load(), "tickNamespace must not create checks when not stale")
 }
 
 // MT test helpers

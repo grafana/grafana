@@ -6,20 +6,17 @@ import (
 	"maps"
 	"math/rand"
 	"sort"
-	"strings"
 	"sync"
 	"time"
 
+	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/metrics"
 	"golang.org/x/sync/errgroup"
 )
 
-const (
-	maxConcurrency       = 10
-	stackNamespacePrefix = "stacks-"
-)
+const maxConcurrency = 10
 
 // runMT runs the multi-tenant scheduler loop. Namespaces are discovered
 // cluster-wide from existing Check resources, lastCreated state is tracked
@@ -55,12 +52,11 @@ func (r *Runner) runMT(ctx context.Context, logger logging.Logger) error {
 			logger.Debug("checkscheduler step", "step", "discoverNamespaces.tick", "detail", "cluster-wide Check list")
 			namespaces, lastCreatedMap, err = r.discoverNamespaces(ctxWithoutCancel, logger)
 			if err != nil {
-				logger.Error("Error discovering namespaces", "error", err)
-				// Do not exit the loop: a transient RBAC or API error should not stop the scheduler.
-				nextEvalTime = r.mtTickInterval()
-				logger.Debug("checkscheduler retry after discover failure", "next_eval", nextEvalTime)
-				ticker.Reset(nextEvalTime)
-				continue
+				// A discovery failure mid-loop signals a real problem (RBAC, apiserver
+				// reachability, etc.) that the runner shouldn't silently retry through:
+				// tear down so the app-sdk runtime can surface it and restart us.
+				logger.Error("Error discovering namespaces, stopping scheduler", "error", err)
+				return fmt.Errorf("failed to discover namespaces (cluster-wide checks list): %w", err)
 			}
 			r.runTickParallelMT(ctx, logger, namespaces, lastCreatedMap)
 
@@ -88,7 +84,7 @@ func (r *Runner) mtTickInterval() time.Duration {
 }
 
 // discoverNamespaces lists Check objects cluster-wide (namespace ""), paginates, and returns
-// every stacks-* namespace that has at least one check plus the latest creation time per namespace.
+// every cloud-stack namespace that has at least one check, plus the latest creation time per namespace.
 func (r *Runner) discoverNamespaces(ctx context.Context, log logging.Logger) ([]string, map[string]time.Time, error) {
 	start := time.Now()
 	var discoveryErr error
@@ -119,7 +115,8 @@ func (r *Runner) discoverNamespaces(ctx context.Context, log logging.Logger) ([]
 		pageSkipped := 0
 		for _, item := range items {
 			ns := item.GetNamespace()
-			if !strings.HasPrefix(ns, stackNamespacePrefix) {
+			info, parseErr := types.ParseNamespace(ns)
+			if parseErr != nil || info.StackID == 0 {
 				pageSkipped++
 				continue
 			}
@@ -130,7 +127,7 @@ func (r *Runner) discoverNamespaces(ctx context.Context, log logging.Logger) ([]
 		}
 		cont := list.GetContinue()
 		log.Debug("checkscheduler discoverNamespaces page done", "page", page, "items_in_page", len(items),
-			"stack_namespaces_known", len(lastCreated), "skipped_non_stacks_prefix_in_page", pageSkipped, "has_more", cont != "")
+			"stack_namespaces_known", len(lastCreated), "skipped_non_stack_in_page", pageSkipped, "has_more", cont != "")
 		if cont == "" {
 			break
 		}
