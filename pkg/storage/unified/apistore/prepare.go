@@ -235,12 +235,12 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	if err != nil {
 		return v, err
 	}
-	if err = s.verifyFolder(obj); err != nil {
-		return v, err
-	}
 
 	// Check if we should bump the generation
 	if obj.GetFolder() != previous.GetFolder() {
+		if err = s.verifyFolder(obj); err != nil {
+			return v, err
+		}
 		if err := s.ensureRepoManagedByParentFolder(ctx, obj); err != nil {
 			return v, err
 		}
