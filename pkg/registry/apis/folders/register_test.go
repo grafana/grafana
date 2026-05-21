@@ -336,7 +336,6 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 			require.NoError(t, err)
 		})
 	}
-
 }
 
 func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
