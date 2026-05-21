@@ -687,9 +687,9 @@ func TestBuildIndex_RebuildLeaderUploads(t *testing.T) {
 	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotUploads.WithLabelValues(snapshotUploadStatusSuccess)))
 }
 
-// TestBuildIndex_RebuildWaiterDownloadsFreshSnapshot verifies that a periodic
-// rebuild waits behind an existing build lock and downloads the fresh snapshot
-// instead of rebuilding locally.
+// TestBuildIndex_RebuildLeaderLockLostDuringBuild verifies that if the rebuild
+// leader's lock is lost during the build, the immediate upload is skipped but
+// the rebuild itself still completes — lock-lost is coordination, not fatal.
 func TestBuildIndex_RebuildLeaderLockLostDuringBuild(t *testing.T) {
 	store := newHookableStore(t)
 	ns := newTestNsResource()
@@ -725,7 +725,7 @@ func TestBuildIndex_RebuildWaiterDownloadsFreshSnapshot(t *testing.T) {
 		MinDocCount: 1,
 		MaxIndexAge: 24 * time.Hour,
 	})
-	withRebuildCoordinationPollInterval(t, 5*time.Millisecond)
+	withSnapshotBuildPollInterval(t, 5*time.Millisecond)
 
 	heldLock, err := store.inner.LockBuildIndex(t.Context(), ns, "11.5.0")
 	require.NoError(t, err)
@@ -1323,25 +1323,26 @@ func TestFindFreshSnapshotByBuildStart(t *testing.T) {
 	})
 }
 
-// withColdStartTimings overrides the package-level wait-loop timings for the
+// withSnapshotBuildPollInterval overrides snapshotBuildPollInterval for the
 // duration of the test. Restored via t.Cleanup.
-func withColdStartTimings(t *testing.T, poll, total time.Duration) {
+func withSnapshotBuildPollInterval(t *testing.T, poll time.Duration) {
 	t.Helper()
-	prevPoll, prevTotal := coldStartPollInterval, coldStartTotalWait
-	coldStartPollInterval = poll
-	coldStartTotalWait = total
+	prev := snapshotBuildPollInterval
+	snapshotBuildPollInterval = poll
 	t.Cleanup(func() {
-		coldStartPollInterval = prevPoll
-		coldStartTotalWait = prevTotal
+		snapshotBuildPollInterval = prev
 	})
 }
 
-func withRebuildCoordinationPollInterval(t *testing.T, poll time.Duration) {
+// withColdStartTimings overrides the cold-start wait-loop timings for the
+// duration of the test. Restored via t.Cleanup.
+func withColdStartTimings(t *testing.T, poll, total time.Duration) {
 	t.Helper()
-	prev := rebuildCoordinationPollInterval
-	rebuildCoordinationPollInterval = poll
+	withSnapshotBuildPollInterval(t, poll)
+	prev := coldStartTotalWait
+	coldStartTotalWait = total
 	t.Cleanup(func() {
-		rebuildCoordinationPollInterval = prev
+		coldStartTotalWait = prev
 	})
 }
 
@@ -1399,7 +1400,7 @@ func TestColdStart_BecameLeader(t *testing.T) {
 	assert.Equal(t, "leader", role)
 	require.NotNil(t, lock)
 	assert.Equal(t, int32(1), store.lockAcquireCalls.Load())
-	assert.Equal(t, 1.0, ct.coldStartCounter(coldStartOutcomeAcquiredLock))
+	assert.Equal(t, 1.0, ct.coldStartCounter(snapshotBuildOutcomeAcquiredLock))
 
 	require.NoError(t, lock.Release())
 	assert.Equal(t, int32(1), store.lockReleaseCalls.Load(),
@@ -1437,7 +1438,7 @@ func TestColdStart_WaitedForLeader(t *testing.T) {
 	// zero (no Release was invoked because no Acquire ever succeeded).
 	assert.Zero(t, store.lockReleaseCalls.Load(),
 		"waiter must not acquire the lock when a snapshot becomes available")
-	assert.Equal(t, 1.0, ct.coldStartCounter(coldStartOutcomeDownloadedAfterWait))
+	assert.Equal(t, 1.0, ct.coldStartCounter(snapshotBuildOutcomeDownloadedAfterWait))
 }
 
 func TestColdStart_WaitTimeout(t *testing.T) {
@@ -1450,7 +1451,7 @@ func TestColdStart_WaitTimeout(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "build_alone", role)
 	assert.Nil(t, lock)
-	assert.Equal(t, 1.0, ct.coldStartCounter(coldStartOutcomeWaitTimedOut))
+	assert.Equal(t, 1.0, ct.coldStartCounter(snapshotBuildOutcomeWaitTimedOut))
 	// We retried the lock at least a couple times before giving up.
 	assert.GreaterOrEqual(t, store.lockAcquireCalls.Load(), int32(2))
 }
@@ -1474,7 +1475,7 @@ func TestColdStart_AcquiresLockAfterLeaderRelease(t *testing.T) {
 	assert.Equal(t, "leader", role)
 	require.NotNil(t, lock)
 	t.Cleanup(func() { _ = lock.Release() })
-	assert.Equal(t, 1.0, ct.coldStartCounter(coldStartOutcomeAcquiredLock))
+	assert.Equal(t, 1.0, ct.coldStartCounter(snapshotBuildOutcomeAcquiredLock))
 }
 
 func TestColdStart_LockBackendErrorBuildsAlone(t *testing.T) {
@@ -1486,7 +1487,7 @@ func TestColdStart_LockBackendErrorBuildsAlone(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "build_alone", role)
 	assert.Nil(t, lock)
-	assert.Equal(t, 1.0, ct.coldStartCounter(coldStartOutcomeLockError))
+	assert.Equal(t, 1.0, ct.coldStartCounter(snapshotBuildOutcomeLockError))
 }
 
 // TestColdStart_LockBackendContextErrorPropagates verifies that a context
@@ -1502,9 +1503,9 @@ func TestColdStart_LockBackendContextErrorPropagates(t *testing.T) {
 
 	_, _, err := ct.coordinate(ctx, time.Time{})
 	require.ErrorIs(t, err, context.Canceled)
-	assert.Zero(t, ct.coldStartCounter(coldStartOutcomeLockError), "context cancel must not be recorded as lock_error")
-	assert.Zero(t, ct.coldStartCounter(coldStartOutcomeWaitTimedOut), "context cancel must not be recorded as wait_timed_out")
-	assert.Equal(t, 1.0, ct.coldStartCounter(coldStartOutcomeContextCanceled))
+	assert.Zero(t, ct.coldStartCounter(snapshotBuildOutcomeLockError), "context cancel must not be recorded as lock_error")
+	assert.Zero(t, ct.coldStartCounter(snapshotBuildOutcomeWaitTimedOut), "context cancel must not be recorded as wait_timed_out")
+	assert.Equal(t, 1.0, ct.coldStartCounter(snapshotBuildOutcomeContextCanceled))
 }
 
 func TestColdStart_ContextCancelInWaitLoop(t *testing.T) {
@@ -1521,8 +1522,8 @@ func TestColdStart_ContextCancelInWaitLoop(t *testing.T) {
 
 	_, _, err := ct.coordinate(ctx, time.Time{})
 	require.ErrorIs(t, err, context.Canceled)
-	assert.Zero(t, ct.coldStartCounter(coldStartOutcomeWaitTimedOut), "context cancel must not be recorded as wait_timed_out")
-	assert.Equal(t, 1.0, ct.coldStartCounter(coldStartOutcomeContextCanceled))
+	assert.Zero(t, ct.coldStartCounter(snapshotBuildOutcomeWaitTimedOut), "context cancel must not be recorded as wait_timed_out")
+	assert.Equal(t, 1.0, ct.coldStartCounter(snapshotBuildOutcomeContextCanceled))
 }
 
 // runBuildIndexColdStart wires a bleveBackend around store and calls
@@ -1585,7 +1586,7 @@ func TestBuildIndex_ColdStartLeaderUploads(t *testing.T) {
 	assert.Equal(t, int32(1), builderCalled.Load(), "builder must run on the leader path")
 	assert.Equal(t, int32(1), store.uploadCalls.Load(), "leader must upload immediately")
 	assert.Equal(t, int32(1), store.lockReleaseCalls.Load(), "leader must release the build lock")
-	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotColdStarts.WithLabelValues(coldStartOutcomeAcquiredLock)))
+	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotColdStarts.WithLabelValues(snapshotBuildOutcomeAcquiredLock)))
 	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotUploads.WithLabelValues(snapshotUploadStatusSuccess)))
 }
 
@@ -1621,7 +1622,7 @@ func TestBuildIndex_ColdStartTimeoutBuildsAlone(t *testing.T) {
 
 	assert.Equal(t, int32(1), builderCalled.Load(), "build alone after timeout")
 	assert.Zero(t, store.uploadCalls.Load(), "no leader upload on timeout path")
-	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotColdStarts.WithLabelValues(coldStartOutcomeWaitTimedOut)))
+	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotColdStarts.WithLabelValues(snapshotBuildOutcomeWaitTimedOut)))
 }
 
 // TestBuildIndex_ColdStartRunsWhenMaxIndexAgeZero verifies that
@@ -1650,7 +1651,7 @@ func TestBuildIndex_ColdStartRunsWhenMaxIndexAgeZero(t *testing.T) {
 	assert.Equal(t, int32(1), store.lockAcquireCalls.Load(), "cold-start must attempt the lock even when MaxIndexAge=0")
 	assert.Equal(t, int32(1), store.uploadCalls.Load(), "leader must upload immediately")
 	assert.Equal(t, int32(1), store.lockReleaseCalls.Load(), "leader must release the build lock")
-	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotColdStarts.WithLabelValues(coldStartOutcomeAcquiredLock)))
+	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotColdStarts.WithLabelValues(snapshotBuildOutcomeAcquiredLock)))
 	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotUploads.WithLabelValues(snapshotUploadStatusSuccess)))
 }
 
