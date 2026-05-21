@@ -601,6 +601,15 @@ type snapshotBuildCoordinationOpts struct {
 //   - both nil, err == nil: lock backend failed or wait timed out; caller builds alone.
 //   - err != nil:           context canceled mid-coordination.
 //
+// Error contract: coordination is best-effort. Only context cancellation is
+// returned to the caller. Probe failures (list/download/manifest read) and
+// non-contention lock backend failures are logged and converted to outcomes
+// ("lock_error", "wait_timed_out", ...) on the IndexSnapshotBuildCoordinations
+// metric, then the caller is told to build alone or to keep waiting. This
+// keeps callers simple: a flaky storage or lock backend should never fail an
+// index build, just degrade coordination quality. For debugging, inspect the
+// warn logs from this function and from the probe helpers, plus the metric.
+//
 // Each iteration:
 //  1. Probe for a usable same-version snapshot. If found, download it.
 //  2. Try to acquire LockBuildIndex (no waiting). If acquired, return as

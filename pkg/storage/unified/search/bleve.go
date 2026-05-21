@@ -867,13 +867,12 @@ func (b *bleveBackend) prepareIndex(
 		// with same-version replicas and accept only a snapshot fresh enough to serve
 		// as a drop-in replacement. There is no tiered fallback here because we
 		// already have a working index.
+		// coordinateRebuild only returns err on ctx cancellation; propagate it directly.
 		idx, name, rv, lock, err := b.coordinateRebuild(ctx, key, resourceDir, lastImportTime, maxFreshSnapshotAge, logger)
 		if err != nil {
-			if ctxErr := ctx.Err(); ctxErr != nil {
-				return preparedBuildIndex{}, ctxErr
-			}
-			logger.Warn("Rebuild coordination failed, will rebuild from scratch", "err", err)
-		} else if idx != nil {
+			return preparedBuildIndex{}, err
+		}
+		if idx != nil {
 			return preparedBuildIndex{
 				index:         idx,
 				indexRV:       rv,
@@ -942,13 +941,12 @@ func (b *bleveBackend) prepareUncachedFileIndex(
 		}, nil
 	}
 
+	// coordinateColdStartBuild only returns err on ctx cancellation; propagate it directly.
 	idx, name, rv, lock, err := b.coordinateColdStartBuild(ctx, key, resourceDir, lastImportTime, logger)
 	if err != nil {
-		if ctxErr := ctx.Err(); ctxErr != nil {
-			return preparedBuildIndex{}, ctxErr
-		}
-		logger.Warn("Cold-start coordination failed, will build alone", "err", err)
-	} else if idx != nil {
+		return preparedBuildIndex{}, err
+	}
+	if idx != nil {
 		return preparedBuildIndex{
 			index:         idx,
 			indexRV:       rv,
