@@ -9,6 +9,7 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	"github.com/open-feature/go-sdk/openfeature"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -26,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -59,6 +61,7 @@ type CascadeWatcher struct {
 	restConfig    apiserver.RestConfigProvider
 	folderSearch  folderSearcher
 	folderMutator folderMutator
+	flagEnabled   func(ctx context.Context) bool
 	log           *slog.Logger
 	resync        time.Duration
 }
@@ -80,13 +83,28 @@ func ProvideCascadeWatcher(
 	return &CascadeWatcher{
 		restConfig:   restConfig,
 		folderSearch: folderSearch,
+		flagEnabled:  cascadeDeleteFlagEnabled,
 		log:          slog.Default().With("logger", "folder-cascade-watcher"),
 		resync:       defaultCascadeWatcherResync,
 	}
 }
 
+func cascadeDeleteFlagEnabled(ctx context.Context) bool {
+	return openfeature.NewDefaultClient().Boolean(
+		ctx,
+		featuremgmt.FlagKubernetesFolderCascadeDelete,
+		false,
+		openfeature.TransactionContext(ctx),
+	)
+}
+
 // Run implements registry.BackgroundService.
 func (w *CascadeWatcher) Run(ctx context.Context) error {
+	if w.flagEnabled == nil || !w.flagEnabled(ctx) {
+		w.log.Debug("folder cascade watcher disabled", "flag", featuremgmt.FlagKubernetesFolderCascadeDelete)
+		return nil
+	}
+
 	restCfg, err := w.restConfig.GetRestConfig(ctx)
 	if err != nil {
 		if errors.Is(err, context.Canceled) {

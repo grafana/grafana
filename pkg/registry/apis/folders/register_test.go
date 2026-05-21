@@ -585,6 +585,7 @@ func TestFolderAPIBuilder_Mutate_Create(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			setKubernetesFolderCascadeDeleteToggle(t, false)
 			us := grafanarest.NewMockStorage(t)
 			sm := resource.NewMockResourceClient(t)
 			b := &FolderAPIBuilder{
@@ -698,6 +699,7 @@ func TestFolderAPIBuilder_Mutate_Update(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			setKubernetesFolderCascadeDeleteToggle(t, false)
 			admAttr := admission.NewAttributesRecord(
 				tt.input,
 				existingObj,
@@ -724,4 +726,52 @@ func TestFolderAPIBuilder_Mutate_Update(t *testing.T) {
 			require.Equal(t, tt.input, tt.expected)
 		})
 	}
+}
+
+func TestFolderAPIBuilder_Mutate_cascadeFinalizerGatedByFeatureFlag(t *testing.T) {
+	newAttrs := func(input *folders.Folder) admission.Attributes {
+		return admission.NewAttributesRecord(
+			input,
+			nil,
+			folders.SchemeGroupVersion.WithKind("folder"),
+			"stacks-123",
+			input.Name,
+			folders.SchemeGroupVersion.WithResource("folders"),
+			"",
+			"CREATE",
+			nil,
+			true,
+			&user.SignedInUser{},
+		)
+	}
+	newFolder := func() *folders.Folder {
+		return &folders.Folder{
+			Spec:       folders.FolderSpec{Title: "foo"},
+			TypeMeta:   metav1.TypeMeta{Kind: "Folder"},
+			ObjectMeta: metav1.ObjectMeta{Name: "valid-name"},
+		}
+	}
+
+	us := grafanarest.NewMockStorage(t)
+	sm := resource.NewMockResourceClient(t)
+	b := &FolderAPIBuilder{
+		namespacer: func(_ int64) string { return "123" },
+		storage:    us,
+		searcher:   sm,
+		parents:    newParentsGetter(us, setting.NewCfg().MaxNestedFolderDepth),
+	}
+
+	t.Run("flag off does not add finalizer", func(t *testing.T) {
+		setKubernetesFolderCascadeDeleteToggle(t, false)
+		f := newFolder()
+		require.NoError(t, b.Mutate(context.Background(), newAttrs(f), nil))
+		require.Empty(t, f.Finalizers)
+	})
+
+	t.Run("flag on adds cascade finalizer", func(t *testing.T) {
+		setKubernetesFolderCascadeDeleteToggle(t, true)
+		f := newFolder()
+		require.NoError(t, b.Mutate(context.Background(), newAttrs(f), nil))
+		require.Contains(t, f.Finalizers, CascadeDeleteFinalizer)
+	})
 }

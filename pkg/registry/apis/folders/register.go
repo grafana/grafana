@@ -194,7 +194,10 @@ func (b *FolderAPIBuilder) storageForVersion(
 		return err
 	}
 	b.registerPermissionHooks(unified)
-	st := newFinalizerStorage(unified)
+	var st grafanarest.Storage = unified
+	if kubernetesFolderCascadeDeleteEnabled(context.Background()) {
+		st = newFinalizerStorage(unified)
+	}
 	b.storage = st
 
 	// This is the ST wrapper
@@ -463,7 +466,9 @@ func (b *FolderAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o
 		if !ok {
 			return fmt.Errorf("obj is not folders.Folder")
 		}
-		ensureCascadeFinalizerOnObject(f)
+		if kubernetesFolderCascadeDeleteEnabled(ctx) {
+			ensureCascadeFinalizerOnObject(f)
+		}
 		f.Spec.Title = strings.Trim(f.Spec.Title, " ")
 		return nil
 	case admission.Delete:
