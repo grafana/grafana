@@ -135,7 +135,7 @@ const getStyles = (theme: GrafanaTheme2, wrapName = false) => {
     label: css({
       label: 'LegendLabel',
       whiteSpace: wrapName ? 'normal' : 'nowrap',
-      textAlign: wrapName ? 'left' : undefined,
+      textAlign: 'left',
       background: 'none',
       border: 'none',
       fontSize: 'inherit',
