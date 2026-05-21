@@ -2643,6 +2643,20 @@
     },
     {
       "metadata": {
+        "name": "frontendService.reducedBootDataAPI",
+        "resourceVersion": "1779301675561",
+        "creationTimestamp": "2026-05-20T18:27:55Z"
+      },
+      "spec": {
+        "description": "Frontend Service doesn't rely on the /bootdata API, instead loads configuration as needed",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "frontendService.settingsSourceFilter",
         "resourceVersion": "1776170446239",
         "creationTimestamp": "2026-04-14T12:40:46Z"
@@ -3679,6 +3693,23 @@
         "description": "Redirects the request of the external group mapping endpoints to the app platform APIs",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesFolderCascadeDelete",
+        "resourceVersion": "1779200031641",
+        "creationTimestamp": "2026-05-19T14:07:10Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-05-19 14:13:51.641875451 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enable folder.grafana.app cascade deletion: opt-in non-empty delete via gracePeriodSeconds=0. Until cascade reconciliation exists, deleting a non-empty folder removes only the folder and leaves child dashboards, nested folders, and other contained resources orphaned",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
         "hideFromDocs": true,
         "expression": "false"
       }

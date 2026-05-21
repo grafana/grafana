@@ -719,9 +719,11 @@ type Cfg struct {
 	VertexLocation    string // default "us-central1"
 	VertexModel       string // default "gemini-embedding-001"
 	VertexDimensions  int    // default 768
+	VertexBatchSize   int    // texts per Vertex predict call; default 50
 	BedrockRegion     string // default "us-east-1"
 	BedrockModel      string // default "cohere.embed-v4:0"
 	BedrockDimensions int    // default 1024
+	BedrockBatchSize  int    // texts per Bedrock invoke call; default 50
 
 	// Overrides/Quotas
 	OverridesFilePath             string

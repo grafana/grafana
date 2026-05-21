@@ -22,6 +22,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
@@ -82,14 +84,14 @@ func TestAlertmanager_SaveAndApplyExtraConfiguration_WithExternalSecrets(t *test
 	am, err := moa.AlertmanagerFor(1)
 	require.NoError(t, err)
 
-	cfg := &definitions.PostableUserConfig{
-		AlertmanagerConfig: definitions.PostableApiAlertingConfig{
-			Config: definitions.Config{
-				Route: &definitions.Route{
+	cfg := &v1.AMConfigV1{
+		AlertmanagerConfig: v1.PostableApiAlertingConfig{
+			Config: v1.Config{
+				Route: &v1.Route{
 					Receiver: "default-receiver",
 				},
 			},
-			Receivers: []*definitions.PostableApiReceiver{
+			Receivers: []*v1.PostableApiReceiver{
 				{
 					Receiver: definitions.Receiver{Name: "default-receiver"},
 				},
@@ -100,7 +102,7 @@ func TestAlertmanager_SaveAndApplyExtraConfiguration_WithExternalSecrets(t *test
 	err = moa.saveAndApplyConfig(context.Background(), 1, am, cfg)
 	require.NoError(t, err)
 
-	_, err = moa.SaveAndApplyExtraConfiguration(context.Background(), 1, &user.SignedInUser{}, noopExtraConfigAuthz{}, definitions.ExtraConfiguration{
+	_, err = moa.SaveAndApplyExtraConfiguration(context.Background(), 1, &user.SignedInUser{}, noopExtraConfigAuthz{}, v1.ExtraConfiguration{
 		Identifier: "external-prometheus",
 		AlertmanagerConfig: `
 route:
@@ -149,14 +151,14 @@ receivers:
 }
 
 func TestAlertmanager_ApplyConfig(t *testing.T) {
-	basicConfig := func() definitions.PostableApiAlertingConfig {
-		return definitions.PostableApiAlertingConfig{
-			Config: definitions.Config{
-				Route: &definitions.Route{
+	basicConfig := func() v1.PostableApiAlertingConfig {
+		return v1.PostableApiAlertingConfig{
+			Config: v1.Config{
+				Route: &v1.Route{
 					Receiver: "default-receiver",
 				},
 			},
-			Receivers: []*definitions.PostableApiReceiver{
+			Receivers: []*v1.PostableApiReceiver{
 				{
 					Receiver: definitions.Receiver{
 						Name: "default-receiver",
@@ -168,13 +170,13 @@ func TestAlertmanager_ApplyConfig(t *testing.T) {
 
 	testCases := []struct {
 		name          string
-		config        *definitions.PostableUserConfig
+		config        *v1.AMConfigV1
 		expectedError string
 		skipInvalid   bool
 	}{
 		{
 			name: "basic config",
-			config: &definitions.PostableUserConfig{
+			config: &v1.AMConfigV1{
 				AlertmanagerConfig: basicConfig(),
 				TemplateFiles: map[string]string{
 					"grafana-template": "{{ define \"grafana.title\" }}Alert{{ end }}",
@@ -184,12 +186,12 @@ func TestAlertmanager_ApplyConfig(t *testing.T) {
 		},
 		{
 			name: "with mimir config",
-			config: &definitions.PostableUserConfig{
+			config: &v1.AMConfigV1{
 				AlertmanagerConfig: basicConfig(),
 				TemplateFiles: map[string]string{
 					"grafana-template": "{{ define \"grafana.title\" }}Grafana Alert{{ end }}",
 				},
-				ExtraConfigs: []definitions.ExtraConfiguration{
+				ExtraConfigs: []v1.ExtraConfiguration{
 					{
 						Identifier: "mimir-prod",
 						TemplateFiles: map[string]string{
@@ -213,9 +215,9 @@ receivers:
 		},
 		{
 			name: "invalid config fails",
-			config: &definitions.PostableUserConfig{
+			config: &v1.AMConfigV1{
 				AlertmanagerConfig: basicConfig(),
-				ExtraConfigs: []definitions.ExtraConfiguration{
+				ExtraConfigs: []v1.ExtraConfiguration{
 					{
 						Identifier: "", // invalid: empty identifier
 						AlertmanagerConfig: `route:
@@ -257,21 +259,21 @@ receivers:
 }
 
 func TestAlertmanager_HashStabilityAndChangeDetection(t *testing.T) {
-	baseConfig := func(receivers ...string) *definitions.PostableUserConfig {
-		postableReceivers := make([]*definitions.PostableApiReceiver, 0, len(receivers))
+	baseConfig := func(receivers ...string) *v1.AMConfigV1 {
+		postableReceivers := make([]*v1.PostableApiReceiver, 0, len(receivers))
 		for _, r := range receivers {
-			postableReceivers = append(postableReceivers, &definitions.PostableApiReceiver{
+			postableReceivers = append(postableReceivers, &v1.PostableApiReceiver{
 				Receiver: definitions.Receiver{Name: r},
 			})
 		}
-		return &definitions.PostableUserConfig{
+		return &v1.AMConfigV1{
 			TemplateFiles: map[string]string{
 				"a-template.tmpl": "{{ define \"a\" }}a{{ end }}",
 				"b-template.tmpl": "{{ define \"b\" }}b{{ end }}",
 			},
-			AlertmanagerConfig: definitions.PostableApiAlertingConfig{
-				Config: definitions.Config{
-					Route: &definitions.Route{Receiver: receivers[0]},
+			AlertmanagerConfig: v1.PostableApiAlertingConfig{
+				Config: v1.Config{
+					Route: &v1.Route{Receiver: receivers[0]},
 				},
 				Receivers: postableReceivers,
 			},
@@ -284,9 +286,9 @@ func TestAlertmanager_HashStabilityAndChangeDetection(t *testing.T) {
 		return m
 	}
 
-	toDBConfig := func(t *testing.T, cfg *definitions.PostableUserConfig) *ngmodels.AlertConfiguration {
+	toDBConfig := func(t *testing.T, cfg *v1.AMConfigV1) *ngmodels.AlertConfiguration {
 		t.Helper()
-		raw, err := json.Marshal(&cfg)
+		raw, err := legacy_storage.SerializeAlertmanagerConfig(*cfg)
 		require.NoError(t, err)
 		return &ngmodels.AlertConfiguration{AlertmanagerConfiguration: string(raw)}
 	}
@@ -294,47 +296,47 @@ func TestAlertmanager_HashStabilityAndChangeDetection(t *testing.T) {
 	type testCase struct {
 		name            string
 		features        featuremgmt.FeatureToggles
-		initialConfig   func() *definitions.PostableUserConfig
+		initialConfig   func() *v1.AMConfigV1
 		initialSettings map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting
-		mutate          func(cfg *definitions.PostableUserConfig, settings map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting)
+		mutate          func(cfg *v1.AMConfigV1, settings map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting)
 	}
 
 	testCases := []testCase{
 		{
 			name:     "Basic config without changes is stable",
 			features: featuremgmt.WithFeatures(),
-			initialConfig: func() *definitions.PostableUserConfig {
+			initialConfig: func() *v1.AMConfigV1 {
 				return baseConfig("default-receiver", "extra-receiver")
 			},
 		},
 		{
 			name:     "Route config changes affect hash",
 			features: featuremgmt.WithFeatures(),
-			initialConfig: func() *definitions.PostableUserConfig {
+			initialConfig: func() *v1.AMConfigV1 {
 				return baseConfig("default-receiver", "extra-receiver")
 			},
-			mutate: func(cfg *definitions.PostableUserConfig, _ map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting) {
+			mutate: func(cfg *v1.AMConfigV1, _ map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting) {
 				cfg.AlertmanagerConfig.Route.GroupByStr = []string{"cluster"}
 			},
 		},
 		{
 			name:     "Template config changes affect hash",
 			features: featuremgmt.WithFeatures(),
-			initialConfig: func() *definitions.PostableUserConfig {
+			initialConfig: func() *v1.AMConfigV1 {
 				return baseConfig("default-receiver", "extra-receiver")
 			},
-			mutate: func(cfg *definitions.PostableUserConfig, _ map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting) {
+			mutate: func(cfg *v1.AMConfigV1, _ map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting) {
 				cfg.TemplateFiles["new.tmpl"] = "{{ define \"new\" }}b{{ end }}"
 			},
 		},
 		{
 			name:     "Receiver config changes affect hash",
 			features: featuremgmt.WithFeatures(),
-			initialConfig: func() *definitions.PostableUserConfig {
+			initialConfig: func() *v1.AMConfigV1 {
 				return baseConfig("default-receiver", "extra-receiver")
 			},
-			mutate: func(cfg *definitions.PostableUserConfig, _ map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting) {
-				cfg.AlertmanagerConfig.Receivers = append(cfg.AlertmanagerConfig.Receivers, &definitions.PostableApiReceiver{
+			mutate: func(cfg *v1.AMConfigV1, _ map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting) {
+				cfg.AlertmanagerConfig.Receivers = append(cfg.AlertmanagerConfig.Receivers, &v1.PostableApiReceiver{
 					Receiver: definitions.Receiver{Name: "new-receiver"},
 				})
 			},
@@ -342,9 +344,9 @@ func TestAlertmanager_HashStabilityAndChangeDetection(t *testing.T) {
 		{
 			name:     "extra config changes affect hash",
 			features: featuremgmt.WithFeatures(),
-			initialConfig: func() *definitions.PostableUserConfig {
+			initialConfig: func() *v1.AMConfigV1 {
 				cfg := baseConfig("default-receiver", "extra-receiver")
-				cfg.ExtraConfigs = []definitions.ExtraConfiguration{
+				cfg.ExtraConfigs = []v1.ExtraConfiguration{
 					{
 						Identifier: "mimir-prod",
 						TemplateFiles: map[string]string{
@@ -359,31 +361,31 @@ receivers:
 				}
 				return cfg
 			},
-			mutate: func(cfg *definitions.PostableUserConfig, _ map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting) {
+			mutate: func(cfg *v1.AMConfigV1, _ map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting) {
 				cfg.ExtraConfigs[0].TemplateFiles["extra-b.tmpl"] = "{{ define \"extra.b\" }}changed{{ end }}"
 			},
 		},
 		{
 			name:     "managed routes changes affect hash",
 			features: featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies),
-			initialConfig: func() *definitions.PostableUserConfig {
+			initialConfig: func() *v1.AMConfigV1 {
 				cfg := baseConfig("default-receiver", "team-a", "team-b", "team-c")
-				cfg.ManagedRoutes = definitions.ManagedRoutes{
+				cfg.ManagedRoutes = v1.ManagedRoutes{
 					"team-b-policy": {Receiver: "team-b"},
 					"team-a-policy": {Receiver: "team-a"},
 				}
 				return cfg
 			},
-			mutate: func(cfg *definitions.PostableUserConfig, _ map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting) {
-				cfg.ManagedRoutes["team-c-policy"] = &definitions.Route{Receiver: "team-c"}
+			mutate: func(cfg *v1.AMConfigV1, _ map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting) {
+				cfg.ManagedRoutes["team-c-policy"] = &v1.Route{Receiver: "team-c"}
 			},
 		},
 		{
 			name:     "managed inhibition rule changes affect hash",
 			features: featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies),
-			initialConfig: func() *definitions.PostableUserConfig {
+			initialConfig: func() *v1.AMConfigV1 {
 				cfg := baseConfig("default-receiver", "team-receiver")
-				cfg.ManagedInhibitionRules = definitions.ManagedInhibitionRules{
+				cfg.ManagedInhibitionRules = v1.ManagedInhibitionRules{
 					"suppress-warning-when-critical": {
 						Name: "suppress-warning-when-critical",
 						InhibitRule: definitions.InhibitRule{
@@ -395,14 +397,14 @@ receivers:
 				}
 				return cfg
 			},
-			mutate: func(cfg *definitions.PostableUserConfig, _ map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting) {
+			mutate: func(cfg *v1.AMConfigV1, _ map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting) {
 				cfg.ManagedInhibitionRules["suppress-warning-when-critical"].Equal = []string{"alertname", "cluster", "namespace"}
 			},
 		},
 		{
 			name:     "autogenerated routes from rule contact point routing change hash",
 			features: featuremgmt.WithFeatures(),
-			initialConfig: func() *definitions.PostableUserConfig {
+			initialConfig: func() *v1.AMConfigV1 {
 				return baseConfig("default-receiver", "receiver-1")
 			},
 			initialSettings: map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting{
@@ -415,7 +417,7 @@ receivers:
 					GroupInterval: new(prommodel.Duration(2 * time.Minute)),
 				},
 			},
-			mutate: func(_ *definitions.PostableUserConfig, settings map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting) {
+			mutate: func(_ *v1.AMConfigV1, settings map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting) {
 				settings[ngmodels.AlertRuleKey{OrgID: 1, UID: "rule-b"}] = ngmodels.ContactPointRouting{
 					Receiver:  "receiver-1",
 					GroupWait: new(prommodel.Duration(3 * time.Minute)),
@@ -425,9 +427,9 @@ receivers:
 		{
 			name:     "extra config with v0mimir email config",
 			features: featuremgmt.WithFeatures(),
-			initialConfig: func() *definitions.PostableUserConfig {
+			initialConfig: func() *v1.AMConfigV1 {
 				cfg := baseConfig("default-receiver", "extra-receiver")
-				cfg.ExtraConfigs = []definitions.ExtraConfiguration{
+				cfg.ExtraConfigs = []v1.ExtraConfiguration{
 					{
 						Identifier: "mimir-prod",
 						TemplateFiles: map[string]string{
@@ -448,7 +450,7 @@ receivers:
 				}
 				return cfg
 			},
-			mutate: func(cfg *definitions.PostableUserConfig, _ map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting) {
+			mutate: func(cfg *v1.AMConfigV1, _ map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting) {
 				cfg.ExtraConfigs[0].TemplateFiles["extra-b.tmpl"] = "{{ define \"extra.b\" }}changed{{ end }}"
 			},
 		},
