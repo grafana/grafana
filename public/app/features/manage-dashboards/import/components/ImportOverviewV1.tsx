@@ -72,20 +72,26 @@ export function ImportOverviewV1({ dashboard, inputs, meta, source, folderUid, o
     async (form: ImportDashboardDTO) => {
       reportInteraction(IMPORT_FINISHED_EVENT_NAME);
       try {
-        const dashboardWithDS = applyV1Inputs(dashboard, inputs, form);
+        const dashboardWithDataSources = applyV1Inputs(dashboard, inputs, form);
 
         // Import new library panels first.
         // Library panel models from __elements may contain ${DS_...} placeholders
         // that need to be resolved before creating the library element.
-        for (const lp of inputs.libraryPanels.filter((lp) => lp.state === LibraryPanelInputState.New)) {
-          const model = new PanelModel(interpolateLibraryPanelDatasources(lp.model.model, inputs, form));
-          const { scopedVars, ...saveModel } = model.getSaveModel();
+        const newLibraryPanels = inputs.libraryPanels.filter((lp) => lp.state === LibraryPanelInputState.New);
+        for (const lp of newLibraryPanels) {
+          const interpolatedModel = interpolateLibraryPanelDatasources(lp.model.model, inputs, form);
+          const libPanelWithPanelModel = new PanelModel(interpolatedModel);
+          let { scopedVars, ...panelSaveModel } = libPanelWithPanelModel.getSaveModel();
+          panelSaveModel = {
+            libraryPanel: {
+              name: lp.model.name,
+              uid: lp.model.uid,
+            },
+            ...panelSaveModel,
+          };
+
           try {
-            await addLibraryPanel(
-              { libraryPanel: { name: lp.model.name, uid: lp.model.uid }, ...saveModel },
-              form.folder.uid,
-              lp.model.uid
-            );
+            await addLibraryPanel(panelSaveModel, form.folder.uid, lp.model.uid);
           } catch {
             appEvents.emit(AppEvents.alertWarning, [
               'Library panel import failed',
@@ -94,11 +100,19 @@ export function ImportOverviewV1({ dashboard, inputs, meta, source, folderUid, o
           }
         }
 
-        const payload: SaveDashboardCommand<Dashboard> = {
-          dashboard: stripExportMetadata(dashboardWithDS),
-          k8s: { annotations: { 'grafana.app/folder': form.folder.uid } },
+        const cleanDashboard = stripExportMetadata(dashboardWithDataSources);
+
+        const dashboardK8SPayload: SaveDashboardCommand<Dashboard> = {
+          dashboard: cleanDashboard,
+          k8s: {
+            annotations: {
+              'grafana.app/folder': form.folder.uid,
+            },
+          },
         };
-        const result = await (await getDashboardAPI('v1')).saveDashboard(payload);
+
+        const api = await getDashboardAPI('v1');
+        const result = await api.saveDashboard(dashboardK8SPayload);
         if (result.url) {
           locationService.push(locationUtil.stripBaseFromUrl(result.url));
         }
