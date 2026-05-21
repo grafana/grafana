@@ -3,7 +3,7 @@ name: Check Frontend Test Coverage
 on:
   pull_request:
     branches: [main]
-    types: [opened, synchronize, reopened, labeled, unlabeled]
+    types: [opened, synchronize, reopened, labeled, unlabeled, ready_for_review]
     paths:
       - '**/*.js'
       - '**/*.jsx'
@@ -17,6 +17,7 @@ permissions: {}
 jobs:
   setup:
     name: Setup opted-in teams
+    if: github.event.pull_request.draft == false
     runs-on: ubuntu-x64-small
     outputs:
       # NOTE: Only checks test coverage for opted-in codeowners.
@@ -35,6 +36,7 @@ jobs:
 
   detect-changes:
     name: Detect changed files
+    if: github.event.pull_request.draft == false
     runs-on: ubuntu-x64-small
     permissions:
       contents: read
@@ -72,7 +74,7 @@ jobs:
   cleanup-on-skip:
     name: Cleanup coverage comments
     needs: setup
-    if: contains(github.event.pull_request.labels.*.name, 'no-check-frontend-test-coverage') && github.event.pull_request.head.repo.fork == false
+    if: github.event.pull_request.draft == false && contains(github.event.pull_request.labels.*.name, 'no-check-frontend-test-coverage') && github.event.pull_request.head.repo.fork == false
     runs-on: ubuntu-x64-small
     permissions:
       pull-requests: write
@@ -99,7 +101,7 @@ jobs:
   post-skip-warning:
     name: Post skip warning
     needs: [setup, cleanup-on-skip]
-    if: contains(github.event.pull_request.labels.*.name, 'no-check-frontend-test-coverage') && github.event.pull_request.head.repo.fork == false
+    if: github.event.pull_request.draft == false && contains(github.event.pull_request.labels.*.name, 'no-check-frontend-test-coverage') && github.event.pull_request.head.repo.fork == false
     runs-on: ubuntu-x64-small
     permissions:
       pull-requests: write
@@ -138,7 +140,7 @@ jobs:
 
   clear-skip-warning:
     name: Clear skip warning
-    if: "!contains(github.event.pull_request.labels.*.name, 'no-check-frontend-test-coverage') && github.event.pull_request.head.repo.fork == false"
+    if: "github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'no-check-frontend-test-coverage') && github.event.pull_request.head.repo.fork == false"
     runs-on: ubuntu-x64-small
     permissions:
       pull-requests: write
@@ -160,7 +162,7 @@ jobs:
   coverage:
     name: Coverage - ${{ matrix.codeowner }}
     needs: [setup, detect-changes]
-    if: "!contains(github.event.pull_request.labels.*.name, 'no-check-frontend-test-coverage')"
+    if: "github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'no-check-frontend-test-coverage')"
     runs-on: ubuntu-x64-large
     permissions:
       contents: read
@@ -328,9 +330,12 @@ jobs:
       - name: Check if skipped
         id: check-skip
         run: |
-          if [[ "${{ contains(github.event.pull_request.labels.*.name, 'no-check-frontend-test-coverage') }}" == "true" ]]; then
+          if [[ "${{ github.event.pull_request.draft }}" == "true" ]]; then
             echo "skipped=true" >> "$GITHUB_OUTPUT"
-            echo "✅ Coverage checks skipped due to 'no-check-frontend-test-coverage' label"
+            echo "📝 Coverage checks skipped for draft PR"
+          elif [[ "${{ contains(github.event.pull_request.labels.*.name, 'no-check-frontend-test-coverage') }}" == "true" ]]; then
+            echo "skipped=true" >> "$GITHUB_OUTPUT"
+            echo "🏷️ Coverage checks skipped due to 'no-check-frontend-test-coverage' label"
           else
             echo "skipped=false" >> "$GITHUB_OUTPUT"
             echo "All opted-in teams' coverage checks have completed."
