@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from 'test/test-utils';
 
 import { store } from '@grafana/data';
-import { type ListMeta, type TableResponse } from 'app/features/apiserver/types';
+import { EMPTY_TABLE_RESPONSE, type ListMeta, type TableResponse } from 'app/features/apiserver/types';
 
 import { deletedDashboardsCache } from '../../search/service/deletedDashboardsCache';
 
@@ -19,10 +19,8 @@ const mockGetAsTable = deletedDashboardsCache.getAsTable as jest.MockedFunction<
 
 function buildTable(count: number, metadata: Partial<ListMeta> = {}): TableResponse {
   return {
-    apiVersion: 'meta.k8s.io/v1',
-    kind: 'Table',
+    ...EMPTY_TABLE_RESPONSE,
     metadata: { resourceVersion: '0', ...metadata },
-    columnDefinitions: [],
     rows: Array.from({ length: count }, (_, i) => ({
       cells: [],
       object: {

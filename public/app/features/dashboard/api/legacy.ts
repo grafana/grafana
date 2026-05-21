@@ -3,7 +3,7 @@ import { t } from '@grafana/i18n';
 import { type FetchError, getBackendSrv } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
-import { type Resource, type TableResponse } from 'app/features/apiserver/types';
+import { EMPTY_TABLE_RESPONSE, type Resource, type TableResponse } from 'app/features/apiserver/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { type DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
 import { type SaveDashboardResponseDTO, type DashboardDTO } from 'app/types/dashboard';
@@ -139,13 +139,7 @@ export class LegacyDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard>
    * No-op for legacy API
    */
   listDeletedDashboards(_options: ListDeletedDashboardsOptions): Promise<TableResponse> {
-    return Promise.resolve({
-      apiVersion: 'meta.k8s.io/v1',
-      kind: 'Table',
-      metadata: { resourceVersion: '0' },
-      columnDefinitions: [],
-      rows: [],
-    });
+    return Promise.resolve(EMPTY_TABLE_RESPONSE);
   }
 
   /**

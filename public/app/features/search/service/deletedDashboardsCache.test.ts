@@ -1,5 +1,5 @@
 import { iamAPIv0alpha1, type Display, type DisplayList } from 'app/api/clients/iam/v0alpha1';
-import { AnnoKeyUpdatedBy } from 'app/features/apiserver/types';
+import { AnnoKeyUpdatedBy, EMPTY_TABLE_RESPONSE } from 'app/features/apiserver/types';
 import { dispatch } from 'app/types/store';
 
 import { deletedDashboardsCache, resolveDeletedByDisplayMap } from './deletedDashboardsCache';
@@ -335,8 +335,7 @@ describe('DeletedDashboardsCache', () => {
 
   function makeTable(uids: string[]) {
     return {
-      apiVersion: 'meta.k8s.io/v1' as const,
-      kind: 'Table' as const,
+      ...EMPTY_TABLE_RESPONSE,
       metadata: { resourceVersion: '1' },
       columnDefinitions: [
         { name: 'Name', type: 'string' },
@@ -476,8 +475,7 @@ describe('DeletedDashboardsCache', () => {
 
   it('deduplicates rows by UID keeping the newest resourceVersion', async () => {
     const duplicateTable = {
-      apiVersion: 'meta.k8s.io/v1' as const,
-      kind: 'Table' as const,
+      ...EMPTY_TABLE_RESPONSE,
       metadata: { resourceVersion: '1' },
       columnDefinitions: [
         { name: 'Name', type: 'string' },

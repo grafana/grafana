@@ -98,9 +98,8 @@ export function RecentlyDeletedActions() {
         return { uid, error: 'not_found' };
       }
 
-      const rv = row.object.metadata.resourceVersion;
       const api = await getDashboardAPI();
-      const dashboard = await api.getDashboard(uid, { resourceVersion: rv });
+      const dashboard = await api.getDashboard(uid, { resourceVersion: row.object.metadata.resourceVersion });
 
       const copy = structuredClone(dashboard);
       copy.metadata = {

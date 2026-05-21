@@ -3,7 +3,7 @@ import {
   type Spec as DashboardV2Spec,
   defaultSpec as defaultDashboardV2Spec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { type ResourceList, type TableResponse } from 'app/features/apiserver/types';
+import { EMPTY_TABLE_RESPONSE, type ResourceList, type TableResponse } from 'app/features/apiserver/types';
 import { type DashboardDataDTO, type DashboardDTO } from 'app/types/dashboard';
 
 import { type SaveDashboardCommand } from '../components/SaveDashboard/types';
@@ -425,8 +425,7 @@ describe('UnifiedDashboardAPI', () => {
   describe('listDeletedDashboards', () => {
     it('delegates directly to v1 client', async () => {
       const mockTableResponse: TableResponse = {
-        apiVersion: 'meta.k8s.io/v1',
-        kind: 'Table',
+        ...EMPTY_TABLE_RESPONSE,
         metadata: { resourceVersion: '1', continue: 'next-token' },
         columnDefinitions: [
           { name: 'Name', type: 'string' },
@@ -451,11 +450,8 @@ describe('UnifiedDashboardAPI', () => {
 
     it('passes options through to v1', async () => {
       const mockTableResponse: TableResponse = {
-        apiVersion: 'meta.k8s.io/v1',
-        kind: 'Table',
+        ...EMPTY_TABLE_RESPONSE,
         metadata: { resourceVersion: '1' },
-        columnDefinitions: [],
-        rows: [],
       };
       v1Client.listDeletedDashboards.mockResolvedValue(mockTableResponse);
 

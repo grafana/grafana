@@ -9,6 +9,7 @@ import {
   AnnoKeyMessage,
   AnnoKeySourcePath,
   AnnoReloadOnParamsChange,
+  EMPTY_TABLE_RESPONSE,
   ManagerKind,
 } from 'app/features/apiserver/types';
 import { type DashboardDataDTO } from 'app/types/dashboard';
@@ -552,8 +553,7 @@ describe('v1 dashboard API', () => {
   describe('listDeletedDashboards', () => {
     it('should return table of deleted dashboards', async () => {
       const mockDeletedDashboards = {
-        apiVersion: 'meta.k8s.io/v1',
-        kind: 'Table',
+        ...EMPTY_TABLE_RESPONSE,
         metadata: { resourceVersion: '1' },
         columnDefinitions: [
           { name: 'Name', type: 'string' },

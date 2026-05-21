@@ -11,6 +11,7 @@ import {
   AnnoKeyMessage,
   AnnoKeySavedFromUI,
   DeprecatedInternalId,
+  EMPTY_TABLE_RESPONSE,
 } from 'app/features/apiserver/types';
 
 import { dashboardAPIVersionResolver } from './DashboardAPIVersionResolver';
@@ -490,8 +491,7 @@ describe('v2 dashboard API', () => {
   describe('listDeletedDashboards', () => {
     it('should return table of deleted dashboards', async () => {
       const mockDeletedDashboards = {
-        apiVersion: 'meta.k8s.io/v1',
-        kind: 'Table',
+        ...EMPTY_TABLE_RESPONSE,
         metadata: { resourceVersion: '1' },
         columnDefinitions: [
           { name: 'Name', type: 'string' },

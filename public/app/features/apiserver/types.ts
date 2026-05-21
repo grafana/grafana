@@ -193,6 +193,15 @@ export interface TableResponse<T = PartialObjectMetadata> extends TypeMeta {
   rows: Array<TableRow<T>>;
 }
 
+/** Empty Kubernetes Table response, used as a no-op / fallback return value. */
+export const EMPTY_TABLE_RESPONSE: TableResponse = {
+  apiVersion: 'meta.k8s.io/v1',
+  kind: 'Table',
+  metadata: { resourceVersion: '0' },
+  columnDefinitions: [],
+  rows: [],
+};
+
 export type ListOptionsLabelSelector =
   | string
   | Array<

@@ -1,5 +1,11 @@
 import { iamAPIv0alpha1, type DisplayList } from 'app/api/clients/iam/v0alpha1';
-import { AnnoKeyFolder, AnnoKeyUpdatedBy, type TableResponse, type TableRow } from 'app/features/apiserver/types';
+import {
+  AnnoKeyFolder,
+  AnnoKeyUpdatedBy,
+  EMPTY_TABLE_RESPONSE,
+  type TableResponse,
+  type TableRow,
+} from 'app/features/apiserver/types';
 import { DELETED_DASHBOARDS_LIMIT } from 'app/features/browse-dashboards/components/DeletedDashboardsLimitBanner';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { dispatch } from 'app/types/store';
@@ -95,13 +101,7 @@ class DeletedDashboardsCache {
       } while (rows.length < DELETED_DASHBOARDS_LIMIT && continueToken);
 
       if (!lastResponse) {
-        return {
-          apiVersion: 'meta.k8s.io/v1',
-          kind: 'Table',
-          metadata: { resourceVersion: '0' },
-          columnDefinitions: [],
-          rows: [],
-        };
+        return EMPTY_TABLE_RESPONSE;
       }
 
       // The backend may return multiple soft-deleted versions of the same dashboard
@@ -115,13 +115,7 @@ class DeletedDashboardsCache {
       };
     } catch (error) {
       console.error('Failed to fetch deleted dashboards:', error);
-      return {
-        apiVersion: 'meta.k8s.io/v1',
-        kind: 'Table',
-        metadata: { resourceVersion: '0' },
-        columnDefinitions: [],
-        rows: [],
-      };
+      return EMPTY_TABLE_RESPONSE;
     }
   }
 }
