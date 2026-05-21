@@ -2230,14 +2230,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "newVizSuggestions",
-			Description: "Enable new visualization suggestions",
-			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaDatavizSquad,
-			Expression:  "true",
-		},
-		{
 			Name:        "panelStyleActions",
 			Description: "Enable style actions (copy/paste) in the panel editor",
 			Stage:       FeatureStageExperimental,
