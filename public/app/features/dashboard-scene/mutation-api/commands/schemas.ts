@@ -22,22 +22,10 @@
 
 import { z } from 'zod';
 
-import type { AutoGridLayoutItemKind, GridLayoutItemKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
-import { AnnotationQueryKindSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2/types.spec.zod.gen';
+import type { AutoGridLayoutItemKind, GridLayoutItemKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { DataQueryKindSchema } from '@grafana/schema/apis/dashboard.grafana.app/v2/zod';
 
-export const annotationQueryKindSchema = AnnotationQueryKindSchema;
-
-export const dataQueryKindSchema = z.object({
-  kind: z.literal('DataQuery').optional().default('DataQuery'),
-  group: z.string().describe('Datasource type (e.g., "prometheus", "loki", "mysql")'),
-  version: z.string().optional().default('v0'),
-  datasource: z
-    .object({
-      name: z.string().optional(),
-    })
-    .optional(),
-  spec: z.record(z.string(), z.unknown()).describe('Query-specific fields (e.g., expr for Prometheus, rawSql for SQL)'),
-});
+export const dataQueryKindSchema = DataQueryKindSchema;
 
 // Variable building-block schemas (v2beta1)
 
@@ -547,54 +535,6 @@ export const partialTabSpecSchema = z
   })
   .describe('Fields to update (partial TabsLayoutTabSpec)');
 
-// Annotation building-block schemas (v2beta1)
-
-const annotationEventFieldMappingSchema = z.object({
-  source: z.string().optional().describe('Source type for the field value (e.g., "field", "text")'),
-  value: z.string().optional().describe('Constant value to use when source is "text"'),
-  regex: z.string().optional().describe('Regular expression applied to the field value'),
-});
-
-const partialAnnotationPanelFilterSchema = z.object({
-  exclude: z
-    .boolean()
-    .optional()
-    .describe('When true, the listed panels are excluded; otherwise only those panels show the annotation'),
-  ids: z.array(z.number()).optional().describe('Panel IDs to include or exclude (replaces existing array)'),
-});
-
-const partialDataQueryKindSchema = z.object({
-  kind: z.literal('DataQuery').optional(),
-  group: z.string().optional().describe('Datasource type (e.g., "prometheus", "loki", "grafana")'),
-  version: z.string().optional(),
-  datasource: z
-    .object({
-      name: z.string().optional(),
-    })
-    .optional(),
-  spec: z
-    .record(z.string(), z.unknown())
-    .optional()
-    .describe('Query-specific fields. Deep-merged into the existing query spec.'),
-});
-
-export const partialAnnotationQueryKindSchema = z.object({
-  kind: z.literal('AnnotationQuery').optional(),
-  spec: z
-    .object({
-      name: z.string().optional().describe('Rename the annotation. Must remain unique within the dashboard.'),
-      enable: z.boolean().optional(),
-      hide: z.boolean().optional(),
-      iconColor: z.string().optional(),
-      placement: z.literal('inControlsMenu').optional(),
-      filter: partialAnnotationPanelFilterSchema.optional(),
-      mappings: z.record(z.string(), annotationEventFieldMappingSchema).optional(),
-      legacyOptions: z.record(z.string(), z.unknown()).optional(),
-      query: partialDataQueryKindSchema.optional().describe('Partial query update; deep-merged into existing query.'),
-    })
-    .describe('Fields to update (partial AnnotationQuerySpec). Omitted fields are left unchanged.'),
-});
-
 // Payload schemas -- one per mutation command.
 // These compose the building-block schemas above into the exact shape
 // each command's `payload` field expects.
@@ -611,20 +551,6 @@ export const updateVariablePayloadSchema = z.object({
 
 export const removeVariablePayloadSchema = z.object({
   name: z.string().describe('Variable name to remove'),
-});
-
-// Annotation payload schemas
-
-export const updateAnnotationPayloadSchema = z.object({
-  name: z.string().describe('Annotation name to update'),
-  annotation: partialAnnotationQueryKindSchema.describe(
-    'Partial annotation update. Only provided fields are applied. Object fields are deep-merged. ' +
-      'Arrays (e.g. filter.ids) are replaced wholesale.'
-  ),
-});
-
-export const removeAnnotationPayloadSchema = z.object({
-  name: z.string().describe('Annotation name to remove'),
 });
 
 // Layout payload schemas
@@ -1077,11 +1003,6 @@ export const payloads = {
   removeVariable: removeVariablePayloadSchema.describe('Remove a template variable'),
   updateVariable: updateVariablePayloadSchema.describe('Update an existing template variable'),
   listVariables: emptyPayloadSchema.describe('List all template variables on the dashboard'),
-  updateAnnotation: updateAnnotationPayloadSchema.describe(
-    'Update an existing dashboard annotation layer by name (partial update, deep-merge)'
-  ),
-  removeAnnotation: removeAnnotationPayloadSchema.describe('Remove a dashboard annotation layer by name'),
-  listAnnotations: emptyPayloadSchema.describe('List all annotation layers on the dashboard'),
   enterEditMode: emptyPayloadSchema.describe('Enter dashboard edit mode'),
   getLayout: getLayoutPayloadSchema.describe('Get the dashboard layout tree and trimmed elements map'),
   addRow: addRowPayloadSchema.describe('Add a new row to the dashboard layout'),

@@ -6,11 +6,11 @@ import { type AnnotationQuery } from '@grafana/data';
 import { dataLayers, type SceneDataLayerProvider } from '@grafana/scenes';
 import { type AnnotationQueryKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
-import { DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsDataLayer';
-import type { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
-import type { DashboardScene } from '../../scene/DashboardScene';
-import { transformV1ToV2AnnotationQuery, transformV2ToV1AnnotationQuery } from '../../serialization/annotations';
-import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
+import { DashboardAnnotationsDataLayer } from '../../../scene/DashboardAnnotationsDataLayer';
+import type { DashboardDataLayerSet } from '../../../scene/DashboardDataLayerSet';
+import type { DashboardScene } from '../../../scene/DashboardScene';
+import { transformV1ToV2AnnotationQuery, transformV2ToV1AnnotationQuery } from '../../../serialization/annotations';
+import { dashboardSceneGraph } from '../../../utils/dashboardSceneGraph';
 
 /**
  * Returns the dashboard's `DashboardDataLayerSet`. Throws when the scene has

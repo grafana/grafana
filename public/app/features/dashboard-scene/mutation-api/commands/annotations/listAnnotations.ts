@@ -8,12 +8,12 @@
 
 import type { AnnotationQueryKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
-import type { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
-import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
+import type { DashboardDataLayerSet } from '../../../scene/DashboardDataLayerSet';
+import { dashboardSceneGraph } from '../../../utils/dashboardSceneGraph';
+import { readOnly, type MutationCommand } from '../types';
 
 import { annotationLayerToKind } from './annotationUtils';
 import { payloads } from './schemas';
-import { readOnly, type MutationCommand } from './types';
 
 export const listAnnotationsCommand: MutationCommand<Record<string, never>> = {
   name: 'LIST_ANNOTATIONS',

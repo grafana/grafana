@@ -7,6 +7,8 @@
 
 import { type z } from 'zod';
 
+import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from '../types';
+
 import {
   findAnnotationLayer,
   getAnnotationLayerSet,
@@ -14,7 +16,6 @@ import {
   replaceAnnotationLayers,
 } from './annotationUtils';
 import { payloads } from './schemas';
-import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
 
 type RemoveAnnotationPayload = z.infer<typeof payloads.removeAnnotation>;
 
