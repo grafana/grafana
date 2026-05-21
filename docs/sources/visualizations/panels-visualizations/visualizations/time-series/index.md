@@ -205,7 +205,17 @@ The tooltip also provides the following options:
 
 - **Select all** and **Deselect all**: Toggle every value in a section.
 - **Clear all**: Reset the filter.
-- **Pin to sidebar**: Dock the filter alongside the panel so it stays open while you work.
+Toggle the **Series visibility** switch on to add the corresponding filter control next to or above the legend.
+Use it to narrow the visible series by name or by label without editing the query, which is useful when a panel renders many series and you want to focus on a subset.
+
+After toggling the switch on, click the **Series visibility** icon to open a tooltip.
+Depending on your dataset, you can filter: 
+
+- **By name**: Lists each unique series name. Select one or more names to limit the visualization to those series.
+- **By labels**: Lists each label key with its values. Select label values to filter series that match.
+- 
+
+For more information, refer to the [Configure legend documentation] (https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/configure-legend/#series-visibility).
 
 ### Axis options
 
