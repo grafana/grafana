@@ -24,8 +24,14 @@ export const dataToSpec = (data: RepositoryFormData, connectionName?: string): R
   };
 
   const singleResourceMessageTemplate = data.commit?.singleResourceMessageTemplate?.trim();
-  if (singleResourceMessageTemplate) {
-    spec.commit = { singleResourceMessageTemplate };
+  const authorName = data.commit?.authorName?.trim();
+  const authorEmail = data.commit?.authorEmail?.trim();
+  if (singleResourceMessageTemplate || authorName || authorEmail) {
+    spec.commit = {
+      ...(singleResourceMessageTemplate && { singleResourceMessageTemplate }),
+      ...(authorName && { authorName }),
+      ...(authorEmail && { authorEmail }),
+    };
   }
 
   if (data.webhook?.baseUrl) {

@@ -55,11 +55,17 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 		return nil, fmt.Errorf("unable to decrypt token: %w", err)
 	}
 
+	signingKey, err := secure.GPGSigningKey(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("unable to decrypt signing key: %w", err)
+	}
+
 	gitRepo, err := git.NewRepository(ctx, r, git.RepositoryConfig{
-		URL:    r.Spec.GitHub.URL,
-		Branch: r.Spec.GitHub.Branch,
-		Path:   r.Spec.GitHub.Path,
-		Token:  token,
+		URL:        r.Spec.GitHub.URL,
+		Branch:     r.Spec.GitHub.Branch,
+		Path:       r.Spec.GitHub.Path,
+		Token:      token,
+		SigningKey: signingKey,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error creating git repository: %w", err)

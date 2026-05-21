@@ -15,6 +15,9 @@ type SecureValuesApplyConfiguration struct {
 	Token *commonv0alpha1.InlineSecureValue `json:"token,omitempty"`
 	// Some webhooks (including github) require a secret key value
 	WebhookSecret *commonv0alpha1.InlineSecureValue `json:"webhookSecret,omitempty"`
+	// Armored OpenPGP private key used to sign commits the repository
+	// writes back. When unset, commits are unsigned.
+	GPGSigningKey *commonv0alpha1.InlineSecureValue `json:"gpgSigningKey,omitempty"`
 }
 
 // SecureValuesApplyConfiguration constructs a declarative configuration of the SecureValues type for use with
@@ -36,5 +39,13 @@ func (b *SecureValuesApplyConfiguration) WithToken(value commonv0alpha1.InlineSe
 // If called multiple times, the WebhookSecret field is set to the value of the last call.
 func (b *SecureValuesApplyConfiguration) WithWebhookSecret(value commonv0alpha1.InlineSecureValue) *SecureValuesApplyConfiguration {
 	b.WebhookSecret = &value
+	return b
+}
+
+// WithGPGSigningKey sets the GPGSigningKey field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the GPGSigningKey field is set to the value of the last call.
+func (b *SecureValuesApplyConfiguration) WithGPGSigningKey(value commonv0alpha1.InlineSecureValue) *SecureValuesApplyConfiguration {
+	b.GPGSigningKey = &value
 	return b
 }

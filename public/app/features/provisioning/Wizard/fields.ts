@@ -24,6 +24,14 @@ export interface FieldConfig {
 const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => {
   // Shared field descriptions used across multiple providers
   const shared = {
+    gpgSigningKey: {
+      label: t('provisioning.shared.gpg-signing-key-label', 'GPG Signing Key (optional)'),
+      description: t(
+        'provisioning.shared.gpg-signing-key-description',
+        'Armored OpenPGP private key (unencrypted) used to sign commits Grafana writes back. Leave blank for unsigned commits.'
+      ),
+      placeholder: '-----BEGIN PGP PRIVATE KEY BLOCK-----',
+    },
     branch: {
       label: t('provisioning.shared.branch-label', 'Branch'),
       description: t('provisioning.shared.branch-description', 'The branch to use for provisioning'),
@@ -99,6 +107,7 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
           'Allows users to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.'
         ),
       },
+      gpgSigningKey: shared.gpgSigningKey,
     },
     gitlab: {
       token: {
@@ -150,6 +159,7 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
           'Allows users to choose whether to open a merge request when saving changes. If the repository does not allow direct changes to the main branch, a merge request may still be required.'
         ),
       },
+      gpgSigningKey: shared.gpgSigningKey,
     },
     bitbucket: {
       token: {
@@ -209,6 +219,7 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
           'Allows users to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.'
         ),
       },
+      gpgSigningKey: shared.gpgSigningKey,
     },
     git: {
       token: {
@@ -265,6 +276,7 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
           'Allows users to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.'
         ),
       },
+      gpgSigningKey: shared.gpgSigningKey,
     },
     local: {
       path: {
@@ -292,6 +304,7 @@ export const getGitProviderFields = (
   | {
       tokenConfig: FieldConfig;
       tokenUserConfig?: FieldConfig;
+      gpgSigningKeyConfig?: FieldConfig;
       urlConfig: FieldConfig;
       branchConfig: FieldConfig;
       pathConfig: FieldConfig;
@@ -306,6 +319,7 @@ export const getGitProviderFields = (
   // For git providers, these fields are guaranteed to exist
   const tokenConfig = configs.token;
   const tokenUserConfig = configs.tokenUser; // Optional field, only for some providers
+  const gpgSigningKeyConfig = configs.gpgSigningKey; // Optional, only for git-based providers
   const urlConfig = configs.url;
   const branchConfig = configs.branch;
   const pathConfig = configs.path;
@@ -318,6 +332,7 @@ export const getGitProviderFields = (
   return {
     tokenConfig,
     tokenUserConfig,
+    gpgSigningKeyConfig,
     urlConfig,
     branchConfig,
     pathConfig,

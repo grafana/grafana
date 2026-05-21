@@ -15,6 +15,7 @@ type secretTypeLabel string
 const (
 	secretTypeToken         secretTypeLabel = "token"
 	secretTypeWebhookSecret secretTypeLabel = "webhook_secret"
+	secretTypeGPGSigningKey secretTypeLabel = "gpg_signing_key"
 )
 
 type Decrypter = func(r *provisioning.Repository) SecureValues
@@ -22,6 +23,7 @@ type Decrypter = func(r *provisioning.Repository) SecureValues
 type SecureValues interface {
 	Token(ctx context.Context) (common.RawSecureValue, error)
 	WebhookSecret(ctx context.Context) (common.RawSecureValue, error)
+	GPGSigningKey(ctx context.Context) (common.RawSecureValue, error)
 }
 
 type secureValues struct {
@@ -71,6 +73,10 @@ func (s *secureValues) Token(ctx context.Context) (common.RawSecureValue, error)
 
 func (s *secureValues) WebhookSecret(ctx context.Context) (common.RawSecureValue, error) {
 	return s.get(ctx, s.names.WebhookSecret, secretTypeWebhookSecret)
+}
+
+func (s *secureValues) GPGSigningKey(ctx context.Context) (common.RawSecureValue, error) {
+	return s.get(ctx, s.names.GPGSigningKey, secretTypeGPGSigningKey)
 }
 
 func ProvideDecrypter(svc decrypt.DecryptService, metrics *DecryptMetrics) Decrypter {

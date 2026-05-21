@@ -1932,6 +1932,8 @@ export type JobList = {
   metadata?: ListMeta;
 };
 export type SecureValues = {
+  /** Armored OpenPGP private key used to sign commits the repository writes back. When unset, commits are unsigned. */
+  gpgSigningKey?: InlineSecureValue;
   /** Token used to connect the configured repository */
   token?: InlineSecureValue;
   /** Some webhooks (including github) require a secret key value */

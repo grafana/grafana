@@ -20,6 +20,7 @@ export function getDefaultValues({
       type: 'github',
       title: t('provisioning.get-default-values.title.repository', 'Repository'),
       token: '',
+      gpgSigningKey: '',
       url: '',
       branch: '',
       generateDashboardPreviews: false,

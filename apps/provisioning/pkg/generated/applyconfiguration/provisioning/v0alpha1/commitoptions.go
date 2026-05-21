@@ -18,6 +18,15 @@ type CommitOptionsApplyConfiguration struct {
 	// SingleResourceMessageTemplate and rendered read-only. The
 	// Grafana-saved-by trailer is always appended regardless of this setting.
 	EnforceTemplate *bool `json:"enforceTemplate,omitempty"`
+	// Name used as the commit author and committer. Required for the GPG
+	// signing key's UID to match the commit, which GitHub needs to mark
+	// commits as Verified. When empty, defaults to "Grafana".
+	AuthorName *string `json:"authorName,omitempty"`
+	// Email used as the commit author and committer. Must match the email on
+	// the GPG signing key's UID and a verified email on the GitHub account
+	// where the matching public key is registered. When empty, defaults to
+	// "noreply@grafana.com".
+	AuthorEmail *string `json:"authorEmail,omitempty"`
 }
 
 // CommitOptionsApplyConfiguration constructs a declarative configuration of the CommitOptions type for use with
@@ -39,5 +48,18 @@ func (b *CommitOptionsApplyConfiguration) WithSingleResourceMessageTemplate(valu
 // If called multiple times, the EnforceTemplate field is set to the value of the last call.
 func (b *CommitOptionsApplyConfiguration) WithEnforceTemplate(value bool) *CommitOptionsApplyConfiguration {
 	b.EnforceTemplate = &value
+// WithAuthorName sets the AuthorName field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the AuthorName field is set to the value of the last call.
+func (b *CommitOptionsApplyConfiguration) WithAuthorName(value string) *CommitOptionsApplyConfiguration {
+	b.AuthorName = &value
+	return b
+}
+
+// WithAuthorEmail sets the AuthorEmail field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the AuthorEmail field is set to the value of the last call.
+func (b *CommitOptionsApplyConfiguration) WithAuthorEmail(value string) *CommitOptionsApplyConfiguration {
+	b.AuthorEmail = &value
 	return b
 }

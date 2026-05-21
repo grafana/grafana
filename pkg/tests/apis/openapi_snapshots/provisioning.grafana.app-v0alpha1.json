@@ -6436,6 +6436,15 @@
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.SecureValues": {
         "type": "object",
         "properties": {
+          "gpgSigningKey": {
+            "description": "Armored OpenPGP private key used to sign commits the repository writes back. When unset, commits are unsigned.",
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.InlineSecureValue"
+              }
+            ]
+          },
           "token": {
             "description": "Token used to connect the configured repository",
             "default": {},

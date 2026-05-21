@@ -21,6 +21,8 @@ type mockSecureValues struct {
 	tokenErr      error
 	webhookSecret common.RawSecureValue
 	webhookErr    error
+	signingKey    common.RawSecureValue
+	signingErr    error
 }
 
 func (m *mockSecureValues) Token(_ context.Context) (common.RawSecureValue, error) {
@@ -29,6 +31,10 @@ func (m *mockSecureValues) Token(_ context.Context) (common.RawSecureValue, erro
 
 func (m *mockSecureValues) WebhookSecret(_ context.Context) (common.RawSecureValue, error) {
 	return m.webhookSecret, m.webhookErr
+}
+
+func (m *mockSecureValues) GPGSigningKey(_ context.Context) (common.RawSecureValue, error) {
+	return m.signingKey, m.signingErr
 }
 
 func TestExtra_Type(t *testing.T) {

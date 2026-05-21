@@ -18,6 +18,7 @@ import {
   SecretInput,
   Stack,
   Switch,
+  TextArea,
 } from '@grafana/ui';
 import {
   type Repository,
@@ -27,6 +28,7 @@ import {
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
 import { DeleteRepositoryButton } from '../Repository/DeleteRepositoryButton';
+import { GPGSigningKeyInfo } from '../Shared/GPGSigningKeyInfo';
 import { TokenPermissionsInfo } from '../Shared/TokenPermissionsInfo';
 import { getGitProviderFields, getLocalProviderFields } from '../Wizard/fields';
 import { PROVISIONING_URL } from '../constants';
@@ -80,6 +82,13 @@ export function ConfigForm({ data }: ConfigFormProps) {
 
   const isEdit = Boolean(repositoryName);
   const [tokenConfigured, setTokenConfigured] = useState(isEdit);
+  const [signingKeyConfigured, setSigningKeyConfigured] = useState(Boolean(data?.secure?.gpgSigningKey?.name));
+  const signingKeyValue = watch('gpgSigningKey');
+  const authorRequired = Boolean(signingKeyValue);
+  const authorRequiredMessage = t(
+    'provisioning.config-form.commit-author-required',
+    'Required when a GPG signing key is set so the commit matches the key UID'
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [submitError, setSubmitError] = useState<string | undefined>();
   const [type, readOnly] = watch(['type', 'readOnly']);
@@ -136,7 +145,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
     setSubmitError(undefined);
     try {
       const spec = dataToSpec(form);
-      await submitData(spec, form.token);
+      await submitData(spec, form.token, form.gpgSigningKey);
     } catch (err) {
       if (isFetchError(err)) {
         const fieldErrors = getConfigFormErrors(err.data);
@@ -276,6 +285,99 @@ export function ConfigForm({ data }: ConfigFormProps) {
               </Field>
             )}
             {hasTokenInstructions && <TokenPermissionsInfo type={type} />}
+            {gitFields.gpgSigningKeyConfig && !usesGitHubApp && (
+              <Stack direction="column" gap={2}>
+                {hasTokenInstructions && <GPGSigningKeyInfo type={type} />}
+                {signingKeyConfigured ? (
+                  <Field
+                    noMargin
+                    label={t('provisioning.config-form.label-commit-signing', 'Commit signing')}
+                    description={t(
+                      'provisioning.config-form.description-commit-signing-configured',
+                      'A GPG signing key and committer identity are configured. Click reset to change them.'
+                    )}
+                  >
+                    <Stack gap={1} alignItems="center">
+                      <Input
+                        value={t('provisioning.config-form.signing-configured', 'configured')}
+                        disabled
+                      />
+                      <Button
+                        variant="secondary"
+                        fill="outline"
+                        onClick={() => {
+                          setValue('gpgSigningKey', '');
+                          setValue('commit.authorName', '');
+                          setValue('commit.authorEmail', '');
+                          setSigningKeyConfigured(false);
+                        }}
+                      >
+                        {t('provisioning.config-form.button-reset-signing', 'Reset')}
+                      </Button>
+                    </Stack>
+                  </Field>
+                ) : (
+                  <>
+                    <Field
+                      noMargin
+                      label={gitFields.gpgSigningKeyConfig.label}
+                      description={gitFields.gpgSigningKeyConfig.description}
+                      error={errors?.gpgSigningKey?.message}
+                      invalid={!!errors.gpgSigningKey}
+                    >
+                      <TextArea
+                        {...register('gpgSigningKey')}
+                        invalid={!!errors.gpgSigningKey}
+                        id="gpgSigningKey"
+                        placeholder={gitFields.gpgSigningKeyConfig.placeholder}
+                        rows={8}
+                      />
+                    </Field>
+                    <Field
+                      noMargin
+                      required={authorRequired}
+                      label={t('provisioning.config-form.label-commit-author-name', 'Commit author name')}
+                      description={t(
+                        'provisioning.config-form.description-commit-author-name',
+                        'Name attached to each commit. Should match the GPG signing key UID when commits are signed.'
+                      )}
+                      error={errors?.commit?.authorName?.message}
+                      invalid={!!errors?.commit?.authorName?.message}
+                    >
+                      <Input
+                        id="commit-author-name"
+                        {...register('commit.authorName', {
+                          validate: (val) =>
+                            !authorRequired || (val?.trim() ?? '').length > 0 || authorRequiredMessage,
+                        })}
+                        placeholder={t('provisioning.config-form.placeholder-commit-author-name', 'Grafana')}
+                      />
+                    </Field>
+                    <Field
+                      noMargin
+                      required={authorRequired}
+                      label={t('provisioning.config-form.label-commit-author-email', 'Commit author email')}
+                      description={t(
+                        'provisioning.config-form.description-commit-author-email',
+                        'Email attached to each commit. For GitHub "Verified" commits, must match the GPG signing key UID and a verified email on the GitHub account where the public key is registered.'
+                      )}
+                      error={errors?.commit?.authorEmail?.message}
+                      invalid={!!errors?.commit?.authorEmail?.message}
+                    >
+                      <Input
+                        id="commit-author-email"
+                        type="email"
+                        {...register('commit.authorEmail', {
+                          validate: (val) =>
+                            !authorRequired || (val?.trim() ?? '').length > 0 || authorRequiredMessage,
+                        })}
+                        placeholder={t('provisioning.config-form.placeholder-commit-author-email', 'noreply@grafana.com')}
+                      />
+                    </Field>
+                  </>
+                )}
+              </Stack>
+            )}
             <Field
               noMargin
               label={gitFields.urlConfig.label}

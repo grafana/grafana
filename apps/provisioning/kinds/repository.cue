@@ -116,6 +116,15 @@ repository: {
 					// Supports variables: {{action}}, {{resourceKind}}, {{resourceID}}, {{title}}.
 					// When empty, a built-in default is used (e.g. "Save dashboard: <title>").
 					singleResourceMessageTemplate?: string
+					// Name used as the commit author and committer. Required for the GPG
+					// signing key's UID to match the commit, which GitHub needs to mark
+					// commits as Verified. When empty, defaults to "Grafana".
+					authorName?: string
+					// Email used as the commit author and committer. Must match the email
+					// on the GPG signing key's UID and a verified email on the GitHub
+					// account where the matching public key is registered. When empty,
+					// defaults to "noreply@grafana.com".
+					authorEmail?: string
 				}
 				#HealthStatus: {
 					// When not healthy, requests will not be executed

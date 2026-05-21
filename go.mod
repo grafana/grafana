@@ -738,6 +738,9 @@ replace (
 
 	// Use our fork of the upstream Alertmanager.
 	github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20260225120258-18275ca76b0c
+
+	// DEV ONLY — drop before opening PR. Local nanogit with the CommitModifier API.
+	github.com/grafana/nanogit => /Users/alejandromalavet/GitHub/nanogit
 )
 
 // This was retracted, but seems to be known by the Go module proxy, and is

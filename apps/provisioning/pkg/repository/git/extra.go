@@ -39,12 +39,18 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 		return nil, fmt.Errorf("unable to decrypt token: %w", err)
 	}
 
+	signingKey, err := secure.GPGSigningKey(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("unable to decrypt signing key: %w", err)
+	}
+
 	return NewRepository(ctx, r, RepositoryConfig{
 		URL:           cfg.URL,
 		Branch:        cfg.Branch,
 		Path:          cfg.Path,
 		TokenUser:     cfg.TokenUser,
 		Token:         token,
+		SigningKey:    signingKey,
 		SkipGitSuffix: true,
 	})
 }

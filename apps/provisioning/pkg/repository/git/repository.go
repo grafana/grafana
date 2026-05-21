@@ -32,20 +32,32 @@ import (
 // ErrNoBranches is returned when a repository has no branches (e.g., a completely empty repository).
 var ErrNoBranches = errors.New("no branches found in repository")
 
+// Default identity attached to commits when the repository spec doesn't
+// override it. When the spec or per-request context does override, the
+// override becomes the author/committer (so a configured GPG key UID can
+// match and produce a Verified commit) and this identity is appended as a
+// Co-authored-by trailer instead.
+const (
+	defaultAuthorName  = "Grafana"
+	defaultAuthorEmail = "noreply@grafana.com"
+)
+
 type RepositoryConfig struct {
 	URL           string
 	Branch        string
 	TokenUser     string
 	Token         common.RawSecureValue
+	SigningKey    common.RawSecureValue
 	Path          string
 	SkipGitSuffix bool
 }
 
 // Make sure all public functions of this struct call the (*gitRepository).logger function, to ensure the Git repo details are included.
 type gitRepository struct {
-	config    *provisioning.Repository
-	gitConfig RepositoryConfig
-	client    nanogit.Client
+	config        *provisioning.Repository
+	gitConfig     RepositoryConfig
+	client        nanogit.Client
+	writerOptions []nanogit.WriterOption
 }
 
 func NewRepository(
@@ -71,10 +83,20 @@ func NewRepository(
 		return nil, fmt.Errorf("create nanogit client: %w", err)
 	}
 
+	var writerOptions []nanogit.WriterOption
+	if !gitConfig.SigningKey.IsZero() {
+		modifier, err := gpgCommitModifier(gitConfig.SigningKey)
+		if err != nil {
+			return nil, fmt.Errorf("configure commit signing: %w", err)
+		}
+		writerOptions = append(writerOptions, nanogit.WithCommitModifier(modifier))
+	}
+
 	return &gitRepository{
-		config:    config,
-		gitConfig: gitConfig,
-		client:    client,
+		config:        config,
+		gitConfig:     gitConfig,
+		client:        client,
+		writerOptions: writerOptions,
 	}, nil
 }
 
@@ -447,7 +469,7 @@ func (r *gitRepository) Create(ctx context.Context, path, ref string, data []byt
 		return err
 	}
 
-	writer, err := r.client.NewStagedWriter(ctx, branchRef)
+	writer, err := r.client.NewStagedWriter(ctx, branchRef, r.writerOptions...)
 	if err != nil {
 		return fmt.Errorf("create staged writer: %w", mapNanogitError(err))
 	}
@@ -498,7 +520,7 @@ func (r *gitRepository) Update(ctx context.Context, path, ref string, data []byt
 		return err
 	}
 	// Create a staged writer
-	writer, err := r.client.NewStagedWriter(ctx, branchRef)
+	writer, err := r.client.NewStagedWriter(ctx, branchRef, r.writerOptions...)
 	if err != nil {
 		return fmt.Errorf("create staged writer: %w", mapNanogitError(err))
 	}
@@ -560,7 +582,7 @@ func (r *gitRepository) Delete(ctx context.Context, path, ref, comment string) e
 		return err
 	}
 	// Create a staged writer
-	writer, err := r.client.NewStagedWriter(ctx, branchRef)
+	writer, err := r.client.NewStagedWriter(ctx, branchRef, r.writerOptions...)
 	if err != nil {
 		return fmt.Errorf("create staged writer: %w", mapNanogitError(err))
 	}
@@ -584,7 +606,7 @@ func (r *gitRepository) Move(ctx context.Context, oldPath, newPath, ref, comment
 	}
 
 	// Create a staged writer
-	writer, err := r.client.NewStagedWriter(ctx, branchRef)
+	writer, err := r.client.NewStagedWriter(ctx, branchRef, r.writerOptions...)
 	if err != nil {
 		return fmt.Errorf("create staged writer: %w", mapNanogitError(err))
 	}
@@ -921,16 +943,25 @@ func (r *gitRepository) ensureBranchExists(ctx context.Context, branchName strin
 	return newRef, nil
 }
 
-// createSignature creates author and committer signatures using the context signature if available,
-// falling back to default Grafana signature
+// createSignature builds author and committer signatures. Precedence:
+// per-request override via WithAuthorSignature > spec.commit.authorName/Email
+// (set by users who pair the repo with a GPG signing key) > built-in default.
 func (r *gitRepository) createSignature(ctx context.Context) (nanogit.Author, nanogit.Committer) {
 	author := nanogit.Author{
-		Name:  "Grafana",
-		Email: "noreply@grafana.com",
+		Name:  defaultAuthorName,
+		Email: defaultAuthorEmail,
 		Time:  time.Now(),
 	}
 
-	// Use signature from context if available
+	if commit := r.config.Spec.Commit; commit != nil {
+		if commit.AuthorName != "" {
+			author.Name = commit.AuthorName
+		}
+		if commit.AuthorEmail != "" {
+			author.Email = commit.AuthorEmail
+		}
+	}
+
 	if sig := repository.GetAuthorSignature(ctx); sig != nil {
 		if sig.Name != "" {
 			author.Name = sig.Name
@@ -953,6 +984,9 @@ func (r *gitRepository) createSignature(ctx context.Context) (nanogit.Author, na
 
 func (r *gitRepository) commit(ctx context.Context, writer nanogit.StagedWriter, comment string) error {
 	author, committer := r.createSignature(ctx)
+	if !r.gitConfig.SigningKey.IsZero() {
+		comment = appendCoAuthor(comment, defaultAuthorName, defaultAuthorEmail)
+	}
 	if _, err := writer.Commit(ctx, comment, author, committer); err != nil {
 		if errors.Is(err, nanogit.ErrNothingToCommit) {
 			return repository.ErrNothingToCommit
@@ -961,6 +995,21 @@ func (r *gitRepository) commit(ctx context.Context, writer nanogit.StagedWriter,
 		return fmt.Errorf("commit changes: %w", err)
 	}
 	return nil
+}
+
+// appendCoAuthor adds a `Co-authored-by:` trailer to a commit message using
+// GitHub's recognized format. If the trailer is already present (e.g. an
+// idempotent retry path) the message is returned unchanged.
+func appendCoAuthor(message, name, email string) string {
+	trailer := fmt.Sprintf("Co-authored-by: %s <%s>", name, email)
+	if strings.Contains(message, trailer) {
+		return message
+	}
+	trimmed := strings.TrimRight(message, " \n")
+	if trimmed == "" {
+		return trailer
+	}
+	return trimmed + "\n\n" + trailer
 }
 
 func (r *gitRepository) commitAndPush(ctx context.Context, writer nanogit.StagedWriter, comment string) error {
