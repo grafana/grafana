@@ -4,7 +4,7 @@ import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 
 export interface TemplateDashboardEnvelopeOpts {
   dashboardSpec: DashboardV2Spec;
-  dashboardVersion: string;
+  dashboardVersion?: string;
   resourceVersion?: string;
   canEdit?: boolean;
   canSave?: boolean;
