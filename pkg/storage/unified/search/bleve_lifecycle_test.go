@@ -266,7 +266,7 @@ func dashboardSearchLifecycleSeed(t *testing.T) int64 {
 func newFileBackedDashboardIndex(t *testing.T, key resource.NamespacedResource, docCount int64) *bleveIndex {
 	t.Helper()
 
-	backend, _ := setupBleveBackend(t, withFileThreshold(1))
+	backend, _ := setupBleveBackend(t, withFileThreshold(0))
 	ctx := identity.WithRequester(t.Context(), &user.SignedInUser{Namespace: key.Namespace})
 
 	info, err := builders.DashboardBuilder(func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
