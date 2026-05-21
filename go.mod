@@ -483,7 +483,7 @@ require (
 	github.com/googleapis/enterprise-certificate-proxy v0.3.15 // indirect
 	github.com/gopherjs/gopherjs v1.17.2 // indirect
 	github.com/grafana/jsonparser v0.0.0-20241004153430-023329977675 // indirect
-	github.com/grafana/nanogit v0.17.0 // indirect
+	github.com/grafana/nanogit v0.17.1-0.20260521203944-f3790b31e8c5 // indirect
 	github.com/grafana/regexp v0.0.0-20250905093917-f7b3be9d1853 // indirect
 	github.com/grafana/sqlds/v5 v5.1.1 // indirect
 	github.com/hashicorp/consul/api v1.33.7 // indirect
@@ -738,9 +738,6 @@ replace (
 
 	// Use our fork of the upstream Alertmanager.
 	github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20260225120258-18275ca76b0c
-
-	// DEV ONLY — drop before opening PR. Local nanogit with the CommitModifier API.
-	github.com/grafana/nanogit => /Users/alejandromalavet/GitHub/nanogit
 )
 
 // This was retracted, but seems to be known by the Go module proxy, and is
