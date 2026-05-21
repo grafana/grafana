@@ -81,12 +81,17 @@ func ProvideService(
 	ac.RegisterScopeAttributeResolver(folder.NewFolderIDScopeResolver(srv.getUIDFromLegacyID, srv))
 	ac.RegisterScopeAttributeResolver(folder.NewFolderUIDScopeResolver(srv))
 
-	k8sHandler := client.NewK8sHandler(
-		request.GetNamespaceMapper(cfg),
-		folderv1.FolderResourceInfo.GroupVersionResource(),
-		restConfig.GetRestConfig,
-		userService,
-		resourceClient,
+	client.RegisterMetrics(r)
+
+	k8sHandler := client.NewK8sHandlerWithMetrics(
+		client.NewK8sHandler(
+			request.GetNamespaceMapper(cfg),
+			folderv1.FolderResourceInfo.GroupVersionResource(),
+			restConfig.GetRestConfig,
+			userService,
+			resourceClient,
+		),
+		"folder_service",
 	)
 
 	unifiedStore := ProvideUnifiedStore(k8sHandler, userService, tracer, cfg)
@@ -94,12 +99,15 @@ func ProvideService(
 	srv.unifiedStore = unifiedStore
 	srv.k8sclient = k8sHandler
 
-	dashHandler := client.NewK8sHandler(
-		request.GetNamespaceMapper(cfg),
-		dashboardv1.DashboardResourceInfo.GroupVersionResource(),
-		restConfig.GetRestConfig,
-		userService,
-		resourceClient,
+	dashHandler := client.NewK8sHandlerWithMetrics(
+		client.NewK8sHandler(
+			request.GetNamespaceMapper(cfg),
+			dashboardv1.DashboardResourceInfo.GroupVersionResource(),
+			restConfig.GetRestConfig,
+			userService,
+			resourceClient,
+		),
+		"folder_service",
 	)
 	srv.dashboardK8sClient = dashHandler
 
