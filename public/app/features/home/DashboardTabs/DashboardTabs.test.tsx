@@ -10,6 +10,26 @@ import { contextSrv } from 'app/core/services/context_srv';
 
 import { DashboardTabs } from './DashboardTabs';
 
+jest.mock('@grafana/assistant', () => ({
+  useAssistant: () => ({
+    isLoading: false,
+    isAvailable: false,
+    openAssistant: undefined,
+    closeAssistant: undefined,
+    toggleAssistant: undefined,
+  }),
+  useTerms: () => ({ accepted: true, termsType: null, loading: false, error: null }),
+  useLimits: () => ({
+    count: 0,
+    limit: 0,
+    month: '',
+    isLimitReached: false,
+    loading: false,
+    error: null,
+    refetch: jest.fn(),
+  }),
+}));
+
 setBackendSrv(backendSrv);
 setupMockServer();
 

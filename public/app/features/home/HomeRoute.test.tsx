@@ -17,6 +17,26 @@ jest.mock('../dashboard/containers/DashboardPageProxy', () => ({
   default: () => <div data-testid="dashboard-page-proxy-stub" />,
 }));
 
+jest.mock('@grafana/assistant', () => ({
+  useAssistant: () => ({
+    isLoading: false,
+    isAvailable: false,
+    openAssistant: undefined,
+    closeAssistant: undefined,
+    toggleAssistant: undefined,
+  }),
+  useTerms: () => ({ accepted: true, termsType: null, loading: false, error: null }),
+  useLimits: () => ({
+    count: 0,
+    limit: 0,
+    month: '',
+    isLimitReached: false,
+    loading: false,
+    error: null,
+    refetch: jest.fn(),
+  }),
+}));
+
 setBackendSrv(backendSrv);
 setupMockServer();
 

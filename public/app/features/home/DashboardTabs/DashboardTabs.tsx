@@ -10,6 +10,8 @@ import { getRecentlyViewedDashboards } from 'app/features/browse-dashboards/api/
 import { useDashboardLocationInfo } from 'app/features/search/hooks/useDashboardLocationInfo';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 
+import { HomeAssistantSearch } from '../HomeAssistantSearch/HomeAssistantSearch';
+
 import { RecentDashboardsTab } from './RecentDashboardsTab';
 import { StarredDashboardsTab } from './StarredDashboardsTab';
 import { type HomepageTab } from './types';
@@ -100,6 +102,7 @@ export function DashboardTabs() {
 
   return (
     <Box backgroundColor="primary" borderRadius="default" padding={3} direction="column" display="flex" gap={2}>
+      <HomeAssistantSearch />
       <TabsBar>
         {contentTabs.map((tab) => {
           const isActive = activeTab === tab.id;
