@@ -100,7 +100,7 @@ const (
 	FlagGrafanaAPIServerEnsureKubectlAccess = "grafanaAPIServerEnsureKubectlAccess"
 
 	// FlagAwsAsyncQueryCaching
-	// Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled
+	// Enable caching for async queries for Redshift and Athena. Requires that the data source has caching and async query support enabled
 	FlagAwsAsyncQueryCaching = "awsAsyncQueryCaching"
 
 	// FlagConfigurableSchedulerTick
@@ -136,7 +136,7 @@ const (
 	FlagKubernetesAnnotationsClient = "kubernetesAnnotationsClient"
 
 	// FlagKubernetesShortURLs
-	// Enables k8s short url api and uses it under the hood when handling legacy /api
+	// Enables k8s short URL API and uses it under the hood when handling legacy /api
 	FlagKubernetesShortURLs = "kubernetesShortURLs"
 
 	// FlagKubernetesCorrelations
@@ -969,4 +969,8 @@ const (
 	// FlagAlertingSyncExternalAlertmanager
 	// Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana
 	FlagAlertingSyncExternalAlertmanager = "alerting.syncExternalAlertmanager"
+
+	// FlagFrontendServiceReducedBootDataAPI
+	// Frontend Service doesn't rely on the /bootdata API, instead loads configuration as needed
+	FlagFrontendServiceReducedBootDataAPI = "frontendService.reducedBootDataAPI"
 )

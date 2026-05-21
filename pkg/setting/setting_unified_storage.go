@@ -196,6 +196,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.MemberlistClusterLabel = section.Key("memberlist_cluster_label").String()
 	cfg.MemberlistClusterLabelVerificationDisabled = section.Key("memberlist_cluster_label_verification_disabled").MustBool(false)
 	cfg.SearchRingReplicationFactor = section.Key("search_ring_replication_factor").MustInt(1)
+	cfg.SearchRingExtendReplicaSet = section.Key("search_ring_extend_replica_set").MustBool(true)
 	cfg.InstanceID = section.Key("instance_id").String()
 	cfg.IndexFileThreshold = section.Key("index_file_threshold").MustInt(10)
 	cfg.IndexMinCount = section.Key("index_min_count").MustInt(1)
@@ -292,9 +293,11 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.VertexLocation = embedSection.Key("vertex_location").MustString("us-central1")
 	cfg.VertexModel = embedSection.Key("vertex_model").MustString("gemini-embedding-001")
 	cfg.VertexDimensions = embedSection.Key("vertex_dimensions").MustInt(768)
+	cfg.VertexBatchSize = embedSection.Key("vertex_batch_size").MustInt(50)
 	cfg.BedrockRegion = embedSection.Key("bedrock_region").MustString("us-east-1")
 	cfg.BedrockModel = embedSection.Key("bedrock_model").MustString("cohere.embed-v4:0")
 	cfg.BedrockDimensions = embedSection.Key("bedrock_dimensions").MustInt(1024)
+	cfg.BedrockBatchSize = embedSection.Key("bedrock_batch_size").MustInt(50)
 }
 
 // applyMigrationEnforcements enforces unified storage migration configs when migrations should run,
