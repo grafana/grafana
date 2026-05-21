@@ -180,10 +180,14 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 }
 
 func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
+	zeroGrace := int64(0)
+
 	tests := []struct {
-		name          string
-		statsResponse []*resourcepb.ResourceStatsResponse_Stats
-		wantErr       bool
+		name                 string
+		statsResponse        []*resourcepb.ResourceStatsResponse_Stats
+		deleteOptions        *metav1.DeleteOptions
+		cascadeDeleteEnabled bool
+		wantErr              bool
 	}{
 		{
 			name: "should allow deletion when folder is empty",
@@ -262,6 +266,23 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 			statsResponse: []*resourcepb.ResourceStatsResponse_Stats{},
 			wantErr:       false,
 		},
+		{
+			name: "should reject force delete when cascade gate disabled",
+			statsResponse: []*resourcepb.ResourceStatsResponse_Stats{
+				{Resource: "folders", Count: 1, Group: "folders.grafana.app"},
+			},
+			deleteOptions:        &metav1.DeleteOptions{GracePeriodSeconds: &zeroGrace},
+			cascadeDeleteEnabled: false,
+			wantErr:              true,
+		},
+		{
+			name: "should allow force delete when cascade gate enabled",
+			statsResponse: []*resourcepb.ResourceStatsResponse_Stats{
+				{Resource: "folders", Count: 1, Group: "folders.grafana.app"},
+			},
+			deleteOptions:        &metav1.DeleteOptions{GracePeriodSeconds: &zeroGrace},
+			cascadeDeleteEnabled: true,
+		},
 	}
 
 	obj := &folders.Folder{
@@ -278,10 +299,14 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			us := grafanarest.NewMockStorage(t)
 			sm := resource.NewMockResourceClient(t)
-			sm.On("GetStats", mock.Anything, &resourcepb.ResourceStatsRequest{Namespace: obj.Namespace, Kinds: countedKinds, Folder: []string{obj.Name}}).Return(
-				&resourcepb.ResourceStatsResponse{Stats: tt.statsResponse},
-				nil,
-			).Once()
+			if !tt.cascadeDeleteEnabled || !forceDeleteFromDeleteOptions(tt.deleteOptions) {
+				sm.On("GetStats", mock.Anything, &resourcepb.ResourceStatsRequest{Namespace: obj.Namespace, Kinds: countedKinds, Folder: []string{obj.Name}}).Return(
+					&resourcepb.ResourceStatsResponse{Stats: tt.statsResponse},
+					nil,
+				).Once()
+			}
+
+			setKubernetesFolderCascadeDeleteToggle(t, tt.cascadeDeleteEnabled)
 
 			b := &FolderAPIBuilder{
 				namespacer: func(_ int64) string { return "123" },
@@ -297,8 +322,8 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 				obj.Name,
 				folders.SchemeGroupVersion.WithResource("folders"),
 				"",
-				"DELETE",
-				nil,
+				admission.Delete,
+				tt.deleteOptions,
 				true,
 				&user.SignedInUser{},
 			),
