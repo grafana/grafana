@@ -171,14 +171,8 @@ func NewRemoteResourceClient(tracer trace.Tracer, conn grpc.ClientConnInterface,
 	return newResourceClient(cc, cci), nil
 }
 
-// NewAuthnGrpcClientInterceptor builds the authlib gRPC client interceptor
-// used to authenticate outbound calls to unified storage services. When
-// cfg.TokenExchangeURL is empty, it falls back to an in-process static
-// exchanger that mints a service-identity token signed by an ephemeral key.
-// This lets local multi-process setups (grafana + standalone unified-grpc +
-// standalone search) talk to each other without a real token exchange server.
-// The server-side authenticator accepts these tokens when running with
-// AllowInsecure (cfg.Env == Dev).
+// NewAuthnGrpcClientInterceptor builds the authlib gRPC client interceptor used to authenticate outbound calls to
+// unified storage services. Will use the in-process token exchanger when the token exchange url is empty.
 func NewAuthnGrpcClientInterceptor(tracer trace.Tracer, cfg RemoteResourceClientConfig) (*authnlib.GrpcClientInterceptor, error) {
 	var tc authnlib.TokenExchanger
 	if cfg.TokenExchangeURL == "" {
