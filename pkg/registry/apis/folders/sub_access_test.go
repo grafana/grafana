@@ -114,8 +114,8 @@ func TestSubAccessREST_getAccessInfo(t *testing.T) {
 			name:         "request semantics: folder-domain uses Name=this, folder hint=parent; dashboards:create flips to Name='', folder hint=this",
 			parentFolder: "parent-uid",
 			allowedByCheck: map[checkKey]bool{
-				{group: folderGroup, resource: folderRes, verb: utils.VerbGet}:    true,
-				{group: dashGroup, resource: dashRes, verb: utils.VerbCreate}:     true,
+				{group: folderGroup, resource: folderRes, verb: utils.VerbGet}: true,
+				{group: dashGroup, resource: dashRes, verb: utils.VerbCreate}:  true,
 			},
 			assertItem: func(t *testing.T, item authlib.BatchCheckItem) {
 				switch item.Group {
