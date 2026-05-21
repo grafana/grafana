@@ -8,16 +8,17 @@
 package v0alpha1
 
 import (
-	commonv0alpha1 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	common "k8s.io/kube-openapi/pkg/common"
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
+
+	commonv0alpha1 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.Display":        schema_pkg_apis_iam_v0alpha1_Display(ref),
-		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.DisplayList":    schema_pkg_apis_iam_v0alpha1_DisplayList(ref),
-		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.IdentityRef":    schema_pkg_apis_iam_v0alpha1_IdentityRef(ref),
+		Display{}.OpenAPIModelName():                                      schema_pkg_apis_iam_v0alpha1_Display(ref),
+		DisplayList{}.OpenAPIModelName():                                  schema_pkg_apis_iam_v0alpha1_DisplayList(ref),
+		IdentityRef{}.OpenAPIModelName():                                  schema_pkg_apis_iam_v0alpha1_IdentityRef(ref),
 		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.SSOSetting":     schema_pkg_apis_iam_v0alpha1_SSOSetting(ref),
 		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.SSOSettingList": schema_pkg_apis_iam_v0alpha1_SSOSettingList(ref),
 		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.SSOSettingSpec": schema_pkg_apis_iam_v0alpha1_SSOSettingSpec(ref),
@@ -39,7 +40,7 @@ func schema_pkg_apis_iam_v0alpha1_Display(ref common.ReferenceCallback) common.O
 					"identity": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.IdentityRef"),
+							Ref:     ref(IdentityRef{}.OpenAPIModelName()),
 						},
 					},
 					"displayName": {
@@ -69,7 +70,7 @@ func schema_pkg_apis_iam_v0alpha1_Display(ref common.ReferenceCallback) common.O
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.IdentityRef"},
+			IdentityRef{}.OpenAPIModelName()},
 	}
 }
 
@@ -152,7 +153,7 @@ func schema_pkg_apis_iam_v0alpha1_DisplayList(ref common.ReferenceCallback) comm
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.Display"),
+										Ref:     ref(Display{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -163,7 +164,7 @@ func schema_pkg_apis_iam_v0alpha1_DisplayList(ref common.ReferenceCallback) comm
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.Display", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
+			Display{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -324,7 +325,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamMember(ref common.ReferenceCallback) commo
 					"identity": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.IdentityRef"),
+							Ref:     ref(IdentityRef{}.OpenAPIModelName()),
 						},
 					},
 					"displayName": {
@@ -369,7 +370,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamMember(ref common.ReferenceCallback) commo
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.IdentityRef"},
+			IdentityRef{}.OpenAPIModelName()},
 	}
 }
 
@@ -450,7 +451,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamSubject(ref common.ReferenceCallback) comm
 						SchemaProps: spec.SchemaProps{
 							Description: "Identity is a reference to the identity of this subject.",
 							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.IdentityRef"),
+							Ref:         ref(IdentityRef{}.OpenAPIModelName()),
 						},
 					},
 					"permission": {
@@ -466,7 +467,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamSubject(ref common.ReferenceCallback) comm
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.IdentityRef"},
+			IdentityRef{}.OpenAPIModelName()},
 	}
 }
 
