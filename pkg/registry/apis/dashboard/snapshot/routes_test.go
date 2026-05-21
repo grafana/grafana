@@ -575,7 +575,6 @@ func TestCreateExternalSnapshotLegacy(t *testing.T) {
 			ExternalSnapshotToken: "ignored-token",
 		}
 
-		snapshotService := dashboardsnapshots.NewMockService(t)
 		dashboardService := dashboards.NewFakeDashboardService(t)
 		dashboardService.On("GetDashboard", mock.Anything, &dashboards.GetDashboardQuery{
 			UID:   "dash-1",
@@ -587,7 +586,6 @@ func TestCreateExternalSnapshotLegacy(t *testing.T) {
 			Return(&dashv0.Snapshot{}, nil)
 
 		routes := GetRoutes(
-			snapshotService,
 			options,
 			acmock.New().WithPermissions([]accesscontrol.Permission{{Action: dashboards.ActionSnapshotsCreate}}),
 			map[string]common.OpenAPIDefinition{},
@@ -634,7 +632,6 @@ func TestCreateExternalSnapshotLegacy(t *testing.T) {
 			ExternalSnapshotURL: externalServer.URL,
 		}
 
-		snapshotService := dashboardsnapshots.NewMockService(t)
 		dashboardService := dashboards.NewFakeDashboardService(t)
 		dashboardService.On("GetDashboard", mock.Anything, &dashboards.GetDashboardQuery{
 			UID:   "dash-1",
@@ -642,7 +639,6 @@ func TestCreateExternalSnapshotLegacy(t *testing.T) {
 		}).Return(&dashboards.Dashboard{UID: "dash-1", OrgID: orgID}, nil)
 
 		routes := GetRoutes(
-			snapshotService,
 			options,
 			acmock.New().WithPermissions([]accesscontrol.Permission{{Action: dashboards.ActionSnapshotsCreate}}),
 			map[string]common.OpenAPIDefinition{},
