@@ -13,7 +13,7 @@ import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 
 import { RecentDashboardsTab } from './RecentDashboardsTab';
 import { StarredDashboardsTab } from './StarredDashboardsTab';
-import { type HomepageTabExtensionProps, isHomepageTab, type HomepageTab } from './types';
+import { type HomepageTabExtensionProps, type HomepageTab, validateHomepageTab } from './types';
 
 const RECENT_TAB_ID = 'recent';
 const STARRED_TAB_ID = 'starred';
@@ -32,9 +32,7 @@ function DashboardExtensionTab({
   const [id, setId] = useState<string | null>(null);
   const register = useCallback(
     (tab: unknown) => {
-      if (!isHomepageTab(tab)) {
-        throw new Error(`Invalid tab object returned from extension: ${JSON.stringify(tab)}`);
-      }
+      validateHomepageTab(tab);
 
       setId(tab.id);
       const unregister = registerTab(tab);
