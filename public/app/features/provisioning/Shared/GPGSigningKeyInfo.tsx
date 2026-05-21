@@ -19,38 +19,17 @@ export function GPGSigningKeyInfo({ type }: { type: InstructionAvailability }) {
   return (
     <div className={styles.container}>
       <Stack gap={0.5} wrap={'wrap'}>
-        <Trans i18nKey="provisioning.gpg-signing-key-info.intro">
-          For GitHub to mark commits as Verified, three things must match:
+        <Trans i18nKey="provisioning.gpg-signing-key-info.required">
+          If you require verified commits,
         </Trans>
-      </Stack>
-      <ul className={styles.list}>
-        <li>
-          <Trans i18nKey="provisioning.gpg-signing-key-info.match-uid">
-            The GPG key's UID email is the commit author/committer email set above.
-          </Trans>
-        </li>
-        <li>
-          <Trans i18nKey="provisioning.gpg-signing-key-info.match-account">
-            That same email is a verified email on the GitHub account where the public key is registered.
-          </Trans>
-        </li>
-        <li>
-          <Trans i18nKey="provisioning.gpg-signing-key-info.unencrypted">
-            The exported private key has no passphrase.
-          </Trans>
-        </li>
-      </ul>
-      <Stack gap={0.5} wrap={'wrap'}>
         <TextLink external href={GPG_GENERATE_KEY_URL}>
-          <Trans i18nKey="provisioning.gpg-signing-key-info.generate-link">Generate a GPG key</Trans>
+          <Trans i18nKey="provisioning.gpg-signing-key-info.generate-link">generate a GPG key</Trans>
         </TextLink>
         <Trans i18nKey="provisioning.gpg-signing-key-info.then">then</Trans>
         <TextLink external href={GPG_ADD_KEY_URL}>
-          <Trans i18nKey="provisioning.gpg-signing-key-info.add-link">add the public key to your account</Trans>
+          <Trans i18nKey="provisioning.gpg-signing-key-info.add-link">add it to a GitHub account</Trans>
         </TextLink>
-        <Trans i18nKey="provisioning.gpg-signing-key-info.bot-tip">
-          (typically a dedicated bot user that also owns the access token).
-        </Trans>
+        <Trans i18nKey="provisioning.gpg-signing-key-info.period">.</Trans>
       </Stack>
     </div>
   );
@@ -59,22 +38,8 @@ export function GPGSigningKeyInfo({ type }: { type: InstructionAvailability }) {
 function getStyles(theme: GrafanaTheme2) {
   return {
     container: css({
-      marginBottom: theme.spacing(1),
-      position: 'relative',
-      width: '100%',
       display: 'flex',
       flexDirection: 'column',
-      flex: '1 1 0',
-      padding: theme.spacing(theme.components.panel.padding),
-    }),
-    list: css({
-      marginTop: theme.spacing(2),
-      marginBottom: theme.spacing(1),
-      paddingLeft: theme.spacing(3),
-
-      li: css({
-        marginBottom: theme.spacing(1),
-      }),
     }),
   };
 }

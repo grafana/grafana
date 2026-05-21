@@ -25,10 +25,10 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
   // Shared field descriptions used across multiple providers
   const shared = {
     gpgSigningKey: {
-      label: t('provisioning.shared.gpg-signing-key-label', 'GPG Signing Key (optional)'),
+      label: t('provisioning.shared.gpg-signing-key-label', 'GPG signing key'),
       description: t(
         'provisioning.shared.gpg-signing-key-description',
-        'Armored OpenPGP private key (unencrypted) used to sign commits Grafana writes back. Leave blank for unsigned commits.'
+        'Armored OpenPGP private key. No passphrase.'
       ),
       placeholder: '-----BEGIN PGP PRIVATE KEY BLOCK-----',
     },

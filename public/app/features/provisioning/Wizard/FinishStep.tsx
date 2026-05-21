@@ -1,12 +1,14 @@
-import { memo, useEffect } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { memo, useEffect, useState } from 'react';
+import { Controller, useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
-import { Checkbox, Field, Input, Stack, Text, TextLink } from '@grafana/ui';
+import { Checkbox, Divider, Field, Input, SecretTextArea, Stack, Text, TextLink } from '@grafana/ui';
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
+import { GPGSigningKeyInfo } from '../Shared/GPGSigningKeyInfo';
 import { EnablePushToConfiguredBranchOption } from '../Config/EnablePushToConfiguredBranchOption';
 import { checkImageRenderer, checkImageRenderingAllowed, checkPublicAccess } from '../GettingStarted/features';
+import { getHasTokenInstructions } from '../utils/git';
 import { isGitProvider } from '../utils/repositoryTypes';
 
 import { useStepStatus } from './StepStatusContext';
@@ -17,19 +19,28 @@ export const FinishStep = memo(function FinishStep() {
   const { setStepStatusInfo, hasStepError } = useStepStatus();
   const {
     register,
+    control,
     watch,
     setValue,
     formState: { errors },
   } = useFormContext<WizardFormData>();
   const settings = useGetFrontendSettingsQuery();
+  const [signingKeyConfigured, setSigningKeyConfigured] = useState(false);
 
   const [type, readOnly] = watch(['repository.type', 'repository.readOnly']);
+  const signingKeyValue = watch('repository.gpgSigningKey');
+  const requireAuthor = Boolean(signingKeyValue);
+  const authorRequiredMessage = t(
+    'provisioning.wizard.commit-author-required',
+    'Required when a signing key is set.'
+  );
 
   const isGithub = type === 'github';
   const isGitBased = isGitProvider(type);
   const isPublic = checkPublicAccess();
   const hasImageRenderer = checkImageRenderer();
   const imageRenderingAllowed = checkImageRenderingAllowed(settings.data);
+  const hasTokenInstructions = getHasTokenInstructions(type);
 
   // Set sync enabled by default
   useEffect(() => {
@@ -159,6 +170,85 @@ export const FinishStep = memo(function FinishStep() {
             placeholder={t('provisioning.finish-step.placeholder-webhook-url', 'https://grafana.example.com')}
           />
         </Field>
+      )}
+
+      {gitFields?.gpgSigningKeyConfig && (
+        <>
+          <Divider spacing={0} />
+          {hasTokenInstructions && <GPGSigningKeyInfo type={type} />}
+          <Field
+            noMargin
+            label={gitFields.gpgSigningKeyConfig.label}
+            description={gitFields.gpgSigningKeyConfig.description}
+            error={errors?.repository?.gpgSigningKey?.message}
+            invalid={!!errors?.repository?.gpgSigningKey?.message}
+          >
+            <Controller
+              name="repository.gpgSigningKey"
+              control={control}
+              render={({ field: { ref, ...field } }) => (
+                <SecretTextArea
+                  {...field}
+                  id="gpgSigningKey"
+                  invalid={!!errors?.repository?.gpgSigningKey?.message}
+                  placeholder={gitFields.gpgSigningKeyConfig?.placeholder}
+                  isConfigured={signingKeyConfigured}
+                  onReset={() => {
+                    setValue('repository.gpgSigningKey', '');
+                    setValue('repository.commit.authorName', '');
+                    setValue('repository.commit.authorEmail', '');
+                    setSigningKeyConfigured(false);
+                  }}
+                  rows={8}
+                  grow
+                />
+              )}
+            />
+          </Field>
+          <Field
+            noMargin
+            required={requireAuthor}
+            label={t('provisioning.wizard.label-commit-author-name', 'Commit author name')}
+            description={t(
+              'provisioning.wizard.description-commit-author-name',
+              'Used as the commit author and committer.'
+            )}
+            error={errors?.repository?.commit?.authorName?.message}
+            invalid={!!errors?.repository?.commit?.authorName?.message}
+          >
+            <Input
+              id="repository-commit-author-name"
+              disabled={!signingKeyValue}
+              {...register('repository.commit.authorName', {
+                validate: (val) =>
+                  !requireAuthor || (val?.trim() ?? '').length > 0 || authorRequiredMessage,
+              })}
+              placeholder={t('provisioning.wizard.placeholder-commit-author-name', 'Grafana')}
+            />
+          </Field>
+          <Field
+            noMargin
+            required={requireAuthor}
+            label={t('provisioning.wizard.label-commit-author-email', 'Commit author email')}
+            description={t(
+              'provisioning.wizard.description-commit-author-email',
+              'Must match the signing key UID.'
+            )}
+            error={errors?.repository?.commit?.authorEmail?.message}
+            invalid={!!errors?.repository?.commit?.authorEmail?.message}
+          >
+            <Input
+              id="repository-commit-author-email"
+              type="email"
+              disabled={!signingKeyValue}
+              {...register('repository.commit.authorEmail', {
+                validate: (val) =>
+                  !requireAuthor || (val?.trim() ?? '').length > 0 || authorRequiredMessage,
+              })}
+              placeholder={t('provisioning.wizard.placeholder-commit-author-email', 'noreply@grafana.com')}
+            />
+          </Field>
+        </>
       )}
     </Stack>
   );
