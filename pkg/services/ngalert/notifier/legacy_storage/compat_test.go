@@ -22,14 +22,15 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 )
 
 func TestPostableMimirReceiverToPostableGrafanaReceiver(t *testing.T) {
 	t.Run("returns original pointer when receiver has only Grafana integrations", func(t *testing.T) {
-		receiver := &definitions.PostableApiReceiver{
+		receiver := &v1.PostableApiReceiver{
 			Receiver: definitions.Receiver{Name: "test"},
-			PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
-				GrafanaManagedReceivers: []*definitions.PostableGrafanaReceiver{
+			PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
+				GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
 					{UID: "grafana-uid", Name: "test", Type: "email"},
 				},
 			},
@@ -41,7 +42,7 @@ func TestPostableMimirReceiverToPostableGrafanaReceiver(t *testing.T) {
 
 	t.Run("converts Mimir integrations to Grafana integrations", func(t *testing.T) {
 		wh := webhookV0.GetFullValidConfig()
-		receiver := &definitions.PostableApiReceiver{
+		receiver := &v1.PostableApiReceiver{
 			Receiver: definitions.Receiver{
 				Name:           "test-receiver",
 				WebhookConfigs: []*webhookV0.Config{&wh},
@@ -72,18 +73,18 @@ func TestPostableMimirReceiverToPostableGrafanaReceiver(t *testing.T) {
 
 	t.Run("existing Grafana integrations appear before converted Mimir ones", func(t *testing.T) {
 		wh := webhookV0.GetFullValidConfig()
-		grafanaRecv := &definitions.PostableGrafanaReceiver{
+		grafanaRecv := &v1.PostableGrafanaReceiver{
 			UID:  "existing-uid",
 			Name: "existing",
 			Type: "email",
 		}
-		receiver := &definitions.PostableApiReceiver{
+		receiver := &v1.PostableApiReceiver{
 			Receiver: definitions.Receiver{
 				Name:           "mixed-receiver",
 				WebhookConfigs: []*webhookV0.Config{&wh},
 			},
-			PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
-				GrafanaManagedReceivers: []*definitions.PostableGrafanaReceiver{grafanaRecv},
+			PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
+				GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{grafanaRecv},
 			},
 		}
 
@@ -98,7 +99,7 @@ func TestPostableMimirReceiverToPostableGrafanaReceiver(t *testing.T) {
 		// UIDs are indexed per integration type, so each type starts at 0.
 		em := emailV0.GetFullValidConfig()
 		wh := webhookV0.GetFullValidConfig()
-		receiver := &definitions.PostableApiReceiver{
+		receiver := &v1.PostableApiReceiver{
 			Receiver: definitions.Receiver{
 				Name:           "multi-receiver",
 				EmailConfigs:   []*emailV0.Config{&em},
@@ -171,7 +172,7 @@ func TestManagedRouteToRoute(t *testing.T) {
 		GroupWait:      &gw,
 		GroupInterval:  &gi,
 		RepeatInterval: &ri,
-		Routes:         []*definition.Route{{Receiver: "child"}},
+		Routes:         []*v1.Route{{Receiver: "child"}},
 		Provenance:     models.Provenance("test"),
 	}
 
@@ -183,11 +184,11 @@ func TestManagedRouteToRoute(t *testing.T) {
 	assert.Equal(t, &gi, route.GroupInterval)
 	assert.Equal(t, &ri, route.RepeatInterval)
 	assert.Len(t, route.Routes, 1)
-	assert.EqualValues(t, definitions.Provenance("test"), route.Provenance)
+	assert.EqualValues(t, v1.Provenance("test"), route.Provenance)
 }
 
 func Test_InhibitRuleToInhibitionRule(t *testing.T) {
-	testRule := definitions.InhibitRule{
+	testRule := config.InhibitRule{
 		SourceMatchers: config.Matchers{
 			{
 				Type:  labels.MatchEqual,
@@ -210,10 +211,10 @@ func Test_InhibitRuleToInhibitionRule(t *testing.T) {
 	tt := []struct {
 		name        string
 		ruleName    string
-		provenance  definitions.Provenance
-		inhibitRule definitions.InhibitRule
+		provenance  v1.Provenance
+		inhibitRule config.InhibitRule
 		origin      models.ResourceOrigin
-		exp         *definitions.InhibitionRule
+		exp         *v1.InhibitionRule
 		expErr      error
 	}{
 		{
@@ -240,25 +241,25 @@ func Test_InhibitRuleToInhibitionRule(t *testing.T) {
 		{
 			name:        "allows length of imported rule name to be over UIDMaxLength limit",
 			ruleName:    "some-really-long-inhibition-rule-name-001",
-			provenance:  definitions.Provenance(models.ProvenanceConvertedPrometheus),
+			provenance:  v1.Provenance(models.ProvenanceConvertedPrometheus),
 			origin:      models.ResourceOriginImported,
 			inhibitRule: testRule,
-			exp: &definitions.InhibitionRule{
+			exp: &v1.InhibitionRule{
 				Name:        "some-really-long-inhibition-rule-name-001",
 				InhibitRule: testRule,
-				Provenance:  definitions.Provenance(models.ProvenanceConvertedPrometheus),
+				Provenance:  v1.Provenance(models.ProvenanceConvertedPrometheus),
 			},
 		},
 		{
 			name:        "converts model correctly when all validations passes",
 			ruleName:    "inhibition-rule-1",
 			origin:      models.ResourceOriginGrafana,
-			provenance:  definitions.Provenance(models.ProvenanceNone),
+			provenance:  v1.Provenance(models.ProvenanceNone),
 			inhibitRule: testRule,
-			exp: &definitions.InhibitionRule{
+			exp: &v1.InhibitionRule{
 				Name:        "inhibition-rule-1",
 				InhibitRule: testRule,
-				Provenance:  definitions.Provenance(models.ProvenanceNone),
+				Provenance:  v1.Provenance(models.ProvenanceNone),
 			},
 		},
 	}

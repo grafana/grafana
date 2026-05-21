@@ -126,6 +126,9 @@ export interface QueryEditorUIState {
   finalizePendingTransformation: (transformationId: string) => void;
   stackedMode: StackedEditorState;
   showVersionBanner: boolean;
+  /** Action surface whose inline delete confirmation is open, so only one Actions instance confirms at a time. */
+  confirmingDeleteActionKey: string | null;
+  setConfirmingDeleteActionKey: (key: string | null) => void;
 }
 
 export interface QueryEditorActions {
