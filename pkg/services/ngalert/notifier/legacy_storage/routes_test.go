@@ -5,17 +5,16 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/grafana/alerting/definition"
 	"github.com/prometheus/alertmanager/dispatch"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/alerting/definition"
-
 	policy_exports "github.com/grafana/grafana/pkg/services/ngalert/api/test-data/policy-exports"
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
 )
 
@@ -51,7 +50,7 @@ func TestManagedRoute_GeneratedSubRoute_PreservesFields(t *testing.T) {
 	gi := model.Duration(20)
 	ri := model.Duration(30)
 
-	child := &definition.Route{
+	child := &v1.Route{
 		Receiver: "child",
 	}
 
@@ -62,7 +61,7 @@ func TestManagedRoute_GeneratedSubRoute_PreservesFields(t *testing.T) {
 		GroupWait:      &gw,
 		GroupInterval:  &gi,
 		RepeatInterval: &ri,
-		Routes:         []*definition.Route{child},
+		Routes:         []*v1.Route{child},
 		Provenance:     models.Provenance("test"),
 	}
 
@@ -85,7 +84,7 @@ func TestManagedRoute_GeneratedSubRoute_PreservesFields(t *testing.T) {
 	assert.Equal(t, "managed", route.ObjectMatchers[0].Value)
 
 	// Provenance propagated
-	assert.EqualValues(t, definitions.Provenance("test"), route.Provenance)
+	assert.EqualValues(t, v1.Provenance("test"), route.Provenance)
 }
 
 func TestManagedRoutes_Sort(t *testing.T) {
@@ -115,11 +114,11 @@ func TestManagedRoutes_Contains(t *testing.T) {
 }
 
 func TestWithManagedRoutes(t *testing.T) {
-	rev := func(root *definitions.Route, managedRoutes map[string]*definitions.Route) *ConfigRevision {
+	rev := func(root *v1.Route, managedRoutes map[string]*v1.Route) *ConfigRevision {
 		return &ConfigRevision{
-			Config: &definitions.PostableUserConfig{
-				AlertmanagerConfig: definitions.PostableApiAlertingConfig{
-					Config: definitions.Config{
+			Config: &v1.AMConfigV1{
+				AlertmanagerConfig: v1.PostableApiAlertingConfig{
+					Config: v1.Config{
 						Route: root,
 					},
 				},
@@ -132,19 +131,19 @@ func TestWithManagedRoutes(t *testing.T) {
 
 		rev *ConfigRevision
 
-		expectedRoute *definitions.Route
+		expectedRoute *v1.Route
 	}{
 		{
 			name: "simple, root is empty just adds managed routes",
 			rev: rev(policy_exports.Empty(),
-				map[string]*definitions.Route{
+				map[string]*v1.Route{
 					"override-inherit": policy_exports.OverrideInherit(),
 					"matcher-variety":  policy_exports.MatcherVariety(),
 				},
 			),
-			expectedRoute: &definitions.Route{
+			expectedRoute: &v1.Route{
 				Receiver: policy_exports.Empty().Receiver,
-				Routes: []*definitions.Route{
+				Routes: []*v1.Route{
 					NewManagedRoute("matcher-variety", policy_exports.MatcherVariety()).GeneratedSubRoute(),
 					NewManagedRoute("override-inherit", policy_exports.OverrideInherit()).GeneratedSubRoute(),
 				},
@@ -152,41 +151,41 @@ func TestWithManagedRoutes(t *testing.T) {
 		},
 		{
 			name: "complex root with existing routes merges to end of routes",
-			rev: rev(&definitions.Route{
+			rev: rev(&v1.Route{
 				Receiver: "root-receiver",
-				Routes: []*definitions.Route{
-					{ObjectMatchers: definitions.ObjectMatchers{{Name: "severity", Type: labels.MatchEqual, Value: "warn"}}, Continue: true},
-					{ObjectMatchers: definitions.ObjectMatchers{{Name: "severity", Type: labels.MatchNotEqual, Value: "critical"}}, Continue: true},
-					{ObjectMatchers: definitions.ObjectMatchers{{Name: "severity", Type: labels.MatchRegexp, Value: "info"}}, Continue: true},
-					{ObjectMatchers: definitions.ObjectMatchers{{Name: "severity", Type: labels.MatchNotRegexp, Value: "debug"}}, Continue: true},
+				Routes: []*v1.Route{
+					{ObjectMatchers: v1.ObjectMatchers{{Name: "severity", Type: labels.MatchEqual, Value: "warn"}}, Continue: true},
+					{ObjectMatchers: v1.ObjectMatchers{{Name: "severity", Type: labels.MatchNotEqual, Value: "critical"}}, Continue: true},
+					{ObjectMatchers: v1.ObjectMatchers{{Name: "severity", Type: labels.MatchRegexp, Value: "info"}}, Continue: true},
+					{ObjectMatchers: v1.ObjectMatchers{{Name: "severity", Type: labels.MatchNotRegexp, Value: "debug"}}, Continue: true},
 				},
 			},
-				map[string]*definitions.Route{
+				map[string]*v1.Route{
 					"r1": {Receiver: "recv1"},
 					"r2": {Receiver: "recv2"},
 				},
 			),
-			expectedRoute: &definitions.Route{
+			expectedRoute: &v1.Route{
 				Receiver: "root-receiver",
-				Routes: []*definitions.Route{
+				Routes: []*v1.Route{
 					{
 						Receiver:       "recv1",
-						ObjectMatchers: definitions.ObjectMatchers{{Name: NamedRouteMatcher, Type: labels.MatchEqual, Value: "r1"}},
+						ObjectMatchers: v1.ObjectMatchers{{Name: NamedRouteMatcher, Type: labels.MatchEqual, Value: "r1"}},
 						GroupWait:      new(model.Duration(dispatch.DefaultRouteOpts.GroupWait)),
 						GroupInterval:  new(model.Duration(dispatch.DefaultRouteOpts.GroupInterval)),
 						RepeatInterval: new(model.Duration(dispatch.DefaultRouteOpts.RepeatInterval)),
 					},
 					{
 						Receiver:       "recv2",
-						ObjectMatchers: definitions.ObjectMatchers{{Name: NamedRouteMatcher, Type: labels.MatchEqual, Value: "r2"}},
+						ObjectMatchers: v1.ObjectMatchers{{Name: NamedRouteMatcher, Type: labels.MatchEqual, Value: "r2"}},
 						GroupWait:      new(model.Duration(dispatch.DefaultRouteOpts.GroupWait)),
 						GroupInterval:  new(model.Duration(dispatch.DefaultRouteOpts.GroupInterval)),
 						RepeatInterval: new(model.Duration(dispatch.DefaultRouteOpts.RepeatInterval)),
 					},
-					{ObjectMatchers: definitions.ObjectMatchers{{Name: "severity", Type: labels.MatchEqual, Value: "warn"}}, Continue: true},
-					{ObjectMatchers: definitions.ObjectMatchers{{Name: "severity", Type: labels.MatchNotEqual, Value: "critical"}}, Continue: true},
-					{ObjectMatchers: definitions.ObjectMatchers{{Name: "severity", Type: labels.MatchRegexp, Value: "info"}}, Continue: true},
-					{ObjectMatchers: definitions.ObjectMatchers{{Name: "severity", Type: labels.MatchNotRegexp, Value: "debug"}}, Continue: true},
+					{ObjectMatchers: v1.ObjectMatchers{{Name: "severity", Type: labels.MatchEqual, Value: "warn"}}, Continue: true},
+					{ObjectMatchers: v1.ObjectMatchers{{Name: "severity", Type: labels.MatchNotEqual, Value: "critical"}}, Continue: true},
+					{ObjectMatchers: v1.ObjectMatchers{{Name: "severity", Type: labels.MatchRegexp, Value: "info"}}, Continue: true},
+					{ObjectMatchers: v1.ObjectMatchers{{Name: "severity", Type: labels.MatchNotRegexp, Value: "debug"}}, Continue: true},
 				},
 			},
 		},
@@ -250,7 +249,7 @@ func TestConfigRevision_GetManagedRoutes(t *testing.T) {
 
 func TestConfigRevision_CreateManagedRoute(t *testing.T) {
 	origRev := testConfig()
-	subtree := definitions.Route{
+	subtree := v1.Route{
 		Receiver: origRev.Config.AlertmanagerConfig.Receivers[0].Name,
 	}
 
@@ -310,7 +309,7 @@ func TestConfigRevision_CreateManagedRoute(t *testing.T) {
 	})
 
 	t.Run("rejects invalid route", func(t *testing.T) {
-		_, err := testConfig().CreateManagedRoute("test", definitions.Route{})
+		_, err := testConfig().CreateManagedRoute("test", v1.Route{})
 		assert.ErrorIs(t, err, models.ErrRouteInvalidFormat)
 	})
 
@@ -329,7 +328,7 @@ func TestConfigRevision_CreateManagedRoute(t *testing.T) {
 
 func TestConfigRevision_UpdateNamedRoute(t *testing.T) {
 	origRev := testConfig()
-	subtree := definitions.Route{
+	subtree := v1.Route{
 		Receiver: origRev.Config.AlertmanagerConfig.Receivers[0].Name,
 	}
 
@@ -348,7 +347,7 @@ func TestConfigRevision_UpdateNamedRoute(t *testing.T) {
 
 	t.Run("rejects invalid route", func(t *testing.T) {
 		rev := testConfig()
-		_, err := rev.UpdateNamedRoute(getAnyKey(t, rev.Config.ManagedRoutes), definitions.Route{})
+		_, err := rev.UpdateNamedRoute(getAnyKey(t, rev.Config.ManagedRoutes), v1.Route{})
 		assert.ErrorIs(t, err, models.ErrRouteInvalidFormat)
 	})
 
@@ -378,12 +377,12 @@ func TestConfigRevision_DeleteManagedRoute(t *testing.T) {
 func TestConfigRevision_ResetUserDefinedRoute(t *testing.T) {
 	rev := testConfig()
 	original := rev.Config.AlertmanagerConfig.Route
-	newRoute := definitions.Route{
+	newRoute := v1.Route{
 		Receiver: rev.Config.AlertmanagerConfig.Receivers[0].Name,
 	}
-	defaultCfg := definitions.PostableUserConfig{
-		AlertmanagerConfig: definitions.PostableApiAlertingConfig{
-			Config: definitions.Config{
+	defaultCfg := v1.AMConfigV1{
+		AlertmanagerConfig: v1.PostableApiAlertingConfig{
+			Config: v1.Config{
 				Route: &newRoute,
 			},
 		},
@@ -400,19 +399,19 @@ func TestConfigRevision_ResetUserDefinedRoute(t *testing.T) {
 	// We don't fail the reset if the new default receiver exists in the default config,
 	// instead we create it as per the definition.
 	name := "deleted_default"
-	newRoute = definitions.Route{
+	newRoute = v1.Route{
 		Receiver: name,
 	}
-	defaultCfg = definitions.PostableUserConfig{
-		AlertmanagerConfig: definitions.PostableApiAlertingConfig{
-			Config: definitions.Config{
-				Route: &definitions.Route{
+	defaultCfg = v1.AMConfigV1{
+		AlertmanagerConfig: v1.PostableApiAlertingConfig{
+			Config: v1.Config{
+				Route: &v1.Route{
 					Receiver: name,
 				},
 			},
-			Receivers: []*definition.PostableApiReceiver{
+			Receivers: []*v1.PostableApiReceiver{
 				{
-					Receiver: definitions.Receiver{
+					Receiver: definition.Receiver{
 						Name: name,
 					},
 				},
@@ -435,7 +434,7 @@ func TestConfigRevision_ResetUserDefinedRoute(t *testing.T) {
 func TestConfigRevision_ValidateRoute(t *testing.T) {
 	t.Run("valid route passes validation", func(t *testing.T) {
 		rev := testConfig()
-		validRoute := definitions.Route{
+		validRoute := v1.Route{
 			Receiver: rev.Config.AlertmanagerConfig.Receivers[0].Name,
 		}
 		err := rev.ValidateRoute(validRoute)
@@ -446,7 +445,7 @@ func TestConfigRevision_ValidateRoute(t *testing.T) {
 		rev := testConfig()
 
 		// Empty receiver is invalid for root.
-		invalid := definitions.Route{
+		invalid := v1.Route{
 			Receiver: "",
 		}
 
@@ -457,7 +456,7 @@ func TestConfigRevision_ValidateRoute(t *testing.T) {
 	t.Run("fails when receiver does not exist", func(t *testing.T) {
 		rev := testConfig()
 
-		invalid := definitions.Route{
+		invalid := v1.Route{
 			Receiver: "missing-receiver",
 		}
 
@@ -468,9 +467,9 @@ func TestConfigRevision_ValidateRoute(t *testing.T) {
 	t.Run("fails when mute time interval does not exist", func(t *testing.T) {
 		rev := testConfig()
 
-		invalid := definitions.Route{
+		invalid := v1.Route{
 			Receiver: rev.Config.AlertmanagerConfig.Receivers[0].Name,
-			Routes: []*definitions.Route{
+			Routes: []*v1.Route{
 				{
 					MuteTimeIntervals: []string{"missing-interval"},
 				},
@@ -484,9 +483,9 @@ func TestConfigRevision_ValidateRoute(t *testing.T) {
 	t.Run("fails when active time interval does not exist", func(t *testing.T) {
 		rev := testConfig()
 
-		invalid := definitions.Route{
+		invalid := v1.Route{
 			Receiver: rev.Config.AlertmanagerConfig.Receivers[0].Name,
-			Routes: []*definitions.Route{
+			Routes: []*v1.Route{
 				{
 					ActiveTimeIntervals: []string{"missing-interval"},
 				},

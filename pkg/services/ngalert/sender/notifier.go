@@ -75,11 +75,6 @@ func (a *Alert) Name() string {
 	return a.Labels.Get(labels.AlertName)
 }
 
-// Hash returns a hash over the alert. It is equivalent to the alert labels hash.
-func (a *Alert) Hash() uint64 {
-	return a.Labels.Hash()
-}
-
 func (a *Alert) String() string {
 	s := fmt.Sprintf("%s[%s]", a.Name(), fmt.Sprintf("%016x", a.Hash())[:7])
 	if a.Resolved() {
