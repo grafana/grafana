@@ -326,7 +326,7 @@ describe('extractV2Inputs', () => {
       variables: [
         {
           kind: 'QueryVariable',
-          spec: { name: 'myvar', query: { group: 'grafana', labels: { [ExportLabel]: 'grafana-1' } } },
+          spec: { name: 'myvar', query: { group: 'grafana' } },
         },
       ],
     };
@@ -345,11 +345,11 @@ describe('extractV2Inputs', () => {
       variables: [
         {
           kind: 'QueryVariable',
-          spec: { name: 'promvar', query: { group: 'prometheus', labels: { [ExportLabel]: 'prom-1' } } },
+          spec: { name: 'promvar', query: { group: 'prometheus' } },
         },
         {
           kind: 'QueryVariable',
-          spec: { name: 'grafvar', query: { group: 'grafana', labels: { [ExportLabel]: 'grafana-1' } } },
+          spec: { name: 'grafvar', query: { group: 'grafana' } },
         },
       ],
     };
