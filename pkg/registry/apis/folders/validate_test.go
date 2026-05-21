@@ -673,11 +673,15 @@ func TestValidateUpdate(t *testing.T) {
 }
 
 func TestValidateDelete(t *testing.T) {
+	zeroGrace := int64(0)
+
 	tests := []struct {
-		name        string
-		folder      *folders.Folder
-		searcher    *mockSearchClient
-		expectedErr string
+		name                 string
+		folder               *folders.Folder
+		searcher             *mockSearchClient
+		deleteOptions        *metav1.DeleteOptions
+		cascadeDeleteEnabled bool
+		expectedErr          string
 	}{{
 		name: "simple delete",
 		folder: &folders.Folder{
@@ -728,6 +732,47 @@ func TestValidateDelete(t *testing.T) {
 			},
 		},
 		expectedErr: "could not verify if folder is empty",
+	}, {
+		name: "folder not empty with gracePeriodSeconds=0 is allowed",
+		folder: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "nnn",
+			},
+		},
+		searcher: &mockSearchClient{
+			stats: &resourcepb.ResourceStatsResponse{
+				Stats: []*resourcepb.ResourceStatsResponse_Stats{
+					{
+						Group:    "folders.grafana.app",
+						Resource: "folders",
+						Count:    2,
+					},
+				},
+			},
+		},
+		deleteOptions:        &metav1.DeleteOptions{GracePeriodSeconds: &zeroGrace},
+		cascadeDeleteEnabled: true,
+	}, {
+		name: "folder not empty with gracePeriodSeconds=0 is blocked when feature is disabled",
+		folder: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "nnn",
+			},
+		},
+		searcher: &mockSearchClient{
+			stats: &resourcepb.ResourceStatsResponse{
+				Stats: []*resourcepb.ResourceStatsResponse_Stats{
+					{
+						Group:    "folders.grafana.app",
+						Resource: "folders",
+						Count:    2,
+					},
+				},
+			},
+		},
+		deleteOptions:        &metav1.DeleteOptions{GracePeriodSeconds: &zeroGrace},
+		cascadeDeleteEnabled: false,
+		expectedErr:          "[folder.not-empty]",
 	}, {
 		name: "folder not empty - contains dashboards",
 		folder: &folders.Folder{
@@ -855,7 +900,7 @@ func TestValidateDelete(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := validateOnDelete(context.Background(), tt.folder, tt.searcher)
+			err := validateOnDelete(context.Background(), tt.folder, tt.searcher, tt.deleteOptions, tt.cascadeDeleteEnabled)
 
 			if tt.expectedErr == "" {
 				require.NoError(t, err)

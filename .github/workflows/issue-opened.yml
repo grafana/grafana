@@ -37,27 +37,16 @@ jobs:
         run: sleep 2m
         shell: bash
 
-      - name: "Get vault secrets"
-        id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@get-vault-secrets/v1.3.0 # zizmor: ignore[unpinned-uses]
+      - name: Get GitHub App token
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
         with:
-          # Secrets placed in the ci/repo/grafana/grafana/plugins_platform_issue_commands_github_bot path in Vault
-          repo_secrets: |
-            GITHUB_APP_ID=grafana_pr_automation_app:app_id
-            GITHUB_APP_PRIVATE_KEY=grafana_pr_automation_app:app_pem
-
-      - name: Generate token
-        id: generate_token
-        uses: actions/create-github-app-token@df432ceedc7162793a195dd1713ff69aefc7379e # v2.0.6
-        with:
-          app-id: ${{ env.GITHUB_APP_ID }}
-          private-key: ${{ env.GITHUB_APP_PRIVATE_KEY }}
-          permission-issues: write
+          github_app: grafana-pr-automation
 
       - name: Run Commands
         uses: ./actions/commands
         with:
-          token: ${{ steps.generate_token.outputs.token }}
+          token: ${{ steps.get-github-app-token.outputs.token }}
           configPath: "issue-opened"
 
   auto-triage:
