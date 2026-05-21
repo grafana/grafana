@@ -23,11 +23,14 @@ interface SidebarProps {
 
 export const Sidebar = memo(function Sidebar({ sidebarSize, setSidebarSize }: SidebarProps) {
   const styles = useStyles2(getStyles);
-  const { setSelectedAlert, cardType } = useQueryEditorUIContext();
+  const { setSelectedAlert, setMultiSelectMode, multiSelectMode, cardType } = useQueryEditorUIContext();
   const { alertRules, loading } = useAlertingContext();
 
   const handleViewChange = (view: QueryEditorType) => {
     trackSidebarViewChange(view);
+    if (multiSelectMode) {
+      setMultiSelectMode(false);
+    }
     setSelectedAlert(view === QueryEditorType.Alert ? (alertRules[0] ?? EMPTY_ALERT) : null);
   };
 

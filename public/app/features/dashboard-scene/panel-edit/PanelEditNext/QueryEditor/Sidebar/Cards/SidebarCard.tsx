@@ -155,7 +155,7 @@ export const SidebarCard = ({
         aria-pressed={isSelected}
       >
         <div className={styles.cardContent}>
-          {multiSelectMode && (
+          {multiSelectMode && onToggleSelect && (
             <div className={styles.checkboxWrapper}>
               <Checkbox
                 className={styles.roundedCheckbox}

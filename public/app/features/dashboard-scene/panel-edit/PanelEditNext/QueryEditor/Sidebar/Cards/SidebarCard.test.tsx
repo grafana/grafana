@@ -228,7 +228,18 @@ describe('SidebarCard', () => {
       expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
     });
 
-    it('renders the checkbox when multi-select mode is on', () => {
+    it('renders the checkbox when multi-select mode is on and onToggleSelect is provided', () => {
+      renderWithQueryEditorProvider(
+        <SidebarCard id="A" isSelected={false} item={item} onSelect={jest.fn()} onToggleSelect={jest.fn()}>
+          <span>Card content</span>
+        </SidebarCard>,
+        { queries, uiStateOverrides: { multiSelectMode: true } }
+      );
+
+      expect(screen.getByRole('checkbox')).toBeInTheDocument();
+    });
+
+    it('does not render the checkbox in multi-select mode when onToggleSelect is not provided (e.g. alert cards)', () => {
       renderWithQueryEditorProvider(
         <SidebarCard id="A" isSelected={false} item={item} onSelect={jest.fn()}>
           <span>Card content</span>
@@ -236,7 +247,7 @@ describe('SidebarCard', () => {
         { queries, uiStateOverrides: { multiSelectMode: true } }
       );
 
-      expect(screen.getByRole('checkbox')).toBeInTheDocument();
+      expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
     });
 
     it('does not render the checkbox just because 2+ items are in the selection set without multi-select mode', () => {
@@ -260,7 +271,14 @@ describe('SidebarCard', () => {
 
     it('checks the checkbox when isPartOfSelection is true', () => {
       renderWithQueryEditorProvider(
-        <SidebarCard id="A" isSelected={false} isPartOfSelection item={item} onSelect={jest.fn()}>
+        <SidebarCard
+          id="A"
+          isSelected={false}
+          isPartOfSelection
+          item={item}
+          onSelect={jest.fn()}
+          onToggleSelect={jest.fn()}
+        >
           <span>Card content</span>
         </SidebarCard>,
         { queries, uiStateOverrides: { multiSelectMode: true } }
