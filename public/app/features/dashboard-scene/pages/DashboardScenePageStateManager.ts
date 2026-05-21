@@ -1027,10 +1027,6 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
               ...scene.state.meta,
               isDashboardTemplate: true,
               dashboardTemplateUid: options.dashboardTemplateUid,
-              k8s: {
-                ...scene.state.meta.k8s,
-                resourceVersion: rsp.metadata.resourceVersion,
-              },
             },
           });
         }
@@ -1116,7 +1112,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
             break;
           }
           // Grafana dashboard templates are V1 only — throw to fallback
-          throw new DashboardVersionError('v0alpha1', 'Grafana dashboard templates use V1 schema');
+          throw new DashboardVersionError('v0alpha1', 'Grafana-provisioned dashboard templates use V1 schema');
         }
         default:
           if (config.featureToggles.reloadDashboardsOnParamsChange) {
@@ -1166,7 +1162,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     { editMode }: { editMode: boolean }
   ): Promise<DashboardWithAccessInfo<DashboardV2Spec>> {
     if (!getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaOrgDashboardTemplates, false)) {
-      throw new Error('Grafana dashboard templates are not enabled');
+      throw new Error('Custom dashboard templates are not enabled');
     }
 
     const response = await getDashboardTemplateExtension().loadTemplate(dashboardTemplateUid);
@@ -1179,6 +1175,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
       // canEdit and canSave will change in the future with specific RBAC permissions.
       return transformTemplateToSaveModelSchemaV2({
         dashboardSpec: response.spec.dashboard,
+        dashboardVersion: response.spec.dashboardVersion,
         resourceVersion,
         canEdit: true,
         canSave: true,
@@ -1191,6 +1188,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     // template, it's a cloning flow.
     return transformTemplateToSaveModelSchemaV2({
       dashboardSpec: response.spec.dashboard,
+      dashboardVersion: response.spec.dashboardVersion,
       canEdit: true,
       canSave: true,
     });
