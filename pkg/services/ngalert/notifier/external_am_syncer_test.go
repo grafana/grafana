@@ -25,9 +25,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	dsfakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	ngfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
@@ -471,7 +471,7 @@ func TestSyncExternalAMs_IdentifierMismatchClassifiedOnMetric(t *testing.T) {
 
 	// Seed an existing ExtraConfig with a different identifier so the sync collides.
 	seedCtx, seedUser := identity.WithServiceIdentity(context.Background(), 1)
-	_, err := moa.SaveAndApplyExtraConfiguration(seedCtx, 1, seedUser, syncBypassAuthz{}, apimodels.ExtraConfiguration{
+	_, err := moa.SaveAndApplyExtraConfiguration(seedCtx, 1, seedUser, syncBypassAuthz{}, v1.ExtraConfiguration{
 		Identifier:         "existing-uid",
 		AlertmanagerConfig: amConfig,
 	}, false, false)

@@ -9,19 +9,18 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/alerting/definition"
 	httpcfg "github.com/grafana/alerting/http/v0mimir"
-	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.yaml.in/yaml/v3"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 )
 
 func TestMergeReceivers(t *testing.T) {
-	r := func(name string) *definition.PostableApiReceiver {
-		return &definition.PostableApiReceiver{
+	r := func(name string) *v1.PostableApiReceiver {
+		return &v1.PostableApiReceiver{
 			Receiver: definition.Receiver{
 				Name: name,
 			},
@@ -37,21 +36,21 @@ func TestMergeReceivers(t *testing.T) {
 
 	testCases := []struct {
 		name            string
-		existing        []*definition.PostableApiReceiver
-		incoming        []*definition.PostableApiReceiver
-		expected        []*definition.PostableApiReceiver
+		existing        []*v1.PostableApiReceiver
+		incoming        []*v1.PostableApiReceiver
+		expected        []*v1.PostableApiReceiver
 		expectedRenames map[string]string
 	}{
 		{
 			name: "should append copies of incoming to existing",
-			existing: []*definition.PostableApiReceiver{
+			existing: []*v1.PostableApiReceiver{
 				r2,
 			},
-			incoming: []*definition.PostableApiReceiver{
+			incoming: []*v1.PostableApiReceiver{
 				r1,
 				r3,
 			},
-			expected: []*definition.PostableApiReceiver{
+			expected: []*v1.PostableApiReceiver{
 				r2,
 				r1,
 				r3,
@@ -60,13 +59,13 @@ func TestMergeReceivers(t *testing.T) {
 		},
 		{
 			name: "should rename incoming if there is existing",
-			existing: []*definition.PostableApiReceiver{
+			existing: []*v1.PostableApiReceiver{
 				r2,
 			},
-			incoming: []*definition.PostableApiReceiver{
+			incoming: []*v1.PostableApiReceiver{
 				r("r2"),
 			},
-			expected: []*definition.PostableApiReceiver{
+			expected: []*v1.PostableApiReceiver{
 				r2,
 				r("r2" + suffix),
 			},
@@ -76,14 +75,14 @@ func TestMergeReceivers(t *testing.T) {
 		},
 		{
 			name: "should rename incoming if there is existing after dedup",
-			existing: []*definition.PostableApiReceiver{
+			existing: []*v1.PostableApiReceiver{
 				r2,
 				r2s,
 			},
-			incoming: []*definition.PostableApiReceiver{
+			incoming: []*v1.PostableApiReceiver{
 				r("r2"),
 			},
-			expected: []*definition.PostableApiReceiver{
+			expected: []*v1.PostableApiReceiver{
 				r2,
 				r2s,
 				r("r2" + suffix + "_01"),
@@ -94,15 +93,15 @@ func TestMergeReceivers(t *testing.T) {
 		},
 		{
 			name: "should keep names unique across both sets",
-			existing: []*definition.PostableApiReceiver{
+			existing: []*v1.PostableApiReceiver{
 				r2,
 				r2s,
 			},
-			incoming: []*definition.PostableApiReceiver{
+			incoming: []*v1.PostableApiReceiver{
 				r("r2"),
 				r("r2" + suffix + "_01"),
 			},
-			expected: []*definition.PostableApiReceiver{
+			expected: []*v1.PostableApiReceiver{
 				r2,
 				r2s,
 				r("r2" + suffix + "_02"),
@@ -153,13 +152,13 @@ func TestMergeReceivers(t *testing.T) {
 }
 
 func TestMergeTimeIntervals(t *testing.T) {
-	ti := func(name string) config.TimeInterval {
-		return config.TimeInterval{
+	ti := func(name string) v1.TimeInterval {
+		return v1.TimeInterval{
 			Name: name,
 		}
 	}
-	mti := func(name string) config.MuteTimeInterval {
-		return config.MuteTimeInterval{
+	mti := func(name string) v1.MuteTimeInterval {
+		return v1.MuteTimeInterval{
 			Name: name,
 		}
 	}
@@ -168,28 +167,28 @@ func TestMergeTimeIntervals(t *testing.T) {
 
 	testCases := []struct {
 		name                  string
-		existingMuteIntervals []config.MuteTimeInterval
-		existingTimeIntervals []config.TimeInterval
-		incomingMuteIntervals []config.MuteTimeInterval
-		incomingTimeIntervals []config.TimeInterval
-		expected              []config.TimeInterval
+		existingMuteIntervals []v1.MuteTimeInterval
+		existingTimeIntervals []v1.TimeInterval
+		incomingMuteIntervals []v1.MuteTimeInterval
+		incomingTimeIntervals []v1.TimeInterval
+		expected              []v1.TimeInterval
 		expectedRenames       map[string]string
 	}{
 		{
 			name: "should append copies of incoming to existing time intervals",
-			existingMuteIntervals: []config.MuteTimeInterval{
+			existingMuteIntervals: []v1.MuteTimeInterval{
 				mti("mti1"),
 			},
-			existingTimeIntervals: []config.TimeInterval{
+			existingTimeIntervals: []v1.TimeInterval{
 				ti("ti2"),
 			},
-			incomingTimeIntervals: []config.TimeInterval{
+			incomingTimeIntervals: []v1.TimeInterval{
 				ti("ti4"),
 			},
-			incomingMuteIntervals: []config.MuteTimeInterval{
+			incomingMuteIntervals: []v1.MuteTimeInterval{
 				mti("mti3"),
 			},
-			expected: []config.TimeInterval{
+			expected: []v1.TimeInterval{
 				ti("ti2"),
 				ti("ti4"),
 				ti("mti3"),
@@ -198,19 +197,19 @@ func TestMergeTimeIntervals(t *testing.T) {
 		},
 		{
 			name: "should rename incoming if there is existing",
-			existingMuteIntervals: []config.MuteTimeInterval{
+			existingMuteIntervals: []v1.MuteTimeInterval{
 				mti("mti1"),
 			},
-			existingTimeIntervals: []config.TimeInterval{
+			existingTimeIntervals: []v1.TimeInterval{
 				ti("ti2"),
 			},
-			incomingTimeIntervals: []config.TimeInterval{
+			incomingTimeIntervals: []v1.TimeInterval{
 				ti("mti1"),
 			},
-			incomingMuteIntervals: []config.MuteTimeInterval{
+			incomingMuteIntervals: []v1.MuteTimeInterval{
 				mti("ti2"),
 			},
-			expected: []config.TimeInterval{
+			expected: []v1.TimeInterval{
 				ti("ti2"),
 				ti("mti1" + suffix),
 				ti("ti2" + suffix),
@@ -222,19 +221,19 @@ func TestMergeTimeIntervals(t *testing.T) {
 		},
 		{
 			name: "should rename incoming if there is existing after dedup",
-			existingMuteIntervals: []config.MuteTimeInterval{
+			existingMuteIntervals: []v1.MuteTimeInterval{
 				mti("ti1"),
 			},
-			existingTimeIntervals: []config.TimeInterval{
+			existingTimeIntervals: []v1.TimeInterval{
 				ti("ti1" + suffix),
 			},
-			incomingTimeIntervals: []config.TimeInterval{
+			incomingTimeIntervals: []v1.TimeInterval{
 				ti("ti1" + suffix),
 			},
-			incomingMuteIntervals: []config.MuteTimeInterval{
+			incomingMuteIntervals: []v1.MuteTimeInterval{
 				mti("ti1"),
 			},
-			expected: []config.TimeInterval{
+			expected: []v1.TimeInterval{
 				ti("ti1" + suffix),
 				ti("ti1" + suffix + suffix),
 				ti("ti1" + suffix + "_01"),
@@ -246,16 +245,16 @@ func TestMergeTimeIntervals(t *testing.T) {
 		},
 		{
 			name: "should rename dupe among incoming",
-			existingTimeIntervals: []config.TimeInterval{
+			existingTimeIntervals: []v1.TimeInterval{
 				ti("ti2"),
 			},
-			incomingTimeIntervals: []config.TimeInterval{
+			incomingTimeIntervals: []v1.TimeInterval{
 				ti("ti2"),
 			},
-			incomingMuteIntervals: []config.MuteTimeInterval{
+			incomingMuteIntervals: []v1.MuteTimeInterval{
 				mti("ti2"),
 			},
-			expected: []config.TimeInterval{ // mute intervals have precedence over time intervals in the case of duplicates (see https://github.com/grafana/alerting/blob/85dab908dcb43f7718a638b4c3cf9c214f7e48da/notify/grafana_alertmanager.go#L676-L685)
+			expected: []v1.TimeInterval{ // mute intervals have precedence over time intervals in the case of duplicates (see https://github.com/grafana/alerting/blob/85dab908dcb43f7718a638b4c3cf9c214f7e48da/notify/grafana_alertmanager.go#L676-L685)
 				ti("ti2"),
 				ti("ti2" + suffix),
 				ti("ti2" + suffix + "_01"),
@@ -266,20 +265,20 @@ func TestMergeTimeIntervals(t *testing.T) {
 		},
 		{
 			name: "should ensure uniqueness across existing and incoming",
-			existingMuteIntervals: []config.MuteTimeInterval{
+			existingMuteIntervals: []v1.MuteTimeInterval{
 				mti("ti1"),
 			},
-			existingTimeIntervals: []config.TimeInterval{
+			existingTimeIntervals: []v1.TimeInterval{
 				ti("ti1" + suffix),
 			},
-			incomingTimeIntervals: []config.TimeInterval{
+			incomingTimeIntervals: []v1.TimeInterval{
 				ti("ti1"),
 				ti("ti2"),
 			},
-			incomingMuteIntervals: []config.MuteTimeInterval{
+			incomingMuteIntervals: []v1.MuteTimeInterval{
 				mti("ti1" + suffix + "_01"),
 			},
-			expected: []config.TimeInterval{
+			expected: []v1.TimeInterval{
 				ti("ti1" + suffix),
 				ti("ti1" + suffix + "_02"),
 				ti("ti2"),
@@ -343,14 +342,15 @@ var fullMimirWithOnlyExtraReceiver string
 //go:embed testdata/mimir_swapped_intervals.yaml
 var fullMimirSwappedIntervals string
 
-func load(t *testing.T, yaml string, mutate ...func(p *definition.PostableApiAlertingConfig)) *definition.PostableApiAlertingConfig {
+func load(t *testing.T, yaml string, mutate ...func(p *v1.PostableApiAlertingConfig)) *v1.PostableApiAlertingConfig {
 	t.Helper()
-	p, err := definition.LoadCompat([]byte(yaml))
+	orig, err := definition.LoadCompat([]byte(yaml))
 	require.NoError(t, err)
+	p := v1.PostableApiAlertingConfigToModel(*orig)
 	for _, m := range mutate {
-		m(p)
+		m(&p)
 	}
-	return p
+	return &p
 }
 
 //go:embed testdata/grafana_config.yaml
@@ -367,27 +367,27 @@ func TestMergeExtraConfig(t *testing.T) {
 
 	// withExtra wraps grafana and a raw mimir YAML string into a PostableUserConfig with ExtraConfigs.
 	// Optional mutateFn can adjust the ExtraConfiguration before it's used.
-	withExtra := func(t *testing.T, grafana *definition.PostableApiAlertingConfig, mimirYAML string, mutateFn ...func(*definitions.ExtraConfiguration)) definitions.PostableUserConfig {
+	withExtra := func(t *testing.T, grafana *v1.PostableApiAlertingConfig, mimirYAML string, mutateFn ...func(*v1.ExtraConfiguration)) v1.AMConfigV1 {
 		t.Helper()
-		extra := definitions.ExtraConfiguration{
+		extra := v1.ExtraConfiguration{
 			Identifier:         identifier,
 			AlertmanagerConfig: mimirYAML,
 		}
 		for _, fn := range mutateFn {
 			fn(&extra)
 		}
-		return definitions.PostableUserConfig{
+		return v1.AMConfigV1{
 			AlertmanagerConfig: *grafana,
-			ExtraConfigs:       []definitions.ExtraConfiguration{extra},
+			ExtraConfigs:       []v1.ExtraConfiguration{extra},
 		}
 	}
 
 	assertResult := func(t *testing.T, expected, actual MergeResult) {
 		t.Helper()
 		diff := cmp.Diff(expected, actual,
-			cmpopts.IgnoreUnexported(commoncfg.ProxyConfig{}, httpcfg.ProxyConfig{}, labels.Matcher{}, definitions.PostableUserConfig{}),
+			cmpopts.IgnoreUnexported(commoncfg.ProxyConfig{}, httpcfg.ProxyConfig{}, labels.Matcher{}, v1.AMConfigV1{}),
 			cmpopts.SortSlices(func(a, b *labels.Matcher) bool { return a.Name < b.Name }),
-			cmpopts.SortSlices(func(a, b *definition.PostableApiReceiver) bool { return a.Name < b.Name }),
+			cmpopts.SortSlices(func(a, b *v1.PostableApiReceiver) bool { return a.Name < b.Name }),
 			cmpopts.EquateEmpty(),
 			cmpopts.IgnoreFields(MergeResult{}, "ExtraRoute", "ExtraInhibitRules"),
 		)
@@ -404,7 +404,7 @@ func TestMergeExtraConfig(t *testing.T) {
 		require.NoError(t, err)
 
 		assertResult(t, MergeResult{
-			Config:     definitions.PostableUserConfig{AlertmanagerConfig: *load(t, fullMergedConfig, func(p *definition.PostableApiAlertingConfig) { p.Global = nil })},
+			Config:     v1.AMConfigV1{AlertmanagerConfig: *load(t, fullMergedConfig, func(p *v1.PostableApiAlertingConfig) { p.Global = nil })},
 			Identifier: identifier,
 		}, result)
 	})
@@ -415,7 +415,7 @@ func TestMergeExtraConfig(t *testing.T) {
 		require.NoError(t, err)
 
 		assertResult(t, MergeResult{
-			Config:     definitions.PostableUserConfig{AlertmanagerConfig: *load(t, fullMergedConfig, func(p *definition.PostableApiAlertingConfig) { p.Global = nil })},
+			Config:     v1.AMConfigV1{AlertmanagerConfig: *load(t, fullMergedConfig, func(p *v1.PostableApiAlertingConfig) { p.Global = nil })},
 			Identifier: identifier,
 		}, result)
 	})
@@ -426,9 +426,9 @@ func TestMergeExtraConfig(t *testing.T) {
 		require.NoError(t, err)
 
 		assertResult(t, MergeResult{
-			Config: definitions.PostableUserConfig{AlertmanagerConfig: *load(t, fullMergedConfig, func(p *definition.PostableApiAlertingConfig) {
+			Config: v1.AMConfigV1{AlertmanagerConfig: *load(t, fullMergedConfig, func(p *v1.PostableApiAlertingConfig) {
 				p.Global = nil
-				p.Receivers = append(p.Receivers, &definition.PostableApiReceiver{
+				p.Receivers = append(p.Receivers, &v1.PostableApiReceiver{
 					Receiver: definition.Receiver{Name: "grafana-default-email" + identifier},
 				})
 			})},
@@ -440,8 +440,8 @@ func TestMergeExtraConfig(t *testing.T) {
 	})
 
 	t.Run("should append index suffix if rename still collides", func(t *testing.T) {
-		grafana := load(t, fullGrafanaConfig, func(p *definition.PostableApiAlertingConfig) {
-			p.Receivers = append(p.Receivers, &definition.PostableApiReceiver{
+		grafana := load(t, fullGrafanaConfig, func(p *v1.PostableApiAlertingConfig) {
+			p.Receivers = append(p.Receivers, &v1.PostableApiReceiver{
 				Receiver: definition.Receiver{Name: "grafana-default-email" + identifier},
 			})
 		})
@@ -450,11 +450,11 @@ func TestMergeExtraConfig(t *testing.T) {
 		require.NoError(t, err)
 
 		assertResult(t, MergeResult{
-			Config: definitions.PostableUserConfig{AlertmanagerConfig: *load(t, fullMergedConfig, func(p *definition.PostableApiAlertingConfig) {
+			Config: v1.AMConfigV1{AlertmanagerConfig: *load(t, fullMergedConfig, func(p *v1.PostableApiAlertingConfig) {
 				p.Global = nil
 				p.Receivers = append(p.Receivers,
-					&definition.PostableApiReceiver{Receiver: definition.Receiver{Name: "grafana-default-email" + identifier}},
-					&definition.PostableApiReceiver{Receiver: definition.Receiver{Name: "grafana-default-email" + identifier + "_01"}},
+					&v1.PostableApiReceiver{Receiver: definition.Receiver{Name: "grafana-default-email" + identifier}},
+					&v1.PostableApiReceiver{Receiver: definition.Receiver{Name: "grafana-default-email" + identifier + "_01"}},
 				)
 			})},
 			RenameResources: RenameResources{
@@ -472,12 +472,12 @@ func TestMergeExtraConfig(t *testing.T) {
 		require.NoError(t, err)
 
 		assertResult(t, MergeResult{
-			Config: definitions.PostableUserConfig{AlertmanagerConfig: *load(t, fullMergedConfig, func(p *definition.PostableApiAlertingConfig) {
+			Config: v1.AMConfigV1{AlertmanagerConfig: *load(t, fullMergedConfig, func(p *v1.PostableApiAlertingConfig) {
 				p.Global = nil
 				// remove mti-2 (absent from fullMimirSwappedIntervals) and add the renamed intervals
 				expected := p.TimeIntervals[:len(p.TimeIntervals)-1]
-				expected = append(expected, config.TimeInterval{Name: "mti-1" + identifier})
-				expected = append(expected, config.TimeInterval{Name: "ti-1" + identifier})
+				expected = append(expected, v1.TimeInterval{Name: "mti-1" + identifier})
+				expected = append(expected, v1.TimeInterval{Name: "ti-1" + identifier})
 				p.TimeIntervals = expected
 			})},
 			RenameResources: RenameResources{
@@ -499,14 +499,14 @@ func TestMergeExtraConfig(t *testing.T) {
 	})
 
 	t.Run("should return base config unchanged if no extra configs", func(t *testing.T) {
-		input := definitions.PostableUserConfig{AlertmanagerConfig: *load(t, fullGrafanaConfig)}
+		input := v1.AMConfigV1{AlertmanagerConfig: *load(t, fullGrafanaConfig)}
 		result, err := MergeExtraConfig(context.Background(), &input)
 		require.NoError(t, err)
 		assert.Equal(t, input, result.Config)
 	})
 
 	t.Run("should fail if identifier is empty", func(t *testing.T) {
-		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirConfig, func(e *definitions.ExtraConfiguration) {
+		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirConfig, func(e *v1.ExtraConfiguration) {
 			e.Identifier = ""
 		})
 		_, err := MergeExtraConfig(context.Background(), &input)
