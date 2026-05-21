@@ -1895,7 +1895,34 @@ func (s *server) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequ
 	return s.search.GetStats(ctx, req)
 }
 
+// requireUserNamespace is a cross-tenant safety net for delegated-only
+// RPCs. It does not replace resource-level access.Check; it only catches
+// the case where a caller authenticated for one namespace asks for data
+// in another.
+func requireUserNamespace(ctx context.Context, namespace string) *resourcepb.ErrorResult {
+	user, ok := claims.AuthInfoFrom(ctx)
+	if !ok || user == nil {
+		return &resourcepb.ErrorResult{
+			Message: "no user found in context",
+			Code:    http.StatusUnauthorized,
+		}
+	}
+	if !claims.NamespaceMatches(user.GetNamespace(), namespace) {
+		return &resourcepb.ErrorResult{
+			Message: "namespace mismatch",
+			Code:    http.StatusForbidden,
+		}
+	}
+	return nil
+}
+
+// ListManagedObjects implements ManagedObjectIndexServer.
+// NOTE: Internal RPC -- callers are responsible for authorizing the originating user request.
+// Do not route end-user traffic here directly.
 func (s *server) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {
+	if errRes := requireUserNamespace(ctx, req.Namespace); errRes != nil {
+		return &resourcepb.ListManagedObjectsResponse{Error: errRes}, nil
+	}
 	if s.search == nil {
 		return nil, fmt.Errorf("search index not configured")
 	}
@@ -1903,7 +1930,13 @@ func (s *server) ListManagedObjects(ctx context.Context, req *resourcepb.ListMan
 	return s.search.ListManagedObjects(ctx, req)
 }
 
+// CountManagedObjects implements ManagedObjectIndexServer.
+// NOTE: Internal RPC -- callers are responsible for authorizing the originating user request.
+// Do not route end-user traffic here directly.
 func (s *server) CountManagedObjects(ctx context.Context, req *resourcepb.CountManagedObjectsRequest) (*resourcepb.CountManagedObjectsResponse, error) {
+	if errRes := requireUserNamespace(ctx, req.Namespace); errRes != nil {
+		return &resourcepb.CountManagedObjectsResponse{Error: errRes}, nil
+	}
 	if s.search == nil {
 		return nil, fmt.Errorf("search index not configured")
 	}
@@ -1916,12 +1949,59 @@ func (s *server) IsHealthy(ctx context.Context, req *resourcepb.HealthCheckReque
 	return s.diagnostics.IsHealthy(ctx, req) //nolint:staticcheck
 }
 
-// GetBlob implements BlobStore.
+// PutBlob implements BlobStore.
+// NOTE: Internal RPC -- callers are responsible for authorizing the originating user request.
+// Do not route end-user traffic here directly.
 func (s *server) PutBlob(ctx context.Context, req *resourcepb.PutBlobRequest) (*resourcepb.PutBlobResponse, error) {
+	if req.Resource == nil {
+		return &resourcepb.PutBlobResponse{Error: &resourcepb.ErrorResult{
+			Message: "missing resource key",
+			Code:    http.StatusBadRequest,
+		}}, nil
+	}
 	if s.blob == nil {
 		return &resourcepb.PutBlobResponse{Error: &resourcepb.ErrorResult{
 			Message: "blob store not configured",
 			Code:    http.StatusNotImplemented,
+		}}, nil
+	}
+
+	user, ok := claims.AuthInfoFrom(ctx)
+	if !ok || user == nil {
+		return &resourcepb.PutBlobResponse{Error: &resourcepb.ErrorResult{
+			Message: "no user found in context",
+			Code:    http.StatusUnauthorized,
+		}}, nil
+	}
+
+	// Load the parent both to enforce existence (see proto) and to get its
+	// folder for access.Check.
+	parent := s.backend.ReadResource(ctx, &resourcepb.ReadRequest{Key: req.Resource})
+	switch {
+	case parent == nil:
+		return &resourcepb.PutBlobResponse{Error: &resourcepb.ErrorResult{
+			Message: "parent resource not found",
+			Code:    http.StatusNotFound,
+		}}, nil
+	case parent.Error != nil:
+		// Surface backend status as-is; collapsing to 404 would hide
+		// transient 5xx as "not found".
+		return &resourcepb.PutBlobResponse{Error: parent.Error}, nil
+	}
+
+	a, err := s.access.Check(ctx, user, claims.CheckRequest{
+		Verb:      utils.VerbUpdate,
+		Group:     req.Resource.Group,
+		Resource:  req.Resource.Resource,
+		Namespace: req.Resource.Namespace,
+		Name:      req.Resource.Name,
+	}, parent.Folder)
+	if err != nil {
+		return &resourcepb.PutBlobResponse{Error: AsErrorResult(err)}, nil
+	}
+	if !a.Allowed {
+		return &resourcepb.PutBlobResponse{Error: &resourcepb.ErrorResult{
+			Code: http.StatusForbidden,
 		}}, nil
 	}
 
@@ -1990,7 +2070,18 @@ func (s *server) getPartialObject(ctx context.Context, key *resourcepb.ResourceK
 }
 
 // GetBlob implements BlobStore.
+// NOTE: Internal RPC -- callers are responsible for authorizing the originating user request.
+// Do not route end-user traffic here directly.
 func (s *server) GetBlob(ctx context.Context, req *resourcepb.GetBlobRequest) (*resourcepb.GetBlobResponse, error) {
+	if req.Resource == nil {
+		return &resourcepb.GetBlobResponse{Error: &resourcepb.ErrorResult{
+			Message: "missing resource key",
+			Code:    http.StatusBadRequest,
+		}}, nil
+	}
+	if errRes := requireUserNamespace(ctx, req.Resource.Namespace); errRes != nil {
+		return &resourcepb.GetBlobResponse{Error: errRes}, nil
+	}
 	if s.blob == nil {
 		return &resourcepb.GetBlobResponse{Error: &resourcepb.ErrorResult{
 			Message: "blob store not configured",
@@ -2074,7 +2165,13 @@ func (s *server) runInQueue(ctx context.Context, tenantID string, runnable func(
 	}
 }
 
+// RebuildIndexes implements ResourceIndexServer.
+// NOTE: Internal RPC -- callers are responsible for authorizing the originating user request.
+// Do not route end-user traffic here directly.
 func (s *server) RebuildIndexes(ctx context.Context, req *resourcepb.RebuildIndexesRequest) (*resourcepb.RebuildIndexesResponse, error) {
+	if errRes := requireUserNamespace(ctx, req.Namespace); errRes != nil {
+		return &resourcepb.RebuildIndexesResponse{Error: errRes}, nil
+	}
 	if s.search == nil {
 		return nil, fmt.Errorf("search index not configured")
 	}
