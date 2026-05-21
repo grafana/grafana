@@ -75,19 +75,44 @@ Use an integration when:
 
 ## Relationships and interactions
 
-Data sources, plugins, and integrations work together to build observability solutions:
+Data sources, plugins, and integrations work together to build observability solutions. The following diagram shows two paths: the manual path where you install plugins and configure data sources yourself, and the integration path where Grafana Cloud provides a pre-packaged setup.
 
-- Plugins extend what Grafana can do.
-- Data sources define where Grafana reads data from.
-- Integrations combine telemetry collection and pre-built content to create complete monitoring solutions.
+```text
+  MANUAL PATH                      INTEGRATION PATH
+  (Self-hosted & Cloud)            (Cloud only)
+
+  ┌────────────────────┐           ┌────────────────────┐
+  │  Install plugin    │           │  Add integration   │
+  └─────────┬──────────┘           └─────────┬──────────┘
+            │ enables                        │ bundles
+            ▼                                ▼
+  ┌────────────────────┐           ┌────────────────────┐
+  │  Configure data    │           │  Alloy config,     │
+  │  source (URL,      │           │  dashboards,       │
+  │  auth, endpoint)   │           │  alerts, rules     │
+  └─────────┬──────────┘           └─────────┬──────────┘
+            │ connects to                    │ ingests into
+            ▼                                ▼
+  ┌────────────────────┐           ┌────────────────────┐
+  │  External backend  │           │  Grafana Cloud     │
+  │  (Prometheus,      │           │  backends (Mimir,  │
+  │   MySQL, etc.)     │           │  Loki, Tempo)      │
+  └─────────┬──────────┘           └─────────┬──────────┘
+            │ queries                        │ queries
+            ▼                                ▼
+  ┌────────────────────┐           ┌────────────────────┐
+  │  Build panels and  │           │  Pre-built         │
+  │  dashboards        │           │  dashboards/alerts │
+  └────────────────────┘           └────────────────────┘
+```
+
+App plugins can combine both paths by bundling data source plugins, panel plugins, and custom pages into a single package.
 
 The following examples show how these concepts work together in practice:
 
 - Install the Databricks data source plugin. Configure the Databricks data source and run SQL queries against your Databricks workspace. Use the `Histogram` panel to visualize distributions in your query results, such as latency buckets, job durations, or model output scores.
 
 - Install the Redis Application app plugin. This app provides a unified experience for monitoring Redis by working with your existing Redis data source. It adds custom pages for configuration and exploration, along with prebuilt dashboards, commands, and visualizations that help you analyze performance, memory usage, and key activity.
-
-<!-- - Install the Azure Cloud Native Monitoring app plugin, which bundles the app and data source plugin types. It includes data source plugins for Azure Monitor and Log Analytics, panel plugins for visualizing Azure metrics, and a custom configuration page for managing authentication and subscriptions. -->
 
 - If you’re using Grafana Cloud, add the ClickHouse integration. This integration provides pre-built dashboards and alerts to monitor ClickHouse cluster metrics and logs, so you can visualize and analyze ClickHouse performance and health.
 
