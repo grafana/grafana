@@ -211,7 +211,17 @@ func newService(
 	embedder *embedder.Embedder,
 	searchClient resourcepb.ResourceIndexClient,
 ) *service {
-	authn := grpcutils.NewAuthenticator(ReadGrpcServerConfig(cfg), tracer)
+	// In dev mode, use the unsafe authenticator so local multi-process setups
+	// (grafana + standalone unified-grpc + standalone search) work without
+	// standing up a real signing keys server. The unsafe verifier accepts any
+	// well-formed JWT, which pairs with the in-proc static token exchanger
+	// used by NewAuthnGrpcClientInterceptor when TokenExchangeURL is empty.
+	var authn interceptors.AuthenticatorFunc
+	if cfg.Env == setting.Dev {
+		authn = grpcutils.NewUnsafeAuthenticator(tracer)
+	} else {
+		authn = grpcutils.NewAuthenticator(ReadGrpcServerConfig(cfg), tracer)
+	}
 
 	return &service{
 		backend:            backend,
