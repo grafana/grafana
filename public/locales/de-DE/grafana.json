@@ -4380,7 +4380,6 @@
       "button-cancel": "Abbrechen",
       "button-delete": "Löschen",
       "button-deleting": "Wird gelöscht …",
-      "commit": "Ordner löschen",
       "delete-warning": "Dadurch werden dieser und alle untergeordneten Ordner gelöscht. Insgesamt betrifft dies:",
       "missing-info": "Fehlende Pflichtfelder",
       "success-message": "Ordner erfolgreich gelöscht"
@@ -4494,7 +4493,6 @@
       "button-cancel": "Abbrechen",
       "button-rename": "Umbenennen",
       "button-renaming": "Wird umbenannt …",
-      "commit": "Ordner umbenennen",
       "error-saving": "Umbenennung des Ordners fehlgeschlagen",
       "label-folder-name": "Ordnername",
       "missing-info": "Fehlende Pflichtfelder",
@@ -10862,6 +10860,12 @@
     "name-stacking": "Stapeln"
   },
   "home": {
+    "dashboard-tabs": {
+      "recent": "",
+      "recent-active": "",
+      "starred": "",
+      "starred-active": ""
+    },
     "home-page": {
       "edition": {
         "cloud": "",
@@ -10874,6 +10878,23 @@
         "morning": ""
       },
       "placeholder": ""
+    },
+    "recent-dashboards-tab": {
+      "browse": "",
+      "clear": "",
+      "create": "",
+      "empty": "",
+      "empty-description": "",
+      "error-title": "",
+      "loading": "",
+      "retry": ""
+    },
+    "starred-dashboards-tab": {
+      "empty": "",
+      "empty-description": "",
+      "error-title": "",
+      "loading": "",
+      "retry": ""
     }
   },
   "inspector": {
@@ -12566,6 +12587,9 @@
       "save-tooltip": ""
     }
   },
+  "page-loader": {
+    "default": ""
+  },
   "panel": {
     "dashlist": {
       "empty-state-message": "Keine Dashboard-Gruppen konfiguriert",
@@ -13233,11 +13257,24 @@
     "code-block": {
       "aria-label-copy": "Code in Zwischenablage kopieren"
     },
+    "commit-message": {
+      "dashboard-create-default": "",
+      "dashboard-delete-default": "",
+      "dashboard-move-default": "",
+      "dashboard-rename-default": "",
+      "dashboard-update-default": "",
+      "folder-create-default": "",
+      "folder-delete-default": "",
+      "folder-move-default": "",
+      "folder-rename-default": "",
+      "folder-update-default": ""
+    },
     "config-form": {
       "alert-repository-settings-saved": "Repository-Einstellungen gespeichert",
       "alert-repository-settings-updated": "Repository-Einstellungen aktualisiert",
       "button-save": "Speichern",
       "button-saving": "Wird gespeichert …",
+      "description-commit-message-template": "",
       "description-connection": "Wählen Sie die zu verwendende GitHub-App-Verbindung aus.",
       "description-enabled": "Sobald das automatische Abrufen aktiviert ist, kann das Ziel nicht mehr geändert werden.",
       "description-read-only": "Ressourcen können über Grafana nicht geändert werden.",
@@ -13248,6 +13285,7 @@
       "error-save-failed": "Repository-Einstellung konnte nicht gespeichert werden",
       "error-save-repository": "Speichern der Repository-Einstellungen fehlgeschlagen",
       "label-automatic-pulling": "Automatisches Pulling",
+      "label-commit-message-template": "",
       "label-connection": "GitHub-App-Verbindung",
       "label-enabled": "Aktiviert",
       "label-interval-seconds": "Intervall (Sekunden)",
@@ -13256,6 +13294,7 @@
       "label-title": "Titel",
       "option-entire-instance": "Gesamte Instanz",
       "option-managed-folder": "Verwalteter Ordner",
+      "placeholder-commit-message-template": "",
       "placeholder-interval-seconds": "60",
       "placeholder-my-config": "Meine Konfiguration"
     },
