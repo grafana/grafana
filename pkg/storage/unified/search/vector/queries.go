@@ -286,8 +286,6 @@ func (r *sqlVectorCollectionSearchRequest) FolderFilterSlice() reflect.Value {
 	return reflect.ValueOf(r.FolderValues)
 }
 
-// --- Query embedding cache ---
-
 type sqlQueryCacheGetResponse struct {
 	Embedding pgvector.HalfVector
 }
@@ -367,8 +365,6 @@ func (r *sqlQueryCacheInsertRequest) Validate() error {
 	}
 	return nil
 }
-
-// --- Rate-limit bucket ---
 
 type sqlRateBucketIncrementResponse struct {
 	Count int64

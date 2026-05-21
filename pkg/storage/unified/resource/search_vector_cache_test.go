@@ -17,12 +17,9 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 )
 
-// fakeQueryCache is an in-memory QueryEmbeddingCache used to verify that
-// VectorSearch hits the cache on repeat queries instead of re-embedding.
-// Tracks per-method call counts to make assertions explicit.
 type fakeQueryCache struct {
 	mu       sync.Mutex
-	entries  map[string][]float32 // key = ns + "|" + model + "|" + hash
+	entries  map[string][]float32
 	getCalls int
 	putCalls int
 	evicted  int64
@@ -65,7 +62,7 @@ func (f *fakeQueryCache) Count(_ context.Context, ns string) (int64, error) {
 	defer f.mu.Unlock()
 	var n int64
 	for k := range f.entries {
-		// crude prefix match — sufficient for tests using a single namespace.
+		// Prefix match is safe because tests use unique namespaces.
 		if len(k) >= len(ns) && k[:len(ns)] == ns {
 			n++
 		}
@@ -90,9 +87,6 @@ func (f *fakeQueryCache) EvictOldest(_ context.Context, ns string, n int) (int64
 	return deleted, nil
 }
 
-// fakeRateLimiter records every Allow call. Setting threshold via cfg
-// (the searchServer field) is what governs the reject decision; this fake
-// returns the count it was last seeded with so tests can drive both branches.
 type fakeRateLimiter struct {
 	mu      sync.Mutex
 	calls   int
@@ -121,10 +115,6 @@ func (f *fakeRateLimiter) SweepOlderThan(_ context.Context, _ time.Time) (int64,
 	return f.swept, f.sweepEr
 }
 
-// newTestSearchServerWithCache wires the cache + rate limiter onto the
-// minimal searchServer used in search_vector_test.go. Both features are
-// always on when the field is set (matching production behavior); the
-// limits live as consts in search.go.
 func newTestSearchServerWithCache(emb *embedder.Embedder, backend vector.VectorBackend, cache vector.QueryEmbeddingCache, rl vector.RateLimiter) *searchServer {
 	s := newTestSearchServer(emb, backend)
 	s.queryCache = cache
@@ -141,18 +131,15 @@ func TestVectorSearch_CacheMissThenHitSkipsEmbedder(t *testing.T) {
 
 	req := &resourcepb.VectorSearchRequest{Key: validKey(), Query: "same query", Limit: 5}
 
-	// First call: cache miss, embedder runs, entry stored.
 	_, err := s.VectorSearch(authedCtx(), req)
 	require.NoError(t, err)
 	assert.Equal(t, 1, cache.getCalls)
 	assert.Equal(t, 1, cache.putCalls)
 	assert.Equal(t, "same query", fake.gotIn.Texts[0])
 
-	// Reset the embedder's captured input so a second call leaves a clear
-	// trace of whether it ran.
+	// Reset the captured input so the next call leaves a clear trace.
 	fake.gotIn = embedder.EmbedTextInput{}
 
-	// Second call: cache hit, embedder must NOT run.
 	_, err = s.VectorSearch(authedCtx(), req)
 	require.NoError(t, err)
 	assert.Equal(t, 2, cache.getCalls)
@@ -161,8 +148,6 @@ func TestVectorSearch_CacheMissThenHitSkipsEmbedder(t *testing.T) {
 }
 
 func TestVectorSearch_CacheGetErrorFallsThroughToEmbed(t *testing.T) {
-	// Cache lookup failures should NOT fail the user-facing search — we
-	// must transparently fall through to the embedder.
 	fake := &fakeTextEmbedder{dim: 4}
 	emb := newTestEmbedder(fake)
 	backend := &fakeVectorBackend{results: []vector.VectorSearchResult{{UID: "u", Title: "t"}}}
@@ -221,8 +206,6 @@ func TestVectorSearch_RateLimitErrorFailsClosedUnavailable(t *testing.T) {
 }
 
 func TestVectorSearch_RateLimitedRunsBeforeEmbedAndCache(t *testing.T) {
-	// A rejected request must not touch the embedder or the cache so cost
-	// is bounded above by the limiter's DB roundtrip.
 	fake := &fakeTextEmbedder{dim: 4}
 	emb := newTestEmbedder(fake)
 	cache := newFakeQueryCache()
@@ -239,7 +222,6 @@ func TestVectorSearch_RateLimitedRunsBeforeEmbedAndCache(t *testing.T) {
 }
 
 func TestSha256HexStable(t *testing.T) {
-	// Sanity-check the helper used as the cache key.
 	const q = "vector search of api latency"
 	got := sha256Hex(q)
 	assert.Len(t, got, 64)

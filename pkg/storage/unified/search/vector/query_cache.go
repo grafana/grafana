@@ -12,40 +12,34 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
-// QueryEmbeddingCache stores (namespace, model, query_hash) → embedding so
-// the embedder isn't called for repeat queries. Eviction is FIFO by
-// insertion time: callers bound per-tenant size via Count + EvictOldest.
-// True LRU is intentionally not tracked — Get is a pure SELECT so hot
-// rows don't contend on a per-hit UPDATE.
+// QueryEmbeddingCache stores embeddings keyed by (namespace, model, queryHash)
+// so callers can skip the embedder on repeat queries.
 type QueryEmbeddingCache interface {
-	// Get returns (embedding, true) on hit; (nil, false) on miss. Read-only.
+	// Get returns the cached embedding and true on hit, or (nil, false, nil) on miss.
 	Get(ctx context.Context, namespace, model, queryHash string) ([]float32, bool, error)
 
-	// Put inserts a new entry. Concurrent inserts of the same key are
-	// idempotent (ON CONFLICT DO NOTHING).
+	// Put stores embedding for (namespace, model, queryHash). Re-putting an
+	// existing key is a no-op.
 	Put(ctx context.Context, namespace, model, queryHash string, embedding []float32) error
 
-	// Count returns the number of cached entries for one tenant.
+	// Count returns how many entries the given namespace currently holds.
 	Count(ctx context.Context, namespace string) (int64, error)
 
-	// EvictOldest removes the n oldest-by-created_at entries for a tenant.
-	// Returns the number of rows actually deleted.
+	// EvictOldest removes up to n of the namespace's oldest entries and
+	// returns the number actually removed.
 	EvictOldest(ctx context.Context, namespace string, n int) (int64, error)
 }
 
-// RateLimiter enforces a per-tenant request budget over a fixed (tumbling)
-// window. State lives in the DB (`vector_search_rate_buckets`) so multiple
-// pods share one view without a distributor in front. Because the window
-// is tumbling, a tenant can fit up to ~2× threshold requests across a
-// boundary; callers that need stricter pacing should use a smaller window.
+// RateLimiter enforces a per-tenant request budget over a time window.
 type RateLimiter interface {
-	// Allow atomically increments the current window bucket and reports
-	// whether the request is under the threshold. Returns (allowed,
-	// currentCount, error). allowed=false when currentCount > threshold.
+	// Allow records one request against (namespace, current window) and
+	// returns whether the caller is still under threshold, along with the
+	// post-increment count for the active window.
 	Allow(ctx context.Context, namespace string, window time.Duration, threshold int) (bool, int64, error)
 
-	// SweepOlderThan deletes buckets with window_start < cutoff. Called
-	// periodically by a background goroutine to keep the table bounded.
+	// SweepOlderThan deletes accounting state for windows that ended before
+	// cutoff and returns the number of entries removed. Intended as periodic
+	// housekeeping; never affects an active or future window.
 	SweepOlderThan(ctx context.Context, cutoff time.Time) (int64, error)
 }
 
@@ -133,7 +127,7 @@ func (b *pgvectorBackend) EvictOldest(ctx context.Context, namespace string, n i
 	}
 	affected, err := res.RowsAffected()
 	if err != nil {
-		// Driver may not support RowsAffected; not fatal.
+		// Driver may not support RowsAffected.
 		return 0, nil
 	}
 	return affected, nil
@@ -150,9 +144,7 @@ func (b *pgvectorBackend) Allow(ctx context.Context, namespace string, window ti
 		return false, 0, errors.New("rate limit threshold must be positive")
 	}
 
-	// Truncate to the active window boundary so all replicas observe the
-	// same bucket key even with clock skew under a second. This is a fixed
-	// (tumbling) window — see RateLimiter doc for boundary behavior.
+	// All replicas observe the same bucket key under sub-second clock skew.
 	windowStart := time.Now().UTC().Truncate(window)
 
 	req := &sqlRateBucketIncrementRequest{

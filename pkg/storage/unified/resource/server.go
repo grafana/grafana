@@ -297,15 +297,7 @@ type SearchOptions struct {
 	// considered eligible for cleanup.
 	IndexSnapshotCleanupGracePeriod time.Duration
 
-	// QueryCache caches embedded VectorSearch queries by (namespace, model,
-	// sha256(query)) so the embedder is skipped on repeats. Optional; nil
-	// disables caching. Always enabled when set; per-tenant cap is set in
-	// search.go (see vectorQueryCacheMaxPerTenant).
-	QueryCache vector.QueryEmbeddingCache
-
-	// RateLimiter enforces a per-tenant request budget on VectorSearch.
-	// Optional; nil disables rate limiting. Threshold and window are set
-	// in search.go (see vectorRateLimit* consts).
+	QueryCache  vector.QueryEmbeddingCache
 	RateLimiter vector.RateLimiter
 }
 

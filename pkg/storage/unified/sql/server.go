@@ -267,11 +267,8 @@ func withSearch(opts *ServerOptions, resourceOpts *resource.ResourceServerOption
 	resourceOpts.IndexMetrics = opts.IndexMetrics
 	resourceOpts.OwnsIndexFn = opts.OwnsIndexFn
 
-	// The pgvector backend implements QueryEmbeddingCache + RateLimiter on
-	// the same struct so we can offer both to VectorSearch without a second
-	// DB connection. Non-pgvector backends skip the assertion and run
-	// without caching or rate limiting. Both are always enabled when the
-	// backend supports them — limits live as consts in search.go.
+	// Backends that don't implement these interfaces (non-pgvector) run
+	// without caching or rate limiting.
 	if opts.VectorBackend != nil {
 		if cache, ok := opts.VectorBackend.(vector.QueryEmbeddingCache); ok {
 			resourceOpts.Search.QueryCache = cache

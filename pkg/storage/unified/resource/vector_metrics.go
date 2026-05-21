@@ -69,10 +69,6 @@ func ProvideVectorMetrics(reg prometheus.Registerer) *VectorMetrics {
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{"group", "resource", "status"}),
-		// Namespace is intentionally NOT a label — in hosted deployments
-		// the tenant/stack count is unbounded and adding it per-counter
-		// would blow up Prometheus cardinality. Per-tenant attribution is
-		// available via tracing.
 		QueryCacheHitsTotal: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "vector_storage_query_cache_hits_total",
 			Help: "Total number of VectorSearch query-embedding cache hits, labeled by model.",

@@ -167,9 +167,6 @@ type searchServer struct {
 	initWorkers   int
 	initMinSize   int
 
-	// VectorSearch query-embedding cache + per-tenant rate limiter.
-	// Both are always on when the backend supports them; limits are
-	// fixed by the vectorQueryCache* / vectorRateLimit* consts below.
 	queryCache  vector.QueryEmbeddingCache
 	rateLimiter vector.RateLimiter
 
@@ -608,11 +605,6 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		attribute.Int("limit", limit),
 	)
 
-	// Per-tenant rate limit covers ALL VectorSearch requests (cache hits
-	// included) so a noisy tenant can't starve the cluster with cheap
-	// hits either. DB-backed so multiple pods share the counter without
-	// a distributor. Fail closed: if the limiter is broken we'd rather
-	// reject than let the embedder be overrun.
 	if s.rateLimiter != nil {
 		allowed, count, err := s.rateLimiter.Allow(ctx, req.Key.Namespace, vectorRateLimitWindow, vectorRateLimitPerTenant)
 		if err != nil {
@@ -636,7 +628,7 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 	if s.queryCache != nil {
 		emb, hit, err := s.queryCache.Get(ctx, req.Key.Namespace, s.embedder.Model, queryHash)
 		if err != nil {
-			// Cache failures are non-fatal — fall through to embed.
+			// Cache failures must not fail the user-facing search.
 			s.log.Warn("vector search: cache lookup failed, falling through", "err", err)
 		} else if hit {
 			if s.vectorMetrics != nil {
@@ -668,9 +660,6 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 			s.vectorMetrics.QueryCacheMissesTotal.WithLabelValues(s.embedder.Model).Inc()
 		}
 
-		// Cache write is best-effort: a write failure should not fail the
-		// search the user just paid for. Eviction races between pods are
-		// bounded by the LIMIT clause in query_cache_evict_oldest.sql.
 		if s.queryCache != nil {
 			if n, err := s.queryCache.Count(ctx, req.Key.Namespace); err == nil && int(n) >= vectorQueryCacheMaxPerTenant {
 				evictN := int(n) - vectorQueryCacheMaxPerTenant + 1
@@ -1106,18 +1095,11 @@ func (s *searchServer) runPeriodicScanForIndexesToRebuild(ctx context.Context) {
 	}
 }
 
-// sha256Hex returns the lowercase hex SHA-256 of s. Used as the cache key
-// for query-embedding lookups so equal queries collide deterministically
-// and bad inputs can't escape into a SQL LIKE.
 func sha256Hex(s string) string {
 	h := sha256.Sum256([]byte(s))
 	return hex.EncodeToString(h[:])
 }
 
-// Fixed limits for the VectorSearch query-embedding cache and per-tenant
-// rate limiter. Both features are always on whenever the backend supports
-// them; if these limits ever need to be tunable they should move to a
-// dedicated config section rather than back into setting.Cfg one-by-one.
 const (
 	vectorQueryCacheMaxPerTenant = 1000
 	vectorRateLimitPerTenant     = 60
@@ -1125,11 +1107,7 @@ const (
 	vectorRateBucketSweepCutoff  = 2 * vectorRateLimitWindow
 )
 
-// startRateBucketSweeper runs while the server is alive and periodically
-// deletes rate-limit buckets that have aged past vectorRateBucketSweepCutoff.
-// Old buckets never affect Allow() — they only bloat the table — so the
-// sweep is purely housekeeping. Lifecycle uses the shared bgTaskWg /
-// bgTaskCancel pair so shutdown waits for it like the other background tasks.
+// Old buckets never affect Allow() — sweeping is purely housekeeping.
 func (s *searchServer) startRateBucketSweeper(ctx context.Context) {
 	if s.rateLimiter == nil {
 		return

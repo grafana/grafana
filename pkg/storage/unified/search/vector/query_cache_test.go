@@ -10,15 +10,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// cleanQueryCache wipes cache + rate-bucket state for the integration
-// tenant prefix. Each test starts from an empty slate so timing-sensitive
-// assertions (eviction order, rate-limit counters) aren't perturbed by
-// leftovers from a prior run.
+// Tests need an empty slate so eviction-order and rate-limit assertions
+// aren't perturbed by leftovers from a prior run.
 func cleanQueryCache(t *testing.T, backend VectorBackend) {
 	t.Helper()
 	ctx := context.Background()
-	// Reach into the concrete type to get the underlying DB; the public
-	// VectorBackend interface intentionally doesn't expose it.
 	b, ok := backend.(*pgvectorBackend)
 	require.True(t, ok, "expected *pgvectorBackend")
 
@@ -36,14 +32,14 @@ func TestIntegrationQueryCacheGetPutRoundTrip(t *testing.T) {
 	const ns = "integration-test-cache-roundtrip"
 	const hash = "deadbeef0000000000000000000000000000000000000000000000000000beef"
 
-	// Miss on first lookup.
 	emb, hit, err := cache.Get(ctx, ns, testModel, hash)
 	require.NoError(t, err)
 	assert.False(t, hit)
 	assert.Nil(t, emb)
 
-	// Insert and read back. The stored bytes are zero-padded to EmbeddingDim,
-	// so we compare only the prefix we set.
+	// Stored bytes are zero-padded to EmbeddingDim, so compare only the set
+	// prefix. The 1e-3 delta accommodates halfvec's fp16 round-trip
+	// (~3-decimal precision) — e.g. 0.42 comes back as 0.41992188.
 	stored := makeEmbedding(0.42, 0.13)
 	require.NoError(t, cache.Put(ctx, ns, testModel, hash, stored))
 
@@ -51,8 +47,8 @@ func TestIntegrationQueryCacheGetPutRoundTrip(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, hit)
 	require.Len(t, got, EmbeddingDim)
-	assert.InDelta(t, float32(0.42), got[0], 1e-5)
-	assert.InDelta(t, float32(0.13), got[1], 1e-5)
+	assert.InDelta(t, float32(0.42), got[0], 1e-3)
+	assert.InDelta(t, float32(0.13), got[1], 1e-3)
 
 	// Repeat lookups do not mutate state — Count stays at 1.
 	_, _, err = cache.Get(ctx, ns, testModel, hash)
@@ -69,8 +65,7 @@ func TestIntegrationQueryCacheEvictOldest(t *testing.T) {
 
 	const ns = "integration-test-cache-evict"
 
-	// Insert four entries; stagger inserts so created_at ordering is
-	// deterministic for the eviction assertion below.
+	// Sleep between inserts so created_at ordering is deterministic.
 	hashes := []string{
 		"a000000000000000000000000000000000000000000000000000000000000001",
 		"a000000000000000000000000000000000000000000000000000000000000002",
@@ -82,7 +77,6 @@ func TestIntegrationQueryCacheEvictOldest(t *testing.T) {
 		time.Sleep(20 * time.Millisecond)
 	}
 
-	// Evict the two oldest entries: hashes[0] and hashes[1].
 	deleted, err := cache.EvictOldest(ctx, ns, 2)
 	require.NoError(t, err)
 	assert.Equal(t, int64(2), deleted)
@@ -107,8 +101,7 @@ func TestIntegrationQueryCacheConcurrentPutSameKeyIsHarmless(t *testing.T) {
 	const ns = "integration-test-cache-concurrent"
 	const hash = "c000000000000000000000000000000000000000000000000000000000000001"
 
-	// Race a few goroutines on the same key. ON CONFLICT DO NOTHING means
-	// every losing insert is a silent no-op.
+	// ON CONFLICT DO NOTHING must collapse racing inserts to one row.
 	var wg sync.WaitGroup
 	for i := 0; i < 8; i++ {
 		wg.Add(1)
@@ -131,7 +124,7 @@ func TestIntegrationRateLimiterAllowAndReject(t *testing.T) {
 	cleanQueryCache(t, backend)
 
 	const ns = "integration-test-rl"
-	// Use a large window so the bucket stays the same across this test.
+	// Large window so the bucket stays the same across this test.
 	window := time.Hour
 
 	for i := 1; i <= 3; i++ {
@@ -141,7 +134,6 @@ func TestIntegrationRateLimiterAllowAndReject(t *testing.T) {
 		assert.Equal(t, int64(i), count)
 	}
 
-	// 4th call exceeds the threshold.
 	allowed, count, err := rl.Allow(ctx, ns, window, 3)
 	require.NoError(t, err)
 	assert.False(t, allowed)
@@ -163,17 +155,14 @@ func TestIntegrationRateLimiterSweepOlderThan(t *testing.T) {
 		ns, old, 7)
 	require.NoError(t, err)
 
-	// Seed a CURRENT bucket via the limiter; this row must survive the sweep.
 	allowed, _, err := rl.Allow(ctx, ns, time.Minute, 100)
 	require.NoError(t, err)
 	require.True(t, allowed)
 
-	// Sweep anything older than 30 minutes ago.
 	deleted, err := rl.SweepOlderThan(ctx, time.Now().Add(-30*time.Minute))
 	require.NoError(t, err)
 	assert.GreaterOrEqual(t, deleted, int64(1), "expected at least the seeded old row to be deleted")
 
-	// The current bucket is untouched.
 	row := b.db.QueryRowContext(ctx,
 		`SELECT COUNT(*) FROM vector_search_rate_buckets WHERE namespace = $1`, ns)
 	var remaining int
