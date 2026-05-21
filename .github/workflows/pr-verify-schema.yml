@@ -1,0 +1,59 @@
+name: Verify schema dump
+
+# The job runs `cli admin db-migrate` + `grafana server` boot against MySQL,
+# dumps the schema, and diffs it against the committed baseline.
+#
+# To fix a failing run locally:
+#   make devenv sources=mysql_schema_dump
+#   make schema-dump
+#   # commit the updated pkg/services/sqlstore/migrator/snapshot/ files
+
+on:
+  pull_request:
+    paths:
+      - 'pkg/services/sqlstore/migrations/**'
+      - 'pkg/services/sqlstore/migrator/**'
+      - 'pkg/storage/unified/migrations/**'
+      - 'scripts/schema-dump/**'
+      - 'devenv/docker/blocks/mysql_schema_dump/**'
+      - '.github/workflows/pr-verify-schema.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+
+jobs:
+  verify-schema:
+    name: Verify migrator snapshot
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        # Pin to the same image the committed snapshot was generated with
+        # (see pkg/services/sqlstore/migrator/snapshot/*.sql headers).
+        image: mysql:8.4.9
+        env:
+          MYSQL_ROOT_PASSWORD: rootpass
+          MYSQL_DATABASE: grafana
+          MYSQL_INITDB_SKIP_TZINFO: "true"
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping --silent" --health-interval=10s --health-timeout=5s --health-retries=10
+    env:
+      GF_DATABASE_HOST: 127.0.0.1:3306
+      GF_DATABASE_NAME: grafana
+      GF_DATABASE_PASSWORD: rootpass
+      MYSQL_CLIENT_IMAGE: mysql:8.4.9
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Setup Go
+        uses: ./.github/actions/setup-go
+      - name: Install mysql client
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends mysql-client
+      - name: Verify schema snapshot
+        run: make schema-dump-verify

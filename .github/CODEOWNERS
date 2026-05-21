@@ -79,6 +79,7 @@
 /scripts/ci/generate-enterprise-imports @grafana/grafana-operator-experience-squad
 /scripts/catalog-plugins-defaults @grafana/grafana-datasources-core-services @kminehart
 /scripts/download-catalog-plugins.sh @grafana/grafana-datasources-core-services @kminehart
+/scripts/schema-dump/ @grafana/grafana-search-and-storage
 /hack/ @grafana/grafana-app-platform-squad
 /.air.toml @macabu
 
@@ -316,6 +317,7 @@
 /devenv/docker/blocks/mysql/ @grafana/data-sources-plugins
 /devenv/docker/blocks/mysql_exporter/ @grafana/data-sources-plugins
 /devenv/docker/blocks/mysql_opendata/ @grafana/data-sources-plugins
+/devenv/docker/blocks/mysql_schema_dump/ @grafana/grafana-search-and-storage
 /devenv/docker/blocks/mysql_tests/ @grafana/data-sources-plugins
 /devenv/docker/blocks/opentsdb/ @grafana/data-sources-plugins
 /devenv/docker/blocks/pgvector/ @grafana/grafana-search-and-storage
@@ -1300,6 +1302,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-external-labelling.yml @Proximyst
 /.github/workflows/pr-patch-check.yml @grafana/grafana-backend-services-squad
 /.github/workflows/pr-test-integration-pgvector.yml @grafana/grafana-search-and-storage
+/.github/workflows/pr-verify-schema.yml @grafana/grafana-search-and-storage
 /.github/workflows/pr-test-integration.yml @grafana/grafana-backend-group
 /.github/workflows/reject-gh-secrets.yml @grafana/grafana-backend-services-squad
 /.github/workflows/sync-mirror-event.yml @grafana/grafana-backend-services-squad

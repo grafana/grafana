@@ -38,6 +38,7 @@ policy:
             - Workflow .github/workflows/pr-test-docker.yml succeeded or skipped
             - Workflow .github/workflows/pr-test-integration-pgvector.yml succeeded or skipped
             - Workflow .github/workflows/pr-test-integration.yml succeeded or skipped
+            - Workflow .github/workflows/pr-verify-schema.yml succeeded or skipped
             - Workflow .github/workflows/reject-gh-secrets.yml succeeded or skipped
             - Workflow .github/workflows/run-schema-v2-e2e.yml succeeded or skipped
             - Workflow .github/workflows/shellcheck.yml succeeded or skipped
@@ -634,6 +635,27 @@ approval_rules:
             - success
           workflows:
             - .github/workflows/pr-test-integration.yml
+  - name: Workflow .github/workflows/pr-verify-schema.yml succeeded or skipped
+    if:
+      changed_files:
+        paths:
+          - ^pkg\/services\/sqlstore\/migrations\/(?:(?:[^/]*(?:/|$))*)$
+          - ^pkg\/services\/sqlstore\/migrator\/(?:(?:[^/]*(?:/|$))*)$
+          - ^pkg\/storage\/unified\/migrations\/(?:(?:[^/]*(?:/|$))*)$
+          - ^scripts\/schema-dump\/(?:(?:[^/]*(?:/|$))*)$
+          - ^devenv\/docker\/blocks\/mysql_schema_dump\/(?:(?:[^/]*(?:/|$))*)$
+          - ^\.github\/workflows\/pr-verify-schema\.yml$
+      file_not_deleted:
+        paths:
+          - ^\.github\/workflows\/pr-verify-schema\.yml$
+    requires:
+      conditions:
+        has_workflow_result:
+          conclusions:
+            - skipped
+            - success
+          workflows:
+            - .github/workflows/pr-verify-schema.yml
   - name: Workflow .github/workflows/reject-gh-secrets.yml succeeded or skipped
     if:
       file_not_deleted:

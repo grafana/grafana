@@ -1,0 +1,13 @@
+  mysql_schema_dump:
+    image: mysql:${mysql_schema_dump_version}
+    platform: linux/amd64
+    environment:
+      MYSQL_DATABASE: grafana
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_INITDB_SKIP_TZINFO: "true"
+    ports:
+      - "3306:3306"
+    tmpfs: /var/lib/mysql:rw
+    command:
+      - mysqld
+      - --explicit-defaults-for-timestamp=ON

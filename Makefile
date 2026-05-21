@@ -615,6 +615,14 @@ test-go-integration-memcached: ## Run integration tests for memcached cache.
 	MEMCACHED_HOSTS=localhost:11211 $(GO) test $(GO_RACE_FLAG) $(GO_TEST_FLAGS) -run IntegrationMemcached -covermode=atomic -timeout=2m \
 		$(shell ./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -n$(SHARD) -m$(SHARDS) -d - -s)
 
+.PHONY: schema-dump
+schema-dump: ## Regenerate pkg/services/sqlstore/migrator/snapshot/ from a fresh MySQL (run `make devenv sources=mysql_schema_dump` first).
+	@./scripts/schema-dump/dump.sh
+
+.PHONY: schema-dump-verify
+schema-dump-verify: ## Verify the committed snapshot still matches what the migrator produces.
+	@./scripts/schema-dump/verify.sh
+
 .PHONY: test-js
 test-js: ## Run tests for frontend.
 	@echo "test frontend"
