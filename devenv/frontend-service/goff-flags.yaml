@@ -17,7 +17,7 @@ compiledBootScript:
     enabled: true
     disabled: false
   defaultRule:
-    variation: disabled
+    variation: enabled
 
 grafana.assetSriChecks:
   variations:
@@ -39,3 +39,10 @@ grafana.meticulousAIRecorderHighVolume:
     disabled: false
   defaultRule:
     variation: disabled
+
+frontendService.reducedBootDataAPI:
+  variations:
+    enabled: true
+    disabled: false
+  defaultRule:
+    variation: enabled

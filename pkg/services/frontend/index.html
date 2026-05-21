@@ -184,7 +184,7 @@
         _femt: true, // isFrontendService() needs this
         assets: [[.Assets]],
         navTree: [],
-        settings: [[.Settings]],
+        settings: [[if .FullSettings]][[.FullSettings]][[else]][[.Settings]][[end]],
         user: [[.DefaultUser]],
       }
     </script>

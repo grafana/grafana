@@ -39,7 +39,8 @@ type IndexViewData struct {
 	AppTitle  string // TODO: remove and get from request config?
 	AppSubUrl string // TODO: remove and get from request config?
 
-	Settings FSFrontendSettings
+	Settings     FSFrontendSettings
+	FullSettings *dtos.FrontendSettingsDTO // New settings struct behind feature flag
 
 	Assets      dtos.EntryPointAssets // Includes CDN info
 	DefaultUser dtos.CurrentUser
@@ -143,6 +144,7 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		Nonce:                                 reqCtx.RequestNonce,
 		PublicDashboardAccessToken:            reqCtx.PublicDashboardAccessToken,
 		Settings:                              fsSettings,
+		FullSettings:                          requestConfig.FullFrontendSettings,
 		RenderBindingSupported:                renderBindingSupported,
 		AssetSriChecksEnabled:                 grafanaAssetSriChecks,
 		MeticulousAIEnabled:                   meticulousAIRecorderEnabled,
@@ -206,4 +208,7 @@ func (p *IndexProvider) runIndexDataHooks(reqCtx *contextmodel.ReqContext, data 
 	p.hooksService.RunIndexDataHooks(&legacyIndexViewData, reqCtx)
 
 	data.Settings.BuildInfo = legacyIndexViewData.Settings.BuildInfo
+	if data.FullSettings != nil {
+		data.FullSettings.BuildInfo = legacyIndexViewData.Settings.BuildInfo
+	}
 }

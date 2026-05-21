@@ -28,6 +28,8 @@ type FSRequestConfig struct {
 	// FormActionAdditionalHosts is the list of additional hostnames for the CSP form-action directive.
 	// These are appended to the template; 'self' should be in the template itself.
 	FormActionAdditionalHosts []string
+
+	FullFrontendSettings *dtos.FrontendSettingsDTO // New settings struct behind feature flag
 }
 
 // NewFSRequestConfig creates a new FSRequestConfig from the global configuration.
@@ -134,12 +136,24 @@ func (c *FSRequestConfig) ApplyOverrides(settings *ini.File, logger log.Logger) 
 	applyStringSlice(settings, "security", "allow_embedding_hosts", &c.AllowEmbeddingHosts, logger)
 	applyStringSlice(settings, "security", "form_action_additional_hosts", &c.FormActionAdditionalHosts, logger)
 
-	applyString(settings, "analytics", "rudderstack_write_key", &c.RudderstackWriteKey, logger)
-	applyString(settings, "analytics", "rudderstack_data_plane_url", &c.RudderstackDataPlaneUrl, logger)
-	applyString(settings, "analytics", "rudderstack_sdk_url", &c.RudderstackSdkUrl, logger)
-	applyString(settings, "analytics", "rudderstack_v3_sdk_url", &c.RudderstackV3SdkUrl, logger)
-	applyString(settings, "analytics", "rudderstack_config_url", &c.RudderstackConfigUrl, logger)
-	applyString(settings, "analytics", "rudderstack_integrations_url", &c.RudderstackIntegrationsUrl, logger)
+	// FullFrontendSettings is present when FlagFrontendServiceReducedBootDataAPI is enabled
+	// in which case we should apply overrides to the nested struct instead of the top-level fields
+	if c.FullFrontendSettings == nil {
+		applyString(settings, "analytics", "rudderstack_write_key", &c.RudderstackWriteKey, logger)
+		applyString(settings, "analytics", "rudderstack_data_plane_url", &c.RudderstackDataPlaneUrl, logger)
+		applyString(settings, "analytics", "rudderstack_sdk_url", &c.RudderstackSdkUrl, logger)
+		applyString(settings, "analytics", "rudderstack_v3_sdk_url", &c.RudderstackV3SdkUrl, logger)
+		applyString(settings, "analytics", "rudderstack_config_url", &c.RudderstackConfigUrl, logger)
+		applyString(settings, "analytics", "rudderstack_integrations_url", &c.RudderstackIntegrationsUrl, logger)
+	} else {
+		applyString(settings, "analytics", "rudderstack_write_key", &c.FullFrontendSettings.RudderstackWriteKey, logger)
+		applyString(settings, "analytics", "rudderstack_data_plane_url", &c.FullFrontendSettings.RudderstackDataPlaneUrl, logger)
+		applyString(settings, "analytics", "rudderstack_sdk_url", &c.FullFrontendSettings.RudderstackSdkUrl, logger)
+		applyString(settings, "analytics", "rudderstack_v3_sdk_url", &c.FullFrontendSettings.RudderstackV3SdkUrl, logger)
+		applyString(settings, "analytics", "rudderstack_config_url", &c.FullFrontendSettings.RudderstackConfigUrl, logger)
+		applyString(settings, "analytics", "rudderstack_integrations_url", &c.FullFrontendSettings.RudderstackIntegrationsUrl, logger)
+	}
+
 }
 
 func getValue(settings *ini.File, section, key string) *ini.Key {
