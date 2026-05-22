@@ -1,11 +1,12 @@
 import { type ReactElement, useMemo } from 'react';
 
-import { LoadingState } from '@grafana/data';
+import { type DataFrame, FieldType, LoadingState } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
   type CancelActivationHandler,
   type SceneComponentProps,
   type SceneDataProvider,
+  type SceneObject,
   sceneGraph,
   SceneObjectBase,
   type SceneObjectState,
@@ -21,6 +22,12 @@ import { ConditionalRenderingConditionWrapper } from './ConditionalRenderingCond
 import { type ConditionalRenderingConditionsSerializerRegistryItem } from './serializers';
 import { checkGroup, getObject, getObjectType } from './utils';
 
+interface SceneObjectWithPanelLayout extends SceneObject {
+  getLayout(): {
+    getVizPanels(): VizPanel[];
+  };
+}
+
 interface ConditionalRenderingDataState extends SceneObjectState {
   value: boolean;
   result: boolean | undefined;
@@ -35,7 +42,7 @@ export class ConditionalRenderingData extends SceneObjectBase<ConditionalRenderi
     deserialize: this.deserialize,
   };
 
-  private _dataProvider: SceneDataProvider | undefined = undefined;
+  private _dataProviders: SceneDataProvider[] = [];
 
   public constructor(state: ConditionalRenderingDataState) {
     super(state);
@@ -50,52 +57,65 @@ export class ConditionalRenderingData extends SceneObjectBase<ConditionalRenderi
       }
     });
 
-    this._dataProvider = this._getObjectDataProvider();
+    this._dataProviders = this._getObjectDataProviders();
 
-    if (!this._dataProvider) {
+    if (!this._dataProviders.length) {
+      this._check();
       return;
     }
 
-    // Be sure to activate the data provider so it doesn't get deactivated on item unmount
-    const dpDeactivate: CancelActivationHandler = this._dataProvider.activate();
+    // Be sure to activate the data providers so they don't get deactivated on item unmount
+    const dpDeactivateHandlers: CancelActivationHandler[] = this._dataProviders.map((dataProvider) =>
+      dataProvider.activate()
+    );
 
     this._check();
 
-    this._subs.add(this._dataProvider.subscribeToState(() => this._check()));
+    for (const dataProvider of this._dataProviders) {
+      this._subs.add(dataProvider.subscribeToState(() => this._check()));
+    }
 
     return () => {
-      dpDeactivate?.();
+      for (const deactivate of dpDeactivateHandlers) {
+        deactivate?.();
+      }
     };
   }
 
-  private _getPanelFromObject(): VizPanel | undefined {
+  private _getPanelsFromObject(): VizPanel[] {
     const object = getObject(this);
 
     if (!object) {
-      return undefined;
+      return [];
     }
 
     if (object instanceof VizPanel) {
-      return object;
+      return [object];
     }
 
     for (const val of Object.values(object.state)) {
       if (val instanceof VizPanel) {
-        return val;
+        return [val];
       }
     }
 
-    return undefined;
-  }
-
-  private _getObjectDataProvider(): SceneDataProvider | undefined {
-    const panel = this._getPanelFromObject();
-
-    if (!panel) {
-      return undefined;
+    if (isSceneObjectWithPanelLayout(object)) {
+      return object.getLayout().getVizPanels();
     }
 
-    return sceneGraph.getData(panel) ?? undefined;
+    return [];
+  }
+
+  private _getObjectDataProviders(): SceneDataProvider[] {
+    const panels = this._getPanelsFromObject();
+
+    if (!panels.length) {
+      return [];
+    }
+
+    return panels
+      .map((panel) => sceneGraph.getData(panel))
+      .filter((dataProvider): dataProvider is SceneDataProvider => Boolean(dataProvider));
   }
 
   private _check() {
@@ -108,23 +128,29 @@ export class ConditionalRenderingData extends SceneObjectBase<ConditionalRenderi
   }
 
   private _evaluate(): boolean | undefined {
-    if (
-      !this._dataProvider ||
-      !this._dataProvider.state.data ||
-      this._dataProvider.state.data.state === LoadingState.Loading ||
-      this._dataProvider.state.data.state === LoadingState.NotStarted
-    ) {
-      return undefined;
+    if (!this._dataProviders.length) {
+      return this.state.value === false;
     }
 
-    const series = this._dataProvider?.state.data?.series ?? [];
     let hasData = false;
+    let hasPendingData = false;
 
-    for (let seriesIdx = 0; seriesIdx < series.length; seriesIdx++) {
-      if (series[seriesIdx].length > 0) {
+    for (const dataProvider of this._dataProviders) {
+      const data = dataProvider.state.data;
+
+      if (!data || data.state === LoadingState.Loading || data.state === LoadingState.NotStarted) {
+        hasPendingData = true;
+        continue;
+      }
+
+      if (dataFramesHaveValues(data.series ?? [])) {
         hasData = true;
         break;
       }
+    }
+
+    if (!hasData && hasPendingData) {
+      return undefined;
     }
 
     // The logic here is pretty simple:
@@ -186,7 +212,7 @@ function ConditionalRenderingDataRenderer({ model }: SceneComponentProps<Conditi
         'Show or hide the {{type}} based on query results.',
         { type: getLowerTranslatedObjectType(objectType) }
       )}
-      isObjectSupported={objectType === 'panel'}
+      isObjectSupported={objectType === 'panel' || objectType === 'row'}
       model={model}
       title={t('dashboard.conditional-rendering.conditions.data.label', 'Query result')}
       ruleId="data"
@@ -204,5 +230,15 @@ function ConditionalRenderingDataRenderer({ model }: SceneComponentProps<Conditi
         }}
       />
     </ConditionalRenderingConditionWrapper>
+  );
+}
+
+function isSceneObjectWithPanelLayout(object: SceneObject): object is SceneObjectWithPanelLayout {
+  return 'getLayout' in object && typeof object.getLayout === 'function';
+}
+
+export function dataFramesHaveValues(series: DataFrame[]): boolean {
+  return series.some((frame) =>
+    frame.fields.some((field) => field.type !== FieldType.time && field.values.some((value) => value != null))
   );
 }

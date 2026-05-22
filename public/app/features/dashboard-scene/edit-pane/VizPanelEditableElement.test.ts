@@ -33,6 +33,7 @@ describe('VizPanelEditableElement', () => {
           condition: 'and',
           result: false,
           renderHidden: false,
+          hasResolved: true,
         }),
       });
 
@@ -72,6 +73,7 @@ describe('VizPanelEditableElement', () => {
             condition: 'and',
             result: false,
             renderHidden: false,
+            hasResolved: true,
           }),
         ],
       });

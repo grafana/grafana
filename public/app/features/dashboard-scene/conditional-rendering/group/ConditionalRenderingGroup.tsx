@@ -32,6 +32,7 @@ export interface ConditionalRenderingGroupState extends SceneObjectState {
   condition: GroupConditionCondition;
   renderHidden: boolean;
   result: boolean;
+  hasResolved: boolean;
 }
 
 export class ConditionalRenderingGroup extends SceneObjectBase<ConditionalRenderingGroupState> {
@@ -77,6 +78,10 @@ export class ConditionalRenderingGroup extends SceneObjectBase<ConditionalRender
     // Because we negate the result if shouldShow is false, we can use `condition.state.result ?? true` directly below
     const validConditions = this.state.conditions.filter((condition) => condition.state.result !== undefined);
 
+    if (this.state.renderHidden && validConditions.length !== this.state.conditions.length) {
+      return;
+    }
+
     let result = true;
 
     if (validConditions.length > 0) {
@@ -89,8 +94,8 @@ export class ConditionalRenderingGroup extends SceneObjectBase<ConditionalRender
       }
     }
 
-    if (result !== this.state.result) {
-      this.setState({ ...this.state, result });
+    if (result !== this.state.result || !this.state.hasResolved) {
+      this.setState({ ...this.state, result, hasResolved: true });
       this.publishEvent(new ConditionalRenderingChangedEvent(this), true);
     }
   }
@@ -129,9 +134,13 @@ export class ConditionalRenderingGroup extends SceneObjectBase<ConditionalRender
 
   public addCondition(condition: ConditionalRenderingConditions) {
     const conditions = [...this.state.conditions, condition];
+    const renderHidden = conditions.some((condition) => condition instanceof ConditionalRenderingData);
+
     this.setState({
       conditions,
-      renderHidden: conditions.some((condition) => condition instanceof ConditionalRenderingData),
+      renderHidden,
+      result: renderHidden ? this.getUnresolvedResult() : this.state.result,
+      hasResolved: renderHidden ? false : this.state.hasResolved,
     });
 
     if (this.isActive && !condition.isActive) {
@@ -187,6 +196,7 @@ export class ConditionalRenderingGroup extends SceneObjectBase<ConditionalRender
       conditions: [],
       result: true,
       renderHidden: false,
+      hasResolved: true,
     });
   }
 
@@ -194,14 +204,20 @@ export class ConditionalRenderingGroup extends SceneObjectBase<ConditionalRender
     const conditions = model.spec.items.map((item) =>
       conditionalRenderingSerializerRegistry.get(item.kind).deserialize(item)
     );
+    const renderHidden = conditions.some((condition) => condition instanceof ConditionalRenderingData);
 
     return new ConditionalRenderingGroup({
       condition: model.spec.condition,
       visibility: model.spec.visibility,
       conditions,
-      result: true,
-      renderHidden: conditions.some((condition) => condition instanceof ConditionalRenderingData),
+      result: renderHidden ? model.spec.visibility !== 'show' : true,
+      renderHidden,
+      hasResolved: !renderHidden,
     });
+  }
+
+  private getUnresolvedResult(): boolean {
+    return !this._shouldShow;
   }
 }
 

@@ -50,15 +50,23 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
           isRepeat?: boolean;
           isSelected?: boolean;
         }) => {
-          const [isConditionallyHidden, conditionalRenderingClass, conditionalRenderingOverlay, renderHidden] =
-            useIsConditionallyHidden(conditionalRendering);
+          const [
+            isConditionallyHidden,
+            conditionalRenderingClass,
+            conditionalRenderingOverlay,
+            renderHidden,
+            hasResolved,
+          ] = useIsConditionallyHidden(conditionalRendering);
 
           return isConditionallyHidden && !isEditing && !renderHidden ? null : (
             <div
               {...(addDndContainer
                 ? { ref: model.containerRef, [AUTO_GRID_ITEM_DROP_TARGET_ATTR]: showDropTarget ? key : undefined }
                 : {})}
-              className={cx(isConditionallyHidden && !isEditing && styles.hidden)}
+              className={cx(
+                isConditionallyHidden && !isEditing && renderHidden && !hasResolved && styles.pendingHidden,
+                isConditionallyHidden && !isEditing && (!renderHidden || hasResolved) && styles.hidden
+              )}
             >
               {isDragged && <div className={styles.draggedPlaceholder} />}
               {
@@ -170,5 +178,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   hidden: css({
     display: 'none',
+  }),
+  pendingHidden: css({
+    visibility: 'hidden',
+    pointerEvents: 'none',
   }),
 });

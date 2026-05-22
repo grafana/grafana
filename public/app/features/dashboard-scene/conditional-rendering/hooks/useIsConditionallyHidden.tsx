@@ -17,8 +17,8 @@ function getPlaceholderConditionalRendering(): ConditionalRenderingGroup {
 
 export function useIsConditionallyHidden(
   conditionalRendering: ConditionalRenderingGroup = getPlaceholderConditionalRendering()
-): [boolean, string | undefined, ReactNode | null, boolean] {
-  const { result, renderHidden } = useSceneObjectState(conditionalRendering, {
+): [boolean, string | undefined, ReactNode | null, boolean, boolean] {
+  const { result, renderHidden, hasResolved } = useSceneObjectState(conditionalRendering, {
     shouldActivateOrKeepAlive: true,
   });
 
@@ -27,5 +27,6 @@ export function useIsConditionallyHidden(
     result ? undefined : 'dashboard-visible-hidden-element',
     result ? null : <ConditionalRenderingOverlay />,
     renderHidden,
+    hasResolved,
   ];
 }
