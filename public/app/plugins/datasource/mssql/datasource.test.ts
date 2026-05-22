@@ -51,11 +51,6 @@ const customVariableModel: CustomVariableModel = {
   rootStateKey: null,
 };
 
-// mock uuidv4 to give back the same value every time
-jest.mock('uuid', () => ({
-  v4: () => '0000',
-}));
-
 const instanceSettings = {
   uid: 'mssql-datasource',
   type: 'mssql',
@@ -209,24 +204,19 @@ describe('MSSQLDatasource', () => {
     });
 
     it('should return a list of fields when fetchFields is called', async () => {
-      const fetchFieldsResponse = {
-        results: {
-          [`columns-0000`]: {
-            frames: [
-              dataFrameToJSON(
-                createDataFrame({
-                  fields: [
-                    { name: 'column', type: FieldType.string, values: ['test1', 'test2', 'test3'] },
-                    { name: 'type', type: FieldType.string, values: ['int', 'char', 'bool'] },
-                  ],
-                })
-              ),
-            ],
-          },
-        },
-      };
+      const fieldsFrame = dataFrameToJSON(
+        createDataFrame({
+          fields: [
+            { name: 'column', type: FieldType.string, values: ['test1', 'test2', 'test3'] },
+            { name: 'type', type: FieldType.string, values: ['int', 'char', 'bool'] },
+          ],
+        })
+      );
 
-      fetchMock.mockImplementation(() => of(createFetchResponse(fetchFieldsResponse)));
+      fetchMock.mockImplementation((options: { data: { queries: Array<{ refId: string }> } }) => {
+        const refId = options.data.queries[0].refId;
+        return of(createFetchResponse({ results: { [refId]: { frames: [fieldsFrame] } } }));
+      });
 
       const sqlQuery: SQLQuery = {
         refId: 'fields',
