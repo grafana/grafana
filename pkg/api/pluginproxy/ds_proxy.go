@@ -250,7 +250,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 
 	proxyutil.ApplyUserHeader(proxy.settings.SendUserHeader, req, proxy.ctx.SignedInUser)
 
-	proxyutil.ClearCookieHeader(req, proxy.ds.AllowedCookies(), []string{proxy.settings.LoginCookieName})
+	proxyutil.ClearCookieHeader(req, proxy.ds.Spec.KeepCookies(), []string{proxy.settings.LoginCookieName})
 	ua := proxy.settings.DataProxyUserAgent
 	if proxy.settings.DataProxyForwardUserAgent {
 		if originalUA := req.Header.Get("User-Agent"); originalUA != "" {
@@ -267,10 +267,10 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 	req.Header.Set("User-Agent", ua)
 
 	jsonData := make(map[string]any)
-	if proxy.ds.JsonData != nil {
-		jsonData, err = proxy.ds.JsonData.Map()
+	if proxy.ds.Spec.JSONData() != nil {
+		jsonData, err = proxy.ds.Spec.JSONData().(map[string]any), nil
 		if err != nil {
-			ctxLogger.Error("Failed to get json data as map", "jsonData", proxy.ds.JsonData, "error", err)
+			ctxLogger.Error("Failed to get json data as map", "jsonData", proxy.ds.Spec.JSONData(), "error", err)
 			return
 		}
 	}

@@ -57,7 +57,7 @@ var _ OAuthTokenService = (*Service)(nil)
 //go:generate mockery --name OAuthTokenService --structname MockService --outpkg oauthtokentest --filename service_mock.go --output ./oauthtokentest/
 type OAuthTokenService interface {
 	GetCurrentOAuthToken(context.Context, identity.Requester, *auth.UserToken) *oauth2.Token
-	IsOAuthPassThruEnabled(*datasourceV0.DataSource) bool
+	IsOAuthPassThruEnabled(*datasources.DataSource) bool
 	TryTokenRefresh(context.Context, identity.Requester, *TokenRefreshMetadata) (*oauth2.Token, error)
 	InvalidateOAuthTokens(context.Context, identity.Requester, *TokenRefreshMetadata) error
 }
