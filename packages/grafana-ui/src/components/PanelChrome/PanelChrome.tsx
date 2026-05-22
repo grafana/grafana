@@ -591,6 +591,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       backgroundColor: contentBackground,
       border: `1px solid ${contentBorderColor}`,
       borderRadius: theme.shape.radius.lg,
+      margin: '-1px', // to overlay the nested borders nicely
     }),
     headerContainer: css({
       label: 'panel-header',
