@@ -4,14 +4,12 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents, locationUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { getAppEvents, locationService, reportInteraction } from '@grafana/runtime';
+import { getAppEvents, getBackendSrv, locationService, reportInteraction } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { Button, Field, Input, Stack, TextArea } from '@grafana/ui';
 import { RepositoryView, Unstructured } from 'app/api/clients/provisioning/v0alpha1';
 import kbn from 'app/core/utils/kbn';
 import { Resource } from 'app/features/apiserver/types';
-import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
-import { PAGE_SIZE } from 'app/features/browse-dashboards/api/services';
 import { SaveDashboardFormCommonOptions } from 'app/features/dashboard-scene/saving/SaveDashboardForm';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
@@ -65,23 +63,25 @@ export function SaveProvisionedDashboardForm({
     reset(defaultValues);
   }, [defaultValues, reset]);
 
-  // NI fork: for new dashboards without a pre-selected folder, find and pre-select
-  // the first folder whose title starts with "Default" (i.e. "Default Workspace").
-  const { data: rootFolders } = browseDashboardsAPI.endpoints.listFolders.useQuery(
-    { parentUid: undefined, limit: PAGE_SIZE, page: 1, permission: 'edit' },
-    { skip: !isNew || Boolean(defaultValues.folder?.uid) }
-  );
-
+  // NI fork: query by name so the result is not limited to the first pageful of folders.
   useEffect(() => {
-    if (!rootFolders) {
+    if (!isNew || Boolean(defaultValues.folder?.uid)) {
       return;
     }
-
-    const match = rootFolders.find((f) => f.title === 'Default Workspace');
-    if (match) {
-      methods.setValue('folder', { uid: match.uid, title: match.title });
-    }
-  }, [rootFolders, methods, isNew]);
+    getBackendSrv()
+      .get<Array<{ uid: string; title: string }>>('/api/search', {
+        type: 'dash-folder',
+        query: 'Default Workspace',
+        permission: 'Edit',
+        limit: 1,
+      })
+      .then((results) => {
+        const match = results.find((r) => r.title === 'Default Workspace');
+        if (match) {
+          methods.setValue('folder', { uid: match.uid, title: match.title });
+        }
+      });
+  }, [isNew, defaultValues.folder?.uid, methods]);
 
   const onRequestError = (error: unknown) => {
     appEvents.publish({

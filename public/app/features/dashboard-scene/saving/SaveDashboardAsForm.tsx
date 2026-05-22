@@ -4,9 +4,8 @@ import { UseFormSetValue, useForm } from 'react-hook-form';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Input, Switch, Field, Label, TextArea, Stack, Alert, Box } from '@grafana/ui';
+import { getBackendSrv } from '@grafana/runtime';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
-import { PAGE_SIZE } from 'app/features/browse-dashboards/api/services';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 import { getProvisionedMeta } from 'app/features/provisioning/components/utils/getProvisionedMeta';
 
@@ -53,25 +52,26 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
 
   const validationTimeoutRef = useRef<NodeJS.Timeout>();
 
-  // NI fork: for new dashboards without a pre-selected folder, find and pre-select
-  // the first folder whose title starts with "Default" (i.e. "Default Workspace").
-  // This mirrors the behaviour the old OldFolderPicker had before it was replaced.
-  const { data: rootFolders } = browseDashboardsAPI.endpoints.listFolders.useQuery(
-    { parentUid: undefined, limit: PAGE_SIZE, page: 1, permission: 'edit' },
-    { skip: !changeInfo.isNew || Boolean(dashboard.state.meta.folderUid) }
-  );
-
+  // NI fork: query by name so the result is not limited to the first pageful of folders.
   useEffect(() => {
-    if (!rootFolders) {
+    if (!changeInfo.isNew || Boolean(dashboard.state.meta.folderUid)) {
       return;
     }
-
-    const match = rootFolders.find((f) => f.title === 'Default Workspace');
-    if (match) {
-      setValue('folder', { uid: match.uid, title: match.title });
-      trigger('title');
-    }
-  }, [rootFolders, setValue, trigger]);
+    getBackendSrv()
+      .get<Array<{ uid: string; title: string }>>('/api/search', {
+        type: 'dash-folder',
+        query: 'Default Workspace',
+        permission: 'Edit',
+        limit: 1,
+      })
+      .then((results) => {
+        const match = results.find((r) => r.title === 'Default Workspace');
+        if (match) {
+          setValue('folder', { uid: match.uid, title: match.title });
+          trigger('title');
+        }
+      });
+  }, [changeInfo.isNew, dashboard.state.meta.folderUid, setValue, trigger]);
 
   // Validate title on form mount to catch invalid default values
   useEffect(() => {

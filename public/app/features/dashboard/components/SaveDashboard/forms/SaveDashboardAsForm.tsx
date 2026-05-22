@@ -1,11 +1,9 @@
-import { ChangeEvent } from 'react';
+import { ChangeEvent, useEffect, useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { config, getBackendSrv } from '@grafana/runtime';
 import { Button, Input, Switch, Form, Field, InputControl, Label, TextArea, Stack } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
-import { PAGE_SIZE } from 'app/features/browse-dashboards/api/services';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 
@@ -57,16 +55,32 @@ export const SaveDashboardAsForm = ({
   onSuccess,
 }: SaveDashboardAsFormProps) => {
   const needsDefaultFolder = Boolean(isNew) && !dashboard.meta.folderUid;
-  const { data: rootFolders, isLoading: foldersLoading } = browseDashboardsAPI.endpoints.listFolders.useQuery(
-    { parentUid: undefined, limit: PAGE_SIZE, page: 1, permission: 'edit' },
-    { skip: !needsDefaultFolder }
-  );
+  const [defaultFolderMatch, setDefaultFolderMatch] = useState<{ uid: string; title: string } | undefined>(undefined);
+  const [folderSearchDone, setFolderSearchDone] = useState(!needsDefaultFolder);
 
-  const defaultFolderMatch = needsDefaultFolder
-    ? rootFolders?.find((f) => f.title === 'Default Workspace')
-    : undefined;
+  // NI fork: query by name so the result is not limited to the first pageful of folders.
+  useEffect(() => {
+    if (!needsDefaultFolder) {
+      return;
+    }
+    getBackendSrv()
+      .get<Array<{ uid: string; title: string }>>('/api/search', {
+        type: 'dash-folder',
+        query: 'Default Workspace',
+        permission: 'Edit',
+        limit: 1,
+      })
+      .then((results) => {
+        const match = results.find((r) => r.title === 'Default Workspace');
+        if (match) {
+          setDefaultFolderMatch({ uid: match.uid, title: match.title });
+        }
+        setFolderSearchDone(true);
+      })
+      .catch(() => setFolderSearchDone(true));
+  }, [needsDefaultFolder]);
 
-  if (needsDefaultFolder && foldersLoading) {
+  if (needsDefaultFolder && !folderSearchDone) {
     return null;
   }
 
