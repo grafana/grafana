@@ -22,58 +22,34 @@ exports[`TableNG SparklineCell threshold wiring (canvas) renders hue gradient wh
   },
   {
     "props": {
-      "value": CanvasGradient {
-        "addColorStop": [MockFunction] {
-          "calls": [
-            [
-              0,
-              "#c5ada0",
-            ],
-            [
-              1,
-              "#5a5a5a",
-            ],
+      "value": {
+        "addColorStop": [
+          [
+            0,
+            "#c5ada0",
           ],
-          "results": [
-            {
-              "type": "return",
-              "value": undefined,
-            },
-            {
-              "type": "return",
-              "value": undefined,
-            },
+          [
+            1,
+            "#5a5a5a",
           ],
-        },
+        ],
       },
     },
     "type": "strokeStyle",
   },
   {
     "props": {
-      "value": CanvasGradient {
-        "addColorStop": [MockFunction] {
-          "calls": [
-            [
-              0,
-              "rgba(197, 173, 160, 0.17)",
-            ],
-            [
-              1,
-              "rgba(90, 90, 90, 0.17)",
-            ],
+      "value": {
+        "addColorStop": [
+          [
+            0,
+            "rgba(197, 173, 160, 0.17)",
           ],
-          "results": [
-            {
-              "type": "return",
-              "value": undefined,
-            },
-            {
-              "type": "return",
-              "value": undefined,
-            },
+          [
+            1,
+            "rgba(90, 90, 90, 0.17)",
           ],
-        },
+        ],
       },
     },
     "type": "fillStyle",
@@ -195,58 +171,34 @@ exports[`TableNG SparklineCell threshold wiring (canvas) renders hue gradient wh
   },
   {
     "props": {
-      "value": CanvasGradient {
-        "addColorStop": [MockFunction] {
-          "calls": [
-            [
-              0,
-              "#969dff",
-            ],
-            [
-              1,
-              "#12c1ea",
-            ],
+      "value": {
+        "addColorStop": [
+          [
+            0,
+            "#969dff",
           ],
-          "results": [
-            {
-              "type": "return",
-              "value": undefined,
-            },
-            {
-              "type": "return",
-              "value": undefined,
-            },
+          [
+            1,
+            "#12c1ea",
           ],
-        },
+        ],
       },
     },
     "type": "strokeStyle",
   },
   {
     "props": {
-      "value": CanvasGradient {
-        "addColorStop": [MockFunction] {
-          "calls": [
-            [
-              0,
-              "rgba(150, 157, 255, 0.17)",
-            ],
-            [
-              1,
-              "rgba(18, 193, 234, 0.17)",
-            ],
+      "value": {
+        "addColorStop": [
+          [
+            0,
+            "rgba(150, 157, 255, 0.17)",
           ],
-          "results": [
-            {
-              "type": "return",
-              "value": undefined,
-            },
-            {
-              "type": "return",
-              "value": undefined,
-            },
+          [
+            1,
+            "rgba(18, 193, 234, 0.17)",
           ],
-        },
+        ],
       },
     },
     "type": "fillStyle",
@@ -368,74 +320,42 @@ exports[`TableNG SparklineCell threshold wiring (canvas) renders scheme gradient
   },
   {
     "props": {
-      "value": CanvasGradient {
-        "addColorStop": [MockFunction] {
-          "calls": [
-            [
-              0,
-              "#73BF69ff",
-            ],
-            [
-              1,
-              "#73BF69ff",
-            ],
-            [
-              1,
-              "#F2495Cff",
-            ],
+      "value": {
+        "addColorStop": [
+          [
+            0,
+            "#73BF69ff",
           ],
-          "results": [
-            {
-              "type": "return",
-              "value": undefined,
-            },
-            {
-              "type": "return",
-              "value": undefined,
-            },
-            {
-              "type": "return",
-              "value": undefined,
-            },
+          [
+            1,
+            "#73BF69ff",
           ],
-        },
+          [
+            1,
+            "#F2495Cff",
+          ],
+        ],
       },
     },
     "type": "strokeStyle",
   },
   {
     "props": {
-      "value": CanvasGradient {
-        "addColorStop": [MockFunction] {
-          "calls": [
-            [
-              0,
-              "#73BF692b",
-            ],
-            [
-              1,
-              "#73BF692b",
-            ],
-            [
-              1,
-              "#F2495C2b",
-            ],
+      "value": {
+        "addColorStop": [
+          [
+            0,
+            "#73BF692b",
           ],
-          "results": [
-            {
-              "type": "return",
-              "value": undefined,
-            },
-            {
-              "type": "return",
-              "value": undefined,
-            },
-            {
-              "type": "return",
-              "value": undefined,
-            },
+          [
+            1,
+            "#73BF692b",
           ],
-        },
+          [
+            1,
+            "#F2495C2b",
+          ],
+        ],
       },
     },
     "type": "fillStyle",
