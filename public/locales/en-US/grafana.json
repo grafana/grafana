@@ -12038,6 +12038,9 @@
       "subtitle": "Manage server-wide settings and access to resources such as organizations, users, and licenses",
       "title": "Server admin"
     },
+    "agentic-testing": {
+      "title": "Agentic testing"
+    },
     "alert-list-legacy": {
       "title": "Alert rules"
     },
