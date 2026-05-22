@@ -72,6 +72,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `sharingDashboardImage`                      | Enables image sharing functionality for dashboards                                                                                                            | Yes                |
 | `newClickhouseConfigPageDesign`              | Enables new design for the Clickhouse data source configuration page                                                                                          | Yes                |
 | `azureResourcePickerUpdates`                 | Enables the updated Azure Monitor resource picker                                                                                                             | Yes                |
+| `vizPresets`                                 | Enable visualization presets                                                                                                                                  | Yes                |
 | `opentsdbBackendMigration`                   | Run queries through the data source backend                                                                                                                   |                    |
 | `multiPropsVariables`                        | Enables support for variables whose values can have multiple properties                                                                                       | Yes                |
 | `dashboardSectionVariables`                  | Enables support for section level variables (rows and tabs)                                                                                                   | Yes                |
@@ -103,7 +104,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertingListViewV2PreviewToggle` | Enables the alerting list view v2 preview toggle                                                       |
 | `teamFolders`                     | Enables team folders functionality                                                                     |
 | `interactiveLearning`             | Enables the interactive learning app                                                                   |
-| `vizPresets`                      | Enable visualization presets                                                                           |
 | `nestedFramesFieldOverrides`      | Enable field overrides for FieldType.nestedFrames fields (like in nested tables)                       |
 | `preventPanelChromeOverflow`      | Restrict PanelChrome contents with overflow: hidden;                                                   |
 | `panelTimeSettings`               | Enables a new panel time settings drawer                                                               |
