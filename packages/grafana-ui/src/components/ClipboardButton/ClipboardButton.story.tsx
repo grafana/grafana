@@ -1,4 +1,4 @@
-import { type StoryFn, type Meta } from '@storybook/react';
+import { type StoryFn, type Meta } from '@storybook/react-webpack5';
 
 import { Field } from '../Forms/Field';
 import { Input } from '../Input/Input';
@@ -41,7 +41,6 @@ export const AsInputFieldAddon: StoryFn<StoryProps> = (args) => {
     <div style={{ width: '100%', maxWidth: 500 }}>
       <Field label="Link URL">
         <Input
-          id="link-url-input"
           value={shareUrl}
           readOnly
           addonAfter={

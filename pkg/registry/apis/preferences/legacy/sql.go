@@ -4,11 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"slices"
 	"strconv"
 	"time"
 
 	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	pref "github.com/grafana/grafana/pkg/services/preference"
@@ -66,23 +66,18 @@ func (s *LegacySQL) listPreferences(ctx context.Context,
 
 	sess := sql.DB.GetSqlxSession()
 	rows, err := sess.Query(ctx, q, req.GetArgs()...)
+	if err != nil {
+		return nil, 0, err
+	}
 	defer func() {
 		if rows != nil {
 			_ = rows.Close()
 		}
 	}()
 
-	for rows.Next() {
-		// SELECT p.id, p.org_id,
-		//   p.json_data,
-		//   p.timezone,
-		//   p.theme,
-		//   p.week_start,
-		//   p.home_dashboard_uid,
-		//   u.uid as user_uid,
-		//   t.uid as team_uid,
-		//   p.created, p.updated
+	var userID, teamID int64 // detect orphan users & teams
 
+	for rows.Next() {
 		pref := preferenceModel{}
 		err := rows.Scan(&pref.ID, &pref.OrgID,
 			&pref.JSONData,
@@ -90,15 +85,29 @@ func (s *LegacySQL) listPreferences(ctx context.Context,
 			&pref.Theme,
 			&pref.WeekStart,
 			&pref.HomeDashboardUID,
-			&pref.UserUID, &pref.TeamUID,
+			&userID, &pref.UserUID,
+			&teamID, &pref.TeamUID,
 			&pref.Created, &pref.Updated)
 		if err != nil {
 			return nil, 0, err
 		}
+
+		if userID > 0 && !pref.UserUID.Valid {
+			logging.FromContext(ctx).Warn("skipping orphan user", "userID", userID)
+			continue
+		}
+		if teamID > 0 && !pref.TeamUID.Valid {
+			logging.FromContext(ctx).Warn("skipping orphan team", "teamID", teamID)
+			continue
+		}
+
 		if pref.Updated.After(rv.Time) {
 			rv.Time = pref.Updated
 		}
 		results = append(results, asPreferencesResource(ns, &pref))
+	}
+	if err = rows.Err(); err != nil {
+		return nil, 0, err
 	}
 
 	if needsRV {
@@ -135,16 +144,11 @@ func (s *LegacySQL) ListPreferences(ctx context.Context, ns string, user identit
 		return nil, err
 	}
 
-	var teams []string
 	found, rv, err := s.listPreferences(ctx, ns, info.OrgID,
 		func(req *preferencesQuery) (bool, error) {
 			if user != nil {
 				req.UserUID = user.GetIdentifier()
-				teams, err = s.GetTeams(ctx, &identity.StaticRequester{
-					OrgID:   info.OrgID,
-					UserUID: req.UserUID,
-				}, false)
-				req.UserTeams = teams
+				req.UserTeams = user.GetGroups()
 			} else {
 				req.All = true
 			}
@@ -161,37 +165,6 @@ func (s *LegacySQL) ListPreferences(ctx context.Context, ns string, user identit
 		list.ResourceVersion = strconv.FormatInt(rv, 10)
 	}
 	return list, nil
-}
-
-func (s *LegacySQL) InTeam(ctx context.Context, id authlib.AuthInfo, team string, admin bool) (bool, error) {
-	// Could be faster, but find for now
-	teams, err := s.GetTeams(ctx, id, admin)
-	if err != nil {
-		return false, err
-	}
-	return slices.Contains(teams, team), nil
-}
-
-func (s *LegacySQL) GetTeams(ctx context.Context, id authlib.AuthInfo, admin bool) ([]string, error) {
-	sql, err := s.db(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	xid, ok := id.(identity.Requester)
-	if !ok {
-		return nil, fmt.Errorf("expected identity.Requester")
-	}
-	req := newTeamsQueryReq(sql, xid.GetOrgID(), id.GetIdentifier(), admin)
-
-	q, err := sqltemplate.Execute(sqlTeams, req)
-	if err != nil {
-		return nil, fmt.Errorf("execute template %q: %w", sqlTeams.Name(), err)
-	}
-	teams := []string{}
-	sess := sql.DB.GetSqlxSession()
-	err = sess.Select(ctx, &teams, q, req.GetArgs()...)
-	return teams, err
 }
 
 func (s *LegacySQL) getLegacyTeamID(ctx context.Context, orgId int64, team string) (int64, error) {

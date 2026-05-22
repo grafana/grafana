@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Stack } from '@grafana/ui';
@@ -25,6 +26,7 @@ export function OrphanedResourceBanner({ repositoryName }: Props) {
   const [actionType, setActionType] = useState<OrphanedResourceAction | null>(null);
   const [job, setJob] = useState<Job | null>(null);
   const [jobResult, setJobResult] = useState<StepStatusInfo | null>(null);
+  const navigate = useNavigate();
 
   const isAdmin = contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
   const hideJobStatus = jobResult?.status === 'success';
@@ -53,17 +55,42 @@ export function OrphanedResourceBanner({ repositoryName }: Props) {
     }
   }, [submitDelete]);
 
-  const handleJobStatusChange = useCallback((statusInfo: StepStatusInfo) => {
-    // store job result
-    setJobResult(statusInfo);
+  const handleJobStatusChange = useCallback(
+    (statusInfo: StepStatusInfo) => {
+      setJobResult(statusInfo);
+      if (statusInfo.status === 'success') {
+        navigate('/dashboards');
+      }
+    },
+    [navigate]
+  );
+
+  const handleDismissResult = useCallback(() => {
+    setJob(null);
+    setActionType(null);
+    setJobResult(null);
   }, []);
 
+  // Job in progress or finished with warning/error.
+  // Success navigates away immediately, so we only render results for warning and error.
   if (job && actionType) {
-    // TODO: add action to dismiss result and navigate away or refresh page if needed
     return (
       <>
         {!hideJobStatus && <JobStatus watch={job} jobType={actionType} onStatusChange={handleJobStatusChange} />}
-        {result && <Alert severity={result.severity} title={result.title} />}
+        {result && !hideJobStatus && (
+          <Alert
+            severity={result.severity}
+            title={result.title}
+            onRemove={jobResult?.status === 'error' ? handleDismissResult : undefined}
+            action={
+              jobResult?.status === 'warning' ? (
+                <Button variant="secondary" onClick={() => navigate('/dashboards')}>
+                  {t('provisioning.orphaned-resource-banner.go-to-dashboards', 'Go to dashboards')}
+                </Button>
+              ) : undefined
+            }
+          />
+        )}
       </>
     );
   }

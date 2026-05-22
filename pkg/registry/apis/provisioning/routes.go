@@ -192,6 +192,7 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 			URL:       url,
 			Path:      path,
 			Workflows: val.Spec.Workflows,
+			Commit:    val.Spec.Commit,
 		}
 	}
 	w.Header().Set("Content-Type", "application/json")

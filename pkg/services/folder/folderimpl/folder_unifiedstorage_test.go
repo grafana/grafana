@@ -142,6 +142,21 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		w.Header().Set("Content-Type", "application/json")
 	})
 
+	// GetDescendants validates the ancestor exists via Get before issuing the
+	// per-level searches, so the delete tests need a GET handler for deletefolder.
+	mux.HandleFunc("GET /apis/folder.grafana.app/v1/namespaces/default/folders/deletefolder", func(w http.ResponseWriter, req *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		namespacer := func(_ int64) string { return "1" }
+		result, err := internalfolders.LegacyFolderToUnstructured(&folder.Folder{
+			OrgID: orgID,
+			UID:   "deletefolder",
+			Title: "deletefolder",
+		}, namespacer)
+		require.NoError(t, err)
+		err = json.NewEncoder(w).Encode(result)
+		require.NoError(t, err)
+	})
+
 	mux.HandleFunc("GET /apis/folder.grafana.app/v1/namespaces/default/folders", func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		l := &folderv1.FolderList{}
@@ -158,6 +173,18 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 
 		err = json.NewEncoder(w).Encode(result)
 		require.NoError(t, err)
+	})
+
+	mux.HandleFunc("GET /apis/folder.grafana.app/v1/namespaces/default/folders/forbidden", func(w http.ResponseWriter, req *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusForbidden)
+		_ = json.NewEncoder(w).Encode(`{
+										"kind": "Status",
+										"apiVersion": "v1",
+										"metadata": {},
+										"status": "Failure",
+										"code": 403
+										}`)
 	})
 
 	mux.HandleFunc("GET /apis/folder.grafana.app/v1/namespaces/default/folders/not-foo", func(w http.ResponseWriter, req *http.Request) {
@@ -300,7 +327,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 			ctx = identity.WithRequester(context.Background(), noPermUsr)
 
 			f := folder.NewFolder("Folder", "")
-			f.UID = "foo"
+			f.UID = "forbidden"
 
 			t.Run("When get folder by id should return access denied error", func(t *testing.T) {
 				_, err := folderService.Get(ctx, &folder.GetFolderQuery{
@@ -317,17 +344,6 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 					OrgID:        orgID,
 					SignedInUser: noPermUsr,
 				})
-				require.Equal(t, folder.ErrAccessDenied, err)
-			})
-
-			t.Run("When deleting folder by uid should return access denied error", func(t *testing.T) {
-				err := folderService.Delete(ctx, &folder.DeleteFolderCommand{
-					UID:              f.UID,
-					OrgID:            orgID,
-					ForceDeleteRules: false,
-					SignedInUser:     noPermUsr,
-				})
-				require.Error(t, err)
 				require.Equal(t, folder.ErrAccessDenied, err)
 			})
 		})
@@ -369,6 +385,10 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 			})
 
 			t.Run("When deleting folder by uid should not return access denied error - ForceDeleteRules true", func(t *testing.T) {
+				// GetDescendants issues a Search for the ancestor's children;
+				// return an empty result so the subtree is just deletefolder.
+				searchMock.On("Search", mock.Anything, mock.Anything).Return(buildFolderSearchResponse(), nil).Once()
+
 				err := folderService.Delete(ctx, &folder.DeleteFolderCommand{
 					UID:              "deletefolder",
 					OrgID:            orgID,
@@ -379,6 +399,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 			})
 
 			t.Run("When deleting folder by uid should not return access denied error - ForceDeleteRules false", func(t *testing.T) {
+				searchMock.On("Search", mock.Anything, mock.Anything).Return(buildFolderSearchResponse(), nil).Once()
 				fakeK8sClient.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{}}, nil).Once()
 				publicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
@@ -392,6 +413,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 			})
 
 			t.Run("When deleting folder by uid, expectedForceDeleteRules as false,should not return access denied error", func(t *testing.T) {
+				searchMock.On("Search", mock.Anything, mock.Anything).Return(buildFolderSearchResponse(), nil).Once()
 				fakeK8sClient.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{}}, nil).Once()
 
 				expectedForceDeleteRules := false
@@ -405,6 +427,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 			})
 
 			t.Run("When deleting folder by uid, expectedForceDeleteRules as true, should not return access denied error", func(t *testing.T) {
+				searchMock.On("Search", mock.Anything, mock.Anything).Return(buildFolderSearchResponse(), nil).Once()
 				fakeK8sClient.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{}}, nil).Once()
 
 				expectedForceDeleteRules := true

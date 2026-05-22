@@ -9,10 +9,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/e2e"
 	gapi "github.com/grafana/grafana-api-golang-client"
 	"github.com/grafana/grafana/pkg/services/ngalert/remote/client"
-	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -353,7 +354,7 @@ func getNetworkName() string {
 func getInstances(n int) []string {
 	is := make([]string, n)
 
-	for i := 0; i < n; i++ {
+	for i := range n {
 		is[i] = "grafana-" + strconv.Itoa(i+1)
 	}
 

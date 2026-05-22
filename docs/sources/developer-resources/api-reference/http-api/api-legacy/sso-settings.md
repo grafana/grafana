@@ -1,8 +1,8 @@
 ---
 aliases:
-  - ../../../http_api/sso-settings/ # /docs/grafana/next/http_api/sso-settings/
-  - ../../../http_api/ssosettings/ # /docs/grafana/next/http_api/ssosettings/
-  - ../../../developers/http_api/sso-settings/ # /docs/grafana/next/developers/http_api/sso-settings/
+  - ../../../../http_api/sso-settings/ # /docs/grafana/next/http_api/sso-settings/
+  - ../../../../http_api/ssosettings/ # /docs/grafana/next/http_api/ssosettings/
+  - ../../../../developers/http_api/sso-settings/ # /docs/grafana/next/developers/http_api/sso-settings/
   - ../../../../developer-resources/api-reference/http-api/sso-settings/ #legacy folder
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/sso-settings/
 description: Grafana SSO Settings API

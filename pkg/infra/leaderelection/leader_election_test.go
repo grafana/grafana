@@ -13,9 +13,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 )
 
-func TestNoopElector_RunCallsFnImmediately(t *testing.T) {
+func TestDefaultElector_RunCallsFnImmediately(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-		le := NewNoopElector()
+		le := NewDefaultElector()
 		ctx, cancel := context.WithCancel(t.Context())
 		defer cancel()
 
@@ -39,9 +39,9 @@ func TestNoopElector_RunCallsFnImmediately(t *testing.T) {
 	})
 }
 
-func TestNoopElector_RunBlocksUntilCancelled(t *testing.T) {
+func TestDefaultElector_RunBlocksUntilCancelled(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-		le := NewNoopElector()
+		le := NewDefaultElector()
 		ctx, cancel := context.WithCancel(t.Context())
 
 		done := make(chan error, 1)
@@ -58,6 +58,29 @@ func TestNoopElector_RunBlocksUntilCancelled(t *testing.T) {
 			t.Fatal("Run returned before context was cancelled")
 		default:
 		}
+
+		cancel()
+		synctest.Wait()
+
+		require.ErrorIs(t, <-done, context.Canceled)
+	})
+}
+
+func TestNoopElector_NeverCallsFn(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		le := NewNoopElector()
+		ctx, cancel := context.WithCancel(t.Context())
+
+		called := false
+		done := make(chan error, 1)
+		go func() {
+			done <- le.Run(ctx, func(ctx context.Context) {
+				called = true
+			})
+		}()
+
+		synctest.Wait()
+		require.False(t, called, "fn should never be called by NoopElector")
 
 		cancel()
 		synctest.Wait()

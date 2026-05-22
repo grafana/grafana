@@ -63,6 +63,7 @@ composableKinds: PanelCfg: {
 					displayedFields?: [...string]
 					setDisplayedFields?: _
 					grammar?:            _
+					allowDownload?:      bool
 				} @cuetsy(kind="interface")
 			}
 		}]

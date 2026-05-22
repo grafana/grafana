@@ -44,7 +44,8 @@ func (m *UnifiedStorageMigrator) Migrate(ctx context.Context, repo repository.Re
 	exportJob := provisioning.Job{
 		Spec: provisioning.JobSpec{
 			Push: &provisioning.ExportJobOptions{
-				Message: options.Message,
+				Message:   options.Message,
+				Resources: options.Resources,
 			},
 		},
 	}
@@ -72,8 +73,11 @@ func (m *UnifiedStorageMigrator) Migrate(ctx context.Context, repo repository.Re
 		return fmt.Errorf("pull resources: %w", err)
 	}
 
-	// For instance-type repositories, also clean the namespace
-	if repo.Config().Spec.Sync.Target != provisioning.SyncTargetTypeFolder {
+	// For instance-type repositories, also clean the namespace.
+	// In selective mode (caller supplied an explicit Resources list) we skip
+	// the cleanup, because deleting every other unmanaged resource would be
+	// destructive — the user only asked to take over the named ones.
+	if repo.Config().Spec.Sync.Target != provisioning.SyncTargetTypeFolder && len(options.Resources) == 0 {
 		progress.SetMessage(ctx, "clean namespace")
 		if err := m.namespaceCleaner.Clean(ctx, namespace, progress); err != nil {
 			return fmt.Errorf("clean namespace: %w", err)

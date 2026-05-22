@@ -11,10 +11,12 @@ import (
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
 
 type healthCheckStep struct {
 	HealthChecker checks.HealthChecker
+	PluginStore   pluginstore.Store
 }
 
 func (s *healthCheckStep) Title() string {
@@ -37,6 +39,11 @@ func (s *healthCheckStep) Run(ctx context.Context, log logging.Logger, obj *advi
 	ds, ok := i.(*datasources.DataSource)
 	if !ok {
 		return nil, fmt.Errorf("invalid item type %T", i)
+	}
+
+	if plugin, exists := s.PluginStore.Plugin(ctx, ds.Type); !exists || !plugin.Backend {
+		log.Debug("Skipping health check because it's missing or a frontend-only plugin", "datasource_uid", ds.UID, "datasource_type", ds.Type, "plugin_exists", exists, "plugin_backend", plugin.Backend)
+		return nil, nil
 	}
 
 	// Health check execution

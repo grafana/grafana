@@ -3,11 +3,11 @@ import { type ComponentProps } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 import type AutoSizer from 'react-virtualized-auto-sizer';
 import { of } from 'rxjs';
-import { comboboxTestSetup } from 'test/helpers/comboboxTestSetup';
 import { render as testRender, screen, waitFor, testWithFeatureToggles } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { config, setBackendSrv } from '@grafana/runtime';
+import { mockComboboxRect } from '@grafana/test-utils';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -21,7 +21,7 @@ setupMockServer();
 
 const [_, { dashbdD, folderA, folderA_folderA }] = getFolderFixtures();
 
-comboboxTestSetup();
+mockComboboxRect();
 
 jest.mock('react-virtualized-auto-sizer', () => {
   return {
@@ -120,21 +120,15 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
       render(<BrowseDashboardsPage queryParams={{}} />);
       expect(await screen.findByPlaceholderText('Search for dashboards and folders')).toBeInTheDocument();
     });
-
     it('shows the "New" button', async () => {
       render(<BrowseDashboardsPage queryParams={{}} />);
       expect(await screen.findByRole('button', { name: 'New' })).toBeInTheDocument();
     });
 
-    it('shows the "Recently deleted" button when restore is enabled', async () => {
-      const previousFlag = config.featureToggles.restoreDashboards;
-      config.featureToggles.restoreDashboards = true;
-
+    it('shows the "Recently deleted" button', async () => {
       render(<BrowseDashboardsPage queryParams={{}} />);
       await screen.findByPlaceholderText('Search for dashboards and folders');
       expect(await screen.findByRole('link', { name: 'Recently deleted' })).toBeInTheDocument();
-
-      config.featureToggles.restoreDashboards = previousFlag;
     });
 
     it('does not show the "New" button if the user does not have permissions', async () => {
