@@ -36,21 +36,11 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - name: "Get vault secrets"
-        id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main # zizmor: ignore[unpinned-uses]
+      - name: Get GitHub App token
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@e5b7989c92b55fe3ac6dd006d6de49082ba8c507 # create-github-app-token (github-script/v9)
         with:
-          # Secrets placed in the ci/repo/grafana/grafana/plugins_platform_issue_commands_github_bot path in Vault
-          repo_secrets: |
-            GITHUB_APP_ID=grafana_pr_automation_app:app_id
-            GITHUB_APP_PRIVATE_KEY=grafana_pr_automation_app:app_pem
-
-      - name: Generate token
-        id: generate_token
-        uses: actions/create-github-app-token@3ff1caaa28b64c9cc276ce0a02e2ff584f3900c5 # v2.0.2
-        with:
-          app-id: ${{ env.GITHUB_APP_ID }}
-          private-key: ${{ env.GITHUB_APP_PRIVATE_KEY }}
+          github_app: grafana-pr-automation
 
       - name: Checkout Actions
         uses: actions/checkout@v5
@@ -66,5 +56,5 @@ jobs:
         uses: ./actions/commands
         with:
           metricsWriteAPIKey: ""
-          token: ${{ steps.generate_token.outputs.token }}
+          token: ${{ steps.get-github-app-token.outputs.token }}
           configPath: commands
