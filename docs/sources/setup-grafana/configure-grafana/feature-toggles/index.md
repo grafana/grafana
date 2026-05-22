@@ -108,6 +108,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `teamFolders`                     | Enables team folders functionality                                                                     |
 | `interactiveLearning`             | Enables the interactive learning app                                                                   |
 | `nestedFramesFieldOverrides`      | Enable field overrides for FieldType.nestedFrames fields (like in nested tables)                       |
+| `heatmapRowsAxisOptions`          | Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)                 |
 | `preventPanelChromeOverflow`      | Restrict PanelChrome contents with overflow: hidden;                                                   |
 | `panelTimeSettings`               | Enables a new panel time settings drawer                                                               |
 | `transformationsEmptyPlaceholder` | Show transformation quick-start cards in empty transformations state                                   |
