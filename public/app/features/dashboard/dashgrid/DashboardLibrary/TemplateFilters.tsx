@@ -46,7 +46,10 @@ export function TemplateFilters({
             options={creatorOptions}
             value={selectedCreators}
             onChange={onCreatorsChange}
-            placeholder={t('dashboard-library.custom-dashboard-template-filters.creator-placeholder', 'Filter by created by')}
+            placeholder={t(
+              'dashboard-library.custom-dashboard-template-filters.creator-placeholder',
+              'Filter by created by'
+            )}
             isClearable
             width={30}
           />

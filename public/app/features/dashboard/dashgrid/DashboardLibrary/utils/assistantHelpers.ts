@@ -118,7 +118,9 @@ export function buildTemplateContextTitle(
  * For suggested dashboards (already rendered), asks to adapt the existing dashboard.
  * For template dashboards, asks to create a new dashboard from the template.
  */
-export function buildAssistantPrompt(kind: 'template_dashboard' | 'suggested_dashboard' | 'custom_dashboard_template'): string {
+export function buildAssistantPrompt(
+  kind: 'template_dashboard' | 'suggested_dashboard' | 'custom_dashboard_template'
+): string {
   if (kind === 'suggested_dashboard') {
     return `Adapt this dashboard to my environment by connecting it to my available data sources and adjusting queries as needed.`;
   }
