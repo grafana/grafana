@@ -8,14 +8,15 @@ import (
 	"maps"
 	"strings"
 
-	"github.com/grafana/alerting/definition"
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/receivers/schema"
+	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/common/model"
 	k8svalidation "k8s.io/apimachinery/pkg/util/validation"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
 )
 
@@ -29,8 +30,8 @@ func UidToName(uid string) (string, error) {
 	return string(data), nil
 }
 
-func IntegrationToPostableGrafanaReceiver(integration *models.Integration) (*apimodels.PostableGrafanaReceiver, error) {
-	postable := &apimodels.PostableGrafanaReceiver{
+func IntegrationToPostableGrafanaReceiver(integration *models.Integration) (*v1.PostableGrafanaReceiver, error) {
+	postable := &v1.PostableGrafanaReceiver{
 		UID:                   integration.UID,
 		Name:                  integration.Name,
 		Type:                  string(integration.Config.Type()),
@@ -53,9 +54,9 @@ func IntegrationToPostableGrafanaReceiver(integration *models.Integration) (*api
 	return postable, nil
 }
 
-func ReceiverToPostableApiReceiver(r *models.Receiver) (*apimodels.PostableApiReceiver, error) {
-	integrations := apimodels.PostableGrafanaReceivers{
-		GrafanaManagedReceivers: make([]*apimodels.PostableGrafanaReceiver, 0, len(r.Integrations)),
+func ReceiverToPostableApiReceiver(r *models.Receiver) (*v1.PostableApiReceiver, error) {
+	integrations := v1.PostableGrafanaReceivers{
+		GrafanaManagedReceivers: make([]*v1.PostableGrafanaReceiver, 0, len(r.Integrations)),
 	}
 	for _, cfg := range r.Integrations {
 		postable, err := IntegrationToPostableGrafanaReceiver(cfg)
@@ -65,7 +66,7 @@ func ReceiverToPostableApiReceiver(r *models.Receiver) (*apimodels.PostableApiRe
 		integrations.GrafanaManagedReceivers = append(integrations.GrafanaManagedReceivers, postable)
 	}
 
-	return &apimodels.PostableApiReceiver{
+	return &v1.PostableApiReceiver{
 		Receiver: alertingNotify.ConfigReceiver{
 			Name: r.Name,
 		},
@@ -73,7 +74,7 @@ func ReceiverToPostableApiReceiver(r *models.Receiver) (*apimodels.PostableApiRe
 	}, nil
 }
 
-func PostableApiReceiverToReceiver(postable *apimodels.PostableApiReceiver, provenance models.Provenance, origin models.ResourceOrigin) (*models.Receiver, error) {
+func PostableApiReceiverToReceiver(postable *v1.PostableApiReceiver, provenance models.Provenance, origin models.ResourceOrigin) (*models.Receiver, error) {
 	if postable.HasMimirIntegrations() {
 		p, err := PostableMimirReceiverToPostableGrafanaReceiver(postable)
 		if err != nil {
@@ -97,7 +98,7 @@ func PostableApiReceiverToReceiver(postable *apimodels.PostableApiReceiver, prov
 }
 
 // GetReceiverProvenance determines the provenance of a definitions.PostableApiReceiver based on the provenance of its integrations.
-func GetReceiverProvenance(storedProvenances map[string]models.Provenance, r *apimodels.PostableApiReceiver, origin models.ResourceOrigin) models.Provenance {
+func GetReceiverProvenance(storedProvenances map[string]models.Provenance, r *v1.PostableApiReceiver, origin models.ResourceOrigin) models.Provenance {
 	if origin == models.ResourceOriginImported {
 		return models.ProvenanceConvertedPrometheus
 	}
@@ -118,7 +119,7 @@ func GetReceiverProvenance(storedProvenances map[string]models.Provenance, r *ap
 	return models.ProvenanceNone
 }
 
-func PostableGrafanaReceiversToIntegrations(postables []*apimodels.PostableGrafanaReceiver) ([]*models.Integration, error) {
+func PostableGrafanaReceiversToIntegrations(postables []*v1.PostableGrafanaReceiver) ([]*models.Integration, error) {
 	integrations := make([]*models.Integration, 0, len(postables))
 	for _, cfg := range postables {
 		integration, err := PostableGrafanaReceiverToIntegration(cfg)
@@ -134,7 +135,7 @@ func PostableGrafanaReceiversToIntegrations(postables []*apimodels.PostableGrafa
 // PostableMimirReceiverToPostableGrafanaReceiver converts all legacy models to apimodels.PostableGrafanaReceiver.
 // If receiver does not have any legacy receivers, returns the original receiver.
 // Otherwise, returns a copy that contains converted integrations (and shallow copy of existing Grafana integrations).
-func PostableMimirReceiverToPostableGrafanaReceiver(r *apimodels.PostableApiReceiver) (*apimodels.PostableApiReceiver, error) {
+func PostableMimirReceiverToPostableGrafanaReceiver(r *v1.PostableApiReceiver) (*v1.PostableApiReceiver, error) {
 	if !r.HasMimirIntegrations() {
 		return r, nil
 	}
@@ -142,12 +143,12 @@ func PostableMimirReceiverToPostableGrafanaReceiver(r *apimodels.PostableApiRece
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert v0 receiver to integrations: %w", err)
 	}
-	result := &apimodels.PostableApiReceiver{
+	result := &v1.PostableApiReceiver{
 		Receiver: apimodels.Receiver{
 			Name: r.Name,
 		},
-		PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
-			GrafanaManagedReceivers: make([]*apimodels.PostableGrafanaReceiver, 0, len(v0)+len(r.GrafanaManagedReceivers)),
+		PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
+			GrafanaManagedReceivers: make([]*v1.PostableGrafanaReceiver, 0, len(v0)+len(r.GrafanaManagedReceivers)),
 		},
 	}
 	result.GrafanaManagedReceivers = append(result.GrafanaManagedReceivers, r.GrafanaManagedReceivers...)
@@ -166,13 +167,13 @@ func PostableMimirReceiverToPostableGrafanaReceiver(r *apimodels.PostableApiRece
 }
 
 // MimirIntegrationConfigToPostableGrafanaReceiver Converts a Mimir integration configuration to a PostableGrafanaReceiver. All settings are unencrypted. Needs to be encrypted later.
-func MimirIntegrationConfigToPostableGrafanaReceiver(config alertingNotify.MimirIntegrationConfig, receiverName string, idx int) (*definition.PostableGrafanaReceiver, error) {
+func MimirIntegrationConfigToPostableGrafanaReceiver(config alertingNotify.MimirIntegrationConfig, receiverName string, idx int) (*v1.PostableGrafanaReceiver, error) {
 	raw, err := config.ConfigJSON()
 	if err != nil {
 		return nil, err
 	}
 
-	return &definition.PostableGrafanaReceiver{
+	return &v1.PostableGrafanaReceiver{
 		// mimirIntegrationUID generates a stable, fixed-length UID for a converted Mimir integration that passes ValidateUID, 40-char limit for long names in particular
 		UID:                   mimirIntegrationUID(receiverName, string(config.Schema.Type()), idx),
 		Name:                  receiverName,
@@ -210,7 +211,7 @@ func PostableMimirReceiverToIntegrations(r alertingNotify.ConfigReceiver) ([]*mo
 	return result, nil
 }
 
-func PostableGrafanaReceiverToIntegration(p *apimodels.PostableGrafanaReceiver) (*models.Integration, error) {
+func PostableGrafanaReceiverToIntegration(p *v1.PostableGrafanaReceiver) (*models.Integration, error) {
 	integrationType, err := alertingNotify.IntegrationTypeFromString(p.Type)
 	if err != nil {
 		return nil, err
@@ -247,18 +248,18 @@ func PostableGrafanaReceiverToIntegration(p *apimodels.PostableGrafanaReceiver) 
 	return integration, nil
 }
 
-func ManagedRouteToRoute(r *ManagedRoute) definition.Route {
+func ManagedRouteToRoute(r *ManagedRoute) v1.Route {
 	groupByAll, groupBy := ToGroupBy(r.GroupBy...)
 
 	// Only need to copy the fields that are valid for a root route.
-	return definition.Route{
+	return v1.Route{
 		Receiver:       r.Receiver,
 		GroupByStr:     r.GroupBy,
 		GroupWait:      r.GroupWait,
 		GroupInterval:  r.GroupInterval,
 		RepeatInterval: r.RepeatInterval,
 		Routes:         r.Routes,
-		Provenance:     definition.Provenance(r.Provenance),
+		Provenance:     v1.Provenance(r.Provenance),
 
 		// These are deceptively necessary since they are normally generated during unmarshalling and assumed to be
 		// present in upstream alertmanager code. We can't assume we'll be unmarshalling the route again, so we need to
@@ -281,7 +282,7 @@ func ToGroupBy(groupByStr ...string) (groupByAll bool, groupBy []model.LabelName
 	return false, groupBy
 }
 
-func InhibitRuleToInhibitionRule(name string, rule apimodels.InhibitRule, provenance apimodels.Provenance) (*apimodels.InhibitionRule, error) {
+func InhibitRuleToInhibitionRule(name string, rule config.InhibitRule, provenance v1.Provenance) (*v1.InhibitionRule, error) {
 	if name = strings.TrimSpace(name); name == "" {
 		return nil, fmt.Errorf("inhibition rule name must not be empty")
 	}
@@ -299,7 +300,7 @@ func InhibitRuleToInhibitionRule(name string, rule apimodels.InhibitRule, proven
 		return nil, fmt.Errorf("inhibition rule name is too long (exceeds %d characters)", ualert.UIDMaxLength)
 	}
 
-	return &apimodels.InhibitionRule{
+	return &v1.InhibitionRule{
 		Name:        name,
 		InhibitRule: rule,
 		Provenance:  provenance,

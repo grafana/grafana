@@ -52,8 +52,10 @@ type IndexViewData struct {
 	// Feature flag for image-renderer to check support for binding calls
 	RenderBindingSupported bool
 
-	MeticulousAIEnabled        bool
-	MeticulousAIRecordingToken string
+	// Options for controlling the inclusion and behavior of the Meticulous AI session recorder script.
+	MeticulousAIEnabled                   bool
+	MeticulousAIRecordingToken            string
+	MeticulousAIProductionEnvironmentFlag bool
 
 	BootScript template.JS
 
@@ -129,21 +131,24 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 	renderBindingSupported, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagReportRenderBinding, false, openfeature.TransactionContext(ctx))
 	compiledBootScript, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagCompiledBootScript, false, openfeature.TransactionContext(ctx))
 	grafanaAssetSriChecks, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagGrafanaAssetSriChecks, false, openfeature.TransactionContext(ctx))
-	meticulousAIRecorderEnabled, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagGrafanaMeticulousAIRecorder, false, openfeature.TransactionContext(ctx))
+	meticulousAIMode, _ := ofClient.StringValue(ctx, featuremgmt.FlagGrafanaMeticulousAIMode, "off", openfeature.TransactionContext(ctx))
+	meticulousAIEnabled := meticulousAIMode == "on-prod-env" || meticulousAIMode == "on-dev-env"
+	meticulousAIProductionEnvironmentFlag := meticulousAIMode == "on-prod-env"
 
 	data := IndexViewData{
-		AppTitle:                   "Grafana",
-		AppSubUrl:                  p.config.AppSubURL,
-		IsDevelopmentEnv:           p.config.Env == setting.Dev,
-		Assets:                     assetsManifest,
-		DefaultUser:                dtos.CurrentUser{},
-		Nonce:                      reqCtx.RequestNonce,
-		PublicDashboardAccessToken: reqCtx.PublicDashboardAccessToken,
-		Settings:                   fsSettings,
-		RenderBindingSupported:     renderBindingSupported,
-		AssetSriChecksEnabled:      grafanaAssetSriChecks,
-		MeticulousAIEnabled:        meticulousAIRecorderEnabled,
-		MeticulousAIRecordingToken: p.config.MeticulousAIRecordingToken,
+		AppTitle:                              "Grafana",
+		AppSubUrl:                             p.config.AppSubURL,
+		IsDevelopmentEnv:                      p.config.Env == setting.Dev,
+		Assets:                                assetsManifest,
+		DefaultUser:                           dtos.CurrentUser{},
+		Nonce:                                 reqCtx.RequestNonce,
+		PublicDashboardAccessToken:            reqCtx.PublicDashboardAccessToken,
+		Settings:                              fsSettings,
+		RenderBindingSupported:                renderBindingSupported,
+		AssetSriChecksEnabled:                 grafanaAssetSriChecks,
+		MeticulousAIEnabled:                   meticulousAIEnabled,
+		MeticulousAIRecordingToken:            p.config.MeticulousAIRecordingToken,
+		MeticulousAIProductionEnvironmentFlag: meticulousAIProductionEnvironmentFlag,
 	}
 
 	if compiledBootScript {

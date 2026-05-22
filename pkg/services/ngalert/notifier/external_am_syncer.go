@@ -13,16 +13,17 @@ import (
 
 	"go.yaml.in/yaml/v3"
 
+	"github.com/open-feature/go-sdk/openfeature"
+
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/open-feature/go-sdk/openfeature"
 )
 
 // mimirConfigResponse is the Mimir/Cortex alertmanager configuration API response.
@@ -100,7 +101,7 @@ func NewExternalAMSyncer(
 //
 // Per-org failures (datasource lookup, HTTP fetch, parse) are logged and emit the
 // failure metric here; the caller does not need to handle the error specifically.
-func (s *ExternalAMSyncer) FetchExtraConfig(ctx context.Context, orgID int64) (*apimodels.ExtraConfiguration, uint64) {
+func (s *ExternalAMSyncer) FetchExtraConfig(ctx context.Context, orgID int64) (*v1.ExtraConfiguration, uint64) {
 	client := openfeature.NewDefaultClient()
 	if !client.Boolean(ctx, featuremgmt.FlagAlertingSyncExternalAlertmanager, false, openfeature.TransactionContext(ctx)) {
 		return nil, 0
@@ -169,7 +170,7 @@ func (s *ExternalAMSyncer) MarkSaved(orgID int64, hash uint64) {
 // Returns the FNV-1a hash of the raw response body so the caller can dedup across
 // ticks. The returned reason matches the label on ExternalAMConfigSyncFailures so
 // the caller can emit the metric without re-classifying.
-func (s *ExternalAMSyncer) fetchExtraConfig(ctx context.Context, orgID int64, uid string) (apimodels.ExtraConfiguration, uint64, string, error) {
+func (s *ExternalAMSyncer) fetchExtraConfig(ctx context.Context, orgID int64, uid string) (v1.ExtraConfiguration, uint64, string, error) {
 	fetchCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
@@ -178,15 +179,15 @@ func (s *ExternalAMSyncer) fetchExtraConfig(ctx context.Context, orgID int64, ui
 		OrgID: orgID,
 	})
 	if err != nil {
-		return apimodels.ExtraConfiguration{}, 0, syncReasonDatasourceLookup, fmt.Errorf("look up datasource: %w", err)
+		return v1.ExtraConfiguration{}, 0, syncReasonDatasourceLookup, fmt.Errorf("look up datasource: %w", err)
 	}
 
 	mimirCfg, hash, err := s.fetchMimirConfig(fetchCtx, ds)
 	if err != nil {
-		return apimodels.ExtraConfiguration{}, 0, syncReasonMimirFetch, fmt.Errorf("fetch upstream config: %w", err)
+		return v1.ExtraConfiguration{}, 0, syncReasonMimirFetch, fmt.Errorf("fetch upstream config: %w", err)
 	}
 
-	return apimodels.ExtraConfiguration{
+	return v1.ExtraConfiguration{
 		Identifier:         uid,
 		AlertmanagerConfig: mimirCfg.AlertmanagerConfig,
 		TemplateFiles:      mimirCfg.TemplateFiles,

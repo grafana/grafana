@@ -145,9 +145,11 @@ export function renderSearchHits(
     <div key="search results">
       <OptionsPaneCategory
         id="Found options"
-        title={t('dashboard.options-pane-options.title-matched', 'Matched {{count}}/{{totalCount}} options', {
+        title={t('dashboard.options-pane-options.title-matched', '', {
           count: optionHits.length,
           totalCount,
+          defaultValue_one: 'Matched {{count}}/{{totalCount}} options',
+          defaultValue_other: 'Matched {{count}}/{{totalCount}} options',
         })}
         key="Normal options"
         forceOpen={true}

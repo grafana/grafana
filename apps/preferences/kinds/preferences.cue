@@ -13,6 +13,9 @@ preferencesV1alpha1: {
 	}
 	schema: {
 		spec: {
+			// Explicit home URL (NOTE: this can only be modified in the system settings)
+			homeURL?: string
+
 			// UID for the home dashboard
 			homeDashboardUID?: string
 
@@ -27,10 +30,6 @@ preferencesV1alpha1: {
 
 			// Selected language
 			language?: string
-
-			// Selected locale (beta)
-			// TODO: Will be removed
-			regionalFormat?: string
 
 			// Explore query history preferences
 			queryHistory?: #QueryHistoryPreference

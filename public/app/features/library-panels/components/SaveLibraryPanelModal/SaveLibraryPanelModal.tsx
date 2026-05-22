@@ -66,6 +66,10 @@ export const SaveLibraryPanelModal = ({
           <Trans
             i18nKey="library-panels.save-library-panel-modal.num-affected"
             count={panel.libraryPanel.meta?.connectedDashboards}
+            tOptions={{
+              defaultValue_one: 'This update will affect <1>{{count}} dashboards.</1>',
+              defaultValue_other: 'This update will affect <1>{{count}} dashboards.</1>',
+            }}
           >
             This update will affect <strong>{'{{count}}'} dashboards.</strong>
           </Trans>

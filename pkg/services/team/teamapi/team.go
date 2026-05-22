@@ -8,15 +8,20 @@ import (
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	prefutils "github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/preference/prefapi"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/sortopts"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
+	"github.com/open-feature/go-sdk/openfeature"
 )
+
+var ofClient = openfeature.NewDefaultClient()
 
 // swagger:route POST /teams teams createTeam
 //
@@ -278,6 +283,15 @@ func (tapi *TeamAPI) getTeamPreferences(c *contextmodel.ReqContext) response.Res
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
 
+	ctx := c.Req.Context()
+	if ofClient.Boolean(ctx, featuremgmt.FlagPreferencesRerouteLegacyAPIs, false, openfeature.TransactionContext(ctx)) {
+		uid, errResp := tapi.resolveTeamUID(c, teamId)
+		if errResp != nil {
+			return errResp
+		}
+		return tapi.preferenceK8sHandler.GetPreferences(c, prefutils.TeamOwner(uid))
+	}
+
 	return prefapi.GetPreferencesFor(c.Req.Context(), tapi.ds, tapi.preferenceService, tapi.features, c.GetOrgID(), 0, teamId)
 }
 
@@ -301,7 +315,30 @@ func (tapi *TeamAPI) updateTeamPreferences(c *contextmodel.ReqContext) response.
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
 
+	ctx := c.Req.Context()
+	if ofClient.Boolean(ctx, featuremgmt.FlagPreferencesRerouteLegacyAPIs, false, openfeature.TransactionContext(ctx)) {
+		uid, errResp := tapi.resolveTeamUID(c, teamId)
+		if errResp != nil {
+			return errResp
+		}
+		return tapi.preferenceK8sHandler.UpdatePreferences(c, prefutils.TeamOwner(uid), &dtoCmd)
+	}
+
 	return prefapi.UpdatePreferencesFor(c.Req.Context(), tapi.ds, tapi.preferenceService, tapi.features, c.GetOrgID(), 0, teamId, &dtoCmd)
+}
+
+// resolveTeamUID returns the team UID. When the request used a UID in the
+// URL it is already stashed in the context by the team UID resolver
+// middleware; otherwise we look it up by ID.
+func (tapi *TeamAPI) resolveTeamUID(c *contextmodel.ReqContext, teamID int64) (string, response.Response) {
+	if uid, ok := team.TeamUIDFrom(c.Req.Context()); ok {
+		return uid, nil
+	}
+	t, err := tapi.teamService.GetTeamByID(c.Req.Context(), &team.GetTeamByIDQuery{ID: teamID, OrgID: c.GetOrgID()})
+	if err != nil {
+		return "", response.Error(http.StatusNotFound, "Team not found", err)
+	}
+	return t.UID, nil
 }
 
 // swagger:parameters updateTeamPreferences

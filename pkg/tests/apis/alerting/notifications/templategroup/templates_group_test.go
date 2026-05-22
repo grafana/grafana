@@ -23,8 +23,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	v1model "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -723,8 +723,8 @@ func TestIntegrationListSelector(t *testing.T) {
 	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
 	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
 	require.NoError(t, err)
-	require.NoError(t, db.SetProvenance(ctx, &definitions.NotificationTemplate{
-		Name: template2.Spec.Title,
+	require.NoError(t, db.SetProvenance(ctx, &v1model.TemplateGroup{
+		Title: template2.Spec.Title,
 	}, helper.Org1.Admin.Identity.GetOrgID(), "API"))
 	template2, err = adminClient.Get(ctx, template2.GetStaticMetadata().Identifier())
 

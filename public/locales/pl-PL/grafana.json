@@ -11489,6 +11489,8 @@
       "clear-search": "Wyczyść",
       "close-inline-details": "Zamknij szczegóły tego logu",
       "close-sidebar-details": "Zamknij pasek boczny szczegółów logu",
+      "copy-log-line": "",
+      "copy-log-line-json": "",
       "copy-shortlink": "Kopiuj krótki link",
       "copy-to-clipboard": "Kopiuj do schowka",
       "displayed-fields-section": "Uporządkuj wyświetlane pola",
@@ -11537,7 +11539,8 @@
     },
     "log-line-menu": {
       "copy-link": "Kopiuj link do wiersza logu",
-      "copy-log": "Kopiuj wiersz logu",
+      "copy-log-contents": "",
+      "copy-log-message": "",
       "hide-details": "Pokaż szczegóły dziennika",
       "icon-label": "Menu logu",
       "log-line": "Wiersz logu",
@@ -15741,8 +15744,8 @@
     },
     "legend": {
       "category": "Legenda",
-      "description-faceted-filter": "Pokaż filtr widoczności szeregów na podstawie etykiet",
-      "name-faceted-filter": "Filtr fasetowy"
+      "description-faceted-filter": "",
+      "name-faceted-filter": ""
     },
     "line-style-editor": {
       "line-fill-options": {

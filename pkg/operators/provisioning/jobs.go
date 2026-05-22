@@ -124,6 +124,7 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 		metrics,
 		tracer,
 		maxSyncWorkers,
+		cfg.ProvisioningMaxFileSize,
 	)
 
 	stageIfPossible := repository.WrapWithStageAndPushIfPossible
