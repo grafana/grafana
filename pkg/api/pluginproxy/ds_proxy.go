@@ -2,6 +2,7 @@ package pluginproxy
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -15,6 +16,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/api/datasource"
+	datasourcesV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	glog "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -40,7 +42,8 @@ var (
 const maxForwardedUserAgentLen = 255
 
 type DataSourceProxy struct {
-	ds                 *datasources.DataSource
+	pluginType         string
+	ds                 *datasourcesV0.DataSource
 	ctx                *contextmodel.ReqContext
 	targetUrl          *url.URL
 	proxyPath          string
@@ -49,9 +52,16 @@ type DataSourceProxy struct {
 	settings           *DataSourceProxySettings
 	clientProvider     httpclient.Provider
 	oAuthTokenService  oauthtoken.OAuthTokenService
-	dataSourcesService datasources.DataSourceService
+	dataSourcesService DataSourceSecretLoader
 	tracer             tracing.Tracer
 	features           featuremgmt.FeatureToggles
+}
+
+type DataSourceSecretLoader interface {
+	GetHTTPTransport(ctx context.Context, ds *datasourcesV0.DataSource, clientProvider httpclient.Provider) (http.RoundTripper, error)
+	DecryptedPassword(ctx context.Context, ds *datasourcesV0.DataSource) (string, error)
+	DecryptedBasicAuthPassword(ctx context.Context, ds *datasourcesV0.DataSource) (string, error)
+	DecryptedValues(ctx context.Context, ds *datasourcesV0.DataSource) (map[string]string, error)
 }
 
 type httpClient interface {
@@ -59,18 +69,20 @@ type httpClient interface {
 }
 
 // NewDataSourceProxy creates a new Datasource proxy
-func NewDataSourceProxy(ds *datasources.DataSource, pluginRoutes []*plugins.Route, ctx *contextmodel.ReqContext,
+func NewDataSourceProxy(pluginType string,
+	ds *datasourcesV0.DataSource, pluginRoutes []*plugins.Route, ctx *contextmodel.ReqContext,
 	proxyPath string, settings *DataSourceProxySettings, clientProvider httpclient.Provider,
-	oAuthTokenService oauthtoken.OAuthTokenService, dsService datasources.DataSourceService,
+	oAuthTokenService oauthtoken.OAuthTokenService, dsService DataSourceSecretLoader,
 	tracer tracing.Tracer, features featuremgmt.FeatureToggles,
 ) (*DataSourceProxy, error) {
-	targetURL, err := datasource.ValidateURL(ds.Type, ds.URL)
+	targetURL, err := datasource.ValidateURL(pluginType, ds.Spec.URL())
 	if err != nil {
 		return nil, err
 	}
 
 	return &DataSourceProxy{
 		ds:                 ds,
+		pluginType:         pluginType,
 		pluginRoutes:       pluginRoutes,
 		ctx:                ctx,
 		proxyPath:          proxyPath,
@@ -152,7 +164,7 @@ func (proxy *DataSourceProxy) HandleRequest() {
 
 	span.SetAttributes(
 		attribute.String("datasource_name", proxy.ds.Name),
-		attribute.String("datasource_type", proxy.ds.Type),
+		attribute.String("datasource_type", proxy.pluginType),
 		attribute.String("user", proxy.ctx.Login),
 		attribute.Int64("org_id", proxy.ctx.OrgID),
 	)
@@ -182,7 +194,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 
 	ctxLogger := logger.FromContext(req.Context())
 
-	switch proxy.ds.Type {
+	switch proxy.pluginType {
 	case datasources.DS_INFLUXDB_08:
 		password, err := proxy.dataSourcesService.DecryptedPassword(req.Context(), proxy.ds)
 		if err != nil {
@@ -190,8 +202,8 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 			return
 		}
 
-		req.URL.RawPath = util.JoinURLFragments(proxy.targetUrl.Path, "db/"+proxy.ds.Database+"/"+proxy.proxyPath)
-		reqQueryVals.Add("u", proxy.ds.User)
+		req.URL.RawPath = util.JoinURLFragments(proxy.targetUrl.Path, "db/"+proxy.ds.Spec.Database()+"/"+proxy.proxyPath)
+		reqQueryVals.Add("u", proxy.ds.Spec.User())
 		reqQueryVals.Add("p", password)
 		req.URL.RawQuery = reqQueryVals.Encode()
 	case datasources.DS_INFLUXDB:
@@ -202,10 +214,10 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 		}
 		req.URL.RawPath = util.JoinURLFragments(proxy.targetUrl.Path, proxy.proxyPath)
 		req.URL.RawQuery = reqQueryVals.Encode()
-		if !proxy.ds.BasicAuth {
+		if !proxy.ds.Spec.BasicAuth() {
 			req.Header.Set(
 				"Authorization",
-				util.GetBasicAuthHeader(proxy.ds.User, password),
+				util.GetBasicAuthHeader(proxy.ds.Spec.User(), password),
 			)
 		}
 	default:
@@ -220,13 +232,13 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 
 	req.URL.Path = unescapedPath
 
-	if proxy.ds.BasicAuth {
+	if proxy.ds.Spec.BasicAuth() {
 		password, err := proxy.dataSourcesService.DecryptedBasicAuthPassword(req.Context(), proxy.ds)
 		if err != nil {
 			ctxLogger.Error("Error interpolating proxy url", "error", err)
 			return
 		}
-		req.Header.Set("Authorization", util.GetBasicAuthHeader(proxy.ds.BasicAuthUser,
+		req.Header.Set("Authorization", util.GetBasicAuthHeader(proxy.ds.Spec.BasicAuthUser(),
 			password))
 	}
 
@@ -271,8 +283,8 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 		}
 
 		ApplyRoute(req.Context(), req, proxy.proxyPath, proxy.matchedRoute, DSInfo{
-			ID:                      proxy.ds.ID,
-			URL:                     proxy.ds.URL,
+			//ID:                      proxy.ds.S.ID,
+			URL:                     proxy.ds.Spec.URL(),
 			Updated:                 proxy.ds.Updated,
 			JSONData:                jsonData,
 			DecryptedSecureJSONData: decryptedValues,
@@ -298,7 +310,7 @@ func (proxy *DataSourceProxy) validateRequest() error {
 		return errors.New("target URL is not a valid target")
 	}
 
-	if proxy.ds.Type == datasources.DS_ES {
+	if proxy.pluginType == datasources.DS_ES {
 		if proxy.ctx.Req.Method == "DELETE" {
 			return errors.New("deletes not allowed on proxied Elasticsearch datasource")
 		}
@@ -348,7 +360,7 @@ func (proxy *DataSourceProxy) validateRequest() error {
 	}
 
 	// Trailing validation below this point for routes that were not matched
-	if proxy.ds.Type == datasources.DS_PROMETHEUS || proxy.ds.Type == datasources.DS_AMAZON_PROMETHEUS || proxy.ds.Type == datasources.DS_AZURE_PROMETHEUS {
+	if proxy.pluginType == datasources.DS_PROMETHEUS || proxy.pluginType == datasources.DS_AMAZON_PROMETHEUS || proxy.pluginType == datasources.DS_AZURE_PROMETHEUS {
 		if proxy.ctx.Req.Method == "DELETE" {
 			return errors.New("non allow-listed DELETEs not allowed on proxied Prometheus datasource")
 		}
@@ -366,7 +378,7 @@ func (proxy *DataSourceProxy) validateRequest() error {
 func (proxy *DataSourceProxy) hasAccessToRoute(route *plugins.Route) bool {
 	ctxLogger := logger.FromContext(proxy.ctx.Req.Context())
 	if route.ReqAction != "" {
-		routeEval := pluginac.GetDataSourceRouteEvaluator(proxy.ds.UID, route.ReqAction)
+		routeEval := pluginac.GetDataSourceRouteEvaluator(proxy.ds.Name, route.ReqAction)
 		hasAccess := routeEval.Evaluate(proxy.ctx.GetPermissions())
 		if !hasAccess {
 			ctxLogger.Debug("plugin route is covered by RBAC, user doesn't have access", "route", proxy.ctx.Req.URL.Path, "action", route.ReqAction, "path", route.Path, "method", route.Method)
@@ -408,7 +420,7 @@ func (proxy *DataSourceProxy) logRequest() {
 		"userid", proxy.ctx.UserID,
 		"orgid", proxy.ctx.OrgID,
 		"username", proxy.ctx.Login,
-		"datasource", proxy.ds.Type,
+		"datasource", proxy.pluginType,
 		"uri", uri,
 		"method", proxy.ctx.Req.Method,
 		"panelPluginId", panelPluginId,
