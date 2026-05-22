@@ -30,8 +30,9 @@ func ProvideResourceDB(cfg *setting.Cfg, grafanaDB infraDB.DB) (db.DBProvider, e
 	switch storageType {
 	case options.StorageTypeFile, options.StorageTypeUnifiedGrpc, options.StorageTypeUnifiedKVGrpc:
 		return nil, nil
+	default:
+		return dbimpl.ProvideResourceDB(grafanaDB, cfg, tracer)
 	}
-	return dbimpl.ProvideResourceDB(grafanaDB, cfg, tracer)
 }
 
 func ProvideKV(cfg *setting.Cfg, eDB db.DBProvider) (kv.KV, error) {
