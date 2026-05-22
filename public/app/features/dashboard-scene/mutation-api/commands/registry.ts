@@ -10,6 +10,7 @@ import { addRowCommand } from './addRow';
 import { addTabCommand } from './addTab';
 import { addVariableCommand } from './addVariable';
 import { enterEditModeCommand } from './enterEditMode';
+import { getDashboardCommand } from './getDashboard';
 import { getDashboardInfoCommand } from './getDashboardInfo';
 import { getLayoutCommand } from './getLayout';
 import { listPanelsCommand } from './listPanels';
@@ -21,6 +22,7 @@ import { removePanelCommand } from './removePanel';
 import { removeRowCommand } from './removeRow';
 import { removeTabCommand } from './removeTab';
 import { removeVariableCommand } from './removeVariable';
+import { replaceDashboardCommand } from './replaceDashboard';
 import type { MutationCommand } from './types';
 import { updateDashboardSettingsCommand } from './updateDashboardSettings';
 import { updateLayoutCommand } from './updateLayout';
@@ -51,8 +53,10 @@ export const ALL_COMMANDS: Array<MutationCommand<any>> = [
   updatePanelCommand,
   removePanelCommand,
   listPanelsCommand,
+  getDashboardCommand,
   getDashboardInfoCommand,
   updateDashboardSettingsCommand,
+  replaceDashboardCommand,
 ];
 
 /** All valid command names. */
