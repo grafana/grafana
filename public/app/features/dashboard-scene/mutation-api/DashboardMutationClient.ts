@@ -13,15 +13,13 @@
  * 3. Payload validation (does the payload match the Zod schema?)
  */
 
-import { type SceneVariable } from '@grafana/scenes';
-
 import { DashboardEditActionEvent } from '../edit-pane/events';
 import type { DashboardScene } from '../scene/DashboardScene';
 
 import { ALL_COMMANDS, validatePayload } from './commands/registry';
 import type { MutationCommand, MutationContext, UndoDomain } from './commands/types';
-import { replaceVariableSet } from './commands/variableUtils';
 import type { MutationClient, MutationRequest, MutationResult } from './types';
+import { getUndoDomain } from './undo-domains';
 
 type MutationHandler = (payload: unknown, context: MutationContext) => Promise<MutationResult>;
 
@@ -83,8 +81,9 @@ export class DashboardMutationClient implements MutationClient {
     const context: MutationContext = { scene: this.scene };
 
     // Snapshot the declared domain before the handler runs.
+    // Snapshot/restore is delegated to the per-domain registry in `undo-domains.ts`.
     const { undoDomain } = registration;
-    const beforeSnapshot = undoDomain ? this.snapshotDomain(undoDomain) : undefined;
+    const beforeSnapshot: unknown = undoDomain ? this.snapshotDomain(undoDomain) : undefined;
 
     try {
       const result = await registration.handler(payload, context);
@@ -131,17 +130,12 @@ export class DashboardMutationClient implements MutationClient {
     return Array.from(this.commands.keys());
   }
 
-  private snapshotDomain(domain: UndoDomain): SceneVariable[] {
-    if (domain === 'variables') {
-      return this.scene.state.$variables?.state.variables.slice() ?? [];
-    }
-    return [];
+  private snapshotDomain(domain: UndoDomain): unknown {
+    return getUndoDomain(domain)?.snapshot(this.scene);
   }
 
-  private restoreDomain(domain: UndoDomain, snapshot: SceneVariable[]): void {
-    if (domain === 'variables') {
-      replaceVariableSet(this.scene, snapshot);
-    }
+  private restoreDomain(domain: UndoDomain, snapshot: unknown): void {
+    getUndoDomain(domain)?.restore(this.scene, snapshot);
   }
 
   private registerCommand(cmd: MutationCommand): void {
