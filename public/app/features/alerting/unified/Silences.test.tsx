@@ -24,7 +24,6 @@ import NewSilencePage from './NewSilencePage';
 import ExistingSilenceEditorPage from './components/silences/SilencesEditor';
 import SilencesTablePage from './components/silences/SilencesTable';
 import {
-  MOCK_DANGLING_ALERT_RULE_UID,
   MOCK_SILENCE_ID_EXISTING,
   MOCK_SILENCE_ID_EXISTING_ALERT_RULE_UID,
   MOCK_SILENCE_ID_LACKING_PERMISSIONS,
@@ -145,6 +144,8 @@ describe('Silences', () => {
       expect(within(allSilences[0]).getByLabelText('Tags')).toHaveTextContent('foo=bar');
       expect(within(allSilences[1]).getByLabelText('Tags')).toHaveTextContent('foo!=bar');
       expect(allSilences[2]).toHaveTextContent(MOCK_GRAFANA_ALERT_RULE_TITLE);
+      const alertRuleLink = within(allSilences[2]).getByRole('link', { name: MOCK_GRAFANA_ALERT_RULE_TITLE });
+      expect(alertRuleLink).toHaveAttribute('href', expect.stringContaining(MOCK_SILENCE_ID_EXISTING_ALERT_RULE_UID));
 
       await user.click(ui.expiredCaret.get());
 
@@ -243,13 +244,13 @@ describe('Silences', () => {
   });
 
   it(
-    'shows a warning when the targeted alert rule no longer exists',
+    'shows a warning when the targeted alert rule is unavailable',
     async () => {
       renderSilences();
 
       const notExpiredTable = await ui.notExpiredTable.find();
-      expect(within(notExpiredTable).getByText(/alert rule no longer exists/i)).toBeInTheDocument();
-      expect(within(notExpiredTable).getByLabelText(`Alert rule UID: ${MOCK_DANGLING_ALERT_RULE_UID}`)).toBeVisible();
+      expect(within(notExpiredTable).getByText(/alert rule unavailable/i)).toBeInTheDocument();
+      expect(within(notExpiredTable).getByLabelText('Alert rule unavailable')).toBeVisible();
     },
     TEST_TIMEOUT
   );

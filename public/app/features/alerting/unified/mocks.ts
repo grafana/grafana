@@ -370,6 +370,7 @@ export const mockSilences = [
     matchers: parsePromQLStyleMatcherLooseSafe(`__alert_rule_uid__=${MOCK_SILENCE_ID_EXISTING_ALERT_RULE_UID}`),
     comment: 'Silence with alert rule UID matcher',
     metadata: {
+      rule_uid: MOCK_SILENCE_ID_EXISTING_ALERT_RULE_UID,
       rule_title: MOCK_GRAFANA_ALERT_RULE_TITLE,
     },
   }),

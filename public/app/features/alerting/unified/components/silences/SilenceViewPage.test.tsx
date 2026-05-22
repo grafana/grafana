@@ -117,7 +117,7 @@ describe('SilenceViewPage', () => {
     expect(parsedRuleLink.searchParams.get('returnTo')).toBe(`/alerting/silence/${silenceId}/view`);
   });
 
-  it('should show a warning when the targeted alert rule no longer exists', async () => {
+  it('should show a warning when the targeted alert rule is unavailable', async () => {
     const silenceId = 'silence-with-dangling-rule';
     const silenceWithDanglingRule = mockSilence({
       id: silenceId,
@@ -138,8 +138,8 @@ describe('SilenceViewPage', () => {
 
     renderSilenceViewPage(silenceId);
 
-    expect(await screen.findByText(/alert rule no longer exists/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(`Alert rule UID: ${MOCK_RULE_UID}`)).toBeInTheDocument();
+    expect(await screen.findByText(/alert rule unavailable/i)).toBeInTheDocument();
+    expect(screen.getByLabelText('Alert rule unavailable')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: MOCK_GRAFANA_ALERT_RULE_TITLE })).not.toBeInTheDocument();
   });
 });
