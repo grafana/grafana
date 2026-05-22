@@ -84,6 +84,7 @@ describe('initPreferences', () => {
 
   afterEach(() => {
     document.body.classList.remove('theme-light', 'theme-dark');
+    document.head.querySelectorAll('link[rel="stylesheet"]').forEach((link) => link.remove());
     document.documentElement.lang = '';
   });
 
