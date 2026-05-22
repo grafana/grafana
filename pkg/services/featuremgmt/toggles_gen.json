@@ -1403,16 +1403,19 @@
     {
       "metadata": {
         "name": "clearPreviousFieldValues",
-        "resourceVersion": "1775070445977",
-        "creationTimestamp": "2026-04-01T19:07:25Z"
+        "resourceVersion": "1779387149898",
+        "creationTimestamp": "2026-04-01T19:07:25Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-05-21 18:12:29.898776 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Mitigates React fiber's retention of previous props/state, causing 2x memory use: https://github.com/facebook/react/issues/36176",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
         "hideFromDocs": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
