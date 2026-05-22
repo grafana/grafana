@@ -15,6 +15,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/api/datasource"
+	datasourcesV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	glog "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -279,7 +280,14 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 		}, proxy.settings)
 	}
 
-	if proxy.oAuthTokenService.IsOAuthPassThruEnabled(proxy.ds) {
+	// Temporary while we transition to using this as the first class type
+	ds := datasourcesV0.DataSource{
+		Spec: datasourcesV0.UnstructuredSpec{
+			Object: jsonData,
+		},
+	}
+
+	if ds.Spec.IsOAuthPassThruEnabled() {
 		if token := proxy.oAuthTokenService.GetCurrentOAuthToken(req.Context(), proxy.ctx.SignedInUser, proxy.ctx.UserToken); token != nil {
 			req.Header.Set("Authorization", fmt.Sprintf("%s %s", token.Type(), token.AccessToken))
 

@@ -10,7 +10,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/login"
 )
 
@@ -150,10 +149,6 @@ func (ts *FakeOAuthTokenService) GetCurrentOAuthToken(context.Context, identity.
 		Expiry:       ts.ExpectedAuthUser.OAuthExpiry,
 		TokenType:    ts.ExpectedAuthUser.OAuthTokenType,
 	}
-}
-
-func (ts *FakeOAuthTokenService) IsOAuthPassThruEnabled(*datasources.DataSource) bool {
-	return ts.passThruEnabled
 }
 
 func (ts *FakeOAuthTokenService) InvalidateOAuthTokens(ctx context.Context, usr *login.UserAuth) error {
