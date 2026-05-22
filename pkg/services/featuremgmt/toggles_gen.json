@@ -5344,13 +5344,16 @@
     {
       "metadata": {
         "name": "queryHistory.localOnly",
-        "resourceVersion": "1779391267544",
-        "creationTimestamp": "2026-05-21T19:21:07Z"
+        "resourceVersion": "1779463558878",
+        "creationTimestamp": "2026-05-21T19:21:07Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-05-22 15:25:58.878199 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Store query history in browser IndexedDB instead of server-side",
         "stage": "experimental",
-        "codeowner": "@grafana/observability-logs",
+        "codeowner": "@grafana/datapro",
         "frontend": true,
         "expression": "false"
       }
@@ -5358,13 +5361,16 @@
     {
       "metadata": {
         "name": "queryHistory.recentQueriesUI",
-        "resourceVersion": "1779391267544",
-        "creationTimestamp": "2026-05-21T19:21:07Z"
+        "resourceVersion": "1779463558878",
+        "creationTimestamp": "2026-05-21T19:21:07Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-05-22 15:25:58.878199 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Replace the Query History drawer with a new Recent Queries modal UI",
         "stage": "experimental",
-        "codeowner": "@grafana/observability-logs",
+        "codeowner": "@grafana/datapro",
         "frontend": true,
         "expression": "false"
       }
