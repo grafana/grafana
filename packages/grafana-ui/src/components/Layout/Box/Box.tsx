@@ -166,7 +166,7 @@ const customBorderColor = (color: BorderColor, theme: GrafanaTheme2) => {
     case 'success':
     case 'info':
     case 'warning':
-      return theme.colors[color].borderTransparent;
+      return theme.colors[color].border;
     default:
       return color ? theme.colors.border[color] : undefined;
   }
@@ -178,7 +178,7 @@ const customBackgroundColor = (color: BackgroundColor, theme: GrafanaTheme2) => 
     case 'success':
     case 'info':
     case 'warning':
-      return theme.colors[color].transparent;
+      return theme.colors[color].subtle;
     default:
       return color ? theme.colors.background[color] : undefined;
   }
@@ -268,7 +268,7 @@ const getStyles = (
         display: val,
       })),
       getResponsiveStyle(theme, backgroundColor, (val) => ({
-        backgroundColor: customBackgroundColor(val, theme),
+        background: customBackgroundColor(val, theme),
       })),
       getResponsiveStyle(theme, direction, (val) => ({
         flexDirection: val,

@@ -36,6 +36,7 @@ const handleThemeChange = (theme: GrafanaTheme2) => {
 const allowedExtraThemes: string[] = ['deut_prot_dark', 'deut_prot_light', 'tritanopia_dark', 'tritanopia_light'];
 
 if (process.env.NODE_ENV === 'development') {
+  allowedExtraThemes.push('visual_refresh_dark');
   allowedExtraThemes.push('debug');
   allowedExtraThemes.push('desertbloom');
   allowedExtraThemes.push('gildedgrove');

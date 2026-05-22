@@ -42,18 +42,26 @@ export const ThemeRichColorInputSchema = z.object({
   name: z.string().optional(),
   /** Main color */
   main: z.string().optional(),
-  /** Used for hover */
-  shade: z.string().optional(),
-  /** Used for text */
-  text: z.string().optional(),
-  /** Used for borders */
-  border: z.string().optional(),
-  /** Used subtly colored backgrounds */
-  transparent: z.string().optional(),
-  /** Used for weak colored borders like larger alert/banner boxes and smaller badges and tags */
-  borderTransparent: z.string().optional(),
   /** Text color for text ontop of main */
   contrastText: z.string().optional(),
+  /** Used for hover */
+  shade: z.string().optional(),
+  /** Used for standalone text */
+  text: z.string().optional(),
+  /** Use for subtly colored backgrounds in e.g. Alerts */
+  subtle: z.string().optional(),
+  /** Used for borders */
+  border: z.string().optional(),
+  /**
+   * Used subtly colored backgrounds
+   * @deprecated Use background instead.
+   */
+  transparent: z.string().optional(),
+  /**
+   * Used for weak colored borders like larger alert/banner boxes and smaller badges and tags
+   * @deprecated Use border instead.
+   */
+  borderTransparent: z.string().optional(),
 });
 
 export const ThemeRichColorSchema = ThemeRichColorInputSchema.required();

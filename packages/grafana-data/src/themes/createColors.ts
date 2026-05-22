@@ -391,6 +391,9 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
     if (!color.transparent) {
       color.transparent = alpha(color.main, 0.15);
     }
+    if (!color.subtle) {
+      color.subtle = alpha(color.main, 0.15);
+    }
     if (!color.contrastText) {
       color.contrastText = getContrastText(color.main);
     }

@@ -18,6 +18,30 @@
       "border": "palette.ink600",
       "text": "palette.ink300"
     },
+    "accent": {
+      "main": "palette.orange400",
+      "text": "palette.orange400"
+    },
+    "error": {
+      "main": "palette.coral400",
+      "border": "palette.coral900",
+      "subtle": "palette.coral950"
+    },
+    "warning": {
+      "main": "palette.amber400",
+      "border": "palette.amber900",
+      "subtle": "palette.amber950"
+    },
+    "success": {
+      "main": "palette.sage400",
+      "border": "palette.sage900",
+      "subtle": "palette.sage950"
+    },
+    "info": {
+      "main": "palette.blue400",
+      "border": "palette.blue900",
+      "subtle": "palette.blue950"
+    },
     "text": {
       "primary": "palette.ink200",
       "secondary": "palette.ink300",
@@ -28,10 +52,6 @@
       "weak": "palette.ink700",
       "medium": "palette.ink600",
       "strong": "palette.ink500"
-    },
-    "accent": {
-      "main": "palette.orange400",
-      "text": "palette.orange400"
     },
     "gradients": {
       "brandHorizontal": "linear-gradient(270deg, palette.orange400 0%, palette.orange500 100%)",
