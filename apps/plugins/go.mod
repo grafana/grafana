@@ -24,11 +24,13 @@ require (
 	github.com/grafana/grafana/pkg/plugins v0.0.0
 	github.com/prometheus/client_golang v1.23.2
 	github.com/stretchr/testify v1.11.1
+	go.opentelemetry.io/otel v1.43.0
 	golang.org/x/sync v0.20.0
 	k8s.io/apimachinery v0.36.1
 	k8s.io/apiserver v0.36.0
 	k8s.io/client-go v0.36.1
 	k8s.io/kube-openapi v0.0.0-20260317180543-43fb72c5454a
+	sigs.k8s.io/structured-merge-diff/v6 v6.4.0
 )
 
 require (
@@ -277,7 +279,6 @@ require (
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.34.0 // indirect
 	sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
-	sigs.k8s.io/structured-merge-diff/v6 v6.4.0 // indirect
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )
 
