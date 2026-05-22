@@ -63,6 +63,7 @@ import {
 import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
 import { dashboardEditActions } from '../edit-pane/shared';
 import { DashboardMutationClient } from '../mutation-api/DashboardMutationClient';
+import { MutationRecorder } from '../mutation-api/MutationRecorder';
 import { type PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
@@ -242,6 +243,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
    */
   private _changeTracker: DashboardSceneChangeTracker;
   private _mutationClient?: DashboardMutationClient;
+  private _mutationRecorder?: MutationRecorder;
   private _writeLocks = new Set<string>();
 
   /**
@@ -254,6 +256,19 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       this._mutationClient = new DashboardMutationClient(this);
     }
     return this._mutationClient;
+  }
+
+  /**
+   * Lazy-initialized MutationRecorder. Owns the snapshot/publish lifecycle for
+   * mutations that declare an `undoDomain`. The Mutation Client delegates to it;
+   * future headless callers (plugin host, MCP gateway) can call `record()`
+   * directly without owning their own snapshot machinery.
+   */
+  public get mutationRecorder(): MutationRecorder {
+    if (!this._mutationRecorder) {
+      this._mutationRecorder = new MutationRecorder(this);
+    }
+    return this._mutationRecorder;
   }
 
   /**

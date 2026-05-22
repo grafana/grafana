@@ -1,27 +1,23 @@
 /**
  * Dashboard Mutation Client
  *
- * API for programmatic dashboard mutations. Provides
- * a declarative, command-based API where callers describe *what* to
- * change (e.g. ADD_VARIABLE, UPDATE_VARIABLE) and the client handles Scenes
- * internals, payload validation (via Zod schemas), permission checks, and
- * transactional execution with structured error responses.
+ * API for programmatic dashboard mutations. The client owns:
+ *   - command lookup,
+ *   - permission + lock checks,
+ *   - payload validation (Zod),
+ *   - per-undoDomain serialization (the "execute queue").
  *
- * Each mutation goes through:
- * 1. Command lookup (is it a registered command?)
- * 2. Permission check (can the user edit this dashboard?)
- * 3. Payload validation (does the payload match the Zod schema?)
+ * Snapshot/restore + history publishing are delegated to MutationRecorder
+ * on DashboardScene. That keeps this class focused on dispatch concerns
+ * and lets other callers (plugin host, future MCP gateway) share the same
+ * recorder without going through this class.
  */
 
-import type { SceneObject } from '@grafana/scenes';
-
-import { DashboardEditActionEvent } from '../edit-pane/events';
 import type { DashboardScene } from '../scene/DashboardScene';
 
 import { ALL_COMMANDS, validatePayload } from './commands/registry';
 import type { MutationCommand, MutationContext, UndoDomain } from './commands/types';
 import type { MutationClient, MutationRequest, MutationResult } from './types';
-import { getUndoDomain } from './undo-domains';
 
 type MutationHandler = (payload: unknown, context: MutationContext) => Promise<MutationResult>;
 
@@ -36,12 +32,6 @@ interface CommandRegistration {
   canCoalesceWith?: (previousPayload: any, gapMs: number) => boolean;
 }
 
-interface LastEntry {
-  type: string;
-  payload: unknown;
-  publishedAt: number;
-}
-
 export class DashboardMutationClient implements MutationClient {
   private scene: DashboardScene;
   private commands: Map<string, CommandRegistration> = new Map();
@@ -53,8 +43,6 @@ export class DashboardMutationClient implements MutationClient {
    * queue.
    */
   private domainQueues: Map<UndoDomain, Promise<unknown>> = new Map();
-  /** Track the last published entry so we can coalesce rapid same-command writes. */
-  private lastEntry?: LastEntry;
 
   constructor(scene: DashboardScene) {
     this.scene = scene;
@@ -111,104 +99,28 @@ export class DashboardMutationClient implements MutationClient {
       if (!validationResult.success) {
         return { success: false, error: validationResult.error, changes: [] };
       }
-      // Zod may return frozen or shared default objects. Deep-clone write payloads
-      // so downstream code (e.g. getPanelOptionsWithDefaults) can mutate in-place.
       payload = registration.readOnly ? validationResult.data : structuredClone(validationResult.data);
     }
 
     const context: MutationContext = { scene: this.scene };
 
-    // Snapshot each declared domain before the handler runs.
-    // Snapshot/restore is delegated to the per-domain registry in `undo-domains.ts`.
-    const { undoDomains } = registration;
-    const beforeSnapshots = new Map<UndoDomain, unknown>();
-    for (const d of undoDomains) {
-      beforeSnapshots.set(d, this.snapshotDomain(d));
-    }
+    // Delegate snapshot + publish to the recorder. The recorder runs the
+    // handler between the before/after snapshots and handles coalescing,
+    // conflict detection, and event publishing.
+    const recorderOptions = {
+      type,
+      payload,
+      undoDomains: registration.undoDomains,
+      canCoalesceWith: registration.canCoalesceWith,
+    };
 
     try {
-      const result = await registration.handler(payload, context);
+      const result = await this.scene.mutationRecorder.record(recorderOptions, () =>
+        registration.handler(payload, context)
+      );
 
       if (result.success && !registration.readOnly) {
         this.scene.forceRender();
-
-        // Register undo/redo entry when the command declared any snapshot domains.
-        // perform() is called immediately by DashboardEditPane.handleEditAction —
-        // the mutation is already applied so we skip that first call.
-        //
-        // Concept: coalescing. If the previous entry is the same command and
-        // canCoalesceWith returns true within the gap, skip publishing a new
-        // entry. Rapid mutations (e.g. typing in a label field) become one
-        // undo step. Real implementation would also extend the previous
-        // entry's afterSnapshot; this POC demonstrates the predicate path.
-        if (
-          this.lastEntry &&
-          this.lastEntry.type === type &&
-          registration.canCoalesceWith?.(this.lastEntry.payload, Date.now() - this.lastEntry.publishedAt) === true
-        ) {
-          this.lastEntry = { type, payload, publishedAt: Date.now() };
-          // TODO: extend previous entry's afterSnapshots. Skipped: this PR is
-          // the concept; the real integration needs DashboardEditPane support.
-          return result;
-        }
-        if (undoDomains.length > 0 && typeof this.scene.publishEvent === 'function') {
-          const afterSnapshots = new Map<UndoDomain, unknown>();
-          for (const d of undoDomains) {
-            afterSnapshots.set(d, this.snapshotDomain(d));
-          }
-          let firstPerform = true;
-
-          // Concept: diff before/after by reference identity to derive selection
-          // hints (added / removed scene objects). Lets the edit pane drive
-          // post-mutation selection updates without the handler returning them.
-          // Uses the first declared domain; cross-domain commands declare the
-          // user-visible domain first.
-          const primary = undoDomains[0];
-          const { addedObject, removedObject } = diffSceneObjects(
-            beforeSnapshots.get(primary),
-            afterSnapshots.get(primary)
-          );
-
-          this.scene.publishEvent(
-            new DashboardEditActionEvent({
-              source: this.scene,
-              description: type,
-              addedObject,
-              removedObject,
-              perform: () => {
-                if (firstPerform) {
-                  firstPerform = false;
-                  return;
-                }
-                // Refuse redo if any slice has drifted since the mutation.
-                for (const d of undoDomains) {
-                  if (!sliceEqual(this.snapshotDomain(d), beforeSnapshots.get(d))) {
-                    console.warn(`[mutation-api] refusing redo for ${type}: slice '${d}' drifted`);
-                    return;
-                  }
-                }
-                for (const d of undoDomains) {
-                  this.restoreDomain(d, afterSnapshots.get(d));
-                }
-              },
-              undo: () => {
-                // Concept: conflict detection. If any slice drifted between
-                // perform and undo, refuse instead of silently reverting.
-                for (const d of undoDomains) {
-                  if (!sliceEqual(this.snapshotDomain(d), afterSnapshots.get(d))) {
-                    console.warn(`[mutation-api] refusing undo for ${type}: slice '${d}' drifted`);
-                    return;
-                  }
-                }
-                for (const d of undoDomains) {
-                  this.restoreDomain(d, beforeSnapshots.get(d));
-                }
-              },
-            }),
-            true
-          );
-          this.lastEntry = { type, payload, publishedAt: Date.now() };
-        }
       }
 
       return result;
@@ -225,16 +137,7 @@ export class DashboardMutationClient implements MutationClient {
     return Array.from(this.commands.keys());
   }
 
-  private snapshotDomain(domain: UndoDomain): unknown {
-    return getUndoDomain(domain)?.snapshot(this.scene);
-  }
-
-  private restoreDomain(domain: UndoDomain, snapshot: unknown): void {
-    getUndoDomain(domain)?.restore(this.scene, snapshot);
-  }
-
   private registerCommand(cmd: MutationCommand): void {
-    // Normalize the (optional, possibly single) undoDomain into an array.
     const undoDomains: UndoDomain[] = cmd.undoDomain
       ? Array.isArray(cmd.undoDomain)
         ? cmd.undoDomain
@@ -250,51 +153,4 @@ export class DashboardMutationClient implements MutationClient {
       canCoalesceWith: cmd.canCoalesceWith,
     });
   }
-}
-
-/**
- * Diff two snapshot arrays by reference identity to find what was added/removed.
- * Used to populate `addedObject` / `removedObject` on the published edit-action
- * event so the edit pane can drive selection updates.
- *
- * Only meaningful for array-shaped snapshots; non-array snapshots return empty.
- */
-function diffSceneObjects(
-  before: unknown,
-  after: unknown
-): {
-  addedObject?: SceneObject;
-  removedObject?: SceneObject;
-} {
-  if (!Array.isArray(before) || !Array.isArray(after)) {
-    return {};
-  }
-  const beforeSet = new Set(before);
-  const afterSet = new Set(after);
-  const added = after.find((item): item is SceneObject => !beforeSet.has(item) && isSceneObjectLike(item));
-  const removed = before.find((item): item is SceneObject => !afterSet.has(item) && isSceneObjectLike(item));
-  return { addedObject: added, removedObject: removed };
-}
-
-function isSceneObjectLike(item: unknown): item is SceneObject {
-  return typeof item === 'object' && item !== null && 'state' in item;
-}
-
-/**
- * Shallow array equality by reference identity. Sufficient for the snapshot
- * model where slices are arrays of SceneObject refs.
- */
-function sliceEqual(a: unknown, b: unknown): boolean {
-  if (a === b) {
-    return true;
-  }
-  if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) {
-    return false;
-  }
-  for (let i = 0; i < a.length; i++) {
-    if (a[i] !== b[i]) {
-      return false;
-    }
-  }
-  return true;
 }
