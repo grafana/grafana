@@ -141,9 +141,24 @@ export class DashboardMutationClient implements MutationClient {
                   firstPerform = false;
                   return;
                 }
+                // Refuse redo if the slice has drifted since the mutation.
+                // Otherwise we'd silently overwrite intervening changes.
+                if (!sliceEqual(this.snapshotDomain(undoDomain), beforeSnapshot)) {
+                  console.warn(`[mutation-api] refusing redo for ${type}: slice drifted`);
+                  return;
+                }
                 this.restoreDomain(undoDomain, afterSnapshot);
               },
-              undo: () => this.restoreDomain(undoDomain, beforeSnapshot),
+              undo: () => {
+                // Concept: conflict detection. If the slice drifted between
+                // perform and undo (another caller wrote to the same domain),
+                // refuse instead of silently reverting their work.
+                if (!sliceEqual(this.snapshotDomain(undoDomain), afterSnapshot)) {
+                  console.warn(`[mutation-api] refusing undo for ${type}: slice drifted`);
+                  return;
+                }
+                this.restoreDomain(undoDomain, beforeSnapshot);
+              },
             }),
             true
           );
@@ -210,4 +225,23 @@ function diffSceneObjects(
 
 function isSceneObjectLike(item: unknown): item is SceneObject {
   return typeof item === 'object' && item !== null && 'state' in item;
+}
+
+/**
+ * Shallow array equality by reference identity. Sufficient for the snapshot
+ * model where slices are arrays of SceneObject refs.
+ */
+function sliceEqual(a: unknown, b: unknown): boolean {
+  if (a === b) {
+    return true;
+  }
+  if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) {
+    return false;
+  }
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) {
+      return false;
+    }
+  }
+  return true;
 }
