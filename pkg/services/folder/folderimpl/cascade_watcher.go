@@ -125,10 +125,12 @@ func (w *CascadeWatcher) Run(ctx context.Context) error {
 	factory := dynamicinformer.NewDynamicSharedInformerFactory(dyn, w.resync)
 	informer := factory.ForResource(gvr).Informer()
 
-	informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+	if _, err := informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc:    w.onFolder,
 		UpdateFunc: func(_, obj interface{}) { w.onFolder(obj) },
-	})
+	}); err != nil {
+		return fmt.Errorf("add folder informer event handler: %w", err)
+	}
 
 	factory.Start(ctx.Done())
 	if !cache.WaitForCacheSync(ctx.Done(), informer.HasSynced) {
