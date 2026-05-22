@@ -10,6 +10,8 @@ import { Button, Field, Input, Stack, TextArea } from '@grafana/ui';
 import { RepositoryView, Unstructured } from 'app/api/clients/provisioning/v0alpha1';
 import kbn from 'app/core/utils/kbn';
 import { Resource } from 'app/features/apiserver/types';
+import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
+import { PAGE_SIZE } from 'app/features/browse-dashboards/api/services';
 import { SaveDashboardFormCommonOptions } from 'app/features/dashboard-scene/saving/SaveDashboardForm';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
@@ -62,6 +64,24 @@ export function SaveProvisionedDashboardForm({
   useEffect(() => {
     reset(defaultValues);
   }, [defaultValues, reset]);
+
+  // NI fork: for new dashboards without a pre-selected folder, find and pre-select
+  // the first folder whose title starts with "Default" (i.e. "Default Workspace").
+  const { data: rootFolders } = browseDashboardsAPI.endpoints.listFolders.useQuery(
+    { parentUid: undefined, limit: PAGE_SIZE, page: 1, permission: 'edit' },
+    { skip: !isNew || Boolean(defaultValues.folder?.uid) }
+  );
+
+  useEffect(() => {
+    if (!rootFolders) {
+      return;
+    }
+
+    const match = rootFolders.find((f) => f.title === 'Default Workspace');
+    if (match) {
+      methods.setValue('folder', { uid: match.uid, title: match.title });
+    }
+  }, [rootFolders, methods, isNew]);
 
   const onRequestError = (error: unknown) => {
     appEvents.publish({
@@ -312,9 +332,9 @@ async function validateTitle(title: string, formValues: ProvisionedDashboardForm
     return error instanceof Error
       ? error.message
       : t(
-          'dashboard-scene.save-provisioned-dashboard-form.title-validation-failed',
-          'Dashboard title validation failed.'
-        );
+        'dashboard-scene.save-provisioned-dashboard-form.title-validation-failed',
+        'Dashboard title validation failed.'
+      );
   }
 }
 

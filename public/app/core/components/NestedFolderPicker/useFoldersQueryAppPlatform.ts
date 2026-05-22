@@ -8,6 +8,7 @@ import { useDispatch, useSelector } from 'app/types/store';
 
 import { ManagerKind } from '../../../features/apiserver/types';
 import { PAGE_SIZE } from '../../../features/browse-dashboards/api/services';
+import { isSharedWithMe } from '../../../features/browse-dashboards/components/utils';
 import { getPaginationPlaceholders } from '../../../features/browse-dashboards/state/utils';
 
 import { UseFoldersQueryProps } from './useFoldersQuery';
@@ -126,6 +127,8 @@ export function useFoldersQueryAppPlatform({
       level: number
     ): Array<DashboardsTreeItem<DashboardViewItemWithUIItems>> {
       let folders = response?.data?.hits ? [...response.data.hits] : [];
+      // NI fork: exclude the virtual "Shared with me" folder from the picker
+      folders = folders.filter((item) => !isSharedWithMe(item.name));
       folders.sort((a, b) => collator.compare(a.title, b.title));
 
       const list = folders.flatMap((item) => {

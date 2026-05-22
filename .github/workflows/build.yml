@@ -123,3 +123,16 @@ jobs:
           aws-region: us-east-1
       - name: Sync signatures to S3
         run: aws s3 sync ${{ runner.temp }}/sigstore s3://signing-web-demo-bucket-1neyh347t53dt
+      - name: Write job summary
+        run: |
+          REGISTRY="${{ needs.determine_registry.outputs.registry_path }}"
+          VERSION="${{ needs.generate_version_number.outputs.image_version }}"
+          ENV="${{ needs.determine_registry.outputs.environment }}"
+          {
+            echo "## Docker image published"
+            echo ""
+            echo "| | |"
+            echo "| --- | --- |"
+            echo "| **Environment** | \`${ENV}\` |"
+            echo "| **Tag** | \`${REGISTRY}:${VERSION}\` |"
+          } >> "$GITHUB_STEP_SUMMARY"

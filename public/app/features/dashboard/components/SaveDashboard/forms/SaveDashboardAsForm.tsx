@@ -4,6 +4,8 @@ import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, Input, Switch, Form, Field, InputControl, Label, TextArea, Stack } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
+import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
+import { PAGE_SIZE } from 'app/features/browse-dashboards/api/services';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 
@@ -54,12 +56,26 @@ export const SaveDashboardAsForm = ({
   onCancel,
   onSuccess,
 }: SaveDashboardAsFormProps) => {
+  const needsDefaultFolder = Boolean(isNew) && !dashboard.meta.folderUid;
+  const { data: rootFolders, isLoading: foldersLoading } = browseDashboardsAPI.endpoints.listFolders.useQuery(
+    { parentUid: undefined, limit: PAGE_SIZE, page: 1, permission: 'edit' },
+    { skip: !needsDefaultFolder }
+  );
+
+  const defaultFolderMatch = needsDefaultFolder
+    ? rootFolders?.find((f) => f.title === 'Default Workspace')
+    : undefined;
+
+  if (needsDefaultFolder && foldersLoading) {
+    return null;
+  }
+
   const defaultValues: SaveDashboardAsFormDTO = {
     title: isNew ? dashboard.title : `${dashboard.title} Copy`,
     description: dashboard.description,
     $folder: {
-      uid: dashboard.meta.folderUid,
-      title: dashboard.meta.folderTitle,
+      uid: defaultFolderMatch?.uid ?? dashboard.meta.folderUid,
+      title: defaultFolderMatch?.title ?? dashboard.meta.folderTitle,
     },
     copyTags: false,
   };
@@ -177,6 +193,7 @@ export const SaveDashboardAsForm = ({
                   {...field}
                   onChange={(uid: string | undefined, title: string | undefined) => field.onChange({ uid, title })}
                   value={field.value?.uid}
+                  showRootFolder={false}
                 />
               )}
               control={control}

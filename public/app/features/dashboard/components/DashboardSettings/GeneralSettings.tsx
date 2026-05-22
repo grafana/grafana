@@ -173,7 +173,7 @@ export function GeneralSettingsUnconnected({
           </Field>
 
           <Field label={t('dashboard-settings.general.folder-label', 'Folder')}>
-            <FolderPicker value={dashboard.meta.folderUid} onChange={onFolderChange} />
+            <FolderPicker value={dashboard.meta.folderUid} onChange={onFolderChange} showRootFolder={false} />
           </Field>
 
           <Field

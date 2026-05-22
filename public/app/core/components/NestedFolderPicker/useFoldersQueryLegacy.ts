@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { ListFolderQueryArgs, browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { PAGE_SIZE } from 'app/features/browse-dashboards/api/services';
+import { isSharedWithMe } from 'app/features/browse-dashboards/components/utils';
 import { getPaginationPlaceholders } from 'app/features/browse-dashboards/state/utils';
 import { DashboardViewItemWithUIItems, DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { FolderListItemDTO } from 'app/types/folders';
@@ -153,7 +154,8 @@ export function useFoldersQueryLegacy({
       const flatList = pages.flatMap((page) => {
         const pageItems = page.data ?? [];
 
-        return pageItems.flatMap((item) => {
+        // NI fork: exclude the virtual "Shared with me" folder from the picker
+        return pageItems.filter((item) => !isSharedWithMe(item.uid)).flatMap((item) => {
           const folderIsOpen = openFolders[item.uid];
           const flatItem: DashboardsTreeItem<DashboardViewItemWithUIItems> = {
             isOpen: Boolean(folderIsOpen),

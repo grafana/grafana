@@ -5,6 +5,8 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Input, Switch, Field, Label, TextArea, Stack, Alert, Box } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
+import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
+import { PAGE_SIZE } from 'app/features/browse-dashboards/api/services';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 import { getProvisionedMeta } from 'app/features/provisioning/components/utils/getProvisionedMeta';
 
@@ -50,6 +52,26 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
   const [contentSent, setContentSent] = useState<{ title?: string; folderUid?: string }>({});
 
   const validationTimeoutRef = useRef<NodeJS.Timeout>();
+
+  // NI fork: for new dashboards without a pre-selected folder, find and pre-select
+  // the first folder whose title starts with "Default" (i.e. "Default Workspace").
+  // This mirrors the behaviour the old OldFolderPicker had before it was replaced.
+  const { data: rootFolders } = browseDashboardsAPI.endpoints.listFolders.useQuery(
+    { parentUid: undefined, limit: PAGE_SIZE, page: 1, permission: 'edit' },
+    { skip: !changeInfo.isNew || Boolean(dashboard.state.meta.folderUid) }
+  );
+
+  useEffect(() => {
+    if (!rootFolders) {
+      return;
+    }
+
+    const match = rootFolders.find((f) => f.title === 'Default Workspace');
+    if (match) {
+      setValue('folder', { uid: match.uid, title: match.title });
+      trigger('title');
+    }
+  }, [rootFolders, setValue, trigger]);
 
   // Validate title on form mount to catch invalid default values
   useEffect(() => {
@@ -198,6 +220,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
               trigger('title');
             }}
             value={formValues.folder?.uid}
+            showRootFolder={false}
           />
         </Field>
         {!changeInfo.isNew && (

@@ -79,7 +79,12 @@ export const ImportDashboardForm = ({
       <Field label={t('manage-dashboards.import-dashboard-form.label-folder', 'Folder')}>
         <Controller
           render={({ field: { ref, value, onChange, ...field } }) => (
-            <FolderPicker {...field} onChange={(uid, title) => onChange({ uid, title })} value={value.uid} />
+            <FolderPicker
+              {...field}
+              onChange={(uid, title) => onChange({ uid, title })}
+              value={value.uid}
+              showRootFolder={false}
+            />
           )}
           name="folder"
           control={control}
