@@ -6,7 +6,7 @@ import { palette } from './palette';
 import { palette as newPalette } from './palette_new';
 import { type DeepRequired, type ThemeRichColor, ThemeRichColorInputSchema } from './types';
 
-const PALETTE_TOKEN_REGEX = /^palette\.(\w+)$/;
+const PALETTE_TOKEN_REGEX = /palette\.(\w+)/g;
 const ThemeColorsModeSchema = z.enum(['light', 'dark']);
 /** @internal */
 export type ThemeColorsMode = z.infer<typeof ThemeColorsModeSchema>;
@@ -19,6 +19,7 @@ const createThemeColorsBaseSchema = <TColor>(color: TColor) =>
       primary: color,
       secondary: color,
       tertiary: color,
+      accent: color,
       info: color,
       error: color,
       success: color,
@@ -97,12 +98,13 @@ const createThemeColorsBaseSchema = <TColor>(color: TColor) =>
 export type ThemeColorsBase<TColor> = DeepRequired<
   Omit<
     z.infer<ReturnType<typeof createThemeColorsBaseSchema>>,
-    'primary' | 'secondary' | 'tertiary' | 'info' | 'error' | 'success' | 'warning'
+    'primary' | 'secondary' | 'tertiary' | 'accent' | 'info' | 'error' | 'success' | 'warning'
   >
 > & {
   primary: TColor;
   secondary: TColor;
   tertiary: TColor;
+  accent: TColor;
   info: TColor;
   error: TColor;
   success: TColor;
@@ -164,6 +166,11 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   tertiary = {
     main: palette.purpleDarkMain,
     text: palette.purpleDarkText,
+  };
+
+  accent = {
+    main: newPalette.orange400,
+    text: newPalette.orange400,
   };
 
   info = this.primary;
@@ -256,6 +263,12 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
     text: palette.purpleLightText,
   };
 
+  // TODO this is probably worng
+  accent = {
+    main: newPalette.orange400,
+    text: newPalette.orange400,
+  };
+
   info = {
     main: palette.blueLightMain,
     text: palette.blueLightText,
@@ -313,19 +326,14 @@ function isPaletteKey(key: string): key is keyof typeof newPalette {
   return key in newPalette;
 }
 
-function resolveRef(value: string): string {
-  const match = value.match(PALETTE_TOKEN_REGEX);
-  if (!match) {
-    return value;
-  }
-  const key = match[1];
-  return isPaletteKey(key) ? newPalette[key] : value;
+function resolveRefs(value: string): string {
+  return value.replace(PALETTE_TOKEN_REGEX, (match, key) => (isPaletteKey(key) ? newPalette[key] : match));
 }
 
 function resolvePaletteRefs(input: ThemeColorsInput): ThemeColorsInput {
   const walk = (node: unknown): unknown => {
     if (typeof node === 'string') {
-      return resolveRef(node);
+      return resolveRefs(node);
     }
     if (node === null || typeof node !== 'object') {
       return node;
@@ -346,6 +354,7 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
     primary = base.primary,
     secondary = base.secondary,
     tertiary = base.tertiary,
+    accent = base.accent,
     info = base.info,
     warning = base.warning,
     success = base.success,
@@ -397,6 +406,7 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
       primary: getRichColor({ color: primary, name: 'primary' }),
       secondary: getRichColor({ color: secondary, name: 'secondary' }),
       tertiary: getRichColor({ color: tertiary, name: 'tertiary' }),
+      accent: getRichColor({ color: accent, name: 'accent' }),
       info: getRichColor({ color: info, name: 'info' }),
       error: getRichColor({ color: error, name: 'error' }),
       success: getRichColor({ color: success, name: 'success' }),
@@ -410,7 +420,7 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
   );
 }
 
-type RichColorNames = 'primary' | 'secondary' | 'tertiary' | 'info' | 'error' | 'success' | 'warning';
+type RichColorNames = 'primary' | 'secondary' | 'tertiary' | 'accent' | 'info' | 'error' | 'success' | 'warning';
 interface GetRichColorProps {
   color: Partial<ThemeRichColor>;
   name: RichColorNames;

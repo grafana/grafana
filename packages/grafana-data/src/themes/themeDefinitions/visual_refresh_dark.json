@@ -28,6 +28,14 @@
       "weak": "palette.ink700",
       "medium": "palette.ink600",
       "strong": "palette.ink500"
+    },
+    "accent": {
+      "main": "palette.orange400",
+      "text": "palette.orange400"
+    },
+    "gradients": {
+      "brandHorizontal": "linear-gradient(270deg, palette.orange400 0%, palette.orange500 100%)",
+      "brandVertical": "linear-gradient(0.01deg, palette.orange400 0.01%, palette.orange500 99.99%)"
     }
   }
 }
