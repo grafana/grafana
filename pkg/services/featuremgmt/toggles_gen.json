@@ -2812,6 +2812,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.meticulousAIMode",
+        "resourceVersion": "1779382110221",
+        "creationTimestamp": "2026-05-21T16:48:30Z"
+      },
+      "spec": {
+        "description": "Controls the Meticulous AI session recorder. One of \"off\", \"on-prod-env\" (recorder enabled, production-environment behaviour), or \"on-dev-env\" (recorder enabled, high-volume/development behaviour).",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "hideFromDocs": true,
+        "expression": "off"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.meticulousAIRecorder",
         "resourceVersion": "1777401759422",
         "creationTimestamp": "2026-04-28T17:20:14Z",
@@ -4604,6 +4618,7 @@
         "name": "newVizSuggestions",
         "resourceVersion": "1774878275721",
         "creationTimestamp": "2025-11-12T19:26:29Z",
+        "deletionTimestamp": "2026-05-18T16:03:00Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-03-30 13:44:35.72192 +0000 UTC"
         }
@@ -6621,15 +6636,18 @@
     {
       "metadata": {
         "name": "vizPresets",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2026-02-18T17:05:38Z"
+        "resourceVersion": "1779296184831",
+        "creationTimestamp": "2026-02-18T17:05:38Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-05-20 16:56:24.831547 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable visualization presets",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {

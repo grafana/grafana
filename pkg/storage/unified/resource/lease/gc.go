@@ -44,19 +44,21 @@ type gcMetadata struct {
 // garbageCollector implements garbage collection of leases acquired using the
 // lease manager's `Acquire()` function.
 type garbageCollector struct {
-	store kv.KV
-	stop  context.CancelFunc
-	done  chan struct{}
-	log   logging.Logger
-	now   func() time.Time
+	store   kv.KV
+	stop    context.CancelFunc
+	done    chan struct{}
+	log     logging.Logger
+	now     func() time.Time
+	metrics *Metrics
 }
 
-func newGarbageCollector(store kv.KV, log logging.Logger, now func() time.Time) *garbageCollector {
+func newGarbageCollector(store kv.KV, log logging.Logger, now func() time.Time, metrics *Metrics) *garbageCollector {
 	gc := &garbageCollector{
-		store: store,
-		done:  make(chan struct{}),
-		log:   log.With("gc", true),
-		now:   now,
+		store:   store,
+		done:    make(chan struct{}),
+		log:     log.With("gc", true),
+		now:     now,
+		metrics: metrics,
 	}
 
 	return gc
@@ -119,6 +121,12 @@ func (gc *garbageCollector) loop(ctx context.Context) {
 }
 
 func (gc *garbageCollector) runOnce(ctx context.Context) (int, error) {
+	start := time.Now()
+	outcome := outcomeError
+	defer func() {
+		gc.metrics.observeGCDuration(time.Since(start), outcome)
+	}()
+
 	metadata, err := gc.readInternalKey(ctx)
 	if err != nil && !errors.Is(err, kv.ErrNotFound) {
 		return 0, fmt.Errorf("reading internal key: %w", err)
@@ -128,6 +136,7 @@ func (gc *garbageCollector) runOnce(ctx context.Context) (int, error) {
 		// Internal key exists: check if it's expired.
 		if gc.now().Before(time.Unix(0, metadata.Expires)) {
 			// Some other instance of GC is already running.
+			outcome = outcomeSkipped
 			return 0, nil
 		}
 
@@ -145,12 +154,18 @@ func (gc *garbageCollector) runOnce(ctx context.Context) (int, error) {
 	}
 
 	if !created {
+		outcome = outcomeSkipped
 		return 0, nil
 	}
 
+	outcome = outcomeExecuted
+
 	cycleCtx, stop := context.WithTimeout(ctx, gcMaxCycleDuration)
-	deleted, cycleErr := gc.runCycle(cycleCtx)
+	scanned, deleted, cycleErr := gc.runCycle(cycleCtx)
 	stop()
+
+	gc.metrics.addGCKeysScanned(scanned)
+	gc.metrics.addGCKeysDeleted(deleted)
 
 	deleteErr := gc.deleteInternalKey(ctx)
 	return deleted, errors.Join(cycleErr, deleteErr)
@@ -199,11 +214,12 @@ func (gc *garbageCollector) deleteInternalKey(ctx context.Context) error {
 
 // runCycle runs a single garbage collection cycle. It iterates over the leases
 // section in descending key order and deletes leases that have been released
-// or expired for longer than `gcGracePeriod`.
-func (gc *garbageCollector) runCycle(ctx context.Context) (int, error) {
+// or expired for longer than `gcGracePeriod`. It returns the total number of
+// keys scanned and deleted across all pages.
+func (gc *garbageCollector) runCycle(ctx context.Context) (int, int, error) {
 	var endKey string
 	now := gc.now()
-	var totalDeleted int
+	var totalScanned, totalDeleted int
 
 	for {
 		opts := kv.ListOptions{
@@ -217,7 +233,7 @@ func (gc *garbageCollector) runCycle(ctx context.Context) (int, error) {
 		keys := make([]string, 0, batchSize)
 		for key, err := range gc.store.Keys(ctx, kv.LeasesSection, opts) {
 			if err != nil {
-				return totalDeleted, err
+				return totalScanned, totalDeleted, err
 			}
 			if isInternal(key) {
 				continue
@@ -226,8 +242,10 @@ func (gc *garbageCollector) runCycle(ctx context.Context) (int, error) {
 		}
 
 		if len(keys) == 0 {
-			return totalDeleted, nil
+			return totalScanned, totalDeleted, nil
 		}
+
+		totalScanned += len(keys)
 
 		// In a descending listing the last key is the smallest; pagination
 		// continues by fetching keys strictly less than it (EndKey is exclusive).
@@ -236,7 +254,7 @@ func (gc *garbageCollector) runCycle(ctx context.Context) (int, error) {
 		var toDelete []string
 		for item, err := range gc.store.BatchGet(ctx, kv.LeasesSection, keys) {
 			if err != nil {
-				return totalDeleted, err
+				return totalScanned, totalDeleted, err
 			}
 
 			var meta leaseMetadata
