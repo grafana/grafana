@@ -573,14 +573,6 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	dbProvider, err := sql.ProvideResourceDB(cfg, sqlStore)
-	if err != nil {
-		return nil, err
-	}
-	kv, err := sql.ProvideKV(cfg, dbProvider)
-	if err != nil {
-		return nil, err
-	}
 	options := &unified.Options{
 		Cfg:            cfg,
 		Features:       featureToggles,
@@ -1305,14 +1297,6 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	vectorMetrics := resource.ProvideVectorMetrics(registerer)
 	embedder, err := provider2.ProvideEmbedder(cfg, vectorMetrics)
-	if err != nil {
-		return nil, err
-	}
-	dbProvider, err := sql.ProvideResourceDB(cfg, sqlStore)
-	if err != nil {
-		return nil, err
-	}
-	kv, err := sql.ProvideKV(cfg, dbProvider)
 	if err != nil {
 		return nil, err
 	}
