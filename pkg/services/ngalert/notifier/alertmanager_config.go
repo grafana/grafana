@@ -136,7 +136,7 @@ func (moa *MultiOrgAlertmanager) PrepareConfig(
 			} else {
 				managedRoutes[mergeResult.Identifier] = mergeResult.ExtraRoute
 
-				importedRules, err := legacy_storage.BuildManagedInhibitionRules(mergeResult.Identifier, mergeResult.ExtraInhibitRules)
+				importedRules, err := merge.BuildManagedInhibitionRules(mergeResult.Identifier, mergeResult.ExtraInhibitRules)
 				if err != nil {
 					moa.logger.Warn("failed to build managed inhibition rules for imported configuration", "identifier", mergeResult.Identifier, "err", err)
 				} else {

@@ -12,11 +12,15 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"slices"
 	"strings"
 
 	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/pkg/labels"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // MergeResult represents the result of merging two Alertmanager configurations.
@@ -278,6 +282,55 @@ func createIndexReceivers(existing, incoming []*v1.PostableApiReceiver) map[stri
 		}
 	}
 	return usedNames
+}
+
+func BuildManagedInhibitionRules(identifier string, rules []config.InhibitRule) (v1.ManagedInhibitionRules, error) {
+	scopedRules := applyManagedRouteMatcher(identifier, rules)
+
+	res := make(v1.ManagedInhibitionRules, len(scopedRules))
+	for i, rule := range scopedRules {
+		namePrefix := fmt.Sprintf("%s-imported-inhibition-rule-", identifier)
+
+		intFmt := "%d"
+		if padLength := util.MaxUIDLength - len(namePrefix); padLength >= 0 {
+			intFmt = fmt.Sprintf("%%0%dd", padLength+1)
+		}
+		name := fmt.Sprintf(namePrefix+intFmt, i)
+
+		ir, err := v1.InhibitRuleToInhibitionRule(name, rule, v1.Provenance(models.ProvenanceConvertedPrometheus))
+		if err != nil {
+			return nil, err
+		}
+		res[name] = ir
+	}
+
+	return res, nil
+}
+
+func applyManagedRouteMatcher(identifier string, rules []config.InhibitRule) []config.InhibitRule {
+	result := make([]config.InhibitRule, 0, len(rules))
+	matcher := &labels.Matcher{
+		Type:  labels.MatchEqual,
+		Name:  models.NamedRouteLabel,
+		Value: identifier,
+	}
+
+	for _, rule := range rules {
+		sm := make(config.Matchers, 0, len(rule.SourceMatchers)+1)
+		sm = append(sm, matcher)
+		sm = append(sm, rule.SourceMatchers...)
+
+		tm := make(config.Matchers, 0, len(rule.TargetMatchers)+1)
+		tm = append(tm, matcher)
+		tm = append(tm, rule.TargetMatchers...)
+
+		result = append(result, config.InhibitRule{
+			SourceMatchers: sm,
+			TargetMatchers: tm,
+			Equal:          slices.Clone(rule.Equal),
+		})
+	}
+	return result
 }
 
 func getUniqueName[T any](name string, suffix string, usedNames map[string]T) string {

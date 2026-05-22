@@ -4,12 +4,9 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/prometheus/alertmanager/config"
-
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/merge"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
 )
 
 type ImportedConfigRevision struct {
@@ -152,51 +149,5 @@ func (e ImportedConfigRevision) GetInhibitRules() (v1.ManagedInhibitionRules, er
 		return nil, nil
 	}
 
-	return BuildManagedInhibitionRules(e.identifier, importedRules)
-}
-
-func BuildManagedInhibitionRules(identifier string, rules []config.InhibitRule) (v1.ManagedInhibitionRules, error) {
-	scopedRules := applyManagedRouteMatcher(identifier, rules)
-
-	res := make(v1.ManagedInhibitionRules, len(scopedRules))
-	for i, rule := range scopedRules {
-		namePrefix := fmt.Sprintf("%s-imported-inhibition-rule-", identifier)
-
-		intFmt := "%d"
-		if padLength := ualert.UIDMaxLength - len(namePrefix); padLength >= 0 {
-			intFmt = fmt.Sprintf("%%0%dd", padLength+1)
-		}
-		name := fmt.Sprintf(namePrefix+intFmt, i)
-
-		ir, err := v1.InhibitRuleToInhibitionRule(name, rule, v1.Provenance(models.ProvenanceConvertedPrometheus))
-		if err != nil {
-			return nil, err
-		}
-		res[name] = ir
-	}
-
-	return res, nil
-}
-
-func applyManagedRouteMatcher(identifier string, rules []config.InhibitRule) []config.InhibitRule {
-	result := make([]config.InhibitRule, 0, len(rules))
-	matcher := managedRouteMatcher(identifier)
-
-	for _, rule := range rules {
-		sm := make(config.Matchers, 0, len(rule.SourceMatchers)+1)
-		sm = append(sm, matcher)
-		sm = append(sm, rule.SourceMatchers...)
-
-		tm := make(config.Matchers, 0, len(rule.TargetMatchers)+1)
-		tm = append(tm, matcher)
-		tm = append(tm, rule.TargetMatchers...)
-
-		result = append(result, config.InhibitRule{
-			SourceMatchers: sm,
-			TargetMatchers: tm,
-			Equal:          slices.Clone(rule.Equal),
-		})
-	}
-
-	return result
+	return merge.BuildManagedInhibitionRules(e.identifier, importedRules)
 }
