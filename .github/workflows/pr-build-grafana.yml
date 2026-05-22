@@ -186,19 +186,11 @@ jobs:
       id-token: write
     runs-on: ubuntu-x64
     steps:
-      - id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+      - name: Get GitHub App token
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@e5b7989c92b55fe3ac6dd006d6de49082ba8c507 # create-github-app-token (github-script/v9)
         with:
-          repo_secrets: |
-            GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
-      - name: Generate token
-        id: generate_token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        with:
-          app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
-          private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
-          repositories: '["grafana"]'
-          permissions: '{"checks": "write"}'
+          github_app: grafana-ci-bot
       - uses: grafana/shared-workflows/actions/login-to-gar@main
         id: login-to-gar
         with:
@@ -222,7 +214,7 @@ jobs:
           echo "IMAGE=${DOCKER_IMAGE}" >> "$GITHUB_ENV"
       - name: Add PR status check
         env:
-          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+          GH_TOKEN: ${{ steps.get-github-app-token.outputs.token }}
           SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           gh api \
