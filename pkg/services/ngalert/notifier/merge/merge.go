@@ -103,9 +103,9 @@ func MergeExtraConfig(_ context.Context, cfg *v1.AMConfigV1) (MergeResult, error
 	if err != nil {
 		return MergeResult{}, fmt.Errorf("failed to get mimir alertmanager config: %w", err)
 	}
-	mergedReceivers, renamedReceivers := MergeReceivers(cfg.AlertmanagerConfig.Receivers, mcfg.Receivers, mimirCfg.Identifier)
+	mergedReceivers, renamedReceivers := Receivers(cfg.AlertmanagerConfig.Receivers, mcfg.Receivers, mimirCfg.Identifier)
 
-	mergedTimeIntervals, renamedTimeIntervals := MergeTimeIntervals(
+	mergedTimeIntervals, renamedTimeIntervals := TimeIntervals(
 		cfg.AlertmanagerConfig.MuteTimeIntervals,
 		cfg.AlertmanagerConfig.TimeIntervals,
 		mcfg.MuteTimeIntervals,
@@ -153,9 +153,9 @@ func MergeExtraConfig(_ context.Context, cfg *v1.AMConfigV1) (MergeResult, error
 
 // DeduplicateResources merges existing and incoming resources (receivers and time intervals) and ensures unique names by applying suffixes. Returns renamed resources for tracking adjustments made.
 func DeduplicateResources(a, b v1.PostableApiAlertingConfig, suffix string) RenameResources {
-	_, renamedReceivers := MergeReceivers(a.Receivers, b.Receivers, suffix)
+	_, renamedReceivers := Receivers(a.Receivers, b.Receivers, suffix)
 
-	_, renamedTimeIntervals := MergeTimeIntervals(
+	_, renamedTimeIntervals := TimeIntervals(
 		a.MuteTimeIntervals,
 		a.TimeIntervals,
 		b.MuteTimeIntervals,
@@ -168,9 +168,9 @@ func DeduplicateResources(a, b v1.PostableApiAlertingConfig, suffix string) Rena
 	}
 }
 
-// MergeTimeIntervals merges existing and incoming time intervals and mute intervals, ensuring unique names by applying suffixes.
+// TimeIntervals merges existing and incoming time intervals and mute intervals, ensuring unique names by applying suffixes.
 // It returns a merged list of time intervals and a map of renamed interval names for tracking adjustments made. Mute time intervals are converted to time intervals.
-func MergeTimeIntervals(
+func TimeIntervals(
 	existingMuteIntervals []v1.MuteTimeInterval,
 	existingTimeIntervals []v1.TimeInterval,
 	incomingMuteIntervals []v1.MuteTimeInterval,
@@ -246,11 +246,11 @@ func RenameResourceUsagesInRoutes(routes []*v1.Route, renames RenameResources) {
 	}
 }
 
-// MergeReceivers merges two lists of PostableApiReceiver objects, ensuring unique names by appending a suffix if necessary.
+// Receivers merges two lists of PostableApiReceiver objects, ensuring unique names by appending a suffix if necessary.
 // It returns the combined list of receivers and a map of renamed original names to their new unique names.
 // The items of the existing list are added to the result list as is whereas the items of incoming list are copied (shallow copy)
 // and renamed if necessary.
-func MergeReceivers(existing, incoming []*v1.PostableApiReceiver, suffix string) ([]*v1.PostableApiReceiver, map[string]string) {
+func Receivers(existing, incoming []*v1.PostableApiReceiver, suffix string) ([]*v1.PostableApiReceiver, map[string]string) {
 	result := make([]*v1.PostableApiReceiver, 0, len(existing)+len(incoming))
 	result = append(result, existing...)
 	usedNames := createIndexReceivers(existing, incoming)
