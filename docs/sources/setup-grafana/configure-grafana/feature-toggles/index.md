@@ -100,6 +100,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `savedQueriesRBAC`                | Enables Saved queries (query library) RBAC permissions                                                 |
 | `newSavedQueriesExperience`       | Enables the new Saved queries (query library) modal experience                                         |
 | `dashboardTemplates`              | Enables a flow to get started with a new dashboard from a template                                     |
+| `groupToNestedTableV2`            | Enable the new matcher-based UI and config shape for the Group to Nested Tables transformation         |
 | `alertRuleRestore`                | Enables the alert rule restore feature                                                                 |
 | `azureMonitorLogsBuilderEditor`   | Enables the logs builder mode for the Azure Monitor data source                                        |
 | `alertingListViewV2PreviewToggle` | Enables the alerting list view v2 preview toggle                                                       |
