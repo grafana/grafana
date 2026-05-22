@@ -33,6 +33,7 @@ import {
   isDashboardV2Spec,
   isV2StoredVersion,
 } from 'app/features/dashboard/api/utils';
+import { SOURCE_ENTRY_POINTS, type SourceEntryPoint } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
 import { initializeDashboardAnalyticsAggregator } from 'app/features/dashboard/services/DashboardAnalyticsAggregator';
 import { dashboardLoaderSrv, DashboardLoaderSrvV2 } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
@@ -40,6 +41,7 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { initializeReportRenderReadinessObserver } from 'app/features/dashboard/services/ReportRenderReadinessObserver';
 import { initializeScenePerformanceLogger } from 'app/features/dashboard/services/ScenePerformanceLogger';
 import { emitDashboardViewEvent } from 'app/features/dashboard/state/analyticsProcessor';
+import { CustomDashboardTemplateInteractions } from 'app/features/dashboard-scene/analytics/main';
 import { transformTemplateToSaveModelSchemaV2 } from 'app/features/dashboard-scene/utils/dashboardTemplateEnvelope';
 import { trackDashboardSceneLoaded } from 'app/features/dashboard-scene/utils/tracking';
 import { interpolateV1Dashboard } from 'app/features/manage-dashboards/import/utils/inputs';
@@ -1169,7 +1171,16 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
 
     const resourceVersion = response.metadata?.resourceVersion;
 
+    const rawSource = new URLSearchParams(window.location.search).get('sourceEntryPoint');
+    const knownSourceEntryPoints: readonly SourceEntryPoint[] = Object.values(SOURCE_ENTRY_POINTS);
+    const sourceEntryPoint: SourceEntryPoint =
+      knownSourceEntryPoints.find((v) => v === rawSource) ?? SOURCE_ENTRY_POINTS.TEMPLATES_GALLERY_MODAL;
+
     if (editMode) {
+      CustomDashboardTemplateInteractions.editOpened({
+        templateUid: dashboardTemplateUid,
+        sourceEntryPoint,
+      });
       // Edit-template flow: mark the scene as editing an org template so downstream UI can hide
       // irrelevant actions.
       // canEdit and canSave will change in the future with specific RBAC permissions.
@@ -1181,6 +1192,11 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
         canSave: true,
       });
     }
+
+    CustomDashboardTemplateInteractions.used({
+      templateUid: dashboardTemplateUid,
+      sourceEntryPoint,
+    });
 
     // Use-template flow: The embedded dashboard spec is hydrated
     // into a fresh scene so the user can "Save as" a brand-new dashboard. Do NOT mark the

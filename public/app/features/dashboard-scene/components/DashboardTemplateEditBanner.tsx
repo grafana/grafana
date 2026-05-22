@@ -5,8 +5,10 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Alert, TextLink, useStyles2 } from '@grafana/ui';
+import { EVENT_LOCATIONS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
 import { DASHBOARD_LIBRARY_ROUTES } from 'app/features/dashboard/dashgrid/types';
 
+import { CustomDashboardTemplateInteractions } from '../analytics/main';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { getDashboardTemplateExtension } from '../settings/enterprise-components/DashboardTemplateExtension';
 
@@ -55,7 +57,13 @@ export function DashboardTemplateEditBanner({ dashboard }: { dashboard: Dashboar
       })}
       severity="info"
       className={styles.banner}
-      onRemove={() => setDismissed(true)}
+      onRemove={() => {
+        CustomDashboardTemplateInteractions.templateEditBannerDismissed({
+          templateUid: dashboardTemplateUid ?? '',
+          eventLocation: EVENT_LOCATIONS.DASHBOARD_PAGE_TEMPLATE_EDIT_BANNER,
+        });
+        setDismissed(true);
+      }}
     >
       <Trans i18nKey="dashboard-scene.dashboard-template-edit-banner.body">
         Edits made will update this template.{' '}

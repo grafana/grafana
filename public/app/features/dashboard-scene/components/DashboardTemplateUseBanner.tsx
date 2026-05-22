@@ -5,7 +5,9 @@ import { useLocation, useSearchParams } from 'react-router-dom-v5-compat';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Alert, useStyles2 } from '@grafana/ui';
+import { EVENT_LOCATIONS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
 import { DASHBOARD_LIBRARY_ROUTES } from 'app/features/dashboard/dashgrid/types';
+import { CustomDashboardTemplateInteractions } from 'app/features/dashboard-scene/analytics/main';
 import { getDashboardTemplateExtension } from 'app/features/dashboard-scene/settings/enterprise-components/DashboardTemplateExtension';
 
 import { type DashboardScene } from '../scene/DashboardScene';
@@ -38,6 +40,10 @@ export function DashboardTemplateUseBanner({ dashboard }: { dashboard: Dashboard
   }, [shouldRender, dashboardTemplateUid]);
 
   const onDismiss = () => {
+    CustomDashboardTemplateInteractions.templateUseBannerDismissed({
+      templateUid: dashboardTemplateUid ?? '',
+      eventLocation: EVENT_LOCATIONS.DASHBOARD_PAGE_TEMPLATE_USE_BANNER,
+    });
     setDismissed(true);
   };
 
