@@ -41,7 +41,7 @@ func (s *finalizerStorage) Delete(
 
 func (s *finalizerStorage) ensureCascadeFinalizer(ctx context.Context, name string) error {
 	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		obj, err := s.Store.Get(ctx, name, &metav1.GetOptions{})
+		obj, err := s.Get(ctx, name, &metav1.GetOptions{})
 		if err != nil {
 			return err
 		}
@@ -65,7 +65,7 @@ func (s *finalizerStorage) ensureCascadeFinalizer(ctx context.Context, name stri
 		}
 		updatedAccessor.SetFinalizers(append(updatedAccessor.GetFinalizers(), CascadeDeleteFinalizer))
 
-		_, _, err = s.Store.Update(
+		_, _, err = s.Update(
 			ctx,
 			name,
 			rest.DefaultUpdatedObjectInfo(updated),
