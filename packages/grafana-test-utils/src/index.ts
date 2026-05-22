@@ -9,3 +9,4 @@
 // where the tsconfig is not set to moduleResolution: bundler so we export it here also.
 export { matchers } from './matchers';
 export { mockBoundingClientRect, mockComboboxRect } from './jsdom';
+export * from 'jest-canvas-mock-compare';

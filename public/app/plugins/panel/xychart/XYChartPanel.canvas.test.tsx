@@ -1,6 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { type CanvasRenderingContext2DEvent } from 'jest-canvas-mock';
-import { removeCanvasTransforms } from 'jest-canvas-mock-compare';
 import type uPlot from 'uplot';
 
 import {
@@ -20,6 +19,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
+import { removeCanvasTransforms } from '@grafana/test-utils';
 import { measureText as uPlotAxisMeasureText, type UPlotConfigBuilder } from '@grafana/ui';
 import { XYChartPanel2 } from 'app/plugins/panel/xychart/XYChartPanel';
 import {

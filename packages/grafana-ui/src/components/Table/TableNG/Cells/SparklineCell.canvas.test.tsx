@@ -1,5 +1,4 @@
 import { render, waitFor } from '@testing-library/react';
-import { removeCanvasTransforms } from 'jest-canvas-mock-compare';
 import type uPlot from 'uplot';
 
 import {
@@ -12,6 +11,7 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { TableCellDisplayMode } from '@grafana/schema';
+import { removeCanvasTransforms } from '@grafana/test-utils';
 
 import * as measureTextModule from '../../../../utils/measureText';
 import * as sparklineUtils from '../../../Sparkline/utils';
@@ -78,7 +78,6 @@ describe('TableNG SparklineCell threshold wiring (canvas)', () => {
     prepareConfigSpy = jest.spyOn(sparklineUtils, 'prepareConfig').mockImplementation((...args) => {
       const builder: UPlotConfigBuilder = realPrepareConfig(...args);
       builder.addHook('drawAxes', (u: uPlot) => {
-        axisEvents = u.ctx.__getEvents();
         u.ctx.__clearEvents();
         uPlotInstance = u;
       });

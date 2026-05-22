@@ -4,15 +4,6 @@ exports[`TableNG SparklineCell threshold wiring (canvas) renders hue gradient wh
 [
   {
     "props": {
-      "height": 25,
-      "width": 292,
-      "x": 0,
-      "y": 0,
-    },
-    "type": "clearRect",
-  },
-  {
-    "props": {
       "x0": 0,
       "x1": 0,
       "y0": 0,
@@ -186,15 +177,6 @@ exports[`TableNG SparklineCell threshold wiring (canvas) renders hue gradient wh
 [
   {
     "props": {
-      "height": 25,
-      "width": 292,
-      "x": 0,
-      "y": 0,
-    },
-    "type": "clearRect",
-  },
-  {
-    "props": {
       "x0": 0,
       "x1": 0,
       "y0": 0,
@@ -366,15 +348,6 @@ exports[`TableNG SparklineCell threshold wiring (canvas) renders hue gradient wh
 
 exports[`TableNG SparklineCell threshold wiring (canvas) renders scheme gradient when color mode is Thresholds with steps 1`] = `
 [
-  {
-    "props": {
-      "height": 25,
-      "width": 292,
-      "x": 0,
-      "y": 0,
-    },
-    "type": "clearRect",
-  },
   {
     "props": {
       "x0": 0,
