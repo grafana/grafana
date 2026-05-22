@@ -142,7 +142,7 @@ type Manager struct {
 
 // NewManager returns a Manager that uses store for persistence and identifies
 // itself as holder.
-func NewManager(store kv.KV, holder string, opts ...ManagerOption) *Manager {
+func NewManager(store kv.KV, holder string, reg prometheus.Registerer, opts ...ManagerOption) *Manager {
 	m := &Manager{
 		store:        store,
 		holder:       holder,
@@ -150,6 +150,7 @@ func NewManager(store kv.KV, holder string, opts ...ManagerOption) *Manager {
 		maxClockSkew: defaultMaxClockSkew,
 		log:          logging.DefaultLogger.With("logger", "lease-manager"),
 		now:          time.Now,
+		metrics:      NewMetrics(reg),
 	}
 	m.garbageCollector = newGarbageCollector(store, m.log, m.now, m.metrics)
 	for _, opt := range opts {
@@ -160,6 +161,12 @@ func NewManager(store kv.KV, holder string, opts ...ManagerOption) *Manager {
 		m.garbageCollector.Start()
 	}
 	return m
+}
+
+// Metrics returns the Manager's metrics handle. Exposed primarily for tests
+// that want to inspect specific collectors after exercising the Manager.
+func (m *Manager) Metrics() *Metrics {
+	return m.metrics
 }
 
 // ManagerOption configures a lease Manager.
@@ -194,24 +201,6 @@ func WithInternalNowFunc(now func() time.Time) ManagerOption {
 // grace period.
 func WithGarbageCollectionDisabled(m *Manager) {
 	m.garbageCollector = nil
-}
-
-// WithRegisterer registers Prometheus metrics for the Manager (and its
-// background garbage collector, if enabled) with reg. When the option is not
-// supplied, no metrics are recorded.
-func WithRegisterer(reg prometheus.Registerer) ManagerOption {
-	return WithMetrics(NewMetrics(reg))
-}
-
-// WithMetrics attaches an existing *Metrics to the Manager. Useful for tests
-// that want to inspect specific collectors after exercising the Manager.
-func WithMetrics(metrics *Metrics) ManagerOption {
-	return func(m *Manager) {
-		m.metrics = metrics
-		if m.garbageCollector != nil {
-			m.garbageCollector.metrics = metrics
-		}
-	}
 }
 
 // AcquireOption configures a single Acquire call.
