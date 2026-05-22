@@ -1,7 +1,7 @@
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 
-import { initPreferences } from './initPreferences';
+import { fetchMergedPreferences, initPreferences } from './initPreferences';
 
 const PREFERENCES_URL = '*/apis/preferences.grafana.app/v1alpha1/namespaces/:ns/preferences/merged';
 
@@ -36,56 +36,37 @@ function setupBootData(userOverrides: Partial<typeof window.grafanaBootData.user
 }
 
 describe('fetchMergedPreferences', () => {
-  let fetchSpy: jest.SpyInstance;
-
   beforeEach(() => {
-    fetchSpy = jest.spyOn(global, 'fetch');
-    setupBootData({ theme: 'dark' });
+    setupBootData();
   });
 
-  afterEach(() => {
-    fetchSpy.mockRestore();
+  it('does not fetch when user is not signed in', async () => {
+    window.grafanaBootData.user.isSignedIn = false;
+    await expect(fetchMergedPreferences()).resolves.toBeUndefined();
   });
 
-  it.each([
-    {
-      name: 'user is not signed in',
-      setup: () => {
-        window.grafanaBootData.user.isSignedIn = false;
-      },
-    },
-    {
-      name: 'namespace is missing',
-      setup: () => {
-        window.grafanaBootData.settings.namespace = '';
-      },
-    },
-  ])('does not fetch when $name', async ({ setup }) => {
-    setup();
-
-    await initPreferences();
-
-    expect(fetchSpy).not.toHaveBeenCalled();
-    expect(window.grafanaBootData.user.theme).toBe('dark');
+  it('does not fetch when namespace is missing', async () => {
+    window.grafanaBootData.settings.namespace = '';
+    await expect(fetchMergedPreferences()).resolves.toBeUndefined();
   });
 
-  it('does not apply preferences when the response is not ok', async () => {
+  it('returns a preferences object on success', async () => {
+    server.use(http.get(PREFERENCES_URL, () => HttpResponse.json({ theme: 'light' })));
+
+    await expect(fetchMergedPreferences()).resolves.toEqual({ theme: 'light' });
+  });
+
+  it('returns undefined when the api errors', async () => {
     server.use(http.get(PREFERENCES_URL, () => HttpResponse.json({ message: 'internal error' }, { status: 500 })));
 
-    await initPreferences();
-
-    expect(fetchSpy).toHaveBeenCalledTimes(1);
-    expect(window.grafanaBootData.user.theme).toBe('dark');
+    await expect(fetchMergedPreferences()).resolves.toBeUndefined();
   });
 
-  it('does not apply preferences when fetch throws', async () => {
+  it('returns undefined when fetch fails', async () => {
     server.use(http.get(PREFERENCES_URL, () => HttpResponse.error()));
     const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
 
-    await initPreferences();
-
-    expect(fetchSpy).toHaveBeenCalledTimes(1);
-    expect(window.grafanaBootData.user.theme).toBe('dark');
+    await expect(fetchMergedPreferences()).resolves.toBeUndefined();
 
     warnSpy.mockRestore();
   });
@@ -136,6 +117,15 @@ describe('initPreferences', () => {
     expect(window.grafanaBootData.user.language).toBe('en-US');
     expect(window.grafanaBootData.user.weekStart).toBe('sunday');
     expect(window.grafanaBootData.user.timezone).toBe('browser');
+  });
+
+  it('does not reject when the API errors', async () => {
+    server.use(http.get(PREFERENCES_URL, () => HttpResponse.json({ message: 'internal error' }, { status: 500 })));
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+    await expect(initPreferences()).resolves.toBeUndefined();
+
+    warnSpy.mockRestore();
   });
 });
 
