@@ -66,7 +66,7 @@ export function getElementStyles(theme: GrafanaTheme2) {
       scrollbarWidth: 'thin',
     },
 
-    'h1, .h1': getVariantStyles(theme.typography.h1),
+    'h1, .h1': getVariantStyles(theme.typography.titleLarge),
     'h2, .h2': getVariantStyles(theme.typography.h2),
     'h3, .h3': getVariantStyles(theme.typography.h3),
     'h4, .h4': getVariantStyles(theme.typography.h4),

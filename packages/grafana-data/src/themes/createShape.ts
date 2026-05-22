@@ -44,13 +44,15 @@ export const ThemeShapeInputSchema = z.object({
 export type ThemeShapeInput = z.infer<typeof ThemeShapeInputSchema>;
 
 export function createShape(options: ThemeShapeInput): ThemeShape {
-  const baseBorderRadius = options.borderRadius ?? 6;
+  const baseBorderRadius = options.borderRadius ?? 8;
 
   const radius = {
     default: `${baseBorderRadius}px`,
     md: `${baseBorderRadius}px`,
-    sm: `${Math.ceil(baseBorderRadius * (2 / 3))}px`, // for default base becomes 4
-    lg: `${Math.ceil(baseBorderRadius * (5 / 3))}px`, // for default base becomes 10
+    sm: `6px`,
+    lg: `12px`,
+    /**sm: `${Math.ceil(baseBorderRadius * (2 / 3))}px`, // for default base becomes 4
+    lg: `${Math.ceil(baseBorderRadius * (5 / 3))}px`, // for default base becomes 10**/
     pill: '9999px',
     circle: '100%',
   };

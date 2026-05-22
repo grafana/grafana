@@ -41,6 +41,7 @@ const svgSizes: {
   h6: 'md',
   body: 'md',
   bodySmall: 'xs',
+  titleLarge: 'xl',
 };
 
 /**

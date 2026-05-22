@@ -68,7 +68,7 @@ export function createTypography(colors: ThemeColors, typographyInput: ThemeTypo
     fontWeightLight = 300,
     fontWeightRegular = 400,
     fontWeightMedium = 500,
-    fontWeightBold = 500,
+    fontWeightBold = 600,
     // Tell Grafana-UI what's the font-size on the html element.
     // 16px is the default font-size used by browsers.
     htmlFontSize = 14,
@@ -117,6 +117,7 @@ export function createTypography(colors: ThemeColors, typographyInput: ThemeTypo
     h6: buildVariant(fontWeightMedium, 14, 22, 0.15),
     body: buildVariant(fontWeightRegular, fontSize, 22, 0.15),
     bodySmall: buildVariant(fontWeightRegular, 12, 18, 0.15),
+    titleLarge: buildVariant(fontWeightBold, 18, 24, 0),
     code: { ...buildVariant(fontWeightRegular, 14, 16, 0.15), fontFamily: fontFamilyMonospace },
   };
 
@@ -156,5 +157,6 @@ export interface ThemeTypographyVariantTypes {
   h6: ThemeTypographyVariant;
   body: ThemeTypographyVariant;
   bodySmall: ThemeTypographyVariant;
+  titleLarge: ThemeTypographyVariant;
   code: ThemeTypographyVariant;
 }

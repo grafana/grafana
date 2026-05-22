@@ -113,7 +113,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       container: 'page / inline-size',
       borderRadius: theme.shape.radius.lg,
       margin: theme.spacing(0, 0.5, 0, 0.5),
-      border: `1px solid ${theme.colors.border.weak}`,
+      border: `1px solid ${theme.colors.border.subtle}`,
     }),
     wrapperPage: css({
       label: 'page-wrapper-primary',

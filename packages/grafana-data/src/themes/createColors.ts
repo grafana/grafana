@@ -191,8 +191,8 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   };
 
   background = {
-    canvas: palette.gray05,
-    page: palette.gray05,
+    canvas: newPalette.ink950,
+    page: newPalette.ink900,
     primary: newPalette.ink800,
     secondary: newPalette.ink700,
     elevated: palette.gray15,

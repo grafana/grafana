@@ -81,7 +81,7 @@ export const EditableTitle = ({ value, onEdit }: Props) => {
           this is to prevent the title from flickering back to the old value after the user has edited
           caused by the delay between the save completing and the new value being refetched
         */}
-        <Text element="h1" truncate>
+        <Text element="h1" variant="titleLarge" truncate>
           {localValue}
         </Text>
         <IconButton

@@ -25,6 +25,7 @@ export function PageHeader({ navItem, renderTitle, actions, info, subTitle, onEd
   return (
     <div className={styles.pageHeader}>
       <div className={styles.topRow}>
+        <div className={styles.titleColumn}>
         <div className={styles.titleInfoContainer}>
           <div className={styles.title}>
             {navItem.img && <img className={styles.img} src={navItem.img} alt={`logo for ${navItem.text}`} />}
@@ -38,9 +39,11 @@ export function PageHeader({ navItem, renderTitle, actions, info, subTitle, onEd
           </div>
           {info && <PageInfo info={info} />}
         </div>
+        {sub && <div className={styles.subTitle}>{sub}</div>}
+        </div>
         <div className={styles.actions}>{actions}</div>
       </div>
-      {sub && <div className={styles.subTitle}>{sub}</div>}
+      
     </div>
   );
 }
@@ -53,7 +56,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexDirection: 'row',
       flexWrap: 'wrap',
       gap: theme.spacing(1, 3),
+      justifyContent: 'space-between',
     }),
+    titleColumn: css({
+  display: 'flex',
+  flexDirection: 'column',
+  minWidth: 0,
+}),
     title: css({
       display: 'flex',
       flexDirection: 'row',
@@ -67,6 +76,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexDirection: 'row',
       gap: theme.spacing(1),
+      flexShrink: 0,
+  marginLeft: 'auto',
     }),
     titleInfoContainer: css({
       display: 'flex',
@@ -82,7 +93,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'page-header',
       display: 'flex',
       flexDirection: 'column',
-      gap: theme.spacing(1),
+      //gap: theme.spacing(1),
       marginBottom: theme.spacing(2),
     }),
     subTitle: css({
