@@ -1,6 +1,10 @@
+import { type ChangeEvent } from 'react';
+
 import { type PanelOptionsEditorBuilder, standardEditorsRegistry, type StatsPickerConfigSettings } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { LegendDisplayMode, type OptionsWithLegend } from '@grafana/schema';
+
+import { Input } from '../../components/Input/Input';
 
 /** @public */
 export function addLegendOptions<T extends OptionsWithLegend>(
@@ -51,20 +55,28 @@ export function addLegendOptions<T extends OptionsWithLegend>(
       path: 'legend.width',
       name: t('grafana-ui.builder.legend.name-width', 'Width'),
       category,
-      settings: {
-        placeholder: t('grafana-ui.builder.legend.placeholder-width', 'Auto, px, or % (e.g. 220 or 35%)'),
-      },
       showIf: (c) => c.legend.showLegend && c.legend.placement === 'right',
       editor: ({ onChange, ...props }) => {
-        const typedOnChange = (value?: string) => {
-          // FIXME: when value is undefined (the input is cleared of prior value), things break
-          let numeric = Number(value);
-          onChange(Number.isNaN(numeric) ? value : numeric);
-        };
+        return (
+          <Input
+            placeholder={t('grafana-ui.builder.legend.placeholder-width', 'Auto, px, or % (e.g. 220 or 35%)')}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => {
+              let value: string | undefined = e.currentTarget.value.trim();
 
-        const TextEditor = standardEditorsRegistry.get('text').editor;
+              if (value === '') {
+                value = undefined;
+              }
 
-        return <TextEditor {...props} onChange={typedOnChange} />;
+              let numeric = Number(value);
+              onChange(Number.isNaN(numeric) ? value : numeric);
+            }}
+            value={props.value}
+            // this is needed as a work-around for _something_ in an ancestor causing a blur/onChange/remount happen on every keypress
+            onInputCapture={(e) => {
+              e.stopPropagation();
+            }}
+          />
+        );
       },
     })
     .addNumberInput({
