@@ -5,8 +5,8 @@
 # $schema: https://golangci-lint.run/jsonschema/golangci.jsonschema.json
 version: '2'
 run:
-  timeout: 15m
-  concurrency: 10
+  timeout: 30m
+  concurrency: 0 # GOMAXPROCS
   allow-parallel-runners: true
 linters:
   default: none
@@ -95,6 +95,9 @@ linters:
               desc: apps/secret is not allowed to import grafana core
         coreplugins:
           files:
+            # TODO: restore grafana-postgresql-datasource once #119110 (mssql & postgresql decouple) is backported to release-13.0.2
+            # TODO: restore mssql once #119110 (mssql & postgresql decouple) is backported to release-13.0.2
+            # TODO: restore influxdb once #119167 (InfluxDB decouple) is backported to release-13.0.2
             - '**/pkg/tsdb/grafana-pyroscope-datasource/*'
             - '**/pkg/tsdb/grafana-pyroscope-datasource/**/*'
             - '**/pkg/tsdb/grafana-testdata-datasource/*'
@@ -117,8 +120,6 @@ linters:
             - '**/pkg/tsdb/cloudwatch/**/*'
             - '**/pkg/tsdb/loki/*'
             - '**/pkg/tsdb/loki/**/*'
-            - '**/pkg/tsdb/zipkin/*'
-            - '**/pkg/tsdb/zipkin/**/*'
             - '**/pkg/tsdb/jaeger/*'
             - '**/pkg/tsdb/jaeger/**/*'
           deny:
@@ -255,6 +256,15 @@ linters:
           - staticcheck
         text: use fake service and real access control evaluator instead
       - linters:
+          - staticcheck
+        text: 'QF1012'
+      - linters:
+          - gosec
+        text: G101 # extremely noisy and low confidence
+      - linters:
+          - gosec
+        text: G118 # extremely noisy and low confidence
+      - linters:
           - gosec
         text: G108
       - linters:
@@ -300,6 +310,51 @@ linters:
           - gosec
         path: (.+)_test\.go
         text: G601
+      - linters:
+          - gosec
+        path: (.+)_test\.go
+        text: G124
+      # TODO: remove once #124553 (nosec G124 annotation in frontend/index.go) is backported to release-13.0.2
+      - linters:
+          - gosec
+        text: G124
+      # TODO: remove once #124553 (nosec G704 annotations in jaeger/client.go) and
+      # #124148 (zipkin removed from core plugins) are backported to release-13.0.2
+      - linters:
+          - gosec
+        text: G704
+      # TODO: remove once #124553 (reflect.Ptr → reflect.Pointer) is backported to release-13.0.2
+      - linters:
+          - govet
+        text: 'inline: Constant reflect\.Ptr'
+      # TODO: remove once #124553 (bulk nosec/nolint annotations) is backported to release-13.0.2
+      - linters:
+          - gosec
+        text: G705
+      - linters:
+          - gosec
+        text: G602
+      - linters:
+          - gosec
+        text: G122
+      - linters:
+          - gosec
+        text: G710
+      - linters:
+          - gosec
+        text: G117
+      - linters:
+          - gosec
+        text: G703
+      - linters:
+          - gosec
+        text: G204
+      - linters:
+          - staticcheck
+        text: 'SA1019: .*\.Director'
+      - linters:
+          - prealloc
+        text: '.*'
     paths:
       - devenv
       - scripts

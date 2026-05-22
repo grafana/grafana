@@ -126,12 +126,12 @@ jobs:
         uses: ./.github/actions/setup-node
 
       - name: Get built packages from pr
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: buildPr
 
       - name: Get built packages from base
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: buildBase
 
@@ -190,27 +190,18 @@ jobs:
     if: github.event.pull_request.head.repo.full_name == github.repository
 
     steps:
-      - id: get-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@28361cdb22223e5f1e34358c86c20908e7248760 # get-vault-secrets-v1.1.0
+      - name: Get GitHub App token
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
         with:
-          # Secrets placed in the ci/repo/grafana/grafana in vault
-          repo_secrets: |
-            GITHUB_APP_ID=grafana_pr_automation_app:app_id
-            GITHUB_APP_PRIVATE_KEY=grafana_pr_automation_app:app_pem
-
-      - name: Generate token
-        id: generate_token
-        uses: actions/create-github-app-token@3ff1caaa28b64c9cc276ce0a02e2ff584f3900c5 # v2.0.2
-        with:
-          app-id: ${{ env.GITHUB_APP_ID }}
-          private-key: ${{ env.GITHUB_APP_PRIVATE_KEY }}
+          github_app: grafana-pr-automation
 
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
 
       - name: 'Download artifact'
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: levitate
 
@@ -268,7 +259,7 @@ jobs:
             [Read our guideline](https://github.com/grafana/grafana/blob/main/contribute/breaking-changes-guide/breaking-changes-guide.md)
 
             * Your pull request merge won't be blocked.
-          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
+          GITHUB_TOKEN: ${{ steps.get-github-app-token.outputs.token }}
 
       # Remove comment from the PR (no more breaking changes)
       - name: Remove comment from PR
@@ -278,7 +269,7 @@ jobs:
           header: levitate-breaking-change-comment
           number: ${{ github.event.pull_request.number }}
           delete: true
-          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
+          GITHUB_TOKEN: ${{ steps.get-github-app-token.outputs.token }}
 
       - name: Send Slack Message via Payload
         id: slack
@@ -323,7 +314,7 @@ jobs:
         env:
           PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
         with:
-          github-token: ${{ steps.generate_token.outputs.token }}
+          github-token: ${{ steps.get-github-app-token.outputs.token }}
           script: |
             await github.rest.issues.addLabels({
               issue_number: process.env.PR_NUMBER,
@@ -339,7 +330,7 @@ jobs:
         env:
           PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
         with:
-          github-token: ${{ steps.generate_token.outputs.token }}
+          github-token: ${{ steps.get-github-app-token.outputs.token }}
           script: |
             await github.rest.issues.removeLabel({
               issue_number: process.env.PR_NUMBER,
@@ -357,7 +348,7 @@ jobs:
         env:
           PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
         with:
-          github-token: ${{ steps.generate_token.outputs.token }}
+          github-token: ${{ steps.get-github-app-token.outputs.token }}
           script: |
             await github.rest.pulls.requestReviewers({
               pull_number: process.env.PR_NUMBER,
@@ -374,7 +365,7 @@ jobs:
         env:
           PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
         with:
-          github-token: ${{ steps.generate_token.outputs.token }}
+          github-token: ${{ steps.get-github-app-token.outputs.token }}
           script: |
             await github.rest.pulls.removeRequestedReviewers({
               pull_number: process.env.PR_NUMBER,
