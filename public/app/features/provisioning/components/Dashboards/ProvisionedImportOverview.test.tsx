@@ -1,10 +1,13 @@
 import { act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { HttpResponse, http } from 'msw';
 import { render, screen, waitFor } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
+import server from '@grafana/test-utils/server';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { dashboardAPIVersionResolver } from 'app/features/dashboard/api/DashboardAPIVersionResolver';
 import { validateTitle, validateUid } from 'app/features/manage-dashboards/import/utils/validation';
@@ -22,30 +25,6 @@ jest.mock('../../hooks/useImportProvisionedSave', () => ({
     save: mockSave,
     isLoading: false,
     error: undefined,
-  }),
-}));
-
-jest.mock('../../hooks/useProvisionedRequestHandler', () => ({
-  useProvisionedRequestHandler: jest.fn(),
-}));
-
-jest.mock('react-router-dom-v5-compat', () => ({
-  ...jest.requireActual('react-router-dom-v5-compat'),
-  useNavigate: () => jest.fn(),
-}));
-
-jest.mock('../Shared/ResourceEditFormSharedFields', () => ({
-  ResourceEditFormSharedFields: () => <div data-testid="shared-fields">Shared Fields</div>,
-}));
-
-jest.mock('../../hooks/usePRBranch', () => ({
-  usePRBranch: jest.fn().mockReturnValue(undefined),
-}));
-
-jest.mock('../../hooks/useLastBranch', () => ({
-  useLastBranch: jest.fn().mockReturnValue({
-    getLastBranch: jest.fn().mockReturnValue(undefined),
-    setLastBranch: jest.fn(),
   }),
 }));
 
@@ -132,6 +111,11 @@ describe('ProvisionedImportOverview', () => {
     mockValidateTitle.mockResolvedValue(true);
     mockValidateUid.mockResolvedValue(true);
     dashboardAPIVersionResolver.set({ v1: 'v1', v2: 'v2' });
+    server.use(
+      http.get(`${BASE}/repositories/:name/files/*`, () => {
+        return new HttpResponse(null, { status: 404 });
+      })
+    );
   });
 
   describe('rendering', () => {
@@ -143,7 +127,8 @@ describe('ProvisionedImportOverview', () => {
 
     it('renders shared provisioning fields', async () => {
       await setup();
-      expect(screen.getByTestId('shared-fields')).toBeInTheDocument();
+      expect(await screen.findByRole('combobox', { name: /branch/i })).toBeInTheDocument();
+      expect(screen.getByRole('textbox', { name: /filename/i })).toBeInTheDocument();
     });
 
     it('renders import button', async () => {
@@ -163,7 +148,7 @@ describe('ProvisionedImportOverview', () => {
     it('calls save with v1 apiVersion on submit', async () => {
       await setup();
       const submitBtn = screen.getByTestId(selectors.components.ImportDashboardForm.submit);
-
+      await waitFor(() => expect(submitBtn).not.toBeDisabled());
       await userEvent.click(submitBtn);
 
       await waitFor(() => {
@@ -181,7 +166,7 @@ describe('ProvisionedImportOverview', () => {
     it('calls save with v2 apiVersion on submit', async () => {
       await setup({ dashboard: v2Dashboard, dashboardUid: 'v2-uid' });
       const submitBtn = screen.getByTestId(selectors.components.ImportDashboardForm.submit);
-
+      await waitFor(() => expect(submitBtn).not.toBeDisabled());
       await userEvent.click(submitBtn);
 
       await waitFor(() => {
@@ -267,7 +252,9 @@ describe('ProvisionedImportOverview', () => {
       await setup({ dashboard: v2Dashboard, inputs: inputsWithLibPanels });
 
       expect(screen.queryByText(/library panels not supported/i)).not.toBeInTheDocument();
-      expect(screen.getByTestId(selectors.components.ImportDashboardForm.submit)).not.toBeDisabled();
+      await waitFor(() =>
+        expect(screen.getByTestId(selectors.components.ImportDashboardForm.submit)).not.toBeDisabled()
+      );
     });
   });
 
@@ -329,7 +316,23 @@ describe('ProvisionedImportOverview', () => {
     it('allows submit when all validations pass', async () => {
       await setup();
 
-      expect(screen.getByTestId(selectors.components.ImportDashboardForm.submit)).not.toBeDisabled();
+      await waitFor(() =>
+        expect(screen.getByTestId(selectors.components.ImportDashboardForm.submit)).not.toBeDisabled()
+      );
+    });
+
+    it('disables submit when file already exists at target path', async () => {
+      server.use(
+        http.get(`${BASE}/repositories/:name/files/*`, () => {
+          return HttpResponse.json({ path: 'existing-file.json' });
+        })
+      );
+      await setup();
+
+      await waitFor(() => {
+        expect(screen.getByTestId(selectors.components.ImportDashboardForm.submit)).toBeDisabled();
+      });
+      expect(screen.getByText('A file with this name already exists at this path')).toBeInTheDocument();
     });
   });
 });
