@@ -109,7 +109,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
       builder.addCustomEditor({
         id: 'rowsFrame-yBucketScale',
         path: 'rowsFrame.yBucketScale',
-        name: t('heatmap.name-y-bucket-scale', 'Y bucket scale'),
+        name: t('heatmap.name-y-bucket-scale', 'Y Bucket scale'),
         category,
         editor: YBucketScaleEditor,
         defaultValue: undefined,

@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 )
 
 var ErrValidation = fmt.Errorf("invalid object specification")
@@ -115,8 +116,8 @@ func MakeErrContactPointUidExists(uid, name string) error {
 	})
 }
 
-func makeErrTemplateOrigin(t definitions.NotificationTemplate, action string) error {
-	return ErrTemplateOrigin.Build(errutil.TemplateData{Public: map[string]interface{}{"Action": action, "Name": t.Name}})
+func makeErrTemplateOrigin(t v1.TemplateGroup, action string) error {
+	return ErrTemplateOrigin.Build(errutil.TemplateData{Public: map[string]interface{}{"Action": action, "Name": t.Title}})
 }
 
 func makeErrMuteTimeIntervalOrigin(mt definitions.MuteTimeInterval, action string) error {
