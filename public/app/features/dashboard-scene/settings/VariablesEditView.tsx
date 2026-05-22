@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 
 import { type NavModel, type NavModelItem, PageLayoutType } from '@grafana/data';
 import {
@@ -119,7 +118,7 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
     }
 
     //clone the original variable, update name and key
-    const newVariable = variableToUpdate.clone({ ...variableToUpdate.state, name: newName, key: uuidv4() });
+    const newVariable = variableToUpdate.clone({ ...variableToUpdate.state, name: newName, key: crypto.randomUUID() });
 
     const updatedVariables = [
       ...variables.slice(0, variableIndex + 1),

@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import { useCallback, useEffect } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 
 import { type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { AccessoryButton } from '@grafana/plugin-ui';
@@ -126,4 +125,4 @@ const TagsInput = ({
 
 export default TagsInput;
 
-export const generateId = () => uuidv4().slice(0, 8);
+export const generateId = () => crypto.randomUUID().slice(0, 8);

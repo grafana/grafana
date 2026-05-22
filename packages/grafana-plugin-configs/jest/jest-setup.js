@@ -8,6 +8,17 @@ expect.extend(matchers);
 
 Object.assign(global, { TextDecoder, TextEncoder });
 
+if (typeof global.crypto.randomUUID !== 'function') {
+  global.crypto.randomUUID = () => {
+    const bytes = new Uint8Array(16);
+    global.crypto.getRandomValues(bytes);
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    const hex = [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
+    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+  };
+}
+
 // https://jestjs.io/docs/manual-mocks#mocking-methods-which-are-not-implemented-in-jsdom
 Object.defineProperty(global, 'matchMedia', {
   writable: true,

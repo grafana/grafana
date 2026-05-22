@@ -1,5 +1,3 @@
-import { v4 as uuidv4 } from 'uuid';
-
 import { type TraceSearchProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
@@ -8,7 +6,7 @@ export const DEFAULT_RANGE = {
   to: 'now',
 };
 
-export const randomId = () => uuidv4().slice(0, 12);
+export const randomId = () => crypto.randomUUID().slice(0, 12);
 
 export const DEFAULT_TAG_FILTERS = {
   id: randomId(),

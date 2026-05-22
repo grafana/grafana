@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { v4 as uuidv4 } from 'uuid';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -22,7 +21,7 @@ const Parallelogram = (props: CanvasElementProps<CanvasElementConfig, CanvasElem
   const styles = getStyles(config.theme2, data);
 
   // uuid needed to avoid id conflicts when multiple elements are rendered
-  const uniqueId = uuidv4();
+  const uniqueId = crypto.randomUUID();
 
   return (
     <div className={styles.container}>

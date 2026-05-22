@@ -1,5 +1,3 @@
-import { v4 as uuidv4 } from 'uuid';
-
 import {
   type AdHocVariableFilter,
   DataFrameView,
@@ -39,7 +37,7 @@ export async function fetchSQLFields(
   );
 
   const queryResponse = await datasource.runMetaSQLExprQuery(
-    { rawSql: queryString, format: QueryFormat.Table, refId: `fields-${uuidv4()}` },
+    { rawSql: queryString, format: QueryFormat.Table, refId: `fields-${crypto.randomUUID()}` },
     options.range ?? getDefaultTimeRange(),
     interpolatedSourceQueries
   );

@@ -1,6 +1,5 @@
 import { hash } from 'immutable';
 import { LRUCache } from 'lru-cache';
-import { v4 as uuidv4 } from 'uuid';
 
 import { type LogContext } from '@grafana/faro-web-sdk';
 
@@ -221,7 +220,7 @@ export function serializeArg(value: unknown, baseKey: string): string {
   try {
     return `${type}:${JSON.stringify(value)}`;
   } catch (error) {
-    const key = `uncacheable:${uuidv4()}`;
+    const key = `uncacheable:${crypto.randomUUID()}`;
     getLogger('grafana/runtime.utils.getCachedPromise').logError(
       new Error(`getCachedPromiseWithArgs: serializeArg failed`, { cause: error }),
       { baseKey, key }

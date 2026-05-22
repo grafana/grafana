@@ -1,5 +1,4 @@
 import { cloneDeep, defaultsDeep, isArray, isEqual } from 'lodash';
-import { v4 as uuidv4 } from 'uuid';
 
 import {
   type DataConfigSource,
@@ -219,7 +218,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     this.events = new EventBusSrv();
     this.restoreModel(model);
     this.replaceVariables = this.replaceVariables.bind(this);
-    this.key = uuidv4();
+    this.key = crypto.randomUUID();
   }
 
   /** Given a persistened PanelModel restores property values */
@@ -264,7 +263,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   }
 
   generateNewKey() {
-    this.key = uuidv4();
+    this.key = crypto.randomUUID();
   }
 
   ensureQueryIds() {

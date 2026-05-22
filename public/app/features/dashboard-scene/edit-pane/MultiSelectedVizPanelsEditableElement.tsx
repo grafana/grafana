@@ -1,5 +1,3 @@
-import { v4 as uuidv4 } from 'uuid';
-
 import { t } from '@grafana/i18n';
 import { appEvents } from 'app/core/app_events';
 import { type OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
@@ -16,7 +14,7 @@ export class MultiSelectedVizPanelsEditableElement implements EditableDashboardE
   public readonly key: string;
 
   constructor(private _panels: BulkActionElement[]) {
-    this.key = uuidv4();
+    this.key = crypto.randomUUID();
   }
 
   public getEditableElementInfo(): EditableDashboardElementInfo {

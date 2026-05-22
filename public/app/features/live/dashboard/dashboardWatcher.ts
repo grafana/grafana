@@ -1,5 +1,4 @@
 import { type Unsubscribable } from 'rxjs';
-import { v4 as uuidv4 } from 'uuid';
 
 import {
   AppEvents,
@@ -22,7 +21,7 @@ import { type DashboardEvent, DashboardEventAction } from './types';
 
 // sessionId is not a security-sensitive value.
 // It is used for filtering out dashboard edit events from the same browsing session
-const sessionId = uuidv4();
+const sessionId = crypto.randomUUID();
 
 class DashboardWatcher {
   private static readonly IGNORE_SAVE_WINDOW_MS = 5000;

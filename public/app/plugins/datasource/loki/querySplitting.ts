@@ -1,6 +1,5 @@
 import { groupBy, partition } from 'lodash';
 import { Observable, type Subscriber, type Subscription, tap } from 'rxjs';
-import { v4 as uuidv4 } from 'uuid';
 
 import {
   arrayToDataFrame,
@@ -130,7 +129,7 @@ export function runSplitGroupedQueries(
   requests: LokiGroupedRequest[],
   options: QuerySplittingOptions = {}
 ) {
-  const responseKey = requests.length ? requests[0].request.queryGroupId : uuidv4();
+  const responseKey = requests.length ? requests[0].request.queryGroupId : crypto.randomUUID();
   let mergedResponse: DataQueryResponse = { data: [], state: LoadingState.Streaming, key: responseKey };
   const totalRequests = Math.max(...requests.map(({ partition }) => partition.length));
   const longestPartition = requests.filter(({ partition }) => partition.length === totalRequests)[0].partition;
@@ -354,7 +353,7 @@ export function runSplitQuery(
   const [nonSplittingQueries, normalQueries] = partition(queries, (query) => !querySupportsSplitting(query));
   const [logQueries, metricQueries] = partition(normalQueries, (query) => isLogsQuery(query.expr));
 
-  request.queryGroupId = uuidv4();
+  request.queryGroupId = crypto.randomUUID();
   // Allow custom split durations for debugging, e.g. `localStorage.setItem('grafana.loki.querySplitInterval', 24 * 60 * 1000) // 1 hour`
   const debugSplitDuration = parseInt(store.get('grafana.loki.querySplitInterval'), 10);
   const oneDayMs = debugSplitDuration || 24 * 60 * 60 * 1000;

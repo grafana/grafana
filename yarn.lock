@@ -3135,7 +3135,6 @@ __metadata:
     "@types/node": "npm:24.10.1"
     "@types/react": "npm:18.3.18"
     "@types/react-dom": "npm:18.3.5"
-    "@types/uuid": "npm:10.0.0"
     d3-random: "npm:^3.0.1"
     jest: "npm:29.7.0"
     lodash: "npm:^4.17.23"
@@ -3148,7 +3147,6 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
     typescript: "npm:6.0.2"
-    uuid: "npm:14.0.0"
     webpack: "npm:^5.105.0"
   peerDependencies:
     "@grafana/runtime": "*"
@@ -3178,7 +3176,6 @@ __metadata:
     "@types/react": "npm:18.3.18"
     "@types/react-dom": "npm:18.3.5"
     "@types/semver": "npm:7.7.1"
-    "@types/uuid": "npm:10.0.0"
     jest: "npm:29.7.0"
     lodash: "npm:^4.17.23"
     moment: "npm:2.30.1"
@@ -3191,7 +3188,6 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
     typescript: "npm:6.0.2"
-    uuid: "npm:14.0.0"
     webpack: "npm:^5.105.0"
   peerDependencies:
     "@grafana/runtime": "*"
@@ -3258,7 +3254,6 @@ __metadata:
     "@types/react": "npm:18.3.18"
     "@types/react-dom": "npm:18.3.5"
     "@types/react-window": "npm:1.8.8"
-    "@types/uuid": "npm:10.0.0"
     jest: "npm:29.7.0"
     lodash: "npm:^4.17.23"
     logfmt: "npm:^1.3.2"
@@ -3271,7 +3266,6 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
     typescript: "npm:6.0.2"
-    uuid: "npm:14.0.0"
     webpack: "npm:^5.105.0"
   peerDependencies:
     "@grafana/runtime": "*"
@@ -3409,7 +3403,6 @@ __metadata:
     "@types/node": "npm:24.10.1"
     "@types/react": "npm:18.3.18"
     "@types/react-dom": "npm:18.3.5"
-    "@types/uuid": "npm:10.0.0"
     debounce-promise: "npm:3.1.2"
     jest: "npm:29.7.0"
     lodash: "npm:^4.17.23"
@@ -3421,7 +3414,6 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
     typescript: "npm:6.0.2"
-    uuid: "npm:14.0.0"
     webpack: "npm:^5.105.0"
   peerDependencies:
     "@grafana/runtime": "*"
@@ -3541,7 +3533,6 @@ __metadata:
     "@types/react": "npm:18.3.18"
     "@types/react-dom": "npm:18.3.5"
     "@types/semver": "npm:7.7.1"
-    "@types/uuid": "npm:10.0.0"
     buffer: "npm:6.0.3"
     events: "npm:3.3.0"
     glob: "npm:11.1.0"
@@ -3563,7 +3554,6 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
     typescript: "npm:6.0.2"
-    uuid: "npm:14.0.0"
     webpack: "npm:^5.105.0"
   peerDependencies:
     "@grafana/runtime": "*"
@@ -4234,7 +4224,6 @@ __metadata:
     ts-morph: "npm:^27.0.2"
     tslib: "npm:2.8.1"
     typescript: "npm:6.0.2"
-    uuid: "npm:14.0.0"
   peerDependencies:
     react: ^18.0.0
     react-dom: ^18.0.0
@@ -20362,7 +20351,6 @@ __metadata:
     "@types/slate-react": "npm:0.22.9"
     "@types/swagger-ui-react": "npm:5.18.0"
     "@types/systemjs": "npm:6.15.3"
-    "@types/uuid": "npm:10.0.0"
     "@types/webpack-assets-manifest": "npm:^5"
     "@types/webpack-env": "npm:^1.18.4"
     "@types/yargs": "npm:17.0.33"
@@ -20569,7 +20557,6 @@ __metadata:
     type-fest: "npm:^4.18.2"
     typescript: "npm:6.0.2"
     uplot: "npm:1.6.32"
-    uuid: "npm:14.0.0"
     vis-data: "npm:^8.0.0"
     vis-network: "npm:10.0.2"
     webpack: "npm:^5.105.0"

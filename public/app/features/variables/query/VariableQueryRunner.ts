@@ -1,6 +1,5 @@
 import { merge, type Observable, of, Subject, throwError, type Unsubscribable } from 'rxjs';
 import { catchError, filter, finalize, mergeMap, take, takeUntil } from 'rxjs/operators';
-import { v4 as uuidv4 } from 'uuid';
 
 import {
   CoreApp,
@@ -185,7 +184,7 @@ export class VariableQueryRunner {
 
     const request: DataQueryRequest = {
       app: CoreApp.Dashboard,
-      requestId: uuidv4(),
+      requestId: crypto.randomUUID(),
       timezone: '',
       range,
       interval: '',

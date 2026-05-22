@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
@@ -246,7 +245,7 @@ export function useGenericSavedSearches(config: SavedSearchesConfig): UseGeneric
       }
 
       const newSearch: SavedSearch = {
-        id: uuidv4(),
+        id: crypto.randomUUID(),
         name,
         query,
         isDefault: false,

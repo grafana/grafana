@@ -2,7 +2,6 @@ import { css } from '@emotion/css';
 import { debounce } from 'lodash';
 import { useRef, useEffect } from 'react';
 import { useLatest } from 'react-use';
-import { v4 as uuidv4 } from 'uuid';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -111,7 +110,7 @@ const MonacoQueryField = ({
   onChange,
   timeRange,
 }: Props) => {
-  const id = uuidv4();
+  const id = crypto.randomUUID();
   // we need only one instance of `overrideServices` during the lifetime of the react component
   const overrideServicesRef = useRef(getOverrideServices());
   const containerRef = useRef<HTMLDivElement>(null);

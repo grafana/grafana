@@ -1,5 +1,4 @@
 import { useMemo, type ReactElement } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 
 import { getMessageFromError } from 'app/core/utils/errors';
 import { dispatch as storeDispatch } from 'app/store/store';
@@ -40,7 +39,7 @@ export const createSuccessNotification = (
   text,
   traceId,
   component,
-  id: uuidv4(),
+  id: crypto.randomUUID(),
   timestamp: Date.now(),
   showing: true,
 });
@@ -55,7 +54,7 @@ export const createErrorNotification = (
     ...defaultErrorNotification,
     text: getMessageFromError(text),
     title,
-    id: uuidv4(),
+    id: crypto.randomUUID(),
     traceId,
     component,
     timestamp: Date.now(),
@@ -74,7 +73,7 @@ export const createWarningNotification = (
   text,
   traceId,
   component,
-  id: uuidv4(),
+  id: crypto.randomUUID(),
   timestamp: Date.now(),
   showing: true,
 });
@@ -84,7 +83,7 @@ export const createInfoNotification = (title: string, text = '', traceId?: strin
   icon: 'info-circle',
   title,
   text,
-  id: uuidv4(),
+  id: crypto.randomUUID(),
   timestamp: Date.now(),
   showing: true,
 });

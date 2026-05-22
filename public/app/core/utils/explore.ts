@@ -1,6 +1,5 @@
 import { customAlphabet } from 'nanoid';
 import { type Unsubscribable } from 'rxjs';
-import { v4 as uuidv4 } from 'uuid';
 
 import {
   type AdHocVariableFilter,
@@ -166,7 +165,7 @@ export const safeStringifyValue = (value: unknown, space?: number) => {
 };
 
 export function generateKey(index = 0): string {
-  return `Q-${uuidv4()}-${index}`;
+  return `Q-${crypto.randomUUID()}-${index}`;
 }
 
 export async function generateEmptyQuery(

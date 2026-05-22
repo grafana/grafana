@@ -1,6 +1,5 @@
 import { capitalize } from 'lodash';
 import { map, type Observable, scan, takeWhile } from 'rxjs';
-import { v4 as uuidv4 } from 'uuid';
 
 import {
   type DataFrame,
@@ -30,7 +29,7 @@ import { stepToNanos } from './utils';
 export const TEMPO_STREAMING_PROGRESS_REF_ID = 'streaming-progress';
 
 function getLiveStreamKey(): string {
-  return uuidv4();
+  return crypto.randomUUID();
 }
 
 export function doTempoSearchStreaming(

@@ -1,5 +1,3 @@
-import { v4 as uuidv4 } from 'uuid';
-
 const MATCH_ID_INDEX = 2;
 const SVG_ID_INSERT_POS = 5;
 
@@ -15,7 +13,7 @@ export const getSvgId = (svgCode: string) => {
 export const svgStyleCleanup = (svgCode: string) => {
   let svgId = getSvgId(svgCode);
   if (!svgId) {
-    svgId = `x${uuidv4()}`;
+    svgId = `x${crypto.randomUUID()}`;
     const pos = svgCode.indexOf('<svg') + SVG_ID_INSERT_POS;
     svgCode = svgCode.substring(0, pos) + `id="${svgId}" ` + svgCode.substring(pos);
   }
