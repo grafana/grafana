@@ -35,7 +35,12 @@ export function DashboardTemplateSavedBanner() {
     setSearchParams(searchParams);
   };
 
-  if (!dashboardTemplateUid || !templateName) {
+  // Hide the banner on Settings tabs — `editview` is set in the URL whenever a settings
+  // tab is active. Settings have their own UI for template editing and the banner is
+  // redundant context there.
+  const onSettingsTab = Boolean(searchParams.get('editview'));
+
+  if (!dashboardTemplateUid || !templateName || onSettingsTab) {
     return null;
   }
 

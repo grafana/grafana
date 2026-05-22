@@ -14,9 +14,14 @@ export function DashboardTemplateUseBanner({ dashboard }: { dashboard: Dashboard
   const styles = useStyles2(getStyles);
   const location = useLocation();
   const [searchParams] = useSearchParams();
+  const { editview } = dashboard.useState();
+  // Hide the banner on Settings tabs — settings have their own UI for template editing
+  // and the banner is redundant context there.
   const shouldRender =
-    Boolean(searchParams.get('useTemplateBanner')) && location.pathname === DASHBOARD_LIBRARY_ROUTES.Template;
-  const [dismissed, setDismissed] = useState<boolean>(!shouldRender);
+    Boolean(searchParams.get('useTemplateBanner')) &&
+    location.pathname === DASHBOARD_LIBRARY_ROUTES.Template &&
+    !editview;
+  const [dismissed, setDismissed] = useState<boolean>(false);
   const [outerTitle, setOuterTitle] = useState<string | undefined>(undefined);
 
   const dashboardTemplateUid = searchParams.get('dashboardTemplateUid') ?? undefined;
@@ -36,7 +41,7 @@ export function DashboardTemplateUseBanner({ dashboard }: { dashboard: Dashboard
     setDismissed(true);
   };
 
-  if (dismissed) {
+  if (dismissed || !shouldRender) {
     return null;
   }
 

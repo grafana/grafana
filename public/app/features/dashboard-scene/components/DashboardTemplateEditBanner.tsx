@@ -13,16 +13,19 @@ import { getDashboardTemplateExtension } from '../settings/enterprise-components
 export function DashboardTemplateEditBanner({ dashboard }: { dashboard: DashboardScene }) {
   const styles = useStyles2(getStyles);
   const location = useLocation();
-  const { meta } = dashboard.useState();
+  const { meta, editview } = dashboard.useState();
 
   const dashboardTemplateUid = meta.dashboardTemplateUid;
 
+  // Hide the banner on Settings tabs — they have their own dedicated UI for template
+  // editing, and the banner is redundant context there.
   const shouldRender =
     location.pathname === DASHBOARD_LIBRARY_ROUTES.Template &&
     Boolean(meta.isDashboardTemplate) &&
-    Boolean(dashboardTemplateUid);
+    Boolean(dashboardTemplateUid) &&
+    !editview;
 
-  const [dismissed, setDismissed] = useState<boolean>(!shouldRender);
+  const [dismissed, setDismissed] = useState<boolean>(false);
   const [outerTitle, setOuterTitle] = useState<string>();
 
   useEffect(() => {
