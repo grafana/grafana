@@ -137,7 +137,6 @@ func (s *FakeUserAuthTokenService) BatchRevokeAllUserTokens(ctx context.Context,
 }
 
 type FakeOAuthTokenService struct {
-	passThruEnabled  bool
 	ExpectedAuthUser *login.UserAuth
 	ExpectedErrors   map[string]error
 }
