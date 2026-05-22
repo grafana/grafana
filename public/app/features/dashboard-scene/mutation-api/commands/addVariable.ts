@@ -1,13 +1,15 @@
 /**
  * ADD_VARIABLE command
  *
- * Add a template variable to the dashboard using v2beta1 VariableKind format.
+ * Agent-facing ADD_VARIABLE handler. Goes through the layered architecture:
+ *   ClientCommand (validate + map) -> UserActionsService.execute -> AddVariableCommand
  */
 
 import { type z } from 'zod';
 
-import { AddVariableCommand } from '../../user-actions/commands/AddVariableCommand';
+import { MutationApiClient } from '../Client';
 
+import { AddVariableClientCommand } from './AddVariableClientCommand';
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
 
@@ -27,18 +29,22 @@ export const addVariableCommand: MutationCommand<AddVariablePayload> = {
     const { scene } = context;
     enterEditModeIfNeeded(scene);
 
-    const { variable, position } = payload;
-
-    const result = scene.userActionsService.execute(new AddVariableCommand(scene, variable, position));
+    const client = new MutationApiClient(scene, scene.userActionsService);
+    const result = await client.execute(new AddVariableClientCommand(), payload);
 
     if (!result.success) {
-      return { success: false, error: result.error ?? 'Unknown error', changes: [] };
+      return {
+        success: false,
+        error: result.error ?? 'Unknown error',
+        changes: [],
+        ...(result.locked ? { locked: true } : {}),
+      };
     }
 
     return {
       success: true,
-      data: { variable },
-      changes: [{ path: `/variables/${variable.spec.name}`, previousValue: null, newValue: variable }],
+      data: { variable: payload.variable },
+      changes: [{ path: `/variables/${payload.variable.spec.name}`, previousValue: null, newValue: payload.variable }],
     };
   },
 };

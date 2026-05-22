@@ -15,6 +15,7 @@ import type { UserActionCommand } from '../UserActionCommand';
  */
 export class AddVariableCommand implements UserActionCommand {
   title: string;
+  lockTarget = 'variables';
 
   private scene: DashboardScene;
   private variableKind: VariableKind;

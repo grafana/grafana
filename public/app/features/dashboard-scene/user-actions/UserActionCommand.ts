@@ -8,6 +8,12 @@
 export interface UserActionCommand {
   /** Human-readable label for undo/redo UI buttons (e.g. "Add variable 'env'"). */
   title: string;
+  /**
+   * Optional write-lock target this command operates against (e.g. 'variables').
+   * If the target is locked at execute() time, UserActionsService short-circuits
+   * with { success: false, locked: true } without calling perform().
+   */
+  lockTarget?: string;
   /** Apply the mutation to the Scene. */
   perform(): void;
   /** Reverse the mutation using stored data, not Scene references. */

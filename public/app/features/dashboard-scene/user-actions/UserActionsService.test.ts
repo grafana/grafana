@@ -22,10 +22,15 @@ function buildMockScene(options: { editable?: boolean } = {}): DashboardScene {
     isEditing: true,
     $variables: new SceneVariableSet({ variables: [] }),
   };
+  const writeLocks = new Set<string>();
   const scene: Record<string, unknown> = {
     state,
     canEditDashboard: jest.fn(() => editable),
     forceRender: jest.fn(),
+    publishEvent: jest.fn(),
+    acquireWriteLock: (t: string) => writeLocks.add(t),
+    releaseWriteLock: (t: string) => writeLocks.delete(t),
+    isWriteLocked: (t: string) => writeLocks.has(t),
     setState: jest.fn((partial: Record<string, unknown>) => {
       Object.assign(state, partial);
       const vars = partial.$variables;
@@ -101,6 +106,24 @@ describe('UserActionsService', () => {
       const result = service.execute(new AddVariableCommand(scene, makeVar('env')));
       expect(result.success).toBe(false);
       expect(result.error).toMatch(/already exists/);
+    });
+
+    it('returns locked:true when the target is write-locked, without mutating state', () => {
+      const scene = buildMockScene();
+      const service = new UserActionsService(scene);
+
+      scene.acquireWriteLock('variables');
+      const result = service.execute(new AddVariableCommand(scene, makeVar('env')));
+      expect(result.success).toBe(false);
+      expect(result.locked).toBe(true);
+      expect(result.error).toMatch(/locked/);
+      expect(getVariableNames(scene)).toEqual([]);
+
+      scene.releaseWriteLock('variables');
+      const result2 = service.execute(new AddVariableCommand(scene, makeVar('env')));
+      expect(result2.success).toBe(true);
+      expect(result2.locked).toBe(false);
+      expect(getVariableNames(scene)).toEqual(['env']);
     });
 
     it('clears the redo stack on a new action', () => {
