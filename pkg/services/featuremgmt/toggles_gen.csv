@@ -259,7 +259,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-08-29,cdnPluginsUrls,experimental,@grafana/grafana-catalog,false,false,false
 2025-10-24,pluginInstallAPISync,experimental,@grafana/grafana-catalog,false,false,false
 2026-05-05,grafana.dedicatedGrafanaComProxyAPIToken,experimental,@grafana/grafana-catalog,false,false,false
-2025-11-12,newVizSuggestions,GA,@grafana/dataviz-squad,false,false,true
 2026-02-18,panelStyleActions,GA,@grafana/dataviz-squad,false,false,true
 2026-02-18,vizPresets,GA,@grafana/dataviz-squad,false,false,true
 2026-03-06,nestedFramesFieldOverrides,preview,@grafana/dataviz-squad,false,false,true
