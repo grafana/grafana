@@ -15,7 +15,7 @@ func ToModel(in *definitions.PostableUserConfig) *AMConfigV1 {
 		return nil
 	}
 	return &AMConfigV1{
-		TemplateFiles:          maps.Clone(in.TemplateFiles),
+		Templates:              TemplateFilesToTemplates(in.TemplateFiles, TemplateKindGrafana),
 		AlertmanagerConfig:     PostableApiAlertingConfigToModel(in.AlertmanagerConfig),
 		ExtraConfigs:           ExtraConfigsToModel(in.ExtraConfigs),
 		ManagedRoutes:          ManagedRoutesToModel(in.ManagedRoutes),
@@ -197,7 +197,7 @@ func ToDBModel(in *AMConfigV1) *AMConfigDB {
 		return nil
 	}
 	return &AMConfigDB{
-		TemplateFiles:          maps.Clone(in.TemplateFiles),
+		TemplateFiles:          TemplatesToTemplateFiles(in.Templates),
 		AlertmanagerConfig:     PostableApiAlertingConfigToDB(in.AlertmanagerConfig),
 		ExtraConfigs:           ExtraConfigsToDB(in.ExtraConfigs),
 		ManagedRoutes:          ManagedRoutesToDB(in.ManagedRoutes),
