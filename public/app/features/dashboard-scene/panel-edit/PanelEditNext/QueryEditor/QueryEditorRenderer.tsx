@@ -3,7 +3,7 @@ import { useCallback, useMemo } from 'react';
 import { CoreApp, DataSourcePluginContextProvider } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { type DataQuery } from '@grafana/schema';
-import { Alert, Spinner, Stack, Text } from '@grafana/ui';
+import { Alert, ErrorBoundaryAlert, Spinner, Stack, Text } from '@grafana/ui';
 import { filterPanelDataToQuery } from 'app/features/query/components/QueryEditorRow';
 import { QueryErrorAlert } from 'app/features/query/components/QueryErrorAlert';
 
@@ -73,18 +73,20 @@ export function QueryEditorRenderer() {
   return (
     <>
       <DataSourcePluginContextProvider instanceSettings={dsSettings}>
-        <QueryEditorComponent
-          key={selectedQuery.refId}
-          app={CoreApp.Dashboard}
-          data={filteredData}
-          datasource={datasource}
-          onAddQuery={addQuery}
-          onChange={handleChange}
-          onRunQuery={runQueries}
-          queries={queries}
-          query={selectedQuery}
-          range={filteredData?.timeRange}
-        />
+        <ErrorBoundaryAlert boundaryName="query-editor-renderer">
+          <QueryEditorComponent
+            key={selectedQuery.refId}
+            app={CoreApp.PanelEditor}
+            data={filteredData}
+            datasource={datasource}
+            onAddQuery={addQuery}
+            onChange={handleChange}
+            onRunQuery={runQueries}
+            queries={queries}
+            query={selectedQuery}
+            range={filteredData?.timeRange}
+          />
+        </ErrorBoundaryAlert>
       </DataSourcePluginContextProvider>
       {error && <QueryErrorAlert error={error} />}
     </>
