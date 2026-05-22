@@ -27,6 +27,7 @@ import { ProvisionedImportForm } from './ProvisionedImportForm';
 export type ProvisionedImportFormData = {
   title: string;
   uid: string;
+  folderUid: string;
   workflow?: string;
   ref: string;
   path: string;
@@ -75,13 +76,14 @@ export function ProvisionedImportOverview({
     return {
       title,
       uid: dashboardUid ?? '',
+      folderUid,
       workflow: getDefaultWorkflow(repository),
       ref: getDefaultRef(repository, 'import'),
       path: generatePath({ timestamp: generateTimestamp(), slug }),
       comment: '',
       repo: repository.name,
     };
-  }, [title, dashboardUid, repository]);
+  }, [title, dashboardUid, folderUid, repository]);
 
   const methods = useForm<ProvisionedImportFormData>({
     defaultValues,
@@ -97,7 +99,7 @@ export function ProvisionedImportOverview({
       spec,
       apiVersion: isV2 ? 'v2' : 'v1',
       uid: form.uid || undefined,
-      folderUid,
+      folderUid: form.folderUid,
       title: form.title,
       form: {
         ref: form.ref,
@@ -139,7 +141,7 @@ export function ProvisionedImportOverview({
         return selected && typeof selected === 'object' ? selected : {};
       }) as ImportDashboardDTO['dataSources'],
       elements: [],
-      folder: { uid: folderUid },
+      folder: { uid: form.folderUid },
     };
 
     const dashboardWithInputs = applyV1Inputs(dash, inputs, v1Form);

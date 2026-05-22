@@ -10,6 +10,7 @@ import { getUidFieldDescription, getUidFieldLabel } from 'app/features/manage-da
 import { type DashboardInput, type DashboardInputs, type DataSourceInput } from 'app/features/manage-dashboards/types';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
+import { ProvisioningAwareFolderPicker } from '../Shared/ProvisioningAwareFolderPicker';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 
@@ -92,6 +93,22 @@ export function ProvisionedImportForm({
         />
       </Field>
 
+      {/* Folder (Grafana target folder) */}
+      <Field label={t('provisioning.import.label-folder', 'Folder')} noMargin>
+        <Controller
+          name="folderUid"
+          control={control}
+          render={({ field: { ref, value, onChange, ...field } }) => (
+            <ProvisioningAwareFolderPicker
+              {...field}
+              onChange={(uid) => onChange(uid ?? '')}
+              value={typeof value === 'string' ? value : ''}
+              repositoryName={repository?.name}
+            />
+          )}
+        />
+      </Field>
+
       {/* UID */}
       <Field
         label={getUidFieldLabel()}
@@ -169,13 +186,14 @@ export function ProvisionedImportForm({
         );
       })}
 
-      {/* Provisioning fields (branch, path, comment) */}
+      {/* Provisioning fields (branch, filename, comment) */}
       {!isLibraryPanelImportBlocked && !isReadOnlyRepo && !isOrphaned && (
         <ResourceEditFormSharedFields
           resourceType="dashboard"
           isNew
           canPushToConfiguredBranch={canPushToConfiguredBranch}
           repository={repository}
+          hiddenFields={['folder']}
         />
       )}
 

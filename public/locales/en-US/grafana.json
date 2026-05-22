@@ -13595,6 +13595,7 @@
       "float-grid-items-title": "Floating grid items",
       "import": "Import",
       "importing": "Importing...",
+      "label-folder": "Folder",
       "label-name": "Name",
       "library-panels-blocked-body": "This dashboard contains library panels that cannot be created through a provisioned import. Import into a non-provisioned folder instead, or remove the library panel references first.",
       "library-panels-blocked-title": "Library panels not supported",
