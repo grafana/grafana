@@ -6386,6 +6386,8 @@
         "ungroup-tabs": "Ungroup tabs"
       },
       "name": "Tabs",
+      "scroll-tabs-left": "Scroll tabs left",
+      "scroll-tabs-right": "Scroll tabs right",
       "tab": {
         "new": "New tab",
         "repeat": {
@@ -6483,6 +6485,10 @@
         },
         "save-dashboard-short": "Save",
         "save-library-panel": "Save library panel",
+        "save-template": {
+          "label": "Save",
+          "tooltip": "Save template changes"
+        },
         "share": {
           "arrow": "Share",
           "tooltip": "Copy link"
@@ -6496,6 +6502,9 @@
       "read-only": "Read only",
       "refresh": "Refresh dashboard",
       "save": "Save dashboard",
+      "save-as-template": {
+        "label": "Save as template"
+      },
       "save-dashboard": {
         "label": "Save dashboard",
         "tooltip": "Save changes"
@@ -7528,7 +7537,9 @@
         "label-details": "Details",
         "title": "Save dashboard",
         "title-copy": "Save dashboard copy",
-        "title-provisioned": "Provisioned dashboard"
+        "title-provisioned": "Provisioned dashboard",
+        "title-template": "Save as template",
+        "title-update-template": "Save template"
       }
     },
     "save-dashboard-form": {
@@ -11995,6 +12006,9 @@
     "admin": {
       "subtitle": "Manage server-wide settings and access to resources such as organizations, users, and licenses",
       "title": "Server admin"
+    },
+    "agentic-testing": {
+      "title": "Agentic testing"
     },
     "alert-list-legacy": {
       "title": "Alert rules"

@@ -720,6 +720,7 @@ func (s *TeamK8sService) GetTeamByID(ctx context.Context, query *team.GetTeamByI
 		Email:         fetched.Spec.Email,
 		ExternalUID:   fetched.Spec.ExternalUID,
 		IsProvisioned: fetched.Spec.Provisioned,
+		MemberCount:   int64(len(fetched.Spec.Members)),
 	}, nil
 }
 

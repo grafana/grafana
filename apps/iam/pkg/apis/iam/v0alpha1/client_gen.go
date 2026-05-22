@@ -1,9 +1,11 @@
 package v0alpha1
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 
@@ -28,6 +30,36 @@ func NewCustomRouteClientFromGenerator(generator resource.ClientGenerator, defau
 		return nil, err
 	}
 	return NewCustomRouteClient(client), nil
+}
+
+type CreateSearchExternalGroupMappingsRequest struct {
+	Params  CreateSearchExternalGroupMappingsRequestParams
+	Body    CreateSearchExternalGroupMappingsRequestBody
+	Headers http.Header
+}
+
+func (c *CustomRouteClient) CreateSearchExternalGroupMappings(ctx context.Context, namespace string, request CreateSearchExternalGroupMappingsRequest) (*CreateSearchExternalGroupMappingsResponse, error) {
+	params := url.Values{}
+	body, err := json.Marshal(request.Body)
+	if err != nil {
+		return nil, fmt.Errorf("unable to marshal body to JSON: %w", err)
+	}
+	resp, err := c.NamespacedRequest(ctx, namespace, resource.CustomRouteRequestOptions{
+		Path:    "/searchExternalGroupMappings",
+		Verb:    "POST",
+		Query:   params,
+		Body:    io.NopCloser(bytes.NewReader(body)),
+		Headers: request.Headers,
+	})
+	if err != nil {
+		return nil, err
+	}
+	cast := CreateSearchExternalGroupMappingsResponse{}
+	err = json.Unmarshal(resp, &cast)
+	if err != nil {
+		return nil, fmt.Errorf("unable to unmarshal response bytes into CreateSearchExternalGroupMappingsResponse: %w", err)
+	}
+	return &cast, nil
 }
 
 type GetSearchTeamsRequest struct {
