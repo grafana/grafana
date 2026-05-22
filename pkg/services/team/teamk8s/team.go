@@ -717,6 +717,16 @@ func (s *TeamK8sService) GetTeamByID(ctx context.Context, query *team.GetTeamByI
 		return nil, err
 	}
 
+	// Mirror the legacy `SELECT COUNT(*) FROM team_member` join by counting
+	// User entries in spec.members. Other Kinds (e.g. ServiceAccount) aren't
+	// counted because the legacy query is filtered to user_id rows.
+	var memberCount int64
+	for _, m := range fetched.Spec.Members {
+		if m.Kind == subjectKindUser {
+			memberCount++
+		}
+	}
+
 	return &team.TeamDTO{
 		ID:            deprecatedInternalID(&fetched),
 		UID:           fetched.Name,
@@ -725,6 +735,7 @@ func (s *TeamK8sService) GetTeamByID(ctx context.Context, query *team.GetTeamByI
 		Email:         fetched.Spec.Email,
 		ExternalUID:   fetched.Spec.ExternalUID,
 		IsProvisioned: fetched.Spec.Provisioned,
+		MemberCount:   memberCount,
 	}, nil
 }
 
