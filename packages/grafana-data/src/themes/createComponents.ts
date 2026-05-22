@@ -71,7 +71,7 @@ export function createComponents(colors: ThemeColors, shadows: ThemeShadows): Th
     headerHeight: 5,
     background: colors.background.subtle,
     borderColor: colors.border.subtle,
-    contentBackground: colors.background.primary,
+    contentBackground: colors.background.secondary,
     contentBorderColor: colors.border.primary,
     boxShadow: 'none',
   };

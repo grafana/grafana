@@ -73,6 +73,7 @@ export const getDragStyles = (theme: GrafanaTheme2, handlePosition?: DragHandleP
     borderTop: '1px solid transparent',
     top: horizontalOffset,
     transform: 'translateY(-50%)',
+    width: '100%',
   };
 
   return {

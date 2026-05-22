@@ -120,6 +120,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     whiteSpace: 'nowrap',
     cursor: 'pointer',
     padding: '6px 8px 4px',
+    borderRadius: theme.shape.radius.default,
 
     '&:hover': {
       background: theme.colors.action.hover,
