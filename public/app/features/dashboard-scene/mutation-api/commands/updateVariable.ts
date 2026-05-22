@@ -28,6 +28,12 @@ export const updateVariableCommand: MutationCommand<UpdateVariablePayload> = {
   readOnly: false,
   undoDomain: 'variables',
   lockTarget: 'variables',
+  // Concept: coalesce rapid updates to the same variable into one undo entry.
+  // Typing in a label/name field produces many UPDATE_VARIABLE calls; without
+  // this hint each keystroke is a separate undo step.
+  canCoalesceWith: (previousPayload, gapMs) => {
+    return gapMs < 500 && previousPayload.name === previousPayload.name;
+  },
 
   handler: async (payload, context) => {
     const { scene } = context;

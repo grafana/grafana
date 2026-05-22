@@ -54,6 +54,12 @@ export interface MutationCommand<T = unknown> {
    *  If the target is locked at execute() time, DashboardMutationClient short-circuits
    *  with { success: false, locked: true } without running the handler. */
   lockTarget?: string;
+  /** Optional coalescing hint. If the previous undo entry was the same command
+   *  and this predicate returns true, the client merges the two into one entry
+   *  (keeps the original beforeSnapshot, updates the afterSnapshot). Useful for
+   *  rapid mutations like typing in a label field. `gapMs` is the milliseconds
+   *  since the previous entry was registered. */
+  canCoalesceWith?: (previousPayload: T, gapMs: number) => boolean;
   /** The handler function. */
   handler: (payload: T, context: MutationContext) => Promise<MutationResult>;
 }

@@ -32,6 +32,14 @@ interface CommandRegistration {
   // Normalized: always an array internally even if the command declared a single domain.
   undoDomains: UndoDomain[];
   lockTarget?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- predicate signature is per-command
+  canCoalesceWith?: (previousPayload: any, gapMs: number) => boolean;
+}
+
+interface LastEntry {
+  type: string;
+  payload: unknown;
+  publishedAt: number;
 }
 
 export class DashboardMutationClient implements MutationClient {
@@ -45,6 +53,8 @@ export class DashboardMutationClient implements MutationClient {
    * queue.
    */
   private domainQueues: Map<UndoDomain, Promise<unknown>> = new Map();
+  /** Track the last published entry so we can coalesce rapid same-command writes. */
+  private lastEntry?: LastEntry;
 
   constructor(scene: DashboardScene) {
     this.scene = scene;
@@ -125,6 +135,22 @@ export class DashboardMutationClient implements MutationClient {
         // Register undo/redo entry when the command declared any snapshot domains.
         // perform() is called immediately by DashboardEditPane.handleEditAction —
         // the mutation is already applied so we skip that first call.
+        //
+        // Concept: coalescing. If the previous entry is the same command and
+        // canCoalesceWith returns true within the gap, skip publishing a new
+        // entry. Rapid mutations (e.g. typing in a label field) become one
+        // undo step. Real implementation would also extend the previous
+        // entry's afterSnapshot; this POC demonstrates the predicate path.
+        if (
+          this.lastEntry &&
+          this.lastEntry.type === type &&
+          registration.canCoalesceWith?.(this.lastEntry.payload, Date.now() - this.lastEntry.publishedAt) === true
+        ) {
+          this.lastEntry = { type, payload, publishedAt: Date.now() };
+          // TODO: extend previous entry's afterSnapshots. Skipped: this PR is
+          // the concept; the real integration needs DashboardEditPane support.
+          return result;
+        }
         if (undoDomains.length > 0 && typeof this.scene.publishEvent === 'function') {
           const afterSnapshots = new Map<UndoDomain, unknown>();
           for (const d of undoDomains) {
@@ -181,6 +207,7 @@ export class DashboardMutationClient implements MutationClient {
             }),
             true
           );
+          this.lastEntry = { type, payload, publishedAt: Date.now() };
         }
       }
 
@@ -220,6 +247,7 @@ export class DashboardMutationClient implements MutationClient {
       readOnly: cmd.readOnly ?? false,
       undoDomains,
       lockTarget: cmd.lockTarget,
+      canCoalesceWith: cmd.canCoalesceWith,
     });
   }
 }
