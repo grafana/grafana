@@ -110,7 +110,7 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 	}
 
 	parentName := meta.GetFolder()
-	if parentName == "" {
+	if folder.IsRootFolderUID(parentName) {
 		return nil // OK, we do not need to validate the tree
 	}
 
@@ -164,6 +164,11 @@ func validateOnUpdate(ctx context.Context,
 		return nil
 	}
 
+	// the k6 folder itself may not be moved (matches legacy folder.Service.Move)
+	if obj.Name == accesscontrol.K6FolderUID {
+		return folder.ErrBadRequest.Errorf("k6 project may not be moved")
+	}
+
 	// Validate the move operation
 	newParent := folderObj.GetFolder()
 
@@ -171,11 +176,11 @@ func validateOnUpdate(ctx context.Context,
 	// before and wasn't too deep. This move will make it more shallow.
 	//
 	// We also don't need to validate circular references because the root folder cannot have a parent.
-	if newParent == folder.RootFolderUID {
+	if folder.IsRootFolderUID(newParent) {
 		return nil
 	}
 
-	// folder cannot be moved to a k6 folder
+	// folder cannot be moved into the k6 folder
 	if newParent == accesscontrol.K6FolderUID {
 		return folder.ErrFolderCannotBeMovedToK6.Errorf("k6 project may not be moved")
 	}
@@ -229,7 +234,7 @@ func validateOnUpdate(ctx context.Context,
 // If the old parent depth is >= the new parent depth, the folder was already valid
 // and this move won't make descendants exceed max depth.
 func canSkipChildrenCheck(ctx context.Context, oldFolder utils.GrafanaMetaAccessor, getter rest.Getter, parents parentsGetter, newParentDepth int) bool {
-	if oldFolder.GetFolder() == folder.RootFolderUID {
+	if folder.IsRootFolderUID(oldFolder.GetFolder()) {
 		return false
 	}
 
