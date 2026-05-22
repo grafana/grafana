@@ -6744,6 +6744,7 @@
       "sort-placeholder": "Sort"
     },
     "dashboard-card": {
+      "created-by-label": "Created by:",
       "details": {
         "datasource": "Datasource",
         "dependencies": "Dependencies",
