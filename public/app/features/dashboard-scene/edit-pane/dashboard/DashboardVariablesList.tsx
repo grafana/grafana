@@ -80,9 +80,11 @@ export function DashboardVariablesList({
       <DraggableList
         items={visible}
         droppableId={ID_VISIBLE_LIST}
-        title={t('dashboard-scene.variables-list.title-top-placement', '{{placement}} ({{count}})', {
+        title={t('dashboard-scene.variables-list.title-top-placement', '', {
           placement: resolvedTopPlacementLabel,
           count: visible.length,
+          defaultValue_one: '{{placement}} ({{count}})',
+          defaultValue_other: '{{placement}} ({{count}})',
         })}
         onClickItem={onClickVariable}
         renderItemLabel={renderItemLabel}
@@ -90,8 +92,10 @@ export function DashboardVariablesList({
       <DraggableList
         items={controlsMenu}
         droppableId={ID_CONTROLS_MENU_LIST}
-        title={t('dashboard-scene.variables-list.title-controls-menu', 'Controls menu ({{count}})', {
+        title={t('dashboard-scene.variables-list.title-controls-menu', '', {
           count: controlsMenu.length,
+          defaultValue_one: 'Controls menu ({{count}})',
+          defaultValue_other: 'Controls menu ({{count}})',
         })}
         onClickItem={onClickVariable}
         renderItemLabel={renderItemLabel}
@@ -99,7 +103,11 @@ export function DashboardVariablesList({
       <DraggableList
         items={hidden}
         droppableId={ID_HIDDEN_LIST}
-        title={t('dashboard-scene.variables-list.title-hidden', 'Hidden ({{count}})', { count: hidden.length })}
+        title={t('dashboard-scene.variables-list.title-hidden', '', {
+          count: hidden.length,
+          defaultValue_one: 'Hidden ({{count}})',
+          defaultValue_other: 'Hidden ({{count}})',
+        })}
         onClickItem={onClickVariable}
         renderItemLabel={renderItemLabel}
       />

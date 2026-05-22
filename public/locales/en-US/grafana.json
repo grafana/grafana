@@ -6386,6 +6386,8 @@
         "ungroup-tabs": "Ungroup tabs"
       },
       "name": "Tabs",
+      "scroll-tabs-left": "Scroll tabs left",
+      "scroll-tabs-right": "Scroll tabs right",
       "tab": {
         "new": "New tab",
         "repeat": {
@@ -11999,6 +12001,9 @@
     "admin": {
       "subtitle": "Manage server-wide settings and access to resources such as organizations, users, and licenses",
       "title": "Server admin"
+    },
+    "agentic-testing": {
+      "title": "Agentic testing"
     },
     "alert-list-legacy": {
       "title": "Alert rules"

@@ -75,7 +75,12 @@ export function useEditOptions(this: RowItem, isNewElement: boolean): OptionsPan
 
   const layoutCategory = useLayoutCategory(layout);
 
-  const sectionVariablesEnabled = useBooleanFlagValue('dashboardSectionVariables', false);
+  // OpenFeature is not initialized for anonymous users, so fall back to
+  // the static feature toggle to ensure section variables work without auth.
+  const sectionVariablesEnabled = useBooleanFlagValue(
+    'dashboardSectionVariables',
+    Boolean(config.featureToggles.dashboardSectionVariables)
+  );
   const sectionVariablesCategory = useMemo(() => {
     const category = new OptionsPaneCategoryDescriptor({
       title: t('dashboard.rows-layout.row-options.section-variables.title', 'Variables'),
