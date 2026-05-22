@@ -9,7 +9,7 @@ import { useStyles2 } from '../../themes/ThemeContext';
 import { hoverColor } from '../../themes/mixins';
 
 import { VizLegendSeriesIcon } from './VizLegendSeriesIcon';
-import { type VizLegendItem } from './types';
+import { VizLegendNameOverflow, type VizLegendItem } from './types';
 
 export interface Props {
   key?: React.Key;
@@ -26,7 +26,7 @@ export interface Props {
   ) => void;
   readonly?: boolean;
   hasMixedAxes?: boolean;
-  wrapName?: boolean;
+  nameOverflow?: VizLegendNameOverflow;
 }
 
 /**
@@ -40,9 +40,9 @@ export const LegendTableItem = ({
   className,
   readonly,
   hasMixedAxes,
-  wrapName = false,
+  nameOverflow,
 }: Props) => {
-  const styles = useStyles2(getStyles, wrapName);
+  const styles = useStyles2(getStyles, nameOverflow);
 
   const onMouseOver = useCallback(
     (event: React.MouseEvent<HTMLButtonElement, MouseEvent> | React.FocusEvent<HTMLButtonElement>) => {
@@ -115,7 +115,7 @@ export const LegendTableItem = ({
 
 LegendTableItem.displayName = 'LegendTableItem';
 
-const getStyles = (theme: GrafanaTheme2, wrapName = false) => {
+const getStyles = (theme: GrafanaTheme2, nameOverflow?: VizLegendNameOverflow) => {
   const rowHoverBg = hoverColor(theme.colors.background.primary, theme);
 
   return {
@@ -134,7 +134,7 @@ const getStyles = (theme: GrafanaTheme2, wrapName = false) => {
     }),
     label: css({
       label: 'LegendLabel',
-      whiteSpace: wrapName ? 'normal' : 'nowrap',
+      whiteSpace: nameOverflow === VizLegendNameOverflow.Wrap ? 'normal' : 'nowrap',
       textAlign: 'left',
       background: 'none',
       border: 'none',
