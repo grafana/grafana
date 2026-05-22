@@ -13,6 +13,8 @@
  * 3. Payload validation (does the payload match the Zod schema?)
  */
 
+import type { SceneObject } from '@grafana/scenes';
+
 import { DashboardEditActionEvent } from '../edit-pane/events';
 import type { DashboardScene } from '../scene/DashboardScene';
 
@@ -119,14 +121,21 @@ export class DashboardMutationClient implements MutationClient {
         // Register undo/redo entry when the command declared a snapshot domain.
         // perform() is called immediately by DashboardEditPane.handleEditAction —
         // the mutation is already applied so we skip that first call.
-        if (undoDomain && beforeSnapshot && typeof this.scene.publishEvent === 'function') {
+        if (undoDomain && beforeSnapshot !== undefined && typeof this.scene.publishEvent === 'function') {
           const afterSnapshot = this.snapshotDomain(undoDomain);
           let firstPerform = true;
+
+          // Concept: diff before/after by reference identity to derive selection
+          // hints (added / removed scene objects). Lets the edit pane drive
+          // post-mutation selection updates without the handler returning them.
+          const { addedObject, removedObject } = diffSceneObjects(beforeSnapshot, afterSnapshot);
 
           this.scene.publishEvent(
             new DashboardEditActionEvent({
               source: this.scene,
               description: type,
+              addedObject,
+              removedObject,
               perform: () => {
                 if (firstPerform) {
                   firstPerform = false;
@@ -173,4 +182,32 @@ export class DashboardMutationClient implements MutationClient {
       lockTarget: cmd.lockTarget,
     });
   }
+}
+
+/**
+ * Diff two snapshot arrays by reference identity to find what was added/removed.
+ * Used to populate `addedObject` / `removedObject` on the published edit-action
+ * event so the edit pane can drive selection updates.
+ *
+ * Only meaningful for array-shaped snapshots; non-array snapshots return empty.
+ */
+function diffSceneObjects(
+  before: unknown,
+  after: unknown
+): {
+  addedObject?: SceneObject;
+  removedObject?: SceneObject;
+} {
+  if (!Array.isArray(before) || !Array.isArray(after)) {
+    return {};
+  }
+  const beforeSet = new Set(before);
+  const afterSet = new Set(after);
+  const added = after.find((item): item is SceneObject => !beforeSet.has(item) && isSceneObjectLike(item));
+  const removed = before.find((item): item is SceneObject => !afterSet.has(item) && isSceneObjectLike(item));
+  return { addedObject: added, removedObject: removed };
+}
+
+function isSceneObjectLike(item: unknown): item is SceneObject {
+  return typeof item === 'object' && item !== null && 'state' in item;
 }
