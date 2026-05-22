@@ -45,6 +45,10 @@
       "types": "./src/matchers/index.ts",
       "import": "./src/matchers/index.ts",
       "require": "./src/matchers/index.ts"
+    },
+    "./canvas": {
+      "import": "./src/canvas/index.ts",
+      "require": "./src/canvas/index.ts"
     }
   },
   "scripts": {

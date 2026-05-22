@@ -420,7 +420,7 @@ func (s *ModuleServer) initOperatorServer() (services.Service, error) {
 						Registerer:     s.registerer,
 						HealthNotifier: s.healthNotifier,
 					}
-					return op.RunFunc(deps)
+					return op.RunFunc(ctx, deps)
 				},
 				nil,
 			).WithName("operator"), nil
