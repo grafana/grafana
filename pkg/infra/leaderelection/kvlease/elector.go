@@ -152,13 +152,14 @@ func (k *Elector) runAsLeader(
 ) {
 	leaderCtx, leaderCancel := context.WithCancel(ctx)
 	defer leaderCancel()
+	defer o.OnStoppedLeading()
 
-	o.OnStartedLeading(leaderCtx)
+	go o.OnStartedLeading(leaderCtx)
 
 	done := make(chan struct{})
 	go func() {
+		defer close(done)
 		fn(leaderCtx)
-		close(done)
 	}()
 
 	select {
@@ -168,7 +169,7 @@ func (k *Elector) runAsLeader(
 	}
 
 	leaderCancel()
-	o.OnStoppedLeading()
+	<-done
 
 	if o.ReleaseOnCancel && ctx.Err() != nil {
 		releaseCtx, releaseCancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -177,6 +178,4 @@ func (k *Elector) runAsLeader(
 		}
 		releaseCancel()
 	}
-
-	<-done
 }
