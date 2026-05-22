@@ -1,6 +1,8 @@
 package search
 
 import (
+	"bytes"
+	"encoding/binary"
 	"fmt"
 
 	"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
@@ -22,6 +24,7 @@ func ParseResults(result *resourcepb.ResourceSearchResponse, offset int64) (v0al
 	emailIDX := -1
 	provisionedIDX := -1
 	externalUIDIDX := -1
+	legacyIDIDX := -1
 
 	for i, v := range result.Results.Columns {
 		if v == nil {
@@ -31,6 +34,8 @@ func ParseResults(result *resourcepb.ResourceSearchResponse, offset int64) (v0al
 		switch v.Name {
 		case resource.SEARCH_FIELD_TITLE:
 			titleIDX = i
+		case resource.SEARCH_FIELD_LEGACY_ID:
+			legacyIDIDX = i
 		case builders.TEAM_SEARCH_EMAIL:
 			emailIDX = i
 		case builders.TEAM_SEARCH_PROVISIONED:
@@ -75,6 +80,13 @@ func ParseResults(result *resourcepb.ResourceSearchResponse, offset int64) (v0al
 
 		if externalUIDIDX >= 0 && row.Cells[externalUIDIDX] != nil {
 			hit.ExternalUID = string(row.Cells[externalUIDIDX])
+		}
+
+		if legacyIDIDX >= 0 && len(row.Cells[legacyIDIDX]) == 8 {
+			var id int64
+			if err := binary.Read(bytes.NewReader(row.Cells[legacyIDIDX]), binary.BigEndian, &id); err == nil && id != 0 {
+				hit.Id = &id
+			}
 		}
 
 		sr.Hits[i] = *hit

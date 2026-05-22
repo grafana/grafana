@@ -668,6 +668,13 @@ func schema_pkg_apis_iam_v0alpha1_GetSearchTeamsTeamHit(ref common.ReferenceCall
 							Format:  "",
 						},
 					},
+					"id": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Deprecated legacy team id; included for parity with the legacy /api/teams/search response.",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
 					"title": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",

@@ -63,7 +63,9 @@ v0alpha1: {
 					}
 					response: {
 						#TeamHit: {
-							name:         string
+							name: string
+							// Deprecated legacy team id; included for parity with the legacy /api/teams/search response.
+							id?:          int64
 							title:        string
 							email:        string
 							provisioned:  bool
