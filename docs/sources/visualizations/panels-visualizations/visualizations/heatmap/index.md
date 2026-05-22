@@ -107,9 +107,7 @@ The following options control how data in the heatmap is calculated and grouped.
 
 <!-- prettier-ignore-end -->
 
-{{< admonition type="note" >}}
-The **Y Bucket scale** option for pre-bucketed data requires the `heatmapRowsAxisOptions` [feature flag](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/) to be enabled. This is an experimental feature that's disabled by default.
-{{< /admonition >}}
+{{< docs/public-preview product="The **Y Bucket scale** option for pre-bucketed data" featureFlag="`heatmapRowsAxisOptions`" >}}
 
 ### Y-Axis options
 
