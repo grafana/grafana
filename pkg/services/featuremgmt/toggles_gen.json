@@ -3086,12 +3086,15 @@
     {
       "metadata": {
         "name": "heatmapRowsAxisOptions",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-12-18T22:45:00Z"
+        "resourceVersion": "1779473680521",
+        "creationTimestamp": "2025-12-18T22:45:00Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-05-22 18:14:40.521505 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
         "expression": "false"
@@ -6609,15 +6612,18 @@
     {
       "metadata": {
         "name": "vizLegendFacetedFilter",
-        "resourceVersion": "1773129262183",
-        "creationTimestamp": "2026-03-10T07:54:22Z"
+        "resourceVersion": "1779387149240",
+        "creationTimestamp": "2026-03-10T07:54:22Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-05-21 18:12:29.240952 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable faceted labels filter for series visibility in the legend",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
