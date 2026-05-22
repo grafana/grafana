@@ -15,6 +15,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/klog/v2"
 
@@ -25,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/services/folder"
 )
 
 type objectForStorage struct {
@@ -79,6 +81,29 @@ func (v *objectForStorage) finish(ctx context.Context, err error, secrets secret
 	return nil
 }
 
+// verifyFolder enforces the folder-annotation contract on write. When folder
+// support is disabled, any folder annotation is a validation error (422): the
+// resource does not live in the folder tree at all. When folder support is
+// enabled, the annotation is accepted as-is.
+func (s *Storage) verifyFolder(obj utils.GrafanaMetaAccessor) error {
+	if s.opts.EnableFolderSupport {
+		return nil
+	}
+	if obj.GetFolder() == "" {
+		return nil
+	}
+	return apierrors.NewInvalid(
+		obj.GetGroupVersionKind().GroupKind(),
+		obj.GetName(),
+		field.ErrorList{
+			field.Forbidden(
+				field.NewPath("metadata", "annotations").Key(utils.AnnoKeyFolder),
+				fmt.Sprintf("folders are not supported for %s", s.gr.String()),
+			),
+		},
+	)
+}
+
 // Called on create
 func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime.Object) (objectForStorage, error) {
 	v := objectForStorage{}
@@ -103,8 +128,8 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	if obj.GetUID() == "" {
 		obj.SetUID(types.UID(uuid.NewString()))
 	}
-	if obj.GetFolder() != "" && !s.opts.EnableFolderSupport {
-		return v, apierrors.NewBadRequest(fmt.Sprintf("folders are not supported for: %s", s.gr.String()))
+	if err = s.verifyFolder(obj); err != nil {
+		return v, err
 	}
 	if s.opts.MaximumNameLength > 0 && len(obj.GetName()) > s.opts.MaximumNameLength {
 		return v, apierrors.NewBadRequest(fmt.Sprintf("name exceeds maximum length (%d)", s.opts.MaximumNameLength))
@@ -213,10 +238,9 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 
 	// Check if we should bump the generation
 	if obj.GetFolder() != previous.GetFolder() {
-		if !s.opts.EnableFolderSupport {
-			return v, apierrors.NewBadRequest(fmt.Sprintf("folders are not supported for: %s", s.gr.String()))
+		if err = s.verifyFolder(obj); err != nil {
+			return v, err
 		}
-		// TODO: check that we can move the folder?
 		if err := s.ensureRepoManagedByParentFolder(ctx, obj); err != nil {
 			return v, err
 		}
@@ -270,7 +294,7 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 }
 
 func (s *Storage) ensureRepoManagedByParentFolder(ctx context.Context, obj utils.GrafanaMetaAccessor) error {
-	if !s.opts.EnableFolderSupport || obj.GetFolder() == "" {
+	if !s.opts.EnableFolderSupport || folder.IsRootFolderUID(obj.GetFolder()) {
 		return nil
 	}
 	folder, err := s.getParentFolder(ctx, obj)

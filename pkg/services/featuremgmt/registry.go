@@ -381,6 +381,15 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:         "kubernetesFolderCascadeDelete",
+			Description:  "Enable folder.grafana.app cascade deletion: opt-in non-empty delete via gracePeriodSeconds=0. Until cascade reconciliation exists, deleting a non-empty folder removes only the folder and leaves child dashboards, nested folders, and other contained resources orphaned",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSearchAndStorageSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{LegacyGo: true},
+		},
+		{
 			Name:            "kubernetesAnnotationsClient",
 			Description:     "Enables usage of the new annotations API client",
 			Stage:           FeatureStageExperimental,
@@ -2221,14 +2230,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "newVizSuggestions",
-			Description: "Enable new visualization suggestions",
-			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaDatavizSquad,
-			Expression:  "true",
-		},
-		{
 			Name:        "panelStyleActions",
 			Description: "Enable style actions (copy/paste) in the panel editor",
 			Stage:       FeatureStageExperimental,
@@ -3077,6 +3078,15 @@ var (
 			Generate:     Generate{Go: true},
 		},
 		{
+			Name:         "grafana.meticulousAIMode",
+			Description:  `Controls the Meticulous AI session recorder. One of "off", "on-prod-env" (recorder enabled, production-environment behaviour), or "on-dev-env" (recorder enabled, high-volume/development behaviour).`,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "off",
+			HideFromDocs: true,
+			Generate:     Generate{Go: true},
+		},
+		{
 			Name:        "datasources.useNewStackInfoToSettingsCache",
 			Description: "Use the new cache for datasource.StackInfoToSettings, backend flag",
 			Stage:       FeatureStageGeneralAvailability,
@@ -3136,6 +3146,15 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{React: true},
+		},
+		{
+			Name:         "frontendService.reducedBootDataAPI",
+			Description:  "Frontend Service doesn't rely on the /bootdata API, instead loads configuration as needed",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//

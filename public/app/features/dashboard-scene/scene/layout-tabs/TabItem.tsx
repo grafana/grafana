@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 
 import { store } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -75,7 +75,7 @@ export class TabItem
   public readonly dashboardLayoutItemType = 'tab';
   private _filtersSet?: SectionFiltersSet;
 
-  public containerRef = React.createRef<HTMLDivElement>();
+  public containerRef: React.MutableRefObject<HTMLDivElement | null> = { current: null };
 
   constructor(state?: Partial<TabItemState>) {
     super({
@@ -119,7 +119,12 @@ export class TabItem
     const layoutChildren = this.state.layout.getOutlineChildren();
     if (
       isEditing &&
-      getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardSectionVariables, false) &&
+      // OpenFeature is not initialized for anonymous users, so fall back to
+      // the static feature toggle to ensure section variables work without auth.
+      getFeatureFlagClient().getBooleanValue(
+        FlagKeys.DashboardSectionVariables,
+        Boolean(config.featureToggles.dashboardSectionVariables)
+      ) &&
       this.state.$variables
     ) {
       return [

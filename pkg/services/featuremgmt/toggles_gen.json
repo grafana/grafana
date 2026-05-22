@@ -2643,6 +2643,20 @@
     },
     {
       "metadata": {
+        "name": "frontendService.reducedBootDataAPI",
+        "resourceVersion": "1779301675561",
+        "creationTimestamp": "2026-05-20T18:27:55Z"
+      },
+      "spec": {
+        "description": "Frontend Service doesn't rely on the /bootdata API, instead loads configuration as needed",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "frontendService.settingsSourceFilter",
         "resourceVersion": "1776170446239",
         "creationTimestamp": "2026-04-14T12:40:46Z"
@@ -2794,6 +2808,20 @@
         "frontend": true,
         "hideFromDocs": true,
         "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.meticulousAIMode",
+        "resourceVersion": "1779382110221",
+        "creationTimestamp": "2026-05-21T16:48:30Z"
+      },
+      "spec": {
+        "description": "Controls the Meticulous AI session recorder. One of \"off\", \"on-prod-env\" (recorder enabled, production-environment behaviour), or \"on-dev-env\" (recorder enabled, high-volume/development behaviour).",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "hideFromDocs": true,
+        "expression": "off"
       }
     },
     {
@@ -3679,6 +3707,23 @@
         "description": "Redirects the request of the external group mapping endpoints to the app platform APIs",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesFolderCascadeDelete",
+        "resourceVersion": "1779200031641",
+        "creationTimestamp": "2026-05-19T14:07:10Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-05-19 14:13:51.641875451 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enable folder.grafana.app cascade deletion: opt-in non-empty delete via gracePeriodSeconds=0. Until cascade reconciliation exists, deleting a non-empty folder removes only the folder and leaves child dashboards, nested folders, and other contained resources orphaned",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -4573,6 +4618,7 @@
         "name": "newVizSuggestions",
         "resourceVersion": "1774878275721",
         "creationTimestamp": "2025-11-12T19:26:29Z",
+        "deletionTimestamp": "2026-05-18T16:03:00Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-03-30 13:44:35.72192 +0000 UTC"
         }

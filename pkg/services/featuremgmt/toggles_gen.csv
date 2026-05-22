@@ -42,6 +42,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2023-09-28,externalServiceAccounts,preview,@grafana/identity-access-team,false,false,false
 2023-12-05,kubernetesSnapshots,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2025-06-25,kubernetesLibraryPanels,experimental,@grafana/grafana-app-platform-squad,false,true,false
+2026-05-19,kubernetesFolderCascadeDelete,experimental,@grafana/search-and-storage,false,false,false
 2026-05-07,kubernetesAnnotationsClient,experimental,@grafana/dashboards-squad,false,false,false
 2025-07-31,kubernetesShortURLs,GA,@grafana/grafana-app-platform-squad,false,true,false
 2025-08-29,useKubernetesShortURLsAPI,GA,@grafana/sharing-squad,false,false,true
@@ -258,7 +259,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-08-29,cdnPluginsUrls,experimental,@grafana/grafana-catalog,false,false,false
 2025-10-24,pluginInstallAPISync,experimental,@grafana/grafana-catalog,false,false,false
 2026-05-05,grafana.dedicatedGrafanaComProxyAPIToken,experimental,@grafana/grafana-catalog,false,false,false
-2025-11-12,newVizSuggestions,GA,@grafana/dataviz-squad,false,false,true
 2026-02-18,panelStyleActions,experimental,@grafana/dataviz-squad,false,false,true
 2026-02-18,vizPresets,preview,@grafana/dataviz-squad,false,false,true
 2026-03-06,nestedFramesFieldOverrides,preview,@grafana/dataviz-squad,false,false,true
@@ -358,6 +358,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-04-27,grafana.correlationsSkipLegacy,experimental,@grafana/datapro,false,false,false
 2026-04-28,grafana.meticulousAIRecorder,experimental,@grafana/dataviz-squad,false,false,false
 2026-05-14,grafana.meticulousAIRecorderHighVolume,experimental,@grafana/dataviz-squad,false,false,false
+2026-05-21,grafana.meticulousAIMode,experimental,@grafana/dataviz-squad,false,false,false
 2026-04-30,datasources.useNewStackInfoToSettingsCache,GA,@grafana/grafana-datasources-core-services,false,false,false
 2026-05-06,grafana.unifiedHomepage,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2026-05-06,preferences.rerouteLegacyAPIs,experimental,@grafana/grafana-frontend-platform,false,false,false
@@ -365,3 +366,4 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-11,alerting.syncExternalAlertmanager,experimental,@grafana/alerting-squad,false,true,false
 2026-05-12,grafana.enableScopesFirstMode,experimental,@grafana/grafana-operator-experience-squad,false,false,true
 2026-05-08,grafana.logLevelInference,deprecated,@grafana/observability-logs,false,false,true
+2026-05-20,frontendService.reducedBootDataAPI,experimental,@grafana/grafana-frontend-platform,false,false,false

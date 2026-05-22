@@ -36,6 +36,8 @@ export type PreferencesQueryHistoryPreference = {
 export type PreferencesSpec = {
   /** UID for the home dashboard */
   homeDashboardUID?: string;
+  /** Explicit home URL (NOTE: this can only be modified in the system settings) */
+  homeURL?: string;
   /** Selected language */
   language?: string;
   navbar?: PreferencesNavbarPreference;
