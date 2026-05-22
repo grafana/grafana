@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
 	"slices"
 	"sort"
 	"strconv"
@@ -251,20 +250,18 @@ func (b *bleveBackend) downloadSelectedSnapshot(
 	}
 	logger = logger.New(logFields...)
 
-	// Pick a fresh destination directory name. DownloadIndexSnapshot refuses to
-	// overwrite an existing destDir; the bump-on-exists loop mirrors what
-	// BuildIndex does when creating new file-based indexes.
-	destDir, name, err := b.reserveSnapshotDir(resourceDir)
+	// Pick and reserve a fresh destination directory name. DownloadIndexSnapshot
+	// refuses to overwrite an existing destDir, so reserveIndexDir protects the
+	// not-yet-created path from other in-process builds while we download.
+	destDir, name, err := b.reserveIndexDir(resourceDir)
 	if err != nil {
 		outcome = snapshotStatusDownloadError
 		return nil, "", 0, fmt.Errorf("reserving local snapshot dir: %w", err)
 	}
 
-	// Protect destDir from cleanOldIndexes for the duration of the download
-	// and validation. On success, ownership of the registration transfers to
-	// the caller (BuildIndex unregisters via its own defer); on any failure
-	// path below, this defer releases it.
-	b.registerInFlightBuildDir(destDir)
+	// On success, ownership of the reservation transfers to the caller
+	// (BuildIndex unregisters via its own defer); on any failure path below,
+	// this defer releases it.
 	defer func() {
 		if retErr != nil {
 			b.unregisterInFlightBuildDir(destDir)
@@ -416,31 +413,6 @@ func snapshotTier(v, minVersion, running *semver.Version) int {
 		return 1 // below preferred floor
 	}
 	return 0
-}
-
-// reserveSnapshotDir returns an absolute path (and its base name) inside
-// resourceDir that does not exist yet. It bumps the timestamp if a collision
-// happens, mirroring the fresh-build naming in BuildIndex.
-func (b *bleveBackend) reserveSnapshotDir(resourceDir string) (string, string, error) {
-	if err := os.MkdirAll(resourceDir, 0o750); err != nil {
-		return "", "", err
-	}
-
-	t := time.Now()
-	for {
-		name := formatIndexName(t)
-		dir := filepath.Join(resourceDir, name)
-		if !isPathWithinRoot(dir, b.opts.Root) {
-			return "", "", fmt.Errorf("invalid path %s", dir)
-		}
-		if _, err := os.Stat(dir); err != nil {
-			if errors.Is(err, os.ErrNotExist) {
-				return dir, name, nil
-			}
-			return "", "", err
-		}
-		t = t.Add(time.Second)
-	}
 }
 
 // validateDownloadedIndex reads the internal RV + buildInfo from the opened

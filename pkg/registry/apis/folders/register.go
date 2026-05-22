@@ -35,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -208,8 +209,8 @@ func (b *FolderAPIBuilder) storageForVersion(
 
 	// Adds a path to return children of a given folder
 	storage[folders.StoragePath("children")] = &subChildrenREST{
-		getter: b.storage,
-		lister: b.storage,
+		getter:   b.storage,
+		searcher: b.searcher,
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[folders.GroupVersion().Version] = storage
@@ -268,7 +269,7 @@ func (b *FolderAPIBuilder) setDefaultFolderPermissions(ctx context.Context, key 
 	}
 
 	// only set default permissions for root folders
-	if obj.GetFolder() != "" {
+	if !folder.IsRootFolderUID(obj.GetFolder()) {
 		return nil
 	}
 
@@ -400,7 +401,8 @@ func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 		}
 		return validateOnCreate(ctx, f, b.parents, b.maxNestedFolderDepth)
 	case admission.Delete:
-		return validateOnDelete(ctx, f, b.searcher)
+		deleteOptions, _ := a.GetOperationOptions().(*metav1.DeleteOptions)
+		return validateOnDelete(ctx, f, b.searcher, deleteOptions, kubernetesFolderCascadeDeleteEnabled(ctx))
 	case admission.Update:
 		old, ok := a.GetOldObject().(*foldersv1.Folder)
 		if !ok {

@@ -43,6 +43,7 @@ import (
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	samanager "github.com/grafana/grafana/pkg/services/serviceaccounts/manager"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingsimpl"
 	"github.com/grafana/grafana/pkg/services/store"
@@ -78,6 +79,7 @@ func ProvideBackgroundServiceRegistry(
 	noopIAMRolesSyncer *accesscontrol.NoopIAMRolesSyncer,
 	installSync installsync.Syncer,
 	zanzanaService *authz.EmbeddedZanzanaService,
+	sqlStore *sqlstore.SQLStore,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ dashboardsnapshots.Service,
 	_ serviceaccounts.Service,
@@ -127,6 +129,7 @@ func ProvideBackgroundServiceRegistry(
 		noopIAMRolesSyncer,
 		installSync,
 		zanzanaService,
+		sqlStore,
 	)
 }
 
