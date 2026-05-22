@@ -5700,8 +5700,7 @@
           "apply": "Apply",
           "change-value": "Change variable value",
           "discard": "Discard",
-          "modal-title": "Custom options",
-          "values": "Values separated by comma"
+          "modal-title": "Custom Variable: {{name}}"
         },
         "datasource-options": {
           "name-filter": "Name filter",
@@ -5718,9 +5717,10 @@
         "open-editor": "Open variable editor",
         "open-editor-tooltip": "For more variable options open variable editor",
         "query-options": {
-          "close": "Close",
-          "modal-title": "Query Variable",
-          "preview": "Preview"
+          "modal-title": "Query variable: {{name}}",
+          "tabs": {
+            "query": "Query"
+          }
         },
         "selection-options": {
           "allow-custom-values": "Allow custom values",
@@ -7335,6 +7335,15 @@
       "provisioned": "Provisioned",
       "terraform": "Managed by: Terraform"
     },
+    "modal-editor": {
+      "apply": "Apply",
+      "content-drag-to-resize": "Drag to resize",
+      "discard": "Discard",
+      "label-static-options": "Static options ({{staticOptionsCount}})",
+      "preview-of-values": "Preview of values ({{ optionsCount }})",
+      "refresh-preview": "Refresh preview",
+      "show-preview": "Show preview"
+    },
     "move-provisioned-dashboard-form": {
       "already-in-folder": "Dashboard is already in the selected folder.",
       "api-error": "Failed to move dashboard",
@@ -7368,6 +7377,7 @@
     },
     "option-row": {
       "aria-label-remove-option": "Remove option",
+      "remove-option": "Remove {{optionName}}",
       "title-drag-and-drop-to-reorder": "Drag and drop to reorder",
       "tooltip-remove-option": "Remove option"
     },
@@ -7723,6 +7733,11 @@
     "use-modal-editor": {
       "description": {
         "change-variable-query": "Change variable query"
+      },
+      "on-click-apply": {
+        "description": {
+          "change-variable-query": "Change variable query"
+        }
       }
     },
     "use-save-dashboard": {
@@ -7823,6 +7838,13 @@
     },
     "variable-multi-prop-static-options-form": {
       "aria-label-static-options": "Static options"
+    },
+    "variable-options-spreadsheet": {
+      "aria-label-paste-static-options-from-clipboard": "Paste static options from clipboard",
+      "tooltip-nothing-to-paste": "Nothing to paste",
+      "tooltip-paste-csv": "Paste CSV data",
+      "tooltip-paste-json": "Paste JSON data",
+      "tooltip-paste-spreadsheet": "Paste spreadsheet data"
     },
     "variable-type-select": {
       "name-variable-type": "Variable type"
@@ -16726,6 +16748,7 @@
       "drag-and-drop": "Drag and drop to reorder",
       "label-header": "Display text",
       "label-placeholder": "Defaults to value",
+      "paste-parse-error": "Failed to parse pasted data",
       "remove-option-button-label": "Remove option",
       "value-header": "Value",
       "value-placeholder": "Value"

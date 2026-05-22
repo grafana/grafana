@@ -14,6 +14,7 @@ export const VariableStaticOptionsFormAddButton = ({ onAdd }: VariableStaticOpti
       onClick={onAdd}
       data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.addButton}
       aria-label={t('variables.static-options.add-option-button-label', 'Add new option')}
+      size="sm"
     >
       <Trans i18nKey="variables.static-options.add-option-button-label">Add new option</Trans>
     </Button>
