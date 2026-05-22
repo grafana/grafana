@@ -1,14 +1,32 @@
 package generate_datasources
 
 import (
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"sort"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+type roundTripFunc func(*http.Request) (*http.Response, error)
+
+func (fn roundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	return fn(req)
+}
+
+type closeTrackingBody struct {
+	io.Reader
+	closed *bool
+}
+
+func (b *closeTrackingBody) Close() error {
+	*b.closed = true
+	return nil
+}
 
 func TestCanGetCompatibleDatasources(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -42,4 +60,28 @@ func TestCanGetCompatibleDatasources(t *testing.T) {
 	for i := range expectedDatasources {
 		assert.Equal(t, expectedDatasources[i], datasources[i])
 	}
+}
+
+func TestGetDatasourcePluginSlugsClosesBodyOnDecodeError(t *testing.T) {
+	originalTransport := http.DefaultTransport
+	t.Cleanup(func() {
+		http.DefaultTransport = originalTransport
+	})
+
+	closed := false
+	http.DefaultTransport = roundTripFunc(func(_ *http.Request) (*http.Response, error) {
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Body: &closeTrackingBody{
+				Reader: strings.NewReader("{"),
+				closed: &closed,
+			},
+			Header: make(http.Header),
+		}, nil
+	})
+
+	_, err := getDatasourcePluginSlugs("http://example.com")
+
+	require.Error(t, err)
+	require.True(t, closed)
 }
