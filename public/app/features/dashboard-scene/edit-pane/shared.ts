@@ -255,11 +255,20 @@ export const dashboardEditActions = {
     const dashboard = getDashboardSceneFor(source);
     // UI path: SceneVariable goes through the Scenes-native overload of cmd.addVariable.
     // The Mutation API routes it via __scenesPayload, no Zod, snapshot undo registered automatically.
-    dashboard.mutationClient.execute(cmd.addVariable(addedObject));
+    dashboard.mutationClient.execute(cmd.addVariable(addedObject)).then((result) => {
+      if (!result.success) {
+        // TODO(POC): surface to UI as toast/banner. For now, log so the failure isn't silent.
+        console.warn('addVariable failed', { error: result.error, locked: result.locked });
+      }
+    });
   },
   removeVariable({ source, removedObject }: RemoveVariableActionHelperProps) {
     const dashboard = getDashboardSceneFor(source);
-    dashboard.mutationClient.execute(cmd.removeVariable(removedObject));
+    dashboard.mutationClient.execute(cmd.removeVariable(removedObject)).then((result) => {
+      if (!result.success) {
+        console.warn('removeVariable failed', { error: result.error, locked: result.locked });
+      }
+    });
   },
   changeVariableType({ source, oldVariable, newVariable }: ChangeVariableTypeActionHelperProps) {
     const varsBeforeChange = [...source.state.variables];

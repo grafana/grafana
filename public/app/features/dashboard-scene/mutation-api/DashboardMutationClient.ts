@@ -52,6 +52,11 @@ export class DashboardMutationClient implements MutationClient {
       return { success: false, error: `Unknown command type: ${type}`, changes: [] };
     }
 
+    const permissionResult = registration.canExecute(this.scene);
+    if (!permissionResult.allowed) {
+      return { success: false, error: permissionResult.error, changes: [] };
+    }
+
     if (registration.lockTarget && this.scene.isWriteLocked(registration.lockTarget)) {
       return {
         success: false,
@@ -59,11 +64,6 @@ export class DashboardMutationClient implements MutationClient {
         error: `Target '${registration.lockTarget}' is locked`,
         changes: [],
       };
-    }
-
-    const permissionResult = registration.canExecute(this.scene);
-    if (!permissionResult.allowed) {
-      return { success: false, error: permissionResult.error, changes: [] };
     }
 
     let payload: unknown;
