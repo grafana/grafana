@@ -75,17 +75,17 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
     case 'right':
       containerStyle.flexDirection = 'row';
 
+      if (typeof legend.props.width !== 'string') {
+        legendStyle.maxWidth = maxWidth;
+      }
+
       if (legendMeasure.width) {
         size = { width: width - legendMeasure.width, height };
       }
 
-      if (legend.props.width != null) {
+      if (typeof legend.props.width === 'number') {
         legendStyle.width = legend.props.width;
-
-        if (typeof legend.props.width === 'number') {
-          legendStyle.maxWidth = maxWidth;
-          size = { width: width - legend.props.width, height };
-        }
+        size = { width: width - legend.props.width, height };
       }
       break;
   }
