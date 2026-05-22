@@ -72,8 +72,7 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
         size = { width, height: height - legendMeasure.height };
       }
       break;
-    case 'right': {
-      console.log(legend.props.width);
+    case 'right':
       containerStyle.flexDirection = 'row';
 
       if (legendMeasure.width) {
@@ -92,7 +91,6 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
         size = { width: width - legend.props.width, height };
       }
       break;
-    }
   }
 
   // This happens when position is switched from bottom to right
