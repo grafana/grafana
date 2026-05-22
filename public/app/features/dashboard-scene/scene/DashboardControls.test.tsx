@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, act } from '@testing-library/react';
 import React from 'react';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
@@ -563,6 +563,74 @@ describe('DashboardControls', () => {
       renderInGrafanaContext(<controls.Component model={controls} />, undefined);
 
       expect(await screen.findByTestId(selectors.components.NavToolbar.editDashboard.editButton)).toBeInTheDocument();
+    });
+  });
+
+  describe('kioskModeHideVariablesAndTimePicker ini option', () => {
+    const originalKioskHide = config.kioskModeHideVariablesAndTimePicker;
+    const originalFeatureToggles = { ...config.featureToggles };
+
+    beforeEach(() => {
+      jest.mocked(playlistSrv.useState).mockReturnValue({ isPlaying: false });
+    });
+
+    afterEach(() => {
+      config.kioskModeHideVariablesAndTimePicker = originalKioskHide;
+      config.featureToggles = originalFeatureToggles;
+      jest.resetAllMocks();
+    });
+
+    it('should hide time picker and variables in kiosk mode when ini option is enabled', async () => {
+      config.kioskModeHideVariablesAndTimePicker = true;
+      const scene = buildTestScene();
+      renderInGrafanaContext(<scene.Component model={scene} />, KioskMode.Full);
+
+      expect(screen.queryByTestId(selectors.pages.Dashboard.Controls)).not.toBeInTheDocument();
+      expect(screen.queryByTestId(selectors.components.TimePicker.openButton)).not.toBeInTheDocument();
+      expect(screen.queryByTestId(selectors.pages.Dashboard.SubMenu.submenuItem)).not.toBeInTheDocument();
+    });
+
+    it('should show time picker and variables in kiosk mode when ini option is disabled', async () => {
+      config.kioskModeHideVariablesAndTimePicker = false;
+      const scene = buildTestScene();
+      renderInGrafanaContext(<scene.Component model={scene} />, KioskMode.Full);
+
+      // Controls container and variables should be visible; TimePicker is skipped due to JSDOM canvas limitations
+      expect(await screen.findByTestId(selectors.pages.Dashboard.Controls)).toBeInTheDocument();
+      expect(await screen.findByTestId(selectors.pages.Dashboard.SubMenu.submenuItem)).toBeInTheDocument();
+    });
+
+    it('should show controls after exiting kiosk mode (ESC restore)', async () => {
+      config.kioskModeHideVariablesAndTimePicker = true;
+      const scene = buildTestScene();
+
+      // Render in kiosk mode first
+      const context = getGrafanaContextMock();
+      context.chrome.update({ kioskMode: KioskMode.Full });
+      const { rerender } = render(<GrafanaContext.Provider value={context}>{<scene.Component model={scene} />}</GrafanaContext.Provider>);
+
+      expect(screen.queryByTestId(selectors.pages.Dashboard.Controls)).not.toBeInTheDocument();
+
+      // Simulate ESC: exit kiosk mode (kioskMode → undefined)
+      act(() => {
+        context.chrome.update({ kioskMode: undefined });
+      });
+      rerender(<GrafanaContext.Provider value={context}>{<scene.Component model={scene} />}</GrafanaContext.Provider>);
+
+      // Controls container and variables should be restored without a page refresh
+      expect(await screen.findByTestId(selectors.pages.Dashboard.Controls)).toBeInTheDocument();
+      expect(await screen.findByTestId(selectors.pages.Dashboard.SubMenu.submenuItem)).toBeInTheDocument();
+    });
+
+    it('should not hide controls outside kiosk mode even when ini option is enabled', async () => {
+      config.kioskModeHideVariablesAndTimePicker = true;
+      const scene = buildTestScene();
+      // No kiosk mode
+      renderInGrafanaContext(<scene.Component model={scene} />, undefined);
+
+      // Controls container and variables should be visible
+      expect(await screen.findByTestId(selectors.pages.Dashboard.Controls)).toBeInTheDocument();
+      expect(await screen.findByTestId(selectors.pages.Dashboard.SubMenu.submenuItem)).toBeInTheDocument();
     });
   });
 
