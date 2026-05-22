@@ -86,7 +86,7 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
 
       legendStyle.maxWidth = maxWidth;
 
-      if (typeof legend.props.width === 'number') {
+      if (legend.props.width != null) {
         legendStyle.width = legend.props.width;
         size = { width: width - legend.props.width, height };
       }
