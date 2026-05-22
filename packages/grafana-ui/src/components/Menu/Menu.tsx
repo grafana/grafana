@@ -40,7 +40,7 @@ const MenuComp = React.forwardRef<HTMLDivElement, MenuProps>(
         {...otherProps}
         aria-label={ariaLabel}
         backgroundColor="elevated"
-        borderRadius={componentTokens.borderRadius}
+        borderRadius="lg"
         boxShadow="z3"
         display="inline-block"
         onKeyDown={handleKeys}
