@@ -99,6 +99,12 @@ ruleTester.run('t-plural-defaults', rule, {
       errors: [nonEmptyPositionalDefault, missingDefaultValueOne, missingDefaultValueOther],
     },
 
+    // Template literal positional default without an expression. All three problems.
+    {
+      code: "t('foo', 'Hello {{count}}', { count })",
+      errors: [nonEmptyPositionalDefault, missingDefaultValueOne, missingDefaultValueOther],
+    },
+
     // Non-string positional value — should still report nonEmptyPositionalDefault.
     {
       code: `t('foo', 42, { count, defaultValue_one: 'x', defaultValue_other: 'y' })`,
