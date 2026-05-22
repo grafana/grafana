@@ -118,7 +118,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
     svg: {
       position: 'relative',
-      top: 1,
+      top: 0.5,
     },
   }),
 });
