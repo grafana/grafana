@@ -29,7 +29,8 @@ interface CommandRegistration {
   handler: MutationHandler;
   canExecute: (scene: DashboardScene) => { allowed: true } | { allowed: false; error: string };
   readOnly: boolean;
-  undoDomain?: UndoDomain;
+  // Normalized: always an array internally even if the command declared a single domain.
+  undoDomains: UndoDomain[];
   lockTarget?: string;
 }
 
@@ -60,15 +61,15 @@ export class DashboardMutationClient implements MutationClient {
       return { success: false, error: `Unknown command type: ${type}`, changes: [] };
     }
 
-    // Serialize per undoDomain to avoid the snapshot race.
-    const { undoDomain } = registration;
-    if (undoDomain) {
-      const prev = this.domainQueues.get(undoDomain) ?? Promise.resolve();
-      const next = prev.then(() => this.executeInner(mutation, registration));
-      this.domainQueues.set(
-        undoDomain,
-        next.catch(() => {})
-      );
+    // Serialize per undoDomain to avoid the snapshot race. If a command
+    // declares multiple domains, chain after all of them.
+    if (registration.undoDomains.length > 0) {
+      const previous = registration.undoDomains.map((d) => this.domainQueues.get(d) ?? Promise.resolve());
+      const next = Promise.all(previous).then(() => this.executeInner(mutation, registration));
+      const settled = next.catch(() => {});
+      for (const d of registration.undoDomains) {
+        this.domainQueues.set(d, settled);
+      }
       return next;
     }
     return this.executeInner(mutation, registration);
@@ -107,10 +108,13 @@ export class DashboardMutationClient implements MutationClient {
 
     const context: MutationContext = { scene: this.scene };
 
-    // Snapshot the declared domain before the handler runs.
+    // Snapshot each declared domain before the handler runs.
     // Snapshot/restore is delegated to the per-domain registry in `undo-domains.ts`.
-    const { undoDomain } = registration;
-    const beforeSnapshot: unknown = undoDomain ? this.snapshotDomain(undoDomain) : undefined;
+    const { undoDomains } = registration;
+    const beforeSnapshots = new Map<UndoDomain, unknown>();
+    for (const d of undoDomains) {
+      beforeSnapshots.set(d, this.snapshotDomain(d));
+    }
 
     try {
       const result = await registration.handler(payload, context);
@@ -118,17 +122,26 @@ export class DashboardMutationClient implements MutationClient {
       if (result.success && !registration.readOnly) {
         this.scene.forceRender();
 
-        // Register undo/redo entry when the command declared a snapshot domain.
+        // Register undo/redo entry when the command declared any snapshot domains.
         // perform() is called immediately by DashboardEditPane.handleEditAction —
         // the mutation is already applied so we skip that first call.
-        if (undoDomain && beforeSnapshot !== undefined && typeof this.scene.publishEvent === 'function') {
-          const afterSnapshot = this.snapshotDomain(undoDomain);
+        if (undoDomains.length > 0 && typeof this.scene.publishEvent === 'function') {
+          const afterSnapshots = new Map<UndoDomain, unknown>();
+          for (const d of undoDomains) {
+            afterSnapshots.set(d, this.snapshotDomain(d));
+          }
           let firstPerform = true;
 
           // Concept: diff before/after by reference identity to derive selection
           // hints (added / removed scene objects). Lets the edit pane drive
           // post-mutation selection updates without the handler returning them.
-          const { addedObject, removedObject } = diffSceneObjects(beforeSnapshot, afterSnapshot);
+          // Uses the first declared domain; cross-domain commands declare the
+          // user-visible domain first.
+          const primary = undoDomains[0];
+          const { addedObject, removedObject } = diffSceneObjects(
+            beforeSnapshots.get(primary),
+            afterSnapshots.get(primary)
+          );
 
           this.scene.publishEvent(
             new DashboardEditActionEvent({
@@ -141,23 +154,29 @@ export class DashboardMutationClient implements MutationClient {
                   firstPerform = false;
                   return;
                 }
-                // Refuse redo if the slice has drifted since the mutation.
-                // Otherwise we'd silently overwrite intervening changes.
-                if (!sliceEqual(this.snapshotDomain(undoDomain), beforeSnapshot)) {
-                  console.warn(`[mutation-api] refusing redo for ${type}: slice drifted`);
-                  return;
+                // Refuse redo if any slice has drifted since the mutation.
+                for (const d of undoDomains) {
+                  if (!sliceEqual(this.snapshotDomain(d), beforeSnapshots.get(d))) {
+                    console.warn(`[mutation-api] refusing redo for ${type}: slice '${d}' drifted`);
+                    return;
+                  }
                 }
-                this.restoreDomain(undoDomain, afterSnapshot);
+                for (const d of undoDomains) {
+                  this.restoreDomain(d, afterSnapshots.get(d));
+                }
               },
               undo: () => {
-                // Concept: conflict detection. If the slice drifted between
-                // perform and undo (another caller wrote to the same domain),
-                // refuse instead of silently reverting their work.
-                if (!sliceEqual(this.snapshotDomain(undoDomain), afterSnapshot)) {
-                  console.warn(`[mutation-api] refusing undo for ${type}: slice drifted`);
-                  return;
+                // Concept: conflict detection. If any slice drifted between
+                // perform and undo, refuse instead of silently reverting.
+                for (const d of undoDomains) {
+                  if (!sliceEqual(this.snapshotDomain(d), afterSnapshots.get(d))) {
+                    console.warn(`[mutation-api] refusing undo for ${type}: slice '${d}' drifted`);
+                    return;
+                  }
                 }
-                this.restoreDomain(undoDomain, beforeSnapshot);
+                for (const d of undoDomains) {
+                  this.restoreDomain(d, beforeSnapshots.get(d));
+                }
               },
             }),
             true
@@ -188,12 +207,18 @@ export class DashboardMutationClient implements MutationClient {
   }
 
   private registerCommand(cmd: MutationCommand): void {
+    // Normalize the (optional, possibly single) undoDomain into an array.
+    const undoDomains: UndoDomain[] = cmd.undoDomain
+      ? Array.isArray(cmd.undoDomain)
+        ? cmd.undoDomain
+        : [cmd.undoDomain]
+      : [];
     this.commands.set(cmd.name, {
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- safe: client validates with Zod before dispatch
       handler: cmd.handler as MutationHandler,
       canExecute: cmd.permission,
       readOnly: cmd.readOnly ?? false,
-      undoDomain: cmd.undoDomain,
+      undoDomains,
       lockTarget: cmd.lockTarget,
     });
   }

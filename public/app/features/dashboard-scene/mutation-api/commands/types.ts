@@ -45,9 +45,11 @@ export interface MutationCommand<T = unknown> {
   permission: PermissionCheck;
   /** When true, the command only reads state and will not trigger a forceRender. */
   readOnly?: boolean;
-  /** Declares which state slice this command modifies. When set, the client automatically
-   *  snapshots the domain before execution and registers an undo/redo history entry. */
-  undoDomain?: UndoDomain;
+  /** Declares which state slice(s) this command modifies. When set, the client
+   *  snapshots each domain before execution and registers an undo/redo history entry.
+   *  Pass an array for commands that touch multiple slices (e.g. removing a panel
+   *  that also drops referencing variables). */
+  undoDomain?: UndoDomain | UndoDomain[];
   /** Optional write-lock target this command operates against (e.g. 'variables').
    *  If the target is locked at execute() time, DashboardMutationClient short-circuits
    *  with { success: false, locked: true } without running the handler. */
