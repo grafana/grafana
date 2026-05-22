@@ -120,7 +120,6 @@ export function ViewPanelSidePaneRenderer({ model }: SceneComponentProps<ViewPan
               <Trans i18nKey="dashboard.view-panel.back-to-dashboard">Back to dashboard</Trans>
             </Button>
           </Box>
-
           <OptionsPaneCategory
             title={t('dashboard.view-panel.quick-toggles', 'Quick toggles')}
             id="quick-toggles"
