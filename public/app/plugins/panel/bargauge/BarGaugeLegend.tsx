@@ -2,7 +2,14 @@ import { memo } from 'react';
 
 import { type Field, cacheFieldDisplayNames, type DataFrame, FieldType, getFieldSeriesColor } from '@grafana/data';
 import { AxisPlacement, type VizLegendOptions } from '@grafana/schema';
-import { useTheme2, VizLayout, type VizLayoutLegendProps, VizLegend, type VizLegendItem } from '@grafana/ui';
+import {
+  useTheme2,
+  VizLayout,
+  type VizLayoutLegendProps,
+  VizLegend,
+  type VizLegendItem,
+  VizLegendNameOverflow,
+} from '@grafana/ui';
 import { getDisplayValuesForCalcs } from '@grafana/ui/internal';
 
 interface BarGaugeLegendProps extends VizLegendOptions, Omit<VizLayoutLegendProps, 'children'> {
@@ -50,6 +57,7 @@ export const BarGaugeLegend = memo(
           sortBy={vizLayoutLegendProps.sortBy}
           sortDesc={vizLayoutLegendProps.sortDesc}
           isSortable={true}
+          nameOverflow={typeof vizLayoutLegendProps.width === 'string' ? VizLegendNameOverflow.Wrap : undefined}
         />
       </VizLayout.Legend>
     );

@@ -19,6 +19,7 @@ import {
   useTheme2,
   VizLayout,
   VizLegend,
+  VizLegendNameOverflow,
   type VizLegendItem,
 } from '@grafana/ui';
 
@@ -185,6 +186,7 @@ function getLegend(props: Props, displayValues: FieldDisplay[], gradientFills?: 
         seriesVisibilityChangeBehavior={SeriesVisibilityChangeBehavior.Hide}
         placement={legendOptions.placement}
         displayMode={legendOptions.displayMode}
+        nameOverflow={typeof legendOptions.width === 'string' ? VizLegendNameOverflow.Wrap : undefined}
       />
     </VizLayout.Legend>
   );

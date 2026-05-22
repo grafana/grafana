@@ -14,6 +14,7 @@ import {
   useStyles2,
   useTheme2,
   usePanelContext,
+  VizLegendNameOverflow,
 } from '@grafana/ui';
 import { getDisplayValuesForCalcs, TooltipHoverMode } from '@grafana/ui/internal';
 
@@ -96,6 +97,7 @@ export const XYChartPanel2 = (props: Props2) => {
           sortBy={sortBy}
           sortDesc={sortDesc}
           isSortable={true}
+          nameOverflow={typeof width === 'string' ? VizLegendNameOverflow.Wrap : undefined}
         />
       </VizLayout.Legend>
     );
