@@ -5,26 +5,42 @@ import { initPreferences } from './initPreferences';
 
 const PREFERENCES_URL = '*/apis/preferences.grafana.app/v1alpha1/namespaces/:ns/preferences/merged';
 
-const server = setupServer(http.get(PREFERENCES_URL, () => HttpResponse.json({}, { status: 500 })));
+// Default 500 so any test that forgets to register its own handler fails loudly
+// with a self-describing body, instead of silently returning stale defaults.
+const server = setupServer(
+  http.get(PREFERENCES_URL, () => HttpResponse.json({ error: 'no handler set' }, { status: 500 }))
+);
 
 beforeAll(() => server.listen());
 afterAll(() => server.close());
 afterEach(() => server.resetHandlers());
+
+/**
+ * Set up grafanaBootData with the defaults
+ * (signed-in user, namespace, theme assets)
+ */
+function setupBootData(userOverrides: Partial<typeof window.grafanaBootData.user> = {}) {
+  window.grafanaBootData.user = {
+    ...window.grafanaBootData.user,
+    isSignedIn: true,
+    ...userOverrides,
+  };
+  window.grafanaBootData.settings = {
+    ...window.grafanaBootData.settings,
+    namespace: 'default',
+  };
+  window.grafanaBootData.assets = {
+    light: 'light.css',
+    dark: 'dark.css',
+  };
+}
 
 describe('fetchMergedPreferences', () => {
   let fetchSpy: jest.SpyInstance;
 
   beforeEach(() => {
     fetchSpy = jest.spyOn(global, 'fetch');
-    window.grafanaBootData.user = {
-      ...window.grafanaBootData.user,
-      isSignedIn: true,
-      theme: 'dark',
-    };
-    window.grafanaBootData.settings = {
-      ...window.grafanaBootData.settings,
-      namespace: 'default',
-    };
+    setupBootData({ theme: 'dark' });
   });
 
   afterEach(() => {
@@ -77,23 +93,12 @@ describe('fetchMergedPreferences', () => {
 
 describe('initPreferences', () => {
   beforeEach(() => {
-    window.grafanaBootData.user = {
-      ...window.grafanaBootData.user,
-      isSignedIn: true,
+    setupBootData({
       theme: 'dark',
       language: 'en-US',
       weekStart: 'sunday',
       timezone: 'browser',
-    };
-    window.grafanaBootData.settings = {
-      ...window.grafanaBootData.settings,
-      namespace: 'default',
-    };
-    // `applyTheme` reads from `assets` to swap the stylesheet href.
-    window.grafanaBootData.assets = {
-      light: 'light.css',
-      dark: 'dark.css',
-    };
+    });
   });
 
   afterEach(() => {
@@ -138,18 +143,7 @@ describe('applyTheme', () => {
   let originalMatchMedia: typeof window.matchMedia;
 
   beforeEach(() => {
-    window.grafanaBootData.user = {
-      ...window.grafanaBootData.user,
-      isSignedIn: true,
-    };
-    window.grafanaBootData.settings = {
-      ...window.grafanaBootData.settings,
-      namespace: 'default',
-    };
-    window.grafanaBootData.assets = {
-      light: 'light.css',
-      dark: 'dark.css',
-    };
+    setupBootData();
     originalMatchMedia = window.matchMedia;
   });
 
