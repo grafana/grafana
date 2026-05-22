@@ -303,19 +303,23 @@ function useColumns(alertManagerSourceName: string) {
         id: 'alert-rule',
         label: t('alerting.use-columns.columns.label.alert-rule-targeted', 'Alert rule targeted'),
         renderCell: function renderAlertRuleLink({ data: { metadata } }) {
-          if (metadata?.rule_title) {
+          const ruleUid = metadata?.rule_uid;
+          if (!ruleUid) {
+            return 'None';
+          }
+
+          const ruleTitle = metadata.rule_title;
+          if (ruleTitle) {
             return (
               <Link
-                href={`/alerting/grafana/${metadata?.rule_uid}/view?returnTo=${encodeURIComponent('/alerting/silences')}`}
+                href={`/alerting/grafana/${encodeURIComponent(ruleUid)}/view?returnTo=${encodeURIComponent('/alerting/silences')}`}
               >
-                {metadata.rule_title}
+                {ruleTitle}
               </Link>
             );
           }
-          if (metadata?.rule_uid) {
-            return <MissingAlertRuleWarning ruleUid={metadata.rule_uid} />;
-          }
-          return 'None';
+
+          return <MissingAlertRuleWarning ruleUid={ruleUid} />;
         },
         size: 8,
       },
