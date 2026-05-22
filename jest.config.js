@@ -34,6 +34,7 @@ const esModules = [
   'earcut',
   'pbf',
   'geotiff',
+  'uuid',
 ].join('|');
 
 module.exports = {
