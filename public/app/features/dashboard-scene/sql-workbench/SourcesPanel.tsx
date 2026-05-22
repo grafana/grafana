@@ -39,8 +39,7 @@ export function SourcesPanel({ onTableClick, onColumnClick }: Props) {
     }
     const q = search.toLowerCase();
     return ds.tables.filter(
-      (t) =>
-        t.name.toLowerCase().includes(q) || t.columns.some((c) => c.name.toLowerCase().includes(q))
+      (t) => t.name.toLowerCase().includes(q) || t.columns.some((c) => c.name.toLowerCase().includes(q))
     );
   };
 
@@ -91,7 +90,9 @@ export function SourcesPanel({ onTableClick, onColumnClick }: Props) {
                                 onClick={() => onColumnClick?.(table.name, col.name)}
                                 title={col.description}
                               >
-                                <span className={`${styles.columnTypeIcon} ${col.type === 'timestamp' ? styles.colTypeTs : col.type === 'value' ? styles.colTypeNum : styles.colTypeLbl}`}>
+                                <span
+                                  className={`${styles.columnTypeIcon} ${col.type === 'timestamp' ? styles.colTypeTs : col.type === 'value' ? styles.colTypeNum : styles.colTypeLbl}`}
+                                >
                                   {col.type === 'timestamp' ? 'T' : col.type === 'value' ? '#' : 'L'}
                                 </span>
                                 <span className={styles.columnName}>{col.name}</span>
@@ -102,9 +103,7 @@ export function SourcesPanel({ onTableClick, onColumnClick }: Props) {
                       </div>
                     );
                   })}
-                  {filteredTables.length === 0 && (
-                    <div className={styles.empty}>No tables match</div>
-                  )}
+                  {filteredTables.length === 0 && <div className={styles.empty}>No tables match</div>}
                 </div>
               )}
             </div>

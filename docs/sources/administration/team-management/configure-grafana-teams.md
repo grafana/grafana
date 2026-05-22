@@ -62,6 +62,8 @@ To create a Team, complete the following steps:
 1. Fill in each field and click **Create**.
 1. Click **Save**. You can now add a Team member.
 
+When the `teamFolders` feature toggle is enabled, the **New Team** page also includes a **Auto-create a team folder** option. Select **Auto-create a team folder** if you want Grafana to create a folder owned by that team during setup. For more information, refer to [Manage team folders](/docs/grafana/<GRAFANA_VERSION>/administration/team-management/team-folders/).
+
 ## Add a Team member
 
 **Note**

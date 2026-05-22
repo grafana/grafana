@@ -4,7 +4,6 @@
       "label-advanced": "고급"
     },
     "advanced-resource-picker": {
-      "aria-label-add": "추가",
       "aria-label-remove": "제거",
       "button-add-resource": "리소스 추가",
       "button-add-resource-uri": "리소스 URI 추가",

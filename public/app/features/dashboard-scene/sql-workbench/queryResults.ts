@@ -1,4 +1,4 @@
-import { DataFrame, FieldType, MutableDataFrame } from '@grafana/data';
+import { type DataFrame, FieldType, MutableDataFrame } from '@grafana/data';
 
 const NOW = Date.now();
 const STEP = 5 * 60 * 1000; // 5 min step
@@ -31,9 +31,7 @@ function histogramQuantileResult(): DataFrame[] {
 
   for (const le of leValues) {
     const vals = sine(le * 0.8, 30, le).map((v) => Math.max(0, v));
-    frames.push(
-      makeFrame(`le=${le}`, [{ name: 'p95_latency', values: vals }])
-    );
+    frames.push(makeFrame(`le=${le}`, [{ name: 'p95_latency', values: vals }]));
   }
   return frames;
 }

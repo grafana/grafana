@@ -1,5 +1,7 @@
 import { css } from '@emotion/css';
+
 import { type GrafanaTheme2 } from '@grafana/data';
+import { type VizPanel } from '@grafana/scenes';
 import {
   GraphDrawStyle,
   LegendDisplayMode,
@@ -8,12 +10,11 @@ import {
   VisibilityMode,
 } from '@grafana/schema';
 import { Switch, useStyles2 } from '@grafana/ui';
-import { type VizPanel } from '@grafana/scenes';
 
 import { PalettePicker } from './PalettePicker';
+import { type InspectorMode } from './PanelInspectorModeToggle';
 import { ScrubbableNumberInput } from './ScrubbableNumberInput';
 import { SegmentedIconToggle } from './SegmentedIconToggle';
-import { type InspectorMode } from './PanelInspectorModeToggle';
 
 interface Props {
   panel: VizPanel;
@@ -30,9 +31,14 @@ export function TimeSeriesStyleCards({ panel, inspectorMode }: Props) {
   const lineWidth = (custom.lineWidth as number) ?? 1;
   const fillOpacity = (custom.fillOpacity as number) ?? 0;
   const showPoints = (custom.showPoints as VisibilityMode) ?? VisibilityMode.Auto;
-  const stacked = !!(custom.stacking as { mode?: string })?.mode && (custom.stacking as { mode: string }).mode !== 'none';
+  const stacked =
+    !!(custom.stacking as { mode?: string })?.mode && (custom.stacking as { mode: string }).mode !== 'none';
   const colorMode = fieldConfig.defaults.color?.mode ?? 'palette-classic';
-  const legend = (options as Record<string, unknown>).legend as { showLegend: boolean; placement: string; displayMode: LegendDisplayMode };
+  const legend = (options as Record<string, unknown>).legend as {
+    showLegend: boolean;
+    placement: string;
+    displayMode: LegendDisplayMode;
+  };
   const tooltip = (options as Record<string, unknown>).tooltip as { mode: TooltipDisplayMode };
 
   function patchCustom(patch: Record<string, unknown>) {
@@ -197,9 +203,7 @@ export function TimeSeriesStyleCards({ panel, inspectorMode }: Props) {
             <div className={styles.control}>
               <Switch
                 value={legend?.showLegend ?? true}
-                onChange={(e) =>
-                  patchOptions({ legend: { ...legend, showLegend: e.currentTarget.checked } })
-                }
+                onChange={(e) => patchOptions({ legend: { ...legend, showLegend: e.currentTarget.checked } })}
               />
             </div>
           </div>

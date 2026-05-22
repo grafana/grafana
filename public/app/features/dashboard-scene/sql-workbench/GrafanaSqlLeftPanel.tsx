@@ -3,8 +3,8 @@ import { css } from '@emotion/css';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
 
-import { type GrafanaSqlStructure } from './grafanaSqlParser';
 import { GrafanaSqlQueryCard } from './GrafanaSqlQueryCard';
+import { type GrafanaSqlStructure } from './grafanaSqlParser';
 
 interface Props {
   structure: GrafanaSqlStructure;
@@ -70,12 +70,10 @@ export function GrafanaSqlLeftPanel({ structure }: Props) {
         <span className={styles.footerCount}>1 items</span>
         <div className={styles.footerActions}>
           <span className={styles.footerStat}>
-            <Icon name="eye" size="sm" className={styles.footerIcon} />
-            1
+            <Icon name="eye" size="sm" className={styles.footerIcon} />1
           </span>
           <span className={styles.footerStat}>
-            <Icon name="link" size="sm" className={styles.footerIcon} />
-            0
+            <Icon name="link" size="sm" className={styles.footerIcon} />0
           </span>
         </div>
       </div>

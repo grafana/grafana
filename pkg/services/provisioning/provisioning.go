@@ -40,6 +40,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/provisioning/plugins"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
@@ -61,8 +62,9 @@ func ProvideService(
 	folderService folder.Service,
 	pluginSettings pluginsettings.Service,
 	quotaService quota.Service,
-	secrectService secrets.Service,
+	secrectService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	orgService org.Service,
+	userService user.Service,
 	resourcePermissions accesscontrol.ReceiverPermissionsService,
 	tracer tracing.Tracer,
 	dual dualwrite.Service,
@@ -91,6 +93,7 @@ func ProvideService(
 		secretService:                secrectService,
 		log:                          log.New("provisioning"),
 		orgService:                   orgService,
+		userService:                  userService,
 		folderService:                folderService,
 		resourcePermissions:          resourcePermissions,
 		tracer:                       tracer,
@@ -218,6 +221,7 @@ type ProvisioningServiceImpl struct {
 	Cfg                          *setting.Cfg
 	SQLStore                     db.DB
 	orgService                   org.Service
+	userService                  user.Service
 	ac                           accesscontrol.AccessControl
 	pluginStore                  pluginstore.Store
 	alertingStore                *alertstore.DBstore
@@ -237,7 +241,7 @@ type ProvisioningServiceImpl struct {
 	correlationsService          correlations.Service
 	pluginsSettings              pluginsettings.Service
 	quotaService                 quota.Service
-	secretService                secrets.Service
+	secretService                secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	folderService                folder.Service
 	resourcePermissions          accesscontrol.ReceiverPermissionsService
 	routesPermissions            accesscontrol.RoutePermissionsService
@@ -340,6 +344,7 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		alertingauthz.NewRouteAccess[*legacy_storage.ManagedRoute](ps.ac, ps.routesPermissions, true),
 	)
 	receiverAuthz := alertingauthz.NewReceiverAccess[*ngmodels.Receiver](ps.ac, true)
+	emailValidator := notifier.NewEmailValidator(ps.orgService, ps.Cfg.UnifiedAlerting.LimitEmailToOrgMembers)
 	receiverSvc := notifier.NewReceiverService(
 		receiverAuthz,
 		configStore,
@@ -353,9 +358,11 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		ps.tracer,
 		validation.ValidateProvenanceRelaxed,
 		false,
+		ps.Cfg.UnifiedAlerting.AllowedIntegrations,
+		emailValidator,
 	)
 	contactPointService := provisioning.NewContactPointService(receiverAuthz, configStore, ps.secretService,
-		ps.alertingStore, ps.SQLStore, receiverSvc, ps.log, ps.alertingStore, ps.resourcePermissions)
+		ps.alertingStore, ps.SQLStore, receiverSvc, ps.log, ps.alertingStore, ps.resourcePermissions, ps.Cfg.UnifiedAlerting.AllowedIntegrations, emailValidator)
 	notificationPolicyService := provisioning.NewNotificationPolicyService(configStore,
 		ps.alertingStore, ps.SQLStore, routeService, ps.Cfg.UnifiedAlerting, ps.log, validation.ValidateProvenanceRelaxed)
 	mutetimingsService := provisioning.NewMuteTimingService(configStore, ps.alertingStore, ps.alertingStore, ps.log, ps.alertingStore, routeService, validation.ValidateProvenanceRelaxed)

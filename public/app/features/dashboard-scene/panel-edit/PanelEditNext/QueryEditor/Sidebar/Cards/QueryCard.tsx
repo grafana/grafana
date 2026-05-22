@@ -4,17 +4,17 @@ import { useEffect, useState } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { type DataQuery } from '@grafana/schema';
 import { Icon, useStyles2 } from '@grafana/ui';
-import grafanaIconSvg from 'img/grafana_icon.svg';
-import lokiLogo from 'app/plugins/datasource/loki/img/loki_icon.svg';
-import prometheusLogo from 'app/plugins/datasource/prometheus/img/prometheus_logo.svg';
-
 import { DataSourceLogo } from 'app/features/datasources/components/picker/DataSourceLogo';
 import { useDatasource } from 'app/features/datasources/hooks';
+import lokiLogo from 'app/plugins/datasource/loki/img/loki_icon.svg';
+import prometheusLogo from 'app/plugins/datasource/prometheus/img/prometheus_logo.svg';
+import grafanaIconSvg from 'img/grafana_icon.svg';
 
 import { GRAFANA_SQL_DEFAULT_QUERY } from '../../../../../sql-workbench/GrafanaSqlMode';
 import { parseGrafanaSql, type SqlCteSource, type SqlJoinRef } from '../../../../../sql-workbench/grafanaSqlParser';
 import { setGrafanaSqlActiveLine, subscribeGrafanaSqlActiveLine } from '../../../../../sql-workbench/workbenchStore';
 import { type ActionItem } from '../../../Actions';
+import { queryToActionItem } from '../../../actionItem';
 import { PENDING_CARD_ID, QueryEditorType } from '../../../constants';
 import {
   useActionsContext,
@@ -35,11 +35,7 @@ const DS_LOGOS: Record<string, string> = {
 
 const defaultStructure = parseGrafanaSql(GRAFANA_SQL_DEFAULT_QUERY);
 
-function getActiveKey(
-  activeLine: number | null,
-  ctes: SqlCteSource[],
-  joins: SqlJoinRef[]
-): string | null {
+function getActiveKey(activeLine: number | null, ctes: SqlCteSource[], joins: SqlJoinRef[]): string | null {
   if (activeLine === null) {
     return null;
   }
@@ -194,12 +190,7 @@ export const QueryCard = ({ query }: { query: DataQuery }) => {
   const isPartOfSelection = selectedQueryRefIds.includes(query.refId) && !isSelected;
   const isHidden = !!query.hide;
 
-  const item: ActionItem = {
-    name: query.refId,
-    type: editorType,
-    isHidden,
-    error,
-  };
+  const item = queryToActionItem(query, { error });
 
   return (
     <>

@@ -81,7 +81,10 @@ export function AiExplainerPopover({ selectedText, mode, onClose, onInsert }: Pr
         <Text variant="bodySmall" color="secondary">
           {mode === 'explain' ? 'Selected snippet:' : 'Generating from:'}
         </Text>
-        <code className={styles.snipCode}>{selectedText.slice(0, 120)}{selectedText.length > 120 ? '…' : ''}</code>
+        <code className={styles.snipCode}>
+          {selectedText.slice(0, 120)}
+          {selectedText.length > 120 ? '…' : ''}
+        </code>
       </div>
 
       <div className={styles.response}>

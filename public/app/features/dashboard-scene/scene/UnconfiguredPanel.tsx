@@ -192,7 +192,7 @@ function NewUnconfiguredPanelComp(props: PanelProps) {
           ]);
         }
       },
-      options: { context: 'dashboard' },
+      options: { context: 'unconfigured-panel' },
     });
   };
 
@@ -241,9 +241,7 @@ function NewUnconfiguredPanelComp(props: PanelProps) {
     setAiPhase('idle');
   };
 
-  const showEmptyState = config.featureToggles.newVizSuggestions && panelContext.app === CoreApp.PanelEditor;
-
-  if (showEmptyState) {
+  if (panelContext.app === CoreApp.PanelEditor) {
     return (
       <div className={styles.emptyStateWrapper}>
         <Icon name="chart-line" size="xxxl" className={styles.emptyStateIcon} />
@@ -281,7 +279,7 @@ function NewUnconfiguredPanelComp(props: PanelProps) {
     },
   ];
 
-  if (queryLibraryEnabled && config.featureToggles.newVizSuggestions && hasSavedQueryReadPermissions()) {
+  if (queryLibraryEnabled && hasSavedQueryReadPermissions()) {
     buttons.splice(1, 0, {
       key: 'saved-query',
       icon: 'book-open',
@@ -293,179 +291,188 @@ function NewUnconfiguredPanelComp(props: PanelProps) {
 
   return (
     <>
-    <div
-      ref={measureRef}
-      className={styles.root}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      onFocus={() => setIsFocused(true)}
-      onBlur={handleBlur}
-    >
-      {isEditing ? (
-        <>
-          <div
-            className={cx(styles.quietState, !isQuietVisible && styles.hidden)}
-            aria-hidden={!isQuietVisible}
-            {...(isQuietVisible && isEditing ? { tabIndex: 0 } : { tabIndex: -1 })}
-            aria-label={t('dashboard.new-panel.aria-label', 'Unconfigured panel. Tab to see configuration options.')}
-          >
+      <div
+        ref={measureRef}
+        className={styles.root}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        onFocus={() => setIsFocused(true)}
+        onBlur={handleBlur}
+      >
+        {isEditing ? (
+          <>
+            <div
+              className={cx(styles.quietState, !isQuietVisible && styles.hidden)}
+              aria-hidden={!isQuietVisible}
+              {...(isQuietVisible && isEditing ? { tabIndex: 0 } : { tabIndex: -1 })}
+              aria-label={t('dashboard.new-panel.aria-label', 'Unconfigured panel. Tab to see configuration options.')}
+            >
+              <div
+                className={cx(
+                  styles.gearIconWrapper,
+                  phase === ViewPhase.TransitioningToQuiet && styles.gearEntering,
+                  phase === ViewPhase.TransitioningToActive && styles.gearExiting
+                )}
+              >
+                <Icon name="cog" size="md" />
+              </div>
+              <span
+                className={cx(
+                  phase === ViewPhase.TransitioningToQuiet && styles.textEntering,
+                  phase === ViewPhase.TransitioningToActive && styles.textExiting
+                )}
+              >
+                <Text color="secondary">
+                  <Trans i18nKey="dashboard.new-panel.no-visualization">No visualization configured</Trans>
+                </Text>
+              </span>
+            </div>
+
             <div
               className={cx(
-                styles.gearIconWrapper,
-                phase === ViewPhase.TransitioningToQuiet && styles.gearEntering,
-                phase === ViewPhase.TransitioningToActive && styles.gearExiting
+                styles.buttonList,
+                isCompact && styles.buttonListCompact,
+                !isButtonsVisible && styles.hidden
               )}
+              aria-hidden={!isButtonsVisible}
+              {...(!isButtonsVisible ? { inert: '' } : {})}
             >
-              <Icon name="cog" size="md" />
-            </div>
-            <span
-              className={cx(
-                phase === ViewPhase.TransitioningToQuiet && styles.textEntering,
-                phase === ViewPhase.TransitioningToActive && styles.textExiting
-              )}
-            >
-              <Text color="secondary">
-                <Trans i18nKey="dashboard.new-panel.no-visualization">No visualization configured</Trans>
-              </Text>
-            </span>
-          </div>
-
-          <div
-            className={cx(styles.buttonList, isCompact && styles.buttonListCompact, !isButtonsVisible && styles.hidden)}
-            aria-hidden={!isButtonsVisible}
-            {...(!isButtonsVisible ? { inert: '' } : {})}
-          >
-            {!isCompact && config.featureToggles.sqlAbstractionPrototype && (
-              <div style={{ display: 'none' }}>
-                <Input
-                  prefix={<span className={styles.aiSparkle}>✨</span>}
-                  placeholder={t('dashboard.new-panel.ai-prompt-placeholder', 'What do you want to learn?')}
-                  value={aiInput}
-                  onChange={(e) => setAiInput(e.currentTarget.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      void handleAiSubmit();
-                    }
-                  }}
-                  disabled={aiPhase === 'loading'}
-                />
-                {aiPhase === 'loading' && (
-                  <div className={styles.aiLoadingRow}>
-                    <Spinner size="sm" />
-                    <Text variant="bodySmall" color="secondary">
-                      <Trans i18nKey="dashboard.new-panel.ai-generating">Generating…</Trans>
+              {!isCompact && config.featureToggles.sqlAbstractionPrototype && (
+                <div style={{ display: 'none' }}>
+                  <Input
+                    prefix={<span className={styles.aiSparkle}>✨</span>}
+                    placeholder={t('dashboard.new-panel.ai-prompt-placeholder', 'What do you want to learn?')}
+                    value={aiInput}
+                    onChange={(e) => setAiInput(e.currentTarget.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        void handleAiSubmit();
+                      }
+                    }}
+                    disabled={aiPhase === 'loading'}
+                  />
+                  {aiPhase === 'loading' && (
+                    <div className={styles.aiLoadingRow}>
+                      <Spinner size="sm" />
+                      <Text variant="bodySmall" color="secondary">
+                        <Trans i18nKey="dashboard.new-panel.ai-generating">Generating…</Trans>
+                      </Text>
+                    </div>
+                  )}
+                  <div className={styles.aiDivider}>
+                    <Text variant="bodySmall" color="disabled">
+                      <Trans i18nKey="dashboard.new-panel.ai-or">or</Trans>
                     </Text>
                   </div>
-                )}
-                <div className={styles.aiDivider}>
-                  <Text variant="bodySmall" color="disabled">
-                    <Trans i18nKey="dashboard.new-panel.ai-or">or</Trans>
-                  </Text>
                 </div>
-              </div>
-            )}
-            {buttons.map((button, i) => (
-              <div
-                key={button.key}
-                className={cx(
-                  styles.buttonWrapper,
-                  phase === ViewPhase.TransitioningToActive && styles.buttonEntering,
-                  phase === ViewPhase.TransitioningToQuiet && styles.buttonExiting
-                )}
-                style={
-                  phase === ViewPhase.TransitioningToActive || phase === ViewPhase.TransitioningToQuiet
-                    ? { animationDelay: `${i * BUTTON_STAGGER_INTERVAL_MS}ms` }
-                    : undefined
-                }
+              )}
+              {buttons.map((button, i) => (
+                <div
+                  key={button.key}
+                  className={cx(
+                    styles.buttonWrapper,
+                    phase === ViewPhase.TransitioningToActive && styles.buttonEntering,
+                    phase === ViewPhase.TransitioningToQuiet && styles.buttonExiting
+                  )}
+                  style={
+                    phase === ViewPhase.TransitioningToActive || phase === ViewPhase.TransitioningToQuiet
+                      ? { animationDelay: `${i * BUTTON_STAGGER_INTERVAL_MS}ms` }
+                      : undefined
+                  }
+                >
+                  {isCompact ? (
+                    <Button
+                      icon={button.icon}
+                      variant={button.variant}
+                      onClick={button.onClick}
+                      tooltip={button.label}
+                    />
+                  ) : (
+                    <Button icon={button.icon} variant={button.variant} onClick={button.onClick} fullWidth>
+                      {button.label}
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </>
+        ) : (
+          <div className={styles.quietState}>
+            <div className={styles.gearIconWrapper}>
+              <Icon name="cog" size="md" />
+            </div>
+            <Text color="secondary">
+              <Trans i18nKey="dashboard.new-panel.no-visualization">No visualization configured</Trans>
+            </Text>
+          </div>
+        )}
+      </div>
+
+      {config.featureToggles.sqlAbstractionPrototype && aiPhase === 'preview' && aiResult && (
+        <Modal
+          title={
+            <div className={styles.aiModalTitle}>
+              <span className={styles.aiSparkle}>✨</span>
+              <span>{t('dashboard.new-panel.ai-modal-title', 'AI-generated panel')}</span>
+            </div>
+          }
+          ariaLabel={t('dashboard.new-panel.ai-modal-aria-label', 'AI-generated panel')}
+          isOpen
+          onDismiss={() => setAiPhase('idle')}
+          contentClassName={styles.aiModalContent}
+        >
+          <div className={styles.aiPromptChip}>
+            <Text variant="bodySmall" color="secondary">
+              <Trans i18nKey="dashboard.new-panel.ai-your-question">Your question:</Trans>{' '}
+            </Text>
+            <Text variant="bodySmall" weight="medium">
+              &ldquo;{aiResult.prompt}&rdquo;
+            </Text>
+          </div>
+
+          <div className={styles.aiQueryContainer}>
+            <div className={styles.aiTabBar} role="tablist">
+              <button
+                role="tab"
+                aria-selected={aiTab === 'sql'}
+                className={cx(styles.aiTab, aiTab === 'sql' && styles.aiTabActive)}
+                onClick={() => setAiTab('sql')}
               >
-                {isCompact ? (
-                  <Button icon={button.icon} variant={button.variant} onClick={button.onClick} tooltip={button.label} />
-                ) : (
-                  <Button icon={button.icon} variant={button.variant} onClick={button.onClick} fullWidth>
-                    {button.label}
-                  </Button>
-                )}
-              </div>
-            ))}
+                SQL
+              </button>
+              <button
+                role="tab"
+                aria-selected={aiTab === 'promql'}
+                className={cx(styles.aiTab, aiTab === 'promql' && styles.aiTabActive)}
+                onClick={() => setAiTab('promql')}
+              >
+                PromQL
+              </button>
+            </div>
+            <pre className={styles.aiCodeBlock}>
+              {aiTab === 'sql' ? aiResult.sql : PROMQL_FOR_VIZ[aiResult.vizType]}
+            </pre>
           </div>
-        </>
-      ) : (
-        <div className={styles.quietState}>
-          <div className={styles.gearIconWrapper}>
-            <Icon name="cog" size="md" />
+
+          <div className={styles.aiChartSection}>
+            <Text variant="bodySmall" color="secondary" weight="bold">
+              <Trans i18nKey="dashboard.new-panel.ai-suggested-viz">Suggested visualization</Trans>
+            </Text>
+            <div className={styles.aiChartWrap}>
+              <AiPreviewSparkline />
+            </div>
           </div>
-          <Text color="secondary">
-            <Trans i18nKey="dashboard.new-panel.no-visualization">No visualization configured</Trans>
-          </Text>
-        </div>
+
+          <div className={styles.aiActions}>
+            <Button variant="primary" icon="plus" onClick={handleAiApply}>
+              <Trans i18nKey="dashboard.new-panel.ai-add-to-dashboard">Add to dashboard</Trans>
+            </Button>
+            <Button variant="secondary" fill="text" onClick={() => setAiPhase('idle')}>
+              <Trans i18nKey="dashboard.new-panel.ai-cancel">Cancel</Trans>
+            </Button>
+          </div>
+        </Modal>
       )}
-    </div>
-
-    {config.featureToggles.sqlAbstractionPrototype && aiPhase === 'preview' && aiResult && (
-      <Modal
-        title={
-          <div className={styles.aiModalTitle}>
-            <span className={styles.aiSparkle}>✨</span>
-            <span>{t('dashboard.new-panel.ai-modal-title', 'AI-generated panel')}</span>
-          </div>
-        }
-        ariaLabel={t('dashboard.new-panel.ai-modal-aria-label', 'AI-generated panel')}
-        isOpen
-        onDismiss={() => setAiPhase('idle')}
-        contentClassName={styles.aiModalContent}
-      >
-        <div className={styles.aiPromptChip}>
-          <Text variant="bodySmall" color="secondary">
-            <Trans i18nKey="dashboard.new-panel.ai-your-question">Your question:</Trans>{' '}
-          </Text>
-          <Text variant="bodySmall" weight="medium">
-            &ldquo;{aiResult.prompt}&rdquo;
-          </Text>
-        </div>
-
-        <div className={styles.aiQueryContainer}>
-          <div className={styles.aiTabBar} role="tablist">
-            <button
-              role="tab"
-              aria-selected={aiTab === 'sql'}
-              className={cx(styles.aiTab, aiTab === 'sql' && styles.aiTabActive)}
-              onClick={() => setAiTab('sql')}
-            >
-              SQL
-            </button>
-            <button
-              role="tab"
-              aria-selected={aiTab === 'promql'}
-              className={cx(styles.aiTab, aiTab === 'promql' && styles.aiTabActive)}
-              onClick={() => setAiTab('promql')}
-            >
-              PromQL
-            </button>
-          </div>
-          <pre className={styles.aiCodeBlock}>
-            {aiTab === 'sql' ? aiResult.sql : PROMQL_FOR_VIZ[aiResult.vizType]}
-          </pre>
-        </div>
-
-        <div className={styles.aiChartSection}>
-          <Text variant="bodySmall" color="secondary" weight="bold">
-            <Trans i18nKey="dashboard.new-panel.ai-suggested-viz">Suggested visualization</Trans>
-          </Text>
-          <div className={styles.aiChartWrap}>
-            <AiPreviewSparkline />
-          </div>
-        </div>
-
-        <div className={styles.aiActions}>
-          <Button variant="primary" icon="plus" onClick={handleAiApply}>
-            <Trans i18nKey="dashboard.new-panel.ai-add-to-dashboard">Add to dashboard</Trans>
-          </Button>
-          <Button variant="secondary" fill="text" onClick={() => setAiPhase('idle')}>
-            <Trans i18nKey="dashboard.new-panel.ai-cancel">Cancel</Trans>
-          </Button>
-        </div>
-      </Modal>
-    )}
     </>
   );
 }
@@ -520,20 +527,14 @@ function LegacyUnconfiguredPanelComp(props: PanelProps) {
     </Menu>
   );
 
-  const showEmptyState = config.featureToggles.newVizSuggestions && panelContext.app === CoreApp.PanelEditor;
-
-  if (showEmptyState) {
-    const defaultContent = (
-      <Trans i18nKey="dashboard.new-panel.empty-state-message">
-        Run a query to visualize it here or go to all visualizations to add other panel types
-      </Trans>
-    );
-
+  if (panelContext.app === CoreApp.PanelEditor) {
     return (
       <div className={styles.emptyStateWrapper}>
         <Icon name="chart-line" size="xxxl" className={styles.emptyStateIcon} />
         <Text element="p" textAlignment="center" color="secondary">
-          {defaultContent}
+          <Trans i18nKey="dashboard.new-panel.empty-state-message">
+            Run a query to visualize it here or go to all visualizations to add other panel types
+          </Trans>
         </Text>
       </div>
     );
@@ -545,7 +546,7 @@ function LegacyUnconfiguredPanelComp(props: PanelProps) {
         {isEditing ? (
           <ButtonGroup>
             <Button icon="sliders-v-alt" onClick={onConfigure}>
-              <Trans i18nKey="dashboard.new-panel.configure-button">Configure</Trans>
+              <Trans i18nKey="dashboard.new-panel.configure-button">Edit visualization</Trans>
             </Button>
             <Dropdown overlay={MenuActions} placement="bottom-end" onVisibleChange={onMenuClick}>
               <Button
@@ -584,10 +585,11 @@ function getStyles(theme: GrafanaTheme2) {
         content: '""',
         position: 'absolute',
         inset: 0,
-        backgroundImage: `url(${emptyPanelSvg})`,
-        backgroundSize: '100% auto',
-        backgroundPosition: 'bottom',
-        backgroundRepeat: 'no-repeat',
+        maskImage: `url(${emptyPanelSvg})`,
+        maskSize: '100% auto',
+        maskPosition: 'bottom',
+        maskRepeat: 'no-repeat',
+        backgroundColor: theme.colors.text.primary,
         opacity: 0.08,
         pointerEvents: 'none',
       },

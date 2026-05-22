@@ -82,7 +82,7 @@ func TestParseKey(t *testing.T) {
 
 func BenchmarkKey_String(b *testing.B) {
 	key := &Key{Group: "test-group", Resource: "test-resource", Namespace: "test-namespace", Name: "test-name"}
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		_ = key.String()
 	}
 }

@@ -86,8 +86,7 @@ export async function* askAiStream(req: AiRequest): AsyncGenerator<string> {
     case 'generate-panel': {
       await delay(800 + Math.random() * 400);
       const lower = req.payload.toLowerCase();
-      const match =
-        GENERATE_PANEL_OUTPUTS.find((o) => lower.includes(o.prompt)) ?? GENERATE_PANEL_OUTPUTS[0];
+      const match = GENERATE_PANEL_OUTPUTS.find((o) => lower.includes(o.prompt)) ?? GENERATE_PANEL_OUTPUTS[0];
       yield JSON.stringify({ sql: match.sql, vizType: match.vizType });
       break;
     }
@@ -107,8 +106,4 @@ export function getFollowUpResponse(question: string): string {
   return FOLLOW_UP_RESPONSES['default'];
 }
 
-export const SUGGESTED_FOLLOW_UPS = [
-  'Why is it spiking?',
-  'Compare to last week',
-  'Show as percentage',
-];
+export const SUGGESTED_FOLLOW_UPS = ['Why is it spiking?', 'Compare to last week', 'Show as percentage'];

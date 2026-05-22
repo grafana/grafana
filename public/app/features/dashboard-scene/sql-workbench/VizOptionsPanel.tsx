@@ -56,13 +56,7 @@ export function VizOptionsPanel() {
           <Text variant="bodySmall" color="secondary">
             Draw style
           </Text>
-          <RadioButtonGroup
-            options={DRAW_STYLES}
-            value={drawStyle}
-            onChange={setDrawStyle}
-            size="sm"
-            fullWidth
-          />
+          <RadioButtonGroup options={DRAW_STYLES} value={drawStyle} onChange={setDrawStyle} size="sm" fullWidth />
         </div>
       )}
 
@@ -71,13 +65,7 @@ export function VizOptionsPanel() {
           Fill opacity
         </Text>
         <div className={styles.sliderRow}>
-          <input
-            type="range"
-            min={0}
-            max={100}
-            defaultValue={0}
-            className={styles.slider}
-          />
+          <input type="range" min={0} max={100} defaultValue={0} className={styles.slider} />
         </div>
       </div>
 
@@ -86,13 +74,7 @@ export function VizOptionsPanel() {
           Line width
         </Text>
         <div className={styles.sliderRow}>
-          <input
-            type="range"
-            min={1}
-            max={10}
-            defaultValue={2}
-            className={styles.slider}
-          />
+          <input type="range" min={1} max={10} defaultValue={2} className={styles.slider} />
         </div>
       </div>
     </div>

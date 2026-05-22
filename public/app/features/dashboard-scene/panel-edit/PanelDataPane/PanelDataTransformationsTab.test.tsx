@@ -25,6 +25,8 @@ import { testDashboard } from '../testfiles/testDashboard';
 
 import { PanelDataTransformationsTab, PanelDataTransformationsTabRendered } from './PanelDataTransformationsTab';
 
+// FIXME: This file has test encapsulation issues, where failures in one test can cascade to other tests.
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   reportInteraction: jest.fn(),
@@ -75,12 +77,17 @@ describe('PanelDataTransformationsTab', () => {
   });
 
   it('renders transformations when there are transformations', async () => {
-    const modelMock = createModelMock(mockData, [
-      {
-        id: 'calculateField',
-        options: {},
-      },
-    ]);
+    const onChangeTransformation = jest.fn();
+    const modelMock = createModelMock(
+      mockData,
+      [
+        {
+          id: 'calculateField',
+          options: {},
+        },
+      ],
+      onChangeTransformation
+    );
     render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
 
     await screen.findByText('1 - Add field from calculation');

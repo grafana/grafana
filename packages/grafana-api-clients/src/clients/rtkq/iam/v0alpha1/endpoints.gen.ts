@@ -41,6 +41,7 @@ const injectedRtkApi = api
             resourceVersion: queryArg.resourceVersion,
             resourceVersionMatch: queryArg.resourceVersionMatch,
             sendInitialEvents: queryArg.sendInitialEvents,
+            shardSelector: queryArg.shardSelector,
             timeoutSeconds: queryArg.timeoutSeconds,
             watch: queryArg.watch,
           },
@@ -60,32 +61,6 @@ const injectedRtkApi = api
             dryRun: queryArg.dryRun,
             fieldManager: queryArg.fieldManager,
             fieldValidation: queryArg.fieldValidation,
-          },
-        }),
-        invalidatesTags: ['ExternalGroupMapping'],
-      }),
-      deletecollectionExternalGroupMapping: build.mutation<
-        DeletecollectionExternalGroupMappingApiResponse,
-        DeletecollectionExternalGroupMappingApiArg
-      >({
-        query: (queryArg) => ({
-          url: `/externalgroupmappings`,
-          method: 'DELETE',
-          params: {
-            pretty: queryArg.pretty,
-            continue: queryArg['continue'],
-            dryRun: queryArg.dryRun,
-            fieldSelector: queryArg.fieldSelector,
-            gracePeriodSeconds: queryArg.gracePeriodSeconds,
-            ignoreStoreReadErrorWithClusterBreakingPotential: queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
-            labelSelector: queryArg.labelSelector,
-            limit: queryArg.limit,
-            orphanDependents: queryArg.orphanDependents,
-            propagationPolicy: queryArg.propagationPolicy,
-            resourceVersion: queryArg.resourceVersion,
-            resourceVersionMatch: queryArg.resourceVersionMatch,
-            sendInitialEvents: queryArg.sendInitialEvents,
-            timeoutSeconds: queryArg.timeoutSeconds,
           },
         }),
         invalidatesTags: ['ExternalGroupMapping'],
@@ -164,7 +139,6 @@ const injectedRtkApi = api
             limit: queryArg.limit,
             page: queryArg.page,
             offset: queryArg.offset,
-            sort: queryArg.sort,
           },
         }),
         invalidatesTags: ['Search'],
@@ -214,6 +188,7 @@ const injectedRtkApi = api
             resourceVersion: queryArg.resourceVersion,
             resourceVersionMatch: queryArg.resourceVersionMatch,
             sendInitialEvents: queryArg.sendInitialEvents,
+            shardSelector: queryArg.shardSelector,
             timeoutSeconds: queryArg.timeoutSeconds,
             watch: queryArg.watch,
           },
@@ -230,32 +205,6 @@ const injectedRtkApi = api
             dryRun: queryArg.dryRun,
             fieldManager: queryArg.fieldManager,
             fieldValidation: queryArg.fieldValidation,
-          },
-        }),
-        invalidatesTags: ['ServiceAccount'],
-      }),
-      deletecollectionServiceAccount: build.mutation<
-        DeletecollectionServiceAccountApiResponse,
-        DeletecollectionServiceAccountApiArg
-      >({
-        query: (queryArg) => ({
-          url: `/serviceaccounts`,
-          method: 'DELETE',
-          params: {
-            pretty: queryArg.pretty,
-            continue: queryArg['continue'],
-            dryRun: queryArg.dryRun,
-            fieldSelector: queryArg.fieldSelector,
-            gracePeriodSeconds: queryArg.gracePeriodSeconds,
-            ignoreStoreReadErrorWithClusterBreakingPotential: queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
-            labelSelector: queryArg.labelSelector,
-            limit: queryArg.limit,
-            orphanDependents: queryArg.orphanDependents,
-            propagationPolicy: queryArg.propagationPolicy,
-            resourceVersion: queryArg.resourceVersion,
-            resourceVersionMatch: queryArg.resourceVersionMatch,
-            sendInitialEvents: queryArg.sendInitialEvents,
-            timeoutSeconds: queryArg.timeoutSeconds,
           },
         }),
         invalidatesTags: ['ServiceAccount'],
@@ -314,8 +263,42 @@ const injectedRtkApi = api
         invalidatesTags: ['ServiceAccount'],
       }),
       getServiceAccountTokens: build.query<GetServiceAccountTokensApiResponse, GetServiceAccountTokensApiArg>({
-        query: (queryArg) => ({ url: `/serviceaccounts/${queryArg.name}/tokens` }),
+        query: (queryArg) => ({
+          url: `/serviceaccounts/${queryArg.name}/tokens`,
+          params: {
+            limit: queryArg.limit,
+            continue: queryArg['continue'],
+          },
+        }),
         providesTags: ['ServiceAccount'],
+      }),
+      createServiceAccountTokens: build.mutation<
+        CreateServiceAccountTokensApiResponse,
+        CreateServiceAccountTokensApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/serviceaccounts/${queryArg.name}/tokens`,
+          method: 'POST',
+          body: queryArg.createServiceAccountTokenRequestBody,
+        }),
+        invalidatesTags: ['ServiceAccount'],
+      }),
+      getServiceAccountTokensWithPath: build.query<
+        GetServiceAccountTokensWithPathApiResponse,
+        GetServiceAccountTokensWithPathApiArg
+      >({
+        query: (queryArg) => ({ url: `/serviceaccounts/${queryArg.name}/tokens/${queryArg.tokenName}` }),
+        providesTags: ['ServiceAccount'],
+      }),
+      deleteServiceAccountTokensWithPath: build.mutation<
+        DeleteServiceAccountTokensWithPathApiResponse,
+        DeleteServiceAccountTokensWithPathApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/serviceaccounts/${queryArg.name}/tokens/${queryArg.tokenName}`,
+          method: 'DELETE',
+        }),
+        invalidatesTags: ['ServiceAccount'],
       }),
       listTeamBinding: build.query<ListTeamBindingApiResponse, ListTeamBindingApiArg>({
         query: (queryArg) => ({
@@ -330,6 +313,7 @@ const injectedRtkApi = api
             resourceVersion: queryArg.resourceVersion,
             resourceVersionMatch: queryArg.resourceVersionMatch,
             sendInitialEvents: queryArg.sendInitialEvents,
+            shardSelector: queryArg.shardSelector,
             timeoutSeconds: queryArg.timeoutSeconds,
             watch: queryArg.watch,
           },
@@ -346,32 +330,6 @@ const injectedRtkApi = api
             dryRun: queryArg.dryRun,
             fieldManager: queryArg.fieldManager,
             fieldValidation: queryArg.fieldValidation,
-          },
-        }),
-        invalidatesTags: ['TeamBinding'],
-      }),
-      deletecollectionTeamBinding: build.mutation<
-        DeletecollectionTeamBindingApiResponse,
-        DeletecollectionTeamBindingApiArg
-      >({
-        query: (queryArg) => ({
-          url: `/teambindings`,
-          method: 'DELETE',
-          params: {
-            pretty: queryArg.pretty,
-            continue: queryArg['continue'],
-            dryRun: queryArg.dryRun,
-            fieldSelector: queryArg.fieldSelector,
-            gracePeriodSeconds: queryArg.gracePeriodSeconds,
-            ignoreStoreReadErrorWithClusterBreakingPotential: queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
-            labelSelector: queryArg.labelSelector,
-            limit: queryArg.limit,
-            orphanDependents: queryArg.orphanDependents,
-            propagationPolicy: queryArg.propagationPolicy,
-            resourceVersion: queryArg.resourceVersion,
-            resourceVersionMatch: queryArg.resourceVersionMatch,
-            sendInitialEvents: queryArg.sendInitialEvents,
-            timeoutSeconds: queryArg.timeoutSeconds,
           },
         }),
         invalidatesTags: ['TeamBinding'],
@@ -442,6 +400,7 @@ const injectedRtkApi = api
             resourceVersion: queryArg.resourceVersion,
             resourceVersionMatch: queryArg.resourceVersionMatch,
             sendInitialEvents: queryArg.sendInitialEvents,
+            shardSelector: queryArg.shardSelector,
             timeoutSeconds: queryArg.timeoutSeconds,
             watch: queryArg.watch,
           },
@@ -458,29 +417,6 @@ const injectedRtkApi = api
             dryRun: queryArg.dryRun,
             fieldManager: queryArg.fieldManager,
             fieldValidation: queryArg.fieldValidation,
-          },
-        }),
-        invalidatesTags: ['Team'],
-      }),
-      deletecollectionTeam: build.mutation<DeletecollectionTeamApiResponse, DeletecollectionTeamApiArg>({
-        query: (queryArg) => ({
-          url: `/teams`,
-          method: 'DELETE',
-          params: {
-            pretty: queryArg.pretty,
-            continue: queryArg['continue'],
-            dryRun: queryArg.dryRun,
-            fieldSelector: queryArg.fieldSelector,
-            gracePeriodSeconds: queryArg.gracePeriodSeconds,
-            ignoreStoreReadErrorWithClusterBreakingPotential: queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
-            labelSelector: queryArg.labelSelector,
-            limit: queryArg.limit,
-            orphanDependents: queryArg.orphanDependents,
-            propagationPolicy: queryArg.propagationPolicy,
-            resourceVersion: queryArg.resourceVersion,
-            resourceVersionMatch: queryArg.resourceVersionMatch,
-            sendInitialEvents: queryArg.sendInitialEvents,
-            timeoutSeconds: queryArg.timeoutSeconds,
           },
         }),
         invalidatesTags: ['Team'],
@@ -538,6 +474,10 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['Team'],
       }),
+      createTeamAddmember: build.mutation<CreateTeamAddmemberApiResponse, CreateTeamAddmemberApiArg>({
+        query: (queryArg) => ({ url: `/teams/${queryArg.name}/addmember`, method: 'POST' }),
+        invalidatesTags: ['Team'],
+      }),
       getTeamGroups: build.query<GetTeamGroupsApiResponse, GetTeamGroupsApiArg>({
         query: (queryArg) => ({
           url: `/teams/${queryArg.name}/groups`,
@@ -560,6 +500,10 @@ const injectedRtkApi = api
         }),
         providesTags: ['Team'],
       }),
+      createTeamRemovemember: build.mutation<CreateTeamRemovememberApiResponse, CreateTeamRemovememberApiArg>({
+        query: (queryArg) => ({ url: `/teams/${queryArg.name}/removemember`, method: 'POST' }),
+        invalidatesTags: ['Team'],
+      }),
       listUser: build.query<ListUserApiResponse, ListUserApiArg>({
         query: (queryArg) => ({
           url: `/users`,
@@ -573,6 +517,7 @@ const injectedRtkApi = api
             resourceVersion: queryArg.resourceVersion,
             resourceVersionMatch: queryArg.resourceVersionMatch,
             sendInitialEvents: queryArg.sendInitialEvents,
+            shardSelector: queryArg.shardSelector,
             timeoutSeconds: queryArg.timeoutSeconds,
             watch: queryArg.watch,
           },
@@ -589,29 +534,6 @@ const injectedRtkApi = api
             dryRun: queryArg.dryRun,
             fieldManager: queryArg.fieldManager,
             fieldValidation: queryArg.fieldValidation,
-          },
-        }),
-        invalidatesTags: ['User'],
-      }),
-      deletecollectionUser: build.mutation<DeletecollectionUserApiResponse, DeletecollectionUserApiArg>({
-        query: (queryArg) => ({
-          url: `/users`,
-          method: 'DELETE',
-          params: {
-            pretty: queryArg.pretty,
-            continue: queryArg['continue'],
-            dryRun: queryArg.dryRun,
-            fieldSelector: queryArg.fieldSelector,
-            gracePeriodSeconds: queryArg.gracePeriodSeconds,
-            ignoreStoreReadErrorWithClusterBreakingPotential: queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
-            labelSelector: queryArg.labelSelector,
-            limit: queryArg.limit,
-            orphanDependents: queryArg.orphanDependents,
-            propagationPolicy: queryArg.propagationPolicy,
-            resourceVersion: queryArg.resourceVersion,
-            resourceVersionMatch: queryArg.resourceVersionMatch,
-            sendInitialEvents: queryArg.sendInitialEvents,
-            timeoutSeconds: queryArg.timeoutSeconds,
           },
         }),
         invalidatesTags: ['User'],
@@ -712,8 +634,7 @@ const injectedRtkApi = api
           url: `/users/${queryArg.name}/teams`,
           params: {
             limit: queryArg.limit,
-            page: queryArg.page,
-            offset: queryArg.offset,
+            continue: queryArg['continue'],
           },
         }),
         providesTags: ['User'],
@@ -769,6 +690,29 @@ export type ListExternalGroupMappingApiArg = {
     
     Defaults to true if `resourceVersion=""` or `resourceVersion="0"` (for backward compatibility reasons) and to false otherwise. */
   sendInitialEvents?: boolean;
+  /** shardSelector restricts the list of returned objects using a CEL-based shard selector expression. The format uses the shardRange() function combined with || (logical OR) to specify one or more hash ranges:
+    
+      shardRange(object.metadata.uid, '0x0', '0x8000000000000000')
+      shardRange(object.metadata.uid, '0x0', '0x8000000000000000') || shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')
+    
+    Field paths use CEL-style object-rooted syntax (e.g. "object.metadata.uid"), NOT the fieldSelector format ("metadata.uid"). Currently supported paths:
+      - object.metadata.uid
+      - object.metadata.namespace
+    
+    hexStart and hexEnd are single-quoted CEL string literals with a '0x' prefix, defining the inclusive lower and exclusive upper bounds over the 64-bit FNV-1a hash space. The full range is [0x0, 0x10000000000000000), where the exclusive upper bound equals 2^64.
+    
+    Examples:
+      2-shard split:
+        shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x8000000000000000')
+        shard 1: shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')
+      4-shard split:
+        shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x4000000000000000')
+        shard 1: shardRange(object.metadata.uid, '0x4000000000000000', '0x8000000000000000')
+        shard 2: shardRange(object.metadata.uid, '0x8000000000000000', '0xc000000000000000')
+        shard 3: shardRange(object.metadata.uid, '0xc000000000000000', '0x10000000000000000')
+    
+    This is an alpha field and requires enabling the ShardedListAndWatch feature gate. */
+  shardSelector?: string;
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
   /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
@@ -788,57 +732,6 @@ export type CreateExternalGroupMappingApiArg = {
   /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
   fieldValidation?: string;
   externalGroupMapping: ExternalGroupMapping;
-};
-export type DeletecollectionExternalGroupMappingApiResponse = /** status 200 OK */ Status;
-export type DeletecollectionExternalGroupMappingApiArg = {
-  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
-  pretty?: string;
-  /** The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the "next key".
-    
-    This field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications. */
-  continue?: string;
-  /** When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed */
-  dryRun?: string;
-  /** A selector to restrict the list of returned objects by their fields. Defaults to everything. */
-  fieldSelector?: string;
-  /** The duration in seconds before the object should be deleted. Value must be non-negative integer. The value zero indicates delete immediately. If this value is nil, the default grace period for the specified type will be used. Defaults to a per object value if not specified. zero means delete immediately. */
-  gracePeriodSeconds?: number;
-  /** if set to true, it will trigger an unsafe deletion of the resource in case the normal deletion flow fails with a corrupt object error. A resource is considered corrupt if it can not be retrieved from the underlying storage successfully because of a) its data can not be transformed e.g. decryption failure, or b) it fails to decode into an object. NOTE: unsafe deletion ignores finalizer constraints, skips precondition checks, and removes the object from the storage. WARNING: This may potentially break the cluster if the workload associated with the resource being unsafe-deleted relies on normal deletion flow. Use only if you REALLY know what you are doing. The default value is false, and the user must opt in to enable it */
-  ignoreStoreReadErrorWithClusterBreakingPotential?: boolean;
-  /** A selector to restrict the list of returned objects by their labels. Defaults to everything. */
-  labelSelector?: string;
-  /** limit is a maximum number of responses to return for a list call. If more items exist, the server will set the `continue` field on the list metadata to a value that can be used with the same initial query to retrieve the next set of results. Setting a limit may return fewer than the requested amount of items (up to zero items) in the event all requested objects are filtered out and clients should only use the presence of the continue field to determine whether more results are available. Servers may choose not to support the limit argument and will return all of the available results. If limit is specified and the continue field is empty, clients may assume that no more results are available. This field is not supported if watch is true.
-    
-    The server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned. */
-  limit?: number;
-  /** Deprecated: please use the PropagationPolicy, this field will be deprecated in 1.7. Should the dependent objects be orphaned. If true/false, the "orphan" finalizer will be added to/removed from the object's finalizers list. Either this field or PropagationPolicy may be set, but not both. */
-  orphanDependents?: boolean;
-  /** Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground. */
-  propagationPolicy?: string;
-  /** resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.
-    
-    Defaults to unset */
-  resourceVersion?: string;
-  /** resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.
-    
-    Defaults to unset */
-  resourceVersionMatch?: string;
-  /** `sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic "Bookmark" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `"k8s.io/initial-events-end": "true"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.
-    
-    When `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan
-      is interpreted as "data at least as new as the provided `resourceVersion`"
-      and the bookmark event is send when the state is synced
-      to a `resourceVersion` at least as fresh as the one provided by the ListOptions.
-      If `resourceVersion` is unset, this is interpreted as "consistent read" and the
-      bookmark event is send when the state is synced at least to the moment
-      when request started being processed.
-    - `resourceVersionMatch` set to any other value or unset
-      Invalid error is returned.
-    
-    Defaults to true if `resourceVersion=""` or `resourceVersion="0"` (for backward compatibility reasons) and to false otherwise. */
-  sendInitialEvents?: boolean;
-  /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
-  timeoutSeconds?: number;
 };
 export type GetExternalGroupMappingApiResponse = /** status 200 OK */ ExternalGroupMapping;
 export type GetExternalGroupMappingApiArg = {
@@ -906,8 +799,6 @@ export type SearchExternalGroupMappingsApiArg = {
   page?: number;
   /** number of results to skip */
   offset?: number;
-  /** sortable field */
-  sort?: string;
   body: {
     externalGroups?: string[];
   };
@@ -989,6 +880,29 @@ export type ListServiceAccountApiArg = {
     
     Defaults to true if `resourceVersion=""` or `resourceVersion="0"` (for backward compatibility reasons) and to false otherwise. */
   sendInitialEvents?: boolean;
+  /** shardSelector restricts the list of returned objects using a CEL-based shard selector expression. The format uses the shardRange() function combined with || (logical OR) to specify one or more hash ranges:
+    
+      shardRange(object.metadata.uid, '0x0', '0x8000000000000000')
+      shardRange(object.metadata.uid, '0x0', '0x8000000000000000') || shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')
+    
+    Field paths use CEL-style object-rooted syntax (e.g. "object.metadata.uid"), NOT the fieldSelector format ("metadata.uid"). Currently supported paths:
+      - object.metadata.uid
+      - object.metadata.namespace
+    
+    hexStart and hexEnd are single-quoted CEL string literals with a '0x' prefix, defining the inclusive lower and exclusive upper bounds over the 64-bit FNV-1a hash space. The full range is [0x0, 0x10000000000000000), where the exclusive upper bound equals 2^64.
+    
+    Examples:
+      2-shard split:
+        shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x8000000000000000')
+        shard 1: shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')
+      4-shard split:
+        shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x4000000000000000')
+        shard 1: shardRange(object.metadata.uid, '0x4000000000000000', '0x8000000000000000')
+        shard 2: shardRange(object.metadata.uid, '0x8000000000000000', '0xc000000000000000')
+        shard 3: shardRange(object.metadata.uid, '0xc000000000000000', '0x10000000000000000')
+    
+    This is an alpha field and requires enabling the ShardedListAndWatch feature gate. */
+  shardSelector?: string;
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
   /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
@@ -1008,57 +922,6 @@ export type CreateServiceAccountApiArg = {
   /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
   fieldValidation?: string;
   serviceAccount: ServiceAccount;
-};
-export type DeletecollectionServiceAccountApiResponse = /** status 200 OK */ Status;
-export type DeletecollectionServiceAccountApiArg = {
-  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
-  pretty?: string;
-  /** The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the "next key".
-    
-    This field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications. */
-  continue?: string;
-  /** When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed */
-  dryRun?: string;
-  /** A selector to restrict the list of returned objects by their fields. Defaults to everything. */
-  fieldSelector?: string;
-  /** The duration in seconds before the object should be deleted. Value must be non-negative integer. The value zero indicates delete immediately. If this value is nil, the default grace period for the specified type will be used. Defaults to a per object value if not specified. zero means delete immediately. */
-  gracePeriodSeconds?: number;
-  /** if set to true, it will trigger an unsafe deletion of the resource in case the normal deletion flow fails with a corrupt object error. A resource is considered corrupt if it can not be retrieved from the underlying storage successfully because of a) its data can not be transformed e.g. decryption failure, or b) it fails to decode into an object. NOTE: unsafe deletion ignores finalizer constraints, skips precondition checks, and removes the object from the storage. WARNING: This may potentially break the cluster if the workload associated with the resource being unsafe-deleted relies on normal deletion flow. Use only if you REALLY know what you are doing. The default value is false, and the user must opt in to enable it */
-  ignoreStoreReadErrorWithClusterBreakingPotential?: boolean;
-  /** A selector to restrict the list of returned objects by their labels. Defaults to everything. */
-  labelSelector?: string;
-  /** limit is a maximum number of responses to return for a list call. If more items exist, the server will set the `continue` field on the list metadata to a value that can be used with the same initial query to retrieve the next set of results. Setting a limit may return fewer than the requested amount of items (up to zero items) in the event all requested objects are filtered out and clients should only use the presence of the continue field to determine whether more results are available. Servers may choose not to support the limit argument and will return all of the available results. If limit is specified and the continue field is empty, clients may assume that no more results are available. This field is not supported if watch is true.
-    
-    The server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned. */
-  limit?: number;
-  /** Deprecated: please use the PropagationPolicy, this field will be deprecated in 1.7. Should the dependent objects be orphaned. If true/false, the "orphan" finalizer will be added to/removed from the object's finalizers list. Either this field or PropagationPolicy may be set, but not both. */
-  orphanDependents?: boolean;
-  /** Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground. */
-  propagationPolicy?: string;
-  /** resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.
-    
-    Defaults to unset */
-  resourceVersion?: string;
-  /** resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.
-    
-    Defaults to unset */
-  resourceVersionMatch?: string;
-  /** `sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic "Bookmark" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `"k8s.io/initial-events-end": "true"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.
-    
-    When `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan
-      is interpreted as "data at least as new as the provided `resourceVersion`"
-      and the bookmark event is send when the state is synced
-      to a `resourceVersion` at least as fresh as the one provided by the ListOptions.
-      If `resourceVersion` is unset, this is interpreted as "consistent read" and the
-      bookmark event is send when the state is synced at least to the moment
-      when request started being processed.
-    - `resourceVersionMatch` set to any other value or unset
-      Invalid error is returned.
-    
-    Defaults to true if `resourceVersion=""` or `resourceVersion="0"` (for backward compatibility reasons) and to false otherwise. */
-  sendInitialEvents?: boolean;
-  /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
-  timeoutSeconds?: number;
 };
 export type GetServiceAccountApiResponse = /** status 200 OK */ ServiceAccount;
 export type GetServiceAccountApiArg = {
@@ -1118,11 +981,34 @@ export type UpdateServiceAccountApiArg = {
   force?: boolean;
   patch: Patch;
 };
-export type GetServiceAccountTokensApiResponse =
-  /** status 200 OK */ GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1ServiceAccountTokenList;
+export type GetServiceAccountTokensApiResponse = /** status 200 OK */ ListServiceAccountTokensBody;
 export type GetServiceAccountTokensApiArg = {
-  /** name of the ServiceAccountTokenList */
+  /** name of the ServiceAccount */
   name: string;
+  /** maximum number of tokens to return in a single page */
+  limit?: number;
+  /** continue token returned by a previous list response to fetch the next page */
+  continue?: string;
+};
+export type CreateServiceAccountTokensApiResponse = /** status 201 Token created */ CreateServiceAccountTokenBody;
+export type CreateServiceAccountTokensApiArg = {
+  /** name of the ServiceAccount */
+  name: string;
+  createServiceAccountTokenRequestBody: CreateServiceAccountTokenRequestBody;
+};
+export type GetServiceAccountTokensWithPathApiResponse = /** status 200 OK */ GetServiceAccountTokenBody;
+export type GetServiceAccountTokensWithPathApiArg = {
+  /** name of the ServiceAccount */
+  name: string;
+  /** name of the token to operate on */
+  tokenName: string;
+};
+export type DeleteServiceAccountTokensWithPathApiResponse = /** status 200 OK */ DeleteServiceAccountTokenBody;
+export type DeleteServiceAccountTokensWithPathApiArg = {
+  /** name of the ServiceAccount */
+  name: string;
+  /** name of the token to operate on */
+  tokenName: string;
 };
 export type ListTeamBindingApiResponse = /** status 200 OK */ TeamBindingList;
 export type ListTeamBindingApiArg = {
@@ -1164,6 +1050,29 @@ export type ListTeamBindingApiArg = {
     
     Defaults to true if `resourceVersion=""` or `resourceVersion="0"` (for backward compatibility reasons) and to false otherwise. */
   sendInitialEvents?: boolean;
+  /** shardSelector restricts the list of returned objects using a CEL-based shard selector expression. The format uses the shardRange() function combined with || (logical OR) to specify one or more hash ranges:
+    
+      shardRange(object.metadata.uid, '0x0', '0x8000000000000000')
+      shardRange(object.metadata.uid, '0x0', '0x8000000000000000') || shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')
+    
+    Field paths use CEL-style object-rooted syntax (e.g. "object.metadata.uid"), NOT the fieldSelector format ("metadata.uid"). Currently supported paths:
+      - object.metadata.uid
+      - object.metadata.namespace
+    
+    hexStart and hexEnd are single-quoted CEL string literals with a '0x' prefix, defining the inclusive lower and exclusive upper bounds over the 64-bit FNV-1a hash space. The full range is [0x0, 0x10000000000000000), where the exclusive upper bound equals 2^64.
+    
+    Examples:
+      2-shard split:
+        shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x8000000000000000')
+        shard 1: shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')
+      4-shard split:
+        shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x4000000000000000')
+        shard 1: shardRange(object.metadata.uid, '0x4000000000000000', '0x8000000000000000')
+        shard 2: shardRange(object.metadata.uid, '0x8000000000000000', '0xc000000000000000')
+        shard 3: shardRange(object.metadata.uid, '0xc000000000000000', '0x10000000000000000')
+    
+    This is an alpha field and requires enabling the ShardedListAndWatch feature gate. */
+  shardSelector?: string;
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
   /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
@@ -1183,57 +1092,6 @@ export type CreateTeamBindingApiArg = {
   /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
   fieldValidation?: string;
   teamBinding: TeamBinding;
-};
-export type DeletecollectionTeamBindingApiResponse = /** status 200 OK */ Status;
-export type DeletecollectionTeamBindingApiArg = {
-  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
-  pretty?: string;
-  /** The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the "next key".
-    
-    This field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications. */
-  continue?: string;
-  /** When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed */
-  dryRun?: string;
-  /** A selector to restrict the list of returned objects by their fields. Defaults to everything. */
-  fieldSelector?: string;
-  /** The duration in seconds before the object should be deleted. Value must be non-negative integer. The value zero indicates delete immediately. If this value is nil, the default grace period for the specified type will be used. Defaults to a per object value if not specified. zero means delete immediately. */
-  gracePeriodSeconds?: number;
-  /** if set to true, it will trigger an unsafe deletion of the resource in case the normal deletion flow fails with a corrupt object error. A resource is considered corrupt if it can not be retrieved from the underlying storage successfully because of a) its data can not be transformed e.g. decryption failure, or b) it fails to decode into an object. NOTE: unsafe deletion ignores finalizer constraints, skips precondition checks, and removes the object from the storage. WARNING: This may potentially break the cluster if the workload associated with the resource being unsafe-deleted relies on normal deletion flow. Use only if you REALLY know what you are doing. The default value is false, and the user must opt in to enable it */
-  ignoreStoreReadErrorWithClusterBreakingPotential?: boolean;
-  /** A selector to restrict the list of returned objects by their labels. Defaults to everything. */
-  labelSelector?: string;
-  /** limit is a maximum number of responses to return for a list call. If more items exist, the server will set the `continue` field on the list metadata to a value that can be used with the same initial query to retrieve the next set of results. Setting a limit may return fewer than the requested amount of items (up to zero items) in the event all requested objects are filtered out and clients should only use the presence of the continue field to determine whether more results are available. Servers may choose not to support the limit argument and will return all of the available results. If limit is specified and the continue field is empty, clients may assume that no more results are available. This field is not supported if watch is true.
-    
-    The server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned. */
-  limit?: number;
-  /** Deprecated: please use the PropagationPolicy, this field will be deprecated in 1.7. Should the dependent objects be orphaned. If true/false, the "orphan" finalizer will be added to/removed from the object's finalizers list. Either this field or PropagationPolicy may be set, but not both. */
-  orphanDependents?: boolean;
-  /** Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground. */
-  propagationPolicy?: string;
-  /** resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.
-    
-    Defaults to unset */
-  resourceVersion?: string;
-  /** resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.
-    
-    Defaults to unset */
-  resourceVersionMatch?: string;
-  /** `sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic "Bookmark" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `"k8s.io/initial-events-end": "true"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.
-    
-    When `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan
-      is interpreted as "data at least as new as the provided `resourceVersion`"
-      and the bookmark event is send when the state is synced
-      to a `resourceVersion` at least as fresh as the one provided by the ListOptions.
-      If `resourceVersion` is unset, this is interpreted as "consistent read" and the
-      bookmark event is send when the state is synced at least to the moment
-      when request started being processed.
-    - `resourceVersionMatch` set to any other value or unset
-      Invalid error is returned.
-    
-    Defaults to true if `resourceVersion=""` or `resourceVersion="0"` (for backward compatibility reasons) and to false otherwise. */
-  sendInitialEvents?: boolean;
-  /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
-  timeoutSeconds?: number;
 };
 export type GetTeamBindingApiResponse = /** status 200 OK */ TeamBinding;
 export type GetTeamBindingApiArg = {
@@ -1329,6 +1187,29 @@ export type ListTeamApiArg = {
     
     Defaults to true if `resourceVersion=""` or `resourceVersion="0"` (for backward compatibility reasons) and to false otherwise. */
   sendInitialEvents?: boolean;
+  /** shardSelector restricts the list of returned objects using a CEL-based shard selector expression. The format uses the shardRange() function combined with || (logical OR) to specify one or more hash ranges:
+    
+      shardRange(object.metadata.uid, '0x0', '0x8000000000000000')
+      shardRange(object.metadata.uid, '0x0', '0x8000000000000000') || shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')
+    
+    Field paths use CEL-style object-rooted syntax (e.g. "object.metadata.uid"), NOT the fieldSelector format ("metadata.uid"). Currently supported paths:
+      - object.metadata.uid
+      - object.metadata.namespace
+    
+    hexStart and hexEnd are single-quoted CEL string literals with a '0x' prefix, defining the inclusive lower and exclusive upper bounds over the 64-bit FNV-1a hash space. The full range is [0x0, 0x10000000000000000), where the exclusive upper bound equals 2^64.
+    
+    Examples:
+      2-shard split:
+        shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x8000000000000000')
+        shard 1: shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')
+      4-shard split:
+        shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x4000000000000000')
+        shard 1: shardRange(object.metadata.uid, '0x4000000000000000', '0x8000000000000000')
+        shard 2: shardRange(object.metadata.uid, '0x8000000000000000', '0xc000000000000000')
+        shard 3: shardRange(object.metadata.uid, '0xc000000000000000', '0x10000000000000000')
+    
+    This is an alpha field and requires enabling the ShardedListAndWatch feature gate. */
+  shardSelector?: string;
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
   /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
@@ -1348,57 +1229,6 @@ export type CreateTeamApiArg = {
   /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
   fieldValidation?: string;
   team: Team;
-};
-export type DeletecollectionTeamApiResponse = /** status 200 OK */ Status;
-export type DeletecollectionTeamApiArg = {
-  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
-  pretty?: string;
-  /** The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the "next key".
-    
-    This field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications. */
-  continue?: string;
-  /** When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed */
-  dryRun?: string;
-  /** A selector to restrict the list of returned objects by their fields. Defaults to everything. */
-  fieldSelector?: string;
-  /** The duration in seconds before the object should be deleted. Value must be non-negative integer. The value zero indicates delete immediately. If this value is nil, the default grace period for the specified type will be used. Defaults to a per object value if not specified. zero means delete immediately. */
-  gracePeriodSeconds?: number;
-  /** if set to true, it will trigger an unsafe deletion of the resource in case the normal deletion flow fails with a corrupt object error. A resource is considered corrupt if it can not be retrieved from the underlying storage successfully because of a) its data can not be transformed e.g. decryption failure, or b) it fails to decode into an object. NOTE: unsafe deletion ignores finalizer constraints, skips precondition checks, and removes the object from the storage. WARNING: This may potentially break the cluster if the workload associated with the resource being unsafe-deleted relies on normal deletion flow. Use only if you REALLY know what you are doing. The default value is false, and the user must opt in to enable it */
-  ignoreStoreReadErrorWithClusterBreakingPotential?: boolean;
-  /** A selector to restrict the list of returned objects by their labels. Defaults to everything. */
-  labelSelector?: string;
-  /** limit is a maximum number of responses to return for a list call. If more items exist, the server will set the `continue` field on the list metadata to a value that can be used with the same initial query to retrieve the next set of results. Setting a limit may return fewer than the requested amount of items (up to zero items) in the event all requested objects are filtered out and clients should only use the presence of the continue field to determine whether more results are available. Servers may choose not to support the limit argument and will return all of the available results. If limit is specified and the continue field is empty, clients may assume that no more results are available. This field is not supported if watch is true.
-    
-    The server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned. */
-  limit?: number;
-  /** Deprecated: please use the PropagationPolicy, this field will be deprecated in 1.7. Should the dependent objects be orphaned. If true/false, the "orphan" finalizer will be added to/removed from the object's finalizers list. Either this field or PropagationPolicy may be set, but not both. */
-  orphanDependents?: boolean;
-  /** Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground. */
-  propagationPolicy?: string;
-  /** resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.
-    
-    Defaults to unset */
-  resourceVersion?: string;
-  /** resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.
-    
-    Defaults to unset */
-  resourceVersionMatch?: string;
-  /** `sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic "Bookmark" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `"k8s.io/initial-events-end": "true"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.
-    
-    When `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan
-      is interpreted as "data at least as new as the provided `resourceVersion`"
-      and the bookmark event is send when the state is synced
-      to a `resourceVersion` at least as fresh as the one provided by the ListOptions.
-      If `resourceVersion` is unset, this is interpreted as "consistent read" and the
-      bookmark event is send when the state is synced at least to the moment
-      when request started being processed.
-    - `resourceVersionMatch` set to any other value or unset
-      Invalid error is returned.
-    
-    Defaults to true if `resourceVersion=""` or `resourceVersion="0"` (for backward compatibility reasons) and to false otherwise. */
-  sendInitialEvents?: boolean;
-  /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
-  timeoutSeconds?: number;
 };
 export type GetTeamApiResponse = /** status 200 OK */ Team;
 export type GetTeamApiArg = {
@@ -1454,6 +1284,12 @@ export type UpdateTeamApiArg = {
   force?: boolean;
   patch: Patch;
 };
+export type CreateTeamAddmemberApiResponse =
+  /** status 200 OK */ GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1TeamMemberList;
+export type CreateTeamAddmemberApiArg = {
+  /** name of the TeamMemberList */
+  name: string;
+};
 export type GetTeamGroupsApiResponse = /** status 200 OK */ GetTeamGroupsResponse;
 export type GetTeamGroupsApiArg = {
   /** name of the GetTeamGroupsResponse */
@@ -1476,6 +1312,12 @@ export type GetTeamMembersApiArg = {
   page?: number;
   /** number of results to skip */
   offset?: number;
+};
+export type CreateTeamRemovememberApiResponse =
+  /** status 200 OK */ GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1TeamMemberList;
+export type CreateTeamRemovememberApiArg = {
+  /** name of the TeamMemberList */
+  name: string;
 };
 export type ListUserApiResponse = /** status 200 OK */ UserList;
 export type ListUserApiArg = {
@@ -1517,6 +1359,29 @@ export type ListUserApiArg = {
     
     Defaults to true if `resourceVersion=""` or `resourceVersion="0"` (for backward compatibility reasons) and to false otherwise. */
   sendInitialEvents?: boolean;
+  /** shardSelector restricts the list of returned objects using a CEL-based shard selector expression. The format uses the shardRange() function combined with || (logical OR) to specify one or more hash ranges:
+    
+      shardRange(object.metadata.uid, '0x0', '0x8000000000000000')
+      shardRange(object.metadata.uid, '0x0', '0x8000000000000000') || shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')
+    
+    Field paths use CEL-style object-rooted syntax (e.g. "object.metadata.uid"), NOT the fieldSelector format ("metadata.uid"). Currently supported paths:
+      - object.metadata.uid
+      - object.metadata.namespace
+    
+    hexStart and hexEnd are single-quoted CEL string literals with a '0x' prefix, defining the inclusive lower and exclusive upper bounds over the 64-bit FNV-1a hash space. The full range is [0x0, 0x10000000000000000), where the exclusive upper bound equals 2^64.
+    
+    Examples:
+      2-shard split:
+        shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x8000000000000000')
+        shard 1: shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')
+      4-shard split:
+        shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x4000000000000000')
+        shard 1: shardRange(object.metadata.uid, '0x4000000000000000', '0x8000000000000000')
+        shard 2: shardRange(object.metadata.uid, '0x8000000000000000', '0xc000000000000000')
+        shard 3: shardRange(object.metadata.uid, '0xc000000000000000', '0x10000000000000000')
+    
+    This is an alpha field and requires enabling the ShardedListAndWatch feature gate. */
+  shardSelector?: string;
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
   /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
@@ -1536,57 +1401,6 @@ export type CreateUserApiArg = {
   /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
   fieldValidation?: string;
   user: User;
-};
-export type DeletecollectionUserApiResponse = /** status 200 OK */ Status;
-export type DeletecollectionUserApiArg = {
-  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
-  pretty?: string;
-  /** The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the "next key".
-    
-    This field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications. */
-  continue?: string;
-  /** When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed */
-  dryRun?: string;
-  /** A selector to restrict the list of returned objects by their fields. Defaults to everything. */
-  fieldSelector?: string;
-  /** The duration in seconds before the object should be deleted. Value must be non-negative integer. The value zero indicates delete immediately. If this value is nil, the default grace period for the specified type will be used. Defaults to a per object value if not specified. zero means delete immediately. */
-  gracePeriodSeconds?: number;
-  /** if set to true, it will trigger an unsafe deletion of the resource in case the normal deletion flow fails with a corrupt object error. A resource is considered corrupt if it can not be retrieved from the underlying storage successfully because of a) its data can not be transformed e.g. decryption failure, or b) it fails to decode into an object. NOTE: unsafe deletion ignores finalizer constraints, skips precondition checks, and removes the object from the storage. WARNING: This may potentially break the cluster if the workload associated with the resource being unsafe-deleted relies on normal deletion flow. Use only if you REALLY know what you are doing. The default value is false, and the user must opt in to enable it */
-  ignoreStoreReadErrorWithClusterBreakingPotential?: boolean;
-  /** A selector to restrict the list of returned objects by their labels. Defaults to everything. */
-  labelSelector?: string;
-  /** limit is a maximum number of responses to return for a list call. If more items exist, the server will set the `continue` field on the list metadata to a value that can be used with the same initial query to retrieve the next set of results. Setting a limit may return fewer than the requested amount of items (up to zero items) in the event all requested objects are filtered out and clients should only use the presence of the continue field to determine whether more results are available. Servers may choose not to support the limit argument and will return all of the available results. If limit is specified and the continue field is empty, clients may assume that no more results are available. This field is not supported if watch is true.
-    
-    The server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned. */
-  limit?: number;
-  /** Deprecated: please use the PropagationPolicy, this field will be deprecated in 1.7. Should the dependent objects be orphaned. If true/false, the "orphan" finalizer will be added to/removed from the object's finalizers list. Either this field or PropagationPolicy may be set, but not both. */
-  orphanDependents?: boolean;
-  /** Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground. */
-  propagationPolicy?: string;
-  /** resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.
-    
-    Defaults to unset */
-  resourceVersion?: string;
-  /** resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.
-    
-    Defaults to unset */
-  resourceVersionMatch?: string;
-  /** `sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic "Bookmark" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `"k8s.io/initial-events-end": "true"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.
-    
-    When `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan
-      is interpreted as "data at least as new as the provided `resourceVersion`"
-      and the bookmark event is send when the state is synced
-      to a `resourceVersion` at least as fresh as the one provided by the ListOptions.
-      If `resourceVersion` is unset, this is interpreted as "consistent read" and the
-      bookmark event is send when the state is synced at least to the moment
-      when request started being processed.
-    - `resourceVersionMatch` set to any other value or unset
-      Invalid error is returned.
-    
-    Defaults to true if `resourceVersion=""` or `resourceVersion="0"` (for backward compatibility reasons) and to false otherwise. */
-  sendInitialEvents?: boolean;
-  /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
-  timeoutSeconds?: number;
 };
 export type GetUserApiResponse = /** status 200 OK */ User;
 export type GetUserApiArg = {
@@ -1679,16 +1493,14 @@ export type UpdateUserStatusApiArg = {
   force?: boolean;
   patch: Patch;
 };
-export type GetUserTeamsApiResponse = /** status 200 OK */ GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1UserTeamList;
+export type GetUserTeamsApiResponse = /** status 200 OK */ GetUserTeamsResponse;
 export type GetUserTeamsApiArg = {
   /** name of the UserTeamList */
   name: string;
-  /** number of results to return */
+  /** maximum number of results to return per page */
   limit?: number;
-  /** page number (starting from 1) */
-  page?: number;
-  /** number of results to skip */
-  offset?: number;
+  /** Opaque token from a previous response's metadata.continue; resumes listing after the last team returned. The token is base64 ('+', '/', '=' may appear) — clients MUST URL-encode it when appending to the query string, otherwise '+' will silently decode to a space on the server and pagination will fail. */
+  continue?: string;
 };
 export type ApiResource = {
   /** categories is a list of the grouped resources this resource belongs to (e.g. 'all') */
@@ -1935,20 +1747,24 @@ export type ServiceAccountList = {
   kind?: string;
   metadata: ListMeta;
 };
-export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1ServiceAccountToken = {
-  created: Time;
-  expires?: Time;
-  lastUsed?: Time;
-  name?: string;
-  revoked?: boolean;
+export type ListServiceAccountTokensBody = {
+  continue: string;
+  items: any[];
 };
-export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1ServiceAccountTokenList = {
-  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
-  apiVersion?: string;
-  items: GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1ServiceAccountToken[];
-  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
-  kind?: string;
-  metadata?: ListMeta;
+export type CreateServiceAccountTokenBody = {
+  expires: number;
+  serviceAccountTokenName: string;
+  token: string;
+};
+export type CreateServiceAccountTokenRequestBody = {
+  expiresInSeconds?: number;
+  tokenName: string;
+};
+export type GetServiceAccountTokenBody = {
+  body: any;
+};
+export type DeleteServiceAccountTokenBody = {
+  message: string;
 };
 export type TeamBindingspecSubject = {
   /** kind of the identity */
@@ -1984,9 +1800,21 @@ export type TeamBindingList = {
   kind?: string;
   metadata: ListMeta;
 };
+export type TeamTeamMember = {
+  /** whether the member was added externally (e.g. team sync) */
+  external: boolean;
+  /** kind of the identity */
+  kind: string;
+  /** uid of the identity */
+  name: string;
+  /** permission of the identity in the team */
+  permission: string;
+};
 export type TeamSpec = {
   email: string;
+  externalGroups?: string[];
   externalUID: string;
+  members: TeamTeamMember[];
   provisioned: boolean;
   title: string;
 };
@@ -2007,23 +1835,6 @@ export type TeamList = {
   kind?: string;
   metadata: ListMeta;
 };
-export type GetTeamGroupsExternalGroupMapping = {
-  externalGroup: string;
-  name: string;
-};
-export type GetTeamGroupsResponse = {
-  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
-  apiVersion?: string;
-  items: GetTeamGroupsExternalGroupMapping[];
-  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
-  kind?: string;
-};
-export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1IdentityRef = {
-  /** Name is the unique identifier for identity, guaranteed to be a unique value for the type within a namespace. */
-  name: string;
-  /** Type of identity e.g. "user". For a full list see https://github.com/grafana/authlib/blob/d6737a7dc8f55e9d42834adb83b5da607ceed293/types/type.go#L15 */
-  type: string;
-};
 export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1TeamMember = {
   /** AvatarURL is the url where we can get the avatar for identity */
   avatarURL?: string;
@@ -2031,7 +1842,7 @@ export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1TeamMember = {
   displayName: string;
   /** External is set if member ship was synced from external IDP. */
   external?: boolean;
-  identity: GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1IdentityRef;
+  identity: IdentityRef;
   /** InternalID is the legacy numeric id for identity, Deprecated: use the identityRef where possible */
   internalId?: number;
   /** Permission member has in team.
@@ -2048,6 +1859,13 @@ export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1TeamMemberList = {
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata?: ListMeta;
+};
+export type GetTeamGroupsResponse = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  externalGroups: string[];
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
 };
 export type UserSpec = {
   disabled: boolean;
@@ -2085,25 +1903,13 @@ export type UserList = {
   kind?: string;
   metadata: ListMeta;
 };
-export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1TeamRef = {
-  /** Name is the unique identifier for a team. */
-  name?: string;
-};
-export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1UserTeam = {
-  /** Possible enum values:
-     - `"admin"`
-     - `"member"` */
-  permission?: 'admin' | 'member';
-  teamRef?: GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1TeamRef;
-  title?: string;
-};
-export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1UserTeamList = {
+export type GetUserTeamsResponse = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
-  items: GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1UserTeam[];
+  items: any[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
-  metadata?: ListMeta;
+  metadata: any;
 };
 export const {
   useGetApiResourcesQuery,
@@ -2113,7 +1919,6 @@ export const {
   useListExternalGroupMappingQuery,
   useLazyListExternalGroupMappingQuery,
   useCreateExternalGroupMappingMutation,
-  useDeletecollectionExternalGroupMappingMutation,
   useGetExternalGroupMappingQuery,
   useLazyGetExternalGroupMappingQuery,
   useReplaceExternalGroupMappingMutation,
@@ -2127,7 +1932,6 @@ export const {
   useListServiceAccountQuery,
   useLazyListServiceAccountQuery,
   useCreateServiceAccountMutation,
-  useDeletecollectionServiceAccountMutation,
   useGetServiceAccountQuery,
   useLazyGetServiceAccountQuery,
   useReplaceServiceAccountMutation,
@@ -2135,10 +1939,13 @@ export const {
   useUpdateServiceAccountMutation,
   useGetServiceAccountTokensQuery,
   useLazyGetServiceAccountTokensQuery,
+  useCreateServiceAccountTokensMutation,
+  useGetServiceAccountTokensWithPathQuery,
+  useLazyGetServiceAccountTokensWithPathQuery,
+  useDeleteServiceAccountTokensWithPathMutation,
   useListTeamBindingQuery,
   useLazyListTeamBindingQuery,
   useCreateTeamBindingMutation,
-  useDeletecollectionTeamBindingMutation,
   useGetTeamBindingQuery,
   useLazyGetTeamBindingQuery,
   useReplaceTeamBindingMutation,
@@ -2147,20 +1954,20 @@ export const {
   useListTeamQuery,
   useLazyListTeamQuery,
   useCreateTeamMutation,
-  useDeletecollectionTeamMutation,
   useGetTeamQuery,
   useLazyGetTeamQuery,
   useReplaceTeamMutation,
   useDeleteTeamMutation,
   useUpdateTeamMutation,
+  useCreateTeamAddmemberMutation,
   useGetTeamGroupsQuery,
   useLazyGetTeamGroupsQuery,
   useGetTeamMembersQuery,
   useLazyGetTeamMembersQuery,
+  useCreateTeamRemovememberMutation,
   useListUserQuery,
   useLazyListUserQuery,
   useCreateUserMutation,
-  useDeletecollectionUserMutation,
   useGetUserQuery,
   useLazyGetUserQuery,
   useReplaceUserMutation,

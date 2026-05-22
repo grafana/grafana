@@ -5,9 +5,9 @@ import { type MutableRefObject, useEffect, useRef, useState } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Button, CodeEditor, type Monaco, type MonacoEditor, useStyles2 } from '@grafana/ui';
 
+import { AiExplainerPopover } from './AiExplainerPopover';
 import { mockSchema } from './schema';
 
-import { AiExplainerPopover } from './AiExplainerPopover';
 
 export const DEFAULT_SQL = `SELECT
   le,
@@ -143,9 +143,7 @@ export function SqlEditor({
 
   const setupAutocomplete = (monaco: Monaco) => {
     const tables = mockSchema.flatMap((ds) => ds.tables.map((t) => t.name));
-    const allColumns = mockSchema.flatMap((ds) =>
-      ds.tables.flatMap((t) => t.columns.map((c) => c.name))
-    );
+    const allColumns = mockSchema.flatMap((ds) => ds.tables.flatMap((t) => t.columns.map((c) => c.name)));
 
     monaco.languages.registerCompletionItemProvider('sql', {
       provideCompletionItems(model, position) {
@@ -165,7 +163,12 @@ export function SqlEditor({
 
         const isAfterFrom = /\bfrom\s+\w*$/i.test(linePrefix);
         const isInsideNative = /native\s*\([^)]*$/.test(
-          model.getValueInRange({ startLineNumber: 1, startColumn: 1, endLineNumber: position.lineNumber, endColumn: position.column })
+          model.getValueInRange({
+            startLineNumber: 1,
+            startColumn: 1,
+            endLineNumber: position.lineNumber,
+            endColumn: position.column,
+          })
         );
 
         const suggestions: monacoNS.languages.CompletionItem[] = [];
@@ -181,7 +184,15 @@ export function SqlEditor({
             });
           });
         } else if (isInsideNative) {
-          ['histogram_quantile', 'rate', 'irate', 'increase', 'avg_over_time', 'sum_over_time', 'label_replace'].forEach((fn) => {
+          [
+            'histogram_quantile',
+            'rate',
+            'irate',
+            'increase',
+            'avg_over_time',
+            'sum_over_time',
+            'label_replace',
+          ].forEach((fn) => {
             suggestions.push({
               label: fn,
               kind: monaco.languages.CompletionItemKind.Function,
@@ -273,7 +284,10 @@ export function SqlEditor({
       {selectedText && !aiMode && (
         <div className={styles.aiBar}>
           <span className={styles.selectionLabel}>
-            <em>{selectedText.slice(0, 50)}{selectedText.length > 50 ? '…' : ''}</em>
+            <em>
+              {selectedText.slice(0, 50)}
+              {selectedText.length > 50 ? '…' : ''}
+            </em>
           </span>
           <Button size="sm" variant="primary" fill="text" icon="comment-alt" onClick={() => setAiMode('explain')}>
             Explain

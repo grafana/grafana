@@ -73,6 +73,11 @@ export interface DashboardMeta {
   isNew?: boolean;
   version?: number;
 
+  // Dashboard template edit flow. Set when a dashboard scene was hydrated from an DashboardTemplate
+  // via DashboardRoutes.Template with editTemplate=true.
+  isDashboardTemplate?: boolean;
+  dashboardTemplateUid?: string;
+
   // When loaded from kubernetes, we stick the raw metadata here
   // yes weird, but this means all the editor structures can exist unchanged
   // until we use the resource as the main container
@@ -160,6 +165,8 @@ export interface DashboardState {
 
 export const DASHBOARD_FROM_LS_KEY = 'DASHBOARD_FROM_LS_KEY';
 
-export function isRedirectResponse(dto: DashboardDTO | HomeDashboardRedirectDTO): dto is HomeDashboardRedirectDTO {
+export function isRedirectResponse<T extends object>(
+  dto: T | HomeDashboardRedirectDTO
+): dto is HomeDashboardRedirectDTO {
   return 'redirectUri' in dto;
 }

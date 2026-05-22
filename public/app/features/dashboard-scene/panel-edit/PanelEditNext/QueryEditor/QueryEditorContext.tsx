@@ -83,9 +83,11 @@ export interface QueryEditorUIState {
   selectedAlert: AlertRule | null;
   selectedQueryRefIds: readonly string[];
   selectedTransformationIds: readonly string[];
+  multiSelectMode: boolean;
   setSelectedQuery: (query: DataQuery | ExpressionQuery | null) => void;
   setSelectedTransformation: (transformation: Transformation | null) => void;
   setSelectedAlert: (alert: AlertRule | null) => void;
+  setMultiSelectMode: (enabled: boolean) => void;
   toggleQuerySelection: (query: DataQuery | ExpressionQuery, modifiers?: SelectionModifiers) => void;
   toggleTransformationSelection: (transformation: Transformation, modifiers?: SelectionModifiers) => void;
   clearSelection: () => void;
@@ -111,6 +113,9 @@ export interface QueryEditorUIState {
   /** Prototype: set when 'grafana-sql-prototype' is the selected datasource for a query refId */
   grafanaSqlActiveRefId: string | null;
   setGrafanaSqlActiveRefId: (refId: string | null) => void;
+  /** Action surface whose inline delete confirmation is open, so only one Actions instance confirms at a time. */
+  confirmingDeleteActionKey: string | null;
+  setConfirmingDeleteActionKey: (key: string | null) => void;
 }
 
 export interface QueryEditorActions {
@@ -129,6 +134,12 @@ export interface QueryEditorActions {
   toggleTransformationDisabled: (transformId: string) => void;
   updateTransformation: (oldConfig: DataTransformerConfig, newConfig: DataTransformerConfig) => void;
   reorderTransformations: (transformations: DataTransformerConfig[]) => void;
+  // Bulk actions
+  bulkDeleteQueries: (refIds: readonly string[]) => void;
+  bulkToggleQueriesHide: (refIds: readonly string[], hide: boolean) => void;
+  bulkDeleteTransformations: (transformIds: readonly string[]) => void;
+  bulkToggleTransformationsDisabled: (transformIds: readonly string[], disabled: boolean) => void;
+  bulkChangeDataSource: (refIds: readonly string[], settings: DataSourceInstanceSettings) => Promise<void>;
 }
 
 export type QueryEditorTypeConfigState = Record<QueryEditorType, QueryEditorTypeConfig>;

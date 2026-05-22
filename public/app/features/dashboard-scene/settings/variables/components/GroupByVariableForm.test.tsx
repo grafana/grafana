@@ -4,6 +4,7 @@ import { byTestId } from 'testing-library-selector';
 
 import { VariableSupportType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { mockBoundingClientRect } from '@grafana/test-utils';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyVariableQueryEditor';
 
@@ -37,17 +38,15 @@ jest.mock('@grafana/runtime', () => ({
 
 describe('GroupByVariableForm', () => {
   beforeAll(() => {
-    Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
-      value: jest.fn(() => ({
-        width: 200,
-        height: 200,
-        x: 0,
-        y: 0,
-        top: 0,
-        bottom: 0,
-        left: 0,
-        right: 0,
-      })),
+    mockBoundingClientRect({
+      width: 200,
+      height: 200,
+      x: 0,
+      y: 0,
+      top: 0,
+      bottom: 0,
+      left: 0,
+      right: 0,
     });
   });
 

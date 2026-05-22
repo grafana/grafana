@@ -38,12 +38,16 @@ export function SummaryPanel({ sql, selection }: Props) {
           SUMMARY
         </Text>
         {selection && (
-          <Text variant="bodySmall" color="secondary">(selection)</Text>
+          <Text variant="bodySmall" color="secondary">
+            (selection)
+          </Text>
         )}
       </div>
 
       {isLoading && (
-        <div className={styles.center}><Spinner /></div>
+        <div className={styles.center}>
+          <Spinner />
+        </div>
       )}
 
       {!isLoading && summary && (
@@ -57,7 +61,9 @@ export function SummaryPanel({ sql, selection }: Props) {
           </div>
 
           <div className={styles.chartSection}>
-            <Text variant="bodySmall" color="secondary">Preview</Text>
+            <Text variant="bodySmall" color="secondary">
+              Preview
+            </Text>
             <Sparklines frames={frames} />
           </div>
         </>
@@ -80,20 +86,23 @@ function Sparklines({ frames }: { frames: DataFrame[] }) {
   const styles = useStyles2(getSparkStyles);
   const COLORS = ['#5794F2', '#FF780A', '#37872D', '#B877D9', '#CA6D00'];
 
-  const series = frames.slice(0, 5).map((frame, fi) => {
-    const valueField = frame.fields.find((f) => f.name !== 'time');
-    if (!valueField) {
-      return null;
-    }
-    const vals: number[] = [];
-    for (let i = 0; i < valueField.values.length; i++) {
-      const v = (valueField.values as number[])[i];
-      if (typeof v === 'number' && !isNaN(v)) {
-        vals.push(v);
+  const series = frames
+    .slice(0, 5)
+    .map((frame, fi) => {
+      const valueField = frame.fields.find((f) => f.name !== 'time');
+      if (!valueField) {
+        return null;
       }
-    }
-    return { name: frame.name, values: vals, color: COLORS[fi % COLORS.length] };
-  }).filter(Boolean);
+      const vals: number[] = [];
+      for (let i = 0; i < valueField.values.length; i++) {
+        const v = (valueField.values as number[])[i];
+        if (typeof v === 'number' && !isNaN(v)) {
+          vals.push(v);
+        }
+      }
+      return { name: frame.name, values: vals, color: COLORS[fi % COLORS.length] };
+    })
+    .filter(Boolean);
 
   if (series.length === 0) {
     return null;

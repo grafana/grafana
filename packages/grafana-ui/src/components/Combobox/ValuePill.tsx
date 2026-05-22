@@ -25,7 +25,7 @@ export const ValuePill = forwardRef<HTMLSpanElement, ValuePillProps>(
             <span className={styles.separator} />
             <IconButton
               name="times"
-              size="md"
+              size="sm"
               aria-label={removeButtonLabel}
               onMouseDown={(e) => {
                 e.preventDefault();
@@ -49,6 +49,9 @@ const getValuePillStyles = (theme: GrafanaTheme2, disabled?: boolean) => ({
     borderRadius: theme.shape.radius.sm,
     color: theme.colors.text.primary,
     background: theme.colors.background.secondary,
+    // input padding is theme.spacing(0.5)
+    // border is 1px
+    height: `calc(${theme.spacing(theme.components.height.md)} - (2 * ${theme.spacing(0.5)}) - (2 * 1px))`,
     padding: theme.spacing(0.25),
     border: disabled ? `1px solid ${theme.colors.border.weak}` : 'none',
     fontSize: theme.typography.bodySmall.fontSize,

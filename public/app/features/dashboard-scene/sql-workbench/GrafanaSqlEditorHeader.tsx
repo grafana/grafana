@@ -2,7 +2,6 @@ import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
-
 import grafanaIconSvg from 'img/grafana_icon.svg';
 
 interface Props {
@@ -21,11 +20,7 @@ export function GrafanaSqlEditorHeader({ queryName, onBack }: Props) {
         </button>
 
         <div className={styles.datasourceSection}>
-          <img
-            src={grafanaIconSvg}
-            alt="Grafana"
-            className={styles.grafanaIcon}
-          />
+          <img src={grafanaIconSvg} alt="Grafana" className={styles.grafanaIcon} />
           <span className={styles.dsName}>grafana-sql</span>
           <Icon name="angle-down" size="sm" className={styles.chevron} />
         </div>

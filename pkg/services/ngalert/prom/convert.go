@@ -78,7 +78,7 @@ var (
 		EvaluationOffset:           &defaultEvaluationOffset,
 		ExecErrState:               models.OkErrState,
 		NoDataState:                models.OK,
-		KeepOriginalRuleDefinition: util.Pointer(true),
+		KeepOriginalRuleDefinition: new(true),
 	}
 )
 
@@ -281,7 +281,7 @@ func (p *Converter) convertRule(orgID int64, namespaceUID string, promGroup Prom
 		// Prometheus resolves alerts as soon as the series disappears.
 		// By setting this value to 1 we ensure that the alert is resolved on the first evaluation
 		// that doesn't have the series.
-		result.MissingSeriesEvalsToResolve = util.Pointer[int64](1)
+		result.MissingSeriesEvalsToResolve = new(int64(1))
 	}
 
 	if p.cfg.KeepOriginalRuleDefinition != nil && *p.cfg.KeepOriginalRuleDefinition {

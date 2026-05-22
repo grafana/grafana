@@ -23,6 +23,16 @@ func (qb *queryBuilder) buildGetQuery(keyPath string) (string, []interface{}) {
 	return query, []interface{}{keyPath}
 }
 
+func (qb *queryBuilder) buildExistsQuery(keyPath string) (string, []interface{}) {
+	query := fmt.Sprintf(
+		"SELECT 1 FROM %s WHERE %s = %s",
+		qb.dialect.QuoteIdent(qb.tableName),
+		qb.dialect.QuoteIdent("key_path"),
+		qb.dialect.Placeholder(1),
+	)
+	return query, []interface{}{keyPath}
+}
+
 // buildKeysQuery generates SELECT query for listing keys
 func (qb *queryBuilder) buildKeysQuery(startKey, endKey string, sortAsc bool, limit int64) (string, []interface{}) {
 	order := "ASC"
@@ -71,6 +81,18 @@ func (qb *queryBuilder) buildUpsertQuery(keyPath string, value []byte) (string, 
 		)
 		return query, []interface{}{keyPath, value, value}
 	}
+}
+
+// buildInsertQuery generates a plain INSERT (key_path, value) with no conflict handling.
+// The DB's unique constraint on key_path will reject duplicates.
+func (qb *queryBuilder) buildInsertQuery(keyPath string, value []byte) (string, []interface{}) {
+	query := fmt.Sprintf(
+		"INSERT INTO %s (%s, %s) VALUES (%s, %s)",
+		qb.dialect.QuoteIdent(qb.tableName),
+		qb.dialect.QuoteIdent("key_path"), qb.dialect.QuoteIdent("value"),
+		qb.dialect.Placeholder(1), qb.dialect.Placeholder(2),
+	)
+	return query, []interface{}{keyPath, value}
 }
 
 // buildDeleteQuery generates DELETE query

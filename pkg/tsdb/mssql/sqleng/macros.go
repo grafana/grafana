@@ -144,6 +144,7 @@ func (m *msSQLMacroEngine) Interpolate(query *backend.DataQuery, timeRange backe
 	return sql, nil
 }
 
+//nolint:gocyclo // The complexity was added in a patch. We do not want to modify the patch right now.
 func (m *msSQLMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *backend.DataQuery, name string, args []string) (string, error) {
 	switch name {
 	case "__time":
@@ -173,6 +174,9 @@ func (m *msSQLMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *bac
 		interval, err := gtime.ParseInterval(strings.Trim(args[1], `'"`))
 		if err != nil {
 			return "", fmt.Errorf("error parsing interval %v", args[1])
+		}
+		if interval <= 0 {
+			return "", fmt.Errorf("interval must be positive, got %v", args[1])
 		}
 		if len(args) == 3 {
 			err := SetupFillmode(query, interval, args[2])
@@ -208,6 +212,9 @@ func (m *msSQLMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *bac
 		interval, err := gtime.ParseInterval(strings.Trim(args[1], `'`))
 		if err != nil {
 			return "", fmt.Errorf("error parsing interval %v", args[1])
+		}
+		if interval <= 0 {
+			return "", fmt.Errorf("interval must be positive, got %v", args[1])
 		}
 		if len(args) == 3 {
 			err := SetupFillmode(query, interval, args[2])

@@ -69,12 +69,7 @@ export function ResultsTable({ sql, autoRun = false, viewMode = 'table', onViewM
           </Text>
         )}
         <div className={styles.toolbarRight}>
-          <RadioButtonGroup
-            options={VIEW_MODE_OPTIONS}
-            value={viewMode}
-            onChange={onViewModeChange}
-            size="sm"
-          />
+          <RadioButtonGroup options={VIEW_MODE_OPTIONS} value={viewMode} onChange={onViewModeChange} size="sm" />
         </div>
       </div>
 
@@ -91,11 +86,10 @@ export function ResultsTable({ sql, autoRun = false, viewMode = 'table', onViewM
             <Spinner />
           </div>
         )}
-        {hasRun && !isLoading && results.length > 0 && (
-          viewMode === 'viz'
-            ? <VisualizationPreview frames={results} />
-            : <DataFrameTable frames={results} />
-        )}
+        {hasRun &&
+          !isLoading &&
+          results.length > 0 &&
+          (viewMode === 'viz' ? <VisualizationPreview frames={results} /> : <DataFrameTable frames={results} />)}
       </div>
     </div>
   );
@@ -110,7 +104,9 @@ function DataFrameTable({ frames }: { frames: DataFrame[] }) {
       <thead>
         <tr>
           {visible[0].fields.map((f) => (
-            <th key={f.name} className={styles.th}>{f.name}</th>
+            <th key={f.name} className={styles.th}>
+              {f.name}
+            </th>
           ))}
           {visible.length > 1 && <th className={styles.th}>series</th>}
         </tr>
@@ -127,7 +123,11 @@ function DataFrameTable({ frames }: { frames: DataFrame[] }) {
                       ? new Date(raw).toLocaleTimeString()
                       : raw.toFixed(4)
                     : String(raw ?? '');
-                return <td key={ci} className={styles.td}>{display}</td>;
+                return (
+                  <td key={ci} className={styles.td}>
+                    {display}
+                  </td>
+                );
               })}
               {visible.length > 1 && <td className={styles.td}>{frame.name}</td>}
             </tr>
@@ -142,25 +142,30 @@ function VisualizationPreview({ frames }: { frames: DataFrame[] }) {
   const styles = useStyles2(getVizPreviewStyles);
   const COLORS = ['#5794F2', '#FF780A', '#37872D', '#B877D9', '#CA6D00'];
 
-  const series = frames.slice(0, 10).map((frame, fi) => {
-    const valueField = frame.fields.find((f) => f.name !== 'time');
-    if (!valueField) {
-      return null;
-    }
-    const vals: number[] = [];
-    for (let i = 0; i < valueField.values.length; i++) {
-      const v = (valueField.values as number[])[i];
-      if (typeof v === 'number' && !isNaN(v)) {
-        vals.push(v);
+  const series = frames
+    .slice(0, 10)
+    .map((frame, fi) => {
+      const valueField = frame.fields.find((f) => f.name !== 'time');
+      if (!valueField) {
+        return null;
       }
-    }
-    return { name: frame.name, values: vals, color: COLORS[fi % COLORS.length] };
-  }).filter(Boolean);
+      const vals: number[] = [];
+      for (let i = 0; i < valueField.values.length; i++) {
+        const v = (valueField.values as number[])[i];
+        if (typeof v === 'number' && !isNaN(v)) {
+          vals.push(v);
+        }
+      }
+      return { name: frame.name, values: vals, color: COLORS[fi % COLORS.length] };
+    })
+    .filter(Boolean);
 
   if (series.length === 0) {
     return (
       <div className={styles.empty}>
-        <Text color="secondary" variant="bodySmall">No data to visualize</Text>
+        <Text color="secondary" variant="bodySmall">
+          No data to visualize
+        </Text>
       </div>
     );
   }

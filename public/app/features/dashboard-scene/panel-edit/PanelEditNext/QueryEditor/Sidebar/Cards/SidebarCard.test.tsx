@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import { type DataQuery } from '@grafana/schema';
 
+import { type ActionItem } from '../../../actionItem';
 import { QueryEditorType } from '../../../constants';
 import { ds1SettingsMock, renderWithQueryEditorProvider } from '../../testUtils';
 import { type Transformation } from '../../types';
@@ -48,8 +49,8 @@ function renderSidebarCard({
   },
 }: RenderSidebarCardProps = {}) {
   const queries: DataQuery[] = [{ refId: id, datasource: { type: 'test', uid: 'test' } }];
-  const item = {
-    name: id,
+  const item: ActionItem = {
+    id,
     type: QueryEditorType.Query,
     isHidden,
   };
@@ -219,7 +220,7 @@ describe('SidebarCard', () => {
 
     it('sets aria-pressed to true when isPartOfSelection is true and isSelected is false', () => {
       const queries: DataQuery[] = [{ refId: 'A', datasource: { type: 'test', uid: 'test' } }];
-      const item = { name: 'A', type: QueryEditorType.Query, isHidden: false };
+      const item: ActionItem = { id: 'A', type: QueryEditorType.Query, isHidden: false };
 
       renderWithQueryEditorProvider(
         <SidebarCard id="A" isSelected={false} isPartOfSelection={true} item={item} onSelect={jest.fn()}>
@@ -231,7 +232,7 @@ describe('SidebarCard', () => {
       expect(screen.getByRole('button', { name: /select card A/i })).toHaveAttribute('aria-pressed', 'true');
     });
 
-    it('calls onSelect with {} when Enter is pressed on the card', async () => {
+    it('calls onSelect with { multi: false } when Enter is pressed on the card outside selection mode', async () => {
       const onSelect = jest.fn();
       const user = userEvent.setup();
       renderSidebarCard({ id: 'A', onSelect });
@@ -242,7 +243,161 @@ describe('SidebarCard', () => {
 
       await user.keyboard('[Enter]');
 
-      expect(onSelect).toHaveBeenCalledWith({});
+      expect(onSelect).toHaveBeenCalledWith({ multi: false });
+    });
+
+    it('passes multi: true to onSelect on plain click when 2+ items are already selected', async () => {
+      // Once the user is in selection mode (2+ selected via Cmd/Shift+click or
+      // multi-select mode), plain clicks act as toggles instead of replacing.
+      const onSelect = jest.fn();
+      const queries: DataQuery[] = [
+        { refId: 'A', datasource: { type: 'test', uid: 'test' } },
+        { refId: 'B', datasource: { type: 'test', uid: 'test' } },
+      ];
+      const item: ActionItem = { id: 'A', type: QueryEditorType.Query, isHidden: false };
+
+      const { user } = renderWithQueryEditorProvider(
+        <SidebarCard id="A" isSelected={false} item={item} onSelect={onSelect}>
+          <span>Card content</span>
+        </SidebarCard>,
+        { queries, uiStateOverrides: { selectedQueryRefIds: ['A', 'B'] } }
+      );
+
+      await user.click(screen.getByRole('button', { name: /select card A/i }));
+
+      expect(onSelect).toHaveBeenCalledWith({ multi: true, range: false });
+    });
+
+    it('passes multi: true to onSelect on plain click when in multi-select mode', async () => {
+      const onSelect = jest.fn();
+      const queries: DataQuery[] = [{ refId: 'A', datasource: { type: 'test', uid: 'test' } }];
+      const item: ActionItem = { id: 'A', type: QueryEditorType.Query, isHidden: false };
+
+      const { user } = renderWithQueryEditorProvider(
+        <SidebarCard id="A" isSelected={false} item={item} onSelect={onSelect}>
+          <span>Card content</span>
+        </SidebarCard>,
+        { queries, uiStateOverrides: { multiSelectMode: true } }
+      );
+
+      await user.click(screen.getByRole('button', { name: /select card A/i }));
+
+      expect(onSelect).toHaveBeenCalledWith({ multi: true, range: false });
+    });
+
+    it('passes multi: true to onSelect on Enter when in multi-select mode', async () => {
+      const onSelect = jest.fn();
+      const queries: DataQuery[] = [{ refId: 'A', datasource: { type: 'test', uid: 'test' } }];
+      const item: ActionItem = { id: 'A', type: QueryEditorType.Query, isHidden: false };
+
+      const { user } = renderWithQueryEditorProvider(
+        <SidebarCard id="A" isSelected={false} item={item} onSelect={onSelect}>
+          <span>Card content</span>
+        </SidebarCard>,
+        { queries, uiStateOverrides: { multiSelectMode: true } }
+      );
+
+      const card = screen.getByRole('button', { name: /select card A/i });
+      await user.click(card);
+      onSelect.mockClear();
+
+      await user.keyboard('[Enter]');
+
+      expect(onSelect).toHaveBeenCalledWith({ multi: true });
+    });
+
+    it('fires a DOM blur on the focused editor even when mousedown preventDefault blocks focus transfer', async () => {
+      // @hello-pangea/dnd installs a capture-phase mousedown listener that preventDefaults, so the
+      // browser's native focus transfer never fires a blur on the previously focused element.
+      // Without the force-blur in handleMouseDown, Monaco-like editors never see a DOM blur and
+      // their pending value is never flushed through onChange before the editor unmounts.
+      const onSelect = jest.fn();
+      const onEditorBlur = jest.fn();
+      const user = userEvent.setup();
+      renderSidebarCard({ id: 'A', onSelect });
+
+      const suppressFocusTransfer = (e: Event) => e.preventDefault();
+      window.addEventListener('mousedown', suppressFocusTransfer, true);
+
+      const editorLike = document.createElement('input');
+      editorLike.addEventListener('blur', onEditorBlur, true);
+      document.body.appendChild(editorLike);
+      editorLike.focus();
+
+      try {
+        await user.click(screen.getByRole('button', { name: /select card A/i }));
+
+        expect(onEditorBlur).toHaveBeenCalled();
+        expect(onSelect).toHaveBeenCalled();
+      } finally {
+        window.removeEventListener('mousedown', suppressFocusTransfer, true);
+        document.body.removeChild(editorLike);
+      }
+    });
+  });
+
+  describe('multi-select checkbox', () => {
+    const queries: DataQuery[] = [{ refId: 'A', datasource: { type: 'test', uid: 'test' } }];
+    const item: ActionItem = { id: 'A', type: QueryEditorType.Query, isHidden: false };
+
+    it('does not render the checkbox when multi-select mode is off', () => {
+      renderWithQueryEditorProvider(
+        <SidebarCard id="A" isSelected={false} item={item} onSelect={jest.fn()}>
+          <span>Card content</span>
+        </SidebarCard>,
+        { queries }
+      );
+
+      // aria-hidden wraps the checkbox, so query with { hidden: true }
+      expect(screen.queryByRole('checkbox', { hidden: true })).not.toBeInTheDocument();
+    });
+
+    it('renders the checkbox when multi-select mode is on', () => {
+      renderWithQueryEditorProvider(
+        <SidebarCard id="A" isSelected={false} item={item} onSelect={jest.fn()}>
+          <span>Card content</span>
+        </SidebarCard>,
+        { queries, uiStateOverrides: { multiSelectMode: true } }
+      );
+
+      expect(screen.getByRole('checkbox', { hidden: true })).toBeInTheDocument();
+    });
+
+    it('renders the checkbox when 2+ items are selected via keyboard shortcuts (no multi-select mode)', () => {
+      const queriesAB: DataQuery[] = [
+        { refId: 'A', datasource: { type: 'test', uid: 'test' } },
+        { refId: 'B', datasource: { type: 'test', uid: 'test' } },
+      ];
+      renderWithQueryEditorProvider(
+        <SidebarCard id="A" isSelected={false} item={item} onSelect={jest.fn()}>
+          <span>Card content</span>
+        </SidebarCard>,
+        { queries: queriesAB, uiStateOverrides: { selectedQueryRefIds: ['A', 'B'] } }
+      );
+
+      expect(screen.getByRole('checkbox', { hidden: true })).toBeInTheDocument();
+    });
+
+    it('checks the checkbox when the card is selected', () => {
+      renderWithQueryEditorProvider(
+        <SidebarCard id="A" isSelected item={item} onSelect={jest.fn()}>
+          <span>Card content</span>
+        </SidebarCard>,
+        { queries, uiStateOverrides: { multiSelectMode: true } }
+      );
+
+      expect(screen.getByRole('checkbox', { hidden: true })).toBeChecked();
+    });
+
+    it('checks the checkbox when the card is part of a selection', () => {
+      renderWithQueryEditorProvider(
+        <SidebarCard id="A" isSelected={false} isPartOfSelection={true} item={item} onSelect={jest.fn()}>
+          <span>Card content</span>
+        </SidebarCard>,
+        { queries, uiStateOverrides: { multiSelectMode: true } }
+      );
+
+      expect(screen.getByRole('checkbox', { hidden: true })).toBeChecked();
     });
   });
 

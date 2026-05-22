@@ -6,6 +6,7 @@
 
 import { type z } from 'zod';
 
+import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { TabItem } from '../../scene/layout-tabs/TabItem';
 
 import { resolveLayoutPath } from './layoutPathResolver';
@@ -37,7 +38,10 @@ export const updateTabCommand: MutationCommand<UpdateTabPayload> = {
       }
 
       const tab = resolved.item;
-      const previousValue = { title: tab.state.title };
+      const previousValue = {
+        title: tab.state.title,
+        conditionalRendering: tab.state.conditionalRendering?.serialize(),
+      };
 
       const updates: Record<string, unknown> = {};
       if (spec.title !== undefined) {
@@ -50,7 +54,15 @@ export const updateTabCommand: MutationCommand<UpdateTabPayload> = {
         tab.onChangeRepeat(spec.repeat?.value || undefined);
       }
 
-      const currentSpec = { title: tab.state.title };
+      if (spec.conditionalRendering !== undefined) {
+        const group = ConditionalRenderingGroup.deserialize(spec.conditionalRendering);
+        tab.setState({ conditionalRendering: group });
+      }
+
+      const currentSpec = {
+        title: tab.state.title,
+        conditionalRendering: tab.state.conditionalRendering?.serialize(),
+      };
 
       return {
         success: true,

@@ -50,9 +50,12 @@ func TestShouldCheckHealth(t *testing.T) {
 			expected: true,
 		},
 		{
-			name: "should not check when hook error exists",
+			name: "should not check when hook error is recent and webhook still required",
 			repo: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Generation: 1},
+				Spec: provisioning.RepositorySpec{
+					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+				},
 				Status: provisioning.RepositoryStatus{
 					ObservedGeneration: 1,
 					Health: provisioning.HealthStatus{
@@ -63,6 +66,49 @@ func TestShouldCheckHealth(t *testing.T) {
 				},
 			},
 			expected: false,
+		},
+		{
+			name: "should check when hook error cooldown expired even if webhook still required",
+			repo: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Generation: 1},
+				Spec: provisioning.RepositorySpec{
+					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+				},
+				Status: provisioning.RepositoryStatus{
+					ObservedGeneration: 1,
+					Health: provisioning.HealthStatus{
+						Healthy: false,
+						Error:   provisioning.HealthFailureHook,
+						// Older than recentUnhealthyDuration (1 minute) so the cooldown
+						// no longer suppresses the check — otherwise the repository
+						// would stay stuck unhealthy forever.
+						Checked: time.Now().Add(-2 * time.Minute).UnixMilli(),
+					},
+				},
+			},
+			expected: true,
+		},
+		{
+			name: "should check when hook error is recent but webhook is no longer required",
+			repo: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Generation: 1},
+				Spec: provisioning.RepositorySpec{
+					// Workflows removed by the user — no webhook is needed anymore,
+					// so the cooldown must not block recovery. The general timing
+					// rule still applies (recent unhealthy check is preserved for
+					// up to recentUnhealthyDuration), but here Checked is older.
+					Workflows: nil,
+				},
+				Status: provisioning.RepositoryStatus{
+					ObservedGeneration: 1,
+					Health: provisioning.HealthStatus{
+						Healthy: false,
+						Error:   provisioning.HealthFailureHook,
+						Checked: time.Now().Add(-2 * time.Minute).UnixMilli(),
+					},
+				},
+			},
+			expected: true,
 		},
 		{
 			name: "should not check when health check is recent and healthy",

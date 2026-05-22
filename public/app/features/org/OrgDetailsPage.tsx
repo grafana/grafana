@@ -2,6 +2,7 @@ import { memo, useEffect } from 'react';
 import { type ConnectedProps, connect } from 'react-redux';
 
 import { t } from '@grafana/i18n';
+import { useFlagGrafanaNewPreferencesPage } from '@grafana/runtime/internal';
 import { Stack } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
@@ -54,6 +55,9 @@ export const OrgDetailsPage = memo(function OrgDetailsPage({
   const canReadPreferences = contextSrv.hasPermission(AccessControlAction.OrgsPreferencesRead);
   const canWritePreferences = contextSrv.hasPermission(AccessControlAction.OrgsPreferencesWrite);
 
+  const newPrefsEnabled = useFlagGrafanaNewPreferencesPage();
+  const orgResourceUri = newPrefsEnabled ? 'namespace' : 'org';
+
   return (
     <Page navModel={navModel}>
       <Page.Contents isLoading={isLoading}>
@@ -62,7 +66,7 @@ export const OrgDetailsPage = memo(function OrgDetailsPage({
             {canReadOrg && <OrgProfile onSubmit={onUpdateOrganization} orgName={organization.name} />}
             {canReadPreferences && (
               <SharedPreferences
-                resourceUri="org"
+                resourceUri={orgResourceUri}
                 disabled={!canWritePreferences}
                 preferenceType="org"
                 onConfirm={handleConfirm}

@@ -56,8 +56,7 @@ export function AiFloatingBarDashboard() {
   const [result, setResult] = useState<GeneratedResult | null>(null);
   const [activeTab, setActiveTab] = useState<'sql' | 'promql'>('sql');
 
-  const expanded =
-    isHovered || isSelectingPanel || selectedPanel !== null || input.length > 0 || phase !== 'idle';
+  const expanded = isHovered || isSelectingPanel || selectedPanel !== null || input.length > 0 || phase !== 'idle';
 
   // Capture document clicks when in panel selection mode
   useEffect(() => {
@@ -142,12 +141,11 @@ export function AiFloatingBarDashboard() {
     setSelectedPanel(null);
   };
 
-  const panelLabel =
-    selectedPanel
-      ? selectedPanel.title.length > 24
-        ? selectedPanel.title.slice(0, 24) + '…'
-        : selectedPanel.title
-      : null;
+  const panelLabel = selectedPanel
+    ? selectedPanel.title.length > 24
+      ? selectedPanel.title.slice(0, 24) + '…'
+      : selectedPanel.title
+    : null;
 
   return (
     <>
@@ -158,9 +156,7 @@ export function AiFloatingBarDashboard() {
         onMouseLeave={() => setIsHovered(false)}
       >
         {/* Collapsed: AI sparkle icon */}
-        {!expanded && (
-          <Icon name="ai-sparkle" size="sm" className={styles.collapsedIcon} />
-        )}
+        {!expanded && <Icon name="ai-sparkle" size="sm" className={styles.collapsedIcon} />}
 
         {/* Expanded content */}
         {expanded && (
@@ -285,9 +281,9 @@ function PreviewSparkline() {
 
 function getStyles(theme: GrafanaTheme2) {
   // Figma design tokens
-  const chipBg = theme.colors.text.primary;        // #ccccdc in dark theme
-  const chipText = '#24292e';                       // Figma: text/maxContrast - black
-  const infoText = theme.colors.info.text;          // #6e9fff
+  const chipBg = theme.colors.text.primary; // #ccccdc in dark theme
+  const chipText = '#24292e'; // Figma: text/maxContrast - black
+  const infoText = theme.colors.info.text; // #6e9fff
   const infoTransparent = 'rgba(56, 113, 220, 0.2)'; // Figma: info/transparent
   const pillBorderCollapsed = 'transparent';
   const pillBorderExpanded = 'rgba(204, 204, 220, 0.3)'; // Figma: border/Strong at 30%
@@ -311,7 +307,8 @@ function getStyles(theme: GrafanaTheme2) {
       height: 24,
       width: 130,
       overflow: 'hidden',
-      transition: 'width 0.2s ease, height 0.2s ease, background 0.15s ease, border-color 0.15s ease, padding 0.15s ease',
+      transition:
+        'width 0.2s ease, height 0.2s ease, background 0.15s ease, border-color 0.15s ease, padding 0.15s ease',
       zIndex: 150,
       cursor: 'pointer',
       whiteSpace: 'nowrap',

@@ -187,11 +187,6 @@ func TestIntegrationServerListStreaming(t *testing.T) {
 
 	server := setupOpenFGAServer(t)
 	setup(t, server)
-	server.cfg.UseStreamedListObjects = true
-
-	t.Cleanup(func() {
-		server.cfg.UseStreamedListObjects = false
-	})
 
 	newList := func(subject, group, resource, subresource string) *authzv1.ListRequest {
 		return &authzv1.ListRequest{

@@ -2,6 +2,8 @@ import { act, render, screen, fireEvent, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
+import { mockComboboxRect } from '@grafana/test-utils';
+
 import { Drawer } from '../Drawer/Drawer';
 import { Field } from '../Forms/Field';
 import { Modal } from '../Modal/Modal';
@@ -47,18 +49,7 @@ describe('Combobox', () => {
 
   const onChangeHandler = jest.fn();
   beforeAll(() => {
-    const mockGetBoundingClientRect = jest.fn(() => ({
-      width: 120,
-      height: 120,
-      top: 0,
-      left: 0,
-      bottom: 0,
-      right: 0,
-    }));
-
-    Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
-      value: mockGetBoundingClientRect,
-    });
+    mockComboboxRect();
   });
 
   afterEach(() => {
@@ -683,6 +674,34 @@ describe('Combobox', () => {
     });
   });
 
+  describe('onBlur', () => {
+    it('calls onBlur when the input loses focus', async () => {
+      const onBlurHandler = jest.fn();
+      render(<Combobox options={options} value={null} onChange={onChangeHandler} onBlur={onBlurHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await userEvent.click(input);
+      await userEvent.tab();
+
+      expect(onBlurHandler).toHaveBeenCalledTimes(1);
+    });
+
+    it('calls onBlur when tabbing away with the menu open', async () => {
+      const onBlurHandler = jest.fn();
+      render(<Combobox options={options} value={null} onChange={onChangeHandler} onBlur={onBlurHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await userEvent.click(input);
+
+      // Menu should be open
+      expect(await screen.findByRole('listbox')).toBeInTheDocument();
+
+      await userEvent.tab();
+
+      expect(onBlurHandler).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe('with RTL selectors', () => {
     it('can be selected by label with HTML <label>', () => {
       render(
@@ -718,6 +737,45 @@ describe('Combobox', () => {
 
       const inputByPlaceholderText = screen.getByPlaceholderText('Country');
       expect(inputByPlaceholderText).toBeInTheDocument();
+    });
+  });
+
+  describe('open state isOpen / onIsOpenChange', () => {
+    it('opens the dropdown when parent sets isOpen after interaction (controlled)', async () => {
+      const { rerender } = render(
+        <Combobox options={options} value={null} onChange={onChangeHandler} isOpen={false} onIsOpenChange={jest.fn()} />
+      );
+      expect(screen.queryByRole('option', { name: 'Option 1' })).not.toBeInTheDocument();
+
+      rerender(
+        <Combobox options={options} value={null} onChange={onChangeHandler} isOpen onIsOpenChange={jest.fn()} />
+      );
+      expect(await screen.findByRole('option', { name: 'Option 1' })).toBeInTheDocument();
+    });
+
+    it('calls onIsOpenChange when the dropdown opens and closes', async () => {
+      const onIsOpenChange = jest.fn();
+      render(<Combobox options={options} value={null} onChange={onChangeHandler} onIsOpenChange={onIsOpenChange} />);
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      expect(onIsOpenChange).toHaveBeenLastCalledWith(true);
+      await user.keyboard('{Escape}');
+      expect(onIsOpenChange).toHaveBeenLastCalledWith(false);
+    });
+
+    it('supports controlled isOpen with onIsOpenChange', async () => {
+      function Controlled() {
+        const [open, setOpen] = React.useState(true);
+        return (
+          <Combobox options={options} value={null} onChange={onChangeHandler} isOpen={open} onIsOpenChange={setOpen} />
+        );
+      }
+      render(<Controlled />);
+      expect(await screen.findByRole('option', { name: 'Option 1' })).toBeInTheDocument();
+      await user.keyboard('{Escape}');
+      await waitFor(() => {
+        expect(screen.queryByRole('option', { name: 'Option 1' })).not.toBeInTheDocument();
+      });
     });
   });
 

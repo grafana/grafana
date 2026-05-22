@@ -51,12 +51,7 @@ export function PalettePicker({ value, onChange }: Props) {
             className={styles.swatch}
             style={{
               background: color,
-              borderRadius:
-                i === 0
-                  ? `${2}px 0 0 ${2}px`
-                  : i === current.swatches.length - 1
-                    ? `0 ${2}px ${2}px 0`
-                    : 0,
+              borderRadius: i === 0 ? `${2}px 0 0 ${2}px` : i === current.swatches.length - 1 ? `0 ${2}px ${2}px 0` : 0,
             }}
           />
         ))}

@@ -136,12 +136,13 @@ export function QueryEditorFooter() {
         <Button
           fill="text"
           size="sm"
-          icon="brackets-curly"
+          icon="crosshair"
           variant="secondary"
           onClick={onOpenInspector}
           aria-label={t('query-editor-next.footer.query-inspector', 'Query inspector')}
-          tooltip={t('query-editor-next.footer.query-inspector', 'Query inspector')}
-        />
+        >
+          <Trans i18nKey="query-editor-next.footer.inspect-queries">Inspect queries</Trans>
+        </Button>
       </div>
     </div>
   );

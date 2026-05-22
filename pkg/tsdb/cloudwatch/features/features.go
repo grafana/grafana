@@ -3,7 +3,7 @@ package features
 import (
 	"context"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
 )
 
 const (
@@ -14,5 +14,5 @@ const (
 )
 
 func IsEnabled(ctx context.Context, feature string) bool {
-	return backend.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled(feature)
+	return config.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled(feature)
 }

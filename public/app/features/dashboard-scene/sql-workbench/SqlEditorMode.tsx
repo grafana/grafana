@@ -6,8 +6,8 @@ import { config } from '@grafana/runtime';
 import { getDragStyles, useStyles2 } from '@grafana/ui';
 
 import { ResultsTable } from './ResultsTable';
-import { DEFAULT_SQL, SqlEditor } from './SqlEditor';
 import { SourcesPanel } from './SourcesPanel';
+import { DEFAULT_SQL, SqlEditor } from './SqlEditor';
 import { SummaryPanel } from './SummaryPanel';
 import { VizOptionsPanel } from './VizOptionsPanel';
 import { consumePendingWorkbenchSql } from './workbenchStore';
@@ -64,12 +64,7 @@ export function SqlEditorMode({ initialSql }: Props = {}) {
 
       <div className={styles.center}>
         <div className={styles.editorPane} style={{ height: editorHeight }}>
-          <SqlEditor
-            value={sql}
-            onChange={setSql}
-            onRunQuery={() => setRunKey((k) => k + 1)}
-            height="100%"
-          />
+          <SqlEditor value={sql} onChange={setSql} onRunQuery={() => setRunKey((k) => k + 1)} height="100%" />
         </div>
         <div
           className={cx(styles.dragHandle, dragStyles.dragHandleHorizontal)}
@@ -78,18 +73,11 @@ export function SqlEditorMode({ initialSql }: Props = {}) {
           aria-orientation="horizontal"
         />
         <div className={styles.resultsPane}>
-          <ResultsTable
-            key={runKey}
-            sql={sql}
-            viewMode={viewMode}
-            onViewModeChange={setViewMode}
-          />
+          <ResultsTable key={runKey} sql={sql} viewMode={viewMode} onViewModeChange={setViewMode} />
         </div>
       </div>
 
-      <div className={styles.rightPanel}>
-        {viewMode === 'viz' ? <VizOptionsPanel /> : <SummaryPanel sql={sql} />}
-      </div>
+      <div className={styles.rightPanel}>{viewMode === 'viz' ? <VizOptionsPanel /> : <SummaryPanel sql={sql} />}</div>
     </div>
   );
 }

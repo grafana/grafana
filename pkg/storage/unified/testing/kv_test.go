@@ -48,8 +48,5 @@ func TestSQLKV(t *testing.T) {
 		return kv
 	}, &KVTestOptions{
 		NSPrefix: "sql-kv-test",
-		SkipTests: map[string]bool{
-			TestKVBatch: true, // Batch operations not yet implemented for sqlKV
-		},
 	})
 }

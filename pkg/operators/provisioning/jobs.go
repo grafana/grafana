@@ -124,6 +124,7 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 		metrics,
 		tracer,
 		maxSyncWorkers,
+		cfg.ProvisioningMaxFileSize,
 	)
 
 	stageIfPossible := repository.WrapWithStageAndPushIfPossible
@@ -178,7 +179,10 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 
 	// PullRequest
 	renderer := pullrequest.NewNoOpRenderer()
-	evaluator := pullrequest.NewEvaluator(renderer, parsers, urlProvider, registry)
+	evaluator := pullrequest.NewEvaluator(renderer, parsers, pullrequest.URLProvider{
+		Internal: urlProvider,
+		Public:   urlProvider,
+	}, registry)
 	commenter := pullrequest.NewCommenter(false)
 	prWorker := pullrequest.NewPullRequestWorker(evaluator, commenter, registry)
 
