@@ -1,3 +1,4 @@
+import { act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render, screen, waitFor } from 'test/test-utils';
 
@@ -6,6 +7,7 @@ import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { dashboardAPIVersionResolver } from 'app/features/dashboard/api/DashboardAPIVersionResolver';
+import { validateTitle, validateUid } from 'app/features/manage-dashboards/import/utils/validation';
 import { type DashboardInputs, DashboardSource, LibraryPanelInputState } from 'app/features/manage-dashboards/types';
 
 import { setupProvisioningMswServer } from '../../mocks/server';
@@ -47,11 +49,13 @@ jest.mock('../../hooks/useLastBranch', () => ({
   }),
 }));
 
-jest.mock('app/features/manage-dashboards/services/ValidationSrv', () => ({
-  validationSrv: {
-    validateNewDashboardName: jest.fn().mockResolvedValue(true),
-  },
+jest.mock('app/features/manage-dashboards/import/utils/validation', () => ({
+  validateTitle: jest.fn().mockResolvedValue(true),
+  validateUid: jest.fn().mockResolvedValue(true),
 }));
+
+const mockValidateTitle = jest.mocked(validateTitle);
+const mockValidateUid = jest.mocked(validateUid);
 
 const repository: RepositoryView = {
   name: 'test-repo',
@@ -101,7 +105,7 @@ const v2Dashboard: DashboardV2Spec = {
   layout: { kind: 'GridLayout', spec: { items: [] } },
 };
 
-function setup(overrides: Partial<Parameters<typeof ProvisionedImportOverview>[0]> = {}) {
+async function setup(overrides: Partial<Parameters<typeof ProvisionedImportOverview>[0]> = {}) {
   const props = {
     dashboard: v1Dashboard,
     dashboardUid: 'test-uid',
@@ -114,35 +118,42 @@ function setup(overrides: Partial<Parameters<typeof ProvisionedImportOverview>[0
     ...overrides,
   };
 
-  return { ...render(<ProvisionedImportOverview {...props} />), props };
+  let result!: ReturnType<typeof render>;
+  await act(async () => {
+    result = render(<ProvisionedImportOverview {...props} />);
+  });
+
+  return { ...result, props };
 }
 
 describe('ProvisionedImportOverview', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockValidateTitle.mockResolvedValue(true);
+    mockValidateUid.mockResolvedValue(true);
     dashboardAPIVersionResolver.set({ v1: 'v1', v2: 'v2' });
   });
 
   describe('rendering', () => {
-    it('renders name and uid fields', () => {
-      setup();
+    it('renders name and uid fields', async () => {
+      await setup();
       expect(screen.getByTestId(selectors.components.ImportDashboardForm.name)).toBeInTheDocument();
       expect(screen.getByTestId('provisioned-import-uid')).toBeInTheDocument();
     });
 
-    it('renders shared provisioning fields', () => {
-      setup();
+    it('renders shared provisioning fields', async () => {
+      await setup();
       expect(screen.getByTestId('shared-fields')).toBeInTheDocument();
     });
 
-    it('renders import button', () => {
-      setup();
+    it('renders import button', async () => {
+      await setup();
       expect(screen.getByTestId(selectors.components.ImportDashboardForm.submit)).toBeInTheDocument();
       expect(screen.getByTestId(selectors.components.ImportDashboardForm.submit)).toHaveTextContent('Import');
     });
 
-    it('pre-fills title from dashboard', () => {
-      setup();
+    it('pre-fills title from dashboard', async () => {
+      await setup();
       const nameInput = screen.getByTestId(selectors.components.ImportDashboardForm.name);
       expect(nameInput).toHaveValue('V1 Dashboard');
     });
@@ -150,7 +161,7 @@ describe('ProvisionedImportOverview', () => {
 
   describe('V1 dashboard', () => {
     it('calls save with v1 apiVersion on submit', async () => {
-      setup();
+      await setup();
       const submitBtn = screen.getByTestId(selectors.components.ImportDashboardForm.submit);
 
       await userEvent.click(submitBtn);
@@ -168,7 +179,7 @@ describe('ProvisionedImportOverview', () => {
 
   describe('V2 dashboard', () => {
     it('calls save with v2 apiVersion on submit', async () => {
-      setup({ dashboard: v2Dashboard, dashboardUid: 'v2-uid' });
+      await setup({ dashboard: v2Dashboard, dashboardUid: 'v2-uid' });
       const submitBtn = screen.getByTestId(selectors.components.ImportDashboardForm.submit);
 
       await userEvent.click(submitBtn);
@@ -204,14 +215,14 @@ describe('ProvisionedImportOverview', () => {
         },
       };
 
-      setup({ dashboard: floatDashboard });
+      await setup({ dashboard: floatDashboard });
 
       expect(screen.getByTestId(selectors.components.ImportDashboardForm.floatGridItemsWarning)).toBeInTheDocument();
     });
   });
 
   describe('library panels block', () => {
-    it('shows warning and disables submit for V1 dashboard with library panels', () => {
+    it('shows warning and disables submit for V1 dashboard with library panels', async () => {
       const inputsWithLibPanels: DashboardInputs = {
         ...emptyInputs,
         libraryPanels: [
@@ -229,13 +240,13 @@ describe('ProvisionedImportOverview', () => {
         ],
       };
 
-      setup({ inputs: inputsWithLibPanels });
+      await setup({ inputs: inputsWithLibPanels });
 
       expect(screen.getByText(/library panels not supported/i)).toBeInTheDocument();
       expect(screen.getByTestId(selectors.components.ImportDashboardForm.submit)).toBeDisabled();
     });
 
-    it('does NOT block submit for V2 dashboard with library panels', () => {
+    it('does NOT block submit for V2 dashboard with library panels', async () => {
       const inputsWithLibPanels: DashboardInputs = {
         ...emptyInputs,
         libraryPanels: [
@@ -253,7 +264,7 @@ describe('ProvisionedImportOverview', () => {
         ],
       };
 
-      setup({ dashboard: v2Dashboard, inputs: inputsWithLibPanels });
+      await setup({ dashboard: v2Dashboard, inputs: inputsWithLibPanels });
 
       expect(screen.queryByText(/library panels not supported/i)).not.toBeInTheDocument();
       expect(screen.getByTestId(selectors.components.ImportDashboardForm.submit)).not.toBeDisabled();
@@ -261,13 +272,13 @@ describe('ProvisionedImportOverview', () => {
   });
 
   describe('read-only repo', () => {
-    it('shows read-only banner and disables submit', () => {
+    it('shows read-only banner and disables submit', async () => {
       const readOnlyRepo: RepositoryView = {
         ...repository,
         workflows: [],
       };
 
-      setup({ repository: readOnlyRepo });
+      await setup({ repository: readOnlyRepo });
 
       expect(screen.getByText(/read only/i)).toBeInTheDocument();
       expect(screen.getByTestId(selectors.components.ImportDashboardForm.submit)).toBeDisabled();
@@ -275,10 +286,50 @@ describe('ProvisionedImportOverview', () => {
   });
 
   describe('gcom source', () => {
-    it('shows GcomDashboardInfo when source is Gcom', () => {
-      setup({ source: DashboardSource.Gcom });
+    it('shows GcomDashboardInfo when source is Gcom', async () => {
+      await setup({ source: DashboardSource.Gcom });
       // GcomDashboardInfo renders orgName info
       expect(screen.getByText(/Test Org/)).toBeInTheDocument();
+    });
+  });
+
+  describe('validation', () => {
+    it('disables submit when title already exists in target folder', async () => {
+      mockValidateTitle.mockResolvedValue('A dashboard with the same name already exists in the target folder');
+      await setup();
+
+      expect(screen.getByTestId(selectors.components.ImportDashboardForm.submit)).toBeDisabled();
+      expect(
+        screen.getByText('A dashboard with the same name already exists in the target folder')
+      ).toBeInTheDocument();
+    });
+
+    it('disables submit when uid already exists', async () => {
+      mockValidateUid.mockResolvedValue("Dashboard named 'Other' in folder 'General' has the same UID");
+      await setup();
+
+      expect(screen.getByTestId(selectors.components.ImportDashboardForm.submit)).toBeDisabled();
+      expect(screen.getByText(/has the same UID/)).toBeInTheDocument();
+    });
+
+    it('does not call uid validator when uid is empty', async () => {
+      await setup({ dashboardUid: undefined });
+
+      expect(mockValidateTitle).toHaveBeenCalledWith('V1 Dashboard', 'folder-1');
+      expect(mockValidateUid).not.toHaveBeenCalled();
+    });
+
+    it('triggers validation on mount for title and uid', async () => {
+      await setup();
+
+      expect(mockValidateTitle).toHaveBeenCalledWith('V1 Dashboard', 'folder-1');
+      expect(mockValidateUid).toHaveBeenCalledWith('test-uid');
+    });
+
+    it('allows submit when all validations pass', async () => {
+      await setup();
+
+      expect(screen.getByTestId(selectors.components.ImportDashboardForm.submit)).not.toBeDisabled();
     });
   });
 });

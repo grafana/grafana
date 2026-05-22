@@ -13185,6 +13185,7 @@
       "label-filename": "Filename",
       "label-folder": "Folder",
       "label-path": "Path",
+      "path-exists": "A file with this name already exists at this path",
       "placeholder-branch": "Select or enter branch name",
       "placeholder-folder": "Select or enter folder path",
       "suffix-configured-branch": "Synchronized branch",

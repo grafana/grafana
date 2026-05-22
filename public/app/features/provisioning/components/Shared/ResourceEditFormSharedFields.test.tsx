@@ -1,4 +1,4 @@
-import { render, renderHook, screen } from '@testing-library/react';
+import { render, renderHook, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ReactNode } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
@@ -9,9 +9,13 @@ import { useBranchDropdownOptions } from '../../hooks/useBranchDropdownOptions';
 import { type ProvisionedDashboardFormData } from '../../types/form';
 
 import { ResourceEditFormSharedFields } from './ResourceEditFormSharedFields';
-// Mock RTK Query hook used inside ResourceEditFormSharedFields to avoid requiring a Redux Provider
+// Mock RTK Query hooks used inside ResourceEditFormSharedFields to avoid requiring a Redux Provider
+const mockCheckFile = jest.fn().mockReturnValue({
+  unwrap: () => Promise.reject({ status: 404, data: {} }),
+});
 jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   useGetRepositoryRefsQuery: jest.fn().mockReturnValue({ data: { items: [] }, isLoading: false, error: null }),
+  useLazyGetRepositoryFilesWithPathQuery: jest.fn().mockImplementation(() => [mockCheckFile, { isLoading: false }]),
 }));
 
 // Mock the new hooks that depend on router context
@@ -413,6 +417,72 @@ describe('ResourceEditFormSharedFields', () => {
 
       // Check if validation error appears
       expect(screen.getByRole('alert')).toBeInTheDocument();
+    });
+  });
+
+  describe('Path validation for new dashboards', () => {
+    beforeEach(() => {
+      mockCheckFile.mockClear();
+    });
+    it('should show error when file already exists at path', async () => {
+      mockCheckFile.mockReturnValue({
+        unwrap: () => Promise.resolve({}),
+      });
+
+      const { user } = setup({
+        isNew: true,
+        repository: mockRepo.github,
+        formDefaultValues: { path: 'dashboards/existing.json' },
+      });
+
+      const filenameInput = screen.getByRole('textbox', { name: /filename/i });
+      await user.clear(filenameInput);
+      await user.type(filenameInput, 'test.json');
+
+      await waitFor(() => {
+        expect(screen.getByText('A file with this name already exists at this path')).toBeInTheDocument();
+      });
+    });
+
+    it('should not show error when file does not exist (404)', async () => {
+      mockCheckFile.mockReturnValue({
+        unwrap: () => Promise.reject({ status: 404, data: {} }),
+      });
+
+      const { user } = setup({
+        isNew: true,
+        repository: mockRepo.github,
+        formDefaultValues: { path: 'dashboards/new-file.json' },
+      });
+
+      const filenameInput = screen.getByRole('textbox', { name: /filename/i });
+      await user.clear(filenameInput);
+      await user.type(filenameInput, 'test.json');
+
+      await waitFor(() => {
+        expect(mockCheckFile).toHaveBeenCalled();
+      });
+
+      expect(screen.queryByText('A file with this name already exists at this path')).not.toBeInTheDocument();
+    });
+
+    it('should not validate path when not a new dashboard', () => {
+      setup({
+        isNew: false,
+        repository: mockRepo.github,
+        formDefaultValues: { path: 'dashboards/existing.json' },
+      });
+
+      expect(mockCheckFile).not.toHaveBeenCalled();
+    });
+
+    it('should not validate path when isNew is not set', () => {
+      setup({
+        repository: mockRepo.github,
+        formDefaultValues: { path: 'dashboards/existing.json' },
+      });
+
+      expect(mockCheckFile).not.toHaveBeenCalled();
     });
   });
 });

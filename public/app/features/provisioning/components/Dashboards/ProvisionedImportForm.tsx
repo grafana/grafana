@@ -7,6 +7,7 @@ import { Alert, Button, Field, Input, Stack } from '@grafana/ui';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { getUidFieldDescription, getUidFieldLabel } from 'app/features/manage-dashboards/import/utils/uidFieldText';
+import { validateTitle, validateUid } from 'app/features/manage-dashboards/import/utils/validation';
 import { type DashboardInput, type DashboardInputs, type DataSourceInput } from 'app/features/manage-dashboards/types';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
@@ -16,7 +17,7 @@ import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFi
 
 import { type ProvisionedImportFormData } from './ProvisionedImportOverview';
 
-interface Props extends Pick<UseFormReturn<ProvisionedImportFormData>, 'register' | 'control'> {
+interface Props extends Pick<UseFormReturn<ProvisionedImportFormData>, 'register' | 'control' | 'getValues'> {
   inputs: DashboardInputs;
   errors: FieldErrors<ProvisionedImportFormData>;
   isReadOnlyRepo: boolean;
@@ -34,6 +35,7 @@ interface Props extends Pick<UseFormReturn<ProvisionedImportFormData>, 'register
 export function ProvisionedImportForm({
   register,
   control,
+  getValues,
   errors,
   inputs,
   isReadOnlyRepo,
@@ -87,7 +89,11 @@ export function ProvisionedImportForm({
         noMargin
       >
         <Input
-          {...register('title', { required: t('provisioning.import.name-required', 'Name is required') })}
+          {...register('title', {
+            required: t('provisioning.import.name-required', 'Name is required'),
+            validate: (v) => validateTitle(v, getValues('folderUid')),
+            deps: ['folderUid'],
+          })}
           type="text"
           data-testid={selectors.components.ImportDashboardForm.name}
         />
@@ -117,7 +123,13 @@ export function ProvisionedImportForm({
         error={errors.uid?.message}
         noMargin
       >
-        <Input {...register('uid')} type="text" data-testid="provisioned-import-uid" />
+        <Input
+          {...register('uid', {
+            validate: (v) => (!v ? true : validateUid(v)),
+          })}
+          type="text"
+          data-testid="provisioned-import-uid"
+        />
       </Field>
 
       {/* Datasource inputs */}
