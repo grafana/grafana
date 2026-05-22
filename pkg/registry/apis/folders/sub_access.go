@@ -187,16 +187,19 @@ func (r *subAccessREST) getAccessInfo(ctx context.Context, name string) (*folder
 		allowed[c.correlationID] = result.Allowed
 	}
 
-	tier := resolveTier(allowed)
-
+	// Can* mirrors the legacy pkg/api/folder.go newToFolderDto computation:
+	// canEdit / canSave both gate on folders:write, canDelete on folders:delete,
+	// canAdmin on the permissions verbs. CanAdmin implies the other three
+	// because the seeded Admin role bundles those actions.
+	canAdmin := allowed["setperms"]
 	rsp := &foldersV1.FolderAccessInfo{
-		CanAdmin:  tier >= tierAdmin,
-		CanEdit:   tier >= tierEditor,
-		CanDelete: tier >= tierEditor,
-		CanSave:   tier >= tierEditor,
+		CanAdmin:  canAdmin,
+		CanEdit:   canAdmin || allowed["update"],
+		CanSave:   canAdmin || allowed["update"],
+		CanDelete: canAdmin || allowed["delete"],
 	}
 
-	if ac := actionsForTier(tier); len(ac) > 0 {
+	if ac := actionsForTier(resolveTier(allowed)); len(ac) > 0 {
 		rsp.AccessControl = ac
 	}
 
