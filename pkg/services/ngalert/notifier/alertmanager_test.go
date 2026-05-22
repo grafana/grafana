@@ -168,6 +168,7 @@ func TestAlertmanager_ApplyConfig(t *testing.T) {
 		}
 	}
 
+	grafanaTmpl := v1.NewTemplateGroup("grafana-template", "{{ define \"grafana.title\" }}Alert{{ end }}", v1.TemplateKindGrafana, ngmodels.ProvenanceNone)
 	testCases := []struct {
 		name          string
 		config        *v1.AMConfigV1
@@ -178,8 +179,8 @@ func TestAlertmanager_ApplyConfig(t *testing.T) {
 			name: "basic config",
 			config: &v1.AMConfigV1{
 				AlertmanagerConfig: basicConfig(),
-				TemplateFiles: map[string]string{
-					"grafana-template": "{{ define \"grafana.title\" }}Alert{{ end }}",
+				Templates: map[v1.ResourceUID]v1.TemplateGroup{
+					grafanaTmpl.UID: grafanaTmpl,
 				},
 			},
 			skipInvalid: false,
@@ -188,8 +189,8 @@ func TestAlertmanager_ApplyConfig(t *testing.T) {
 			name: "with mimir config",
 			config: &v1.AMConfigV1{
 				AlertmanagerConfig: basicConfig(),
-				TemplateFiles: map[string]string{
-					"grafana-template": "{{ define \"grafana.title\" }}Grafana Alert{{ end }}",
+				Templates: map[v1.ResourceUID]v1.TemplateGroup{
+					grafanaTmpl.UID: grafanaTmpl,
 				},
 				ExtraConfigs: []v1.ExtraConfiguration{
 					{
@@ -247,8 +248,8 @@ receivers:
 			} else {
 				require.NoError(t, err)
 
-				templateDefs := tc.config.GetMergedTemplateDefinitions()
-				expectedTemplateCount := len(tc.config.TemplateFiles)
+				templateDefs := tc.config.SortedTemplates(true)
+				expectedTemplateCount := len(tc.config.Templates)
 				if len(tc.config.ExtraConfigs) > 0 {
 					expectedTemplateCount += len(tc.config.ExtraConfigs[0].TemplateFiles)
 				}
@@ -267,9 +268,9 @@ func TestAlertmanager_HashStabilityAndChangeDetection(t *testing.T) {
 			})
 		}
 		return &v1.AMConfigV1{
-			TemplateFiles: map[string]string{
-				"a-template.tmpl": "{{ define \"a\" }}a{{ end }}",
-				"b-template.tmpl": "{{ define \"b\" }}b{{ end }}",
+			Templates: map[v1.ResourceUID]v1.TemplateGroup{
+				v1.TemplateUID(v1.TemplateKindGrafana, "a-template.tmpl"): {Title: "a-template.tmpl", Content: "{{ define \"a\" }}a{{ end }}", Kind: v1.TemplateKindGrafana},
+				v1.TemplateUID(v1.TemplateKindGrafana, "b-template.tmpl"): {Title: "b-template.tmpl", Content: "{{ define \"b\" }}b{{ end }}", Kind: v1.TemplateKindGrafana},
 			},
 			AlertmanagerConfig: v1.PostableApiAlertingConfig{
 				Config: v1.Config{
@@ -326,7 +327,8 @@ func TestAlertmanager_HashStabilityAndChangeDetection(t *testing.T) {
 				return baseConfig("default-receiver", "extra-receiver")
 			},
 			mutate: func(cfg *v1.AMConfigV1, _ map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting) {
-				cfg.TemplateFiles["new.tmpl"] = "{{ define \"new\" }}b{{ end }}"
+				tmpl := v1.NewTemplateGroup("new.tmpl", "{{ define \"new\" }}b{{ end }}", v1.TemplateKindGrafana, ngmodels.ProvenanceNone)
+				cfg.Templates[tmpl.UID] = tmpl
 			},
 		},
 		{
@@ -481,9 +483,9 @@ receivers:
 				require.NoError(t, err)
 				diff := cmp.Diff(firstApplied, base.AppliedConfig(), cmpopts.IgnoreUnexported(definition.Route{}, labels.Matcher{}))
 				if diff != "" {
-					t.Errorf("Unexpected change in applied config: %v", diff)
+					t.Errorf("Unexpected change in applied config after %d runs: %v", i, diff)
 				}
-				require.Falsef(t, changed, "applyConfig should not return changed=true after first run, diff:\n%s", diff)
+				require.Falsef(t, changed, "applyConfig should not return changed=true after first run, runs: %d, diff:\n%s", i, diff)
 				require.Equal(t, firstHash, am.(*alertmanager).appliedHash)
 			}
 
