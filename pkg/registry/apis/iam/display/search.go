@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"strconv"
 
+	"golang.org/x/sync/errgroup"
 	"k8s.io/apimachinery/pkg/selection"
 
 	authlib "github.com/grafana/authlib/types"
@@ -47,17 +48,28 @@ func (r *SearchDisplayProvider) GetDisplayList(ctx context.Context, ns authlib.N
 	foundUIDs := make(map[string]struct{}, len(keys.uids))
 	foundIDs := make(map[int64]struct{}, len(keys.ids))
 
-	// Users and service accounts are separate resources in the search index,
-	// so search both and tag matches with the corresponding identity type.
-	for _, target := range []struct {
-		resource     string
-		identityType authlib.IdentityType
-	}{
-		{"users", authlib.TypeUser},
-		{"serviceaccounts", authlib.TypeServiceAccount},
-	} {
-		if err := r.searchResource(ctx, ns, keys, rsp, target.resource, target.identityType, foundUIDs, foundIDs); err != nil {
+	jobs := r.buildSearchJobs(ns, keys)
+	if len(jobs) > 0 {
+		responses := make([]*resourcepb.ResourceSearchResponse, len(jobs))
+		g, gctx := errgroup.WithContext(ctx)
+		for i, j := range jobs {
+			g.Go(func() error {
+				srsp, err := r.client.Search(gctx, j.req)
+				if err != nil {
+					return err
+				}
+				responses[i] = srsp
+				return nil
+			})
+		}
+		if err := g.Wait(); err != nil {
 			return nil, err
+		}
+		// Merge serially to keep deterministic ordering (users before
+		// service accounts, UID matches before ID matches) and avoid
+		// needing locks around the shared maps and slice.
+		for i, srsp := range responses {
+			appendDisplayRows(rsp, srsp, jobs[i].identityType, foundUIDs, foundIDs)
 		}
 	}
 
@@ -67,57 +79,70 @@ func (r *SearchDisplayProvider) GetDisplayList(ctx context.Context, ns authlib.N
 	return rsp, nil
 }
 
-func (r *SearchDisplayProvider) searchResource(ctx context.Context, ns authlib.NamespaceInfo, keys dispKeys, list *iam.DisplayList, resourceName string, identityType authlib.IdentityType, foundUIDs map[string]struct{}, foundIDs map[int64]struct{}) error {
+type searchJob struct {
+	req          *resourcepb.ResourceSearchRequest
+	identityType authlib.IdentityType
+}
+
+// buildSearchJobs returns the set of search requests needed to resolve display
+// info for the given keys. Users and service accounts are separate resources
+// in the search index, and each is queried by UID and by deprecated internal
+// ID, yielding up to four independent requests.
+func (r *SearchDisplayProvider) buildSearchJobs(ns authlib.NamespaceInfo, keys dispKeys) []searchJob {
 	if len(keys.uids) == 0 && len(keys.ids) == 0 {
 		return nil
 	}
 
-	newReq := func() *resourcepb.ResourceSearchRequest {
-		return &resourcepb.ResourceSearchRequest{
-			Limit:  10, // this should never be more than one
-			Fields: searchDisplayFields,
-			Options: &resourcepb.ListOptions{
-				Key: &resourcepb.ResourceKey{
-					Namespace: ns.Value,
-					Group:     iam.GROUP,
-					Resource:  resourceName,
+	targets := []struct {
+		resource     string
+		identityType authlib.IdentityType
+	}{
+		{"users", authlib.TypeUser},
+		{"serviceaccounts", authlib.TypeServiceAccount},
+	}
+
+	jobs := make([]searchJob, 0, 2*len(targets))
+	for _, target := range targets {
+		newReq := func() *resourcepb.ResourceSearchRequest {
+			return &resourcepb.ResourceSearchRequest{
+				Limit:  100, // although the query should only return one item
+				Fields: searchDisplayFields,
+				Options: &resourcepb.ListOptions{
+					Key: &resourcepb.ResourceKey{
+						Namespace: ns.Value,
+						Group:     iam.GROUP,
+						Resource:  target.resource,
+					},
 				},
-			},
+			}
 		}
-	}
 
-	if len(keys.uids) > 0 {
-		req := newReq()
-		req.Options.Fields = []*resourcepb.Requirement{{
-			Key:      resource.SEARCH_FIELD_NAME,
-			Operator: string(selection.In),
-			Values:   keys.uids,
-		}}
-		srsp, err := r.client.Search(ctx, req)
-		if err != nil {
-			return err
+		for _, uid := range keys.uids {
+			req := newReq()
+			req.Options.Fields = []*resourcepb.Requirement{{
+				Key:      resource.SEARCH_FIELD_NAME,
+				Operator: string(selection.In),
+				Values:   []string{uid},
+			}}
+			jobs = append(jobs, searchJob{req: req, identityType: target.identityType})
 		}
-		appendDisplayRows(list, srsp, identityType, foundUIDs, foundIDs)
-	}
 
-	if len(keys.ids) > 0 {
-		idStrs := make([]string, 0, len(keys.ids))
-		for _, id := range keys.ids {
-			idStrs = append(idStrs, strconv.FormatInt(id, 10))
+		// Labels do support OR, so lets use that to search for multiple IDs at once
+		if len(keys.ids) > 0 {
+			idStrs := make([]string, 0, len(keys.ids))
+			for _, id := range keys.ids {
+				idStrs = append(idStrs, strconv.FormatInt(id, 10))
+			}
+			req := newReq()
+			req.Options.Labels = []*resourcepb.Requirement{{
+				Key:      utils.LabelKeyDeprecatedInternalID, // nolint:staticcheck
+				Operator: string(selection.In),
+				Values:   idStrs,
+			}}
+			jobs = append(jobs, searchJob{req: req, identityType: target.identityType})
 		}
-		req := newReq()
-		req.Options.Labels = []*resourcepb.Requirement{{
-			Key:      utils.LabelKeyDeprecatedInternalID, // nolint:staticcheck
-			Operator: string(selection.In),
-			Values:   idStrs,
-		}}
-		srsp, err := r.client.Search(ctx, req)
-		if err != nil {
-			return err
-		}
-		appendDisplayRows(list, srsp, identityType, foundUIDs, foundIDs)
 	}
-	return nil
+	return jobs
 }
 
 func appendDisplayRows(list *iam.DisplayList, rsp *resourcepb.ResourceSearchResponse, identityType authlib.IdentityType, foundUIDs map[string]struct{}, foundIDs map[int64]struct{}) {
