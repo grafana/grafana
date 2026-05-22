@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/testutil"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 // nolint:gocyclo
@@ -315,9 +314,7 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			b := &DashboardsAPIBuilder{
-				features: featuremgmt.WithFeatures(),
-			}
+			b := &DashboardsAPIBuilder{}
 			var operationOptions runtime.Object
 			switch tt.operation {
 			case admission.Create:

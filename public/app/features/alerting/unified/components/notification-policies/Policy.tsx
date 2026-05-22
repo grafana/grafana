@@ -431,7 +431,14 @@ const Policy = (props: PolicyComponentProps) => {
                 className={styles.moreButtons}
                 onClick={() => setVisibleChildPolicies(visibleChildPolicies + POLICIES_PER_PAGE)}
               >
-                <Trans i18nKey="alerting.policies.n-more-policies" count={moreCount}>
+                <Trans
+                  i18nKey="alerting.policies.n-more-policies"
+                  count={moreCount}
+                  tOptions={{
+                    defaultValue_one: '{{count}} additional policies',
+                    defaultValue_other: '{{count}} additional policies',
+                  }}
+                >
                   {{ count: moreCount }} additional policies
                 </Trans>
               </Button>
@@ -511,7 +518,14 @@ export function MetadataRow({
           >
             <Text color="primary">{numberOfAlertInstances ?? '-'}</Text>
             <span>
-              <Trans i18nKey="alerting.policies.metadata.n-instances" count={numberOfAlertInstances ?? 0}>
+              <Trans
+                i18nKey="alerting.policies.metadata.n-instances"
+                count={numberOfAlertInstances ?? 0}
+                tOptions={{
+                  defaultValue_one: 'instance',
+                  defaultValue_other: 'instance',
+                }}
+              >
                 instance
               </Trans>
             </span>
@@ -798,7 +812,14 @@ export const DefaultPolicyIndicator: FC<DefaultPolicyIndicatorProps> = ({ route 
       {isFinite(routeCount) && (
         <Text variant="bodySmall" color="secondary">
           ・{' '}
-          <Trans i18nKey="alerting.policies.default-policy.route-count" count={routeCount}>
+          <Trans
+            i18nKey="alerting.policies.default-policy.route-count"
+            count={routeCount}
+            tOptions={{
+              defaultValue_one: '{{count}} routes',
+              defaultValue_other: '{{count}} routes',
+            }}
+          >
             {{ count: routeCount }} routes
           </Trans>
         </Text>

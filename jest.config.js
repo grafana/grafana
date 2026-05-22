@@ -26,7 +26,7 @@ const esModules = [
   'lodash-es',
   'vscode-languageserver-types',
   '@bsull/augurs',
-  'react-data-grid',
+  '@grafana/react-data-grid',
   '@grafana/llm',
   'pkce-challenge',
   'quickselect',
@@ -34,6 +34,7 @@ const esModules = [
   'earcut',
   'pbf',
   'geotiff',
+  'uuid',
 ].join('|');
 
 module.exports = {
