@@ -453,7 +453,9 @@ export function PanelChrome({
           <div
             id={panelContentId}
             data-testid={selectors.components.Panels.Panel.content}
-            className={cx(styles.content, height === undefined && styles.containNone)}
+            className={cx(styles.content, height === undefined && styles.containNone, {
+              [styles.contentTransparent]: isPanelTransparent,
+            })}
             style={contentStyle}
             onPointerDown={onContentPointerDown}
           >
@@ -593,6 +595,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       border: `1px solid ${contentBorderColor}`,
       borderRadius: theme.shape.radius.lg,
       margin: '-1px', // to overlay the nested borders nicely
+    }),
+    contentTransparent: css({
+      backgroundColor: 'transparent',
+      border: '1px solid transparent',
     }),
     headerContainer: css({
       label: 'panel-header',
