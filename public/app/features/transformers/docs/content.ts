@@ -3,7 +3,7 @@
   please then rebuild the markdown by doing the following:
 
   $ cd /docs (from the root of the repository)
-  $ make sources/panels-visualizations/query-transform-data/transform-data/index.md
+  $ make sources/visualizations/panels-visualizations/query-transform-data/transform-data/index.md
   $ make docs
 
   Browse to http://localhost:3003/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/
@@ -713,8 +713,8 @@ Use this transformation to construct a matrix by specifying fields from your que
 
   | Option                            | Description                                                                                                                |
   | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-  | Show field names in nested tables | Show or hide the column headers inside each nested table. On by default.                                                   |
-  | Expand nested rows by default     | Expand all nested rows automatically when the panel loads, instead of starting with all columns collapsed. Off by default. |
+  | Show field names in nested tables | Show or hide the column headers inside each nested table. On by default. In public preview.                                                   |
+  | Expand nested rows by default     | Expand all nested rows automatically when the panel loads, instead of starting with all columns collapsed. Off by default. In public preview. |
   `;
     },
     links: [

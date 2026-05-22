@@ -746,10 +746,10 @@ After choosing the field by which you want to group your data, you can add vario
 
 #### Display options
 
-| Option                            | Description                                                                                                                |
-| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| Show field names in nested tables | Show or hide the column headers inside each nested table. On by default.                                                   |
-| Expand nested rows by default     | Expand all nested rows automatically when the panel loads, instead of starting with all columns collapsed. Off by default. |
+| Option                            | Description                                                                                                                                   |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Show field names in nested tables | Show or hide the column headers inside each nested table. On by default. In public preview.                                                   |
+| Expand nested rows by default     | Expand all nested rows automatically when the panel loads, instead of starting with all columns collapsed. Off by default. In public preview. |
 
 ### Create heatmap
 
