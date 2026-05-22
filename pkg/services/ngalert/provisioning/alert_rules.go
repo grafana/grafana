@@ -1051,9 +1051,12 @@ func (service *AlertRuleService) DeleteAlertRule(ctx context.Context, user ident
 	if !can {
 		delta, err := store.CalculateRuleDelete(ctx, service.ruleStore, rule.GetKey())
 		if err != nil {
-			return err
-		}
-		if err = service.authz.AuthorizeRuleGroupWrite(ctx, user, delta); err != nil {
+			if !errors.Is(err, models.ErrAlertRuleNotFound) {
+				return err
+			}
+			// Rule already gone; fall through to the idempotent delete below
+			// so non-admin users get the same 204 behaviour as admins.
+		} else if err = service.authz.AuthorizeRuleGroupWrite(ctx, user, delta); err != nil {
 			return err
 		}
 	}
