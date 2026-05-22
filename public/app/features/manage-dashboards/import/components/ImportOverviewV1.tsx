@@ -5,6 +5,7 @@ import { AppEvents, locationUtil } from '@grafana/data';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
+import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { type SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -52,7 +53,7 @@ export function ImportOverviewV1({ dashboard, inputs, meta, source, folderUid, o
     shouldRenderProvisionedFields,
     isOrphaned,
     isReadOnlyRepo,
-    isLPBlocked,
+    isLibraryPanelImportBlocked,
     canPushToConfiguredBranch,
     repository,
     submitDisabled,
@@ -106,7 +107,7 @@ export function ImportOverviewV1({ dashboard, inputs, meta, source, folderUid, o
           dashboard: cleanDashboard,
           k8s: {
             annotations: {
-              'grafana.app/folder': form.folder.uid,
+              [AnnoKeyFolder]: form.folder.uid,
             },
           },
         };
@@ -170,7 +171,7 @@ export function ImportOverviewV1({ dashboard, inputs, meta, source, folderUid, o
               <ProvisionedImportFields
                 isReadOnlyRepo={isReadOnlyRepo}
                 isOrphaned={isOrphaned}
-                isLPBlocked={isLPBlocked}
+                isLibraryPanelImportBlocked={isLibraryPanelImportBlocked}
                 canPushToConfiguredBranch={canPushToConfiguredBranch}
                 repository={repository}
                 error={provisionedError}

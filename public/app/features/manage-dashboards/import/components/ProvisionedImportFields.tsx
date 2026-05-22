@@ -8,7 +8,7 @@ import { ResourceEditFormSharedFields } from 'app/features/provisioning/componen
 interface Props {
   isReadOnlyRepo: boolean;
   isOrphaned: boolean;
-  isLPBlocked?: boolean;
+  isLibraryPanelImportBlocked?: boolean;
   canPushToConfiguredBranch: boolean;
   repository?: RepositoryView;
   error?: string;
@@ -17,7 +17,7 @@ interface Props {
 export function ProvisionedImportFields({
   isReadOnlyRepo,
   isOrphaned,
-  isLPBlocked = false,
+  isLibraryPanelImportBlocked = false,
   canPushToConfiguredBranch,
   repository,
   error,
@@ -27,7 +27,7 @@ export function ProvisionedImportFields({
       {(isReadOnlyRepo || isOrphaned) && (
         <RepoInvalidStateBanner noRepository={isOrphaned} isReadOnlyRepo={isReadOnlyRepo} />
       )}
-      {isLPBlocked && (
+      {isLibraryPanelImportBlocked && (
         <Alert
           severity="warning"
           title={t('manage-dashboards.import-provisioned.library-panels-blocked-title', 'Library panels not supported')}
@@ -38,7 +38,7 @@ export function ProvisionedImportFields({
           </Trans>
         </Alert>
       )}
-      {!isLPBlocked && !isReadOnlyRepo && !isOrphaned && (
+      {!isLibraryPanelImportBlocked && !isReadOnlyRepo && !isOrphaned && (
         <ResourceEditFormSharedFields
           resourceType="dashboard"
           isNew

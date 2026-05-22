@@ -271,7 +271,7 @@ describe('useProvisionedImport', () => {
     expect(setValueSpy).toHaveBeenCalledTimes(4);
   });
 
-  it('returns isLPBlocked=true and submitDisabled=true when hasLibraryPanels', async () => {
+  it('returns isLibraryPanelImportBlocked=true and submitDisabled=true when hasLibraryPanels', async () => {
     setupRepoState({ isProvisioned: true });
     const { result } = renderHook(() => useProvisionedImport(defaultArgs({ hasLibraryPanels: true })), {
       wrapper: getWrapper({ renderWithRouter: true }),
@@ -281,7 +281,7 @@ describe('useProvisionedImport', () => {
       expect(result.current.isProvisioned).toBe(true);
     });
 
-    expect(result.current.isLPBlocked).toBe(true);
+    expect(result.current.isLibraryPanelImportBlocked).toBe(true);
     expect(result.current.submitDisabled).toBe(true);
   });
 

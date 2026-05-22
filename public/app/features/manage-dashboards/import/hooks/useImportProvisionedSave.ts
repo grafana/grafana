@@ -6,7 +6,10 @@ import { t } from '@grafana/i18n';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import kbn from 'app/core/utils/kbn';
 import { AnnoKeyFolder, type ResourceForCreate } from 'app/features/apiserver/types';
-import { dashboardAPIVersionResolver } from 'app/features/dashboard/api/DashboardAPIVersionResolver';
+import {
+  DASHBOARD_API_GROUP,
+  dashboardAPIVersionResolver,
+} from 'app/features/dashboard/api/DashboardAPIVersionResolver';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { getProvisionedRequestError } from 'app/features/provisioning/components/utils/errors';
 import { PROVISIONING_PREVIEW_URL } from 'app/features/provisioning/constants';
@@ -116,7 +119,7 @@ export function useImportProvisionedSave({ repository }: { repository?: Reposito
         apiVersion === 'v2' ? dashboardAPIVersionResolver.getV2() : dashboardAPIVersionResolver.getV1();
 
       const body: ResourceForCreate<unknown> = {
-        apiVersion: `dashboard.grafana.app/${resolvedVersion}`,
+        apiVersion: `${DASHBOARD_API_GROUP}/${resolvedVersion}`,
         kind: 'Dashboard',
         metadata: {
           annotations: { [AnnoKeyFolder]: targetFolderUid },

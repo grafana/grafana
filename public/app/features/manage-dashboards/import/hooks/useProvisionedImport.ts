@@ -44,7 +44,7 @@ export interface UseProvisionedImportResult {
   isOrphaned: boolean;
   isRepoLoading: boolean;
   isReadOnlyRepo: boolean;
-  isLPBlocked: boolean;
+  isLibraryPanelImportBlocked: boolean;
   canPushToConfiguredBranch: boolean;
   repository?: RepositoryView;
   /** Render gate for ProvisionedImportFields (covers Ready and Orphaned). */
@@ -70,7 +70,7 @@ export function useProvisionedImport({
   const isOrphaned = status === RepoViewStatus.Orphaned;
   const isRepoLoading = status === RepoViewStatus.Loading;
   const isRepoError = status === RepoViewStatus.Error;
-  const isLPBlocked = isProvisioned && hasLibraryPanels;
+  const isLibraryPanelImportBlocked = isProvisioned && hasLibraryPanels;
 
   // Seed provisioning form defaults when a repo becomes available or the folder changes.
   // getDefaultTitle must have a stable identity (useCallback) so this effect does not
@@ -95,13 +95,12 @@ export function useProvisionedImport({
   }, [isProvisioned, repository, folderUid, applyDefaults]);
 
   const provisionedSave = useImportProvisionedSave({ repository });
-
   const canPushToConfiguredBranch = isProvisioned ? getCanPushToConfiguredBranch(repository) : false;
   const submitDisabled =
     isRepoLoading ||
     isRepoError ||
     isOrphaned ||
-    isLPBlocked ||
+    isLibraryPanelImportBlocked ||
     (isProvisioned && isReadOnlyRepo) ||
     provisionedSave.isLoading;
   const shouldRenderProvisionedFields = isProvisioned || isOrphaned;
@@ -111,7 +110,7 @@ export function useProvisionedImport({
     isOrphaned,
     isRepoLoading,
     isReadOnlyRepo,
-    isLPBlocked,
+    isLibraryPanelImportBlocked,
     canPushToConfiguredBranch,
     repository,
     shouldRenderProvisionedFields,

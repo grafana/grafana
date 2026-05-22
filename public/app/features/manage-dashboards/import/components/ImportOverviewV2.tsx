@@ -5,6 +5,7 @@ import { AppEvents, locationUtil } from '@grafana/data';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { appEvents } from 'app/core/app_events';
+import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 
 import { type DashboardInputs, DashboardSource, type ImportFormDataV2 } from '../../types';
@@ -40,7 +41,7 @@ export function ImportOverviewV2({ dashboard, dashboardUid, inputs, meta, source
       folderUid: folderUid,
       k8s: {
         ...(dashboardUid !== undefined ? { name: dashboardUid } : {}),
-        annotations: { 'grafana.app/folder': folderUid },
+        annotations: { [AnnoKeyFolder]: folderUid },
       },
     },
     mode: 'onChange',
