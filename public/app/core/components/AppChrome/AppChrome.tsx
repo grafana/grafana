@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import classNames from 'classnames';
+import classNames from 'clsx';
 import { Resizable } from 're-resizable';
 import { type PropsWithChildren, useEffect } from 'react';
 

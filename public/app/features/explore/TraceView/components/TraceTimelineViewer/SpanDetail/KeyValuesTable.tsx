@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { css } from '@emotion/css';
-import cx from 'classnames';
+import cx from 'clsx';
 import DOMPurify from 'dompurify';
 import { type PropsWithChildren } from 'react';
 
