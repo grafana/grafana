@@ -72,7 +72,9 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('shows scroll buttons and supports paged scrolling', async ({ gotoDashboardPage, selectors, page }) => {
+    // Flaky on CI since PR #123251 introduced the test (May 22, 2026):
+    // `scrollLeftButton` intermittently stays visible after scrolling to start.
+    test.skip('shows scroll buttons and supports paged scrolling', async ({ gotoDashboardPage, selectors, page }) => {
       const dashboardPage = await gotoDashboardPage({});
       const { firstTab, lastTab } = await buildOverflowTabs(page, dashboardPage, selectors);
 

@@ -205,7 +205,7 @@ require (
 	go.yaml.in/yaml/v3 v3.0.4 // @grafana/alerting-backend
 	gocloud.dev v0.44.0 // @grafana/grafana-app-platform-squad
 	gocloud.dev/secrets/hashivault v0.44.0 // @grafana/grafana-operator-experience-squad
-	golang.org/x/net v0.54.0 // @grafana/data-sources-plugins
+	golang.org/x/net v0.55.0 // @grafana/data-sources-plugins
 	golang.org/x/oauth2 v0.36.0 // @grafana/identity-access-team
 	golang.org/x/sync v0.20.0 // @grafana/alerting-backend
 	golang.org/x/text v0.37.0 // @grafana/grafana-backend-group

@@ -2232,18 +2232,18 @@ var (
 		{
 			Name:        "panelStyleActions",
 			Description: "Enable style actions (copy/paste) in the panel editor",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{LegacyFrontend: true},
 			Owner:       grafanaDatavizSquad,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:        "vizPresets",
 			Description: "Enable visualization presets",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{LegacyFrontend: true},
 			Owner:       grafanaDatavizSquad,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:        "nestedFramesFieldOverrides",
