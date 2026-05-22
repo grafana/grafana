@@ -280,12 +280,21 @@ export const dashboardEditActions = {
     const dashboard = getDashboardSceneFor(source);
     const variableKind = createVariableKindFromSceneVariable(addedObject);
     const position = source.state.variables.length;
-    dashboard.userActionsService.execute(new AddVariableCommand(dashboard, variableKind, position));
+    const result = dashboard.userActionsService.execute(new AddVariableCommand(dashboard, variableKind, position));
+    if (!result.success) {
+      // TODO(POC): surface to UI as toast/banner. For now, log so the failure isn't silent.
+      console.warn('addVariable failed', { error: result.error, locked: result.locked });
+    }
   },
   removeVariable({ source, removedObject }: RemoveVariableActionHelperProps) {
     const dashboard = getDashboardSceneFor(source);
     const variableKind = createVariableKindFromSceneVariable(removedObject);
-    dashboard.userActionsService.execute(new RemoveVariableCommand(dashboard, removedObject.state.name, variableKind));
+    const result = dashboard.userActionsService.execute(
+      new RemoveVariableCommand(dashboard, removedObject.state.name, variableKind)
+    );
+    if (!result.success) {
+      console.warn('removeVariable failed', { error: result.error, locked: result.locked });
+    }
   },
   changeVariableType({ source, oldVariable, newVariable }: ChangeVariableTypeActionHelperProps) {
     const varsBeforeChange = [...source.state.variables];
