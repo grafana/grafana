@@ -118,7 +118,10 @@ func (f *fakeRateLimiter) SweepOlderThan(_ context.Context, _ time.Time) (int64,
 func newTestSearchServerWithCache(emb *embedder.Embedder, backend vector.VectorBackend, cache vector.QueryEmbeddingCache, rl vector.RateLimiter) *searchServer {
 	s := newTestSearchServer(emb, backend)
 	s.queryCache = cache
+	s.queryCacheMaxPerTenant = 1000
 	s.rateLimiter = rl
+	s.rateLimitPerTenant = 60
+	s.rateLimitWindow = time.Minute
 	return s
 }
 

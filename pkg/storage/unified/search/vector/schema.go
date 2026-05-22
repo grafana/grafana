@@ -150,7 +150,12 @@ func initVectorTables(mg *migrator.Migrator) {
 			{Name: "window_start", Type: migrator.DB_TimeStampz, Nullable: false, IsPrimaryKey: true},
 			{Name: "request_count", Type: migrator.DB_BigInt, Nullable: false, Default: "0"},
 		},
+		Indices: []*migrator.Index{
+			{Cols: []string{"window_start"}, Type: migrator.IndexType},
+		},
 	}
 	mg.AddMigration("create vector_search_rate_buckets",
 		migrator.NewAddTableMigration(rateBuckets))
+	mg.AddMigration("create vector_search_rate_buckets window_start index",
+		migrator.NewAddIndexMigration(rateBuckets, rateBuckets.Indices[0]))
 }

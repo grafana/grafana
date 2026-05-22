@@ -268,11 +268,18 @@ func withSearch(opts *ServerOptions, resourceOpts *resource.ResourceServerOption
 	resourceOpts.OwnsIndexFn = opts.OwnsIndexFn
 
 	if opts.VectorBackend != nil {
-		if cache, ok := opts.VectorBackend.(vector.QueryEmbeddingCache); ok {
-			resourceOpts.Search.QueryCache = cache
+		if opts.Cfg.VectorQueryCacheEnabled {
+			if cache, ok := opts.VectorBackend.(vector.QueryEmbeddingCache); ok {
+				resourceOpts.Search.QueryCache = cache
+				resourceOpts.Search.QueryCacheMaxPerTenant = opts.Cfg.VectorQueryCacheMaxPerTenant
+			}
 		}
-		if rl, ok := opts.VectorBackend.(vector.RateLimiter); ok {
-			resourceOpts.Search.RateLimiter = rl
+		if opts.Cfg.VectorRateLimitEnabled {
+			if rl, ok := opts.VectorBackend.(vector.RateLimiter); ok {
+				resourceOpts.Search.RateLimiter = rl
+				resourceOpts.Search.RateLimitPerTenant = opts.Cfg.VectorRateLimitPerTenant
+				resourceOpts.Search.RateLimitWindow = opts.Cfg.VectorRateLimitWindow
+			}
 		}
 	}
 	return nil

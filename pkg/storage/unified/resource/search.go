@@ -167,8 +167,11 @@ type searchServer struct {
 	initWorkers   int
 	initMinSize   int
 
-	queryCache  vector.QueryEmbeddingCache
-	rateLimiter vector.RateLimiter
+	queryCache             vector.QueryEmbeddingCache
+	queryCacheMaxPerTenant int
+	rateLimiter            vector.RateLimiter
+	rateLimitPerTenant     int
+	rateLimitWindow        time.Duration
 
 	ownsIndexFn func(key NamespacedResource) (bool, error)
 
@@ -271,8 +274,11 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 		injectFailuresPercent:     opts.InjectFailuresPercent,
 		indexModificationCacheTTL: opts.IndexModificationCacheTTL,
 
-		queryCache:  opts.QueryCache,
-		rateLimiter: opts.RateLimiter,
+		queryCache:             opts.QueryCache,
+		queryCacheMaxPerTenant: opts.QueryCacheMaxPerTenant,
+		rateLimiter:            opts.RateLimiter,
+		rateLimitPerTenant:     opts.RateLimitPerTenant,
+		rateLimitWindow:        opts.RateLimitWindow,
 	}
 
 	s.rebuildQueue = debouncer.NewQueue(combineRebuildRequests)
@@ -687,7 +693,7 @@ func (s *searchServer) checkVectorSearchRateLimit(ctx context.Context, namespace
 	if s.rateLimiter == nil {
 		return nil
 	}
-	allowed, count, err := s.rateLimiter.Allow(ctx, namespace, vectorRateLimitWindow, vectorRateLimitPerTenant)
+	allowed, count, err := s.rateLimiter.Allow(ctx, namespace, s.rateLimitWindow, s.rateLimitPerTenant)
 	if err != nil {
 		s.log.Error("vector search: rate-limit check failed, fail-closed", "err", err, "namespace", namespace)
 		if s.vectorMetrics != nil {
@@ -757,15 +763,21 @@ func (s *searchServer) lookupCachedQueryEmbedding(ctx context.Context, namespace
 	return emb, true
 }
 
+// vectorQueryCacheEvictTargetFraction is how full the cache is left
+// after an eviction round runs.
+const vectorQueryCacheEvictTargetFraction = 0.8
+
 // storeCachedQueryEmbedding writes the freshly-embedded vector into the
-// cache (best-effort) and evicts the oldest entries past the per-tenant
-// cap before insert.
+// cache (best-effort). When the tenant is at or above the cap, eviction
+// trims down to vectorQueryCacheEvictTargetFraction of the cap in one
+// pass so we don't run a DELETE on every cache miss at steady state.
 func (s *searchServer) storeCachedQueryEmbedding(ctx context.Context, namespace, queryHash string, dense []float32) {
-	if s.queryCache == nil {
+	if s.queryCache == nil || s.queryCacheMaxPerTenant <= 0 {
 		return
 	}
-	if n, err := s.queryCache.Count(ctx, namespace); err == nil && int(n) >= vectorQueryCacheMaxPerTenant {
-		evictN := int(n) - vectorQueryCacheMaxPerTenant + 1
+	if n, err := s.queryCache.Count(ctx, namespace); err == nil && int(n) >= s.queryCacheMaxPerTenant {
+		target := int(float64(s.queryCacheMaxPerTenant) * vectorQueryCacheEvictTargetFraction)
+		evictN := int(n) - target
 		if deleted, err := s.queryCache.EvictOldest(ctx, namespace, evictN); err != nil {
 			s.log.Warn("vector search: cache evict failed", "err", err)
 		} else if deleted > 0 && s.vectorMetrics != nil {
@@ -1136,20 +1148,13 @@ func sha256Hex(s string) string {
 	return hex.EncodeToString(h[:])
 }
 
-const (
-	vectorQueryCacheMaxPerTenant = 1000
-	vectorRateLimitPerTenant     = 60
-	vectorRateLimitWindow        = time.Minute
-	vectorRateBucketSweepCutoff  = 2 * vectorRateLimitWindow
-)
-
 // Old buckets never affect Allow() — sweeping is purely housekeeping.
 func (s *searchServer) startRateBucketSweeper(ctx context.Context) {
-	if s.rateLimiter == nil {
+	if s.rateLimiter == nil || s.rateLimitWindow <= 0 {
 		return
 	}
 	s.bgTaskWg.Go(func() {
-		interval := vectorRateLimitWindow / 2
+		interval := s.rateLimitWindow / 2
 		if interval < time.Minute {
 			interval = time.Minute
 		}
@@ -1160,7 +1165,7 @@ func (s *searchServer) startRateBucketSweeper(ctx context.Context) {
 			case <-ctx.Done():
 				return
 			case <-t.C:
-				cutoff := time.Now().Add(-vectorRateBucketSweepCutoff)
+				cutoff := time.Now().Add(-2 * s.rateLimitWindow)
 				deleted, err := s.rateLimiter.SweepOlderThan(ctx, cutoff)
 				if err != nil {
 					s.log.Warn("rate-bucket sweep failed", "err", err)

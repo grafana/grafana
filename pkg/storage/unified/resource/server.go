@@ -297,8 +297,14 @@ type SearchOptions struct {
 	// considered eligible for cleanup.
 	IndexSnapshotCleanupGracePeriod time.Duration
 
-	QueryCache  vector.QueryEmbeddingCache
-	RateLimiter vector.RateLimiter
+	// VectorSearch query-embedding cache. nil disables the cache path.
+	QueryCache             vector.QueryEmbeddingCache
+	QueryCacheMaxPerTenant int
+
+	// VectorSearch per-tenant rate limiter. nil disables rate limiting.
+	RateLimiter        vector.RateLimiter
+	RateLimitPerTenant int
+	RateLimitWindow    time.Duration
 }
 
 type ResourceServerOptions struct {
