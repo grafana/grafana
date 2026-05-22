@@ -711,7 +711,7 @@ Use this transformation to construct a matrix by specifying fields from your que
 
   #### Display options
 
-> **Note:** Display options are in public preview. To try out the new transformation editor, enable the \`groupToNestedTableV2\` feature toggle. To try out nested field overrides, enable \`nestedFramesFieldOverrides\`.
+> **Note:** Display options are in public preview. To try out the new editor for this transformation, enable the \`groupToNestedTableV2\` feature toggle. To try out nested field overrides, enable \`nestedFramesFieldOverrides\`.
 
   | Option                            | Description                                                                                                                |
   | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
