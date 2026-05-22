@@ -364,6 +364,14 @@ func (s *TeamK8sService) CreateTeam(ctx context.Context, cmd *team.CreateTeamCom
 
 	result, err := client.Create(ctx, &unstructured.Unstructured{Object: unstructuredObj}, metav1.CreateOptions{})
 	if err != nil {
+		// The legacy team store maps a UNIQUE(org_id, name) violation to
+		// apierrors.NewAlreadyExists, which surfaces here as IsAlreadyExists
+		// (and as IsConflict for some apiserver paths). Translate either back
+		// into team.ErrTeamNameTaken so the /api/teams handler returns 409
+		// "Team name taken" instead of a generic 500.
+		if apierrors.IsAlreadyExists(err) || apierrors.IsConflict(err) {
+			return team.Team{}, team.ErrTeamNameTaken
+		}
 		ctxLogger.Error("k8s team create failed", "namespace", namespace, "orgID", orgID, "name", cmd.Name, "err", err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
@@ -464,6 +472,12 @@ func (s *TeamK8sService) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCom
 
 	_, err = client.Update(ctx, updated, metav1.UpdateOptions{})
 	if err != nil {
+		// Same UNIQUE(org_id, name) violation handling as CreateTeam — a rename
+		// to a name owned by another team needs to surface as ErrTeamNameTaken
+		// so the /api/teams/:id handler maps it to a 400 "Team name taken".
+		if apierrors.IsAlreadyExists(err) || apierrors.IsConflict(err) {
+			return team.ErrTeamNameTaken
+		}
 		ctxLogger.Error("k8s team update failed", "namespace", namespace, "orgID", orgID, "teamID", cmd.ID, "err", err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
