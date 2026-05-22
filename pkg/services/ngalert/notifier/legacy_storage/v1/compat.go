@@ -1,13 +1,18 @@
 package v1
 
 import (
+	"fmt"
 	"maps"
 	"slices"
+	"strings"
 
 	"github.com/grafana/alerting/definition"
 	"github.com/prometheus/alertmanager/config"
+	k8svalidation "k8s.io/apimachinery/pkg/util/validation"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func ToModel(in *definitions.PostableUserConfig) *AMConfigV1 {
@@ -370,4 +375,29 @@ func ExtraConfigToDB(in ExtraConfiguration) definitions.ExtraConfiguration {
 		TemplateFiles:      maps.Clone(in.TemplateFiles),
 		AlertmanagerConfig: in.AlertmanagerConfig,
 	}
+}
+
+func InhibitRuleToInhibitionRule(name string, rule config.InhibitRule, provenance Provenance) (*InhibitionRule, error) {
+	if name = strings.TrimSpace(name); name == "" {
+		return nil, fmt.Errorf("inhibition rule name must not be empty")
+	}
+
+	if strings.Contains(name, ":") {
+		return nil, fmt.Errorf("inhibition rule name cannot contain invalid character ':'")
+	}
+
+	if errs := k8svalidation.IsDNS1123Subdomain(name); len(errs) > 0 {
+		return nil, fmt.Errorf("inhibition rule name must be a valid DNS subdomain: %s", strings.Join(errs, ", "))
+	}
+
+	// imported inhibition rules have purposefully long names to ensure no conflict with non-imported ones
+	if models.Provenance(provenance) != models.ProvenanceConvertedPrometheus && len(name) > util.MaxUIDLength {
+		return nil, fmt.Errorf("inhibition rule name is too long (exceeds %d characters)", util.MaxUIDLength)
+	}
+
+	return &InhibitionRule{
+		Name:        name,
+		InhibitRule: rule,
+		Provenance:  provenance,
+	}, nil
 }

@@ -168,7 +168,7 @@ func BuildManagedInhibitionRules(identifier string, rules []config.InhibitRule) 
 		}
 		name := fmt.Sprintf(namePrefix+intFmt, i)
 
-		ir, err := InhibitRuleToInhibitionRule(name, rule, v1.Provenance(models.ProvenanceConvertedPrometheus))
+		ir, err := v1.InhibitRuleToInhibitionRule(name, rule, v1.Provenance(models.ProvenanceConvertedPrometheus))
 		if err != nil {
 			return nil, err
 		}
