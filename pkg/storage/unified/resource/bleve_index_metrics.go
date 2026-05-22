@@ -26,7 +26,7 @@ type BleveIndexMetrics struct {
 	IndexSnapshotDownloadDuration         prometheus.Histogram
 	IndexSnapshotUploads                  *prometheus.CounterVec
 	IndexSnapshotUploadDuration           prometheus.Histogram
-	IndexSnapshotColdStarts               *prometheus.CounterVec
+	IndexSnapshotBuildCoordinations       *prometheus.CounterVec
 	IndexSnapshotNamespaceCleanups        *prometheus.CounterVec
 	IndexSnapshotDeleted                  *prometheus.CounterVec
 	IndexSnapshotIncompleteUploadsCleaned prometheus.Counter
@@ -122,10 +122,10 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
 		}),
-		IndexSnapshotColdStarts: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
-			Name: "index_server_snapshot_cold_start_total",
-			Help: "Number of cold-start build coordination outcomes, by outcome.",
-		}, []string{"outcome"}), // outcome: acquired_lock, downloaded_after_wait, wait_timed_out, lock_error, context_canceled
+		IndexSnapshotBuildCoordinations: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "index_server_snapshot_build_coordinations_total",
+			Help: "Number of snapshot build coordination outcomes, by flow and outcome.",
+		}, []string{"flow", "outcome"}), // flow: cold_start, rebuild. outcome: acquired_lock, downloaded_after_wait, wait_timed_out, lock_error, context_canceled
 		IndexSnapshotNamespaceCleanups: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "index_server_snapshot_namespace_cleanups_total",
 			Help: "Number of namespace-level remote index snapshot cleanup attempts, by outcome.",
@@ -170,11 +170,13 @@ func (m *BleveIndexMetrics) InitSnapshotMetrics() {
 	m.IndexSnapshotUploads.WithLabelValues("skip_recent_remote").Add(0)
 	m.IndexSnapshotUploads.WithLabelValues("skip_not_owner").Add(0)
 	m.IndexSnapshotUploads.WithLabelValues("error").Add(0)
-	m.IndexSnapshotColdStarts.WithLabelValues("acquired_lock").Add(0)
-	m.IndexSnapshotColdStarts.WithLabelValues("downloaded_after_wait").Add(0)
-	m.IndexSnapshotColdStarts.WithLabelValues("wait_timed_out").Add(0)
-	m.IndexSnapshotColdStarts.WithLabelValues("lock_error").Add(0)
-	m.IndexSnapshotColdStarts.WithLabelValues("context_canceled").Add(0)
+	for _, flow := range []string{"cold_start", "rebuild"} {
+		m.IndexSnapshotBuildCoordinations.WithLabelValues(flow, "acquired_lock").Add(0)
+		m.IndexSnapshotBuildCoordinations.WithLabelValues(flow, "downloaded_after_wait").Add(0)
+		m.IndexSnapshotBuildCoordinations.WithLabelValues(flow, "wait_timed_out").Add(0)
+		m.IndexSnapshotBuildCoordinations.WithLabelValues(flow, "lock_error").Add(0)
+		m.IndexSnapshotBuildCoordinations.WithLabelValues(flow, "context_canceled").Add(0)
+	}
 	m.IndexSnapshotNamespaceCleanups.WithLabelValues("success").Add(0)
 	m.IndexSnapshotNamespaceCleanups.WithLabelValues("error").Add(0)
 	m.IndexSnapshotNamespaceCleanups.WithLabelValues("skip_lock_held").Add(0)

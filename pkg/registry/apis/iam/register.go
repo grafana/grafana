@@ -36,6 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	iamauthorizer "github.com/grafana/grafana/pkg/registry/apis/iam/authorizer"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/display"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/externalgroupmapping"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
@@ -84,7 +85,7 @@ func RegisterAPIService(
 	externalGroupMappingApiInstaller ExternalGroupMappingApiInstaller,
 	tracing *tracing.TracingService,
 	roleBindingsApiInstaller RoleBindingApiInstaller,
-	teamGroupsHandlerImpl externalgroupmapping.TeamGroupsHandler,
+	teamGroupsHandlerProvider externalgroupmapping.TeamGroupsHandlerProvider,
 	externalGroupMappingSearchHandler externalgroupmapping.SearchHandler,
 	externalGroupReconciler legacy.ExternalGroupReconciler,
 	dual dualwrite.Service,
@@ -129,6 +130,8 @@ func RegisterAPIService(
 		resourcePermsSearchAuthorizer = iamauthorizer.NewResourcePermissionsAuthorizer(accessClient, resourceParentProvider)
 	}
 
+	displayProvider := display.NewLegacyDisplayProvider(store)
+
 	builder := &IdentityAccessManagementAPIBuilder{
 		store:                             store,
 		userLegacyStore:                   user.NewLegacyStore(store, accessClient, tracing),
@@ -144,7 +147,7 @@ func RegisterAPIService(
 		resourcePermissionsStorage:        rpStorage,
 		mappers:                           mappers,
 		roleBindingsApiInstaller:          roleBindingsApiInstaller,
-		teamGroupsHandler:                 teamGroupsHandlerImpl,
+		teamGroupsHandlerProvider:         teamGroupsHandlerProvider,
 		externalGroupMappingSearchHandler: externalGroupMappingSearchHandler,
 		sso:                               ssoService,
 		resourceParentProvider:            resourceParentProvider,
@@ -154,7 +157,7 @@ func RegisterAPIService(
 		ac:                                ac,
 		zClient:                           zClient,
 		zTickets:                          make(chan bool, MaxConcurrentZanzanaWrites),
-		display:                           user.NewLegacyDisplayREST(store),
+		display:                           display.NewDisplayHandler(displayProvider),
 		reg:                               reg,
 		logger:                            log.New("iam.apis"),
 		features:                          features,
@@ -209,12 +212,14 @@ func NewAPIService(
 		iamauthorizer.Versions,
 	)
 
+	displayProvider := display.NewLegacyDisplayProvider(store)
+
 	return &IdentityAccessManagementAPIBuilder{
 		store:                      store,
 		userLegacyStore:            user.NewLegacyStore(store, accessClient, tracingService),
 		saLegacyStore:              serviceaccount.NewLegacyStore(store, accessClient, tracingService),
 		teamBindingLegacyStore:     teambinding.NewLegacyBindingStore(store, tracingService),
-		display:                    user.NewLegacyDisplayREST(store),
+		display:                    display.NewDisplayHandler(displayProvider),
 		tracing:                    tracingService,
 		resourcePermissionsStorage: resourcePermissionsStorage,
 		mappers:                    mappers,
@@ -393,7 +398,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	})
 
 	if enableTeamsApi {
-		if err := b.UpdateTeamsAPIGroup(opts, storage, enableExternalGroupMappingsApi, enableZanzanaSync); err != nil {
+		if err := b.UpdateTeamsAPIGroup(opts, storage, enableZanzanaSync); err != nil {
 			return err
 		}
 	}
@@ -478,7 +483,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	return nil
 }
 
-func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.APIGroupOptions, storage map[string]rest.Storage, enableExternalGroupMappingsApi bool, enableZanzanaSync bool) error {
+func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.APIGroupOptions, storage map[string]rest.Storage, enableZanzanaSync bool) error {
 	teamResource := iamv0.TeamResourceInfo
 	teamUniStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, teamResource, opts.OptsGetter)
 	if err != nil {
@@ -522,9 +527,8 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.AP
 	storage[teamResource.StoragePath("addmember")] = team.NewTeamAddMemberREST(teamStorage, b.tracing)
 	storage[teamResource.StoragePath("removemember")] = team.NewTeamRemoveMemberREST(teamStorage, b.tracing)
 
-	if b.teamGroupsHandler != nil {
-		b.teamGroupsHandler.SetTeamGetter(b.teamGetter)
-		storage[teamResource.StoragePath("groups")] = b.teamGroupsHandler
+	if b.teamGroupsHandlerProvider != nil {
+		storage[teamResource.StoragePath("groups")] = b.teamGroupsHandlerProvider(b.teamGetter)
 	}
 
 	return nil
@@ -906,10 +910,9 @@ func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes(gv schema.GroupVersion
 
 	enableTeamsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesTeamsApi, false, openfeature.TransactionContext(ctx))
 	enableUserApi := b.isSingleOrgSetup() && client.Boolean(ctx, featuremgmt.FlagKubernetesUsersApi, false, openfeature.TransactionContext(ctx))
-	enableExternalGroupMappingsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesExternalGroupMappingsApi, false, openfeature.TransactionContext(ctx))
 	enableResourcePermissionsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzResourcePermissionApis, false, openfeature.TransactionContext(ctx))
 
-	searchRoutes := make([]*builder.APIRoutes, 0, 3)
+	searchRoutes := make([]*builder.APIRoutes, 0, 4)
 	if enableUserApi && b.userSearchHandler != nil {
 		searchRoutes = append(searchRoutes, b.userSearchHandler.GetAPIRoutes(defs))
 	}
@@ -922,7 +925,7 @@ func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes(gv schema.GroupVersion
 		searchRoutes = append(searchRoutes, b.resourcePermissionsSearchHandler.GetAPIRoutes(defs))
 	}
 
-	if enableExternalGroupMappingsApi && b.externalGroupMappingSearchHandler != nil {
+	if enableTeamsApi && b.externalGroupMappingSearchHandler != nil {
 		searchRoutes = append(searchRoutes, b.externalGroupMappingSearchHandler.GetAPIRoutes(defs))
 	}
 
