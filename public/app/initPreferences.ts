@@ -22,7 +22,7 @@ export const initPreferences = async () => {
   }
 };
 
-async function fetchMergedPreferences(): Promise<{ spec: PreferencesSpec } | undefined> {
+export async function fetchMergedPreferences(): Promise<{ spec: PreferencesSpec } | undefined> {
   const namespace = window.grafanaBootData?.settings?.namespace;
   const isSignedIn = window.grafanaBootData?.user?.isSignedIn;
 
@@ -47,25 +47,20 @@ async function fetchMergedPreferences(): Promise<{ spec: PreferencesSpec } | und
 // but using the merged-preferences value. Updates lightTheme, the <body> class,
 // and the theme stylesheet <link href>.
 function applyTheme(theme: string) {
-  let isLightTheme: boolean;
-  if (theme === 'system') {
-    isLightTheme = !window.matchMedia('(prefers-color-scheme: dark)').matches;
-  } else {
-    isLightTheme = theme === 'light';
-  }
-  window.grafanaBootData.user.lightTheme = isLightTheme;
+  // The per-theme CSS still contains some global styles needed
+  // to render the page correctly.
+  const cssLink = document.createElement('link');
+  cssLink.rel = 'stylesheet';
 
-  document.body.classList.remove('theme-light', 'theme-dark');
+  if (theme === 'system') {
+    const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    window.grafanaBootData.user.lightTheme = !darkQuery.matches;
+  }
+
+  const isLightTheme = window.grafanaBootData.user.lightTheme;
+
   document.body.classList.add(isLightTheme ? 'theme-light' : 'theme-dark');
 
-  const lightAsset = window.grafanaBootData.assets.light;
-  const darkAsset = window.grafanaBootData.assets.dark;
-  const newAsset = isLightTheme ? lightAsset : darkAsset;
-  for (const link of document.head.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]')) {
-    const href = link.getAttribute('href');
-    if (href === lightAsset || href === darkAsset) {
-      link.setAttribute('href', newAsset);
-      break;
-    }
-  }
+  cssLink.href = window.grafanaBootData.assets[isLightTheme ? 'light' : 'dark'];
+  document.head.appendChild(cssLink);
 }
