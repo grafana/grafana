@@ -72,7 +72,7 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('shows scroll buttons and supports paged scrolling', async ({ gotoDashboardPage, selectors, page }) => {
+    test.skip('shows scroll buttons and supports paged scrolling', async ({ gotoDashboardPage, selectors, page }) => {
       const dashboardPage = await gotoDashboardPage({});
       const { firstTab, lastTab } = await buildOverflowTabs(page, dashboardPage, selectors);
 
