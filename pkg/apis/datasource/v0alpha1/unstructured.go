@@ -139,6 +139,7 @@ func (u *UnstructuredSpec) KeepCookies() []string {
 	return v
 }
 
+// Check if the oauthPassThru is enabled
 func (u *UnstructuredSpec) IsOAuthPassThruEnabled() bool {
 	v, _, _ := unstructured.NestedBool(u.Object, "jsonData", "oauthPassThru")
 	return v

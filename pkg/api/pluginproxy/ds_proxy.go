@@ -283,7 +283,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 	// Temporary while we transition to using this as the first class type
 	ds := datasourcesV0.DataSource{
 		Spec: datasourcesV0.UnstructuredSpec{
-			Object: jsonData,
+			Object: map[string]any{"jsonData": jsonData},
 		},
 	}
 

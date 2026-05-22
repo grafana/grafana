@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	datasourcesV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -35,7 +36,7 @@ func (m *OAuthTokenMiddleware) applyToken(ctx context.Context, pCtx backend.Plug
 		return nil
 	}
 
-	// NOTE: something is structurally awkward if we have to decrypt the settings again here
+	// NOTE: something is structurally awkward if we have to decode the settings JSON again here
 	settings := pCtx.DataSourceInstanceSettings
 	jsonDataBytes, err := simplejson.NewJson(settings.JSONData)
 	if err != nil {
@@ -44,7 +45,7 @@ func (m *OAuthTokenMiddleware) applyToken(ctx context.Context, pCtx backend.Plug
 
 	ds := datasourcesV0.DataSource{
 		Spec: datasourcesV0.UnstructuredSpec{
-			Object: jsonDataBytes.MustMap(),
+			Object: map[string]any{"jsonData": jsonDataBytes.MustMap()},
 		},
 	}
 
