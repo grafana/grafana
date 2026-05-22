@@ -64,6 +64,7 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
         <div
           ref={(ref) => {
             dragProvided.innerRef(ref);
+            model.containerRef.current = ref;
           }}
           className={cx(dragSnapshot.isDragging && styles.dragging)}
           {...dragProvided.draggableProps}
@@ -71,7 +72,6 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
           style={getDraggableStyle(dragProvided.draggableProps.style, dragSnapshot)}
         >
           <Tab
-            ref={model.containerRef}
             truncate
             className={cx(
               isConditionallyHidden && styles.hidden,
