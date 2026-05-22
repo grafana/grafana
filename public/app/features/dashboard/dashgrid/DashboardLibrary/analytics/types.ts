@@ -39,7 +39,7 @@ export interface ItemClickedProperties extends EventProperty {
   /** Whether the suggested dashboards assistant is enabled. */
   isSuggestedDashboardAssistantButtonEnabled?: boolean;
   /** The action taken by the user on the library item. */
-  action?: 'view_template' | 'use_dashboard' | 'assistant';
+  action?: 'view_template' | 'use_dashboard' | 'assistant' | 'use_template' | 'edit_template';
 }
 
 export interface SearchPerformedProperties extends EventProperty {
@@ -52,6 +52,21 @@ export interface SearchPerformedProperties extends EventProperty {
   /** Whether the query returned at least one result. */
   hasResults: boolean;
   /** Number of items matching the query. */
+  resultCount: number;
+}
+
+export interface FiltersAppliedProperties extends EventProperty {
+  /** The UI surface the user came from when they opened the library. */
+  sourceEntryPoint: SourceEntryPoint;
+  /** The specific UI location within the product where the filter changed. */
+  eventLocation: EventLocation;
+  /** Which filter category changed. */
+  filterType: 'tags' | 'creators' | 'sort';
+  /** Number of values selected for the filter after the change. */
+  selectedCount: number;
+  /** The current sort direction, when filterType is 'sort'. */
+  sortValue?: string;
+  /** Number of items remaining after applying the filter. */
   resultCount: number;
 }
 

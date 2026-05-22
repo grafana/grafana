@@ -2,11 +2,17 @@ import { store } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { type SceneGridItemLike } from '@grafana/scenes';
 import {
+  CREATION_ORIGINS,
+  SOURCE_ENTRY_POINTS,
+  type SourceEntryPoint,
+} from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
+import {
   isTemplateDashboardAssistantEnabled,
   isSuggestedDashboardAssistantEnabled,
 } from 'app/features/dashboard/dashgrid/DashboardLibrary/utils/assistantHelpers';
 import { getDatasourceTypes } from 'app/features/dashboard/dashgrid/DashboardLibrary/utils/dashboardLibraryHelpers';
 
+import { CustomDashboardTemplateInteractions } from '../analytics/main';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
@@ -90,6 +96,23 @@ export async function trackDashboardSceneCreatedOrSaved(
           ...dashboardLibraryProperties,
         }),
   });
+
+  // Fire the custom-template-specific funnel event when this is the FIRST save of a
+  // dashboard hydrated from a custom template. Gated on isNew so subsequent saves of
+  // the same dashboard don't re-emit.
+  if (isNew) {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('creationOrigin') === CREATION_ORIGINS.DASHBOARD_LIBRARY_CUSTOM_TEMPLATE) {
+      const rawSource = urlParams.get('sourceEntryPoint');
+      const knownSourceEntryPoints: readonly SourceEntryPoint[] = Object.values(SOURCE_ENTRY_POINTS);
+      const sourceEntryPoint = knownSourceEntryPoints.find((v) => v === rawSource);
+      CustomDashboardTemplateInteractions.dashboardSavedFromTemplate({
+        dashboardUid: dashboard.state.uid ?? '',
+        templateUid: urlParams.get('libraryItemId') ?? undefined,
+        sourceEntryPoint,
+      });
+    }
+  }
 }
 
 export function trackDropItemCrossLayout(gridItem: SceneGridItemLike) {

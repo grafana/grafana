@@ -2,6 +2,7 @@ import { getPanelPlugin } from '@grafana/data/test';
 import { reportInteraction, setPluginImportUtils } from '@grafana/runtime';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
+import { CustomDashboardTemplateInteractions } from '../analytics/main';
 import nestedDashboard from '../serialization/testfiles/nested_dashboard.json';
 
 import { getTestDashboardSceneFromSaveModel } from './test-utils';
@@ -26,6 +27,12 @@ jest.mock('@grafana/runtime', () => ({
 // mock useSaveDashboardMutation
 jest.mock('app/features/browse-dashboards/api/browseDashboardsAPI', () => ({
   useSaveDashboardMutation: () => [() => Promise.resolve({ data: { version: 2, uid: 'new-uid' } })],
+}));
+
+jest.mock('../analytics/main', () => ({
+  CustomDashboardTemplateInteractions: {
+    dashboardSavedFromTemplate: jest.fn(),
+  },
 }));
 
 setPluginImportUtils({
@@ -104,6 +111,59 @@ describe('dashboard tracking', () => {
         transformation_counts: { organize: 2, reduce: 1 },
         expression_counts: { sql: 3, math: 1 },
       });
+    });
+  });
+
+  describe('dashboardSavedFromTemplate', () => {
+    const originalSearch = window.location.search;
+    const setSearch = (search: string) => {
+      Object.defineProperty(window, 'location', {
+        value: { ...window.location, search },
+        writable: true,
+      });
+    };
+    afterEach(() => {
+      setSearch(originalSearch);
+    });
+
+    it('fires when isNew is true and creationOrigin matches the custom-template marker', async () => {
+      setSearch(
+        '?creationOrigin=dashboard_library_custom_template&libraryItemId=tpl-42&sourceEntryPoint=templates_gallery_modal'
+      );
+      const scene = buildTestScene();
+      await trackDashboardSceneCreatedOrSaved(true, scene, { name: 'n', url: 'u' });
+
+      expect(CustomDashboardTemplateInteractions.dashboardSavedFromTemplate).toHaveBeenCalledWith({
+        dashboardUid: 'dashboard-test',
+        templateUid: 'tpl-42',
+        sourceEntryPoint: 'templates_gallery_modal',
+      });
+    });
+
+    it('does NOT fire on non-first saves (isNew = false)', async () => {
+      setSearch('?creationOrigin=dashboard_library_custom_template&libraryItemId=tpl-42');
+      const scene = buildTestScene();
+      await trackDashboardSceneCreatedOrSaved(false, scene, { name: 'n', url: 'u' });
+
+      expect(CustomDashboardTemplateInteractions.dashboardSavedFromTemplate).not.toHaveBeenCalled();
+    });
+
+    it('does NOT fire when creationOrigin is a different library variant', async () => {
+      setSearch('?creationOrigin=dashboard_library_template_dashboard&libraryItemId=tpl-42');
+      const scene = buildTestScene();
+      await trackDashboardSceneCreatedOrSaved(true, scene, { name: 'n', url: 'u' });
+
+      expect(CustomDashboardTemplateInteractions.dashboardSavedFromTemplate).not.toHaveBeenCalled();
+    });
+
+    it('drops unknown sourceEntryPoint values', async () => {
+      setSearch('?creationOrigin=dashboard_library_custom_template&sourceEntryPoint=garbage');
+      const scene = buildTestScene();
+      await trackDashboardSceneCreatedOrSaved(true, scene, { name: 'n', url: 'u' });
+
+      expect(CustomDashboardTemplateInteractions.dashboardSavedFromTemplate).toHaveBeenCalledWith(
+        expect.objectContaining({ sourceEntryPoint: undefined })
+      );
     });
   });
 

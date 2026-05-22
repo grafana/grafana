@@ -5,7 +5,9 @@ import { useLocation, useSearchParams } from 'react-router-dom-v5-compat';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Alert, useStyles2 } from '@grafana/ui';
+import { EVENT_LOCATIONS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
 import { DASHBOARD_LIBRARY_ROUTES } from 'app/features/dashboard/dashgrid/types';
+import { CustomDashboardTemplateInteractions } from 'app/features/dashboard-scene/analytics/main';
 import { getDashboardTemplateExtension } from 'app/features/dashboard-scene/settings/enterprise-components/DashboardTemplateExtension';
 
 import { type DashboardScene } from '../scene/DashboardScene';
@@ -14,9 +16,14 @@ export function DashboardTemplateUseBanner({ dashboard }: { dashboard: Dashboard
   const styles = useStyles2(getStyles);
   const location = useLocation();
   const [searchParams] = useSearchParams();
+  const { editview } = dashboard.useState();
+  // Hide the banner on Settings tabs — settings have their own UI for template editing
+  // and the banner is redundant context there.
   const shouldRender =
-    Boolean(searchParams.get('useTemplateBanner')) && location.pathname === DASHBOARD_LIBRARY_ROUTES.Template;
-  const [dismissed, setDismissed] = useState<boolean>(!shouldRender);
+    Boolean(searchParams.get('useTemplateBanner')) &&
+    location.pathname === DASHBOARD_LIBRARY_ROUTES.Template &&
+    !editview;
+  const [dismissed, setDismissed] = useState<boolean>(false);
   const [outerTitle, setOuterTitle] = useState<string | undefined>(undefined);
 
   const dashboardTemplateUid = searchParams.get('dashboardTemplateUid') ?? undefined;
@@ -33,10 +40,14 @@ export function DashboardTemplateUseBanner({ dashboard }: { dashboard: Dashboard
   }, [shouldRender, dashboardTemplateUid]);
 
   const onDismiss = () => {
+    CustomDashboardTemplateInteractions.templateUseBannerDismissed({
+      templateUid: dashboardTemplateUid ?? '',
+      eventLocation: EVENT_LOCATIONS.DASHBOARD_PAGE_TEMPLATE_USE_BANNER,
+    });
     setDismissed(true);
   };
 
-  if (dismissed) {
+  if (dismissed || !shouldRender) {
     return null;
   }
 

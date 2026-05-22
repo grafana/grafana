@@ -6,6 +6,12 @@ export const EVENT_LOCATIONS = {
   MODAL_VIEW: 'suggested_dashboards_modal',
   BROWSE_DASHBOARDS_PAGE: 'browse_dashboards_page',
   DASHBOARD_PAGE_SUGGESTED_DASHBOARDS_BANNER: 'dashboard_page_suggested_dashboards_banner',
+  DASHBOARD_TEMPLATES_MODAL: 'dashboard_templates_modal',
+  DASHBOARD_PAGE_TEMPLATE_USE_BANNER: 'dashboard_page_template_use_banner',
+  DASHBOARD_PAGE_TEMPLATE_EDIT_BANNER: 'dashboard_page_template_edit_banner',
+  DASHBOARD_PAGE_TEMPLATE_SAVED_BANNER: 'dashboard_page_template_saved_banner',
+  DASHBOARD_SAVE_DRAWER: 'dashboard_save_drawer',
+  DASHBOARD_VERSIONS_VIEW: 'dashboard_versions_view',
 } as const;
 
 /**
@@ -17,6 +23,7 @@ export const CONTENT_KINDS = {
   DATASOURCE_DASHBOARD: 'datasource_dashboard',
   COMMUNITY_DASHBOARD: 'community_dashboard',
   TEMPLATE_DASHBOARD: 'template_dashboard',
+  CUSTOM_DASHBOARD_TEMPLATE: 'custom_dashboard_template',
   SUGGESTED_DASHBOARDS: 'suggested_dashboards',
 } as const;
 
@@ -42,12 +49,26 @@ const SuggestedDashboardSourceEntryPoint = {
 } as const;
 
 /**
+ * Entry points for custom (org-defined) dashboard templates — the gallery tab,
+ * the toolbar "Save as template" menu, and the lifecycle banners on the
+ * dashboard scene page.
+ */
+const CustomDashboardTemplateSourceEntryPoint = {
+  TEMPLATES_GALLERY_MODAL: 'templates_gallery_modal',
+  SAVE_AS_TEMPLATE_MENU: 'save_as_template_menu',
+  TEMPLATE_USE_BANNER: 'template_use_banner',
+  TEMPLATE_EDIT_BANNER: 'template_edit_banner',
+  TEMPLATE_SAVED_BANNER: 'template_saved_banner',
+} as const;
+
+/**
  * Combined source entry points for all dashboard library features.
  * Sent in tracking events to identify which UI element triggered the interaction.
  */
 export const SOURCE_ENTRY_POINTS = {
   ...SuggestedDashboardSourceEntryPoint,
   ...TemplateDashboardSourceEntryPoint,
+  ...CustomDashboardTemplateSourceEntryPoint,
 } as const;
 
 /**
@@ -66,6 +87,7 @@ export const CREATION_ORIGINS = {
   DASHBOARD_LIBRARY_DATASOURCE_DASHBOARD: 'dashboard_library_datasource_dashboard',
   DASHBOARD_LIBRARY_COMMUNITY_DASHBOARD: 'dashboard_library_community_dashboard',
   DASHBOARD_LIBRARY_TEMPLATE_DASHBOARD: 'dashboard_library_template_dashboard',
+  DASHBOARD_LIBRARY_CUSTOM_TEMPLATE: 'dashboard_library_custom_template',
 } as const;
 
 export type EventLocation = (typeof EVENT_LOCATIONS)[keyof typeof EVENT_LOCATIONS];

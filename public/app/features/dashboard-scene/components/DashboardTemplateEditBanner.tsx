@@ -5,24 +5,29 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Alert, TextLink, useStyles2 } from '@grafana/ui';
+import { EVENT_LOCATIONS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
 import { DASHBOARD_LIBRARY_ROUTES } from 'app/features/dashboard/dashgrid/types';
 
+import { CustomDashboardTemplateInteractions } from '../analytics/main';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { getDashboardTemplateExtension } from '../settings/enterprise-components/DashboardTemplateExtension';
 
 export function DashboardTemplateEditBanner({ dashboard }: { dashboard: DashboardScene }) {
   const styles = useStyles2(getStyles);
   const location = useLocation();
-  const { meta } = dashboard.useState();
+  const { meta, editview } = dashboard.useState();
 
   const dashboardTemplateUid = meta.dashboardTemplateUid;
 
+  // Hide the banner on Settings tabs — they have their own dedicated UI for template
+  // editing, and the banner is redundant context there.
   const shouldRender =
     location.pathname === DASHBOARD_LIBRARY_ROUTES.Template &&
     Boolean(meta.isDashboardTemplate) &&
-    Boolean(dashboardTemplateUid);
+    Boolean(dashboardTemplateUid) &&
+    !editview;
 
-  const [dismissed, setDismissed] = useState<boolean>(!shouldRender);
+  const [dismissed, setDismissed] = useState<boolean>(false);
   const [outerTitle, setOuterTitle] = useState<string>();
 
   useEffect(() => {
@@ -52,7 +57,13 @@ export function DashboardTemplateEditBanner({ dashboard }: { dashboard: Dashboar
       })}
       severity="info"
       className={styles.banner}
-      onRemove={() => setDismissed(true)}
+      onRemove={() => {
+        CustomDashboardTemplateInteractions.templateEditBannerDismissed({
+          templateUid: dashboardTemplateUid ?? '',
+          eventLocation: EVENT_LOCATIONS.DASHBOARD_PAGE_TEMPLATE_EDIT_BANNER,
+        });
+        setDismissed(true);
+      }}
     >
       <Trans i18nKey="dashboard-scene.dashboard-template-edit-banner.body">
         Edits made will update this template.{' '}

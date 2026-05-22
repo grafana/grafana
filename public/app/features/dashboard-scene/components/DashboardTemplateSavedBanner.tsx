@@ -5,6 +5,7 @@ import { useSearchParams } from 'react-router-dom-v5-compat';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Alert, TextLink, useStyles2 } from '@grafana/ui';
+import { CustomDashboardTemplateInteractions } from 'app/features/dashboard-scene/analytics/main';
 import { getDashboardTemplateExtension } from 'app/features/dashboard-scene/settings/enterprise-components/DashboardTemplateExtension';
 
 export function DashboardTemplateSavedBanner() {
@@ -31,11 +32,19 @@ export function DashboardTemplateSavedBanner() {
   };
 
   const onOpenGallery = () => {
+    CustomDashboardTemplateInteractions.savedBannerGalleryClicked({
+      templateUid: dashboardTemplateUid ?? '',
+    });
     searchParams.set('templateDashboards', 'true');
     setSearchParams(searchParams);
   };
 
-  if (!dashboardTemplateUid || !templateName) {
+  // Hide the banner on Settings tabs — `editview` is set in the URL whenever a settings
+  // tab is active. Settings have their own UI for template editing and the banner is
+  // redundant context there.
+  const onSettingsTab = Boolean(searchParams.get('editview'));
+
+  if (!dashboardTemplateUid || !templateName || onSettingsTab) {
     return null;
   }
 
