@@ -102,7 +102,7 @@ func (moa *MultiOrgAlertmanager) PrepareConfig(
 		if !recv.HasMimirIntegrations() {
 			continue
 		}
-		grafana, err := legacy_storage.PostableMimirReceiverToPostableGrafanaReceiver(recv)
+		grafana, err := v1.PostableMimirReceiverToPostableGrafanaReceiver(recv)
 		if err != nil {
 			moa.logger.Warn("Failed to convert Mimir receiver to Grafana receiver. Ignoring receiver ", "identifier", mergeResult.Identifier, "receiver", recv.Name, "err", err)
 			failed++

@@ -2,11 +2,13 @@ package v1
 
 import (
 	"fmt"
+	"hash/fnv"
 	"maps"
 	"slices"
 	"strings"
 
 	"github.com/grafana/alerting/definition"
+	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/prometheus/alertmanager/config"
 	k8svalidation "k8s.io/apimachinery/pkg/util/validation"
 
@@ -400,4 +402,63 @@ func InhibitRuleToInhibitionRule(name string, rule config.InhibitRule, provenanc
 		InhibitRule: rule,
 		Provenance:  provenance,
 	}, nil
+}
+
+// PostableMimirReceiverToPostableGrafanaReceiver converts all legacy models to PostableGrafanaReceiver.
+// If receiver does not have any legacy receivers, returns the original receiver.
+// Otherwise, returns a copy that contains converted integrations (and shallow copy of existing Grafana integrations).
+func PostableMimirReceiverToPostableGrafanaReceiver(r *PostableApiReceiver) (*PostableApiReceiver, error) {
+	if !r.HasMimirIntegrations() {
+		return r, nil
+	}
+	v0, err := alertingNotify.ConfigReceiverToMimirIntegrations(r.Receiver)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert v0 receiver to integrations: %w", err)
+	}
+	result := &PostableApiReceiver{
+		Receiver: definition.Receiver{
+			Name: r.Name,
+		},
+		PostableGrafanaReceivers: PostableGrafanaReceivers{
+			GrafanaManagedReceivers: make([]*PostableGrafanaReceiver, 0, len(v0)+len(r.GrafanaManagedReceivers)),
+		},
+	}
+	result.GrafanaManagedReceivers = append(result.GrafanaManagedReceivers, r.GrafanaManagedReceivers...)
+	typeCount := make(map[string]int)
+	for _, cfg := range v0 {
+		integrationType := string(cfg.Schema.Type())
+		idx := typeCount[integrationType]
+		typeCount[integrationType]++
+		integration, err := MimirIntegrationConfigToPostableGrafanaReceiver(cfg, r.Name, idx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert Mimir integration config to PostableGrafanaReceiver: %w", err)
+		}
+		result.GrafanaManagedReceivers = append(result.GrafanaManagedReceivers, integration)
+	}
+	return result, nil
+}
+
+// MimirIntegrationConfigToPostableGrafanaReceiver converts a Mimir integration configuration to a PostableGrafanaReceiver. All settings are unencrypted. Needs to be encrypted later.
+func MimirIntegrationConfigToPostableGrafanaReceiver(cfg alertingNotify.MimirIntegrationConfig, receiverName string, idx int) (*PostableGrafanaReceiver, error) {
+	raw, err := cfg.ConfigJSON()
+	if err != nil {
+		return nil, err
+	}
+
+	return &PostableGrafanaReceiver{
+		// mimirIntegrationUID generates a stable, fixed-length UID for a converted Mimir integration that passes ValidateUID, 40-char limit for long names in particular
+		UID:                   mimirIntegrationUID(receiverName, string(cfg.Schema.Type()), idx),
+		Name:                  receiverName,
+		Type:                  string(cfg.Schema.Type()),
+		Version:               string(cfg.Schema.Version),
+		DisableResolveMessage: false, // V0 ignores this flag as they have their own SendResolved one.
+		Settings:              raw,
+		SecureSettings:        nil,
+	}, nil
+}
+
+func mimirIntegrationUID(receiverName string, integrationType string, idx int) string {
+	h := fnv.New64a()
+	_, _ = fmt.Fprintf(h, "%s-%s-%d", receiverName, integrationType, idx)
+	return fmt.Sprintf("%016x", h.Sum64())
 }
