@@ -96,8 +96,8 @@ func TestCascadeWatcher_Run_enabledFlagWithoutRestConfig(t *testing.T) {
 }
 
 type deletedFolder struct {
-	name         string
-	gracePeriod  *int64
+	name        string
+	gracePeriod *int64
 }
 
 type recordingFolderMutator struct {
@@ -233,7 +233,9 @@ func TestCascadeWatcher_onFolder_removesFinalizerWhenEmpty(t *testing.T) {
 func TestCascadeWatcher_onFolder_skipsWhenNotTerminating(t *testing.T) {
 	mut := &recordingFolderMutator{}
 	w := &CascadeWatcher{
-		folderSearch:  &mockFolderSearcher{search: func(context.Context, int64, *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) { return nil, nil }},
+		folderSearch: &mockFolderSearcher{search: func(context.Context, int64, *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
+			return nil, nil
+		}},
 		folderMutator: mut,
 		log:           slog.Default(),
 	}
