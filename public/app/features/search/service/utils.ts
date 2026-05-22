@@ -184,14 +184,13 @@ export function resourceToSearchResult(
       resource: 'dashboards',
       name: item.metadata.name,
       title: item.spec?.title,
-      location: 'general',
       folder: item?.metadata?.annotations?.[AnnoKeyFolder] ?? 'general',
       tags: item.spec?.tags || [],
       field,
       url: '',
     };
     if (!hit.folder) {
-      return { ...hit, location: 'general', folder: 'general' };
+      return { ...hit, folder: 'general' };
     }
 
     return hit;

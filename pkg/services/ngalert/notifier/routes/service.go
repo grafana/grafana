@@ -2,7 +2,6 @@ package routes
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"go.opentelemetry.io/otel/attribute"
@@ -12,10 +11,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/merge"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -210,7 +208,7 @@ func (nps *Service) GetManagedRoutes(ctx context.Context, orgID int64, user iden
 	return managedRoutes, nil
 }
 
-func (nps *Service) UpdateManagedRoute(ctx context.Context, orgID int64, name string, subtree definitions.Route, p models.Provenance, version string, user identity.Requester) (*legacy_storage.ManagedRoute, error) {
+func (nps *Service) UpdateManagedRoute(ctx context.Context, orgID int64, name string, subtree v1.Route, p models.Provenance, version string, user identity.Requester) (*legacy_storage.ManagedRoute, error) {
 	ctx, span := nps.tracer.Start(ctx, "alerting.routes.update", trace.WithAttributes(
 		attribute.Int64("query_org_id", orgID),
 		attribute.String("route_name", name),
@@ -273,15 +271,6 @@ func (nps *Service) UpdateManagedRoute(ctx context.Context, orgID int64, name st
 		return nil, err
 	}
 	updated.Provenance = p
-
-	_, err = merge.MergeExtraConfig(ctx, revision.Config)
-	if err != nil {
-		if errors.Is(err, merge.ErrSubtreeMatchersConflict) {
-			// TODO temporarily get the conflicting matchers
-			return nil, models.MakeErrRouteConflictingMatchers(fmt.Sprintf("%s", revision.Config.ExtraConfigs[0].MergeMatchers))
-		}
-		nps.log.FromContext(ctx).Warn("Unable to validate the combined routing tree because of an error during merging. This could be a sign of broken external configuration. Skipping", "error", err)
-	}
 
 	err = nps.xact.InTransaction(ctx, func(ctx context.Context) error {
 		if err := nps.configStore.Save(ctx, revision, orgID); err != nil {
@@ -359,18 +348,13 @@ func (nps *Service) DeleteManagedRoute(ctx context.Context, orgID int64, name st
 			return fmt.Errorf("failed to parse default alertmanager config: %w", err)
 		}
 
-		_, err = revision.ResetUserDefinedRoute(defaultCfg)
+		_, err = revision.ResetUserDefinedRoute(v1.ToModel(defaultCfg))
 		if err != nil {
 			return err
 		}
 		action = "Reset"
 	} else {
 		revision.DeleteManagedRoute(name)
-	}
-
-	_, err = merge.MergeExtraConfig(ctx, revision.Config)
-	if err != nil {
-		return fmt.Errorf("new routing tree is not compatible with extra configuration: %w", err)
 	}
 
 	err = nps.xact.InTransaction(ctx, func(ctx context.Context) error {
@@ -394,7 +378,7 @@ func (nps *Service) DeleteManagedRoute(ctx context.Context, orgID int64, name st
 	return nil
 }
 
-func (nps *Service) CreateManagedRoute(ctx context.Context, orgID int64, name string, subtree definitions.Route, p models.Provenance, user identity.Requester) (*legacy_storage.ManagedRoute, error) {
+func (nps *Service) CreateManagedRoute(ctx context.Context, orgID int64, name string, subtree v1.Route, p models.Provenance, user identity.Requester) (*legacy_storage.ManagedRoute, error) {
 	ctx, span := nps.tracer.Start(ctx, "alerting.routes.create", trace.WithAttributes(
 		attribute.Int64("query_org_id", orgID),
 		attribute.String("route_name", name),
@@ -473,11 +457,11 @@ func (nps *Service) ReceiverNameUsedByRoutes(_ context.Context, rev *legacy_stor
 	return rev.ReceiverNameUsedByRoutes(name, nps.managedRoutesEnabled())
 }
 
-func (nps *Service) RenameReceiverInRoutes(_ context.Context, rev *legacy_storage.ConfigRevision, oldName, newName string) map[*definitions.Route]int {
+func (nps *Service) RenameReceiverInRoutes(_ context.Context, rev *legacy_storage.ConfigRevision, oldName, newName string) map[*v1.Route]int {
 	return rev.RenameReceiverInRoutes(oldName, newName, nps.managedRoutesEnabled())
 }
 
-func (nps *Service) RenameTimeIntervalInRoutes(_ context.Context, rev *legacy_storage.ConfigRevision, oldName string, newName string) map[*definitions.Route]int {
+func (nps *Service) RenameTimeIntervalInRoutes(_ context.Context, rev *legacy_storage.ConfigRevision, oldName string, newName string) map[*v1.Route]int {
 	return rev.RenameTimeIntervalInRoutes(oldName, newName, nps.managedRoutesEnabled())
 }
 
