@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import { useMemo } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
@@ -153,7 +154,7 @@ export function ProvisionedImportOverview({
         <GcomDashboardInfo gnetId={gnetId} orgName={meta.orgName} updatedAt={meta.updatedAt} />
       )}
       <FormProvider {...methods}>
-        <form onSubmit={methods.handleSubmit(onSubmit)}>
+        <form onSubmit={methods.handleSubmit(onSubmit)} className={css({ maxWidth: '600px', width: '100%' })}>
           <ProvisionedImportForm
             register={methods.register}
             control={methods.control}
