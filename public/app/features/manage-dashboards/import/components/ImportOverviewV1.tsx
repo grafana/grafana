@@ -1,9 +1,11 @@
+import { css } from '@emotion/css';
 import { useCallback, useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { AppEvents, locationUtil } from '@grafana/data';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
+import { useStyles2 } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
@@ -31,6 +33,7 @@ type Props = {
 };
 
 export function ImportOverviewV1({ dashboard, inputs, meta, source, folderUid, onCancel }: Props) {
+  const styles = useStyles2(getStyles);
   const [uidReset, setUidReset] = useState(false);
 
   const methods = useForm<ImportDashboardDTO>({
@@ -153,7 +156,7 @@ export function ImportOverviewV1({ dashboard, inputs, meta, source, folderUid, o
         <GcomDashboardInfo gnetId={dashboard.gnetId} orgName={meta.orgName} updatedAt={meta.updatedAt} />
       )}
       <FormProvider {...methods}>
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form className={styles.form} onSubmit={handleSubmit(onSubmit)}>
           <ImportForm
             register={register}
             errors={formState.errors}
@@ -182,4 +185,12 @@ export function ImportOverviewV1({ dashboard, inputs, meta, source, folderUid, o
       </FormProvider>
     </>
   );
+}
+
+function getStyles() {
+  return {
+    form: css({
+      maxWidth: '600px',
+    }),
+  };
 }

@@ -1,9 +1,11 @@
+import { css } from '@emotion/css';
 import { useCallback, useEffect, useMemo } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { AppEvents, locationUtil } from '@grafana/data';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { useStyles2 } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
@@ -30,6 +32,7 @@ type Props = {
 };
 
 export function ImportOverviewV2({ dashboard, dashboardUid, inputs, meta, source, folderUid, onCancel }: Props) {
+  const styles = useStyles2(getStyles);
   const { layout: normalizedLayout, modified: hasFloatGridItems } = useMemo(
     () => truncateFloatGridItems(dashboard.layout),
     [dashboard.layout]
@@ -139,7 +142,7 @@ export function ImportOverviewV2({ dashboard, dashboardUid, inputs, meta, source
         <GcomDashboardInfo gnetId={undefined} orgName={meta.orgName} updatedAt={meta.updatedAt} />
       )}
       <FormProvider {...methods}>
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form className={styles.form} onSubmit={handleSubmit(onSubmit)}>
           <ImportDashboardFormV2
             register={register}
             inputs={inputs}
@@ -166,4 +169,12 @@ export function ImportOverviewV2({ dashboard, dashboardUid, inputs, meta, source
       </FormProvider>
     </>
   );
+}
+
+function getStyles() {
+  return {
+    form: css({
+      maxWidth: '600px',
+    }),
+  };
 }

@@ -13188,7 +13188,7 @@
       "label-branch": "Branch",
       "label-comment": "Comment",
       "label-filename": "Filename",
-      "label-folder": "Folder",
+      "label-folder": "Repository folder",
       "label-path": "Path",
       "placeholder-branch": "Select or enter branch name",
       "placeholder-folder": "Select or enter folder path",

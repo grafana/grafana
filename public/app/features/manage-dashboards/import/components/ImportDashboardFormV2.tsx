@@ -208,13 +208,13 @@ export const ImportDashboardFormV2 = ({
         <Button
           type="submit"
           data-testid={selectors.components.ImportDashboardForm.submit}
-          variant={getButtonVariant(errors)}
+          variant={getButtonVariant(errors, submitDisabled)}
           disabled={submitDisabled}
           onClick={() => {
             setSubmitted(true);
           }}
         >
-          {getButtonText(errors)}
+          {getButtonText(errors, submitDisabled)}
         </Button>
         <Button type="reset" variant="secondary" onClick={onCancel}>
           <Trans i18nKey="dashboard-scene.import-dashboard-form-v2.cancel">Cancel</Trans>
@@ -224,10 +224,10 @@ export const ImportDashboardFormV2 = ({
   );
 };
 
-function getButtonVariant(errors: FormFieldErrors<ImportFormDataV2>) {
-  return errors && (errors.dashboard?.title || errors.k8s?.name) ? 'destructive' : 'primary';
+function getButtonVariant(errors: FormFieldErrors<ImportFormDataV2>, submitDisabled?: boolean) {
+  return !submitDisabled && errors && (errors.dashboard?.title || errors.k8s?.name) ? 'destructive' : 'primary';
 }
 
-function getButtonText(errors: FormFieldErrors<ImportFormDataV2>) {
-  return errors && (errors.dashboard?.title || errors.k8s?.name) ? 'Import (Overwrite)' : 'Import';
+function getButtonText(errors: FormFieldErrors<ImportFormDataV2>, submitDisabled?: boolean) {
+  return !submitDisabled && errors && (errors.dashboard?.title || errors.k8s?.name) ? 'Import (Overwrite)' : 'Import';
 }
