@@ -183,7 +183,7 @@ func StartGrafanaEnvWithManualCleanup(t *testing.T, grafDir, cfgPath string) (st
 		require.NoError(t, services.StartAndAwaitRunning(context.Background(), backendService))
 
 		storage, err = sql.ProvideUnifiedStorageGrpcService(env.Cfg, env.FeatureToggles,
-			env.Cfg.Logger, registerer, nil, nil, nil, nil, kv.Config{}, nil, storageBackend, nil, nil, nil, grpcService)
+			env.Cfg.Logger, registerer, nil, nil, nil, nil, nil, kv.Config{}, nil, storageBackend, nil, nil, nil, grpcService)
 		require.NoError(t, err)
 		err = grpcService.StartAsync(ctx)
 		require.NoError(t, err)
@@ -427,6 +427,15 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		recordingRulesSect, err := cfg.NewSection("recording_rules")
 		require.NoError(t, err)
 		_, err = recordingRulesSect.NewKey("enabled", "true")
+		require.NoError(t, err)
+	}
+
+	if opts.EnableAnnotationAppPlatform {
+		annotationSect, err := cfg.NewSection("annotations.app_platform")
+		require.NoError(t, err)
+		_, err = annotationSect.NewKey("enabled", "true")
+		require.NoError(t, err)
+		_, err = annotationSect.NewKey("store_backend", "memory")
 		require.NoError(t, err)
 	}
 
@@ -1008,6 +1017,8 @@ type GrafanaOpts struct {
 	HARedisAddr            string
 	HARedisPeerName        string
 	HASingleNodeEvaluation bool
+
+	EnableAnnotationAppPlatform bool
 }
 
 func CreateUser(t *testing.T, store db.DB, cfg *setting.Cfg, cmd user.CreateUserCommand) *user.User {

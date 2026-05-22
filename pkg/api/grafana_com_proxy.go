@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"regexp"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -13,6 +14,28 @@ import (
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 	"github.com/grafana/grafana/pkg/web"
 )
+
+// ssoTokenAllowedPaths are the GCOM paths that should receive the hg-auth token.
+var ssoTokenAllowedPaths = []*regexp.Regexp{
+	regexp.MustCompile(`^/?plugins$`),
+	regexp.MustCompile(`^/?plugins/[^/]+$`),
+	regexp.MustCompile(`^/?plugins/[^/]+/versions$`),
+	regexp.MustCompile(`^/?plugins/[^/]+/versions/[^/]+$`),
+	regexp.MustCompile(`^/?plugins/[^/]+/versions/[^/]+/logos/[^/]+$`),
+	regexp.MustCompile(`^/?plugins/[^/]+/versions/[^/]+/images/.+$`),
+	regexp.MustCompile(`^/?plugins/[^/]+/versions/[^/]+/insights$`),
+	regexp.MustCompile(`^/?dashboards$`),
+	regexp.MustCompile(`^/?dashboards/[^/]+$`),
+}
+
+func ssoTokenAllowedPath(proxyPath string) bool {
+	for _, re := range ssoTokenAllowedPaths {
+		if re.MatchString(proxyPath) {
+			return true
+		}
+	}
+	return false
+}
 
 var grafanaComProxyTransport = &http.Transport{
 	Proxy: http.ProxyFromEnvironment,
@@ -41,7 +64,7 @@ func ReverseProxyGnetReq(logger log.Logger, proxyPath, version, grafanaComAPIUrl
 		// send the current Grafana version for each request proxied to GCOM
 		req.Header.Add("grafana-version", version)
 
-		if grafanaComAPIToken != "" {
+		if grafanaComAPIToken != "" && req.Method == http.MethodGet && ssoTokenAllowedPath(proxyPath) {
 			req.Header.Set("Authorization", "Bearer "+grafanaComAPIToken)
 		}
 	}

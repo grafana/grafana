@@ -760,8 +760,10 @@ function ReviewStep({ formData, onStartImport, onCancel, dryRunResult, rulesFrom
               {willImportRules && (
                 <button type="button" className={styles.badgeWithIcon} onClick={handlePreviewRules}>
                   {rulesCount > 0
-                    ? t('alerting.import-to-gma.review.will-import-rules-count', 'Will import {{count}} rules', {
+                    ? t('alerting.import-to-gma.review.will-import-rules-count', '', {
                         count: rulesCount,
+                        defaultValue_one: 'Will import {{count}} rules',
+                        defaultValue_other: 'Will import {{count}} rules',
                       })
                     : t('alerting.import-to-gma.review.will-import-rules', 'Will import rules')}
                   <Icon name="eye" size="sm" />

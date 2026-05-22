@@ -515,7 +515,8 @@
         "edit-yaml": "Editar YAML",
         "save": "Salvar"
       },
-      "error-title": ""
+      "error-title": "",
+      "no-group-success": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "nome",
@@ -1171,6 +1172,7 @@
     },
     "evaluate-every-validation-options": {
       "message": {
+        "none-not-allowed": "",
         "required": "Este valor é obrigatório."
       }
     },
@@ -2875,6 +2877,11 @@
         },
         "group-name": "Nome do grupo de avaliação",
         "group-text": "Todas as regras no grupo selecionado são avaliadas a cada {{evaluateEvery}}.",
+        "interval-label": "",
+        "mode": {
+          "legacy": "",
+          "new": ""
+        },
         "new-group": "Novo grupo de avaliação",
         "pause": {
           "alerting": "Ative para pausar a avaliação desta regra de alerta.",
@@ -11350,6 +11357,8 @@
       "clear-search": "Limpar",
       "close-inline-details": "Fechar detalhes deste log",
       "close-sidebar-details": "Fechar barra lateral de detalhes do log",
+      "copy-log-line": "",
+      "copy-log-line-json": "",
       "copy-shortlink": "Copiar link curto",
       "copy-to-clipboard": "Copiar para a área de transferência",
       "displayed-fields-section": "Organizar campos exibidos",
@@ -11398,7 +11407,8 @@
     },
     "log-line-menu": {
       "copy-link": "Copiar link para a linha do log",
-      "copy-log": "Copiar linha do log",
+      "copy-log-contents": "",
+      "copy-log-message": "",
       "hide-details": "Exibir detalhes do log",
       "icon-label": "Menu do log",
       "log-line": "Linha de registro",
@@ -15146,6 +15156,8 @@
     },
     "support-bundles-unconnected": {
       "created-on": "Criado em",
+      "deprecation-warning-message": "",
+      "deprecation-warning-title": "",
       "download": "Baixar",
       "expires": "Validade:",
       "requested-by": "Solicitado por",
@@ -15546,8 +15558,8 @@
     },
     "legend": {
       "category": "Legenda",
-      "description-faceted-filter": "Exibir filtro de visibilidade de série com base em rótulos",
-      "name-faceted-filter": "Filtro facetado"
+      "description-faceted-filter": "",
+      "name-faceted-filter": ""
     },
     "line-style-editor": {
       "line-fill-options": {
