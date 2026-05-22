@@ -299,10 +299,15 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
+      - name: Get GitHub App token
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@e5b7989c92b55fe3ac6dd006d6de49082ba8c507 # create-github-app-token (github-script/v9)
+        with:
+          github_app: grafana-ci-bot
       - name: Setup Enterprise
         uses: ./.github/actions/setup-enterprise
         with:
-          github-app-name: 'grafana-ci-bot'
+          token: ${{ steps.get-github-app-token.outputs.token }}
       - name: Run tests
         env:
           SHARD: ${{ matrix.shard }}
@@ -339,10 +344,15 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
+      - name: Get GitHub App token
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@e5b7989c92b55fe3ac6dd006d6de49082ba8c507 # create-github-app-token (github-script/v9)
+        with:
+          github_app: grafana-ci-bot
       - name: Setup Enterprise
         uses: ./.github/actions/setup-enterprise
         with:
-          github-app-name: 'grafana-ci-bot'
+          token: ${{ steps.get-github-app-token.outputs.token }}
       - name: Run tests
         if: matrix.shard != 'profiled'
         env:
@@ -456,10 +466,15 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
+      - name: Get GitHub App token
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@e5b7989c92b55fe3ac6dd006d6de49082ba8c507 # create-github-app-token (github-script/v9)
+        with:
+          github_app: grafana-ci-bot
       - name: Setup Enterprise
         uses: ./.github/actions/setup-enterprise
         with:
-          github-app-name: 'grafana-ci-bot'
+          token: ${{ steps.get-github-app-token.outputs.token }}
       - name: Setup MySQL devenv
         run: mysql -h 127.0.0.1 -P 3306 -u root -prootpass < devenv/docker/blocks/mysql_tests/setup.sql
       - name: Run tests
@@ -506,10 +521,15 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
+      - name: Get GitHub App token
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@e5b7989c92b55fe3ac6dd006d6de49082ba8c507 # create-github-app-token (github-script/v9)
+        with:
+          github_app: grafana-ci-bot
       - name: Setup Enterprise
         uses: ./.github/actions/setup-enterprise
         with:
-          github-app-name: 'grafana-ci-bot'
+          token: ${{ steps.get-github-app-token.outputs.token }}
       - name: Setup Postgres devenv
         run: psql -p 5432 -h 127.0.0.1 -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
       - name: Run tests
