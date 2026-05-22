@@ -14,6 +14,7 @@ import {
 } from '@grafana/scenes';
 import { type ElementSelectionContextItem } from '@grafana/ui';
 
+import { cmd } from '../mutation-api/cmd';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
 import { SceneGridRowEditableElement } from '../scene/layout-default/SceneGridRowEditableElement';
@@ -26,6 +27,7 @@ import { LocalVariableEditableElement } from '../settings/variables/LocalVariabl
 import { VariableEditableElement } from '../settings/variables/VariableEditableElement';
 import { VariableSetEditableElement } from '../settings/variables/VariableSetEditableElement';
 import { isSceneVariable } from '../settings/variables/utils';
+import { getDashboardSceneFor } from '../utils/utils';
 
 import { type DashboardEditPane } from './DashboardEditPane';
 import { MultiSelectedObjectsEditableElement } from './MultiSelectedObjectsEditableElement';
@@ -250,32 +252,14 @@ export const dashboardEditActions = {
   }),
 
   addVariable({ source, addedObject }: AddVariableActionHelperProps) {
-    const varsBeforeAddition = [...(source.state.variables ?? [])];
-
-    dashboardEditActions.addElement({
-      source,
-      addedObject,
-      perform() {
-        source.setState({ variables: [...varsBeforeAddition, addedObject] });
-      },
-      undo() {
-        source.setState({ variables: [...varsBeforeAddition] });
-      },
-    });
+    const dashboard = getDashboardSceneFor(source);
+    // UI path: SceneVariable goes through the Scenes-native overload of cmd.addVariable.
+    // The Mutation API routes it via __scenesPayload, no Zod, snapshot undo registered automatically.
+    dashboard.mutationClient.execute(cmd.addVariable(addedObject));
   },
   removeVariable({ source, removedObject }: RemoveVariableActionHelperProps) {
-    const varsBeforeRemoval = [...source.state.variables];
-
-    dashboardEditActions.removeElement({
-      source,
-      removedObject,
-      perform() {
-        source.setState({ variables: varsBeforeRemoval.filter((v) => v !== removedObject) });
-      },
-      undo() {
-        source.setState({ variables: varsBeforeRemoval });
-      },
-    });
+    const dashboard = getDashboardSceneFor(source);
+    dashboard.mutationClient.execute(cmd.removeVariable(removedObject));
   },
   changeVariableType({ source, oldVariable, newVariable }: ChangeVariableTypeActionHelperProps) {
     const varsBeforeChange = [...source.state.variables];

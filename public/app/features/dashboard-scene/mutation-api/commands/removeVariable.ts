@@ -22,6 +22,7 @@ export const removeVariableCommand: MutationCommand<RemoveVariablePayload> = {
   permission: requiresEdit,
   readOnly: false,
   undoDomain: 'variables',
+  lockTarget: 'variables',
 
   handler: async (payload, context) => {
     const { scene } = context;

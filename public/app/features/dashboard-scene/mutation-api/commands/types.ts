@@ -48,6 +48,10 @@ export interface MutationCommand<T = unknown> {
   /** Declares which state slice this command modifies. When set, the client automatically
    *  snapshots the domain before execution and registers an undo/redo history entry. */
   undoDomain?: UndoDomain;
+  /** Optional write-lock target this command operates against (e.g. 'variables').
+   *  If the target is locked at execute() time, DashboardMutationClient short-circuits
+   *  with { success: false, locked: true } without running the handler. */
+  lockTarget?: string;
   /** The handler function. */
   handler: (payload: T, context: MutationContext) => Promise<MutationResult>;
 }

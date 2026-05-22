@@ -27,6 +27,7 @@ export const addVariableCommand: MutationCommand<AddVariablePayload> = {
   permission: requiresEdit,
   readOnly: false,
   undoDomain: 'variables',
+  lockTarget: 'variables',
 
   handler: async (payload, context) => {
     const { scene } = context;

@@ -18,6 +18,7 @@ function buildMockScene(
     isEditing,
     $variables: new SceneVariableSet({ variables: [] }),
   };
+  const writeLocks = new Set<string>();
   const scene = {
     state,
     canEditDashboard: jest.fn(() => editable),
@@ -26,6 +27,9 @@ function buildMockScene(
     }),
     forceRender: jest.fn(),
     publishEvent: withEventBus ? jest.fn() : undefined,
+    acquireWriteLock: (t: string) => writeLocks.add(t),
+    releaseWriteLock: (t: string) => writeLocks.delete(t),
+    isWriteLocked: (t: string) => writeLocks.has(t),
     setState: jest.fn((partial: Record<string, unknown>) => {
       Object.assign(state, partial);
       // Activate new variable set if provided
@@ -554,6 +558,81 @@ describe('Variable mutation commands', () => {
 
       expect(roundTripped.state.name).toBe('qvar');
       expect((roundTripped as QueryVariable).state.regex).toBe('.*');
+    });
+  });
+
+  describe('canonical undo: add three, remove middle, undo restores at the right index', () => {
+    it('add [a,b,c], remove b, undo -> [a,b,c], redo -> [a,c]', async () => {
+      const sceneWithBus = buildMockScene({ editable: true, withEventBus: true });
+      const c = new DashboardMutationClient(sceneWithBus);
+
+      // Capture the published events so we can drive undo/redo deterministically
+      const events: Array<{ perform: () => void; undo: () => void }> = [];
+      (sceneWithBus.publishEvent as jest.Mock).mockImplementation((event: DashboardEditActionEvent) => {
+        events.push({ perform: event.payload.perform, undo: event.payload.undo });
+        // DashboardEditPane calls perform() once on subscribe; emulate that here.
+        event.payload.perform();
+      });
+
+      const mkVar = (name: string) => ({ kind: 'CustomVariable' as const, spec: { name, query: 'x,y' } });
+      await c.execute({ type: 'ADD_VARIABLE', payload: { variable: mkVar('a') } });
+      await c.execute({ type: 'ADD_VARIABLE', payload: { variable: mkVar('b') } });
+      await c.execute({ type: 'ADD_VARIABLE', payload: { variable: mkVar('c') } });
+
+      const namesAfterAdds = sceneWithBus.state.$variables!.state.variables.map((v) => v.state.name);
+      expect(namesAfterAdds).toEqual(['a', 'b', 'c']);
+
+      // Remove the middle one
+      await c.execute({ type: 'REMOVE_VARIABLE', payload: { name: 'b' } });
+      expect(sceneWithBus.state.$variables!.state.variables.map((v) => v.state.name)).toEqual(['a', 'c']);
+
+      // Undo the remove -> b should be restored at index 1
+      events[events.length - 1].undo();
+      expect(sceneWithBus.state.$variables!.state.variables.map((v) => v.state.name)).toEqual(['a', 'b', 'c']);
+
+      // Redo the remove -> b should be gone again
+      events[events.length - 1].perform();
+      expect(sceneWithBus.state.$variables!.state.variables.map((v) => v.state.name)).toEqual(['a', 'c']);
+    });
+  });
+
+  describe('multiplayer composition: each mutation reads latest state', () => {
+    it('two sequential add commands accumulate, second sees state from first', async () => {
+      await client.execute({
+        type: 'ADD_VARIABLE',
+        payload: { variable: { kind: 'CustomVariable', spec: { name: 'first', query: 'a,b' } } },
+      });
+      await client.execute({
+        type: 'ADD_VARIABLE',
+        payload: { variable: { kind: 'CustomVariable', spec: { name: 'second', query: 'c,d' } } },
+      });
+
+      expect(scene.state.$variables!.state.variables.map((v) => v.state.name)).toEqual(['first', 'second']);
+    });
+  });
+
+  describe('lock mechanism', () => {
+    it('returns locked:true when the target is write-locked, then succeeds after release', async () => {
+      scene.acquireWriteLock('variables');
+
+      const blocked = await client.execute({
+        type: 'ADD_VARIABLE',
+        payload: { variable: { kind: 'CustomVariable', spec: { name: 'env', query: 'dev,prod' } } },
+      });
+
+      expect(blocked.success).toBe(false);
+      expect(blocked.locked).toBe(true);
+      expect(blocked.error).toMatch(/locked/);
+      expect(scene.state.$variables!.state.variables.map((v) => v.state.name)).toEqual([]);
+
+      scene.releaseWriteLock('variables');
+      const ok = await client.execute({
+        type: 'ADD_VARIABLE',
+        payload: { variable: { kind: 'CustomVariable', spec: { name: 'env', query: 'dev,prod' } } },
+      });
+      expect(ok.success).toBe(true);
+      expect(ok.locked).toBeFalsy();
+      expect(scene.state.$variables!.state.variables.map((v) => v.state.name)).toEqual(['env']);
     });
   });
 });

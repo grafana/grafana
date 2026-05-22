@@ -30,6 +30,7 @@ interface CommandRegistration {
   canExecute: (scene: DashboardScene) => { allowed: true } | { allowed: false; error: string };
   readOnly: boolean;
   undoDomain?: UndoDomain;
+  lockTarget?: string;
 }
 
 export class DashboardMutationClient implements MutationClient {
@@ -49,6 +50,15 @@ export class DashboardMutationClient implements MutationClient {
     const registration = this.commands.get(type);
     if (!registration) {
       return { success: false, error: `Unknown command type: ${type}`, changes: [] };
+    }
+
+    if (registration.lockTarget && this.scene.isWriteLocked(registration.lockTarget)) {
+      return {
+        success: false,
+        locked: true,
+        error: `Target '${registration.lockTarget}' is locked`,
+        changes: [],
+      };
     }
 
     const permissionResult = registration.canExecute(this.scene);
@@ -141,6 +151,7 @@ export class DashboardMutationClient implements MutationClient {
       canExecute: cmd.permission,
       readOnly: cmd.readOnly ?? false,
       undoDomain: cmd.undoDomain,
+      lockTarget: cmd.lockTarget,
     });
   }
 }
