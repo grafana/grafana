@@ -236,7 +236,7 @@ describe('HeatmapPanel (canvas)', () => {
   };
 
   beforeEach(() => {
-    applyDefaultUPlotAxisMeasureTextMock(uPlotAxisMeasureText as jest.MockedFunction<typeof uPlotAxisMeasureText>);
+    applyDefaultUPlotAxisMeasureTextMock(jest.mocked(uPlotAxisMeasureText));
     // VizLayout always calls `useMeasure`; when legend is hidden the result is unused. Zeros match an unmeasured rect.
     prepConfigSpy = jest.spyOn(heatmapUtils, 'prepConfig').mockImplementation((opts) => {
       const builder: UPlotConfigBuilder = realPrepConfig(opts);

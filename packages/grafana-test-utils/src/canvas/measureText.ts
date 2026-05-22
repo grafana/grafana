@@ -15,7 +15,7 @@
  * );
  *
  * beforeEach(() => {
- *   applyDefaultUPlotAxisMeasureTextMock(uPlotAxisMeasureText as jest.MockedFunction<typeof uPlotAxisMeasureText>);
+ *   applyDefaultUPlotAxisMeasureTextMock(jest.mocked(uPlotAxisMeasureText));
  * });
  * ```
  */

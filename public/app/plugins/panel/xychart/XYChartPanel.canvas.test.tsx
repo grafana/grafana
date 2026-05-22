@@ -290,7 +290,7 @@ describe('XYChartPanel2', () => {
   };
 
   beforeEach(() => {
-    applyDefaultUPlotAxisMeasureTextMock(uPlotAxisMeasureText as jest.MockedFunction<typeof uPlotAxisMeasureText>);
+    applyDefaultUPlotAxisMeasureTextMock(jest.mocked(uPlotAxisMeasureText));
     // VizLayout always calls `useMeasure`; when legend is hidden the result is unused. Zeros match an unmeasured rect.
     prepConfigSpy = jest.spyOn(utils, 'prepConfig').mockImplementation((opts, theme) => {
       const result = realPrepConfig(opts, theme);
