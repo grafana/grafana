@@ -592,10 +592,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       backgroundColor: contentBackground,
       border: `1px solid ${contentBorderColor}`,
       borderRadius: theme.shape.radius.lg,
-<<<<<<< HEAD
       margin: '-1px', // to overlay the nested borders nicely
-=======
->>>>>>> 3618831b7cd (Updated page header to new fontstyle and spacing)
     }),
     headerContainer: css({
       label: 'panel-header',
