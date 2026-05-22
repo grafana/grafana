@@ -1,7 +1,7 @@
 import fs from 'fs';
-import { glob } from 'glob';
 import path from 'path';
 import process from 'process';
+import { glob } from 'tinyglobby';
 
 // Support for node 22 and 24. Due to the many changes in importing json files
 // across recent node versions we load the json files using fs for simplicity.

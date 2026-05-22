@@ -1,8 +1,8 @@
-import { glob } from 'glob';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import path from 'path';
 import copy from 'rollup-plugin-copy';
+import { globSync } from 'tinyglobby';
 
 import { cjsOutput, entryPoint, esmOutput, plugins } from '../rollup.config.parts';
 
@@ -20,12 +20,10 @@ export default [
   {
     // Files that should be exported but not included in the `entryPoint`.
     input: Object.fromEntries(
-      glob
-        .sync('src/raw/composable/**/*.ts')
-        .map((file) => [
-          path.relative('src', file.slice(0, file.length - path.extname(file).length)),
-          fileURLToPath(new URL(file, import.meta.url)),
-        ])
+      globSync('src/raw/composable/**/*.ts').map((file) => [
+        path.relative('src', file.slice(0, file.length - path.extname(file).length)),
+        fileURLToPath(new URL(file, import.meta.url)),
+      ])
     ),
     plugins: [
       ...plugins,
