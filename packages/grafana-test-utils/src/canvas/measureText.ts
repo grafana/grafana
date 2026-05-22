@@ -18,7 +18,7 @@
  * beforeEach(() => {
  *   applyDefaultUPlotAxisMeasureTextMock(jest.mocked(uPlotAxisMeasureText));
  *
- *   // Set uPlotInstance by spying on the config builder and adding a hook, or by other means.
+ *   // Set uPlotInstance by spying on the config builder and adding a hook, or by other means. See SparklineCell.canvas.test.tsx, or HeatmapPanel.canvas.test.tsx for examples
  * });
  * ```
  */
