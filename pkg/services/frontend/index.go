@@ -134,8 +134,9 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 	renderBindingSupported, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagReportRenderBinding, false, openfeature.TransactionContext(ctx))
 	compiledBootScript, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagCompiledBootScript, false, openfeature.TransactionContext(ctx))
 	grafanaAssetSriChecks, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagGrafanaAssetSriChecks, false, openfeature.TransactionContext(ctx))
-	meticulousAIRecorderEnabled, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagGrafanaMeticulousAIRecorder, false, openfeature.TransactionContext(ctx))
-	meticulousAIRecorderHighVolume, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagGrafanaMeticulousAIRecorderHighVolume, false, openfeature.TransactionContext(ctx))
+	meticulousAIMode, _ := ofClient.StringValue(ctx, featuremgmt.FlagGrafanaMeticulousAIMode, "off", openfeature.TransactionContext(ctx))
+	meticulousAIEnabled := meticulousAIMode == "on-prod-env" || meticulousAIMode == "on-dev-env"
+	meticulousAIProductionEnvironmentFlag := meticulousAIMode == "on-prod-env"
 	reduceBootdataAPI, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagFrontendServiceReducedBootDataAPI, false, openfeature.TransactionContext(ctx))
 
 	data := IndexViewData{
@@ -149,9 +150,9 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		Settings:                              fsSettings,
 		RenderBindingSupported:                renderBindingSupported,
 		AssetSriChecksEnabled:                 grafanaAssetSriChecks,
-		MeticulousAIEnabled:                   meticulousAIRecorderEnabled,
+		MeticulousAIEnabled:                   meticulousAIEnabled,
 		MeticulousAIRecordingToken:            p.config.MeticulousAIRecordingToken,
-		MeticulousAIProductionEnvironmentFlag: !meticulousAIRecorderHighVolume,
+		MeticulousAIProductionEnvironmentFlag: meticulousAIProductionEnvironmentFlag,
 		ReduceBootdataAPI:                     reduceBootdataAPI,
 	}
 

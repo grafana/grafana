@@ -67,7 +67,7 @@ func PostableAPIConfigToNotificationsConfiguration(c *v1.AMConfigV1, limits aler
 		InhibitRules:      c.AlertmanagerConfig.InhibitRules,
 		MuteTimeIntervals: ModelToMuteTimeIntervals(c.AlertmanagerConfig.MuteTimeIntervals),
 		TimeIntervals:     ModelToTimeIntervals(c.AlertmanagerConfig.TimeIntervals),
-		Templates:         alertingNotify.PostableAPITemplatesToTemplateDefinitions(c.GetMergedTemplateDefinitions()),
+		Templates:         ModelToTemplateDefinitions(c.SortedTemplates(true)),
 		Receivers:         receivers,
 		Limits:            limits,
 	}, nil
@@ -120,6 +120,25 @@ func ModelToMuteTimeIntervals(in []v1.MuteTimeInterval) []alertingNotify.MuteTim
 		})
 	}
 	return out
+}
+
+func ModelToTemplateDefinitions(ts []v1.TemplateGroup) []templates.TemplateDefinition {
+	defs := make([]templates.TemplateDefinition, 0, len(ts))
+	for _, t := range ts {
+		var kind templates.Kind
+		switch t.Kind {
+		case v1.TemplateKindGrafana:
+			kind = templates.GrafanaKind
+		case v1.TemplateKindMimir:
+			kind = templates.MimirKind
+		}
+		defs = append(defs, templates.TemplateDefinition{
+			Name:     t.Title,
+			Template: t.Content,
+			Kind:     kind,
+		})
+	}
+	return defs
 }
 
 // TODO: Temporary until DB model and API model separate. Doing it this way makes caller intent clearer.

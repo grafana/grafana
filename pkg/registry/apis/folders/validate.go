@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -109,7 +110,7 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 	}
 
 	parentName := meta.GetFolder()
-	if parentName == "" {
+	if folder.IsRootFolderUID(parentName) {
 		return nil // OK, we do not need to validate the tree
 	}
 
@@ -163,6 +164,11 @@ func validateOnUpdate(ctx context.Context,
 		return nil
 	}
 
+	// the k6 folder itself may not be moved (matches legacy folder.Service.Move)
+	if obj.Name == accesscontrol.K6FolderUID {
+		return folder.ErrBadRequest.Errorf("k6 project may not be moved")
+	}
+
 	// Validate the move operation
 	newParent := folderObj.GetFolder()
 
@@ -170,11 +176,11 @@ func validateOnUpdate(ctx context.Context,
 	// before and wasn't too deep. This move will make it more shallow.
 	//
 	// We also don't need to validate circular references because the root folder cannot have a parent.
-	if newParent == folder.RootFolderUID {
+	if folder.IsRootFolderUID(newParent) {
 		return nil
 	}
 
-	// folder cannot be moved to a k6 folder
+	// folder cannot be moved into the k6 folder
 	if newParent == accesscontrol.K6FolderUID {
 		return folder.ErrFolderCannotBeMovedToK6.Errorf("k6 project may not be moved")
 	}
@@ -228,7 +234,7 @@ func validateOnUpdate(ctx context.Context,
 // If the old parent depth is >= the new parent depth, the folder was already valid
 // and this move won't make descendants exceed max depth.
 func canSkipChildrenCheck(ctx context.Context, oldFolder utils.GrafanaMetaAccessor, getter rest.Getter, parents parentsGetter, newParentDepth int) bool {
-	if oldFolder.GetFolder() == folder.RootFolderUID {
+	if folder.IsRootFolderUID(oldFolder.GetFolder()) {
 		return false
 	}
 
@@ -361,7 +367,21 @@ func getChildrenBatch(ctx context.Context, searcher resourcepb.ResourceIndexClie
 func validateOnDelete(ctx context.Context,
 	f *folders.Folder,
 	searcher resourcepb.ResourceIndexClient,
+	deleteOptions *metav1.DeleteOptions,
+	cascadeDeleteEnabled bool,
 ) error {
+	// Non-empty folder delete is opt-in via gracePeriodSeconds=0 when kubernetesFolderCascadeDelete
+	// is enabled (same pattern as dashboard delete validation). This only bypasses the empty-folder
+	// check; until cascade reconciliation runs, child resources are left orphaned.
+	if cascadeDeleteEnabled && forceDeleteFromDeleteOptions(deleteOptions) {
+		logging.FromContext(ctx).Warn(
+			"folder force-delete bypassing empty check; cascade deletion is not yet wired up so sub-folders, dashboards, alert rules, and library elements under this folder will be orphaned. This is a temporary state during the cascade delete rollout.",
+			"folder", f.Name,
+			"namespace", f.Namespace,
+		)
+		return nil
+	}
+
 	resp, err := searcher.GetStats(ctx, &resourcepb.ResourceStatsRequest{Namespace: f.Namespace, Kinds: countedKinds, Folder: []string{f.Name}})
 	if err != nil {
 		return err
