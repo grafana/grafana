@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2, generateUUID } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { type DimensionContext } from 'app/features/dimensions/context';
@@ -21,7 +21,7 @@ const Triangle = (props: CanvasElementProps<CanvasElementConfig, CanvasElementDa
   const styles = getStyles(config.theme2, data);
 
   // uuid needed to avoid id conflicts when multiple elements are rendered
-  const uniqueId = crypto.randomUUID();
+  const uniqueId = generateUUID();
 
   return (
     <div className={styles.container}>

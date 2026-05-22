@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useEffect, useState, useRef, useCallback, useImperativeHandle, forwardRef } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2, generateUUID } from '@grafana/data';
 import { type VariableValueOption } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
@@ -34,7 +34,7 @@ export const VariableStaticOptionsForm = forwardRef<VariableStaticOptionsFormRef
       (option: VariableValueOption) => ({
         label: option.label,
         value: String(option.value),
-        id: crypto.randomUUID(),
+        id: generateUUID(),
       }),
       []
     );
@@ -50,7 +50,7 @@ export const VariableStaticOptionsForm = forwardRef<VariableStaticOptionsFormRef
             ? options.map((option) => ({
                 label: option.label,
                 value: String(option.value),
-                id: crypto.randomUUID(),
+                id: generateUUID(),
               }))
             : [createEmptyItem()]
         );
@@ -132,6 +132,6 @@ function createEmptyItem(): VariableStaticOptionsFormItem {
   return {
     label: '',
     value: '',
-    id: crypto.randomUUID(),
+    id: generateUUID(),
   };
 }

@@ -4,6 +4,7 @@ import {
   getDefaultTimeRange,
   type ScopedVars,
   type TimeRange,
+  generateUUID,
 } from '@grafana/data';
 import { QueryFormat, type SQLQuery, type SQLSelectableValue } from '@grafana/plugin-ui';
 import { type DataQuery } from '@grafana/schema';
@@ -37,7 +38,7 @@ export async function fetchSQLFields(
   );
 
   const queryResponse = await datasource.runMetaSQLExprQuery(
-    { rawSql: queryString, format: QueryFormat.Table, refId: `fields-${crypto.randomUUID()}` },
+    { rawSql: queryString, format: QueryFormat.Table, refId: `fields-${generateUUID()}` },
     options.range ?? getDefaultTimeRange(),
     interpolatedSourceQueries
   );

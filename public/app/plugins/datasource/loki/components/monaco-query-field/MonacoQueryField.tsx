@@ -3,7 +3,7 @@ import { debounce } from 'lodash';
 import { useRef, useEffect } from 'react';
 import { useLatest } from 'react-use';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2, generateUUID } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { parser } from '@grafana/lezer-logql';
 import { languageConfiguration, monarchlanguage } from '@grafana/monaco-logql';
@@ -110,7 +110,7 @@ const MonacoQueryField = ({
   onChange,
   timeRange,
 }: Props) => {
-  const id = crypto.randomUUID();
+  const id = generateUUID();
   // we need only one instance of `overrideServices` during the lifetime of the react component
   const overrideServicesRef = useRef(getOverrideServices());
   const containerRef = useRef<HTMLDivElement>(null);

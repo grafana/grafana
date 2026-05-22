@@ -8,6 +8,7 @@ import {
   LiveChannelConnectionState,
   type LiveChannelEvent,
   LiveChannelScope,
+  generateUUID,
 } from '@grafana/data';
 import { getGrafanaLiveSrv, locationService } from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
@@ -21,7 +22,7 @@ import { type DashboardEvent, DashboardEventAction } from './types';
 
 // sessionId is not a security-sensitive value.
 // It is used for filtering out dashboard edit events from the same browsing session
-const sessionId = crypto.randomUUID();
+const sessionId = generateUUID();
 
 class DashboardWatcher {
   private static readonly IGNORE_SAVE_WINDOW_MS = 5000;

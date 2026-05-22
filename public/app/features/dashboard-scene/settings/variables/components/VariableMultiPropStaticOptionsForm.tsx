@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { DragDropContext, Draggable, Droppable, type DropResult } from '@hello-pangea/dnd';
 import { useEffect, useRef, useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2, generateUUID } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { type VariableValueOption, type VariableValueOptionProperties } from '@grafana/scenes';
@@ -30,7 +30,7 @@ const useVariableMultiPropStaticOptionsForm = ({
 }: VariableMultiPropStaticOptionsFormProps) => {
   const [internalOptions, setInternalOptions] = useState<Option[]>(() =>
     options.map((o) => ({
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       ...o,
       properties: { ...o.properties, value: o.value, text: o.label },
     }))
@@ -48,7 +48,7 @@ const useVariableMultiPropStaticOptionsForm = ({
   };
 
   const onAddNewOption = () => {
-    const newId = crypto.randomUUID();
+    const newId = generateUUID();
     autoFocusIdRef.current = newId;
 
     const newOption = {

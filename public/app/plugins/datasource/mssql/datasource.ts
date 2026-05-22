@@ -1,4 +1,4 @@
-import { type DataSourceInstanceSettings, type ScopedVars } from '@grafana/data';
+import { type DataSourceInstanceSettings, type ScopedVars, generateUUID } from '@grafana/data';
 import { type LanguageDefinition } from '@grafana/plugin-ui';
 import { type TemplateSrv } from '@grafana/runtime';
 import {
@@ -45,7 +45,7 @@ export class MssqlDatasource extends SqlDatasource {
     }
     const [_, table] = query.table.split('.');
     const schema = await this.runSql<{ column: string; type: string }>(getSchema(query.dataset, table), {
-      refId: `columns-${crypto.randomUUID()}`,
+      refId: `columns-${generateUUID()}`,
     });
     const result: SQLSelectableValue[] = [];
     for (let i = 0; i < schema.length; i++) {

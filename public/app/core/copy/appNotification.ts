@@ -1,5 +1,6 @@
 import { useMemo, type ReactElement } from 'react';
 
+import { generateUUID } from '@grafana/data';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { dispatch as storeDispatch } from 'app/store/store';
 import { AppNotificationSeverity, type AppNotification } from 'app/types/appNotifications';
@@ -39,7 +40,7 @@ export const createSuccessNotification = (
   text,
   traceId,
   component,
-  id: crypto.randomUUID(),
+  id: generateUUID(),
   timestamp: Date.now(),
   showing: true,
 });
@@ -54,7 +55,7 @@ export const createErrorNotification = (
     ...defaultErrorNotification,
     text: getMessageFromError(text),
     title,
-    id: crypto.randomUUID(),
+    id: generateUUID(),
     traceId,
     component,
     timestamp: Date.now(),
@@ -73,7 +74,7 @@ export const createWarningNotification = (
   text,
   traceId,
   component,
-  id: crypto.randomUUID(),
+  id: generateUUID(),
   timestamp: Date.now(),
   showing: true,
 });
@@ -83,7 +84,7 @@ export const createInfoNotification = (title: string, text = '', traceId?: strin
   icon: 'info-circle',
   title,
   text,
-  id: crypto.randomUUID(),
+  id: generateUUID(),
   timestamp: Date.now(),
   showing: true,
 });

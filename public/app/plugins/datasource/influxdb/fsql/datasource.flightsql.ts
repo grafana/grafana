@@ -1,4 +1,4 @@
-import { type DataSourceInstanceSettings, type TimeRange } from '@grafana/data';
+import { type DataSourceInstanceSettings, type TimeRange, generateUUID } from '@grafana/data';
 import { CompletionItemKind, type LanguageDefinition, type TableIdentifier } from '@grafana/plugin-ui';
 import { type TemplateSrv, getTemplateSrv } from '@grafana/runtime';
 import { COMMON_FNS, type DB, type FuncParameter, type SQLQuery, SqlDatasource, formatSQL } from '@grafana/sql';
@@ -57,7 +57,7 @@ export class FlightSQLDatasource extends SqlDatasource {
     }
     const interpolatedTable = this.templateSrv.replace(query.table);
     const queryString = buildColumnQuery(interpolatedTable, query.dataset);
-    const frame = await this.runSql<string[]>(queryString, { refId: `fields-${crypto.randomUUID()}` });
+    const frame = await this.runSql<string[]>(queryString, { refId: `fields-${generateUUID()}` });
     const fields = frame.map((f) => ({
       name: f[0],
       text: f[0],

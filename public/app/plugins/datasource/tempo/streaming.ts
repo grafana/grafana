@@ -16,6 +16,7 @@ import {
   sortDataFrame,
   type ThresholdsConfig,
   ThresholdsMode,
+  generateUUID,
 } from '@grafana/data';
 import { cloneQueryResponse, combineResponses } from '@grafana/o11y-ds-frontend';
 import { getGrafanaLiveSrv } from '@grafana/runtime';
@@ -29,7 +30,7 @@ import { stepToNanos } from './utils';
 export const TEMPO_STREAMING_PROGRESS_REF_ID = 'streaming-progress';
 
 function getLiveStreamKey(): string {
-  return crypto.randomUUID();
+  return generateUUID();
 }
 
 export function doTempoSearchStreaming(

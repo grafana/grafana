@@ -1,6 +1,6 @@
 import { type FormEvent, useCallback, useEffect, useRef, useState, useSyncExternalStore, type JSX } from 'react';
 
-import { type OrgRole } from '@grafana/data';
+import { type OrgRole, generateUUID } from '@grafana/data';
 import { ClickOutsideWrapper, Portal, useTheme2 } from '@grafana/ui';
 import { pickerStateStore } from 'app/core/utils/roles';
 import type { Role } from 'app/types/accessControl';
@@ -54,7 +54,7 @@ export const RolePicker = ({
   pickerId,
 }: Props): JSX.Element | null => {
   // Generate stable picker ID if not provided
-  const stablePickerIdRef = useRef(pickerId || crypto.randomUUID());
+  const stablePickerIdRef = useRef(pickerId || generateUUID());
   const stablePickerId = stablePickerIdRef.current;
 
   // Use external store for isOpen state so it survives remounts

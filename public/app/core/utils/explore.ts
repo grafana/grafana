@@ -22,6 +22,7 @@ import {
   type TimeZone,
   toURLRange,
   urlUtil,
+  generateUUID,
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { RefreshPicker } from '@grafana/ui';
@@ -165,7 +166,7 @@ export const safeStringifyValue = (value: unknown, space?: number) => {
 };
 
 export function generateKey(index = 0): string {
-  return `Q-${crypto.randomUUID()}-${index}`;
+  return `Q-${generateUUID()}-${index}`;
 }
 
 export async function generateEmptyQuery(

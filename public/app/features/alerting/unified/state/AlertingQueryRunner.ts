@@ -8,6 +8,7 @@ import {
   type PanelData,
   type TimeRange,
   dataFrameFromJSON,
+  generateUUID,
   getDefaultTimeRange,
   preProcessPanelData,
   rangeUtil,
@@ -176,7 +177,7 @@ const runRequest = (
     data: { data: queries, condition },
     url: '/api/v1/eval',
     method: 'POST',
-    requestId: crypto.randomUUID(),
+    requestId: generateUUID(),
   };
 
   return withLoadingIndicator({

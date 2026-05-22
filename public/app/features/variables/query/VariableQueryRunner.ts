@@ -10,6 +10,7 @@ import {
   type PanelData,
   type QueryVariableModel,
   type ScopedVars,
+  generateUUID,
 } from '@grafana/data';
 import { type StoreState, type ThunkDispatch } from 'app/types/store';
 
@@ -184,7 +185,7 @@ export class VariableQueryRunner {
 
     const request: DataQueryRequest = {
       app: CoreApp.Dashboard,
-      requestId: crypto.randomUUID(),
+      requestId: generateUUID(),
       timezone: '',
       range,
       interval: '',

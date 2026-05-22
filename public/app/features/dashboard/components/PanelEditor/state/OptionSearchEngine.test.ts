@@ -1,3 +1,5 @@
+import { generateUUID } from '@grafana/data';
+
 import { OptionsPaneCategoryDescriptor } from '../OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from '../OptionsPaneItemDescriptor';
 
@@ -51,21 +53,21 @@ function getOptionCategories(): OptionsPaneCategoryDescriptor[] {
       .addItem(
         new OptionsPaneItemDescriptor({
           title: 'Title',
-          id: crypto.randomUUID(),
+          id: generateUUID(),
           render: jest.fn(),
         })
       )
       .addItem(
         new OptionsPaneItemDescriptor({
           title: 'Min',
-          id: crypto.randomUUID(),
+          id: generateUUID(),
           render: jest.fn(),
         })
       )
       .addItem(
         new OptionsPaneItemDescriptor({
           title: 'ASDSADASDSADA',
-          id: crypto.randomUUID(),
+          id: generateUUID(),
           description: 'DescriptionMatch',
           render: jest.fn(),
         })
@@ -77,21 +79,21 @@ function getOptionCategories(): OptionsPaneCategoryDescriptor[] {
       .addItem(
         new OptionsPaneItemDescriptor({
           title: 'Min',
-          id: crypto.randomUUID(),
+          id: generateUUID(),
           render: jest.fn(),
         })
       )
       .addItem(
         new OptionsPaneItemDescriptor({
           title: 'DescriptionMatch',
-          id: crypto.randomUUID(),
+          id: generateUUID(),
           render: jest.fn(),
         })
       )
       .addItem(
         new OptionsPaneItemDescriptor({
           title: 'Frame',
-          id: crypto.randomUUID(),
+          id: generateUUID(),
           render: jest.fn(),
         })
       ),
@@ -107,21 +109,21 @@ function getOverrides(): OptionsPaneCategoryDescriptor[] {
       .addItem(
         new OptionsPaneItemDescriptor({
           title: 'Match by name',
-          id: crypto.randomUUID(),
+          id: generateUUID(),
           render: jest.fn(),
         })
       )
       .addItem(
         new OptionsPaneItemDescriptor({
           title: 'Min',
-          id: crypto.randomUUID(),
+          id: generateUUID(),
           render: jest.fn(),
         })
       )
       .addItem(
         new OptionsPaneItemDescriptor({
           title: 'Max',
-          id: crypto.randomUUID(),
+          id: generateUUID(),
           render: jest.fn(),
         })
       ),
@@ -132,21 +134,21 @@ function getOverrides(): OptionsPaneCategoryDescriptor[] {
       .addItem(
         new OptionsPaneItemDescriptor({
           title: 'Match by name',
-          id: crypto.randomUUID(),
+          id: generateUUID(),
           render: jest.fn(),
         })
       )
       .addItem(
         new OptionsPaneItemDescriptor({
           title: 'Threshold',
-          id: crypto.randomUUID(),
+          id: generateUUID(),
           render: jest.fn(),
         })
       )
       .addItem(
         new OptionsPaneItemDescriptor({
           title: 'Max',
-          id: crypto.randomUUID(),
+          id: generateUUID(),
           render: jest.fn(),
         })
       ),

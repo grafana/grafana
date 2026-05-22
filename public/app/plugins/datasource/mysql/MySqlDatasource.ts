@@ -1,4 +1,4 @@
-import { type DataSourceInstanceSettings, type TimeRange } from '@grafana/data';
+import { type DataSourceInstanceSettings, type TimeRange, generateUUID } from '@grafana/data';
 import { CompletionItemKind, type LanguageDefinition, type TableIdentifier } from '@grafana/plugin-ui';
 import {
   COMMON_FNS,
@@ -62,7 +62,7 @@ export class MySqlDatasource extends SqlDatasource {
       return [];
     }
     const queryString = buildColumnQuery(query.table, query.dataset);
-    const frame = await this.runSql<string[]>(queryString, { refId: `fields-${crypto.randomUUID()}` });
+    const frame = await this.runSql<string[]>(queryString, { refId: `fields-${generateUUID()}` });
     const fields = frame.map((f) => ({
       name: f[0],
       text: f[0],

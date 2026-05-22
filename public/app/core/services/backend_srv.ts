@@ -25,7 +25,7 @@ import {
   throwIfEmpty,
 } from 'rxjs/operators';
 
-import { AppEvents, DataQueryErrorType, deprecationWarning } from '@grafana/data';
+import { AppEvents, DataQueryErrorType, deprecationWarning, generateUUID } from '@grafana/data';
 import {
   type BackendSrv as BackendService,
   type BackendSrvRequest,
@@ -125,7 +125,7 @@ export class BackendSrv implements BackendService {
 
   fetch<T>(options: BackendSrvRequest): Observable<FetchResponse<T>> {
     // We need to match an entry added to the queue stream with the entry that is eventually added to the response stream
-    const id = crypto.randomUUID();
+    const id = generateUUID();
     const fetchQueue = this.fetchQueue;
 
     return new Observable((observer) => {

@@ -1,3 +1,5 @@
+import { generateUUID } from '@grafana/data';
+
 const MATCH_ID_INDEX = 2;
 const SVG_ID_INSERT_POS = 5;
 
@@ -13,7 +15,7 @@ export const getSvgId = (svgCode: string) => {
 export const svgStyleCleanup = (svgCode: string) => {
   let svgId = getSvgId(svgCode);
   if (!svgId) {
-    svgId = `x${crypto.randomUUID()}`;
+    svgId = `x${generateUUID()}`;
     const pos = svgCode.indexOf('<svg') + SVG_ID_INSERT_POS;
     svgCode = svgCode.substring(0, pos) + `id="${svgId}" ` + svgCode.substring(pos);
   }
