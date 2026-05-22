@@ -89,7 +89,7 @@ exports[`TableNG SparklineCell threshold wiring (canvas) renders hue gradient w/
         {
           "props": {
             "height": 26,
-            "width": 293,
+            "width": 285,
             "x": -0.5,
             "y": -0.5,
           },
@@ -105,7 +105,7 @@ exports[`TableNG SparklineCell threshold wiring (canvas) renders hue gradient w/
       "path": [
         {
           "props": {
-            "x": 292,
+            "x": 284,
             "y": 25.255102040816325,
           },
           "type": "lineTo",
@@ -133,7 +133,7 @@ exports[`TableNG SparklineCell threshold wiring (canvas) renders hue gradient w/
         },
         {
           "props": {
-            "x": 292,
+            "x": 284,
             "y": 0,
           },
           "type": "lineTo",
@@ -198,7 +198,7 @@ exports[`TableNG SparklineCell threshold wiring (canvas) renders none gradient w
         {
           "props": {
             "height": 26,
-            "width": 293,
+            "width": 285,
             "x": -0.5,
             "y": -0.5,
           },
@@ -214,7 +214,7 @@ exports[`TableNG SparklineCell threshold wiring (canvas) renders none gradient w
       "path": [
         {
           "props": {
-            "x": 292,
+            "x": 284,
             "y": 25.255102040816325,
           },
           "type": "lineTo",
@@ -242,7 +242,7 @@ exports[`TableNG SparklineCell threshold wiring (canvas) renders none gradient w
         },
         {
           "props": {
-            "x": 292,
+            "x": 284,
             "y": 0,
           },
           "type": "lineTo",
@@ -327,7 +327,7 @@ exports[`TableNG SparklineCell threshold wiring (canvas) renders opacity gradien
         {
           "props": {
             "height": 26,
-            "width": 293,
+            "width": 285,
             "x": -0.5,
             "y": -0.5,
           },
@@ -343,7 +343,7 @@ exports[`TableNG SparklineCell threshold wiring (canvas) renders opacity gradien
       "path": [
         {
           "props": {
-            "x": 292,
+            "x": 284,
             "y": 25.255102040816325,
           },
           "type": "lineTo",
@@ -371,7 +371,7 @@ exports[`TableNG SparklineCell threshold wiring (canvas) renders opacity gradien
         },
         {
           "props": {
-            "x": 292,
+            "x": 284,
             "y": 0,
           },
           "type": "lineTo",
@@ -484,7 +484,7 @@ exports[`TableNG SparklineCell threshold wiring (canvas) renders scheme gradient
         {
           "props": {
             "height": 26,
-            "width": 293,
+            "width": 285,
             "x": -0.5,
             "y": -0.5,
           },
@@ -500,7 +500,7 @@ exports[`TableNG SparklineCell threshold wiring (canvas) renders scheme gradient
       "path": [
         {
           "props": {
-            "x": 292,
+            "x": 284,
             "y": 25.255102040816325,
           },
           "type": "lineTo",
@@ -528,7 +528,7 @@ exports[`TableNG SparklineCell threshold wiring (canvas) renders scheme gradient
         },
         {
           "props": {
-            "x": 292,
+            "x": 284,
             "y": 0,
           },
           "type": "lineTo",
@@ -689,7 +689,7 @@ exports[`TableNG SparklineCell threshold wiring (canvas) renders scheme gradient
         {
           "props": {
             "height": 26,
-            "width": 293,
+            "width": 285,
             "x": -0.5,
             "y": -0.5,
           },
@@ -705,7 +705,7 @@ exports[`TableNG SparklineCell threshold wiring (canvas) renders scheme gradient
       "path": [
         {
           "props": {
-            "x": 292,
+            "x": 284,
             "y": 25.255102040816325,
           },
           "type": "lineTo",
@@ -733,7 +733,7 @@ exports[`TableNG SparklineCell threshold wiring (canvas) renders scheme gradient
         },
         {
           "props": {
-            "x": 292,
+            "x": 284,
             "y": 0,
           },
           "type": "lineTo",

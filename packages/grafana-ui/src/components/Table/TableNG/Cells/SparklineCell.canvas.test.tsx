@@ -11,9 +11,9 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { GraphGradientMode, TableCellDisplayMode } from '@grafana/schema';
-import { removeCanvasTransforms } from '@grafana/test-utils/canvas';
+import { applyDefaultUPlotAxisMeasureTextMock, removeCanvasTransforms } from '@grafana/test-utils/canvas';
 
-import * as measureTextModule from '../../../../utils/measureText';
+import { measureText as uPlotAxisMeasureText } from '../../../../utils/measureText';
 import * as sparklineUtils from '../../../Sparkline/utils';
 import { type UPlotConfigBuilder } from '../../../uPlot/config/UPlotConfigBuilder';
 
@@ -53,12 +53,14 @@ function renderSparklineCell(field: Field) {
   return render(<SparklineCell field={field} rowIdx={0} theme={createTheme()} value={tsFrame} width={width} />);
 }
 
+let uPlotInstance: InstanceType<typeof uPlot> | undefined;
+jest.mock('../../../../utils/measureText', () =>
+  require('@grafana/test-utils/canvas').createGrafanaUiMeasureTextJestMock(() => uPlotInstance)
+);
+
 describe('TableNG SparklineCell threshold wiring (canvas)', () => {
   const realPrepareConfig = sparklineUtils.prepareConfig;
-  const realGetCanvasContext = measureTextModule.getCanvasContext;
   let prepareConfigSpy: jest.SpyInstance;
-  let getCanvasContextSpy: jest.SpyInstance;
-  let uPlotInstance: InstanceType<typeof uPlot> | undefined;
 
   const assertCanvasOutput = async () => {
     await waitFor(() => expect(document.querySelector('.u-over')).toBeInTheDocument());
@@ -66,14 +68,9 @@ describe('TableNG SparklineCell threshold wiring (canvas)', () => {
   };
 
   beforeEach(() => {
+    applyDefaultUPlotAxisMeasureTextMock(jest.mocked(uPlotAxisMeasureText));
+
     uPlotInstance = undefined;
-    // gradientFills.ts creates linear gradients on the shared measureText canvas
-    // (getCanvasContext) — separate from uPlot's own ctx — so the createLinearGradient
-    // geometry never lands in uPlotInstance.ctx events and the viewer can't replay it.
-    // Routing both to the same ctx makes the snapshot self-contained.
-    getCanvasContextSpy = jest
-      .spyOn(measureTextModule, 'getCanvasContext')
-      .mockImplementation(() => uPlotInstance?.ctx ?? realGetCanvasContext());
 
     prepareConfigSpy = jest.spyOn(sparklineUtils, 'prepareConfig').mockImplementation((...args) => {
       const builder: UPlotConfigBuilder = realPrepareConfig(...args);
@@ -87,7 +84,6 @@ describe('TableNG SparklineCell threshold wiring (canvas)', () => {
 
   afterEach(() => {
     prepareConfigSpy.mockRestore();
-    getCanvasContextSpy.mockRestore();
   });
 
   it('renders scheme gradient w/ Thresholds color mode', async () => {
