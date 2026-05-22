@@ -7986,6 +7986,13 @@
     "settings": {
       "title": "Settings"
     },
+    "template": {
+      "title": "Template",
+      "unavailable-body": "This dashboard is not being edited as a template, so template settings cannot be shown.",
+      "unavailable-oss-body": "Editing dashboard template settings requires Grafana Enterprise.",
+      "unavailable-oss-title": "Available in Grafana Enterprise",
+      "unavailable-title": "Template metadata unavailable"
+    },
     "time-picker": {
       "hide-time-picker": "Hide time picker",
       "now-delay-description": "Exclude recent data that may be incomplete.",
