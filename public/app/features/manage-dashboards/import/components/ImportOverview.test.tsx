@@ -73,7 +73,7 @@ const v2Dashboard: DashboardV2Spec = {
     autoRefresh: '',
     autoRefreshIntervals: [],
     hideTimepicker: false,
-    weekStart: '',
+    weekStart: undefined,
     fiscalYearStartMonth: 0,
     nowDelay: '',
     quickRanges: [],

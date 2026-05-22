@@ -5,9 +5,8 @@ import { selectors } from '@grafana/e2e-selectors';
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
-import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { dashboardAPIVersionResolver } from 'app/features/dashboard/api/DashboardAPIVersionResolver';
-import { type DashboardInputs, DashboardSource } from 'app/features/manage-dashboards/types';
+import { type DashboardInputs, DashboardSource, LibraryPanelInputState } from 'app/features/manage-dashboards/types';
 
 import { setupProvisioningMswServer } from '../../mocks/server';
 
@@ -90,7 +89,7 @@ const v2Dashboard: DashboardV2Spec = {
     autoRefresh: '',
     autoRefreshIntervals: [],
     hideTimepicker: false,
-    weekStart: '',
+    weekStart: undefined,
     fiscalYearStartMonth: 0,
     nowDelay: '',
     quickRanges: [],
@@ -220,12 +219,12 @@ describe('ProvisionedImportOverview', () => {
             model: {
               uid: 'lp-1',
               name: 'My Panel',
-              model: {},
+              model: { type: 'timeseries' },
               version: 1,
               type: 'timeseries',
               description: '',
             },
-            state: 'new' as const,
+            state: LibraryPanelInputState.New,
           },
         ],
       };
@@ -244,12 +243,12 @@ describe('ProvisionedImportOverview', () => {
             model: {
               uid: 'lp-1',
               name: 'My Panel',
-              model: {},
+              model: { type: 'timeseries' },
               version: 1,
               type: 'timeseries',
               description: '',
             },
-            state: 'new' as const,
+            state: LibraryPanelInputState.New,
           },
         ],
       };
