@@ -95,8 +95,9 @@ linters:
               desc: apps/secret is not allowed to import grafana core
         coreplugins:
           files:
-            - '**/pkg/tsdb/grafana-postgresql-datasource/*'
-            - '**/pkg/tsdb/grafana-postgresql-datasource/**/*'
+            # TODO: restore grafana-postgresql-datasource once #119110 (mssql & postgresql decouple) is backported to release-13.0.2
+            # TODO: restore mssql once #119110 (mssql & postgresql decouple) is backported to release-13.0.2
+            # TODO: restore influxdb once #119167 (InfluxDB decouple) is backported to release-13.0.2
             - '**/pkg/tsdb/grafana-pyroscope-datasource/*'
             - '**/pkg/tsdb/grafana-pyroscope-datasource/**/*'
             - '**/pkg/tsdb/grafana-testdata-datasource/*'
@@ -107,8 +108,6 @@ linters:
             - '**/pkg/tsdb/cloud-monitoring/**/*'
             - '**/pkg/tsdb/graphite/*'
             - '**/pkg/tsdb/graphite/**/*'
-            - '**/pkg/tsdb/mssql/*'
-            - '**/pkg/tsdb/mssql/**/*'
             - '**/pkg/tsdb/mysql/*'
             - '**/pkg/tsdb/mysql/**/*'
             - '**/pkg/tsdb/opentsdb/*'
@@ -123,8 +122,6 @@ linters:
             - '**/pkg/tsdb/loki/**/*'
             - '**/pkg/tsdb/jaeger/*'
             - '**/pkg/tsdb/jaeger/**/*'
-            - '**/pkg/tsdb/influxdb/*'
-            - '**/pkg/tsdb/influxdb/**/*'
           deny:
             - pkg: github.com/grafana/grafana/pkg/api
               desc: Core plugins are not allowed to depend on Grafana core packages
@@ -330,6 +327,34 @@ linters:
       - linters:
           - govet
         text: 'inline: Constant reflect\.Ptr'
+      # TODO: remove once #124553 (bulk nosec/nolint annotations) is backported to release-13.0.2
+      - linters:
+          - gosec
+        text: G705
+      - linters:
+          - gosec
+        text: G602
+      - linters:
+          - gosec
+        text: G122
+      - linters:
+          - gosec
+        text: G710
+      - linters:
+          - gosec
+        text: G117
+      - linters:
+          - gosec
+        text: G703
+      - linters:
+          - gosec
+        text: G204
+      - linters:
+          - staticcheck
+        text: 'SA1019: .*\.Director'
+      - linters:
+          - prealloc
+        text: '.*'
     paths:
       - devenv
       - scripts
