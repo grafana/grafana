@@ -6,6 +6,7 @@ import { createReturnTo } from '../../hooks/useReturnTo';
 import { MATCHER_ALERT_RULE_UID } from '../../utils/constants';
 
 import { Matchers } from './Matchers';
+import { MissingAlertRuleWarning } from './MissingAlertRuleWarning';
 import { SilenceMetadataGrid } from './SilenceMetadataGrid';
 import SilencedAlertsTable from './SilencedAlertsTable';
 
@@ -25,12 +26,16 @@ export function SilenceViewContent({ silence, silencedAlerts }: SilenceViewConte
 
   return (
     <Stack direction="column" gap={2}>
-      {metadata?.rule_title && metadata?.rule_uid && (
+      {metadata?.rule_uid && (
         <Stack direction="column" gap={0.5}>
           <Text variant="bodySmall" color="secondary">
             <Trans i18nKey="alerting.silence-view.alert-rule">Alert rule</Trans>
           </Text>
-          <TextLink href={alertRuleHref}>{metadata.rule_title}</TextLink>
+          {metadata.rule_title ? (
+            <TextLink href={alertRuleHref}>{metadata.rule_title}</TextLink>
+          ) : (
+            <MissingAlertRuleWarning ruleUid={metadata.rule_uid} />
+          )}
         </Stack>
       )}
 

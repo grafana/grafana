@@ -24,6 +24,7 @@ import NewSilencePage from './NewSilencePage';
 import ExistingSilenceEditorPage from './components/silences/SilencesEditor';
 import SilencesTablePage from './components/silences/SilencesTable';
 import {
+  MOCK_DANGLING_ALERT_RULE_UID,
   MOCK_SILENCE_ID_EXISTING,
   MOCK_SILENCE_ID_EXISTING_ALERT_RULE_UID,
   MOCK_SILENCE_ID_LACKING_PERMISSIONS,
@@ -240,6 +241,18 @@ describe('Silences', () => {
 
     expect(ui.addSilenceButton.query()).not.toBeInTheDocument();
   });
+
+  it(
+    'shows a warning when the targeted alert rule no longer exists',
+    async () => {
+      renderSilences();
+
+      const notExpiredTable = await ui.notExpiredTable.find();
+      expect(within(notExpiredTable).getByText(/alert rule no longer exists/i)).toBeInTheDocument();
+      expect(within(notExpiredTable).getByLabelText(`Alert rule UID: ${MOCK_DANGLING_ALERT_RULE_UID}`)).toBeVisible();
+    },
+    TEST_TIMEOUT
+  );
 
   it('handles error case when broken alertmanager is used', async () => {
     renderSilences(`/alerting/silences?alertmanager=${encodeURIComponent(MOCK_DATASOURCE_NAME_BROKEN_ALERTMANAGER)}`);
