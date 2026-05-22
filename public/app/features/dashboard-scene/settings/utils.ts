@@ -12,6 +12,7 @@ import { type DashboardScene } from '../scene/DashboardScene';
 
 import { AnnotationsEditView } from './AnnotationsEditView';
 import { DashboardLinksEditView } from './DashboardLinksEditView';
+import { DashboardTemplateEditView } from './DashboardTemplateEditView';
 import { GeneralSettingsEditView } from './GeneralSettingsEditView';
 import { JsonModelEditView } from './JsonModelEditView';
 import { PermissionsEditView } from './PermissionsEditView';
@@ -41,6 +42,14 @@ export function useDashboardEditPageNav(dashboard: DashboardScene, currentEditVi
     children: [],
     parentItem: dashboardPageNav,
   };
+
+  if (dashboard.state.meta.isDashboardTemplate && dashboard.state.meta.canSave) {
+    pageNav.children!.push({
+      text: t('dashboard-settings.template.title', 'Template'),
+      url: locationUtil.getUrlForPartial(location, { editview: 'template', editIndex: null }),
+      active: currentEditView === 'template',
+    });
+  }
 
   if (dashboard.state.meta.canEdit) {
     pageNav.children!.push({
@@ -106,6 +115,8 @@ export function createDashboardEditViewFor(editview: string): DashboardEditView 
       return new JsonModelEditView({});
     case 'permissions':
       return new PermissionsEditView({});
+    case 'template':
+      return new DashboardTemplateEditView({});
     case 'settings':
     default:
       return new GeneralSettingsEditView({});
