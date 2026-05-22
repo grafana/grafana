@@ -4328,7 +4328,6 @@ __metadata:
     "@types/react-dom": "npm:18.3.5"
     "@types/react-virtualized-auto-sizer": "npm:1.0.8"
     "@types/systemjs": "npm:6.15.3"
-    "@types/uuid": "npm:10.0.0"
     i18next-cli: "npm:^1.48.0"
     immutable: "npm:5.1.5"
     jest: "npm:^29.6.4"
@@ -4343,7 +4342,6 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
     typescript: "npm:6.0.2"
-    uuid: "npm:14.0.0"
   peerDependencies:
     "@grafana/data": ">=10.4.0"
     "@grafana/runtime": ">=10.4.0"
