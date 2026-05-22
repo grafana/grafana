@@ -72,22 +72,27 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
         size = { width, height: height - legendMeasure.height };
       }
       break;
-    case 'right':
+    case 'right': {
+      console.log(legend.props.width);
       containerStyle.flexDirection = 'row';
-
-      if (typeof legend.props.width !== 'string') {
-        legendStyle.maxWidth = maxWidth;
-      }
 
       if (legendMeasure.width) {
         size = { width: width - legendMeasure.width, height };
       }
+
+      if (typeof legend.props.width === 'string') {
+        legendStyle.width = legend.props.width;
+        break;
+      }
+
+      legendStyle.maxWidth = maxWidth;
 
       if (typeof legend.props.width === 'number') {
         legendStyle.width = legend.props.width;
         size = { width: width - legend.props.width, height };
       }
       break;
+    }
   }
 
   // This happens when position is switched from bottom to right

@@ -59,6 +59,7 @@ export function addLegendOptions<T extends OptionsWithLegend>(
       editor: ({ onChange, ...props }) => {
         return (
           <Input
+            {...props}
             placeholder={t('grafana-ui.builder.legend.placeholder-width', 'Auto, px, or % (e.g. 220 or 35%)')}
             onChange={(e: ChangeEvent<HTMLInputElement>) => {
               let value: string | undefined = e.currentTarget.value.trim();
@@ -70,7 +71,6 @@ export function addLegendOptions<T extends OptionsWithLegend>(
               let numeric = Number(value);
               onChange(Number.isNaN(numeric) ? value : numeric);
             }}
-            value={props.value}
             // this is needed as a work-around for _something_ in an ancestor causing a blur/onChange/remount happen on every keypress
             onInputCapture={(e) => {
               e.stopPropagation();
