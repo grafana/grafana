@@ -51,6 +51,11 @@ const customVariableModel: CustomVariableModel = {
   rootStateKey: null,
 };
 
+jest.mock('@grafana/data', () => ({
+  ...jest.requireActual('@grafana/data'),
+  generateUUID: () => '0000',
+}));
+
 const instanceSettings = {
   uid: 'mssql-datasource',
   type: 'mssql',
@@ -204,19 +209,24 @@ describe('MSSQLDatasource', () => {
     });
 
     it('should return a list of fields when fetchFields is called', async () => {
-      const fieldsFrame = dataFrameToJSON(
-        createDataFrame({
-          fields: [
-            { name: 'column', type: FieldType.string, values: ['test1', 'test2', 'test3'] },
-            { name: 'type', type: FieldType.string, values: ['int', 'char', 'bool'] },
-          ],
-        })
-      );
+      const fetchFieldsResponse = {
+        results: {
+          [`columns-0000`]: {
+            frames: [
+              dataFrameToJSON(
+                createDataFrame({
+                  fields: [
+                    { name: 'column', type: FieldType.string, values: ['test1', 'test2', 'test3'] },
+                    { name: 'type', type: FieldType.string, values: ['int', 'char', 'bool'] },
+                  ],
+                })
+              ),
+            ],
+          },
+        },
+      };
 
-      fetchMock.mockImplementation((options: { data: { queries: Array<{ refId: string }> } }) => {
-        const refId = options.data.queries[0].refId;
-        return of(createFetchResponse({ results: { [refId]: { frames: [fieldsFrame] } } }));
-      });
+      fetchMock.mockImplementation(() => of(createFetchResponse(fetchFieldsResponse)));
 
       const sqlQuery: SQLQuery = {
         refId: 'fields',
