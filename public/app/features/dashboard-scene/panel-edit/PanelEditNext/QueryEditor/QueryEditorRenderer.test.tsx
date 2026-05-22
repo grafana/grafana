@@ -174,6 +174,8 @@ describe('QueryEditorRenderer', () => {
             toggleQuerySelection: jest.fn(),
             toggleTransformationSelection: jest.fn(),
             clearSelection: jest.fn(),
+            confirmingDeleteActionKey: null,
+            setConfirmingDeleteActionKey: jest.fn(),
           }}
           actions={mockActions}
           typeConfig={mockTypeConfig}
@@ -252,6 +254,8 @@ describe('QueryEditorRenderer', () => {
             toggleQuerySelection: jest.fn(),
             toggleTransformationSelection: jest.fn(),
             clearSelection: jest.fn(),
+            confirmingDeleteActionKey: null,
+            setConfirmingDeleteActionKey: jest.fn(),
           }}
           actions={{ ...mockActions, updateSelectedQuery }}
           typeConfig={mockTypeConfig}
