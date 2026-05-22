@@ -19,126 +19,115 @@ import (
 )
 
 func TestSubAccessREST_getAccessInfo(t *testing.T) {
-	type checkKey struct {
-		group, resource, verb string
-	}
 	type testCase struct {
 		name              string
-		allowed           map[string]bool // verb -> allowed (folder-domain shorthand)
-		allowedByCheck    map[checkKey]bool
+		allowed           map[string]bool // verb -> allowed
 		checkErr          error
 		itemErr           error // attached to the first BatchCheckItem's result
 		parentFolder      string
-		expect            folders.FolderAccessInfo
+		expectCanAdmin    bool
+		expectCanEdit     bool
+		expectCanDelete   bool
+		expectCanSave     bool
+		expectActionsTier folderTier // tier whose action bundle should appear in AccessControl
+		expectNilAC       bool       // when tier is None, AccessControl is nil
 		expectErr         bool
-		expectFolderInReq string // verify parent folder is passed to folder-domain checks
 		assertItem        func(t *testing.T, item authlib.BatchCheckItem)
 	}
 
-	const folderGroup, folderRes = "folder.grafana.app", "folders"
-	const dashGroup, dashRes = "dashboard.grafana.app", "dashboards"
-
 	tcs := []testCase{
 		{
-			name: "admin: every verb allowed → all bools true and full map (folder + dashboards:create)",
+			name: "setPermissions allowed → Admin tier; all Can* true; admin bundle returned",
 			allowed: map[string]bool{
-				utils.VerbGet:            true,
-				utils.VerbUpdate:         true,
-				utils.VerbDelete:         true,
-				utils.VerbCreate:         true,
-				utils.VerbGetPermissions: true,
 				utils.VerbSetPermissions: true,
 			},
-			expect: folders.FolderAccessInfo{
-				CanSave: true, CanEdit: true, CanAdmin: true, CanDelete: true,
-				AccessControl: map[string]bool{
-					"folders:read":              true,
-					"folders:write":             true,
-					"folders:delete":            true,
-					"folders:create":            true,
-					"folders.permissions:read":  true,
-					"folders.permissions:write": true,
-					"dashboards:create":         true,
-				},
-			},
+			expectCanAdmin:    true,
+			expectCanEdit:     true,
+			expectCanDelete:   true,
+			expectCanSave:     true,
+			expectActionsTier: tierAdmin,
 		},
 		{
-			name: "folder-domain only allowed (no dashboard tuples in Zanzana)",
-			allowedByCheck: map[checkKey]bool{
-				{group: folderGroup, resource: folderRes, verb: utils.VerbGet}:    true,
-				{group: folderGroup, resource: folderRes, verb: utils.VerbUpdate}: true,
+			name: "every verb allowed → Admin tier (setPermissions still wins)",
+			allowed: map[string]bool{
+				utils.VerbGet:            true,
+				utils.VerbCreate:         true,
+				utils.VerbUpdate:         true,
+				utils.VerbDelete:         true,
+				utils.VerbSetPermissions: true,
 			},
-			expect: folders.FolderAccessInfo{
-				CanSave: false, CanEdit: true, CanAdmin: false, CanDelete: false,
-				AccessControl: map[string]bool{
-					"folders:read":  true,
-					"folders:write": true,
-				},
-			},
+			expectCanAdmin:    true,
+			expectCanEdit:     true,
+			expectCanDelete:   true,
+			expectCanSave:     true,
+			expectActionsTier: tierAdmin,
 		},
 		{
-			name: "dashboard-create only allowed (folder checks all false)",
-			allowedByCheck: map[checkKey]bool{
-				{group: dashGroup, resource: dashRes, verb: utils.VerbCreate}: true,
+			name: "update allowed → Editor tier; CanAdmin false but other Can* true",
+			allowed: map[string]bool{
+				utils.VerbGet:    true,
+				utils.VerbUpdate: true,
 			},
-			expect: folders.FolderAccessInfo{
-				CanSave: false, CanEdit: false, CanAdmin: false, CanDelete: false,
-				AccessControl: map[string]bool{
-					"dashboards:create": true,
-				},
-			},
+			expectCanAdmin:    false,
+			expectCanEdit:     true,
+			expectCanDelete:   true,
+			expectCanSave:     true,
+			expectActionsTier: tierEditor,
 		},
 		{
-			name:           "no access: all bools false and AccessControl omitted (nil)",
-			allowedByCheck: map[checkKey]bool{},
-			expect: folders.FolderAccessInfo{
-				CanSave: false, CanEdit: false, CanAdmin: false, CanDelete: false,
-				AccessControl: nil,
+			name: "delete only → Editor tier (any of create/update/delete promotes to Editor)",
+			allowed: map[string]bool{
+				utils.VerbDelete: true,
 			},
+			expectCanAdmin:    false,
+			expectCanEdit:     true,
+			expectCanDelete:   true,
+			expectCanSave:     true,
+			expectActionsTier: tierEditor,
 		},
 		{
-			name: "permissions-write implies all bools (only folder-domain has the verb)",
-			allowedByCheck: map[checkKey]bool{
-				{group: folderGroup, resource: folderRes, verb: utils.VerbSetPermissions}: true,
+			name: "create only → Editor tier",
+			allowed: map[string]bool{
+				utils.VerbCreate: true,
 			},
-			expect: folders.FolderAccessInfo{
-				// CanAdmin=true forces CanDelete/CanEdit/CanSave true even though
-				// the underlying delete/update/create verbs are not granted.
-				CanSave: true, CanEdit: true, CanAdmin: true, CanDelete: true,
-				AccessControl: map[string]bool{
-					"folders.permissions:write": true,
-				},
-			},
+			expectCanAdmin:    false,
+			expectCanEdit:     true,
+			expectCanDelete:   true,
+			expectCanSave:     true,
+			expectActionsTier: tierEditor,
 		},
 		{
-			name:         "request semantics: folder-domain uses Name=this, folder hint=parent; dashboards:create flips to Name='', folder hint=this",
+			name: "get only → Viewer tier; all Can* false; viewer bundle returned",
+			allowed: map[string]bool{
+				utils.VerbGet: true,
+			},
+			expectCanAdmin:    false,
+			expectCanEdit:     false,
+			expectCanDelete:   false,
+			expectCanSave:     false,
+			expectActionsTier: tierViewer,
+		},
+		{
+			name:        "no access → None tier; all Can* false; AccessControl omitted (nil)",
+			allowed:     map[string]bool{},
+			expectNilAC: true,
+		},
+		{
+			name:         "request semantics: every folder check targets this folder with parent as folder hint; only folder-resource checks are sent",
 			parentFolder: "parent-uid",
-			allowedByCheck: map[checkKey]bool{
-				{group: folderGroup, resource: folderRes, verb: utils.VerbGet}: true,
-				{group: dashGroup, resource: dashRes, verb: utils.VerbCreate}:  true,
+			allowed: map[string]bool{
+				utils.VerbGet: true,
 			},
 			assertItem: func(t *testing.T, item authlib.BatchCheckItem) {
-				switch item.Group {
-				case folderGroup:
-					require.Equal(t, "this-folder", item.Name, "folder-domain check should target THIS folder")
-					require.Equal(t, "parent-uid", item.Folder, "folder-domain check folder hint should be the immediate parent")
-				case dashGroup:
-					require.Equal(t, "", item.Name, "cross-domain check should use empty Name (any new resource)")
-					require.Equal(t, "this-folder", item.Folder, "cross-domain check folder hint should be THIS folder")
-				default:
-					t.Fatalf("unexpected group in check: %q", item.Group)
-				}
+				require.Equal(t, folders.GROUP, item.Group, "all checks must target the folder group")
+				require.Equal(t, folders.RESOURCE, item.Resource, "all checks must target the folder resource")
+				require.Equal(t, "this-folder", item.Name, "every check should target THIS folder")
+				require.Equal(t, "parent-uid", item.Folder, "every check should pass the immediate parent as folder hint")
 			},
-			expect: folders.FolderAccessInfo{
-				CanSave: false, CanEdit: false, CanAdmin: false, CanDelete: false,
-				AccessControl: map[string]bool{
-					"folders:read":      true,
-					"dashboards:create": true,
-				},
-			},
+			expectActionsTier: tierViewer,
 		},
 		{
-			name:      "Check error is propagated",
+			name:      "BatchCheck error is propagated",
 			checkErr:  fmt.Errorf("authz unavailable"),
 			expectErr: true,
 		},
@@ -167,23 +156,13 @@ func TestSubAccessREST_getAccessInfo(t *testing.T) {
 					if tc.checkErr != nil {
 						return authlib.BatchCheckResponse{}, tc.checkErr
 					}
+					require.Len(t, req.Checks, len(folderTierChecks), "tier resolution sends exactly the folder probes")
 					results := make(map[string]authlib.BatchCheckResult, len(req.Checks))
 					for idx, item := range req.Checks {
 						if tc.assertItem != nil {
 							tc.assertItem(t, item)
 						}
-						if tc.expectFolderInReq != "" {
-							require.Equal(t, tc.expectFolderInReq, item.Folder,
-								"expected folder=%q on check for verb %q", tc.expectFolderInReq, item.Verb)
-						}
-						// Fine-grained map wins if set; otherwise fall back to verb-only.
-						var allowed bool
-						if tc.allowedByCheck != nil {
-							allowed = tc.allowedByCheck[checkKey{item.Group, item.Resource, item.Verb}]
-						} else {
-							allowed = tc.allowed[item.Verb]
-						}
-						res := authlib.BatchCheckResult{Allowed: allowed}
+						res := authlib.BatchCheckResult{Allowed: tc.allowed[item.Verb]}
 						if tc.itemErr != nil && idx == 0 {
 							res.Error = tc.itemErr
 						}
@@ -205,11 +184,17 @@ func TestSubAccessREST_getAccessInfo(t *testing.T) {
 			}
 			require.NoError(t, err)
 			require.NotNil(t, got)
-			require.Equal(t, tc.expect.CanSave, got.CanSave, "CanSave")
-			require.Equal(t, tc.expect.CanEdit, got.CanEdit, "CanEdit")
-			require.Equal(t, tc.expect.CanAdmin, got.CanAdmin, "CanAdmin")
-			require.Equal(t, tc.expect.CanDelete, got.CanDelete, "CanDelete")
-			require.Equal(t, tc.expect.AccessControl, got.AccessControl, "AccessControl")
+			require.Equal(t, tc.expectCanAdmin, got.CanAdmin, "CanAdmin")
+			require.Equal(t, tc.expectCanEdit, got.CanEdit, "CanEdit")
+			require.Equal(t, tc.expectCanDelete, got.CanDelete, "CanDelete")
+			require.Equal(t, tc.expectCanSave, got.CanSave, "CanSave")
+
+			if tc.expectNilAC {
+				require.Nil(t, got.AccessControl, "AccessControl should be nil when tier is None")
+				return
+			}
+			require.Equal(t, actionsForTier(tc.expectActionsTier), got.AccessControl,
+				"AccessControl should match the legacy bundle for tier %d", tc.expectActionsTier)
 		})
 	}
 }
