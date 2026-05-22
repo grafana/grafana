@@ -19,7 +19,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     label: 'no-data-card',
     padding: theme.spacing(3),
     background: theme.colors.background.primary,
-    borderRadius: theme.shape.radius.default,
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',

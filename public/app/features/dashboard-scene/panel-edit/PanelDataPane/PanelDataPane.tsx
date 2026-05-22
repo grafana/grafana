@@ -135,7 +135,7 @@ function getStyles(theme: GrafanaTheme2) {
       border: `1px solid ${theme.colors.border.weak}`,
       borderLeft: 'none',
       borderBottom: 'none',
-      borderTopRightRadius: theme.shape.radius.default,
+      borderTopRightRadius: theme.shape.radius.lg,
       flexGrow: 1,
       overflow: 'hidden',
     }),

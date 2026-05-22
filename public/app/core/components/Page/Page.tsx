@@ -112,7 +112,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'relative',
       container: 'page / inline-size',
       borderRadius: theme.shape.radius.lg,
-      overflow: 'hidden',
       margin: theme.spacing(0, 0.5, 0, 0.5),
       border: `1px solid ${theme.colors.border.weak}`,
     }),

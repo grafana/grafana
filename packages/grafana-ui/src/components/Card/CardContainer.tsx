@@ -116,7 +116,7 @@ export const getCardContainerStyles = (
       width: '100%',
       padding: theme.spacing(isCompact ? 1 : 2),
       background: theme.colors.background.secondary,
-      borderRadius: theme.shape.radius.default,
+      borderRadius: theme.shape.radius.lg,
       marginBottom: theme.spacing(noMargin ? 0 : 1),
       pointerEvents: disabled ? 'none' : 'auto',
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {

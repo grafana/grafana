@@ -24,6 +24,6 @@ export const TabContent = ({ children, className, ...restProps }: Props) => {
 
 const getTabContentStyle = (theme: GrafanaTheme2) => ({
   tabContent: css({
-    background: theme.colors.background.primary,
+    background: theme.colors.background.page,
   }),
 });

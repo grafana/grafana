@@ -42,22 +42,6 @@ export const palette = {
   orange800: '#8e3c17',
   orange900: '#743218',
 
-  // misc colors
-  red100: '#fff3f4',
-  red200: '#ffe5e6',
-  red300: '#ffd2d3',
-  red400: '#ffb2b3',
-  red500: '#ff888b',
-  red600: '#ff6467',
-  red700: '#ff3d41',
-  red800: '#e82024',
-  red900: '#ce171a',
-  red1000: '#b81215',
-  red1100: '#7f0a0c',
-  red1200: '#650709',
-  red1300: '#590708',
-  red1400: '#520607',
-
   // Warm red-orange. Status: error, critical
   coral50: '#fff1f0',
   coral100: '#ffdedb',

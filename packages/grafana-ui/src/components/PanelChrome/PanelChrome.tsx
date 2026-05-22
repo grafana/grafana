@@ -514,7 +514,7 @@ const getContentStyle = (
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const { background, contentBackground, borderColor, contentBorderColor, } = theme.components.panel;
+  const { background, contentBackground, borderColor, contentBorderColor } = theme.components.panel;
 
   return {
     container: css({
@@ -526,7 +526,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       backgroundColor: background,
       border: `1px solid ${borderColor}`,
       position: 'unset',
-      borderRadius: theme.shape.radius.default,
+      borderRadius: theme.shape.radius.lg,
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
@@ -590,7 +590,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       contain: 'size layout',
       backgroundColor: contentBackground,
       border: `1px solid ${contentBorderColor}`,
-      borderRadius: '12px',
+      borderRadius: theme.shape.radius.lg,
     }),
     headerContainer: css({
       label: 'panel-header',

@@ -70,7 +70,7 @@ const getStyles = (theme: GrafanaTheme2, complete: boolean) => {
     }),
     heading: css({
       textTransform: 'uppercase',
-      color: complete ? theme.v1.palette.blue95 : '#FFB357',
+      color: complete ? theme.colors.success.text : theme.colors.accent.text,
       marginBottom: theme.spacing(2),
     }),
     title: css({
