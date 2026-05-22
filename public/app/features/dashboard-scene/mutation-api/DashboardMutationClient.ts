@@ -34,6 +34,14 @@ interface CommandRegistration {
 export class DashboardMutationClient implements MutationClient {
   private scene: DashboardScene;
   private commands: Map<string, CommandRegistration> = new Map();
+  /**
+   * Per-domain promise queue. Concept: two `execute()` calls on the same
+   * `undoDomain` must run sequentially. Otherwise both calls snapshot the
+   * same pre-execution state and the second mutation's undo entry would
+   * silently revert the first. Commands without an undoDomain bypass the
+   * queue.
+   */
+  private domainQueues: Map<UndoDomain, Promise<unknown>> = new Map();
 
   constructor(scene: DashboardScene) {
     this.scene = scene;
@@ -49,6 +57,23 @@ export class DashboardMutationClient implements MutationClient {
     if (!registration) {
       return { success: false, error: `Unknown command type: ${type}`, changes: [] };
     }
+
+    // Serialize per undoDomain to avoid the snapshot race.
+    const { undoDomain } = registration;
+    if (undoDomain) {
+      const prev = this.domainQueues.get(undoDomain) ?? Promise.resolve();
+      const next = prev.then(() => this.executeInner(mutation, registration));
+      this.domainQueues.set(
+        undoDomain,
+        next.catch(() => {})
+      );
+      return next;
+    }
+    return this.executeInner(mutation, registration);
+  }
+
+  private async executeInner(mutation: MutationRequest, registration: CommandRegistration): Promise<MutationResult> {
+    const type = mutation.type.toUpperCase();
 
     const permissionResult = registration.canExecute(this.scene);
     if (!permissionResult.allowed) {
