@@ -20,12 +20,15 @@ import (
 // so the resource DB can be injected into both ProvideKV and NewStorageBackend
 // from the same Wire graph.
 //
-// Returns nil for storage types that don't consume a SQL-backed resource DB
-// (file, unified-grpc, unified-kv-grpc).
+// Returns nil only for storage types that do not consume a SQL-backed resource
+// DB (file, unified-grpc, unified-kv-grpc). All other accepted storage types
+// fall through to the SQL backend in newClient and therefore require a DB
+// provider.
 func ProvideResourceDB(cfg *setting.Cfg, grafanaDB infraDB.DB) (db.DBProvider, error) {
 	storageType := options.StorageType(cfg.SectionWithEnvOverrides("grafana-apiserver").Key("storage_type").
 		MustString(string(options.StorageTypeUnified)))
-	if storageType != options.StorageTypeUnified {
+	switch storageType {
+	case options.StorageTypeFile, options.StorageTypeUnifiedGrpc, options.StorageTypeUnifiedKVGrpc:
 		return nil, nil
 	}
 	return dbimpl.ProvideResourceDB(grafanaDB, cfg, tracer)
