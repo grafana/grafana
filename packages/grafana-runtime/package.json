@@ -71,7 +71,7 @@
     "react-loading-skeleton": "3.5.0",
     "react-use": "17.6.0",
     "rxjs": "7.8.2",
-    "uuid": "11.1.0"
+    "uuid": "14.0.0"
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "16.0.1",
