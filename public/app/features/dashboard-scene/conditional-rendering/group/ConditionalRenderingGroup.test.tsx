@@ -3,12 +3,14 @@ import userEvent from '@testing-library/user-event';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { CustomVariable, SceneVariableSet, ScopesVariable, type SceneVariable } from '@grafana/scenes';
+import { type ConditionalRenderingGroupKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { mockComboboxRect } from '@grafana/test-utils';
 
 import { DashboardScene } from '../../scene/DashboardScene';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
 import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
+import { ConditionalRenderingData } from '../conditions/ConditionalRenderingData';
 import { ConditionalRenderingVariable } from '../conditions/ConditionalRenderingVariable';
 
 import { ConditionalRenderingGroup } from './ConditionalRenderingGroup';
@@ -36,6 +38,7 @@ function buildSceneWithCondition(variables: SceneVariable[], condition: Conditio
     conditions: [condition],
     result: true,
     renderHidden: false,
+    hasResolved: true,
   });
 
   const row = new RowItem({
@@ -52,6 +55,35 @@ function buildSceneWithCondition(variables: SceneVariable[], condition: Conditio
 }
 
 describe('ConditionalRenderingGroupRenderer', () => {
+  describe('unresolved data conditions', () => {
+    it('starts show rules hidden until query results resolve', () => {
+      const model = deserializeDataCondition('show');
+
+      expect(model.state.result).toBe(false);
+      expect(model.state.renderHidden).toBe(true);
+      expect(model.state.hasResolved).toBe(false);
+    });
+
+    it('starts hide rules visible until query results resolve', () => {
+      const model = deserializeDataCondition('hide');
+
+      expect(model.state.result).toBe(true);
+      expect(model.state.renderHidden).toBe(true);
+      expect(model.state.hasResolved).toBe(false);
+    });
+
+    it('uses the same unresolved visibility when adding a data condition', () => {
+      const model = ConditionalRenderingGroup.createEmpty();
+      model.changeVisibility('hide');
+
+      model.addCondition(ConditionalRenderingData.createEmpty());
+
+      expect(model.state.result).toBe(true);
+      expect(model.state.renderHidden).toBe(true);
+      expect(model.state.hasResolved).toBe(false);
+    });
+  });
+
   describe('variables list filtering', () => {
     it('does not create a variable condition when only system variables are present', async () => {
       const user = userEvent.setup();
@@ -153,3 +185,16 @@ describe('ConditionalRenderingGroupRenderer', () => {
     });
   });
 });
+
+function deserializeDataCondition(visibility: 'show' | 'hide'): ConditionalRenderingGroup {
+  const model: ConditionalRenderingGroupKind = {
+    kind: 'ConditionalRenderingGroup',
+    spec: {
+      visibility,
+      condition: 'and',
+      items: [{ kind: 'ConditionalRenderingData', spec: { value: true } }],
+    },
+  };
+
+  return ConditionalRenderingGroup.deserialize(model);
+}

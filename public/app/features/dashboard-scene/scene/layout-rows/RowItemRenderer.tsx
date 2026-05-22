@@ -33,9 +33,8 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   const isCollapsed = collapse && !isHeaderHidden; // never allow a row without a header to be collapsed
   const isClone = isRepeatCloneOrChildOf(model);
   const { isEditing } = useDashboardState(model);
-  const [isConditionallyHidden, conditionalRenderingClass, conditionalRenderingOverlay] = useIsConditionallyHidden(
-    model.state.conditionalRendering
-  );
+  const [isConditionallyHidden, conditionalRenderingClass, conditionalRenderingOverlay, renderHidden, hasResolved] =
+    useIsConditionallyHidden(model.state.conditionalRendering);
   const { isSelected, onSelect, isSelectable, onClear: onClearSelection } = useElementSelection(key);
   const { isSelected: isSourceSelected } = useElementSelection(repeatSourceKey);
   const title = useInterpolatedTitle(model);
@@ -60,7 +59,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
 
   const isDraggable = !isClone && isEditing;
 
-  if (isHidden) {
+  if (isHidden && !renderHidden) {
     return null;
   }
 
@@ -108,6 +107,8 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
             dragSnapshot.isDragging && styles.dragging,
             isCollapsed && styles.wrapperCollapsed,
             shouldGrow && styles.wrapperGrow,
+            isHidden && renderHidden && !hasResolved && styles.pendingHidden,
+            isHidden && (!renderHidden || hasResolved) && styles.hidden,
             conditionalRenderingClass,
             !isSelected && !isSourceSelected && selectableHighlight && 'dashboard-selectable-element',
             (isSelected || isSourceSelected) && 'dashboard-selected-element',
@@ -279,6 +280,13 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     wrapperGrow: css({
       flexGrow: 1,
+    }),
+    hidden: css({
+      display: 'none',
+    }),
+    pendingHidden: css({
+      visibility: 'hidden',
+      pointerEvents: 'none',
     }),
     wrapperCollapsed: css({
       flexGrow: 0,
