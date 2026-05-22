@@ -62,7 +62,11 @@ func (s *NamespacedResource) Valid() bool {
 }
 
 func (s *NamespacedResource) String() string {
-	return fmt.Sprintf("%s/%s/%s", s.Namespace, s.Group, s.Resource)
+	return fmt.Sprintf("%s/%s", s.Namespace, s.Kind())
+}
+
+func (s *NamespacedResource) Kind() string {
+	return fmt.Sprintf("%s/%s", s.Group, s.Resource)
 }
 
 type IndexAction int
