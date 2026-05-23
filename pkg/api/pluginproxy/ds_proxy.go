@@ -14,6 +14,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
+	datasourcesV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
+
 	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
@@ -41,7 +43,7 @@ var (
 const maxForwardedUserAgentLen = 255
 
 type DataSourceProxy struct {
-	pluginType        string // the pluginID
+	ds                *datasourcesV0.DataSource
 	dataSource        DataSourceLoader
 	ctx               *contextmodel.ReqContext
 	targetUrl         *url.URL
@@ -60,7 +62,7 @@ type httpClient interface {
 }
 
 // NewDataSourceProxy creates a new Datasource proxy
-func NewDataSourceProxy(pluginType string, dataSource DataSourceLoader,
+func NewDataSourceProxy(dataSource DataSourceLoader,
 	pluginRoutes []*plugins.Route, ctx *contextmodel.ReqContext,
 	proxyPath string, settings *DataSourceProxySettings, clientProvider httpclient.Provider,
 	oAuthTokenService oauthtoken.OAuthTokenService,
@@ -71,13 +73,13 @@ func NewDataSourceProxy(pluginType string, dataSource DataSourceLoader,
 		return nil, fmt.Errorf("failed to load datasource: %w", err)
 	}
 
-	targetURL, err := datasource.ValidateURL(pluginType, ds.Spec.URL())
+	targetURL, err := datasource.ValidateURL(dataSource.PluginType(), ds.Spec.URL())
 	if err != nil {
 		return nil, err
 	}
 
 	return &DataSourceProxy{
-		pluginType:        pluginType,
+		ds:                ds,
 		dataSource:        dataSource,
 		pluginRoutes:      pluginRoutes,
 		ctx:               ctx,
@@ -112,12 +114,6 @@ func (proxy *DataSourceProxy) HandleRequest() {
 		"remote_addr", proxy.ctx.RemoteAddr(),
 		"referer", proxy.ctx.Req.Referer(),
 	)
-
-	ds, err := proxy.dataSource.DataSource(proxy.ctx.Req.Context())
-	if err != nil {
-		proxy.ctx.JsonApiErr(400, "Unable to load datasource", err)
-		return
-	}
 
 	transport, err := proxy.dataSource.GetHTTPTransport(proxy.ctx.Req.Context(), proxy.clientProvider)
 	if err != nil {
@@ -164,8 +160,8 @@ func (proxy *DataSourceProxy) HandleRequest() {
 	proxy.ctx.Req = proxy.ctx.Req.WithContext(ctx)
 
 	span.SetAttributes(
-		attribute.String("datasource_name", ds.Name),
-		attribute.String("datasource_type", proxy.pluginType),
+		attribute.String("datasource_name", proxy.ds.Name),
+		attribute.String("datasource_type", proxy.dataSource.PluginType()),
 		attribute.String("user", proxy.ctx.Login),
 		attribute.Int64("org_id", proxy.ctx.OrgID),
 	)
@@ -194,13 +190,9 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 	reqQueryVals := req.URL.Query()
 
 	ctxLogger := logger.FromContext(req.Context())
-	ds, err := proxy.dataSource.DataSource(req.Context())
-	if err != nil {
-		ctxLogger.Error("Unable to load datasource", "error", err)
-		return
-	}
+	ds := proxy.ds
 
-	switch proxy.pluginType {
+	switch proxy.dataSource.PluginType() {
 	case datasources.DS_INFLUXDB_08:
 		password, err := proxy.dataSource.DecryptedPassword(req.Context())
 		if err != nil {
@@ -317,7 +309,7 @@ func (proxy *DataSourceProxy) validateRequest() error {
 		return errors.New("target URL is not a valid target")
 	}
 
-	if proxy.pluginType == datasources.DS_ES {
+	if proxy.dataSource.PluginType() == datasources.DS_ES {
 		if proxy.ctx.Req.Method == "DELETE" {
 			return errors.New("deletes not allowed on proxied Elasticsearch datasource")
 		}
@@ -367,7 +359,8 @@ func (proxy *DataSourceProxy) validateRequest() error {
 	}
 
 	// Trailing validation below this point for routes that were not matched
-	if proxy.pluginType == datasources.DS_PROMETHEUS || proxy.pluginType == datasources.DS_AMAZON_PROMETHEUS || proxy.pluginType == datasources.DS_AZURE_PROMETHEUS {
+	switch proxy.dataSource.PluginType() {
+	case datasources.DS_PROMETHEUS, datasources.DS_AMAZON_PROMETHEUS, datasources.DS_AZURE_PROMETHEUS:
 		if proxy.ctx.Req.Method == "DELETE" {
 			return errors.New("non allow-listed DELETEs not allowed on proxied Prometheus datasource")
 		}
@@ -385,13 +378,7 @@ func (proxy *DataSourceProxy) validateRequest() error {
 func (proxy *DataSourceProxy) hasAccessToRoute(route *plugins.Route) bool {
 	ctxLogger := logger.FromContext(proxy.ctx.Req.Context())
 	if route.ReqAction != "" {
-		ds, err := proxy.dataSource.DataSource(proxy.ctx.Req.Context())
-		if err != nil {
-			ctxLogger.Error("Unable to load datasource", "error", err)
-			return false
-		}
-
-		routeEval := pluginac.GetDataSourceRouteEvaluator(ds.Name, route.ReqAction)
+		routeEval := pluginac.GetDataSourceRouteEvaluator(proxy.ds.Name, route.ReqAction)
 		hasAccess := routeEval.Evaluate(proxy.ctx.GetPermissions())
 		if !hasAccess {
 			ctxLogger.Debug("plugin route is covered by RBAC, user doesn't have access", "route", proxy.ctx.Req.URL.Path, "action", route.ReqAction, "path", route.Path, "method", route.Method)
@@ -433,7 +420,7 @@ func (proxy *DataSourceProxy) logRequest() {
 		"userid", proxy.ctx.UserID,
 		"orgid", proxy.ctx.OrgID,
 		"username", proxy.ctx.Login,
-		"datasource", proxy.pluginType,
+		"datasource", proxy.dataSource.PluginType(),
 		"uri", uri,
 		"method", proxy.ctx.Req.Method,
 		"panelPluginId", panelPluginId,

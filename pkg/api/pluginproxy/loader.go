@@ -13,6 +13,7 @@ import (
 
 // This is scoped to a single datasource -- not generic
 type DataSourceLoader interface {
+	PluginType() string
 	DataSource(ctx context.Context) (*datasourcesV0.DataSource, error)
 	GetHTTPTransport(ctx context.Context, clientProvider httpclient.Provider) (http.RoundTripper, error)
 	DecryptedPassword(ctx context.Context) (string, error)
@@ -40,6 +41,11 @@ type loaderFromService struct {
 	dsV0    *datasourcesV0.DataSource
 	ds      *datasources.DataSource
 	service datasources.DataSourceService
+}
+
+// PluginType implements [DataSourceLoader].
+func (l *loaderFromService) PluginType() string {
+	return l.ds.Type
 }
 
 func (l *loaderFromService) DataSource(ctx context.Context) (*datasourcesV0.DataSource, error) {
