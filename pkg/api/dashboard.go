@@ -490,7 +490,7 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 		"id":        dashboard.ID,
 		"uid":       dashboard.UID,
 		"url":       dashboard.GetURL(),
-		"folderUid": dashboard.FolderUID,
+		"folderUid": folder.ToLegacyFolderUID(dashboard.FolderUID),
 	})
 }
 
@@ -621,7 +621,7 @@ func (hs *HTTPServer) saveDashboardViaK8s(c *contextmodel.ReqContext, cmd dashbo
 		"id":        meta.GetDeprecatedInternalID(), //nolint:staticcheck
 		"uid":       meta.GetName(),
 		"url":       dashboards.GetDashboardFolderURL(false, meta.GetName(), slug),
-		"folderUid": meta.GetFolder(),
+		"folderUid": folder.ToLegacyFolderUID(meta.GetFolder()),
 	})
 }
 

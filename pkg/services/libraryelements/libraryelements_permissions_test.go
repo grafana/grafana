@@ -182,6 +182,11 @@ func TestIntegrationLibraryElementGranularPermissions(t *testing.T) {
 		})
 
 		t.Run("When viewer doesn't have read access to folder2, they cannot create library element in folder2", func(t *testing.T) {
+			// The folder is hidden from the caller by the unified storage
+			// access check, so folderService.Get returns ErrFolderNotFound
+			// and the legacy create handler falls back to BadRequest. This
+			// matches the historical "you can't see the folder" semantics
+			// (a 4xx that doesn't disclose existence).
 			createLibraryElement(t, grafanaListedAddr, "granular-viewer", "granular-viewer", folder2UID, http.StatusBadRequest)
 		})
 
@@ -209,6 +214,10 @@ func TestIntegrationLibraryElementGranularPermissions(t *testing.T) {
 		})
 
 		t.Run("When viewer doesn't have read access to folder2, they cannot get library element from folder2", func(t *testing.T) {
+			// The unified storage access check hides folder2 from the caller
+			// entirely; folderService.Get returns ErrFolderNotFound, which
+			// the legacy get handler maps to 404 (NotFound) — k8s-style
+			// "you don't see this resource" rather than 403.
 			getLibraryElement(t, grafanaListedAddr, "granular-viewer", "granular-viewer", inFolder2, http.StatusNotFound)
 		})
 

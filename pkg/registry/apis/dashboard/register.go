@@ -469,7 +469,7 @@ func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.A
 	}
 
 	// Validate folder access permissions and existence if specified
-	if !a.IsDryRun() && accessor.GetFolder() != "" {
+	if !a.IsDryRun() && !folder.IsRootFolderUID(accessor.GetFolder()) {
 		if err := b.verifyFolderAccessPermissions(ctx, id, accessor.GetFolder()); err != nil {
 			return err
 		}
@@ -543,7 +543,7 @@ func (b *DashboardsAPIBuilder) validateUpdate(ctx context.Context, a admission.A
 	}
 
 	// Validate folder existence if specified and changed
-	if !a.IsDryRun() && newAccessor.GetFolder() != oldAccessor.GetFolder() && newAccessor.GetFolder() != "" {
+	if !a.IsDryRun() && newAccessor.GetFolder() != oldAccessor.GetFolder() && !folder.IsRootFolderUID(newAccessor.GetFolder()) {
 		id, err := identity.GetRequester(ctx)
 		if err != nil {
 			return fmt.Errorf("error getting requester: %w", err)
@@ -585,11 +585,13 @@ func (b *DashboardsAPIBuilder) validateVariableCreate(ctx context.Context, a adm
 		return fmt.Errorf("error getting variable meta accessor: %w", err)
 	}
 
-	if err := validateVariableMetadataName(variable.GetName(), getVariableName(variable.Spec), accessor.GetFolder()); err != nil {
+	folderUID := accessor.GetFolder()
+
+	if err := validateVariableMetadataName(variable.GetName(), getVariableName(variable.Spec), folderUID); err != nil {
 		return apierrors.NewBadRequest(err.Error())
 	}
 
-	if !a.IsDryRun() && accessor.GetFolder() != "" {
+	if !a.IsDryRun() && !folder.IsRootFolderUID(folderUID) {
 		id, err := identity.GetRequester(ctx)
 		if err != nil {
 			return fmt.Errorf("error getting requester: %w", err)
@@ -1076,7 +1078,7 @@ func (b *DashboardsAPIBuilder) setDefaultDashboardPermissions(ctx context.Contex
 		return nil
 	}
 
-	if obj.GetFolder() != "" {
+	if !folder.IsRootFolderUID(obj.GetFolder()) {
 		return nil
 	}
 

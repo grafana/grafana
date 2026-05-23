@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -189,7 +190,12 @@ func mutateVariable(a admission.Attributes) error {
 		labels = make(map[string]string)
 	}
 
-	if folderUID := meta.GetFolder(); folderUID != "" {
+	// Apistore stamps a root sentinel (typically "root") on root-parented
+	// resources, so any of "", "general", or "root" means "global scope" for
+	// the uniqueness label — set no folder label in that case. Without this,
+	// re-reading a stamped object on update would mirror "root" into the
+	// label and incorrectly flip a global variable into folder scope.
+	if folderUID := meta.GetFolder(); !folder.IsRootFolderUID(folderUID) {
 		labels[variableFolderLabelKey] = folderUID
 	} else {
 		delete(labels, variableFolderLabelKey)

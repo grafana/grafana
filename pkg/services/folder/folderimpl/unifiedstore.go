@@ -231,10 +231,16 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 		q.Page = 1
 	}
 
+	// Match both "" and "general" at the root: new writes use the canonical
+	// sentinel, but rows from before the apistore migration still carry "".
+	folderValues := []string{q.UID}
+	if q.UID == "" {
+		folderValues = append(folderValues, folder.GeneralFolderUID)
+	}
 	fields := []*resourcepb.Requirement{{
 		Key:      resource.SEARCH_FIELD_FOLDER,
 		Operator: string(selection.In),
-		Values:   []string{q.UID},
+		Values:   folderValues,
 	}}
 	// only filter the folder UIDs if they are provided in the query
 	if len(q.FolderUIDs) > 0 {
@@ -279,10 +285,12 @@ func (ss *FolderUnifiedStoreImpl) doSearchPage(ctx context.Context, orgID int64,
 	hits := make([]*folder.FolderReference, 0, len(res.Hits))
 	for _, item := range res.Hits {
 		hits = append(hits, &folder.FolderReference{
-			ID:        item.Field.GetNestedInt64(resource.SEARCH_FIELD_LEGACY_ID),
-			UID:       item.Name,
-			Title:     item.Title,
-			ParentUID: item.Folder,
+			ID:    item.Field.GetNestedInt64(resource.SEARCH_FIELD_LEGACY_ID),
+			UID:   item.Name,
+			Title: item.Title,
+			// Legacy responses convey root with an empty ParentUID; the apistore
+			// now stores it as "general", so convert back here.
+			ParentUID: folder.ToLegacyFolderUID(item.Folder),
 			ManagedBy: item.ManagedBy.Kind,
 		})
 	}

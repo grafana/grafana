@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -17,10 +18,10 @@ func ToCreateLibraryElementCommand(raw runtime.Object) (*model.CreateLibraryElem
 	if err != nil {
 		return nil, err
 	}
-	folder := obj.GetFolder()
+	folderUID := folder.ToLegacyFolderUID(obj.GetFolder())
 	cmd := &model.CreateLibraryElementCommand{
 		UID:       obj.GetName(),
-		FolderUID: &folder,
+		FolderUID: &folderUID,
 		Kind:      1, // the only kind... LibraryPanel
 		Name:      obj.FindTitle("library panel"),
 	}
@@ -39,10 +40,10 @@ func ToPatchLibraryElementCommand(raw runtime.Object) (*model.PatchLibraryElemen
 	if err != nil {
 		return nil, err
 	}
-	folder := obj.GetFolder()
+	folderUID := folder.ToLegacyFolderUID(obj.GetFolder())
 	cmd := &model.PatchLibraryElementCommand{
 		UID:       obj.GetName(),
-		FolderUID: &folder,
+		FolderUID: &folderUID,
 		Kind:      1, // the only kind... LibraryPanel
 		Name:      obj.FindTitle("library panel"),
 	}

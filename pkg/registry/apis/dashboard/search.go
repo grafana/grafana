@@ -637,9 +637,11 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 		// hijacks the "name" query param to only search for shared dashboard UIDs
 		names = append(names, dashboardUIDs...)
 	} else if folder != "" {
-		// root folder is empty in the search index; collapse the canonical
-		// "general" sentinel to "" before querying.
-		folder = foldermodel.ToLegacyFolderUID(folder)
+		// The apistore stamps the canonical folder.GeneralFolderUID on root-parented
+		// resources; map any of the legacy root sentinels to it before querying.
+		if foldermodel.IsRootFolderUID(folder) {
+			folder = foldermodel.GeneralFolderUID
+		}
 		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
 			Key:      "folder",
 			Operator: "=",
