@@ -27,7 +27,8 @@ jobs:
       - uses: actions/checkout@v6
         with:
           persist-credentials: true # required to get more history in the changed-files action
-          fetch-depth: 2
+          fetch-depth: 0
+          filter: blob:none
       - name: Detect changes
         id: detect-changes
         uses: ./.github/actions/change-detection
@@ -290,7 +291,7 @@ jobs:
     steps:
       - name: Download blob reports from GitHub Actions Artifacts
         if: needs.run-playwright-tests.result != 'skipped'
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           path: blobs
           pattern: playwright-blob-*
@@ -365,7 +366,7 @@ jobs:
     steps:
       - name: Download blob reports from GitHub Actions Artifacts
         if: needs.run-playwright-tests.result != 'skipped'
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           path: blobs
           pattern: playwright-blob-*

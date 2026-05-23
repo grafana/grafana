@@ -317,6 +317,36 @@ describe('DashboardEditPane', () => {
       expect(tab2.getLayout().getVizPanels()).toHaveLength(0);
     });
 
+    it('preserves the source panel config when pasting with target undefined into a RowsLayout dashboard', () => {
+      const { dashboard, row1, row2, row1Viz, editPane } = setupWithTwoRows();
+      dashboard.copyPanel(row1Viz);
+
+      editPane.pastePanel(undefined);
+
+      const row1Panels = row1.getLayout().getVizPanels();
+      expect(row1Panels).toHaveLength(2);
+      expect(row2.getLayout().getVizPanels()).toHaveLength(0);
+
+      const pastedPanel = row1Panels[row1Panels.length - 1];
+      expect(pastedPanel.state.pluginId).toBe(row1Viz.state.pluginId);
+      expect(pastedPanel.state.title).toBe(row1Viz.state.title);
+    });
+
+    it('preserves the source panel config when pasting with target undefined into a TabsLayout dashboard', () => {
+      const { dashboard, tab1, tab2, tab1Viz, editPane } = setupWithTwoTabs();
+      dashboard.copyPanel(tab1Viz);
+
+      editPane.pastePanel(undefined);
+
+      const tab1Panels = tab1.getLayout().getVizPanels();
+      expect(tab1Panels).toHaveLength(2);
+      expect(tab2.getLayout().getVizPanels()).toHaveLength(0);
+
+      const pastedPanel = tab1Panels[tab1Panels.length - 1];
+      expect(pastedPanel.state.pluginId).toBe(tab1Viz.state.pluginId);
+      expect(pastedPanel.state.title).toBe(tab1Viz.state.title);
+    });
+
     it('adds pasted panel to the dashboard when dashboard is empty', () => {
       const { dashboard, editPane } = setupEmptyDashboard();
       const panel = new VizPanel({ key: 'panel-1', pluginId: 'text', title: 'P1' });

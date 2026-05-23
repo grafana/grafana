@@ -42,7 +42,7 @@ jobs:
       - name: Build test plugins
         run: yarn e2e:plugin:build
 
-      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           name: ${{ inputs.packages-artifact-name }}
           run-id: ${{ inputs.run-id }}
@@ -150,7 +150,7 @@ jobs:
       - name: Build test plugins
         run: yarn e2e:plugin:build
 
-      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           name: ${{ inputs.packages-artifact-name }}
           run-id: ${{ inputs.run-id }}
@@ -251,7 +251,7 @@ jobs:
       - name: Build test plugins
         run: yarn e2e:plugin:build
 
-      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           name: ${{ inputs.docker-artifact-name || inputs.packages-artifact-name }}
           run-id: ${{ inputs.run-id }}
@@ -338,7 +338,7 @@ jobs:
       - name: Build test plugins
         run: yarn e2e:plugin:build
 
-      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           name: ${{ inputs.docker-ubuntu-artifact-name || inputs.docker-artifact-name || inputs.packages-artifact-name }}
           run-id: ${{ inputs.run-id }}
