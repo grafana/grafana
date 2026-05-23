@@ -15,14 +15,15 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	datasourcesV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
+	"github.com/grafana/grafana/pkg/models/usertoken"
 
 	"github.com/grafana/grafana/pkg/api/datasource"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	glog "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
-	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
@@ -42,10 +43,21 @@ var (
 // appended to the data proxy User-Agent when forward_user_agent is enabled.
 const maxForwardedUserAgentLen = 255
 
+type HttpContext struct {
+	Req  *http.Request
+	Resp http.ResponseWriter
+
+	// TODO? eventually this should come from the user in the request context
+	UserToken      *usertoken.UserToken
+	HasUserRole    func(role identity.RoleType) bool
+	GetPermissions func() map[string][]string
+}
+
 type DataSourceProxy struct {
 	ds                *datasourcesV0.DataSource
+	requester         identity.Requester
 	dataSource        DataSourceLoader
-	ctx               *contextmodel.ReqContext
+	ctx               HttpContext
 	targetUrl         *url.URL
 	proxyPath         string
 	matchedRoute      *plugins.Route
@@ -63,7 +75,7 @@ type httpClient interface {
 
 // NewDataSourceProxy creates a new Datasource proxy
 func NewDataSourceProxy(dataSource DataSourceLoader,
-	pluginRoutes []*plugins.Route, ctx *contextmodel.ReqContext,
+	pluginRoutes []*plugins.Route, ctx HttpContext,
 	proxyPath string, settings *DataSourceProxySettings, clientProvider httpclient.Provider,
 	oAuthTokenService oauthtoken.OAuthTokenService,
 	tracer tracing.Tracer, features featuremgmt.FeatureToggles,
@@ -73,6 +85,11 @@ func NewDataSourceProxy(dataSource DataSourceLoader,
 		return nil, fmt.Errorf("failed to load datasource: %w", err)
 	}
 
+	requester, err := identity.GetRequester(ctx.Req.Context())
+	if err != nil {
+		return nil, fmt.Errorf("failed to get requester from context: %w", err)
+	}
+
 	targetURL, err := datasource.ValidateURL(dataSource.PluginType(), ds.Spec.URL())
 	if err != nil {
 		return nil, err
@@ -80,6 +97,7 @@ func NewDataSourceProxy(dataSource DataSourceLoader,
 
 	return &DataSourceProxy{
 		ds:                ds,
+		requester:         requester,
 		dataSource:        dataSource,
 		pluginRoutes:      pluginRoutes,
 		ctx:               ctx,
@@ -102,22 +120,23 @@ func newHTTPClient() httpClient {
 
 func (proxy *DataSourceProxy) HandleRequest() {
 	if err := proxy.validateRequest(); err != nil {
-		proxy.ctx.JsonApiErr(403, err.Error(), nil)
+		writeJSONErr(proxy.ctx.Resp, proxy.ctx.Req, 403, err.Error(), nil)
 		return
 	}
 
+	userid, _ := proxy.requester.GetInternalID()
 	proxyErrorLogger := logger.New(
-		"userId", proxy.ctx.UserID,
-		"orgId", proxy.ctx.OrgID,
-		"uname", proxy.ctx.Login,
+		"userId", userid,
+		"orgId", proxy.requester.GetOrgID(),
+		"uname", proxy.requester.GetLogin(),
 		"path", proxy.ctx.Req.URL.Path,
-		"remote_addr", proxy.ctx.RemoteAddr(),
+		"remote_addr", proxy.ctx.Req.RemoteAddr,
 		"referer", proxy.ctx.Req.Referer(),
 	)
 
 	transport, err := proxy.dataSource.GetHTTPTransport(proxy.ctx.Req.Context(), proxy.clientProvider)
 	if err != nil {
-		proxy.ctx.JsonApiErr(400, "Unable to load TLS certificate", err)
+		writeJSONErr(proxy.ctx.Resp, proxy.ctx.Req, 400, "Unable to load TLS certificate", err)
 		return
 	}
 
@@ -162,8 +181,8 @@ func (proxy *DataSourceProxy) HandleRequest() {
 	span.SetAttributes(
 		attribute.String("datasource_name", proxy.ds.Spec.Title()),
 		attribute.String("datasource_type", proxy.dataSource.PluginType()),
-		attribute.String("user", proxy.ctx.Login),
-		attribute.Int64("org_id", proxy.ctx.OrgID),
+		attribute.String("user", proxy.requester.GetLogin()),
+		attribute.Int64("org_id", proxy.requester.GetOrgID()),
 	)
 
 	proxy.addTraceFromHeaderValue(span, "X-Panel-Id", "panel_id")
@@ -246,7 +265,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 		req.Header.Set("Authorization", dsAuth)
 	}
 
-	proxyutil.ApplyUserHeader(proxy.settings.SendUserHeader, req, proxy.ctx.SignedInUser)
+	proxyutil.ApplyUserHeader(proxy.settings.SendUserHeader, req, proxy.requester)
 
 	proxyutil.ClearCookieHeader(req, ds.Spec.KeepCookies(), []string{proxy.settings.LoginCookieName})
 	ua := proxy.settings.DataProxyUserAgent
@@ -292,7 +311,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 	}
 
 	if ds.Spec.IsOAuthPassThruEnabled() {
-		if token := proxy.oAuthTokenService.GetCurrentOAuthToken(req.Context(), proxy.ctx.SignedInUser, proxy.ctx.UserToken); token != nil {
+		if token := proxy.oAuthTokenService.GetCurrentOAuthToken(req.Context(), proxy.requester, proxy.ctx.UserToken); token != nil {
 			req.Header.Set("Authorization", fmt.Sprintf("%s %s", token.Type(), token.AccessToken))
 
 			idToken, ok := token.Extra("id_token").(string)
@@ -302,7 +321,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 		}
 	}
 
-	proxyutil.ApplyForwardIDHeader(req, proxy.ctx.SignedInUser)
+	proxyutil.ApplyForwardIDHeader(req, proxy.requester)
 }
 
 func (proxy *DataSourceProxy) validateRequest() error {
@@ -409,18 +428,25 @@ func (proxy *DataSourceProxy) logRequest() {
 		}
 	}
 
+	ctx := proxy.ctx.Req.Context()
+	ctxLogger := logger.FromContext(ctx)
 	panelPluginId := proxy.ctx.Req.Header.Get("X-Panel-Plugin-Id")
 
 	uri, err := util.SanitizeURI(proxy.ctx.Req.RequestURI)
 	if err != nil {
-		proxy.ctx.Logger.Error("Could not sanitize RequestURI", "error", err)
+		ctxLogger.Error("Could not sanitize RequestURI", "error", err)
 	}
 
-	ctxLogger := logger.FromContext(proxy.ctx.Req.Context())
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		user = &identity.StaticRequester{}
+	}
+	userid, _ := user.GetInternalID()
+
 	ctxLogger.Info("Proxying incoming request",
-		"userid", proxy.ctx.UserID,
-		"orgid", proxy.ctx.OrgID,
-		"username", proxy.ctx.Login,
+		"userid", userid,
+		"orgid", user.GetOrgID(),
+		"username", user.GetLogin(),
 		"datasource", proxy.dataSource.PluginType(),
 		"uri", uri,
 		"method", proxy.ctx.Req.Method,
@@ -431,7 +457,7 @@ func (proxy *DataSourceProxy) logRequest() {
 func (proxy *DataSourceProxy) checkWhiteList() bool {
 	if proxy.targetUrl.Host != "" && len(proxy.settings.DataProxyWhiteList) > 0 {
 		if _, exists := proxy.settings.DataProxyWhiteList[proxy.targetUrl.Host]; !exists {
-			proxy.ctx.JsonApiErr(403, "Data proxy hostname and ip are not included in whitelist", nil)
+			writeJSONErr(proxy.ctx.Resp, proxy.ctx.Req, 403, "Data proxy hostname and ip are not included in whitelist", nil)
 			return false
 		}
 	}

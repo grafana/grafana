@@ -452,7 +452,7 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 	t.Run("When proxying graphite", func(t *testing.T) {
 		var routes []*plugins.Route
 		ds := &datasources.DataSource{URL: "htttp://graphite:8080", Type: datasources.DS_GRAPHITE}
-		ctx := &contextmodel.ReqContext{}
+		ctx := newReqContext(t)
 
 		proxy, err := setupDSProxyTest(t, ctx, ds, routes, "/render", func(proxy *DataSourceProxy) {
 			proxy.settings = &DataSourceProxySettings{}
@@ -477,7 +477,7 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 			User:     "user",
 		}
 
-		ctx := &contextmodel.ReqContext{}
+		ctx := newReqContext(t)
 		var routes []*plugins.Route
 		proxy, err := setupDSProxyTest(t, ctx, ds, routes, "")
 		require.NoError(t, err)
@@ -499,7 +499,7 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 			JsonData: json,
 		}
 
-		ctx := &contextmodel.ReqContext{}
+		ctx := newReqContext(t)
 		var routes []*plugins.Route
 		proxy, err := setupDSProxyTest(t, ctx, ds, routes, "")
 		require.NoError(t, err)
@@ -525,7 +525,7 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 			JsonData: json,
 		}
 
-		ctx := &contextmodel.ReqContext{}
+		ctx := newReqContext(t)
 		var routes []*plugins.Route
 		proxy, err := setupDSProxyTest(t, ctx, ds, routes, "")
 		require.NoError(t, err)
@@ -546,7 +546,7 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 			Type: "custom-datasource",
 			URL:  "http://host/root/",
 		}
-		ctx := &contextmodel.ReqContext{}
+		ctx := newReqContext(t)
 		var routes []*plugins.Route
 
 		proxy, err := setupDSProxyTest(t, ctx, ds, routes, "/path/to/folder/")
@@ -765,7 +765,7 @@ func TestDataSourceProxy_userAgentHeader(t *testing.T) {
 	var routes []*plugins.Route
 
 	t.Run("When DataProxyForwardUserAgent config is disabled", func(t *testing.T) {
-		ctx := &contextmodel.ReqContext{}
+		ctx := newReqContext(t)
 		proxy, err := setupDSProxyTest(t, ctx, ds, routes, "/render", func(p *DataSourceProxy) {
 			p.settings = &DataSourceProxySettings{
 				DataProxyUserAgent:        "Grafana/5.3.0",
@@ -784,7 +784,7 @@ func TestDataSourceProxy_userAgentHeader(t *testing.T) {
 	})
 
 	t.Run("When DataProxyForwardUserAgent config is enabled", func(t *testing.T) {
-		ctx := &contextmodel.ReqContext{}
+		ctx := newReqContext(t)
 		proxy, err := setupDSProxyTest(t, ctx, ds, routes, "/render", func(p *DataSourceProxy) {
 			p.settings = &DataSourceProxySettings{
 				DataProxyUserAgent:        "Grafana/5.3.0",
@@ -803,7 +803,7 @@ func TestDataSourceProxy_userAgentHeader(t *testing.T) {
 	})
 
 	t.Run("When DataProxyForwardUserAgent config is enabled but the client User-Agent is empty", func(t *testing.T) {
-		ctx := &contextmodel.ReqContext{}
+		ctx := newReqContext(t)
 		proxy, err := setupDSProxyTest(t, ctx, ds, routes, "/render", func(p *DataSourceProxy) {
 			p.settings = &DataSourceProxySettings{
 				DataProxyUserAgent:        "Grafana/5.3.0",
@@ -822,7 +822,7 @@ func TestDataSourceProxy_userAgentHeader(t *testing.T) {
 	})
 
 	t.Run("When DataProxyForwardUserAgent config is enabled with a custom DataProxyUserAgent", func(t *testing.T) {
-		ctx := &contextmodel.ReqContext{}
+		ctx := newReqContext(t)
 		proxy, err := setupDSProxyTest(t, ctx, ds, routes, "/render", func(p *DataSourceProxy) {
 			p.settings = &DataSourceProxySettings{
 				DataProxyUserAgent:        "MyCorp/1.0",
@@ -841,7 +841,7 @@ func TestDataSourceProxy_userAgentHeader(t *testing.T) {
 	})
 
 	t.Run("When DataProxyForwardUserAgent config is enabled and DataProxyUserAgent is empty", func(t *testing.T) {
-		ctx := &contextmodel.ReqContext{}
+		ctx := newReqContext(t)
 		proxy, err := setupDSProxyTest(t, ctx, ds, routes, "/render", func(p *DataSourceProxy) {
 			p.settings = &DataSourceProxySettings{
 				DataProxyUserAgent:        "",
@@ -860,7 +860,7 @@ func TestDataSourceProxy_userAgentHeader(t *testing.T) {
 	})
 
 	t.Run("When DataProxyForwardUserAgent is enabled and the client User-Agent exceeds the length cap, it is truncated", func(t *testing.T) {
-		ctx := &contextmodel.ReqContext{}
+		ctx := newReqContext(t)
 		proxy, err := setupDSProxyTest(t, ctx, ds, routes, "/render", func(p *DataSourceProxy) {
 			p.settings = &DataSourceProxySettings{
 				DataProxyUserAgent:        "Grafana/5.3.0",
@@ -881,7 +881,7 @@ func TestDataSourceProxy_userAgentHeader(t *testing.T) {
 	})
 
 	t.Run("When DataProxyForwardUserAgent is enabled and the client User-Agent is exactly the cap, it is forwarded unchanged", func(t *testing.T) {
-		ctx := &contextmodel.ReqContext{}
+		ctx := newReqContext(t)
 		proxy, err := setupDSProxyTest(t, ctx, ds, routes, "/render", func(p *DataSourceProxy) {
 			p.settings = &DataSourceProxySettings{
 				DataProxyUserAgent:        "Grafana/5.3.0",
@@ -1009,7 +1009,7 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 		proxy.HandleRequest()
 
 		require.NoError(t, writeErr)
-		assert.Equal(t, 400, proxy.ctx.Resp.Status(), "Status code 401 should be converted to 400")
+		assert.Equal(t, 400, proxy.ctx.Resp.(web.ResponseWriter).Status(), "Status code 401 should be converted to 400")
 		assert.Empty(t, proxy.ctx.Resp.Header().Get("www-authenticate"))
 	})
 
@@ -1142,7 +1142,6 @@ func TestNewDataSourceProxy_MSSQL(t *testing.T) {
 
 // getDatasourceProxiedRequest is a helper for easier setup of tests based on global config and ReqContext.
 func getDatasourceProxiedRequest(t *testing.T, ctx *contextmodel.ReqContext, proxyCfg *DataSourceProxySettings) *http.Request {
-	ensureReqContext(t, ctx)
 	ds := &datasources.DataSource{
 		Type: "custom",
 		URL:  "http://host/root/",
@@ -1165,7 +1164,7 @@ func getDatasourceProxiedRequest(t *testing.T, ctx *contextmodel.ReqContext, pro
 	loader, err := NewDataSourceLoader(ds, dsService)
 	require.NoError(t, err)
 
-	proxy, err := NewDataSourceProxy(loader, routes, ctx, "", proxyCfg, httpclient.NewProvider(), &oauthtoken.Service{}, tracer, features)
+	proxy, err := NewDataSourceProxy(loader, routes, toHttpContext(t, ctx), "", proxyCfg, httpclient.NewProvider(), &oauthtoken.Service{}, tracer, features)
 	require.NoError(t, err)
 	req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
 	require.NoError(t, err)
@@ -1280,8 +1279,7 @@ func runDatasourceAuthTest(t *testing.T,
 	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	secretsStore secretskvs.SecretsKVStore, cfg *setting.Cfg, test *testCase,
 ) {
-	ctx := &contextmodel.ReqContext{}
-	ensureReqContext(t, ctx)
+	ctx := newReqContext(t)
 	tracer := tracing.InitializeTracerForTest()
 
 	var routes []*plugins.Route
@@ -1297,7 +1295,7 @@ func runDatasourceAuthTest(t *testing.T,
 	loader, err := NewDataSourceLoader(test.datasource, dsService)
 	require.NoError(t, err)
 
-	proxy, err := NewDataSourceProxy(loader, routes, ctx, "", &DataSourceProxySettings{}, httpclient.NewProvider(), &oauthtoken.Service{}, tracer, features)
+	proxy, err := NewDataSourceProxy(loader, routes, toHttpContext(t, ctx), "", &DataSourceProxySettings{}, httpclient.NewProvider(), &oauthtoken.Service{}, tracer, features)
 	require.NoError(t, err)
 
 	req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
@@ -1344,7 +1342,6 @@ func Test_PathCheck(t *testing.T) {
 
 func setupDSProxyTest(t *testing.T, ctx *contextmodel.ReqContext, ds *datasources.DataSource, routes []*plugins.Route, path string, opts ...func(proxy *DataSourceProxy)) (*DataSourceProxy, error) {
 	t.Helper()
-	ensureReqContext(t, ctx)
 
 	cfg := setting.NewCfg()
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
@@ -1362,7 +1359,7 @@ func setupDSProxyTest(t *testing.T, ctx *contextmodel.ReqContext, ds *datasource
 	loader, err := NewDataSourceLoader(ds, dsService)
 	require.NoError(t, err)
 
-	proxy, err := NewDataSourceProxy(loader, routes, ctx, path, &DataSourceProxySettings{}, httpclient.NewProvider(), &oauthtoken.Service{}, tracer, features)
+	proxy, err := NewDataSourceProxy(loader, routes, toHttpContext(t, ctx), path, &DataSourceProxySettings{}, httpclient.NewProvider(), &oauthtoken.Service{}, tracer, features)
 	if err != nil {
 		return nil, err
 	}
@@ -1374,9 +1371,24 @@ func setupDSProxyTest(t *testing.T, ctx *contextmodel.ReqContext, ds *datasource
 	return proxy, nil
 }
 
-// ensureReqContext makes sure ctx.Req is set so callers like NewDataSourceProxy
-// that read ctx.Req.Context() don't panic on partial test fixtures.
-func ensureReqContext(t *testing.T, ctx *contextmodel.ReqContext) {
+// newReqContext returns a ReqContext with a minimal http.Request and a default
+// SignedInUser attached. NewDataSourceProxy reads ctx.Req.Context() and requires
+// a Requester in that context during construction.
+func newReqContext(t *testing.T) *contextmodel.ReqContext {
+	t.Helper()
+	req, err := http.NewRequest(http.MethodGet, "http://localhost/", nil)
+	require.NoError(t, err)
+	return &contextmodel.ReqContext{
+		Context:      &web.Context{Req: req},
+		SignedInUser: &user.SignedInUser{},
+	}
+}
+
+// toHttpContext builds an HttpContext suitable for NewDataSourceProxy from a
+// ReqContext used in tests. It fills in a default Req and SignedInUser if absent
+// and injects the SignedInUser into the request context so identity.GetRequester
+// can find it.
+func toHttpContext(t *testing.T, ctx *contextmodel.ReqContext) HttpContext {
 	t.Helper()
 	if ctx.Context == nil {
 		ctx.Context = &web.Context{}
@@ -1385,5 +1397,16 @@ func ensureReqContext(t *testing.T, ctx *contextmodel.ReqContext) {
 		req, err := http.NewRequest(http.MethodGet, "http://localhost/", nil)
 		require.NoError(t, err)
 		ctx.Req = req
+	}
+	if ctx.SignedInUser == nil {
+		ctx.SignedInUser = &user.SignedInUser{}
+	}
+	ctx.Req = ctx.Req.WithContext(identity.WithRequester(ctx.Req.Context(), ctx.SignedInUser))
+	return HttpContext{
+		Req:            ctx.Req,
+		Resp:           ctx.Resp,
+		UserToken:      ctx.UserToken,
+		HasUserRole:    ctx.HasUserRole,
+		GetPermissions: ctx.GetPermissions,
 	}
 }

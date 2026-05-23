@@ -130,8 +130,17 @@ func (p *DataSourceProxyService) proxyDatasourceRequest(c *contextmodel.ReqConte
 		return
 	}
 
+	hc := pluginproxy.HttpContext{
+		Req:  c.Req,
+		Resp: c.Resp,
+
+		UserToken:      c.UserToken,
+		HasUserRole:    c.HasUserRole,
+		GetPermissions: c.GetPermissions,
+	}
+
 	proxyPath := getProxyPath(c)
-	proxy, err := pluginproxy.NewDataSourceProxy(loader, plugin.Routes, c, proxyPath, p.proxyCfg,
+	proxy, err := pluginproxy.NewDataSourceProxy(loader, plugin.Routes, hc, proxyPath, p.proxyCfg,
 		p.HTTPClientProvider, p.OAuthTokenService, p.tracer, p.features)
 	if err != nil {
 		var urlValidationError datasource.URLValidationError
