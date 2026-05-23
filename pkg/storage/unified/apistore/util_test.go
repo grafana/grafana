@@ -218,7 +218,7 @@ func TestToListRequest(t *testing.T) {
 				},
 			},
 			wantPredicate: storage.SelectionPredicate{
-				Label: labels.SelectorFromSet(labels.Set{utils.LabelKeySearchPrefix + "folder": "xyz"}),
+				Label: labels.NewSelector(),
 			},
 			wantErr: nil,
 		},
@@ -255,12 +255,9 @@ func TestToListRequest(t *testing.T) {
 					},
 				},
 			},
-			wantPredicate: func() storage.SelectionPredicate {
-				req, _ := labels.NewRequirement(utils.LabelKeySearchPrefix+"name", selection.In, []string{"a", "b", "c"})
-				return storage.SelectionPredicate{
-					Label: labels.NewSelector().Add(*req),
-				}
-			}(),
+			wantPredicate: storage.SelectionPredicate{
+				Label: labels.NewSelector(),
+			},
 			wantErr: nil,
 		},
 		{
@@ -293,7 +290,7 @@ func TestToListRequest(t *testing.T) {
 				},
 			},
 			wantPredicate: storage.SelectionPredicate{
-				Label: labels.SelectorFromSet(labels.Set{utils.LabelKeySearchPrefix + "AND.title": "foo"}),
+				Label: labels.NewSelector(),
 			},
 			wantErr: nil,
 		},

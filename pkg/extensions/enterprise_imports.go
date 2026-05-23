@@ -111,6 +111,8 @@ import (
 	_ "github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1"
 	_ "github.com/grafana/grafana/apps/alerting/historian/pkg/app/config"
 	_ "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	_ "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
+	_ "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	_ "github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	_ "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	_ "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"

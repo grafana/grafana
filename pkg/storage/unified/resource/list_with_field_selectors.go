@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+	"k8s.io/apimachinery/pkg/selection"
 )
 
 func (s *server) listWithFieldSelectors(ctx context.Context, req *resourcepb.ListRequest) (*resourcepb.ListResponse, error) {
@@ -21,8 +22,14 @@ func (s *server) listWithFieldSelectors(ctx context.Context, req *resourcepb.Lis
 		}, nil
 	}
 
+	// Only selectable fields are stored under the SEARCH_SELECTABLE_FIELDS_PREFIX
+	// sub-document. Standard search fields (folder, title, tags, ...) live at the
+	// top level of the index and must not be prefixed.
+	standardFields := StandardSearchFields()
 	for _, v := range req.Options.Fields {
-		v.Key = SEARCH_SELECTABLE_FIELDS_PREFIX + v.Key
+		if standardFields.Field(v.Key) == nil {
+			v.Key = SEARCH_SELECTABLE_FIELDS_PREFIX + v.Key
+		}
 	}
 
 	srq := &resourcepb.ResourceSearchRequest{
@@ -110,7 +117,12 @@ func (s *server) listWithFieldSelectors(ctx context.Context, req *resourcepb.Lis
 func filterFieldSelectors(req *resourcepb.ListRequest) *resourcepb.ListRequest {
 	fields := make([]*resourcepb.Requirement, 0, len(req.Options.Fields))
 	for _, f := range req.Options.Fields {
-		if (f.Operator != "=" && f.Operator != "==") || f.Key == "metadata.namespace" {
+		if f.Key == "metadata.namespace" {
+			continue
+		}
+		switch selection.Operator(f.Operator) {
+		case selection.Equals, selection.DoubleEquals, selection.In:
+		default:
 			continue
 		}
 		fields = append(fields, f)
