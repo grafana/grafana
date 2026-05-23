@@ -124,9 +124,15 @@ func (p *DataSourceProxyService) proxyDatasourceRequest(c *contextmodel.ReqConte
 		return
 	}
 
+	loader, err := pluginproxy.NewDataSourceLoader(ds, p.DataSourcesService)
+	if err != nil {
+		c.JsonApiErr(http.StatusInternalServerError, "Failed creating data source loader", err)
+		return
+	}
+
 	proxyPath := getProxyPath(c)
-	proxy, err := pluginproxy.NewDataSourceProxy(ds, plugin.Routes, c, proxyPath, p.proxyCfg, p.HTTPClientProvider,
-		p.OAuthTokenService, p.DataSourcesService, p.tracer, p.features)
+	proxy, err := pluginproxy.NewDataSourceProxy(ds.Type, loader, plugin.Routes, c, proxyPath, p.proxyCfg,
+		p.HTTPClientProvider, p.OAuthTokenService, p.tracer, p.features)
 	if err != nil {
 		var urlValidationError datasource.URLValidationError
 		if errors.As(err, &urlValidationError) {

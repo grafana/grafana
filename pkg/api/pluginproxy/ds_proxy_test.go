@@ -1160,7 +1160,11 @@ func getDatasourceProxiedRequest(t *testing.T, ctx *contextmodel.ReqContext, pro
 		&actest.FakePermissionsService{}, quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{},
 		plugincontext.ProvideBaseService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()), dsRetriever)
 	require.NoError(t, err)
-	proxy, err := NewDataSourceProxy(ds, routes, ctx, "", proxyCfg, httpclient.NewProvider(), &oauthtoken.Service{}, dsService, tracer, features)
+
+	loader, err := NewDataSourceLoader(ds, dsService)
+	require.NoError(t, err)
+
+	proxy, err := NewDataSourceProxy(ds.Type, loader, routes, ctx, "", proxyCfg, httpclient.NewProvider(), &oauthtoken.Service{}, tracer, features)
 	require.NoError(t, err)
 	req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
 	require.NoError(t, err)
@@ -1287,7 +1291,11 @@ func runDatasourceAuthTest(t *testing.T,
 		&actest.FakePermissionsService{}, quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{},
 		plugincontext.ProvideBaseService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()), dsRetriever)
 	require.NoError(t, err)
-	proxy, err := NewDataSourceProxy(test.datasource, routes, ctx, "", &DataSourceProxySettings{}, httpclient.NewProvider(), &oauthtoken.Service{}, dsService, tracer, features)
+
+	loader, err := NewDataSourceLoader(test.datasource, dsService)
+	require.NoError(t, err)
+
+	proxy, err := NewDataSourceProxy(test.datasource.Type, loader, routes, ctx, "", &DataSourceProxySettings{}, httpclient.NewProvider(), &oauthtoken.Service{}, tracer, features)
 	require.NoError(t, err)
 
 	req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
@@ -1348,7 +1356,10 @@ func setupDSProxyTest(t *testing.T, ctx *contextmodel.ReqContext, ds *datasource
 
 	tracer := tracing.InitializeTracerForTest()
 
-	proxy, err := NewDataSourceProxy(ds, routes, ctx, path, &DataSourceProxySettings{}, httpclient.NewProvider(), &oauthtoken.Service{}, dsService, tracer, features)
+	loader, err := NewDataSourceLoader(ds, dsService)
+	require.NoError(t, err)
+
+	proxy, err := NewDataSourceProxy(ds.Type, loader, routes, ctx, path, &DataSourceProxySettings{}, httpclient.NewProvider(), &oauthtoken.Service{}, tracer, features)
 	if err != nil {
 		return nil, err
 	}
