@@ -135,7 +135,6 @@ func (p *DataSourceProxyService) proxyDatasourceRequest(c *contextmodel.ReqConte
 		Resp: c.Resp,
 
 		UserToken:      c.UserToken,
-		HasUserRole:    c.HasUserRole,
 		GetPermissions: c.GetPermissions,
 	}
 

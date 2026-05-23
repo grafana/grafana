@@ -49,7 +49,6 @@ type HttpContext struct {
 
 	// TODO? eventually this should come from the user in the request context
 	UserToken      *usertoken.UserToken
-	HasUserRole    func(role identity.RoleType) bool
 	GetPermissions func() map[string][]string
 }
 
@@ -406,7 +405,7 @@ func (proxy *DataSourceProxy) hasAccessToRoute(route *plugins.Route) bool {
 		return hasAccess
 	}
 	if route.ReqRole.IsValid() {
-		if hasUserRole := proxy.ctx.HasUserRole(route.ReqRole); !hasUserRole {
+		if hasUserRole := proxy.requester.GetOrgRole().Includes(route.ReqRole); !hasUserRole {
 			ctxLogger.Debug("plugin route is covered by org role, user doesn't have access", "route", proxy.ctx.Req.URL.Path, "role", route.ReqRole, "path", route.Path, "method", route.Method)
 			return false
 		}
