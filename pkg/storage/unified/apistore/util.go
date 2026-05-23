@@ -8,6 +8,7 @@ package apistore
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -57,6 +58,10 @@ func toListRequest(k *resourcepb.ResourceKey, opts storage.ListOptions) (*resour
 
 		for _, r := range requirements {
 			v := r.Key()
+
+			if strings.HasPrefix(v, utils.LabelKeySearchPrefix) {
+
+			}
 
 			// Parse the history/trash request from labels
 			if v == utils.LabelKeyGetHistory || v == utils.LabelKeyGetTrash {
