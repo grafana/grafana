@@ -1142,6 +1142,7 @@ func TestNewDataSourceProxy_MSSQL(t *testing.T) {
 
 // getDatasourceProxiedRequest is a helper for easier setup of tests based on global config and ReqContext.
 func getDatasourceProxiedRequest(t *testing.T, ctx *contextmodel.ReqContext, proxyCfg *DataSourceProxySettings) *http.Request {
+	ensureReqContext(t, ctx)
 	ds := &datasources.DataSource{
 		Type: "custom",
 		URL:  "http://host/root/",
@@ -1280,6 +1281,7 @@ func runDatasourceAuthTest(t *testing.T,
 	secretsStore secretskvs.SecretsKVStore, cfg *setting.Cfg, test *testCase,
 ) {
 	ctx := &contextmodel.ReqContext{}
+	ensureReqContext(t, ctx)
 	tracer := tracing.InitializeTracerForTest()
 
 	var routes []*plugins.Route
@@ -1342,6 +1344,7 @@ func Test_PathCheck(t *testing.T) {
 
 func setupDSProxyTest(t *testing.T, ctx *contextmodel.ReqContext, ds *datasources.DataSource, routes []*plugins.Route, path string, opts ...func(proxy *DataSourceProxy)) (*DataSourceProxy, error) {
 	t.Helper()
+	ensureReqContext(t, ctx)
 
 	cfg := setting.NewCfg()
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
@@ -1369,4 +1372,18 @@ func setupDSProxyTest(t *testing.T, ctx *contextmodel.ReqContext, ds *datasource
 	}
 
 	return proxy, nil
+}
+
+// ensureReqContext makes sure ctx.Req is set so callers like NewDataSourceProxy
+// that read ctx.Req.Context() don't panic on partial test fixtures.
+func ensureReqContext(t *testing.T, ctx *contextmodel.ReqContext) {
+	t.Helper()
+	if ctx.Context == nil {
+		ctx.Context = &web.Context{}
+	}
+	if ctx.Req == nil {
+		req, err := http.NewRequest(http.MethodGet, "http://localhost/", nil)
+		require.NoError(t, err)
+		ctx.Req = req
+	}
 }

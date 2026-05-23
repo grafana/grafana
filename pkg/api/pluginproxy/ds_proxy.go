@@ -160,7 +160,7 @@ func (proxy *DataSourceProxy) HandleRequest() {
 	proxy.ctx.Req = proxy.ctx.Req.WithContext(ctx)
 
 	span.SetAttributes(
-		attribute.String("datasource_name", proxy.ds.Name),
+		attribute.String("datasource_name", proxy.ds.Spec.Title()),
 		attribute.String("datasource_type", proxy.dataSource.PluginType()),
 		attribute.String("user", proxy.ctx.Login),
 		attribute.Int64("org_id", proxy.ctx.OrgID),
@@ -271,6 +271,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 			return
 		}
 
+		// JSONData may be absent or stored as a non-map value; ApplyRoute requires a non-nil map, so fall back to empty.
 		jsonData, ok := ds.Spec.JSONData().(map[string]any)
 		if !ok {
 			jsonData = make(map[string]any)

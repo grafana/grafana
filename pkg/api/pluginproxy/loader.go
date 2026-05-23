@@ -11,7 +11,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
-// This is scoped to a single datasource -- not generic
+// DataSourceLoader allows async access to the datasource and helps detach
+// the new apiserver proxy routes from the full legacy DataSourceService
 type DataSourceLoader interface {
 	PluginType() string
 	DataSource(ctx context.Context) (*datasourcesV0.DataSource, error)
@@ -21,16 +22,10 @@ type DataSourceLoader interface {
 	DecryptedValues(ctx context.Context) (map[string]string, error)
 }
 
+// NewDataSourceLoader creates a new DataSourceLoader using the legacy datasource and service
 func NewDataSourceLoader(ds *datasources.DataSource, service datasources.DataSourceService) (DataSourceLoader, error) {
-	converter := converter.NewConverter(authlib.OrgNamespaceFormatter, ds.Type+".datasource.grafana.app", ds.Type, []string{})
-	dsV0, err := converter.AsDataSource(ds)
-	if err != nil {
-		return nil, err
-	}
-
 	return &loaderFromService{
 		ds:      ds,
-		dsV0:    dsV0,
 		service: service,
 	}, nil
 }
@@ -38,7 +33,6 @@ func NewDataSourceLoader(ds *datasources.DataSource, service datasources.DataSou
 var _ DataSourceLoader = (*loaderFromService)(nil)
 
 type loaderFromService struct {
-	dsV0    *datasourcesV0.DataSource
 	ds      *datasources.DataSource
 	service datasources.DataSourceService
 }
@@ -49,7 +43,9 @@ func (l *loaderFromService) PluginType() string {
 }
 
 func (l *loaderFromService) DataSource(ctx context.Context) (*datasourcesV0.DataSource, error) {
-	return l.dsV0, nil
+	ds := l.ds
+	c := converter.NewConverter(authlib.OrgNamespaceFormatter, ds.Type+".datasource.grafana.app", ds.Type, nil)
+	return c.AsDataSource(ds)
 }
 
 // DecryptedBasicAuthPassword implements [DataSourceLoader].
