@@ -59,8 +59,20 @@ func toListRequest(k *resourcepb.ResourceKey, opts storage.ListOptions) (*resour
 		for _, r := range requirements {
 			v := r.Key()
 
-			if strings.HasPrefix(v, utils.LabelKeySearchPrefix) {
-
+			// grafana.app/search.* selections are converted to search requests
+			if field, ok := strings.CutPrefix(v, utils.LabelKeySearchPrefix); ok {
+				switch {
+				case strings.HasPrefix(field, "OR."):
+					return nil, predicate, apierrors.NewBadRequest("OR conditions in search labels are not yet supported: " + v)
+				case strings.HasPrefix(field, "AND."):
+					field = strings.TrimPrefix(field, "AND.")
+				}
+				req.Options.Fields = append(req.Options.Fields, &resourcepb.Requirement{
+					Key:      field,
+					Operator: string(r.Operator()),
+					Values:   r.Values().List(),
+				})
+				continue
 			}
 
 			// Parse the history/trash request from labels
