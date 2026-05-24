@@ -14,7 +14,15 @@ Paste the last ~50 lines of a failed build or deploy when asking for help.
 
 ## Common failures
 
-### 1. Build killed with exit code 137 (OOM)
+### 1. `dockerfile invalid: flag '--mount=type=cache,...' is missing an id argument`
+
+**Symptom:** Build fails immediately during scheduling/unpack; no `yarn` output yet.
+
+**Cause:** Railway's Metal builder requires BuildKit cache mounts to include an `id=` (upstream Dockerfile used anonymous caches).
+
+**Fix:** Use current `main` with `id=grafana-gomod` / `id=grafana-gobuild` on those `RUN --mount` lines, or remove the `--mount` flags (slower builds, works everywhere).
+
+### 2. Build killed with exit code 137 (OOM)
 
 **Symptom:** Build stops during `yarn install` or `yarn build` in the Docker `js-builder` stage.
 
@@ -28,7 +36,7 @@ Paste the last ~50 lines of a failed build or deploy when asking for help.
 
 If it still fails, use a larger Railway plan or build the image in GitHub Actions, push to GHCR, and deploy that image (advanced).
 
-### 2. Deploy / health check timeout
+### 3. Deploy / health check timeout
 
 **Symptom:** Build succeeds; deploy runs for minutes then fails "health check" or "service unavailable".
 
@@ -41,7 +49,7 @@ If it still fails, use a larger Railway plan or build the image in GitHub Action
 | Grafana listens on 3000, Railway routes to `$PORT` | Set `GF_SERVER_HTTP_PORT=${{PORT}}` or use updated `packaging/docker/run.sh` (maps `PORT` automatically) |
 | First image build still running | Wait; full Grafana image builds often take 20–45+ minutes |
 
-### 3. Running but 502 Bad Gateway
+### 4. Running but 502 Bad Gateway
 
 **Symptom:** Deploy shows "Active" briefly, browser returns 502.
 
@@ -49,7 +57,7 @@ If it still fails, use a larger Railway plan or build the image in GitHub Action
 
 - `GF_SERVER_HTTP_PORT` must equal Railway's `PORT` (or unset so `run.sh` sets it from `PORT`).
 
-### 4. Crash loop after start (database)
+### 5. Crash loop after start (database)
 
 **Symptom:** Container restarts; logs mention database, migrations, or permission errors.
 
@@ -58,13 +66,13 @@ If it still fails, use a larger Railway plan or build the image in GitHub Action
 - **SQLite:** Mount a Railway **volume** at `/var/lib/grafana`.
 - **Postgres:** Set all `GF_DATABASE_*` variables from the Railway Postgres plugin references; `GF_DATABASE_SSL_MODE=require` is usually required.
 
-### 5. `GF_SERVER_ROOT_URL` placeholder
+### 6. `GF_SERVER_ROOT_URL` placeholder
 
 **Symptom:** Redirect loops, broken assets, or login failures.
 
 **Fix:** Set `GF_SERVER_ROOT_URL` to the exact public URL Railway gives you (HTTPS, no trailing slash). For PR previews use `https://${{RAILWAY_PUBLIC_DOMAIN}}` in that environment's variables.
 
-### 6. Config in repo not applied
+### 7. Config in repo not applied
 
 **Symptom:** Health check still uses `/api/health` or short timeout despite local `railway.toml`.
 
