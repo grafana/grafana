@@ -83,15 +83,15 @@ COPY .citools .citools
 # Uses --parents to preserve directory structure with fewer COPY directives.
 COPY --parents **/go.mod **/go.sum ./
 
-RUN --mount=type=cache,id=grafana-gomod,target=/go/pkg/mod \
-    go mod download
+RUN go mod download
 
 # Copy full source
 COPY embed.go Makefile package.json ./
 COPY cue.mod cue.mod
 COPY kinds kinds
 COPY kindsv2 kindsv2
-COPY local local
+# `local/` is gitignored (dev overrides); ensure it exists when not in build context (e.g. Railway).
+RUN mkdir -p local
 COPY packages/grafana-schema packages/grafana-schema
 COPY packages/grafana-data/src/themes/themeDefinitions packages/grafana-data/src/themes/themeDefinitions
 COPY public/app/plugins public/app/plugins
@@ -105,9 +105,7 @@ COPY .github .github
 ENV COMMIT_SHA=${COMMIT_SHA}
 ENV BUILD_BRANCH=${BUILD_BRANCH}
 
-RUN --mount=type=cache,id=grafana-gomod,target=/go/pkg/mod \
-    --mount=type=cache,id=grafana-gobuild,target=/root/.cache/go-build \
-    make build-go GO_BUILD_TAGS=${GO_BUILD_TAGS} WIRE_TAGS=${WIRE_TAGS}
+RUN make build-go GO_BUILD_TAGS=${GO_BUILD_TAGS} WIRE_TAGS=${WIRE_TAGS}
 
 RUN mkdir -p data/plugins-bundled
 

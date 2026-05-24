@@ -42,12 +42,12 @@ If it still fails, use a larger Railway plan or build the image in GitHub Action
 
 **Causes:**
 
-| Cause | Fix |
-|-------|-----|
-| Health check hits `/api/health` before DB is ready | Use `/healthz` in `railway.toml` (committed config) |
-| Cold Docker build + DB migrations exceed timeout | Raise `healthcheckTimeout` in `railway.toml` (600–900s) |
+| Cause                                              | Fix                                                                                                      |
+| -------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Health check hits `/api/health` before DB is ready | Use `/healthz` in `railway.toml` (committed config)                                                      |
+| Cold Docker build + DB migrations exceed timeout   | Raise `healthcheckTimeout` in `railway.toml` (600–900s)                                                  |
 | Grafana listens on 3000, Railway routes to `$PORT` | Set `GF_SERVER_HTTP_PORT=${{PORT}}` or use updated `packaging/docker/run.sh` (maps `PORT` automatically) |
-| First image build still running | Wait; full Grafana image builds often take 20–45+ minutes |
+| First image build still running                    | Wait; full Grafana image builds often take 20–45+ minutes                                                |
 
 ### 4. Running but 502 Bad Gateway
 

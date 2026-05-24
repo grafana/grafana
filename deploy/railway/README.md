@@ -9,14 +9,30 @@ Target repo: [fieldsphere/grafana](https://github.com/fieldsphere/grafana).
 1. Create a [Railway](https://railway.com) project (Hobby or Pro).
 2. **New → GitHub Repo** → `fieldsphere/grafana`, branch `main`.
 3. Railway detects the root `Dockerfile` and `railway.toml` (health check `/api/health`, long timeout for cold builds).
-4. **Add a volume** (if using SQLite): mount at `/var/lib/grafana` on the Grafana service.
-5. **Variables**: copy from [`env.example`](./env.example). Minimum: `GF_SERVER_ROOT_URL`, `GF_SECURITY_ADMIN_PASSWORD`, and disable anonymous/signup (already in the example).
-6. **Networking**: generate a public domain; set `GF_SERVER_ROOT_URL` to `https://<that-domain>`.
-7. **PR environments**: Project Settings → **Environments** → enable **PR Environments** (and optionally **Focused PR Environments** so only this service rebuilds).
+4. **Postgres (recommended):** add a Postgres database in the project, then on the **grafana** service set variables from [`env.example`](./env.example) using `${{Postgres.PGHOST}}` (and related) references. Railway does not auto-inject DB creds; you must add the references explicitly.
+5. **Or SQLite:** attach a volume at `/var/lib/grafana` and use the SQLite block in `env.example`.
+6. **Variables:** copy [`env.example`](./env.example). At minimum set:
+   - `GF_SERVER_ROOT_URL` (must match the public HTTPS URL)
+   - `GF_SECURITY_ADMIN_PASSWORD` (and `GF_SECURITY_SECRET_KEY` — not optional for a public deploy)
+   - Postgres `GF_DATABASE_*` **or** SQLite + volume
+   - `GF_AUTH_ANONYMOUS_ENABLED=false`, `GF_USERS_ALLOW_SIGN_UP=false`
+7. **Networking:** generate a public domain; confirm `GF_SERVER_ROOT_URL` matches it.
+8. **PR environments**: Project Settings → **Environments** → enable **PR Environments** (and optionally **Focused PR Environments** so only this service rebuilds).
 
 Auth is **Grafana’s own login page** (admin user + password you set in Railway). Railway does not sit in front with a separate login wall.
 
-For a public demo, you only need a strong `GF_SECURITY_ADMIN_PASSWORD` plus `GF_AUTH_ANONYMOUS_ENABLED=false` and `GF_USERS_ALLOW_SIGN_UP=false` so strangers cannot browse without logging in or create accounts.
+For a public demo you need Grafana’s own auth configured in Railway:
+
+| Variable                           | Why                                                                 |
+| ---------------------------------- | ------------------------------------------------------------------- |
+| `GF_SECURITY_ADMIN_PASSWORD`       | Login password (not `admin` / `admin`)                              |
+| `GF_SECURITY_SECRET_KEY`           | Session signing; never leave the sample.ini default on the internet |
+| `GF_SECURITY_ADMIN_EMAIL`          | Admin profile email on first boot                                   |
+| `GF_DATABASE_*` or volume + SQLite | Persist users/settings; Postgres refs `${{Postgres.*}}`             |
+| `GF_AUTH_ANONYMOUS_ENABLED=false`  | No anonymous browsing                                               |
+| `GF_USERS_ALLOW_SIGN_UP=false`     | No public account creation                                          |
+
+Admin password env vars only apply on **first** startup. If Grafana already created an admin with defaults, change the password in the UI or reset the database before expecting env changes to take effect.
 
 ### Optional: GitHub on the Grafana login page
 
@@ -56,11 +72,11 @@ Dashboard UI + datasource queries from the preview count toward egress (usually 
 
 ### Practical guidance
 
-| Pattern | Build cost | Run cost | Good for |
-|---------|------------|----------|----------|
-| PR preview on **every** commit | High | Medium while PR open | Proving “deploy my branch” in demos |
-| PR preview only with label / manual Railway deploy | Lower | Lower | Day-to-day dev |
-| **Main only** auto-deploy; PRs use local `make run` | Lowest | One stable instance | Most internal work |
+| Pattern                                             | Build cost | Run cost             | Good for                            |
+| --------------------------------------------------- | ---------- | -------------------- | ----------------------------------- |
+| PR preview on **every** commit                      | High       | Medium while PR open | Proving “deploy my branch” in demos |
+| PR preview only with label / manual Railway deploy  | Lower      | Lower                | Day-to-day dev                      |
+| **Main only** auto-deploy; PRs use local `make run` | Lowest     | One stable instance  | Most internal work                  |
 
 For coding-tool demos, a common compromise is: **auto-deploy `main`**, enable PR environments for **release demos**, and accept **one long first build** per PR.
 
@@ -82,12 +98,12 @@ railway up
 
 ## Suggested resources
 
-| Setting | Suggestion |
-|---------|------------|
-| RAM | ≥ 1 GB (2 GB if dashboards + alerting feel tight) |
-| Volume | 1–5 GB for SQLite demos |
-| Health check | `/healthz` (configured in `railway.toml`) |
-| Service RAM | ≥ 2 GB recommended for runtime |
+| Setting      | Suggestion                                        |
+| ------------ | ------------------------------------------------- |
+| RAM          | ≥ 1 GB (2 GB if dashboards + alerting feel tight) |
+| Volume       | 1–5 GB for SQLite demos                           |
+| Health check | `/healthz` (configured in `railway.toml`)         |
+| Service RAM  | ≥ 2 GB recommended for runtime                    |
 
 Push `railway.toml` to GitHub so Railway picks up config-as-code (a dashboard-only deploy won't get these settings).
 
