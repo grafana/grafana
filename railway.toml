@@ -1,0 +1,18 @@
+# Railway config for fieldsphere/grafana demo deploys.
+# https://docs.railway.com/guides/config-as-code
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+# Use /healthz (HTTP 200 when the web server is up). /api/health returns 503 until the DB
+# and API server are ready and often fails Railway health checks during startup.
+healthcheckPath = "/healthz"
+# First deploy after a cold Docker build can take a long time before Grafana listens.
+healthcheckTimeout = 600
+restartPolicyType = "ON_FAILURE"
+
+# PR preview environments (enable in Railway: Project Settings → Environments).
+[environments.pr.deploy]
+healthcheckTimeout = 900

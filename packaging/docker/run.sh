@@ -63,6 +63,11 @@ done
 
 export HOME="$GF_PATHS_HOME"
 
+# PaaS hosts (Railway, Render, etc.) set PORT; Grafana uses GF_SERVER_HTTP_PORT / [server] http_port.
+if [ -n "${PORT:-}" ] && [ -z "${GF_SERVER_HTTP_PORT:-}" ]; then
+  export GF_SERVER_HTTP_PORT="$PORT"
+fi
+
 if [ ! -z "${GF_INSTALL_PLUGINS}" ]; then
   >&2 echo "\033[0;33mWARN\033[0m: GF_INSTALL_PLUGINS is deprecated. Use GF_PLUGINS_PREINSTALL or GF_PLUGINS_PREINSTALL_SYNC instead. Checkout the documentation for more info."
   if [ "${GF_INSTALL_PLUGINS_FORCE}" = "true" ]; then

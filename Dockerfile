@@ -22,8 +22,10 @@ FROM --platform=${JS_PLATFORM} ${JS_IMAGE} AS js-builder
 ARG JS_NODE_ENV=production
 ARG JS_YARN_INSTALL_FLAG=--immutable
 ARG JS_YARN_BUILD_FLAG=build
+# Railway and other PaaS builders may OOM below 8GB; override at build time if needed.
+ARG JS_NODE_MAX_OLD_SPACE=8000
 
-ENV NODE_OPTIONS=--max_old_space_size=8000
+ENV NODE_OPTIONS=--max_old_space_size=${JS_NODE_MAX_OLD_SPACE}
 
 WORKDIR /tmp/grafana
 
