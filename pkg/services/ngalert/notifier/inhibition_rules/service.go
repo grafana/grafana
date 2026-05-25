@@ -112,7 +112,7 @@ func (svc *Service) CreateInhibitionRule(ctx context.Context, rule v1.Inhibition
 		return v1.InhibitionRule{}, err
 	}
 
-	created, err := legacy_storage.InhibitRuleToInhibitionRule(rule.Name, rule.InhibitRule, rule.Provenance)
+	created, err := v1.InhibitRuleToInhibitionRule(rule.Name, rule.InhibitRule, rule.Provenance)
 	if err != nil {
 		return v1.InhibitionRule{}, models.MakeErrInhibitionRuleInvalid(err)
 	}
@@ -171,7 +171,7 @@ func (svc *Service) UpdateInhibitionRule(ctx context.Context, name string, rule 
 		delete(revision.Config.ManagedInhibitionRules, existing.Name)
 	}
 
-	updated, err := legacy_storage.InhibitRuleToInhibitionRule(rule.Name, rule.InhibitRule, rule.Provenance)
+	updated, err := v1.InhibitRuleToInhibitionRule(rule.Name, rule.InhibitRule, rule.Provenance)
 	if err != nil {
 		return v1.InhibitionRule{}, models.MakeErrInhibitionRuleInvalid(err)
 	}
