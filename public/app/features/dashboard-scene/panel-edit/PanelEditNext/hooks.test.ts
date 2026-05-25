@@ -140,23 +140,4 @@ describe('useRatioResize', () => {
     expect(getDefaultRatio).not.toHaveBeenCalled();
     expect(result.current.ratio).toBe(0.5);
   });
-
-  it('calls onManualResize when the user starts dragging the resize handle', () => {
-    const onManualResize = jest.fn();
-    const containerRef = makeContainerRef(1200, 600);
-    const handle = document.createElement('div');
-    handle.setPointerCapture = jest.fn();
-    handle.releasePointerCapture = jest.fn();
-
-    const { result } = renderHook(() =>
-      useRatioResize({ direction: 'vertical', initialRatio: 0.5, containerRef, onManualResize })
-    );
-
-    result.current.handleRef(handle);
-    const pointerDown = new MouseEvent('pointerdown', { clientY: 300, bubbles: true }) as PointerEvent;
-    Object.defineProperty(pointerDown, 'pointerId', { value: 1 });
-    handle.dispatchEvent(pointerDown);
-
-    expect(onManualResize).toHaveBeenCalledTimes(1);
-  });
 });

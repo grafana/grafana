@@ -35,7 +35,6 @@ type UseRatioResizeOptions = {
   minRatio?: number;
   maxRatio?: number;
   className?: string;
-  onManualResize?: () => void;
 };
 
 export function useRatioResize({
@@ -46,7 +45,6 @@ export function useRatioResize({
   minRatio = 0,
   maxRatio = 1,
   className,
-  onManualResize,
 }: UseRatioResizeOptions) {
   const [ratio, setRatio] = useState(initialRatio);
   const styles = useStyles2(getDragStyles, 'middle');
@@ -92,7 +90,6 @@ export function useRatioResize({
 
       const onPointerDown = (e: PointerEvent) => {
         e.preventDefault();
-        onManualResize?.();
         startPos = direction === 'horizontal' ? e.clientX : e.clientY;
         startRatio = ratioRef.current;
         // Read exact dimensions at the moment of interaction — no continuous measurement needed.
@@ -114,7 +111,7 @@ export function useRatioResize({
         }
       };
     },
-    [containerRef, direction, onManualResize]
+    [containerRef, direction]
   );
 
   // dragHandleVertical = a vertical bar the user drags horizontally (col-resize cursor)
