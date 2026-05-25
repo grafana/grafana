@@ -1,10 +1,12 @@
 import { useMemo } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
+import { getDataSourceSrv } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { type Folder } from 'app/api/clients/folder/v1beta1';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import { isRecord } from 'app/core/utils/isRecord';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { GcomDashboardInfo } from 'app/features/manage-dashboards/import/components/GcomDashboardInfo';
@@ -95,7 +97,9 @@ export function ProvisionedImportOverview({
   });
 
   function onSubmit(form: ProvisionedImportFormData) {
-    const spec = isDashboardV2Spec(dashboard) ? buildV2Spec(dashboard, form) : buildV1Spec(dashboard, form);
+    const spec = isDashboardV2Spec(dashboard)
+      ? buildV2Spec(dashboard, form, normalizedLayout, hasFloatGridItems)
+      : buildV1Spec(dashboard, form, inputs);
 
     save({
       spec,
@@ -110,44 +114,6 @@ export function ProvisionedImportOverview({
         workflow: form.workflow,
       },
     });
-  }
-
-  function buildV2Spec(dash: DashboardV2Spec, form: ProvisionedImportFormData): DashboardV2Spec {
-    const dashboardToSave = hasFloatGridItems && normalizedLayout ? { ...dash, layout: normalizedLayout } : dash;
-
-    // applyV2Inputs reads datasource-* and constant-* keys from the form.
-    // ProvisionedImportFormData is compatible with ImportFormDataV2's index access pattern.
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    const formForV2 = form as unknown as ImportFormDataV2;
-    return {
-      ...applyV2Inputs(dashboardToSave, formForV2),
-      title: form.title,
-    };
-  }
-
-  function buildV1Spec(dash: Dashboard, form: ProvisionedImportFormData): Dashboard {
-    // Build an ImportDashboardDTO-compatible shape for applyV1Inputs.
-    // The dataSources array is populated from the form's DatasourceSelection values;
-    // applyV1Inputs only reads .uid and .type from each entry.
-    const v1Form: ImportDashboardDTO = {
-      title: form.title,
-      uid: form.uid,
-      gnetId: '',
-      constants: inputs.constants.map((c) => {
-        const val = form[`constant-${c.name}`];
-        return typeof val === 'string' ? val : c.value;
-      }),
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      dataSources: inputs.dataSources.map((ds) => {
-        const selected = form[`datasource-${ds.name}`];
-        return selected && typeof selected === 'object' ? selected : {};
-      }) as ImportDashboardDTO['dataSources'],
-      elements: [],
-      folder: { uid: form.folderUid },
-    };
-
-    const dashboardWithInputs = applyV1Inputs(dash, inputs, v1Form);
-    return stripExportMetadata(dashboardWithInputs);
   }
 
   const gnetId = isDashboardV2Spec(dashboard) ? undefined : dashboard.gnetId;
@@ -174,4 +140,41 @@ export function ProvisionedImportOverview({
       </FormProvider>
     </>
   );
+}
+
+function buildV2Spec(
+  dash: DashboardV2Spec,
+  form: ProvisionedImportFormData,
+  normalizedLayout: DashboardV2Spec['layout'] | undefined,
+  hasFloatGridItems: boolean
+): DashboardV2Spec {
+  const dashboardToSave = hasFloatGridItems && normalizedLayout ? { ...dash, layout: normalizedLayout } : dash;
+  const formForV2: ImportFormDataV2 = { ...form, dashboard: dashboardToSave };
+  return {
+    ...applyV2Inputs(dashboardToSave, formForV2),
+    title: form.title,
+  };
+}
+
+function buildV1Spec(dash: Dashboard, form: ProvisionedImportFormData, inputs: DashboardInputs): Dashboard {
+  const v1Form: ImportDashboardDTO = {
+    title: form.title,
+    uid: form.uid,
+    gnetId: '',
+    constants: inputs.constants.map((c) => {
+      const val = form[`constant-${c.name}`];
+      return typeof val === 'string' ? val : c.value;
+    }),
+    dataSources: inputs.dataSources.flatMap((ds) => {
+      const selected = form[`datasource-${ds.name}`];
+      if (!isRecord(selected) || typeof selected.uid !== 'string') {
+        return [];
+      }
+      const settings = getDataSourceSrv().getInstanceSettings(selected.uid);
+      return settings ? [settings] : [];
+    }),
+    elements: [],
+    folder: { uid: form.folderUid },
+  };
+  return stripExportMetadata(applyV1Inputs(dash, inputs, v1Form));
 }
