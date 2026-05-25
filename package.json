@@ -460,8 +460,6 @@
     "@grafana/scenes-react/@grafana/e2e-selectors": "workspace:*",
     "swagger-ui-react/dompurify": "3.4.0",
     "refractor/prismjs": "^1.27.0",
-    "@mapbox/jsonlint-lines-primitives": "github:mapbox/jsonlint#commit=e31b7289baedf3e1000d7ae7edd42268212c9954",
-    "get-document": "github:webmodules/get-document#commit=a04ccb499d6e0433a368c3bb150b4899b698461f",
     "gitconfiglocal": "2.1.0",
     "tmp@npm:^0.0.33": "~0.2.1",
     "js-yaml@npm:4.1.0": "^4.1.0",
@@ -470,7 +468,9 @@
     "storybook@npm:10.3.6": "patch:storybook@npm%3A10.3.6#~/.yarn/patches/storybook-npm-10.3.6-8a0644ac0b.patch",
     "protobufjs@npm:8.0.0": "8.0.1",
     "@types/slate/immutable": "^4.0.0",
-    "@types/slate-react/immutable": "^4.0.0"
+    "@types/slate-react/immutable": "^4.0.0",
+    "@mapbox/jsonlint-lines-primitives@npm:~2.0.2": "patch:@mapbox/jsonlint-lines-primitives@npm%3A2.0.2#~/.yarn/patches/@mapbox-jsonlint-lines-primitives-npm-2.0.2-f48e04c479.patch",
+    "get-document@npm:1": "patch:get-document@npm%3A1.0.0#~/.yarn/patches/get-document-npm-1.0.0-9fe09104f6.patch"
   },
   "workspaces": {
     "packages": [

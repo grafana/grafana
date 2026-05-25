@@ -6371,10 +6371,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@mapbox/jsonlint-lines-primitives@github:mapbox/jsonlint#commit=e31b7289baedf3e1000d7ae7edd42268212c9954":
+"@mapbox/jsonlint-lines-primitives@npm:2.0.2":
   version: 2.0.2
-  resolution: "@mapbox/jsonlint-lines-primitives@https://github.com/mapbox/jsonlint.git#commit=e31b7289baedf3e1000d7ae7edd42268212c9954"
-  checksum: 10/660bd93beac97f0f4bdcfbbded3282efaf2ab4debb99da55f7fb7b27250e0dfa7dd572a9040802fdc008c71d0bb5ff7e565a7426177fda6c3d17e9bf1598bbaf
+  resolution: "@mapbox/jsonlint-lines-primitives@npm:2.0.2"
+  checksum: 10/6d8e64d34d912ebf29fead0d1917c8d8ad86e96f69b6100a9764af8cba391609474cdce7f7e4a2d579ccea58a142d1454257b795403179e9133a09af13101068
+  languageName: node
+  linkType: hard
+
+"@mapbox/jsonlint-lines-primitives@patch:@mapbox/jsonlint-lines-primitives@npm%3A2.0.2#~/.yarn/patches/@mapbox-jsonlint-lines-primitives-npm-2.0.2-f48e04c479.patch":
+  version: 2.0.2
+  resolution: "@mapbox/jsonlint-lines-primitives@patch:@mapbox/jsonlint-lines-primitives@npm%3A2.0.2#~/.yarn/patches/@mapbox-jsonlint-lines-primitives-npm-2.0.2-f48e04c479.patch::version=2.0.2&hash=556ff3"
+  checksum: 10/d5cc9e25a1b687d00bfe94c7d83db90b4c398b2ad8ab5d076db98bf0e0978fc14da551dc81d56fc44683c72b3d33d27df66df4347a1664d4f63b38f2011578f2
   languageName: node
   linkType: hard
 
@@ -19860,10 +19867,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"get-document@github:webmodules/get-document#commit=a04ccb499d6e0433a368c3bb150b4899b698461f":
+"get-document@npm:1.0.0":
   version: 1.0.0
-  resolution: "get-document@https://github.com/webmodules/get-document.git#commit=a04ccb499d6e0433a368c3bb150b4899b698461f"
-  checksum: 10/5ec51321f3a5257a08c3ea9ac1984d64302a34c786f5d5691ae1ee00aba189eedac63f401e0cf746b0c77fb84091a4d2a9b66ac23dc0e872cbac860e5e0c5245
+  resolution: "get-document@npm:1.0.0"
+  checksum: 10/94312db44ea9d070cca8cc14272582d04c7638494d6b5c9c0d6f1d949ef2605b4102ee52f0ded11e571357aba45e9fcc98a5b0467d61e4943a66002167eb6e7a
+  languageName: node
+  linkType: hard
+
+"get-document@patch:get-document@npm%3A1.0.0#~/.yarn/patches/get-document-npm-1.0.0-9fe09104f6.patch":
+  version: 1.0.0
+  resolution: "get-document@patch:get-document@npm%3A1.0.0#~/.yarn/patches/get-document-npm-1.0.0-9fe09104f6.patch::version=1.0.0&hash=c96dbf"
+  checksum: 10/889105d9cea13ea95b3723350adbbbb48bd5ee07500e61f7595da02492683aa8f6f57c821534bd31bb80187c9ca19640b62736bd04b522505a2cd326379259f6
   languageName: node
   linkType: hard
 
