@@ -12,13 +12,25 @@ interface UseStackedItemScrollArgs {
   setScrollHandler: (handler: ((item: StackedEditorItem) => void) | null) => void;
 }
 
+function findSection(container: HTMLElement, item: StackedEditorItem): HTMLElement | null {
+  const sections = container.querySelectorAll<HTMLElement>('[data-stacked-editor-item-id]');
+  for (const section of sections) {
+    if (section.dataset.stackedEditorItemId === item.id && section.dataset.stackedEditorItemType === item.type) {
+      return section;
+    }
+  }
+  return null;
+}
+
 /**
- * Owns the imperative scroll + active-item observation lifecycle for the stacked editor.
+ * Wires the stacked editor into the wrapper's scroll bridge and the active-item observer.
  *
- * Registers an imperative `scrollToItem` with the wrapper via `setScrollHandler`, so sidebar
- * clicks (etc.) can scroll the matching section into view without an effect. Item DOM nodes
- * are discovered through the same `data-stacked-editor-item-*` attributes the observer uses —
- * no parallel ref map needed, which avoids ref-callback churn on every parent re-render.
+ * - Pushes an imperative `scrollToItem` to the wrapper via `setScrollHandler` so sidebar clicks
+ *   can scroll a section into view without state or effects.
+ * - Mounts the IntersectionObserver that calls `onActiveItemChange` as the user scrolls.
+ *
+ * The two pieces share `pendingScrollKeyRef` so the observer holds off until an in-flight smooth
+ * scroll reaches its target.
  */
 export function useStackedItemScroll({
   containerRef,
@@ -36,14 +48,12 @@ export function useStackedItemScroll({
       if (!container) {
         return;
       }
-      pendingScrollKeyRef.current = getStackedItemKey(item);
-      const sections = container.querySelectorAll<HTMLElement>('[data-stacked-editor-item-id]');
-      for (const section of sections) {
-        if (section.dataset.stackedEditorItemId === item.id && section.dataset.stackedEditorItemType === item.type) {
-          section.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
-          return;
-        }
+      const section = findSection(container, item);
+      if (!section) {
+        return;
       }
+      pendingScrollKeyRef.current = getStackedItemKey(item);
+      section.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
     },
     [containerRef]
   );
