@@ -133,6 +133,18 @@ func (u *UnstructuredSpec) SetJSONData(v any) *UnstructuredSpec {
 	return u.Set("jsonData", v)
 }
 
+// When sending proxy requests, these cookies will be also be sent
+func (u *UnstructuredSpec) KeepCookies() []string {
+	v, _, _ := unstructured.NestedStringSlice(u.Object, "jsonData", "keepCookies")
+	return v
+}
+
+// Check if the oauthPassThru is enabled
+func (u *UnstructuredSpec) IsOAuthPassThruEnabled() bool {
+	v, _, _ := unstructured.NestedBool(u.Object, "jsonData", "oauthPassThru")
+	return v
+}
+
 // The OpenAPI spec uses the generated values from GenericDataSourceSpec, except that it:
 // 1. Allows additional properties at the root
 // 2. The jsonData field *may* be an raw value OR a map

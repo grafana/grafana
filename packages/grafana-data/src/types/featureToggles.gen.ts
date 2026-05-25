@@ -540,7 +540,7 @@ export interface FeatureToggles {
   newDashboardWithFiltersAndGroupBy?: boolean;
   /**
   * Renders ad hoc filters and group by in a single unified control
-  * @default false
+  * @default true
   */
   dashboardUnifiedDrilldownControls?: boolean;
   /**
@@ -1272,7 +1272,7 @@ export interface FeatureToggles {
   nestedFramesFieldOverrides?: boolean;
   /**
   * Enable faceted labels filter for series visibility in the legend
-  * @default false
+  * @default true
   */
   vizLegendFacetedFilter?: boolean;
   /**

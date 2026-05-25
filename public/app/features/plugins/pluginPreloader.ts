@@ -4,8 +4,8 @@ import type {
   PluginExtensionExposedComponentConfig,
   PluginExtensionAddedComponentConfig,
 } from '@grafana/data';
+import { getPluginSettings } from '@grafana/runtime/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
-import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 
 import { pluginImporter } from './importer/pluginImporter';
 
@@ -39,7 +39,7 @@ async function preload(config: AppPluginConfig): Promise<void> {
   const showErrorAlert = contextSrv.user.orgRole !== '';
 
   try {
-    const meta = await getPluginSettings(config.id, { showErrorAlert });
+    const meta = await getPluginSettings(config.id, showErrorAlert);
     await pluginImporter.importApp(meta);
   } catch (error) {
     if (!showErrorAlert) {

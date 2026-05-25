@@ -21,7 +21,7 @@ import { SaveLibraryPanelButton } from './actions/SaveLibraryPanelButton';
 import { UnlinkLibraryPanelButton } from './actions/UnlinkLibraryPanelButton';
 import { getDynamicActions, renderActionElements } from './utils';
 
-export const RightActions = ({ dashboard }: { dashboard: DashboardScene }) => {
+export const Actions = ({ dashboard }: { dashboard: DashboardScene }) => {
   const { editPanel, editable, editview, isEditing, meta, viewPanel } = dashboard.useState();
   const { isPlaying } = playlistSrv.useState();
   const styles = useStyles2(getStyles);

@@ -74,6 +74,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `azureResourcePickerUpdates`                 | Enables the updated Azure Monitor resource picker                                                                                                             | Yes                |
 | `panelStyleActions`                          | Enable style actions (copy/paste) in the panel editor                                                                                                         | Yes                |
 | `vizPresets`                                 | Enable visualization presets                                                                                                                                  | Yes                |
+| `vizLegendFacetedFilter`                     | Enable faceted labels filter for series visibility in the legend                                                                                              | Yes                |
 | `opentsdbBackendMigration`                   | Run queries through the data source backend                                                                                                                   |                    |
 | `multiPropsVariables`                        | Enables support for variables whose values can have multiple properties                                                                                       | Yes                |
 | `dashboardSectionVariables`                  | Enables support for section level variables (rows and tabs)                                                                                                   | Yes                |
@@ -107,6 +108,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `teamFolders`                     | Enables team folders functionality                                                                     |
 | `interactiveLearning`             | Enables the interactive learning app                                                                   |
 | `nestedFramesFieldOverrides`      | Enable field overrides for FieldType.nestedFrames fields (like in nested tables)                       |
+| `heatmapRowsAxisOptions`          | Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)                 |
 | `preventPanelChromeOverflow`      | Restrict PanelChrome contents with overflow: hidden;                                                   |
 | `panelTimeSettings`               | Enables a new panel time settings drawer                                                               |
 | `transformationsEmptyPlaceholder` | Show transformation quick-start cards in empty transformations state                                   |

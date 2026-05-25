@@ -178,7 +178,9 @@ describe('DashboardTabs', () => {
     const { user } = render(<DashboardTabs />);
 
     expect(await screen.findByRole('tab', { name: 'Plugin Tab 1' })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Plugin Tab 1' })).toHaveAttribute('aria-selected', 'true');
+    await waitFor(() => {
+      expect(screen.getByRole('tab', { name: 'Plugin Tab 1' })).toHaveAttribute('aria-selected', 'true');
+    });
 
     expect(await screen.findByRole('tab', { name: 'Plugin Tab 2' })).toBeInTheDocument();
     expect(screen.queryByRole('tab', { name: 'Plugin Tab 3' })).not.toBeInTheDocument();
