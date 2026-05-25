@@ -3147,7 +3147,7 @@ var (
 			Generate:     Generate{React: true},
 		},
 		{
-			Name:        "grafana.initDataSourcesAsync",
+			Name:        "plugins.initDataSourcesAsync",
 			Description: "Initializes data source instance settings asynchronously from the API instead of synchronously from boot data",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaCatalogSquad,

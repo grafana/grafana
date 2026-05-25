@@ -48,7 +48,7 @@ declare module "@openfeature/core" {
     | "alerting.syncExternalAlertmanager"
     | "grafana.enableScopesFirstMode"
     | "grafana.logLevelInference"
-    | "grafana.initDataSourcesAsync";
+    | "plugins.initDataSourcesAsync";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;
