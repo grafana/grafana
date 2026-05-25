@@ -127,6 +127,14 @@ const (
 	// Routes snapshot requests from /api to the /apis endpoint
 	FlagKubernetesSnapshots = "kubernetesSnapshots"
 
+	// FlagExternalSnapshotsK8SAPIPush
+	// When kubernetesSnapshots is enabled, push/delete external snapshots via the K8s API. When off, the K8s snapshots handler falls back to the legacy /api/snapshots endpoint on the external instance.
+	FlagExternalSnapshotsK8SAPIPush = "externalSnapshotsK8SAPIPush"
+
+	// FlagExternalSnapshotsSupportLegacyAPI
+	// On a SnapshotPublicMode instance with kubernetesSnapshots enabled, keep accepting anonymous /api/snapshots pushes by routing them through CreateDashboardSnapshotPublic instead of the authenticated k8s create endpoint. Default off: the migrated end state rejects anonymous legacy pushes. Turn on as a temporary backward-compat lever while senders migrate to the authenticated k8s API push, then turn off once migration completes. Not compatible with snapshot dual-write Mode5 (k8s-only storage), where the k8s create API is mandatory.
+	FlagExternalSnapshotsSupportLegacyAPI = "externalSnapshotsSupportLegacyAPI"
+
 	// FlagKubernetesLibraryPanels
 	// Routes library panel requests from /api to the /apis endpoint
 	FlagKubernetesLibraryPanels = "kubernetesLibraryPanels"

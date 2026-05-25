@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/open-feature/go-sdk/openfeature"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -30,6 +31,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -86,6 +88,65 @@ func createExternalSnapshot(cmd *dashboardsnapshots.CreateDashboardSnapshotComma
 	}
 
 	return &result, nil
+}
+
+// createExternalSnapshotLegacy sends a snapshot creation request to the external
+// snapshot server's legacy /api/snapshots endpoint. Used when the external server
+// has not been migrated to the K8s snapshots API yet.
+func createExternalSnapshotLegacy(cmd *dashboardsnapshots.CreateDashboardSnapshotCommand, options dashv0.SnapshotSharingOptions) (*dashv0.DashboardCreateResponse, error) {
+	externalURL := strings.TrimRight(options.ExternalSnapshotURL, "/") + "/api/snapshots"
+
+	name := cmd.Name
+	if name == "" {
+		name = "Unnamed snapshot"
+	}
+
+	body, err := json.Marshal(map[string]any{
+		"name":      name,
+		"expires":   cmd.Expires,
+		"dashboard": cmd.Dashboard,
+		"key":       cmd.Key,
+		"deleteKey": cmd.DeleteKey,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal snapshot request: %w", err)
+	}
+
+	req, err := http.NewRequest(http.MethodPost, externalURL, bytes.NewReader(body))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	// The legacy /api/snapshots endpoint is fully public — no Authorization header.
+	resp, err := externalHTTPClient.Do(req)
+	if err != nil {
+		return nil, dashboardsnapshots.ErrExternalSnapshotFailed.Errorf("failed to contact external snapshot server: %w", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, dashboardsnapshots.ErrExternalSnapshotFailed.Errorf("external snapshot server returned status code %d", resp.StatusCode)
+	}
+
+	// Legacy response shape: {key, deleteKey, url, deleteUrl}. Map into the K8s
+	// response struct so callers can stay shape-agnostic.
+	var legacy struct {
+		Key       string `json:"key"`
+		DeleteKey string `json:"deleteKey"`
+		URL       string `json:"url"`
+		DeleteURL string `json:"deleteUrl"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&legacy); err != nil {
+		return nil, fmt.Errorf("failed to decode external snapshot response: %w", err)
+	}
+
+	return &dashv0.DashboardCreateResponse{
+		Key:       legacy.Key,
+		DeleteKey: legacy.DeleteKey,
+		URL:       legacy.URL,
+		DeleteURL: legacy.DeleteURL,
+	}, nil
 }
 
 // nolint:gocyclo
@@ -252,7 +313,12 @@ func GetRoutes(options dashv0.SnapshotSharingOptions, accessControl ac.AccessCon
 					var snapshotURL string
 
 					if cmd.External {
-						resp, err := createExternalSnapshot(&cmd, options)
+						var resp *dashv0.DashboardCreateResponse
+						if openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagExternalSnapshotsK8SAPIPush, false, openfeature.TransactionContext(ctx)) {
+							resp, err = createExternalSnapshot(&cmd, options)
+						} else {
+							resp, err = createExternalSnapshotLegacy(&cmd, options)
+						}
 						if err != nil {
 							errhttp.Write(ctx, err, w)
 							return
