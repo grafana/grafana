@@ -269,11 +269,13 @@ func (s *TeamK8sService) listUserTeams(ctx context.Context, namespace, userUID s
 		return nil, err
 	}
 
+	// 404 from the apiserver here means the users/teams subresource isn't
+	// registered (it's gated on kubernetesUsersApi), not that the user is
+	// missing — the caller resolved the UID via SQL before invoking us.
+	// Propagate the error so teamimpl falls back to legacy, matching the
+	// 403 path taken when a non-admin requester is rejected by the authorizer.
 	resp, err := client.GetUserTeams(ctx, sdkresource.Identifier{Namespace: namespace, Name: userUID}, iamv0alpha1.GetUserTeamsRequest{})
 	if err != nil {
-		if apierrors.IsNotFound(err) {
-			return nil, nil
-		}
 		return nil, err
 	}
 	return resp.Items, nil
