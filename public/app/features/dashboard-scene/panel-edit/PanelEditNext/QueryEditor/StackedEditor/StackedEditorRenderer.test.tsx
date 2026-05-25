@@ -95,17 +95,18 @@ describe('StackedEditorRenderer', () => {
 
     expect(screen.getByTestId(`stacked-section-${QueryEditorType.Query}-B`)).toHaveAttribute('aria-current', 'true');
     expect(screen.getByTestId(`stacked-section-${QueryEditorType.Query}-A`)).not.toHaveAttribute('aria-current');
-    expect(
-      screen.getByTestId(`stacked-section-${QueryEditorType.Transformation}-organize-0`)
-    ).not.toHaveAttribute('aria-current');
+    expect(screen.getByTestId(`stacked-section-${QueryEditorType.Transformation}-organize-0`)).not.toHaveAttribute(
+      'aria-current'
+    );
   });
 
   it('marks the selected transformation as the current section', () => {
     renderStackedEditor({ selectedQuery: null, selectedTransformation: transformations[0] });
 
-    expect(
-      screen.getByTestId(`stacked-section-${QueryEditorType.Transformation}-organize-0`)
-    ).toHaveAttribute('aria-current', 'true');
+    expect(screen.getByTestId(`stacked-section-${QueryEditorType.Transformation}-organize-0`)).toHaveAttribute(
+      'aria-current',
+      'true'
+    );
     expect(screen.getByTestId(`stacked-section-${QueryEditorType.Query}-A`)).not.toHaveAttribute('aria-current');
     expect(screen.getByTestId(`stacked-section-${QueryEditorType.Query}-B`)).not.toHaveAttribute('aria-current');
   });
