@@ -12,13 +12,13 @@ import { PanelDataPaneNext } from './PanelDataPaneNext';
 import { QueryEditorContextWrapper } from './QueryEditor/QueryEditorContextWrapper';
 import { Sidebar } from './QueryEditor/Sidebar/Sidebar';
 import { SidebarSize } from './constants';
-import { STACKED_MODE_LAYOUT_TRANSITION_MS, useQueryEditorBanner, useVizAndDataPaneLayout } from './hooks';
+import { useQueryEditorBanner, useVizAndDataPaneLayout } from './hooks';
 
 export function VizAndDataPaneNext({ model }: SceneComponentProps<PanelEditor>) {
   const containerRef = useRef<HTMLDivElement>(null);
   const { showBanner, dismissBanner } = useQueryEditorBanner();
   const { scene, layout } = useVizAndDataPaneLayout(model, containerRef, showBanner);
-  const styles = useStyles2(getStyles, layout.sidebarSize, layout.animateVizResize);
+  const styles = useStyles2(getStyles, layout.sidebarSize);
 
   const nextDataPane = scene.dataPane instanceof PanelDataPaneNext ? scene.dataPane : null;
 
@@ -45,7 +45,6 @@ export function VizAndDataPaneNext({ model }: SceneComponentProps<PanelEditor>) 
         <QueryEditorContextWrapper
           dataPane={nextDataPane}
           onSwitchToClassic={model.onToggleQueryEditorVersion}
-          onStackedModeChange={layout.setStackedMode}
           showVersionBanner={showBanner}
         >
           {showBanner && (
@@ -77,20 +76,13 @@ export function VizAndDataPaneNext({ model }: SceneComponentProps<PanelEditor>) 
   );
 }
 
-function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize, animateVizResize: boolean) {
+function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
   return {
     pageContainer: css({
       display: 'grid',
       gap: theme.spacing(2),
       overflow: 'hidden',
       paddingBottom: theme.spacing(2),
-      ...(animateVizResize && {
-        [theme.transitions.handleMotion('no-preference')]: {
-          transition: theme.transitions.create(['grid-template-rows'], {
-            duration: STACKED_MODE_LAYOUT_TRANSITION_MS,
-          }),
-        },
-      }),
     }),
     versionToggle: css({
       gridArea: 'version-toggle',

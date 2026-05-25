@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { QueryEditorType } from '../../constants';
 import { type StackedEditorItem, type StackedEditorState } from '../QueryEditorContext';
@@ -6,8 +6,6 @@ import { type StackedEditorItem, type StackedEditorState } from '../QueryEditorC
 type ScrollHandler = (item: StackedEditorItem) => void;
 
 interface UseStackedModeOrchestrationArgs {
-  /** Notifies the viz pane layout when stacked mode toggles so it can animate the layout. */
-  onStackedModeChange?: (enabled: boolean) => void;
   /**
    * Card selection writer. Used by `enter` to promote a primary item into the selection and
    * by `syncActiveItem` to mirror observer-driven activations back into selection state.
@@ -34,14 +32,12 @@ interface UseStackedModeOrchestrationResult {
 
 /**
  * Owns the stacked-mode state machine: the on/off boolean, the imperative scroll bridge,
- * the `enter` / `exit` / `syncActiveItem` callbacks, and the unmount-cleanup effect that
- * restores the parent layout if the wrapper unmounts while stacked mode is still active.
+ * and the `enter` / `exit` / `syncActiveItem` callbacks.
  *
  * Lives outside `QueryEditorContextWrapper` so the wrapper doesn't carry the stacked-only
  * plumbing inline. The wrapper composes this hook and exposes `stackedMode` on its context.
  */
 export function useStackedModeOrchestration({
-  onStackedModeChange,
   onCardSelectionChange,
   selectedQueryRefIds,
   selectedTransformationIds,
@@ -60,26 +56,8 @@ export function useStackedModeOrchestration({
     scrollHandlerRef.current = handler;
   }, []);
 
-  const setStackedModeForView = useCallback(
-    (enabled: boolean) => {
-      setIsStackedMode(enabled);
-      onStackedModeChange?.(enabled);
-    },
-    [onStackedModeChange]
-  );
-
-  // Restore parent layout on unmount if stacked mode is still active. Refs keep the
-  // cleanup effect's deps empty so it only runs on unmount, not on every toggle.
-  const isStackedModeRef = useRef(isStackedMode);
-  isStackedModeRef.current = isStackedMode;
-  const onStackedModeChangeRef = useRef(onStackedModeChange);
-  onStackedModeChangeRef.current = onStackedModeChange;
-  useEffect(() => {
-    return () => {
-      if (isStackedModeRef.current) {
-        onStackedModeChangeRef.current?.(false);
-      }
-    };
+  const setStackedModeForView = useCallback((enabled: boolean) => {
+    setIsStackedMode(enabled);
   }, []);
 
   // `enter` is invoked imperatively from a button click, so reading the latest selection

@@ -20,14 +20,8 @@ jest.mock('../QueryEditorBanner', () => ({
   QueryEditorBanner: () => <div data-testid="query-editor-banner" />,
 }));
 
-type MockQueryEditorContextWrapperProps = {
-  children: React.ReactNode;
-  onStackedModeChange?: (enabled: boolean) => void;
-};
-
-const mockQueryEditorContextWrapper = jest.fn(({ children }: MockQueryEditorContextWrapperProps) => <>{children}</>);
 jest.mock('./QueryEditor/QueryEditorContextWrapper', () => ({
-  QueryEditorContextWrapper: (props: MockQueryEditorContextWrapperProps) => mockQueryEditorContextWrapper(props),
+  QueryEditorContextWrapper: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
 jest.mock('./QueryEditor/Sidebar/Sidebar', () => ({
@@ -55,7 +49,6 @@ function buildMockLayout(dataPane?: PanelDataPane | PanelDataPaneNext) {
       setSidebarSize: jest.fn(),
       isScrollingLayout: false,
       gridStyles: {},
-      setStackedMode: jest.fn(),
       sidebarResizeHandle: { ref: jest.fn(), className: '' },
       vizResizeHandle: { ref: jest.fn(), className: '' },
     },
@@ -103,24 +96,6 @@ describe('VizAndDataPaneNext', () => {
     it('renders the data pane component', () => {
       render(<VizAndDataPaneNext model={panelEditor} />);
       expect(screen.getByTestId('data-pane-content')).toBeInTheDocument();
-    });
-
-    it('passes stacked mode layout resize callback to the query editor context wrapper', () => {
-      const mockDataPane = Object.create(PanelDataPaneNext.prototype);
-      mockDataPane.Component = () => <div data-testid="data-pane-content" />;
-      const base = buildMockLayout(mockDataPane);
-      const setStackedMode = jest.fn();
-      jest.mocked(useVizAndDataPaneLayout).mockReturnValue({
-        ...base,
-        layout: {
-          ...base.layout,
-          setStackedMode,
-        },
-      });
-
-      render(<VizAndDataPaneNext model={panelEditor} />);
-
-      expect(mockQueryEditorContextWrapper.mock.calls.at(-1)?.[0].onStackedModeChange).toBe(setStackedMode);
     });
   });
 

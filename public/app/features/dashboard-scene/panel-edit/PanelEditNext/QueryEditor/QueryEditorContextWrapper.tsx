@@ -38,13 +38,11 @@ import { getEditorType, getTransformId } from './utils';
 export function QueryEditorContextWrapper({
   dataPane,
   onSwitchToClassic,
-  onStackedModeChange,
   showVersionBanner,
   children,
 }: {
   dataPane: PanelDataPaneNext;
   onSwitchToClassic?: () => void;
-  onStackedModeChange?: (enabled: boolean) => void;
   showVersionBanner?: boolean;
   children: ReactNode;
 }) {
@@ -109,7 +107,6 @@ export function QueryEditorContextWrapper({
   );
 
   const { stackedMode, setStackedModeForView } = useStackedModeOrchestration({
-    onStackedModeChange,
     onCardSelectionChange,
     selectedQueryRefIds,
     selectedTransformationIds,

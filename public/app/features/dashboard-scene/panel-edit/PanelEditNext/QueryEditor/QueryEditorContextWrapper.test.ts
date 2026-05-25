@@ -99,15 +99,11 @@ function makeMockDataPane(): PanelDataPaneNext {
   } as unknown as PanelDataPaneNext;
 }
 
-function renderWithWrapper(
-  dataPane: PanelDataPaneNext,
-  options: { onStackedModeChange?: (enabled: boolean) => void } = {}
-) {
+function renderWithWrapper(dataPane: PanelDataPaneNext) {
   return renderHook(() => useQueryEditorUIContext(), {
     wrapper: ({ children }) =>
       React.createElement(QueryEditorContextWrapper, {
         dataPane,
-        onStackedModeChange: options.onStackedModeChange,
         children,
       }),
   });
@@ -387,27 +383,6 @@ describe('QueryEditorContextWrapper - stacked mode', () => {
     expect(result.current.selectedTransformationIds).toEqual(['reduce-0']);
   });
 
-  it('notifies the layout to restore viz ratio when unmounting while stacked mode is active', () => {
-    const onStackedModeChange = jest.fn();
-    const { result, unmount } = renderWithWrapper(makeMockDataPane(), { onStackedModeChange });
-
-    act(() => result.current.stackedMode.enter());
-    onStackedModeChange.mockClear();
-
-    unmount();
-
-    expect(onStackedModeChange).toHaveBeenCalledWith(false);
-  });
-
-  it('does not notify the layout on unmount when stacked mode is inactive', () => {
-    const onStackedModeChange = jest.fn();
-    const { unmount } = renderWithWrapper(makeMockDataPane(), { onStackedModeChange });
-
-    unmount();
-
-    expect(onStackedModeChange).not.toHaveBeenCalled();
-  });
-
   it('exits stacked mode when an alert is selected', () => {
     mockUseAlertRulesForPanel.mockReturnValue({
       alertRules: [mockAlert],
@@ -422,19 +397,6 @@ describe('QueryEditorContextWrapper - stacked mode', () => {
     act(() => result.current.setSelectedAlert(mockAlert));
 
     expect(result.current.stackedMode.enabled).toBe(false);
-  });
-
-  it('notifies the layout when stacked mode changes', () => {
-    const onStackedModeChange = jest.fn();
-    const { result } = renderWithWrapper(makeMockDataPane(), { onStackedModeChange });
-
-    expect(onStackedModeChange).not.toHaveBeenCalled();
-
-    act(() => result.current.stackedMode.enter());
-    expect(onStackedModeChange).toHaveBeenLastCalledWith(true);
-
-    act(() => result.current.stackedMode.exit());
-    expect(onStackedModeChange).toHaveBeenLastCalledWith(false);
   });
 
   it('entering stacked mode collapses existing multi-selection to the primary item', () => {
