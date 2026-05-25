@@ -173,12 +173,16 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
     );
   }
 
-  const referencedByPoliciesText = t('alerting.contact-points.used-by', 'Used by {{count}} notification policies', {
+  const referencedByPoliciesText = t('alerting.contact-points.used-by', '', {
     count: numberOfPolicies,
+    defaultValue_one: 'Used by {{count}} notification policies',
+    defaultValue_other: 'Used by {{count}} notification policies',
   });
 
-  const referencedByRulesText = t('alerting.contact-points.used-by-rules', 'Used by {{count}} alert rules', {
+  const referencedByRulesText = t('alerting.contact-points.used-by-rules', '', {
     count: numberOfRules,
+    defaultValue_one: 'Used by {{count}} alert rules',
+    defaultValue_other: 'Used by {{count}} alert rules',
   });
 
   // TOOD: Tidy up/consolidate logic for working out id for contact point. This requires some unravelling of

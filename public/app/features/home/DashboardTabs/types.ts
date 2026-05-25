@@ -1,16 +1,28 @@
-import { type ReactNode } from 'react';
+import { z } from 'zod';
 
-import { type IconName } from '@grafana/data';
+import { isIconName } from '@grafana/data';
 
-export interface HomepageTab {
-  id: string;
-  label: string;
-  activeLabel?: string;
-  icon?: IconName;
-  /** Tab renders content inline */
-  content?: ReactNode;
+const HomepageTabSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  activeLabel: z.string().optional(),
+  icon: z.string().refine(isIconName, { error: 'Unknown icon' }).optional(),
   /** Tab is a link (rendered right-aligned) */
-  href?: string;
+  href: z.string().optional(),
   /** Item count shown as badge on the tab */
-  counter?: number;
+  counter: z.number().optional(),
+});
+
+export type HomepageTab = z.infer<typeof HomepageTabSchema>;
+
+export function validateHomepageTab(value: unknown): asserts value is HomepageTab {
+  const result = HomepageTabSchema.safeParse(value);
+  if (!result.success) {
+    throw new Error(`Invalid tab object returned from extension: ${z.prettifyError(result.error)}`);
+  }
+}
+
+export interface HomepageTabExtensionProps {
+  active: boolean;
+  register: (tab: HomepageTab) => () => void;
 }

@@ -9,9 +9,11 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	otelcodes "go.opentelemetry.io/otel/codes"
@@ -62,7 +64,7 @@ var (
 )
 
 type Lease struct {
-	key      leaseKey
+	key      atomic.Pointer[leaseKey]
 	holder   string
 	lostCh   chan struct{}
 	lostOnce sync.Once
@@ -135,6 +137,7 @@ type Manager struct {
 	log              logging.Logger
 	garbageCollector *garbageCollector
 	now              func() time.Time
+	metrics          *Metrics
 }
 
 // NewManager returns a Manager that uses store for persistence and identifies
@@ -148,7 +151,7 @@ func NewManager(store kv.KV, holder string, opts ...ManagerOption) *Manager {
 		log:          logging.DefaultLogger.With("logger", "lease-manager"),
 		now:          time.Now,
 	}
-	m.garbageCollector = newGarbageCollector(store, m.log, m.now)
+	m.garbageCollector = newGarbageCollector(store, m.log, m.now, m.metrics)
 	for _, opt := range opts {
 		opt(m)
 	}
@@ -193,6 +196,24 @@ func WithGarbageCollectionDisabled(m *Manager) {
 	m.garbageCollector = nil
 }
 
+// WithRegisterer registers Prometheus metrics for the Manager (and its
+// background garbage collector, if enabled) with reg. When the option is not
+// supplied, no metrics are recorded.
+func WithRegisterer(reg prometheus.Registerer) ManagerOption {
+	return WithMetrics(NewMetrics(reg))
+}
+
+// WithMetrics attaches an existing *Metrics to the Manager. Useful for tests
+// that want to inspect specific collectors after exercising the Manager.
+func WithMetrics(metrics *Metrics) ManagerOption {
+	return func(m *Manager) {
+		m.metrics = metrics
+		if m.garbageCollector != nil {
+			m.garbageCollector.metrics = metrics
+		}
+	}
+}
+
 // AcquireOption configures a single Acquire call.
 type AcquireOption func(*acquireOptions)
 
@@ -222,6 +243,7 @@ func WithAutoRenew() AcquireOption {
 // an unexpired lease for name is currently owned by some holder (including
 // possibly the caller).
 func (m *Manager) Acquire(ctx context.Context, name string, opts ...AcquireOption) (lease *Lease, retErr error) {
+	start := time.Now()
 	ctx, span := tracer.Start(ctx, "lease.Manager.Acquire", trace.WithAttributes(
 		attribute.String("lease.name", name),
 		attribute.String("lease.holder", m.holder),
@@ -231,6 +253,8 @@ func (m *Manager) Acquire(ctx context.Context, name string, opts ...AcquireOptio
 		recordSpanError(span, retErr)
 		span.SetAttributes(attribute.Int("attempts", attempts))
 		span.End()
+		m.metrics.observeAcquireRetries(attempts)
+		m.metrics.observeAcquireDuration(time.Since(start), acquireOutcome(retErr))
 	}()
 
 	if err := validateLeaseName(name); err != nil {
@@ -322,12 +346,12 @@ func (m *Manager) Acquire(ctx context.Context, name string, opts ...AcquireOptio
 		}
 
 		l := &Lease{
-			key:    key,
 			holder: m.holder,
 			lostCh: make(chan struct{}),
 			stop:   make(chan struct{}),
 			done:   make(chan struct{}),
 		}
+		l.key.Store(&key)
 
 		if cfg.autoRenew {
 			renewInterval := cfg.ttl / 3
@@ -342,25 +366,32 @@ func (m *Manager) Acquire(ctx context.Context, name string, opts ...AcquireOptio
 // Release releases lease. It is not idempotent: releasing a lease that has
 // already been released — or one that has expired — returns ErrLeaseLost.
 func (m *Manager) Release(ctx context.Context, lease *Lease) (retErr error) {
+	start := time.Now()
+	key := lease.key.Load()
 	ctx, span := tracer.Start(ctx, "lease.Manager.Release", trace.WithAttributes(
-		attribute.String("lease.name", lease.key.name),
+		attribute.String("lease.name", key.name),
 		attribute.String("lease.holder", lease.holder),
 	))
 	defer func() {
 		recordSpanError(span, retErr)
 		span.End()
+		m.metrics.observeReleaseDuration(time.Since(start), releaseOutcome(retErr))
 	}()
 
 	lease.stopOnce.Do(func() { close(lease.stop) })
 	<-lease.done
 	defer lease.notifyLoss()
 
-	meta, err := m.read(ctx, lease.key)
+	// Reload after the auto-renew goroutine has exited so we release the
+	// latest generation rather than one that the renewer may have just
+	// tombstoned.
+	key = lease.key.Load()
+	meta, err := m.read(ctx, *key)
 	if err != nil {
 		if errors.Is(err, kv.ErrNotFound) {
-			return fmt.Errorf("releasing %s~%d: %w (not found)", lease.key.name, lease.key.generation, ErrLeaseLost)
+			return fmt.Errorf("releasing %s~%d: %w (not found)", key.name, key.generation, ErrLeaseLost)
 		}
-		return fmt.Errorf("releasing %s~%d: %w", lease.key.name, lease.key.generation, err)
+		return fmt.Errorf("releasing %s~%d: %w", key.name, key.generation, err)
 	}
 
 	// Note that we're not guaranteed to return ErrLeaseLost if two managers for
@@ -371,13 +402,13 @@ func (m *Manager) Release(ctx context.Context, lease *Lease) (retErr error) {
 	// at this time.
 	now := m.now()
 	if meta.Holder != m.holder || !meta.ValidAsOf(now) {
-		return fmt.Errorf("releasing %s~%d: %w", lease.key.name, lease.key.generation, ErrLeaseLost)
+		return fmt.Errorf("releasing %s~%d: %w", key.name, key.generation, ErrLeaseLost)
 	}
 
 	meta.Deleted = true
 	meta.ReleasedAt = now.UnixNano()
-	if err := m.save(ctx, lease.key, meta); err != nil {
-		return fmt.Errorf("releasing %s~%d: %w", lease.key.name, lease.key.generation, err)
+	if err := m.save(ctx, *key, meta); err != nil {
+		return fmt.Errorf("releasing %s~%d: %w", key.name, key.generation, err)
 	}
 
 	return nil
@@ -394,21 +425,22 @@ func (m *Manager) Stop() {
 // RunGarbageCollection runs one garbage collection attempt synchronously.
 // Used for testing.
 func (m *Manager) RunGarbageCollection(ctx context.Context) (int, error) {
-	return newGarbageCollector(m.store, m.log, m.now).runOnce(ctx)
+	return newGarbageCollector(m.store, m.log, m.now, m.metrics).runOnce(ctx)
 }
 
 func (m *Manager) extendGeneration(ctx context.Context, lease *Lease, ttl time.Duration) (time.Time, error) {
-	meta, err := m.read(ctx, lease.key)
+	key := lease.key.Load()
+	meta, err := m.read(ctx, *key)
 	if err != nil {
-		return time.Time{}, fmt.Errorf("extending %s~%d: %w", lease.key.name, lease.key.generation, err)
+		return time.Time{}, fmt.Errorf("extending %s~%d: %w", key.name, key.generation, err)
 	}
 
 	now := m.now()
 	if meta.Holder != m.holder || !meta.ValidAsOf(now) {
-		return time.Time{}, fmt.Errorf("extending %s~%d: %w", lease.key.name, lease.key.generation, ErrLeaseLost)
+		return time.Time{}, fmt.Errorf("extending %s~%d: %w", key.name, key.generation, ErrLeaseLost)
 	}
 
-	newGeneration := lease.key.generation + 1
+	newGeneration := key.generation + 1
 	expires := now.Add(ttl)
 	state := leaseMetadata{
 		Holder:  m.holder,
@@ -426,19 +458,19 @@ func (m *Manager) extendGeneration(ctx context.Context, lease *Lease, ttl time.D
 		return time.Time{}, err
 	}
 
-	newKey := newLeaseKey(lease.key.name, newGeneration)
+	newKey := newLeaseKey(key.name, newGeneration)
 	err = m.store.Batch(ctx, kv.LeasesSection, []kv.BatchOp{
 		{Mode: kv.BatchOpCreate, Key: newKey.String(), Value: value},
-		{Mode: kv.BatchOpUpdate, Key: lease.key.String(), Value: tombstone},
+		{Mode: kv.BatchOpUpdate, Key: key.String(), Value: tombstone},
 	})
 	if errors.Is(err, kv.ErrKeyAlreadyExists) {
-		return time.Time{}, fmt.Errorf("extending %s~%d: %w", lease.key.name, lease.key.generation, ErrLeaseLost)
+		return time.Time{}, fmt.Errorf("extending %s~%d: %w", key.name, key.generation, ErrLeaseLost)
 	}
 	if err != nil {
-		return time.Time{}, fmt.Errorf("extending %s~%d: %w", lease.key.name, lease.key.generation, err)
+		return time.Time{}, fmt.Errorf("extending %s~%d: %w", key.name, key.generation, err)
 	}
 
-	lease.key = newKey
+	lease.key.Store(&newKey)
 	return expires, nil
 }
 
@@ -450,6 +482,7 @@ func (m *Manager) expiryLoop(lease *Lease, remaining time.Duration) {
 	case <-lease.stop:
 		return
 	case <-timer.C:
+		m.metrics.recordLoss(lossReasonExpired)
 		lease.notifyLoss()
 	}
 }
@@ -460,7 +493,8 @@ func (m *Manager) autoRenewLoop(lease *Lease, expiry time.Time, ttl, renewInterv
 	defer ticker.Stop()
 
 	for {
-		log := m.log.With("lease", lease.key.name, "holder", lease.holder, "generation", lease.key.generation)
+		key := lease.key.Load()
+		log := m.log.With("lease", key.name, "holder", lease.holder, "generation", key.generation)
 
 		select {
 		case <-lease.stop:
@@ -469,18 +503,21 @@ func (m *Manager) autoRenewLoop(lease *Lease, expiry time.Time, ttl, renewInterv
 			newExpiry, err := m.renewOnce(lease, ttl, renewInterval)
 			if errors.Is(err, ErrLeaseLost) {
 				log.Warn("lease lost to another holder during renewal", "err", err)
+				m.metrics.recordLoss(lossReasonLost)
 				lease.notifyLoss()
 				return
 			}
 			if err != nil {
 				if m.now().After(expiry) {
 					log.Error("lease lost: renewal retries exhausted before expiry", "err", err)
+					m.metrics.recordLoss(lossReasonError)
 					lease.notifyLoss()
 					return
 				}
 				log.Warn("lease renewal failed, will retry", "time_until_expiry", expiry.Sub(m.now()), "err", err)
 				continue
 			}
+			m.metrics.recordRenewal()
 			expiry = newExpiry
 		}
 	}
