@@ -540,7 +540,7 @@ export interface FeatureToggles {
   newDashboardWithFiltersAndGroupBy?: boolean;
   /**
   * Renders ad hoc filters and group by in a single unified control
-  * @default false
+  * @default true
   */
   dashboardUnifiedDrilldownControls?: boolean;
   /**
@@ -1257,12 +1257,12 @@ export interface FeatureToggles {
   pluginInstallAPISync?: boolean;
   /**
   * Enable style actions (copy/paste) in the panel editor
-  * @default false
+  * @default true
   */
   panelStyleActions?: boolean;
   /**
   * Enable visualization presets
-  * @default false
+  * @default true
   */
   vizPresets?: boolean;
   /**
@@ -1272,7 +1272,7 @@ export interface FeatureToggles {
   nestedFramesFieldOverrides?: boolean;
   /**
   * Enable faceted labels filter for series visibility in the legend
-  * @default false
+  * @default true
   */
   vizLegendFacetedFilter?: boolean;
   /**
@@ -1612,7 +1612,7 @@ export interface FeatureToggles {
   tracesDrilldownTimeSeeker?: boolean;
   /**
   * Mitigates React fiber's retention of previous props/state, causing 2x memory use: https://github.com/facebook/react/issues/36176
-  * @default false
+  * @default true
   */
   clearPreviousFieldValues?: boolean;
   /**
