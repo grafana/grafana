@@ -37,6 +37,7 @@ import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import { createWorker } from '../saving/createDetectChangesWorker';
 import { buildGridItemForPanel, transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
+import * as DashboardTemplateExtensionModule from '../settings/enterprise-components/DashboardTemplateExtension';
 import { getCloneKey } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { DashboardInteractions } from '../utils/interactions';
@@ -1835,6 +1836,59 @@ describe('DashboardScene', () => {
           expect(res).toBe(false);
         });
       }
+    });
+  });
+
+  describe('When restoring a template dashboard', () => {
+    it('delegates to the DashboardTemplateExtension instead of the dashboard API', async () => {
+      const scene = buildTestScene({ meta: { isDashboardTemplate: true } });
+      scene.onEnterEditMode();
+
+      const restoreSpy = jest.fn().mockResolvedValue(true);
+      jest.spyOn(DashboardTemplateExtensionModule, 'getDashboardTemplateExtension').mockReturnValue({
+        loadTemplate: jest.fn(),
+        listHistory: jest.fn(),
+        restore: restoreSpy,
+      });
+
+      const version = getVersionMock();
+      const result = await scene.onRestore(version);
+
+      expect(restoreSpy).toHaveBeenCalledWith(scene, version);
+      expect(result).toBe(true);
+    });
+  });
+
+  describe('openSaveDrawer with template flags', () => {
+    it('opens the drawer in saveAsDashboardTemplate mode', () => {
+      const scene = buildTestScene();
+      scene.onEnterEditMode();
+
+      scene.openSaveDrawer({ saveAsDashboardTemplate: true });
+
+      const overlay = scene.state.overlay;
+      expect(overlay).toBeInstanceOf(SaveDashboardDrawer);
+      expect((overlay as SaveDashboardDrawer).state.saveAsDashboardTemplate).toBe(true);
+      expect((overlay as SaveDashboardDrawer).state.saveDashboardTemplate).toBeUndefined();
+    });
+
+    it('opens the drawer in saveDashboardTemplate mode', () => {
+      const scene = buildTestScene();
+      scene.onEnterEditMode();
+
+      scene.openSaveDrawer({ saveDashboardTemplate: true });
+
+      const overlay = scene.state.overlay;
+      expect(overlay).toBeInstanceOf(SaveDashboardDrawer);
+      expect((overlay as SaveDashboardDrawer).state.saveDashboardTemplate).toBe(true);
+      expect((overlay as SaveDashboardDrawer).state.saveAsDashboardTemplate).toBeUndefined();
+    });
+
+    it('does nothing when the scene is not in edit mode', () => {
+      const scene = buildTestScene();
+      // Not entering edit mode
+      scene.openSaveDrawer({ saveAsDashboardTemplate: true });
+      expect(scene.state.overlay).toBeUndefined();
     });
   });
 

@@ -48,18 +48,18 @@ func (f *fakeClient) PredictEmbeddings(_ context.Context, _ string, texts []stri
 	return res, nil
 }
 
-func TestDenseEmbedder_EmbedText_ChunksAtBatchSize(t *testing.T) {
+func TestDenseEmbedder_EmbedText_ChunksAtDefaultBatchSize(t *testing.T) {
 	fc := &fakeClient{dim: 3, failAfter: -1}
-	e := NewDenseEmbedder(fc, "text-embedding-005", 0)
+	e := NewDenseEmbedder(fc, "text-embedding-005", 0, 50)
 
-	// 600 inputs → 3 chunks (250 + 250 + 100).
-	texts := make([]string, 600)
+	// 130 inputs at DefaultBatchSize=50 → 3 chunks (50 + 50 + 30).
+	texts := make([]string, 130)
 	for i := range texts {
 		texts[i] = "x"
 	}
 	out, err := e.EmbedText(context.Background(), embedder.EmbedTextInput{Texts: texts})
 	require.NoError(t, err)
-	require.Len(t, out.Embeddings, 600)
+	require.Len(t, out.Embeddings, 130)
 
 	fc.mu.Lock()
 	chunks := len(fc.calls)
@@ -71,12 +71,35 @@ func TestDenseEmbedder_EmbedText_ChunksAtBatchSize(t *testing.T) {
 
 	assert.Equal(t, 3, chunks)
 	// Concurrent dispatch — sort sizes for deterministic comparison.
-	assert.ElementsMatch(t, []int{250, 250, 100}, sizes)
+	assert.ElementsMatch(t, []int{50, 50, 30}, sizes)
+}
+
+func TestDenseEmbedder_EmbedText_HonorsConfiguredBatchSize(t *testing.T) {
+	fc := &fakeClient{dim: 3, failAfter: -1}
+	// Lower than the default to mimic an operator avoiding per-call
+	// token-limit blowups.
+	e := NewDenseEmbedder(fc, "text-embedding-005", 0, 25)
+
+	// 60 inputs at batchSize=25 → 3 chunks (25 + 25 + 10).
+	texts := make([]string, 60)
+	for i := range texts {
+		texts[i] = "x"
+	}
+	_, err := e.EmbedText(context.Background(), embedder.EmbedTextInput{Texts: texts})
+	require.NoError(t, err)
+
+	fc.mu.Lock()
+	sizes := make([]int, len(fc.calls))
+	for i, c := range fc.calls {
+		sizes[i] = len(c)
+	}
+	fc.mu.Unlock()
+	assert.ElementsMatch(t, []int{25, 25, 10}, sizes)
 }
 
 func TestDenseEmbedder_EmbedText_PassesTaskType(t *testing.T) {
 	fc := &fakeClient{dim: 3, failAfter: -1}
-	e := NewDenseEmbedder(fc, "text-embedding-005", 0)
+	e := NewDenseEmbedder(fc, "text-embedding-005", 0, 50)
 	_, err := e.EmbedText(context.Background(), embedder.EmbedTextInput{
 		Texts: []string{"a"},
 		Task:  embedder.TaskRetrievalQuery,
@@ -87,7 +110,7 @@ func TestDenseEmbedder_EmbedText_PassesTaskType(t *testing.T) {
 
 func TestDenseEmbedder_EmbedText_DefaultsToDocumentTask(t *testing.T) {
 	fc := &fakeClient{dim: 3, failAfter: -1}
-	e := NewDenseEmbedder(fc, "text-embedding-005", 0)
+	e := NewDenseEmbedder(fc, "text-embedding-005", 0, 50)
 	_, err := e.EmbedText(context.Background(), embedder.EmbedTextInput{Texts: []string{"a"}})
 	require.NoError(t, err)
 	assert.Equal(t, "RETRIEVAL_DOCUMENT", fc.wantTask)
@@ -97,7 +120,7 @@ func TestDenseEmbedder_EmbedText_NormalizesWhenAsked(t *testing.T) {
 	// fake returns vectors with first element == len(text); normalization should
 	// scale to unit length.
 	fc := &fakeClient{dim: 3, failAfter: -1}
-	e := NewDenseEmbedder(fc, "text-embedding-005", 0)
+	e := NewDenseEmbedder(fc, "text-embedding-005", 0, 50)
 	out, err := e.EmbedText(context.Background(), embedder.EmbedTextInput{
 		Texts:     []string{"abcd"},
 		Normalize: true,
@@ -112,7 +135,7 @@ func TestDenseEmbedder_EmbedText_NormalizesWhenAsked(t *testing.T) {
 
 func TestDenseEmbedder_EmbedText_EmptyInput(t *testing.T) {
 	fc := &fakeClient{dim: 3, failAfter: -1}
-	e := NewDenseEmbedder(fc, "text-embedding-005", 0)
+	e := NewDenseEmbedder(fc, "text-embedding-005", 0, 50)
 	out, err := e.EmbedText(context.Background(), embedder.EmbedTextInput{})
 	require.NoError(t, err)
 	assert.Empty(t, out.Embeddings)
@@ -121,7 +144,7 @@ func TestDenseEmbedder_EmbedText_EmptyInput(t *testing.T) {
 
 func TestDenseEmbedder_EmbedText_PropagatesError(t *testing.T) {
 	fc := &fakeClient{dim: 3, failAfter: 1}
-	e := NewDenseEmbedder(fc, "text-embedding-005", 0)
+	e := NewDenseEmbedder(fc, "text-embedding-005", 0, 50)
 	_, err := e.EmbedText(context.Background(), embedder.EmbedTextInput{Texts: []string{"a", "b"}})
 	require.Error(t, err)
 }
