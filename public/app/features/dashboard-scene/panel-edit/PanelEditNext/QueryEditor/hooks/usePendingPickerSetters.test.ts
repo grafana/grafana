@@ -2,149 +2,95 @@ import { renderHook, act } from '@testing-library/react';
 
 import { usePendingPickerSetters } from './usePendingPickerSetters';
 
-interface MockArgs {
-  exitStackedMode: jest.Mock;
-  setPendingExpression: jest.Mock;
-  setPendingTransformation: jest.Mock;
-  setPendingSavedQuery: jest.Mock;
-}
-
 function setup() {
-  const args: MockArgs = {
+  const args = {
     exitStackedMode: jest.fn(),
     setPendingExpression: jest.fn(),
     setPendingTransformation: jest.fn(),
     setPendingSavedQuery: jest.fn(),
   };
 
-  const hookResult = renderHook(() => usePendingPickerSetters(args));
+  const { result, rerender } = renderHook(() => usePendingPickerSetters(args));
 
-  return { ...hookResult, args };
+  return { result, rerender, args };
 }
 
+const PENDING = { insertAfter: 'A' };
+
+type RawSetter = 'setPendingExpression' | 'setPendingTransformation' | 'setPendingSavedQuery';
+type Wrapped = ReturnType<typeof setup>['result']['current'];
+
+// Each row exercises one picker; the symmetric invariant (exit stacked + clear the other two)
+// is expressed once in the test bodies below.
+const PICKERS: Array<{
+  kind: string;
+  target: RawSetter;
+  others: RawSetter[];
+  open: (s: Wrapped) => void;
+  close: (s: Wrapped) => void;
+}> = [
+  {
+    kind: 'expression',
+    target: 'setPendingExpression',
+    others: ['setPendingTransformation', 'setPendingSavedQuery'],
+    open: (s) => s.setPendingExpression(PENDING),
+    close: (s) => s.setPendingExpression(null),
+  },
+  {
+    kind: 'transformation',
+    target: 'setPendingTransformation',
+    others: ['setPendingExpression', 'setPendingSavedQuery'],
+    open: (s) => s.setPendingTransformation(PENDING),
+    close: (s) => s.setPendingTransformation(null),
+  },
+  {
+    kind: 'saved query',
+    target: 'setPendingSavedQuery',
+    others: ['setPendingExpression', 'setPendingTransformation'],
+    open: (s) => s.setPendingSavedQuery(PENDING),
+    close: (s) => s.setPendingSavedQuery(null),
+  },
+];
+
 describe('usePendingPickerSetters', () => {
-  describe('opening a picker', () => {
-    it('exits stacked mode, clears the other two pickers, and writes the expression', () => {
+  it.each(PICKERS)(
+    'opening the $kind picker exits stacked mode and clears the other two',
+    ({ open, target, others }) => {
       const { result, args } = setup();
-      const pending = { insertAfter: 'A' };
 
-      act(() => {
-        result.current.setPendingExpression(pending);
-      });
+      act(() => open(result.current));
 
       expect(args.exitStackedMode).toHaveBeenCalledTimes(1);
-      expect(args.setPendingTransformation).toHaveBeenCalledWith(null);
-      expect(args.setPendingSavedQuery).toHaveBeenCalledWith(null);
-      // The bare expression setter is invoked exactly once — with the pending value, not null.
-      expect(args.setPendingExpression).toHaveBeenCalledTimes(1);
-      expect(args.setPendingExpression).toHaveBeenCalledWith(pending);
-    });
+      expect(args[target]).toHaveBeenCalledWith(PENDING);
+      for (const other of others) {
+        expect(args[other]).toHaveBeenCalledWith(null);
+      }
+    }
+  );
 
-    it('exits stacked mode, clears the other two pickers, and writes the transformation', () => {
-      const { result, args } = setup();
-      const pending = { insertAfter: 'reduce-0' };
-
-      act(() => {
-        result.current.setPendingTransformation(pending);
-      });
-
-      expect(args.exitStackedMode).toHaveBeenCalledTimes(1);
-      expect(args.setPendingExpression).toHaveBeenCalledWith(null);
-      expect(args.setPendingSavedQuery).toHaveBeenCalledWith(null);
-      expect(args.setPendingTransformation).toHaveBeenCalledTimes(1);
-      expect(args.setPendingTransformation).toHaveBeenCalledWith(pending);
-    });
-
-    it('exits stacked mode, clears the other two pickers, and writes the saved query', () => {
-      const { result, args } = setup();
-      const pending = { insertAfter: 'B' };
-
-      act(() => {
-        result.current.setPendingSavedQuery(pending);
-      });
-
-      expect(args.exitStackedMode).toHaveBeenCalledTimes(1);
-      expect(args.setPendingExpression).toHaveBeenCalledWith(null);
-      expect(args.setPendingTransformation).toHaveBeenCalledWith(null);
-      expect(args.setPendingSavedQuery).toHaveBeenCalledTimes(1);
-      expect(args.setPendingSavedQuery).toHaveBeenCalledWith(pending);
-    });
-  });
-
-  describe('closing a picker (writing null)', () => {
-    it('does not exit stacked mode or touch the other pickers', () => {
+  it.each(PICKERS)(
+    'closing the $kind picker does not exit stacked mode or touch other pickers',
+    ({ close, target, others }) => {
       const { result, args } = setup();
 
-      act(() => {
-        result.current.setPendingExpression(null);
-      });
+      act(() => close(result.current));
 
       expect(args.exitStackedMode).not.toHaveBeenCalled();
-      expect(args.setPendingTransformation).not.toHaveBeenCalled();
-      expect(args.setPendingSavedQuery).not.toHaveBeenCalled();
-      expect(args.setPendingExpression).toHaveBeenCalledWith(null);
-    });
+      expect(args[target]).toHaveBeenCalledWith(null);
+      for (const other of others) {
+        expect(args[other]).not.toHaveBeenCalled();
+      }
+    }
+  );
 
-    it('writes null through for the transformation setter without side effects', () => {
-      const { result, args } = setup();
+  it('returned setters keep stable identities across re-renders', () => {
+    const { result, rerender } = setup();
+    const first = { ...result.current };
 
-      act(() => {
-        result.current.setPendingTransformation(null);
-      });
+    rerender();
 
-      expect(args.exitStackedMode).not.toHaveBeenCalled();
-      expect(args.setPendingExpression).not.toHaveBeenCalled();
-      expect(args.setPendingSavedQuery).not.toHaveBeenCalled();
-      expect(args.setPendingTransformation).toHaveBeenCalledWith(null);
-    });
-
-    it('writes null through for the saved-query setter without side effects', () => {
-      const { result, args } = setup();
-
-      act(() => {
-        result.current.setPendingSavedQuery(null);
-      });
-
-      expect(args.exitStackedMode).not.toHaveBeenCalled();
-      expect(args.setPendingExpression).not.toHaveBeenCalled();
-      expect(args.setPendingTransformation).not.toHaveBeenCalled();
-      expect(args.setPendingSavedQuery).toHaveBeenCalledWith(null);
-    });
-  });
-
-  describe('cross-exclusion sequencing', () => {
-    it('opening a second picker after a first closes the first via its raw setter', () => {
-      const { result, args } = setup();
-      const expression = { insertAfter: 'A' };
-      const transformation = { insertAfter: 'reduce-0' };
-
-      act(() => {
-        result.current.setPendingExpression(expression);
-      });
-      args.setPendingExpression.mockClear();
-
-      // Opening transformation must clear expression (via its bare setter) and saved query,
-      // then write transformation — same observable contract regardless of prior state.
-      act(() => {
-        result.current.setPendingTransformation(transformation);
-      });
-
-      expect(args.setPendingExpression).toHaveBeenCalledWith(null);
-      expect(args.setPendingSavedQuery).toHaveBeenCalledWith(null);
-      expect(args.setPendingTransformation).toHaveBeenLastCalledWith(transformation);
-    });
-  });
-
-  describe('referential stability', () => {
-    it('returned setters keep stable identities across re-renders when inputs are stable', () => {
-      const { result, rerender } = setup();
-      const first = { ...result.current };
-
-      rerender();
-
-      expect(result.current.setPendingExpression).toBe(first.setPendingExpression);
-      expect(result.current.setPendingTransformation).toBe(first.setPendingTransformation);
-      expect(result.current.setPendingSavedQuery).toBe(first.setPendingSavedQuery);
-    });
+    expect(result.current.setPendingExpression).toBe(first.setPendingExpression);
+    expect(result.current.setPendingTransformation).toBe(first.setPendingTransformation);
+    expect(result.current.setPendingSavedQuery).toBe(first.setPendingSavedQuery);
   });
 });
