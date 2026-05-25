@@ -139,12 +139,12 @@ func TestNewSearchClient(t *testing.T) {
 
 	// When the flag is enabled, storage should be able to make a grpc call to search
 	t.Run("storage to search grpc call carries authlib token when flag is enabled", func(t *testing.T) {
-		searchServer := createTestGrpcServer(t, ":11002")
+		searchServer := createTestGrpcServer(t, ":0")
 		defer searchServer.s.Stop()
 
 		cfg := setting.NewCfg()
 		cfg.EnableSearchClient = true
-		cfg.Raw.Section("grafana-apiserver").Key("search_server_address").SetValue(":11002")
+		cfg.Raw.Section("grafana-apiserver").Key("search_server_address").SetValue(searchServer.addr)
 
 		client, err := NewStorageApiSearchClient(cfg, featuremgmt.WithFeatures(featuremgmt.FlagAppPlatformGrpcClientAuth))
 		require.NoError(t, err)
@@ -169,12 +169,12 @@ func TestNewSearchClient(t *testing.T) {
 	// which requires identity.Requester in ctx. A ctx without one must fail
 	// before the call leaves the process — this is the bug being fixed.
 	t.Run("legacy branch fails outbound when ctx has no Requester", func(t *testing.T) {
-		searchServer := createTestGrpcServer(t, ":11003")
+		searchServer := createTestGrpcServer(t, ":0")
 		defer searchServer.s.Stop()
 
 		cfg := setting.NewCfg()
 		cfg.EnableSearchClient = true
-		cfg.Raw.Section("grafana-apiserver").Key("search_server_address").SetValue(":11003")
+		cfg.Raw.Section("grafana-apiserver").Key("search_server_address").SetValue(searchServer.addr)
 
 		client, err := NewStorageApiSearchClient(cfg, featuremgmt.WithFeatures())
 		require.NoError(t, err)
@@ -213,6 +213,7 @@ func createTestGrpcServer(t *testing.T, address string) *testServer {
 	}()
 
 	testServer.s = s
+	testServer.addr = listener.Addr().String()
 
 	return testServer
 }
@@ -223,6 +224,7 @@ type testServer struct {
 	Metadata map[string]metadata.MD
 	mu       sync.Mutex
 	s        *grpc.Server
+	addr     string
 }
 
 func newTestServer() *testServer {
