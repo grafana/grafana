@@ -20,29 +20,20 @@ interface UseStackedModeOrchestrationArgs {
   onEnter?: () => void;
 }
 
-interface UseStackedModeOrchestrationResult {
-  /** Public stacked-mode API consumed via `uiState.stackedMode`. */
-  stackedMode: StackedEditorState;
-  /**
-   * Imperative setter for paths that need to force-exit stacked mode without going through
-   * `stackedMode.exit` (alert selection, picker setters, multi-select toggle).
-   */
-  setStackedModeForView: (enabled: boolean) => void;
-}
-
 /**
  * Owns the stacked-mode state machine: the on/off boolean, the imperative scroll bridge,
  * and the `enter` / `exit` / `syncActiveItem` callbacks.
  *
  * Lives outside `QueryEditorContextWrapper` so the wrapper doesn't carry the stacked-only
- * plumbing inline. The wrapper composes this hook and exposes `stackedMode` on its context.
+ * plumbing inline. The wrapper composes this hook and exposes the returned `stackedMode`
+ * on its context. Callers that need to force-exit reach for `stackedMode.exit`.
  */
 export function useStackedModeOrchestration({
   onCardSelectionChange,
   selectedQueryRefIds,
   selectedTransformationIds,
   onEnter,
-}: UseStackedModeOrchestrationArgs): UseStackedModeOrchestrationResult {
+}: UseStackedModeOrchestrationArgs): StackedEditorState {
   const [isStackedMode, setIsStackedMode] = useState(false);
 
   // Imperative scroll bridge: the active StackedEditorRenderer publishes its scroll function
@@ -56,10 +47,6 @@ export function useStackedModeOrchestration({
     scrollHandlerRef.current = handler;
   }, []);
 
-  const setStackedModeForView = useCallback((enabled: boolean) => {
-    setIsStackedMode(enabled);
-  }, []);
-
   // `enter` is invoked imperatively from a button click, so reading the latest selection
   // and onEnter via refs is safe and keeps `enter` referentially stable across selections.
   const selectedQueryRefIdsRef = useRef(selectedQueryRefIds);
@@ -71,6 +58,9 @@ export function useStackedModeOrchestration({
 
   const enter = useCallback(() => {
     onEnterRef.current?.();
+    // Prefer the most-recently-selected transformation as the primary card. Transformations are
+    // downstream of queries in the pipeline, so if both are selected the user is most likely
+    // working on the transformation step.
     const primaryTransformationId = selectedTransformationIdsRef.current.at(-1);
     const primaryQueryRefId = selectedQueryRefIdsRef.current.at(-1);
     if (primaryTransformationId) {
@@ -78,12 +68,12 @@ export function useStackedModeOrchestration({
     } else if (primaryQueryRefId) {
       onCardSelectionChange(primaryQueryRefId, null);
     }
-    setStackedModeForView(true);
-  }, [onCardSelectionChange, setStackedModeForView]);
+    setIsStackedMode(true);
+  }, [onCardSelectionChange]);
 
   const exit = useCallback(() => {
-    setStackedModeForView(false);
-  }, [setStackedModeForView]);
+    setIsStackedMode(false);
+  }, []);
 
   const syncActiveItem = useCallback(
     (item: StackedEditorItem) => {
@@ -96,7 +86,7 @@ export function useStackedModeOrchestration({
     [onCardSelectionChange]
   );
 
-  const stackedMode = useMemo<StackedEditorState>(
+  return useMemo<StackedEditorState>(
     () => ({
       enabled: isStackedMode,
       enter,
@@ -107,6 +97,4 @@ export function useStackedModeOrchestration({
     }),
     [isStackedMode, enter, exit, syncActiveItem, requestScroll, setScrollHandler]
   );
-
-  return { stackedMode, setStackedModeForView };
 }

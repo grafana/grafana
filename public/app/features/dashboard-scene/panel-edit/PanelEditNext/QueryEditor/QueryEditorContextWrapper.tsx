@@ -106,7 +106,7 @@ export function QueryEditorContextWrapper({
     [onCardSelectionChangeRaw]
   );
 
-  const { stackedMode, setStackedModeForView } = useStackedModeOrchestration({
+  const stackedMode = useStackedModeOrchestration({
     onCardSelectionChange,
     selectedQueryRefIds,
     selectedTransformationIds,
@@ -118,7 +118,7 @@ export function QueryEditorContextWrapper({
   });
   // Destructured for tight dep arrays in the selection handlers below — these property reads
   // are referentially stable when their underlying state doesn't change.
-  const { enabled: isStackedMode, requestScroll: requestStackedScroll } = stackedMode;
+  const { enabled: isStackedMode, exit: exitStackedMode, requestScroll: requestStackedScroll } = stackedMode;
 
   const toggleQuerySelection = useCallback(
     (query: DataQuery | ExpressionQuery, modifiers?: SelectionModifiers) => {
@@ -162,22 +162,22 @@ export function QueryEditorContextWrapper({
 
   const selectAlert = useCallback(
     (alertId: string | null) => {
-      setStackedModeForView(false);
+      exitStackedMode();
       setSelectedAlertId(alertId);
       setConfirmingDeleteActionKey(null);
       clearSelectionRaw();
     },
-    [clearSelectionRaw, setStackedModeForView]
+    [clearSelectionRaw, exitStackedMode]
   );
 
   const setMultiSelectModeForView = useCallback(
     (enabled: boolean) => {
       if (enabled) {
-        setStackedModeForView(false);
+        exitStackedMode();
       }
       setMultiSelectMode(enabled);
     },
-    [setStackedModeForView]
+    [exitStackedMode]
   );
 
   // Wraps onCardSelectionChange with a UI reset for use in finalizePendingExpression /
@@ -230,8 +230,6 @@ export function QueryEditorContextWrapper({
     addTransformation: addTransformationAction,
     onCardSelectionChange: onFinalizeCardSelection,
   });
-
-  const exitStackedMode = useCallback(() => setStackedModeForView(false), [setStackedModeForView]);
 
   const { setPendingExpression, setPendingTransformation, setPendingSavedQuery } = usePendingPickerSetters({
     exitStackedMode,
