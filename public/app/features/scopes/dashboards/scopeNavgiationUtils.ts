@@ -69,7 +69,7 @@ export function isCurrentPath(pathname: string, to: string): boolean {
   const isDashboard = to.startsWith('/d/');
 
   if (isDashboard) {
-    // For dashboards, the title is appended to the path when we navigate to just the dashboard id, hence we need to disregard this
+    // For dashboards, the title/slug is appended to the path after the dashboard id, hence we need to disregard it on the left (browser pathname)
     return getDashboardPathForComparison(pathname) === normalizePath(to);
   }
   //Ignore query params

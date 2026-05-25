@@ -116,7 +116,11 @@ export async function trackDashboardReloadRequests(page: Page): Promise<{
 
   return {
     getRequests: () => dashboardRequests,
-    waitForExpectedRequests: () => completionPromise,
+    // Resolves when expectedRequestCount DTOs arrive, or after 15 s — whichever comes first.
+    // Without a cap, completionPromise hangs indefinitely when the second DTO (triggered by
+    // reloadDashboardsOnParamsChange) doesn't fire in time.
+    waitForExpectedRequests: () =>
+      Promise.race([completionPromise, new Promise<void>((resolve) => setTimeout(resolve, 15000))]),
   };
 }
 

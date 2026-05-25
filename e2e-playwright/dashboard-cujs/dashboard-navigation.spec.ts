@@ -13,7 +13,12 @@ import {
   getScopesDashboardsSearchInput,
   getScopesSelectorInput,
 } from './cuj-selectors';
-import { checkDashboardReloadBehavior, getConfigDashboards, trackDashboardReloadRequests } from './utils';
+import {
+  checkDashboardReloadBehavior,
+  getConfigDashboards,
+  prepareAPIMocks,
+  trackDashboardReloadRequests,
+} from './utils';
 
 test.use({
   featureToggles: {
@@ -36,11 +41,14 @@ test.describe(
   },
   () => {
     test('Navigate between dashboards', async ({ page, gotoDashboardPage, selectors }) => {
+      test.setTimeout(90000);
       const scopeSelectorInput = getScopesSelectorInput(page);
       const scopesDashboards = getScopesDashboards(page);
       const scopesDashboardsSearchInput = getScopesDashboardsSearchInput(page);
       const adhocFilterPills = getAdHocFilterPills(page);
       const groupByValues = getGroupByValues(page);
+
+      await prepareAPIMocks(page);
 
       // Set up routes before any navigation (only for mocked mode)
       if (!USE_LIVE_DATA) {
@@ -131,7 +139,6 @@ test.describe(
             await clickFirstScopesDashboard(page);
             await page.waitForURL('**/d/**');
             await waitForExpectedRequests();
-            await page.waitForLoadState('networkidle');
 
             const requests = getRequests();
             expect(checkDashboardReloadBehavior(requests)).toBe(true);

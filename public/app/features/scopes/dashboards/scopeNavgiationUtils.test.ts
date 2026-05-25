@@ -17,6 +17,12 @@ describe('scopeNavgiationUtils', () => {
   it('should return the correct path for a navigation', () => {
     expect(isCurrentPath('/d/dashboardId/slug', '/d/dashboardId')).toBe(true);
     expect(isCurrentPath('/d/dashboardId', '/d/dashboardId')).toBe(true);
+    // API returns URLs without slugs, so only the browser pathname (left) is stripped
+    expect(isCurrentPath('/d/dashboardId/slug', '/d/dashboardId/another-slug')).toBe(false);
+    expect(isCurrentPath('/d/dashboardId', '/d/dashboardId/slug')).toBe(false);
+    // Different dashboards should not match
+    expect(isCurrentPath('/d/dashboardId1', '/d/dashboardId2')).toBe(false);
+    expect(isCurrentPath('/d/dashboardId1/slug', '/d/dashboardId2/slug')).toBe(false);
   });
 
   it('shoudl handle non-dashboard paths', () => {
