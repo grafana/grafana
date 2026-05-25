@@ -87,10 +87,11 @@ func (a *api) registerEndpoints() {
 			}
 
 			gotParams := web.Params(c.Req)
-			resourceID := gotParams[":resourceID"]
-			resourceID, err := resTranslator(c.Req.Context(), c.OrgID, resourceID)
+			resourceUID := gotParams[":resourceID"]
+			translatedID, err := resTranslator(c.Req.Context(), c.OrgID, resourceUID)
 			if err == nil {
-				gotParams[":resourceID"] = resourceID
+				gotParams[":resourceUID"] = resourceUID // preserve original UID for the K8s adapter
+				gotParams[":resourceID"] = translatedID // overwrite with numeric ID for auth middleware
 				web.SetURLParams(c.Req, gotParams)
 			} else {
 				c.JsonApiErr(http.StatusNotFound, "Not found", nil)
@@ -376,6 +377,9 @@ func (a *api) setUserPermission(c *contextmodel.ReqContext) response.Response {
 		err := a.setUserPermissionInTeamMembers(c, c.Namespace, resourceID, userID, cmd.Permission)
 		if err != nil {
 			span.RecordError(err)
+			if errors.Is(err, ErrExternalTeamMember) {
+				return response.Err(err)
+			}
 			if errors.Is(err, ErrRestConfigNotAvailable) {
 				a.logger.Debug("k8s API not available for team permissions via team members, continuing with legacy", "error", err, "resourceID", resourceID)
 			} else {

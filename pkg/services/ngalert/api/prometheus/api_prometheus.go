@@ -29,7 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
-	"github.com/grafana/grafana/pkg/util"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -1207,13 +1206,13 @@ func filterRulesByState(ruleGroup *apimodels.RuleGroup, withStatesFast map[eval.
 		var state *eval.State
 		switch rule.State {
 		case "normal", "inactive":
-			state = util.Pointer(eval.Normal)
+			state = new(eval.Normal)
 		case "alerting", "firing":
-			state = util.Pointer(eval.Alerting)
+			state = new(eval.Alerting)
 		case "pending":
-			state = util.Pointer(eval.Pending)
+			state = new(eval.Pending)
 		case "recovering":
-			state = util.Pointer(eval.Recovering)
+			state = new(eval.Recovering)
 		}
 		if state != nil {
 			if _, ok := withStatesFast[*state]; ok {

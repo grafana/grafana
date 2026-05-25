@@ -39,6 +39,7 @@ export interface CloudMonitoringOptions extends DataSourceOptions {
   gceDefaultProject?: string;
   enableSecureSocksProxy?: boolean;
   universeDomain?: string;
+  oauthPassThru?: boolean;
 }
 
 export interface CloudMonitoringSecureJsonData extends DataSourceSecureJsonData {}

@@ -139,7 +139,8 @@ type APIBuilder struct {
 	registry                      prometheus.Registerer
 	quotaGetter                   quotas.QuotaGetter
 	folderMetadataEnabled         bool
-	maxIncrementalChanges         int
+	maxFileSize                   int64
+	incrementalPolicy             repository.IncrementalSyncPolicy
 	folderAPIVersion              string
 	webhookSecretRotationInterval time.Duration
 }
@@ -188,7 +189,8 @@ func NewAPIBuilder(
 	quotaGetter quotas.QuotaGetter,
 	folderMetadataEnabled bool,
 	folderAPIVersion string,
-	maxIncrementalChanges int,
+	incrementalPolicy repository.IncrementalSyncPolicy,
+	maxFileSize int64,
 ) (*APIBuilder, error) {
 	var clients resources.ClientFactory
 	if newStandaloneClientFactoryFunc != nil {
@@ -240,7 +242,9 @@ func NewAPIBuilder(
 		quotaGetter:                         quotaGetter,
 		folderMetadataEnabled:               folderMetadataEnabled,
 		folderAPIVersion:                    folderAPIVersion,
-		maxIncrementalChanges:               maxIncrementalChanges,
+		incrementalPolicy:                   incrementalPolicy,
+		// Per-file cap for the files API. Non-positive (<=0) disables the cap.
+		maxFileSize: maxFileSize,
 	}
 
 	for _, builder := range extraBuilders {
@@ -315,7 +319,8 @@ func RegisterAPIService(
 	jobHistoryConfig := createJobHistoryConfigFromSettings(cfg)
 	folderMetadataEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata) //nolint:staticcheck
 	folderAPIVersion := cfg.ProvisioningFolderAPIVersion
-	maxIncrementalChanges := cfg.ProvisioningMaxIncrementalChanges
+	maxFileSize := cfg.ProvisioningMaxFileSize
+	incrementalPolicy := repository.NewIncrementalSyncPolicy(folderMetadataEnabled, cfg.ProvisioningMaxIncrementalChanges)
 
 	// Register v0alpha1 (preferred version)
 	builder, err := NewAPIBuilder(
@@ -347,7 +352,8 @@ func RegisterAPIService(
 		quotaGetter,
 		folderMetadataEnabled,
 		folderAPIVersion,
-		maxIncrementalChanges,
+		incrementalPolicy,
+		maxFileSize,
 	)
 	if err != nil {
 		return nil, err
@@ -385,7 +391,8 @@ func RegisterAPIService(
 		quotaGetter,
 		folderMetadataEnabled,
 		folderAPIVersion,
-		maxIncrementalChanges,
+		incrementalPolicy,
+		maxFileSize,
 	)
 	if err != nil {
 		return nil, err
@@ -802,7 +809,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	// connector via ProvisioningAuthorizer.AuthorizeResource, and repository-
 	// level operations remain Admin-gated by authorizeRepositorySubresource.
 	filesAccess := auth.NewVerbAwareAccessChecker(b.accessWithViewer, b.accessWithEditor)
-	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, filesAccess, b.folderMetadataEnabled, b.folderAPIVersion)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, filesAccess, b.folderMetadataEnabled, b.folderAPIVersion, b.maxFileSize)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = NewRefsConnector(b)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = &listConnector{
 		getter: b,
@@ -921,6 +928,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				metrics,
 				b.tracer,
 				10,
+				b.maxFileSize,
 			)
 
 			// Migration export preserves original names so the takeover
@@ -1042,9 +1050,8 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.minSyncInterval,
 				30*time.Second,
 				b.quotaGetter,
-				b.folderMetadataEnabled,
+				b.incrementalPolicy,
 				b.folderAPIVersion,
-				b.maxIncrementalChanges,
 				webhookSecretRotationInterval,
 			)
 			if err != nil {

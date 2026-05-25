@@ -57,7 +57,10 @@ export function PluginDetailsPage({
   const { isLoading: isFetchDetailsLoading } = useFetchDetailsStatus();
   const styles = useStyles2(getStyles);
 
-  if (isFetchLoading || isFetchDetailsLoading) {
+  // Gate on `!plugin?.details` so post-action refetches (e.g. fetchDetails after install) keep
+  // the page mounted — otherwise the "Refresh the page" notice in PluginActions is lost. Initial
+  // fetches still hit the loader because tabs read from plugin.details and would flash empty.
+  if (isFetchLoading || (isFetchDetailsLoading && !plugin?.details)) {
     return (
       <Page
         navId={navId}

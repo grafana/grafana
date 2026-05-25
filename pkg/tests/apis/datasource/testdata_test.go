@@ -1,6 +1,7 @@
 package datasource
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"maps"
@@ -12,12 +13,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/utils/ptr"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	datasourceV0alpha1 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/chunked"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -46,6 +47,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 			featuremgmt.FlagDatasourceUseNewCRUDAPIs,                   // enables CRUD endpoints
 			featuremgmt.FlagDatasourcesApiServerEnableResourceEndpoint, // enables resource endpoint
 			featuremgmt.FlagDatasourcesApiServerEnableHealthEndpoint,   // enables health endpoint
+			featuremgmt.FlagDatasourcesChunkedQueryStreaming,           // enable chunked streaming responses for queries
 		},
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 			"datasources.grafana-testdata-datasource.datasource.grafana.app": {
@@ -254,9 +256,9 @@ func TestIntegrationTestDatasource(t *testing.T) {
 			require.Equal(t, 1, frame.Fields[1].Len())
 			require.Equal(t, 1, frame.Fields[2].Len())
 
-			require.Equal(t, ptr.To(int64(1)), frame.Fields[0].At(0))
-			require.Equal(t, ptr.To("two"), frame.Fields[1].At(0))
-			require.Equal(t, ptr.To(false), frame.Fields[2].At(0))
+			require.Equal(t, new(int64(1)), frame.Fields[0].At(0))
+			require.Equal(t, new("two"), frame.Fields[1].At(0))
+			require.Equal(t, new(false), frame.Fields[2].At(0))
 		}
 
 		// The standard JSON request/response
@@ -278,6 +280,31 @@ func TestIntegrationTestDatasource(t *testing.T) {
 
 			qdr := &backend.QueryDataResponse{}
 			err = json.Unmarshal(raw, qdr)
+
+			checkCSVResult(qdr.Responses["A"])
+			checkCSVResult(qdr.Responses["B"])
+		})
+
+		t.Run("chunked", func(t *testing.T) {
+			var statusCode int
+			result := adminClient.Post().
+				Namespace("default").
+				Resource("datasources").
+				Name("test"). // datasource UID
+				SubResource("query").
+				SetHeader("Content-type", "application/json").
+				SetHeader("Accept", chunked.CONTENT_TYPE). // <<< get a chunked response
+				Body(body).
+				Do(ctx).
+				StatusCode(&statusCode)
+
+			require.Equal(t, int(http.StatusOK), statusCode) // query success
+			raw, _ := result.Raw()
+			require.NotNil(t, raw)
+
+			// Read JSON lines
+			qdr, err := chunked.AccumulateJSONLines(bytes.NewReader(raw))
+			require.NoError(t, err)
 
 			checkCSVResult(qdr.Responses["A"])
 			checkCSVResult(qdr.Responses["B"])

@@ -1,24 +1,48 @@
 import { v4 as uuidv4 } from 'uuid';
 
-import { getDefaultTimeRange, DataFrameView } from '@grafana/data';
+import {
+  type AdHocVariableFilter,
+  DataFrameView,
+  getDefaultTimeRange,
+  type ScopedVars,
+  type TimeRange,
+} from '@grafana/data';
 import { QueryFormat, type SQLQuery, type SQLSelectableValue } from '@grafana/plugin-ui';
 import { type DataQuery } from '@grafana/schema';
 
 import { quoteIdentifierIfNecessary, unquoteIdentifier } from 'app/plugins/datasource/mysql/sqlUtil';
 import { dataSource } from '../ExpressionDatasource';
 
-export async function fetchSQLFields(query: Partial<SQLQuery>, queries: DataQuery[]): Promise<SQLSelectableValue[]> {
+import { interpolateSourceQueries } from './interpolateSourceQueries';
+
+export interface FetchSQLFieldsOptions {
+  range?: TimeRange;
+  scopedVars?: ScopedVars;
+  filters?: AdHocVariableFilter[];
+}
+
+export async function fetchSQLFields(
+  query: Partial<SQLQuery>,
+  queries: DataQuery[],
+  options: FetchSQLFieldsOptions = {}
+): Promise<SQLSelectableValue[]> {
   const datasource = dataSource;
   if (!query.table) {
     return [];
   }
 
-  const queryString = `SELECT * FROM ${quoteIdentifierIfNecessary(unquoteIdentifier(query.table))} LIMIT 1`;
+const queryString = `SELECT * FROM ${quoteIdentifierIfNecessary(unquoteIdentifier(query.table))} LIMIT 1`;
+const sourceQueries = queries.filter((q) => q.refId === query.table);
+const interpolatedSourceQueries = await interpolateSourceQueries(
+    sourceQueries,
+    options.scopedVars ?? {},
+    options.filters
+);
 
-  const queryResponse = await datasource.runMetaSQLExprQuery(
+const queryResponse = await datasource.runMetaSQLExprQuery(
     { rawSql: queryString, format: QueryFormat.Table, refId: `fields-${uuidv4()}` },
-    getDefaultTimeRange(),
-    queries.filter((q) => q.refId === query.table)
+    options.range ?? getDefaultTimeRange(),
+    interpolatedSourceQueries
   );
   const frame = new DataFrameView<string[]>(queryResponse);
 

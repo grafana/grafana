@@ -39,7 +39,7 @@ var _ auth.UserTokenService = (*UserAuthTokenService)(nil)
 
 func ProvideUserAuthTokenService(ctx context.Context, sqlStore db.DB,
 	serverLockService *serverlock.ServerLockService,
-	quotaService quota.Service, secretService secrets.Service,
+	quotaService quota.Service, secretService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	cfgProvider configprovider.ConfigProvider, tracer tracing.Tracer,
 	features featuremgmt.FeatureToggles,
 ) (*UserAuthTokenService, error) {

@@ -515,7 +515,8 @@
         "edit-yaml": "Modifier le fichier YAML",
         "save": "Enregistrer"
       },
-      "error-title": ""
+      "error-title": "",
+      "no-group-success": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "nom",
@@ -1153,6 +1154,9 @@
         "rule-viewer-section-extension": "Échec du chargement de la section d’enrichissement de la visionneuse de règles"
       }
     },
+    "entities": {
+      "group": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "Échec de la mise à jour de votre configuration :",
       "title-something-went-wrong": "Une erreur s'est produite"
@@ -1161,10 +1165,14 @@
       "content-show-all-errors": "Afficher toutes les erreurs"
     },
     "errors": {
+      "api-machinery": {
+        "with-causes": ""
+      },
       "failedWith": "{{-config}} a échoué avec le statut {{status}} : {{-message}}"
     },
     "evaluate-every-validation-options": {
       "message": {
+        "none-not-allowed": "",
         "required": "Obligatoire."
       }
     },
@@ -2869,6 +2877,11 @@
         },
         "group-name": "Nom du groupe d'évaluation",
         "group-text": "Toutes les règles du groupe sélectionné sont évaluées tous les {{evaluateEvery}}.",
+        "interval-label": "",
+        "mode": {
+          "legacy": "",
+          "new": ""
+        },
         "new-group": "Nouveau groupe d'évaluation",
         "pause": {
           "alerting": "Activez pour mettre en pause l'évaluation de cette règle d'alerte.",
@@ -3174,9 +3187,7 @@
       "deleting": "Suppression",
       "text-federated": "Fédéré",
       "text-provisioned": "Mis en service",
-      "ungrouped": "Non groupé",
-      "ungrouped-suffix": "{{ruleName}} (non groupé)",
-      "unknown-rule": "Règle inconnue"
+      "ungrouped": "Non groupé"
     },
     "saved-searches": {
       "actions-aria-label": "Actions",
@@ -4462,6 +4473,14 @@
       "resource-detail-dashboards": "Vous avez créé {{usage}} tableaux de bord sur {{limit}} ({{percentage}} %).",
       "resource-detail-folders": "Vous avez créé {{usage}} dossiers sur {{limit}} ({{percentage}} %)."
     },
+    "readme": {
+      "add-readme": "",
+      "edit-tooltip": "",
+      "empty-message": "",
+      "load-error-retry": "",
+      "load-error-title": "",
+      "parse-error": ""
+    },
     "recently-viewed": {
       "clear": "Effacer l’historique",
       "error": "Impossible de charger les tableaux de bord consultés récemment.",
@@ -5270,7 +5289,7 @@
   },
   "dashboard": {
     "actions": {
-      "open-settings": "Paramètres"
+      "open-settings": ""
     },
     "add": {
       "new-panel": {
@@ -5672,7 +5691,7 @@
         "title": "Variables"
       },
       "variable": {
-        "change-type": "Modifier",
+        "change-type": "",
         "change-type-aria-label": "Modifier le type de variable",
         "custom-options": {
           "apply": "Appliquer",
@@ -5989,7 +6008,7 @@
       "cancel": "Annuler",
       "common": {
         "copy": "Copier",
-        "copy-or-duplicate": "Copier/coller ou dupliquer",
+        "copy-tooltip": "",
         "delete": "Supprimer",
         "duplicate": "Dupliquer",
         "layout": "Mise en page",
@@ -6028,7 +6047,7 @@
     },
     "new-panel": {
       "aria-label": "Panneau non configuré. Appuyez sur la touche Tab pour afficher les options de configuration.",
-      "configure-button": "Configurer",
+      "configure-button": "",
       "configure-button-menu": "Afficher/Masquer le menu",
       "configure-visualization": "Configurer la visualisation",
       "empty-state-message": "Exécutez une requête pour la visualiser ici ou accédez à toutes les visualisations, afin d’ajouter d’autres types de panneaux",
@@ -6270,10 +6289,8 @@
       "title-provisioned": "Tableau de bord provisionné"
     },
     "save-dashboard-error-proxy": {
-      "body-name-exists": "Un tableau de bord portant le même nom existe déjà dans le dossier sélectionné.<br/><2>Souhaitez-vous quand même enregistrer ce tableau de bord ?</2>",
       "body-version-mismatch": "Quelqu’un d’autre a mis à jour ce tableau de bord<br/><2>Souhaitez-vous quand même enregistrer ce tableau de bord ?</2>",
       "confirmText-save-and-overwrite": "Enregistrer et écraser",
-      "title-name-exists": "Conflits",
       "title-version-mismatch": "Conflits"
     },
     "save-dashboard-form": {
@@ -7328,10 +7345,6 @@
       "target-path-label": "Chemin de destination",
       "title-this-repository-is-read-only": "Ce dépôt est en lecture seule"
     },
-    "name-already-exists-error": {
-      "body-name-already-exists": "Un tableau de bord du même nom existe déjà dans le dossier sélectionné. Voulez-vous toujours enregistrer ce tableau de bord ?",
-      "title-name-already-exists": "Nom déjà existant"
-    },
     "on-open-snapshot-original-dashboard": {
       "confirmText": {
         "proceed": "Continuer"
@@ -8038,19 +8051,6 @@
       "aria-label-create-a-dashboard": "Créer un tableau de bord",
       "aria-label-explore-data": "Explorer les données",
       "aria-label-suggested-dashboards": "Tableaux de bord suggérés"
-    },
-    "alerting-enabled": {
-      "text-alerting-not-supported": "Alertes non prises en charge",
-      "text-alerting-supported": "Alertes prises en charge"
-    },
-    "basic-serttings": {
-      "tooltip-name": "Le nom est utilisé lorsque vous sélectionnez la source de données dans les panneaux. La source de données par défaut est présélectionnée dans les nouveaux panneaux."
-    },
-    "basic-settings": {
-      "aria-label-datasource-settings-page-basic": "Paramètres de base de la page des paramètres de la source de données",
-      "basic-settings-name-placeholder-name": "Nom",
-      "label-default": "Par défaut",
-      "label-name": "Nom"
     },
     "build-a-dashboard-button": {
       "blank": "Vide",
@@ -10861,6 +10861,21 @@
     "name-line-width": "Épaisseur de ligne",
     "name-stacking": "Empilement"
   },
+  "home": {
+    "home-page": {
+      "edition": {
+        "cloud": "",
+        "enterprise": "",
+        "open-source": ""
+      },
+      "greeting": {
+        "afternoon": "",
+        "evening": "",
+        "morning": ""
+      },
+      "placeholder": ""
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "Chargement en cours",
@@ -11255,7 +11270,7 @@
     "description-order": "Afficher les journaux les plus récents ou les plus anciens en premier. Lorsque l’option Les plus anciens en premier est sélectionnée, la vue défile automatiquement vers les journaux les plus récents, situés en bas.",
     "description-prettify-json": "Formater les entrées de journal JSON avec retraits et retours à la ligne.",
     "description-show-controls": "Afficher les commandes pour accéder à la première ou à la dernière ligne du journal et filtrer par niveau de journal.",
-    "description-show-log-attributes": "En phase de test. Lorsque les journaux OTel sont affichés, ajouter un champ supplémentaire contenant les paires clé-valeur pertinentes issues des étiquettes et des métadonnées.",
+    "description-show-log-attributes": "",
     "description-unwrapped-columns": "Aligner les valeurs à l’aide de colonnes lorsque les champs affichés sont utilisés.",
     "description-wrap-lines": "Afficher les journaux sur une seule ligne ou retourner à la ligne pour les entrées de journal longues afin de les adapter au panneau.",
     "field-selector": {
@@ -11342,6 +11357,8 @@
       "clear-search": "Effacer",
       "close-inline-details": "Fermer les détails de ce journal",
       "close-sidebar-details": "Fermer la barre latérale des détails du journal",
+      "copy-log-line": "",
+      "copy-log-line-json": "",
       "copy-shortlink": "Copier le lien court",
       "copy-to-clipboard": "Copier dans le presse-papiers",
       "displayed-fields-section": "Organiser les champs affichés",
@@ -11390,7 +11407,8 @@
     },
     "log-line-menu": {
       "copy-link": "Copier le lien vers la ligne de journal",
-      "copy-log": "Copier la ligne de journal",
+      "copy-log-contents": "",
+      "copy-log-message": "",
       "hide-details": "Afficher les détails du journal",
       "icon-label": "Menu du journal",
       "log-line": "Ligne de journal",
@@ -11581,7 +11599,7 @@
       "line-contains-not": "Ajouter car la ligne ne contient pas de filtre",
       "search-text": "Rechercher dans les résultats"
     },
-    "show-log-attributes": "Afficher les attributs de journal pour les journaux OTel",
+    "show-log-attributes": "",
     "timestamp-format": "Résolution des horodatages",
     "un-themed-log-details": {
       "aria-label-data-links": "Données de liaison",
@@ -14839,9 +14857,6 @@
       "home-dashboard-placeholder": "Tableau de bord par défaut",
       "language-preference-label": "Langue",
       "language-preference-placeholder": "Choisir une langue",
-      "locale-preference-description": "Choisissez votre région pour voir la date, l’heure et le format numérique correspondants",
-      "locale-preference-label": "Format de la région",
-      "locale-preference-placeholder": "Choisir une région",
       "theme-description": "Vous aimez les thèmes expérimentaux ? Dites-nous ce que vous aimeriez voir <2>ici.</2>",
       "theme-label": "Thème de l'interface utilisateur",
       "week-start-label": "Début de la semaine"
@@ -15141,6 +15156,8 @@
     },
     "support-bundles-unconnected": {
       "created-on": "Créé le",
+      "deprecation-warning-message": "",
+      "deprecation-warning-title": "",
       "download": "Télécharger",
       "expires": "Expire",
       "requested-by": "Demandé par",
@@ -15541,8 +15558,8 @@
     },
     "legend": {
       "category": "Légende",
-      "description-faceted-filter": "Afficher le filtre de visibilité des séries en fonction des étiquettes",
-      "name-faceted-filter": "Filtre à facettes"
+      "description-faceted-filter": "",
+      "name-faceted-filter": ""
     },
     "line-style-editor": {
       "line-fill-options": {
@@ -16032,7 +16049,9 @@
       "description": {
         "group-by-field-value": "Regroupez les données selon la valeur d’un champ et créez des tableaux imbriqués avec les données regroupées."
       },
+      "description-expand-nested-rows": "",
       "description-show-field-names": "Si activés, les tableaux imbriqués afficheront les noms de champs comme en-tête de tableau",
+      "label-expand-nested-rows-by-default": "",
       "label-show-field-names-in-nested-tables": "Afficher les noms de champs dans les tableaux imbriqués",
       "name": {
         "group-to-nested-tables": "Regrouper en tableaux imbriqués"

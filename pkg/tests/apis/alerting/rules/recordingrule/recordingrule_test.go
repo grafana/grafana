@@ -7,18 +7,15 @@ import (
 	"testing"
 	"time"
 
+	prom_model "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
-
-	prom_model "github.com/prometheus/common/model"
-
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tests/apis/alerting/rules/common"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -57,10 +54,10 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 			Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
 			Expressions: v0alpha1.RecordingRuleExpressionMap{
 				"A": {
-					QueryType:     util.Pointer(rule.Data[0].QueryType),
-					DatasourceUID: util.Pointer(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+					QueryType:     new(rule.Data[0].QueryType),
+					DatasourceUID: new(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 					Model:         rule.Data[0].Model,
-					Source:        util.Pointer(true),
+					Source:        new(true),
 					RelativeTimeRange: &v0alpha1.RecordingRuleRelativeTimeRange{
 						From: v0alpha1.RecordingRulePromDurationWMillis("5m"),
 						To:   v0alpha1.RecordingRulePromDurationWMillis("0s"),
@@ -155,10 +152,10 @@ func TestIntegrationAccessControl(t *testing.T) {
 			Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
 			Expressions: v0alpha1.RecordingRuleExpressionMap{
 				"A": {
-					QueryType:     util.Pointer(rule.Data[0].QueryType),
-					DatasourceUID: util.Pointer(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+					QueryType:     new(rule.Data[0].QueryType),
+					DatasourceUID: new(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 					Model:         rule.Data[0].Model,
-					Source:        util.Pointer(true),
+					Source:        new(true),
 					RelativeTimeRange: &v0alpha1.RecordingRuleRelativeTimeRange{
 						From: v0alpha1.RecordingRulePromDurationWMillis("5m"),
 						To:   v0alpha1.RecordingRulePromDurationWMillis("0s"),
@@ -240,10 +237,10 @@ func TestIntegrationCRUD(t *testing.T) {
 				Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
 				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
-						QueryType:     util.Pointer(rule.Data[0].QueryType),
-						DatasourceUID: util.Pointer(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						QueryType:     new(rule.Data[0].QueryType),
+						DatasourceUID: new(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 						Model:         rule.Data[0].Model,
-						Source:        util.Pointer(true),
+						Source:        new(true),
 						RelativeTimeRange: &v0alpha1.RecordingRuleRelativeTimeRange{
 							From: v0alpha1.RecordingRulePromDurationWMillis("5m"),
 							To:   v0alpha1.RecordingRulePromDurationWMillis("0s"),
@@ -292,10 +289,10 @@ func TestIntegrationCRUD(t *testing.T) {
 				Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
 				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
-						QueryType:     util.Pointer(rule.Data[0].QueryType),
-						DatasourceUID: util.Pointer(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						QueryType:     new(rule.Data[0].QueryType),
+						DatasourceUID: new(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 						Model:         rule.Data[0].Model,
-						Source:        util.Pointer(true),
+						Source:        new(true),
 						RelativeTimeRange: &v0alpha1.RecordingRuleRelativeTimeRange{
 							From: v0alpha1.RecordingRulePromDurationWMillis("5m"),
 							To:   v0alpha1.RecordingRulePromDurationWMillis("0s"),
@@ -350,10 +347,10 @@ func TestIntegrationCRUD(t *testing.T) {
 				Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
 				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
-						QueryType:     util.Pointer(rule.Data[0].QueryType),
-						DatasourceUID: util.Pointer(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						QueryType:     new(rule.Data[0].QueryType),
+						DatasourceUID: new(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 						Model:         rule.Data[0].Model,
-						Source:        util.Pointer(true),
+						Source:        new(true),
 						RelativeTimeRange: &v0alpha1.RecordingRuleRelativeTimeRange{
 							From: v0alpha1.RecordingRulePromDurationWMillis("5m"),
 							To:   v0alpha1.RecordingRulePromDurationWMillis("0s"),
@@ -402,8 +399,8 @@ func TestIntegrationCRUD(t *testing.T) {
 				Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
 				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
-						QueryType:     util.Pointer(rule.Data[0].QueryType),
-						DatasourceUID: util.Pointer(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						QueryType:     new(rule.Data[0].QueryType),
+						DatasourceUID: new(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 						Model:         rule.Data[0].Model,
 						RelativeTimeRange: &v0alpha1.RecordingRuleRelativeTimeRange{
 							From: v0alpha1.RecordingRulePromDurationWMillis("5m"),
@@ -438,10 +435,10 @@ func TestIntegrationCRUD(t *testing.T) {
 				Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
 				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
-						QueryType:     util.Pointer(rule.Data[0].QueryType),
-						DatasourceUID: util.Pointer(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						QueryType:     new(rule.Data[0].QueryType),
+						DatasourceUID: new(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 						Model:         rule.Data[0].Model,
-						Source:        util.Pointer(true),
+						Source:        new(true),
 						RelativeTimeRange: &v0alpha1.RecordingRuleRelativeTimeRange{
 							From: v0alpha1.RecordingRulePromDurationWMillis("5m"),
 							To:   v0alpha1.RecordingRulePromDurationWMillis("0s"),
@@ -492,10 +489,10 @@ func TestIntegrationPatch(t *testing.T) {
 			Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
 			Expressions: v0alpha1.RecordingRuleExpressionMap{
 				"A": {
-					QueryType:     util.Pointer(rule.Data[0].QueryType),
-					DatasourceUID: util.Pointer(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+					QueryType:     new(rule.Data[0].QueryType),
+					DatasourceUID: new(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 					Model:         rule.Data[0].Model,
-					Source:        util.Pointer(true),
+					Source:        new(true),
 					RelativeTimeRange: &v0alpha1.RecordingRuleRelativeTimeRange{
 						From: v0alpha1.RecordingRulePromDurationWMillis("5m"),
 						To:   v0alpha1.RecordingRulePromDurationWMillis("0s"),
@@ -593,10 +590,10 @@ func TestIntegrationFolderLabelSyncAndValidation(t *testing.T) {
 				Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
 				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
-						QueryType:     util.Pointer(rule.Data[0].QueryType),
-						DatasourceUID: util.Pointer(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						QueryType:     new(rule.Data[0].QueryType),
+						DatasourceUID: new(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 						Model:         rule.Data[0].Model,
-						Source:        util.Pointer(true),
+						Source:        new(true),
 						RelativeTimeRange: &v0alpha1.RecordingRuleRelativeTimeRange{
 							From: v0alpha1.RecordingRulePromDurationWMillis("5m"),
 							To:   v0alpha1.RecordingRulePromDurationWMillis("0s"),
@@ -638,10 +635,10 @@ func TestIntegrationFolderLabelSyncAndValidation(t *testing.T) {
 				Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
 				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
-						QueryType:     util.Pointer(rule.Data[0].QueryType),
-						DatasourceUID: util.Pointer(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						QueryType:     new(rule.Data[0].QueryType),
+						DatasourceUID: new(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 						Model:         rule.Data[0].Model,
-						Source:        util.Pointer(true),
+						Source:        new(true),
 						RelativeTimeRange: &v0alpha1.RecordingRuleRelativeTimeRange{
 							From: v0alpha1.RecordingRulePromDurationWMillis("5m"),
 							To:   v0alpha1.RecordingRulePromDurationWMillis("0s"),
@@ -675,10 +672,10 @@ func TestIntegrationFolderLabelSyncAndValidation(t *testing.T) {
 				Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
 				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
-						QueryType:     util.Pointer(rule.Data[0].QueryType),
-						DatasourceUID: util.Pointer(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						QueryType:     new(rule.Data[0].QueryType),
+						DatasourceUID: new(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 						Model:         rule.Data[0].Model,
-						Source:        util.Pointer(true),
+						Source:        new(true),
 						RelativeTimeRange: &v0alpha1.RecordingRuleRelativeTimeRange{
 							From: v0alpha1.RecordingRulePromDurationWMillis("5m"),
 							To:   v0alpha1.RecordingRulePromDurationWMillis("0s"),
@@ -725,10 +722,10 @@ func TestIntegrationListWithLabelSelectors(t *testing.T) {
 				Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
 				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
-						QueryType:     util.Pointer(rule.Data[0].QueryType),
-						DatasourceUID: util.Pointer(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						QueryType:     new(rule.Data[0].QueryType),
+						DatasourceUID: new(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 						Model:         rule.Data[0].Model,
-						Source:        util.Pointer(true),
+						Source:        new(true),
 						RelativeTimeRange: &v0alpha1.RecordingRuleRelativeTimeRange{
 							From: v0alpha1.RecordingRulePromDurationWMillis("5m"),
 							To:   v0alpha1.RecordingRulePromDurationWMillis("0s"),
@@ -809,10 +806,10 @@ func TestIntegrationListWithFieldSelectors(t *testing.T) {
 				Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
 				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
-						QueryType:     util.Pointer(rule.Data[0].QueryType),
-						DatasourceUID: util.Pointer(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						QueryType:     new(rule.Data[0].QueryType),
+						DatasourceUID: new(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 						Model:         rule.Data[0].Model,
-						Source:        util.Pointer(true),
+						Source:        new(true),
 						RelativeTimeRange: &v0alpha1.RecordingRuleRelativeTimeRange{
 							From: v0alpha1.RecordingRulePromDurationWMillis("5m"),
 							To:   v0alpha1.RecordingRulePromDurationWMillis("0s"),
@@ -830,6 +827,7 @@ func TestIntegrationListWithFieldSelectors(t *testing.T) {
 		r1 := baseRule("rr-fs-folder")
 		r1.Spec.Title = "rr-field-sel-title-unique-xyz"
 		r2 := baseRule("rr-fs-folder")
+		r2.Spec.Title = "rr-field-sel-title-unique-other"
 
 		c1, err := client.Create(ctx, r1, v1.CreateOptions{})
 		require.NoError(t, err)
@@ -840,17 +838,33 @@ func TestIntegrationListWithFieldSelectors(t *testing.T) {
 			_ = client.Delete(ctx, c2.Name, v1.DeleteOptions{})
 		})
 
-		list, err := client.List(ctx, v1.ListOptions{FieldSelector: "spec.title=rr-field-sel-title-unique-xyz"})
-		require.NoError(t, err)
-		require.Len(t, list.Items, 1)
-		require.Equal(t, "rr-field-sel-title-unique-xyz", list.Items[0].Spec.Title)
+		t.Run("equals returns only matching rules", func(t *testing.T) {
+			list, err := client.List(ctx, v1.ListOptions{FieldSelector: "spec.title=rr-field-sel-title-unique-xyz"})
+			require.NoError(t, err)
+			require.Len(t, list.Items, 1)
+			require.Equal(t, "rr-field-sel-title-unique-xyz", list.Items[0].Spec.Title)
+		})
+
+		t.Run("not-equals returns only rules whose title differs", func(t *testing.T) {
+			list, err := client.List(ctx, v1.ListOptions{
+				LabelSelector: "grafana.app/folder=rr-fs-folder",
+				FieldSelector: "spec.title!=rr-field-sel-title-unique-xyz",
+			})
+			require.NoError(t, err)
+			titles := make([]string, 0, len(list.Items))
+			for _, item := range list.Items {
+				titles = append(titles, item.Spec.Title)
+			}
+			require.Contains(t, titles, "rr-field-sel-title-unique-other")
+			require.NotContains(t, titles, "rr-field-sel-title-unique-xyz")
+		})
 	})
 
 	t.Run("filter by spec.paused", func(t *testing.T) {
 		paused1 := baseRule("rr-fs-folder")
-		paused1.Spec.Paused = util.Pointer(true)
+		paused1.Spec.Paused = new(true)
 		paused2 := baseRule("rr-fs-folder")
-		paused2.Spec.Paused = util.Pointer(true)
+		paused2.Spec.Paused = new(true)
 		active1 := baseRule("rr-fs-folder")
 		active2 := baseRule("rr-fs-folder")
 
@@ -891,6 +905,89 @@ func TestIntegrationListWithFieldSelectors(t *testing.T) {
 			require.Len(t, list.Items, 2)
 			for _, item := range list.Items {
 				require.True(t, item.Spec.Paused == nil || !*item.Spec.Paused)
+			}
+		})
+	})
+
+	t.Run("filter by spec.metric", func(t *testing.T) {
+		matchMetric := "rr_match_metric_unique"
+		r1 := baseRule("rr-fs-folder")
+		r1.Spec.Metric = v0alpha1.RecordingRuleMetricName(matchMetric)
+		r2 := baseRule("rr-fs-folder")
+		r2.Spec.Metric = v0alpha1.RecordingRuleMetricName(matchMetric)
+		r3 := baseRule("rr-fs-folder") // a different unique metric from baseRule
+
+		c1, err := client.Create(ctx, r1, v1.CreateOptions{})
+		require.NoError(t, err)
+		c2, err := client.Create(ctx, r2, v1.CreateOptions{})
+		require.NoError(t, err)
+		c3, err := client.Create(ctx, r3, v1.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = client.Delete(ctx, c1.Name, v1.DeleteOptions{})
+			_ = client.Delete(ctx, c2.Name, v1.DeleteOptions{})
+			_ = client.Delete(ctx, c3.Name, v1.DeleteOptions{})
+		})
+
+		t.Run("equals returns only matching rules", func(t *testing.T) {
+			list, err := client.List(ctx, v1.ListOptions{FieldSelector: "spec.metric=" + matchMetric})
+			require.NoError(t, err)
+			require.Len(t, list.Items, 2)
+			for _, item := range list.Items {
+				require.Equal(t, matchMetric, string(item.Spec.Metric))
+			}
+		})
+
+		t.Run("not-equals excludes matching rules", func(t *testing.T) {
+			list, err := client.List(ctx, v1.ListOptions{
+				LabelSelector: "grafana.app/folder=rr-fs-folder",
+				FieldSelector: "spec.metric!=" + matchMetric,
+			})
+			require.NoError(t, err)
+			for _, item := range list.Items {
+				require.NotEqual(t, matchMetric, string(item.Spec.Metric))
+			}
+		})
+	})
+
+	t.Run("filter by spec.targetDatasourceUID", func(t *testing.T) {
+		matchUID := "rr-target-ds-unique-uid"
+		r1 := baseRule("rr-fs-folder")
+		r1.Spec.TargetDatasourceUID = v0alpha1.RecordingRuleDatasourceUID(matchUID)
+		r2 := baseRule("rr-fs-folder")
+		r2.Spec.TargetDatasourceUID = v0alpha1.RecordingRuleDatasourceUID(matchUID)
+		r3 := baseRule("rr-fs-folder")
+		r3.Spec.TargetDatasourceUID = v0alpha1.RecordingRuleDatasourceUID("rr-target-ds-other-uid")
+
+		c1, err := client.Create(ctx, r1, v1.CreateOptions{})
+		require.NoError(t, err)
+		c2, err := client.Create(ctx, r2, v1.CreateOptions{})
+		require.NoError(t, err)
+		c3, err := client.Create(ctx, r3, v1.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = client.Delete(ctx, c1.Name, v1.DeleteOptions{})
+			_ = client.Delete(ctx, c2.Name, v1.DeleteOptions{})
+			_ = client.Delete(ctx, c3.Name, v1.DeleteOptions{})
+		})
+
+		t.Run("equals returns only matching rules", func(t *testing.T) {
+			list, err := client.List(ctx, v1.ListOptions{FieldSelector: "spec.targetDatasourceUID=" + matchUID})
+			require.NoError(t, err)
+			require.Len(t, list.Items, 2)
+			for _, item := range list.Items {
+				require.Equal(t, matchUID, string(item.Spec.TargetDatasourceUID))
+			}
+		})
+
+		t.Run("not-equals excludes matching rules", func(t *testing.T) {
+			list, err := client.List(ctx, v1.ListOptions{
+				LabelSelector: "grafana.app/folder=rr-fs-folder",
+				FieldSelector: "spec.targetDatasourceUID!=" + matchUID,
+			})
+			require.NoError(t, err)
+			for _, item := range list.Items {
+				require.NotEqual(t, matchUID, string(item.Spec.TargetDatasourceUID))
 			}
 		})
 	})

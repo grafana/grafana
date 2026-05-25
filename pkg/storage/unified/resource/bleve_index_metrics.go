@@ -9,24 +9,24 @@ import (
 )
 
 type BleveIndexMetrics struct {
-	IndexLatency            *prometheus.HistogramVec
-	IndexSize               prometheus.Gauge
-	IndexedKinds            *prometheus.GaugeVec
-	IndexCreationTime       *prometheus.HistogramVec
-	OpenIndexes             *prometheus.GaugeVec
-	IndexBuilds             *prometheus.CounterVec
-	IndexBuildFailures      prometheus.Counter
-	IndexBuildSkipped       prometheus.Counter
-	UpdateLatency           prometheus.Histogram
-	UpdatedDocuments        prometheus.Summary
-	SearchUpdateWaitTime    *prometheus.HistogramVec
-	RebuildQueueLength      prometheus.Gauge
-	SearchLegacyQueryFields prometheus.Counter
+	IndexLatency         *prometheus.HistogramVec
+	IndexSize            prometheus.Gauge
+	IndexedKinds         *prometheus.GaugeVec
+	IndexCreationTime    *prometheus.HistogramVec
+	OpenIndexes          *prometheus.GaugeVec
+	IndexBuilds          *prometheus.CounterVec
+	IndexBuildFailures   prometheus.Counter
+	IndexBuildSkipped    prometheus.Counter
+	UpdateLatency        prometheus.Histogram
+	UpdatedDocuments     prometheus.Summary
+	SearchUpdateWaitTime *prometheus.HistogramVec
+	RebuildQueueLength   prometheus.Gauge
 
 	IndexSnapshotDownloads                *prometheus.CounterVec
 	IndexSnapshotDownloadDuration         prometheus.Histogram
 	IndexSnapshotUploads                  *prometheus.CounterVec
 	IndexSnapshotUploadDuration           prometheus.Histogram
+	IndexSnapshotBuildCoordinations       *prometheus.CounterVec
 	IndexSnapshotNamespaceCleanups        *prometheus.CounterVec
 	IndexSnapshotDeleted                  *prometheus.CounterVec
 	IndexSnapshotIncompleteUploadsCleaned prometheus.Counter
@@ -98,14 +98,10 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 			Name: "index_server_rebuild_queue_length",
 			Help: "Number of indexes waiting for rebuild",
 		}),
-		SearchLegacyQueryFields: promauto.With(reg).NewCounter(prometheus.CounterOpts{
-			Name: "index_server_search_legacy_query_fields_total",
-			Help: "Search requests using query fields without title_ngram. Used to monitor when it is safe to remove ngram from title.",
-		}),
 		IndexSnapshotDownloads: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "index_server_snapshot_downloads_total",
-			Help: "Number of remote index snapshot download attempts at index build time, by outcome.",
-		}, []string{"status"}), // status: success, empty, download_error, validate_error
+			Help: "Number of remote index snapshot download attempts at index build time, by selection policy and outcome.",
+		}, []string{"policy", "status"}), // policy: tiered, same_version. status: success, empty, download_error, validate_error
 		IndexSnapshotDownloadDuration: promauto.With(reg).NewHistogram(prometheus.HistogramOpts{
 			Name:                            "index_server_snapshot_download_duration_seconds",
 			Help:                            "Duration of successful remote index snapshot downloads, including open and validation.",
@@ -117,7 +113,7 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 		IndexSnapshotUploads: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "index_server_snapshot_uploads_total",
 			Help: "Number of remote index snapshot upload attempts, by outcome.",
-		}, []string{"status"}), // status: success, skip_no_changes, skip_lock_contention, error
+		}, []string{"status"}), // status: success, skip_no_changes, skip_lock_contention, skip_lock_lost, skip_recent_remote, skip_not_owner, error
 		IndexSnapshotUploadDuration: promauto.With(reg).NewHistogram(prometheus.HistogramOpts{
 			Name:                            "index_server_snapshot_upload_duration_seconds",
 			Help:                            "Duration of successful remote index snapshot uploads, including snapshot creation.",
@@ -126,6 +122,10 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
 		}),
+		IndexSnapshotBuildCoordinations: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "index_server_snapshot_build_coordinations_total",
+			Help: "Number of snapshot build coordination outcomes, by flow and outcome.",
+		}, []string{"flow", "outcome"}), // flow: cold_start, rebuild. outcome: acquired_lock, downloaded_after_wait, wait_timed_out, lock_error, context_canceled
 		IndexSnapshotNamespaceCleanups: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "index_server_snapshot_namespace_cleanups_total",
 			Help: "Number of namespace-level remote index snapshot cleanup attempts, by outcome.",
@@ -157,14 +157,26 @@ func (m *BleveIndexMetrics) InitSnapshotMetrics() {
 	if m == nil {
 		return
 	}
-	m.IndexSnapshotDownloads.WithLabelValues("success").Add(0)
-	m.IndexSnapshotDownloads.WithLabelValues("empty").Add(0)
-	m.IndexSnapshotDownloads.WithLabelValues("download_error").Add(0)
-	m.IndexSnapshotDownloads.WithLabelValues("validate_error").Add(0)
+	for _, policy := range []string{"tiered", "same_version", "cold_start"} {
+		m.IndexSnapshotDownloads.WithLabelValues(policy, "success").Add(0)
+		m.IndexSnapshotDownloads.WithLabelValues(policy, "empty").Add(0)
+		m.IndexSnapshotDownloads.WithLabelValues(policy, "download_error").Add(0)
+		m.IndexSnapshotDownloads.WithLabelValues(policy, "validate_error").Add(0)
+	}
 	m.IndexSnapshotUploads.WithLabelValues("success").Add(0)
 	m.IndexSnapshotUploads.WithLabelValues("skip_no_changes").Add(0)
 	m.IndexSnapshotUploads.WithLabelValues("skip_lock_contention").Add(0)
+	m.IndexSnapshotUploads.WithLabelValues("skip_lock_lost").Add(0)
+	m.IndexSnapshotUploads.WithLabelValues("skip_recent_remote").Add(0)
+	m.IndexSnapshotUploads.WithLabelValues("skip_not_owner").Add(0)
 	m.IndexSnapshotUploads.WithLabelValues("error").Add(0)
+	for _, flow := range []string{"cold_start", "rebuild"} {
+		m.IndexSnapshotBuildCoordinations.WithLabelValues(flow, "acquired_lock").Add(0)
+		m.IndexSnapshotBuildCoordinations.WithLabelValues(flow, "downloaded_after_wait").Add(0)
+		m.IndexSnapshotBuildCoordinations.WithLabelValues(flow, "wait_timed_out").Add(0)
+		m.IndexSnapshotBuildCoordinations.WithLabelValues(flow, "lock_error").Add(0)
+		m.IndexSnapshotBuildCoordinations.WithLabelValues(flow, "context_canceled").Add(0)
+	}
 	m.IndexSnapshotNamespaceCleanups.WithLabelValues("success").Add(0)
 	m.IndexSnapshotNamespaceCleanups.WithLabelValues("error").Add(0)
 	m.IndexSnapshotNamespaceCleanups.WithLabelValues("skip_lock_held").Add(0)
