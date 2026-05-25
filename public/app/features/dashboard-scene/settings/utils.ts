@@ -10,15 +10,6 @@ import { useSelector } from 'app/types/store';
 
 import { type DashboardScene } from '../scene/DashboardScene';
 
-import { AnnotationsEditView } from './AnnotationsEditView';
-import { DashboardLinksEditView } from './DashboardLinksEditView';
-import { DashboardTemplateEditView } from './DashboardTemplateEditView';
-import { GeneralSettingsEditView } from './GeneralSettingsEditView';
-import { JsonModelEditView } from './JsonModelEditView';
-import { PermissionsEditView } from './PermissionsEditView';
-import { VariablesEditView } from './VariablesEditView';
-import { VersionsEditView } from './VersionsEditView';
-
 export interface DashboardEditViewState extends SceneObjectState {}
 
 export interface DashboardEditListViewState extends DashboardEditViewState {
@@ -99,26 +90,4 @@ export function useDashboardEditPageNav(dashboard: DashboardScene, currentEditVi
   });
 
   return { navModel, pageNav };
-}
-
-export function createDashboardEditViewFor(editview: string): DashboardEditView {
-  switch (editview) {
-    case 'annotations':
-      return new AnnotationsEditView({});
-    case 'variables':
-      return new VariablesEditView({});
-    case 'links':
-      return new DashboardLinksEditView({});
-    case 'versions':
-      return new VersionsEditView({});
-    case 'json-model':
-      return new JsonModelEditView({});
-    case 'permissions':
-      return new PermissionsEditView({});
-    case 'template':
-      return new DashboardTemplateEditView({});
-    case 'settings':
-    default:
-      return new GeneralSettingsEditView({});
-  }
 }
