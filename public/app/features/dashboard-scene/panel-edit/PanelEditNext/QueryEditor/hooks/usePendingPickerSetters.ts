@@ -3,15 +3,12 @@ import { useCallback } from 'react';
 import { type PendingExpression, type PendingSavedQuery, type PendingTransformation } from '../QueryEditorContext';
 
 interface UsePendingPickerSettersArgs {
-  /** Exits stacked mode whenever a picker is opened — pickers and stacked mode are mutually exclusive. */
-  setStackedModeForView: (enabled: boolean) => void;
-  /** Underlying state setters from each picker's owning hook (or local state). */
-  setPendingExpressionRaw: (pending: PendingExpression | null) => void;
-  setPendingTransformationRaw: (pending: PendingTransformation | null) => void;
-  setPendingSavedQueryRaw: (pending: PendingSavedQuery | null) => void;
-  /** Clearers for the picker hooks that own their own state machine. */
-  clearPendingExpression: () => void;
-  clearPendingTransformation: () => void;
+  /** Called when any picker opens — pickers and stacked mode are mutually exclusive. */
+  exitStackedMode: () => void;
+  /** Bare state writers for each picker, before this hook's cross-exclusion logic wraps them. */
+  setPendingExpression: (pending: PendingExpression | null) => void;
+  setPendingTransformation: (pending: PendingTransformation | null) => void;
+  setPendingSavedQuery: (pending: PendingSavedQuery | null) => void;
 }
 
 interface UsePendingPickerSettersResult {
@@ -23,33 +20,33 @@ interface UsePendingPickerSettersResult {
 type PickerKind = 'expression' | 'transformation' | 'savedQuery';
 
 /**
- * Wraps the three pending-picker setters with the cross-exclusion invariant: only one picker can be
- * pending at a time, and opening any picker exits stacked mode. Returned setters are stable for the
- * component lifetime (assuming their inputs are stable), so they can live in `uiState` without
- * triggering downstream re-renders on every selection change.
+ * Wraps the three pending-picker setters with the cross-exclusion invariant: only one picker
+ * can be pending at a time, and opening any picker exits stacked mode. Closing a picker
+ * (writing null) is a no-op for stacked mode and for the other pickers.
+ *
+ * Returned setters are stable for the component lifetime (assuming their inputs are), so they
+ * can live in `uiState` without triggering downstream re-renders on every selection change.
  */
 export function usePendingPickerSetters({
-  setStackedModeForView,
-  setPendingExpressionRaw,
-  setPendingTransformationRaw,
-  setPendingSavedQueryRaw,
-  clearPendingExpression,
-  clearPendingTransformation,
+  exitStackedMode,
+  setPendingExpression: rawSetPendingExpression,
+  setPendingTransformation: rawSetPendingTransformation,
+  setPendingSavedQuery: rawSetPendingSavedQuery,
 }: UsePendingPickerSettersArgs): UsePendingPickerSettersResult {
   const startPickerSession = useCallback(
     (opening: PickerKind) => {
-      setStackedModeForView(false);
+      exitStackedMode();
       if (opening !== 'expression') {
-        clearPendingExpression();
+        rawSetPendingExpression(null);
       }
       if (opening !== 'transformation') {
-        clearPendingTransformation();
+        rawSetPendingTransformation(null);
       }
       if (opening !== 'savedQuery') {
-        setPendingSavedQueryRaw(null);
+        rawSetPendingSavedQuery(null);
       }
     },
-    [setStackedModeForView, clearPendingExpression, clearPendingTransformation, setPendingSavedQueryRaw]
+    [exitStackedMode, rawSetPendingExpression, rawSetPendingTransformation, rawSetPendingSavedQuery]
   );
 
   const setPendingExpression = useCallback(
@@ -57,9 +54,9 @@ export function usePendingPickerSetters({
       if (pending) {
         startPickerSession('expression');
       }
-      setPendingExpressionRaw(pending);
+      rawSetPendingExpression(pending);
     },
-    [startPickerSession, setPendingExpressionRaw]
+    [startPickerSession, rawSetPendingExpression]
   );
 
   const setPendingTransformation = useCallback(
@@ -67,9 +64,9 @@ export function usePendingPickerSetters({
       if (pending) {
         startPickerSession('transformation');
       }
-      setPendingTransformationRaw(pending);
+      rawSetPendingTransformation(pending);
     },
-    [startPickerSession, setPendingTransformationRaw]
+    [startPickerSession, rawSetPendingTransformation]
   );
 
   const setPendingSavedQuery = useCallback(
@@ -77,9 +74,9 @@ export function usePendingPickerSetters({
       if (pending) {
         startPickerSession('savedQuery');
       }
-      setPendingSavedQueryRaw(pending);
+      rawSetPendingSavedQuery(pending);
     },
-    [startPickerSession, setPendingSavedQueryRaw]
+    [startPickerSession, rawSetPendingSavedQuery]
   );
 
   return { setPendingExpression, setPendingTransformation, setPendingSavedQuery };

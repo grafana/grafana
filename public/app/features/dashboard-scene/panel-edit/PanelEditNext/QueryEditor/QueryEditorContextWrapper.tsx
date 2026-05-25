@@ -231,13 +231,13 @@ export function QueryEditorContextWrapper({
     onCardSelectionChange: onFinalizeCardSelection,
   });
 
+  const exitStackedMode = useCallback(() => setStackedModeForView(false), [setStackedModeForView]);
+
   const { setPendingExpression, setPendingTransformation, setPendingSavedQuery } = usePendingPickerSetters({
-    setStackedModeForView,
-    setPendingExpressionRaw,
-    setPendingTransformationRaw,
-    setPendingSavedQueryRaw,
-    clearPendingExpression,
-    clearPendingTransformation,
+    exitStackedMode,
+    setPendingExpression: setPendingExpressionRaw,
+    setPendingTransformation: setPendingTransformationRaw,
+    setPendingSavedQuery: setPendingSavedQueryRaw,
   });
 
   const clearSideEffects = useCallback(() => {
