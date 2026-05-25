@@ -10915,9 +10915,7 @@
   },
   "import-overview": {
     "error-provisioning-status": "Could not check whether the target folder is managed by a repository. Please try again or contact an administrator.",
-    "error-provisioning-status-title": "Unable to determine provisioning status",
-    "error-unsupported-format": "This dashboard is not in a recognized format and cannot be imported.",
-    "error-unsupported-format-title": "Unsupported dashboard format"
+    "error-provisioning-status-title": "Unable to determine provisioning status"
   },
   "inspector": {
     "inspect-data-tab": {
