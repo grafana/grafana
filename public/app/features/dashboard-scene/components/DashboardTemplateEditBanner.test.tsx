@@ -17,26 +17,31 @@ const mockGetExtension = jest.mocked(getDashboardTemplateExtension);
 const TEMPLATE_ROUTE = '/dashboard/template';
 
 function buildDashboard(
-  overrides: {
+  opts: {
     isDashboardTemplate?: boolean;
-    dashboardTemplateUid?: string | null;
+    dashboardTemplateUid?: string;
     editview?: GeneralSettingsEditView;
     title?: string;
   } = {}
 ) {
-  const dashboardTemplateUid =
-    'dashboardTemplateUid' in overrides ? (overrides.dashboardTemplateUid ?? undefined) : 'tmpl-1';
+  const { isDashboardTemplate, dashboardTemplateUid, editview, title } = {
+    isDashboardTemplate: true,
+    dashboardTemplateUid: 'tmpl-1' as string | undefined,
+    title: 'Fallback Title',
+    ...opts,
+  };
+
   return new DashboardScene({
     $timeRange: new SceneTimeRange({}),
-    title: overrides.title ?? 'Fallback Title',
+    title,
     uid: 'dash-1',
     meta: {
       canEdit: true,
       canSave: true,
-      isDashboardTemplate: overrides.isDashboardTemplate ?? true,
+      isDashboardTemplate,
       dashboardTemplateUid,
     },
-    editview: overrides.editview,
+    editview,
   });
 }
 
@@ -62,7 +67,7 @@ describe('DashboardTemplateEditBanner', () => {
   });
 
   it('renders on the template route when the dashboard is a template with a template uid', async () => {
-    const dashboard = buildDashboard();
+    const dashboard = buildDashboard({});
     render(<DashboardTemplateEditBanner dashboard={dashboard} />, {
       historyOptions: { initialEntries: [TEMPLATE_ROUTE] },
     });
@@ -81,7 +86,7 @@ describe('DashboardTemplateEditBanner', () => {
   });
 
   it('does not render when the route is not the template route', () => {
-    const dashboard = buildDashboard();
+    const dashboard = buildDashboard({});
     render(<DashboardTemplateEditBanner dashboard={dashboard} />, {
       historyOptions: { initialEntries: ['/dashboard/other'] },
     });
@@ -99,7 +104,7 @@ describe('DashboardTemplateEditBanner', () => {
   });
 
   it('does not render when dashboardTemplateUid is missing', () => {
-    const dashboard = buildDashboard({ dashboardTemplateUid: null });
+    const dashboard = buildDashboard({ dashboardTemplateUid: undefined });
     render(<DashboardTemplateEditBanner dashboard={dashboard} />, {
       historyOptions: { initialEntries: [TEMPLATE_ROUTE] },
     });
@@ -117,7 +122,7 @@ describe('DashboardTemplateEditBanner', () => {
   });
 
   it('hides the banner after the dismiss button is clicked', async () => {
-    const dashboard = buildDashboard();
+    const dashboard = buildDashboard({});
     const { user } = render(<DashboardTemplateEditBanner dashboard={dashboard} />, {
       historyOptions: { initialEntries: [TEMPLATE_ROUTE] },
     });
