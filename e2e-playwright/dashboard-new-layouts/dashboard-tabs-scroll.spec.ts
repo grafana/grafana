@@ -5,6 +5,7 @@ import { groupIntoTab, saveDashboard } from './utils';
 test.use({
   featureToggles: {
     dashboardNewLayouts: true,
+    dashboardUnifiedDrilldownControls: false,
   },
   // Narrow viewport guarantees the tabs overflow horizontally so the scroll
   // buttons and auto-scroll behaviour are actually exercised.
