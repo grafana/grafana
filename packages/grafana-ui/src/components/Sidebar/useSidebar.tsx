@@ -20,6 +20,7 @@ export interface SidebarContextValue {
   edgeMargin: number;
   contentMargin: number;
   isHidden: boolean;
+  isHiddenValue: boolean;
   canGoBack?: boolean;
   onToggleDock?: () => void;
   onResize: (diff: number) => void;
@@ -174,6 +175,7 @@ export function useSidebar({
     bottomMargin,
     contentMargin,
     isHidden: effectiveIsHidden,
+    isHiddenValue: isHidden,
     onClosePane,
     onGoBack,
     canGoBack,
