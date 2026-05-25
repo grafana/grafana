@@ -7,7 +7,7 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => backendSrv,
 }));
 
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { act, render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { of } from 'rxjs';
 
 import { type BackendSrv } from '@grafana/runtime';
@@ -15,7 +15,7 @@ import { type BackendSrv } from '@grafana/runtime';
 import { InfluxVersion } from '../../../types';
 
 import { UrlAndAuthenticationSection } from './UrlAndAuthenticationSection';
-import { createTestProps } from './helpers';
+import { createMockValidation, createTestProps } from './helpers';
 
 describe('UrlAndAuthenticationSection', () => {
   const onOptionsChangeMock = jest.fn();
@@ -350,6 +350,54 @@ describe('UrlAndAuthenticationSection', () => {
           }),
         })
       );
+    });
+  });
+
+  describe('validation', () => {
+    const emptyProps = createTestProps({
+      options: {
+        url: '',
+        jsonData: { product: '', version: '' },
+        secureJsonData: {},
+        secureJsonFields: {},
+      },
+      mocks: { onOptionsChange: jest.fn() },
+    });
+
+    const filledProps = createTestProps({
+      options: {
+        url: 'http://localhost:8086',
+        jsonData: { product: 'InfluxDB OSS 2.x', version: InfluxVersion.Flux },
+        secureJsonData: {},
+        secureJsonFields: {},
+      },
+      mocks: { onOptionsChange: jest.fn() },
+    });
+
+    it('shows inline errors for url, product and version when validator is called with empty values', async () => {
+      const validation = createMockValidation();
+      render(<UrlAndAuthenticationSection {...emptyProps} validation={validation} />);
+
+      await act(async () => {
+        validation.runValidator();
+      });
+
+      expect(screen.getByText('URL is required')).toBeInTheDocument();
+      expect(screen.getByText('Product is required')).toBeInTheDocument();
+      expect(screen.getByText('Query language is required')).toBeInTheDocument();
+    });
+
+    it('shows no errors when all fields are filled', async () => {
+      const validation = createMockValidation();
+      render(<UrlAndAuthenticationSection {...filledProps} validation={validation} />);
+
+      await act(async () => {
+        validation.runValidator();
+      });
+
+      expect(screen.queryByText('URL is required')).not.toBeInTheDocument();
+      expect(screen.queryByText('Product is required')).not.toBeInTheDocument();
+      expect(screen.queryByText('Query language is required')).not.toBeInTheDocument();
     });
   });
 
