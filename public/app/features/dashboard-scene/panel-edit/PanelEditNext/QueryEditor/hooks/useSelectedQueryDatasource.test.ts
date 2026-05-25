@@ -305,8 +305,9 @@ describe('useSelectedQueryDatasource', () => {
     });
 
     it('should return null when the datasource cannot be loaded', async () => {
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-
+      // `useQueryDatasource` throws on lookup failure and routes the error through useAsync's
+      // `error` state — no console.error side effect. The wrapper hook intentionally does not
+      // surface the error (see useSelectedQueryDatasource), so consumers see `data: null` here.
       const query: DataQuery = { refId: 'A', datasource: { uid: 'unknown-uid', type: 'unknown' } };
 
       const { result } = renderHook(() => useSelectedQueryDatasource(query, mockTestDataSettings));
@@ -314,8 +315,6 @@ describe('useSelectedQueryDatasource', () => {
       await waitFor(() => expect(result.current.selectedQueryDsLoading).toBe(false));
 
       expect(result.current.selectedQueryDsData).toBeNull();
-      expect(consoleErrorSpy).toHaveBeenCalled();
-      consoleErrorSpy.mockRestore();
     });
   });
 });

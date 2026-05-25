@@ -19,14 +19,14 @@ function stackedModeOverrides(overrides = {}) {
     enter: jest.fn(),
     exit: jest.fn(),
     syncActiveItem: jest.fn(),
-    scrollTarget: null,
-    clearScrollTarget: jest.fn(),
+    requestScroll: jest.fn(),
+    setScrollHandler: jest.fn(),
     ...overrides,
   };
 }
 
 describe('QueryEditorSidebar', () => {
-  afterAll(() => {
+  beforeEach(() => {
     jest.clearAllMocks();
   });
 

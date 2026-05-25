@@ -7,8 +7,9 @@ import { type DataQuery } from '@grafana/schema';
 import { mockCombinedRule } from 'app/features/alerting/unified/mocks';
 
 import { type PanelDataPaneNext } from '../PanelDataPaneNext';
+import { QueryEditorType } from '../constants';
 
-import { useActionsContext, useQueryEditorUIContext } from './QueryEditorContext';
+import { type StackedEditorItem, useActionsContext, useQueryEditorUIContext } from './QueryEditorContext';
 import { QueryEditorContextWrapper } from './QueryEditorContextWrapper';
 import { type AlertRule, type Transformation } from './types';
 
@@ -341,11 +342,86 @@ describe('QueryEditorContextWrapper - stacked mode', () => {
     const dataPane = makeMockDataPane();
     const { result } = renderWithWrapper(dataPane);
 
+    // Stand in for the StackedEditorRenderer — register a handler so requestScroll has somewhere
+    // to dispatch to.
+    const scrollHandler = jest.fn();
+    act(() => result.current.stackedMode.setScrollHandler(scrollHandler));
+
     act(() => result.current.stackedMode.enter());
     act(() => result.current.toggleQuerySelection({ refId: 'B' } as DataQuery));
 
     expect(result.current.selectedQueryRefIds).toEqual(['B']);
-    expect(result.current.stackedMode.scrollTarget).toEqual({ type: 'query', id: 'B' });
+    expect(scrollHandler).toHaveBeenLastCalledWith({ type: QueryEditorType.Query, id: 'B' });
+  });
+
+  it('plain transformation selection in stacked mode requests scrolling to that transformation', () => {
+    const { useTransformations } = require('./hooks/useTransformations');
+    const mockTransformation: Transformation = {
+      registryItem: undefined,
+      transformId: 'reduce-0',
+      transformConfig: { id: 'reduce', options: {} },
+    };
+    useTransformations.mockReturnValue([mockTransformation]);
+
+    const { result } = renderWithWrapper(makeMockDataPane());
+    const scrollHandler = jest.fn();
+    act(() => result.current.stackedMode.setScrollHandler(scrollHandler));
+
+    act(() => result.current.stackedMode.enter());
+    act(() => result.current.toggleTransformationSelection(mockTransformation));
+
+    expect(scrollHandler).toHaveBeenLastCalledWith({ type: QueryEditorType.Transformation, id: 'reduce-0' });
+  });
+
+  it('syncStackedActiveItem mirrors observer-driven activations into the card selection', () => {
+    const { result } = renderWithWrapper(makeMockDataPane());
+
+    const queryItem: StackedEditorItem = { type: QueryEditorType.Query, id: 'A' };
+    act(() => result.current.stackedMode.syncActiveItem(queryItem));
+    expect(result.current.selectedQueryRefIds).toEqual(['A']);
+    expect(result.current.selectedTransformationIds).toEqual([]);
+
+    const transformItem: StackedEditorItem = { type: QueryEditorType.Transformation, id: 'reduce-0' };
+    act(() => result.current.stackedMode.syncActiveItem(transformItem));
+    expect(result.current.selectedQueryRefIds).toEqual([]);
+    expect(result.current.selectedTransformationIds).toEqual(['reduce-0']);
+  });
+
+  it('notifies the layout to restore viz ratio when unmounting while stacked mode is active', () => {
+    const onStackedModeChange = jest.fn();
+    const { result, unmount } = renderWithWrapper(makeMockDataPane(), { onStackedModeChange });
+
+    act(() => result.current.stackedMode.enter());
+    onStackedModeChange.mockClear();
+
+    unmount();
+
+    expect(onStackedModeChange).toHaveBeenCalledWith(false);
+  });
+
+  it('does not notify the layout on unmount when stacked mode is inactive', () => {
+    const onStackedModeChange = jest.fn();
+    const { unmount } = renderWithWrapper(makeMockDataPane(), { onStackedModeChange });
+
+    unmount();
+
+    expect(onStackedModeChange).not.toHaveBeenCalled();
+  });
+
+  it('exits stacked mode when an alert is selected', () => {
+    mockUseAlertRulesForPanel.mockReturnValue({
+      alertRules: [mockAlert],
+      loading: false,
+      isDashboardSaved: true,
+    });
+    const { result } = renderWithWrapper(makeMockDataPane());
+
+    act(() => result.current.stackedMode.enter());
+    expect(result.current.stackedMode.enabled).toBe(true);
+
+    act(() => result.current.setSelectedAlert(mockAlert));
+
+    expect(result.current.stackedMode.enabled).toBe(false);
   });
 
   it('notifies the layout when stacked mode changes', () => {

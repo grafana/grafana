@@ -10,7 +10,7 @@ import { QueryEditorFooter } from './Footer/QueryEditorFooter';
 import { ContentHeaderSceneWrapper } from './Header/ContentHeader';
 import { DatasourceHelpPanel } from './Header/DatasourceHelpPanel';
 import { useAlertingContext, useQueryEditorUIContext } from './QueryEditorContext';
-import { StackedEditorRenderer } from './StackedEditorRenderer';
+import { StackedEditorRenderer } from './StackedEditor/StackedEditorRenderer';
 
 export function QueryEditorContent() {
   const styles = useStyles2(getStyles);

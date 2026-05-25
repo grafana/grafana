@@ -11,7 +11,7 @@ import { type DataQuery } from '@grafana/schema';
 import { QueryEditorType } from '../constants';
 
 import { QueryEditorContent } from './QueryEditorContent';
-import { type QueryEditorUIState, type StackedEditorState } from './QueryEditorContext';
+import { type QueryEditorUIState, type StackedEditorItem, type StackedEditorState } from './QueryEditorContext';
 import { ds1SettingsMock, renderWithQueryEditorProvider } from './testUtils';
 import { type Transformation } from './types';
 
@@ -107,9 +107,54 @@ function stackedModeOverrides(overrides: Partial<StackedEditorState> = {}): Stac
     enter: jest.fn(),
     exit: jest.fn(),
     syncActiveItem: jest.fn(),
-    scrollTarget: null,
-    clearScrollTarget: jest.fn(),
+    requestScroll: jest.fn(),
+    setScrollHandler: jest.fn(),
     ...overrides,
+  };
+}
+
+/**
+ * Captures the imperative scroll handler the StackedEditorRenderer registers via
+ * `setScrollHandler`. Tests invoke the captured handler to drive the renderer's scroll behavior
+ * the same way the wrapper's `requestScroll` does in production.
+ */
+function captureScrollHandler() {
+  let handler: ((item: StackedEditorItem) => void) | null = null;
+  const setScrollHandler = jest.fn((next: ((item: StackedEditorItem) => void) | null) => {
+    handler = next;
+  });
+  return { setScrollHandler, invoke: (item: StackedEditorItem) => handler?.(item) };
+}
+
+function setupMockIntersectionObserver() {
+  const observed = new Map<string | null, Element>();
+  let observerCallback: IntersectionObserverCallback | undefined;
+
+  class MockIntersectionObserver {
+    constructor(callback: IntersectionObserverCallback) {
+      observerCallback = callback;
+    }
+    observe = (element: Element) => {
+      observed.set(element.getAttribute('data-stacked-editor-item-id'), element);
+    };
+    unobserve = jest.fn();
+    disconnect = jest.fn();
+  }
+
+  const original = global.IntersectionObserver;
+  global.IntersectionObserver = MockIntersectionObserver as unknown as typeof IntersectionObserver;
+
+  return {
+    observed,
+    triggerEntries: (entries: IntersectionObserverEntry[]) => {
+      act(() => {
+        observerCallback?.(entries, {} as IntersectionObserver);
+      });
+    },
+    waitUntilReady: () => waitFor(() => expect(observerCallback).toBeDefined()),
+    restore: () => {
+      global.IntersectionObserver = original;
+    },
   };
 }
 
@@ -155,22 +200,7 @@ describe('QueryEditorContent stacked mode', () => {
 
   it('syncs the active stacked item from intersection changes', async () => {
     const syncActiveItem = jest.fn();
-    const observed = new Map<string | null, Element>();
-    let observerCallback: IntersectionObserverCallback | undefined;
-
-    class MockIntersectionObserver {
-      constructor(callback: IntersectionObserverCallback) {
-        observerCallback = callback;
-      }
-      observe = (element: Element) => {
-        observed.set(element.getAttribute('data-stacked-editor-item-id'), element);
-      };
-      unobserve = jest.fn();
-      disconnect = jest.fn();
-    }
-
-    const originalIntersectionObserver = global.IntersectionObserver;
-    global.IntersectionObserver = MockIntersectionObserver as unknown as typeof IntersectionObserver;
+    const mockObserver = setupMockIntersectionObserver();
 
     try {
       renderWithQueryEditorProvider(<QueryEditorContent />, {
@@ -184,71 +214,49 @@ describe('QueryEditorContent stacked mode', () => {
         } satisfies Partial<QueryEditorUIState>,
       });
 
-      await waitFor(() => expect(observerCallback).toBeDefined());
-      const queryBElement = observed.get('B');
+      await mockObserver.waitUntilReady();
+      const queryBElement = mockObserver.observed.get('B');
       expect(queryBElement).toBeDefined();
 
-      act(() => {
-        observerCallback?.(
-          [
-            {
-              target: queryBElement!,
-              isIntersecting: true,
-              intersectionRatio: 0.8,
-              boundingClientRect: { top: 20 } as DOMRectReadOnly,
-            } as IntersectionObserverEntry,
-          ],
-          {} as IntersectionObserver
-        );
-      });
+      mockObserver.triggerEntries([
+        {
+          target: queryBElement!,
+          isIntersecting: true,
+          intersectionRatio: 0.8,
+          boundingClientRect: { top: 20 } as DOMRectReadOnly,
+        } as IntersectionObserverEntry,
+      ]);
 
       expect(syncActiveItem).toHaveBeenCalledWith({ type: QueryEditorType.Query, id: 'B' });
 
-      const transformationElement = observed.get('organize-0');
+      const transformationElement = mockObserver.observed.get('organize-0');
       expect(transformationElement).toBeDefined();
 
-      act(() => {
-        observerCallback?.(
-          [
-            {
-              target: transformationElement!,
-              isIntersecting: true,
-              intersectionRatio: 0.9,
-              boundingClientRect: { top: 40 } as DOMRectReadOnly,
-            } as IntersectionObserverEntry,
-          ],
-          {} as IntersectionObserver
-        );
-      });
+      mockObserver.triggerEntries([
+        {
+          target: transformationElement!,
+          isIntersecting: true,
+          intersectionRatio: 0.9,
+          boundingClientRect: { top: 40 } as DOMRectReadOnly,
+        } as IntersectionObserverEntry,
+      ]);
 
       expect(syncActiveItem).toHaveBeenCalledWith({
         type: QueryEditorType.Transformation,
         id: 'organize-0',
       });
     } finally {
-      global.IntersectionObserver = originalIntersectionObserver;
+      mockObserver.restore();
     }
   });
 
   it('keeps a sidebar-selected item active until its editor becomes visible', async () => {
     const syncActiveItem = jest.fn();
-    const clearScrollTarget = jest.fn();
-    const observed = new Map<string | null, Element>();
-    let observerCallback: IntersectionObserverCallback | undefined;
-
-    class MockIntersectionObserver {
-      constructor(callback: IntersectionObserverCallback) {
-        observerCallback = callback;
-      }
-      observe = (element: Element) => {
-        observed.set(element.getAttribute('data-stacked-editor-item-id'), element);
-      };
-      unobserve = jest.fn();
-      disconnect = jest.fn();
-    }
-
-    const originalIntersectionObserver = global.IntersectionObserver;
-    global.IntersectionObserver = MockIntersectionObserver as unknown as typeof IntersectionObserver;
+    const scrollHandler = captureScrollHandler();
+    const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+    // jsdom doesn't implement scrollIntoView — stub it so requesting a scroll doesn't throw.
+    HTMLElement.prototype.scrollIntoView = jest.fn();
+    const mockObserver = setupMockIntersectionObserver();
 
     try {
       renderWithQueryEditorProvider(<QueryEditorContent />, {
@@ -259,68 +267,86 @@ describe('QueryEditorContent stacked mode', () => {
         uiStateOverrides: {
           selectedQueryDsData: { datasource: mockDatasource as DataSourceApi, dsSettings: ds1SettingsMock },
           stackedMode: stackedModeOverrides({
-            scrollTarget: { type: QueryEditorType.Query, id: 'B' },
             syncActiveItem,
-            clearScrollTarget,
+            setScrollHandler: scrollHandler.setScrollHandler,
           }),
         } satisfies Partial<QueryEditorUIState>,
       });
 
-      await waitFor(() => expect(observerCallback).toBeDefined());
-      const queryAElement = observed.get('A');
-      const queryBElement = observed.get('B');
+      await mockObserver.waitUntilReady();
+
+      // Simulate the wrapper's requestScroll — drives the renderer's pending-scroll-target ref the
+      // same way clicking a sidebar card would in production.
+      act(() => scrollHandler.invoke({ type: QueryEditorType.Query, id: 'B' }));
+
+      const queryAElement = mockObserver.observed.get('A');
+      const queryBElement = mockObserver.observed.get('B');
       expect(queryAElement).toBeDefined();
       expect(queryBElement).toBeDefined();
 
-      act(() => {
-        observerCallback?.(
-          [
-            {
-              target: queryAElement!,
-              isIntersecting: true,
-              intersectionRatio: 1,
-              boundingClientRect: { top: 0 } as DOMRectReadOnly,
-            } as IntersectionObserverEntry,
-          ],
-          {} as IntersectionObserver
-        );
-      });
+      // Mid-scroll: A passes through the viewport. Observer must not sync the active item yet.
+      mockObserver.triggerEntries([
+        {
+          target: queryAElement!,
+          isIntersecting: true,
+          intersectionRatio: 1,
+          boundingClientRect: { top: 0 } as DOMRectReadOnly,
+        } as IntersectionObserverEntry,
+      ]);
 
       expect(syncActiveItem).not.toHaveBeenCalled();
-      expect(clearScrollTarget).not.toHaveBeenCalled();
 
-      act(() => {
-        observerCallback?.(
-          [
-            {
-              target: queryAElement!,
-              isIntersecting: false,
-              intersectionRatio: 0,
-              boundingClientRect: { top: -20 } as DOMRectReadOnly,
-            } as IntersectionObserverEntry,
-            {
-              target: queryBElement!,
-              isIntersecting: true,
-              intersectionRatio: 1,
-              boundingClientRect: { top: 0 } as DOMRectReadOnly,
-            } as IntersectionObserverEntry,
-          ],
-          {} as IntersectionObserver
-        );
-      });
+      // Target reached: A leaves, B fully visible. Observer should sync to B and clear its guard.
+      mockObserver.triggerEntries([
+        {
+          target: queryAElement!,
+          isIntersecting: false,
+          intersectionRatio: 0,
+          boundingClientRect: { top: -20 } as DOMRectReadOnly,
+        } as IntersectionObserverEntry,
+        {
+          target: queryBElement!,
+          isIntersecting: true,
+          intersectionRatio: 1,
+          boundingClientRect: { top: 0 } as DOMRectReadOnly,
+        } as IntersectionObserverEntry,
+      ]);
 
       expect(syncActiveItem).toHaveBeenCalledWith({ type: QueryEditorType.Query, id: 'B' });
-      expect(clearScrollTarget).toHaveBeenCalled();
+
+      // After the guard clears, subsequent intersections for other items must sync normally.
+      // Simulate continuing to scroll: B leaves the viewport as organize-0 arrives.
+      const transformationElement = mockObserver.observed.get('organize-0');
+      mockObserver.triggerEntries([
+        {
+          target: queryBElement!,
+          isIntersecting: false,
+          intersectionRatio: 0,
+          boundingClientRect: { top: -20 } as DOMRectReadOnly,
+        } as IntersectionObserverEntry,
+        {
+          target: transformationElement!,
+          isIntersecting: true,
+          intersectionRatio: 1,
+          boundingClientRect: { top: 0 } as DOMRectReadOnly,
+        } as IntersectionObserverEntry,
+      ]);
+
+      expect(syncActiveItem).toHaveBeenCalledWith({
+        type: QueryEditorType.Transformation,
+        id: 'organize-0',
+      });
     } finally {
-      global.IntersectionObserver = originalIntersectionObserver;
+      mockObserver.restore();
+      HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
     }
   });
 
-  it('scrolls requested stacked items into view', async () => {
+  it('scrolls a requested item into view via the registered scroll handler', async () => {
     const scrollIntoView = jest.fn();
-    const clearScrollTarget = jest.fn();
     const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
     HTMLElement.prototype.scrollIntoView = scrollIntoView;
+    const scrollHandler = captureScrollHandler();
 
     try {
       renderWithQueryEditorProvider(<QueryEditorContent />, {
@@ -330,17 +356,22 @@ describe('QueryEditorContent stacked mode', () => {
         dsState: { dsSettings: ds1SettingsMock },
         uiStateOverrides: {
           selectedQueryDsData: { datasource: mockDatasource as DataSourceApi, dsSettings: ds1SettingsMock },
-          stackedMode: stackedModeOverrides({
-            scrollTarget: { type: QueryEditorType.Query, id: 'B' },
-            clearScrollTarget,
-          }),
+          stackedMode: stackedModeOverrides({ setScrollHandler: scrollHandler.setScrollHandler }),
         } satisfies Partial<QueryEditorUIState>,
       });
 
-      await waitFor(() => {
-        expect(scrollIntoView).toHaveBeenCalledWith({ block: 'start', behavior: 'smooth' });
-      });
-      expect(clearScrollTarget).not.toHaveBeenCalled();
+      // The renderer registered its scroll handler at mount.
+      expect(scrollHandler.setScrollHandler).toHaveBeenCalledWith(expect.any(Function));
+
+      // Wait for the editor sections to mount so subsequent async datasource resolution
+      // settles before we invoke the imperative scroll handler.
+      expect(await screen.findByTestId('query-editor-B')).toBeInTheDocument();
+
+      // Invoking the handler scrolls the matching section into view — same path the wrapper's
+      // `requestScroll` takes when a sidebar card is clicked.
+      act(() => scrollHandler.invoke({ type: QueryEditorType.Query, id: 'B' }));
+
+      expect(scrollIntoView).toHaveBeenCalledWith({ block: 'start', behavior: 'smooth' });
     } finally {
       HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
     }

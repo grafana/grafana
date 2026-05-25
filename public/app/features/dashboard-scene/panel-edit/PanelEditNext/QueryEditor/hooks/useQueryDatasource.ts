@@ -5,59 +5,46 @@ import { config, getDataSourceSrv } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 
 /**
- * Hook to load the datasource for a query.
- * Falls back to the panel's datasource if the query doesn't specify one.
+ * Loads the datasource for a query. Falls back to the panel's datasource if the query doesn't
+ * specify one. Returns `queryDsError` when the lookup throws so consumers can distinguish a
+ * configuration gap (no datasource resolved) from an actual load failure.
  */
 export function useQueryDatasource(query: DataQuery | null, panelDsSettings: DataSourceInstanceSettings | undefined) {
-  const { value: queryDsData, loading: queryDsLoading } = useAsync(async () => {
+  const { value, loading, error } = useAsync(async () => {
     if (!query) {
       return undefined;
     }
 
-    try {
-      // If query has explicit datasource, use it; otherwise fall back to panel datasource
-      let dsRef = query.datasource;
+    let dsRef = query.datasource;
 
-      if (!dsRef && panelDsSettings) {
-        // Special handling for Mixed datasource:
-        // Mixed is a meta-datasource that delegates to per-query datasources. It has no QueryEditor component.
-        // Normally, all queries in a Mixed panel should have explicit datasources, but edge cases exist
-        // (legacy dashboards, transition states). Fall back to default datasource to allow editing.
-        // Matches behavior in resolveNewQueryDatasource.
-        if (panelDsSettings.meta.mixed) {
-          const defaultDs = getDataSourceSrv().getInstanceSettings(config.defaultDatasource);
-          dsRef = defaultDs ? getDataSourceRef(defaultDs) : undefined;
-        } else {
-          dsRef = getDataSourceRef(panelDsSettings);
-        }
+    if (!dsRef && panelDsSettings) {
+      // Mixed is a meta-datasource that delegates to per-query datasources; Mixed-panel queries
+      // normally specify their own. Fall back to the default for legacy/transition cases —
+      // matches behavior in resolveNewQueryDatasource.
+      if (panelDsSettings.meta.mixed) {
+        const defaultDs = getDataSourceSrv().getInstanceSettings(config.defaultDatasource);
+        dsRef = defaultDs ? getDataSourceRef(defaultDs) : undefined;
+      } else {
+        dsRef = getDataSourceRef(panelDsSettings);
       }
+    }
 
-      if (!dsRef) {
-        return undefined;
-      }
-
-      const queryDsSettings = getDataSourceSrv().getInstanceSettings(dsRef);
-      if (!queryDsSettings) {
-        console.error('Datasource settings not found for', dsRef);
-        return undefined;
-      }
-
-      const queryDatasource = await getDataSourceSrv().get(dsRef);
-      return { datasource: queryDatasource, dsSettings: queryDsSettings };
-    } catch (err) {
-      console.error('Failed to load datasource for query:', err);
+    if (!dsRef) {
       return undefined;
     }
-  }, [
-    query?.refId,
-    query?.datasource?.uid,
-    query?.datasource?.type,
-    panelDsSettings?.uid,
-    panelDsSettings?.meta.mixed,
-  ]);
+
+    const queryDsSettings = getDataSourceSrv().getInstanceSettings(dsRef);
+    if (!queryDsSettings) {
+      throw new Error(`Datasource settings not found for ${JSON.stringify(dsRef)}`);
+    }
+
+    const queryDatasource = await getDataSourceSrv().get(dsRef);
+    return { datasource: queryDatasource, dsSettings: queryDsSettings };
+  }, [query, panelDsSettings]);
 
   return {
-    queryDsData: queryDsData ?? null,
-    queryDsLoading,
+    queryDsData: value ?? null,
+    queryDsLoading: loading,
+    queryDsError: error,
   };
 }
