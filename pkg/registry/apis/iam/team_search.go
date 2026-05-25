@@ -311,7 +311,6 @@ func (s *TeamSearchHandler) DoTeamSearch(w http.ResponseWriter, r *http.Request)
 		Explain: queryParams.Has("explain") && queryParams.Get("explain") != "false",
 		Fields: []string{
 			resource.SEARCH_FIELD_TITLE,
-			resource.SEARCH_FIELD_LEGACY_ID,
 			resource.SEARCH_FIELD_PREFIX + builders.TEAM_SEARCH_EMAIL,
 			resource.SEARCH_FIELD_PREFIX + builders.TEAM_SEARCH_PROVISIONED,
 			resource.SEARCH_FIELD_PREFIX + builders.TEAM_SEARCH_EXTERNAL_UID,

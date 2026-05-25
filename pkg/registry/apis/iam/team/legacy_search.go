@@ -1,9 +1,7 @@
 package team
 
 import (
-	"bytes"
 	"context"
-	"encoding/binary"
 	"fmt"
 	"math"
 	"strconv"
@@ -139,13 +137,8 @@ func getResourceKey(t *team.TeamDTO, namespace string) *resourcepb.ResourceKey {
 
 func getColumns(fields []string) []*resourcepb.ResourceTableColumnDefinition {
 	columns := getDefaultColumns()
-	standard := resource.StandardSearchFields()
 
 	for _, field := range fields {
-		if field == resource.SEARCH_FIELD_LEGACY_ID {
-			columns = append(columns, standard.Field(resource.SEARCH_FIELD_LEGACY_ID))
-			continue
-		}
 		fieldName := strings.TrimPrefix(field, resource.SEARCH_FIELD_PREFIX)
 		if col, ok := builders.TeamSearchTableColumnDefinitions[fieldName]; ok {
 			columns = append(columns, col)
@@ -166,10 +159,6 @@ func getDefaultColumns() []*resourcepb.ResourceTableColumnDefinition {
 func createCells(t *team.TeamDTO, fields []string) [][]byte {
 	cells := createDefaultCells(t)
 	for _, field := range fields {
-		if field == resource.SEARCH_FIELD_LEGACY_ID {
-			cells = append(cells, encodeInt64BE(t.ID))
-			continue
-		}
 		fieldName := strings.TrimPrefix(field, resource.SEARCH_FIELD_PREFIX)
 		switch fieldName {
 		case builders.TEAM_SEARCH_EMAIL:
@@ -181,13 +170,6 @@ func createCells(t *team.TeamDTO, fields []string) [][]byte {
 		}
 	}
 	return cells
-}
-
-// encodeInt64BE writes v as 8-byte big-endian, matching the unified-storage INT64 cell format.
-func encodeInt64BE(v int64) []byte {
-	var buf bytes.Buffer
-	_ = binary.Write(&buf, binary.BigEndian, v)
-	return buf.Bytes()
 }
 
 func createDefaultCells(t *team.TeamDTO) [][]byte {

@@ -4,9 +4,7 @@ package v0alpha1
 
 // +k8s:openapi-gen=true
 type GetSearchTeamsTeamHit struct {
-	Name string `json:"name"`
-	// Deprecated legacy team id; included for parity with the legacy /api/teams/search response.
-	Id            *int64          `json:"id,omitempty"`
+	Name          string          `json:"name"`
 	Title         string          `json:"title"`
 	Email         string          `json:"email"`
 	Provisioned   bool            `json:"provisioned"`

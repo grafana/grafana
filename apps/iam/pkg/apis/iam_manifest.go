@@ -1183,12 +1183,6 @@ var appManifestData = app.ManifestData{
 										Type: []string{"string"},
 									},
 								},
-								"id": {
-									SchemaProps: spec.SchemaProps{
-										Type:        []string{"integer"},
-										Description: "Deprecated legacy team id; included for parity with the legacy /api/teams/search response.",
-									},
-								},
 								"memberCount": {
 									SchemaProps: spec.SchemaProps{
 										Type: []string{"integer"},
