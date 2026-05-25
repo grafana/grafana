@@ -17,6 +17,7 @@ declare module "@openfeature/core" {
     | "stateTimeline.nameAboveBars"
     | "sqlExpressionsCodeMirror"
     | "newSavedQueriesExperience"
+    | "savedQueriesAssistantProvisioning"
     | "grafana.orgDashboardTemplates"
     | "dashboardTemplatesAssistantButton"
     | "suggestedDashboardsAssistantButton"
