@@ -1403,16 +1403,19 @@
     {
       "metadata": {
         "name": "clearPreviousFieldValues",
-        "resourceVersion": "1775070445977",
-        "creationTimestamp": "2026-04-01T19:07:25Z"
+        "resourceVersion": "1779387149898",
+        "creationTimestamp": "2026-04-01T19:07:25Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-05-21 18:12:29.898776 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Mitigates React fiber's retention of previous props/state, causing 2x memory use: https://github.com/facebook/react/issues/36176",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
         "hideFromDocs": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -3053,17 +3056,16 @@
     {
       "metadata": {
         "name": "groupToNestedTableV2",
-        "resourceVersion": "1775569565125",
+        "resourceVersion": "1779387430820",
         "creationTimestamp": "2026-03-27T20:18:08Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-04-07 13:46:05.125597 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-05-21 18:17:10.820324 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enable the new matcher-based UI and config shape for the Group to Nested Tables transformation",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/dataviz-squad",
-        "hideFromDocs": true,
         "expression": "false"
       }
     },
@@ -3084,12 +3086,15 @@
     {
       "metadata": {
         "name": "heatmapRowsAxisOptions",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-12-18T22:45:00Z"
+        "resourceVersion": "1779473680521",
+        "creationTimestamp": "2025-12-18T22:45:00Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-05-22 18:14:40.521505 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
         "expression": "false"
@@ -4736,15 +4741,18 @@
     {
       "metadata": {
         "name": "panelStyleActions",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2026-02-18T17:05:38Z"
+        "resourceVersion": "1779296829158",
+        "creationTimestamp": "2026-02-18T17:05:38Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-05-20 17:07:09.158003 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable style actions (copy/paste) in the panel editor",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -6604,15 +6612,18 @@
     {
       "metadata": {
         "name": "vizLegendFacetedFilter",
-        "resourceVersion": "1773129262183",
-        "creationTimestamp": "2026-03-10T07:54:22Z"
+        "resourceVersion": "1779387149240",
+        "creationTimestamp": "2026-03-10T07:54:22Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-05-21 18:12:29.240952 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable faceted labels filter for series visibility in the legend",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -6636,15 +6647,18 @@
     {
       "metadata": {
         "name": "vizPresets",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2026-02-18T17:05:38Z"
+        "resourceVersion": "1779296184831",
+        "creationTimestamp": "2026-02-18T17:05:38Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-05-20 16:56:24.831547 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable visualization presets",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
