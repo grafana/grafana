@@ -39,5 +39,4 @@ jobs:
           github_board_id: 78 # Frontend Platform project
           en_paths: public/locales/en-US/grafana.json, public/app/plugins/datasource/azuremonitor/locales/en-US/grafana-azure-monitor-datasource.json, public/app/plugins/datasource/mssql/locales/en-US/mssql.json, packages/grafana-sql/src/locales/en-US/grafana-sql.json
           github_repo_token: ${{ steps.get-github-app-token.outputs.token }}
-          # TODO
-          # github_pr_approver_token: ${{ steps.get-pr-approver-token.outputs.token }}
+          github_pr_approver_token: ${{ steps.get-github-app-token.outputs.token }}

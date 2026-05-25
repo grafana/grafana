@@ -592,9 +592,6 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 						Expiry:       time.Now().AddDate(0, 0, 1),
 					}).WithExtra(map[string]any{"id_token": "testidtoken"})
 				},
-				IsOAuthPassThruEnabledFunc: func(ds *datasources.DataSource) bool {
-					return true
-				},
 			}
 		})
 		require.NoError(t, err)
