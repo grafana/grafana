@@ -23,6 +23,8 @@ jest.mock('./StackedSection', () => ({
     isCurrent: boolean;
     headingId: string;
   }) => (
+    // Mirror headingId on a data-* attribute (not aria-labelledby) so the test can inspect the value
+    // without claiming a11y semantics the mock doesn't actually fulfill.
     <section
       data-testid={`stacked-section-${item.type}-${item.id}`}
       data-stacked-editor-item-id={item.id}
@@ -70,16 +72,15 @@ describe('StackedEditorRenderer', () => {
   it('renders one section per query and transformation in source order', () => {
     renderStackedEditor();
 
-    const sections = screen.getAllByTestId(/^stacked-section-/);
-    expect(sections.map((section) => section.getAttribute('data-stacked-editor-item-id'))).toEqual([
-      'A',
-      'B',
-      'organize-0',
-    ]);
-    expect(sections.map((section) => section.getAttribute('data-stacked-editor-item-type'))).toEqual([
-      QueryEditorType.Query,
-      QueryEditorType.Query,
-      QueryEditorType.Transformation,
+    const renderedItems = screen.getAllByTestId(/^stacked-section-/).map((section) => ({
+      id: section.getAttribute('data-stacked-editor-item-id'),
+      type: section.getAttribute('data-stacked-editor-item-type'),
+    }));
+
+    expect(renderedItems).toEqual([
+      { id: 'A', type: QueryEditorType.Query },
+      { id: 'B', type: QueryEditorType.Query },
+      { id: 'organize-0', type: QueryEditorType.Transformation },
     ]);
   });
 
