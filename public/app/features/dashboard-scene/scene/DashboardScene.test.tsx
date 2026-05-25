@@ -47,6 +47,7 @@ import * as utils from '../utils/utils';
 import { DashboardControls } from './DashboardControls';
 import { DashboardScene, type DashboardSceneState } from './DashboardScene';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
+import { LiveNowStreamingGuard } from './LiveNowStreamingGuard';
 import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from './layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from './layout-auto-grid/AutoGridLayoutManager';
@@ -372,18 +373,18 @@ describe('DashboardScene', () => {
       });
 
       it('A enabling/disabling live now setting should set isDirty true', () => {
-        const liveNowTimer = scene.state.$behaviors?.find(
-          (b) => b instanceof behaviors.LiveNowTimer
-        ) as behaviors.LiveNowTimer;
-        liveNowTimer.enable();
+        const liveNowGuard = scene.state.$behaviors?.find(
+          (b) => b instanceof LiveNowStreamingGuard
+        ) as LiveNowStreamingGuard;
+        liveNowGuard.setUserEnabled(true);
 
         expect(scene.state.isDirty).toBe(true);
 
         scene.exitEditMode({ skipConfirm: true });
-        const restoredLiveNowTimer = scene.state.$behaviors?.find(
-          (b) => b instanceof behaviors.LiveNowTimer
-        ) as behaviors.LiveNowTimer;
-        expect(restoredLiveNowTimer.state.enabled).toBeFalsy();
+        const restoredGuard = scene.state.$behaviors?.find(
+          (b) => b instanceof LiveNowStreamingGuard
+        ) as LiveNowStreamingGuard;
+        expect(restoredGuard.state.userEnabled).toBeFalsy();
       });
 
       it('A change to time picker visibility settings should set isDirty true', () => {
@@ -2931,7 +2932,7 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
       timeZone: 'browser',
     }),
     controls: new DashboardControls({}),
-    $behaviors: [new behaviors.CursorSync({}), new behaviors.LiveNowTimer({})],
+    $behaviors: [new behaviors.CursorSync({}), new behaviors.LiveNowTimer({}), new LiveNowStreamingGuard({})],
     body: new DefaultGridLayoutManager({
       grid: new SceneGridLayout({
         children: [

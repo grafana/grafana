@@ -39,6 +39,7 @@ import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSou
 
 import { type DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
+import { LiveNowStreamingGuard } from '../scene/LiveNowStreamingGuard';
 import { type AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { type AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
 import { type DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
@@ -110,8 +111,8 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     expect(scene.state.version).toEqual(123);
     expect(scene.state.tags).toEqual(dash.tags);
 
-    const liveNow = scene.state.$behaviors?.find((b) => b instanceof behaviors.LiveNowTimer);
-    expect(liveNow?.state.enabled).toEqual(dash.liveNow);
+    const liveNowGuard = scene.state.$behaviors?.find((b) => b instanceof LiveNowStreamingGuard);
+    expect(liveNowGuard?.state.userEnabled).toEqual(dash.liveNow);
 
     const cursorSync = scene.state.$behaviors?.find((b) => b instanceof behaviors.CursorSync);
     expect(transformCursorSynctoEnum(cursorSync?.state.sync)).toEqual(dash.cursorSync);

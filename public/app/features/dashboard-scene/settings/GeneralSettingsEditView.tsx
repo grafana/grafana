@@ -3,9 +3,10 @@ import { type ChangeEvent } from 'react';
 import { PageLayoutType } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { type SceneComponentProps, SceneObjectBase, behaviors, sceneGraph } from '@grafana/scenes';
+import { type SceneComponentProps, SceneObjectBase, sceneGraph } from '@grafana/scenes';
 import { type TimeZone } from '@grafana/schema';
 import {
+  Alert,
   Box,
   CollapsableSection,
   Field,
@@ -27,10 +28,12 @@ import { ProvisioningAwareFolderPicker } from 'app/features/provisioning/compone
 
 import { updateNavModel } from '../pages/utils';
 import { type DashboardScene } from '../scene/DashboardScene';
+import { LiveNowStreamingGuard } from '../scene/LiveNowStreamingGuard';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
+import { hasStreamingDataSource } from '../utils/hasStreamingDataSource';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { DeleteDashboardButton } from './DeleteDashboardButton';
@@ -72,12 +75,12 @@ export class GeneralSettingsEditView
     return dashboardSceneGraph.getCursorSync(this._dashboard);
   }
 
-  public getLiveNowTimer(): behaviors.LiveNowTimer {
-    const liveNowTimer = sceneGraph.findObject(this._dashboard, (s) => s instanceof behaviors.LiveNowTimer);
-    if (liveNowTimer instanceof behaviors.LiveNowTimer) {
-      return liveNowTimer;
+  public getLiveNowGuard(): LiveNowStreamingGuard {
+    const guard = sceneGraph.findObject(this._dashboard, (s) => s instanceof LiveNowStreamingGuard);
+    if (guard instanceof LiveNowStreamingGuard) {
+      return guard;
     } else {
-      throw new Error('LiveNowTimer could not be found');
+      throw new Error('LiveNowStreamingGuard could not be found');
     }
   }
 
@@ -156,8 +159,7 @@ export class GeneralSettingsEditView
 
   public onLiveNowChange = (enable: boolean) => {
     try {
-      const liveNow = this.getLiveNowTimer();
-      enable ? liveNow.enable() : liveNow.disable();
+      this.getLiveNowGuard().setUserEnabled(enable);
     } catch (err) {
       console.error(err);
     }
@@ -214,7 +216,8 @@ function GeneralSettingsEditViewComponent({ model }: SceneComponentProps<General
   const { timeZone, weekStart, UNSAFE_nowDelay: nowDelay } = model.getTimeRange().useState();
   const { intervals } = model.getRefreshPicker().useState();
   const { hideTimeControls } = model.getDashboardControls().useState();
-  const { enabled: liveNow } = model.getLiveNowTimer().useState();
+  const { userEnabled: liveNow } = model.getLiveNowGuard().useState();
+  const liveNowHasNoStreamingDataSource = liveNow && !hasStreamingDataSource(dashboard);
   const EDITABLE_OPTIONS = [
     {
       label: t('dashboard-scene.general-settings-edit-view.editable_options.label.editable', 'Editable'),
@@ -372,6 +375,24 @@ function GeneralSettingsEditViewComponent({ model }: SceneComponentProps<General
           liveNow={liveNow}
           timezone={timeZone || ''}
           weekStart={weekStart}
+          liveNowWarning={
+            liveNowHasNoStreamingDataSource ? (
+              <Box marginTop={1}>
+                <Alert
+                  severity="warning"
+                  title={t(
+                    'dashboard-settings.time-picker.smooth-streaming-no-streaming-title',
+                    'No streaming datasources detected'
+                  )}
+                >
+                  <Trans i18nKey="dashboard-settings.time-picker.smooth-streaming-no-streaming-body">
+                    None of the panels on this dashboard use a streaming-capable datasource, so smooth streaming
+                    visualization has no effect. Add a panel backed by a streaming datasource to enable it.
+                  </Trans>
+                </Alert>
+              </Box>
+            ) : null
+          }
         />
 
         {/* @todo: Update "Graph tooltip" description to remove prompt about reloading when resolving #46581 */}

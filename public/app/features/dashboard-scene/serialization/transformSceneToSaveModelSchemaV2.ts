@@ -57,6 +57,7 @@ import {
 } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { type DashboardScene, type DashboardSceneState } from '../scene/DashboardScene';
+import { LiveNowStreamingGuard } from '../scene/LiveNowStreamingGuard';
 import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { isLinkEditable } from '../settings/links/utils';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
@@ -186,7 +187,7 @@ function getCursorSync(state: DashboardSceneState) {
 
 function getLiveNow(state: DashboardSceneState) {
   const liveNow =
-    state.$behaviors?.find((b): b is behaviors.LiveNowTimer => b instanceof behaviors.LiveNowTimer)?.isEnabled ||
+    state.$behaviors?.find((b): b is LiveNowStreamingGuard => b instanceof LiveNowStreamingGuard)?.isEnabled ||
     undefined;
   // hack for validator
   if (liveNow === undefined) {
