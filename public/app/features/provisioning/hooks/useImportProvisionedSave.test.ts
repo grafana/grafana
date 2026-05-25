@@ -128,7 +128,43 @@ describe('useImportProvisionedSave', () => {
     });
 
     const call = mockCreateFile.mock.calls[0][0];
-    expect(call.message).toBe('Import dashboard: My Dash');
+    expect(call.message).toBe('New dashboard: My Dash');
+  });
+
+  it('trims whitespace-only comment and falls back to default', () => {
+    const { result } = renderHook(() => useImportProvisionedSave({ repository }));
+
+    act(() => {
+      result.current.save(
+        makeSaveParams({
+          title: 'My Dash',
+          form: { ref: 'main', path: 'test.json', comment: '   ', workflow: 'write' },
+        })
+      );
+    });
+
+    const call = mockCreateFile.mock.calls[0][0];
+    expect(call.message).toBe('New dashboard: My Dash');
+  });
+
+  it('honors repository commit template when comment is empty', () => {
+    const repoWithTemplate: RepositoryView = {
+      ...repository,
+      commit: { singleResourceMessageTemplate: 'feat: {{title}}' },
+    };
+    const { result } = renderHook(() => useImportProvisionedSave({ repository: repoWithTemplate }));
+
+    act(() => {
+      result.current.save(
+        makeSaveParams({
+          title: 'My Dash',
+          form: { ref: 'main', path: 'test.json', comment: '', workflow: 'write' },
+        })
+      );
+    });
+
+    const call = mockCreateFile.mock.calls[0][0];
+    expect(call.message).toBe('feat: My Dash');
   });
 
   it('falls back to beta version when resolver has not been called', () => {

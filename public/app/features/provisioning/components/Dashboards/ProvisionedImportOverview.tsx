@@ -1,4 +1,3 @@
-import { css } from '@emotion/css';
 import { useEffect, useMemo } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
@@ -172,25 +171,20 @@ export function ProvisionedImportOverview({
         <GcomDashboardInfo gnetId={gnetId} orgName={meta.orgName} updatedAt={meta.updatedAt} />
       )}
       <FormProvider {...methods}>
-        <form onSubmit={methods.handleSubmit(onSubmit)} className={css({ maxWidth: '600px', width: '100%' })}>
-          <ProvisionedImportForm
-            register={methods.register}
-            control={methods.control}
-            getValues={methods.getValues}
-            errors={methods.formState.errors}
-            inputs={inputs}
-            isReadOnlyRepo={isReadOnlyRepo}
-            isOrphaned={false}
-            isLibraryPanelImportBlocked={isLibraryPanelImportBlocked}
-            hasFloatGridItems={hasFloatGridItems}
-            canPushToConfiguredBranch={canPushToConfiguredBranch}
-            repository={repository}
-            submitDisabled={submitDisabled}
-            isLoading={isLoading}
-            error={error}
-            onCancel={onCancel}
-          />
-        </form>
+        <ProvisionedImportForm
+          inputs={inputs}
+          isReadOnlyRepo={isReadOnlyRepo}
+          isOrphaned={false}
+          isLibraryPanelImportBlocked={isLibraryPanelImportBlocked}
+          hasFloatGridItems={hasFloatGridItems}
+          canPushToConfiguredBranch={canPushToConfiguredBranch}
+          repository={repository}
+          submitDisabled={submitDisabled}
+          isLoading={isLoading}
+          error={error}
+          onSubmit={onSubmit}
+          onCancel={onCancel}
+        />
       </FormProvider>
     </>
   );

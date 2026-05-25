@@ -1,9 +1,10 @@
-import { Controller, type FieldErrors, type UseFormReturn } from 'react-hook-form';
+import { css } from '@emotion/css';
+import { Controller, useFormContext } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
-import { Alert, Button, Field, Input, Stack } from '@grafana/ui';
+import { Alert, Button, Field, Input, Stack, useStyles2 } from '@grafana/ui';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { getUidFieldDescription, getUidFieldLabel } from 'app/features/manage-dashboards/import/utils/uidFieldText';
@@ -16,9 +17,8 @@ import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFi
 
 import { type ProvisionedImportFormData } from './ProvisionedImportOverview';
 
-interface Props extends Pick<UseFormReturn<ProvisionedImportFormData>, 'register' | 'control' | 'getValues'> {
+interface Props {
   inputs: DashboardInputs;
-  errors: FieldErrors<ProvisionedImportFormData>;
   isReadOnlyRepo: boolean;
   isOrphaned: boolean;
   isLibraryPanelImportBlocked: boolean;
@@ -28,14 +28,11 @@ interface Props extends Pick<UseFormReturn<ProvisionedImportFormData>, 'register
   submitDisabled: boolean;
   isLoading: boolean;
   error?: string;
+  onSubmit: (form: ProvisionedImportFormData) => void;
   onCancel: () => void;
 }
 
 export function ProvisionedImportForm({
-  register,
-  control,
-  getValues,
-  errors,
   inputs,
   isReadOnlyRepo,
   isOrphaned,
@@ -46,167 +43,186 @@ export function ProvisionedImportForm({
   submitDisabled,
   isLoading,
   error,
+  onSubmit,
   onCancel,
 }: Props) {
+  const styles = useStyles2(getStyles);
+  const {
+    register,
+    control,
+    getValues,
+    handleSubmit,
+    formState: { errors },
+  } = useFormContext<ProvisionedImportFormData>();
+
   return (
-    <Stack direction="column" gap={2}>
-      {/* Banners */}
-      {(isReadOnlyRepo || isOrphaned) && (
-        <RepoInvalidStateBanner noRepository={isOrphaned} isReadOnlyRepo={isReadOnlyRepo} />
-      )}
+    <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
+      <Stack direction="column" gap={2}>
+        {/* Banners */}
+        {(isReadOnlyRepo || isOrphaned) && (
+          <RepoInvalidStateBanner noRepository={isOrphaned} isReadOnlyRepo={isReadOnlyRepo} />
+        )}
 
-      {isLibraryPanelImportBlocked && (
-        <Alert
-          severity="warning"
-          title={t('provisioning.import.library-panels-blocked-title', 'Library panels not supported')}
-        >
-          <Trans i18nKey="provisioning.import.library-panels-blocked-body">
-            This dashboard contains library panels that cannot be created through a provisioned import. Import into a
-            non-provisioned folder instead, or remove the library panel references first.
-          </Trans>
-        </Alert>
-      )}
-
-      {hasFloatGridItems && (
-        <Alert
-          severity="warning"
-          title={t('provisioning.import.float-grid-items-title', 'Floating grid items')}
-          data-testid={selectors.components.ImportDashboardForm.floatGridItemsWarning}
-        >
-          <Trans i18nKey="provisioning.import.float-grid-items-body">
-            The dashboard contains grid items with floating positions. This is not supported by Grafana and the numbers
-            will be truncated to integers.
-          </Trans>
-        </Alert>
-      )}
-
-      {/* Name */}
-      <Field
-        label={t('provisioning.import.label-name', 'Name')}
-        invalid={!!errors.title}
-        error={errors.title?.message}
-        noMargin
-      >
-        <Input
-          {...register('title', {
-            required: t('provisioning.import.name-required', 'Name is required'),
-            validate: (v) => validateTitle(v, getValues('folderUid')),
-            deps: ['folderUid'],
-          })}
-          type="text"
-          data-testid={selectors.components.ImportDashboardForm.name}
-        />
-      </Field>
-
-      {/* UID */}
-      <Field
-        label={getUidFieldLabel()}
-        description={getUidFieldDescription()}
-        invalid={!!errors.uid}
-        error={errors.uid?.message}
-        noMargin
-      >
-        <Input
-          {...register('uid', {
-            validate: (v) => (!v ? true : validateUid(v)),
-          })}
-          type="text"
-          data-testid="provisioned-import-uid"
-        />
-      </Field>
-
-      {/* Datasource inputs */}
-      {inputs.dataSources.map((input: DataSourceInput) => {
-        if (input.pluginId === ExpressionDatasourceRef.type) {
-          return null;
-        }
-        const fieldName = `datasource-${input.name}`;
-        return (
-          <Field
-            label={input.name}
-            description={input.description}
-            key={fieldName}
-            invalid={!!errors[fieldName]}
-            error={
-              errors[fieldName]
-                ? t('provisioning.import.datasource-required', 'Please select a data source')
-                : undefined
-            }
-            noMargin
+        {isLibraryPanelImportBlocked && (
+          <Alert
+            severity="warning"
+            title={t('provisioning.import.library-panels-blocked-title', 'Library panels not supported')}
           >
-            <Controller
-              name={fieldName}
-              render={({ field: { ref, value, onChange, ...field } }) => {
-                const dsUid =
-                  value && typeof value === 'object' && 'uid' in value && typeof value.uid === 'string'
-                    ? value.uid
-                    : undefined;
-                return (
-                  <DataSourcePicker
-                    {...field}
-                    noDefault={true}
-                    placeholder={input.info}
-                    pluginId={input.pluginId}
-                    current={dsUid}
-                    onChange={(ds) => {
-                      onChange({ uid: ds.uid, type: ds.type, name: ds.name });
-                    }}
-                  />
-                );
-              }}
-              control={control}
-              rules={{ required: true }}
-            />
-          </Field>
-        );
-      })}
+            <Trans i18nKey="provisioning.import.library-panels-blocked-body">
+              This dashboard contains library panels that cannot be created through a provisioned import. Import into a
+              non-provisioned folder instead, or remove the library panel references first.
+            </Trans>
+          </Alert>
+        )}
 
-      {/* Constant inputs */}
-      {inputs.constants.map((input: DashboardInput) => {
-        const fieldName = `constant-${input.name}`;
-        return (
-          <Field
-            label={input.label}
-            key={fieldName}
-            invalid={!!errors[fieldName]}
-            error={
-              errors[fieldName]
-                ? t('provisioning.import.constant-required', '{{label}} needs a value', { label: input.label })
-                : undefined
-            }
-            noMargin
+        {hasFloatGridItems && (
+          <Alert
+            severity="warning"
+            title={t('provisioning.import.float-grid-items-title', 'Floating grid items')}
+            data-testid={selectors.components.ImportDashboardForm.floatGridItemsWarning}
           >
-            <Input {...register(fieldName, { required: true })} defaultValue={input.value} />
-          </Field>
-        );
-      })}
+            <Trans i18nKey="provisioning.import.float-grid-items-body">
+              The dashboard contains grid items with floating positions. This is not supported by Grafana and the
+              numbers will be truncated to integers.
+            </Trans>
+          </Alert>
+        )}
 
-      {/* Provisioning fields (branch, filename, comment) */}
-      {!isLibraryPanelImportBlocked && !isReadOnlyRepo && !isOrphaned && (
-        <ResourceEditFormSharedFields
-          resourceType="dashboard"
-          isNew
-          canPushToConfiguredBranch={canPushToConfiguredBranch}
-          repository={repository}
-        />
-      )}
-
-      {error && <ProvisioningAlert error={error} />}
-
-      {/* Actions */}
-      <Stack direction="row" gap={2}>
-        <Button
-          type="submit"
-          data-testid={selectors.components.ImportDashboardForm.submit}
-          variant="primary"
-          disabled={submitDisabled}
+        {/* Name */}
+        <Field
+          label={t('provisioning.import.label-name', 'Name')}
+          invalid={!!errors.title}
+          error={errors.title?.message}
+          noMargin
         >
-          {isLoading ? t('provisioning.import.importing', 'Importing...') : t('provisioning.import.import', 'Import')}
-        </Button>
-        <Button type="reset" variant="secondary" onClick={onCancel}>
-          <Trans i18nKey="provisioning.import.cancel">Cancel</Trans>
-        </Button>
+          <Input
+            {...register('title', {
+              required: t('provisioning.import.name-required', 'Name is required'),
+              validate: (v) => validateTitle(v, getValues('folderUid')),
+              deps: ['folderUid'],
+            })}
+            type="text"
+            data-testid={selectors.components.ImportDashboardForm.name}
+          />
+        </Field>
+
+        {/* UID */}
+        <Field
+          label={getUidFieldLabel()}
+          description={getUidFieldDescription()}
+          invalid={!!errors.uid}
+          error={errors.uid?.message}
+          noMargin
+        >
+          <Input
+            {...register('uid', {
+              validate: (v) => (!v ? true : validateUid(v)),
+            })}
+            type="text"
+            data-testid="provisioned-import-uid"
+          />
+        </Field>
+
+        {/* Datasource inputs */}
+        {inputs.dataSources.map((input: DataSourceInput) => {
+          if (input.pluginId === ExpressionDatasourceRef.type) {
+            return null;
+          }
+          const fieldName = `datasource-${input.name}`;
+          return (
+            <Field
+              label={input.name}
+              description={input.description}
+              key={fieldName}
+              invalid={!!errors[fieldName]}
+              error={
+                errors[fieldName]
+                  ? t('provisioning.import.datasource-required', 'Please select a data source')
+                  : undefined
+              }
+              noMargin
+            >
+              <Controller
+                name={fieldName}
+                render={({ field: { ref, value, onChange, ...field } }) => {
+                  const dsUid =
+                    value && typeof value === 'object' && 'uid' in value && typeof value.uid === 'string'
+                      ? value.uid
+                      : undefined;
+                  return (
+                    <DataSourcePicker
+                      {...field}
+                      noDefault={true}
+                      placeholder={input.info}
+                      pluginId={input.pluginId}
+                      current={dsUid}
+                      onChange={(ds) => {
+                        onChange({ uid: ds.uid, type: ds.type, name: ds.name });
+                      }}
+                    />
+                  );
+                }}
+                control={control}
+                rules={{ required: true }}
+              />
+            </Field>
+          );
+        })}
+
+        {/* Constant inputs */}
+        {inputs.constants.map((input: DashboardInput) => {
+          const fieldName = `constant-${input.name}`;
+          return (
+            <Field
+              label={input.label}
+              key={fieldName}
+              invalid={!!errors[fieldName]}
+              error={
+                errors[fieldName]
+                  ? t('provisioning.import.constant-required', '{{label}} needs a value', { label: input.label })
+                  : undefined
+              }
+              noMargin
+            >
+              <Input {...register(fieldName, { required: true })} defaultValue={input.value} />
+            </Field>
+          );
+        })}
+
+        {/* Provisioning fields (branch, filename, comment) */}
+        {!isLibraryPanelImportBlocked && !isReadOnlyRepo && !isOrphaned && (
+          <ResourceEditFormSharedFields
+            resourceType="dashboard"
+            isNew
+            canPushToConfiguredBranch={canPushToConfiguredBranch}
+            repository={repository}
+          />
+        )}
+
+        {error && <ProvisioningAlert error={error} />}
+
+        {/* Actions */}
+        <Stack direction="row" gap={2}>
+          <Button
+            type="submit"
+            data-testid={selectors.components.ImportDashboardForm.submit}
+            variant="primary"
+            disabled={submitDisabled}
+          >
+            {isLoading ? t('provisioning.import.importing', 'Importing...') : t('provisioning.import.import', 'Import')}
+          </Button>
+          <Button type="reset" variant="secondary" onClick={onCancel}>
+            <Trans i18nKey="provisioning.import.cancel">Cancel</Trans>
+          </Button>
+        </Stack>
       </Stack>
-    </Stack>
+    </form>
   );
 }
+
+const getStyles = () => ({
+  form: css({
+    maxWidth: '600px',
+    width: '100%',
+  }),
+});

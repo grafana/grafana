@@ -7,6 +7,7 @@ import { Spinner, Stack } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
 import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { isRecord } from 'app/core/utils/isRecord';
 import { ExportFormat } from 'app/features/dashboard/api/types';
 import { isDashboardV1Resource, isDashboardV2Resource } from 'app/features/dashboard/api/utils';
 
@@ -119,9 +120,16 @@ export function DashboardImportK8s({ queryParams }: Props) {
     try {
       const format = detectExportFormat(json);
       const isV2Resource = isDashboardV2Resource(json);
+      const isV1Resource = isDashboardV1Resource(json);
       // Unwrap k8s resource to get the spec, or use as-is for classic dashboards
-      const dashboard = isV2Resource || isDashboardV1Resource(json) ? json.spec : json;
-      const dashboardUid = isV2Resource ? json.metadata.name : undefined;
+      const dashboard = isV2Resource || isV1Resource ? json.spec : json;
+
+      let dashboardUid: string | undefined;
+      if (isV2Resource || isV1Resource) {
+        dashboardUid = json.metadata.name;
+      } else if (isRecord(dashboard) && typeof dashboard.uid === 'string') {
+        dashboardUid = dashboard.uid;
+      }
       const inputs =
         format === ExportFormat.V2Resource ? await extractV2Inputs(dashboard) : await extractV1Inputs(dashboard);
 

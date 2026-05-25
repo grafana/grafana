@@ -12,6 +12,7 @@ import {
 } from 'app/features/dashboard/api/DashboardAPIVersionResolver';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { PROVISIONING_PREVIEW_URL } from 'app/features/provisioning/constants';
+import { getSingleResourceCommitMessage } from 'app/features/provisioning/utils/commitMessage';
 import { buildResourceBranchRedirectUrl } from 'app/features/provisioning/utils/redirect';
 
 import { getProvisionedRequestError } from '../components/utils/errors';
@@ -134,7 +135,14 @@ export function useImportProvisionedSave({ repository }: { repository?: Reposito
         name: repository.name,
         path: form.path,
         ref: form.ref === repository.branch ? undefined : form.ref,
-        message: form.comment || `Import dashboard: ${title}`,
+        message: getSingleResourceCommitMessage({
+          comment: form.comment,
+          repository,
+          action: 'create',
+          resourceKind: 'dashboard',
+          resourceID: uid ?? '',
+          title,
+        }),
         body,
       });
     },
