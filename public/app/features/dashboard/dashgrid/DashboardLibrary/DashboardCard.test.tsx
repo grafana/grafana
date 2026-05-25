@@ -812,5 +812,38 @@ describe('DashboardCard', () => {
 
       expect(screen.getByTestId('dashboard-card-description')).toHaveTextContent('No description available');
     });
+
+    it('should call onEdit when the Edit button is clicked', async () => {
+      const mockOnEdit = jest.fn();
+      const { user } = render(
+        <DashboardCard
+          title="My Custom Template"
+          dashboard={createMockGnetDashboard()}
+          onClick={mockOnClick}
+          onEdit={mockOnEdit}
+          kind="custom_dashboard_template"
+        />
+      );
+
+      await user.click(screen.getByRole('button', { name: 'Edit template: My Custom Template' }));
+
+      expect(mockOnEdit).toHaveBeenCalledTimes(1);
+      expect(mockOnClick).not.toHaveBeenCalled();
+    });
+
+    it('should call onClick when the primary "Use template" button is clicked', async () => {
+      const { user } = render(
+        <DashboardCard
+          title="My Custom Template"
+          dashboard={createMockGnetDashboard()}
+          onClick={mockOnClick}
+          kind="custom_dashboard_template"
+        />
+      );
+
+      await user.click(screen.getByRole('button', { name: 'View dashboard: My Custom Template' }));
+
+      expect(mockOnClick).toHaveBeenCalledTimes(1);
+    });
   });
 });
