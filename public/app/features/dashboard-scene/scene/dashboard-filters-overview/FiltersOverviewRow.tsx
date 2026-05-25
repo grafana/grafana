@@ -325,6 +325,11 @@ const getRowStyles = (theme: GrafanaTheme2) => {
         borderTopLeftRadius: 'unset',
         borderBottomLeftRadius: 'unset',
       },
+      '&& [class*="-placeholder"]': {
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+      },
     }),
     indicators: cx(getInputStyles({ theme, invalid: false }).suffix, css({ position: 'relative' })),
     restoreButton: css({
