@@ -274,6 +274,15 @@ export type PluginExtensionPanelContext = {
   targets: DataQuery[];
   scopedVars?: ScopedVars;
   data?: PanelData;
+  /**
+   * Path-based identifier for the rendered panel instance, unique even across
+   * repeated panels (one per repeat instance, includes local variable values).
+   *
+   * Set only in scenes-based dashboards. Pass to
+   * `getPanelScreenshotService().capture()` to capture the panel image.
+   * Undefined in legacy dashboard contexts.
+   */
+  panelPathId?: string;
 };
 
 export type CentralAlertHistorySceneV1Props = {
