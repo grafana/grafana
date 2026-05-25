@@ -42,23 +42,32 @@ describe('QueryEditorContent', () => {
     {
       name: 'stacked mode is disabled',
       overrides: { stackedMode: makeStackedMode({ enabled: false }) },
+      expectedFooter: true,
     },
     {
       name: 'a pending expression takes over',
       overrides: { stackedMode: makeStackedMode({ enabled: true }), pendingExpression: { insertAfter: 'A' } },
+      expectedFooter: false,
     },
     {
       name: 'a pending transformation takes over',
-      overrides: { stackedMode: makeStackedMode({ enabled: true }), pendingTransformation: {} },
+      overrides: { stackedMode: makeStackedMode({ enabled: true }), pendingTransformation: { insertAfter: 'A' } },
+      expectedFooter: false,
     },
     {
       name: 'the editor is in alert view',
       overrides: { stackedMode: makeStackedMode({ enabled: true }), cardType: QueryEditorType.Alert },
+      expectedFooter: false,
     },
-  ])('falls back to the single-edit body when $name', ({ overrides }) => {
+  ])('falls back to the single-edit body when $name', ({ overrides, expectedFooter }) => {
     renderContent(overrides);
 
     expect(screen.queryByTestId('stacked-editor-renderer')).not.toBeInTheDocument();
     expect(screen.getByTestId('query-editor-body')).toBeInTheDocument();
+    if (expectedFooter) {
+      expect(screen.getByTestId('query-editor-footer')).toBeInTheDocument();
+    } else {
+      expect(screen.queryByTestId('query-editor-footer')).not.toBeInTheDocument();
+    }
   });
 });
