@@ -6,6 +6,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 import type { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
 import { useBranchDropdownOptions } from '../../hooks/useBranchDropdownOptions';
+import { useGetRepositoryFolders } from '../../hooks/useGetRepositoryFolders';
 import { type ProvisionedDashboardFormData } from '../../types/form';
 
 import { ResourceEditFormSharedFields } from './ResourceEditFormSharedFields';
@@ -483,6 +484,39 @@ describe('ResourceEditFormSharedFields', () => {
       });
 
       expect(mockCheckFile).not.toHaveBeenCalled();
+    });
+
+    it('should trigger path validation when folder changes', async () => {
+      // File exists at the new path → validation should fire and show error
+      mockCheckFile.mockReturnValue({
+        unwrap: () => Promise.resolve({}),
+      });
+
+      // Provide folder options so the combobox has selectable items
+      jest.mocked(useGetRepositoryFolders).mockReturnValue({
+        options: [{ label: 'other-folder', value: 'other-folder' }],
+        loading: false,
+        error: null,
+      });
+
+      const { user } = setup({
+        isNew: true,
+        repository: mockRepo.github,
+        formDefaultValues: { path: 'dashboards/test.json' },
+      });
+
+      mockCheckFile.mockClear();
+
+      // Change folder via combobox
+      const folderCombobox = screen.getByRole('combobox', { name: /folder/i });
+      await user.clear(folderCombobox);
+      await user.type(folderCombobox, 'other-folder');
+      await user.keyboard('{Enter}');
+
+      // shouldValidate: true means the path validator reruns after folder change
+      await waitFor(() => {
+        expect(mockCheckFile).toHaveBeenCalled();
+      });
     });
   });
 });

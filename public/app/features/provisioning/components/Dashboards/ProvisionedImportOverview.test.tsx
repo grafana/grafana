@@ -8,7 +8,9 @@ import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
+import { type Folder } from 'app/api/clients/folder/v1beta1';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { dashboardAPIVersionResolver } from 'app/features/dashboard/api/DashboardAPIVersionResolver';
 import { validateTitle, validateUid } from 'app/features/manage-dashboards/import/utils/validation';
 import { type DashboardInputs, DashboardSource, LibraryPanelInputState } from 'app/features/manage-dashboards/types';
@@ -333,6 +335,46 @@ describe('ProvisionedImportOverview', () => {
         expect(screen.getByTestId(selectors.components.ImportDashboardForm.submit)).toBeDisabled();
       });
       expect(screen.getByText('A file with this name already exists at this path')).toBeInTheDocument();
+    });
+  });
+
+  describe('folder path in repo', () => {
+    it('includes folder source path in the default file path', async () => {
+      const folder = {
+        metadata: {
+          annotations: {
+            [AnnoKeySourcePath]: 'dashboards/subfolder',
+          },
+        },
+        spec: { title: 'subfolder' },
+      } as unknown as Folder;
+
+      await setup({ folder });
+
+      const filenameInput = screen.getByRole('textbox', { name: /filename/i });
+      expect(filenameInput).toHaveValue('v1-dashboard.json');
+      // The full path should start with the folder source path
+      const folderCombobox = screen.getByRole('combobox', { name: /folder/i });
+      expect(folderCombobox).toHaveValue('dashboards/subfolder');
+    });
+
+    it('does not include folder prefix when folder has no AnnoKeySourcePath', async () => {
+      await setup({ folder: undefined });
+
+      const filenameInput = screen.getByRole('textbox', { name: /filename/i });
+      expect(filenameInput).toHaveValue('v1-dashboard.json');
+      const folderCombobox = screen.getByRole('combobox', { name: /folder/i });
+      expect(folderCombobox).toHaveValue('');
+    });
+
+    it('does not render a Grafana folder picker (ProvisioningAwareFolderPicker)', async () => {
+      await setup();
+      // The repo folder combobox should be present
+      expect(screen.getByRole('combobox', { name: /folder/i })).toBeInTheDocument();
+      // But no Grafana-style folder picker with label "Folder" outside the repo fields
+      // The only "Folder" control should be the repo folder combobox
+      const folderControls = screen.getAllByRole('combobox', { name: /folder/i });
+      expect(folderControls).toHaveLength(1);
     });
   });
 });

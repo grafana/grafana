@@ -20,7 +20,7 @@ import { useLastBranch } from '../../hooks/useLastBranch';
 import { usePRBranch } from '../../hooks/usePRBranch';
 import { joinPath, splitPath } from '../utils/path';
 
-type SharedFieldName = 'path' | 'comment' | 'folder';
+type SharedFieldName = 'path' | 'comment';
 
 interface DashboardEditFormSharedFieldsProps {
   resourceType: 'dashboard' | 'folder';
@@ -193,36 +193,34 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
               const { directory: dir, filename: file } = splitPath(value || '');
               return (
                 <>
-                  {!hiddenFields?.includes('folder') && (
-                    <Field
-                      noMargin
-                      htmlFor="folder-path"
-                      label={t(
-                        'provisioned-resource-form.save-or-delete-resource-shared-fields.label-folder',
-                        'Folder'
+                  <Field
+                    noMargin
+                    htmlFor="folder-path"
+                    label={t('provisioned-resource-form.save-or-delete-resource-shared-fields.label-folder', 'Folder')}
+                    description={t(
+                      'provisioned-resource-form.save-or-delete-resource-shared-fields.description-folder',
+                      'Folder inside the repository. Leave empty for the repository root.'
+                    )}
+                  >
+                    <Combobox
+                      id="folder-path"
+                      value={dir}
+                      onChange={(option) => {
+                        setValue('path', joinPath(option?.value ?? '', file), {
+                          shouldDirty: !isNew,
+                          shouldValidate: true,
+                        });
+                      }}
+                      options={folderOptions}
+                      loading={isFoldersLoading}
+                      createCustomValue
+                      isClearable
+                      placeholder={t(
+                        'provisioned-resource-form.save-or-delete-resource-shared-fields.placeholder-folder',
+                        'Select or enter folder path'
                       )}
-                      description={t(
-                        'provisioned-resource-form.save-or-delete-resource-shared-fields.description-folder',
-                        'Folder inside the repository. Leave empty for the repository root.'
-                      )}
-                    >
-                      <Combobox
-                        id="folder-path"
-                        value={dir}
-                        onChange={(option) => {
-                          setValue('path', joinPath(option?.value ?? '', file), { shouldDirty: !isNew });
-                        }}
-                        options={folderOptions}
-                        loading={isFoldersLoading}
-                        createCustomValue
-                        isClearable
-                        placeholder={t(
-                          'provisioned-resource-form.save-or-delete-resource-shared-fields.placeholder-folder',
-                          'Select or enter folder path'
-                        )}
-                      />
-                    </Field>
-                  )}
+                    />
+                  </Field>
                   <Field
                     noMargin
                     htmlFor="dashboard-filename"

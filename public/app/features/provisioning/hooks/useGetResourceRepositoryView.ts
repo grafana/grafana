@@ -41,7 +41,7 @@ export const useGetResourceRepositoryView = ({
   skipQuery,
 }: GetResourceRepositoryArgs): RepositoryViewData => {
   const provisioningEnabled = config.featureToggles.provisioning;
-  const shouldSkipSettings = !provisioningEnabled || skipQuery || (!name && !folderName);
+  const shouldSkipSettings = !provisioningEnabled || skipQuery;
   const settingsQueryArg = shouldSkipSettings ? skipToken : undefined;
 
   const {

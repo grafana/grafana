@@ -165,17 +165,21 @@ describe('ImportOverview dispatcher', () => {
     });
   });
 
-  describe('error / orphaned fallthrough', () => {
-    it('falls through to standard V1 when status is Error', () => {
+  describe('error / orphaned states', () => {
+    it('shows error banner when status is Error', () => {
       setRepoView({ status: RepoViewStatus.Error, error: new Error('fail') });
       render(<ImportOverview {...defaultProps} dashboard={v1Dashboard} />);
-      expect(screen.getByTestId('standard-v1')).toBeInTheDocument();
+      expect(screen.getByRole('alert')).toBeInTheDocument();
+      expect(screen.queryByTestId('standard-v1')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('provisioned-import')).not.toBeInTheDocument();
     });
 
-    it('falls through to standard V2 when status is Orphaned', () => {
+    it('shows error banner when status is Orphaned', () => {
       setRepoView({ status: RepoViewStatus.Orphaned });
       render(<ImportOverview {...defaultProps} dashboard={v2Dashboard} />);
-      expect(screen.getByTestId('standard-v2')).toBeInTheDocument();
+      expect(screen.getByRole('alert')).toBeInTheDocument();
+      expect(screen.queryByTestId('standard-v2')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('provisioned-import')).not.toBeInTheDocument();
     });
   });
 });

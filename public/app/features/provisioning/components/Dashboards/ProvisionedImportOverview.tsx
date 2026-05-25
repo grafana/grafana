@@ -4,7 +4,9 @@ import { FormProvider, useForm } from 'react-hook-form';
 
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type Folder } from 'app/api/clients/folder/v1beta1';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { GcomDashboardInfo } from 'app/features/manage-dashboards/import/components/GcomDashboardInfo';
 import { truncateFloatGridItems } from 'app/features/manage-dashboards/import/utils/floatingGridItems';
@@ -43,6 +45,7 @@ interface Props {
   source: DashboardSource;
   folderUid: string;
   repository: RepositoryView;
+  folder?: Folder;
   onCancel: () => void;
 }
 
@@ -54,6 +57,7 @@ export function ProvisionedImportOverview({
   source,
   folderUid,
   repository,
+  folder,
   onCancel,
 }: Props) {
   const isV2 = isDashboardV2Spec(dashboard);
@@ -73,17 +77,18 @@ export function ProvisionedImportOverview({
 
   const defaultValues = useMemo<ProvisionedImportFormData>(() => {
     const slug = slugifyForFilename(title);
+    const folderPath = folder?.metadata?.annotations?.[AnnoKeySourcePath];
     return {
       title,
       uid: dashboardUid ?? '',
       folderUid,
       workflow: getDefaultWorkflow(repository),
       ref: getDefaultRef(repository, 'import'),
-      path: generatePath({ timestamp: generateTimestamp(), slug }),
+      path: generatePath({ timestamp: generateTimestamp(), slug, folderPath }),
       comment: '',
       repo: repository.name,
     };
-  }, [title, dashboardUid, folderUid, repository]);
+  }, [title, dashboardUid, folderUid, repository, folder]);
 
   const methods = useForm<ProvisionedImportFormData>({
     defaultValues,

@@ -11,7 +11,6 @@ import { validateTitle, validateUid } from 'app/features/manage-dashboards/impor
 import { type DashboardInput, type DashboardInputs, type DataSourceInput } from 'app/features/manage-dashboards/types';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
-import { ProvisioningAwareFolderPicker } from '../Shared/ProvisioningAwareFolderPicker';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 
@@ -96,22 +95,6 @@ export function ProvisionedImportForm({
           })}
           type="text"
           data-testid={selectors.components.ImportDashboardForm.name}
-        />
-      </Field>
-
-      {/* Folder (Grafana target folder) */}
-      <Field label={t('provisioning.import.label-folder', 'Folder')} noMargin>
-        <Controller
-          name="folderUid"
-          control={control}
-          render={({ field: { ref, value, onChange, ...field } }) => (
-            <ProvisioningAwareFolderPicker
-              {...field}
-              onChange={(uid) => onChange(uid ?? '')}
-              value={typeof value === 'string' ? value : ''}
-              repositoryName={repository?.name}
-            />
-          )}
         />
       </Field>
 
@@ -205,7 +188,6 @@ export function ProvisionedImportForm({
           isNew
           canPushToConfiguredBranch={canPushToConfiguredBranch}
           repository={repository}
-          hiddenFields={['folder']}
         />
       )}
 
