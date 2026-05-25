@@ -75,16 +75,6 @@ linters:
           deny:
             - pkg: github.com/grafana/grafana/pkg
               desc: apps/playlist is not allowed to import grafana core
-        apps-dashboard:
-          list-mode: lax
-          files:
-            - ./apps/dashboard/*
-            - ./apps/dashboard/**/*
-          allow:
-            - github.com/grafana/grafana/pkg/apimachinery
-          deny:
-            - pkg: github.com/grafana/grafana/pkg
-              desc: apps/dashboard is not allowed to import grafana core
         apps-secret:
           list-mode: lax
           files:
@@ -95,8 +85,6 @@ linters:
               desc: apps/secret is not allowed to import grafana core
         coreplugins:
           files:
-            - '**/pkg/tsdb/grafana-postgresql-datasource/*'
-            - '**/pkg/tsdb/grafana-postgresql-datasource/**/*'
             - '**/pkg/tsdb/grafana-pyroscope-datasource/*'
             - '**/pkg/tsdb/grafana-pyroscope-datasource/**/*'
             - '**/pkg/tsdb/grafana-testdata-datasource/*'
@@ -107,12 +95,8 @@ linters:
             - '**/pkg/tsdb/cloud-monitoring/**/*'
             - '**/pkg/tsdb/graphite/*'
             - '**/pkg/tsdb/graphite/**/*'
-            - '**/pkg/tsdb/mssql/*'
-            - '**/pkg/tsdb/mssql/**/*'
             - '**/pkg/tsdb/mysql/*'
             - '**/pkg/tsdb/mysql/**/*'
-            - '**/pkg/tsdb/opentsdb/*'
-            - '**/pkg/tsdb/opentsdb/**/*'
             - '**/pkg/tsdb/parca/*'
             - '**/pkg/tsdb/parca/**/*'
             - '**/pkg/tsdb/tempo/*'
@@ -123,8 +107,6 @@ linters:
             - '**/pkg/tsdb/loki/**/*'
             - '**/pkg/tsdb/jaeger/*'
             - '**/pkg/tsdb/jaeger/**/*'
-            - '**/pkg/tsdb/influxdb/*'
-            - '**/pkg/tsdb/influxdb/**/*'
           deny:
             - pkg: github.com/grafana/grafana/pkg/api
               desc: Core plugins are not allowed to depend on Grafana core packages
@@ -187,9 +169,7 @@ linters:
             - pkg: io/ioutil
               desc: 'Deprecated: As of Go 1.16, the same functionality is now provided by package io or package os, and those implementations should be preferred in new code. See the specific function documentation for details.'
             - pkg: gopkg.in/yaml.v2
-              desc: use go.yaml.in/yaml/v3 instead
-            - pkg: gopkg.in/yaml.v3
-              desc: use go.yaml.in/yaml/v3 instead
+              desc: Grafana packages are not allowed to depend on gopkg.in/yaml.v2 as gopkg.in/yaml.v3 is now available
             - pkg: github.com/pkg/errors
               desc: 'Deprecated: Go 1.13 supports the functionality provided by pkg/errors in the standard library.'
             - pkg: github.com/xorcare/pointer
