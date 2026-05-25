@@ -1212,13 +1212,10 @@ func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.Lis
 		q = q.Where("NOT (" + clause + ")")
 	}
 	if query.RoutingPolicyExact != "" {
-		if query.RoutingPolicyExact == ngmodels.DefaultRoutingTreeName {
-			// 'user-defined' is the default notification policy tree. Rules pointing to it are
-			// stored with alert_routing_policy = NULL (PolicyRouting.Validate prevents storing
-			// the sentinel value explicitly). Match rules with no routing override at all.
-			q = q.Where("alert_routing_policy IS NULL AND " + sqlNotificationSettingsUnset)
-		} else {
-			q = q.Where("alert_routing_policy = ?", query.RoutingPolicyExact)
+		var err error
+		q, err = st.filterByRoutingPolicyExact(query.RoutingPolicyExact, q)
+		if err != nil {
+			return nil, groupsSet, err
 		}
 	}
 	if query.ExcludeRoutingPolicy != "" {
@@ -1794,6 +1791,37 @@ func (st DBstore) filterByContentInNotificationSettings(value string, sess *xorm
 	}
 	sql, param := st.SQLStore.GetDialect().LikeOperator("notification_settings", true, search, true)
 	return sess.And(sql, param), nil
+}
+
+// filterByRoutingPolicyExact matches rules routed to the given named policy tree.
+// Rules may store the policy in alert_routing_policy (alertingPolicyRoutingSettings) or, in legacy
+// mode, in the __grafana_managed_route__ label.
+func (st DBstore) filterByRoutingPolicyExact(policy string, sess *xorm.Session) (*xorm.Session, error) {
+	if policy == ngmodels.DefaultRoutingTreeName {
+		// 'user-defined' is the default notification policy tree. Rules pointing to it are
+		// stored with alert_routing_policy = NULL (PolicyRouting.Validate prevents storing
+		// the sentinel value explicitly). Match rules with no routing override at all.
+		labelMatcher, err := labels.NewMatcher(labels.MatchEqual, ngmodels.NamedRouteLabel, "")
+		if err != nil {
+			return nil, err
+		}
+		labelSQL, labelArgs, err := buildLabelMatcherCondition(st.SQLStore.GetDialect(), "labels", labelMatcher)
+		if err != nil {
+			return nil, err
+		}
+		return sess.Where("(alert_routing_policy IS NULL AND "+sqlNotificationSettingsUnset+" AND ("+labelSQL+"))", labelArgs...), nil
+	}
+
+	labelMatcher, err := labels.NewMatcher(labels.MatchEqual, ngmodels.NamedRouteLabel, policy)
+	if err != nil {
+		return nil, err
+	}
+	labelSQL, labelArgs, err := buildLabelMatcherCondition(st.SQLStore.GetDialect(), "labels", labelMatcher)
+	if err != nil {
+		return nil, err
+	}
+	args := append([]any{policy}, labelArgs...)
+	return sess.Where("(alert_routing_policy = ? OR ("+labelSQL+"))", args...), nil
 }
 
 // sqlNotificationSettingsUnset is a SQL predicate that matches rules with no contact-point
