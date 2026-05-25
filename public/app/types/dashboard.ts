@@ -73,6 +73,11 @@ export interface DashboardMeta {
   isNew?: boolean;
   version?: number;
 
+  // Dashboard template edit flow. Set when a dashboard scene was hydrated from an DashboardTemplate
+  // via DashboardRoutes.Template with editTemplate=true.
+  isDashboardTemplate?: boolean;
+  dashboardTemplateUid?: string;
+
   // When loaded from kubernetes, we stick the raw metadata here
   // yes weird, but this means all the editor structures can exist unchanged
   // until we use the resource as the main container
@@ -84,9 +89,6 @@ export interface DashboardMeta {
   // This is a property added specifically for edge cases where dashboards should be reloaded on scopes, time range or variables changes
   // This property is not persisted in the DB but its existence is controlled by the API
   reloadOnParamsChange?: boolean;
-
-  /** True when no custom home dashboard is configured (the platform default should be used). */
-  isDefaultHome?: boolean;
 
   // Conversion status from the API response, indicating if the dashboard was converted from another version
   conversionStatus?: {

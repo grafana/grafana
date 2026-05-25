@@ -12,6 +12,7 @@ import (
 	"github.com/bwmarrin/snowflake"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/apitesting"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -24,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/folder"
 )
 
 var rtscheme = runtime.NewScheme()
@@ -650,5 +652,128 @@ func TestEnsureRepoManagedByParentFolder(t *testing.T) {
 		_, err = s.prepareObjectForUpdate(ctx, newDash, oldDash)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "no config")
+	})
+
+	t.Run("skips when folder annotation is 'general' (canonical root)", func(t *testing.T) {
+		s := &Storage{
+			opts:         StorageOptions{EnableFolderSupport: true},
+			getDynClient: failingDynClient(errors.New("dynamic client should not be consulted for root parent")),
+		}
+		obj := makeDashboard(t, folder.GeneralFolderUID, nil)
+		require.NoError(t, s.ensureRepoManagedByParentFolder(context.Background(), obj))
+	})
+}
+
+func TestVerifyFolder(t *testing.T) {
+	_ = dashv1.AddToScheme(rtscheme)
+
+	makeDash := func(t *testing.T, parent string) utils.GrafanaMetaAccessor {
+		t.Helper()
+		dash := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "d1", Namespace: "default"}}
+		dash.SetGroupVersionKind(dashv1.DashboardResourceInfo.GroupVersionKind())
+		acc, err := utils.MetaAccessor(dash)
+		require.NoError(t, err)
+		if parent != "" {
+			acc.SetFolder(parent)
+		}
+		return acc
+	}
+
+	t.Run("support enabled, empty folder passes", func(t *testing.T) {
+		s := &Storage{
+			gr:   dashv1.DashboardResourceInfo.GroupResource(),
+			opts: StorageOptions{EnableFolderSupport: true},
+		}
+		obj := makeDash(t, "")
+		require.NoError(t, s.verifyFolder(obj))
+		require.Empty(t, obj.GetFolder())
+	})
+
+	t.Run("support enabled, folder set passes unchanged", func(t *testing.T) {
+		s := &Storage{
+			gr:   dashv1.DashboardResourceInfo.GroupResource(),
+			opts: StorageOptions{EnableFolderSupport: true},
+		}
+		obj := makeDash(t, "my-folder")
+		require.NoError(t, s.verifyFolder(obj))
+		require.Equal(t, "my-folder", obj.GetFolder())
+	})
+
+	t.Run("support disabled, empty folder passes", func(t *testing.T) {
+		s := &Storage{
+			gr:   dashv1.DashboardResourceInfo.GroupResource(),
+			opts: StorageOptions{EnableFolderSupport: false},
+		}
+		obj := makeDash(t, "")
+		require.NoError(t, s.verifyFolder(obj))
+	})
+
+	t.Run("support disabled, folder set returns Invalid (422) with field cause", func(t *testing.T) {
+		s := &Storage{
+			gr:   dashv1.DashboardResourceInfo.GroupResource(),
+			opts: StorageOptions{EnableFolderSupport: false},
+		}
+		obj := makeDash(t, "my-folder")
+		err := s.verifyFolder(obj)
+		require.Error(t, err)
+		require.True(t, apierrors.IsInvalid(err), "expected Invalid (422), got %T: %v", err, err)
+
+		status, ok := err.(apierrors.APIStatus)
+		require.True(t, ok, "error should implement APIStatus")
+		require.NotNil(t, status.Status().Details)
+		require.NotEmpty(t, status.Status().Details.Causes)
+		require.Equal(t,
+			"metadata.annotations[grafana.app/folder]",
+			status.Status().Details.Causes[0].Field,
+		)
+	})
+}
+
+func TestPrepareObjectForStorage_FolderSupportDisabled(t *testing.T) {
+	_ = dashv1.AddToScheme(rtscheme)
+	node, err := snowflake.NewNode(rand.Int64N(1024))
+	require.NoError(t, err)
+
+	s := &Storage{
+		gr:        dashv1.DashboardResourceInfo.GroupResource(),
+		codec:     apitesting.TestCodec(rtcodecs, dashv1.DashboardResourceInfo.GroupVersion()),
+		snowflake: node,
+		opts: StorageOptions{
+			Scheme:              rtscheme,
+			EnableFolderSupport: false,
+		},
+	}
+
+	ctx := authlib.WithAuthInfo(context.Background(),
+		&identity.StaticRequester{UserID: 1, UserUID: "u1", Type: authlib.TypeUser},
+	)
+
+	t.Run("create: folder annotation returns Invalid (422)", func(t *testing.T) {
+		dash := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "d1"}}
+		meta, err := utils.MetaAccessor(dash)
+		require.NoError(t, err)
+		meta.SetFolder("nope")
+
+		_, err = s.prepareObjectForStorage(ctx, dash)
+		require.Error(t, err)
+		require.True(t, apierrors.IsInvalid(err), "expected Invalid (422), got %T: %v", err, err)
+	})
+
+	t.Run("update: introducing a folder annotation returns Invalid (422)", func(t *testing.T) {
+		oldDash := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "d1"}}
+		newDash := oldDash.DeepCopy()
+		meta, err := utils.MetaAccessor(newDash)
+		require.NoError(t, err)
+		meta.SetFolder("nope")
+
+		_, err = s.prepareObjectForUpdate(ctx, newDash, oldDash)
+		require.Error(t, err)
+		require.True(t, apierrors.IsInvalid(err), "expected Invalid (422), got %T: %v", err, err)
+	})
+
+	t.Run("create: no folder annotation succeeds", func(t *testing.T) {
+		dash := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "d2"}}
+		_, err := s.prepareObjectForStorage(ctx, dash)
+		require.NoError(t, err)
 	})
 }
