@@ -2,7 +2,7 @@ import { screen } from '@testing-library/react';
 
 import { SidebarSize } from '../../constants';
 import { type QueryEditorUIState } from '../QueryEditorContext';
-import { ds1SettingsMock, renderWithQueryEditorProvider } from '../testUtils';
+import { ds1SettingsMock, makeStackedMode, renderWithQueryEditorProvider } from '../testUtils';
 
 import { Sidebar } from './Sidebar';
 
@@ -12,18 +12,6 @@ jest.mock('@grafana/runtime', () => ({
     getInstanceSettings: () => ds1SettingsMock,
   }),
 }));
-
-function stackedModeOverrides(overrides = {}) {
-  return {
-    enabled: false,
-    enter: jest.fn(),
-    exit: jest.fn(),
-    syncActiveItem: jest.fn(),
-    requestScroll: jest.fn(),
-    setScrollHandler: jest.fn(),
-    ...overrides,
-  };
-}
 
 describe('QueryEditorSidebar', () => {
   beforeEach(() => {
@@ -59,38 +47,57 @@ describe('QueryEditorSidebar', () => {
     expect(setSidebarSize).toHaveBeenCalledWith(SidebarSize.Mini);
   });
 
-  it('renders a stacked view action in the Data view', async () => {
-    const enterStackedMode = jest.fn();
-    const { user } = renderWithQueryEditorProvider(
-      <Sidebar sidebarSize={SidebarSize.Full} setSidebarSize={jest.fn()} />,
-      {
+  describe('stacked view action', () => {
+    it('renders as inactive (aria-pressed=false) when stacked mode is disabled', () => {
+      renderWithQueryEditorProvider(<Sidebar sidebarSize={SidebarSize.Full} setSidebarSize={jest.fn()} />, {
         uiStateOverrides: {
-          stackedMode: stackedModeOverrides({ enter: enterStackedMode }),
+          stackedMode: makeStackedMode({ enabled: false }),
         } satisfies Partial<QueryEditorUIState>,
-      }
-    );
+      });
 
-    await user.click(screen.getByRole('button', { name: /enter stacked view/i }));
+      expect(screen.getByRole('button', { name: /enter stacked view/i })).toHaveAttribute('aria-pressed', 'false');
+    });
 
-    expect(enterStackedMode).toHaveBeenCalled();
-  });
-
-  it('shows the stacked view action as active and exits stacked view when clicked', async () => {
-    const exitStackedMode = jest.fn();
-    const { user } = renderWithQueryEditorProvider(
-      <Sidebar sidebarSize={SidebarSize.Full} setSidebarSize={jest.fn()} />,
-      {
+    it('renders as active (aria-pressed=true) when stacked mode is enabled', () => {
+      renderWithQueryEditorProvider(<Sidebar sidebarSize={SidebarSize.Full} setSidebarSize={jest.fn()} />, {
         uiStateOverrides: {
-          stackedMode: stackedModeOverrides({ enabled: true, exit: exitStackedMode }),
+          stackedMode: makeStackedMode({ enabled: true }),
         } satisfies Partial<QueryEditorUIState>,
-      }
-    );
+      });
 
-    const stackedButton = screen.getByRole('button', { name: /exit stacked view/i });
-    expect(stackedButton).toHaveAttribute('aria-pressed', 'true');
+      expect(screen.getByRole('button', { name: /exit stacked view/i })).toHaveAttribute('aria-pressed', 'true');
+    });
 
-    await user.click(stackedButton);
+    it('clicking enters stacked mode when currently disabled', async () => {
+      const enter = jest.fn();
+      const { user } = renderWithQueryEditorProvider(
+        <Sidebar sidebarSize={SidebarSize.Full} setSidebarSize={jest.fn()} />,
+        {
+          uiStateOverrides: {
+            stackedMode: makeStackedMode({ enter }),
+          } satisfies Partial<QueryEditorUIState>,
+        }
+      );
 
-    expect(exitStackedMode).toHaveBeenCalled();
+      await user.click(screen.getByRole('button', { name: /enter stacked view/i }));
+
+      expect(enter).toHaveBeenCalled();
+    });
+
+    it('clicking exits stacked mode when currently enabled', async () => {
+      const exit = jest.fn();
+      const { user } = renderWithQueryEditorProvider(
+        <Sidebar sidebarSize={SidebarSize.Full} setSidebarSize={jest.fn()} />,
+        {
+          uiStateOverrides: {
+            stackedMode: makeStackedMode({ enabled: true, exit }),
+          } satisfies Partial<QueryEditorUIState>,
+        }
+      );
+
+      await user.click(screen.getByRole('button', { name: /exit stacked view/i }));
+
+      expect(exit).toHaveBeenCalled();
+    });
   });
 });

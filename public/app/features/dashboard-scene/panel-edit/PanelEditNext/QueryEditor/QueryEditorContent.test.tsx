@@ -11,8 +11,8 @@ import { type DataQuery } from '@grafana/schema';
 import { QueryEditorType } from '../constants';
 
 import { QueryEditorContent } from './QueryEditorContent';
-import { type QueryEditorUIState, type StackedEditorItem, type StackedEditorState } from './QueryEditorContext';
-import { ds1SettingsMock, renderWithQueryEditorProvider } from './testUtils';
+import { type QueryEditorUIState, type StackedEditorItem } from './QueryEditorContext';
+import { ds1SettingsMock, makeStackedMode, renderWithQueryEditorProvider } from './testUtils';
 import { type Transformation } from './types';
 
 jest.mock('app/features/query/components/QueryEditorRow', () => ({
@@ -101,18 +101,6 @@ const transformations: Transformation[] = [
   },
 ];
 
-function stackedModeOverrides(overrides: Partial<StackedEditorState> = {}): StackedEditorState {
-  return {
-    enabled: true,
-    enter: jest.fn(),
-    exit: jest.fn(),
-    syncActiveItem: jest.fn(),
-    requestScroll: jest.fn(),
-    setScrollHandler: jest.fn(),
-    ...overrides,
-  };
-}
-
 /**
  * Captures the imperative scroll handler the StackedEditorRenderer registers via
  * `setScrollHandler`. Tests invoke the captured handler to drive the renderer's scroll behavior
@@ -170,7 +158,7 @@ describe('QueryEditorContent stacked mode', () => {
       dsState: { dsSettings: ds1SettingsMock },
       uiStateOverrides: {
         selectedQueryDsData: { datasource: mockDatasource as DataSourceApi, dsSettings: ds1SettingsMock },
-        stackedMode: stackedModeOverrides({ exit }),
+        stackedMode: makeStackedMode({ enabled: true, exit }),
       } satisfies Partial<QueryEditorUIState>,
       actionsOverrides: { updateSelectedQuery },
     });
@@ -207,7 +195,7 @@ describe('QueryEditorContent stacked mode', () => {
         dsState: { dsSettings: ds1SettingsMock },
         uiStateOverrides: {
           selectedQueryDsData: { datasource: mockDatasource as DataSourceApi, dsSettings: ds1SettingsMock },
-          stackedMode: stackedModeOverrides({ syncActiveItem }),
+          stackedMode: makeStackedMode({ enabled: true, syncActiveItem }),
         } satisfies Partial<QueryEditorUIState>,
       });
 
@@ -263,7 +251,8 @@ describe('QueryEditorContent stacked mode', () => {
         dsState: { dsSettings: ds1SettingsMock },
         uiStateOverrides: {
           selectedQueryDsData: { datasource: mockDatasource as DataSourceApi, dsSettings: ds1SettingsMock },
-          stackedMode: stackedModeOverrides({
+          stackedMode: makeStackedMode({
+            enabled: true,
             syncActiveItem,
             setScrollHandler: scrollHandler.setScrollHandler,
           }),
@@ -353,7 +342,7 @@ describe('QueryEditorContent stacked mode', () => {
         dsState: { dsSettings: ds1SettingsMock },
         uiStateOverrides: {
           selectedQueryDsData: { datasource: mockDatasource as DataSourceApi, dsSettings: ds1SettingsMock },
-          stackedMode: stackedModeOverrides({ setScrollHandler: scrollHandler.setScrollHandler }),
+          stackedMode: makeStackedMode({ enabled: true, setScrollHandler: scrollHandler.setScrollHandler }),
         } satisfies Partial<QueryEditorUIState>,
       });
 

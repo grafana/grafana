@@ -21,6 +21,7 @@ import {
   type QueryEditorUIState,
   type QueryOptionsState,
   type QueryRunnerState,
+  type StackedEditorState,
 } from './QueryEditorContext';
 import { type Transformation } from './types';
 
@@ -125,6 +126,23 @@ export const mockQueryOptionsState: QueryOptionsState = {
   focusedField: null,
 };
 
+/**
+ * Builds a fresh `StackedEditorState` for tests. Defaults to the natural "off" state; callers
+ * pass overrides for the fields they care about (e.g. `{ enabled: true, enter: jest.fn() }`).
+ * Each call returns new `jest.fn()` mocks so assertions don't leak between tests.
+ */
+export function makeStackedMode(overrides: Partial<StackedEditorState> = {}): StackedEditorState {
+  return {
+    enabled: false,
+    enter: jest.fn(),
+    exit: jest.fn(),
+    syncActiveItem: jest.fn(),
+    requestScroll: jest.fn(),
+    setScrollHandler: jest.fn(),
+    ...overrides,
+  };
+}
+
 export const mockUIStateBase = {
   selectedQueryDsData: null,
   selectedQueryDsLoading: false,
@@ -145,14 +163,7 @@ export const mockUIStateBase = {
   toggleTransformationSelection: jest.fn(),
   clearSelection: jest.fn(),
   setMultiSelectMode: jest.fn(),
-  stackedMode: {
-    enabled: false,
-    enter: jest.fn(),
-    exit: jest.fn(),
-    syncActiveItem: jest.fn(),
-    requestScroll: jest.fn(),
-    setScrollHandler: jest.fn(),
-  },
+  stackedMode: makeStackedMode(),
   confirmingDeleteActionKey: null,
   setConfirmingDeleteActionKey: jest.fn(),
 };
@@ -310,14 +321,7 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
     pendingTransformation: null,
     setPendingTransformation: jest.fn(),
     finalizePendingTransformation: jest.fn(),
-    stackedMode: {
-      enabled: false,
-      enter: jest.fn(),
-      exit: jest.fn(),
-      syncActiveItem: jest.fn(),
-      requestScroll: jest.fn(),
-      setScrollHandler: jest.fn(),
-    },
+    stackedMode: makeStackedMode(),
     selectedAlert: null,
     setSelectedAlert: jest.fn(),
     pendingSavedQuery: null,
