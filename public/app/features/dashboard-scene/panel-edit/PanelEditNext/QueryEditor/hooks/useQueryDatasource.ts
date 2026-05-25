@@ -40,7 +40,17 @@ export function useQueryDatasource(query: DataQuery | null, panelDsSettings: Dat
 
     const queryDatasource = await getDataSourceSrv().get(dsRef);
     return { datasource: queryDatasource, dsSettings: queryDsSettings };
-  }, [query, panelDsSettings]);
+    // Narrow deps are intentional: widening to [query, panelDsSettings] would re-run on every
+    // field change (SQL text, refId, hide flag), flickering `loading` and briefly clearing
+    // `queryDsData` on every keystroke. Only datasource-identity changes should invalidate.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    query?.refId,
+    query?.datasource?.uid,
+    query?.datasource?.type,
+    panelDsSettings?.uid,
+    panelDsSettings?.meta.mixed,
+  ]);
 
   return {
     queryDsData: value ?? null,
