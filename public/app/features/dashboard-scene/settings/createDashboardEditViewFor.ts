@@ -1,3 +1,5 @@
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+
 import { AnnotationsEditView } from './AnnotationsEditView';
 import { DashboardLinksEditView } from './DashboardLinksEditView';
 import { DashboardTemplateEditView } from './DashboardTemplateEditView';
@@ -22,7 +24,10 @@ export function createDashboardEditViewFor(editview: string) {
     case 'permissions':
       return new PermissionsEditView({});
     case 'template':
-      return new DashboardTemplateEditView({});
+      if (getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaOrgDashboardTemplates, false)) {
+        return new DashboardTemplateEditView({});
+      }
+      return new GeneralSettingsEditView({});
     case 'settings':
     default:
       return new GeneralSettingsEditView({});

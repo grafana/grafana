@@ -1,3 +1,5 @@
+import { setTestFlags } from '@grafana/test-utils/unstable';
+
 import { AnnotationsEditView } from './AnnotationsEditView';
 import { DashboardLinksEditView } from './DashboardLinksEditView';
 import { DashboardTemplateEditView } from './DashboardTemplateEditView';
@@ -16,7 +18,6 @@ describe('createDashboardEditViewFor', () => {
     ['versions', VersionsEditView],
     ['json-model', JsonModelEditView],
     ['permissions', PermissionsEditView],
-    ['template', DashboardTemplateEditView],
     ['settings', GeneralSettingsEditView],
   ])('returns the matching view for editview=%s', (editview, ExpectedClass) => {
     expect(createDashboardEditViewFor(editview)).toBeInstanceOf(ExpectedClass);
@@ -25,5 +26,17 @@ describe('createDashboardEditViewFor', () => {
   it('defaults to GeneralSettingsEditView for unknown editview values', () => {
     expect(createDashboardEditViewFor('unknown-value')).toBeInstanceOf(GeneralSettingsEditView);
     expect(createDashboardEditViewFor('')).toBeInstanceOf(GeneralSettingsEditView);
+  });
+
+  describe('editview=template', () => {
+    it('returns DashboardTemplateEditView when grafana.orgDashboardTemplates is enabled', () => {
+      setTestFlags({ 'grafana.orgDashboardTemplates': true });
+      expect(createDashboardEditViewFor('template')).toBeInstanceOf(DashboardTemplateEditView);
+    });
+
+    it('falls back to GeneralSettingsEditView when grafana.orgDashboardTemplates is disabled', () => {
+      setTestFlags({ 'grafana.orgDashboardTemplates': false });
+      expect(createDashboardEditViewFor('template')).toBeInstanceOf(GeneralSettingsEditView);
+    });
   });
 });
