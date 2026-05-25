@@ -12,6 +12,7 @@ import (
 const (
 	ScopeReceiversRoot       = "receivers"
 	ScopeRoutesRoot          = accesscontrol.AlertingRoutesKind
+	ScopePrometheusRulesRoot = accesscontrol.AlertingPrometheusRulesKind
 	ScopeInhibitionRulesRoot = "inhibition-rules"
 	AlertRolesGroup          = "Alerting"
 
@@ -27,6 +28,8 @@ var (
 	ScopeReceiversAll            = ScopeReceiversProvider.GetResourceAllScope()
 	ScopeRoutesProvider          = RouteScopeProvider{accesscontrol.NewScopeProvider(ScopeRoutesRoot)}
 	ScopeRoutesAll               = ScopeRoutesProvider.GetResourceAllScope()
+	ScopePrometheusRulesProvider = PrometheusRuleScopeProvider{accesscontrol.NewScopeProvider(ScopePrometheusRulesRoot)}
+	ScopePrometheusRulesAll      = ScopePrometheusRulesProvider.GetResourceAllScope()
 	ScopeInhibitionRulesProvider = accesscontrol.NewScopeProvider(ScopeInhibitionRulesRoot)
 	ScopeInhibitionRulesAll      = ScopeInhibitionRulesProvider.GetResourceAllScope()
 
@@ -63,5 +66,13 @@ type RouteScopeProvider struct {
 }
 
 func (p RouteScopeProvider) GetResourceScopeUID(uid string) string {
+	return p.ScopeProvider.GetResourceScopeUID(uid)
+}
+
+type PrometheusRuleScopeProvider struct {
+	accesscontrol.ScopeProvider
+}
+
+func (p PrometheusRuleScopeProvider) GetResourceScopeUID(uid string) string {
 	return p.ScopeProvider.GetResourceScopeUID(uid)
 }
