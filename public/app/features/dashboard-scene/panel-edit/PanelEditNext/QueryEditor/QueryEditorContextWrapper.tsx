@@ -125,7 +125,8 @@ export function QueryEditorContextWrapper({
       setSelectedAlertId(null);
       if (isStackedMode) {
         const item: StackedEditorItem = {
-          type: getEditorType(query) === QueryEditorType.Expression ? QueryEditorType.Expression : QueryEditorType.Query,
+          type:
+            getEditorType(query) === QueryEditorType.Expression ? QueryEditorType.Expression : QueryEditorType.Query,
           id: query.refId,
         };
         onCardSelectionChange(query.refId, null);

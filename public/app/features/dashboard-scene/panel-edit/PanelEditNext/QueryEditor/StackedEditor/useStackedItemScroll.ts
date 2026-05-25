@@ -39,10 +39,7 @@ export function useStackedItemScroll({
       pendingScrollKeyRef.current = getStackedItemKey(item);
       const sections = container.querySelectorAll<HTMLElement>('[data-stacked-editor-item-id]');
       for (const section of sections) {
-        if (
-          section.dataset.stackedEditorItemId === item.id &&
-          section.dataset.stackedEditorItemType === item.type
-        ) {
+        if (section.dataset.stackedEditorItemId === item.id && section.dataset.stackedEditorItemType === item.type) {
           section.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
           return;
         }

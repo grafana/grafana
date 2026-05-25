@@ -189,10 +189,7 @@ describe('QueryEditorContent stacked mode', () => {
     expect(container.querySelector('[data-stacked-editor-item-id="B"]')).not.toHaveAttribute('aria-current');
 
     await user.click(screen.getByRole('button', { name: /change B/i }));
-    expect(updateSelectedQuery).toHaveBeenCalledWith(
-      expect.objectContaining({ refId: 'B', hide: true }),
-      'B'
-    );
+    expect(updateSelectedQuery).toHaveBeenCalledWith(expect.objectContaining({ refId: 'B', hide: true }), 'B');
 
     await user.click(screen.getByRole('button', { name: /exit stacked view/i }));
     expect(exit).toHaveBeenCalled();
