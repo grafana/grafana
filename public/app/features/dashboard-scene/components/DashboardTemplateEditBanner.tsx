@@ -59,8 +59,7 @@ export function DashboardTemplateEditBanner({ dashboard }: { dashboard: Dashboar
       className={styles.banner}
       onRemove={() => {
         CustomDashboardTemplateInteractions.templateEditBannerDismissed({
-          templateUid: dashboardTemplateUid ?? '',
-          eventLocation: EVENT_LOCATIONS.DASHBOARD_PAGE_TEMPLATE_EDIT_BANNER,
+          templateUid: dashboardTemplateUid,
         });
         setDismissed(true);
       }}

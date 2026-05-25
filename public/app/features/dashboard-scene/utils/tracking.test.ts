@@ -140,16 +140,7 @@ describe('dashboard tracking', () => {
       });
     });
 
-    it('does NOT fire on non-first saves (isNew = false)', async () => {
-      setTestFlags({ 'grafana.orgDashboardTemplates': true });
-      setLocation('/dashboard/template', '?dashboardTemplateUid=tpl-42');
-      const scene = buildTestScene();
-      await trackDashboardSceneCreatedOrSaved(false, scene, { name: 'n', url: 'u' });
-
-      expect(CustomDashboardTemplateInteractions.dashboardSavedFromTemplate).not.toHaveBeenCalled();
-    });
-
-    it('does NOT fire when the route is something other than /dashboard/template', async () => {
+    it('does not fire when the route is something other than /dashboard/template', async () => {
       setTestFlags({ 'grafana.orgDashboardTemplates': true });
       setLocation('/d/abc/my-dash', '?dashboardTemplateUid=tpl-42');
       const scene = buildTestScene();
@@ -158,7 +149,7 @@ describe('dashboard tracking', () => {
       expect(CustomDashboardTemplateInteractions.dashboardSavedFromTemplate).not.toHaveBeenCalled();
     });
 
-    it('does NOT fire when dashboardTemplateUid is missing from the URL', async () => {
+    it('does not fire when dashboardTemplateUid is missing from the URL', async () => {
       setTestFlags({ 'grafana.orgDashboardTemplates': true });
       setLocation('/dashboard/template', '');
       const scene = buildTestScene();
@@ -167,7 +158,7 @@ describe('dashboard tracking', () => {
       expect(CustomDashboardTemplateInteractions.dashboardSavedFromTemplate).not.toHaveBeenCalled();
     });
 
-    it('does NOT fire when the feature flag is disabled', async () => {
+    it('does not fire when the feature flag is disabled', async () => {
       setTestFlags({ 'grafana.orgDashboardTemplates': false });
       setLocation('/dashboard/template', '?dashboardTemplateUid=tpl-42');
       const scene = buildTestScene();

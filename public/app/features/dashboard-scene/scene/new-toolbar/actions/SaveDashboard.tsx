@@ -104,7 +104,6 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
                   CustomDashboardTemplateInteractions.saveAsOpened({
                     dashboardUid: uid ?? '',
                     isNewDashboard: isNew,
-                    eventLocation: EVENT_LOCATIONS.DASHBOARD_SAVE_DRAWER,
                   });
                   dashboard.openSaveDrawer({ saveAsDashboardTemplate: true });
                 }}

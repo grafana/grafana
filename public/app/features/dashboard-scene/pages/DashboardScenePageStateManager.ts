@@ -33,7 +33,6 @@ import {
   isDashboardV2Spec,
   isV2StoredVersion,
 } from 'app/features/dashboard/api/utils';
-import { SOURCE_ENTRY_POINTS, type SourceEntryPoint } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
 import { initializeDashboardAnalyticsAggregator } from 'app/features/dashboard/services/DashboardAnalyticsAggregator';
 import { dashboardLoaderSrv, DashboardLoaderSrvV2 } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
@@ -1171,15 +1170,9 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
 
     const resourceVersion = response.metadata?.resourceVersion;
 
-    const rawSource = new URLSearchParams(window.location.search).get('sourceEntryPoint');
-    const knownSourceEntryPoints: readonly SourceEntryPoint[] = Object.values(SOURCE_ENTRY_POINTS);
-    const sourceEntryPoint: SourceEntryPoint =
-      knownSourceEntryPoints.find((v) => v === rawSource) ?? SOURCE_ENTRY_POINTS.TEMPLATES_GALLERY_MODAL;
-
     if (editMode) {
       CustomDashboardTemplateInteractions.editOpened({
         templateUid: dashboardTemplateUid,
-        sourceEntryPoint,
       });
       // Edit-template flow: mark the scene as editing an org template so downstream UI can hide
       // irrelevant actions.
@@ -1195,7 +1188,6 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
 
     CustomDashboardTemplateInteractions.used({
       templateUid: dashboardTemplateUid,
-      sourceEntryPoint,
     });
 
     // Use-template flow: The embedded dashboard spec is hydrated

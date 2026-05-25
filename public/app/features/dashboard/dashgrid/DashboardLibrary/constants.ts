@@ -7,11 +7,6 @@ export const EVENT_LOCATIONS = {
   BROWSE_DASHBOARDS_PAGE: 'browse_dashboards_page',
   DASHBOARD_PAGE_SUGGESTED_DASHBOARDS_BANNER: 'dashboard_page_suggested_dashboards_banner',
   DASHBOARD_TEMPLATES_MODAL: 'dashboard_templates_modal',
-  DASHBOARD_PAGE_TEMPLATE_USE_BANNER: 'dashboard_page_template_use_banner',
-  DASHBOARD_PAGE_TEMPLATE_EDIT_BANNER: 'dashboard_page_template_edit_banner',
-  DASHBOARD_PAGE_TEMPLATE_SAVED_BANNER: 'dashboard_page_template_saved_banner',
-  DASHBOARD_SAVE_DRAWER: 'dashboard_save_drawer',
-  DASHBOARD_VERSIONS_VIEW: 'dashboard_versions_view',
 } as const;
 
 /**

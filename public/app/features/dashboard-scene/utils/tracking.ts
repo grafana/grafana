@@ -94,12 +94,7 @@ export async function trackDashboardSceneCreatedOrSaved(
         }),
   });
 
-  // Fire the custom-template-specific funnel event when this is the FIRST save of a
-  // dashboard hydrated from a custom template. The use-template flow is identified by
-  // three signals: the feature flag is on, the route is the template route, and a
-  // dashboardTemplateUid URL param is present. Gated on `isNew` so subsequent saves of
-  // the same dashboard don't re-emit.
-  if (isNew && getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaOrgDashboardTemplates, false)) {
+  if (getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaOrgDashboardTemplates, false)) {
     const isOnTemplateRoute = window.location.pathname === DASHBOARD_LIBRARY_ROUTES.Template;
     const templateUid = new URLSearchParams(window.location.search).get('dashboardTemplateUid');
     if (isOnTemplateRoute && templateUid) {

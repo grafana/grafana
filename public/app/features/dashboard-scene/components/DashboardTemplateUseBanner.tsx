@@ -42,7 +42,6 @@ export function DashboardTemplateUseBanner({ dashboard }: { dashboard: Dashboard
   const onDismiss = () => {
     CustomDashboardTemplateInteractions.templateUseBannerDismissed({
       templateUid: dashboardTemplateUid ?? '',
-      eventLocation: EVENT_LOCATIONS.DASHBOARD_PAGE_TEMPLATE_USE_BANNER,
     });
     setDismissed(true);
   };

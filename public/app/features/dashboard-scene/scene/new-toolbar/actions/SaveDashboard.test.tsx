@@ -197,7 +197,6 @@ describe('SaveDashboard (toolbar)', () => {
       expect(CustomDashboardTemplateInteractions.saveAsOpened).toHaveBeenCalledWith({
         dashboardUid: 'my-dash',
         isNewDashboard: false,
-        eventLocation: 'dashboard_save_drawer',
       });
     });
   });
