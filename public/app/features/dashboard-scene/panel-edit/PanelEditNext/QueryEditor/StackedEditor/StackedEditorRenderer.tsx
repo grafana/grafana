@@ -32,6 +32,9 @@ export function StackedEditorRenderer() {
     ),
   ];
 
+  // Wires the renderer into stacked-mode: registers an imperative scrollToItem with the wrapper
+  // (so sidebar clicks can scroll the right section into view) and sets up the IntersectionObserver
+  // that calls syncActiveItem as the user scrolls. No return value — all side effects.
   useStackedItemScroll({
     containerRef,
     items,

@@ -47,7 +47,7 @@ function StackedItemHeader({ icon, label, identifier, headingId, isHidden = fals
           <span className={styles.headerSeparator} />
         </>
       )}
-      <span className={cx(styles.headerRefId, isHidden && styles.headerRefIdHidden)}>{identifier}</span>
+      <span className={cx(styles.headerRefId, { [styles.headerRefIdHidden]: isHidden })}>{identifier}</span>
       {isHidden && (
         <Icon
           name="eye-slash"
@@ -67,18 +67,22 @@ interface StackedQueryItemProps {
 
 export function StackedQueryItem({ query, headingId }: StackedQueryItemProps) {
   const styles = useStyles2(getStyles);
+
   const typeConfig = useQueryEditorTypeConfig();
   const { dsSettings } = useDatasourceContext();
   const { queries, data } = useQueryRunnerContext();
   const { updateSelectedQuery, addQuery, runQueries } = useActionsContext();
   const { queryDsData, queryDsLoading } = useQueryDatasource(query, dsSettings);
+
   const editorType = getStackedQueryEditorType(query);
   const isExpression = editorType === QueryEditorType.Expression;
+
   const icon = isExpression ? (
     <Icon name={typeConfig[editorType].icon} size="md" color={typeConfig[editorType].color} />
   ) : (
     <DataSourceLogo dataSource={queryDsData?.dsSettings} size={18} />
   );
+
   const label = isExpression ? typeConfig[editorType].getLabel() : queryDsData?.dsSettings.name;
 
   return (
