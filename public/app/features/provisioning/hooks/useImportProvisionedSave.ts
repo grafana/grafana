@@ -72,9 +72,17 @@ export function useImportProvisionedSave({ repository }: { repository?: Reposito
     selectedBranch,
     handlers: {
       onWriteSuccess: (upsert) => {
+        // Sync-disabled repositories can return success without creating a
+        // Grafana k8s resource. Fall back to the folder view when we don't
+        // have a dashboard uid to navigate to.
+        const uid = upsert?.metadata?.name;
+        if (!uid) {
+          navigate(locationUtil.assureBaseUrl(folderUid ? `/dashboards/f/${folderUid}/` : '/dashboards'));
+          return;
+        }
         const url = locationUtil.assureBaseUrl(
           getDashboardUrl({
-            uid: upsert.metadata.name,
+            uid,
             slug: kbn.slugifyForUrl(titleRef.current),
             currentQueryParams: window.location.search,
           })
@@ -107,7 +115,7 @@ export function useImportProvisionedSave({ repository }: { repository?: Reposito
   });
 
   const save = useCallback(
-    ({ spec, apiVersion, uid, folderUid: targetFolderUid, title, form }: ImportProvisionedSaveParams) => {
+    async ({ spec, apiVersion, uid, folderUid: targetFolderUid, title, form }: ImportProvisionedSaveParams) => {
       if (!repository) {
         return;
       }
@@ -118,8 +126,9 @@ export function useImportProvisionedSave({ repository }: { repository?: Reposito
       setSelectedBranch(form.ref);
       titleRef.current = title;
 
-      const resolvedVersion =
-        apiVersion === 'v2' ? dashboardAPIVersionResolver.getV2() : dashboardAPIVersionResolver.getV1();
+      // Ensure version negotiation has run; getV1/getV2 fall back to beta otherwise.
+      const versions = await dashboardAPIVersionResolver.resolve();
+      const resolvedVersion = apiVersion === 'v2' ? versions.v2 : versions.v1;
 
       const body: ResourceForCreate<unknown> = {
         apiVersion: `${DASHBOARD_API_GROUP}/${resolvedVersion}`,

@@ -21,7 +21,6 @@ import { type ProvisionedImportFormData } from './ProvisionedImportOverview';
 interface Props {
   inputs: DashboardInputs;
   isReadOnlyRepo: boolean;
-  isOrphaned: boolean;
   isLibraryPanelImportBlocked: boolean;
   hasFloatGridItems: boolean;
   canPushToConfiguredBranch: boolean;
@@ -35,7 +34,6 @@ interface Props {
 export function ProvisionedImportForm({
   inputs,
   isReadOnlyRepo,
-  isOrphaned,
   isLibraryPanelImportBlocked,
   hasFloatGridItems,
   canPushToConfiguredBranch,
@@ -82,9 +80,7 @@ export function ProvisionedImportForm({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
       <Stack direction="column" gap={2}>
-        {(isReadOnlyRepo || isOrphaned) && (
-          <RepoInvalidStateBanner noRepository={isOrphaned} isReadOnlyRepo={isReadOnlyRepo} />
-        )}
+        {isReadOnlyRepo && <RepoInvalidStateBanner noRepository={false} isReadOnlyRepo={isReadOnlyRepo} />}
 
         {isLibraryPanelImportBlocked && (
           <Alert
@@ -208,7 +204,7 @@ export function ProvisionedImportForm({
           );
         })}
 
-        {!isLibraryPanelImportBlocked && !isReadOnlyRepo && !isOrphaned && (
+        {!isLibraryPanelImportBlocked && !isReadOnlyRepo && (
           <ResourceEditFormSharedFields
             resourceType="dashboard"
             isNew

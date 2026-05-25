@@ -20,6 +20,7 @@ import {
 } from 'app/features/manage-dashboards/types';
 
 import { useImportProvisionedSave } from '../../hooks/useImportProvisionedSave';
+import { type BaseProvisionedFormData } from '../../types/form';
 import { getIsReadOnlyRepo } from '../../utils/repository';
 import { getCanPushToConfiguredBranch, getDefaultRef, getDefaultWorkflow } from '../defaults';
 import { generatePath, slugifyForFilename } from '../utils/path';
@@ -27,15 +28,10 @@ import { generateTimestamp } from '../utils/timestamp';
 
 import { ProvisionedImportForm } from './ProvisionedImportForm';
 
-export type ProvisionedImportFormData = {
-  title: string;
+export type ProvisionedImportFormData = BaseProvisionedFormData & {
+  ref: string;
   uid: string;
   folderUid: string;
-  workflow?: string;
-  ref: string;
-  path: string;
-  comment?: string;
-  repo?: string;
 } & Record<string, unknown>;
 
 interface Props {
@@ -127,7 +123,6 @@ export function ProvisionedImportOverview({
         <ProvisionedImportForm
           inputs={inputs}
           isReadOnlyRepo={isReadOnlyRepo}
-          isOrphaned={false}
           isLibraryPanelImportBlocked={isLibraryPanelImportBlocked}
           hasFloatGridItems={hasFloatGridItems}
           canPushToConfiguredBranch={canPushToConfiguredBranch}

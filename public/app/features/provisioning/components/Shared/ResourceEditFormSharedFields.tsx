@@ -3,7 +3,6 @@ import { memo, useCallback } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { t } from '@grafana/i18n';
-import { isFetchError } from '@grafana/runtime';
 import { Combobox, Field, Input, TextArea } from '@grafana/ui';
 import {
   type RepositoryView,
@@ -57,10 +56,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
             'provisioned-resource-form.save-or-delete-resource-shared-fields.path-exists',
             'A file with this name already exists at this path'
           );
-        } catch (err) {
-          if (isFetchError(err) && err.status === 404) {
-            return true;
-          }
+        } catch {
           return true;
         }
       },
@@ -189,6 +185,8 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
           <Controller
             name="path"
             control={control}
+            // deps: ['ref'] re-runs validatePath when the branch changes — a file
+            // might exist on one branch but not another, so cached results are stale.
             rules={shouldValidatePath ? { validate: validatePath, deps: ['ref'] } : undefined}
             render={({ field: { ref: _ref, onChange, value } }) => {
               const { directory: dir, filename: file } = splitPath(value || '');
