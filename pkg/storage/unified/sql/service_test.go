@@ -223,8 +223,9 @@ func TestNewGrpcAuthenticator(t *testing.T) {
 		metadata.Pairs("X-Access-Token", tokenResp.Token),
 	)
 
-	t.Run("unsafe=true accepts in-proc token", func(t *testing.T) {
+	t.Run("unsafe=true in dev accepts in-proc token", func(t *testing.T) {
 		cfg := setting.NewCfg()
+		cfg.Env = setting.Dev
 		cfg.Raw.Section("grpc_server_authentication").Key("unsafe").SetValue("true")
 
 		authn := newGrpcAuthenticator(cfg, tracer)
@@ -233,8 +234,19 @@ func TestNewGrpcAuthenticator(t *testing.T) {
 		require.NotNil(t, gotCtx)
 	})
 
+	t.Run("unsafe=true outside dev does not enable unsafe authenticator", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		cfg.Env = "production"
+		cfg.Raw.Section("grpc_server_authentication").Key("unsafe").SetValue("true")
+
+		authn := newGrpcAuthenticator(cfg, tracer)
+		_, err := authn(ctxWithToken)
+		require.Error(t, err, "unsafe must not bypass real auth outside dev mode")
+	})
+
 	t.Run("unsafe=false rejects token with no signing keys configured", func(t *testing.T) {
 		cfg := setting.NewCfg()
+		cfg.Env = setting.Dev
 
 		authn := newGrpcAuthenticator(cfg, tracer)
 		_, err := authn(ctxWithToken)

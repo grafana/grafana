@@ -465,7 +465,7 @@ func ReadGrpcServerConfig(cfg *setting.Cfg) *grpcutils.AuthenticatorConfig {
 
 func newGrpcAuthenticator(cfg *setting.Cfg, tracer trace.Tracer) interceptors.AuthenticatorFunc {
 	unsafe := cfg.SectionWithEnvOverrides("grpc_server_authentication").Key("unsafe").MustBool(false)
-	if unsafe && cfg.Env != setting.Dev {
+	if unsafe && cfg.Env == setting.Dev {
 		return grpcutils.NewUnsafeAuthenticator(tracer)
 	}
 	return grpcutils.NewAuthenticator(ReadGrpcServerConfig(cfg), tracer)
