@@ -494,6 +494,7 @@ describe('ResourceEditFormSharedFields', () => {
 
       // Provide folder options so the combobox has selectable items
       jest.mocked(useGetRepositoryFolders).mockReturnValue({
+        hint: null,
         options: [{ label: 'other-folder', value: 'other-folder' }],
         loading: false,
         error: null,
