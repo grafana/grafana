@@ -780,14 +780,6 @@ func (s *TeamK8sService) GetTeamByID(ctx context.Context, query *team.GetTeamByI
 		return nil, err
 	}
 
-	// Count only User-kind members to match the legacy team_member.user_id COUNT(*).
-	var memberCount int64
-	for _, m := range fetched.Spec.Members {
-		if m.Kind == subjectKindUser {
-			memberCount++
-		}
-	}
-
 	return &team.TeamDTO{
 		ID:            deprecatedInternalID(&fetched),
 		UID:           fetched.Name,
@@ -796,7 +788,6 @@ func (s *TeamK8sService) GetTeamByID(ctx context.Context, query *team.GetTeamByI
 		Email:         fetched.Spec.Email,
 		ExternalUID:   fetched.Spec.ExternalUID,
 		IsProvisioned: fetched.Spec.Provisioned,
-		MemberCount:   memberCount,
 	}, nil
 }
 
