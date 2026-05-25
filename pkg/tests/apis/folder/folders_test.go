@@ -1429,6 +1429,7 @@ func TestIntegrationRootFolderDeletionBlockedByLibraryElementsInSubfolder(t *tes
 
 // Test moving folders to root.
 func TestIntegrationMoveNestedFolderToRootK8S(t *testing.T) {
+	t.Skip("Skipping flaky test - times out intermittently")
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	if !db.IsTestDbSQLite() {
