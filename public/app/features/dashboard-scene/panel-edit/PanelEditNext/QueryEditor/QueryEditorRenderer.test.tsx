@@ -176,6 +176,8 @@ describe('QueryEditorRenderer', () => {
             clearSelection: jest.fn(),
             confirmingDeleteActionKey: null,
             setConfirmingDeleteActionKey: jest.fn(),
+            grafanaSqlActiveRefId: null,
+            setGrafanaSqlActiveRefId: jest.fn(),
           }}
           actions={mockActions}
           typeConfig={mockTypeConfig}

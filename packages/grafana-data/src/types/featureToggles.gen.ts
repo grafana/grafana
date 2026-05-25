@@ -1655,4 +1655,9 @@ export interface FeatureToggles {
   * @default false
   */
   ['alerting.syncExternalAlertmanager']?: boolean;
+  /**
+  * Enables the SQL abstraction prototype: SQL-over-Prometheus querying with AI assist (mid-fidelity simulation, no real backend)
+  * @default false
+  */
+  sqlAbstractionPrototype?: boolean;
 }

@@ -3155,6 +3155,15 @@ var (
 			Expression:   "false",
 			Generate:     Generate{Go: true},
 		},
+		{
+			Name:         "sqlAbstractionPrototype",
+			Description:  "Enables the SQL abstraction prototype: SQL-over-Prometheus querying with AI assist (mid-fidelity simulation, no real backend)",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
+			HideFromDocs: true,
+			Generate:     Generate{LegacyFrontend: true},
+		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//
 		// Adding a new feature flag? Be sure to check out the updated docs at /contribute/feature-toggles.md#Steps-to-adding-a-feature-toggle

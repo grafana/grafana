@@ -110,6 +110,9 @@ export interface QueryEditorUIState {
   setPendingTransformation: (pending: PendingTransformation | null) => void;
   finalizePendingTransformation: (transformationId: string) => void;
   showVersionBanner: boolean;
+  /** Prototype: set when 'grafana-sql-prototype' is the selected datasource for a query refId */
+  grafanaSqlActiveRefId: string | null;
+  setGrafanaSqlActiveRefId: (refId: string | null) => void;
   /** Action surface whose inline delete confirmation is open, so only one Actions instance confirms at a time. */
   confirmingDeleteActionKey: string | null;
   setConfirmingDeleteActionKey: (key: string | null) => void;

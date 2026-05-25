@@ -4,6 +4,7 @@ import { type DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data
 import { SceneDataTransformer } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { useTheme2 } from '@grafana/ui';
+import { GRAFANA_SQL_PROTOTYPE_UID } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 import { type ExpressionQuery } from 'app/features/expressions/types';
 
@@ -51,6 +52,7 @@ export function QueryEditorContextWrapper({
   const queryRunner = getQueryRunnerFor(panel);
   const queryRunnerState = queryRunner?.useState();
   const [pendingSavedQueryState, setPendingSavedQueryState] = useState<PendingSavedQuery | null>(null);
+  const [grafanaSqlActiveRefId, setGrafanaSqlActiveRefId] = useState<string | null>(null);
   const { isDrawerOpen } = useQueryLibraryContext();
   const pendingSavedQuery = isDrawerOpen ? pendingSavedQueryState : null;
 
@@ -312,6 +314,8 @@ export function QueryEditorContextWrapper({
       showVersionBanner: Boolean(showVersionBanner),
       confirmingDeleteActionKey,
       setConfirmingDeleteActionKey,
+      grafanaSqlActiveRefId,
+      setGrafanaSqlActiveRefId,
     }),
     [
       selectedQuery,
@@ -349,6 +353,8 @@ export function QueryEditorContextWrapper({
       clearPendingTransformation,
       showVersionBanner,
       confirmingDeleteActionKey,
+      grafanaSqlActiveRefId,
+      setGrafanaSqlActiveRefId,
     ]
   );
 
@@ -370,6 +376,11 @@ export function QueryEditorContextWrapper({
       toggleQueryHide: dataPane.toggleQueryHide,
       runQueries: dataPane.runQueries,
       changeDataSource: (settings: DataSourceInstanceSettings, queryRefId: string) => {
+        if (settings.uid === GRAFANA_SQL_PROTOTYPE_UID) {
+          setGrafanaSqlActiveRefId(queryRefId);
+          return;
+        }
+        setGrafanaSqlActiveRefId(null);
         dataPane.changeDataSource(getDataSourceRef(settings), queryRefId);
       },
       onQueryOptionsChange: dataPane.onQueryOptionsChange,

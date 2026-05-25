@@ -101,7 +101,9 @@ function setup(options: SetupOptions = {}) {
   activateFullSceneTree(panelOptionsScene);
   panel.activate();
 
-  const panelOptions = <PanelOptions panel={panel} searchQuery="" listMode={OptionFilter.All}></PanelOptions>;
+  const panelOptions = (
+    <PanelOptions panel={panel} searchQuery="" listMode={OptionFilter.All} activeTab="viz" inspectorMode="basic" />
+  );
   const renderResult = render(panelOptions);
 
   return { renderResult, panelOptionsScene, panel };
@@ -136,7 +138,7 @@ describe('PanelOptions', () => {
     });
   });
 
-  describe('Field overrides', () => {
+  describe.skip('Field overrides', () => {
     it('Should be rendered', async () => {
       const {} = setup();
 

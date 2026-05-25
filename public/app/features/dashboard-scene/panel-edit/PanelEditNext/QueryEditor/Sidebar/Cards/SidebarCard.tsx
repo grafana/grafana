@@ -213,7 +213,8 @@ function getStyles(
     top: 0,
     bottom: 0,
     display: 'flex',
-    alignItems: 'center',
+    alignItems: 'flex-start',
+    paddingTop: theme.spacing(0.5),
     paddingRight: theme.spacing(1),
     // increasing the left padding lets the gradient become transparent before the first button rather than behind the first button
     paddingLeft: theme.spacing(3),

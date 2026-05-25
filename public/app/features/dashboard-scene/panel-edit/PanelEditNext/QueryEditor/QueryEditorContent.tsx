@@ -4,6 +4,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 import { QueryEditorType } from '../constants';
+import { GrafanaSqlInlineEditor } from '../../../sql-workbench/GrafanaSqlInlineEditor';
 
 import { QueryEditorBody } from './Body/QueryEditorBody';
 import { QueryEditorFooter } from './Footer/QueryEditorFooter';
@@ -14,11 +15,13 @@ import { useAlertingContext, useQueryEditorUIContext } from './QueryEditorContex
 export function QueryEditorContent() {
   const styles = useStyles2(getStyles);
 
-  const { cardType, showingDatasourceHelp, pendingExpression, pendingTransformation } = useQueryEditorUIContext();
+  const { cardType, showingDatasourceHelp, pendingExpression, pendingTransformation, grafanaSqlActiveRefId } =
+    useQueryEditorUIContext();
   const { alertRules } = useAlertingContext();
   const hasPendingPicker = !!pendingExpression || !!pendingTransformation;
   const isAlertView = cardType === QueryEditorType.Alert;
   const isAlertEmptyState = isAlertView && alertRules.length === 0;
+  const isGrafanaSql = grafanaSqlActiveRefId !== null;
 
   const shouldShowHeader = !isAlertEmptyState;
   const shouldShowFooter = !hasPendingPicker && !isAlertView;
@@ -27,9 +30,15 @@ export function QueryEditorContent() {
   return (
     <div className={styles.container}>
       {shouldShowHeader && <ContentHeaderSceneWrapper />}
-      {shouldShowDatasourceHelp && <DatasourceHelpPanel />}
-      <QueryEditorBody />
-      {shouldShowFooter && <QueryEditorFooter />}
+      {isGrafanaSql ? (
+        <GrafanaSqlInlineEditor onChangeDatasource={() => {}} />
+      ) : (
+        <>
+          {shouldShowDatasourceHelp && <DatasourceHelpPanel />}
+          <QueryEditorBody />
+        </>
+      )}
+      {shouldShowFooter && !isGrafanaSql && <QueryEditorFooter />}
     </div>
   );
 }

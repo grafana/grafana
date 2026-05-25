@@ -5999,6 +5999,21 @@
     },
     {
       "metadata": {
+        "name": "sqlAbstractionPrototype",
+        "resourceVersion": "1779479904951",
+        "creationTimestamp": "2026-05-22T19:58:24Z"
+      },
+      "spec": {
+        "description": "Enables the SQL abstraction prototype: SQL-over-Prometheus querying with AI assist (mid-fidelity simulation, no real backend)",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "sqlExpressions",
         "resourceVersion": "1778600445085",
         "creationTimestamp": "2024-02-27T21:16:00Z",

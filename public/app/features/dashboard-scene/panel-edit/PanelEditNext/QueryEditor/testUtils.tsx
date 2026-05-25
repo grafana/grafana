@@ -309,6 +309,8 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
     showVersionBanner: false,
     confirmingDeleteActionKey: null,
     setConfirmingDeleteActionKey: jest.fn(),
+    grafanaSqlActiveRefId: null,
+    setGrafanaSqlActiveRefId: jest.fn(),
     ...uiStateOverrides,
   };
 

@@ -20,6 +20,7 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { KioskMode } from 'app/types/dashboard';
 
+import { AiFloatingBarDashboard } from '../assistant/AiFloatingBarDashboard';
 import { type PopoverTarget, AssistantPopoverContext } from '../assistant/AssistantPopoverContext';
 import {
   useDashboardAssistantViewMode,
@@ -224,6 +225,7 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
           {renderBody()}
           {showPopover && <ViewModePanelPromptCard targets={popoverTargets} onClose={clearPopover} />}
         </ElementSelectionContext.Provider>
+        {config.featureToggles.sqlAbstractionPrototype && <AiFloatingBarDashboard />}
       </div>
     </AssistantPopoverContext.Provider>
   );
