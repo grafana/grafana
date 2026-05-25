@@ -336,6 +336,27 @@ describe('ProvisionedImportOverview', () => {
       });
       expect(screen.getByText('A file with this name already exists at this path')).toBeInTheDocument();
     });
+
+    it('keeps submit disabled until initial async validation completes', async () => {
+      let resolveTitle!: (value: true | string) => void;
+      mockValidateTitle.mockImplementation(
+        () =>
+          new Promise<true | string>((resolve) => {
+            resolveTitle = resolve;
+          })
+      );
+
+      await setup();
+
+      const submitBtn = screen.getByTestId(selectors.components.ImportDashboardForm.submit);
+      expect(submitBtn).toBeDisabled();
+
+      await act(async () => {
+        resolveTitle(true);
+      });
+
+      await waitFor(() => expect(submitBtn).not.toBeDisabled());
+    });
   });
 
   describe('folder path in repo', () => {

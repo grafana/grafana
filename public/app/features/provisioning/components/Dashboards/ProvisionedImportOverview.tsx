@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { type Dashboard } from '@grafana/schema';
@@ -94,19 +94,6 @@ export function ProvisionedImportOverview({
     mode: 'onChange',
   });
 
-  useEffect(() => {
-    methods.trigger(['title', 'uid', 'path']);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const submitDisabled =
-    isLibraryPanelImportBlocked ||
-    isReadOnlyRepo ||
-    isLoading ||
-    methods.formState.isValidating ||
-    !!methods.formState.errors.title ||
-    !!methods.formState.errors.uid ||
-    !!methods.formState.errors.path;
-
   function onSubmit(form: ProvisionedImportFormData) {
     const spec = isDashboardV2Spec(dashboard) ? buildV2Spec(dashboard, form) : buildV1Spec(dashboard, form);
 
@@ -179,7 +166,6 @@ export function ProvisionedImportOverview({
           hasFloatGridItems={hasFloatGridItems}
           canPushToConfiguredBranch={canPushToConfiguredBranch}
           repository={repository}
-          submitDisabled={submitDisabled}
           isLoading={isLoading}
           error={error}
           onSubmit={onSubmit}

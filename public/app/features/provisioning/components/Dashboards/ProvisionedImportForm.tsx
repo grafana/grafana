@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useEffect, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -25,7 +26,6 @@ interface Props {
   hasFloatGridItems: boolean;
   canPushToConfiguredBranch: boolean;
   repository?: RepositoryView;
-  submitDisabled: boolean;
   isLoading: boolean;
   error?: string;
   onSubmit: (form: ProvisionedImportFormData) => void;
@@ -40,7 +40,6 @@ export function ProvisionedImportForm({
   hasFloatGridItems,
   canPushToConfiguredBranch,
   repository,
-  submitDisabled,
   isLoading,
   error,
   onSubmit,
@@ -52,13 +51,37 @@ export function ProvisionedImportForm({
     control,
     getValues,
     handleSubmit,
-    formState: { errors },
+    trigger,
+    formState: { errors, isValidating },
   } = useFormContext<ProvisionedImportFormData>();
+
+  const [hasInitiallyValidated, setHasInitiallyValidated] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    trigger(['title', 'uid', 'path']).then(() => {
+      if (!cancelled) {
+        setHasInitiallyValidated(true);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [trigger]);
+
+  const submitDisabled =
+    !hasInitiallyValidated ||
+    isLibraryPanelImportBlocked ||
+    isReadOnlyRepo ||
+    isLoading ||
+    isValidating ||
+    !!errors.title ||
+    !!errors.uid ||
+    !!errors.path;
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
       <Stack direction="column" gap={2}>
-        {/* Banners */}
         {(isReadOnlyRepo || isOrphaned) && (
           <RepoInvalidStateBanner noRepository={isOrphaned} isReadOnlyRepo={isReadOnlyRepo} />
         )}
@@ -88,7 +111,6 @@ export function ProvisionedImportForm({
           </Alert>
         )}
 
-        {/* Name */}
         <Field
           label={t('provisioning.import.label-name', 'Name')}
           invalid={!!errors.title}
@@ -106,7 +128,6 @@ export function ProvisionedImportForm({
           />
         </Field>
 
-        {/* UID */}
         <Field
           label={getUidFieldLabel()}
           description={getUidFieldDescription()}
@@ -123,7 +144,6 @@ export function ProvisionedImportForm({
           />
         </Field>
 
-        {/* Datasource inputs */}
         {inputs.dataSources.map((input: DataSourceInput) => {
           if (input.pluginId === ExpressionDatasourceRef.type) {
             return null;
@@ -169,7 +189,6 @@ export function ProvisionedImportForm({
           );
         })}
 
-        {/* Constant inputs */}
         {inputs.constants.map((input: DashboardInput) => {
           const fieldName = `constant-${input.name}`;
           return (
@@ -189,7 +208,6 @@ export function ProvisionedImportForm({
           );
         })}
 
-        {/* Provisioning fields (branch, filename, comment) */}
         {!isLibraryPanelImportBlocked && !isReadOnlyRepo && !isOrphaned && (
           <ResourceEditFormSharedFields
             resourceType="dashboard"
@@ -201,7 +219,6 @@ export function ProvisionedImportForm({
 
         {error && <ProvisioningAlert error={error} />}
 
-        {/* Actions */}
         <Stack direction="row" gap={2}>
           <Button
             type="submit"
