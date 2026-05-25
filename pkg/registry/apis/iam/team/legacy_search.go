@@ -183,9 +183,7 @@ func createCells(t *team.TeamDTO, fields []string) [][]byte {
 	return cells
 }
 
-// encodeInt64BE matches the wire format used by the unified storage table
-// builder for INT64 columns (big-endian binary). Callers decoding cells must
-// use the same encoding (e.g. binary.BigEndian on a 8-byte buffer).
+// encodeInt64BE writes v as 8-byte big-endian, matching the unified-storage INT64 cell format.
 func encodeInt64BE(v int64) []byte {
 	var buf bytes.Buffer
 	_ = binary.Write(&buf, binary.BigEndian, v)

@@ -72,9 +72,7 @@ type TeamK8sService struct {
 	namespaceMapper request.NamespaceMapper
 	configProvider  apiserver.DirectRestConfigProvider
 	cache           *localcache.CacheService
-	// db is used for direct SQL user lookups that back legacy /api/teams member
-	// enrichment. We can't depend on user.Service here (wire cycle with
-	// userimpl) or on the k8s users resource (gated by kubernetesUsersApi).
+	// db backs SQL user lookups when the k8s users resource is gated off; avoids a wire cycle with userimpl.
 	db db.DB
 }
 
@@ -114,11 +112,7 @@ func (s *TeamK8sService) getClient(ctx context.Context, namespace string) (dynam
 	return s.getDynamicClient(ctx, namespace, teamGVR)
 }
 
-// resolveUserUID maps a legacy user ID to its UID. We can't depend on
-// user.Service (wire cycle) or the k8s users resource (gated by
-// kubernetesUsersApi), so we go straight to SQL via the shared db. Tests with
-// a nil db fall back to a label-selector lookup against the dynamic users
-// client.
+// resolveUserUID maps a legacy user.id to user.uid via SQL, falling back to the dynamic users client when db is nil (tests).
 func (s *TeamK8sService) resolveUserUID(ctx context.Context, namespace string, userID int64) (string, error) {
 	if s.db != nil {
 		var uid string
@@ -157,8 +151,7 @@ func (s *TeamK8sService) resolveUserUID(ctx context.Context, namespace string, u
 	return result.Items[0].GetName(), nil
 }
 
-// listUsersByUIDs returns user records keyed by UID for member enrichment.
-// SQL when db is set; falls back to the dynamic users client for tests.
+// listUsersByUIDs returns users by UID via SQL, with a dynamic-client fallback when db is nil (tests).
 func (s *TeamK8sService) listUsersByUIDs(ctx context.Context, namespace string, uids []string) (map[string]*user.User, error) {
 	if len(uids) == 0 {
 		return nil, nil
@@ -222,8 +215,7 @@ func (s *TeamK8sService) listUsersByUIDs(ctx context.Context, namespace string, 
 	return users, nil
 }
 
-// getUserByUID retrieves a single user by UID. SQL via the shared db; falls
-// back to the dynamic users client for tests configured without one.
+// getUserByUID returns a single user by UID via SQL, with a dynamic-client fallback when db is nil (tests).
 func (s *TeamK8sService) getUserByUID(ctx context.Context, namespace, userUID string) (*user.User, error) {
 	if s.db != nil {
 		usr := &user.User{}
@@ -269,11 +261,7 @@ func (s *TeamK8sService) listUserTeams(ctx context.Context, namespace, userUID s
 		return nil, err
 	}
 
-	// 404 from the apiserver here means the users/teams subresource isn't
-	// registered (it's gated on kubernetesUsersApi), not that the user is
-	// missing — the caller resolved the UID via SQL before invoking us.
-	// Propagate the error so teamimpl falls back to legacy, matching the
-	// 403 path taken when a non-admin requester is rejected by the authorizer.
+	// Propagate every error (including 404) so teamimpl falls back to legacy when the subresource is gated off.
 	resp, err := client.GetUserTeams(ctx, sdkresource.Identifier{Namespace: namespace, Name: userUID}, iamv0alpha1.GetUserTeamsRequest{})
 	if err != nil {
 		return nil, err
@@ -436,11 +424,7 @@ func (s *TeamK8sService) CreateTeam(ctx context.Context, cmd *team.CreateTeamCom
 
 	result, err := client.Create(ctx, &unstructured.Unstructured{Object: unstructuredObj}, metav1.CreateOptions{})
 	if err != nil {
-		// The legacy team store maps a UNIQUE(org_id, name) violation to
-		// apierrors.NewAlreadyExists, which surfaces here as IsAlreadyExists
-		// (and as IsConflict for some apiserver paths). Translate either back
-		// into team.ErrTeamNameTaken so the /api/teams handler returns 409
-		// "Team name taken" instead of a generic 500.
+		// Surface UNIQUE(org_id, name) violations as ErrTeamNameTaken so /api/teams returns 409 instead of 500.
 		if apierrors.IsAlreadyExists(err) || apierrors.IsConflict(err) {
 			return team.Team{}, team.ErrTeamNameTaken
 		}
@@ -544,9 +528,7 @@ func (s *TeamK8sService) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCom
 
 	_, err = client.Update(ctx, updated, metav1.UpdateOptions{})
 	if err != nil {
-		// Same UNIQUE(org_id, name) violation handling as CreateTeam — a rename
-		// to a name owned by another team needs to surface as ErrTeamNameTaken
-		// so the /api/teams/:id handler maps it to a 400 "Team name taken".
+		// Same UNIQUE conversion as CreateTeam — rename to a taken name → 400 "Team name taken".
 		if apierrors.IsAlreadyExists(err) || apierrors.IsConflict(err) {
 			return team.ErrTeamNameTaken
 		}
@@ -803,9 +785,7 @@ func (s *TeamK8sService) GetTeamByID(ctx context.Context, query *team.GetTeamByI
 		return nil, err
 	}
 
-	// Mirror the legacy `SELECT COUNT(*) FROM team_member` join by counting
-	// User entries in spec.members. Other Kinds (e.g. ServiceAccount) aren't
-	// counted because the legacy query is filtered to user_id rows.
+	// Count only User-kind members to match the legacy team_member.user_id COUNT(*).
 	var memberCount int64
 	for _, m := range fetched.Spec.Members {
 		if m.Kind == subjectKindUser {
