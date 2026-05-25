@@ -3469,7 +3469,7 @@ __metadata:
     "@emotion/css": "npm:11.13.5"
     "@grafana/data": "npm:13.1.0-pre"
     "@grafana/e2e-selectors": "npm:13.1.0-pre"
-    "@grafana/google-sdk": "npm:0.3.5"
+    "@grafana/google-sdk": "npm:0.6.0"
     "@grafana/plugin-configs": "npm:13.1.0-pre"
     "@grafana/plugin-ui": "npm:^0.13.1"
     "@grafana/runtime": "npm:13.1.0-pre"
@@ -3900,6 +3900,18 @@ __metadata:
     react: ^18.2.0
     react-dom: ^18.2.0
   checksum: 10/5070002bc4e4ca4079384e914a0435d6deffe0854b3c2a8ce8a691cdcfa81d9f8ba9247222fbd366f48a8bb0745f8ba2c21790e7f4a46f027d0a867f8c75e06e
+  languageName: node
+  linkType: hard
+
+"@grafana/google-sdk@npm:0.6.0":
+  version: 0.6.0
+  resolution: "@grafana/google-sdk@npm:0.6.0"
+  peerDependencies:
+    "@grafana/data": ">=11.6.0"
+    "@grafana/ui": ">=11.6.0"
+    react: ^18.2.0
+    react-dom: ^18.2.0
+  checksum: 10/d7ecd1a642ec3e1bec3079cc0b4d3cd1f89bf698995ba339eb77104371a265d53521bccdac57f9cac13fe074d86ccfb23867ec53f81c32692fa99c377827f233
   languageName: node
   linkType: hard
 
