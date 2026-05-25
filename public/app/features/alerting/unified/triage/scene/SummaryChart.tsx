@@ -5,7 +5,7 @@ import { type CustomTransformOperator, type DataFrame, FieldType } from '@grafan
 import { SceneObjectBase, type SceneObjectState, VizConfigBuilders } from '@grafana/scenes';
 import { VizPanel, useDataTransformer, useQueryRunner } from '@grafana/scenes-react';
 import { BarAlignment, GraphDrawStyle, VisibilityMode } from '@grafana/schema';
-import { LegendDisplayMode, StackingMode, TooltipDisplayMode } from '@grafana/ui';
+import { StackingMode, TooltipDisplayMode } from '@grafana/ui';
 
 import { overrideToFixedColor } from '../../home/Insights';
 
@@ -26,7 +26,6 @@ export const summaryChartVizConfig = VizConfigBuilders.timeseries()
   .setCustomFieldConfig('showPoints', VisibilityMode.Never)
   .setOption('legend', {
     showLegend: false,
-    displayMode: LegendDisplayMode.Hidden,
   })
   .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
   .setMin(0)

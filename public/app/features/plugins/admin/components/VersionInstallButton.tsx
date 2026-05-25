@@ -130,7 +130,7 @@ export const VersionInstallButton = ({
         onConfirm={onConfirm}
         onDismiss={onDismiss}
         disabled={isInstalling}
-        confirmButtonVariant="primary"
+        confirmVariant="primary"
       />
     </>
   );
