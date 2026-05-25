@@ -44,26 +44,12 @@ const SuggestedDashboardSourceEntryPoint = {
 } as const;
 
 /**
- * Entry points for custom (org-defined) dashboard templates — the gallery tab,
- * the toolbar "Save as template" menu, and the lifecycle banners on the
- * dashboard scene page.
- */
-const CustomDashboardTemplateSourceEntryPoint = {
-  TEMPLATES_GALLERY_MODAL: 'templates_gallery_modal',
-  SAVE_AS_TEMPLATE_MENU: 'save_as_template_menu',
-  TEMPLATE_USE_BANNER: 'template_use_banner',
-  TEMPLATE_EDIT_BANNER: 'template_edit_banner',
-  TEMPLATE_SAVED_BANNER: 'template_saved_banner',
-} as const;
-
-/**
  * Combined source entry points for all dashboard library features.
  * Sent in tracking events to identify which UI element triggered the interaction.
  */
 export const SOURCE_ENTRY_POINTS = {
   ...SuggestedDashboardSourceEntryPoint,
   ...TemplateDashboardSourceEntryPoint,
-  ...CustomDashboardTemplateSourceEntryPoint,
 } as const;
 
 /**
@@ -84,6 +70,12 @@ export const CREATION_ORIGINS = {
   DASHBOARD_LIBRARY_TEMPLATE_DASHBOARD: 'dashboard_library_template_dashboard',
   DASHBOARD_LIBRARY_CUSTOM_TEMPLATE: 'dashboard_library_custom_template',
 } as const;
+
+export const DashboardTemplatesSourceEntryPointMap: Record<string, SourceEntryPoint> = {
+  quickAdd: TemplateDashboardSourceEntryPoint.QUICK_ADD_BUTTON,
+  commandPalette: TemplateDashboardSourceEntryPoint.COMMAND_PALETTE,
+  createNewButton: TemplateDashboardSourceEntryPoint.BROWSE_DASHBOARDS_PAGE,
+};
 
 export type EventLocation = (typeof EVENT_LOCATIONS)[keyof typeof EVENT_LOCATIONS];
 export type ContentKind = (typeof CONTENT_KINDS)[keyof typeof CONTENT_KINDS];

@@ -13,6 +13,7 @@ import {
   useFlagGrafanaOrgDashboardTemplates,
 } from '@grafana/runtime/internal';
 import { Box, Grid, Modal, Tab, TabsBar, Text, useStyles2 } from '@grafana/ui';
+import { DashboardTemplatesSourceEntryPointMap } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
 
 import { DashboardCard } from './DashboardCard';
 import { NewTemplateDashboardInteractions } from './analytics/main';
@@ -27,11 +28,6 @@ import { getDashboardTemplatesTab } from './enterprise-components/DashboardTempl
 import { TemplateDashboardInteractions } from './interactions';
 import { type GnetDashboard, type GnetDashboardsResponse, type Link } from './types';
 import { getTemplateDashboardUrl } from './utils/templateDashboardHelpers';
-const SourceEntryPointMap: Record<string, SourceEntryPoint> = {
-  quickAdd: TemplateDashboardSourceEntryPoint.QUICK_ADD_BUTTON,
-  commandPalette: TemplateDashboardSourceEntryPoint.COMMAND_PALETTE,
-  createNewButton: TemplateDashboardSourceEntryPoint.BROWSE_DASHBOARDS_PAGE,
-};
 
 type TemplateTab = 'grafana' | 'custom';
 
@@ -56,7 +52,7 @@ export const TemplateDashboardModal = () => {
   };
 
   const onPreviewDashboardClick = async (dashboard: GnetDashboard, customizeWithAssistant = false) => {
-    const sourceEntryPoint = SourceEntryPointMap[entryPoint] || 'unknown';
+    const sourceEntryPoint = DashboardTemplatesSourceEntryPointMap[entryPoint] || 'unknown';
     isAnalyticsFrameworkEnabled
       ? NewTemplateDashboardInteractions.itemClicked({
           contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
@@ -116,14 +112,14 @@ export const TemplateDashboardModal = () => {
             numberOfItems: dashboards.length,
             contentKinds: [CONTENT_KINDS.TEMPLATE_DASHBOARD],
             datasourceTypes: [String(testDataSource?.type)],
-            sourceEntryPoint: SourceEntryPointMap[entryPoint] || 'unknown',
+            sourceEntryPoint: DashboardTemplatesSourceEntryPointMap[entryPoint] || 'unknown',
             eventLocation: EVENT_LOCATIONS.BROWSE_DASHBOARDS_PAGE,
           })
         : TemplateDashboardInteractions.loaded({
             numberOfItems: dashboards.length,
             contentKinds: [CONTENT_KINDS.TEMPLATE_DASHBOARD],
             datasourceTypes: [String(testDataSource?.type)],
-            sourceEntryPoint: SourceEntryPointMap[entryPoint] || 'unknown',
+            sourceEntryPoint: DashboardTemplatesSourceEntryPointMap[entryPoint] || 'unknown',
             eventLocation: EVENT_LOCATIONS.BROWSE_DASHBOARDS_PAGE,
           });
     }

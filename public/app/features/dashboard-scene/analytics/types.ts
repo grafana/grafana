@@ -1,7 +1,5 @@
 import { type EventProperty } from '@grafana/runtime/unstable';
 
-import type { EventLocation } from '../../dashboard/dashgrid/DashboardLibrary/constants';
-
 export interface SaveAsOpenedProperties extends EventProperty {
   /** UID of the source dashboard the user is saving as a template. Empty for new dashboards. */
   dashboardUid: string;
@@ -12,8 +10,6 @@ export interface SaveAsCompletedProperties extends EventProperty {
   dashboardUid: string;
   /** UID of the newly created template resource. */
   templateUid: string;
-  /** Whether the user attached at least one tag to the template. */
-  hasTags: boolean;
   /** Number of tags attached to the template. */
   tagCount: number;
   /** Whether the user filled in a description for the template. */
@@ -70,8 +66,6 @@ export interface VersionRestoredProperties extends EventProperty {
   templateUid: string;
   /** Version identifier that was restored. */
   version: number;
-  /** The specific UI location within the product where the restore was triggered. */
-  eventLocation: EventLocation;
 }
 
 export interface BannerDismissedProperties extends EventProperty {
