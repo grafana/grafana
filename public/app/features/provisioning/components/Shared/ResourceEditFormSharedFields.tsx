@@ -18,6 +18,7 @@ import { useBranchDropdownOptions } from '../../hooks/useBranchDropdownOptions';
 import { useGetRepositoryFolders } from '../../hooks/useGetRepositoryFolders';
 import { useLastBranch } from '../../hooks/useLastBranch';
 import { usePRBranch } from '../../hooks/usePRBranch';
+import { type BaseProvisionedFormData } from '../../types/form';
 import { joinPath, splitPath } from '../utils/path';
 
 type SharedFieldName = 'path' | 'comment';
@@ -40,7 +41,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
       formState: { errors },
       setValue,
       watch,
-    } = useFormContext();
+    } = useFormContext<BaseProvisionedFormData>();
 
     const [checkFile] = useLazyGetRepositoryFilesWithPathQuery();
 
@@ -233,7 +234,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
                       'File name for the dashboard (.json or .yaml)'
                     )}
                     invalid={!!errors.path}
-                    error={typeof errors.path?.message === 'string' ? errors.path.message : undefined}
+                    error={errors?.path?.message}
                   >
                     <Input
                       id="dashboard-filename"
