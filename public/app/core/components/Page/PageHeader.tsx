@@ -59,9 +59,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       justifyContent: 'space-between',
     }),
     titleColumn: css({
-  display: 'flex',
-  flexDirection: 'column',
-  minWidth: 0,
+      display: 'flex',
+      flexDirection: 'column',
+      minWidth: 0,
+      gap: 6,
 }),
     title: css({
       display: 'flex',
@@ -77,7 +78,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexDirection: 'row',
       gap: theme.spacing(1),
       flexShrink: 0,
-  marginLeft: 'auto',
+      marginLeft: 'auto',
     }),
     titleInfoContainer: css({
       display: 'flex',
@@ -93,12 +94,18 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'page-header',
       display: 'flex',
       flexDirection: 'column',
+      borderBottom: `1px solid ${theme.colors.border.subtle}`,
       //gap: theme.spacing(1),
-      marginBottom: theme.spacing(2),
+      //marginBottom: theme.spacing(2),
+      padding: theme.spacing(2),
+      [theme.breakpoints.up('md')]: {
+        padding: theme.spacing(2, 4),
+      },
     }),
     subTitle: css({
       position: 'relative',
       color: theme.colors.text.secondary,
+      ...theme.typography.descriptionLg,
     }),
     img: css({
       width: '32px',

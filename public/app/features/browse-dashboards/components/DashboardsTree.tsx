@@ -44,8 +44,8 @@ interface DashboardsTreeProps {
   requestLoadMore: (folderUid: string | undefined) => void;
 }
 
-const HEADER_HEIGHT = 36;
-const ROW_HEIGHT = 36;
+const HEADER_HEIGHT = 40;
+const ROW_HEIGHT = 40;
 const DIVIDER_HEIGHT = 0; // Yes - make it appear as a border on the row rather than a row itself
 // README is always the last item, so an approximate height is fine.
 const README_ROW_HEIGHT = 320;
@@ -221,6 +221,7 @@ export function DashboardsTree({
               itemSize={getRowHeight}
               onItemsRendered={onItemsRendered}
               itemKey={itemKey}
+              className={styles.listBody}
             >
               {VirtualListRow}
             </List>
@@ -303,6 +304,19 @@ const getStyles = (theme: GrafanaTheme2) => {
       gap: theme.spacing(1),
     }),
 
+    listBody: css({
+      backgroundColor: theme.colors.background.primary,
+      border: `1px solid ${theme.colors.border.primary}`,
+      borderRadius: theme.shape.radius.lg,
+      padding: theme.spacing(4),
+
+      // Pull the list body over the parent border
+      margin: '-1px',
+
+      // Keep the visual size stable after the negative margin
+      width: 'calc(100% + 2px)',
+    }),
+
     divider: css({
       borderTop: `1px solid ${theme.colors.border.weak}`,
       width: '100%',
@@ -315,12 +329,13 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
 
     headerRow: css({
-      backgroundColor: theme.colors.background.secondary,
       height: HEADER_HEIGHT,
+      padding: theme.spacing(1,2),
     }),
 
     bodyRow: css({
       height: ROW_HEIGHT,
+      padding: theme.spacing(1,2),
 
       '&:hover': {
         backgroundColor: theme.colors.action.hover,

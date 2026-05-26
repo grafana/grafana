@@ -143,14 +143,20 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     link: css({
       color: theme.colors.text.secondary,
-      padding: theme.spacing(1, 1.5, 1),
+      //padding: theme.spacing(1, 1.5, 1),
       borderRadius: theme.shape.radius.default,
 
-      display: 'block',
+      //display: 'block',
       height: '100%',
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(1),
+      padding: theme.spacing(1, 1.5),
+      position: 'relative',
 
       svg: {
-        marginRight: theme.spacing(1),
+        //marginRight: theme.spacing(1),
+        flexShrink: 0,
       },
 
       '&:focus-visible': getFocusStyles(theme),

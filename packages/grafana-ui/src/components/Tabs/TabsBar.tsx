@@ -11,6 +11,7 @@ export interface Props extends Omit<React.HTMLAttributes<HTMLDivElement>, 'child
   className?: string;
   /** For hiding the bottom border (on PageHeader for example) */
   hideBorder?: boolean;
+  layout?: 'page' | 'contained';
 }
 
 /**
@@ -19,12 +20,12 @@ export interface Props extends Omit<React.HTMLAttributes<HTMLDivElement>, 'child
  * https://developers.grafana.com/ui/latest/index.html?path=/docs/navigation-tabs--docs
  */
 export const TabsBar = forwardRef<HTMLDivElement, Props>(
-  ({ children, className, hideBorder = false, ...rest }, ref) => {
+  ({ children, className, hideBorder = false, layout = 'page', ...rest }, ref) => {
     const styles = useStyles2(getStyles);
 
     return (
       <div className={cx(styles.tabsWrapper, hideBorder && styles.noBorder, className)} ref={ref} {...rest}>
-        <div className={styles.tabs} role="tablist">
+        <div className={cx(styles.tabs, layout === 'page' && styles.pageTabs)}>
           {children}
         </div>
       </div>
@@ -34,7 +35,8 @@ export const TabsBar = forwardRef<HTMLDivElement, Props>(
 
 const getStyles = (theme: GrafanaTheme2) => ({
   tabsWrapper: css({
-    borderBottom: `1px solid ${theme.colors.border.weak}`,
+    //borderBottom: `1px solid ${theme.colors.border.subtle}`,
+    boxShadow: `inset 0 -1px 0 ${theme.colors.border.subtle}`,
     overflowX: 'auto',
   }),
   noBorder: css({
@@ -44,6 +46,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
     position: 'relative',
     display: 'flex',
     alignItems: 'center',
+  }),
+  pageTabs: css({
+    paddingLeft: theme.spacing(2),
+    paddingRight: theme.spacing(2),
+
+    [theme.breakpoints.up('md')]: {
+      paddingLeft: theme.spacing(4),
+      paddingRight: theme.spacing(4),
+    },
   }),
 });
 

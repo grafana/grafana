@@ -123,9 +123,9 @@ export function getPropertiesForButtonSize(size: ComponentSize, theme: GrafanaTh
     case 'md':
     default:
       return {
-        padding: 2,
+        padding: 1,
         fontSize: theme.typography.size.md,
-        height: theme.components.height.md,
+        height:3.5,
       };
   }
 }

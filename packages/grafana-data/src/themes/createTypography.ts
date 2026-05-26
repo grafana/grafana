@@ -93,7 +93,7 @@ export function createTypography(colors: ThemeColors, typographyInput: ThemeTypo
     letterSpacing: number,
     casing?: object
   ): ThemeTypographyVariant => {
-    if (lineHeight % 2 !== 0 || size % 2 !== 0) {
+    if (lineHeight % 2 !== 0) {
       throw new Error('Font size and line height should be integer multiples of 2 to prevent issues with alignment');
     }
 
@@ -115,9 +115,12 @@ export function createTypography(colors: ThemeColors, typographyInput: ThemeTypo
     h4: buildVariant(fontWeightRegular, 18, 22, 0.25),
     h5: buildVariant(fontWeightRegular, 16, 22, 0),
     h6: buildVariant(fontWeightMedium, 14, 22, 0.15),
-    body: buildVariant(fontWeightRegular, fontSize, 22, 0.15),
+    body: buildVariant(fontWeightRegular, 13, 22, 0.15),
     bodySmall: buildVariant(fontWeightRegular, 12, 18, 0.15),
-    titleLarge: buildVariant(fontWeightBold, 18, 24, 0),
+    titleLarge: buildVariant(fontWeightBold, 18, 20, 0),
+    headingLarge: buildVariant(fontWeightBold, 15, 18, 0),
+    descriptionLg: buildVariant(fontWeightRegular, 13, 16, 0),
+    buttonMd: buildVariant(fontWeightMedium, 13, 16, 0),
     code: { ...buildVariant(fontWeightRegular, 14, 16, 0.15), fontFamily: fontFamilyMonospace },
   };
 
@@ -158,5 +161,8 @@ export interface ThemeTypographyVariantTypes {
   body: ThemeTypographyVariant;
   bodySmall: ThemeTypographyVariant;
   titleLarge: ThemeTypographyVariant;
+  headingLarge: ThemeTypographyVariant;
+  descriptionLg: ThemeTypographyVariant;
+  buttonMd: ThemeTypographyVariant;
   code: ThemeTypographyVariant;
 }

@@ -49,6 +49,7 @@ const createThemeColorsBaseSchema = <TColor>(color: TColor) =>
          **/
         elevated: z.string().optional(),
         subtle: z.string().optional(),
+        input: z.string().optional(),
       }),
 
       border: z.object({
@@ -155,12 +156,12 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   };
 
   secondary = {
-    main: palette.gray20,
+    main: newPalette.ink700,
     shade: palette.gray25,
     transparent: `rgba(${this.whiteBase}, 0.08)`,
     text: this.text.primary,
     contrastText: `rgb(${this.whiteBase})`,
-    border: `rgba(${this.whiteBase}, 0.08)`,
+    border: newPalette.ink600,
   };
 
   tertiary = {
@@ -197,6 +198,7 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
     secondary: newPalette.ink700,
     elevated: palette.gray15,
     subtle: newPalette.ink850,
+    input: newPalette.ink700,
   };
 
   action = {
@@ -245,8 +247,8 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
     weak: `rgba(${this.blackBase}, 0.12)`,
     medium: `rgba(${this.blackBase}, 0.3)`,
     strong: `rgba(${this.blackBase}, 0.4)`,
-    primary: newPalette.neutral100,
-    subtle: newPalette.neutral200,
+    primary: newPalette.neutral200,
+    subtle: newPalette.neutral300,
   };
 
   secondary = {
@@ -291,12 +293,13 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   };
 
   background = {
-    canvas: palette.gray100,
-    page: palette.gray100,
+    canvas: newPalette.neutral200,
+    page: newPalette.neutral100,
     primary: palette.white,
     secondary: palette.gray95,
     elevated: palette.white,
     subtle: newPalette.neutral50,
+    input: newPalette.neutral300,
   };
 
   action = {

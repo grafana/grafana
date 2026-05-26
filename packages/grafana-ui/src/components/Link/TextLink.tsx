@@ -42,6 +42,9 @@ const svgSizes: {
   body: 'md',
   bodySmall: 'xs',
   titleLarge: 'xl',
+  headingLarge: 'lg',
+  descriptionLg: 'md',
+  buttonMd: 'md',
 };
 
 /**

@@ -144,6 +144,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       gap: theme.spacing(1),
       overflow: 'hidden',
+      svg: {
+        color: theme.colors.text.secondary,
+      },
     }),
     link: css({
       '&:hover': {

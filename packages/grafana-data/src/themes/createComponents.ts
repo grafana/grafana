@@ -71,7 +71,7 @@ export function createComponents(colors: ThemeColors, shadows: ThemeShadows): Th
     headerHeight: 5,
     background: colors.background.subtle,
     borderColor: colors.border.subtle,
-    contentBackground: colors.background.secondary,
+    contentBackground: colors.background. primary,
     contentBorderColor: colors.border.primary,
     boxShadow: 'none',
   };
@@ -80,7 +80,7 @@ export function createComponents(colors: ThemeColors, shadows: ThemeShadows): Th
     borderColor: colors.border.medium,
     borderHover: colors.border.strong,
     text: colors.text.primary,
-    background: colors.mode === 'dark' ? colors.background.canvas : colors.background.primary,
+    background: colors.mode === 'dark' ? colors.background.input : colors.background.primary,
   };
 
   const menu: MenuComponentTokens = {
@@ -91,7 +91,7 @@ export function createComponents(colors: ThemeColors, shadows: ThemeShadows): Th
   return {
     height: {
       sm: 3,
-      md: 4,
+      md: 3.5,
       lg: 6,
     },
     input,

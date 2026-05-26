@@ -323,6 +323,9 @@
             },
             "subtle": {
               "type": "string"
+            },
+            "input": {
+              "type": "string"
             }
           },
           "additionalProperties": false

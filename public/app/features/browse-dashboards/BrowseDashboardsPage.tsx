@@ -156,7 +156,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
   const renderTitle = (title: string) => {
     return (
       <Stack alignItems={'center'} gap={2}>
-        <Text element={'h1'}>{title}</Text>
+        <Text element={'h1'} variant={'titleLarge'}>{title}</Text>
         {showEditTitle && isProvisionedFolder && !isRepoRootFolder && !isReadOnlyRepo && (
           <IconButton
             name="pen"
@@ -188,16 +188,18 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
         <QuotaLimitBanner />
         {/* only show recently viewed dashboards when in root and flag is enabled */}
         {isRecentlyViewedEnabled && <RecentlyViewedDashboards />}
-        <div>
+        <div className={styles.toolbar}>
           <FilterInput
+            className={styles.searchInput}
             placeholder={getSearchPlaceholder(searchState.includePanels)}
             value={searchState.query}
             escapeRegex={false}
             onChange={(e) => stateManager.onQueryChange(e)}
           />
-        </div>
 
-        {hasSelection ? <BrowseActions folderDTO={folderDTO} /> : <BrowseFilters />}
+          {hasSelection ? <BrowseActions folderDTO={folderDTO} /> : <BrowseFilters />}
+
+        </div>
 
         <div className={styles.subView}>
           <AutoSizer>
@@ -247,15 +249,69 @@ const getStyles = (theme: GrafanaTheme2) => ({
     label: 'pageContents',
     display: 'flex',
     flexDirection: 'column',
-    gap: theme.spacing(1),
+    gap: theme.spacing(2),
     height: '100%',
   }),
 
+  toolbar: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(1),
+    // Target the FilterInput input locally
+    input: {
+      background: theme.colors.background.subtle,
+      borderColor: theme.colors.background.subtle,
+      borderRadius: theme.shape.radius.default,
+    },
+
+    'input:hover': {
+      borderColor: theme.colors.border.medium,
+    },
+
+    'input:focus': {
+      borderColor: theme.colors.primary.border,
+    },
+
+    '[class*="input-wrapper"]': {
+      background: theme.colors.background.page,
+      borderColor: theme.colors.border.primary,
+      borderRadius: theme.shape.radius.default,
+    },
+
+    '[class*="input-wrapper"]:hover': {
+      borderColor: theme.colors.border.medium,
+    },
+
+    '[class*="radio-button-group"]': {
+      background: theme.colors.background.page,
+      borderColor: theme.colors.border.primary,
+      borderRadius: theme.shape.radius.default,
+    },
+
+  }),
+
+  searchInput: css ({
+    height: theme.spacing(4.5),
+
+    // the actual input
+    input: {
+      height: theme.spacing(4.5),
+      lineHeight: theme.spacing(4.5),
+    },
+
+    // only icons inside the search input, not the action buttons
+    svg: {
+      alignSelf: 'center',
+  },
+  }),
   // AutoSizer needs an element to measure the full height available
   subView: css({
     label: 'subView',
     height: '100%',
     minHeight: '300px',
+    backgroundColor: theme.colors.background.subtle,
+    border: `1px solid ${theme.colors.border.subtle}`,
+    borderRadius: theme.shape.radius.lg,
   }),
 });
 

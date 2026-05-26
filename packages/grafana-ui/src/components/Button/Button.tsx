@@ -243,11 +243,12 @@ export interface StyleProps {
 
 export const getButtonStyles = (props: StyleProps) => {
   const { theme, variant, fill = 'solid', size, iconOnly, fullWidth } = props;
-  const { height, padding, fontSize } = getPropertiesForButtonSize(size, theme);
+  const { height, padding } = getPropertiesForButtonSize(size, theme);
   const variantStyles = getPropertiesForVariant(theme, variant, fill);
   const disabledStyles = getPropertiesForDisabled(theme, variant, fill);
   const focusStyle = getButtonFocusStyles(theme);
   const paddingMinusBorder = theme.spacing.gridSize * padding - 1;
+  const buttonTypography = theme.typography.buttonMd;
 
   return {
     button: css({
@@ -255,9 +256,7 @@ export const getButtonStyles = (props: StyleProps) => {
       display: 'inline-flex',
       alignItems: 'center',
       gap: theme.spacing(1),
-      fontSize: fontSize,
-      fontWeight: theme.typography.fontWeightMedium,
-      fontFamily: theme.typography.fontFamily,
+      ...buttonTypography,
       padding: `0 ${paddingMinusBorder}px`,
       height: theme.spacing(height),
       // Deduct border from line-height for perfect vertical centering on windows and linux

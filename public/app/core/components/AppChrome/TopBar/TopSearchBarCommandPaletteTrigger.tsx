@@ -82,11 +82,16 @@ const getStyles = (theme: GrafanaTheme2) => {
       css({
         width: 'auto',
         minWidth: 140,
-        maxWidth: 350,
+        maxWidth: 160,
         flexGrow: 1,
       })
     ),
-    inputWrapper: baseStyles.inputWrapper,
+    inputWrapper: css([
+      baseStyles.inputWrapper,
+      {
+      backgroundColor: theme.colors.background.page,
+      },
+    ]),
     prefix: baseStyles.prefix,
     suffix: css([
       baseStyles.suffix,
@@ -100,6 +105,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       {
         textAlign: 'left',
         paddingLeft: 28,
+        backgroundColor: theme.colors.background.page,
+        borderColor: theme.colors.border.subtle,
         color: theme.colors.text.disabled,
 
         // We want the focus styles to appear only when tabbing through, not when clicking the button
