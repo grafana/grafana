@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../../../reference/templating/ # /docs/grafana/next/reference/templating/
-  - ../../../variables/add-ad-hoc-filters/ # /docs/grafana/next/variables/add-ad-hoc-filters/
   - ../../../variables/add-constant-variable/ # /docs/grafana/next/variables/add-constant-variable/
   - ../../../variables/add-custom-variable/ # /docs/grafana/next/variables/add-custom-variable/
   - ../../../variables/add-data-source-variable/ # /docs/grafana/next/variables/add-data-source-variable/
@@ -16,7 +15,6 @@ aliases:
   - ../../../variables/manage-variable/ # /docs/grafana/next/variables/manage-variable/
   - ../../../variables/variable-selection-options/ # /docs/grafana/next/variables/variable-selection-options/
   - ../../../variables/variable-types/ # /docs/grafana/next/variables/variable-types/
-  - ../../../variables/variable-types/add-ad-hoc-filters/ # /docs/grafana/next/variables/variable-types/add-ad-hoc-filters/
   - ../../../variables/variable-types/add-constant-variable/ # /docs/grafana/next/variables/variable-types/add-constant-variable/
   - ../../../variables/variable-types/add-custom-variable/ # /docs/grafana/next/variables/variable-types/add-custom-variable/
   - ../../../variables/variable-types/add-data-source-variable/ # /docs/grafana/next/variables/variable-types/add-data-source-variable/

@@ -1,5 +1,7 @@
 ---
 aliases:
+  - ../../../variables/add-ad-hoc-filters/ # /docs/grafana/next/variables/add-ad-hoc-filters/
+  - ../../../variables/variable-types/add-ad-hoc-filters/ # /docs/grafana/next/variables/variable-types/add-ad-hoc-filters/
 keywords:
   - panel
   - dashboard
