@@ -23,6 +23,7 @@ In the **Dashboard controls** section of the sidebar, you can add variables, ann
 
 ## Filter and Group by
 
+<!-- vale Grafana.WordList = NO -->
 <!-- vale Grafana.Spelling = NO -->
 
 {{< admonition type="note" >}}
@@ -30,6 +31,7 @@ The **Filter and Group by** feature renames the **Ad hoc filters** variable and 
 However, in the dashboard schema, it's still referred to as `"kind": "AdhocVariable"`.
 {{< /admonition >}}
 
+<!-- vale Grafana.WordList = YES -->
 <!-- vale Grafana.Spelling = YES -->
 
 The **Filter and Group by** option is one of the most complex and flexible dashboard controls available.
