@@ -23,11 +23,11 @@ export function DashboardOutlineRenderer({ model }: SceneComponentProps<Dashboar
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
   useDebounce(() => setDebouncedSearchQuery(searchQuery), 200, [searchQuery]);
 
-  const normalizedSearchQuery = debouncedSearchQuery.trim().toLowerCase();
-  const isSearching = normalizedSearchQuery.length > 0;
+  const trimmedSearchQuery = debouncedSearchQuery.trim();
+  const isSearching = trimmedSearchQuery.length > 0;
 
   const searchMatches = isSearching
-    ? computeSearchMatches(dashboard, normalizedSearchQuery, Boolean(isEditing), noTitleText)
+    ? computeSearchMatches(dashboard, trimmedSearchQuery, Boolean(isEditing), noTitleText)
     : null;
   const hasResults = !searchMatches || searchMatches.matchingKeys.size > 0;
 
