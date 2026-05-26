@@ -105,17 +105,12 @@ func (e *errKeyStore) SetLastUpdated(ctx context.Context) error {
 
 func Test_IsDisabled(t *testing.T) {
 	t.Run("disabled when PluginSkipPublicKeyDownload is true", func(t *testing.T) {
-		kr := ProvideService(&setting.Cfg{PluginSkipPublicKeyDownload: true, CheckForPluginUpdates: true}, nil)
+		kr := ProvideService(&setting.Cfg{PluginSkipPublicKeyDownload: true}, nil)
 		require.True(t, kr.IsDisabled())
 	})
 
-	t.Run("disabled when CheckForPluginUpdates is false", func(t *testing.T) {
-		kr := ProvideService(&setting.Cfg{PluginSkipPublicKeyDownload: false, CheckForPluginUpdates: false}, nil)
-		require.True(t, kr.IsDisabled())
-	})
-
-	t.Run("enabled when both flags allow it", func(t *testing.T) {
-		kr := ProvideService(&setting.Cfg{PluginSkipPublicKeyDownload: false, CheckForPluginUpdates: true}, nil)
+	t.Run("enabled when PluginSkipPublicKeyDownload is false", func(t *testing.T) {
+		kr := ProvideService(&setting.Cfg{PluginSkipPublicKeyDownload: false}, nil)
 		require.False(t, kr.IsDisabled())
 	})
 }
