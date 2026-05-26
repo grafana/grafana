@@ -1104,6 +1104,7 @@ func newWatchTestUser() *identity.StaticRequester {
 type watchTestServerOpts struct {
 	BookmarkFrequency time.Duration
 	StorageMetrics    *StorageMetrics
+	AccessClient      authlib.AccessClient
 }
 
 func newWatchTestServer(t *testing.T, opts watchTestServerOpts) *server {
@@ -1124,6 +1125,7 @@ func newWatchTestServer(t *testing.T, opts watchTestServerOpts) *server {
 		Backend:           store,
 		BookmarkFrequency: opts.BookmarkFrequency,
 		StorageMetrics:    opts.StorageMetrics,
+		AccessClient:      opts.AccessClient,
 	})
 	require.NoError(t, err)
 	t.Cleanup(func() {
@@ -1383,7 +1385,94 @@ func TestWatchEventMetricsWithSinceRV(t *testing.T) {
 		"WatchEventLatency should only observe events that arrived after the subscription started")
 }
 
+// TestWatchInitialEventsRespectsItemChecker tests that checker is used for
+// initial-events when SendInitialEvents=true.
+func TestWatchInitialEventsRespectsItemChecker(t *testing.T) {
+	const (
+		allowedFolder = "folder-a"
+		deniedFolder  = "folder-b"
+		allowedName   = "allowed-playlist"
+		deniedName    = "denied-playlist"
+	)
+
+	ac := &callbackAccessClient{
+		fn: func(req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+			// Only fail reads, allow other verbs to seed test resources
+			if req.Verb == utils.VerbGet && folder != allowedFolder {
+				return deny()
+			}
+			return allow()
+		},
+	}
+	srv := newWatchTestServer(t, watchTestServerOpts{AccessClient: ac})
+
+	user := newWatchTestUser()
+	ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), user))
+	defer cancel()
+
+	for _, item := range []struct {
+		name, folder string
+	}{
+		{allowedName, allowedFolder},
+		{deniedName, deniedFolder},
+	} {
+		value := []byte(`{"apiVersion":"playlist.grafana.app/v0alpha1","kind":"Playlist","metadata":{"name":"` + item.name + `","uid":"uid-` + item.name + `","namespace":"` + watchTestNamespace + `","annotations":{"grafana.app/folder":"` + item.folder + `"}},"spec":{"title":"t","interval":"5m","items":[]}}`)
+		created, err := srv.Create(ctx, &resourcepb.CreateRequest{
+			Key: &resourcepb.ResourceKey{
+				Group:     watchTestGroup,
+				Resource:  watchTestResource,
+				Namespace: watchTestNamespace,
+				Name:      item.name,
+			},
+			Value: value,
+		})
+		require.NoError(t, err)
+		require.Nil(t, created.Error, "creating seed resource %q", item.name)
+	}
+
+	mock := newMockWatchServer(ctx)
+	var eg errgroup.Group
+	eg.Go(func() error {
+		return srv.Watch(&resourcepb.WatchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
+					Group:     watchTestGroup,
+					Resource:  watchTestResource,
+					Namespace: watchTestNamespace,
+				},
+			},
+			SendInitialEvents: true,
+		}, mock)
+	})
+
+	// Drain events
+	var added []*resourcepb.WatchEvent
+	deadline := time.After(2 * time.Second)
+drain:
+	for {
+		select {
+		case evt := <-mock.events:
+			if evt.Type == resourcepb.WatchEvent_ADDED {
+				added = append(added, evt)
+			}
+		case <-deadline:
+			break drain
+		}
+	}
+
+	cancel()
+	require.NoError(t, eg.Wait())
+
+	for _, evt := range added {
+		require.NotContains(t, string(evt.Resource.Value), `"name":"`+deniedName+`"`)
+	}
+	require.Len(t, added, 1)
+	require.Contains(t, string(added[0].Resource.Value), `"name":"`+allowedName+`"`)
+}
+
 // callbackAccessClient is a test helper whose Check behavior can be swapped between calls.
+// Compile returns an ItemChecker that delegates to the same fn (with Verb=get),
+// so a single callback drives both Check and per-item authorization.
 type callbackAccessClient struct {
 	fn func(req authlib.CheckRequest, folder string) (authlib.CheckResponse, error)
 }
@@ -1392,8 +1481,20 @@ func (c *callbackAccessClient) Check(_ context.Context, _ authlib.AuthInfo, req 
 	return c.fn(req, folder)
 }
 
-func (c *callbackAccessClient) Compile(_ context.Context, _ authlib.AuthInfo, _ authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
-	return func(_, _ string) bool { return true }, authlib.NoopZookie{}, nil
+func (c *callbackAccessClient) Compile(_ context.Context, _ authlib.AuthInfo, req authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
+	return func(name, folder string) bool {
+		resp, err := c.fn(authlib.CheckRequest{
+			Verb:      utils.VerbGet,
+			Group:     req.Group,
+			Resource:  req.Resource,
+			Namespace: req.Namespace,
+			Name:      name,
+		}, folder)
+		if err != nil {
+			return false
+		}
+		return resp.Allowed
+	}, authlib.NoopZookie{}, nil
 }
 
 func (c *callbackAccessClient) BatchCheck(_ context.Context, _ authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {

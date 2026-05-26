@@ -140,7 +140,6 @@
     "uwrap": "0.1.2"
   },
   "devDependencies": {
-    "@babel/core": "7.28.0",
     "@faker-js/faker": "^9.0.0",
     "@grafana/test-utils": "workspace:*",
     "@rollup/plugin-node-resolve": "16.0.1",
