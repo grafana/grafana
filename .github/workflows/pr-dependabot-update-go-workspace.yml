@@ -16,7 +16,7 @@ permissions:
   id-token: write
 jobs:
   update:
-    runs-on: "ubuntu-latest"
+    runs-on: ubuntu-arm64
     if: ${{ github.event.pull_request.user.login == 'dependabot[bot]' && github.event.pull_request.head.repo.full_name == github.repository }}
     continue-on-error: true
     steps:

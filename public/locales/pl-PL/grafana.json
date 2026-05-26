@@ -446,7 +446,14 @@
       "label-value": "Wartość"
     },
     "alert-instance-extension-point": {
-      "aria-label-actions": "Działania"
+      "n-contact-points_one": "",
+      "n-contact-points_few": "",
+      "n-contact-points_many": "",
+      "n-contact-points_other": "",
+      "view-route_one": "",
+      "view-route_few": "",
+      "view-route_many": "",
+      "view-route_other": ""
     },
     "alert-instance-modal-selector": {
       "add-alert-data-to-payload": "Dodaj dane alertu do ładunku",
@@ -462,6 +469,7 @@
     },
     "alert-instances-table": {
       "created": "Utworzono",
+      "destination": "",
       "labels": "Etykiety",
       "state": "Stan"
     },
@@ -2367,6 +2375,7 @@
     },
     "notification-route": {
       "no-labels": "Brak etykiet",
+      "notification-policies": "",
       "notification-policy": "Zasady dotyczące powiadomień"
     },
     "notification-route-header": {
@@ -4434,7 +4443,6 @@
       "button-cancel": "Anuluj",
       "button-delete": "Usuń",
       "button-deleting": "Usuwanie…",
-      "commit": "Usuń folder",
       "delete-warning": "Spowoduje to usunięcie folderu i elementów po nim dziedziczących. Łącznie wpłynie to na następujące elementy:",
       "missing-info": "Brak wymaganych pól",
       "success-message": "Folder został usunięty"
@@ -4548,7 +4556,6 @@
       "button-cancel": "Anuluj",
       "button-rename": "Zmień nazwę",
       "button-renaming": "Zmienianie nazwy…",
-      "commit": "Zmień nazwę folderu",
       "error-saving": "Nie udało się zmienić nazwy folderu",
       "label-folder-name": "Nazwa folderu",
       "missing-info": "Brak wymaganych pól",
@@ -6445,6 +6452,8 @@
         "ungroup-tabs": "Rozłącz grupę kart"
       },
       "name": "Karty",
+      "scroll-tabs-left": "",
+      "scroll-tabs-right": "",
       "tab": {
         "new": "Nowa karta",
         "repeat": {
@@ -6542,6 +6551,10 @@
         },
         "save-dashboard-short": "Zapisz",
         "save-library-panel": "Zapisz panel biblioteki",
+        "save-template": {
+          "label": "",
+          "tooltip": ""
+        },
         "share": {
           "arrow": "Udostępnij",
           "tooltip": "Kopiuj link"
@@ -6555,6 +6568,9 @@
       "read-only": "Tylko do odczytu",
       "refresh": "Odśwież pulpit",
       "save": "Zapisz pulpit",
+      "save-as-template": {
+        "label": ""
+      },
       "save-dashboard": {
         "label": "Zapisz pulpit",
         "tooltip": "Zapisz zmiany"
@@ -7607,7 +7623,9 @@
         "label-details": "Szczegóły",
         "title": "Zapisz pulpit",
         "title-copy": "Zapisz kopię pulpitu",
-        "title-provisioned": "Pulpit aprowizowany"
+        "title-provisioned": "Pulpit aprowizowany",
+        "title-template": "",
+        "title-update-template": ""
       }
     },
     "save-dashboard-form": {
@@ -7686,6 +7704,10 @@
     },
     "section-filters-list": {
       "add-filter": ""
+    },
+    "section-placement": {
+      "top-row": "",
+      "top-tab": ""
     },
     "selection-options-form": {
       "description-enables-multiple-values-selected": "Umożliwia wybór wielu wartości jednocześnie",
@@ -7826,9 +7848,6 @@
     "variable-display-select": {
       "label": "Wyświetl",
       "options": {
-        "above-dashboard": {
-          "label": "Nad pulpitem"
-        },
         "controls-menu": {
           "description": "Widoczne, gdy menu sterowania jest otwarte",
           "label": "Menu sterowania"
@@ -7837,9 +7856,9 @@
           "description": "Widoczne tylko w trybie edycji",
           "label": "Ukryte"
         },
-        "hidden-label": {
-          "description": "Nad pulpitem, ale bez pokazywania nazwy zmiennej",
-          "label": "Nad pulpitem, etykieta ukryta"
+        "top-placement-hidden-label": {
+          "description": "",
+          "label": ""
         }
       }
     },
@@ -7924,10 +7943,9 @@
           "reorder-variables-list": "Zmień kolejność na liście zmiennych"
         }
       },
-      "title-above-dashboard_one": "Nad pulpitem ({{count}})",
-      "title-above-dashboard_few": "Nad pulpitem ({{count}})",
-      "title-above-dashboard_many": "Nad pulpitem ({{count}})",
-      "title-above-dashboard_other": "Nad pulpitem ({{count}})",
+      "top-placement": {
+        "default": ""
+      },
       "title-controls-menu_one": "Menu sterowania ({{count}})",
       "title-controls-menu_few": "Menu sterowania ({{count}})",
       "title-controls-menu_many": "Menu sterowania ({{count}})",
@@ -7935,7 +7953,11 @@
       "title-hidden_one": "Ukryte ({{count}})",
       "title-hidden_few": "Ukryte ({{count}})",
       "title-hidden_many": "Ukryte ({{count}})",
-      "title-hidden_other": "Ukryte ({{count}})"
+      "title-hidden_other": "Ukryte ({{count}})",
+      "title-top-placement_one": "",
+      "title-top-placement_few": "",
+      "title-top-placement_many": "",
+      "title-top-placement_other": ""
     },
     "version-history": {
       "comparison": {
@@ -10863,7 +10885,7 @@
     "name-unit": "Jednostka",
     "name-value-name": "Nazwa wartości",
     "name-y-axis-scale": "Skala osi Y",
-    "name-y-bucket-scale": "Skala zasobnika Y",
+    "name-y-bucket-scale": "",
     "placeholder-axis-label": "Automatycznie",
     "placeholder-axis-width": "Automatycznie",
     "placeholder-decimals": "Automatycznie",
@@ -10978,6 +11000,12 @@
     "name-stacking": "Układanie"
   },
   "home": {
+    "dashboard-tabs": {
+      "recent": "",
+      "recent-active": "",
+      "starred": "",
+      "starred-active": ""
+    },
     "home-page": {
       "edition": {
         "cloud": "",
@@ -10990,6 +11018,23 @@
         "morning": ""
       },
       "placeholder": ""
+    },
+    "recent-dashboards-tab": {
+      "browse": "",
+      "clear": "",
+      "create": "",
+      "empty": "",
+      "empty-description": "",
+      "error-title": "",
+      "loading": "",
+      "retry": ""
+    },
+    "starred-dashboards-tab": {
+      "empty": "",
+      "empty-description": "",
+      "error-title": "",
+      "loading": "",
+      "retry": ""
     }
   },
   "inspector": {
@@ -12102,6 +12147,9 @@
       "subtitle": "Zarządzaj ustawieniami na całym serwerze i dostępem do zasobów, takich jak organizacje, użytkownicy i licencje",
       "title": "Administrator serwera"
     },
+    "agentic-testing": {
+      "title": ""
+    },
     "alert-list-legacy": {
       "title": "Reguły alertu"
     },
@@ -12703,6 +12751,9 @@
       "required": "",
       "save-tooltip": ""
     }
+  },
+  "page-loader": {
+    "default": ""
   },
   "panel": {
     "dashlist": {
@@ -13377,11 +13428,24 @@
     "code-block": {
       "aria-label-copy": "Skopiuj kod klucza do schowka"
     },
+    "commit-message": {
+      "dashboard-create-default": "",
+      "dashboard-delete-default": "",
+      "dashboard-move-default": "",
+      "dashboard-rename-default": "",
+      "dashboard-update-default": "",
+      "folder-create-default": "",
+      "folder-delete-default": "",
+      "folder-move-default": "",
+      "folder-rename-default": "",
+      "folder-update-default": ""
+    },
     "config-form": {
       "alert-repository-settings-saved": "Ustawienia repozytorium zostały zapisane",
       "alert-repository-settings-updated": "Ustawienia repozytorium zostały zaktualizowane",
       "button-save": "Zapisz",
       "button-saving": "Zapisywanie…",
+      "description-commit-message-template": "",
       "description-connection": "Wybierz połączenie z aplikacją GitHub, którego chcesz użyć",
       "description-enabled": "Po włączeniu automatycznego pobierania (pull) nie można zmienić celu.",
       "description-read-only": "Zasobów nie można modyfikować za pośrednictwem usługi Grafana.",
@@ -13392,6 +13456,7 @@
       "error-save-failed": "Nie udało się zapisać ustawienia repozytorium",
       "error-save-repository": "Nie udało się zapisać ustawień repozytorium",
       "label-automatic-pulling": "Automatyczne operacje pull",
+      "label-commit-message-template": "",
       "label-connection": "Połączenie z aplikacją GitHub",
       "label-enabled": "Włączone",
       "label-interval-seconds": "Odstęp czasu (sekundy)",
@@ -13400,6 +13465,7 @@
       "label-title": "Tytuł",
       "option-entire-instance": "Cała instancja",
       "option-managed-folder": "Folder zarządzany",
+      "placeholder-commit-message-template": "",
       "placeholder-interval-seconds": "60",
       "placeholder-my-config": "Moja konfiguracja"
     },
@@ -14316,6 +14382,10 @@
   "query-editor-next": {
     "action": {
       "add-transformation-filter": "Dodaj filtr",
+      "cancel-delete": "",
+      "confirm-delete": "",
+      "confirm-delete-confirm": "",
+      "delete-confirmation-group": "",
       "disable": "Wyłącz: {{type}}",
       "duplicate": "Duplikuj: {{type}}",
       "enable": "Włącz: {{type}}",
@@ -14361,10 +14431,7 @@
       "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
-      "body-query": "Czy na pewno chcesz usunąć to zapytanie?",
-      "body-transformation": "Usunięcie jednej transformacji może spowodować uszkodzenie innych.",
-      "confirm": "Usuń",
-      "title": "Usunąć: {{name}}?"
+      "body-transformation": "Usunięcie jednej transformacji może spowodować uszkodzenie innych."
     },
     "details-sidebar": {
       "cache-timeout": "Limit czasu pamięci podręcznej",
