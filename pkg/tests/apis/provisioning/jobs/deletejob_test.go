@@ -339,8 +339,8 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 			require.True(t, apierrors.IsNotFound(err), "should be not found error")
 		})
 
-		t.Run("delete non-existent resource by reference", func(t *testing.T) {
-			// Create delete job for non-existent resource
+		t.Run("delete non-existent resource by reference warns", func(t *testing.T) {
+			// Deleting a resource that doesn't exist should warn, not fail — idempotent delete.
 			spec := provisioning.JobSpec{
 				Action: provisioning.JobActionDelete,
 				Delete: &provisioning.DeleteJobOptions{
@@ -356,58 +356,51 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 
 			job := helper.TriggerJobAndWaitForComplete(t, repo, spec)
 			state := common.MustNestedString(job.Object, "status", "state")
-			assert.Equal(t, "error", state, "delete job should have failed due to non-existent file")
+			assert.Equal(t, string(provisioning.JobStateWarning), state, "delete job for non-existent resource should complete with warning, not error")
 		})
 	})
 
-	t.Run("delete non-existent file is rejected", func(t *testing.T) {
-		body := common.AsJSON(provisioning.JobSpec{
+	t.Run("delete non-existent file warns", func(t *testing.T) {
+		// Deleting a file that doesn't exist is idempotent — should warn, not fail.
+		spec := provisioning.JobSpec{
 			Action: provisioning.JobActionDelete,
 			Delete: &provisioning.DeleteJobOptions{
 				Paths: []string{"non-existent.json"},
 			},
-		})
+		}
 
-		result := helper.AdminREST.Post().
-			Namespace("default").
-			Resource("repositories").
-			Name(repo).
-			SubResource("jobs").
-			Body(body).
-			SetHeader("Content-Type", "application/json").
-			Do(ctx)
-
-		require.Error(t, result.Error(), "delete job for non-existent file should be rejected at creation")
+		job := helper.TriggerJobAndWaitForComplete(t, repo, spec)
+		state := common.MustNestedString(job.Object, "status", "state")
+		assert.Equal(t, string(provisioning.JobStateWarning), state, "delete job for non-existent file should complete with warning, not error")
 	})
 
-	t.Run("delete mixed existing and non-existent file is rejected", func(t *testing.T) {
+	t.Run("delete mixed existing and non-existent file: existing deleted, non-existent warns", func(t *testing.T) {
 		helper.CopyToProvisioningPath(t, "../testdata/all-panels.json", "test-delete-mixed.json")
 		helper.SyncAndWait(t, repo, nil)
 
-		body := common.AsJSON(provisioning.JobSpec{
+		spec := provisioning.JobSpec{
 			Action: provisioning.JobActionDelete,
 			Delete: &provisioning.DeleteJobOptions{
 				Paths: []string{
-					"test-delete-mixed.json", // This exists
-					"non-existent-file.json", // This doesn't exist
+					"test-delete-mixed.json", // exists — should be deleted
+					"non-existent-file.json", // does not exist — should warn
 				},
 			},
-		})
+		}
 
-		result := helper.AdminREST.Post().
-			Namespace("default").
-			Resource("repositories").
-			Name(repo).
-			SubResource("jobs").
-			Body(body).
-			SetHeader("Content-Type", "application/json").
-			Do(ctx)
+		job := helper.TriggerJobAndWaitForComplete(t, repo, spec)
+		state := common.MustNestedString(job.Object, "status", "state")
+		assert.Equal(t, string(provisioning.JobStateWarning), state, "job should complete with warning (non-existent file), not error")
 
-		require.Error(t, result.Error(), "delete job with any non-existent file should be rejected at creation")
+		// Existing file must have been deleted
+		_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "test-delete-mixed.json")
+		require.Error(t, err, "test-delete-mixed.json should have been deleted")
+		require.True(t, apierrors.IsNotFound(err))
 	})
 
-	t.Run("delete multiple non-existent files is rejected", func(t *testing.T) {
-		body := common.AsJSON(provisioning.JobSpec{
+	t.Run("delete multiple non-existent files warns", func(t *testing.T) {
+		// All paths missing — all warn, job completes with warning state.
+		spec := provisioning.JobSpec{
 			Action: provisioning.JobActionDelete,
 			Delete: &provisioning.DeleteJobOptions{
 				Paths: []string{
@@ -416,17 +409,10 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 					"does-not-exist-3.json",
 				},
 			},
-		})
+		}
 
-		result := helper.AdminREST.Post().
-			Namespace("default").
-			Resource("repositories").
-			Name(repo).
-			SubResource("jobs").
-			Body(body).
-			SetHeader("Content-Type", "application/json").
-			Do(ctx)
-
-		require.Error(t, result.Error(), "delete job for all non-existent files should be rejected at creation")
+		job := helper.TriggerJobAndWaitForComplete(t, repo, spec)
+		state := common.MustNestedString(job.Object, "status", "state")
+		assert.Equal(t, string(provisioning.JobStateWarning), state, "delete job for all non-existent files should complete with warning, not error")
 	})
 }
