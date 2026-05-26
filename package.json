@@ -77,7 +77,9 @@
     "plugin:i18n-extract": "nx run-many -t i18n-extract --projects='tag:scope:plugin'",
     "generate-apis": "yarn workspace @grafana/api-clients generate-apis",
     "generate:api-client": "yarn workspace @grafana/api-clients generate:api-client",
-    "generate:openapi": "yarn workspace @grafana/openapi generate:openapi"
+    "generate:openapi": "yarn workspace @grafana/openapi generate:openapi",
+    "knip": "knip",
+    "knip:fix": "knip --fix --allow-remove-files"
   },
   "grafana": {
     "whatsNewUrl": "https://grafana.com/docs/grafana/next/whatsnew/whats-new-in-v%[1]s-%[2]s/",
@@ -137,7 +139,7 @@
     "@types/lodash": "4.17.20",
     "@types/logfmt": "^1.2.3",
     "@types/lucene": "^2",
-    "@types/node": "24.10.1",
+    "@types/node": "^25.9.1",
     "@types/node-forge": "^1",
     "@types/ol-ext": "npm:@siedlerchr/types-ol-ext@3.3.0",
     "@types/pluralize": "^0.0.33",
@@ -221,6 +223,7 @@
     "jest-monocart-coverage": "^1.1.1",
     "jest-watch-typeahead": "^2.2.2",
     "jimp": "^1.6.0",
+    "knip": "^6.14.2",
     "known-css-properties": "^0.37.0",
     "lerna": "9.0.6",
     "madge": "^8.0.0",
@@ -254,7 +257,7 @@
     "ts-jest": "29.4.0",
     "ts-morph": "^28.0.0",
     "ts-node": "10.9.2",
-    "typescript": "6.0.2",
+    "typescript": "^6.0.3",
     "webpack": "^5.105.0",
     "webpack-assets-manifest": "^5.1.0",
     "webpack-cli": "6.0.1",
