@@ -1,0 +1,63 @@
+package dashboard
+
+import (
+	"bytes"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+)
+
+// fuzzNopLookup is a do-nothing DatasourceLookup. Returning nil from both
+// methods is safe for the parser: the few call sites that consume the
+// result check for nil. We don't need real datasource resolution to
+// exercise the JSON walker.
+type fuzzNopLookup struct{}
+
+func (fuzzNopLookup) ByRef(*DataSourceRef) *DataSourceRef { return nil }
+func (fuzzNopLookup) ByType(string) []DataSourceRef       { return nil }
+
+// FuzzReadDashboard fuzzes the streaming dashboard JSON walker. The walker
+// type-switches on every field and accepts several polymorphic shapes, so
+// the goal is to flush out panics, unbounded recursion, and divergence
+// bugs on adversarial input.
+//
+// Invariant: must not panic. Any error is acceptable.
+func FuzzReadDashboard(f *testing.F) {
+	seedDirs := []string{
+		"testdata",
+		"../../../../storage/unified/search/testdata",
+		"../../../../storage/unified/search/embed/dashboard/testdata",
+	}
+	for _, dir := range seedDirs {
+		entries, err := os.ReadDir(dir)
+		if err != nil {
+			continue
+		}
+		for _, e := range entries {
+			if e.IsDir() || filepath.Ext(e.Name()) != ".json" {
+				continue
+			}
+			// *-info.json files are golden outputs from existing tests,
+			// not parser inputs.
+			if strings.HasSuffix(e.Name(), "-info.json") {
+				continue
+			}
+			data, err := os.ReadFile(filepath.Join(dir, e.Name()))
+			if err != nil {
+				continue
+			}
+			f.Add(data)
+		}
+	}
+
+	f.Fuzz(func(t *testing.T, data []byte) {
+		// Cap input size. Real dashboards are well under a megabyte and an
+		// uncapped fuzzer happily spends time on multi-MB inputs that
+		// don't exercise new paths.
+		if len(data) > 1<<20 {
+			t.Skip()
+		}
+		_, _ = ReadDashboard(bytes.NewReader(data), fuzzNopLookup{})
+	})
+}
