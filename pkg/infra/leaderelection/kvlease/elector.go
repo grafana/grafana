@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/lease"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 // Elector implements leaderelection.Elector using the KV store lease
@@ -33,6 +34,7 @@ type Elector struct {
 	leaseDuration time.Duration
 	retryPeriod   time.Duration
 	logger        log.Logger
+	reg           prometheus.Registerer
 	managerOpts   []lease.ManagerOption
 }
 
@@ -53,6 +55,7 @@ func New(
 	kvStore kv.KV,
 	cfg leaderelection.Config,
 	logger log.Logger,
+	reg prometheus.Registerer,
 	opts ...Option,
 ) (*Elector, error) {
 	if kvStore == nil {
@@ -78,6 +81,7 @@ func New(
 		leaseDuration: cfg.LeaseDuration,
 		retryPeriod:   cfg.RetryPeriod,
 		logger:        logger,
+		reg:           reg,
 	}
 	for _, opt := range opts {
 		opt(e)
@@ -101,7 +105,7 @@ func (k *Elector) Run(ctx context.Context, fn func(ctx context.Context), opts ..
 		}),
 	}, opts)
 
-	mgr := lease.NewManager(k.kvStore, k.identity, nil, k.managerOpts...)
+	mgr := lease.NewManager(k.kvStore, k.identity, k.reg, k.managerOpts...)
 
 	for {
 		if err := ctx.Err(); err != nil {
