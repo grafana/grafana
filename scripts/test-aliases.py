@@ -11,23 +11,25 @@ Prerequisites:
   - A running docs server (start with `make docs` from the repo root, serves on localhost:3002)
 
 Usage:
+  # Run the following commands in terminal:
+
   # From the repo root
-  python test-aliases.py docs/sources/.../user.md
+  python3 scripts/test-aliases.py docs/sources/.../<FILENAME>.md
 
   # Full paths work from anywhere — docs/sources is auto-detected
-  python test-aliases.py /home/user/repos/grafana/docs/sources/.../api-legacy/
+  python3 scripts/test-aliases.py /home/user/repos/grafana/docs/sources/.../<FOLDERNAME>/
 
   # Multiple files
-  python test-aliases.py docs/sources/.../user.md docs/sources/.../admin.md
+  python3 scripts/test-aliases.py docs/sources/.../user.md docs/sources/.../<FILENAME>.md
 
   # All .md files in a directory (recursive)
-  python test-aliases.py docs/sources/.../api-legacy/
+  python3 scripts/test-aliases.py docs/sources/.../<FOLDERNAME>/
 
   # Custom server URL (default: http://localhost:3002)
-  python test-aliases.py --server http://localhost:3003 docs/sources/.../api-legacy/
+  python3 scripts/test-aliases.py --server http://localhost:3003 docs/sources/.../<FOLDERNAME>/
 
   # Explicit docs source root (overrides auto-detection)
-  python test-aliases.py --root /home/user/repos/grafana/docs/sources docs/sources/.../api-legacy/
+  python3 scripts/test-aliases.py --root /home/user/repos/grafana/docs/sources docs/sources/.../<FOLDERNAME>/
 """
 
 import argparse
