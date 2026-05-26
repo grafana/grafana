@@ -285,13 +285,12 @@ describe('SidebarCard', () => {
   describe('multi-select checkbox', () => {
     it('does not render the checkbox when multi-select mode is off', () => {
       renderSidebarCard({ id: 'A', multiSelectMode: false });
-      // aria-hidden wraps the checkbox, so query with { hidden: true }
-      expect(screen.queryByRole('checkbox', { hidden: true })).not.toBeInTheDocument();
+      expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
     });
 
     it('renders the checkbox when multi-select mode is on', () => {
       renderSidebarCard({ id: 'A', multiSelectMode: true });
-      expect(screen.getByRole('checkbox', { hidden: true })).toBeInTheDocument();
+      expect(screen.getByRole('checkbox')).toBeInTheDocument();
     });
 
     it('does not render the checkbox when onToggleMultiSelect is not provided', () => {
@@ -305,29 +304,29 @@ describe('SidebarCard', () => {
         { queries, uiStateOverrides: { multiSelectMode: true } }
       );
 
-      expect(screen.queryByRole('checkbox', { hidden: true })).not.toBeInTheDocument();
+      expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
     });
 
     it('reflects isMultiSelected in the checkbox checked state', () => {
       const { rerender } = renderSidebarCard({ id: 'A', multiSelectMode: true, isMultiSelected: false });
-      expect(screen.getByRole('checkbox', { hidden: true })).not.toBeChecked();
+      expect(screen.getByRole('checkbox')).not.toBeChecked();
 
       // Re-render with isMultiSelected=true via a fresh mount.
       rerender(<div />);
       renderSidebarCard({ id: 'A', multiSelectMode: true, isMultiSelected: true });
-      expect(screen.getByRole('checkbox', { hidden: true })).toBeChecked();
+      expect(screen.getByRole('checkbox')).toBeChecked();
     });
 
     it('does not check the checkbox just because isSelected is true', () => {
       // Active (single-select) state is independent of the bulk checkbox.
       renderSidebarCard({ id: 'A', multiSelectMode: true, isSelected: true, isMultiSelected: false });
-      expect(screen.getByRole('checkbox', { hidden: true })).not.toBeChecked();
+      expect(screen.getByRole('checkbox')).not.toBeChecked();
     });
 
     it('clicking the checkbox calls onToggleMultiSelect with { multi: true }', async () => {
       const { user, onToggleMultiSelect } = renderSidebarCard({ id: 'A', multiSelectMode: true });
 
-      await user.click(screen.getByRole('checkbox', { hidden: true }));
+      await user.click(screen.getByRole('checkbox'));
 
       expect(onToggleMultiSelect).toHaveBeenCalledWith({ multi: true });
     });
@@ -335,7 +334,7 @@ describe('SidebarCard', () => {
     it('Shift+clicking the checkbox calls onToggleMultiSelect with { range: true }', async () => {
       const { user, onSelect, onToggleMultiSelect } = renderSidebarCard({ id: 'A', multiSelectMode: true });
 
-      const checkbox = screen.getByRole('checkbox', { hidden: true });
+      const checkbox = screen.getByRole('checkbox');
       await user.keyboard('[ShiftLeft>]');
       await user.click(checkbox);
       await user.keyboard('[/ShiftLeft]');

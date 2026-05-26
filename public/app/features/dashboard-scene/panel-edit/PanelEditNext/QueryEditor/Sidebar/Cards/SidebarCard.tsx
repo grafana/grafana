@@ -46,7 +46,6 @@ export const SidebarCard = ({
   const [hasFocusWithin, setHasFocusWithin] = useState(false);
   const shiftRangeSelectRef = useRef(false);
   const { multiSelectMode } = useQueryEditorUIContext();
-  const showSelectionControls = multiSelectMode;
 
   const styles = useStyles2(getStyles, { isSelected, item });
 
@@ -64,14 +63,7 @@ export const SidebarCard = ({
     setHasFocusWithin(false);
   }, []);
 
-  const isBulkSelectCheckboxTarget = (target: EventTarget | null) => {
-    return target instanceof HTMLElement && Boolean(target.closest('[data-bulk-select-checkbox]'));
-  };
-
   const handleCardMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (isBulkSelectCheckboxTarget(e.target)) {
-      return;
-    }
     if (e.shiftKey) {
       e.preventDefault();
     }
@@ -82,10 +74,7 @@ export const SidebarCard = ({
     }
   };
 
-  const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (isBulkSelectCheckboxTarget(e.target)) {
-      return;
-    }
+  const handleCardClick = () => {
     onSelect();
   };
 
@@ -101,8 +90,6 @@ export const SidebarCard = ({
   };
 
   const handleBulkCheckboxMouseDownCapture = (e: React.MouseEvent<HTMLDivElement>) => {
-    // Capture phase: stop before the card mousedown handler blurs focus and cancels the click.
-    e.stopPropagation();
     if (e.shiftKey) {
       e.preventDefault();
       shiftRangeSelectRef.current = true;
@@ -136,60 +123,56 @@ export const SidebarCard = ({
 
   return (
     <div className={styles.wrapper}>
-      <div
-        className={styles.card}
-        onClick={handleCardClick}
-        onMouseDown={handleCardMouseDown}
-        onKeyDown={handleKeyDown}
-        onFocus={handleFocus}
-        onBlur={handleBlur}
-        role="button"
-        tabIndex={0}
-        data-query-sidebar-card={id}
-        aria-label={t('query-editor-next.sidebar.card-click', 'Select card {{id}}', { id })}
-        aria-pressed={isSelected}
-      >
-        <div className={styles.cardContent}>
-          {showSelectionControls && onToggleMultiSelect && (
-            <div
-              data-bulk-select-checkbox
-              className={styles.checkboxWrapper}
-              onMouseDownCapture={handleBulkCheckboxMouseDownCapture}
-            >
-              <Checkbox
-                className={styles.roundedCheckbox}
-                value={isMultiSelected}
-                onChange={handleCheckboxChange}
-                aria-label={t('query-editor-next.sidebar.card-multi-select', 'Include card {{id}} in bulk selection', {
-                  id,
-                })}
-              />
-            </div>
-          )}
-          {children}
-        </div>
-        {hasActions && (
-          <div>
-            <div className={styles.cardContentIcons}>
-              {item.isHidden && <Icon name="eye-slash" size="sm" />}
-              {!!item.error && <Icon name="exclamation-triangle" size="sm" color={theme.colors.error.text} />}
-            </div>
-            <div className={cx(styles.hoverActions, { [styles.hoverActionsVisible]: hasFocusWithin })}>
-              <Actions
-                handleResetFocus={handleResetFocus}
-                item={item}
-                onDelete={onDelete}
-                onDuplicate={onDuplicate}
-                onToggleHide={onToggleHide}
-                order={{
-                  delete: 1,
-                  duplicate: 0,
-                  hide: 2,
-                }}
-              />
-            </div>
+      <div className={styles.cardRow}>
+        {multiSelectMode && onToggleMultiSelect && (
+          <div className={styles.bulkCheckbox} onMouseDownCapture={handleBulkCheckboxMouseDownCapture}>
+            <Checkbox
+              className={styles.roundedCheckbox}
+              value={isMultiSelected}
+              onChange={handleCheckboxChange}
+              aria-label={t('query-editor-next.sidebar.card-multi-select', 'Include card {{id}} in bulk selection', {
+                id,
+              })}
+            />
           </div>
         )}
+        <div
+          className={styles.card}
+          onClick={handleCardClick}
+          onMouseDown={handleCardMouseDown}
+          onKeyDown={handleKeyDown}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+          role="button"
+          tabIndex={0}
+          data-query-sidebar-card={id}
+          aria-label={t('query-editor-next.sidebar.card-click', 'Select card {{id}}', { id })}
+          aria-pressed={isSelected}
+        >
+          <div className={styles.cardContent}>{children}</div>
+          {hasActions && !multiSelectMode && (
+            <div>
+              <div className={styles.cardContentIcons}>
+                {item.isHidden && <Icon name="eye-slash" size="sm" />}
+                {!!item.error && <Icon name="exclamation-triangle" size="sm" color={theme.colors.error.text} />}
+              </div>
+              <div className={cx(styles.hoverActions, { [styles.hoverActionsVisible]: hasFocusWithin })}>
+                <Actions
+                  handleResetFocus={handleResetFocus}
+                  item={item}
+                  onDelete={onDelete}
+                  onDuplicate={onDuplicate}
+                  onToggleHide={onToggleHide}
+                  order={{
+                    delete: 1,
+                    duplicate: 0,
+                    hide: 2,
+                  }}
+                />
+              </div>
+            </div>
+          )}
+        </div>
       </div>
       <AddCardButton variant={addVariant} afterId={id} />
     </div>
@@ -311,6 +294,8 @@ function getStyles(
       justifyContent: 'space-between',
 
       width: '100%',
+      flex: 1,
+      minWidth: 0,
       background: cardBackground,
       borderRadius: theme.shape.radius.default,
       cursor: 'pointer',
@@ -379,8 +364,14 @@ function getStyles(
       },
     }),
 
-    checkboxWrapper: css({
+    cardRow: css({
       display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(0.75),
+    }),
+    bulkCheckbox: css({
+      display: 'flex',
+      flexShrink: 0,
     }),
     roundedCheckbox: css({
       '& span': {
