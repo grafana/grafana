@@ -75,10 +75,8 @@ type TeamK8sService struct {
 
 var _ team.Service = (*TeamK8sService)(nil)
 
-// NewTeamK8sService requires the kubernetesUsersApi feature toggle to be
-// enabled — user enrichment goes through the k8s users resource. teamimpl
-// gates the redirect on both flags so this service is only reached when
-// users are available via k8s.
+// NewTeamK8sService relies on the k8s users resource for member enrichment;
+// teamimpl gates the redirect on kubernetesUsersApi.
 func NewTeamK8sService(logger log.Logger, cfg *setting.Cfg, configProvider apiserver.DirectRestConfigProvider, tracer tracing.Tracer) *TeamK8sService {
 	return &TeamK8sService{
 		logger:          logger,
@@ -113,7 +111,6 @@ func (s *TeamK8sService) getClient(ctx context.Context, namespace string) (dynam
 }
 
 // resolveUserUID maps a legacy user.id to user.uid via the k8s users resource.
-// Requires the kubernetesUsersApi feature toggle (gated by teamimpl).
 func (s *TeamK8sService) resolveUserUID(ctx context.Context, namespace string, userID int64) (string, error) {
 	client, err := s.getDynamicClient(ctx, namespace, userGVR)
 	if err != nil {
@@ -136,7 +133,6 @@ func (s *TeamK8sService) resolveUserUID(ctx context.Context, namespace string, u
 }
 
 // listUsersByUIDs returns users by UID via the k8s users resource.
-// Requires the kubernetesUsersApi feature toggle (gated by teamimpl).
 func (s *TeamK8sService) listUsersByUIDs(ctx context.Context, namespace string, uids []string) (map[string]*user.User, error) {
 	if len(uids) == 0 {
 		return nil, nil
@@ -184,7 +180,6 @@ func (s *TeamK8sService) listUsersByUIDs(ctx context.Context, namespace string, 
 }
 
 // getUserByUID returns a single user by UID via the k8s users resource.
-// Requires the kubernetesUsersApi feature toggle (gated by teamimpl).
 func (s *TeamK8sService) getUserByUID(ctx context.Context, namespace, userUID string) (*user.User, error) {
 	client, err := s.getDynamicClient(ctx, namespace, userGVR)
 	if err != nil {

@@ -194,9 +194,7 @@ func (s *Service) RegisterDelete(query string) {
 }
 
 // isK8sRedirectEnabled gates team operations on the k8s apiserver path.
-// FIXME: requiring kubernetesUsersApi here is a workaround for user-enrichment
-// lookups in teamk8s; refactor team/user services so the redirect works
-// without it.
+// FIXME: drop the UsersApi requirement once teamk8s no longer needs the k8s users resource for enrichment.
 func (s *Service) isK8sRedirectEnabled(ctx context.Context) bool {
 	if s.openFeatureClient == nil {
 		return false

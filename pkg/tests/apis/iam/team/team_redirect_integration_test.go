@@ -215,8 +215,7 @@ func setTeamK8sFeatureToggle(t *testing.T, enabled bool) {
 			DefaultVariant: "default",
 			Variants:       map[string]any{"default": enabled},
 		},
-		// teamimpl.isK8sRedirectEnabled requires UsersApi alongside TeamsRedirect
-		// because teamk8s enriches members via the k8s users resource.
+		// Gate also requires UsersApi for member enrichment.
 		featuremgmt.FlagKubernetesUsersApi: {
 			Key:            featuremgmt.FlagKubernetesUsersApi,
 			DefaultVariant: "default",
