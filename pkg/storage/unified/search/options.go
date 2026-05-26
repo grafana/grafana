@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Masterminds/semver"
+	"github.com/Masterminds/semver/v3"
 	"github.com/oklog/ulid/v2"
 	"gocloud.dev/blob"
 
