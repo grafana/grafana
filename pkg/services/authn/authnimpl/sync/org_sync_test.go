@@ -156,13 +156,13 @@ func TestOrgSync_SyncOrgRolesHook_SkipsWhenSingleOrgAndKubernetesUsersRedirect(t
 			name:                    "does not skip when only single-org is enabled",
 			singleOrg:               true,
 			kubernetesUsersRedirect: false,
-			expectSkip:               false,
+			expectSkip:              false,
 		},
 		{
 			name:                    "does not skip when only k8s users redirect is enabled",
 			singleOrg:               false,
 			kubernetesUsersRedirect: true,
-			expectSkip:               false,
+			expectSkip:              false,
 		},
 	}
 
