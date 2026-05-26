@@ -156,7 +156,7 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
     },
     ref
   ) => {
-    const sanitizedHref = href !== undefined ? textUtil.sanitizeUrl(href) : undefined;
+    const sanitizedHref = href ? textUtil.sanitizeUrl(href) : href;
 
     const theme = useTheme2();
     const styles = getButtonStyles({

@@ -118,4 +118,9 @@ describe('LinkButton', () => {
     setup(<LinkButton>No link</LinkButton>);
     expect(screen.getByText('No link').closest('a')).not.toHaveAttribute('href');
   });
+
+  it('passes through empty string href unchanged', () => {
+    setup(<LinkButton href="">Current page</LinkButton>);
+    expect(screen.getByText('Current page').closest('a')).toHaveAttribute('href', '');
+  });
 });
