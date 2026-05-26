@@ -18,6 +18,7 @@ const config: KnipConfig = {
     },
     'packages/**': {
       project: 'src/**',
+      entry: ['src/index.ts', 'src/unstable.ts', 'src/internal/index.ts'],
       ignoreDependencies: [
         // These are used by the base rollup config located outside of the packages
         '@rollup/plugin-node-resolve',
