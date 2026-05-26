@@ -1,5 +1,6 @@
 import { Icon } from '@grafana/ui';
 
+import { transformationToActionItem } from '../../../actionItem';
 import { PENDING_CARD_ID, QueryEditorType } from '../../../constants';
 import { useActionsContext, useQueryEditorUIContext, useQueryEditorTypeConfig } from '../../QueryEditorContext';
 import { type Transformation } from '../../types';
@@ -18,11 +19,7 @@ export const TransformationCard = ({ transformation }: { transformation: Transfo
   const isHidden = !!transformation.transformConfig.disabled;
   const transformationName = transformation.registryItem?.name || transformation.transformConfig.id;
 
-  const item = {
-    name: transformationName,
-    type: QueryEditorType.Transformation,
-    isHidden: !!transformation.transformConfig.disabled,
-  };
+  const item = transformationToActionItem(transformation);
 
   return (
     <>

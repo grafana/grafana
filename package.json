@@ -221,7 +221,6 @@
     "jest-monocart-coverage": "^1.1.1",
     "jest-watch-typeahead": "^2.2.2",
     "jimp": "^1.6.0",
-    "jsdom-testing-mocks": "^1.13.1",
     "known-css-properties": "^0.37.0",
     "lerna": "9.0.6",
     "madge": "^8.0.0",
@@ -282,10 +281,10 @@
     "@grafana/azure-sdk": "0.1.0",
     "@grafana/data": "workspace:*",
     "@grafana/e2e-selectors": "workspace:*",
-    "@grafana/faro-core": "^2.2.4",
-    "@grafana/faro-instrumentation-replay": "^2.2.4",
-    "@grafana/faro-web-sdk": "^2.2.4",
-    "@grafana/faro-web-tracing": "^2.2.4",
+    "@grafana/faro-core": "^2.7.0",
+    "@grafana/faro-instrumentation-replay": "^2.7.0",
+    "@grafana/faro-web-sdk": "^2.7.0",
+    "@grafana/faro-web-tracing": "^2.7.0",
     "@grafana/flamegraph": "workspace:*",
     "@grafana/google-sdk": "0.3.5",
     "@grafana/i18n": "workspace:*",
@@ -296,8 +295,8 @@
     "@grafana/plugin-ui": "^0.13.1",
     "@grafana/prometheus": "13.1.2",
     "@grafana/runtime": "workspace:*",
-    "@grafana/scenes": "^8.2.5",
-    "@grafana/scenes-react": "^8.2.5",
+    "@grafana/scenes": "^8.2.6",
+    "@grafana/scenes-react": "^8.2.6",
     "@grafana/schema": "workspace:*",
     "@grafana/sql": "workspace:*",
     "@grafana/ui": "workspace:*",
@@ -355,6 +354,7 @@
     "fast-json-patch": "3.1.1",
     "file-saver": "2.0.5",
     "history": "4.10.1",
+    "html-to-image": "1.11.13",
     "i18next": "^25.0.0",
     "i18next-browser-languagedetector": "^8.0.0",
     "i18next-pseudo": "^2.2.1",
@@ -439,7 +439,7 @@
     "tween-functions": "^1.2.0",
     "type-fest": "^4.18.2",
     "uplot": "1.6.32",
-    "uuid": "11.1.0",
+    "uuid": "14.0.0",
     "vis-data": "^8.0.0",
     "vis-network": "10.0.2",
     "whatwg-fetch": "3.6.20"
@@ -468,9 +468,10 @@
     "js-yaml@npm:=4.1.0": "^4.1.0",
     "nodemailer": "8.0.7",
     "storybook@npm:10.3.6": "patch:storybook@npm%3A10.3.6#~/.yarn/patches/storybook-npm-10.3.6-8a0644ac0b.patch",
-    "protobufjs@npm:8.0.0": "8.0.1",
     "@types/slate/immutable": "^4.0.0",
-    "@types/slate-react/immutable": "^4.0.0"
+    "@types/slate-react/immutable": "^4.0.0",
+    "ws": "^8.20.1",
+    "js-cookie": "^3.0.7"
   },
   "workspaces": {
     "packages": [
@@ -482,7 +483,7 @@
   "engines": {
     "node": ">= 22 <25"
   },
-  "packageManager": "yarn@4.11.0",
+  "packageManager": "yarn@4.15.0",
   "dependenciesMeta": {
     "msw": {
       "built": true

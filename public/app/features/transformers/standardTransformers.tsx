@@ -674,7 +674,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
         TransformerCategory.CalculateNewFields,
         TransformerCategory.Reformat,
       ]),
-      state: PluginState.beta,
+      state: config.featureToggles.groupToNestedTableV2 ? undefined : PluginState.beta,
       imageDark: groupToNestedTableDark,
       imageLight: groupToNestedTableLight,
     }),
