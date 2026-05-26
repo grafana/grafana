@@ -43,7 +43,7 @@ import {
 } from '../../../../features/apiserver/types';
 import { PAGE_SIZE } from '../../../../features/browse-dashboards/api/constants';
 import { refetchChildren, refreshParents } from '../../../../features/browse-dashboards/state/actions';
-import { GENERAL_FOLDER_UID } from '../../../../features/search/constants';
+import { isRootFolderUID } from '../../../../features/search/constants';
 import { deletedDashboardsCache } from '../../../../features/search/service/deletedDashboardsCache';
 import { useDispatch } from '../../../../types/store';
 
@@ -120,7 +120,10 @@ const combineFolderResponses = (
 };
 
 export async function getFolderByUidFacade(uid: string) {
-  const isVirtualFolder = uid && [GENERAL_FOLDER_UID, config.sharedWithMeFolderUID].includes(uid);
+  // Root-parented requests carry "" or "general" — serve the virtual root
+  // folder for either rather than fetching a folder resource that doesn't exist.
+  const isRoot = isRootFolderUID(uid);
+  const isVirtualFolder = uid && (isRoot || uid === config.sharedWithMeFolderUID);
   const shouldUseAppPlatformAPI = Boolean(config.featureToggles.foldersAppPlatformAPI);
 
   // We need the legacy API call regardless, for now
@@ -135,7 +138,7 @@ export async function getFolderByUidFacade(uid: string) {
   if (shouldUseAppPlatformAPI) {
     let virtualFolderResponse;
     if (isVirtualFolder) {
-      virtualFolderResponse = GENERAL_FOLDER_UID === uid ? rootFolder : sharedWithMeFolder;
+      virtualFolderResponse = isRoot ? rootFolder : sharedWithMeFolder;
     }
 
     const responses = await Promise.all([
@@ -191,7 +194,10 @@ export async function getFolderByUidFacade(uid: string) {
  */
 export function useGetFolderQueryFacade(uid?: string) {
   const shouldUseAppPlatformAPI = Boolean(config.featureToggles.foldersAppPlatformAPI);
-  const isVirtualFolder = uid && [GENERAL_FOLDER_UID, config.sharedWithMeFolderUID].includes(uid);
+  // "" / undefined and "general" both mean the synthetic root folder —
+  // neither is a real folder resource.
+  const isRoot = isRootFolderUID(uid);
+  const isVirtualFolder = uid && (isRoot || uid === config.sharedWithMeFolderUID);
   const params = !uid ? skipToken : { name: uid };
 
   // This may look weird that we call the legacy folder anyway all the time, but the issue is we don't have good API
@@ -234,8 +240,8 @@ export function useGetFolderQueryFacade(uid?: string) {
       isSuccess: true,
       isLoading: false,
       isFetching: false,
-      data: GENERAL_FOLDER_UID === uid ? rootFolder : sharedWithMeFolder,
-      currentData: GENERAL_FOLDER_UID === uid ? rootFolder : sharedWithMeFolder,
+      data: isRoot ? rootFolder : sharedWithMeFolder,
+      currentData: isRoot ? rootFolder : sharedWithMeFolder,
     };
   }
 
@@ -592,9 +598,8 @@ const appPlatformFolderToLegacyFolder = (
     id: parseInt(labels?.[DeprecatedInternalId] || '0', 10) || 0,
     uid: name,
     title,
-    // general folder does not come with url
-    // see https://github.com/grafana/grafana/blob/8a05378ef3ae5545c6f7429eae5c174d3c0edbfe/pkg/services/folder/folderimpl/folder_unifiedstorage.go#L88
-    url: name === GENERAL_FOLDER_UID ? '' : getFolderUrl(name, title),
+    // the root folder has no url — the backend leaves it blank
+    url: isRootFolderUID(name) ? '' : getFolderUrl(name, title),
     created: creationTimestamp || '0001-01-01T00:00:00Z',
     updated: annotations?.[AnnoKeyUpdatedTimestamp] || '0001-01-01T00:00:00Z',
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions

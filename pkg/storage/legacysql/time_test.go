@@ -17,7 +17,7 @@ func TestDBTime_ValueAndString_ZeroAndNonZero(t *testing.T) {
 		t.Fatalf("expected empty string for zero DBTime.String(), got %q", s)
 	}
 
-	tt := time.Date(2023, 10, 5, 13, 14, 15, 0, time.UTC)
+	tt := time.Date(2023, 10, 5, 13, 14, 15, 250_000_000, time.UTC)
 	dt := NewDBTime(tt)
 
 	val, err := dt.Value()
@@ -28,7 +28,7 @@ func TestDBTime_ValueAndString_ZeroAndNonZero(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected Value to be string, got %T", val)
 	}
-	expected := tt.Format(time.DateTime)
+	expected := tt.Format(dbTimeMillisLayout)
 	if strVal != expected {
 		t.Fatalf("Value() = %q, want %q", strVal, expected)
 	}
@@ -36,12 +36,28 @@ func TestDBTime_ValueAndString_ZeroAndNonZero(t *testing.T) {
 	if s := dt.String(); s != expected {
 		t.Fatalf("String() = %q, want %q", s, expected)
 	}
+
+	// On-second values must keep emitting the legacy second layout so the
+	// optimistic-concurrency check in legacy.UpdateTeam can text-match
+	// against rows still written by xorm at second precision.
+	tsOnSecond := time.Date(2023, 10, 5, 13, 14, 15, 0, time.UTC)
+	dtOnSecond := NewDBTime(tsOnSecond)
+	val, err = dtOnSecond.Value()
+	if err != nil {
+		t.Fatalf("unexpected error for on-second Value: %v", err)
+	}
+	if got, want := val.(string), tsOnSecond.Format(time.DateTime); got != want {
+		t.Fatalf("on-second Value() = %q, want legacy layout %q", got, want)
+	}
 }
 
 func TestDBTime_Scan_VariousInputs(t *testing.T) {
-	base := time.Date(2022, 12, 31, 23, 59, 59, 0, time.UTC)
-	layout := time.DateTime
-	formatted := base.Format(layout)
+	// Use a value with sub-second precision so the millisecond layout
+	// round-trips, then verify the legacy second-precision layout still
+	// scans for backwards compatibility with rows written by older builds.
+	base := time.Date(2022, 12, 31, 23, 59, 59, 123_000_000, time.UTC)
+	formatted := base.Format(dbTimeMillisLayout)
+	legacy := base.Truncate(time.Second).Format(time.DateTime)
 
 	tests := []struct {
 		name        string
@@ -51,8 +67,9 @@ func TestDBTime_Scan_VariousInputs(t *testing.T) {
 		expectError bool
 	}{
 		{"nil sets zero", nil, time.Time{}, true, false},
-		{"scan from string", formatted, base, false, false},
-		{"scan from []byte", []byte(formatted), base, false, false},
+		{"scan from millis string", formatted, base, false, false},
+		{"scan from millis []byte", []byte(formatted), base, false, false},
+		{"scan from legacy second string", legacy, base.Truncate(time.Second), false, false},
 		{"scan from time.Time", base, base, false, false},
 		{"invalid parse", "not-a-time", time.Time{}, true, true},
 		{"unsupported type", 12345, time.Time{}, true, true},

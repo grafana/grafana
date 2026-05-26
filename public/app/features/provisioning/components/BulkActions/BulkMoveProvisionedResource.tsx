@@ -18,7 +18,7 @@ import {
   getDefaultWorkflow,
 } from 'app/features/provisioning/components/defaults';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
-import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
+import { isRootFolderUID } from 'app/features/search/constants';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { type StepStatusInfo } from '../../Wizard/types';
@@ -188,7 +188,9 @@ function FormContent({
                     clearErrors('targetFolderUID');
                   }}
                   repositoryName={repository.name}
-                  excludeUIDs={[...Object.keys(selectedItems?.folder).map((uid) => uid)]}
+                  // selectedItems.folder contains false entries from deselect ancestor propagation
+                  // in setItemSelectionState reducer - filter to only truly-selected UIDs
+                  excludeUIDs={Object.keys(selectedItems?.folder ?? {}).filter((uid) => selectedItems.folder[uid])}
                 />
               </Field>
               <ResourceEditFormSharedFields
@@ -222,7 +224,7 @@ function FormContent({
 
 export function BulkMoveProvisionedResource({ folderUid, selectedItems, onDismiss }: BulkActionProvisionResourceProps) {
   // Check if we're on the root browser dashboards page
-  const isRootPage = !folderUid || folderUid === GENERAL_FOLDER_UID;
+  const isRootPage = isRootFolderUID(folderUid);
   const { selectedItemsRepoUID } = useSelectionRepoValidation(selectedItems);
 
   // Capture the repo UID so it survives selection state changes during/after job execution

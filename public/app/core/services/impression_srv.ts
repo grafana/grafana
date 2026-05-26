@@ -58,6 +58,9 @@ export class ImpressionSrv {
     return result;
   }
 
+  clearImpressions() {
+    store.set(this.impressionKey(), JSON.stringify([]));
+  }
   impressionKey() {
     return 'dashboard_impressions-' + contextSrv.user.orgId;
   }

@@ -24,6 +24,7 @@ const (
 	DashboardResource        = "dashboards.dashboard.grafana.app"
 	ShortURLResource         = "shorturls.shorturl.grafana.app"
 	StarsResource            = "stars.collections.grafana.app"
+	PreferencesResource      = "preferences.preferences.grafana.app"
 	DataSourceResources      = "datasources.datasource.grafana.app" // All datasources
 	QueryCacheConfigResource = "querycacheconfigs.querycaching.grafana.app"
 )
@@ -35,6 +36,7 @@ var MigratedUnifiedResources = map[string]bool{
 	DashboardResource:        true,  // Only Mode5!
 	ShortURLResource:         false, // Requires kubernetesShortURLs to be enabled by default
 	StarsResource:            false,
+	PreferencesResource:      false,
 	DataSourceResources:      false,
 	QueryCacheConfigResource: false,
 }
@@ -175,6 +177,8 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	}
 	cfg.EnableSearch = section.Key("enable_search").MustBool(true)
 	cfg.EnableVectorBackend = section.Key("vector_backend").MustBool(false)
+	cfg.VectorIndexingEnabled = section.Key("vector_indexing_enabled").MustBool(false)
+	cfg.VectorReconcilerInterval = section.Key("vector_reconciler_interval").MustDuration(time.Minute)
 	cfg.applyMigrationEnforcements()
 	cfg.EnableSearchClient = section.Key("enable_search_client").MustBool(false)
 	cfg.MaxPageSizeBytes = section.Key("max_page_size_bytes").MustInt(0)
@@ -192,6 +196,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.MemberlistClusterLabel = section.Key("memberlist_cluster_label").String()
 	cfg.MemberlistClusterLabelVerificationDisabled = section.Key("memberlist_cluster_label_verification_disabled").MustBool(false)
 	cfg.SearchRingReplicationFactor = section.Key("search_ring_replication_factor").MustInt(1)
+	cfg.SearchRingExtendReplicaSet = section.Key("search_ring_extend_replica_set").MustBool(true)
 	cfg.InstanceID = section.Key("instance_id").String()
 	cfg.IndexFileThreshold = section.Key("index_file_threshold").MustInt(10)
 	cfg.IndexMinCount = section.Key("index_min_count").MustInt(1)
@@ -276,8 +281,15 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.VectorDBUser = vectorSection.Key("db_user").String()
 	cfg.VectorDBPassword = vectorSection.Key("db_password").String()
 	cfg.VectorDBSSLMode = vectorSection.Key("db_sslmode").MustString("disable")
-	cfg.VectorPromotionThreshold = vectorSection.Key("promotion_threshold").MustInt(9999999) // effectively disabled by default
-	cfg.VectorPromoterInterval = vectorSection.Key("promoter_interval").MustDuration(1 * time.Hour)
+	cfg.VectorPromotionThreshold = vectorSection.Key("promotion_threshold").MustInt(10000)
+	cfg.VectorPromoterInterval = vectorSection.Key("promoter_interval").MustDuration(0) // zero means disabled
+
+	// Per-tenant query-embedding cache + rate limit.
+	cfg.VectorQueryCacheEnabled = vectorSection.Key("query_cache_enabled").MustBool(true)
+	cfg.VectorQueryCacheMaxPerTenant = vectorSection.Key("query_cache_max_per_tenant").MustInt(1000)
+	cfg.VectorRateLimitEnabled = vectorSection.Key("rate_limit_enabled").MustBool(true)
+	cfg.VectorRateLimitPerTenant = vectorSection.Key("rate_limit_per_tenant").MustInt(60)
+	cfg.VectorRateLimitWindow = vectorSection.Key("rate_limit_window").MustDuration(time.Minute)
 
 	// Embedding provider for the VectorSearch RPC. Empty = disabled (RPC
 	// returns Unimplemented). When set, the matching provider's connection
@@ -288,9 +300,11 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.VertexLocation = embedSection.Key("vertex_location").MustString("us-central1")
 	cfg.VertexModel = embedSection.Key("vertex_model").MustString("gemini-embedding-001")
 	cfg.VertexDimensions = embedSection.Key("vertex_dimensions").MustInt(768)
+	cfg.VertexBatchSize = embedSection.Key("vertex_batch_size").MustInt(50)
 	cfg.BedrockRegion = embedSection.Key("bedrock_region").MustString("us-east-1")
 	cfg.BedrockModel = embedSection.Key("bedrock_model").MustString("cohere.embed-v4:0")
 	cfg.BedrockDimensions = embedSection.Key("bedrock_dimensions").MustInt(1024)
+	cfg.BedrockBatchSize = embedSection.Key("bedrock_batch_size").MustInt(50)
 }
 
 // applyMigrationEnforcements enforces unified storage migration configs when migrations should run,
