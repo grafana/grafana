@@ -2357,7 +2357,6 @@ __metadata:
     "@types/react-dom": "npm:18.3.5"
     "@types/tinycolor2": "npm:^1"
     fishery: "npm:^2.3.1"
-    i18next: "npm:^25.5.2"
     i18next-cli: "npm:^1.48.0"
     lodash: "npm:^4.17.21"
     react: "npm:18.3.1"
@@ -2624,7 +2623,6 @@ __metadata:
     "@types/node": "npm:24.10.1"
     "@types/react": "npm:18.3.18"
     "@types/react-table": "npm:^7.7.20"
-    "@types/react-virtualized-auto-sizer": "npm:1.0.8"
     "@types/tinycolor2": "npm:1.4.6"
     d3-scale: "npm:^4.0.2"
     esbuild: "npm:0.25.8"
@@ -2640,9 +2638,6 @@ __metadata:
     rollup-plugin-node-externals: "npm:^8.0.0"
     storybook: "npm:10.3.6"
     tinycolor2: "npm:1.6.0"
-    ts-jest: "npm:29.4.0"
-    ts-node: "npm:10.9.2"
-    tslib: "npm:2.8.1"
     typescript: "npm:6.0.2"
   peerDependencies:
     "@grafana/assistant": ^0.1.1
@@ -20053,7 +20048,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"i18next@npm:^25.0.0, i18next@npm:^25.5.2":
+"i18next@npm:^25.0.0":
   version: 25.6.2
   resolution: "i18next@npm:25.6.2"
   dependencies:
