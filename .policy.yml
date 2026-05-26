@@ -151,6 +151,7 @@ approval_rules:
           conclusions:
             - skipped
             - success
+            - failure
           workflows:
             - .github/workflows/check-frontend-test-coverage.yml
   - name: Workflow .github/workflows/codeowners-validator.yml succeeded or skipped
