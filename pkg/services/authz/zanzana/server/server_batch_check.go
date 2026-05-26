@@ -98,7 +98,7 @@ func (s *Server) batchCheck(ctx context.Context, r *authzv1.BatchCheckRequest, n
 		return nil, fmt.Errorf("failed to get openfga store: %w", err)
 	}
 
-	contextuals, err := s.getContextuals(ctx, r.GetSubject(), r.GetTeams())
+	contextuals, err := s.getContextuals(r.GetSubject(), r.GetTeams())
 	if err != nil {
 		return nil, fmt.Errorf("failed to get contextual tuples: %w", err)
 	}
@@ -775,6 +775,10 @@ func (s *Server) doBatchCheck(
 		return nil, nil
 	}
 
+	// Shallow-copy each item so that setBatchCheckItemsContextualTuples does not
+	// mutate the caller's slice when it sets ContextualTuples.
+	checks = copyBatchCheckItems(checks)
+
 	chunks := contextualTupleChunks(contextuals)
 	if len(chunks) == 0 {
 		setBatchCheckItemsContextualTuples(checks, nil)
@@ -801,6 +805,19 @@ func (s *Server) doBatchCheck(
 		}
 	}
 	return merged, nil
+}
+
+func copyBatchCheckItems(checks []*openfgav1.BatchCheckItem) []*openfgav1.BatchCheckItem {
+	copied := make([]*openfgav1.BatchCheckItem, len(checks))
+	for i, c := range checks {
+		if c == nil {
+			copied[i] = nil
+			continue
+		}
+		item := *c
+		copied[i] = &item
+	}
+	return copied
 }
 
 func setBatchCheckItemsContextualTuples(checks []*openfgav1.BatchCheckItem, contextuals *openfgav1.ContextualTupleKeys) {

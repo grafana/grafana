@@ -253,7 +253,7 @@ func (s *Server) Close() {
 }
 
 // getContextuals returns contextual tuples for the request subject.
-func (s *Server) getContextuals(ctx context.Context, subject string, teams []string) (*openfgav1.ContextualTupleKeys, error) {
+func (s *Server) getContextuals(subject string, teams []string) (*openfgav1.ContextualTupleKeys, error) {
 	var keys []*openfgav1.TupleKey
 	if strings.HasPrefix(subject, common.TypeRenderService+":") {
 		keys = append(

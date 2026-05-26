@@ -17,7 +17,7 @@ func TestGetContextuals(t *testing.T) {
 	srv := &Server{}
 
 	t.Run("render service gets dashboard and folder contextual base tuples", func(t *testing.T) {
-		contextuals, err := srv.getContextuals(t.Context(), "render:0", nil)
+		contextuals, err := srv.getContextuals("render:0", nil)
 		require.NoError(t, err)
 		require.NotNil(t, contextuals)
 		require.Len(t, contextuals.TupleKeys, 3)
@@ -48,13 +48,13 @@ func TestGetContextuals(t *testing.T) {
 	})
 
 	t.Run("non-render subject without groups returns no tuples", func(t *testing.T) {
-		contextuals, err := srv.getContextuals(t.Context(), "user:123", nil)
+		contextuals, err := srv.getContextuals("user:123", nil)
 		require.NoError(t, err)
 		assert.Nil(t, contextuals)
 	})
 
 	t.Run("request teams add team member tuples", func(t *testing.T) {
-		contextuals, err := srv.getContextuals(t.Context(), "user:1", []string{"aa", "bb"})
+		contextuals, err := srv.getContextuals("user:1", []string{"aa", "bb"})
 		require.NoError(t, err)
 		require.NotNil(t, contextuals)
 		require.Len(t, contextuals.TupleKeys, 2)
@@ -71,7 +71,7 @@ func TestGetContextuals(t *testing.T) {
 			groups[i] = fmt.Sprintf("team-%04d", i)
 		}
 
-		contextuals, err := srv.getContextuals(t.Context(), "user:1", groups)
+		contextuals, err := srv.getContextuals("user:1", groups)
 		require.NoError(t, err)
 		require.NotNil(t, contextuals)
 		require.Len(t, contextuals.TupleKeys, len(groups))
