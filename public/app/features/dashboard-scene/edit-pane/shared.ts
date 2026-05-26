@@ -31,7 +31,7 @@ import { type DashboardEditPane } from './DashboardEditPane';
 import { MultiSelectedObjectsEditableElement } from './MultiSelectedObjectsEditableElement';
 import { VizPanelEditableElement } from './VizPanelEditableElement';
 import { DashboardEditableElement } from './dashboard/DashboardEditableElement';
-import { DashboardEditActionEvent, type DashboardEditActionEventPayload } from './events';
+import { DashboardEditActionEvent, type DashboardEditActionEventPayload, type SerializableInverse } from './events';
 
 export const EDIT_PANE_COLLAPSED_KEY = 'grafana.dashboards.edit-pane.isCollapsed';
 
@@ -148,6 +148,7 @@ export interface AddElementActionHelperProps {
   source: SceneObject;
   perform: () => void;
   undo: () => void;
+  inverse?: SerializableInverse;
 }
 
 export interface RemoveElementActionHelperProps {
@@ -203,7 +204,7 @@ export const dashboardEditActions = {
    * Helper for makeEdit that adds elements
    */
   addElement(props: AddElementActionHelperProps) {
-    const { addedObject, source, perform, undo } = props;
+    const { addedObject, source, perform, undo, inverse } = props;
 
     const element = getEditableElementFor(addedObject);
     if (!element) {
@@ -218,6 +219,7 @@ export const dashboardEditActions = {
       source,
       perform,
       undo,
+      inverse,
     });
   },
 
@@ -260,6 +262,10 @@ export const dashboardEditActions = {
       },
       undo() {
         source.setState({ variables: [...varsBeforeAddition] });
+      },
+      inverse: {
+        type: 'REMOVE_VARIABLE',
+        payload: { name: addedObject.state.name },
       },
     });
   },
