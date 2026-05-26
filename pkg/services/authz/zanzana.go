@@ -122,7 +122,7 @@ func ProvideEmbeddedZanzanaServer(cfg *setting.Cfg, db db.DB, tracer tracing.Tra
 // The CLI Wire graph binds Elector directly to NewDefaultElector, so this
 // provider — and therefore sql.ProvideKV — is never invoked from grafana-cli;
 // that keeps Badger/SQL out of the CLI startup path.
-func ProvideEmbeddedZanzanaElector(cfg *setting.Cfg, features featuremgmt.FeatureToggles, kvStore kv.KV) (leaderelection.Elector, error) {
+func ProvideEmbeddedZanzanaElector(cfg *setting.Cfg, features featuremgmt.FeatureToggles, kvStore kv.KV, reg prometheus.Registerer) (leaderelection.Elector, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !features.IsEnabledGlobally(featuremgmt.FlagZanzana) ||
 		cfg.ZanzanaReconciler.Mode != setting.ZanzanaReconcilerModeMT ||
@@ -134,7 +134,7 @@ func ProvideEmbeddedZanzanaElector(cfg *setting.Cfg, features featuremgmt.Featur
 		return nil, fmt.Errorf("KV lease leader election requires unified storage KV backend")
 	}
 
-	le, err := kvlease.New(kvStore, cfg.ZanzanaReconciler.LeaderElection, log.New("zanzana.mt-reconciler"))
+	le, err := kvlease.New(kvStore, cfg.ZanzanaReconciler.LeaderElection, log.New("zanzana.mt-reconciler"), reg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create KV lease elector: %w", err)
 	}

@@ -44,7 +44,7 @@ func TestKVLeaseElector_AcquireLeadership(t *testing.T) {
 	kvp := newTestKV(t)
 	cfg := testElectionConfig()
 
-	elector, err := New(kvp, cfg, log.NewNopLogger(), testElectorOpts()...)
+	elector, err := New(kvp, cfg, log.NewNopLogger(), nil, testElectorOpts()...)
 	require.NoError(t, err)
 
 	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
@@ -69,7 +69,7 @@ func TestKVLeaseElector_GracefulRelease(t *testing.T) {
 	kvp := newTestKV(t)
 	cfg := testElectionConfig()
 
-	elector, err := New(kvp, cfg, log.NewNopLogger(), testElectorOpts()...)
+	elector, err := New(kvp, cfg, log.NewNopLogger(), nil, testElectorOpts()...)
 	require.NoError(t, err)
 
 	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
@@ -104,7 +104,7 @@ func TestKVLeaseElector_LeadershipHandoff(t *testing.T) {
 		Identity:      "holder-1",
 		LeaseDuration: cfg.LeaseDuration,
 		RetryPeriod:   cfg.RetryPeriod,
-	}, log.NewNopLogger(), testElectorOpts()...)
+	}, log.NewNopLogger(), nil, testElectorOpts()...)
 	require.NoError(t, err)
 
 	elector2, err := New(kvp, leaderelection.Config{
@@ -112,7 +112,7 @@ func TestKVLeaseElector_LeadershipHandoff(t *testing.T) {
 		Identity:      "holder-2",
 		LeaseDuration: cfg.LeaseDuration,
 		RetryPeriod:   cfg.RetryPeriod,
-	}, log.NewNopLogger(), testElectorOpts()...)
+	}, log.NewNopLogger(), nil, testElectorOpts()...)
 	require.NoError(t, err)
 
 	ctx1, cancel1 := context.WithCancel(t.Context())
@@ -159,7 +159,7 @@ func TestKVLeaseElector_IdentityAutoGeneration(t *testing.T) {
 		Identity:      "",
 		LeaseDuration: time.Second,
 		RetryPeriod:   200 * time.Millisecond,
-	}, log.NewNopLogger())
+	}, log.NewNopLogger(), nil)
 	require.NoError(t, err)
 	require.NotEmpty(t, elector.identity)
 	require.Contains(t, elector.identity, ":")
@@ -170,13 +170,13 @@ func TestKVLeaseElector_MissingLeaseName(t *testing.T) {
 
 	_, err := New(kvp, leaderelection.Config{
 		LeaseName: "",
-	}, log.NewNopLogger())
+	}, log.NewNopLogger(), nil)
 	require.Error(t, err)
 	require.ErrorContains(t, err, "leader_election_lease_name")
 }
 
 func TestKVLeaseElector_NilKVRejected(t *testing.T) {
-	_, err := New(nil, testElectionConfig(), log.NewNopLogger())
+	_, err := New(nil, testElectionConfig(), log.NewNopLogger(), nil)
 	require.Error(t, err)
 }
 
