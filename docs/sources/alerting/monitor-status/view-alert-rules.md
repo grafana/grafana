@@ -77,7 +77,7 @@ On the Alert rule's Versions page you can view, compare and restore the previous
   When any alert rule in an evaluation group changes, the version number increases for all alert rules in that group. However, the version history table only displays a new entry when the alert rule itself had meaningful changes.
 
 - In Grafana OSS and Enterprise, the number of alert rule versions can be limited using the [`rule_version_record_limit` option](/docs/grafana/latest/setup-grafana/configure-grafana/#rule_version_record_limit). In Grafana Cloud, free users are allowed a maximum of 10 alert rule versions, while paid users have a maximum of 100 stored alert rule versions.
-{{< /admonition >}}
+  {{< /admonition >}}
 
 ## Bulk pause or resume alert rules evaluations within a folder
 
