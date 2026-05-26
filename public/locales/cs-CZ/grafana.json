@@ -446,7 +446,14 @@
       "label-value": "Hodnota"
     },
     "alert-instance-extension-point": {
-      "aria-label-actions": "Akce"
+      "n-contact-points_one": "",
+      "n-contact-points_few": "",
+      "n-contact-points_many": "",
+      "n-contact-points_other": "",
+      "view-route_one": "",
+      "view-route_few": "",
+      "view-route_many": "",
+      "view-route_other": ""
     },
     "alert-instance-modal-selector": {
       "add-alert-data-to-payload": "Přidat data výstrah k datovému obsahu",
@@ -462,6 +469,7 @@
     },
     "alert-instances-table": {
       "created": "Vytvořeno",
+      "destination": "",
       "labels": "Štítky",
       "state": "Stav"
     },
@@ -2367,6 +2375,7 @@
     },
     "notification-route": {
       "no-labels": "Žádné štítky",
+      "notification-policies": "",
       "notification-policy": "Zásada oznamování"
     },
     "notification-route-header": {
@@ -4434,7 +4443,6 @@
       "button-cancel": "Zrušit",
       "button-delete": "Odstranit",
       "button-deleting": "Probíhá odstraňování…",
-      "commit": "Odstranit složku",
       "delete-warning": "Tímto odstraníte tuto složku a všechny následné složky. Celkově to ovlivní:",
       "missing-info": "Chybějící povinná pole",
       "success-message": "Složka byla úspěšně odstraněna"
@@ -4548,7 +4556,6 @@
       "button-cancel": "Zrušit",
       "button-rename": "Přejmenovat",
       "button-renaming": "Přejmenovávání…",
-      "commit": "Přejmenovat složku",
       "error-saving": "Přejmenování složky se nezdařilo",
       "label-folder-name": "Název složky",
       "missing-info": "Chybějící povinná pole",
@@ -6445,6 +6452,8 @@
         "ungroup-tabs": "Zrušit seskupení karet"
       },
       "name": "Karty",
+      "scroll-tabs-left": "",
+      "scroll-tabs-right": "",
       "tab": {
         "new": "Nová karta",
         "repeat": {
@@ -6542,6 +6551,10 @@
         },
         "save-dashboard-short": "Uložit",
         "save-library-panel": "Uložit panel knihovny",
+        "save-template": {
+          "label": "",
+          "tooltip": ""
+        },
         "share": {
           "arrow": "Sdílet",
           "tooltip": "Kopírovat odkaz"
@@ -6555,6 +6568,9 @@
       "read-only": "Jen pro čtení",
       "refresh": "Obnovit nástěnku",
       "save": "Uložit nástěnku",
+      "save-as-template": {
+        "label": ""
+      },
       "save-dashboard": {
         "label": "Uložit nástěnku",
         "tooltip": "Uložit změny"
@@ -7607,7 +7623,9 @@
         "label-details": "Podrobnosti",
         "title": "Uložit nástěnku",
         "title-copy": "Uložit kopii nástěnky",
-        "title-provisioned": "Zajištěná nástěnka"
+        "title-provisioned": "Zajištěná nástěnka",
+        "title-template": "",
+        "title-update-template": ""
       }
     },
     "save-dashboard-form": {
@@ -7686,6 +7704,10 @@
     },
     "section-filters-list": {
       "add-filter": ""
+    },
+    "section-placement": {
+      "top-row": "",
+      "top-tab": ""
     },
     "selection-options-form": {
       "description-enables-multiple-values-selected": "Umožňuje vybrat více hodnot současně",
@@ -7826,9 +7848,6 @@
     "variable-display-select": {
       "label": "Zobrazit",
       "options": {
-        "above-dashboard": {
-          "label": "Nad nástěnkou"
-        },
         "controls-menu": {
           "description": "Viditelné, když je otevřena nabídka ovládacích prvků",
           "label": "Nabídka ovládacích prvků"
@@ -7837,9 +7856,9 @@
           "description": "Viditelné pouze v režimu úprav",
           "label": "Skryté"
         },
-        "hidden-label": {
-          "description": "Nad nástěnkou, ale bez zobrazení názvu proměnné",
-          "label": "Nad nástěnkou, štítek skrytý"
+        "top-placement-hidden-label": {
+          "description": "",
+          "label": ""
         }
       }
     },
@@ -7924,10 +7943,9 @@
           "reorder-variables-list": "Změnit pořadí seznamu proměnných"
         }
       },
-      "title-above-dashboard_one": "Nad nástěnkou ({{count}})",
-      "title-above-dashboard_few": "Nad nástěnkou ({{count}})",
-      "title-above-dashboard_many": "Nad nástěnkou ({{count}})",
-      "title-above-dashboard_other": "Nad nástěnkou ({{count}})",
+      "top-placement": {
+        "default": ""
+      },
       "title-controls-menu_one": "Nabídka ovládacích prvků ({{count}})",
       "title-controls-menu_few": "Nabídka ovládacích prvků ({{count}})",
       "title-controls-menu_many": "Nabídka ovládacích prvků ({{count}})",
@@ -7935,7 +7953,11 @@
       "title-hidden_one": "Skryté ({{count}})",
       "title-hidden_few": "Skryté ({{count}})",
       "title-hidden_many": "Skryté ({{count}})",
-      "title-hidden_other": "Skryté ({{count}})"
+      "title-hidden_other": "Skryté ({{count}})",
+      "title-top-placement_one": "",
+      "title-top-placement_few": "",
+      "title-top-placement_many": "",
+      "title-top-placement_other": ""
     },
     "version-history": {
       "comparison": {
@@ -10863,7 +10885,7 @@
     "name-unit": "Jednotka",
     "name-value-name": "Název hodnoty",
     "name-y-axis-scale": "Měřítko osy Y",
-    "name-y-bucket-scale": "Měřítko segmentu Y",
+    "name-y-bucket-scale": "",
     "placeholder-axis-label": "Auto",
     "placeholder-axis-width": "Auto",
     "placeholder-decimals": "Auto",
@@ -10978,6 +11000,12 @@
     "name-stacking": "Stackování"
   },
   "home": {
+    "dashboard-tabs": {
+      "recent": "",
+      "recent-active": "",
+      "starred": "",
+      "starred-active": ""
+    },
     "home-page": {
       "edition": {
         "cloud": "",
@@ -10990,6 +11018,23 @@
         "morning": ""
       },
       "placeholder": ""
+    },
+    "recent-dashboards-tab": {
+      "browse": "",
+      "clear": "",
+      "create": "",
+      "empty": "",
+      "empty-description": "",
+      "error-title": "",
+      "loading": "",
+      "retry": ""
+    },
+    "starred-dashboards-tab": {
+      "empty": "",
+      "empty-description": "",
+      "error-title": "",
+      "loading": "",
+      "retry": ""
     }
   },
   "inspector": {
@@ -12102,6 +12147,9 @@
       "subtitle": "Spravujte nastavení na celém serveru a přístup ke zdrojům, jako jsou organizace, uživatelé a licence",
       "title": "Správce serveru"
     },
+    "agentic-testing": {
+      "title": ""
+    },
     "alert-list-legacy": {
       "title": "Pravidla výstrah"
     },
@@ -12703,6 +12751,9 @@
       "required": "",
       "save-tooltip": ""
     }
+  },
+  "page-loader": {
+    "default": ""
   },
   "panel": {
     "dashlist": {
@@ -13377,11 +13428,24 @@
     "code-block": {
       "aria-label-copy": "Zkopírovat kód do schránky"
     },
+    "commit-message": {
+      "dashboard-create-default": "",
+      "dashboard-delete-default": "",
+      "dashboard-move-default": "",
+      "dashboard-rename-default": "",
+      "dashboard-update-default": "",
+      "folder-create-default": "",
+      "folder-delete-default": "",
+      "folder-move-default": "",
+      "folder-rename-default": "",
+      "folder-update-default": ""
+    },
     "config-form": {
       "alert-repository-settings-saved": "Nastavení úložiště bylo uloženo",
       "alert-repository-settings-updated": "Nastavení úložiště bylo aktualizováno",
       "button-save": "Uložit",
       "button-saving": "Ukládání…",
+      "description-commit-message-template": "",
       "description-connection": "Vyberte připojení aplikace GitHub, které chcete použít",
       "description-enabled": "Jakmile je povoleno automatické tažení, cíl nelze změnit.",
       "description-read-only": "Zdroje nelze upravovat přes Grafanu.",
@@ -13392,6 +13456,7 @@
       "error-save-failed": "Nastavení úložiště se nepodařilo uložit",
       "error-save-repository": "Nastavení úložiště se nepodařilo uložit",
       "label-automatic-pulling": "Automatické vyžádání",
+      "label-commit-message-template": "",
       "label-connection": "Připojení aplikace GitHub",
       "label-enabled": "Povoleno",
       "label-interval-seconds": "Interval (sekundy)",
@@ -13400,6 +13465,7 @@
       "label-title": "Název",
       "option-entire-instance": "Celá instance",
       "option-managed-folder": "Spravovaná složka",
+      "placeholder-commit-message-template": "",
       "placeholder-interval-seconds": "60",
       "placeholder-my-config": "Moje konfigurace"
     },
@@ -14316,6 +14382,10 @@
   "query-editor-next": {
     "action": {
       "add-transformation-filter": "Přidat filtr",
+      "cancel-delete": "",
+      "confirm-delete": "",
+      "confirm-delete-confirm": "",
+      "delete-confirmation-group": "",
       "disable": "Zakázat {{type}}",
       "duplicate": "Duplikovat {{type}}",
       "enable": "Povolit {{type}}",
@@ -14361,10 +14431,7 @@
       "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
-      "body-query": "Opravdu chcete odstranit tento dotaz?",
-      "body-transformation": "Odstranění jedné transformace může narušit ostatní transformace.",
-      "confirm": "Odstranit",
-      "title": "Odstranit {{name}}?"
+      "body-transformation": "Odstranění jedné transformace může narušit ostatní transformace."
     },
     "details-sidebar": {
       "cache-timeout": "Platnost vyrovnávací paměti vypršela",

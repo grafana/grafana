@@ -446,7 +446,14 @@
       "label-value": "Значение"
     },
     "alert-instance-extension-point": {
-      "aria-label-actions": "Действия"
+      "n-contact-points_one": "",
+      "n-contact-points_few": "",
+      "n-contact-points_many": "",
+      "n-contact-points_other": "",
+      "view-route_one": "",
+      "view-route_few": "",
+      "view-route_many": "",
+      "view-route_other": ""
     },
     "alert-instance-modal-selector": {
       "add-alert-data-to-payload": "Добавить данные оповещения в полезные данные",
@@ -462,6 +469,7 @@
     },
     "alert-instances-table": {
       "created": "Создана",
+      "destination": "",
       "labels": "Метки",
       "state": "Состояние"
     },
@@ -2367,6 +2375,7 @@
     },
     "notification-route": {
       "no-labels": "Нет меток",
+      "notification-policies": "",
       "notification-policy": "Политика уведомлений"
     },
     "notification-route-header": {
@@ -4434,7 +4443,6 @@
       "button-cancel": "Отмена",
       "button-delete": "Удалить",
       "button-deleting": "Удаление...",
-      "commit": "Удалить папку",
       "delete-warning": "Эта папка и все дочерние папки будут удалены. Действие окажет влияние на следующие элементы:",
       "missing-info": "Отсутствуют обязательные поля",
       "success-message": "Папка удалена"
@@ -4548,7 +4556,6 @@
       "button-cancel": "Отмена",
       "button-rename": "Переименовать",
       "button-renaming": "Переименование...",
-      "commit": "Переименовать папку",
       "error-saving": "Не удалось переименовать папку",
       "label-folder-name": "Имя папки",
       "missing-info": "Отсутствуют обязательные поля",
@@ -6445,6 +6452,8 @@
         "ungroup-tabs": "Разгруппировать вкладки"
       },
       "name": "Вкладки",
+      "scroll-tabs-left": "",
+      "scroll-tabs-right": "",
       "tab": {
         "new": "Новая вкладка",
         "repeat": {
@@ -6542,6 +6551,10 @@
         },
         "save-dashboard-short": "Сохранить",
         "save-library-panel": "Сохранить панель библиотеки",
+        "save-template": {
+          "label": "",
+          "tooltip": ""
+        },
         "share": {
           "arrow": "Общий доступ",
           "tooltip": "Копировать ссылку"
@@ -6555,6 +6568,9 @@
       "read-only": "Только для чтения",
       "refresh": "Обновить дашборд",
       "save": "Сохранить дашборд",
+      "save-as-template": {
+        "label": ""
+      },
       "save-dashboard": {
         "label": "Сохранить дашборд",
         "tooltip": "Сохранить изменения"
@@ -7607,7 +7623,9 @@
         "label-details": "Подробности",
         "title": "Сохранить дашборд",
         "title-copy": "Сохранить копию дашборда",
-        "title-provisioned": "Подготовленный дашборд"
+        "title-provisioned": "Подготовленный дашборд",
+        "title-template": "",
+        "title-update-template": ""
       }
     },
     "save-dashboard-form": {
@@ -7686,6 +7704,10 @@
     },
     "section-filters-list": {
       "add-filter": ""
+    },
+    "section-placement": {
+      "top-row": "",
+      "top-tab": ""
     },
     "selection-options-form": {
       "description-enables-multiple-values-selected": "Позволяет выбирать несколько значений одновременно.",
@@ -7826,9 +7848,6 @@
     "variable-display-select": {
       "label": "Отобразить",
       "options": {
-        "above-dashboard": {
-          "label": "Над дашбордом"
-        },
         "controls-menu": {
           "description": "Отображается при открытом меню управления",
           "label": "Меню элементов управления"
@@ -7837,9 +7856,9 @@
           "description": "Отображается только в режиме редактирования",
           "label": "Скрыто"
         },
-        "hidden-label": {
-          "description": "Над дашбордом, но имя переменной не отображается",
-          "label": "Над дашбордом, метка скрыта"
+        "top-placement-hidden-label": {
+          "description": "",
+          "label": ""
         }
       }
     },
@@ -7924,10 +7943,9 @@
           "reorder-variables-list": "Измените порядок в списке переменных"
         }
       },
-      "title-above-dashboard_one": "Над дашбордом ({{count}})",
-      "title-above-dashboard_few": "Над дашбордом ({{count}})",
-      "title-above-dashboard_many": "Над дашбордом ({{count}})",
-      "title-above-dashboard_other": "Над дашбордом ({{count}})",
+      "top-placement": {
+        "default": ""
+      },
       "title-controls-menu_one": "Меню управления ({{count}})",
       "title-controls-menu_few": "Меню управления ({{count}})",
       "title-controls-menu_many": "Меню управления ({{count}})",
@@ -7935,7 +7953,11 @@
       "title-hidden_one": "Скрыто ({{count}})",
       "title-hidden_few": "Скрыто ({{count}})",
       "title-hidden_many": "Скрыто ({{count}})",
-      "title-hidden_other": "Скрыто ({{count}})"
+      "title-hidden_other": "Скрыто ({{count}})",
+      "title-top-placement_one": "",
+      "title-top-placement_few": "",
+      "title-top-placement_many": "",
+      "title-top-placement_other": ""
     },
     "version-history": {
       "comparison": {
@@ -10863,7 +10885,7 @@
     "name-unit": "Единица",
     "name-value-name": "Имя значения",
     "name-y-axis-scale": "Шкала оси Y",
-    "name-y-bucket-scale": "Шкала сегмента Y",
+    "name-y-bucket-scale": "",
     "placeholder-axis-label": "Авто",
     "placeholder-axis-width": "Авто",
     "placeholder-decimals": "Авто",
@@ -10978,6 +11000,12 @@
     "name-stacking": "Расположение в стеке"
   },
   "home": {
+    "dashboard-tabs": {
+      "recent": "",
+      "recent-active": "",
+      "starred": "",
+      "starred-active": ""
+    },
     "home-page": {
       "edition": {
         "cloud": "",
@@ -10990,6 +11018,23 @@
         "morning": ""
       },
       "placeholder": ""
+    },
+    "recent-dashboards-tab": {
+      "browse": "",
+      "clear": "",
+      "create": "",
+      "empty": "",
+      "empty-description": "",
+      "error-title": "",
+      "loading": "",
+      "retry": ""
+    },
+    "starred-dashboards-tab": {
+      "empty": "",
+      "empty-description": "",
+      "error-title": "",
+      "loading": "",
+      "retry": ""
     }
   },
   "inspector": {
@@ -12102,6 +12147,9 @@
       "subtitle": "Управление параметрами всего сервера и доступом к ресурсам, таким как организации, пользователи и лицензии",
       "title": "Администратор сервера"
     },
+    "agentic-testing": {
+      "title": ""
+    },
     "alert-list-legacy": {
       "title": "Правила оповещения"
     },
@@ -12703,6 +12751,9 @@
       "required": "",
       "save-tooltip": ""
     }
+  },
+  "page-loader": {
+    "default": ""
   },
   "panel": {
     "dashlist": {
@@ -13377,11 +13428,24 @@
     "code-block": {
       "aria-label-copy": "Копировать в буфер обмена"
     },
+    "commit-message": {
+      "dashboard-create-default": "",
+      "dashboard-delete-default": "",
+      "dashboard-move-default": "",
+      "dashboard-rename-default": "",
+      "dashboard-update-default": "",
+      "folder-create-default": "",
+      "folder-delete-default": "",
+      "folder-move-default": "",
+      "folder-rename-default": "",
+      "folder-update-default": ""
+    },
     "config-form": {
       "alert-repository-settings-saved": "Параметры репозитория сохранены",
       "alert-repository-settings-updated": "Параметры репозитория обновлены",
       "button-save": "Сохранить",
       "button-saving": "Сохранение...",
+      "description-commit-message-template": "",
       "description-connection": "Выберите подключение к приложению GitHub для использования",
       "description-enabled": "После включения автоматического внесения изменения целевой элемент невозможно изменить.",
       "description-read-only": "Ресурсы невозможно изменить через Grafana.",
@@ -13392,6 +13456,7 @@
       "error-save-failed": "Не удалось сохранить параметры репозитория",
       "error-save-repository": "Не удалось сохранить параметры репозитория",
       "label-automatic-pulling": "Автоматическое включение изменений",
+      "label-commit-message-template": "",
       "label-connection": "Подключение к приложению GitHub",
       "label-enabled": "Включено",
       "label-interval-seconds": "Интервал (в секундах)",
@@ -13400,6 +13465,7 @@
       "label-title": "Название",
       "option-entire-instance": "Весь экземпляр",
       "option-managed-folder": "Управляемая папка",
+      "placeholder-commit-message-template": "",
       "placeholder-interval-seconds": "60",
       "placeholder-my-config": "Моя конфигурация"
     },
@@ -14316,6 +14382,10 @@
   "query-editor-next": {
     "action": {
       "add-transformation-filter": "Добавить фильтр",
+      "cancel-delete": "",
+      "confirm-delete": "",
+      "confirm-delete-confirm": "",
+      "delete-confirmation-group": "",
       "disable": "Отключить {{type}}",
       "duplicate": "Дублировать {{type}}",
       "enable": "Включить {{type}}",
@@ -14361,10 +14431,7 @@
       "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
-      "body-query": "Удалить запрос?",
-      "body-transformation": "Удаление одного преобразования может привести к нарушению работы других.",
-      "confirm": "Удалить",
-      "title": "Удалить {{name}}?"
+      "body-transformation": "Удаление одного преобразования может привести к нарушению работы других."
     },
     "details-sidebar": {
       "cache-timeout": "Таймаут кэша",

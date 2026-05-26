@@ -437,7 +437,8 @@
       "label-value": "値"
     },
     "alert-instance-extension-point": {
-      "aria-label-actions": "操作"
+      "n-contact-points_other": "",
+      "view-route_other": ""
     },
     "alert-instance-modal-selector": {
       "add-alert-data-to-payload": "ペイロードにアラートデータを追加",
@@ -453,6 +454,7 @@
     },
     "alert-instances-table": {
       "created": "作成済み",
+      "destination": "",
       "labels": "ラベル",
       "state": "状態"
     },
@@ -2328,6 +2330,7 @@
     },
     "notification-route": {
       "no-labels": "ラベルなし",
+      "notification-policies": "",
       "notification-policy": "通知ポリシー"
     },
     "notification-route-header": {
@@ -4353,7 +4356,6 @@
       "button-cancel": "キャンセル",
       "button-delete": "削除",
       "button-deleting": "削除中…",
-      "commit": "フォルダを削除",
       "delete-warning": "このフォルダとその下位のすべてのフォルダやコンテンツが削除されます。影響のある項目は次のとおりです。",
       "missing-info": "必須フィールドが不足しています",
       "success-message": "フォルダが正常に削除されました"
@@ -4467,7 +4469,6 @@
       "button-cancel": "キャンセル",
       "button-rename": "名前を変更",
       "button-renaming": "名前を変更しています...",
-      "commit": "フォルダ名を変更",
       "error-saving": "フォルダ名の変更に失敗しました",
       "label-folder-name": "フォルダ名",
       "missing-info": "必須フィールドが不足しています",
@@ -6352,6 +6353,8 @@
         "ungroup-tabs": "タブのグループ化を解除"
       },
       "name": "タブ",
+      "scroll-tabs-left": "",
+      "scroll-tabs-right": "",
       "tab": {
         "new": "新しいタブ",
         "repeat": {
@@ -6449,6 +6452,10 @@
         },
         "save-dashboard-short": "保存",
         "save-library-panel": "ライブラリパネルを保存",
+        "save-template": {
+          "label": "",
+          "tooltip": ""
+        },
         "share": {
           "arrow": "共有",
           "tooltip": "リンクをコピー"
@@ -6462,6 +6469,9 @@
       "read-only": "読み取り専用",
       "refresh": "ダッシュボードを更新",
       "save": "ダッシュボードを保存",
+      "save-as-template": {
+        "label": ""
+      },
       "save-dashboard": {
         "label": "ダッシュボードを保存",
         "tooltip": "変更を保存"
@@ -7484,7 +7494,9 @@
         "label-details": "詳細",
         "title": "ダッシュボードを保存",
         "title-copy": "ダッシュボードのコピーを保存",
-        "title-provisioned": "プロビジョニング済みダッシュボード"
+        "title-provisioned": "プロビジョニング済みダッシュボード",
+        "title-template": "",
+        "title-update-template": ""
       }
     },
     "save-dashboard-form": {
@@ -7560,6 +7572,10 @@
     },
     "section-filters-list": {
       "add-filter": ""
+    },
+    "section-placement": {
+      "top-row": "",
+      "top-tab": ""
     },
     "selection-options-form": {
       "description-enables-multiple-values-selected": "複数の値を同時に選択可能にします",
@@ -7700,9 +7716,6 @@
     "variable-display-select": {
       "label": "表示",
       "options": {
-        "above-dashboard": {
-          "label": "ダッシュボード上部"
-        },
         "controls-menu": {
           "description": "コントロールメニューが開いているときに表示されます",
           "label": "コントロールメニュー"
@@ -7711,9 +7724,9 @@
           "description": "編集モードでのみ表示されます",
           "label": "非表示"
         },
-        "hidden-label": {
-          "description": "ダッシュボード上部に表示されますが、変数名は表示されません",
-          "label": "ダッシュボード上部（ラベル非表示）"
+        "top-placement-hidden-label": {
+          "description": "",
+          "label": ""
         }
       }
     },
@@ -7795,9 +7808,12 @@
           "reorder-variables-list": "変数リストの並べ替え"
         }
       },
-      "title-above-dashboard_other": "ダッシュボード上部（{{count}}）",
+      "top-placement": {
+        "default": ""
+      },
       "title-controls-menu_other": "コントロールメニュー（{{count}}）",
-      "title-hidden_other": "非表示（{{count}}）"
+      "title-hidden_other": "非表示（{{count}}）",
+      "title-top-placement_other": ""
     },
     "version-history": {
       "comparison": {
@@ -10689,7 +10705,7 @@
     "name-unit": "単位",
     "name-value-name": "値の名前",
     "name-y-axis-scale": "Y軸スケール",
-    "name-y-bucket-scale": "Y軸バケットスケール",
+    "name-y-bucket-scale": "",
     "placeholder-axis-label": "自動",
     "placeholder-axis-width": "自動",
     "placeholder-decimals": "自動",
@@ -10804,6 +10820,12 @@
     "name-stacking": "積み上げ"
   },
   "home": {
+    "dashboard-tabs": {
+      "recent": "",
+      "recent-active": "",
+      "starred": "",
+      "starred-active": ""
+    },
     "home-page": {
       "edition": {
         "cloud": "",
@@ -10816,6 +10838,23 @@
         "morning": ""
       },
       "placeholder": ""
+    },
+    "recent-dashboards-tab": {
+      "browse": "",
+      "clear": "",
+      "create": "",
+      "empty": "",
+      "empty-description": "",
+      "error-title": "",
+      "loading": "",
+      "retry": ""
+    },
+    "starred-dashboards-tab": {
+      "empty": "",
+      "empty-description": "",
+      "error-title": "",
+      "loading": "",
+      "retry": ""
     }
   },
   "inspector": {
@@ -11904,6 +11943,9 @@
       "subtitle": "サーバー全体の設定と、組織、ユーザー、ライセンスなどのリソースへのアクセスを管理します",
       "title": "サーバー管理者"
     },
+    "agentic-testing": {
+      "title": ""
+    },
     "alert-list-legacy": {
       "title": "アラートルール"
     },
@@ -12496,6 +12538,9 @@
       "required": "",
       "save-tooltip": ""
     }
+  },
+  "page-loader": {
+    "default": ""
   },
   "panel": {
     "dashlist": {
@@ -13161,11 +13206,24 @@
     "code-block": {
       "aria-label-copy": "コードをクリップボードにコピー"
     },
+    "commit-message": {
+      "dashboard-create-default": "",
+      "dashboard-delete-default": "",
+      "dashboard-move-default": "",
+      "dashboard-rename-default": "",
+      "dashboard-update-default": "",
+      "folder-create-default": "",
+      "folder-delete-default": "",
+      "folder-move-default": "",
+      "folder-rename-default": "",
+      "folder-update-default": ""
+    },
     "config-form": {
       "alert-repository-settings-saved": "リポジトリ設定を保存しました",
       "alert-repository-settings-updated": "リポジトリ設定が更新されました",
       "button-save": "保存",
       "button-saving": "保存中…",
+      "description-commit-message-template": "",
       "description-connection": "使用するGitHubアプリ接続を選択します",
       "description-enabled": "自動取得を有効にすると、対象を変更できなくなります。",
       "description-read-only": "Grafanaではリソースを変更できません。",
@@ -13176,6 +13234,7 @@
       "error-save-failed": "リポジトリ設定の保存に失敗しました",
       "error-save-repository": "リポジトリ設定の保存に失敗しました",
       "label-automatic-pulling": "自動取得",
+      "label-commit-message-template": "",
       "label-connection": "GitHubアプリ接続",
       "label-enabled": "有効化",
       "label-interval-seconds": "間隔（秒）",
@@ -13184,6 +13243,7 @@
       "label-title": "タイトル",
       "option-entire-instance": "インスタンス全体",
       "option-managed-folder": "管理フォルダ",
+      "placeholder-commit-message-template": "",
       "placeholder-interval-seconds": "60",
       "placeholder-my-config": "私の設定"
     },
@@ -14064,6 +14124,10 @@
   "query-editor-next": {
     "action": {
       "add-transformation-filter": "フィルターを追加",
+      "cancel-delete": "",
+      "confirm-delete": "",
+      "confirm-delete-confirm": "",
+      "delete-confirmation-group": "",
       "disable": "{{type}}を無効化",
       "duplicate": "{{type}}を複製",
       "enable": "{{type}}を有効化",
@@ -14103,10 +14167,7 @@
       "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
-      "body-query": "本当にこのクエリを削除してもよろしいですか？",
-      "body-transformation": "1つの変換を削除すると、他の変換が破損する可能性があります。",
-      "confirm": "削除",
-      "title": "{{name}}を削除しますか？"
+      "body-transformation": "1つの変換を削除すると、他の変換が破損する可能性があります。"
     },
     "details-sidebar": {
       "cache-timeout": "キャッシュタイムアウト",

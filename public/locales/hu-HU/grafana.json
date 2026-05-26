@@ -440,7 +440,10 @@
       "label-value": "Érték"
     },
     "alert-instance-extension-point": {
-      "aria-label-actions": "Műveletek"
+      "n-contact-points_one": "",
+      "n-contact-points_other": "",
+      "view-route_one": "",
+      "view-route_other": ""
     },
     "alert-instance-modal-selector": {
       "add-alert-data-to-payload": "Riasztási adatok hozzáadása a hasznos tartalomhoz",
@@ -456,6 +459,7 @@
     },
     "alert-instances-table": {
       "created": "Létrehozva",
+      "destination": "",
       "labels": "Címkék",
       "state": "Állapot"
     },
@@ -2341,6 +2345,7 @@
     },
     "notification-route": {
       "no-labels": "Nincs címke",
+      "notification-policies": "",
       "notification-policy": "Értesítési házirend"
     },
     "notification-route-header": {
@@ -4380,7 +4385,6 @@
       "button-cancel": "Mégse",
       "button-delete": "Törlés",
       "button-deleting": "Törlés…",
-      "commit": "Mappa törlése",
       "delete-warning": "Ez törli ezt a mappát és minden almappáját. Összességében ez a következőket érinti:",
       "missing-info": "Hiányzó kötelező mezők",
       "success-message": "A mappa törlése sikeres"
@@ -4494,7 +4498,6 @@
       "button-cancel": "Mégse",
       "button-rename": "Átnevezés",
       "button-renaming": "Átnevezés…",
-      "commit": "Mappa átnevezése",
       "error-saving": "A mappa átnevezése nem sikerült",
       "label-folder-name": "Mappa neve",
       "missing-info": "Hiányzó kötelező mezők",
@@ -6383,6 +6386,8 @@
         "ungroup-tabs": "Lapok csoportosításának megszüntetése"
       },
       "name": "Lapok",
+      "scroll-tabs-left": "",
+      "scroll-tabs-right": "",
       "tab": {
         "new": "Új lap",
         "repeat": {
@@ -6480,6 +6485,10 @@
         },
         "save-dashboard-short": "Mentés",
         "save-library-panel": "Könyvtárpanel mentése",
+        "save-template": {
+          "label": "",
+          "tooltip": ""
+        },
         "share": {
           "arrow": "Megosztás",
           "tooltip": "Hivatkozás másolása"
@@ -6493,6 +6502,9 @@
       "read-only": "Csak olvasható",
       "refresh": "Irányítópult frissítése",
       "save": "Irányítópult mentése",
+      "save-as-template": {
+        "label": ""
+      },
       "save-dashboard": {
         "label": "Irányítópult mentése",
         "tooltip": "Beállítások mentése"
@@ -7525,7 +7537,9 @@
         "label-details": "Részletek",
         "title": "Irányítópult mentése",
         "title-copy": "Irányítópult-másolat mentése",
-        "title-provisioned": "Kiépített irányítópult"
+        "title-provisioned": "Kiépített irányítópult",
+        "title-template": "",
+        "title-update-template": ""
       }
     },
     "save-dashboard-form": {
@@ -7602,6 +7616,10 @@
     },
     "section-filters-list": {
       "add-filter": ""
+    },
+    "section-placement": {
+      "top-row": "",
+      "top-tab": ""
     },
     "selection-options-form": {
       "description-enables-multiple-values-selected": "Lehetővé teszi több érték egyidejű kijelölését",
@@ -7742,9 +7760,6 @@
     "variable-display-select": {
       "label": "Megjelenítés",
       "options": {
-        "above-dashboard": {
-          "label": "Irányítópult felett"
-        },
         "controls-menu": {
           "description": "Akkor látható, ha a vezérlőmenü nyitva van",
           "label": "Vezérlőmenü"
@@ -7753,9 +7768,9 @@
           "description": "Csak szerkesztési módban látható",
           "label": "Rejtett"
         },
-        "hidden-label": {
-          "description": "Az irányítópult felett, de a változó nevének megjelenítése nélkül",
-          "label": "Irányítópult felett, címke elrejtve"
+        "top-placement-hidden-label": {
+          "description": "",
+          "label": ""
         }
       }
     },
@@ -7838,12 +7853,15 @@
           "reorder-variables-list": "Változólista átrendezése"
         }
       },
-      "title-above-dashboard_one": "Irányítópult felett ({{count}})",
-      "title-above-dashboard_other": "Irányítópult felett ({{count}})",
+      "top-placement": {
+        "default": ""
+      },
       "title-controls-menu_one": "Vezérlőmenü ({{count}})",
       "title-controls-menu_other": "Vezérlőmenü ({{count}})",
       "title-hidden_one": "Rejtett ({{count}})",
-      "title-hidden_other": "Rejtett ({{count}})"
+      "title-hidden_other": "Rejtett ({{count}})",
+      "title-top-placement_one": "",
+      "title-top-placement_other": ""
     },
     "version-history": {
       "comparison": {
@@ -10747,7 +10765,7 @@
     "name-unit": "Egység",
     "name-value-name": "Érték neve",
     "name-y-axis-scale": "Y tengely skálája",
-    "name-y-bucket-scale": "Y gyűjtő skálája",
+    "name-y-bucket-scale": "",
     "placeholder-axis-label": "Automatikus",
     "placeholder-axis-width": "Automatikus",
     "placeholder-decimals": "Automatikus",
@@ -10862,6 +10880,12 @@
     "name-stacking": "Egymásra helyezés"
   },
   "home": {
+    "dashboard-tabs": {
+      "recent": "",
+      "recent-active": "",
+      "starred": "",
+      "starred-active": ""
+    },
     "home-page": {
       "edition": {
         "cloud": "",
@@ -10874,6 +10898,23 @@
         "morning": ""
       },
       "placeholder": ""
+    },
+    "recent-dashboards-tab": {
+      "browse": "",
+      "clear": "",
+      "create": "",
+      "empty": "",
+      "empty-description": "",
+      "error-title": "",
+      "loading": "",
+      "retry": ""
+    },
+    "starred-dashboards-tab": {
+      "empty": "",
+      "empty-description": "",
+      "error-title": "",
+      "loading": "",
+      "retry": ""
     }
   },
   "inspector": {
@@ -11970,6 +12011,9 @@
       "subtitle": "Kiszolgálószintű beállítások kezelése és hozzáférés az erőforrásokhoz, például szervezetekhez, felhasználókhoz és licencekhez",
       "title": "Kiszolgálói rendszergazda"
     },
+    "agentic-testing": {
+      "title": ""
+    },
     "alert-list-legacy": {
       "title": "Riasztási szabályok"
     },
@@ -12565,6 +12609,9 @@
       "required": "",
       "save-tooltip": ""
     }
+  },
+  "page-loader": {
+    "default": ""
   },
   "panel": {
     "dashlist": {
@@ -13233,11 +13280,24 @@
     "code-block": {
       "aria-label-copy": "Kód másolása vágólapra"
     },
+    "commit-message": {
+      "dashboard-create-default": "",
+      "dashboard-delete-default": "",
+      "dashboard-move-default": "",
+      "dashboard-rename-default": "",
+      "dashboard-update-default": "",
+      "folder-create-default": "",
+      "folder-delete-default": "",
+      "folder-move-default": "",
+      "folder-rename-default": "",
+      "folder-update-default": ""
+    },
     "config-form": {
       "alert-repository-settings-saved": "Adattár beállításai mentve",
       "alert-repository-settings-updated": "Adattár beállításai frissítve",
       "button-save": "Mentés",
       "button-saving": "Mentés...",
+      "description-commit-message-template": "",
       "description-connection": "Válassza ki a használni kívánt GitHub-alkalmazáskapcsolatot",
       "description-enabled": "Az automatikus lekérés engedélyezése után a cél nem módosítható.",
       "description-read-only": "Az erőforrások nem módosíthatók a Grafanán keresztül.",
@@ -13248,6 +13308,7 @@
       "error-save-failed": "Az adattár beállításának mentése nem sikerült",
       "error-save-repository": "Az adattár beállításainak mentése sikertelen volt",
       "label-automatic-pulling": "Automatikus lekérés",
+      "label-commit-message-template": "",
       "label-connection": "GitHub-alkalmazáskapcsolat",
       "label-enabled": "Engedélyezve",
       "label-interval-seconds": "Intervallum (másodperc)",
@@ -13256,6 +13317,7 @@
       "label-title": "Cím",
       "option-entire-instance": "Teljes példány",
       "option-managed-folder": "Felügyelt mappa",
+      "placeholder-commit-message-template": "",
       "placeholder-interval-seconds": "60",
       "placeholder-my-config": "Saját konfiguráció"
     },
@@ -14148,6 +14210,10 @@
   "query-editor-next": {
     "action": {
       "add-transformation-filter": "Szűrő hozzáadása",
+      "cancel-delete": "",
+      "confirm-delete": "",
+      "confirm-delete-confirm": "",
+      "delete-confirmation-group": "",
       "disable": "A(z) {{type}} letiltása",
       "duplicate": "{{type}} duplikálása",
       "enable": "A(z) {{type}} engedélyezése",
@@ -14189,10 +14255,7 @@
       "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
-      "body-query": "Biztosan törli ezt a lekérdezést?",
-      "body-transformation": "Egy transzformáció eltávolítása továbbiakat is használhatatlanná tehet.",
-      "confirm": "Törlés",
-      "title": "Törli: {{name}}?"
+      "body-transformation": "Egy transzformáció eltávolítása továbbiakat is használhatatlanná tehet."
     },
     "details-sidebar": {
       "cache-timeout": "Gyorsítótár időtúllépése",
