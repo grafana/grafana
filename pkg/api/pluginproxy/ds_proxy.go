@@ -237,14 +237,19 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 		req.Header.Set("Authorization", dsAuth)
 	}
 
-	jsonData := proxy.ds.JsonDataMap()
+	jsonData := make(map[string]any)
+	if proxy.ds.JsonData != nil {
+		jsonData, err = proxy.ds.JsonData.Map()
+		if err != nil {
+			ctxLogger.Error("Failed to get json data as map", "jsonData", proxy.ds.JsonData, "error", err)
+			return
+		}
+	}
 
 	// Temporary while we transition to using this as the first class type
 	ds := datasourcesV0.DataSource{
 		Spec: datasourcesV0.UnstructuredSpec{
-			Object: map[string]any{
-				"jsonData": jsonData,
-			},
+			Object: map[string]any{"jsonData": jsonData},
 		},
 	}
 
