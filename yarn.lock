@@ -3699,7 +3699,6 @@ __metadata:
     dompurify: "npm:3.4.0"
     esbuild: "npm:0.25.8"
     eventemitter3: "npm:5.0.1"
-    fast_array_intersect: "npm:1.1.0"
     history: "npm:4.10.1"
     lodash: "npm:^4.17.23"
     marked: "npm:16.3.0"
@@ -3719,7 +3718,6 @@ __metadata:
     rxjs: "npm:7.8.2"
     string-hash: "npm:^1.1.3"
     tinycolor2: "npm:1.6.0"
-    tslib: "npm:2.8.1"
     tsx: "npm:^4.21.0"
     typescript: "npm:6.0.2"
     uplot: "npm:1.6.32"
@@ -19314,13 +19312,6 @@ __metadata:
   dependencies:
     fast-string-width: "npm:^3.0.2"
   checksum: 10/e717a249dae84c9a964e6b5da05c373fadd92714b2afb2d6c7e6f766c3409c773c95b28e186dcdd397e2d7850533dbdd766845d0cd29e15d172d33128f9447d3
-  languageName: node
-  linkType: hard
-
-"fast_array_intersect@npm:1.1.0":
-  version: 1.1.0
-  resolution: "fast_array_intersect@npm:1.1.0"
-  checksum: 10/94a6d062cd5564d1614d73b23a0196b0fd1da57f16616721a8c0f2ab5cab7a5fe650b0f260bd4541143c53e9124b17ab7bd020679e69e29f39dc533df66e5e32
   languageName: node
   linkType: hard
 
