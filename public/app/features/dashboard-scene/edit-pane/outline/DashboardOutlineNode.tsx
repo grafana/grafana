@@ -7,6 +7,10 @@ import { t, Trans } from '@grafana/i18n';
 import { type SceneObject } from '@grafana/scenes';
 import { Icon, Text, useElementSelection, useStyles2 } from '@grafana/ui';
 
+import { DashboardLinksSet } from '../../settings/links/DashboardLinksSet';
+import { LinkEdit } from '../../settings/links/LinkAddEditableElement';
+import { DashboardFiltersSet } from '../../settings/variables/DashboardFiltersSet';
+import { SectionFiltersSet } from '../../settings/variables/SectionFiltersSet';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { DashboardInteractions } from '../../utils/interactions';
 import { type DashboardEditPane } from '../DashboardEditPane';
@@ -15,8 +19,7 @@ import { useOutlineRename } from '../useOutlineRename';
 
 import { type DashboardOutline } from './DashboardOutline';
 import { DashboardOutlineNodeButtonContent } from './DashboardOutlineNodeButtonContent';
-import { getCommonStyles } from './styles';
-import { getOutlineInstanceName, getVisibleOutlineChildren, selectOutlineObject } from './utils';
+import { getVisibleOutlineChildren } from './utils';
 
 interface DashboardOutlineNodeProps {
   sceneObject: SceneObject;
@@ -25,6 +28,8 @@ interface DashboardOutlineNodeProps {
   isEditing: boolean | undefined;
   depth: number;
   index: number;
+  searchMatchKeys?: Set<string>;
+  searchVisibleKeys?: Set<string>;
 }
 
 export function DashboardOutlineNode({
@@ -34,8 +39,9 @@ export function DashboardOutlineNode({
   isEditing,
   depth,
   index,
+  searchMatchKeys,
+  searchVisibleKeys,
 }: DashboardOutlineNodeProps) {
-  const commonStyles = useStyles2(getCommonStyles);
   const styles = useStyles2(getStyles);
   const key = sceneObject.state.key;
   const [isCollapsed, setIsCollapsed] = useState(() => outline.isNodeCollapsed(key, depth > 0));
@@ -46,7 +52,7 @@ export function DashboardOutlineNode({
   const noTitleText = t('dashboard.outline.tree-item.no-title', '<no title>');
 
   const elementInfo = editableElement.getEditableElementInfo();
-  const instanceName = getOutlineInstanceName(elementInfo.instanceName, noTitleText);
+  const instanceName = elementInfo.instanceName === '' ? noTitleText : elementInfo.instanceName;
   const outlineRename = useOutlineRename(editableElement, isEditing);
   const isContainer = editableElement.getOutlineChildren ? true : false;
   const visibleChildren = useMemo(
@@ -54,10 +60,33 @@ export function DashboardOutlineNode({
     [sceneObject, isEditing]
   );
 
+  const isSearching = searchVisibleKeys !== undefined;
+  const isSearchMatch = isSearching && key !== undefined && searchMatchKeys?.has(key);
+  const filteredChildren = isSearching
+    ? visibleChildren.filter((child) => child.state.key !== undefined && searchVisibleKeys.has(child.state.key))
+    : visibleChildren;
+  const effectiveCollapsed = isSearching ? false : isCollapsed;
+
   const onNodeClicked = (e: React.MouseEvent) => {
     e.stopPropagation();
 
-    selectOutlineObject(sceneObject, editPane, isSelected ?? false, onSelect, e);
+    if (isSelected) {
+      return;
+    }
+
+    if (
+      sceneObject instanceof LinkEdit ||
+      sceneObject instanceof DashboardLinksSet ||
+      sceneObject instanceof DashboardFiltersSet ||
+      sceneObject instanceof SectionFiltersSet
+    ) {
+      // Select directly via editPane.selectObject because these objects are not
+      // in the scene graph, so sceneGraph.findByKey (used by onSelect) can't find them.
+      editPane.selectObject(sceneObject);
+      return;
+    }
+
+    onSelect?.(e);
 
     editableElement.scrollIntoView?.();
     DashboardInteractions.outlineItemClicked({ index, depth, isEditing });
@@ -70,6 +99,10 @@ export function DashboardOutlineNode({
     outline.setNodeCollapsed(key, newCollapsed);
   };
 
+  if (isSearching && depth > 0 && (!key || !searchVisibleKeys.has(key))) {
+    return null;
+  }
+
   if (elementInfo.isHidden && !isEditing) {
     return null;
   }
@@ -80,18 +113,19 @@ export function DashboardOutlineNode({
     <li
       role="treeitem"
       aria-selected={isSelected}
-      className={commonStyles.wrapper}
+      className={styles.wrapper}
       onClick={onNodeClicked}
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       style={{ '--depth': depth } as React.CSSProperties}
     >
       <div
-        className={cx(commonStyles.row, isEditing ? commonStyles.rowEditMode : commonStyles.rowViewMode, {
-          [commonStyles.rowSelected]: isSelected,
+        className={cx(styles.row, isEditing ? styles.rowEditMode : styles.rowViewMode, {
+          [styles.rowSelected]: isSelected,
+          [styles.searchMatch]: isSearchMatch,
         })}
       >
         <div className={styles.indentation}></div>
-        {isContainer && (
+        {isContainer && !isSearching && (
           <button
             className={styles.angleButton}
             onClick={onToggleCollapse}
@@ -101,7 +135,7 @@ export function DashboardOutlineNode({
           </button>
         )}
         <button
-          className={cx(commonStyles.nodeButton, { [commonStyles.nodeButtonClone]: isCloned })}
+          className={cx(styles.nodeButton, { [styles.nodeButtonClone]: isCloned })}
           onDoubleClick={outlineRename.onNameDoubleClicked}
           data-testid={selectors.components.PanelEditor.Outline.item(instanceName)}
         >
@@ -119,10 +153,10 @@ export function DashboardOutlineNode({
         </button>
       </div>
 
-      {isContainer && !isCollapsed && (
+      {isContainer && !effectiveCollapsed && (filteredChildren.length > 0 || !isSearching) && (
         <ul className={styles.nodeChildren} role="group">
-          {visibleChildren.length > 0 ? (
-            visibleChildren.map((child, i) => (
+          {filteredChildren.length > 0 ? (
+            filteredChildren.map((child, i) => (
               <DashboardOutlineNode
                 key={child.state.key}
                 sceneObject={child}
@@ -131,17 +165,19 @@ export function DashboardOutlineNode({
                 depth={depth + 1}
                 isEditing={isEditing}
                 index={i}
+                searchMatchKeys={searchMatchKeys}
+                searchVisibleKeys={searchVisibleKeys}
               />
             ))
           ) : (
             <li
               role="treeitem"
               aria-selected={isSelected}
-              className={commonStyles.wrapper}
+              className={styles.wrapper}
               // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
               style={{ '--depth': depth + 1 } as React.CSSProperties}
             >
-              <div className={commonStyles.row}>
+              <div className={styles.row}>
                 <div className={styles.indentation}></div>
                 <Text color="secondary" italic>
                   <Trans i18nKey="dashboard.outline.tree-item.empty">(empty)</Trans>
@@ -157,8 +193,19 @@ export function DashboardOutlineNode({
 
 function getStyles(theme: GrafanaTheme2) {
   return {
+    wrapper: css({
+      display: 'flex',
+      gap: theme.spacing(0.5),
+      flexGrow: 1,
+      flexDirection: 'column',
+      borderRadius: theme.shape.radius.default,
+      color: theme.colors.text.secondary,
+    }),
     indentation: css({
       marginLeft: `calc(var(--depth) * ${theme.spacing(3)})`,
+    }),
+    searchMatch: css({
+      color: theme.colors.text.primary,
     }),
     angleButton: css({
       boxShadow: 'none',
@@ -186,6 +233,49 @@ function getStyles(theme: GrafanaTheme2) {
         background: theme.colors.border.weak,
         marginLeft: `calc(11px + ${theme.spacing(3)} * var(--depth))`,
       },
+    }),
+    row: css({
+      display: 'flex',
+      gap: theme.spacing(0.5),
+      borderRadius: theme.shape.radius.default,
+    }),
+    rowEditMode: css({
+      '&:hover': {
+        color: theme.colors.text.primary,
+        outline: `1px dashed ${theme.colors.border.strong}`,
+        backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.05),
+      },
+    }),
+    rowViewMode: css({
+      '&:hover': {
+        textDecoration: 'underline',
+      },
+    }),
+    rowSelected: css({
+      color: theme.colors.text.primary,
+      outline: `1px dashed ${theme.colors.primary.border} !important`,
+      backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.05),
+    }),
+    nodeButton: css({
+      boxShadow: 'none',
+      border: 'none',
+      background: 'transparent',
+      padding: 0,
+      borderRadius: theme.shape.radius.default,
+      color: 'inherit',
+      display: 'flex',
+      flexGrow: 1,
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+      overflow: 'hidden',
+      '> span': {
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+      },
+    }),
+    nodeButtonClone: css({
+      color: theme.colors.text.secondary,
     }),
   };
 }
