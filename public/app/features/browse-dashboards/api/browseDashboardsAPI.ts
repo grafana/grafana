@@ -22,7 +22,7 @@ import { isDashboardV2Resource, isV1DashboardCommand, isV2DashboardCommand } fro
 import { type SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { TEAM_FOLDERS_UID } from 'app/features/search/constants';
-import { dispatch } from 'app/store/store';
+import { dispatch, getState } from 'app/store/store';
 import { type PermissionLevel } from 'app/types/acl';
 import { type ImportDashboardResponseDTO, type SaveDashboardResponseDTO } from 'app/types/dashboard';
 import {
@@ -35,6 +35,7 @@ import {
 import { getDashboardScenePageStateManager } from '../../dashboard-scene/pages/DashboardScenePageStateManager';
 import { deletedDashboardsCache } from '../../search/service/deletedDashboardsCache';
 import { refetchChildren, refreshParents } from '../state/actions';
+import { findItem } from '../state/utils';
 
 import { PAGE_SIZE } from './constants';
 import { isProvisionedDashboard } from './isProvisioned';
@@ -486,8 +487,18 @@ export const browseDashboardsAPI = createApi({
         }
       },
 
-      onQueryStarted: ({ folderUid, dashboard }, { queryFulfilled, dispatch }) => {
+      onQueryStarted: (cmd, { queryFulfilled, dispatch }) => {
+        const { folderUid, dashboard } = cmd;
         dashboardWatcher.ignoreNextSave();
+        const dashboardUid = isV1DashboardCommand(cmd) ? cmd.dashboard.uid : cmd.k8s?.name;
+
+        // Capture the dashboard's previous folder from the cache before save, so that
+        // if the user is moving it to a different folder we can invalidate the source
+        // folder's children cache. Without this, childrenByParentUID[previousFolderUid]
+        // stays stale and folder-select cascades in the list view incorrectly include
+        // the moved-out dashboard.
+        const previousFolderUid = getDashboardFolder(dashboardUid);
+
         queryFulfilled.then(async ({ data }) => {
           try {
             await contextSrv.fetchUserPermissions();
@@ -500,6 +511,15 @@ export const browseDashboardsAPI = createApi({
               pageSize: PAGE_SIZE,
             })
           );
+          // If the dashboard was moved, also refetch old parent folder
+          if (previousFolderUid !== undefined && previousFolderUid !== folderUid) {
+            dispatch(
+              refetchChildren({
+                parentUID: previousFolderUid,
+                pageSize: PAGE_SIZE,
+              })
+            );
+          }
           // version 1 means a newly created dashboard — only then does the resource count change
           if (data.version === 1) {
             invalidateQuotaUsage(dispatch);
@@ -616,6 +636,19 @@ export const browseDashboardsAPI = createApi({
     }),
   }),
 });
+
+/**
+ * Gets a parent folder of a dashboard from the cache in the store.
+ * @param dashboardUid
+ */
+function getDashboardFolder(dashboardUid?: string) {
+  if (dashboardUid) {
+    const { browseDashboards } = getState();
+    const item = findItem(browseDashboards.rootItems?.items ?? [], browseDashboards.childrenByParentUID, dashboardUid);
+    return item?.parentUID;
+  }
+  return undefined;
+}
 
 export const {
   endpoints,

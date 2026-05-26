@@ -2075,11 +2075,6 @@
       "count": 3
     }
   },
-  "public/app/features/datasources/components/DataSourceTestingStatus.tsx": {
-    "@grafana/no-gf-form": {
-      "count": 1
-    }
-  },
   "public/app/features/datasources/components/EditDataSourceActions.test.tsx": {
     "@grafana/no-plain-links": {
       "count": 1
