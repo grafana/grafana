@@ -24,9 +24,7 @@ export function GPGSigningKeyInfo({ type }: { type: InstructionAvailability }) {
   return (
     <div className={styles.container}>
       <Stack gap={0.5} wrap={'wrap'}>
-        <Trans i18nKey="provisioning.gpg-signing-key-info.required">
-          If you require verified commits,
-        </Trans>
+        <Trans i18nKey="provisioning.gpg-signing-key-info.required">If you require verified commits,</Trans>
         <TextLink external href={generateUrl}>
           <Trans i18nKey="provisioning.gpg-signing-key-info.generate-link">generate a GPG key</Trans>
         </TextLink>

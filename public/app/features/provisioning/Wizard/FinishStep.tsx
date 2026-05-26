@@ -30,10 +30,7 @@ export const FinishStep = memo(function FinishStep() {
   const [type, readOnly] = watch(['repository.type', 'repository.readOnly']);
   const signingKeyValue = watch('repository.gpgSigningKey');
   const requireAuthor = Boolean(signingKeyValue);
-  const authorRequiredMessage = t(
-    'provisioning.wizard.commit-author-required',
-    'Required when a signing key is set.'
-  );
+  const authorRequiredMessage = t('provisioning.wizard.commit-author-required', 'Required when a signing key is set.');
 
   const isGithub = type === 'github';
   const isGitBased = isGitProvider(type);
@@ -220,8 +217,7 @@ export const FinishStep = memo(function FinishStep() {
               id="repository-commit-author-name"
               disabled={!signingKeyValue}
               {...register('repository.commit.authorName', {
-                validate: (val) =>
-                  !requireAuthor || (val?.trim() ?? '').length > 0 || authorRequiredMessage,
+                validate: (val) => !requireAuthor || (val?.trim() ?? '').length > 0 || authorRequiredMessage,
               })}
               placeholder={t('provisioning.wizard.placeholder-commit-author-name', 'Grafana')}
             />
@@ -230,10 +226,7 @@ export const FinishStep = memo(function FinishStep() {
             noMargin
             required={requireAuthor}
             label={t('provisioning.wizard.label-commit-author-email', 'Commit author email')}
-            description={t(
-              'provisioning.wizard.description-commit-author-email',
-              'Must match the signing key UID.'
-            )}
+            description={t('provisioning.wizard.description-commit-author-email', 'Must match the signing key UID.')}
             error={errors?.repository?.commit?.authorEmail?.message}
             invalid={!!errors?.repository?.commit?.authorEmail?.message}
           >
@@ -242,8 +235,7 @@ export const FinishStep = memo(function FinishStep() {
               type="email"
               disabled={!signingKeyValue}
               {...register('repository.commit.authorEmail', {
-                validate: (val) =>
-                  !requireAuthor || (val?.trim() ?? '').length > 0 || authorRequiredMessage,
+                validate: (val) => !requireAuthor || (val?.trim() ?? '').length > 0 || authorRequiredMessage,
               })}
               placeholder={t('provisioning.wizard.placeholder-commit-author-email', 'noreply@grafana.com')}
             />

@@ -452,77 +452,75 @@ export function ConfigForm({ data }: ConfigFormProps) {
             <Divider spacing={0} />
             {hasTokenInstructions && <GPGSigningKeyInfo type={type} />}
             <Field
-                noMargin
-                label={gitFields.gpgSigningKeyConfig.label}
-                description={gitFields.gpgSigningKeyConfig.description}
-                error={errors?.gpgSigningKey?.message}
-                invalid={!!errors.gpgSigningKey}
-              >
-                <Controller
-                  name="gpgSigningKey"
-                  control={control}
-                  render={({ field: { ref, ...field } }) => (
-                    <SecretTextArea
-                      {...field}
-                      id="gpgSigningKey"
-                      invalid={!!errors.gpgSigningKey}
-                      placeholder={gitFields.gpgSigningKeyConfig?.placeholder}
-                      isConfigured={signingKeyConfigured}
-                      onReset={() => {
-                        setValue('gpgSigningKey', '');
-                        setValue('commit.authorName', '');
-                        setValue('commit.authorEmail', '');
-                        setSigningKeyConfigured(false);
-                      }}
-                      rows={8}
-                      grow
-                    />
-                  )}
-                />
-              </Field>
-              <Field
-                noMargin
-                required={authorRequired}
-                label={t('provisioning.config-form.label-commit-author-name', 'Commit author name')}
-                description={t(
-                  'provisioning.config-form.description-commit-author-name',
-                  'Used as the commit author and committer.'
+              noMargin
+              label={gitFields.gpgSigningKeyConfig.label}
+              description={gitFields.gpgSigningKeyConfig.description}
+              error={errors?.gpgSigningKey?.message}
+              invalid={!!errors.gpgSigningKey}
+            >
+              <Controller
+                name="gpgSigningKey"
+                control={control}
+                render={({ field: { ref, ...field } }) => (
+                  <SecretTextArea
+                    {...field}
+                    id="gpgSigningKey"
+                    invalid={!!errors.gpgSigningKey}
+                    placeholder={gitFields.gpgSigningKeyConfig?.placeholder}
+                    isConfigured={signingKeyConfigured}
+                    onReset={() => {
+                      setValue('gpgSigningKey', '');
+                      setValue('commit.authorName', '');
+                      setValue('commit.authorEmail', '');
+                      setSigningKeyConfigured(false);
+                    }}
+                    rows={8}
+                    grow
+                  />
                 )}
-                error={errors?.commit?.authorName?.message}
-                invalid={!!errors?.commit?.authorName?.message}
-              >
-                <Input
-                  id="commit-author-name"
-                  disabled={!signingKeyValue}
-                  {...register('commit.authorName', {
-                    validate: (val) =>
-                      !authorRequired || (val?.trim() ?? '').length > 0 || authorRequiredMessage,
-                  })}
-                  placeholder={t('provisioning.config-form.placeholder-commit-author-name', 'Grafana')}
-                />
-              </Field>
-              <Field
-                noMargin
-                required={authorRequired}
-                label={t('provisioning.config-form.label-commit-author-email', 'Commit author email')}
-                description={t(
-                  'provisioning.config-form.description-commit-author-email',
-                  'Must match the signing key UID.'
-                )}
-                error={errors?.commit?.authorEmail?.message}
-                invalid={!!errors?.commit?.authorEmail?.message}
-              >
-                <Input
-                  id="commit-author-email"
-                  type="email"
-                  disabled={!signingKeyValue}
-                  {...register('commit.authorEmail', {
-                    validate: (val) =>
-                      !authorRequired || (val?.trim() ?? '').length > 0 || authorRequiredMessage,
-                  })}
-                  placeholder={t('provisioning.config-form.placeholder-commit-author-email', 'noreply@grafana.com')}
-                />
-              </Field>
+              />
+            </Field>
+            <Field
+              noMargin
+              required={authorRequired}
+              label={t('provisioning.config-form.label-commit-author-name', 'Commit author name')}
+              description={t(
+                'provisioning.config-form.description-commit-author-name',
+                'Used as the commit author and committer.'
+              )}
+              error={errors?.commit?.authorName?.message}
+              invalid={!!errors?.commit?.authorName?.message}
+            >
+              <Input
+                id="commit-author-name"
+                disabled={!signingKeyValue}
+                {...register('commit.authorName', {
+                  validate: (val) => !authorRequired || (val?.trim() ?? '').length > 0 || authorRequiredMessage,
+                })}
+                placeholder={t('provisioning.config-form.placeholder-commit-author-name', 'Grafana')}
+              />
+            </Field>
+            <Field
+              noMargin
+              required={authorRequired}
+              label={t('provisioning.config-form.label-commit-author-email', 'Commit author email')}
+              description={t(
+                'provisioning.config-form.description-commit-author-email',
+                'Must match the signing key UID.'
+              )}
+              error={errors?.commit?.authorEmail?.message}
+              invalid={!!errors?.commit?.authorEmail?.message}
+            >
+              <Input
+                id="commit-author-email"
+                type="email"
+                disabled={!signingKeyValue}
+                {...register('commit.authorEmail', {
+                  validate: (val) => !authorRequired || (val?.trim() ?? '').length > 0 || authorRequiredMessage,
+                })}
+                placeholder={t('provisioning.config-form.placeholder-commit-author-email', 'noreply@grafana.com')}
+              />
+            </Field>
           </>
         )}
 

@@ -26,10 +26,7 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
   const shared = {
     gpgSigningKey: {
       label: t('provisioning.shared.gpg-signing-key-label', 'GPG signing key'),
-      description: t(
-        'provisioning.shared.gpg-signing-key-description',
-        'Armored OpenPGP private key. No passphrase.'
-      ),
+      description: t('provisioning.shared.gpg-signing-key-description', 'Armored OpenPGP private key. No passphrase.'),
       placeholder: '-----BEGIN PGP PRIVATE KEY BLOCK-----',
     },
     branch: {
