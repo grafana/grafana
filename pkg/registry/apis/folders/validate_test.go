@@ -11,7 +11,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	authlib "github.com/grafana/authlib/types"
-	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -1406,12 +1405,8 @@ func TestCheckMoveAccess(t *testing.T) {
 	)
 
 	folderGVR := folders.FolderResourceInfo.GroupVersionResource()
-	dashGVR := dashv1.DashboardResourceInfo.GroupVersionResource()
 	allowFolder := func(verb, name, folderUID string) allow {
 		return allow{group: folderGVR.Group, resource: folderGVR.Resource, verb: verb, name: name, folder: folderUID}
-	}
-	allowDash := func(verb, name, folderUID string) allow {
-		return allow{group: dashGVR.Group, resource: dashGVR.Resource, verb: verb, name: name, folder: folderUID}
 	}
 
 	// Common allows: user can update source under its current parent (so the
@@ -1475,33 +1470,52 @@ func TestCheckMoveAccess(t *testing.T) {
 			expectedErr: "folders.forbiddenMove",
 		},
 		{
-			name:      "dashboards read on new parent only is escalation",
+			// Tier model: gaining a *different* verb at the same tier is not
+			// escalation. Old=update (Editor), new=delete (Editor) → no jump.
+			name:      "same-tier verb swap (update→delete) is not escalation",
 			newParent: newParentUID,
 			oldParent: oldParentUID,
 			allows: []allow{
 				canCreateFolderInNew,
-				allowDash(utils.VerbGet, "", newParentUID),
+				allowFolder(utils.VerbUpdate, sourceUID, oldParentUID),
+				allowFolder(utils.VerbDelete, sourceUID, newParentUID),
+			},
+		},
+		{
+			// Tier model: losing capability at the destination is never
+			// escalation. Old=Admin (setperms), new=Editor (update only).
+			name:      "tier downgrade Admin→Editor is not escalation",
+			newParent: newParentUID,
+			oldParent: oldParentUID,
+			allows: []allow{
+				canCreateFolderInNew,
+				allowFolder(utils.VerbSetPermissions, sourceUID, oldParentUID),
+				allowFolder(utils.VerbUpdate, sourceUID, newParentUID),
+			},
+		},
+		{
+			// Tier model: gaining Admin (setperms) where the user only had
+			// Editor (update) before is a tier jump → escalation.
+			name:      "tier upgrade Editor→Admin on folder is escalation",
+			newParent: newParentUID,
+			oldParent: oldParentUID,
+			allows: []allow{
+				canCreateFolderInNew,
+				canUpdateOnSourceUnderOld,
+				canUpdateOnSourceUnderNew,
+				allowFolder(utils.VerbSetPermissions, sourceUID, newParentUID),
 			},
 			expectedErr: "folders.accessEscalation",
 		},
 		{
-			name:      "dashboards read on source folder today is not escalation",
+			// Tier model: gaining View (None → Viewer) is a tier jump on its
+			// own → escalation. Catches read-only access gained by the move.
+			name:      "tier upgrade None→Viewer is escalation",
 			newParent: newParentUID,
 			oldParent: oldParentUID,
 			allows: []allow{
 				canCreateFolderInNew,
-				allowDash(utils.VerbGet, "", newParentUID),
-				// direct grant on source folder, unaffected by the move
-				allowDash(utils.VerbGet, "", sourceUID),
-			},
-		},
-		{
-			name:      "dashboards write on new parent only is escalation",
-			newParent: newParentUID,
-			oldParent: oldParentUID,
-			allows: []allow{
-				canCreateFolderInNew,
-				allowDash(utils.VerbUpdate, "", newParentUID),
+				allowFolder(utils.VerbGet, sourceUID, newParentUID),
 			},
 			expectedErr: "folders.accessEscalation",
 		},

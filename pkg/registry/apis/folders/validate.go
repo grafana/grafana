@@ -15,7 +15,6 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
-	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -263,13 +262,48 @@ func validateOnUpdate(ctx context.Context,
 	return checkSubtreeDepth(ctx, searcher, obj.Namespace, obj.Name, allowedDepth, maxDepth)
 }
 
-var escalationVerbs = []string{
-	utils.VerbGet,
-	utils.VerbUpdate,
-	utils.VerbPatch,
-	utils.VerbDelete,
-	utils.VerbCreate,
-	utils.VerbSetPermissions,
+// folderTier is the Viewer/Editor/Admin level used by the /access subresource.
+// Comparing tiers across the move catches role-level escalations without
+// firing on per-verb churn.
+//
+// Only the folder tier is compared. Built-in roles bundle dashboard, library
+// panel, alert, and annotation actions with the folder tier, so a folder-tier
+// jump catches them transitively. Custom roles that grant sub-resource
+// actions directly at folder scope without folder access are not caught here.
+type folderTier int
+
+const (
+	tierNone folderTier = iota
+	tierViewer
+	tierEditor
+	tierAdmin
+)
+
+// tierProbes are the verbs we ask Zanzana about to resolve a tier. setperms
+// signals Admin, the Editor verbs (create/update/delete) collectively signal
+// Editor, and get alone signals Viewer.
+var tierProbes = []struct {
+	suffix string
+	verb   string
+}{
+	{"get", utils.VerbGet},
+	{"create", utils.VerbCreate},
+	{"update", utils.VerbUpdate},
+	{"delete", utils.VerbDelete},
+	{"setperms", utils.VerbSetPermissions},
+}
+
+func resolveTier(allowed map[string]bool) folderTier {
+	switch {
+	case allowed["setperms"]:
+		return tierAdmin
+	case allowed["create"] || allowed["update"] || allowed["delete"]:
+		return tierEditor
+	case allowed["get"]:
+		return tierViewer
+	default:
+		return tierNone
+	}
 }
 
 func checkMoveAccess(
@@ -290,17 +324,14 @@ func checkMoveAccess(
 	}
 
 	folderGVR := folders.FolderResourceInfo.GroupVersionResource()
-	dashGVR := dashv1.DashboardResourceInfo.GroupVersionResource()
 
 	const (
-		writeDestKey     = "writeDest"
-		newFolderPrefix  = "newFolder|"
-		oldFolderPrefix  = "oldFolder|"
-		newDashPrefix    = "newDash|"
-		sourceDashPrefix = "sourceDash|"
+		writeDestKey    = "writeDest"
+		newFolderPrefix = "newFolder|"
+		oldFolderPrefix = "oldFolder|"
 	)
 
-	checks := make([]authlib.BatchCheckItem, 0, 1+4*len(escalationVerbs))
+	checks := make([]authlib.BatchCheckItem, 0, 1+2*len(tierProbes))
 
 	// Destination-write check: can the user create folders under newParentUID?
 	checks = append(checks, authlib.BatchCheckItem{
@@ -311,43 +342,24 @@ func checkMoveAccess(
 		Folder:        newParentUID,
 	})
 
-	for _, verb := range escalationVerbs {
-		// Folder escalation: source folder permissions under new vs old parent.
+	// Folder escalation context: source folder permissions under new vs old parent.
+	for _, p := range tierProbes {
 		checks = append(checks,
 			authlib.BatchCheckItem{
-				CorrelationID: newFolderPrefix + verb,
-				Verb:          verb,
+				CorrelationID: newFolderPrefix + p.suffix,
+				Verb:          p.verb,
 				Group:         folderGVR.Group,
 				Resource:      folderGVR.Resource,
 				Name:          sourceUID,
 				Folder:        newParentUID,
 			},
 			authlib.BatchCheckItem{
-				CorrelationID: oldFolderPrefix + verb,
-				Verb:          verb,
+				CorrelationID: oldFolderPrefix + p.suffix,
+				Verb:          p.verb,
 				Group:         folderGVR.Group,
 				Resource:      folderGVR.Resource,
 				Name:          sourceUID,
 				Folder:        oldParentUID,
-			},
-		)
-		// Dashboard escalation: dashboards inside source inherit from the
-		// destination post-move, so flag if the user gains a permission they
-		// don't already hold inside the source folder today.
-		checks = append(checks,
-			authlib.BatchCheckItem{
-				CorrelationID: newDashPrefix + verb,
-				Verb:          verb,
-				Group:         dashGVR.Group,
-				Resource:      dashGVR.Resource,
-				Folder:        newParentUID,
-			},
-			authlib.BatchCheckItem{
-				CorrelationID: sourceDashPrefix + verb,
-				Verb:          verb,
-				Group:         dashGVR.Group,
-				Resource:      dashGVR.Resource,
-				Folder:        sourceUID,
 			},
 		)
 	}
@@ -375,26 +387,28 @@ func checkMoveAccess(
 		return folder.ErrMoveAccessDenied.Errorf("user does not have permissions to move a folder to folder with UID %s", destLabel)
 	}
 
-	for _, verb := range escalationVerbs {
-		newFolderState, nfOk := batchResp.Results[newFolderPrefix+verb]
-		oldFolderState, ofOk := batchResp.Results[oldFolderPrefix+verb]
-		newDashState, ndOk := batchResp.Results[newDashPrefix+verb]
-		sourceDashState, sdOk := batchResp.Results[sourceDashPrefix+verb]
-		// Fail closed on missing result: we built all correlation IDs ourselves.
-		if !nfOk || !ofOk || !ndOk || !sdOk {
-			return fmt.Errorf("access escalation check returned no result for verb %q", verb)
+	// Fail closed on any missing result — we built every correlation ID
+	// ourselves, so an absent key is a server bug.
+	newFolder := make(map[string]bool, len(tierProbes))
+	oldFolder := make(map[string]bool, len(tierProbes))
+	for _, p := range tierProbes {
+		nf, nfOk := batchResp.Results[newFolderPrefix+p.suffix]
+		of, ofOk := batchResp.Results[oldFolderPrefix+p.suffix]
+		if !nfOk || !ofOk {
+			return fmt.Errorf("access escalation check returned no result for verb %q", p.verb)
 		}
-		for _, state := range []authlib.BatchCheckResult{newFolderState, oldFolderState, newDashState, sourceDashState} {
-			if state.Error != nil {
-				return state.Error
-			}
+		if nf.Error != nil {
+			return nf.Error
 		}
-		if newFolderState.Allowed && !oldFolderState.Allowed {
-			return folder.ErrAccessEscalation.Errorf("user cannot move a folder to another folder where they have higher permissions")
+		if of.Error != nil {
+			return of.Error
 		}
-		if newDashState.Allowed && !sourceDashState.Allowed {
-			return folder.ErrAccessEscalation.Errorf("user cannot move a folder to another folder where they have higher permissions")
-		}
+		newFolder[p.suffix] = nf.Allowed
+		oldFolder[p.suffix] = of.Allowed
+	}
+
+	if resolveTier(newFolder) > resolveTier(oldFolder) {
+		return folder.ErrAccessEscalation.Errorf("user cannot move a folder to another folder where they have higher permissions")
 	}
 
 	return nil
