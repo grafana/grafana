@@ -249,7 +249,7 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
 });
 
 interface BaseFieldColorSchemeModeOptions {
-  id: FieldColorModeId;
+  id: FieldColorModeId | string;
   name: string;
   description?: string;
   isContinuous: boolean;
@@ -271,7 +271,7 @@ interface FieldColorSchemeModeGetColors extends BaseFieldColorSchemeModeOptions 
 type FieldColorSchemeModeOptions = FieldColorSchemeModeGetColors | FieldColorSchemeModeInterpolator;
 
 export class FieldColorSchemeMode implements FieldColorMode {
-  id: FieldColorModeId;
+  id: FieldColorModeId | string;
   name: string;
   description?: string;
   isContinuous: boolean;

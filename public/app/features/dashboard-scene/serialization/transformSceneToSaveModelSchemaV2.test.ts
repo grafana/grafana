@@ -445,6 +445,40 @@ describe('transformSceneToSaveModelSchemaV2', () => {
     expect(result.annotations).toHaveLength(2);
   });
 
+  it('keeps custom color mode ids in field config defaults', () => {
+    const panelKey = 'panel-custom-color';
+    const customColorMode = 'sunset';
+
+    const scene = new DashboardScene({
+      body: new DefaultGridLayoutManager({
+        grid: new SceneGridLayout({
+          children: [
+            new DashboardGridItem({
+              body: new VizPanel({
+                key: panelKey,
+                pluginId: 'timeseries',
+                title: 'Custom color panel',
+                fieldConfig: {
+                  defaults: {
+                    color: {
+                      mode: customColorMode,
+                    },
+                  },
+                  overrides: [],
+                },
+              }),
+            }),
+          ],
+        }),
+      }),
+    });
+
+    const result = transformSceneToSaveModelSchemaV2(scene);
+    const panel = result.elements[panelKey] as { kind: 'Panel'; spec: PanelSpec };
+
+    expect(panel.spec.vizConfig.spec.fieldConfig.defaults?.color?.mode).toBe(customColorMode);
+  });
+
   it('should transform links with placement property', () => {
     const sceneWithPlacementLink = new DashboardScene({
       links: [

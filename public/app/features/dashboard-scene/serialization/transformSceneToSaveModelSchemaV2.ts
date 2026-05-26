@@ -336,6 +336,7 @@ function handleFieldConfigDefaultsConversion(vizPanel: VizPanel) {
     if (convertedMode) {
       color = {
         ...rawColor,
+        //@ts-expect-error @todo update FieldColorModeId in dashboard spec
         mode: convertedMode,
       };
     }

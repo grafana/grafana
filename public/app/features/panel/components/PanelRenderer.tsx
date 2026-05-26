@@ -9,16 +9,50 @@ import {
   type OptionDefaults,
   useFieldOverrides,
 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { getTemplateSrv, type PanelRendererProps } from '@grafana/runtime';
-import { ErrorBoundaryAlert, useTheme2 } from '@grafana/ui';
+import { ErrorBoundaryAlert, LoadingPlaceholder, useTheme2 } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
+import { needsDynamicPalette } from 'app/features/dynamic-palettes/needsDynamicPalette';
+import { useDynamicPalettesReady } from 'app/features/dynamic-palettes/useDynamicFieldColorModes';
 
 import { importPanelPlugin, syncGetPanelPlugin } from '../../plugins/importPanelPlugin';
 
 const defaultFieldConfig = { defaults: {}, overrides: [] };
 
 export function PanelRenderer<P extends object = {}, F extends object = {}>(props: PanelRendererProps<P, F>) {
+  const shouldWaitForDynamicPalette = needsDynamicPalette(props.fieldConfig);
+  // Future dynamic options can append additional checks here.
+  const shouldWaitForDynamicOptions = shouldWaitForDynamicPalette;
+
+  if (shouldWaitForDynamicOptions) {
+    return <PanelRendererWithDynamicOptionsGate {...props} />;
+  }
+
+  return <PanelRendererWithLoadedDynamicOptions {...props} />;
+}
+
+function PanelRendererWithDynamicOptionsGate<P extends object = {}, F extends object = {}>(
+  props: PanelRendererProps<P, F>
+) {
+  const palettesReady = useDynamicPalettesReady();
+  // Future dynamic options can append additional ready hooks here.
+  const dynamicOptionsReady = palettesReady;
+
+  if (!dynamicOptionsReady) {
+    return (
+      <LoadingPlaceholder
+        text={t('panel.panel-renderer.loading-dynamic-options', 'Loading dynamic panel options...')}
+      />
+    );
+  }
+
+  return <PanelRendererWithLoadedDynamicOptions {...props} />;
+}
+
+function PanelRendererWithLoadedDynamicOptions<P extends object = {}, F extends object = {}>(
+  props: PanelRendererProps<P, F>
+) {
   const {
     pluginId,
     data,

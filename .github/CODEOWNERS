@@ -952,6 +952,8 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/dev-utils.ts @grafana/grafana-frontend-platform
 
 /public/app/features/actions/ @grafana/dataviz-squad
+public/app/features/dynamic-palettes/ @grafana/dataviz-squad
+public/app/features/dynamic-options/ @grafana/dataviz-squad
 /public/app/features/admin/ @grafana/identity-access-team
 /public/app/features/auth-config/ @grafana/identity-squad
 /public/app/features/annotations/ @grafana/dashboards-squad

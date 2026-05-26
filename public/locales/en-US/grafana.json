@@ -7451,6 +7451,9 @@
       },
       "title-close": "Close"
     },
+    "panel-wrapper-with-dynamic-palette-gate": {
+      "text-loading-dynamic-panel": "Loading dynamic panel..."
+    },
     "provisioned-controls-section": {
       "label": "Provisioned by data source",
       "tooltip": "Added by the {{pluginName}} plugin",
@@ -7639,6 +7642,9 @@
         "text-no-save": "You have unsaved changes. You don’t have permission to save. Discard changes and share the original?",
         "title": "Unsaved changes"
       }
+    },
+    "solo-panel": {
+      "text-loading-dynamic-panel": "Loading dynamic panel..."
     },
     "suggested-dashboard-banner": {
       "body": "Not what you're looking for? View <2>other suggested dashboards</2> or <6>create one from scratch</6>.",
@@ -12698,6 +12704,7 @@
     },
     "panel-renderer": {
       "failed-to-load-plugin": "Failed to load plugin: {{error}}",
+      "loading-dynamic-options": "Loading dynamic panel options...",
       "loading-plugin-panel": "Loading plugin panel...",
       "no-panel-component": "Seems like the plugin you are trying to load does not have a panel component.",
       "no-panel-data": "No panel data"
