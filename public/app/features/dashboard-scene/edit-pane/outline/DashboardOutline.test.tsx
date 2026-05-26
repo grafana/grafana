@@ -7,21 +7,21 @@ import { setPluginImportUtils } from '@grafana/runtime';
 import { SceneVariableSet, VizPanel } from '@grafana/scenes';
 import { ElementSelectionContext, Sidebar, useSidebar } from '@grafana/ui';
 
-import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
-import { DashboardScene } from '../scene/DashboardScene';
-import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
-import { AutoGridLayout } from '../scene/layout-auto-grid/AutoGridLayout';
-import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
-import { RowItem } from '../scene/layout-rows/RowItem';
-import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
-import { TabItem } from '../scene/layout-tabs/TabItem';
-import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
-import { DashboardInteractions } from '../utils/interactions';
-import { activateFullSceneTree } from '../utils/test-utils';
+import { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
+import { DashboardScene } from '../../scene/DashboardScene';
+import { AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
+import { AutoGridLayout } from '../../scene/layout-auto-grid/AutoGridLayout';
+import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
+import { RowItem } from '../../scene/layout-rows/RowItem';
+import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
+import { TabItem } from '../../scene/layout-tabs/TabItem';
+import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
+import { DashboardInteractions } from '../../utils/interactions';
+import { activateFullSceneTree } from '../../utils/test-utils';
 
 import { DashboardOutline } from './DashboardOutline';
 
-jest.mock('../utils/interactions', () => ({
+jest.mock('../../utils/interactions', () => ({
   DashboardInteractions: {
     outlineItemClicked: jest.fn(),
   },
@@ -262,6 +262,70 @@ describe('DashboardOutline', () => {
         depth: 1,
         isEditing: undefined,
       });
+    });
+  });
+
+  describe('search', () => {
+    it('shows flattened results for nested matches without expanding parent nodes', async () => {
+      const user = userEvent.setup();
+      const scene = buildTestScene();
+      const pane = new DashboardOutline({});
+
+      scene.onEnterEditMode();
+      scene.state.editPane.enableSelection();
+      scene.state.editPane.openPane(pane);
+
+      render(
+        <ElementSelectionContext.Provider value={scene.state.editPane.state.selectionContext}>
+          <WrapSidebar>
+            <pane.Component model={pane} />
+          </WrapSidebar>
+        </ElementSelectionContext.Provider>
+      );
+
+      expect(
+        screen.queryByTestId(selectors.components.PanelEditor.Outline.item('Tab level 3 - B'))
+      ).not.toBeInTheDocument();
+
+      await user.type(screen.getByPlaceholderText('Search outline'), 'Tab level 3 - B');
+
+      expect(screen.getByTestId(selectors.components.PanelEditor.Outline.item('Tab level 3 - B'))).toBeInTheDocument();
+      expect(
+        screen.queryByTestId(selectors.components.PanelEditor.Outline.item('Row level 1'))
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByTestId(selectors.components.PanelEditor.Outline.node('Tab level 3 - B'))
+      ).not.toBeInTheDocument();
+    });
+
+    it('shows a no-results message and restores tree view when search is cleared', async () => {
+      const user = userEvent.setup();
+      const scene = buildTestScene();
+      const pane = new DashboardOutline({});
+
+      scene.onEnterEditMode();
+      scene.state.editPane.enableSelection();
+      scene.state.editPane.openPane(pane);
+
+      render(
+        <ElementSelectionContext.Provider value={scene.state.editPane.state.selectionContext}>
+          <WrapSidebar>
+            <pane.Component model={pane} />
+          </WrapSidebar>
+        </ElementSelectionContext.Provider>
+      );
+
+      const searchInput = screen.getByPlaceholderText('Search outline');
+
+      await user.type(searchInput, 'does-not-exist');
+      expect(screen.getByText('No results found for your query')).toBeInTheDocument();
+
+      await user.clear(searchInput);
+      expect(screen.queryByText('No results found for your query')).not.toBeInTheDocument();
+      expect(screen.getByTestId(selectors.components.PanelEditor.Outline.item('Row level 1'))).toBeInTheDocument();
+      expect(
+        screen.queryByTestId(selectors.components.PanelEditor.Outline.item('Tab level 3 - B'))
+      ).not.toBeInTheDocument();
     });
   });
 });
