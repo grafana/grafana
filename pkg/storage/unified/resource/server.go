@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -1148,6 +1149,29 @@ func (s *server) update(ctx context.Context, user claims.AuthInfo, req *resource
 	}
 	if latest.Value == nil {
 		rsp.Error = NewBadRequestError("current value does not exist")
+		return rsp, nil
+	}
+
+	// Skip write events when there is no change to the payload, but still enforce RBAC.
+	if bytes.Equal(req.Value, latest.Value) {
+		key := req.Key
+		a, err := s.access.Check(ctx, user, claims.CheckRequest{
+			Verb:      utils.VerbUpdate,
+			Group:     key.Group,
+			Resource:  key.Resource,
+			Namespace: key.Namespace,
+			Name:      key.Name,
+		}, latest.Folder)
+		if err != nil || !a.Allowed {
+			return &resourcepb.UpdateResponse{
+				Error: &resourcepb.ErrorResult{
+					Message: "not allowed to update resource",
+					Code:    http.StatusForbidden,
+				},
+			}, nil
+		}
+
+		rsp.ResourceVersion = latest.ResourceVersion // No change, return the current RV
 		return rsp, nil
 	}
 
