@@ -31,6 +31,7 @@ func TestIntegrationReadImported_Snapshot(t *testing.T) {
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{
+			featuremgmt.FlagAlertingMultiplePolicies,
 			featuremgmt.FlagAlertingImportAlertmanagerAPI,
 		},
 	})
@@ -45,12 +46,10 @@ func TestIntegrationReadImported_Snapshot(t *testing.T) {
 	require.NoError(t, err)
 
 	identifier := "test-create-get-config"
-	mergeMatchers := "_imported=true"
 
 	headers := map[string]string{
 		"Content-Type":                         "application/yaml",
 		"X-Grafana-Alerting-Config-Identifier": identifier,
-		"X-Grafana-Alerting-Merge-Matchers":    mergeMatchers,
 	}
 
 	amConfig := apimodels.AlertmanagerUserConfig{

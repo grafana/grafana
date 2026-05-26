@@ -521,7 +521,8 @@
         "edit-yaml": "Upravit YAML",
         "save": "Uložit"
       },
-      "error-title": ""
+      "error-title": "",
+      "no-group-success": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "název",
@@ -1163,6 +1164,9 @@
         "rule-viewer-section-extension": "Sekci pro rozšiřující modul prohlížeče pravidel se nepodařilo načíst"
       }
     },
+    "entities": {
+      "group": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "Konfiguraci se nepodařilo aktualizovat:",
       "title-something-went-wrong": "Došlo k chybě"
@@ -1171,10 +1175,14 @@
       "content-show-all-errors": "Zobrazit všechny chyby"
     },
     "errors": {
+      "api-machinery": {
+        "with-causes": ""
+      },
       "failedWith": "{{-config}} selhalo se stavem {{status}}: {{-message}}"
     },
     "evaluate-every-validation-options": {
       "message": {
+        "none-not-allowed": "",
         "required": "Povinné."
       }
     },
@@ -2901,6 +2909,11 @@
         },
         "group-name": "Název hodnotící skupiny",
         "group-text": "Všechna pravidla ve vybrané skupině jsou vyhodnocena každých {{evaluateEvery}}.",
+        "interval-label": "",
+        "mode": {
+          "legacy": "",
+          "new": ""
+        },
         "new-group": "Nová hodnotící skupina",
         "pause": {
           "alerting": "Zapnutím pozastavíte hodnocení tohoto pravidla výstrahy.",
@@ -3212,9 +3225,7 @@
       "deleting": "Odstraňování",
       "text-federated": "Federované",
       "text-provisioned": "Zajištěno",
-      "ungrouped": "Neseskupené",
-      "ungrouped-suffix": "{{ruleName}} (neseskupené)",
-      "unknown-rule": "Neznámé pravidlo"
+      "ungrouped": "Neseskupené"
     },
     "saved-searches": {
       "actions-aria-label": "Akce",
@@ -10966,6 +10977,21 @@
     "name-line-width": "Šířka řádku",
     "name-stacking": "Stackování"
   },
+  "home": {
+    "home-page": {
+      "edition": {
+        "cloud": "",
+        "enterprise": "",
+        "open-source": ""
+      },
+      "greeting": {
+        "afternoon": "",
+        "evening": "",
+        "morning": ""
+      },
+      "placeholder": ""
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "Načítání",
@@ -11463,6 +11489,8 @@
       "clear-search": "Vymazat",
       "close-inline-details": "Zavřít podrobnosti tohoto protokolu",
       "close-sidebar-details": "Zavřít postranní panel s podrobnostmi protokolu",
+      "copy-log-line": "",
+      "copy-log-line-json": "",
       "copy-shortlink": "Kopírovat krátký odkaz",
       "copy-to-clipboard": "Kopírovat do schránky",
       "displayed-fields-section": "Uspořádat zobrazená pole",
@@ -11511,7 +11539,8 @@
     },
     "log-line-menu": {
       "copy-link": "Kopírovat odkaz na řádek protokolu",
-      "copy-log": "Kopírovat řádek protokolu",
+      "copy-log-contents": "",
+      "copy-log-message": "",
       "hide-details": "Zobrazit podrobnosti protokolu",
       "icon-label": "Nabídka protokolu",
       "log-line": "Řádek protokolu",
@@ -15012,9 +15041,6 @@
       "home-dashboard-placeholder": "Výchozí nástěnka",
       "language-preference-label": "Jazyk",
       "language-preference-placeholder": "Vyberte jazyk",
-      "locale-preference-description": "Pro zobrazení odpovídajícího formátu data, času a čísla vyberte svou oblast",
-      "locale-preference-label": "Formát oblasti",
-      "locale-preference-placeholder": "Vyberte region",
       "theme-description": "Baví vás experimentální motivy? Řekněte nám, co byste <2>tady uvítali.</2>",
       "theme-label": "Motiv rozhraní",
       "week-start-label": "Začátek týdne"
@@ -15316,6 +15342,8 @@
     },
     "support-bundles-unconnected": {
       "created-on": "Vytvořeno",
+      "deprecation-warning-message": "",
+      "deprecation-warning-title": "",
       "download": "Stáhnout",
       "expires": "Vyprší",
       "requested-by": "Žadatel:",
@@ -15716,8 +15744,8 @@
     },
     "legend": {
       "category": "Legenda",
-      "description-faceted-filter": "Zobrazit filtr viditelnosti řad na základě štítků",
-      "name-faceted-filter": "Fasetová filtrace"
+      "description-faceted-filter": "",
+      "name-faceted-filter": ""
     },
     "line-style-editor": {
       "line-fill-options": {
@@ -16207,7 +16235,9 @@
       "description": {
         "group-by-field-value": "Seskupit data podle hodnoty pole a vytvořit vnořené tabulky se seskupenými daty."
       },
+      "description-expand-nested-rows": "",
       "description-show-field-names": "Pokud je povoleno, vnořené tabulky zobrazí názvy polí jako záhlaví tabulky",
+      "label-expand-nested-rows-by-default": "",
       "label-show-field-names-in-nested-tables": "Zobrazit názvy polí ve vnořených tabulkách",
       "name": {
         "group-to-nested-tables": "Seskupit do vnořených tabulek"
