@@ -16,6 +16,8 @@ import { refetchChildren } from 'app/features/browse-dashboards/state/actions';
 import { type RepoType } from 'app/features/provisioning/Wizard/types';
 import { useDispatch } from 'app/types/store';
 
+import { getRepoFileUrl } from '../utils/git';
+
 import { PushSuccessMessage } from './PushSuccessMessage';
 import { useLastBranch } from './useLastBranch';
 
@@ -123,12 +125,24 @@ export function useProvisionedRequestHandler<T>({
       // which navigates to a preview page with its own PR banner)
       if (workflow !== 'branch') {
         const branch = ref || selectedBranch || repository?.branch;
-        const repoURL = urls?.repositoryURL || repository?.url;
+        // Link to the configured path (e.g. /tree/main/dashboards) so users
+        // land where their resources live, not the repo root.
+        const linkUrl =
+          (repository?.path
+            ? getRepoFileUrl({
+                repoType: repository.type,
+                url: repository.url,
+                branch,
+                filePath: repository.path.endsWith('/') ? repository.path : `${repository.path}/`,
+              })
+            : undefined) ||
+          urls?.repositoryURL ||
+          repository?.url;
 
         if (branch) {
           // Uses dispatch(notifyApp(...)) instead of getAppEvents().publish() because AlertPayload only accepts strings
           // and notifyApp supports a React component for rendering the branch name as a clickable link.
-          const component = createElement(PushSuccessMessage, { branch, repositoryURL: repoURL });
+          const component = createElement(PushSuccessMessage, { branch, url: linkUrl });
           dispatch(notifyApp(createSuccessNotification('', '', undefined, component)));
         } else {
           const message = successMessage || t('provisioned-request.saved-success', 'Changes saved successfully');

@@ -288,5 +288,16 @@ describe('useGetResourceRepositoryView', () => {
       expect(result.current.repository).toBeUndefined();
       expect(result.current.isInstanceManaged).toBe(false);
     });
+
+    it('returns instance repo when both name and folderName are empty (root import)', () => {
+      const instanceRepo = repoView({ name: 'instance-repo', target: 'instance' });
+      setupMocks({ settingsItems: [instanceRepo] });
+
+      const { result } = renderHook(() => useGetResourceRepositoryView({ folderName: '' }));
+
+      expect(result.current.status).toBe(RepoViewStatus.Ready);
+      expect(result.current.repository).toBe(instanceRepo);
+      expect(result.current.isInstanceManaged).toBe(true);
+    });
   });
 });

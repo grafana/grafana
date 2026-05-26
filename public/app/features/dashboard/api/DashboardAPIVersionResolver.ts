@@ -12,7 +12,7 @@ export interface ResolvedDashboardVersions {
   v2: DashboardV2Version;
 }
 
-const DASHBOARD_API_GROUP = 'dashboard.grafana.app';
+export const DASHBOARD_API_GROUP = 'dashboard.grafana.app';
 const BETA_V1: DashboardV1Version = 'v1beta1';
 const BETA_V2: DashboardV2Version = 'v2beta1';
 
