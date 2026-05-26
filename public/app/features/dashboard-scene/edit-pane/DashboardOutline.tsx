@@ -50,7 +50,7 @@ export class DashboardOutline extends SceneObjectBase<DashboardOutlineState> {
     }
   }
 
-  public clone(withState?: Partial<SceneObjectState>): this {
+  public clone(withState?: Partial<DashboardOutlineState>): this {
     const cloned = super.clone({ ...withState, collapsedState: this.state.collapsedState });
     return cloned;
   }
