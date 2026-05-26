@@ -356,6 +356,8 @@ Selecting the **Auto** interval schedules a refresh based on the query time rang
 
 {{< docs/shared lookup="dashboards/time-range-URLs.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
+<!-- TODO: Maybe delete this section -->
+
 ## Filter dashboard data
 
 After you've [added a filter](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/#add-ad-hoc-filters) in the dashboard settings, you can create label/value filter pairs on the dashboard.
