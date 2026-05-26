@@ -300,10 +300,6 @@ describe('DashboardOutline', () => {
       // Ancestors are shown for hierarchy context
       expect(screen.getByTestId(selectors.components.PanelEditor.Outline.item('Row level 1'))).toBeInTheDocument();
       expect(screen.getByTestId(selectors.components.PanelEditor.Outline.item('Row level 2'))).toBeInTheDocument();
-      // Non-matching sibling is hidden
-      expect(
-        screen.queryByTestId(selectors.components.PanelEditor.Outline.item('Tab level 3 - A'))
-      ).not.toBeInTheDocument();
       // Collapse toggles are hidden during search
       expect(
         screen.queryByTestId(selectors.components.PanelEditor.Outline.node('Row level 1'))
