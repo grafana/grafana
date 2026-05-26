@@ -5,6 +5,7 @@ import { useSearchParams } from 'react-router-dom-v5-compat';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Alert, TextLink, useStyles2 } from '@grafana/ui';
+import { CustomDashboardTemplateInteractions } from 'app/features/dashboard-scene/analytics/dashboard-templates/main';
 import { getDashboardTemplateExtension } from 'app/features/dashboard-scene/settings/enterprise-components/DashboardTemplateExtension';
 
 export function DashboardTemplateSavedBanner() {
@@ -31,6 +32,9 @@ export function DashboardTemplateSavedBanner() {
   };
 
   const onOpenGallery = () => {
+    CustomDashboardTemplateInteractions.savedBannerGalleryClicked({
+      templateUid: dashboardTemplateUid ?? '',
+    });
     searchParams.set('templateDashboards', 'true');
     setSearchParams(searchParams);
   };

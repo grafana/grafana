@@ -1,12 +1,15 @@
 import { store } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type SceneGridItemLike } from '@grafana/scenes';
 import {
   isTemplateDashboardAssistantEnabled,
   isSuggestedDashboardAssistantEnabled,
 } from 'app/features/dashboard/dashgrid/DashboardLibrary/utils/assistantHelpers';
 import { getDatasourceTypes } from 'app/features/dashboard/dashgrid/DashboardLibrary/utils/dashboardLibraryHelpers';
+import { DASHBOARD_LIBRARY_ROUTES } from 'app/features/dashboard/dashgrid/types';
 
+import { CustomDashboardTemplateInteractions } from '../analytics/dashboard-templates/main';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
@@ -90,6 +93,17 @@ export async function trackDashboardSceneCreatedOrSaved(
           ...dashboardLibraryProperties,
         }),
   });
+
+  if (getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaOrgDashboardTemplates, false)) {
+    const isOnTemplateRoute = window.location.pathname === DASHBOARD_LIBRARY_ROUTES.Template;
+    const templateUid = new URLSearchParams(window.location.search).get('dashboardTemplateUid');
+    if (isOnTemplateRoute && templateUid) {
+      CustomDashboardTemplateInteractions.dashboardSavedFromTemplate({
+        dashboardUid: dashboard.state.uid ?? '',
+        templateUid,
+      });
+    }
+  }
 }
 
 export function trackDropItemCrossLayout(gridItem: SceneGridItemLike) {

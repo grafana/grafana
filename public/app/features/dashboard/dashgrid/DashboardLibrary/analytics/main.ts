@@ -7,6 +7,7 @@ import {
   type CompatibilityCheckTriggeredProperties,
   type CreateFromScratchClickedProperties,
   type EntryPointClickedProperties,
+  type FiltersAppliedProperties,
   type ItemClickedProperties,
   type LoadedProperties,
   type MappingFormCompletedProperties,
@@ -48,6 +49,8 @@ export const NewDashboardLibraryInteractions = {
   compatibilityCheckCompleted: newDashboardLibraryInteraction<CompatibilityCheckCompletedProperties>(
     'compatibility_check_completed'
   ),
+  /** Fired when the user changes a filter (tags / creators / sort) in a library view. */
+  filtersApplied: newDashboardLibraryInteraction<FiltersAppliedProperties>('filters_applied'),
 };
 
 /**
@@ -65,6 +68,17 @@ export const NewTemplateDashboardInteractions = {
     const isDashboardTemplatesAssistantEnabled = await isTemplateDashboardAssistantEnabled();
     NewDashboardLibraryInteractions.itemClicked({ ...properties, isDashboardTemplatesAssistantEnabled });
   },
+};
+
+/**
+ * Dashboard Library events scoped to the Custom Dashboard Templates variant.
+ *
+ * Reuses the dashboard_library namespace because the gallery surface, search, and
+ * item-click funnel are shared with the other variants — events are differentiated
+ * by `contentKind: 'custom_dashboard_template'` rather than by event name.
+ */
+export const NewCustomDashboardTemplateInteractions = {
+  ...NewDashboardLibraryInteractions,
 };
 
 /**

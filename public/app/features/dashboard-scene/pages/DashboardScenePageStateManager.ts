@@ -40,6 +40,7 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { initializeReportRenderReadinessObserver } from 'app/features/dashboard/services/ReportRenderReadinessObserver';
 import { initializeScenePerformanceLogger } from 'app/features/dashboard/services/ScenePerformanceLogger';
 import { emitDashboardViewEvent } from 'app/features/dashboard/state/analyticsProcessor';
+import { CustomDashboardTemplateInteractions } from 'app/features/dashboard-scene/analytics/dashboard-templates/main';
 import { transformTemplateToSaveModelSchemaV2 } from 'app/features/dashboard-scene/utils/dashboardTemplateEnvelope';
 import { trackDashboardSceneLoaded } from 'app/features/dashboard-scene/utils/tracking';
 import { interpolateV1Dashboard } from 'app/features/manage-dashboards/import/utils/inputs';
@@ -1170,6 +1171,9 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     const resourceVersion = response.metadata?.resourceVersion;
 
     if (editMode) {
+      CustomDashboardTemplateInteractions.editOpened({
+        templateUid: dashboardTemplateUid,
+      });
       // Edit-template flow: mark the scene as editing an org template so downstream UI can hide
       // irrelevant actions.
       // canEdit and canSave will change in the future with specific RBAC permissions.
@@ -1181,6 +1185,10 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
         canSave: true,
       });
     }
+
+    CustomDashboardTemplateInteractions.browsed({
+      templateUid: dashboardTemplateUid,
+    });
 
     // Use-template flow: The embedded dashboard spec is hydrated
     // into a fresh scene so the user can "Save as" a brand-new dashboard. Do NOT mark the
