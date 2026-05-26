@@ -2,17 +2,14 @@ package dashboard
 
 import (
 	"context"
-	"errors"
+	"strings"
 	"testing"
-	"time"
 
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/admission"
 	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 
@@ -89,7 +86,7 @@ func TestDashboardsAPIBuilderValidateVariable(t *testing.T) {
 
 func TestDashboardsAPIBuilderValidateVariableCreateRequiresFolderAccess(t *testing.T) {
 	folderUID := "folder-a"
-	v := newCustomVariable("region", "region")
+	v := newCustomVariable("region", "")
 	v.SetAnnotations(map[string]string{utils.AnnoKeyFolder: folderUID})
 
 	ctx := k8srequest.WithNamespace(context.Background(), "stacks-1")
@@ -127,7 +124,7 @@ func TestDashboardsAPIBuilderValidateVariableCreateRequiresFolderAccess(t *testi
 
 func TestDashboardsAPIBuilderValidateVariableCreateMissingFolderHandlerReturnsError(t *testing.T) {
 	folderUID := "folder-a"
-	v := newCustomVariable("region", "region")
+	v := newCustomVariable("region", "")
 	v.SetAnnotations(map[string]string{utils.AnnoKeyFolder: folderUID})
 
 	ctx := k8srequest.WithNamespace(context.Background(), "stacks-1")
@@ -158,7 +155,29 @@ func TestDashboardsAPIBuilderValidateVariableCreateMissingFolderHandlerReturnsEr
 	require.Contains(t, err.Error(), "folder client handler is not configured")
 }
 
-func TestDashboardsAPIBuilderValidateVariableUpdateScopeChangeRequiresFolderAccess(t *testing.T) {
+func TestDashboardsAPIBuilderValidateVariableCreateMetadataNameContract(t *testing.T) {
+	ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{OrgRole: identity.RoleEditor, OrgID: 1})
+	builder := &DashboardsAPIBuilder{}
+
+	t.Run("name may be omitted and derived during mutation", func(t *testing.T) {
+		v := newCustomVariable("status", "")
+
+		err := builder.Validate(ctx, buildVariableAttributesForOp(admission.Create, v, nil), nil)
+		require.NoError(t, err)
+	})
+
+	t.Run("explicit name must match derived value", func(t *testing.T) {
+		v := newCustomVariable("status", "status5")
+		v.SetAnnotations(map[string]string{utils.AnnoKeyFolder: "abcdef"})
+
+		err := builder.Validate(ctx, buildVariableAttributesForOp(admission.Create, v, nil), nil)
+		require.Error(t, err)
+		require.True(t, apierrors.IsBadRequest(err))
+		require.Contains(t, err.Error(), `expected "status--abcdef"`)
+	})
+}
+
+func TestDashboardsAPIBuilderValidateVariableUpdateScopeChangeRejected(t *testing.T) {
 	oldVariable := newCustomVariable("region", "region")
 	newVariable := newCustomVariable("region", "region")
 	newVariable.SetAnnotations(map[string]string{utils.AnnoKeyFolder: "folder-a"})
@@ -169,22 +188,18 @@ func TestDashboardsAPIBuilderValidateVariableUpdateScopeChangeRequiresFolderAcce
 		OrgID:   1,
 	})
 
-	folderHandler := &variableFolderAccessHandler{
-		forbiddenAccessSubresource: true,
-	}
-
 	builder := &DashboardsAPIBuilder{
-		folderClientProvider: &staticHandlerProvider{handler: folderHandler},
+		folderClientProvider: &staticHandlerProvider{handler: &variableFolderAccessHandler{}},
 	}
 
 	err := builder.Validate(ctx, buildVariableAttributesForOp(admission.Update, newVariable, oldVariable), nil)
 
 	require.Error(t, err)
-	require.True(t, apierrors.IsForbidden(err))
-	require.True(t, folderHandler.accessSubresourceChecked)
+	require.True(t, apierrors.IsBadRequest(err))
+	require.Contains(t, err.Error(), "folder scope cannot be changed")
 }
 
-func TestDashboardsAPIBuilderValidateVariableUpdateScopeChangeToGlobalSkipsFolderAccessCheck(t *testing.T) {
+func TestDashboardsAPIBuilderValidateVariableUpdateScopeChangeToGlobalRejected(t *testing.T) {
 	oldVariable := newCustomVariable("region", "region")
 	oldVariable.SetAnnotations(map[string]string{utils.AnnoKeyFolder: "folder-a"})
 	newVariable := newCustomVariable("region", "region")
@@ -195,18 +210,36 @@ func TestDashboardsAPIBuilderValidateVariableUpdateScopeChangeToGlobalSkipsFolde
 		OrgID:   1,
 	})
 
-	folderHandler := &variableFolderAccessHandler{
-		forbiddenAccessSubresource: true,
-	}
-
 	builder := &DashboardsAPIBuilder{
-		folderClientProvider: &staticHandlerProvider{handler: folderHandler},
+		folderClientProvider: &staticHandlerProvider{handler: &variableFolderAccessHandler{}},
 	}
 
 	err := builder.Validate(ctx, buildVariableAttributesForOp(admission.Update, newVariable, oldVariable), nil)
 
-	require.NoError(t, err)
-	require.False(t, folderHandler.accessSubresourceChecked)
+	require.Error(t, err)
+	require.True(t, apierrors.IsBadRequest(err))
+	require.Contains(t, err.Error(), "folder scope cannot be changed")
+}
+
+func TestDashboardsAPIBuilderValidateVariableUpdateRenameRejected(t *testing.T) {
+	oldVariable := newCustomVariable("region", "region")
+	newVariable := newCustomVariable("status", "region")
+
+	ctx := k8srequest.WithNamespace(context.Background(), "stacks-1")
+	ctx = identity.WithRequester(ctx, &identity.StaticRequester{
+		OrgRole: identity.RoleEditor,
+		OrgID:   1,
+	})
+
+	builder := &DashboardsAPIBuilder{
+		folderClientProvider: &staticHandlerProvider{handler: &variableFolderAccessHandler{}},
+	}
+
+	err := builder.Validate(ctx, buildVariableAttributesForOp(admission.Update, newVariable, oldVariable), nil)
+
+	require.Error(t, err)
+	require.True(t, apierrors.IsBadRequest(err))
+	require.Contains(t, err.Error(), "spec.spec.name cannot be changed")
 }
 
 func TestVariableMutationPermissionsByRole(t *testing.T) {
@@ -266,290 +299,41 @@ func newCustomVariable(variableName, metadataName string) *dashv2beta1.Variable 
 	}
 }
 
-func TestVariableNameUniquenessHelpers(t *testing.T) {
-	t.Run("list options include folder label only for folder scope", func(t *testing.T) {
-		globalScope := buildVariableNameListOptions("region", "")
-		require.Equal(t, "spec.spec.name=region", globalScope.FieldSelector)
-		require.Empty(t, globalScope.LabelSelector)
-
-		folderScope := buildVariableNameListOptions("region", "folder-a")
-		require.Equal(t, "spec.spec.name=region", folderScope.FieldSelector)
-		require.Equal(t, variableFolderLabelKey+"=folder-a", folderScope.LabelSelector)
+func TestDeriveVariableMetadataName(t *testing.T) {
+	t.Run("global scope uses spec name", func(t *testing.T) {
+		require.Equal(t, "status", deriveVariableMetadataName("status", ""))
 	})
-
-	t.Run("global scope ignores folder-scoped matches", func(t *testing.T) {
-		list := &unstructured.UnstructuredList{
-			Items: []unstructured.Unstructured{
-				{
-					Object: map[string]any{
-						"metadata": map[string]any{
-							"name": "folder-only",
-							"labels": map[string]any{
-								variableFolderLabelKey: "folder-a",
-							},
-						},
-					},
-				},
-			},
-		}
-
-		require.Empty(t, findVariableNameConflict(list, "", ""))
-	})
-
-	t.Run("folder scope checks only same folder and excludes current object", func(t *testing.T) {
-		list := &unstructured.UnstructuredList{
-			Items: []unstructured.Unstructured{
-				{
-					Object: map[string]any{
-						"metadata": map[string]any{
-							"name": "same-folder-conflict",
-							"labels": map[string]any{
-								variableFolderLabelKey: "folder-a",
-							},
-						},
-					},
-				},
-				{
-					Object: map[string]any{
-						"metadata": map[string]any{
-							"name": "different-folder",
-							"labels": map[string]any{
-								variableFolderLabelKey: "folder-b",
-							},
-						},
-					},
-				},
-			},
-		}
-
-		require.Equal(t, "same-folder-conflict", findVariableNameConflict(list, "folder-a", ""))
-		require.Empty(t, findVariableNameConflict(list, "folder-a", "same-folder-conflict"))
+	t.Run("folder scope appends folder uid with delimiter", func(t *testing.T) {
+		require.Equal(t, "status--folder-a", deriveVariableMetadataName("status", "folder-a"))
 	})
 }
 
-func TestPickVariableWinner(t *testing.T) {
-	mkItem := func(name, uid string, created time.Time) unstructured.Unstructured {
-		return unstructured.Unstructured{
-			Object: map[string]any{
-				"metadata": map[string]any{
-					"name":              name,
-					"uid":               uid,
-					"creationTimestamp": metav1.NewTime(created).Format(time.RFC3339),
-				},
-			},
-		}
-	}
-
-	t.Run("single item is its own winner", func(t *testing.T) {
-		base := time.Date(2026, 1, 1, 10, 0, 0, 0, time.UTC)
-		items := []unstructured.Unstructured{mkItem("only", "uid-1", base)}
-		winner := pickVariableWinner(items)
-		require.Equal(t, "only", winner.GetName())
+func TestValidateVariableMetadataName(t *testing.T) {
+	t.Run("empty metadata name is allowed and will be derived by mutation", func(t *testing.T) {
+		require.NoError(t, validateVariableMetadataName("", "status", "folder-a"))
 	})
-
-	t.Run("earliest creationTimestamp wins", func(t *testing.T) {
-		base := time.Date(2026, 1, 1, 10, 0, 0, 0, time.UTC)
-		items := []unstructured.Unstructured{
-			mkItem("second", "uid-b", base.Add(5*time.Second)),
-			mkItem("first", "uid-a", base),
-			mkItem("third", "uid-c", base.Add(10*time.Second)),
-		}
-		winner := pickVariableWinner(items)
-		require.Equal(t, "first", winner.GetName())
+	t.Run("matching folder scoped metadata name is accepted", func(t *testing.T) {
+		require.NoError(t, validateVariableMetadataName("status--folder-a", "status", "folder-a"))
 	})
-
-	t.Run("ties broken by lowest UID lexicographically", func(t *testing.T) {
-		base := time.Date(2026, 1, 1, 10, 0, 0, 0, time.UTC)
-		items := []unstructured.Unstructured{
-			mkItem("zoo", "uid-zzz", base),
-			mkItem("alpha", "uid-aaa", base),
-			mkItem("mid", "uid-mmm", base),
-		}
-		winner := pickVariableWinner(items)
-		require.Equal(t, "uid-aaa", string(winner.GetUID()))
+	t.Run("matching global metadata name is accepted", func(t *testing.T) {
+		require.NoError(t, validateVariableMetadataName("status", "status", ""))
 	})
-
-	t.Run("timestamp beats UID when not tied", func(t *testing.T) {
-		base := time.Date(2026, 1, 1, 10, 0, 0, 0, time.UTC)
-		items := []unstructured.Unstructured{
-			mkItem("late-low-uid", "uid-aaa", base.Add(time.Second)),
-			mkItem("early-high-uid", "uid-zzz", base),
-		}
-		winner := pickVariableWinner(items)
-		require.Equal(t, "early-high-uid", winner.GetName())
-	})
-}
-
-func TestFilterVariablesInScope(t *testing.T) {
-	list := &unstructured.UnstructuredList{
-		Items: []unstructured.Unstructured{
-			makeVariableListItem("global-a", "uid-global-a", "", time.Time{}),
-			makeVariableListItem("folder-a-1", "uid-f-a-1", "folder-a", time.Time{}),
-			makeVariableListItem("folder-b-1", "uid-f-b-1", "folder-b", time.Time{}),
-		},
-	}
-
-	t.Run("global scope keeps only items without a folder label", func(t *testing.T) {
-		items := filterVariablesInScope(list, "")
-		require.Len(t, items, 1)
-		require.Equal(t, "global-a", items[0].GetName())
-	})
-
-	t.Run("folder scope keeps only items in the same folder", func(t *testing.T) {
-		items := filterVariablesInScope(list, "folder-a")
-		require.Len(t, items, 1)
-		require.Equal(t, "folder-a-1", items[0].GetName())
-	})
-
-	t.Run("nil list returns nil", func(t *testing.T) {
-		require.Nil(t, filterVariablesInScope(nil, ""))
-	})
-}
-
-func TestResolveVariableNameConflictAfterCreate(t *testing.T) {
-	ctx := context.Background()
-	createdTime := time.Date(2026, 1, 1, 10, 0, 0, 0, time.UTC)
-
-	t.Run("returns false when no duplicate exists", func(t *testing.T) {
-		created := newCreatedVariable("region", "region-123", "uid-created", "42", "", createdTime)
-		handler := &client.MockK8sHandler{}
-		handler.On("List", mock.Anything, int64(1), mock.MatchedBy(matchListOptions("region", "", "42"))).
-			Return(&unstructured.UnstructuredList{
-				Items: []unstructured.Unstructured{
-					makeVariableListItem("region-123", "uid-created", "", createdTime),
-				},
-			}, nil).Once()
-
-		lost, err := resolveVariableNameConflictAfterCreate(ctx, &staticHandlerProvider{handler: handler}, created)
-		require.NoError(t, err)
-		require.False(t, lost)
-		handler.AssertExpectations(t)
-	})
-
-	t.Run("returns false when we are the tie-break winner", func(t *testing.T) {
-		created := newCreatedVariable("region", "region-created", "uid-aaa", "42", "", createdTime)
-		handler := &client.MockK8sHandler{}
-		handler.On("List", mock.Anything, int64(1), mock.Anything).
-			Return(&unstructured.UnstructuredList{
-				Items: []unstructured.Unstructured{
-					makeVariableListItem("region-created", "uid-aaa", "", createdTime),
-					makeVariableListItem("region-other", "uid-zzz", "", createdTime.Add(time.Second)),
-				},
-			}, nil).Once()
-
-		lost, err := resolveVariableNameConflictAfterCreate(ctx, &staticHandlerProvider{handler: handler}, created)
-		require.NoError(t, err)
-		require.False(t, lost)
-	})
-
-	t.Run("returns true when we lost to an earlier creationTimestamp", func(t *testing.T) {
-		created := newCreatedVariable("region", "region-created", "uid-later", "42", "", createdTime.Add(time.Second))
-		handler := &client.MockK8sHandler{}
-		handler.On("List", mock.Anything, int64(1), mock.Anything).
-			Return(&unstructured.UnstructuredList{
-				Items: []unstructured.Unstructured{
-					makeVariableListItem("region-created", "uid-later", "", createdTime.Add(time.Second)),
-					makeVariableListItem("region-winner", "uid-winner", "", createdTime),
-				},
-			}, nil).Once()
-
-		lost, err := resolveVariableNameConflictAfterCreate(ctx, &staticHandlerProvider{handler: handler}, created)
-		require.NoError(t, err)
-		require.True(t, lost)
-	})
-
-	t.Run("folder-scoped duplicates ignore global-scope entries", func(t *testing.T) {
-		created := newCreatedVariable("region", "region-f", "uid-f", "42", "folder-a", createdTime)
-		handler := &client.MockK8sHandler{}
-		handler.On("List", mock.Anything, int64(1), mock.Anything).
-			Return(&unstructured.UnstructuredList{
-				Items: []unstructured.Unstructured{
-					makeVariableListItem("region-f", "uid-f", "folder-a", createdTime),
-					makeVariableListItem("region-global", "uid-g", "", createdTime.Add(-time.Hour)),
-					makeVariableListItem("region-other-folder", "uid-o", "folder-b", createdTime.Add(-time.Hour)),
-				},
-			}, nil).Once()
-
-		lost, err := resolveVariableNameConflictAfterCreate(ctx, &staticHandlerProvider{handler: handler}, created)
-		require.NoError(t, err)
-		require.False(t, lost, "only the folder-a entry is in scope, so we are the sole survivor")
-	})
-
-	t.Run("list error is surfaced", func(t *testing.T) {
-		created := newCreatedVariable("region", "region-x", "uid-x", "42", "", createdTime)
-		handler := &client.MockK8sHandler{}
-		handler.On("List", mock.Anything, int64(1), mock.Anything).
-			Return(nil, errors.New("kaboom")).Once()
-
-		_, err := resolveVariableNameConflictAfterCreate(ctx, &staticHandlerProvider{handler: handler}, created)
+	t.Run("mismatch returns actionable folder-scoped error", func(t *testing.T) {
+		err := validateVariableMetadataName("status5", "status", "abcdef")
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "post-create uniqueness check")
+		require.Contains(t, err.Error(), `expected "status--abcdef"`)
+		require.Contains(t, err.Error(), "omit metadata.name")
 	})
-
-	t.Run("nil provider returns false without error", func(t *testing.T) {
-		created := newCreatedVariable("region", "region-x", "uid-x", "42", "", createdTime)
-		lost, err := resolveVariableNameConflictAfterCreate(ctx, nil, created)
-		require.NoError(t, err)
-		require.False(t, lost)
+	t.Run("mismatch returns actionable global error", func(t *testing.T) {
+		err := validateVariableMetadataName("status--abcdef", "status", "")
+		require.Error(t, err)
+		require.Contains(t, err.Error(), `expected "status"`)
 	})
-}
-
-// newCreatedVariable builds a *dashv2beta1.Variable resembling the object returned
-// by registry.Store.Create: metadata is fully populated including namespace,
-// UID, resourceVersion, and (optionally) folder annotation + label.
-func newCreatedVariable(specName, metadataName, uid, resourceVersion, folderUID string, created time.Time) *dashv2beta1.Variable {
-	v := newCustomVariable(specName, metadataName)
-	v.SetNamespace("stacks-1")
-	v.SetUID(types.UID(uid))
-	v.SetResourceVersion(resourceVersion)
-	v.SetCreationTimestamp(metav1.NewTime(created))
-	if folderUID != "" {
-		v.SetAnnotations(map[string]string{utils.AnnoKeyFolder: folderUID})
-		v.SetLabels(map[string]string{variableFolderLabelKey: folderUID})
-	}
-	return v
-}
-
-// makeVariableListItem builds an unstructured list entry shaped like the one
-// a List call would return for a Variable. Only the fields consulted by the
-// resolver are populated.
-func makeVariableListItem(name, uid, folderUID string, created time.Time) unstructured.Unstructured {
-	meta := map[string]any{
-		"name": name,
-		"uid":  uid,
-	}
-	if !created.IsZero() {
-		meta["creationTimestamp"] = metav1.NewTime(created).Format(time.RFC3339)
-	}
-	if folderUID != "" {
-		meta["labels"] = map[string]any{
-			variableFolderLabelKey: folderUID,
-		}
-	}
-	return unstructured.Unstructured{Object: map[string]any{"metadata": meta}}
-}
-
-// matchListOptions asserts the field selector and (if set) resourceVersion
-// floor passed to the post-create list. It also permits any folder label
-// selector so tests can share it across scope variants.
-func matchListOptions(specName, folderUID, resourceVersion string) func(metav1.ListOptions) bool {
-	return func(opts metav1.ListOptions) bool {
-		if opts.FieldSelector != "spec.spec.name="+specName {
-			return false
-		}
-		if folderUID != "" && opts.LabelSelector != variableFolderLabelKey+"="+folderUID {
-			return false
-		}
-		if resourceVersion != "" {
-			if opts.ResourceVersion != resourceVersion {
-				return false
-			}
-			if opts.ResourceVersionMatch != metav1.ResourceVersionMatchNotOlderThan {
-				return false
-			}
-		}
-		return true
-	}
+	t.Run("derived name longer than max length is rejected", func(t *testing.T) {
+		tooLong := strings.Repeat("x", variableMetadataNameMaxLength)
+		err := validateVariableMetadataName("", "status", tooLong)
+		require.ErrorContains(t, err, "derived metadata.name exceeds maximum length")
+	})
 }
 
 func buildVariableAttributesForOp(op admission.Operation, newVariable, oldVariable *dashv2beta1.Variable) admission.Attributes {
