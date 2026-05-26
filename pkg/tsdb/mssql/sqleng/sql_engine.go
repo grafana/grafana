@@ -460,7 +460,7 @@ func (e *DataSourceHandler) processResponse(qm *dataQueryModel, rows *sql.Rows, 
 				}
 			}
 		}
-		if qm.FillMissing != nil {
+		if qm.FillMissing != nil && qm.Interval > 0 {
 			frame = e.applyFill(frame, qm, logger)
 		}
 	}

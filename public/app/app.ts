@@ -39,6 +39,7 @@ import {
   setHelpNavItemHook,
   setFolderPicker,
   setCorrelationsService,
+  setPanelScreenshotService,
   setPluginFunctionsHook,
   setMegaMenuOpenHook,
 } from '@grafana/runtime';
@@ -92,6 +93,7 @@ import { DashboardLevelTimeMacro } from './features/dashboard-scene/scene/Dashbo
 import { initGrafanaLive } from './features/live';
 import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
 import { PanelRenderer } from './features/panel/components/PanelRenderer';
+import { PanelScreenshotServiceImpl } from './features/panel-screenshot/PanelScreenshotServiceImpl';
 import { DatasourceSrv } from './features/plugins/datasource_srv';
 import {
   getObservablePluginComponents,
@@ -153,18 +155,11 @@ export class GrafanaApp {
         }
       }
 
-      const regionalFormat = config.featureToggles.localeFormatPreference
-        ? config.regionalFormat
-        : contextSrv.user.language;
-
-      const initI18nPromise = initializeI18n(
-        {
-          language: contextSrv.user.language,
-          ns: NAMESPACES,
-          module: loadTranslations,
-        },
-        regionalFormat
-      );
+      const initI18nPromise = initializeI18n({
+        language: contextSrv.user.language,
+        ns: NAMESPACES,
+        module: loadTranslations,
+      });
 
       // This is a placeholder so we can put a 'comment' in the message json files.
       // Starts with an underscore so it's sorted to the top of the file. Even though it is in a comment the following line is still extracted
@@ -181,7 +176,7 @@ export class GrafanaApp {
       // This needs to be done after the `initEchoSrv` since it is being used under the hood.
       startMeasure('frontend_app_init');
 
-      setLocale(config.regionalFormat);
+      setLocale(contextSrv.user.language);
       setWeekStart(contextSrv.user.weekStart);
       setPanelRenderer(PanelRenderer);
       setPluginPage(PluginPage);
@@ -189,6 +184,7 @@ export class GrafanaApp {
       setPanelDataErrorView(PanelDataErrorView);
       setLocationSrv(locationService);
       setCorrelationsService(new CorrelationsService());
+      setPanelScreenshotService(new PanelScreenshotServiceImpl());
       setEmbeddedDashboard(EmbeddedDashboardLazy);
       setTimeZoneResolver(() => contextSrv.user.timezone);
       initGrafanaLive();
@@ -259,9 +255,9 @@ export class GrafanaApp {
 
       if (contextSrv.user.orgRole !== '') {
         preloadPlugins(await getAppPluginsToPreload());
+        getPluginExtensionRegistries();
       }
 
-      getPluginExtensionRegistries();
       await getPanelPluginMetas();
 
       setHelpNavItemHook(useHelpNode);

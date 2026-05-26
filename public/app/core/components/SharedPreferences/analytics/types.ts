@@ -22,10 +22,3 @@ export interface LanguageChanged extends EventProperty {
   /** The language the user switched to. */
   toLanguage: string;
 }
-
-export interface RegionalFormatChanged extends EventProperty {
-  /** Whether the preference being changed belongs to an org, team, or individual user. */
-  preferenceType: 'org' | 'team' | 'user';
-  /** The regional format the user switched to. */
-  toRegionalFormat: string;
-}

@@ -2,6 +2,7 @@ package search
 
 import (
 	"context"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"os"
@@ -9,7 +10,9 @@ import (
 	"time"
 
 	"github.com/blevesearch/bleve/v2"
+	"github.com/blevesearch/bleve/v2/util"
 	"github.com/oklog/ulid/v2"
+	"go.etcd.io/bbolt"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	oteltrace "go.opentelemetry.io/otel/trace"
@@ -73,7 +76,7 @@ func (b *bleveBackend) uploadSnapshot(ctx context.Context, key resource.Namespac
 	// optimisation, not a correctness check.
 	if interval := b.opts.Snapshot.UploadInterval; interval > 0 {
 		notOlderThan := time.Now().Add(-interval)
-		k, _, err := findFreshSnapshotByUploadTime(ctx, b.opts.Snapshot.Store, key, notOlderThan, b.opts.BuildVersion)
+		k, _, err := findFreshSnapshotByUploadTime(ctx, b.opts.Snapshot.Store, key, notOlderThan, b.opts.BuildVersion, b.maxSupportedIndexFormat, logger)
 		if err != nil {
 			logger.Warn("Snapshot upload-time probe failed; proceeding with upload", "err", err)
 		} else if k != (ulid.ULID{}) {
@@ -128,6 +131,11 @@ func (b *bleveBackend) snapshotCopyAndUpload(ctx context.Context, key resource.N
 		return ulid.ULID{}, 0, err
 	}
 
+	indexFormat, err := readSnapshotIndexFormat(stagingDir)
+	if err != nil {
+		return ulid.ULID{}, 0, fmt.Errorf("reading snapshot index format: %w", err)
+	}
+
 	// Read RV/build info from the staged snapshot instead of the live index so
 	// the uploaded metadata matches the copied snapshot contents even if the live
 	// index advanced while CopyTo was running.
@@ -150,6 +158,7 @@ func (b *bleveBackend) snapshotCopyAndUpload(ctx context.Context, key resource.N
 
 	meta := IndexMeta{
 		BuildVersion:          bi.BuildVersion,
+		IndexFormat:           indexFormat,
 		LatestResourceVersion: rv,
 	}
 	// bi.BuildTime is the original index creation time; it survives reopens and
@@ -176,6 +185,50 @@ func (b *bleveBackend) snapshotIndex(idx bleve.Index, destDir string) error {
 		return fmt.Errorf("copying index snapshot: %w", err)
 	}
 	return nil
+}
+
+// readSnapshotIndexFormat reads the segment format Bleve persisted for this
+// snapshot. Bleve uses this metadata internally when opening scorch snapshots,
+// but does not expose it through the public Index API.
+func readSnapshotIndexFormat(indexDir string) (string, error) {
+	db, err := bbolt.Open(filepath.Join(indexDir, "store", "root.bolt"), 0, &bbolt.Options{ReadOnly: true, Timeout: time.Second})
+	if err != nil {
+		return "", err
+	}
+	defer func() { _ = db.Close() }()
+
+	var format string
+	if err := db.View(func(tx *bbolt.Tx) error {
+		snapshots := tx.Bucket(util.BoltSnapshotsBucket)
+		if snapshots == nil {
+			return fmt.Errorf("snapshots bucket missing")
+		}
+		k, _ := snapshots.Cursor().Last()
+		if k == nil {
+			return fmt.Errorf("snapshot metadata missing")
+		}
+		snapshot := snapshots.Bucket(k)
+		if snapshot == nil {
+			return fmt.Errorf("snapshot bucket missing")
+		}
+		meta := snapshot.Bucket(util.BoltMetaDataKey)
+		if meta == nil {
+			return fmt.Errorf("metadata bucket missing")
+		}
+		formatType := string(meta.Get(util.BoltMetaDataSegmentTypeKey))
+		versionBytes := meta.Get(util.BoltMetaDataSegmentVersionKey)
+		if len(versionBytes) < 4 {
+			return fmt.Errorf("segment version missing")
+		}
+		format = indexFormat(formatType, binary.BigEndian.Uint32(versionBytes))
+		if format == "" {
+			return fmt.Errorf("segment format missing")
+		}
+		return nil
+	}); err != nil {
+		return "", err
+	}
+	return format, nil
 }
 
 func (b *bleveBackend) newSnapshotStagingDir(key resource.NamespacedResource) (string, error) {
