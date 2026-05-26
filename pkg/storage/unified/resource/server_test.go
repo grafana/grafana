@@ -1385,7 +1385,7 @@ func TestWatchEventMetricsWithSinceRV(t *testing.T) {
 		"WatchEventLatency should only observe events that arrived after the subscription started")
 }
 
-// TestWatchInitialEventsRespectsItemChecker tests that checker is used for 
+// TestWatchInitialEventsRespectsItemChecker tests that checker is used for
 // initial-events when SendInitialEvents=true.
 func TestWatchInitialEventsRespectsItemChecker(t *testing.T) {
 	const (
