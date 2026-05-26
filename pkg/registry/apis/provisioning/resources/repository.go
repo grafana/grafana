@@ -2,7 +2,6 @@ package resources
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -17,9 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-var (
-	ErrResourceNotFound = errors.New("resource not found")
-)
 
 //go:generate mockery --name RepositoryResourcesFactory --structname MockRepositoryResourcesFactory --inpackage --filename repository_resources_factory_mock.go --with-expecter
 type RepositoryResourcesFactory interface {
@@ -98,7 +94,7 @@ func (r *repositoryResources) FindResourcePath(ctx context.Context, name string,
 	obj, err := client.Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			return "", fmt.Errorf("%s/%s/%s: %w", gvr.Group, gvr.Resource, name, ErrResourceNotFound)
+			return "", &ResourceNotFoundError{Group: gvr.Group, Resource: gvr.Resource, Name: name}
 		}
 		return "", fmt.Errorf("failed to get resource %s/%s/%s: %w", gvr.Group, gvr.Resource, name, err)
 	}

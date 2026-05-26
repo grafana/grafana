@@ -104,7 +104,7 @@ func TestRepositoryResources_FindResourcePath(t *testing.T) {
 				Resource: "dashboards",
 			},
 			getError:         apierrors.NewNotFound(schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}, "nonexistent-dashboard"),
-			expectedError:    "resource not found",
+			expectedError:    "resource not found: dashboard.grafana.app/dashboards/nonexistent-dashboard",
 			expectedSentinel: ErrResourceNotFound,
 		},
 		{
