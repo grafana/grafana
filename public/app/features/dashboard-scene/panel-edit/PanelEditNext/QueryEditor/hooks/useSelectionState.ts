@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { type DataQuery } from '@grafana/schema';
 import { type ExpressionQuery } from 'app/features/expressions/types';
@@ -17,7 +17,11 @@ export interface UseSelectionStateResult {
   activeTransformationId: string | null;
   selectedQueryRefIds: string[];
   selectedTransformationIds: string[];
-  onCardSelectionChange: (queryRefId: string | null, transformationId: string | null) => void;
+  onCardSelectionChange: (
+    queryRefId: string | null,
+    transformationId: string | null,
+    options?: { seedBulk?: boolean }
+  ) => void;
   trackQueryRename: (originalRefId: string, updatedRefId: string) => void;
   activateQuery: (query: DataQuery | ExpressionQuery) => void;
   activateTransformation: (transformation: Transformation) => void;
@@ -96,12 +100,36 @@ export function useSelectionState({
   const selectedTransformationIdsRef = useRef(selectedTransformationIds);
   selectedTransformationIdsRef.current = selectedTransformationIds;
 
-  const onCardSelectionChange = useCallback((queryRefId: string | null, transformationId: string | null) => {
-    setActiveQueryRefId(queryRefId);
-    setActiveTransformationId(transformationId);
-    setSelectedQueryRefIds([]);
-    setSelectedTransformationIds([]);
-  }, []);
+  // Reconcile active ids when the underlying lists change (e.g. after a delete propagates
+  // from the Scene). Without this, activeQueryRefId / activeTransformationId can reference
+  // items that no longer exist, causing downstream consumers like selectActiveInMultiSelection
+  // to seed stale ids into the bulk set.
+  useEffect(() => {
+    if (activeQueryRefId !== null && !queries.some((q) => q.refId === activeQueryRefId)) {
+      setActiveQueryRefId(queries[0]?.refId ?? null);
+    }
+  }, [queries, activeQueryRefId]);
+
+  useEffect(() => {
+    if (activeTransformationId !== null && !transformations.some((t) => t.transformId === activeTransformationId)) {
+      setActiveTransformationId(null);
+    }
+  }, [transformations, activeTransformationId]);
+
+  const onCardSelectionChange = useCallback(
+    (queryRefId: string | null, transformationId: string | null, options?: { seedBulk?: boolean }) => {
+      setActiveQueryRefId(queryRefId);
+      setActiveTransformationId(transformationId);
+      if (options?.seedBulk) {
+        setSelectedQueryRefIds(queryRefId ? [queryRefId] : []);
+        setSelectedTransformationIds(transformationId ? [transformationId] : []);
+      } else {
+        setSelectedQueryRefIds([]);
+        setSelectedTransformationIds([]);
+      }
+    },
+    []
+  );
 
   const trackQueryRename = useCallback((originalRefId: string, updatedRefId: string) => {
     setActiveQueryRefId((current) => (current === originalRefId ? updatedRefId : current));

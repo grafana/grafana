@@ -101,9 +101,9 @@ export function QueryEditorContextWrapper({
 
   // Wrap each selection mutator to clear alert selection (cross-type exclusivity).
   const onCardSelectionChange = useCallback(
-    (queryRefId: string | null, transformationId: string | null) => {
+    (queryRefId: string | null, transformationId: string | null, options?: { seedBulk?: boolean }) => {
       setSelectedAlertId(null);
-      onCardSelectionChangeRaw(queryRefId, transformationId);
+      onCardSelectionChangeRaw(queryRefId, transformationId, options);
     },
     [onCardSelectionChangeRaw]
   );
@@ -171,10 +171,10 @@ export function QueryEditorContextWrapper({
   // remain visible after the picker resolves.
   const onFinalizeCardSelection = useCallback(
     (queryRefId: string | null, transformationId: string | null) => {
-      onCardSelectionChange(queryRefId, transformationId);
+      onCardSelectionChange(queryRefId, transformationId, { seedBulk: multiSelectMode });
       resetUIToggles();
     },
-    [onCardSelectionChange, resetUIToggles]
+    [onCardSelectionChange, multiSelectMode, resetUIToggles]
   );
 
   const { pendingExpression, setPendingExpression, finalizePendingExpression, clearPendingExpression } =
