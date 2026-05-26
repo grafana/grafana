@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { getPanelPlugin } from '@grafana/data/test';
@@ -290,8 +290,13 @@ describe('DashboardOutline', () => {
 
       await user.type(screen.getByPlaceholderText('Search outline'), 'Tab level 3 - B');
 
-      // Matching item is shown
-      expect(screen.getByTestId(selectors.components.PanelEditor.Outline.item('Tab level 3 - B'))).toBeInTheDocument();
+      // Wait for debounced search to complete
+      await waitFor(() => {
+        // Matching item is shown
+        expect(
+          screen.getByTestId(selectors.components.PanelEditor.Outline.item('Tab level 3 - B'))
+        ).toBeInTheDocument();
+      });
       // Ancestors are shown for hierarchy context
       expect(screen.getByTestId(selectors.components.PanelEditor.Outline.item('Row level 1'))).toBeInTheDocument();
       expect(screen.getByTestId(selectors.components.PanelEditor.Outline.item('Row level 2'))).toBeInTheDocument();
@@ -324,9 +329,11 @@ describe('DashboardOutline', () => {
 
       await user.type(screen.getByPlaceholderText('Search outline'), 'important system metrics');
 
-      expect(
-        screen.getByTestId(selectors.components.PanelEditor.Outline.item('Panel level 4 - A'))
-      ).toBeInTheDocument();
+      await waitFor(() => {
+        expect(
+          screen.getByTestId(selectors.components.PanelEditor.Outline.item('Panel level 4 - A'))
+        ).toBeInTheDocument();
+      });
     });
 
     it('shows a no-results message and restores tree view when search is cleared', async () => {
@@ -349,10 +356,14 @@ describe('DashboardOutline', () => {
       const searchInput = screen.getByPlaceholderText('Search outline');
 
       await user.type(searchInput, 'does-not-exist');
-      expect(screen.getByText('No results found for your query')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByText('No results found for your query')).toBeInTheDocument();
+      });
 
       await user.clear(searchInput);
-      expect(screen.queryByText('No results found for your query')).not.toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.queryByText('No results found for your query')).not.toBeInTheDocument();
+      });
       expect(screen.getByTestId(selectors.components.PanelEditor.Outline.item('Row level 1'))).toBeInTheDocument();
       expect(
         screen.queryByTestId(selectors.components.PanelEditor.Outline.item('Tab level 3 - B'))

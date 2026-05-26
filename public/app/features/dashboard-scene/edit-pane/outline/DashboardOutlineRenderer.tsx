@@ -1,4 +1,6 @@
 import { css } from '@emotion/css';
+import { useState } from 'react';
+import { useDebounce } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -17,7 +19,11 @@ export function DashboardOutlineRenderer({ model }: SceneComponentProps<Dashboar
   const { searchQuery } = model.useState();
   const { isEditing } = dashboard.useState();
   const noTitleText = t('dashboard.outline.tree-item.no-title', '<no title>');
-  const normalizedSearchQuery = searchQuery.trim().toLowerCase();
+
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
+  useDebounce(() => setDebouncedSearchQuery(searchQuery), 200, [searchQuery]);
+
+  const normalizedSearchQuery = debouncedSearchQuery.trim().toLowerCase();
   const isSearching = normalizedSearchQuery.length > 0;
 
   const searchMatches = isSearching
