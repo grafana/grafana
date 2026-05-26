@@ -9,8 +9,19 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/grafana/pkg/api/pluginproxy"
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/oauthtoken"
+	"github.com/grafana/grafana/pkg/services/validations"
 )
+
+type ProxyDependencies struct {
+	ProxyCfg                   *pluginproxy.DataSourceProxySettings
+	DataSourceRequestValidator validations.DataSourceRequestValidator
+	HTTPClientProvider         httpclient.Provider
+	OAuthTokenService          *oauthtoken.Service
+}
 
 type subProxyREST struct {
 	pluginJSON plugins.JSONData

@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/grafana/grafana/pkg/api/datasource"
+	"github.com/grafana/grafana/pkg/api/datasource/validation"
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -142,7 +142,7 @@ func (p *DataSourceProxyService) proxyDatasourceRequest(c *contextmodel.ReqConte
 	proxy, err := pluginproxy.NewDataSourceProxy(loader, plugin.Routes, hc, proxyPath, p.proxyCfg,
 		p.HTTPClientProvider, p.OAuthTokenService, p.tracer, p.features)
 	if err != nil {
-		var urlValidationError datasource.URLValidationError
+		var urlValidationError validation.URLValidationError
 		if errors.As(err, &urlValidationError) {
 			c.JsonApiErr(http.StatusBadRequest, fmt.Sprintf("Invalid data source URL: %q", ds.URL), err)
 		} else {

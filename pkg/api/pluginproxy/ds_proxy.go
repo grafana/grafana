@@ -17,7 +17,7 @@ import (
 	datasourcesV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/models/usertoken"
 
-	"github.com/grafana/grafana/pkg/api/datasource"
+	"github.com/grafana/grafana/pkg/api/datasource/validation"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
@@ -89,7 +89,7 @@ func NewDataSourceProxy(dataSource DataSourceLoader,
 		return nil, fmt.Errorf("failed to get requester from context: %w", err)
 	}
 
-	targetURL, err := datasource.ValidateURL(dataSource.PluginType(), ds.Spec.URL())
+	targetURL, err := validation.ValidateURL(dataSource.PluginType(), ds.Spec.URL())
 	if err != nil {
 		return nil, err
 	}

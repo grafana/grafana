@@ -21,7 +21,7 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 
-	"github.com/grafana/grafana/pkg/api/datasource"
+	"github.com/grafana/grafana/pkg/api/datasource/validation"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -1111,7 +1111,7 @@ func TestNewDataSourceProxy_MSSQL(t *testing.T) {
 		{
 			description: "Invalid ODBC URL",
 			url:         `localhost\instance::1433`,
-			err: datasource.URLValidationError{
+			err: validation.URLValidationError{
 				Err: errors.New(`unrecognized URL format: "localhost\\instance::1433"`),
 				URL: `localhost\instance::1433`,
 			},
@@ -1406,7 +1406,6 @@ func toHttpContext(t *testing.T, ctx *contextmodel.ReqContext) HttpContext {
 		Req:            ctx.Req,
 		Resp:           ctx.Resp,
 		UserToken:      ctx.UserToken,
-		HasUserRole:    ctx.HasUserRole,
 		GetPermissions: ctx.GetPermissions,
 	}
 }
