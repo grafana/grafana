@@ -1837,6 +1837,16 @@
         },
         "description": "(empty)"
       },
+      "pulseSearchUsersResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/PulseUserSearchResponse"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "queryMetricsWithExpressionsRespons": {
         "content": {
           "application/json": {
@@ -9752,6 +9762,37 @@
         "title": "PulseThreadPage is the swagger-friendly mirror of PageResult[Thread].",
         "type": "object"
       },
+      "PulseUserSearchHit": {
+        "description": "PulseUserSearchHit is one row in the Pulse-scoped user search\nresponse. Intentionally minimal: id, login, optional name, and the\ngravatar URL the @-mention picker renders. No emails, roles, or\nauth metadata so the endpoint is safe to expose to every Pulse\nreader without widening org.users:read.",
+        "properties": {
+          "avatarUrl": {
+            "type": "string"
+          },
+          "login": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "userId": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "PulseUserSearchResponse": {
+        "description": "PulseUserSearchResponse is the JSON envelope returned by the\npulse-scoped user search endpoint. The shape mirrors\napi/org/users/search closely enough that the @-mention picker can\nshare its parsing path, but the field set is intentionally smaller.",
+        "properties": {
+          "users": {
+            "items": {
+              "$ref": "#/components/schemas/PulseUserSearchHit"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
       "PushoverConfig": {
         "properties": {
           "device": {
@@ -10578,7 +10619,7 @@
         "type": "object"
       },
       "ResourceKind": {
-        "description": "v1 supports \"dashboard\". The schema is polymorphic from day one so that\nfuture kinds (folder, alert rule, datasource, etc.) can be added without\nmigrating existing rows.",
+        "description": "v1 supports \"dashboard\". The schema is polymorphic from day one so that\nfuture kinds (alert rule, datasource, etc.) can be added without\nmigrating existing rows. Folder is intentionally NOT a thread kind:\nthe folder Pulse tab aggregates dashboard-scoped threads from\ndashboards under that folder rather than holding folder-scoped\nconversations of its own.",
         "title": "ResourceKind is the kind of resource a Pulse thread is attached to.",
         "type": "string"
       },
@@ -12352,6 +12393,13 @@
           "createdBy": {
             "format": "int64",
             "type": "integer"
+          },
+          "folderTitle": {
+            "type": "string"
+          },
+          "folderUID": {
+            "description": "FolderUID / FolderTitle are populated by the folder Pulse\nrollup endpoint only. They identify the parent folder of the\nthread's underlying dashboard so the rollup table can render a\n\"Folder\" column with a navigable link to the dashboard's home.\nOther surfaces leave these empty; the global overview already\nhas ResourceTitle for its single resource link.",
+            "type": "string"
           },
           "lastPulseAt": {
             "format": "date-time",

@@ -101,7 +101,7 @@ func (k *Elector) Run(ctx context.Context, fn func(ctx context.Context), opts ..
 		}),
 	}, opts)
 
-	mgr := lease.NewManager(k.kvStore, k.identity, k.managerOpts...)
+	mgr := lease.NewManager(k.kvStore, k.identity, nil, k.managerOpts...)
 
 	for {
 		if err := ctx.Err(); err != nil {
