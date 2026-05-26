@@ -3,6 +3,7 @@ package provisioning
 import (
 	"context"
 	"net/http"
+	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -14,11 +15,16 @@ import (
 )
 
 type refsConnector struct {
-	getter RepoGetter
+	getter  RepoGetter
+	timeout time.Duration
 }
 
-func NewRefsConnector(getter RepoGetter) *refsConnector {
-	return &refsConnector{getter: getter}
+func NewRefsConnector(getter RepoGetter, customTimeout *time.Duration) *refsConnector {
+	timeout := 30 * time.Second
+	if customTimeout != nil {
+		timeout = *customTimeout
+	}
+	return &refsConnector{getter: getter, timeout: timeout}
 }
 
 func (*refsConnector) New() runtime.Object {
@@ -44,17 +50,19 @@ func (*refsConnector) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (c *refsConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	logger := logging.FromContext(ctx).With("logger", "refs-connector", "repository_name", name)
-	ctx = logging.Context(ctx, logger)
-	repo, err := c.getter.GetRepository(ctx, name)
-	if err != nil {
-		logger.Debug("failed to find repository", "error", err)
-		return nil, err
-	}
+	return WithTimeout(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		logger := logging.FromContext(ctx).With("logger", "refs-connector", "repository_name", name)
+		ctx = logging.Context(ctx, logger)
 
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			responder.Error(apierrors.NewMethodNotSupported(provisioning.RepositoryResourceInfo.GroupResource(), r.Method))
+			return
+		}
+
+		repo, err := c.getter.GetRepository(ctx, name)
+		if err != nil {
+			logger.Debug("failed to find repository", "error", err)
+			responder.Error(err)
 			return
 		}
 
@@ -75,7 +83,7 @@ func (c *refsConnector) Connect(ctx context.Context, name string, opts runtime.O
 		}
 
 		responder.Object(http.StatusOK, refsList)
-	}), nil
+	}, c.timeout), nil
 }
 
 var (

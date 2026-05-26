@@ -6,16 +6,21 @@ import (
 	"time"
 )
 
-// WithTimeout adds a timeout context to the request
-func WithTimeout(h http.Handler, timeout time.Duration) http.Handler {
+// CtxHandlerFunc is a request handler that receives the timeout-bounded
+// context as an explicit first parameter. Pass this to WithTimeout /
+// WithTimeoutFunc so backend calls inside the handler use the bounded ctx
+// instead of an outer-scope one captured by closure.
+type CtxHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request)
+
+func WithTimeout(f CtxHandlerFunc, timeout time.Duration) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), timeout)
 		defer cancel()
-		h.ServeHTTP(w, r.WithContext(ctx))
+		f(ctx, w, r.WithContext(ctx))
 	})
 }
 
 // WithTimeoutFunc adds a timeout context to the request
-func WithTimeoutFunc(f func(w http.ResponseWriter, r *http.Request), timeout time.Duration) func(w http.ResponseWriter, r *http.Request) {
-	return WithTimeout(http.HandlerFunc(f), timeout).ServeHTTP
+func WithTimeoutFunc(f CtxHandlerFunc, timeout time.Duration) http.HandlerFunc {
+	return WithTimeout(f, timeout).ServeHTTP
 }

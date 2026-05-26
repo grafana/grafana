@@ -17,12 +17,18 @@ import (
 )
 
 type connectionRepositoriesConnector struct {
-	getter ConnectionGetter
+	getter  ConnectionGetter
+	timeout time.Duration
 }
 
-func NewConnectionRepositoriesConnector(getter ConnectionGetter) *connectionRepositoriesConnector {
+func NewConnectionRepositoriesConnector(getter ConnectionGetter, customTimeout *time.Duration) *connectionRepositoriesConnector {
+	timeout := 30 * time.Second
+	if customTimeout != nil {
+		timeout = *customTimeout
+	}
 	return &connectionRepositoriesConnector{
-		getter: getter,
+		getter:  getter,
+		timeout: timeout,
 	}
 }
 
@@ -49,10 +55,10 @@ func (*connectionRepositoriesConnector) NewConnectOptions() (runtime.Object, boo
 }
 
 func (c *connectionRepositoriesConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	logger := logging.FromContext(ctx).With("logger", "connection-repositories-connector", "connection_name", name)
-	ctx = logging.Context(ctx, logger)
+	return WithTimeout(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		logger := logging.FromContext(ctx).With("logger", "connection-repositories-connector", "connection_name", name)
+		ctx = logging.Context(ctx, logger)
 
-	return WithTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			responder.Error(apierrors.NewMethodNotSupported(provisioning.ConnectionResourceInfo.GroupResource(), r.Method))
 			return
@@ -92,7 +98,7 @@ func (c *connectionRepositoriesConnector) Connect(ctx context.Context, name stri
 		}
 
 		responder.Object(http.StatusOK, result)
-	}), 30*time.Second), nil
+	}, c.timeout), nil
 }
 
 var (

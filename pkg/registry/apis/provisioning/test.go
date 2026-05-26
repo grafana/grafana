@@ -58,18 +58,25 @@ type testConnector struct {
 	connectionGetter ConnectionGetter
 	healthProvider   HealthCheckerProvider
 	tester           repository.Tester
+	timeout          time.Duration
 }
 
 func NewTestConnector(
 	deps ConnectorDependencies,
 	tester repository.Tester,
+	customTimeout *time.Duration,
 ) *testConnector {
+	timeout := 30 * time.Second
+	if customTimeout != nil {
+		timeout = *customTimeout
+	}
 	return &testConnector{
 		repoFactory:      deps.GetRepoFactory(),
 		repoGetter:       deps,
 		connectionGetter: deps,
 		healthProvider:   deps,
 		tester:           tester,
+		timeout:          timeout,
 	}
 }
 
@@ -96,15 +103,18 @@ func (*testConnector) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (s *testConnector) Connect(ctx context.Context, name string, _ runtime.Object, responder rest.Responder) (http.Handler, error) {
-	ns, ok := request.NamespaceFrom(ctx)
-	if !ok {
+	if _, ok := request.NamespaceFrom(ctx); !ok {
 		return nil, fmt.Errorf("missing namespace")
 	}
 
-	logger := logging.FromContext(ctx).With("logger", "test-connector", "repository_name", name, "namespace", ns)
-	ctx = logging.Context(ctx, logger)
-
-	return WithTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return WithTimeout(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		ns, ok := request.NamespaceFrom(ctx)
+		if !ok {
+			responder.Error(k8serrors.NewBadRequest("missing namespace"))
+			return
+		}
+		logger := logging.FromContext(ctx).With("logger", "test-connector", "repository_name", name, "namespace", ns)
+		ctx = logging.Context(ctx, logger)
 		body, err := readBody(r, defaultMaxBodySize)
 		if err != nil {
 			responder.Error(err)
@@ -311,7 +321,7 @@ func (s *testConnector) Connect(ctx context.Context, name string, _ runtime.Obje
 		}
 
 		responder.Object(rsp.Code, rsp)
-	}), 30*time.Second), nil
+	}, s.timeout), nil
 }
 
 var (

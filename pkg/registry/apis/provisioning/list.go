@@ -16,8 +16,17 @@ import (
 
 // TODO: Rename to resources as it's not clear that we are returning here is repository resources
 type listConnector struct {
-	getter RepoGetter
-	lister resources.ResourceLister
+	getter  RepoGetter
+	lister  resources.ResourceLister
+	timeout time.Duration
+}
+
+func NewListConnector(getter RepoGetter, lister resources.ResourceLister, customTimeout *time.Duration) *listConnector {
+	timeout := 30 * time.Second
+	if customTimeout != nil {
+		timeout = *customTimeout
+	}
+	return &listConnector{getter: getter, lister: lister, timeout: timeout}
 }
 
 func (*listConnector) New() runtime.Object {
@@ -48,7 +57,7 @@ func (s *listConnector) Connect(ctx context.Context, name string, opts runtime.O
 		return nil, fmt.Errorf("missing namespace")
 	}
 
-	return WithTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return WithTimeout(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		// TODO: Add pagination to resource lister
 		rsp, err := s.lister.List(ctx, ns, name)
 		if err != nil {
@@ -56,7 +65,7 @@ func (s *listConnector) Connect(ctx context.Context, name string, opts runtime.O
 		} else {
 			responder.Object(200, rsp)
 		}
-	}), 30*time.Second), nil
+	}, s.timeout), nil
 }
 
 var (

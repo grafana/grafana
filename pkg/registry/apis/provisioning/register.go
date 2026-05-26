@@ -792,14 +792,14 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[provisioning.RepositoryResourceInfo.StoragePath("status")] = repositoryStatusStorage
 
 	storage[provisioning.ConnectionResourceInfo.StoragePath("status")] = connectionStatusStorage
-	storage[provisioning.ConnectionResourceInfo.StoragePath("repositories")] = NewConnectionRepositoriesConnector(b)
+	storage[provisioning.ConnectionResourceInfo.StoragePath("repositories")] = NewConnectionRepositoriesConnector(b, nil)
 
 	// TODO: Add some logic so that the connectors can registered themselves and we don't have logic all over the place
 	testTester := repository.NewTester(b.repoValidator, existingReposValidator)
 
 	// TODO: Remove this connector when we deprecate the test endpoint
 	// We should use fieldErrors from status instead.
-	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = NewTestConnector(b, testTester)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = NewTestConnector(b, testTester, nil)
 	// The files subresource handles GET/POST/PUT/DELETE in a single connector
 	// and the appropriate role fallback differs per verb: reads should fall
 	// back to Viewer, writes to Editor. A static accessWithEditor would over-
@@ -809,16 +809,11 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	// connector via ProvisioningAuthorizer.AuthorizeResource, and repository-
 	// level operations remain Admin-gated by authorizeRepositorySubresource.
 	filesAccess := auth.NewVerbAwareAccessChecker(b.accessWithViewer, b.accessWithEditor)
-	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, filesAccess, b.folderMetadataEnabled, b.folderAPIVersion, b.maxFileSize)
-	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = NewRefsConnector(b)
-	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = &listConnector{
-		getter: b,
-		lister: b.resourceLister,
-	}
-	storage[provisioning.RepositoryResourceInfo.StoragePath("history")] = &historySubresource{
-		repoGetter: b,
-	}
-	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = NewJobsConnector(b, b, b, jobHistory, b.access, b.clients, b.folderMetadataEnabled)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, filesAccess, b.folderMetadataEnabled, b.folderAPIVersion, b.maxFileSize, nil)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = NewRefsConnector(b, nil)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = NewListConnector(b, b.resourceLister, nil)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("history")] = NewHistorySubresource(b, nil)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = NewJobsConnector(b, b, b, jobHistory, b.access, b.clients, b.folderMetadataEnabled, nil)
 
 	// Add any extra storage
 	for _, extra := range b.extras {

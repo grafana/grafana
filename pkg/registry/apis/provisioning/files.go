@@ -34,9 +34,14 @@ type filesConnector struct {
 	// maxFileSize caps the size in bytes of files read from or written to the
 	// repository through this connector. <=0 disables the check.
 	maxFileSize int64
+	timeout     time.Duration
 }
 
-func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clients resources.ClientFactory, access auth.AccessChecker, folderMetadataEnabled bool, folderAPIVersion string, maxFileSize int64) *filesConnector {
+func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clients resources.ClientFactory, access auth.AccessChecker, folderMetadataEnabled bool, folderAPIVersion string, maxFileSize int64, customTimeout *time.Duration) *filesConnector {
+	timeout := 30 * time.Second
+	if customTimeout != nil {
+		timeout = *customTimeout
+	}
 	return &filesConnector{
 		getter:                getter,
 		parsers:               parsers,
@@ -45,6 +50,7 @@ func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clien
 		folderMetadataEnabled: folderMetadataEnabled,
 		folderAPIVersion:      folderAPIVersion,
 		maxFileSize:           maxFileSize,
+		timeout:               timeout,
 	}
 }
 
@@ -83,12 +89,11 @@ func (c *filesConnector) getRepo(ctx context.Context, method, name string) (repo
 
 // TODO: document the synchronous write and delete on the API Spec
 func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	logger := logging.FromContext(ctx).With("logger", "files-connector", "repository_name", name)
-	ctx = logging.Context(ctx, logger)
-
-	return WithTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return WithTimeout(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		logger := logging.FromContext(ctx).With("logger", "files-connector", "repository_name", name)
+		ctx = logging.Context(ctx, logger)
 		c.handleRequest(ctx, name, r, responder, logger)
-	}), 30*time.Second), nil
+	}, c.timeout), nil
 }
 
 // handleRequest processes the HTTP request for files operations.
@@ -123,7 +128,7 @@ func (c *filesConnector) handleRequest(ctx context.Context, name string, r *http
 	}
 
 	logger = logger.With("url", r.URL.Path, "ref", opts.Ref, "message", opts.Message)
-	ctx = logging.Context(r.Context(), logger)
+	ctx = logging.Context(ctx, logger)
 
 	// Handle directory listing separately
 	isDir := safepath.IsDir(opts.Path)

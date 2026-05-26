@@ -49,7 +49,7 @@ func (m *mockConnection) Test(ctx context.Context) (*provisioning.TestResults, e
 
 func TestConnectionRepositoriesConnector(t *testing.T) {
 	mockGetter := &mockConnectionGetter{}
-	connector := NewConnectionRepositoriesConnector(mockGetter)
+	connector := NewConnectionRepositoriesConnector(mockGetter, nil)
 
 	t.Run("New returns ExternalRepositoryList", func(t *testing.T) {
 		obj := connector.New()
@@ -250,7 +250,7 @@ func TestConnectionRepositoriesConnector_WithGitHubConnection(t *testing.T) {
 			err:  nil,
 		}
 
-		connector := NewConnectionRepositoriesConnector(mockGetter)
+		connector := NewConnectionRepositoriesConnector(mockGetter, nil)
 
 		// Test the endpoint
 		handler, err := connector.Connect(ctx, "test-github-connection", nil, responder)
@@ -337,7 +337,7 @@ func TestConnectionRepositoriesConnector_WithGitHubConnection(t *testing.T) {
 			err:  nil,
 		}
 
-		connector := NewConnectionRepositoriesConnector(mockGetter)
+		connector := NewConnectionRepositoriesConnector(mockGetter, nil)
 
 		// Test the endpoint
 		handler, err := connector.Connect(ctx, "test-github-connection", nil, responder)
@@ -364,7 +364,7 @@ func TestConnectionRepositoriesConnector_WithGitHubConnection(t *testing.T) {
 			err:  nil,
 		}
 
-		connector := NewConnectionRepositoriesConnector(mockGetter)
+		connector := NewConnectionRepositoriesConnector(mockGetter, nil)
 
 		handler, err := connector.Connect(ctx, "test-gitlab-connection", nil, responder)
 		require.NoError(t, err)

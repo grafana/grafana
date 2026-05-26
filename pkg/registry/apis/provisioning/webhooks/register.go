@@ -145,12 +145,13 @@ func ProvideWebhooksWithImages(
 			parsers := resources.NewParserFactory(clients, resources.IsFolderMetadataEnabled(cfg))
 
 			screenshotRenderer := pullrequest.NewScreenshotRenderer(renderer, blobstore)
-			render := NewRenderConnector(blobstore, b)
+			render := NewRenderConnector(blobstore, b, nil)
 			webhook := NewWebhookConnector(
 				isPublic,
 				b,
 				screenshotRenderer,
 				registry,
+				nil,
 			)
 
 			evaluator := pullrequest.NewEvaluator(screenshotRenderer, parsers, urls, registry)
@@ -179,7 +180,7 @@ func ProvideWebhooks(provisioningURL string, registry prometheus.Registerer) *We
 		urlProvider: urlProvider,
 		ExtraBuilder: func(b *provisioningapis.APIBuilder) provisioningapis.Extra {
 			screenshotRenderer := pullrequest.NewNoOpRenderer()
-			webhook := NewWebhookConnector(isPublic, b, screenshotRenderer, registry)
+			webhook := NewWebhookConnector(isPublic, b, screenshotRenderer, registry, nil)
 
 			return NewWebhookExtra(webhook)
 		},

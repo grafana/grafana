@@ -25,12 +25,18 @@ import (
 type renderConnector struct {
 	unified resource.ResourceClient
 	core    *provisioningapis.APIBuilder
+	timeout time.Duration
 }
 
-func NewRenderConnector(unified resource.ResourceClient, core *provisioningapis.APIBuilder) *renderConnector {
+func NewRenderConnector(unified resource.ResourceClient, core *provisioningapis.APIBuilder, customTimeout *time.Duration) *renderConnector {
+	timeout := 20 * time.Second
+	if customTimeout != nil {
+		timeout = *customTimeout
+	}
 	return &renderConnector{
 		unified: unified,
 		core:    core,
+		timeout: timeout,
 	}
 }
 
@@ -114,8 +120,8 @@ func (c *renderConnector) Connect(
 	opts runtime.Object,
 	responder rest.Responder,
 ) (http.Handler, error) {
-	namespace := request.NamespaceValue(ctx)
-	return provisioningapis.WithTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return provisioningapis.WithTimeout(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		namespace := request.NamespaceValue(ctx)
 		prefix := fmt.Sprintf("/%s/render", name)
 		idx := strings.Index(r.URL.Path, prefix)
 		if idx == -1 {
@@ -169,7 +175,7 @@ func (c *renderConnector) Connect(
 				},
 			})
 		}
-	}), 20*time.Second), nil
+	}, c.timeout), nil
 }
 
 var (
