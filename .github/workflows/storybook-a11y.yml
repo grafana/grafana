@@ -1,10 +1,6 @@
 name: Run Storybook a11y tests
 on:
   pull_request:
-  push:
-    branches:
-      - main
-      - release-*.*.*
 
 permissions: {}
 
