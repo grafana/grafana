@@ -5,6 +5,7 @@ const config: KnipConfig = {
     // we don't often use enums, but when we do we usually include members we'll utilise in the future
     'enumMembers',
   ],
+  ignore: ['**/*.gen.ts*'],
   workspaces: {
     // TODO figure out how to properly include webpack/jest configs
     '.': {

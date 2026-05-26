@@ -4002,7 +4002,6 @@ __metadata:
     "@grafana/e2e-selectors": "npm:13.1.0-pre"
     "@grafana/plugin-ui": "npm:^0.13.1"
     "@grafana/runtime": "npm:13.1.0-pre"
-    "@grafana/schema": "npm:13.1.0-pre"
     "@grafana/ui": "npm:13.1.0-pre"
     "@rollup/plugin-dynamic-import-vars": "npm:2.1.5"
     "@rollup/plugin-image": "npm:3.0.3"
@@ -4017,13 +4016,9 @@ __metadata:
     "@types/systemjs": "npm:6.15.3"
     jest: "npm:^29.6.4"
     react: "npm:18.3.1"
-    react-select: "npm:5.10.2"
     react-use: "npm:17.6.0"
     rollup: "npm:^4.60.1"
     rxjs: "npm:7.8.2"
-    ts-jest: "npm:29.4.0"
-    ts-node: "npm:10.9.2"
-    tslib: "npm:2.8.1"
     typescript: "npm:6.0.2"
   peerDependencies:
     react: ^18.0.0
