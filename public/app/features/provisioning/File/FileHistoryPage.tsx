@@ -56,9 +56,9 @@ export default function FileHistoryPage() {
             </TextLink>
           </EmptyState>
         ) : (
-          //@ts-expect-error TODO fix history response types
           <div>
             {history.data ? (
+              //@ts-expect-error TODO fix history response types
               <HistoryView history={history.data} path={path} repo={name} repoType={repoType ?? undefined} />
             ) : (
               <Spinner />
