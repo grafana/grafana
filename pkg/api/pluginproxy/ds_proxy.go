@@ -84,14 +84,14 @@ func NewDataSourceProxy(dataSource DataSourceLoader,
 		return nil, fmt.Errorf("failed to load datasource: %w", err)
 	}
 
-	requester, err := identity.GetRequester(ctx.Req.Context())
-	if err != nil {
-		return nil, fmt.Errorf("failed to get requester from context: %w", err)
-	}
-
 	targetURL, err := validation.ValidateURL(dataSource.PluginType(), ds.Spec.URL())
 	if err != nil {
 		return nil, err
+	}
+
+	requester, err := identity.GetRequester(ctx.Req.Context())
+	if err != nil {
+		return nil, fmt.Errorf("failed to get requester from context: %w", err)
 	}
 
 	return &DataSourceProxy{
