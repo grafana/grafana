@@ -117,8 +117,8 @@ However, in the dashboard schema, they're still referred to as `"kind": "AdhocVa
 For information on the **Filter and Group by** feature, refer to the [documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/filter-group-by/).
 {{< /admonition >}}
 
-<!-- vale Grafana.WordList = NO -->
-<!-- vale Grafana.Spelling = NO -->
+<!-- vale Grafana.WordList = YES -->
+<!-- vale Grafana.Spelling = YES -->
 
 ## Enter General options
 

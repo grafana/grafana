@@ -26,6 +26,9 @@ The **Filter and Group by** feature renames the **Ad hoc filters** variable and 
 However, in the dashboard schema, it's still referred to as `"kind": "AdhocVariable"`.
 {{< /admonition >}}
 
+<!-- vale Grafana.WordList = YES -->
+<!-- vale Grafana.Spelling = YES -->
+
 The **Filter and Group by** option is one of the most complex and flexible dashboard controls available.
 Instead of creating a variable for each dimension by which you want to filter, it automatically queries your data source for available dimensions and lets users add or remove filters and group by values on the dashboard dynamically.
 This allows you to quickly apply filters dashboard-wide.
