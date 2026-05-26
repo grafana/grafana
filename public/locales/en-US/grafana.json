@@ -7616,10 +7616,6 @@
     "section-filters-list": {
       "add-filter": "Add filter"
     },
-    "section-placement": {
-      "top-row": "Top of row",
-      "top-tab": "Top of tab"
-    },
     "selection-options-form": {
       "description-enables-multiple-values-selected": "Enables multiple values to be selected at the same time",
       "description-enables-option-include-variables": "Enables an option to include all values",
@@ -7759,6 +7755,9 @@
     "variable-display-select": {
       "label": "Display",
       "options": {
+        "above-dashboard": {
+          "label": "Above dashboard"
+        },
         "controls-menu": {
           "description": "Visible when the controls menu is open",
           "label": "Controls menu"
@@ -7767,9 +7766,9 @@
           "description": "Only visible in edit mode",
           "label": "Hidden"
         },
-        "top-placement-hidden-label": {
-          "description": "{{placement}}, but without showing the name of variable",
-          "label": "{{placement}}, label hidden"
+        "hidden-label": {
+          "description": "Above the dashboard, but without showing the name of variable",
+          "label": "Above dashboard, label hidden"
         }
       }
     },
@@ -7852,15 +7851,12 @@
           "reorder-variables-list": "Reorder variables list"
         }
       },
+      "title-above-dashboard_one": "Above dashboard ({{count}})",
+      "title-above-dashboard_other": "Above dashboard ({{count}})",
       "title-controls-menu_one": "Controls menu ({{count}})",
       "title-controls-menu_other": "Controls menu ({{count}})",
       "title-hidden_one": "Hidden ({{count}})",
-      "title-hidden_other": "Hidden ({{count}})",
-      "title-top-placement_one": "{{placement}} ({{count}})",
-      "title-top-placement_other": "{{placement}} ({{count}})",
-      "top-placement": {
-        "default": "Above dashboard"
-      }
+      "title-hidden_other": "Hidden ({{count}})"
     },
     "version-history": {
       "comparison": {
@@ -10916,6 +10912,10 @@
       "retry": "Retry"
     }
   },
+  "import-overview": {
+    "error-provisioning-status": "Could not check whether the target folder is managed by a repository. Please try again or contact an administrator.",
+    "error-provisioning-status-title": "Unable to determine provisioning status"
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "Loading",
@@ -13602,7 +13602,18 @@
       "resource-not-found": "Resource not found. Please check the URL or repository."
     },
     "import": {
-      "error": "An error occurred while importing the dashboard."
+      "cancel": "Cancel",
+      "constant-required": "{{label}} needs a value",
+      "datasource-required": "Please select a data source",
+      "error": "An error occurred while importing the dashboard.",
+      "float-grid-items-body": "The dashboard contains grid items with floating positions. This is not supported by Grafana and the numbers will be truncated to integers.",
+      "float-grid-items-title": "Floating grid items",
+      "import": "Import",
+      "importing": "Importing...",
+      "label-name": "Name",
+      "library-panels-blocked-body": "This dashboard contains library panels that cannot be created through a provisioned import. Import into a non-provisioned folder instead, or remove the library panel references first.",
+      "library-panels-blocked-title": "Library panels not supported",
+      "name-required": "Name is required"
     },
     "instance-sync-deprecation": {
       "message": "Instance sync is currently not fully supported and breaks library panels and alerts. To use library panels and alerts, disconnect your repository and reconnect it using folder sync instead.",
