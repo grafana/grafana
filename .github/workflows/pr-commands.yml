@@ -1,6 +1,6 @@
 name: PR automation
 on:
-  pull_request_target:
+  pull_request_target:  # zizmor: ignore[dangerous-triggers] action uses GITHUB_TOKEN only, does not check out fork code
     types:
       - labeled
       - opened
