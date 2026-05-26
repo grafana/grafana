@@ -437,7 +437,8 @@
       "label-value": "值"
     },
     "alert-instance-extension-point": {
-      "aria-label-actions": "操作"
+      "n-contact-points_other": "",
+      "view-route_other": ""
     },
     "alert-instance-modal-selector": {
       "add-alert-data-to-payload": "将警报数据添加到负载中",
@@ -453,6 +454,7 @@
     },
     "alert-instances-table": {
       "created": "已创建",
+      "destination": "",
       "labels": "标签",
       "state": "状态"
     },
@@ -2328,6 +2330,7 @@
     },
     "notification-route": {
       "no-labels": "无标签",
+      "notification-policies": "",
       "notification-policy": "通知策略"
     },
     "notification-route-header": {
@@ -4353,7 +4356,6 @@
       "button-cancel": "取消",
       "button-delete": "删除",
       "button-deleting": "正在删除…",
-      "commit": "删除文件夹",
       "delete-warning": "这将删除此文件夹及其所有子文件夹。总体而言，这将影响：",
       "missing-info": "缺少必填字段",
       "success-message": "文件夹已成功删除"
@@ -4467,7 +4469,6 @@
       "button-cancel": "取消",
       "button-rename": "重命名",
       "button-renaming": "正在重命名…",
-      "commit": "重命名文件夹",
       "error-saving": "重命名文件夹失败",
       "label-folder-name": "文件夹名称",
       "missing-info": "缺少必填字段",
@@ -6352,6 +6353,8 @@
         "ungroup-tabs": "取消选项卡分组"
       },
       "name": "标签页",
+      "scroll-tabs-left": "",
+      "scroll-tabs-right": "",
       "tab": {
         "new": "新建标签页",
         "repeat": {
@@ -6449,6 +6452,10 @@
         },
         "save-dashboard-short": "保存",
         "save-library-panel": "保存库面板",
+        "save-template": {
+          "label": "",
+          "tooltip": ""
+        },
         "share": {
           "arrow": "分享",
           "tooltip": "复制链接"
@@ -6462,6 +6469,9 @@
       "read-only": "只读",
       "refresh": "刷新仪表板",
       "save": "保存仪表板",
+      "save-as-template": {
+        "label": ""
+      },
       "save-dashboard": {
         "label": "保存仪表板",
         "tooltip": "保存更改"
@@ -7484,7 +7494,9 @@
         "label-details": "详情",
         "title": "保存仪表板",
         "title-copy": "保存数据面板副本",
-        "title-provisioned": "已预置的数据面板"
+        "title-provisioned": "已预置的数据面板",
+        "title-template": "",
+        "title-update-template": ""
       }
     },
     "save-dashboard-form": {
@@ -7560,6 +7572,10 @@
     },
     "section-filters-list": {
       "add-filter": ""
+    },
+    "section-placement": {
+      "top-row": "",
+      "top-tab": ""
     },
     "selection-options-form": {
       "description-enables-multiple-values-selected": "允许同时选择多个值",
@@ -7700,9 +7716,6 @@
     "variable-display-select": {
       "label": "显示",
       "options": {
-        "above-dashboard": {
-          "label": "数据面板上方"
-        },
         "controls-menu": {
           "description": "控件菜单打开时可见",
           "label": "控件菜单"
@@ -7711,9 +7724,9 @@
           "description": "仅在编辑模式下可见",
           "label": "隐藏"
         },
-        "hidden-label": {
-          "description": "数据面板上方，但不显示变量名称",
-          "label": "数据面板上方，标签隐藏"
+        "top-placement-hidden-label": {
+          "description": "",
+          "label": ""
         }
       }
     },
@@ -7795,9 +7808,12 @@
           "reorder-variables-list": "重新排序变量列表"
         }
       },
-      "title-above-dashboard_other": "数据面板上方 ({{count}})",
+      "top-placement": {
+        "default": ""
+      },
       "title-controls-menu_other": "控件菜单 ({{count}})",
-      "title-hidden_other": "隐藏 ({{count}})"
+      "title-hidden_other": "隐藏 ({{count}})",
+      "title-top-placement_other": ""
     },
     "version-history": {
       "comparison": {
@@ -10689,7 +10705,7 @@
     "name-unit": "单位",
     "name-value-name": "值名称",
     "name-y-axis-scale": "Y 轴比例",
-    "name-y-bucket-scale": "Y 桶比例",
+    "name-y-bucket-scale": "",
     "placeholder-axis-label": "自动",
     "placeholder-axis-width": "自动",
     "placeholder-decimals": "自动",
@@ -10804,6 +10820,12 @@
     "name-stacking": "堆叠"
   },
   "home": {
+    "dashboard-tabs": {
+      "recent": "",
+      "recent-active": "",
+      "starred": "",
+      "starred-active": ""
+    },
     "home-page": {
       "edition": {
         "cloud": "",
@@ -10816,6 +10838,23 @@
         "morning": ""
       },
       "placeholder": ""
+    },
+    "recent-dashboards-tab": {
+      "browse": "",
+      "clear": "",
+      "create": "",
+      "empty": "",
+      "empty-description": "",
+      "error-title": "",
+      "loading": "",
+      "retry": ""
+    },
+    "starred-dashboards-tab": {
+      "empty": "",
+      "empty-description": "",
+      "error-title": "",
+      "loading": "",
+      "retry": ""
     }
   },
   "inspector": {
@@ -11904,6 +11943,9 @@
       "subtitle": "管理整个服务器范围的设置，以及对组织、用户和许可证等资源的访问权限",
       "title": "服务器管理员"
     },
+    "agentic-testing": {
+      "title": ""
+    },
     "alert-list-legacy": {
       "title": "警报规则"
     },
@@ -12496,6 +12538,9 @@
       "required": "",
       "save-tooltip": ""
     }
+  },
+  "page-loader": {
+    "default": ""
   },
   "panel": {
     "dashlist": {
@@ -13161,11 +13206,24 @@
     "code-block": {
       "aria-label-copy": "复制代码到剪贴板"
     },
+    "commit-message": {
+      "dashboard-create-default": "",
+      "dashboard-delete-default": "",
+      "dashboard-move-default": "",
+      "dashboard-rename-default": "",
+      "dashboard-update-default": "",
+      "folder-create-default": "",
+      "folder-delete-default": "",
+      "folder-move-default": "",
+      "folder-rename-default": "",
+      "folder-update-default": ""
+    },
     "config-form": {
       "alert-repository-settings-saved": "存储库设置已保存",
       "alert-repository-settings-updated": "存储库设置已更新",
       "button-save": "保存",
       "button-saving": "正在保存...",
+      "description-commit-message-template": "",
       "description-connection": "选择要使用的 GitHub 应用连接",
       "description-enabled": "启用自动拉取后，将无法更改目标。",
       "description-read-only": "无法通过 Grafana 修改资源。",
@@ -13176,6 +13234,7 @@
       "error-save-failed": "保存存储库设置失败",
       "error-save-repository": "保存存储库设置失败",
       "label-automatic-pulling": "自动拉取",
+      "label-commit-message-template": "",
       "label-connection": "GitHub 应用连接",
       "label-enabled": "已启用",
       "label-interval-seconds": "间隔（秒）",
@@ -13184,6 +13243,7 @@
       "label-title": "标题",
       "option-entire-instance": "整个实例",
       "option-managed-folder": "受管理的文件夹",
+      "placeholder-commit-message-template": "",
       "placeholder-interval-seconds": "60",
       "placeholder-my-config": "我的配置"
     },
@@ -14064,6 +14124,10 @@
   "query-editor-next": {
     "action": {
       "add-transformation-filter": "添加筛选条件",
+      "cancel-delete": "",
+      "confirm-delete": "",
+      "confirm-delete-confirm": "",
+      "delete-confirmation-group": "",
       "disable": "禁用 {{type}}",
       "duplicate": "复制{{type}}",
       "enable": "启用 {{type}}",
@@ -14103,10 +14167,7 @@
       "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
-      "body-query": "您确定要删除此查询吗？",
-      "body-transformation": "移除一个转换可能会破坏其他转换。",
-      "confirm": "删除",
-      "title": "要删除{{name}}吗？"
+      "body-transformation": "移除一个转换可能会破坏其他转换。"
     },
     "details-sidebar": {
       "cache-timeout": "缓存超时",
