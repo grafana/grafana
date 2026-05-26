@@ -804,6 +804,7 @@ func (s *TeamK8sService) GetTeamsByUser(ctx context.Context, query *team.GetTeam
 			Email:         t.Spec.Email,
 			ExternalUID:   t.Spec.ExternalUID,
 			IsProvisioned: t.Spec.Provisioned,
+			MemberCount:   int64(len(t.Spec.Members)),
 			AvatarURL:     dtos.GetGravatarUrlWithDefault(s.cfg, t.Spec.Email, t.Spec.Title),
 		})
 	}
