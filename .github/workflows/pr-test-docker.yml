@@ -43,6 +43,7 @@ jobs:
     runs-on: ubuntu-x64-large
     permissions:
       contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v6
         with:
@@ -50,6 +51,9 @@ jobs:
       - uses: docker/setup-docker-action@3fb92d6d9c634363128c8cce4bc3b2826526370a # v4
       - name: Set up Docker Buildx
         run: docker buildx create --use
+      - name: Login to DockerHub
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
+        uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.4
       - name: Build alpine (full source)
         run: make build-docker-full DOCKER_BUILD_ARGS=--load
 

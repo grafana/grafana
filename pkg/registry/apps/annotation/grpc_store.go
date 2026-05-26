@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -118,8 +119,10 @@ func (s *storeGRPC) Delete(ctx context.Context, namespace, name string) error {
 	return nil
 }
 
-func (s *storeGRPC) Cleanup(ctx context.Context) (int64, error) {
-	req := &storev1.CleanupRequest{}
+func (s *storeGRPC) Cleanup(ctx context.Context, before time.Time) (int64, error) {
+	req := &storev1.CleanupRequest{
+		BeforeMs: before.UnixMilli(),
+	}
 
 	resp, err := s.client.Cleanup(ctx, req)
 	if err != nil {
