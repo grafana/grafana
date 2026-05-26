@@ -355,7 +355,7 @@ export default class ResourcePickerData extends DataSourceWithBackend<
           }
         }
       } catch (e) {
-        console.debug(`Failed to fetch metric namespaces for region ${region}, falling back to predefined list:`, e);
+        console.warn(`Failed to fetch metric namespaces for region ${region}, falling back to predefined list:`, e);
       }
     };
 
