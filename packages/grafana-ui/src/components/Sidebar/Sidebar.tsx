@@ -210,7 +210,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
     }),
     showButton: css({
       position: 'fixed',
-      top: '50%',
+      bottom: theme.spacing(2),
       zIndex: theme.zIndex.navbarFixed,
       padding: theme.spacing(1),
       backgroundColor: theme.colors.background.secondary,
