@@ -1,3 +1,4 @@
+import { skipToken } from '@reduxjs/toolkit/query/react';
 import { renderHook } from '@testing-library/react';
 
 import { config } from '@grafana/runtime';
@@ -293,11 +294,19 @@ describe('useGetResourceRepositoryView', () => {
       const instanceRepo = repoView({ name: 'instance-repo', target: 'instance' });
       setupMocks({ settingsItems: [instanceRepo] });
 
-      const { result } = renderHook(() => useGetResourceRepositoryView({ folderName: '' }));
+      const { result } = renderHook(() => useGetResourceRepositoryView({ folderName: '', includeInstance: true }));
 
       expect(result.current.status).toBe(RepoViewStatus.Ready);
       expect(result.current.repository).toBe(instanceRepo);
       expect(result.current.isInstanceManaged).toBe(true);
+    });
+
+    it('skips settings query when no name, folderName, or includeInstance is provided', () => {
+      setupMocks();
+
+      renderHook(() => useGetResourceRepositoryView({ folderName: '' }));
+
+      expect(mockUseGetFrontendSettingsQuery).toHaveBeenCalledWith(skipToken);
     });
   });
 });
