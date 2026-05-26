@@ -4,6 +4,7 @@ import (
 	"context"
 	"net"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -113,7 +114,8 @@ func (s *mockGRPCServer) Cleanup(ctx context.Context, req *storev1.CleanupReques
 		return nil, status.Error(codes.Unimplemented, "cleanup not supported")
 	}
 
-	count, err := s.lifecycle.Cleanup(ctx)
+	before := time.UnixMilli(req.BeforeMs).UTC()
+	count, err := s.lifecycle.Cleanup(ctx, before)
 	if err != nil {
 		return nil, mapToGRPCStatus(err)
 	}

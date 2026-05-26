@@ -5,7 +5,8 @@ import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Checkbox, Icon, useStyles2, useTheme2 } from '@grafana/ui';
 
-import { type ActionItem, Actions } from '../../../Actions';
+import { Actions } from '../../../Actions';
+import { type ActionItem } from '../../../actionItem';
 import { QueryEditorType, SIDEBAR_CARD_HEIGHT, SIDEBAR_CARD_INDENT, SIDEBAR_CARD_SPACING } from '../../../constants';
 import { type SelectionModifiers, useQueryEditorTypeConfig, useQueryEditorUIContext } from '../../QueryEditorContext';
 import { getEditorBorderColor } from '../../utils';

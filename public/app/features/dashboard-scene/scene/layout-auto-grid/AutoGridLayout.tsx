@@ -120,6 +120,10 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
   }
 
   public getDragHooks() {
+    if (!this.isDraggable()) {
+      return {};
+    }
+
     return {
       onDragStart: (evt: ReactPointerEvent, panel: VizPanel) => {
         const gridItem = panel.parent;

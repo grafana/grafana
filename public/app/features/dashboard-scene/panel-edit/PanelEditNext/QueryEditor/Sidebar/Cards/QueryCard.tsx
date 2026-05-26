@@ -3,7 +3,7 @@ import { Icon } from '@grafana/ui';
 import { DataSourceLogo } from 'app/features/datasources/components/picker/DataSourceLogo';
 import { useDatasource } from 'app/features/datasources/hooks';
 
-import { type ActionItem } from '../../../Actions';
+import { queryToActionItem } from '../../../actionItem';
 import { PENDING_CARD_ID, QueryEditorType } from '../../../constants';
 import {
   useActionsContext,
@@ -38,12 +38,7 @@ export const QueryCard = ({ query }: { query: DataQuery }) => {
   const isMultiSelected = multiSelectMode && selectedQueryRefIds.includes(query.refId);
   const isHidden = !!query.hide;
 
-  const item: ActionItem = {
-    name: query.refId,
-    type: editorType,
-    isHidden,
-    error,
-  };
+  const item = queryToActionItem(query, { error });
 
   return (
     <>

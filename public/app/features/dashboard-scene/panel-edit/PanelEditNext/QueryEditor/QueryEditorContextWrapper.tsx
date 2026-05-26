@@ -75,6 +75,7 @@ export function QueryEditorContextWrapper({
   const clearSideEffectsRef = useRef<() => void>(() => {});
   const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
   const [multiSelectMode, setMultiSelectMode] = useState(false);
+  const [confirmingDeleteActionKey, setConfirmingDeleteActionKey] = useState<string | null>(null);
 
   const {
     activeQueryRefId,
@@ -99,10 +100,12 @@ export function QueryEditorContextWrapper({
     onClearSideEffects: useCallback(() => clearSideEffectsRef.current(), []),
   });
 
-  // Wrap each selection mutator to clear alert selection (cross-type exclusivity).
+  // Wrap each selection mutator to clear alert selection (cross-type exclusivity) and dismiss any
+  // open inline delete confirmation because both are selection-scoped UI state.
   const onCardSelectionChange = useCallback(
     (queryRefId: string | null, transformationId: string | null, options?: { seedBulk?: boolean }) => {
       setSelectedAlertId(null);
+      setConfirmingDeleteActionKey(null);
       onCardSelectionChangeRaw(queryRefId, transformationId, options);
     },
     [onCardSelectionChangeRaw]
@@ -111,6 +114,7 @@ export function QueryEditorContextWrapper({
   const toggleQuerySelection = useCallback(
     (query: DataQuery | ExpressionQuery, modifiers?: SelectionModifiers) => {
       setSelectedAlertId(null);
+      setConfirmingDeleteActionKey(null);
       if (modifiers?.multi || modifiers?.range) {
         if (!multiSelectMode) {
           return;
@@ -126,6 +130,7 @@ export function QueryEditorContextWrapper({
   const toggleTransformationSelection = useCallback(
     (transformation: Transformation, modifiers?: SelectionModifiers) => {
       setSelectedAlertId(null);
+      setConfirmingDeleteActionKey(null);
       if (modifiers?.multi || modifiers?.range) {
         if (!multiSelectMode) {
           return;
@@ -138,13 +143,11 @@ export function QueryEditorContextWrapper({
     [multiSelectMode, activateTransformationRaw, toggleTransformationSelectionRaw]
   );
 
-  // Full reset of card + bulk + multi-select state, optionally setting an alert as the active item.
-  // Uses the raw flag setter directly — clearSelectionRaw already wipes the bulk arrays, so going
-  // through setMultiSelectModeState would clear them a second time.
   const resetSelectionState = useCallback(
     (alertId: string | null) => {
       setSelectedAlertId(alertId);
       setMultiSelectMode(false);
+      setConfirmingDeleteActionKey(null);
       clearSelectionRaw();
     },
     [clearSelectionRaw]
@@ -346,6 +349,8 @@ export function QueryEditorContextWrapper({
       },
       finalizePendingTransformation,
       showVersionBanner: Boolean(showVersionBanner),
+      confirmingDeleteActionKey,
+      setConfirmingDeleteActionKey,
     }),
     [
       selectedQuery,
@@ -385,6 +390,7 @@ export function QueryEditorContextWrapper({
       finalizePendingTransformation,
       clearPendingTransformation,
       showVersionBanner,
+      confirmingDeleteActionKey,
     ]
   );
 

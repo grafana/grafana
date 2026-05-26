@@ -9,7 +9,7 @@ import { PublicDashboardBadge } from './actions/PublicDashboardBadge';
 import { StarButton } from './actions/StarButton';
 import { getDynamicActions, renderActionElements } from './utils';
 
-export const LeftActions = ({ dashboard }: { dashboard: DashboardScene }) => {
+export const BreadcrumbActions = ({ dashboard }: { dashboard: DashboardScene }) => {
   const { editview, editPanel, isEditing, uid, meta, viewPanel } = dashboard.useState();
 
   const hasEditView = Boolean(editview);
