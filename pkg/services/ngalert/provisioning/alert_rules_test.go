@@ -1558,7 +1558,7 @@ func TestDeleteAlertRule(t *testing.T) {
 			assert.Equal(t, "CanWriteAllRules", ac.Calls[0].Method)
 
 			deletes := getDeleteQueries(ruleStore)
-			require.Len(t, deletes, 1, "deleteRules should still be called")
+			require.Empty(t, deletes, "no store delete when rule already gone")
 		})
 	})
 
