@@ -51,7 +51,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
         }
         const ref = watch('ref');
         try {
-          await checkFile({ name: repository.name, path, ref: ref || undefined }, true).unwrap();
+          await checkFile({ name: repository.name, path, ref: ref || undefined }).unwrap();
           return t(
             'provisioned-resource-form.save-or-delete-resource-shared-fields.path-exists',
             'A file with this name already exists at this path'
@@ -142,7 +142,12 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
               <Controller
                 name="ref"
                 control={control}
-                rules={{ validate: validateBranchName }}
+                rules={{
+                  validate: validateBranchName,
+                  // When the branch changes, re-run path validation: a file may exist on one
+                  // branch but not another, so the previous result is stale on the new ref.
+                  deps: shouldValidatePath ? ['path'] : undefined,
+                }}
                 render={({ field: { ref, onChange, ...field } }) => (
                   <>
                     {canOnlyPushToConfiguredBranch ? (
@@ -185,9 +190,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
           <Controller
             name="path"
             control={control}
-            // deps: ['ref'] re-runs validatePath when the branch changes — a file
-            // might exist on one branch but not another, so cached results are stale.
-            rules={shouldValidatePath ? { validate: validatePath, deps: ['ref'] } : undefined}
+            rules={shouldValidatePath ? { validate: validatePath } : undefined}
             render={({ field: { ref: _ref, onChange, value } }) => {
               const { directory: dir, filename: file } = splitPath(value || '');
               return (

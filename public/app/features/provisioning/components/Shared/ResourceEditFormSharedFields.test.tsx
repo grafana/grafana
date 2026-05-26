@@ -516,5 +516,39 @@ describe('ResourceEditFormSharedFields', () => {
         expect(validationRequested).toBe(true);
       });
     });
+
+    it('should re-trigger path validation when the branch changes', async () => {
+      const refsInRequest: string[] = [];
+      server.use(
+        http.get(`${BASE}/repositories/:name/files/*`, ({ request }) => {
+          const url = new URL(request.url);
+          refsInRequest.push(url.searchParams.get('ref') ?? '');
+          return new HttpResponse(null, { status: 404 });
+        })
+      );
+
+      const { user } = setup({
+        isNew: true,
+        repository: mockRepo.github,
+        formDefaultValues: { path: 'dashboards/test.json', ref: 'main', workflow: 'write' },
+      });
+
+      // Seed the validator by editing the filename so the path field is touched.
+      const filenameInput = screen.getByRole('textbox', { name: /filename/i });
+      await user.clear(filenameInput);
+      await user.type(filenameInput, 'check.json');
+      await waitFor(() => expect(refsInRequest).toContain('main'));
+
+      refsInRequest.length = 0;
+
+      // Change branch → deps on the ref field should re-run validatePath.
+      const branchCombobox = screen.getByRole('combobox', { name: /branch/i });
+      await user.click(branchCombobox);
+      await user.clear(branchCombobox);
+      await user.paste('feature-branch');
+      await user.keyboard('{Enter}');
+
+      await waitFor(() => expect(refsInRequest).toContain('feature-branch'));
+    });
   });
 });
