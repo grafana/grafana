@@ -3,6 +3,11 @@ import userEvent from '@testing-library/user-event';
 
 import { FieldColorModeId } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import {
+  DYNAMIC_PALETTES_INDEX_KEY,
+  DYNAMIC_PALETTE_KEY_PREFIX,
+  resetDynamicFieldColorModesForTests,
+} from 'app/features/dynamic-palettes/dynamicPalettes';
 
 import { FieldColorEditor } from './fieldColor';
 
@@ -52,6 +57,11 @@ const defaultEditorProps = {
 };
 
 describe('fieldColor', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    resetDynamicFieldColorModesForTests();
+  });
+
   it('filters out registry options with excludeFromPicker=true', async () => {
     render(<FieldColorEditor {...defaultEditorProps} />);
     await userEvent.type(screen.getByRole('combobox'), '{arrowdown}');
@@ -86,5 +96,23 @@ describe('fieldColor', () => {
       expect(screen.queryByText(/^Colorblind safe/i)).not.toBeInTheDocument();
       expect(screen.getAllByRole('option')).toHaveLength(2);
     });
+  });
+
+  it('shows a palette loaded asynchronously from local storage', async () => {
+    const dynamicId = `sunset-${Date.now()}`;
+
+    localStorage.setItem(
+      DYNAMIC_PALETTES_INDEX_KEY,
+      JSON.stringify([{ id: dynamicId, name: 'Sunset', group: 'Custom' }])
+    );
+    localStorage.setItem(
+      `${DYNAMIC_PALETTE_KEY_PREFIX}${dynamicId}`,
+      JSON.stringify(['#FF6B6B', '#FFB36B', '#FFD56B'])
+    );
+
+    render(<FieldColorEditor {...defaultEditorProps} />);
+    await userEvent.type(screen.getByRole('combobox'), '{arrowdown}');
+
+    expect(await screen.findByText(/^Sunset/i)).toBeInTheDocument();
   });
 });

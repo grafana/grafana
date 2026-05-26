@@ -16,6 +16,7 @@ import {
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { useStyles2, useTheme2, Field, RadioButtonGroup, Select, Stack } from '@grafana/ui';
+import { useDynamicFieldColorModes } from 'app/features/dynamic-palettes/useDynamicFieldColorModes';
 
 import { ColorValueEditor } from './color';
 
@@ -27,6 +28,7 @@ type Props = StandardEditorProps<FieldColor | undefined, FieldColorConfigSetting
 export const FieldColorEditor = ({ value, onChange, item, id }: Props) => {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
+  const { loading } = useDynamicFieldColorModes();
 
   const colorMode = getFieldColorMode(value?.mode);
   const availableOptions = item.settings?.byValueSupport
@@ -114,6 +116,7 @@ export const FieldColorEditor = ({ value, onChange, item, id }: Props) => {
       <div className={styles.group}>
         <Select
           minMenuHeight={200}
+          isLoading={loading}
           options={options}
           value={mode}
           onChange={onModeChange}
@@ -130,6 +133,7 @@ export const FieldColorEditor = ({ value, onChange, item, id }: Props) => {
       <div className={styles.group}>
         <Select
           minMenuHeight={200}
+          isLoading={loading}
           options={options}
           value={mode}
           onChange={onModeChange}
@@ -154,7 +158,14 @@ export const FieldColorEditor = ({ value, onChange, item, id }: Props) => {
     return (
       <>
         <div style={{ marginBottom: theme.spacing(2) }}>
-          <Select minMenuHeight={200} options={options} value={mode} onChange={onModeChange} inputId={id} />
+          <Select
+            minMenuHeight={200}
+            isLoading={loading}
+            options={options}
+            value={mode}
+            onChange={onModeChange}
+            inputId={id}
+          />
         </div>
         <Field label={t('options-ui.field-color.color-by-label', 'Color series by')}>
           <RadioButtonGroup value={value?.seriesBy ?? 'last'} options={seriesModes} onChange={onSeriesModeChange} />
@@ -163,7 +174,16 @@ export const FieldColorEditor = ({ value, onChange, item, id }: Props) => {
     );
   }
 
-  return <Select minMenuHeight={200} options={options} value={mode} onChange={onModeChange} inputId={id} />;
+  return (
+    <Select
+      minMenuHeight={200}
+      isLoading={loading}
+      options={options}
+      value={mode}
+      onChange={onModeChange}
+      inputId={id}
+    />
+  );
 };
 
 interface ModeProps {

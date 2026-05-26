@@ -99,7 +99,7 @@ export function transformDataTopic(topic: DataTransformerConfig['topic']): DataT
   }
 }
 
-export function colorIdEnumToColorIdV2(colorId: FieldColorModeIdV1 | string): FieldColorModeIdV2 | undefined {
+export function colorIdEnumToColorIdV2(colorId: FieldColorModeIdV1 | string): FieldColorModeIdV2 | string {
   switch (colorId) {
     case FieldColorModeIdV1.Thresholds:
       return 'thresholds';
@@ -142,6 +142,6 @@ export function colorIdEnumToColorIdV2(colorId: FieldColorModeIdV1 | string): Fi
     case FieldColorModeIdV1.Shades:
       return 'shades';
     default:
-      return undefined;
+      return colorId;
   }
 }
