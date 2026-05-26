@@ -43,6 +43,7 @@ jobs:
     runs-on: ubuntu-x64-large
     permissions:
       contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v6
         with:
