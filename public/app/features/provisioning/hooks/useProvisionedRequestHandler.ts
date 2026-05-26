@@ -16,6 +16,7 @@ import { refetchChildren } from 'app/features/browse-dashboards/state/actions';
 import { type RepoType } from 'app/features/provisioning/Wizard/types';
 import { useDispatch } from 'app/types/store';
 
+import { ensureFolderPathTrailingSlash } from '../components/utils/path';
 import { getRepoFileUrl } from '../utils/git';
 
 import { PushSuccessMessage } from './PushSuccessMessage';
@@ -127,17 +128,15 @@ export function useProvisionedRequestHandler<T>({
         const branch = ref || selectedBranch || repository?.branch;
         // Link to the configured path (e.g. /tree/main/dashboards) so users
         // land where their resources live, not the repo root.
-        const linkUrl =
-          (repository?.path
-            ? getRepoFileUrl({
-                repoType: repository.type,
-                url: repository.url,
-                branch,
-                filePath: repository.path.endsWith('/') ? repository.path : `${repository.path}/`,
-              })
-            : undefined) ||
-          urls?.repositoryURL ||
-          repository?.url;
+        const repoFileUrl = repository?.path
+          ? getRepoFileUrl({
+              repoType: repository.type,
+              url: repository.url,
+              branch,
+              filePath: ensureFolderPathTrailingSlash(repository.path),
+            })
+          : undefined;
+        const linkUrl = repoFileUrl || urls?.repositoryURL || repository?.url;
 
         if (branch) {
           // Uses dispatch(notifyApp(...)) instead of getAppEvents().publish() because AlertPayload only accepts strings
