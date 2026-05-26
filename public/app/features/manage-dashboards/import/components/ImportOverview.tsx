@@ -27,7 +27,7 @@ export function ImportOverview({ dashboard, dashboardUid, inputs, meta, source, 
   const searchObj = locationService.getSearchObject();
   const folderUid = searchObj.folderUid ? String(searchObj.folderUid) : '';
 
-  const { repository, folder, status } = useGetResourceRepositoryView({ folderName: folderUid });
+  const { repository, folder, status } = useGetResourceRepositoryView({ folderName: folderUid, includeInstance: true });
 
   // While detecting provisioning status, show a spinner
   if (status === RepoViewStatus.Loading) {
