@@ -3,8 +3,8 @@ import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { screen } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { mockBoundingClientRect } from '@grafana/test-utils';
 import * as pluginSettings from '@grafana/runtime/unstable';
+import { mockBoundingClientRect } from '@grafana/test-utils';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { type ExpressionEditorProps } from '../components/rule-editor/ExpressionEditor';
