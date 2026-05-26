@@ -22,6 +22,7 @@ func FuzzExtractDashboard(f *testing.F) {
 		"../../testdata",
 		"../../../../../services/store/kind/dashboard/testdata",
 	}
+	seedCount := 0
 	for _, dir := range seedDirs {
 		entries, err := os.ReadDir(dir)
 		if err != nil {
@@ -34,12 +35,19 @@ func FuzzExtractDashboard(f *testing.F) {
 			if strings.HasSuffix(e.Name(), "-info.json") {
 				continue
 			}
+			// nolint:gosec // G304: paths come from a hard-coded list of
+			// seed directories joined with names read from those
+			// directories, not user input.
 			data, err := os.ReadFile(filepath.Join(dir, e.Name()))
 			if err != nil {
 				continue
 			}
 			f.Add(data)
+			seedCount++
 		}
+	}
+	if seedCount == 0 {
+		f.Fatalf("no seeds loaded; seed paths may have moved: %v", seedDirs)
 	}
 
 	e := New()
