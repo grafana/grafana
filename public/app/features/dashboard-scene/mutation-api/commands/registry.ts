@@ -8,19 +8,16 @@
 import { addPanelCommand } from './addPanel';
 import { addRowCommand } from './addRow';
 import { addTabCommand } from './addTab';
-import { addVariableCommand } from './addVariable';
 import { enterEditModeCommand } from './enterEditMode';
 import { getDashboardInfoCommand } from './getDashboardInfo';
 import { getLayoutCommand } from './getLayout';
 import { listPanelsCommand } from './listPanels';
-import { listVariablesCommand } from './listVariables';
 import { movePanelCommand } from './movePanel';
 import { moveRowCommand } from './moveRow';
 import { moveTabCommand } from './moveTab';
 import { removePanelCommand } from './removePanel';
 import { removeRowCommand } from './removeRow';
 import { removeTabCommand } from './removeTab';
-import { removeVariableCommand } from './removeVariable';
 import type { MutationCommand } from './types';
 import { updateLayoutCommand } from './updateLayout';
 import { updatePanelCommand } from './updatePanel';
@@ -30,10 +27,7 @@ import { updateVariableCommand } from './updateVariable';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- each command is typed internally; the array is heterogeneous
 export const ALL_COMMANDS: Array<MutationCommand<any>> = [
-  addVariableCommand,
-  removeVariableCommand,
   updateVariableCommand,
-  listVariablesCommand,
   enterEditModeCommand,
   getLayoutCommand,
   addRowCommand,

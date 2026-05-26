@@ -25,3 +25,13 @@ export type {
 export { ALL_COMMANDS, MUTATION_TYPES, validatePayload } from './commands/registry';
 
 export type { MutationCommand } from './commands/types';
+
+export { MutationApiClient, CLIENT_COMMANDS } from './Client';
+export type { MutationApiRequest, ClientCommandSummary } from './Client';
+export type {
+  ClientCommand,
+  ClientCommandContext,
+  ClientCommandResult,
+  WriteClientCommand,
+  ReadClientCommand,
+} from './ClientCommand';

@@ -1,51 +1,33 @@
 /**
- * LIST_VARIABLES command
+ * LIST_VARIABLES -- canonical ReadClientCommand example.
  *
- * List all template variables in the current dashboard in v2beta1 VariableKind format.
- * Returns an ordered array matching the dashboard schema variable ordering.
+ * Read commands return data without mutating state and do not enter the
+ * undo/redo stack. The UI does not consume them (Scenes subscriptions are
+ * the UI's read channel); the agent does, via MutationApiClient.execute().
  */
 
+import { type z } from 'zod';
+
 import { SceneVariableSet } from '@grafana/scenes';
+import type { VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
 import { sceneVariablesSetToSchemaV2Variables } from '../../serialization/sceneVariablesSetToVariables';
+import { type ReadClientCommand } from '../ClientCommand';
 
 import { payloads } from './schemas';
-import { readOnly, type MutationCommand } from './types';
 
-export const listVariablesCommand: MutationCommand<Record<string, never>> = {
-  name: 'LIST_VARIABLES',
+type ListVariablesPayload = z.infer<typeof payloads.listVariables>;
+
+export const listVariablesClientCommand: ReadClientCommand<ListVariablesPayload, { variables: VariableKind[] }> = {
+  type: 'LIST_VARIABLES',
   description: payloads.listVariables.description ?? '',
-
-  payloadSchema: payloads.listVariables,
-  permission: readOnly,
-  readOnly: true,
-
-  handler: async (_payload, context) => {
-    const { scene } = context;
-
-    try {
-      const varSet = scene.state.$variables;
-      if (!varSet || !(varSet instanceof SceneVariableSet)) {
-        return {
-          success: true,
-          data: { variables: [] },
-          changes: [],
-        };
-      }
-
-      const variables = sceneVariablesSetToSchemaV2Variables(varSet, true);
-
-      return {
-        success: true,
-        data: { variables },
-        changes: [],
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : String(error),
-        changes: [],
-      };
+  schema: payloads.listVariables,
+  kind: 'read',
+  read(_payload, ctx) {
+    const varSet = ctx.scene.state.$variables;
+    if (!varSet || !(varSet instanceof SceneVariableSet)) {
+      return { variables: [] };
     }
+    return { variables: sceneVariablesSetToSchemaV2Variables(varSet, true) };
   },
 };

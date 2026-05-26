@@ -62,6 +62,7 @@ import {
 } from '../../apiserver/types';
 import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
 import { dashboardEditActions } from '../edit-pane/shared';
+import { MutationApiClient } from '../mutation-api/Client';
 import { type PanelEditor } from '../panel-edit/PanelEditor';
 import { getUpdatedHoverHeader } from '../panel-edit/getPanelFrameOptions';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
@@ -84,7 +85,6 @@ import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
 import { normalizeTransformation } from '../serialization/transformationCompat';
 import { JsonModelEditView } from '../settings/JsonModelEditView';
 import { type DashboardEditView } from '../settings/utils';
-import { UserActionsService } from '../user-actions/UserActionsService';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
@@ -240,14 +240,24 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
    * Dashboard changes tracker
    */
   private _changeTracker: DashboardSceneChangeTracker;
-  private _userActionsService?: UserActionsService;
+  private _mutationApiClient?: MutationApiClient;
   private _writeLocks = new Set<string>();
 
-  public get userActionsService(): UserActionsService {
-    if (!this._userActionsService) {
-      this._userActionsService = new UserActionsService(this);
+  /**
+   * Lazy-initialized agent-facing entry point for the Mutation API.
+   *
+   * The UI does NOT need this getter: it constructs UserActionCommands
+   * directly and dispatches via `dashboardEditActions.executeUserAction`.
+   * The agent (Assistant / restrictedGrafanaApis bridge) calls
+   * `mutationApiClient.list()` to discover commands and `.execute({ type,
+   * payload })` to run them by JSON, which converges on the same
+   * UserActionCommand primitive.
+   */
+  public get mutationApiClient(): MutationApiClient {
+    if (!this._mutationApiClient) {
+      this._mutationApiClient = new MutationApiClient(this);
     }
-    return this._userActionsService;
+    return this._mutationApiClient;
   }
 
   /**

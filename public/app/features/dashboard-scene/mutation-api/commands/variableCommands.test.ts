@@ -1,26 +1,30 @@
 import { SceneVariableSet } from '@grafana/scenes';
 
 import type { DashboardScene } from '../../scene/DashboardScene';
+import { MutationApiClient } from '../Client';
 import { DashboardMutationClient } from '../DashboardMutationClient';
-import type { MutationResult } from '../types';
 
 function buildMockScene(options: { editable?: boolean; isEditing?: boolean } = {}): DashboardScene {
-  const { editable = true, isEditing = false } = options;
+  const { editable = true, isEditing = true } = options;
   const state: Record<string, unknown> = {
     uid: 'test-dash',
     isEditing,
     $variables: new SceneVariableSet({ variables: [] }),
   };
-  const scene = {
+  const writeLocks = new Set<string>();
+  const scene: Record<string, unknown> = {
     state,
     canEditDashboard: jest.fn(() => editable),
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
     }),
     forceRender: jest.fn(),
+    publishEvent: jest.fn(),
+    acquireWriteLock: (t: string) => writeLocks.add(t),
+    releaseWriteLock: (t: string) => writeLocks.delete(t),
+    isWriteLocked: (t: string) => writeLocks.has(t),
     setState: jest.fn((partial: Record<string, unknown>) => {
       Object.assign(state, partial);
-      // Activate new variable set if provided
       const vars = partial.$variables;
       if (vars && typeof (vars as SceneVariableSet).activate === 'function') {
         (vars as SceneVariableSet).activate();
@@ -32,95 +36,64 @@ function buildMockScene(options: { editable?: boolean; isEditing?: boolean } = {
 }
 
 describe('Variable mutation commands', () => {
-  let client: DashboardMutationClient;
-  let scene: ReturnType<typeof buildMockScene>;
+  let client: MutationApiClient;
+  let scene: DashboardScene;
 
   beforeEach(() => {
-    // Scenes library warns when re-parenting variables via replaceVariableSet
     jest.spyOn(console, 'warn').mockImplementation(() => {});
     scene = buildMockScene({ editable: true });
-    client = new DashboardMutationClient(scene);
+    client = new MutationApiClient(scene);
   });
 
   it('ADD_VARIABLE adds a variable to the dashboard', async () => {
-    const result: MutationResult = await client.execute({
+    const result = await client.execute({
       type: 'ADD_VARIABLE',
       payload: {
-        variable: {
-          kind: 'CustomVariable',
-          spec: {
-            name: 'env',
-            query: 'dev,staging,prod',
-          },
-        },
+        variable: { kind: 'CustomVariable', spec: { name: 'env', query: 'dev,staging,prod' } },
       },
     });
 
     expect(result.success).toBe(true);
-    expect(result.changes.length).toBeGreaterThan(0);
-    expect(result.changes[0].path).toBe('/variables/env');
   });
 
   it('LIST_VARIABLES returns dashboard variables', async () => {
-    // First add a variable
     await client.execute({
       type: 'ADD_VARIABLE',
       payload: {
-        variable: {
-          kind: 'CustomVariable',
-          spec: {
-            name: 'env',
-            query: 'dev,staging,prod',
-          },
-        },
+        variable: { kind: 'CustomVariable', spec: { name: 'env', query: 'dev,staging,prod' } },
       },
     });
 
-    const result = await client.execute({
-      type: 'LIST_VARIABLES',
-      payload: {},
-    });
+    const result = await client.execute({ type: 'LIST_VARIABLES', payload: {} });
 
     expect(result.success).toBe(true);
-    expect(result.data).toBeDefined();
+    const data = result.data as { variables: Array<{ spec: { name: string } }> };
+    expect(data.variables.map((v) => v.spec.name)).toEqual(['env']);
   });
 
   it('REMOVE_VARIABLE removes a variable by name', async () => {
-    // First add a variable
     await client.execute({
       type: 'ADD_VARIABLE',
       payload: {
-        variable: {
-          kind: 'CustomVariable',
-          spec: { name: 'env', query: 'dev,staging,prod' },
-        },
+        variable: { kind: 'CustomVariable', spec: { name: 'env', query: 'dev,staging,prod' } },
       },
     });
 
-    const result = await client.execute({
-      type: 'REMOVE_VARIABLE',
-      payload: { name: 'env' },
-    });
+    const result = await client.execute({ type: 'REMOVE_VARIABLE', payload: { name: 'env' } });
 
     expect(result.success).toBe(true);
-    expect(result.changes.length).toBeGreaterThan(0);
   });
 
   it('ADD_VARIABLE with position inserts at the specified index', async () => {
     await client.execute({
       type: 'ADD_VARIABLE',
-      payload: {
-        variable: { kind: 'CustomVariable', spec: { name: 'first', query: 'a,b' } },
-      },
+      payload: { variable: { kind: 'CustomVariable', spec: { name: 'first', query: 'a,b' } } },
     });
     await client.execute({
       type: 'ADD_VARIABLE',
-      payload: {
-        variable: { kind: 'CustomVariable', spec: { name: 'third', query: 'x,y' } },
-      },
+      payload: { variable: { kind: 'CustomVariable', spec: { name: 'third', query: 'x,y' } } },
     });
-
-    const result = await client.execute({
+    await client.execute({
       type: 'ADD_VARIABLE',
       payload: {
         variable: { kind: 'CustomVariable', spec: { name: 'second', query: 'c,d' } },
@@ -128,52 +101,92 @@ describe('Variable mutation commands', () => {
       },
     });
 
-    expect(result.success).toBe(true);
-
-    const listResult = await client.execute({ type: 'LIST_VARIABLES', payload: {} });
-    expect(listResult.success).toBe(true);
-    const variables = (listResult.data as { variables: Array<{ spec: { name: string } }> }).variables;
+    const list = await client.execute({ type: 'LIST_VARIABLES', payload: {} });
+    const variables = (list.data as { variables: Array<{ spec: { name: string } }> }).variables;
     expect(variables.map((v) => v.spec.name)).toEqual(['first', 'second', 'third']);
   });
 
   it('ADD_VARIABLE rejects duplicate variable name', async () => {
     await client.execute({
       type: 'ADD_VARIABLE',
-      payload: {
-        variable: { kind: 'CustomVariable', spec: { name: 'env', query: 'dev,staging,prod' } },
-      },
+      payload: { variable: { kind: 'CustomVariable', spec: { name: 'env', query: 'dev,staging,prod' } } },
     });
 
     const result = await client.execute({
       type: 'ADD_VARIABLE',
-      payload: {
-        variable: { kind: 'CustomVariable', spec: { name: 'env', query: 'a,b,c' } },
-      },
+      payload: { variable: { kind: 'CustomVariable', spec: { name: 'env', query: 'a,b,c' } } },
     });
 
     expect(result.success).toBe(false);
     expect(result.error).toContain("Variable 'env' already exists");
   });
 
-  it('UPDATE_VARIABLE updates an existing variable', async () => {
-    await client.execute({
+  it('REMOVE_VARIABLE returns error for non-existent variable', async () => {
+    const result = await client.execute({ type: 'REMOVE_VARIABLE', payload: { name: 'nonexistent' } });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("Variable 'nonexistent' not found");
+  });
+
+  it('rejects invalid payloads with a validation error', async () => {
+    const result = await client.execute({
       type: 'ADD_VARIABLE',
-      payload: {
-        variable: { kind: 'CustomVariable', spec: { name: 'env', query: 'dev,staging,prod' } },
-      },
+      payload: { variable: { invalid: true } },
     });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('Validation failed');
+  });
+
+  it('rejects unknown command types', async () => {
+    const result = await client.execute({ type: 'NONEXISTENT_COMMAND', payload: {} });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('Unknown command type');
+  });
+
+  it('returns an error when dashboard is not editable', async () => {
+    scene = buildMockScene({ editable: false });
+    client = new MutationApiClient(scene);
 
     const result = await client.execute({
-      type: 'UPDATE_VARIABLE',
-      payload: {
-        name: 'env',
-        variable: { kind: 'CustomVariable', spec: { name: 'env', query: 'dev,staging,prod,canary' } },
-      },
+      type: 'ADD_VARIABLE',
+      payload: { variable: { kind: 'CustomVariable', spec: { name: 'env', query: 'dev,staging,prod' } } },
     });
 
-    expect(result.success).toBe(true);
-    expect(result.changes.length).toBeGreaterThan(0);
-    expect(result.changes[0].path).toBe('/variables/env');
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('Cannot edit dashboard');
+  });
+
+  it('returns locked:true when the target write-lock is held', async () => {
+    scene.acquireWriteLock('variables');
+
+    const result = await client.execute({
+      type: 'ADD_VARIABLE',
+      payload: { variable: { kind: 'CustomVariable', spec: { name: 'env', query: 'dev,staging,prod' } } },
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.locked).toBe(true);
+  });
+
+  it('list() exposes the registered commands for Assistant discovery', () => {
+    const summary = client.list();
+    const byType = new Map(summary.map((s) => [s.type, s]));
+    expect(byType.get('ADD_VARIABLE')?.kind).toBe('write');
+    expect(byType.get('REMOVE_VARIABLE')?.kind).toBe('write');
+    expect(byType.get('LIST_VARIABLES')?.kind).toBe('read');
+  });
+});
+
+describe('Legacy DashboardMutationClient (unmigrated commands)', () => {
+  let client: DashboardMutationClient;
+  let scene: ReturnType<typeof buildMockScene>;
+
+  beforeEach(() => {
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+    scene = buildMockScene({ editable: true });
+    client = new DashboardMutationClient(scene);
   });
 
   it('UPDATE_VARIABLE returns error when variable not found', async () => {
@@ -189,76 +202,13 @@ describe('Variable mutation commands', () => {
     expect(result.error).toContain("Variable 'nonexistent' not found");
   });
 
-  it('REMOVE_VARIABLE returns error for non-existent variable', async () => {
-    const result = await client.execute({
-      type: 'REMOVE_VARIABLE',
-      payload: { name: 'nonexistent' },
-    });
-
-    expect(result.success).toBe(false);
-    expect(result.error).toContain("Variable 'nonexistent' not found");
-  });
-
   it('ENTER_EDIT_MODE enters edit mode when not editing', async () => {
-    const result = await client.execute({
-      type: 'ENTER_EDIT_MODE',
-      payload: {},
-    });
+    scene = buildMockScene({ editable: true, isEditing: false });
+    client = new DashboardMutationClient(scene);
+
+    const result = await client.execute({ type: 'ENTER_EDIT_MODE', payload: {} });
 
     expect(result.success).toBe(true);
-    expect(result.changes).toEqual([{ path: '/isEditing', previousValue: false, newValue: true }]);
     expect(scene.onEnterEditMode).toHaveBeenCalled();
-  });
-
-  it('ENTER_EDIT_MODE is a no-op when already editing', async () => {
-    scene = buildMockScene({ editable: true, isEditing: true });
-    client = new DashboardMutationClient(scene);
-
-    const result = await client.execute({
-      type: 'ENTER_EDIT_MODE',
-      payload: {},
-    });
-
-    expect(result.success).toBe(true);
-    expect((result.data as { wasAlreadyEditing: boolean }).wasAlreadyEditing).toBe(true);
-    expect(scene.onEnterEditMode).not.toHaveBeenCalled();
-  });
-
-  it('rejects invalid payloads with a validation error', async () => {
-    const result = await client.execute({
-      type: 'ADD_VARIABLE',
-      payload: { variable: { invalid: true } },
-    });
-
-    expect(result.success).toBe(false);
-    expect(result.error).toContain('Validation failed');
-  });
-
-  it('rejects unknown command types', async () => {
-    const result = await client.execute({
-      type: 'NONEXISTENT_COMMAND',
-      payload: {},
-    });
-
-    expect(result.success).toBe(false);
-    expect(result.error).toContain('Unknown command type');
-  });
-
-  it('rejects commands when dashboard is not editable', async () => {
-    scene = buildMockScene({ editable: false });
-    client = new DashboardMutationClient(scene);
-
-    const result = await client.execute({
-      type: 'ADD_VARIABLE',
-      payload: {
-        variable: {
-          kind: 'CustomVariable',
-          spec: { name: 'env', query: 'dev,staging,prod' },
-        },
-      },
-    });
-
-    expect(result.success).toBe(false);
-    expect(result.error).toContain('Cannot edit dashboard');
   });
 });

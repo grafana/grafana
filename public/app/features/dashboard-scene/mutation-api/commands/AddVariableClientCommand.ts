@@ -1,32 +1,25 @@
+import { type z } from 'zod';
+
 import { AddVariableCommand } from '../../user-actions/commands/AddVariableCommand';
-import {
-  type ClientCommand,
-  type ClientCommandContext,
-  type ClientCommandResult,
-  toClientResult,
-} from '../ClientCommand';
+import { type WriteClientCommand } from '../ClientCommand';
 
 import { addVariablePayloadSchema } from './schemas';
 
-/**
- * Agent-facing ADD_VARIABLE client command.
- *
- * Responsibilities:
- *   1. Validate the raw JSON payload against the Zod schema.
- *   2. Map the validated JSON (VariableKind) to AddVariableCommand inputs.
- *   3. Delegate execution to UserActionsService.
- *
- * Does not mutate Scene state directly.
- */
-export class AddVariableClientCommand implements ClientCommand {
-  async handler(payload: unknown, context: ClientCommandContext): Promise<ClientCommandResult> {
-    const validation = addVariablePayloadSchema.safeParse(payload);
-    if (!validation.success) {
-      return { success: false, error: validation.error.message };
-    }
+export type AddVariablePayload = z.infer<typeof addVariablePayloadSchema>;
 
-    const { variable, position } = validation.data;
-    const cmd = new AddVariableCommand(context.scene, variable, position);
-    return toClientResult(context.userActionsService.execute(cmd));
-  }
-}
+/**
+ * Agent-facing ADD_VARIABLE command. Data record, not a class.
+ *
+ * MutationApiClient.execute() validates the payload against `schema` and
+ * dispatches `toUserAction(payload, ctx)` through dashboardEditActions, so
+ * the agent and the UI share the same mutation primitive (AddVariableCommand).
+ */
+export const addVariableClientCommand: WriteClientCommand<AddVariablePayload> = {
+  type: 'ADD_VARIABLE',
+  description: addVariablePayloadSchema.description ?? '',
+  schema: addVariablePayloadSchema,
+  kind: 'write',
+  toUserAction(payload, ctx) {
+    return new AddVariableCommand(ctx.scene, payload.variable, payload.position);
+  },
+};
