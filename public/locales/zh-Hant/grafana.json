@@ -437,7 +437,8 @@
       "label-value": "數值"
     },
     "alert-instance-extension-point": {
-      "aria-label-actions": "動作"
+      "n-contact-points_other": "",
+      "view-route_other": ""
     },
     "alert-instance-modal-selector": {
       "add-alert-data-to-payload": "將警報資料新增至負載",
@@ -453,6 +454,7 @@
     },
     "alert-instances-table": {
       "created": "已建立",
+      "destination": "",
       "labels": "標籤",
       "state": "狀態"
     },
@@ -2328,6 +2330,7 @@
     },
     "notification-route": {
       "no-labels": "沒有標籤",
+      "notification-policies": "",
       "notification-policy": "通知政策"
     },
     "notification-route-header": {
@@ -4353,7 +4356,6 @@
       "button-cancel": "取消",
       "button-delete": "刪除",
       "button-deleting": "正在刪除…",
-      "commit": "刪除資料夾",
       "delete-warning": "這將刪除此資料夾及其所有子資料夾。總體而言，這會影響：",
       "missing-info": "缺少必要欄位",
       "success-message": "已成功刪除資料夾"
@@ -4467,7 +4469,6 @@
       "button-cancel": "取消",
       "button-rename": "重新命名",
       "button-renaming": "正在重新命名…",
-      "commit": "重新命名資料夾",
       "error-saving": "無法重新命名資料夾",
       "label-folder-name": "資料夾名稱",
       "missing-info": "缺少必要欄位",
@@ -6352,6 +6353,8 @@
         "ungroup-tabs": "解散分頁群組"
       },
       "name": "分頁",
+      "scroll-tabs-left": "",
+      "scroll-tabs-right": "",
       "tab": {
         "new": "新分頁",
         "repeat": {
@@ -6449,6 +6452,10 @@
         },
         "save-dashboard-short": "儲存",
         "save-library-panel": "儲存資料庫面板",
+        "save-template": {
+          "label": "",
+          "tooltip": ""
+        },
         "share": {
           "arrow": "分享",
           "tooltip": "複製網址"
@@ -6462,6 +6469,9 @@
       "read-only": "唯讀",
       "refresh": "重新整理儀表板",
       "save": "儲存儀表板",
+      "save-as-template": {
+        "label": ""
+      },
       "save-dashboard": {
         "label": "儲存儀表板",
         "tooltip": "儲存變更"
@@ -7484,7 +7494,9 @@
         "label-details": "詳細資訊",
         "title": "儲存儀表板",
         "title-copy": "儲存儀表板副本",
-        "title-provisioned": "已佈建儀表板"
+        "title-provisioned": "已佈建儀表板",
+        "title-template": "",
+        "title-update-template": ""
       }
     },
     "save-dashboard-form": {
@@ -7560,6 +7572,10 @@
     },
     "section-filters-list": {
       "add-filter": ""
+    },
+    "section-placement": {
+      "top-row": "",
+      "top-tab": ""
     },
     "selection-options-form": {
       "description-enables-multiple-values-selected": "啟用同時選取多個值",
@@ -7700,9 +7716,6 @@
     "variable-display-select": {
       "label": "顯示",
       "options": {
-        "above-dashboard": {
-          "label": "儀表板上方"
-        },
         "controls-menu": {
           "description": "開啟控制選單時可見",
           "label": "控制選單"
@@ -7711,9 +7724,9 @@
           "description": "只有在編輯模式下才能看到",
           "label": "隱藏"
         },
-        "hidden-label": {
-          "description": "儀表板上方，但不顯示變數名稱",
-          "label": "儀表板上方，標籤隱藏"
+        "top-placement-hidden-label": {
+          "description": "",
+          "label": ""
         }
       }
     },
@@ -7795,9 +7808,12 @@
           "reorder-variables-list": "重新排序變數清單"
         }
       },
-      "title-above-dashboard_other": "儀表板上方 ({{count}})",
+      "top-placement": {
+        "default": ""
+      },
       "title-controls-menu_other": "控制選單 ({{count}})",
-      "title-hidden_other": "隱藏 ({{count}})"
+      "title-hidden_other": "隱藏 ({{count}})",
+      "title-top-placement_other": ""
     },
     "version-history": {
       "comparison": {
@@ -10689,7 +10705,7 @@
     "name-unit": "單位",
     "name-value-name": "值名稱",
     "name-y-axis-scale": "Y 軸刻度",
-    "name-y-bucket-scale": "Y 儲存貯體刻度",
+    "name-y-bucket-scale": "",
     "placeholder-axis-label": "自動",
     "placeholder-axis-width": "自動",
     "placeholder-decimals": "自動",
@@ -10804,6 +10820,12 @@
     "name-stacking": "堆疊"
   },
   "home": {
+    "dashboard-tabs": {
+      "recent": "",
+      "recent-active": "",
+      "starred": "",
+      "starred-active": ""
+    },
     "home-page": {
       "edition": {
         "cloud": "",
@@ -10816,6 +10838,23 @@
         "morning": ""
       },
       "placeholder": ""
+    },
+    "recent-dashboards-tab": {
+      "browse": "",
+      "clear": "",
+      "create": "",
+      "empty": "",
+      "empty-description": "",
+      "error-title": "",
+      "loading": "",
+      "retry": ""
+    },
+    "starred-dashboards-tab": {
+      "empty": "",
+      "empty-description": "",
+      "error-title": "",
+      "loading": "",
+      "retry": ""
     }
   },
   "inspector": {
@@ -11904,6 +11943,9 @@
       "subtitle": "管理整個伺服器的設定，以及存取組織、使用者及授權等資源",
       "title": "伺服器管理員"
     },
+    "agentic-testing": {
+      "title": ""
+    },
     "alert-list-legacy": {
       "title": "警報規則"
     },
@@ -12496,6 +12538,9 @@
       "required": "",
       "save-tooltip": ""
     }
+  },
+  "page-loader": {
+    "default": ""
   },
   "panel": {
     "dashlist": {
@@ -13161,11 +13206,24 @@
     "code-block": {
       "aria-label-copy": "複製程式碼至剪貼簿"
     },
+    "commit-message": {
+      "dashboard-create-default": "",
+      "dashboard-delete-default": "",
+      "dashboard-move-default": "",
+      "dashboard-rename-default": "",
+      "dashboard-update-default": "",
+      "folder-create-default": "",
+      "folder-delete-default": "",
+      "folder-move-default": "",
+      "folder-rename-default": "",
+      "folder-update-default": ""
+    },
     "config-form": {
       "alert-repository-settings-saved": "儲存庫設定已儲存",
       "alert-repository-settings-updated": "儲存庫設定已更新",
       "button-save": "儲存",
       "button-saving": "正在儲存…",
+      "description-commit-message-template": "",
       "description-connection": "選取要使用的 GitHub 應用程式連線",
       "description-enabled": "一旦啟用自動拉取，目標便無法變更。",
       "description-read-only": "無法透過 Grafana 修改資源。",
@@ -13176,6 +13234,7 @@
       "error-save-failed": "無法儲存儲存庫設定",
       "error-save-repository": "無法儲存儲存庫設定",
       "label-automatic-pulling": "自動拉取",
+      "label-commit-message-template": "",
       "label-connection": "GitHub 應用程式連線",
       "label-enabled": "已啟用",
       "label-interval-seconds": "間隔（秒）",
@@ -13184,6 +13243,7 @@
       "label-title": "標題",
       "option-entire-instance": "整個執行個體",
       "option-managed-folder": "受管理的資料夾",
+      "placeholder-commit-message-template": "",
       "placeholder-interval-seconds": "60",
       "placeholder-my-config": "我的設定"
     },
@@ -14064,6 +14124,10 @@
   "query-editor-next": {
     "action": {
       "add-transformation-filter": "新增篩選條件",
+      "cancel-delete": "",
+      "confirm-delete": "",
+      "confirm-delete-confirm": "",
+      "delete-confirmation-group": "",
       "disable": "停用 {{type}}",
       "duplicate": "重複 {{type}}",
       "enable": "啟用 {{type}}",
@@ -14103,10 +14167,7 @@
       "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
-      "body-query": "確定要刪除此查詢嗎？",
-      "body-transformation": "移除一個轉換可能會破壞其他轉換。",
-      "confirm": "刪除",
-      "title": "要刪除 {{name}} 嗎？"
+      "body-transformation": "移除一個轉換可能會破壞其他轉換。"
     },
     "details-sidebar": {
       "cache-timeout": "快取逾時",

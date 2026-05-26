@@ -133,6 +133,11 @@ func TestRemoteIndexStore_UploadDownloadBleveIndex(t *testing.T) {
 	destDir := filepath.Join(t.TempDir(), "downloaded")
 	gotMeta, err := DownloadIndexSnapshot(ctx, store, ns, indexKey, destDir)
 	require.NoError(t, err)
+	// Manifest paths must be root-relative, forward-slash, and canonical.
+	for k := range gotMeta.Files {
+		require.False(t, strings.HasPrefix(k, "./"), "manifest key %q has ./ prefix", k)
+		require.Equal(t, filepath.ToSlash(filepath.Clean(k)), k, "manifest key %q is not canonical", k)
+	}
 	assert.Equal(t, meta.BuildVersion, gotMeta.BuildVersion)
 	assert.Equal(t, meta.LatestResourceVersion, gotMeta.LatestResourceVersion)
 	assert.True(t, gotMeta.BuildTime.Equal(buildStart),

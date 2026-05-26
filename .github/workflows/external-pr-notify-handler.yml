@@ -18,7 +18,7 @@ concurrency:
 jobs:
   notify:
     name: Notify and label external PR
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
     # Only run if trigger workflow succeeded
     if: github.event.workflow_run.conclusion == 'success'
 

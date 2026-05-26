@@ -456,7 +456,7 @@ abstract class DataSourceApi<
 /**
  * Base options shared across datasource filtering operations.
  */
-export interface DataSourceFilteringRequestOptions<TQuery extends DataQuery = DataQuery> {
+interface DataSourceFilteringRequestOptions<TQuery extends DataQuery = DataQuery> {
   /**
    * Context time range. New in v10.3
    */
