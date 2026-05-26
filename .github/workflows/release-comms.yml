@@ -42,7 +42,7 @@ jobs:
       DRY_RUN: ${{ inputs.dry_run }}
       LATEST: ${{ inputs.latest && '1' || '0' }}
       VERSION: ${{ inputs.version }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
     steps:
     - if: ${{ github.event.pull_request.merged == true && startsWith(github.head_ref, 'release/') }}
       run: |
@@ -130,7 +130,7 @@ jobs:
       latest: ${{ needs.setup.outputs.latest }}
   post_on_slack:
     needs: setup
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
     env:
       DRY_RUN: ${{ needs.setup.outputs.dry_run }}
       VERSION: ${{ needs.setup.outputs.version }}
