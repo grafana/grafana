@@ -9,30 +9,21 @@ import { getDashboardSceneFor } from '../../utils/utils';
 
 import { type DashboardOutline } from './DashboardOutline';
 import { DashboardOutlineNode } from './DashboardOutlineNode';
-import { DashboardOutlineSearchResultNode } from './DashboardOutlineSearchResultNode';
-import { flattenOutlineNodes } from './utils';
+import { computeSearchMatches } from './utils';
 
 export function DashboardOutlineRenderer({ model }: SceneComponentProps<DashboardOutline>) {
   const styles = useStyles2(getStyles);
   const dashboard = getDashboardSceneFor(model);
   const { searchQuery } = model.useState();
   const { isEditing } = dashboard.useState();
-  const isEditingMode = Boolean(isEditing);
   const noTitleText = t('dashboard.outline.tree-item.no-title', '<no title>');
   const normalizedSearchQuery = searchQuery.trim().toLowerCase();
   const isSearching = normalizedSearchQuery.length > 0;
 
-  const flattenedNodes = flattenOutlineNodes(dashboard, isEditingMode, noTitleText);
-  const searchResults = isSearching
-    ? flattenedNodes.filter((node) => {
-        if (node.depth <= 0) {
-          return false;
-        }
-
-        const searchableText = `${node.instanceName} ${node.typeName} ${node.path.join(' ')}`.toLowerCase();
-        return searchableText.includes(normalizedSearchQuery);
-      })
-    : [];
+  const searchMatches = isSearching
+    ? computeSearchMatches(dashboard, normalizedSearchQuery, Boolean(isEditing), noTitleText)
+    : null;
+  const hasResults = !searchMatches || searchMatches.matchingKeys.size > 0;
 
   return (
     <Box display="flex" direction="column" flex={1} height="100%">
@@ -47,34 +38,8 @@ export function DashboardOutlineRenderer({ model }: SceneComponentProps<Dashboar
         />
       </div>
       <ScrollContainer showScrollIndicators={true}>
-        <Box
-          padding={1}
-          gap={isSearching ? 0.5 : 0}
-          display="flex"
-          direction="column"
-          element="ul"
-          role="tree"
-          position="relative"
-        >
-          {isSearching ? (
-            searchResults.length > 0 ? (
-              searchResults.map((node, index) => (
-                <DashboardOutlineSearchResultNode
-                  key={node.sceneObject.state.key ?? `${node.instanceName}-${index}`}
-                  node={node}
-                  resultIndex={index}
-                  isEditing={isEditing}
-                  editPane={dashboard.state.editPane}
-                />
-              ))
-            ) : (
-              <li className={styles.noResults}>
-                <Text color="secondary">
-                  <Trans i18nKey="dashboard.outline.search.no-results">No results found for your query</Trans>
-                </Text>
-              </li>
-            )
-          ) : (
+        <Box padding={1} gap={0} display="flex" direction="column" element="ul" role="tree" position="relative">
+          {hasResults ? (
             <DashboardOutlineNode
               sceneObject={dashboard}
               isEditing={isEditing}
@@ -82,7 +47,15 @@ export function DashboardOutlineRenderer({ model }: SceneComponentProps<Dashboar
               outline={model}
               depth={0}
               index={0}
+              searchMatchKeys={searchMatches?.matchingKeys}
+              searchVisibleKeys={searchMatches?.visibleKeys}
             />
+          ) : (
+            <li className={styles.noResults}>
+              <Text color="secondary">
+                <Trans i18nKey="dashboard.outline.search.no-results">No results found for your query</Trans>
+              </Text>
+            </li>
           )}
         </Box>
       </ScrollContainer>

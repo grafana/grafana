@@ -1,11 +1,11 @@
+import { css } from '@emotion/css';
 import { type ChangeEvent, type KeyboardEvent } from 'react';
 
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Icon, Text, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { type EditableDashboardElementInfo } from '../../scene/types/EditableDashboardElement';
-
-import { getCommonStyles } from './styles';
 
 interface DashboardOutlineNodeButtonContentProps {
   elementInfo: EditableDashboardElementInfo;
@@ -28,11 +28,11 @@ export function DashboardOutlineNodeButtonContent({
   onInputBlur,
   onInputKeyDown,
 }: DashboardOutlineNodeButtonContentProps) {
-  const commonStyles = useStyles2(getCommonStyles);
+  const styles = useStyles2(getStyles);
 
   const elementName = elementInfo.tooltip ? (
     <Tooltip content={elementInfo.tooltip} placement="auto">
-      <span className={commonStyles.nodeNameText}>
+      <span className={styles.nodeNameText}>
         <Text truncate>{instanceName}</Text>
       </span>
     </Tooltip>
@@ -46,7 +46,7 @@ export function DashboardOutlineNodeButtonContent({
         ref={renameInputRef}
         type="text"
         value={elementInfo.instanceName}
-        className={commonStyles.outlineInput}
+        className={styles.outlineInput}
         onChange={onChangeName}
         onBlur={onInputBlur}
         onKeyDown={onInputKeyDown}
@@ -56,9 +56,9 @@ export function DashboardOutlineNodeButtonContent({
 
   return (
     <>
-      <div className={commonStyles.nodeName}>
+      <div className={styles.nodeName}>
         {elementName}
-        {elementInfo.isHidden && <Icon name="eye-slash" size="sm" className={commonStyles.hiddenIcon} />}
+        {elementInfo.isHidden && <Icon name="eye-slash" size="sm" className={styles.hiddenIcon} />}
       </div>
       {isCloned && (
         <span>
@@ -67,4 +67,36 @@ export function DashboardOutlineNodeButtonContent({
       )}
     </>
   );
+}
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    nodeName: css({
+      display: 'flex',
+      gap: theme.spacing(0.5),
+      flexGrow: 1,
+      alignItems: 'center',
+      overflow: 'hidden',
+    }),
+    nodeNameText: css({
+      display: 'inline-flex',
+      alignItems: 'center',
+      overflow: 'hidden',
+      minWidth: 0,
+    }),
+    hiddenIcon: css({
+      color: theme.colors.text.secondary,
+      marginLeft: theme.spacing(1),
+    }),
+    outlineInput: css({
+      border: `1px solid ${theme.components.input.borderColor}`,
+      height: theme.spacing(3),
+      borderRadius: theme.shape.radius.default,
+
+      '&:focus': {
+        outline: 'none',
+        boxShadow: 'none',
+      },
+    }),
+  };
 }

@@ -55,6 +55,7 @@ function buildTestScene() {
                             new AutoGridItem({
                               body: new VizPanel({
                                 title: 'Panel level 4 - A',
+                                description: 'Shows important system metrics',
                               }),
                             }),
                           ],
@@ -266,7 +267,7 @@ describe('DashboardOutline', () => {
   });
 
   describe('search', () => {
-    it('shows flattened results for nested matches without expanding parent nodes', async () => {
+    it('shows hierarchical results with ancestor context for nested matches', async () => {
       const user = userEvent.setup();
       const scene = buildTestScene();
       const pane = new DashboardOutline({});
@@ -289,13 +290,43 @@ describe('DashboardOutline', () => {
 
       await user.type(screen.getByPlaceholderText('Search outline'), 'Tab level 3 - B');
 
+      // Matching item is shown
       expect(screen.getByTestId(selectors.components.PanelEditor.Outline.item('Tab level 3 - B'))).toBeInTheDocument();
+      // Ancestors are shown for hierarchy context
+      expect(screen.getByTestId(selectors.components.PanelEditor.Outline.item('Row level 1'))).toBeInTheDocument();
+      expect(screen.getByTestId(selectors.components.PanelEditor.Outline.item('Row level 2'))).toBeInTheDocument();
+      // Non-matching sibling is hidden
       expect(
-        screen.queryByTestId(selectors.components.PanelEditor.Outline.item('Row level 1'))
+        screen.queryByTestId(selectors.components.PanelEditor.Outline.item('Tab level 3 - A'))
       ).not.toBeInTheDocument();
+      // Collapse toggles are hidden during search
       expect(
-        screen.queryByTestId(selectors.components.PanelEditor.Outline.node('Tab level 3 - B'))
+        screen.queryByTestId(selectors.components.PanelEditor.Outline.node('Row level 1'))
       ).not.toBeInTheDocument();
+    });
+
+    it('matches panel descriptions in search', async () => {
+      const user = userEvent.setup();
+      const scene = buildTestScene();
+      const pane = new DashboardOutline({});
+
+      scene.onEnterEditMode();
+      scene.state.editPane.enableSelection();
+      scene.state.editPane.openPane(pane);
+
+      render(
+        <ElementSelectionContext.Provider value={scene.state.editPane.state.selectionContext}>
+          <WrapSidebar>
+            <pane.Component model={pane} />
+          </WrapSidebar>
+        </ElementSelectionContext.Provider>
+      );
+
+      await user.type(screen.getByPlaceholderText('Search outline'), 'important system metrics');
+
+      expect(
+        screen.getByTestId(selectors.components.PanelEditor.Outline.item('Panel level 4 - A'))
+      ).toBeInTheDocument();
     });
 
     it('shows a no-results message and restores tree view when search is cleared', async () => {
