@@ -213,7 +213,6 @@ Depending on your dataset, you can filter:
 
 - **By name**: Lists each unique series name. Select one or more names to limit the visualization to those series.
 - **By labels**: Lists each label key with its values. Select label values to filter series that match.
--
 
 For more information, refer to the [Configure legend documentation] (https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/configure-legend/#series-visibility).
 
