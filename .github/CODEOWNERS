@@ -590,7 +590,6 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/src/utils/datasource* @grafana/grafana-datasources-core-services
 /packages/grafana-data/src/utils/docs.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/src/utils/deprecationWarning* @grafana/grafana-frontend-platform
-/packages/grafana-data/src/utils/featureToggles.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/src/utils/fieldParser.ts @grafana/dataviz-squad
 /packages/grafana-data/src/utils/flotPairs* @grafana/dataviz-squad
 /packages/grafana-data/src/utils/fuzzySearch* @grafana/grafana-frontend-navigation
@@ -806,6 +805,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /lefthook.yml @grafana/frontend-ops
 /lefthook.rc @grafana/frontend-ops
 /.levignore.js @grafana/grafana-frontend-platform
+knip.config.ts @grafana/grafana-frontend-platform
 playwright.config.ts @grafana/grafana-catalog
 playwright.storybook.config.ts @grafana/grafana-frontend-platform
 
