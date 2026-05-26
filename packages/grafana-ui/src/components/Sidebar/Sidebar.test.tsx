@@ -44,14 +44,14 @@ describe('Sidebar', () => {
   });
 
   it('Can persist docked state', async () => {
-    const { unmount } = render(<TestSetup persistanceKey="test" />);
+    const { unmount } = render(<TestSetup persistenceKey="test" />);
 
     act(() => screen.getByLabelText('Settings').click());
     act(() => screen.getByLabelText('Dock').click());
 
     unmount();
 
-    render(<TestSetup persistanceKey="test" />);
+    render(<TestSetup persistenceKey="test" />);
 
     act(() => screen.getByLabelText('Settings').click());
     expect(screen.getByLabelText('Undock')).toBeInTheDocument();
@@ -82,14 +82,14 @@ describe('Sidebar', () => {
     });
 
     it('persists the un-hidden state across remounts', () => {
-      const { unmount } = render(<TestSetup defaultIsHidden persistanceKey="hidden-persist" />);
+      const { unmount } = render(<TestSetup defaultIsHidden persistenceKey="hidden-persist" />);
 
       act(() => screen.getByTestId(selectors.components.Sidebar.showHideToggle).click());
       expect(screen.getByTestId(selectors.components.Sidebar.container)).toBeInTheDocument();
 
       unmount();
 
-      render(<TestSetup defaultIsHidden persistanceKey="hidden-persist" />);
+      render(<TestSetup defaultIsHidden persistenceKey="hidden-persist" />);
       expect(screen.getByTestId(selectors.components.Sidebar.container)).toBeInTheDocument();
     });
 
@@ -121,8 +121,8 @@ describe('Sidebar', () => {
       expect(screen.getByTestId(selectors.components.Sidebar.showHideToggle)).toBeInTheDocument();
     });
 
-    it('shares hidden state across instances via hiddenPersistanceKey', () => {
-      const { unmount } = render(<TestSetup persistanceKey="mode-x" hiddenPersistanceKey="shared-hide" />);
+    it('shares hidden state across instances via hiddenPersistenceKey', () => {
+      const { unmount } = render(<TestSetup persistenceKey="mode-x" hiddenPersistenceKey="shared-hide" />);
 
       // Hide the sidebar (defaults to visible)
       act(() => screen.getByLabelText('Hide').click());
@@ -130,9 +130,9 @@ describe('Sidebar', () => {
 
       unmount();
 
-      // A different consumer with a different persistanceKey but the same hiddenPersistanceKey
+      // A different consumer with a different persistenceKey but the same hiddenPersistenceKey
       // observes the shared hidden state.
-      render(<TestSetup persistanceKey="mode-y" hiddenPersistanceKey="shared-hide" />);
+      render(<TestSetup persistenceKey="mode-y" hiddenPersistenceKey="shared-hide" />);
       expect(screen.getByTestId(selectors.components.Sidebar.showHideToggle)).toBeInTheDocument();
     });
   });
@@ -167,18 +167,18 @@ describe('Sidebar', () => {
 });
 
 interface TestSetupProps {
-  persistanceKey?: string;
+  persistenceKey?: string;
   defaultIsHidden?: boolean;
-  hiddenPersistanceKey?: string;
+  hiddenPersistenceKey?: string;
 }
 
-function TestSetup({ persistanceKey, defaultIsHidden, hiddenPersistanceKey }: TestSetupProps) {
+function TestSetup({ persistenceKey, defaultIsHidden, hiddenPersistenceKey }: TestSetupProps) {
   const [openPane, setOpenPane] = React.useState('');
   const contextValue = useSidebar({
     position: 'right',
     hasOpenPane: openPane !== '',
-    persistanceKey,
-    hiddenPersistanceKey,
+    persistenceKey,
+    hiddenPersistenceKey,
     onClosePane: () => setOpenPane(''),
     defaultIsHidden,
   });
