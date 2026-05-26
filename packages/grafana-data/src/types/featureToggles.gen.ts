@@ -214,11 +214,6 @@ export interface FeatureToggles {
   */
   kubernetesLibraryPanels?: boolean;
   /**
-  * Enables usage of the new annotations API client
-  * @default false
-  */
-  kubernetesAnnotationsClient?: boolean;
-  /**
   * Enables k8s short URL API and uses it under the hood when handling legacy /api
   * @default true
   */
