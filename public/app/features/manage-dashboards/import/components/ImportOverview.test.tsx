@@ -126,10 +126,10 @@ describe('ImportOverview dispatcher', () => {
       expect(screen.queryByTestId('provisioned-import')).not.toBeInTheDocument();
     });
 
-    it('renders nothing for unknown dashboard type', () => {
+    it('renders error alert for unknown dashboard type', () => {
       setRepoView({ status: RepoViewStatus.Disabled });
-      const { container } = render(<ImportOverview {...defaultProps} dashboard={{ unknown: true }} />);
-      expect(container.innerHTML).toBe('');
+      render(<ImportOverview {...defaultProps} dashboard={{ unknown: true }} />);
+      expect(screen.getByRole('alert', { name: /invalid or unknown dashboard schema/i })).toBeInTheDocument();
     });
 
     it('renders V1 overview when status is Ready but no repository', () => {
