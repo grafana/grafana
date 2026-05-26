@@ -16,7 +16,7 @@ concurrency:
 jobs:
   notify:
     name: Notify team about new FR
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
     if: |
       contains(github.event.issue.labels.*.name, 'type/feature-request') &&
       !contains(github.event.issue.labels.*.name, 'fr/auto-triaged')
