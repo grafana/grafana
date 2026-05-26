@@ -18,7 +18,7 @@ export const buildMockDB = (): DB => ({
 });
 
 // This data is of type `SqlDatasource`
-export const buildMockDatasource = (hasDefaultDatabaseConfigured?: boolean) => {
+const buildMockDatasource = (hasDefaultDatabaseConfigured?: boolean) => {
   return {
     id: Infinity,
     type: '',
