@@ -935,7 +935,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	dataSourceAPIBuilder, err := datasource.RegisterAPIService(featureToggles, apiserverService, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, decryptService, accessControl, accessClient, registerer, pluginsourcesService)
+	dataSourceAPIBuilder, err := datasource.RegisterAPIService(featureToggles, apiserverService, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, decryptService, accessControl, accessClient, registerer, pluginsourcesService, cfg, ossDataSourceRequestValidator, httpclientProvider, oauthtokenService)
 	if err != nil {
 		return nil, err
 	}
@@ -1664,7 +1664,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	dataSourceAPIBuilder, err := datasource.RegisterAPIService(featureToggles, apiserverService, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, decryptService, accessControl, accessClient, registerer, pluginsourcesService)
+	dataSourceAPIBuilder, err := datasource.RegisterAPIService(featureToggles, apiserverService, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, decryptService, accessControl, accessClient, registerer, pluginsourcesService, cfg, ossDataSourceRequestValidator, httpclientProvider, oauthtokenService)
 	if err != nil {
 		return nil, err
 	}
