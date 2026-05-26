@@ -56,13 +56,13 @@ export const ThemeRichColorInputSchema = z.object({
   contrastText: z.string().optional(),
 });
 
-export const ThemeRichColorSchema = ThemeRichColorInputSchema.required();
+const ThemeRichColorSchema = ThemeRichColorInputSchema.required();
 
 /** @alpha */
 export type ThemeRichColor = z.infer<typeof ThemeRichColorSchema>;
 
 /** @internal */
-export type DeepPartial<T> = {
+type DeepPartial<T> = {
   [P in keyof T]?: DeepPartial<T[P]>;
 };
 

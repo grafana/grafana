@@ -10,7 +10,7 @@ import { type DateTimeInput, toUtc, dateTimeAsMoment } from './moment_wrapper';
 /**
  * Converts a Grafana timezone string to an IANA timezone string.
  */
-export function toIANATimezone(grafanaTimezone: string) {
+function toIANATimezone(grafanaTimezone: string) {
   // Intl APIs will use the browser's timezone by default (if tz is undefined)
   if (grafanaTimezone === 'browser') {
     return undefined;
