@@ -5792,8 +5792,7 @@
         }
       },
       "operator": {
-        "aria-label": "Operator",
-        "placeholder": "Select operator"
+        "aria-label": "Operator"
       },
       "restore": "Restore default value",
       "search": {
