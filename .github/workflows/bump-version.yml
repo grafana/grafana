@@ -16,7 +16,7 @@ permissions: {}
 
 jobs:
   bump-version:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
     permissions:
       id-token: write
       contents: read

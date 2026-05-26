@@ -12,7 +12,7 @@ permissions: {}
 
 jobs:
   bundle-schema-types:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
     # These permissions are needed to assume roles from Github's OIDC.
     permissions:
       contents: read

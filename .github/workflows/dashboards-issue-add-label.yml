@@ -16,7 +16,7 @@ concurrency:
 jobs:
   main:
     if: github.repository == 'grafana/grafana'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
     permissions:
       contents: read
       id-token: write

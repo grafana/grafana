@@ -13,7 +13,7 @@ permissions: {}
 # so it must not run untrusted code (such as checking out the pull request)
 jobs:
   main:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
     permissions:
       # contents: read is needed to read package.json from the PR's base branch.
       contents: read

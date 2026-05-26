@@ -39,7 +39,7 @@ permissions: {}
 
 jobs:
   main:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
     permissions:
       # Pushes use the app token via actions/checkout; GITHUB_TOKEN needs only OIDC for Vault.
       contents: read

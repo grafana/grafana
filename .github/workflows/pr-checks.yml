@@ -11,7 +11,7 @@ permissions: {}
 
 jobs:
   main:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
     permissions:
       statuses: write
       checks: write
