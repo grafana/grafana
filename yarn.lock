@@ -3742,7 +3742,6 @@ __metadata:
     rollup-plugin-esbuild: "npm:6.2.1"
     rollup-plugin-node-externals: "npm:^8.0.0"
     semver: "npm:^7.7.0"
-    tslib: "npm:2.8.1"
     typescript: "npm:6.0.2"
   languageName: unknown
   linkType: soft
