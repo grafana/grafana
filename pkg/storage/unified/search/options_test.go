@@ -33,6 +33,11 @@ func TestBuildVersionParsing(t *testing.T) {
 		{input: "11.5.0+meta", wantOK: true, wantNorm: "11.5.0+meta"},
 		{input: "v11.5.0", wantOK: true, wantNorm: "11.5.0"}, // v-prefix is stripped
 		{input: "11.5", wantOK: true, wantNorm: "11.5.0"},    // missing patch is filled in
+		// Real build versions seen in production.
+		{input: "13.1.0-ephemeral-enterprise-11758-10265-1", wantOK: true, wantNorm: "13.1.0-ephemeral-enterprise-11758-10265-1"},
+		{input: "13.1.0-ephemeral-oss-123137-102418-1", wantOK: true, wantNorm: "13.1.0-ephemeral-oss-123137-102418-1"},
+		{input: "13.0.0-23069273608.patch13", wantOK: true, wantNorm: "13.0.0-23069273608.patch13"},
+		{input: "13.1.0-25901809875", wantOK: true, wantNorm: "13.1.0-25901809875"},
 		{input: "dev", wantOK: false},
 		{input: "main", wantOK: false},
 		{input: "a1b2c3d4", wantOK: false}, // git SHA-like
