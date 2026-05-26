@@ -42,14 +42,25 @@ func mkdirOld(t *testing.T, root string, parts ...string) string {
 	t.Helper()
 	dir := filepath.Join(append([]string{root}, parts...)...)
 	require.NoError(t, os.MkdirAll(dir, 0o750))
-	old := time.Now().Add(-24 * time.Hour)
-	require.NoError(t, filepath.WalkDir(dir, func(p string, _ fs.DirEntry, err error) error {
+	chtimesRecursive(t, dir, time.Now().Add(-24*time.Hour))
+	return dir
+}
+
+// chtimesRecursive rewinds the mtime/atime of every entry under dir. It uses
+// os.Root-anchored APIs so gosec G122 (which forbids race-prone
+// filepath.WalkDir callbacks) is satisfied — same posture the production
+// sweep uses.
+func chtimesRecursive(t *testing.T, dir string, when time.Time) {
+	t.Helper()
+	root, err := os.OpenRoot(dir)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = root.Close() })
+	require.NoError(t, fs.WalkDir(root.FS(), ".", func(p string, _ fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
-		return os.Chtimes(p, old, old)
+		return root.Chtimes(p, when, when)
 	}))
-	return dir
 }
 
 // mkdirFresh creates a directory tree and leaves every entry's mtime current
@@ -136,13 +147,7 @@ func TestRunDiskCleanup_OwnedResource_KeepsCachedActive(t *testing.T) {
 
 	// Force the active dir to look stale on disk so we know the
 	// active-index check — not the mtime gate — is what's saving it.
-	old := time.Now().Add(-24 * time.Hour)
-	require.NoError(t, filepath.WalkDir(activeDir, func(p string, _ fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		return os.Chtimes(p, old, old)
-	}))
+	chtimesRecursive(t, activeDir, time.Now().Add(-24*time.Hour))
 
 	b.runDiskCleanup(t.Context())
 
@@ -224,13 +229,7 @@ func TestRunDiskCleanup_SnapshotStaging_OldDeleted(t *testing.T) {
 	writeFileOld(t, filepath.Join(stale, "store"), "root.bolt")
 	// Force the staging directory itself (and store/) to look old after the
 	// nested files were written.
-	old := time.Now().Add(-24 * time.Hour)
-	require.NoError(t, filepath.WalkDir(stale, func(p string, _ fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		return os.Chtimes(p, old, old)
-	}))
+	chtimesRecursive(t, stale, time.Now().Add(-24*time.Hour))
 
 	b.runDiskCleanup(t.Context())
 
