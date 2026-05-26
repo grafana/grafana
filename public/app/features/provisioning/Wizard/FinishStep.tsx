@@ -12,7 +12,7 @@ import { getHasTokenInstructions } from '../utils/git';
 import { isGitProvider } from '../utils/repositoryTypes';
 
 import { useStepStatus } from './StepStatusContext';
-import { getGitProviderFields } from './fields';
+import { getCommitAuthorRequiredMessage, getGitProviderFields } from './fields';
 import { type WizardFormData } from './types';
 
 export const FinishStep = memo(function FinishStep() {
@@ -30,7 +30,7 @@ export const FinishStep = memo(function FinishStep() {
   const [type, readOnly] = watch(['repository.type', 'repository.readOnly']);
   const signingKeyValue = watch('repository.gpgSigningKey');
   const requireAuthor = Boolean(signingKeyValue);
-  const authorRequiredMessage = t('provisioning.wizard.commit-author-required', 'Required when a signing key is set.');
+  const authorRequiredMessage = getCommitAuthorRequiredMessage();
 
   const isGithub = type === 'github';
   const isGitBased = isGitProvider(type);
@@ -169,16 +169,17 @@ export const FinishStep = memo(function FinishStep() {
         </Field>
       )}
 
-      {gitFields?.gpgSigningKeyConfig && (
+      {gitFields?.gpgSigningKeyConfig && gitFields.commitAuthorNameConfig && gitFields.commitAuthorEmailConfig && (
         <>
           <Divider spacing={0} />
           {hasTokenInstructions && <GPGSigningKeyInfo type={type} />}
           <Field
             noMargin
+            htmlFor="gpgSigningKey"
             label={gitFields.gpgSigningKeyConfig.label}
             description={gitFields.gpgSigningKeyConfig.description}
             error={errors?.repository?.gpgSigningKey?.message}
-            invalid={!!errors?.repository?.gpgSigningKey?.message}
+            invalid={!!errors?.repository?.gpgSigningKey}
           >
             <Controller
               name="repository.gpgSigningKey"
@@ -187,7 +188,7 @@ export const FinishStep = memo(function FinishStep() {
                 <SecretTextArea
                   {...field}
                   id="gpgSigningKey"
-                  invalid={!!errors?.repository?.gpgSigningKey?.message}
+                  invalid={!!errors?.repository?.gpgSigningKey}
                   placeholder={gitFields.gpgSigningKeyConfig?.placeholder}
                   isConfigured={signingKeyConfigured}
                   onReset={() => {
@@ -204,40 +205,39 @@ export const FinishStep = memo(function FinishStep() {
           </Field>
           <Field
             noMargin
+            htmlFor="commit-author-name"
             required={requireAuthor}
-            label={t('provisioning.wizard.label-commit-author-name', 'Commit author name')}
-            description={t(
-              'provisioning.wizard.description-commit-author-name',
-              'Used as the commit author and committer.'
-            )}
+            label={gitFields.commitAuthorNameConfig.label}
+            description={gitFields.commitAuthorNameConfig.description}
             error={errors?.repository?.commit?.authorName?.message}
-            invalid={!!errors?.repository?.commit?.authorName?.message}
+            invalid={!!errors?.repository?.commit?.authorName}
           >
             <Input
-              id="repository-commit-author-name"
+              id="commit-author-name"
               disabled={!signingKeyValue}
               {...register('repository.commit.authorName', {
                 validate: (val) => !requireAuthor || (val?.trim() ?? '').length > 0 || authorRequiredMessage,
               })}
-              placeholder={t('provisioning.wizard.placeholder-commit-author-name', 'Grafana')}
+              placeholder={gitFields.commitAuthorNameConfig.placeholder}
             />
           </Field>
           <Field
             noMargin
+            htmlFor="commit-author-email"
             required={requireAuthor}
-            label={t('provisioning.wizard.label-commit-author-email', 'Commit author email')}
-            description={t('provisioning.wizard.description-commit-author-email', 'Must match the signing key UID.')}
+            label={gitFields.commitAuthorEmailConfig.label}
+            description={gitFields.commitAuthorEmailConfig.description}
             error={errors?.repository?.commit?.authorEmail?.message}
-            invalid={!!errors?.repository?.commit?.authorEmail?.message}
+            invalid={!!errors?.repository?.commit?.authorEmail}
           >
             <Input
-              id="repository-commit-author-email"
+              id="commit-author-email"
               type="email"
               disabled={!signingKeyValue}
               {...register('repository.commit.authorEmail', {
                 validate: (val) => !requireAuthor || (val?.trim() ?? '').length > 0 || authorRequiredMessage,
               })}
-              placeholder={t('provisioning.wizard.placeholder-commit-author-email', 'noreply@grafana.com')}
+              placeholder={gitFields.commitAuthorEmailConfig.placeholder}
             />
           </Field>
         </>

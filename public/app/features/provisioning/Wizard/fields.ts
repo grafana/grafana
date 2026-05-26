@@ -30,6 +30,16 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
       // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
       placeholder: '-----BEGIN PGP PRIVATE KEY BLOCK-----',
     },
+    commitAuthorName: {
+      label: t('provisioning.shared.commit-author-name-label', 'Commit author name'),
+      description: t('provisioning.shared.commit-author-name-description', 'Used as the commit author and committer.'),
+      placeholder: t('provisioning.shared.commit-author-name-placeholder', 'Grafana'),
+    },
+    commitAuthorEmail: {
+      label: t('provisioning.shared.commit-author-email-label', 'Commit author email'),
+      description: t('provisioning.shared.commit-author-email-description', 'Must match the signing key UID.'),
+      placeholder: t('provisioning.shared.commit-author-email-placeholder', 'noreply@grafana.com'),
+    },
     branch: {
       label: t('provisioning.shared.branch-label', 'Branch'),
       description: t('provisioning.shared.branch-description', 'The branch to use for provisioning'),
@@ -106,6 +116,8 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
         ),
       },
       gpgSigningKey: shared.gpgSigningKey,
+      commitAuthorName: shared.commitAuthorName,
+      commitAuthorEmail: shared.commitAuthorEmail,
     },
     gitlab: {
       token: {
@@ -158,6 +170,8 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
         ),
       },
       gpgSigningKey: shared.gpgSigningKey,
+      commitAuthorName: shared.commitAuthorName,
+      commitAuthorEmail: shared.commitAuthorEmail,
     },
     bitbucket: {
       token: {
@@ -218,6 +232,8 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
         ),
       },
       gpgSigningKey: shared.gpgSigningKey,
+      commitAuthorName: shared.commitAuthorName,
+      commitAuthorEmail: shared.commitAuthorEmail,
     },
     git: {
       token: {
@@ -275,6 +291,8 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
         ),
       },
       gpgSigningKey: shared.gpgSigningKey,
+      commitAuthorName: shared.commitAuthorName,
+      commitAuthorEmail: shared.commitAuthorEmail,
     },
     local: {
       path: {
@@ -303,6 +321,8 @@ export const getGitProviderFields = (
       tokenConfig: FieldConfig;
       tokenUserConfig?: FieldConfig;
       gpgSigningKeyConfig?: FieldConfig;
+      commitAuthorNameConfig?: FieldConfig;
+      commitAuthorEmailConfig?: FieldConfig;
       urlConfig: FieldConfig;
       branchConfig: FieldConfig;
       pathConfig: FieldConfig;
@@ -318,6 +338,8 @@ export const getGitProviderFields = (
   const tokenConfig = configs.token;
   const tokenUserConfig = configs.tokenUser; // Optional field, only for some providers
   const gpgSigningKeyConfig = configs.gpgSigningKey; // Optional, only for git-based providers
+  const commitAuthorNameConfig = configs.commitAuthorName; // Paired with gpgSigningKey
+  const commitAuthorEmailConfig = configs.commitAuthorEmail; // Paired with gpgSigningKey
   const urlConfig = configs.url;
   const branchConfig = configs.branch;
   const pathConfig = configs.path;
@@ -331,12 +353,17 @@ export const getGitProviderFields = (
     tokenConfig,
     tokenUserConfig,
     gpgSigningKeyConfig,
+    commitAuthorNameConfig,
+    commitAuthorEmailConfig,
     urlConfig,
     branchConfig,
     pathConfig,
     prWorkflowConfig,
   };
 };
+
+export const getCommitAuthorRequiredMessage = () =>
+  t('provisioning.shared.commit-author-required', 'Required when a signing key is set.');
 
 /**
  * Get local provider field configurations that are guaranteed to exist

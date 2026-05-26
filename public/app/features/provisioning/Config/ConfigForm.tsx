@@ -31,7 +31,7 @@ import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 import { DeleteRepositoryButton } from '../Repository/DeleteRepositoryButton';
 import { GPGSigningKeyInfo } from '../Shared/GPGSigningKeyInfo';
 import { TokenPermissionsInfo } from '../Shared/TokenPermissionsInfo';
-import { getGitProviderFields, getLocalProviderFields } from '../Wizard/fields';
+import { getCommitAuthorRequiredMessage, getGitProviderFields, getLocalProviderFields } from '../Wizard/fields';
 import { PROVISIONING_URL } from '../constants';
 import { useConnectionOptions } from '../hooks/useConnectionOptions';
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
@@ -86,10 +86,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
   const [signingKeyConfigured, setSigningKeyConfigured] = useState(Boolean(data?.secure?.gpgSigningKey?.name));
   const signingKeyValue = watch('gpgSigningKey');
   const authorRequired = Boolean(signingKeyValue);
-  const authorRequiredMessage = t(
-    'provisioning.config-form.commit-author-required',
-    'Required when a signing key is set.'
-  );
+  const authorRequiredMessage = getCommitAuthorRequiredMessage();
   const [isLoading, setIsLoading] = useState(false);
   const [submitError, setSubmitError] = useState<string | undefined>();
   const [type, readOnly] = watch(['type', 'readOnly']);
@@ -446,12 +443,13 @@ export function ConfigForm({ data }: ConfigFormProps) {
           </ControlledCollapse>
         )}
 
-        {gitFields?.gpgSigningKeyConfig && (
+        {gitFields?.gpgSigningKeyConfig && gitFields.commitAuthorNameConfig && gitFields.commitAuthorEmailConfig && (
           <>
             <Divider spacing={0} />
             {hasTokenInstructions && <GPGSigningKeyInfo type={type} />}
             <Field
               noMargin
+              htmlFor="gpgSigningKey"
               label={gitFields.gpgSigningKeyConfig.label}
               description={gitFields.gpgSigningKeyConfig.description}
               error={errors?.gpgSigningKey?.message}
@@ -481,14 +479,12 @@ export function ConfigForm({ data }: ConfigFormProps) {
             </Field>
             <Field
               noMargin
+              htmlFor="commit-author-name"
               required={authorRequired}
-              label={t('provisioning.config-form.label-commit-author-name', 'Commit author name')}
-              description={t(
-                'provisioning.config-form.description-commit-author-name',
-                'Used as the commit author and committer.'
-              )}
+              label={gitFields.commitAuthorNameConfig.label}
+              description={gitFields.commitAuthorNameConfig.description}
               error={errors?.commit?.authorName?.message}
-              invalid={!!errors?.commit?.authorName?.message}
+              invalid={!!errors?.commit?.authorName}
             >
               <Input
                 id="commit-author-name"
@@ -496,19 +492,17 @@ export function ConfigForm({ data }: ConfigFormProps) {
                 {...register('commit.authorName', {
                   validate: (val) => !authorRequired || (val?.trim() ?? '').length > 0 || authorRequiredMessage,
                 })}
-                placeholder={t('provisioning.config-form.placeholder-commit-author-name', 'Grafana')}
+                placeholder={gitFields.commitAuthorNameConfig.placeholder}
               />
             </Field>
             <Field
               noMargin
+              htmlFor="commit-author-email"
               required={authorRequired}
-              label={t('provisioning.config-form.label-commit-author-email', 'Commit author email')}
-              description={t(
-                'provisioning.config-form.description-commit-author-email',
-                'Must match the signing key UID.'
-              )}
+              label={gitFields.commitAuthorEmailConfig.label}
+              description={gitFields.commitAuthorEmailConfig.description}
               error={errors?.commit?.authorEmail?.message}
-              invalid={!!errors?.commit?.authorEmail?.message}
+              invalid={!!errors?.commit?.authorEmail}
             >
               <Input
                 id="commit-author-email"
@@ -517,7 +511,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
                 {...register('commit.authorEmail', {
                   validate: (val) => !authorRequired || (val?.trim() ?? '').length > 0 || authorRequiredMessage,
                 })}
-                placeholder={t('provisioning.config-form.placeholder-commit-author-email', 'noreply@grafana.com')}
+                placeholder={gitFields.commitAuthorEmailConfig.placeholder}
               />
             </Field>
           </>

@@ -21,6 +21,7 @@ export function getDefaultValues({
       title: t('provisioning.get-default-values.title.repository', 'Repository'),
       token: '',
       gpgSigningKey: '',
+      commit: { authorName: '', authorEmail: '' },
       url: '',
       branch: '',
       generateDashboardPreviews: false,

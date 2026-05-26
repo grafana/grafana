@@ -88,11 +88,9 @@ describe('FinishStep', () => {
 
     it('enables author fields after a signing key is entered', async () => {
       const { user } = setup();
-      const textarea = document.getElementById('gpgSigningKey');
-      expect(textarea).not.toBeNull();
-      await user.type(textarea!, 'PGP-KEY');
-      expect(document.getElementById('repository-commit-author-name')).toBeEnabled();
-      expect(document.getElementById('repository-commit-author-email')).toBeEnabled();
+      await user.type(screen.getByLabelText(/GPG signing key/), 'PGP-KEY');
+      expect(screen.getByLabelText(/Commit author name/)).toBeEnabled();
+      expect(screen.getByLabelText(/Commit author email/)).toBeEnabled();
     });
 
     it('does not render signing key section for local repositories', () => {
