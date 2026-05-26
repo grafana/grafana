@@ -345,6 +345,8 @@ jobs:
       - name: Add "grafana/grafana-frontend-platform" as a reviewer
         if: steps.levitate-run.outputs.exit_code == 1
         uses: actions/github-script@v8
+        # FIXME: GATB doesn't seem to grant us necessary pull_requests write permissions
+        continue-on-error: true
         env:
           PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
         with:
@@ -362,6 +364,8 @@ jobs:
       - name: Remove "grafana/grafana-frontend-platform" from the list of reviewers
         if: steps.levitate-run.outputs.exit_code == 0
         uses: actions/github-script@v8
+        # FIXME: GATB doesn't seem to grant us necessary pull_requests write permissions
+        continue-on-error: true
         env:
           PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
         with:

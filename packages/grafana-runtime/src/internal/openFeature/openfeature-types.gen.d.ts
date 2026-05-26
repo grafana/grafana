@@ -16,6 +16,7 @@ declare module "@openfeature/core" {
     | "queryHistory.recentQueriesUI"
     | "provisioningFolderMetadata"
     | "provisioning.readmes"
+    | "grafana.kubernetesAnnotationsClient"
     | "stateTimeline.nameAboveBars"
     | "sqlExpressionsCodeMirror"
     | "newSavedQueriesExperience"
