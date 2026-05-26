@@ -152,6 +152,8 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Struct(new(unified.Options), "*"),
 	unified.ProvideUnifiedStorageClient,
 	sql.ProvideStorageBackend,
+	sql.ProvideKV,
+	sql.ProvideResourceDB,
 	vector.ProvideVectorBackend,
 	embedderprovider.ProvideEmbedder,
 	builder.ProvideDefaultBuildHandlerChainFuncFromBuilders,

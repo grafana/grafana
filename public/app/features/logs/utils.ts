@@ -438,11 +438,23 @@ function getDataSourceLabelType(labelType: string, datasourceType: string | unde
     case 'loki':
       switch (labelType) {
         case 'I':
-          return t('logs.fields.type.loki.indexed-label', 'Indexed labels', { count: plural ? 2 : 1 });
+          return t('logs.fields.type.loki.indexed-label', '', {
+            count: plural ? 2 : 1,
+            defaultValue_one: 'Indexed labels',
+            defaultValue_other: 'Indexed labels',
+          });
         case 'S':
-          return t('logs.fields.type.loki.structured-metadata', 'Structured metadata', { count: plural ? 2 : 1 });
+          return t('logs.fields.type.loki.structured-metadata', '', {
+            count: plural ? 2 : 1,
+            defaultValue_one: 'Structured metadata',
+            defaultValue_other: 'Structured metadata',
+          });
         case 'P':
-          return t('logs.fields.type.loki.parsedl-label', 'Parsed fields', { count: plural ? 2 : 1 });
+          return t('logs.fields.type.loki.parsedl-label', '', {
+            count: plural ? 2 : 1,
+            defaultValue_one: 'Parsed fields',
+            defaultValue_other: 'Parsed fields',
+          });
         default:
           return null;
       }
