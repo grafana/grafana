@@ -133,10 +133,7 @@ describe('FolderPulseContent (rollup)', () => {
     // Folder column renders a link for rows with a folderUID and an
     // em-dash for rows without — both branches must be exercised
     // because root-level dashboards are common.
-    expect(screen.getByRole('link', { name: 'Subteam alpha' })).toHaveAttribute(
-      'href',
-      '/dashboards/f/subfolder-1'
-    );
+    expect(screen.getByRole('link', { name: 'Subteam alpha' })).toHaveAttribute('href', '/dashboards/f/subfolder-1');
     expect(screen.getByText('—')).toBeInTheDocument();
 
     expect(screen.getByText('Alice')).toBeInTheDocument();

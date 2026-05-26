@@ -533,8 +533,7 @@ export function PulseComposer({
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder={
-                  titlePlaceholder ??
-                  t('pulse.composer.title-placeholder', 'Title — a short summary of this thread')
+                  titlePlaceholder ?? t('pulse.composer.title-placeholder', 'Title — a short summary of this thread')
                 }
                 aria-label={t('pulse.composer.title-aria', 'Thread title')}
                 maxLength={160}
@@ -653,10 +652,7 @@ function composerHint(kinds: Array<'panel' | 'dashboard'>): string {
         return t('pulse.composer.hint-markdown', 'Cmd/Ctrl+Enter to send · @user · #panel · **markdown**');
     }
   }
-  return t(
-    'pulse.composer.hint-markdown-multi',
-    'Cmd/Ctrl+Enter to send · @user · #resource · **markdown**'
-  );
+  return t('pulse.composer.hint-markdown-multi', 'Cmd/Ctrl+Enter to send · @user · #resource · **markdown**');
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({

@@ -124,13 +124,7 @@ export function PulseRenderer({
     // styled to scope mention-style inline-code rendering to the pulse
     // body so we don't bleed into the rest of the page.
     const html = renderMarkdown(source);
-    return (
-      <div
-        ref={markdownRef}
-        className={styles.markdown}
-        dangerouslySetInnerHTML={{ __html: html }}
-      />
-    );
+    return <div ref={markdownRef} className={styles.markdown} dangerouslySetInnerHTML={{ __html: html }} />;
   }
   if (!body.root) {
     return null;
@@ -240,19 +234,20 @@ interface NodeProps {
   onTimeChipClick?: (from: number, to: number) => void;
 }
 
-function RenderNode({
-  node,
-  onMentionClick,
-  panelTitlesById,
-  dashboardUID,
-  onTimeChipClick,
-}: NodeProps): ReactNode {
+function RenderNode({ node, onMentionClick, panelTitlesById, dashboardUID, onTimeChipClick }: NodeProps): ReactNode {
   switch (node.type) {
     case 'root':
       return (
         <>
           {node.children?.map((c, i) => (
-            <RenderNode key={i} node={c} onMentionClick={onMentionClick} panelTitlesById={panelTitlesById} dashboardUID={dashboardUID} onTimeChipClick={onTimeChipClick} />
+            <RenderNode
+              key={i}
+              node={c}
+              onMentionClick={onMentionClick}
+              panelTitlesById={panelTitlesById}
+              dashboardUID={dashboardUID}
+              onTimeChipClick={onTimeChipClick}
+            />
           ))}
         </>
       );
@@ -261,7 +256,14 @@ function RenderNode({
       return (
         <p style={{ margin: '0 0 0.5em' }}>
           {node.children?.map((c, i) => (
-            <RenderNode key={i} node={c} onMentionClick={onMentionClick} panelTitlesById={panelTitlesById} dashboardUID={dashboardUID} onTimeChipClick={onTimeChipClick} />
+            <RenderNode
+              key={i}
+              node={c}
+              onMentionClick={onMentionClick}
+              panelTitlesById={panelTitlesById}
+              dashboardUID={dashboardUID}
+              onTimeChipClick={onTimeChipClick}
+            />
           ))}
         </p>
       );
@@ -270,7 +272,14 @@ function RenderNode({
       return (
         <blockquote style={{ borderLeft: '3px solid currentColor', margin: 0, paddingLeft: '0.75em', opacity: 0.8 }}>
           {node.children?.map((c, i) => (
-            <RenderNode key={i} node={c} onMentionClick={onMentionClick} panelTitlesById={panelTitlesById} dashboardUID={dashboardUID} onTimeChipClick={onTimeChipClick} />
+            <RenderNode
+              key={i}
+              node={c}
+              onMentionClick={onMentionClick}
+              panelTitlesById={panelTitlesById}
+              dashboardUID={dashboardUID}
+              onTimeChipClick={onTimeChipClick}
+            />
           ))}
         </blockquote>
       );
@@ -279,7 +288,14 @@ function RenderNode({
       return (
         <code style={{ background: 'rgba(127,127,127,0.15)', padding: '0 4px', borderRadius: 3 }}>
           {node.children?.map((c, i) => (
-            <RenderNode key={i} node={c} onMentionClick={onMentionClick} panelTitlesById={panelTitlesById} dashboardUID={dashboardUID} onTimeChipClick={onTimeChipClick} />
+            <RenderNode
+              key={i}
+              node={c}
+              onMentionClick={onMentionClick}
+              panelTitlesById={panelTitlesById}
+              dashboardUID={dashboardUID}
+              onTimeChipClick={onTimeChipClick}
+            />
           ))}
         </code>
       );
@@ -312,7 +328,14 @@ function RenderNode({
         return (
           <Fragment>
             {node.children?.map((c, i) => (
-              <RenderNode key={i} node={c} onMentionClick={onMentionClick} panelTitlesById={panelTitlesById} dashboardUID={dashboardUID} onTimeChipClick={onTimeChipClick} />
+              <RenderNode
+                key={i}
+                node={c}
+                onMentionClick={onMentionClick}
+                panelTitlesById={panelTitlesById}
+                dashboardUID={dashboardUID}
+                onTimeChipClick={onTimeChipClick}
+              />
             ))}
           </Fragment>
         );
@@ -320,7 +343,14 @@ function RenderNode({
       return (
         <a href={safe} target="_blank" rel="noopener noreferrer">
           {node.children?.map((c, i) => (
-            <RenderNode key={i} node={c} onMentionClick={onMentionClick} panelTitlesById={panelTitlesById} dashboardUID={dashboardUID} onTimeChipClick={onTimeChipClick} />
+            <RenderNode
+              key={i}
+              node={c}
+              onMentionClick={onMentionClick}
+              panelTitlesById={panelTitlesById}
+              dashboardUID={dashboardUID}
+              onTimeChipClick={onTimeChipClick}
+            />
           ))}
         </a>
       );
@@ -332,7 +362,14 @@ function RenderNode({
       return (
         <Fragment>
           {node.children?.map((c, i) => (
-            <RenderNode key={i} node={c} onMentionClick={onMentionClick} panelTitlesById={panelTitlesById} dashboardUID={dashboardUID} onTimeChipClick={onTimeChipClick} />
+            <RenderNode
+              key={i}
+              node={c}
+              onMentionClick={onMentionClick}
+              panelTitlesById={panelTitlesById}
+              dashboardUID={dashboardUID}
+              onTimeChipClick={onTimeChipClick}
+            />
           ))}
         </Fragment>
       );

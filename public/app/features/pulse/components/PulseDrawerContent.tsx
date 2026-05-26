@@ -692,4 +692,3 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: theme.colors.text.primary,
   }),
 });
-

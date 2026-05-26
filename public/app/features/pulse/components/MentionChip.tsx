@@ -56,13 +56,7 @@ interface Props {
  * there's no XSS surface even if a malicious displayName slipped
  * through.
  */
-export function MentionChip({
-  mention,
-  onClick,
-  panelTitlesById,
-  dashboardUID,
-  onTimeChipClick,
-}: Props): ReactNode {
+export function MentionChip({ mention, onClick, panelTitlesById, dashboardUID, onTimeChipClick }: Props): ReactNode {
   const styles = useStyles2(getStyles);
 
   // Prefer the live panel title for panel mentions so a renamed panel
@@ -133,11 +127,7 @@ export function MentionChip({
           }
         : undefined;
       return (
-        <a
-          className={styles.time}
-          href={timeChipHref(dashboardUID, range.from, range.to)}
-          onClick={handleClick}
-        >
+        <a className={styles.time} href={timeChipHref(dashboardUID, range.from, range.to)} onClick={handleClick}>
           <span>@{label}</span>
         </a>
       );

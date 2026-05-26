@@ -283,12 +283,7 @@ function PulseDrawerRenderer({ model }: SceneComponentProps<PulseDrawer>) {
   }, [folderDashboards.items, resourceUID]);
 
   return (
-    <Drawer
-      title={t('pulse.drawer.title', 'Pulse')}
-      subtitle={dashboard.state.title}
-      onClose={model.onClose}
-      size="md"
-    >
+    <Drawer title={t('pulse.drawer.title', 'Pulse')} subtitle={dashboard.state.title} onClose={model.onClose} size="md">
       <PulseDrawerContent
         resourceUID={resourceUID}
         panelFilter={panelFilter}

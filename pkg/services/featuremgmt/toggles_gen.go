@@ -223,6 +223,14 @@ const (
 	// Change the way annotation permissions work by scoping them to folders and dashboards.
 	FlagAnnotationPermissionUpdate = "annotationPermissionUpdate"
 
+	// FlagDashboardPulse
+	// Enables Pulse, threaded conversations attached to dashboards and panels (Slack-style threads with @user and #panel mentions, subscriptions, and notifications)
+	FlagDashboardPulse = "dashboardPulse"
+
+	// FlagDashboardPulseEmail
+	// Sends email notifications to Pulse mention and subscription recipients. Requires dashboardPulse to be enabled and SMTP to be configured.
+	FlagDashboardPulseEmail = "dashboardPulseEmail"
+
 	// FlagPdfTables
 	// Enables generating table data as PDF in reporting
 	FlagPdfTables = "pdfTables"
