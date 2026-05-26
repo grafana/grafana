@@ -283,10 +283,10 @@ export const useFlagGrafanaOrgDashboardTemplates = (options?: ReactFlagEvaluatio
  *
  * **Details:**
  * - flag key: `grafana.scenesFlickeringFix`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagGrafanaScenesFlickeringFix = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.scenesFlickeringFix", false, options).value;
+  return useFlag("grafana.scenesFlickeringFix", true, options).value;
 };
 
 /**

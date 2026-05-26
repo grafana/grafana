@@ -39,6 +39,10 @@ import (
 
 const maxBatchSize = 1000
 
+// unknownBuildSize is passed when the caller does not have a cheap size hint.
+// Backends should treat it as unknown, not as an empty resource.
+const unknownBuildSize int64 = -1
+
 const (
 	defaultVectorSearchLimit = 50
 	maxVectorSearchLimit     = 200
@@ -122,7 +126,8 @@ type SearchBackend interface {
 	GetIndex(key NamespacedResource) ResourceIndex
 
 	// BuildIndex builds an index from scratch.
-	// Depending on the size, the backend may choose different options (eg: memory vs disk).
+	// Depending on the size hint, the backend may choose different options (eg: memory vs disk).
+	// A negative size means the caller does not have a cheap size hint.
 	// The last known resource version can be used to detect that nothing has changed, and existing on-disk index can be reused.
 	// The builder will write all documents before returning.
 	// Updater function is used to update the index before performing the search.
@@ -772,9 +777,10 @@ func (s *searchServer) GetStats(ctx context.Context, req *resourcepb.ResourceSta
 	}
 
 	stats := NewSearchStats("GetStats")
-	defer s.logStats(ctx, stats, span, "namespace", req.Namespace, "group", strings.Join(req.Kinds, ","), "folder", req.Folder)
+	defer s.logStats(ctx, stats, span, "namespace", req.Namespace, "group", strings.Join(req.Kinds, ","), "folder", strings.Join(req.Folder, ","))
 
 	rsp := &resourcepb.ResourceStatsResponse{}
+	folderSet := folderFilterSet(req)
 
 	// Explicit list of kinds
 	if len(req.Kinds) > 0 {
@@ -790,7 +796,7 @@ func (s *searchServer) GetStats(ctx context.Context, req *resourcepb.ResourceSta
 				rsp.Error = AsErrorResult(err)
 				return rsp, nil
 			}
-			count, err := index.DocCount(ctx, req.Folder, stats)
+			count, err := sumDocCount(ctx, index, folderSet, stats)
 			if err != nil {
 				rsp.Error = AsErrorResult(err)
 				return rsp, nil
@@ -815,8 +821,8 @@ func (s *searchServer) GetStats(ctx context.Context, req *resourcepb.ResourceSta
 	}
 	rsp.Stats = make([]*resourcepb.ResourceStatsResponse_Stats, len(resourceStats))
 
-	// When not filtered by folder or repository, we can use the results directly
-	if req.Folder == "" {
+	// When not filtered by folder, we can use the results directly
+	if len(folderSet) == 0 {
 		for i, stat := range resourceStats {
 			rsp.Stats[i] = &resourcepb.ResourceStatsResponse_Stats{
 				Group:    stat.Group,
@@ -837,7 +843,7 @@ func (s *searchServer) GetStats(ctx context.Context, req *resourcepb.ResourceSta
 			rsp.Error = AsErrorResult(err)
 			return rsp, nil
 		}
-		count, err := index.DocCount(ctx, req.Folder, stats)
+		count, err := sumDocCount(ctx, index, folderSet, stats)
 		if err != nil {
 			rsp.Error = AsErrorResult(err)
 			return rsp, nil
@@ -849,6 +855,48 @@ func (s *searchServer) GetStats(ctx context.Context, req *resourcepb.ResourceSta
 		}
 	}
 	return rsp, nil
+}
+
+// folderFilterSet returns req.Folder de-duplicated, with empty entries dropped.
+// Returns nil when no folder filter is set, which means "count everything in
+// the namespace".
+func folderFilterSet(req *resourcepb.ResourceStatsRequest) []string {
+	if len(req.Folder) == 0 {
+		return nil
+	}
+	seen := make(map[string]struct{}, len(req.Folder))
+	out := make([]string, 0, len(req.Folder))
+	for _, f := range req.Folder {
+		if f == "" {
+			continue
+		}
+		if _, ok := seen[f]; ok {
+			continue
+		}
+		seen[f] = struct{}{}
+		out = append(out, f)
+	}
+	return out
+}
+
+// sumDocCount returns the document count across the given folders. When
+// folders is empty it returns the total document count of the index. Bleve
+// has no native multi-folder count, so we issue one DocCount per folder and
+// sum — fine for the move/delete confirmation flow which only spans a
+// folder subtree.
+func sumDocCount(ctx context.Context, index ResourceIndex, folders []string, stats *SearchStats) (int64, error) {
+	if len(folders) == 0 {
+		return index.DocCount(ctx, "", stats)
+	}
+	var total int64
+	for _, f := range folders {
+		c, err := index.DocCount(ctx, f, stats)
+		if err != nil {
+			return 0, err
+		}
+		total += c
+	}
+	return total, nil
 }
 
 func (s *searchServer) RebuildIndexes(ctx context.Context, req *resourcepb.RebuildIndexesRequest) (*resourcepb.RebuildIndexesResponse, error) {
@@ -1218,26 +1266,11 @@ func (s *searchServer) rebuildIndex(ctx context.Context, req rebuildRequest) {
 		s.builders.clearNamespacedCache(req.NamespacedResource)
 	}
 
-	// Get the correct value of size + RV for building the index. This is important for our Bleve
-	// backend to decide whether to build index in-memory or as file-based.
-	nsr := NamespacedResource{
-		Namespace: req.Namespace,
-		Group:     req.Group,
-		Resource:  req.Resource,
-	}
-	stats, err := s.storage.GetResourceStats(ctx, nsr, 0)
+	size, err := idx.DocCount(ctx, "", nil)
 	if err != nil {
-		span.RecordError(fmt.Errorf("failed to get resource stats: %w", err))
-		l.Error("failed to get resource stats", "error", err)
-		return
-	}
-
-	size := int64(0)
-	for _, stat := range stats {
-		if stat.Namespace == req.Namespace && stat.Group == req.Group && stat.Resource == req.Resource {
-			size = stat.Count
-			break
-		}
+		span.RecordError(fmt.Errorf("failed to get current index doc count: %w", err))
+		l.Warn("failed to get current index doc count, using unknown size", "error", err)
+		size = unknownBuildSize
 	}
 
 	// Pass rebuild=true to force rebuild of any existing file-based index.
@@ -1375,24 +1408,6 @@ func (s *searchServer) getOrCreateIndex(ctx context.Context, stats *SearchStats,
 				return idx, nil
 			}
 
-			// Get correct value of size + RV for building the index. This is important for our Bleve
-			// backend to decide whether to build index in-memory or as file-based.
-			nsr := NamespacedResource{
-				Namespace: key.Namespace,
-			}
-			stats, err := s.storage.GetResourceStats(ctx, nsr, 0)
-			if err != nil {
-				return nil, fmt.Errorf("failed to get resource stats: %w", err)
-			}
-
-			size := int64(0)
-			for _, stat := range stats {
-				if stat.Namespace == key.Namespace && stat.Group == key.Group && stat.Resource == key.Resource {
-					size = stat.Count
-					break
-				}
-			}
-
 			// Get last import time to pass to BuildIndex, which will check if the file-based
 			// index needs to be rebuilt before opening it.
 			var lastImportTime time.Time
@@ -1404,7 +1419,7 @@ func (s *searchServer) getOrCreateIndex(ctx context.Context, stats *SearchStats,
 				lastImportTime = importTimes[key]
 			}
 
-			idx, err = s.build(ctx, key, size, reason, false, lastImportTime)
+			idx, err = s.build(ctx, key, unknownBuildSize, reason, false, lastImportTime)
 			if err != nil {
 				return nil, fmt.Errorf("error building search index, %w", err)
 			}
