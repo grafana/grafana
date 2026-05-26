@@ -427,7 +427,7 @@ func (s *ResourcePermSqlBackend) existsResourcePermission(ctx context.Context, t
 	err := tx.Get(ctx, &roleID, idQuery, orgID, "managed:%", scope)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		s.logger.Error("could not check for existing resource permission", "orgID", orgID, "scope", scope, "error", err.Error())
-		return fmt.Errorf("could not check for existing resource permission")
+		return fmt.Errorf("could not check for existing resource permission: %w", err)
 	}
 	if roleID != 0 {
 		return errConflict
@@ -479,7 +479,7 @@ func (s *ResourcePermSqlBackend) updateResourcePermission(ctx context.Context, d
 				return apierrors.NewNotFound(v0alpha1.ResourcePermissionInfo.GroupResource(), grn.string())
 			}
 			s.logger.Error("could not get resource permissions", "orgID", ns.OrgID, "scope", grn.Name, "error", err.Error())
-			return fmt.Errorf("could not get the existing resource permissions for resource %s", grn.Name)
+			return fmt.Errorf("could not get the existing resource permissions for resource %s: %w", grn.Name, err)
 		}
 
 		permissionsToAdd, permissionsToRemove := diffPermissions(currentPerms.Spec.Permissions, v0ResourcePerm.Spec.Permissions)
@@ -508,7 +508,7 @@ func (s *ResourcePermSqlBackend) updateResourcePermission(ctx context.Context, d
 				_, err = tx.Exec(ctx, removePermQuery, args...)
 				if err != nil {
 					s.logger.Error("could not remove role permission", "scope", perm.Scope, "role", perm.RoleName, "error", err.Error())
-					return fmt.Errorf("could not remove role permission")
+					return fmt.Errorf("could not remove role permission: %w", err)
 				}
 			}
 		}
@@ -596,8 +596,8 @@ func (s *ResourcePermSqlBackend) deleteResourcePermission(ctx context.Context, s
 
 	_, err = sql.DB.GetSqlxSession().Exec(ctx, rawQuery, args...)
 	if err != nil {
-		s.logger.Error("could not delete resource permissions", "scope", scope, "orgID", ns.OrgID, err.Error())
-		return fmt.Errorf("could not delete resource permission")
+		s.logger.Error("could not delete resource permissions", "scope", scope, "orgID", ns.OrgID, "error", err.Error())
+		return fmt.Errorf("could not delete resource permission: %w", err)
 	}
 
 	return nil
