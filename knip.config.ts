@@ -6,6 +6,7 @@ const config: KnipConfig = {
     'enumMembers',
   ],
   ignore: ['**/*.gen.ts*'],
+  ignoreBinaries: ['make'],
   workspaces: {
     // TODO figure out how to properly include webpack/jest configs
     '.': {
@@ -18,6 +19,7 @@ const config: KnipConfig = {
       webpack: false,
     },
     'packages/**': {
+      entry: ['i18next.config.ts'],
       ignoreDependencies: [
         // These are used by the base rollup config located outside of the packages
         '@rollup/plugin-node-resolve',
