@@ -70,3 +70,4 @@ export {
 export { installPluginMeta, uninstallPluginMeta } from '../services/pluginMeta/plugins';
 export { logPluginMetaError, logPluginMetaWarning } from '../services/pluginMeta/logging';
 export { refetchPluginSettings } from '../services/pluginSettings/refetchPluginSettings';
+export { invalidatePluginSettingsCache } from '../services/pluginSettings/invalidatePluginSettingsCache';

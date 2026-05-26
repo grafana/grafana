@@ -210,7 +210,7 @@ func TestService_UpdateInhibitionRule(t *testing.T) {
 			expRule: func() v1.InhibitionRule {
 				r := testGrafanaRule
 				r.Equal = []string{"instance", "job"}
-				updated, err := legacy_storage.InhibitRuleToInhibitionRule(r.Name, r.InhibitRule, r.Provenance)
+				updated, err := v1.InhibitRuleToInhibitionRule(r.Name, r.InhibitRule, r.Provenance)
 				require.Nil(t, err)
 				return *updated
 			}(),
@@ -228,7 +228,7 @@ func TestService_UpdateInhibitionRule(t *testing.T) {
 			expRule: func() v1.InhibitionRule {
 				r := testGrafanaRule
 				r.Name = "managed-rule-1-renamed"
-				updated, err := legacy_storage.InhibitRuleToInhibitionRule(r.Name, r.InhibitRule, r.Provenance)
+				updated, err := v1.InhibitRuleToInhibitionRule(r.Name, r.InhibitRule, r.Provenance)
 				require.Nil(t, err)
 				return *updated
 			}(),

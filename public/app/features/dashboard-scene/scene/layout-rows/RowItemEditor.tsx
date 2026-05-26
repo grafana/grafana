@@ -108,9 +108,7 @@ export function useEditOptions(this: RowItem, isNewElement: boolean): OptionsPan
       title: t('dashboard.rows-layout.row-options.section-filters.title', 'Filters'),
       id: 'dash-row-section-filters',
       isOpenDefault: true,
-      renderTitle: (isExpanded: boolean) => (
-        <SectionFiltersCategoryTitle sectionOwner={model} isExpanded={isExpanded} />
-      ),
+      renderTitle: () => <SectionFiltersCategoryTitle />,
     });
 
     category.addItem(
