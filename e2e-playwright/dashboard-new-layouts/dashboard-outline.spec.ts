@@ -73,10 +73,10 @@ test.describe(
       await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.Outline.node('Variables')).click();
       await expect(outlineTree.getByText('(empty)').first()).toBeVisible();
 
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.backToDashboardButton)
-        .click();
+      // Exit edit mode
+      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
 
+      // Re-enter edit mode
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.outlineButton).click();
       await expect(outlineTree.getByText('(empty)').first()).toBeVisible();
