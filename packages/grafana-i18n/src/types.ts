@@ -1,9 +1,4 @@
 import { type TOptions } from 'i18next';
-/**
- * Hook type for translation function that takes an ID, default message, and optional values
- * @returns A function that returns the translated string
- */
-type UseTranslateHook = () => (id: string, defaultMessage: string, values?: Record<string, unknown>) => string;
 
 /**
  * Type for children elements in Trans component
@@ -99,4 +94,4 @@ interface Resources extends Record<string, string | Resources | unknown> {}
  */
 type ResourceLoader = (resolvedLanguage: string) => Promise<Resources>;
 
-export type { ResourceLoader, Resources, TransProps, TransType, TFunction, UseTranslateHook };
+export type { ResourceLoader, Resources, TransProps, TransType, TFunction };
