@@ -99,4 +99,4 @@ interface Resources extends Record<string, string | Resources | unknown> {}
  */
 type ResourceLoader = (resolvedLanguage: string) => Promise<Resources>;
 
-export type { ResourceLoader, Resources, TransProps, TransType, TFunction, UseTranslateHook };
+export type { ResourceLoader, Resources, TransProps, TransType, TFunction };

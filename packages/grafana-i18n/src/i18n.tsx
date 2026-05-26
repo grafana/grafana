@@ -176,7 +176,7 @@ export function getResolvedLanguage() {
   return getI18nInstance()?.resolvedLanguage || DEFAULT_LANGUAGE;
 }
 
-export function getNamespaces() {
+function getNamespaces() {
   return getI18nInstance()?.options.ns;
 }
 

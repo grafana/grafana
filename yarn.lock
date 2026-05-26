@@ -3926,7 +3926,6 @@ __metadata:
     micro-memoize: "npm:^4.1.2"
     react-i18next: "npm:^15.0.0"
     rollup: "npm:^4.60.1"
-    rollup-plugin-copy: "npm:3.5.0"
     typescript: "npm:6.0.2"
   peerDependencies:
     react: ">=18"
