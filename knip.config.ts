@@ -5,6 +5,7 @@ const config: KnipConfig = {
     // we don't often use enums, but when we do we usually include members we'll utilise in the future
     'enumMembers',
   ],
+  ignore: ['**/*.gen.ts*'],
   workspaces: {
     // TODO figure out how to properly include webpack/jest configs
     '.': {
@@ -17,8 +18,6 @@ const config: KnipConfig = {
       webpack: false,
     },
     'packages/**': {
-      project: 'src/**',
-      entry: ['src/index.ts', 'src/unstable.ts', 'src/internal/index.ts'],
       ignoreDependencies: [
         // These are used by the base rollup config located outside of the packages
         '@rollup/plugin-node-resolve',
