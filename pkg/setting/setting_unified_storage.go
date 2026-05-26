@@ -284,6 +284,13 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.VectorPromotionThreshold = vectorSection.Key("promotion_threshold").MustInt(10000)
 	cfg.VectorPromoterInterval = vectorSection.Key("promoter_interval").MustDuration(0) // zero means disabled
 
+	// Per-tenant query-embedding cache + rate limit.
+	cfg.VectorQueryCacheEnabled = vectorSection.Key("query_cache_enabled").MustBool(true)
+	cfg.VectorQueryCacheMaxPerTenant = vectorSection.Key("query_cache_max_per_tenant").MustInt(1000)
+	cfg.VectorRateLimitEnabled = vectorSection.Key("rate_limit_enabled").MustBool(true)
+	cfg.VectorRateLimitPerTenant = vectorSection.Key("rate_limit_per_tenant").MustInt(60)
+	cfg.VectorRateLimitWindow = vectorSection.Key("rate_limit_window").MustDuration(time.Minute)
+
 	// Embedding provider for the VectorSearch RPC. Empty = disabled (RPC
 	// returns Unimplemented). When set, the matching provider's connection
 	// fields must also be configured.
