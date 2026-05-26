@@ -241,6 +241,52 @@ describe('provisioning data mapping', () => {
       const data = specToData(spec);
       expect(data.commit?.singleResourceMessageTemplate).toBe('feat: {{title}}');
     });
+
+    it('writes authorName and authorEmail to spec when provided', () => {
+      const formData = makeFormData('github');
+      formData.commit = { authorName: 'Jane Doe', authorEmail: 'jane@example.com' };
+      const spec = dataToSpec(formData);
+      expect(spec.commit?.authorName).toBe('Jane Doe');
+      expect(spec.commit?.authorEmail).toBe('jane@example.com');
+    });
+
+    it('trims author fields before writing to spec', () => {
+      const formData = makeFormData('github');
+      formData.commit = { authorName: '  Jane Doe  ', authorEmail: '  jane@example.com  ' };
+      const spec = dataToSpec(formData);
+      expect(spec.commit?.authorName).toBe('Jane Doe');
+      expect(spec.commit?.authorEmail).toBe('jane@example.com');
+    });
+
+    it('omits author fields from spec when whitespace-only', () => {
+      const formData = makeFormData('github');
+      formData.commit = { authorName: '   ', authorEmail: '   ' };
+      const spec = dataToSpec(formData);
+      expect(spec.commit).toBeUndefined();
+    });
+
+    it('writes only the author fields that are set', () => {
+      const formData = makeFormData('github');
+      formData.commit = { authorName: 'Jane Doe' };
+      const spec = dataToSpec(formData);
+      expect(spec.commit?.authorName).toBe('Jane Doe');
+      expect(spec.commit).not.toHaveProperty('authorEmail');
+      expect(spec.commit).not.toHaveProperty('singleResourceMessageTemplate');
+    });
+
+    it('reads author fields from spec to form data', () => {
+      const spec: RepositorySpec = {
+        type: 'github',
+        title: 'repo',
+        sync: baseSync,
+        workflows: [],
+        github: { url: 'https://github.com/owner/repo', branch: 'main', path: '' },
+        commit: { authorName: 'Jane Doe', authorEmail: 'jane@example.com' },
+      };
+      const data = specToData(spec);
+      expect(data.commit?.authorName).toBe('Jane Doe');
+      expect(data.commit?.authorEmail).toBe('jane@example.com');
+    });
   });
 
   describe('empty branch sends empty string for backend auto-detection', () => {

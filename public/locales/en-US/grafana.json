@@ -13600,7 +13600,7 @@
       "generate-link": "generate a GPG key",
       "period": ".",
       "required": "If you require verified commits,",
-      "then": ""
+      "then": "then"
     },
     "history-view": {
       "not-found": "Not found"
