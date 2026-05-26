@@ -4,10 +4,9 @@ import { reportInteraction } from '@grafana/runtime';
 import { useFlagGrafanaOrgDashboardTemplates } from '@grafana/runtime/internal';
 import { Button, ButtonGroup, Dropdown, Menu } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
-import { CustomDashboardTemplateInteractions } from 'app/features/dashboard-scene/analytics/main';
+import { CustomDashboardTemplateInteractions } from 'app/features/dashboard-scene/analytics/dashboard-templates/main';
 import { getSaveAsTemplateForm } from 'app/features/dashboard-scene/saving/enterprise-components/SaveAsTemplateFormExtension';
 
-import { EVENT_LOCATIONS } from '../../../../dashboard/dashgrid/DashboardLibrary/constants';
 import { type ToolbarActionProps } from '../types';
 
 export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
@@ -103,7 +102,6 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
                 onClick={() => {
                   CustomDashboardTemplateInteractions.saveAsOpened({
                     dashboardUid: uid ?? '',
-                    isNewDashboard: isNew,
                   });
                   dashboard.openSaveDrawer({ saveAsDashboardTemplate: true });
                 }}

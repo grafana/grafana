@@ -11,7 +11,7 @@ import {
   type SaveConflictShownProperties,
   type SaveFailedProperties,
   type SavedBannerGalleryClickedProperties,
-  type UsedProperties,
+  type BrowsedProperties,
   type VersionRestoredProperties,
 } from './types';
 
@@ -43,7 +43,7 @@ export const CustomDashboardTemplateInteractions = {
   /** Fired when the template save form surfaces a version conflict (HTTP 409) to the user. */
   saveConflictShown: createCustomTemplateEvent<SaveConflictShownProperties>('save_conflict_shown'),
   /** Fired when a user opens the "use template" flow that hydrates a new (unsaved) dashboard from a template. */
-  used: createCustomTemplateEvent<UsedProperties>('used'),
+  browsed: createCustomTemplateEvent<BrowsedProperties>('browsed'),
   /** Fired when a user opens an existing template in edit mode. */
   editOpened: createCustomTemplateEvent<EditOpenedProperties>('edit_opened'),
   /** Fired on the first save of a dashboard that was created from a custom template. */

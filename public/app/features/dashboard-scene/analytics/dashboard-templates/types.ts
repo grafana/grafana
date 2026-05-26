@@ -44,7 +44,7 @@ export interface SaveConflictShownProperties extends EventProperty {
   templateUid: string;
 }
 
-export interface UsedProperties extends EventProperty {
+export interface BrowsedProperties extends EventProperty {
   /** UID of the template the user is starting from. */
   templateUid: string;
 }

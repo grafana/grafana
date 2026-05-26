@@ -7,7 +7,7 @@ import { reportInteraction, setPluginImportUtils } from '@grafana/runtime';
 import { SceneGridLayout, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
-import { CustomDashboardTemplateInteractions } from 'app/features/dashboard-scene/analytics/main';
+import { CustomDashboardTemplateInteractions } from 'app/features/dashboard-scene/analytics/dashboard-templates/main';
 import { registerSaveAsTemplateForm } from 'app/features/dashboard-scene/saving/enterprise-components/SaveAsTemplateFormExtension';
 import { activateFullSceneTree } from 'app/features/dashboard-scene/utils/test-utils';
 

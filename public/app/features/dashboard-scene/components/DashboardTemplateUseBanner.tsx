@@ -5,9 +5,8 @@ import { useLocation, useSearchParams } from 'react-router-dom-v5-compat';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Alert, useStyles2 } from '@grafana/ui';
-import { EVENT_LOCATIONS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
 import { DASHBOARD_LIBRARY_ROUTES } from 'app/features/dashboard/dashgrid/types';
-import { CustomDashboardTemplateInteractions } from 'app/features/dashboard-scene/analytics/main';
+import { CustomDashboardTemplateInteractions } from 'app/features/dashboard-scene/analytics/dashboard-templates/main';
 import { getDashboardTemplateExtension } from 'app/features/dashboard-scene/settings/enterprise-components/DashboardTemplateExtension';
 
 import { type DashboardScene } from '../scene/DashboardScene';

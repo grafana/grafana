@@ -17,13 +17,7 @@ import { DashboardTemplatesSourceEntryPointMap } from 'app/features/dashboard/da
 
 import { DashboardCard } from './DashboardCard';
 import { NewTemplateDashboardInteractions } from './analytics/main';
-import {
-  CONTENT_KINDS,
-  DISCOVERY_METHODS,
-  EVENT_LOCATIONS,
-  type SourceEntryPoint,
-  TemplateDashboardSourceEntryPoint,
-} from './constants';
+import { CONTENT_KINDS, DISCOVERY_METHODS, EVENT_LOCATIONS, TemplateDashboardSourceEntryPoint } from './constants';
 import { getDashboardTemplatesTab } from './enterprise-components/DashboardTemplatesTabExtension';
 import { TemplateDashboardInteractions } from './interactions';
 import { type GnetDashboard, type GnetDashboardsResponse, type Link } from './types';

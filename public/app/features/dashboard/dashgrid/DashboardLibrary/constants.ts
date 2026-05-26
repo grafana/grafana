@@ -68,7 +68,7 @@ export const CREATION_ORIGINS = {
   DASHBOARD_LIBRARY_DATASOURCE_DASHBOARD: 'dashboard_library_datasource_dashboard',
   DASHBOARD_LIBRARY_COMMUNITY_DASHBOARD: 'dashboard_library_community_dashboard',
   DASHBOARD_LIBRARY_TEMPLATE_DASHBOARD: 'dashboard_library_template_dashboard',
-  DASHBOARD_LIBRARY_CUSTOM_TEMPLATE: 'dashboard_library_custom_template',
+  DASHBOARD_LIBRARY_CUSTOM_DASHBOARD_TEMPLATE: 'dashboard_library_custom_dashboard_template',
 } as const;
 
 export const DashboardTemplatesSourceEntryPointMap: Record<string, SourceEntryPoint> = {

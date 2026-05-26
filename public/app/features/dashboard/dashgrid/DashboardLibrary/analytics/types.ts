@@ -39,7 +39,7 @@ export interface ItemClickedProperties extends EventProperty {
   /** Whether the suggested dashboards assistant is enabled. */
   isSuggestedDashboardAssistantButtonEnabled?: boolean;
   /** The action taken by the user on the library item. */
-  action?: 'view_template' | 'use_dashboard' | 'assistant' | 'use_template' | 'edit_template';
+  action?: 'view_template' | 'use_dashboard' | 'assistant' | 'edit_template';
 }
 
 export interface SearchPerformedProperties extends EventProperty {

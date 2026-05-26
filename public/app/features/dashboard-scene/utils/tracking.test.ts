@@ -3,7 +3,7 @@ import { reportInteraction, setPluginImportUtils } from '@grafana/runtime';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
-import { CustomDashboardTemplateInteractions } from '../analytics/main';
+import { CustomDashboardTemplateInteractions } from '../analytics/dashboard-templates/main';
 import nestedDashboard from '../serialization/testfiles/nested_dashboard.json';
 
 import { getTestDashboardSceneFromSaveModel } from './test-utils';
