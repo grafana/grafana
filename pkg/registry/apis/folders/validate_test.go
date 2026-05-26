@@ -1459,13 +1459,13 @@ func TestCheckMoveAccess(t *testing.T) {
 		},
 		{
 			name:      "move to root requires create at root",
-			newParent: folder.RootFolderUID,
+			newParent: folder.GeneralFolderUID,
 			oldParent: oldParentUID,
-			allows:    []allow{allowFolder(utils.VerbCreate, "", "")},
+			allows:    []allow{allowFolder(utils.VerbCreate, "", folder.GeneralFolderUID)},
 		},
 		{
 			name:        "move to root denied without create at root",
-			newParent:   folder.RootFolderUID,
+			newParent:   folder.GeneralFolderUID,
 			oldParent:   oldParentUID,
 			expectedErr: "folders.forbiddenMove",
 		},

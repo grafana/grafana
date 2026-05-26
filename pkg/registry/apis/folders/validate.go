@@ -180,26 +180,6 @@ func validateOnUpdate(ctx context.Context,
 		return folder.ErrFolderCannotBeMovedToK6.Errorf("k6 project may not be moved")
 	}
 
-	// Resolve the destination's ancestor chain for the depth and circular
-	// reference checks below. Access checks rely on Zanzana for inheritance
-	// and don't need this chain enumerated.
-	var destinationAncestors []folders.FolderInfo
-	if newParent != folder.RootFolderUID {
-		parentObj, err := getter.Get(ctx, newParent, &metav1.GetOptions{})
-		if err != nil {
-			return fmt.Errorf("move target not found %w", err)
-		}
-		parent, ok := parentObj.(*folders.Folder)
-		if !ok {
-			return fmt.Errorf("expected folder, found %T", parentObj)
-		}
-		info, err := parents(ctx, parent)
-		if err != nil {
-			return err
-		}
-		destinationAncestors = info.Items
-	}
-
 	if err := checkMoveAccess(ctx, obj.Namespace, obj.Name, oldFolder.GetFolder(), newParent, accessClient); err != nil {
 		return err
 	}
@@ -381,7 +361,7 @@ func checkMoveAccess(
 	}
 	if !writeRes.Allowed {
 		destLabel := newParentUID
-		if destLabel == folder.RootFolderUID {
+		if folder.IsRootFolderUID(destLabel) {
 			destLabel = folder.GeneralFolderUID
 		}
 		return folder.ErrMoveAccessDenied.Errorf("user does not have permissions to move a folder to folder with UID %s", destLabel)
