@@ -50,8 +50,7 @@ func WithManagerOptions(opts ...lease.ManagerOption) Option {
 }
 
 // New creates an Elector. If cfg.Identity is empty, it is auto-generated
-// from hostname:PID. reg may be nil; when non-nil, the underlying lease
-// manager registers its metrics with it.
+// from hostname:PID.
 func New(
 	kvStore kv.KV,
 	cfg leaderelection.Config,
