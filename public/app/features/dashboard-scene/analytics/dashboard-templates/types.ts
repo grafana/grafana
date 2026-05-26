@@ -32,6 +32,26 @@ export interface SaveCompletedProperties extends EventProperty {
   overwriteUsed: boolean;
 }
 
+export interface SaveTemplateInfoCompletedProperties extends EventProperty {
+  /** UID of the template resource that was modified. */
+  templateUid: string;
+  /** Number of tags attached to the template. */
+  tagCount: number;
+  /** Whether the user filled in a description for the template. */
+  hasDescription: boolean;
+}
+export interface SaveTemplateInfoFailedProperties extends EventProperty {
+  /** UID of the template resource that failed to modify. */
+  templateUid: string;
+  /** HTTP status returned by the failing request, when available. */
+  errorStatus?: number;
+}
+
+export interface DeleteCompletedProperties extends EventProperty {
+  /** UID of the template resource that was deleted. */
+  templateUid: string;
+}
+
 export interface SaveFailedProperties extends EventProperty {
   /** UID of the template resource that failed to save. */
   templateUid: string;

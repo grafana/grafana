@@ -45,38 +45,6 @@ export const TemplateDashboardModal = () => {
     setSearchParams(searchParams);
   };
 
-  const onPreviewDashboardClick = async (dashboard: GnetDashboard, customizeWithAssistant = false) => {
-    const sourceEntryPoint = DashboardTemplatesSourceEntryPointMap[entryPoint] || 'unknown';
-    isAnalyticsFrameworkEnabled
-      ? NewTemplateDashboardInteractions.itemClicked({
-          contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
-          datasourceTypes: [String(testDataSource?.type)],
-          libraryItemId: String(dashboard.id),
-          libraryItemTitle: dashboard.name,
-          sourceEntryPoint,
-          eventLocation: EVENT_LOCATIONS.BROWSE_DASHBOARDS_PAGE,
-          discoveryMethod: DISCOVERY_METHODS.BROWSE,
-          action: customizeWithAssistant ? 'assistant' : 'view_template',
-        })
-      : TemplateDashboardInteractions.itemClicked({
-          contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
-          datasourceTypes: [String(testDataSource?.type)],
-          libraryItemId: String(dashboard.id),
-          libraryItemTitle: dashboard.name,
-          sourceEntryPoint,
-          eventLocation: EVENT_LOCATIONS.BROWSE_DASHBOARDS_PAGE,
-          discoveryMethod: DISCOVERY_METHODS.BROWSE,
-          action: customizeWithAssistant ? 'assistant' : 'view_template',
-        });
-
-    const templateUrl = getTemplateDashboardUrl(
-      dashboard,
-      sourceEntryPoint,
-      customizeWithAssistant ? TemplateDashboardSourceEntryPoint.ASSISTANT_BUTTON : undefined
-    );
-    locationService.push(templateUrl);
-  };
-
   const { value: dashboards = [], loading } = useAsync(async () => {
     if (!isOpen) {
       return [];
@@ -126,6 +94,38 @@ export const TemplateDashboardModal = () => {
   }
 
   const renderGrafanaTemplates = () => {
+    const onPreviewDashboardClick = async (dashboard: GnetDashboard, customizeWithAssistant = false) => {
+      const sourceEntryPoint = DashboardTemplatesSourceEntryPointMap[entryPoint] || 'unknown';
+      isAnalyticsFrameworkEnabled
+        ? NewTemplateDashboardInteractions.itemClicked({
+            contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
+            datasourceTypes: [String(testDataSource?.type)],
+            libraryItemId: String(dashboard.id),
+            libraryItemTitle: dashboard.name,
+            sourceEntryPoint,
+            eventLocation: EVENT_LOCATIONS.BROWSE_DASHBOARDS_PAGE,
+            discoveryMethod: DISCOVERY_METHODS.BROWSE,
+            action: customizeWithAssistant ? 'assistant' : 'view_template',
+          })
+        : TemplateDashboardInteractions.itemClicked({
+            contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
+            datasourceTypes: [String(testDataSource?.type)],
+            libraryItemId: String(dashboard.id),
+            libraryItemTitle: dashboard.name,
+            sourceEntryPoint,
+            eventLocation: EVENT_LOCATIONS.BROWSE_DASHBOARDS_PAGE,
+            discoveryMethod: DISCOVERY_METHODS.BROWSE,
+            action: customizeWithAssistant ? 'assistant' : 'view_template',
+          });
+
+      const templateUrl = getTemplateDashboardUrl(
+        dashboard,
+        sourceEntryPoint,
+        customizeWithAssistant ? TemplateDashboardSourceEntryPoint.ASSISTANT_BUTTON : undefined
+      );
+      locationService.push(templateUrl);
+    };
+
     if (!showGrafanaTemplates) {
       return null;
     }

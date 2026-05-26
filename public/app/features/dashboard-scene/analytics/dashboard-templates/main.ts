@@ -13,6 +13,9 @@ import {
   type SavedBannerGalleryClickedProperties,
   type BrowsedProperties,
   type VersionRestoredProperties,
+  type SaveTemplateInfoCompletedProperties,
+  type SaveTemplateInfoFailedProperties,
+  type DeleteCompletedProperties,
 } from './types';
 
 const SCHEMA_VERSION = 1;
@@ -40,8 +43,15 @@ export const CustomDashboardTemplateInteractions = {
   saveCompleted: createCustomTemplateEvent<SaveCompletedProperties>('save_completed'),
   /** Fired when saving changes to an existing template fails. */
   saveFailed: createCustomTemplateEvent<SaveFailedProperties>('save_failed'),
+  /** Fired when the user successfully saves changes to the template info. */
+  saveTemplateInfoCompleted:
+    createCustomTemplateEvent<SaveTemplateInfoCompletedProperties>('save_template_info_completed'),
+  /** Fired when saving changes to the template info fails. */
+  saveTemplateInfoFailed: createCustomTemplateEvent<SaveTemplateInfoFailedProperties>('save_template_info_failed'),
   /** Fired when the template save form surfaces a version conflict (HTTP 409) to the user. */
   saveConflictShown: createCustomTemplateEvent<SaveConflictShownProperties>('save_conflict_shown'),
+  /** Fired when the user successfully deletes a template. */
+  deleted: createCustomTemplateEvent<DeleteCompletedProperties>('deleted'),
   /** Fired when a user opens the "use template" flow that hydrates a new (unsaved) dashboard from a template. */
   browsed: createCustomTemplateEvent<BrowsedProperties>('browsed'),
   /** Fired when a user opens an existing template in edit mode. */
