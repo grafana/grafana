@@ -6,6 +6,7 @@ import { useCallback, useState } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { type SceneComponentProps } from '@grafana/scenes';
 import { clearButtonStyles, Icon, Tooltip, useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
 
@@ -45,7 +46,12 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   const isTopLevel = model.parent?.parent instanceof DashboardScene;
   const pointerDistance = usePointerDistance();
   const soloPanelContext = useSoloPanelContext();
-  const sectionVariablesEnabled = useBooleanFlagValue('dashboardSectionVariables', false);
+  // OpenFeature is not initialized for anonymous users, so fall back to
+  // the static feature toggle to ensure section variables work without auth.
+  const sectionVariablesEnabled = useBooleanFlagValue(
+    'dashboardSectionVariables',
+    Boolean(config.featureToggles.dashboardSectionVariables)
+  );
   const rowVariablesSet = model.state.$variables;
 
   const myIndex = rows.findIndex((row) => row === model);

@@ -11,6 +11,8 @@ on:
       - "public/app/plugins/datasource/influxdb/**"
       - "public/app/plugins/datasource/mssql/**"
       - "public/app/plugins/datasource/opentsdb/**"
+      - "public/app/plugins/datasource/prometheus/**"
+      - "public/app/plugins/datasource/grafana-pyroscope-datasource/**"
       - "public/app/plugins/datasource/tempo/**"
       - "pkg/tsdb/cloudwatch/**"
       - "pkg/tsdb/cloud-monitoring/**"
@@ -18,6 +20,8 @@ on:
       - "pkg/tsdb/influxdb/**"
       - "pkg/tsdb/mssql/**"
       - "pkg/tsdb/opentsdb/**"
+      - "pkg/tsdb/prometheus/**"
+      - "pkg/tsdb/grafana-pyroscope-datasource/**"
       - "pkg/tsdb/tempo/**"
 
 jobs:

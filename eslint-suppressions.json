@@ -539,11 +539,6 @@
       "count": 1
     }
   },
-  "packages/grafana-ui/src/components/PanelChrome/PanelChrome.test.tsx": {
-    "@grafana/no-plain-links": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/PanelChrome/PanelContext.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
@@ -1656,11 +1651,6 @@
   },
   "public/app/features/dashboard-scene/settings/variables/components/QueryVariableForm.tsx": {
     "react-hooks/exhaustive-deps": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/settings/variables/components/VariableDisplaySelect.tsx": {
-    "@grafana/require-no-margin": {
       "count": 1
     }
   },

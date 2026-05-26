@@ -30,7 +30,7 @@ export const ConfigEditor = memo(({ options, onOptionsChange }: Props) => {
         hasRequiredFields
       />
       <Divider />
-      <ConnectionConfig options={options} onOptionsChange={handleOnOptionsChange}></ConnectionConfig>
+      <ConnectionConfig options={options} onOptionsChange={handleOnOptionsChange} enableOAuthPassthrough />
       {config.secureSocksDSProxyEnabled && (
         <>
           <Divider />

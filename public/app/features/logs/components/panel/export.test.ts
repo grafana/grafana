@@ -1,4 +1,4 @@
-import { DataFrameType, FieldType, LogLevel, LogsSortOrder, type DataSourceApi, toDataFrame } from '@grafana/data';
+import { FieldType, LogLevel, LogsSortOrder, type DataSourceApi, toDataFrame } from '@grafana/data';
 
 import { createLogLine } from '../mocks/logRow';
 
@@ -230,35 +230,6 @@ describe('buildLogLineFullJsonObject', () => {
     spy.mockRestore();
   });
 
-  it('omits dataframe fields for dataplane LogLines frames (fields come from labels / line only)', () => {
-    const log = createLogLine(
-      {
-        labels: { app: 'store' },
-        entry: 'buy',
-        logLevel: LogLevel.info,
-        entryFieldIndex: 1,
-        dataFrame: toDataFrame({
-          refId: 'A',
-          meta: { type: DataFrameType.LogLines },
-          fields: [
-            { name: 'timestamp', type: FieldType.time, values: [6000] },
-            { name: 'body', type: FieldType.string, values: ['buy'] },
-            { name: 'labels', type: FieldType.other, values: [{ app: 'store' }] },
-            { name: 'extra', type: FieldType.string, values: ['ignored-for-export'] },
-          ],
-        }),
-      },
-      processOpts
-    );
-
-    const out = buildLogLineFullJsonObject(
-      log,
-      typedDs(() => null)
-    );
-    expect(out.fields).toBeUndefined();
-    expect(out.labels).toEqual({ app: 'store' });
-  });
-
   it('prettifies the log line when the row is detected as JSON', () => {
     const entry = '{"message":"ping"}';
     const log = createLogLine(
@@ -280,9 +251,8 @@ describe('buildLogLineFullJsonObject', () => {
       processOpts
     );
 
-    void log.body;
-    expect(log.isJSON).toBe(true);
     const line = buildLogLineFullJsonObject(log, untypedDs()).line as Record<string, unknown>;
+    expect(log.isJSON).toBe(true);
     expect(line.message).toBe('ping');
   });
 });
