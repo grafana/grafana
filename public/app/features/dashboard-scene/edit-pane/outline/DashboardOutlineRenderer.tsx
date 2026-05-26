@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -16,9 +15,9 @@ import { flattenOutlineNodes } from './utils';
 export function DashboardOutlineRenderer({ model }: SceneComponentProps<DashboardOutline>) {
   const styles = useStyles2(getStyles);
   const dashboard = getDashboardSceneFor(model);
+  const { searchQuery } = model.useState();
   const { isEditing } = dashboard.useState();
   const isEditingMode = Boolean(isEditing);
-  const [searchQuery, setSearchQuery] = useState('');
   const noTitleText = t('dashboard.outline.tree-item.no-title', '<no title>');
   const normalizedSearchQuery = searchQuery.trim().toLowerCase();
   const isSearching = normalizedSearchQuery.length > 0;
@@ -41,7 +40,7 @@ export function DashboardOutlineRenderer({ model }: SceneComponentProps<Dashboar
       <div className={styles.container}>
         <FilterInput
           value={searchQuery}
-          onChange={setSearchQuery}
+          onChange={(query) => model.setSearchQuery(query)}
           escapeRegex={false}
           placeholder={t('dashboard.outline.search.placeholder', 'Search outline')}
           className={styles.input}

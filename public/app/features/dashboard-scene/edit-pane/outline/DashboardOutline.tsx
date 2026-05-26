@@ -4,6 +4,7 @@ import { DashboardOutlineRenderer } from './DashboardOutlineRenderer';
 
 interface DashboardOutlineState extends SceneObjectState {
   collapsedState: Map<string, boolean>;
+  searchQuery: string;
 }
 
 export class DashboardOutline extends SceneObjectBase<DashboardOutlineState> {
@@ -13,6 +14,7 @@ export class DashboardOutline extends SceneObjectBase<DashboardOutlineState> {
     super({
       ...state,
       collapsedState: state?.collapsedState ?? new Map<string, boolean>(),
+      searchQuery: state?.searchQuery ?? '',
     });
   }
 
@@ -33,8 +35,18 @@ export class DashboardOutline extends SceneObjectBase<DashboardOutlineState> {
     }
   }
 
+  public setSearchQuery(searchQuery: string): void {
+    if (this.state.searchQuery !== searchQuery) {
+      this.setState({ searchQuery });
+    }
+  }
+
   public clone(withState?: Partial<SceneObjectState>): this {
-    const cloned = super.clone({ ...withState, collapsedState: this.state.collapsedState });
+    const cloned = super.clone({
+      ...withState,
+      collapsedState: this.state.collapsedState,
+      searchQuery: this.state.searchQuery,
+    });
     return cloned;
   }
 }
