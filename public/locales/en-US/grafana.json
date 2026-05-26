@@ -14221,6 +14221,7 @@
       "submit-error": "Could not submit thread. Please check Pulse API and try again.",
       "tab-preview": "Preview",
       "tab-write": "Write",
+      "time-suggestion-label": "Insert dashboard time range",
       "title-aria": "Thread title",
       "title-placeholder": "Title — a short summary of this thread",
       "user-lookup-empty": "No matching users.",

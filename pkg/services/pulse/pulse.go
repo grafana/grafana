@@ -116,7 +116,7 @@ func ProvideService(
 // notifier so callers don't need to gate on cfg.Smtp.Enabled here.
 func buildNotifier(cfg *setting.Cfg, features featuremgmt.FeatureToggles, ns notifications.Service, users user.Service, logger log.Logger) Notifier {
 	chain := []Notifier{&LogOnlyNotifier{Log: logger}}
-	if features != nil && features.IsEnabledGlobally(featuremgmt.FlagDashboardPulseEmail) && ns != nil && users != nil && cfg != nil {
+	if features != nil && features.IsEnabled(context.Background(), featuremgmt.FlagDashboardPulseEmail) && ns != nil && users != nil && cfg != nil {
 		chain = append(chain, NewEmailNotifier(ns, users, cfg, logger))
 	}
 	if len(chain) == 1 {
