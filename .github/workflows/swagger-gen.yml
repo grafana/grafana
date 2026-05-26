@@ -52,11 +52,17 @@ jobs:
         uses: actions/setup-go@v5.5.0
         with:
           go-version-file: go.mod
+      - name: Get GitHub App token
+        id: get-github-app-token
+        if: ${{ github.event.pull_request.head.repo.fork == false }}
+        uses: grafana/shared-workflows/actions/create-github-app-token@e5b7989c92b55fe3ac6dd006d6de49082ba8c507 # create-github-app-token (github-script/v9)
+        with:
+          github_app: grafana-ci-bot
       - name: Setup Enterprise
         if: ${{ github.event.pull_request.head.repo.fork == false }}
         uses: ./.github/actions/setup-enterprise
         with:
-          github-app-name: 'grafana-ci-bot'
+          token: ${{ steps.get-github-app-token.outputs.token }}
 
       - name: Generate Swagger specs
         run: make swagger-clean && make openapi3-gen
