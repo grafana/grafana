@@ -51,12 +51,12 @@ describe('useImportProvisionedSave', () => {
     expect(mockCreateFile).not.toHaveBeenCalled();
   });
 
-  it('builds correct body for v1 dashboard import', () => {
+  it('builds correct body for v1 dashboard import', async () => {
     const { result } = renderHook(() => useImportProvisionedSave({ repository }));
     const spec = { title: 'My Dashboard', panels: [] };
 
-    act(() => {
-      result.current.save(
+    await act(async () => {
+      await result.current.save(
         makeSaveParams({
           spec,
           apiVersion: 'v1',
@@ -86,12 +86,12 @@ describe('useImportProvisionedSave', () => {
     expect(body.spec).toBe(spec);
   });
 
-  it('builds correct body for v2 dashboard import', () => {
+  it('builds correct body for v2 dashboard import', async () => {
     const { result } = renderHook(() => useImportProvisionedSave({ repository }));
     const spec = { title: 'V2 Dash', layout: { kind: 'GridLayout', spec: { items: [] } } };
 
-    act(() => {
-      result.current.save(
+    await act(async () => {
+      await result.current.save(
         makeSaveParams({
           spec,
           apiVersion: 'v2',
@@ -115,11 +115,11 @@ describe('useImportProvisionedSave', () => {
     expect(call.ref).toBe('feat-branch');
   });
 
-  it('uses default commit message when comment is empty', () => {
+  it('uses default commit message when comment is empty', async () => {
     const { result } = renderHook(() => useImportProvisionedSave({ repository }));
 
-    act(() => {
-      result.current.save(
+    await act(async () => {
+      await result.current.save(
         makeSaveParams({
           title: 'My Dash',
           form: { ref: 'main', path: 'test.json', comment: '', workflow: 'write' },
@@ -131,11 +131,11 @@ describe('useImportProvisionedSave', () => {
     expect(call.message).toBe('New dashboard: My Dash');
   });
 
-  it('trims whitespace-only comment and falls back to default', () => {
+  it('trims whitespace-only comment and falls back to default', async () => {
     const { result } = renderHook(() => useImportProvisionedSave({ repository }));
 
-    act(() => {
-      result.current.save(
+    await act(async () => {
+      await result.current.save(
         makeSaveParams({
           title: 'My Dash',
           form: { ref: 'main', path: 'test.json', comment: '   ', workflow: 'write' },
@@ -147,15 +147,15 @@ describe('useImportProvisionedSave', () => {
     expect(call.message).toBe('New dashboard: My Dash');
   });
 
-  it('honors repository commit template when comment is empty', () => {
+  it('honors repository commit template when comment is empty', async () => {
     const repoWithTemplate: RepositoryView = {
       ...repository,
       commit: { singleResourceMessageTemplate: 'feat: {{title}}' },
     };
     const { result } = renderHook(() => useImportProvisionedSave({ repository: repoWithTemplate }));
 
-    act(() => {
-      result.current.save(
+    await act(async () => {
+      await result.current.save(
         makeSaveParams({
           title: 'My Dash',
           form: { ref: 'main', path: 'test.json', comment: '', workflow: 'write' },
@@ -167,13 +167,13 @@ describe('useImportProvisionedSave', () => {
     expect(call.message).toBe('feat: My Dash');
   });
 
-  it('falls back to beta version when resolver has not been called', () => {
+  it('falls back to beta version when resolver has not been called', async () => {
     dashboardAPIVersionResolver.reset();
 
     const { result } = renderHook(() => useImportProvisionedSave({ repository }));
 
-    act(() => {
-      result.current.save(makeSaveParams({ apiVersion: 'v1' }));
+    await act(async () => {
+      await result.current.save(makeSaveParams({ apiVersion: 'v1' }));
     });
 
     const body = mockCreateFile.mock.calls[0][0].body;
