@@ -192,7 +192,7 @@ function useVariablesCategory(dashboard: DashboardScene): OptionsPaneCategoryDes
             title: '',
             id: variableListId,
             skipField: true,
-            render: () => <DashboardVariablesList variableSet={$variables} />,
+            render: () => <DashboardVariablesList sourceVariableSet={$variables} />,
           })
         );
       }
