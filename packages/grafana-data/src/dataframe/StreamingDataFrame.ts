@@ -545,17 +545,6 @@ function parseLabelsFromField(str: string): Labels {
   return parsedLabels;
 }
 
-/**
- * @internal // not exported in yet
- */
-function getLastStreamingDataFramePacket(frame: DataFrame) {
-  if (frame instanceof StreamingDataFrame) {
-    const pi = frame.packetInfo;
-    return pi.action;
-  }
-  return undefined;
-}
-
 // mutable circular push
 function circPush(data: unknown[][], newData: unknown[][], maxLength = Infinity, deltaIdx = 0, maxDelta = Infinity) {
   for (let i = 0; i < data.length; i++) {

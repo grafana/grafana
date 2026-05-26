@@ -102,8 +102,6 @@ type ThemeColorsBase<TColor> = DeepRequired<
   warning: TColor;
 };
 
-interface ThemeHoverStrengh {}
-
 /** @beta */
 export interface ThemeColors extends ThemeColorsBase<ThemeRichColor> {
   /** Returns a text color for the background */

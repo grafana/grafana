@@ -62,11 +62,6 @@ const ThemeRichColorSchema = ThemeRichColorInputSchema.required();
 export type ThemeRichColor = z.infer<typeof ThemeRichColorSchema>;
 
 /** @internal */
-type DeepPartial<T> = {
-  [P in keyof T]?: DeepPartial<T[P]>;
-};
-
-/** @internal */
 export type DeepRequired<T> = Required<{
   [P in keyof T]: T[P] extends Required<T[P]> ? T[P] : DeepRequired<T[P]>;
 }>;
