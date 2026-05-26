@@ -2610,6 +2610,7 @@ __metadata:
     "@leeoniya/ufuzzy": "npm:1.0.19"
     "@rollup/plugin-node-resolve": "npm:16.0.1"
     "@storybook/addon-webpack5-compiler-swc": "npm:^4.0.2"
+    "@storybook/preset-scss": "npm:1.0.3"
     "@storybook/react": "npm:10.3.6"
     "@storybook/react-webpack5": "npm:10.3.6"
     "@testing-library/dom": "npm:10.4.1"
