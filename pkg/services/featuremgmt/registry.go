@@ -390,13 +390,13 @@ var (
 			Generate:     Generate{LegacyGo: true},
 		},
 		{
-			Name:            "kubernetesAnnotationsClient",
+			Name:            "grafana.kubernetesAnnotationsClient",
 			Description:     "Enables usage of the new annotations API client",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaDashboardsSquad,
 			RequiresRestart: false,
 			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
+			Generate:        Generate{React: true},
 		},
 		{
 			Name:            "kubernetesShortURLs",
