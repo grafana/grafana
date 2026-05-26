@@ -296,6 +296,15 @@ type SearchOptions struct {
 	// have existed before its predecessor in the same Grafana-version group is
 	// considered eligible for cleanup.
 	IndexSnapshotCleanupGracePeriod time.Duration
+
+	// VectorSearch query-embedding cache. nil disables the cache path.
+	QueryCache             vector.QueryEmbeddingCache
+	QueryCacheMaxPerTenant int
+
+	// VectorSearch per-tenant rate limiter. nil disables rate limiting.
+	RateLimiter        vector.RateLimiter
+	RateLimitPerTenant int
+	RateLimitWindow    time.Duration
 }
 
 type ResourceServerOptions struct {
@@ -973,6 +982,20 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 	}
 	defer s.inflight.Done()
 
+	if r := verifyRequestKey(req.Key); r != nil {
+		return nil, fmt.Errorf("invalid request key: %s", r.Message)
+	}
+
+	rsp := &resourcepb.CreateResponse{}
+	user, ok := claims.AuthInfoFrom(ctx)
+	if !ok || user == nil {
+		rsp.Error = &resourcepb.ErrorResult{
+			Message: "no user found in context",
+			Code:    http.StatusUnauthorized,
+		}
+		return rsp, nil
+	}
+
 	err := s.checkQuota(ctx, NamespacedResource{
 		Namespace: req.Key.Namespace,
 		Group:     req.Key.Group,
@@ -991,20 +1014,6 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 				Code:    http.StatusForbidden,
 			},
 		}, nil
-	}
-
-	if r := verifyRequestKey(req.Key); r != nil {
-		return nil, fmt.Errorf("invalid request key: %s", r.Message)
-	}
-
-	rsp := &resourcepb.CreateResponse{}
-	user, ok := claims.AuthInfoFrom(ctx)
-	if !ok || user == nil {
-		rsp.Error = &resourcepb.ErrorResult{
-			Message: "no user found in context",
-			Code:    http.StatusUnauthorized,
-		}
-		return rsp, nil
 	}
 
 	var res *resourcepb.CreateResponse
