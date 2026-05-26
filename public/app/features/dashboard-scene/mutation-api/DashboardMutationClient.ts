@@ -20,9 +20,12 @@ import type { MutationCommand, MutationContext, UndoDomain } from './commands/ty
 import type { MutationClient, MutationRequest, MutationResult } from './types';
 
 type MutationHandler = (payload: unknown, context: MutationContext) => Promise<MutationResult>;
+type MutationTransform = (payload: unknown) => unknown;
 
 interface CommandRegistration {
   handler: MutationHandler;
+  /** Per-command normalizer. Always called by the client before the handler. */
+  transformPayloadToScene: MutationTransform;
   canExecute: (scene: DashboardScene) => { allowed: true } | { allowed: false; error: string };
   readOnly: boolean;
   // Normalized: always an array internally even if the command declared a single domain.
@@ -90,17 +93,21 @@ export class DashboardMutationClient implements MutationClient {
       };
     }
 
-    let payload: unknown;
+    let rawPayload: unknown;
     if ('__scenesPayload' in mutation) {
-      // UI path: SceneObject passed directly — skip Zod validation and forward transformer.
-      payload = { __scenesPayload: mutation.__scenesPayload };
+      // UI path: SceneObject passed directly — skip Zod validation.
+      rawPayload = { __scenesPayload: mutation.__scenesPayload };
     } else {
       const validationResult = validatePayload(type, mutation.payload);
       if (!validationResult.success) {
         return { success: false, error: validationResult.error, changes: [] };
       }
-      payload = registration.readOnly ? validationResult.data : structuredClone(validationResult.data);
+      rawPayload = registration.readOnly ? validationResult.data : structuredClone(validationResult.data);
     }
+
+    // Always normalize through the command's declared transformer. The handler
+    // sees a single shape regardless of which dispatch path the caller used.
+    const payload = registration.transformPayloadToScene(rawPayload);
 
     const context: MutationContext = { scene: this.scene };
 
@@ -143,9 +150,16 @@ export class DashboardMutationClient implements MutationClient {
         ? cmd.undoDomain
         : [cmd.undoDomain]
       : [];
+    // Identity transform when the command does not declare one. Keeps the
+    // dispatch path uniform: every command goes through transformPayloadToScene.
+    const transform: MutationTransform = cmd.transformPayloadToScene
+      ? // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- normalizer is per-command
+        (cmd.transformPayloadToScene as MutationTransform)
+      : (p) => p;
     this.commands.set(cmd.name, {
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- safe: client validates with Zod before dispatch
       handler: cmd.handler as MutationHandler,
+      transformPayloadToScene: transform,
       canExecute: cmd.permission,
       readOnly: cmd.readOnly ?? false,
       undoDomains,

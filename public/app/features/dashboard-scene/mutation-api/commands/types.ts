@@ -8,6 +8,7 @@
 import { type z } from 'zod';
 
 import { config } from '@grafana/runtime';
+import type { SceneObject } from '@grafana/scenes';
 
 import type { DashboardScene } from '../../scene/DashboardScene';
 import type { MutationResult } from '../types';
@@ -34,13 +35,19 @@ export type PermissionCheck = (scene: DashboardScene) => PermissionCheckResult;
  */
 export type UndoDomain = 'variables';
 
-export interface MutationCommand<T = unknown> {
+/**
+ * Discriminated input the client hands to a command's transformer: either a
+ * Zod-validated agent payload, or a scenes-native carrier wrapping a SceneObject.
+ */
+export type CommandInput<TInput> = TInput | { __scenesPayload: SceneObject };
+
+export interface MutationCommand<TInput = unknown, TScene = TInput> {
   /** Command name -- must be UPPER_CASE. Used as the MutationType value. */
   name: string;
   /** Human-readable description. */
   description: string;
   /** Zod schema for runtime payload validation. Single source of truth. */
-  payloadSchema: z.ZodType<T>;
+  payloadSchema: z.ZodType<TInput>;
   /** Permission check run before execution. Must be a pure predicate (no side effects). */
   permission: PermissionCheck;
   /** When true, the command only reads state and will not trigger a forceRender. */
@@ -59,9 +66,21 @@ export interface MutationCommand<T = unknown> {
    *  (keeps the original beforeSnapshot, updates the afterSnapshot). Useful for
    *  rapid mutations like typing in a label field. `gapMs` is the milliseconds
    *  since the previous entry was registered. */
-  canCoalesceWith?: (previousPayload: T, gapMs: number) => boolean;
-  /** The handler function. */
-  handler: (payload: T, context: MutationContext) => Promise<MutationResult>;
+  canCoalesceWith?: (previousPayload: TScene, gapMs: number) => boolean;
+  /**
+   * Normalize the raw input the client receives into the shape the handler
+   * needs. Called by DashboardMutationClient between Zod validation and the
+   * handler, so every command sees a single payload shape regardless of
+   * whether the caller is the agent (validated payload) or the UI (scenes
+   * payload). Default identity when omitted (TScene defaults to TInput).
+   *
+   * Lives on the command, not in the handler, so the two-shape fork is
+   * declared in one place per command instead of branching at the top of
+   * every handler.
+   */
+  transformPayloadToScene?: (payload: CommandInput<TInput>) => TScene;
+  /** The handler function. Receives the normalized payload (TScene). */
+  handler: (payload: TScene, context: MutationContext) => Promise<MutationResult>;
 }
 
 /**
