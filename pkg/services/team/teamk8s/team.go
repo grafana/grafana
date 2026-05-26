@@ -29,7 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -72,13 +71,15 @@ type TeamK8sService struct {
 	namespaceMapper request.NamespaceMapper
 	configProvider  apiserver.DirectRestConfigProvider
 	cache           *localcache.CacheService
-	// db backs SQL user lookups when the k8s users resource is gated off; avoids a wire cycle with userimpl.
-	db db.DB
 }
 
 var _ team.Service = (*TeamK8sService)(nil)
 
-func NewTeamK8sService(logger log.Logger, cfg *setting.Cfg, configProvider apiserver.DirectRestConfigProvider, tracer tracing.Tracer, sqlDB db.DB) *TeamK8sService {
+// NewTeamK8sService requires the kubernetesUsersApi feature toggle to be
+// enabled — user enrichment goes through the k8s users resource. teamimpl
+// gates the redirect on both flags so this service is only reached when
+// users are available via k8s.
+func NewTeamK8sService(logger log.Logger, cfg *setting.Cfg, configProvider apiserver.DirectRestConfigProvider, tracer tracing.Tracer) *TeamK8sService {
 	return &TeamK8sService{
 		logger:          logger,
 		cfg:             cfg,
@@ -86,7 +87,6 @@ func NewTeamK8sService(logger log.Logger, cfg *setting.Cfg, configProvider apise
 		namespaceMapper: request.GetNamespaceMapper(cfg),
 		configProvider:  configProvider,
 		cache:           localcache.New(defaultCacheDuration, 2*defaultCacheDuration),
-		db:              sqlDB,
 	}
 }
 
@@ -112,25 +112,9 @@ func (s *TeamK8sService) getClient(ctx context.Context, namespace string) (dynam
 	return s.getDynamicClient(ctx, namespace, teamGVR)
 }
 
-// resolveUserUID maps a legacy user.id to user.uid via SQL, falling back to the dynamic users client when db is nil (tests).
+// resolveUserUID maps a legacy user.id to user.uid via the k8s users resource.
+// Requires the kubernetesUsersApi feature toggle (gated by teamimpl).
 func (s *TeamK8sService) resolveUserUID(ctx context.Context, namespace string, userID int64) (string, error) {
-	if s.db != nil {
-		var uid string
-		err := s.db.WithDbSession(ctx, func(sess *db.Session) error {
-			has, err := sess.Table("user").Where("id = ? AND is_service_account = ?", userID, s.db.GetDialect().BooleanValue(false)).Cols("uid").Get(&uid)
-			if err != nil {
-				return err
-			}
-			if !has {
-				return user.ErrUserNotFound
-			}
-			return nil
-		})
-		if err != nil {
-			return "", err
-		}
-		return uid, nil
-	}
 	client, err := s.getDynamicClient(ctx, namespace, userGVR)
 	if err != nil {
 		return "", err
@@ -151,27 +135,11 @@ func (s *TeamK8sService) resolveUserUID(ctx context.Context, namespace string, u
 	return result.Items[0].GetName(), nil
 }
 
-// listUsersByUIDs returns users by UID via SQL, with a dynamic-client fallback when db is nil (tests).
+// listUsersByUIDs returns users by UID via the k8s users resource.
+// Requires the kubernetesUsersApi feature toggle (gated by teamimpl).
 func (s *TeamK8sService) listUsersByUIDs(ctx context.Context, namespace string, uids []string) (map[string]*user.User, error) {
 	if len(uids) == 0 {
 		return nil, nil
-	}
-	if s.db != nil {
-		users := make(map[string]*user.User, len(uids))
-		err := s.db.WithDbSession(ctx, func(sess *db.Session) error {
-			var rows []*user.User
-			if err := sess.Table("user").In("uid", uids).Where("is_service_account = ?", s.db.GetDialect().BooleanValue(false)).Cols("id", "uid", "email", "name", "login").Find(&rows); err != nil {
-				return err
-			}
-			for _, u := range rows {
-				users[u.UID] = u
-			}
-			return nil
-		})
-		if err != nil {
-			return nil, err
-		}
-		return users, nil
 	}
 	client, err := s.getDynamicClient(ctx, namespace, userGVR)
 	if err != nil {
@@ -215,25 +183,9 @@ func (s *TeamK8sService) listUsersByUIDs(ctx context.Context, namespace string, 
 	return users, nil
 }
 
-// getUserByUID returns a single user by UID via SQL, with a dynamic-client fallback when db is nil (tests).
+// getUserByUID returns a single user by UID via the k8s users resource.
+// Requires the kubernetesUsersApi feature toggle (gated by teamimpl).
 func (s *TeamK8sService) getUserByUID(ctx context.Context, namespace, userUID string) (*user.User, error) {
-	if s.db != nil {
-		usr := &user.User{}
-		err := s.db.WithDbSession(ctx, func(sess *db.Session) error {
-			has, err := sess.Table("user").Where("uid = ? AND is_service_account = ?", userUID, s.db.GetDialect().BooleanValue(false)).Cols("id", "uid", "email", "name", "login").Get(usr)
-			if err != nil {
-				return err
-			}
-			if !has {
-				return user.ErrUserNotFound
-			}
-			return nil
-		})
-		if err != nil {
-			return nil, err
-		}
-		return usr, nil
-	}
 	client, err := s.getDynamicClient(ctx, namespace, userGVR)
 	if err != nil {
 		return nil, err
