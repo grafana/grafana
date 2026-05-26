@@ -7617,6 +7617,10 @@
     "section-filters-list": {
       "add-filter": "Add filter"
     },
+    "section-placement": {
+      "top-row": "Top of row",
+      "top-tab": "Top of tab"
+    },
     "selection-options-form": {
       "description-enables-multiple-values-selected": "Enables multiple values to be selected at the same time",
       "description-enables-option-include-variables": "Enables an option to include all values",
@@ -7756,9 +7760,6 @@
     "variable-display-select": {
       "label": "Display",
       "options": {
-        "above-dashboard": {
-          "label": "Above dashboard"
-        },
         "controls-menu": {
           "description": "Visible when the controls menu is open",
           "label": "Controls menu"
@@ -7767,9 +7768,9 @@
           "description": "Only visible in edit mode",
           "label": "Hidden"
         },
-        "hidden-label": {
-          "description": "Above the dashboard, but without showing the name of variable",
-          "label": "Above dashboard, label hidden"
+        "top-placement-hidden-label": {
+          "description": "{{placement}}, but without showing the name of variable",
+          "label": "{{placement}}, label hidden"
         }
       }
     },
@@ -7852,12 +7853,15 @@
           "reorder-variables-list": "Reorder variables list"
         }
       },
-      "title-above-dashboard_one": "Above dashboard ({{count}})",
-      "title-above-dashboard_other": "Above dashboard ({{count}})",
       "title-controls-menu_one": "Controls menu ({{count}})",
       "title-controls-menu_other": "Controls menu ({{count}})",
       "title-hidden_one": "Hidden ({{count}})",
-      "title-hidden_other": "Hidden ({{count}})"
+      "title-hidden_other": "Hidden ({{count}})",
+      "title-top-placement_one": "{{placement}} ({{count}})",
+      "title-top-placement_other": "{{placement}} ({{count}})",
+      "top-placement": {
+        "default": "Above dashboard"
+      }
     },
     "version-history": {
       "comparison": {
