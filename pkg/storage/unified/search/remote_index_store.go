@@ -498,6 +498,10 @@ func UploadIndexSnapshot(ctx context.Context, store RemoteIndexStore, nsResource
 		if err != nil {
 			return err
 		}
+		// fs.WalkDir yields paths that are root-relative, forward-slash, and
+		// canonical (without leading "./" or ".." segments), per the fs.FS contract.
+		// That's the format the manifest's Files keys require, so we can store
+		// the path as-is.
 		meta.Files[path] = info.Size()
 		relPaths = append(relPaths, path)
 		return nil
