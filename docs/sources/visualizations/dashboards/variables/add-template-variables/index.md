@@ -91,8 +91,6 @@ refs:
 
 The following table lists the types of variables shipped with Grafana.
 
-<!-- vale Grafana.Spelling = NO -->
-
 <!-- prettier-ignore-start -->
 
 | Variable type     | Description                                                                                                                          |
@@ -103,12 +101,24 @@ The following table lists the types of variables shipped with Grafana.
 | Constant          | Define a hidden constant. [Add a constant variable](#add-a-constant-variable).                                                                                                          |
 | Data source       | Quickly change the data source for an entire dashboard. [Add a data source variable](#add-a-data-source-variable).                                                                      |
 | Interval          | Interval variables represent time spans. [Add an interval variable](#add-an-interval-variable).                                                                                         |
-| Filters    | Key/value filters that are automatically added to all metric queries for a data source (Prometheus, Loki, InfluxDB, and Elasticsearch only). [Add filters](#add-ad-hoc-filters). |
 | Switch            | Display a switch that allows you to toggle between two configurable values for enabled and disabled states. [Add a switch variable](#add-a-switch-variable).                            |
 | Global variables  | Built-in variables that can be used in expressions in the query editor. Refer to [Global variables](#global-variables).                                                                 |
 | Chained variables | Variable queries can contain other variables. Refer to [Chained variables](#chained-variables).                                                                                         |
 
 <!-- prettier-ignore-end -->
+
+<!-- vale Grafana.WordList = NO -->
+<!-- vale Grafana.Spelling = NO -->
+
+{{< admonition type="note" >}}
+In Grafana 13.1, **Ad hoc filters** have been renamed **Filter and Group by** and extended by adding grouping for Prometheus and Loki data sources.
+However, in the dashboard schema, they're still referred to as `"kind": "AdhocVariable"`.
+
+For information on the **Filter and Group by** feature, refer to the [documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/filter-group-by/).
+{{< /admonition >}}
+
+<!-- vale Grafana.WordList = NO -->
+<!-- vale Grafana.Spelling = NO -->
 
 ## Enter General options
 
@@ -150,7 +160,6 @@ To create a variable, follow these steps:
    - [Constant](#add-a-constant-variable)
    - [Data source](#add-a-data-source-variable)
    - [Interval](#add-an-interval-variable)
-   - [Filters](#add-ad-hoc-filters)
    - [Switch](#add-a-switch-variable)
 
 {{< /docs/list >}}
@@ -468,7 +477,7 @@ This is how those values are displayed in a preview:
 
 Then you can use `${varName.someProperty}` syntax to reference any property in your dashboard panels or metrics:
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-multipropvar-used-12.4.png" max-width=750px" alt="Multi-property variable used in a text panel" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-multipropvar-used-12.4.png" max-width="750px" alt="Multi-property variable used in a text panel" >}}
 
 You can even deeply nest properties and still access them using familiar variable syntax. In the following example, each user has an address property with all the elements of an address nested within it:
 
