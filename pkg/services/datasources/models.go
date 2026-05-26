@@ -145,18 +145,6 @@ func GetTeamHTTPHeaders(jsonData *simplejson.Json) (*TeamHTTPHeaders, error) {
 	return teamHTTPHeaders, nil
 }
 
-// AllowedCookies parses the jsondata.keepCookies and returns a list of
-// allowed cookies, otherwise an empty list.
-func (ds DataSource) AllowedCookies() []string {
-	if ds.JsonData != nil {
-		if keepCookies := ds.JsonData.Get("keepCookies"); keepCookies != nil {
-			return keepCookies.MustStringArray()
-		}
-	}
-
-	return []string{}
-}
-
 // ----------------------
 // COMMANDS
 

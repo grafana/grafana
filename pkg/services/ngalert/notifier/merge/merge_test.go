@@ -18,7 +18,7 @@ import (
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 )
 
-func TestMergeReceivers(t *testing.T) {
+func TestReceivers(t *testing.T) {
 	r := func(name string) *v1.PostableApiReceiver {
 		return &v1.PostableApiReceiver{
 			Receiver: definition.Receiver{
@@ -122,7 +122,7 @@ func TestMergeReceivers(t *testing.T) {
 				incomingNames = append(incomingNames, r.Name)
 			}
 
-			actual, actualRenames := MergeReceivers(tc.existing, tc.incoming, suffix)
+			actual, actualRenames := Receivers(tc.existing, tc.incoming, suffix)
 			require.Len(t, actual, len(tc.expected))
 			assert.EqualValues(t, tc.expectedRenames, actualRenames)
 			for i := range tc.expected {
@@ -151,7 +151,7 @@ func TestMergeReceivers(t *testing.T) {
 	}
 }
 
-func TestMergeTimeIntervals(t *testing.T) {
+func TestTimeIntervals(t *testing.T) {
 	ti := func(name string) v1.TimeInterval {
 		return v1.TimeInterval{
 			Name: name,
@@ -305,7 +305,7 @@ func TestMergeTimeIntervals(t *testing.T) {
 				incomingNames = append(incomingNames, r.Name)
 			}
 
-			actualTimeIntervals, actualRenames := MergeTimeIntervals(tc.existingMuteIntervals, tc.existingTimeIntervals, tc.incomingMuteIntervals, tc.incomingTimeIntervals, suffix)
+			actualTimeIntervals, actualRenames := TimeIntervals(tc.existingMuteIntervals, tc.existingTimeIntervals, tc.incomingMuteIntervals, tc.incomingTimeIntervals, suffix)
 			assert.Equal(t, tc.expected, actualTimeIntervals)
 			assert.EqualValues(t, tc.expectedRenames, actualRenames)
 
