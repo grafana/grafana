@@ -4,7 +4,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { getAppEvents, isFetchError, reportInteraction } from '@grafana/runtime';
 import {
   Alert,
@@ -20,7 +20,6 @@ import {
   SecretTextArea,
   Stack,
   Switch,
-  Text,
 } from '@grafana/ui';
 import {
   type Repository,

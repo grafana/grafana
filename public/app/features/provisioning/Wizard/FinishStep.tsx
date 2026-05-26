@@ -5,9 +5,9 @@ import { Trans, t } from '@grafana/i18n';
 import { Checkbox, Divider, Field, Input, SecretTextArea, Stack, Text, TextLink } from '@grafana/ui';
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
-import { GPGSigningKeyInfo } from '../Shared/GPGSigningKeyInfo';
 import { EnablePushToConfiguredBranchOption } from '../Config/EnablePushToConfiguredBranchOption';
 import { checkImageRenderer, checkImageRenderingAllowed, checkPublicAccess } from '../GettingStarted/features';
+import { GPGSigningKeyInfo } from '../Shared/GPGSigningKeyInfo';
 import { getHasTokenInstructions } from '../utils/git';
 import { isGitProvider } from '../utils/repositoryTypes';
 

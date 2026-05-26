@@ -4,16 +4,13 @@ import { Controller, useFormContext } from 'react-hook-form';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Field, Input, RadioButtonGroup, Stack, TextLink, useStyles2 } from '@grafana/ui';
+import { Alert, Field, RadioButtonGroup, Stack, TextLink, useStyles2 } from '@grafana/ui';
 
 import { useConnectionStatus } from '../hooks/useConnectionStatus';
 
-import { getHasTokenInstructions } from '../utils/git';
-import { isGitProvider } from '../utils/repositoryTypes';
 import { GitHubAppFields } from './GitHubAppFields';
 import { RepositoryField } from './components/RepositoryField';
 import { RepositoryTokenInput } from './components/RepositoryTokenInput';
-import { getGitProviderFields } from './fields';
 import { type ConnectionCreationResult, type GitHubAuthType, type WizardFormData } from './types';
 
 interface AuthTypeOption {
@@ -50,12 +47,7 @@ const getAuthTypeOptions = (): AuthTypeOption[] => [
 
 export function AuthTypeStep({ onGitHubAppSubmit }: AuthTypeStepProps) {
   const styles = useStyles2(getStyles);
-  const {
-    control,
-    register,
-    watch,
-    formState: { errors },
-  } = useFormContext<WizardFormData>();
+  const { control, watch } = useFormContext<WizardFormData>();
   const [githubAuthType, githubAppMode, githubAppConnectionName, repoType] = watch([
     'githubAuthType',
     'githubAppMode',
@@ -65,7 +57,6 @@ export function AuthTypeStep({ onGitHubAppSubmit }: AuthTypeStepProps) {
   const authTypeOptions = useMemo(() => getAuthTypeOptions(), []);
   const shouldShowRepositories = githubAuthType !== 'github-app' || githubAppMode !== 'new';
   const isGitHub = repoType === 'github';
-  const isGitBased = isGitProvider(repoType);
 
   const { isConnected: isSelectedConnectionReady } = useConnectionStatus(
     githubAuthType === 'github-app' ? githubAppConnectionName : undefined

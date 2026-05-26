@@ -27,6 +27,7 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
     gpgSigningKey: {
       label: t('provisioning.shared.gpg-signing-key-label', 'GPG signing key'),
       description: t('provisioning.shared.gpg-signing-key-description', 'Armored OpenPGP private key. No passphrase.'),
+      // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
       placeholder: '-----BEGIN PGP PRIVATE KEY BLOCK-----',
     },
     branch: {
