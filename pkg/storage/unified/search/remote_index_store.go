@@ -471,9 +471,15 @@ func UploadIndexSnapshot(ctx context.Context, store RemoteIndexStore, nsResource
 		return ulid.ULID{}, fmt.Errorf("resolving local dir: %w", err)
 	}
 
+	localRoot, err := os.OpenRoot(absLocalDir)
+	if err != nil {
+		return ulid.ULID{}, fmt.Errorf("opening local index dir: %w", err)
+	}
+	defer func() { _ = localRoot.Close() }()
+
 	meta.Files = make(map[string]int64)
 	var relPaths []string
-	err = filepath.WalkDir(absLocalDir, func(path string, d fs.DirEntry, err error) error {
+	err = fs.WalkDir(localRoot.FS(), ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -488,16 +494,16 @@ func UploadIndexSnapshot(ctx context.Context, store RemoteIndexStore, nsResource
 		if d.Name() == snapshotManifestFile {
 			return nil
 		}
-		rel, err := filepath.Rel(absLocalDir, path)
-		if err != nil {
-			return err
-		}
 		info, err := d.Info()
 		if err != nil {
 			return err
 		}
-		meta.Files[filepath.ToSlash(rel)] = info.Size()
-		relPaths = append(relPaths, rel)
+		// fs.WalkDir yields paths that are root-relative, forward-slash, and
+		// canonical (without leading "./" or ".." segments), per the fs.FS contract.
+		// That's the format the manifest's Files keys require, so we can store
+		// the path as-is.
+		meta.Files[path] = info.Size()
+		relPaths = append(relPaths, path)
 		return nil
 	})
 	if err != nil {
@@ -523,8 +529,7 @@ func UploadIndexSnapshot(ctx context.Context, store RemoteIndexStore, nsResource
 
 	// Stream each file via WriteSnapshotFile.
 	for _, rel := range relPaths {
-		relSlash := filepath.ToSlash(rel)
-		if err := uploadSnapshotFileFromDisk(ctx, store, nsResource, indexKey, relSlash, filepath.Join(absLocalDir, rel), logger); err != nil {
+		if err := uploadSnapshotFileFromDisk(ctx, store, nsResource, indexKey, rel, localRoot, logger); err != nil {
 			return ulid.ULID{}, fmt.Errorf("uploading %s: %w", rel, err)
 		}
 	}
@@ -543,9 +548,9 @@ func UploadIndexSnapshot(ctx context.Context, store RemoteIndexStore, nsResource
 	return indexKey, nil
 }
 
-func uploadSnapshotFileFromDisk(ctx context.Context, store RemoteIndexStore, ns resource.NamespacedResource, indexKey ulid.ULID, relSlash, localPath string, logger log.Logger) error {
+func uploadSnapshotFileFromDisk(ctx context.Context, store RemoteIndexStore, ns resource.NamespacedResource, indexKey ulid.ULID, relSlash string, root *os.Root, logger log.Logger) error {
 	return retryRemoteIndexStore(ctx, snapshotStoreOpUploadFile, logger, func() error {
-		f, err := os.Open(localPath) //nolint:gosec // path is under the server-controlled bleve index directory
+		f, err := root.Open(filepath.FromSlash(relSlash))
 		if err != nil {
 			return err
 		}
@@ -588,18 +593,26 @@ func DownloadIndexSnapshot(ctx context.Context, store RemoteIndexStore, nsResour
 		}
 	}()
 
+	stagingRoot, err := os.OpenRoot(tmpDir)
+	if err != nil {
+		return nil, fmt.Errorf("opening staging dir: %w", err)
+	}
+	defer func() { _ = stagingRoot.Close() }()
+
 	for relPath, expectedSize := range meta.Files {
-		localPath := filepath.Join(tmpDir, filepath.FromSlash(relPath))
-		if err := os.MkdirAll(filepath.Dir(localPath), 0750); err != nil {
-			return nil, fmt.Errorf("creating directory for %s: %w", relPath, err)
+		relLocal := filepath.FromSlash(relPath)
+		if dir := filepath.Dir(relLocal); dir != "." {
+			if err := stagingRoot.MkdirAll(dir, 0750); err != nil {
+				return nil, fmt.Errorf("creating directory for %s: %w", relPath, err)
+			}
 		}
-		if err := downloadSnapshotFileToDisk(ctx, store, nsResource, indexKey, relPath, localPath, expectedSize); err != nil {
+		if err := downloadSnapshotFileToDisk(ctx, store, nsResource, indexKey, relPath, stagingRoot, expectedSize); err != nil {
 			return nil, fmt.Errorf("downloading %s: %w", relPath, err)
 		}
 		// Validate against what was actually written. This catches both
 		// short reads (the bucket returned fewer bytes than advertised) and
 		// any cap discrepancy.
-		info, err := os.Stat(localPath)
+		info, err := stagingRoot.Stat(relLocal)
 		if err != nil {
 			return nil, fmt.Errorf("stat downloaded %s: %w", relPath, err)
 		}
@@ -616,13 +629,13 @@ func DownloadIndexSnapshot(ctx context.Context, store RemoteIndexStore, nsResour
 	return meta, nil
 }
 
-// downloadSnapshotFileToDisk creates localPath and streams the remote object
-// into it, capping the transfer at expectedSize+1 bytes so a misadvertised
-// size or a bucket object that's grown out of band fails fast before we
-// transfer unbounded data.
-func downloadSnapshotFileToDisk(ctx context.Context, store RemoteIndexStore, ns resource.NamespacedResource, indexKey ulid.ULID, relPath, localPath string, expectedSize int64) error {
+// downloadSnapshotFileToDisk creates relPath under root and streams the remote
+// object into it, capping the transfer at expectedSize+1 bytes so a
+// misadvertised size or a bucket object that's grown out of band fails fast
+// before we transfer unbounded data.
+func downloadSnapshotFileToDisk(ctx context.Context, store RemoteIndexStore, ns resource.NamespacedResource, indexKey ulid.ULID, relPath string, root *os.Root, expectedSize int64) error {
 	return retryRemoteIndexStore(ctx, snapshotStoreOpDownloadFile, nil, func() error {
-		f, err := os.Create(localPath) //nolint:gosec // path is under a Grafana-controlled staging directory
+		f, err := root.Create(filepath.FromSlash(relPath))
 		if err != nil {
 			return err
 		}

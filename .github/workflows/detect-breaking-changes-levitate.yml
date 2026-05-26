@@ -20,7 +20,7 @@ on:
 jobs:
   buildPR:
     name: Build PR packages artifacts
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64
     defaults:
       run:
         working-directory: './pr'
@@ -61,7 +61,7 @@ jobs:
 
   buildBase:
     name: Build Base packages artifacts
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64
     permissions:
       contents: read
       id-token: write
@@ -109,7 +109,7 @@ jobs:
 
   Detect:
     name: Detect breaking changes between PR and base
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64
     needs: ['buildPR', 'buildBase']
     env:
       GITHUB_STEP_NUMBER: 8
@@ -182,7 +182,7 @@ jobs:
 
   Report:
     name: Report breaking changes in PR comment
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64
     needs: ['Detect']
     permissions:
       contents: read
@@ -345,6 +345,8 @@ jobs:
       - name: Add "grafana/grafana-frontend-platform" as a reviewer
         if: steps.levitate-run.outputs.exit_code == 1
         uses: actions/github-script@v8
+        # FIXME: GATB doesn't seem to grant us necessary pull_requests write permissions
+        continue-on-error: true
         env:
           PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
         with:
@@ -362,6 +364,8 @@ jobs:
       - name: Remove "grafana/grafana-frontend-platform" from the list of reviewers
         if: steps.levitate-run.outputs.exit_code == 0
         uses: actions/github-script@v8
+        # FIXME: GATB doesn't seem to grant us necessary pull_requests write permissions
+        continue-on-error: true
         env:
           PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
         with:

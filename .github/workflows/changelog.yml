@@ -64,7 +64,7 @@ jobs:
       PREVIOUS_VERISON: ${{ inputs.previous_version }}
       TARGET: ${{ inputs.target }}
       DRY_RUN: ${{ inputs.dry_run }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
     permissions:
       id-token: write
       contents: write
