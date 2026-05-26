@@ -17,11 +17,13 @@ import { listVariablesCommand } from './listVariables';
 import { movePanelCommand } from './movePanel';
 import { moveRowCommand } from './moveRow';
 import { moveTabCommand } from './moveTab';
+import { redoCommand } from './redo';
 import { removePanelCommand } from './removePanel';
 import { removeRowCommand } from './removeRow';
 import { removeTabCommand } from './removeTab';
 import { removeVariableCommand } from './removeVariable';
 import type { MutationCommand } from './types';
+import { undoCommand } from './undo';
 import { updateDashboardSettingsCommand } from './updateDashboardSettings';
 import { updateLayoutCommand } from './updateLayout';
 import { updatePanelCommand } from './updatePanel';
@@ -53,6 +55,8 @@ export const ALL_COMMANDS: Array<MutationCommand<any>> = [
   listPanelsCommand,
   getDashboardInfoCommand,
   updateDashboardSettingsCommand,
+  undoCommand,
+  redoCommand,
 ];
 
 /** All valid command names. */

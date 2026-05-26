@@ -1,26 +1,24 @@
 /**
  * MutationRecorder
  *
- * Concept: the snapshot + publish-DashboardEditActionEvent mechanism is not
- * the Mutation Client's concern. It is the *recorder*'s concern. By moving
- * it onto DashboardScene we get:
+ * Owns the undo/redo stack for a dashboard. All mutations the client executes
+ * land here; nothing else carries history state.
  *
- *   - a single recorder per dashboard regardless of caller (UI, agent, future
- *     headless plugin host),
- *   - a clean seam for the future audit log / replay tooling to read from,
- *   - a per-dashboard ownership boundary that's natural for multiplayer.
+ * Design intent (Ivan, 2026-05-26): the recorder is the single source of truth
+ * for "what happened to this dashboard". Snapshot + publish-to-toolbar is too
+ * many seams. Instead:
  *
- * DashboardMutationClient delegates here. Other callers (the future MCP
- * gateway, plugin-side adapters) can call `recorder.record(...)` directly
- * without owning their own snapshot machinery.
+ *   - record() pushes an undo entry with before/after snapshots per undoDomain
+ *     and clears the redo stack,
+ *   - undo() / redo() pop and re-apply,
+ *   - UI buttons and the agent both go through the same path: the UNDO and
+ *     REDO mutation commands dispatch into this recorder.
  *
- * The behaviour (snapshot, publish, conflict-detect, coalesce) is identical
- * to what the client did before this extraction.
+ * No DashboardEditActionEvent publication from here. If a separate audit
+ * surface needs to react, it subscribes to the recorder, not the other way
+ * around.
  */
 
-import type { SceneObject } from '@grafana/scenes';
-
-import { DashboardEditActionEvent } from '../edit-pane/events';
 import type { DashboardScene } from '../scene/DashboardScene';
 
 import type { UndoDomain } from './commands/types';
@@ -33,95 +31,112 @@ export interface RecordOptions {
   canCoalesceWith?: (previousPayload: unknown, gapMs: number) => boolean;
 }
 
-interface LastEntry {
+interface StackEntry {
   type: string;
   payload: unknown;
+  before: Map<UndoDomain, unknown>;
+  after: Map<UndoDomain, unknown>;
   publishedAt: number;
 }
 
 export class MutationRecorder {
   private scene: DashboardScene;
-  private lastEntry?: LastEntry;
+  private undoStack: StackEntry[] = [];
+  private redoStack: StackEntry[] = [];
 
   constructor(scene: DashboardScene) {
     this.scene = scene;
   }
 
   /**
-   * Snapshot the declared domains, run the mutation, snapshot again, and
-   * publish a DashboardEditActionEvent so the toolbar undo stack picks it up.
-   *
-   * The caller passes the actual mutation as a function so the recorder can
-   * frame it with snapshot/restore. Returns whatever the mutation returns.
+   * Snapshot the declared domains, run the mutation, snapshot again, push
+   * onto the undo stack. The caller passes the actual mutation as a function
+   * so the recorder can frame it with snapshot/restore.
    */
   async record<T>(opts: RecordOptions, mutate: () => Promise<T>): Promise<T> {
-    const beforeSnapshots = new Map<UndoDomain, unknown>();
-    for (const d of opts.undoDomains) {
-      beforeSnapshots.set(d, this.snapshotDomain(d));
-    }
-
+    const before = this.snapshot(opts.undoDomains);
     const result = await mutate();
 
-    if (opts.undoDomains.length === 0 || typeof this.scene.publishEvent !== 'function') {
+    if (opts.undoDomains.length === 0) {
       return result;
     }
 
-    // Coalesce path: skip publishing a fresh entry, update the watermark.
-    if (
-      this.lastEntry &&
-      this.lastEntry.type === opts.type &&
-      opts.canCoalesceWith?.(this.lastEntry.payload, Date.now() - this.lastEntry.publishedAt) === true
-    ) {
-      this.lastEntry = { type: opts.type, payload: opts.payload, publishedAt: Date.now() };
+    const now = Date.now();
+
+    // Coalesce with the previous entry if eligible (e.g. rapid typing).
+    const prev = this.undoStack[this.undoStack.length - 1];
+    if (prev && prev.type === opts.type && opts.canCoalesceWith?.(prev.payload, now - prev.publishedAt) === true) {
+      prev.after = this.snapshot(opts.undoDomains);
+      prev.payload = opts.payload;
+      prev.publishedAt = now;
+      this.redoStack.length = 0;
       return result;
     }
 
-    const afterSnapshots = new Map<UndoDomain, unknown>();
-    for (const d of opts.undoDomains) {
-      afterSnapshots.set(d, this.snapshotDomain(d));
-    }
-
-    const primary = opts.undoDomains[0];
-    const { addedObject, removedObject } = diffSceneObjects(beforeSnapshots.get(primary), afterSnapshots.get(primary));
-
-    let firstPerform = true;
-    this.scene.publishEvent(
-      new DashboardEditActionEvent({
-        source: this.scene,
-        description: opts.type,
-        addedObject,
-        removedObject,
-        perform: () => {
-          if (firstPerform) {
-            firstPerform = false;
-            return;
-          }
-          for (const d of opts.undoDomains) {
-            if (!sliceEqual(this.snapshotDomain(d), beforeSnapshots.get(d))) {
-              console.warn(`[mutation-api] refusing redo for ${opts.type}: slice '${d}' drifted`);
-              return;
-            }
-          }
-          for (const d of opts.undoDomains) {
-            this.restoreDomain(d, afterSnapshots.get(d));
-          }
-        },
-        undo: () => {
-          for (const d of opts.undoDomains) {
-            if (!sliceEqual(this.snapshotDomain(d), afterSnapshots.get(d))) {
-              console.warn(`[mutation-api] refusing undo for ${opts.type}: slice '${d}' drifted`);
-              return;
-            }
-          }
-          for (const d of opts.undoDomains) {
-            this.restoreDomain(d, beforeSnapshots.get(d));
-          }
-        },
-      }),
-      true
-    );
-    this.lastEntry = { type: opts.type, payload: opts.payload, publishedAt: Date.now() };
+    this.undoStack.push({
+      type: opts.type,
+      payload: opts.payload,
+      before,
+      after: this.snapshot(opts.undoDomains),
+      publishedAt: now,
+    });
+    this.redoStack.length = 0;
     return result;
+  }
+
+  canUndo(): boolean {
+    return this.undoStack.length > 0;
+  }
+
+  canRedo(): boolean {
+    return this.redoStack.length > 0;
+  }
+
+  /**
+   * Restore the last entry's `before` snapshots. Refuses if the dashboard has
+   * drifted from the entry's `after` state (i.e. something else mutated the
+   * same slice in the meantime).
+   */
+  undo(): boolean {
+    const entry = this.undoStack[this.undoStack.length - 1];
+    if (!entry) {
+      return false;
+    }
+    if (!this.sliceMapEqual(this.snapshot([...entry.after.keys()]), entry.after)) {
+      console.warn(`[mutation-api] refusing undo for ${entry.type}: slice drifted`);
+      return false;
+    }
+    for (const [domain, snap] of entry.before) {
+      this.restoreDomain(domain, snap);
+    }
+    this.undoStack.pop();
+    this.redoStack.push(entry);
+    return true;
+  }
+
+  redo(): boolean {
+    const entry = this.redoStack[this.redoStack.length - 1];
+    if (!entry) {
+      return false;
+    }
+    if (!this.sliceMapEqual(this.snapshot([...entry.before.keys()]), entry.before)) {
+      console.warn(`[mutation-api] refusing redo for ${entry.type}: slice drifted`);
+      return false;
+    }
+    for (const [domain, snap] of entry.after) {
+      this.restoreDomain(domain, snap);
+    }
+    this.redoStack.pop();
+    this.undoStack.push(entry);
+    return true;
+  }
+
+  private snapshot(domains: UndoDomain[]): Map<UndoDomain, unknown> {
+    const m = new Map<UndoDomain, unknown>();
+    for (const d of domains) {
+      m.set(d, this.snapshotDomain(d));
+    }
+    return m;
   }
 
   private snapshotDomain(domain: UndoDomain): unknown {
@@ -131,27 +146,19 @@ export class MutationRecorder {
   private restoreDomain(domain: UndoDomain, snapshot: unknown): void {
     getUndoDomain(domain)?.restore(this.scene, snapshot);
   }
-}
 
-function diffSceneObjects(
-  before: unknown,
-  after: unknown
-): {
-  addedObject?: SceneObject;
-  removedObject?: SceneObject;
-} {
-  if (!Array.isArray(before) || !Array.isArray(after)) {
-    return {};
+  private sliceMapEqual(a: Map<UndoDomain, unknown>, b: Map<UndoDomain, unknown>): boolean {
+    if (a.size !== b.size) {
+      return false;
+    }
+    for (const [key, valA] of a) {
+      const valB = b.get(key);
+      if (!sliceEqual(valA, valB)) {
+        return false;
+      }
+    }
+    return true;
   }
-  const beforeSet = new Set(before);
-  const afterSet = new Set(after);
-  const added = after.find((item): item is SceneObject => !beforeSet.has(item) && isSceneObjectLike(item));
-  const removed = before.find((item): item is SceneObject => !afterSet.has(item) && isSceneObjectLike(item));
-  return { addedObject: added, removedObject: removed };
-}
-
-function isSceneObjectLike(item: unknown): item is SceneObject {
-  return typeof item === 'object' && item !== null && 'state' in item;
 }
 
 function sliceEqual(a: unknown, b: unknown): boolean {

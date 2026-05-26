@@ -1036,4 +1036,6 @@ export const payloads = {
   updateDashboardSettings: updateDashboardSettingsPayloadSchema.describe(
     'Update dashboard settings (title, description, tags, refresh, time range, timezone, editable)'
   ),
+  undo: emptyPayloadSchema.describe('Undo the last recorded mutation on this dashboard'),
+  redo: emptyPayloadSchema.describe('Redo the last undone mutation on this dashboard'),
 };
