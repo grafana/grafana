@@ -724,7 +724,7 @@ func (s *Storage) GuaranteedUpdate(
 			return err
 		}
 
-		if updateResponse.ResourceVersion > 0 && updateResponse.ResourceVersion != readResponse.ResourceVersion {
+		if updateResponse.ResourceVersion > 0 {
 			rv := uint64(updateResponse.ResourceVersion)
 			if err := s.versioner.UpdateObject(destination, rv); err != nil {
 				return err
