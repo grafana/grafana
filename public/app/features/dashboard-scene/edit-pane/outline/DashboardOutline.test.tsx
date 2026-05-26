@@ -327,5 +327,81 @@ describe('DashboardOutline', () => {
         screen.queryByTestId(selectors.components.PanelEditor.Outline.item('Tab level 3 - B'))
       ).not.toBeInTheDocument();
     });
+
+    it('retains search query when the pane is closed and reopened', async () => {
+      const user = userEvent.setup();
+      const scene = buildTestScene();
+      const editPane = scene.state.editPane;
+      const outlinePane = editPane.state.outlinePane!;
+
+      scene.onEnterEditMode();
+      editPane.enableSelection();
+      editPane.openPane(outlinePane);
+
+      const { unmount } = render(
+        <ElementSelectionContext.Provider value={editPane.state.selectionContext}>
+          <WrapSidebar>
+            <outlinePane.Component model={outlinePane} />
+          </WrapSidebar>
+        </ElementSelectionContext.Provider>
+      );
+
+      const searchInput = screen.getByPlaceholderText('Search outline');
+      await user.type(searchInput, 'Row level 1');
+      expect(searchInput).toHaveValue('Row level 1');
+
+      unmount();
+
+      render(
+        <ElementSelectionContext.Provider value={editPane.state.selectionContext}>
+          <WrapSidebar>
+            <outlinePane.Component model={outlinePane} />
+          </WrapSidebar>
+        </ElementSelectionContext.Provider>
+      );
+
+      expect(screen.getByPlaceholderText('Search outline')).toHaveValue('Row level 1');
+    });
+
+    it('preserves search query after entering and exiting edit mode', async () => {
+      const user = userEvent.setup();
+      const scene = buildTestScene();
+      const editPane = scene.state.editPane;
+      const outlinePane = editPane.state.outlinePane!;
+
+      editPane.enableSelection();
+      editPane.openPane(outlinePane);
+
+      const { unmount } = render(
+        <ElementSelectionContext.Provider value={editPane.state.selectionContext}>
+          <WrapSidebar>
+            <outlinePane.Component model={outlinePane} />
+          </WrapSidebar>
+        </ElementSelectionContext.Provider>
+      );
+
+      const searchInput = screen.getByPlaceholderText('Search outline');
+      await user.type(searchInput, 'Row level 1');
+      expect(searchInput).toHaveValue('Row level 1');
+
+      unmount();
+
+      scene.onEnterEditMode();
+      scene.exitEditMode({ skipConfirm: true });
+
+      const newOutlinePane = scene.state.editPane.state.outlinePane!;
+      scene.state.editPane.enableSelection();
+      scene.state.editPane.openPane(newOutlinePane);
+
+      render(
+        <ElementSelectionContext.Provider value={scene.state.editPane.state.selectionContext}>
+          <WrapSidebar>
+            <newOutlinePane.Component model={newOutlinePane} />
+          </WrapSidebar>
+        </ElementSelectionContext.Provider>
+      );
+
+      expect(screen.getByPlaceholderText('Search outline')).toHaveValue('Row level 1');
+    });
   });
 });
