@@ -4,13 +4,13 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/authlib/authn"
-	"github.com/grafana/authlib/types"
-	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/stretchr/testify/require"
 	grpcmetadata "google.golang.org/grpc/metadata"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/ptr"
+
+	"github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
 
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -85,7 +85,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		spec := secretv1beta1.SecureValueSpec{
 			Description: "description",
 			Decrypters:  []string{svcIdentity},
-			Value:       ptr.To(secretv1beta1.NewExposedSecureValue("value")),
+			Value:       new(secretv1beta1.NewExposedSecureValue("value")),
 		}
 		sv := &secretv1beta1.SecureValue{Spec: spec}
 		sv.Name = "sv-test"
@@ -120,7 +120,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		spec := secretv1beta1.SecureValueSpec{
 			Description: "description",
 			Decrypters:  []string{svcIdentity},
-			Value:       ptr.To(secretv1beta1.NewExposedSecureValue("value")),
+			Value:       new(secretv1beta1.NewExposedSecureValue("value")),
 		}
 		sv := &secretv1beta1.SecureValue{Spec: spec}
 		sv.Name = "sv-test"
@@ -154,7 +154,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		spec := secretv1beta1.SecureValueSpec{
 			Description: "description",
 			Decrypters:  []string{svcIdentity},
-			Value:       ptr.To(secretv1beta1.NewExposedSecureValue("value")),
+			Value:       new(secretv1beta1.NewExposedSecureValue("value")),
 		}
 		sv := &secretv1beta1.SecureValue{Spec: spec}
 		sv.Name = svName
@@ -186,7 +186,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		spec := secretv1beta1.SecureValueSpec{
 			Description: "description",
 			Decrypters:  []string{svcIdentity},
-			Value:       ptr.To(secretv1beta1.NewExposedSecureValue("value")),
+			Value:       new(secretv1beta1.NewExposedSecureValue("value")),
 		}
 		sv := &secretv1beta1.SecureValue{Spec: spec}
 		sv.Name = "sv-test"
@@ -219,7 +219,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		spec := secretv1beta1.SecureValueSpec{
 			Description: "description",
 			Decrypters:  []string{svcIdentity},
-			Value:       ptr.To(secretv1beta1.NewExposedSecureValue("value")),
+			Value:       new(secretv1beta1.NewExposedSecureValue("value")),
 		}
 		sv := &secretv1beta1.SecureValue{Spec: spec}
 		sv.Name = svName
@@ -251,7 +251,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		spec := secretv1beta1.SecureValueSpec{
 			Description: "description",
 			Decrypters:  []string{svcIdentity},
-			Value:       ptr.To(secretv1beta1.NewExposedSecureValue("value")),
+			Value:       new(secretv1beta1.NewExposedSecureValue("value")),
 		}
 		sv := &secretv1beta1.SecureValue{Spec: spec}
 		sv.Name = "sv-test"
@@ -284,7 +284,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		spec := secretv1beta1.SecureValueSpec{
 			Description: "description",
 			Decrypters:  []string{svcIdentity},
-			Value:       ptr.To(secretv1beta1.NewExposedSecureValue("value")),
+			Value:       new(secretv1beta1.NewExposedSecureValue("value")),
 		}
 		sv := &secretv1beta1.SecureValue{Spec: spec}
 		sv.Name = svName
@@ -322,7 +322,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		spec := secretv1beta1.SecureValueSpec{
 			Description: "description",
 			Decrypters:  []string{tokenSvcIdentity},
-			Value:       ptr.To(secretv1beta1.NewExposedSecureValue("value")),
+			Value:       new(secretv1beta1.NewExposedSecureValue("value")),
 		}
 		sv := &secretv1beta1.SecureValue{Spec: spec}
 		sv.Name = "sv-test"
@@ -406,7 +406,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 			Spec: secretv1beta1.SecureValueSpec{
 				Description: "description",
 				Decrypters:  []string{tokenSvcIdentity},
-				Ref:         ptr.To("ref1"),
+				Ref:         new("ref1"),
 			}}
 
 		_, err = sut.CreateSv(ctx, testutils.CreateSvWithSv(sv))
@@ -459,7 +459,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 			Spec: secretv1beta1.SecureValueSpec{
 				Description: "description",
 				Decrypters:  []string{svcIdentity},
-				Value:       ptr.To(secretv1beta1.NewExposedSecureValue("inline-value")),
+				Value:       new(secretv1beta1.NewExposedSecureValue("inline-value")),
 			},
 		}
 		created, err := sut.CreateSv(authCtx, testutils.CreateSvWithSv(sv))

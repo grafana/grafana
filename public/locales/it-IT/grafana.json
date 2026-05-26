@@ -515,7 +515,8 @@
         "edit-yaml": "Modifica YAML",
         "save": "Salva"
       },
-      "error-title": ""
+      "error-title": "",
+      "no-group-success": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "nome",
@@ -1164,10 +1165,14 @@
       "content-show-all-errors": "Mostra tutti gli errori"
     },
     "errors": {
+      "api-machinery": {
+        "with-causes": ""
+      },
       "failedWith": "{{-config}} non riuscita con {{status}}: {{-message}}"
     },
     "evaluate-every-validation-options": {
       "message": {
+        "none-not-allowed": "",
         "required": "Obbligatorio."
       }
     },
@@ -2872,6 +2877,11 @@
         },
         "group-name": "Nome del gruppo di valutazione",
         "group-text": "Tutte le regole nel gruppo selezionato vengono valutate ogni {{evaluateEvery}}.",
+        "interval-label": "",
+        "mode": {
+          "legacy": "",
+          "new": ""
+        },
         "new-group": "Nuovo gruppo di valutazione",
         "pause": {
           "alerting": "Attiva per mettere in pausa la valutazione per questa regola di avviso.",
@@ -10851,6 +10861,21 @@
     "name-line-width": "Larghezza linea",
     "name-stacking": "Impilabile"
   },
+  "home": {
+    "home-page": {
+      "edition": {
+        "cloud": "",
+        "enterprise": "",
+        "open-source": ""
+      },
+      "greeting": {
+        "afternoon": "",
+        "evening": "",
+        "morning": ""
+      },
+      "placeholder": ""
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "Caricamento",
@@ -11332,6 +11357,8 @@
       "clear-search": "Cancella",
       "close-inline-details": "Chiudi i dettagli del registro",
       "close-sidebar-details": "Chiudi la barra laterale dei dettagli del registro",
+      "copy-log-line": "",
+      "copy-log-line-json": "",
       "copy-shortlink": "Copia shortlink",
       "copy-to-clipboard": "Copia negli appunti",
       "displayed-fields-section": "Organizza i campi visualizzati",
@@ -11380,7 +11407,8 @@
     },
     "log-line-menu": {
       "copy-link": "Copia il link alla riga del registro",
-      "copy-log": "Copia la riga del registro",
+      "copy-log-contents": "",
+      "copy-log-message": "",
       "hide-details": "Mostra i dettagli del registro",
       "icon-label": "Menu registro",
       "log-line": "Riga registro",
@@ -14829,9 +14857,6 @@
       "home-dashboard-placeholder": "Dashboard predefinito",
       "language-preference-label": "Lingua",
       "language-preference-placeholder": "Scegli lingua",
-      "locale-preference-description": "Scegli la tua regione per visualizzare la data, l'ora e il formato numerico corrispondenti",
-      "locale-preference-label": "Formato regione",
-      "locale-preference-placeholder": "Scegli regione",
       "theme-description": "Ti piacciono i temi sperimentali? Dicci cosa ti piacerebbe vedere <2>qui.</2>",
       "theme-label": "Tema dell'interfaccia",
       "week-start-label": "Inizio settimana"
@@ -15131,6 +15156,8 @@
     },
     "support-bundles-unconnected": {
       "created-on": "Creato il",
+      "deprecation-warning-message": "",
+      "deprecation-warning-title": "",
       "download": "Scarica",
       "expires": "Scade ",
       "requested-by": "Richiesto da",
@@ -15531,8 +15558,8 @@
     },
     "legend": {
       "category": "Legenda",
-      "description-faceted-filter": "Mostra il filtro di visibilità della serie in base alle etichette",
-      "name-faceted-filter": "Filtro a faccette"
+      "description-faceted-filter": "",
+      "name-faceted-filter": ""
     },
     "line-style-editor": {
       "line-fill-options": {
@@ -16022,7 +16049,9 @@
       "description": {
         "group-by-field-value": "Raggruppa i dati in base a un valore di campo e crea tabelle nidificate con i dati raggruppati."
       },
+      "description-expand-nested-rows": "",
       "description-show-field-names": "Se abilitato, le tabelle nidificate mostreranno i nomi dei campi come intestazione della tabella",
+      "label-expand-nested-rows-by-default": "",
       "label-show-field-names-in-nested-tables": "Mostra i nomi dei campi nelle tabelle nidificate",
       "name": {
         "group-to-nested-tables": "Raggruppa in tabelle nidificate"

@@ -9,7 +9,7 @@ import { type ScopesService } from '../ScopesService';
 import { type ScopesSelectorService } from '../selector/ScopesSelectorService';
 
 import { enterEditMode, openSelector, toggleDashboards } from './utils/actions';
-import { expectDashboardsOpen } from './utils/assertions';
+import { expectDashboardsClosed, expectDashboardsOpen } from './utils/assertions';
 import { getDatasource, getInstanceSettings } from './utils/mocks';
 import { renderDashboard, resetScenes } from './utils/render';
 import { getDashboardsExpand, getSelectorInput, querySelectorApply } from './utils/selectors';
@@ -55,9 +55,19 @@ describe('Scope selector in edit mode', () => {
     expect(querySelectorApply()).toBeInTheDocument();
   });
 
-  it('Does not close dashboards list when entering edit mode', async () => {
+  it('Closes dashboards list when entering edit mode', async () => {
     await toggleDashboards();
     await enterEditMode(dashboardScene);
+    expectDashboardsClosed();
+  });
+
+  it('Restores dashboards list when exiting edit mode', async () => {
+    await toggleDashboards();
+    await enterEditMode(dashboardScene);
+    expectDashboardsClosed();
+    act(() => {
+      dashboardScene.exitEditMode({ skipConfirm: true });
+    });
     expectDashboardsOpen();
   });
 

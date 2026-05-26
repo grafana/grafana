@@ -8522,9 +8522,6 @@
           "queryHistory": {
             "$ref": "#/components/schemas/QueryHistoryPreference"
           },
-          "regionalFormat": {
-            "type": "string"
-          },
           "theme": {
             "enum": [
               "light",
@@ -9180,6 +9177,10 @@
             "description": "UID for the home dashboard",
             "type": "string"
           },
+          "homeURL": {
+            "description": "Explicit home URL (NOTE: this can only be modified in the system settings)",
+            "type": "string"
+          },
           "language": {
             "description": "Selected language",
             "type": "string"
@@ -9189,10 +9190,6 @@
           },
           "queryHistory": {
             "$ref": "#/components/schemas/PreferencesQueryHistoryPreference"
-          },
-          "regionalFormat": {
-            "description": "Selected locale (beta)\nTODO: Will be removed",
-            "type": "string"
           },
           "theme": {
             "description": "user interface theme",
@@ -12034,6 +12031,7 @@
             "type": "string"
           },
           "uid": {
+            "description": "Deprecated: always empty; no per-entry id.",
             "type": "string"
           }
         },
@@ -12963,9 +12961,6 @@
           },
           "queryHistory": {
             "$ref": "#/components/schemas/QueryHistoryPreference"
-          },
-          "regionalFormat": {
-            "type": "string"
           },
           "theme": {
             "enum": [

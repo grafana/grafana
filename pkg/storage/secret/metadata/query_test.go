@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate/mocks"
-	"k8s.io/utils/ptr"
 )
 
 func TestKeeperQueries(t *testing.T) {
@@ -42,6 +41,28 @@ func TestKeeperQueries(t *testing.T) {
 							Type:        "sql",
 							Payload:     "",
 						},
+					},
+				},
+				{
+					Name: "create-with-secure-value-refs",
+					Data: &createKeeper{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Row: &keeperDB{
+							GUID:        "abc",
+							Name:        "name",
+							Namespace:   "ns",
+							Annotations: `{"x":"XXXX"}`,
+							Labels:      `{"a":"AAA", "b", "BBBB"}`,
+							Created:     1234,
+							CreatedBy:   "user:ryan",
+							Updated:     5678,
+							UpdatedBy:   "user:cameron",
+							Description: "description",
+							Type:        "sql",
+							Payload:     "",
+						},
+						UsedSecureValues: []string{"a", "b"},
+						SystemKeeperName: contracts.SystemKeeperName,
 					},
 				},
 			},
@@ -113,14 +134,26 @@ func TestKeeperQueries(t *testing.T) {
 						},
 					},
 				},
-			},
-			sqlKeeperListByName: {
 				{
-					Name: "list",
-					Data: listByNameKeeper{
+					Name: "update-with-secure-value-refs",
+					Data: &updateKeeper{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						Namespace:   "ns",
-						KeeperNames: []string{"a", "b"},
+						Row: &keeperDB{
+							GUID:        "abc",
+							Name:        "name",
+							Namespace:   "ns",
+							Annotations: `{"x":"XXXX"}`,
+							Labels:      `{"a":"AAA", "b", "BBBB"}`,
+							Created:     1234,
+							CreatedBy:   "user:ryan",
+							Updated:     5678,
+							UpdatedBy:   "user:cameron",
+							Description: "description",
+							Type:        "sql",
+							Payload:     "",
+						},
+						UsedSecureValues: []string{"a", "b"},
+						SystemKeeperName: contracts.SystemKeeperName,
 					},
 				},
 			},
@@ -235,14 +268,14 @@ func TestSecureValueQueries(t *testing.T) {
 							UpdatedBy:                "user:cameron",
 							Version:                  1,
 							Description:              "description",
-							Keeper:                   toNullString(ptr.To("keeper_test")),
-							Decrypters:               toNullString(ptr.To("decrypters_test")),
-							Ref:                      toNullString(ptr.To("ref_test")),
+							Keeper:                   toNullString(new("keeper_test")),
+							Decrypters:               toNullString(new("decrypters_test")),
+							Ref:                      toNullString(new("ref_test")),
 							ExternalID:               "extId",
-							OwnerReferenceAPIGroup:   toNullString(ptr.To("prometheus.datasource.grafana.app")),
-							OwnerReferenceAPIVersion: toNullString(ptr.To("v0alpha1")),
-							OwnerReferenceKind:       toNullString(ptr.To("DataSource")),
-							OwnerReferenceName:       toNullString(ptr.To("prom-config")),
+							OwnerReferenceAPIGroup:   toNullString(new("prometheus.datasource.grafana.app")),
+							OwnerReferenceAPIVersion: toNullString(new("v0alpha1")),
+							OwnerReferenceKind:       toNullString(new("DataSource")),
+							OwnerReferenceName:       toNullString(new("prom-config")),
 						},
 					},
 				},
