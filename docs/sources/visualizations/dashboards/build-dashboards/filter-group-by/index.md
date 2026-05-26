@@ -1,4 +1,17 @@
 ---
+aliases:
+keywords:
+  - panel
+  - dashboard
+  - create
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
+title: Filter and Group by
+description: Filter and gorup by
+weight: 4
 ---
 
 # Filter and Group by
@@ -194,7 +207,6 @@ If one of the panels in the dashboard using that data source doesn't include tha
 
 In cases where the data source you're using doesn't support filtering, consider using the special Dashboard data source.
 For more information, refer to [Filter any data using the Dashboard data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#filter-any-data-using-the-dashboard-data-source).
-
 
 ## Variable best practices
 <!--TODO: update title and figure out if this is relevant -->
