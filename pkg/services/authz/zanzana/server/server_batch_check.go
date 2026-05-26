@@ -14,6 +14,7 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	grpccodes "google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
@@ -814,8 +815,7 @@ func copyBatchCheckItems(checks []*openfgav1.BatchCheckItem) []*openfgav1.BatchC
 			copied[i] = nil
 			continue
 		}
-		item := *c
-		copied[i] = &item
+		copied[i] = proto.Clone(c).(*openfgav1.BatchCheckItem)
 	}
 	return copied
 }
