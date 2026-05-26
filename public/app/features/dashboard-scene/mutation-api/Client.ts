@@ -2,9 +2,9 @@ import { dashboardEditActions } from '../edit-pane/shared';
 import type { DashboardScene } from '../scene/DashboardScene';
 
 import { type ClientCommand, type ClientCommandContext, type ClientCommandResult } from './ClientCommand';
-import { addVariableClientCommand } from './commands/AddVariableClientCommand';
-import { removeVariableClientCommand } from './commands/RemoveVariableClientCommand';
+import { addVariableClientCommand } from './commands/addVariable';
 import { listVariablesClientCommand } from './commands/listVariables';
+import { removeVariableClientCommand } from './commands/removeVariable';
 
 /**
  * Registry of agent-facing dashboard commands. Each entry is a data record

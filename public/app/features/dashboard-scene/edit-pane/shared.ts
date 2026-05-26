@@ -14,6 +14,10 @@ import {
 } from '@grafana/scenes';
 import { type ElementSelectionContextItem } from '@grafana/ui';
 
+import { type ClientCommandResult } from '../mutation-api/ClientCommand';
+import { type UserActionCommand } from '../mutation-api/UserActionCommand';
+import { AddVariableCommand } from '../mutation-api/commands/addVariable';
+import { RemoveVariableCommand } from '../mutation-api/commands/removeVariable';
 import { createVariableKindFromSceneVariable } from '../mutation-api/commands/variableUtils';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -35,9 +39,6 @@ import {
   VariableTypeChangeEditableElement,
 } from '../settings/variables/VariableTypeSelectionPane';
 import { isSceneVariable } from '../settings/variables/utils';
-import { type UserActionCommand } from '../user-actions/UserActionCommand';
-import { AddVariableCommand } from '../user-actions/commands/AddVariableCommand';
-import { RemoveVariableCommand } from '../user-actions/commands/RemoveVariableCommand';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { type DashboardEditPane } from './DashboardEditPane';
@@ -220,18 +221,6 @@ export interface MoveElementActionHelperProps {
   undo: () => void;
 }
 
-/**
- * Result of dispatching a UserActionCommand through dashboardEditActions.
- * `locked: true` signals the target write-lock is currently held; callers
- * should retry later. `success: true` means the action was queued through
- * the existing DashboardEditActionEvent stack.
- */
-export interface UserActionExecuteResult {
-  success: boolean;
-  error?: string;
-  locked?: boolean;
-}
-
 export const dashboardEditActions = {
   /**
    * Registers and performs an edit action.
@@ -251,7 +240,7 @@ export const dashboardEditActions = {
    * The UserActionCommand's `perform` / `undo` methods carry the mutation
    * logic; this helper just adapts them into the legacy event shape.
    */
-  executeUserAction(scene: DashboardScene, cmd: UserActionCommand): UserActionExecuteResult {
+  executeUserAction(scene: DashboardScene, cmd: UserActionCommand): ClientCommandResult {
     if (!scene.canEditDashboard()) {
       return {
         success: false,
@@ -348,11 +337,7 @@ export const dashboardEditActions = {
   },
   removeVariable({ source, removedObject }: RemoveVariableActionHelperProps) {
     const dashboard = getDashboardSceneFor(source);
-    const variableKind = createVariableKindFromSceneVariable(removedObject);
-    dashboardEditActions.executeUserAction(
-      dashboard,
-      new RemoveVariableCommand(dashboard, removedObject.state.name, variableKind)
-    );
+    dashboardEditActions.executeUserAction(dashboard, new RemoveVariableCommand(dashboard, removedObject.state.name));
   },
   changeVariableType({ source, oldVariable, newVariable }: ChangeVariableTypeActionHelperProps) {
     const varsBeforeChange = [...source.state.variables];

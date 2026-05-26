@@ -1,7 +1,13 @@
 /**
- * A reversible user action that can be performed and undone.
+ * UserActionCommand -- the shared mutation primitive.
  *
- * Inverse mutations must be declarative: `undo()` uses stored primitives
+ * Implemented as a class (so private fields can carry data needed for
+ * declarative undo). Both the UI and the agent build instances of these
+ * classes and dispatch them through `dashboardEditActions.executeUserAction`,
+ * which runs `perform` and registers the action on the existing
+ * DashboardEditPane undo/redo stack via DashboardEditActionEvent.
+ *
+ * Inverse mutations are declarative: `undo()` uses stored primitives
  * (name, index, VariableKind) rather than captured Scene-object references,
  * so redo remains safe even when surrounding state has changed.
  */
@@ -10,7 +16,7 @@ export interface UserActionCommand {
   title: string;
   /**
    * Optional write-lock target this command operates against (e.g. 'variables').
-   * If the target is locked at execute() time, UserActionsService short-circuits
+   * If the target is locked at execute() time, `executeUserAction` short-circuits
    * with { success: false, locked: true } without calling perform().
    */
   lockTarget?: string;

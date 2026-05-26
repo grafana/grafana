@@ -1,7 +1,8 @@
 import type { z } from 'zod';
 
 import type { DashboardScene } from '../scene/DashboardScene';
-import type { UserActionCommand } from '../user-actions/UserActionCommand';
+
+import type { UserActionCommand } from './UserActionCommand';
 
 export interface ClientCommandContext {
   scene: DashboardScene;

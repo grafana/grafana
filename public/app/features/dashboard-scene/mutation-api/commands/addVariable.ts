@@ -1,18 +1,29 @@
+/**
+ * ADD_VARIABLE -- the full story for this mutation in one file.
+ *
+ * Two exports:
+ *   - AddVariableCommand: the UserActionCommand class. Carries the mutation
+ *     logic (perform / undo) and is the shared primitive used by both the UI
+ *     (constructs directly) and the agent (constructed via toUserAction).
+ *   - addVariableClientCommand: the agent-facing data record. Declares the
+ *     Zod schema and how to turn a validated payload into the class.
+ */
+
+import { type z } from 'zod';
+
 import { sceneGraph } from '@grafana/scenes';
 import type { VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
-import { replaceVariableSet } from '../../mutation-api/commands/variableUtils';
 import type { DashboardScene } from '../../scene/DashboardScene';
 import { createSceneVariableFromVariableModel } from '../../serialization/transformSaveModelSchemaV2ToScene';
+import { type WriteClientCommand } from '../ClientCommand';
 import type { UserActionCommand } from '../UserActionCommand';
 
-/**
- * Adds a variable to the dashboard at the given position.
- *
- * Stores only declarative data (VariableKind + position): no SceneVariable
- * references are held in the command, so redo recomputes a fresh SceneVariable
- * each time and stays safe against intervening state changes.
- */
+import { addVariablePayloadSchema } from './schemas';
+import { replaceVariableSet } from './variableUtils';
+
+export type AddVariablePayload = z.infer<typeof addVariablePayloadSchema>;
+
 export class AddVariableCommand implements UserActionCommand {
   title: string;
   lockTarget = 'variables';
@@ -31,8 +42,7 @@ export class AddVariableCommand implements UserActionCommand {
   perform(): void {
     const name = this.variableKind.spec.name;
     const varSet = sceneGraph.getVariables(this.scene);
-    const existing = varSet.state.variables.find((v) => v.state.name === name);
-    if (existing) {
+    if (varSet.state.variables.find((v) => v.state.name === name)) {
       throw new Error(`Variable '${name}' already exists`);
     }
 
@@ -57,3 +67,13 @@ export class AddVariableCommand implements UserActionCommand {
     );
   }
 }
+
+export const addVariableClientCommand: WriteClientCommand<AddVariablePayload> = {
+  type: 'ADD_VARIABLE',
+  description: addVariablePayloadSchema.description ?? '',
+  schema: addVariablePayloadSchema,
+  kind: 'write',
+  toUserAction(payload, ctx) {
+    return new AddVariableCommand(ctx.scene, payload.variable, payload.position);
+  },
+};
