@@ -713,6 +713,15 @@ type Cfg struct {
 	VectorPromotionThreshold int           // row count per tenant to trigger promotion
 	VectorPromoterInterval   time.Duration // promoter tick interval; 0 disables
 
+	// VectorSearch per-tenant query-embedding cache (DB-backed, FIFO).
+	VectorQueryCacheEnabled      bool
+	VectorQueryCacheMaxPerTenant int
+
+	// VectorSearch per-tenant rate limit (DB-backed, sliding window).
+	VectorRateLimitEnabled   bool
+	VectorRateLimitPerTenant int
+	VectorRateLimitWindow    time.Duration
+
 	// Embedding provider used by the VectorSearch RPC. "" = disabled.
 	EmbeddingProvider string // "vertex" | "bedrock" | ""
 	VertexProjectID   string
