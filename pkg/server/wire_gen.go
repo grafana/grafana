@@ -445,7 +445,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	elector, err := authz.ProvideEmbeddedZanzanaElector(cfg, featureToggles, kv)
+	elector, err := authz.ProvideEmbeddedZanzanaElector(cfg, featureToggles, kv, registerer)
 	if err != nil {
 		return nil, err
 	}

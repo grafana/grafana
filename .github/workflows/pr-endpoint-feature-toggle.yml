@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   detect-changes:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
     outputs:
       frontend-strict: ${{ steps.changed-files.outputs.frontend_strict_any_changed }}
       backend-strict: ${{ steps.changed-files.outputs.backend_strict_any_changed }}
@@ -59,7 +59,7 @@ jobs:
   check-endpoint-migration:
     needs: detect-changes
     if: needs.detect-changes.outputs.frontend-strict == 'true' && needs.detect-changes.outputs.backend-strict != 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
     permissions:
       contents: read
       pull-requests: read
@@ -94,7 +94,7 @@ jobs:
   endpoint-toggle-result:
     if: always()
     needs: [detect-changes, check-endpoint-migration]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
     permissions:
       contents: read
     steps:
