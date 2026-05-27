@@ -8,6 +8,45 @@ const { alpha } = colorManipulator;
 
 export type FieldIndices = Record<string, number>;
 
+/**
+ * Computes a representative spacing (in x-axis units) between adjacent points, used to
+ * derive candle/bar width. Returns null when there are fewer than two valid points.
+ *
+ * The first and last gaps are excluded because, on a sliding relative time range, the
+ * edge buckets are partial and produce gaps smaller than the real interval. Driving the
+ * width off the global minimum (the old behavior) made every bar shrink whenever such an
+ * edge gap appeared, so widths changed "randomly" on each refresh. The median of the
+ * remaining gaps is robust to those outliers, to missing buckets, and to timestamp
+ * jitter (where a mode would degenerate back toward the minimum).
+ */
+export function representativeDelta(dataX: ArrayLike<number>, dataY: ArrayLike<number | null | undefined>) {
+  let gaps: number[] = [];
+  let prevIdx: number | null = null;
+
+  for (let i = 0; i < dataX.length; i++) {
+    if (dataY[i] != null) {
+      if (prevIdx != null) {
+        let delta = dataX[i] - dataX[prevIdx];
+        if (Number.isFinite(delta) && delta > 0) {
+          gaps.push(delta);
+        }
+      }
+      prevIdx = i;
+    }
+  }
+
+  if (gaps.length === 0) {
+    return null;
+  }
+
+  // drop the partial edge buckets; keep all when too short to have interior gaps
+  let core = gaps.length >= 3 ? gaps.slice(1, -1) : gaps;
+  core.sort((a, b) => a - b);
+
+  let mid = Math.floor(core.length / 2);
+  return core.length % 2 !== 0 ? core[mid] : (core[mid - 1] + core[mid]) / 2;
+}
+
 interface RendererOpts {
   mode: VizDisplayMode;
   candleStyle: CandleStyle;
@@ -78,26 +117,11 @@ export function drawMarkers(opts: RendererOpts) {
 
     let colWidth = u.bbox.width;
 
-    if (dataX.length > 1) {
-      // prior index with non-undefined y data
-      let prevIdx = null;
-
-      // scan full dataset for smallest adjacent delta
-      // will not work properly for non-linear x scales, since does not do expensive valToPosX calcs till end
-      for (let i = 0, minDelta = Infinity; i < dataX.length; i++) {
-        if (dataY[i] !== undefined) {
-          if (prevIdx != null) {
-            let delta = Math.abs(dataX[i] - dataX[prevIdx]);
-
-            if (delta < minDelta) {
-              minDelta = delta;
-              colWidth = Math.abs(u.valToPos(dataX[i], 'x', true) - u.valToPos(dataX[prevIdx], 'x', true));
-            }
-          }
-
-          prevIdx = i;
-        }
-      }
+    let repDelta = representativeDelta(dataX, dataY);
+    if (repDelta != null) {
+      // assumes a linear x scale (true for time series); convert the representative
+      // delta to pixels once instead of probing every adjacent pair
+      colWidth = Math.abs(u.valToPos(dataX[0] + repDelta, 'x', true) - u.valToPos(dataX[0], 'x', true));
     }
 
     let barWidth = Math.round(0.6 * colWidth);
