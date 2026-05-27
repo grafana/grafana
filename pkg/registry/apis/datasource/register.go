@@ -58,9 +58,8 @@ type DataSourceAPIBuilder struct {
 	client                 PluginClient // will only ever be called with the same plugin id!
 	datasources            PluginDatasourceProvider
 	contextProvider        PluginContextWrapper
-	decrypter              decrypt.DecryptService      // when not reading legacy
-	accessControl          accesscontrol.AccessControl // ST Only
-	accessClient           authlib.AccessClient        // MT+ST
+	decrypter              decrypt.DecryptService // when not reading legacy
+	accessClient           authlib.AccessClient   // MT+ST
 	schemas                map[string]*pluginschema.PluginSchema
 	queryTypes             *datasourceV0.QueryTypeDefinitionList
 	cfg                    DataSourceAPIBuilderConfig
@@ -77,7 +76,7 @@ func RegisterAPIService(
 	datasources ScopedPluginDatasourceProvider,
 	contextProvider PluginContextWrapper,
 	decrypter decrypt.DecryptService, // when not reading legacy
-	accessControl accesscontrol.AccessControl,
+	_ accesscontrol.AccessControl, // Not used
 	accessClient authlib.AccessClient,
 	reg prometheus.Registerer,
 	pluginSources sources.Registry,
@@ -132,7 +131,7 @@ func RegisterAPIService(
 			client,
 			datasources.GetDatasourceProvider(plugin.JSONData),
 			contextProvider,
-			accessControl,
+			accessClient,
 			decrypter,
 			flags,
 		)
@@ -169,7 +168,7 @@ func NewDataSourceAPIBuilder(
 	client PluginClient,
 	datasources PluginDatasourceProvider,
 	contextProvider PluginContextWrapper,
-	accessControl accesscontrol.AccessControl,
+	accessClient authlib.AccessClient,
 	decrypter decrypt.DecryptService, // when not reading legacy
 	cfg DataSourceAPIBuilderConfig,
 ) (*DataSourceAPIBuilder, error) {
@@ -181,7 +180,7 @@ func NewDataSourceAPIBuilder(
 		client:                 client,
 		datasources:            datasources,
 		contextProvider:        contextProvider,
-		accessControl:          accessControl,
+		accessClient:           accessClient,
 		decrypter:              decrypter,
 		cfg:                    cfg,
 	}
