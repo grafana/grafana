@@ -5792,8 +5792,7 @@
         }
       },
       "operator": {
-        "aria-label": "Operator",
-        "placeholder": "Select operator"
+        "aria-label": "Operator"
       },
       "restore": "Restore default value",
       "search": {
@@ -9062,7 +9061,6 @@
       "copy-button": "Copy to clipboard",
       "download-button": "Download file",
       "download-successful_toast_message": "Your JSON has been downloaded",
-      "export-externally-label": "Export the dashboard to use in another instance",
       "export-format": "Format",
       "export-mode": "Model",
       "info-text": "Copy or download a file containing the definition of your dashboard",
@@ -13521,7 +13519,7 @@
       "modal-title-set-up-public-access": "Set up public access",
       "modal-title-set-up-required-features": "Set up required features",
       "step-description-copy-url": "From the ngrok output, copy the https:// forwarding URL that looks like this:",
-      "step-description-enable-feature-toggles": "Add the provisioning feature toggle to your custom.ini file. Note: kubernetesDashboards is enabled by default, but if you have explicitly disabled it, you will need to enable it in your Grafana settings or remove the override from your configuration.",
+      "step-description-enable-feature-toggles": "Add the provisioning feature toggle to your custom.ini file.",
       "step-description-start-ngrok": "Run this command to create a secure tunnel to your local Grafana:",
       "step-description-update-grafana-config": "Add this to your custom.ini file, replacing the URL with your actual ngrok URL:",
       "step-title-copy-url": "Copy your public URL",
@@ -14713,7 +14711,6 @@
   "share-dashboard": {
     "menu": {
       "export-image-title": "Export as image",
-      "export-json-title": "Export as JSON",
       "share-externally-title": "Share externally",
       "share-internally-title": "Share internally",
       "share-snapshot-title": "Share snapshot"
