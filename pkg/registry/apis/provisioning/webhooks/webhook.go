@@ -130,10 +130,6 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 
 		logger := logging.FromContext(ctx).With("logger", "webhook-connector", "repo", name)
 		ctx = logging.Context(ctx, logger)
-		if !s.webhooksEnabled {
-			responder.Error(errors.NewBadRequest("webhooks are not enabled"))
-			return
-		}
 
 		// Switch to the worker identity (the request user is likely anonymous), then
 		// fetch the repository under that identity. Both calls run against the
@@ -152,6 +148,11 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 		if err != nil {
 			span.RecordError(err)
 			responder.Error(err)
+			return
+		}
+
+		if !s.webhooksEnabled {
+			responder.Error(errors.NewBadRequest("webhooks are not enabled"))
 			return
 		}
 
