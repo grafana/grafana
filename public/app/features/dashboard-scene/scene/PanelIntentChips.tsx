@@ -1,18 +1,40 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { FieldType, type DataFrame, type GrafanaTheme2 } from '@grafana/data';
 import { type Panel } from '@grafana/schema';
-import { type SceneComponentProps, type SceneObjectState, SceneObjectBase, VizPanel } from '@grafana/scenes';
+import { sceneGraph, type SceneComponentProps, type SceneObjectState, SceneObjectBase, VizPanel } from '@grafana/scenes';
 import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
+
+import { isLessThanThreshold, parseAlertThreshold, parseNormalRange } from './parseIntentThresholds';
+
+/** Severity state for an individual chip derived from live panel data. */
+type ChipState = 'alerting' | 'warning' | 'normal';
+
+/** Per-chip states computed independently from live panel data. */
+interface ChipStates {
+  /** State of the normalRange chip: normal if value is within band, warning if outside. */
+  range?: ChipState;
+  /** State of the alertThreshold chip: alerting if breached, normal if below. */
+  alert?: ChipState;
+}
 
 interface PanelIntentChipsState extends SceneObjectState {
   intent: NonNullable<Panel['intent']>;
+  /**
+   * Per-chip threshold states computed from live panel data.
+   * undefined while data hasn't loaded yet or thresholds can't be parsed.
+   */
+  chipStates?: ChipStates;
 }
 
 /**
  * Renders a row of compact chips in a panel's title area summarizing
  * the panel's `intent` block — currently expected behavior (normal
  * range, alert threshold) and the highest-priority failure mode tag.
+ *
+ * Phase E.5: each chip is colored according to the live panel data
+ * compared against the intent thresholds, giving a glanceable health
+ * status without interfering with the panel's own fieldConfig.
  *
  * The chips are intentionally low-signal: the goal is to put a 2-second
  * "what should this panel show?" anchor next to the title without
@@ -31,11 +53,118 @@ export class PanelIntentChips extends SceneObjectBase<PanelIntentChipsState> {
     if (!this.parent || !(this.parent instanceof VizPanel)) {
       throw new Error('PanelIntentChips must be used as a VizPanel title item');
     }
+
+    const recompute = () => {
+      const dataState = sceneGraph.getData(this).state;
+      this.setState({
+        chipStates: computeChipStates(this.state.intent, dataState.data?.series ?? []),
+      });
+    };
+
+    // Evaluate immediately with whatever data is already loaded.
+    recompute();
+
+    // Re-evaluate whenever panel data refreshes.
+    const dataSub = sceneGraph.getData(this).subscribeToState(recompute);
+
+    // Re-evaluate when intent is edited at runtime (e.g. via PanelIntentEditor).
+    const intentSub = this.subscribeToState((next, prev) => {
+      if (next.intent !== prev.intent) {
+        recompute();
+      }
+    });
+
+    return () => {
+      dataSub.unsubscribe();
+      intentSub.unsubscribe();
+    };
   };
 }
 
+// ---------------------------------------------------------------------------
+// Threshold state computation (Phase E.5)
+// ---------------------------------------------------------------------------
+
+/**
+ * Compute independent chip states for the normalRange and alertThreshold
+ * chips from live panel data.
+ *
+ * Each chip reflects only its own condition so they can diverge:
+ * e.g. value within the normal band (range=normal) but still below the
+ * alert threshold (alert=normal), or outside the band (range=warning)
+ * but not yet past the alert line (alert=normal).
+ */
+export function computeChipStates(
+  intent: NonNullable<Panel['intent']>,
+  series: DataFrame[]
+): ChipStates | undefined {
+  const alertThresholdValue = parseAlertThreshold(intent.expectedBehavior?.alertThreshold);
+  const normalRange = parseNormalRange(intent.expectedBehavior?.normalRange);
+
+  if (alertThresholdValue === undefined && normalRange === undefined) {
+    return undefined;
+  }
+
+  const isLess = isLessThanThreshold(intent.expectedBehavior?.alertThreshold);
+  // For > thresholds: worst = max; for < thresholds: worst = min.
+  const worstValue = getWorstLastValue(series, isLess);
+  if (worstValue === undefined) {
+    return undefined;
+  }
+
+  const result: ChipStates = {};
+
+  if (alertThresholdValue !== undefined) {
+    const breached = isLess ? worstValue < alertThresholdValue : worstValue > alertThresholdValue;
+    result.alert = breached ? 'alerting' : 'normal';
+  }
+
+  if (normalRange) {
+    const withinRange = worstValue >= normalRange.min && worstValue <= normalRange.max;
+    result.range = withinRange ? 'normal' : 'warning';
+  }
+
+  return result;
+}
+
+/**
+ * Return the last value (per series) that represents the worst-case
+ * relative to the threshold direction.
+ *
+ * For > thresholds: highest last value across all numeric fields.
+ * For < thresholds: lowest last value across all numeric fields.
+ */
+function getWorstLastValue(series: DataFrame[], isLess: boolean): number | undefined {
+  let worst: number | undefined = undefined;
+  for (const frame of series) {
+    for (const field of frame.fields) {
+      if (field.type !== FieldType.number) {
+        continue;
+      }
+      const len = field.values.length;
+      if (!len) {
+        continue;
+      }
+      const last = (field.values as number[])[len - 1];
+      if (typeof last !== 'number' || !Number.isFinite(last)) {
+        continue;
+      }
+      if (worst === undefined) {
+        worst = last;
+      } else {
+        worst = isLess ? Math.min(worst, last) : Math.max(worst, last);
+      }
+    }
+  }
+  return worst;
+}
+
+// ---------------------------------------------------------------------------
+// Renderer
+// ---------------------------------------------------------------------------
+
 export function PanelIntentChipsRenderer({ model }: SceneComponentProps<PanelIntentChips>) {
-  const { intent } = model.useState();
+  const { intent, chipStates } = model.useState();
   const styles = useStyles2(getStyles);
 
   // Defensive shape coercion: the intent block is authored
@@ -71,7 +200,9 @@ export function PanelIntentChipsRenderer({ model }: SceneComponentProps<PanelInt
           content={`Normal range — ${provenanceTooltip(expectedProvenance)}`}
           placement="top"
         >
-          <span className={chipClass(styles, expectedProvenance)}>~ {expected.normalRange}</span>
+          <span className={resolvedChipClass(styles, chipStates?.range, expectedProvenance)}>
+            ~ {expected.normalRange}
+          </span>
         </Tooltip>
       )}
       {expected?.alertThreshold && (
@@ -79,7 +210,7 @@ export function PanelIntentChipsRenderer({ model }: SceneComponentProps<PanelInt
           content={`Alert threshold — ${provenanceTooltip(thresholdProvenance)}`}
           placement="top"
         >
-          <span className={chipClass(styles, thresholdProvenance)}>
+          <span className={resolvedChipClass(styles, chipStates?.alert, thresholdProvenance)}>
             <Icon name="bell" size="xs" aria-hidden /> {expected.alertThreshold}
           </span>
         </Tooltip>
@@ -107,6 +238,32 @@ export function PanelIntentChipsRenderer({ model }: SceneComponentProps<PanelInt
       )}
     </div>
   );
+}
+
+// ---------------------------------------------------------------------------
+// Chip class helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Resolve the chip CSS class for threshold-aware chips (normalRange,
+ * alertThreshold). When a threshold state is known it takes precedence
+ * over the provenance style so the health signal is always visible.
+ */
+function resolvedChipClass(
+  styles: ReturnType<typeof getStyles>,
+  state: ChipState | undefined,
+  provenance: string | undefined
+): string {
+  if (state === 'alerting') {
+    return styles.chipAlerting;
+  }
+  if (state === 'warning') {
+    return styles.chipWarning;
+  }
+  if (state === 'normal') {
+    return styles.chipNormal;
+  }
+  return chipClass(styles, provenance);
 }
 
 function chipClass(styles: ReturnType<typeof getStyles>, provenance: string | undefined): string {
@@ -169,6 +326,18 @@ function getStyles(theme: GrafanaTheme2) {
   // visual zone. This keeps the left edge of the header reserved for
   // the runtime panel-error chip (red `exclamation-triangle`) and
   // pushes declared-failure-mode chips firmly to the right.
+  const chipBase = {
+    display: 'inline-flex' as const,
+    alignItems: 'center',
+    gap: theme.spacing(0.25),
+    padding: theme.spacing(0, 0.5),
+    borderRadius: theme.shape.radius.pill,
+    fontSize: theme.typography.bodySmall.fontSize,
+    lineHeight: 1.4,
+    whiteSpace: 'nowrap' as const,
+    cursor: 'default',
+  };
+
   return {
     row: css({
       display: 'inline-flex',
@@ -178,31 +347,36 @@ function getStyles(theme: GrafanaTheme2) {
       marginLeft: 'auto',
     }),
     chip: css({
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: theme.spacing(0.25),
-      padding: theme.spacing(0, 0.5),
-      borderRadius: theme.shape.radius.pill,
+      ...chipBase,
       backgroundColor: theme.colors.background.secondary,
       border: `1px solid ${theme.colors.border.weak}`,
       color: theme.colors.text.secondary,
-      fontSize: theme.typography.bodySmall.fontSize,
-      lineHeight: 1.4,
-      whiteSpace: 'nowrap',
     }),
     chipDraft: css({
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: theme.spacing(0.25),
-      padding: theme.spacing(0, 0.5),
-      borderRadius: theme.shape.radius.pill,
+      ...chipBase,
       backgroundColor: theme.colors.background.secondary,
       border: `1px dashed ${theme.colors.border.medium}`,
       color: theme.colors.text.secondary,
       fontStyle: 'italic',
-      fontSize: theme.typography.bodySmall.fontSize,
-      lineHeight: 1.4,
-      whiteSpace: 'nowrap',
+    }),
+    // Phase E.5: live-data state variants
+    chipNormal: css({
+      ...chipBase,
+      backgroundColor: theme.colors.success.transparent,
+      border: `1px solid ${theme.colors.success.border}`,
+      color: theme.colors.success.text,
+    }),
+    chipWarning: css({
+      ...chipBase,
+      backgroundColor: theme.colors.warning.transparent,
+      border: `1px solid ${theme.colors.warning.border}`,
+      color: theme.colors.warning.text,
+    }),
+    chipAlerting: css({
+      ...chipBase,
+      backgroundColor: theme.colors.error.transparent,
+      border: `1px solid ${theme.colors.error.border}`,
+      color: theme.colors.error.text,
     }),
   };
 }

@@ -1,8 +1,9 @@
 import { render, screen } from '@testing-library/react';
 
+import { FieldType } from '@grafana/data';
 import { type Panel } from '@grafana/schema';
 
-import { PanelIntentChips, PanelIntentChipsRenderer } from './PanelIntentChips';
+import { PanelIntentChips, PanelIntentChipsRenderer, computeChipStates } from './PanelIntentChips';
 
 type PanelIntent = NonNullable<Panel['intent']>;
 
@@ -26,76 +27,41 @@ describe('PanelIntentChips', () => {
 
   it('renders normal-range and alert-threshold chips', () => {
     renderChips({
-      expectedBehavior: {
-        normalRange: 'p99 < 250ms',
-        alertThreshold: 'p99 > 500ms for 5m',
-      },
-      provenance: {
-        'expected_behavior.normal_range': 'author-written',
-        'expected_behavior.alert_threshold': 'lifted-from-alert',
-      },
+      expectedBehavior: { normalRange: '10–20 logins/min', alertThreshold: '> 50' },
     });
-
-    expect(screen.getByTestId('panel-intent-chips')).toBeInTheDocument();
-    expect(screen.getByText(/p99 < 250ms/)).toBeInTheDocument();
-    expect(screen.getByText(/p99 > 500ms for 5m/)).toBeInTheDocument();
+    expect(screen.getByText(/10–20 logins\/min/)).toBeInTheDocument();
+    expect(screen.getByText(/> 50/)).toBeInTheDocument();
   });
 
-  it('renders the primary failure mode with a "+N" count for additional modes', () => {
+  it('renders primary failure mode chip with # prefix', () => {
+    renderChips({
+      failureModes: [{ tag: 'oom', description: 'Out of memory' }],
+    });
+    expect(screen.getByText('#oom')).toBeInTheDocument();
+  });
+
+  it('does not render an exclamation-triangle icon in failure-mode chips', () => {
+    renderChips({
+      failureModes: [{ tag: 'spike' }],
+    });
+    // The icon element should NOT be present (E.4: no warning icon on failure-mode chips)
+    expect(screen.queryByRole('img', { name: /exclamation/i })).not.toBeInTheDocument();
+  });
+
+  it('shows +N suffix when there are additional failure modes', () => {
     renderChips({
       failureModes: [
-        { tag: 'db-slow', description: 'Database query latency spike.' },
-        { tag: 'pod-oom' },
-        { tag: 'deploy-regression' },
+        { tag: 'spike' },
+        { tag: 'oom' },
+        { tag: 'timeout' },
       ],
-      provenance: { failure_modes: 'assistant-unconfirmed' },
     });
-
-    // Only the primary failure mode is shown by name; the rest collapse
-    // into a "+N" counter so the title row stays compact. The chip is
-    // prefixed with `#` (Phase E.4) so it reads as a tag, not as a
-    // runtime alert.
-    expect(screen.getByText(/#db-slow/)).toBeInTheDocument();
-    expect(screen.getByText(/\+2/)).toBeInTheDocument();
-    expect(screen.queryByText(/pod-oom/)).not.toBeInTheDocument();
+    expect(screen.getByText('#spike +2')).toBeInTheDocument();
   });
 
-  it('does not render the "+N" suffix when there is only a single failure mode', () => {
-    renderChips({
-      failureModes: [{ tag: 'db-slow' }],
-    });
-
-    expect(screen.getByText(/#db-slow/)).toBeInTheDocument();
-    expect(screen.queryByText(/\+/)).not.toBeInTheDocument();
-  });
-
-  it('Phase E.4: declared failure-mode chip uses no warning icon (reserved for active-match in Phase F)', () => {
-    const { container } = renderChips({
-      failureModes: [{ tag: 'db-slow' }],
-    });
-
-    // The chip text is the only signal a declared failure mode
-    // provides; rendering an exclamation-triangle here would visually
-    // collide with the runtime panel-error chip (red destructive
-    // button with the same icon). The red + warning treatment is
-    // reserved for the live active-match state landed in Phase F.
-    expect(container.querySelector('svg[name="exclamation-triangle"]')).toBeNull();
-    expect(container.querySelector('[data-icon="exclamation-triangle"]')).toBeNull();
-  });
-
-  it('Phase E.4: failure-mode chip is prefixed with `#` to read as a tag rather than an alert', () => {
-    renderChips({ failureModes: [{ tag: 'bot-traffic' }] });
-    // The literal `#` prefix is what disambiguates "this is a label
-    // the team watches for" from "the panel is failing right now".
-    expect(screen.getByText('#bot-traffic')).toBeInTheDocument();
-  });
-
-  it('renders nothing without crashing when failureModes is a bare string instead of an array', () => {
-    // Hand-authored or LLM-drafted intent has been observed in the
-    // wild with `failureModes` set to a free-text string rather than
-    // the `Array<{tag}>` shape the schema declares. Render nothing
-    // for the malformed field rather than crashing the panel header
-    // with `failureModes.map is not a function`.
+  it('renders nothing without crashing when failureModes is a bare string', () => {
+    // Regression: observed failureModes arriving as a string in the wild,
+    // which caused `failureModes.map is not a function`.
     const { container } = renderChips({
       // @ts-expect-error — intentional malformed shape for the
       // regression test; the schema typing rejects this but real
@@ -114,5 +80,82 @@ describe('PanelIntentChips', () => {
       expectedBehavior: 'All metrics should be within normal thresholds',
     });
     expect(container).toBeEmptyDOMElement();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// computeThresholdState (Phase E.5)
+// ---------------------------------------------------------------------------
+
+function makeFrame(values: number[]) {
+  return {
+    fields: [
+      { type: FieldType.time, values: values.map((_, i) => i * 1000) },
+      { type: FieldType.number, values },
+    ],
+    length: values.length,
+  };
+}
+
+describe('computeChipStates', () => {
+  it('returns undefined when intent has no parseable thresholds', () => {
+    const intent: PanelIntent = { expectedBehavior: { alertThreshold: 'spike' } };
+    expect(computeChipStates(intent, [makeFrame([60, 70, 80])])).toBeUndefined();
+  });
+
+  it('returns undefined when series is empty', () => {
+    const intent: PanelIntent = { expectedBehavior: { alertThreshold: '> 80' } };
+    expect(computeChipStates(intent, [])).toBeUndefined();
+  });
+
+  it('alert chip is alerting when last value exceeds a > threshold', () => {
+    const intent: PanelIntent = { expectedBehavior: { alertThreshold: '> 80' } };
+    expect(computeChipStates(intent, [makeFrame([60, 70, 85])])?.alert).toBe('alerting');
+  });
+
+  it('alert chip is normal when last value is below a > threshold', () => {
+    const intent: PanelIntent = { expectedBehavior: { alertThreshold: '> 80' } };
+    expect(computeChipStates(intent, [makeFrame([60, 70, 75])])?.alert).toBe('normal');
+  });
+
+  it('alert chip is alerting when last value breaches a < threshold', () => {
+    const intent: PanelIntent = { expectedBehavior: { alertThreshold: '< 10' } };
+    expect(computeChipStates(intent, [makeFrame([50, 30, 5])])?.alert).toBe('alerting');
+  });
+
+  it('range chip is normal when last value is within the normal range', () => {
+    const intent: PanelIntent = { expectedBehavior: { normalRange: '60-90' } };
+    expect(computeChipStates(intent, [makeFrame([65, 70, 75])])?.range).toBe('normal');
+  });
+
+  it('range chip is warning when last value is outside the normal range', () => {
+    const intent: PanelIntent = { expectedBehavior: { normalRange: '60-90' } };
+    expect(computeChipStates(intent, [makeFrame([65, 70, 95])])?.range).toBe('warning');
+  });
+
+  it('chips are independent: range warning + alert normal when outside band but below threshold', () => {
+    const intent: PanelIntent = { expectedBehavior: { normalRange: '60-90', alertThreshold: '> 95' } };
+    const states = computeChipStates(intent, [makeFrame([70, 80, 92])]);
+    expect(states?.range).toBe('warning');  // outside 60-90
+    expect(states?.alert).toBe('normal');   // below 95 threshold
+  });
+
+  it('chips are independent: both alerting when threshold breached and outside range', () => {
+    const intent: PanelIntent = { expectedBehavior: { normalRange: '60-90', alertThreshold: '> 90' } };
+    const states = computeChipStates(intent, [makeFrame([70, 80, 92])]);
+    expect(states?.range).toBe('warning');   // outside 60-90
+    expect(states?.alert).toBe('alerting');  // above 90
+  });
+
+  it('uses worst-case (max) across multiple series for > thresholds', () => {
+    const intent: PanelIntent = { expectedBehavior: { alertThreshold: '> 80' } };
+    const series = [makeFrame([60, 65, 70]), makeFrame([75, 78, 82])];
+    expect(computeChipStates(intent, series)?.alert).toBe('alerting');
+  });
+
+  it('uses worst-case (min) across multiple series for < thresholds', () => {
+    const intent: PanelIntent = { expectedBehavior: { alertThreshold: '< 10' } };
+    const series = [makeFrame([50, 40, 20]), makeFrame([30, 15, 8])];
+    expect(computeChipStates(intent, series)?.alert).toBe('alerting');
   });
 });

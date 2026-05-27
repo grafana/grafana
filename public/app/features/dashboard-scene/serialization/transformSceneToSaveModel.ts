@@ -239,7 +239,7 @@ export function vizPanelToPanel(
       title: vizPanel.state.title,
       description: vizPanel.state.description || undefined,
       gridPos,
-      fieldConfig: (vizPanel.state.fieldConfig as FieldConfigSource) ?? { defaults: {}, overrides: [] },
+      fieldConfig: vizPanel.state.fieldConfig,
       transformations: [],
       transparent: vizPanel.state.displayMode === 'transparent',
       pluginVersion: vizPanel.state.pluginVersion,
