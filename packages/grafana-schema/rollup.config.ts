@@ -1,8 +1,10 @@
+import { globSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import path from 'path';
 import copy from 'rollup-plugin-copy';
-import { globSync } from 'tinyglobby';
+
+// bust
 
 import { cjsOutput, entryPoint, esmOutput, plugins } from '../rollup.config.parts';
 
