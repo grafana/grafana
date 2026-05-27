@@ -280,3 +280,54 @@ jobs:
       version: ${{ needs.setup.outputs.version }}
       build_id: ${{ github.run_id }}
       version_type: "canary"
+
+  # notify-pr creates (or updates) a comment in a pull request to link to this workflow where the release artifacts are
+  # being built.
+  notify-pr:
+    runs-on: ubuntu-x64-small
+    permissions:
+      contents: read
+      id-token: write
+    needs:
+      - setup
+    steps:
+      - name: Get GitHub App token
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@e5b7989c92b55fe3ac6dd006d6de49082ba8c507 # create-github-app-token (github-script/v9)
+        with:
+          github_app: grafana-releases-oss
+          permission_set: notify-pr
+      - name: Find PR
+        continue-on-error: true
+        id: find-pr
+        env:
+          GITHUB_TOKEN: ${{ steps.get-github-app-token.outputs.token }}
+          GRAFANA_COMMIT: ${{ needs.setup.outputs.grafana-commit }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -eo pipefail
+          gh api "/repos/${REPO}/commits/${GRAFANA_COMMIT}/pulls" | jq -r '.[0].number' | tee issue_number.txt
+          echo "ISSUE_NUMBER=$(cat issue_number.txt)" >> "$GITHUB_ENV"
+      - name: Find Comment
+        uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e # v3
+        if: ${{ steps.find-pr.outcome == 'success' }}
+        id: fc
+        continue-on-error: true
+        with:
+          issue-number: ${{ env.ISSUE_NUMBER }}
+          comment-author: 'grafana-releases-oss[bot]'
+          body-includes: GitHub Actions Build
+          token: ${{ steps.get-github-app-token.outputs.token }}
+      - name: Create or update comment
+        uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v4
+        if: ${{ steps.find-pr.outcome == 'success' }} # Run even if comment wasn't found
+        with:
+          token: ${{ steps.get-github-app-token.outputs.token }}
+          comment-id: ${{ steps.fc.outputs.comment-id }}
+          issue-number: ${{ env.ISSUE_NUMBER }}
+          body: |
+            :rocket: Your submission is now being built and packaged.
+
+            - [GitHub Actions Build](https://github.com/grafana/grafana/actions/runs/${{ github.run_id }})
+            - Version: ${{ needs.setup.outputs.version }}
+          edit-mode: replace
