@@ -24,7 +24,8 @@ import (
 func ProvideService(ctx context.Context, sqlStore db.DB, routeRegister routing.RouteRegister, ds datasources.DataSourceService, ac accesscontrol.AccessControl, bus bus.Bus, qs quota.Service, cfg *setting.Cfg, clientGen resource.ClientGenerator, restConfig apiserver.RestConfigProvider, userService user.Service, resourceClient resource2.ResourceClient,
 ) (Service, error) {
 	client := openfeature.NewDefaultClient()
-	if client.Boolean(ctx, featuremgmt.FlagGrafanaCorrelationsSkipLegacy, false, openfeature.TransactionContext(ctx)) {
+	if client.Boolean(ctx, featuremgmt.FlagKubernetesCorrelations, false, openfeature.TransactionContext(ctx)) ||
+		client.Boolean(ctx, featuremgmt.FlagGrafanaCorrelationsSkipLegacy, false, openfeature.TransactionContext(ctx)) {
 		k8sHandler := apiClient.NewK8sHandler(
 			request.GetNamespaceMapper(cfg),
 			v0alpha1.CorrelationKind().GroupVersionResource(),
