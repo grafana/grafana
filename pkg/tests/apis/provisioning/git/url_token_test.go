@@ -34,7 +34,7 @@ func TestIntegrationProvisioning_GitRequiresNewTokenWhenRepositoryURLChanges(t *
 			updated := common.MustToUnstructured(t, repo)
 			require.NoError(collect, unstructured.SetNestedField(updated.Object, "https://some-new-url/", "spec", "git", "url"))
 			unstructured.RemoveNestedField(updated.Object, "secure", "token")
-			
+
 			_, err = helper.Repositories.Resource.Update(ctx, updated, metav1.UpdateOptions{})
 			require.Error(collect, err)
 			require.True(collect, apierrors.IsInvalid(err), "expected invalid repository update, got %v", err)
@@ -51,16 +51,16 @@ func TestIntegrationProvisioning_GitRequiresNewTokenWhenRepositoryURLChanges(t *
 			require.NoError(collect, err)
 
 			repoObj := common.MustFromUnstructured[provisioning.Repository](t, repo)
-     		repoObj.Spec.Git.URL = changedRemote.URL
-     		repoObj.Spec.Git.TokenUser = changedUser.Username
-     		repoObj.Secure.Token = apicommon.InlineSecureValue{Create: apicommon.RawSecureValue(changedUser.Password)}
-     
-     		result, err := helper.Repositories.Resource.Update(ctx, common.MustToUnstructured(t, repoObj), metav1.UpdateOptions{})
-     		require.NoError(collect, err)
-     
-     		updatedRepo := common.MustFromUnstructured[provisioning.Repository](t, result)
-     		require.Equal(collect, changedRemote.URL, updatedRepo.Spec.Git.URL)
-     		require.NotEmpty(collect, updatedRepo.Secure.Token.Name)
+			repoObj.Spec.Git.URL = changedRemote.URL
+			repoObj.Spec.Git.TokenUser = changedUser.Username
+			repoObj.Secure.Token = apicommon.InlineSecureValue{Create: apicommon.RawSecureValue(changedUser.Password)}
+
+			result, err := helper.Repositories.Resource.Update(ctx, common.MustToUnstructured(t, repoObj), metav1.UpdateOptions{})
+			require.NoError(collect, err)
+
+			updatedRepo := common.MustFromUnstructured[provisioning.Repository](t, result)
+			require.Equal(collect, changedRemote.URL, updatedRepo.Spec.Git.URL)
+			require.NotEmpty(collect, updatedRepo.Secure.Token.Name)
 		}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 	})
 
