@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 )
 
@@ -66,7 +67,7 @@ func (h *historySubresource) Connect(ctx context.Context, name string, opts runt
 
 		// Reject unvalidated refs before they reach any backend. Empty is allowed
 		// and defaulted by the backend to the configured branch.
-		if !repository.IsValidRef(ref) {
+		if !git.IsValidRef(ref) {
 			responder.Error(repository.ErrInvalidRef)
 			return
 		}

@@ -266,7 +266,7 @@ func (r *githubRepository) History(ctx context.Context, path, ref string) ([]pro
 	// Defence in depth: connectors validate the ref before calling into the backend,
 	// but we re-check here so unvalidated callers (other backends, tests, future
 	// callers) can't forward arbitrary input to the GitHub REST API.
-	if !repository.IsValidRef(ref) {
+	if !git.IsValidRef(ref) {
 		return nil, repository.ErrInvalidRef
 	}
 
