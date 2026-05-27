@@ -8,7 +8,7 @@ import { type LabelMatchDetails, matchLabels } from '../matchers/utils';
 import { type Route, type RouteWithID } from './types';
 
 export const INHERITABLE_KEYS = ['receiver', 'group_by', 'group_wait', 'group_interval', 'repeat_interval'] as const;
-export type InheritableKeys = typeof INHERITABLE_KEYS;
+type InheritableKeys = typeof INHERITABLE_KEYS;
 export type InheritableProperties = Pick<Route, InheritableKeys[number]>;
 
 // Represents matching information for a single route in the traversal path
