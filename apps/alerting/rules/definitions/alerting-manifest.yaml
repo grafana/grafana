@@ -271,6 +271,7 @@ spec:
       - spec.notificationSettings.type
       - spec.notificationSettings.receiver
       - spec.notificationSettings.routingTree
+      userReadable: false
     - admission:
         mutation:
           operations:
@@ -434,5 +435,6 @@ spec:
       - spec.paused
       - spec.metric
       - spec.targetDatasourceUID
+      userReadable: false
     name: v0alpha1
     served: true
