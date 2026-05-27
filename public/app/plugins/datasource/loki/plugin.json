@@ -59,11 +59,6 @@
     { "method": "GET", "path": "/api/v1/index/volume_range", "reqRole": "Viewer", "reqAction": "datasources:query" },
 
     { "method": "GET", "path": "/api/v1/patterns", "reqRole": "Viewer", "reqAction": "datasources:query" },
-    { "method": "GET", "path": "/api/v1/detected_fields", "reqRole": "Viewer", "reqAction": "datasources:query" },
-    { "method": "POST", "path": "/api/v1/detected_fields", "reqRole": "Viewer", "reqAction": "datasources:query" },
-    { "method": "GET", "path": "/api/v1/detected_field", "reqRole": "Viewer", "reqAction": "datasources:query" },
-    { "method": "POST", "path": "/api/v1/detected_field", "reqRole": "Viewer", "reqAction": "datasources:query" },
-
     { "method": "GET", "path": "/api/v1/tail", "reqRole": "Viewer", "reqAction": "datasources:query" },
     { "method": "GET", "path": "/api/v1/status/buildinfo", "reqRole": "Viewer", "reqAction": "datasources:query" },
     { "method": "GET", "path": "/api/v1/format_query", "reqRole": "Viewer", "reqAction": "datasources:query" },
@@ -72,6 +67,10 @@
     { "method": "GET", "path": "/api/v1/rules", "reqRole": "Viewer", "reqAction": "alert.rules.external:read" },
     { "method": "POST", "path": "/api/v1/rules", "reqRole": "Editor", "reqAction": "alert.rules.external:write" },
     { "method": "DELETE", "path": "/api/v1/rules", "reqRole": "Editor", "reqAction": "alert.rules.external:write" },
+
+    { "method": "GET", "path": "/loki/api/v1/rules", "reqRole": "Viewer", "reqAction": "alert.rules.external:read" },
+    { "method": "POST", "path": "/loki/api/v1/rules", "reqRole": "Editor", "reqAction": "alert.rules.external:write" },
+    { "method": "DELETE", "path": "/loki/api/v1/rules", "reqRole": "Editor", "reqAction": "alert.rules.external:write" },
 
     { "method": "GET", "path": "/rules", "reqRole": "Viewer", "reqAction": "alert.rules.external:read" },
     { "method": "POST", "path": "/rules", "reqRole": "Editor", "reqAction": "alert.rules.external:write" },
