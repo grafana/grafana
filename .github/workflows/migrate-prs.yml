@@ -30,13 +30,14 @@ on:
         required: true
         type: string
 
-permissions:
-  contents: read
-  id-token: write
+permissions: {}
 
 jobs:
   main:
     runs-on: ubuntu-arm64-small
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Get GitHub App token
         id: get-github-app-token

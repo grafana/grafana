@@ -50,12 +50,12 @@ while IFS=" " read -r -a package; do
   echo ""
   echo "$PACKAGE_PATH"
   echo "================================================="
-  npm exec -- @grafana/levitate@latest compare --prev "$PREV" --current "$CURRENT" --json >data.json
+  yarn exec levitate compare --prev "$PREV" --current "$CURRENT" --json >data.json
 
   # Check if the comparison returned with a non-zero exit code
   # Record the output, maybe with some additional information
   STATUS=$?
-  CURRENT_REPORT=$(node ./scripts/levitate-parse-json-report.js)
+  CURRENT_REPORT=$(node ./.github/workflows/scripts/levitate/levitate-parse-json-report.js)
   # Final exit code
   # (non-zero if any of the packages failed the checks)
   if [ "$STATUS" -gt 0 ]; then

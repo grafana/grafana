@@ -9,7 +9,7 @@ permissions: {}
 
 jobs:
   vale:
-    runs-on: ubuntu-arm64
+    runs-on: ubuntu-x64-small
     permissions:
       contents: read
       pull-requests: write

@@ -8,14 +8,15 @@ on:
       - docs/sources/developers/plugins/plugin.schema.json
   workflow_dispatch:
 
-# These permissions are needed to assume roles from Github's OIDC.
-permissions:
-  contents: read
-  id-token: write
+permissions: {}
 
 jobs:
   bundle-schema-types:
     runs-on: ubuntu-arm64-small
+    # These permissions are needed to assume roles from Github's OIDC.
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v5
 
