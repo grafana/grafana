@@ -1,9 +1,13 @@
-import { type ThemeVisualizationColors } from '../themes/createVisualizationColors';
+import { type ThemeVisualizationColors } from '../themes/types/color.mts';
 
-export enum GrafanaThemeType {
-  Light = 'light',
-  Dark = 'dark',
-}
+export const GrafanaThemeTypeConstants = {
+  Light: 'light',
+  Dark: 'dark',
+} as const;
+
+type GrafanaThemeTypeConstantsType = typeof GrafanaThemeTypeConstants;
+
+export type GrafanaThemeType = GrafanaThemeTypeConstantsType[keyof GrafanaThemeTypeConstantsType];
 
 export interface GrafanaThemeCommons {
   name: string;

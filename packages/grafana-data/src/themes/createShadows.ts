@@ -1,11 +1,5 @@
-import { type ThemeColors } from './createColors';
-
-/** @beta */
-export interface ThemeShadows {
-  z1: string;
-  z2: string;
-  z3: string;
-}
+import { type ThemeColors } from './types/color.mts';
+import { type ThemeShadows } from './types/shadows.mts';
 
 /** @alpha */
 export function createShadows(colors: ThemeColors): ThemeShadows {

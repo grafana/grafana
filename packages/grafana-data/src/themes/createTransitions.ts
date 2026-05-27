@@ -2,6 +2,8 @@
 // The MIT License (MIT)
 // Copyright (c) 2014 Call-Em-All
 
+import { type CreateTransitionOptions, type ReducedMotionProps, type ThemeTransitions } from './types/transitions.mts';
+
 // Follow https://material.google.com/motion/duration-easing.html#duration-easing-natural-easing-curves
 // to learn the context in which each easing should be used.
 const easing = {
@@ -33,13 +35,6 @@ const duration = {
 };
 
 /** @alpha */
-interface CreateTransitionOptions {
-  duration?: number | string;
-  easing?: string;
-  delay?: number | string;
-}
-
-/** @alpha */
 function create(props: string | string[] = ['all'], options: CreateTransitionOptions = {}) {
   const { duration: durationOption = duration.standard, easing: easingOption = easing.easeInOut, delay = 0 } = options;
 
@@ -52,8 +47,6 @@ function create(props: string | string[] = ['all'], options: CreateTransitionOpt
     )
     .join(',');
 }
-
-type ReducedMotionProps = 'no-preference' | 'reduce';
 
 function handleMotion(...props: ReducedMotionProps[]) {
   return `@media ${props.map((prop) => `(prefers-reduced-motion: ${prop})`).join(',')}`;
@@ -72,15 +65,6 @@ function getAutoHeightDuration(height: number) {
 
 function formatMs(milliseconds: number) {
   return `${Math.round(milliseconds)}ms`;
-}
-
-/** @alpha */
-export interface ThemeTransitions {
-  create: typeof create;
-  duration: typeof duration;
-  easing: typeof easing;
-  getAutoHeightDuration: typeof getAutoHeightDuration;
-  handleMotion: typeof handleMotion;
 }
 
 /** @internal */

@@ -1,30 +1,16 @@
-import * as z from 'zod';
-
 import { createBreakpoints } from './breakpoints';
-import { createColors, ThemeColorsInputSchema } from './createColors';
+import { createColors } from './createColors';
 import { createComponents } from './createComponents';
 import { createShadows } from './createShadows';
-import { createShape, ThemeShapeInputSchema } from './createShape';
-import { createSpacing, ThemeSpacingOptionsSchema } from './createSpacing';
+import { createShape } from './createShape';
+import { createSpacing } from './createSpacing';
 import { createTransitions } from './createTransitions';
-import { createTypography, ThemeTypographyInputSchema } from './createTypography';
+import { createTypography } from './createTypography';
 import { createV1Theme } from './createV1Theme';
-import { createVisualizationColors, ThemeVisualizationColorsInputSchema } from './createVisualizationColors';
+import { createVisualizationColors } from './createVisualizationColors';
 import { type GrafanaTheme2 } from './types';
+import { type NewThemeOptions } from './types/schema.mts';
 import { zIndex } from './zIndex';
-
-export const NewThemeOptionsSchema = z.object({
-  name: z.string(),
-  id: z.string(),
-  colors: ThemeColorsInputSchema.optional(),
-  spacing: ThemeSpacingOptionsSchema.optional(),
-  shape: ThemeShapeInputSchema.optional(),
-  typography: ThemeTypographyInputSchema.optional(),
-  visualization: ThemeVisualizationColorsInputSchema.optional(),
-});
-
-/** @internal */
-export type NewThemeOptions = z.infer<typeof NewThemeOptionsSchema>;
 
 /** @internal */
 export function createTheme(

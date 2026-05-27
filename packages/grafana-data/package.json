@@ -60,7 +60,7 @@
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
     "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-npm-package.js",
     "postpack": "mv package.json.bak package.json",
-    "themes-schema": "tsx ./scripts/generateSchema.ts"
+    "themes-schema": "node ./scripts/generateSchema.mts"
   },
   "dependencies": {
     "@braintree/sanitize-url": "7.0.1",
@@ -111,7 +111,6 @@
     "rollup-plugin-copy": "3.5.0",
     "rollup-plugin-esbuild": "6.2.1",
     "rollup-plugin-node-externals": "^8.0.0",
-    "tsx": "^4.21.0",
     "typescript": "6.0.2"
   },
   "peerDependencies": {

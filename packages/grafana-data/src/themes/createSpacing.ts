@@ -1,45 +1,9 @@
 // Code based on Material UI
 // The MIT License (MIT)
 // Copyright (c) 2014 Call-Em-All
-import { z } from 'zod';
 
-/** @internal */
-export const ThemeSpacingOptionsSchema = z.object({
-  gridSize: z.int().positive().optional(),
-});
-
-/** @internal */
-export type ThemeSpacingOptions = z.infer<typeof ThemeSpacingOptionsSchema>;
-
-/** @internal */
-type ThemeSpacingArgument = number | string;
-
-/**
- * @beta
- * The different signatures imply different meaning for their arguments that can't be expressed structurally.
- * We express the difference with variable names.
- * tslint:disable:unified-signatures */
-export interface ThemeSpacing extends SpacingTokens {
-  (): string;
-  (value: ThemeSpacingArgument): string;
-  (topBottom: ThemeSpacingArgument, rightLeft: ThemeSpacingArgument): string;
-  (top: ThemeSpacingArgument, rightLeft: ThemeSpacingArgument, bottom: ThemeSpacingArgument): string;
-  (
-    top: ThemeSpacingArgument,
-    right: ThemeSpacingArgument,
-    bottom: ThemeSpacingArgument,
-    left: ThemeSpacingArgument
-  ): string;
-  gridSize: number;
-}
-
-// Possible spacing token options
-export type ThemeSpacingTokens = 0 | 0.25 | 0.5 | 1 | 1.5 | 2 | 2.5 | 3 | 4 | 5 | 6 | 8 | 10;
-
-// Spacing tokens as represented in the theme
-type SpacingTokens = {
-  [key in `x${Exclude<ThemeSpacingTokens, 0.25 | 0.5 | 1.5 | 2.5> | '0_25' | '0_5' | '1_5' | '2_5'}`]: string;
-};
+import { type ThemeSpacingOptions } from './types/schema.mts';
+import { type ThemeSpacing, type ThemeSpacingArgument } from './types/spacing.mts';
 
 /** @internal */
 export function createSpacing(options: ThemeSpacingOptions = {}): ThemeSpacing {

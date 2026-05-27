@@ -9,7 +9,8 @@
     "isolatedModules": true,
     "rootDirs": ["."],
     "moduleResolution": "bundler",
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "allowImportingTsExtensions": true // todo: comment explain
   },
   "exclude": ["dist/**/*"],
   "include": [
@@ -17,6 +18,17 @@
     "typings/jest",
     "../../public/app/types/jquery/*.ts",
     "../../public/app/types/*.d.ts",
-    "../grafana-ui/src/types/react-table-config.d.ts"
+    "../grafana-ui/src/types/react-table-config.d.ts",
+    "src/themes/types/schema.mts",
+    "src/themes/types/breakpoints.mts",
+    "src/themes/types/color.mts",
+    "src/themes/types/components.mts",
+    "src/themes/types/shadows.mts",
+    "src/themes/types/shape.mts",
+    "src/themes/types/theme.mts",
+    "src/themes/types/spacing.mts",
+    "src/themes/types/transitions.mts",
+    "src/themes/types/typography.mts",
+    "src/themes/types/zIndex.mts"
   ]
 }

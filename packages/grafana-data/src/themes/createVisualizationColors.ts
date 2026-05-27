@@ -1,20 +1,12 @@
-import { z } from 'zod';
-
 import { FALLBACK_COLOR } from '../types/fieldColor';
 
 import { type ThemeColors } from './createColors';
-
-/**
- * @alpha
- */
-export interface ThemeVisualizationColors {
-  /** Only for internal use by color schemes */
-  palette: string[];
-  /** Lookup the real color given the name */
-  getColorByName: (color: string) => string;
-  /** Colors organized by hue */
-  hues: ThemeVizHue[];
-}
+import {
+  type ThemeVisualizationColorsInput,
+  type ThemeVizColorName,
+  type ThemeVizColorShadeName,
+  type ThemeVizHue,
+} from './types/schema.mts';
 
 /**
  * @alpha
@@ -26,46 +18,9 @@ export interface ThemeVizColor<T extends ThemeVizColorName> {
   primary?: boolean;
 }
 
-type ThemeVizColorName = 'red' | 'orange' | 'yellow' | 'green' | 'blue' | 'purple';
-
-const createShadeSchema = <T>(color: T extends ThemeVizColorName ? T : never) =>
-  z.enum([`super-light-${color}`, `light-${color}`, color, `semi-dark-${color}`, `dark-${color}`]);
-
-type ThemeVizColorShadeName<T extends ThemeVizColorName> = z.infer<ReturnType<typeof createShadeSchema<T>>>;
-
-const createHueSchema = <T>(color: T extends ThemeVizColorName ? T : never) =>
-  z.object({
-    name: z.literal(color),
-    shades: z.array(
-      z.object({
-        color: z.string(),
-        name: createShadeSchema(color),
-        aliases: z.array(z.string()).optional(),
-        primary: z.boolean().optional(),
-      })
-    ),
-  });
-
-const ThemeVizHueSchema = z.union([
-  createHueSchema('red'),
-  createHueSchema('orange'),
-  createHueSchema('yellow'),
-  createHueSchema('green'),
-  createHueSchema('blue'),
-  createHueSchema('purple'),
-]);
-
 /**
  * @alpha
  */
-export type ThemeVizHue = z.infer<typeof ThemeVizHueSchema>;
-
-export const ThemeVisualizationColorsInputSchema = z.object({
-  hues: z.array(ThemeVizHueSchema).optional(),
-  palette: z.array(z.string()).optional(),
-});
-
-export type ThemeVisualizationColorsInput = z.infer<typeof ThemeVisualizationColorsInputSchema>;
 
 /**
  * @internal
