@@ -683,18 +683,13 @@ func TestRemoveSecretsForContactPoint(t *testing.T) {
 			settings["api_token"] = "test-token"
 		},
 		"oncall": func(settings map[string]any) { // add authorization_credentials field since it's expected as a secret field
-			settings["AUTHORIZATION_CREDENTIALS"] = "test-authz-creds"
-			// remove the lower case version so we don't have a duplicate secret
-			delete(settings, "authorization_credentials")
+			settings["authorization_credentials"] = "test-authz-creds"
 		},
 	}
 
 	configs := notifytest.AllKnownV1ConfigsForTesting
 	keys := slices.Sorted(maps.Keys(configs))
 	for _, integrationType := range keys {
-		if integrationType != "oncall" {
-			continue
-		}
 		integration := models.IntegrationGen(models.IntegrationMuts.WithValidConfig(integrationType))()
 		if f, ok := overrides[integrationType]; ok {
 			f(integration.Settings)
@@ -724,15 +719,72 @@ func TestRemoveSecretsForContactPoint(t *testing.T) {
 						assert.Fail(t, fmt.Sprintf("cannot get expected value for field '%s'", field))
 						continue FIELDS_ASSERT
 					}
-					expectedValue, ok = v[segment]
-					if !ok {
-						expectedValue = v[strings.ToUpper(segment)]
-					}
+					expectedValue = v[segment]
 				}
 				assert.EqualValues(t, secureFields[field], expectedValue)
 				v, err := cp.Settings.GetPath(path...).Value()
 				assert.NoError(t, err)
 				assert.Nilf(t, v, "field %s is expected to be removed from the settings", field)
+			}
+		})
+	}
+}
+
+func TestRemoveSecretsForContactPoint_CaseInsensitive(t *testing.T) {
+	// Each case stores a secret under a non-canonical casing of the schema's
+	// secret field name and asserts that RemoveSecretsForContactPoint still
+	// extracts it into secureFields and strips it from settings.
+	cases := []struct {
+		name        string
+		integration string
+		field       string // canonical field name from the schema
+		storedKey   string // the differently-cased key actually stored in settings
+	}{
+		{
+			name:        "camelCase field stored uppercase",
+			integration: "opsgenie",
+			field:       "apiKey",
+			storedKey:   "APIKEY",
+		},
+		{
+			name:        "camelCase field stored lowercase",
+			integration: "opsgenie",
+			field:       "apiKey",
+			storedKey:   "apikey",
+		},
+		{
+			name:        "snake_case field stored uppercase",
+			integration: "webhook",
+			field:       "authorization_credentials",
+			storedKey:   "AUTHORIZATION_CREDENTIALS",
+		},
+		{
+			name:        "snake_case field stored mixed-case",
+			integration: "webhook",
+			field:       "authorization_credentials",
+			storedKey:   "Authorization_Credentials",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			settings, err := simplejson.NewJson(fmt.Appendf(nil, `{%q:"test-secret"}`, tc.storedKey))
+			require.NoError(t, err)
+			cp := definitions.EmbeddedContactPoint{
+				Name:     "case-insensitive-" + tc.integration,
+				Type:     tc.integration,
+				Settings: settings,
+			}
+
+			secureFields, err := RemoveSecretsForContactPoint(&cp)
+			require.NoError(t, err)
+
+			assert.Equal(t, "test-secret", secureFields[tc.field])
+
+			settingsMap, err := cp.Settings.Map()
+			require.NoError(t, err)
+			for k := range settingsMap {
+				assert.Falsef(t, strings.EqualFold(k, tc.field), "expected %s to be removed from settings but key %q remains", tc.field, k)
 			}
 		})
 	}
