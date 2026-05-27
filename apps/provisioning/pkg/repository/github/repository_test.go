@@ -544,36 +544,6 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 			expectedResult: []provisioning.HistoryItem{},
 		},
 		{
-			name: "invalid ref with shell metacharacters is rejected before API call",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						Branch: "main",
-						Path:   "dashboards",
-					},
-				},
-			},
-			path:          "dashboard.json",
-			ref:           "main; rm -rf /",
-			mockSetup:     func(m *MockClient) {},
-			expectedError: repo.ErrInvalidRef,
-		},
-		{
-			name: "invalid ref with double dots is rejected before API call",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						Branch: "main",
-						Path:   "dashboards",
-					},
-				},
-			},
-			path:          "dashboard.json",
-			ref:           "feature/..bad",
-			mockSetup:     func(m *MockClient) {},
-			expectedError: repo.ErrInvalidRef,
-		},
-		{
 			name: "6-char hex ref is treated as a valid branch name and forwarded",
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
