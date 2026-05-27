@@ -440,7 +440,10 @@
       "label-value": "Valor"
     },
     "alert-instance-extension-point": {
-      "aria-label-actions": "Acciones"
+      "n-contact-points_one": "",
+      "n-contact-points_other": "",
+      "view-route_one": "",
+      "view-route_other": ""
     },
     "alert-instance-modal-selector": {
       "add-alert-data-to-payload": "Añadir datos de alerta a la carga útil",
@@ -456,6 +459,7 @@
     },
     "alert-instances-table": {
       "created": "Creada",
+      "destination": "",
       "labels": "Etiquetas",
       "state": "Estado"
     },
@@ -2341,6 +2345,7 @@
     },
     "notification-route": {
       "no-labels": "Ninguna etiqueta",
+      "notification-policies": "",
       "notification-policy": "Política de notificación"
     },
     "notification-route-header": {
@@ -4380,7 +4385,6 @@
       "button-cancel": "Cancelar",
       "button-delete": "Eliminar",
       "button-deleting": "Eliminando...",
-      "commit": "Eliminar carpeta",
       "delete-warning": "Esto eliminará esta carpeta y todas sus derivadas. En total, esto afectará a:",
       "missing-info": "Faltan campos obligatorios.",
       "success-message": "Carpeta eliminada correctamente"
@@ -4494,7 +4498,6 @@
       "button-cancel": "Cancelar",
       "button-rename": "Cambiar nombre",
       "button-renaming": "Cambiando el nombre...",
-      "commit": "Cambiar nombre de la carpeta",
       "error-saving": "Error al cambiar el nombre de la carpeta",
       "label-folder-name": "Nombre de la carpeta",
       "missing-info": "Faltan campos obligatorios.",
@@ -6383,6 +6386,8 @@
         "ungroup-tabs": "Desagrupar pestañas"
       },
       "name": "Pestañas",
+      "scroll-tabs-left": "",
+      "scroll-tabs-right": "",
       "tab": {
         "new": "Nueva pestaña",
         "repeat": {
@@ -6480,6 +6485,10 @@
         },
         "save-dashboard-short": "Guardar",
         "save-library-panel": "Guardar panel de librería",
+        "save-template": {
+          "label": "",
+          "tooltip": ""
+        },
         "share": {
           "arrow": "Compartir",
           "tooltip": "Copiar enlace"
@@ -6493,6 +6502,9 @@
       "read-only": "Solo lectura",
       "refresh": "Actualizar panel de control",
       "save": "Guardar panel de control",
+      "save-as-template": {
+        "label": ""
+      },
       "save-dashboard": {
         "label": "Guardar panel de control",
         "tooltip": "Guardar cambios"
@@ -7525,7 +7537,9 @@
         "label-details": "Detalles",
         "title": "Guardar panel de control",
         "title-copy": "Guardar copia del dashboard",
-        "title-provisioned": "Dashboard aprovisionado"
+        "title-provisioned": "Dashboard aprovisionado",
+        "title-template": "",
+        "title-update-template": ""
       }
     },
     "save-dashboard-form": {
@@ -7602,6 +7616,10 @@
     },
     "section-filters-list": {
       "add-filter": ""
+    },
+    "section-placement": {
+      "top-row": "",
+      "top-tab": ""
     },
     "selection-options-form": {
       "description-enables-multiple-values-selected": "Permite seleccionar varios valores al mismo tiempo",
@@ -7742,9 +7760,6 @@
     "variable-display-select": {
       "label": "Mostrar",
       "options": {
-        "above-dashboard": {
-          "label": "Encima del dashboard"
-        },
         "controls-menu": {
           "description": "Visible cuando el menú de controles está abierto",
           "label": "Menú de controles"
@@ -7753,9 +7768,9 @@
           "description": "Solo visible en el modo de edición",
           "label": "Oculto"
         },
-        "hidden-label": {
-          "description": "Encima del dashboard, pero sin mostrar el nombre de la variable",
-          "label": "Encima del dashboard, con la etiqueta oculta"
+        "top-placement-hidden-label": {
+          "description": "",
+          "label": ""
         }
       }
     },
@@ -7838,12 +7853,15 @@
           "reorder-variables-list": "Reordenar la lista de variables"
         }
       },
-      "title-above-dashboard_one": "Encima del dashboard ({{count}})",
-      "title-above-dashboard_other": "Encima del dashboard ({{count}})",
+      "top-placement": {
+        "default": ""
+      },
       "title-controls-menu_one": "Menú de controles ({{count}})",
       "title-controls-menu_other": "Menús de controles ({{count}})",
       "title-hidden_one": "Oculto ({{count}})",
-      "title-hidden_other": "Ocultos ({{count}})"
+      "title-hidden_other": "Ocultos ({{count}})",
+      "title-top-placement_one": "",
+      "title-top-placement_other": ""
     },
     "version-history": {
       "comparison": {
@@ -10747,7 +10765,7 @@
     "name-unit": "Unidad",
     "name-value-name": "Nombre del valor",
     "name-y-axis-scale": "Escala del eje Y",
-    "name-y-bucket-scale": "Escala de cubo Y",
+    "name-y-bucket-scale": "",
     "placeholder-axis-label": "Auto",
     "placeholder-axis-width": "Auto",
     "placeholder-decimals": "Auto",
@@ -10862,6 +10880,12 @@
     "name-stacking": "Apilamiento"
   },
   "home": {
+    "dashboard-tabs": {
+      "recent": "",
+      "recent-active": "",
+      "starred": "",
+      "starred-active": ""
+    },
     "home-page": {
       "edition": {
         "cloud": "",
@@ -10874,6 +10898,23 @@
         "morning": ""
       },
       "placeholder": ""
+    },
+    "recent-dashboards-tab": {
+      "browse": "",
+      "clear": "",
+      "create": "",
+      "empty": "",
+      "empty-description": "",
+      "error-title": "",
+      "loading": "",
+      "retry": ""
+    },
+    "starred-dashboards-tab": {
+      "empty": "",
+      "empty-description": "",
+      "error-title": "",
+      "loading": "",
+      "retry": ""
     }
   },
   "inspector": {
@@ -11970,6 +12011,9 @@
       "subtitle": "Administrar la configuración de todo el servidor y el acceso a recursos como organizaciones, usuarios y licencias",
       "title": "Administrador del servidor"
     },
+    "agentic-testing": {
+      "title": ""
+    },
     "alert-list-legacy": {
       "title": "Reglas de alerta"
     },
@@ -12565,6 +12609,9 @@
       "required": "",
       "save-tooltip": ""
     }
+  },
+  "page-loader": {
+    "default": ""
   },
   "panel": {
     "dashlist": {
@@ -13233,11 +13280,24 @@
     "code-block": {
       "aria-label-copy": "Copiar código al portapapeles"
     },
+    "commit-message": {
+      "dashboard-create-default": "",
+      "dashboard-delete-default": "",
+      "dashboard-move-default": "",
+      "dashboard-rename-default": "",
+      "dashboard-update-default": "",
+      "folder-create-default": "",
+      "folder-delete-default": "",
+      "folder-move-default": "",
+      "folder-rename-default": "",
+      "folder-update-default": ""
+    },
     "config-form": {
       "alert-repository-settings-saved": "Ajustes del repositorio guardados",
       "alert-repository-settings-updated": "Ajustes del repositorio actualizados",
       "button-save": "Guardar",
       "button-saving": "Guardando…",
+      "description-commit-message-template": "",
       "description-connection": "Selecciona la conexión de la aplicación de GitHub que se utilizará",
       "description-enabled": "Una vez que la extracción automática está habilitada, el objetivo no se puede cambiar.",
       "description-read-only": "Los recursos no se pueden modificar a través de Grafana.",
@@ -13248,6 +13308,7 @@
       "error-save-failed": "Error al guardar la configuración del repositorio",
       "error-save-repository": "Error al guardar los ajustes del repositorio",
       "label-automatic-pulling": "Extracción automática",
+      "label-commit-message-template": "",
       "label-connection": "Conexión de la aplicación de GitHub",
       "label-enabled": "Activado",
       "label-interval-seconds": "Intervalo (segundos)",
@@ -13256,6 +13317,7 @@
       "label-title": "Título",
       "option-entire-instance": "Instancia completa",
       "option-managed-folder": "Carpeta administrada",
+      "placeholder-commit-message-template": "",
       "placeholder-interval-seconds": "60",
       "placeholder-my-config": "Mi configuración"
     },
@@ -14148,6 +14210,10 @@
   "query-editor-next": {
     "action": {
       "add-transformation-filter": "Añadir filtro",
+      "cancel-delete": "",
+      "confirm-delete": "",
+      "confirm-delete-confirm": "",
+      "delete-confirmation-group": "",
       "disable": "Deshabilitar {{type}}",
       "duplicate": "Duplicar {{type}}",
       "enable": "Habilitar {{type}}",
@@ -14189,10 +14255,7 @@
       "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
-      "body-query": "¿Seguro que quieres eliminar esta consulta?",
-      "body-transformation": "Eliminar una transformación puede romper otras.",
-      "confirm": "Eliminar",
-      "title": "¿Eliminar {{name}}?"
+      "body-transformation": "Eliminar una transformación puede romper otras."
     },
     "details-sidebar": {
       "cache-timeout": "Tiempo de espera de la caché",

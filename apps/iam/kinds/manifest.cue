@@ -80,6 +80,28 @@ v0alpha1: {
 					responseMetadata: objectMeta: false
 				}
 			}
+			"/searchExternalGroupMappings": {
+				"POST": {
+					name: "createSearchExternalGroupMappings"
+					request: {
+						query: {
+							limit?:  int64 | 30
+							page?:   int64 | 1
+							offset?: int64 | 0
+						}
+						body: {
+							externalGroups?: [...string]
+						}
+					}
+					response: {
+						// Deduplicated team UIDs whose spec.externalGroups intersect the request set.
+						teams: [...string]
+						// Raw match count; may exceed len(teams) in legacy storage mode where one team can match through multiple group rows. Use to drive pagination, not as a team count.
+						totalHits: int64
+					}
+					responseMetadata: objectMeta: false
+				}
+			}
 		}
 	}
 }

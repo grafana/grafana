@@ -303,6 +303,45 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 		require.NotEmpty(t, updatedRule.FolderFullpath, "FolderFullpath should be populated")
 		assert.Equal(t, folderBTitle, updatedRule.FolderFullpath, "FolderFullpath should be updated to Folder B")
 	})
+
+	t.Run("should preserve guid and use correct table when called inside an outer transaction", func(t *testing.T) {
+		// Regression test for the ORM table inference bug where UpdateAlertRules was
+		// called from callers (UpdateRuleGroup, UpdateAlertRule) that already hold an
+		// outer InTransaction session on the context. A prior query on that shared
+		// session could leave xorm's table state pointing at the wrong model,
+		// causing "SELECT alert_rule columns FROM user" on PostgreSQL.
+		rule := createRule(t, store, gen)
+		require.NotEmpty(t, rule.GUID, "rule must have a guid after insert")
+		originalGUID := rule.GUID
+
+		newRule := models.CopyRule(rule)
+		newRule.Title = util.GenerateShortUID()
+
+		err := sqlStore.InTransaction(context.Background(), func(ctx context.Context) error {
+			// Simulate a prior query on the shared session using a different table,
+			// as would happen when the folder service or provenance store runs on
+			// the same transaction context before UpdateAlertRules is called.
+			_ = sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+				_, _ = sess.Table("alert_rule_version").Where("1=0").Count()
+				return nil
+			})
+			return store.UpdateAlertRules(ctx, &usr, []models.UpdateRule{{
+				Existing: rule,
+				New:      *newRule,
+			}})
+		})
+		require.NoError(t, err)
+
+		dbrule := &alertRule{}
+		err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+			exist, err := sess.Table(alertRule{}).ID(rule.ID).Get(dbrule)
+			require.Truef(t, exist, "rule with ID %d not found after update", rule.ID)
+			return err
+		})
+		require.NoError(t, err)
+		require.Equal(t, originalGUID, dbrule.GUID, "guid must not change on update — it is an immutable identifier")
+		require.Equal(t, newRule.Title, dbrule.Title)
+	})
 }
 
 func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
