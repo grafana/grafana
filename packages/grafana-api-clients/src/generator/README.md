@@ -22,6 +22,9 @@ If the selected API group/version is already present in the codegen config, the 
 existing client instead. Update mode regenerates endpoints from the existing config and does not modify config entries,
 Redux middleware/reducers/imports, package exports, or scaffold files.
 
+For the full end-to-end update flow from API types to OpenAPI snapshots to RTK Query endpoints, see
+[Updating generated clients](../../README.md#updating-generated-clients).
+
 ## What It Does
 
 The generator automates the following:
