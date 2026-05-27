@@ -5,6 +5,10 @@ import { generatedAPI as advisorAPIv0alpha1 } from './advisor/v0alpha1';
 import { generatedAPI as collectionsAPIv1alpha1 } from './collections/v1alpha1';
 import { generatedAPI as correlationsAPIv0alpha1 } from './correlations/v0alpha1';
 import { generatedAPI as dashboardAPIv0alpha1 } from './dashboard/v0alpha1';
+import { generatedAPI as dashboardAPIv1beta1 } from './dashboard/v1beta1';
+import { generatedAPI as dashboardAPIv2 } from './dashboard/v2';
+import { generatedAPI as dashboardAPIv2alpha1 } from './dashboard/v2alpha1';
+import { generatedAPI as dashboardAPIv2beta1 } from './dashboard/v2beta1';
 import { generatedAPI as folderAPIv1beta1 } from './folder/v1beta1';
 import { generatedAPI as historianAlertingAPIv0alpha1 } from './historian.alerting/v0alpha1';
 import { generatedAPI as iamAPIv0alpha1 } from './iam/v0alpha1';
@@ -43,6 +47,10 @@ export const allMiddleware = [
   orgPreferencesAPI.middleware,
   teamPreferencesAPI.middleware,
   notificationsAlertingAPIv1beta1.middleware,
+  dashboardAPIv1beta1.middleware,
+  dashboardAPIv2.middleware,
+  dashboardAPIv2alpha1.middleware,
+  dashboardAPIv2beta1.middleware,
   // PLOP_INJECT_MIDDLEWARE
 ] as const;
 
@@ -67,6 +75,10 @@ export const allReducers = {
   [orgPreferencesAPI.reducerPath]: orgPreferencesAPI.reducer,
   [teamPreferencesAPI.reducerPath]: teamPreferencesAPI.reducer,
   [notificationsAlertingAPIv1beta1.reducerPath]: notificationsAlertingAPIv1beta1.reducer,
+  [dashboardAPIv1beta1.reducerPath]: dashboardAPIv1beta1.reducer,
+  [dashboardAPIv2.reducerPath]: dashboardAPIv2.reducer,
+  [dashboardAPIv2alpha1.reducerPath]: dashboardAPIv2alpha1.reducer,
+  [dashboardAPIv2beta1.reducerPath]: dashboardAPIv2beta1.reducer,
   // PLOP_INJECT_REDUCER
 };
 
