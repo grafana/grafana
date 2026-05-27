@@ -8,7 +8,7 @@ import {
   injectBeforeMarker,
   runGenerateApis,
   updatePackageJsonExports,
-  writeNewFile,
+  writeNewFileIfMissing,
 } from './actions.ts';
 import { confirmUpdateExistingClient, runPrompts } from './prompts.ts';
 import { renderBaseAPI, renderConfigEntry, renderIndexTs } from './templates.ts';
@@ -36,14 +36,14 @@ if (isExistingClient) {
 } else {
   const existingClientFiles = getExistingClientFiles(basePath, variant, answers.groupName, answers.version);
   if (existingClientFiles.length > 0) {
-    throw new Error(
-      `Client files already exist for ${answers.groupName}/${answers.version}, but no config entry was found in ${variant.codegenScript}. Refusing to create a partial client. Existing files:\n${existingClientFiles.map((filePath) => `- ${filePath}`).join('\n')}`
+    console.warn(
+      `⚠️ Client files already exist for ${answers.groupName}/${answers.version}, but no config entry was found in ${variant.codegenScript}. The generator will preserve existing files and continue creating missing files. Existing files:\n${existingClientFiles.map((filePath) => `- ${filePath}`).join('\n')}`
     );
   }
 
   // Create baseAPI.ts and index.ts
-  writeNewFile(path.join(clientDir, 'baseAPI.ts'), renderBaseAPI(answers, variant));
-  writeNewFile(path.join(clientDir, 'index.ts'), renderIndexTs());
+  writeNewFileIfMissing(path.join(clientDir, 'baseAPI.ts'), renderBaseAPI(answers, variant));
+  writeNewFileIfMissing(path.join(clientDir, 'index.ts'), renderIndexTs());
 
   // Add config entry to the generate script (inject before the marker so marker stays last)
   injectBeforeMarker(path.join(basePath, variant.codegenScript), MARKERS.CONFIG, renderConfigEntry(answers));

@@ -4,13 +4,15 @@ import path from 'path';
 
 import { type Variant, PACKAGE_ROOT } from './variants.ts';
 
-/** Write a new file, creating parent directories. Refuses to overwrite. */
-export function writeNewFile(filePath: string, content: string) {
+export function writeNewFileIfMissing(filePath: string, content: string): boolean {
   if (fs.existsSync(filePath)) {
-    throw new Error(`File already exists: ${filePath}`);
+    console.warn(`⚠️ Skipping existing file: ${filePath}`);
+    return false;
   }
+
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
   fs.writeFileSync(filePath, content, 'utf8');
+  return true;
 }
 
 export function hasAPIConfigEntry(basePath: string, variant: Variant, groupName: string, version: string): boolean {
