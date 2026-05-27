@@ -69,7 +69,7 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
 
   return (
     <div className={cx(styles.tabLayoutContainer, { [styles.nestedTabsMargin]: isNestedInTab })}>
-      <TabsBar className={styles.tabsBar}>
+      <TabsBar layout="contained" className={styles.tabsBar}>
         <DragDropContext onBeforeDragStart={onBeforeDragStart} onDragEnd={onDragEnd}>
           <div className={styles.tabsRow} {...{ [DASHBOARD_DROP_TARGET_KEY_ATTR]: key }}>
             <Droppable droppableId={key!} direction="horizontal">

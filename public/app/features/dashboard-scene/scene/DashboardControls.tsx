@@ -422,7 +422,8 @@ function getStyles(theme: GrafanaTheme2, isQueryEditorNext: boolean) {
     // Original controls style
     controls: css({
       gap: theme.spacing(1),
-      padding: theme.spacing(2, 2, 1, 2),
+      padding: theme.spacing(1, 1, 0),
+      borderBottom: `1px solid ${theme.colors.border.subtle}`,
       flexDirection: 'row',
       flexWrap: 'nowrap',
       position: 'relative',

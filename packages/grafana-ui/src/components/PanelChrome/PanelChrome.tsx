@@ -634,6 +634,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       minWidth: 0,
       paddingLeft: theme.spacing.x0_5,
       '& > h2': {
+        ...theme.typography.titleSm,
         minWidth: 0,
       },
     }),

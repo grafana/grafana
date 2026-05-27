@@ -16,6 +16,7 @@ export interface SidebarContextValue {
   tabsMode?: boolean;
   outerWrapperProps: React.HTMLAttributes<HTMLDivElement>;
   paneWidth: number;
+  topMargin: number;
   bottomMargin: number;
   edgeMargin: number;
   contentMargin: number;
@@ -44,6 +45,8 @@ export interface UseSideBarOptions {
   defaultToCompact?: boolean;
   /** Initial state for docked mode */
   defaultToDocked?: boolean;
+  /** defaults to 2 grid units (16px) */
+  topMargin?: number;
   /** defaults to 2 grid units (16px) */
   bottomMargin?: number;
   /** defaults to 2 grid units (16px) */
@@ -74,8 +77,9 @@ export function useSidebar({
   tabsMode,
   defaultToCompact = true,
   defaultToDocked = false,
+  topMargin = 0.5,
   bottomMargin = 2,
-  edgeMargin = 2,
+  edgeMargin = 1,
   contentMargin = 2,
   persistanceKey,
   onClosePane,
@@ -154,6 +158,7 @@ export function useSidebar({
     tabsMode,
     paneWidth,
     edgeMargin,
+    topMargin,
     bottomMargin,
     contentMargin,
     isHidden,

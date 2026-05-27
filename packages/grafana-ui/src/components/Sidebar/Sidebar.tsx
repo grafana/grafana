@@ -29,7 +29,7 @@ export interface Props {
 export function SidebarComp({ children, contextValue }: Props) {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
-  const { isDocked, position, tabsMode, hasOpenPane, edgeMargin, bottomMargin, onToggleIsHidden } = contextValue;
+  const { isDocked, position, tabsMode, hasOpenPane, topMargin, edgeMargin, bottomMargin, onToggleIsHidden } = contextValue;
 
   const className = cx({
     [styles.container]: true,
@@ -39,7 +39,7 @@ export function SidebarComp({ children, contextValue }: Props) {
     [styles.containerHidden]: !!contextValue.isHidden,
   });
 
-  const style = { [position]: theme.spacing(edgeMargin), bottom: theme.spacing(bottomMargin) };
+  const style = { [position]: theme.spacing(edgeMargin), top: theme.spacing(topMargin), bottom: theme.spacing(bottomMargin) };
 
   const ref = useCustomClickAway((evt) => {
     const portalContainer = getPortalContainer();

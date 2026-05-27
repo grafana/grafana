@@ -198,7 +198,7 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
     secondary: newPalette.ink700,
     elevated: palette.gray15,
     subtle: newPalette.ink850,
-    input: newPalette.ink700,
+    input: newPalette.ink800,
   };
 
   action = {

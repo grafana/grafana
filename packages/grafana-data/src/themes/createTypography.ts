@@ -118,6 +118,7 @@ export function createTypography(colors: ThemeColors, typographyInput: ThemeTypo
     body: buildVariant(fontWeightRegular, 13, 22, 0.15),
     bodySmall: buildVariant(fontWeightRegular, 12, 18, 0.15),
     titleLarge: buildVariant(fontWeightBold, 18, 20, 0),
+    titleSm: buildVariant(fontWeightMedium, 13, 16, 0),
     headingLarge: buildVariant(fontWeightBold, 15, 18, 0),
     descriptionLg: buildVariant(fontWeightRegular, 13, 16, 0),
     buttonMd: buildVariant(fontWeightMedium, 13, 16, 0),
@@ -161,6 +162,7 @@ export interface ThemeTypographyVariantTypes {
   body: ThemeTypographyVariant;
   bodySmall: ThemeTypographyVariant;
   titleLarge: ThemeTypographyVariant;
+  titleSm: ThemeTypographyVariant;
   headingLarge: ThemeTypographyVariant;
   descriptionLg: ThemeTypographyVariant;
   buttonMd: ThemeTypographyVariant;

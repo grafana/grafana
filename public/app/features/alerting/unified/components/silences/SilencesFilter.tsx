@@ -218,5 +218,6 @@ export class SilenceFiltersController implements AdHocFiltersController {
 const getStyles = (theme: GrafanaTheme2) => ({
   comboboxWrapper: css({
     minWidth: '360px',
+    height: theme.components.height.md,
   }),
 });

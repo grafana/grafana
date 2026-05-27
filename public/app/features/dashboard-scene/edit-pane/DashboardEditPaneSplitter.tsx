@@ -332,7 +332,7 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
       scrollbarWidth: 'thin',
       scrollbarGutter: 'stable',
       // without top padding the fixed controls headers is rendered over the selection outline.
-      padding: theme.spacing(0.125, 1, 2, 2),
+      padding: theme.spacing(0.5, 0, 2, 1),
     }),
     scrollContainerNoSidebar: css({
       paddingRight: theme.spacing(2),

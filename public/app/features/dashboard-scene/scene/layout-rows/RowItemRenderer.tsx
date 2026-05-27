@@ -179,10 +179,10 @@ function getStyles(theme: GrafanaTheme2) {
     rowHeader: css({
       display: 'flex',
       gap: theme.spacing(1),
-      padding: theme.spacing(0.5, 0.5, 0.5, 0),
+      padding: theme.spacing(1.5, 0.5, 1.5, 0),
       alignItems: 'center',
       justifyContent: 'space-between',
-      marginBottom: theme.spacing(1),
+      //marginBottom: theme.spacing(1),
 
       '& .dashboard-row-header-drag-handle': css({
         opacity: 0,
@@ -211,7 +211,7 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       alignItems: 'center',
       gap: theme.spacing(2),
-      ...theme.typography.h5,
+      ...theme.typography.titleSm,
       fontWeight: theme.typography.fontWeightMedium,
       whiteSpace: 'nowrap',
       overflow: 'hidden',
@@ -265,11 +265,11 @@ function getStyles(theme: GrafanaTheme2) {
         '&:before': {
           content: '""',
           position: 'absolute',
-          top: `-8px`,
+          top: `0px`,
           bottom: 0,
-          left: '-16px',
+          left: '-16.5px',
           width: '1px',
-          backgroundColor: theme.colors.border.weak,
+          backgroundColor: theme.colors.border.subtle,
         },
       },
     }),
