@@ -1,9 +1,10 @@
+import type { Variant } from './variants.ts';
+
 export interface TemplateInput {
   group: string;
   groupName: string;
   version: string;
   reducerPath: string;
-  isEnterprise: boolean;
   endpoints: string;
 }
 
@@ -22,12 +23,8 @@ export function formatEndpoints(endpointsInput: string): string {
     .join(', ');
 }
 
-export function renderBaseAPI(input: TemplateInput): string {
-  const imports = input.isEnterprise
-    ? `import { getAPIBaseURL } from '@grafana/api-clients';
-import { createBaseQuery } from '@grafana/api-clients/rtkq';`
-    : `import { getAPIBaseURL } from '../../../../utils/utils';
-import { createBaseQuery } from '../../createBaseQuery';`;
+export function renderBaseAPI(input: TemplateInput, variant: Variant): string {
+  const imports = variant.baseAPIImports;
 
   return `import { createApi } from '@reduxjs/toolkit/query/react';
 

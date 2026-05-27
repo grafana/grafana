@@ -1,6 +1,7 @@
 import Enquirer from 'enquirer';
 
 import { getOpenAPISpecs } from './actions.ts';
+import { variantFor } from './variants.ts';
 
 export interface GeneratorAnswers {
   isEnterprise: boolean;
@@ -49,7 +50,7 @@ export async function runPrompts(basePath: string): Promise<GeneratorAnswers> {
   });
 
   // 2. Pick OpenAPI spec
-  const specs = getOpenAPISpecs(basePath, isEnterprise);
+  const specs = getOpenAPISpecs(basePath, variantFor(isEnterprise));
   const autocompleteOptions = {
     type: 'autocomplete' as const,
     name: 'apiInfo',
