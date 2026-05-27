@@ -30,7 +30,7 @@ env:
 
 jobs:
   report:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
     environment: ${{ github.event_name == 'workflow_dispatch' && 'manual-trigger' || '' }}
 
     steps:

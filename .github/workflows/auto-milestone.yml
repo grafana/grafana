@@ -15,7 +15,7 @@ permissions:
 # so it must not run untrusted code (such as checking out the pull request)
 jobs:
   main:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
     if: github.event.pull_request.draft == false
     steps:
       # Note: Github will not trigger other actions from this because it uses

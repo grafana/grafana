@@ -437,7 +437,8 @@
       "label-value": "값"
     },
     "alert-instance-extension-point": {
-      "aria-label-actions": "작업"
+      "n-contact-points_other": "",
+      "view-route_other": ""
     },
     "alert-instance-modal-selector": {
       "add-alert-data-to-payload": "페이로드에 경고 데이터 추가",
@@ -453,6 +454,7 @@
     },
     "alert-instances-table": {
       "created": "생성됨",
+      "destination": "",
       "labels": "라벨",
       "state": "상태"
     },
@@ -2328,6 +2330,7 @@
     },
     "notification-route": {
       "no-labels": "라벨 없음",
+      "notification-policies": "",
       "notification-policy": "알림 정책"
     },
     "notification-route-header": {
@@ -4353,7 +4356,6 @@
       "button-cancel": "취소",
       "button-delete": "삭제",
       "button-deleting": "삭제 중…",
-      "commit": "폴더 삭제",
       "delete-warning": "이 작업을 수행하면 이 폴더와 모든 하위 폴더가 삭제됩니다. 이는 전체적으로 다음에 영향을 미칩니다.",
       "missing-info": "필수 입력 항목 누락",
       "success-message": "폴더가 삭제되었습니다"
@@ -4467,7 +4469,6 @@
       "button-cancel": "취소",
       "button-rename": "이름 변경",
       "button-renaming": "이름 변경 중...",
-      "commit": "폴더 이름 변경",
       "error-saving": "폴더 이름 변경 실패",
       "label-folder-name": "폴더 이름",
       "missing-info": "필수 입력 항목 누락",
@@ -6352,6 +6353,8 @@
         "ungroup-tabs": "탭 그룹 해제"
       },
       "name": "탭",
+      "scroll-tabs-left": "",
+      "scroll-tabs-right": "",
       "tab": {
         "new": "새 탭",
         "repeat": {
@@ -6449,6 +6452,10 @@
         },
         "save-dashboard-short": "저장",
         "save-library-panel": "라이브러리 패널 저장",
+        "save-template": {
+          "label": "",
+          "tooltip": ""
+        },
         "share": {
           "arrow": "공유",
           "tooltip": "링크 복사"
@@ -6462,6 +6469,9 @@
       "read-only": "읽기 전용",
       "refresh": "대시보드 새로 고침",
       "save": "대시보드 저장",
+      "save-as-template": {
+        "label": ""
+      },
       "save-dashboard": {
         "label": "대시보드 저장",
         "tooltip": "변경 사항 저장"
@@ -7484,7 +7494,9 @@
         "label-details": "세부 정보",
         "title": "대시보드 저장",
         "title-copy": "대시보드 복사본 저장",
-        "title-provisioned": "프로비저닝된 대시보드"
+        "title-provisioned": "프로비저닝된 대시보드",
+        "title-template": "",
+        "title-update-template": ""
       }
     },
     "save-dashboard-form": {
@@ -7560,6 +7572,10 @@
     },
     "section-filters-list": {
       "add-filter": ""
+    },
+    "section-placement": {
+      "top-row": "",
+      "top-tab": ""
     },
     "selection-options-form": {
       "description-enables-multiple-values-selected": "여러 값을 동시에 선택할 수 있도록 합니다",
@@ -7700,9 +7716,6 @@
     "variable-display-select": {
       "label": "디스플레이",
       "options": {
-        "above-dashboard": {
-          "label": "대시보드 위"
-        },
         "controls-menu": {
           "description": "컨트롤 메뉴가 열려 있을 때 표시",
           "label": "컨트롤 메뉴"
@@ -7711,9 +7724,9 @@
           "description": "편집 모드에서만 표시됩니다",
           "label": "숨김"
         },
-        "hidden-label": {
-          "description": "대시보드 위에 있지만 변수 이름은 표시하지 않음",
-          "label": "대시보드 위, 라벨 숨김"
+        "top-placement-hidden-label": {
+          "description": "",
+          "label": ""
         }
       }
     },
@@ -7795,9 +7808,12 @@
           "reorder-variables-list": "변수 목록 순서 변경"
         }
       },
-      "title-above-dashboard_other": "대시보드 위({{count}})",
+      "top-placement": {
+        "default": ""
+      },
       "title-controls-menu_other": "컨트롤 메뉴({{count}})",
-      "title-hidden_other": "숨김({{count}})"
+      "title-hidden_other": "숨김({{count}})",
+      "title-top-placement_other": ""
     },
     "version-history": {
       "comparison": {
@@ -10689,7 +10705,7 @@
     "name-unit": "단위",
     "name-value-name": "값 이름",
     "name-y-axis-scale": "Y축 스케일",
-    "name-y-bucket-scale": "Y 버킷 척도",
+    "name-y-bucket-scale": "",
     "placeholder-axis-label": "자동",
     "placeholder-axis-width": "자동",
     "placeholder-decimals": "자동",
@@ -10804,6 +10820,12 @@
     "name-stacking": "스태킹"
   },
   "home": {
+    "dashboard-tabs": {
+      "recent": "",
+      "recent-active": "",
+      "starred": "",
+      "starred-active": ""
+    },
     "home-page": {
       "edition": {
         "cloud": "",
@@ -10816,6 +10838,23 @@
         "morning": ""
       },
       "placeholder": ""
+    },
+    "recent-dashboards-tab": {
+      "browse": "",
+      "clear": "",
+      "create": "",
+      "empty": "",
+      "empty-description": "",
+      "error-title": "",
+      "loading": "",
+      "retry": ""
+    },
+    "starred-dashboards-tab": {
+      "empty": "",
+      "empty-description": "",
+      "error-title": "",
+      "loading": "",
+      "retry": ""
     }
   },
   "inspector": {
@@ -11904,6 +11943,9 @@
       "subtitle": "서버 단위 설정 및 조직, 사용자, 라이선스와 같은 리소스에 대한 액세스 권한 관리",
       "title": "서버 관리자"
     },
+    "agentic-testing": {
+      "title": ""
+    },
     "alert-list-legacy": {
       "title": "경고 규칙"
     },
@@ -12496,6 +12538,9 @@
       "required": "",
       "save-tooltip": ""
     }
+  },
+  "page-loader": {
+    "default": ""
   },
   "panel": {
     "dashlist": {
@@ -13161,11 +13206,24 @@
     "code-block": {
       "aria-label-copy": "클립보드에 코드 복사"
     },
+    "commit-message": {
+      "dashboard-create-default": "",
+      "dashboard-delete-default": "",
+      "dashboard-move-default": "",
+      "dashboard-rename-default": "",
+      "dashboard-update-default": "",
+      "folder-create-default": "",
+      "folder-delete-default": "",
+      "folder-move-default": "",
+      "folder-rename-default": "",
+      "folder-update-default": ""
+    },
     "config-form": {
       "alert-repository-settings-saved": "리포지토리 설정이 저장되었습니다",
       "alert-repository-settings-updated": "리포지토리 설정이 업데이트되었습니다",
       "button-save": "저장",
       "button-saving": "저장 중...",
+      "description-commit-message-template": "",
       "description-connection": "사용할 GitHub 앱 연결을 선택하세요",
       "description-enabled": "자동 풀링이 활성화되면 대상을 변경할 수 없습니다.",
       "description-read-only": "Grafana를 통해 리소스를 수정할 수 없습니다.",
@@ -13176,6 +13234,7 @@
       "error-save-failed": "리포지토리 설정 저장 실패",
       "error-save-repository": "리포지토리 설정 저장 실패",
       "label-automatic-pulling": "자동 풀링",
+      "label-commit-message-template": "",
       "label-connection": "GitHub 앱 연결",
       "label-enabled": "활성화됨",
       "label-interval-seconds": "간격(초)",
@@ -13184,6 +13243,7 @@
       "label-title": "제목",
       "option-entire-instance": "전체 인스턴스",
       "option-managed-folder": "관리형 폴더",
+      "placeholder-commit-message-template": "",
       "placeholder-interval-seconds": "60",
       "placeholder-my-config": "내 구성"
     },
@@ -14064,6 +14124,10 @@
   "query-editor-next": {
     "action": {
       "add-transformation-filter": "필터 추가",
+      "cancel-delete": "",
+      "confirm-delete": "",
+      "confirm-delete-confirm": "",
+      "delete-confirmation-group": "",
       "disable": "{{type}} 비활성화",
       "duplicate": "{{type}} 복제",
       "enable": "{{type}} 활성화",
@@ -14103,10 +14167,7 @@
       "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
-      "body-query": "정말 이 쿼리를 삭제하시겠어요?",
-      "body-transformation": "하나의 변환을 제거하면 다른 변환이 제대로 작동하지 않을 수 있습니다.",
-      "confirm": "삭제",
-      "title": "{{name}}을(를) 삭제하시겠어요?"
+      "body-transformation": "하나의 변환을 제거하면 다른 변환이 제대로 작동하지 않을 수 있습니다."
     },
     "details-sidebar": {
       "cache-timeout": "캐시 타임아웃",

@@ -1777,6 +1777,9 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 				if err := iter.Error(); err != nil {
 					return err
 				}
+				if !checker(iter.Name(), iter.Folder()) {
+					continue
+				}
 				if err := srv.Send(&resourcepb.WatchEvent{
 					Type: resourcepb.WatchEvent_ADDED,
 					Resource: &resourcepb.WatchEvent_Resource{
