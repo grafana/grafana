@@ -23,6 +23,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: ./go.mod
+          cache: false
       - name: golangci-lint
         uses: golangci/golangci-lint-action@b002b6ecfcabe6ac0e2c6cba1bcc779eb34ac51f # v9
         with:
