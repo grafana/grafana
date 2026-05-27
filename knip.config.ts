@@ -38,6 +38,9 @@ const config: KnipConfig = {
       entry: [...packageEntries, '**/*.story.tsx'],
       ignoreDependencies: [...packageIgnoreDeps, '@storybook/react-webpack5', '@storybook/react'],
     },
+    'packages/grafana-api-clients': {
+      entry: [...packageEntries, 'src/scripts/generate-rtk-apis.ts', 'src/generator/plopfile.ts'],
+    },
   },
 };
 
