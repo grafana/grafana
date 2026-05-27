@@ -42,6 +42,51 @@ function buildRowsLayoutManager(rows: RowItem[] = []) {
 }
 
 describe('RowsLayoutManager', () => {
+  describe('getSlug', () => {
+    it('generates slugs based on row titles', () => {
+      const rowsLayoutManager = buildRowsLayoutManager();
+      const row1 = rowsLayoutManager.addNewRow(new RowItem({ title: 'My Row Title' }));
+      const row2 = rowsLayoutManager.addNewRow(new RowItem({ title: 'Another Row!' }));
+
+      expect(row1.getSlug()).toBe('My-Row-Title');
+      expect(row2.getSlug()).toBe('Another-Row!');
+    });
+
+    it('disambiguates slugs when multiple titles are encoded to the same value', () => {
+      const rowsLayoutManager = buildRowsLayoutManager();
+      const firstRow = rowsLayoutManager.addNewRow(new RowItem({ title: 'New row 1' }));
+      const secondRow = rowsLayoutManager.addNewRow(new RowItem({ title: 'New row-1' }));
+
+      expect(firstRow.getSlug()).toBe('New-row-1');
+      expect(secondRow.getSlug()).toBe('New-row-1__2');
+    });
+
+    it('keeps clean slugs when there is no slug duplication', () => {
+      const rowsLayoutManager = buildRowsLayoutManager();
+      const firstRow = rowsLayoutManager.addNewRow(new RowItem({ title: 'Row One' }));
+      const secondRow = rowsLayoutManager.addNewRow(new RowItem({ title: 'Row Two' }));
+
+      expect(firstRow.getSlug()).toBe('Row-One');
+      expect(secondRow.getSlug()).toBe('Row-Two');
+    });
+
+    it('keeps slug values stable across different row layout instances', () => {
+      const titles = ['New row 1', 'New row-1', 'Other row'];
+
+      const getSlugsFromFreshLayout = () => {
+        const rows = titles.map((title) => new RowItem({ title }));
+        buildRowsLayoutManager(rows);
+        return rows.map((row) => row.getSlug());
+      };
+
+      const firstRunSlugs = getSlugsFromFreshLayout();
+      const secondRunSlugs = getSlugsFromFreshLayout();
+
+      expect(firstRunSlugs).toEqual(['New-row-1', 'New-row-1__2', 'Other-row']);
+      expect(secondRunSlugs).toEqual(firstRunSlugs);
+    });
+  });
+
   describe('addNewRow', () => {
     beforeEach(() => {
       lastUndo = undefined;
