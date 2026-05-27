@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -19,7 +20,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	bolterrors "go.etcd.io/bbolt/errors"
-	"go.uber.org/atomic"
 	"go.uber.org/goleak"
 	"k8s.io/apimachinery/pkg/selection"
 
@@ -1435,11 +1435,11 @@ func updateTestDocs(ns resource.NamespacedResource, docs int) resource.UpdateFn 
 
 func updateTestDocsReturningMillisTimestamp(ns resource.NamespacedResource, docs int) (resource.UpdateFn, *atomic.Int64) {
 	cnt := 0
-	updateCalls := atomic.NewInt64(0)
+	var updateCalls atomic.Int64
 
 	return func(context context.Context, index resource.ResourceIndex, sinceRV int64) (newRV int64, updatedDocs int, _ error) {
 		now := time.Now()
-		updateCalls.Inc()
+		updateCalls.Add(1)
 
 		cnt++
 
@@ -1461,7 +1461,7 @@ func updateTestDocsReturningMillisTimestamp(ns resource.NamespacedResource, docs
 
 		err := index.BulkIndex(&resource.BulkIndexRequest{Items: items})
 		return now.UnixMilli(), docs, err
-	}, updateCalls
+	}, &updateCalls
 }
 
 func TestCleanOldIndexes(t *testing.T) {
@@ -1783,9 +1783,7 @@ func TestConcurrentIndexUpdateSearchAndRebuild(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	rebuilds := atomic.NewInt64(0)
-	updates := atomic.NewInt64(0)
-	searches := atomic.NewInt64(0)
+	var rebuilds, updates, searches atomic.Int64
 	const searchConcurrency = 25
 	for i := range searchConcurrency {
 		wg.Add(1)
@@ -1807,7 +1805,7 @@ func TestConcurrentIndexUpdateSearchAndRebuild(t *testing.T) {
 					}
 					require.NoError(t, err)
 				}
-				updates.Inc()
+				updates.Add(1)
 
 				resp, err := idx.Search(ctx, nil, &resourcepb.ResourceSearchRequest{
 					Options: &resourcepb.ListOptions{
@@ -1828,7 +1826,7 @@ func TestConcurrentIndexUpdateSearchAndRebuild(t *testing.T) {
 					require.NoError(t, err)
 				}
 				require.Equal(t, int64(10), resp.TotalHits)
-				searches.Inc()
+				searches.Add(1)
 			}
 		}()
 	}
@@ -1839,7 +1837,7 @@ func TestConcurrentIndexUpdateSearchAndRebuild(t *testing.T) {
 		for ctx.Err() == nil {
 			_, err := be.BuildIndex(t.Context(), ns, 10, nil, "test", indexTestDocs(ns, 10, 100), updateTestDocs(ns, 5), false, time.Time{}, 0)
 			require.NoError(t, err)
-			rebuilds.Inc()
+			rebuilds.Add(1)
 		}
 	}()
 
@@ -1927,7 +1925,7 @@ func TestConcurrentIndexUpdateAndSearchWithIndexMinUpdateInterval(t *testing.T) 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	attemptedUpdates := atomic.NewInt64(0)
+	var attemptedUpdates atomic.Int64
 
 	// Verify that each returned RV (unix timestamp in millis) is either the same as before, or at least minInterval later.
 	const searchConcurrency = 10
@@ -1938,7 +1936,7 @@ func TestConcurrentIndexUpdateAndSearchWithIndexMinUpdateInterval(t *testing.T) 
 
 			var collectedRVs []int64
 			for ctx.Err() == nil {
-				attemptedUpdates.Inc()
+				attemptedUpdates.Add(1)
 
 				// We use t.Context() here to avoid getting errors from context cancellation.
 				rv, err := idx.UpdateIndex(t.Context())

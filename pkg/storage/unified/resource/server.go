@@ -11,7 +11,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/Masterminds/semver"
+	"github.com/Masterminds/semver/v3"
 	"github.com/bwmarrin/snowflake"
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
@@ -1752,6 +1752,9 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 			for iter.Next() {
 				if err := iter.Error(); err != nil {
 					return err
+				}
+				if !checker(iter.Name(), iter.Folder()) {
+					continue
 				}
 				if err := srv.Send(&resourcepb.WatchEvent{
 					Type: resourcepb.WatchEvent_ADDED,

@@ -16,26 +16,11 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource/lease"
 )
 
-func TestMetricsNilSafe(t *testing.T) {
-	// Manager constructed without metrics must work end-to-end without
-	// panicking. Existing tests already exercise this path; this is an
-	// explicit smoke test for the documented invariant.
-	m := lease.NewManager(newMapKV(), "holder-nil", lease.WithGarbageCollectionDisabled)
-
-	l, err := m.Acquire(t.Context(), "metrics/nil-safe")
-	require.NoError(t, err)
-	require.NoError(t, m.Release(t.Context(), l))
-
-	_, err = m.RunGarbageCollection(t.Context())
-	require.NoError(t, err)
-}
-
 func TestMetricsAcquireRelease(t *testing.T) {
-	metrics := lease.NewMetrics(prometheus.NewRegistry())
-	m := lease.NewManager(newMapKV(), "holder-ar",
+	m := lease.NewManager(newMapKV(), "holder-ar", prometheus.NewPedanticRegistry(),
 		lease.WithGarbageCollectionDisabled,
-		lease.WithMetrics(metrics),
 	)
+	metrics := m.Metrics()
 
 	l, err := m.Acquire(t.Context(), "metrics/acquire-release")
 	require.NoError(t, err)
@@ -58,11 +43,10 @@ func TestMetricsAcquireRelease(t *testing.T) {
 }
 
 func TestMetricsAcquireErrorOutcome(t *testing.T) {
-	metrics := lease.NewMetrics(prometheus.NewRegistry())
-	m := lease.NewManager(newMapKV(), "holder-err",
+	m := lease.NewManager(newMapKV(), "holder-err", prometheus.NewPedanticRegistry(),
 		lease.WithGarbageCollectionDisabled,
-		lease.WithMetrics(metrics),
 	)
+	metrics := m.Metrics()
 
 	// Invalid name → Acquire returns before the retry loop. Duration is still
 	// observed with outcome=error.
@@ -75,11 +59,10 @@ func TestMetricsAcquireErrorOutcome(t *testing.T) {
 }
 
 func TestMetricsAcquireAlreadyHeldOutcome(t *testing.T) {
-	metrics := lease.NewMetrics(prometheus.NewRegistry())
-	m := lease.NewManager(newMapKV(), "holder-already-held",
+	m := lease.NewManager(newMapKV(), "holder-already-held", prometheus.NewPedanticRegistry(),
 		lease.WithGarbageCollectionDisabled,
-		lease.WithMetrics(metrics),
 	)
+	metrics := m.Metrics()
 
 	// First acquire succeeds; second acquire of the same name returns
 	// ErrLeaseAlreadyHeld.
@@ -98,12 +81,11 @@ func TestMetricsAcquireAlreadyHeldOutcome(t *testing.T) {
 func TestMetricsReleaseLostOutcome(t *testing.T) {
 	const ttl = 50 * time.Millisecond
 
-	metrics := lease.NewMetrics(prometheus.NewRegistry())
-	m := lease.NewManager(newMapKV(), "holder-release-lost",
+	m := lease.NewManager(newMapKV(), "holder-release-lost", prometheus.NewPedanticRegistry(),
 		lease.WithGarbageCollectionDisabled,
 		lease.WithInternalMinTTL(ttl),
-		lease.WithMetrics(metrics),
 	)
+	metrics := m.Metrics()
 
 	l, err := m.Acquire(t.Context(), "metrics/release-lost", lease.WithTTL(ttl))
 	require.NoError(t, err)
@@ -124,12 +106,11 @@ func TestMetricsReleaseLostOutcome(t *testing.T) {
 }
 
 func TestMetricsAcquireRetries(t *testing.T) {
-	metrics := lease.NewMetrics(prometheus.NewRegistry())
 	failing := &retryKV{KV: newMapKV()}
-	m := lease.NewManager(failing, "holder-retry",
+	m := lease.NewManager(failing, "holder-retry", prometheus.NewPedanticRegistry(),
 		lease.WithGarbageCollectionDisabled,
-		lease.WithMetrics(metrics),
 	)
+	metrics := m.Metrics()
 
 	// First Batch call fails with ErrKeyAlreadyExists, forcing the loop to
 	// retry exactly once.
@@ -144,12 +125,11 @@ func TestMetricsAcquireRetries(t *testing.T) {
 func TestMetricsLossOnExpiry(t *testing.T) {
 	const ttl = 50 * time.Millisecond
 
-	metrics := lease.NewMetrics(prometheus.NewRegistry())
-	m := lease.NewManager(newMapKV(), "holder-loss",
+	m := lease.NewManager(newMapKV(), "holder-loss", prometheus.NewPedanticRegistry(),
 		lease.WithGarbageCollectionDisabled,
 		lease.WithInternalMinTTL(ttl),
-		lease.WithMetrics(metrics),
 	)
+	metrics := m.Metrics()
 
 	l, err := m.Acquire(t.Context(), "metrics/loss", lease.WithTTL(ttl))
 	require.NoError(t, err)
@@ -168,12 +148,11 @@ func TestMetricsLossOnExpiry(t *testing.T) {
 func TestMetricsRenewalSuccess(t *testing.T) {
 	const ttl = 100 * time.Millisecond
 
-	metrics := lease.NewMetrics(prometheus.NewRegistry())
-	m := lease.NewManager(newMapKV(), "holder-renew",
+	m := lease.NewManager(newMapKV(), "holder-renew", prometheus.NewPedanticRegistry(),
 		lease.WithGarbageCollectionDisabled,
 		lease.WithInternalMinTTL(ttl),
-		lease.WithMetrics(metrics),
 	)
+	metrics := m.Metrics()
 
 	l, err := m.Acquire(t.Context(), "metrics/renew", lease.WithTTL(ttl), lease.WithAutoRenew())
 	require.NoError(t, err)
@@ -192,12 +171,11 @@ func TestMetricsRenewalFailureLost(t *testing.T) {
 	const ttl = 100 * time.Millisecond
 
 	store := newMapKV()
-	metrics := lease.NewMetrics(prometheus.NewRegistry())
-	a := lease.NewManager(store, "holder-a",
+	a := lease.NewManager(store, "holder-a", prometheus.NewPedanticRegistry(),
 		lease.WithGarbageCollectionDisabled,
 		lease.WithInternalMinTTL(ttl),
-		lease.WithMetrics(metrics),
 	)
+	metrics := a.Metrics()
 
 	l, err := a.Acquire(t.Context(), "metrics/renew-lost", lease.WithTTL(ttl), lease.WithAutoRenew())
 	require.NoError(t, err)
@@ -207,7 +185,7 @@ func TestMetricsRenewalFailureLost(t *testing.T) {
 	// a's renewal goroutine ticks it tries to create the same generation key
 	// and fails with ErrLeaseLost.
 	future := func() time.Time { return time.Now().Add(time.Hour) }
-	b := lease.NewManager(store, "holder-b",
+	b := lease.NewManager(store, "holder-b", nil,
 		lease.WithGarbageCollectionDisabled,
 		lease.WithInternalMinTTL(ttl),
 		lease.WithInternalNowFunc(future),
@@ -227,11 +205,10 @@ func TestMetricsRenewalFailureLost(t *testing.T) {
 }
 
 func TestMetricsGCExecuted(t *testing.T) {
-	metrics := lease.NewMetrics(prometheus.NewRegistry())
-	m := lease.NewManager(newMapKV(), "holder-gc-exec",
+	m := lease.NewManager(newMapKV(), "holder-gc-exec", prometheus.NewPedanticRegistry(),
 		lease.WithGarbageCollectionDisabled,
-		lease.WithMetrics(metrics),
 	)
+	metrics := m.Metrics()
 
 	_, err := m.RunGarbageCollection(t.Context())
 	require.NoError(t, err)
@@ -246,11 +223,10 @@ func TestMetricsGCSkipped(t *testing.T) {
 	// Simulate another GC instance currently holding the internal key.
 	writeGCInternalKey(t, store, time.Now().Add(time.Minute))
 
-	metrics := lease.NewMetrics(prometheus.NewRegistry())
-	m := lease.NewManager(store, "holder-gc-skip",
+	m := lease.NewManager(store, "holder-gc-skip", prometheus.NewPedanticRegistry(),
 		lease.WithGarbageCollectionDisabled,
-		lease.WithMetrics(metrics),
 	)
+	metrics := m.Metrics()
 
 	_, err := m.RunGarbageCollection(t.Context())
 	require.NoError(t, err)
@@ -269,13 +245,12 @@ func TestMetricsGCScannedAndDeleted(t *testing.T) {
 	now := base
 	nowFunc := func() time.Time { return now }
 
-	metrics := lease.NewMetrics(prometheus.NewRegistry())
-	m := lease.NewManager(store, "holder-gc-counts",
+	m := lease.NewManager(store, "holder-gc-counts", prometheus.NewPedanticRegistry(),
 		lease.WithGarbageCollectionDisabled,
 		lease.WithInternalMinTTL(shortTTL),
 		lease.WithInternalNowFunc(nowFunc),
-		lease.WithMetrics(metrics),
 	)
+	metrics := m.Metrics()
 
 	// One released lease and one expired lease, both well in the past.
 	released, err := m.Acquire(ctx, "metrics/gc/released")

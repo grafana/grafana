@@ -454,6 +454,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/dashboards/V2DashWithRowRepeats.json @grafana/dashboards-squad
 /e2e-playwright/dashboards/V2DashWithTabRepeats.json @grafana/dashboards-squad
 /e2e-playwright/dashboards/V2DashWithTabs.json @grafana/dashboards-squad
+/e2e-playwright/dashboards/V2DashboardWithTabsForSlugTest.json @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/adhoc-filter-from-panel.spec.ts @grafana/datapro
 /e2e-playwright/dashboards-suite/dashboard-browse-nested.spec.ts @grafana/grafana-frontend-navigation
 /e2e-playwright/dashboards-suite/dashboard-browse.spec.ts @grafana/grafana-frontend-navigation
@@ -590,7 +591,6 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/src/utils/datasource* @grafana/grafana-datasources-core-services
 /packages/grafana-data/src/utils/docs.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/src/utils/deprecationWarning* @grafana/grafana-frontend-platform
-/packages/grafana-data/src/utils/featureToggles.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/src/utils/fieldParser.ts @grafana/dataviz-squad
 /packages/grafana-data/src/utils/flotPairs* @grafana/dataviz-squad
 /packages/grafana-data/src/utils/fuzzySearch* @grafana/grafana-frontend-navigation
@@ -668,6 +668,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/components/QueryEditorWithMigration* @grafana/grafana-catalog
 /packages/grafana-runtime/src/config.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/services/ @grafana/grafana-frontend-platform
+/packages/grafana-runtime/src/services/dataSource @grafana/grafana-catalog
 /packages/grafana-runtime/src/services/logging @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/services/pluginExtensions @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/services/CorrelationsService.ts @grafana/datapro
@@ -806,6 +807,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /lefthook.yml @grafana/frontend-ops
 /lefthook.rc @grafana/frontend-ops
 /.levignore.js @grafana/grafana-frontend-platform
+knip.config.ts @grafana/grafana-frontend-platform
 playwright.config.ts @grafana/grafana-catalog
 playwright.storybook.config.ts @grafana/grafana-frontend-platform
 
