@@ -3200,6 +3200,7 @@ __metadata:
     "@storybook/addon-webpack5-compiler-swc": "npm:^4.0.3"
     "@storybook/mdx2-csf": "npm:1.1.0"
     "@storybook/preset-scss": "npm:1.0.3"
+    "@storybook/react": "npm:10.3.6"
     "@storybook/react-webpack5": "npm:10.3.6"
     "@storybook/test-runner": "npm:^0.24.3"
     "@tanstack/react-virtual": "npm:^3.5.1"

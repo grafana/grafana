@@ -147,6 +147,7 @@
     "@storybook/addon-webpack5-compiler-swc": "^4.0.3",
     "@storybook/mdx2-csf": "1.1.0",
     "@storybook/preset-scss": "1.0.3",
+    "@storybook/react": "10.3.6",
     "@storybook/react-webpack5": "10.3.6",
     "@storybook/test-runner": "^0.24.3",
     "@testing-library/dom": "10.4.1",
