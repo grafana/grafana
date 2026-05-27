@@ -20,19 +20,22 @@ const config: KnipConfig = {
   ignore: ['**/*.gen.ts*', '**/*_gen.ts*'],
   ignoreBinaries: ['make'],
   workspaces: {
-    // TODO figure out how to properly include webpack/jest configs
     '.': {
+      // TODO figure out how to properly include webpack/jest configs
       jest: false,
     },
     'public/app/plugins/datasource/*': {
+      // TODO figure out how to properly include webpack/jest configs
       webpack: false,
     },
     'e2e-playwright/test-plugins/*': {
+      // TODO figure out how to properly include webpack/jest configs
       webpack: false,
     },
     'packages/**': {
       entry: packageEntries,
       ignoreDependencies: packageIgnoreDeps,
+      jest: true,
     },
     // `grafana-alerting` has stories that are included in `grafana-ui`'s storybook
     // this is a bad idea
