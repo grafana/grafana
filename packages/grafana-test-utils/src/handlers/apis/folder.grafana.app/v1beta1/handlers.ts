@@ -4,6 +4,7 @@ import { HttpResponse, http, type HttpResponseResolver } from 'msw';
 import type {
   DescendantCounts,
   Folder,
+  FolderAccessInfo,
   FolderInfoList,
   FolderList,
   OwnerReference,
@@ -75,6 +76,35 @@ const getFolderHandler = () =>
       const appPlatformFolder = folderToAppPlatform(response.item, undefined, namespace);
 
       return HttpResponse.json(appPlatformFolder);
+    }
+  );
+
+const getFolderAccessHandler = () =>
+  http.get<{ folderUid: string; namespace: string }>(
+    '/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/:folderUid/access',
+    ({ params }) => {
+      const { folderUid } = params;
+
+      const folder = mockTree.find(({ item }) => item.uid === folderUid);
+      if (!folder) {
+        return HttpResponse.json(folderNotFoundError, { status: 404 });
+      }
+
+      const response: FolderAccessInfo = {
+        ...baseResponse,
+        kind: 'FolderAccessInfo',
+        canAdmin: true,
+        canDelete: true,
+        canEdit: true,
+        canSave: true,
+        accessControl: {
+          'dashboards.permissions:write': true,
+          'dashboards:create': true,
+          'folders:write': true,
+        },
+      };
+
+      return HttpResponse.json(response);
     }
   );
 
@@ -318,6 +348,7 @@ export const customCreateFolderHandler = (resolver: HttpResponseResolver) =>
 export default [
   getFolderListHandler(),
   getFolderHandler(),
+  getFolderAccessHandler(),
   getFolderParentsHandler(),
   createFolderHandler(),
   replaceFolderHandler(),
