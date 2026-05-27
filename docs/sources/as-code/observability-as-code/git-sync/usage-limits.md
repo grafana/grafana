@@ -48,7 +48,7 @@ The following Git Sync per-tier limits apply:
 | Amount of repositories                    | 1                | 10                | 10              | 10                     |
 | Amount of synced resources per repository | 20               | 1,000             | No limit        | No limit               |
 
-**Do not sync more than 1,000 resources per Git Sync connection.** For details on usage and storage limits, refer to [Dashboard and folder limits](https://grafana.com/docs/grafana-cloud/cost-management-and-billing/manage-invoices/understand-your-invoice/usage-limits/#other-usage-limits). 
+**We currently do not allow to sync more than 1,000 resources per Git Sync connection.** For details on usage and storage limits, refer to [Dashboard and folder limits](https://grafana.com/docs/grafana-cloud/cost-management-and-billing/manage-invoices/understand-your-invoice/usage-limits/#other-usage-limits). 
 
 ### Modify your usage limits
 
