@@ -187,7 +187,7 @@
     "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-npm-package.js",
     "postpack": "mv package.json.bak package.json",
     "generate-apis": "yarn workspace @grafana/openapi process-specs && NODE_OPTIONS='--disable-warning=ExperimentalWarning' rtk-query-codegen-openapi ./src/scripts/generate-rtk-apis.ts",
-    "generate:api-client": "NODE_OPTIONS='--experimental-strip-types --disable-warning=ExperimentalWarning' node src/generator/generate.ts"
+    "generate:api-client": "node src/generator/generate.ts"
   },
   "devDependencies": {
     "@rtk-query/codegen-openapi": "^2.0.0",
