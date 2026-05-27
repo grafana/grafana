@@ -145,7 +145,7 @@ A **Regex** mapping maps regular expressions to text and a color. For example, i
 ![A regular expression used to truncate full URLs to the text wwww](/media/docs/grafana/panels-visualizations/screenshot-map-regex-v10.4.png)
 
 {{< admonition type="note" >}}
-The `.` metacharacter doesn't match newline characters `\n` and `\r` by default.
+The character `.` doesn't match newline characters `\n` and `\r` by default.
 If your data contains multiline strings, use `[\s\S]` in place of `.` to match any character including newlines.
 For more detailed information, refer to the [Multiline regular expression example](#multiline-regular-expression-example).
 {{< /admonition >}}
@@ -192,13 +192,14 @@ If your data source returns multiline strings—such as Windows event log entrie
 | `.*`      | Single-line text only          |
 | `[\s\S]*` | Single-line and multiline text |
 
-For example, to map any multiline log entry that starts with `ERROR` to the display text **Error**, use the pattern:
+For example, if you wanted to map any multiline log entry that starts with `ERROR` to the display text **Error**, using `ERROR.*` would only match text up to the first newline and would fail to map the full entry.
+
+Instead, you should use the pattern:
 
 ```text
 ERROR[\s\S]*
 ```
 
-Using `ERROR.*` instead would only match text up to the first newline and would fail to map the full entry.
 
 ## Add a value mapping
 
