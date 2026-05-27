@@ -1,7 +1,7 @@
 name: Build Docker Variants
 
 # Reusable workflow that builds all six Docker variants (alpine, alpine-slim,
-# ubuntu, ubuntu-slim, distroless, distroless-slim) from a pre-built source
+# ubuntu, ubuntu-slim) from a pre-built source
 # tarball for a single OS/arch combination.
 #
 # Called from release-build.yml (once per arch, tarball from build-targz) and
@@ -86,18 +86,6 @@ jobs:
             artifact-glob: "dist/*.ubuntu-slim.docker.tar.gz"
             artifact-name-prefix: artifacts-docker-ubuntu-slim
             tag-suffix: "-ubuntu-slim"
-          - variant: distroless
-            make-target: build-docker-distroless
-            slim: false
-            artifact-glob: "dist/*.distroless.docker.tar.gz"
-            artifact-name-prefix: artifacts-docker-distroless
-            tag-suffix: "-distroless"
-          - variant: distroless-slim
-            make-target: build-docker-distroless
-            slim: true
-            artifact-glob: "dist/*.distroless-slim.docker.tar.gz"
-            artifact-name-prefix: artifacts-docker-distroless-slim
-            tag-suffix: "-distroless-slim"
     steps:
       - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.4
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false

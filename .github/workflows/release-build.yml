@@ -23,7 +23,7 @@ permissions:
 #
 # targz:grafana:* (via make build-targz)
 # deb / rpm (via make build-deb / build-rpm, from targz)
-# docker alpine / alpine-slim / ubuntu / ubuntu-slim / distroless / distroless-slim (via make build-docker*, from targz)
+# docker alpine / alpine-slim / ubuntu / ubuntu-slim (via make build-docker*, from targz)
 # zip / msi (Dagger, consuming prebuilt targz from dist)
 #
 # One shared frontend artifact is reused for every targz matrix cell (OSS), so assets-manifest.json matches all
@@ -751,60 +751,6 @@ jobs:
     with:
       bucket: grafana-prerelease
       pattern: artifacts-docker-ubuntu-slim-${{ matrix.target }}
-      run-id: ${{ github.run_id }}
-      bucket-path: ${{ needs.setup.outputs.version }}_${{ github.run_id }}
-      environment: prod
-      runs-on: ubuntu-x64-small
-
-  publish-docker-distroless:
-    name: Upload docker (distroless) / ${{ matrix.target }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - target: linux-amd64
-          - target: linux-arm64
-          - target: linux-s390x
-          - target: linux-armv7
-    uses: grafana/grafana/.github/workflows/publish-artifact.yml@main
-    permissions:
-      id-token: write
-    needs:
-      - setup
-      - build-docker-linux-amd64
-      - build-docker-linux-arm64
-      - build-docker-linux-s390x
-      - build-docker-linux-armv7
-    with:
-      bucket: grafana-prerelease
-      pattern: artifacts-docker-distroless-${{ matrix.target }}
-      run-id: ${{ github.run_id }}
-      bucket-path: ${{ needs.setup.outputs.version }}_${{ github.run_id }}
-      environment: prod
-      runs-on: ubuntu-x64-small
-
-  publish-docker-distroless-slim:
-    name: Upload docker (distroless-slim) / ${{ matrix.target }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - target: linux-amd64
-          - target: linux-arm64
-          - target: linux-s390x
-          - target: linux-armv7
-    uses: grafana/grafana/.github/workflows/publish-artifact.yml@main
-    permissions:
-      id-token: write
-    needs:
-      - setup
-      - build-docker-linux-amd64
-      - build-docker-linux-arm64
-      - build-docker-linux-s390x
-      - build-docker-linux-armv7
-    with:
-      bucket: grafana-prerelease
-      pattern: artifacts-docker-distroless-slim-${{ matrix.target }}
       run-id: ${{ github.run_id }}
       bucket-path: ${{ needs.setup.outputs.version }}_${{ github.run_id }}
       environment: prod
