@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/advisor
 
-go 1.25.9
+go 1.25.10
 
 require (
 	github.com/Masterminds/semver/v3 v3.4.0
