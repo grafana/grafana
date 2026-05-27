@@ -617,15 +617,15 @@ func (l *LibraryElementService) PatchLibraryElement(c context.Context, signedInU
 			return model.LibraryElementDTO{}, model.ErrLibraryElementProvisionedFolder
 		}
 
-		// Mirror the create path: the destination folder must allow the caller
-		// to create library panels there. The route-level authorize guard only
-		// checks library.panels:write on the element itself, so without this
-		// check a caller with edit rights on the element could relocate it
-		// into any folder, including ones they cannot see or write to.
+		// The destination folder must allow the caller to create library
+		// panels there. The route-level authorize guard only checks
+		// library.panels:write on the element itself, so without this check
+		// a caller with edit rights on the element could relocate it into
+		// any folder, including ones they cannot see or write to.
 		//
-		// Normalize an empty UID to the "general" sentinel the way the create
-		// handler does, so the scope check resolves against the same general
-		// folder permissions both paths share.
+		// Empty UID is normalized to the "general" sentinel so the scope
+		// resolves to fixed:folders.general — without this, GetResourceScopeUID("")
+		// produces "folders:uid:" which never matches a granted permission.
 		destFolderUID := *cmd.FolderUID
 		if destFolderUID == "" {
 			destFolderUID = ac.GeneralFolderUID
