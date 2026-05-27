@@ -20,12 +20,21 @@ const config: KnipConfig = {
     // TODO figure out how to properly include webpack/jest configs
     '.': {
       jest: false,
+      webpack: false,
+      project: ['!devenv', '!packages', '!pkg', '!public/app/plugins'],
     },
     'public/app/plugins/datasource/*': {
       webpack: false,
+      jest: true,
+      entry: [...packageEntries, 'module.{ts,tsx,js}'],
     },
     'e2e-playwright/test-plugins/*': {
+      project: ['!plugins'],
       webpack: false,
+      entry: [...packageEntries, 'module.{ts,tsx,js}'],
+    },
+    'e2e-playwright/test-plugins/grafana-extensiontest-app/plugins/*': {
+      entry: ['module.tsx'],
     },
     'packages/**': {
       entry: packageEntries,
