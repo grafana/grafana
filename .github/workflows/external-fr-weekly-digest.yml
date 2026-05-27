@@ -18,15 +18,16 @@ on:
         default: ''
         type: string
 
-permissions:
-  contents: read
-  issues: read
-  id-token: write
+permissions: {}
 
 jobs:
   digest:
     runs-on: ubuntu-arm64-small
     environment: ${{ github.event_name == 'workflow_dispatch' && 'manual-trigger' || '' }}
+    permissions:
+      contents: read
+      issues: read
+      id-token: write
 
     steps:
       - name: Validate manual trigger

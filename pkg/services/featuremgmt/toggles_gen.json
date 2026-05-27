@@ -3826,6 +3826,20 @@
     },
     {
       "metadata": {
+        "name": "plugins.initDataSourcesAsync",
+        "resourceVersion": "1779789947610",
+        "creationTimestamp": "2026-05-26T10:05:47Z"
+      },
+      "spec": {
+        "description": "Initializes data source instance settings asynchronously from the API instead of synchronously from boot data",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-catalog",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "plugins.marketplaceLicensing",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"

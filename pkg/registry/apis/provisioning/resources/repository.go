@@ -93,7 +93,7 @@ func (r *repositoryResources) FindResourcePath(ctx context.Context, name string,
 	obj, err := client.Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			return "", fmt.Errorf("resource not found: %s/%s/%s", gvr.Group, gvr.Resource, name)
+			return "", &ResourceNotFoundError{Group: gvr.Group, Resource: gvr.Resource, Name: name}
 		}
 		return "", fmt.Errorf("failed to get resource %s/%s/%s: %w", gvr.Group, gvr.Resource, name, err)
 	}
