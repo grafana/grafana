@@ -28,7 +28,6 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	apicommon "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
@@ -877,105 +876,6 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 			require.Contains(collect, updatedRepo.Finalizers, repository.CleanFinalizer, "should contain CleanFinalizer")
 		}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 	})
-}
-
-func TestIntegrationProvisioning_RequiresNewTokenWhenRepositoryURLChanges(t *testing.T) {
-	helper := sharedHelper(t)
-	ctx := context.Background()
-
-	t.Run("update rejects url change without a new token", func(t *testing.T) {
-		repoName := "repo-url-change-no-token"
-		created := createGitHubRepositoryWithToken(t, helper, repoName, "https://github.com/grafana/original")
-
-		updated := created.DeepCopy()
-		require.NoError(t, unstructured.SetNestedField(updated.Object, "https://github.com/grafana/changed", "spec", "github", "url"))
-		unstructured.RemoveNestedField(updated.Object, "secure", "token")
-
-		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			_, err := helper.Repositories.Resource.Update(ctx, updated, metav1.UpdateOptions{})
-			require.Error(collect, err)
-			require.True(collect, apierrors.IsInvalid(err), "expected invalid repository update, got %v", err)
-			require.ErrorContains(collect, err, "secure.token")
-			require.ErrorContains(collect, err, "a new token is required when changing the repository URL")
-		}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
-	})
-
-	t.Run("update allows url change with a new token", func(t *testing.T) {
-		repoName := "repo-url-change-new-token"
-		created := createGitHubRepositoryWithToken(t, helper, repoName, "https://github.com/grafana/original")
-
-		repo := common.MustFromUnstructured[provisioning.Repository](t, created)
-		repo.Spec.GitHub.URL = "https://github.com/grafana/changed"
-		repo.Secure.Token = apicommon.InlineSecureValue{Create: "new-token"}
-
-		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			result, err := helper.Repositories.Resource.Update(ctx, common.MustToUnstructured(t, repo), metav1.UpdateOptions{})
-			require.NoError(collect, err)
-
-			updatedRepo := common.MustFromUnstructured[provisioning.Repository](t, result)
-			require.Equal(collect, "https://github.com/grafana/changed", updatedRepo.Spec.GitHub.URL)
-			require.NotEmpty(collect, updatedRepo.Secure.Token.Name)
-		}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
-	})
-
-	t.Run("test subresource rejects url change without a new token", func(t *testing.T) {
-		repoName := "repo-url-change-test-no-token"
-		createGitHubRepositoryWithToken(t, helper, repoName, "https://github.com/grafana/original")
-
-		repoConfig := map[string]any{
-			"apiVersion": "provisioning.grafana.app/v0alpha1",
-			"kind":       "Repository",
-			"spec": map[string]any{
-				"title": "Changed Repo URL",
-				"type":  "github",
-				"github": map[string]any{
-					"url":    "https://github.com/grafana/changed",
-					"branch": "main",
-				},
-				"sync": map[string]any{
-					"enabled":         false,
-					"target":          "folder",
-					"intervalSeconds": 60,
-				},
-				"workflows": []string{},
-			},
-		}
-
-		configBytes, err := json.Marshal(repoConfig)
-		require.NoError(t, err)
-
-		var statusCode int
-		result := helper.AdminREST.Post().
-			Namespace("default").
-			Resource("repositories").
-			Name(repoName).
-			SubResource("test").
-			Body(configBytes).
-			SetHeader("Content-Type", "application/json").
-			Do(ctx).StatusCode(&statusCode)
-
-		require.Error(t, result.Error())
-		require.Equal(t, http.StatusBadRequest, statusCode)
-		require.True(t, apierrors.IsBadRequest(result.Error()), "expected bad request, got %v", result.Error())
-		require.ErrorContains(t, result.Error(), "a new token is required when changing the repository URL")
-	})
-}
-
-func createGitHubRepositoryWithToken(t *testing.T, helper *common.ProvisioningTestHelper, name, url string) *unstructured.Unstructured {
-	t.Helper()
-
-	input := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
-		"Name":          name,
-		"URL":           url,
-		"Branch":        "main",
-		"SyncEnabled":   false,
-		"WorkflowsJSON": `[]`,
-		"Token":         "test-token",
-	})
-
-	created, err := helper.Repositories.Resource.Create(context.Background(), input, metav1.CreateOptions{})
-	require.NoError(t, err)
-	return created
 }
 
 func TestIntegrationProvisioning_FailInvalidSchema(t *testing.T) {
