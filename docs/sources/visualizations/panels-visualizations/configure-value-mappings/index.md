@@ -144,6 +144,10 @@ A **Range** mapping maps numerical ranges to text and a color. For example, if a
 A **Regex** mapping maps regular expressions to text and a color. For example, if a value is `www.example.com`, you can configure a regular expression value mapping so that Grafana displays **www** and truncates the domain. Use the **Regex** mapping when you want to format the text and color of a regular expression value.
 ![A regular expression used to truncate full URLs to the text wwww](/media/docs/grafana/panels-visualizations/screenshot-map-regex-v10.4.png)
 
+{{< admonition type="note" >}}
+The `.` metacharacter does not match newline characters `\n` and `\r` by default. If your data contains multiline strings, use `[\s\S]` in place of `.` to match any character including newlines.
+{{< /admonition >}}
+
 ### Special
 
 A **Special** mapping maps special values like `Null`, `NaN` (not a number), and boolean values like `true` and `false` to text and color. For example, you can configure a special value mapping so that `null` values appear as **N/A**. Use the **Special** mapping when you want to format uncommon, boolean, or empty values.
@@ -176,6 +180,23 @@ The following image shows a bar gauge visualization with value mappings. Note th
 The following image shows a table visualization with value mappings. If you want value mapping colors displayed on the table, then set the cell display mode to **Color text** or **Color background**.
 
 ![Value mappings table example](/static/img/docs/value-mappings/value-mappings-table-example-8-0.png)
+
+### Multiline regular expression example
+
+If your data source returns multiline strings—such as Windows event log entries that contain `\r\n` line breaks—a regex pattern using `.` will not match across those line breaks. Use `[\s\S]` to match any character including newlines.
+
+| Pattern | Matches |
+|---|---|
+| `.*` | Single-line text only |
+| `[\s\S]*` | Single-line and multiline text |
+
+For example, to map any multiline log entry that starts with `ERROR` to the display text **Error** with a red color, use the pattern:
+
+```
+ERROR[\s\S]*
+```
+
+Using `ERROR.*` instead would only match text up to the first newline and would fail to map the full entry.
 
 ## Add a value mapping
 
