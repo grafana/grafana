@@ -114,6 +114,7 @@ const config: ConfigFile = {
     ...createAPIConfig('correlations', 'v0alpha1'),
     ...createAPIConfig('dashboard', 'v0alpha1'),
     ...createAPIConfig('dashboard', 'v1beta1'),
+    ...createAPIConfig('dashboard', 'v2alpha1'),
     ...createAPIConfig('dashboard', 'v2beta1'),
     ...createAPIConfig('dashboard', 'v2'),
     ...createAPIConfig('folder', 'v1beta1'),
@@ -130,10 +131,6 @@ const config: ConfigFile = {
     ...createAPIConfig('logsdrilldown', 'v1beta1'),
     ...createAPIConfig('logsdrilldown', 'v1alpha1'),
     ...createAPIConfig('quotas', 'v0alpha1'),
-    ...createAPIConfig('dashboard', 'v1beta1'),
-    ...createAPIConfig('dashboard', 'v2'),
-    ...createAPIConfig('dashboard', 'v2alpha1'),
-    ...createAPIConfig('dashboard', 'v2beta1'),
     // PLOP_INJECT_API_CLIENT - Used by the API client generator
   },
 };
