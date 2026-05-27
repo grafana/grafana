@@ -1,6 +1,6 @@
 import Enquirer from 'enquirer';
 
-import { getOpenAPISpecs } from './actions.ts';
+import { getOpenAPISpecs } from './openapi.ts';
 import { variantFor } from './variants.ts';
 
 export interface GeneratorAnswers {

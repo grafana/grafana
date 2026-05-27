@@ -1,15 +1,9 @@
 import path from 'path';
 
-import {
-  formatFiles,
-  getClientGenerationState,
-  getFilesToFormat,
-  getRTKClientEntries,
-  injectBeforeMarkerIfMissing,
-  runGenerateApis,
-  updatePackageJsonExports,
-  writeNewFileIfMissing,
-} from './actions.ts';
+import { getClientGenerationState, getRTKClientEntries } from './clientState.ts';
+import { formatFiles, getFilesToFormat, runGenerateApis } from './commands.ts';
+import { injectBeforeMarkerIfMissing, writeNewFileIfMissing } from './files.ts';
+import { updatePackageJsonExports } from './packageExports.ts';
 import { confirmUpdateExistingClient, runPrompts } from './prompts.ts';
 import { renderBaseAPI, renderConfigEntry, renderIndexTs } from './templates.ts';
 import { MARKERS, variantFor } from './variants.ts';
