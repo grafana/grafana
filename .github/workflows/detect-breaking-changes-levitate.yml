@@ -125,6 +125,9 @@ jobs:
       - name: Setup Node.js
         uses: ./.github/actions/setup-node
 
+      - name: Install yarn dependencies
+        uses: ./.github/actions/yarn-install
+
       - name: Get built packages from pr
         uses: actions/download-artifact@v8
         with:
@@ -159,7 +162,7 @@ jobs:
 
       - name: Detect breaking changes
         id: breaking-changes
-        run: ./scripts/check-breaking-changes.sh
+        run: ./.github/workflows/scripts/levitate/check-breaking-changes.sh
         env:
           FORCE_COLOR: 3
           IS_FORK: ${{ github.event.pull_request.head.repo.full_name != github.repository }} # used in check-breaking-changes.sh and levitate-parse-json-report.js
@@ -211,7 +214,7 @@ jobs:
         with:
           script: |
             const filePath = 'result.json';
-            const script = require('./.github/workflows/scripts/json-file-to-job-output.js');
+            const script = require('./.github/workflows/scripts/levitate/json-file-to-job-output.js');
             await script({ core, filePath });
 
       # Check if label exists

@@ -30,6 +30,9 @@ type BleveIndexMetrics struct {
 	IndexSnapshotNamespaceCleanups        *prometheus.CounterVec
 	IndexSnapshotDeleted                  *prometheus.CounterVec
 	IndexSnapshotIncompleteUploadsCleaned prometheus.Counter
+
+	IndexDiskCleanupRuns        *prometheus.CounterVec
+	IndexDiskCleanupDirsDeleted *prometheus.CounterVec
 }
 
 var IndexCreationBuckets = []float64{1, 5, 10, 25, 50, 75, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000}
@@ -138,6 +141,14 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 			Name: "index_server_snapshot_incomplete_uploads_cleaned_total",
 			Help: "Number of incomplete (partial) index snapshots deleted by cleanup.",
 		}),
+		IndexDiskCleanupRuns: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "index_server_disk_cleanup_runs_total",
+			Help: "Number of on-disk index cleanup pass attempts, by outcome.",
+		}, []string{"outcome"}), // outcome: success, error
+		IndexDiskCleanupDirsDeleted: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "index_server_disk_cleanup_dirs_deleted_total",
+			Help: "Number of on-disk directories the disk cleanup pass attempted to delete, by kind and outcome.",
+		}, []string{"kind", "outcome"}), // kind: index, snapshot_staging. outcome: success, error
 	}
 
 	// Always-on label series. Snapshot-specific series are initialised separately
@@ -184,4 +195,20 @@ func (m *BleveIndexMetrics) InitSnapshotMetrics() {
 	m.IndexSnapshotDeleted.WithLabelValues("success").Add(0)
 	m.IndexSnapshotDeleted.WithLabelValues("error").Add(0)
 	m.IndexSnapshotIncompleteUploadsCleaned.Add(0)
+}
+
+// InitDiskCleanupMetrics zero-initialises the per-label series of the disk
+// cleanup counters. Call once at startup only when the disk cleanup loop is
+// configured to run on this instance, so disabled instances don't emit
+// permanently-zero `index_server_disk_cleanup_*` series.
+func (m *BleveIndexMetrics) InitDiskCleanupMetrics() {
+	if m == nil {
+		return
+	}
+	m.IndexDiskCleanupRuns.WithLabelValues("success").Add(0)
+	m.IndexDiskCleanupRuns.WithLabelValues("error").Add(0)
+	for _, kind := range []string{"index", "snapshot_staging"} {
+		m.IndexDiskCleanupDirsDeleted.WithLabelValues(kind, "success").Add(0)
+		m.IndexDiskCleanupDirsDeleted.WithLabelValues(kind, "error").Add(0)
+	}
 }
