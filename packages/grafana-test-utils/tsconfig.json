@@ -10,12 +10,6 @@
     "moduleResolution": "bundler",
     "rootDir": "./src"
   },
-  "ts-node": {
-    "compilerOptions": {
-      "module": "ESNext",
-      "moduleResolution": "Node"
-    }
-  },
   "exclude": ["dist/**/*"],
   "include": [
     "../../public/app/types/window.d.ts",

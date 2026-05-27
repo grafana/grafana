@@ -20,13 +20,6 @@
       "*": ["./public/*"]
     }
   },
-  "ts-node": {
-    "swc": true,
-    "compilerOptions": {
-      "module": "ESNext",
-      "moduleResolution": "Bundler"
-    }
-  },
   "include": [
     "eslint.config.js",
     "public/app/**/*.ts*",

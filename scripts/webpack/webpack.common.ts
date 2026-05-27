@@ -5,7 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import webpack, { type Configuration } from 'webpack';
 
-import { getEnvConfig } from '../cli/env-util.ts';
+import { getEnvConfig } from '../cli/env-util.mts';
 
 import CorsWorkerPlugin from './plugins/CorsWorkerPlugin.ts';
 import { esbuildRule, sassRule } from './rules.ts';

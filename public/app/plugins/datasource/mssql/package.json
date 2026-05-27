@@ -27,7 +27,6 @@
     "@types/node": "24.10.1",
     "@types/react": "18.3.18",
     "i18next-cli": "^1.48.0",
-    "ts-node": "10.9.2",
     "typescript": "6.0.2",
     "webpack": "^5.105.0"
   },
@@ -35,9 +34,9 @@
     "@grafana/runtime": "*"
   },
   "scripts": {
-    "build": "webpack -c ./webpack.config.ts --env production",
-    "build:commit": "webpack -c ./webpack.config.ts --env production --env commit=$(git rev-parse --short HEAD)",
-    "dev": "webpack -w -c ./webpack.config.ts --env development",
+    "build": "webpack --disable-interpret -c ./webpack.config.ts --env production",
+    "build:commit": "webpack --disable-interpret -c ./webpack.config.ts --env production --env commit=$(git rev-parse --short HEAD)",
+    "dev": "webpack -w --disable-interpret -c ./webpack.config.ts --env development",
     "i18n-extract": "i18next-cli extract --sync-primary"
   },
   "packageManager": "yarn@4.11.0"
