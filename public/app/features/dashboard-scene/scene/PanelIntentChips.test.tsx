@@ -89,4 +89,30 @@ describe('PanelIntentChips', () => {
     // the team watches for" from "the panel is failing right now".
     expect(screen.getByText('#bot-traffic')).toBeInTheDocument();
   });
+
+  it('renders nothing without crashing when failureModes is a bare string instead of an array', () => {
+    // Hand-authored or LLM-drafted intent has been observed in the
+    // wild with `failureModes` set to a free-text string rather than
+    // the `Array<{tag}>` shape the schema declares. Render nothing
+    // for the malformed field rather than crashing the panel header
+    // with `failureModes.map is not a function`.
+    const { container } = renderChips({
+      // @ts-expect-error — intentional malformed shape for the
+      // regression test; the schema typing rejects this but real
+      // dashboards in the wild contain it.
+      failureModes: 'Spikes indicate runaway processes',
+    });
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it('renders nothing without crashing when expectedBehavior is a bare string instead of an object', () => {
+    // Same shape-drift risk for `expectedBehavior` — the schema
+    // expects `{normalRange?, alertThreshold?, notes?}` but legacy
+    // hand-edits sometimes store a single descriptive string here.
+    const { container } = renderChips({
+      // @ts-expect-error — see above.
+      expectedBehavior: 'All metrics should be within normal thresholds',
+    });
+    expect(container).toBeEmptyDOMElement();
+  });
 });

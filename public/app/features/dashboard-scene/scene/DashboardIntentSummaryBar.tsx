@@ -39,7 +39,15 @@ export function DashboardIntentSummaryBar({ dashboard }: Props) {
     return null;
   }
 
-  const { purpose, owner, failureModes = [], runbooks = [] } = intent;
+  // Defensively coerce list fields. The intent block is authored
+  // free-form (legacy hand-edits, LLM drafts, cross-version imports)
+  // and we have observed `failureModes` and `runbooks` arriving as
+  // bare strings or missing entirely. Render nothing rather than
+  // crash the dashboard when a list-shaped field isn't actually a
+  // list.
+  const { purpose, owner } = intent;
+  const failureModes = Array.isArray(intent.failureModes) ? intent.failureModes : [];
+  const runbooks = Array.isArray(intent.runbooks) ? intent.runbooks : [];
 
   return (
     <div className={styles.wrapper} data-testid="dashboard-intent-summary-bar">

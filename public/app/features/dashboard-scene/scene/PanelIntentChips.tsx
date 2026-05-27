@@ -38,8 +38,15 @@ export function PanelIntentChipsRenderer({ model }: SceneComponentProps<PanelInt
   const { intent } = model.useState();
   const styles = useStyles2(getStyles);
 
-  const expected = intent.expectedBehavior;
-  const failureModes = intent.failureModes ?? [];
+  // Defensive shape coercion: the intent block is authored
+  // free-form (legacy hand-edits, LLM drafts, cross-version imports)
+  // and we have observed `failureModes` arriving as a bare string and
+  // `expectedBehavior` arriving as a string instead of an object.
+  // Bail to "no chip-worthy content" for malformed shapes rather than
+  // crashing the panel header.
+  const expected =
+    intent.expectedBehavior && typeof intent.expectedBehavior === 'object' ? intent.expectedBehavior : undefined;
+  const failureModes = Array.isArray(intent.failureModes) ? intent.failureModes : [];
   const expectedProvenance = intent.provenance?.['expected_behavior.normal_range'];
   const thresholdProvenance = intent.provenance?.['expected_behavior.alert_threshold'];
   const failureModesProvenance = intent.provenance?.failure_modes;
