@@ -15,6 +15,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/api/datasource"
+	datasourcesV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	glog "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -236,9 +237,25 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 		req.Header.Set("Authorization", dsAuth)
 	}
 
+	jsonData := make(map[string]any)
+	if proxy.ds.JsonData != nil {
+		jsonData, err = proxy.ds.JsonData.Map()
+		if err != nil {
+			ctxLogger.Error("Failed to get json data as map", "jsonData", proxy.ds.JsonData, "error", err)
+			return
+		}
+	}
+
+	// Temporary while we transition to using this as the first class type
+	ds := datasourcesV0.DataSource{
+		Spec: datasourcesV0.UnstructuredSpec{
+			Object: map[string]any{"jsonData": jsonData},
+		},
+	}
+
 	proxyutil.ApplyUserHeader(proxy.settings.SendUserHeader, req, proxy.ctx.SignedInUser)
 
-	proxyutil.ClearCookieHeader(req, proxy.ds.AllowedCookies(), []string{proxy.settings.LoginCookieName})
+	proxyutil.ClearCookieHeader(req, ds.Spec.KeepCookies(), []string{proxy.settings.LoginCookieName})
 	ua := proxy.settings.DataProxyUserAgent
 	if proxy.settings.DataProxyForwardUserAgent {
 		if originalUA := req.Header.Get("User-Agent"); originalUA != "" {
@@ -253,15 +270,6 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 		}
 	}
 	req.Header.Set("User-Agent", ua)
-
-	jsonData := make(map[string]any)
-	if proxy.ds.JsonData != nil {
-		jsonData, err = proxy.ds.JsonData.Map()
-		if err != nil {
-			ctxLogger.Error("Failed to get json data as map", "jsonData", proxy.ds.JsonData, "error", err)
-			return
-		}
-	}
 
 	if proxy.matchedRoute != nil {
 		decryptedValues, err := proxy.dataSourcesService.DecryptedValues(req.Context(), proxy.ds)
@@ -279,7 +287,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 		}, proxy.settings)
 	}
 
-	if proxy.oAuthTokenService.IsOAuthPassThruEnabled(proxy.ds) {
+	if ds.Spec.IsOAuthPassThruEnabled() {
 		if token := proxy.oAuthTokenService.GetCurrentOAuthToken(req.Context(), proxy.ctx.SignedInUser, proxy.ctx.UserToken); token != nil {
 			req.Header.Set("Authorization", fmt.Sprintf("%s %s", token.Type(), token.AccessToken))
 
