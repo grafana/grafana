@@ -23,7 +23,6 @@ updates:
       - "/.citools/src/cue"
       - "/.citools/src/golangci-lint"
       - "/.citools/src/govulncheck"
-      - "/.citools/src/jb"
       - "/.citools/src/lefthook"
       - "/.citools/src/swagger"
     schedule:
