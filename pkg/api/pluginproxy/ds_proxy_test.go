@@ -1332,6 +1332,98 @@ func Test_PathCheck(t *testing.T) {
 	require.Equal(t, routes[1], proxy.matchedRoute)
 }
 
+func TestDataSourceProxy_LokiRouteAccessControl(t *testing.T) {
+	const (
+		dsUID       = "dsUID"
+		dsScope     = "datasources:uid:" + dsUID
+		readAction  = "alert.rules.external:read"
+		writeAction = "alert.rules.external:write"
+	)
+
+	routes := []*plugins.Route{
+		{
+			Path:      "api/v1/rules",
+			ReqAction: readAction,
+			Method:    http.MethodGet,
+		},
+		{
+			Path:      "api/v1/rules",
+			ReqAction: writeAction,
+			Method:    http.MethodPost,
+		},
+	}
+
+	for _, tc := range []struct {
+		name        string
+		method      string
+		path        string
+		permissions map[string][]string
+		wantErr     error
+		wantRoute   *plugins.Route
+	}{
+		{
+			name:        "allows Loki alert rule reads with scoped read permission",
+			method:      http.MethodGet,
+			path:        "api/v1/rules",
+			permissions: map[string][]string{readAction: {dsScope}},
+			wantRoute:   routes[0],
+		},
+		{
+			name:        "allows allow-listed Loki alert rule writes with scoped write permission",
+			method:      http.MethodPost,
+			path:        "api/v1/rules",
+			permissions: map[string][]string{writeAction: {dsScope}},
+			wantRoute:   routes[1],
+		},
+		{
+			name:        "denies allow-listed Loki alert rule writes without scoped write permission",
+			method:      http.MethodPost,
+			path:        "api/v1/rules",
+			permissions: map[string][]string{readAction: {dsScope}},
+			wantErr:     errPluginProxyRouteAccessDenied,
+		},
+		{
+			name:        "denies non allow-listed Loki writes",
+			method:      http.MethodPost,
+			path:        "api/v1/unmatched",
+			permissions: map[string][]string{writeAction: {dsScope}},
+			wantErr:     errors.New("non allow-listed POSTs not allowed on proxied Prometheus or Loki datasource"),
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			req, err := http.NewRequest(tc.method, "http://localhost/"+tc.path, nil)
+			require.NoError(t, err)
+
+			ctx := &contextmodel.ReqContext{
+				Context: &web.Context{Req: req},
+				SignedInUser: &user.SignedInUser{
+					OrgID:       1,
+					OrgRole:     identity.RoleNone,
+					Permissions: map[int64]map[string][]string{1: tc.permissions},
+				},
+			}
+			ds := &datasources.DataSource{
+				UID:  dsUID,
+				Type: datasources.DS_LOKI,
+				URL:  "http://loki:3100",
+			}
+
+			proxy, err := setupDSProxyTest(t, ctx, ds, routes, tc.path)
+			require.NoError(t, err)
+
+			err = proxy.validateRequest()
+			if tc.wantErr != nil {
+				require.Error(t, err)
+				require.Equal(t, tc.wantErr.Error(), err.Error())
+				return
+			}
+
+			require.NoError(t, err)
+			require.Equal(t, tc.wantRoute, proxy.matchedRoute)
+		})
+	}
+}
+
 func setupDSProxyTest(t *testing.T, ctx *contextmodel.ReqContext, ds *datasources.DataSource, routes []*plugins.Route, path string, opts ...func(proxy *DataSourceProxy)) (*DataSourceProxy, error) {
 	t.Helper()
 
