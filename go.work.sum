@@ -456,6 +456,7 @@ github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/internal/v2 v2.0.0 h1:PTFG
 github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/internal/v3 v3.1.0 h1:2qsIIvxVT+uE6yrNldntJKlLRgxGbZ85kgtz5SNBhMw=
 github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/internal/v3 v3.1.0/go.mod h1:AW8VEadnhw9xox+VaVd9sP7NjzOAnaZBLRH6Tq3cJ38=
 github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/managementgroups/armmanagementgroups v1.0.0 h1:pPvTJ1dY0sA35JOeFq6TsY2xj6Z85Yo23Pj4wCCvu4o=
+github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources v1.1.1 h1:7CBQ+Ei8SP2c6ydQTGCCrS35bDxgTMfoP2miAwK++OU=
 github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources v1.2.0 h1:Dd+RhdJn0OTtVGaeDLZpcumkIVCtA/3/Fo42+eoYvVM=
 github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources v1.2.0/go.mod h1:5kakwfW5CjC9KK+Q4wjXAg+ShuIm2mBMua0ZFj2C8PE=
 github.com/Azure/go-amqp v1.0.5 h1:po5+ljlcNSU8xtapHTe8gIc8yHxCzC03E8afH2g1ftU=
@@ -495,7 +496,6 @@ github.com/FZambia/eagle v0.1.0/go.mod h1:YjGSPVkQTNcVLfzEUQJNgW9ScPR0K4u/Ky0yeF
 github.com/GoogleCloudPlatform/cloudsql-proxy v1.36.0 h1:kAtNAWwvTt5+iew6baV0kbOrtjYTXPtWNSyOFlcxkBU=
 github.com/GoogleCloudPlatform/cloudsql-proxy v1.36.0/go.mod h1:VRKXU8C7Y/aUKjRBTGfw0Ndv4YqNxlB8zAPJJDxbASE=
 github.com/HdrHistogram/hdrhistogram-go v1.1.0/go.mod h1:yDgFjdqOqDEKOvasDdhWNXYg9BVp4O+o5f6V/ehm6Oo=
-github.com/HdrHistogram/hdrhistogram-go v1.2.0/go.mod h1:CiIeGiHSd06zjX+FypuEJ5EQ07KKtxZ+8J6hszwVQig=
 github.com/IBM/go-sdk-core/v5 v5.17.4 h1:VGb9+mRrnS2HpHZFM5hy4J6ppIWnwNrw0G+tLSgcJLc=
 github.com/IBM/go-sdk-core/v5 v5.17.4/go.mod h1:KsAAI7eStAWwQa4F96MLy+whYSh39JzNjklZRbN/8ns=
 github.com/IBM/go-sdk-core/v5 v5.21.0 h1:DUnYhvC4SoC8T84rx5omnhY3+xcQg/Whyoa3mDPIMkk=
@@ -969,6 +969,7 @@ github.com/emicklei/proto v1.10.0/go.mod h1:rn1FgRS/FANiZdD2djyH7TMA9jdRDcYQ9IEN
 github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f h1:Y/CXytFA4m6baUTXGLOoWe4PQhGxaX0KpnayAqC48p4=
 github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f/go.mod h1:vw97MGsxSvLiUE2X8qFplwetxpGLQrlU1Q9AUEIzCaM=
 github.com/esiqveland/notify v0.11.0 h1:0WJ/xW+3Ln8uRBYntG7f0XihXxnlOaQTdha1yyzXz30=
+github.com/ettle/strcase v0.1.1 h1:htFueZyVeE1XNnMEfbqp5r67qAN/4r6ya1ysq8Q+Zcw=
 github.com/ettle/strcase v0.2.0 h1:fGNiVF21fHXpX1niBgk0aROov1LagYsOwV/xqKDKR/Q=
 github.com/ettle/strcase v0.2.0/go.mod h1:DajmHElDSaX76ITe3/VHVyMin4LWSJN5Z909Wp+ED1A=
 github.com/evanphx/json-patch v0.5.2/go.mod h1:ZWS5hhDbVDyob71nXKNL0+PWn6ToqBHMikGIFbs31qQ=
@@ -1114,6 +1115,7 @@ github.com/google/renameio/v2 v2.0.0/go.mod h1:BtmJXm5YlszgC+TD4HOEEUFgkJP3nLxeh
 github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 h1:El6M4kTTCOh6aBiKaUGG7oYTSPP8MxqL4YI3kZKwcP4=
 github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510/go.mod h1:pupxD2MaaD3pAXIBCelhxNneeOaAeabZDe5s4K6zSpQ=
 github.com/googleapis/cloud-bigtable-clients-test v0.0.2 h1:S+sCHWAiAc+urcEnvg5JYJUOdlQEm/SEzQ/c/IdAH5M=
+github.com/googleapis/cloud-bigtable-clients-test v0.0.3 h1:afMKTvA/jc6jSTMkeHBZGFDTt8Cc+kb1ATFzqMK85hw=
 github.com/googleapis/cloud-bigtable-clients-test v0.0.4 h1:9f+NjgCZHLx7t2lyL+Zhyg5f9/eFNI4RryGWlbcTwqk=
 github.com/googleapis/cloud-bigtable-clients-test v0.0.4/go.mod h1:NNHPqSxC2OBSLmt1j/qofCRRzL0OYZxk24CsicIe8MA=
 github.com/googleapis/gnostic v0.3.0 h1:CcQijm0XKekKjP/YCz28LXVSpgguuB+nCxaSjCe09y0=
@@ -1202,7 +1204,6 @@ github.com/hashicorp/consul/api v1.15.3/go.mod h1:/g/qgcoBcEXALCNZgRRisyTW0nY86+
 github.com/hashicorp/consul/api v1.28.2/go.mod h1:KyzqzgMEya+IZPcD65YFoOVAgPpbfERu4I/tzG6/ueE=
 github.com/hashicorp/consul/sdk v0.10.0/go.mod h1:yPkX5Q6CsxTFMjQQDJwzeNmUUF5NUGGbrDsv9wTb8cw=
 github.com/hashicorp/consul/sdk v0.11.0/go.mod h1:yPkX5Q6CsxTFMjQQDJwzeNmUUF5NUGGbrDsv9wTb8cw=
-github.com/hashicorp/consul/sdk v0.17.3/go.mod h1:jnOmYjiNfVRpBaujQ1DFFVs0N6g3S1y6wygSjLTzYfc=
 github.com/hashicorp/go-hclog v0.14.1/go.mod h1:whpDNt7SSdeAju8AWKIWsul05p54N/39EeqMAyrmvFQ=
 github.com/hashicorp/go-hclog v1.2.2/go.mod h1:W4Qnvbt70Wk/zYJryRzDRU/4r0kIg0PVHBcfoyhpF5M=
 github.com/hashicorp/go-immutable-radix v1.3.0/go.mod h1:0y9vanUI8NX6FsYoO3zeMjhV/C5i9g4Q3DwcSNZ4P60=
@@ -1516,6 +1517,7 @@ github.com/open-telemetry/opentelemetry-collector-contrib/pkg/batchpersignal v0.
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/batchpersignal v0.102.0/go.mod h1:DmkGhNL9nuSTg8fMhYNopMuF1Y3LFqu/FQHrvhBzME0=
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/core/xidutils v0.132.0 h1:IPWsyHcSLZHXvPMGmtdsxCCBru9gSvgJ3bAyp5Qkljk=
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/core/xidutils v0.132.0/go.mod h1:7n9eqrE/iiyp3IvTgny8+CqPe3HNshX8BIM5VJ37KxQ=
+github.com/open-telemetry/opentelemetry-collector-contrib/pkg/golden v0.128.0 h1:GJzARUS5NcCeYr7pwlrYMEK+fl92cmCDED2to7nPuCQ=
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/golden v0.129.0 h1:ib4F7Rsefrpcq3Uo72UUb58+PE8uZs5rBYs1cyHGSJs=
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/golden v0.129.0/go.mod h1:U0i/4xJl9xpII4DnpHBWP3Kang7ZZuDTf7XDuBjYxKo=
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/kafka/configkafka v0.132.0 h1:K0gk4eUO8rQ90E94HLvRH8KkocZXb3DBwzkJmDtkzhg=
@@ -1524,6 +1526,7 @@ github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl v0.97.0 h1:bV
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl v0.97.0/go.mod h1:lj29zRdEZdvbQvZ6g7Pb+tSPw4dQE/jahe39fRgO+08=
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl v0.132.0 h1:4x4qjjqXslM+rfEFCw5M3tAJvukKtjQUgdF2ZbO+HtE=
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl v0.132.0/go.mod h1:M8Cd3VWBHc/x+lNGWax6Ae36aZFL4ScP5b0mz4hvgXM=
+github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest v0.128.0 h1:+rUULr4xqOJjZK3SokFmRYzsiPq5onoWoSv3He4aaus=
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest v0.129.0 h1:ydkfqpZ5BWZfEJEs7OUhTHW59og5aZspbUYxoGcAEok=
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest v0.129.0/go.mod h1:oA+49dkzmhUx0YFC9JXGuPPSBL0TOTp6jkv7qSr2n0Q=
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatautil v0.102.0 h1:TvJYcU/DLRFCgHr7nT98k5D+qkZ4syKVxc8OJjv+K4c=
@@ -1764,6 +1767,7 @@ github.com/substrait-io/substrait v0.66.1-0.20250205013839-a30b3e2d7ec6 h1:Xqtxw
 github.com/substrait-io/substrait v0.66.1-0.20250205013839-a30b3e2d7ec6/go.mod h1:MPFNw6sToJgpD5Z2rj0rQrdP/Oq8HG7Z2t3CAEHtkHw=
 github.com/substrait-io/substrait v0.69.0 h1:qfwUe1qKa3PsCclMpubQOF6nqIqS14geUuvzJ1P7gsM=
 github.com/substrait-io/substrait v0.69.0/go.mod h1:MPFNw6sToJgpD5Z2rj0rQrdP/Oq8HG7Z2t3CAEHtkHw=
+github.com/substrait-io/substrait-go v0.4.2 h1:buDnjsb3qAqTaNbOR7VKmNgXf4lYQxWEcnSGUWBtmN8=
 github.com/substrait-io/substrait-go v1.2.0 h1:3ZNRkc8FYD7ifCagKEOZQtUcgMceMQfwo2N1NGaK4Q4=
 github.com/substrait-io/substrait-go v1.2.0/go.mod h1:IPsy24rdjp/buXR+T8ENl6QCnSCS6h+uM8P+GaZez7c=
 github.com/substrait-io/substrait-go/v3 v3.9.0 h1:sRJf0ID9q2TPxJ9eH+oAniepMqt9fYW0Hy32CScT2cI=
@@ -2246,6 +2250,7 @@ golang.org/x/net v0.49.0/go.mod h1:/ysNB2EvaqvesRkuLAyjI1ycPZlQHM3q01F02UY/MV8=
 golang.org/x/net v0.50.0/go.mod h1:UgoSli3F/pBgdJBHCTc+tp3gmrU4XswgGRgtnwWTfyM=
 golang.org/x/net v0.51.0/go.mod h1:aamm+2QF5ogm02fjy5Bb7CQ0WMt1/WVM7FtyaTLlA9Y=
 golang.org/x/net v0.52.0/go.mod h1:R1MAz7uMZxVMualyPXb+VaqGSa3LIaUqk0eEt3w36Sw=
+golang.org/x/net v0.54.0/go.mod h1:Sj4oj8jK6XmHpBZU/zWHw3BV3abl4Kvi+Ut7cQcY+cQ=
 golang.org/x/oauth2 v0.31.0/go.mod h1:lzm5WQJQwKZ3nwavOZ3IS5Aulzxi68dUSgRHujetwEA=
 golang.org/x/oauth2 v0.32.0/go.mod h1:lzm5WQJQwKZ3nwavOZ3IS5Aulzxi68dUSgRHujetwEA=
 golang.org/x/sys v0.0.0-20190130150945-aca44879d564/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
@@ -2256,6 +2261,7 @@ golang.org/x/sys v0.0.0-20220908164124-27713097b956/go.mod h1:oPkhp1MJrh7nUepCBc
 golang.org/x/sys v0.40.0/go.mod h1:OgkHotnGiDImocRcuBABYBEXf8A9a87e/uXjp9XT3ks=
 golang.org/x/sys v0.41.0/go.mod h1:OgkHotnGiDImocRcuBABYBEXf8A9a87e/uXjp9XT3ks=
 golang.org/x/sys v0.42.0/go.mod h1:4GL1E5IUh+htKOUEOaiffhrAeqysfVGipDYzABqnCmw=
+golang.org/x/sys v0.44.0/go.mod h1:4GL1E5IUh+htKOUEOaiffhrAeqysfVGipDYzABqnCmw=
 golang.org/x/telemetry v0.0.0-20240521205824-bda55230c457 h1:zf5N6UOrA487eEFacMePxjXAJctxKmyjKUsjA11Uzuk=
 golang.org/x/telemetry v0.0.0-20250807160809-1a19826ec488 h1:3doPGa+Gg4snce233aCWnbZVFsyFMo/dR40KK/6skyE=
 golang.org/x/term v0.0.0-20210220032956-6a3ed077a48d/go.mod h1:bj7SfCRtBDWHUb9snDiAeCFNEtKQo2Wmx5Cou7ajbmo=
@@ -2385,9 +2391,11 @@ k8s.io/utils v0.0.0-20240711033017-18e509b52bc8/go.mod h1:OLgZIPagt7ERELqWJFomSt
 lukechampine.com/uint128 v1.2.0 h1:mBi/5l91vocEN8otkC5bDLhi2KdCticRiwbdB0O+rjI=
 lukechampine.com/uint128 v1.3.0 h1:cDdUVfRwDUDovz610ABgFD17nXD4/uDgVHl2sC3+sbo=
 modernc.org/cc/v3 v3.36.3 h1:uISP3F66UlixxWEcKuIWERa4TwrZENHSL8tWxZz8bHg=
+modernc.org/cc/v3 v3.40.0 h1:P3g79IUS/93SYhtoeaHW+kRCIrYaxJ27MFPv+7kaTOw=
 modernc.org/cc/v3 v3.41.0 h1:QoR1Sn3YWlmA1T4vLaKZfawdVtSiGx8H+cEojbC7v1Q=
 modernc.org/cc/v3 v3.41.0/go.mod h1:Ni4zjJYJ04CDOhG7dn640WGfwBzfE0ecX8TyMB0Fv0Y=
 modernc.org/ccgo/v3 v3.16.9 h1:AXquSwg7GuMk11pIdw7fmO1Y/ybgazVkMhsZWCV0mHM=
+modernc.org/ccgo/v3 v3.16.13 h1:Mkgdzl46i5F/CNR/Kj80Ri59hC8TKAhZrYSaqvkwzUw=
 modernc.org/ccgo/v3 v3.17.0 h1:o3OmOqx4/OFnl4Vm3G8Bgmqxnvxnh0nbxeT5p/dWChA=
 modernc.org/ccgo/v3 v3.17.0/go.mod h1:Sg3fwVpmLvCUTaqEUjiBDAvshIaKDB0RXaf+zgqFu8I=
 modernc.org/ccorpus v1.11.6 h1:J16RXiiqiCgua6+ZvQot4yUuUy8zxgqbqEEUuGPlISk=
