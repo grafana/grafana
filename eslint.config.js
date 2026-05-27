@@ -267,6 +267,23 @@ module.exports = [
     },
   },
   {
+    name: 'grafana/grafana-ui-no-test-utils',
+    files: ['packages/grafana-ui/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        withBaseRestrictedImportsConfig({
+          patterns: [
+            {
+              group: ['@grafana/test-utils'],
+              message: "'@grafana/test-utils' creates a circular dependency with '@grafana/ui'",
+            },
+          ],
+        }),
+      ],
+    },
+  },
+  {
     name: 'grafana/story-rules',
     files: ['packages/grafana-ui/src/**/*.story.tsx'],
     rules: {
