@@ -1,11 +1,10 @@
 import { type Page, expect } from '@playwright/test';
-import { v4 as uuidv4 } from 'uuid';
 
 /**
  * Add a new dashboard
  */
 export async function addDashboard(page: Page, title?: string): Promise<string> {
-  const dashboardTitle = title || `e2e-${uuidv4()}`;
+  const dashboardTitle = title || `e2e-${crypto.randomUUID()}`;
 
   // Navigate to add dashboard page
   await page.goto('/dashboard/new');
