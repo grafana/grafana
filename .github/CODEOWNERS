@@ -1088,7 +1088,6 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /scripts/build-targz.sh @grafana/grafana-backend-services-squad
 scripts/build-msi.sh @grafana/grafana-backend-services-squad
 scripts/verify-pkg-stig.sh @grafana/grafana-backend-services-squad
-/scripts/check-breaking-changes.sh @grafana/grafana-frontend-platform
 /scripts/ci-* @grafana/grafana-backend-services-squad
 /scripts/publish-npm-packages.sh @grafana/grafana-backend-services-squad @grafana/grafana-frontend-platform
 /scripts/validate-npm-packages.sh @grafana/grafana-backend-services-squad @grafana/grafana-frontend-platform
@@ -1112,8 +1111,6 @@ scripts/verify-pkg-stig.sh @grafana/grafana-backend-services-squad
 /scripts/trigger_windows_build.sh @grafana/grafana-backend-services-squad
 /scripts/verify-repo-update/ @grafana/grafana-backend-services-squad
 /scripts/generate-alerting-rtk-apis.ts @grafana/alerting-frontend
-/scripts/levitate-parse-json-report.js @grafana/grafana-frontend-platform
-/scripts/levitate-show-affected-plugins.js @grafana/grafana-frontend-platform
 /scripts/codemods/explicit-barrel-imports.cjs @grafana/frontend-ops
 /scripts/view-playwright-ci.sh @grafana/grafana-frontend-platform
 
@@ -1315,7 +1312,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/scripts/pr-digest.mts @grafana/grafana-community-support
 /.github/workflows/scripts/pr-notify.mts @grafana/grafana-community-support
 /.github/workflows/scripts/utils.mts @grafana/grafana-community-support
-/.github/workflows/scripts/json-file-to-job-output.js @grafana/grafana-frontend-platform
+/.github/workflows/scripts/levitate/ @grafana/grafana-frontend-platform
 /.github/workflows/stale.yml @grafana/grafana-backend-services-squad
 /.github/workflows/storybook-a11y.yml @grafana/grafana-frontend-platform
 /.github/workflows/scripts/create-security-branch/create-security-branch.sh @grafana/grafana-backend-services-squad
