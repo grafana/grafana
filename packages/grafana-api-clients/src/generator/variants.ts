@@ -12,10 +12,10 @@ export interface Variant {
 }
 
 export const MARKERS = {
-  CONFIG: '// GENERATED:API_CLIENT — used by the API client generator, do not remove',
-  IMPORT: '// GENERATED:IMPORT — used by the API client generator, do not remove',
-  REDUCER: '// GENERATED:REDUCER — used by the API client generator, do not remove',
-  MIDDLEWARE: '// GENERATED:MIDDLEWARE — used by the API client generator, do not remove',
+  CONFIG: '// GENERATED:API_CLIENT — used by the API client generator',
+  IMPORT: '// GENERATED:IMPORT',
+  REDUCER: '// GENERATED:REDUCER',
+  MIDDLEWARE: '// GENERATED:MIDDLEWARE',
 } as const;
 
 export const PACKAGE_ROOT = 'packages/grafana-api-clients';
