@@ -73,10 +73,7 @@ func (*webhookConnector) ProducesObject(verb string) any {
 }
 
 func (*webhookConnector) ConnectMethods() []string {
-	return []string{
-		http.MethodPost,
-		http.MethodGet, // only useful for browser testing, should be removed
-	}
+	return []string{http.MethodPost}
 }
 
 func (*webhookConnector) NewConnectOptions() (runtime.Object, bool, string) {
