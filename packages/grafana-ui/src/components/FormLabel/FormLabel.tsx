@@ -45,4 +45,5 @@ export const FormLabel = ({
   );
 };
 
+/** @alias */
 export const InlineFormLabel = FormLabel;

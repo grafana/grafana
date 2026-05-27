@@ -16,8 +16,8 @@ import { SelectCommonProps, SelectAsyncProps } from '../../../Select/types';
 import { Tooltip } from '../../../Tooltip/Tooltip';
 import { PopoverContent } from '../../../Tooltip/types';
 
-import IndicatorsContainer from './IndicatorsContainer';
-import NoOptionsMessage from './NoOptionsMessage';
+import { IndicatorsContainer } from './IndicatorsContainer';
+import { NoOptionsMessage } from './NoOptionsMessage';
 import { SelectOption } from './SelectOption';
 import { SelectOptionGroup } from './SelectOptionGroup';
 
@@ -331,5 +331,3 @@ export class WrapInTooltip extends PureComponent<TooltipWrapperProps, TooltipWra
     }
   }
 }
-
-export default Select;
