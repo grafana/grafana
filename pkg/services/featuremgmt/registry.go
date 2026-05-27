@@ -3147,6 +3147,14 @@ var (
 			Generate:     Generate{React: true},
 		},
 		{
+			Name:        "plugins.initDataSourcesAsync",
+			Description: "Initializes data source instance settings asynchronously from the API instead of synchronously from boot data",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaCatalogSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
 			Name:         "frontendService.reducedBootDataAPI",
 			Description:  "Frontend Service doesn't rely on the /bootdata API, instead loads configuration as needed",
 			Stage:        FeatureStageExperimental,
