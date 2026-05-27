@@ -12,10 +12,10 @@ export interface Variant {
 }
 
 export const MARKERS = {
-  CONFIG: '// PLOP_INJECT_API_CLIENT - Used by the API client generator',
-  IMPORT: '// PLOP_INJECT_IMPORT',
-  REDUCER: '// PLOP_INJECT_REDUCER',
-  MIDDLEWARE: '// PLOP_INJECT_MIDDLEWARE',
+  CONFIG: '// GENERATED:API_CLIENT',
+  IMPORT: '// GENERATED:IMPORT',
+  REDUCER: '// GENERATED:REDUCER',
+  MIDDLEWARE: '// GENERATED:MIDDLEWARE',
 } as const;
 
 export const PACKAGE_ROOT = 'packages/grafana-api-clients';
