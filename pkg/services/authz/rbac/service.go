@@ -1072,7 +1072,7 @@ func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, 
 	if strings.HasPrefix(req.Action, "folders:") || strings.HasPrefix(req.Action, "folders.permissions:") {
 		res = buildFolderList(scopeMap, tree)
 	} else {
-		res = buildItemList(scopeMap, tree, t.Prefix())
+		res = buildItemList(scopeMap, tree, t.Prefix(), req.Verb)
 	}
 
 	if cacheHit {
@@ -1108,12 +1108,22 @@ func buildFolderList(scopes map[string]bool, tree folderTree) *authzv1.ListRespo
 	return &authzv1.ListResponse{Items: itemList}
 }
 
-func buildItemList(scopes map[string]bool, tree folderTree, prefix string) *authzv1.ListResponse {
+func buildItemList(scopes map[string]bool, tree folderTree, prefix string, verb string) *authzv1.ListResponse {
 	folderSet := make(map[string]struct{}, len(scopes))
 	itemSet := make(map[string]struct{}, len(scopes))
 
+	// For non-create verbs the synthetic root is not a real parent for
+	// inheritance — fixed:folders.general:reader exists only so Viewers see
+	// the root in the UI, and must not grant access to every root-parented
+	// resource via Compile/Watch. Mirrors the checkInheritedPermissions
+	// guard. Create deliberately uses general as the inheritance target.
+	skipRootSentinel := verb != utils.VerbCreate
+
 	for scope := range scopes {
 		if identifier, ok := strings.CutPrefix(scope, "folders:uid:"); ok {
+			if skipRootSentinel && foldermodel.IsRootFolderUID(identifier) {
+				continue
+			}
 			if _, ok := folderSet[identifier]; ok {
 				continue
 			}
