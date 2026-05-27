@@ -36,10 +36,9 @@ func TestIntegrationProvisioning_CrossFolderWriteDeniedWithoutDestinationAccess(
 	writeToProvisioningPath(t, helper, "innerB/_folder.json", folderMetadataJSON("inner-b-uid", "Inner B"))
 	writeToProvisioningPath(t, helper, "innerA/cross-folder-dash.json", dashboardBody)
 
-	helper.CreateLocalRepo(t, common.TestRepo{
+	helper.CreateRepo(t, common.TestRepo{
 		Name:                   repoName,
-		SyncTarget:             "folder",
-		Workflows:              []string{"write"},
+		Target:                 "folder",
 		SkipResourceAssertions: true,
 	})
 
