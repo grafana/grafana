@@ -59,7 +59,7 @@ if (isExistingClient) {
       `import { generatedAPI as ${reducerPath} } from './${groupName}/${version}';`
     );
     injectBeforeMarker(rtkqIndex, MARKERS.REDUCER, `  [${reducerPath}.reducerPath]: ${reducerPath}.reducer,`);
-    injectBeforeMarker(rtkqIndex, MARKERS.MIDDLEWARE, `        ${reducerPath}.middleware,`);
+    injectBeforeMarker(rtkqIndex, MARKERS.MIDDLEWARE, `  ${reducerPath}.middleware,`);
 
     updatePackageJsonExports(basePath, groupName, version);
   }

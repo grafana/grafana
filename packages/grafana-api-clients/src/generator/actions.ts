@@ -35,19 +35,14 @@ export function getExistingClientFiles(
   );
 }
 
-/** Insert text at a marker line, preserving the marker. */
-function injectAtMarker(filePath: string, marker: string, text: string, position: 'before' | 'after') {
+/** Insert text immediately before a marker line, preserving the marker. */
+export function injectBeforeMarker(filePath: string, marker: string, text: string) {
   const content = fs.readFileSync(filePath, 'utf8');
   if (!content.includes(marker)) {
     throw new Error(`Marker not found in ${filePath}: ${marker}`);
   }
-  const replacement = position === 'before' ? `${text}\n${marker}` : `${marker}\n${text}`;
+  const replacement = `${text}\n${marker}`;
   fs.writeFileSync(filePath, content.replace(marker, replacement), 'utf8');
-}
-
-/** Insert text immediately before a marker line, preserving the marker. */
-export function injectBeforeMarker(filePath: string, marker: string, text: string) {
-  injectAtMarker(filePath, marker, text, 'before');
 }
 
 /** Return the list of files that need formatting after generation. */

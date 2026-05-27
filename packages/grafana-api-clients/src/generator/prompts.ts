@@ -18,7 +18,9 @@ export function validateGroup(group: string): true | string {
 }
 
 export function validateVersion(version: string): true | string {
-  return version && /^v\d+[a-z]*\d+$/.test(version) ? true : 'Version should be in format: v0alpha1, v1beta2, etc.';
+  return version && /^v\d+([a-z]+\d+)?$/.test(version)
+    ? true
+    : 'Version should be in format: v1, v2, v0alpha1, v1beta2, etc.';
 }
 
 function formatConfirmValue(value: boolean | string): string {
