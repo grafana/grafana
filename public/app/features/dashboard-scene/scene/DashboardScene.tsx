@@ -82,6 +82,7 @@ import { buildGridItemForPanel, transformSaveModelToScene } from '../serializati
 import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
 import { normalizeTransformation } from '../serialization/transformationCompat';
 import { JsonModelEditView } from '../settings/JsonModelEditView';
+import { getDashboardTemplateExtension } from '../settings/enterprise-components/DashboardTemplateExtension';
 import { type DashboardEditView } from '../settings/utils';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
@@ -547,6 +548,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public onRestore = async (version: DecoratedRevisionModel): Promise<boolean> => {
+    if (this.state.meta.isDashboardTemplate) {
+      return getDashboardTemplateExtension().restore(this, version);
+    }
+
     const api = await getDashboardAPI();
     // the id here is the resource version in k8s, use this instead to get the specific version
     const versionRsp = await api.restoreDashboardVersion(version.uid, version.id);
@@ -581,7 +586,17 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     return true;
   };
 
-  public openSaveDrawer({ saveAsCopy, onSaveSuccess }: { saveAsCopy?: boolean; onSaveSuccess?: () => void }) {
+  public openSaveDrawer({
+    saveAsCopy,
+    saveDashboardTemplate,
+    saveAsDashboardTemplate,
+    onSaveSuccess,
+  }: {
+    saveAsCopy?: boolean;
+    saveDashboardTemplate?: boolean;
+    saveAsDashboardTemplate?: boolean;
+    onSaveSuccess?: () => void;
+  }) {
     if (!this.state.isEditing) {
       return;
     }
@@ -590,6 +605,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       overlay: new SaveDashboardDrawer({
         dashboardRef: this.getRef(),
         saveAsCopy,
+        saveAsDashboardTemplate,
+        saveDashboardTemplate,
         onSaveSuccess,
         showVariablesWarning: this.hasVariableErrors(),
       }),

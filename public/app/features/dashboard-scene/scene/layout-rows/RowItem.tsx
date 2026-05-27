@@ -73,6 +73,7 @@ export class RowItem
 
   public readonly isEditableDashboardElement = true;
   public readonly isDashboardDropTarget = true;
+  public readonly dashboardLayoutItemType = 'row';
   public containerRef: React.MutableRefObject<HTMLDivElement | null> = React.createRef<HTMLDivElement>();
   private _filtersSet?: SectionFiltersSet;
 
@@ -118,7 +119,12 @@ export class RowItem
     const layoutChildren = this.state.layout.getOutlineChildren();
     if (
       isEditing &&
-      getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardSectionVariables, false) &&
+      // OpenFeature is not initialized for anonymous users, so fall back to
+      // the static feature toggle to ensure section variables work without auth.
+      getFeatureFlagClient().getBooleanValue(
+        FlagKeys.DashboardSectionVariables,
+        Boolean(config.featureToggles.dashboardSectionVariables)
+      ) &&
       this.state.$variables
     ) {
       return [
