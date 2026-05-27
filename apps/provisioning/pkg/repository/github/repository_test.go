@@ -489,6 +489,108 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 			},
 			expectedError: errors.New("get commits: API error"),
 		},
+		{
+			name: "valid branch name with slashes is accepted",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+						Path:   "dashboards",
+					},
+				},
+			},
+			path: "dashboard.json",
+			ref:  "feature/my-branch",
+			mockSetup: func(m *MockClient) {
+				m.On("Commits", mock.Anything, "grafana", "grafana", "dashboards/dashboard.json", "feature/my-branch").
+					Return([]Commit{}, nil)
+			},
+			expectedResult: []provisioning.HistoryItem{},
+		},
+		{
+			name: "valid short commit SHA is accepted",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+						Path:   "dashboards",
+					},
+				},
+			},
+			path: "dashboard.json",
+			ref:  "abc1234",
+			mockSetup: func(m *MockClient) {
+				m.On("Commits", mock.Anything, "grafana", "grafana", "dashboards/dashboard.json", "abc1234").
+					Return([]Commit{}, nil)
+			},
+			expectedResult: []provisioning.HistoryItem{},
+		},
+		{
+			name: "valid full commit SHA is accepted",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+						Path:   "dashboards",
+					},
+				},
+			},
+			path: "dashboard.json",
+			ref:  "abcdef0123456789abcdef0123456789abcdef01",
+			mockSetup: func(m *MockClient) {
+				m.On("Commits", mock.Anything, "grafana", "grafana", "dashboards/dashboard.json", "abcdef0123456789abcdef0123456789abcdef01").
+					Return([]Commit{}, nil)
+			},
+			expectedResult: []provisioning.HistoryItem{},
+		},
+		{
+			name: "invalid ref with shell metacharacters is rejected before API call",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+						Path:   "dashboards",
+					},
+				},
+			},
+			path:          "dashboard.json",
+			ref:           "main; rm -rf /",
+			mockSetup:     func(m *MockClient) {},
+			expectedError: repo.ErrInvalidRef,
+		},
+		{
+			name: "invalid ref with double dots is rejected before API call",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+						Path:   "dashboards",
+					},
+				},
+			},
+			path:          "dashboard.json",
+			ref:           "feature/..bad",
+			mockSetup:     func(m *MockClient) {},
+			expectedError: repo.ErrInvalidRef,
+		},
+		{
+			name: "6-char hex ref is treated as a valid branch name and forwarded",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+						Path:   "dashboards",
+					},
+				},
+			},
+			path: "dashboard.json",
+			ref:  "abcdef",
+			mockSetup: func(m *MockClient) {
+				m.On("Commits", mock.Anything, "grafana", "grafana", "dashboards/dashboard.json", "abcdef").
+					Return([]Commit{}, nil)
+			},
+			expectedResult: []provisioning.HistoryItem{},
+		},
 	}
 
 	for _, tt := range tests {

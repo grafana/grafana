@@ -263,6 +263,13 @@ func (r *githubRepository) History(ctx context.Context, path, ref string) ([]pro
 		ref = r.config.Spec.GitHub.Branch
 	}
 
+	// Defence in depth: connectors validate the ref before calling into the backend,
+	// but we re-check here so unvalidated callers (other backends, tests, future
+	// callers) can't forward arbitrary input to the GitHub REST API.
+	if !repository.IsValidRef(ref) {
+		return nil, repository.ErrInvalidRef
+	}
+
 	finalPath := safepath.Join(r.config.Spec.GitHub.Path, path)
 	commits, err := r.gh.Commits(ctx, r.owner, r.repo, finalPath, ref)
 	if err != nil {

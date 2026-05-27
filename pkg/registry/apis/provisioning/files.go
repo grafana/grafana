@@ -197,6 +197,12 @@ func (c *filesConnector) parseRequestOptions(r *http.Request, name string, repo 
 		Branch:       repo.Config().Branch(),
 	}
 
+	// Reject unvalidated refs before they reach any backend. Empty is allowed and
+	// is defaulted to the configured branch downstream.
+	if !repository.IsValidRef(opts.Ref) {
+		return opts, repository.ErrInvalidRef
+	}
+
 	path, err := pathAfterPrefix(r.URL.Path, fmt.Sprintf("/%s/files", name))
 	if err != nil {
 		return opts, err

@@ -61,14 +61,21 @@ func (h *historySubresource) Connect(ctx context.Context, name string, opts runt
 	}
 
 	return WithTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		query := r.URL.Query()
+		ref := query.Get("ref")
+
+		// Reject unvalidated refs before they reach any backend. Empty is allowed
+		// and defaulted by the backend to the configured branch.
+		if !repository.IsValidRef(ref) {
+			responder.Error(repository.ErrInvalidRef)
+			return
+		}
+
 		versioned, ok := repo.(repository.Versioned)
 		if !ok {
 			responder.Error(apierrors.NewBadRequest("this repository does not support history"))
 			return
 		}
-
-		query := r.URL.Query()
-		ref := query.Get("ref")
 
 		filePath, err := pathAfterPrefix(r.URL.Path, fmt.Sprintf("/%s/history/", name))
 		if err != nil {
