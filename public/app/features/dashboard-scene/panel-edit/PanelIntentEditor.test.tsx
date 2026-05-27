@@ -199,4 +199,48 @@ describe('PanelIntentEditor', () => {
 
     expect(screen.getByRole('button', { name: /Refine with AI/i })).toBeInTheDocument();
   });
+
+  describe('per-field Suggest buttons (E.3)', () => {
+    it('does not render per-field suggest buttons when the assistant is unavailable', async () => {
+      const { vizPanel } = buildPanel();
+      render(<PanelIntentEditor panel={vizPanel} />);
+      await expandPanelContext();
+      expect(screen.queryByLabelText(/Suggest a purpose statement with AI/i)).not.toBeInTheDocument();
+      expect(screen.queryByLabelText(/Suggest an owner with AI/i)).not.toBeInTheDocument();
+      expect(screen.queryByLabelText(/Suggest expected behavior with AI/i)).not.toBeInTheDocument();
+      expect(screen.queryByLabelText(/Suggest failure modes with AI/i)).not.toBeInTheDocument();
+    });
+
+    it('renders per-field suggest buttons when the assistant is available', async () => {
+      (useAssistant as jest.Mock).mockReturnValue({
+        isAvailable: true,
+        openAssistant: jest.fn(),
+      });
+      const { vizPanel } = buildPanel();
+      render(<PanelIntentEditor panel={vizPanel} />);
+      await expandPanelContext();
+      expect(screen.getByLabelText(/Suggest a purpose statement with AI/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/Suggest an owner with AI/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/Suggest expected behavior with AI/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/Suggest failure modes with AI/i)).toBeInTheDocument();
+    });
+
+    it('clicking a per-field suggest button opens the assistant with the correct focus', async () => {
+      const openAssistant = jest.fn();
+      (useAssistant as jest.Mock).mockReturnValue({ isAvailable: true, openAssistant });
+
+      const { vizPanel } = buildPanel();
+      render(<PanelIntentEditor panel={vizPanel} />);
+      await expandPanelContext();
+
+      await userEvent.click(screen.getByLabelText(/Suggest a purpose statement with AI/i));
+
+      expect(openAssistant).toHaveBeenCalledTimes(1);
+      const call = openAssistant.mock.calls[0][0];
+      expect(call.mode).toBe('assistant');
+      expect(call.autoSend).toBe(true);
+      expect(call.prompt).toMatch(/suggest_dashboard_intent/);
+      expect(call.prompt).toMatch(/focus="purpose"/);
+    });
+  });
 });

@@ -129,33 +129,56 @@ function PanelIntentEditorBody({ panel, intent }: BodyProps) {
             'One sentence: what does this panel measure and why does it matter?'
           )}
         >
-          <TextArea
-            value={intent.purpose ?? ''}
-            rows={2}
-            onChange={(e) =>
-              writeIntent(
-                { ...currentIntent(), purpose: e.currentTarget.value || undefined },
-                t('panel-intent-editor.edit.purpose', 'Edit panel purpose')
-              )
-            }
-          />
+          <Stack direction="row" gap={0.5} alignItems="flex-start">
+            <TextArea
+              value={intent.purpose ?? ''}
+              rows={2}
+              onChange={(e) =>
+                writeIntent(
+                  { ...currentIntent(), purpose: e.currentTarget.value || undefined },
+                  t('panel-intent-editor.edit.purpose', 'Edit panel purpose')
+                )
+              }
+            />
+            <SuggestFieldButton
+              panel={panel}
+              focus="purpose"
+              tooltip={t('panel-intent-editor.suggest.purpose', 'Suggest a purpose statement with AI')}
+            />
+          </Stack>
         </Field>
 
         <Field label={t('panel-intent-editor.owner', 'Owner')}>
-          <Input
-            value={intent.owner ?? ''}
-            placeholder="@team-handle"
-            onChange={(e) =>
-              writeIntent(
-                { ...currentIntent(), owner: e.currentTarget.value || undefined },
-                t('panel-intent-editor.edit.owner', 'Edit panel owner')
-              )
-            }
-          />
+          <Stack direction="row" gap={0.5} alignItems="center">
+            <Input
+              value={intent.owner ?? ''}
+              placeholder="@team-handle"
+              onChange={(e) =>
+                writeIntent(
+                  { ...currentIntent(), owner: e.currentTarget.value || undefined },
+                  t('panel-intent-editor.edit.owner', 'Edit panel owner')
+                )
+              }
+            />
+            <SuggestFieldButton
+              panel={panel}
+              focus="owner"
+              tooltip={t('panel-intent-editor.suggest.owner', 'Suggest an owner with AI')}
+            />
+          </Stack>
         </Field>
 
         <fieldset className={styles.group}>
-          <legend className={styles.legend}>{t('panel-intent-editor.expected', 'Expected behavior')}</legend>
+          <legend className={styles.legend}>
+            <Stack direction="row" gap={0.5} alignItems="center">
+              {t('panel-intent-editor.expected', 'Expected behavior')}
+              <SuggestFieldButton
+                panel={panel}
+                focus="expected behavior, alert threshold, normal range"
+                tooltip={t('panel-intent-editor.suggest.expected', 'Suggest expected behavior with AI')}
+              />
+            </Stack>
+          </legend>
 
           <Field label={t('panel-intent-editor.normal-range', 'Normal range')}>
             <Input
@@ -220,6 +243,7 @@ function PanelIntentEditorBody({ panel, intent }: BodyProps) {
 
         <FailureModesEditor
           failureModes={intent.failureModes ?? []}
+          panel={panel}
           onChange={(failureModes) =>
             writeIntent(
               { ...currentIntent(), failureModes: failureModes.length ? failureModes : undefined },
@@ -288,13 +312,23 @@ function hasAnyIntent(intent: PanelIntent): boolean {
 interface FailureModesEditorProps {
   failureModes: FailureMode[];
   onChange: (next: FailureMode[]) => void;
+  panel: VizPanel;
 }
 
-function FailureModesEditor({ failureModes, onChange }: FailureModesEditorProps) {
+function FailureModesEditor({ failureModes, onChange, panel }: FailureModesEditorProps) {
   const styles = useStyles2(getStyles);
   return (
     <fieldset className={styles.group}>
-      <legend className={styles.legend}>{t('panel-intent-editor.failure-modes', 'Failure modes')}</legend>
+      <legend className={styles.legend}>
+        <Stack direction="row" gap={0.5} alignItems="center">
+          {t('panel-intent-editor.failure-modes', 'Failure modes')}
+          <SuggestFieldButton
+            panel={panel}
+            focus="failure modes"
+            tooltip={t('panel-intent-editor.suggest.failure-modes', 'Suggest failure modes with AI')}
+          />
+        </Stack>
+      </legend>
       <Stack direction="column" gap={0.5}>
         {failureModes.map((fm, idx) => (
           <Stack key={idx} direction="row" gap={0.5} alignItems="center">
@@ -444,6 +478,57 @@ function RunbooksEditor({ runbooks, onChange }: RunbooksEditorProps) {
         </Button>
       </Stack>
     </fieldset>
+  );
+}
+
+interface SuggestFieldButtonProps {
+  panel: VizPanel;
+  /** Natural-language focus hint forwarded to suggest_dashboard_intent as the `focus` param. */
+  focus: string;
+  /** Tooltip shown on the icon button. */
+  tooltip: string;
+}
+
+/**
+ * Phase E.3: small per-field "Suggest" icon button that opens the
+ * Grafana Assistant pre-filled with a `suggest_dashboard_intent` prompt
+ * scoped to a specific field. Less destructive than the top-level
+ * "Draft with AI" button — the user can ask for one field at a time
+ * without triggering a full intent draft.
+ *
+ * Renders nothing when the assistant is unavailable so authors on
+ * non-assistant tenants don't see a non-functional shortcut.
+ */
+function SuggestFieldButton({ panel, focus, tooltip }: SuggestFieldButtonProps) {
+  const assistant = useAssistant();
+  if (!assistant.isAvailable || !assistant.openAssistant) {
+    return null;
+  }
+  const { openAssistant } = assistant;
+  const dashboard = getDashboardSceneFor(panel);
+  const dashboardUid = dashboard.state.uid;
+  const panelId = getPanelIdForVizPanel(panel);
+
+  const handleClick = () => {
+    reportInteraction('grafana_dashboard_intent_suggest_field_clicked', { focus });
+    openAssistant({
+      origin: 'grafana/dashboard/panel-context/suggest-field',
+      mode: 'assistant',
+      prompt: `For panel ${panelId} on dashboard ${dashboardUid}, use suggest_dashboard_intent with focus="${focus}" to draft just that field. Present the suggestion and wait for confirmation before saving.`,
+      context: [
+        createAssistantContextItem('structured', {
+          title: `Panel ${panelId}`,
+          data: { dashboardUid, panelId, focus },
+        }),
+      ],
+      autoSend: true,
+    });
+  };
+
+  return (
+    <Tooltip content={tooltip} placement="top">
+      <IconButton name="ai-sparkle" size="sm" aria-label={tooltip} onClick={handleClick} />
+    </Tooltip>
   );
 }
 
