@@ -1,11 +1,10 @@
-import { v4 as uuidv4 } from 'uuid';
-
 import {
   type AdHocVariableFilter,
   DataFrameView,
   getDefaultTimeRange,
   type ScopedVars,
   type TimeRange,
+  generateUUID,
 } from '@grafana/data';
 import { QueryFormat, type SQLQuery, type SQLSelectableValue } from '@grafana/plugin-ui';
 import { type DataQuery } from '@grafana/schema';
@@ -39,7 +38,7 @@ export async function fetchSQLFields(
   );
 
   const queryResponse = await datasource.runMetaSQLExprQuery(
-    { rawSql: queryString, format: QueryFormat.Table, refId: `fields-${uuidv4()}` },
+    { rawSql: queryString, format: QueryFormat.Table, refId: `fields-${generateUUID()}` },
     options.range ?? getDefaultTimeRange(),
     interpolatedSourceQueries
   );

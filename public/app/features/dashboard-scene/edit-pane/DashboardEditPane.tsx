@@ -13,6 +13,7 @@ import { getRepeatCloneSourceKey } from '../utils/clone';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDefaultVizPanel, getLayoutForObject, getDashboardSceneFor } from '../utils/utils';
 
+import { DashboardOutline } from './DashboardOutline';
 import { ElementEditPane } from './ElementEditPane';
 import {
   ConditionalRenderingChangedEvent,
@@ -32,6 +33,7 @@ export interface DashboardEditPaneState extends SceneObjectState {
 
   undoStack: DashboardEditActionEventPayload[];
   redoStack: DashboardEditActionEventPayload[];
+  outlinePane?: DashboardOutline;
   openPane?: DashboardSidebarPane;
   /** Temp hack for Link and LinkSet that are not part of the scene but need to be selected for now  */
   selectedDisconnectedObject?: SceneObject;
@@ -43,7 +45,7 @@ export interface DashboardEditPaneState extends SceneObjectState {
 }
 
 export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> implements EditPaneSelectionActions {
-  public constructor() {
+  public constructor(state?: Partial<DashboardEditPaneState>) {
     super({
       selectionContext: {
         enabled: false,
@@ -54,6 +56,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
       isNewElement: false,
       undoStack: [],
       redoStack: [],
+      outlinePane: state?.outlinePane ?? new DashboardOutline({}),
     });
 
     this.addActivationHandler(this.onActivate.bind(this));

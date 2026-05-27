@@ -520,7 +520,12 @@ func (hs *HTTPServer) UpdateDataSourceByUID(c *contextmodel.ReqContext) response
 		return response.Error(http.StatusBadRequest, "Failed to update datasource", err)
 	}
 
-	ds, err := hs.getRawDataSourceByUID(c.Req.Context(), web.Params(c.Req)[":uid"], c.GetOrgID())
+	urlUID := web.Params(c.Req)[":uid"]
+	if cmd.UID != "" && cmd.UID != urlUID {
+		return response.Error(http.StatusBadRequest, "UID in the payload must match the UID in the URL", nil)
+	}
+
+	ds, err := hs.getRawDataSourceByUID(c.Req.Context(), urlUID, c.GetOrgID())
 	if err != nil {
 		if errors.Is(err, datasources.ErrDataSourceNotFound) {
 			return response.Error(http.StatusNotFound, "Data source not found", nil)

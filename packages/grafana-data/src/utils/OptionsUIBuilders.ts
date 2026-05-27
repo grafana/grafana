@@ -178,7 +178,7 @@ export interface NestedPanelOptions<TSub = any> {
   values?: (parent: NestedValueAccess) => NestedValueAccess;
 }
 
-export class NestedPanelOptionsBuilder<TSub = any> implements OptionsEditorItem<TSub, any, any, any> {
+class NestedPanelOptionsBuilder<TSub = any> implements OptionsEditorItem<TSub, any, any, any> {
   path = '';
   category?: string[];
   defaultValue?: TSub;
