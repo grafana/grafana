@@ -11699,6 +11699,11 @@
       "published-by": "Published by",
       "updated-on": "Updated on"
     },
+    "import-overview": {
+      "invalid-schema-action": "Try another dashboard",
+      "invalid-schema-body": "The dashboard could not be imported because its schema is not a recognized version.",
+      "invalid-schema-title": "Invalid or unknown dashboard schema"
+    },
     "snapshot-list-table": {
       "body-delete": "Are you sure you want to delete '{{snapshotToRemove}}'?",
       "confirmText-delete": "Delete",
