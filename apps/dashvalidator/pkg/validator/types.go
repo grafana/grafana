@@ -42,6 +42,7 @@ type Datasource struct {
 	Name       string       // Datasource name for reporting
 	URL        string       // Datasource URL for API calls
 	HTTPClient *http.Client // Authenticated HTTP client for making requests
+	OrgID      int64        // Org ID
 }
 
 // CompatibilityResult contains the shared metrics compatibility fields
