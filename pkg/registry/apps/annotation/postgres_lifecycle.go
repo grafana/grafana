@@ -10,10 +10,9 @@ import (
 
 // Cleanup implements the LifecycleManager interface
 // It removes old partitions that are beyond the retention TTL
-func (s *PostgreSQLStore) Cleanup(ctx context.Context) (int64, error) {
+func (s *PostgreSQLStore) Cleanup(ctx context.Context, before time.Time) (int64, error) {
 	// Calculate cutoff timestamp and corresponding partition name
-	cutoff := time.Now().UTC().Add(-s.config.RetentionTTL)
-	cutoffMs := cutoff.UnixMilli()
+	cutoffMs := before.UnixMilli()
 	cutoffPartition := getPartitionName(cutoffMs)
 
 	// Get all existing partitions

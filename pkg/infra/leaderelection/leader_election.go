@@ -137,30 +137,26 @@ func NewKubernetesElector(
 // fn receives a context that is cancelled when leadership is lost.
 // Run blocks until ctx is cancelled.
 func (k *KubernetesElector) Run(ctx context.Context, fn func(ctx context.Context), opts ...RunOption) error {
-	o := &runOptions{
-		releaseOnCancel: true,
-		onStartedLeading: func(ctx context.Context) {
+	o := ResolveRunOptions([]RunOption{
+		WithReleaseOnCancel(true),
+		WithOnStartedLeading(func(ctx context.Context) {
 			k.logger.Info("Acquired leader lease, starting leader work",
 				"identity", k.identity,
 				"lease", k.leaseName,
 				"namespace", k.namespace,
 			)
-		},
-		onStoppedLeading: func() {
+		}),
+		WithOnStoppedLeading(func() {
 			k.logger.Info("Lost leader lease, stopping leader work",
 				"identity", k.identity,
 			)
-		},
-		onNewLeader: func(identity string) {
+		}),
+		WithOnNewLeader(func(identity string) {
 			if identity != k.identity {
 				k.logger.Info("New leader elected", "leader", identity)
 			}
-		},
-	}
-
-	for _, opt := range opts {
-		opt(o)
-	}
+		}),
+	}, opts)
 
 	lock := &resourcelock.LeaseLock{
 		LeaseMeta: metav1.ObjectMeta{
@@ -178,14 +174,14 @@ func (k *KubernetesElector) Run(ctx context.Context, fn func(ctx context.Context
 		LeaseDuration:   k.leaseDuration,
 		RenewDeadline:   k.renewDeadline,
 		RetryPeriod:     k.retryPeriod,
-		ReleaseOnCancel: o.releaseOnCancel,
+		ReleaseOnCancel: o.ReleaseOnCancel,
 		Callbacks: leaderelection.LeaderCallbacks{
 			OnStartedLeading: func(ctx context.Context) {
-				o.onStartedLeading(ctx)
+				o.OnStartedLeading(ctx)
 				fn(ctx)
 			},
-			OnStoppedLeading: o.onStoppedLeading,
-			OnNewLeader:      o.onNewLeader,
+			OnStoppedLeading: o.OnStoppedLeading,
+			OnNewLeader:      o.OnNewLeader,
 		},
 	})
 	if err != nil {

@@ -3,6 +3,8 @@ package resource
 import (
 	"cmp"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"hash/fnv"
 	"math/rand"
@@ -11,7 +13,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Masterminds/semver"
+	"github.com/Masterminds/semver/v3"
 	"github.com/hashicorp/golang-lru/v2/expirable"
 	gocache "github.com/patrickmn/go-cache"
 	"go.opentelemetry.io/otel/attribute"
@@ -38,6 +40,10 @@ import (
 )
 
 const maxBatchSize = 1000
+
+// unknownBuildSize is passed when the caller does not have a cheap size hint.
+// Backends should treat it as unknown, not as an empty resource.
+const unknownBuildSize int64 = -1
 
 const (
 	defaultVectorSearchLimit = 50
@@ -122,7 +128,8 @@ type SearchBackend interface {
 	GetIndex(key NamespacedResource) ResourceIndex
 
 	// BuildIndex builds an index from scratch.
-	// Depending on the size, the backend may choose different options (eg: memory vs disk).
+	// Depending on the size hint, the backend may choose different options (eg: memory vs disk).
+	// A negative size means the caller does not have a cheap size hint.
 	// The last known resource version can be used to detect that nothing has changed, and existing on-disk index can be reused.
 	// The builder will write all documents before returning.
 	// Updater function is used to update the index before performing the search.
@@ -164,6 +171,12 @@ type searchServer struct {
 	builders      *builderCache
 	initWorkers   int
 	initMinSize   int
+
+	queryCache             vector.QueryEmbeddingCache
+	queryCacheMaxPerTenant int
+	rateLimiter            vector.RateLimiter
+	rateLimitPerTenant     int
+	rateLimitWindow        time.Duration
 
 	ownsIndexFn func(key NamespacedResource) (bool, error)
 
@@ -265,6 +278,12 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 		selectableFields:          opts.SelectableFieldsForKinds,
 		injectFailuresPercent:     opts.InjectFailuresPercent,
 		indexModificationCacheTTL: opts.IndexModificationCacheTTL,
+
+		queryCache:             opts.QueryCache,
+		queryCacheMaxPerTenant: opts.QueryCacheMaxPerTenant,
+		rateLimiter:            opts.RateLimiter,
+		rateLimitPerTenant:     opts.RateLimitPerTenant,
+		rateLimitWindow:        opts.RateLimitWindow,
 	}
 
 	s.rebuildQueue = debouncer.NewQueue(combineRebuildRequests)
@@ -597,26 +616,18 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		attribute.Int("limit", limit),
 	)
 
-	// Embed the query as a retrieval *query* (different task hint than the
-	// retrieval *document* hint used at index time — providers tune
-	// projections per side of the retrieval pair).
-	out, err := s.embedder.EmbedText(ctx, embedder.EmbedTextInput{
-		Texts:     []string{req.Query},
-		Normalize: s.embedder.ShouldNormalize(),
-		Task:      embedder.TaskRetrievalQuery,
-	})
-	if err != nil {
-		s.log.Error("vector search: embed query", "err", err)
-		return nil, status.Error(codes.Internal, "embed query")
+	if err := s.checkVectorSearchRateLimit(ctx, req.Key.Namespace); err != nil {
+		return nil, err
 	}
-	if len(out.Embeddings) != 1 || len(out.Embeddings[0].Dense) == 0 {
-		s.log.Error("vector search: embedder returned no vectors")
-		return nil, status.Error(codes.Internal, "embed query: empty result")
+
+	dense, err := s.embedVectorSearchQuery(ctx, req.Key.Namespace, req.Query)
+	if err != nil {
+		return nil, err
 	}
 
 	results, err := s.vectorBackend.Search(ctx,
 		req.Key.Namespace, s.embedder.Model, req.Key.Resource,
-		out.Embeddings[0].Dense, limit, translateVectorSearchFilters(req.Filters)...)
+		dense, limit, translateVectorSearchFilters(req.Filters)...)
 	if err != nil {
 		s.log.Error("vector search: backend", "err", err)
 		return nil, status.Error(codes.Internal, "vector search backend")
@@ -678,6 +689,109 @@ func validateVectorSearchRequest(req *resourcepb.VectorSearchRequest) *resourcep
 		}
 	}
 	return nil
+}
+
+// checkVectorSearchRateLimit returns a gRPC status error when the
+// request must be rejected (over quota or limiter unreachable), nil
+// when it should proceed.
+func (s *searchServer) checkVectorSearchRateLimit(ctx context.Context, namespace string) error {
+	if s.rateLimiter == nil {
+		return nil
+	}
+	allowed, count, err := s.rateLimiter.Allow(ctx, namespace, s.rateLimitWindow, s.rateLimitPerTenant)
+	if err != nil {
+		s.log.Error("vector search: rate-limit check failed, fail-closed", "err", err, "namespace", namespace)
+		if s.vectorMetrics != nil {
+			s.vectorMetrics.RateLimiterErrorsTotal.Inc()
+		}
+		return status.Error(codes.Unavailable, "rate limiter unavailable")
+	}
+	if !allowed {
+		if s.vectorMetrics != nil {
+			s.vectorMetrics.RateLimitedRequestsTotal.Inc()
+		}
+		return status.Errorf(codes.ResourceExhausted, "tenant rate limit exceeded: %d requests in window", count)
+	}
+	return nil
+}
+
+// embedVectorSearchQuery returns the query embedding, fetching it from
+// the cache on hit or calling the embedder on miss (and best-effort
+// writing back into the cache, enforcing the per-tenant cap).
+func (s *searchServer) embedVectorSearchQuery(ctx context.Context, namespace, query string) ([]float32, error) {
+	queryHash := sha256Hex(query)
+	if dense, ok := s.lookupCachedQueryEmbedding(ctx, namespace, queryHash); ok {
+		return dense, nil
+	}
+
+	// Embed the query as a retrieval *query* (different task hint than
+	// the retrieval *document* hint used at index time — providers tune
+	// projections per side of the retrieval pair).
+	out, err := s.embedder.EmbedText(ctx, embedder.EmbedTextInput{
+		Texts:     []string{query},
+		Normalize: s.embedder.ShouldNormalize(),
+		Task:      embedder.TaskRetrievalQuery,
+	})
+	if err != nil {
+		s.log.Error("vector search: embed query", "err", err)
+		return nil, status.Error(codes.Internal, "embed query")
+	}
+	if len(out.Embeddings) != 1 || len(out.Embeddings[0].Dense) == 0 {
+		s.log.Error("vector search: embedder returned no vectors")
+		return nil, status.Error(codes.Internal, "embed query: empty result")
+	}
+	dense := out.Embeddings[0].Dense
+	if s.vectorMetrics != nil {
+		s.vectorMetrics.QueryCacheMissesTotal.WithLabelValues(s.embedder.Model).Inc()
+	}
+	s.storeCachedQueryEmbedding(ctx, namespace, queryHash, dense)
+	return dense, nil
+}
+
+// lookupCachedQueryEmbedding returns (embedding, true) on hit; (nil,
+// false) on miss or any error (cache failures must not fail the search).
+func (s *searchServer) lookupCachedQueryEmbedding(ctx context.Context, namespace, queryHash string) ([]float32, bool) {
+	if s.queryCache == nil {
+		return nil, false
+	}
+	emb, hit, err := s.queryCache.Get(ctx, namespace, s.embedder.Model, queryHash)
+	if err != nil {
+		s.log.Warn("vector search: cache lookup failed, falling through", "err", err)
+		return nil, false
+	}
+	if !hit {
+		return nil, false
+	}
+	if s.vectorMetrics != nil {
+		s.vectorMetrics.QueryCacheHitsTotal.WithLabelValues(s.embedder.Model).Inc()
+	}
+	return emb, true
+}
+
+// vectorQueryCacheEvictTargetFraction is how full the cache is left
+// after an eviction round runs.
+const vectorQueryCacheEvictTargetFraction = 0.8
+
+// storeCachedQueryEmbedding writes the freshly-embedded vector into the
+// cache (best-effort). When the tenant is at or above the cap, eviction
+// trims down to vectorQueryCacheEvictTargetFraction of the cap in one
+// pass so we don't run a DELETE on every cache miss at steady state.
+func (s *searchServer) storeCachedQueryEmbedding(ctx context.Context, namespace, queryHash string, dense []float32) {
+	if s.queryCache == nil || s.queryCacheMaxPerTenant <= 0 {
+		return
+	}
+	if n, err := s.queryCache.Count(ctx, namespace); err == nil && int(n) >= s.queryCacheMaxPerTenant {
+		target := int(float64(s.queryCacheMaxPerTenant) * vectorQueryCacheEvictTargetFraction)
+		evictN := int(n) - target
+		if deleted, err := s.queryCache.EvictOldest(ctx, namespace, evictN); err != nil {
+			s.log.Warn("vector search: cache evict failed", "err", err)
+		} else if deleted > 0 && s.vectorMetrics != nil {
+			s.vectorMetrics.QueryCacheEvictionsTotal.Add(float64(deleted))
+		}
+	}
+	if err := s.queryCache.Put(ctx, namespace, s.embedder.Model, queryHash, dense); err != nil {
+		s.log.Warn("vector search: cache put failed", "err", err)
+	}
 }
 
 // vectorAuthzKey de-dupes (UID, Folder) so sub-resources of the same
@@ -772,9 +886,10 @@ func (s *searchServer) GetStats(ctx context.Context, req *resourcepb.ResourceSta
 	}
 
 	stats := NewSearchStats("GetStats")
-	defer s.logStats(ctx, stats, span, "namespace", req.Namespace, "group", strings.Join(req.Kinds, ","), "folder", req.Folder)
+	defer s.logStats(ctx, stats, span, "namespace", req.Namespace, "group", strings.Join(req.Kinds, ","), "folder", strings.Join(req.Folder, ","))
 
 	rsp := &resourcepb.ResourceStatsResponse{}
+	folderSet := folderFilterSet(req)
 
 	// Explicit list of kinds
 	if len(req.Kinds) > 0 {
@@ -790,7 +905,7 @@ func (s *searchServer) GetStats(ctx context.Context, req *resourcepb.ResourceSta
 				rsp.Error = AsErrorResult(err)
 				return rsp, nil
 			}
-			count, err := index.DocCount(ctx, req.Folder, stats)
+			count, err := sumDocCount(ctx, index, folderSet, stats)
 			if err != nil {
 				rsp.Error = AsErrorResult(err)
 				return rsp, nil
@@ -815,8 +930,8 @@ func (s *searchServer) GetStats(ctx context.Context, req *resourcepb.ResourceSta
 	}
 	rsp.Stats = make([]*resourcepb.ResourceStatsResponse_Stats, len(resourceStats))
 
-	// When not filtered by folder or repository, we can use the results directly
-	if req.Folder == "" {
+	// When not filtered by folder, we can use the results directly
+	if len(folderSet) == 0 {
 		for i, stat := range resourceStats {
 			rsp.Stats[i] = &resourcepb.ResourceStatsResponse_Stats{
 				Group:    stat.Group,
@@ -837,7 +952,7 @@ func (s *searchServer) GetStats(ctx context.Context, req *resourcepb.ResourceSta
 			rsp.Error = AsErrorResult(err)
 			return rsp, nil
 		}
-		count, err := index.DocCount(ctx, req.Folder, stats)
+		count, err := sumDocCount(ctx, index, folderSet, stats)
 		if err != nil {
 			rsp.Error = AsErrorResult(err)
 			return rsp, nil
@@ -849,6 +964,48 @@ func (s *searchServer) GetStats(ctx context.Context, req *resourcepb.ResourceSta
 		}
 	}
 	return rsp, nil
+}
+
+// folderFilterSet returns req.Folder de-duplicated, with empty entries dropped.
+// Returns nil when no folder filter is set, which means "count everything in
+// the namespace".
+func folderFilterSet(req *resourcepb.ResourceStatsRequest) []string {
+	if len(req.Folder) == 0 {
+		return nil
+	}
+	seen := make(map[string]struct{}, len(req.Folder))
+	out := make([]string, 0, len(req.Folder))
+	for _, f := range req.Folder {
+		if f == "" {
+			continue
+		}
+		if _, ok := seen[f]; ok {
+			continue
+		}
+		seen[f] = struct{}{}
+		out = append(out, f)
+	}
+	return out
+}
+
+// sumDocCount returns the document count across the given folders. When
+// folders is empty it returns the total document count of the index. Bleve
+// has no native multi-folder count, so we issue one DocCount per folder and
+// sum — fine for the move/delete confirmation flow which only spans a
+// folder subtree.
+func sumDocCount(ctx context.Context, index ResourceIndex, folders []string, stats *SearchStats) (int64, error) {
+	if len(folders) == 0 {
+		return index.DocCount(ctx, "", stats)
+	}
+	var total int64
+	for _, f := range folders {
+		c, err := index.DocCount(ctx, f, stats)
+		if err != nil {
+			return 0, err
+		}
+		total += c
+	}
+	return total, nil
 }
 
 func (s *searchServer) RebuildIndexes(ctx context.Context, req *resourcepb.RebuildIndexesRequest) (*resourcepb.RebuildIndexesResponse, error) {
@@ -980,6 +1137,8 @@ func (s *searchServer) init(ctx context.Context) error {
 	s.bgTaskWg.Add(1)
 	go s.runPeriodicScanForIndexesToRebuild(subctx)
 
+	s.startRateBucketSweeper(subctx)
+
 	end := time.Now().Unix()
 	s.log.Info("search index initialized", "duration_secs", end-start, "total_docs", s.search.TotalDocs())
 	return nil
@@ -1030,6 +1189,42 @@ func (s *searchServer) runPeriodicScanForIndexesToRebuild(ctx context.Context) {
 			s.findIndexesToRebuild(importTimes, nil, time.Now(), true)
 		}
 	}
+}
+
+func sha256Hex(s string) string {
+	h := sha256.Sum256([]byte(s))
+	return hex.EncodeToString(h[:])
+}
+
+// Old buckets never affect Allow() — sweeping is purely housekeeping.
+func (s *searchServer) startRateBucketSweeper(ctx context.Context) {
+	if s.rateLimiter == nil || s.rateLimitWindow <= 0 {
+		return
+	}
+	s.bgTaskWg.Go(func() {
+		interval := s.rateLimitWindow / 2
+		if interval < time.Minute {
+			interval = time.Minute
+		}
+		t := time.NewTicker(interval)
+		defer t.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-t.C:
+				cutoff := time.Now().Add(-2 * s.rateLimitWindow)
+				deleted, err := s.rateLimiter.SweepOlderThan(ctx, cutoff)
+				if err != nil {
+					s.log.Warn("rate-bucket sweep failed", "err", err)
+					continue
+				}
+				if deleted > 0 {
+					s.log.Debug("rate-bucket sweep", "deleted", deleted, "cutoff", cutoff)
+				}
+			}
+		}
+	})
 }
 
 // jitterForKey returns a deterministic jitter duration for the given key,
@@ -1218,26 +1413,11 @@ func (s *searchServer) rebuildIndex(ctx context.Context, req rebuildRequest) {
 		s.builders.clearNamespacedCache(req.NamespacedResource)
 	}
 
-	// Get the correct value of size + RV for building the index. This is important for our Bleve
-	// backend to decide whether to build index in-memory or as file-based.
-	nsr := NamespacedResource{
-		Namespace: req.Namespace,
-		Group:     req.Group,
-		Resource:  req.Resource,
-	}
-	stats, err := s.storage.GetResourceStats(ctx, nsr, 0)
+	size, err := idx.DocCount(ctx, "", nil)
 	if err != nil {
-		span.RecordError(fmt.Errorf("failed to get resource stats: %w", err))
-		l.Error("failed to get resource stats", "error", err)
-		return
-	}
-
-	size := int64(0)
-	for _, stat := range stats {
-		if stat.Namespace == req.Namespace && stat.Group == req.Group && stat.Resource == req.Resource {
-			size = stat.Count
-			break
-		}
+		span.RecordError(fmt.Errorf("failed to get current index doc count: %w", err))
+		l.Warn("failed to get current index doc count, using unknown size", "error", err)
+		size = unknownBuildSize
 	}
 
 	// Pass rebuild=true to force rebuild of any existing file-based index.
@@ -1375,24 +1555,6 @@ func (s *searchServer) getOrCreateIndex(ctx context.Context, stats *SearchStats,
 				return idx, nil
 			}
 
-			// Get correct value of size + RV for building the index. This is important for our Bleve
-			// backend to decide whether to build index in-memory or as file-based.
-			nsr := NamespacedResource{
-				Namespace: key.Namespace,
-			}
-			stats, err := s.storage.GetResourceStats(ctx, nsr, 0)
-			if err != nil {
-				return nil, fmt.Errorf("failed to get resource stats: %w", err)
-			}
-
-			size := int64(0)
-			for _, stat := range stats {
-				if stat.Namespace == key.Namespace && stat.Group == key.Group && stat.Resource == key.Resource {
-					size = stat.Count
-					break
-				}
-			}
-
 			// Get last import time to pass to BuildIndex, which will check if the file-based
 			// index needs to be rebuilt before opening it.
 			var lastImportTime time.Time
@@ -1404,7 +1566,7 @@ func (s *searchServer) getOrCreateIndex(ctx context.Context, stats *SearchStats,
 				lastImportTime = importTimes[key]
 			}
 
-			idx, err = s.build(ctx, key, size, reason, false, lastImportTime)
+			idx, err = s.build(ctx, key, unknownBuildSize, reason, false, lastImportTime)
 			if err != nil {
 				return nil, fmt.Errorf("error building search index, %w", err)
 			}
