@@ -33,7 +33,7 @@ func FuzzReadDashboard(f *testing.F) {
 	for _, dir := range seedDirs {
 		entries, err := os.ReadDir(dir)
 		if err != nil {
-			continue
+			f.Fatalf("read seed dir %q: %v (did seed paths move?)", dir, err)
 		}
 		for _, e := range entries {
 			if e.IsDir() || filepath.Ext(e.Name()) != ".json" {
