@@ -1654,11 +1654,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/settings/variables/components/VariableDisplaySelect.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/settings/variables/components/VariableHideSelect.tsx": {
     "@grafana/require-no-margin": {
       "count": 1
@@ -2078,11 +2073,6 @@
   "public/app/features/datasources/components/DataSourcePluginState.tsx": {
     "@grafana/no-gf-form": {
       "count": 3
-    }
-  },
-  "public/app/features/datasources/components/DataSourceTestingStatus.tsx": {
-    "@grafana/no-gf-form": {
-      "count": 1
     }
   },
   "public/app/features/datasources/components/EditDataSourceActions.test.tsx": {
