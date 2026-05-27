@@ -281,23 +281,11 @@ export const dashboardEditActions = {
 
   addVariable({ source, addedObject }: AddVariableActionHelperProps) {
     const dashboard = getDashboardSceneFor(source);
-    const cmd = new AddVariableCommand(dashboard, addedObject, source.state.variables.length);
-    dashboardEditActions.edit({
-      source: dashboard,
-      description: cmd.title,
-      perform: () => cmd.perform(),
-      undo: () => cmd.undo(),
-    });
+    dashboard.mutationApiClient.execute(new AddVariableCommand(dashboard, addedObject, source.state.variables.length));
   },
   removeVariable({ source, removedObject }: RemoveVariableActionHelperProps) {
     const dashboard = getDashboardSceneFor(source);
-    const cmd = new RemoveVariableCommand(dashboard, removedObject);
-    dashboardEditActions.edit({
-      source: dashboard,
-      description: cmd.title,
-      perform: () => cmd.perform(),
-      undo: () => cmd.undo(),
-    });
+    dashboard.mutationApiClient.execute(new RemoveVariableCommand(dashboard, removedObject));
   },
   changeVariableType({ source, oldVariable, newVariable }: ChangeVariableTypeActionHelperProps) {
     const varsBeforeChange = [...source.state.variables];
