@@ -65,7 +65,7 @@ export function useImportProvisionedSave({ repository }: { repository?: Reposito
     activeRepo: undefined,
   });
 
-  const [createFile, request] = useCreateOrUpdateRepositoryFile(undefined);
+  const [createFile, request] = useCreateOrUpdateRepositoryFile();
 
   useProvisionedRequestHandler({
     ...saveState,
