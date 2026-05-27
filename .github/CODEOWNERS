@@ -614,6 +614,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/src/utils/throwIfAngular* @grafana/grafana-frontend-platform
 /packages/grafana-data/src/utils/unaryOperators.ts @grafana/datapro
 /packages/grafana-data/src/utils/url* @grafana/grafana-frontend-navigation
+/packages/grafana-data/src/utils/uuid* @grafana/grafana-frontend-platform
 /packages/grafana-data/src/utils/valueMappings* @grafana/dashboards-squad
 /packages/grafana-data/src/utils/variables.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/src/utils/withLoadingIndicator.ts @grafana/access-squad @grafana/alerting-frontend
