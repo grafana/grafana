@@ -100,8 +100,11 @@ func (s *webhookConnector) PostProcessOpenAPI(oas *spec3.OpenAPI) error {
 	root := "/apis/" + s.core.GetGroupVersion().String() + "/"
 	repoprefix := root + "namespaces/{namespace}/repositories/{name}"
 	sub := oas.Paths.Paths[repoprefix+"/webhook"]
-	if sub != nil && sub.Get != nil {
-		sub.Post.Description = "Currently only supports github webhooks"
+	if sub != nil {
+		sub.Get = nil
+		if sub.Post != nil {
+			sub.Post.Description = "Currently only supports github webhooks"
+		}
 	}
 
 	return nil
