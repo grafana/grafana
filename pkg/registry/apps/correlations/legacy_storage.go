@@ -250,13 +250,24 @@ func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation r
 			datasourceToDelete["name"] = dsName
 		}
 	}
+	labelSelector, _ := listOptions.LabelSelector.Requirements()
+	if labelSelector[0].Key() == "correlations.grafana.app/sourceDSProv-ref" {
+		datasourceData := strings.Split(labelSelector[0].Values().List()[0], ".")
+		datasourceToDelete["group"] = datasourceData[0]
+		datasourceToDelete["name"] = datasourceData[1]
+		datasourceToDelete["provisioned"] = datasourceData[2]
+	}
 
 	if datasourceToDelete["name"] == "" || datasourceToDelete["group"] == "" {
-		return nil, fmt.Errorf("deleteCollection to legacy passed invalid field selectors")
+		return nil, fmt.Errorf("deleteCollection to legacy passed invalid field or label selectors")
 	}
 
 	if isSourceDelete {
-		return nil, s.service.DeleteCorrelationsBySourceUID(ctx, correlations.DeleteCorrelationsBySourceUIDCommand{SourceUID: datasourceToDelete["name"], SourceType: datasourceToDelete["group"], OrgId: orgID, OnlyProvisioned: true})
+		isProvisioned := true
+		if datasourceToDelete["provisioned"] == "false" {
+			isProvisioned = false
+		}
+		return nil, s.service.DeleteCorrelationsBySourceUID(ctx, correlations.DeleteCorrelationsBySourceUIDCommand{SourceUID: datasourceToDelete["name"], SourceType: datasourceToDelete["group"], OrgId: orgID, OnlyProvisioned: isProvisioned})
 	} else {
 		return nil, s.service.DeleteCorrelationsByTargetUID(ctx, correlations.DeleteCorrelationsByTargetUIDCommand{TargetUID: datasourceToDelete["name"], TargetType: datasourceToDelete["group"], OrgId: orgID})
 	}
