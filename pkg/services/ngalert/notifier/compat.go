@@ -3,6 +3,9 @@ package notifier
 import (
 	"encoding/json"
 	"fmt"
+	"maps"
+	"slices"
+	"strings"
 
 	"github.com/grafana/alerting/definition"
 	alertingModels "github.com/grafana/alerting/models"
@@ -58,19 +61,23 @@ func IntegrationToIntegrationConfig(i models.Integration) (alertingModels.Integr
 }
 
 func PostableAPIConfigToNotificationsConfiguration(
-	cfg v1.PostableApiAlertingConfig,
-	tmpls []v1.TemplateGroup,
+	cfg v1.AMConfigV1,
 	limits alertingNotify.DynamicLimits,
 ) (alertingNotify.NotificationsConfiguration, error) {
-	receivers, err := ModelToAPIReceivers(cfg.Receivers)
+	receivers, err := ModelToAPIReceivers(cfg.AlertmanagerConfig.Receivers)
+	if err != nil {
+		return alertingNotify.NotificationsConfiguration{}, err
+	}
+	inhibitionRules, err := ModelToInhibitionRules(cfg.InhibitionRules)
 	if err != nil {
 		return alertingNotify.NotificationsConfiguration{}, err
 	}
 	return alertingNotify.NotificationsConfiguration{
-		RoutingTree:   RouteToAPI(cfg.Route),
-		InhibitRules:  cfg.InhibitRules,
-		TimeIntervals: ModelToTimeIntervals(cfg.TimeIntervals, cfg.MuteTimeIntervals),
-		Templates:     ModelToTemplateDefinitions(tmpls),
+		RoutingTree: RouteToAPI(cfg.AlertmanagerConfig.Route),
+		// Unclear if we need to include inhibition rules from AlertmanagerConfig as historically they shouldn't have been supported, but for now we do to keep behaviour unchanged.
+		InhibitRules:  append(inhibitionRules, cfg.AlertmanagerConfig.InhibitRules...),
+		TimeIntervals: ModelToTimeIntervals(cfg.AlertmanagerConfig.TimeIntervals, cfg.AlertmanagerConfig.MuteTimeIntervals),
+		Templates:     ModelToTemplateDefinitions(cfg.SortedTemplates(false)), // templates are already merged.
 		Receivers:     receivers,
 		Limits:        limits,
 	}, nil
@@ -140,10 +147,31 @@ func ModelToTemplateDefinitions(ts []v1.TemplateGroup) []templates.TemplateDefin
 	return defs
 }
 
+// ModelToInhibitionRules Converts inhibition rules to a consistently ordered slice of upstream inhibit rules.
+func ModelToInhibitionRules(inhibitionRules map[v1.ResourceUID]v1.InhibitionRule) ([]config.InhibitRule, error) {
+	if len(inhibitionRules) == 0 {
+		return make([]config.InhibitRule, 0), nil
+	}
+
+	res := make([]config.InhibitRule, 0, len(inhibitionRules))
+	for _, ir := range slices.SortedFunc(maps.Values(inhibitionRules), func(a v1.InhibitionRule, b v1.InhibitionRule) int {
+		return strings.Compare(string(a.UID), string(b.UID))
+	}) {
+		apiDef, err := InhibitionRuleToAPI(ir)
+		if err != nil {
+			return nil, err
+		}
+		res = append(res, apiDef.InhibitRule)
+	}
+
+	return res, nil
+}
+
 // TODO: Temporary until DB model and API model separate. Doing it this way makes caller intent clearer.
 var RouteToAPI = v1.RouteToDB
 var PostableApiAlertingConfigToAPI = v1.PostableApiAlertingConfigToDB
 var ExtraConfigsToAPI = v1.ExtraConfigsToDB
+var InhibitionRuleToAPI = v1.InhibitionRuleToDB
 
 func NotificationsConfigurationToPostableAPIConfig(config alertingNotify.NotificationsConfiguration) apimodels.PostableApiAlertingConfig {
 	return apimodels.PostableApiAlertingConfig{

@@ -24,11 +24,11 @@ type AMConfigDB = definitions.PostableUserConfig // TODO: Define type explicitly
 
 // AMConfigV1 is an exact structural copy of PostableUserConfig without json tags.
 type AMConfigV1 struct {
-	Templates              map[ResourceUID]TemplateGroup
-	AlertmanagerConfig     PostableApiAlertingConfig
-	ExtraConfigs           []ExtraConfiguration
-	ManagedRoutes          ManagedRoutes
-	ManagedInhibitionRules ManagedInhibitionRules
+	Templates          map[ResourceUID]TemplateGroup
+	InhibitionRules    map[ResourceUID]InhibitionRule
+	AlertmanagerConfig PostableApiAlertingConfig
+	ExtraConfigs       []ExtraConfiguration
+	ManagedRoutes      ManagedRoutes
 }
 
 // SortedTemplates returns templates ordered by kind and title.

@@ -1,25 +1,29 @@
 package v1
 
 import (
+	"cmp"
 	"fmt"
 	"hash/fnv"
 	"slices"
+	"strings"
 
-	"github.com/prometheus/alertmanager/config"
-	"github.com/prometheus/alertmanager/pkg/labels"
+	k8svalidation "k8s.io/apimachinery/pkg/util/validation"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
 )
 
-type ManagedInhibitionRules map[string]*InhibitionRule
-
 type InhibitionRule struct {
-	Name string
-	config.InhibitRule
-	Provenance Provenance
+	ResourceMetadata
+
+	SourceMatchers []Matcher
+	TargetMatchers []Matcher
+	Equal          []string
 }
 
 // ResourceID returns the UID for provenance tracking.
 func (ir InhibitionRule) ResourceID() string {
-	return ir.Name
+	return string(ir.UID)
 }
 
 const ResourceTypeInhibitionRule = "inhibition-rule"
@@ -30,8 +34,6 @@ func (ir InhibitionRule) ResourceType() string {
 }
 
 func (ir *InhibitionRule) Validate() error {
-	// Matchers are already validated during conversion via labels.NewMatcher()
-	// which checks regex compilation and label name validity.
 	// We only support modern matchers (not deprecated source_match/target_match),
 	// so we just validate presence here.
 
@@ -42,14 +44,60 @@ func (ir *InhibitionRule) Validate() error {
 		return fmt.Errorf("inhibition rule must have at least one target matcher")
 	}
 
-	if ir.Name == "" {
-		return fmt.Errorf("inhibition rule name must not be empty")
+	uid := string(ir.UID)
+	if strings.TrimSpace(uid) == "" {
+		return fmt.Errorf("inhibition rule uid must not be empty")
+	}
+
+	if strings.Contains(uid, ":") {
+		return fmt.Errorf("inhibition rule uid cannot contain invalid character ':'")
+	}
+
+	if errs := k8svalidation.IsDNS1123Subdomain(uid); len(errs) > 0 {
+		return fmt.Errorf("inhibition rule uid must be a valid DNS subdomain: %s", strings.Join(errs, ", "))
+	}
+
+	// imported inhibition rules have purposefully long names to ensure no conflict with non-imported ones
+	if ir.Provenance != models.ProvenanceConvertedPrometheus && len(uid) > ualert.UIDMaxLength {
+		return fmt.Errorf("inhibition rule uid is too long (exceeds %d characters)", ualert.UIDMaxLength)
+	}
+
+	for _, m := range ir.SourceMatchers {
+		if err := m.Validate(); err != nil {
+			return fmt.Errorf("invalid source matcher: %w", err)
+		}
+	}
+
+	for _, m := range ir.TargetMatchers {
+		if err := m.Validate(); err != nil {
+			return fmt.Errorf("invalid target matcher: %w", err)
+		}
 	}
 
 	return nil
 }
 
-func (ir *InhibitionRule) Fingerprint() string {
+func NewInhibitionRule(
+	uid string,
+	sourceMatchers []Matcher,
+	targetMatchers []Matcher,
+	equal []string,
+	provenance models.Provenance,
+) InhibitionRule {
+	ir := InhibitionRule{
+		ResourceMetadata: ResourceMetadata{
+			UID:        ResourceUID(uid),
+			Provenance: provenance,
+		},
+		SourceMatchers: sourceMatchers,
+		TargetMatchers: targetMatchers,
+		Equal:          equal,
+	}
+	ir.Version = InhibitionRuleFingerprint(ir)
+	return ir
+}
+
+func InhibitionRuleFingerprint(ir InhibitionRule) string {
 	sum := fnv.New64a()
 	separator := []byte{255}
 	writeBytes := func(b []byte) {
@@ -59,15 +107,15 @@ func (ir *InhibitionRule) Fingerprint() string {
 
 	sourceMatchers := sortMatchers(ir.SourceMatchers)
 	for _, m := range sourceMatchers {
-		writeBytes([]byte(m.Type.String()))
-		writeBytes([]byte(m.Name))
+		writeBytes([]byte(m.Type))
+		writeBytes([]byte(m.Label))
 		writeBytes([]byte(m.Value))
 	}
 
 	targetMatchers := sortMatchers(ir.TargetMatchers)
 	for _, m := range targetMatchers {
-		writeBytes([]byte(m.Type.String()))
-		writeBytes([]byte(m.Name))
+		writeBytes([]byte(m.Type))
+		writeBytes([]byte(m.Label))
 		writeBytes([]byte(m.Value))
 	}
 
@@ -80,30 +128,17 @@ func (ir *InhibitionRule) Fingerprint() string {
 	return fmt.Sprintf("%016x", sum.Sum64())
 }
 
-func sortMatchers(matchers []*labels.Matcher) []*labels.Matcher {
-	result := make([]*labels.Matcher, 0, len(matchers))
+func sortMatchers(matchers []Matcher) []Matcher {
+	result := make([]Matcher, 0, len(matchers))
 	for _, m := range matchers {
-		if m != nil {
-			result = append(result, m)
-		}
+		result = append(result, m)
 	}
-	slices.SortFunc(result, func(a, b *labels.Matcher) int {
-		if a.Type != b.Type {
-			return int(a.Type) - int(b.Type)
-		}
-		if a.Name < b.Name {
-			return -1
-		}
-		if a.Name > b.Name {
-			return 1
-		}
-		if a.Value < b.Value {
-			return -1
-		}
-		if a.Value > b.Value {
-			return 1
-		}
-		return 0
+	slices.SortFunc(result, func(a, b Matcher) int {
+		return cmp.Or(
+			cmp.Compare(a.Type, b.Type),
+			cmp.Compare(a.Label, b.Label),
+			cmp.Compare(a.Value, b.Value),
+		)
 	})
 	return result
 }

@@ -1,20 +1,19 @@
 package v1
 
 import (
+	"errors"
 	"fmt"
 	"hash/fnv"
 	"maps"
 	"slices"
-	"strings"
 
 	"github.com/grafana/alerting/definition"
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/prometheus/alertmanager/config"
-	k8svalidation "k8s.io/apimachinery/pkg/util/validation"
+	"github.com/prometheus/alertmanager/pkg/labels"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 func ToModel(in *definitions.PostableUserConfig) *AMConfigV1 {
@@ -22,11 +21,11 @@ func ToModel(in *definitions.PostableUserConfig) *AMConfigV1 {
 		return nil
 	}
 	return &AMConfigV1{
-		Templates:              TemplateFilesToTemplates(in.TemplateFiles, TemplateKindGrafana),
-		AlertmanagerConfig:     PostableApiAlertingConfigToModel(in.AlertmanagerConfig),
-		ExtraConfigs:           ExtraConfigsToModel(in.ExtraConfigs),
-		ManagedRoutes:          ManagedRoutesToModel(in.ManagedRoutes),
-		ManagedInhibitionRules: ManagedInhibitionRulesToModel(in.ManagedInhibitionRules),
+		Templates:          TemplateFilesToTemplates(in.TemplateFiles, TemplateKindGrafana),
+		InhibitionRules:    InhibitionRulesToModel(in.ManagedInhibitionRules),
+		AlertmanagerConfig: PostableApiAlertingConfigToModel(in.AlertmanagerConfig),
+		ExtraConfigs:       ExtraConfigsToModel(in.ExtraConfigs),
+		ManagedRoutes:      ManagedRoutesToModel(in.ManagedRoutes),
 	}
 }
 
@@ -156,26 +155,31 @@ func ObjectMatchersToModel(in definitions.ObjectMatchers) ObjectMatchers {
 	return ObjectMatchers(slices.Clone(in))
 }
 
-func ManagedInhibitionRulesToModel(in definitions.ManagedInhibitionRules) ManagedInhibitionRules {
+func InhibitionRulesToModel(in definitions.ManagedInhibitionRules) map[ResourceUID]InhibitionRule {
 	if in == nil {
 		return nil
 	}
-	out := make(ManagedInhibitionRules, len(in))
-	for k, ir := range in {
-		out[k] = InhibitionRuleToModel(ir)
+	out := make(map[ResourceUID]InhibitionRule, len(in))
+	for _, ir := range in {
+		if ir == nil {
+			continue
+		}
+		m := InhibitionRuleToModel(*ir)
+		out[m.UID] = m
 	}
 	return out
 }
 
-func InhibitionRuleToModel(in *definitions.InhibitionRule) *InhibitionRule {
-	if in == nil {
-		return nil
+func InhibitionRuleToModel(in definitions.InhibitionRule) InhibitionRule {
+	return NewInhibitionRule(in.Name, MatchersToModel(in.SourceMatchers), MatchersToModel(in.TargetMatchers), in.Equal, models.Provenance(in.Provenance))
+}
+
+func MatchersToModel(in config.Matchers) []Matcher {
+	out := make([]Matcher, 0, len(in))
+	for _, m := range in {
+		out = append(out, Matcher{Type: MatcherType(m.Type.String()), Label: m.Name, Value: m.Value}) // TODO: Stricter Type conversion?
 	}
-	return &InhibitionRule{
-		Name:        in.Name,
-		InhibitRule: in.InhibitRule,
-		Provenance:  Provenance(in.Provenance),
-	}
+	return out
 }
 
 func ExtraConfigsToModel(in []definitions.ExtraConfiguration) []ExtraConfiguration {
@@ -199,17 +203,25 @@ func ExtraConfigToModel(in definitions.ExtraConfiguration) ExtraConfiguration {
 
 // -----------------
 
-func ToDBModel(in *AMConfigV1) *AMConfigDB {
+func ToDBModel(in *AMConfigV1) (*AMConfigDB, error) {
 	if in == nil {
-		return nil
+		return nil, nil
 	}
-	return &AMConfigDB{
-		TemplateFiles:          TemplatesToTemplateFiles(in.Templates),
-		AlertmanagerConfig:     PostableApiAlertingConfigToDB(in.AlertmanagerConfig),
-		ExtraConfigs:           ExtraConfigsToDB(in.ExtraConfigs),
-		ManagedRoutes:          ManagedRoutesToDB(in.ManagedRoutes),
-		ManagedInhibitionRules: ManagedInhibitionRulesToDB(in.ManagedInhibitionRules),
+	dbModel := AMConfigDB{
+		TemplateFiles:      TemplatesToTemplateFiles(in.Templates),
+		AlertmanagerConfig: PostableApiAlertingConfigToDB(in.AlertmanagerConfig),
+		ExtraConfigs:       ExtraConfigsToDB(in.ExtraConfigs),
+		ManagedRoutes:      ManagedRoutesToDB(in.ManagedRoutes),
 	}
+
+	var errs []error
+	var err error
+	dbModel.ManagedInhibitionRules, err = InhibitionRulesToDB(in.InhibitionRules)
+	if err != nil {
+		errs = append(errs, err)
+	}
+
+	return &dbModel, errors.Join(errs...)
 }
 
 func PostableApiAlertingConfigToDB(in PostableApiAlertingConfig) definition.PostableApiAlertingConfig {
@@ -338,25 +350,75 @@ func ObjectMatchersToDB(in ObjectMatchers) definitions.ObjectMatchers {
 	return definitions.ObjectMatchers(slices.Clone(in))
 }
 
-func ManagedInhibitionRulesToDB(in ManagedInhibitionRules) definitions.ManagedInhibitionRules {
+func InhibitionRulesToDB(in map[ResourceUID]InhibitionRule) (definitions.ManagedInhibitionRules, error) {
 	if in == nil {
-		return nil
+		return nil, nil
 	}
+	var errs []error
 	out := make(definitions.ManagedInhibitionRules, len(in))
-	for k, ir := range in {
-		out[k] = InhibitionRuleToDB(ir)
+	for _, ir := range in {
+		m, err := InhibitionRuleToDB(ir)
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+		out[m.Name] = m
 	}
-	return out
+	return out, errors.Join(errs...)
 }
 
-func InhibitionRuleToDB(in *InhibitionRule) *definitions.InhibitionRule {
-	if in == nil {
-		return nil
+func InhibitionRuleToDB(in InhibitionRule) (*definitions.InhibitionRule, error) {
+	sourceMatchers, err := MatchersToDB(in.SourceMatchers)
+	if err != nil {
+		return nil, fmt.Errorf("invalid source matchers: %w", err)
+	}
+	targetMatchers, err := MatchersToDB(in.TargetMatchers)
+	if err != nil {
+		return nil, fmt.Errorf("invalid target matchers: %w", err)
 	}
 	return &definitions.InhibitionRule{
-		Name:        in.Name,
-		InhibitRule: in.InhibitRule,
-		Provenance:  definition.Provenance(in.Provenance),
+		Name: string(in.UID),
+		InhibitRule: definitions.InhibitRule{
+			SourceMatchers: sourceMatchers,
+			TargetMatchers: targetMatchers,
+			Equal:          slices.Clone(in.Equal),
+		},
+		Provenance: definition.Provenance(in.Provenance),
+	}, nil
+}
+
+func MatchersToDB(in []Matcher) (config.Matchers, error) {
+	if len(in) == 0 {
+		return nil, nil
+	}
+
+	result := make(config.Matchers, 0, len(in))
+	for _, m := range in {
+		matchType, err := MatcherTypeToDB(m.Type)
+		if err != nil {
+			return nil, err
+		}
+		matcher, err := labels.NewMatcher(matchType, m.Label, m.Value)
+		if err != nil {
+			return nil, fmt.Errorf("invalid matcher (label=%s, type=%s, value=%s): %w", m.Label, m.Type, m.Value, err)
+		}
+		result = append(result, matcher)
+	}
+	return result, nil
+}
+
+func MatcherTypeToDB(mType MatcherType) (labels.MatchType, error) {
+	switch mType {
+	case MatcherEqual:
+		return labels.MatchEqual, nil
+	case MatcherNotEqual:
+		return labels.MatchNotEqual, nil
+	case MatcherEqualRegex:
+		return labels.MatchRegexp, nil
+	case MatcherNotEqualRegex:
+		return labels.MatchNotRegexp, nil
+	default:
+		return labels.MatchEqual, models.MakeErrInhibitionRuleInvalid(fmt.Errorf("unknown matcher type: %s", mType))
 	}
 }
 
@@ -377,31 +439,6 @@ func ExtraConfigToDB(in ExtraConfiguration) definitions.ExtraConfiguration {
 		TemplateFiles:      maps.Clone(in.TemplateFiles),
 		AlertmanagerConfig: in.AlertmanagerConfig,
 	}
-}
-
-func InhibitRuleToInhibitionRule(name string, rule config.InhibitRule, provenance Provenance) (*InhibitionRule, error) {
-	if name = strings.TrimSpace(name); name == "" {
-		return nil, fmt.Errorf("inhibition rule name must not be empty")
-	}
-
-	if strings.Contains(name, ":") {
-		return nil, fmt.Errorf("inhibition rule name cannot contain invalid character ':'")
-	}
-
-	if errs := k8svalidation.IsDNS1123Subdomain(name); len(errs) > 0 {
-		return nil, fmt.Errorf("inhibition rule name must be a valid DNS subdomain: %s", strings.Join(errs, ", "))
-	}
-
-	// imported inhibition rules have purposefully long names to ensure no conflict with non-imported ones
-	if models.Provenance(provenance) != models.ProvenanceConvertedPrometheus && len(name) > util.MaxUIDLength {
-		return nil, fmt.Errorf("inhibition rule name is too long (exceeds %d characters)", util.MaxUIDLength)
-	}
-
-	return &InhibitionRule{
-		Name:        name,
-		InhibitRule: rule,
-		Provenance:  provenance,
-	}, nil
 }
 
 // PostableMimirReceiverToPostableGrafanaReceiver converts all legacy models to PostableGrafanaReceiver.

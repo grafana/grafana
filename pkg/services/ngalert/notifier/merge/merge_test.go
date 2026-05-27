@@ -409,7 +409,7 @@ func TestMergeExtraConfig(t *testing.T) {
 		require.NoError(t, err)
 		route := mcfg.Route
 		RenameResourceUsagesInRoutes([]*v1.Route{route}, renames)
-		inhibitRules, err := BuildManagedInhibitionRules(identifier, mcfg.InhibitRules, v1.Provenance(models.ProvenanceConvertedPrometheus))
+		inhibitRules, err := BuildManagedInhibitionRules(identifier, mcfg.InhibitRules, models.ProvenanceConvertedPrometheus)
 		require.NoError(t, err)
 		return v1.ManagedRoutes{identifier: route}, inhibitRules
 	}
