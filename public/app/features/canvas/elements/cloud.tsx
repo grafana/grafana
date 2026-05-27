@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { v4 as uuidv4 } from 'uuid';
+import { useId } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -22,7 +22,7 @@ const Cloud = (props: CanvasElementProps<CanvasElementConfig, CanvasElementData>
   const styles = getStyles(config.theme2, data);
 
   // uuid needed to avoid id conflicts when multiple elements are rendered
-  const uniqueId = uuidv4();
+  const uniqueId = useId();
 
   return (
     <div className={styles.container}>

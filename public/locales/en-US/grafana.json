@@ -7617,6 +7617,10 @@
     "section-filters-list": {
       "add-filter": "Add filter"
     },
+    "section-placement": {
+      "top-row": "Top of row",
+      "top-tab": "Top of tab"
+    },
     "selection-options-form": {
       "description-enables-multiple-values-selected": "Enables multiple values to be selected at the same time",
       "description-enables-option-include-variables": "Enables an option to include all values",
@@ -7756,9 +7760,6 @@
     "variable-display-select": {
       "label": "Display",
       "options": {
-        "above-dashboard": {
-          "label": "Above dashboard"
-        },
         "controls-menu": {
           "description": "Visible when the controls menu is open",
           "label": "Controls menu"
@@ -7767,9 +7768,9 @@
           "description": "Only visible in edit mode",
           "label": "Hidden"
         },
-        "hidden-label": {
-          "description": "Above the dashboard, but without showing the name of variable",
-          "label": "Above dashboard, label hidden"
+        "top-placement-hidden-label": {
+          "description": "{{placement}}, but without showing the name of variable",
+          "label": "{{placement}}, label hidden"
         }
       }
     },
@@ -7852,12 +7853,15 @@
           "reorder-variables-list": "Reorder variables list"
         }
       },
-      "title-above-dashboard_one": "Above dashboard ({{count}})",
-      "title-above-dashboard_other": "Above dashboard ({{count}})",
       "title-controls-menu_one": "Controls menu ({{count}})",
       "title-controls-menu_other": "Controls menu ({{count}})",
       "title-hidden_one": "Hidden ({{count}})",
-      "title-hidden_other": "Hidden ({{count}})"
+      "title-hidden_other": "Hidden ({{count}})",
+      "title-top-placement_one": "{{placement}} ({{count}})",
+      "title-top-placement_other": "{{placement}} ({{count}})",
+      "top-placement": {
+        "default": "Above dashboard"
+      }
     },
     "version-history": {
       "comparison": {
@@ -9058,7 +9062,6 @@
       "copy-button": "Copy to clipboard",
       "download-button": "Download file",
       "download-successful_toast_message": "Your JSON has been downloaded",
-      "export-externally-label": "Export the dashboard to use in another instance",
       "export-format": "Format",
       "export-mode": "Model",
       "info-text": "Copy or download a file containing the definition of your dashboard",
@@ -11696,12 +11699,6 @@
       "published-by": "Published by",
       "updated-on": "Updated on"
     },
-    "import-resource-format-error": {
-      "cancel": "Cancel",
-      "title": "Unsupported format",
-      "v1-message": "This dashboard is in Kubernetes v1 resource format and cannot be imported when Kubernetes dashboards feature is disabled. Please enable the kubernetesDashboards feature toggle to import this dashboard.",
-      "v2-message": "This dashboard is in v2 resource format and cannot be imported when Kubernetes dashboards feature is disabled. Please enable the kubernetesDashboards feature toggle to import this dashboard."
-    },
     "snapshot-list-table": {
       "body-delete": "Are you sure you want to delete '{{snapshotToRemove}}'?",
       "confirmText-delete": "Delete",
@@ -13523,7 +13520,7 @@
       "modal-title-set-up-public-access": "Set up public access",
       "modal-title-set-up-required-features": "Set up required features",
       "step-description-copy-url": "From the ngrok output, copy the https:// forwarding URL that looks like this:",
-      "step-description-enable-feature-toggles": "Add the provisioning feature toggle to your custom.ini file. Note: kubernetesDashboards is enabled by default, but if you have explicitly disabled it, you will need to enable it in your Grafana settings or remove the override from your configuration.",
+      "step-description-enable-feature-toggles": "Add the provisioning feature toggle to your custom.ini file.",
       "step-description-start-ngrok": "Run this command to create a secure tunnel to your local Grafana:",
       "step-description-update-grafana-config": "Add this to your custom.ini file, replacing the URL with your actual ngrok URL:",
       "step-title-copy-url": "Copy your public URL",
@@ -14715,7 +14712,6 @@
   "share-dashboard": {
     "menu": {
       "export-image-title": "Export as image",
-      "export-json-title": "Export as JSON",
       "share-externally-title": "Share externally",
       "share-internally-title": "Share internally",
       "share-snapshot-title": "Share snapshot"

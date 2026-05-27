@@ -51,9 +51,9 @@ const customVariableModel: CustomVariableModel = {
   rootStateKey: null,
 };
 
-// mock uuidv4 to give back the same value every time
-jest.mock('uuid', () => ({
-  v4: () => '0000',
+jest.mock('@grafana/data', () => ({
+  ...jest.requireActual('@grafana/data'),
+  generateUUID: () => '0000',
 }));
 
 const instanceSettings = {

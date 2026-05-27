@@ -159,22 +159,12 @@ func (tapi *TeamAPI) addCreatorAsAdminViaK8s(c *contextmodel.ReqContext, teamUID
 			return err
 		}
 
-		idx := slices.IndexFunc(teamObj.Spec.Members, func(m iamv0alpha1.TeamTeamMember) bool {
-			return m.Kind == subjectKindUser && m.Name == usr.UID
+		teamObj.Spec.Members = append(teamObj.Spec.Members, iamv0alpha1.TeamTeamMember{
+			Kind:       subjectKindUser,
+			Name:       usr.UID,
+			Permission: iamv0alpha1.TeamTeamPermissionAdmin,
+			External:   false,
 		})
-		if idx >= 0 {
-			if teamObj.Spec.Members[idx].Permission == iamv0alpha1.TeamTeamPermissionAdmin {
-				return nil
-			}
-			teamObj.Spec.Members[idx].Permission = iamv0alpha1.TeamTeamPermissionAdmin
-		} else {
-			teamObj.Spec.Members = append(teamObj.Spec.Members, iamv0alpha1.TeamTeamMember{
-				Kind:       subjectKindUser,
-				Name:       usr.UID,
-				Permission: iamv0alpha1.TeamTeamPermissionAdmin,
-				External:   false,
-			})
-		}
 
 		_, err = teamClient.Update(ctx, teamObj, resource.UpdateOptions{})
 		return err
