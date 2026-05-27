@@ -87,7 +87,7 @@ export function toIntegerOrUndefined(value: string): number | undefined {
   return isNaN(v) ? undefined : v;
 }
 
-export function toFloatOrUndefined(value: string, _strict: boolean): number | undefined {
+export function toFloatOrUndefined(value: string): number | undefined {
   if (!value) {
     return undefined;
   }
