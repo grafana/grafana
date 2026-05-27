@@ -31,7 +31,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	pluginspec "github.com/grafana/grafana/pkg/plugins/openapi"
 	"github.com/grafana/grafana/pkg/registry/apis/query/queryschema"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -76,7 +75,6 @@ func RegisterAPIService(
 	datasources ScopedPluginDatasourceProvider,
 	contextProvider PluginContextWrapper,
 	decrypter decrypt.DecryptService, // when not reading legacy
-	_ accesscontrol.AccessControl, // Not used
 	accessClient authlib.AccessClient,
 	reg prometheus.Registerer,
 	pluginSources sources.Registry,
