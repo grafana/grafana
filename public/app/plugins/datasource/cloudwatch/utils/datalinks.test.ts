@@ -67,7 +67,9 @@ describe('addDataLinksToLogsResponse', () => {
       range: { ...time, raw: time },
     } as DataQueryRequest<CloudWatchQuery>;
 
-    jest.mocked(getDataSourceInstanceSettings).mockResolvedValue({ name: 'Xray' } as unknown as DataSourceInstanceSettings);
+    jest
+      .mocked(getDataSourceInstanceSettings)
+      .mockResolvedValue({ name: 'Xray' } as unknown as DataSourceInstanceSettings);
 
     await addDataLinksToLogsResponse(
       mockResponse,
