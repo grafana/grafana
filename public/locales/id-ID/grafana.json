@@ -437,7 +437,8 @@
       "label-value": "Nilai"
     },
     "alert-instance-extension-point": {
-      "aria-label-actions": "Tindakan"
+      "n-contact-points_other": "",
+      "view-route_other": ""
     },
     "alert-instance-modal-selector": {
       "add-alert-data-to-payload": "Tambahkan data peringatan ke payload",
@@ -453,6 +454,7 @@
     },
     "alert-instances-table": {
       "created": "Dibuat",
+      "destination": "",
       "labels": "Label",
       "state": "Status"
     },
@@ -2328,6 +2330,7 @@
     },
     "notification-route": {
       "no-labels": "Tidak ada label",
+      "notification-policies": "",
       "notification-policy": "Kebijakan notifikasi"
     },
     "notification-route-header": {
@@ -4353,7 +4356,6 @@
       "button-cancel": "Batalkan",
       "button-delete": "Hapus",
       "button-deleting": "Menghapus...",
-      "commit": "Hapus folder",
       "delete-warning": "Ini akan menghapus folder ini dan semua subfoldernya. Secara keseluruhan, ini akan memengaruhi:",
       "missing-info": "Bidang wajib tidak ada",
       "success-message": "Folder berhasil dihapus"
@@ -4467,7 +4469,6 @@
       "button-cancel": "Batalkan",
       "button-rename": "Ganti nama",
       "button-renaming": "Mengganti nama...",
-      "commit": "Ganti nama folder",
       "error-saving": "Gagal mengganti nama folder",
       "label-folder-name": "Nama folder",
       "missing-info": "Bidang wajib tidak ada",
@@ -6352,6 +6353,8 @@
         "ungroup-tabs": "Pisah grup tab"
       },
       "name": "Tab",
+      "scroll-tabs-left": "",
+      "scroll-tabs-right": "",
       "tab": {
         "new": "Tab baru",
         "repeat": {
@@ -6449,6 +6452,10 @@
         },
         "save-dashboard-short": "Simpan",
         "save-library-panel": "Simpan panel pustaka",
+        "save-template": {
+          "label": "",
+          "tooltip": ""
+        },
         "share": {
           "arrow": "Bagikan",
           "tooltip": "Salin tautan"
@@ -6462,6 +6469,9 @@
       "read-only": "Hanya baca",
       "refresh": "Muat ulang dasbor",
       "save": "Simpan dasbor",
+      "save-as-template": {
+        "label": ""
+      },
       "save-dashboard": {
         "label": "Simpan dasbor",
         "tooltip": "Simpan perubahan"
@@ -7484,7 +7494,9 @@
         "label-details": "Detail",
         "title": "Simpan dasbor",
         "title-copy": "Simpan salinan dasbor",
-        "title-provisioned": "Dasbor yang disediakan"
+        "title-provisioned": "Dasbor yang disediakan",
+        "title-template": "",
+        "title-update-template": ""
       }
     },
     "save-dashboard-form": {
@@ -7560,6 +7572,10 @@
     },
     "section-filters-list": {
       "add-filter": ""
+    },
+    "section-placement": {
+      "top-row": "",
+      "top-tab": ""
     },
     "selection-options-form": {
       "description-enables-multiple-values-selected": "Memungkinkan beberapa nilai untuk dipilih secara bersamaan",
@@ -7700,9 +7716,6 @@
     "variable-display-select": {
       "label": "Tampilan",
       "options": {
-        "above-dashboard": {
-          "label": "Di atas dasbor"
-        },
         "controls-menu": {
           "description": "Terlihat saat menu kontrol terbuka",
           "label": "Menu kontrol"
@@ -7711,9 +7724,9 @@
           "description": "Hanya terlihat dalam mode edit",
           "label": "Tersembunyi"
         },
-        "hidden-label": {
-          "description": "Di atas dasbor, tetapi tanpa menunjukkan nama variabel",
-          "label": "Di atas dasbor, label disembunyikan"
+        "top-placement-hidden-label": {
+          "description": "",
+          "label": ""
         }
       }
     },
@@ -7795,9 +7808,12 @@
           "reorder-variables-list": "Susun ulang daftar variabel"
         }
       },
-      "title-above-dashboard_other": "Di atas dasbor ({{count}})",
+      "top-placement": {
+        "default": ""
+      },
       "title-controls-menu_other": "Menu kontrol ({{count}})",
-      "title-hidden_other": "Tersembunyi ({{count}})"
+      "title-hidden_other": "Tersembunyi ({{count}})",
+      "title-top-placement_other": ""
     },
     "version-history": {
       "comparison": {
@@ -10689,7 +10705,7 @@
     "name-unit": "Unit",
     "name-value-name": "Nama nilai",
     "name-y-axis-scale": "Skala sumbu Y",
-    "name-y-bucket-scale": "Skala bucket Y",
+    "name-y-bucket-scale": "",
     "placeholder-axis-label": "Otomatis",
     "placeholder-axis-width": "Otomatis",
     "placeholder-decimals": "Otomatis",
@@ -10804,6 +10820,12 @@
     "name-stacking": "Tumpukan"
   },
   "home": {
+    "dashboard-tabs": {
+      "recent": "",
+      "recent-active": "",
+      "starred": "",
+      "starred-active": ""
+    },
     "home-page": {
       "edition": {
         "cloud": "",
@@ -10816,6 +10838,23 @@
         "morning": ""
       },
       "placeholder": ""
+    },
+    "recent-dashboards-tab": {
+      "browse": "",
+      "clear": "",
+      "create": "",
+      "empty": "",
+      "empty-description": "",
+      "error-title": "",
+      "loading": "",
+      "retry": ""
+    },
+    "starred-dashboards-tab": {
+      "empty": "",
+      "empty-description": "",
+      "error-title": "",
+      "loading": "",
+      "retry": ""
     }
   },
   "inspector": {
@@ -11904,6 +11943,9 @@
       "subtitle": "Kelola pengaturan di seluruh server dan akses ke sumber daya, seperti organisasi, pengguna, dan lisensi",
       "title": "Admin server"
     },
+    "agentic-testing": {
+      "title": ""
+    },
     "alert-list-legacy": {
       "title": "Aturan peringatan"
     },
@@ -12496,6 +12538,9 @@
       "required": "",
       "save-tooltip": ""
     }
+  },
+  "page-loader": {
+    "default": ""
   },
   "panel": {
     "dashlist": {
@@ -13161,11 +13206,24 @@
     "code-block": {
       "aria-label-copy": "Salin kode ke papan klip"
     },
+    "commit-message": {
+      "dashboard-create-default": "",
+      "dashboard-delete-default": "",
+      "dashboard-move-default": "",
+      "dashboard-rename-default": "",
+      "dashboard-update-default": "",
+      "folder-create-default": "",
+      "folder-delete-default": "",
+      "folder-move-default": "",
+      "folder-rename-default": "",
+      "folder-update-default": ""
+    },
     "config-form": {
       "alert-repository-settings-saved": "Pengaturan repositori disimpan",
       "alert-repository-settings-updated": "Pengaturan repositori diperbarui",
       "button-save": "Simpan",
       "button-saving": "Menyimpan...",
+      "description-commit-message-template": "",
       "description-connection": "Pilih koneksi Aplikasi GitHub yang akan digunakan",
       "description-enabled": "Setelah pulling otomatis diaktifkan, target tidak dapat diubah.",
       "description-read-only": "Sumber daya tidak dapat dimodifikasi melalui Grafana.",
@@ -13176,6 +13234,7 @@
       "error-save-failed": "Gagal menyimpan pengaturan repositori",
       "error-save-repository": "Gagal menyimpan pengaturan repositori",
       "label-automatic-pulling": "Pulling otomatis",
+      "label-commit-message-template": "",
       "label-connection": "Koneksi Aplikasi GitHub",
       "label-enabled": "Aktif",
       "label-interval-seconds": "Interval (detik)",
@@ -13184,6 +13243,7 @@
       "label-title": "Judul",
       "option-entire-instance": "Seluruh instans",
       "option-managed-folder": "Folder terkelola",
+      "placeholder-commit-message-template": "",
       "placeholder-interval-seconds": "60",
       "placeholder-my-config": "Konfigurasi saya"
     },
@@ -14064,6 +14124,10 @@
   "query-editor-next": {
     "action": {
       "add-transformation-filter": "Tambahkan filter",
+      "cancel-delete": "",
+      "confirm-delete": "",
+      "confirm-delete-confirm": "",
+      "delete-confirmation-group": "",
       "disable": "Nonaktifkan {{type}}",
       "duplicate": "Duplikasikan {{type}}",
       "enable": "Aktifkan {{type}}",
@@ -14103,10 +14167,7 @@
       "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
-      "body-query": "Yakin ingin menghapus kueri ini?",
-      "body-transformation": "Menghapus satu transformasi dapat merusak yang lain.",
-      "confirm": "Hapus",
-      "title": "Hapus {{name}}?"
+      "body-transformation": "Menghapus satu transformasi dapat merusak yang lain."
     },
     "details-sidebar": {
       "cache-timeout": "Cache timeout",

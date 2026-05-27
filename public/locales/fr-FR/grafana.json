@@ -440,7 +440,10 @@
       "label-value": "Valeur"
     },
     "alert-instance-extension-point": {
-      "aria-label-actions": "Actions"
+      "n-contact-points_one": "",
+      "n-contact-points_other": "",
+      "view-route_one": "",
+      "view-route_other": ""
     },
     "alert-instance-modal-selector": {
       "add-alert-data-to-payload": "Ajouter des données d’alerte à la charge utile",
@@ -456,6 +459,7 @@
     },
     "alert-instances-table": {
       "created": "Créé",
+      "destination": "",
       "labels": "Étiquettes",
       "state": "État"
     },
@@ -2341,6 +2345,7 @@
     },
     "notification-route": {
       "no-labels": "Pas d’étiquettes",
+      "notification-policies": "",
       "notification-policy": "Politique de notification"
     },
     "notification-route-header": {
@@ -4380,7 +4385,6 @@
       "button-cancel": "Annuler",
       "button-delete": "Supprimer",
       "button-deleting": "Suppression en cours…",
-      "commit": "Supprimer le dossier",
       "delete-warning": "Cette opération supprimera ce dossier ainsi que tous ses éléments enfants. Au total, cela concernera :",
       "missing-info": "Champs obligatoires manquants",
       "success-message": "Dossier supprimé avec succès"
@@ -4494,7 +4498,6 @@
       "button-cancel": "Annuler",
       "button-rename": "Renommer",
       "button-renaming": "Changement de nom en cours…",
-      "commit": "Renommer le dossier",
       "error-saving": "Échec de l’attribution d’un nouveau nom au dossier",
       "label-folder-name": "Nom du dossier",
       "missing-info": "Champs obligatoires manquants",
@@ -6383,6 +6386,8 @@
         "ungroup-tabs": "Dissocier les onglets"
       },
       "name": "Onglets",
+      "scroll-tabs-left": "",
+      "scroll-tabs-right": "",
       "tab": {
         "new": "Nouvel onglet",
         "repeat": {
@@ -6480,6 +6485,10 @@
         },
         "save-dashboard-short": "Enregistrer",
         "save-library-panel": "Enregistrer le panneau de la bibliothèque",
+        "save-template": {
+          "label": "",
+          "tooltip": ""
+        },
         "share": {
           "arrow": "Partager",
           "tooltip": "Copier le lien"
@@ -6493,6 +6502,9 @@
       "read-only": "Lecture seule",
       "refresh": "Actualiser le tableau de bord",
       "save": "Enregistrer le tableau de bord",
+      "save-as-template": {
+        "label": ""
+      },
       "save-dashboard": {
         "label": "Enregistrer le tableau de bord",
         "tooltip": "Enregistrer les modifications"
@@ -7525,7 +7537,9 @@
         "label-details": "Détails",
         "title": "Enregistrer le tableau de bord",
         "title-copy": "Enregistrer une copie du tableau de bord",
-        "title-provisioned": "Tableau de bord provisionné"
+        "title-provisioned": "Tableau de bord provisionné",
+        "title-template": "",
+        "title-update-template": ""
       }
     },
     "save-dashboard-form": {
@@ -7602,6 +7616,10 @@
     },
     "section-filters-list": {
       "add-filter": ""
+    },
+    "section-placement": {
+      "top-row": "",
+      "top-tab": ""
     },
     "selection-options-form": {
       "description-enables-multiple-values-selected": "Permet de sélectionner plusieurs valeurs en même temps",
@@ -7742,9 +7760,6 @@
     "variable-display-select": {
       "label": "Affichage",
       "options": {
-        "above-dashboard": {
-          "label": "Au-dessus du tableau de bord"
-        },
         "controls-menu": {
           "description": "Visible lorsque le menu des commandes est ouvert",
           "label": "Menu des commandes"
@@ -7753,9 +7768,9 @@
           "description": "Visible uniquement en mode édition",
           "label": "Masqué"
         },
-        "hidden-label": {
-          "description": "Au-dessus du tableau de bord, sans afficher le nom de la variable",
-          "label": "Au-dessus du tableau de bord, étiquette masquée"
+        "top-placement-hidden-label": {
+          "description": "",
+          "label": ""
         }
       }
     },
@@ -7838,12 +7853,15 @@
           "reorder-variables-list": "Réorganiser la liste des variables"
         }
       },
-      "title-above-dashboard_one": "Au-dessus du tableau de bord ({{count}})",
-      "title-above-dashboard_other": "Au-dessus du tableau de bord ({{count}})",
+      "top-placement": {
+        "default": ""
+      },
       "title-controls-menu_one": "Menu des commandes ({{count}})",
       "title-controls-menu_other": "Menu des commandes ({{count}})",
       "title-hidden_one": "Masqué ({{count}})",
-      "title-hidden_other": "Masqués ({{count}})"
+      "title-hidden_other": "Masqués ({{count}})",
+      "title-top-placement_one": "",
+      "title-top-placement_other": ""
     },
     "version-history": {
       "comparison": {
@@ -10747,7 +10765,7 @@
     "name-unit": "Unité",
     "name-value-name": "Nom de la valeur",
     "name-y-axis-scale": "Échelle de l’axe Y",
-    "name-y-bucket-scale": "Échelle des compartiments Y",
+    "name-y-bucket-scale": "",
     "placeholder-axis-label": "Auto",
     "placeholder-axis-width": "Auto",
     "placeholder-decimals": "Auto",
@@ -10862,6 +10880,12 @@
     "name-stacking": "Empilement"
   },
   "home": {
+    "dashboard-tabs": {
+      "recent": "",
+      "recent-active": "",
+      "starred": "",
+      "starred-active": ""
+    },
     "home-page": {
       "edition": {
         "cloud": "",
@@ -10874,6 +10898,23 @@
         "morning": ""
       },
       "placeholder": ""
+    },
+    "recent-dashboards-tab": {
+      "browse": "",
+      "clear": "",
+      "create": "",
+      "empty": "",
+      "empty-description": "",
+      "error-title": "",
+      "loading": "",
+      "retry": ""
+    },
+    "starred-dashboards-tab": {
+      "empty": "",
+      "empty-description": "",
+      "error-title": "",
+      "loading": "",
+      "retry": ""
     }
   },
   "inspector": {
@@ -11970,6 +12011,9 @@
       "subtitle": "Gérer les paramètres à l'échelle du serveur et l'accès aux ressources telles que les organisations, les utilisateurs et les licences",
       "title": "Administrateur de serveur"
     },
+    "agentic-testing": {
+      "title": ""
+    },
     "alert-list-legacy": {
       "title": "Règles d'alerte"
     },
@@ -12565,6 +12609,9 @@
       "required": "",
       "save-tooltip": ""
     }
+  },
+  "page-loader": {
+    "default": ""
   },
   "panel": {
     "dashlist": {
@@ -13233,11 +13280,24 @@
     "code-block": {
       "aria-label-copy": "Copier le code dans le presse-papiers"
     },
+    "commit-message": {
+      "dashboard-create-default": "",
+      "dashboard-delete-default": "",
+      "dashboard-move-default": "",
+      "dashboard-rename-default": "",
+      "dashboard-update-default": "",
+      "folder-create-default": "",
+      "folder-delete-default": "",
+      "folder-move-default": "",
+      "folder-rename-default": "",
+      "folder-update-default": ""
+    },
     "config-form": {
       "alert-repository-settings-saved": "Paramètres du référentiel enregistrés",
       "alert-repository-settings-updated": "Paramètres du référentiel mis à jour",
       "button-save": "Enregistrer",
       "button-saving": "Enregistrement en cours...",
+      "description-commit-message-template": "",
       "description-connection": "Sélectionnez la connexion à l’application GitHub à utiliser",
       "description-enabled": "Une fois que la fusion automatique est activée, la cible ne peut pas être modifiée.",
       "description-read-only": "Les ressources ne peuvent pas être modifiées via Grafana.",
@@ -13248,6 +13308,7 @@
       "error-save-failed": "Échec de l’enregistrement des paramètres du référentiel",
       "error-save-repository": "Échec de l’enregistrement des paramètres du référentiel",
       "label-automatic-pulling": "Fusion automatique",
+      "label-commit-message-template": "",
       "label-connection": "Connexion via l’application GitHub",
       "label-enabled": "Activé",
       "label-interval-seconds": "Intervalle (secondes)",
@@ -13256,6 +13317,7 @@
       "label-title": "Titre",
       "option-entire-instance": "Instance entière",
       "option-managed-folder": "Dossier géré",
+      "placeholder-commit-message-template": "",
       "placeholder-interval-seconds": "60",
       "placeholder-my-config": "Ma configuration"
     },
@@ -14148,6 +14210,10 @@
   "query-editor-next": {
     "action": {
       "add-transformation-filter": "Ajouter un filtre",
+      "cancel-delete": "",
+      "confirm-delete": "",
+      "confirm-delete-confirm": "",
+      "delete-confirmation-group": "",
       "disable": "Désactiver {{type}}",
       "duplicate": "Dupliquer {{type}}",
       "enable": "Activer {{type}}",
@@ -14189,10 +14255,7 @@
       "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
-      "body-query": "Voulez-vous vraiment supprimer cette requête ?",
-      "body-transformation": "La suppression d’une transformation peut en perturber d’autres.",
-      "confirm": "Supprimer",
-      "title": "Supprimer {{name}} ?"
+      "body-transformation": "La suppression d’une transformation peut en perturber d’autres."
     },
     "details-sidebar": {
       "cache-timeout": "Délai d’expiration du cache",
