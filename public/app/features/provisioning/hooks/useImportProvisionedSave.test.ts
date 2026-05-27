@@ -1,29 +1,22 @@
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act, waitFor } from '@testing-library/react';
+import { HttpResponse, http } from 'msw';
+import { getWrapper } from 'test/test-utils';
 
+import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
+import server from '@grafana/test-utils/server';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { dashboardAPIVersionResolver } from 'app/features/dashboard/api/DashboardAPIVersionResolver';
 
+import { setupProvisioningMswServer } from '../mocks/server';
+
 import { useImportProvisionedSave, type ImportProvisionedSaveParams } from './useImportProvisionedSave';
 
-const mockNavigate = jest.fn();
-jest.mock('react-router-dom-v5-compat', () => ({
-  ...jest.requireActual('react-router-dom-v5-compat'),
-  useNavigate: () => mockNavigate,
-}));
+setupProvisioningMswServer();
 
-const mockCreateFile = jest.fn();
-const mockRequest = { isLoading: false, isSuccess: false, isError: false };
-jest.mock('./useCreateOrUpdateRepositoryFile', () => ({
-  useCreateOrUpdateRepositoryFile: () => [mockCreateFile, mockRequest],
-}));
-
+const mockUseProvisionedRequestHandler = jest.fn();
 jest.mock('./useProvisionedRequestHandler', () => ({
-  useProvisionedRequestHandler: jest.fn(),
-}));
-
-jest.mock('./useLastBranch', () => ({
-  useLastBranch: () => ({ getLastBranch: jest.fn(), setLastBranch: jest.fn() }),
+  useProvisionedRequestHandler: (...args: unknown[]) => mockUseProvisionedRequestHandler(...args),
 }));
 
 const repository: RepositoryView = {
@@ -35,25 +28,47 @@ const repository: RepositoryView = {
   workflows: ['write', 'branch'],
 };
 
+let capturedRequest: { url: URL; body: unknown } | null = null;
+
+function requireCapturedRequest(): { url: URL; body: unknown } {
+  expect(capturedRequest).not.toBeNull();
+  return capturedRequest as { url: URL; body: unknown };
+}
+
+function renderImportSaveHook(repo?: RepositoryView) {
+  return renderHook(() => useImportProvisionedSave({ repository: repo }), {
+    wrapper: getWrapper({ renderWithRouter: true }),
+  });
+}
+
 describe('useImportProvisionedSave', () => {
   beforeEach(() => {
+    capturedRequest = null;
     jest.clearAllMocks();
     dashboardAPIVersionResolver.set({ v1: 'v1', v2: 'v2' });
+
+    server.use(
+      http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+        const url = new URL(request.url);
+        capturedRequest = { url, body: await request.json() };
+        return HttpResponse.json({ resource: { upsert: {} } });
+      })
+    );
   });
 
-  it('does not call createFile when repository is undefined', () => {
-    const { result } = renderHook(() => useImportProvisionedSave({ repository: undefined }));
+  it('does not send a create-file request when repository is undefined', async () => {
+    const { result } = renderImportSaveHook(undefined);
 
-    act(() => {
-      result.current.save(makeSaveParams());
+    await act(async () => {
+      await result.current.save(makeSaveParams());
     });
 
-    expect(mockCreateFile).not.toHaveBeenCalled();
+    expect(capturedRequest).toBeNull();
   });
 
   it('builds correct body for v1 dashboard import', async () => {
-    const { result } = renderHook(() => useImportProvisionedSave({ repository }));
     const spec = { title: 'My Dashboard', panels: [] };
+    const { result } = renderImportSaveHook(repository);
 
     await act(async () => {
       await result.current.save(
@@ -68,27 +83,31 @@ describe('useImportProvisionedSave', () => {
       );
     });
 
-    expect(mockCreateFile).toHaveBeenCalledTimes(1);
-    const call = mockCreateFile.mock.calls[0][0];
+    await waitFor(() => {
+      expect(capturedRequest).not.toBeNull();
+    });
 
-    expect(call.name).toBe('my-repo');
-    expect(call.path).toBe('dashboards/my-dash.json');
-    // ref === repository.branch → should be undefined
-    expect(call.ref).toBeUndefined();
-    expect(call.message).toBe('Initial import');
+    const req = requireCapturedRequest();
+    expect(req.url.pathname).toContain('/repositories/my-repo/files/dashboards/my-dash.json');
+    // ref === repository.branch → should not be sent
+    expect(req.url.searchParams.get('ref')).toBeNull();
+    expect(req.url.searchParams.get('message')).toBe('Initial import');
 
-    const body = call.body;
-    expect(body.apiVersion).toBe('dashboard.grafana.app/v1');
-    expect(body.kind).toBe('Dashboard');
-    expect(body.metadata.name).toBe('custom-uid');
-    expect(body.metadata.generateName).toBeUndefined();
-    expect(body.metadata.annotations[AnnoKeyFolder]).toBe('folder-abc');
-    expect(body.spec).toBe(spec);
+    const body = req.body as Record<string, unknown>;
+    expect(body).toMatchObject({
+      apiVersion: 'dashboard.grafana.app/v1',
+      kind: 'Dashboard',
+      spec,
+    });
+    const metadata = body.metadata as Record<string, unknown>;
+    expect(metadata.name).toBe('custom-uid');
+    expect(metadata.generateName).toBeUndefined();
+    expect((metadata.annotations as Record<string, string>)[AnnoKeyFolder]).toBe('folder-abc');
   });
 
   it('builds correct body for v2 dashboard import', async () => {
-    const { result } = renderHook(() => useImportProvisionedSave({ repository }));
     const spec = { title: 'V2 Dash', layout: { kind: 'GridLayout', spec: { items: [] } } };
+    const { result } = renderImportSaveHook(repository);
 
     await act(async () => {
       await result.current.save(
@@ -102,21 +121,29 @@ describe('useImportProvisionedSave', () => {
       );
     });
 
-    const call = mockCreateFile.mock.calls[0][0];
-    const body = call.body;
+    await waitFor(() => {
+      expect(capturedRequest).not.toBeNull();
+    });
 
-    expect(body.apiVersion).toBe('dashboard.grafana.app/v2');
-    expect(body.kind).toBe('Dashboard');
-    // No uid provided → should use generateName
-    expect(body.metadata.name).toBeUndefined();
-    expect(body.metadata.generateName).toBe('d');
-    expect(body.spec).toBe(spec);
+    const req = requireCapturedRequest();
+    expect(req.url.pathname).toContain('/repositories/my-repo/files/v2-dash.json');
     // Non-default branch → ref should be sent
-    expect(call.ref).toBe('feat-branch');
+    expect(req.url.searchParams.get('ref')).toBe('feat-branch');
+
+    const body = req.body as Record<string, unknown>;
+    expect(body).toMatchObject({
+      apiVersion: 'dashboard.grafana.app/v2',
+      kind: 'Dashboard',
+      spec,
+    });
+    const metadata = body.metadata as Record<string, unknown>;
+    // No uid provided → should use generateName
+    expect(metadata.name).toBeUndefined();
+    expect(metadata.generateName).toBe('d');
   });
 
   it('uses default commit message when comment is empty', async () => {
-    const { result } = renderHook(() => useImportProvisionedSave({ repository }));
+    const { result } = renderImportSaveHook(repository);
 
     await act(async () => {
       await result.current.save(
@@ -127,12 +154,16 @@ describe('useImportProvisionedSave', () => {
       );
     });
 
-    const call = mockCreateFile.mock.calls[0][0];
-    expect(call.message).toBe('New dashboard: My Dash');
+    await waitFor(() => {
+      expect(capturedRequest).not.toBeNull();
+    });
+
+    const req = requireCapturedRequest();
+    expect(req.url.searchParams.get('message')).toBe('New dashboard: My Dash');
   });
 
   it('trims whitespace-only comment and falls back to default', async () => {
-    const { result } = renderHook(() => useImportProvisionedSave({ repository }));
+    const { result } = renderImportSaveHook(repository);
 
     await act(async () => {
       await result.current.save(
@@ -143,8 +174,12 @@ describe('useImportProvisionedSave', () => {
       );
     });
 
-    const call = mockCreateFile.mock.calls[0][0];
-    expect(call.message).toBe('New dashboard: My Dash');
+    await waitFor(() => {
+      expect(capturedRequest).not.toBeNull();
+    });
+
+    const req = requireCapturedRequest();
+    expect(req.url.searchParams.get('message')).toBe('New dashboard: My Dash');
   });
 
   it('honors repository commit template when comment is empty', async () => {
@@ -152,7 +187,7 @@ describe('useImportProvisionedSave', () => {
       ...repository,
       commit: { singleResourceMessageTemplate: 'feat: {{title}}' },
     };
-    const { result } = renderHook(() => useImportProvisionedSave({ repository: repoWithTemplate }));
+    const { result } = renderImportSaveHook(repoWithTemplate);
 
     await act(async () => {
       await result.current.save(
@@ -163,21 +198,71 @@ describe('useImportProvisionedSave', () => {
       );
     });
 
-    const call = mockCreateFile.mock.calls[0][0];
-    expect(call.message).toBe('feat: My Dash');
+    await waitFor(() => {
+      expect(capturedRequest).not.toBeNull();
+    });
+
+    const req = requireCapturedRequest();
+    expect(req.url.searchParams.get('message')).toBe('feat: My Dash');
   });
 
   it('falls back to beta version when resolver has not been called', async () => {
     dashboardAPIVersionResolver.reset();
 
-    const { result } = renderHook(() => useImportProvisionedSave({ repository }));
+    // Discovery will hit /apis/dashboard.grafana.app/ — return 404 so it falls back to beta
+    server.use(http.get('/apis/dashboard.grafana.app/', () => new HttpResponse(null, { status: 404 })));
+
+    const { result } = renderImportSaveHook(repository);
 
     await act(async () => {
       await result.current.save(makeSaveParams({ apiVersion: 'v1' }));
     });
 
-    const body = mockCreateFile.mock.calls[0][0].body;
+    await waitFor(() => {
+      expect(capturedRequest).not.toBeNull();
+    });
+
+    const body = requireCapturedRequest().body as Record<string, unknown>;
     expect(body.apiVersion).toBe('dashboard.grafana.app/v1beta1');
+  });
+
+  describe('useProvisionedRequestHandler wiring', () => {
+    it('passes resourceType and handler functions on initial render', () => {
+      renderImportSaveHook(repository);
+
+      expect(mockUseProvisionedRequestHandler).toHaveBeenCalled();
+      const config = mockUseProvisionedRequestHandler.mock.calls[0][0];
+
+      expect(config.resourceType).toBe('dashboard');
+      expect(config.repository).toBe(repository);
+      expect(typeof config.handlers.onWriteSuccess).toBe('function');
+      expect(typeof config.handlers.onBranchSuccess).toBe('function');
+      expect(typeof config.handlers.onError).toBe('function');
+    });
+
+    it('passes workflow, folderUID, and selectedBranch from save form', async () => {
+      const { result } = renderImportSaveHook(repository);
+
+      await act(async () => {
+        await result.current.save(
+          makeSaveParams({
+            folderUid: 'target-folder',
+            form: { ref: 'my-branch', path: 'dash.json', workflow: 'branch' },
+          })
+        );
+      });
+
+      await waitFor(() => {
+        const lastCall =
+          mockUseProvisionedRequestHandler.mock.calls[mockUseProvisionedRequestHandler.mock.calls.length - 1][0];
+        expect(lastCall.workflow).toBe('branch');
+      });
+
+      const lastCall =
+        mockUseProvisionedRequestHandler.mock.calls[mockUseProvisionedRequestHandler.mock.calls.length - 1][0];
+      expect(lastCall.folderUID).toBe('target-folder');
+      expect(lastCall.selectedBranch).toBe('my-branch');
+    });
   });
 });
 
