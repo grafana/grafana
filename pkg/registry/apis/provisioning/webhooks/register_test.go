@@ -168,9 +168,9 @@ func TestIsPublicURL(t *testing.T) {
 		{"https://grafana.example.com/", true},
 		{"https://grafana.example.com:8443/path", true},
 		{"https://notlocalhost.grafana.com/", true},
-		{"https://172.15.0.1/", true},  // just outside 172.16.0.0/12
-		{"https://172.32.0.1/", true},  // just outside 172.16.0.0/12
-		{"https://8.8.8.8/", true},     // public IPv4
+		{"https://172.15.0.1/", true}, // just outside 172.16.0.0/12
+		{"https://172.32.0.1/", true}, // just outside 172.16.0.0/12
+		{"https://8.8.8.8/", true},    // public IPv4
 		{"https://[2001:db8::1]/", true},
 
 		// Scheme
